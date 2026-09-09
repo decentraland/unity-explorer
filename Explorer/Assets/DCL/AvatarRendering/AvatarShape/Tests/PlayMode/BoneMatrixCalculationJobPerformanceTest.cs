@@ -55,7 +55,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests.PlayMode
             {
                 avatarTransform[a] = float4x4.Translate(new float3(a + 1, 0f, 0f));
 
-                updateAvatar[a] = (a % 2) == 0;
+                updateAvatar[a] = a % 2 == 0;
 
                 perAvatarBoneCount[a] = FILTERED_BASELINE + 1 + (a % 16);
 

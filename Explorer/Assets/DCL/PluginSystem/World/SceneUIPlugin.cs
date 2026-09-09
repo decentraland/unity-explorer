@@ -98,7 +98,7 @@ namespace DCL.PluginSystem.World
             UIDropdownInstantiationSystem.InjectToWorld(ref builder, componentPoolsRegistry, sharedDependencies.EcsToCRDTWriter, styleFontDefinitions);
             UIDropdownReleaseSystem.InjectToWorld(ref builder, componentPoolsRegistry);
             UIPointerEventsSystem.InjectToWorld(ref builder, sharedDependencies.SceneStateProvider, sharedDependencies.EcsToCRDTWriter);
-            UICanvasInformationSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter);
+            UICanvasInformationSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, uiDocument);
             UIFixPbPointerEventsSystem.InjectToWorld(ref builder);
 
             ResetDirtyFlagSystem<PBUiTransform>.InjectToWorld(ref builder);

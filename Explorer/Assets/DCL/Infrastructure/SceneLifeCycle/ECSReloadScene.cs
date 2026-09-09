@@ -102,22 +102,24 @@ namespace ECS.SceneLifeCycle
                 world.Query(in new QueryDescription().WithAll<RealmComponent>(),
                     (ref StaticScenePointers staticScenePointers) => { staticScenePointers.Promise = null; });
 
-                if (changedModelSrc != null
-                    && TryResolveContentHash(definition, changedModelSrc, out string contentHash)
-                    && IsRawGltfModel(definition, contentHash))
+                // Content-versioned hashes self-invalidate on edit — skip eviction (see LocalSceneDevHashes).
+                if (!LocalSceneDevHashes.IsContentVersioned(definition))
                 {
-                    // The dev server named the exact model that changed. In raw-GLTF development its
-                    // cache key is the bare content hash, so evict just that asset and let every other
-                    // cache stay warm across the reload.
-                    cacheCleaner.EvictGltfModel(contentHash);
-                }
-                else
-                {
-                    // Force-drain dereferenced caches on LSD reload. The local dev server derives hashes
-                    // from the file path, not content, so an updated model keeps the same hash and cache
-                    // hits would return stale assets. Draining guarantees fresh loads.
-                    cacheCleaner.UnloadCache(budgeted: false);
-                    _ = Resources.UnloadUnusedAssets();
+                    if (changedModelSrc != null
+                        && TryResolveContentHash(definition, changedModelSrc, out string contentHash)
+                        && IsRawGltfModel(definition, contentHash))
+                    {
+                        // The dev server named the exact model that changed. In raw-GLTF development its
+                        // cache key is the bare content hash, so evict just that asset and let every other
+                        // cache stay warm across the reload.
+                        cacheCleaner.EvictGltfModel(contentHash);
+                    }
+                    else
+                    {
+                        // Force-drain dereferenced caches on LSD reload to guarantee fresh loads.
+                        cacheCleaner.UnloadCache(budgeted: false);
+                        _ = Resources.UnloadUnusedAssets();
+                    }
                 }
 
                 await WaitUntilNewSceneIsFullyLoadedAsync();

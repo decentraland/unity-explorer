@@ -1,5 +1,6 @@
 ﻿using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading.Components;
+using DCL.Diagnostics;
 using DCL.Utility;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -50,7 +51,7 @@ namespace DCL.Profiles
             return DeserializeProfileList(jObject, existingValue);
         }
 
-        private Profile DeserializeProfileList(JObject root, Profile? profile)
+        private Profile? DeserializeProfileList(JObject root, Profile? profile)
         {
             // Temporary support two schemes: from catalyst and centralized
             // TODO remove before releasing
@@ -61,13 +62,17 @@ namespace DCL.Profiles
             JToken? avatars = root["avatars"];
 
             if (avatars is not { Type: JTokenType.Array })
-                throw new ArgumentException("\"avatars\" is not a JSON array");
+            {
+                ReportHub.LogWarning(ReportCategory.PROFILE, $"Profile response \"avatars\" field is not a JSON array (type: {avatars?.Type.ToString() ?? "missing"})");
+                return null;
+            }
 
             // We only care about the first element, it's never an array in reality
             foreach (JToken? item in avatars.Children())
                 return DeserializeProfile(item, profile);
 
-            throw new ArgumentException("\"avatars\" array is empty");
+            ReportHub.LogWarning(ReportCategory.PROFILE, "Profile response \"avatars\" array is empty");
+            return null;
         }
 
         private Profile DeserializeProfile(JToken? jToken, Profile? profile)

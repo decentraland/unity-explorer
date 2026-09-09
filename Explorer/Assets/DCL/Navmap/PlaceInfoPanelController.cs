@@ -44,6 +44,7 @@ namespace DCL.Navmap
         private readonly GalleryEventBus? galleryEventBus;
         private readonly HomePlaceEventBus homePlaceEventBus;
         private readonly ImageController thumbnailImage;
+        private readonly Sprite? thumbnailPlaceholder;
         private readonly MultiStateButtonController dislikeButton;
         private readonly MultiStateButtonController likeButton;
         private readonly MultiStateButtonController? homeButton;
@@ -94,6 +95,9 @@ namespace DCL.Navmap
             this.homePlaceEventBus = homePlaceEventBus;
             this.donationsService = donationsService;
 
+            // The prefab authors the placeholder thumbnail on the image itself; capture it before the first request
+            // overwrites it, so a place carrying no thumbnail url still shows something.
+            thumbnailPlaceholder = view.Thumbnail.ImageSprite;
             thumbnailImage = imageControllerProvider.Create(view.Thumbnail);
 
             if (view.CameraReelGalleryView != null)
@@ -184,7 +188,7 @@ namespace DCL.Navmap
             else
                 currentBaseParcel = null;
 
-            thumbnailImage.RequestImage(placeInfo.image);
+            thumbnailImage.RequestImage(placeInfo.image, defaultSprite: thumbnailPlaceholder);
             view.PlaceNameLabel.text = RichTextSanitizer.EscapeAndTruncate(placeInfo.title, RichTextSanitizer.DEFAULT_NAME_LENGTH);
 
             // The creator name sits inside a <b> run this label has to keep interpreting, so it is escaped

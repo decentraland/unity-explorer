@@ -196,7 +196,7 @@ namespace DCL.Places
         {
             currentFilters.Section = null;
             currentFilters.CategoryId = null;
-            currentFilters.SortBy = IPlacesAPIService.SortBy.LIKE_SCORE;
+            currentFilters.SortBy = IPlacesAPIService.SortBy.MOST_ACTIVE;
             currentFilters.SDKVersion = IPlacesAPIService.SDKVersion.SDK7_ONLY;
             currentFilters.SearchText = string.Empty;
         }

@@ -14,12 +14,14 @@ using DCL.FeatureFlags;
 using DCL.Passport;
 using DCL.Profiles;
 using DCL.Utilities;
+using DCL.Utilities.Extensions;
 using DCL.Web3;
 using ECS.Abstract;
 using MVC;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Utility.Arch;
 
 namespace DCL.Interaction.Systems
 {
@@ -44,8 +46,6 @@ namespace DCL.Interaction.Systems
         private Profile? currentProfileHovered;
         private Vector2? currentPositionHovered;
         private UniTaskCompletionSource contextMenuTask = new ();
-
-        private bool wasCursorLockedWhenMenuOpened;
 
         internal ProcessOtherAvatarsInteractionSystem(
             World world,
@@ -144,36 +144,38 @@ namespace DCL.Interaction.Systems
 
             string userId = currentProfileHovered.UserId.Value;
 
-            wasCursorLockedWhenMenuOpened  = World.Get<CursorComponent>(cameraEntityProxy.Object).CursorState == CursorState.Locked;
-
-            if (wasCursorLockedWhenMenuOpened)
-            {
-                if (World.Has<PointerLockIntention>(cameraEntityProxy.Object))
-                    World.Set(cameraEntityProxy.Object, new PointerLockIntention(true, true));
-                else
-                    World.Add(cameraEntityProxy.Object, new PointerLockIntention(true, true));
-            }
-
             contextMenuTask.TrySetResult();
             contextMenuTask = new UniTaskCompletionSource();
-            menusAccessFacade.ShowUserProfileContextMenuFromWalletIdAsync(
-                new Web3Address(userId),
-                currentPositionHovered!.Value,
-                new Vector2(50, 0),
-                disposeCts.Token,
-                contextMenuTask.Task,
-                anchorPoint: MenuAnchorPoint.CenterRight,
-                isOpenedOnWorldAvatar: true,
-                onHide: OnContextMenuClosed).Forget();
+
+            ShowOptionsContextMenuAsync(userId, currentPositionHovered!.Value, contextMenuTask.Task, disposeCts.Token).Forget();
         }
 
-        private void OnContextMenuClosed()
+        private async UniTaskVoid ShowOptionsContextMenuAsync(string userId, Vector2 position, UniTask closeMenuTask, CancellationToken ct)
         {
-            if (wasCursorLockedWhenMenuOpened)
-            {
-                ref CursorComponent cursor = ref World.Get<CursorComponent>(cameraEntityProxy.Object);
-                cursor.CursorState = CursorState.Locked;
-            }
+            Entity cameraEntity = cameraEntityProxy.Object;
+
+            if (World.Get<CursorComponent>(cameraEntity).CursorState == CursorState.Locked)
+                World.AddOrSet(cameraEntity, new PointerLockIntention(true, true));
+
+            await menusAccessFacade.ShowUserProfileContextMenuFromWalletIdAsync(
+                                        new Web3Address(userId),
+                                        position,
+                                        new Vector2(50, 0),
+                                        ct,
+                                        closeMenuTask,
+                                        anchorPoint: MenuAnchorPoint.CenterRight,
+                                        isOpenedOnWorldAvatar: true)
+                                   .SuppressToResultAsync(GetReportData());
+
+            if (ct.IsCancellationRequested)
+                return;
+
+            // Runs on every outcome: menu closed, never shown (unknown profile, another menu already open) or failed.
+            // Drops the lock-with-UI intention if it was not applied yet, otherwise requests the cursor to be freed
+            if (World.TryGet(cameraEntity, out PointerLockIntention pendingIntention) && pendingIntention is { Locked: true, WithUI: true })
+                World.Remove<PointerLockIntention>(cameraEntity);
+            else if (World.Get<CursorComponent>(cameraEntity).CursorState == CursorState.LockedWithUi)
+                World.AddOrSet(cameraEntity, new PointerLockIntention(false));
         }
 
         private void OnPlayerMoved(InputAction.CallbackContext obj)

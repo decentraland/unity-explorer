@@ -25,6 +25,13 @@ namespace ECS.StreamableLoading.Cache.Disk
 
         UniTask<EnumResult<TaskError>> PutAsync<Ti>(HashKey key, string extension, Ti data, CancellationToken token) where Ti: IMemoryIterator;
 
+        /// <summary>
+        ///     Serializes and persists the value. Serialization is owned by the store so that an
+        ///     implementation that discards writes never invokes the serializer — preparing the bytes
+        ///     can be expensive or outright invalid (e.g. reading a texture whose CPU mirror was dropped).
+        /// </summary>
+        UniTask<EnumResult<TaskError>> PutAsync<T, Ts>(HashKey key, string extension, T data, IDiskSerializer<T, Ts> serializer, CancellationToken token) where Ts: IMemoryIterator;
+
         UniTask<EnumResult<SlicedOwnedMemory<byte>?, TaskError>> ContentAsync(HashKey key, string extension, CancellationToken token);
 
         UniTask<EnumResult<TaskError>> RemoveAsync(HashKey key, string extension, CancellationToken token);
@@ -32,6 +39,11 @@ namespace ECS.StreamableLoading.Cache.Disk
         class Fake : IDiskCache
         {
             public UniTask<EnumResult<TaskError>> PutAsync<Ti>(HashKey key, string extension, Ti data, CancellationToken token) where Ti: IMemoryIterator =>
+                UniTask.FromResult(EnumResult<TaskError>.ErrorResult(TaskError.MessageError, "It's fake"));
+
+            // The serializer is deliberately never invoked: the write is discarded, so the bytes
+            // must not be prepared.
+            public UniTask<EnumResult<TaskError>> PutAsync<T, Ts>(HashKey key, string extension, T data, IDiskSerializer<T, Ts> serializer, CancellationToken token) where Ts: IMemoryIterator =>
                 UniTask.FromResult(EnumResult<TaskError>.ErrorResult(TaskError.MessageError, "It's fake"));
 
             public UniTask<EnumResult<SlicedOwnedMemory<byte>?, TaskError>> ContentAsync(HashKey key, string extension, CancellationToken token) =>

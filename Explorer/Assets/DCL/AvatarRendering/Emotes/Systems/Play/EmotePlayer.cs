@@ -366,7 +366,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                 emoteComponent.EmoteLoop = isLooping;
 
                 // See https://github.com/decentraland/unity-explorer/issues/4198
-                view.ResetArmatureInclination();
+                view.ResetArmatureTransform();
             }
 
             view.ResetAnimatorTrigger(AnimationHashes.EMOTE_STOP);
@@ -386,7 +386,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             {
                 view.ReplaceMaskedEmoteAnimation(emoteReferences.avatarClip);
                 maskedEmote.EmoteLoop = isLooping;
-                view.ResetArmatureInclination();
+                view.ResetArmatureTransform();
             }
 
             view.ResetAnimatorTrigger(AnimationHashes.MASKED_EMOTE_STOP);

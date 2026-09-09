@@ -39,8 +39,8 @@ namespace DCL.Backpack.Gifting.Presenters.GiftTransfer.Commands
 
         public string GetWaitingMessage() =>
             web3Provider.IsThirdWebOTP
-                ? GiftingTextIds.WaitingForWalletMessageThirdWeb
-                : GiftingTextIds.WaitingForWalletMessage;
+                ? GiftingTextIds.WAITING_FOR_WALLET_MESSAGE_THIRD_WEB
+                : GiftingTextIds.WAITING_FOR_WALLET_MESSAGE;
 
         public async UniTask<GiftTransferResult> ExecuteAsync(GiftTransferParams data, CancellationToken ct)
         {

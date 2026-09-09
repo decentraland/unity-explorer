@@ -22,6 +22,41 @@ namespace Global.AppArgs
         public const string REALM = "realm";
         public const string COMMS_ADAPTER = "comms-adapter";
         public const string GATEKEEPER_URL = "gatekeeper-url";
+
+        /// <summary>
+        ///     Lets a realm's comms adapter be served over cleartext http, as an e2e fixture's is, provided it
+        ///     resolves to loopback. Command line only, and deliberately absent from the deep-link allowlist:
+        ///     it lowers a transport guarantee, which is never a link's call to make.
+        /// </summary>
+        public const string ACCEPT_UNTRUSTED_REALM = "accept-untrusted-realm";
+
+        /// <summary>
+        ///     Routes every supported service through this gateway origin instead of <c>gateway.{base-domain}</c>,
+        ///     and forces routing on: naming a gateway is the opt-in the <c>use-gateway</c> feature flag would
+        ///     otherwise carry, so the flag is ignored. Command line only — it aims the session's whole
+        ///     supported-service traffic at the named host, so a deep link must never set it.
+        /// </summary>
+        public const string GATEWAY = "gateway";
+
+        /// <summary>
+        ///     Points every backend host at a deployment served under this base domain instead of
+        ///     decentraland.{org,zone}, selecting <c>DecentralandEnvironment.Custom</c>. Applied from the
+        ///     command line only: it gates which realm hosts are trusted, so it has to be read before a pending deep
+        ///     link is processed. It is denied by <c>DeepLinkAllowlist</c> like the other infrastructure-pointing
+        ///     params, and accepting it in the denied-params dialog has no effect.
+        /// </summary>
+        public const string BASE_DOMAIN = "base-domain";
+
+        /// <summary>
+        ///     The chain a <c>--base-domain</c> deployment signs and transacts against: "mainnet" or "sepolia", each
+        ///     carrying the polygon network that pairs with it. Defaults to mainnet. Every decentraland environment
+        ///     answers for one chain of its own - org mainnet, zone sepolia - and this cannot move them:
+        ///     paired with one of those it is reported and dropped (<c>ChainUtils.ResolveNetwork</c>). Where the value
+        ///     is read, anything not naming a known network ends the launch instead of falling back to the default
+        ///     (<c>MainSceneLoader.CaptureEthNetworkArg</c>). Command line only, like <see cref="BASE_DOMAIN" />.
+        /// </summary>
+        public const string ETH_NETWORK = "eth-network";
+
         public const string LOCAL_SCENE = "local-scene";
         public const string POSITION = "position";
         public const string SPAWN_POINT = "spawnpoint";
@@ -38,6 +73,13 @@ namespace Global.AppArgs
 
         // The opaque identity id delivered by the auth website's signin deep link (<c>decentraland://?signin={identityId}</c>).
         public const string SIGNIN = "signin";
+
+        /// <summary>
+        ///     Referral attribution address (0x…) forwarded by the launcher.
+        ///     Untrusted input: consumers must validate it before use.
+        /// </summary>
+        public const string REFERRER = "referrer";
+
         // The auth request id parameter echoed in the signin deep link, used to match a link to the login that minted it.
         public const string AUTH_REQUEST_ID = "authRequestId";
         // See: https://github.com/decentraland/unity-explorer/issues/9524
@@ -59,6 +101,7 @@ namespace Global.AppArgs
         public const string VOICE_CHAT = "voice-chat";
         public const string NEARBY_VOICE_CHAT = "nearby-voice-chat";
         public const string DONATIONS_UI = "donations-ui";
+        public const string BUG_REPORT = "bug-report";
 
         public const string DISABLE_DISK_CACHE = "disable-disk-cache";
         public const string DISABLE_DISK_CACHE_CLEANUP = "disable-disk-cache-cleanup";
@@ -83,6 +126,8 @@ namespace Global.AppArgs
         public const string HEAD_SYNC = "head-sync";
 
         public const string DISCOVER = "discover";
+
+        public const string IN_GAME_SHOP = "in-game-shop";
 
         public const string FORCE_BACKFACE_CULLING = "force-backface-culling";
 
@@ -142,7 +187,8 @@ namespace Global.AppArgs
         /// </summary>
         public const string LOCAL_AB = "local-ab";
 
-        public const string OPTIMIZED_ASSETS_URL = "optimized-assets-url";
+        /// <summary>Presence forces the abgen pipeline on without waiting for the abgen-pipeline feature flag.</summary>
+        public const string ABGEN_PIPELINE = "abgen-pipeline";
 
         public const string NO_LIVEKIT_MODE = "no-livekit-mode";
 
@@ -169,6 +215,12 @@ namespace Global.AppArgs
             public const string SESSION_ID = "session_id";
             public const string LAUNCHER_ID = "launcher_anonymous_id";
             public const string CAMPAIGN_ANON_USER_ID = "campaign_anon_user_id";
+        }
+
+        public static class Launcher
+        {
+            /// <summary>Version of the launcher that started the client; launchers older than the flag do not send it.</summary>
+            public const string VERSION = "launcher_version";
         }
     }
 }

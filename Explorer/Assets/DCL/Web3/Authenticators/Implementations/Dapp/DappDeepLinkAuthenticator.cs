@@ -34,6 +34,7 @@ namespace DCL.Web3.Authenticators
         private readonly ReactiveProperty<string?> deeplinkSigninIdentityId;
         private readonly ReactiveProperty<string?> loginAwaitingSigninRequestId;
         private readonly bool forceBridgeOnly;
+        private readonly Web3Address? referrer;
         private readonly URLBuilder urlBuilder = new ();
         private readonly DCLSemaphoreSlim loginMutex = new ();
 
@@ -45,7 +46,8 @@ namespace DCL.Web3.Authenticators
             IWebRequestController webRequestController,
             ReactiveProperty<string?> deeplinkSigninIdentityId,
             ReactiveProperty<string?> loginAwaitingSigninRequestId,
-            bool forceBridgeOnly)
+            bool forceBridgeOnly,
+            string? referrer = null)
         {
             this.webBrowser = webBrowser;
             this.authApiUrl = authApiUrl;
@@ -55,6 +57,10 @@ namespace DCL.Web3.Authenticators
             this.deeplinkSigninIdentityId = deeplinkSigninIdentityId;
             this.loginAwaitingSigninRequestId = loginAwaitingSigninRequestId;
             this.forceBridgeOnly = forceBridgeOnly;
+
+            // Normalized/validated once at construction so the field is always canonical;
+            // an invalid launch-argument value degrades to "no referrer".
+            this.referrer = Web3Address.FromUntrusted(referrer);
         }
 
         public void Dispose()
@@ -76,12 +82,9 @@ namespace DCL.Web3.Authenticators
 
                 // Client-generated id embedded in the browser URL; no server round-trip needed before opening the browser.
                 var authRequestId = Guid.NewGuid().ToString();
-                var url = $"{signatureWebAppUrl}/{authRequestId}?loginMethod={payload.Method}&flow=deeplink";
-
-                // Forces the login to open in deeplink bridge only, so the launcher does not spawn a new explorer instance
-                // during the confirmation from the website
-                if (forceBridgeOnly)
-                    url += "&bridgeOnly";
+                // `forceBridgeOnly` keeps the login in the deeplink bridge so the launcher does not
+                // spawn a new explorer instance during the confirmation from the website.
+                string url = DeepLinkSignInUrl.Build(signatureWebAppUrl, authRequestId, payload.Method.ToString(), forceBridgeOnly, referrer);
 
                 webBrowser.OpenUrlMainThreadOnly(url);
 

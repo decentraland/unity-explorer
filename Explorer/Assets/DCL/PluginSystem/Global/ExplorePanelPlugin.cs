@@ -27,6 +27,7 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.Quality;
 using DCL.Settings;
+using DCL.Shop;
 using DCL.SpringBones;
 using DCL.Settings.Configuration;
 using DCL.UserInAppInitializationFlow;
@@ -354,7 +355,7 @@ namespace DCL.PluginSystem.Global
             placeDetailPanelController?.Dispose();
             creditsPanelController.Dispose();
 
-            dclInput.Shortcuts.MainMenu.performed -= OnInputShortcutsMainMenuPerformedAsync;
+            dclInput.Shortcuts.MainMenu.canceled -= OnInputShortcutsMainMenuCanceledAsync;
             dclInput.Shortcuts.Map.performed -= OnInputShortcutsMapPerformedAsync;
             dclInput.Shortcuts.Settings.performed -= OnInputShortcutsSettingsPerformedAsync;
             dclInput.Shortcuts.Backpack.performed -= OnInputShortcutsBackpackPerformedAsync;
@@ -367,7 +368,7 @@ namespace DCL.PluginSystem.Global
 
         public async UniTask InitializeAsync(ExplorePanelSettings settings, CancellationToken ct)
         {
-            dclInput.Shortcuts.MainMenu.performed += OnInputShortcutsMainMenuPerformedAsync;
+            dclInput.Shortcuts.MainMenu.canceled += OnInputShortcutsMainMenuCanceledAsync;
             dclInput.Shortcuts.Map.performed += OnInputShortcutsMapPerformedAsync;
             dclInput.Shortcuts.Settings.performed += OnInputShortcutsSettingsPerformedAsync;
             dclInput.Shortcuts.Backpack.performed += OnInputShortcutsBackpackPerformedAsync;
@@ -582,6 +583,9 @@ namespace DCL.PluginSystem.Global
             eventsController = new EventsController(eventsView, cursor, eventsApiService, placesAPIService, webBrowser, decentralandUrlsSource, mvcManager,
                 eventsThumbnailLoader, eventCardActionsController, profileRepositoryWrapper, friendsService, communitiesDataProvider);
 
+            ShopView shopView = explorePanelView.GetComponentInChildren<ShopView>();
+            var shopController = new ShopController(shopView);
+
             EventDetailPanelView eventDetailPanelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.EventInfoPrefab, ct: ct)).GetComponent<EventDetailPanelView>();
             var eventInfoViewFactory = EventDetailPanelController.CreateLazily(eventDetailPanelViewAsset, null);
             eventDetailPanelController = new EventDetailPanelController(eventInfoViewFactory,
@@ -617,6 +621,7 @@ namespace DCL.PluginSystem.Global
                     communitiesBrowserController,
                     placesController,
                     eventsController,
+                    shopController,
                     inputBlock,
                     eventsApiService,
                     mvcManager,
@@ -705,7 +710,7 @@ namespace DCL.PluginSystem.Global
             mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Navmap)));
         }
 
-        private void OnInputShortcutsMainMenuPerformedAsync(InputAction.CallbackContext _)
+        private void OnInputShortcutsMainMenuCanceledAsync(InputAction.CallbackContext _)
         {
             if (explorePanelController is { State: not ControllerState.ViewHidden }) return;
 

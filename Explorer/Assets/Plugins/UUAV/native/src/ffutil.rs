@@ -92,6 +92,14 @@ impl AvDict {
     pub(crate) const fn as_mut_ptr(&mut self) -> *mut *mut ff::AVDictionary {
         &raw mut self.0
     }
+
+    /// Only fails on allocation failure, which leaves the entry unset and
+    /// surfaces later as an open error. Copies both strings.
+    pub(crate) fn set(&mut self, key: &std::ffi::CStr, value: &std::ffi::CStr) {
+        unsafe {
+            ff::av_dict_set(&mut self.0, key.as_ptr(), value.as_ptr(), 0);
+        }
+    }
 }
 
 impl From<&StreamingProtocol> for AvDict {

@@ -7,6 +7,7 @@ using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using SceneRunner.Scene;
 using System;
+using System.Collections.Generic;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.TextureData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
 namespace ECS.StreamableLoading.GLTF.DownloadProvider
@@ -15,6 +16,10 @@ namespace ECS.StreamableLoading.GLTF.DownloadProvider
     {
         private readonly string targetGltfOriginalPath;
         private readonly ISceneData sceneData;
+
+        private List<GltfExternalDependency>? externalDependencies;
+
+        public override IReadOnlyList<GltfExternalDependency>? ExternalDependencies => externalDependencies;
 
         public GltFastSceneDownloadProvider(World world, ISceneData sceneData, IPartitionComponent partitionComponent, string targetGltfOriginalPath, ReportData reportData,
             IWebRequestController webRequestController, IAcquiredBudget? acquiredBudget)
@@ -34,6 +39,11 @@ namespace ECS.StreamableLoading.GLTF.DownloadProvider
                 if (isBaseGltfFetch) acquiredBudget?.Release();
                 throw new Exception($"Error on GLTF download ({targetGltfOriginalPath} - {originalFilePath}): NOT FOUND");
             }
+
+            // The base GLTF's own hash is part of the load-cache key, so only the external files it
+            // pulls in (textures, buffers) need recording for cache-hit revalidation.
+            if (!isBaseGltfFetch)
+                (externalDependencies ??= new List<GltfExternalDependency>()).Add(new GltfExternalDependency(originalFilePath, tryGetContentUrlResult.Value));
 
             return new Uri(tryGetContentUrlResult);
         }

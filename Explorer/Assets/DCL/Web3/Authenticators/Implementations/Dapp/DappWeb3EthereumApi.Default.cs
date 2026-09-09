@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Web3.Abstract;
+using DCL.Web3.Chains;
 using DCL.Web3.Identities;
 using System.Collections.Generic;
 using System.Threading;
@@ -15,7 +16,7 @@ namespace DCL.Web3.Authenticators
         {
             private readonly DappWeb3EthereumApi origin;
 
-            public Default(IWeb3IdentityCache identityCache, IDecentralandUrlsSource decentralandUrlsSource, IWeb3AccountFactory web3AccountFactory, DecentralandEnvironment environment)
+            public Default(IWeb3IdentityCache identityCache, IDecentralandUrlsSource decentralandUrlsSource, IWeb3AccountFactory web3AccountFactory, EthereumNetwork ethereumNetwork)
             {
                 URLAddress authApiUrl = URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.ApiAuth));
                 URLAddress signatureUrl = URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.AuthSignatureWebApp));
@@ -51,7 +52,7 @@ namespace DCL.Web3.Authenticators
                         "eth_getTransactionCount",
                         "eth_getBlockByNumber", "eth_getCode"
                     },
-                    environment
+                    ethereumNetwork
                 );
             }
 

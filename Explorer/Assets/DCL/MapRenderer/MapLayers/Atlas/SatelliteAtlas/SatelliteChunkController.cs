@@ -9,7 +9,6 @@ using System.Threading;
 using UnityEngine;
 using Utility;
 using UnityEngine.AddressableAssets;
-using Object = UnityEngine.Object;
 
 namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
 {
@@ -91,10 +90,11 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
 
             try
             {
-                currentOwnedTexture = await textureTask!;
+                currentOwnedTexture = await textureTask;
                 await UniTask.SwitchToMainThread();
                 texture = currentOwnedTexture;
             }
+            catch (OperationCanceledException) { return; }
             catch (Exception e)
             {
                 ReportHub.LogException(e, ReportCategory.UI);
@@ -115,6 +115,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
 
                 atlasChunk.MainSpriteRenderer.sprite.name = chunkId.ToString();
             }
+            catch (OperationCanceledException) { return; }
             catch (Exception e)
             {
                 ReportHub.LogException(e, ReportCategory.UI);

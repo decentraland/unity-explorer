@@ -280,11 +280,6 @@ namespace DCL.Passport
 
             passportErrorsController = new PassportErrorsController(viewInstance!.ErrorNotification);
 
-            characterPreviewController = new PassportCharacterPreviewController(viewInstance.CharacterPreviewView,
-                characterPreviewFactory,
-                world,
-                characterPreviewEventBus);
-
             characterPreviewController = new PassportCharacterPreviewController(
                 viewInstance.CharacterPreviewView,
                 characterPreviewFactory,
@@ -323,7 +318,7 @@ namespace DCL.Passport
                                            && FeaturesRegistry.Instance.IsEnabled(FeatureId.UserCredits)
                                            && CreditsFeatureAccess.Instance.IsUserAllowed();
 
-            var creditPurchaseBuyHandler = new CreditPurchaseBuyHandler(mvcManager, marketplaceShopApiClient, webBrowser, isCreditPurchaseEnabled);
+            var creditPurchaseBuyHandler = new CreditPurchaseBuyHandler(mvcManager, marketplaceShopApiClient, webBrowser, characterPreviewController.StopEmotePreview, isCreditPurchaseEnabled);
             creditPurchaseBuyHandler.FellBackToWeb += OnCreditsBuyFellBackToWeb;
 
             overviewPassportModules.Add(new EquippedItemsPassportModuleController(
@@ -337,7 +332,9 @@ namespace DCL.Passport
                 thumbnailProvider,
                 decentralandUrlsSource,
                 passportErrorsController,
-                creditPurchaseBuyHandler));
+                creditPurchaseBuyHandler,
+                characterPreviewController.PlayEmoteClicked,
+                characterPreviewController.StopEmotePreview));
 
             overviewPassportModules.Add(new BadgesOverviewPassportModuleController(
                 viewInstance.BadgesOverviewModuleView,

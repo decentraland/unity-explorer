@@ -7,7 +7,6 @@ using CRDT.Protocol;
 using CRDT.Serializer;
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.ComponentWriter;
-using CrdtEcsBridge.ECSToCRDTWriter;
 using CrdtEcsBridge.JsModulesImplementation;
 using CrdtEcsBridge.JsModulesImplementation.Communications;
 using CrdtEcsBridge.OutgoingMessages;
@@ -30,6 +29,7 @@ using DCL.WebRequests;
 using ECS;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
+using ECS.Unity.ExplorerUiEvents;
 using MVC;
 using SceneRunner.ECSWorld;
 using SceneRunner.Scene;
@@ -74,7 +74,6 @@ namespace SceneRunner
 
         private readonly MultiThreadSync ecsMultiThreadSync;
         private readonly ICRDTDeserializer crdtDeserializer;
-        private readonly IECSToCRDTWriter ecsToCRDTWriter;
 
         private readonly ECSWorldInstanceSharedDependencies ecsWorldSharedDependencies;
 
@@ -96,7 +95,6 @@ namespace SceneRunner
             ISceneData sceneData,
             MultiThreadSync ecsMultiThreadSync,
             ICRDTDeserializer crdtDeserializer,
-            IECSToCRDTWriter ecsToCRDTWriter,
             ISystemGroupsUpdateGate systemGroupThrottler,
             ISystemsUpdateGate systemsUpdateGate,
             ECSWorldInstanceSharedDependencies ecsWorldSharedDependencies)
@@ -115,7 +113,6 @@ namespace SceneRunner
             this.sceneData = sceneData;
             this.ecsMultiThreadSync = ecsMultiThreadSync;
             this.crdtDeserializer = crdtDeserializer;
-            this.ecsToCRDTWriter = ecsToCRDTWriter;
             this.systemGroupThrottler = systemGroupThrottler;
             this.systemsUpdateGate = systemsUpdateGate;
             this.ecsWorldSharedDependencies = ecsWorldSharedDependencies;
@@ -145,15 +142,16 @@ namespace SceneRunner
             CRDTMemoryAllocator = CRDTPooledMemoryAllocator.Create().EnsureNotNull();
             crdtDeserializer = new CRDTDeserializer(CRDTMemoryAllocator);
             OutgoingCRDTMessagesProvider = new OutgoingCRDTMessagesProvider(sdkComponentsRegistry, CRDTProtocol, CRDTMemoryAllocator);
-            ecsToCRDTWriter = new ECSToCRDTWriter(OutgoingCRDTMessagesProvider);
+            var ecsToCRDTWriter = new ECSToCRDTWriter(OutgoingCRDTMessagesProvider);
             EntityCollidersCache = EntityCollidersSceneCache.Create(entityCollidersGlobalCache);
             ExceptionsHandler = SceneExceptionsHandler.Create(SceneStateProvider, sceneData.SceneShortInfo).EnsureNotNull();
             var entityEventsBuilder = new EntityEventsBuilder();
+            var explorerUiEvents = new Queue<ExplorerUiEvent>();
 
             /* Pass dependencies here if they are needed by the systems */
             ecsWorldSharedDependencies = new ECSWorldInstanceSharedDependencies(sceneData, partitionProvider, ecsToCRDTWriter, entitiesMap,
                 ExceptionsHandler, EntityCollidersCache, SceneStateProvider, entityEventsBuilder, ecsMultiThreadSync,
-                systemGroupThrottler, systemsUpdateGate, RuntimeMetrics);
+                systemGroupThrottler, systemsUpdateGate, RuntimeMetrics, explorerUiEvents);
 
             ECSWorldFacade = ecsWorldFactory.CreateWorld(new ECSWorldFactoryArgs(ecsWorldSharedDependencies, systemGroupThrottler, sceneData));
             CRDTWorldSynchronizer = new CRDTWorldSynchronizer(ECSWorldFacade.EcsWorld, sdkComponentsRegistry, entityFactory, entitiesMap);
@@ -264,7 +262,7 @@ namespace SceneRunner
                 string installSource)
                 : this(
                     engineApi,
-                    new RestrictedActionsAPIImplementation(mvcManager, syncDeps.ecsWorldSharedDependencies.SceneStateProvider, globalWorldActions, syncDeps.sceneData, syncDeps.permissionsProvider, systemClipboard, syncDeps.ECSWorldFacade.EcsWorld, syncDeps.ECSWorldFacade.PersistentEntities.Player, new ExplorerUiActions(mvcManager)),
+                    new RestrictedActionsAPIImplementation(mvcManager, syncDeps.ecsWorldSharedDependencies.SceneStateProvider, globalWorldActions, syncDeps.sceneData, syncDeps.permissionsProvider, systemClipboard, syncDeps.ECSWorldFacade.EcsWorld, syncDeps.ECSWorldFacade.PersistentEntities.Player, new ExplorerUiActions(mvcManager, syncDeps.ecsWorldSharedDependencies.ExplorerUiEvents)),
                     new RuntimeImplementation(jsOperations, syncDeps.sceneData, realmData, webRequestController, skyboxSettings, roomHub, installSource),
                     new SceneApiImplementation(syncDeps.sceneData),
                     new ClientWebSocketApiImplementation(syncDeps.PoolsProvider, jsOperations, syncDeps.permissionsProvider),

@@ -43,12 +43,14 @@ namespace DCL.PluginSystem.World
         private readonly ArrayPool<byte> buffersPool;
         private readonly IDiskCache<PartialLoadingState> partialsDiskCache;
         private readonly URLDomain assetBundleURL;
+        private readonly URLDomain lodAssetBundleURL;
         private readonly IGltfContainerAssetsCache gltfContainerAssetsCache;
         private readonly ILaunchMode launchMode;
 
         public AssetBundlesPlugin(IReportsHandlingSettings reportsHandlingSettings, CacheCleaner cacheCleaner, IWebRequestController webRequestController, ArrayPool<byte> buffersPool, IDiskCache<PartialLoadingState> partialsDiskCache,
-            URLDomain assetBundleURL, IGltfContainerAssetsCache gltfContainerAssetsCache, ILaunchMode launchMode)
+            URLDomain assetBundleURL, URLDomain lodAssetBundleURL, IGltfContainerAssetsCache gltfContainerAssetsCache, ILaunchMode launchMode)
         {
+            this.lodAssetBundleURL = lodAssetBundleURL;
             this.reportsHandlingSettings = reportsHandlingSettings;
             this.webRequestController = webRequestController;
             this.buffersPool = buffersPool;
@@ -76,7 +78,7 @@ namespace DCL.PluginSystem.World
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
             // Asset Bundles
-            PrepareGlobalAssetBundleLoadingParametersSystem.InjectToWorld(ref builder, STREAMING_ASSETS_URL, assetBundleURL);
+            PrepareGlobalAssetBundleLoadingParametersSystem.InjectToWorld(ref builder, STREAMING_ASSETS_URL, assetBundleURL, lodAssetBundleURL);
 
             LoadAssetBundleManifestSystem.InjectToWorld(ref builder, new NoCache<SceneAssetBundleManifest, GetAssetBundleManifestIntention>(true, true), assetBundleURL, webRequestController);
 

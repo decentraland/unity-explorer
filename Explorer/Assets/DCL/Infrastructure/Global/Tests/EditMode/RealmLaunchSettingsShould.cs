@@ -25,7 +25,7 @@ namespace Global.Tests.EditMode
             realmLaunchSettings.ApplyConfig(applicationParametersParser);
 
             var dclUrlSource = DecentralandUrlsSource.CreateForTest(DecentralandEnvironment.Org, realmLaunchSettings);
-            var realmUrls = new RealmUrls(realmLaunchSettings, new RealmNamesMap(IWebRequestController.TEST), dclUrlSource);
+            var realmUrls = new RealmUrls(realmLaunchSettings, new RealmNamesMap(IWebRequestController.TEST, dclUrlSource), dclUrlSource);
 
             Assert.IsTrue(realmLaunchSettings.CurrentMode is LaunchMode.LocalSceneDevelopment);
             Assert.AreEqual("http://127.0.0.1:8000", realmUrls.LocalSceneDevelopmentRealmBlocking()!);
@@ -46,7 +46,7 @@ namespace Global.Tests.EditMode
             realmLaunchSettings.ApplyConfig(applicationParametersParser);
 
             var dclUrlSource = DecentralandUrlsSource.CreateForTest(DecentralandEnvironment.Org, realmLaunchSettings);
-            var realmUrls = new RealmUrls(realmLaunchSettings, new RealmNamesMap(IWebRequestController.TEST), dclUrlSource);
+            var realmUrls = new RealmUrls(realmLaunchSettings, new RealmNamesMap(IWebRequestController.TEST, dclUrlSource), dclUrlSource);
 
             Assert.IsFalse(realmLaunchSettings.CurrentMode is LaunchMode.LocalSceneDevelopment);
             Assert.AreEqual("http://127.0.0.1:8000", realmUrls.StartingRealmBlocking());
@@ -141,7 +141,7 @@ namespace Global.Tests.EditMode
             realmLaunchSettings.ApplyConfig(applicationParametersParser);
 
             var dclUrlSource = DecentralandUrlsSource.CreateForTest(DecentralandEnvironment.Org, realmLaunchSettings);
-            var realmUrls = new RealmUrls(realmLaunchSettings, new RealmNamesMap(IWebRequestController.TEST), dclUrlSource);
+            var realmUrls = new RealmUrls(realmLaunchSettings, new RealmNamesMap(IWebRequestController.TEST, dclUrlSource), dclUrlSource);
 
             Assert.AreEqual(realm, realmUrls.StartingRealmBlocking());
         }
@@ -161,7 +161,7 @@ namespace Global.Tests.EditMode
             realmLaunchSettings.ApplyConfig(applicationParametersParser);
 
             var dclUrlSource = DecentralandUrlsSource.CreateForTest(DecentralandEnvironment.Org, realmLaunchSettings);
-            var realmUrls = new RealmUrls(realmLaunchSettings, new RealmNamesMap(IWebRequestController.TEST), dclUrlSource);
+            var realmUrls = new RealmUrls(realmLaunchSettings, new RealmNamesMap(IWebRequestController.TEST, dclUrlSource), dclUrlSource);
 
             Assert.AreEqual($"https://worlds-content-server.decentraland.org/world/{world}", realmUrls.StartingRealmBlocking());
         }

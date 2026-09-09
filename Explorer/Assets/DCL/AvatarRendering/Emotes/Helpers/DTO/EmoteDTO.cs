@@ -51,7 +51,10 @@ namespace DCL.AvatarRendering.Emotes
         [Serializable]
         public class BuilderEmoteMetadataDto : EmoteMetadataDto, IBuilderLambdaResponseElement<BuilderEmoteDTO>
         {
+            // Newtonsoft-deserialized wire DTO (CreateFromJson with WRJsonParser.Newtonsoft); Unity serialization never sees this field.
+#pragma warning disable UAC1009
             public Dictionary<string, string> contents;
+#pragma warning restore UAC1009
             public string type;
 
             [JsonIgnore]

@@ -130,5 +130,11 @@ namespace DCL.Multiplayer.Connections.RoomHubs
 
             return identityHashCache;
         }
+
+        public string RoomsStateInfo() =>
+            $"Island{StateInfo(archipelagoIslandRoom)} Scene{StateInfo(gateKeeperSceneRoom)} Chat{StateInfo(chatRoom)}";
+
+        private static string StateInfo(IConnectiveRoom room) =>
+            $"[{room.CurrentState().ToStringNonAlloc()}, {room.AttemptToConnectState.ToStringNonAlloc()}, {room.CurrentConnectionLoopHealth.ToStringNonAlloc()}]";
     }
 }

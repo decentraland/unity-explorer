@@ -63,7 +63,7 @@ namespace ECS.StreamableLoading.AssetBundles
                 ca.CurrentSource = AssetSource.Web;
 
                 // Hash was already translated to the CDN file name (digest and Qm casing) at intention creation via GetCdnRequestHash.
-                ca.URL = assetBundlesURL.Append(new URLPath(assetBundleIntention.AssetBundleManifest.GetCdnRequestPath(assetBundleIntention.Hash, assetBundleIntention.ParentEntityID)));
+                ca.URL = ResolveAssetBundlesUrl(in assetBundleIntention).Append(new URLPath(assetBundleIntention.AssetBundleManifest.GetCdnRequestPath(assetBundleIntention.Hash, assetBundleIntention.ParentEntityID)));
                 assetBundleIntention.CommonArguments = ca;
 
                 if (ignoreCacheHash) return;
@@ -71,6 +71,9 @@ namespace ECS.StreamableLoading.AssetBundles
                 assetBundleIntention.cacheHash = assetBundleIntention.AssetBundleManifest.ComputeCacheHash(assetBundleIntention.Hash);
             }
         }
+
+        protected virtual URLDomain ResolveAssetBundlesUrl(in GetAssetBundleIntention assetBundleIntention) =>
+            assetBundlesURL;
 
         private URLAddress GetStreamingAssetsUrl(string hash, URLSubdirectory customSubdirectory) =>
 

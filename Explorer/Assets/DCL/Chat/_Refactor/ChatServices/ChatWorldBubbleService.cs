@@ -6,7 +6,6 @@ using DCL.Nametags;
 using DCL.Profiles;
 using DCL.Settings.Settings;
 using DCL.UI;
-using DCL.Utilities;
 using System;
 using UnityEngine;
 using UnityEngine.InputSystem;

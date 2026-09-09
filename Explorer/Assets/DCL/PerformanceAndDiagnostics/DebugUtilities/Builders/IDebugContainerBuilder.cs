@@ -56,6 +56,7 @@ namespace DCL.DebugUtilities
             public static readonly WidgetName RENDERING = "Rendering".AsWidgetName();
             public static readonly WidgetName PARTICLES = "Particles".AsWidgetName();
             public static readonly WidgetName MEDIA_PLAYER = "Media Player".AsWidgetName();
+            public static readonly WidgetName BUG_REPORT = "Bug Report".AsWidgetName();
         }
     }
 

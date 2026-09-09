@@ -152,3 +152,31 @@ Notice that:
 3. Dates with time are also valid
 4. Dates must be in ISO format and expressed in UTC
 5. Both date bounds must be specified or the config won't be temporal
+
+## Nearby Voice Chat intro tip
+
+The FF `alfa-nearby-voice-chat-tip` gates the Nearby Voice Chat introductory tip independently from the Nearby Voice Chat feature itself, so the tip can be turned off remotely without a client release.
+
+It is a **kill switch**: unlike most feature flags it has no editor or app-arg fallback, so the tip stays hidden until the flag is explicitly enabled. To exercise it locally, point the client at a server where the flag is on:
+
+```bash
+./Decentraland.app --feature-flags-url https://feature-flags.decentraland.zone --feature-flags-hostname https://decentraland.zone
+```
+
+Its optional `config` variant carries the display frequency:
+
+```json
+{
+    "showEverySessions": 5,
+    "maxTimesShown": 2
+}
+```
+
+- `showEverySessions` — how many launches must pass since the previous display before the tip is due again. Defaults to `5`.
+- `maxTimesShown` — how many times the tip may ever be displayed to a user. Defaults to `2`.
+
+With the defaults a fresh user sees the tip on launch 5 and again on launch 10, then never again. Both fields are optional; a missing payload or a missing field falls back to the default.
+
+The gap is measured from the **last display**, not from launch 0. A returning user who is already well past every threshold when the flag is enabled therefore gets one display on their next launch and the second one a full period later — they never burn both displays on consecutive launches.
+
+Independently of the flag, the tip is never shown again to a user who has spoken over nearby voice chat, who pressed the tip's own "Try it now" button, or who dismissed the tip back when it was shown once on first login. Merely closing the tip does not retire it — that user still gets their remaining scheduled display.

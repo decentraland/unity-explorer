@@ -54,7 +54,7 @@ namespace Global
             ECSWorldSingletonSharedDependencies sharedDependencies = staticContainer.SingletonSharedDependencies;
             ExposedGlobalDataContainer exposedGlobalDataContainer = staticContainer.ExposedGlobalDataContainer;
 
-            var systemsDependencies = new SystemsDependencies(roomHub, staticContainer.EntityCollidersGlobalCache);
+            var systemsDependencies = new SystemsDependencies(roomHub, staticContainer.EntityCollidersGlobalCache, staticContainer.LoadingStatus);
 
             var ecsWorldFactory = new ECSWorldFactory(sharedDependencies,
                 systemsDependencies,

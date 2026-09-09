@@ -17,6 +17,7 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp
             Failed,
             TimedOut,
             Cancelled,
+            Abandoned,
         }
 
         private static readonly TimeSpan FOREGROUND_POLL_INTERVAL = TimeSpan.FromSeconds(1.5);
@@ -92,7 +93,7 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp
 
         public void AcknowledgeTerminalState()
         {
-            if (CurrentStatus.Stage is CreditsTopUpStage.Credited or CreditsTopUpStage.Failed)
+            if (CurrentStatus.Stage is CreditsTopUpStage.Credited or CreditsTopUpStage.Failed or CreditsTopUpStage.Abandoned)
                 SetStatus(CreditsTopUpStatus.Idle());
         }
 
@@ -153,6 +154,9 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp
                     case PollOutcome.Failed:
                         SetStatus(CreditsTopUpStatus.GrantFailed(pack, orderId, order.error));
                         break;
+                    case PollOutcome.Abandoned:
+                        SetStatus(CreditsTopUpStatus.Abandoned(pack, orderId));
+                        break;
                 }
             }
             catch (OperationCanceledException) { }
@@ -182,6 +186,8 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp
                             return (PollOutcome.Credited, result.Value);
                         case CreditsOrderStatusResponse.STATUS_FAILED:
                             return (PollOutcome.Failed, result.Value);
+                        case CreditsOrderStatusResponse.STATUS_ABANDONED:
+                            return (PollOutcome.Abandoned, result.Value);
                     }
                 }
                 else

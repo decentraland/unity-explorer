@@ -123,7 +123,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests.PerformanceTests
 
             for (int i = 0; i < avatarCount; i++)
             {
-                bool inFront = (i % 2) == 0;
+                bool inFront = i % 2 == 0;
                 if (inFront) frontCount++;
                 CreateAvatarEntity(i, inFront ? new Vector3(0, 0, 5) : new Vector3(0, 0, -5));
             }

@@ -27,72 +27,71 @@ namespace Decentraland.Kernel.Apis {
             "CjFkZWNlbnRyYWxhbmQva2VybmVsL2FwaXMvcmVzdHJpY3RlZF9hY3Rpb25z",
             "LnByb3RvEhhkZWNlbnRyYWxhbmQua2VybmVsLmFwaXMaIWRlY2VudHJhbGFu",
             "ZC9jb21tb24vdmVjdG9ycy5wcm90bxo0ZGVjZW50cmFsYW5kL3Nkay9jb21w",
-            "b25lbnRzL2NvbW1vbi9hdmF0YXJfbWFzay5wcm90byKOAgoTTW92ZVBsYXll",
-            "clRvUmVxdWVzdBI7ChVuZXdfcmVsYXRpdmVfcG9zaXRpb24YASABKAsyHC5k",
-            "ZWNlbnRyYWxhbmQuY29tbW9uLlZlY3RvcjMSOAoNY2FtZXJhX3RhcmdldBgC",
-            "IAEoCzIcLmRlY2VudHJhbGFuZC5jb21tb24uVmVjdG9yM0gAiAEBEjgKDWF2",
-            "YXRhcl90YXJnZXQYAyABKAsyHC5kZWNlbnRyYWxhbmQuY29tbW9uLlZlY3Rv",
-            "cjNIAYgBARIVCghkdXJhdGlvbhgEIAEoAkgCiAEBQhAKDl9jYW1lcmFfdGFy",
-            "Z2V0QhAKDl9hdmF0YXJfdGFyZ2V0QgsKCV9kdXJhdGlvbiJMChFUZWxlcG9y",
-            "dFRvUmVxdWVzdBI3ChF3b3JsZF9jb29yZGluYXRlcxgBIAEoCzIcLmRlY2Vu",
-            "dHJhbGFuZC5jb21tb24uVmVjdG9yMiJ7ChNUcmlnZ2VyRW1vdGVSZXF1ZXN0",
-            "EhgKEHByZWRlZmluZWRfZW1vdGUYASABKAkSQQoEbWFzaxgCIAEoDjIuLmRl",
-            "Y2VudHJhbGFuZC5zZGsuY29tcG9uZW50cy5jb21tb24uQXZhdGFyTWFza0gA",
-            "iAEBQgcKBV9tYXNrIkUKEkNoYW5nZVJlYWxtUmVxdWVzdBINCgVyZWFsbRgB",
-            "IAEoCRIUCgdtZXNzYWdlGAIgASgJSACIAQFCCgoIX21lc3NhZ2UiJQoWT3Bl",
-            "bkV4dGVybmFsVXJsUmVxdWVzdBILCgN1cmwYASABKAkiIwoUT3Blbk5mdERp",
-            "YWxvZ1JlcXVlc3QSCwoDdXJuGAEgASgJIhcKFVVuYmxvY2tQb2ludGVyUmVx",
-            "dWVzdCIwChNDb21tc0FkYXB0ZXJSZXF1ZXN0EhkKEWNvbm5lY3Rpb25fc3Ry",
-            "aW5nGAEgASgJIo8BChhUcmlnZ2VyU2NlbmVFbW90ZVJlcXVlc3QSCwoDc3Jj",
-            "GAEgASgJEhEKBGxvb3AYAiABKAhIAIgBARJBCgRtYXNrGAMgASgOMi4uZGVj",
-            "ZW50cmFsYW5kLnNkay5jb21wb25lbnRzLmNvbW1vbi5BdmF0YXJNYXNrSAGI",
-            "AQFCBwoFX2xvb3BCBwoFX21hc2siIgoPU3VjY2Vzc1Jlc3BvbnNlEg8KB3N1",
-            "Y2Nlc3MYASABKAgiFgoUVHJpZ2dlckVtb3RlUmVzcG9uc2UiJwoUTW92ZVBs",
-            "YXllclRvUmVzcG9uc2USDwoHc3VjY2VzcxgBIAEoCCIUChJUZWxlcG9ydFRv",
-            "UmVzcG9uc2UiJgoWQ29weVRvQ2xpcGJvYXJkUmVxdWVzdBIMCgR0ZXh0GAEg",
-            "ASgJIg8KDUVtcHR5UmVzcG9uc2UiEgoQU3RvcEVtb3RlUmVxdWVzdCJJChVP",
-            "cGVuRXhwbG9yZXJVaVJlcXVlc3QSMAoCdWkYASABKA4yJC5kZWNlbnRyYWxh",
-            "bmQua2VybmVsLmFwaXMuRXhwbG9yZXJVaSJdChZPcGVuRXhwbG9yZXJVaVJl",
-            "c3BvbnNlEkMKC29wZW5fcmVzdWx0GAEgASgOMi4uZGVjZW50cmFsYW5kLmtl",
-            "cm5lbC5hcGlzLk9wZW5FeHBsb3JlclVpUmVzdWx0KoABCgpFeHBsb3JlclVp",
-            "Eg8KC0VVX1NFVFRJTkdTEAASCgoGRVVfTUFQEAESDwoLRVVfQkFDS1BBQ0sQ",
-            "AhISCg5FVV9DQU1FUkFfUkVFTBADEhIKDkVVX0NPTU1VTklUSUVTEAQSDQoJ",
-            "RVVfUExBQ0VTEAUSDQoJRVVfRVZFTlRTEAYqpgEKFE9wZW5FeHBsb3JlclVp",
-            "UmVzdWx0Eg8KC1VOU1BFQ0lGSUVEEAASCgoGT1BFTkVEEAESFAoQV0FTX0FM",
-            "UkVBRFlfT1BFThACEh4KGlJFSkVDVEVEX05PVF9DVVJSRU5UX1NDRU5FEAMS",
-            "HQoZUkVKRUNURURfRkVBVFVSRV9ESVNBQkxFRBAEEhwKGFJFSkVDVEVEX05P",
-            "X1VTRVJfR0VTVFVSRRAFMuwJChhSZXN0cmljdGVkQWN0aW9uc1NlcnZpY2US",
-            "bwoMTW92ZVBsYXllclRvEi0uZGVjZW50cmFsYW5kLmtlcm5lbC5hcGlzLk1v",
-            "dmVQbGF5ZXJUb1JlcXVlc3QaLi5kZWNlbnRyYWxhbmQua2VybmVsLmFwaXMu",
-            "TW92ZVBsYXllclRvUmVzcG9uc2UiABJpCgpUZWxlcG9ydFRvEisuZGVjZW50",
-            "cmFsYW5kLmtlcm5lbC5hcGlzLlRlbGVwb3J0VG9SZXF1ZXN0GiwuZGVjZW50",
-            "cmFsYW5kLmtlcm5lbC5hcGlzLlRlbGVwb3J0VG9SZXNwb25zZSIAEm8KDFRy",
-            "aWdnZXJFbW90ZRItLmRlY2VudHJhbGFuZC5rZXJuZWwuYXBpcy5UcmlnZ2Vy",
-            "RW1vdGVSZXF1ZXN0Gi4uZGVjZW50cmFsYW5kLmtlcm5lbC5hcGlzLlRyaWdn",
-            "ZXJFbW90ZVJlc3BvbnNlIgASaAoLQ2hhbmdlUmVhbG0SLC5kZWNlbnRyYWxh",
-            "bmQua2VybmVsLmFwaXMuQ2hhbmdlUmVhbG1SZXF1ZXN0GikuZGVjZW50cmFs",
-            "YW5kLmtlcm5lbC5hcGlzLlN1Y2Nlc3NSZXNwb25zZSIAEnAKD09wZW5FeHRl",
-            "cm5hbFVybBIwLmRlY2VudHJhbGFuZC5rZXJuZWwuYXBpcy5PcGVuRXh0ZXJu",
-            "YWxVcmxSZXF1ZXN0GikuZGVjZW50cmFsYW5kLmtlcm5lbC5hcGlzLlN1Y2Nl",
-            "c3NSZXNwb25zZSIAEmwKDU9wZW5OZnREaWFsb2cSLi5kZWNlbnRyYWxhbmQu",
-            "a2VybmVsLmFwaXMuT3Blbk5mdERpYWxvZ1JlcXVlc3QaKS5kZWNlbnRyYWxh",
-            "bmQua2VybmVsLmFwaXMuU3VjY2Vzc1Jlc3BvbnNlIgASdgoYU2V0Q29tbXVu",
-            "aWNhdGlvbnNBZGFwdGVyEi0uZGVjZW50cmFsYW5kLmtlcm5lbC5hcGlzLkNv",
-            "bW1zQWRhcHRlclJlcXVlc3QaKS5kZWNlbnRyYWxhbmQua2VybmVsLmFwaXMu",
-            "U3VjY2Vzc1Jlc3BvbnNlIgASdAoRVHJpZ2dlclNjZW5lRW1vdGUSMi5kZWNl",
-            "bnRyYWxhbmQua2VybmVsLmFwaXMuVHJpZ2dlclNjZW5lRW1vdGVSZXF1ZXN0",
-            "GikuZGVjZW50cmFsYW5kLmtlcm5lbC5hcGlzLlN1Y2Nlc3NSZXNwb25zZSIA",
-            "Em4KD0NvcHlUb0NsaXBib2FyZBIwLmRlY2VudHJhbGFuZC5rZXJuZWwuYXBp",
-            "cy5Db3B5VG9DbGlwYm9hcmRSZXF1ZXN0GicuZGVjZW50cmFsYW5kLmtlcm5l",
-            "bC5hcGlzLkVtcHR5UmVzcG9uc2UiABJkCglTdG9wRW1vdGUSKi5kZWNlbnRy",
-            "YWxhbmQua2VybmVsLmFwaXMuU3RvcEVtb3RlUmVxdWVzdBopLmRlY2VudHJh",
-            "bGFuZC5rZXJuZWwuYXBpcy5TdWNjZXNzUmVzcG9uc2UiABJ1Cg5PcGVuRXhw",
-            "bG9yZXJVaRIvLmRlY2VudHJhbGFuZC5rZXJuZWwuYXBpcy5PcGVuRXhwbG9y",
-            "ZXJVaVJlcXVlc3QaMC5kZWNlbnRyYWxhbmQua2VybmVsLmFwaXMuT3BlbkV4",
-            "cGxvcmVyVWlSZXNwb25zZSIAYgZwcm90bzM="));
+            "b25lbnRzL2NvbW1vbi9hdmF0YXJfbWFzay5wcm90bxo0ZGVjZW50cmFsYW5k",
+            "L3Nkay9jb21wb25lbnRzL2NvbW1vbi9leHBsb3Jlcl91aS5wcm90byKOAgoT",
+            "TW92ZVBsYXllclRvUmVxdWVzdBI7ChVuZXdfcmVsYXRpdmVfcG9zaXRpb24Y",
+            "ASABKAsyHC5kZWNlbnRyYWxhbmQuY29tbW9uLlZlY3RvcjMSOAoNY2FtZXJh",
+            "X3RhcmdldBgCIAEoCzIcLmRlY2VudHJhbGFuZC5jb21tb24uVmVjdG9yM0gA",
+            "iAEBEjgKDWF2YXRhcl90YXJnZXQYAyABKAsyHC5kZWNlbnRyYWxhbmQuY29t",
+            "bW9uLlZlY3RvcjNIAYgBARIVCghkdXJhdGlvbhgEIAEoAkgCiAEBQhAKDl9j",
+            "YW1lcmFfdGFyZ2V0QhAKDl9hdmF0YXJfdGFyZ2V0QgsKCV9kdXJhdGlvbiJM",
+            "ChFUZWxlcG9ydFRvUmVxdWVzdBI3ChF3b3JsZF9jb29yZGluYXRlcxgBIAEo",
+            "CzIcLmRlY2VudHJhbGFuZC5jb21tb24uVmVjdG9yMiJ7ChNUcmlnZ2VyRW1v",
+            "dGVSZXF1ZXN0EhgKEHByZWRlZmluZWRfZW1vdGUYASABKAkSQQoEbWFzaxgC",
+            "IAEoDjIuLmRlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50cy5jb21tb24uQXZh",
+            "dGFyTWFza0gAiAEBQgcKBV9tYXNrIkUKEkNoYW5nZVJlYWxtUmVxdWVzdBIN",
+            "CgVyZWFsbRgBIAEoCRIUCgdtZXNzYWdlGAIgASgJSACIAQFCCgoIX21lc3Nh",
+            "Z2UiJQoWT3BlbkV4dGVybmFsVXJsUmVxdWVzdBILCgN1cmwYASABKAkiIwoU",
+            "T3Blbk5mdERpYWxvZ1JlcXVlc3QSCwoDdXJuGAEgASgJIhcKFVVuYmxvY2tQ",
+            "b2ludGVyUmVxdWVzdCIwChNDb21tc0FkYXB0ZXJSZXF1ZXN0EhkKEWNvbm5l",
+            "Y3Rpb25fc3RyaW5nGAEgASgJIo8BChhUcmlnZ2VyU2NlbmVFbW90ZVJlcXVl",
+            "c3QSCwoDc3JjGAEgASgJEhEKBGxvb3AYAiABKAhIAIgBARJBCgRtYXNrGAMg",
+            "ASgOMi4uZGVjZW50cmFsYW5kLnNkay5jb21wb25lbnRzLmNvbW1vbi5BdmF0",
+            "YXJNYXNrSAGIAQFCBwoFX2xvb3BCBwoFX21hc2siIgoPU3VjY2Vzc1Jlc3Bv",
+            "bnNlEg8KB3N1Y2Nlc3MYASABKAgiFgoUVHJpZ2dlckVtb3RlUmVzcG9uc2Ui",
+            "JwoUTW92ZVBsYXllclRvUmVzcG9uc2USDwoHc3VjY2VzcxgBIAEoCCIUChJU",
+            "ZWxlcG9ydFRvUmVzcG9uc2UiJgoWQ29weVRvQ2xpcGJvYXJkUmVxdWVzdBIM",
+            "CgR0ZXh0GAEgASgJIg8KDUVtcHR5UmVzcG9uc2UiEgoQU3RvcEVtb3RlUmVx",
+            "dWVzdCJTChVPcGVuRXhwbG9yZXJVaVJlcXVlc3QSOgoCdWkYASABKA4yLi5k",
+            "ZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMuY29tbW9uLkV4cGxvcmVyVWki",
+            "XQoWT3BlbkV4cGxvcmVyVWlSZXNwb25zZRJDCgtvcGVuX3Jlc3VsdBgBIAEo",
+            "DjIuLmRlY2VudHJhbGFuZC5rZXJuZWwuYXBpcy5PcGVuRXhwbG9yZXJVaVJl",
+            "c3VsdCqmAQoUT3BlbkV4cGxvcmVyVWlSZXN1bHQSDwoLVU5TUEVDSUZJRUQQ",
+            "ABIKCgZPUEVORUQQARIUChBXQVNfQUxSRUFEWV9PUEVOEAISHgoaUkVKRUNU",
+            "RURfTk9UX0NVUlJFTlRfU0NFTkUQAxIdChlSRUpFQ1RFRF9GRUFUVVJFX0RJ",
+            "U0FCTEVEEAQSHAoYUkVKRUNURURfTk9fVVNFUl9HRVNUVVJFEAUy7AkKGFJl",
+            "c3RyaWN0ZWRBY3Rpb25zU2VydmljZRJvCgxNb3ZlUGxheWVyVG8SLS5kZWNl",
+            "bnRyYWxhbmQua2VybmVsLmFwaXMuTW92ZVBsYXllclRvUmVxdWVzdBouLmRl",
+            "Y2VudHJhbGFuZC5rZXJuZWwuYXBpcy5Nb3ZlUGxheWVyVG9SZXNwb25zZSIA",
+            "EmkKClRlbGVwb3J0VG8SKy5kZWNlbnRyYWxhbmQua2VybmVsLmFwaXMuVGVs",
+            "ZXBvcnRUb1JlcXVlc3QaLC5kZWNlbnRyYWxhbmQua2VybmVsLmFwaXMuVGVs",
+            "ZXBvcnRUb1Jlc3BvbnNlIgASbwoMVHJpZ2dlckVtb3RlEi0uZGVjZW50cmFs",
+            "YW5kLmtlcm5lbC5hcGlzLlRyaWdnZXJFbW90ZVJlcXVlc3QaLi5kZWNlbnRy",
+            "YWxhbmQua2VybmVsLmFwaXMuVHJpZ2dlckVtb3RlUmVzcG9uc2UiABJoCgtD",
+            "aGFuZ2VSZWFsbRIsLmRlY2VudHJhbGFuZC5rZXJuZWwuYXBpcy5DaGFuZ2VS",
+            "ZWFsbVJlcXVlc3QaKS5kZWNlbnRyYWxhbmQua2VybmVsLmFwaXMuU3VjY2Vz",
+            "c1Jlc3BvbnNlIgAScAoPT3BlbkV4dGVybmFsVXJsEjAuZGVjZW50cmFsYW5k",
+            "Lmtlcm5lbC5hcGlzLk9wZW5FeHRlcm5hbFVybFJlcXVlc3QaKS5kZWNlbnRy",
+            "YWxhbmQua2VybmVsLmFwaXMuU3VjY2Vzc1Jlc3BvbnNlIgASbAoNT3Blbk5m",
+            "dERpYWxvZxIuLmRlY2VudHJhbGFuZC5rZXJuZWwuYXBpcy5PcGVuTmZ0RGlh",
+            "bG9nUmVxdWVzdBopLmRlY2VudHJhbGFuZC5rZXJuZWwuYXBpcy5TdWNjZXNz",
+            "UmVzcG9uc2UiABJ2ChhTZXRDb21tdW5pY2F0aW9uc0FkYXB0ZXISLS5kZWNl",
+            "bnRyYWxhbmQua2VybmVsLmFwaXMuQ29tbXNBZGFwdGVyUmVxdWVzdBopLmRl",
+            "Y2VudHJhbGFuZC5rZXJuZWwuYXBpcy5TdWNjZXNzUmVzcG9uc2UiABJ0ChFU",
+            "cmlnZ2VyU2NlbmVFbW90ZRIyLmRlY2VudHJhbGFuZC5rZXJuZWwuYXBpcy5U",
+            "cmlnZ2VyU2NlbmVFbW90ZVJlcXVlc3QaKS5kZWNlbnRyYWxhbmQua2VybmVs",
+            "LmFwaXMuU3VjY2Vzc1Jlc3BvbnNlIgASbgoPQ29weVRvQ2xpcGJvYXJkEjAu",
+            "ZGVjZW50cmFsYW5kLmtlcm5lbC5hcGlzLkNvcHlUb0NsaXBib2FyZFJlcXVl",
+            "c3QaJy5kZWNlbnRyYWxhbmQua2VybmVsLmFwaXMuRW1wdHlSZXNwb25zZSIA",
+            "EmQKCVN0b3BFbW90ZRIqLmRlY2VudHJhbGFuZC5rZXJuZWwuYXBpcy5TdG9w",
+            "RW1vdGVSZXF1ZXN0GikuZGVjZW50cmFsYW5kLmtlcm5lbC5hcGlzLlN1Y2Nl",
+            "c3NSZXNwb25zZSIAEnUKDk9wZW5FeHBsb3JlclVpEi8uZGVjZW50cmFsYW5k",
+            "Lmtlcm5lbC5hcGlzLk9wZW5FeHBsb3JlclVpUmVxdWVzdBowLmRlY2VudHJh",
+            "bGFuZC5rZXJuZWwuYXBpcy5PcGVuRXhwbG9yZXJVaVJlc3BvbnNlIgBiBnBy",
+            "b3RvMw=="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
-          new pbr::FileDescriptor[] { global::Decentraland.Common.VectorsReflection.Descriptor, global::DCL.ECSComponents.AvatarMaskReflection.Descriptor, },
-          new pbr::GeneratedClrTypeInfo(new[] {typeof(global::Decentraland.Kernel.Apis.ExplorerUi), typeof(global::Decentraland.Kernel.Apis.OpenExplorerUiResult), }, null, new pbr::GeneratedClrTypeInfo[] {
+          new pbr::FileDescriptor[] { global::Decentraland.Common.VectorsReflection.Descriptor, global::DCL.ECSComponents.AvatarMaskReflection.Descriptor, global::DCL.ECSComponents.ExplorerUiReflection.Descriptor, },
+          new pbr::GeneratedClrTypeInfo(new[] {typeof(global::Decentraland.Kernel.Apis.OpenExplorerUiResult), }, null, new pbr::GeneratedClrTypeInfo[] {
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.MovePlayerToRequest), global::Decentraland.Kernel.Apis.MovePlayerToRequest.Parser, new[]{ "NewRelativePosition", "CameraTarget", "AvatarTarget", "Duration" }, new[]{ "CameraTarget", "AvatarTarget", "Duration" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.TeleportToRequest), global::Decentraland.Kernel.Apis.TeleportToRequest.Parser, new[]{ "WorldCoordinates" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.TriggerEmoteRequest), global::Decentraland.Kernel.Apis.TriggerEmoteRequest.Parser, new[]{ "PredefinedEmote", "Mask" }, new[]{ "Mask" }, null, null, null),
@@ -117,20 +116,6 @@ namespace Decentraland.Kernel.Apis {
 
   }
   #region Enums
-  /// <summary>
-  /// Identifies which fullscreen explorer panel OpenExplorerUi targets.
-  /// EU_SETTINGS holds 0 so an unset `ui` field defaults to the least-intrusive panel.
-  /// </summary>
-  public enum ExplorerUi {
-    [pbr::OriginalName("EU_SETTINGS")] EuSettings = 0,
-    [pbr::OriginalName("EU_MAP")] EuMap = 1,
-    [pbr::OriginalName("EU_BACKPACK")] EuBackpack = 2,
-    [pbr::OriginalName("EU_CAMERA_REEL")] EuCameraReel = 3,
-    [pbr::OriginalName("EU_COMMUNITIES")] EuCommunities = 4,
-    [pbr::OriginalName("EU_PLACES")] EuPlaces = 5,
-    [pbr::OriginalName("EU_EVENTS")] EuEvents = 6,
-  }
-
   /// <summary>
   /// Verdict of an OpenExplorerUi request (enum rather than a bool so new outcomes stay expressible).
   /// </summary>
@@ -3566,10 +3551,10 @@ namespace Decentraland.Kernel.Apis {
 
     /// <summary>Field number for the "ui" field.</summary>
     public const int UiFieldNumber = 1;
-    private global::Decentraland.Kernel.Apis.ExplorerUi ui_ = global::Decentraland.Kernel.Apis.ExplorerUi.EuSettings;
+    private global::DCL.ECSComponents.ExplorerUi ui_ = global::DCL.ECSComponents.ExplorerUi.EuSettings;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::Decentraland.Kernel.Apis.ExplorerUi Ui {
+    public global::DCL.ECSComponents.ExplorerUi Ui {
       get { return ui_; }
       set {
         ui_ = value;
@@ -3599,7 +3584,7 @@ namespace Decentraland.Kernel.Apis {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override int GetHashCode() {
       int hash = 1;
-      if (Ui != global::Decentraland.Kernel.Apis.ExplorerUi.EuSettings) hash ^= Ui.GetHashCode();
+      if (Ui != global::DCL.ECSComponents.ExplorerUi.EuSettings) hash ^= Ui.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -3618,7 +3603,7 @@ namespace Decentraland.Kernel.Apis {
     #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       output.WriteRawMessage(this);
     #else
-      if (Ui != global::Decentraland.Kernel.Apis.ExplorerUi.EuSettings) {
+      if (Ui != global::DCL.ECSComponents.ExplorerUi.EuSettings) {
         output.WriteRawTag(8);
         output.WriteEnum((int) Ui);
       }
@@ -3632,7 +3617,7 @@ namespace Decentraland.Kernel.Apis {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
-      if (Ui != global::Decentraland.Kernel.Apis.ExplorerUi.EuSettings) {
+      if (Ui != global::DCL.ECSComponents.ExplorerUi.EuSettings) {
         output.WriteRawTag(8);
         output.WriteEnum((int) Ui);
       }
@@ -3646,7 +3631,7 @@ namespace Decentraland.Kernel.Apis {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public int CalculateSize() {
       int size = 0;
-      if (Ui != global::Decentraland.Kernel.Apis.ExplorerUi.EuSettings) {
+      if (Ui != global::DCL.ECSComponents.ExplorerUi.EuSettings) {
         size += 1 + pb::CodedOutputStream.ComputeEnumSize((int) Ui);
       }
       if (_unknownFields != null) {
@@ -3661,7 +3646,7 @@ namespace Decentraland.Kernel.Apis {
       if (other == null) {
         return;
       }
-      if (other.Ui != global::Decentraland.Kernel.Apis.ExplorerUi.EuSettings) {
+      if (other.Ui != global::DCL.ECSComponents.ExplorerUi.EuSettings) {
         Ui = other.Ui;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
@@ -3684,7 +3669,7 @@ namespace Decentraland.Kernel.Apis {
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
             break;
           case 8: {
-            Ui = (global::Decentraland.Kernel.Apis.ExplorerUi) input.ReadEnum();
+            Ui = (global::DCL.ECSComponents.ExplorerUi) input.ReadEnum();
             break;
           }
         }
@@ -3707,7 +3692,7 @@ namespace Decentraland.Kernel.Apis {
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
           case 8: {
-            Ui = (global::Decentraland.Kernel.Apis.ExplorerUi) input.ReadEnum();
+            Ui = (global::DCL.ECSComponents.ExplorerUi) input.ReadEnum();
             break;
           }
         }

@@ -178,8 +178,15 @@ namespace DCL.CharacterPreview
         public void SetPreviewPlatformActive(bool isActive) =>
             characterPreviewAvatarContainer.SetPreviewPlatformActive(isActive);
 
-        public void SetCharacterPreviewAvatarContainerActive(bool isActive) =>
+        public void SetCharacterPreviewAvatarContainerActive(bool isActive)
+        {
+            // Activation rebinds the Animator, which captures the current pose as its defaults: the Armature must hold its
+            // prefab transform at that moment rather than the frame an interrupted emote froze on.
+            if (isActive && globalWorld.TryGet(characterPreviewEntity, out AvatarBase avatarBase) && avatarBase != null)
+                avatarBase.ResetArmatureTransform();
+
             characterPreviewAvatarContainer.gameObject.SetActive(isActive);
+        }
 
         public void ResetAvatarMovement() =>
             cameraController.ResetAvatarMovement();

@@ -212,7 +212,9 @@ namespace DCL.WebRequests
             public async UniTask<T?> ExecuteAsync(TRequest request, CancellationToken ct)
             {
                 DownloadHandler downloadHandler = request.UnityWebRequest.downloadHandler;
-                string text = null;
+
+                // Non-null only on the text-based branch; streaming failures rethrow raw
+                string? text = null;
 
                 try
                 {
@@ -266,6 +268,35 @@ namespace DCL.WebRequests
             }
         }
 
+        /// <summary>
+        ///     <see cref="JsonSerializer.Populate(JsonReader, object)" /> never consults root-level converters, so a converter
+        ///     matching <typeparamref name="T" /> is routed manually, receiving <paramref name="target" /> to populate in place.
+        /// </summary>
+        public static void PopulateInto<T>(JsonReader reader, T target, JsonSerializer serializer)
+        {
+            IList<JsonConverter> converters = serializer.Converters;
+
+            for (var i = 0; i < converters.Count; i++)
+            {
+                JsonConverter converter = converters[i];
+
+                if (converter.CanRead && converter.CanConvert(typeof(T)))
+                {
+                    // Converters expect the reader at the value's first token; an empty body has none and is a no-op
+                    if (reader.TokenType == JsonToken.None && !reader.Read())
+                        return;
+
+                    // A null result (e.g. a null token) legitimately leaves the target untouched; anything else must be the target itself or data is silently lost
+                    if (converter.ReadJson(reader, typeof(T), target, serializer) is { } result && !ReferenceEquals(result, target))
+                        throw new JsonSerializationException($"{converter.GetType().Name} did not populate the existing value in place; its result would be discarded.");
+
+                    return;
+                }
+            }
+
+            serializer.Populate(reader, target);
+        }
+
         public struct OverwriteFromJsonAsyncOp<T, TRequest> : IWebRequestOp<TRequest, T> where TRequest: struct, ITypedWebRequest, IGenericDownloadHandlerRequest
         {
             private readonly CreateExceptionOnParseFail? createCustomExceptionOnFailure;
@@ -287,7 +318,9 @@ namespace DCL.WebRequests
             public async UniTask<T?> ExecuteAsync(TRequest request, CancellationToken ct)
             {
                 DownloadHandler downloadHandler = request.UnityWebRequest.downloadHandler;
-                string text = null;
+
+                // Non-null only on the text-based branch; streaming failures rethrow raw
+                string? text = null;
 
                 try
                 {
@@ -322,7 +355,7 @@ namespace DCL.WebRequests
 
                             using var textReader = new StreamReader(stream, Encoding.UTF8);
                             using var jsonReader = new JsonTextReader(textReader);
-                            serializer.Populate(jsonReader, Target);
+                            PopulateInto(jsonReader, Target, serializer);
                         }
                     }
                 }

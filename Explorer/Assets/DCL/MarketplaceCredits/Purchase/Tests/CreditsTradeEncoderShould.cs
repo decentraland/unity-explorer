@@ -1,3 +1,4 @@
+using DCL.Web3.Chains;
 using NUnit.Framework;
 using System;
 using System.Globalization;
@@ -466,7 +467,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         public void BuildMetaTxTypedDataWithCreditsManagerDomain()
         {
             // Arrange
-            var chainConfig = new CreditsChainConfig(DCL.Multiplayer.Connections.DecentralandUrls.DecentralandEnvironment.Zone);
+            var chainConfig = new CreditsChainConfig(EthereumNetwork.Sepolia);
 
             // Act
             string json = CreditsTradeEncoder.BuildMetaTxTypedDataJson(chainConfig, new BigInteger(7), BUYER, "0x1234");

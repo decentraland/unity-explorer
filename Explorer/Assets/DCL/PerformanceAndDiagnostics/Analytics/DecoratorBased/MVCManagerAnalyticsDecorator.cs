@@ -87,5 +87,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         public bool IsAnyModalViewShowing() =>
             core.IsAnyModalViewShowing();
+
+        public bool IsShowing<TView, TInputData>() where TView: IView =>
+            core.IsShowing<TView, TInputData>();
     }
 }

@@ -6,6 +6,7 @@ using DCL.Interaction.Utility;
 using DCL.Profiling;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
+using ECS.Unity.ExplorerUiEvents;
 using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
 using System.Collections.Generic;
@@ -28,6 +29,12 @@ namespace DCL.PluginSystem.World.Dependencies
         public readonly ISystemsUpdateGate EcsSystemsGate;
         public readonly SceneRuntimeMetrics RuntimeMetrics;
 
+        /// <summary>
+        ///     Explore panel life cycle events this scene's own openExplorerUi calls produced, filled by the
+        ///     restricted actions API and drained by WriteExplorerUiEventsSystem. Main thread only on both ends.
+        /// </summary>
+        public readonly Queue<ExplorerUiEvent> ExplorerUiEvents;
+
         public ECSWorldInstanceSharedDependencies(
             ISceneData sceneData,
             IPartitionComponent scenePartition,
@@ -38,7 +45,8 @@ namespace DCL.PluginSystem.World.Dependencies
             ISceneStateProvider sceneStateProvider, EntityEventsBuilder entityEventsBuilder,
             MultiThreadSync multiThreadSync,
             ISystemGroupsUpdateGate ecsGroupThrottler, ISystemsUpdateGate ecsSystemsGate,
-            SceneRuntimeMetrics runtimeMetrics)
+            SceneRuntimeMetrics runtimeMetrics,
+            Queue<ExplorerUiEvent> explorerUiEvents)
         {
             SceneData = sceneData;
             EcsToCRDTWriter = ecsToCRDTWriter;
@@ -52,6 +60,7 @@ namespace DCL.PluginSystem.World.Dependencies
             EcsSystemsGate = ecsSystemsGate;
             EntityEventsBuilder = entityEventsBuilder;
             RuntimeMetrics = runtimeMetrics;
+            ExplorerUiEvents = explorerUiEvents;
         }
     }
 }

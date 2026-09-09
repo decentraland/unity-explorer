@@ -14,21 +14,21 @@ namespace DCL.Notifications.NotificationEntry
     {
         public event Action<NotificationType, INotification>? NotificationClicked;
         public NotificationType NotificationType { get; set; }
-        public INotification Notification { get; set; }
+        public INotification Notification { get; set; } = null!;
         [field: SerializeField] public Color NormalColor { get; private set; }
         [field: SerializeField] public Color HoveredColor { get; private set; }
-        [field: SerializeField] public Image Background { get; private set; }
-        [field: SerializeField] public Button MainButton { get; private set; }
-        [field: SerializeField] public TMP_Text HeaderText { get; set; }
-        [field: SerializeField] public TMP_Text TitleText { get; set; }
-        [field: SerializeField] public TMP_Text GiftNameText { get; set; }
-        [field: SerializeField] public TMP_Text TimeText { get; set; }
-        [field: SerializeField] public Button CloseButton { get; set; }
-        [field: SerializeField] public GameObject UnreadImage { get; set; }
-        [field: SerializeField] public Image NotificationTypeImage { get; set; }
-        [field: SerializeField] public ImageView NotificationImage { get; set; }
-        [field: SerializeField] public Image NotificationImageBackground { get; set; }
-        [field: SerializeField] public AudioClipConfig AcceptedNotificationAudio { get; private set; }
+        [field: SerializeField] public Image Background { get; private set; } = null!;
+        [field: SerializeField] public Button MainButton { get; private set; } = null!;
+        [field: SerializeField] public TMP_Text HeaderText { get; set; } = null!;
+        [field: SerializeField] public TMP_Text TitleText { get; set; } = null!;
+        [field: SerializeField] public TMP_Text GiftNameText { get; set; } = null!;
+        [field: SerializeField] public TMP_Text TimeText { get; set; } = null!;
+        [field: SerializeField] public Button CloseButton { get; set; } = null!;
+        [field: SerializeField] public GameObject UnreadImage { get; set; } = null!;
+        [field: SerializeField] public Image NotificationTypeImage { get; set; } = null!;
+        [field: SerializeField] public ImageView NotificationImage { get; set; } = null!;
+        [field: SerializeField] public Image NotificationImageBackground { get; set; } = null!;
+        [field: SerializeField] public AudioClipConfig AcceptedNotificationAudio { get; private set; } = null!;
 
         private void PlayAcceptedNotificationAudio()
         {
@@ -53,13 +53,13 @@ namespace DCL.Notifications.NotificationEntry
                 ? $"{notification.Metadata.SenderAddress.Substring(0, 4)}..." 
                 : notification.Metadata.SenderAddress;
 
-            HeaderText.text = $"{shortAddr} sent you a something!";
+            HeaderText.text = string.Format(GiftingTextIds.GIFT_RECEIVED_SENDER_TITLE_FORMAT, shortAddr);
         }
         
         public void UpdateSenderName(string playerName, Color nameColor)
         {
             string hexColor = ColorUtility.ToHtmlStringRGB(nameColor);
-            HeaderText.text = string.Format(GiftingTextIds.GiftReceivedTitleFormat, hexColor, playerName);
+            HeaderText.text = string.Format(GiftingTextIds.GIFT_RECEIVED_TITLE_FORMAT, hexColor, playerName);
         }
 
         private void OnPointerClick()

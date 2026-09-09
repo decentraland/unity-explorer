@@ -1,11 +1,9 @@
-using Cysharp.Threading.Tasks;
 using DCL.FeatureFlags;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
-using System.Threading;
 
 namespace DCL.SceneLoadingScreens
 {
@@ -30,7 +28,7 @@ namespace DCL.SceneLoadingScreens
             this.legacyTips = legacyTips;
         }
 
-        public async UniTask<SceneTips> GetAsync(CancellationToken ct)
+        public SceneTips Get()
         {
             if (!featureFlagChecked)
             {
@@ -42,7 +40,7 @@ namespace DCL.SceneLoadingScreens
                 featureFlagChecked = true;
             }
 
-            SceneTips originTips = await legacyTips.GetAsync(ct);
+            SceneTips originTips = legacyTips.Get();
 
             if (audienceTipsParseSuccess)
             {

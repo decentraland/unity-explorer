@@ -32,10 +32,13 @@ using DCL.Utilities.Extensions;
 using DCL.Utility;
 using DCL.Utility.Types;
 using DCL.Web3.Accounts.Factory;
+using DCL.Web3.Authenticators;
+using DCL.Web3.Chains;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using DG.Tweening;
 using ECS;
+using ECS.SceneLifeCycle.Realm;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Cache.Disk.CleanUp;
 using ECS.StreamableLoading.Cache.Disk.Lock; // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
@@ -43,6 +46,7 @@ using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using Global.AppArgs;
 using Global.Versioning;
+using LiveKit.Internal.FFIClients.Requests;
 using MVC;
 using Newtonsoft.Json.Linq;
 using Plugins.NativeWindowManager;
@@ -56,6 +60,7 @@ using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.UI;
 using Utility;
+using Utility.Networking;
 using MinimumSpecsScreenView = DCL.ApplicationGuards.MinimumSpecsScreenView;
 
 // ReSharper disable once CheckNamespace
@@ -68,6 +73,15 @@ namespace Global.Dynamic
 
         [Space]
         [SerializeField] private DecentralandEnvironment decentralandEnvironment;
+
+        // Non-null only for DecentralandEnvironment.Custom; set from the command line by ApplyBaseDomainArg.
+        private string? customBaseDomain;
+        private string? cliGatewayArg;
+        private string? cliGatewayPrefix;
+
+        // The validated --eth-network value, or null when it was not passed on the command line. Captured by
+        // CaptureEthNetworkArg and turned into a network by ResolveEthereumNetwork once the environment is settled.
+        private string? ethNetworkArg;
 
         [Space]
         [SerializeField] private DebugSettings.DebugSettings debugSettings = new ();
@@ -90,6 +104,7 @@ namespace Global.Dynamic
         private DynamicWorldContainer? dynamicWorldContainer;
         private GlobalWorld? globalWorld;
         private ProvidedInstance<SplashScreen> splashScreen;
+        private AbgenSidecarBootstrap? abgenSidecar;
         private FileStream? singleInstanceLock;
         private ErrorPopupWithRetryView? clockDesyncPopupPrefab;
 
@@ -159,6 +174,9 @@ namespace Global.Dynamic
                 stopwatch.LogStep("staticContainer.SafeDispose");
             }
 
+            abgenSidecar?.Dispose();
+            stopwatch.LogStep("abgenSidecar.Dispose");
+
             bootstrapContainer?.Dispose();
             stopwatch.LogStep("bootstrapContainer.Dispose");
 
@@ -192,8 +210,26 @@ namespace Global.Dynamic
 
         private void ParseEnvironment(string environment)
         {
-            if (Enum.TryParse(environment, true, out DecentralandEnvironment env))
-                decentralandEnvironment = env;
+            // --base-domain already selected Custom, and it is command-line only while --dclenv can arrive from a
+            // deep link. Letting the link win would move the client back onto a decentraland domain behind the
+            // operator's back, so the base domain is authoritative and the mismatch is reported.
+            if (customBaseDomain != null)
+            {
+                ReportHub.Log(ReportCategory.STARTUP, $"Ignoring --{AppArgsFlags.ENVIRONMENT}={environment}: --{AppArgsFlags.BASE_DOMAIN}={customBaseDomain} pins the environment to {nameof(DecentralandEnvironment.Custom)}");
+                return;
+            }
+
+            if (!Enum.TryParse(environment, true, out DecentralandEnvironment env))
+                return;
+
+            // Custom has no domain of its own to derive; only --base-domain can select it.
+            if (env == DecentralandEnvironment.Custom)
+            {
+                ReportHub.LogWarning(ReportCategory.STARTUP, $"Ignoring --{AppArgsFlags.ENVIRONMENT}={environment}: {nameof(DecentralandEnvironment.Custom)} is selected by --{AppArgsFlags.BASE_DOMAIN} instead");
+                return;
+            }
+
+            decentralandEnvironment = env;
         }
 
         private async UniTask InitializeFlowAsync(CancellationToken ct)
@@ -214,6 +250,37 @@ namespace Global.Dynamic
             // now (best-effort, fails safe to loopback-only), then process the deep link with it applied.
             IAppArgs applicationParametersParser = ApplicationParametersParser.CreateDeferringDeepLinks(rawApplicationParameters);
 
+            // Read while the deep link is still deferred, so only the command line can supply it. The ordering is the
+            // reason, not the allowlist: the base domain gates which realms DeepLinkAllowlist trusts, so it has to be
+            // registered before InitializeDeepLinks() evaluates the pending link's whitelisted-realm params against
+            // it. A domain arriving in that same link could not be — its own params would need gating against a domain
+            // it has not supplied yet. (base-domain is denied by the allowlist, so a link carrying it still reaches
+            // the consent dialog; WarnIfCommandLineOnlyArgCameFromTheDeepLink reports that accepting it changes nothing.)
+            ApplyBaseDomainArg(applicationParametersParser);
+            LocalCertificateValidation.Configure(applicationParametersParser.HasFlag(AppArgsFlags.ACCEPT_UNTRUSTED_REALM));
+
+            // Configure the local ICE policy before any dynamic container or room is created. The SDK still
+            // applies its own loopback URL check, so this opt-in cannot change transport behavior for a remote
+            // realm. RealmController recomputes the value after every realm bootstrap/change as a second guard.
+            FFIBridgeExtensions.UseTransportAllForLoopbackUrls = applicationParametersParser.HasFlag(AppArgsFlags.ACCEPT_UNTRUSTED_REALM);
+
+            // Read while the deep link is still deferred for the same reason as the base domain: which chain the
+            // client signs against is not something a link may pick, not even through the denied-params dialog.
+            if (!CaptureEthNetworkArg(applicationParametersParser))
+            {
+                ExitUtils.Exit();
+                return;
+            }
+
+            // Read while the deep link is still deferred, for the same reason as the two above: where a session's
+            // supported-service traffic goes is not something a link may pick, not even through the denied-params
+            // dialog.
+            if (!CaptureGatewayArg(applicationParametersParser))
+            {
+                ExitUtils.Exit();
+                return;
+            }
+
             if (applicationParametersParser.HasPendingDeepLink)
                 await InitializeDeepLinkWorldWhitelistAsync(applicationParametersParser, ct);
 
@@ -231,6 +298,10 @@ namespace Global.Dynamic
                 return;
             }
 
+            WarnIfCommandLineOnlyArgCameFromTheDeepLink(applicationParametersParser, AppArgsFlags.BASE_DOMAIN, customBaseDomain);
+            WarnIfCommandLineOnlyArgCameFromTheDeepLink(applicationParametersParser, AppArgsFlags.ETH_NETWORK, ethNetworkArg);
+            WarnIfCommandLineOnlyArgCameFromTheDeepLink(applicationParametersParser, AppArgsFlags.GATEWAY, cliGatewayArg);
+
             FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(FeatureFlagsResultDto.Empty));
 
             DCLVersion dclVersion = DCLVersion.FromAppArgs(applicationParametersParser);
@@ -246,29 +317,50 @@ namespace Global.Dynamic
             ApplyConfig(applicationParametersParser);
             launchSettings.ApplyConfig(applicationParametersParser);
 
+            // Resolved after ApplyConfig, not where the arg was captured: --dclenv is able to move the environment up
+            // to this point, and the environment is what decides whether the override is read at all.
+            EthereumNetwork ethereumNetwork = ResolveEthereumNetwork();
+
             NativeWindowManager.Initialize(
                 applicationParametersParser.HasFlag(AppArgsFlags.DISABLE_WINDOW_RESTRICTIONS),
                 applicationParametersParser.HasFlag(AppArgsFlags.WINDOWED_MODE),
                 GetResolutionFromAppArgs(applicationParametersParser));
+
+            // Shown before anything that can wait (the abgen sidecar launch below is serial).
+            splashScreen = await assetsProvisioner.ProvideInstanceAsync(splashScreenRef, ct: ct);
+
+            // Alttester Automation (only works when ALTTESTER define is set), needs to run after splash is instantiated
+            if (applicationParametersParser.HasFlag(AppArgsFlags.ALTTESTER))
+                InstantiateAltTester(applicationParametersParser);
 
             World world = World.Create();
 
             var realmData = new RealmData();
 
             applicationParametersParser.TryGetValue(AppArgsFlags.GATEKEEPER_URL, out string? cliGatekeeperUrl);
-            applicationParametersParser.TryGetValue(AppArgsFlags.OPTIMIZED_ASSETS_URL, out string? cliOptimizedAssetsUrl);
 
-            // local-ab only: the embedded abgen JIT server reads the scene through the preview server's own
-            // content endpoints — no SDK-side sidecar or proxy involved. Its base URL becomes the
-            // optimized-assets source; requests it doesn't build (wearables, emotes, LODs, registry)
-            // stream through it from the production upstream (abgen's ab-cdn read-through and registry
-            // pass-through), so no lane loses content. Only the loopback endpoint is reserved here — the
-            // URL sources below need it at construction; AbgenSidecarPlugin (registered from this value,
-            // absent otherwise) owns everything else: creation, launch, warm-up and disposal.
+            bool cliAbgenPipeline = applicationParametersParser.HasFlag(AppArgsFlags.ABGEN_PIPELINE);
+
+            // local-ab only: the embedded abgen JIT server becomes the optimized-assets source (it serves the
+            // local scene and read-throughs everything else from production). Brought up to health serially,
+            // before the URL sources are built, so the override is seeded only when the server is actually
+            // serving; the whole-scene warm-up continues in the background and realm loading holds on it below.
             string? localAbBaseUrl = null;
 
-            if (launchSettings.CurrentMode is LaunchMode.LocalSceneDevelopment && launchSettings.useLocalAssetBundles && string.IsNullOrEmpty(cliOptimizedAssetsUrl))
-                cliOptimizedAssetsUrl = localAbBaseUrl = AbgenSidecar.ReserveBaseUrl();
+            if (launchSettings.CurrentMode is LaunchMode.LocalSceneDevelopment && launchSettings.useLocalAssetBundles)
+            {
+                // Mirrors RealmUrls.StartingRealmAsync's Localhost/Custom branches — keep in sync.
+                // RealmUrls itself can't be used here: it needs the URL sources that don't exist yet.
+                string realmRoot = launchSettings.initialRealm == InitialRealm.Localhost
+                    ? IRealmNavigator.LOCALHOST
+                    : launchSettings.customRealm;
+
+                string baseDomain = DecentralandUrlsSource.ResolveBaseDomain(decentralandEnvironment, customBaseDomain);
+                abgenSidecar = new AbgenSidecarBootstrap(baseDomain);
+
+                if (await abgenSidecar.StartAsync(realmRoot).AttachExternalCancellation(ct))
+                    localAbBaseUrl = abgenSidecar.BaseUrl;
+            }
 
             var decentralandUrlsSource = new GatewayUrlsSource(
                 decentralandEnvironment,
@@ -277,17 +369,14 @@ namespace Global.Dynamic
                 debugSettings.GatekeeperMode,
                 debugSettings.CustomGatekeeperUrl,
                 cliGatekeeperUrl,
-                cliOptimizedAssetsUrl);
+                localAbBaseUrl,
+                customBaseDomain,
+                cliAbgenPipeline,
+                cliGatewayPrefix);
             DiagnosticInfoUtils.LogEnvironment(decentralandUrlsSource);
 
-            splashScreen = await assetsProvisioner.ProvideInstanceAsync(splashScreenRef, ct: ct);
-
-            // Alttester Automation (only works when ALTTESTER define is set), needs to run after splash is instantiated
-            if (applicationParametersParser.HasFlag(AppArgsFlags.ALTTESTER))
-                InstantiateAltTester(applicationParametersParser);
-
             var web3AccountFactory = new Web3AccountFactory();
-            var identityCache = new IWeb3IdentityCache.Default(web3AccountFactory, decentralandEnvironment);
+            var identityCache = new IWeb3IdentityCache.Default(web3AccountFactory, ethereumNetwork);
             var debugViewsCatalog = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.DebugViewsCatalog, ct)).Value;
             var debugContainer = DebugUtilitiesContainer.Create(debugViewsCatalog, applicationParametersParser.HasDebugFlag(), applicationParametersParser.HasFlag(AppArgsFlags.LOCAL_SCENE));
 
@@ -309,8 +398,8 @@ namespace Global.Dynamic
                 partialsDiskCache,
                 world,
                 decentralandEnvironment,
+                ethereumNetwork,
                 dclVersion,
-                localAbBaseUrl,
                 destroyCancellationToken
             );
 
@@ -414,11 +503,10 @@ namespace Global.Dynamic
 
                 globalWorld = bootstrap.CreateGlobalWorld(bootstrapContainer, staticContainer!, dynamicWorldContainer!, debugContainer.RootDocument, playerEntity);
 
-                // Realm loading is what starts scene loading — and with it the scene's asset-bundle
-                // manifest request, whose bundles-vs-GLTFs verdict is final for the session. Hold it
-                // until the abgen sidecar is warm or has given up; completed immediately when the
-                // sidecar is not mounted.
-                await dynamicWorldContainer!.AbgenSidecarReadyAsync.AttachExternalCancellation(ct);
+                // The scene's first manifest request fixes the bundles-vs-GLTFs verdict for the session —
+                // hold realm loading until the whole-scene warm-up settles.
+                if (abgenSidecar != null)
+                    await abgenSidecar.WarmUpTask.AttachExternalCancellation(ct);
 
                 await LoadStartingRealmAsync(ct);
                 await LoadUserFlowAsync(playerEntity, ct);
@@ -551,12 +639,121 @@ namespace Global.Dynamic
 #endif
         }
 
+        /// <summary>
+        ///     Reports a value the deep link carried for an arg that was already read from the command line, where
+        ///     the link's own value is therefore not applied - not even after the user accepts it in the
+        ///     denied-params dialog, since nothing reads the arg again. Without this it would sit in the logged args
+        ///     looking applied.
+        /// </summary>
+        private static void WarnIfCommandLineOnlyArgCameFromTheDeepLink(IAppArgs appArgs, string flag, string? commandLineValue)
+        {
+            if (appArgs.TryGetValue(flag, out string? linkValue)
+                && !string.IsNullOrWhiteSpace(linkValue)
+                && !string.Equals(linkValue.Trim(), commandLineValue, StringComparison.OrdinalIgnoreCase))
+                ReportHub.LogWarning(ReportCategory.STARTUP, $"Ignoring --{flag}={linkValue} from the deep link: it is only applied from the command line");
+        }
+
+        /// <summary>
+        ///     Captures <see cref="AppArgsFlags.ETH_NETWORK" /> into <see cref="ethNetworkArg" />, rejecting a value
+        ///     that would otherwise leave the run on the default chain with nothing said. Returns false when the
+        ///     launch must be abandoned; the reason is already reported.
+        ///     <para>
+        ///         Rejecting rather than defaulting is the whole point on a <c>--base-domain</c> deployment: mainnet
+        ///         is the default, so every way of mistyping this flag ends with real contracts and the production
+        ///         identity slot behind an operator who asked for a test chain.
+        ///     </para>
+        /// </summary>
+        private bool CaptureEthNetworkArg(IAppArgs appArgs)
+        {
+            if (!appArgs.TryGetValue(AppArgsFlags.ETH_NETWORK, out string? value))
+                return true;
+
+            // Only a Custom environment reads the value, and only --base-domain selects Custom, so this is already
+            // final here even though --dclenv has not been applied yet.
+            bool valueIsRead = decentralandEnvironment == DecentralandEnvironment.Custom;
+
+            if (valueIsRead && !ChainUtils.TryParseNetwork(value, out _))
+            {
+                ReportHub.LogError(ReportCategory.STARTUP, $"--{AppArgsFlags.ETH_NETWORK} '{value}' names no known network. Expected {ChainUtils.GetNetworkId(EthereumNetwork.Mainnet)} or {ChainUtils.GetNetworkId(EthereumNetwork.Sepolia)}");
+                return false;
+            }
+
+            ethNetworkArg = string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+            return true;
+        }
+
+        /// <summary>
+        ///     Captures <see cref="AppArgsFlags.GATEWAY" /> into <see cref="cliGatewayArg" /> and its normalized form
+        ///     into <see cref="cliGatewayPrefix" />. Returns false when the launch must be abandoned; the reason is
+        ///     already reported.
+        ///     <para>
+        ///         Rejecting rather than ignoring: naming a gateway forces routing on, so a value that cannot be read
+        ///         as an origin would otherwise send every supported service to a host nobody named.
+        ///     </para>
+        /// </summary>
+        private bool CaptureGatewayArg(IAppArgs appArgs)
+        {
+            if (!appArgs.TryGetValue(AppArgsFlags.GATEWAY, out string? value) || string.IsNullOrWhiteSpace(value))
+                return true;
+
+            if (!GatewayUrlsSource.TryNormalizeGatewayPrefix(value, out string prefix))
+            {
+                ReportHub.LogError(ReportCategory.STARTUP, $"--{AppArgsFlags.GATEWAY} '{value}' is not a gateway origin. Expected an absolute http or https url with a host and no query or fragment");
+                return false;
+            }
+
+            cliGatewayArg = value.Trim();
+            cliGatewayPrefix = prefix;
+            return true;
+        }
+
+        /// <summary>
+        ///     Turns the captured <see cref="ethNetworkArg" /> into the chain this run uses. Only a
+        ///     <c>--base-domain</c> deployment can answer for its own chain, so an override paired with a
+        ///     decentraland environment is reported and dropped rather than silently having no effect. The rule
+        ///     itself lives in <see cref="ChainUtils.ResolveNetwork" />; this reports what it discarded.
+        /// </summary>
+        private EthereumNetwork ResolveEthereumNetwork()
+        {
+            EthereumNetwork ethereumNetwork = ChainUtils.ResolveNetwork(decentralandEnvironment, ethNetworkArg);
+
+            if (ethNetworkArg != null && ChainUtils.PinnedNetworkOf(decentralandEnvironment) is { } pinned)
+            {
+                if (!ChainUtils.TryParseNetwork(ethNetworkArg, out EthereumNetwork requested))
+                    ReportHub.LogWarning(ReportCategory.STARTUP, $"Ignoring --{AppArgsFlags.ETH_NETWORK}={ethNetworkArg}: it names no known network, and the {decentralandEnvironment} environment runs on {ChainUtils.GetNetworkId(pinned)} regardless");
+                else if (requested != pinned)
+                    ReportHub.LogWarning(ReportCategory.STARTUP, $"Ignoring --{AppArgsFlags.ETH_NETWORK}={ethNetworkArg}: the {decentralandEnvironment} environment always runs on {ChainUtils.GetNetworkId(pinned)}");
+            }
+
+            // Logged unconditionally: a custom deployment defaults to mainnet, which puts the production contracts
+            // and identity slot behind it, and that has to be answerable from a log after the fact.
+            ReportHub.Log(ReportCategory.STARTUP, $"Chain: {ChainUtils.GetNetworkId(ethereumNetwork)} (environment {decentralandEnvironment})");
+
+            return ethereumNetwork;
+        }
+
+        /// <summary>
+        ///     Applies <see cref="AppArgsFlags.BASE_DOMAIN" />: it selects <see cref="DecentralandEnvironment.Custom" />
+        ///     and, through <see cref="DecentralandUrlsSource.ResolveBaseDomain" />, the domain every backend host and
+        ///     every realm-trust check resolves against.
+        /// </summary>
+        private void ApplyBaseDomainArg(IAppArgs appArgs)
+        {
+            if (appArgs.TryGetValue(AppArgsFlags.BASE_DOMAIN, out string? baseDomainArg) && !string.IsNullOrWhiteSpace(baseDomainArg))
+            {
+                customBaseDomain = baseDomainArg.Trim();
+                decentralandEnvironment = DecentralandEnvironment.Custom;
+            }
+
+            DeepLinkAllowlist.SetTrustedBaseDomain(DecentralandUrlsSource.ResolveBaseDomain(decentralandEnvironment, customBaseDomain));
+        }
+
         private async UniTask InitializeDeepLinkWorldWhitelistAsync(IAppArgs appArgs, CancellationToken ct)
         {
             appArgs.TryGetValue(AppArgsFlags.FeatureFlags.URL, out string? featureFlagsOverride);
 
             string featureFlagsBase = string.IsNullOrEmpty(featureFlagsOverride)
-                ? DecentralandUrlsSource.GetFeatureFlagsUrl(decentralandEnvironment)
+                ? DecentralandUrlsSource.GetFeatureFlagsUrl(decentralandEnvironment, customBaseDomain)
                 : featureFlagsOverride.TrimEnd('/');
 
             IReadOnlyList<string> whitelistedWorlds = await DeepLinkWorldWhitelistProvider.FetchAsync($"{featureFlagsBase}/{FeatureFlagOptions.APP_NAME}.json", ct);
@@ -584,7 +781,7 @@ namespace Global.Dynamic
             bool hasMinimumSpecs = minimumSpecsGuard.HasMinimumSpecs() && !forceShow;
 
             if (!hasMinimumSpecs && !skipScreen)
-                SavedQualitySettingsApplier.EnforceLowPreset();
+                SavedQualitySettingsApplier.EnforceLowPresetOnce();
 
             bool userWantsToSkip = DCLPlayerPrefs.GetBool(DCLPrefKeys.DONT_SHOW_MIN_SPECS_SCREEN);
 
@@ -839,14 +1036,18 @@ namespace Global.Dynamic
             if (string.IsNullOrEmpty(realm)) return true;
 
             var uri = new Uri(realm);
-            if (uri.Host == "127.0.0.1") return true;
-            if (uri.Host == "localhost") return true;
-            if (uri.Host == "sdk-team-cdn." + IDecentralandUrlsSource.ORG_DOMAIN) return true;
-            if (uri.Host == "sdk-test-scenes." + IDecentralandUrlsSource.ZONE_DOMAIN) return true;
-            if (uri.Host == "realm-provider-ea." + IDecentralandUrlsSource.ORG_DOMAIN) return true;
-            if (uri.Host == "realm-provider-ea." + IDecentralandUrlsSource.ZONE_DOMAIN) return true;
-            if (uri.Host == "worlds-content-server." + IDecentralandUrlsSource.ORG_DOMAIN) return true;
-            if (uri.Host == "worlds-content-server." + IDecentralandUrlsSource.ZONE_DOMAIN) return true;
+            // A controlled host skips the consent prompt and the contracts/servers lookup below.
+            if (TrustedRealms.IsTrusted(uri)) return true;
+
+            // A --base-domain deployment owns everything under its domain, so its realms and worlds carry the same
+            // trust TrustedRealms grants decentraland's own hosts. Its worlds server in particular cannot be reached
+            // any other way: the catalyst server list consulted at the end enumerates catalysts, not worlds servers,
+            // which is exactly why decentraland's is named outright. Widening trust this way is safe because
+            // --base-domain is command-line only (never accepted from a deep link), so the operator already chose
+            // this deployment.
+            if (decentralandEnvironment == DecentralandEnvironment.Custom
+                && IDecentralandUrlsSource.IsHostWithinDomain(uri.Host, dclUrls.BaseDomain))
+                return true;
 
             IWebRequestController webRequestController = staticContainer!.WebRequestsContainer.WebRequestController;
 

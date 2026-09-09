@@ -143,6 +143,8 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         [SerializeField] private Transform[] potentialHighestBones = null!;
         private float cachedHeadWearableOffset; // Cached offset from head bone to the highest point of head wearables (like tall hats). Updated when wearables change.
         private Vector3 headArmatureBoneStartPosition;
+        private Vector3 armatureStartLocalPosition;
+        private Vector3 armatureStartLocalScale;
 
         public float NametagGlideOffset => nametagGlideOffset;
 
@@ -171,6 +173,8 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
             overrideController.ApplyOverrides(animationOverrides);
 
             headArmatureBoneStartPosition = headAramatureBone.position - transform.position;
+            armatureStartLocalPosition = Armature.localPosition;
+            armatureStartLocalScale = Armature.localScale;
 
             GhostRenderer = GhostGameObject.GetComponentInChildren<Renderer>();
         }
@@ -262,19 +266,21 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         public void ResetAnimatorTrigger(int hash) =>
             AvatarAnimator.ResetTrigger(hash);
 
-        public void ResetArmatureInclination()
+        public void ResetArmatureTransform()
         {
             Vector3 angles = Armature.eulerAngles;
             angles.x = 90;
             Armature.eulerAngles = angles;
+            Armature.localPosition = armatureStartLocalPosition;
+            Armature.localScale = armatureStartLocalScale;
         }
 
         // Called onRelease of the pool. Resets stuff to avoid:
-        //   - Armature inclination that could be caused by emotes
+        //   - Armature inclination, offset and scale that could be caused by emote clips animating the Armature node
         //   - Things that could cause the avatar to shift in X/Y/Z such as animations and feet IK resolution
         public void ResetState()
         {
-            ResetArmatureInclination();
+            ResetArmatureTransform();
             transform.localPosition = Vector3.zero;
             LegacyAnimation?.Stop();
             maskedLegacyBlender?.Stop();
@@ -434,7 +440,7 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 
         void ResetAnimatorTrigger(int hash);
 
-        void ResetArmatureInclination();
+        void ResetArmatureTransform();
 
         void SetLayerWeight(int layerIndex, float weight);
     }

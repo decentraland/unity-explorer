@@ -1,7 +1,6 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Loading.Components;
-using DCL.AvatarRendering.Loading.Exceptions;
 using DCL.AvatarRendering.Thumbnails.Utils;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using ECS.Prioritization.Components;
@@ -31,12 +30,8 @@ namespace DCL.AvatarRendering.Wearables
                 if (existing.Succeeded)
                     return existing.Asset;
 
-                // A previous attempt was cancelled (e.g. page change). Clear so a fresh promise
-                // can spawn below. Sticky failures keep the slot and fall through to throw.
-                if (existing.Cancelled)
-                    avatarAttachment.ThumbnailAssetResult = null;
-                else
-                    throw new ThumbnailLoadFailedException();
+                // Terminal non-success (timeout or cancellation) is per-attempt, never sticky: clear the slot so a fresh promise can spawn
+                avatarAttachment.ThumbnailAssetResult = null;
             }
 
             CancellationTokenSource promiseCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
@@ -59,14 +54,12 @@ namespace DCL.AvatarRendering.Wearables
             }
             catch (OperationCanceledException) when (!ct.IsCancellationRequested)
             {
-                // Timed out: cancel the underlying promise so the resolver cleans it up, and record
-                // a sticky Failed on the attachment so subsequent calls don't immediately re-attempt
-                // a load that we already gave up on. (The resolver will see IsCancellationRequested
-                // but skip overwriting because the slot is now Failed, not Cancelled.)
+                // Timed out: cancel the underlying promise so the resolver cleans it up. Failed releases
+                // concurrent waiters and keeps the resolver from stamping Cancelled over the slot.
                 promiseCts.Cancel();
                 avatarAttachment.ThumbnailAssetResult = StreamableLoadingResult<SpriteData>.WithFallback.Failed();
 
-                throw new ThumbnailLoadFailedException($"Thumbnail load timed out after {timeoutMs}ms");
+                return LoadThumbnailsUtils.DEFAULT_THUMBNAIL;
             }
         }
     }

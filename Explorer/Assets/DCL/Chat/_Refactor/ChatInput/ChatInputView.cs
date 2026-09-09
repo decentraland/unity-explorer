@@ -18,48 +18,51 @@ namespace DCL.Chat.ChatInput
         [Serializable]
         public class EmojiContainer
         {
-            [field: SerializeField] internal EmojiPanelConfigurationSO emojiPanelConfiguration { get; private set; }
-            [field: SerializeField] internal EmojiButtonView emojiPanelButton { get; private set; }
-            [field: SerializeField] internal EmojiPanelView emojiPanel { get; private set; }
-            [field: SerializeField] internal AudioClipConfig addEmojiAudio { get; private set; }
-            [field: SerializeField] internal AudioClipConfig openEmojiPanelAudio { get; private set; }
+            [field: SerializeField] internal EmojiPanelConfigurationSO emojiPanelConfiguration { get; private set; } = null!;
+            [field: SerializeField] internal EmojiButtonView emojiPanelButton { get; private set; } = null!;
+            [field: SerializeField] internal EmojiPanelView emojiPanel { get; private set; } = null!;
+            [field: SerializeField] internal AudioClipConfig addEmojiAudio { get; private set; } = null!;
+            [field: SerializeField] internal AudioClipConfig openEmojiPanelAudio { get; private set; } = null!;
+
+            [field: SerializeField]
+            [field: Tooltip("Space kept between the input field's top edge and the emoji panel's bottom edge.")]
+            internal float emojiPanelGap { get; private set; } = 5f;
         }
 
-        [field: SerializeField] public CustomInputField inputField { get; private set; }
-        [field: SerializeField] internal RectTransform pastePopupPosition { get; private set; }
+        [field: SerializeField] public CustomInputField inputField { get; private set; } = null!;
+        [field: SerializeField] internal RectTransform pastePopupPosition { get; private set; } = null!;
 
-        [SerializeField] private GameObject inputFieldContainer;
-        [SerializeField] private LayoutElement layoutElement;
+        [SerializeField] private GameObject inputFieldContainer = null!;
+        [SerializeField] private LayoutElement layoutElement = null!;
 
         [field: Header("Blocked")]
-        [field: SerializeField] internal Button maskButton { get; private set; }
-        [SerializeField] private GameObject maskContainer;
-        [SerializeField] private TMP_Text maskText;
+        [field: SerializeField] internal Button maskButton { get; private set; } = null!;
+        [SerializeField] private GameObject maskContainer = null!;
+        [SerializeField] private TMP_Text maskText = null!;
 
         [Header("Suggestion Panel")]
-        [field: SerializeField] internal InputSuggestionPanelView suggestionPanel { get; private set; }
+        [field: SerializeField] internal InputSuggestionPanelView suggestionPanel { get; private set; } = null!;
 
         [Header("Focus Visuals")]
-        [SerializeField] private GameObject outlineObject;
-        [SerializeField] private GameObject characterCounterObject;
-        [SerializeField] private CharacterCounterView characterCounter;
-        [SerializeField] private GameObject emojiButtonObject;
-        [SerializeField] private Image backgroundImage;
-        [SerializeField] private TextMeshProUGUI inputPlaceholderObject;
+        [SerializeField] private GameObject outlineObject = null!;
+        [SerializeField] private GameObject characterCounterObject = null!;
+        [SerializeField] private CharacterCounterView characterCounter = null!;
+        [SerializeField] private GameObject emojiButtonObject = null!;
+        [SerializeField] private TextMeshProUGUI inputPlaceholderObject = null!;
         [SerializeField] private Color focusedBackgroundColor;
         [SerializeField] private Color unfocusedBackgroundColor;
 
         [field: Header("Emojis")]
-        [field: SerializeField] internal EmojiContainer emojiContainer { get; private set; }
+        [field: SerializeField] internal EmojiContainer emojiContainer { get; private set; } = null!;
 
         [field: Header("Audio")]
-        [field: SerializeField] internal AudioClipConfig chatInputTextAudio { get; private set; }
-        [field: SerializeField] internal AudioClipConfig enterInputAudio { get; private set; }
+        [field: SerializeField] internal AudioClipConfig chatInputTextAudio { get; private set; } = null!;
+        [field: SerializeField] internal AudioClipConfig enterInputAudio { get; private set; } = null!;
 
         [field: Header("Event Bus")]
-        [field: SerializeField] internal ViewEventBus inputEventBus { get; private set; }
+        [field: SerializeField] internal ViewEventBus inputEventBus { get; private set; } = null!;
 
-        private ChatConfig.ChatConfig chatConfig;
+        private ChatConfig.ChatConfig chatConfig = null!;
 
         public void ApplyFocusStyle()
         {
@@ -87,10 +90,10 @@ namespace DCL.Chat.ChatInput
             inputField.DeactivateInputField();
         }
 
-        public void Initialize(ChatConfig.ChatConfig chatConfig, ITextFormatter textFormatter)
+        public void Initialize(ChatConfig.ChatConfig config, ITextFormatter textFormatter)
         {
             characterCounter.SetMaximumLength(inputField.characterLimit);
-            this.chatConfig = chatConfig;
+            chatConfig = config;
             inputField.SetTextFormatter(textFormatter);
         }
 

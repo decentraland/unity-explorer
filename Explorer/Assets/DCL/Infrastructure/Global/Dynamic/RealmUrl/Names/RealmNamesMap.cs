@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Utilities.Extensions;
 using DCL.WebRequests;
 using System;
@@ -11,12 +12,14 @@ namespace Global.Dynamic.RealmUrl.Names
     public class RealmNamesMap : IRealmNamesMap
     {
         private readonly IWebRequestController webRequestController;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly Dictionary<string, string> cachedUrlToNameDictionary = new ();
         private IReadOnlyList<NodeDTO>? cachedNodes;
 
-        public RealmNamesMap(IWebRequestController webRequestController)
+        public RealmNamesMap(IWebRequestController webRequestController, IDecentralandUrlsSource decentralandUrlsSource)
         {
             this.webRequestController = webRequestController;
+            this.decentralandUrlsSource = decentralandUrlsSource;
         }
 
         public async UniTask<string> UrlFromNameAsync(string name, CancellationToken token)
@@ -38,7 +41,7 @@ namespace Global.Dynamic.RealmUrl.Names
         {
             if (cachedNodes == null)
             {
-                CommonArguments arguments = "https://peer.decentraland.org/lambdas/contracts/servers";
+                CommonArguments arguments = decentralandUrlsSource.Url(DecentralandUrl.Servers);
 
                 cachedNodes = await webRequestController
                                    .GetAsync(arguments, token, ReportCategory.GENERIC_WEB_REQUEST)

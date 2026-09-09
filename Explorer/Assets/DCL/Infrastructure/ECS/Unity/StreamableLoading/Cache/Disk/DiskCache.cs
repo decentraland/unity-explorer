@@ -28,6 +28,17 @@ namespace ECS.StreamableLoading.Cache.Disk
             this.diskCleanUp = diskCleanUp;
         }
 
+        public async UniTask<EnumResult<TaskError>> PutAsync<T, Ts>(HashKey key, string extension, T data, IDiskSerializer<T, Ts> serializer, CancellationToken token) where Ts: IMemoryIterator
+        {
+            if (WebRequestsDebugControl.DisableCache)
+                return EnumResult<TaskError>.SuccessResult();
+
+            // Serialize on the caller's thread: serializers may touch main-thread-only Unity APIs
+            // (e.g. Texture2D.GetRawTextureData); the write below hops to the thread pool itself.
+            using Ts iterator = serializer.Serialize(data);
+            return await PutAsync(key, extension, iterator, token);
+        }
+
         public async UniTask<EnumResult<TaskError>> PutAsync<Ti>(HashKey key, string extension, Ti data, CancellationToken token) where Ti: IMemoryIterator
         {
             if (WebRequestsDebugControl.DisableCache)
@@ -185,11 +196,8 @@ namespace ECS.StreamableLoading.Cache.Disk
             this.serializer = serializer;
         }
 
-        public async UniTask<EnumResult<TaskError>> PutAsync(HashKey key, string extension, T data, CancellationToken token)
-        {
-            using var iterator = serializer.Serialize(data);
-            return await diskCache.PutAsync(key, extension, iterator, token);
-        }
+        public UniTask<EnumResult<TaskError>> PutAsync(HashKey key, string extension, T data, CancellationToken token) =>
+            diskCache.PutAsync(key, extension, data, serializer, token);
 
         public async UniTask<EnumResult<Option<T>, TaskError>> ContentAsync(HashKey key, string extension, CancellationToken token)
         {

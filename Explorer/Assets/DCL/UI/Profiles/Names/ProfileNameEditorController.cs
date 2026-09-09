@@ -162,7 +162,13 @@ namespace DCL.UI.ProfileNames
 
                 config.claimedNameDropdown.options = dropdownOptions;
 
-                int selectedIndex = config.claimedNameDropdown.options.FindIndex(option => option.text == profile.Name);
+                // An unclaimed display name that matches an owned NFT name is not an equipped name:
+                // keep the dropdown unselected so the entry stays selectable (selecting the pre-selected
+                // entry never fires onValueChanged, which would leave Save permanently disabled)
+                int selectedIndex = profile.HasClaimedName
+                    ? config.claimedNameDropdown.options.FindIndex(option => option.text == profile.Name)
+                    : -1;
+
                 config.claimedNameDropdown.SetValueWithoutNotify(selectedIndex);
                 // Always start as disabled as it makes no sense save your own current name again..
                 config.saveButtonInteractable = false;

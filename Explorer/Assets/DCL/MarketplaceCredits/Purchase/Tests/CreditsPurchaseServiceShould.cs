@@ -1,7 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.FeatureFlags;
-using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Web3;
+using DCL.Web3.Chains;
 using DCL.Web3.Identities;
 using NSubstitute;
 using NUnit.Framework;
@@ -64,7 +64,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             metaTxRelayer = Substitute.For<CreditsManagerMetaTxRelayer>(null, null, null, null);
             settlementPoller = Substitute.For<PolygonSettlementPoller>(null, null);
             manaUsdRateReader = Substitute.For<ManaUsdRateReader>(null, null);
-            chainConfig = new CreditsChainConfig(DecentralandEnvironment.Zone);
+            chainConfig = new CreditsChainConfig(EthereumNetwork.Sepolia);
             identityCache = Substitute.For<IWeb3IdentityCache>();
 
             IWeb3Identity identity = Substitute.For<IWeb3Identity>();

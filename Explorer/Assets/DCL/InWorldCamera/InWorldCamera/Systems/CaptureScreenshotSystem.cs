@@ -10,6 +10,8 @@ using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.InWorldCamera.UI;
 using DCL.Multiplayer.Profiles.Entities;
+using DCL.NotificationsBus;
+using DCL.NotificationsBus.NotificationTypes;
 using DCL.Profiles;
 using ECS.Abstract;
 using System;
@@ -27,6 +29,7 @@ namespace DCL.InWorldCamera.Systems
         private const float SPLASH_FX_DURATION = 0.5f;
         private const float MIDDLE_PAUSE_FX_DURATION = 0.1f;
         private const float IMAGE_TRANSITION_FX_DURATION = 0.5f;
+        private const string SCREENSHOT_UPLOAD_ERROR_MESSAGE = "There was an error uploading your screenshot.";
 
         private readonly ScreenRecorder recorder;
         private readonly ScreenshotMetadataBuilder metadataBuilder;
@@ -42,7 +45,7 @@ namespace DCL.InWorldCamera.Systems
         private ScreenshotMetadata? metadata;
         private string currentSource;
 
-        public CaptureScreenshotSystem(
+        internal CaptureScreenshotSystem(
             World world,
             ScreenRecorder recorder,
             Entity playerEntity,
@@ -96,17 +99,51 @@ namespace DCL.InWorldCamera.Systems
             screenshot = recorder.GetScreenshotAndReset();
             metadata = metadataBuilder.GetMetadataAndReset();
 
-            try
+            if (screenshot == null)
             {
-                cameraReelStorageService.UploadScreenshotAsync(screenshot, metadata, currentSource, ctx.Token).Forget();
-
                 hudController.SetViewCanvasActive(true);
-                hudController.PlayScreenshotFX(screenshot, SPLASH_FX_DURATION, MIDDLE_PAUSE_FX_DURATION, IMAGE_TRANSITION_FX_DURATION);
-                hudController.DebugCapture(screenshot, metadata);
+                return;
             }
-            catch (OperationCanceledException) { }
-            catch (ScreenshotLimitReachedException) { hudController.Show(); }
-            catch (Exception e) { ReportHub.LogException(e, ReportCategory.CAMERA_REEL); }
+
+            ProcessCapturedScreenshotAsync(screenshot, metadata!, currentSource, ctx.Token).Forget();
+
+            hudController.SetViewCanvasActive(true);
+            hudController.PlayScreenshotFX(screenshot, SPLASH_FX_DURATION, MIDDLE_PAUSE_FX_DURATION, IMAGE_TRANSITION_FX_DURATION);
+            hudController.DebugCapture(screenshot, metadata);
+
+            return;
+
+            async UniTaskVoid ProcessCapturedScreenshotAsync(Texture2D capture, ScreenshotMetadata meta, string source, CancellationToken ct)
+            {
+                try
+                {
+                    await cameraReelStorageService.UploadScreenshotAsync(capture, meta, source, ct);
+                }
+                catch (OperationCanceledException) { }
+                catch (ScreenshotLimitReachedException)
+                {
+                    // Swallowed since the UI already shows that the user reached their limit; this just prevents the camera from closing
+                }
+                catch (Exception e)
+                {
+                    NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(SCREENSHOT_UPLOAD_ERROR_MESSAGE));
+                    ReportHub.LogException(e, ReportCategory.CAMERA_REEL);
+
+                    // Wait for cleanup query
+                    await UniTask.Yield();
+
+                    if (ct.IsCancellationRequested)
+                        return;
+
+                    RequestDisableInWorldCamera();
+                }
+            }
+        }
+
+        private void RequestDisableInWorldCamera()
+        {
+            if (camera.GetCameraComponent(World).CameraInputChangeEnabled && !World.Has<ToggleInWorldCameraRequest>(camera))
+                World.Add(camera, new ToggleInWorldCameraRequest { IsEnable = false });
         }
 
         private bool ScreenshotIsRequested()
