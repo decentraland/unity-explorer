@@ -142,10 +142,7 @@ namespace DCL.Web3.Authenticators
 
                 ActiveWallet = wallet;
 
-                return await BuildIdentityAsync(
-                    wallet,
-                    isGuest ? IWeb3Identity.Web3IdentitySource.Guest : IWeb3Identity.Web3IdentitySource.OTP,
-                    ct);
+                return await BuildIdentityAsync(wallet, isGuest ? LoginMethod.GUEST : LoginMethod.EMAIL_OTP, ct);
             }
             catch (Exception)
             {
@@ -167,7 +164,7 @@ namespace DCL.Web3.Authenticators
             }
         }
 
-        private async UniTask<IWeb3Identity> BuildIdentityAsync(IThirdwebWallet wallet, IWeb3Identity.Web3IdentitySource source, CancellationToken ct)
+        private async UniTask<IWeb3Identity> BuildIdentityAsync(IThirdwebWallet wallet, LoginMethod method, CancellationToken ct)
         {
             string sender = await wallet.GetAddress().AsUniTask().AttachExternalCancellation(ct);
 
@@ -194,7 +191,7 @@ namespace DCL.Web3.Authenticators
                 signature = signature,
             });
 
-            return new DecentralandIdentity(new Web3Address(sender), ephemeralAccount, sessionExpiration, authChain, source);
+            return new DecentralandIdentity(new Web3Address(sender), ephemeralAccount, sessionExpiration, authChain, method);
         }
 
         private async UniTask<InAppWallet> GuestLoginFlowAsync(CancellationToken ct)
@@ -358,7 +355,7 @@ namespace DCL.Web3.Authenticators
             pendingLinkWallet = null;
             pendingLinkEmail = string.Empty;
 
-            return await BuildIdentityAsync(activeWallet, IWeb3Identity.Web3IdentitySource.OTP, ct);
+            return await BuildIdentityAsync(activeWallet, LoginMethod.EMAIL_OTP, ct);
         }
 
         private static bool ContainsInvalidOtpError(Exception ex) =>

@@ -6,6 +6,7 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.Utilities;
 using DCL.Web3;
+using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using MVC;
 using System;
@@ -115,7 +116,7 @@ namespace DCL.AuthenticationScreenFlow
                         // When the profile was already in cache, for example your previous account after logout, we need to ensure that all systems related to the profile will update
                         profile.IsDirty = true;
                         // Convert into guest account, only if was not upgraded before
-                        profile.HasConnectedWeb3 |= identity.Source != IWeb3Identity.Web3IdentitySource.Guest;
+                        profile.HasConnectedWeb3 |= identity.Method != LoginMethod.GUEST;
                         machine.Enter<LobbyForExistingAccountAuthState, (Profile, bool, CancellationToken)>((profile, isCached, ct));
                     }
                     else if (isCached)
@@ -193,7 +194,7 @@ namespace DCL.AuthenticationScreenFlow
             profile.Hobbies = string.Empty;
             profile.TutorialStep = 0;
             profile.Version = 0;
-            profile.HasConnectedWeb3 = identity.Source != IWeb3Identity.Web3IdentitySource.Guest;
+            profile.HasConnectedWeb3 = identity.Method != LoginMethod.GUEST;
             profile.IsDirty = true;
 
             return profile;

@@ -1,5 +1,6 @@
 using DCL.Web3.Abstract;
 using DCL.Web3.Accounts.Factory;
+using DCL.Web3.Authenticators;
 using DCL.Web3.Chains;
 using System;
 
@@ -109,6 +110,6 @@ namespace DCL.Web3.Identities
         }
 
         public static bool IsGuest(this IWeb3IdentityCache cache) =>
-            cache.Identity?.Source == IWeb3Identity.Web3IdentitySource.Guest;
+            cache.Identity?.Method == LoginMethod.GUEST;
     }
 }

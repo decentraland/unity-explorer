@@ -25,6 +25,7 @@ namespace DCL.Web3.Authenticators
         COINBASE = 8,
         WALLETCONNECT = 9,
         GUEST = 10,
+        TOKEN_FILE = 11,
     }
 
     public readonly struct LoginPayload

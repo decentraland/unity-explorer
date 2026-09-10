@@ -190,7 +190,7 @@ namespace DCL.Web3.Authenticators
 
                 // To keep cohesiveness between the platform, convert the user address to lower case
                 return new DecentralandIdentity(new Web3Address(response.sender),
-                    ephemeralAccount, sessionExpiration, authChain, IWeb3Identity.Web3IdentitySource.Dapp);
+                    ephemeralAccount, sessionExpiration, authChain, payload.Method);
             }
             catch (Exception)
             {

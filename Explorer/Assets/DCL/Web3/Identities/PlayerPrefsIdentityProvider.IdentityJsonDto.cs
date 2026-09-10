@@ -14,7 +14,7 @@ namespace DCL.Web3.Identities
             public string address = "";
             public string key = "";
             public string expiration = "";
-            public string source = "";
+            public string method = "";
             public List<AuthLink> ephemeralAuthChain = new ();
 
             public bool IsValid => !string.IsNullOrEmpty(address)
@@ -26,7 +26,7 @@ namespace DCL.Web3.Identities
                 address = "";
                 key = "";
                 expiration = "";
-                source = "";
+                method = "";
                 ephemeralAuthChain.Clear();
             }
         }

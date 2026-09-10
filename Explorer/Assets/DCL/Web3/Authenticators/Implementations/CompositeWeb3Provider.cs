@@ -74,10 +74,10 @@ namespace DCL.Web3.Authenticators
             identityCache.Identity = identity;
             analytics.Identify(identity);
 
-            if (identity.Source != IWeb3Identity.Web3IdentitySource.OTP)
+            if (identity.Method != LoginMethod.EMAIL_OTP)
                 DCLPlayerPrefs.DeleteKey(DCLPrefKeys.LOGGEDIN_EMAIL, save: true);
 
-            if (identity.Source != IWeb3Identity.Web3IdentitySource.Guest)
+            if (identity.Method != LoginMethod.GUEST)
                 DCLPlayerPrefs.DeleteKey(DCLPrefKeys.GUEST_SESSION_ACTIVE, save: true);
 
             return identity;

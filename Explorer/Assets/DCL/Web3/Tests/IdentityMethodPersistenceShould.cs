@@ -1,5 +1,6 @@
 using DCL.Web3.Abstract;
 using DCL.Web3.Accounts.Factory;
+using DCL.Web3.Authenticators;
 using DCL.Web3.Chains;
 using DCL.Web3.Identities;
 using Newtonsoft.Json.Linq;
@@ -9,7 +10,7 @@ using System;
 namespace DCL.Web3.Tests
 {
     [TestFixture]
-    public class IdentitySourcePersistenceShould
+    public class IdentityMethodPersistenceShould
     {
         private PlayerPrefsIdentityProvider.DecentralandIdentityWithNethereumAccountJsonSerializer serializer = null!;
         private IWeb3AccountFactory accountFactory = null!;
@@ -21,29 +22,29 @@ namespace DCL.Web3.Tests
             serializer = new PlayerPrefsIdentityProvider.DecentralandIdentityWithNethereumAccountJsonSerializer(accountFactory);
         }
 
-        [TestCase(IWeb3Identity.Web3IdentitySource.Guest)]
-        [TestCase(IWeb3Identity.Web3IdentitySource.OTP)]
-        [TestCase(IWeb3Identity.Web3IdentitySource.Dapp)]
-        [TestCase(IWeb3Identity.Web3IdentitySource.Deeplink)]
-        [TestCase(IWeb3Identity.Web3IdentitySource.TokenFile)]
-        public void RoundTripSource(IWeb3Identity.Web3IdentitySource source)
+        [TestCase(LoginMethod.GUEST)]
+        [TestCase(LoginMethod.EMAIL_OTP)]
+        [TestCase(LoginMethod.METAMASK)]
+        [TestCase(LoginMethod.GOOGLE)]
+        [TestCase(LoginMethod.TOKEN_FILE)]
+        public void RoundTripMethod(LoginMethod method)
         {
             // Arrange
-            IWeb3Identity identity = NewIdentity(source);
+            IWeb3Identity identity = NewIdentity(method);
 
             // Act
             IWeb3Identity? restored = serializer.Deserialize(serializer.Serialize(identity));
 
             // Assert
             Assert.That(restored, Is.Not.Null);
-            Assert.That(restored!.Source, Is.EqualTo(source));
+            Assert.That(restored!.Method, Is.EqualTo(method));
         }
 
         [Test]
         public void PreserveAddressAcrossRoundTrip()
         {
             // Arrange
-            IWeb3Identity identity = NewIdentity(IWeb3Identity.Web3IdentitySource.Guest);
+            IWeb3Identity identity = NewIdentity(LoginMethod.GUEST);
 
             // Act
             IWeb3Identity? restored = serializer.Deserialize(serializer.Serialize(identity));
@@ -53,34 +54,34 @@ namespace DCL.Web3.Tests
         }
 
         [Test]
-        public void FallBackToCachedWhenSourceIsAbsent()
+        public void FallBackToAnyWhenMethodIsAbsent()
         {
             // Arrange
-            var json = JObject.Parse(serializer.Serialize(NewIdentity(IWeb3Identity.Web3IdentitySource.Guest)));
-            Assert.That(json.Remove("source"), Is.True, "the payload is expected to carry a source property");
+            var json = JObject.Parse(serializer.Serialize(NewIdentity(LoginMethod.GUEST)));
+            Assert.That(json.Remove("method"), Is.True, "the payload is expected to carry a method property");
 
             // Act
             IWeb3Identity? restored = serializer.Deserialize(json.ToString());
 
             // Assert
-            Assert.That(restored!.Source, Is.EqualTo(IWeb3Identity.Web3IdentitySource.Cached));
+            Assert.That(restored!.Method, Is.EqualTo(LoginMethod.ANY));
         }
 
         [Test]
-        public void FallBackToCachedWhenSourceIsUnrecognised()
+        public void FallBackToAnyWhenMethodIsUnrecognised()
         {
             // Arrange
-            var json = JObject.Parse(serializer.Serialize(NewIdentity(IWeb3Identity.Web3IdentitySource.Guest)));
-            json["source"] = "SomethingElse";
+            var json = JObject.Parse(serializer.Serialize(NewIdentity(LoginMethod.GUEST)));
+            json["method"] = "SomethingElse";
 
             // Act
             IWeb3Identity? restored = serializer.Deserialize(json.ToString());
 
             // Assert
-            Assert.That(restored!.Source, Is.EqualTo(IWeb3Identity.Web3IdentitySource.Cached));
+            Assert.That(restored!.Method, Is.EqualTo(LoginMethod.ANY));
         }
 
-        private IWeb3Identity NewIdentity(IWeb3Identity.Web3IdentitySource source)
+        private IWeb3Identity NewIdentity(LoginMethod method)
         {
             IWeb3Account signer = accountFactory.CreateRandomAccount();
             IWeb3Account ephemeral = accountFactory.CreateRandomAccount();
@@ -98,7 +99,7 @@ namespace DCL.Web3.Tests
                 signature = signer.Sign(message),
             });
 
-            return new DecentralandIdentity(signer.Address, ephemeral, expiration, authChain, source);
+            return new DecentralandIdentity(signer.Address, ephemeral, expiration, authChain, method);
         }
     }
 }

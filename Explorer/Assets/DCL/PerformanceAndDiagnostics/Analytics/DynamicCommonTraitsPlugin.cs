@@ -1,8 +1,8 @@
 ﻿using DCL.Utilities.Extensions;
+using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using ECS;
 using Newtonsoft.Json.Linq;
-using System;
 using Utility;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics
@@ -11,7 +11,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
     {
         private const string NOT_CONFIGURED = "NOT CONFIGURED";
         private const string GUEST_IDENTITY = "guest";
-        private const string REGISTERED_IDENTITY = "registered";
+        private const string WEB2_IDENTITY = "web2";
+        private const string WEB3_IDENTITY = "web3";
 
         private readonly IRealmData realmData;
         private readonly IExposedTransform playerTransform;
@@ -28,7 +29,15 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         {
             trackEvent["dcl_eth_address"] = identityCache?.Identity?.Address == null ? NOT_CONFIGURED : identityCache.Identity.Address.ToString();
             trackEvent["auth_chain"] = identityCache?.Identity?.AuthChain == null ? NOT_CONFIGURED : identityCache.Identity.AuthChain.ToString();
-            trackEvent["identity_type"] = identityCache?.Identity == null ? NOT_CONFIGURED : identityCache.IsGuest() ? GUEST_IDENTITY : REGISTERED_IDENTITY;
+            trackEvent["identity_type"] = identityCache?.Identity == null
+                ? NOT_CONFIGURED
+                : identityCache.Identity.Method switch
+                {
+                    LoginMethod.GUEST => GUEST_IDENTITY,
+                    LoginMethod.EMAIL_OTP or LoginMethod.GOOGLE or LoginMethod.DISCORD or LoginMethod.APPLE or LoginMethod.X => WEB2_IDENTITY,
+                    LoginMethod.METAMASK or LoginMethod.WALLETCONNECT or LoginMethod.COINBASE or LoginMethod.FORTMATIC => WEB3_IDENTITY,
+                    _ => NOT_CONFIGURED,
+                };
             trackEvent["realm"] = realmData is not { Configured: true } ? NOT_CONFIGURED : realmData.RealmName;
             trackEvent["realm_url"] = realmData is not { Configured: true } ? NOT_CONFIGURED : realmData.Ipfs.CatalystBaseUrl.Value;
             trackEvent["parcel"] = playerTransform == null ? NOT_CONFIGURED : playerTransform.Position.ToParcel().ToString();

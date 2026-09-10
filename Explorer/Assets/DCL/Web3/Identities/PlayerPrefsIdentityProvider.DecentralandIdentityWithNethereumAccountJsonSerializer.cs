@@ -1,4 +1,5 @@
 using DCL.Web3.Abstract;
+using DCL.Web3.Authenticators;
 using DCL.Web3.Chains;
 using Nethereum.Signer;
 using Newtonsoft.Json;
@@ -31,14 +32,14 @@ namespace DCL.Web3.Identities
                 foreach (AuthLink link in jsonRoot.ephemeralAuthChain)
                     authChain.Set(link);
 
-                if (!Enum.TryParse(jsonRoot.source, out IWeb3Identity.Web3IdentitySource source))
-                    source = IWeb3Identity.Web3IdentitySource.Cached;
+                if (!Enum.TryParse(jsonRoot.method, out LoginMethod method))
+                    method = LoginMethod.ANY;
 
                 return new DecentralandIdentity(new Web3Address(jsonRoot.address),
                     accountFactory.CreateAccount(new EthECKey(jsonRoot.key)),
                     DateTime.Parse(jsonRoot.expiration, null, DateTimeStyles.RoundtripKind),
                     authChain,
-                    source);
+                    method);
             }
 
             public string Serialize(IWeb3Identity identity)
@@ -48,7 +49,7 @@ namespace DCL.Web3.Identities
                 jsonRoot.expiration = $"{identity.Expiration:O}";
                 jsonRoot.ephemeralAuthChain.AddRange(identity.AuthChain);
                 jsonRoot.key = identity.EphemeralAccount.PrivateKey;
-                jsonRoot.source = identity.Source.ToString();
+                jsonRoot.method = identity.Method.ToString();
 
                 return JsonConvert.SerializeObject(jsonRoot);
             }
