@@ -10,8 +10,18 @@ using Utility;
 
 namespace DCL.UI.UpgradeGuestAccountPopup
 {
-    public class UpgradeGuestAccountPopupController : ControllerBase<UpgradeGuestAccountPopupView>
+    public class UpgradeGuestAccountPopupController : ControllerBase<UpgradeGuestAccountPopupView, UpgradeGuestAccountPopupController.Params>
     {
+        public readonly struct Params
+        {
+            public readonly GuestUpgradeTrigger Trigger;
+
+            public Params(GuestUpgradeTrigger trigger)
+            {
+                Trigger = trigger;
+            }
+        }
+
         private enum Step
         {
             RestrictedUser,
@@ -28,6 +38,11 @@ namespace DCL.UI.UpgradeGuestAccountPopup
 
         private UniTaskCompletionSource lifeCycleTask = new ();
         private CancellationTokenSource linkCts = new ();
+
+        public event Action<GuestUpgradeTrigger>? PromptShown;
+        public event Action<GuestUpgradeTrigger>? UpgradeStarted;
+        public event Action<GuestUpgradeTrigger>? UpgradeCompleted;
+        public event Action<GuestUpgradeTrigger, string>? UpgradeFailed;
 
         public UpgradeGuestAccountPopupController(
             ViewFactoryMethod viewFactory,
@@ -64,6 +79,7 @@ namespace DCL.UI.UpgradeGuestAccountPopup
         {
             base.OnBeforeViewShow();
             ShowStep(Step.RestrictedUser);
+            PromptShown?.Invoke(inputData.Trigger);
         }
 
         protected override void OnViewClose()
@@ -112,6 +128,7 @@ namespace DCL.UI.UpgradeGuestAccountPopup
         private void OnEmailSubmitted()
         {
             ShowStep(Step.VerifyEmail);
+            UpgradeStarted?.Invoke(inputData.Trigger);
             SendLinkOtpAsync(viewInstance!.EMailInputField.Text, linkCts.Token).Forget();
         }
 
@@ -136,6 +153,7 @@ namespace DCL.UI.UpgradeGuestAccountPopup
             {
                 if (ct.IsCancellationRequested) return;
 
+                UpgradeFailed?.Invoke(inputData.Trigger, "invalid_email");
                 ShowInvalidEmail();
             }
             catch (Exception e)
@@ -143,6 +161,7 @@ namespace DCL.UI.UpgradeGuestAccountPopup
                 if (ct.IsCancellationRequested) return;
 
                 ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
+                UpgradeFailed?.Invoke(inputData.Trigger, "otp_send_error");
                 ShowStep(Step.Error);
             }
         }
@@ -163,6 +182,7 @@ namespace DCL.UI.UpgradeGuestAccountPopup
 
                 if (ct.IsCancellationRequested) return;
 
+                UpgradeCompleted?.Invoke(inputData.Trigger);
                 ShowStep(Step.Success);
             }
             catch (OperationCanceledException) { }
@@ -170,12 +190,14 @@ namespace DCL.UI.UpgradeGuestAccountPopup
             {
                 if (ct.IsCancellationRequested) return;
 
+                UpgradeFailed?.Invoke(inputData.Trigger, "invalid_code");
                 viewInstance!.OTPInputField.SetFailure();
             }
             catch (EmailAlreadyLinkedException)
             {
                 if (ct.IsCancellationRequested) return;
 
+                UpgradeFailed?.Invoke(inputData.Trigger, "email_already_linked");
                 ShowStep(Step.EmailAlreadyExist);
             }
             catch (Exception e)
@@ -183,6 +205,7 @@ namespace DCL.UI.UpgradeGuestAccountPopup
                 if (ct.IsCancellationRequested) return;
 
                 ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
+                UpgradeFailed?.Invoke(inputData.Trigger, "link_error");
                 ShowStep(Step.Error);
             }
         }

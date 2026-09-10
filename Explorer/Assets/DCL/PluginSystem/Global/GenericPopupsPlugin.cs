@@ -71,7 +71,7 @@ namespace DCL.PluginSystem.Global
 
             UpgradeGuestAccountPopupView upgradeGuestAccountPopupAsset = (await assetsProvisioner.ProvideMainAssetAsync(settings.UpgradeGuestAccountPopupPrefab, ct)).Value;
 
-            ControllerBase<UpgradeGuestAccountPopupView, ControllerNoData>.ViewFactoryMethod upgradeGuestAccountViewFactoryMethod =
+            ControllerBase<UpgradeGuestAccountPopupView, UpgradeGuestAccountPopupController.Params>.ViewFactoryMethod upgradeGuestAccountViewFactoryMethod =
                 UpgradeGuestAccountPopupController.Preallocate(upgradeGuestAccountPopupAsset, null, out _);
 
             upgradeGuestAccountPopupController = new UpgradeGuestAccountPopupController(upgradeGuestAccountViewFactoryMethod, accountLinkAuthenticator, selfProfile);

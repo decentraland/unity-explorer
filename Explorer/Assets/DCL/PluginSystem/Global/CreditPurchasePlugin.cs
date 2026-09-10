@@ -124,7 +124,7 @@ namespace DCL.PluginSystem.Global
         private UniTask OpenGetCreditsPanelAsync(CancellationToken ct)
         {
             if (web3IdentityCache.IsGuest())
-                return mvcManager.ShowAsync(UpgradeGuestAccountPopupController.IssueCommand(), ct);
+                return mvcManager.ShowAsync(UpgradeGuestAccountPopupController.IssueCommand(new UpgradeGuestAccountPopupController.Params(GuestUpgradeTrigger.Credits)), ct);
 
             return FeaturesRegistry.Instance.IsEnabled(FeatureId.CreditsTopup) && CreditsFeatureAccess.Instance.IsUserAllowed()
                 ? mvcManager.ShowAsync(CreditsTopUpModalController.IssueCommand(new CreditsTopUpModalControllerParams(CreditsTopUpModalControllerParams.SOURCE_PURCHASE_MODAL)), ct)

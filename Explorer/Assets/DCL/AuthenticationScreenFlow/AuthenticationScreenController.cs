@@ -43,6 +43,8 @@ namespace DCL.AuthenticationScreenFlow
 
             ProfileFetchingCached = 6,
             LoggedInCached = 7,
+
+            AvatarSelection = 9,
         }
 
         internal const int ANIMATION_DELAY = 300;
@@ -88,9 +90,7 @@ namespace DCL.AuthenticationScreenFlow
         public event Action<string, bool>? OTPVerified;
         public event Action? OTPResend;
         public event Action? ProfileFinalized;
-
-        internal void RaiseProfileFinalized() =>
-            ProfileFinalized?.Invoke();
+        public event Action<string, int>? AvatarSelected;
 
         // Null until OnViewInstantiated: the view is created lazily on first Show and may never be instantiated.
         private MVCStateMachine<AuthStateBase>? fsm;
@@ -221,6 +221,12 @@ namespace DCL.AuthenticationScreenFlow
                 EnterLoginEntryState(UIAnimationHashes.IN);
             }
         }
+
+        internal void RaiseProfileFinalized() =>
+            ProfileFinalized?.Invoke();
+
+        internal void RaiseAvatarSelected(string bodyType, int presetSlot) =>
+            AvatarSelected?.Invoke(bodyType, presetSlot);
 
         internal void EnterLoginEntryState(int animHash)
         {

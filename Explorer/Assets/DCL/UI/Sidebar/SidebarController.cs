@@ -431,7 +431,7 @@ namespace DCL.UI.Sidebar
         {
             if (identityCache.IsGuest())
             {
-                OpenPanelAsync(viewInstance!.MarketplaceCreditsButton, UpgradeGuestAccountPopupController.IssueCommand()).Forget();
+                OpenPanelAsync(viewInstance!.MarketplaceCreditsButton, UpgradeGuestAccountPopupController.IssueCommand(new UpgradeGuestAccountPopupController.Params(GuestUpgradeTrigger.Credits))).Forget();
                 return;
             }
 
@@ -464,7 +464,7 @@ namespace DCL.UI.Sidebar
 
             if (identityCache.IsGuest())
             {
-                OpenPanelAsync(null, UpgradeGuestAccountPopupController.IssueCommand()).Forget();
+                OpenPanelAsync(null, UpgradeGuestAccountPopupController.IssueCommand(new UpgradeGuestAccountPopupController.Params(GuestUpgradeTrigger.Voice))).Forget();
                 return;
             }
 

@@ -59,7 +59,7 @@ namespace DCL.AuthenticationScreenFlow
             selectedBodyType = BodyShape.MALE;
             selectedPresetSlot = 0;
 
-            currentState.Value = payload.isCached ? AuthStatus.LoggedInCached : AuthStatus.LoggedIn;
+            currentState.Value = AuthStatus.AvatarSelection;
 
             view.Show();
 
@@ -164,6 +164,8 @@ namespace DCL.AuthenticationScreenFlow
 
         private void OnContinueButtonClicked()
         {
+            controller.RaiseAvatarSelected(selectedBodyType.ToString(), selectedPresetSlot);
+
             view.Hide();
             fsm.Enter<LobbyForNewAccountAuthState, (Profile, string, bool, CancellationToken)>((newUserProfile, userEmail, isCached, loginCt));
         }

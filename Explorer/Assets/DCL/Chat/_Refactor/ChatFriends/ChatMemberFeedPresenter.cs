@@ -110,7 +110,7 @@ namespace DCL.Chat.ChatFriends
             // A guest can answer a conversation someone else started, but cannot start one
             if (identityCache.IsGuest() && !chatHistory.Channels.ContainsKey(new ChatChannel.ChannelId(userId)))
             {
-                mvcManager.ShowAndForget(UpgradeGuestAccountPopupController.IssueCommand());
+                mvcManager.ShowAndForget(UpgradeGuestAccountPopupController.IssueCommand(new UpgradeGuestAccountPopupController.Params(GuestUpgradeTrigger.DirectMessage)));
                 return;
             }
 

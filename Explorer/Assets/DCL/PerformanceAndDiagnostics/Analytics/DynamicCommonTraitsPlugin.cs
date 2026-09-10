@@ -10,6 +10,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
     public class DynamicCommonTraitsPlugin : IAnalyticsPlugin
     {
         private const string NOT_CONFIGURED = "NOT CONFIGURED";
+        private const string GUEST_IDENTITY = "guest";
+        private const string REGISTERED_IDENTITY = "registered";
 
         private readonly IRealmData realmData;
         private readonly IExposedTransform playerTransform;
@@ -26,6 +28,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         {
             trackEvent["dcl_eth_address"] = identityCache?.Identity?.Address == null ? NOT_CONFIGURED : identityCache.Identity.Address.ToString();
             trackEvent["auth_chain"] = identityCache?.Identity?.AuthChain == null ? NOT_CONFIGURED : identityCache.Identity.AuthChain.ToString();
+            trackEvent["identity_type"] = identityCache?.Identity == null ? NOT_CONFIGURED : identityCache.IsGuest() ? GUEST_IDENTITY : REGISTERED_IDENTITY;
             trackEvent["realm"] = realmData is not { Configured: true } ? NOT_CONFIGURED : realmData.RealmName;
             trackEvent["realm_url"] = realmData is not { Configured: true } ? NOT_CONFIGURED : realmData.Ipfs.CatalystBaseUrl.Value;
             trackEvent["parcel"] = playerTransform == null ? NOT_CONFIGURED : playerTransform.Position.ToParcel().ToString();

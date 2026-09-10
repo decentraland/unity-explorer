@@ -305,7 +305,7 @@ namespace DCL.MarketplaceCredits
         {
             if (web3IdentityCache.IsGuest())
             {
-                mvcManager.ShowAndForget(UpgradeGuestAccountPopupController.IssueCommand());
+                mvcManager.ShowAndForget(UpgradeGuestAccountPopupController.IssueCommand(new UpgradeGuestAccountPopupController.Params(GuestUpgradeTrigger.Credits)));
                 return;
             }
 

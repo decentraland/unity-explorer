@@ -546,7 +546,7 @@ namespace DCL.Communities.CommunitiesBrowser
         {
             if (web3IdentityCache.IsGuest())
             {
-                mvcManager.ShowAndForget(UpgradeGuestAccountPopupController.IssueCommand());
+                mvcManager.ShowAndForget(UpgradeGuestAccountPopupController.IssueCommand(new UpgradeGuestAccountPopupController.Params(GuestUpgradeTrigger.Communities)));
                 return;
             }
 
@@ -558,7 +558,7 @@ namespace DCL.Communities.CommunitiesBrowser
         {
             if (web3IdentityCache.IsGuest())
             {
-                mvcManager.ShowAndForget(UpgradeGuestAccountPopupController.IssueCommand());
+                mvcManager.ShowAndForget(UpgradeGuestAccountPopupController.IssueCommand(new UpgradeGuestAccountPopupController.Params(GuestUpgradeTrigger.Communities)));
                 return;
             }
 
@@ -666,7 +666,7 @@ namespace DCL.Communities.CommunitiesBrowser
         {
             if (web3IdentityCache.IsGuest())
             {
-                mvcManager.ShowAndForget(UpgradeGuestAccountPopupController.IssueCommand());
+                mvcManager.ShowAndForget(UpgradeGuestAccountPopupController.IssueCommand(new UpgradeGuestAccountPopupController.Params(GuestUpgradeTrigger.Communities)));
                 return;
             }
 

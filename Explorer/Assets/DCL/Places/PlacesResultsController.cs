@@ -148,7 +148,7 @@ namespace DCL.Places
         {
             if (identityCache.IsGuest())
             {
-                mvcManager.ShowAndForget(UpgradeGuestAccountPopupController.IssueCommand());
+                mvcManager.ShowAndForget(UpgradeGuestAccountPopupController.IssueCommand(new UpgradeGuestAccountPopupController.Params(GuestUpgradeTrigger.NameClaim)));
                 return;
             }
 

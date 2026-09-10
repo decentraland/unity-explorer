@@ -20,6 +20,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
             controller.OTPVerified += OnOTPVerified;
             controller.OTPResend += OnOTPResend;
             controller.ProfileFinalized += OnProfileFinalized;
+            controller.AvatarSelected += OnAvatarSelected;
         }
 
         public void Dispose()
@@ -29,6 +30,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
             controller.OTPVerified -= OnOTPVerified;
             controller.OTPResend -= OnOTPResend;
             controller.ProfileFinalized -= OnProfileFinalized;
+            controller.AvatarSelected -= OnAvatarSelected;
         }
 
         private void OnAuthenticationScreenStateChanged(AuthStatus state)
@@ -72,6 +74,15 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
                         { "is_cached", false },
                     });
                     break;
+                case AuthStatus.AvatarSelection:
+                    // isInstant: true — start of the avatar step, and abandoning here is exactly what
+                    // this measurement is for, so it must not stay in the buffer
+                    analytics.Track(Authentication.AVATAR_SELECTION_SCREEN, new JObject
+                    {
+                        { "method", controller.CurrentLoginMethod.ToString() },
+                    }, isInstant: true);
+                    break;
+
                 case AuthStatus.LoggedIn: // Triggered WHEN the user gets in Lobby
                     analytics.Track(Authentication.LOGGED_IN, new JObject
                     {
@@ -119,6 +130,14 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
                 default: throw new ArgumentOutOfRangeException(nameof(state), state, null);
             }
         }
+
+        private void OnAvatarSelected(string bodyType, int presetSlot) =>
+            analytics.Track(Authentication.AVATAR_COMPLETE, new JObject
+            {
+                { "method", controller.CurrentLoginMethod.ToString() },
+                { "body_type", bodyType },
+                { "preset_slot", presetSlot },
+            }, isInstant: true);
 
         private void OnProfileFinalized() =>
             // isInstant: true because this fires moments before the auth screen tears down

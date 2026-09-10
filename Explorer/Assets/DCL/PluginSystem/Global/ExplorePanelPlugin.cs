@@ -659,7 +659,7 @@ namespace DCL.PluginSystem.Global
             {
                 if (web3IdentityCache.IsGuest())
                 {
-                    mvcManager.ShowAndForget(UpgradeGuestAccountPopupController.IssueCommand(), ct: ct);
+                    mvcManager.ShowAndForget(UpgradeGuestAccountPopupController.IssueCommand(new UpgradeGuestAccountPopupController.Params(GuestUpgradeTrigger.Credits)), ct: ct);
                     return;
                 }
 
