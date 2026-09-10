@@ -53,8 +53,7 @@ module.exports.movePlayerTo = async function(message) {
 }
 
 module.exports.teleportTo = async function(message) {
-    // Both fields are optional: worldCoordinates alone teleports within the current realm, realm alone
-    // targets that realm's default spawn, and together they land on the parcel in that realm.
+    // Unpack optional fields and forward to the C# bridge; both are nullable.
     const coords = message.worldCoordinates
     UnityRestrictedActionsApi.TeleportTo(
         coords != undefined ? Number(coords.x) : null,
