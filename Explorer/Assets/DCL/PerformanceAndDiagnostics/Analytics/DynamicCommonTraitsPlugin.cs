@@ -38,6 +38,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
                     LoginMethod.METAMASK or LoginMethod.WALLETCONNECT or LoginMethod.COINBASE or LoginMethod.FORTMATIC => WEB3_IDENTITY,
                     _ => NOT_CONFIGURED,
                 };
+            trackEvent["identity_method"] = identityCache?.Identity == null ? NOT_CONFIGURED : identityCache.Identity.Method.ToString();
             trackEvent["realm"] = realmData is not { Configured: true } ? NOT_CONFIGURED : realmData.RealmName;
             trackEvent["realm_url"] = realmData is not { Configured: true } ? NOT_CONFIGURED : realmData.Ipfs.CatalystBaseUrl.Value;
             trackEvent["parcel"] = playerTransform == null ? NOT_CONFIGURED : playerTransform.Position.ToParcel().ToString();

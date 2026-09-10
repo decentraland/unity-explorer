@@ -49,10 +49,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
 
                 // Triggered WHEN the user press one of the login buttons in the Login Selection Screen
                 case AuthStatus.LoginRequested:
-                    analytics.Track(Authentication.LOGIN_REQUESTED, new JObject
-                    {
-                        { "method", controller.CurrentLoginMethod.ToString() },
-                    });
+                    analytics.Track(Authentication.LOGIN_REQUESTED);
                     break;
 
                 // Triggered WHEN verification screen is shown (dapp code or OTP)
@@ -70,17 +67,11 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
                     // a LOGIN_REQUESTED with no AUTH_COMPLETED within a session = failed auth.
                     analytics.Track(Authentication.AUTH_COMPLETED, new JObject
                     {
-                        { "method", controller.CurrentLoginMethod.ToString() },
                         { "is_cached", false },
                     });
                     break;
                 case AuthStatus.AvatarSelection:
-                    // isInstant: true — start of the avatar step, and abandoning here is exactly what
-                    // this measurement is for, so it must not stay in the buffer
-                    analytics.Track(Authentication.AVATAR_SELECTION_SCREEN, new JObject
-                    {
-                        { "method", controller.CurrentLoginMethod.ToString() },
-                    }, isInstant: true);
+                    analytics.Track(Authentication.AVATAR_SELECTION_SCREEN);
                     break;
 
                 case AuthStatus.LoggedIn: // Triggered WHEN the user gets in Lobby
@@ -96,10 +87,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
                         // onboarding measurement to be guaranteed-flushed; otherwise an early
                         // abandon (close client during avatar customization) can drop the start
                         // event and leave us with a profile_finalized that has no opener.
-                        analytics.Track(Authentication.NEW_ACCOUNT_ONBOARDING_STARTED, new JObject
-                        {
-                            { "method", controller.CurrentLoginMethod.ToString() },
-                        }, isInstant: true);
+                        analytics.Track(Authentication.NEW_ACCOUNT_ONBOARDING_STARTED, isInstant: true);
                     }
                     break;
 
@@ -108,7 +96,6 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
                     analytics.Track(Authentication.PROFILE_FETCHING_CACHED);
                     analytics.Track(Authentication.AUTH_COMPLETED, new JObject
                     {
-                        { "method", controller.CurrentLoginMethod.ToString() },
                         { "is_cached", true },
                     });
                     break;
@@ -116,14 +103,12 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
                     analytics.Track(Authentication.LOGGED_IN_CACHED, new JObject
                     {
                         { "is_new_account", controller.IsCurrentlyNewAccount },
+                        { "method", controller.CurrentLoginMethod.ToString() },
                     }, isInstant: true);
                     if (controller.IsCurrentlyNewAccount)
                     {
                         // isInstant: true — same reasoning as the LoggedIn branch.
-                        analytics.Track(Authentication.NEW_ACCOUNT_ONBOARDING_STARTED, new JObject
-                        {
-                            { "method", controller.CurrentLoginMethod.ToString() },
-                        }, isInstant: true);
+                        analytics.Track(Authentication.NEW_ACCOUNT_ONBOARDING_STARTED, isInstant: true);
                     }
                     break;
 
@@ -134,7 +119,6 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
         private void OnAvatarSelected(string bodyType, int presetSlot) =>
             analytics.Track(Authentication.AVATAR_COMPLETE, new JObject
             {
-                { "method", controller.CurrentLoginMethod.ToString() },
                 { "body_type", bodyType },
                 { "preset_slot", presetSlot },
             }, isInstant: true);
@@ -143,10 +127,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
             // isInstant: true because this fires moments before the auth screen tears down
             // and the FSM transitions to InitAuthState. Without flushing immediately the event
             // can sit in the buffer past the screen disposal and never make it to Segment.
-            analytics.Track(Authentication.PROFILE_FINALIZED, new JObject
-            {
-                { "method", controller.CurrentLoginMethod.ToString() },
-            }, isInstant: true);
+            analytics.Track(Authentication.PROFILE_FINALIZED, isInstant: true);
 
         private void OnOTPVerified(string email, bool success)
         {
