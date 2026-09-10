@@ -160,7 +160,7 @@ namespace ECS.SceneLifeCycle.SceneDefinition
             {
                 var item = list[read];
 
-                if (seenIds.Add(item.id))
+                if (seenIds.Add(item.id ?? string.Empty))
                     list[write++] = item;
             }
 
@@ -207,7 +207,7 @@ namespace ECS.SceneLifeCycle.SceneDefinition
                     serializer.Converters.RemoveAt(0);
 
                     SceneMetadata metadata;
-                    try { metadata = serializer.Deserialize<SceneMetadata>(jsonReader); }
+                    try { metadata = serializer.Deserialize<SceneMetadata>(jsonReader) ?? throw new JsonSerializationException("Scene metadata deserialized to null"); }
                     finally { serializer.Converters.Add(this); }
 
                     int endByte = startByte;

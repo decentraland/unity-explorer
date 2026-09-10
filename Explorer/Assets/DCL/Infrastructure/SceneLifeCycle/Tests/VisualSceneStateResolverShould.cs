@@ -15,7 +15,7 @@ namespace DCL.SceneLifeCycle.Tests
         private const int UNLOAD_TOLERANCE = 1;
         private const string SDK7_RUNTIME = "7";
 
-        private VisualSceneStateResolver resolver;
+        private VisualSceneStateResolver resolver = null!;
 
         [SetUp]
         public void SetUp()
@@ -76,7 +76,7 @@ namespace DCL.SceneLifeCycle.Tests
         [TestCase("6", 0, VisualSceneState.ShowingScene)]
         [TestCase(null, SDK7_LOD_THRESHOLD, VisualSceneState.ShowingLod)]
         [TestCase("6", SDK7_LOD_THRESHOLD, VisualSceneState.ShowingLod)]
-        public void ApplySceneDistanceToSDK6(string runtimeVersion, byte bucket, VisualSceneState expected)
+        public void ApplySceneDistanceToSDK6(string? runtimeVersion, byte bucket, VisualSceneState expected)
         {
             VisualSceneState result = resolver.ResolveVisualSceneState(CreatePartition(bucket), CreateSceneDefinition(runtimeVersion),
                 VisualSceneState.Uninitialized, false, ISSDescriptor.NONE);
@@ -118,18 +118,19 @@ namespace DCL.SceneLifeCycle.Tests
                 Bucket = bucket,
             };
 
-        private static SceneDefinitionComponent CreateSceneDefinition(string runtimeVersion) =>
-            SceneDefinitionComponentFactory.CreateFromDefinition(
-                new SceneEntityDefinition
-                {
-                    metadata = new SceneMetadata
-                    {
-                        scene = new SceneMetadataScene
-                            { DecodedParcels = new Vector2Int[1] },
-                        runtimeVersion = runtimeVersion,
-                    },
-                },
-                new IpfsPath());
+        private static SceneDefinitionComponent CreateSceneDefinition(string? runtimeVersion)
+        {
+            var metadata = new SceneMetadata
+            {
+                scene = new SceneMetadataScene
+                    { DecodedParcels = new Vector2Int[1] },
+            };
+
+            if (runtimeVersion != null)
+                metadata.runtimeVersion = runtimeVersion;
+
+            return SceneDefinitionComponentFactory.CreateFromDefinition(new SceneEntityDefinition { metadata = metadata }, new IpfsPath());
+        }
 
         private static ISSDescriptor CreateResolvedDescriptor()
         {
