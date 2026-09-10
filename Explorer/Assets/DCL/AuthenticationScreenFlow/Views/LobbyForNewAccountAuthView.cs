@@ -29,6 +29,8 @@ namespace DCL.AuthenticationScreenFlow
 
         [field: Space]
         [field: SerializeField]
+        public GameObject SubscribeRoot { get; private set; } = null!;
+        [field: SerializeField]
         public Toggle SubscribeToggle { get; private set; } = null!;
         [field: SerializeField]
         public Toggle TermsOfUse { get; private set; } = null!;

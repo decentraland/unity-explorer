@@ -9,6 +9,7 @@ using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.Utilities;
 using DCL.Web3;
+using DCL.Web3.Identities;
 using DCL.WebRequests;
 using MVC;
 using System;
@@ -32,6 +33,7 @@ namespace DCL.AuthenticationScreenFlow
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly ProfileChangesBus profileChangesBus;
+        private readonly IWeb3IdentityCache identityCache;
         private readonly Web3Address? referrer;
 
         private Profile newUserProfile;
@@ -51,6 +53,7 @@ namespace DCL.AuthenticationScreenFlow
             IWebRequestController webRequestController,
             IDecentralandUrlsSource decentralandUrlsSource,
             ProfileChangesBus profileChangesBus,
+            IWeb3IdentityCache identityCache,
             string? referrer = null) : base(viewInstance)
         {
             view = viewInstance.LobbyForNewAccountAuthView;
@@ -64,6 +67,7 @@ namespace DCL.AuthenticationScreenFlow
             this.webRequestController = webRequestController;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.profileChangesBus = profileChangesBus;
+            this.identityCache = identityCache;
             // Normalized/validated once at construction so the field is always canonical;
             // an invalid launch-argument value degrades to "no referral tracking".
             this.referrer = Web3Address.FromUntrusted(referrer);
@@ -97,6 +101,9 @@ namespace DCL.AuthenticationScreenFlow
 
             view.FinalizeNewUserButton.onClick.AddListener(FinalizeNewUser);
             view.BackButton.onClick.AddListener(OnBackButtonClicked);
+
+            // A guest has no email to subscribe with
+            view.SubscribeRoot.SetActive(!identityCache.IsGuest());
 
             // Toggle listeners for terms agreement
             view.SubscribeToggle.SetIsOnWithoutNotify(false);
