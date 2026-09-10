@@ -20,7 +20,7 @@ using Avatar = DCL.Profiles.Avatar;
 
 namespace DCL.AuthenticationScreenFlow
 {
-    public class LobbyForNewAccountAuthState : AuthStateBase, IPayloadedState<(Profile profile, string email, bool isCached, CancellationToken ct)>
+    public class LobbyForNewAccountAuthState : AuthStateBase, IPayloadedState<(Profile profile, string email, bool isRestoredSession, CancellationToken ct)>
     {
         private readonly MVCStateMachine<AuthStateBase> fsm;
         private readonly AuthenticationScreenController controller;
@@ -78,7 +78,7 @@ namespace DCL.AuthenticationScreenFlow
             view.OnViewHidden += ReparentCharacterPreview;
         }
 
-        public void Enter((Profile profile, string email, bool isCached, CancellationToken ct) payload)
+        public void Enter((Profile profile, string email, bool isRestoredSession, CancellationToken ct) payload)
         {
             base.Enter();
 
@@ -90,7 +90,7 @@ namespace DCL.AuthenticationScreenFlow
             UpdateCharacterPreview(payload.profile.Avatar);
 
             controller.IsCurrentlyNewAccount = true;
-            currentState.Value = payload.isCached ? AuthStatus.LoggedInCached : AuthStatus.LoggedIn;
+            currentState.Value = payload.isRestoredSession ? AuthStatus.LoggedInCached : AuthStatus.LoggedIn;
 
             view.Show();
             characterPreviewView.transform.SetParent(view.transform);

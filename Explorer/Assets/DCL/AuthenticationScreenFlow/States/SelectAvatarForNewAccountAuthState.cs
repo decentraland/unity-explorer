@@ -11,7 +11,7 @@ using Avatar = DCL.Profiles.Avatar;
 
 namespace DCL.AuthenticationScreenFlow
 {
-    public class SelectAvatarForNewAccountAuthState : AuthStateBase, IPayloadedState<(Profile profile, string email, bool isCached, CancellationToken ct)>
+    public class SelectAvatarForNewAccountAuthState : AuthStateBase, IPayloadedState<(Profile profile, string email, bool isRestoredSession, CancellationToken ct)>
     {
         private readonly MVCStateMachine<AuthStateBase> fsm;
         private readonly AuthenticationScreenController controller;
@@ -27,7 +27,7 @@ namespace DCL.AuthenticationScreenFlow
 
         private Profile newUserProfile = null!;
         private string userEmail = string.Empty;
-        private bool isCached;
+        private bool isRestoredSession;
         private CancellationToken loginCt;
 
         public SelectAvatarForNewAccountAuthState(
@@ -47,13 +47,13 @@ namespace DCL.AuthenticationScreenFlow
             this.characterPreviewController = characterPreviewController;
         }
 
-        public void Enter((Profile profile, string email, bool isCached, CancellationToken ct) payload)
+        public void Enter((Profile profile, string email, bool isRestoredSession, CancellationToken ct) payload)
         {
             base.Enter();
 
             newUserProfile = payload.profile;
             userEmail = payload.email;
-            isCached = payload.isCached;
+            isRestoredSession = payload.isRestoredSession;
             loginCt = payload.ct;
 
             selectedBodyType = BodyShape.MALE;
@@ -167,7 +167,7 @@ namespace DCL.AuthenticationScreenFlow
             controller.RaiseAvatarSelected(selectedBodyType.ToString(), selectedPresetSlot);
 
             view.Hide();
-            fsm.Enter<LobbyForNewAccountAuthState, (Profile, string, bool, CancellationToken)>((newUserProfile, userEmail, isCached, loginCt));
+            fsm.Enter<LobbyForNewAccountAuthState, (Profile, string, bool, CancellationToken)>((newUserProfile, userEmail, isRestoredSession, loginCt));
         }
     }
 }

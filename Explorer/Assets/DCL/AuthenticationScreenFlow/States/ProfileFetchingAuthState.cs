@@ -54,7 +54,7 @@ namespace DCL.AuthenticationScreenFlow
             view.Show();
             view.CancelButton.onClick.AddListener(controller.CancelLoginProcess);
 
-            FetchProfileFlowAsync(payload.Email, payload.Identity, payload.IsCached, payload.Ct).Forget();
+            FetchProfileFlowAsync(payload.Email, payload.Identity, payload.IsRestoredSession, payload.Ct).Forget();
         }
 
         public override void Exit()
@@ -82,7 +82,7 @@ namespace DCL.AuthenticationScreenFlow
             base.Exit();
         }
 
-        private async UniTaskVoid FetchProfileFlowAsync(string email, IWeb3Identity identity, bool isCached, CancellationToken ct)
+        private async UniTaskVoid FetchProfileFlowAsync(string email, IWeb3Identity identity, bool isRestoredSession, CancellationToken ct)
         {
             SentryTransactionNameMapping.Instance.StartSpan(LOADING_TRANSACTION_NAME, new SpanData
             {
@@ -93,19 +93,19 @@ namespace DCL.AuthenticationScreenFlow
 
             if (!IsUserAllowedToAccessToBeta(identity))
             {
-                profileFetchException = new NotAllowedUserException($"User not allowed to access beta - restricted user {email} in {nameof(ProfileFetchingAuthState)} ({(isCached ? "cached" : "main")} flow)");
+                profileFetchException = new NotAllowedUserException($"User not allowed to access beta - restricted user {email} in {nameof(ProfileFetchingAuthState)} ({(isRestoredSession ? "restored" : "main")} flow)");
                 machine.Enter<LoginSelectionAuthState, ErrorType>(ErrorType.RestrictedUser);
             }
             else
             {
                 SentryTransactionNameMapping.Instance.EndCurrentSpan(LOADING_TRANSACTION_NAME);
-                currentState.Value = isCached ? AuthStatus.ProfileFetchingCached : AuthStatus.ProfileFetching;
+                currentState.Value = isRestoredSession ? AuthStatus.ProfileFetchingCached : AuthStatus.ProfileFetching;
 
                 try
                 {
                     SentryTransactionNameMapping.Instance.StartSpan(LOADING_TRANSACTION_NAME, new SpanData
                     {
-                        SpanName = isCached ? "ProfileFetchingCached" : "ProfileFetching",
+                        SpanName = isRestoredSession ? "ProfileFetchingCached" : "ProfileFetching",
                         SpanOperation = "auth.profile_fetching",
                         Depth =  STATE_SPAN_DEPTH + 1,
                     });
@@ -117,9 +117,9 @@ namespace DCL.AuthenticationScreenFlow
                         profile.IsDirty = true;
                         // Convert into guest account, only if was not upgraded before
                         profile.HasConnectedWeb3 |= identity.Method != LoginMethod.GUEST;
-                        machine.Enter<LobbyForExistingAccountAuthState, (Profile, bool, CancellationToken)>((profile, isCached, ct));
+                        machine.Enter<LobbyForExistingAccountAuthState, (Profile, bool, CancellationToken)>((profile, isRestoredSession, ct));
                     }
-                    else if (isCached)
+                    else if (isRestoredSession)
                     {
                         // Auto-login restored an identity that has no deployed profile (abandoned onboarding). Clear it and start over.
                         identityCache.Clear();
@@ -223,22 +223,22 @@ namespace DCL.AuthenticationScreenFlow
     {
         public readonly string Email;
         public readonly IWeb3Identity Identity;
-        public readonly bool IsCached;
+        public readonly bool IsRestoredSession;
         public CancellationToken Ct;
 
-        public ProfileFetchingPayload(string email, IWeb3Identity identity, bool isCached, CancellationToken ct)
+        public ProfileFetchingPayload(string email, IWeb3Identity identity, bool isRestoredSession, CancellationToken ct)
         {
             this.Email = email;
             this.Identity = identity;
-            this.IsCached = isCached;
+            this.IsRestoredSession = isRestoredSession;
             this.Ct = ct;
         }
 
-        public ProfileFetchingPayload(IWeb3Identity identity, bool isCached, CancellationToken ct)
+        public ProfileFetchingPayload(IWeb3Identity identity, bool isRestoredSession, CancellationToken ct)
         {
             this.Email = string.Empty;
             this.Identity = identity;
-            this.IsCached = isCached;
+            this.IsRestoredSession = isRestoredSession;
             this.Ct = ct;
         }
     }
