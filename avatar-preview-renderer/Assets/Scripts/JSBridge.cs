@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Linq;
 using Configurator;
 using JetBrains.Annotations;
@@ -105,6 +106,33 @@ public class JSBridge : MonoBehaviour
         }
         if (payload == null) return;
         previewController.SetSpringBonesParams(payload);
+    }
+
+    [UsedImplicitly]
+    public void SetCameraPosition(string value) => previewController.ChangeCameraPosition(ParseCameraVector(value));
+
+    [UsedImplicitly]
+    public void SetOffset(string value) => previewController.SetCameraTarget(ParseCameraVector(value));
+
+    [UsedImplicitly]
+    public void SetZoom(string value) => previewController.ChangeCameraPosition(new Vector3(0f, 0f, -ParseCameraNumber(value)));
+
+    private static Vector3 ParseCameraVector(string value)
+    {
+        var parts = value.Split(',');
+        if (parts.Length != 3)
+            throw new ArgumentException("Send three comma-separated camera values.", nameof(value));
+
+        return new Vector3(ParseCameraNumber(parts[0]), ParseCameraNumber(parts[1]), ParseCameraNumber(parts[2]));
+    }
+
+    private static float ParseCameraNumber(string value)
+    {
+        if (!float.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var number)
+            || float.IsNaN(number) || float.IsInfinity(number))
+            throw new ArgumentException("Camera values must be finite numbers using a decimal point.", nameof(value));
+
+        return number;
     }
 
     [UsedImplicitly]

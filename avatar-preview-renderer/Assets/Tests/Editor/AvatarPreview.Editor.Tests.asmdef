@@ -1,0 +1,5 @@
+{
+    "name": "AvatarPreview.Editor.Tests",
+    "includePlatforms": ["Editor"],
+    "optionalUnityReferences": ["TestAssemblies"]
+}
