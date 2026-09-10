@@ -372,6 +372,12 @@ Shader "DCL/DCL_Toon"
 #ifdef UNIVERSAL_PIPELINE_CORE_INCLUDED
             #include "../DCL_AvatarDither.hlsl"
             #include "DCL_ToonInput.hlsl"
+            #define UNIVERSAL_LIT_INPUT_INCLUDED
+            #ifndef UNIVERSAL_SURFACE_TYPE_TRANSPARENT_INCLUDED
+            #define UNIVERSAL_SURFACE_TYPE_TRANSPARENT_INCLUDED
+            inline bool IsSurfaceTypeTransparent() { return _Surface > 0; }
+            inline bool IsSurfaceTypeOpaque() { return !IsSurfaceTypeTransparent(); }
+            #endif
             #include "Packages/com.unity.render-pipelines.universal/Shaders/LitForwardPass.hlsl"
             #include "DCL_ToonHead.hlsl"
             #include "DCL_ToonBody.hlsl"

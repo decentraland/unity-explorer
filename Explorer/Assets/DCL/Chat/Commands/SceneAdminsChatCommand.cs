@@ -1,13 +1,8 @@
 using Cysharp.Threading.Tasks;
-using System;
 using System.Text;
 using System.Threading;
 using System.Collections.Generic;
-using DCL.WebRequests;
-using DCL.Utilities;
 using DCL.SceneBannedUsers;
-using ECS.SceneLifeCycle;
-using SceneRunner.Scene;
 using RichTypes;
 
 namespace DCL.Chat.Commands

@@ -26,7 +26,9 @@ using DCL.LOD.Systems;
 using DCL.MarketplaceCredits;
 using DCL.MarketplaceCredits.Purchase;
 using DCL.McpServer.Systems;
+using DCL.Multiplayer.Connections.GateKeeper.Meta;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
+using DCL.Multiplayer.Connections.Pulse;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Emotes;
 using DCL.Multiplayer.Movement;
@@ -45,6 +47,7 @@ using DCL.RealmNavigation;
 using DCL.Rendering.GPUInstancing.Systems;
 using DCL.RuntimeDeepLink;
 using DCL.SDKComponents.AvatarLocomotion;
+using DCL.SDKComponents.AvatarNametag;
 using DCL.SkyBox;
 using DCL.UI;
 using DCL.UI.ConfirmationDialog;
@@ -83,8 +86,6 @@ namespace Global.Dynamic
         private readonly UIShellContainer uiShellContainer;
         private readonly ChatContainer chatContainer;
 
-        private AbgenSidecarPlugin? abgenSidecarPlugin;
-
         public IMVCManager MvcManager => uiShellContainer.MvcManager;
 
         public IGlobalRealmController RealmController { get; }
@@ -110,13 +111,6 @@ namespace Global.Dynamic
         public IRoomHub RoomHub => commsContainer.RoomHub;
 
         public ISystemClipboard SystemClipboard => uiShellContainer.Clipboard;
-
-        /// <summary>
-        ///     Completed once the abgen sidecar reaches a terminal state — warm and serving, or given up
-        ///     (see <see cref="AbgenSidecarPlugin.ReadyAsync" />). Already completed when the sidecar is
-        ///     not mounted, so awaiting it costs nothing outside local scene development with local ABs.
-        /// </summary>
-        public UniTask AbgenSidecarReadyAsync => abgenSidecarPlugin?.ReadyAsync ?? UniTask.CompletedTask;
 
         private DynamicWorldContainer(
             UIShellContainer uiShellContainer,
@@ -235,6 +229,10 @@ namespace Global.Dynamic
 
             var terrainContainer = TerrainContainer.Create(staticContainer, realmContainer, dynamicWorldParams.EnableLandscape, localSceneDevelopment);
 
+            // One fetch of the dev server’s entity id, shared by both transports: the gatekeeper scene room
+            // keys its room on it and Pulse derives its realm from it, so two instances would double the start-up requests.
+            var localSceneEntityIdSource = new LocalSceneEntityIdSource(staticContainer.WebRequestsContainer.WebRequestController, dynamicWorldParams.LocalSceneDevelopmentRealm);
+
             var commsContainer = CommsContainer.Create(
                 staticContainer,
                 bootstrapContainer,
@@ -244,7 +242,12 @@ namespace Global.Dynamic
                 dynamicWorldParams.IsolateScenesCommunication,
                 dynamicWorldParams.EnableAnalytics,
                 localSceneDevelopment,
-                dynamicWorldParams.LocalSceneDevelopmentRealm);
+                localSceneEntityIdSource);
+
+            // Pulse partitions visibility by exact realm string. Local scene development has no realm of its own,
+            // so each dev process derives one from the entity id its dev server serves, keeping concurrent previews apart.
+            var pulseRealm = new PulseRealm(staticContainer.RealmData,
+                localSceneDevelopment ? localSceneEntityIdSource : null);
 
             IFriendsEventBus friendsEventBus = new DefaultFriendsEventBus();
 
@@ -282,7 +285,7 @@ namespace Global.Dynamic
 
                 multiplayerContainer = await MultiplayerContainer.CreateAsync(
                     settingsContainer,
-                    staticContainer.RealmData,
+                    pulseRealm,
                     identityCache,
                     commsContainer.MovementInbox,
                     staticContainer.QualityContainer.LandscapeData,
@@ -365,6 +368,7 @@ namespace Global.Dynamic
                 multiplayerContainer.PulseMultiplayerService,
                 multiplayerContainer.ProfilePropagation,
                 multiplayerContainer.PulseActivation,
+                multiplayerContainer.PulseRealm,
                 realmNavigatorContainer.WorldPermissionsService,
                 chatContainer.ChatHistory);
 
@@ -429,6 +433,7 @@ namespace Global.Dynamic
                 new AvatarAttachPlugin(globalWorld, staticContainer.MainPlayerAvatarBaseProxy, staticContainer.ComponentsContainer.ComponentPoolsRegistry, commsContainer.EntityParticipantTable, staticContainer.CharacterContainer.Transform),
                 new SceneMaskedEmotePlugin(globalWorld, playerEntity, staticContainer.MainPlayerAvatarBaseProxy, staticContainer.EmotesContainer.EmotePlayer, staticContainer.EmoteStorage, multiplayerEmotesMessageBus),
                 new RealmInfoPlugin(staticContainer.RealmData, commsContainer.RoomHub),
+                new AvatarNametagWorldPlugin(globalWorld, playerEntity, commsContainer.EntityParticipantTable),
             };
 
             var characterPreviewEventBus = new CharacterPreviewEventBus();
@@ -515,8 +520,6 @@ namespace Global.Dynamic
             var bannedSceneController = new ECSBannedScene(staticContainer.ScenesCache, globalWorld, playerEntity);
 
             var springBoneSimulationSettings = new SpringBoneSimulationSettings();
-
-            AbgenSidecarPlugin? abgenSidecarPlugin = null;
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
@@ -836,6 +839,8 @@ namespace Global.Dynamic
                     uiShellContainer.MvcManager,
                     bootstrapContainer.DecentralandUrlsSource));
 
+            globalPlugins.Add(new AnalyticsDiskFullPopupPlugin(bootstrapContainer.Analytics.EventBus, uiShellContainer.MvcManager));
+
             // ReSharper disable once MethodHasAsyncOverloadWithCancellation
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.VoiceChat))
                 globalPlugins.Add(
@@ -870,11 +875,6 @@ namespace Global.Dynamic
             if (localSceneDevelopment)
             {
                 globalPlugins.Add(new LocalSceneDevelopmentPlugin(realmContainer.ReloadSceneController, realmUrls));
-
-                // local-ab only (the endpoint is reserved exclusively under that flag); the plugin owns
-                // the abgen server's whole lifecycle: creation, launch, warm-up, dispose.
-                if (bootstrapContainer.LocalAbBaseUrl != null)
-                    globalPlugins.Add(abgenSidecarPlugin = new AbgenSidecarPlugin(bootstrapContainer.LocalAbBaseUrl, realmUrls, bootstrapContainer.Environment));
             }
             else
             {
@@ -1097,8 +1097,6 @@ namespace Global.Dynamic
                 communitiesContainer,
                 voiceChatContainer
             );
-
-            container.abgenSidecarPlugin = abgenSidecarPlugin;
 
             // Init itself
             await dynamicWorldDependencies.SettingsContainer.InitializePluginAsync(container, ct)!.ThrowOnFail();

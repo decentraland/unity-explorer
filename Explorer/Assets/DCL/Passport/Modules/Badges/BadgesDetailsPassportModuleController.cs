@@ -5,12 +5,9 @@ using DCL.Passport.Fields.Badges;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI;
-using DCL.WebRequests;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using Arch.Core;
-using UnityEngine;
 using Utility;
 
 namespace DCL.Passport.Modules.Badges

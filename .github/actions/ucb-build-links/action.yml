@@ -1,0 +1,178 @@
+name: Fetch Unity Cloud Build Links
+description: >-
+  Download the unity_build_info_* artifacts of a Unity Cloud Build run and emit
+  sanitized markdown linking each build id to its Unity Cloud dashboard page:
+  bare table rows for appending to an existing two-column table, and a standalone
+  table section for comment bodies that have no table of their own.
+
+inputs:
+  run-id:
+    description: Workflow run id of the Unity Cloud Build run whose artifacts to read.
+    required: true
+  github-token:
+    description: Token used to download the run's artifacts.
+    required: true
+  install-source:
+    description: >-
+      Install source half of the info-artifact name
+      (unity_build_info_<target>_<install-source>), matching the build
+      workflow's install_source matrix value.
+    required: false
+    default: launcher
+
+outputs:
+  rows:
+    description: >-
+      Two-column table rows, one per target, each pairing the GitHub job log,
+      the Unity Cloud build page, the Unity log artifact and a "⏱" duration
+      cell; a row omits the parts whose data was absent or invalid, and rows
+      built purely from the Actions API (job/log links) still render when the
+      info artifact itself is missing.
+    value: ${{ steps.fetch.outputs.rows }}
+  section:
+    description: >-
+      Standalone table (header + rows); empty only when no row could be built.
+    value: ${{ steps.fetch.outputs.section }}
+  windows-cell:
+    description: >-
+      The Windows row's cell alone ("[GitHub job](…) · [Unity Cloud #N](…) ·
+      [Unity log](…) · ⏱ …"), for callers composing their own rows; empty when
+      unknown.
+    value: ${{ steps.fetch.outputs.windows-cell }}
+  mac-cell:
+    description: Mac twin of windows-cell.
+    value: ${{ steps.fetch.outputs.mac-cell }}
+
+runs:
+  using: composite
+  steps:
+    - name: Download and sanitize Unity Cloud build info
+      id: fetch
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+        RUN_ID: ${{ inputs.run-id }}
+        REPO_FULL: ${{ github.repository }}
+        INSTALL_SOURCE: ${{ inputs.install-source }}
+      run: |
+        set -euo pipefail
+
+        # The info files come out of the PR-controlled build workflow, so treat them as
+        # untrusted input: accept only a numeric build id and a Unity dashboard URL with
+        # a conservative charset before letting them anywhere near a comment body.
+        # Mirrors the producer's '/builds/<id>' requirement (build.py) so the two
+        # validators agree, and pins the id to digits — a query-string-only path
+        # under a Unity host (open-redirect bait) no longer passes.
+        URL_RE='^https://(cloud\.unity\.com|developer\.cloud\.unity3d\.com|dashboard\.unity3d\.com)/[A-Za-z0-9./_%~?=&#-]*/builds/[0-9]+[A-Za-z0-9./_%~?=&#-]*$'
+        parse_info() {
+          local target="$1"
+          local dir="ucb_info_${target}"
+          REPLY_ID=""
+          REPLY_URL=""
+          REPLY_QUEUE=""
+          REPLY_BUILD=""
+          if gh run download "$RUN_ID" \
+               --repo "$REPO_FULL" \
+               --name "unity_build_info_${target}_${INSTALL_SOURCE}" \
+               --dir "$dir" 2>"${dir}.err"; then
+            REPLY_ID=$(grep -m1 '^BUILD_ID=' "$dir/unity_cloud_build_info.env" | cut -d= -f2- || true)
+            REPLY_URL=$(grep -m1 '^DASHBOARD_URL=' "$dir/unity_cloud_build_info.env" | cut -d= -f2- || true)
+            REPLY_QUEUE=$(grep -m1 '^QUEUE_SECS=' "$dir/unity_cloud_build_info.env" | cut -d= -f2- || true)
+            REPLY_BUILD=$(grep -m1 '^BUILD_SECS=' "$dir/unity_cloud_build_info.env" | cut -d= -f2- || true)
+            [[ "$REPLY_ID" =~ ^[0-9]+$ ]] || REPLY_ID=""
+            [[ "$REPLY_URL" =~ $URL_RE ]] || REPLY_URL=""
+            [[ "$REPLY_QUEUE" =~ ^[0-9]+$ ]] || REPLY_QUEUE=""
+            [[ "$REPLY_BUILD" =~ ^[0-9]+$ ]] || REPLY_BUILD=""
+          else
+            # Absence is normal for runs predating the info artifact; still surface the
+            # gh error so an auth/permission regression doesn't silently eat the rows.
+            echo "note: could not fetch unity_build_info_${target}_${INSTALL_SOURCE}: $(tr '\n' ' ' < "${dir}.err")"
+          fi
+        }
+
+        # Per-target GitHub job pages, from the trusted Actions API (jobs of the
+        # matrix job "Build (<target>)"), so each row pairs the Unity Cloud build
+        # page with the GitHub-side job log.
+        JOBS_JSON=$(gh api "/repos/$REPO_FULL/actions/runs/$RUN_ID/jobs?per_page=100" 2>/dev/null || echo '{"jobs":[]}')
+
+        # Suite id + artifact ids feed the per-target Unity log download links
+        # (artifact downloads hang off the check suite, not the run).
+        SUITE_ID=$(gh api "/repos/$REPO_FULL/actions/runs/$RUN_ID" --jq '.check_suite_id' 2>/dev/null || echo "")
+        [[ "$SUITE_ID" =~ ^[0-9]+$ ]] || SUITE_ID=""
+        ARTIFACTS_JSON=$(gh api "/repos/$REPO_FULL/actions/runs/$RUN_ID/artifacts?per_page=100" 2>/dev/null || echo '{"artifacts":[]}')
+
+        fmt_dur() {
+          # Digits-only input may still carry leading zeros; force base-10 so
+          # $(( )) can't parse a value like 0900 as (invalid) octal.
+          local s=$((10#$1))
+          if [ "$s" -ge 3600 ]; then printf '%dh %dm' $((s/3600)) $((s%3600/60))
+          elif [ "$s" -ge 60 ]; then printf '%dm %ds' $((s/60)) $((s%60))
+          else printf '%ds' "$s"; fi
+        }
+
+        WINDOWS_CELL=""
+        MAC_CELL=""
+        ROWS=""
+        for entry in "windows64:Windows" "macos:Mac"; do
+          target="${entry%%:*}"
+          label="${entry#*:}"
+          parse_info "$target"
+          job_url=$(jq -r --arg n "Build ($target)" '.jobs[]? | select(.name==$n) | .html_url // empty' <<< "$JOBS_JSON" | head -1)
+          log_id=$(jq -r --arg n "${target}_${INSTALL_SOURCE}_unity_log" \
+            '.artifacts[]? | select(.name==$n and .expired==false) | .id' <<< "$ARTIFACTS_JSON" | head -1)
+          [[ "$log_id" =~ ^[0-9]+$ ]] || log_id=""
+
+          parts=()
+          [ -n "$job_url" ] && parts+=("[GitHub job](${job_url})")
+          # A URL without a valid id only occurs on a tampered artifact — drop the link
+          # rather than render an empty "[#](...)" label.
+          if [ -n "$REPLY_ID" ] && [ -n "$REPLY_URL" ]; then
+            parts+=("[Unity Cloud #${REPLY_ID}](${REPLY_URL})")
+          elif [ -n "$REPLY_ID" ]; then
+            # Unlinked fallback must not say "#N": GitHub autolinks bare #N in
+            # comments to issue N.
+            parts+=("Unity Cloud build ${REPLY_ID}")
+          fi
+          if [ -n "$log_id" ] && [ -n "$SUITE_ID" ]; then
+            parts+=("[Unity log](${GITHUB_SERVER_URL:-https://github.com}/${REPO_FULL}/suites/${SUITE_ID}/artifacts/${log_id})")
+          fi
+          if [ -n "$REPLY_BUILD" ]; then
+            t="⏱ $(fmt_dur "$REPLY_BUILD") build"
+            [ -n "$REPLY_QUEUE" ] && [ "$REPLY_QUEUE" -gt 0 ] && t+=" + $(fmt_dur "$REPLY_QUEUE") queue"
+            parts+=("$t")
+          fi
+
+          cell=""
+          if [ "${#parts[@]}" -gt 0 ]; then
+            cell=$(printf '%s · ' "${parts[@]}")
+            cell="${cell% · }"
+            ROWS+="| ${label} | ${cell} |"$'\n'
+          fi
+          case "$target" in
+            windows64) WINDOWS_CELL="$cell" ;;
+            macos)     MAC_CELL="$cell" ;;
+          esac
+        done
+
+        SECTION=""
+        if [ -n "$ROWS" ]; then
+          SECTION="| Platform | Links & timing |"$'\n'"| -------- | ----------------------- |"$'\n'"$ROWS"
+        fi
+
+        # The payload derives from artifact bytes, so the heredoc delimiter must not be
+        # guessable content even though the validation above already forbids newlines.
+        # Every value is emitted with exactly one trailing newline — a value glued to
+        # the delimiter line would make the runner miss the terminator entirely.
+        DELIM="UCB_EOF_${RANDOM}${RANDOM}_$$"
+        emit() {
+          local name="$1" val="$2"
+          echo "${name}<<${DELIM}"
+          if [ -n "$val" ]; then printf '%s\n' "${val%$'\n'}"; fi
+          echo "${DELIM}"
+        }
+        {
+          emit rows "$ROWS"
+          emit section "$SECTION"
+          emit windows-cell "$WINDOWS_CELL"
+          emit mac-cell "$MAC_CELL"
+        } >> "$GITHUB_OUTPUT"

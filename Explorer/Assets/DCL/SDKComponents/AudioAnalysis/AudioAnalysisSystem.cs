@@ -8,12 +8,9 @@ using DCL.Optimization.PerformanceBudgeting;
 using DCL.SDKComponents.MediaStream;
 using ECS.Abstract;
 using ECS.Groups;
-using ECS.Prioritization.Components;
-using SceneRunner.Scene;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using CRDT;
 using Plugins.NativeAudioAnalysis;
-using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AudioClips.AudioClipData, ECS.StreamableLoading.AudioClips.GetAudioClipIntention>;
 
 namespace DCL.SDKComponents.AudioSources
 {

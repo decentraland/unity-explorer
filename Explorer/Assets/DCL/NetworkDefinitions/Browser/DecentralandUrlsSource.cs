@@ -46,7 +46,7 @@ namespace DCL.Browser.DecentralandUrls
         private readonly ILaunchMode launchMode;
         private readonly DecentralandEnvironment environment;
         private readonly string? gatekeeperBaseOverride;
-        private readonly string? optimizedAssetsBaseOverride;
+        private readonly string? localAbBaseOverride;
         private readonly bool abgenPipelineForced;
 
         /// <summary>
@@ -61,7 +61,7 @@ namespace DCL.Browser.DecentralandUrls
             GatekeeperMode gatekeeperMode = GatekeeperMode.Org,
             string customGatekeeperUrl = "",
             string? cliGatekeeperUrl = null,
-            string? cliOptimizedAssetsUrl = null,
+            string? localAbBaseUrl = null,
             string? customBaseDomain = null,
             bool abgenPipelineForced = false)
         {
@@ -71,7 +71,7 @@ namespace DCL.Browser.DecentralandUrls
             this.launchMode = launchMode;
             gatekeeperBaseOverride = ResolveGatekeeperOverride(gatekeeperMode, customGatekeeperUrl, cliGatekeeperUrl, out string source);
             ReportHub.Log(ReportCategory.STARTUP, $"Gatekeeper base override: {gatekeeperBaseOverride ?? "(default)"} (source: {source})");
-            optimizedAssetsBaseOverride = cliOptimizedAssetsUrl?.TrimEnd('/');
+            localAbBaseOverride = localAbBaseUrl?.TrimEnd('/');
             this.abgenPipelineForced = abgenPipelineForced;
 
             realmData.RealmType.OnUpdate += ResetRealmDependentUrls;
@@ -178,6 +178,9 @@ namespace DCL.Browser.DecentralandUrls
             return urlData.Url!;
         }
 
+        /// <summary>This source routes nothing through a gateway; <see cref="GatewayUrlsSource" /> overrides it.</summary>
+        public virtual string? GatewayOrigin => null;
+
         public virtual string TransformUrl(string originalUrl) =>
             originalUrl;
 
@@ -206,13 +209,13 @@ namespace DCL.Browser.DecentralandUrls
             gatekeeperBaseOverride ?? defaultBaseUrl;
 
         /// <summary>
-        ///     The "--optimized-assets-url" arg or the flag variant payload override the base url, otherwise
+        ///     The local-ab abgen sidecar's base url or the flag variant payload override the base url, otherwise
         ///     https://abcdn.{BaseDomain}. FeatureFlagsDependent means it is re-resolved (not cached) until flags load.
         /// </summary>
         private UrlData ResolveOptimizedAssetsUrl(UrlData dedicatedHost)
         {
-            if (optimizedAssetsBaseOverride is { Length: > 0 })
-                return new UrlData(CacheBehaviour.FeatureFlagsDependent, optimizedAssetsBaseOverride);
+            if (localAbBaseOverride is { Length: > 0 })
+                return new UrlData(CacheBehaviour.FeatureFlagsDependent, localAbBaseOverride);
 
             FeatureFlagsConfiguration featureFlags = FeatureFlagsConfiguration.Instance;
 
@@ -376,8 +379,14 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.WorldEntitiesActive => UrlData.RealmDependent(FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.ASSET_BUNDLE_FALLBACK) && launchMode.CurrentMode != LaunchMode.LocalSceneDevelopment ? $"{Url(DecentralandUrl.AssetBundleRegistry)}/entities/active?world_name={{0}}" :
                     realmData.Configured ? realmData.Ipfs.EntitiesActiveEndpoint.Value : null),
 
-                DecentralandUrl.EntitiesDeployment => UrlData.RealmDependent(realmData.Configured ? realmData.Ipfs.EntitiesBaseUrl.Value : null),
-                DecentralandUrl.Lambdas => UrlData.RealmDependent(realmData.Configured ? realmData.Ipfs.LambdasBaseUrl.Value : null),
+                // A local scene dev server stubs the catalyst endpoints it advertises - deployments are rejected
+                // and profile / outfit reads answer "not found" - so identity data, which is environment-global
+                // rather than realm-scoped, resolves against the environment's catalyst instead of the realm's.
+                DecentralandUrl.EntitiesDeployment => UrlData.RealmDependent(realmData.IsLocalScene() ? $"https://peer.{BaseDomain}/content/entities/" :
+                    realmData.Configured ? realmData.Ipfs.EntitiesBaseUrl.Value : null),
+
+                DecentralandUrl.Lambdas => UrlData.RealmDependent(realmData.IsLocalScene() ? $"https://peer.{BaseDomain}/lambdas" :
+                    realmData.Configured ? realmData.Ipfs.LambdasBaseUrl.Value : null),
                 DecentralandUrl.Content => UrlData.RealmDependent(realmData.Configured ? realmData.Ipfs.ContentBaseUrl.Value : null),
 
                 DecentralandUrl.SocialServiceMutes => $"https://social-api.{BaseDomain}/v1/mutes",
