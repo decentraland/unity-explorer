@@ -68,6 +68,7 @@ namespace DCL.Web3.Authenticators
                     : await CreateEmailWalletAsync(email, linkedCt);
 
                 ct.ThrowIfCancellationRequested();
+
                 if (linkedCt.IsCancellationRequested)
                 {
                     ReportHub.LogWarning(ReportCategory.AUTHENTICATION, $"ThirdWeb auto-login timed out after {AUTO_LOGIN_TIMEOUT.TotalSeconds}s");
@@ -94,6 +95,7 @@ namespace DCL.Web3.Authenticators
                 // External cancellation — rethrow so caller knows it was cancelled
                 throw;
             }
+
             // An upgraded account is not an auto-login failure: it propagates so the caller can require its OTP
             catch (Exception e) when (e is not GuestAccountUpgradedException)
             {
@@ -210,15 +212,18 @@ namespace DCL.Web3.Authenticators
 
         private UniTask<InAppWallet> CreateGuestWalletAsync(CancellationToken ct) =>
             InAppWallet.Create(client, authProvider: Thirdweb.AuthProvider.Guest, storageDirectoryPath: storageDirectoryPath)
-                       .AsUniTask().AttachExternalCancellation(ct);
+                       .AsUniTask()
+                       .AttachExternalCancellation(ct);
 
         private UniTask<InAppWallet> CreateEmailWalletAsync(string? email, CancellationToken ct) =>
             InAppWallet.Create(client, email, storageDirectoryPath: storageDirectoryPath)
-                       .AsUniTask().AttachExternalCancellation(ct);
+                       .AsUniTask()
+                       .AttachExternalCancellation(ct);
 
         private UniTask<string> LoginWithGuestAsync(InAppWallet wallet, CancellationToken ct) =>
             wallet.LoginWithGuest(GuestSessionIdProvider.Resolve(guestSessionIdOverride))
-                  .AsUniTask().AttachExternalCancellation(ct);
+                  .AsUniTask()
+                  .AttachExternalCancellation(ct);
 
         /// <summary>
         ///     The guest session id is derived from the device, so the guest flow keeps resolving the same wallet after
@@ -268,10 +273,7 @@ namespace DCL.Web3.Authenticators
             pendingWallet = await CreateEmailWalletAsync(email, ct);
 
             try { await pendingWallet.SendOTP().AsUniTask().AttachExternalCancellation(ct); }
-            catch (Exception ex) when (ContainsInvalidEmailError(ex))
-            {
-                throw new InvalidEmailException(ex.Message, ex);
-            }
+            catch (Exception ex) when (ContainsInvalidEmailError(ex)) { throw new InvalidEmailException(ex.Message, ex); }
 
             ReportHub.Log(ReportCategory.AUTHENTICATION, "ThirdWeb login: OTP sent to email");
             OTPSendSucceeded?.Invoke(email);
@@ -317,26 +319,34 @@ namespace DCL.Web3.Authenticators
             InAppWallet walletToLink = await CreateEmailWalletAsync(email, ct);
 
             try { await walletToLink.SendOTP().AsUniTask().AttachExternalCancellation(ct); }
-            catch (Exception ex) when (ContainsInvalidEmailError(ex))
-            {
-                throw new InvalidEmailException(ex.Message, ex);
-            }
+            catch (Exception ex) when (ContainsInvalidEmailError(ex)) { throw new InvalidEmailException(ex.Message, ex); }
 
             pendingLinkWallet = walletToLink;
             pendingLinkEmail = email;
             ReportHub.Log(ReportCategory.AUTHENTICATION, "ThirdWeb link: OTP sent to email");
         }
 
-        public UniTask ResendEmailLinkOtpAsync(CancellationToken ct) =>
-            pendingLinkWallet!.SendOTP().AsUniTask().AttachExternalCancellation(ct);
+        public UniTask ResendEmailLinkOtpAsync(CancellationToken ct)
+        {
+            if (pendingLinkWallet == null)
+                throw new InvalidOperationException("ResendEmailLinkOtp called but no pending link wallet");
+
+            return pendingLinkWallet.SendOTP().AsUniTask().AttachExternalCancellation(ct);
+        }
 
         public async UniTask<IWeb3Identity> LinkEmailAsync(string otp, CancellationToken ct)
         {
             ct.ThrowIfCancellationRequested();
 
-            var activeWallet = (InAppWallet)ActiveWallet!;
+            if (ActiveWallet == null)
+                throw new InvalidOperationException("LinkEmail called but no active wallet");
 
-            try { await activeWallet.LinkAccount(pendingLinkWallet!, otp); }
+            if (pendingLinkWallet == null)
+                throw new InvalidOperationException("LinkEmail called but no pending link wallet");
+
+            var activeWallet = (InAppWallet)ActiveWallet;
+
+            try { await activeWallet.LinkAccount(pendingLinkWallet, otp); }
             catch (Exception e) when (ContainsInvalidOtpError(e)) { throw new CodeVerificationException("Incorrect OTP code", e); }
             catch (Exception e) when (ContainsAlreadyLinkedError(e)) { throw new EmailAlreadyLinkedException("The email is already linked to another account", e); }
 

@@ -189,20 +189,15 @@ namespace DCL.UI.UpgradeGuestAccountPopup
 
         private async UniTask PromoteProfileAsync(CancellationToken ct)
         {
-            try
-            {
-                Profile? profile = await selfProfile.ProfileAsync(ct);
+            Profile? profile = await selfProfile.ProfileAsync(ct);
 
-                if (profile == null || profile.HasConnectedWeb3) return;
+            if (profile == null || profile.HasConnectedWeb3) return;
 
-                Profile promotedProfile = new ProfileBuilder().From(profile)
-                                                              .WithGuestMode(false)
-                                                              .Build();
+            Profile promotedProfile = new ProfileBuilder().From(profile)
+                                                          .WithGuestMode(false)
+                                                          .Build();
 
-                await selfProfile.UpdateProfileAsync(promotedProfile, ct);
-            }
-            catch (OperationCanceledException) { }
-            catch (Exception e) { ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION)); }
+            await selfProfile.UpdateProfileAsync(promotedProfile, ct);
         }
 
         private void ResendOTP() =>
