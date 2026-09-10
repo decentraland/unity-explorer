@@ -72,13 +72,16 @@ namespace DCL.SceneLifeCycle.Tests
             Assert.That(result, Is.EqualTo(VisualSceneState.ShowingScene));
         }
 
-        [Test]
-        public void ShowLODInVolatileRealmForSDK6()
+        [TestCase(null, 0, VisualSceneState.ShowingScene)]
+        [TestCase("6", 0, VisualSceneState.ShowingScene)]
+        [TestCase(null, SDK7_LOD_THRESHOLD, VisualSceneState.ShowingLod)]
+        [TestCase("6", SDK7_LOD_THRESHOLD, VisualSceneState.ShowingLod)]
+        public void ApplySceneDistanceToSDK6(string runtimeVersion, byte bucket, VisualSceneState expected)
         {
-            VisualSceneState result = resolver.ResolveVisualSceneState(CreatePartition(0), CreateSceneDefinition(null),
+            VisualSceneState result = resolver.ResolveVisualSceneState(CreatePartition(bucket), CreateSceneDefinition(runtimeVersion),
                 VisualSceneState.Uninitialized, false, ISSDescriptor.NONE);
 
-            Assert.That(result, Is.EqualTo(VisualSceneState.ShowingLod));
+            Assert.That(result, Is.EqualTo(expected));
         }
 
         [Test]

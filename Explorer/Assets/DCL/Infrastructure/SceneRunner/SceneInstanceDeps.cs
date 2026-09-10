@@ -44,6 +44,7 @@ using SceneRuntime.Apis.Modules.SceneApi;
 using SceneRuntime.ScenePermissions;
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 using Utility.Multithreading;
 
 namespace SceneRunner
@@ -180,7 +181,9 @@ namespace SceneRunner
                     return Result<SceneInstanceDependencies>.ErrorResult($"Scene main script '{sceneData.SceneEntityDefinition.metadata.main}' not found in the content manifest of scene {sceneData.SceneShortInfo}");
             }
             else
-                sceneCodeUrl = URLAddress.FromString("https://renderer-artifacts.decentraland.org/sdk7-adaption-layer/main/index.js");
+                // SHA-256: 733a108cd8bb667be75d6c76a3fe444f6ddcd481858af8d354dba25a29713b9a
+                // Build provenance: StreamingAssets/Js/sdk6-adapter.provenance.json
+                sceneCodeUrl = URLAddress.FromString($"file://{Application.streamingAssetsPath}/Js/sdk6-adapter.min.js");
 
             return Result<SceneInstanceDependencies>.SuccessResult(
                 new SceneInstanceDependencies(sceneCodeUrl, sdkComponentsRegistry, entityCollidersGlobalCache, sceneData, permissionsProvider, partitionProvider, ecsWorldFactory, entityFactory));
