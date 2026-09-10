@@ -1,11 +1,12 @@
 name: In-World Tests
 
-# Dispatcher for the InWorld NUnit suite. The mechanics — Explorer install,
-# AltTester, `mf explorer test`, Allure upload, and reporting into the unified
-# CI status comment's InWorld section (standalone comment as fallback) — live
-# in decentraland/explorer-automation's `run-inworld-suite.yml`. This file only
-# decides when to run and against which build, and shares its build resolution
-# with visual-regression.yml via .github/actions/resolve-explorer-build.
+# Dispatcher for the InWorld and Visual NUnit suites. The mechanics — Explorer
+# install, AltTester, `mf explorer test`, Allure upload, and reporting into the
+# unified CI status comment (standalone comment as fallback) — live in
+# decentraland/explorer-automation's `run-inworld-suite.yml` and
+# `run-visual-suite.yml`. This file only decides when to run and against which
+# build, and shares its build resolution with visual-regression.yml via
+# .github/actions/resolve-explorer-build.
 #
 # Triggers:
 #   - Every PR into main from a `release/**` or `hotfix/**` branch. `pull_request`
@@ -16,8 +17,8 @@ name: In-World Tests
 #   - Manually, from the Actions tab, against any ref.
 #
 # To make a red suite block the merge, add `InWorld suite result` to main's
-# required status checks. That job is the gate: it is the only name worth
-# requiring, it stays stable when the reusable workflow's own job names change,
+# required status checks. That job gates both suites: it is the only name worth
+# requiring, it stays stable when the reusable workflows' own job names change,
 # and it passes for PRs into main that are not release or hotfix.
 #
 # Release PRs are opened by create-release-branch.yml with GITHUB_TOKEN, and
@@ -229,9 +230,133 @@ jobs:
       scope: ${{ (inputs.filter || '') == '' && 'ALL' || '' }}
     secrets: inherit
 
+  # Flip the CI status comment's automation section to "running" as soon as the
+  # visual suite is dispatched, as visual-regression.yml does for /visual-tests.
+  visual-pending:
+    name: Mark visual suite running
+    needs: resolve
+    if: needs.resolve.outputs.pr_number != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout CI status action
+        uses: actions/checkout@v6
+        with:
+          sparse-checkout: .github/actions/ci-status-comment
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
+      - name: Set automation section to running
+        uses: ./.github/actions/ci-status-comment
+        with:
+          pr-number: ${{ needs.resolve.outputs.pr_number }}
+          section: automation
+          github-token: ${{ github.token }}
+          body: |-
+            [![Automation](https://img.shields.io/badge/Automation-Running!-yellow?logo=github&logoColor=white&style=for-the-badge)](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+
+            Visual regression suite running for commit `${{ needs.resolve.outputs.commit_sha }}` — [watch the run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}).
+
+  visual-suite:
+    name: Visual suite
+    # visual-pending in needs orders the two writers of the automation section, so
+    # the "Running!" write cannot land after the verdict. !cancelled() keeps the
+    # suite running when pending skips or fails.
+    needs: [resolve, visual-pending]
+    if: ${{ !cancelled() && needs.resolve.result == 'success' }}
+    # @main pins the merged version of the reusable, as for the InWorld suite above.
+    uses: decentraland/explorer-automation/.github/workflows/run-visual-suite.yml@main
+    # Must be a superset of run-visual-suite.yml's own `permissions:`. contents:write
+    # is its record-mode baseline commit, unused in test mode but declared upstream.
+    permissions:
+      contents: write
+      pull-requests: write
+    with:
+      mode: test
+      build_url: ${{ needs.resolve.outputs.build_url }}
+      pr_number: ${{ needs.resolve.outputs.pr_number }}
+      tests_ref: ${{ needs.resolve.outputs.tests_ref }}
+      commit_sha: ${{ needs.resolve.outputs.commit_sha }}
+      branch_label: ${{ needs.resolve.outputs.branch_label }}
+    secrets: inherit
+
+  # Final state of the automation section. The reusable still posts its own
+  # detailed comment; this is the at-a-glance summary in the CI status comment.
+  visual-report:
+    name: Update CI status comment (visual)
+    needs: [resolve, visual-suite]
+    if: always() && needs.resolve.result == 'success' && needs.resolve.outputs.pr_number != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout CI status action
+        uses: actions/checkout@v6
+        with:
+          sparse-checkout: .github/actions/ci-status-comment
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
+      - name: Compose automation section
+        id: compose
+        env:
+          RESULT: ${{ needs.visual-suite.result }}
+          PR_NUMBER: ${{ needs.resolve.outputs.pr_number }}
+          COMMIT_SHA: ${{ needs.resolve.outputs.commit_sha }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          PUBLIC_URL_PREFIX: ${{ vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          BADGE_STYLE="?logo=github&logoColor=white&style=for-the-badge"
+          case "$RESULT" in
+            success) BADGE="https://img.shields.io/badge/Automation-Passed!-3fb950${BADGE_STYLE}"; MSG="✅ Visual regression suite passed." ;;
+            failure) BADGE="https://img.shields.io/badge/Automation-Failed!-ff0000${BADGE_STYLE}"; MSG="❌ Visual regression suite failed." ;;
+            *)       BADGE="https://img.shields.io/badge/Automation-Cancelled-lightgrey${BADGE_STYLE}"; MSG="Visual regression suite did not finish (\`$RESULT\`)." ;;
+          esac
+
+          # Mirrors run-visual-suite.yml's "Compute identifiers" S3 path for mode=test,
+          # platform=macos; keep the three in lockstep.
+          REPORT_URL="${PUBLIC_URL_PREFIX}/@dcl/${REPO//\//-}/visual-regression/test/macos/${PR_NUMBER}/${COMMIT_SHA}/index.html"
+
+          # The callee only syncs a report to S3 when the suite produced one.
+          if curl -sfIL --max-time 15 "$REPORT_URL" >/dev/null 2>&1; then
+            REPORT_ROW="| Allure report | [Open report]($REPORT_URL) |"
+          else
+            REPORT_ROW="| Allure report | not produced — see the workflow run |"
+          fi
+
+          DELIM="EOF_${RANDOM}${RANDOM}_$$"
+          {
+            echo "body<<$DELIM"
+            echo "[![Automation]($BADGE)]($RUN_URL)"
+            echo ""
+            echo "$MSG"
+            echo ""
+            echo "| Name | Link |"
+            echo "| -------- | ----------------------- |"
+            echo "| Commit | [\`$COMMIT_SHA\`](${GITHUB_SERVER_URL:-https://github.com}/${REPO}/commit/${COMMIT_SHA}) |"
+            echo "$REPORT_ROW"
+            echo "| Workflow run | [View run]($RUN_URL) |"
+            echo ""
+            echo "<sub>Runs with the InWorld suite on release and hotfix PRs · the detailed per-platform comment is posted separately.</sub>"
+            echo "$DELIM"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Update automation section
+        uses: ./.github/actions/ci-status-comment
+        with:
+          pr-number: ${{ needs.resolve.outputs.pr_number }}
+          section: automation
+          github-token: ${{ github.token }}
+          body: ${{ steps.compose.outputs.body }}
+
   result:
     name: InWorld suite result
-    needs: [resolve, run-suite]
+    needs: [resolve, run-suite, visual-suite]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -244,18 +369,19 @@ jobs:
         env:
           RESOLVE: ${{ needs.resolve.result }}
           SUITE: ${{ needs.run-suite.result }}
+          VISUAL: ${{ needs.visual-suite.result }}
         run: |
           set -euo pipefail
           if [ "$RESOLVE" = "skipped" ]; then
-            echo "::notice::Not a release or hotfix PR — the InWorld suite does not gate this one."
+            echo "::notice::Not a release or hotfix PR — the InWorld and Visual suites do not gate this one."
             exit 0
           fi
-          if [ "$RESOLVE" = "success" ] && [ "$SUITE" = "success" ]; then
-            echo "::notice::InWorld suite passed."
+          if [ "$RESOLVE" = "success" ] && [ "$SUITE" = "success" ] && [ "$VISUAL" = "success" ]; then
+            echo "::notice::InWorld and Visual suites passed."
             exit 0
           fi
           # Cancelled counts as failure on purpose: a merge gate must not go
           # green because the run was interrupted. The superseding run reports
           # its own result.
-          echo "::error::InWorld gate failed — build: ${RESOLVE}, suite: ${SUITE}. See the Allure report linked in the suite's job summary."
+          echo "::error::Gate failed — build: ${RESOLVE}, InWorld: ${SUITE}, Visual: ${VISUAL}. See the Allure reports linked in the suites' job summaries."
           exit 1
