@@ -169,6 +169,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
 
             // Assert
             mvcManager.Received(1).ShowAsync(ChangeRealmPromptController.IssueCommand(new ChangeRealmPromptController.Params(string.Empty, TEST_REALM)));
+            mvcManager.DidNotReceive().ShowAsync(Arg.Any<ShowCommand<TeleportPromptController.Params>>());
         }
 
         [Test]

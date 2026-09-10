@@ -15,7 +15,7 @@ namespace DCL.SceneRuntime.Apis.RestrictedActionsApi
         /// <summary>
         ///     Teleports the player. <paramref name="newCoords" /> absent targets the realm's default spawn (only
         ///     meaningful together with <paramref name="realm" />); <paramref name="realm" /> absent addresses the
-        ///     parcel in the realm the player is already in.
+        ///     parcel in the realm the player is already in. Both absent is rejected (warning logged, no-op).
         /// </summary>
         void TryTeleportTo(Vector2Int? newCoords, string? realm);
 

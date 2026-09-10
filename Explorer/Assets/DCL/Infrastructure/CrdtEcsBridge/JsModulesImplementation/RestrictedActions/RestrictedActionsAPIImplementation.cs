@@ -109,12 +109,9 @@ namespace CrdtEcsBridge.RestrictedActions
             if (!sceneStateProvider.IsCurrent)
                 return;
 
-            // A realm on the request makes this a realm change that lands on the parcel afterwards: parcel
-            // coordinates only address one realm's grid, so the switch has to complete before the parcel is
-            // used. The change-realm prompt's target-parcel path already sequences both.
+            // Realm present → route through the change-realm consent prompt, carrying the optional parcel.
             if (!string.IsNullOrEmpty(realm))
             {
-                // Empty message → the prompt renders its default confirmation text; teleportTo carries none.
                 ChangeRealmAsync(string.Empty, realm, coords).Forget();
                 return;
             }
