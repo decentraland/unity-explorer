@@ -4183,9 +4183,10 @@ MonoBehaviour:
   <CancelButton>k__BackingField: {fileID: 3824222793098969090}
   <CloseButton>k__BackingField: {fileID: 1974616765462285413}
   <ScreenshotSection>k__BackingField: {fileID: 7421734640136279578}
-  <ScreenshotPreview>k__BackingField: {fileID: 1193700335233655905}
   <AttachScreenshotButton>k__BackingField: {fileID: 713862912872209289}
-  <RemoveScreenshotButton>k__BackingField: {fileID: 4904196664767073673}
+  <ScreenshotSlots>k__BackingField:
+  - Preview: {fileID: 1193700335233655905}
+    RemoveButton: {fileID: 4904196664767073673}
   <FormPanel>k__BackingField: {fileID: 8232872225358305164}
   <SuccessPanel>k__BackingField: {fileID: 5108638669791995018}
   <SuccessDoneButton>k__BackingField: {fileID: 7783538574768294506}

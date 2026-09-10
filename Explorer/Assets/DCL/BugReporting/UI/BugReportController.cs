@@ -9,6 +9,7 @@ using DCL.Profiles.Self;
 using DCL.Utility.Types;
 using MVC;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using TMPro;
 using UnityEngine;
@@ -35,7 +36,8 @@ namespace DCL.BugReporting.UI
         private readonly IBugReportImageProvider? imageProvider;
         private readonly IBugReportSessionContext? sessionContext;
 
-        private BugReportImage? attachedImage;
+        private readonly List<BugReportImage> attachedImages = new (IntercomTicketPayload.MAX_EVIDENCE_IMAGES);
+
         private UniTaskCompletionSource? closeIntent;
         private CancellationTokenSource operationsCts = new ();
 
@@ -43,6 +45,9 @@ namespace DCL.BugReporting.UI
         private readonly CancellationTokenSource submissionsCts = new ();
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
+
+        /// <summary>The prefab may offer fewer slots than the proxy accepts, never more.</summary>
+        private int maxScreenshots => Mathf.Min(IntercomTicketPayload.MAX_EVIDENCE_IMAGES, viewInstance!.ScreenshotSlots.Length);
 
         public BugReportController(
             ViewFactoryMethod viewFactory,
@@ -68,7 +73,7 @@ namespace DCL.BugReporting.UI
             base.Dispose();
             operationsCts.SafeCancelAndDispose();
             submissionsCts.SafeCancelAndDispose();
-            ClearAttachedImage();
+            ClearAttachedImages();
         }
 
         /// <summary>
@@ -110,7 +115,12 @@ namespace DCL.BugReporting.UI
             viewInstance.CloseButton.onClick.AddListener(RequestClose);
             viewInstance.SuccessDoneButton.onClick.AddListener(RequestClose);
             viewInstance.AttachScreenshotButton.onClick.AddListener(OnAttachScreenshotClicked);
-            viewInstance.RemoveScreenshotButton.onClick.AddListener(OnRemoveScreenshotClicked);
+
+            for (var i = 0; i < viewInstance.ScreenshotSlots.Length; i++)
+            {
+                int slotIndex = i;
+                viewInstance.ScreenshotSlots[i].RemoveButton.onClick.AddListener(() => OnRemoveScreenshotClicked(slotIndex));
+            }
 
             viewInstance.ScreenshotSection.SetActive(imageProvider != null);
         }
@@ -118,13 +128,13 @@ namespace DCL.BugReporting.UI
         protected override void OnBeforeViewShow()
         {
             operationsCts = operationsCts.SafeRestart();
-            ClearAttachedImage();
+            ClearAttachedImages();
 
             viewInstance!.IssueTypeDropdown.SetValueWithoutNotify(IssueTypeIndexOf(inputData.PrefilledIssueType));
             viewInstance.DescriptionInput.SetTextWithoutNotify(inputData.PrefilledDescription ?? string.Empty);
             viewInstance.HideCharCounter();
             viewInstance.ShareLogsToggle.SetIsOnWithoutNotify(true);
-            viewInstance.SetScreenshot(null);
+            RefreshScreenshots();
             viewInstance.ShowState(BugReportViewState.Form);
             RefreshSubmitInteractable();
         }
@@ -141,7 +151,7 @@ namespace DCL.BugReporting.UI
         protected override void OnViewClose()
         {
             operationsCts = operationsCts.SafeRestart();
-            ClearAttachedImage();
+            ClearAttachedImages();
             inputBlock.Enable(InputMapComponent.Kind.Shortcuts, InputMapComponent.Kind.InWorldCamera, InputMapComponent.Kind.Camera, InputMapComponent.Kind.Player);
         }
 
@@ -174,7 +184,7 @@ namespace DCL.BugReporting.UI
             var draft = new BugReportDraft(
                 viewInstance.IssueTypeDropdown.value,
                 viewInstance.DescriptionInput.text,
-                attachedImage);
+                attachedImages.ToArray());
 
             viewInstance.ShowState(BugReportViewState.Success);
             SubmitDetachedAsync(draft, submissionsCts.Token).Forget();
@@ -196,12 +206,16 @@ namespace DCL.BugReporting.UI
             if (ct.IsCancellationRequested)
                 return Result<string>.CancelledResult();
 
+            var images = new EvidenceImage[draft.Images.Count];
+
+            for (var i = 0; i < images.Length; i++)
+                images[i] = new EvidenceImage(draft.Images[i].Bytes, draft.Images[i].ContentType);
+
             var input = new BugReportInput
             {
                 IssueType = BugReportIssueTypes.ALL[draft.IssueTypeIndex],
                 Description = draft.Description.Trim(),
-                Image = draft.Image?.Bytes,
-                ImageContentType = draft.Image?.ContentType,
+                Images = images,
                 UserName = userName,
                 Coordinates = CurrentParcel(),
                 MeetsMinimumSpecs = sessionContext?.MeetsMinimumSpecs,
@@ -255,23 +269,35 @@ namespace DCL.BugReporting.UI
                 return;
             }
 
-            ClearAttachedImage();
-            attachedImage = picked.Value;
-            viewInstance!.SetScreenshot(picked.Value.Preview);
+            if (attachedImages.Count >= maxScreenshots)
+            {
+                UnityEngine.Object.Destroy(picked.Value.Preview);
+                return;
+            }
+
+            attachedImages.Add(picked.Value);
+            RefreshScreenshots();
         }
 
-        private void OnRemoveScreenshotClicked()
+        private void OnRemoveScreenshotClicked(int slotIndex)
         {
-            ClearAttachedImage();
-            viewInstance!.SetScreenshot(null);
+            if (slotIndex >= attachedImages.Count)
+                return;
+
+            UnityEngine.Object.Destroy(attachedImages[slotIndex].Preview);
+            attachedImages.RemoveAt(slotIndex);
+            RefreshScreenshots();
         }
 
-        private void ClearAttachedImage()
-        {
-            if (attachedImage.HasValue)
-                UnityEngine.Object.Destroy(attachedImage.Value.Preview);
+        private void RefreshScreenshots() =>
+            viewInstance!.SetScreenshots(attachedImages, attachedImages.Count < maxScreenshots);
 
-            attachedImage = null;
+        private void ClearAttachedImages()
+        {
+            foreach (BugReportImage image in attachedImages)
+                UnityEngine.Object.Destroy(image.Preview);
+
+            attachedImages.Clear();
         }
     }
 
@@ -279,13 +305,15 @@ namespace DCL.BugReporting.UI
     {
         public readonly int IssueTypeIndex;
         public readonly string Description;
-        public readonly BugReportImage? Image;
 
-        public BugReportDraft(int issueTypeIndex, string description, BugReportImage? image)
+        /// <summary>A snapshot: the controller's own list is cleared when the view closes while the upload is still running.</summary>
+        public readonly IReadOnlyList<BugReportImage> Images;
+
+        public BugReportDraft(int issueTypeIndex, string description, IReadOnlyList<BugReportImage> images)
         {
             IssueTypeIndex = issueTypeIndex;
             Description = description;
-            Image = image;
+            Images = images;
         }
     }
 }
