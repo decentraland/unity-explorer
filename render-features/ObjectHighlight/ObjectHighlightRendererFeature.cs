@@ -62,8 +62,8 @@ namespace DCL.Rendering.ObjectHighlight
         private static readonly Dictionary<Renderer, ObjectHighlightSettings> HIGHLIGHT_RENDERERS = new ();
         private static readonly Dictionary<Renderer, ObjectHighlightSettings> HIGHLIGHT_RENDERERS_AVATAR = new ();
 
-        public static readonly IHighlightedObjects HIGHLIGHTED_OBJECTS = new HighlightedObjects(HIGHLIGHT_RENDERERS);
-        public static readonly IHighlightedObjects HIGHLIGHTED_OBJECTS_AVATAR = new HighlightedObjects(HIGHLIGHT_RENDERERS_AVATAR);
+        public static readonly HighlightedObjects HIGHLIGHTED_OBJECTS = new HighlightedObjects(HIGHLIGHT_RENDERERS);
+        public static readonly HighlightedObjects HIGHLIGHTED_OBJECTS_AVATAR = new HighlightedObjects(HIGHLIGHT_RENDERERS_AVATAR);
 
         [SerializeField] private Material? inputMaterial;
         [SerializeField] private Material? blurMaterial;

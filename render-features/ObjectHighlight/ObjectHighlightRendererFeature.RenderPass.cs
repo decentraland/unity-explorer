@@ -248,8 +248,8 @@ namespace DCL.Rendering.ObjectHighlight
 
             private class PassData
             {
-                internal IReadOnlyDictionary<Renderer, ObjectHighlightSettings> highlightRenderers = null!;
-                internal IReadOnlyDictionary<Renderer, ObjectHighlightSettings> avatarHighlightRenderers = null!;
+                internal Dictionary<Renderer, ObjectHighlightSettings> highlightRenderers = null!;
+                internal Dictionary<Renderer, ObjectHighlightSettings> avatarHighlightRenderers = null!;
                 internal Material inputMaterial = null!;
                 internal Material blurMaterial = null!;
                 internal Material outputMaterial = null!;

@@ -1,4 +1,4 @@
-﻿Shader "DCL/HighlightInput_Blur"
+﻿Shader "DCL/ObjectHighlight/Blur"
 {
     Properties
     {
@@ -21,7 +21,6 @@
                 #pragma target 4.5
                 #pragma vertex hl_blur_vert
                 #pragma fragment hl_blur_frag
-                #pragma enable_d3d11_debug_symbols
                 #include "UnityCG.cginc"
 
                 struct sk_appdata
@@ -115,7 +114,6 @@
                 #pragma target 4.5
                 #pragma vertex hl_blur_vert
                 #pragma fragment hl_blur_frag
-                #pragma enable_d3d11_debug_symbols
                 #include "UnityCG.cginc"
 
                 struct sk_appdata

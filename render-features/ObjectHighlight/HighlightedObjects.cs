@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace DCL.Rendering.ObjectHighlight
 {
-    public class HighlightedObjects : IHighlightedObjects
+    public class HighlightedObjects
     {
         private readonly Dictionary<Renderer, ObjectHighlightSettings> highLightRenderers;
 
@@ -17,9 +17,21 @@ namespace DCL.Rendering.ObjectHighlight
             highLightRenderers[renderer] = settings;
         }
 
+        public void Highlight(List<Renderer> renderers, in ObjectHighlightSettings settings)
+        {
+            foreach (Renderer renderer in renderers)
+                Highlight(renderer, in settings);
+        }
+
         public void Disparage(Renderer renderer)
         {
             highLightRenderers.Remove(renderer);
+        }
+
+        public void Disparage(List<Renderer> renderers)
+        {
+            foreach (Renderer renderer in renderers)
+                Disparage(renderer);
         }
 
         public void DisparageAll()
