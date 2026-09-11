@@ -247,6 +247,10 @@ namespace Global.Dynamic
                 ? guestSessionId
                 : null;
 
+            ReportHub.LogProductionInfo($"[GuestLogin] session id override: env={decentralandEnvironment}, debugFlag={appArgs.HasDebugFlag()}, "
+                                        + $"argPresent={appArgs.TryGetValue(AppArgsFlags.GUEST_SESSION_ID, out string? rawGuestSessionId)}, argValue='{rawGuestSessionId}' "
+                                        + $"=> override='{guestSessionIdOverride}'");
+
             // Create ThirdWeb authenticator (Email + OTP)
             var thirdWebAuth = new ThirdWebAuthenticator(
                 decentralandUrlsSource,

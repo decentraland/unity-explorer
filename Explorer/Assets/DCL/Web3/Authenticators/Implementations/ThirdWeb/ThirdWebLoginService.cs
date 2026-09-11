@@ -52,6 +52,8 @@ namespace DCL.Web3.Authenticators
             bool isGuest = DCLPlayerPrefs.GetBool(DCLPrefKeys.GUEST_SESSION_ACTIVE);
             string email = DCLPlayerPrefs.GetString(DCLPrefKeys.LOGGEDIN_EMAIL, string.Empty);
 
+            ReportHub.LogProductionInfo($"[GuestLogin] auto-login: guestSessionActive={isGuest}, storedEmail='{Mask(email)}'");
+
             if (!isGuest && string.IsNullOrEmpty(email))
                 return false;
 
@@ -198,7 +200,14 @@ namespace DCL.Web3.Authenticators
         {
             InAppWallet wallet = await CreateGuestWalletAsync(ct);
 
+            bool wasAlreadyConnected = await wallet.IsConnected().AsUniTask().AttachExternalCancellation(ct);
+
+            ReportHub.LogProductionInfo($"[GuestLogin] guest wallet created: alreadyConnected={wasAlreadyConnected}, "
+                                        + $"address='{(wasAlreadyConnected ? await wallet.GetAddress() : "<not connected>")}', storage='{storageDirectoryPath}'");
+
             await LoginWithGuestAsync(wallet, ct);
+
+            ReportHub.LogProductionInfo($"[GuestLogin] logged in as guest: address='{await wallet.GetAddress()}', walletId='{wallet.WalletId}'");
 
             ReportHub.Log(ReportCategory.AUTHENTICATION, $"ThirdWeb login: logged in as guest wallet {wallet.WalletId}");
 
@@ -217,10 +226,17 @@ namespace DCL.Web3.Authenticators
                        .AsUniTask()
                        .AttachExternalCancellation(ct);
 
-        private UniTask<string> LoginWithGuestAsync(InAppWallet wallet, CancellationToken ct) =>
-            wallet.LoginWithGuest(GuestSessionIdProvider.Resolve(guestSessionIdOverride))
-                  .AsUniTask()
-                  .AttachExternalCancellation(ct);
+        private UniTask<string> LoginWithGuestAsync(InAppWallet wallet, CancellationToken ct)
+        {
+            string? sessionId = GuestSessionIdProvider.Resolve(guestSessionIdOverride);
+
+            ReportHub.LogProductionInfo($"[GuestLogin] LoginWithGuest: override='{guestSessionIdOverride}', "
+                                        + $"deviceIdSupported={SystemInfo.deviceUniqueIdentifier != SystemInfo.unsupportedIdentifier}, sessionId='{sessionId}'");
+
+            return wallet.LoginWithGuest(sessionId)
+                         .AsUniTask()
+                         .AttachExternalCancellation(ct);
+        }
 
         /// <summary>
         ///     The guest session id is derived from the device, so the guest flow keeps resolving the same wallet after
@@ -232,7 +248,12 @@ namespace DCL.Web3.Authenticators
             string? linkedEmail = await ResolveLinkedEmailAsync(wallet, ct);
 
             if (string.IsNullOrEmpty(linkedEmail))
+            {
+                ReportHub.LogProductionInfo($"[GuestLogin] upgrade check passed, continuing as guest: address='{await wallet.GetAddress()}'");
                 return;
+            }
+
+            ReportHub.LogProductionInfo($"[GuestLogin] upgrade check FAILED, an email is linked to this account: address='{await wallet.GetAddress()}'");
 
             ReportHub.Log(ReportCategory.AUTHENTICATION, "ThirdWeb: the guest wallet has a linked email, the account can only be signed in with its OTP");
 
@@ -245,8 +266,14 @@ namespace DCL.Web3.Authenticators
             {
                 List<LinkedAccount>? linkedAccounts = await wallet.GetLinkedAccounts().AsUniTask().AttachExternalCancellation(ct);
 
+                ReportHub.LogProductionInfo($"[GuestLogin] linked accounts of '{await wallet.GetAddress()}': count={linkedAccounts?.Count.ToString() ?? "<null>"}");
+
                 if (linkedAccounts == null)
                     return null;
+
+                foreach (LinkedAccount account in linkedAccounts)
+                    ReportHub.LogProductionInfo($"[GuestLogin]   linked account: type='{account.Type}', email='{Mask(account.Details.Email)}', "
+                                                + $"phone='{Mask(account.Details.Phone)}', address='{account.Details.Address}'");
 
                 foreach (LinkedAccount account in linkedAccounts)
                     if (!string.IsNullOrEmpty(account.Details.Email))
@@ -260,6 +287,21 @@ namespace DCL.Web3.Authenticators
             }
 
             return null;
+        }
+
+        /// <summary>
+        ///     Keeps enough of a value to tell entries apart in a log without writing the whole address.
+        /// </summary>
+        private static string Mask(string? value)
+        {
+            if (string.IsNullOrEmpty(value))
+                return string.Empty;
+
+            int at = value.IndexOf('@');
+
+            return at > 0
+                ? $"{value[0]}***{value[at..]}"
+                : $"{value[0]}***";
         }
 
         private async UniTask<InAppWallet> OTPLoginFlowAsync(string? email, CancellationToken ct)
