@@ -120,10 +120,10 @@ jobs:
         run: bash scripts/uuav/repro-gate.sh macos-universal
 
       - name: Gate B - reproduce the committed binaries, toolchain permitting
-        run: python3 scripts/uuav/reproduces-lock.py macos-universal --toolchain toolchain-macos.txt
+        run: python3 scripts/native-lock/reproduces-lock.py --lock "$LOCK" macos-universal --toolchain toolchain-macos.txt
 
       - name: Compare the fresh build against the lock
-        run: python3 scripts/uuav/verify-binaries.py --report macos-universal
+        run: python3 scripts/native-lock/verify-binaries.py --lock "$LOCK" --report macos-universal
 
       # always(): a round that fails a gate is exactly the round whose fresh
       # hashes and recorded toolchain someone needs to read. Without this the
@@ -137,6 +137,7 @@ jobs:
             Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/macOS/uuav-helper
             toolchain-macos.txt
             uuav-macos-universal.sha256
+            uuav-macos-universal.gate-b.txt
           if-no-files-found: error
 
   windows:
@@ -219,10 +220,10 @@ jobs:
         run: bash scripts/uuav/repro-gate.sh windows-x86_64
 
       - name: Gate B - reproduce the committed binaries, toolchain permitting
-        run: python scripts/uuav/reproduces-lock.py windows-x86_64 --toolchain toolchain-windows.txt
+        run: python scripts/native-lock/reproduces-lock.py --lock "$LOCK" windows-x86_64 --toolchain toolchain-windows.txt
 
       - name: Compare the fresh build against the lock
-        run: python scripts/uuav/verify-binaries.py --report windows-x86_64
+        run: python scripts/native-lock/verify-binaries.py --lock "$LOCK" --report windows-x86_64
 
       # always(): see the macOS job's note.
       - uses: actions/upload-artifact@v4
@@ -234,6 +235,7 @@ jobs:
             Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/x86_64/uuav-helper.exe
             toolchain-windows.txt
             uuav-windows-x86_64.sha256
+            uuav-windows-x86_64.gate-b.txt
           if-no-files-found: error
 
   publish:
@@ -253,12 +255,20 @@ jobs:
       - name: Assemble the release manifest
         run: |
           set -euo pipefail
+          shopt -s nullglob
           mkdir -p manifest
           cp "$LOCK" manifest/uuav-binaries.lock.json
           cat built/*/*.sha256 > manifest/SHA256SUMS
           cat built/*/toolchain-*.txt > manifest/TOOLCHAINS.txt
           {
             echo "### UUAV native build"
+            echo
+            echo "| target | Gate B |"
+            echo "|---|---|"
+            for f in built/*/*.gate-b.txt; do
+              target=$(basename "$f" .gate-b.txt); target=${target#uuav-}
+              echo "| $target | $(cat "$f") |"
+            done
             echo
             echo '```'
             cat manifest/SHA256SUMS
@@ -269,7 +279,7 @@ jobs:
             echo '```'
             echo
             echo '> [!WARNING]'
-            echo "> **Nothing was committed** — this workflow has \`contents: read\` and only verifies. If this build is meant to ship, follow the relock steps in \`Explorer/Assets/Plugins/UUAV/README.md\`: commit the binaries from this run's artifacts, then run \`verify-binaries.py --update --only <target> --toolchain toolchain-<os>.txt\`."
+            echo "> **Nothing was committed** — this workflow has \`contents: read\` and only verifies. If this build is meant to ship, follow the relock steps in \`Explorer/Assets/Plugins/UUAV/README.md\`: commit the binaries from this run's artifacts, then run \`scripts/native-lock/verify-binaries.py --lock $LOCK --update --only <target> --toolchain toolchain-<os>.txt\`."
           } >> "$GITHUB_STEP_SUMMARY"
 
       - uses: actions/upload-artifact@v4
