@@ -55,7 +55,7 @@ namespace DCL.PluginSystem.Global
 
         private void OnConnectionUpdated(IRoom room, ConnectionUpdate connectionUpdate, LKDisconnectReason? disconnectReason = null)
         {
-            if (connectionUpdate == ConnectionUpdate.Disconnected && disconnectReason == LKDisconnectReason.DuplicateIdentity && duplicateIdentityController?.State != ControllerState.ViewShowing)
+            if (connectionUpdate == ConnectionUpdate.Disconnected && disconnectReason is LKDisconnectReason.DuplicateIdentity or LKDisconnectReason.ParticipantRemoved && duplicateIdentityController?.State != ControllerState.ViewShowing)
                 ShowDuplicateIdentityWindowAsync().Forget();
 
             return;

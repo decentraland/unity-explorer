@@ -303,7 +303,8 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 
         private void OnConnectionUpdated(IRoom _, ConnectionUpdate connectionUpdate, LKDisconnectReason? disconnectReason)
         {
-            if (connectionUpdate == ConnectionUpdate.Disconnected && disconnectReason is LKDisconnectReason.DuplicateIdentity && isDuplicateIdentityStopFeatureEnabled)
+            // Gatekeeper with Pulse Authority evicts duplicated peers with ParticipantRemoved reason
+            if (connectionUpdate == ConnectionUpdate.Disconnected && disconnectReason is LKDisconnectReason.DuplicateIdentity or LKDisconnectReason.ParticipantRemoved && isDuplicateIdentityStopFeatureEnabled)
             {
                 isDuplicateIdentityDetected = true;
                 cancellationTokenSource?.SafeCancelAndDispose();
