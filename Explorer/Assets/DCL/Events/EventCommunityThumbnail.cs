@@ -24,7 +24,7 @@ namespace DCL.Events
         {
             loadingCommunityThumbnailCts = loadingCommunityThumbnailCts.SafeRestart();
             thumbnailLoader.LoadCommunityThumbnailFromUrlAsync(communityInfo.ThumbnailUrl, communityThumbnail, null, loadingCommunityThumbnailCts.Token, true).Forget();
-            communityText.text = communityInfo.name;
+            communityText.text = RichTextSanitizer.EscapeAndTruncate(communityInfo.name, RichTextSanitizer.DEFAULT_NAME_LENGTH);
         }
 
         public void OnPointerEnter(PointerEventData eventData) =>

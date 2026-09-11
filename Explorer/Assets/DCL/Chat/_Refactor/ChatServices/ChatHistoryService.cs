@@ -2,10 +2,9 @@
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.Settings.Settings;
+using DCL.UI;
 using DCL.UI.InputFieldFormatting;
 using System;
-using System.Globalization;
-using System.Runtime.CompilerServices;
 using DCL.Translation.Service;
 
 namespace DCL.Chat.ChatServices
@@ -52,12 +51,17 @@ namespace DCL.Chat.ChatServices
                 return;
 
             var messageToAdd = message;
-            bool isCopyOfSystemMessage = IsCopyOfSystemMessage(message.Message);
-            bool isSystemMessage = message.IsSystemMessage;
 
-            if (!isSystemMessage && !isCopyOfSystemMessage)
+            // Provenance is the only thing that may skip this. A message that merely looks like a system line —
+            // one starting with 🟢/🔴/🟡 — is still some peer's, and letting its text opt out of the pipeline let
+            // that peer choose whether their own markup got neutralized (SEC-023).
+            if (!message.IsSystemMessage)
             {
-                string formattedText = hyperlinkTextFormatter.FormatText(message.Message);
+                // Escaped before formatting, not after: the bubble's content label renders rich text, so the
+                // peer's own markup has to be inert before the formatter adds the <link> and <color> runs the
+                // chat UI depends on. Escaping afterwards would neutralize those too.
+                string neutralizedText = RichTextSanitizer.Escape(message.Message);
+                string formattedText = hyperlinkTextFormatter.FormatText(neutralizedText);
                 messageToAdd = ChatMessage.CopyWithNewMessage(formattedText, message);
             }
 
@@ -103,57 +107,6 @@ namespace DCL.Chat.ChatServices
                 : audioConfig.receiveMessageAudio;
 
             UIAudioEventsBus.Instance.SendPlayAudioEvent(clip);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static ReadOnlySpan<char> TrimStartIgnorables(ReadOnlySpan<char> s)
-        {
-            int i = 0;
-            while (i < s.Length)
-            {
-                char ch = s[i];
-
-                // skip whitespace (includes NBSP, newlines)
-                if (char.IsWhiteSpace(ch))
-                {
-                    i++;
-                    continue;
-                }
-
-                // skip format/control-like invisibles (ZWSP, ZWJ, LRM, RLM, BOM, VS16, etc.)
-                var cat = char.GetUnicodeCategory(ch);
-                if (cat == UnicodeCategory.Format || ch == '\uFEFF')
-                {
-                    i++;
-                    continue;
-                }
-
-                break;
-            }
-
-            return s.Slice(i);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool IsCopyOfSystemMessage(string message)
-        {
-            // normalize the front edge
-            var s = TrimStartIgnorables(message.AsSpan());
-
-            // compare EXACTLY (ordinal), not culture-aware
-            if (s.StartsWith("🟢".AsSpan(), StringComparison.Ordinal)) return AfterMarkerLooksLikeSystem(s, "🟢");
-            if (s.StartsWith("🔴".AsSpan(), StringComparison.Ordinal)) return AfterMarkerLooksLikeSystem(s, "🔴");
-            if (s.StartsWith("🟡".AsSpan(), StringComparison.Ordinal)) return AfterMarkerLooksLikeSystem(s, "🟡");
-
-            return false;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static bool AfterMarkerLooksLikeSystem(ReadOnlySpan<char> s, string marker)
-        {
-            // Require a space or punctuation right after the marker.
-            var rest = s.Slice(marker.AsSpan().Length);
-            return rest.Length == 0 || char.IsWhiteSpace(rest[0]) || ":-—–,;.!?)]}".AsSpan().IndexOf(rest[0]) >= 0;
         }
     }
 }

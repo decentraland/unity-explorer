@@ -47,7 +47,7 @@ namespace DCL.UI.Communities
                                         .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.ViewCommunityText, contextMenuSettings.ViewCommunitySprite, () => ViewCommunityRequested?.Invoke()));
 
             openContextMenu = openContextMenuAction;
-            userNameElement.text = communityName;
+            userNameElement.text = RichTextSanitizer.EscapeAndTruncate(communityName, RichTextSanitizer.DEFAULT_NAME_LENGTH);
             thumbnailView.SetDefaultThumbnail();
 
             if (thumbnailUrl != null)

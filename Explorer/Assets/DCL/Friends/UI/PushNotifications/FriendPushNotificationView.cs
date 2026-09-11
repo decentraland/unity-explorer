@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.FeatureFlags;
 using DCL.Profiles;
+using DCL.UI;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.ProfileElements;
 using DG.Tweening;
@@ -14,12 +15,12 @@ namespace DCL.Friends.UI.PushNotifications
 {
     public class FriendPushNotificationView : ViewBase, IView
     {
-        [field: SerializeField] public ProfilePictureView ProfilePictureView { get; private set; }
-        [field: SerializeField] public TMP_Text UserNameText { get; private set; }
-        [field: SerializeField] public TMP_Text UserAddressText { get; private set; }
-        [field: SerializeField] public GameObject VerifiedIcon { get; private set; }
-        [field: SerializeField] public GameObject OfficialIcon { get; private set; }
-        [field: SerializeField] public CanvasGroup PanelCanvasGroup { get; private set; }
+        [field: SerializeField] public ProfilePictureView ProfilePictureView { get; private set; } = null!;
+        [field: SerializeField] public TMP_Text UserNameText { get; private set; } = null!;
+        [field: SerializeField] public TMP_Text UserAddressText { get; private set; } = null!;
+        [field: SerializeField] public GameObject VerifiedIcon { get; private set; } = null!;
+        [field: SerializeField] public GameObject OfficialIcon { get; private set; } = null!;
+        [field: SerializeField] public CanvasGroup PanelCanvasGroup { get; private set; } = null!;
 
         [field:Header("Toast Animation")]
         [field: SerializeField] public float toastFadeInDuration = 0.3f;
@@ -43,7 +44,7 @@ namespace DCL.Friends.UI.PushNotifications
         {
             Color userColor = friendProfile.UserNameColor;
             UserNameText.color = userColor;
-            UserNameText.text = friendProfile.Name;
+            UserNameText.text = RichTextSanitizer.EscapeAndTruncate(friendProfile.ValidatedNameOrRaw, RichTextSanitizer.DEFAULT_NAME_LENGTH);
             UserAddressText.text = $"#{friendProfile.Address.ToString()[^4..]}";
             UserAddressText.gameObject.SetActive(!friendProfile.HasClaimedName);
             VerifiedIcon.SetActive(friendProfile.HasClaimedName);

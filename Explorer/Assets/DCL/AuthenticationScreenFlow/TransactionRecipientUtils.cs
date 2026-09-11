@@ -1,3 +1,4 @@
+using DCL.UI;
 using DCL.Utility;
 using DCL.Web3;
 using System;
@@ -84,19 +85,12 @@ namespace DCL.AuthenticationScreenFlow
             return fraction.Length == 0 ? whole.ToString() : $"{whole}.{fraction}";
         }
 
+        // The copy is rich text by design, so a display name carrying "<size=0>" would hide the warning it
+        // sits in. The link id is escaped as an attribute because a '"' there would close it early.
         private static string Highlight(string value) =>
-            $"<color={HIGHLIGHT_COLOR}>{EscapeRichText(value)}</color>";
+            $"<color={HIGHLIGHT_COLOR}>{RichTextSanitizer.Escape(value)}</color>";
 
         private static string HighlightLink(string id, string label) =>
-            $"<link=\"{EscapeRichText(id)}\"><color={HIGHLIGHT_COLOR}><b>{EscapeRichText(label)}</b></color></link>";
-
-        /// <summary>
-        ///     Swaps the characters TMP reads as markup for lookalikes that it does not. The copy is rich
-        ///     text by design, so a display name carrying "&lt;size=0&gt;" would hide the warning it sits in.
-        /// </summary>
-        private static string EscapeRichText(string value) =>
-            value.Replace('<', '‹') // single left-pointing angle quotation mark
-                 .Replace('>', '›') // single right-pointing angle quotation mark
-                 .Replace('"', '”'); // right double quotation mark, closes the link attribute
+            $"<link=\"{RichTextSanitizer.EscapeAttribute(id)}\"><color={HIGHLIGHT_COLOR}><b>{RichTextSanitizer.Escape(label)}</b></color></link>";
     }
 }

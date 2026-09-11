@@ -5,6 +5,7 @@ using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
 using DCL.Profiles;
 using DCL.Settings.Settings;
+using DCL.UI;
 using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -56,7 +57,10 @@ namespace DCL.Chat.ChatServices
             {
                 if (communityDataService.TryGetCommunity(destinationChannel.Id, out var communityData))
                 {
-                    communityName = communityData.name;
+                    // Escaped here rather than at the nametag that renders it: the name is chosen by whoever owns
+                    // the community, and NametagElement lives in DCL.AvatarRendering, which cannot see this helper.
+                    // This is the boundary where community data enters the bubble path.
+                    communityName = RichTextSanitizer.EscapeAndTruncate(communityData.name, RichTextSanitizer.DEFAULT_NAME_LENGTH);
                 }
             }
 

@@ -93,7 +93,7 @@ namespace DCL.Communities.CommunitiesBrowser
             CommunityId = id;
 
         public void SetTitle(string title) =>
-            communityTitle.text = title;
+            communityTitle.text = RichTextSanitizer.EscapeAndTruncate(title, RichTextSanitizer.DEFAULT_NAME_LENGTH);
 
         public void SetRequestsReceived(int requestsCount) =>
             requestsReceivedText.text = $"{requestsCount} Request{(requestsCount > 1 ? "s" : "")} Received";
