@@ -294,9 +294,12 @@ public class SkyboxRenderController : MonoBehaviour
             lightAnimator.Stop();
         }
 
-        var directionalLightLocalScale = directionalLight.gameObject.transform.localScale;
-        RenderSettings.skybox.SetFloat(SUN_SIZE, directionalLightLocalScale.x);
-        RenderSettings.skybox.SetFloat(SUN_OPACITY, directionalLightLocalScale.y);
+        // The clip carries intensity and the disc size/opacity as localScale.x/y channels. A preset curve overrides
+        // each of them when authored, so the clip can be reduced to the sun rotation.
+        Vector3 directionalLightLocalScale = directionalLight.gameObject.transform.localScale;
+        directionalLight.intensity = EvaluateOrFallback(preset.LightIntensity, timeOfDay, directionalLight.intensity);
+        RenderSettings.skybox.SetFloat(SUN_SIZE, EvaluateOrFallback(preset.SunSize, timeOfDay, directionalLightLocalScale.x));
+        RenderSettings.skybox.SetFloat(SUN_OPACITY, EvaluateOrFallback(preset.SunOpacity, timeOfDay, directionalLightLocalScale.y));
 
         //sampling sun radiance and intensity curves
         RenderSettings.skybox.SetFloat(SUN_RADIANCE, preset.SunRadiance.Evaluate(timeOfDay));
@@ -307,6 +310,9 @@ public class SkyboxRenderController : MonoBehaviour
 
         UpdateLensFlare(timeOfDay);
     }
+
+    private static float EvaluateOrFallback(AnimationCurve curve, float timeOfDay, float fallback) =>
+        curve.length > 0 ? curve.Evaluate(timeOfDay) : fallback;
 
     private void InitializeLensFlare(bool lensFlareEnabled)
     {

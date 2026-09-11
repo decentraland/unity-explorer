@@ -27,6 +27,14 @@ namespace DCL.SkyBox
                  + "Sun position and disc curves always follow time, never phase.")]
         [SerializeField] private AnimationCurve timeToPhase = AnimationCurve.Linear(0f, 0f, 1f, 1f);
 
+        [Header("Sun mechanics (keyed on time of day, not phase)")]
+        [Tooltip("Directional light intensity over the day. Empty = keep the light animation clip's intensity channel.")]
+        [SerializeField] private AnimationCurve lightIntensity = new ();
+        [Tooltip("Sun disc size over the day. Empty = keep the clip's localScale.x channel.")]
+        [SerializeField] private AnimationCurve sunSize = new ();
+        [Tooltip("Sun disc opacity over the day. Empty = keep the clip's localScale.y channel.")]
+        [SerializeField] private AnimationCurve sunOpacity = new ();
+
         [Header("Directional Light")]
         [GradientUsage(true)] [SerializeField] private Gradient directionalColorRamp = new ();
         [GradientUsage(true)] [SerializeField] private Gradient sunColorRamp = new ();
@@ -79,6 +87,10 @@ namespace DCL.SkyBox
         [SerializeField] private float secondSunOrbitSize = 0.1f;
 
         public AnimationCurve TimeToPhase => timeToPhase;
+
+        public AnimationCurve LightIntensity => lightIntensity;
+        public AnimationCurve SunSize => sunSize;
+        public AnimationCurve SunOpacity => sunOpacity;
 
         public Gradient DirectionalColorRamp => directionalColorRamp;
         public Gradient SunColorRamp => sunColorRamp;
