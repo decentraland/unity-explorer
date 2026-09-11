@@ -53,9 +53,12 @@ module.exports.movePlayerTo = async function(message) {
 }
 
 module.exports.teleportTo = async function(message) {
-    const x = Number(message.worldCoordinates.x);
-    const y = Number(message.worldCoordinates.y);
-    UnityRestrictedActionsApi.TeleportTo(x, y);
+    // Unpack optional fields and forward to the C# bridge; both are nullable.
+    const coords = message.worldCoordinates
+    UnityRestrictedActionsApi.TeleportTo(
+        coords != undefined ? Number(coords.x) : null,
+        coords != undefined ? Number(coords.y) : null,
+        message.realm != undefined ? message.realm : null);
     return {};
 }
 

@@ -104,12 +104,25 @@ namespace CrdtEcsBridge.RestrictedActions
             }
         }
 
-        public void TryTeleportTo(Vector2Int coords)
+        public void TryTeleportTo(Vector2Int? coords, string? realm)
         {
             if (!sceneStateProvider.IsCurrent)
                 return;
 
-            TeleportAsync(coords).Forget();
+            // Realm present → route through the change-realm consent prompt, carrying the optional parcel.
+            if (!string.IsNullOrEmpty(realm))
+            {
+                ChangeRealmAsync(string.Empty, realm, coords).Forget();
+                return;
+            }
+
+            if (!coords.HasValue)
+            {
+                ReportHub.LogWarning(ReportCategory.RESTRICTED_ACTIONS, "TeleportTo: request carries neither worldCoordinates nor realm");
+                return;
+            }
+
+            TeleportAsync(coords.Value).Forget();
         }
 
         public bool TryChangeRealm(string message, string realm)
@@ -279,10 +292,10 @@ namespace CrdtEcsBridge.RestrictedActions
             await mvcManager.ShowAsync(TeleportPromptController.IssueCommand(new TeleportPromptController.Params(coords)));
         }
 
-        private async UniTask ChangeRealmAsync(string message, string realm)
+        private async UniTask ChangeRealmAsync(string message, string realm, Vector2Int? position = null)
         {
             await UniTask.SwitchToMainThread();
-            await mvcManager.ShowAsync(ChangeRealmPromptController.IssueCommand(new ChangeRealmPromptController.Params(message, realm)));
+            await mvcManager.ShowAsync(ChangeRealmPromptController.IssueCommand(new ChangeRealmPromptController.Params(message, realm, position)));
         }
 
         private async UniTask OpenNftDialogAsync(string chain, string contractAddress, string tokenId)
