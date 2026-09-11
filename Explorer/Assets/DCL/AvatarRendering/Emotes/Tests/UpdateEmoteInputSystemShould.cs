@@ -7,6 +7,7 @@ using DCL.ECSComponents;
 using DCL.CharacterMotion.Components;
 using DCL.Profiles;
 using DCL.SDKComponents.InputModifier.Components;
+using ECS.TestSuite;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
@@ -23,6 +24,14 @@ namespace DCL.AvatarRendering.Emotes.Tests
         private UpdateEmoteInputSystem system;
         private TestEmoteWheelShortcutHandler testShortcutHandler;
         private GameObject testGameObject;
+
+        [OneTimeSetUp]
+        public void OneTimeSetUp() =>
+            EcsTestsUtils.SetUpFeaturesRegistry();
+
+        [OneTimeTearDown]
+        public void OneTimeTearDown() =>
+            EcsTestsUtils.TearDownFeaturesRegistry();
 
         [SetUp]
         public void SetUp()
@@ -70,7 +79,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
 
         private Profile CreateProfileWithEmotes(params string[] emoteUrns)
         {
-            var profile = Profile.Create();
+            var profile = Profile.NewRandomProfile();
             var avatar = new Avatar();
 
             for (int i = 0; i < emoteUrns.Length && i < Avatar.MAX_EQUIPPED_EMOTES; i++)

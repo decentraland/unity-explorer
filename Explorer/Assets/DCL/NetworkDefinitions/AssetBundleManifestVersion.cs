@@ -34,6 +34,9 @@ public class AssetBundleManifestVersion
         private bool? SupportsISSValue;
         public bool assetBundleManifestRequestFailed;
         public bool IsLSDAsset;
+
+        // LOD bundles are only produced by the regular pipeline; loading keys the CDN base on this.
+        public bool IsLODAsset;
         public AssetBundleManifestVersionPerPlatform? assets;
 
         //Bare hash → CDN file name; fed by InjectDepsDigests (digest-bearing names) and InjectContent (Qm casing fixes).
@@ -215,8 +218,8 @@ public class AssetBundleManifestVersion
             var assetBundleManifestVersion = new AssetBundleManifestVersion();
             var assets = new AssetBundleManifestVersionPerPlatform
             {
-                mac = new PlatformInfo(AB_MIN_SUPPORTED_VERSION_WINDOWS.ToString(), "1"),
-                windows = new PlatformInfo(AB_MIN_SUPPORTED_VERSION_MAC.ToString(), "1"),
+                windows = new PlatformInfo(AB_MIN_SUPPORTED_VERSION_WINDOWS.ToString(), "1"),
+                mac = new PlatformInfo(AB_MIN_SUPPORTED_VERSION_MAC.ToString(), "1"),
             };
             assetBundleManifestVersion.assets = assets;
             assetBundleManifestVersion.HasHashInPath();
@@ -240,7 +243,7 @@ public class AssetBundleManifestVersion
             var assets = new AssetBundleManifestVersionPerPlatform();
             assets.SetVersion(assetBundleManifestVerison, buildDate);
 
-            var assetBundleManifestVersion = new AssetBundleManifestVersion { assets = assets };
+            var assetBundleManifestVersion = new AssetBundleManifestVersion { assets = assets, IsLODAsset = true };
 
             return assetBundleManifestVersion;
         }

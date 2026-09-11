@@ -25,10 +25,10 @@ namespace Global.AppArgs
             [AppArgsFlags.FRIENDS_API_URL] = "Changes the server that holds your friends and social data.",
             [AppArgsFlags.FeatureFlags.URL] = "Changes the server that decides which features are enabled.",
             [AppArgsFlags.FeatureFlags.HOSTNAME] = "Changes the server that decides which features are enabled.",
-            [AppArgsFlags.OPTIMIZED_ASSETS_URL] = "Changes the server scene models and textures are downloaded from.",
             [AppArgsFlags.LSD_REMOTE_AB_SERVER] = "Changes the server scene asset bundles are downloaded from.",
             [AppArgsFlags.LSD_REMOTE_AB_WORLD] = "Loads scene content from a world chosen by the link.",
             [AppArgsFlags.PULSE_MULTIPLAYER] = "Changes how this session connects to other players.",
+            [AppArgsFlags.GATEWAY] = "Routes all Decentraland traffic through a server chosen by the link.",
 
             // Skips a protective screen.
             [AppArgsFlags.SKIP_VERSION_CHECK] = "Skips the check for an outdated Explorer version.",
@@ -38,6 +38,7 @@ namespace Global.AppArgs
             // Development / automation modes.
             [AppArgsFlags.DEBUG] = "Enables debug mode and developer tooling.",
             [AppArgsFlags.AUTOPILOT] = "Takes over your avatar to run an automated route.",
+            [AppArgsFlags.MEASURE_LOADING_TIME] = "Runs a loading-time benchmark and skips the sign-in screen.",
             [AppArgsFlags.ALTTESTER] = "Lets an external tool remotely control this client.",
             [AppArgsFlags.MCP] = "Opens a local port that lets other programs control this client.",
             [AppArgsFlags.MCP_PORT] = "Opens a local port that lets other programs control this client.",

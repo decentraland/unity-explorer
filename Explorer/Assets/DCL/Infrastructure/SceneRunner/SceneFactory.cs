@@ -16,12 +16,12 @@ using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Poses;
 using DCL.Profiles;
 using DCL.SkyBox;
+using DCL.Utility.Exceptions;
 using DCL.Web3;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
 using ECS.Prioritization.Components;
-using ECS.StreamableLoading.AssetBundles.InitialSceneState;
 using Microsoft.ClearScript;
 using MVC;
 using PortableExperiences.Controller;
@@ -39,7 +39,6 @@ using UnityEngine.Assertions;
 using UnityEngine.Networking;
 using Utility;
 using Utility.Multithreading;
-using RichTypes;
 
 namespace SceneRunner
 {
@@ -173,7 +172,12 @@ namespace SceneRunner
 
         private async UniTask<ISceneFacade> CreateSceneAsync(ISceneData sceneData, IJsApiPermissionsProvider permissionsProvider, IPartitionComponent partitionProvider, CancellationToken ct)
         {
-            var deps = new SceneInstanceDependencies(sdkComponentsRegistry, entityCollidersGlobalCache, sceneData, permissionsProvider, partitionProvider, ecsWorldFactory, entityFactory);
+            DCL.Utility.Types.Result<SceneInstanceDependencies> depsResult = SceneInstanceDependencies.New(sdkComponentsRegistry, entityCollidersGlobalCache, sceneData, permissionsProvider, partitionProvider, ecsWorldFactory, entityFactory);
+
+            if (!depsResult.Success)
+                throw new ManifestNotFoundException(depsResult.ErrorMessage!);
+
+            SceneInstanceDependencies deps = depsResult.Value;
 
             // Try to create scene runtime
             SceneRuntimeImpl sceneRuntime;

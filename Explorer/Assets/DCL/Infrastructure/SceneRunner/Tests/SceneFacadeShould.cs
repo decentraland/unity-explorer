@@ -6,7 +6,6 @@ using CRDT.Memory;
 using CRDT.Protocol;
 using CRDT.Serializer;
 using CrdtEcsBridge.Components;
-using CrdtEcsBridge.ECSToCRDTWriter;
 using CrdtEcsBridge.JsModulesImplementation.Communications;
 using CrdtEcsBridge.OutgoingMessages;
 using CrdtEcsBridge.PoolsProviders;
@@ -389,7 +388,6 @@ namespace SceneRunner.Tests
                     Substitute.For<ISceneData>(),
                     new MultiThreadSync(new SceneShortInfo()),
                     Substitute.For<ICRDTDeserializer>(),
-                    Substitute.For<IECSToCRDTWriter>(),
                     Substitute.For<ISystemGroupsUpdateGate>(),
                     Substitute.For<ISystemsUpdateGate>(),
                     new ECSWorldInstanceSharedDependencies()

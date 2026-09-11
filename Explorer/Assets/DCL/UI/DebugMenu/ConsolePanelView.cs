@@ -147,6 +147,6 @@ namespace DCL.UI.DebugMenu
         // Cannot compare against 'highValue' directly due to floating point precision error
         private bool IsScrollAtBottom() =>
             scrollView != null
-            && scrollView.verticalScroller.value >= (scrollView.verticalScroller.highValue * 0.999f);
+            && scrollView.verticalScroller.value >= scrollView.verticalScroller.highValue * 0.999f;
     }
 }

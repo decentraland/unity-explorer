@@ -1,5 +1,6 @@
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading.Components;
+using DCL.Utility.Types;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -141,9 +142,14 @@ namespace DCL.Profiles
 
         public Profile Build()
         {
-            var profile = Profile.Create();
+            Option<UserId> id = UserId.New(userId);
+
+            if (!id.Has)
+                throw new InvalidOperationException("Cannot build a profile without a user id");
+
+            var avatar = new Avatar();
+            var profile = new Profile(id.Value, name ?? "", avatar);
             profile.RealName = realName ?? "";
-            profile.GetCompact().UserId = userId!;
             profile.Version = version;
             profile.blocked = blocked;
             profile.interests = interests;
@@ -155,7 +161,6 @@ namespace DCL.Profiles
             profile.Gender = gender ?? "";
             profile.Hobbies = hobbies ?? "";
             profile.Language = language ?? "";
-            profile.GetCompact().Name = name ?? "";
             profile.Profession = profession ?? "";
             profile.Pronouns = pronouns ?? "";
             profile.Version = version;
@@ -168,9 +173,6 @@ namespace DCL.Profiles
             profile.HasConnectedWeb3 = hasConnectedWeb3;
             profile.GetCompact().UserNameColor = userNameColor;
             profile.ClaimedNameColor = claimedNameColor;
-
-            var avatar = new Avatar();
-            profile.Avatar = avatar;
 
             if (wearables != null)
                 foreach (URN urn in wearables)

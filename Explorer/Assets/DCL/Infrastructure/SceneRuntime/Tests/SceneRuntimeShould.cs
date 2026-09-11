@@ -25,8 +25,8 @@ namespace SceneRuntime.Tests
 {
     public class SceneRuntimeShould
     {
-        private IInstancePoolsProvider poolsProvider;
-        private ISceneExceptionsHandler sceneExceptionsHandler;
+        private IInstancePoolsProvider poolsProvider = null!;
+        private ISceneExceptionsHandler sceneExceptionsHandler = null!;
 
         [SetUp]
         public void SetUp()
@@ -165,6 +165,24 @@ namespace SceneRuntime.Tests
                     await UniTask.Yield();
                     await sceneRuntime.UpdateScene(0.01f);
                 }
+            });
+
+        // Regression (Sentry UNITY-EXPLORER-NQG): a racing double dispose cancelled an already-disposed CTS
+        [UnityTest]
+        public IEnumerator NotThrowOnSecondSetIsDisposing() =>
+            UniTask.ToCoroutine(async () =>
+            {
+                var code = @"
+            exports.onStart = async function() {};
+            exports.onUpdate = async function(dt) {};
+        ";
+
+                var sceneRuntimeFactory = NewSceneRuntimeFactory();
+                SceneRuntimeImpl sceneRuntime = await sceneRuntimeFactory.CreateBySourceCodeAsync(code, poolsProvider, new SceneShortInfo(), CancellationToken.None);
+
+                sceneRuntime.SetIsDisposing();
+
+                Assert.DoesNotThrow(() => sceneRuntime.SetIsDisposing());
             });
 
         public class TestUtilCheckOk

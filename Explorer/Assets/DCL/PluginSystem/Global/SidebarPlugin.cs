@@ -243,7 +243,6 @@ namespace DCL.PluginSystem.Global
                 globalWorld,
                 chatEventBus,
                 eventsApiService,
-                helpMenuController,
                 communitiesLiveTracker
                 );
 

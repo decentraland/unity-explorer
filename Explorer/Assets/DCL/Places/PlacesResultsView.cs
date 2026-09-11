@@ -8,6 +8,7 @@ using DCL.UI;
 using DCL.UI.Controls.Configs;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.Utilities;
+using DCL.Utility.Types;
 using MVC;
 using SuperScrollView;
 using System;
@@ -64,7 +65,7 @@ namespace DCL.Places
         [SerializeField] private PlaceContextMenuConfiguration placeCardContextMenuConfiguration = null!;
 
         private PlacesStateService placesStateService = null!;
-        private readonly List<string> currentPlacesIds = new ();
+        private readonly List<PlaceId> currentPlacesIds = new ();
 
         private void Awake()
         {
@@ -113,7 +114,12 @@ namespace DCL.Places
         public void AddPlacesResultsItems(IReadOnlyList<PlacesData.PlaceInfo> places, bool resetPos, PlacesSection? section)
         {
             foreach (PlacesData.PlaceInfo placeInfo in places)
-                currentPlacesIds.Add(placeInfo.id);
+            {
+                Option<PlaceId> placeId = PlaceId.New(placeInfo.id);
+
+                if (placeId.Has)
+                    currentPlacesIds.Add(placeId.Value);
+            }
 
             placesResultsLoopGrid.SetListItemCount(currentPlacesIds.Count, resetPos);
 

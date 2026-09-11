@@ -4,6 +4,7 @@ using DCL.Emoji;
 using DCL.UI.CustomInputField;
 using MVC;
 using System;
+using UnityEngine;
 
 namespace DCL.Chat.ChatInput
 {
@@ -13,6 +14,7 @@ namespace DCL.Chat.ChatInput
         private readonly EmojiPanelView emojiPanelView;
         private readonly ChatInputView.EmojiContainer emojiContainer;
         private readonly CustomInputField inputField;
+        private readonly RectTransform inputFieldRect;
         private readonly ChatClickDetectionHandler clickDetectionHandler;
 
         public EmojiPanelChatInputState(ChatInputView view, EmojiPanelPresenter emojiPanelPresenter, EmojiPanelView emojiPanelView)
@@ -23,6 +25,10 @@ namespace DCL.Chat.ChatInput
 
             inputField = view.inputField;
 
+            // The field, not its container: the container keeps a fixed height while the field grows upwards as
+            // the text wraps.
+            inputFieldRect = (RectTransform)view.inputField.transform;
+
             clickDetectionHandler = new ChatClickDetectionHandler(
                 emojiPanelView.transform,
                 emojiContainer.emojiPanelButton.transform);
@@ -32,7 +38,10 @@ namespace DCL.Chat.ChatInput
 
         protected override void Activate()
         {
-            emojiPanelView.ResetToDefaultPosition();
+            // Measured from the input field on every open: the chat panel is re-laid-out whenever the voice-chat
+            // panel changes height, and the field itself grows with wrapped text — neither of which a stored
+            // position would survive.
+            emojiPanelView.PositionAbove(inputFieldRect, emojiContainer.emojiPanelGap);
             emojiPanelPresenter.SetPanelVisibility(true);
             emojiContainer.emojiPanelButton.SetState(true);
             emojiPanelPresenter.EmojiSelected += OnEmojiSelected;

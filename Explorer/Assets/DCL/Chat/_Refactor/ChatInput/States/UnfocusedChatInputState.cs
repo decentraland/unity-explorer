@@ -22,7 +22,8 @@ namespace DCL.Chat.ChatInput
             view.SetDefault();
             view.RefreshHeight();
 
-            if (EventSystem.current != null)
+            // Another view's input field may already own the selection — never clear one the chat doesn't hold
+            if (EventSystem.current != null && EventSystem.current.currentSelectedGameObject == view.inputField.gameObject)
                 EventSystem.current.SetSelectedGameObject(null);
 
             view.inputField.onSelect.AddListener(OnInputSelected);

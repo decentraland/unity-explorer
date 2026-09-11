@@ -9,7 +9,7 @@ namespace DCL.AvatarRendering.Wearables.Components
     /// </summary>
     public readonly struct WearablesResolution : IDisposable
     {
-        public static readonly WearablesResolution EMPTY = new (new List<IWearable>(), null);
+        public static readonly WearablesResolution EMPTY = new (new List<IWearable>());
 
         /// <summary>
         ///     This list is calculated on wearables resolution and it's used on avatar instantiation, poolable

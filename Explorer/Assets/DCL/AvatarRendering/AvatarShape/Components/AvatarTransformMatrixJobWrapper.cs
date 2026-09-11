@@ -30,6 +30,12 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
         public NativeArray<float4x4> RemoteAvatarsBonesResult  => remoteAvatars.Job.BonesMatricesResult;
 
+        /// <summary>
+        ///     World-space bounds per remote avatar, computed by the calculation job. Indexed by
+        ///     IndexInGlobalJobArray and only valid after CompleteBoneMatrixCalculations.
+        /// </summary>
+        public NativeArray<float3x2> RemoteAvatarsWorldBounds => remoteAvatars.WorldBounds;
+
 #if UNITY_INCLUDE_TESTS
         public int MatrixFromAllAvatarsLength => remoteAvatars.MatrixFromAllAvatarsLength;
         public int UpdateAvatarLength => remoteAvatars.UpdateAvatarLength;
@@ -87,6 +93,37 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             remoteAvatars.Register(avatarBase, ref transformMatrixComponent);
         }
 
+        /// <summary>
+        ///     Pushes the avatar's authoritative bone count (AvatarCustomSkinningComponent.BoneCount — the
+        ///     exact number of matrices ComputeSkinning uploads) into the matching pipeline so the
+        ///     calculation job produces precisely that range. Must be called every frame before
+        ///     ScheduleBoneMatrixCalculation; unregistered avatars (invalid index) are ignored.
+        /// </summary>
+        public void SetBoneCount(ref AvatarTransformMatrixComponent transformMatrixComponent, int boneCount)
+        {
+            if (transformMatrixComponent.IndexInGlobalJobArray.TryGetValue(out int validIndex) == false)
+                return;
+
+            if (transformMatrixComponent.IsMainPlayer)
+                mainPlayerAvatar.SetBoneCount(boneCount);
+            else
+                remoteAvatars.SetBoneCount(validIndex, boneCount);
+        }
+
+        /// <summary>
+        ///     Pushes the avatar-space bounds so the calculation job can place them in the world. The main player
+        ///     is never culled, so only remote slots carry bounds.
+        /// </summary>
+        public void SetLocalBounds(ref AvatarTransformMatrixComponent transformMatrixComponent, Bounds localBounds)
+        {
+            if (transformMatrixComponent.IsMainPlayer) return;
+
+            if (transformMatrixComponent.IndexInGlobalJobArray.TryGetValue(out int validIndex) == false)
+                return;
+
+            remoteAvatars.SetLocalBounds(validIndex, new float3x2(localBounds.center, localBounds.extents));
+        }
+
         public void Dispose()
         {
             // Leak the resouces. Managed dispose of TransformAccessArray takes very much time.
@@ -108,7 +145,12 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
             if (dummyTransform != null)
             {
-                UnityEngine.Object.Destroy(dummyTransform.gameObject);
+                // Destroy is illegal in edit mode, where the system's edit-mode tests dispose this wrapper.
+                if (Application.isPlaying)
+                    UnityEngine.Object.Destroy(dummyTransform.gameObject);
+                else
+                    UnityEngine.Object.DestroyImmediate(dummyTransform.gameObject);
+
                 stopwatch.LogStep("dummyTransform.Destroy");
             }
 

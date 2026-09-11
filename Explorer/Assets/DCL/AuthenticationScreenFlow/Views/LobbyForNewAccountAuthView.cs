@@ -23,6 +23,12 @@ namespace DCL.AuthenticationScreenFlow
         [field: SerializeField]
         public Button FinalizeNewUserButton { get; private set; } = null!;
 
+        [field: SerializeField]
+        public GameObject JumpInIcon { get; private set; } = null!;
+
+        [field: SerializeField]
+        public GameObject FinalizeLoading { get; private set; } = null!;
+
         [field: Space]
         [field: SerializeField]
         public Button RandomizeButton { get; private set; } = null!;
@@ -59,8 +65,8 @@ namespace DCL.AuthenticationScreenFlow
         public TMP_Text_ClickeableLink TermsOfUseAndPrivacyLink { get; private set; } = null!;
 
         [Space]
-        [SerializeField] private Animator animator;
-        [SerializeField] private CanvasGroup canvasGroup;
+        [SerializeField] private Animator animator = null!;
+        [SerializeField] private CanvasGroup canvasGroup = null!;
 
         private int hideAnimHash = UIAnimationHashes.OUT;
 

@@ -6,11 +6,13 @@ name: Comment Warning Ratchet on PR
 # workflow, so it can comment with write permissions without exposing them to the
 # untrusted lint job. Mirrors pr-comment-artifact-url.yml.
 #
-# 'requested' -> post a "Lint pending" banner the moment Unity Test starts, so a
-#                stale Passed/Blocked banner from a previous run never lingers.
-# 'completed' -> ALWAYS refresh the banner: Passed / Blocked / Skipped (no C#
-#                changes) / Unavailable (lint did not finish). Keyed on the hidden
-#                <!-- warning-ratchet --> marker so every state edits the same comment.
+# Writes only the "lint" section of the unified CI status comment via the
+# ci-status-comment composite action (build / lint / tests live in one comment).
+#
+# 'requested' -> reset the lint section to "pending" the moment Unity Test starts,
+#                so a stale Passed/Blocked state from a previous run never lingers.
+# 'completed' -> ALWAYS refresh the section: Passed / Blocked / Skipped (no C#
+#                changes) / Unavailable (lint did not finish).
 on:
   workflow_run:
     types:
@@ -23,6 +25,7 @@ on:
 permissions:
   contents: read
   pull-requests: write
+  actions: read       # needed by download-artifact@v4 to fetch warning-result from the Unity Test run
 
 jobs:
   pending:
@@ -43,29 +46,25 @@ jobs:
             echo "pr-number=$PR_NUMBER" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Find existing comment
+      - name: Checkout CI status action
         if: steps.pr.outputs.pr-number != ''
-        uses: peter-evans/find-comment@v2
-        id: find-comment
+        uses: actions/checkout@v6
         with:
-          issue-number: ${{ steps.pr.outputs.pr-number }}
-          comment-author: 'github-actions[bot]'
-          body-includes: '<!-- warning-ratchet -->'
+          sparse-checkout: .github/actions/ci-status-comment
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
 
-      - name: Upsert pending banner
+      - name: Reset lint section to pending
         if: steps.pr.outputs.pr-number != ''
-        uses: peter-evans/create-or-update-comment@v3
+        uses: ./.github/actions/ci-status-comment
         with:
-          issue-number: ${{ steps.pr.outputs.pr-number }}
-          comment-id: ${{ steps.find-comment.outputs.comment-id }}
-          edit-mode: replace
+          pr-number: ${{ steps.pr.outputs.pr-number }}
+          section: lint
+          github-token: ${{ github.token }}
           body: |-
-            <!-- warning-ratchet -->
-            ![badge]
+            [![Lint](https://img.shields.io/badge/Lint-Pending!-yellow?logo=jetbrains&logoColor=white&style=for-the-badge)](${{ github.event.workflow_run.html_url }})
 
             Lint in progress, come back later!
-
-            [badge]: https://img.shields.io/badge/Lint-Pending!-ffff00?logo=jetbrains&logoColor=white&style=for-the-badge
 
   comment:
     if: github.event.action == 'completed'
@@ -124,6 +123,9 @@ jobs:
           ALLOW_EQUAL: ${{ steps.result.outputs.allow-equal }}
           CONCLUSION: ${{ github.event.workflow_run.conclusion }}
           RUN_URL: ${{ github.event.workflow_run.html_url }}
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
         run: |
           DELIM="EOF_$(uuidgen)"
           BADGE_STYLE="?logo=jetbrains&logoColor=white&style=for-the-badge"
@@ -131,9 +133,10 @@ jobs:
           BLOCKED=0
 
           # COUNT/BASELINE come from the artifact produced by the untrusted pull_request job
-          # (fork-controlled). This step has no `set -e`, and bash's `[` errors out on a
-          # non-numeric operand and falls through - never let such a value reach a comparison
-          # or a bash arithmetic context ($(( )) evaluates its operands as expressions).
+          # (fork-controlled). This step runs under Actions' default `bash -e {0}`: `[`
+          # errors on a non-numeric operand (falling through inside `if`, aborting the step
+          # elsewhere) - never let such a value reach a comparison or a bash arithmetic
+          # context ($(( )) evaluates its operands as expressions).
           [[ "$COUNT" =~ ^[0-9]+$ ]] || COUNT=0
           [[ "$BASELINE" =~ ^[0-9]+$ ]] || BASELINE=""
 
@@ -177,7 +180,7 @@ jobs:
                 echo "<details><summary>Warnings/errors in files changed by this PR ($total)</summary>"
                 echo ""
                 echo '```'
-                jq -r '.pr_findings[] | "\(.file):\(.line)  \(.rule)  \(.message | gsub("[\r\n]"; " "))"' warning-result.json
+                jq -r '.pr_findings[] | "\(.file | gsub("[\r\n]"; " ")):\(.line | tostring | gsub("[\r\n]"; " "))  \(.rule | gsub("[\r\n]"; " "))  \(.message | gsub("[\r\n]"; " "))"' warning-result.json
                 shown=$(jq -r '.pr_findings | length' warning-result.json)
                 if [ "$total" -gt "$shown" ]; then
                   echo ""
@@ -196,7 +199,7 @@ jobs:
                   echo "<details><summary>No warnings in files changed by this PR — showing general ones you can remove to unblock ($dcount of $COUNT)</summary>"
                   echo ""
                   echo '```'
-                  jq -r '.droppable[] | "\(.file):\(.line)  \(.rule)  \(.message | gsub("[\r\n]"; " "))"' warning-result.json
+                  jq -r '.droppable[] | "\(.file | gsub("[\r\n]"; " ")):\(.line | tostring | gsub("[\r\n]"; " "))  \(.rule | gsub("[\r\n]"; " "))  \(.message | gsub("[\r\n]"; " "))"' warning-result.json
                   echo '```'
                   echo ""
                   echo "</details>"
@@ -206,32 +209,58 @@ jobs:
             fi
           fi
 
+          # Footer: the lint job run plus the full InspectCode report artifact (the
+          # findings list above is capped; the artifact has everything). The id comes
+          # from the trusted Actions API.
+          FOOTER=""
+          if [ "$FOUND" = "true" ]; then
+            ART_ID=$(gh api "/repos/$REPO/actions/runs/$RUN_ID/artifacts?per_page=100" \
+              --jq '.artifacts[] | select(.name=="csharp-lint-reports") | .id' 2>/dev/null | head -1)
+            # Wall time of the Lint job, from the trusted Actions API. An API failure
+            # degrades to "no duration" (empty) instead of aborting the step under -e.
+            LINT_SECS=$(gh api "/repos/$REPO/actions/runs/$RUN_ID/jobs?per_page=100" \
+              --jq '[.jobs[] | select(.name=="Lint" and .completed_at != null and .started_at != null)
+                     | ((.completed_at|fromdateiso8601) - (.started_at|fromdateiso8601))] | first // empty' 2>/dev/null || true)
+            FOOTER="<sub>[Lint run]($RUN_URL)"
+            [ -n "$ART_ID" ] && FOOTER="$FOOTER · [full InspectCode report](https://github.com/$REPO/actions/runs/$RUN_ID/artifacts/$ART_ID)"
+            if [[ "$LINT_SECS" =~ ^[0-9]+$ ]]; then
+              # Same h/m/s convention as fmt_dur in ucb-build-links/action.yml.
+              if [ "$LINT_SECS" -ge 3600 ]; then took="$((LINT_SECS/3600))h $((LINT_SECS%3600/60))m"
+              elif [ "$LINT_SECS" -ge 60 ]; then took="$((LINT_SECS/60))m $((LINT_SECS%60))s"
+              else took="${LINT_SECS}s"; fi
+              FOOTER="$FOOTER · took $took"
+            fi
+            FOOTER="$FOOTER</sub>"
+          fi
+
           {
             echo "body<<$DELIM"
-            echo "<!-- warning-ratchet -->"
-            echo "![badge]"
+            echo "[![Lint]($BADGE)]($RUN_URL)"
             echo ""
             echo "$MSG"
             [ -n "$DETAILS" ] && cat "$DETAILS"
-            echo ""
-            echo "[badge]: $BADGE"
+            if [ -n "$FOOTER" ]; then
+              echo ""
+              echo "$FOOTER"
+            fi
             echo "$DELIM"
           } >> "$GITHUB_OUTPUT"
 
-      - name: Find existing comment
+      - name: Checkout CI status action
         if: steps.pr.outputs.pr-number != ''
-        uses: peter-evans/find-comment@v2
-        id: find-comment
+        uses: actions/checkout@v6
         with:
-          issue-number: ${{ steps.pr.outputs.pr-number }}
-          comment-author: 'github-actions[bot]'
-          body-includes: '<!-- warning-ratchet -->'
+          sparse-checkout: .github/actions/ci-status-comment
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+          # Own path so checkout's workspace-clean can't wipe the already-downloaded warning-result.json.
+          path: ci-status-action
 
-      - name: Upsert comment
+      - name: Update lint section
         if: steps.pr.outputs.pr-number != ''
-        uses: peter-evans/create-or-update-comment@v3
+        uses: ./ci-status-action/.github/actions/ci-status-comment
         with:
-          issue-number: ${{ steps.pr.outputs.pr-number }}
-          comment-id: ${{ steps.find-comment.outputs.comment-id }}
-          edit-mode: replace
+          pr-number: ${{ steps.pr.outputs.pr-number }}
+          section: lint
+          github-token: ${{ github.token }}
           body: ${{ steps.body.outputs.body }}

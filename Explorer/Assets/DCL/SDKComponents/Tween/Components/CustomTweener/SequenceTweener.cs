@@ -122,7 +122,7 @@ namespace DCL.SDKComponents.Tween.Components
 
                         if (textureTweener != null)
                         {
-                            textureTweener.From(pbTween.TextureMove.Start, false, false);
+                            textureTweener.From(pbTween.TextureMove.Start, false);
                             textureTweener.SetAutoKill(false).Pause();
                             returnTween = textureTweener;
                         }

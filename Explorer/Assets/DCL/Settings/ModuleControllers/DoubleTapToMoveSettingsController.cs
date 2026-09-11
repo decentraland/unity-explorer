@@ -18,7 +18,7 @@ namespace DCL.Settings.ModuleControllers
                 return;
             }
 
-            bool value = DCLPlayerPrefs.GetBool(DCLPrefKeys.SETTINGS_DOUBLE_TAP_TO_MOVE, false);
+            bool value = DCLPlayerPrefs.GetBool(DCLPrefKeys.SETTINGS_DOUBLE_TAP_TO_MOVE);
             view.ToggleView.Toggle.SetIsOnWithoutNotify(value);
             view.ToggleView.Toggle.onValueChanged.AddListener(OnToggleValueChanged);
         }

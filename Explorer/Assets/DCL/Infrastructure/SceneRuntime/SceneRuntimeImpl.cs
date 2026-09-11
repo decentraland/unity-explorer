@@ -13,6 +13,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine.Assertions;
+using Utility.Multithreading;
 
 namespace SceneRuntime
 {
@@ -29,6 +30,7 @@ namespace SceneRuntime
         private readonly JSTaskResolverResetable resetableSource;
 
         private readonly CancellationTokenSource isDisposingTokenSource = new ();
+        private readonly InterlockedFlag isDisposing = new ();
         private int nextUint8Array;
 
         private ScriptObject updateFunc;
@@ -80,9 +82,9 @@ namespace SceneRuntime
         }
 
         /// <remarks>
-        ///     <see cref="SceneFacade" /> is a component in the global scene as an
+        ///     <c>SceneFacade</c> is a component in the global scene as an
         ///     <see cref="ISceneFacade" />. It owns its <see cref="SceneRuntimeImpl" /> through its
-        ///     <see cref="deps" /> field, which in turns owns its <see cref="V8ScriptEngine" />. So that also
+        ///     <c>deps</c> field, which in turns owns its <see cref="V8ScriptEngine" />. So that also
         ///     shall be the chain of Dispose calls.
         /// </remarks>
         public void Dispose()
@@ -132,8 +134,14 @@ namespace SceneRuntime
             jsApiBunch.AddHostObject(itemName, target);
         }
 
+        /// <remarks>
+        ///     Entered concurrently from more than one thread, so the single-entry guard is atomic.
+        /// </remarks>
         public void SetIsDisposing()
         {
+            if (!isDisposing.Set())
+                return;
+
             isDisposingTokenSource.Cancel();
             isDisposingTokenSource.Dispose();
         }

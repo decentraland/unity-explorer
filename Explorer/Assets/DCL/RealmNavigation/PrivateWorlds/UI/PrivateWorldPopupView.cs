@@ -195,8 +195,6 @@ namespace DCL.PrivateWorlds.UI
 
         /// <summary>
         /// Focuses the password input field after a short delay.
-        /// The popup controller implements IBlocksChat, so the MVC system automatically
-        /// minimizes the chat before the popup shows — no manual chat closing needed.
         /// The single-frame delay lets the UI layout settle before activating the field.
         /// </summary>
         public void FocusPasswordInput()

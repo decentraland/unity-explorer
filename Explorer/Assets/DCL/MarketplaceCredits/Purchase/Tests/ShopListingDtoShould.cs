@@ -31,6 +31,24 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
                     ""chainId"": 80002
                 },
                 {
+                    ""tradeId"": null,
+                    ""acquisition"": ""store"",
+                    ""listingType"": ""primary"",
+                    ""source"": ""legacy"",
+                    ""contractAddress"": ""0x7777777777777777777777777777777777777777"",
+                    ""itemId"": ""0"",
+                    ""name"": ""Pixie Emote"",
+                    ""thumbnail"": ""https://peer.decentraland.zone/emote.png"",
+                    ""rarity"": ""legendary"",
+                    ""category"": ""emote"",
+                    ""creator"": ""0x8888888888888888888888888888888888888888"",
+                    ""priceCredits"": 14,
+                    ""manaWei"": ""20000000000000000000"",
+                    ""available"": 8,
+                    ""network"": ""MATIC"",
+                    ""chainId"": 137
+                },
+                {
                     ""tradeId"": ""trade-legacy"",
                     ""listingType"": ""primary"",
                     ""source"": ""legacy"",
@@ -60,7 +78,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             // Assert
             Assert.IsNotNull(response.data);
             ShopListingDto[] data = response.data!;
-            Assert.AreEqual(2, data.Length);
+            Assert.AreEqual(3, data.Length);
             Assert.AreEqual(58, response.total);
 
             ShopListingDto native = data[0];
@@ -69,13 +87,45 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             Assert.AreEqual("trade-native", native.tradeId);
             Assert.AreEqual(25, native.priceCredits);
 
-            ShopListingDto legacy = data[1];
+            ShopListingDto legacy = data[2];
             Assert.AreEqual("legacy", legacy.source);
             Assert.AreEqual("1000000000000000000", legacy.manaWei);
             Assert.AreEqual("trade-legacy", legacy.tradeId);
 
             // The server rounds a sub-credit legacy price up to 1; nothing here recomputes it.
             Assert.AreEqual(1, legacy.priceCredits);
+        }
+
+        /// <summary>
+        ///     The row for a CollectionStore MINT. `acquisition` is the server's own discriminator and the only
+        ///     thing that can tell this apart from a trade — a null tradeId cannot, and reading it as "not for
+        ///     sale" is what made the web shop show NOT FOR SALE on items it was itself selling.
+        /// </summary>
+        [Test]
+        public void ParseAStoreMintRowWithNoTrade()
+        {
+            // Act
+            ShopListingsResponse response = JsonConvert.DeserializeObject<ShopListingsResponse>(UNIFIED_PAYLOAD)!;
+
+            // Assert
+            ShopListingDto mint = response.data![1];
+            Assert.AreEqual("store", mint.acquisition);
+            Assert.IsNull(mint.tradeId);
+            Assert.AreEqual("20000000000000000000", mint.manaWei); // MANA-priced, so the oracle sets its credits
+            Assert.AreEqual(8, mint.available); // stock, not a trade, is what "on sale" means for a mint
+            Assert.AreEqual("0", mint.itemId);
+            Assert.AreEqual(137, mint.chainId);
+        }
+
+        /// <summary>An older server does not send `acquisition` at all — and back then every row was a trade.</summary>
+        [Test]
+        public void LeaveAcquisitionNullWhenTheServerDoesNotSendIt()
+        {
+            // Act
+            ShopListingsResponse response = JsonConvert.DeserializeObject<ShopListingsResponse>(UNIFIED_PAYLOAD)!;
+
+            // Assert
+            Assert.IsNull(response.data![0].acquisition);
         }
 
         [Test]

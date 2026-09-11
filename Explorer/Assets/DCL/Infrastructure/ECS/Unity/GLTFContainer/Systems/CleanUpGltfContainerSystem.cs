@@ -10,6 +10,7 @@ using ECS.Groups;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
+using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.GLTFContainer.Asset.Cache;
 using ECS.Unity.GLTFContainer.Asset.Components;
@@ -39,21 +40,21 @@ namespace ECS.Unity.GLTFContainer.Systems
 
         protected override void Update(float t)
         {
-            FinalizeGLTFContainerQuery(World);
+            FinalizeGltfContainerQuery(World);
         }
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
-        private void FinalizeGLTFContainer(ref GltfContainerComponent component)
+        private void FinalizeGltfContainer(ref GltfContainerComponent component)
         {
-            DestroyGLTFContainer(ref component, false);
+            DestroyGltfContainer(ref component, false);
         }
 
         [Query]
         [All(typeof(GltfContainerComponent))]
         private void DestroyWithScenePartition(ref GltfContainerComponent component)
         {
-            DestroyGLTFContainer(ref component, LODUtils.ShouldGoToTheBridge(scenePartition));
+            DestroyGltfContainer(ref component, LODUtils.ShouldGoToTheBridge(scenePartition));
         }
 
         public void FinalizeComponents(in Query query)
@@ -61,7 +62,7 @@ namespace ECS.Unity.GLTFContainer.Systems
             DestroyWithScenePartitionQuery(World);
         }
 
-        private void DestroyGLTFContainer(ref GltfContainerComponent component, bool partitionAllowsBridge)
+        private void DestroyGltfContainer(ref GltfContainerComponent component, bool partitionAllowsBridge)
         {
             if (component.Promise.TryGetResult(World, out StreamableLoadingResult<GltfContainerAsset> result) && result.Succeeded)
             {
@@ -77,6 +78,10 @@ namespace ECS.Unity.GLTFContainer.Systems
 
             component.RootGameObject = null;
             component.Promise.ForgetLoading(World);
+
+            // Clear the cached result so a repeated release (per-frame delete intention, scene teardown)
+            // cannot dereference the returned asset a second time and dispose it while it is in use
+            component.Promise = AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.NULL;
         }
 
     }

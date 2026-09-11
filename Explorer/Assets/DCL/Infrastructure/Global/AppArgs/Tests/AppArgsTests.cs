@@ -1,3 +1,4 @@
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using NUnit.Framework;
 using System.Collections.Generic;
 
@@ -10,6 +11,7 @@ namespace Global.AppArgs.Tests
         {
             // Reset the cached/overridden world whitelist so tests don't leak state into one another.
             DeepLinkAllowlist.SetWhitelistedWorlds(null);
+            DeepLinkAllowlist.SetTrustedBaseDomain(null);
         }
 
         [Test]
@@ -60,12 +62,13 @@ namespace Global.AppArgs.Tests
         public void DeepLinkDropsInternalFlags()
         {
             Dictionary<string, string> output = ApplicationParametersParser.ProcessDeepLinkParameters(
-                "decentraland://?creator-hub-bin-path=%5C%5Cattacker%5Cshare%5Cp.exe&launch-cdp-monitor-on-start&local-scene=true&comms-adapter=x&skip-auth-screen=true");
+                "decentraland://?creator-hub-bin-path=%5C%5Cattacker%5Cshare%5Cp.exe&launch-cdp-monitor-on-start&local-scene=true&comms-adapter=x&accept-untrusted-realm=true&skip-auth-screen=true");
 
             Assert.IsFalse(output.ContainsKey("creator-hub-bin-path"), "creator-hub-bin-path must be dropped from deep links (not an app-arg; the Creator Hub path is resolved at runtime)");
             Assert.IsFalse(output.ContainsKey(AppArgsFlags.LAUNCH_CDP_MONITOR_ON_START), "launch-cdp-monitor-on-start must be dropped");
             Assert.IsFalse(output.ContainsKey(AppArgsFlags.LOCAL_SCENE), "local-scene must be dropped");
             Assert.IsFalse(output.ContainsKey(AppArgsFlags.COMMS_ADAPTER), "comms-adapter must be dropped");
+            Assert.IsFalse(output.ContainsKey(AppArgsFlags.ACCEPT_UNTRUSTED_REALM), "accept-untrusted-realm must be dropped — it lowers a transport guarantee");
             Assert.IsFalse(output.ContainsKey(AppArgsFlags.SKIP_AUTH_SCREEN), "skip-auth-screen must be dropped");
         }
 
@@ -160,12 +163,12 @@ namespace Global.AppArgs.Tests
         public void DeepLinkDropsExecAndInfraParamsEvenForLoopbackRealm()
         {
             Dictionary<string, string> output = ApplicationParametersParser.ProcessDeepLinkParameters(
-                "decentraland://?realm=http://127.0.0.1:8000&creator-hub-bin-path=x&launch-cdp-monitor-on-start=true&comms-adapter=y&optimized-assets-url=https://evil.example");
+                "decentraland://?realm=http://127.0.0.1:8000&creator-hub-bin-path=x&launch-cdp-monitor-on-start=true&comms-adapter=y&gateway=https://evil.example");
 
             Assert.IsFalse(output.ContainsKey("creator-hub-bin-path"), "creator-hub-bin-path must never be permitted (SEC-005), even for a loopback realm");
             Assert.IsFalse(output.ContainsKey(AppArgsFlags.LAUNCH_CDP_MONITOR_ON_START), "launch-cdp-monitor-on-start must never be permitted, even for a loopback realm");
             Assert.IsFalse(output.ContainsKey(AppArgsFlags.COMMS_ADAPTER), "comms-adapter must never be permitted, even for a loopback realm");
-            Assert.IsFalse(output.ContainsKey(AppArgsFlags.OPTIMIZED_ASSETS_URL), "optimized-assets-url must never be permitted, even for a loopback realm — it points the AB/LOD/registry endpoints at arbitrary infrastructure for the whole session; local-ab derives the base from the realm instead");
+            Assert.IsFalse(output.ContainsKey(AppArgsFlags.GATEWAY), "gateway must never be permitted, even for a loopback realm — it aims every supported backend url at a host of the link's choosing for the whole session");
         }
 
         [Test]
@@ -219,12 +222,13 @@ namespace Global.AppArgs.Tests
 
             // Act
             Dictionary<string, string> output = ApplicationParametersParser.ProcessDeepLinkParameters(
-                "decentraland://?realm=test-world.dcl.eth&local-scene=true&dclenv=zone&mcp=true");
+                "decentraland://?realm=test-world.dcl.eth&local-scene=true&dclenv=zone&mcp=true&measure-loading-time=true");
 
             // Assert
             Assert.AreEqual("true", output.GetValueOrDefault(AppArgsFlags.LOCAL_SCENE), "local-scene must survive for a whitelisted world realm");
             Assert.AreEqual("zone", output.GetValueOrDefault(AppArgsFlags.ENVIRONMENT), "dclenv must survive for a whitelisted world realm");
             Assert.AreEqual("true", output.GetValueOrDefault(AppArgsFlags.MCP), "mcp must survive for a whitelisted world realm");
+            Assert.AreEqual("true", output.GetValueOrDefault(AppArgsFlags.MEASURE_LOADING_TIME), "measure-loading-time must survive for a whitelisted world realm — the QA loading-benchmark flow targets a whitelisted world");
         }
 
         [Test]
@@ -278,6 +282,61 @@ namespace Global.AppArgs.Tests
 
             // Act & Assert
             Assert.AreEqual(expected, DeepLinkAllowlist.IsRealmWhitelisted(realm));
+        }
+
+        [TestCase("https://worlds-content-server.interconnected.online/world/test-world.dcl.eth", true, TestName = "a host under the custom base domain is trusted like decentraland's")]
+        [TestCase("https://interconnected.online.attacker.com/world/test-world.dcl.eth", false, TestName = "suffix-lookalike of the custom base domain is rejected")]
+        [TestCase("https://worlds-content-server.decentraland.org/world/test-world.dcl.eth", false, TestName = "a custom deployment does not inherit trust in decentraland hosts")]
+        [TestCase("http://127.0.0.1:8000", true, TestName = "loopback stays trusted")]
+        public void ClassifyRealmAsWhitelistedUnderACustomBaseDomain(string realm, bool expected)
+        {
+            // Arrange
+            DeepLinkAllowlist.SetWhitelistedWorlds(new[] { "test-world.dcl.eth" });
+            DeepLinkAllowlist.SetTrustedBaseDomain("interconnected.online");
+
+            // Act & Assert
+            Assert.AreEqual(expected, DeepLinkAllowlist.IsRealmWhitelisted(realm));
+        }
+
+        [Test]
+        public void KeepTheDecentralandFamilyTrustedWhenTheBaseDomainIsOneOfItsOwn()
+        {
+            // Arrange: passing a decentraland domain must not narrow trust to that single environment.
+            DeepLinkAllowlist.SetWhitelistedWorlds(new[] { "test-world.dcl.eth" });
+            DeepLinkAllowlist.SetTrustedBaseDomain(IDecentralandUrlsSource.ORG_DOMAIN);
+
+            // Act & Assert
+            Assert.IsTrue(DeepLinkAllowlist.IsRealmWhitelisted("https://worlds-content-server.decentraland.org/world/test-world.dcl.eth"));
+            Assert.IsTrue(DeepLinkAllowlist.IsRealmWhitelisted("https://worlds-content-server.decentraland.zone/world/test-world.dcl.eth"));
+        }
+
+        /// <summary>
+        ///     The base domain decides which realm hosts are trusted, so a deep link must never be able to set it:
+        ///     it stays a command-line-only flag, denied (and surfaced for consent) like any other unlisted param.
+        /// </summary>
+        [Test]
+        public void NeverPermitTheBaseDomainFromADeepLink()
+        {
+            Assert.IsFalse(DeepLinkAllowlist.IsPermitted(AppArgsFlags.BASE_DOMAIN));
+            Assert.IsFalse(DeepLinkAllowlist.IsPermittedForWhitelistedRealm(AppArgsFlags.BASE_DOMAIN));
+
+            Dictionary<string, string> output = ApplicationParametersParser.ProcessDeepLinkParameters($"decentraland://?realm=https://peer.decentraland.org&{AppArgsFlags.BASE_DOMAIN}=evil.example");
+            Assert.IsFalse(output.ContainsKey(AppArgsFlags.BASE_DOMAIN), $"keys: {string.Join(", ", output.Keys)}");
+        }
+
+        /// <summary>
+        ///     Which chain the client signs against is not something a link may pick, so it is denied like any other
+        ///     unlisted param. Denial is only half of it: the value is read from the command line before the deep
+        ///     link is processed, so consenting to it in the denied-params dialog does not apply it either.
+        /// </summary>
+        [Test]
+        public void NeverPermitTheEthNetworkFromADeepLink()
+        {
+            Assert.IsFalse(DeepLinkAllowlist.IsPermitted(AppArgsFlags.ETH_NETWORK));
+            Assert.IsFalse(DeepLinkAllowlist.IsPermittedForWhitelistedRealm(AppArgsFlags.ETH_NETWORK));
+
+            Dictionary<string, string> output = ApplicationParametersParser.ProcessDeepLinkParameters($"decentraland://?realm=https://peer.decentraland.org&{AppArgsFlags.ETH_NETWORK}=mainnet");
+            Assert.IsFalse(output.ContainsKey(AppArgsFlags.ETH_NETWORK), $"keys: {string.Join(", ", output.Keys)}");
         }
 
         [Test]
@@ -394,6 +453,24 @@ namespace Global.AppArgs.Tests
                 "decentraland://?realm=https://peer.decentraland.org&local-scene=true&local-ab=true");
 
             Assert.IsFalse(output.ContainsKey(AppArgsFlags.LOCAL_AB), "local-ab must be dropped for a non-loopback (remote) realm");
+        }
+
+        [Test]
+        public void DeepLinkKeepsMeasureLoadingTimeForLoopbackRealm()
+        {
+            Dictionary<string, string> output = ApplicationParametersParser.ProcessDeepLinkParameters(
+                "decentraland://?realm=http://127.0.0.1:8000&measure-loading-time=true");
+
+            Assert.AreEqual("true", output.GetValueOrDefault(AppArgsFlags.MEASURE_LOADING_TIME), "measure-loading-time must survive for a loopback (local dev) realm");
+        }
+
+        [Test]
+        public void DeepLinkDropsMeasureLoadingTimeForRemoteRealm()
+        {
+            Dictionary<string, string> output = ApplicationParametersParser.ProcessDeepLinkParameters(
+                "decentraland://?realm=https://peer.decentraland.org&measure-loading-time=true");
+
+            Assert.IsFalse(output.ContainsKey(AppArgsFlags.MEASURE_LOADING_TIME), "measure-loading-time must be dropped for a non-whitelisted realm — it suppresses the sign-in screen and quits the client when no identity is cached");
         }
     }
 }

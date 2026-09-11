@@ -58,6 +58,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: eb5b5e33068c14a2bacdd6575e94f505, type: 3}
   m_Name: UISoftMaskProjectSettings
   m_EditorClassIdentifier: Coffee.SoftMaskForUGUI::Coffee.UISoftMask.UISoftMaskProjectSettings
+  m_PreLoadSettingsInBuild: 1
   m_SoftMaskEnabled: 1
   m_StereoEnabled: 1
   m_TransformSensitivity: 1
@@ -66,5 +67,12 @@ MonoBehaviour:
   m_ShaderVariantRegistry:
     m_OptionalShaders: []
     m_Asset: {fileID: -3594433201247543868}
+    m_RegisteredShaders:
+    - {fileID: 4800000, guid: 55469a28bf0d2b14db8e6452e462bd4c, type: 3}
+    - {fileID: 4800000, guid: 537b3c029e4916749868ad462dca58c5, type: 3}
+    - {fileID: 4800000, guid: 2933b413a51fc4ff3a83c7ef4177ae84, type: 3}
+    - {fileID: 4800000, guid: 9839189d918374a318d397a86e90aa73, type: 3}
+    - {fileID: 4800000, guid: 63261060f5b084969aca3decbe52d1d0, type: 3}
+    - {fileID: 4800000, guid: 73f09e0b51f9545d686192848731ea76, type: 3}
     m_ErrorOnUnregisteredVariant: 0
     m_UnregisteredVariants: []

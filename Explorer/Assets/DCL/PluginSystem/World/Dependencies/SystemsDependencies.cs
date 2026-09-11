@@ -1,5 +1,6 @@
 using DCL.Interaction.Utility;
 using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.RealmNavigation;
 
 namespace DCL.PluginSystem.World.Dependencies
 {
@@ -12,11 +13,13 @@ namespace DCL.PluginSystem.World.Dependencies
     {
         public readonly IRoomHub RoomHub;
         public readonly IEntityCollidersGlobalCache EntityCollidersGlobalCache;
+        public readonly IReadOnlyLoadingStatus LoadingStatus;
 
-        public SystemsDependencies(IRoomHub roomHub, IEntityCollidersGlobalCache entityCollidersGlobalCache)
+        public SystemsDependencies(IRoomHub roomHub, IEntityCollidersGlobalCache entityCollidersGlobalCache, IReadOnlyLoadingStatus loadingStatus)
         {
             RoomHub = roomHub;
             EntityCollidersGlobalCache = entityCollidersGlobalCache;
+            LoadingStatus = loadingStatus;
         }
     }
 }

@@ -95,7 +95,7 @@ namespace DCL.VoiceChat.UI
         {
             if (stateModel.State.Value == NearbyVoiceChatState.Idle)
             {
-                stateModel.StartSpeaking(NearbyVoiceActivation.Button);
+                stateModel.StartSpeaking();
                 view.HearText.text = SPEAKING_BUTTON_TEXT;
             }
             else if (stateModel.State.Value == NearbyVoiceChatState.OpenMic)

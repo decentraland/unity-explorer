@@ -97,6 +97,17 @@ namespace DCL.ResourcesUnloading
             ClearExtendedObjectPools(budgetToUse, budgeted ? POOLS_UNLOAD_CHUNK : int.MaxValue);
         }
 
+        public void EvictGltfModel(string hash)
+        {
+            // In raw-GLTF development the container cache is keyed by the bare content hash. Evict both
+            // layers: dropping only the container asset would let it be rebuilt from the still-cached
+            // stale import. The import cache is keyed by (Name, Hash) where Name is the verbatim src
+            // from scene code, which this caller cannot reconstruct — evict by hash instead.
+            gltfContainerAssetsCache?.Remove(hash);
+            if (gltfLoadCache is GltfLoadCache typedCache)
+                typedCache.RemoveByHash(hash);
+        }
+
         private void ClearExtendedObjectPools(IPerformanceBudget budgetToUse, int maxUnload)
         {
             foreach (IThrottledClearable pool in extendedObjectPools)

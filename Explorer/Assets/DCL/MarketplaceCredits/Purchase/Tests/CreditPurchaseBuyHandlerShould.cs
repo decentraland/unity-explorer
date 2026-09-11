@@ -36,7 +36,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
 
         private CreditPurchaseBuyHandler CreateHandler(bool isEnabled)
         {
-            var handler = new CreditPurchaseBuyHandler(mvcManager, shopApiClient, webBrowser, isEnabled);
+            var handler = new CreditPurchaseBuyHandler(mvcManager, shopApiClient, webBrowser, () => { }, isEnabled);
             handler.FellBackToWeb += (reason, urn, source) => fallbacks.Add((reason, urn, source));
             return handler;
         }
@@ -73,7 +73,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
 
             // Assert
             await mvcManager.Received(1).ShowAsync(
-                Arg.Is<ShowCommand<CreditPurchaseModalView, CreditPurchaseModalControllerParams>>(cmd => cmd.InputData.Source == SOURCE),
+                Arg.Is<ShowCommand<CreditPurchaseModalView, CreditPurchaseModalControllerParams>>(cmd => cmd.InputData.Source == SOURCE && cmd.InputData.ItemUrn == ITEM_URN),
                 Arg.Any<CancellationToken>());
 
             Assert.IsNull(webBrowser.UrlOpened);

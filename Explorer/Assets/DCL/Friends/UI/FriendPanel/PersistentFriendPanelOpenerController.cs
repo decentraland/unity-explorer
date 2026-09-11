@@ -5,6 +5,7 @@ using DCL.Friends.UI.Requests;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.Passport;
+using DCL.Profiles;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
 using DCL.Web3;
@@ -92,13 +93,22 @@ namespace DCL.Friends.UI.FriendPanel
                             mvcManager.ShowAndForget(FriendsPanelController.IssueCommand(new FriendsPanelParameter(FriendsPanelController.FriendsPanelTab.Friends)), ct);
                         break;
                     case FriendshipStatus.RequestReceived:
+                        Option<Profile.CompactInfo> sender = notification.Metadata.Sender.ToFriendProfile();
+                        Option<Profile.CompactInfo> receiver = notification.Metadata.Receiver.ToFriendProfile();
+
+                        if (!sender.Has || !receiver.Has)
+                        {
+                            ReportHub.LogWarning(ReportCategory.FRIENDS, "Ignoring friend request notification: sender or receiver has no address");
+                            break;
+                        }
+
                         mvcManager.ShowAsync(FriendRequestController.IssueCommand(new FriendRequestParams
                         {
                             Request = new FriendRequest(
                                 friendRequestId: notification.Metadata.RequestId,
                                 timestamp: GetDateTimeFromString(notification.Timestamp),
-                                from: notification.Metadata.Sender.ToFriendProfile(),
-                                to: notification.Metadata.Receiver.ToFriendProfile(),
+                                from: sender.Value,
+                                to: receiver.Value,
                                 messageBody: notification.Metadata.Message)
                         }), ct).Forget();
                         break;

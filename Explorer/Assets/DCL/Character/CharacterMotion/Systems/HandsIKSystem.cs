@@ -73,7 +73,7 @@ namespace DCL.CharacterMotion.Systems
         {
             handsIKComponent.IsDisabled = !handsIkSystemIsEnabled;
 
-            int maskedLayerTag = avatarBase.GetAnimatorCurrentStateTag(AnimatorEmoteLayers.UPPER_BODY_LAYER);
+            int maskedLayerTag = avatarBase.GetAnimatorCurrentStateTag(avatarBase.UpperBodyLayerIndex);
             bool isPlayingMaskedEmote = maskedLayerTag == AnimationHashes.MASKED_EMOTE || maskedLayerTag == AnimationHashes.MASKED_EMOTE_LOOP;
 
             // To avoid using the Hands IK during any special state we update this

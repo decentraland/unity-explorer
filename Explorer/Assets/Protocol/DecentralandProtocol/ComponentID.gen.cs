@@ -65,5 +65,7 @@ namespace DCL.ECS7
         public const int PARTICLE_SYSTEM = 1217;
         public const int TOUCH_SCREEN_CONTROLS = 1218;
         public const int UI_INPUT_BINDING = 1219;
+        public const int EXPLORER_UI_EVENTS_RESULT = 1220;
+        public const int AVATAR_NAMETAG = 1221;
     }
 }

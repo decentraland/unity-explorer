@@ -2,7 +2,6 @@ using DCL.Optimization.Pools;
 using DCL.Optimization.ThreadSafePool;
 using DCL.Utility;
 using Sentry;
-using Sentry.Extensibility;
 using Sentry.Unity;
 using System;
 using System.Collections.Generic;
@@ -16,6 +15,19 @@ namespace DCL.Diagnostics.Sentry
         public delegate void ConfigureScope(Scope scope);
 
         private static readonly TimeSpan SESSION_FLUSH_TIMEOUT = TimeSpan.FromSeconds(2);
+        private const string UNKNOWN_SCENE_NAME = "unknown-scene";
+
+        // Un-actionable native engine messages, e.g. PhysX mesh-cooking warnings from creator assets (#7928)
+        private static readonly string[] SENTRY_IGNORED_NATIVE_MESSAGE_PREFIXES =
+        {
+            "[Physics.PhysX]",
+        };
+
+#if UNITY_EDITOR
+        private const string EDITOR_DSN_ENV_VAR = "DCL_SENTRY_DSN";
+#endif
+
+        private static IReadOnlyList<ConfigureScope>? globalScopeConfigurators;
 
         private readonly List<ConfigureScope> scopeConfigurators = new (10);
 
@@ -25,6 +37,7 @@ namespace DCL.Diagnostics.Sentry
             : base(ReportHandler.Sentry, matrix, debounceEnabled)
         {
             scopesPool = new PerReportScope.Pool(scopeConfigurators);
+            globalScopeConfigurators = scopeConfigurators;
 
             // To prevent unwanted logs, manual initialization is required.
             // We need to delay the replacement of Debug.unityLogger.logHandler instance
@@ -45,6 +58,21 @@ namespace DCL.Diagnostics.Sentry
 
             options.Enabled = true;
             options.TracesSampler = sentrySampler.Execute;
+
+#if UNITY_EDITOR
+            // The asset carries a placeholder DSN that only CI replaces, so editor sessions resolve one from the environment instead.
+            if (!IsValidConfiguration(options))
+            {
+                string? editorDsn = Environment.GetEnvironmentVariable(EDITOR_DSN_ENV_VAR);
+
+                if (!string.IsNullOrWhiteSpace(editorDsn))
+                {
+                    options.Dsn = editorDsn;
+                    options.Environment = "editor";
+                    options.CaptureInEditor = true;
+                }
+            }
+#endif
 
             if (!IsValidConfiguration(options))
             {
@@ -96,6 +124,20 @@ namespace DCL.Diagnostics.Sentry
             scopeConfigurators.Add(configureScope);
         }
 
+        public static void ApplyGlobalScope(Scope scope)
+        {
+            IReadOnlyList<ConfigureScope>? configurators = globalScopeConfigurators;
+
+            if (configurators == null)
+                return;
+
+            for (var i = 0; i < configurators.Count; i++)
+            {
+                try { configurators[i](scope); }
+                catch (Exception) { /* ignored */ }
+            }
+        }
+
         internal override void LogInternal(LogType logType, ReportData category, Object context, object message)
         {
             CaptureMessage(message.ToString(), category, logType);
@@ -112,9 +154,9 @@ namespace DCL.Diagnostics.Sentry
             SentrySdk.CaptureException(ecsSystemException);
         }
 
-        internal override void LogExceptionInternal(Exception exception, ReportData reportData, Object context)
+        internal override void LogExceptionInternal(Exception exception, ReportData reportData, Object? context)
         {
-            using PoolExtensions.Scope<PerReportScope> reportScope = scopesPool.Scope(reportData);
+            using PoolExtensions.Scope<PerReportScope> reportScope = scopesPool.Scope(reportData, exception);
             SentrySdk.CaptureException(exception, reportScope.Value.ExecuteCached);
         }
 
@@ -130,6 +172,13 @@ namespace DCL.Diagnostics.Sentry
 
         private void CaptureMessage(string message, ReportData reportData, LogType logType)
         {
+            // Native messages always arrive as UNSPECIFIED; demote the ignored ones to breadcrumbs
+            if (reportData.Category == ReportCategory.UNSPECIFIED && IsIgnoredNativeMessage(message))
+            {
+                SentrySdk.AddBreadcrumb(message, reportData.Category, level: BreadcrumbLevel.Warning);
+                return;
+            }
+
             // Avoid reporting non-errors to sentry as separate issues (even if they are enabled in the matrix)
             // Report them as breadcrumbs instead
 
@@ -156,6 +205,15 @@ namespace DCL.Diagnostics.Sentry
             }
         }
 
+        private static bool IsIgnoredNativeMessage(string message)
+        {
+            for (var i = 0; i < SENTRY_IGNORED_NATIVE_MESSAGE_PREFIXES.Length; i++)
+                if (message.StartsWith(SENTRY_IGNORED_NATIVE_MESSAGE_PREFIXES[i], StringComparison.Ordinal))
+                    return true;
+
+            return false;
+        }
+
         private bool IsValidConfiguration(SentryUnityOptions options) =>
             !string.IsNullOrEmpty(options.Dsn)
             && options.Dsn != "<REPLACE_DSN>";
@@ -176,13 +234,47 @@ namespace DCL.Diagnostics.Sentry
             }
         }
 
+        internal static void AddSceneJsFingerprint(Scope scope, in ReportData data, Exception? exception)
+        {
+            if (exception == null)
+                return;
+
+            if (!data.Category.Equals(ReportCategory.JAVASCRIPT))
+                return;
+
+            // Exception.Message is virtual and may build its string lazily, so reports filtered out above never pay for it
+            string message = exception.Message;
+
+            if (string.IsNullOrEmpty(message))
+                return;
+
+            // default(SceneShortInfo) has a null Name
+            string sceneName = data.SceneShortInfo.Name;
+            scope.SetFingerprint("scene-js", string.IsNullOrEmpty(sceneName) ? UNKNOWN_SCENE_NAME : sceneName, FirstLine(message));
+        }
+
+        private static string FirstLine(string message)
+        {
+            int end = message.IndexOf('\n');
+
+            if (end < 0)
+                return message;
+
+            // Excluding the '\r' of a "\r\n" ending here spares the extra string a TrimEnd would allocate
+            if (end > 0 && message[end - 1] == '\r')
+                end--;
+
+            return message.Substring(0, end);
+        }
+
         private class PerReportScope
         {
             public readonly Action<Scope> ExecuteCached;
 
             private readonly IReadOnlyList<ConfigureScope> scopeConfigurators;
 
-            internal ReportData reportData { private get; set; }
+            private ReportData reportData { get; set; }
+            private Exception? exception { get; set; }
 
             private PerReportScope(IReadOnlyList<ConfigureScope> scopeConfigurators)
             {
@@ -202,6 +294,7 @@ namespace DCL.Diagnostics.Sentry
 
                 AddCategoryTag(scope, reportData);
                 AddSceneInfo(scope, reportData);
+                AddSceneJsFingerprint(scope, reportData, exception);
             }
 
             private static void AddCategoryTag(Scope scope, ReportData data) =>
@@ -221,10 +314,11 @@ namespace DCL.Diagnostics.Sentry
                 public Pool(IReadOnlyList<ConfigureScope> scopeConfigurators) : base(
                     () => new PerReportScope(scopeConfigurators), defaultCapacity: 3, collectionCheck: PoolConstants.CHECK_COLLECTIONS) { }
 
-                public PoolExtensions.Scope<PerReportScope> Scope(ReportData reportData)
+                public PoolExtensions.Scope<PerReportScope> Scope(ReportData reportData, Exception? exception = null)
                 {
                     PoolExtensions.Scope<PerReportScope> scope = this.AutoScope();
                     scope.Value.reportData = reportData;
+                    scope.Value.exception = exception;
                     return scope;
                 }
             }

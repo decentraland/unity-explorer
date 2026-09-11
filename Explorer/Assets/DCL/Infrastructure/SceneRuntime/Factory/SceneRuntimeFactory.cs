@@ -111,6 +111,10 @@ namespace SceneRuntime.Factory
             InstantiationBehavior instantiationBehavior = InstantiationBehavior.StayOnMainThread)
         {
             await EnsureCalledOnMainThreadAsync();
+
+            if (string.IsNullOrEmpty(path.Value))
+                throw new System.ArgumentException("Scene source URL is empty; the scene has no resolvable main script.", nameof(path));
+
             string sourceCode = await webJsSources.SceneSourceCodeAsync(path, ct);
             return await CreateBySourceCodeAsync(sourceCode, instancePoolsProvider, sceneShortInfo, ct, instantiationBehavior);
         }

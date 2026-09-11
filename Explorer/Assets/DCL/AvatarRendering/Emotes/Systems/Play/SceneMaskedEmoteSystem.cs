@@ -104,7 +104,7 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             if (!masked.IsPlaying) return;
 
-            string layer = AnimatorEmoteLayers.GetFromEmoteMask(masked.Mask);
+            int layer = view.GetEmoteLayerIndex(masked.Mask);
             int currentTag = view.GetAnimatorCurrentStateTag(layer);
             bool isOnAnotherTag = currentTag != AnimationHashes.MASKED_EMOTE && currentTag != AnimationHashes.MASKED_EMOTE_LOOP;
 
@@ -119,6 +119,13 @@ namespace DCL.AvatarRendering.Emotes.Play
         {
             URN emoteId = emoteIntent.EmoteId;
 
+            if (emoteIntent.UpdatePlayTimeout(dt))
+            {
+                ReportHub.LogError(GetReportData(), $"Cant play masked emote {emoteId} timeout reached.");
+                World.Remove<CharacterEmoteIntent>(entity);
+                return;
+            }
+
             if (!emoteStorage.TryGetElement(emoteId.Shorten(), out IEmote emote)) return;
 
             if (emote.IsLoading)
@@ -126,13 +133,6 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             if (emote.Model is { IsInitialized: true, Succeeded: false })
             {
-                World.Remove<CharacterEmoteIntent>(entity);
-                return;
-            }
-
-            if (emoteIntent.UpdatePlayTimeout(dt))
-            {
-                ReportHub.LogError(GetReportData(), $"Cant play masked emote {emoteId} timeout reached.");
                 World.Remove<CharacterEmoteIntent>(entity);
                 return;
             }
@@ -270,7 +270,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             int prevTag = masked.CurrentAnimationTag;
             if (prevTag == 0) return;
 
-            string layer = AnimatorEmoteLayers.GetFromEmoteMask(masked.Mask);
+            int layer = mainPlayerAvatarBaseProxy.Object!.GetEmoteLayerIndex(masked.Mask);
             int currentTag = mainPlayerAvatarBaseProxy.Object!.GetAnimatorCurrentStateTag(layer);
 
             if ((prevTag != AnimationHashes.MASKED_EMOTE || currentTag != AnimationHashes.MASKED_EMOTE_LOOP)

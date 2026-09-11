@@ -5,12 +5,12 @@ using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
-using SceneRuntime;
 using SceneRuntime.Apis.Modules.CommsApi;
 using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
+using UnityEngine.Profiling;
 
 namespace SceneRuntime.Tests
 {
@@ -18,11 +18,11 @@ namespace SceneRuntime.Tests
     {
         private const string TEST_SCENE_ID = "test-scene-123";
 
-        private CommsApiWrap commsApi;
-        private TestSceneCommunicationPipe pipe;
-        private IRoomHub roomHub;
-        private ISceneExceptionsHandler exceptionsHandler;
-        private CancellationTokenSource cts;
+        private CommsApiWrap commsApi = null!;
+        private TestSceneCommunicationPipe pipe = null!;
+        private IRoomHub roomHub = null!;
+        private ISceneExceptionsHandler exceptionsHandler = null!;
+        private CancellationTokenSource cts = null!;
 
         [SetUp]
         public void SetUp()
@@ -52,7 +52,7 @@ namespace SceneRuntime.Tests
             //Assert
             Assert.AreEqual(TEST_SCENE_ID, pipe.registeredSceneId);
             Assert.AreEqual(ISceneCommunicationPipe.MsgType.CommsData, pipe.registeredMsgType);
-            Assert.IsNotNull(pipe.onSceneMessage);
+            Assert.IsNotNull(pipe.sceneMessageHandler);
         }
 
         [Test]
@@ -111,7 +111,7 @@ namespace SceneRuntime.Tests
 
             // Simulate receive: SceneCommunicationPipe.DecodeMessage strips byte[0] (MsgType).
             ReadOnlySpan<byte> afterMsgType = wireBytes.AsSpan(1);
-            pipe.onSceneMessage.Invoke(new ISceneCommunicationPipe.DecodedMessage(afterMsgType, senderIdentity, isTrustedSource: true));
+            pipe.sceneMessageHandler.Invoke(new ISceneCommunicationPipe.DecodedMessage(afterMsgType, senderIdentity, isTrustedSource: true));
 
             //Assert — ConsumeMessages returns JSON; inner data string is JSON-escaped by JsonTextWriter.
             string json = commsApi.ConsumeMessages(topic);
@@ -173,6 +173,69 @@ namespace SceneRuntime.Tests
 
             //Assert
             Assert.AreEqual("[]", result, "Messages before subscription should be dropped.");
+        }
+
+        [Test]
+        public void ReceiveForUnsubscribedTopicDoesNotAllocate()
+        {
+            // Budgeted GC.Alloc Recorder with a liveness canary: GetAllocatedBytesForCurrentThread is inert
+            // on editor Mono, and the strict AllocatingGCMemory constraint trips on noise outside OnDataReceived.
+            const int MEASURED_INVOKES = 1000;
+            const int CANARY_ALLOCS = 16;
+            const int ALLOC_SAMPLE_BUDGET = 100;
+
+            // Capture real wire bytes via a PublishData round-trip; the topic is never subscribed.
+            commsApi.PublishData("never-subscribed-topic", "{\"type\":\"noise\"}");
+            Assert.AreEqual(1, pipe.sendMessageCalls.Count);
+            byte[] wireBytes = pipe.sendMessageCalls[0];
+
+            // AsSpan(1) skips the MsgType byte that SceneCommunicationPipe.DecodeMessage strips.
+            // Warm-up: JIT the receive path outside the measured region.
+            for (var i = 0; i < 64; i++)
+                pipe.sceneMessageHandler.Invoke(new ISceneCommunicationPipe.DecodedMessage(wireBytes.AsSpan(1), "0xSENDER", isTrustedSource: true));
+
+            Recorder gcAllocRecorder = Recorder.Get("GC.Alloc");
+            gcAllocRecorder.FilterToCurrentThread();
+            gcAllocRecorder.enabled = false;
+            gcAllocRecorder.enabled = true;
+
+            for (var i = 0; i < MEASURED_INVOKES; i++)
+                pipe.sceneMessageHandler.Invoke(new ISceneCommunicationPipe.DecodedMessage(wireBytes.AsSpan(1), "0xSENDER", isTrustedSource: true));
+
+            byte[]? canary = null;
+
+            for (var i = 0; i < CANARY_ALLOCS; i++)
+                canary = new byte[16];
+
+            gcAllocRecorder.enabled = false;
+            int measured = gcAllocRecorder.sampleBlockCount;
+            GC.KeepAlive(canary);
+
+            Assert.GreaterOrEqual(measured, CANARY_ALLOCS,
+                "GC.Alloc recorder did not observe the deliberate canary allocations — the probe is inert on this runtime.");
+
+            Assert.Less(measured, ALLOC_SAMPLE_BUDGET,
+                $"OnDataReceived allocated GC memory for messages on a topic that was never subscribed ({measured} GC.Alloc samples over {MEASURED_INVOKES} messages).");
+        }
+
+        [Test]
+        public void ResubscribeAfterUnsubscribeReceivesAgain()
+        {
+            const string TOPIC = "flip-flop";
+
+            commsApi.SubscribeToTopic(TOPIC);
+            SimulateIncomingMessage(TOPIC, "{\"v\":1}", "sender1");
+
+            commsApi.UnsubscribeFromTopic(TOPIC);
+            SimulateIncomingMessage(TOPIC, "{\"v\":2}", "sender2");
+            commsApi.SubscribeToTopic(TOPIC);
+            SimulateIncomingMessage(TOPIC, "{\"v\":3}", "sender3");
+
+            string json = commsApi.ConsumeMessages(TOPIC);
+
+            Assert.That(json, Does.Not.Contain("sender1"));
+            Assert.That(json, Does.Not.Contain("sender2"));
+            Assert.That(json, Does.Contain("sender3"));
         }
 
         [Test]
@@ -248,7 +311,7 @@ namespace SceneRuntime.Tests
             System.Buffers.Binary.BinaryPrimitives.WriteUInt16LittleEndian(encoded, (ushort)topicBytes.Length);
             topicBytes.CopyTo(encoded, 2);
             dataBytes.CopyTo(encoded, 2 + topicBytes.Length);
-            pipe.onSceneMessage.Invoke(new ISceneCommunicationPipe.DecodedMessage(encoded, senderIdentity, isTrustedSource: true));
+            pipe.sceneMessageHandler.Invoke(new ISceneCommunicationPipe.DecodedMessage(encoded, senderIdentity, isTrustedSource: true));
         }
 
         /// <summary>
@@ -258,8 +321,8 @@ namespace SceneRuntime.Tests
         private class TestSceneCommunicationPipe : ISceneCommunicationPipe
         {
             internal readonly List<byte[]> sendMessageCalls = new ();
-            internal ISceneCommunicationPipe.SceneMessageHandler onSceneMessage;
-            internal string registeredSceneId;
+            internal ISceneCommunicationPipe.SceneMessageHandler sceneMessageHandler = null!;
+            internal string registeredSceneId = null!;
             internal ISceneCommunicationPipe.MsgType registeredMsgType;
             internal bool handlerRemoved;
 
@@ -267,7 +330,7 @@ namespace SceneRuntime.Tests
             {
                 registeredSceneId = sceneId;
                 registeredMsgType = msgType;
-                this.onSceneMessage = onSceneMessage;
+                sceneMessageHandler = onSceneMessage;
             }
 
             public void RemoveSceneMessageHandler(string sceneId, ISceneCommunicationPipe.MsgType msgType, ISceneCommunicationPipe.SceneMessageHandler onSceneMessage)
@@ -275,7 +338,7 @@ namespace SceneRuntime.Tests
                 handlerRemoved = true;
             }
 
-            public void SendMessage(ReadOnlySpan<byte> message, string sceneId, ISceneCommunicationPipe.ConnectivityAssertiveness assertiveness, CancellationToken ct, string specialRecipient = null)
+            public void SendMessage(ReadOnlySpan<byte> message, string sceneId, ISceneCommunicationPipe.ConnectivityAssertiveness assertiveness, CancellationToken ct, string? specialRecipient = null)
             {
                 sendMessageCalls.Add(message.ToArray());
             }

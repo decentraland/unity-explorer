@@ -43,7 +43,7 @@ namespace DCL.Friends.Tests
         public async Task RaiseOnlineEventWhenSameStatusIsRebroadcastAfterReset()
         {
             //Arrange
-            var friendProfile = new Profile.CompactInfo(FRIEND_ID, "TestFriend");
+            var friendProfile = new Profile.CompactInfo(UserId.New(FRIEND_ID).Unwrap(), "TestFriend");
             var onlineEventsCount = 0;
             tracker.OnFriendBecameOnline += _ => onlineEventsCount++;
 
@@ -64,7 +64,7 @@ namespace DCL.Friends.Tests
         public async Task ReportFriendAsOfflineAfterReset()
         {
             //Arrange
-            var friendProfile = new Profile.CompactInfo(FRIEND_ID, "TestFriend");
+            var friendProfile = new Profile.CompactInfo(UserId.New(FRIEND_ID).Unwrap(), "TestFriend");
             eventBus.BroadcastFriendConnected(friendProfile);
             await UniTask.Delay(DEBOUNCE_WAIT_MS);
             Assert.AreEqual(OnlineStatus.Online, tracker.GetFriendStatus(friendProfile.UserId));
@@ -80,7 +80,7 @@ namespace DCL.Friends.Tests
         public async Task CancelPendingDebounceOnReset()
         {
             //Arrange
-            var friendProfile = new Profile.CompactInfo(FRIEND_ID, "TestFriend");
+            var friendProfile = new Profile.CompactInfo(UserId.New(FRIEND_ID).Unwrap(), "TestFriend");
             var onlineEventsCount = 0;
             tracker.OnFriendBecameOnline += _ => onlineEventsCount++;
             eventBus.BroadcastFriendConnected(friendProfile);

@@ -303,6 +303,47 @@ A loop that re-queues unresolved items will spin forever when the upstream sourc
 
 If `X` does nothing useful without `Y`, and there is no second consumer of `X`, merge them. Splits must pay for themselves in polymorphism, reuse, or test isolation.
 
+### 8. Accessing `Option<T>.Value` without checking `Has`
+
+`Option<T>.Value` (`Utility/Types/Result.cs`) is `default` — null for reference types — when `Has` is false. A blind read silently propagates an invalid value far from its source.
+
+```csharp
+// WRONG — Value is default/null when Has is false
+UserId userId = UserId.New(raw).Value;
+
+// WRONG in production — Unwrap() hides the absence case instead of modeling it
+UserId userId = UserId.New(raw).Unwrap();
+
+// RIGHT — branch on Has when the input may be invalid
+Option<UserId> userId = UserId.New(raw);
+if (!userId.Has) return;
+Use(userId.Value);
+
+// RIGHT — a factory that is valid by construction needs no Option at all
+UserId userId = UserId.NewRandom();
+
+// RIGHT in tests only — Unwrap() for known-valid constants; it throws loudly at the source
+UserId userId = UserId.New(KNOWN_CONSTANT).Unwrap();
+```
+
+In production code, handle `None` explicitly (early return, propagation) or use a by-construction-valid factory. `Unwrap()` is a test-only affordance — and in tests, known-valid constants go through `Unwrap()`, never bare `.Value`.
+
+### 9. Committing one-shot development tooling
+
+Code written to help *build* a feature is not part of the feature. This covers editor `[MenuItem]` scaffolders that generate a greybox prefab, API probes and spike scripts (`Assets/DCL/Playgrounds/...`), throwaway editor assemblies (`*.Editor.asmdef` + `csc.rsp`) created only to host such a tool, temporary `DecentralandUrlsSource` localhost pointers, and hand-rolled test harnesses that are not NUnit tests. Once the generated asset or the answer exists, the tool has no consumer and it ships nothing.
+
+```csharp
+// WRONG: a one-shot generator committed next to the feature it bootstrapped
+[MenuItem("Decentraland/UI/Scaffold BugReportView Prefab")]
+private static void Scaffold() { /* builds a greybox and saves the prefab */ }
+```
+
+Rules:
+
+- Keep such tools **untracked** (never `git add` them) or delete them once they have done their job. If a tool must survive across sessions, leave it untracked and note its location in memory, not in the repo.
+- Before proposing a commit or PR, scan the staged diff for these files and drop them. `Assets/DCL/**/Editor/` folders and new `[MenuItem]` attributes in a feature PR are the usual tell.
+- The exceptions are tools with a lasting audience: runtime debug widgets registered through `IDebugContainerBuilder` (see the **debug-widget** skill), editor-only companion systems guarded by `#if UNITY_EDITOR`, and recurring editor utilities that other developers use (`Assets/DCL/Editor/`, `DiskCacheMenu`, `AssetBundleCacheClearMenu`). Those go through review as their own change, with the justification stated in the PR.
+
 ## PR Standards
 
 - **Branches:** Based on `dev` branch
@@ -315,3 +356,4 @@ If `X` does nothing useful without `Y`, and there is no second consumer of `X`, 
 - **PR approval:** QA review + developer review + passing builds/tests
 - **Merge method:** Squash and merge
 - **Commits:** Commit often as save points; PRs are squashed on merge
+- **PR contents:** Only the feature/fix. One-shot development tooling (prefab scaffolders, probes, spike scripts, throwaway editor assemblies) stays untracked or is deleted before the PR; see Anti-Pattern 9.

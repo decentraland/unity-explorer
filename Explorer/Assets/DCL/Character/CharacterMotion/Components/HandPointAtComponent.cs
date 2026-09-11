@@ -36,5 +36,11 @@ namespace DCL.Character.CharacterMotion.Components
             if (duration <= 0)
                 IsPointing = false;
         }
+
+        public void StopPointing()
+        {
+            IsPointing = false;
+            RefreshDuration(0f);
+        }
     }
 }

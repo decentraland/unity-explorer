@@ -1,3 +1,4 @@
+using CommunicationData.URLHelpers;
 using DCL.Ipfs;
 using DCL.Utilities;
 using System;
@@ -17,6 +18,8 @@ namespace ECS
 
         private IIpfsRealm ipfs = InvalidIpfsRealm.Instance;
         private bool hasSceneURNs;
+        private string pendingWorldCommsSecret = string.Empty;
+        private URLDomain? pendingSecretScope;
 
         public string RealmName { get; private set; }
         public int NetworkId { get; private set; }
@@ -24,7 +27,7 @@ namespace ECS
         public string Protocol { get; private set; }
         public string Hostname { get; private set; }
         public bool IsLocalSceneDevelopment { get; private set; }
-        public string WorldCommsSecret { get; set; }
+        public string WorldCommsSecret { get; private set; }
         public bool Configured { get; private set; }
         public float? SkyboxFixedHour { get; private set; }
 
@@ -104,7 +107,8 @@ namespace ECS
         }
 
         public void Reconfigure(IIpfsRealm ipfsRealm, string realmName, int networkId, string commsAdapter, string protocol,
-            string hostname, bool isLocalSceneDevelopment, WorldManifest worldManifest, float? skyboxFixedHour = null)
+            string hostname, bool isLocalSceneDevelopment, WorldManifest worldManifest, float? skyboxFixedHour = null,
+            URLDomain realmUrl = default) // Security: omitting realmUrl clears any pending world secret (fail-closed).
         {
             IsDirty = true;
             Configured = true;
@@ -125,6 +129,30 @@ namespace ECS
                 realmType.Value = RealmKind.GenesisCity;
             else
                 realmType.Value = RealmKind.World;
+
+            // Pending is kept on a match so the same realm can be reconfigured again without re-validation.
+            if (pendingSecretScope.HasValue && !string.IsNullOrEmpty(realmUrl.Value) && pendingSecretScope.Value == realmUrl)
+                WorldCommsSecret = pendingWorldCommsSecret;
+            else
+            {
+                WorldCommsSecret = string.Empty;
+                ClearPendingWorldCommsSecret();
+            }
+        }
+
+        public void SetPendingWorldCommsSecret(URLDomain validatedRealm, string secret)
+        {
+            if (string.IsNullOrEmpty(validatedRealm.Value))
+                return;
+
+            pendingSecretScope = validatedRealm;
+            pendingWorldCommsSecret = secret;
+        }
+
+        public void ClearPendingWorldCommsSecret()
+        {
+            pendingSecretScope = null;
+            pendingWorldCommsSecret = string.Empty;
         }
 
         /// <summary>
@@ -133,6 +161,9 @@ namespace ECS
         public void Invalidate()
         {
             Configured = false;
+
+            // Pending survives so a password validated for the upcoming realm isn't lost before Reconfigure applies it.
+            WorldCommsSecret = string.Empty;
             ipfs = InvalidIpfsRealm.Instance;
             WorldManifest.Dispose();
             WorldManifest = WorldManifest.Empty;

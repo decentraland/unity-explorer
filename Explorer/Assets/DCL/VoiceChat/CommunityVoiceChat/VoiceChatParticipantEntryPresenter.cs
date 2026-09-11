@@ -1,7 +1,9 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
+using DCL.Utility.Types;
 using MVC;
 using System;
 using System.Threading;
@@ -49,13 +51,19 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             view.gameObject.SetActive(true);
             view.CleanupEntry();
 
-            Color nameColor = NameColorHelper.GetNameColor(currentParticipantState.Name);
-            view.SetupParticipantProfile(currentParticipantState.Name, nameColor, profileRepositoryWrapper, currentParticipantState.ProfilePictureUrl, currentParticipantState.WalletId, cts.Token);
+            Option<Profile.CompactInfo> profile = currentParticipantState.Profile;
+
+            if (profile.Has)
+            {
+                Color nameColor = NameColorHelper.GetNameColor(profile.Value.Name);
+                view.SetupParticipantProfile(profile.Value.Name, nameColor, profileRepositoryWrapper, profile.Value.FaceSnapshotUrl, profile.Value.UserId.Value, cts.Token);
+            }
 
             // We only show context menu button on top of the local participant if the local participant is a moderator.
             var showContextMenuButton = true;
+            Option<string> localName = localParticipantState.Name;
 
-            if (currentParticipantState.Name == localParticipantState.Name)
+            if (profile.Has && localName.Has && profile.Value.Name == localName.Value)
                 showContextMenuButton = VoiceChatRoleHelper.IsModeratorOrOwner(localParticipantState.Role.Value);
 
             view.SetContextMenuButtonVisibility(showContextMenuButton);
@@ -73,9 +81,11 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         private void OnOpenPassport()
         {
-            if (string.IsNullOrEmpty(currentParticipantState.WalletId)) return;
+            Option<string> walletId = currentParticipantState.WalletId;
 
-            OpenPassportAsync(currentParticipantState.WalletId, CancellationToken.None).Forget();
+            if (!walletId.Has) return;
+
+            OpenPassportAsync(walletId.Value, CancellationToken.None).Forget();
             return;
 
             async UniTask OpenPassportAsync(string userId, CancellationToken ct = default)
@@ -93,12 +103,18 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         private void OnDenySpeaker()
         {
-            DenySpeaker?.Invoke(currentParticipantState.WalletId);
+            Option<string> walletId = currentParticipantState.WalletId;
+
+            if (walletId.Has)
+                DenySpeaker?.Invoke(walletId.Value);
         }
 
         private void OnApproveSpeaker()
         {
-            ApproveSpeaker?.Invoke(currentParticipantState.WalletId);
+            Option<string> walletId = currentParticipantState.WalletId;
+
+            if (walletId.Has)
+                ApproveSpeaker?.Invoke(walletId.Value);
         }
 
         private void OnOpenOpenContextMenu(Vector2 position)
@@ -137,8 +153,10 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             bool showApproveDenySection = isRequestingToSpeak && VoiceChatRoleHelper.IsModeratorOrOwner(localParticipantState.Role.Value);
             view.ParticipantRequestingToSpeakChanged(showApproveDenySection);
 
-            if (isRequestingToSpeak)
-                UserIsRequestingToSpeak?.Invoke(currentParticipantState.Name);
+            Option<string> participantName = currentParticipantState.Name;
+
+            if (isRequestingToSpeak && participantName.Has)
+                UserIsRequestingToSpeak?.Invoke(participantName.Value);
         }
 
         private void ParticipantIsMutedChanged(bool isMuted)

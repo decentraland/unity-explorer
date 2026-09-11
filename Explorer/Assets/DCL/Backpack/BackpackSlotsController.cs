@@ -1,6 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DCL.AvatarRendering.AvatarShape.Helpers;
-using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
@@ -10,7 +8,6 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.Backpack.AvatarSection.Outfits.Commands;
-using UnityEngine;
 using Utility;
 
 namespace DCL.Backpack

@@ -1,0 +1,425 @@
+name: Resolve Explorer build
+description: >-
+  Resolves Unity Cloud Build artifact URLs for a commit, plus the
+  explorer-automation ref its tests should come from. Shared by the dispatchers
+  for explorer-automation's reusable suites — visual-regression.yml, which needs
+  the macOS build, and in-world-tests.yml, which needs both.
+
+inputs:
+  head-ref:
+    description: 'Branch under test. Looked up in explorer-automation to pick tests-ref.'
+    required: true
+  head-sha:
+    description: 'Commit to find a build for.'
+    required: true
+  wait-minutes:
+    description: >-
+      How long to wait for a build that has not finished yet. 0 (the default)
+      requires one to already exist — right for a caller a human triggers, since
+      they can look. A caller that fires the moment a PR opens has to wait for
+      the build the same event started.
+    required: false
+    default: '0'
+  build-legs:
+    description: >-
+      Which build-unitycloud.yml matrix legs must be green before the artifacts
+      are usable, comma-separated. Each leg contributes its own URL, so asking
+      for `windows64` is also what makes windows-build-url non-empty. Waiting on
+      the legs rather than the run skips Build Gate and anything else downstream.
+    required: false
+    default: 'macos'
+  build-url-override:
+    description: >-
+      Use this artifact URL as-is and skip resolution. For manual runs that
+      target a build this repo cannot derive — an older commit, another branch.
+      Both platforms' zips share a prefix, so the sibling URL is derived from
+      this one rather than asked for separately.
+    required: false
+    default: ''
+  public-url-prefix:
+    description: 'vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL — public prefix of the artifact bucket.'
+    required: true
+  github-token:
+    description: 'Token with actions:read on this repo.'
+    required: true
+  automation-token:
+    description: 'Token with contents:read on decentraland/explorer-automation (REPOS_READ_ONLY_TOKEN).'
+    required: true
+
+outputs:
+  build-url:
+    description: 'Direct URL to Decentraland_macos.zip, verified reachable.'
+    value: ${{ steps.build.outputs.build-url }}
+  windows-build-url:
+    description: >-
+      Direct URL to Decentraland_windows64.zip, verified reachable. Empty unless
+      `windows64` is in build-legs.
+    value: ${{ steps.build.outputs.windows-build-url }}
+  short-sha:
+    description: 'First 7 characters of the commit the build was made from.'
+    value: ${{ steps.build.outputs.short-sha }}
+  tests-ref:
+    description: 'explorer-automation ref to take tests from. Empty means that repo default.'
+    value: ${{ steps.match.outputs.tests-ref }}
+
+runs:
+  using: composite
+  steps:
+    - name: Resolve build URL
+      id: build
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+        HEAD_SHA: ${{ inputs.head-sha }}
+        WAIT_MINUTES: ${{ inputs.wait-minutes }}
+        BUILD_LEGS: ${{ inputs.build-legs }}
+        BUILD_URL_OVERRIDE: ${{ inputs.build-url-override }}
+        PUBLIC_URL_PREFIX: ${{ inputs.public-url-prefix }}
+      run: |
+        set -euo pipefail
+
+        LEGS=${BUILD_LEGS//,/ }
+        # build-unitycloud.yml names both zips Decentraland_<matrix.target>.zip
+        # and uploads them to one prefix, so a leg name is all it takes to get
+        # from one to the other.
+        want_windows=0
+        for LEG in $LEGS; do
+          if [ "$LEG" = "windows64" ]; then want_windows=1; fi
+        done
+
+        # A green leg does not guarantee the zip is fetchable, and neither does a
+        # caller having typed a URL. Failing here costs seconds; the same failure
+        # inside a suite costs a whole runner slot, and the Windows one is a
+        # scarce self-hosted GPU box. Defined before the override branch because
+        # both paths end in a URL a suite will download.
+        # curl still prints its -w output when it exits non-zero, so a
+        # `|| echo 000` fallback would concatenate codes ("200000") — normalize
+        # separately, and only when the output is empty.
+        verify() {
+          local url="$1" http
+          http=$(curl -sS -o /dev/null -w '%{http_code}' -I --retry 3 --retry-delay 5 "$url" || true)
+          http=${http:-000}
+          if [ "$http" != "200" ]; then
+            echo "::error::Build artifact is not reachable (HTTP ${http}): ${url}"
+            return 1
+          fi
+        }
+
+        if [ -n "$BUILD_URL_OVERRIDE" ]; then
+          # Everything below only ever produces bucket URLs; an override is the
+          # one path where a caller picks the host, so pin it here rather than
+          # leaving it to the suite's own check on the macOS runner.
+          #
+          # The newline arm comes first and is not just tidiness: $GITHUB_OUTPUT
+          # is line-oriented, the REST API accepts embedded newlines in a
+          # workflow_dispatch string input, and a glob matches across them. A
+          # payload could otherwise pass the host check on its first line and
+          # define a second, caller-chosen output (short-sha, say) on the next.
+          case "$BUILD_URL_OVERRIDE" in
+            *[$'\n\r']*)
+              echo "::error::build_url must be a single line."
+              exit 1
+              ;;
+            https://explorer-artifacts.decentraland.org/*) ;;
+            *)
+              echo "::error::build_url must be an https://explorer-artifacts.decentraland.org/ URL."
+              exit 1
+              ;;
+          esac
+          # Same prefix, so the sibling needs no second input from the caller.
+          OVERRIDE_WINDOWS_URL="${BUILD_URL_OVERRIDE%/*}/Decentraland_windows64.zip"
+          # Checked like a resolved build rather than trusted because a human
+          # asserted it — and the sibling is not even asserted, it is derived, so
+          # an override naming a macOS-only build hands the Windows leg a 404 on
+          # the GPU box this check exists to protect.
+          verify "$BUILD_URL_OVERRIDE"
+          if [ "$want_windows" = "1" ]; then verify "$OVERRIDE_WINDOWS_URL"; fi
+          {
+            echo "build-url=${BUILD_URL_OVERRIDE}"
+            if [ "$want_windows" = "1" ]; then
+              echo "windows-build-url=${OVERRIDE_WINDOWS_URL}"
+            fi
+            echo "short-sha=${HEAD_SHA:0:7}"
+          } >> "$GITHUB_OUTPUT"
+          echo "::notice::Using caller-supplied build URL."
+          exit 0
+        fi
+
+        # gh has no built-in retry, and both callers below are decisive on a
+        # single answer: the wait-minutes: 0 path has no second poll, and a
+        # listing that fails every poll would otherwise read as "no build
+        # exists". Three attempts five seconds apart cover a transport failure
+        # — a 5xx, a connection reset — and only that. They do not rescue a
+        # spent rate limit, which refills on an hour boundary rather than in
+        # ten seconds: there every attempt fails by construction and the retry
+        # only spends more of a budget that is already gone. What separates
+        # that outage from a real "no build" is the LISTED/LISTED_NOW pair
+        # below, not this helper.
+        #
+        # stderr is dropped on the attempts that get another go, because a
+        # 90-minute wait polls ~90 times and a blip that the next attempt
+        # answers is not news. The last attempt keeps it, because a permanent
+        # failure — build-unitycloud.yml renamed, say — 404s on every attempt
+        # of every poll, and the messages below can only report that as an API
+        # that did not answer: without gh's own line the operator is sent to a
+        # status page that is green, with the one fact that explains it
+        # discarded.
+        gh_api_retry() {
+          local out attempt
+          for attempt in 1 2 3; do
+            if [ "$attempt" -lt 3 ]; then
+              if out=$(gh api "$@" 2>/dev/null); then printf '%s' "$out"; return 0; fi
+              # Only between attempts: the callers below act on the answer
+              # immediately, so a sleep after the last one would just delay a
+              # red check.
+              sleep 5
+            else
+              if out=$(gh api "$@"); then printf '%s' "$out"; return 0; fi
+            fi
+          done
+          return 1
+        }
+
+        # A listing that fails leaves the same candidate set as a commit with
+        # no build — TOTAL=0, nothing examined, STATE=none — so without a
+        # record of the listing itself the messages below cannot tell an
+        # operator which of the two happened, and only one of them is fixed by
+        # `force-build`. LISTED is "did any poll's listing ever answer";
+        # LISTED_NOW, set per poll further down, is "did the last one". Both
+        # are needed precisely for the outage the retry above cannot absorb:
+        # this loop spends ~360 requests/hour of the 1,000/hour per-repository
+        # GITHUB_TOKEN budget it shares with build-unitycloud and the review
+        # bots, so rate-limit exhaustion starts partway through a 90-minute
+        # wait and holds until the hour rolls over — every attempt of every
+        # remaining poll fails, and by then LISTED has long since flipped
+        # while LISTED_NOW has not. That difference is the whole diagnosis.
+        LISTED=0
+        DEADLINE=$(( SECONDS + WAIT_MINUTES * 60 ))
+        while :; do
+          # Scoped to the build workflow file: a repo-wide head_sha listing gets
+          # crowded out by bot runs sharing the SHA (90+ on a typical release
+          # commit) and the build falls past the first page. Only
+          # pull_request/push builds qualify — dispatch builds can carry
+          # non-default options (e.g. profiling) that break the determinism the
+          # suites rely on. Newest first.
+          #
+          # Absorbed rather than left to `set -e`: one 5xx or rate-limit blip
+          # would otherwise end a 90-minute wait with a red required check on a
+          # release PR that has nothing wrong with it. Only an outage that
+          # survives all three attempts lands in the else arm; an empty list
+          # reads as "nothing found this poll" and the loop asks again a
+          # minute later.
+          LISTED_NOW=0
+          if RUNS=$(gh_api_retry "repos/${GITHUB_REPOSITORY}/actions/workflows/build-unitycloud.yml/runs?head_sha=${HEAD_SHA}&per_page=50" \
+            --jq '[.workflow_runs[] | select(.event == "pull_request" or .event == "push")]'); then
+            LISTED=1
+            LISTED_NOW=1
+          else
+            RUNS=''
+          fi
+          if [ -z "$RUNS" ]; then RUNS='[]'; fi
+          TOTAL=$(jq 'length' <<< "$RUNS")
+          LIMIT=$TOTAL
+          if [ "$LIMIT" -gt 5 ]; then LIMIT=5; fi
+
+          RUN_JSON=''
+          STATE=none
+          for (( i = 0; i < LIMIT; i++ )); do
+            CAND=$(jq -c ".[$i]" <<< "$RUNS")
+            RUN_DONE=$(jq -r '.status' <<< "$CAND")
+            # Wait on the build legs, not on the run: they upload the zips, and
+            # Build Gate and everything else downstream only conclude later.
+            # One call per candidate, filtered per leg locally.
+            JOBS=$(gh_api_retry "repos/${GITHUB_REPOSITORY}/actions/runs/$(jq -r '.id' <<< "$CAND")/jobs?per_page=50" \
+              --jq '[.jobs[] | {name, status, conclusion}]') || JOBS=''
+            if [ -z "$JOBS" ]; then
+              # Same blip tolerance as the listing above, but an unreachable API
+              # must not read as a run whose matrix left the leg out: that is a
+              # fast-fail below, and this candidate is simply unknown until the
+              # next poll.
+              if [ "$STATE" = none ]; then STATE=pending; fi
+              continue
+            fi
+            # Per candidate, because the states rank against each other only
+            # within the run that produced them: `failed` and `nomatrix` are
+            # decisive and must outrank a later leg that is merely `pending`,
+            # or a red macOS leg beside a Windows leg still building would be
+            # overwritten and neither fast-exit below would ever fire.
+            CAND_STATE=none
+            legs_ok=1
+            for LEG in $LEGS; do
+              J=$(jq -c --arg leg "Build ($LEG" '[.[] | select(.name | startswith($leg))] | .[0] // empty' <<< "$JOBS")
+              if [ -z "$J" ]; then
+                legs_ok=0
+                if [ "$RUN_DONE" = "completed" ]; then
+                  # The run is over and this leg never existed: prebuild's
+                  # targets left it out, or the build job never expanded at all.
+                  if [ "$CAND_STATE" != failed ]; then CAND_STATE=nomatrix; fi
+                else
+                  # Prebuild has not fanned the matrix out yet.
+                  if [ "$CAND_STATE" = none ]; then CAND_STATE=pending; fi
+                fi
+                continue
+              fi
+              case "$(jq -r '"\(.status)/\(.conclusion // "-")"' <<< "$J")" in
+                completed/success) ;;
+                completed/*)       legs_ok=0; CAND_STATE=failed ;;
+                *)                 legs_ok=0; if [ "$CAND_STATE" = none ]; then CAND_STATE=pending; fi ;;
+              esac
+            done
+            if [ "$legs_ok" = "1" ]; then RUN_JSON="$CAND"; break; fi
+            # Candidates are newest first and the fast-exits act on the newest
+            # verdict there is, so an older run's must not stomp it.
+            if [ "$STATE" = none ]; then STATE=$CAND_STATE; fi
+          done
+          if [ -n "$RUN_JSON" ]; then break; fi
+
+          # These two verdicts are decided before the wait-minutes: 0 branch
+          # below, not after it. Both are conclusions the candidate loop has
+          # already reached, and the single-poll callers are precisely the ones
+          # that can do least with the generic message that branch ends in:
+          # visual-regression.yml takes this path on every /visual-tests, and
+          # in-world-tests.yml on the dispatch create-release-branch.yml gates
+          # a release cut with. Neither can wait the condition out, so telling
+          # them to guess at something already known is the one case where the
+          # specific message matters most.
+          #
+          # Hoisting them cannot mask that branch's listing-outage message: a
+          # listing that never answered leaves RUNS empty, so no candidate is
+          # ever examined and STATE stays `none` — which neither of these two
+          # matches. The waiting path is unaffected either way, since the
+          # branch between them never fires when WAIT_MINUTES is non-zero.
+          #
+          # Newest first, so `failed` means the most recent build we found is red
+          # on a leg we need. Waiting for a re-run nobody has asked for only
+          # delays that.
+          if [ "$STATE" = failed ]; then
+            echo "::error::A build leg failed for ${HEAD_SHA:0:7} — there is nothing to test. Fix the build, or push again."
+            exit 1
+          fi
+          # Equally decisive: the build is over and this leg was never in its
+          # matrix, so no amount of waiting will produce the zip.
+          if [ "$STATE" = nomatrix ]; then
+            echo "::error::The build of ${HEAD_SHA:0:7} finished without a job for every leg in [${BUILD_LEGS}]. Either the PR touches no Explorer/** file, so build-unitycloud.yml built nothing — label it \`force-build\`; or a \`windows-only\`/\`macos-only\` label narrowed its targets and left the leg out — remove it. Neither label re-triggers this workflow, so re-run this job once the build is green."
+            exit 1
+          fi
+          if [ "$WAIT_MINUTES" -eq 0 ]; then
+            # The consequential half of the same ambiguity: this path has no
+            # second poll to correct itself, and it is the one
+            # visual-regression.yml takes on every /visual-tests, and
+            # in-world-tests.yml on every dispatch — which is how
+            # create-release-branch.yml gates a release cut. Reporting an
+            # unanswered API as a missing build sends the operator after a
+            # build that is very likely fine. One poll, so LISTED and
+            # LISTED_NOW are the same bit here.
+            if [ "$LISTED" = "0" ]; then
+              echo "::error::Could not list build-unitycloud.yml runs for ${HEAD_SHA:0:7} — the GitHub Actions API did not answer. Nothing was learned about the build, so this says nothing about whether one exists: re-run this job."
+              exit 1
+            fi
+            # With `failed` and `nomatrix` exiting above, what reaches here is
+            # `pending` — legs still building — or `none`: the listing answered
+            # and there is no build run for this commit at all. The old "or did
+            # it fail?" asked after a case that can no longer arrive, which is
+            # worse than vague now that the specific message exists.
+            echo "::error::No Unity Cloud Build of ${HEAD_SHA:0:7} with all of [${BUILD_LEGS}] green — no leg has failed, so the build is either still in progress or was never queued for this commit."
+            exit 1
+          fi
+          if [ "$SECONDS" -ge "$DEADLINE" ]; then
+            echo "::error::Gave up after ${WAIT_MINUTES}m waiting for a build of ${HEAD_SHA:0:7} with [${BUILD_LEGS}] green."
+            # With the cases above carved out, `none` means the candidate loop
+            # never reached a verdict, which happens two ways: no
+            # pull_request or push run of build-unitycloud.yml exists for the
+            # SHA at all — a run that started and built nothing is `nomatrix`
+            # — or the last poll's listing went unanswered, leaving the same
+            # empty set with nothing learned. Only the first is a build
+            # problem: labelling and pushing are both trigger types of that
+            # workflow, so either queues the run this commit never got,
+            # whereas a `force-build` label does nothing whatsoever for an API
+            # that is not replying.
+            if [ "$STATE" = none ]; then
+              if [ "$LISTED_NOW" = "0" ]; then
+                # The wait ended blind, so nothing here establishes that no
+                # build exists. LISTED then separates an outage that lasted
+                # the whole wait from one that began during it, because the
+                # remedies differ: a spent rate-limit budget refills on its
+                # own hour boundary and needs no page checked.
+                if [ "$LISTED" = "0" ]; then
+                  echo "::error::The GitHub Actions API never answered a single run listing in ${WAIT_MINUTES}m, so no build was ever looked at. Check https://www.githubstatus.com, then re-run this job."
+                else
+                  echo "::error::The GitHub Actions API stopped answering run listings partway through the wait, so whether a build exists is unknown — most likely this token's hourly request budget is spent. Re-run this job after the hour rolls over."
+                fi
+              else
+                echo "::error::No build was ever queued for this commit. Label the PR \`force-build\`, or push a change under Explorer/, then re-run this job."
+              fi
+            else
+              echo "::error::Re-run this job once the build is green."
+            fi
+            exit 1
+          fi
+          # Without the note this line claims "0 build run(s) found" once a
+          # minute for an hour and a half, which is the same thing the flags
+          # above exist to stop asserting — and this trail is what makes an
+          # outage diagnosable after the fact.
+          LISTING_NOTE=''
+          if [ "$LISTED_NOW" = "0" ]; then LISTING_NOTE=' (run listing unavailable this poll)'; fi
+          echo "Waiting for [${BUILD_LEGS}] on ${HEAD_SHA:0:7} — ${TOTAL} build run(s) found, newest ${LIMIT} examined, state: ${STATE}${LISTING_NOTE}. $(( (DEADLINE - SECONDS) / 60 ))m left."
+          sleep 60
+        done
+
+        RUN_NUMBER=$(jq -r '.run_number'  <<< "$RUN_JSON")
+        RUN_EVENT=$(jq  -r '.event'       <<< "$RUN_JSON")
+        RUN_BRANCH=$(jq -r '.head_branch' <<< "$RUN_JSON")
+        BUILT_SHA=$(jq  -r '.head_sha'    <<< "$RUN_JSON")
+        SHORT_SHA="${BUILT_SHA:0:7}"
+
+        # The S3 prefix and branch segment come from the run that produced the
+        # build, not from what is under test: a commit's only build may have run
+        # on another trigger — e.g. bot-created release PRs, whose tip is built
+        # by the push to dev. Table mirrors build-unitycloud.yml's
+        # "Set SHA, branch, and build prefix".
+        case "$RUN_EVENT" in
+          pull_request)      BUILD_PREFIX="pr" ;;
+          push)              BUILD_PREFIX="pu" ;;
+          merge_group)       BUILD_PREFIX="mg" ;;
+          workflow_dispatch) BUILD_PREFIX="wd" ;;
+          workflow_call)     BUILD_PREFIX="wc" ;;
+          schedule)          BUILD_PREFIX="sc" ;;
+          *)                 BUILD_PREFIX="gn" ;;
+        esac
+
+        # Always the branch/ path, never releases/: release builds are compiled
+        # without the ALTTESTER scripting define (CloudBuild.cs strips it), so
+        # the client installs and renders but never accepts a connection, and
+        # the suite sits at "Wait for connection: 0%" until its job cap.
+        ARTIFACT_PATH="@dcl/${GITHUB_REPOSITORY##*/}/branch/${RUN_BRANCH}/${BUILD_PREFIX}-${RUN_NUMBER}-${SHORT_SHA}"
+        BUILD_URL="${PUBLIC_URL_PREFIX}/${ARTIFACT_PATH}/Decentraland_macos.zip"
+        WINDOWS_BUILD_URL="${PUBLIC_URL_PREFIX}/${ARTIFACT_PATH}/Decentraland_windows64.zip"
+
+        verify "$BUILD_URL"
+        if [ "$want_windows" = "1" ]; then verify "$WINDOWS_BUILD_URL"; fi
+
+        {
+          echo "build-url=${BUILD_URL}"
+          if [ "$want_windows" = "1" ]; then echo "windows-build-url=${WINDOWS_BUILD_URL}"; fi
+          echo "short-sha=${SHORT_SHA}"
+        } >> "$GITHUB_OUTPUT"
+        echo "::notice::Using ${RUN_BRANCH} build ${BUILD_PREFIX}-${RUN_NUMBER}-${SHORT_SHA} for [${BUILD_LEGS}]."
+
+    - name: Look up matching explorer-automation branch
+      id: match
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.automation-token }}
+        HEAD_REF: ${{ inputs.head-ref }}
+      run: |
+        set -euo pipefail
+        # 200 = the branch exists there, so fixtures and visual baselines come
+        # from the matching feature branch. 404 = fall back to empty, which both
+        # reusable workflows resolve to their repo default.
+        if gh api "repos/decentraland/explorer-automation/branches/${HEAD_REF}" --silent >/dev/null 2>&1; then
+          echo "tests-ref=${HEAD_REF}" >> "$GITHUB_OUTPUT"
+          echo "::notice::Using matching explorer-automation branch '${HEAD_REF}'."
+        else
+          echo "tests-ref=" >> "$GITHUB_OUTPUT"
+          echo "::notice::No matching explorer-automation branch '${HEAD_REF}' — using default."
+        fi

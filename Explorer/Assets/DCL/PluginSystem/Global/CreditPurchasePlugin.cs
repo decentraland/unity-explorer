@@ -1,7 +1,10 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.Backpack;
 using DCL.Browser;
+using DCL.CharacterPreview;
 using DCL.ExplorePanel;
 using DCL.FeatureFlags;
 using DCL.MarketplaceCredits;
@@ -9,7 +12,9 @@ using DCL.MarketplaceCredits.Purchase;
 using DCL.MarketplaceCredits.Purchase.TopUp;
 using DCL.MarketplaceCredits.Purchase.TopUp.UI;
 using DCL.MarketplaceCredits.Purchase.UI;
+using DCL.Profiles.Self;
 using DCL.UI;
+using DCL.UI.Profiles.Helpers;
 using DCL.Web3.Identities;
 using MVC;
 using System;
@@ -28,6 +33,12 @@ namespace DCL.PluginSystem.Global
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly UnityAppWebBrowser webBrowser;
         private readonly ImageControllerProvider imageControllerProvider;
+        private readonly ICharacterPreviewFactory characterPreviewFactory;
+        private readonly CharacterPreviewEventBus characterPreviewEventBus;
+        private readonly ISelfProfile selfProfile;
+        private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
+        private readonly Arch.Core.World world;
+        private readonly IWearableStorage wearableStorage;
 
         private CreditPurchaseModalController? creditPurchaseModalController;
         private ICreditsTopUpService? creditsTopUpService;
@@ -40,7 +51,13 @@ namespace DCL.PluginSystem.Global
             MarketplaceCreditsAPIClient marketplaceCreditsAPIClient,
             IWeb3IdentityCache web3IdentityCache,
             UnityAppWebBrowser webBrowser,
-            ImageControllerProvider imageControllerProvider)
+            ImageControllerProvider imageControllerProvider,
+            ICharacterPreviewFactory characterPreviewFactory,
+            CharacterPreviewEventBus characterPreviewEventBus,
+            ISelfProfile selfProfile,
+            ProfileRepositoryWrapper profileRepositoryWrapper,
+            Arch.Core.World world,
+            IWearableStorage wearableStorage)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -49,6 +66,12 @@ namespace DCL.PluginSystem.Global
             this.web3IdentityCache = web3IdentityCache;
             this.webBrowser = webBrowser;
             this.imageControllerProvider = imageControllerProvider;
+            this.characterPreviewFactory = characterPreviewFactory;
+            this.characterPreviewEventBus = characterPreviewEventBus;
+            this.selfProfile = selfProfile;
+            this.profileRepositoryWrapper = profileRepositoryWrapper;
+            this.world = world;
+            this.wearableStorage = wearableStorage;
         }
 
         public void Dispose()
@@ -63,6 +86,7 @@ namespace DCL.PluginSystem.Global
         public async UniTask InitializeAsync(CreditPurchaseSettings settings, CancellationToken ct)
         {
             CreditPurchaseModalView viewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.CreditPurchasePopupPrefab, ct: ct)).GetComponent<CreditPurchaseModalView>();
+            NftTypeIconSO rarityInfoPanelBackgrounds = await assetsProvisioner.ProvideMainAssetValueAsync(settings.RarityInfoPanelBackgroundsMapping, ct);
 
             creditPurchaseModalController = new CreditPurchaseModalController(
                 CreditPurchaseModalController.CreateLazily(viewAsset, null),
@@ -70,6 +94,13 @@ namespace DCL.PluginSystem.Global
                 marketplaceCreditsAPIClient,
                 web3IdentityCache,
                 webBrowser,
+                characterPreviewFactory,
+                characterPreviewEventBus,
+                selfProfile,
+                profileRepositoryWrapper,
+                world,
+                wearableStorage,
+                rarityInfoPanelBackgrounds,
                 OpenGetCreditsPanelAsync,
                 OpenBackpackPanelAsync);
 
@@ -103,6 +134,7 @@ namespace DCL.PluginSystem.Global
             [field: Header("Credit purchase")]
             [field: SerializeField] internal AssetReferenceGameObject CreditPurchasePopupPrefab { get; private set; } = null!;
             [field: SerializeField] internal AssetReferenceGameObject CreditsTopUpPopupPrefab { get; private set; } = null!;
+            [field: SerializeField] internal AssetReferenceT<NftTypeIconSO> RarityInfoPanelBackgroundsMapping { get; private set; } = null!;
         }
     }
 }

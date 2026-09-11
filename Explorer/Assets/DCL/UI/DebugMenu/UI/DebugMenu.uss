@@ -235,6 +235,39 @@
     background-color: transparent;
 }
 
+.ab-conversion-panel {
+    background-color: rgba(15, 15, 17, 0.9);
+}
+
+/* Mirrors .console-entry so both consoles read the same. */
+.ab-conversion-entry {
+    padding-left: 8px;
+    padding-right: 36px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    color: var(--dcl-color-snow);
+    background-color: var(--dcl-color-black-40);
+    -unity-font-definition: var(--dcl-font-azeretmono-medium);
+    font-size: 14px;
+    white-space: normal;
+}
+
+.ab-conversion-entry.unity-collection-view__item--alternative-background {
+    background-color: transparent;
+}
+
+.ab-conversion-entry:hover {
+    background-color: var(--dcl-color-black-70);
+}
+
+.ab-conversion-entry--warning {
+    color: var(--dcl-color-rarity-unique);
+}
+
+.ab-conversion-entry--error {
+    color: rgb(255, 36, 36);
+}
+
 .console-entry:hover {
     background-color: var(--dcl-color-black-70);
 }
@@ -320,28 +353,220 @@
     top: 10px;
 }
 
+/* Each action is a full-width menu row: icon (or badge) on the left, label to the right.
+   The longest row sets the strip width and every row stretches to match it. */
 .sidebar__button {
-    width: 30px;
+    flex-direction: row;
+    align-items: center;
     height: 30px;
-    background-size: 22px 22px;
+    padding-top: 0;
+    padding-right: 10px;
+    padding-bottom: 0;
+    padding-left: 4px;
+    margin-top: 1px;
+    margin-bottom: 1px;
     border-top-left-radius: 8px;
     border-top-right-radius: 8px;
     border-bottom-right-radius: 8px;
     border-bottom-left-radius: 8px;
-    background-color: var(--dcl-color-orange-transparent);
+    background-color: rgba(0, 0, 0, 0);
     transition-property: background-color, scale;
+}
+
+.sidebar__button:hover {
+    background-color: var(--dcl-color-orange-transparent);
 }
 
 .sidebar__button--selected {
     background-color: var(--dcl-color-orange);
 }
 
-.sidebar__button--console {
+.sidebar__button--selected:hover {
+    background-color: var(--dcl-color-orange);
+}
+
+.sidebar__button--attention {
+    background-color: rgb(255, 201, 91);
+}
+
+.sidebar__button-icon {
+    width: 22px;
+    height: 22px;
+    margin-right: 8px;
+    flex-shrink: 0;
+    background-size: 22px 22px;
+}
+
+.sidebar__button-badge {
+    -unity-text-align: middle-center;
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: rgb(255, 255, 255);
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    border-top-color: rgba(255, 255, 255, 0.4);
+    border-right-color: rgba(255, 255, 255, 0.4);
+    border-bottom-color: rgba(255, 255, 255, 0.4);
+    border-left-color: rgba(255, 255, 255, 0.4);
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+    border-bottom-right-radius: 5px;
+    border-bottom-left-radius: 5px;
+    -unity-font-definition: var(--dcl-font-inter-semibold);
+}
+
+.sidebar__button-label {
+    font-size: 11px;
+    color: rgb(255, 255, 255);
+    -unity-font-definition: var(--dcl-font-inter-semibold);
+}
+
+.sidebar__button-icon--console {
     background-image: var(--sprite-common__icon-console);
 }
 
-.sidebar__button--debug {
+.sidebar__button-icon--metrics {
+    background-image: var(--sprite-common__icon-scene-stats);
+}
+
+.sidebar__button-icon--debug {
     background-image: var(--sprite-common__icon-debug);
+}
+
+/* Collapse header: labels the strip ("LOCAL TOOLS") and folds the action buttons away
+   when a scene's top-right UI overlaps them. Arrow points up while expanded, down while collapsed. */
+.sidebar__header {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 2px;
+    padding-right: 4px;
+    padding-bottom: 4px;
+    padding-left: 4px;
+    margin-bottom: 2px;
+    background-color: rgba(0, 0, 0, 0);
+    transition-property: background-color;
+    transition-duration: 0.15s;
+}
+
+.sidebar__header-label {
+    font-size: 9px;
+    letter-spacing: 1px;
+    margin-right: 6px;
+    color: rgba(255, 255, 255, 0.6);
+    -unity-font-definition: var(--dcl-font-inter-semibold);
+}
+
+.sidebar__header-arrow {
+    width: 14px;
+    height: 8px;
+    flex-shrink: 0;
+    background-size: contain;
+    background-image: var(--sprite-common__icon-arrow-down);
+    rotate: 180deg;
+    transition-property: rotate;
+    transition-duration: 0.15s;
+}
+
+.sidebar__header--collapsed .sidebar__header-arrow {
+    rotate: 0deg;
+}
+
+.metrics-panel {
+    width: 440px;
+    background-color: rgba(15, 15, 17, 0.9);
+}
+
+.metrics-panel__header {
+    flex-direction: row;
+    align-items: center;
+    padding-top: 18px;
+    padding-right: 24px;
+    padding-bottom: 18px;
+    padding-left: 24px;
+    background-color: rgba(0, 0, 0, 0.35);
+}
+
+.metrics-panel__title {
+    color: rgb(255, 255, 255);
+    font-size: 20px;
+    letter-spacing: 1px;
+    -unity-font-definition: var(--dcl-font-inter-semibold);
+}
+
+.metrics-panel__rows {
+    padding-bottom: 6px;
+}
+
+.metrics-panel__row {
+    flex-direction: row;
+    align-items: center;
+    padding-top: 15px;
+    padding-bottom: 15px;
+    padding-right: 24px;
+    padding-left: 24px;
+}
+
+.metrics-panel__row--even {
+    background-color: rgba(255, 255, 255, 0.04);
+}
+
+.metrics-panel__row-label {
+    flex-shrink: 0;
+    white-space: nowrap;
+    color: rgb(255, 255, 255);
+    font-size: 14px;
+    letter-spacing: 0.5px;
+    -unity-font-definition: var(--dcl-font-inter-semibold);
+}
+
+.metrics-panel__row-value {
+    flex-grow: 1;
+    color: rgb(255, 255, 255);
+    font-size: 15px;
+    -unity-font-definition: var(--dcl-font-azeretmono-medium);
+    -unity-text-align: middle-right;
+}
+
+.metrics-panel__row-info {
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    margin-left: 8px;
+    background-image: url("project://database/Assets/Textures/Common/InfoIcn.png?fileID=21300000&guid=d63bc69a4cb0e4fd5b31fc3bd1f8e1fc&type=3#InfoIcn");
+    -unity-background-image-tint-color: #A09BA8;
+}
+
+.metrics-panel__row-info:hover {
+    -unity-background-image-tint-color: #FCFCFC;
+}
+
+.metrics-panel__tooltip {
+    position: absolute;
+    max-width: 320px;
+    padding-top: 10px;
+    padding-right: 12px;
+    padding-bottom: 10px;
+    padding-left: 12px;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    border-bottom-right-radius: 8px;
+    border-bottom-left-radius: 8px;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    border-color: rgba(255, 255, 255, 0.12);
+    background-color: rgba(0, 0, 0, 0.95);
+}
+
+.metrics-panel__tooltip-text {
+    white-space: normal;
+    color: rgb(255, 255, 255);
+    font-size: 12px;
+    -unity-font-definition: var(--dcl-font-inter-regular);
 }
 
 .debug-panel__header-spacer {

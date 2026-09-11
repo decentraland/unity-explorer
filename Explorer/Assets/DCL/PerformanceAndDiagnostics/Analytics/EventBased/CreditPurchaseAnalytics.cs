@@ -134,6 +134,9 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
             return new JObject
             {
                 { "trade_id", listing.tradeId },
+                // Which rail settled it. A null trade_id is ambiguous on its own (a mint has none, but so does a
+                // row we failed to parse), and mints are now buyable, so the funnel needs to be able to split them.
+                { "acquisition", listing.acquisition },
                 { "contract_address", listing.contractAddress },
                 { "item_id", listing.itemId },
                 { "token_id", listing.tokenId },

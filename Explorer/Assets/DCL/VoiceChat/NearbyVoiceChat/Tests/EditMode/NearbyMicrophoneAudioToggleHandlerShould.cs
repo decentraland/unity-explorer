@@ -66,7 +66,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
         [Test]
         public void PlayOnClipAtFullVolumeForButtonActivation()
         {
-            stateModel.StartSpeaking(NearbyVoiceActivation.Button);
+            stateModel.StartSpeaking();
 
             Assert.That(played.Count, Is.EqualTo(1));
             Assert.That(played[0].clip, Is.SameAs(onClip));
@@ -76,7 +76,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
         [Test]
         public void PlayOffClipAtFullVolumeForButtonActivation()
         {
-            stateModel.StartSpeaking(NearbyVoiceActivation.Button);
+            stateModel.StartSpeaking();
             played.Clear();
 
             stateModel.StopSpeaking();
@@ -121,7 +121,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
         [Test]
         public void NotPlayOffClipWhenSuppressedFromOpenMic()
         {
-            stateModel.StartSpeaking(NearbyVoiceActivation.Button);
+            stateModel.StartSpeaking();
             played.Clear();
 
             stateModel.Suppress(SuppressionReason.Call);
@@ -132,7 +132,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
         [Test]
         public void NotPlayOnClipWhenResumedToOpenMic()
         {
-            stateModel.StartSpeaking(NearbyVoiceActivation.Button);
+            stateModel.StartSpeaking();
             stateModel.Suppress(SuppressionReason.Call);
             played.Clear();
 
@@ -144,7 +144,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
         [Test]
         public void StaySilentAcrossFullSuppressResumeCycle()
         {
-            stateModel.StartSpeaking(NearbyVoiceActivation.Button);
+            stateModel.StartSpeaking();
             played.Clear();
 
             stateModel.Suppress(SuppressionReason.Scene);
@@ -156,7 +156,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
         [Test]
         public void NotPlayOffClipWhenDisabledFromOpenMic()
         {
-            stateModel.StartSpeaking(NearbyVoiceActivation.Button);
+            stateModel.StartSpeaking();
             played.Clear();
 
             stateModel.Disable();
@@ -169,7 +169,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
         {
             handler.Dispose();
 
-            stateModel.StartSpeaking(NearbyVoiceActivation.Button);
+            stateModel.StartSpeaking();
 
             Assert.That(played, Is.Empty);
         }

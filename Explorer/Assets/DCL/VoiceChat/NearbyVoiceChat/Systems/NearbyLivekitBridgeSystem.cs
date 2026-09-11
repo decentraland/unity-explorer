@@ -47,8 +47,7 @@ namespace DCL.VoiceChat.Nearby.Systems
         [All(typeof(AvatarBase))]
         private void AddStreaming(Entity entity, in Profile profile)
         {
-            string walletId = profile.UserId;
-            if (string.IsNullOrEmpty(walletId)) return;
+            string walletId = profile.UserId.Value;
 
             string[]? arr = registry.GetAudioSidsArray(walletId);
             if (arr != null)
@@ -60,8 +59,7 @@ namespace DCL.VoiceChat.Nearby.Systems
         [All(typeof(AvatarBase))]
         private void RefreshStreaming(in Profile profile, ref NearbyAudioStreamerComponent nearby)
         {
-            string userId = profile.UserId;
-            if (string.IsNullOrEmpty(userId)) return;
+            string userId = profile.UserId.Value;
 
             string[]? current = registry.GetAudioSidsArray(userId);
             if (current == null) return; // cleanup is RemoveStreaming's responsibility
@@ -76,8 +74,8 @@ namespace DCL.VoiceChat.Nearby.Systems
         [All(typeof(AvatarBase), typeof(NearbyAudioStreamerComponent))]
         private void RemoveStreaming(Entity entity, in Profile profile)
         {
-            string userId = profile.UserId;
-            if (string.IsNullOrEmpty(userId) || registry.GetAudioSidsArray(userId) != null) return;
+            string userId = profile.UserId.Value;
+            if (registry.GetAudioSidsArray(userId) != null) return;
 
             // Drop NearbyAudioStreamerComponent and every dependent marker so invariants (speaking ⊆ streaming, audible ⊆ streaming) hold.
             World.Remove<NearbyAudioStreamerComponent>(entity);
@@ -94,8 +92,8 @@ namespace DCL.VoiceChat.Nearby.Systems
         [All(typeof(AvatarBase), typeof(NearbyAudioStreamerComponent))]
         private void AddSpeaking(Entity entity, in Profile profile)
         {
-            string walletId = profile.UserId;
-            if (!string.IsNullOrEmpty(walletId) && registry.IsActiveSpeaker(walletId))
+            string walletId = profile.UserId.Value;
+            if (registry.IsActiveSpeaker(walletId))
                 World.Add<IsActivelySpeakingTag>(entity);
         }
 
@@ -104,8 +102,8 @@ namespace DCL.VoiceChat.Nearby.Systems
         [All(typeof(AvatarBase), typeof(IsActivelySpeakingTag))]
         private void RemoveSpeaking(Entity entity, in Profile profile)
         {
-            string walletId = profile.UserId;
-            if (!string.IsNullOrEmpty(walletId) && !registry.IsActiveSpeaker(walletId))
+            string walletId = profile.UserId.Value;
+            if (!registry.IsActiveSpeaker(walletId))
                 World.Remove<IsActivelySpeakingTag>(entity);
         }
     }

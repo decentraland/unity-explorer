@@ -17,7 +17,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         private static readonly CreditPack PACK = new ("pack_25", 24.99f, 235, true, string.Empty);
 
         private ICreditsTopUpService topUpService = null!;
-        private CreditsTopUpModalController controller = null!;
+        private TestableController controller = null!;
 
         private readonly List<(string orderId, CreditPack pack)> redirected = new ();
         private readonly List<(string orderId, CreditPack pack)> completed = new ();
@@ -40,12 +40,10 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
 
             topUpService = Substitute.For<ICreditsTopUpService>();
 
-            controller = new CreditsTopUpModalController(
-                () => null!,
+            controller = new TestableController(
                 topUpService,
                 Substitute.For<MarketplaceCreditsAPIClient>(null, null),
-                Substitute.For<IWeb3IdentityCache>(),
-                null!);
+                Substitute.For<IWeb3IdentityCache>());
 
             controller.RedirectedToStripe += (orderId, pack) => redirected.Add((orderId, pack));
             controller.BuyCreditsCompleted += (orderId, pack) => completed.Add((orderId, pack));
@@ -119,7 +117,95 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             Assert.AreEqual("grant_failed", failed[0].errorCode);
         }
 
+        [Test]
+        public void CancelTopUpWhenClosedWhileWaitingForBrowser()
+        {
+            // Arrange
+            topUpService.CurrentStatus.Returns(CreditsTopUpStatus.WaitingForPayment(PACK, ORDER_ID));
+            controller.Show();
+            RaiseStatus(CreditsTopUpStatus.WaitingForPayment(PACK, ORDER_ID));
+
+            // Act
+            controller.Close();
+
+            // Assert
+            topUpService.Received(1).CancelTopUp();
+            topUpService.DidNotReceive().AcknowledgeTerminalState();
+            Assert.AreEqual(1, cancelled.Count);
+            Assert.AreEqual(ORDER_ID, cancelled[0].orderId);
+        }
+
+        [Test]
+        public void CancelTopUpWhenClosedWhilePending()
+        {
+            // Arrange
+            topUpService.CurrentStatus.Returns(CreditsTopUpStatus.PendingTimeout(PACK, ORDER_ID));
+            controller.Show();
+            RaiseStatus(CreditsTopUpStatus.PendingTimeout(PACK, ORDER_ID));
+
+            // Act
+            controller.Close();
+
+            // Assert
+            topUpService.Received(1).CancelTopUp();
+            topUpService.DidNotReceive().AcknowledgeTerminalState();
+            Assert.AreEqual(1, cancelled.Count);
+        }
+
+        [Test]
+        public void AcknowledgeWithoutCancellingWhenClosedAfterTerminalState()
+        {
+            // Arrange
+            topUpService.CurrentStatus.Returns(CreditsTopUpStatus.Credited(PACK, ORDER_ID, 250, 300));
+            controller.Show();
+            RaiseStatus(CreditsTopUpStatus.Credited(PACK, ORDER_ID, 250, 300));
+
+            // Act
+            controller.Close();
+
+            // Assert
+            topUpService.Received(1).AcknowledgeTerminalState();
+            topUpService.DidNotReceive().CancelTopUp();
+            Assert.AreEqual(0, cancelled.Count);
+        }
+
+        [Test]
+        public void StartFromPackSelectionWhenReopenedAfterCancellingClose()
+        {
+            // Arrange: first close happens mid browser wait and cancels the top-up.
+            topUpService.CurrentStatus.Returns(CreditsTopUpStatus.WaitingForPayment(PACK, ORDER_ID));
+            controller.Show();
+            RaiseStatus(CreditsTopUpStatus.WaitingForPayment(PACK, ORDER_ID));
+            controller.Close();
+
+            // Act: the service is idle again, so reopening and closing must not cancel anything else.
+            topUpService.CurrentStatus.Returns(CreditsTopUpStatus.Idle());
+            controller.Show();
+            controller.Close();
+
+            // Assert
+            topUpService.Received(1).CancelTopUp();
+            topUpService.DidNotReceive().AcknowledgeTerminalState();
+            Assert.AreEqual(1, cancelled.Count);
+        }
+
         private void RaiseStatus(CreditsTopUpStatus status) =>
             topUpService.StatusChanged += Raise.Event<Action<CreditsTopUpStatus>>(status);
+
+        // Exposes the protected view lifecycle so close behavior is testable without a view instance.
+        private class TestableController : CreditsTopUpModalController
+        {
+            public TestableController(
+                ICreditsTopUpService topUpService,
+                MarketplaceCreditsAPIClient creditsApiClient,
+                IWeb3IdentityCache identityCache)
+                : base(() => null!, topUpService, creditsApiClient, identityCache, null!) { }
+
+            public void Show() =>
+                OnViewShow();
+
+            public void Close() =>
+                OnViewClose();
+        }
     }
 }

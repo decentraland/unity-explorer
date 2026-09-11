@@ -1,4 +1,3 @@
-#if AV_PRO_PRESENT
 using NUnit.Framework;
 
 namespace DCL.SDKComponents.MediaStream.Tests
@@ -55,4 +54,3 @@ namespace DCL.SDKComponents.MediaStream.Tests
         }
     }
 }
-#endif

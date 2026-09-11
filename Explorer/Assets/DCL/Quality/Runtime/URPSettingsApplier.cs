@@ -103,35 +103,35 @@ namespace DCL.Quality.Runtime
         public static void ApplySunShadows(bool enabled)
         {
             EnsureReflectionProperties();
-            var renderPipelineAsset = (GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset);
+            var renderPipelineAsset = GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset;
             TrySetReflectionField(MainLightRenderingMode, renderPipelineAsset, enabled ? LightRenderingMode.PerPixel : LightRenderingMode.Disabled, nameof(MainLightRenderingMode));
         }
 
         public static void ApplySceneLight(bool enabled)
         {
             EnsureReflectionProperties();
-            var renderPipelineAsset = (GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset);
+            var renderPipelineAsset = GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset;
             TrySetReflectionField(AdditionalLightsRenderingMode, renderPipelineAsset, enabled ? LightRenderingMode.PerPixel : LightRenderingMode.Disabled, nameof(AdditionalLightsRenderingMode));
         }
 
         public static void ApplyMaxObjectsPerLight(int maxLights)
         {
             EnsureReflectionProperties();
-            var renderPipelineAsset = (GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset);
+            var renderPipelineAsset = GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset;
             renderPipelineAsset.maxAdditionalLightsCount = maxLights;
         }
 
         public static void ApplySceneLightsShadows(bool enabled)
         {
             EnsureReflectionProperties();
-            var renderPipelineAsset = (GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset);
+            var renderPipelineAsset = GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset;
             TrySetReflectionField(AdditionalLightShadowsSupported, renderPipelineAsset, enabled, nameof(AdditionalLightShadowsSupported));
         }
 
         public static void ApplyShadowQuality(ShadowQualityConfig shadowQualityConfig)
         {
             EnsureReflectionProperties();
-            var renderPipelineAsset = (GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset);
+            var renderPipelineAsset = GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset;
             renderPipelineAsset.mainLightShadowmapResolution = shadowQualityConfig.MainShadowResolution;
             TrySetReflectionField(AdditionalLightsShadowResolutionTierLow, renderPipelineAsset, shadowQualityConfig.ShadowResolutionTier0, nameof(AdditionalLightsShadowResolutionTierLow));
             TrySetReflectionField(AdditionalLightsShadowResolutionTierMedium, renderPipelineAsset, shadowQualityConfig.ShadowResolutionTier1, nameof(AdditionalLightsShadowResolutionTierMedium));
@@ -144,7 +144,7 @@ namespace DCL.Quality.Runtime
 
         public static void ApplyShadowDistance(float distance)
         {
-            var renderPipelineAsset = (GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset);
+            var renderPipelineAsset = GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset;
             renderPipelineAsset.shadowDistance = distance;
         }
 

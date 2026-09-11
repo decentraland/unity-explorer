@@ -4,7 +4,6 @@ using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.FeatureFlags;
 using DCL.UI;
-using DCL.WebRequests;
 using DG.Tweening;
 using MVC;
 using System;
@@ -26,6 +25,16 @@ namespace DCL.Notifications.NewNotification
         private static readonly int HIDE_TRIGGER = Animator.StringToHash("Hide");
         private static readonly TimeSpan TIME_BEFORE_HIDE_NOTIFICATION_TIME_SPAN = TimeSpan.FromSeconds(5f);
 
+        /// <summary>
+        ///     Types that carry a standing condition rather than a one-off event, so a second one while the first is
+        ///     still on screen would say nothing new. Only one instance of these is ever queued or displayed at a
+        ///     time; further ones are dropped instead of piling up behind it.
+        /// </summary>
+        private static readonly List<NotificationType> COLLAPSIBLE_NOTIFICATION_TYPES = new ()
+        {
+            NotificationType.INTERNAL_SCENE_CLIPBOARD_WRITE,
+        };
+
         private readonly NotificationIconTypes notificationIconTypes;
         private readonly NotificationDefaultThumbnails notificationDefaultThumbnails;
         private readonly NftTypeIconSO rarityBackgroundMapping;
@@ -33,6 +42,7 @@ namespace DCL.Notifications.NewNotification
         private readonly ImageControllerProvider imageControllerProvider;
         private readonly Queue<INotification> notificationQueue = new ();
         private bool isDisplaying;
+        private NotificationType? displayingNotificationType;
         private ImageController? thumbnailImageController;
         private ImageController badgeThumbnailImageController;
         private ImageController friendsThumbnailImageController;
@@ -93,6 +103,10 @@ namespace DCL.Notifications.NewNotification
             cts.SafeCancelAndDispose();
             cts = new CancellationTokenSource();
             cts.Token.ThrowIfCancellationRequested();
+
+            // Dismissing hands the screen slot back immediately — the fade-out that follows is cosmetic, so a
+            // collapsible type must not stay suppressed for its duration.
+            displayingNotificationType = null;
         }
 
         private void ClickedNotification(NotificationType notificationType, INotification notification)
@@ -104,9 +118,30 @@ namespace DCL.Notifications.NewNotification
         private void QueueNewNotification(INotification newNotification)
         {
             ReportHub.Log(ReportCategory.GIFTING, $"{newNotification.Type}");
+
+            if (COLLAPSIBLE_NOTIFICATION_TYPES.Contains(newNotification.Type) && IsPending(newNotification.Type))
+                return;
+
             notificationQueue.Enqueue(newNotification);
 
             if (!isDisplaying) { DisplayNewNotificationAsync().Forget(); }
+        }
+
+        /// <summary>
+        ///     Whether a notification of this type is on screen right now or waiting behind the one that is.
+        /// </summary>
+        private bool IsPending(NotificationType type)
+        {
+            if (displayingNotificationType == type)
+                return true;
+
+            foreach (INotification queued in notificationQueue)
+            {
+                if (queued.Type == type)
+                    return true;
+            }
+
+            return false;
         }
 
         private async UniTaskVoid DisplayNewNotificationAsync()
@@ -114,53 +149,72 @@ namespace DCL.Notifications.NewNotification
             if (viewInstance == null)
                 return;
 
-            while (notificationQueue.Count > 0)
+            isDisplaying = true;
+
+            try
             {
-                isDisplaying = true;
-                INotification notification = notificationQueue.Dequeue();
-
-                switch (notification.Type)
+                while (notificationQueue.Count > 0)
                 {
-                    case NotificationType.INTERNAL_ARRIVED_TO_DESTINATION:
-                    case NotificationType.INTERNAL_SERVER_ERROR:
-                        await ProcessArrivedNotificationAsync(notification);
-                        break;
-                    case NotificationType.COMMUNITY_VOICE_CHAT_STARTED:
-                        if (FeaturesRegistry.Instance.IsEnabled(FeatureId.CommunityVoiceChat))
-                            await ProcessCommunityVoiceChatStartedNotificationAsync(notification);
+                    INotification notification = notificationQueue.Dequeue();
+                    displayingNotificationType = notification.Type;
 
-                        break;
-                    case NotificationType.BADGE_GRANTED:
-                        await ProcessBadgeNotificationAsync(notification);
-                        break;
-                    case NotificationType.SOCIAL_SERVICE_FRIENDSHIP_REQUEST:
-                    case NotificationType.SOCIAL_SERVICE_FRIENDSHIP_ACCEPTED:
-                        await ProcessFriendsNotificationAsync(notification);
-                        break;
-                    case NotificationType.CREDITS_GOAL_COMPLETED:
-                        await ProcessMarketplaceCreditsNotificationAsync(notification);
-                        break;
-                    case NotificationType.INTERNAL_DEFAULT_SUCCESS:
-                        await ProcessArrivedNotificationAsync(notification, false);
-                        break;
-                    case NotificationType.TRANSFER_RECEIVED:
-                        await ProcessGiftNotificationAsync(notification);
-                        break;
-                    case NotificationType.TIP_RECEIVED:
-                        await ProcessTipReceivedNotificationAsync(notification);
-                        break;
-                    case NotificationType.BAN_WARNING:
-                    case NotificationType.BANNED:
-                    case NotificationType.BAN_LIFTED:
-                        await ProcessPersistentNotificationAsync(notification);
-                        break;
-                    default:
-                        await ProcessDefaultNotificationAsync(notification);
-                        break;
+                    try
+                    {
+                        switch (notification.Type)
+                        {
+                            case NotificationType.INTERNAL_ARRIVED_TO_DESTINATION:
+                            case NotificationType.INTERNAL_SERVER_ERROR:
+                            case NotificationType.INTERNAL_SCENE_CLIPBOARD_WRITE:
+                                await ProcessArrivedNotificationAsync(notification);
+                                break;
+                            case NotificationType.COMMUNITY_VOICE_CHAT_STARTED:
+                                if (FeaturesRegistry.Instance.IsEnabled(FeatureId.CommunityVoiceChat))
+                                    await ProcessCommunityVoiceChatStartedNotificationAsync(notification);
+
+                                break;
+                            case NotificationType.BADGE_GRANTED:
+                                await ProcessBadgeNotificationAsync(notification);
+                                break;
+                            case NotificationType.SOCIAL_SERVICE_FRIENDSHIP_REQUEST:
+                            case NotificationType.SOCIAL_SERVICE_FRIENDSHIP_ACCEPTED:
+                                await ProcessFriendsNotificationAsync(notification);
+                                break;
+                            case NotificationType.CREDITS_GOAL_COMPLETED:
+                                await ProcessMarketplaceCreditsNotificationAsync(notification);
+                                break;
+                            case NotificationType.INTERNAL_DEFAULT_SUCCESS:
+                                await ProcessArrivedNotificationAsync(notification, false);
+                                break;
+                            case NotificationType.TRANSFER_RECEIVED:
+                                await ProcessGiftNotificationAsync(notification);
+                                break;
+                            case NotificationType.TIP_RECEIVED:
+                                await ProcessTipReceivedNotificationAsync(notification);
+                                break;
+                            case NotificationType.BAN_WARNING:
+                            case NotificationType.BANNED:
+                            case NotificationType.BAN_LIFTED:
+                                await ProcessPersistentNotificationAsync(notification);
+                                break;
+                            default:
+                                await ProcessDefaultNotificationAsync(notification);
+                                break;
+                        }
+                    }
+                    catch (OperationCanceledException) { }
+
+                    // A notification that fails to display must not kill the loop: the queue keeps
+                    // being consumed and later notifications still show
+                    catch (Exception e) { ReportHub.LogException(e, ReportCategory.UI); }
+
+                    // The natural-expiry counterpart to the reset in StopAnimation, which covers early dismissal.
+                    displayingNotificationType = null;
                 }
             }
-
-            isDisplaying = false;
+            finally
+            {
+                isDisplaying = false;
+            }
         }
 
         private async UniTask ProcessGiftNotificationAsync(INotification notification)

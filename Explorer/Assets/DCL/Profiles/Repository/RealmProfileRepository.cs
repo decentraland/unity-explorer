@@ -8,6 +8,7 @@ using ECS.Prioritization.Components;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading;
 using Unity.Collections;
@@ -40,8 +41,8 @@ namespace DCL.Profiles
 
         private readonly List<ProfilesBatchRequest> ongoingBatches = new (10);
 
-        private ulong passedTimeSinceLastDeployment = 0;
-        private ulong lastDeployTimestampInSeconds = 0;
+        private ulong passedTimeSinceLastDeployment;
+        private ulong lastDeployTimestampInSeconds;
 
         private UniTaskCompletionSource? currentProfileResolutionTask;
         private Profile? currentProfile;
@@ -79,9 +80,6 @@ namespace DCL.Profiles
 
         public async UniTask SetAsync(Profile profile, CancellationToken ct)
         {
-            if (string.IsNullOrEmpty(profile.UserId))
-                throw new ArgumentException("Can't set a profile with an empty UserId");
-
             currentProfile = profile;
 
             if (currentProfileResolutionTask != null)
@@ -112,7 +110,7 @@ namespace DCL.Profiles
                 }
                 while (!currentProfile.IsSameProfile(localCurrent));
 
-                profileCache.Set(currentProfile.UserId, currentProfile);
+                profileCache.Set(currentProfile.UserId.Value, currentProfile);
                 currentProfileResolutionTask.TrySetResult();
             }
             catch (Exception e)
@@ -133,27 +131,34 @@ namespace DCL.Profiles
             {
                 version = IpfsProfileEntity.DEFAULT_VERSION,
                 content = Array.Empty<ContentDefinition>(),
-                pointers = new[] { profile.UserId },
+                pointers = new[] { profile.UserId.Value },
                 timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
                 type = IpfsRealmEntityType.Profile.ToEntityString(),
             };
 
-        private bool TryGetExistingRequest(string userId, out ProfilesBatchRequest.Input req) =>
-            TryGetExistingRequest(userId, ongoingBatches, out req) || TryGetExistingRequest(userId, pendingBatches, out req);
-
-        private bool TryGetExistingRequest(string userId, List<ProfilesBatchRequest> list, out ProfilesBatchRequest.Input req)
+        private bool TryGetExistingRequest(string userId, out ProfilesBatchRequest.Input req)
         {
-            lock (list)
+            lock (ongoingBatches)
             {
-                foreach (ProfilesBatchRequest profilesBatch in list)
-                {
-                    if (profilesBatch.PendingRequests.TryGetValue(userId, out req))
-                        return true;
-                }
-
-                req = default(ProfilesBatchRequest.Input);
-                return false;
+                if (TryGetExistingRequest(userId, ongoingBatches, out req))
+                    return true;
             }
+
+            lock (pendingBatches)
+                return TryGetExistingRequest(userId, pendingBatches, out req);
+        }
+
+        // Caller holds the lock on `list`
+        private static bool TryGetExistingRequest(string userId, List<ProfilesBatchRequest> list, out ProfilesBatchRequest.Input req)
+        {
+            foreach (ProfilesBatchRequest profilesBatch in list)
+            {
+                if (profilesBatch.PendingRequests.TryGetValue(userId, out req))
+                    return true;
+            }
+
+            req = default(ProfilesBatchRequest.Input);
+            return false;
         }
 
         private void Resolve(string userId, ProfileTier? profile, bool batched)
@@ -161,17 +166,17 @@ namespace DCL.Profiles
             if (profile != null)
                 profilesAnalytics.OnProfileResolved(userId, batched);
 
-            if (TryRemoveOngoingRequest(userId, out UniTaskCompletionSource<ProfileTier?> continuation))
+            if (TryRemoveOngoingRequest(userId, out UniTaskCompletionSource<ProfileTier?>? continuation))
                 continuation.TrySetResult(profile);
         }
 
         private void ResolveException(string userId, Exception ex)
         {
-            if (TryRemoveOngoingRequest(userId, out UniTaskCompletionSource<ProfileTier?> continuation))
+            if (TryRemoveOngoingRequest(userId, out UniTaskCompletionSource<ProfileTier?>? continuation))
                 continuation.TrySetException(ex);
         }
 
-        private bool TryRemoveOngoingRequest(string userId, out UniTaskCompletionSource<ProfileTier?> ongoingRequest)
+        private bool TryRemoveOngoingRequest(string userId, [NotNullWhen(true)] out UniTaskCompletionSource<ProfileTier?>? ongoingRequest)
         {
             lock (ongoingBatches)
             {
@@ -199,6 +204,7 @@ namespace DCL.Profiles
             return false;
         }
 
+        // Caller holds the lock on `requests`
         private UniTaskCompletionSource<ProfileTier?> AddToBatch(string userId, URLDomain? fromCatalyst,
             List<ProfilesBatchRequest> requests, ProfileTier.Kind tier, IPartitionComponent partition)
         {
@@ -206,38 +212,35 @@ namespace DCL.Profiles
 
             ProfilesBatchRequest? batch = null;
 
-            lock (requests)
+            // Find the batch with the same lambda URL and the same and or higher tier
+            for (var i = 0; i < requests.Count; i++)
             {
-                // Find the batch with the same lambda URL and the same and or higher tier
-                for (var i = 0; i < requests.Count; i++)
+                ProfilesBatchRequest profilesBatch = requests[i];
+
+                if (profilesBatch.LambdasUrl.Value == fromCatalyst.Value.Value)
                 {
-                    ProfilesBatchRequest profilesBatch = requests[i];
-
-                    if (profilesBatch.LambdasUrl.Value == fromCatalyst.Value.Value)
+                    // If there is an existing batch with a lower tier, it should be promoted to make sure we request a given profile only once
+                    if (profilesBatch.Tier < tier)
                     {
-                        // If there is an existing batch with a lower tier, it should be promoted to make sure we request a given profile only once
-                        if (profilesBatch.Tier < tier)
-                        {
-                            profilesBatch.Tier = tier;
-                            requests[i] = profilesBatch;
-                        }
-
-                        batch = profilesBatch;
-                        break;
+                        profilesBatch.Tier = tier;
+                        requests[i] = profilesBatch;
                     }
+
+                    batch = profilesBatch;
+                    break;
                 }
-
-                if (batch == null)
-                    requests.Add((batch = ProfilesBatchRequest.Create(fromCatalyst.Value, tier)).Value);
-
-                if (batch.Value.PendingRequests.TryGetValue(userId, out ProfilesBatchRequest.Input request))
-                    return request.Cs;
-
-                var cs = new UniTaskCompletionSource<ProfileTier?>();
-
-                batch.Value.PendingRequests.Add(userId, new ProfilesBatchRequest.Input(cs, partition));
-                return cs;
             }
+
+            if (batch == null)
+                requests.Add((batch = ProfilesBatchRequest.Create(fromCatalyst.Value, tier)).Value);
+
+            if (batch.Value.PendingRequests.TryGetValue(userId, out ProfilesBatchRequest.Input request))
+                return request.Cs;
+
+            var cs = new UniTaskCompletionSource<ProfileTier?>();
+
+            batch.Value.PendingRequests.Add(userId, new ProfilesBatchRequest.Input(cs, partition));
+            return cs;
         }
 
         public async UniTask<ProfileTier?> GetAsync(string id, int version, URLDomain? fromCatalyst, CancellationToken ct,
@@ -288,7 +291,12 @@ namespace DCL.Profiles
                     else
                     {
                         // Batching is allowed
-                        result = await AddToBatch(id, fromCatalyst, pendingBatches, tier, partition).Task.AttachExternalCancellation(ct);
+                        UniTaskCompletionSource<ProfileTier?> batchRequest;
+
+                        lock (pendingBatches)
+                            batchRequest = AddToBatch(id, fromCatalyst, pendingBatches, tier, partition);
+
+                        result = await batchRequest.Task.AttachExternalCancellation(ct);
 
                         // Not found profiles or version mismatches (Catalyst replication delays) will be processed individually by GET
                         // ⚠️ The following produces potentially a very long-living task ⚠️
@@ -309,7 +317,8 @@ namespace DCL.Profiles
             {
                 // Add directly to the ongoing batch as it's dispatch immediately
                 // It's needed if the same profile is requested again (Single or in the batch) so it will wait for the existing request
-                AddToBatch(id, fromCatalyst, ongoingBatches, tier, partition);
+                lock (ongoingBatches)
+                    AddToBatch(id, fromCatalyst, ongoingBatches, tier, partition);
 
                 // Launch single request
                 // It still can return `null` if all atempts are exhausted
@@ -353,8 +362,9 @@ namespace DCL.Profiles
                 // Centralized endpoint doesn't support GET
                 if (useCentralizedProfiles && !forceCatalyst)
                 {
+                    // POST is not retried by the web request itself, so this policy drives PostSingleAsync's re-issue loop (#9878)
                     profile = await ProfilesRequest.PostSingleAsync(webRequestController, PostUrl(fromCatalyst, ProfileTier.Kind.Full), id, version,
-                        retryUntilResolved ? CentralizedProfileRetryPolicy.VALUE : RetryPolicy.NONE, ct);
+                        retryUntilResolved ? CentralizedProfileRetryPolicy.VALUE : RetryPolicy.DEFAULT, ct);
 
                     if (profile != null)
                         profilesAnalytics.OnProfileResolved(id, false);

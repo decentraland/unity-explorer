@@ -1,0 +1,18 @@
+{
+    "name": "AvProSwitch",
+    "rootNamespace": "DCL.AvProSwitch",
+    "references": [
+        "GUID:4a0b2c8f3c9e5f6a0b1c2d3e4f5a6b7c",
+        "GUID:3ca842002c51d0a43b73e45298809a13",
+        "GUID:40cc3d3e494162646bdb002eed05aeec"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

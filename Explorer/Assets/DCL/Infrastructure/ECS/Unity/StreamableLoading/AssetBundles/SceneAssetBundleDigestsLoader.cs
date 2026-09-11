@@ -20,12 +20,14 @@ namespace ECS.StreamableLoading.AssetBundles
     /// </summary>
     public static class SceneAssetBundleDigestsLoader
     {
-        public static async UniTask EnsureDepsDigestsAsync(World world, EntityDefinitionBase entityDefinition, IPartitionComponent partition, CancellationToken ct)
+        public static async UniTask EnsureDepsDigestsAsync(World world, EntityDefinitionBase entityDefinition, IPartitionComponent partition, CancellationToken ct, bool isLocalSceneDevelopment = false)
         {
             AssetBundleManifestVersion manifestVersion = entityDefinition.AssetBundleManifestVersionOrFailed;
 
-            // Pre-v49 manifests have no canonical assets/ layout — skip both the manifest download and the injection.
-            if (!manifestVersion.SupportsDepsDigests())
+            // LSD hashes are path-derived and unique per file, so the cross-scene hash collisions deps
+            // digests disambiguate cannot occur there — skip the extra manifest download entirely.
+            // Pre-v49 manifests have no canonical assets/ layout — skip both the download and the injection.
+            if (isLocalSceneDevelopment || !manifestVersion.SupportsDepsDigests())
                 return;
 
             //Needed to use the UnityEngine.Time.realtimeSinceStartup on the intention creation

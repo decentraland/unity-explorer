@@ -125,7 +125,7 @@ public class SimpleCamera : MonoBehaviour
         // Apply cursor state
         Cursor.lockState = _wantedMode;
         // Hide cursor when locking
-        Cursor.visible = (CursorLockMode.Locked != _wantedMode);
+        Cursor.visible = CursorLockMode.Locked != _wantedMode;
     }
 
     private void CalculateCurrentIncrease(bool moving)

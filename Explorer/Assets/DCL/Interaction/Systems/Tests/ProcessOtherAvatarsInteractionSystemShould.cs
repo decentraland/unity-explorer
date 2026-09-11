@@ -24,17 +24,17 @@ namespace DCL.Interaction.Systems.Tests
     {
         private const string TEST_USER_ID = "0xtestuser1234";
 
-        private ProcessOtherAvatarsInteractionSystem system;
-        private World world;
-        private Mouse mouse;
-        private IEventSystem eventSystem;
-        private IMVCManagerMenusAccessFacade menusAccessFacade;
-        private IMVCManager mvcManager;
-        private ObjectProxy<Entity> cameraEntityProxy;
+        private ProcessOtherAvatarsInteractionSystem system = null!;
+        private World world = null!;
+        private Mouse mouse = null!;
+        private IEventSystem eventSystem = null!;
+        private IMVCManagerMenusAccessFacade menusAccessFacade = null!;
+        private IMVCManager mvcManager = null!;
+        private ObjectProxy<Entity> cameraEntityProxy = null!;
         private Entity cameraEntity;
         private Entity queryEntity;
         private Entity avatarEntity;
-        private Profile testProfile;
+        private Profile testProfile = null!;
 
         private void SetUpWithFeatureFlag(bool enableContextMenu)
         {
@@ -59,7 +59,7 @@ namespace DCL.Interaction.Systems.Tests
             cameraEntityProxy = new ObjectProxy<Entity>();
             cameraEntityProxy.SetObject(cameraEntity);
 
-            testProfile = new Profile { UserId = TEST_USER_ID };
+            testProfile = new Profile(UserId.New(TEST_USER_ID).Unwrap(), "test user", new Avatar());
             avatarEntity = world.Create(testProfile);
 
             queryEntity = world.Create(
@@ -75,11 +75,9 @@ namespace DCL.Interaction.Systems.Tests
         [TearDown]
         public override void TearDown()
         {
-            system?.Dispose();
-            world?.Dispose();
-
-            if (mouse != null)
-                InputSystem.RemoveDevice(mouse);
+            system.Dispose();
+            world.Dispose();
+            InputSystem.RemoveDevice(mouse);
 
             EcsTestsUtils.TearDownFeaturesRegistry();
             base.TearDown();
@@ -87,7 +85,7 @@ namespace DCL.Interaction.Systems.Tests
 
         private static void OverrideFeatureFlag(FeatureId featureId, bool value)
         {
-            FieldInfo field = typeof(FeaturesRegistry).GetField("featureStates", BindingFlags.NonPublic | BindingFlags.Instance);
+            FieldInfo? field = typeof(FeaturesRegistry).GetField("featureStates", BindingFlags.NonPublic | BindingFlags.Instance);
             var dict = (Dictionary<FeatureId, bool>)field!.GetValue(FeaturesRegistry.Instance);
             dict[featureId] = value;
         }
@@ -153,7 +151,7 @@ namespace DCL.Interaction.Systems.Tests
 
         [TestCase(true)]
         [TestCase(false)]
-        public void ClearTooltipWhenPointerOverUI(bool contextMenuEnabled)
+        public void ClearTooltipWhenPointerOverUi(bool contextMenuEnabled)
         {
             // Arrange
             SetUpWithFeatureFlag(contextMenuEnabled);
@@ -274,23 +272,6 @@ namespace DCL.Interaction.Systems.Tests
             Assert.That(mvcManager.ReceivedCalls(), Is.Empty);
         }
 
-        [Test]
-        public void NotOpenPassportWhenUserIdIsEmpty()
-        {
-            // Arrange
-            SetUpWithFeatureFlag(false);
-            testProfile.UserId = "";
-            SetupValidAvatarHit();
-            system.Update(0);
-
-            // Act
-            Press(mouse.leftButton);
-            Release(mouse.leftButton);
-
-            // Assert
-            Assert.That(mvcManager.ReceivedCalls(), Is.Empty);
-        }
-
         // ==========================================================
         // Context-menu mode (feature flag ON) - right click
         // ==========================================================
@@ -325,25 +306,9 @@ namespace DCL.Interaction.Systems.Tests
         }
 
         [Test]
-        public void NotOpenContextMenuWhenUserIdIsEmpty()
+        public void KeepCursorLockedWhenContextMenuIsNeverShown()
         {
-            // Arrange
-            SetUpWithFeatureFlag(true);
-            testProfile.UserId = "";
-            SetupValidAvatarHit();
-            system.Update(0);
-
-            // Act
-            Press(mouse.rightButton);
-
-            // Assert
-            Assert.That(CountContextMenuCalls(), Is.EqualTo(0));
-        }
-
-        [Test]
-        public void SetPointerLockIntentionWithUIWhenCursorLockedAndRightClick()
-        {
-            // Arrange
+            // Arrange - the substitute completes right away, like the facade does when the profile is unknown
             SetUpWithFeatureFlag(true);
             world.Set(cameraEntity, new CursorComponent { CursorState = CursorState.Locked });
             SetupValidAvatarHit();
@@ -353,11 +318,8 @@ namespace DCL.Interaction.Systems.Tests
             Press(mouse.rightButton);
 
             // Assert
-            Assert.That(world.Has<PointerLockIntention>(cameraEntity), Is.True);
-
-            var intention = world.Get<PointerLockIntention>(cameraEntity);
-            Assert.That(intention.Locked, Is.True);
-            Assert.That(intention.WithUI, Is.True);
+            Assert.That(world.Has<PointerLockIntention>(cameraEntity), Is.False);
+            Assert.That(world.Get<CursorComponent>(cameraEntity).CursorState, Is.EqualTo(CursorState.Locked));
         }
 
         [Test]
@@ -388,7 +350,6 @@ namespace DCL.Interaction.Systems.Tests
 
             // Act & Assert
             Assert.DoesNotThrow(() => system.Dispose());
-            system = null;
         }
 
         [Test]
@@ -399,7 +360,6 @@ namespace DCL.Interaction.Systems.Tests
 
             // Act & Assert
             Assert.DoesNotThrow(() => system.Dispose());
-            system = null;
         }
     }
 }

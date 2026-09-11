@@ -1,5 +1,5 @@
 using Cysharp.Threading.Tasks;
-using RenderHeads.Media.AVProVideo;
+using DCL.AvProSwitch;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -33,7 +33,7 @@ namespace DCL.SDKComponents.MediaStream
 
             if (offlineMediaPlayers.TryGetValue(url, out Queue<MediaPlayerInfo>? queue) && queue.Count > 0)
             {
-                mediaPlayer = queue.Dequeue().mediaPlayer;
+                mediaPlayer = queue.Dequeue().MediaPlayer;
                 mediaPlayer.enabled = true;
                 mediaPlayer.gameObject.SetActive(true);
             }
@@ -51,7 +51,6 @@ namespace DCL.SDKComponents.MediaStream
             #endif
             mediaPlayer.PlatformOptionsWindows.startWithHighestBitrate = true;
             mediaPlayer.PlatformOptionsWindows.useLowLiveLatency = false;
-            mediaPlayer.AutoOpen = false;
             mediaPlayer.enabled = true;
 
             return mediaPlayer;
@@ -59,7 +58,7 @@ namespace DCL.SDKComponents.MediaStream
 
         private async UniTask TryUnloadAsync()
         {
-            while (true)
+            while (!UnityObjectUtils.IsQuitting)
             {
                 //We will do this analysis every two minute
                 await UniTask.Delay(TimeSpan.FromMinutes(tryCleanOfflineMediaPlayersDelayInMinutes));
@@ -71,11 +70,11 @@ namespace DCL.SDKComponents.MediaStream
                     Queue<MediaPlayerInfo>? queue = kvp.Value;
 
                     //IF the video hasnt been used in five minutes, then it will be get closed and destroyed
-                    while (queue.Count > 0 && now - queue.Peek().lastTimeUsed > maxOfflineTimePossibleInSeconds)
+                    while (queue.Count > 0 && now - queue.Peek().LastTimeUsed > maxOfflineTimePossibleInSeconds)
                     {
-                        MediaPlayerInfo? expiredPlayerInfo = queue.Dequeue();
-                        expiredPlayerInfo.mediaPlayer.CloseMedia();
-                        GameObject.Destroy(expiredPlayerInfo.mediaPlayer.gameObject);
+                        MediaPlayerInfo expiredPlayerInfo = queue.Dequeue();
+                        expiredPlayerInfo.MediaPlayer.CloseMedia();
+                        Object.Destroy(expiredPlayerInfo.MediaPlayer.gameObject);
                     }
 
                     if (queue.Count == 0)
@@ -115,13 +114,13 @@ namespace DCL.SDKComponents.MediaStream
 
     public class MediaPlayerInfo
     {
-        public MediaPlayer mediaPlayer;
-        public float lastTimeUsed;
+        public MediaPlayer MediaPlayer;
+        public float LastTimeUsed;
 
         public MediaPlayerInfo(MediaPlayer mediaPlayer, float lastTimeUsed)
         {
-            this.mediaPlayer = mediaPlayer;
-            this.lastTimeUsed = lastTimeUsed;
+            MediaPlayer = mediaPlayer;
+            LastTimeUsed = lastTimeUsed;
         }
     }
 }

@@ -26,6 +26,10 @@ All controllers inherit `ControllerBase<TView, TInputData>` or `ControllerBase<T
 - **Lazy:** `CreateLazily` — View created on first show. **Why:** Saves startup time for rarely-used views.
 - **Pre-warmed:** `Preallocate` — View created at startup. **Why:** Avoids first-show lag for critical UI that must appear instantly (e.g., minimap, HUD).
 
+### View Prefabs Are Authored, Not Generated
+
+The prefab is the deliverable; the user styles it in the editor. If a greybox generator (an editor `[MenuItem]` scaffolder that instantiates the hierarchy and wires the serialized fields) speeds up the first pass, it is a one-shot tool: keep it untracked and delete it once the prefab exists. Never commit it alongside the view, and never create an editor asmdef just to host it (code-standards Anti-Pattern 9).
+
 ### Controller Lifecycle
 
 1. `OnViewInstantiated()` — Subscribe to view events, set initial state

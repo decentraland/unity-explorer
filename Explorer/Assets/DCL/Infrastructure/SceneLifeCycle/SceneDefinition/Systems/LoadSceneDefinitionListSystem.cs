@@ -1,7 +1,5 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
-using Arch.SystemGroups.DefaultSystemGroups;
-using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Ipfs;
@@ -12,11 +10,9 @@ using ECS.Groups;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Cache;
-using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
 using Newtonsoft.Json;
-using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -28,7 +24,6 @@ using Unity.Mathematics;
 using Unity.Profiling;
 using UnityEngine.Pool;
 using UnityEngine.Scripting;
-using Utility;
 using Utility.Multithreading;
 
 namespace ECS.SceneLifeCycle.SceneDefinition
@@ -122,21 +117,36 @@ namespace ECS.SceneLifeCycle.SceneDefinition
 
             analytics.OnRequestFinished(intention.TargetCollection.Count);
 
-            foreach (SceneEntityDefinition sceneEntityDefinition in intention.TargetCollection)
+            // One round-trip of wall-clock instead of one per scene: on a fully reconverted (v49+) city every
+            // scene in the batch fetches its manifest, and awaiting them one-by-one held the whole batch —
+            // and the destination scene queued behind it — for ~400ms × N.
+            using (ListPool<UniTask>.Get(out List<UniTask> manifestTasks))
             {
-                //Fallback needed for when the asset-bundle-registry does not have the asset bundle manifest.
-                //Could be removed once the asset bundle manifest registry has been battle tested.
-                //With local asset bundles the manual LSD manifest is skipped so the real manifest is fetched
-                //from the local asset-bundle server; failures there are expected (whole-scene raw-GLTF degrade).
-                await AssetBundleManifestFallbackHelper.CheckAssetBundleManifestFallbackAsync(World, sceneEntityDefinition, partition, ct, useManualManifest: isLocalSceneDevelopment && !useLocalAssetBundles, skipException: isLocalSceneDevelopment);
+                foreach (SceneEntityDefinition sceneEntityDefinition in intention.TargetCollection)
+                    manifestTasks.Add(EnsureManifestDataAsync(sceneEntityDefinition, partition, ct));
 
-                // v49+ scene ABs ship a per-file deps digest in their manifest. Fetch it (deduped via the promise cache)
-                // so the AB / GLTF / disk caches can differentiate scenes that share a hash but resolve different deps.
-                await SceneAssetBundleDigestsLoader.EnsureDepsDigestsAsync(World, sceneEntityDefinition, partition, ct);
+                await UniTask.WhenAll(manifestTasks);
             }
 
             return new StreamableLoadingResult<SceneDefinitions>(
                 new SceneDefinitions(intention.TargetCollection));
+        }
+
+        private async UniTask EnsureManifestDataAsync(SceneEntityDefinition sceneEntityDefinition, IPartitionComponent partition, CancellationToken ct)
+        {
+            //Fallback needed for when the asset-bundle-registry does not have the asset bundle manifest.
+            //Could be removed once the asset bundle manifest registry has been battle tested.
+            //With local asset bundles the manual LSD manifest is skipped so the real manifest is fetched
+            //from the local asset-bundle server; failures there are expected (whole-scene raw-GLTF degrade).
+            await AssetBundleManifestFallbackHelper.CheckAssetBundleManifestFallbackAsync(World, sceneEntityDefinition, partition, ct, useManualManifest: isLocalSceneDevelopment && !useLocalAssetBundles, skipException: isLocalSceneDevelopment);
+
+            // v49+ scene ABs ship a per-file deps digest in their manifest. Fetch it (deduped via the promise cache)
+            // so the AB / GLTF / disk caches can differentiate scenes that share a hash but resolve different deps.
+            // SDK7 scenes only: everything else (SDK6 scenes, roads) never instantiates as a scene — it is
+            // permanently represented by LODs from the LOD pipeline (see VisualSceneStateResolver) — so it
+            // never requests its own bundles and its digest map would go unread.
+            if (sceneEntityDefinition.metadata?.runtimeVersion == "7")
+                await SceneAssetBundleDigestsLoader.EnsureDepsDigestsAsync(World, sceneEntityDefinition, partition, ct, isLocalSceneDevelopment);
         }
 
         private void RemoveDuplicates(List<SceneEntityDefinition> list)

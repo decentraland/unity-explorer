@@ -1614,7 +1614,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Each NAME adds a World to your collection and increases your overall <link="https://docs.decentraland.org/creator/worlds/about/#worlds-size-limit"><b><u>World
+  m_text: Each NAME adds a World to your collection and increases your overall <link="https://docs.decentraland.org/creator/scenes-sdk7/kinds-of-projects/kinds-of-project#size-limits"><b><u>World
     size limits</u></b></link>. Plus, NAMEs are each worth 100 Voting Power!
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 35aa85d68d15435418848a03a2db81ec, type: 2}

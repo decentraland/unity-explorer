@@ -19,7 +19,6 @@ using DCL.VoiceChat.Nearby;
 using DCL.VoiceChat.Nearby.Audio;
 using DCL.VoiceChat.Nearby.Systems;
 using LiveKit.Rooms.Streaming;
-using LiveKit.Rooms.Streaming.Audio;
 using LiveKit.Rooms;
 using System;
 using System.Collections.Generic;
@@ -35,7 +34,6 @@ using DCL.RealmNavigation;
 using DCL.SceneBannedUsers;
 using DCL.VoiceChat.UI;
 using Utility;
-using Utility.Multithreading;
 using AudioSettings = UnityEngine.AudioSettings;
 using RustAudio;
 
@@ -85,7 +83,6 @@ namespace DCL.PluginSystem.Global
         private NearbyMicrophoneAudioToggleHandler? nearbyMicrophoneAudioToggleHandler;
         private NearbyVoiceChatButtonController? nearbyButtonController;
         private NearbyVoiceWidgetController? nearbyWidgetController;
-        private CancellationTokenSource? nearbyTipCts;
         private VoiceChatConfiguration voiceChatConfiguration;
 
         public VoiceChatPlugin(
@@ -139,7 +136,6 @@ namespace DCL.PluginSystem.Global
 
         public void Dispose()
         {
-            nearbyTipCts.SafeCancelAndDispose();
             pluginScope.Dispose();
 
             if (voiceChatPluginSettingsAsset.Value != null)
@@ -260,16 +256,12 @@ namespace DCL.PluginSystem.Global
                 pluginScope.Add(nearbyWidgetController);
 
                 // Intro FLUX
-                nearbyTipCts = new CancellationTokenSource();
-                RunNearbyVoiceTipAsync(nearbyVoiceTipView, loadingStatus, nearbyVoiceChatButtonView, nearbyTipCts.Token).Forget();
-            }
-        }
+                NearbyVoiceTipSchedule tipSchedule = FeaturesRegistry.Instance.IsEnabled(FeatureId.NearbyVoiceChatTip)
+                    ? NearbyVoiceTipSchedule.FromFeatureFlags(FeatureFlagsConfiguration.Instance)
+                    : NearbyVoiceTipSchedule.Disabled;
 
-        private static async UniTaskVoid RunNearbyVoiceTipAsync(NearbyVoiceTipView view, ILoadingStatus loadingStatus,
-            NearbyVoiceChatButtonView buttonView, CancellationToken ct)
-        {
-            if (await NearbyVoiceTipFlow.WaitAndShowAsync(view, loadingStatus, ct))
-                buttonView.Button.onClick.Invoke();
+                pluginScope.Add(new NearbyVoiceTipController(nearbyVoiceTipView, nearbyVoiceChatButtonView, stateModel, chatSharedAreaEventBus, loadingStatus, tipSchedule));
+            }
         }
 
         [Serializable]
@@ -281,39 +273,6 @@ namespace DCL.PluginSystem.Global
             public class VoiceChatConfigurationsReference : AssetReferenceT<VoiceChatPluginSettings>
             {
                 public VoiceChatConfigurationsReference(string guid) : base(guid) { }
-            }
-        }
-
-        private static class NearbyVoiceTipFlow
-        {
-            public static async UniTask<bool> WaitAndShowAsync(NearbyVoiceTipView view, ILoadingStatus loadingStatus, CancellationToken ct)
-            {
-                view.Hide();
-
-                if (DCLPlayerPrefs.GetBool(DCLPrefKeys.NEARBY_VOICE_TIP_DISMISSED))
-                    return false;
-
-                try
-                {
-                    await UniTask.WaitUntil(
-                        () => loadingStatus.CurrentStage.Value == LoadingStatus.LoadingStage.Completed,
-                        cancellationToken: ct);
-
-                    view.Show();
-
-                    int winner = await UniTask.WhenAny(
-                        view.CloseButton.OnClickAsync(ct),
-                        view.TryItNowButton.OnClickAsync(ct));
-
-                    DCLPlayerPrefs.SetBool(DCLPrefKeys.NEARBY_VOICE_TIP_DISMISSED, true, save: true);
-                    view.Hide();
-
-                    return winner == 1;
-                }
-                catch (OperationCanceledException)
-                {
-                    return false;
-                }
             }
         }
     }

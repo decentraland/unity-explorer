@@ -15,6 +15,7 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 using GLTFast.Loading;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine.Networking;
@@ -42,6 +43,8 @@ namespace ECS.StreamableLoading.GLTF.DownloadProvider
             this.acquiredBudget = acquiredBudget;
         }
 
+        public virtual IReadOnlyList<GltfExternalDependency>? ExternalDependencies => null;
+
         public void Dispose()
         {
             acquiredBudget?.Release();
@@ -64,7 +67,7 @@ namespace ECS.StreamableLoading.GLTF.DownloadProvider
             byte[] data = Array.Empty<byte>();
             string error = string.Empty;
             string text = string.Empty;
-            bool success = false;
+            bool success;
 
             DownloadHandler? downloadHandler = null;
 
@@ -105,8 +108,13 @@ namespace ECS.StreamableLoading.GLTF.DownloadProvider
             // The textures fetching need to finish before the GLTF loading can continue its flow...
             Promise promiseResult = await texturePromise.ToUniTaskAsync(world, cancellationToken: new CancellationToken());
 
+            // Surface the failure through the ITextureDownload contract (Success/Error), like RequestAsync does for the GLTF itself
             if (promiseResult.Result is { Succeeded: false })
-                throw new Exception(GetTextureErrorMessage(promiseResult));
+                return new TextureDownloadResult(null)
+                {
+                    Error = GetTextureErrorMessage(promiseResult),
+                    Success = false,
+                };
 
             return new TextureDownloadResult(promiseResult.Result?.Asset!.EnsureTexture2D())
             {

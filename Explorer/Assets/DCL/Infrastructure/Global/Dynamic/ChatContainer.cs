@@ -103,7 +103,7 @@ namespace Global.Dynamic
             var chatHistory = new ChatHistory();
             var chatEventBus = new ChatEventBus();
 
-            var chatTeleporter = new ChatTeleporter(realmNavigator, new ChatEnvironmentValidator(bootstrapContainer.Environment), bootstrapContainer.DecentralandUrlsSource, staticContainer.ScenesCache);
+            var chatTeleporter = new ChatTeleporter(realmNavigator, new ChatEnvironmentValidator(bootstrapContainer.DecentralandUrlsSource), bootstrapContainer.DecentralandUrlsSource, staticContainer.ScenesCache);
 
             var reloadSceneChatCommand = new ReloadSceneChatCommand(reloadSceneController, globalWorld, playerEntity, staticContainer.ScenesCache, teleportController, localSceneDevelopment);
 
@@ -219,7 +219,7 @@ namespace Global.Dynamic
                 profileContainer.ThumbnailCache,
                 communitiesContainer.EventBus,
                 voiceChatContainer.VoiceChatOrchestrator,
-                uiShellContainer.MainUIView.SidebarView.unreadMessagesButton.transform,
+                uiShellContainer.MainUIView.SidebarView.UnreadMessagesButton.transform,
                 TranslationSettings,
                 staticContainer.WebRequestsContainer.WebRequestController,
                 bootstrapContainer.DecentralandUrlsSource,

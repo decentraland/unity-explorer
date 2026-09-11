@@ -12,7 +12,7 @@ namespace DCL.Profiles
     [REnumField(typeof(Profile), "Full")]
     public readonly partial struct ProfileTier : IDisposable
     {
-        public string UserId => Match(c => c.UserId, f => f.UserId);
+        public UserId UserId => Match(c => c.UserId, f => f.UserId);
         public string DisplayName => Match(c => c.DisplayName, f => f.DisplayName);
         public URLAddress FaceSnapshotUrl => Match(c => c.FaceSnapshotUrl, f => f.Compact.FaceSnapshotUrl);
 

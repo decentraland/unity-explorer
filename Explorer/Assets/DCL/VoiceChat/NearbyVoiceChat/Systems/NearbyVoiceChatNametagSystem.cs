@@ -86,8 +86,6 @@ namespace DCL.VoiceChat.Nearby.Systems
 
         private VoiceChatNametagComponent? Resolve(Entity entity, string walletId)
         {
-            if (string.IsNullOrEmpty(walletId)) return null;
-
             return entity == playerEntity
                 ? ResolveLocal(walletId)
                 : ResolveRemote(walletId);

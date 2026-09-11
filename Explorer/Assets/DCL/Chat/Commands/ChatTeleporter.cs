@@ -93,7 +93,7 @@ namespace DCL.Chat.Commands
             if(realmNavigator.IsAlreadyOnRealm(realmURL))
                 return await TeleportToParcelAsync(targetPosition, true, ct, spawnPointName);
 
-            var result = await realmNavigator.TryChangeRealmAsync(realmURL, ct, targetPosition, isWorld, false, spawnPointName: spawnPointName);
+            var result = await realmNavigator.TryChangeRealmAsync(realmURL, ct, targetPosition, isWorld, spawnPointName: spawnPointName);
 
             if (result.Success)
                 return $"🟢 Welcome to the {realm} world!";

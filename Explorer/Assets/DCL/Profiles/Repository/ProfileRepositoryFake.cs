@@ -40,7 +40,7 @@ namespace DCL.Profiles
 
         private static Profile NewRandomProfile() =>
             new (
-                Guid.NewGuid().ToString(),
+                UserId.NewRandom(),
                 Guid.NewGuid().ToString(),
                 new Avatar(
                     new BodyShape(),

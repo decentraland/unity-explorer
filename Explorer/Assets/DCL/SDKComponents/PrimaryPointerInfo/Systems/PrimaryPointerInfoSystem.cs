@@ -65,7 +65,12 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Systems
 
         private void UpdatePointerInfo()
         {
-            Vector2 rawPosition = inputPoint.ReadValue<Vector2>();
+            // The Camera action map is disabled while explorer UI holds input focus (chat, passport,
+            // explore panel), and a disabled action reads default(Vector2); the scene-facing pointer
+            // feed must keep tracking the device, so fall back to it (or the last known position).
+            Vector2 rawPosition = inputPoint.enabled
+                ? inputPoint.ReadValue<Vector2>()
+                : UnityEngine.InputSystem.Pointer.current?.position.ReadValue() ?? previousPosition;
             CumulativePointerDelta accumulatedDelta = exposedCameraData.AccumulatedPointerDelta;
             Vector2 pointerPos;
             Vector2 deltaPos;

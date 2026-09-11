@@ -3,6 +3,7 @@ using System;
 
 namespace DCL.AvatarRendering.Loading.DTO
 {
+    [Serializable]
     public abstract class TrimmedAvatarAttachmentDTO<TMetadata> : TrimmedAvatarAttachmentDTO where TMetadata : TrimmedAvatarAttachmentDTO.TrimmedMetadataBase<TrimmedAvatarAttachmentDTO.TrimmedDataBase>
     {
         public TMetadata metadata;
@@ -10,6 +11,7 @@ namespace DCL.AvatarRendering.Loading.DTO
         public override TrimmedMetadataBase<TrimmedDataBase> Metadata => metadata;
     }
 
+    [Serializable]
     public abstract class TrimmedAvatarAttachmentDTO : TrimmedEntityDefinitionBase
     {
         public string? ContentDownloadUrl { get; protected set; }

@@ -627,10 +627,22 @@ namespace DCL.Communities.CommunitiesDataProvider
         private async UniTask GetProfileAsync<TTarget>(TTarget target, string address, Action<TTarget, Profile.CompactInfo> assignProfile, CancellationToken ct)
         {
             // The v2 community endpoints keep members whose profile cannot be resolved; fall back to an address-only profile instead of failing the whole batch.
-            Profile.CompactInfo compactProfile = await profileRepository.GetCompactAsync(address, ct)
-                                                 ?? new Profile.CompactInfo(address);
+            Profile.CompactInfo? resolvedProfile = await profileRepository.GetCompactAsync(address, ct);
 
-            assignProfile(target, compactProfile);
+            if (resolvedProfile == null)
+            {
+                Option<UserId> userId = UserId.New(address);
+
+                if (!userId.Has)
+                {
+                    ReportHub.LogWarning(ReportCategory.COMMUNITIES, "Skipping community member profile: the entry has an empty address");
+                    return;
+                }
+
+                resolvedProfile = new Profile.CompactInfo(userId.Value);
+            }
+
+            assignProfile(target, resolvedProfile.Value);
         }
 
         private async UniTask GetProfileNameAsync<TTarget>(TTarget target, string address, Action<TTarget, string> assignName, CancellationToken ct)

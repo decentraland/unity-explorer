@@ -1,0 +1,23 @@
+{
+    "name": "DCL.Settings.Tests",
+    "rootNamespace": "",
+    "references": [
+        "GUID:1d75b3d8691c845b1a51082e81433dfc",
+        "GUID:fa7b3fdbb04d67549916da7bd2af58ab"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

@@ -2,9 +2,27 @@
 ---
 name: Comment Artifact URL on PR
 
+# Writes the "build" section of the unified CI status comment via the
+# ci-status-comment composite action, plus the "performance" section's dispatch
+# status (the comment holds build / lint / tests / performance / automation).
+#
+# 'requested' -> reset the build section to "pending" the moment a new build
+#                starts, so last build's download links never linger as stale.
+# 'completed' -> fill the section back in: Success (with artifact links) /
+#                Failed / Skipped (no changes under Explorer/).
+#
+# Both are gated on build-run-attempted.sh. build-unitycloud.yml also runs for
+# events that build nothing on purpose — any pull_request labeled/unlabeled
+# (only four label names re-trigger a build, and `on:` cannot filter by name),
+# a draft without force-build, the perf_test label — and such a run finishes
+# `success` with no artifacts, which is indistinguishable here from a real run
+# that had nothing to build. Writing the section for one of those replaces a
+# green build and its download links with "Build skipped", so a run that
+# attempted no build leaves every section untouched.
 on:
   workflow_run:
     types:
+      - "requested"
       - "completed"
     workflows:
       - "Unity Cloud Build"
@@ -12,8 +30,11 @@ on:
       - "main"
   workflow_dispatch:
 permissions:
-  contents: read  
+  contents: read
   pull-requests: write
+  # ucb-build-links reads the build run's artifacts and jobs cross-run — the
+  # same reason the sibling comment workflows grant it.
+  actions: read
 
 jobs:
   pre-validation:
@@ -34,13 +55,77 @@ jobs:
           fi
           echo "pr-number=$PR_NUMBER" >> $GITHUB_OUTPUT
 
+  comment-pending:
+    needs: pre-validation
+    if: github.event.action == 'requested' && needs.pre-validation.outputs.pr-number != ''
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout CI status action
+        uses: actions/checkout@v6
+        with:
+          sparse-checkout: .github/actions/ci-status-comment
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
+      # 'requested' fires before the run has decided anything, and a label event
+      # starts a run that builds nothing (see build-run-attempted.sh). Resetting
+      # to Pending for one of those throws away the previous build's download
+      # links, so wait for Prebuild to pick the run up before writing.
+      - name: Check whether this run will build
+        id: attempted
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          OWNER: ${{ github.repository_owner }}
+          REPO: ${{ github.event.repository.name }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+          WAIT_SECONDS: '300'
+        run: |
+          attempted=$(bash .github/actions/ci-status-comment/build-run-attempted.sh)
+          echo "build-attempted=$attempted" >> "$GITHUB_OUTPUT"
+
+      - name: Reset build section to pending
+        if: steps.attempted.outputs.build-attempted == 'true'
+        uses: ./.github/actions/ci-status-comment
+        with:
+          pr-number: ${{ needs.pre-validation.outputs.pr-number }}
+          section: build
+          github-token: ${{ github.token }}
+          body: |-
+            [![Build](https://img.shields.io/badge/Build-Pending!-yellow?logo=github&style=for-the-badge)](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }})
+
+            New build in progress — per-platform Unity Cloud links land here as soon as each build is created.
+
   check-build-ran:
     needs: pre-validation
-    if: needs.pre-validation.outputs.pr-number != ''
+    if: github.event.action == 'completed' && needs.pre-validation.outputs.pr-number != ''
     runs-on: ubuntu-latest
     outputs:
       build-ran: ${{ steps.check.outputs.build-ran }}
+      player-artifacts: ${{ steps.check.outputs.player-artifacts }}
+      build-attempted: ${{ steps.attempted.outputs.build-attempted }}
     steps:
+      # A run that built nothing on purpose (label/unlabel event, draft without
+      # force-build, perf_test) says nothing about the build and must leave the
+      # section as the last real run left it — otherwise it reads as "a build ran
+      # and produced no artifacts" and overwrites a green build with "Skipped".
+      - name: Checkout CI status action
+        uses: actions/checkout@v6
+        with:
+          sparse-checkout: .github/actions/ci-status-comment
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
+      - name: Check whether this run attempted a build
+        id: attempted
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          OWNER: ${{ github.repository_owner }}
+          REPO: ${{ github.event.repository.name }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+        run: |
+          attempted=$(bash .github/actions/ci-status-comment/build-run-attempted.sh)
+          echo "build-attempted=$attempted" >> "$GITHUB_OUTPUT"
+
       - name: Check if build jobs actually ran
         id: check
         env:
@@ -49,11 +134,28 @@ jobs:
           REPO: ${{ github.event.repository.name }}
           RUN_ID: ${{ github.event.workflow_run.id }}
         run: |
-          # Check if any build artifacts exist (they only exist when Build jobs ran)
-          ARTIFACT_COUNT=$(gh api "/repos/$OWNER/$REPO/actions/runs/$RUN_ID/artifacts" \
-            --jq '[.artifacts[] | select(.name | startswith("Decentraland_"))] | length')
-          echo "Build artifact count: $ARTIFACT_COUNT"
-          if [ "$ARTIFACT_COUNT" -gt 0 ]; then
+          # player-artifacts: Decentraland_* zips exist. comment-success interpolates
+          # their artifact ids into download URLs, so the success/skipped split must
+          # keep gating on this and only this.
+          # build-ran: any evidence a Unity-side build started. unity_build_info_* is
+          # uploaded as soon as the build id is known, so a build that failed before
+          # producing player artifacts still posts a failure comment (with the Unity
+          # Cloud link) instead of leaving the comment stuck on "Pending".
+          # per_page=100: the default page holds 30 and a two-target run already
+          # uploads ~a dozen artifacts — unity_build_info_* falling off page 1
+          # would read as build-ran=false, the exact stuck-on-Pending bug the
+          # flag exists to prevent.
+          NAMES=$(gh api "/repos/$OWNER/$REPO/actions/runs/$RUN_ID/artifacts?per_page=100" \
+            --jq '[.artifacts[].name]')
+          PLAYER_COUNT=$(jq 'map(select(startswith("Decentraland_"))) | length' <<< "$NAMES")
+          INFO_COUNT=$(jq 'map(select(startswith("unity_build_info_"))) | length' <<< "$NAMES")
+          echo "Player artifact count: $PLAYER_COUNT; build info artifact count: $INFO_COUNT"
+          if [ "$PLAYER_COUNT" -gt 0 ]; then
+            echo "player-artifacts=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "player-artifacts=false" >> "$GITHUB_OUTPUT"
+          fi
+          if [ "$PLAYER_COUNT" -gt 0 ] || [ "$INFO_COUNT" -gt 0 ]; then
             echo "build-ran=true" >> "$GITHUB_OUTPUT"
           else
             echo "build-ran=false" >> "$GITHUB_OUTPUT"
@@ -61,34 +163,67 @@ jobs:
 
   comment-skipped:
     needs: [pre-validation, check-build-ran]
-    if: github.event.workflow_run.conclusion == 'success' && needs.pre-validation.outputs.pr-number != '' && needs.check-build-ran.outputs.build-ran == 'false'
+    if: github.event.workflow_run.conclusion == 'success' && needs.pre-validation.outputs.pr-number != '' && needs.check-build-ran.outputs.player-artifacts == 'false' && needs.check-build-ran.outputs.build-attempted == 'true'
     runs-on: ubuntu-latest
     steps:
-      - name: Find Comment
-        uses: peter-evans/find-comment@v2
-        id: find-comment
+      - name: Checkout CI status action
+        uses: actions/checkout@v6
         with:
-          issue-number: ${{ needs.pre-validation.outputs.pr-number }}
-          comment-author: 'github-actions[bot]'
+          sparse-checkout: .github/actions/ci-status-comment
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
 
-      - name: Post skipped comment
-        uses: peter-evans/create-or-update-comment@v3
+      - name: Post skipped build section
+        uses: ./.github/actions/ci-status-comment
         with:
-          issue-number: ${{ needs.pre-validation.outputs.pr-number }}
-          comment-id: ${{ steps.find-comment.outputs.comment-id }}
-          edit-mode: replace
+          pr-number: ${{ needs.pre-validation.outputs.pr-number }}
+          section: build
+          github-token: ${{ github.token }}
           body: |-
-            ![badge]  <img src="https://ui.decentraland.org/decentraland_256x256.png" width="30">
+            [![Build](https://img.shields.io/badge/Build-Skipped-yellow?logo=unity&logoColor=white&style=for-the-badge)](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }})
 
             Build skipped — no changes detected under `Explorer/`.
 
-            [badge]: https://img.shields.io/badge/Build-Skipped-yellow?logo=unity&logoColor=white&style=for-the-badge
+  # A cancelled run matches neither the success nor the failure gate, and the
+  # build job's live writer may have left an In-progress badge and rows up —
+  # without this the comment claims a build is running forever.
+  comment-cancelled:
+    needs: [pre-validation, check-build-ran]
+    if: github.event.action == 'completed' && github.event.workflow_run.conclusion == 'cancelled' && needs.pre-validation.outputs.pr-number != '' && needs.check-build-ran.outputs.build-attempted == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout CI status action
+        uses: actions/checkout@v6
+        with:
+          sparse-checkout: .github/actions/ci-status-comment
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
+      - name: Post cancelled build section
+        uses: ./.github/actions/ci-status-comment
+        with:
+          pr-number: ${{ needs.pre-validation.outputs.pr-number }}
+          section: build
+          github-token: ${{ github.token }}
+          body: |-
+            [![Build](https://img.shields.io/badge/Build-Cancelled-lightgrey?logo=unity&logoColor=white&style=for-the-badge)](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }})
+
+            Build cancelled — push a new commit or re-run the workflow to refresh this section.
 
   comment-success:
     needs: [pre-validation, check-build-ran]
-    if: github.event.workflow_run.conclusion == 'success' && needs.pre-validation.outputs.pr-number != '' && needs.check-build-ran.outputs.build-ran == 'true'
+    if: github.event.workflow_run.conclusion == 'success' && needs.pre-validation.outputs.pr-number != '' && needs.check-build-ran.outputs.player-artifacts == 'true' && needs.check-build-ran.outputs.build-attempted == 'true'
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout CI status action
+        uses: actions/checkout@v6
+        with:
+          sparse-checkout: |
+            .github/actions/ci-status-comment
+            .github/actions/ucb-build-links
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
       - name: Get Artifact and Pull request info
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -104,21 +239,24 @@ jobs:
           echo "Previous Suite ID: $SUITE_ID"
           echo "SUITE_ID=$SUITE_ID" >> "$GITHUB_ENV"
 
-          WINDOWS_ARTIFACT_ID=$(gh api "/repos/$OWNER/$REPO/actions/artifacts" \
-            --jq ".artifacts.[] |
-            select(.workflow_run.id==${PREVIOUS_JOB_ID}) |
-            select(.expired==false) |
-            select(.name==\"Decentraland_windows64\") |
-            .id")
+          # Query the run-scoped endpoint: the repo-wide /actions/artifacts list is
+          # newest-first and page-limited, so a zip uploaded by a fast platform long
+          # before the slow one finishes can fall off the first page and lose its
+          # "Download .zip" link in the comment. The run list spans all re-run
+          # attempts, so a same-name artifact can appear once per attempt —
+          # max_by keeps only the newest and guarantees a single-line id.
+          RUN_ARTIFACTS=$(gh api "/repos/$OWNER/$REPO/actions/runs/${PREVIOUS_JOB_ID}/artifacts?per_page=100")
+          newest_artifact_id() {
+            jq -r --arg name "$1" \
+              '[.artifacts[] | select(.expired==false and .name==$name)] | max_by(.created_at) | .id // empty' \
+              <<< "$RUN_ARTIFACTS"
+          }
+
+          WINDOWS_ARTIFACT_ID=$(newest_artifact_id "Decentraland_windows64")
           echo "Windows Artifact ID: $WINDOWS_ARTIFACT_ID"
           echo "WINDOWS_ARTIFACT_ID=$WINDOWS_ARTIFACT_ID" >> "$GITHUB_ENV"
 
-          MAC_ARTIFACT_ID=$(gh api "/repos/$OWNER/$REPO/actions/artifacts" \
-            --jq ".artifacts.[] |
-            select(.workflow_run.id==${PREVIOUS_JOB_ID}) |
-            select(.expired==false) |
-            select(.name==\"Decentraland_macos\") |
-            .id")
+          MAC_ARTIFACT_ID=$(newest_artifact_id "Decentraland_macos")
           echo "Mac Artifact ID: $MAC_ARTIFACT_ID"
           echo "MAC_ARTIFACT_ID=$MAC_ARTIFACT_ID" >> "$GITHUB_ENV"
 
@@ -131,6 +269,7 @@ jobs:
 
           SHORT_SHA=$(echo "$HEAD_SHA" | cut -c1-7)
           echo "Short SHA: $SHORT_SHA"
+          echo "SHORT_SHA=$SHORT_SHA" >> "$GITHUB_ENV"
 
           SAFE_BRANCH_NAME=$(jq -r '.pull_requests[0].head.ref // .head_branch' <<< "$WORKFLOW_RUN_EVENT_OBJ")
           echo "Safe Branch Name: $SAFE_BRANCH_NAME"
@@ -160,6 +299,7 @@ jobs:
           echo "BUILD_DATE=$BUILD_DATE" >> "$GITHUB_ENV"
 
       - name: Download size reports
+        continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ github.token }}
           OWNER: ${{ github.repository_owner }}
@@ -194,44 +334,69 @@ jobs:
             echo "SIZE_REPORT=" >> "$GITHUB_ENV"
           fi
 
-      - name: Find Comment
-        uses: peter-evans/find-comment@v2
-        id: find-comment
+      - name: Fetch Unity Cloud build links
+        continue-on-error: true
+        id: ucb
+        uses: ./.github/actions/ucb-build-links
         with:
-          issue-number: ${{ needs.pre-validation.outputs.pr-number }}
-          comment-author: 'github-actions[bot]'
+          run-id: ${{ env.PREVIOUS_JOB_ID }}
+          github-token: ${{ github.token }}
+          install-source: launcher
 
-      - name: Update Comment
+      # One row per platform: GitHub job · Unity Cloud build · Unity log ·
+      # build duration · zip downloads. Composed here rather than inline in the
+      # body so a link whose id could not be resolved is dropped instead of
+      # rendering broken.
+      - name: Compose platform rows
+        continue-on-error: true
         env:
-          JOB_PATH: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ env.PREVIOUS_JOB_ID }}"
-          WINDOWS_ARTIFACT_URL: "${{ github.server_url }}/${{ github.repository }}/suites/${{ env.SUITE_ID }}/artifacts/${{ env.WINDOWS_ARTIFACT_ID }}"
-          WINDOWS_ARTIFACT_S3_URL: "${{ format('{0}/{1}/Decentraland_windows64.zip', vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL, env.ARTIFACT_S3_DESTINATION_PATH) }}"
-          MAC_ARTIFACT_URL: "${{ github.server_url }}/${{ github.repository }}/suites/${{ env.SUITE_ID }}/artifacts/${{ env.MAC_ARTIFACT_ID }}"
-          MAC_ARTIFACT_S3_URL: "${{ format('{0}/{1}/Decentraland_macos.zip', vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL, env.ARTIFACT_S3_DESTINATION_PATH) }}"
-          HEAD_SHA: "${{ env.HEAD_SHA }}"
-        uses: peter-evans/create-or-update-comment@v3
+          WINDOWS_CELL: ${{ steps.ucb.outputs.windows-cell }}
+          MAC_CELL: ${{ steps.ucb.outputs.mac-cell }}
+          S3_BASE: ${{ format('{0}/{1}', vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL, env.ARTIFACT_S3_DESTINATION_PATH) }}
+          # Set by "Get Artifact and Pull request info" above via $GITHUB_ENV; listed
+          # here so the coupling between the two steps is visible without tracing it.
+          SUITE_ID: ${{ env.SUITE_ID }}
+          WINDOWS_ARTIFACT_ID: ${{ env.WINDOWS_ARTIFACT_ID }}
+          MAC_ARTIFACT_ID: ${{ env.MAC_ARTIFACT_ID }}
+          GITHUB_SERVER_URL: ${{ github.server_url }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          compose_row() {
+            local label="$1" cell="$2" art_id="$3" file="$4"
+            local parts=()
+            [ -n "$cell" ] && parts+=("$cell")
+            [ -n "$art_id" ] && parts+=("[Download .zip](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/suites/${SUITE_ID}/artifacts/${art_id})")
+            parts+=("[.zip via S3](${S3_BASE}/${file})")
+            local joined
+            joined=$(printf '%s · ' "${parts[@]}")
+            printf '| %s | %s |\n' "$label" "${joined% · }"
+          }
+          DELIM="PLATFORM_ROWS_EOF_${RANDOM}${RANDOM}_$$"
+          {
+            echo "PLATFORM_ROWS<<$DELIM"
+            compose_row "Windows" "$WINDOWS_CELL" "${WINDOWS_ARTIFACT_ID:-}" "Decentraland_windows64.zip"
+            compose_row "Mac" "$MAC_CELL" "${MAC_ARTIFACT_ID:-}" "Decentraland_macos.zip"
+            echo "$DELIM"
+          } >> "$GITHUB_ENV"
+
+      - name: Update build section
+        uses: ./.github/actions/ci-status-comment
         with:
-          issue-number: ${{ needs.pre-validation.outputs.pr-number }}
-          comment-id: ${{ steps.find-comment.outputs.comment-id }}
-          edit-mode: replace
+          pr-number: ${{ needs.pre-validation.outputs.pr-number }}
+          section: build
+          github-token: ${{ github.token }}
           body: |-
-            ![badge]  <img src="https://ui.decentraland.org/decentraland_256x256.png" width="30">
+            [![Build](https://img.shields.io/badge/Build-Success!-3fb950?logo=unity&logoColor=white&style=for-the-badge)](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ env.PREVIOUS_JOB_ID }})
 
-            Windows and Mac build successful in Unity Cloud! You can find a link to the downloadable artifact below.
+            Windows and Mac built successfully in Unity Cloud.
 
-            | Name                | Link                    |
-            | --------            | ----------------------- |
-            | Commit              | ${{ env.HEAD_SHA }}     |
-            | Logs                | ${{ env.JOB_PATH }}     |
-            | Download Windows    | ${{ env.WINDOWS_ARTIFACT_URL }} |
-            | Download Windows S3 | ${{ env.WINDOWS_ARTIFACT_S3_URL }} |
-            | Download Mac        | ${{ env.MAC_ARTIFACT_URL }} |
-            | Download Mac S3     | ${{ env.MAC_ARTIFACT_S3_URL }} |
-            | Built on            | ${{ env.BUILD_DATE }} |
+            | Name | Links & timing |
+            | -------- | ----------------------- |
+            | Build | [`${{ env.SHORT_SHA }}`](${{ github.server_url }}/${{ github.repository }}/commit/${{ env.HEAD_SHA }}) · [Logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ env.PREVIOUS_JOB_ID }}) · built ${{ env.BUILD_DATE }} |
+            ${{ env.PLATFORM_ROWS }}
 
             ${{ env.SIZE_REPORT }}
-
-            [badge]: https://img.shields.io/badge/Build-Success!-3fb950?logo=unity&logoColor=white&style=for-the-badge
 
       - name: Find latest release
         env:
@@ -239,43 +404,131 @@ jobs:
         run: gh release view -R $GITHUB_REPOSITORY --json tagName --template "RELEASE_TAG={{.tagName}}" >> $GITHUB_ENV
 
       - name: Trigger performance test
+        id: perf_dispatch
         uses: peter-evans/repository-dispatch@v4
         with:
           repository: decentraland/performance-testing
           event-type: unity-explorer
           token: ${{ secrets.PERFORMANCE_TESTING_PAT }}
+          # Fork-controlled fields (display_title, and the branch name inside
+          # ARTIFACT_S3_DESTINATION_PATH) are wrapped in toJSON so they are JSON-escaped
+          # rather than spliced raw into the payload — a title/branch containing a quote
+          # can't break out of its string and inject or override other fields.
           client-payload: |-
             {
-              "run_name": "${{ github.event.workflow_run.display_title }}",
+              "run_name": ${{ toJSON(github.event.workflow_run.display_title) }},
               "pr_number": "${{ needs.pre-validation.outputs.pr-number }}",
-              "win_change_build_url": "${{ vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL }}/${{ env.ARTIFACT_S3_DESTINATION_PATH }}/Decentraland_windows64.zip",
+              "win_change_build_url": ${{ toJSON(format('{0}/{1}/Decentraland_windows64.zip', vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL, env.ARTIFACT_S3_DESTINATION_PATH)) }},
               "win_base_build_url": "${{ vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL }}/@dcl/unity-explorer/releases/${{ env.RELEASE_TAG }}/Decentraland_windows64.zip",
-              "mac_change_build_url": "${{ vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL }}/${{ env.ARTIFACT_S3_DESTINATION_PATH }}/Decentraland_macos.zip",
+              "mac_change_build_url": ${{ toJSON(format('{0}/{1}/Decentraland_macos.zip', vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL, env.ARTIFACT_S3_DESTINATION_PATH)) }},
               "mac_base_build_url": "${{ vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL }}/@dcl/unity-explorer/releases/${{ env.RELEASE_TAG }}/Decentraland_macos.zip"
             }
 
+      # The PAT's remaining lifetime comes back as a response header on any API
+      # call it makes; surfacing it in the status comment replaces a separate
+      # expiry canary — an expiring token must warn somewhere a human looks.
+      - name: Probe performance PAT expiry
+        # Purely decorative — its whole output is one optional sentence, so it
+        # must never gate the dispatched/dispatch-failed section writes below.
+        if: steps.perf_dispatch.outcome == 'success'
+        continue-on-error: true
+        env:
+          PAT: ${{ secrets.PERFORMANCE_TESTING_PAT }}
+        run: |
+          set -euo pipefail
+          # The expiry header rides every authenticated call; /rate_limit spends
+          # no quota and names no repo that could drift. gh reads the token from
+          # the environment, keeping it out of any process's argv. head -1 keeps
+          # $GITHUB_ENV single-line even if the response ever repeats the header.
+          exp=$(GH_TOKEN="$PAT" timeout 15 gh api --include --method HEAD /rate_limit 2>/dev/null \
+            | tr -d '\r' | grep -i '^github-authentication-token-expiration:' | head -1 | cut -d' ' -f2- || true)
+          msg=""
+          if [ -n "$exp" ]; then
+            exp_s=$(date -d "$exp" +%s 2>/dev/null || echo 0)
+            if [ "$exp_s" -gt 0 ]; then
+              days=$(( (exp_s - $(date +%s)) / 86400 ))
+              echo "PERFORMANCE_TESTING_PAT expires in $days days ($exp)"
+              if [ "$days" -lt 30 ]; then
+                msg="⚠️ \`PERFORMANCE_TESTING_PAT\` expires in **$days days** ($exp) — rotate it before benchmark dispatches start failing."
+              fi
+            fi
+          else
+            echo "::warning::No github-authentication-token-expiration header returned — PAT expiry cannot be monitored."
+          fi
+          echo "PAT_EXPIRY_WARNING=$msg" >> "$GITHUB_ENV"
+
+      # repository_dispatch is fire-and-forget (no run id comes back), so this
+      # links the target workflow's run list; the benchmark itself rewrites
+      # this section with its report when it finishes (or falls back to a
+      # standalone perf-test-summary comment when the section write fails).
+      - name: Mark performance section as dispatched
+        if: steps.perf_dispatch.outcome == 'success'
+        uses: ./.github/actions/ci-status-comment
+        with:
+          pr-number: ${{ needs.pre-validation.outputs.pr-number }}
+          section: performance
+          github-token: ${{ github.token }}
+          body: |-
+            [![Performance](https://img.shields.io/badge/Performance-Dispatched!-yellow?logo=speedtest&logoColor=white&style=for-the-badge)](https://github.com/decentraland/performance-testing/actions/workflows/unity-explorer.yaml)
+
+            🏁 Bare-metal benchmark dispatched for this build ([run queue](https://github.com/decentraland/performance-testing/actions/workflows/unity-explorer.yaml)) — results across the runner fleet land in this section when it finishes.
+
+            <sub>Latest build wins this section — it also replaces any earlier `perf_test`-suite verdict.</sub>
+
+            ${{ env.PAT_EXPIRY_WARNING }}
+
+      # A failing dispatch (e.g. an expired PERFORMANCE_TESTING_PAT) turns this
+      # job red but leaves no trace on the PR; surface it in the performance
+      # section so it cannot go unnoticed.
+      # outcome != 'success' rather than == 'failure': anything failing between
+      # the checkout and the dispatch (Find latest release, the build-section
+      # upsert) skips perf_dispatch, and a skipped dispatch is the same silence
+      # on the PR as a failed one.
+      - name: Mark performance section as dispatch-failed
+        if: failure() && steps.perf_dispatch.outcome != 'success'
+        uses: ./.github/actions/ci-status-comment
+        with:
+          pr-number: ${{ needs.pre-validation.outputs.pr-number }}
+          section: performance
+          github-token: ${{ github.token }}
+          body: |-
+            [![Performance](https://img.shields.io/badge/Performance-Dispatch%20failed-ff0000?logo=speedtest&logoColor=white&style=for-the-badge)](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+
+            ❌ Could not dispatch the bare-metal benchmark (the job failed before or during the dispatch) — see the [step log](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}). If it says "Repository not found, OR token has insufficient permissions", the `PERFORMANCE_TESTING_PAT` secret has expired and needs to be rotated.
+
   comment-failed:
     needs: [pre-validation, check-build-ran]
-    if: github.event.workflow_run.conclusion == 'failure' && needs.pre-validation.outputs.pr-number != '' && needs.check-build-ran.outputs.build-ran == 'true'
+    if: github.event.workflow_run.conclusion == 'failure' && needs.pre-validation.outputs.pr-number != '' && needs.check-build-ran.outputs.build-ran == 'true' && needs.check-build-ran.outputs.build-attempted == 'true'
     runs-on: ubuntu-latest
     steps:
-      - name: Find Comment
-        uses: peter-evans/find-comment@v2
-        id: find-comment
+      - name: Checkout CI status action
+        uses: actions/checkout@v6
         with:
-          issue-number: ${{ needs.pre-validation.outputs.pr-number }}
-          comment-author: 'github-actions[bot]'
+          sparse-checkout: |
+            .github/actions/ci-status-comment
+            .github/actions/ucb-build-links
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
 
-      - name: Update Comment
-        uses: peter-evans/create-or-update-comment@v3
+      - name: Fetch Unity Cloud build links
+        continue-on-error: true
+        id: ucb
+        uses: ./.github/actions/ucb-build-links
         with:
-          issue-number: ${{ needs.pre-validation.outputs.pr-number }}
-          comment-id: ${{ steps.find-comment.outputs.comment-id }}
-          edit-mode: replace
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
+          install-source: launcher
+
+      - name: Update build section
+        uses: ./.github/actions/ci-status-comment
+        with:
+          pr-number: ${{ needs.pre-validation.outputs.pr-number }}
+          section: build
+          github-token: ${{ github.token }}
           body: |-
-            ![badge]  <img src="https://ui.decentraland.org/decentraland_256x256.png" width="30"> 
-            
-            Build failed! Check the logs to see what went wrong.
+            [![Build](https://img.shields.io/badge/Build-Failed!-ff0000?logo=unity&logoColor=white&style=for-the-badge)](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }})
+
+            Build failed! Check the [logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }}) to see what went wrong.
             If the error repeats please consider the `clean-build` tag.
 
-            [badge]: https://img.shields.io/badge/Build-Failed!-ff0000?logo=unity&logoColor=white&style=for-the-badge
+            ${{ steps.ucb.outputs.section }}

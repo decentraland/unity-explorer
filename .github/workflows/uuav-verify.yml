@@ -1,0 +1,152 @@
+name: UUAV Binary Verification
+
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'Explorer/Assets/Plugins/UUAV/**'
+      - 'scripts/uuav/**'
+      - '.gitattributes'
+      - '.github/workflows/uuav-verify.yml'
+  merge_group: {}
+  push:
+    branches: [dev]
+    paths:
+      - 'Explorer/Assets/Plugins/UUAV/**'
+      - 'scripts/uuav/**'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  PLUGIN_LFS_GLOB: 'Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/**'
+
+jobs:
+  verify:
+    name: Verify committed binaries against the lock
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          lfs: false
+
+      - name: Fetch the plugin binaries from LFS
+        run: git lfs pull --include "$PLUGIN_LFS_GLOB"
+
+      - name: Test the verifier itself
+        run: python3 scripts/uuav/test-verify-binaries.py
+
+      - name: Verify hashes, provenance and build inputs
+        run: python3 scripts/uuav/verify-binaries.py
+
+      - name: Require new native binaries to be stored in LFS
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          base=$(git merge-base "origin/$BASE_REF" "$HEAD_SHA")
+          # The helper is the one shipped binary no extension rule catches: on
+          # macOS it has none. Named explicitly so a committed child cannot
+          # land as a plain blob.
+          changed=$(git diff --name-only --diff-filter=AM "$base" "$HEAD_SHA" \
+            -- '*.dll' '*.dylib' '*.so' '*.exe' '*/uuav-helper' || true)
+
+          if [ -z "$changed" ]; then
+            echo "No native binaries added or modified."
+            exit 0
+          fi
+
+          status=0
+          while IFS= read -r path; do
+            [ -n "$path" ] || continue
+            # A file stored in LFS has an ~130 byte pointer as its git blob
+            # whose first line is the spec URL; a plain blob is the whole
+            # binary. Match the whole first line, not a byte-count prefix -
+            # a truncated prefix can never match the anchored pattern.
+            if git cat-file blob "$HEAD_SHA:$path" 2>/dev/null \
+                 | head -n1 | grep -q '^version https://git-lfs.github.com/spec/v1'; then
+              echo "  ok (lfs)    $path"
+            else
+              echo "::error file=$path::$path was committed as a plain git blob, not Git LFS. Re-add it with an LFS rule in .gitattributes in effect: *.dll and *.dylib are covered by globs; anything else needs an explicit entry like the uuav-helper ones. See Explorer/Assets/Plugins/UUAV/README.md."
+              status=1
+            fi
+          done <<< "$changed"
+          exit $status
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "### UUAV binary verification"
+            echo
+            echo "Lock: \`scripts/uuav/uuav-binaries.lock.json\`"
+            echo
+            echo '```'
+            python3 scripts/uuav/verify-binaries.py 2>&1 || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  rust:
+    name: Checks for the FFmpeg-free crates
+    # macOS, not Linux: uuav-ipc and uuav-client are written for the two
+    # platforms the plugin ships on and do not compile for a Linux target,
+    # so this is the cheapest runner where their code and tests are real.
+    # uuav-core and uuav-server need FFmpeg 8.1 headers and only compile in
+    # the full native build (uuav-native.yml).
+    runs-on: macos-15
+    defaults:
+      run:
+        working-directory: Explorer/Assets/Plugins/UUAV/native
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          lfs: false
+
+      - name: Record the toolchain
+        run: |
+          rustc --version
+          cargo --version
+          cargo clippy --version
+
+      - name: Nothing depends on uuav-client
+        run: |
+          set -euo pipefail
+          cargo metadata --no-deps --format-version 1 > "$RUNNER_TEMP/metadata.json"
+          python3 - <<'PY'
+          import json, os, sys
+          meta = json.load(open(os.environ["RUNNER_TEMP"] + "/metadata.json"))
+          offenders = [p["name"] for p in meta["packages"]
+                       if p["name"] != "uuav-client"
+                       and any(d["name"] == "uuav-client" for d in p["dependencies"])]
+          if offenders:
+              print(f"::error::{', '.join(offenders)} depend(s) on uuav-client. "
+                    f"Its rlib exists only so examples/smoke.rs can link the "
+                    f"same code as the shipped `uuav` cdylib; anything else "
+                    f"linking it would carry a second copy of every uuav_* "
+                    f"export. See Explorer/Assets/Plugins/UUAV/README.md.")
+              sys.exit(1)
+          print("no package depends on uuav-client")
+          PY
+
+      - name: Check and test uuav-ipc
+        run: |
+          cargo check -p uuav-ipc --all-targets
+          cargo test -p uuav-ipc
+
+      - name: Check and test uuav-client
+        run: |
+          cargo check -p uuav-client --all-targets
+          cargo test -p uuav-client
+
+      - name: Clippy
+        run: cargo clippy -p uuav-ipc -p uuav-client --all-targets -- -D warnings

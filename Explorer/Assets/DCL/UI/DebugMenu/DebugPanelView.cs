@@ -23,7 +23,11 @@ namespace DCL.UI.DebugMenu
             root.EnableInClassList(USS_DEBUG_PANEL_HIDDEN, true);
             root.style.display = DisplayStyle.None;
 
-            root.Q<Button>("CloseButton").clicked += closeClicked;
+            // Panels toggled solely from the sidebar (e.g. Scene Stats) omit the close button.
+            Button? closeButton = root.Q<Button>("CloseButton");
+
+            if (closeButton != null)
+                closeButton.clicked += closeClicked;
         }
 
         public virtual void Toggle()

@@ -1,9 +1,12 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using Decentraland.Pulse;
 using ENet;
 using Google.Protobuf;
 using Pulse.Transport;
 using System;
+using System.Net;
+using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using Utility;
@@ -89,7 +92,7 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
             }
         }
 
-        public async UniTask ConnectAsync(string ip, int port, CancellationToken ct)
+        public async UniTask ConnectAsync(string hostName, int port, CancellationToken ct)
         {
             if (!isLibInitialized)
             {
@@ -99,10 +102,12 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
                 isLibInitialized = true;
             }
 
+            string resolvedIp = await ResolveIPv4Async(hostName, ct);
+
             host = new Host();
 
             var address = new Address();
-            address.SetHost(ip);
+            address.SetHost(resolvedIp);
             address.Port = (ushort)port;
 
             host.Create(peerLimit: 1, channelLimit: ENetChannel.COUNT);
@@ -118,30 +123,69 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
             }
             catch (TimeoutException)
             {
-                lifeCycleCts.SafeCancelAndDispose();
-
-                // As there is no direct way to tell Connection Timeout to ENet
-                // at this point it might be [already] connected or not, simply force it to disconnect
-                serverPeer.Value.DisconnectNow((uint)DisconnectReason.NONE);
-                host.Dispose();
-
-                serverPeer = null;
-                host = null;
-
+                await ForceDisconnectAsync();
                 throw;
             }
+        }
+
+        private async UniTask<string> ResolveIPv4Async(string hostName, CancellationToken ct)
+        {
+            if (IPAddress.TryParse(hostName, out IPAddress? literal))
+                return literal.ToString();
+
+            IPAddress[] candidates;
+
+            try
+            {
+                candidates = await Dns.GetHostAddressesAsync(hostName)
+                                      .AsUniTask()
+                                      .AttachExternalCancellation(ct)
+                                      .Timeout(TimeSpan.FromMilliseconds(options.ConnectTimeoutMs));
+            }
+            catch (Exception e) when (e is not OperationCanceledException)
+            {
+                throw new PulseHostResolutionException(hostName, e);
+            }
+
+            foreach (IPAddress candidate in candidates)
+                if (candidate.AddressFamily == AddressFamily.InterNetwork)
+                    return candidate.ToString();
+
+            throw new PulseHostResolutionException(hostName);
+        }
+
+        internal async UniTask ForceDisconnectAsync()
+        {
+            lifeCycleCts.SafeCancelAndDispose();
+            await WaitForListenLoopExitAsync(spinThread: false);
+
+            // As there is no direct way to tell Connection Timeout to ENet
+            // at this point it might be [already] connected or not, simply force it to disconnect
+            serverPeer?.DisconnectNow((uint)DisconnectReason.NONE);
+            FinalizeHost();
         }
 
         public UniTask DisconnectAsync(DisconnectReason reason) =>
             DisconnectAsync(reason, false).AsUniTask();
 
+        /// <param name="reason">Reported to the peer as the disconnection cause</param>
         /// <param name="spinThread">If true: Wait on the same thread; if false - async Yield</param>
         private async Task DisconnectAsync(DisconnectReason reason, bool spinThread)
         {
             // Finish the ListenForIncomingDataAsync loop
             lifeCycleCts.SafeCancelAndDispose();
+            await WaitForListenLoopExitAsync(spinThread);
 
-            // Wait for the loop to finish in order to prevent race conditions to ENet
+            serverPeer?.Disconnect((uint)reason);
+            FinalizeHost();
+        }
+
+        /// <summary>
+        ///     ENet is not thread-safe: its objects must not be touched until the listen loop has fully exited
+        /// </summary>
+        /// <param name="spinThread">If true: Wait on the same thread; if false - async Yield</param>
+        private async Task WaitForListenLoopExitAsync(bool spinThread)
+        {
             if (spinThread)
             {
                 while (Volatile.Read(ref listenLoopIsActive))
@@ -152,9 +196,6 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
                 while (Volatile.Read(ref listenLoopIsActive))
                     await Task.Yield();
             }
-
-            serverPeer?.Disconnect((uint)reason);
-            FinalizeHost();
         }
 
         /// <summary>
@@ -182,35 +223,44 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
         ///     The listener loop must be gracefully finalized before other ENet manipulations to prevent race conditions
         /// </summary>
         /// <param name="servingHost">The currently serving host, the class field might be changed on disconnection/reconnection</param>
-        private UniTask ListenForIncomingDataAsync(Host servingHost, CancellationToken ct)
+        /// <param name="ct">Cancelled to exit the loop and release the host</param>
+        private async UniTask ListenForIncomingDataAsync(Host servingHost, CancellationToken ct)
         {
             Volatile.Write(ref listenLoopIsActive, true);
 
-            // ENet must be driven on a single dedicated thread
-            return DCLTask.RunOnThreadPool(async () =>
+            try
             {
-                while (!ct.IsCancellationRequested)
+                // ENet must be driven on a single dedicated thread
+                await DCLTask.RunOnThreadPool(async () =>
                 {
-                    // Service does socket I/O + returns one event. Short timeout so we never block outgoing flushes.
-                    if (servingHost.Service(options.ServiceTimeoutMs, out Event netEvent) > 0)
-                        ReceiveIncomingMessage(in netEvent);
+                    while (!ct.IsCancellationRequested)
+                    {
+                        // Service does socket I/O + returns one event. Short timeout so we never block outgoing flushes.
+                        if (servingHost.Service(options.ServiceTimeoutMs, out Event netEvent) > 0)
+                            ReceiveIncomingMessage(in netEvent);
 
-                    // ReceiveIncomingMessage can fire the cancellation token
-                    if (ct.IsCancellationRequested)
-                        break;
+                        // ReceiveIncomingMessage can fire the cancellation token
+                        if (ct.IsCancellationRequested)
+                            break;
 
-                    // Service only returns one event per call. If multiple packets arrived in that I/O pass,
-                    // the rest are queued internally. CheckEvents drains them without redundant socket I/O.
-                    while (servingHost.CheckEvents(out netEvent) > 0)
-                        ReceiveIncomingMessage(in netEvent);
+                        // Service only returns one event per call. If multiple packets arrived in that I/O pass,
+                        // the rest are queued internally. CheckEvents drains them without redundant socket I/O.
+                        // ReceiveIncomingMessage can finalize the host mid-drain
+                        while (!ct.IsCancellationRequested && servingHost.CheckEvents(out netEvent) > 0)
+                            ReceiveIncomingMessage(in netEvent);
 
-                    SendOutgoingMessages();
+                        SendOutgoingMessages();
 
-                    await Task.Yield();
-                }
-
+                        await Task.Yield();
+                    }
+                }, configureAwait: false, cancellationToken: ct);
+            }
+            catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, ReportCategory.MULTIPLAYER); }
+            finally
+            {
+                // Must reset even if the loop faults or never starts
                 Volatile.Write(ref listenLoopIsActive, false);
-            }, configureAwait: false, cancellationToken: ct);
+            }
         }
 
         private void ReceiveIncomingMessage(in Event netEvent)

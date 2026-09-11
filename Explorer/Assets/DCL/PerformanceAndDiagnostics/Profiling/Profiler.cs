@@ -221,8 +221,8 @@ namespace DCL.Profiling
 
         // Hiccup bar = 2x the target frame time, floored at 50 ms. Uncapped/vsync configs (>= 60 FPS)
         // stay at the floor; capped configs (e.g. 30 FPS -> 67 ms) get a higher bar so their normal
-        // cadence isn't counted as hiccups.
-        private static long EffectiveHiccupThresholdNs()
+        // cadence isn't counted as hiccups. Public so every hiccup consumer shares one definition.
+        public static long EffectiveHiccupThresholdNs()
         {
             int targetFps = Application.targetFrameRate;
 

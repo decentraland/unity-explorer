@@ -69,10 +69,16 @@ namespace DCL.FeatureFlags
                 [FeatureId.PointAt] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.POINT_AT, featureFlags.IsEnabled(FeatureFlagsStrings.POINT_AT) || Application.isEditor),
                 [FeatureId.AvatarContextMenu] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.AVATAR_CONTEXT_MENU, featureFlags.IsEnabled(FeatureFlagsStrings.AVATAR_CONTEXT_MENU) || Application.isEditor),
                 [FeatureId.DoubleClickWalk] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.DOUBLE_CLICK_WALK, featureFlags.IsEnabled(FeatureFlagsStrings.DOUBLE_CLICK_WALK)),
-                [FeatureId.Pulse] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.PULSE_MULTIPLAYER, featureFlags.IsEnabled(FeatureFlagsStrings.PULSE), requireDebug: false) && !localSceneDevelopment,
+                // Local scene development resolves no remote feature flags, so Pulse is deterministically on there; --pulse false opts back into LiveKit-only.
+                [FeatureId.Pulse] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.PULSE_MULTIPLAYER, localSceneDevelopment || featureFlags.IsEnabled(FeatureFlagsStrings.PULSE), requireDebug: false),
                 [FeatureId.ByteWeightedLoadingProgress] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.BYTE_WEIGHTED_LOADING_PROGRESS, featureFlags.IsEnabled(FeatureFlagsStrings.BYTE_WEIGHTED_LOADING_PROGRESS) || isEditor),
                 [FeatureId.HardwareFingerprint] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.HARDWARE_FINGERPRINT, featureFlags.IsEnabled(FeatureFlagsStrings.HARDWARE_FINGERPRINT)),
                 [FeatureId.McpServer] = appArgs.HasFlag(AppArgsFlags.MCP) || appArgs.HasFlag(AppArgsFlags.MCP_PORT),
+                [FeatureId.UseCustomMediaPlayerWindows] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.USE_CUSTOM_MEDIA_PLAYER, featureFlags.IsEnabled(FeatureFlagsStrings.USE_CUSTOM_MEDIA_PLAYER_WINDOWS), requireDebug: false),
+                [FeatureId.UseCustomMediaPlayerMacSilicon] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.USE_CUSTOM_MEDIA_PLAYER, featureFlags.IsEnabled(FeatureFlagsStrings.USE_CUSTOM_MEDIA_PLAYER_MAC_SILICON), requireDebug: false),
+                [FeatureId.UseCustomMediaPlayerMacIntel] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.USE_CUSTOM_MEDIA_PLAYER, featureFlags.IsEnabled(FeatureFlagsStrings.USE_CUSTOM_MEDIA_PLAYER_MAC_INTEL), requireDebug: false),
+                [FeatureId.BugReport] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.BUG_REPORT, featureFlags.IsEnabled(FeatureFlagsStrings.BUG_REPORT) || isEditor),
+                [FeatureId.InGameShop] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.IN_GAME_SHOP, featureFlags.IsEnabled(FeatureFlagsStrings.IN_GAME_SHOP) || isEditor),
                 // Note: COMMUNITIES feature is not cached here because it depends on user identity
             });
 
@@ -80,6 +86,9 @@ namespace DCL.FeatureFlags
             SetFeatureState(FeatureId.VoiceChat, IsEnabled(FeatureId.Friends) && IsEnabled(FeatureId.FriendsUserBlocking) && (isEditor || featureFlags.IsEnabled(FeatureFlagsStrings.VOICE_CHAT) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.VOICE_CHAT))));
             SetFeatureState(FeatureId.CommunityVoiceChat, IsEnabled(FeatureId.VoiceChat));
             SetFeatureState(FeatureId.NearbyVoiceChat, IsEnabled(FeatureId.VoiceChat) && appArgs.ResolveFeatureFlagArg(AppArgsFlags.NEARBY_VOICE_CHAT, featureFlags.IsEnabled(FeatureFlagsStrings.NEARBY_VOICE_CHAT) || Application.isEditor));
+
+            // The intro tip is a kill switch: unlike the feature itself it stays off until the flag is explicitly enabled.
+            SetFeatureState(FeatureId.NearbyVoiceChatTip, IsEnabled(FeatureId.NearbyVoiceChat) && featureFlags.IsEnabled(FeatureFlagsStrings.NEARBY_VOICE_CHAT_TIP));
         }
 
         /// <summary>
@@ -212,5 +221,11 @@ namespace DCL.FeatureFlags
         CreditsWearablePurchase = 68,
         CreditsTopup = 69,
         McpServer = 70,
+        UseCustomMediaPlayerWindows = 71,
+        UseCustomMediaPlayerMacSilicon = 72,
+        UseCustomMediaPlayerMacIntel = 73,
+        NearbyVoiceChatTip = 74,
+        BugReport = 75,
+        InGameShop = 76,
     }
 }

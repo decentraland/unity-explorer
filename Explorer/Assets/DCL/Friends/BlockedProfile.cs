@@ -9,13 +9,13 @@ namespace DCL.Friends
         public Profile.CompactInfo Profile { get; }
         public DateTime Timestamp { get; }
 
-        public BlockedProfile(Web3Address address,
+        public BlockedProfile(UserId userId,
             string name,
             bool hasClaimedName,
             string facePictureUrl,
             DateTime timestamp)
         {
-            Profile = new Profile.CompactInfo(address, name, hasClaimedName, facePictureUrl);
+            Profile = new Profile.CompactInfo(userId, name, hasClaimedName, facePictureUrl);
             Timestamp = timestamp;
         }
 

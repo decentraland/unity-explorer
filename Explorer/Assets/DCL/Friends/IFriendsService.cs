@@ -23,11 +23,11 @@ namespace DCL.Friends
 
         UniTask CancelFriendshipAsync(string friendId, CancellationToken ct);
 
-        UniTask AcceptFriendshipAsync(string friendId, CancellationToken ct);
+        UniTask<bool> AcceptFriendshipAsync(string friendId, CancellationToken ct);
 
-        UniTask DeleteFriendshipAsync(string friendId, CancellationToken ct);
+        UniTask<bool> DeleteFriendshipAsync(string friendId, CancellationToken ct);
 
-        UniTask<FriendRequest> RequestFriendshipAsync(string friendId, string messageBody, CancellationToken ct);
+        UniTask<FriendRequest?> RequestFriendshipAsync(string friendId, string messageBody, CancellationToken ct);
 
         UniTask<PaginatedBlockedProfileResult> GetBlockedUsersAsync(int pageNum, int pageSize, CancellationToken ct);
 

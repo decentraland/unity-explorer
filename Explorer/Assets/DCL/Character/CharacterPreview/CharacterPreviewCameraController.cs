@@ -1,7 +1,4 @@
-﻿using Cysharp.Threading.Tasks;
-using DG.Tweening;
-using System;
-using System.Threading;
+﻿using System;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -156,7 +153,7 @@ namespace DCL.CharacterPreview
             else
             {
                 // Acceleration, higher inertia = slower acceleration
-                float accelerationRate = (1f / cameraSettings.rotationInertia) * UnityEngine.Time.deltaTime;
+                float accelerationRate = 1f / cameraSettings.rotationInertia * UnityEngine.Time.deltaTime;
                 angularVelocity = Mathf.Lerp(angularVelocity, targetVelocity, accelerationRate);
             }
 

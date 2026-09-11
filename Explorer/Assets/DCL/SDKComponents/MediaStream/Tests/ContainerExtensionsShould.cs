@@ -1,4 +1,3 @@
-#if AV_PRO_PRESENT
 using DCL.SDKComponents.MediaStream.YouTube;
 using NUnit.Framework;
 
@@ -40,4 +39,3 @@ namespace DCL.SDKComponents.MediaStream.Tests
         }
     }
 }
-#endif

@@ -170,7 +170,7 @@ namespace DCL.CharacterMotion.Systems
         {
             // Check the upper body layer animator state to detect masked emotes.
             // The component lives in scene worlds (not global), so we check the animator directly.
-            int maskedLayerTag = avatarBase.GetAnimatorCurrentStateTag(AnimatorEmoteLayers.UPPER_BODY_LAYER);
+            int maskedLayerTag = avatarBase.GetAnimatorCurrentStateTag(avatarBase.UpperBodyLayerIndex);
             bool isPlayingMaskedEmote = maskedLayerTag == AnimationHashes.MASKED_EMOTE || maskedLayerTag == AnimationHashes.MASKED_EMOTE_LOOP;
 
             bool pitchEnabled = debugHeadIKIsEnabled &&

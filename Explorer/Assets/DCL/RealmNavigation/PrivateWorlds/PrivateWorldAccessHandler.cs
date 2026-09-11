@@ -1,3 +1,4 @@
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.PrivateWorlds.UI;
@@ -28,7 +29,7 @@ namespace DCL.PrivateWorlds
             this.realmData = realmData;
         }
 
-        public async UniTask<WorldAccessResult> CheckAccessAsync(string worldName, string? ownerAddress, CancellationToken ct)
+        public async UniTask<WorldAccessResult> CheckAccessAsync(string worldName, string? ownerAddress, URLDomain realm, CancellationToken ct)
         {
             ReportHub.Log(ReportCategory.REALM, $"[PrivateWorldAccessHandler] Checking access for '{worldName}'");
 
@@ -40,7 +41,7 @@ namespace DCL.PrivateWorlds
                     WorldAccessCheckResult.Allowed => HandleAllowed(),
                     WorldAccessCheckResult.CheckFailed => WorldAccessResult.CheckFailed,
                     WorldAccessCheckResult.AccessDenied => await ShowAccessDeniedAsync(worldName, context.AccessInfo?.OwnerAddress ?? ownerAddress, ct),
-                    WorldAccessCheckResult.PasswordRequired => await HandlePasswordRequiredAsync(worldName, context.AccessInfo?.OwnerAddress ?? ownerAddress, ct),
+                    WorldAccessCheckResult.PasswordRequired => await HandlePasswordRequiredAsync(worldName, context.AccessInfo?.OwnerAddress ?? ownerAddress, realm, ct),
                     _ => WorldAccessResult.CheckFailed,
                 };
             }
@@ -73,11 +74,11 @@ namespace DCL.PrivateWorlds
 
         private WorldAccessResult HandleAllowed()
         {
-            realmData.WorldCommsSecret = string.Empty;
+            realmData.ClearPendingWorldCommsSecret();
             return WorldAccessResult.Allowed;
         }
 
-        private async UniTask<WorldAccessResult> HandlePasswordRequiredAsync(string worldName, string? ownerAddress, CancellationToken ct)
+        private async UniTask<WorldAccessResult> HandlePasswordRequiredAsync(string worldName, string? ownerAddress, URLDomain realm, CancellationToken ct)
         {
             var popupParams = new PrivateWorldPopupParams(worldName, PrivateWorldPopupMode.PasswordRequired, ownerAddress);
 
@@ -85,8 +86,9 @@ namespace DCL.PrivateWorlds
 
             if (popupParams.Result == PrivateWorldPopupResult.PasswordSubmitted)
             {
-                realmData.WorldCommsSecret = popupParams.EnteredPassword ?? string.Empty;
-                ReportHub.Log(ReportCategory.REALM, $"[PrivateWorldAccessHandler] Password validated for '{worldName}', secret stored (length={popupParams.EnteredPassword?.Length ?? 0})");
+                realmData.SetPendingWorldCommsSecret(realm, popupParams.EnteredPassword ?? string.Empty);
+                popupParams.EnteredPassword = null;
+                ReportHub.Log(ReportCategory.REALM, $"[PrivateWorldAccessHandler] Password validated for '{worldName}', secret scoped to '{realm}'");
                 return WorldAccessResult.Allowed;
             }
 

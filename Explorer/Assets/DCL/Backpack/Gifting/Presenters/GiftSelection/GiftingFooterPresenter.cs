@@ -30,8 +30,8 @@ namespace DCL.Backpack.Gifting.Presenters
             view.SendGiftButton.interactable = isItemSelected;
             view.InfoMessageContainer.SetActive(true);
             view.InfoMessageLabel.text = isItemSelected
-                ? string.Format(GiftingTextIds.SelectedItemInfoMessageFormat, selectedItemName, recipient)
-                : GiftingTextIds.DefaultInfoMessage;
+                ? string.Format(GiftingTextIds.SELECTED_ITEM_INFO_MESSAGE_FORMAT, selectedItemName, recipient)
+                : GiftingTextIds.DEFAULT_INFO_MESSAGE;
         }
 
         public void Dispose()

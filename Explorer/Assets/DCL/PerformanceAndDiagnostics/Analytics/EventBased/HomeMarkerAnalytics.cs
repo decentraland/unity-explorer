@@ -32,7 +32,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
 				{ "world_name", evt.WorldName ?? string.Empty }
 			};
 
-			analytics.Track(AnalyticsEvents.UI.HOME_POSITION_SET, properties);
+			analytics.Track(AnalyticsEvents.Ui.HOME_POSITION_SET, properties);
 		}
 
 

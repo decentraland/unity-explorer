@@ -41,9 +41,9 @@ namespace DCL.MapRenderer.MapLayers.Categories
         private CancellationTokenSource deHighlightCt = new ();
         private ICategoryMarker? previousMarker;
         private bool isEnabled;
-        private int zoomLevel = 1;
-        private float baseZoom = 1;
-        private float zoom = 1;
+        private int currentZoomLevel = 1;
+        private float currentBaseZoom = 1;
+        private float currentZoom = 1;
         private bool arePlacesLoaded;
 
         public LiveEventsMarkersController(
@@ -68,33 +68,33 @@ namespace DCL.MapRenderer.MapLayers.Categories
             this.navmapBus = navmapBus;
         }
 
-        public async UniTask InitializeAsync(CancellationToken cancellationToken)
-        {
-        }
+        public UniTask InitializeAsync(CancellationToken cancellationToken) =>
+            UniTask.CompletedTask;
 
         public void ApplyCameraZoom(float baseZoom, float zoom, int zoomLevel)
         {
             if (ZoomBlocked)
                 return;
 
-            this.baseZoom = baseZoom;
-            this.zoom = zoom;
-            this.zoomLevel = zoomLevel;
+            currentBaseZoom = baseZoom;
+            currentZoom = zoom;
+            currentZoomLevel = zoomLevel;
 
             if (isEnabled && !ZoomBlocked)
-                foreach (ICategoryMarker clusterableMarker in clusterController.UpdateClusters(zoomLevel, baseZoom, zoom, markers))
-                    mapCullingController.StartTracking(clusterableMarker, this);
+                foreach (IClusterableMarker clusterableMarker in clusterController.UpdateClusters(zoomLevel, baseZoom, zoom, markers))
+                    mapCullingController.StartTracking((ICategoryMarker)clusterableMarker, this);
 
-            foreach (ICategoryMarker marker in markers.Values)
-                marker.SetZoom(coordsUtils.ParcelSize, baseZoom, zoom);
+            foreach (IClusterableMarker marker in markers.Values)
+                ((ICategoryMarker)marker).SetZoom(coordsUtils.ParcelSize, baseZoom, zoom);
 
             clusterController.ApplyCameraZoom(baseZoom, zoom);
         }
 
         public UniTask Disable(CancellationToken cancellationToken)
         {
-            foreach (ICategoryMarker marker in markers.Values)
+            foreach (IClusterableMarker clusterableMarker in markers.Values)
             {
+                var marker = (ICategoryMarker)clusterableMarker;
                 mapCullingController.StopTracking(marker);
                 marker.OnBecameInvisible();
             }
@@ -114,14 +114,14 @@ namespace DCL.MapRenderer.MapLayers.Categories
                 arePlacesLoaded = true;
             }
 
-            foreach (ICategoryMarker marker in markers.Values)
-                mapCullingController.StartTracking(marker, this);
+            foreach (IClusterableMarker marker in markers.Values)
+                mapCullingController.StartTracking((ICategoryMarker)marker, this);
 
             isEnabled = true;
 
             if (!ZoomBlocked)
-                foreach (ICategoryMarker clusterableMarker in clusterController.UpdateClusters(zoomLevel, baseZoom, zoom, markers))
-                    mapCullingController.StartTracking(clusterableMarker, this);
+                foreach (IClusterableMarker clusterableMarker in clusterController.UpdateClusters(currentZoomLevel, currentBaseZoom, currentZoom, markers))
+                    mapCullingController.StartTracking((ICategoryMarker)clusterableMarker, this);
 
             return UniTask.CompletedTask;
         }
@@ -138,8 +138,8 @@ namespace DCL.MapRenderer.MapLayers.Categories
         {
             objectsPool.Clear();
 
-            foreach (ICategoryMarker marker in markers.Values)
-                marker.Dispose();
+            foreach (IClusterableMarker marker in markers.Values)
+                ((ICategoryMarker)marker).Dispose();
 
             markers.Clear();
             pollDataCancellationToken.SafeCancelAndDispose();
@@ -207,7 +207,7 @@ namespace DCL.MapRenderer.MapLayers.Categories
             if (visibleMarkers.TryGetValue(gameObject, out ICategoryMarker marker))
             {
                 marker.ToggleSelection(true);
-                navmapBus.SelectEventAsync(marker.EventDTO, cts.Token, null).Forget();
+                navmapBus.SelectEventAsync(marker.EventDTO, cts.Token).Forget();
                 mapRenderMarker = marker;
                 return true;
             }
@@ -215,12 +215,13 @@ namespace DCL.MapRenderer.MapLayers.Categories
             return false;
         }
 
-        private async UniTask PollEventsAndPlacesOverTimeAsync(CancellationToken ct)
+        internal async UniTask PollEventsAndPlacesOverTimeAsync(CancellationToken ct)
         {
             do
             {
-                foreach (ICategoryMarker marker in markers.Values)
+                foreach (IClusterableMarker clusterableMarker in markers.Values)
                 {
+                    var marker = (ICategoryMarker)clusterableMarker;
                     mapCullingController.StopTracking(marker);
                     marker.OnBecameInvisible();
                 }
@@ -231,7 +232,7 @@ namespace DCL.MapRenderer.MapLayers.Categories
                 foreach (EventDTO eventDto in events)
                 {
                     if (eventDto.world)
-                        return;
+                        continue;
                     
                     Vector2Int coords = new Vector2Int(eventDto.x, eventDto.y);
                     if (markers.ContainsKey(coords))
@@ -247,8 +248,8 @@ namespace DCL.MapRenderer.MapLayers.Categories
                 }
 
                 if(isEnabled && !ZoomBlocked)
-                    foreach (ICategoryMarker clusterableMarker in clusterController.UpdateClusters(zoomLevel, baseZoom, zoom, markers))
-                        mapCullingController.StartTracking(clusterableMarker, this);
+                    foreach (IClusterableMarker clusterableMarker in clusterController.UpdateClusters(currentZoomLevel, currentBaseZoom, currentZoom, markers))
+                        mapCullingController.StartTracking((ICategoryMarker)clusterableMarker, this);
                 await UniTask.Delay(LIVE_EVENTS_POLLING_TIME, DelayType.Realtime, cancellationToken: ct);
             }
             while (ct.IsCancellationRequested == false);

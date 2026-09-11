@@ -23,13 +23,15 @@ namespace Global.AppArgs
     ///         <item>
     ///             <b>Permitted only for a whitelisted realm</b> — the local-development params Creator Hub and the
     ///             SDK (<c>sdk-commands</c>) attach to their preview deep links: local-scene, hub, skip-auth-screen,
-    ///             landscape-terrain-enabled, multi-instance, local-ab, mcp, mcp-port. A realm is "whitelisted" when
+    ///             landscape-terrain-enabled, multi-instance, local-ab, mcp, mcp-port — plus the loading-benchmark
+    ///             param measure-loading-time. A realm is "whitelisted" when
     ///             it is loopback (127.0.0.1 / localhost / [::1]) OR its world matches the
     ///             <c>deeplink-whitelisted-worlds</c> feature flag (see <see cref="IsRealmWhitelisted" /> and
     ///             <see cref="SetWhitelistedWorlds" />). A remote-realm deep link from a web page can never enable
     ///             them unless that exact world was explicitly whitelisted. All but the MCP pair are individually
     ///             low-harm — an analytics tag, a cosmetic toggle, an instance count, a screen skip that still forces
-    ///             auth when no valid identity is cached, or asset loading pointed at the realm the link already
+    ///             auth when no valid identity is cached, a benchmark that quits instead of bypassing that auth, or
+    ///             asset loading pointed at the realm the link already
     ///             targets — and the whitelisted-realm gate confines them to the dev context.
     ///             <c>mcp</c>/<c>mcp-port</c> start an unauthenticated loopback control port and are the one
     ///             non-low-harm pair in this set; they lean on the gate plus the server's own 127.0.0.1 bind and
@@ -39,8 +41,9 @@ namespace Global.AppArgs
     ///             <b>Never permitted</b> — everything else, in particular params that launch code
     ///             (<c>creator-hub-bin-path</c>, <c>launch-cdp-monitor-on-start</c> — SEC-005); point the client at
     ///             attacker infrastructure (<c>comms-adapter</c>, <c>gatekeeper-url</c>, <c>friends-api-url</c> —
-    ///             SEC-052, <c>feature-flags-url</c>/<c>-hostname</c>, <c>optimized-assets-url</c>,
-    ///             <c>lsd-remote-ab-server</c>/<c>-world</c>, <c>pulse</c>); bypass a version/specs screen
+    ///             SEC-052, <c>feature-flags-url</c>/<c>-hostname</c>,
+    ///             <c>lsd-remote-ab-server</c>/<c>-world</c>, <c>pulse</c>, <c>gateway</c>); move the client
+    ///             onto another chain (<c>base-domain</c>, <c>eth-network</c>); bypass a version/specs screen
     ///             (<c>skip-version-check</c>, <c>skip-minimum-specs-screen</c>); or enable the remaining dev/test
     ///             modes (<c>debug</c>, <c>autopilot</c>, <c>alttester</c>, <c>simulate*</c>). A whitelisted realm
     ///             does not unlock these: unlike the tier above, a key that is in neither set is dropped for every
@@ -87,7 +90,7 @@ namespace Global.AppArgs
             // publish a profile change.
             AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS,
 
-            // Target environment (org|zone|today). Not realm-gated: the login callbacks and jump-in links that carry
+            // Target environment (org|zone). Not realm-gated: the login callbacks and jump-in links that carry
             // it have no realm at all, so the loopback-realm condition below could never pass for them and the session
             // would silently fall back to the default environment. Safe on its own — a closed Decentraland-owned enum,
             // parsed with Enum.TryParse where it is consumed and ignored when it does not match, never a URL, so it
@@ -143,19 +146,40 @@ namespace Global.AppArgs
             // the same gate; the value is clamped to 1024-65535 and falls back to the default port (McpServerPlugin).
             AppArgsFlags.MCP_PORT,
 
-            // Local-scene development only: load the scene's asset bundles from the preview server instead of raw
-            // GLTFs. A pure boolean — the optimized-assets base is derived from the realm itself
-            // ({realm}/optimized-assets, see RealmLaunchSettings.LocalAssetBundlesBaseUrl), the same value this
+            // Local-scene development only: serve the scene as asset bundles JIT-converted by the explorer's
+            // embedded abgen sidecar instead of raw GLTFs. A pure boolean — the sidecar reads the scene through
+            // the realm's own /content endpoints (RealmUrls.LocalSceneDevelopmentRealmAsync), the same value this
             // gate already requires to be loopback, so the flag adds no attacker-controllable input: it can only
-            // point asset loading at the realm the link already targets. The full-URL variant
-            // (optimized-assets-url) points AB/LOD/registry endpoints at arbitrary infrastructure and stays
-            // never-permitted.
+            // point asset conversion at the realm the link already targets.
             AppArgsFlags.LOCAL_AB,
+
+            // Runs the loading-time benchmark (LoadingTimeBenchmark reports stage timings to analytics) and, like
+            // autopilot, suppresses the auth screen — it cannot bypass authentication: when no valid identity is
+            // cached the client quits instead (RealUserInAppInitializationFlow). Whitelisted-realm-gated because
+            // it's a CI based action used internally on a specific realm.
+            AppArgsFlags.MEASURE_LOADING_TIME,
         };
 
         // Canonical (lowercased world-name) whitelist, set from the deeplink-whitelisted-worlds feature flag. Empty
         // means loopback-only — the safe default when feature flags are unavailable (e.g. before they are fetched).
         private static HashSet<string> whitelistedWorlds = new();
+
+        // The one base domain a realm has to sit under to carry trust, or null for the decentraland family. Set from
+        // IDecentralandUrlsSource.BaseDomain; see SetTrustedBaseDomain.
+        private static string? trustedBaseDomain;
+
+        /// <summary>
+        ///     Declares the base domain this client is deployed under — pass
+        ///     <see cref="IDecentralandUrlsSource.BaseDomain" />, the single source for it. A domain of the
+        ///     decentraland family keeps the whole family trusted (they are one deployment); any other domain
+        ///     <i>replaces</i> it, because a client pointed at a custom deployment has no reason to trust
+        ///     decentraland-hosted realms. Passing null resets to the decentraland family.
+        /// </summary>
+        public static void SetTrustedBaseDomain(string? baseDomain)
+        {
+            string? domain = baseDomain?.Trim();
+            trustedBaseDomain = domain is { Length: > 0 } && !IsDecentralandDomain(domain) ? domain : null;
+        }
 
         public static bool IsPermitted(string key) =>
             PERMITTED_KEYS.Contains(key);
@@ -202,27 +226,43 @@ namespace Global.AppArgs
                 // name is read from the path — handing an attacker the dev params and (worse) a consent-free realm
                 // switch. Uri.Host is the parsed host, so userinfo ("https://x.decentraland.org@evil.example") and port
                 // tricks cannot spoof it.
-                if (!IsDecentralandHost(uri.Host))
+                if (!IsTrustedBaseDomainHost(uri.Host))
                     return false;
             }
 
             return whitelistedWorlds.Count > 0 && whitelistedWorlds.Contains(ExtractWorldName(realm));
         }
 
-        // A subdomain of a Decentraland domain (worlds-content-server.decentraland.org, ...). The '.' boundary check
-        // is what rejects lookalikes such as "decentraland.org.attacker.com" and "evil-decentraland.org".
-        private static bool IsDecentralandHost(string host)
+        // A subdomain of the base domain this client is deployed under (worlds-content-server.decentraland.org,
+        // worlds-content-server.{custom-base-domain}, ...). The '.' boundary check is what rejects lookalikes such as
+        // "decentraland.org.attacker.com" and "evil-decentraland.org".
+        private static bool IsTrustedBaseDomainHost(string host)
+        {
+            // Deliberately subdomains only: the registrable domain itself does not host realms, so it carries no
+            // trust here even though it sits under itself.
+            if (trustedBaseDomain != null)
+                return IDecentralandUrlsSource.IsSubdomainOf(host, trustedBaseDomain);
+
+            // Indexed loop, not foreach: enumerating the IReadOnlyList would allocate an enumerator.
+            IReadOnlyList<string> domains = IDecentralandUrlsSource.ALL_DOMAINS;
+
+            for (var i = 0; i < domains.Count; i++)
+            {
+                if (IDecentralandUrlsSource.IsSubdomainOf(host, domains[i]))
+                    return true;
+            }
+
+            return false;
+        }
+
+        private static bool IsDecentralandDomain(string domain)
         {
             // Indexed loop, not foreach: enumerating the IReadOnlyList would allocate an enumerator.
             IReadOnlyList<string> domains = IDecentralandUrlsSource.ALL_DOMAINS;
 
             for (var i = 0; i < domains.Count; i++)
             {
-                string domain = domains[i];
-
-                if (host.Length > domain.Length
-                    && host[host.Length - domain.Length - 1] == '.'
-                    && host.EndsWith(domain, StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(domain, domains[i], StringComparison.OrdinalIgnoreCase))
                     return true;
             }
 

@@ -73,5 +73,7 @@ namespace DCL.NotificationsBus.NotificationTypes
         BAN_WARNING,
         BANNED,
         BAN_LIFTED,
+
+        INTERNAL_SCENE_CLIPBOARD_WRITE,
     }
 }

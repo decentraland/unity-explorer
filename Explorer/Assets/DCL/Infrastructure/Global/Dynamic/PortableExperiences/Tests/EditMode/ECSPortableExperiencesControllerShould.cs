@@ -38,7 +38,7 @@ namespace PortableExperiences.Tests
 
             localCache = new LocalPortableExperienceCache(Substitute.For<IWebRequestController>());
             globalCache = new GlobalPortableExperienceCache();
-            smartWearableCache = new SmartWearableCache(Substitute.For<IWebRequestController>());
+            smartWearableCache = new SmartWearableCache(Substitute.For<IWebRequestController>(), Substitute.For<IDecentralandUrlsSource>());
 
             controller = new ECSPortableExperiencesController(
                 Substitute.For<IWeb3IdentityCache>(),
