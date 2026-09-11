@@ -5,12 +5,10 @@ using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.CharacterCamera;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
-using DCL.Utilities;
 using ECS.Abstract;
 using ECS.Groups;
 using SceneRunner.Scene;
 using UnityEngine;
-using InputAction = UnityEngine.InputSystem.InputAction;
 using PointerType = DCL.ECSComponents.PointerType;
 using Vector2 = UnityEngine.Vector2;
 using Vector3 = Decentraland.Common.Vector3;
@@ -25,10 +23,9 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Systems
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IExposedCameraData exposedCameraData;
-        private InputAction inputPoint;
         private Vector2 previousPosition = Vector2.zero;
         private CumulativePointerDelta lastSeenAccumulatedDelta;
-        private Camera cachedCamera;
+        private Camera cachedCamera = null!;
 
         internal PrimaryPointerInfoSystem(
             World world,
@@ -50,7 +47,6 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Systems
 
             cachedCamera = globalWorld.CacheCamera().GetCameraComponent(globalWorld).Camera;
 
-            inputPoint = DCLInput.Instance.Camera.Point;
             lastSeenAccumulatedDelta = exposedCameraData.AccumulatedPointerDelta;
 
             UpdatePointerInfo();
@@ -65,12 +61,12 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Systems
 
         private void UpdatePointerInfo()
         {
-            // The Camera action map is disabled while explorer UI holds input focus (chat, passport,
-            // explore panel), and a disabled action reads default(Vector2); the scene-facing pointer
-            // feed must keep tracking the device, so fall back to it (or the last known position).
-            Vector2 rawPosition = inputPoint.enabled
-                ? inputPoint.ReadValue<Vector2>()
-                : UnityEngine.InputSystem.Pointer.current?.position.ReadValue() ?? previousPosition;
+            // The pointer the cursor pipeline resolved, never the mouse device directly: the device is not the
+            // only thing that moves the pointer (a gamepad's virtual cursor, an automation gesture's injected
+            // one), and reading an input action here also went blank whenever explorer UI took input focus and
+            // disabled the Camera action map. The reticle ray is built from the same position, so the scene and
+            // the client agree on where the pointer is.
+            Vector2 cursorPosition = exposedCameraData.PointerScreenPosition;
             CumulativePointerDelta accumulatedDelta = exposedCameraData.AccumulatedPointerDelta;
             Vector2 pointerPos;
             Vector2 deltaPos;
@@ -85,13 +81,13 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Systems
             }
             else
             {
-                pointerPos = rawPosition;
-                deltaPos = rawPosition - previousPosition;
+                pointerPos = cursorPosition;
+                deltaPos = cursorPosition - previousPosition;
             }
 
-            // Always track the raw position and the accumulated total, so the first frame after a
+            // Always track the cursor position and the accumulated total, so the first frame after a
             // lock-state transition doesn't produce a stale-diff spike.
-            previousPosition = rawPosition;
+            previousPosition = cursorPosition;
             lastSeenAccumulatedDelta = accumulatedDelta;
 
             var ray = cachedCamera.ScreenPointToRay(pointerPos);

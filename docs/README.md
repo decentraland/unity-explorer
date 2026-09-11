@@ -78,6 +78,7 @@ Welcome to the official documentation for Unity Explorer — the Decentraland cl
 - **[Testing Guide](testing-guide.md)** — UnitySystemTestBase, ECS test utilities, mocking, EditMode/PlayMode, async test patterns
 - **[Automation Testing](automation-testing.md)** — AltTester SDK setup, writing UI automation tests, static probes for reading client state, running against instrumented builds and in-Editor, triggering visual regression on PRs via `/visual-tests`
 - **[MCP Automation](mcp-automation.md)** — Embedded MCP server for coding agents: screenshots, player/scene state, scene logs, and player control via `--mcp`
+- **[Synthetic Input Simulation](synthetic-input-simulation.md)** — Driver-agnostic input layer shared by the MCP tools and AltTester probes: movement, pointer/hover, global SDK input actions, camera look, and UI interaction through the production pipelines
 - **[Connect to Local Scene](how-to-connect-to-a-local-scene.md)** — Running and connecting to local SDK7 scenes
 - **[Master of Bots](master-of-bots.md)** — Simulating multiple bot users for load testing
 - **[Override Debug Log Matrix](override-debug-log-matrix.md)** — Runtime log severity overrides

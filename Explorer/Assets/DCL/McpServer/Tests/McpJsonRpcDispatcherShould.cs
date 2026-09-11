@@ -106,6 +106,52 @@ namespace DCL.McpServer.Tests
             Assert.That(tool.LastArguments!.Count, Is.EqualTo(0));
         }
 
+        /// <summary>
+        ///     A key the tool does not declare used to be dropped in silence, so a caller passing a sibling tool's
+        ///     argument (ui_click's `device` to ui_drag) read a success that did not do what it asked. The refusal
+        ///     is a tool-level error like every other argument refusal, and it lists what the tool does take.
+        /// </summary>
+        [Test]
+        public void RefuseAnArgumentTheToolDoesNotDeclare()
+        {
+            FakeMcpTool tool = FakeMcpTool.Returning("echo");
+            McpJsonRpcDispatcher dispatcher = DispatcherWith(tool);
+
+            JObject result = ResultOf(Dispatch(dispatcher, CallRequest(8, "echo", new JObject { ["value"] = "hi", ["device"] = true })));
+
+            Assert.That(tool.CallCount, Is.EqualTo(0), "the tool must not run with an argument it cannot read");
+            Assert.That(result["isError"]!.Value<bool>(), Is.True);
+
+            string message = result["content"]![0]!["text"]!.Value<string>()!;
+            Assert.That(message, Does.Contain("echo has no argument 'device'"));
+            Assert.That(message, Does.Contain("its arguments are: value"));
+        }
+
+        [Test]
+        public void RefuseEveryArgumentAnArgumentlessToolIsGiven()
+        {
+            FakeMcpTool tool = FakeMcpTool.Returning("ping_scene", takesArguments: false);
+            McpJsonRpcDispatcher dispatcher = DispatcherWith(tool);
+
+            JObject result = ResultOf(Dispatch(dispatcher, CallRequest(9, "ping_scene", new JObject { ["a"] = 1, ["b"] = 2 })));
+
+            Assert.That(tool.CallCount, Is.EqualTo(0));
+            Assert.That(result["content"]![0]!["text"]!.Value<string>(), Is.EqualTo("ping_scene takes no arguments; remove 'a', 'b'."));
+        }
+
+        [Test]
+        public void PassDeclaredArgumentsThroughUntouched()
+        {
+            FakeMcpTool tool = FakeMcpTool.Returning("echo");
+            McpJsonRpcDispatcher dispatcher = DispatcherWith(tool);
+
+            // A declared argument carrying null is still a declared argument: the tool's own parsing decides.
+            JObject result = ResultOf(Dispatch(dispatcher, CallRequest(10, "echo", new JObject { ["value"] = null })));
+
+            Assert.That(tool.CallCount, Is.EqualTo(1));
+            Assert.That(result.ContainsKey("isError"), Is.False);
+        }
+
         [Test]
         public void RejectAnUnknownToolWithInvalidParams()
         {

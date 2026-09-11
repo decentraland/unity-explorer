@@ -111,7 +111,7 @@ namespace DCL.PluginSystem.Global
             ProcessPointerEventsSystem.InjectToWorld(ref builder, actionsMap, entityCollidersGlobalCache, eventSystem);
             ProcessOtherAvatarsInteractionSystem.InjectToWorld(ref builder, eventSystem, menusAccessFacade, mvcManager, cameraEntityProxy);
             ShowHoverFeedbackSystem.InjectToWorld(ref builder, hoverCanvas, settings.hoverCanvasSettings.InputButtons);
-            PrepareGlobalInputEventsSystem.InjectToWorld(ref builder, globalInputEvents, actionsMap);
+            PrepareGlobalInputEventsSystem.InjectToWorld(ref builder, globalInputEvents, actionsMap, playerInteractionEntity);
         }
 
         [Serializable]
