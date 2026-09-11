@@ -7,6 +7,7 @@ on:
     paths:
       - 'Explorer/Assets/Plugins/UUAV/**'
       - 'scripts/uuav/**'
+      - 'scripts/native-lock/**'
       - '.gitattributes'
       - '.github/workflows/uuav-verify.yml'
   merge_group: {}
@@ -15,6 +16,7 @@ on:
     paths:
       - 'Explorer/Assets/Plugins/UUAV/**'
       - 'scripts/uuav/**'
+      - 'scripts/native-lock/**'
 
 permissions:
   contents: read
@@ -25,6 +27,7 @@ concurrency:
 
 env:
   PLUGIN_LFS_GLOB: 'Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/**'
+  LOCK: scripts/uuav/uuav-binaries.lock.json
 
 jobs:
   verify:
@@ -41,10 +44,10 @@ jobs:
         run: git lfs pull --include "$PLUGIN_LFS_GLOB"
 
       - name: Test the verifier itself
-        run: python3 scripts/uuav/test-verify-binaries.py
+        run: python3 scripts/native-lock/test-verify-binaries.py
 
       - name: Verify hashes, provenance and build inputs
-        run: python3 scripts/uuav/verify-binaries.py
+        run: python3 scripts/native-lock/verify-binaries.py --lock "$LOCK"
 
       - name: Require new native binaries to be stored in LFS
         if: github.event_name == 'pull_request'
@@ -91,7 +94,7 @@ jobs:
             echo "Lock: \`scripts/uuav/uuav-binaries.lock.json\`"
             echo
             echo '```'
-            python3 scripts/uuav/verify-binaries.py 2>&1 || true
+            python3 scripts/native-lock/verify-binaries.py --lock "$LOCK" 2>&1 || true
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 

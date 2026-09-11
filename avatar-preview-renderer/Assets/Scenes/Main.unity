@@ -253,6 +253,7 @@ MonoBehaviour:
   mainCamera: {fileID: 7250373747808368237}
   dragSpeed: 0.5
   inertiaDamp: 0.25
+  maxPitch: 30
   autoRotateSpeed: 10
   autoRotateDelay: 1
   returnSpeed: 2
@@ -314,6 +315,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -3910990755373119420, guid: 5b63cb074d2b1474882caf59b30c3739, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -440673046031751957, guid: 5b63cb074d2b1474882caf59b30c3739, type: 3}
+      propertyPath: m_CastShadows
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8771091787928289351, guid: 5b63cb074d2b1474882caf59b30c3739, type: 3}
@@ -1292,6 +1297,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -440673046031751957, guid: 5b63cb074d2b1474882caf59b30c3739, type: 3}
+      propertyPath: m_CastShadows
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 8771091787928289351, guid: 5b63cb074d2b1474882caf59b30c3739, type: 3}
       propertyPath: m_Name
       value: Avatar_Model_Idle
@@ -1652,7 +1661,7 @@ MonoBehaviour:
   facialFeaturesMat: {fileID: 2100000, guid: 640484c930a9c425791b434dd2094bff, type: 2}
   configuratorController: {fileID: 3845507387249961957}
   previewController: {fileID: 1667190199235124708}
-  debugUrl: ?mode=marketplace&profile=0x3f574d05ec670fe2c92305480b175654ca512005&urn=urn:decentraland:matic:collections-v2:0xa826e7769bf0c712bff7b1b9e9031bfc36ed7758:0&type=wearable&background=039dfc
+  debugUrl: ?mode=marketplace&profile=default1&urn=urn:decentraland:matic:collections-v2:0x38a4ace8b52b60d09ae4015068624e69e87988e2:2
 --- !u!4 &983774208
 Transform:
   m_ObjectHideFlags: 0
@@ -1762,6 +1771,7 @@ VisualEffect:
   m_StartSeed: 0
   m_ResetSeedOnPlay: 1
   m_AllowInstancing: 1
+  m_ReleaseInstanceOnDisable: 0
   m_ResourceVersion: 1
   m_PropertySheet:
     m_Float:
@@ -2747,6 +2757,8 @@ MonoBehaviour:
   panSubjectDistance: 7
   maxPanOffset: 2
   lerpSpeed: 10
+  avatarFitMargin: 1.05
+  wearableFitMargin: 1.05
   authProfileCamera: {fileID: 2096491904}
   marketplaceWearableCamera: {fileID: 1248428041}
   marketplaceAvatarCamera: {fileID: 543892823}
@@ -3960,6 +3972,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   facialFeatureRotation: {x: -0.1305262, y: 0, z: 0, w: 0.9914449}
+  upperBodyIdleBlend: 0.8
 --- !u!114 &5537778323977382524
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3975,6 +3988,7 @@ MonoBehaviour:
   mainCamera: {fileID: 7250373747808368237}
   dragSpeed: 0.5
   inertiaDamp: 0.25
+  maxPitch: 30
   autoRotateSpeed: 10
   autoRotateDelay: 1
   returnSpeed: 2
@@ -4395,6 +4409,7 @@ VisualEffect:
   m_StartSeed: 0
   m_ResetSeedOnPlay: 1
   m_AllowInstancing: 1
+  m_ReleaseInstanceOnDisable: 0
   m_ResourceVersion: 1
   m_PropertySheet:
     m_Float:
@@ -4666,6 +4681,7 @@ MonoBehaviour:
   mainCamera: {fileID: 5610390852201726291}
   dragSpeed: 0.5
   inertiaDamp: 0.25
+  maxPitch: 30
   autoRotateSpeed: 10
   autoRotateDelay: 1
   returnSpeed: 5
