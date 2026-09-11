@@ -42,6 +42,11 @@ public class SkyboxRenderController : MonoBehaviour
     private static readonly int SECOND_SUN_SIZE_FACTOR = Shader.PropertyToID("_Second_Sun_Size_Factor");
     private static readonly int SECOND_SUN_ORBIT_SIZE = Shader.PropertyToID("_Second_Sun_Orbit_Size");
 
+    // Sky lookup (phase x elevation). The float switch is copied to the reflection bake material along with the texture.
+    private static readonly int USE_SKY_LUT = Shader.PropertyToID("_UseSkyLut");
+    private static readonly int SKY_LUT = Shader.PropertyToID("_SkyLut");
+    private static readonly int SKY_PHASE = Shader.PropertyToID("_SkyPhase");
+
     [Header("Look")]
     [SerializeField] private SkyboxLookPreset preset = null!;
 
@@ -205,7 +210,11 @@ public class SkyboxRenderController : MonoBehaviour
         skyboxMaterial.SetFloat(GROUND_BLEND, preset.GroundBlend);
         skyboxMaterial.SetFloat(BLEND_TWIST, preset.BlendTwist);
         skyboxMaterial.SetFloat(RIM_SPREAD, preset.RimSpread);
-        skyboxMaterial.SetFloat(RIM_OPACITY, preset.RimOpacity);
+
+        // With the lookup on, the horizon band lives inside the elevation gradients, so the rim line is switched off.
+        skyboxMaterial.SetFloat(RIM_OPACITY, preset.UseSkyLut ? 0f : preset.RimOpacity);
+        skyboxMaterial.SetFloat(USE_SKY_LUT, preset.UseSkyLut ? 1f : 0f);
+        skyboxMaterial.SetTexture(SKY_LUT, preset.SkyLut);
         skyboxMaterial.SetFloat(STARS_BRIGHTNESS, preset.StarsBrightness);
         skyboxMaterial.SetTexture(STARS_TEXTURE, preset.StarsTexture);
         skyboxMaterial.SetTexture(CLOUDS_CUBEMAP, preset.CloudsCubemap);
@@ -378,6 +387,7 @@ public class SkyboxRenderController : MonoBehaviour
         RenderSettings.skybox.SetColor(RIM_COLOR, preset.RimColorRamp.Evaluate(phase));
         RenderSettings.skybox.SetColor(CLOUDS_COLOR, preset.CloudsColorRamp.Evaluate(phase));
         RenderSettings.skybox.SetFloat(CLOUD_HIGHLIGHTS, preset.CloudsHighlightsIntensity.Evaluate(phase));
+        RenderSettings.skybox.SetFloat(SKY_PHASE, phase);
     }
 
     /// <summary>

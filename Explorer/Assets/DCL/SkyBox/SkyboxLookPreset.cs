@@ -54,6 +54,18 @@ namespace DCL.SkyBox
         [InspectorName("Rim Light Color")]
         [GradientUsage(true)] [SerializeField] private Gradient rimColorRamp = new ();
 
+        [Header("Sky Lookup (phase x elevation)")]
+        [Tooltip("Replaces the zenith/horizon/nadir bands with a per-phase colour-over-elevation lookup. "
+                 + "The rim (horizon band) is disabled while this is on because the band is authored inside these gradients.")]
+        [SerializeField] private bool useSkyLut;
+        [Tooltip("Colour over elevation, 0 = horizon, 1 = zenith. One gradient per phase anchor.")]
+        [GradientUsage(true)] [SerializeField] private Gradient skyNight = new ();
+        [GradientUsage(true)] [SerializeField] private Gradient skySunrise = new ();
+        [GradientUsage(true)] [SerializeField] private Gradient skyDay = new ();
+        [GradientUsage(true)] [SerializeField] private Gradient skySunset = new ();
+        [Tooltip("Baked from the four gradients with the \"Bake sky LUT\" button. Rows: Night, Sunrise, Day, Sunset, Night.")]
+        [SerializeField] private Texture2D? skyLut;
+
         [Header("Indirect Lighting")]
         [InspectorName("Enabled")] [SerializeField] private bool indirectLight = true;
         [GradientUsage(true)] [SerializeField] private Gradient indirectSkyRamp = new ();
@@ -105,6 +117,13 @@ namespace DCL.SkyBox
         public Gradient SkyHorizonColorRamp => skyHorizonColorRamp;
         public Gradient SkyNadirColorRamp => skyNadirColorRamp;
         public Gradient RimColorRamp => rimColorRamp;
+
+        public bool UseSkyLut => useSkyLut;
+        public Gradient SkyNight => skyNight;
+        public Gradient SkySunrise => skySunrise;
+        public Gradient SkyDay => skyDay;
+        public Gradient SkySunset => skySunset;
+        public Texture2D? SkyLut => skyLut;
 
         public bool IndirectLight => indirectLight;
         public Gradient IndirectSkyRamp => indirectSkyRamp;
