@@ -5,6 +5,7 @@ namespace DCL.EventsApi
     [Serializable]
     public class EventWithPlaceIdDTO : IEventDTO
     {
+        // ReSharper disable InconsistentNaming
         public string place_id;
         public string id;
         public string name;
@@ -30,6 +31,7 @@ namespace DCL.EventsApi
         public bool world;
         public int x;
         public int y;
+        // ReSharper restore InconsistentNaming
 
         public string Id
         {
@@ -55,7 +57,7 @@ namespace DCL.EventsApi
             set => description = value;
         }
 
-        public string Next_start_at
+        public string NextStartAt
         {
             get => next_start_at;
             set => next_start_at = value;
@@ -68,19 +70,19 @@ namespace DCL.EventsApi
             set => nextStartAtProcessed = value;
         }
 
-        public string Next_finish_at
+        public string NexFinishAt
         {
             get => next_finish_at;
             set => next_finish_at = value;
         }
 
-        public string Finish_at
+        public string FinishAt
         {
             get => finish_at;
             set => finish_at = value;
         }
 
-        public string Scene_name
+        public string SceneName
         {
             get => scene_name;
             set => scene_name = value;
@@ -98,7 +100,7 @@ namespace DCL.EventsApi
             set => server = value;
         }
 
-        public int Total_attendees
+        public int TotalAttendees
         {
             get => total_attendees;
             set => total_attendees = value;
@@ -110,7 +112,7 @@ namespace DCL.EventsApi
             set => live = value;
         }
 
-        public string User_name
+        public string UserName
         {
             get => user_name;
             set => user_name = value;
@@ -152,7 +154,7 @@ namespace DCL.EventsApi
             set => duration = value;
         }
 
-        public string Start_at
+        public string StartAt
         {
             get => start_at;
             set => start_at = value;
@@ -165,7 +167,7 @@ namespace DCL.EventsApi
             set => startAtProcessed = value;
         }
 
-        public string[] Recurrent_dates
+        public string[] RecurrentDates
         {
             get => recurrent_dates;
             set => recurrent_dates = value;
