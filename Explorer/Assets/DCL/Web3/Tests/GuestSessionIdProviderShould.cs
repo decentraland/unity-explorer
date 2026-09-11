@@ -10,7 +10,33 @@ namespace DCL.Web3.Tests
         private const string DEVICE_ID = "device-abc-123";
 
         [Test]
-        public void PreferOverrideOverDeviceId()
+        public void ResolveDifferentIdsForDifferentOverridesOnTheSameDevice()
+        {
+            // Act
+            string? first = GuestSessionIdProvider.Resolve("creator-session-1", DEVICE_ID);
+            string? second = GuestSessionIdProvider.Resolve("creator-session-2", DEVICE_ID);
+
+            // Assert
+            Assert.That(first, Is.Not.EqualTo(second));
+            Assert.That(first, Is.Not.EqualTo(GuestSessionIdProvider.Resolve(null, DEVICE_ID)));
+        }
+
+        [Test]
+        public void ResolveDifferentIdsForTheSameOverrideOnDifferentDevices()
+        {
+            // Arrange
+            const string OVERRIDE = "creator-session-1";
+
+            // Act
+            string? first = GuestSessionIdProvider.Resolve(OVERRIDE, DEVICE_ID);
+            string? second = GuestSessionIdProvider.Resolve(OVERRIDE, "device-xyz-789");
+
+            // Assert
+            Assert.That(first, Is.Not.EqualTo(second));
+        }
+
+        [Test]
+        public void NeverExposeTheOverride()
         {
             // Arrange
             const string OVERRIDE = "creator-session-1";
@@ -19,7 +45,8 @@ namespace DCL.Web3.Tests
             string? resolved = GuestSessionIdProvider.Resolve(OVERRIDE, DEVICE_ID);
 
             // Assert
-            Assert.That(resolved, Is.EqualTo(OVERRIDE));
+            Assert.That(resolved, Does.Not.Contain(OVERRIDE));
+            Assert.That(resolved!.Length, Is.EqualTo(64));
         }
 
         [Test]
@@ -87,6 +114,33 @@ namespace DCL.Web3.Tests
 
             // Assert
             Assert.That(resolved, Is.Null);
+        }
+
+        [TestCase("", TestName = "empty device id")]
+        [TestCase(null, TestName = "null device id")]
+        public void FallBackToTheRawOverrideWhenDeviceIdIsMissing(string? rawDeviceId)
+        {
+            // Arrange
+            const string OVERRIDE = "creator-session-1";
+
+            // Act
+            string? resolved = GuestSessionIdProvider.Resolve(OVERRIDE, rawDeviceId!);
+
+            // Assert
+            Assert.That(resolved, Is.EqualTo(OVERRIDE));
+        }
+
+        [Test]
+        public void FallBackToTheRawOverrideWhenDeviceIdIsUnsupported()
+        {
+            // Arrange
+            const string OVERRIDE = "creator-session-1";
+
+            // Act
+            string? resolved = GuestSessionIdProvider.Resolve(OVERRIDE, SystemInfo.unsupportedIdentifier);
+
+            // Assert
+            Assert.That(resolved, Is.EqualTo(OVERRIDE));
         }
     }
 }

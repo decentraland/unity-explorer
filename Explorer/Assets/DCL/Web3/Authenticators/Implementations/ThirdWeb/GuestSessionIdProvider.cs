@@ -13,16 +13,20 @@ namespace DCL.Web3.Authenticators
 
         internal static string? Resolve(string? overrideId, string rawDeviceId)
         {
-            if (!string.IsNullOrEmpty(overrideId))
+            if (string.IsNullOrEmpty(rawDeviceId) || rawDeviceId == SystemInfo.unsupportedIdentifier)
                 return overrideId;
 
-            if (string.IsNullOrEmpty(rawDeviceId) || rawDeviceId == SystemInfo.unsupportedIdentifier)
-                return null;
+            // The override extends the device rather than replacing it, so the same override on two
+            // machines resolves two accounts: sharing one guest account across devices puts both clients on
+            // the same address, and a single comms room only keeps one of them.
+            string seed = string.IsNullOrEmpty(overrideId)
+                ? rawDeviceId.Trim().ToLowerInvariant()
+                : $"{rawDeviceId.Trim().ToLowerInvariant()}:{overrideId}";
 
             // Only the digest is returned, never the raw device id, and the domain prefix scopes it to
             // guest login so it stays independent from any other value derived from the same hardware.
             using var sha256 = SHA256.Create();
-            byte[] hash = sha256.ComputeHash(Encoding.UTF8.GetBytes(DOMAIN_PREFIX + rawDeviceId.Trim().ToLowerInvariant()));
+            byte[] hash = sha256.ComputeHash(Encoding.UTF8.GetBytes(DOMAIN_PREFIX + seed));
 
             var builder = new StringBuilder(hash.Length * 2);
 
