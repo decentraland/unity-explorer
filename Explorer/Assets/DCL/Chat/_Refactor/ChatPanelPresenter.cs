@@ -123,7 +123,8 @@ namespace DCL.Chat
                 chatCommandRegistry.GetUserCallStatusCommand,
                 chatCommandRegistry.ToggleAutoTranslateCommand,
                 web3IdentityCache,
-                mvcManager);
+                mvcManager,
+                profileCache);
 
 
             var channelListPresenter = new ChatChannelsPresenter(view.ConversationToolbarView2,

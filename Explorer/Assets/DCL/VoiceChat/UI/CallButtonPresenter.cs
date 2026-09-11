@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Chat;
 using DCL.Chat.History;
 using DCL.FeatureFlags;
+using DCL.Profiles;
 using DCL.UI.UpgradeGuestAccountPopup;
 using DCL.Utilities;
 using DCL.Web3;
@@ -42,9 +43,9 @@ namespace DCL.VoiceChat
 
         private readonly CallButtonView view;
         private readonly IPrivateCallOrchestrator privateCallOrchestrator;
-        private readonly ChatEventBus chatEventBus;
         private readonly IWeb3IdentityCache identityCache;
         private readonly IMVCManager mvcManager;
+        private readonly IProfileCache profileCache;
 
         private bool isClickedOnce;
         private OtherUserCallStatus otherUserStatus;
@@ -59,13 +60,14 @@ namespace DCL.VoiceChat
             ChatEventBus chatEventBus,
             IReadonlyReactiveProperty<ChatChannel> currentChannel,
             IWeb3IdentityCache identityCache,
-            IMVCManager mvcManager)
+            IMVCManager mvcManager,
+            IProfileCache profileCache)
         {
             this.view = view;
             this.privateCallOrchestrator = privateCallOrchestrator;
-            this.chatEventBus = chatEventBus;
             this.identityCache = identityCache;
             this.mvcManager = mvcManager;
+            this.profileCache = profileCache;
             this.view.CallButton.onClick.AddListener(OnCallButtonClicked);
             cts = new CancellationTokenSource();
 
@@ -117,6 +119,10 @@ namespace DCL.VoiceChat
             currentUserName = userName;
             currentUserId = userId;
             otherUserStatus = status;
+
+            // A guest cannot receive a call, so there is nothing to start
+            view.CallButton.interactable = !profileCache.IsGuest(userId);
+
             Reset();
         }
 

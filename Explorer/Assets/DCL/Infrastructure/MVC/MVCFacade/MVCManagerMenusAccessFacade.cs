@@ -151,7 +151,7 @@ namespace MVC
         private async UniTask ShowUserProfileContextMenuAsync(Profile.CompactInfo profile, Vector3 position, Vector2 offset, CancellationToken ct, Action? onContextMenuHide, Action? onContextMenuShow,
             UniTask closeMenuTask, MenuAnchorPoint anchorPoint = MenuAnchorPoint.Default, bool isOpenedOnWorldAvatar = false)
         {
-            genericUserProfileContextMenuController ??= new GenericUserProfileContextMenuController(friendsService, chatEventBus, mvcManager, contextMenuSettings, analytics, onlineUsersProvider, realmNavigator, friendOnlineStatusCache, includeCommunities, communitiesDataProvider, voiceChatOrchestrator, webBrowser, decentralandUrlsSource, selfProfile, nearbyMuteService);
+            genericUserProfileContextMenuController ??= new GenericUserProfileContextMenuController(friendsService, chatEventBus, mvcManager, contextMenuSettings, analytics, onlineUsersProvider, realmNavigator, friendOnlineStatusCache, includeCommunities, communitiesDataProvider, voiceChatOrchestrator, webBrowser, decentralandUrlsSource, selfProfile, profileCache, nearbyMuteService);
             await genericUserProfileContextMenuController.ShowUserProfileContextMenuAsync(profile, position, offset, ct, closeMenuTask, onContextMenuHide, ConvertMenuAnchorPoint(anchorPoint), onContextMenuShow, isOpenedOnWorldAvatar);
         }
 
