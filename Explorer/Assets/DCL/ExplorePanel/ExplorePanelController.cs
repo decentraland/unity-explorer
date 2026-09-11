@@ -37,7 +37,6 @@ namespace DCL.ExplorePanel
     public class ExplorePanelController : ControllerBase<ExplorePanelView, ExplorePanelParameter>, IReshowController<ExplorePanelParameter>
     {
         private readonly BackpackController backpackController;
-        private readonly ShopController shopController;
         private readonly SidebarProfileButtonPresenter profileButtonPresenter;
         private readonly ProfileMenuController profileMenuController;
         private readonly DCLInput dclInput;
@@ -69,11 +68,13 @@ namespace DCL.ExplorePanel
         public CommunitiesBrowserController CommunitiesBrowserController { get; }
         public PlacesController PlacesController { get; }
         public EventsController EventsController { get; }
+        public ShopController ShopController { get; }
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
 
         public event Action? PlacesOpenedFromStartMenu;
         public event Action? EventsOpenedFromStartMenu;
+        public event Action? ShopOpenedFromStartMenu;
 
         public ExplorePanelController(ViewFactoryMethod viewFactory,
             NavmapController navmapController,
@@ -113,7 +114,7 @@ namespace DCL.ExplorePanel
             NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT, p => OnShowSectionFromNotificationAsync(p, ExploreSections.Backpack).Forget());
 
             EventsController = eventsController;
-            this.shopController = shopController;
+            ShopController = shopController;
         }
 
         public override void Dispose()
@@ -176,7 +177,7 @@ namespace DCL.ExplorePanel
                 { ExploreSections.Communities, CommunitiesBrowserController },
                 { ExploreSections.Places, PlacesController },
                 { ExploreSections.Events, EventsController },
-                { ExploreSections.Shop, shopController },
+                { ExploreSections.Shop, ShopController },
             };
 
             includeCommunities = await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct);
@@ -217,6 +218,9 @@ namespace DCL.ExplorePanel
                                 break;
                             case ExploreSections.Events:
                                 EventsOpenedFromStartMenu?.Invoke();
+                                break;
+                            case ExploreSections.Shop:
+                                ShopOpenedFromStartMenu?.Invoke();
                                 break;
                         }
 
@@ -271,6 +275,9 @@ namespace DCL.ExplorePanel
                     break;
                 case ExploreSections.Events:
                     EventsOpenedFromStartMenu?.Invoke();
+                    break;
+                case ExploreSections.Shop:
+                    ShopOpenedFromStartMenu?.Invoke();
                     break;
             }
         }

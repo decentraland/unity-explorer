@@ -230,6 +230,23 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             public const string CREDITS_BUY_FALLBACK_WEB = "credits_buy_fallback_web";
         }
 
+        public static class Shop
+        {
+            // Names and page ids shared with the web shop's Segment funnel (design/SHOP_TRACKING_SPEC.md).
+            public const string SHOP_VIEWED_PAGE = "Shop Viewed Page";
+            public const string SHOP_SEARCHED = "Shop Searched";
+            public const string SHOP_APPLIED_FILTER = "Shop Applied Filter";
+            public const string SHOP_ADDED_TO_CART = "Shop Added To Cart";
+            public const string SHOP_REMOVED_FROM_CART = "Shop Removed From Cart";
+            public const string SHOP_OUTFIT_ADDED_TO_CART = "Shop Outfit Added To Cart";
+            public const string PAGE_OVERVIEW = "overview";
+            public const string PAGE_ASSETS = "assets";
+
+            // Client-only moments with no web counterpart.
+            public const string SHOP_SECTION_OPENED = "shop_section_opened";
+            public const string SHOP_CART_OPENED = "shop_cart_opened";
+        }
+
         public static class Settings
         {
             public const string CHAT_BUBBLES_VISIBILITY_CHANGED = "chat-bubbles-visibility-changed";
