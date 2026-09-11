@@ -107,7 +107,8 @@ namespace DCL.Interaction.Systems
                         if (playerPosition != null)
                             playerDistance = Vector3.Distance(hitInfo.point, (Vector3)playerPosition);
 
-                        raycastResultForSceneEntities.SetupHit(hitInfo, sceneEntityInfo, distance, playerDistance);
+                        // scene entities: camera distance (ray length) + player distance, see InteractionInputUtils.IsQualifiedByDistance
+                        raycastResultForSceneEntities.SetupHit(hitInfo, sceneEntityInfo, hitInfo.distance, playerDistance);
                     }
                     else
                         raycastResultForSceneEntities.Reset();

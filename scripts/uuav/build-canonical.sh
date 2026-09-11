@@ -1,4 +1,9 @@
 #!/bin/bash
+#
+# Canonical build: the shipped bytes must not depend on where the source was
+# checked out, so HEAD is exported to one fixed directory (the canonical root)
+# and built there. Two builds from two checkouts through this script are
+# therefore comparable byte-for-byte, which is what repro-gate.sh relies on.
 
 set -euo pipefail
 

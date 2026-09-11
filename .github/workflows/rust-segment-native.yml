@@ -1,0 +1,226 @@
+name: RustSegment Native Build
+
+
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [labeled, synchronize]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  PLUGIN_LFS_GLOB: 'Explorer/Assets/Plugins/RustSegment/SegmentServerWrap/Libraries/**'
+  LOCK: scripts/rust-segment/rust-segment-binaries.lock.json
+  NATIVE: Explorer/Assets/Plugins/RustSegment/.native
+
+jobs:
+  gate:
+    name: Should this run
+    runs-on: ubuntu-latest
+    outputs:
+      run: ${{ steps.decide.outputs.run }}
+    steps:
+      - id: decide
+        env:
+          LABELLED: ${{ contains(github.event.pull_request.labels.*.name, 'build-rust-segment-native') }}
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ "$LABELLED" = "true" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  macos:
+    name: Build macos-universal
+    needs: gate
+    if: needs.gate.outputs.run == 'true'
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          lfs: false
+
+      - run: git lfs pull --include "$PLUGIN_LFS_GLOB"
+
+      # From .native/, always: rustup honours rust-toolchain.toml only there, not at the repo root.
+      - name: Install both Rust slices
+        working-directory: ${{ env.NATIVE }}
+        run: |
+          set -euo pipefail
+          rustup target add aarch64-apple-darwin x86_64-apple-darwin
+          # A missing x86_64 std surfaces inside cargo as a missing crate; name the real cause.
+          sysroot="$(rustc --print sysroot)"
+          for slice in aarch64-apple-darwin x86_64-apple-darwin; do
+            if [ ! -d "$sysroot/lib/rustlib/$slice/lib" ]; then
+              echo "::error::the pinned rustc ($(rustc --version), sysroot $sysroot) has no $slice std; the universal build cannot work"
+              exit 1
+            fi
+          done
+
+      # Written at the repo root, where Gate B and the upload expect it.
+      - name: Record the toolchain actually used
+        run: |
+          set -euo pipefail
+          # Assignments, not substitutions inside echo: only these let -e fail the step on a dead probe.
+          rustc=$(cd "$NATIVE" && rustc --version)
+          cargo=$(cd "$NATIVE" && cargo --version)
+          clang=$(clang --version | head -1)
+          xcode=$(xcodebuild -version | tr '\n' ' ' | sed 's/ *$//')
+          sdk_version=$(xcrun --sdk macosx --show-sdk-version)
+          sdk_build=$(xcrun --sdk macosx --show-sdk-build-version)
+          ld=$(ld -v 2>&1 | head -1 || true)
+          {
+            echo "rustc: $rustc"
+            echo "cargo: $cargo"
+            echo "clang: $clang"
+            echo "xcode: $xcode"
+            echo "sdk: macosx$sdk_version ($sdk_build)"
+            echo "ld: $ld"
+          } | tee toolchain-macos.txt
+
+      - name: Gate A - the same runner must build the same bytes twice
+        run: bash scripts/rust-segment/repro-gate.sh macos-universal
+
+      - name: Gate B - reproduce the committed binaries, toolchain permitting
+        run: python3 scripts/native-lock/reproduces-lock.py --lock "$LOCK" macos-universal --toolchain toolchain-macos.txt
+
+      - name: Compare the fresh build against the lock
+        run: python3 scripts/native-lock/verify-binaries.py --lock "$LOCK" --report macos-universal
+
+      # always(): a failed gate is exactly the round whose hashes and toolchain need reading.
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: rust-segment-macos-universal
+          path: |
+            Explorer/Assets/Plugins/RustSegment/SegmentServerWrap/Libraries/Mac/*.dylib
+            toolchain-macos.txt
+            rust-segment-macos-universal.sha256
+            rust-segment-macos-universal.gate-b.txt
+          if-no-files-found: error
+
+  windows:
+    name: Build windows-x86_64
+    needs: gate
+    if: needs.gate.outputs.run == 'true'
+    # Dated image: the lock pins the MSVC toolset, and a floating label would turn Gate B into a silent skip.
+    runs-on: windows-2025
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          lfs: false
+
+      - run: git lfs pull --include "$PLUGIN_LFS_GLOB"
+
+      # From .native/, always - see the macOS job.
+      - name: Install the Rust target
+        working-directory: ${{ env.NATIVE }}
+        run: |
+          set -euo pipefail
+          rustup target add x86_64-pc-windows-msvc
+          # build.sh hardcodes the triple, so the lock must agree with it; LOCK is repo-relative and this step runs in .native/.
+          pinned=$(python - <<'PY'
+          import json, os, sys
+          sys.stdout.reconfigure(newline="\n")
+          lock = os.path.join(os.environ["GITHUB_WORKSPACE"], os.environ["LOCK"])
+          print(json.load(open(lock))["targets"]["windows-x86_64"]["rust"]["target"])
+          PY
+          )
+          if [ "$pinned" != "x86_64-pc-windows-msvc" ]; then
+            echo "::error::the lock pins rust target '$pinned' but .native/build.sh builds x86_64-pc-windows-msvc"
+            exit 1
+          fi
+
+      # rustc locates link.exe itself, so no vcvars shell names the toolset; vswhere does, as the shared verifier's msvc probe reads it back.
+      - name: Record the toolchain actually used
+        run: |
+          set -euo pipefail
+          rustc=$(cd "$NATIVE" && rustc --version)
+          cargo=$(cd "$NATIVE" && cargo --version)
+          vswhere="/c/Program Files (x86)/Microsoft Visual Studio/Installer/vswhere.exe"
+          install=$("$vswhere" -latest -products '*' -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath | tr -d '\r')
+          msvc=$(tr -d '\r\n' < "$(cygpath -u "$install")/VC/Auxiliary/Build/Microsoft.VCToolsVersion.default.txt")
+          {
+            echo "rustc: $rustc"
+            echo "cargo: $cargo"
+            echo "msvc: $msvc"
+          } | tee toolchain-windows.txt
+
+      - name: Gate A - the same runner must build the same bytes twice
+        run: bash scripts/rust-segment/repro-gate.sh windows-x86_64
+
+      - name: Gate B - reproduce the committed binaries, toolchain permitting
+        run: python scripts/native-lock/reproduces-lock.py --lock "$LOCK" windows-x86_64 --toolchain toolchain-windows.txt
+
+      - name: Compare the fresh build against the lock
+        run: python scripts/native-lock/verify-binaries.py --lock "$LOCK" --report windows-x86_64
+
+      # always(): see the macOS job.
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: rust-segment-windows-x86_64
+          path: |
+            Explorer/Assets/Plugins/RustSegment/SegmentServerWrap/Libraries/Windows/*.dll
+            toolchain-windows.txt
+            rust-segment-windows-x86_64.sha256
+            rust-segment-windows-x86_64.gate-b.txt
+          if-no-files-found: error
+
+  publish:
+    name: Publish manifest
+    needs: [macos, windows]
+    if: always() && needs.macos.result == 'success' && needs.windows.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          lfs: false
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: built
+
+      - name: Assemble the release manifest
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          mkdir -p manifest
+          cp "$LOCK" manifest/rust-segment-binaries.lock.json
+          cat built/*/*.sha256 > manifest/SHA256SUMS
+          cat built/*/toolchain-*.txt > manifest/TOOLCHAINS.txt
+          {
+            echo "### RustSegment native build"
+            echo
+            echo "| target | Gate B |"
+            echo "|---|---|"
+            for f in built/*/*.gate-b.txt; do
+              target=$(basename "$f" .gate-b.txt); target=${target#rust-segment-}
+              echo "| $target | $(cat "$f") |"
+            done
+            echo
+            echo '```'
+            cat manifest/SHA256SUMS
+            echo '```'
+            echo
+            echo '```'
+            cat manifest/TOOLCHAINS.txt
+            echo '```'
+            echo
+            echo '> [!WARNING]'
+            echo "> **Nothing was committed** — this workflow has \`contents: read\` and only verifies. If this build is meant to ship, follow the relock steps in \`Explorer/Assets/Plugins/RustSegment/README.md\`: commit the binaries from this run's artifacts, then run \`scripts/native-lock/verify-binaries.py --lock $LOCK --update --only <target> --toolchain toolchain-<os>.txt\`."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rust-segment-manifest
+          path: manifest
+          if-no-files-found: error

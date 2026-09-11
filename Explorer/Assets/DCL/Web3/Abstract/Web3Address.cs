@@ -28,15 +28,13 @@ namespace DCL.Web3
         /// <param name="walletAddress">The value to check. Null and malformed values return false.</param>
         public static bool IsValidWalletAddress(string? walletAddress)
         {
-            if (walletAddress == null || walletAddress.Length != ETH_ADDRESS_LENGTH) return false;
+            if (walletAddress is not { Length: ETH_ADDRESS_LENGTH }) return false;
 
             if (walletAddress[0] != '0' || (walletAddress[1] != 'x' && walletAddress[1] != 'X')) return false;
 
-            for (int i = 2; i < walletAddress.Length; i++)
-            {
+            for (var i = 2; i < walletAddress.Length; i++)
                 if (walletAddress[i] is not (>= '0' and <= '9' or >= 'a' and <= 'f' or >= 'A' and <= 'F'))
                     return false;
-            }
 
             return true;
         }

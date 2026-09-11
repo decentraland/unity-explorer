@@ -40,6 +40,7 @@ mod tests {
     use std::{println as info, println as warn};
 
     #[test]
+    #[ignore = "needs SEGMENT_WRITE_KEY/SEGMENT_QUEUE_PATH and network access; see README - Testing"]
     fn test_integration() {
         let write_key = std::env::var("SEGMENT_WRITE_KEY").unwrap();
         let persistent_path = std::env::var("SEGMENT_QUEUE_PATH").unwrap();

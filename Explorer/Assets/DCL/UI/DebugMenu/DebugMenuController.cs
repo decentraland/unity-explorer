@@ -17,8 +17,11 @@ namespace DCL.UI.DebugMenu
     {
         private const string USS_SIDEBAR_BUTTON_SELECTED = "sidebar__button--selected";
         private const string USS_SIDEBAR_BUTTON_ATTENTION = "sidebar__button--attention";
+        private const string USS_SIDEBAR_COLLAPSE_COLLAPSED = "sidebar__header--collapsed";
         private const int METRICS_REFRESH_COOLDOWN_FRAMES = 30;
         private const float AB_PANEL_AUTO_CLOSE_LINGER_SECONDS = 3f;
+
+        private const float PANEL_SIDEBAR_GAP = 8f;
 
         private readonly DebugMenuConsoleLogHistory logsHistory = new ();
 
@@ -34,6 +37,14 @@ namespace DCL.UI.DebugMenu
         private Button abConversionButton = null!;
         private Button metricsButton = null!;
         private Button debugPanelButton = null!;
+        private Button collapseButton = null!;
+        private VisualElement sidebar = null!;
+        private VisualElement sidebarButtons = null!;
+        private VisualElement consolePanelRoot = null!;
+        private VisualElement abConversionPanelRoot = null!;
+        private VisualElement metricsPanelRoot = null!;
+        private bool sidebarCollapsed;
+        private float expandedSidebarWidth;
 
         private bool shouldRefreshConsole;
         private bool shouldHideDebugPanelOwnToggle;
@@ -61,20 +72,33 @@ namespace DCL.UI.DebugMenu
             abConversionButton = root.Q<Button>("AbConversionButton");
             metricsButton = root.Q<Button>("MetricsButton");
             debugPanelButton = root.Q<Button>("DebugPanelButton");
+            collapseButton = root.Q<Button>("CollapseButton");
+            sidebar = root.Q("Sidebar");
+            sidebarButtons = root.Q("SidebarButtons");
+            consolePanelRoot = root.Q("ConsolePanel");
+            abConversionPanelRoot = root.Q("AbConversionPanel");
+            metricsPanelRoot = root.Q("MetricsPanel");
 
             consoleButton.clicked += OnConsoleButtonClicked;
             abConversionButton.clicked += OnAbConversionButtonClicked;
             metricsButton.clicked += OnMetricsButtonClicked;
+            collapseButton.clicked += OnCollapseButtonClicked;
+
+            // Panels open to the left of the sidebar; keep them clear of its live width.
+            sidebar.RegisterCallback<GeometryChangedEvent>(OnSidebarGeometryChanged);
+
+            // Re-apply the persisted collapsed state after a live reload rebuilds the tree.
+            ApplySidebarCollapsed();
 
             // Views
-            consolePanelView = new ConsolePanelView(root.Q("ConsolePanel"), consoleButton, OnConsoleButtonClicked, logsHistory);
+            consolePanelView = new ConsolePanelView(consolePanelRoot, consoleButton, OnConsoleButtonClicked, logsHistory);
 
             // Null until Initialize runs; the view receives it in SetInputBlock then
             if (inputBlock != null)
                 consolePanelView.SetInputBlock(inputBlock);
 
-            abConversionPanelView = new AbConversionPanelView(root.Q("AbConversionPanel"), abConversionButton, OnAbConversionButtonClicked);
-            metricsPanelView = new MetricsPanelView(root.Q("MetricsPanel"), metricsButton, OnMetricsButtonClicked);
+            abConversionPanelView = new AbConversionPanelView(abConversionPanelRoot, abConversionButton, OnAbConversionButtonClicked);
+            metricsPanelView = new MetricsPanelView(metricsPanelRoot, metricsButton, OnMetricsButtonClicked);
 
             // Shortcuts
             DCLInput.Instance.Shortcuts.ToggleSceneDebugConsole.performed += OnToggleConsoleShortcutPerformed;
@@ -129,8 +153,11 @@ namespace DCL.UI.DebugMenu
         private void OnDisable()
         {
             logsHistory.LogsUpdated -= OnLogsUpdated;
+            consoleButton.clicked -= OnConsoleButtonClicked;
             abConversionButton.clicked -= OnAbConversionButtonClicked;
             metricsButton.clicked -= OnMetricsButtonClicked;
+            collapseButton.clicked -= OnCollapseButtonClicked;
+            sidebar.UnregisterCallback<GeometryChangedEvent>(OnSidebarGeometryChanged);
             DCLInput.Instance.Shortcuts.ToggleSceneDebugConsole.performed -= OnToggleConsoleShortcutPerformed;
 
             if (metricsScene != null)
@@ -172,6 +199,7 @@ namespace DCL.UI.DebugMenu
 
             UpdateAbConversionAttention();
             UpdateMetricsPanel();
+            UpdateDebugPanelButtonState();
         }
 
         /// <summary>
@@ -235,6 +263,9 @@ namespace DCL.UI.DebugMenu
 
             abConversionButton.EnableInClassList(USS_SIDEBAR_BUTTON_ATTENTION, attention);
 
+            // While collapsed the AB button is hidden, so surface the flash on the collapse handle instead.
+            collapseButton.EnableInClassList(USS_SIDEBAR_BUTTON_ATTENTION, sidebarCollapsed && attention);
+
             UpdateAbPanelAutoClose(warmUpStage, failedConversions);
         }
 
@@ -282,6 +313,16 @@ namespace DCL.UI.DebugMenu
             metricsPanelView.UpdateValues(in text);
         }
 
+        private void UpdateDebugPanelButtonState()
+        {
+            // Mirror the debug panel's actual visibility so the row stays in sync when the panel is
+            // closed from its own header, not just from this button. Gated until the container is
+            // built (shouldHideDebugPanelOwnToggle only clears once Container is available).
+            if (debugContainerBuilder == null || shouldHideDebugPanelOwnToggle) return;
+
+            debugPanelButton.EnableInClassList(USS_SIDEBAR_BUTTON_SELECTED, debugContainerBuilder.Container.IsPanelVisible());
+        }
+
         private void HideDebugPanelOwnToggle()
         {
             try
@@ -316,13 +357,51 @@ namespace DCL.UI.DebugMenu
         private void OnMetricsButtonClicked() =>
             TogglePanel(metricsPanelView);
 
+        private void OnCollapseButtonClicked()
+        {
+            sidebarCollapsed = !sidebarCollapsed;
+            ApplySidebarCollapsed();
+
+            // Collapsing hides the rows that open these panels, so close whichever one is open
+            // (Console / Scene Stats / AB Conversion). The Debug Panel is separate and left as-is.
+            if (sidebarCollapsed && visiblePanel != null)
+                TogglePanel(visiblePanel);
+        }
+
+        private void ApplySidebarCollapsed()
+        {
+            sidebarButtons.style.display = sidebarCollapsed ? DisplayStyle.None : DisplayStyle.Flex;
+            collapseButton.EnableInClassList(USS_SIDEBAR_COLLAPSE_COLLAPSED, sidebarCollapsed);
+        }
+
+        private void OnSidebarGeometryChanged(GeometryChangedEvent evt)
+        {
+            // Pin the strip to its expanded width so collapsing hides the rows without the box
+            // resizing under the header. Captured while expanded (the default state).
+            if (!sidebarCollapsed && evt.newRect.width > expandedSidebarWidth)
+            {
+                expandedSidebarWidth = evt.newRect.width;
+                sidebar.style.minWidth = expandedSidebarWidth;
+            }
+
+            // The sidebar is drawn on top of the panels, so tuck each panel's right edge just left
+            // of the sidebar's left edge — its width varies with the labels, so a fixed offset would
+            // either overlap or leave a gap. Both are absolute siblings offset from the same parent's
+            // right edge, so the inset is derived from layout rects; sidebar.resolvedStyle.right is
+            // not reliably resolved in player builds.
+            float panelRight = sidebar.parent.layout.width - evt.newRect.xMin + PANEL_SIDEBAR_GAP;
+            consolePanelRoot.style.right = panelRight;
+            abConversionPanelRoot.style.right = panelRight;
+            metricsPanelRoot.style.right = panelRight;
+        }
+
         private void OnDebugPanelButtonClicked()
         {
             if (debugContainerBuilder == null) return;
 
+            // The row's selected state is mirrored from the panel's visibility every frame in
+            // UpdateDebugPanelButtonState, so it only needs to flip the panel here.
             debugContainerBuilder.Container.TogglePanelVisibility();
-
-            debugPanelButton.EnableInClassList(USS_SIDEBAR_BUTTON_SELECTED, debugContainerBuilder.Container.IsPanelVisible());
         }
 
         private void TogglePanel(DebugPanelView panelView)

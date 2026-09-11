@@ -2,3 +2,10 @@
 rustflags = [
   "-Dwarnings",         # treat all warnings as errors
 ]
+
+[target.x86_64-pc-windows-msvc]
+rustflags = [
+  "-Dwarnings",                      # repeated: a target's rustflags replace build.rustflags
+  "-C", "link-arg=/Brepro",          # no wall clock in the PE header, so two builds are byte-identical
+  "-C", "link-arg=/PDBALTPATH:%_PDB%", # no absolute pdb path in the image
+]

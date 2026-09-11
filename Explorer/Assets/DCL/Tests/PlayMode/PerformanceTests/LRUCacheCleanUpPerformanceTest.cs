@@ -1,11 +1,4 @@
-﻿using DCL.Diagnostics;
-using DCL.Optimization.PerformanceBudgeting;
-using ECS.StreamableLoading.Common.Components;
-using NSubstitute;
-using NUnit.Framework;
-using System;
-using System.Collections.Generic;
-using System.Threading;
+﻿using NUnit.Framework;
 using UnityEngine;
 using Unity.Profiling;
 using Unity.PerformanceTesting;
