@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.Archipelago.Rooms.Chat;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
+using DCL.Multiplayer.Connections.Rooms;
 using DCL.Multiplayer.Connections.Rooms.Connective;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
@@ -72,6 +73,19 @@ namespace DCL.Multiplayer.Connections.RoomHubs
             participant = null;
             room = null;
             return false;
+        }
+
+        public RoomSource RoomsOf(string walletId)
+        {
+            var rooms = RoomSource.None;
+
+            if (islandParticipantsHub.RemoteParticipantIdentities().ContainsKey(walletId))
+                rooms |= RoomSource.Island;
+
+            if (sceneParticipantsHub.RemoteParticipantIdentities().ContainsKey(walletId))
+                rooms |= RoomSource.Gatekeeper;
+
+            return rooms;
         }
 
         /// <summary>
