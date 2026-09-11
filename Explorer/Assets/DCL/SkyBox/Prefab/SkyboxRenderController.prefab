@@ -47,6 +47,7 @@ MonoBehaviour:
   preset: {fileID: 11400000, guid: 32976ee587c04db88e083b6775e5ee5f, type: 2}
   availablePresets:
   - {fileID: 11400000, guid: 32976ee587c04db88e083b6775e5ee5f, type: 2}
+  - {fileID: 11400000, guid: 0296d6a0d77243a7833863a582c2f4ba, type: 2}
   directionalLight: {fileID: 0}
   lightAnimation: {fileID: 7400000, guid: 3b17a8a5ab9ee104899eb22c70935c38, type: 2}
   transitionDuration: 0
