@@ -290,6 +290,8 @@ void LitPassFragmentSimple(
     color.rgb = MixFog(color.rgb, inputData.fogCoord);
     color.a = OutputAlpha(color.a, IsSurfaceTypeTransparent(_Surface));
 
+    DCLTeleportClip(input.uv);
+    color.rgb = DCLTeleportColor(color.rgb, input.positionWS, inputData.normalWS, input.uv);
     outColor = color;
 
 #ifdef _WRITE_RENDERING_LAYERS

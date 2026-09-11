@@ -481,5 +481,8 @@ float4 frag(VertexOutput i, half facing : VFACE) : SV_TARGET
         if (positionOS.y > _RevealPosition.y)
             clip(-1);
     }
-    return fragDoubleShadeFeather(i, facing);
+    DCLTeleportClip(TRANSFORM_TEX(i.uv0, _BaseMap));
+    float4 color = fragDoubleShadeFeather(i, facing);
+    color.rgb = DCLTeleportColor(color.rgb, i.posWorld.xyz, i.normalDir, TRANSFORM_TEX(i.uv0, _BaseMap));
+    return color;
 }

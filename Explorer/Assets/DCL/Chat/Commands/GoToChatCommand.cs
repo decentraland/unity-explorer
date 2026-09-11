@@ -31,12 +31,14 @@ namespace DCL.Chat.Commands
         private readonly ChatTeleporter chatTeleporter;
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource urlsSource;
+        private readonly GotoTeleportAnimation teleportAnimation;
 
-        public GoToChatCommand(ChatTeleporter chatTeleporter, IWebRequestController webRequestController, IDecentralandUrlsSource urlsSource)
+        public GoToChatCommand(ChatTeleporter chatTeleporter, IWebRequestController webRequestController, IDecentralandUrlsSource urlsSource, GotoTeleportAnimation teleportAnimation)
         {
             this.chatTeleporter = chatTeleporter;
             this.webRequestController = webRequestController;
             this.urlsSource = urlsSource;
+            this.teleportAnimation = teleportAnimation;
         }
 
         public bool ValidateParameters(string[] parameters) =>
@@ -46,21 +48,32 @@ namespace DCL.Chat.Commands
         {
             GotoTarget target = ChatParamUtils.ParseGotoTarget(parameters[0]);
 
-            if (target.IsRandom)
-                return await chatTeleporter.TeleportToParcelAsync(GetRandomParcel(), false, ct);
+            if (!target.IsRandom && !target.IsCrowd && target.World == null && !target.Parcel.HasValue)
+                return $"🔴 Invalid parameters, usage:\n{Description}";
 
-            if (target.IsCrowd)
-                return await chatTeleporter.TeleportToParcelAsync(await FindCrowdAsync(ct), false, ct);
+            Vector2Int? destination = target.IsRandom ? GetRandomParcel()
+                : target.IsCrowd ? await FindCrowdAsync(ct) : target.Parcel;
 
-            if (target.World != null)
-                return target.Parcel.HasValue
-                    ? await chatTeleporter.TeleportToRealmAsync(target.World, target.Parcel.Value, ct, target.SpawnPoint)
-                    : await chatTeleporter.TeleportToRealmAsync(target.World, ct, target.SpawnPoint);
+            if (!await teleportAnimation.BeginAsync(ct))
+                return "🟡 A teleport is already in progress or was canceled.";
 
-            if (target.Parcel is { } parcel)
-                return await chatTeleporter.TeleportToParcelAsync(parcel, false, ct, target.SpawnPoint);
+            try
+            {
+                string result;
+                if (target.World != null)
+                    result = destination.HasValue
+                        ? await chatTeleporter.TeleportToRealmAsync(target.World, destination.Value, ct, target.SpawnPoint)
+                        : await chatTeleporter.TeleportToRealmAsync(target.World, ct, target.SpawnPoint);
+                else
+                    result = await chatTeleporter.TeleportToParcelAsync(destination.GetValueOrDefault(), false, ct, target.SpawnPoint);
 
-            return $"🔴 Invalid parameters, usage:\n{Description}";
+                await teleportAnimation.ArriveAsync(ct);
+                return result;
+            }
+            finally
+            {
+                teleportAnimation.Finish();
+            }
         }
 
         private static Vector2Int GetRandomParcel() =>

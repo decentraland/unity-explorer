@@ -55,6 +55,7 @@ namespace Global.Dynamic
         public StreamReactionsChatCommand StreamReactionsChatCommand { get; }
 
         public PlayerPrefsTranslationSettings TranslationSettings { get; }
+        public GotoTeleportAnimation GotoTeleportAnimation { get; }
 
         private ChatContainer(
             ChatHistory chatHistory,
@@ -66,7 +67,8 @@ namespace Global.Dynamic
             ChatSharedAreaEventBus chatSharedAreaEventBus,
             ReloadSceneChatCommand reloadSceneChatCommand,
             StreamReactionsChatCommand streamReactionsChatCommand,
-            PlayerPrefsTranslationSettings translationSettings)
+            PlayerPrefsTranslationSettings translationSettings,
+            GotoTeleportAnimation gotoTeleportAnimation)
         {
             ChatHistory = chatHistory;
             ChatMessagesBus = chatMessagesBus;
@@ -78,6 +80,7 @@ namespace Global.Dynamic
             ReloadSceneChatCommand = reloadSceneChatCommand;
             StreamReactionsChatCommand = streamReactionsChatCommand;
             TranslationSettings = translationSettings;
+            GotoTeleportAnimation = gotoTeleportAnimation;
         }
 
         public static ChatContainer Create(
@@ -102,6 +105,7 @@ namespace Global.Dynamic
         {
             var chatHistory = new ChatHistory();
             var chatEventBus = new ChatEventBus();
+            var gotoTeleportAnimation = new GotoTeleportAnimation();
 
             var chatTeleporter = new ChatTeleporter(realmNavigator, new ChatEnvironmentValidator(bootstrapContainer.DecentralandUrlsSource), bootstrapContainer.DecentralandUrlsSource, staticContainer.ScenesCache);
 
@@ -117,7 +121,7 @@ namespace Global.Dynamic
 
             var chatCommands = new List<IChatCommand>
             {
-                new GoToChatCommand(chatTeleporter, staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource),
+                new GoToChatCommand(chatTeleporter, staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, gotoTeleportAnimation),
                 new GoToLocalChatCommand(chatTeleporter, staticContainer.ScenesCache),
                 new DebugPanelChatCommand(debugBuilder),
                 new ShowEntityChatCommand(worldInfoHub),
@@ -166,7 +170,8 @@ namespace Global.Dynamic
                 new ChatSharedAreaEventBus(),
                 reloadSceneChatCommand,
                 streamReactionsChatCommand,
-                new PlayerPrefsTranslationSettings());
+                new PlayerPrefsTranslationSettings(),
+                gotoTeleportAnimation);
         }
 
         public ChatPlugin CreatePlugin(
@@ -228,6 +233,7 @@ namespace Global.Dynamic
                 bootstrapContainer.Environment,
                 bootstrapContainer.Analytics.Controller,
                 StreamReactionsChatCommand,
+                GotoTeleportAnimation,
                 CurrentChannelService);
 
         public void Dispose()

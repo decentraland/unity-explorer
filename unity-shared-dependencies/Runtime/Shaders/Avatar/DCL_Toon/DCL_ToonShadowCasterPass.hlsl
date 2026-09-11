@@ -79,6 +79,7 @@ Varyings ShadowPassVertex(Attributes input)
 
 half4 ShadowPassFragment(Varyings input) : SV_TARGET
 {
+    DCLTeleportClip(input.uv);
 	float2 Set_UV0 = input.uv;
     int nMainTexArrID = _MainTexArr_ID;
     float2 uv_maintex = TRANSFORM_TEX(Set_UV0, _MainTex);
