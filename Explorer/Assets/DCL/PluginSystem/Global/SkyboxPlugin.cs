@@ -2,6 +2,8 @@ using Arch.Core;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.DebugUtilities;
+using DCL.DebugUtilities.UIBindings;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.PluginSystem;
@@ -13,6 +15,7 @@ using ECS;
 using ECS.SceneLifeCycle;
 using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -26,6 +29,7 @@ namespace DCL.SkyBox
         private readonly IScenesCache scenesCache;
         private readonly ISceneRestrictionBusController sceneRestrictionController;
         private readonly IRealmData realmData;
+        private readonly IDebugContainerBuilder debugBuilder;
         private readonly bool skyboxTimeEnabled;
 
         private SkyboxSettings settingsJson;
@@ -38,6 +42,7 @@ namespace DCL.SkyBox
             IScenesCache scenesCache,
             ISceneRestrictionBusController sceneRestrictionController,
             IRealmData realmData,
+            IDebugContainerBuilder debugBuilder,
             bool skyboxTimeEnabled = true)
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -45,6 +50,7 @@ namespace DCL.SkyBox
             this.scenesCache = scenesCache;
             this.sceneRestrictionController = sceneRestrictionController;
             this.realmData = realmData;
+            this.debugBuilder = debugBuilder;
             this.skyboxTimeEnabled = skyboxTimeEnabled;
         }
 
@@ -89,6 +95,8 @@ namespace DCL.SkyBox
 
                 if (!skyboxTimeEnabled)
                     skyboxRenderController.DisableSkyboxTime();
+
+                AddLookPresetDebugWidget(skyboxRenderController);
             }
             catch (OperationCanceledException)
             {
@@ -147,6 +155,24 @@ namespace DCL.SkyBox
                     }
                 }
             }
+        }
+
+        private void AddLookPresetDebugWidget(SkyboxRenderController controller)
+        {
+            IReadOnlyList<SkyboxLookPreset> presets = controller.AvailablePresets;
+
+            if (presets.Count == 0)
+                return;
+
+            var names = new List<string>(presets.Count);
+
+            for (var i = 0; i < presets.Count; i++)
+                names.Add(presets[i].name);
+
+            var binding = new IndexedElementBinding(names, controller.Preset.name, evt => controller.ApplyPreset(presets[evt.index]));
+
+            debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.SKYBOX)
+                       ?.AddControl(new DebugDropdownDef(binding, "Look preset"), null);
         }
 
         [Serializable]
