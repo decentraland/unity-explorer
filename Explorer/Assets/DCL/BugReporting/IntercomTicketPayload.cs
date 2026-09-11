@@ -4,11 +4,14 @@ using System.Collections.Generic;
 
 namespace DCL.BugReporting
 {
-    /// <summary>Codes of the "Platform" list attribute as the proxy takes them; it maps each code to Intercom's option id.</summary>
+    /// <summary>
+    ///     Codes of the "Platform" list attribute as the proxy takes them; it maps each code to Intercom's option id.
+    ///     The proxy rejects 0, the value an unassigned enum field serializes to, so no code is 0.
+    /// </summary>
     public enum IntercomTicketPlatform
     {
-        Desktop = 0,
-        Mobile = 1,
+        Desktop = 1,
+        Mobile = 2,
     }
 
     /// <summary>One image the proxy uploads and inlines into the ticket description.</summary>

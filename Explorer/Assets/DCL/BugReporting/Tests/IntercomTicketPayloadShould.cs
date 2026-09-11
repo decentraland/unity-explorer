@@ -39,11 +39,11 @@ namespace DCL.BugReporting.Tests
             Assert.AreEqual(data.GraphicCard, attributes["Graphic Card"]!.Value<string>());
             Assert.AreEqual(data.Ram, attributes["RAM"]!.Value<string>());
             Assert.AreEqual(data.ClientVersion, attributes["Client version"]!.Value<string>());
-            Assert.AreEqual(0, attributes["Platform"]!.Value<int>());
+            Assert.AreEqual(1, attributes["Platform"]!.Value<int>());
         }
 
-        [TestCase(IntercomTicketPlatform.Desktop, 0)]
-        [TestCase(IntercomTicketPlatform.Mobile, 1)]
+        [TestCase(IntercomTicketPlatform.Desktop, 1)]
+        [TestCase(IntercomTicketPlatform.Mobile, 2)]
         public void SendThePlatformAsItsNumericCode(IntercomTicketPlatform platform, int expectedCode)
         {
             // Arrange
@@ -53,7 +53,7 @@ namespace DCL.BugReporting.Tests
             // Act
             JObject payload = JObject.Parse(IntercomTicketPayload.BuildCreateTicketJson(in data));
 
-            // Assert - the proxy resolves the code to the list option; a label would be rejected.
+            // Assert - the proxy resolves the code to the list option; a label or 0 would be rejected.
             JToken platformToken = payload["ticket_attributes"]!["Platform"]!;
             Assert.AreEqual(JTokenType.Integer, platformToken.Type);
             Assert.AreEqual(expectedCode, platformToken.Value<int>());
