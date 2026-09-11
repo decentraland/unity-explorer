@@ -63,7 +63,7 @@ namespace DCL.Events
             }
 
             eventData.Attending = !eventData.Attending;
-            eventData.Total_attendees += eventData.Attending ? 1 : -1;
+            eventData.TotalAttendees += eventData.Attending ? 1 : -1;
 
             eventCardView?.UpdateInterestedButtonState(eventData.Attending);
             eventCardView?.UpdateVisuals();
@@ -90,7 +90,6 @@ namespace DCL.Events
                 realmNavigator.TryChangeRealmAsync(
                     URLDomain.FromString(new ENS(eventData.Server).ConvertEnsToWorldUrl(decentralandUrlsSource.Url(DecentralandUrl.WorldServer))),
                     ct,
-                    default,
                     isWorld: true,
                     allowsSpawnPointerOverride: true).Forget();
             else

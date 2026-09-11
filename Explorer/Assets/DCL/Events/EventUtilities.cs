@@ -1,5 +1,6 @@
 using DCL.EventsApi;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.UI;
 using System;
 using System.Globalization;
 using System.Text;
@@ -99,25 +100,25 @@ namespace DCL.Communities.EventInfo
 
         private static string GetPlaceJumpInLink(IEventDTO eventData, IDecentralandUrlsSource urls) =>
             eventData.World
-                ? string.Format(urls.Url(DecentralandUrl.JumpInWorldLink), eventData.Server)
-                : string.Format(urls.Url(DecentralandUrl.JumpInGenesisCityLink), eventData.X, eventData.Y);
+                ? ShareLinkUtilities.WithReferrer(string.Format(urls.Url(DecentralandUrl.JumpInWorldLink), eventData.Server))
+                : ShareLinkUtilities.WithReferrer(string.Format(urls.Url(DecentralandUrl.JumpInGenesisCityLink), eventData.X, eventData.Y));
 
         private static string GetEventWebsiteLink(IEventDTO eventData, IDecentralandUrlsSource urls) =>
             string.Format(urls.Url(DecentralandUrl.WhatsOnEventLink), eventData.Id);
 
         public static string GetEventShareLink(IEventDTO eventData, IDecentralandUrlsSource urls) =>
-            string.Format(TWITTER_NEW_POST_LINK, eventData.Name, TWITTER_HASHTAG, GetEventCopyLink(eventData, urls));
+            string.Format(TWITTER_NEW_POST_LINK, eventData.Name, TWITTER_HASHTAG, ShareLinkUtilities.AsQueryParameterValue(GetEventCopyLink(eventData, urls)));
 
         public static string GetEventAddToCalendarLink(IEventDTO eventData, IDecentralandUrlsSource urls)
         {
             DateTime nextStartAtDate = DateTime.Parse(
-                eventData.Next_start_at,
+                eventData.NextStartAt,
                 CultureInfo.InvariantCulture,
                 DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal
             );
 
             DateTime nextFinishAtDate = DateTime.Parse(
-                eventData.Next_finish_at,
+                eventData.NexFinishAt,
                 CultureInfo.InvariantCulture,
                 DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal
             );
@@ -125,7 +126,7 @@ namespace DCL.Communities.EventInfo
             return string.Format(ADD_TO_CALENDAR_LINK,
                 eventData.Name,
                 eventData.Description,
-                $"jump in: {GetPlaceJumpInLink(eventData, urls)}",
+                $"jump in: {ShareLinkUtilities.AsQueryParameterValue(GetPlaceJumpInLink(eventData, urls))}",
                 nextStartAtDate.ToString("yyyyMMdd'T'HHmmss'Z'"),
                 nextFinishAtDate.ToString("yyyyMMdd'T'HHmmss'Z'"));
         }
@@ -135,14 +136,10 @@ namespace DCL.Communities.EventInfo
             TimeSpan duration = TimeSpan.FromMilliseconds(eventData.Duration);
             DateTime utcEnd = utcStart.Add(duration);
 
-            TimeZoneInfo localZone = TimeZoneInfo.Local;
-            DateTime localStart = TimeZoneInfo.ConvertTimeFromUtc(utcStart, localZone);
-            DateTime localEnd = TimeZoneInfo.ConvertTimeFromUtc(utcEnd, localZone);
-
             return string.Format(ADD_TO_CALENDAR_LINK,
                 eventData.Name,
                 eventData.Description,
-                $"jump in: {GetPlaceJumpInLink(eventData, urls)}",
+                $"jump in: {ShareLinkUtilities.AsQueryParameterValue(GetPlaceJumpInLink(eventData, urls))}",
                 utcStart.ToString("yyyyMMdd'T'HHmmss'Z'"),
                 utcEnd.ToString("yyyyMMdd'T'HHmmss'Z'"));
         }

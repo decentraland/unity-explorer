@@ -55,9 +55,9 @@ namespace DCL.Navmap
         public void Set(PlacesData.PlaceInfo place)
         {
             VectorUtilities.TryParseVector2Int(place.base_position, out var coordinates);
-            copyLink = string.Format(decentralandUrlsSource.Url(DecentralandUrl.JumpInGenesisCityLink), coordinates.x, coordinates.y);
+            copyLink = ShareLinkUtilities.WithReferrer(string.Format(decentralandUrlsSource.Url(DecentralandUrl.JumpInGenesisCityLink), coordinates.x, coordinates.y));
             var description = string.Format(TWITTER_PLACE_DESCRIPTION, place.title);
-            twitterLink = string.Format(TWITTER_NEW_POST_LINK, description, "DCLPlace", copyLink);
+            twitterLink = string.Format(TWITTER_NEW_POST_LINK, description, "DCLPlace", ShareLinkUtilities.AsQueryParameterValue(copyLink));
         }
 
         public void Set(EventDTO @event)
@@ -65,10 +65,10 @@ namespace DCL.Navmap
             string description = @event.name;
 
             copyLink = @event.live
-                ? string.Format(decentralandUrlsSource.Url(DecentralandUrl.JumpInGenesisCityLink), @event.x, @event.y)
+                ? ShareLinkUtilities.WithReferrer(string.Format(decentralandUrlsSource.Url(DecentralandUrl.JumpInGenesisCityLink), @event.x, @event.y))
                 : string.Format(decentralandUrlsSource.Url(DecentralandUrl.WhatsOnEventLink), @event.id);
 
-            twitterLink = string.Format(TWITTER_NEW_POST_LINK, description, "DCLPlace", copyLink);
+            twitterLink = string.Format(TWITTER_NEW_POST_LINK, description, "DCLPlace", ShareLinkUtilities.AsQueryParameterValue(copyLink));
         }
 
         private void CopyLink()
