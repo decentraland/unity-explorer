@@ -5,23 +5,25 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.RealmNavigation;
 using DCL.Utilities;
+using DCL.Utility.Types;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace DCL.UserInAppInitializationFlow.Tests
 {
     [TestFixture]
     public class LoadPlayerAvatarStartupOperationShould
     {
-        private World world;
-        private ILoadingStatus loadingStatus;
-        private ISelfProfile selfProfile;
-        private ObjectProxy<AvatarBase> avatarBaseProxy;
-        private GameObject avatarGameObject;
-        private CancellationTokenSource cts;
+        private World world = null!;
+        private ILoadingStatus loadingStatus = null!;
+        private ISelfProfile selfProfile = null!;
+        private ObjectProxy<AvatarBase> avatarBaseProxy = null!;
+        private GameObject avatarGameObject = null!;
+        private CancellationTokenSource cts = null!;
 
         [OneTimeSetUp]
         public void OneTimeSetUp() =>
@@ -89,6 +91,26 @@ namespace DCL.UserInAppInitializationFlow.Tests
             operation.ExecuteAsync(MakeParams(playerEntity), cts.Token).GetAwaiter().GetResult();
 
             Assert.AreSame(newProfile, world.Get<Profile>(playerEntity));
+        }
+
+        [Test]
+        public void FailWithoutAddingProfileWhenProfileCannotBeResolved()
+        {
+            // Arrange
+            selfProfile.ProfileAsync(Arg.Any<CancellationToken>())
+                .Returns(UniTask.FromResult<Profile?>(null));
+
+            LogAssert.Expect(LogType.Exception, "InvalidOperationException: Own profile could not be resolved, the player entity cannot be initialized");
+
+            Entity playerEntity = world.Create();
+            var operation = new LoadPlayerAvatarStartupOperation(loadingStatus, selfProfile, avatarBaseProxy);
+
+            // Act
+            EnumResult<TaskError> result = operation.ExecuteAsync(MakeParams(playerEntity), cts.Token).GetAwaiter().GetResult();
+
+            // Assert
+            Assert.IsFalse(result.Success, "A missing own profile must fail the operation instead of continuing with a null profile");
+            Assert.IsFalse(world.Has<Profile>(playerEntity), "A null Profile component would make every profile system throw each frame");
         }
 
         private IStartupOperation.Params MakeParams(Entity playerEntity)

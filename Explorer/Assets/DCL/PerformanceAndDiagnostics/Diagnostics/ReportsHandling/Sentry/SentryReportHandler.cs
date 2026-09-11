@@ -103,6 +103,11 @@ namespace DCL.Diagnostics.Sentry
             scope.SetTag("wallet", wallet);
         }
 
+        public void AddSessionIdToScope(Scope scope, string sessionId)
+        {
+            scope.SetTag("session_id", sessionId);
+        }
+
         public void AddCurrentSceneToScope(Scope scope, SceneShortInfo sceneInfo)
         {
             scope.SetTag("current_scene.base_parcel", sceneInfo.BaseParcel.ToString());

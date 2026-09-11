@@ -1,9 +1,11 @@
 {
   "schema": 1,
+  "name": "uuav",
+  "docs": "Explorer/Assets/Plugins/UUAV/README.md",
   "comment": [
     "Hash lock for the prebuilt UUAV native binaries committed under",
     "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/.",
-    "Verified by scripts/uuav/verify-binaries.py; regenerate with --update.",
+    "Verified by scripts/native-lock/verify-binaries.py --lock <this file>; regenerate with --update.",
     "See Explorer/Assets/Plugins/UUAV/README.md."
   ],
   "rust_source": {
