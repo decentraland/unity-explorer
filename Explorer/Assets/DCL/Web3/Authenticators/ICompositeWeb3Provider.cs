@@ -28,9 +28,9 @@ namespace DCL.Web3.Authenticators
         UniTask LogoutAsync(CancellationToken ct);
 
         /// <summary>
-        /// Returns true if ThirdWeb OTP method is currently selected
+        /// Returns true if the session is backed by a ThirdWeb wallet, either guest or Email + OTP
         /// </summary>
-        bool IsThirdWebOTP { get; }
+        bool IsThirdWebAccount { get; }
 
         /// <summary>
         ///     Sets the callback that will be invoked when a transaction requires user confirmation.

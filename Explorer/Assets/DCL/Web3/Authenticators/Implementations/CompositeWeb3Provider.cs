@@ -30,12 +30,10 @@ namespace DCL.Web3.Authenticators
             remove => thirdWebAuth.OTPSendSucceeded -= value;
         }
 
-        public bool IsThirdWebOTP => CurrentProvider == AuthProvider.ThirdWeb;
+        public bool IsThirdWebAccount => CurrentProvider == AuthProvider.ThirdWeb;
 
-        private bool isThirdWebBacked => CurrentProvider is AuthProvider.ThirdWeb or AuthProvider.Guest;
-
-        private IWeb3Authenticator currentAuthenticator => isThirdWebBacked ? thirdWebAuth : dappLogin;
-        private IEthereumApi currentEthereumApi => isThirdWebBacked ? thirdWebAuth : dappEthereumApi;
+        private IWeb3Authenticator currentAuthenticator => IsThirdWebAccount ? thirdWebAuth : dappLogin;
+        private IEthereumApi currentEthereumApi => IsThirdWebAccount ? thirdWebAuth : dappEthereumApi;
 
         public CompositeWeb3Provider(
             ThirdWebAuthenticator thirdWebAuth,
@@ -88,7 +86,7 @@ namespace DCL.Web3.Authenticators
             analytics.Identify(null);
 
             // ThirdWeb is the only provider holding a login session of its own.
-            if (isThirdWebBacked)
+            if (IsThirdWebAccount)
                 await thirdWebAuth.LogoutAsync(ct);
             else
                 // Abort any in-flight browser signature confirmation so an approval arriving
@@ -132,7 +130,7 @@ namespace DCL.Web3.Authenticators
 
             if (DCLPlayerPrefs.GetBool(DCLPrefKeys.GUEST_SESSION_ACTIVE))
             {
-                CurrentProvider = AuthProvider.Guest;
+                CurrentProvider = AuthProvider.ThirdWeb;
 
                 try { return await thirdWebAuth.TryAutoLoginAsync(ct); }
                 catch (GuestAccountUpgradedException)

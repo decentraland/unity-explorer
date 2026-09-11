@@ -6,7 +6,7 @@ namespace DCL.Web3.Authenticators
     public enum AuthProvider
     {
         /// <summary>
-        ///     ThirdWeb authentication via Email + OTP code
+        ///     ThirdWeb authentication, either as a guest or with an Email + OTP code
         /// </summary>
         ThirdWeb,
 
@@ -14,7 +14,5 @@ namespace DCL.Web3.Authenticators
         ///     Dapp authentication via external browser wallet (MetaMask, etc.)
         /// </summary>
         Dapp,
-
-        Guest,
     }
 }
