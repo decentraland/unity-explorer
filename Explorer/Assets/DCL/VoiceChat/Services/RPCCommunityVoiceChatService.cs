@@ -54,6 +54,8 @@ namespace DCL.VoiceChat.Services
             socialServiceEventBus.TransportClosed += OnTransportClosed;
             socialServiceEventBus.RPCClientReconnected += OnTransportConnected;
             socialServiceEventBus.WebSocketConnectionEstablished += OnTransportConnected;
+            identityCache.OnIdentityChanged += OnIdentityChanged;
+            identityCache.OnIdentityCleared += OnIdentityChanged;
         }
 
         public override void Dispose()
@@ -61,29 +63,17 @@ namespace DCL.VoiceChat.Services
             socialServiceEventBus.TransportClosed -= OnTransportClosed;
             socialServiceEventBus.RPCClientReconnected -= OnTransportConnected;
             socialServiceEventBus.WebSocketConnectionEstablished -= OnTransportConnected;
+            identityCache.OnIdentityChanged -= OnIdentityChanged;
+            identityCache.OnIdentityCleared -= OnIdentityChanged;
             subscriptionCts.SafeCancelAndDispose();
             fetchActiveChatsCts.SafeCancelAndDispose();
             base.Dispose();
         }
 
-        private void OnTransportConnected()
-        {
-            if (identityCache.Identity == null) return;
-
-            SubscribeToCommunityVoiceChatUpdatesAsync(subscriptionCts.Token).Forget();
-
-            fetchActiveChatsCts = fetchActiveChatsCts.SafeRestart();
-            FetchActiveCommunityVoiceChatsAsync(fetchActiveChatsCts.Token).Forget();
-        }
-
-        private void OnTransportClosed()
-        {
-            subscriptionCts = subscriptionCts.SafeRestart();
-            fetchActiveChatsCts = fetchActiveChatsCts.SafeRestart();
-        }
-
         public async UniTask<StartCommunityVoiceChatResponse> StartCommunityVoiceChatAsync(string communityId, CancellationToken ct)
         {
+            ThrowIfGuest();
+
             await socialServiceRPC.EnsureRpcConnectionAsync(ct);
 
             var payload = new StartCommunityVoiceChatPayload
@@ -101,6 +91,8 @@ namespace DCL.VoiceChat.Services
 
         public async UniTask<JoinCommunityVoiceChatResponse> JoinCommunityVoiceChatAsync(string communityId, CancellationToken ct)
         {
+            ThrowIfGuest();
+
             await socialServiceRPC.EnsureRpcConnectionAsync(ct);
 
             var payload = new JoinCommunityVoiceChatPayload
@@ -144,6 +136,8 @@ namespace DCL.VoiceChat.Services
 
         public async UniTask<RequestToSpeakInCommunityVoiceChatResponse> RequestToSpeakInCommunityVoiceChatAsync(string communityId, bool isRequestingToSpeak, CancellationToken ct)
         {
+            ThrowIfGuest();
+
             await socialServiceRPC.EnsureRpcConnectionAsync(ct);
 
             var payload = new RequestToSpeakInCommunityVoiceChatPayload
@@ -303,6 +297,38 @@ namespace DCL.VoiceChat.Services
             }
             catch (OperationCanceledException) { }
             catch (Exception e) { ReportHub.LogException(e, new ReportData(ReportCategory.COMMUNITY_VOICE_CHAT)); }
+        }
+
+        private void ThrowIfGuest()
+        {
+            if (identityCache.IsGuest())
+                throw new InvalidOperationException("Voice chat is not available for guest accounts.");
+        }
+
+        private void TrySubscribe()
+        {
+            if (identityCache.Identity == null || identityCache.IsGuest()) return;
+
+            SubscribeToCommunityVoiceChatUpdatesAsync(subscriptionCts.Token).Forget();
+
+            fetchActiveChatsCts = fetchActiveChatsCts.SafeRestart();
+            FetchActiveCommunityVoiceChatsAsync(fetchActiveChatsCts.Token).Forget();
+        }
+
+        private void OnTransportConnected() =>
+            TrySubscribe();
+
+        private void OnIdentityChanged()
+        {
+            subscriptionCts = subscriptionCts.SafeRestart();
+            fetchActiveChatsCts = fetchActiveChatsCts.SafeRestart();
+            TrySubscribe();
+        }
+
+        private void OnTransportClosed()
+        {
+            subscriptionCts = subscriptionCts.SafeRestart();
+            fetchActiveChatsCts = fetchActiveChatsCts.SafeRestart();
         }
     }
 }

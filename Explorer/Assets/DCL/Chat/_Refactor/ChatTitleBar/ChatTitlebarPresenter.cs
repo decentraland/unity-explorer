@@ -4,8 +4,11 @@ using Cysharp.Threading.Tasks;
 using DCL.Chat.ChatViewModels;
 using DCL.Chat.History;
 using DCL.Diagnostics;
+using DCL.Profiles;
 using DCL.Web3;
+using DCL.Web3.Identities;
 using DG.Tweening;
+using MVC;
 using System.Linq;
 using DCL.Chat.ChatCommands;
 using DCL.Chat.ChatCommands.DCL.Chat.ChatUseCases;
@@ -71,7 +74,10 @@ namespace DCL.Chat
             IVoiceChatOrchestrator voiceChatOrchestrator,
             ChatEventBus chatEventBus,
             GetUserCallStatusCommand getUserCallStatusCommand,
-            ToggleAutoTranslateCommand toggleAutoTranslateCommand)
+            ToggleAutoTranslateCommand toggleAutoTranslateCommand,
+            IWeb3IdentityCache identityCache,
+            IMVCManager mvcManager,
+            IProfileCache profileCache)
         {
             this.view = view;
             this.chatConfig = chatConfig;
@@ -97,7 +103,7 @@ namespace DCL.Chat
             communityDataService.CommunityMetadataUpdated += CommunityMetadataUpdated;
             chatMemberListService.OnMemberCountUpdated += OnMemberCountUpdated;
 
-            callButtonPresenter = new CallButtonPresenter(view.CallButton, voiceChatOrchestrator, chatEventBus, currentChannelService.CurrentChannelProperty);
+            callButtonPresenter = new CallButtonPresenter(view.CallButton, voiceChatOrchestrator, chatEventBus, currentChannelService.CurrentChannelProperty, identityCache, mvcManager, profileCache);
 
             scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelUsersStatusUpdated>(OnChannelUsersStatusUpdated));
             scope.Add(this.eventBus.Subscribe<ChatEvents.UserStatusUpdatedEvent>(OnLiveUserConnectionStateChange));

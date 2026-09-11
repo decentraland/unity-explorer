@@ -91,7 +91,7 @@ namespace DCL.Web3.Authenticators
                 // Resolves when the OS delivers the deep link that carries the identity id.
                 string identityId = await WaitForSigninAsync(authRequestId, ct);
 
-                return await FetchIdentityByIdAsync(identityId, ct);
+                return await FetchIdentityByIdAsync(identityId, payload.Method, ct);
             }
             finally { loginMutex.Release(); }
         }
@@ -123,7 +123,7 @@ namespace DCL.Web3.Authenticators
             }
         }
 
-        private async UniTask<DecentralandIdentity> FetchIdentityByIdAsync(string identityId, CancellationToken ct)
+        private async UniTask<DecentralandIdentity> FetchIdentityByIdAsync(string identityId, LoginMethod method, CancellationToken ct)
         {
             urlBuilder.Clear();
 
@@ -171,7 +171,7 @@ namespace DCL.Web3.Authenticators
 
             DateTime expiration = DateTime.Parse(json.identity.expiration, null, DateTimeStyles.RoundtripKind);
 
-            return new DecentralandIdentity(new Web3Address(signerAddress), ephemeralAccount, expiration, authChain, IWeb3Identity.Web3IdentitySource.Deeplink);
+            return new DecentralandIdentity(new Web3Address(signerAddress), ephemeralAccount, expiration, authChain, method);
         }
 
         // Field names mirror the auth server's JSON payloads verbatim, so they intentionally break the naming rules.

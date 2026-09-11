@@ -212,7 +212,7 @@ namespace DCL.PluginSystem.Global
 
             mvcManager.RegisterController(new ProfileNameEditorController(
                 ProfileNameEditorController.CreateLazily(profileNameEditorView, null),
-                webBrowser, selfProfile, nftNamesProvider, decentralandUrlsSource, profileChangesBus));
+                webBrowser, selfProfile, nftNamesProvider, decentralandUrlsSource, profileChangesBus, mvcManager, web3IdentityCache));
         }
 
         [Serializable]

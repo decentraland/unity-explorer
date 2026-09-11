@@ -14,8 +14,10 @@ using DCL.Optimization.Pools;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
 using DCL.Profiles.Self;
+using DCL.UI.UpgradeGuestAccountPopup;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
+using DCL.Web3.Identities;
 using DCL.WebRequests;
 using MVC;
 using System;
@@ -54,6 +56,7 @@ namespace DCL.Communities.CommunityCreation
         private readonly ISelfProfile selfProfile;
         private readonly IMVCManager mvcManager;
         private readonly IProfileRepository profileRepository;
+        private readonly IWeb3IdentityCache identityCache;
         private readonly string[] allowedImageExtensions = { "jpg", "png" };
 
         private UniTaskCompletionSource closeTaskCompletionSource = new ();
@@ -104,7 +107,8 @@ namespace DCL.Communities.CommunityCreation
             IPlacesAPIService placesAPIService,
             ISelfProfile selfProfile,
             IMVCManager mvcManager,
-            IProfileRepository profileRepository) : base(viewFactory)
+            IProfileRepository profileRepository,
+            IWeb3IdentityCache identityCache) : base(viewFactory)
         {
             this.webBrowser = webBrowser;
             this.inputBlock = inputBlock;
@@ -113,6 +117,7 @@ namespace DCL.Communities.CommunityCreation
             this.selfProfile = selfProfile;
             this.mvcManager = mvcManager;
             this.profileRepository = profileRepository;
+            this.identityCache = identityCache;
 
             FileBrowser.Instance.AllowSyncCalls = true;
         }
@@ -205,8 +210,16 @@ namespace DCL.Communities.CommunityCreation
             viewInstance!.PlayOnLinkClickAudio();
         }
 
-        private void GoToGetNameLink() =>
+        private void GoToGetNameLink()
+        {
+            if (identityCache.IsGuest())
+            {
+                mvcManager.ShowAndForget(UpgradeGuestAccountPopupController.IssueCommand(new UpgradeGuestAccountPopupController.Params(GuestUpgradeTrigger.NameClaim)));
+                return;
+            }
+
             webBrowser.OpenUrlMainThreadOnly(DecentralandUrl.MarketplaceClaimName);
+        }
 
         private void DisableShortcutsInput() =>
             inputBlock.Disable(InputMapComponent.Kind.Shortcuts, InputMapComponent.Kind.InWorldCamera);

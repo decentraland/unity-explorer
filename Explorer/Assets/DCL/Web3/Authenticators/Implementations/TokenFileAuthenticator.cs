@@ -80,7 +80,7 @@ namespace DCL.Web3.Authenticators
             DateTime expiration = DateTime.Parse(json.identity.expiration, null, DateTimeStyles.RoundtripKind);
 
             return new DecentralandIdentity(new Web3Address(address), ephemeralAccount, expiration, authChain,
-                IWeb3Identity.Web3IdentitySource.TokenFile);
+                LoginMethod.TOKEN_FILE);
         }
 
         public UniTask<string> RequestTransferAsync(string giftUrn, string recipientAddress, CancellationToken ct)

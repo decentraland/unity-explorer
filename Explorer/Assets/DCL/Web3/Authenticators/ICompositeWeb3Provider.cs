@@ -14,7 +14,7 @@ namespace DCL.Web3.Authenticators
     ///     Combines base authentication, Ethereum API, and OTP flows.
     ///     This is the single entry point for all Web3 authentication needs.
     /// </summary>
-    public interface ICompositeWeb3Provider : IWeb3Authenticator, IEthereumApi, IOtpAuthenticator
+    public interface ICompositeWeb3Provider : IWeb3Authenticator, IEthereumApi, IOtpAuthenticator, IAccountLinkAuthenticator
     {
         /// <summary>
         /// Currently selected authentication method
@@ -28,9 +28,9 @@ namespace DCL.Web3.Authenticators
         UniTask LogoutAsync(CancellationToken ct);
 
         /// <summary>
-        /// Returns true if ThirdWeb OTP method is currently selected
+        /// Returns true if the session is backed by a ThirdWeb wallet, either guest or Email + OTP
         /// </summary>
-        bool IsThirdWebOTP { get; }
+        bool IsThirdWebAccount { get; }
 
         /// <summary>
         ///     Sets the callback that will be invoked when a transaction requires user confirmation.

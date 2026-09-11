@@ -19,11 +19,13 @@ using DCL.RealmNavigation;
 using DCL.UI;
 using DCL.UI.ConfirmationDialog;
 using DCL.UI.Profiles.Helpers;
+using DCL.UI.UpgradeGuestAccountPopup;
 using DCL.Utilities.Extensions;
 using Utility;
 using DCL.Utility.Types;
 using DCL.VoiceChat;
 using DCL.Web3;
+using DCL.Web3.Identities;
 using DCL.WebRequests;
 using MVC;
 using System;
@@ -54,6 +56,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private readonly CommunitiesDataProvider.CommunitiesDataProvider dataProvider;
         private readonly IInputBlock inputBlock;
         private readonly IMVCManager mvcManager;
+        private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly ISelfProfile selfProfile;
         private readonly ISpriteCache spriteCache;
         private readonly CommunitiesBrowserEventBus browserEventBus;
@@ -102,8 +105,10 @@ namespace DCL.Communities.CommunitiesBrowser
             CommunityDataService communityDataService,
             ILoadingStatus loadingStatus,
             UnityAppWebBrowser webBrowser,
-            IDecentralandUrlsSource decentralandUrlsSource)
+            IDecentralandUrlsSource decentralandUrlsSource,
+            IWeb3IdentityCache web3IdentityCache)
         {
+            this.web3IdentityCache = web3IdentityCache;
             this.view = view;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
             this.cursor = cursor;
@@ -539,12 +544,24 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void JoinCommunity(CommunitiesBrowserEvents.CommunityJoinedClickedEvent evt)
         {
+            if (web3IdentityCache.IsGuest())
+            {
+                mvcManager.ShowAndForget(UpgradeGuestAccountPopupController.IssueCommand(new UpgradeGuestAccountPopupController.Params(GuestUpgradeTrigger.Communities)));
+                return;
+            }
+
             joinCommunityCts = joinCommunityCts.SafeRestart();
             commandsLibrary.JoinCommunityCommand.Execute(evt.CommunityId, joinCommunityCts.Token);
         }
 
         private void RequestToJoinCommunity(CommunitiesBrowserEvents.RequestedToJoinCommunityEvent evt)
         {
+            if (web3IdentityCache.IsGuest())
+            {
+                mvcManager.ShowAndForget(UpgradeGuestAccountPopupController.IssueCommand(new UpgradeGuestAccountPopupController.Params(GuestUpgradeTrigger.Communities)));
+                return;
+            }
+
             requestToJoinCommunityCts = requestToJoinCommunityCts.SafeRestart();
             RequestToJoinCommunityAsync(requestToJoinCommunityCts.Token).Forget();
             return;
@@ -647,6 +664,12 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void CreateCommunity()
         {
+            if (web3IdentityCache.IsGuest())
+            {
+                mvcManager.ShowAndForget(UpgradeGuestAccountPopupController.IssueCommand(new UpgradeGuestAccountPopupController.Params(GuestUpgradeTrigger.Communities)));
+                return;
+            }
+
             openCommunityCreationCts = openCommunityCreationCts.SafeRestart();
             commandsLibrary.CreateCommunityCommand.Execute(openCommunityCreationCts.Token);
         }

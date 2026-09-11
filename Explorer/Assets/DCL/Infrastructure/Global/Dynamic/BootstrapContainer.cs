@@ -139,7 +139,6 @@ namespace Global.Dynamic
                 bool hasSessionId = applicationParametersParser.TryGetValue(AppArgsFlags.Analytics.SESSION_ID, out string? sessionId) && !string.IsNullOrEmpty(sessionId);
 
                 container.reportHandlingSettings = ProvideReportHandlingSettingsAsync(container.settings, applicationParametersParser);
-
                 container.DiagnosticsContainer = DiagnosticsContainer.Create(container.ReportHandlingSettings, realmLaunchSettings.CurrentMode is DCL.Utility.LaunchMode.LocalSceneDevelopment);
                 container.DiagnosticsContainer.AddSentryScopeConfigurator(AddIdentityToSentryScope);
 
@@ -175,7 +174,7 @@ namespace Global.Dynamic
                 var realmUrls = new RealmUrls(realmLaunchSettings, new RealmNamesMap(webRequestsContainer.WebRequestController, decentralandUrlsSource), decentralandUrlsSource);
 
                 container.Bootstrap = await CreateBootstrapperAsync(debugSettings, debugContainer, applicationParametersParser, splashScreen, realmUrls, diskCache, partialsDiskCache, container, webRequestsContainer, settingsContainer, realmLaunchSettings, world, container.settings.BuildData, dclVersion, ct);
-                container.CompositeWeb3Provider = CreateWeb3Dependencies(sceneLoaderSettings, web3AccountFactory, identityCache, browser, container.Analytics, decentralandUrlsSource, ethereumNetwork, applicationParametersParser, webRequestsContainer.WebRequestController, container.DeeplinkSigninIdentityId, container.DeeplinkLoginAwaitingSigninRequestId);
+                container.CompositeWeb3Provider = CreateWeb3Dependencies(sceneLoaderSettings, web3AccountFactory, identityCache, browser, container.Analytics, decentralandUrlsSource, ethereumNetwork, decentralandEnvironment, applicationParametersParser, webRequestsContainer.WebRequestController, container.DeeplinkSigninIdentityId, container.DeeplinkLoginAwaitingSigninRequestId);
 
                 void AddIdentityToSentryScope(Scope scope)
                 {
@@ -223,8 +222,6 @@ namespace Global.Dynamic
             return coreBootstrap;
         }
 
-
-
         private static ICompositeWeb3Provider CreateWeb3Dependencies(
             DynamicSceneLoaderSettings sceneLoaderSettings,
             IWeb3AccountFactory web3AccountFactory,
@@ -233,6 +230,7 @@ namespace Global.Dynamic
             AnalyticsContainer container,
             IDecentralandUrlsSource decentralandUrlsSource,
             EthereumNetwork ethereumNetwork,
+            DecentralandEnvironment decentralandEnvironment,
             IAppArgs appArgs,
             IWebRequestController webRequestController,
             ReactiveProperty<string?> deeplinkSigninIdentityId,
@@ -242,6 +240,17 @@ namespace Global.Dynamic
                 ? int.Parse(v!)
                 : null;
 
+            // Overriding the guest session id defeats one-guest-per-machine, so only allow it for developers & testing
+            string? guestSessionIdOverride = decentralandEnvironment != DecentralandEnvironment.Org
+                                             && appArgs.HasDebugFlag()
+                                             && appArgs.TryGetValue(AppArgsFlags.GUEST_SESSION_ID, out string? guestSessionId)
+                ? guestSessionId
+                : null;
+
+            ReportHub.LogProductionInfo($"[GuestLogin] session id override: env={decentralandEnvironment}, debugFlag={appArgs.HasDebugFlag()}, "
+                                        + $"argPresent={appArgs.TryGetValue(AppArgsFlags.GUEST_SESSION_ID, out string? rawGuestSessionId)}, argValue='{rawGuestSessionId}' "
+                                        + $"=> override='{guestSessionIdOverride}'");
+
             // Create ThirdWeb authenticator (Email + OTP)
             var thirdWebAuth = new ThirdWebAuthenticator(
                 decentralandUrlsSource,
@@ -250,7 +259,8 @@ namespace Global.Dynamic
                 new HashSet<string>(sceneLoaderSettings.Web3ReadOnlyMethods),
                 web3AccountFactory,
                 webRequestController,
-                identityExpirationDuration
+                identityExpirationDuration,
+                guestSessionIdOverride
             );
 
             string? referrer = appArgs.TryGetValue(AppArgsFlags.REFERRER, out string? referrerValue) ? referrerValue : null;
