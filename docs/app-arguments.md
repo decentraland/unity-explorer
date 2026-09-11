@@ -390,6 +390,18 @@ decentraland://?force-open-backpack=true
 
 ---
 
+### `alttester`
+**Type:** Optional String (`host:port`)
+**Description:** Activates AltTester instrumentation at runtime: loads the AltTester prefab on start and connects to AltTester Desktop at `127.0.0.1:13000`, or at the `host:port` given as the value. Only effective in builds compiled with the `ALTTESTER` scripting define — every non-release CI build; release builds strip it. The flag also silences analytics for the session, so automation runs never reach Segment. Command-line only: the deep-link allowlist drops it. See [Automation Testing](automation-testing.md).
+
+**Usage:**
+```bash
+--alttester
+--alttester 192.168.1.10:13000
+```
+
+---
+
 ### `mcp`
 **Description:** Starts the embedded MCP (Model Context Protocol) server on `http://127.0.0.1:8123/unity-explorer-mcp` so coding agents can observe and drive the client (screenshots, player/scene state, scene logs, teleport/movement, chat commands). The listener binds to localhost only and rejects non-localhost browser Origins. See [MCP Automation](mcp-automation.md).
 
