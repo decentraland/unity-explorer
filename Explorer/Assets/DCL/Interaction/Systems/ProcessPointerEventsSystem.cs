@@ -229,16 +229,16 @@ namespace DCL.Interaction.Systems
             ProximityFeedbackUtils.TryIssueProximityLeaveEventForPreviousEntity(in proximityResultForSceneEntities, in previousEntityInfo);
         }
 
-        private void HighlightNewEntity(GlobalColliderSceneEntityInfo entityInfo, bool isAtDistance)
+        private void HighlightNewEntity(GlobalColliderSceneEntityInfo entityInfo)
         {
             World world = entityInfo.EcsExecutor.World;
             Entity entityRef = entityInfo.ColliderSceneEntityInfo.EntityReference;
             int count = world.CountEntities(highlightQuery);
 
             if (count > 0)
-                SetupHighlightComponentQuery(world, isAtDistance, entityRef);
+                SetupHighlightComponentQuery(world, entityRef);
             else
-                world.Create(HighlightComponent.NewEntityHighlightComponent(isAtDistance, entityRef));
+                world.Create(HighlightComponent.NewEntityHighlightComponent(entityRef));
         }
 
         [Pure]
@@ -255,9 +255,9 @@ namespace DCL.Interaction.Systems
             interactionType == InteractionType.Cursor ? PointerEventType.PetHoverEnter : PointerEventType.PetProximityEnter;
 
         [Query]
-        private void SetupHighlightComponent([Data] bool isAtDistance, [Data] Entity nextEntityRef, ref HighlightComponent highlightComponent)
+        private void SetupHighlightComponent([Data] Entity nextEntityRef, ref HighlightComponent highlightComponent)
         {
-            highlightComponent.Setup(isAtDistance, nextEntityRef);
+            highlightComponent.Setup(nextEntityRef);
         }
 
         [Query]
@@ -327,8 +327,8 @@ namespace DCL.Interaction.Systems
 
             hoverFeedbackComponent.ScreenPositionOverride = screenPositionOverride;
 
-            if (highlightEnabled)
-                HighlightNewEntity(entityInfo, isAtDistance);
+            if (highlightEnabled && isAtDistance)
+                HighlightNewEntity(entityInfo);
 
             if (isAtDistance)
             {

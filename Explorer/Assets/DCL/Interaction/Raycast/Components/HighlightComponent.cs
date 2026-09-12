@@ -6,30 +6,26 @@ namespace DCL.Interaction.Raycast.Components
     public struct HighlightComponent
     {
         private bool isEnabled;
-        private bool isAtDistance;
         private Entity currentEntity;
         private Entity nextEntity;
 
-        public HighlightComponent(bool isEnabled, bool isAtDistance, Entity currentEntity, Entity nextEntity) : this()
+        public HighlightComponent(bool isEnabled, Entity currentEntity, Entity nextEntity) : this()
         {
             this.isEnabled = isEnabled;
-            this.isAtDistance = isAtDistance;
             this.currentEntity = currentEntity;
             this.nextEntity = nextEntity;
         }
 
-        public static HighlightComponent NewEntityHighlightComponent(bool isAtDistance, Entity entityRef) =>
+        public static HighlightComponent NewEntityHighlightComponent(Entity entityRef) =>
             new (
                 true,
-                isAtDistance,
                 entityRef,
                 entityRef
             );
 
-        public void Setup(bool atDistance, Entity newNextEntity)
+        public void Setup(Entity newNextEntity)
         {
             isEnabled = true;
-            isAtDistance = atDistance;
             nextEntity = newNextEntity;
         }
 
@@ -37,7 +33,6 @@ namespace DCL.Interaction.Raycast.Components
         public void Reset()
         {
             isEnabled = false;
-            isAtDistance = false;
             nextEntity = Entity.Null;
         }
 
@@ -53,10 +48,6 @@ namespace DCL.Interaction.Raycast.Components
         {
             currentEntity = nextEntity;
         }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly bool IsAtDistance() =>
-            isAtDistance;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly Entity CurrentEntityOrNull() =>
