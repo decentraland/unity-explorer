@@ -44,7 +44,12 @@ namespace ECS.StreamableLoading.Textures
                 return SerializeMemoryIterator<State>.New(new State(), static (_, _, _) => 0, static (_, _, _) => false);
             }
 
-            NativeArray<byte> textureData = tex2D!.GetRawTextureData<byte>()!;
+            // GetRawTextureData returns a view into the texture's native memory, while the
+            // iterator is consumed across an async disk write during which the texture can be
+            // destroyed or re-uploaded. Snapshot the bytes into an owned copy that lives until
+            // the iterator is disposed.
+            NativeArray<byte> textureView = tex2D!.GetRawTextureData<byte>();
+            var textureData = new NativeArray<byte>(textureView, Allocator.Persistent);
 
             var meta = new Meta(tex2D);
             State state = new State(meta, textureData);
@@ -74,7 +79,8 @@ namespace ECS.StreamableLoading.Textures
                     index -= 1;
 
                     return SerializeMemoryIterator.CanReadNextData(index, source.TextureData.Length, bufferLength);
-                }
+                },
+                static source => source.TextureData.Dispose()
             );
         }
 

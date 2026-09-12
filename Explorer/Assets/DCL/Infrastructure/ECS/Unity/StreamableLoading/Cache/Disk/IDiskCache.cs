@@ -242,23 +242,38 @@ namespace ECS.StreamableLoading.Cache.Disk
         private readonly byte[] buffer;
         private readonly FillBufferDelegate fillBufferDelegate;
         private readonly CanMoveNextDelegate canMoveNextDelegate;
+        private readonly Action<T>? disposeSource;
 
         /// <summary>
         /// Starts with -1
         /// </summary>
         private int index;
 
-        private SerializeMemoryIterator(T source, FillBufferDelegate fillBufferDelegate, CanMoveNextDelegate canMoveNextDelegate)
+        private SerializeMemoryIterator(T source, FillBufferDelegate fillBufferDelegate, CanMoveNextDelegate canMoveNextDelegate, Action<T>? disposeSource)
         {
             this.source = source;
             this.fillBufferDelegate = fillBufferDelegate;
             this.canMoveNextDelegate = canMoveNextDelegate;
+            this.disposeSource = disposeSource;
             index = -1;
             buffer = SerializeMemoryIterator.POOL.Get();
         }
 
-        public static SerializeMemoryIterator<T> New(T source, FillBufferDelegate fillBufferDelegate, CanMoveNextDelegate canMoveNextFunc) =>
-            new (source, fillBufferDelegate, canMoveNextFunc);
+        /// <summary>
+        /// Creates an iterator that streams <paramref name="source"/> in pooled chunks.
+        /// </summary>
+        /// <remarks>
+        /// Every delegate must be a <c>static</c> lambda (or a static method group). The iterator is created per write
+        /// and consumed across an async disk write after the serializer has returned, so a capturing lambda would both
+        /// allocate a closure on every write and keep outer-scope objects reachable while the write is in flight.
+        /// Anything a delegate needs must be reachable from <paramref name="source"/>, which is passed back into every call.
+        /// </remarks>
+        /// <param name="disposeSource">
+        /// Releases resources owned by <paramref name="source"/> (e.g. a <c>NativeArray</c> snapshot). Invoked from <see cref="Dispose"/>
+        /// on every exit path of the consuming write: completion, cancellation or exception.
+        /// </param>
+        public static SerializeMemoryIterator<T> New(T source, FillBufferDelegate fillBufferDelegate, CanMoveNextDelegate canMoveNextFunc, Action<T>? disposeSource = null) =>
+            new (source, fillBufferDelegate, canMoveNextFunc, disposeSource);
 
         public ReadOnlyMemory<byte> Current
         {
@@ -289,7 +304,8 @@ namespace ECS.StreamableLoading.Cache.Disk
 
         public void Dispose()
         {
-            SerializeMemoryIterator.POOL.Release(buffer);
+            try { disposeSource?.Invoke(source); }
+            finally { SerializeMemoryIterator.POOL.Release(buffer); }
         }
     }
 

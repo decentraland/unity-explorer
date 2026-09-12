@@ -21,6 +21,13 @@ Only assets fetched from the **web** qualify (`ILoadingIntention.IsQualifiedForD
 - **`DiskCache<T, Ts>`** (typed layer) — wraps the raw layer with an `IDiskSerializer<T, Ts>` that converts the asset to/from bytes (e.g. `TextureDiskSerializer`, `StringDiskSerializer`). Serialization streams through pooled 128 KB chunks (`SerializeMemoryIterator`).
 - **`GenericCache<T, TKey>`** — composes the memory cache (the `IStreamableCache` of the load system) with the typed disk cache. This is what `LoadSystemBase` talks to: reads check memory first, then disk (a disk hit backfills memory); writes go to both.
 
+### Writing a serializer
+
+`SerializeMemoryIterator<T>.New(source, fillBuffer, canMoveNext, disposeSource)` returns a struct that `DiskCache.PutAsync` consumes on the thread pool, across awaited `FileStream` writes, after `Serialize` has already returned. Two rules follow:
+
+- **The iterator must own every byte it reads.** Never hand it a view into memory that another owner can free or rewrite while the write is in flight. `Texture2D.GetRawTextureData` is such a view (the texture's native pixel memory), so `TextureDiskSerializer` snapshots it into a `NativeArray<byte>` with `Allocator.Persistent` and releases it through `disposeSource`. That callback runs from `Dispose` on every exit path of the write: completion, cancellation or exception.
+- **All three delegates must be `static` lambdas.** State travels through the `source` argument, which is passed back into every call, so nothing is captured from the enclosing scope: no closure allocation per write, and no reference to outer-scope objects that could be freed while the write is in flight.
+
 ### Cache keys
 
 Each intention type provides an `IDiskHashCompute` (e.g. `GetTextureIntention.DiskHashCompute`) that feeds the identity of the request — content file hash (or URL when no hash exists), plus parameters that change the stored bytes, such as wrap/filter modes for textures — into a SHA256. The hex digest plus the extension is the file name. Include an `ITERATION_NUMBER` bump in the payload when the serialized format changes, so stale entries of the old format are simply never found.
