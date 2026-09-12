@@ -181,7 +181,7 @@ namespace SceneRunner
                     return Result<SceneInstanceDependencies>.ErrorResult($"Scene main script '{sceneData.SceneEntityDefinition.metadata.main}' not found in the content manifest of scene {sceneData.SceneShortInfo}");
             }
             else
-                // SHA-256: 733a108cd8bb667be75d6c76a3fe444f6ddcd481858af8d354dba25a29713b9a
+                // SHA-256: 18e63cfc2a6913bbed658bde0bf4ca2af60336be2b4cd07806b00948662f12c9
                 // Build provenance: StreamingAssets/Js/sdk6-adapter.provenance.json
                 sceneCodeUrl = URLAddress.FromString($"file://{Application.streamingAssetsPath}/Js/sdk6-adapter.min.js");
 
