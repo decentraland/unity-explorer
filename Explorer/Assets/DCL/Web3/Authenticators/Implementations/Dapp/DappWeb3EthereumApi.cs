@@ -350,11 +350,17 @@ namespace DCL.Web3.Authenticators
 
                 await ConnectToAuthApiAsync();
 
+                // The ephemeral key signs method, params and timestamp so the server can tell this request apart from a reused delegation.
+                long timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+                string signedPayload = $"{request.method}:{JsonConvert.SerializeObject(request.@params, Formatting.None)}:{timestamp}".ToLowerInvariant();
+                using AuthChain signedChain = identityCache.Identity!.Sign(signedPayload);
+
                 SignatureIdResponse authenticationResponse = await RequestEthMethodWithSignatureAsync(new AuthorizedEthApiRequest
                 {
                     method = request.method,
                     @params = request.@params,
-                    authChain = identityCache.Identity!.AuthChain.ToArray(),
+                    timestamp = timestamp,
+                    authChain = signedChain.ToArray(),
                 }, ct);
 
                 DateTime signatureExpiration = DateTime.UtcNow.AddMinutes(5);

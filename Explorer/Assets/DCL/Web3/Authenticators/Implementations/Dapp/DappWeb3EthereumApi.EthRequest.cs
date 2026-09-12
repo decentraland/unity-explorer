@@ -15,6 +15,9 @@ namespace DCL.Web3.Authenticators
             public object[] @params;
 #pragma warning restore UAC1001
 
+            // Unix time in milliseconds covered by the signed auth chain together with method and params.
+            public long timestamp;
+
             public AuthLink[] authChain;
         }
     }
