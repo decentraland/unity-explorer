@@ -48,6 +48,9 @@ namespace Runtime.Wearables
         [field: SerializeField]
         public GameObject FetchAPIPermissionContent { get; private set; }
 
+        [field: SerializeField]
+        public GameObject SpawnPortableExperiencePermissionContent { get; private set; }
+
         public async UniTask WaitChoiceAsync()
         {
             await UniTask.WhenAny(AuthorizeButton.OnClickAsync(), DenyButton.OnClickAsync());
@@ -68,6 +71,7 @@ namespace Runtime.Wearables
             OpenExternalUrlPermissionContent.SetActive(permissions.Contains(ScenePermissionNames.OPEN_EXTERNAL_LINK));
             WebSocketPermissionContent.SetActive(permissions.Contains(ScenePermissionNames.USE_WEBSOCKET));
             FetchAPIPermissionContent.SetActive(permissions.Contains(ScenePermissionNames.USE_FETCH));
+            SpawnPortableExperiencePermissionContent.SetActive(permissions.Contains(ScenePermissionNames.SPAWN_PORTABLE_EXPERIENCE));
         }
     }
 }

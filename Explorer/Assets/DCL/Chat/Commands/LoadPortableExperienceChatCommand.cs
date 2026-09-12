@@ -2,7 +2,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
-using DCL.Utilities.Extensions;
 using PortableExperiences.Controller;
 using System;
 using System.Threading;
@@ -52,14 +51,19 @@ namespace DCL.Chat.Commands
 
             await UniTask.SwitchToMainThread(ct);
 
-            var result = await portableExperiencesController.CreatePortableExperienceByEnsAsync(new ENS(pxName), ct, true, true).SuppressAnyExceptionWithFallback(new IPortableExperiencesController.SpawnResponse(), ReportCategory.PORTABLE_EXPERIENCE);
+            try
+            {
+                await portableExperiencesController.CreatePortableExperienceByEnsAsync(new ENS(pxName), ct, isGlobalPortableExperience: true, force: true, requireUserAuthorization: true);
 
-            bool isSuccess = !string.IsNullOrEmpty(result.ens);
-
-            if (ct.IsCancellationRequested)
-                return "🔴 Error. The operation was canceled!";
-
-            return isSuccess ? $"🟢 The Portable Experience {pxName} has started loading" : $"🔴 Error. Could not load {pxName} as a Portable Experience";
+                return $"🟢 The Portable Experience {pxName} has started loading";
+            }
+            catch (OperationCanceledException) { return "🔴 Error. The operation was canceled!"; }
+            catch (PortableExperienceAuthorizationDeniedException) { return $"🔴 {pxName} was not loaded because you denied its authorization request"; }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, ReportCategory.PORTABLE_EXPERIENCE);
+                return $"🔴 Error. Could not load {pxName} as a Portable Experience";
+            }
         }
     }
 }

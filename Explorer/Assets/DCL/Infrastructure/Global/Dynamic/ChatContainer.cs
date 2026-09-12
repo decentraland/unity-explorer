@@ -123,7 +123,7 @@ namespace Global.Dynamic
                 new ShowEntityChatCommand(worldInfoHub),
                 reloadSceneChatCommand,
                 new LoadPortableExperienceChatCommand(staticContainer.PortableExperiencesController),
-                new KillPortableExperienceChatCommand(staticContainer.PortableExperiencesController, staticContainer.SmartWearableCache),
+                new KillPortableExperienceChatCommand(staticContainer.PortableExperiencesController),
                 new VersionChatCommand(dclVersion),
                 new SupportChatCommand(uiShellContainer.SupportRequestService),
                 new RoomsChatCommand(commsContainer.RoomHub),
