@@ -75,6 +75,12 @@ Each decorator wraps `origin.Send()` and forwards `origin.MessageAdded` events, 
 
 ---
 
+## Rooms & local scene development
+
+Comms rooms are wired in `CommsContainer.Create`. In **local scene development** the Friends subsystem is disabled, so the LiveKit **chat room** (the transport that carries DMs) must not be connected at all: `CommsContainer` passes `IConnectiveRoom.Null.INSTANCE` for the chat room in that mode, exactly as it already does for the archipelago island room. Gate the connection **at the source** — do not connect the room and then drop inbound DMs downstream, which leaves an unanswerable conversation half-alive. `PrivateConversationUserStateService.InitializeAsync` must also early-return when `FeatureId.LocalSceneDevelopment` is enabled, because waiting on a room that never connects only burns the timeout and logs a spurious error.
+
+---
+
 ## Chat Command Pattern
 
 ### Interface
