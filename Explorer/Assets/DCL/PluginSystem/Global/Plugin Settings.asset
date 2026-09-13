@@ -475,7 +475,7 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
-        <LegacyExplorePanelPrefab>k__BackingField:
+        <LobbyExplorePanelPrefab>k__BackingField:
           m_AssetGUID: 07ae770d2aa140eeb767b5dcab7cbbca
           m_SubObjectName:
           m_SubObjectType:

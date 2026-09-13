@@ -447,7 +447,7 @@ namespace DCL.PluginSystem.Global
                 ownedNftFilter
             );
 
-            ExplorePanelView panelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(livingLobbyEnabled ? settings.ExplorePanelPrefab : settings.LegacyExplorePanelPrefab, ct: ct)).GetComponent<ExplorePanelView>();
+            ExplorePanelView panelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(livingLobbyEnabled ? settings.LobbyExplorePanelPrefab : settings.ExplorePanelPrefab, ct: ct)).GetComponent<ExplorePanelView>();
             ControllerBase<ExplorePanelView, ExplorePanelParameter>.ViewFactoryMethod viewFactoryMethod = ExplorePanelController.Preallocate(panelViewAsset, null, out ExplorePanelView explorePanelView);
 
             ProvidedAsset<AudioMixer> generalAudioMixer = await assetsProvisioner.ProvideMainAssetAsync(settings.GeneralAudioMixer, ct);
@@ -865,7 +865,7 @@ namespace DCL.PluginSystem.Global
         public class ExplorePanelSettings : IDCLPluginSettings
         {
             [field: SerializeField] public AssetReferenceGameObject ExplorePanelPrefab { get; private set; } = null!;
-            [field: SerializeField] public AssetReferenceGameObject LegacyExplorePanelPrefab { get; private set; } = null!;
+            [field: SerializeField] public AssetReferenceGameObject LobbyExplorePanelPrefab { get; private set; } = null!;
             [field: SerializeField] public BackpackSettings BackpackSettings { get; private set; } = null!;
             [field: SerializeField] public string[] EmbeddedEmotes { get; private set; } = null!;
             [field: SerializeField] public SettingsMenuConfiguration SettingsMenuConfiguration { get; private set; } = null!;

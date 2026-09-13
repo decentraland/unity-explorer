@@ -51,7 +51,7 @@ MonoBehaviour:
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 07ae770d2aa140eeb767b5dcab7cbbca
-    m_Address: LegacyExplorePanelUI
+    m_Address: LobbyExplorePanelUI
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
