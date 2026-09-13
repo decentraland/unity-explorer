@@ -73,6 +73,7 @@ Prerequisites:
 
 - Rust toolchain with the GNU target: `rustup target add x86_64-pc-windows-gnu`
 - MSYS2 with the mingw64 toolchain at `C:\msys64` (the linker is pinned to `C:\msys64\mingw64\bin\gcc.exe` in `native/.cargo/config.toml`)
+- LLVM with both `libclang` and the `clang` executable on `PATH` (the GitHub Windows runner image ships it that way). `ffmpeg-sys-next` generates its bindings at build time through bindgen, which probes the system include directories by running `clang`; with only `LIBCLANG_PATH` set, libclang parses mingw's `malloc.h` without its own resource headers and the build stops at `mm_malloc.h`.
 - FFmpeg **8.1** development files (headers + import libs + runtime DLLs) in `native/.third_party/ffmpeg/`. Use the [BtbN](https://github.com/BtbN/FFmpeg-Builds/releases) **LGPL shared** win64 build for release 8.1 — the DLL majors must be avcodec **62** / avutil **60** (see Runtime deployment). `FFMPEG_DIR` already points there via `native/.cargo/config.toml`.
 
 Then:
