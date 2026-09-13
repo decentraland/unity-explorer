@@ -125,7 +125,7 @@ namespace MVC
             using CancellationTokenSource? linkedCancellation = ct.CanBeCanceled
                 ? CancellationTokenSource.CreateLinkedTokenSource(ct, destructionToken)
                 : null;
-            ct = linkedCancellation?.Token ?? destructionToken;
+            CancellationToken showToken = linkedCancellation?.Token ?? destructionToken;
 
             try
             {
@@ -134,16 +134,16 @@ namespace MVC
                 switch (controller.Layer)
                 {
                     case CanvasOrdering.SortingLayer.Popup:
-                        await ShowPopupAsync(command, controller, ct);
+                        await ShowPopupAsync(command, controller, showToken);
                         break;
                     case CanvasOrdering.SortingLayer.Fullscreen:
-                        await ShowFullScreenAsync(command, controller, ct);
+                        await ShowFullScreenAsync(command, controller, showToken);
                         break;
                     case CanvasOrdering.SortingLayer.Persistent:
-                        await ShowPersistentAsync(command, controller, ct);
+                        await ShowPersistentAsync(command, controller, showToken);
                         break;
                     case CanvasOrdering.SortingLayer.Overlay:
-                        await ShowOverlayAsync(command, controller, ct);
+                        await ShowOverlayAsync(command, controller, showToken);
                         break;
                 }
             }

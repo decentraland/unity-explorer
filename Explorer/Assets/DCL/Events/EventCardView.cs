@@ -44,7 +44,7 @@ namespace DCL.Events
 
         [Header("Event Info")]
         [SerializeField] protected ImageView eventThumbnail = null!;
-        [SerializeField] protected Sprite defaultThumbnail;
+        [SerializeField] protected Sprite? defaultThumbnail;
         [SerializeField] private TMP_Text eventText = null!;
         [SerializeField] protected TMP_Text hostName = null!;
         [SerializeField] private TMP_Text eventDate = null!;

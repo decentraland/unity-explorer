@@ -1,10 +1,12 @@
 using DCL.UI;
+using DCL.Utilities.Extensions;
 using DCL.Communities;
 using System.Threading;
 using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.Serialization;
 
 namespace DCL.ExplorePanel.Lobby
 {
@@ -13,19 +15,28 @@ namespace DCL.ExplorePanel.Lobby
     {
         [SerializeField] private Sprite? defaultThumbnail;
 
-        [field: SerializeField] public TMP_Text Title { get; private set; }
-        [field: SerializeField] public TMP_Text Detail { get; private set; }
-        [field: SerializeField] public TMP_Text Status { get; private set; }
-        [field: SerializeField] public Image Thumbnail { get; private set; }
-        [field: SerializeField] public Button Surface { get; private set; }
-        [field: SerializeField] public Button Primary { get; private set; }
-        [field: SerializeField] public Button Chat { get; private set; }
-        [field: SerializeField] public Button Profile { get; private set; }
+        [SerializeField, FormerlySerializedAs("<Title>k__BackingField")] private TMP_Text? titleText;
+        [SerializeField, FormerlySerializedAs("<Detail>k__BackingField")] private TMP_Text? detailText;
+        [SerializeField, FormerlySerializedAs("<Status>k__BackingField")] private TMP_Text? statusText;
+        [SerializeField, FormerlySerializedAs("<Thumbnail>k__BackingField")] private Image? thumbnail;
+        [SerializeField, FormerlySerializedAs("<Surface>k__BackingField")] private Button? surface;
+        [SerializeField, FormerlySerializedAs("<Primary>k__BackingField")] private Button? primary;
+        [SerializeField, FormerlySerializedAs("<Chat>k__BackingField")] private Button? chat;
+        [SerializeField, FormerlySerializedAs("<Profile>k__BackingField")] private Button? profile;
 
         private string imageUrl = string.Empty;
         private Action? selected;
         private Action? chatSelected;
         private Action? profileSelected;
+
+        public TMP_Text Title => titleText.EnsureNotNull();
+        public TMP_Text Detail => detailText.EnsureNotNull();
+        public TMP_Text Status => statusText.EnsureNotNull();
+        public Image Thumbnail => thumbnail.EnsureNotNull();
+        public Button Surface => surface.EnsureNotNull();
+        public Button Primary => primary.EnsureNotNull();
+        public Button Chat => chat.EnsureNotNull();
+        public Button Profile => profile.EnsureNotNull();
 
         private void Awake()
         {

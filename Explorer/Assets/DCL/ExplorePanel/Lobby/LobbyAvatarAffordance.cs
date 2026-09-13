@@ -1,3 +1,4 @@
+using DCL.Utilities.Extensions;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -7,8 +8,8 @@ namespace DCL.ExplorePanel.Lobby
     /// <summary>Shows the same customization affordance for pointer and keyboard users.</summary>
     public sealed class LobbyAvatarAffordance : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, ISelectHandler, IDeselectHandler
     {
-        [SerializeField] private GameObject hint;
-        [SerializeField] private Outline highlight;
+        [SerializeField] private GameObject? hint;
+        [SerializeField] private Outline? highlight;
 
         public void OnPointerEnter(PointerEventData _) => SetHighlighted(true);
         public void OnPointerExit(PointerEventData _) => SetHighlighted(false);
@@ -22,8 +23,8 @@ namespace DCL.ExplorePanel.Lobby
 
         private void SetHighlighted(bool highlighted)
         {
-            hint.SetActive(highlighted);
-            highlight.enabled = highlighted;
+            hint.EnsureNotNull().SetActive(highlighted);
+            highlight.EnsureNotNull().enabled = highlighted;
         }
     }
 }

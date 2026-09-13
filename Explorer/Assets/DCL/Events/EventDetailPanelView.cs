@@ -27,7 +27,7 @@ namespace DCL.Communities.EventInfo
 
         [Header("Event Info")]
         [SerializeField] private ImageView eventImage = null!;
-        [SerializeField] private Sprite defaultThumbnail;
+        [SerializeField] private Sprite? defaultThumbnail;
         [SerializeField] private TMP_Text eventDate = null!;
         [SerializeField] private TMP_Text eventName = null!;
         [SerializeField] private TMP_Text hostName = null!;

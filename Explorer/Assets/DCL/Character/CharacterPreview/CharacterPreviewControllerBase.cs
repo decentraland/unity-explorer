@@ -41,7 +41,7 @@ namespace DCL.CharacterPreview
         private Vector3 avatarPosition;
 
         private RenderTexture? currentRenderTexture;
-        public RenderTexture CurrentRenderTexture => currentRenderTexture;
+        public RenderTexture? CurrentRenderTexture => currentRenderTexture;
 
         protected CharacterPreviewController? previewController;
         protected CharacterPreviewAvatarModel previewAvatarModel;
