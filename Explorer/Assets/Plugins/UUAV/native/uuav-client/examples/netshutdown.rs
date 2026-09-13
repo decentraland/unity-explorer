@@ -35,10 +35,20 @@ fn to_str(line: *const c_char) -> String {
     unsafe { CStr::from_ptr(line) }.to_string_lossy().into_owned()
 }
 
+/// Stands in for Unity's probe: on Linux the pointer is opaque, the
+/// headless Vulkan device installed here is what init captures.
 #[cfg(target_os = "linux")]
 fn with_probe<T>(init: impl FnOnce(*const c_void) -> T) -> T {
     uuav::test_install_headless_device().expect("headless Vulkan device");
     init(std::ptr::NonNull::<u8>::dangling().as_ptr().cast_const().cast())
+}
+
+/// The headless probe is Linux-only; elsewhere the example builds (so
+/// `--all-targets` covers it) but refuses to run.
+#[cfg(not(target_os = "linux"))]
+fn with_probe<T>(_init: impl FnOnce(*const c_void) -> T) -> T {
+    eprintln!("netshutdown needs the Linux headless Vulkan probe; run it on Linux");
+    std::process::exit(2)
 }
 
 fn main() {
