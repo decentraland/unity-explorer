@@ -8,8 +8,13 @@ namespace UUAV.Compat
         private static readonly TimeRanges Buffered = new TimeRanges(1);
 
         private readonly UUAVPlayer player;
-
         private bool seekRequested;
+
+        // A seek issued while the media is still opening. The core only
+        // accepts seeks once it holds a playback unit, so the target waits
+        // here and is issued from Tick as soon as the media settles; a later
+        // Seek replaces it, matching how the core coalesces rapid seeks.
+        private double? pendingSeek;
 
         public UUAVBackend(UUAVPlayer player)
         {
@@ -19,11 +24,31 @@ namespace UUAV.Compat
         public void Tick()
         {
             UUAVState state = player.State;
+            bool settled = state == UUAVState.Playing
+                || state == UUAVState.Paused
+                || state == UUAVState.Ready;
 
-            if (seekRequested
-                && (state == UUAVState.Playing
-                    || state == UUAVState.Paused
-                    || state == UUAVState.Ready))
+            if (pendingSeek is double target)
+            {
+                if (settled || state == UUAVState.Ended)
+                {
+                    pendingSeek = null;
+                    player.Seek(target);
+                    // seekRequested stays up until a later settled tick
+                    return;
+                }
+
+                if (state != UUAVState.Opening)
+                {
+                    // the media went away before it opened
+                    pendingSeek = null;
+                    seekRequested = false;
+                }
+
+                return;
+            }
+
+            if (seekRequested && settled)
             {
                 seekRequested = false;
             }
@@ -33,15 +58,23 @@ namespace UUAV.Compat
 
         public void Pause() => player.Pause();
 
-        public void Stop() 
+        public void Stop()
         {
             player.Pause();
-            player.Seek(0); // Stop rewinds to the start, keeping the media open
+            Seek(0); // Stop rewinds to the start, keeping the media open
         }
 
         public void Seek(double time)
         {
             seekRequested = true;
+
+            if (player.State == UUAVState.Opening)
+            {
+                pendingSeek = time;
+                return;
+            }
+
+            pendingSeek = null;
             player.Seek(time);
         }
 
@@ -88,7 +121,7 @@ namespace UUAV.Compat
 
         public double GetDuration() => player.Duration;
 
-        public Texture? GetTexture(int index = 0) 
+        public Texture? GetTexture(int index = 0)
         {
             return player.CurrentTexture;
         }
