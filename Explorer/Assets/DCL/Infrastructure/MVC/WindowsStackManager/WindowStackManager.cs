@@ -26,13 +26,13 @@ namespace MVC
         public WindowStackManager(InputAction closeAction)
         {
             this.closeAction = closeAction;
-            closeAction.performed += CloseNextUI;
+            closeAction.performed += CloseNextUi;
         }
 
         public void Dispose() =>
-            closeAction.performed -= CloseNextUI;
+            closeAction.performed -= CloseNextUi;
 
-        private void CloseNextUI(InputAction.CallbackContext _)
+        private void CloseNextUi(InputAction.CallbackContext _)
         {
             if (closeableStack.Count == 0) return;
 

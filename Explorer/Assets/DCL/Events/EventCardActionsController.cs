@@ -95,7 +95,7 @@ namespace DCL.Events
             {
                 var result = await realmNavigator.TryChangeRealmAsync(
                     URLDomain.FromString(new ENS(eventData.Server).ConvertEnsToWorldUrl(decentralandUrlsSource.Url(DecentralandUrl.WorldServer))),
-                    ct, default, isWorld: true, allowsSpawnPointerOverride: true);
+                    ct, isWorld: true, allowsSpawnPointerOverride: true);
                 return result.As(ChangeRealmErrors.AsTaskError);
             }
             else

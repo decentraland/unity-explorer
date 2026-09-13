@@ -185,7 +185,7 @@ namespace DCL.Places
             if (!string.IsNullOrWhiteSpace(placeInfo.world_name))
             {
                 var result = await realmNavigator.TryChangeRealmAsync(URLDomain.FromString(new ENS(placeInfo.world_name).ConvertEnsToWorldUrl(dclUrlSource.Url(DecentralandUrl.WorldServer))),
-                    ct, default, isWorld: true, allowsSpawnPointerOverride: true);
+                    ct, isWorld: true, allowsSpawnPointerOverride: true);
                 return result.As(ChangeRealmErrors.AsTaskError);
             }
             else

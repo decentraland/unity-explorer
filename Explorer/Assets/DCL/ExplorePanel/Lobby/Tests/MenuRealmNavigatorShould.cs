@@ -25,7 +25,7 @@ namespace DCL.ExplorePanel.Lobby.Tests
 
             status.SetCurrentStage(LoadingStatus.LoadingStage.Completed);
             await pending;
-            _ = navigator.Received(1).TeleportToParcelAsync(Vector2Int.one, Arg.Any<CancellationToken>(), false, true, null);
+            _ = navigator.Received(1).TeleportToParcelAsync(Vector2Int.one, Arg.Any<CancellationToken>(), false, true);
         }
 
         [TestCase(LoadingStatus.LoadingStage.Failed, TaskError.MessageError)]
