@@ -1,0 +1,39 @@
+[
+  {
+    "name": "ktx",
+    "derivation": "drv/ktx/default.nix",
+    "shipped": {
+      "path": "./build/Linux/decentraland-explorer_Data/Plugins/x86_64/libktx_unity.so",
+      "sha256": "36962d135310df18d7f4dfceb2aa0754f78cc1368b2cd57dc7e3cb4e063cc312"
+    },
+    "built": {
+      "path": "/nix/store/wy89ca9mms98za43fmpx4j4nxlrn4cl7-libktx_unity-1.1.0+ktx-4.4.0/lib/libktx_unity.so",
+      "sha256": "7e89517103d49df4dd7ea8773393165d847de3caebb3ee30077f0faa2e579db8"
+    },
+    "checked_at": "2026-09-06T19:45:40.154026+00:00",
+    "detail": {
+      "normalized_match": false,
+      "dynsym_match": false,
+      "dynsym_only_shipped": [
+        "B __bss_start",
+        "B _end",
+        "D _edata",
+        "T _fini",
+        "T _init",
+        "W _ZN6basist11dxt5a_block12set_selectorEjjj",
+        "W _ZN6basist15bitwise_decoder14decode_huffmanERKNS_22huffman_decoding_tableEi",
+        "W _ZN6basist17decoder_etc_block11pack_color5ERKNS_7color32Ebj",
+        "W _ZN6basist17decoder_etc_block16get_block_color5ERKNS_7color32EjjRjS4_S4_",
+        "W _ZN6basist17decoder_etc_block17get_block_colors5EPNS_7color32ERKS1_j",
+        "W _ZN6basist17decoder_etc_block19get_block_colors5_gEPiRKNS_7color32Ej",
+        "W _ZN6basist17decoder_etc_block24get_block_colors5_boundsEPNS_7color32ERKS1_jjj",
+        "W _ZN6basist7color3211set_clampedEiiii",
+        "W _ZN6basist8selector10init_flagsEv",
+        "W _ZN6basist8selector12set_selectorEjjj",
+        "W _ZSt13__adjust_heapIPjljN9__gnu_cxx5__ops15_Iter_less_iterEEvT_T0_S5_T1_T2_"
+      ],
+      "dynsym_only_built": []
+    },
+    "verdict": "divergent"
+  }
+]

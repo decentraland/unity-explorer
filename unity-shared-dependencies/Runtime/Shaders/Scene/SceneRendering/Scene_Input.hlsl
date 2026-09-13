@@ -16,6 +16,9 @@ half4 _SpecColor;
 half4 _EmissionColor;
 float4 _PlaneClipping;
 float4 _VerticalClipping;
+float4 _InstColourTint;
+float4 _InstUVTransform;
+float _InstDitherLevel;
 half _Cutoff;
 half _Smoothness;
 half _Metallic;
@@ -47,6 +50,9 @@ UNITY_DOTS_INSTANCING_END(MaterialPropertyMetadata)
 UNITY_DOTS_INSTANCING_START(UserPropertyMetadata)
     UNITY_DOTS_INSTANCED_PROP(float4, _PlaneClipping)
     UNITY_DOTS_INSTANCED_PROP(float4, _VerticalClipping)
+    UNITY_DOTS_INSTANCED_PROP(float4, _InstColourTint)
+    UNITY_DOTS_INSTANCED_PROP(float4, _InstUVTransform)
+    UNITY_DOTS_INSTANCED_PROP(float , _InstDitherLevel)
 UNITY_DOTS_INSTANCING_END(UserPropertyMetadata)
 
 // Here, we want to avoid overriding a property like e.g. _BaseColor with something like this:
@@ -64,6 +70,8 @@ static float4 unity_DOTS_Sampled_SpecColor;
 static float4 unity_DOTS_Sampled_EmissionColor;
 static float4 unity_DOTS_Sampled_PlaneClipping;
 static float4 unity_DOTS_Sampled_VerticalClipping;
+static float4 unity_DOTS_Sampled_InstColourTint;
+static float4 unity_DOTS_Sampled_InstUVTransform;
 static float  unity_DOTS_Sampled_Cutoff;
 static float  unity_DOTS_Sampled_Smoothness;
 static float  unity_DOTS_Sampled_Metallic;
@@ -71,6 +79,7 @@ static float  unity_DOTS_Sampled_BumpScale;
 static float  unity_DOTS_Sampled_Parallax;
 static float  unity_DOTS_Sampled_OcclusionStrength;
 static float  unity_DOTS_Sampled_Surface;
+static float  unity_DOTS_Sampled_InstDitherLevel;
 
 void SetupDOTSSceneMaterialPropertyCaches()
 {
@@ -86,6 +95,9 @@ void SetupDOTSSceneMaterialPropertyCaches()
     unity_DOTS_Sampled_Parallax             = UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT(float , _Parallax);
     unity_DOTS_Sampled_OcclusionStrength    = UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT(float , _OcclusionStrength);
     unity_DOTS_Sampled_Surface              = UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT(float , _Surface);
+    unity_DOTS_Sampled_InstColourTint       = UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT(float4, _InstColourTint);
+    unity_DOTS_Sampled_InstUVTransform      = UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT(float4, _InstUVTransform);
+    unity_DOTS_Sampled_InstDitherLevel      = UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT(float , _InstDitherLevel);
 }
 
 #undef UNITY_SETUP_DOTS_MATERIAL_PROPERTY_CACHES
@@ -208,7 +220,12 @@ VertexPositionInputs GetVertexPositionInputs_PerInstance(float3 positionOS, uint
     VertexPositionInputs input;
     input.positionWS = TransformObjectToWorld_PerInstance(positionOS, _instanceID);
     input.positionVS = TransformWorldToView(input.positionWS);
-    input.positionCS = TransformWorldToHClip(input.positionWS);
+
+    // precise: forbid FMA contraction on the clip-position chain so every driver compiler
+    // produces bit-identical vertex positions (sub-pixel rasterization coverage then matches
+    // across GPUs/OSes).
+    precise float4 positionCS = TransformWorldToHClip(input.positionWS);
+    input.positionCS = positionCS;
 
     float4 ndc = input.positionCS * 0.5f;
     input.positionNDC.xy = float2(ndc.x, ndc.y * _ProjectionParams.x) + ndc.w;
@@ -224,9 +241,14 @@ float4 TransformObjectToHClip_Scene(float3 _positionOS, uint _svInstanceID)
     uint cmdID = GetCommandID(0);
     uint instanceID = GetIndirectInstanceID_Base(_svInstanceID);
     uint instID = _PerInstanceLookUpAndDitherBuffer[instanceID].instanceID;
-    return mul(GetWorldToHClipMatrix(), mul(_PerInstanceBuffer[instID].instMatrix, float4(_positionOS, 1.0)));
+
+    // precise: see GetVertexPositionInputs_PerInstance — bit-identical clip positions across
+    // driver compilers.
+    precise float4 positionCS = mul(GetWorldToHClipMatrix(), mul(_PerInstanceBuffer[instID].instMatrix, float4(_positionOS, 1.0)));
+    return positionCS;
     #else
-    return TransformObjectToHClip(_positionOS);
+    precise float4 positionCS = TransformObjectToHClip(_positionOS);
+    return positionCS;
     #endif
 }
 
@@ -361,6 +383,8 @@ float2 TransformTex_PerInstance(float2 uv, uint _svInstanceID)
         float2 uv_tiling = _PerInstanceBuffer[instID].instTiling;
         float2 uv_offset = _PerInstanceBuffer[instID].instOffset;
         uv_trans = (uv_trans * uv_tiling) + uv_offset;
+    #elif defined(UNITY_DOTS_INSTANCING_ENABLED)
+        uv_trans = (uv_trans * unity_DOTS_Sampled_InstUVTransform.xy) + unity_DOTS_Sampled_InstUVTransform.zw;
     #endif
     return uv_trans;
 }

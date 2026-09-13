@@ -1,8 +1,5 @@
-﻿using Cysharp.Threading.Tasks;
 using DCL.Landscape.Jobs;
 using StylizedGrass;
-using System;
-using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
@@ -12,22 +9,20 @@ namespace DCL.Landscape
 {
     public static class TerrainGenerationUtils
     {
-        [Obsolete]
-        public static async UniTask<GrassColorMapRenderer> AddColorMapRendererAsync(Transform parent, IReadOnlyList<Terrain> terrains, TerrainFactory factory)
+        /// <summary>
+        ///     Instantiates the grass colour-map renderer under <paramref name="parent" />, bakes
+        ///     <paramref name="ground" /> into it and publishes the result to the grass shader
+        ///     globals. The renderer follows its parent's lifecycle: hiding the terrain root parks
+        ///     the bake, showing it again re-publishes it, destroying it releases the texture.
+        /// </summary>
+        public static GrassColorMapRenderer AddColorMapRenderer(Transform parent, TerrainFactory factory, GrassColorMapSplatSource ground)
         {
-            // we wait at least one frame so all the terrain chunks are properly rendered so we can render the color map
-            await UniTask.Yield();
+            (GrassColorMapRenderer colorMapRenderer, GrassColorMap _) = factory.CreateColorMapRenderer(parent);
 
-            (GrassColorMapRenderer colorMapRenderer, GrassColorMap grassColorMap) = factory.CreateColorMapRenderer(parent);
-
-            foreach (Terrain terrain in terrains)
-                colorMapRenderer.terrainObjects.Add(terrain.gameObject);
-
+            colorMapRenderer.splatSources.Add(ground);
             colorMapRenderer.RecalculateBounds();
-
-            grassColorMap.bounds.center = new Vector3(grassColorMap.bounds.center.x, 0, grassColorMap.bounds.center.z);
-
             colorMapRenderer.Render();
+
             return colorMapRenderer;
         }
 

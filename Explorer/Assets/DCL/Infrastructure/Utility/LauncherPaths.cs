@@ -17,6 +17,16 @@ namespace DCL.Utility
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                 "DecentralandLauncherLight"
             );
+#elif UNITY_STANDALONE_LINUX || UNITY_EDITOR_LINUX
+        // ${XDG_DATA_HOME:-~/.local/share}/DecentralandLauncherLight/ — the launcher's app directory on
+        // Linux (dirs::data_local_dir()); a sandboxed launcher hands the client the same XDG_DATA_HOME.
+        public static readonly string LauncherDirectory =
+            Path.Combine(
+                Environment.GetEnvironmentVariable("XDG_DATA_HOME") is { Length: > 0 } xdgDataHome
+                    ? xdgDataHome
+                    : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), ".local", "share"),
+                "DecentralandLauncherLight"
+            );
 #else
         // ~/Library/Application Support/DecentralandLauncherLight/
         public static readonly string LauncherDirectory =

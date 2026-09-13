@@ -202,7 +202,9 @@ float4 fragDoubleShadeFeather(VertexOutput i, half facing : VFACE) : SV_TARGET
     }
 
     int nMatCap_SamplerArrID = _MatCap_SamplerArr_ID;
-    float4 _MatCap_Sampler_var = SAMPLE_MATCAP(TRANSFORM_TEX(_Rot_MatCapUV_var, _MatCap_Sampler), nMatCap_SamplerArrID, _BlurLevelMatcap);
+    // _MatCap_Sampler_ST is never uploaded by the material system on this pipeline, so
+    // its cbuffer bytes are undefined; sample the matcap with the raw rotated UV.
+    float4 _MatCap_Sampler_var = SAMPLE_MATCAP(_Rot_MatCapUV_var, nMatCap_SamplerArrID, _BlurLevelMatcap);
 
     // MatcapMask
     float _Tweak_MatcapMaskLevel_var = 1.0f;//saturate(lerp(_Set_MatcapMask_var.g, (1.0 - _Set_MatcapMask_var.g), _Inverse_MatcapMask) + _Tweak_MatcapMaskLevel);

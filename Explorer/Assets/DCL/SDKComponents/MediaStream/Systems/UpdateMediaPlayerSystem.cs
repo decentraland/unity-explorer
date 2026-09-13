@@ -78,7 +78,7 @@ namespace DCL.SDKComponents.MediaStream
             ToggleCurrentStreamsStateQuery(World, enteredScene);
         }
 
-        // Drops players whose AVPro object was destroyed under them (pool eviction / scene teardown). Runs first so no
+        // Drops players whose MediaPlayer object was destroyed under them (pool eviction / scene teardown). Runs first so no
         // later query dereferences the stale ref; recreated from the SDK component next frame.
         [Query]
         [None(typeof(DeleteEntityIntention))]

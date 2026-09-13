@@ -1,0 +1,14 @@
+# Patch.toml - the [profile.release] that build-win.py overlays onto the downloaded Cargo.toml,
+# so the build emits separate debug symbols (a .pdb on Windows, a .dSYM on macOS) instead of
+# baking them into the library. This mirrors upstream rust-sdks' own release profile; it is the
+# single source for these flags - edit here to change them.
+[profile.release]
+# Emit debug symbols to a separate file (.pdb on Windows, .dSYM on macOS) instead of the binary:
+debug = 2
+split-debuginfo = "packed"
+strip = "symbols"
+# Optimization flags below match upstream's release profile.
+lto = true
+opt-level = "z"
+codegen-units = 1
+panic = "abort"

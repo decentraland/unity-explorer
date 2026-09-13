@@ -28,7 +28,7 @@ use objc2_metal::{
 use std::collections::HashMap;
 use std::os::raw::c_void;
 use uuav_core as core;
-use uuav_ipc::protocol::{PlayerId, ToClient};
+use uuav_ipc::protocol::{PlayerId, TextureImportWire, ToClient};
 use uuav_ipc::channel::Channel;
 use uuav_ipc::mach_channel;
 
@@ -259,6 +259,8 @@ fn announce(
         height,
         // surfaces travel as mach ports, not handles
         handles: Vec::new(),
+        import: TextureImportWire::Handles,
+        planes: Vec::new(),
     })
 }
 

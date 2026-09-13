@@ -122,6 +122,13 @@ namespace UUAV.Tests
             return server.UrlFor(fixtureName);
         }
 
+        // the fixture's first byte arrives after a pause, so the player sits
+        // in Opening long enough for the test to act inside that window
+        protected string HeldUrlFor(string fixtureName)
+        {
+            return UrlFor($"{FixtureServer.HoldPrefix}{System.Guid.NewGuid():N}/{fixtureName}");
+        }
+
         protected UUAVPlayer CreatePlayer(out AudioTapBehaviour audio)
         {
             // assembled inactive so everything is in place before

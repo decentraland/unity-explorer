@@ -196,6 +196,28 @@ namespace DCL.Rendering.GPUInstancing
         {
             foreach (GPUInstancingLODGroupWithBuffer candidate in candidates)
             {
+                // Baked candidate data can reference materials whose shader has no batcher
+                // support; instancing those draws every instance with the same per-draw matrix
+                // (no per-instance fetch path), so they must not enter the indirect pipeline.
+                candidate.CombinedLodsRenderers.RemoveAll(combined =>
+                {
+                    Material sharedMat = combined.SharedMaterial;
+
+                    bool supported = sharedMat != null && sharedMat.shader
+                                                                   .keywordSpace
+                                                                   .FindKeyword(GPUInstancingMaterialsCache.GPU_INSTANCING_KEYWORD)
+                                                                   .isValid;
+
+                    if (!supported)
+                        ReportHub.LogWarning(ReportCategory.GPU_INSTANCING,
+                            $"{candidate.Name}: material {(sharedMat != null ? sharedMat.name : "<null>")} uses a shader without {GPUInstancingMaterialsCache.GPU_INSTANCING_KEYWORD}; skipping its indirect draws");
+
+                    return !supported;
+                });
+
+                if (candidate.CombinedLodsRenderers.Count == 0)
+                    continue;
+
                 if (!candidatesBuffersTable.TryGetValue(candidate, out GPUInstancingBuffers buffers))
                 {
                     buffers = new GPUInstancingBuffers();

@@ -166,12 +166,14 @@ public class AssetBundleManifestVersion
         }
 
         //! safe: every factory (CreateFromFallback, CreateFailed, CreateManualManifest, CreateForLOD) sets the current platform's info, and deserialized manifests carry both platforms.
+        // Linux uses windows bundles — see PlatformUtils.GetCurrentPlatform.
         public string GetAssetBundleManifestVersion() =>
-            IPlatform.DEFAULT.Is(IPlatform.Kind.Windows) ? assets?.windows!.version! : assets?.mac!.version!;
+            IPlatform.DEFAULT.IsNot(IPlatform.Kind.Mac) ? assets?.windows!.version! : assets?.mac!.version!;
 
         //! safe: same factory invariant as GetAssetBundleManifestVersion.
+        // Linux uses windows bundles — see PlatformUtils.GetCurrentPlatform.
         private string GetAssetBundleManifestBuildDate() =>
-            IPlatform.DEFAULT.Is(IPlatform.Kind.Windows) ? assets?.windows!.buildDate! : assets?.mac!.buildDate!;
+            IPlatform.DEFAULT.IsNot(IPlatform.Kind.Mac) ? assets?.windows!.buildDate! : assets?.mac!.buildDate!;
 
         public bool IsEmpty() =>
             assets?.IsEmpty() ?? true;
@@ -284,7 +286,7 @@ public class AssetBundleManifestVersion
 
         public void SetVersion(string assetBundleManifestVersion, string buildDate)
         {
-            if (IPlatform.DEFAULT.Is(IPlatform.Kind.Windows))
+            if (IPlatform.DEFAULT.IsNot(IPlatform.Kind.Mac))
                 windows = new PlatformInfo(assetBundleManifestVersion, buildDate);
             else
                 mac = new PlatformInfo(assetBundleManifestVersion, buildDate);
@@ -292,7 +294,7 @@ public class AssetBundleManifestVersion
 
         public bool IsEmpty()
         {
-            if (IPlatform.DEFAULT.Is(IPlatform.Kind.Windows))
+            if (IPlatform.DEFAULT.IsNot(IPlatform.Kind.Mac))
                 return windows == null || string.IsNullOrEmpty(windows.version);
 
             return mac == null || string.IsNullOrEmpty(mac.version);

@@ -1,0 +1,13 @@
+{
+  "outputDir": "",
+  "entries": [
+    { "shaderName": "DCL/Scene", "passName": "ForwardLit", "keywords": [] },
+    { "shaderName": "DCL/Scene", "passName": "ForwardLit", "keywords": ["LOD_FADE_CROSSFADE"] },
+    { "shaderName": "DCL/Scene", "passName": "DepthOnly", "keywords": [] },
+    { "shaderName": "DCL/Scene", "passName": "DepthNormals", "keywords": [] },
+    { "shaderName": "DCL/Scene", "passName": "ShadowCaster", "keywords": [] },
+    { "shaderName": "DCL/DCL_Toon", "passName": "ForwardLit", "keywords": ["_DCL_TEXTURE_ARRAYS", "_DCL_COMPUTE_SKINNING", "_FORWARD_PLUS"] },
+    { "shaderName": "DCL/MountainLit", "passName": "ForwardLit", "keywords": [] },
+    { "computeAssetPath": "Assets/DCL/Rendering/GPUInstanceBatcher/ComputeShaders/PerInstanceCullingEvaluation.compute", "kernelName": "CameraCullingAndLODCalculationKernel" }
+  ]
+}

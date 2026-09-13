@@ -73,6 +73,7 @@ Prerequisites:
 
 - Rust toolchain with the GNU target: `rustup target add x86_64-pc-windows-gnu`
 - MSYS2 with the mingw64 toolchain at `C:\msys64` (the linker is pinned to `C:\msys64\mingw64\bin\gcc.exe` in `native/.cargo/config.toml`)
+- LLVM with both `libclang` and the `clang` executable on `PATH` (the GitHub Windows runner image ships it that way). `ffmpeg-sys-next` generates its bindings at build time through bindgen, which probes the system include directories by running `clang`; with only `LIBCLANG_PATH` set, libclang parses mingw's `malloc.h` without its own resource headers and the build stops at `mm_malloc.h`.
 - FFmpeg **8.1** development files (headers + import libs + runtime DLLs) in `native/.third_party/ffmpeg/`. Use the [BtbN](https://github.com/BtbN/FFmpeg-Builds/releases) **LGPL shared** win64 build for release 8.1 — the DLL majors must be avcodec **62** / avutil **60** (see Runtime deployment). `FFMPEG_DIR` already points there via `native/.cargo/config.toml`.
 
 Then:
@@ -146,6 +147,41 @@ macOS notes:
 - **Universal binaries** (arm64 + x86_64), **Metal only**: `UUAVRuntime` refuses to initialize on any other graphics API, because native has no way to validate that the probe texture pointer is an `id<MTLTexture>`. Verify the slices with `lipo -archs <dylib>` or by running `doctor-libs.sh` in the plugins folder.
 - The Seatbelt profile (`native/uuav-server/helper.sb`) is embedded into `uuav-helper` at compile time - nothing extra ships, and sandboxing needs no entitlements, so ad-hoc signing stays sufficient.
 - CI does not notarize; the helper inherits the ad-hoc signing from `build.sh`. If notarization lands later, add `uuav-helper` to the signed inventory.
+
+On Linux the set lives in `Packages/UUAV/Runtime/Plugins/linux-x86_64/`:
+
+```
+libuuav.so            # the client Unity loads (C ABI)
+libuuav_core.so       # debug-only in-process alternative (UUAV_NO_IPC_LAYER)
+uuav-helper           # the decode process, spawned by libuuav.so from its own folder
+libavcodec.so.62      # FFmpeg n8.1 runtime, linked by the helper
+libavdevice.so.62
+libavfilter.so.11
+libavformat.so.62
+libavutil.so.60
+libswresample.so.6
+libswscale.so.9
+```
+
+Linux notes:
+
+- `libuuav.so`, `libuuav_core.so` and `uuav-helper` are built from this plugin's `native/` Rust workspace (`uuav-client`, `uuav-core` via `src/`, `uuav-server`) for `x86_64-unknown-linux-gnu`. `native/build.sh` currently automates only the Windows and macOS deployments; the Linux binaries are committed prebuilt.
+- That `native/` workspace is self-contained and is the source of record for the three Linux binaries: a build of this tree is byte-identical to a build of the tree it was extracted from, so nothing about the artifacts depends on sources outside this repository.
+- FFmpeg is an **LGPL-only shared build of n8.1** (no `--enable-gpl`, no `--enable-nonfree`); the exact configure line is embedded in every FFmpeg library (`strings libavutil.so.60 | grep -- --prefix`). License text and full provenance: [`COPYING.LGPLv2.1`](COPYING.LGPLv2.1) and [`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md) in this folder.
+- The hash lock below (`scripts/uuav/uuav-binaries.lock.json`) pins the **macOS and Windows** targets only; the `linux-x86_64` binaries are not covered by `scripts/uuav/verify-binaries.py`. They are covered instead by the provenance harness in `scripts/native-provenance/`, which rebuilds each of them from pinned sources and records the outcome in [`PROVENANCE.lock`](../../../../scripts/native-provenance/PROVENANCE.lock).
+
+### Rebuilding the Linux binaries from pinned sources
+
+From the repository root:
+
+```sh
+nix-build scripts/native-provenance/drv/uuav/default.nix    # libuuav.so, libuuav_core.so, uuav-helper
+nix-build scripts/native-provenance/drv/ffmpeg/default.nix  # the seven FFmpeg libraries
+```
+
+`drv/uuav` imports the `native/` tree from this repository and asserts the sha256 of `Cargo.toml`, `Cargo.lock`, `.cargo/config.toml` and `rust-toolchain.toml`, so evaluation fails if the workspace drifts from the audited state. It links the FFmpeg 8 package it resolves (8.1.2 at the audited state) rather than the bespoke n8.1 build the committed binaries link; the resulting `NEEDED` sets are identical (avcodec 62 / avformat 62 / avutil 60 / swresample 6).
+
+Neither rebuild is byte-identical to the committed binaries. For all three cargo artifacts the exported dynamic symbol surface is identical — `libuuav.so` and `libuuav_core.so` match export for export, and `uuav-helper` exports no dynamic symbols either way. `PROVENANCE.lock` grades `uuav-helper` as a dynsym mismatch only because the comparison tool treats two empty symbol tables as a non-match; the full dynamic symbol tables diff clean. Residual byte differences are toolchain noise: the embedded cargo vendor prefix, runpath entries, and codegen drift from binding against 8.1.2 headers. Details in [`drv/uuav/NOTES.md`](../../../../scripts/native-provenance/drv/uuav/NOTES.md).
 
 ## CI verification of the shipped binaries
 

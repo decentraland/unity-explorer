@@ -1,0 +1,44 @@
+[
+  {
+    "name": "uuav-helper",
+    "derivation": "drv/uuav/default.nix",
+    "shipped": {
+      "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/linux-x86_64/uuav-helper",
+      "sha256": "79787e7a827b61f913f33a49939abb92429254e2965928605dd8139ae3138905"
+    },
+    "built": {
+      "path": "/nix/store/imiyd3crxic4mxl8g7922vq8m4inzm58-uuav-0.4.0-0e3fcab/bin/uuav-helper",
+      "sha256": "79787e7a827b61f913f33a49939abb92429254e2965928605dd8139ae3138905"
+    },
+    "checked_at": "2026-09-13T21:36:05.577048+00:00",
+    "verdict": "reproduced"
+  },
+  {
+    "name": "uuav-libuuav",
+    "derivation": "drv/uuav/default.nix",
+    "shipped": {
+      "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/linux-x86_64/libuuav.so",
+      "sha256": "472545a2f8756e6ed3fbc67d68a262250410585fd5812e1d491d168a44ecfcfd"
+    },
+    "built": {
+      "path": "/nix/store/imiyd3crxic4mxl8g7922vq8m4inzm58-uuav-0.4.0-0e3fcab/lib/libuuav.so",
+      "sha256": "472545a2f8756e6ed3fbc67d68a262250410585fd5812e1d491d168a44ecfcfd"
+    },
+    "checked_at": "2026-09-13T21:36:05.631601+00:00",
+    "verdict": "reproduced"
+  },
+  {
+    "name": "uuav-libuuav-core",
+    "derivation": "drv/uuav/default.nix",
+    "shipped": {
+      "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/linux-x86_64/libuuav_core.so",
+      "sha256": "18447aaa73b121c5f3311e4c08e0f717addf77ed7161f53f2e40c3d95dffc5f5"
+    },
+    "built": {
+      "path": "/nix/store/imiyd3crxic4mxl8g7922vq8m4inzm58-uuav-0.4.0-0e3fcab/lib/libuuav_core.so",
+      "sha256": "18447aaa73b121c5f3311e4c08e0f717addf77ed7161f53f2e40c3d95dffc5f5"
+    },
+    "checked_at": "2026-09-13T21:36:05.683651+00:00",
+    "verdict": "reproduced"
+  }
+]

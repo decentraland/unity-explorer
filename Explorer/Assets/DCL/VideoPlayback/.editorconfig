@@ -1,0 +1,8 @@
+# The Linux player interops with POSIX and ffmpeg surfaces (extern names,
+# wire-format field names), so member names follow those surfaces rather
+# than the repo convention.
+[*.cs]
+resharper_inconsistent_naming_highlighting = none
+# InspectCode runs without Unity-awareness here and flags Unity event methods
+# (Awake) as unused.
+resharper_unused_member_local_highlighting = none

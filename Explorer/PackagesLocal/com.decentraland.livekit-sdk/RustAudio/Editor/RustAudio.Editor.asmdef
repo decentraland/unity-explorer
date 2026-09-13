@@ -1,0 +1,21 @@
+{
+    "name": "RustAudio.Editor",
+    "rootNamespace": "",
+    "references": [
+        "RichTypes",
+        "LiveKit",
+        "RustAudio",
+        "RustAudio.Def"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

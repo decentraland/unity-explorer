@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using AssetManagement;
 using CommunicationData.URLHelpers;
+using DCL.Utility;
 using ECS.Abstract;
 using ECS.StreamableLoading.Common.Components;
 using System;
@@ -13,9 +14,10 @@ namespace ECS.StreamableLoading.AssetBundles
     {
         private static readonly string[] COMMON_SHADERS =
         {
-            "dcl/scene_ignore_windows", "dcl/scene_ignore_mac",
+            "dcl/scene_ignore_windows", "dcl/scene_ignore_mac", "dcl/scene_ignore_linux",
             "dcl/universal render pipeline/lit_ignore_windows",
             "dcl/universal render pipeline/lit_ignore_mac",
+            "dcl/universal render pipeline/lit_ignore_linux",
         };
 
         private readonly URLDomain streamingAssetURL;
@@ -75,13 +77,16 @@ namespace ECS.StreamableLoading.AssetBundles
         protected virtual URLDomain ResolveAssetBundlesUrl(in GetAssetBundleIntention assetBundleIntention) =>
             assetBundlesURL;
 
-        private URLAddress GetStreamingAssetsUrl(string hash, URLSubdirectory customSubdirectory) =>
+        private URLAddress GetStreamingAssetsUrl(string hash, URLSubdirectory customSubdirectory)
+        {
+            // Shader bundles are opened from the file compiled for this player's graphics APIs
+            var file = URLPath.FromString(PlatformUtils.GetEmbeddedShaderBundleName(hash));
 
             // There is a special case when it comes to the shaders:
             // they are shared and custom subdirectory should be ignored, otherwise we would need to store a copy in every subdirectory
-            customSubdirectory.IsEmpty() || COMMON_SHADERS.Contains(hash, StringComparer.OrdinalIgnoreCase)
-                ? streamingAssetURL.Append(URLPath.FromString(hash))
-                : streamingAssetURL.Append(customSubdirectory).Append(URLPath.FromString(hash));
-
+            return customSubdirectory.IsEmpty() || COMMON_SHADERS.Contains(hash, StringComparer.OrdinalIgnoreCase)
+                ? streamingAssetURL.Append(file)
+                : streamingAssetURL.Append(customSubdirectory).Append(file);
+        }
     }
 }

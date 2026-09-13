@@ -6,7 +6,7 @@ using ECS.TestSuite;
 using ECS.Unity.Textures.Components;
 using NSubstitute;
 using NUnit.Framework;
-using DCL.AvProSwitch;
+using DCL.VideoPlayback;
 using SceneRunner.Scene;
 using UnityEngine;
 using Utility;

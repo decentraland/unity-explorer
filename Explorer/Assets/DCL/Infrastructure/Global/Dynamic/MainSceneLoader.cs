@@ -262,7 +262,7 @@ namespace Global.Dynamic
             // Configure the local ICE policy before any dynamic container or room is created. The SDK still
             // applies its own loopback URL check, so this opt-in cannot change transport behavior for a remote
             // realm. RealmController recomputes the value after every realm bootstrap/change as a second guard.
-            FFIBridgeExtensions.UseTransportAllForLoopbackUrls = applicationParametersParser.HasFlag(AppArgsFlags.ACCEPT_UNTRUSTED_REALM);
+            LocalUntrustedRealmCommsPolicy.ApplyTransportPolicy(applicationParametersParser.HasFlag(AppArgsFlags.ACCEPT_UNTRUSTED_REALM));
 
             // Read while the deep link is still deferred for the same reason as the base domain: which chain the
             // client signs against is not something a link may pick, not even through the denied-params dialog.
@@ -341,11 +341,18 @@ namespace Global.Dynamic
 
             bool cliAbgenPipeline = applicationParametersParser.HasFlag(AppArgsFlags.ABGEN_PIPELINE);
 
-            // local-ab only: the embedded abgen JIT server becomes the optimized-assets source (it serves the
-            // local scene and read-throughs everything else from production). Brought up to health serially,
-            // before the URL sources are built, so the override is seeded only when the server is actually
-            // serving; the whole-scene warm-up continues in the background and realm loading holds on it below.
+            // The embedded abgen JIT server backs the optimized-assets endpoint: brought up to health
+            // serially, before the URL sources are built, so the override is seeded only when the server
+            // is actually serving. Two ways in:
+            //   • local-ab (LSD): the server reads the scene through the preview server's content
+            //     endpoints, downloading its pinned binary on first run; the whole-scene warm-up
+            //     continues in the background and realm loading holds on it below.
+            //   • every other mode: a StreamingAssets abgen binary shipped with the build turns the
+            //     server into a read-through AB CDN fallback that JIT-converts genuine CDN misses
+            //     (Linux, where no _linux bundles exist upstream yet). Builds that do not ship the
+            //     binary leave the CDN primary and the sidecar dormant.
             string? localAbBaseUrl = null;
+            string sidecarBaseDomain = DecentralandUrlsSource.ResolveBaseDomain(decentralandEnvironment, customBaseDomain);
 
             if (launchSettings.CurrentMode is LaunchMode.LocalSceneDevelopment && launchSettings.useLocalAssetBundles)
             {
@@ -355,10 +362,18 @@ namespace Global.Dynamic
                     ? IRealmNavigator.LOCALHOST
                     : launchSettings.customRealm;
 
-                string baseDomain = DecentralandUrlsSource.ResolveBaseDomain(decentralandEnvironment, customBaseDomain);
-                abgenSidecar = new AbgenSidecarBootstrap(baseDomain);
+                abgenSidecar = new AbgenSidecarBootstrap(sidecarBaseDomain);
 
                 if (await abgenSidecar.StartAsync(realmRoot).AttachExternalCancellation(ct))
+                    localAbBaseUrl = abgenSidecar.BaseUrl;
+            }
+            else if (File.Exists(AbgenSidecar.StreamingAssetsExecutablePath))
+            {
+                // The sidecar reads the catalyst through at peer.{baseDomain}, so a Custom base domain
+                // needs no realm override.
+                abgenSidecar = new AbgenSidecarBootstrap(sidecarBaseDomain);
+
+                if (await abgenSidecar.StartFallbackAsync().AttachExternalCancellation(ct))
                     localAbBaseUrl = abgenSidecar.BaseUrl;
             }
 
@@ -480,7 +495,9 @@ namespace Global.Dynamic
                 if (FeaturesRegistry.Instance.IsEnabled(FeatureId.CheckDiskSpace))
                     await BlockOnInsufficientDiskSpaceAsync(specResults, applicationParametersParser, ct);
 
-                if (!await IsTrustedRealmAsync(decentralandUrlsSource, ct))
+                // Controlled bench runs pin --realm to the operator's own node; the
+                // untrusted-realm modal would otherwise block an unattended run forever.
+                if (!applicationParametersParser.HasFlag(AppArgsFlags.PLAZA_BENCH_CONTROLLED) && !await IsTrustedRealmAsync(decentralandUrlsSource, ct))
                 {
                     splashScreen.Value.Hide();
 
@@ -909,12 +926,16 @@ namespace Global.Dynamic
             if (!runVersionControl)
                 return false;
 
-            var appVersionGuard = new ApplicationVersionGuard(staticContainer!.WebRequestsContainer.WebRequestController, bootstrapContainer!.WebBrowser);
+            var appVersionGuard = new ApplicationVersionGuard(staticContainer.EnsureNotNull().WebRequestsContainer.WebRequestController, bootstrapContainer.EnsureNotNull().WebBrowser, applicationParametersParser);
             string? latestVersion = await appVersionGuard.GetLatestVersionAsync(ct);
 
             if (!currentVersion.Version.IsOlderThan(latestVersion))
+            {
+                ReportHub.LogProductionInfo($"[VersionGuard] Version {currentVersion.Version} is current, latest published is {latestVersion}");
                 return false;
+            }
 
+            ReportHub.LogProductionInfo($"[VersionGuard] Version {currentVersion.Version} is older than {latestVersion}, requiring an update");
             splash.Hide();
 
             var appVerRedirectionScreenPrefab = await bootstrapContainer!.AssetsProvisioner!.ProvideMainAssetAsync(dynamicSettings.AppVerRedirectionScreenPrefab, ct);
@@ -926,7 +947,9 @@ namespace Global.Dynamic
             dynamicWorldContainer!.MvcManager.RegisterController(launcherRedirectionScreenController);
 
             await dynamicWorldContainer!.MvcManager.ShowAsync(LauncherRedirectionScreenController.IssueCommand(), ct);
-            return true;
+
+            // USE CURRENT VERSION dismisses the guard and lets boot continue; UPDATE NOW and EXIT never return.
+            return !launcherRedirectionScreenController.UpdateSkipped;
         }
 
         private void DisableInputs()

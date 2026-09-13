@@ -124,6 +124,9 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             remoteAvatars.SetLocalBounds(validIndex, new float3x2(localBounds.center, localBounds.extents));
         }
 
+        public void GoldenDescribeSlot(int validIndex, System.Text.StringBuilder sb) =>
+            remoteAvatars.GoldenDescribeSlot(validIndex, sb);
+
         public void Dispose()
         {
             // Leak the resouces. Managed dispose of TransformAccessArray takes very much time.

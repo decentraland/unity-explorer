@@ -17,6 +17,10 @@ namespace DCL.ApplicationGuards
         [field: SerializeField]
         public Button CloseButton { get; private set; } = null!;
 
+        // Nullable: older prefab revisions may not have this button wired.
+        [field: SerializeField]
+        public Button? ContinueAnywayButton { get; private set; }
+
         [SerializeField] private TMP_Text Description  = null!;
 
         public void SetVersions(string current, string latest)

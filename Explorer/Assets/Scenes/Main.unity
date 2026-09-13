@@ -389,7 +389,7 @@ MonoBehaviour:
       parcels:
       - {x: 100, y: 100}
     targetWorld: flutterecho.dcl.eth
-    customRealm: https://sdk-team-cdn.decentraland.org/ipfs/goerli-plaza-main-latest
+    customRealm: https://peer.dcl.one
     remoteHibridWorld: MetadyneLabs.dcl.eth
     remoteHybridSceneContentServer: 1
     useRemoteAssetsBundles: 0
@@ -411,8 +411,21 @@ MonoBehaviour:
     overrideConnectionQuality: 0
     connectionQuality: 2
     gatekeeperMode: 0
-    customGatekeeperUrl: 
-    appParameters: []
+    customGatekeeperUrl:
+    appParameters:
+    - --base-domain
+    - dcl.one
+    - --position
+    - "0,0"
+    - --skip-auth-screen
+    - "true"
+    - --skip-version-check
+    - "true"
+    - --skip-minimum-specs-screen
+    - --mcp-port
+    - "8123"
+    - --skybox-time-enabled
+    - "false"
   pluginSettingsContainer: {fileID: 11400000, guid: 7575a56449e4af444b9c13267319c95d, type: 2}
   settings: {fileID: 11400000, guid: 2e1d2c350e04ac3428300d032c5ee567, type: 2}
   splashScreenRef:

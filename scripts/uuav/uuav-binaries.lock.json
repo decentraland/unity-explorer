@@ -17,7 +17,7 @@
     "cargo_manifest": {
       "kind": "file",
       "path": "Explorer/Assets/Plugins/UUAV/native/Cargo.toml",
-      "sha256": "aa75ab05328c53920fdcd070fd9a4c49a30f7a429fbd8a39bc38dec822762f02"
+      "sha256": "8892b44f30ca061ff36a825ed4ab89f18ecef7398875e0fe741c68be8eef53dc"
     },
     "cargo_lock": {
       "comment": [
@@ -35,8 +35,8 @@
         "uuav-client",
         "uuav-server"
       ],
-      "sha256": "8564f0e2bf3f6145a220161fb11fc1e70fb75a08a76931182f3d95de1028c91f",
-      "entries": 118
+      "sha256": "cd4c13192c5ad28f98a1d042b6dedf357e49f0cf92bf264f45fc3084a408c36f",
+      "entries": 122
     },
     "cargo_config": {
       "comment": [
@@ -45,7 +45,7 @@
       ],
       "kind": "file",
       "path": "Explorer/Assets/Plugins/UUAV/native/.cargo/config.toml",
-      "sha256": "99638f2710a4b1eea8992aade076d5478010393c0c97ef435e703c8c3d84bed8"
+      "sha256": "67b77d9cc0130d2f5fccf0163260b919c70f064ef765dbe93e1c56ab793a44e6"
     },
     "rust_toolchain": {
       "comment": [
@@ -60,17 +60,17 @@
     "client_manifest": {
       "kind": "file",
       "path": "Explorer/Assets/Plugins/UUAV/native/uuav-client/Cargo.toml",
-      "sha256": "4504d0b2f23cb299803ba84c7a0173feb6ec8eeaef781dda48c892eb7ced214d"
+      "sha256": "ed8d521bf294f4cc85e0d9ca213088fb3bb9a53b7c3c14f7b99968f2d7ca8390"
     },
     "server_manifest": {
       "kind": "file",
       "path": "Explorer/Assets/Plugins/UUAV/native/uuav-server/Cargo.toml",
-      "sha256": "536151faabecbce5620ea1f25070e7146e2b3d9dfcc41bde146a959254b176f1"
+      "sha256": "eba2b5f0731e6e13e73755ffe1d0759da31087348121df1450478543334fc56f"
     },
     "ipc_manifest": {
       "kind": "file",
       "path": "Explorer/Assets/Plugins/UUAV/native/uuav-ipc/Cargo.toml",
-      "sha256": "46c9c987e6be6111617b20fbcdc232e7be2eaaf666fd93e96d51287db3e4f70d"
+      "sha256": "746213d35eb6384bb8d4fa5f736a2c74096ed8ffbc3112246f5d6d47e575a1b9"
     },
     "client_source": {
       "comment": [
@@ -83,8 +83,8 @@
       "suffix": [
         ".rs"
       ],
-      "sha256": "c2193180bf16d908580a4ff82b63660b36bbb12b557c66a339734084eefe4743",
-      "entries": 10
+      "sha256": "1866bb97a342ab55ea4743a6561a862e54fafbb167b5c9803d968a7095ca7f22",
+      "entries": 14
     },
     "server_source": {
       "comment": [
@@ -103,8 +103,8 @@
         "target",
         ".target"
       ],
-      "sha256": "fe5ba7c213d2634977e3a1689e6f99095b8e01dea3d3d4a2a0530d8f02ff1106",
-      "entries": 11
+      "sha256": "07ccfd2009c648aa8abedc844091051a7bdf3d17d8741ff65e52e92b1da140a2",
+      "entries": 16
     },
     "ipc_source": {
       "comment": [
@@ -116,8 +116,8 @@
       "suffix": [
         ".rs"
       ],
-      "sha256": "d0ebd0d5655d9b54d82b3709dc5354ede0f1e04b007ee89677c783a1c26a9e2d",
-      "entries": 6
+      "sha256": "1359efbd6dff8807d313aea605bdc6cc7d0417fe788cf141abe1da76a6acf9cf",
+      "entries": 8
     }
   },
   "targets": {
@@ -126,7 +126,7 @@
       "rust": {
         "target": "universal (aarch64-apple-darwin + x86_64-apple-darwin)",
         "profile": "release",
-        "crate_version": "0.3.0",
+        "crate_version": "0.4.0",
         "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
         "toolchain": {
           "comment": [
@@ -138,17 +138,17 @@
           ],
           "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
           "cargo": "cargo 1.97.1 (c980f4866 2026-06-30)",
-          "clang": "Apple clang version 17.0.0 (clang-1700.0.13.5)",
-          "xcode": "Xcode 16.4 Build version 16F6",
-          "sdk": "macosx15.5 (24F74)"
+          "clang": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+          "xcode": "Xcode 26.6 Build version 17F113",
+          "sdk": "macosx26.5 (25F70)"
         },
         "link_args": [
           "-C",
           "link-arg=-Wl,-rpath,@loader_path"
         ],
-        "source_digest": "597277eebf8697f849e019fcb15492aef1d1a64a90bc082125377dd0f55c25c5",
-        "source_files": 21,
-        "repo_commit": "c436eb6533ec729157045aabbfbee2790fe76990"
+        "source_digest": "c1419a58953ec27cbf1d8c7ed2d519083f3e52778a536f068023d7253b6a07ca",
+        "source_files": 25,
+        "repo_commit": "8403cd3221cfaf3101cf1f4b22e0c3fbd00484c3"
       },
       "ffmpeg": {
         "provenance": "built-from-source",
@@ -179,62 +179,62 @@
       "artifacts": [
         {
           "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/macOS/libavcodec.62.dylib",
-          "sha256": "194dba727a03cd42bbc46c5f6f62838e71ad7bb8b8e547d37315e410c9e77b05",
-          "bytes": 28817024,
+          "sha256": "711f62c16569d23e28dd609d2fa0ce64b9b40bdffc6bab4e4b245bfc603f1b31",
+          "bytes": 29037328,
           "produced_by": "ffmpeg"
         },
         {
           "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/macOS/libavdevice.62.dylib",
-          "sha256": "7ac1587f909e3dcf1b8e652506857bbc07d499cde706880d6988716c7beab7f5",
-          "bytes": 215216,
+          "sha256": "5dac20ae8f7faca5baf94837d2919aa51e47f40f564316f3ceb556bfd1819183",
+          "bytes": 214624,
           "produced_by": "ffmpeg"
         },
         {
           "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/macOS/libavfilter.11.dylib",
-          "sha256": "503833928f2730519b1ebbf1c9793a9dc4f880ee40cf0feb25b54e9cc5ca4e95",
-          "bytes": 8443024,
+          "sha256": "be99bf94f3044a870f628538cc68fca6372448ba8002252e93f19b7e13de337a",
+          "bytes": 8502176,
           "produced_by": "ffmpeg"
         },
         {
           "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/macOS/libavformat.62.dylib",
-          "sha256": "b3b7a4cf37429cea66b4b97732ba7926dee9549fe5c81742665ea3ea23f04e1a",
-          "bytes": 5248256,
+          "sha256": "61325fd97ff5bf513c4184a6b8b230ccd42387f2b85b94014b7ddac48359be00",
+          "bytes": 5249424,
           "produced_by": "ffmpeg"
         },
         {
           "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/macOS/libavutil.60.dylib",
-          "sha256": "7df9aabaf34a66b7052cc151635e2af80864e440c0b003cbaaa4dd7633508eb6",
-          "bytes": 1647360,
+          "sha256": "6c1c1b1f651709bb3f4d81cb458374c67892a645f1ee6e9c2dfdb0c640058992",
+          "bytes": 1610256,
           "produced_by": "ffmpeg"
         },
         {
           "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/macOS/libswresample.6.dylib",
-          "sha256": "b24f38f288e8f318dfc413d351706d02982b73d0e48d58749a3051005a315705",
-          "bytes": 318608,
+          "sha256": "9e4ff0f0aab6f850363999aefe6bd5652ee998345fbeb4b1a976f45859d636d5",
+          "bytes": 317920,
           "produced_by": "ffmpeg"
         },
         {
           "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/macOS/libswscale.9.dylib",
-          "sha256": "dc72665b80ef1261a4954d3c3879c143103aacf34d8546a993b3829fc5e35b2a",
-          "bytes": 2708416,
+          "sha256": "91bc3e860002d24eafbf3ccc4f893b9c31857cdb46083b6d870f6bcf3d2da2d8",
+          "bytes": 2718032,
           "produced_by": "ffmpeg"
         },
         {
           "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/macOS/libuuav.dylib",
-          "sha256": "60a3b18ca58c84419cee15c6fb25000009ef24bb3d259dd142a71c5c599833d1",
-          "bytes": 1495744,
+          "sha256": "8ac0f6f3d7f4b7524943701336b769a55aebecd0408f58605a7158e48c573049",
+          "bytes": 1491584,
           "produced_by": "cargo"
         },
         {
           "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/macOS/libuuav_core.dylib",
-          "sha256": "74ec5a44f2fb7503b9a0ca8bd999be6a9d5bf9e738bbfdc3bbf15e79be3be86b",
-          "bytes": 1265248,
+          "sha256": "031f0a38fa3b3cd5c1d2a38ce907b060161c57dd1988f39133435b71744aa675",
+          "bytes": 1294560,
           "produced_by": "cargo"
         },
         {
           "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/macOS/uuav-helper",
-          "sha256": "2763d5ec312b054c57712a64a1a2823dd2d335002e61a07249009fbf8763bc5a",
-          "bytes": 1713456,
+          "sha256": "d49e7c2954dabd48759855d78cc1d7aae29f8e70915790176618a6fd9a464899",
+          "bytes": 1725296,
           "produced_by": "cargo"
         }
       ]
@@ -244,15 +244,15 @@
       "rust": {
         "target": "x86_64-pc-windows-gnu",
         "profile": "release",
-        "crate_version": "0.3.0",
+        "crate_version": "0.4.0",
         "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
-        "source_digest": "597277eebf8697f849e019fcb15492aef1d1a64a90bc082125377dd0f55c25c5",
-        "source_files": 21,
-        "repo_commit": "c436eb6533ec729157045aabbfbee2790fe76990",
+        "source_digest": "c1419a58953ec27cbf1d8c7ed2d519083f3e52778a536f068023d7253b6a07ca",
+        "source_files": 25,
+        "repo_commit": "8403cd3221cfaf3101cf1f4b22e0c3fbd00484c3",
         "toolchain": {
           "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
           "cargo": "cargo 1.97.1 (c980f4866 2026-06-30)",
-          "gcc": "gcc.exe (Rev3, Built by MSYS2 project) 16.2.0"
+          "gcc": "gcc.exe (Rev5, Built by MSYS2 project) 16.1.0"
         }
       },
       "ffmpeg": {
@@ -310,20 +310,20 @@
         },
         {
           "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/x86_64/uuav.dll",
-          "sha256": "8df1d6145b5f00b1d191d2cbb6378ca305411a3144098acc69efa4358cce8cdd",
-          "bytes": 1325568,
+          "sha256": "7b16e09982294ad640f2ac288f94cc4513276046c57b4178ed3549fbf2069e73",
+          "bytes": 1333760,
           "produced_by": "cargo"
         },
         {
           "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/x86_64/uuav_core.dll",
-          "sha256": "26374a96cc263a684bde34a2ab3c509af2c12dbc88a6880c05017b20ed47ee14",
-          "bytes": 1243136,
+          "sha256": "c3984cb174baea0e4dd0b0c8437a00d12d654fd0291e8544154e3232f82ae5f1",
+          "bytes": 1247232,
           "produced_by": "cargo"
         },
         {
           "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/x86_64/uuav-helper.exe",
-          "sha256": "f61345dceeaa0824bc80e172b57df3e68dd2618da3ad6036660508fbe957fd1e",
-          "bytes": 1408000,
+          "sha256": "b60e219f61631aab6833ea7993b69d4ca4e8abe086e3f8735f1e1e0d594160d9",
+          "bytes": 1417216,
           "produced_by": "cargo"
         }
       ]

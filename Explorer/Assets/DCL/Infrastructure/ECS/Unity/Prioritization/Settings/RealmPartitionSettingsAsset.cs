@@ -8,6 +8,11 @@ namespace ECS.Prioritization
     [CreateAssetMenu(fileName = "RealmPartitionSettings", menuName = "DCL/Prioritization/Realm Partition Settings")]
     public class RealmPartitionSettingsAsset : ScriptableObject, IRealmPartitionSettings
     {
+        // Under the quantized scene clock every ticking scene must reach the clock ceiling before
+        // the capture's freeze floor, and ceiling arrival is real-paced by this rate: every scene
+        // that ticks at all ticks at the current scene's rate.
+        private static readonly bool GOLDEN_SCENE_CLOCK = Environment.GetEnvironmentVariable("DCL_GOLDEN_SCENE_CLOCK") == "1";
+
         [SerializeField] private int[] fpsBuckets = { 30, 20, 10, 5, 0 };
         [SerializeField] private int behindFps = 1;
         [SerializeField] private float aggregatePositionTolerance = 0.5f;
@@ -61,6 +66,10 @@ namespace ECS.Prioritization
         public int GetSceneUpdateFrequency(in PartitionComponent partition)
         {
             int bucketFps = fpsBuckets[Mathf.Clamp(partition.Bucket, 0, fpsBuckets.Length - 1)];
+
+            if (GOLDEN_SCENE_CLOCK && bucketFps > 0)
+                return fpsBuckets[0];
+
             return partition.IsBehind ? Mathf.Min(bucketFps, behindFps) : bucketFps;
         }
     }

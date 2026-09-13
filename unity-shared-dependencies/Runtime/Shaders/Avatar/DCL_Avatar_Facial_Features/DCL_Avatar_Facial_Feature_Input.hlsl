@@ -22,6 +22,14 @@ CBUFFER_START(UnityPerMaterial)
     float _RevealEnabled;
 CBUFFER_END
 
+// On Vulkan / glslang, UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT(int, …)
+// expands to a path that calls intBitsToFloat with a signature glslang
+// can't resolve ("'intBitsToFloat': no matching overloaded function found").
+// Upstream URP avoids this by only using float / float4 in DOTS metadata —
+// the integer use cases (vertex-buffer indices, texture-array slot IDs)
+// store as float and the consumer casts to int at the read site
+// (see line ~133 below: `int nMainTexArrID = _MainTexArr_ID;` — implicit
+// float→int truncation matches the value-range we use).
 #ifdef UNITY_DOTS_INSTANCING_ENABLED
     UNITY_DOTS_INSTANCING_START(MaterialPropertyMetadata)
         UNITY_DOTS_INSTANCED_PROP(float4, _BaseColor)
@@ -29,10 +37,10 @@ CBUFFER_END
         UNITY_DOTS_INSTANCED_PROP(float4, _EmissionColor)
         UNITY_DOTS_INSTANCED_PROP(float , _Cutoff)
         UNITY_DOTS_INSTANCED_PROP(float , _Surface)
-        UNITY_DOTS_INSTANCED_PROP(int, _lastWearableVertCount)
-        UNITY_DOTS_INSTANCED_PROP(int, _lastAvatarVertCount)
-        UNITY_DOTS_INSTANCED_PROP(int, _MainTexArr_ID)
-        UNITY_DOTS_INSTANCED_PROP(int, _MaskTexArr_ID)
+        UNITY_DOTS_INSTANCED_PROP(float, _lastWearableVertCount)
+        UNITY_DOTS_INSTANCED_PROP(float, _lastAvatarVertCount)
+        UNITY_DOTS_INSTANCED_PROP(float, _MainTexArr_ID)
+        UNITY_DOTS_INSTANCED_PROP(float, _MaskTexArr_ID)
         UNITY_DOTS_INSTANCED_PROP(float, _EndFadeDistance)
         UNITY_DOTS_INSTANCED_PROP(float, _StartFadeDistance)
         UNITY_DOTS_INSTANCED_PROP(float, _FadeDistance)
@@ -45,10 +53,10 @@ CBUFFER_END
     static float4 unity_DOTS_Sampled_EmissionColor;
     static float unity_DOTS_Sampled_Cutoff;
     static float unity_DOTS_Sampled_Surface;
-    static int unity_DOTS_Sampled_lastWearableVertCount;
-    static int unity_DOTS_Sampled_lastAvatarVertCount;
-    static int unity_DOTS_Sampled_MainTexArr_ID;
-    static int unity_DOTS_Sampled_MaskTexArr_ID;
+    static float unity_DOTS_Sampled_lastWearableVertCount;
+    static float unity_DOTS_Sampled_lastAvatarVertCount;
+    static float unity_DOTS_Sampled_MainTexArr_ID;
+    static float unity_DOTS_Sampled_MaskTexArr_ID;
     static float unity_DOTS_Sampled_EndFadeDistance;
     static float unity_DOTS_Sampled_StartFadeDistance;
     static float unity_DOTS_Sampled_FadeDistance;
@@ -62,10 +70,10 @@ CBUFFER_END
         unity_DOTS_Sampled_EmissionColor            = UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT(float4, _EmissionColor);
         unity_DOTS_Sampled_Cutoff                   = UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT(float, _Cutoff);
         unity_DOTS_Sampled_Surface                  = UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT(float, _Surface);
-        unity_DOTS_Sampled_lastWearableVertCount    = UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT(int, _lastWearableVertCount);
-        unity_DOTS_Sampled_lastAvatarVertCount      = UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT(int, _lastAvatarVertCount);
-        unity_DOTS_Sampled_MainTexArr_ID            = UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT(int, _MainTexArr_ID);
-        unity_DOTS_Sampled_MaskTexArr_ID            = UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT(int, _MaskTexArr_ID);
+        unity_DOTS_Sampled_lastWearableVertCount    = UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT(float, _lastWearableVertCount);
+        unity_DOTS_Sampled_lastAvatarVertCount      = UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT(float, _lastAvatarVertCount);
+        unity_DOTS_Sampled_MainTexArr_ID            = UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT(float, _MainTexArr_ID);
+        unity_DOTS_Sampled_MaskTexArr_ID            = UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT(float, _MaskTexArr_ID);
         unity_DOTS_Sampled_EndFadeDistance          = UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT(float, _EndFadeDistance);
         unity_DOTS_Sampled_StartFadeDistance        = UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT(float, _StartFadeDistance);
         unity_DOTS_Sampled_FadeDistance             = UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT(float, _FadeDistance);

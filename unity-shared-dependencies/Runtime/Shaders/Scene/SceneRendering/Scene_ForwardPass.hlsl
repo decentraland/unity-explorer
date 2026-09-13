@@ -191,6 +191,9 @@ Varyings LitPassVertex(Attributes input, uint svInstanceID : SV_InstanceID)
         uint instID = _PerInstanceLookUpAndDitherBuffer[instanceID].instanceID;
         output.tintColour = _PerInstanceBuffer[instID].instColourTint;
         output.nDither = _PerInstanceLookUpAndDitherBuffer[instanceID].ditherLevel;
+    #elif defined(UNITY_DOTS_INSTANCING_ENABLED)
+        output.tintColour = unity_DOTS_Sampled_InstColourTint;
+        output.nDither    = (uint)unity_DOTS_Sampled_InstDitherLevel;
     #else
         output.tintColour = float4(1.0f, 1.0f, 1.0f, 1.0f);
         output.nDither = 0;
@@ -208,7 +211,7 @@ Varyings LitPassVertex(Attributes input, uint svInstanceID : SV_InstanceID)
         fogFactor = ComputeFogFactor(vertexInput.positionCS.z);
     #endif
 
-    #ifdef _GPU_INSTANCER_BATCHER
+    #if defined(_GPU_INSTANCER_BATCHER) || defined(UNITY_DOTS_INSTANCING_ENABLED)
         output.uv = TransformTex_PerInstance(input.texcoord, svInstanceID);
     #else
         output.uv = TRANSFORM_TEX(input.texcoord, _BaseMap);

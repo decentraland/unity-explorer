@@ -3,6 +3,7 @@
     "rootNamespace": "UUAV.Tests",
     "references": [
         "UUAVClient",
+        "UUAV.Compat",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],

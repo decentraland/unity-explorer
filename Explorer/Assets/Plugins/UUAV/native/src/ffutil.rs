@@ -210,6 +210,11 @@ impl OwnedFrame {
         self.0
     }
 
+    #[cfg(target_os = "linux")]
+    pub(crate) const fn as_ptr(&self) -> *const ff::AVFrame {
+        self.0
+    }
+
     /// Pixel format for video frames, sample format for audio frames.
     pub(crate) fn format(&self) -> c_int {
         unsafe { (*self.0).format }

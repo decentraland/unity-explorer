@@ -16,6 +16,10 @@ namespace UUAV.Tests
     /// file: is not whitelisted. Built on TcpListener instead of HttpListener
     /// to sidestep Windows URL-ACL registration; implements Range requests
     /// because FFmpeg's http demuxer seeks inside mp4 containers with them.
+    /// A "hold/{token}/" path prefix answers that url's first request only
+    /// after <see cref="HoldMilliseconds"/>, widening the player's Opening
+    /// window for tests that act inside it; every later request for the same
+    /// url (FFmpeg reopens per range) is served at once.
     /// </summary>
     public sealed class FixtureServer : IDisposable
     {
@@ -23,6 +27,10 @@ namespace UUAV.Tests
         private readonly string fixturesDirectory;
         private readonly Dictionary<string, byte[]> cache = new Dictionary<string, byte[]>();
         private readonly object cacheGate = new object();
+        private readonly HashSet<string> heldOnce = new HashSet<string>();
+
+        public const string HoldPrefix = "hold/";
+        public const int HoldMilliseconds = 1500;
         private volatile bool disposed;
 
         public FixtureServer(string fixturesDirectory)
@@ -131,7 +139,25 @@ namespace UUAV.Tests
             }
 
             bool headOnly = parts[0] == "HEAD";
-            byte[]? content = Load(Uri.UnescapeDataString(parts[1].TrimStart('/')));
+            string path = Uri.UnescapeDataString(parts[1].TrimStart('/'));
+            if (path.StartsWith(HoldPrefix, StringComparison.Ordinal))
+            {
+                bool first;
+                lock (cacheGate)
+                {
+                    first = heldOnce.Add(path);
+                }
+
+                if (first)
+                {
+                    Thread.Sleep(HoldMilliseconds);
+                }
+
+                int fixtureStart = path.IndexOf('/', HoldPrefix.Length) + 1;
+                path = fixtureStart > 0 ? path.Substring(fixtureStart) : string.Empty;
+            }
+
+            byte[]? content = Load(path);
             if (content == null)
             {
                 WriteResponse(stream, "404 Not Found", Array.Empty<byte>(), 0, 0, 0, headOnly);

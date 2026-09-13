@@ -1,5 +1,7 @@
 using DCL.FeatureFlags;
 using System;
+using System.IO;
+using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -148,6 +150,87 @@ namespace DCL.ApplicationGuards
         public static bool ComputeShaderCheck()
         {
             return SystemInfo.supportsComputeShaders;
+        }
+
+        private const int LINUX_MIN_KERNEL_MAJOR = 5;
+        private const int LINUX_MIN_KERNEL_MINOR = 15;
+
+        private const int LINUX_MIN_CORES = 2;
+
+        private static readonly string[] LINUX_SOFTWARE_GPU_NAMES =
+        {
+            "llvmpipe", "lavapipe", "softpipe", "swrast", "swiftshader",
+        };
+
+        private static readonly string[] LINUX_INTEGRATED_GPU_KEYWORDS =
+        {
+            "intel(r) hd", "intel hd", "intel(r) uhd", "intel uhd",
+            "intel(r) iris", "intel iris", "iris xe",
+            "radeon vega", "radeon graphics", "radeon r5", "radeon r6", "radeon r7",
+            "vangogh", "custom gpu 0405", "custom apu 0405",
+            "raphael", "rembrandt", "phoenix", "strix", "lucienne", "cezanne", "renoir",
+        };
+
+        public static bool IsLinuxOsAcceptable(string os)
+        {
+            try
+            {
+                string osrelease = File.ReadAllText("/proc/sys/kernel/osrelease").Trim();
+                return IsLinuxOsAcceptable_Inner(osrelease);
+            }
+            catch (Exception)
+            {
+                return IsLinuxOsAcceptable_Inner(os ?? "");
+            }
+        }
+
+        public static bool IsLinuxOsAcceptable_Inner(string osreleaseOrSystemInfo)
+        {
+            var match = Regex.Match(osreleaseOrSystemInfo, @"(\d+)\.(\d+)");
+            if (!match.Success) return false;
+            if (!int.TryParse(match.Groups[1].Value, out int major)) return false;
+            if (!int.TryParse(match.Groups[2].Value, out int minor)) return false;
+            if (major > LINUX_MIN_KERNEL_MAJOR) return true;
+            if (major < LINUX_MIN_KERNEL_MAJOR) return false;
+            return minor >= LINUX_MIN_KERNEL_MINOR;
+        }
+
+        public static bool IsLinuxCpuAcceptable(string cpu)
+        {
+            if (RuntimeInformation.OSArchitecture != Architecture.X64)
+                return false;
+            if (SystemInfo.processorCount < LINUX_MIN_CORES)
+                return false;
+            string lower = (cpu ?? "").ToLowerInvariant();
+            return lower.Contains("intel") || lower.Contains("amd")
+                                          || lower.Contains("ryzen") || lower.Contains("core");
+        }
+
+        public static bool IsLinuxGpuAcceptable(string gpu)
+        {
+            if (SystemInfo.graphicsDeviceType != GraphicsDeviceType.Vulkan)
+                return false;
+            string lowerName = (gpu ?? "").ToLowerInvariant();
+            string lowerVendor = (SystemInfo.graphicsDeviceVendor ?? "").ToLowerInvariant();
+            foreach (string fallback in LINUX_SOFTWARE_GPU_NAMES)
+            {
+                if (lowerName.Contains(fallback) || lowerVendor.Contains(fallback))
+                    return false;
+            }
+            return true;
+        }
+
+        public static bool IsLinuxIntegratedGpu(string gpuName)
+        {
+            if (string.IsNullOrEmpty(gpuName))
+                return false;
+            string lowerGpuName = gpuName.ToLowerInvariant();
+            foreach (string keyword in LINUX_INTEGRATED_GPU_KEYWORDS)
+            {
+                if (lowerGpuName.Contains(keyword))
+                    return true;
+            }
+            return false;
         }
 
         /// <summary>

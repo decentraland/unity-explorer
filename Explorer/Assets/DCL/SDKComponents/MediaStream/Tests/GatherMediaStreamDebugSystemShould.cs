@@ -26,7 +26,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
         {
             // a pool-evicted backend (null MediaPlayer) exercises the IsValid guard,
             // so rows stop at the "(backend destroyed)" line
-            var component = new MediaPlayerComponent(MultiMediaPlayer.FromAvProPlayer(new AvProPlayer(null!, null!)), isFromContentServer: false);
+            var component = new MediaPlayerComponent(MultiMediaPlayer.FromUrlMediaPlayer(new UrlMediaPlayer(null!, null!)), isFromContentServer: false);
             return world.Create(new PBVideoPlayer { Src = "https://example.com/video.mp4" }, component);
         }
 
@@ -59,7 +59,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
         [Test]
         public void CountAudioStreams()
         {
-            var component = new MediaPlayerComponent(MultiMediaPlayer.FromAvProPlayer(new AvProPlayer(null!, null!)), isFromContentServer: false);
+            var component = new MediaPlayerComponent(MultiMediaPlayer.FromUrlMediaPlayer(new UrlMediaPlayer(null!, null!)), isFromContentServer: false);
             world.Create(new PBAudioStream { Url = "https://example.com/audio.mp3" }, component);
             registry.RequestCollect();
 

@@ -17,6 +17,7 @@ namespace DCL.ApplicationGuards
     {
         Windows,
         Mac,
+        Linux,
         Unsupported
     }
 

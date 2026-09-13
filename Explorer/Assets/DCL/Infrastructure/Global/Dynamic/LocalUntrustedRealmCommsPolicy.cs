@@ -14,5 +14,17 @@ namespace Global.Dynamic
         /// </summary>
         public static bool ShouldUseTransportAll(bool acceptUntrustedRealm, string realmUrl) =>
             acceptUntrustedRealm && LoopbackUrls.IsLoopbackWebUrl(realmUrl.AsSpan());
+
+        /// <summary>
+        ///     Hands the computed policy to the comms SDK. The pinned livekit-sdk revision
+        ///     (222d67cc, kept for its Linux support) predates the SDK-side
+        ///     FFIBridgeExtensions.UseTransportAllForLoopbackUrls switch, so the policy is
+        ///     accepted and dropped here until the pin advances to a revision that carries
+        ///     both Linux support and the switch.
+        /// </summary>
+        public static void ApplyTransportPolicy(bool useTransportAllForLoopbackUrls)
+        {
+            _ = useTransportAllForLoopbackUrls;
+        }
     }
 }

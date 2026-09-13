@@ -1,0 +1,128 @@
+[
+  {
+    "name": "ffmpeg-libavcodec",
+    "derivation": "drv/ffmpeg/default.nix",
+    "shipped": {
+      "path": "./build/Linux/decentraland-explorer_Data/Plugins/x86_64/libavcodec.so.62",
+      "sha256": "148dc8c4c4c390e896e7ca6f98245e2123b5c4d5861fe3a9b93ea377ddbaadee"
+    },
+    "built": {
+      "path": "/nix/store/hw4lxas7cn17lhqyv1b0m9s5q87lpryl-ffmpeg-dcl-linux-n8.1/lib/libavcodec.so.62",
+      "sha256": "830f40e7623bd1ab106d934b42ed5d531ee7a2272e3e4333bc20d0133c02517a"
+    },
+    "checked_at": "2026-09-06T22:04:01.384534+00:00",
+    "detail": {
+      "normalized_match": false,
+      "dynsym_match": true
+    },
+    "verdict": "divergent"
+  },
+  {
+    "name": "ffmpeg-libavdevice",
+    "derivation": "drv/ffmpeg/default.nix",
+    "shipped": {
+      "path": "./build/Linux/decentraland-explorer_Data/Plugins/x86_64/libavdevice.so.62",
+      "sha256": "3b7ff4a7e1d03cd30c03d2b0236a69c6505ee1cb596382982707836cad6940e7"
+    },
+    "built": {
+      "path": "/nix/store/hw4lxas7cn17lhqyv1b0m9s5q87lpryl-ffmpeg-dcl-linux-n8.1/lib/libavdevice.so.62",
+      "sha256": "729ebccd7e2d5300af05600404b8bca73df0bdf5f37899688938c5c7391b2b0b"
+    },
+    "checked_at": "2026-09-06T22:04:01.491277+00:00",
+    "detail": {
+      "normalized_match": false,
+      "dynsym_match": true
+    },
+    "verdict": "divergent"
+  },
+  {
+    "name": "ffmpeg-libavfilter",
+    "derivation": "drv/ffmpeg/default.nix",
+    "shipped": {
+      "path": "./build/Linux/decentraland-explorer_Data/Plugins/x86_64/libavfilter.so.11",
+      "sha256": "1f977e85249220015fa3bdbdd0ec5f12e6748187fff1088c20832f77965c06e2"
+    },
+    "built": {
+      "path": "/nix/store/hw4lxas7cn17lhqyv1b0m9s5q87lpryl-ffmpeg-dcl-linux-n8.1/lib/libavfilter.so.11",
+      "sha256": "a743f1db5f21a5fc8c97502adcb1f1edee17da8a725de69a9a4cd114a7a16402"
+    },
+    "checked_at": "2026-09-06T22:04:01.573558+00:00",
+    "detail": {
+      "normalized_match": false,
+      "dynsym_match": true
+    },
+    "verdict": "divergent"
+  },
+  {
+    "name": "ffmpeg-libavformat",
+    "derivation": "drv/ffmpeg/default.nix",
+    "shipped": {
+      "path": "./build/Linux/decentraland-explorer_Data/Plugins/x86_64/libavformat.so.62",
+      "sha256": "1b8f52c4903a8ded71965e5882b6448c9a022117f96e9b809b09d427653a567c"
+    },
+    "built": {
+      "path": "/nix/store/hw4lxas7cn17lhqyv1b0m9s5q87lpryl-ffmpeg-dcl-linux-n8.1/lib/libavformat.so.62",
+      "sha256": "3c40b0930df0b92fc419285ecddc1dfdf5481f0ed119b6e8f396991e7e836eea"
+    },
+    "checked_at": "2026-09-06T22:04:01.692605+00:00",
+    "detail": {
+      "normalized_match": false,
+      "dynsym_match": true
+    },
+    "verdict": "divergent"
+  },
+  {
+    "name": "ffmpeg-libavutil",
+    "derivation": "drv/ffmpeg/default.nix",
+    "shipped": {
+      "path": "./build/Linux/decentraland-explorer_Data/Plugins/x86_64/libavutil.so.60",
+      "sha256": "b63c45f14b3416a9a8c6d067714322bc3b50aa0ddc075ec82622916a1448d4f0"
+    },
+    "built": {
+      "path": "/nix/store/hw4lxas7cn17lhqyv1b0m9s5q87lpryl-ffmpeg-dcl-linux-n8.1/lib/libavutil.so.60",
+      "sha256": "3bc14cd5e21a18083d5efcfa594bb401a4760222ab647a0475d8c2ac65eae2e8"
+    },
+    "checked_at": "2026-09-06T22:04:01.798140+00:00",
+    "detail": {
+      "normalized_match": false,
+      "dynsym_match": true
+    },
+    "verdict": "divergent"
+  },
+  {
+    "name": "ffmpeg-libswresample",
+    "derivation": "drv/ffmpeg/default.nix",
+    "shipped": {
+      "path": "./build/Linux/decentraland-explorer_Data/Plugins/x86_64/libswresample.so.6",
+      "sha256": "6099e513fb35ab9daca93021e947b911a099c6ca41fc84aa37bea9fc31afb49b"
+    },
+    "built": {
+      "path": "/nix/store/hw4lxas7cn17lhqyv1b0m9s5q87lpryl-ffmpeg-dcl-linux-n8.1/lib/libswresample.so.6",
+      "sha256": "136cc8e743ac521aad790d463c5263ec4f25536ffeee88cead9b0f5c9ce5e04b"
+    },
+    "checked_at": "2026-09-06T22:04:01.879487+00:00",
+    "detail": {
+      "normalized_match": false,
+      "dynsym_match": true
+    },
+    "verdict": "divergent"
+  },
+  {
+    "name": "ffmpeg-libswscale",
+    "derivation": "drv/ffmpeg/default.nix",
+    "shipped": {
+      "path": "./build/Linux/decentraland-explorer_Data/Plugins/x86_64/libswscale.so.9",
+      "sha256": "dab12cff4369a9f4f804251573094c1ba8fe62ba3b9f0b72ee7953987971946d"
+    },
+    "built": {
+      "path": "/nix/store/hw4lxas7cn17lhqyv1b0m9s5q87lpryl-ffmpeg-dcl-linux-n8.1/lib/libswscale.so.9",
+      "sha256": "5a9eaeef9fbfa60287590e0f6436b46b6efe0398a0bc397b487c5a656be4dbed"
+    },
+    "checked_at": "2026-09-06T22:04:01.949011+00:00",
+    "detail": {
+      "normalized_match": false,
+      "dynsym_match": true
+    },
+    "verdict": "divergent"
+  }
+]

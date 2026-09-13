@@ -112,18 +112,65 @@ pub enum ReplyBody {
     PlayerId(PlayerId),
 }
 
+/// Which graphics API the client presents with, so the helper picks the
+/// matching texture-set export flavor.
+///
+/// `Default` is the platform's only choice (D3D11 on Windows, Metal on
+/// macOS); Linux distinguishes Vulkan (dma-buf export) from OpenGL
+/// (opaque-fd export).
+#[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
+pub enum GraphicsApiWire {
+    Default,
+    Vulkan,
+    OpenGl,
+}
+
+/// How the slot images of a texture-set generation travel to the client.
+#[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
+pub enum TextureImportWire {
+    /// `TextureSet::handles` carries per-slot values (Windows NT
+    /// handles), or nothing at all (macOS IOSurface ports ride the mach
+    /// channel). `planes` is empty.
+    Handles,
+    /// Linux/Vulkan: one dma-buf fd per plane image arrives tagged on
+    /// the surface channel (`fd_channel`), laid out per `planes`.
+    DmaBuf,
+    /// Linux/GL: one opaque memory fd per plane image arrives tagged on
+    /// the surface channel; only `TexturePlaneWire::size` is
+    /// meaningful. `tiling_optimal` selects the GL import tiling.
+    OpaqueFd { tiling_optimal: bool },
+}
+
+/// Memory layout of one shared plane image (Linux only; empty elsewhere).
+/// Order matches the fd batch: slot-major, plane-minor.
+#[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
+pub struct TexturePlaneWire {
+    pub slot: u8,
+    pub plane: u8,
+    /// Byte offset of the image data inside its dma-buf.
+    pub offset: u64,
+    /// Row pitch in bytes (0 when opaque).
+    pub pitch: u32,
+    /// Total allocation size of the backing memory.
+    pub size: u64,
+    /// DRM format modifier the image was allocated with (0 when opaque).
+    pub modifier: u64,
+}
+
 /// Client (Unity) -> server (helper).
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum ToServer {
     /// Completes the handshake after the client validated `Hello`. The helper
     /// creates its GPU device (`adapter` = D3D11 LUID on Windows / Metal
-    /// registryID on macOS, 0 = system default) and runs the core init.
+    /// registryID on macOS / DRM dev_t on Linux, 0 = system default) and
+    /// runs the core init.
     Configure {
         corr: Corr,
         audio: AudioOptionsWire,
         protocol_whitelist: String,
         log_level: i32,
         adapter: u64,
+        graphics: GraphicsApiWire,
     },
     SetLogLevel {
         level: i32,
@@ -213,14 +260,17 @@ pub enum ToClient {
     /// process — the sandboxed helper cannot duplicate into Unity, so the
     /// client pulls copies out with `DuplicateHandle`, and the helper
     /// keeps the originals open until an ack proves the announcement was
-    /// consumed. The client assembles the set and answers with
-    /// `TextureSetAck`.
+    /// consumed. On Linux: `handles` is empty and the per-plane fds ride
+    /// this frame's `SCM_RIGHTS` batch, described by `import`/`planes`.
+    /// The client assembles the set and answers with `TextureSetAck`.
     TextureSet {
         id: PlayerId,
         generation: u32,
         width: u32,
         height: u32,
         handles: Vec<u64>,
+        import: TextureImportWire,
+        planes: Vec<TexturePlaneWire>,
     },
     /// The helper finished writing a frame into `slot` (GPU work complete);
     /// the client's next render event may consume it.

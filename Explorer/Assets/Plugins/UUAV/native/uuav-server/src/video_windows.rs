@@ -18,7 +18,7 @@ use std::collections::HashMap;
 use std::os::raw::c_void;
 use uuav_core as core;
 use uuav_ipc::channel::Channel;
-use uuav_ipc::protocol::{PlayerId, ToClient};
+use uuav_ipc::protocol::{PlayerId, TextureImportWire, ToClient};
 use windows::Win32::Foundation::{CloseHandle, HANDLE};
 use windows::Win32::Graphics::Direct3D11::{
     D3D11_BIND_SHADER_RESOURCE, D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX,
@@ -163,6 +163,8 @@ impl VideoPump {
                 width,
                 height,
                 handles,
+                import: TextureImportWire::Handles,
+                planes: Vec::new(),
             })?;
             let created = GenSlots {
                 generation,
