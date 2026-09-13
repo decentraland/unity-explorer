@@ -34,7 +34,9 @@ namespace Global.Dynamic
     ///     The binary is never embedded in the build: on first run the pinned release is downloaded
     ///     (<see cref="EnsurePinnedBinaryAsync" />) and verified against its compile-time sha256. Only the
     ///     pinned version is ever executed — a compromised GitHub release cannot propagate here without a
-    ///     deliberate pin+checksum bump in this file. StreamingAssets acts as an explicit developer override.
+    ///     deliberate pin+checksum bump in this file. Installing it removes every earlier install, so a pin
+    ///     bump leaves one copy on disk instead of accumulating them. StreamingAssets acts as an explicit
+    ///     developer override.
     /// </summary>
     public sealed class AbgenSidecar : IDisposable
     {
@@ -51,6 +53,9 @@ namespace Global.Dynamic
 
         /// <summary>Path under the realm root where a content server exposes its entities and files.</summary>
         private const string CONTENT_PATH = "/content";
+
+        /// <summary>abgen's <c>status</c> for a server that can serve and convert; anything else is degraded.</summary>
+        private const string READY_STATUS = "ready";
 
         private readonly string executablePath;
         private readonly string realmRoot;
@@ -189,6 +194,13 @@ namespace Global.Dynamic
         ///     corpus. The pinned build on a different realm is left alone: its catalyst cannot be re-pointed,
         ///     and it is likely serving another live client.
         ///     </para>
+        ///     <para>
+        ///     A server that calls itself degraded is killed rather than adopted, but only once the realm check
+        ///     has cleared it as this instance's to replace. Degraded is abgen's verdict on its own ability to
+        ///     convert — a broken live template, a corpus root gone missing — so adopting one buys a server
+        ///     that answers every probe here and then converts nothing, which is the silent degrade this whole
+        ///     reconcile exists to end. A fresh launch rebuilds the state a resident cannot recover on its own.
+        ///     </para>
         /// </summary>
         private async UniTask<ResidentServer> ReconcileResidentServerAsync(CancellationToken ct)
         {
@@ -214,13 +226,7 @@ namespace Global.Dynamic
                     $"abgen v{resident.version} (pid {resident.pid}) holds {BaseUrl}; this client pins v{PINNED_VERSION} — killing it");
 
                 AbgenConversionMetrics.INSTANCE.OnMilestone($"replacing a stale abgen v{resident.version} on {BaseUrl}");
-                KillForeign(resident.pid);
-
-                if (await WaitPortReleasedAsync(ct))
-                    return ResidentServer.None;
-
-                AbgenConversionMetrics.INSTANCE.OnMilestone($"could not free {BaseUrl} — the scene loads as raw GLTFs");
-                return ResidentServer.Blocked;
+                return await ReplaceResidentAsync(resident.pid, ct);
             }
 
             if (resident.catalyst_url != catalystContentUrl)
@@ -232,12 +238,43 @@ namespace Global.Dynamic
                 return ResidentServer.Blocked;
             }
 
+            if (resident.status != READY_STATUS)
+            {
+                ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES,
+                    $"the abgen holding {BaseUrl} reports itself {resident.status} (pid {resident.pid}); it cannot convert — killing it");
+
+                AbgenConversionMetrics.INSTANCE.OnMilestone($"replacing a degraded abgen on {BaseUrl}");
+                return await ReplaceResidentAsync(resident.pid, ct);
+            }
+
             ReportHub.Log(ReportCategory.ASSET_BUNDLES, $"adopting the abgen v{resident.version} already serving {catalystContentUrl} on {BaseUrl}");
             AbgenConversionMetrics.INSTANCE.OnMilestone("reusing the abgen already serving this scene");
             return ResidentServer.Adopted;
         }
 
-        /// <summary>Null when what answers on <see cref="BaseUrl" /> is not an abgen.</summary>
+        /// <summary>
+        ///     Kills the resident server and waits for the port to go quiet. <see cref="ResidentServer.None" />
+        ///     once it does — the port is this instance's to bind; <see cref="ResidentServer.Blocked" /> when it
+        ///     is still answering at the deadline, since launching into a held port is the collision this
+        ///     reconcile exists to prevent.
+        /// </summary>
+        private async UniTask<ResidentServer> ReplaceResidentAsync(int pid, CancellationToken ct)
+        {
+            KillForeign(pid);
+
+            if (await WaitPortReleasedAsync(ct))
+                return ResidentServer.None;
+
+            AbgenConversionMetrics.INSTANCE.OnMilestone($"could not free {BaseUrl} — the scene loads as raw GLTFs");
+            return ResidentServer.Blocked;
+        }
+
+        /// <summary>
+        ///     Null when what answers on <see cref="BaseUrl" /> is not an abgen. A non-2xx answer is still
+        ///     read: abgen serves <c>/health</c> with 503 whenever it calls itself degraded, and that body
+        ///     carries the same identifying fields as a healthy one. Accepting only 2xx would file the
+        ///     degraded case as a foreign server — the one resident this instance most needs to recognize.
+        /// </summary>
         private async UniTask<HealthDto?> TryGetHealthAsync(CancellationToken ct)
         {
             using UnityWebRequest request = UnityWebRequest.Get($"{BaseUrl}/health");
@@ -245,7 +282,10 @@ namespace Global.Dynamic
 
             try { await request.SendWebRequest().WithCancellation(ct); }
             catch (OperationCanceledException) { throw; }
-            catch { return null; }
+            catch { /* a protocol error still carries its body; a connection error leaves responseCode at 0 */ }
+
+            if (request.responseCode <= 0)
+                return null;
 
             HealthDto? health;
 
@@ -627,7 +667,8 @@ namespace Global.Dynamic
 
             // Resolved before the thread switch: persistentDataPath and Application.platform (behind
             // IsWindows) are main-thread-only Unity APIs.
-            string finalDir = Path.Combine(Application.persistentDataPath, AbgenBundleDiskCache.SIDECAR_DIR, "bin", version);
+            string binRoot = Path.Combine(Application.persistentDataPath, AbgenBundleDiskCache.SIDECAR_DIR, "bin");
+            string finalDir = Path.Combine(binRoot, version);
             bool isWindows = IsWindows;
 
             await DCLTask.RunOnThreadPool(() =>
@@ -648,10 +689,28 @@ namespace Global.Dynamic
 
                 if (Directory.Exists(finalDir)) Directory.Delete(finalDir, true);
                 Directory.Move(tmpDir, finalDir);
+                PruneOtherInstalls(binRoot, version);
             });
 
             AbgenConversionMetrics.INSTANCE.OnMilestone($"abgen v{version} installed");
             ReportHub.Log(ReportCategory.ASSET_BUNDLES, $"abgen sidecar binary v{version} downloaded and installed");
+        }
+
+        /// <summary>
+        ///     Deletes every install under <paramref name="binRoot" /> except <paramref name="keep" />, so a
+        ///     bumped pin does not leave its predecessor's copy sitting in persistent storage for good. A
+        ///     directory that will not delete is left alone — on Windows a running executable holds its own
+        ///     file — and the next install makes the attempt again.
+        /// </summary>
+        private static void PruneOtherInstalls(string binRoot, string keep)
+        {
+            foreach (string dir in Directory.GetDirectories(binRoot))
+            {
+                if (Path.GetFileName(dir) == keep) continue;
+
+                try { Directory.Delete(dir, true); }
+                catch (Exception e) { ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES, $"the stale abgen install at {dir} could not be removed: {e.Message}"); }
+            }
         }
 
         /// <summary>Minimal ustar reader: extracts regular files and directories, preserving relative paths.</summary>
@@ -990,6 +1049,9 @@ namespace Global.Dynamic
             public string version = null!;
             public int pid;
             public string catalyst_url = null!;
+
+            /// <summary>"ready" or "degraded" — the same verdict the response's status code carries.</summary>
+            public string status = null!;
         }
 
         /// <summary>abgen <c>GET /progress/{entity}</c> response (crate/src/abcdn/handlers/status.rs).</summary>
