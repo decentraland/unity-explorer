@@ -1,5 +1,5 @@
 {
-  "status": "pr-open",
+  "status": "done",
   "prUrl": "https://github.com/decentraland/unity-explorer/pull/9991",
   "authReview": null,
   "requester": "U0ADNDHL1T7",
@@ -135,5 +135,6 @@
       "commit": null,
       "note": "scene-specific bug in Fastlane Bowling (scoring text desync), not explorer code"
     }
-  ]
+  ],
+  "note": "PR #9991 merged 2026-09-08; state finalized to done by w36 run (pr-open had lagged after merge + branch auto-delete)"
 }
