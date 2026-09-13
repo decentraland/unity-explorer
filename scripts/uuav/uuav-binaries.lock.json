@@ -17,7 +17,7 @@
     "cargo_manifest": {
       "kind": "file",
       "path": "Explorer/Assets/Plugins/UUAV/native/Cargo.toml",
-      "sha256": "aa75ab05328c53920fdcd070fd9a4c49a30f7a429fbd8a39bc38dec822762f02"
+      "sha256": "8892b44f30ca061ff36a825ed4ab89f18ecef7398875e0fe741c68be8eef53dc"
     },
     "cargo_lock": {
       "comment": [
@@ -35,8 +35,8 @@
         "uuav-client",
         "uuav-server"
       ],
-      "sha256": "8564f0e2bf3f6145a220161fb11fc1e70fb75a08a76931182f3d95de1028c91f",
-      "entries": 118
+      "sha256": "cd4c13192c5ad28f98a1d042b6dedf357e49f0cf92bf264f45fc3084a408c36f",
+      "entries": 122
     },
     "cargo_config": {
       "comment": [
@@ -45,7 +45,7 @@
       ],
       "kind": "file",
       "path": "Explorer/Assets/Plugins/UUAV/native/.cargo/config.toml",
-      "sha256": "99638f2710a4b1eea8992aade076d5478010393c0c97ef435e703c8c3d84bed8"
+      "sha256": "67b77d9cc0130d2f5fccf0163260b919c70f064ef765dbe93e1c56ab793a44e6"
     },
     "rust_toolchain": {
       "comment": [
@@ -60,17 +60,17 @@
     "client_manifest": {
       "kind": "file",
       "path": "Explorer/Assets/Plugins/UUAV/native/uuav-client/Cargo.toml",
-      "sha256": "4504d0b2f23cb299803ba84c7a0173feb6ec8eeaef781dda48c892eb7ced214d"
+      "sha256": "ed8d521bf294f4cc85e0d9ca213088fb3bb9a53b7c3c14f7b99968f2d7ca8390"
     },
     "server_manifest": {
       "kind": "file",
       "path": "Explorer/Assets/Plugins/UUAV/native/uuav-server/Cargo.toml",
-      "sha256": "536151faabecbce5620ea1f25070e7146e2b3d9dfcc41bde146a959254b176f1"
+      "sha256": "eba2b5f0731e6e13e73755ffe1d0759da31087348121df1450478543334fc56f"
     },
     "ipc_manifest": {
       "kind": "file",
       "path": "Explorer/Assets/Plugins/UUAV/native/uuav-ipc/Cargo.toml",
-      "sha256": "46c9c987e6be6111617b20fbcdc232e7be2eaaf666fd93e96d51287db3e4f70d"
+      "sha256": "746213d35eb6384bb8d4fa5f736a2c74096ed8ffbc3112246f5d6d47e575a1b9"
     },
     "client_source": {
       "comment": [
@@ -83,8 +83,8 @@
       "suffix": [
         ".rs"
       ],
-      "sha256": "c2193180bf16d908580a4ff82b63660b36bbb12b557c66a339734084eefe4743",
-      "entries": 10
+      "sha256": "53975f1218dee9a095da72c48aa480d7e1701beff6470efd00e7ead565088838",
+      "entries": 14
     },
     "server_source": {
       "comment": [
@@ -103,8 +103,8 @@
         "target",
         ".target"
       ],
-      "sha256": "fe5ba7c213d2634977e3a1689e6f99095b8e01dea3d3d4a2a0530d8f02ff1106",
-      "entries": 11
+      "sha256": "07ccfd2009c648aa8abedc844091051a7bdf3d17d8741ff65e52e92b1da140a2",
+      "entries": 16
     },
     "ipc_source": {
       "comment": [
@@ -116,8 +116,8 @@
       "suffix": [
         ".rs"
       ],
-      "sha256": "d0ebd0d5655d9b54d82b3709dc5354ede0f1e04b007ee89677c783a1c26a9e2d",
-      "entries": 6
+      "sha256": "1359efbd6dff8807d313aea605bdc6cc7d0417fe788cf141abe1da76a6acf9cf",
+      "entries": 8
     }
   },
   "targets": {
@@ -244,15 +244,15 @@
       "rust": {
         "target": "x86_64-pc-windows-gnu",
         "profile": "release",
-        "crate_version": "0.3.0",
+        "crate_version": "0.4.0",
         "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
-        "source_digest": "597277eebf8697f849e019fcb15492aef1d1a64a90bc082125377dd0f55c25c5",
-        "source_files": 21,
-        "repo_commit": "c436eb6533ec729157045aabbfbee2790fe76990",
+        "source_digest": "c1419a58953ec27cbf1d8c7ed2d519083f3e52778a536f068023d7253b6a07ca",
+        "source_files": 25,
+        "repo_commit": "cea98d670507313147fe18a190c2ee48b067787a",
         "toolchain": {
           "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
           "cargo": "cargo 1.97.1 (c980f4866 2026-06-30)",
-          "gcc": "gcc.exe (Rev3, Built by MSYS2 project) 16.2.0"
+          "gcc": "gcc.exe (Rev5, Built by MSYS2 project) 16.1.0"
         }
       },
       "ffmpeg": {
@@ -310,20 +310,20 @@
         },
         {
           "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/x86_64/uuav.dll",
-          "sha256": "8df1d6145b5f00b1d191d2cbb6378ca305411a3144098acc69efa4358cce8cdd",
-          "bytes": 1325568,
+          "sha256": "41d21c8aafd7880470099f20c08a3e7b114130b9c88f9597dfdfa018cb1bd9c8",
+          "bytes": 1333760,
           "produced_by": "cargo"
         },
         {
           "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/x86_64/uuav_core.dll",
-          "sha256": "26374a96cc263a684bde34a2ab3c509af2c12dbc88a6880c05017b20ed47ee14",
-          "bytes": 1243136,
+          "sha256": "c3984cb174baea0e4dd0b0c8437a00d12d654fd0291e8544154e3232f82ae5f1",
+          "bytes": 1247232,
           "produced_by": "cargo"
         },
         {
           "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/x86_64/uuav-helper.exe",
-          "sha256": "f61345dceeaa0824bc80e172b57df3e68dd2618da3ad6036660508fbe957fd1e",
-          "bytes": 1408000,
+          "sha256": "b60e219f61631aab6833ea7993b69d4ca4e8abe086e3f8735f1e1e0d594160d9",
+          "bytes": 1417216,
           "produced_by": "cargo"
         }
       ]
