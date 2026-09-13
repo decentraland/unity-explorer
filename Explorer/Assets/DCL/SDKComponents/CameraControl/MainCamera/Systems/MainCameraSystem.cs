@@ -116,7 +116,8 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
         [None(typeof(DeleteEntityIntention))]
         private void HandleActiveVirtualCameraLookAtChange(CRDTEntity crdtEntity, in PBVirtualCamera pbVirtualCamera, ref VirtualCameraComponent virtualCameraComponent)
         {
-            if (cameraData.CinemachineBrain!.ActiveVirtualCamera.VirtualCameraGameObject != virtualCameraComponent.virtualCameraInstance.gameObject) return;
+            ICinemachineCamera activeVirtualCamera = cameraData.CinemachineBrain!.ActiveVirtualCamera;
+            if (activeVirtualCamera == null || activeVirtualCamera.VirtualCameraGameObject != virtualCameraComponent.virtualCameraInstance.gameObject) return;
 
             CRDTEntity? pbVirtualCameraLookAtEntity = VirtualCameraUtils.GetPBVirtualCameraLookAtCRDTEntity(pbVirtualCamera, crdtEntity);
 
