@@ -17,6 +17,10 @@
       10005,
       9997,
       9941
+    ],
+    [
+      9922,
+      9937
     ]
   ],
   "issues": [
@@ -28,9 +32,9 @@
     },
     {
       "number": 10009,
-      "status": "pending",
+      "status": "skipped",
       "commit": null,
-      "note": null
+      "note": "NRE originates inside the render-features UPM package (SkyboxToCubemapRendererFeature.Create), triggered by lazy asset.scriptableRenderer access; Assets/DCL/Quality code is already null-safe (?./T?). The correct publisher-side fix belongs in the render-features package (separate review/publish path, outside Assets/), and the exact null token is unconfirmed due to package version drift"
     },
     {
       "number": 10008,
@@ -40,8 +44,8 @@
     },
     {
       "number": 10007,
-      "status": "pending",
-      "commit": null,
+      "status": "fixed",
+      "commit": "1b5c58801d679c4ae67515551b29bc203e84da02",
       "note": null
     },
     {
@@ -58,9 +62,9 @@
     },
     {
       "number": 10003,
-      "status": "pending",
+      "status": "skipped",
       "commit": null,
-      "note": null
+      "note": "already fixed in origin/dev by #10042 (guards against adding a null Profile component in LoadPlayerAvatarStartupOperation) plus the existing null guard in RemoteProfiles; a new fix would duplicate #10042 or be a forbidden defensive null-check on the non-nullable Profile query parameter"
     },
     {
       "number": 10001,
@@ -148,9 +152,9 @@
     },
     {
       "number": 9967,
-      "status": "pending",
+      "status": "skipped",
       "commit": null,
-      "note": null
+      "note": "chat bubble text is UI Toolkit (NametagElement) resolved via the DCLTextSettings PanelTextSettings asset, which has m_EnableEmojiSupport=0; the emoji sprite asset is already wired, so the fix is a single .asset inspector toggle (a binary edit the sweep must not perform). No .cs code references the settings, so it is not code-fixable within sweep scope"
     },
     {
       "number": 9962,
@@ -166,8 +170,8 @@
     },
     {
       "number": 9953,
-      "status": "pending",
-      "commit": null,
+      "status": "fixed",
+      "commit": "58826928f10ff015c88a113f87a98d09c4ff7cc5",
       "note": null
     },
     {
@@ -202,8 +206,8 @@
     },
     {
       "number": 9937,
-      "status": "pending",
-      "commit": null,
+      "status": "fixed",
+      "commit": "2daf0e0ca2d2cbc518825666559c039405cfade1",
       "note": null
     },
     {
@@ -220,8 +224,8 @@
     },
     {
       "number": 9922,
-      "status": "pending",
-      "commit": null,
+      "status": "fixed",
+      "commit": "2daf0e0ca2d2cbc518825666559c039405cfade1",
       "note": null
     },
     {
