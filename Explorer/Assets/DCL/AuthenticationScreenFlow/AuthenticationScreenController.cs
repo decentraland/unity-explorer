@@ -271,6 +271,16 @@ namespace DCL.AuthenticationScreenFlow
             await lifeCycleTask.Task;
         }
 
+        internal void CompleteExistingAccountLogin(bool isCached)
+        {
+            IsCurrentlyNewAccount = false;
+            CurrentState.Value = isCached ? AuthStatus.LoggedInCached : AuthStatus.LoggedIn;
+            if (splashScreen != null)
+                splashScreen.FadeOutAndHide();
+            fsm?.Enter<InitAuthState>();
+            TrySetLifeCycle();
+        }
+
         internal void TrySetLifeCycle()
         {
             lifeCycleTask?.TrySetResult();

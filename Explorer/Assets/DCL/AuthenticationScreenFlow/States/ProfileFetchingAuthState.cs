@@ -116,7 +116,10 @@ namespace DCL.AuthenticationScreenFlow
                         profile.IsDirty = true;
                         // Catalysts don't manipulate this field, so at this point we assume that the user is connected to web3
                         profile.HasConnectedWeb3 = true;
-                        machine.Enter<LobbyForExistingAccountAuthState, (Profile, bool, CancellationToken)>((profile, isCached, ct));
+                        if (FeaturesRegistry.Instance.IsEnabled(FeatureId.LivingLobby))
+                            controller.CompleteExistingAccountLogin(isCached);
+                        else
+                            machine.Enter<LobbyForExistingAccountAuthState, (Profile, bool, CancellationToken)>((profile, isCached, ct));
                     }
                     else if (isCached)
                     {

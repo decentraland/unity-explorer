@@ -39,13 +39,16 @@ namespace DCL.EventsApi
             baseUrl = URLDomain.FromString(urlsSource.Url(DecentralandUrl.ApiEvents));
         }
 
-        public async UniTask<IReadOnlyList<EventDTO>> GetEventsAsync(CancellationToken ct, bool onlyLiveEvents = false)
+        public async UniTask<IReadOnlyList<EventDTO>> GetEventsAsync(CancellationToken ct, bool onlyLiveEvents = false, bool withConnectedUsers = false)
         {
             urlBuilder.Clear();
             urlBuilder.AppendDomain(baseUrl);
 
             if (onlyLiveEvents)
                 urlBuilder.AppendParameter(new URLParameter(LIST_PARAMETER, LIVE_PARAMETER_VALUE));
+
+            if (withConnectedUsers)
+                urlBuilder.AppendParameter(new URLParameter(WITH_CONNECTED_USERS_PARAMETER, "true"));
 
             return await FetchEventListAsync(urlBuilder.Build(), ct);
         }

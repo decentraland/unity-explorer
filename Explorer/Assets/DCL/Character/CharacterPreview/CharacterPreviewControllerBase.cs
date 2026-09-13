@@ -303,6 +303,9 @@ namespace DCL.CharacterPreview
         private async UniTask UpdateAvatarAsync(CharacterPreviewAvatarModel model, CancellationToken ct) =>
             await (previewController?.UpdateAvatarAsync(model, ct) ?? UniTask.CompletedTask);
 
+        public void SetRenderingActive(bool isActive) =>
+            previewController?.SetCharacterPreviewAvatarContainerActive(isActive);
+
         public void StopEmotes()
         {
             previewController?.StopEmotes();

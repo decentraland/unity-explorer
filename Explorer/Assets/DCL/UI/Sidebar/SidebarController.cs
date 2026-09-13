@@ -431,7 +431,13 @@ namespace DCL.UI.Sidebar
         private void OnBugReportButtonClicked() => OpenPanelAsync(viewInstance!.bugReportButton, BugReportController.IssueCommand(new BugReportParams())).Forget();
 
         private void OnSidebarConfigButtonClicked() => OpenPanelAsync(viewInstance!.sidebarConfigButton, SidebarSettingsWidgetController.IssueCommand()).Forget();
-        private void OnProfilePanelButtonClicked() => OpenPanelAsync(null, ProfileMenuController.IssueCommand()).Forget();
+        private void OnProfilePanelButtonClicked()
+        {
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.LivingLobby))
+                OpenPanelAsync(null, ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Home, entryPoint: "sidebar_avatar"))).Forget();
+            else
+                OpenPanelAsync(null, ProfileMenuController.IssueCommand()).Forget();
+        }
         private void OpenSkyboxSettingsPanel() => OpenPanelAsync(viewInstance!.skyboxButton, SkyboxMenuController.IssueCommand()).Forget();
         private void OpenNotificationsPanel() => OpenPanelAsync(viewInstance!.NotificationsButton, NotificationsPanelController.IssueCommand()).Forget();
 

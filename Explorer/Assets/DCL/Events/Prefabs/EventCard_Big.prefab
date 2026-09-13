@@ -2892,6 +2892,7 @@ MonoBehaviour:
   actionButtonsCanvasGroup: {fileID: 5617121989798511185}
   reminderMarkCanvasGroup: {fileID: 4202337368447821018}
   liveMarkCanvasGroup: {fileID: 5186718141298057439}
+  defaultThumbnail: {fileID: 21300000, guid: 50c948c68942a4cf188b1f118ba70f8d, type: 3}
 --- !u!114 &-7201698428235074530
 MonoBehaviour:
   m_ObjectHideFlags: 0

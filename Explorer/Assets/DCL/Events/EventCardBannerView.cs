@@ -41,7 +41,7 @@ namespace DCL.Events
             loadingThumbnailCts = loadingThumbnailCts.SafeRestart();
             thumbnailLoader.LoadCommunityThumbnailFromUrlAsync(
                 !string.IsNullOrEmpty(eventInfo.image_vertical) ? eventInfo.image_vertical : eventInfo.image,
-                eventThumbnail, null, loadingThumbnailCts.Token, true).Forget();
+                eventThumbnail, defaultThumbnail, loadingThumbnailCts.Token, true).Forget();
         }
 
         protected override void PlayHoverAnimation() { }

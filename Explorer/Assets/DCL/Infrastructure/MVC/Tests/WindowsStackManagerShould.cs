@@ -1,18 +1,28 @@
 using NSubstitute;
 using NUnit.Framework;
+using UnityEngine.InputSystem;
 
 namespace MVC.Tests
 {
     public class WindowsStackManagerShould
     {
+        private InputAction closeAction;
         private WindowStackManager manager;
         private IController controller;
 
         [SetUp]
         public void Setup()
         {
-            manager = new WindowStackManager();
+            closeAction = new InputAction();
+            manager = new WindowStackManager(closeAction);
             controller = Substitute.For<IController>();
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            manager.Dispose();
+            closeAction.Dispose();
         }
 
         [Test]

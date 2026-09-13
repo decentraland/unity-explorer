@@ -50,6 +50,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 07ae770d2aa140eeb767b5dcab7cbbca
+    m_Address: LegacyExplorePanelUI
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 08d42937d0bc54b48baaa23c8c520175
     m_Address: AuthenticationScreen
     m_ReadOnly: 0

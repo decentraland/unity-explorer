@@ -103,6 +103,8 @@ namespace MVC
 
         public async UniTask ShowAsync<TView, TInputData>(ShowCommand<TView, TInputData> command, CancellationToken ct = default) where TView: IView
         {
+            if (ct.IsCancellationRequested || destructionToken.IsCancellationRequested) return;
+
             // Find the controller
             IController controller = controllers[typeof(IController<TView, TInputData>)];
 
@@ -120,9 +122,10 @@ namespace MVC
                 return;
             }
 
-            ct = ct.Equals(CancellationToken.None)
-                ? destructionToken
-                : CancellationTokenSource.CreateLinkedTokenSource(ct, destructionToken).Token;
+            using CancellationTokenSource? linkedCancellation = ct.CanBeCanceled
+                ? CancellationTokenSource.CreateLinkedTokenSource(ct, destructionToken)
+                : null;
+            ct = linkedCancellation?.Token ?? destructionToken;
 
             try
             {
@@ -233,7 +236,7 @@ namespace MVC
                 await popupCloser.HideAsync(ct);
 
                 await UniTask.WhenAny(command.Execute(controller, fullscreenPushInfo.ControllerOrdering, ct),
-                    fullscreenPushInfo.OnClose?.Task ?? UniTask.Never(ct),
+                    fullscreenPushInfo.OnClose.Task,
                     windowsStackManager.GetControllerClosure(controller)?.Task ?? UniTask.Never(ct));
             }
             finally
@@ -260,7 +263,7 @@ namespace MVC
                 await UniTask.WhenAny(
                     UniTask.WhenAll(command.Execute(controller, pushPopupPush.ControllerOrdering, ct), popupCloser.ShowAsync(ct)),
                     WaitForPopupCloserClickAsync(controller, ct),
-                    pushPopupPush.OnClose?.Task ?? UniTask.Never(ct),
+                    pushPopupPush.OnClose.Task,
                     windowsStackManager.GetControllerClosure(controller)?.Task ?? UniTask.Never(ct));
             }
             finally

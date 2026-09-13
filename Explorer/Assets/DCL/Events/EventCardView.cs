@@ -44,6 +44,7 @@ namespace DCL.Events
 
         [Header("Event Info")]
         [SerializeField] protected ImageView eventThumbnail = null!;
+        [SerializeField] protected Sprite defaultThumbnail;
         [SerializeField] private TMP_Text eventText = null!;
         [SerializeField] protected TMP_Text hostName = null!;
         [SerializeField] private TMP_Text eventDate = null!;
@@ -256,7 +257,7 @@ namespace DCL.Events
             loadingThumbnailCts = loadingThumbnailCts.SafeRestart();
             thumbnailLoader.LoadCommunityThumbnailFromUrlAsync(
                 eventInfo.image,
-                eventThumbnail, null, loadingThumbnailCts.Token, true).Forget();
+                eventThumbnail, defaultThumbnail, loadingThumbnailCts.Token, true).Forget();
         }
 
         private void OpenContextMenu(Vector2 position)

@@ -12,6 +12,7 @@ using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.PlacesAPIService;
 using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
 using ECS.SceneLifeCycle.Realm;
 using System;
 using System.Threading;
@@ -175,18 +176,22 @@ namespace DCL.Places
             placeDetailPanelView?.SilentlySetHomeToggle(isHome);
         }
 
-        public void JumpInPlace(PlacesData.PlaceInfo placeInfo, CancellationToken ct)
-        {
-            if (!string.IsNullOrWhiteSpace(placeInfo.world_name))
-                realmNavigator.TryChangeRealmAsync(URLDomain.FromString(new ENS(placeInfo.world_name).ConvertEnsToWorldUrl(dclUrlSource.Url(DecentralandUrl.WorldServer))),
-                    ct,
-                    default,
-                    isWorld: true,
-                    allowsSpawnPointerOverride: true).Forget();
-            else
-                realmNavigator.TeleportToParcelAsync(placeInfo.base_position_processed, ct, false).Forget();
+        public void JumpInPlace(PlacesData.PlaceInfo placeInfo, CancellationToken ct) =>
+            JumpInPlaceAsync(placeInfo, ct).SuppressToResultAsync(ReportCategory.UI).Forget();
 
+        public async UniTask<EnumResult<TaskError>> JumpInPlaceAsync(PlacesData.PlaceInfo placeInfo, CancellationToken ct)
+        {
             JumpedInPlace?.Invoke(placeInfo);
+            if (!string.IsNullOrWhiteSpace(placeInfo.world_name))
+            {
+                var result = await realmNavigator.TryChangeRealmAsync(URLDomain.FromString(new ENS(placeInfo.world_name).ConvertEnsToWorldUrl(dclUrlSource.Url(DecentralandUrl.WorldServer))),
+                    ct, default, isWorld: true, allowsSpawnPointerOverride: true);
+                return result.As(ChangeRealmErrors.AsTaskError);
+            }
+            else
+            {
+                return await realmNavigator.TeleportToParcelAsync(placeInfo.base_position_processed, ct, false);
+            }
         }
 
         public void SharePlace(PlacesData.PlaceInfo placeInfo)

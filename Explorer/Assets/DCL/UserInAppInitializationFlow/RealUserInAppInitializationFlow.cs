@@ -8,6 +8,9 @@ using DCL.AuthenticationScreenFlow;
 using DCL.Character;
 using DCL.Chat.History;
 using DCL.Diagnostics;
+using DCL.ExplorePanel;
+using DCL.ExplorePanel.Lobby;
+using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.Pulse;
 using DCL.Multiplayer.Connections.RoomHubs;
@@ -17,7 +20,9 @@ using DCL.RealmNavigation;
 using DCL.RealmNavigation.LoadingOperation;
 using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.UI.ErrorPopup;
+using DCL.UI;
 using DCL.Utilities;
+using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
 using DCL.Web3.Identities;
 using ECS;
@@ -108,14 +113,16 @@ namespace DCL.UserInAppInitializationFlow
 
         public async UniTask ExecuteAsync(UserInAppInitializationFlowParameters parameters, CancellationToken ct)
         {
-            loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Init);
-
             EnumResult<TaskError> result = parameters.RecoveryError;
+            if (IsCancelled(result, ct)) return;
+
+            loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Init);
 
             using UIAudioEventsBus.PlayAudioScope playAudioScope = UIAudioEventsBus.Instance.NewPlayAudioScope(backgroundMusic);
 
             do
             {
+                if (ct.IsCancellationRequested) return;
                 // Clear cached identity for non-first instances in local scene development
                 // This ensures each instance (except the first one) shows the authentication screen
                 if (!appArgs.HasFlagWithValueTrue(AppArgsFlags.SKIP_AUTH_SCREEN) &&
@@ -161,18 +168,25 @@ namespace DCL.UserInAppInitializationFlow
                         default:
                             await UniTask.WhenAll(
                                 ShowAuthenticationScreenAsync(ct),
-                                ShowErrorPopupIfRequired(result, ct)
+                                result.Error is { } previousFailure ? ShowFailureAsync(previousFailure, ct) : UniTask.CompletedTask
                             );
 
                             break;
                     }
                 }
 
+                if (ct.IsCancellationRequested) return;
+
                 var flowToRun = parameters.LoadSource is IUserInAppInitializationFlow.LoadSource.Logout
                     ? reloginOps
                     : initOps;
 
-                var loadingResult = await LoadingScreen(parameters.ShowLoading)
+                bool showLobby = LobbyStartup.ShouldOpen(appArgs, FeaturesRegistry.Instance.IsEnabled(FeatureId.LivingLobby));
+                if (showLobby)
+                    mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Home, entryPoint: "startup")), ct)
+                        .SuppressToResultAsync(ReportCategory.UI).Forget();
+
+                var loadingResult = await LoadingScreen(parameters.ShowLoading && !showLobby)
                     .ShowWhileExecuteTaskAsync(
                         async (parentLoadReport, ct) =>
                         {
@@ -180,6 +194,7 @@ namespace DCL.UserInAppInitializationFlow
                             // The realm was set during bootstrap before the user had a chance to switch accounts, so the identity
                             // that's now authenticated may differ from the one assumed at startup.
                             await VerifyWorldAccessAndFallbackIfNeededAsync(ct);
+                            ct.ThrowIfCancellationRequested();
 
                             //Set initial position and start async livekit connection
                             characterExposedTransform.Position.Value
@@ -206,7 +221,10 @@ namespace DCL.UserInAppInitializationFlow
                                 // At this point it is necessary that the task did not become invalid by any modification in the process
                                 var livekitOperationResult = await livekitHandshake;
 
-                                if (isLocalSceneDevelopment)
+                                if (IsCancelled(operationResult, ct) || IsCancelled(livekitOperationResult, ct))
+                                    return EnumResult<TaskError>.CancelledResult(TaskError.Cancelled);
+
+                                if (isLocalSceneDevelopment && operationResult.Success)
                                 {
                                     // Fix: https://github.com/decentraland/unity-explorer/issues/5250
                                     // Prevent creators to be stuck at loading screen due to livekit issues
@@ -216,7 +234,8 @@ namespace DCL.UserInAppInitializationFlow
                                 }
                                 else
                                 {
-                                    operationResult = livekitOperationResult;
+                                    if (operationResult.Success)
+                                        operationResult = livekitOperationResult;
 
                                     if (operationResult.Success)
                                         parentLoadReport.SetProgress(
@@ -230,15 +249,19 @@ namespace DCL.UserInAppInitializationFlow
                     );
 
                 result = loadingResult;
-
-                if (!result.Success)
+                if (IsCancelled(result, ct))
                 {
-                    //Fail straight away
-                    string message = result.Error.AsMessage();
-                    ReportHub.LogError(ReportCategory.AUTHENTICATION, message);
+                    loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Cancelled);
+                    return;
                 }
+                if (result.Error is not { } failure) return;
+
+                loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Failed);
+                ReportHub.LogError(ReportCategory.AUTHENTICATION, $"{failure.State}: {failure.Message} {failure.Exception}");
+                if (showLobby)
+                    await ShowFailureAsync(failure, ct);
             }
-            while (!result.Success && parameters.ShowAuthentication);
+            while (parameters.ShowAuthentication && !ct.IsCancellationRequested);
         }
 
         private async UniTask VerifyWorldAccessAndFallbackIfNeededAsync(CancellationToken ct)
@@ -338,44 +361,27 @@ namespace DCL.UserInAppInitializationFlow
             await mvcManager.ShowAsync(AuthenticationScreenController.IssueCommand(), ct);
         }
 
-        private UniTask ShowErrorPopupIfRequired(EnumResult<TaskError> result, CancellationToken ct)
+        private UniTask ShowFailureAsync((TaskError State, string Message, Exception Exception) failure, CancellationToken ct)
         {
-            if (result.Success)
-                return UniTask.CompletedTask;
+            if (ct.IsCancellationRequested) return UniTask.CompletedTask;
 
-            if (result.Error is { Exception: UserBlockedException })
-                return mvcManager.ShowAsync(BlockedScreenController.IssueCommand(new BlockedScreenParameters(((UserBlockedException)result.Error.Value.Exception).BanStatusData.ban)), ct);
+            if (failure.Exception is UserBlockedException blocked)
+                return mvcManager.ShowAsync(BlockedScreenController.IssueCommand(new BlockedScreenParameters(blocked.BanStatusData.ban)), ct);
 
-            if (result.Error is { State: TaskError.Timeout })
+            if (failure.State == TaskError.Timeout || failure.Exception is TimeoutException)
                 return mvcManager.ShowAsync(ErrorPopupWithRetryController.IssueCommand(new ErrorPopupWithRetryController.Input(
                     title: "Connection Error",
                     description: "We were unable to connect to Decentraland. Please verify your connection and retry.",
                     iconType: ErrorPopupWithRetryController.IconType.ConnectionLost,
                     retryText: "Continue")), ct);
 
-            var message = $"{ToMessage(result)}\nPlease try again";
+            string message = failure.State == TaskError.MessageError ? $"Error: {failure.Message}" : "Critical error occurred.";
+            message += "\nPlease try again";
             return mvcManager.ShowAsync(new ShowCommand<ErrorPopupView, ErrorPopupData>(ErrorPopupData.FromDescription(message)), ct);
         }
 
-        private string ToMessage(EnumResult<TaskError> result)
-        {
-            if (result.Success)
-            {
-                ReportHub.LogError(ReportCategory.AUTHENTICATION, "Incorrect use case of error to message");
-                return "Incorrect error state";
-            }
-
-            var error = result.Error!.Value;
-
-            return error.State switch
-                   {
-                       TaskError.MessageError => $"Error: {error.Message}",
-                       TaskError.Timeout => "Load timeout. Verify yor connection.",
-                       TaskError.Cancelled => "Operation cancelled.",
-                       TaskError.UnexpectedException => "Critical error occured.",
-                       _ => throw new ArgumentOutOfRangeException()
-                   };
-        }
+        private static bool IsCancelled(EnumResult<TaskError> result, CancellationToken ct) =>
+            ct.IsCancellationRequested || result.Error is { State: TaskError.Cancelled } or { Exception: OperationCanceledException };
 
         private ILoadingScreen LoadingScreen(bool withUI) =>
             withUI ? loadingScreen : EMPTY_LOADING_SCREEN;

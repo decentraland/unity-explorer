@@ -32,10 +32,12 @@ namespace DCL.RealmNavigation.LoadingOperation
         /// <summary>
         ///     Tries to restart the whole flow for <paramref name="attemptsCount" /> times <br />
         ///     Protects from unexpected exceptions from the inner operations <br />
-        ///     Always finalizes the process with <see cref="LoadingStatus.LoadingStage.Completed" />
+        ///     Reports completion only after all operations succeed.
         /// </summary>
         public virtual async UniTask<EnumResult<TaskError>> ExecuteAsync(string processName, int attemptsCount, TParams args, CancellationToken ct)
         {
+            if (ct.IsCancellationRequested) return EnumResult<TaskError>.CancelledResult(TaskError.Cancelled);
+
             var lastOpResult = EnumResult<TaskError>.SuccessResult();
 
             attemptsCount = Mathf.Max(1, attemptsCount);
@@ -44,6 +46,7 @@ namespace DCL.RealmNavigation.LoadingOperation
             {
                 foreach (ILoadingOperation<TParams> loadingOp in Operations)
                 {
+                    if (ct.IsCancellationRequested) return EnumResult<TaskError>.CancelledResult(TaskError.Cancelled);
                     currentOp.Value = loadingOp;
 
                     try
@@ -52,6 +55,9 @@ namespace DCL.RealmNavigation.LoadingOperation
                             return EnumResult<TaskError>.ErrorResult(TaskError.MessageError, $"Loading operation {loadingOp.GetType().Name} has been manually interrupted");
 
                         lastOpResult = await loadingOp.ExecuteAsync(args, ct);
+
+                        if (ct.IsCancellationRequested || lastOpResult.Error is { State: TaskError.Cancelled } or { Exception: OperationCanceledException })
+                            return EnumResult<TaskError>.CancelledResult(TaskError.Cancelled);
 
                         if (!lastOpResult.Success)
                         {
@@ -62,6 +68,10 @@ namespace DCL.RealmNavigation.LoadingOperation
 
                             break;
                         }
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        return EnumResult<TaskError>.CancelledResult(TaskError.Cancelled);
                     }
                     catch (Exception e)
                     {

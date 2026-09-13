@@ -53,12 +53,6 @@ namespace DCL.ChatArea
             CentralizedChatClickDetectionService.Instance.Resume();
         }
 
-        protected override void OnBeforeViewShow()
-        {
-            base.OnBeforeViewShow();
-            mvcManager.CloseAllNonPersistentViews();
-        }
-
         protected override void OnViewShow()
         {
             CentralizedChatClickDetectionService.Instance.Resume();

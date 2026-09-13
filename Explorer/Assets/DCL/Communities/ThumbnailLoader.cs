@@ -24,10 +24,11 @@ namespace DCL.Communities
             ImageView thumbnailView,
             Sprite? defaultThumbnail,
             CancellationToken ct,
-            bool useKtx)
+            bool useKtx,
+            Func<bool>? isCurrent = null)
         {
-            thumbnailView.ImageColor = Color.clear;
-            thumbnailView.SetImage(defaultThumbnail!, true);
+            thumbnailView.SetImage(defaultThumbnail, true);
+            thumbnailView.ImageColor = defaultThumbnail != null ? Color.white : Color.clear;
             thumbnailView.IsLoading = true;
 
             Sprite? loadedSprite = null;
@@ -40,12 +41,16 @@ namespace DCL.Communities
             catch (OperationCanceledException) { return; }
             catch (Exception e) { ReportHub.LogException(e, ReportCategory.COMMUNITIES); }
 
+            if (ct.IsCancellationRequested || isCurrent?.Invoke() == false)
+                return;
+
             thumbnailView.IsLoading = false;
 
             if (loadedSprite != null)
                 thumbnailView.SetImage(loadedSprite, true);
 
-            thumbnailView.ShowImageAnimated();
+            if (loadedSprite != null || defaultThumbnail != null)
+                thumbnailView.ShowImageAnimated();
         }
     }
 }

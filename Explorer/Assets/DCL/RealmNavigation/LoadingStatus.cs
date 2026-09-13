@@ -26,7 +26,9 @@ namespace DCL.RealmNavigation
             [LoadingStage.PlayerTeleporting] = 0.85f,
             [LoadingStage.GlobalPXsLoading] = 0.99f, //Used in initialization Flow
             [LoadingStage.LivekitRestarting] = 0.99f, //Used in Teleport Flow
-            [LoadingStage.Completed] = 1f
+            [LoadingStage.Completed] = 1f,
+            [LoadingStage.Failed] = 0f,
+            [LoadingStage.Cancelled] = 0f,
         };
 
         private static readonly HashSet<LoadingStage> NON_LOADING_SCREEN_STAGES = new()
@@ -34,6 +36,8 @@ namespace DCL.RealmNavigation
             LoadingStage.Completed,
             LoadingStage.Init,
             LoadingStage.AuthenticationScreenShowing,
+            LoadingStage.Failed,
+            LoadingStage.Cancelled,
         };
 
 
@@ -54,6 +58,8 @@ namespace DCL.RealmNavigation
             LiveKitStopping,
             RealmChanging,
             LivekitRestarting,
+            Failed,
+            Cancelled,
         }
 
         public float SetCurrentStage(LoadingStage stage)
@@ -61,8 +67,10 @@ namespace DCL.RealmNavigation
             ReportHub.LogProductionInfo($"Current loading stage: {stage}");
             CurrentLoadingStage.Set(stage.ToString());
             CurrentStageMut.Value = stage;
-            return PROGRESS[stage];
+            return GetProgress(stage);
         }
+
+        public static float GetProgress(LoadingStage stage) => PROGRESS[stage];
 
         public void UpdateAssetsLoaded(int assetsLoaded, int assetsToLoad)
         {

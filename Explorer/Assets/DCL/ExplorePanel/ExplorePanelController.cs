@@ -1,8 +1,8 @@
 using Cysharp.Threading.Tasks;
 using DCL.Backpack;
+using DCL.ExplorePanel.Lobby;
 using DCL.Communities;
 using DCL.Communities.CommunitiesBrowser;
-using DCL.Credits;
 using DCL.FeatureFlags;
 using DCL.Diagnostics;
 using DCL.Events;
@@ -34,8 +34,9 @@ using Utility;
 
 namespace DCL.ExplorePanel
 {
-    public class ExplorePanelController : ControllerBase<ExplorePanelView, ExplorePanelParameter>, IReshowController<ExplorePanelParameter>
+    public class ExplorePanelController : ControllerBase<ExplorePanelView, ExplorePanelParameter>, IReshowController<ExplorePanelParameter>, IController
     {
+        private readonly LobbyController? lobbyController;
         private readonly BackpackController backpackController;
         private readonly ShopController shopController;
         private readonly SidebarProfileButtonPresenter profileButtonPresenter;
@@ -45,7 +46,6 @@ namespace DCL.ExplorePanel
         private readonly bool includeCameraReel;
         private readonly IMVCManager mvcManager;
         private readonly bool includeDiscover;
-        private readonly bool includeInGameShop;
         private readonly HttpEventsApiService eventsApiService;
         private readonly JoinedCommunitiesVoiceLiveTracker communitiesLiveTracker;
         private bool includeCommunities;
@@ -72,6 +72,10 @@ namespace DCL.ExplorePanel
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
 
+        private bool canClose => lobbyController?.IsWorldReady ?? true;
+
+        bool IController.CanBeClosedByEscape => canClose;
+
         public event Action? PlacesOpenedFromStartMenu;
         public event Action? EventsOpenedFromStartMenu;
 
@@ -90,9 +94,16 @@ namespace DCL.ExplorePanel
             HttpEventsApiService eventsApiService,
             IMVCManager mvcManager,
             JoinedCommunitiesVoiceLiveTracker communitiesLiveTracker,
-            ICreditsPanelController creditsPanelController)
+            LobbyController? lobbyController)
             : base(viewFactory)
         {
+            this.lobbyController = lobbyController;
+            if (lobbyController != null)
+            {
+                lobbyController.NavigationRequested += ShowSection;
+                lobbyController.CloseRequested += CloseFromLobby;
+                lobbyController.WorldReadinessChanged += UpdateWorldReadiness;
+            }
             NavmapController = navmapController;
             SettingsController = settingsController;
             this.backpackController = backpackController;
@@ -104,7 +115,6 @@ namespace DCL.ExplorePanel
             this.includeCameraReel = FeaturesRegistry.Instance.IsEnabled(FeatureId.CameraReel);
             this.mvcManager = mvcManager;
             this.includeDiscover = FeaturesRegistry.Instance.IsEnabled(FeatureId.Discover);
-            includeInGameShop = FeaturesRegistry.Instance.IsEnabled(FeatureId.InGameShop);
             this.eventsApiService = eventsApiService;
             this.communitiesLiveTracker = communitiesLiveTracker;
             CommunitiesBrowserController = communitiesBrowserController;
@@ -118,6 +128,13 @@ namespace DCL.ExplorePanel
 
         public override void Dispose()
         {
+            if (lobbyController != null)
+            {
+                lobbyController.NavigationRequested -= ShowSection;
+                lobbyController.CloseRequested -= CloseFromLobby;
+                lobbyController.WorldReadinessChanged -= UpdateWorldReadiness;
+                lobbyController.Dispose();
+            }
             base.Dispose();
 
             profileMenuCts.SafeCancelAndDispose();
@@ -129,7 +146,7 @@ namespace DCL.ExplorePanel
 
         public void OnReshowWhileVisible(ExplorePanelParameter parameter)
         {
-            ExploreSections sectionToShow = parameter.IsSectionProvided ? parameter.Section : lastShownSection;
+            ExploreSections sectionToShow = RequestedSection(parameter);
 
             if (sectionToShow != lastShownSection)
                 sectionSelectorController.SetAnimationState(false, tabsBySections[lastShownSection]);
@@ -152,7 +169,7 @@ namespace DCL.ExplorePanel
         protected override void OnViewInstantiated()
         {
             setupExploreSectionsCts = setupExploreSectionsCts.SafeRestart();
-            SetupExploreSectionsAsync(setupExploreSectionsCts.Token).Forget();
+            SetupExploreSectionsAsync(setupExploreSectionsCts.Token).SuppressToResultAsync(ReportCategory.UI).Forget();
             viewInstance!.SetLiveEventsCounter(0);
 
             viewInstance.CommunitiesLiveBadge.SetActive(communitiesLiveTracker.HasAnyJoinedCommunityLive.Value);
@@ -165,7 +182,7 @@ namespace DCL.ExplorePanel
                 viewInstance.CommunitiesLiveBadge.SetActive(hasAnyLive);
         }
 
-        private async UniTaskVoid SetupExploreSectionsAsync(CancellationToken ct)
+        private async UniTask SetupExploreSectionsAsync(CancellationToken ct)
         {
             exploreSections = new Dictionary<ExploreSections, ISection>
             {
@@ -179,9 +196,12 @@ namespace DCL.ExplorePanel
                 { ExploreSections.Shop, shopController },
             };
 
-            includeCommunities = await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct);
-
-            lastShownSection = includeDiscover ? ExploreSections.Events : includeCommunities ? ExploreSections.Communities : ExploreSections.Navmap;
+            if (lobbyController != null) exploreSections.Add(ExploreSections.Home, lobbyController);
+            includeCommunities = lobbyController != null
+                ? CommunitiesFeatureAccess.Instance.IsUserAllowedCached()
+                : await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct);
+            lastShownSection = lobbyController != null ? ExploreSections.Home
+                : includeDiscover ? ExploreSections.Events : includeCommunities ? ExploreSections.Communities : ExploreSections.Navmap;
 
             sectionSelectorController = new SectionSelectorController<ExploreSections>(exploreSections, lastShownSection);
 
@@ -197,15 +217,14 @@ namespace DCL.ExplorePanel
                 if ((section == ExploreSections.CameraReel && !includeCameraReel) ||
                     (section == ExploreSections.Communities && !includeCommunities) ||
                     (section == ExploreSections.Places && !includeDiscover) ||
-                    (section == ExploreSections.Events && !includeDiscover) ||
-                    (section == ExploreSections.Shop && !includeInGameShop))
+                    (section == ExploreSections.Events && !includeDiscover) || (section == ExploreSections.Shop && (lobbyController != null || !FeaturesRegistry.Instance.IsEnabled(FeatureId.InGameShop))))
                 {
                     tabSelector.gameObject.SetActive(false);
-                    continue;
                 }
 
                 tabSelector.TabSelectorToggle.onValueChanged.AddListener(isOn =>
                     {
+                        if (isOn && section != lastShownSection) lobbyController?.Visit?.Action("navigation", section.ToString());
                         ToggleSection(isOn, tabSelector, section, true);
 
                         if (!isOn) return;
@@ -224,15 +243,27 @@ namespace DCL.ExplorePanel
                 );
             }
 
+            viewInstance.HomeButton?.onClick.AddListener(() => ShowSection(ExploreSections.Home));
             viewInstance?.ProfileWidget?.OpenProfileButton?.Button?.onClick.AddListener(ShowProfileMenuAsync);
+
+            try
+            {
+                includeCommunities = await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct);
+                if (!ct.IsCancellationRequested)
+                    tabsBySections[ExploreSections.Communities].gameObject.SetActive(includeCommunities);
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e) { ReportHub.LogException(e, ReportCategory.UI); }
         }
 
         protected override void OnViewShow()
         {
             isControlClosing = false;
+            if (lobbyController != null) lobbyController.EntryPoint = inputData.EntryPoint ?? "navigation";
+            UpdateWorldReadiness(canClose);
             sectionSelectorController.ResetAnimators();
 
-            ExploreSections sectionToShow = inputData.IsSectionProvided ? inputData.Section : lastShownSection;
+            ExploreSections sectionToShow = RequestedSection(inputData);
 
             foreach ((ExploreSections section, TabSelectorView? tab) in tabsBySections)
             {
@@ -314,7 +345,7 @@ namespace DCL.ExplorePanel
                 ShowSection(ExploreSections.CameraReel);
             }
             else
-                isControlClosing = true;
+                isControlClosing = canClose;
         }
 
         private void OnCloseMainMenu(InputAction.CallbackContext obj)
@@ -324,7 +355,7 @@ namespace DCL.ExplorePanel
             EventSystem.current.SetSelectedGameObject(null);
 
             profileMenuController.HideViewAsync(CancellationToken.None).Forget();
-            isControlClosing = true;
+            isControlClosing = canClose;
         }
 
         private void OnMapHotkeyPressed(InputAction.CallbackContext obj)
@@ -335,7 +366,7 @@ namespace DCL.ExplorePanel
                 ShowSection(ExploreSections.Navmap);
             }
             else
-                isControlClosing = true;
+                isControlClosing = canClose;
         }
 
         private void OnSettingsHotkeyPressed(InputAction.CallbackContext obj)
@@ -346,7 +377,7 @@ namespace DCL.ExplorePanel
                 ShowSection(ExploreSections.Settings);
             }
             else
-                isControlClosing = true;
+                isControlClosing = canClose;
         }
 
         private void OnCommunitiesHotkeyPressed(InputAction.CallbackContext obj)
@@ -359,7 +390,7 @@ namespace DCL.ExplorePanel
                 ShowSection(ExploreSections.Communities);
             }
             else
-                isControlClosing = true;
+                isControlClosing = canClose;
         }
 
         private void OnPlacesHotkeyPressed(InputAction.CallbackContext obj)
@@ -372,7 +403,7 @@ namespace DCL.ExplorePanel
                 ShowSection(ExploreSections.Places);
             }
             else
-                isControlClosing = true;
+                isControlClosing = canClose;
         }
 
         private void OnEventsHotkeyPressed(InputAction.CallbackContext obj)
@@ -385,7 +416,7 @@ namespace DCL.ExplorePanel
                 ShowSection(ExploreSections.Events);
             }
             else
-                isControlClosing = true;
+                isControlClosing = canClose;
         }
 
         private void OnBackpackHotkeyPressed(InputAction.CallbackContext obj)
@@ -396,12 +427,31 @@ namespace DCL.ExplorePanel
                 ShowSection(ExploreSections.Backpack);
             }
             else
-                isControlClosing = true;
+                isControlClosing = canClose;
         }
+
+        private void CloseFromLobby() =>
+            isControlClosing = canClose;
+
+        private ExploreSections RequestedSection(ExplorePanelParameter parameter) =>
+            parameter.IsSectionProvided && (parameter.Section != ExploreSections.Home || lobbyController != null)
+                ? parameter.Section : lobbyController != null ? ExploreSections.Home : lastShownSection;
 
         private void ShowSection(ExploreSections section)
         {
+            if (section == ExploreSections.Home && lobbyController == null) section = lastShownSection;
+            if (section != lastShownSection) lobbyController?.Visit?.Action("navigation", section.ToString());
             ToggleSection(true, tabsBySections[section], section, true);
+        }
+
+        protected override void OnBlur()
+        {
+            if (lastShownSection == ExploreSections.Home) lobbyController?.Suspend();
+        }
+
+        protected override void OnFocus()
+        {
+            if (lastShownSection == ExploreSections.Home) lobbyController?.Resume();
         }
 
         protected override void OnViewClose()
@@ -441,15 +491,22 @@ namespace DCL.ExplorePanel
             inputBlock.Enable(InputMapComponent.Kind.Camera, InputMapComponent.Kind.Player);
         }
 
+        private void UpdateWorldReadiness(bool ready)
+        {
+            if (viewInstance == null) return;
+            viewInstance.CloseButton.interactable = ready;
+        }
+
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
         {
             await UniTask.WhenAny(viewInstance!.CloseButton.OnClickAsync(ct),
-                                  UniTask.WaitUntil(() => isControlClosing, PlayerLoopTiming.Update, ct),
+                                  UniTask.WaitUntil(() => isControlClosing && canClose, PlayerLoopTiming.Update, ct),
                                   viewInstance.ProfileMenuView.SystemMenuView.LogoutButton.OnClickAsync(ct));
         }
 
         private async void ShowProfileMenuAsync()
         {
+            lobbyController?.Visit?.Action("profile_menu", "navigation");
             profileMenuCts = profileMenuCts.SafeRestart();
 
             if (profileMenuController.State != ControllerState.ViewHidden)
@@ -494,6 +551,7 @@ namespace DCL.ExplorePanel
     public readonly struct ExplorePanelParameter
     {
         public readonly ExploreSections Section;
+        public readonly string? EntryPoint;
         public readonly BackpackSections? BackpackSection;
         public readonly SettingsController.SettingsSection? SettingsSection;
 
@@ -502,9 +560,10 @@ namespace DCL.ExplorePanel
         /// </summary>
         public readonly bool IsSectionProvided;
 
-        public ExplorePanelParameter(ExploreSections section, BackpackSections? backpackSection = null, SettingsController.SettingsSection? settingsSection = null)
+        public ExplorePanelParameter(ExploreSections section, BackpackSections? backpackSection = null, SettingsController.SettingsSection? settingsSection = null, string? entryPoint = null)
         {
             Section = section;
+            EntryPoint = entryPoint;
             BackpackSection = backpackSection;
             SettingsSection = settingsSection;
             IsSectionProvided = true;

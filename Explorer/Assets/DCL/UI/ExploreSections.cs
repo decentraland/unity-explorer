@@ -10,6 +10,7 @@ namespace DCL.UI
         Places,
         Events,
         Shop,
+        Home,
     }
 
     public enum BackpackSections

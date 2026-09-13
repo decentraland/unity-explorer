@@ -400,6 +400,7 @@ MonoBehaviour:
   scheduleRowPrefab: {fileID: 76320892326706947, guid: 1bd3b16c0ed8ffe4bb2394ad754fd9ae, type: 3}
   placeNameText: {fileID: 2598487190492434019}
   liveBadge: {fileID: 3161702301004139443}
+  defaultThumbnail: {fileID: 21300000, guid: 50c948c68942a4cf188b1f118ba70f8d, type: 3}
 --- !u!1 &871678827698297966
 GameObject:
   m_ObjectHideFlags: 0

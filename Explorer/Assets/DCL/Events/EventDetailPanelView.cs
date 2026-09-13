@@ -27,6 +27,7 @@ namespace DCL.Communities.EventInfo
 
         [Header("Event Info")]
         [SerializeField] private ImageView eventImage = null!;
+        [SerializeField] private Sprite defaultThumbnail;
         [SerializeField] private TMP_Text eventDate = null!;
         [SerializeField] private TMP_Text eventName = null!;
         [SerializeField] private TMP_Text hostName = null!;
@@ -106,7 +107,7 @@ namespace DCL.Communities.EventInfo
 
             ResetScrollPosition();
 
-            thumbnailLoader.LoadCommunityThumbnailFromUrlAsync(eventData.Image, eventImage, null, cancellationToken, true).Forget();
+            thumbnailLoader.LoadCommunityThumbnailFromUrlAsync(eventData.Image, eventImage, defaultThumbnail, cancellationToken, true).Forget();
             eventDate.text = EventUtilities.GetEventTimeText(eventData);
             eventName.text = eventData.Name;
             hostName.text = string.Format(HOST_FORMAT, eventData.User_name);

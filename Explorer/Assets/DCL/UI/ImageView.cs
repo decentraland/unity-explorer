@@ -73,8 +73,9 @@ namespace DCL.UI
             }
         }
 
-        public void SetImage(Sprite sprite, bool fitAndCenterImage = false)
+        public void SetImage(Sprite? sprite, bool fitAndCenterImage = false)
         {
+            Image.DOKill();
             Image.enabled = true;
             Image.sprite = sprite;
             IsLoading = false;

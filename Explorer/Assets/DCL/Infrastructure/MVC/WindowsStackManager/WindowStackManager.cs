@@ -19,26 +19,28 @@ namespace MVC
         public (IController controller, int orderInLayer) TopMostPopup => popupStack.LastOrDefault();
         public IController? CurrentFullscreenController => fullscreenController;
 
-        private readonly List<(IController controller, UniTaskCompletionSource? onClose)> closeableStack = new ();
+        private readonly List<(IController controller, UniTaskCompletionSource onClose)> closeableStack = new ();
         private readonly List<(IController controller, UniTaskCompletionSource closer)> controllersClosures = new ();
+        private readonly InputAction closeAction;
 
-        public WindowStackManager()
+        public WindowStackManager(InputAction closeAction)
         {
-            DCLInput.Instance.UI.Close.performed += CloseNextUI;
+            this.closeAction = closeAction;
+            closeAction.performed += CloseNextUI;
         }
 
         public void Dispose() =>
-            DCLInput.Instance.UI.Close.performed -= CloseNextUI;
+            closeAction.performed -= CloseNextUI;
 
-        private void CloseNextUI(InputAction.CallbackContext obj)
+        private void CloseNextUI(InputAction.CallbackContext _)
         {
             if (closeableStack.Count == 0) return;
 
-            (IController controller, UniTaskCompletionSource? onClose) = closeableStack[^1];
+            (IController controller, UniTaskCompletionSource onClose) = closeableStack[^1];
 
             if (!controller.CanBeClosedByEscape) return;
 
-            onClose?.TrySetResult();
+            onClose.TrySetResult();
         }
 
         public PopupPushInfo PushPopup(IController controller)
@@ -52,10 +54,8 @@ namespace MVC
             // Keep track of every popup canvass order
             popupStack.Add((controller, currentMaxOrderInLayer));
 
-            UniTaskCompletionSource? onClose = null;
-
-            if (controller.CanBeClosedByEscape)
-                closeableStack.Add((controller, onClose = new UniTaskCompletionSource()));
+            var onClose = new UniTaskCompletionSource();
+            closeableStack.Add((controller, onClose));
 
             controllersClosures.Add((controller, new UniTaskCompletionSource()));
 
@@ -74,10 +74,8 @@ namespace MVC
         {
             fullscreenController = controller;
 
-            UniTaskCompletionSource? onClose = null;
-
-            if (controller.CanBeClosedByEscape)
-                closeableStack.Add((controller, onClose = new UniTaskCompletionSource()));
+            var onClose = new UniTaskCompletionSource();
+            closeableStack.Add((controller, onClose));
 
             controllersClosures.Add((controller, new UniTaskCompletionSource()));
 
@@ -98,8 +96,6 @@ namespace MVC
                 persistentController.Focus();
 
             fullscreenController = null;
-
-            if (!controller.CanBeClosedByEscape) return;
 
             TryPopCloseable(controller);
         }
@@ -190,8 +186,6 @@ namespace MVC
 
         private void TryPopCloseable(IController controller)
         {
-            if (!controller.CanBeClosedByEscape) return;
-
             for (var i = 0; i < closeableStack.Count; i++)
                 if (closeableStack[i].controller == controller)
                 {
@@ -206,9 +200,9 @@ namespace MVC
         public readonly CanvasOrdering ControllerOrdering;
         public readonly CanvasOrdering PopupCloserOrdering;
         public readonly IController? PreviousController;
-        public readonly UniTaskCompletionSource? OnClose;
+        public readonly UniTaskCompletionSource OnClose;
 
-        public PopupPushInfo(CanvasOrdering controllerOrdering, CanvasOrdering popupCloserOrdering, IController? previousController, UniTaskCompletionSource? onClose)
+        public PopupPushInfo(CanvasOrdering controllerOrdering, CanvasOrdering popupCloserOrdering, IController? previousController, UniTaskCompletionSource onClose)
         {
             this.ControllerOrdering = controllerOrdering;
             this.PopupCloserOrdering = popupCloserOrdering;
@@ -233,9 +227,9 @@ namespace MVC
     {
         public readonly List<(IController, int)> PopupControllers;
         public readonly CanvasOrdering ControllerOrdering;
-        public readonly UniTaskCompletionSource? OnClose;
+        public readonly UniTaskCompletionSource OnClose;
 
-        public FullscreenPushInfo(List<(IController, int)> popupControllers, CanvasOrdering controllerOrdering, UniTaskCompletionSource? onClose)
+        public FullscreenPushInfo(List<(IController, int)> popupControllers, CanvasOrdering controllerOrdering, UniTaskCompletionSource onClose)
         {
             this.PopupControllers = popupControllers;
             ControllerOrdering = controllerOrdering;

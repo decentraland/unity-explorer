@@ -32,6 +32,7 @@ namespace DCL.FeatureFlags
 
             SetFeatureStates(new Dictionary<FeatureId, bool>
             {
+                [FeatureId.LivingLobby] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.LIVING_LOBBY, featureFlags.IsEnabled(FeatureFlagsStrings.LIVING_LOBBY) || (appArgs.HasFlag(AppArgsFlags.OPEN_LOBBY) && !appArgs.HasFlagWithValueFalse(AppArgsFlags.OPEN_LOBBY)), requireDebug: false),
                 [FeatureId.CameraReel] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.CAMERA_REEL, featureFlags.IsEnabled(FeatureFlagsStrings.CAMERA_REEL) || isEditor),
                 [FeatureId.Friends] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.FRIENDS, featureFlags.IsEnabled(FeatureFlagsStrings.FRIENDS) || isEditor) && !localSceneDevelopment,
                 [FeatureId.FriendsUserBlocking] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.FRIENDS_USER_BLOCKING, featureFlags.IsEnabled(FeatureFlagsStrings.FRIENDS_USER_BLOCKING)),
@@ -227,5 +228,6 @@ namespace DCL.FeatureFlags
         NearbyVoiceChatTip = 74,
         BugReport = 75,
         InGameShop = 76,
+        LivingLobby = 77,
     }
 }

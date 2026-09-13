@@ -20,17 +20,31 @@ namespace DCL.SceneLoadingScreens.LoadingScreen
                 CancellationToken ct)
             {
                 var loadReport = AsyncLoadProcessReport.Create(ct);
+                EnumResult<TaskError> result;
 
                 try
                 {
-                    await operation(loadReport, ct);
-                    return EnumResult<TaskError>.SuccessResult();
+                    result = await operation(loadReport, ct);
+                }
+                catch (OperationCanceledException)
+                {
+                    result = EnumResult<TaskError>.CancelledResult(TaskError.Cancelled);
                 }
                 catch (Exception e)
                 {
-                    loadReport.SetProgress(1f);
-                    return EnumResult<TaskError>.ErrorResult(TaskError.UnexpectedException, e.Message);
+                    result = EnumResult<TaskError>.ErrorResult(TaskError.UnexpectedException, e.Message, e);
                 }
+
+                if (ct.IsCancellationRequested || result.Error is { State: TaskError.Cancelled } or { Exception: OperationCanceledException })
+                {
+                    result = EnumResult<TaskError>.CancelledResult(TaskError.Cancelled);
+                    loadReport.SetCancelled();
+                }
+                else
+                    loadReport.SetResult(result.AsResult());
+
+                await loadReport.WaitUntilFinishedAsync();
+                return result;
             }
         }
     }
