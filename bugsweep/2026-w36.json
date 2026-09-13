@@ -1,234 +1,234 @@
 {
- "status": "active",
- "prUrl": null,
- "authReview": null,
- "requester": "U0ADNDHL1T7",
- "originChannel": "C0BB9H2CS5D",
- "groups": [
-  [
-   9988,
-   9972
+  "status": "active",
+  "prUrl": null,
+  "authReview": null,
+  "requester": "U0ADNDHL1T7",
+  "originChannel": "C0BB9H2CS5D",
+  "groups": [
+    [
+      9988,
+      9972
+    ],
+    [
+      9993,
+      9990
+    ],
+    [
+      10005,
+      9997,
+      9941
+    ]
   ],
-  [
-   9993,
-   9990
-  ],
-  [
-   10005,
-   9997,
-   9941
+  "issues": [
+    {
+      "number": 10011,
+      "status": "skipped",
+      "commit": null,
+      "note": "System.UriFormatException in UnityWebRequest redirect handling (UnityWebRequestModule.RedirectTo); native URI parsing on a malformed redirect Location, no C# source to fix"
+    },
+    {
+      "number": 10009,
+      "status": "pending",
+      "commit": null,
+      "note": null
+    },
+    {
+      "number": 10008,
+      "status": "skipped",
+      "commit": null,
+      "note": "Unity's insecure-connection guard rejects a non-HTTPS request from scene/content (ITypedWebRequest); expected security behavior"
+    },
+    {
+      "number": 10007,
+      "status": "pending",
+      "commit": null,
+      "note": null
+    },
+    {
+      "number": 10005,
+      "status": "skipped",
+      "commit": null,
+      "note": "scene-initiated WebSocket connect/receive failures (ClientWebSocketApiImplementation); transient network errors surfaced from scene code (group)"
+    },
+    {
+      "number": 10002,
+      "status": "skipped",
+      "commit": null,
+      "note": "EcsSystemException NullRef with only generics/il2cpp frames (Generics__34.cpp, ResetDirtyFlagSystem); no C# source location or repro"
+    },
+    {
+      "number": 10003,
+      "status": "pending",
+      "commit": null,
+      "note": null
+    },
+    {
+      "number": 10001,
+      "status": "pending",
+      "commit": null,
+      "note": null
+    },
+    {
+      "number": 9998,
+      "status": "skipped",
+      "commit": null,
+      "note": "HTTP 504 gateway error captured by Sentry network tracker; server/network, not a client bug"
+    },
+    {
+      "number": 9997,
+      "status": "skipped",
+      "commit": null,
+      "note": "scene-initiated WebSocket connect/receive failures (ClientWebSocketApiImplementation); transient network errors surfaced from scene code (group)"
+    },
+    {
+      "number": 9994,
+      "status": "skipped",
+      "commit": null,
+      "note": "MultiThreadSync timeout (scene ECS loop exceeds lock budget); a perf symptom with no localized root cause for the sweep"
+    },
+    {
+      "number": 9993,
+      "status": "skipped",
+      "commit": null,
+      "note": "'Large HTTP payload' Sentry perf span (POST .../entities/active); telemetry alert not a crash, no localized code fix (group)"
+    },
+    {
+      "number": 9990,
+      "status": "skipped",
+      "commit": null,
+      "note": "'Large HTTP payload' Sentry perf span (POST .../entities/active); telemetry alert not a crash, no localized code fix (group)"
+    },
+    {
+      "number": 9989,
+      "status": "skipped",
+      "commit": null,
+      "note": "scene JS error (TypeError: __internalScene.onUpdate is not a function) raised by scene code, not explorer C#"
+    },
+    {
+      "number": 9988,
+      "status": "skipped",
+      "commit": null,
+      "note": "native [Physics.PhysX] 'cleaning the mesh failed' engine error; no C# source to fix (group)"
+    },
+    {
+      "number": 9986,
+      "status": "skipped",
+      "commit": null,
+      "note": "arena leaderboard avatar duplication; content-team labeled, root cause in arena scene/content, not explorer core"
+    },
+    {
+      "number": 9985,
+      "status": "skipped",
+      "commit": null,
+      "note": "avatar invisible after changing wearables; needs runtime reproduction across avatar+wearable systems, too broad to root-cause without repro"
+    },
+    {
+      "number": 9981,
+      "status": "skipped",
+      "commit": null,
+      "note": "Windows cache-file move failure 'destination exists' in Unity asset cache layer; environment/race, no C# source in stack"
+    },
+    {
+      "number": 9978,
+      "status": "skipped",
+      "commit": null,
+      "note": "already being fixed in open PR #9979; also an enhancement to a .github release workflow (forbidden ground)"
+    },
+    {
+      "number": 9974,
+      "status": "skipped",
+      "commit": null,
+      "note": "scene JS error (TypeError: Cannot read properties of undefined reading 'x' in scene serialize), not explorer C#"
+    },
+    {
+      "number": 9972,
+      "status": "skipped",
+      "commit": null,
+      "note": "native [Physics.PhysX] 'cleaning the mesh failed' engine error; no C# source to fix (group)"
+    },
+    {
+      "number": 9967,
+      "status": "pending",
+      "commit": null,
+      "note": null
+    },
+    {
+      "number": 9962,
+      "status": "skipped",
+      "commit": null,
+      "note": "protobuf truncated/misreported-length message from RPC transport; malformed inbound data, no localized C# fix"
+    },
+    {
+      "number": 9961,
+      "status": "skipped",
+      "commit": null,
+      "note": "KHR_materials_unlit glTF import material feature gap; still 'need QA validation', and a material-pipeline change too broad/unverifiable for the sweep"
+    },
+    {
+      "number": 9953,
+      "status": "pending",
+      "commit": null,
+      "note": null
+    },
+    {
+      "number": 9952,
+      "status": "skipped",
+      "commit": null,
+      "note": "unsupported local mini-comms realm (ws-room:ws://127.0.0.1/mini-comms); ForkGlobalRealmRoom.ProtocolFor intentionally throws for adapter kinds this client does not speak (behavior pinned by ArchipelagoProtocolSelectionShould tests). No ws-room client exists; a fallback would reverse a deliberate fail-loud contract"
+    },
+    {
+      "number": 9951,
+      "status": "skipped",
+      "commit": null,
+      "note": "livekit room connection failure (network), only il2cpp frames, transient connectivity, no C# root cause"
+    },
+    {
+      "number": 9949,
+      "status": "skipped",
+      "commit": null,
+      "note": "sqlite 'attempt to write a readonly database' in Segment analytics flush; environment/file-permission issue, no C# source"
+    },
+    {
+      "number": 9941,
+      "status": "skipped",
+      "commit": null,
+      "note": "scene-initiated WebSocket connect/receive failures (ClientWebSocketApiImplementation); transient network errors surfaced from scene code (group)"
+    },
+    {
+      "number": 9938,
+      "status": "skipped",
+      "commit": null,
+      "note": "native uuav DLL load failure (Windows); platform/native packaging issue, no C# source to fix"
+    },
+    {
+      "number": 9937,
+      "status": "pending",
+      "commit": null,
+      "note": null
+    },
+    {
+      "number": 9936,
+      "status": "skipped",
+      "commit": null,
+      "note": "enhancement to CI/release status-comment workflow (forbidden ground: CI/workflow files), not a bug"
+    },
+    {
+      "number": 9935,
+      "status": "skipped",
+      "commit": null,
+      "note": "server-side InternalServerError (500) upserting social settings; backend error, not a client bug"
+    },
+    {
+      "number": 9922,
+      "status": "pending",
+      "commit": null,
+      "note": null
+    },
+    {
+      "number": 9916,
+      "status": "fixed",
+      "commit": "ad6c3135275fafec3f3b6bd98e73b634a37c38ef",
+      "note": null
+    }
   ]
- ],
- "issues": [
-  {
-   "number": 10011,
-   "status": "skipped",
-   "commit": null,
-   "note": "System.UriFormatException in UnityWebRequest redirect handling (UnityWebRequestModule.RedirectTo); native URI parsing on a malformed redirect Location, no C# source to fix"
-  },
-  {
-   "number": 10009,
-   "status": "pending",
-   "commit": null,
-   "note": null
-  },
-  {
-   "number": 10008,
-   "status": "skipped",
-   "commit": null,
-   "note": "Unity's insecure-connection guard rejects a non-HTTPS request from scene/content (ITypedWebRequest); expected security behavior"
-  },
-  {
-   "number": 10007,
-   "status": "pending",
-   "commit": null,
-   "note": null
-  },
-  {
-   "number": 10005,
-   "status": "skipped",
-   "commit": null,
-   "note": "scene-initiated WebSocket connect/receive failures (ClientWebSocketApiImplementation); transient network errors surfaced from scene code (group)"
-  },
-  {
-   "number": 10002,
-   "status": "skipped",
-   "commit": null,
-   "note": "EcsSystemException NullRef with only generics/il2cpp frames (Generics__34.cpp, ResetDirtyFlagSystem); no C# source location or repro"
-  },
-  {
-   "number": 10003,
-   "status": "pending",
-   "commit": null,
-   "note": null
-  },
-  {
-   "number": 10001,
-   "status": "pending",
-   "commit": null,
-   "note": null
-  },
-  {
-   "number": 9998,
-   "status": "skipped",
-   "commit": null,
-   "note": "HTTP 504 gateway error captured by Sentry network tracker; server/network, not a client bug"
-  },
-  {
-   "number": 9997,
-   "status": "skipped",
-   "commit": null,
-   "note": "scene-initiated WebSocket connect/receive failures (ClientWebSocketApiImplementation); transient network errors surfaced from scene code (group)"
-  },
-  {
-   "number": 9994,
-   "status": "skipped",
-   "commit": null,
-   "note": "MultiThreadSync timeout (scene ECS loop exceeds lock budget); a perf symptom with no localized root cause for the sweep"
-  },
-  {
-   "number": 9993,
-   "status": "skipped",
-   "commit": null,
-   "note": "'Large HTTP payload' Sentry perf span (POST .../entities/active); telemetry alert not a crash, no localized code fix (group)"
-  },
-  {
-   "number": 9990,
-   "status": "skipped",
-   "commit": null,
-   "note": "'Large HTTP payload' Sentry perf span (POST .../entities/active); telemetry alert not a crash, no localized code fix (group)"
-  },
-  {
-   "number": 9989,
-   "status": "skipped",
-   "commit": null,
-   "note": "scene JS error (TypeError: __internalScene.onUpdate is not a function) raised by scene code, not explorer C#"
-  },
-  {
-   "number": 9988,
-   "status": "skipped",
-   "commit": null,
-   "note": "native [Physics.PhysX] 'cleaning the mesh failed' engine error; no C# source to fix (group)"
-  },
-  {
-   "number": 9986,
-   "status": "skipped",
-   "commit": null,
-   "note": "arena leaderboard avatar duplication; content-team labeled, root cause in arena scene/content, not explorer core"
-  },
-  {
-   "number": 9985,
-   "status": "skipped",
-   "commit": null,
-   "note": "avatar invisible after changing wearables; needs runtime reproduction across avatar+wearable systems, too broad to root-cause without repro"
-  },
-  {
-   "number": 9981,
-   "status": "skipped",
-   "commit": null,
-   "note": "Windows cache-file move failure 'destination exists' in Unity asset cache layer; environment/race, no C# source in stack"
-  },
-  {
-   "number": 9978,
-   "status": "skipped",
-   "commit": null,
-   "note": "already being fixed in open PR #9979; also an enhancement to a .github release workflow (forbidden ground)"
-  },
-  {
-   "number": 9974,
-   "status": "skipped",
-   "commit": null,
-   "note": "scene JS error (TypeError: Cannot read properties of undefined reading 'x' in scene serialize), not explorer C#"
-  },
-  {
-   "number": 9972,
-   "status": "skipped",
-   "commit": null,
-   "note": "native [Physics.PhysX] 'cleaning the mesh failed' engine error; no C# source to fix (group)"
-  },
-  {
-   "number": 9967,
-   "status": "pending",
-   "commit": null,
-   "note": null
-  },
-  {
-   "number": 9962,
-   "status": "skipped",
-   "commit": null,
-   "note": "protobuf truncated/misreported-length message from RPC transport; malformed inbound data, no localized C# fix"
-  },
-  {
-   "number": 9961,
-   "status": "skipped",
-   "commit": null,
-   "note": "KHR_materials_unlit glTF import material feature gap; still 'need QA validation', and a material-pipeline change too broad/unverifiable for the sweep"
-  },
-  {
-   "number": 9953,
-   "status": "pending",
-   "commit": null,
-   "note": null
-  },
-  {
-   "number": 9952,
-   "status": "pending",
-   "commit": null,
-   "note": null
-  },
-  {
-   "number": 9951,
-   "status": "skipped",
-   "commit": null,
-   "note": "livekit room connection failure (network), only il2cpp frames, transient connectivity, no C# root cause"
-  },
-  {
-   "number": 9949,
-   "status": "skipped",
-   "commit": null,
-   "note": "sqlite 'attempt to write a readonly database' in Segment analytics flush; environment/file-permission issue, no C# source"
-  },
-  {
-   "number": 9941,
-   "status": "skipped",
-   "commit": null,
-   "note": "scene-initiated WebSocket connect/receive failures (ClientWebSocketApiImplementation); transient network errors surfaced from scene code (group)"
-  },
-  {
-   "number": 9938,
-   "status": "skipped",
-   "commit": null,
-   "note": "native uuav DLL load failure (Windows); platform/native packaging issue, no C# source to fix"
-  },
-  {
-   "number": 9937,
-   "status": "pending",
-   "commit": null,
-   "note": null
-  },
-  {
-   "number": 9936,
-   "status": "skipped",
-   "commit": null,
-   "note": "enhancement to CI/release status-comment workflow (forbidden ground: CI/workflow files), not a bug"
-  },
-  {
-   "number": 9935,
-   "status": "skipped",
-   "commit": null,
-   "note": "server-side InternalServerError (500) upserting social settings; backend error, not a client bug"
-  },
-  {
-   "number": 9922,
-   "status": "pending",
-   "commit": null,
-   "note": null
-  },
-  {
-   "number": 9916,
-   "status": "pending",
-   "commit": null,
-   "note": null
-  }
- ]
 }
