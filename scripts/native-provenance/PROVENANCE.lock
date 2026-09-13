@@ -506,10 +506,10 @@
       "sha256": "79787e7a827b61f913f33a49939abb92429254e2965928605dd8139ae3138905"
     },
     "built": {
-      "path": "/nix/store/nya45snsw5ggw6pinwwcsa0ax94jpi53-uuav-0.4.0-0e3fcab/bin/uuav-helper",
+      "path": "/nix/store/imiyd3crxic4mxl8g7922vq8m4inzm58-uuav-0.4.0-0e3fcab/bin/uuav-helper",
       "sha256": "79787e7a827b61f913f33a49939abb92429254e2965928605dd8139ae3138905"
     },
-    "checked_at": "2026-09-07T02:14:15.695151+00:00",
+    "checked_at": "2026-09-13T21:36:05.415877+00:00",
     "verdict": "reproduced"
   },
   {
@@ -517,13 +517,13 @@
     "derivation": "drv/uuav/default.nix",
     "shipped": {
       "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/linux-x86_64/libuuav.so",
-      "sha256": "996dfe8001cb4ca8b3a0218ab5df365b613a025efe256d95eb5780a6513a3b59"
+      "sha256": "472545a2f8756e6ed3fbc67d68a262250410585fd5812e1d491d168a44ecfcfd"
     },
     "built": {
-      "path": "/nix/store/nya45snsw5ggw6pinwwcsa0ax94jpi53-uuav-0.4.0-0e3fcab/lib/libuuav.so",
-      "sha256": "996dfe8001cb4ca8b3a0218ab5df365b613a025efe256d95eb5780a6513a3b59"
+      "path": "/nix/store/imiyd3crxic4mxl8g7922vq8m4inzm58-uuav-0.4.0-0e3fcab/lib/libuuav.so",
+      "sha256": "472545a2f8756e6ed3fbc67d68a262250410585fd5812e1d491d168a44ecfcfd"
     },
-    "checked_at": "2026-09-07T02:14:15.566350+00:00",
+    "checked_at": "2026-09-13T21:36:05.467090+00:00",
     "verdict": "reproduced"
   },
   {
@@ -534,10 +534,10 @@
       "sha256": "18447aaa73b121c5f3311e4c08e0f717addf77ed7161f53f2e40c3d95dffc5f5"
     },
     "built": {
-      "path": "/nix/store/nya45snsw5ggw6pinwwcsa0ax94jpi53-uuav-0.4.0-0e3fcab/lib/libuuav_core.so",
+      "path": "/nix/store/imiyd3crxic4mxl8g7922vq8m4inzm58-uuav-0.4.0-0e3fcab/lib/libuuav_core.so",
       "sha256": "18447aaa73b121c5f3311e4c08e0f717addf77ed7161f53f2e40c3d95dffc5f5"
     },
-    "checked_at": "2026-09-07T02:14:15.628048+00:00",
+    "checked_at": "2026-09-13T21:36:05.523482+00:00",
     "verdict": "reproduced"
   }
 ]

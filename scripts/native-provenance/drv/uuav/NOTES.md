@@ -50,3 +50,16 @@ Residual diff characterization (why not `equivalent`):
 Stripping: upstream release profile sets strip="symbols", but the nixpkgs
 cargo hook force-sets CARGO_PROFILE_RELEASE_STRIP=false; stripAllList
 restores the policy (sizes land within 0.15% of shipped).
+
+## 2026-09-13 rebuild
+
+Built: /nix/store/imiyd3crxic4mxl8g7922vq8m4inzm58-uuav-0.4.0-0e3fcab from the
+native tree at 5fa6356ff3 (uuav-client error messages keep their cause chain;
+uuav-core, uuav-server and the four key files are unchanged, so the derivation's
+hash assertions still hold).
+
+The derivation is the build of record for the committed Linux blobs, and it is
+deterministic: `nix-build --check` rebuilds the same output, `libuuav_core.so`
+and `uuav-helper` came out byte-identical to the 2026-09-07 blobs, and only
+`libuuav.so` (the crate that changed) is new. All three grade `reproduced`.
+The FFmpeg sonames beside them are untouched.

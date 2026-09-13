@@ -3,54 +3,42 @@
     "name": "uuav-helper",
     "derivation": "drv/uuav/default.nix",
     "shipped": {
-      "path": "./build/Linux/decentraland-explorer_Data/Plugins/x86_64/uuav-helper",
-      "sha256": "131335cf3c670779dd20e6975f6b9b276e91b5b6148558e61d0bbf23d5e571e3"
+      "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/linux-x86_64/uuav-helper",
+      "sha256": "79787e7a827b61f913f33a49939abb92429254e2965928605dd8139ae3138905"
     },
     "built": {
-      "path": "drv/uuav/result/bin/uuav-helper",
-      "sha256": "d7d3d0eaa470b8a2969290cf62e545a3f57f3339c8892c81a691670955f4157e"
+      "path": "/nix/store/imiyd3crxic4mxl8g7922vq8m4inzm58-uuav-0.4.0-0e3fcab/bin/uuav-helper",
+      "sha256": "79787e7a827b61f913f33a49939abb92429254e2965928605dd8139ae3138905"
     },
-    "checked_at": "2026-09-06T19:40:14.593628+00:00",
-    "detail": {
-      "normalized_match": false,
-      "dynsym_match": false
-    },
-    "verdict": "divergent"
+    "checked_at": "2026-09-13T21:36:05.577048+00:00",
+    "verdict": "reproduced"
   },
   {
     "name": "uuav-libuuav",
     "derivation": "drv/uuav/default.nix",
     "shipped": {
-      "path": "./build/Linux/decentraland-explorer_Data/Plugins/x86_64/libuuav.so",
-      "sha256": "53f2caee7446f9feeb7940819162942a385336eb265b3fe04997bbfc92bdd2fc"
+      "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/linux-x86_64/libuuav.so",
+      "sha256": "472545a2f8756e6ed3fbc67d68a262250410585fd5812e1d491d168a44ecfcfd"
     },
     "built": {
-      "path": "drv/uuav/result/lib/libuuav.so",
-      "sha256": "996dfe8001cb4ca8b3a0218ab5df365b613a025efe256d95eb5780a6513a3b59"
+      "path": "/nix/store/imiyd3crxic4mxl8g7922vq8m4inzm58-uuav-0.4.0-0e3fcab/lib/libuuav.so",
+      "sha256": "472545a2f8756e6ed3fbc67d68a262250410585fd5812e1d491d168a44ecfcfd"
     },
-    "checked_at": "2026-09-06T19:40:14.450294+00:00",
-    "detail": {
-      "normalized_match": false,
-      "dynsym_match": true
-    },
-    "verdict": "divergent"
+    "checked_at": "2026-09-13T21:36:05.631601+00:00",
+    "verdict": "reproduced"
   },
   {
     "name": "uuav-libuuav-core",
     "derivation": "drv/uuav/default.nix",
     "shipped": {
-      "path": "./build/Linux/decentraland-explorer_Data/Plugins/x86_64/libuuav_core.so",
-      "sha256": "df8d25210cec11ea02c9c9c48525439be382707d1d8d50a5e18461f54f08a404"
-    },
-    "built": {
-      "path": "drv/uuav/result/lib/libuuav_core.so",
+      "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/linux-x86_64/libuuav_core.so",
       "sha256": "18447aaa73b121c5f3311e4c08e0f717addf77ed7161f53f2e40c3d95dffc5f5"
     },
-    "checked_at": "2026-09-06T19:40:14.515794+00:00",
-    "detail": {
-      "normalized_match": false,
-      "dynsym_match": true
+    "built": {
+      "path": "/nix/store/imiyd3crxic4mxl8g7922vq8m4inzm58-uuav-0.4.0-0e3fcab/lib/libuuav_core.so",
+      "sha256": "18447aaa73b121c5f3311e4c08e0f717addf77ed7161f53f2e40c3d95dffc5f5"
     },
-    "verdict": "divergent"
+    "checked_at": "2026-09-13T21:36:05.683651+00:00",
+    "verdict": "reproduced"
   }
 ]
