@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Utilities.Extensions;
+using DCL.Utility;
 using DCL.Utility.Types;
 using System;
 using System.Diagnostics;
@@ -16,23 +17,7 @@ namespace DCL.RuntimeDeepLink
         // Maximum time a deferred signin bridge file is retained on disk; without this cap it would be re-read on every check-in forever.
         private static readonly TimeSpan DEFERRED_SIGNIN_LIFETIME = TimeSpan.FromSeconds(300);
 
-#if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN || PLATFORM_STANDALONE_WIN
-        // path for: C:\Users\<YourUsername>\AppData\Local\DecentralandLauncherLight\
-        private static readonly string DEEP_LINK_BRIDGE_PATH =
-            Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "DecentralandLauncherLight", "deeplink-bridge.json"
-            );
-#else
-
-        // path for: ~/Library/Application Support/DecentralandLauncherLight/
-        private static readonly string DEEP_LINK_BRIDGE_PATH =
-            Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.Personal),
-                "Library", "Application Support", "DecentralandLauncherLight", "deeplink-bridge.json"
-            );
-#endif
-
+        private static readonly string DEEP_LINK_BRIDGE_PATH = LauncherPaths.InLauncherDirectory("deeplink-bridge.json");
 
         /// <summary>
         /// Runs for the lifetime of the app.

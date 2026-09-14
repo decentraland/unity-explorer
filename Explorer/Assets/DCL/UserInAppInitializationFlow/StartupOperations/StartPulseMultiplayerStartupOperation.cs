@@ -3,6 +3,7 @@ using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Pulse;
 using DCL.Profiles;
 using DCL.Profiles.Self;
+using System;
 using System.Threading;
 
 namespace DCL.UserInAppInitializationFlow
@@ -59,7 +60,11 @@ namespace DCL.UserInAppInitializationFlow
             }
 
             Profile? profile = await selfProfile.ProfileAsync(ct);
-            profilePropagation.Propagate(profile!);
+
+            if (profile == null)
+                throw new InvalidOperationException("Own profile could not be resolved, nothing to propagate to Pulse");
+
+            profilePropagation.Propagate(profile);
             await UniTask.SwitchToMainThread();
         }
     }
