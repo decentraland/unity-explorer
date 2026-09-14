@@ -10,6 +10,7 @@ using NSubstitute;
 using NUnit.Framework;
 using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace CrdtEcsBridge.RestrictedActions.Tests
 {
@@ -17,8 +18,9 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
     ///     Covers how <see cref="ExplorerUiActions" /> chooses between opening the explore panel and answering
     ///     the scene that it was already open, and the life cycle events it reports back for the requests it
     ///     did accept. One instance exists per scene, so it cannot have witnessed the panel opening before it
-    ///     was built, and MVC skips OnViewClosed when a view's lifecycle is cancelled — the panel state
-    ///     therefore has to be read from MVC at the moment of the decision.
+    ///     was built, and MVC skips OnViewClosed when a view's lifecycle is cancelled — a panel the scene did
+    ///     not open therefore has to be read from MVC at the moment of the decision, while a panel this scene
+    ///     is itself putting up is one MVC does not report yet.
     /// </summary>
     [TestFixture]
     public class ExplorerUiActionsShould
@@ -39,45 +41,68 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
         }
 
         [Test]
-        public void AnswerWasAlreadyOpenForAPanelOpenedBeforeTheSceneLoaded()
+        public async Task AnswerWasAlreadyOpenForAPanelThisSceneDidNotOpen()
         {
+            // Covers both a panel the user opened before the scene loaded and one they opened while the
+            // request was travelling: the answer is decided at a single point, after the thread hop.
             mvcManager.IsShowing<ExplorePanelView, ExplorePanelParameter>().Returns(true);
 
-            Assert.That(explorerUiActions.OpenSection(ExplorerUi.EuMap, ExploreSections.Navmap), Is.EqualTo(OpenExplorerUiResult.WasAlreadyOpen));
+            Assert.That(await OpenAsync(ExplorerUi.EuMap, ExploreSections.Navmap), Is.EqualTo(OpenExplorerUiResult.WasAlreadyOpen));
+
             Assert.That(events, Is.Empty);
+            mvcManager.DidNotReceive().ShowAsync(Arg.Any<ShowCommand<ExplorePanelView, ExplorePanelParameter>>(), Arg.Any<CancellationToken>());
         }
 
         [Test]
-        public void OpenTheSectionWhileThePanelIsHidden()
+        public async Task OpenTheSectionWhileThePanelIsHidden()
         {
             mvcManager.IsShowing<ExplorePanelView, ExplorePanelParameter>().Returns(false);
 
-            Assert.That(explorerUiActions.OpenSection(ExplorerUi.EuMap, ExploreSections.Navmap), Is.EqualTo(OpenExplorerUiResult.Opened));
+            Assert.That(await OpenAsync(ExplorerUi.EuMap, ExploreSections.Navmap), Is.EqualTo(OpenExplorerUiResult.Opened));
             mvcManager.Received(1).ShowAsync(Arg.Any<ShowCommand<ExplorePanelView, ExplorePanelParameter>>(), Arg.Any<CancellationToken>());
         }
 
         [Test]
-        public void FollowThePanelStateAcrossCalls()
+        public async Task RefuseASecondRequestWhileTheFirstOneIsStillPuttingThePanelUp()
         {
-            // Re-arranged before every call rather than queued up as a sequence: each accepted request asks
-            // MVC twice, once per thread it runs on, so the number of calls is not the test's business.
+            // MVC reports the panel as hidden throughout: it only flips once the view's life cycle starts,
+            // which is exactly the window a scene firing two calls back to back lands in.
             mvcManager.IsShowing<ExplorePanelView, ExplorePanelParameter>().Returns(false);
-            Assert.That(explorerUiActions.OpenSection(ExplorerUi.EuMap, ExploreSections.Navmap), Is.EqualTo(OpenExplorerUiResult.Opened));
 
-            mvcManager.IsShowing<ExplorePanelView, ExplorePanelParameter>().Returns(true);
-            Assert.That(explorerUiActions.OpenSection(ExplorerUi.EuPlaces, ExploreSections.Places), Is.EqualTo(OpenExplorerUiResult.WasAlreadyOpen));
+            mvcManager.ShowAsync(Arg.Any<ShowCommand<ExplorePanelView, ExplorePanelParameter>>(), Arg.Any<CancellationToken>())
+                      .Returns(new UniTaskCompletionSource().Task);
 
-            // A cached flag would stay stuck on the middle answer; the panel closing has to be picked up.
-            mvcManager.IsShowing<ExplorePanelView, ExplorePanelParameter>().Returns(false);
-            Assert.That(explorerUiActions.OpenSection(ExplorerUi.EuPlaces, ExploreSections.Places), Is.EqualTo(OpenExplorerUiResult.Opened));
+            Assert.That(await OpenAsync(ExplorerUi.EuEvents, ExploreSections.Events), Is.EqualTo(OpenExplorerUiResult.Opened));
+            Assert.That(await OpenAsync(ExplorerUi.EuEvents, ExploreSections.Events), Is.EqualTo(OpenExplorerUiResult.WasAlreadyOpen));
+
+            // One accepted request means one panel and one life cycle: a refused request reports nothing.
+            mvcManager.Received(1).ShowAsync(Arg.Any<ShowCommand<ExplorePanelView, ExplorePanelParameter>>(), Arg.Any<CancellationToken>());
+
+            Assert.That(events, Is.EqualTo(new[] { new ExplorerUiEvent(ExplorerUi.EuEvents, ExplorerUiEventKind.Opened) }));
         }
 
         [Test]
-        public void ReportTheOpenedAndClosedPairOfItsOwnRequest()
+        public async Task FollowThePanelStateAcrossCalls()
+        {
+            // Re-arranged before every call rather than queued up as a sequence: the substituted show
+            // resolves at once, so each accepted request has already let its panel go by the next call.
+            mvcManager.IsShowing<ExplorePanelView, ExplorePanelParameter>().Returns(false);
+            Assert.That(await OpenAsync(ExplorerUi.EuMap, ExploreSections.Navmap), Is.EqualTo(OpenExplorerUiResult.Opened));
+
+            mvcManager.IsShowing<ExplorePanelView, ExplorePanelParameter>().Returns(true);
+            Assert.That(await OpenAsync(ExplorerUi.EuPlaces, ExploreSections.Places), Is.EqualTo(OpenExplorerUiResult.WasAlreadyOpen));
+
+            // A cached flag would stay stuck on the middle answer; the panel closing has to be picked up.
+            mvcManager.IsShowing<ExplorePanelView, ExplorePanelParameter>().Returns(false);
+            Assert.That(await OpenAsync(ExplorerUi.EuPlaces, ExploreSections.Places), Is.EqualTo(OpenExplorerUiResult.Opened));
+        }
+
+        [Test]
+        public async Task ReportTheOpenedAndClosedPairOfItsOwnRequest()
         {
             mvcManager.IsShowing<ExplorePanelView, ExplorePanelParameter>().Returns(false);
 
-            explorerUiActions.OpenSection(ExplorerUi.EuBackpack, ExploreSections.Backpack);
+            await OpenAsync(ExplorerUi.EuBackpack, ExploreSections.Backpack);
 
             // The events carry the protocol value the scene asked with, not the section MVC was driven by:
             // the two enums are unrelated and only this direction of the mapping exists.
@@ -89,28 +114,14 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
         }
 
         [Test]
-        public void ReportNothingWhenTheUserOpensThePanelFirst()
-        {
-            // False on the scene's JS thread, true once the request reaches the main thread. ShowAsync would
-            // silently do nothing from here on, so a reported pair would describe a panel this scene never
-            // opened and would never see closed either.
-            mvcManager.IsShowing<ExplorePanelView, ExplorePanelParameter>().Returns(false, true);
-
-            Assert.That(explorerUiActions.OpenSection(ExplorerUi.EuMap, ExploreSections.Navmap), Is.EqualTo(OpenExplorerUiResult.Opened));
-
-            Assert.That(events, Is.Empty);
-            mvcManager.DidNotReceive().ShowAsync(Arg.Any<ShowCommand<ExplorePanelView, ExplorePanelParameter>>(), Arg.Any<CancellationToken>());
-        }
-
-        [Test]
-        public void ReportClosedWhenTheShowDoesNotEndNormally()
+        public async Task ReportClosedWhenTheShowDoesNotEndNormally()
         {
             mvcManager.IsShowing<ExplorePanelView, ExplorePanelParameter>().Returns(false);
 
             mvcManager.ShowAsync(Arg.Any<ShowCommand<ExplorePanelView, ExplorePanelParameter>>(), Arg.Any<CancellationToken>())
                       .Returns(UniTask.FromCanceled());
 
-            explorerUiActions.OpenSection(ExplorerUi.EuMap, ExploreSections.Navmap);
+            await OpenAsync(ExplorerUi.EuMap, ExploreSections.Navmap);
 
             // Every way the show can end leaves the panel down, so the pair has to close on all of them: a
             // reported open with no reported close is a scene waiting forever.
@@ -120,5 +131,22 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
                 new ExplorerUiEvent(ExplorerUi.EuMap, ExplorerUiEventKind.Closed),
             }));
         }
+
+        [Test]
+        public async Task AcceptAgainAfterAFailedShowReleasedThePanel()
+        {
+            mvcManager.IsShowing<ExplorePanelView, ExplorePanelParameter>().Returns(false);
+
+            mvcManager.ShowAsync(Arg.Any<ShowCommand<ExplorePanelView, ExplorePanelParameter>>(), Arg.Any<CancellationToken>())
+                      .Returns(UniTask.FromCanceled());
+
+            await OpenAsync(ExplorerUi.EuMap, ExploreSections.Navmap);
+
+            // A show that never reached the screen must not leave the scene locked out of the panel.
+            Assert.That(await OpenAsync(ExplorerUi.EuMap, ExploreSections.Navmap), Is.EqualTo(OpenExplorerUiResult.Opened));
+        }
+
+        private async Task<OpenExplorerUiResult> OpenAsync(ExplorerUi ui, ExploreSections section) =>
+            await explorerUiActions.OpenSectionAsync(ui, section, CancellationToken.None);
     }
 }

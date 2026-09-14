@@ -96,8 +96,11 @@ namespace DCL.SceneRuntime.Apis.RestrictedActionsApi
             api.TryOpenNftDialog(urn);
 
         [UsedImplicitly]
-        public int OpenExplorerUi(int ui) =>
-            api.TryOpenExplorerUi(ui);
+        public object OpenExplorerUi(int ui) =>
+            // No per-call token, unlike the other async restricted actions: a second call is a legitimate
+            // request owed a WasAlreadyOpen answer, and a shared restarted token would cancel the first
+            // one instead. Scene teardown stays the only cancellation.
+            api.TryOpenExplorerUiAsync(ui, disposeCts.Token).ToDisconnectedPromise(this);
 
         [UsedImplicitly]
         public object StopEmote()

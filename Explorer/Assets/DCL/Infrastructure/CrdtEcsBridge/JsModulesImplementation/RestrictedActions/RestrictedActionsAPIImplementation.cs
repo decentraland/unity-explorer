@@ -211,8 +211,10 @@ namespace CrdtEcsBridge.RestrictedActions
             return true;
         }
 
-        public int TryOpenExplorerUi(int ui)
+        public async UniTask<int> TryOpenExplorerUiAsync(int ui, CancellationToken ct)
         {
+            // Every rejection below returns before the first await, so gating a misbehaving scene still
+            // costs nothing: only an accepted request pays for the hop to the main thread.
             if (!sceneStateProvider.IsCurrent)
                 return (int)OpenExplorerUiResult.RejectedNotCurrentScene;
 
@@ -238,7 +240,7 @@ namespace CrdtEcsBridge.RestrictedActions
                 return (int)OpenExplorerUiResult.RejectedFeatureDisabled;
             }
 
-            return (int)explorerUiActions.OpenSection((ExplorerUi)ui, section);
+            return (int)await explorerUiActions.OpenSectionAsync((ExplorerUi)ui, section, ct);
         }
 
         public void Dispose() { }

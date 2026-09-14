@@ -92,7 +92,7 @@ module.exports.openNftDialog = async function(message) {
 }
 
 module.exports.openExplorerUi = async function(message) {
-    const openResult = UnityRestrictedActionsApi.OpenExplorerUi(message.ui)
+    const openResult = await UnityRestrictedActionsApi.OpenExplorerUi(message.ui)
     return { openResult };
 }
 

@@ -10,6 +10,7 @@ using ECS.Unity.ExplorerUiEvents;
 using MVC;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 
 namespace DCL.Infrastructure.CrdtEcsBridge.JsModulesImplementation.RestrictedActions
 {
@@ -23,13 +24,20 @@ namespace DCL.Infrastructure.CrdtEcsBridge.JsModulesImplementation.RestrictedAct
         private readonly IMVCManager mvcManager;
         private readonly Queue<ExplorerUiEvent> events;
 
+        /// <summary>
+        ///     True from the moment a request of this scene hands the panel to MVC until that panel closes.
+        ///     MVC reports the panel as showing only once the view's life cycle has begun, which is later
+        ///     than the call to <c>ShowAsync</c>, so it cannot answer for a request that is still landing.
+        /// </summary>
+        private bool showPending;
+
         public ExplorerUiActions(IMVCManager mvcManager, Queue<ExplorerUiEvent> events)
         {
             this.mvcManager = mvcManager;
             this.events = events;
         }
 
-        public OpenExplorerUiResult OpenSection(ExplorerUi ui, ExploreSections section)
+        public async UniTask<OpenExplorerUiResult> OpenSectionAsync(ExplorerUi ui, ExploreSections section, CancellationToken ct)
         {
             // Communities availability depends on the user identity (feature flag + wallets allowlist),
             // so it cannot be gated through FeaturesRegistry like the other sections.
@@ -39,31 +47,36 @@ namespace DCL.Infrastructure.CrdtEcsBridge.JsModulesImplementation.RestrictedAct
                 return OpenExplorerUiResult.RejectedFeatureDisabled;
             }
 
-            if (mvcManager.IsShowing<ExplorePanelView, ExplorePanelParameter>())
+            await UniTask.SwitchToMainThread(ct);
+
+            // Deciding the answer here, rather than on the scene's thread, is the whole point of the hop:
+            // the slot can be taken by the user or by this scene's previous request while the call travels.
+            if (showPending || mvcManager.IsShowing<ExplorePanelView, ExplorePanelParameter>())
                 return OpenExplorerUiResult.WasAlreadyOpen;
 
-            OpenSectionAsync(ui, section).Forget();
+            showPending = true;
+
+            // Queued before the answer leaves, so an Opened verdict always has its life cycle behind it.
+            events.Enqueue(new ExplorerUiEvent(ui, ExplorerUiEventKind.Opened));
+
+            ShowUntilClosedAsync(ui, section).Forget();
             return OpenExplorerUiResult.Opened;
         }
 
-        private async UniTask OpenSectionAsync(ExplorerUi ui, ExploreSections section)
+        /// <summary>
+        ///     <c>ShowAsync</c> resolves when the panel closes, so it is left running rather than awaited by
+        ///     the request: the answer owes the scene nothing beyond the open.
+        /// </summary>
+        private async UniTask ShowUntilClosedAsync(ExplorerUi ui, ExploreSections section)
         {
             try
             {
-                await UniTask.SwitchToMainThread();
-
-                // The answer given to the scene was decided on its JS thread; by now the user may have opened
-                // the panel themselves, and ShowAsync does nothing for a controller that is not hidden.
-                if (mvcManager.IsShowing<ExplorePanelView, ExplorePanelParameter>())
-                    return;
-
-                // ShowAsync resolves when the panel closes, so the pair brackets its whole life cycle. The
-                // opened event goes out before the await because there is no later moment that still means
-                // "shown".
-                events.Enqueue(new ExplorerUiEvent(ui, ExplorerUiEventKind.Opened));
-
                 try { await mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(section))); }
-                finally { events.Enqueue(new ExplorerUiEvent(ui, ExplorerUiEventKind.Closed)); }
+                finally
+                {
+                    showPending = false;
+                    events.Enqueue(new ExplorerUiEvent(ui, ExplorerUiEventKind.Closed));
+                }
             }
             catch (OperationCanceledException) { }
             catch (Exception e) { ReportHub.LogException(e, ReportCategory.RESTRICTED_ACTIONS); }
