@@ -53,8 +53,8 @@ namespace ECS.Unity.Transforms.Tests
             system = new ParentingTransformSystem(world, crdtToEntityDict, rootEntity);
         }
 
-        private SDKTransform parentSDKTransform;
-        private SDKTransform childSDKTransform;
+        private SDKTransform parentSDKTransform = null!;
+        private SDKTransform childSDKTransform = null!;
 
         private TransformComponent parentTransformComponent;
         private TransformComponent childTransformComponent;
@@ -68,7 +68,7 @@ namespace ECS.Unity.Transforms.Tests
         private Entity parentEntity;
         private Entity childEntity;
 
-        private Dictionary<CRDTEntity, Entity> crdtToEntityDict;
+        private Dictionary<CRDTEntity, Entity> crdtToEntityDict = null!;
 
         [Test]
         public void ParentTransform()
