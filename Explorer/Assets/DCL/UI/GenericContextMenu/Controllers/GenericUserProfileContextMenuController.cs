@@ -252,9 +252,8 @@ namespace DCL.UI
 
             if (isVoiceChatFeatureEnabled)
             {
-                contextMenuCallButton.Enabled = isVoiceChatFeatureEnabled;
                 // A guest cannot receive a call, so there is nothing to start
-                contextMenuCallButton.Interactable = !profileCache.IsGuest(profile.UserId!);
+                contextMenuCallButton.Enabled = !profileCache.IsGuest(profile.UserId!);
                 startCallButtonControlSettings.SetData(profile.UserId!);
             }
 
