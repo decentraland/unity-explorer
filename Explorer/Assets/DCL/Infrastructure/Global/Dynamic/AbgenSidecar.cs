@@ -274,6 +274,7 @@ namespace Global.Dynamic
         ///     read: abgen serves <c>/health</c> with 503 whenever it calls itself degraded, and that body
         ///     carries the same identifying fields as a healthy one. Accepting only 2xx would file the
         ///     degraded case as a foreign server — the one resident this instance most needs to recognize.
+        ///     A body without both a version and a usable pid identifies nothing this instance can act on.
         /// </summary>
         private async UniTask<HealthDto?> TryGetHealthAsync(CancellationToken ct)
         {
@@ -293,7 +294,10 @@ namespace Global.Dynamic
             try { health = JsonUtility.FromJson<HealthDto>(request.downloadHandler.text); }
             catch (Exception) { return null; }
 
-            return string.IsNullOrEmpty(health?.version) ? null : health;
+            if (health == null || string.IsNullOrEmpty(health.version) || health.pid <= 0)
+                return null;
+
+            return health;
         }
 
         /// <summary>True once <see cref="BaseUrl" /> stops answering; false if it still answers at the deadline.</summary>
@@ -333,6 +337,12 @@ namespace Global.Dynamic
         /// </summary>
         private static void KillForeign(int pid)
         {
+            // The pid arrives in a /health body, so it is not this process's to trust. Non-positive
+            // values are lethal on POSIX: kill(0) signals every process in this process group,
+            // kill(-1) every process this user owns. Nothing is signalled for those.
+            if (pid <= 0)
+                return;
+
 #if UNITY_EDITOR
             try
             {
