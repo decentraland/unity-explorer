@@ -36,7 +36,7 @@ namespace DCL.WebRequests.Analytics
         private WebRequestsContainer() { }
 
         public override void Dispose() =>
-            WebRequestsDumper.AnalyticsHandler = null;
+            WebRequestsDumper.Instance.AnalyticsHandler = null;
 
         public WebRequestsPlugin CreatePlugin(bool isLocalSceneDevelopment)
         {
@@ -121,7 +121,7 @@ namespace DCL.WebRequests.Analytics
                 container.debugMetricsAnalyticsHandler = debugHandler;
                 var dumpHandler = new WebRequestDumpAnalyticsHandler(debugHandler);
 
-                WebRequestsDumper.AnalyticsHandler = dumpHandler;
+                WebRequestsDumper.Instance.AnalyticsHandler = dumpHandler;
 
                 var analyticsContainer = new WebRequestsAnalyticsContainer(sentryWebRequestHandler, dumpHandler, debugHandler, chromeDevtoolProtocolHandler);
 

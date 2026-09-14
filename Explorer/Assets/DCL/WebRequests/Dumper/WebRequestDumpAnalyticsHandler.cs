@@ -65,18 +65,18 @@ namespace DCL.WebRequests.Dumper
             foreach ((Type type, Func<RequestMetricBase> ctor) in trackedMetrics)
             {
                 var recorder = new RequestMetricRecorder(ctor());
-                WebRequestsDumper.Instance.activeMetrics[MetricsRegistry.INDICES[type]] = recorder;
+                WebRequestsDumper.Instance.activeMetrics[MetricsRegistry.Indices[type]] = recorder;
                 AddFlatMetric(recorder);
             }
         }
 
         public void OnRequestStarted<T, TWebRequestArgs>(in RequestEnvelope<T, TWebRequestArgs> envelope, T request, DateTime startedAt) where T: struct, ITypedWebRequest where TWebRequestArgs: struct
         {
-            // Signed requests are not supported
-            if (WebRequestsDumper.IsMatch(envelope.signInfo != null, envelope.CommonArguments.URL))
-            {
-                WebRequestsDumper instance = WebRequestsDumper.Instance;
+            WebRequestsDumper instance = WebRequestsDumper.Instance;
 
+            // Signed requests are not supported
+            if (instance.IsMatch(envelope.signInfo != null, envelope.CommonArguments.URL))
+            {
                 // Make sure the analytics are created at this point
                 // They will be re-created in case of the domain reload
                 RecreateMetricsIfNeeded();

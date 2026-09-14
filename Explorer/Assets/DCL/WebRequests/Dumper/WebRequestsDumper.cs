@@ -39,7 +39,21 @@ namespace DCL.WebRequests.Dumper
             },
         };
 
-        internal readonly RequestMetricRecorder[] activeMetrics = new RequestMetricRecorder[MetricsRegistry.TYPES.Length];
+        private RequestMetricRecorder[]? activeMetricsLazy;
+
+        internal RequestMetricRecorder[] activeMetrics
+        {
+            get
+            {
+                if (activeMetricsLazy == null)
+                {
+                    MetricsRegistry.Initialize();
+                    activeMetricsLazy = new RequestMetricRecorder[MetricsRegistry.Types.Length];
+                }
+
+                return activeMetricsLazy;
+            }
+        }
 
         private readonly WebRequestDump dump = new ();
 
@@ -47,25 +61,21 @@ namespace DCL.WebRequests.Dumper
         /// <summary>
         ///     Preserves the values across domain reload (edit mode => play mode)
         /// </summary>
-        private static bool IsEnabledFromEditorPrefs
+        private bool isEnabledFromEditorPrefs
         {
             get => EditorPrefs.GetBool($"{nameof(WebRequestsDumper)}.{nameof(Enabled)}", false);
             set => EditorPrefs.SetBool($"{nameof(WebRequestsDumper)}.{nameof(Enabled)}", value);
         }
 #endif
 
-        private static bool isEnabled;
+        private bool isEnabled;
 
-        /// <summary>
-        ///     Static so that the disabled path never touches <see cref="Instance" />: recording is driven
-        ///     exclusively by the editor window, so a player build must not allocate the dumper at all.
-        /// </summary>
-        public static bool Enabled
+        public bool Enabled
         {
             get
             {
 #if UNITY_EDITOR
-                return IsEnabledFromEditorPrefs;
+                return isEnabledFromEditorPrefs;
 #else
                 return isEnabled;
 #endif
@@ -74,24 +84,24 @@ namespace DCL.WebRequests.Dumper
             set
             {
 #if UNITY_EDITOR
-                IsEnabledFromEditorPrefs = value;
+                isEnabledFromEditorPrefs = value;
 #else
                 isEnabled = value;
 #endif
             }
         }
 
-        public static string Filter { get; set; } = string.Empty;
+        public string Filter { get; set; } = string.Empty;
 
         /// <summary>
         ///     Whether the <see cref="Filter" /> is treated as Regex (C# format)
         /// </summary>
-        public static bool IsRegEx { get; set; }
+        public bool IsRegEx { get; set; }
 
-        public static bool IsMatch(bool signed, string url) =>
+        public bool IsMatch(bool signed, string url) =>
             Enabled && !signed && (string.IsNullOrEmpty(Filter) || (IsRegEx ? Regex.IsMatch(url, Filter) : url.Contains(Filter, StringComparison.OrdinalIgnoreCase)));
 
-        public static WebRequestDumpAnalyticsHandler? AnalyticsHandler { get; set; }
+        public WebRequestDumpAnalyticsHandler? AnalyticsHandler { get; set; }
 
         public int Count => dump.entries.Count;
 

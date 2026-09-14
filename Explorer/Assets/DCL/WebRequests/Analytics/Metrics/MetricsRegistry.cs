@@ -5,30 +5,35 @@ namespace DCL.WebRequests.Analytics.Metrics
 {
     public static class MetricsRegistry
     {
-        // Fix ANR: Removed a reflection scan over all assemblies. Just select types we care manually.
-        public static readonly Type[] TYPES =
+        public static Type[] Types { get; private set; } = Array.Empty<Type>();
+
+        public static Dictionary<Type, int> Indices { get; private set; } = new (0);
+
+        public static void Initialize()
         {
-            typeof(ActiveCounter),
-            typeof(Total),
-            typeof(TotalFailed),
-            typeof(BandwidthDown),
-            typeof(BandwidthUp),
-            typeof(ServeTimeSmallFileAverage),
-            typeof(ServeTimePerMBAverage),
-            typeof(FillRateAverage),
-            typeof(TimeToFirstByteAverage),
-        };
+            if (Types.Length > 0)
+                return;
 
-        public static readonly Dictionary<Type, int> INDICES = BuildIndices();
+            // Fix ANR: Removed a reflection scan over all assemblies. Just select types we care manually.
+            Types = new[]
+            {
+                typeof(ActiveCounter),
+                typeof(Total),
+                typeof(TotalFailed),
+                typeof(BandwidthDown),
+                typeof(BandwidthUp),
+                typeof(ServeTimeSmallFileAverage),
+                typeof(ServeTimePerMBAverage),
+                typeof(FillRateAverage),
+                typeof(TimeToFirstByteAverage),
+            };
 
-        private static Dictionary<Type, int> BuildIndices()
-        {
-            var indices = new Dictionary<Type, int>(TYPES.Length);
+            var indices = new Dictionary<Type, int>(Types.Length);
 
-            for (var i = 0; i < TYPES.Length; i++)
-                indices[TYPES[i]] = i;
+            for (var i = 0; i < Types.Length; i++)
+                indices[Types[i]] = i;
 
-            return indices;
+            Indices = indices;
         }
     }
 }

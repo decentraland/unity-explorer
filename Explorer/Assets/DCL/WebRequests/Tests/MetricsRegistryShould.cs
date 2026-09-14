@@ -10,6 +10,12 @@ namespace DCL.WebRequests.Tests
 {
     public class MetricsRegistryShould
     {
+        [SetUp]
+        public void SetUp()
+        {
+            MetricsRegistry.Initialize();
+        }
+
         [Test]
         public void ContainEveryConcreteRequestMetricInTheProject()
         {
@@ -21,16 +27,16 @@ namespace DCL.WebRequests.Tests
                                                         && type != typeof(RequestMetricRecorder))
                                          .ToArray();
 
-            CollectionAssert.AreEquivalent(discovered, MetricsRegistry.TYPES);
+            CollectionAssert.AreEquivalent(discovered, MetricsRegistry.Types);
         }
 
         [Test]
         public void MapEveryTypeToItsPositionInTypes()
         {
-            Assert.That(MetricsRegistry.INDICES.Count, Is.EqualTo(MetricsRegistry.TYPES.Length));
+            Assert.That(MetricsRegistry.Indices.Count, Is.EqualTo(MetricsRegistry.Types.Length));
 
-            for (var i = 0; i < MetricsRegistry.TYPES.Length; i++)
-                Assert.That(MetricsRegistry.INDICES[MetricsRegistry.TYPES[i]], Is.EqualTo(i));
+            for (var i = 0; i < MetricsRegistry.Types.Length; i++)
+                Assert.That(MetricsRegistry.Indices[MetricsRegistry.Types[i]], Is.EqualTo(i));
         }
 
         private static IEnumerable<Type> GetTypesSafely(Assembly assembly)
