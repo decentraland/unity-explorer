@@ -85,9 +85,6 @@ namespace Global.AppArgs
 
         // The auth request id parameter echoed in the signin deep link, used to match a link to the login that minted it.
         public const string AUTH_REQUEST_ID = "authRequestId";
-        // See: https://github.com/decentraland/unity-explorer/issues/9524
-        // ReSharper disable once UnusedMember.Global (used on non-editor build only)
-        public const string AUTH_BRIDGE_ONLY = "login-bridge-only";
 
         public const string FORCED_EMOTES = "self-force-emotes";
         public const string SELF_PREVIEW_EMOTES = "self-preview-emotes";

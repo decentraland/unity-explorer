@@ -12,17 +12,9 @@ namespace DCL.AuthenticationScreenFlow.Tests
         private const string LOGIN_METHOD = "METAMASK";
 
         [Test]
-        public void BuildBaseUrlWithoutReferrer()
+        public void AlwaysReturnToTheRunningClient()
         {
-            string url = DeepLinkSignInUrl.Build(BASE_URL, REQUEST_ID, LOGIN_METHOD, bridgeOnly: false, referrer: null);
-
-            Assert.AreEqual($"{BASE_URL}/{REQUEST_ID}?loginMethod={LOGIN_METHOD}&flow=deeplink", url);
-        }
-
-        [Test]
-        public void AppendBridgeOnlyFlag()
-        {
-            string url = DeepLinkSignInUrl.Build(BASE_URL, REQUEST_ID, LOGIN_METHOD, bridgeOnly: true, referrer: null);
+            string url = DeepLinkSignInUrl.Build(BASE_URL, REQUEST_ID, LOGIN_METHOD, referrer: null);
 
             Assert.AreEqual($"{BASE_URL}/{REQUEST_ID}?loginMethod={LOGIN_METHOD}&flow=deeplink&bridgeOnly", url);
         }
@@ -30,11 +22,11 @@ namespace DCL.AuthenticationScreenFlow.Tests
         [Test]
         public void AppendLowercasedReferrerWhenValid()
         {
-            string url = DeepLinkSignInUrl.Build(BASE_URL, REQUEST_ID, LOGIN_METHOD, bridgeOnly: false,
+            string url = DeepLinkSignInUrl.Build(BASE_URL, REQUEST_ID, LOGIN_METHOD,
                 Web3Address.FromUntrusted("0x24E5F44999C151F08609F8E27B2238C773C4D020"));
 
             Assert.AreEqual(
-                $"{BASE_URL}/{REQUEST_ID}?loginMethod={LOGIN_METHOD}&flow=deeplink&referrer=0x24e5f44999c151f08609f8e27b2238c773c4d020",
+                $"{BASE_URL}/{REQUEST_ID}?loginMethod={LOGIN_METHOD}&flow=deeplink&bridgeOnly&referrer=0x24e5f44999c151f08609f8e27b2238c773c4d020",
                 url);
         }
 
@@ -47,7 +39,7 @@ namespace DCL.AuthenticationScreenFlow.Tests
         {
             // FromUntrusted degrades every invalid value to null, matching how the
             // authenticator constructs the field.
-            string url = DeepLinkSignInUrl.Build(BASE_URL, REQUEST_ID, LOGIN_METHOD, bridgeOnly: false, Web3Address.FromUntrusted(rawReferrer));
+            string url = DeepLinkSignInUrl.Build(BASE_URL, REQUEST_ID, LOGIN_METHOD, Web3Address.FromUntrusted(rawReferrer));
 
             StringAssert.DoesNotContain("referrer", url);
         }
@@ -57,7 +49,7 @@ namespace DCL.AuthenticationScreenFlow.Tests
         {
             // Defense-in-depth: even a Web3Address constructed directly from garbage
             // (the ctor does not validate) must not reach the URL.
-            string url = DeepLinkSignInUrl.Build(BASE_URL, REQUEST_ID, LOGIN_METHOD, bridgeOnly: false, new Web3Address("not-an-address"));
+            string url = DeepLinkSignInUrl.Build(BASE_URL, REQUEST_ID, LOGIN_METHOD, new Web3Address("not-an-address"));
 
             StringAssert.DoesNotContain("referrer", url);
         }

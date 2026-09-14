@@ -174,7 +174,7 @@ namespace Global.Dynamic
                 container.WebRequestsContainer = webRequestsContainer;
                 var realmUrls = new RealmUrls(realmLaunchSettings, new RealmNamesMap(webRequestsContainer.WebRequestController, decentralandUrlsSource), decentralandUrlsSource);
 
-                container.Bootstrap = await CreateBootstrapperAsync(debugSettings, debugContainer, applicationParametersParser, splashScreen, realmUrls, diskCache, partialsDiskCache, container, webRequestsContainer, settingsContainer, realmLaunchSettings, world, container.settings.BuildData, dclVersion, ct);
+                container.Bootstrap = await CreateBootstrapperAsync(debugSettings, debugContainer, applicationParametersParser, splashScreen, realmUrls, diskCache, partialsDiskCache, container, identityCache, webRequestsContainer, settingsContainer, realmLaunchSettings, world, container.settings.BuildData, dclVersion, ct);
                 container.CompositeWeb3Provider = CreateWeb3Dependencies(sceneLoaderSettings, web3AccountFactory, identityCache, browser, container.Analytics, decentralandUrlsSource, ethereumNetwork, applicationParametersParser, webRequestsContainer.WebRequestController, container.DeeplinkSigninIdentityId, container.DeeplinkLoginAwaitingSigninRequestId);
 
                 void AddIdentityToSentryScope(Scope scope)
@@ -200,6 +200,7 @@ namespace Global.Dynamic
             IDiskCache diskCache,
             IDiskCache<PartialLoadingState> partialsDiskCache,
             BootstrapContainer container,
+            IWeb3IdentityCache identityCache,
             WebRequestsContainer webRequestsContainer,
             IPluginSettingsContainer settingsContainer,
             RealmLaunchSettings realmLaunchSettings,
@@ -208,7 +209,7 @@ namespace Global.Dynamic
             DCLVersion dclVersion,
             CancellationToken ct)
         {
-            AnalyticsContainer? analyticsContainer = await AnalyticsContainer.CreateAsync(appArgs, container.IdentityCache, realmLaunchSettings, debugUtilitiesContainer.Builder, buildData.InstallSource, settingsContainer, dclVersion, ct);
+            AnalyticsContainer? analyticsContainer = await AnalyticsContainer.CreateAsync(appArgs, identityCache, realmLaunchSettings, debugUtilitiesContainer.Builder, buildData.InstallSource, settingsContainer, dclVersion, ct);
             container.Analytics = analyticsContainer;
 
             var coreBootstrap = new Bootstrap(debugSettings, appArgs, splashScreen, realmUrls, realmLaunchSettings, webRequestsContainer, diskCache, partialsDiskCache,
@@ -263,11 +264,6 @@ namespace Global.Dynamic
                 webRequestController,
                 deeplinkSigninIdentityId,
                 deeplinkLoginAwaitingSigninRequestId,
-#if UNITY_EDITOR
-                true,
-#else
-                appArgs.HasFlag(AppArgsFlags.AUTH_BRIDGE_ONLY),
-#endif
                 referrer
             );
 
