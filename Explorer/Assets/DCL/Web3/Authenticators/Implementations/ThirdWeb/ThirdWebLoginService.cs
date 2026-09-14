@@ -26,7 +26,7 @@ namespace DCL.Web3.Authenticators
         public IThirdwebWallet? ActiveWallet { get; private set; }
         private InAppWallet? pendingWallet;
 
-        private readonly DCLSemaphoreSlim mutex = new (1, 1);
+        private readonly DCLSemaphoreSlim mutex = new ();
         private readonly ThirdwebClient client;
 
         private UniTaskCompletionSource<bool>? loginCompletionSource;

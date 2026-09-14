@@ -5,7 +5,6 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using DCL.Optimization.Pools;
 using DCL.Platforms;
 using DCL.Utility;
 using DCL.WebRequests;
@@ -17,9 +16,7 @@ using ECS.StreamableLoading.Common.Systems;
 using SceneRunner.Scene;
 using System;
 using System.Threading;
-using UnityEngine;
 using UnityEngine.Pool;
-using Utility;
 
 namespace ECS.StreamableLoading.AssetBundles
 {

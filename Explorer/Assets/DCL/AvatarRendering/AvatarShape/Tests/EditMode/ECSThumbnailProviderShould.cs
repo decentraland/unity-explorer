@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Loading.DTO;
 using DCL.AvatarRendering.Loading.Exceptions;
+using DCL.AvatarRendering.Thumbnails.Utils;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -82,13 +83,9 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
         {
             FakeWearable wearable = NewWearable();
 
-            try
-            {
-                await provider.GetAsync(wearable, CancellationToken.None, timeoutMs: 1);
-                Assert.Fail("Expected the first never-resolving load to throw after the timeout");
-            }
-            catch (ThumbnailLoadFailedException) { }
+            Sprite firstResult = await provider.GetAsync(wearable, CancellationToken.None, timeoutMs: 1);
 
+            Assert.That(firstResult, Is.SameAs(LoadThumbnailsUtils.DEFAULT_THUMBNAIL.Sprite), "A timed-out load must resolve to the default thumbnail instead of throwing");
             Assert.That(wearable.ThumbnailAssetResult, Is.Not.Null);
             Assert.That(wearable.ThumbnailAssetResult!.Value.IsInitialized, Is.True);
             Assert.That(wearable.ThumbnailAssetResult!.Value.Succeeded, Is.False);
@@ -98,9 +95,9 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             UniTask<Sprite> retryTask = provider.GetAsync(wearable, CancellationToken.None, timeoutMs: 1);
             int promisesAfterRetry = world.CountEntities(in THUMBNAIL_PROMISES);
 
-            try { await retryTask; }
-            catch (ThumbnailLoadFailedException) { }
+            Sprite retryResult = await retryTask;
 
+            Assert.That(retryResult, Is.SameAs(LoadThumbnailsUtils.DEFAULT_THUMBNAIL.Sprite));
             Assert.That(promisesAfterRetry, Is.EqualTo(promisesAfterTimeout + 1), "A call after a timed-out attempt must spawn a fresh promise instead of rethrowing the cached failure");
         }
 

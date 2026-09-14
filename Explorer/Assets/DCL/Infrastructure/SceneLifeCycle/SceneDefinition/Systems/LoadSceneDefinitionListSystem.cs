@@ -1,7 +1,5 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
-using Arch.SystemGroups.DefaultSystemGroups;
-using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Ipfs;
@@ -12,11 +10,9 @@ using ECS.Groups;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Cache;
-using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
 using Newtonsoft.Json;
-using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -28,7 +24,6 @@ using Unity.Mathematics;
 using Unity.Profiling;
 using UnityEngine.Pool;
 using UnityEngine.Scripting;
-using Utility;
 using Utility.Multithreading;
 
 namespace ECS.SceneLifeCycle.SceneDefinition
