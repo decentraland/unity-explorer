@@ -47,6 +47,24 @@ public class SkyboxRenderController : MonoBehaviour
     private static readonly int SKY_LUT = Shader.PropertyToID("_SkyLut");
     private static readonly int SKY_PHASE = Shader.PropertyToID("_SkyPhase");
 
+    // Clouds v2: global shader values read by CloudsV2.hlsl in both the sky and the reflection bake, so no material
+    // properties are needed. Textures and layer setup are written once per preset, colours and flow per frame.
+    private static readonly int[] CLOUD_STRIPS = { Shader.PropertyToID("_DclCloudStrip0"), Shader.PropertyToID("_DclCloudStrip1"), Shader.PropertyToID("_DclCloudStrip2") };
+    private static readonly int[] CLOUD_LAYERS = { Shader.PropertyToID("_DclCloudLayer0"), Shader.PropertyToID("_DclCloudLayer1"), Shader.PropertyToID("_DclCloudLayer2") };
+    private static readonly int CLOUD_LAYER_OPACITY = Shader.PropertyToID("_DclCloudLayerOpacity");
+    private static readonly int CLOUD_LAYER_FLOW = Shader.PropertyToID("_DclCloudLayerFlow");
+    private static readonly int CLOUD_LAYER_TILING = Shader.PropertyToID("_DclCloudLayerTiling");
+    private static readonly int CLOUD_LAYER_OFFSET_U = Shader.PropertyToID("_DclCloudLayerOffsetU");
+    private static readonly int CLOUD_SHADOW_COLOR = Shader.PropertyToID("_DclCloudShadowColor");
+    private static readonly int CLOUD_LIT_COLOR = Shader.PropertyToID("_DclCloudLitColor");
+    private static readonly int CLOUDS_PARAMS = Shader.PropertyToID("_DclCloudsParams");
+    private static readonly int CLOUDS_MODE = Shader.PropertyToID("_DclCloudsMode");
+    private static readonly int CLOUDS_PARAMS2 = Shader.PropertyToID("_DclCloudsParams2");
+    private static readonly int SUN_DIRECTION = Shader.PropertyToID("_DclSunDirection");
+    private static readonly int HORIZON_NOISE = Shader.PropertyToID("_DclHorizonNoise");
+    private static readonly int HORIZON_NOISE_PARAMS = Shader.PropertyToID("_DclHorizonNoiseParams");
+    private const int MAX_CLOUD_LAYERS = 3;
+
     [Header("Look")]
     [SerializeField] private SkyboxLookPreset preset = null!;
 
@@ -192,11 +210,24 @@ public class SkyboxRenderController : MonoBehaviour
     private void OnDestroy()
     {
         transitionCancellationTokenSource.SafeCancelAndDispose();
+        ResetCloudsV2Globals();
     }
 
     private void OnDisable()
     {
         transitionCancellationTokenSource.SafeCancelAndDispose();
+        ResetCloudsV2Globals();
+    }
+
+    // Global shader values outlive Play mode in the Editor; without this the Scene view keeps rendering v2 clouds
+    // after a session on a v2 preset, whatever the preset field says.
+    private static void ResetCloudsV2Globals()
+    {
+        Shader.SetGlobalVector(CLOUDS_MODE, Vector4.zero);
+        Shader.SetGlobalVector(HORIZON_NOISE_PARAMS, Vector4.zero);
+
+        for (var i = 0; i < MAX_CLOUD_LAYERS; i++)
+            Shader.SetGlobalTexture(CLOUD_STRIPS[i], null);
     }
 
     private void ApplyPresetStatics()
@@ -215,6 +246,11 @@ public class SkyboxRenderController : MonoBehaviour
         skyboxMaterial.SetFloat(RIM_OPACITY, preset.UseSkyLut ? 0f : preset.RimOpacity);
         skyboxMaterial.SetFloat(USE_SKY_LUT, preset.UseSkyLut ? 1f : 0f);
         skyboxMaterial.SetTexture(SKY_LUT, preset.SkyLut);
+
+        // Horizon noise for the lookup path; strength 0 (or no texture) disables it in the shader.
+        Shader.SetGlobalTexture(HORIZON_NOISE, preset.SkyHorizonNoise);
+        float noiseStrength = preset.UseSkyLut && preset.SkyHorizonNoise != null ? preset.SkyHorizonNoiseStrength : 0f;
+        Shader.SetGlobalVector(HORIZON_NOISE_PARAMS, new Vector4(noiseStrength, preset.SkyHorizonNoiseTiling.x, preset.SkyHorizonNoiseTiling.y, preset.SkyHorizonNoiseSpeed));
         skyboxMaterial.SetFloat(STARS_BRIGHTNESS, preset.StarsBrightness);
         skyboxMaterial.SetTexture(STARS_TEXTURE, preset.StarsTexture);
         skyboxMaterial.SetTexture(CLOUDS_CUBEMAP, preset.CloudsCubemap);
@@ -227,11 +263,69 @@ public class SkyboxRenderController : MonoBehaviour
         skyboxMaterial.SetFloat(CLOUDS_ROTATION_SPEED, shaderTimeDisabled ? 0f : preset.CloudsRotationSpeed);
         skyboxMaterial.SetFloat(SECOND_SUN_ROTATION_SPEED, shaderTimeDisabled ? 0f : preset.SecondSunRotationSpeed);
 
+        ApplyCloudsV2Statics();
+
         if (preset.IndirectLight)
             RenderSettings.ambientMode = AmbientMode.Trilight;
 
         if (preset.Fog)
             RenderSettings.fog = true;
+    }
+
+    private void ApplyCloudsV2Statics()
+    {
+        IReadOnlyList<SkyboxLookPreset.CloudLayer> layers = preset.CloudLayers;
+        int layerCount = Mathf.Min(layers.Count, MAX_CLOUD_LAYERS);
+        var opacity = Vector4.zero;
+        var tiling = Vector4.one;
+        var offsetU = Vector4.zero;
+
+        for (var i = 0; i < MAX_CLOUD_LAYERS; i++)
+        {
+            if (i < layerCount)
+            {
+                SkyboxLookPreset.CloudLayer layer = layers[i];
+                Shader.SetGlobalTexture(CLOUD_STRIPS[i], layer.Strip);
+                Shader.SetGlobalVector(CLOUD_LAYERS[i], new Vector4(layer.StretchV, layer.OffsetV, layer.Speed, layer.Strength));
+                opacity[i] = layer.Opacity;
+                tiling[i] = layer.TilingU;
+                offsetU[i] = layer.OffsetU;
+            }
+            else
+            {
+                Shader.SetGlobalTexture(CLOUD_STRIPS[i], null);
+                Shader.SetGlobalVector(CLOUD_LAYERS[i], Vector4.zero);
+            }
+        }
+
+        opacity.w = layerCount;
+        Shader.SetGlobalVector(CLOUD_LAYER_OPACITY, opacity);
+        Shader.SetGlobalVector(CLOUD_LAYER_TILING, tiling);
+        Shader.SetGlobalVector(CLOUD_LAYER_OFFSET_U, offsetU);
+        Shader.SetGlobalVector(CLOUDS_PARAMS, new Vector4(preset.CloudsRampKnee, preset.CloudsHighlightStrength, preset.CloudsHighlightThreshold, preset.CloudsHighlightFalloff));
+        Shader.SetGlobalVector(CLOUDS_PARAMS2, new Vector4(preset.CloudsZenithFadeStart, preset.CloudsZenithFadeEnd, preset.CloudsOcclusionStart, preset.CloudsOcclusionEnd));
+
+        Shader.SetGlobalVector(CLOUDS_MODE, new Vector4(
+            preset.CloudsV2Ramp ? 1f : 0f,
+            preset.CloudsV2Backlight ? 1f : 0f,
+            preset.CloudsV2Flow ? 1f : 0f,
+            preset.UseCloudsV2 ? 1f : 0f));
+    }
+
+    private void UpdateCloudsV2(float phase)
+    {
+        if (!preset.UseCloudsV2) return;
+
+        Shader.SetGlobalVector(CLOUD_SHADOW_COLOR, preset.CloudsShadowColorRamp.Evaluate(phase));
+        Shader.SetGlobalVector(CLOUD_LIT_COLOR, preset.CloudsColorRamp.Evaluate(phase));
+
+        IReadOnlyList<SkyboxLookPreset.CloudLayer> layers = preset.CloudLayers;
+        var flow = Vector4.zero;
+
+        for (var i = 0; i < Mathf.Min(layers.Count, MAX_CLOUD_LAYERS); i++)
+            flow[i] = SkyboxLookPreset.EvaluateByPhase(layers[i].FlowByPhase, phase);
+
+        Shader.SetGlobalVector(CLOUD_LAYER_FLOW, flow);
     }
 
     private async UniTaskVoid StartDirectionalLightTransitionAsync(float newTimeOfDay, float duration)
@@ -302,6 +396,9 @@ public class SkyboxRenderController : MonoBehaviour
             lightAnimator.Sample();
             lightAnimator.Stop();
         }
+
+        // Direction toward the sun for the cloud backlight; the moon is its opposite.
+        Shader.SetGlobalVector(SUN_DIRECTION, -directionalLight.transform.forward);
 
         // The clip carries intensity and the disc size/opacity as localScale.x/y channels. A preset curve overrides
         // each of them when authored, so the clip can be reduced to the sun rotation.
@@ -388,6 +485,8 @@ public class SkyboxRenderController : MonoBehaviour
         RenderSettings.skybox.SetColor(CLOUDS_COLOR, preset.CloudsColorRamp.Evaluate(phase));
         RenderSettings.skybox.SetFloat(CLOUD_HIGHLIGHTS, preset.CloudsHighlightsIntensity.Evaluate(phase));
         RenderSettings.skybox.SetFloat(SKY_PHASE, phase);
+
+        UpdateCloudsV2(phase);
     }
 
     /// <summary>

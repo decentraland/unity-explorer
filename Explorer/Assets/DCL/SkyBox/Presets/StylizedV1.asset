@@ -1092,6 +1092,76 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+  useCloudsV2: 1
+  cloudsV2Ramp: 1
+  cloudsV2Backlight: 1
+  cloudsV2Flow: 0
+  cloudLayers:
+  - Strip: {fileID: 2800000, guid: af264267fa004076aaa8543587772925, type: 3}
+    StretchV: 0.4
+    TilingU: 1
+    OffsetU: 0
+    OffsetV: 0.2
+    Speed: 2.0
+    Strength: 1.2
+    Opacity: 1
+    FlowByPhase: {x: 1, y: 1, z: 1, w: 1}
+  - Strip: {fileID: 2800000, guid: 0801758dd52c2814da13ed73a001e90e, type: 3}
+    StretchV: 0.42
+    TilingU: 1
+    OffsetU: 0.5
+    OffsetV: -0.17
+    Speed: 1.4
+    Strength: 1.2
+    Opacity: 1
+    FlowByPhase: {x: 1, y: 1, z: 1, w: 1}
+  - Strip: {fileID: 2800000, guid: dbe0743944d76c84d9cd69072fb4bd88, type: 3}
+    StretchV: 0.4
+    TilingU: 1
+    OffsetU: 0.25
+    OffsetV: -0.064
+    Speed: 1.4
+    Strength: 1.2
+    Opacity: 1
+    FlowByPhase: {x: 0, y: 0, z: 1, w: 0}
+  cloudsShadowColorRamp:
+    serializedVersion: 2
+    key0: {r: 0.16, g: 0.20, b: 0.30, a: 1}
+    key1: {r: 0.28, g: 0.20, b: 0.45, a: 1}
+    key2: {r: 0.38, g: 0.58, b: 0.82, a: 1}
+    key3: {r: 0.30, g: 0.26, b: 0.45, a: 1}
+    key4: {r: 0.16, g: 0.20, b: 0.30, a: 1}
+    key5: {r: 0, g: 0, b: 0, a: 0}
+    key6: {r: 0, g: 0, b: 0, a: 0}
+    key7: {r: 0, g: 0, b: 0, a: 0}
+    ctime0: 0
+    ctime1: 16384
+    ctime2: 32768
+    ctime3: 49151
+    ctime4: 65535
+    ctime5: 0
+    ctime6: 0
+    ctime7: 0
+    atime0: 0
+    atime1: 65535
+    atime2: 0
+    atime3: 0
+    atime4: 0
+    atime5: 0
+    atime6: 0
+    atime7: 0
+    m_Mode: 0
+    m_ColorSpace: -1
+    m_NumColorKeys: 5
+    m_NumAlphaKeys: 2
+  cloudsRampKnee: 0.15
+  cloudsHighlightStrength: 2
+  cloudsHighlightThreshold: 0.6
+  cloudsHighlightFalloff: 3
+  cloudsZenithFadeStart: 0.97
+  cloudsZenithFadeEnd: 1.0
+  cloudsOcclusionStart: 0.35
+  cloudsOcclusionEnd: 0.9
   fog: 1
   fogColorRamp:
     serializedVersion: 2
@@ -1186,9 +1256,9 @@ MonoBehaviour:
     m_NumAlphaKeys: 2
   skyDay:
     serializedVersion: 2
-    key0: {r: 1.2, g: 1.2, b: 1.2, a: 1}
-    key1: {r: 1.3, g: 1.32, b: 1.35, a: 1}
-    key2: {r: 0.72, g: 0.85, b: 1.0, a: 1}
+    key0: {r: 1.0, g: 1.0, b: 1.02, a: 1}
+    key1: {r: 1.08, g: 1.1, b: 1.15, a: 1}
+    key2: {r: 0.68, g: 0.83, b: 1.0, a: 1}
     key3: {r: 0.45, g: 0.75, b: 1.0, a: 1}
     key4: {r: 0.30, g: 0.62, b: 0.98, a: 1}
     key5: {r: 0.02, g: 0.42, b: 0.88, a: 1}
@@ -1245,6 +1315,10 @@ MonoBehaviour:
     m_NumColorKeys: 7
     m_NumAlphaKeys: 2
   skyLut: {fileID: 2800000, guid: b6fe7200b57b72b4ba04231c0a3d5f60, type: 2}
+  skyHorizonNoise: {fileID: 2800000, guid: 10f62b4152000cd40bfef3f3ac6dec74, type: 3}
+  skyHorizonNoiseStrength: 0.1
+  skyHorizonNoiseTiling: {x: 5, y: 10}
+  skyHorizonNoiseSpeed: 0.002
   zenitSpread: 0.404
   zenitBlend: 0.214
   groundSpread: 0.2

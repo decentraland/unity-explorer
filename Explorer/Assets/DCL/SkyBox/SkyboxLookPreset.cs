@@ -21,6 +21,25 @@ namespace DCL.SkyBox
             public LensFlareDataSRP FlareAsset = null!;
         }
 
+        [Serializable]
+        public class CloudLayer
+        {
+            public Texture2D? Strip;
+            [Tooltip("Unreal MF_CloudLayer semantics: fraction of the dome's height the strip covers. 0.4 = the strip's cloud band spans roughly a 25 degree slice of elevation; larger = taller clouds.")]
+            public float StretchV = 0.4f;
+            [Tooltip("Unreal MF_CloudLayer semantics: added to the dome V before scaling. Negative moves the layer up, positive down.")]
+            public float OffsetV;
+            [Tooltip("How many times the strip repeats around the horizon. 2 = clouds half the size.")]
+            [Range(1f, 4f)] public float TilingU = 1f;
+            [Tooltip("Rotates the strip around the horizon, as a fraction of a full turn. Use different values per layer so clouds do not stack.")]
+            [Range(0f, 1f)] public float OffsetU;
+            public float Speed = 1f;
+            public float Strength = 1.2f;
+            [Range(0f, 1f)] public float Opacity = 1f;
+            [Tooltip("Visibility per phase anchor: Night, Sunrise, Day, Sunset. 1 = shown, 0 = dissolved.")]
+            public Vector4 FlowByPhase = Vector4.one;
+        }
+
         [Header("Timing")]
         [Tooltip("Maps normalized time of day (0 = midnight, 0.5 = noon) to the phase every colour ramp is keyed on. "
                  + "Identity keeps ramps on time. Plateaus hold a palette; steep parts shorten a transition. "
@@ -65,6 +84,13 @@ namespace DCL.SkyBox
         [GradientUsage(true)] [SerializeField] private Gradient skySunset = new ();
         [Tooltip("Baked from the four gradients with the \"Bake sky LUT\" button. Rows: Night, Sunrise, Day, Sunset, Night.")]
         [SerializeField] private Texture2D? skyLut;
+        [Tooltip("Tiling noise that perturbs the horizon band into distant-cloud silhouettes (lookup only). None = off.")]
+        [SerializeField] private Texture2D? skyHorizonNoise;
+        [Tooltip("Elevation offset at full noise (Unreal: Strength x 0.1). 0 disables.")]
+        [Range(0f, 0.5f)] [SerializeField] private float skyHorizonNoiseStrength = 0.1f;
+        [Tooltip("Noise repeats around the horizon (x) and over the dome height (y).")]
+        [SerializeField] private Vector2 skyHorizonNoiseTiling = new (5f, 10f);
+        [SerializeField] private float skyHorizonNoiseSpeed = 0.002f;
 
         [Header("Indirect Lighting")]
         [InspectorName("Enabled")] [SerializeField] private bool indirectLight = true;
@@ -75,6 +101,30 @@ namespace DCL.SkyBox
         [Header("Clouds")]
         [GradientUsage(true)] [SerializeField] private Gradient cloudsColorRamp = new ();
         [SerializeField] private AnimationCurve cloudsHighlightsIntensity = new ();
+
+        [Header("Clouds v2 (layered strips)")]
+        [Tooltip("Replaces the cloud cubemap with up to three packed strips (R shading, G backlit look, B growth order, A mask).")]
+        [SerializeField] private bool useCloudsV2;
+        [Tooltip("Colour clouds through the shadow-to-lit ramp instead of a flat tint.")]
+        [SerializeField] private bool cloudsV2Ramp = true;
+        [Tooltip("Darken bodies and light rims when the sun or moon is behind a cloud.")]
+        [SerializeField] private bool cloudsV2Backlight = true;
+        [Tooltip("Grow clouds in from their base and dissolve them over time.")]
+        [SerializeField] private bool cloudsV2Flow = true;
+        [Tooltip("Up to three layers, first = highest / farthest.")]
+        [SerializeField] private CloudLayer[] cloudLayers = Array.Empty<CloudLayer>();
+        [Tooltip("Cloud shadow colour per phase. The lit colour is the Clouds colour ramp above.")]
+        [GradientUsage(true)] [SerializeField] private Gradient cloudsShadowColorRamp = new ();
+        [Range(0.02f, 0.9f)] [SerializeField] private float cloudsRampKnee = 0.15f;
+        [SerializeField] private float cloudsHighlightStrength = 2f;
+        [Range(0f, 0.99f)] [SerializeField] private float cloudsHighlightThreshold = 0.6f;
+        [SerializeField] private float cloudsHighlightFalloff = 3f;
+        [Tooltip("Elevation (0 horizon .. 1 zenith) where clouds start fading out, so the strip never pinches at the zenith.")]
+        [Range(0f, 1f)] [SerializeField] private float cloudsZenithFadeStart = 0.55f;
+        [Range(0f, 1f)] [SerializeField] private float cloudsZenithFadeEnd = 0.8f;
+        [Tooltip("Cloud alpha range over which clouds start / fully hide the sun. Starting above 0 avoids a dark ring at soft edges.")]
+        [Range(0f, 1f)] [SerializeField] private float cloudsOcclusionStart = 0.35f;
+        [Range(0f, 1f)] [SerializeField] private float cloudsOcclusionEnd = 0.9f;
 
         [Header("Fog")]
         [InspectorName("Enabled")] [SerializeField] private bool fog = true;
@@ -124,6 +174,10 @@ namespace DCL.SkyBox
         public Gradient SkyDay => skyDay;
         public Gradient SkySunset => skySunset;
         public Texture2D? SkyLut => skyLut;
+        public Texture2D? SkyHorizonNoise => skyHorizonNoise;
+        public float SkyHorizonNoiseStrength => skyHorizonNoiseStrength;
+        public Vector2 SkyHorizonNoiseTiling => skyHorizonNoiseTiling;
+        public float SkyHorizonNoiseSpeed => skyHorizonNoiseSpeed;
 
         public bool IndirectLight => indirectLight;
         public Gradient IndirectSkyRamp => indirectSkyRamp;
@@ -132,6 +186,21 @@ namespace DCL.SkyBox
 
         public Gradient CloudsColorRamp => cloudsColorRamp;
         public AnimationCurve CloudsHighlightsIntensity => cloudsHighlightsIntensity;
+
+        public bool UseCloudsV2 => useCloudsV2;
+        public bool CloudsV2Ramp => cloudsV2Ramp;
+        public bool CloudsV2Backlight => cloudsV2Backlight;
+        public bool CloudsV2Flow => cloudsV2Flow;
+        public IReadOnlyList<CloudLayer> CloudLayers => cloudLayers;
+        public Gradient CloudsShadowColorRamp => cloudsShadowColorRamp;
+        public float CloudsRampKnee => cloudsRampKnee;
+        public float CloudsHighlightStrength => cloudsHighlightStrength;
+        public float CloudsHighlightThreshold => cloudsHighlightThreshold;
+        public float CloudsHighlightFalloff => cloudsHighlightFalloff;
+        public float CloudsZenithFadeStart => cloudsZenithFadeStart;
+        public float CloudsZenithFadeEnd => cloudsZenithFadeEnd;
+        public float CloudsOcclusionStart => cloudsOcclusionStart;
+        public float CloudsOcclusionEnd => cloudsOcclusionEnd;
 
         public bool Fog => fog;
         public Gradient FogColorRamp => fogColorRamp;
@@ -159,5 +228,17 @@ namespace DCL.SkyBox
         /// </summary>
         public float EvaluatePhase(float timeOfDay) =>
             timeToPhase.length == 0 ? timeOfDay : Mathf.Clamp01(timeToPhase.Evaluate(timeOfDay));
+
+        /// <summary>
+        ///     Linear interpolation of a per-anchor value (Night, Sunrise, Day, Sunset, wrapping back to Night) at the phase.
+        /// </summary>
+        public static float EvaluateByPhase(Vector4 byPhase, float phase)
+        {
+            float scaled = Mathf.Clamp01(phase) * 4f;
+            int anchor = Mathf.Min((int)scaled, 3);
+            float from = byPhase[anchor];
+            float to = anchor == 3 ? byPhase[0] : byPhase[anchor + 1];
+            return Mathf.Lerp(from, to, scaled - anchor);
+        }
     }
 }
