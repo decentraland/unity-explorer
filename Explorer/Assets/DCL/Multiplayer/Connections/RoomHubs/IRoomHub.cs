@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.Archipelago.Rooms.Chat;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
+using DCL.Multiplayer.Connections.Rooms;
 using LiveKit.Proto;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
@@ -17,6 +18,13 @@ namespace DCL.Multiplayer.Connections.RoomHubs
         VoiceChatActivatableConnectiveRoom VoiceChatRoom();
 
         bool TryGetUser(string wallet, out LKParticipant? participant, out IRoom? room);
+
+        /// <summary>
+        ///     The local rooms whose participant roster currently lists <paramref name="walletId" />, as
+        ///     <see cref="RoomSource.Island" /> and/or <see cref="RoomSource.Gatekeeper" />. Read from LiveKit's own
+        ///     roster, so it holds regardless of what the peer sends over a data channel.
+        /// </summary>
+        RoomSource RoomsOf(string walletId);
 
         UniTask<bool> StartAsync();
         UniTask StopAsync();
