@@ -111,10 +111,10 @@ namespace DCL.SceneRuntime.Apis.RestrictedActionsApi
 
             return StopEmoteAsync().ToDisconnectedPromise(this);
 
-            async UniTask StopEmoteAsync()
+            async UniTask<bool> StopEmoteAsync()
             {
                 await UniTask.SwitchToMainThread();
-                api.TryStopEmote();
+                return api.TryStopEmote();
             }
         }
 

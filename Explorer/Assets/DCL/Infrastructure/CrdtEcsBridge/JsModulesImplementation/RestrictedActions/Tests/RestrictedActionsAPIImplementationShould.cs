@@ -342,6 +342,25 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
         }
 
         [Test]
+        public void StopEmote_ReportsSuccess()
+        {
+            Assert.IsTrue(restrictedActionsAPIImplementation.TryStopEmote());
+            globalWorldActions.Received(1).StopEmote();
+        }
+
+        [Test]
+        public void StopEmote_ReportsFailure_WhenSceneIsNotCurrent()
+        {
+            // Arrange
+            sceneStateProvider.IsCurrent.Returns(false);
+
+            // Assert: the refusal is the one outcome a scene can act on, so it has to reach it rather
+            // than look the same as a stop that happened.
+            Assert.IsFalse(restrictedActionsAPIImplementation.TryStopEmote());
+            globalWorldActions.DidNotReceive().StopEmote();
+        }
+
+        [Test]
         public void MovePlayerTo_RejectsPositionOutsideScene_ForRegularScene()
         {
             // Arrange

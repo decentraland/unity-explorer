@@ -164,10 +164,10 @@ namespace CrdtEcsBridge.RestrictedActions
             return true;
         }
 
-        public void TryStopEmote()
+        public bool TryStopEmote()
         {
             if (!sceneStateProvider.IsCurrent)
-                return;
+                return false;
 
             // Stop full-body emote on global world
             globalWorldActions.StopEmote();
@@ -179,6 +179,8 @@ namespace CrdtEcsBridge.RestrictedActions
                 masked.EmoteUrn = default; // Permanent stop — don't replay on re-entry
                 sceneWorld.Set(scenePlayerEntity, masked);
             }
+
+            return true;
         }
 
         private void TriggerMaskedEmoteOnSceneWorld(CommunicationData.URLHelpers.URN urn, AvatarEmoteMask mask)

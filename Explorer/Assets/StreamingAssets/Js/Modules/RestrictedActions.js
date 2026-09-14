@@ -122,7 +122,7 @@ module.exports.triggerSceneEmote = async function(message) {
 }
 
 module.exports.stopEmote = async function(message) {
-    const isSuccess = UnityRestrictedActionsApi.StopEmote()
+    const isSuccess = await UnityRestrictedActionsApi.StopEmote()
     return {
         success: isSuccess
     };
