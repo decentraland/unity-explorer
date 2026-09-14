@@ -205,6 +205,14 @@ namespace DCL.Web3.Authenticators
             ReportHub.LogProductionInfo($"[GuestLogin] guest wallet created: alreadyConnected={wasAlreadyConnected}, "
                                         + $"address='{(wasAlreadyConnected ? await wallet.GetAddress() : "<not connected>")}', storage='{storageDirectoryPath}'");
 
+            // Creating the wallet restores whatever guest session the storage directory holds, and a connected
+            // wallet makes LoginWithGuest a no-op, so the session id would never decide which account is resolved
+            if (wasAlreadyConnected)
+            {
+                await wallet.Disconnect().AsUniTask().AttachExternalCancellation(ct);
+                ReportHub.LogProductionInfo("[GuestLogin] restored session disconnected, logging in with the resolved session id");
+            }
+
             await LoginWithGuestAsync(wallet, ct);
 
             ReportHub.LogProductionInfo($"[GuestLogin] logged in as guest: address='{await wallet.GetAddress()}', walletId='{wallet.WalletId}'");
