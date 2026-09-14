@@ -81,6 +81,7 @@ Welcome to the official documentation for Unity Explorer — the Decentraland cl
 - **[Synthetic Input Simulation](synthetic-input-simulation.md)** — Driver-agnostic input layer shared by the MCP tools and AltTester probes: movement, pointer/hover, global SDK input actions, camera look, and UI interaction through the production pipelines
 - **[Connect to Local Scene](how-to-connect-to-a-local-scene.md)** — Running and connecting to local SDK7 scenes
 - **[Master of Bots](master-of-bots.md)** — Simulating multiple bot users for load testing
+- **[QA: Archipelago Island Room](qa-archipelago-island-room.md)** — Verifying island assignment and LiveKit room membership from the client, and reading the debug room indicator
 - **[Override Debug Log Matrix](override-debug-log-matrix.md)** — Runtime log severity overrides
 - **[Performance Benchmark](performance-benchmark.md)** — Generating PDF benchmark reports
 

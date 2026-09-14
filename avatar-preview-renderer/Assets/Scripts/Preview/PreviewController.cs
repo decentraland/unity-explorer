@@ -249,17 +249,16 @@ namespace Preview
                     throw;
                 }
 
-                // Wait for 1 frame for animation to kick in before re-centering the object on screen
+                // Wait for 1 frame for animation to kick in before measuring bounds for the framing below
                 await Awaitable.NextFrameAsync();
 
+                // The item view only: the avatar is never moved or scaled. Its feet have to stay on the
+                // shadow and glow catchers, which sit at a fixed floor height, so an emote is framed by
+                // the camera fit below instead.
                 if (hasWearableOverride)
                 {
                     GameObjectUtils.CenterAndFit(wearableLoader.transform, mainCamera, wearablePadding);
                     wearableLoader.transform.position += wearableOffset;
-                }
-                else if (hasEmoteOverride)
-                {
-                    GameObjectUtils.CenterAndFit(avatarLoader.transform, mainCamera, wearablePadding);
                 }
 
                 if (config.Mode is PreviewMode.Marketplace)

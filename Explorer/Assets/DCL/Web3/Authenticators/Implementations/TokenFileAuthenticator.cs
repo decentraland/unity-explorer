@@ -2,6 +2,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Utilities.Extensions;
+using DCL.Utility;
 using DCL.Utility.Types;
 using DCL.Web3.Abstract;
 using DCL.Web3.Chains;
@@ -17,21 +18,7 @@ namespace DCL.Web3.Authenticators
 {
     public partial class TokenFileAuthenticator : IWeb3Authenticator
     {
-#if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN || PLATFORM_STANDALONE_WIN
-        // path for: C:\Users\<YourUsername>\AppData\Local\DecentralandLauncherLight\
-        private static readonly string TOKEN_PATH =
-            Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "DecentralandLauncherLight", "auth-token-bridge.txt"
-            );
-#else
-        // path for: ~/Library/Application Support/DecentralandLauncherLight/
-        private static readonly string TOKEN_PATH =
-            Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.Personal),
-                "Library", "Application Support", "DecentralandLauncherLight", "auth-token-bridge.txt"
-            );
-#endif
+        private static readonly string TOKEN_PATH = LauncherPaths.InLauncherDirectory("auth-token-bridge.txt");
 
         private readonly URLAddress authApiUrl;
         private readonly IWebRequestController webRequestController;
