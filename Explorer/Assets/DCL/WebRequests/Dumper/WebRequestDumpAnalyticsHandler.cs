@@ -72,11 +72,11 @@ namespace DCL.WebRequests.Dumper
 
         public void OnRequestStarted<T, TWebRequestArgs>(in RequestEnvelope<T, TWebRequestArgs> envelope, T request, DateTime startedAt) where T: struct, ITypedWebRequest where TWebRequestArgs: struct
         {
-            WebRequestsDumper instance = WebRequestsDumper.Instance;
-
             // Signed requests are not supported
-            if (instance.IsMatch(envelope.signInfo != null, envelope.CommonArguments.URL))
+            if (WebRequestsDumper.IsMatch(envelope.signInfo != null, envelope.CommonArguments.URL))
             {
+                WebRequestsDumper instance = WebRequestsDumper.Instance;
+
                 // Make sure the analytics are created at this point
                 // They will be re-created in case of the domain reload
                 RecreateMetricsIfNeeded();

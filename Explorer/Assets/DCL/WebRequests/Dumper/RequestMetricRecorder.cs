@@ -24,13 +24,13 @@ namespace DCL.WebRequests.Dumper
 
         public override void OnRequestStarted<T>(T request, DateTime startTime)
         {
-            if (!WebRequestsDumper.Instance.IsMatch(IsSigned(request), request.UnityWebRequest.url)) return;
+            if (!WebRequestsDumper.IsMatch(IsSigned(request), request.UnityWebRequest.url)) return;
             metric.OnRequestStarted(request, startTime);
         }
 
         public override void OnRequestEnded<T>(T request, TimeSpan duration)
         {
-            if (!WebRequestsDumper.Instance.IsMatch(IsSigned(request), request.UnityWebRequest.url)) return;
+            if (!WebRequestsDumper.IsMatch(IsSigned(request), request.UnityWebRequest.url)) return;
             metric.OnRequestEnded(request, duration);
         }
     }

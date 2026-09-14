@@ -59,12 +59,12 @@ namespace DCL.WebRequests.Dumper.Editor
             // Load filter from EditorPrefs
             string savedFilter = EditorPrefs.GetString(FILTER_PREFS_KEY, string.Empty);
             filterField.value = savedFilter;
-            WebRequestsDumper.Instance.Filter = savedFilter;
+            WebRequestsDumper.Filter = savedFilter;
 
             filterField.RegisterValueChangedCallback(evt =>
             {
                 string value = evt.newValue.Trim();
-                WebRequestsDumper.Instance.Filter = value;
+                WebRequestsDumper.Filter = value;
                 EditorPrefs.SetString(FILTER_PREFS_KEY, value);
             });
 
@@ -77,11 +77,11 @@ namespace DCL.WebRequests.Dumper.Editor
             // Load the value from EditorPrefs
             bool isRegex = EditorPrefs.GetBool(IS_REGEX_PREFS_KEY, false);
             isRegexToggle.value = isRegex;
-            WebRequestsDumper.Instance.IsRegEx = isRegex;
+            WebRequestsDumper.IsRegEx = isRegex;
 
             isRegexToggle.RegisterValueChangedCallback(evt =>
             {
-                WebRequestsDumper.Instance.IsRegEx = evt.newValue;
+                WebRequestsDumper.IsRegEx = evt.newValue;
                 EditorPrefs.SetBool(IS_REGEX_PREFS_KEY, evt.newValue);
             });
 
@@ -228,7 +228,7 @@ namespace DCL.WebRequests.Dumper.Editor
             metricsView.RefreshItems();
 
             // Update stop/resume button icon and tooltip
-            if (dumper.Enabled)
+            if (WebRequestsDumper.Enabled)
             {
                 GUIContent stopIcon = EditorGUIUtility.IconContent("PreMatQuad");
 
@@ -251,16 +251,16 @@ namespace DCL.WebRequests.Dumper.Editor
         private void OnRestart()
         {
             WebRequestsDumper dumper = WebRequestsDumper.Instance;
-            dumper.Filter = filterField.value;
+            WebRequestsDumper.Filter = filterField.value;
             dumper.Restart();
 
-            if (dumper.AnalyticsHandler != null)
+            if (WebRequestsDumper.AnalyticsHandler != null)
             {
                 // Remove tracked metrics
                 foreach (RequestMetricRecorder requestMetric in activeMetrics)
                 {
                     if (requestMetric == null) continue;
-                    dumper.AnalyticsHandler.RemoveFlatMetric(requestMetric);
+                    WebRequestsDumper.AnalyticsHandler.RemoveFlatMetric(requestMetric);
                 }
             }
 
@@ -278,7 +278,7 @@ namespace DCL.WebRequests.Dumper.Editor
         {
             WebRequestsDumper dumper = WebRequestsDumper.Instance;
 
-            if (dumper.Enabled)
+            if (WebRequestsDumper.Enabled)
             {
                 dumper.Stop();
 
