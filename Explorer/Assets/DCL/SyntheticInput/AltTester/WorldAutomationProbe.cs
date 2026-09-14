@@ -1,5 +1,7 @@
 #if ALTTESTER
+using Arch.Core;
 using Cysharp.Threading.Tasks;
+using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
 using DCL.ECSComponents;
 using DCL.SyntheticInput.Components;
@@ -7,6 +9,7 @@ using DCL.SyntheticInput.UiSimulation;
 using Newtonsoft.Json.Linq;
 using System;
 using UnityEngine;
+using Utility;
 
 namespace DCL.SyntheticInput.AltTester
 {
@@ -26,20 +29,48 @@ namespace DCL.SyntheticInput.AltTester
     {
         private const float MAX_SECONDS = 30f;
         private const float DEFAULT_POINTER_TIMEOUT_SEC = 3f;
+        private const string NOT_INSTALLED = "the synthetic input layer is not installed (launch with --alttester or --mcp)";
 
-        private static SyntheticInputAgent? agent;
+        private static Session? session;
 
-        /// <summary>Written once by SyntheticInputPlugin when the automation session starts (the static-latch probe pattern).</summary>
-        public static void Install(SyntheticInputAgent installedAgent) =>
-            agent = installedAgent;
+        /// <summary>Written once by DynamicWorldContainer when the automation session starts (the static-latch probe pattern).</summary>
+        public static void Install(SyntheticInputAgent installedAgent, World world, Entity playerEntity) =>
+            session = new Session(installedAgent, world, playerEntity);
 
         public static bool IsReady() =>
-            agent != null;
+            session != null;
 
         public static string PollJson(int operationId) =>
             AltOperationRegistry.PollJson(operationId);
 
-        /// <summary>Walk/jog/run camera-relative for a duration; kind ∈ walk|jog|run. Scene movement locks apply unless ignoreInputModifiers.</summary>
+        /// <summary>
+        ///     The player's pose right now, in one round-trip:
+        ///     <c>{"ok":true,"position":{x,y,z},"rotationEuler":{x,y,z},"parcel":{x,y},"velocity":{x,y,z},"isGrounded":true}</c>.
+        ///     Read it before and after a gesture to assert what the gesture did.
+        /// </summary>
+        public static string GetPlayerStateJson()
+        {
+            if (session == null)
+                return AltOperationRegistry.ErrorPayload(NOT_INSTALLED);
+
+            CharacterTransform characterTransform = session.World.Get<CharacterTransform>(session.PlayerEntity);
+            session.World.TryGet(session.PlayerEntity, out CharacterRigidTransform? rigidTransform);
+
+            return new JObject
+            {
+                ["ok"] = true,
+                ["position"] = VectorJson(characterTransform.Position),
+                ["rotationEuler"] = VectorJson(characterTransform.Rotation.eulerAngles),
+                ["parcel"] = ParcelJson(characterTransform.Position.ToParcel()),
+                ["velocity"] = VectorJson(rigidTransform?.MoveVelocity.Velocity ?? Vector3.zero),
+                ["isGrounded"] = rigidTransform?.IsGrounded ?? false,
+            }.ToString();
+        }
+
+        /// <summary>
+        ///     Walk/jog/run camera-relative for a duration; kind ∈ walk|jog|run. Scene movement locks apply unless
+        ///     ignoreInputModifiers. The payload carries the start and end positions and the distance covered.
+        /// </summary>
         public static int StartWalk(float directionX, float directionY, string kind, float seconds, bool jump, bool ignoreInputModifiers)
         {
             if (!TryGetAgent(out SyntheticInputAgent readyAgent, out int failedId))
@@ -56,8 +87,7 @@ namespace DCL.SyntheticInput.AltTester
             float clampedSeconds = Mathf.Clamp(seconds, 0.1f, MAX_SECONDS);
 
             return AltOperationRegistry.Start(
-                readyAgent.WalkAsync(direction.normalized, movementKind, clampedSeconds, jump, ignoreInputModifiers)
-                          .ContinueWith(DeliveryPayload));
+                WalkPayloadAsync(readyAgent.WalkAsync(direction.normalized, movementKind, clampedSeconds, jump, ignoreInputModifiers)));
         }
 
         /// <summary>Holds a relative camera-look (mouse-delta units per frame) for a duration.</summary>
@@ -185,15 +215,15 @@ namespace DCL.SyntheticInput.AltTester
 
         private static bool TryGetAgent(out SyntheticInputAgent readyAgent, out int failedOperationId)
         {
-            if (agent != null)
+            if (session != null)
             {
-                readyAgent = agent;
+                readyAgent = session.Agent;
                 failedOperationId = 0;
                 return true;
             }
 
             readyAgent = null!;
-            failedOperationId = AltOperationRegistry.Start(UniTask.FromResult(AltOperationRegistry.ErrorPayload("the synthetic input layer is not installed (launch with --alttester or --mcp)")));
+            failedOperationId = AltOperationRegistry.Start(UniTask.FromResult(AltOperationRegistry.ErrorPayload(NOT_INSTALLED)));
             return false;
         }
 
@@ -230,6 +260,35 @@ namespace DCL.SyntheticInput.AltTester
                 ["delivery"] = delivery.ToString(),
             }.ToString();
 
+        /// <summary>The delivery payload plus where the hold took the player, mirroring the MCP walk tool.</summary>
+        private static async UniTask<string> WalkPayloadAsync(UniTask<SyntheticInputDelivery> walk)
+        {
+            Vector3 startPosition = ReadPlayerPosition();
+            SyntheticInputDelivery delivery = await walk;
+            await UniTask.SwitchToMainThread();
+            Vector3 endPosition = ReadPlayerPosition();
+
+            return new JObject
+            {
+                ["ok"] = delivery != SyntheticInputDelivery.TimedOut,
+                ["delivery"] = delivery.ToString(),
+                ["startPosition"] = VectorJson(startPosition),
+                ["endPosition"] = VectorJson(endPosition),
+                ["distance"] = Math.Round(Vector3.Distance(startPosition, endPosition), 2),
+                ["parcel"] = ParcelJson(endPosition.ToParcel()),
+            }.ToString();
+        }
+
+        /// <summary>Only reached through a Start* method, which already proved the session is installed.</summary>
+        private static Vector3 ReadPlayerPosition() =>
+            session == null ? Vector3.zero : session.World.Get<CharacterTransform>(session.PlayerEntity).Position;
+
+        private static JObject VectorJson(Vector3 value) =>
+            new () { ["x"] = Math.Round(value.x, 3), ["y"] = Math.Round(value.y, 3), ["z"] = Math.Round(value.z, 3) };
+
+        private static JObject ParcelJson(Vector2Int parcel) =>
+            new () { ["x"] = parcel.x, ["y"] = parcel.y };
+
         private static string SweepResultPayload(SyntheticSweepResult sweep)
         {
             var payload = new JObject
@@ -256,6 +315,20 @@ namespace DCL.SyntheticInput.AltTester
             JObject payload = result.ToJson();
             payload["ok"] = !result.TimedOut && result.FailureReason == null;
             return payload;
+        }
+
+        private sealed class Session
+        {
+            public readonly SyntheticInputAgent Agent;
+            public readonly World World;
+            public readonly Entity PlayerEntity;
+
+            public Session(SyntheticInputAgent agent, World world, Entity playerEntity)
+            {
+                Agent = agent;
+                World = world;
+                PlayerEntity = playerEntity;
+            }
         }
     }
 }

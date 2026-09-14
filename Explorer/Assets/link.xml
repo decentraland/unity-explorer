@@ -19,6 +19,7 @@
     <assembly fullname="DCL.SyntheticInput">
         <type fullname="DCL.SyntheticInput.AltTester.WorldAutomationProbe" preserve="all" />
         <type fullname="DCL.SyntheticInput.AltTester.UiAutomationProbe" preserve="all" />
+        <type fullname="DCL.SyntheticInput.AltTester.NavigationAutomationProbe" preserve="all" />
     </assembly>
     <assembly fullname="DCL.Network">
         <type fullname="DCL.FeatureFlags.AltTesterFeatureFlagsProbe" preserve="all" />

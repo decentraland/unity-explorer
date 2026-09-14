@@ -26,9 +26,7 @@ using DCL.LOD.Systems;
 using DCL.MarketplaceCredits;
 using DCL.MarketplaceCredits.Purchase;
 using DCL.McpServer.Systems;
-using DCL.Multiplayer.Connections.GateKeeper.Meta;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
-using DCL.Multiplayer.Connections.Pulse;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Emotes;
 using DCL.Multiplayer.Movement;
@@ -47,7 +45,6 @@ using DCL.RealmNavigation;
 using DCL.Rendering.GPUInstancing.Systems;
 using DCL.RuntimeDeepLink;
 using DCL.SDKComponents.AvatarLocomotion;
-using DCL.SDKComponents.AvatarNametag;
 using DCL.SkyBox;
 using DCL.SyntheticInput;
 using DCL.SyntheticInput.Systems;
@@ -902,8 +899,10 @@ namespace Global.Dynamic
 #if ALTTESTER
                 // AltTester tests reach the layer through CallStaticMethod, so the session's instances are handed
                 // to the static probes once (the static-latch pattern of AlttesterSceneReadinessProbe).
-                DCL.SyntheticInput.AltTester.WorldAutomationProbe.Install(syntheticInputAgent);
+                DCL.SyntheticInput.AltTester.WorldAutomationProbe.Install(syntheticInputAgent, globalWorld, playerEntity);
                 DCL.SyntheticInput.AltTester.UiAutomationProbe.Install(uiAutomation);
+                DCL.SyntheticInput.AltTester.NavigationAutomationProbe.Install(realmNavigator, staticContainer.RealmData, bootstrapContainer.DecentralandUrlsSource,
+                    staticContainer.ScenesCache, staticContainer.LoadingStatus, bootstrapContainer.Environment);
 #endif
 
                 globalPlugins.Add(new SyntheticInputPlugin(staticContainer.ScenesCache, staticContainer.EntityCollidersGlobalCache, uiAutomation));
