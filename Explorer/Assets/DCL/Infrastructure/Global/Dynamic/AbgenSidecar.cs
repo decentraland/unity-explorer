@@ -177,7 +177,7 @@ namespace Global.Dynamic
             /// <summary>The pinned build, already serving this realm: used as-is, and left running on dispose.</summary>
             Adopted,
 
-            /// <summary>Held by a server this instance cannot use and will not disturb; the user is told what holds it.</summary>
+            /// <summary>Not this instance's port to bind: held by a server it cannot use and will not disturb — the user is told what holds it — or start-up was abandoned before it could tell.</summary>
             Blocked,
         }
 
@@ -198,10 +198,15 @@ namespace Global.Dynamic
         /// </summary>
         private async UniTask<ResidentServer> ReconcileResidentServerAsync(CancellationToken ct)
         {
-            if (!await RespondsAsync(ct))
-                return ResidentServer.None;
+            (bool responded, HealthDto? resident) = await ProbeResidentAsync(ct);
 
-            HealthDto? resident = await TryGetHealthAsync(ct);
+            // A probe that never finished says nothing about the port, and a cancelled start-up has
+            // nothing to report to anyone.
+            if (ct.IsCancellationRequested)
+                return ResidentServer.Blocked;
+
+            if (!responded)
+                return ResidentServer.None;
 
             if (resident == null)
                 return Unusable("a server that is not an abgen",
@@ -241,34 +246,42 @@ namespace Global.Dynamic
         }
 
         /// <summary>
-        ///     Null when what answers on <see cref="BaseUrl" /> is not an abgen. A non-2xx answer is still
-        ///     read: abgen serves <c>/health</c> with 503 whenever it calls itself degraded, and that body
-        ///     carries the same identifying fields as a healthy one. Accepting only 2xx would file the
-        ///     degraded case as a foreign server, when what it is matters to whoever has to act on it.
-        ///     A body carrying neither a version nor a pid is not identifying itself as an abgen.
+        ///     Answers both questions the reconcile has with one request: <c>responded</c> is whether
+        ///     anything holds <see cref="BaseUrl" /> at all, <c>health</c> is non-null only when what
+        ///     answered identifies itself as an abgen. Asking them as two requests left an interval in
+        ///     which a resident could exit, which read back as a port that was occupied and holding
+        ///     nothing.
+        ///     <para>
+        ///     A non-2xx answer is still parsed: abgen serves <c>/health</c> with 503 whenever it calls
+        ///     itself degraded, and that body carries the same identifying fields as a healthy one.
+        ///     Accepting only 2xx would file the degraded case as a foreign server, when what it is
+        ///     matters to whoever has to act on it. A body carrying neither a version nor a pid is not
+        ///     identifying itself as an abgen. Cancellation reports nothing responding, which the caller
+        ///     separates from a free port by reading the token.
+        ///     </para>
         /// </summary>
-        private async UniTask<HealthDto?> TryGetHealthAsync(CancellationToken ct)
+        private async UniTask<(bool responded, HealthDto? health)> ProbeResidentAsync(CancellationToken ct)
         {
             using UnityWebRequest request = UnityWebRequest.Get($"{BaseUrl}/health");
             request.timeout = 2;
 
             try { await request.SendWebRequest().WithCancellation(ct); }
-            catch (OperationCanceledException) { throw; }
+            catch (OperationCanceledException) { return (false, null); }
             catch { /* a protocol error still carries its body; a connection error leaves responseCode at 0 */ }
 
             if (request.responseCode <= 0)
-                return null;
+                return (false, null);
 
             HealthDto? health;
 
             // Anything else on the port answers with a body JsonUtility either rejects or reads as blank.
             try { health = JsonUtility.FromJson<HealthDto>(request.downloadHandler.text); }
-            catch (Exception) { return null; }
+            catch (Exception) { return (true, null); }
 
             if (health == null || string.IsNullOrEmpty(health.version) || health.pid <= 0)
-                return null;
+                return (true, null);
 
-            return health;
+            return (true, health);
         }
 
         /// <summary>Whether anything at all answers on <see cref="BaseUrl" /> — the only liveness signal an adopted server offers.</summary>
@@ -277,8 +290,8 @@ namespace Global.Dynamic
             using UnityWebRequest request = UnityWebRequest.Head(BaseUrl);
             request.timeout = 2;
 
-            // Cancellation reports "still there" so neither caller acts on a probe it never completed;
-            // both re-check the token immediately after.
+            // A cancelled probe carries no data, so it reports "still there": an incomplete probe must
+            // never read as evidence the port went quiet.
             try { await request.SendWebRequest().WithCancellation(ct); }
             catch (OperationCanceledException) { return true; }
             catch { /* nothing listening */ }
@@ -847,38 +860,43 @@ namespace Global.Dynamic
         /// </summary>
         private async UniTaskVoid SuperviseAsync(CancellationToken ct)
         {
-            while (!disposed && !ct.IsCancellationRequested)
+            try
             {
-                await UniTask.Delay(SUPERVISION_POLL_MS, DelayType.Realtime, cancellationToken: ct).SuppressCancellationThrow();
-
-                if (disposed || ct.IsCancellationRequested) return;
-
-                // An adopted server is another process's child, so pid liveness says nothing about it —
-                // its death is observed over HTTP. Dropping the flag hands ownership to the relaunch
-                // below: the port is free again, and this instance kills what it starts.
-                if (adopted)
+                while (!disposed && !ct.IsCancellationRequested)
                 {
-                    if (await RespondsAsync(ct)) continue;
-                    adopted = false;
-                }
-                else if (ChildAlive())
-                    continue;
+                    await UniTask.Delay(SUPERVISION_POLL_MS, DelayType.Realtime, cancellationToken: ct).SuppressCancellationThrow();
 
-                // Main-thread only: UniTask.Delay resumes this loop on the player loop, so no atomicity is needed.
-                if (++restarts > MAX_RESTARTS)
-                {
-                    ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES, "abgen sidecar keeps exiting; asset bundles fall back to direct CDN errors");
-                    return;
-                }
+                    if (disposed || ct.IsCancellationRequested) return;
 
-                ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES, $"abgen sidecar exited; restart {restarts}/{MAX_RESTARTS}");
+                    // An adopted server is another process's child, so pid liveness says nothing about it —
+                    // its death is observed over HTTP. Dropping the flag hands ownership to the relaunch
+                    // below: the port is free again, and this instance kills what it starts.
+                    if (adopted)
+                    {
+                        if (await RespondsAsync(ct)) continue;
+                        adopted = false;
+                    }
+                    else if (ChildAlive())
+                        continue;
 
-                if (!Launch())
-                {
-                    ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES, "abgen sidecar restart failed; asset bundles fall back to direct CDN errors");
-                    return;
+                    // Main-thread only: UniTask.Delay resumes this loop on the player loop, so no atomicity is needed.
+                    if (++restarts > MAX_RESTARTS)
+                    {
+                        ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES, "abgen sidecar keeps exiting; asset bundles fall back to direct CDN errors");
+                        return;
+                    }
+
+                    ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES, $"abgen sidecar exited; restart {restarts}/{MAX_RESTARTS}");
+
+                    if (!Launch())
+                    {
+                        ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES, "abgen sidecar restart failed; asset bundles fall back to direct CDN errors");
+                        return;
+                    }
                 }
             }
+            catch (OperationCanceledException) { }
+            catch (Exception e) { ReportHub.LogException(e, ReportCategory.ASSET_BUNDLES); }
         }
 
         private async UniTask<bool> WaitHealthyAsync(CancellationToken ct)
@@ -890,7 +908,7 @@ namespace Global.Dynamic
                 using (UnityWebRequest req = UnityWebRequest.Head(BaseUrl))
                 {
                     req.timeout = 1;
-                    try { await req.SendWebRequest(); } catch { /* not up yet */ }
+                    try { await req.SendWebRequest().WithCancellation(ct); } catch { /* not up yet, or cancelled */ }
 
                     // Any HTTP response (even 404) proves a server is listening; only the child's own
                     // liveness proves it is this one. Without both, a server that beat this child to the
