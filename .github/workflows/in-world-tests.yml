@@ -230,46 +230,15 @@ jobs:
       scope: ${{ (inputs.filter || '') == '' && 'ALL' || '' }}
     secrets: inherit
 
-  # Flip the CI status comment's automation section to "running" as soon as the
-  # visual suite is dispatched, as visual-regression.yml does for /visual-tests.
-  visual-pending:
-    name: Mark visual suite running
-    needs: resolve
-    if: needs.resolve.outputs.pr_number != ''
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: write
-    steps:
-      - name: Checkout CI status action
-        uses: actions/checkout@v6
-        with:
-          sparse-checkout: .github/actions/ci-status-comment
-          sparse-checkout-cone-mode: false
-          persist-credentials: false
-
-      - name: Set automation section to running
-        uses: ./.github/actions/ci-status-comment
-        with:
-          pr-number: ${{ needs.resolve.outputs.pr_number }}
-          section: automation
-          github-token: ${{ github.token }}
-          body: |-
-            [![Automation](https://img.shields.io/badge/Automation-Running!-yellow?logo=github&logoColor=white&style=for-the-badge)](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
-
-            Visual regression suite running for commit `${{ needs.resolve.outputs.commit_sha }}` — [watch the run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}).
-
   visual-suite:
     name: Visual suite
-    # visual-pending in needs orders the two writers of the automation section, so
-    # the "Running!" write cannot land after the verdict. !cancelled() keeps the
-    # suite running when pending skips or fails.
-    needs: [resolve, visual-pending]
-    if: ${{ !cancelled() && needs.resolve.result == 'success' }}
+    needs: resolve
     # @main pins the merged version of the reusable, as for the InWorld suite above.
     uses: decentraland/explorer-automation/.github/workflows/run-visual-suite.yml@main
     # Must be a superset of run-visual-suite.yml's own `permissions:`. contents:write
-    # is its record-mode baseline commit, unused in test mode but declared upstream.
+    # is its record-mode baseline commit, unused in test mode but declared upstream;
+    # pull-requests:write is the CI status comment's automation section it upserts
+    # (or the standalone comment it falls back to).
     permissions:
       contents: write
       pull-requests: write
@@ -281,78 +250,6 @@ jobs:
       commit_sha: ${{ needs.resolve.outputs.commit_sha }}
       branch_label: ${{ needs.resolve.outputs.branch_label }}
     secrets: inherit
-
-  # Final state of the automation section. The reusable still posts its own
-  # detailed comment; this is the at-a-glance summary in the CI status comment.
-  visual-report:
-    name: Update CI status comment (visual)
-    needs: [resolve, visual-suite]
-    if: always() && needs.resolve.result == 'success' && needs.resolve.outputs.pr_number != ''
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: write
-    steps:
-      - name: Checkout CI status action
-        uses: actions/checkout@v6
-        with:
-          sparse-checkout: .github/actions/ci-status-comment
-          sparse-checkout-cone-mode: false
-          persist-credentials: false
-
-      - name: Compose automation section
-        id: compose
-        env:
-          RESULT: ${{ needs.visual-suite.result }}
-          PR_NUMBER: ${{ needs.resolve.outputs.pr_number }}
-          COMMIT_SHA: ${{ needs.resolve.outputs.commit_sha }}
-          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          PUBLIC_URL_PREFIX: ${{ vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL }}
-          REPO: ${{ github.repository }}
-        run: |
-          set -euo pipefail
-          BADGE_STYLE="?logo=github&logoColor=white&style=for-the-badge"
-          case "$RESULT" in
-            success) BADGE="https://img.shields.io/badge/Automation-Passed!-3fb950${BADGE_STYLE}"; MSG="✅ Visual regression suite passed." ;;
-            failure) BADGE="https://img.shields.io/badge/Automation-Failed!-ff0000${BADGE_STYLE}"; MSG="❌ Visual regression suite failed." ;;
-            *)       BADGE="https://img.shields.io/badge/Automation-Cancelled-lightgrey${BADGE_STYLE}"; MSG="Visual regression suite did not finish (\`$RESULT\`)." ;;
-          esac
-
-          # Mirrors run-visual-suite.yml's "Compute identifiers" S3 path for mode=test,
-          # platform=macos; keep the three in lockstep.
-          REPORT_URL="${PUBLIC_URL_PREFIX}/@dcl/${REPO//\//-}/visual-regression/test/macos/${PR_NUMBER}/${COMMIT_SHA}/index.html"
-
-          # The callee only syncs a report to S3 when the suite produced one.
-          if curl -sfIL --max-time 15 "$REPORT_URL" >/dev/null 2>&1; then
-            REPORT_ROW="| Allure report | [Open report]($REPORT_URL) |"
-          else
-            REPORT_ROW="| Allure report | not produced — see the workflow run |"
-          fi
-
-          DELIM="EOF_${RANDOM}${RANDOM}_$$"
-          {
-            echo "body<<$DELIM"
-            echo "[![Automation]($BADGE)]($RUN_URL)"
-            echo ""
-            echo "$MSG"
-            echo ""
-            echo "| Name | Link |"
-            echo "| -------- | ----------------------- |"
-            echo "| Commit | [\`$COMMIT_SHA\`](${GITHUB_SERVER_URL:-https://github.com}/${REPO}/commit/${COMMIT_SHA}) |"
-            echo "$REPORT_ROW"
-            echo "| Workflow run | [View run]($RUN_URL) |"
-            echo ""
-            echo "<sub>Runs with the InWorld suite on release and hotfix PRs · the detailed per-platform comment is posted separately.</sub>"
-            echo "$DELIM"
-          } >> "$GITHUB_OUTPUT"
-
-      - name: Update automation section
-        uses: ./.github/actions/ci-status-comment
-        with:
-          pr-number: ${{ needs.resolve.outputs.pr_number }}
-          section: automation
-          github-token: ${{ github.token }}
-          body: ${{ steps.compose.outputs.body }}
 
   result:
     name: InWorld suite result
