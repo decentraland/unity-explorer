@@ -45,7 +45,6 @@ namespace Global.Dynamic
         private const int HEALTH_TIMEOUT_MS = 15000;
         private const int HEALTH_POLL_MS = 250;
         private const int PROGRESS_POLL_MS = 500;
-        private const int KILL_RELEASE_TIMEOUT_MS = 5000;
 
         /// <summary>abgen's built-in default bind port (crate/src/abcdn/config.rs) — never exported as an env var.</summary>
         private const int ABGEN_DEFAULT_PORT = 5147;
@@ -178,7 +177,7 @@ namespace Global.Dynamic
             /// <summary>The pinned build, already serving this realm: used as-is, and left running on dispose.</summary>
             Adopted,
 
-            /// <summary>Held by a server that cannot serve this realm and must not be killed.</summary>
+            /// <summary>Held by a server this instance cannot use and will not disturb; the user is told what holds it.</summary>
             Blocked,
         }
 
@@ -187,19 +186,14 @@ namespace Global.Dynamic
         ///     entirely by environment at start-up, so a resident server's realm and build are fixed, and
         ///     <c>/health</c> is the only way to read them.
         ///     <para>
-        ///     A different build is killed: it answers <c>/health</c> but its route surface is not the one this
-        ///     client is compiled against, so adopting it fails later and far more obscurely — an orphan of a
-        ///     previous run served <c>/manifest/{entity}_{platform}.json</c> into a catch-all 404. The pinned
-        ///     build on this realm is adopted, which is what lets two clients share one converter and one
-        ///     corpus. The pinned build on a different realm is left alone: its catalyst cannot be re-pointed,
-        ///     and it is likely serving another live client.
-        ///     </para>
-        ///     <para>
-        ///     A server that calls itself degraded is killed rather than adopted, but only once the realm check
-        ///     has cleared it as this instance's to replace. Degraded is abgen's verdict on its own ability to
-        ///     convert — a broken live template, a corpus root gone missing — so adopting one buys a server
-        ///     that answers every probe here and then converts nothing, which is the silent degrade this whole
-        ///     reconcile exists to end. A fresh launch rebuilds the state a resident cannot recover on its own.
+        ///     The pinned build, healthy and on this realm, is adopted — which is what lets two clients share
+        ///     one converter and one corpus, and what reclaims a server leaked by a client that exited without
+        ///     disposing. Everything else is left exactly as it is and reported: another build, another realm,
+        ///     a server that calls itself degraded, or something that is not an abgen at all. None of them can
+        ///     serve this scene, and none of them is this instance's to end — a resident may belong to a live
+        ///     session, and nothing in <c>/health</c> distinguishes that from an orphan. The session degrades
+        ///     to raw GLTFs and the AB panel names what holds the port and what to do about it, which is the
+        ///     decision a person can make and this code cannot.
         ///     </para>
         /// </summary>
         private async UniTask<ResidentServer> ReconcileResidentServerAsync(CancellationToken ct)
@@ -210,42 +204,20 @@ namespace Global.Dynamic
             HealthDto? resident = await TryGetHealthAsync(ct);
 
             if (resident == null)
-            {
-                // On the port, but not answering /health as an abgen: not ours to kill, and launching into
-                // an occupied port only reproduces the silent adoption this reconcile exists to prevent.
-                ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES,
-                    $"{BaseUrl} is held by a server that is not an abgen — this scene loads as raw GLTFs");
-
-                AbgenConversionMetrics.INSTANCE.OnMilestone($"{BaseUrl} is held by an unknown server — the scene loads as raw GLTFs");
-                return ResidentServer.Blocked;
-            }
+                return Unusable("a server that is not an abgen",
+                    "quit whatever is on the port, then relaunch");
 
             if (resident.version != PINNED_VERSION)
-            {
-                ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES,
-                    $"abgen v{resident.version} (pid {resident.pid}) holds {BaseUrl}; this client pins v{PINNED_VERSION} — killing it");
-
-                AbgenConversionMetrics.INSTANCE.OnMilestone($"replacing a stale abgen v{resident.version} on {BaseUrl}");
-                return await ReplaceResidentAsync(resident.pid, ct);
-            }
+                return Unusable($"abgen v{resident.version} (pid {resident.pid})",
+                    $"this client speaks to v{PINNED_VERSION} — quit the client that started it, or stop pid {resident.pid}, then relaunch");
 
             if (resident.catalyst_url != catalystContentUrl)
-            {
-                ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES,
-                    $"abgen on {BaseUrl} serves {resident.catalyst_url}, not {catalystContentUrl} — leaving it running; this scene loads as raw GLTFs");
-
-                AbgenConversionMetrics.INSTANCE.OnMilestone($"{BaseUrl} is serving another realm — the scene loads as raw GLTFs");
-                return ResidentServer.Blocked;
-            }
+                return Unusable($"an abgen serving {resident.catalyst_url} (pid {resident.pid})",
+                    "its realm is fixed at start-up and cannot be re-pointed — quit that client, then relaunch");
 
             if (resident.status != READY_STATUS)
-            {
-                ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES,
-                    $"the abgen holding {BaseUrl} reports itself {resident.status} (pid {resident.pid}); it cannot convert — killing it");
-
-                AbgenConversionMetrics.INSTANCE.OnMilestone($"replacing a degraded abgen on {BaseUrl}");
-                return await ReplaceResidentAsync(resident.pid, ct);
-            }
+                return Unusable($"an abgen reporting itself {resident.status} (pid {resident.pid})",
+                    $"it cannot convert — stop pid {resident.pid}, then relaunch");
 
             ReportHub.Log(ReportCategory.ASSET_BUNDLES, $"adopting the abgen v{resident.version} already serving {catalystContentUrl} on {BaseUrl}");
             AbgenConversionMetrics.INSTANCE.OnMilestone("reusing the abgen already serving this scene");
@@ -253,19 +225,18 @@ namespace Global.Dynamic
         }
 
         /// <summary>
-        ///     Kills the resident server and waits for the port to go quiet. <see cref="ResidentServer.None" />
-        ///     once it does — the port is this instance's to bind; <see cref="ResidentServer.Blocked" /> when it
-        ///     is still answering at the deadline, since launching into a held port is the collision this
-        ///     reconcile exists to prevent.
+        ///     Records that <paramref name="what" /> holds <see cref="BaseUrl" /> and that <paramref name="action" />
+        ///     is what would free it, and opens the AB panel so the reason is seen rather than left in a log.
+        ///     Always <see cref="ResidentServer.Blocked" /> — the resident is left running and untouched.
         /// </summary>
-        private async UniTask<ResidentServer> ReplaceResidentAsync(int pid, CancellationToken ct)
+        private ResidentServer Unusable(string what, string action)
         {
-            KillForeign(pid);
+            ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES,
+                $"{BaseUrl} is held by {what}; this scene loads as raw GLTFs — {action}");
 
-            if (await WaitPortReleasedAsync(ct))
-                return ResidentServer.None;
-
-            AbgenConversionMetrics.INSTANCE.OnMilestone($"could not free {BaseUrl} — the scene loads as raw GLTFs");
+            AbgenConversionMetrics.INSTANCE.OnMilestone($"{what} holds {BaseUrl} — the scene loads as raw GLTFs");
+            AbgenConversionMetrics.INSTANCE.OnMilestone($"to use asset bundles: {action}");
+            AbgenConversionMetrics.INSTANCE.RequestPanelOpen();
             return ResidentServer.Blocked;
         }
 
@@ -273,8 +244,8 @@ namespace Global.Dynamic
         ///     Null when what answers on <see cref="BaseUrl" /> is not an abgen. A non-2xx answer is still
         ///     read: abgen serves <c>/health</c> with 503 whenever it calls itself degraded, and that body
         ///     carries the same identifying fields as a healthy one. Accepting only 2xx would file the
-        ///     degraded case as a foreign server — the one resident this instance most needs to recognize.
-        ///     A body without both a version and a usable pid identifies nothing this instance can act on.
+        ///     degraded case as a foreign server, when what it is matters to whoever has to act on it.
+        ///     A body carrying neither a version nor a pid is not identifying itself as an abgen.
         /// </summary>
         private async UniTask<HealthDto?> TryGetHealthAsync(CancellationToken ct)
         {
@@ -300,22 +271,6 @@ namespace Global.Dynamic
             return health;
         }
 
-        /// <summary>True once <see cref="BaseUrl" /> stops answering; false if it still answers at the deadline.</summary>
-        private async UniTask<bool> WaitPortReleasedAsync(CancellationToken ct)
-        {
-            float deadline = Time.realtimeSinceStartup + (KILL_RELEASE_TIMEOUT_MS / 1000f);
-
-            while (Time.realtimeSinceStartup < deadline && !ct.IsCancellationRequested)
-            {
-                if (!await RespondsAsync(ct))
-                    return true;
-
-                await UniTask.Delay(HEALTH_POLL_MS, DelayType.Realtime, cancellationToken: ct).SuppressCancellationThrow();
-            }
-
-            return false;
-        }
-
         /// <summary>Whether anything at all answers on <see cref="BaseUrl" /> — the only liveness signal an adopted server offers.</summary>
         private async UniTask<bool> RespondsAsync(CancellationToken ct)
         {
@@ -329,39 +284,6 @@ namespace Global.Dynamic
             catch { /* nothing listening */ }
 
             return request.responseCode > 0;
-        }
-
-        /// <summary>
-        ///     Kills a process this instance did not spawn. The pid comes from the live <c>/health</c> response,
-        ///     so the process it names was an abgen a moment ago — there is no pidfile staleness to guard against.
-        /// </summary>
-        private static void KillForeign(int pid)
-        {
-            // The pid arrives in a /health body, so it is not this process's to trust. Non-positive
-            // values are lethal on POSIX: kill(0) signals every process in this process group,
-            // kill(-1) every process this user owns. Nothing is signalled for those.
-            if (pid <= 0)
-                return;
-
-#if UNITY_EDITOR
-            try
-            {
-                using Process foreign = Process.GetProcessById(pid);
-                foreign.Kill();
-            }
-            catch (Exception)
-            {
-                // Already gone, or not ours to signal.
-            }
-#elif UNITY_STANDALONE_WIN
-            IntPtr handle = OpenProcess(PROCESS_TERMINATE, false, pid);
-            if (handle == IntPtr.Zero) return;
-
-            TerminateProcess(handle, 0);
-            CloseHandle(handle);
-#else
-            kill(pid, SIGKILL);
-#endif
         }
 
         /// <summary>
@@ -1034,11 +956,6 @@ namespace Global.Dynamic
 
         [DllImport("kernel32.dll", SetLastError = true)]
         private static extern bool TerminateProcess(IntPtr hProcess, uint uExitCode);
-
-        private const uint PROCESS_TERMINATE = 0x0001;
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        private static extern IntPtr OpenProcess(uint dwDesiredAccess, bool bInheritHandle, int dwProcessId);
 
         [DllImport("kernel32.dll", SetLastError = true)]
         private static extern bool CloseHandle(IntPtr hObject);
