@@ -124,7 +124,6 @@ namespace DCL.AuthenticationScreenFlow
             }
             catch (GuestAccountUpgradedException e)
             {
-                ReportHub.LogProductionInfo("[GuestLogin] guest login refused, the account was upgraded: routing to the login selection screen");
                 machine.Enter<LoginSelectionAuthState, string>(e.Email);
             }
             catch (Exception e)
