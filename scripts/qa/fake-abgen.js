@@ -2,13 +2,15 @@
 // Stands in for the abgen sidecar on 127.0.0.1:5147 so the Explorer's
 // resident-server reconcile can be driven from the outside.
 //
-//   node fake-abgen.js stale     [realm]   a pinned-but-older abgen  -> expect the Explorer to kill it
-//   node fake-abgen.js degraded  [realm]   the pinned abgen, broken  -> expect the Explorer to kill it
-//   node fake-abgen.js foreign   [realm]   something that is not abgen -> expect the Explorer to leave it
-//   node fake-abgen.js adopt     [realm]   the pinned abgen, healthy -> expect the Explorer to adopt it
+//   node fake-abgen.js adopt     [realm]   the pinned abgen, healthy   -> expect the Explorer to adopt it
+//   node fake-abgen.js stale     [realm]   a different build           -> expect it named in the AB panel, left running
+//   node fake-abgen.js degraded  [realm]   the pinned abgen, broken    -> expect it named in the AB panel, left running
+//   node fake-abgen.js foreign   [realm]   not an abgen at all         -> expect it named in the AB panel, left running
+//
+// Only "adopt" is used by the Explorer; every other mode must survive the run untouched.
 //
 // realm defaults to http://127.0.0.1:8000 (the sdk7 preview server).
-// It reports its own pid, so the Explorer has to kill this process for real.
+// It reports its own pid, so the panel's instruction can be checked against a real process.
 
 const http = require('http');
 
