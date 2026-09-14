@@ -29,7 +29,7 @@ In `js-sdk-toolchain`, generate serialization code and optional helper functions
 ### Step 3: C# Code Generation + Unity Implementation
 
 In `unity-explorer`:
-1. Run protocol update: `npm install @dcl/protocol@experimental && npm run build-protocol`
+1. Run protocol update: `npm install @dcl/protocol@next && npm run build-protocol`
    - Node/npm only — `build-protocol` runs the `protoc-gen-bitwise` plugin, a dependency-free Node script bundled in `@dcl/protocol` (no Python or extra packages required).
 2. Add partial class to `IDirtyMarker.cs`
 3. Register in `ComponentsContainer.cs` using `SDKComponentBuilder<T>`
