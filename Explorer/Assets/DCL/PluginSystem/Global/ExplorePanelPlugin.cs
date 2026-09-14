@@ -195,10 +195,8 @@ namespace DCL.PluginSystem.Global
         private CommunitiesBrowserController? communitiesBrowserController;
         private ExplorePanelController? explorePanelController;
         private LobbyView? lobbyView;
-        private bool openHomeOnEscape;
         private long experimentStartedAt;
         private readonly bool livingLobbyEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.LivingLobby);
-        private readonly InputAction openHomeInput = new("Open Home", InputActionType.Button, "<Keyboard>/escape");
         private PlacesController? placesController;
         private PlaceDetailPanelController? placeDetailPanelController;
         private EventsController? eventsController;
@@ -375,9 +373,6 @@ namespace DCL.PluginSystem.Global
             creditsPanelController.Dispose();
 
             dclInput.Shortcuts.MainMenu.canceled -= OnInputShortcutsMainMenuCanceledAsync;
-            openHomeInput.started -= OnEscapeStarted;
-            openHomeInput.performed -= OnEscapePerformed;
-            openHomeInput.Dispose();
             loadingStatus.CurrentStage.Unsubscribe(TrackLobbyReady);
             mvcManager.OnViewClosed -= OnViewClosed;
             dclInput.Shortcuts.Map.performed -= OnInputShortcutsMapPerformedAsync;
@@ -397,9 +392,6 @@ namespace DCL.PluginSystem.Global
             loadingStatus.CurrentStage.Subscribe(TrackLobbyReady);
             TrackLobbyReady(loadingStatus.CurrentStage.Value);
             dclInput.Shortcuts.MainMenu.canceled += OnInputShortcutsMainMenuCanceledAsync;
-            openHomeInput.started += OnEscapeStarted;
-            openHomeInput.performed += OnEscapePerformed;
-            if (livingLobbyEnabled) openHomeInput.Enable();
             dclInput.Shortcuts.Map.performed += OnInputShortcutsMapPerformedAsync;
             dclInput.Shortcuts.Settings.performed += OnInputShortcutsSettingsPerformedAsync;
             dclInput.Shortcuts.Backpack.performed += OnInputShortcutsBackpackPerformedAsync;
@@ -790,29 +782,6 @@ namespace DCL.PluginSystem.Global
             if (eventName != "lobby_experiment_exposed")
                 properties["duration_seconds"] = (System.Diagnostics.Stopwatch.GetTimestamp() - experimentStartedAt) / (double)System.Diagnostics.Stopwatch.Frequency;
             analytics.Track(eventName, properties);
-        }
-
-        private void OnEscapeStarted(InputAction.CallbackContext _)
-        {
-            // Capture this before the window stack handles the same key's close action.
-            openHomeOnEscape = loadingStatus.CurrentStage.Value == LoadingStatus.LoadingStage.Completed
-                               && explorePanelController is { State: ControllerState.ViewHidden }
-                               && !mvcManager.IsAnyModalViewShowing();
-        }
-
-        private void OnEscapePerformed(InputAction.CallbackContext _)
-        {
-            if (!openHomeOnEscape) return;
-            openHomeOnEscape = false;
-            OpenHomeAfterEscapeAsync().SuppressToResultAsync(ReportCategory.UI).Forget();
-        }
-
-        private async UniTask OpenHomeAfterEscapeAsync()
-        {
-            // Finish processing the Escape key before adding a closeable window.
-            await UniTask.NextFrame();
-            if (explorePanelController is { State: ControllerState.ViewHidden } && !mvcManager.IsAnyModalViewShowing())
-                await mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Home, entryPoint: "escape")));
         }
 
         private void OnInputShortcutsMainMenuCanceledAsync(InputAction.CallbackContext _)
