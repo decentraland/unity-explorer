@@ -35,7 +35,6 @@ namespace Global.Dynamic
     ///     (<see cref="EnsurePinnedBinaryAsync" />) and verified against its compile-time sha256. Only the
     ///     pinned version is ever executed — a compromised GitHub release cannot propagate here without a
     ///     deliberate pin+checksum bump in this file. StreamingAssets acts as an explicit developer override.
-    ///     An explicit --optimized-assets-url always takes precedence.
     /// </summary>
     public sealed class AbgenSidecar : IDisposable
     {
@@ -114,7 +113,7 @@ namespace Global.Dynamic
         ///     path-derived hashes, which never change.
         ///     </para>
         /// </summary>
-        public static AbgenSidecar? TryCreate(string baseUrl, string environmentDomain, string? cacheRoot = null, string? realmRootOverride = null, bool jitContentDigest = false)
+        public static AbgenSidecar? TryCreate(string baseUrl, string baseDomain, string? cacheRoot = null, string? realmRootOverride = null, bool jitContentDigest = false)
         {
             string? exe = TryFindPinnedExecutable() ?? (File.Exists(StreamingAssetsExecutablePath) ? StreamingAssetsExecutablePath : null);
 
@@ -123,8 +122,8 @@ namespace Global.Dynamic
 
             return new AbgenSidecar(baseUrl,
                 exe,
-                realmRootOverride?.TrimEnd('/') ?? $"https://peer.decentraland.{environmentDomain}",
-                $"https://ab-cdn.decentraland.{environmentDomain}",
+                realmRootOverride?.TrimEnd('/') ?? $"https://peer.{baseDomain}",
+                $"https://ab-cdn.{baseDomain}",
                 cacheRoot ?? Path.Combine(Application.persistentDataPath, realmRootOverride == null ? AbgenBundleDiskCache.SIDECAR_DIR : AbgenBundleDiskCache.SIDECAR_LSD_DIR),
                 jitContentDigest);
         }

@@ -149,6 +149,9 @@ Emit these as warnings in the review body. They do NOT cause a FAIL on their own
 - **Main Scene Modified** — If `Explorer/Assets/Scenes/Main.unity` or its `.meta` appears in the changed files:
   > ⚠️ **Main scene modified** (`Explorer/Assets/Scenes/Main.unity`). This file is rarely changed intentionally — verify this wasn't pushed by mistake.
 
+--- Security review integration ---
+Follow deployed Jarvis `skills/security-review/SKILL.md` and its Unity reference for security checks, evidence-based remedies, advisory scope and snapshot/run-marker publication. Put its single `DEPENDENCY_REVIEW` line before the verdict block below; preserve the four code-review lines and attribution.
+
 --- STEP 9 — Verdict ---
 Emit exactly these four lines at the end of the review body you post to GitHub, immediately before the attribution line (order matters — downstream automation parses them):
 REVIEW_RESULT: PASS ✅  (or FAIL ❌)

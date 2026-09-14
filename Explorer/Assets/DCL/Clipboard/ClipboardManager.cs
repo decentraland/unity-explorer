@@ -1,5 +1,4 @@
 using System.Text.RegularExpressions;
-using UnityEngine;
 
 namespace DCL.Clipboard
 {
@@ -26,6 +25,12 @@ namespace DCL.Clipboard
 
         public bool HasValue() =>
             systemClipboard.HasValue();
+
+        /// <summary>
+        ///     Reads the clipboard text without notifying <see cref="OnPaste" /> subscribers.
+        /// </summary>
+        public string GetText() =>
+            systemClipboard.Get();
 
         /// <summary>
         /// Sets the text on the clipboard and then calls an OnCopy event.

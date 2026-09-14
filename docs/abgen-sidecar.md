@@ -16,7 +16,7 @@ preview server's path-derived hashes, persistent disk cache under `persistentDat
 and `ABGEN_GPU_BACKEND=off` — see below), health-checked, restarted up to 3× on unexpected exit.
 
 The lifecycle is owned end to end by `MainSceneLoader` and is deliberately **serial where it
-matters**: in local scene development with `--local-ab` (and no explicit `--optimized-assets-url`),
+matters**: in local scene development with `--local-ab`,
 **`AbgenSidecarBootstrap`** is constructed and its `StartAsync` *awaited under the splash screen,
 before the URL sources are built*. It resolves the realm directly from the launch settings (LSD is
 only entered with a web-scheme realm param or the editor's Localhost preset), downloads the pinned
@@ -31,8 +31,9 @@ mode no sidecar object is ever constructed.
 
 The sidecar's base URL becomes the optimized-assets source
 (`AssetBundlesCDN` / `LodGeneratorCDN` / `AssetBundleRegistry`): the server JIT-converts the local
-scene and answers everything else — wearables, emotes, LODs, registry records — from the
-production upstream via its built-in ab-cdn read-through and registry pass-through, so no lane
+scene and answers everything else — wearables, emotes, LODs, registry records — from the base
+domain's upstream (`ab-cdn.<base domain>`, with the registry abgen derives beside it) via its
+built-in ab-cdn read-through and registry pass-through, so no lane
 loses content. The loading flow is untouched: bundles stream over loopback via
 `DownloadHandlerAssetBundle` directly into native memory (no managed copies), requested on the
 standard v25+ hash-in-path lane (`{version}/{sceneID}/{hash}`). Deps digests are skipped in LSD
