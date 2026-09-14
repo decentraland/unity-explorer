@@ -238,8 +238,8 @@ namespace DCL.Browser.DecentralandUrls
         /// <summary>
         ///     The abgen parallel pipeline: registry and CDN must flip together — the abgen registry's versions and
         ///     statuses describe abgen-cdn's content. The "--abgen-pipeline" arg forces it on without the flag.
-        ///     FeatureFlagsDependent both defers caching until flags load and keeps the abgen hosts off the gateway
-        ///     (they resolve to their own origins).
+        ///     FeatureFlagsDependent defers caching until flags load; the hosts themselves are subdomains of this
+        ///     deployment, so <see cref="GatewayUrlsSource" /> routes them like the regular ones.
         /// </summary>
         private UrlData ResolveAbgenPipelineUrl(string regularHost, string abgenHost)
         {

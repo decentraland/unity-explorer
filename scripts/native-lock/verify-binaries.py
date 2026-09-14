@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""Verify the committed UUAV native binaries against scripts/uuav/uuav-binaries.lock.json.
+"""Verify committed native plugin binaries against their hash lock.
+
+Shared by every plugin that commits prebuilt binaries (UUAV, RustSegment): the
+lock passed with --lock names the plugin's binaries, build inputs and toolchain
+pins, and its top-level "name" prefixes the files this script writes. Checks
+that need an FFmpeg block (ffmpeg-builder, provenance, drift) run only for
+targets whose lock entry has one.
 
 Six independent checks, each of which fails the run on its own:
 
@@ -78,8 +84,8 @@ are still refreshed, because they belong to no single target - a target whose
 binaries predate them stays red on its own per-target pins.
 
 `--report TARGET` compares a freshly built target against the lock and writes
-uuav-<TARGET>.sha256; used by the build workflow, where artifact hashes are
-expected to differ (see Explorer/Assets/Plugins/UUAV/README.md) but the
+<name>-<TARGET>.sha256; used by the build workflow, where artifact hashes are
+expected to differ (see the plugin README the lock's "docs" points at) but the
 configure line is not.
 
 Exit status: 0 all checks passed, 1 at least one check failed, 2 bad usage.
@@ -94,8 +100,6 @@ import os
 import re
 import subprocess
 import sys
-
-LOCK_REL = "scripts/uuav/uuav-binaries.lock.json"
 
 CONFIGURE_START = b"--prefix="
 CONFIGURE_MARKER = "--enable-shared"
@@ -384,8 +388,30 @@ def _first_line(argv, cwd) -> str | None:
     return output.splitlines()[0].strip() if output else None
 
 
-PROBEABLE_COMPONENTS = ("rustc", "cargo", "clang", "gcc", "windows_sdk",
+PROBEABLE_COMPONENTS = ("rustc", "cargo", "clang", "gcc", "msvc", "windows_sdk",
                         "xcode", "sdk")
+
+VSWHERE = os.path.join(os.environ.get("ProgramFiles(x86)", r"C:\Program Files (x86)"),
+                       "Microsoft Visual Studio", "Installer", "vswhere.exe")
+
+
+def msvc_tools_version() -> str | None:
+    """The VC++ toolset version; rustc finds link.exe without a vcvars shell, so vswhere is the only stable way to name it."""
+    if not os.path.exists(VSWHERE):
+        return None
+    install = _first_line([VSWHERE, "-latest", "-products", "*", "-requires",
+                           "Microsoft.VisualStudio.Component.VC.Tools.x86.x64",
+                           "-property", "installationPath"], None)
+    if not install:
+        return None
+    marker = os.path.join(install, "VC", "Auxiliary", "Build",
+                          "Microsoft.VCToolsVersion.default.txt")
+    try:
+        with open(marker, encoding="utf-8") as handle:
+            version = handle.read().strip()
+    except OSError:
+        return None
+    return version or None
 
 
 def probe_toolchain_component(component: str, native_dir: str) -> str | None:
@@ -399,6 +425,8 @@ def probe_toolchain_component(component: str, native_dir: str) -> str | None:
         return _first_line([component, "--version"], native_dir)
     if component == "gcc":
         return _first_line(["gcc", "--version"], native_dir)
+    if component == "msvc":
+        return msvc_tools_version()
     if component == "windows_sdk":
         version = os.environ.get("WindowsSDKVersion")
         return version.rstrip("\\") if version else None
@@ -513,8 +541,7 @@ def check_artifacts(repo: str, target: str, spec: dict, update: bool) -> list[st
             problems.append(
                 f"[{target}] {artifact['path']} is an unfetched Git LFS pointer, "
                 f"not the binary.\n"
-                f"    Run: git lfs pull --include "
-                f"'Explorer/Assets/Plugins/UUAV/**'")
+                f"    Run: git lfs pull --include '{spec['runtime_dir']}/**'")
             continue
 
         actual_sha = sha256_of(path)
@@ -535,7 +562,7 @@ def check_artifacts(repo: str, target: str, spec: dict, update: bool) -> list[st
 # What counts as a shippable binary inside a runtime dir: native libraries and
 # executables by extension, plus extensionless files (the macOS uuav-helper).
 # Everything else there (.meta, .sh) is not loaded by the player.
-SHIPPABLE_SUFFIXES = (".dll", ".dylib", ".exe")
+SHIPPABLE_SUFFIXES = (".dll", ".dylib", ".exe", ".so", ".bundle")
 
 
 def check_runtime_dir_completeness(repo: str, target: str, spec: dict) -> list[str]:
@@ -554,19 +581,24 @@ def check_runtime_dir_completeness(repo: str, target: str, spec: dict) -> list[s
     if not os.path.isdir(runtime_dir):
         return [f"[{target}] missing runtime dir: {spec['runtime_dir']}"]
 
-    listed = {os.path.basename(artifact["path"]) for artifact in spec["artifacts"]}
+    listed = {os.path.normpath(os.path.join(repo, artifact["path"]))
+              for artifact in spec["artifacts"]}
     problems = []
-    for name in sorted(os.listdir(runtime_dir)):
-        if not os.path.isfile(os.path.join(runtime_dir, name)):
-            continue
-        extension = os.path.splitext(name)[1].lower()
-        if extension not in SHIPPABLE_SUFFIXES and extension != "":
-            continue
-        if name not in listed:
+    for base, dirs, files in os.walk(runtime_dir):
+        # A .bundle is a directory-shaped binary; report it whole and do not descend.
+        bundles = [d for d in dirs if d.lower().endswith(".bundle")]
+        dirs[:] = [d for d in dirs if d not in bundles]
+        for name in sorted(files + bundles):
+            extension = os.path.splitext(name)[1].lower()
+            if extension not in SHIPPABLE_SUFFIXES and extension != "":
+                continue
+            full = os.path.normpath(os.path.join(base, name))
+            if full in listed:
+                continue
+            rel = os.path.relpath(full, repo).replace(os.sep, "/")
             problems.append(
-                f"[{target}] {spec['runtime_dir']}/{name} is in the shipped "
-                f"plugin folder but has no entry in the lock - its provenance "
-                f"is unverified.\n"
+                f"[{target}] {rel} is in the shipped plugin folder but has no "
+                f"entry in the lock - its provenance is unverified.\n"
                 f"    Add it to this target's artifacts and relock with "
                 f"--update, or remove it from the folder.")
     return problems
@@ -772,7 +804,7 @@ def configure_from_script(path: str) -> list[str]:
 
 def check_ffmpeg_builder(repo: str, target: str, spec: dict, update: bool) -> list[str]:
     """A target built from source must record the build script that produced it."""
-    ffmpeg = spec["ffmpeg"]
+    ffmpeg = spec.get("ffmpeg", {})
     if "builder_sha256" not in ffmpeg:
         return []
 
@@ -817,8 +849,10 @@ def check_ffmpeg_builder(repo: str, target: str, spec: dict, update: bool) -> li
 def check_provenance(repo: str, target: str, spec: dict, update: bool) -> list[str]:
     """Every shipped FFmpeg library must report the configure line the lock records."""
     problems = []
-    recorded = spec["ffmpeg"].get("configure_observed")
     ffmpeg_artifacts = [a for a in spec["artifacts"] if a["produced_by"] == "ffmpeg"]
+    if not ffmpeg_artifacts:
+        return problems
+    recorded = spec.get("ffmpeg", {}).get("configure_observed")
 
     seen = {}
     for artifact in ffmpeg_artifacts:
@@ -856,7 +890,9 @@ def check_provenance(repo: str, target: str, spec: dict, update: bool) -> list[s
 
 def check_drift(target: str, spec: dict) -> list[str]:
     """The build recipe and the shipped build must describe the same FFmpeg."""
-    ffmpeg = spec["ffmpeg"]
+    if not any(a["produced_by"] == "ffmpeg" for a in spec["artifacts"]):
+        return []
+    ffmpeg = spec.get("ffmpeg", {})
     expected = ffmpeg.get("configure_expected")
     observed = ffmpeg.get("configure_observed")
     if expected == observed:
@@ -900,11 +936,11 @@ def report_fresh_build(repo: str, lock: dict, target: str) -> int:
         print(f"  {state:8} {name}  {actual}")
         lines.append(f"{actual}  {name}")
 
-    sums_path = os.path.join(repo, f"uuav-{target}.sha256")
+    sums_path = os.path.join(repo, f"{lock['name']}-{target}.sha256")
     with open(sums_path, "w", encoding="utf-8") as handle:
         handle.write("\n".join(lines) + "\n")
 
-    expected = spec["ffmpeg"].get("configure_expected")
+    expected = spec.get("ffmpeg", {}).get("configure_expected")
     built = None
     for artifact in spec["artifacts"]:
         if artifact["produced_by"] != "ffmpeg":
@@ -919,8 +955,7 @@ def report_fresh_build(repo: str, lock: dict, target: str) -> int:
         with open(summary, "a", encoding="utf-8") as handle:
             handle.write(f"### {target}\n\n")
             handle.write(f"{len(lines)} artifacts, {mismatches} differing from the "
-                         f"committed hashes (expected - see "
-                         f"Explorer/Assets/Plugins/UUAV/README.md).\n\n")
+                         f"committed hashes (expected - see {lock['docs']}).\n\n")
 
     if missing:
         fail(f"[{target}] {missing} artifact(s) missing after the build")
@@ -951,27 +986,37 @@ def main() -> int:
                              "rust.toolchain pin from it")
     parser.add_argument("--report", metavar="TARGET", default=None,
                         help="compare a freshly built target against the lock and "
-                             "write uuav-<TARGET>.sha256 (used by the build workflow)")
+                             "write <name>-<TARGET>.sha256 (used by the build workflow)")
+    parser.add_argument("--lock", required=True, metavar="PATH",
+                        help="the plugin's lock, relative to the repository root "
+                             "(e.g. scripts/uuav/uuav-binaries.lock.json)")
     parser.add_argument("--repo", default=None,
                         help="repository root (default: two levels above this script)")
     args = parser.parse_args()
 
     repo = args.repo or os.path.dirname(os.path.dirname(os.path.dirname(
         os.path.abspath(__file__))))
-    lock_path = os.path.join(repo, LOCK_REL)
+    lock_rel = args.lock
+    lock_path = os.path.join(repo, lock_rel)
     if not os.path.exists(lock_path):
         print(f"FAIL: no lock file at {lock_path}", file=sys.stderr)
         return 2
 
     with open(lock_path, encoding="utf-8") as handle:
         lock = json.load(handle)
+    for key in ("name", "docs"):
+        if not lock.get(key):
+            print(f"FAIL: {lock_rel} has no top-level \"{key}\"; the shared verifier "
+                  f"needs it to name its output files and the plugin README",
+                  file=sys.stderr)
+            return 2
 
     if args.report:
         if args.report not in lock["targets"]:
             print(f"FAIL: unknown target '{args.report}'; the lock defines "
                   f"{', '.join(lock['targets'])}", file=sys.stderr)
             return 2
-        print(f"Fresh build vs {LOCK_REL} - {args.report}")
+        print(f"Fresh build vs {lock_rel} - {args.report}")
         return report_fresh_build(repo, lock, args.report)
 
     if args.only and args.only not in lock["targets"]:
@@ -1001,13 +1046,14 @@ def main() -> int:
                 print(f"FAIL: {refusal}", file=sys.stderr)
             return 2
 
-    print(f"UUAV native binary verification ({LOCK_REL})")
+    print(f"{lock['name']} native binary verification ({lock_rel})")
 
     problems = check_build_inputs(repo, lock, args.update)
     for target, spec in lock["targets"].items():
-        note(f"{target}: {len(spec['artifacts'])} artifacts, FFmpeg "
-             f"{spec['ffmpeg'].get('tag') or spec['ffmpeg'].get('upstream_describe')}, "
-             f"core from native/src {spec['rust']['source_digest'][:12]}")
+        ffmpeg = spec.get("ffmpeg", {})
+        ffmpeg_note = ffmpeg.get("tag") or ffmpeg.get("upstream_describe") or "none"
+        note(f"{target}: {len(spec['artifacts'])} artifacts, FFmpeg {ffmpeg_note}, "
+             f"rust source {spec['rust']['source_digest'][:12]}")
         update_target = args.update and args.only in (None, target)
         if args.update and not update_target:
             note(f"{target}: not relocked (--only {args.only})")
@@ -1028,7 +1074,7 @@ def main() -> int:
         with open(lock_path, "w", encoding="utf-8", newline="\n") as handle:
             json.dump(lock, handle, indent=2)
             handle.write("\n")
-        print(f"Updated {LOCK_REL} from the working tree.")
+        print(f"Updated {lock_rel} from the working tree.")
         still_pending = [name for name, spec in lock["build_inputs"].items()
                          if "pending" in spec]
         if still_pending:
@@ -1049,9 +1095,9 @@ def main() -> int:
             fail(problem)
         print()
         print(f"{len(problems)} problem(s). The committed native binaries do not match "
-              f"{LOCK_REL}.")
+              f"{lock_rel}.")
         print("If the change is intended, rebuild the affected target and run:")
-        print(f"    python3 scripts/uuav/verify-binaries.py --update")
+        print(f"    python3 scripts/native-lock/verify-binaries.py --lock {lock_rel} --update")
         return 1
 
     print("All checks passed.")
