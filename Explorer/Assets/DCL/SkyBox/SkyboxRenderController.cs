@@ -163,18 +163,10 @@ public class SkyboxRenderController : MonoBehaviour
     public void ApplyPreset(SkyboxLookPreset newPreset)
     {
         preset = newPreset;
+
+        // Drop the cached flare so the new preset's entries are picked up on the next evaluation.
         activeLensFlareData = null;
-
-        if (!skyboxMaterial)
-            return;
-
-        ApplyPresetStatics();
-
-        if (targetTimeOfDay > float.MinValue)
-            UpdatePalette(targetTimeOfDay);
-
-        if (directionalLightTimeOfDay > float.MinValue)
-            UpdateDirectionalLight(directionalLightTimeOfDay);
+        RefreshLook();
     }
 
     /// <summary>,
@@ -270,6 +262,24 @@ public class SkyboxRenderController : MonoBehaviour
 
         if (preset.Fog)
             RenderSettings.fog = true;
+    }
+
+    /// <summary>
+    ///     Re-applies the preset's material values and re-evaluates the current time, so an edited preset shows up
+    ///     without waiting for the next time change.
+    /// </summary>
+    private void RefreshLook()
+    {
+        if (!skyboxMaterial)
+            return;
+
+        ApplyPresetStatics();
+
+        if (targetTimeOfDay > float.MinValue)
+            UpdatePalette(targetTimeOfDay);
+
+        if (directionalLightTimeOfDay > float.MinValue)
+            UpdateDirectionalLight(directionalLightTimeOfDay);
     }
 
     private void ApplyCloudsV2Statics()
@@ -507,6 +517,14 @@ public class SkyboxRenderController : MonoBehaviour
         //that doesn't have the regular plugin init flow
         if (editMode)
             Initialize(RenderSettings.skybox, null!, null!, 0.5f);
+    }
+
+    // The authoring scene has no system driving UpdateSkybox, so a preset edited during Play would only show after
+    // the time changed. Re-applying every frame keeps gradient and layer tweaks live while authoring.
+    private void Update()
+    {
+        if (editMode && preset)
+            RefreshLook();
     }
 
     // Lets the preset reference be swapped from the inspector while the authoring scene is playing.
