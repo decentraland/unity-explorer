@@ -246,18 +246,17 @@ namespace Global.Dynamic
         }
 
         /// <summary>
-        ///     Answers both questions the reconcile has with one request: <c>responded</c> is whether
-        ///     anything holds <see cref="BaseUrl" /> at all, <c>health</c> is non-null only when what
-        ///     answered identifies itself as an abgen. Asking them as two requests left an interval in
-        ///     which a resident could exit, which read back as a port that was occupied and holding
-        ///     nothing.
+        ///     Answers two questions with one request: <c>responded</c> is whether anything holds
+        ///     <see cref="BaseUrl" /> at all, <c>health</c> is non-null only when what answered
+        ///     identifies itself as an abgen. Asking them as two requests left an interval in which a
+        ///     resident could exit, which read back as a port that was occupied and holding nothing.
         ///     <para>
         ///     A non-2xx answer is still parsed: abgen serves <c>/health</c> with 503 whenever it calls
         ///     itself degraded, and that body carries the same identifying fields as a healthy one.
-        ///     Accepting only 2xx would file the degraded case as a foreign server, when what it is
-        ///     matters to whoever has to act on it. A body carrying neither a version nor a pid is not
-        ///     identifying itself as an abgen. Cancellation reports nothing responding, which the caller
-        ///     separates from a free port by reading the token.
+        ///     Accepting only 2xx would file the degraded case as a foreign server. A body carrying
+        ///     neither a version nor a pid is not identifying itself as an abgen. A cancelled request
+        ///     returns <c>(false, null)</c>, the same shape as a free port; this method does not tell
+        ///     the two apart.
         ///     </para>
         /// </summary>
         private async UniTask<(bool responded, HealthDto? health)> ProbeResidentAsync(CancellationToken ct)
