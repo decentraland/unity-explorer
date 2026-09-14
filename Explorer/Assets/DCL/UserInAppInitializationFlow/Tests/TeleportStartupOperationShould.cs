@@ -16,6 +16,7 @@ using NSubstitute;
 using NUnit.Framework;
 using System.Collections.Generic;
 using System.Threading;
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace DCL.UserInAppInitializationFlow.Tests
@@ -139,6 +140,44 @@ namespace DCL.UserInAppInitializationFlow.Tests
 
             teleportController.Received(1)
                 .TeleportToSceneSpawnPointAsync(new Vector2Int(10, 20), Arg.Any<AsyncLoadProcessReport>(), Arg.Any<CancellationToken>());
+        }
+
+        [Test]
+        public void UsesStartParcelWhenEditorPositionOverrideActiveInLocalSceneDevelopment()
+        {
+            worldManifest = WorldManifest.Create(new[] { new int2(0, 0) });
+            realmData.WorldManifest.Returns(worldManifest);
+            realmData.IsLocalSceneDevelopment.Returns(true);
+            appArgs.HasFlag(AppArgsFlags.POSITION).Returns(false);
+
+            CreateOperation(new StartParcel(new Vector2Int(10, 20)), editorPositionOverrideActive: true)
+                .ExecuteAsync(MakeParams(), cts.Token).GetAwaiter().GetResult();
+
+            teleportController.Received(1)
+                .TeleportToSceneSpawnPointAsync(new Vector2Int(10, 20), Arg.Any<AsyncLoadProcessReport>(), Arg.Any<CancellationToken>());
+
+            realmController.DidNotReceive().WaitForStaticScenesEntityDefinitionsAsync(Arg.Any<CancellationToken>());
+        }
+
+        [Test]
+        public void UsesLocalSceneBaseParcelWhenNoPositionArgAndNoEditorOverride()
+        {
+            realmData.IsLocalSceneDevelopment.Returns(true);
+            appArgs.HasFlag(AppArgsFlags.POSITION).Returns(false);
+
+            var definition = new SceneEntityDefinition
+            {
+                metadata = new SceneMetadata { scene = new SceneMetadataScene { DecodedBase = new Vector2Int(3, 4) } },
+            };
+
+            realmController.WaitForStaticScenesEntityDefinitionsAsync(Arg.Any<CancellationToken>())
+                .Returns(UniTask.FromResult<SceneDefinitions?>(new SceneDefinitions(new List<SceneEntityDefinition> { definition })));
+
+            CreateOperation(new StartParcel(new Vector2Int(10, 20)))
+                .ExecuteAsync(MakeParams(), cts.Token).GetAwaiter().GetResult();
+
+            teleportController.Received(1)
+                .TeleportToSceneSpawnPointAsync(new Vector2Int(3, 4), Arg.Any<AsyncLoadProcessReport>(), Arg.Any<CancellationToken>());
         }
 
         [Test]
