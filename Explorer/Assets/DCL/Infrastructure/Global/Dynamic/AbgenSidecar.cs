@@ -856,7 +856,8 @@ namespace Global.Dynamic
         /// <summary>
         ///     Liveness is polled rather than event-driven — an Exited event needs the managed Process
         ///     object, which player builds don't have. A dead child is relaunched on the same port
-        ///     (consumers already hold <see cref="BaseUrl" />) up to <see cref="MAX_RESTARTS" /> times.
+        ///     (consumers already hold <see cref="BaseUrl" />) up to <see cref="MAX_RESTARTS" /> times; a
+        ///     relaunch only counts as recovered once the child answers.
         /// </summary>
         private async UniTaskVoid SuperviseAsync(CancellationToken ct)
         {
@@ -893,6 +894,12 @@ namespace Global.Dynamic
                         ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES, "abgen sidecar restart failed; asset bundles fall back to direct CDN errors");
                         return;
                     }
+
+                    if (await WaitHealthyAsync(ct)) continue;
+
+                    // A live child that never answered would pass for recovered on every later poll. Killing
+                    // it makes the next poll see a dead child and spend another bounded restart on it.
+                    KillChild();
                 }
             }
             catch (OperationCanceledException) { }
