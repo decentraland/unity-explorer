@@ -8,6 +8,7 @@ using ECS.Unity.ExplorerUiEvents;
 using MVC;
 using NSubstitute;
 using NUnit.Framework;
+using SceneRunner.Scene;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -25,7 +26,10 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
     [TestFixture]
     public class ExplorerUiActionsShould
     {
+        private const uint TICK = 21;
+
         private IMVCManager mvcManager = null!;
+        private ISceneStateProvider sceneStateProvider = null!;
         private Queue<ExplorerUiEvent> events = null!;
         private ExplorerUiActions explorerUiActions = null!;
 
@@ -33,11 +37,13 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
         public void SetUp()
         {
             mvcManager = Substitute.For<IMVCManager>();
+            sceneStateProvider = Substitute.For<ISceneStateProvider>();
+            sceneStateProvider.TickNumber.Returns(TICK);
             events = new Queue<ExplorerUiEvent>();
 
             // Built before any panel state is arranged, the way a scene load builds it long after the user
             // could have opened a panel.
-            explorerUiActions = new ExplorerUiActions(mvcManager, events);
+            explorerUiActions = new ExplorerUiActions(mvcManager, sceneStateProvider, events);
         }
 
         [Test]
@@ -78,7 +84,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             // One accepted request means one panel and one life cycle: a refused request reports nothing.
             mvcManager.Received(1).ShowAsync(Arg.Any<ShowCommand<ExplorePanelView, ExplorePanelParameter>>(), Arg.Any<CancellationToken>());
 
-            Assert.That(events, Is.EqualTo(new[] { new ExplorerUiEvent(ExplorerUi.EuEvents, ExplorerUiEventKind.Opened) }));
+            Assert.That(events, Is.EqualTo(new[] { new ExplorerUiEvent(ExplorerUi.EuEvents, ExplorerUiEventKind.Opened, 0, TICK) }));
         }
 
         [Test]
@@ -108,8 +114,8 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             // the two enums are unrelated and only this direction of the mapping exists.
             Assert.That(events, Is.EqualTo(new[]
             {
-                new ExplorerUiEvent(ExplorerUi.EuBackpack, ExplorerUiEventKind.Opened),
-                new ExplorerUiEvent(ExplorerUi.EuBackpack, ExplorerUiEventKind.Closed),
+                new ExplorerUiEvent(ExplorerUi.EuBackpack, ExplorerUiEventKind.Opened, 0, TICK),
+                new ExplorerUiEvent(ExplorerUi.EuBackpack, ExplorerUiEventKind.Closed, 0, TICK),
             }));
         }
 
@@ -127,8 +133,48 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             // reported open with no reported close is a scene waiting forever.
             Assert.That(events, Is.EqualTo(new[]
             {
-                new ExplorerUiEvent(ExplorerUi.EuMap, ExplorerUiEventKind.Opened),
-                new ExplorerUiEvent(ExplorerUi.EuMap, ExplorerUiEventKind.Closed),
+                new ExplorerUiEvent(ExplorerUi.EuMap, ExplorerUiEventKind.Opened, 0, TICK),
+                new ExplorerUiEvent(ExplorerUi.EuMap, ExplorerUiEventKind.Closed, 0, TICK),
+            }));
+        }
+
+        [Test]
+        public async Task EchoTheRequestIdOnBothEventsOfTheCallThatCarriedIt()
+        {
+            mvcManager.IsShowing<ExplorePanelView, ExplorePanelParameter>().Returns(false);
+
+            await OpenAsync(ExplorerUi.EuPlaces, ExploreSections.Places, 88);
+
+            // Without the echo on both ends a scene waiting on the close cannot tell which of its calls
+            // the panel it just lost belonged to.
+            Assert.That(events, Is.EqualTo(new[]
+            {
+                new ExplorerUiEvent(ExplorerUi.EuPlaces, ExplorerUiEventKind.Opened, 88, TICK),
+                new ExplorerUiEvent(ExplorerUi.EuPlaces, ExplorerUiEventKind.Closed, 88, TICK),
+            }));
+        }
+
+        [Test]
+        public async Task StampEachEventWithTheTickItHappenedOn()
+        {
+            mvcManager.IsShowing<ExplorePanelView, ExplorePanelParameter>().Returns(false);
+
+            var show = new UniTaskCompletionSource();
+
+            mvcManager.ShowAsync(Arg.Any<ShowCommand<ExplorePanelView, ExplorePanelParameter>>(), Arg.Any<CancellationToken>())
+                      .Returns(show.Task);
+
+            sceneStateProvider.TickNumber.Returns((uint)5);
+            await OpenAsync(ExplorerUi.EuMap, ExploreSections.Navmap, 3);
+
+            // The panel stays up across several ticks, so the close cannot share the open's stamp.
+            sceneStateProvider.TickNumber.Returns((uint)9);
+            show.TrySetResult();
+
+            Assert.That(events, Is.EqualTo(new[]
+            {
+                new ExplorerUiEvent(ExplorerUi.EuMap, ExplorerUiEventKind.Opened, 3, 5),
+                new ExplorerUiEvent(ExplorerUi.EuMap, ExplorerUiEventKind.Closed, 3, 9),
             }));
         }
 
@@ -146,7 +192,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             Assert.That(await OpenAsync(ExplorerUi.EuMap, ExploreSections.Navmap), Is.EqualTo(OpenExplorerUiResult.Opened));
         }
 
-        private async Task<OpenExplorerUiResult> OpenAsync(ExplorerUi ui, ExploreSections section) =>
-            await explorerUiActions.OpenSectionAsync(ui, section, CancellationToken.None);
+        private async Task<OpenExplorerUiResult> OpenAsync(ExplorerUi ui, ExploreSections section, uint requestId = 0) =>
+            await explorerUiActions.OpenSectionAsync(ui, section, requestId, CancellationToken.None);
     }
 }

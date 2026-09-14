@@ -66,7 +66,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             });
             systemClipboard = Substitute.For<ISystemClipboard>();
             explorerUiActions = Substitute.For<IExplorerUiActions>();
-            explorerUiActions.OpenSectionAsync(Arg.Any<ExplorerUi>(), Arg.Any<ExploreSections>(), Arg.Any<CancellationToken>()).Returns(UniTask.FromResult(OpenExplorerUiResult.Opened));
+            explorerUiActions.OpenSectionAsync(Arg.Any<ExplorerUi>(), Arg.Any<ExploreSections>(), Arg.Any<uint>(), Arg.Any<CancellationToken>()).Returns(UniTask.FromResult(OpenExplorerUiResult.Opened));
             sceneWorld = World.Create();
             Entity scenePlayerEntity = sceneWorld.Create();
             restrictedActionsAPIImplementation = new RestrictedActionsAPIImplementation(
@@ -174,11 +174,21 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
         public async Task OpenExplorerUi_MapOpensNavmap()
         {
             // Act
-            int result = await restrictedActionsAPIImplementation.TryOpenExplorerUiAsync((int)ExplorerUi.EuMap, CancellationToken.None);
+            int result = await restrictedActionsAPIImplementation.TryOpenExplorerUiAsync((int)ExplorerUi.EuMap, 0, CancellationToken.None);
 
             // Assert
             Assert.AreEqual((int)OpenExplorerUiResult.Opened, result);
-            explorerUiActions.Received(1).OpenSectionAsync(ExplorerUi.EuMap, ExploreSections.Navmap, Arg.Any<CancellationToken>());
+            explorerUiActions.Received(1).OpenSectionAsync(ExplorerUi.EuMap, ExploreSections.Navmap, Arg.Any<uint>(), Arg.Any<CancellationToken>());
+        }
+
+        [Test]
+        public async Task OpenExplorerUi_ForwardsTheRequestId()
+        {
+            // Act
+            await restrictedActionsAPIImplementation.TryOpenExplorerUiAsync((int)ExplorerUi.EuMap, 77, CancellationToken.None);
+
+            // Assert: the id is opaque here — nothing on this layer reads it, it only has to arrive intact.
+            explorerUiActions.Received(1).OpenSectionAsync(ExplorerUi.EuMap, ExploreSections.Navmap, 77, Arg.Any<CancellationToken>());
         }
 
         [Test]
@@ -188,11 +198,11 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             sceneStateProvider.IsCurrent.Returns(false);
 
             // Act
-            int result = AnsweredWithoutAFrame(restrictedActionsAPIImplementation.TryOpenExplorerUiAsync((int)ExplorerUi.EuMap, CancellationToken.None));
+            int result = AnsweredWithoutAFrame(restrictedActionsAPIImplementation.TryOpenExplorerUiAsync((int)ExplorerUi.EuMap, 0, CancellationToken.None));
 
             // Assert
             Assert.AreEqual((int)OpenExplorerUiResult.RejectedNotCurrentScene, result);
-            explorerUiActions.DidNotReceive().OpenSectionAsync(Arg.Any<ExplorerUi>(), Arg.Any<ExploreSections>(), Arg.Any<CancellationToken>());
+            explorerUiActions.DidNotReceive().OpenSectionAsync(Arg.Any<ExplorerUi>(), Arg.Any<ExploreSections>(), Arg.Any<uint>(), Arg.Any<CancellationToken>());
         }
 
         [Test]
@@ -205,21 +215,21 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             sceneStateProvider.LastUserInputTick.Returns((uint)lastUserInputTick);
 
             // Act
-            int result = AnsweredWithoutAFrame(restrictedActionsAPIImplementation.TryOpenExplorerUiAsync((int)ExplorerUi.EuMap, CancellationToken.None));
+            int result = AnsweredWithoutAFrame(restrictedActionsAPIImplementation.TryOpenExplorerUiAsync((int)ExplorerUi.EuMap, 0, CancellationToken.None));
 
             // Assert
             Assert.AreEqual((int)OpenExplorerUiResult.RejectedNoUserGesture, result);
-            explorerUiActions.DidNotReceive().OpenSectionAsync(Arg.Any<ExplorerUi>(), Arg.Any<ExploreSections>(), Arg.Any<CancellationToken>());
+            explorerUiActions.DidNotReceive().OpenSectionAsync(Arg.Any<ExplorerUi>(), Arg.Any<ExploreSections>(), Arg.Any<uint>(), Arg.Any<CancellationToken>());
         }
 
         [Test]
         public async Task OpenExplorerUi_AlreadyOpen_ReturnsWasAlreadyOpen()
         {
             // Arrange
-            explorerUiActions.OpenSectionAsync(Arg.Any<ExplorerUi>(), Arg.Any<ExploreSections>(), Arg.Any<CancellationToken>()).Returns(UniTask.FromResult(OpenExplorerUiResult.WasAlreadyOpen));
+            explorerUiActions.OpenSectionAsync(Arg.Any<ExplorerUi>(), Arg.Any<ExploreSections>(), Arg.Any<uint>(), Arg.Any<CancellationToken>()).Returns(UniTask.FromResult(OpenExplorerUiResult.WasAlreadyOpen));
 
             // Act
-            int result = await restrictedActionsAPIImplementation.TryOpenExplorerUiAsync((int)ExplorerUi.EuMap, CancellationToken.None);
+            int result = await restrictedActionsAPIImplementation.TryOpenExplorerUiAsync((int)ExplorerUi.EuMap, 0, CancellationToken.None);
 
             // Assert
             Assert.AreEqual((int)OpenExplorerUiResult.WasAlreadyOpen, result);
@@ -229,11 +239,11 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
         public void OpenExplorerUi_UnknownUiValue_Rejects()
         {
             // Act: 99 is not a member of the ExplorerUi enum, so the section mapping must fail.
-            int result = AnsweredWithoutAFrame(restrictedActionsAPIImplementation.TryOpenExplorerUiAsync(99, CancellationToken.None));
+            int result = AnsweredWithoutAFrame(restrictedActionsAPIImplementation.TryOpenExplorerUiAsync(99, 0, CancellationToken.None));
 
             // Assert
             Assert.AreEqual((int)OpenExplorerUiResult.RejectedFeatureDisabled, result);
-            explorerUiActions.DidNotReceive().OpenSectionAsync(Arg.Any<ExplorerUi>(), Arg.Any<ExploreSections>(), Arg.Any<CancellationToken>());
+            explorerUiActions.DidNotReceive().OpenSectionAsync(Arg.Any<ExplorerUi>(), Arg.Any<ExploreSections>(), Arg.Any<uint>(), Arg.Any<CancellationToken>());
         }
 
         [Test]
@@ -246,11 +256,11 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             EcsTestsUtils.SetUpFeaturesRegistryWithAppArgs(new[] { "--camera-reel", "false" });
 
             // Act
-            int result = AnsweredWithoutAFrame(restrictedActionsAPIImplementation.TryOpenExplorerUiAsync((int)ExplorerUi.EuCameraReel, CancellationToken.None));
+            int result = AnsweredWithoutAFrame(restrictedActionsAPIImplementation.TryOpenExplorerUiAsync((int)ExplorerUi.EuCameraReel, 0, CancellationToken.None));
 
             // Assert
             Assert.AreEqual((int)OpenExplorerUiResult.RejectedFeatureDisabled, result);
-            explorerUiActions.DidNotReceive().OpenSectionAsync(Arg.Any<ExplorerUi>(), Arg.Any<ExploreSections>(), Arg.Any<CancellationToken>());
+            explorerUiActions.DidNotReceive().OpenSectionAsync(Arg.Any<ExplorerUi>(), Arg.Any<ExploreSections>(), Arg.Any<uint>(), Arg.Any<CancellationToken>());
         }
 
         [Test]
@@ -259,10 +269,10 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             // Arrange
             // Communities availability is identity-dependent, so its gate lives inside the
             // IExplorerUiActions implementation; the API must return that rejection to the scene.
-            explorerUiActions.OpenSectionAsync(ExplorerUi.EuCommunities, ExploreSections.Communities, Arg.Any<CancellationToken>()).Returns(UniTask.FromResult(OpenExplorerUiResult.RejectedFeatureDisabled));
+            explorerUiActions.OpenSectionAsync(ExplorerUi.EuCommunities, ExploreSections.Communities, Arg.Any<uint>(), Arg.Any<CancellationToken>()).Returns(UniTask.FromResult(OpenExplorerUiResult.RejectedFeatureDisabled));
 
             // Act
-            int result = await restrictedActionsAPIImplementation.TryOpenExplorerUiAsync((int)ExplorerUi.EuCommunities, CancellationToken.None);
+            int result = await restrictedActionsAPIImplementation.TryOpenExplorerUiAsync((int)ExplorerUi.EuCommunities, 0, CancellationToken.None);
 
             // Assert
             Assert.AreEqual((int)OpenExplorerUiResult.RejectedFeatureDisabled, result);

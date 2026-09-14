@@ -8,6 +8,7 @@ using DCL.UI;
 using Decentraland.Kernel.Apis;
 using ECS.Unity.ExplorerUiEvents;
 using MVC;
+using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -22,6 +23,7 @@ namespace DCL.Infrastructure.CrdtEcsBridge.JsModulesImplementation.RestrictedAct
     public class ExplorerUiActions : IExplorerUiActions
     {
         private readonly IMVCManager mvcManager;
+        private readonly ISceneStateProvider sceneStateProvider;
         private readonly Queue<ExplorerUiEvent> events;
 
         /// <summary>
@@ -31,13 +33,14 @@ namespace DCL.Infrastructure.CrdtEcsBridge.JsModulesImplementation.RestrictedAct
         /// </summary>
         private bool showPending;
 
-        public ExplorerUiActions(IMVCManager mvcManager, Queue<ExplorerUiEvent> events)
+        public ExplorerUiActions(IMVCManager mvcManager, ISceneStateProvider sceneStateProvider, Queue<ExplorerUiEvent> events)
         {
             this.mvcManager = mvcManager;
+            this.sceneStateProvider = sceneStateProvider;
             this.events = events;
         }
 
-        public async UniTask<OpenExplorerUiResult> OpenSectionAsync(ExplorerUi ui, ExploreSections section, CancellationToken ct)
+        public async UniTask<OpenExplorerUiResult> OpenSectionAsync(ExplorerUi ui, ExploreSections section, uint requestId, CancellationToken ct)
         {
             // Communities availability depends on the user identity (feature flag + wallets allowlist),
             // so it cannot be gated through FeaturesRegistry like the other sections.
@@ -57,9 +60,9 @@ namespace DCL.Infrastructure.CrdtEcsBridge.JsModulesImplementation.RestrictedAct
             showPending = true;
 
             // Queued before the answer leaves, so an Opened verdict always has its life cycle behind it.
-            events.Enqueue(new ExplorerUiEvent(ui, ExplorerUiEventKind.Opened));
+            Enqueue(ui, ExplorerUiEventKind.Opened, requestId);
 
-            ShowUntilClosedAsync(ui, section).Forget();
+            ShowUntilClosedAsync(ui, section, requestId).Forget();
             return OpenExplorerUiResult.Opened;
         }
 
@@ -67,7 +70,7 @@ namespace DCL.Infrastructure.CrdtEcsBridge.JsModulesImplementation.RestrictedAct
         ///     <c>ShowAsync</c> resolves when the panel closes, so it is left running rather than awaited by
         ///     the request: the answer owes the scene nothing beyond the open.
         /// </summary>
-        private async UniTask ShowUntilClosedAsync(ExplorerUi ui, ExploreSections section)
+        private async UniTask ShowUntilClosedAsync(ExplorerUi ui, ExploreSections section, uint requestId)
         {
             try
             {
@@ -75,11 +78,16 @@ namespace DCL.Infrastructure.CrdtEcsBridge.JsModulesImplementation.RestrictedAct
                 finally
                 {
                     showPending = false;
-                    events.Enqueue(new ExplorerUiEvent(ui, ExplorerUiEventKind.Closed));
+                    Enqueue(ui, ExplorerUiEventKind.Closed, requestId);
                 }
             }
             catch (OperationCanceledException) { }
             catch (Exception e) { ReportHub.LogException(e, ReportCategory.RESTRICTED_ACTIONS); }
         }
+
+        // The tick is read here rather than where the queue is drained: a scene is told when the event
+        // happened, and draining can be a tick or more later.
+        private void Enqueue(ExplorerUi ui, ExplorerUiEventKind kind, uint requestId) =>
+            events.Enqueue(new ExplorerUiEvent(ui, kind, requestId, sceneStateProvider.TickNumber));
     }
 }

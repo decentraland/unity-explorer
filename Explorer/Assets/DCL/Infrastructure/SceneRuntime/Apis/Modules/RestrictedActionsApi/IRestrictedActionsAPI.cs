@@ -22,7 +22,7 @@ namespace DCL.SceneRuntime.Apis.RestrictedActionsApi
 
         bool TryOpenNftDialog(string urn);
 
-        UniTask<int> TryOpenExplorerUiAsync(int ui, CancellationToken ct);
+        UniTask<int> TryOpenExplorerUiAsync(int ui, uint requestId, CancellationToken ct);
 
         void TryCopyToClipboard(string text);
 
