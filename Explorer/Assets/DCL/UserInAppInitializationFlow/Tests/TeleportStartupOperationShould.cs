@@ -147,6 +147,7 @@ namespace DCL.UserInAppInitializationFlow.Tests
         {
             worldManifest = WorldManifest.Create(new[] { new int2(0, 0) });
             realmData.WorldManifest.Returns(worldManifest);
+            realmData.RealmType.Returns(new ReactiveProperty<RealmKind>(RealmKind.LocalScene));
             realmData.IsLocalSceneDevelopment.Returns(true);
             appArgs.HasFlag(AppArgsFlags.POSITION).Returns(false);
 
@@ -162,6 +163,7 @@ namespace DCL.UserInAppInitializationFlow.Tests
         [Test]
         public void UsesLocalSceneBaseParcelWhenNoPositionArgAndNoEditorOverride()
         {
+            realmData.RealmType.Returns(new ReactiveProperty<RealmKind>(RealmKind.LocalScene));
             realmData.IsLocalSceneDevelopment.Returns(true);
             appArgs.HasFlag(AppArgsFlags.POSITION).Returns(false);
 
