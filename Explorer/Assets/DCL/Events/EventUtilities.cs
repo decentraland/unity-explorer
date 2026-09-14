@@ -118,7 +118,7 @@ namespace DCL.Communities.EventInfo
             );
 
             DateTime nextFinishAtDate = DateTime.Parse(
-                eventData.NexFinishAt,
+                eventData.NextFinishAt,
                 CultureInfo.InvariantCulture,
                 DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal
             );

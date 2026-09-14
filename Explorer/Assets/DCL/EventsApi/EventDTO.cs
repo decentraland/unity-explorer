@@ -11,7 +11,7 @@ namespace DCL.EventsApi
         string Description {get; set; }
         string NextStartAt {get; set; }
         DateTime NextStartAtProcessed {get; set; }
-        string NexFinishAt {get; set; }
+        string NextFinishAt {get; set; }
         string FinishAt {get; set; }
         string SceneName {get; set; }
         int[] Coordinates {get; set; }
@@ -105,7 +105,7 @@ namespace DCL.EventsApi
             set => nextStartAtProcessed = value;
         }
 
-        public string NexFinishAt
+        public string NextFinishAt
         {
             get => next_finish_at;
             set => next_finish_at = value;

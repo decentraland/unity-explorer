@@ -70,7 +70,7 @@ namespace DCL.EventsApi
             set => nextStartAtProcessed = value;
         }
 
-        public string NexFinishAt
+        public string NextFinishAt
         {
             get => next_finish_at;
             set => next_finish_at = value;
