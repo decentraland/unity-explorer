@@ -47,8 +47,9 @@ namespace DCL.SyntheticInput.Systems
             base.Initialize();
             camera = World.CacheCamera();
 
-            // Installed once per session beside CursorComponent; the gesture steps only write into it afterwards,
-            // so no structural change happens while a gesture ref is held.
+            // Every system that writes the override installs it beside CursorComponent, so none depends on a
+            // sibling system being registered; the second install is a no-op. The gesture steps only write into
+            // it afterwards, so no structural change happens while a gesture ref is held.
             World.AddOrSet(camera, SyntheticCursorOverride.Inactive);
         }
 

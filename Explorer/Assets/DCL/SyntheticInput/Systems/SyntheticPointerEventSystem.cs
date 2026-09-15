@@ -90,8 +90,9 @@ namespace DCL.SyntheticInput.Systems
             playerCamera = World.CacheCamera();
             pipelineEntity = new SingleInstanceEntity(in PIPELINE_ENTITY, World);
 
-            // Installed once per session beside CursorComponent; the parked pointer only writes into it afterwards,
-            // so no structural change happens while an intent ref is held.
+            // Every system that writes the override installs it beside CursorComponent, so none depends on a
+            // sibling system being registered; the second install is a no-op. The parked pointer only writes into
+            // it afterwards, so no structural change happens while an intent ref is held.
             World.AddOrSet(playerCamera, SyntheticCursorOverride.Inactive);
         }
 
