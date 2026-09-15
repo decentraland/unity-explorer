@@ -23,6 +23,9 @@ namespace SceneRunner
         private const int UPDATE_HANG_INTERRUPT_THRESHOLD_MS = 10000;
         private const int START_HANG_INTERRUPT_THRESHOLD_MS = 30000;
 
+        // Sentinel interval for a frozen scene (0 FPS): the update loop idles until a positive interval is set
+        private const int FROZEN_INTERVAL_MS = -1;
+
         // Cap dt passed to JS so a slow tick (e.g. host-parking on first iteration) can't feed an
         // absurd value into scene code that does dt-based stepping/integration, which would otherwise
         // spin synchronously inside V8 for hundreds of iterations and trip the hang watchdog.
@@ -123,7 +126,9 @@ namespace SceneRunner
 
         public void SetTargetFPS(int fps)
         {
-            intervalMS = (int)(1000f / fps);
+            // Casting 1000f / 0 (+Infinity) to int is platform-dependent: int.MinValue on x86/x64 but int.MaxValue
+            // on IL2CPP ARM64, which would turn the freeze into a multi-day Task.Delay. Set the sentinel explicitly.
+            intervalMS = fps <= 0 ? FROZEN_INTERVAL_MS : (int)(1000f / fps);
             RuntimeMetrics.TargetFps = fps;
         }
 
@@ -325,7 +330,7 @@ namespace SceneRunner
             if (TryComplete())
                 return false;
 
-            // Support scene freeze (0 FPS, int.MinValue)
+            // Support scene freeze (0 FPS, FROZEN_INTERVAL_MS)
             while (intervalMS < 0)
             {
                 if (TryComplete())
