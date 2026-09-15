@@ -215,17 +215,35 @@ namespace DCL.Browser.DecentralandUrls.Tests
             Assert.AreEqual("https://asset-bundle-registry-abgen.decentraland.org", forcedOn.Url(DecentralandUrl.AssetBundleRegistry));
         }
 
+        // The abgen hosts are subdomains of this deployment like the regular ones, so the flip changes which
+        // service the gateway fronts, not whether it is fronted at all.
         [Test]
-        public void KeepAbgenHostsOffTheGatewayButLodsAndProfilesOnIt()
+        public void RouteAbgenHostsThroughTheGatewayAlongsideLodsAndProfiles()
         {
             InitializeFeatureFlags(optimizedAssets: false, useGateway: true, abgenPipeline: true);
             GatewayUrlsSource urlsSource = GatewayUrlsSource.CreateForTest(DecentralandEnvironment.Org, ILaunchMode.PLAY);
 
-            Assert.AreEqual("https://abgen-cdn.decentraland.org", urlsSource.Url(DecentralandUrl.AssetBundlesCDN));
-            Assert.AreEqual("https://asset-bundle-registry-abgen.decentraland.org", urlsSource.Url(DecentralandUrl.AssetBundleRegistry));
+            Assert.AreEqual("https://gateway.decentraland.org/abgen-cdn", urlsSource.Url(DecentralandUrl.AssetBundlesCDN));
+            Assert.AreEqual("https://gateway.decentraland.org/asset-bundle-registry-abgen", urlsSource.Url(DecentralandUrl.AssetBundleRegistry));
+
+            // Composed off the gatewayed registry base, and routed once - not re-prefixed with the gateway subdomain
+            Assert.AreEqual("https://gateway.decentraland.org/asset-bundle-registry-abgen/entities/versions", urlsSource.Url(DecentralandUrl.AssetBundleRegistryVersion));
+            Assert.AreEqual("https://gateway.decentraland.org/asset-bundle-registry-abgen/entities/active", urlsSource.Url(DecentralandUrl.EntitiesActiveElements));
 
             Assert.AreEqual("https://gateway.decentraland.org/ab-cdn", urlsSource.Url(DecentralandUrl.LodAssetBundlesCDN));
             Assert.AreEqual("https://gateway.decentraland.org/asset-bundle-registry/profiles", urlsSource.Url(DecentralandUrl.Profiles));
+        }
+
+        // Consolidation outranks the abgen flip, and the consolidated host is its own origin - never the gateway's.
+        [Test]
+        public void KeepTheConsolidatedHostOffTheGatewayThroughTheAbgenFlip()
+        {
+            InitializeFeatureFlags(optimizedAssets: true, useGateway: true, abgenPipeline: true);
+            GatewayUrlsSource urlsSource = GatewayUrlsSource.CreateForTest(DecentralandEnvironment.Org, ILaunchMode.PLAY);
+
+            Assert.AreEqual("https://abcdn.decentraland.org", urlsSource.Url(DecentralandUrl.AssetBundlesCDN));
+            Assert.AreEqual("https://abcdn.decentraland.org", urlsSource.Url(DecentralandUrl.AssetBundleRegistry));
+            Assert.AreEqual("https://abcdn.decentraland.org/entities/versions", urlsSource.Url(DecentralandUrl.AssetBundleRegistryVersion));
         }
 
         [Test]
