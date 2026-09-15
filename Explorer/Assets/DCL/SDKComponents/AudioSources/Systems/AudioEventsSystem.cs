@@ -29,6 +29,12 @@ namespace DCL.SDKComponents.AudioSources
         private static float lastLogTime;
 #endif
 
+        /// <summary>
+        ///     While a clip plays, its position is reported every this many scene ticks (about twice a second at 30 Hz),
+        ///     so scenes can align gameplay with the audio that is actually heard.
+        /// </summary>
+        internal const uint PLAYBACK_REPORT_INTERVAL_TICKS = 15;
+
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IPerformanceBudget frameTimeBudget;
@@ -63,9 +69,12 @@ namespace DCL.SDKComponents.AudioSources
             if (!frameTimeBudget.TrySpendBudget()) return;
 
             MediaState state = GetAudioSourceState(in audioSourceComponent);
+            uint tick = sceneStateProvider.TickNumber;
+            bool stateChanged = state != audioSourceComponent.LastPropagatedAudioState;
+            bool positionDue = state == MediaState.MsPlaying && tick - audioSourceComponent.LastReportedTick >= PLAYBACK_REPORT_INTERVAL_TICKS;
 
-            // Only propagate if state has changed to avoid CRDT message spam
-            if (state == audioSourceComponent.LastPropagatedAudioState)
+            // Propagate on state changes, and periodically while playing; anything else would be CRDT message spam
+            if (!stateChanged && !positionDue)
             {
 #if AUDIO_EVENTS_DEBUG
                 messagesSkipped++;
@@ -75,12 +84,17 @@ namespace DCL.SDKComponents.AudioSources
 
             MediaState previousState = audioSourceComponent.LastPropagatedAudioState;
             audioSourceComponent.LastPropagatedAudioState = state;
+            audioSourceComponent.LastReportedTick = tick;
+
 #if AUDIO_EVENTS_DEBUG
             messagesSent++;
 #endif
-            PropagateStateInAudioEvent(in sdkEntity, state);
+            AudioSource? audioSource = audioSourceComponent.AudioSource;
+            AudioClip? clip = audioSource != null ? audioSource.clip : null;
+            PropagateAudioEvent(in sdkEntity, new AudioEventReport(state, tick,
+                hasPosition: clip != null, currentOffset: clip != null ? audioSource!.time : 0f, clipLength: clip != null ? clip.length : 0f));
 
-            if (IsNaturalFinish(previousState, state, sdkComponent))
+            if (stateChanged && IsNaturalFinish(previousState, state, sdkComponent))
                 WriteBackNaturalFinish(ecsToCRDTWriter, in sdkEntity, sdkComponent);
         }
 
@@ -105,7 +119,7 @@ namespace DCL.SDKComponents.AudioSources
 #if AUDIO_EVENTS_DEBUG
             messagesSent++;
 #endif
-            PropagateStateInAudioEvent(in sdkEntity, state);
+            PropagateAudioEvent(in sdkEntity, new AudioEventReport(state, sceneStateProvider.TickNumber, hasPosition: false, currentOffset: 0f, clipLength: 0f));
         }
 
         /// <summary>
@@ -174,15 +188,41 @@ namespace DCL.SDKComponents.AudioSources
             return (MediaState)videoState;
         }
 
-        private void PropagateStateInAudioEvent(in CRDTEntity sdkEntity, MediaState mediaState) =>
-            ecsToCRDTWriter.AppendMessage<PBAudioEvent, (MediaState state, uint timestamp)>
+        internal readonly struct AudioEventReport
+        {
+            public readonly MediaState State;
+            public readonly uint Tick;
+            public readonly bool HasPosition;
+            public readonly float CurrentOffset;
+            public readonly float ClipLength;
+
+            public AudioEventReport(MediaState state, uint tick, bool hasPosition, float currentOffset, float clipLength)
+            {
+                State = state;
+                Tick = tick;
+                HasPosition = hasPosition;
+                CurrentOffset = currentOffset;
+                ClipLength = clipLength;
+            }
+        }
+
+        private void PropagateAudioEvent(in CRDTEntity sdkEntity, AudioEventReport report) =>
+            ecsToCRDTWriter.AppendMessage<PBAudioEvent, AudioEventReport>
             (
                 prepareMessage: static (pbAudioEvent, data) =>
                 {
-                    pbAudioEvent.State = data.state;
-                    pbAudioEvent.Timestamp = data.timestamp;
+                    pbAudioEvent.State = data.State;
+                    pbAudioEvent.Timestamp = data.Tick;
+                    pbAudioEvent.TickNumber = data.Tick;
+
+                    // Position fields are optional in the protocol: only written when a clip is attached.
+                    if (data.HasPosition)
+                    {
+                        pbAudioEvent.CurrentOffset = data.CurrentOffset;
+                        pbAudioEvent.ClipLength = data.ClipLength;
+                    }
                 },
-                sdkEntity, (int)sceneStateProvider.TickNumber, (mediaState, sceneStateProvider.TickNumber)
+                sdkEntity, (int)report.Tick, report
             );
     }
 }

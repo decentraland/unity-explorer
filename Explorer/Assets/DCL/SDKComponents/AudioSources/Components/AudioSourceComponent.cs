@@ -23,6 +23,11 @@ namespace DCL.SDKComponents.AudioSources
         public float LastAppliedCurrentTime;
 
         /// <summary>
+        ///     Scene tick of the last AudioEvent written for this source, so playback-position reports keep a steady cadence
+        /// </summary>
+        public uint LastReportedTick;
+
+        /// <summary>
         ///     The final audio source ready for consumption
         /// </summary>
         public AudioSource? AudioSource { get; private set; }
@@ -47,6 +52,7 @@ namespace DCL.SDKComponents.AudioSources
             AudioSourceAssigned = false;
             LastPropagatedAudioState = MediaState.MsNone;
             LastAppliedCurrentTime = float.NaN;
+            LastReportedTick = 0;
 
             lastAudioFrameReadFilter = new ();
         }
