@@ -13,7 +13,11 @@ namespace DCL.Multiplayer.Connections.Archipelago.SignFlow
 
         UniTask<Result> SendHeartbeatAsync(Vector3 playerPosition, CancellationToken token);
 
-        UniTaskVoid StartListeningForConnectionStringAsync(Action<string> onNewConnectionString, CancellationToken token);
+        /// <summary>
+        ///     Invokes <paramref name="onNewIslandAssignment" /> with the island id and the connection
+        ///     string of every assignment the server pushes.
+        /// </summary>
+        UniTaskVoid StartListeningForConnectionStringAsync(Action<string, string> onNewIslandAssignment, CancellationToken token);
 
         UniTask DisconnectAsync(CancellationToken token);
     }
