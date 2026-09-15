@@ -6,6 +6,7 @@ using AssetManagement;
 using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.LOD.Components;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Utility;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
@@ -32,12 +33,17 @@ namespace DCL.LOD.Systems
     [LogCategory(ReportCategory.LOD)]
     public partial class UpdateSceneLODInfoSystem : BaseUnityLoopSystem
     {
+        // Production LODs have always been cached under this pseudo build date; an abgen LOD source gets its own key.
+        private const string REGULAR_LOD_CACHE_KEY = "dummyDate";
+
         private readonly ILODSettingsAsset lodSettingsAsset;
+        private readonly IDecentralandUrlsSource? decentralandUrlsSource;
         private IReadOnlyList<SceneAssetBundleManifest>? manifestCache;
 
-        public UpdateSceneLODInfoSystem(World world, ILODSettingsAsset lodSettingsAsset) : base(world)
+        public UpdateSceneLODInfoSystem(World world, ILODSettingsAsset lodSettingsAsset, IDecentralandUrlsSource? decentralandUrlsSource = null) : base(world)
         {
             this.lodSettingsAsset = lodSettingsAsset;
+            this.decentralandUrlsSource = decentralandUrlsSource;
         }
 
         protected override void Update(float t)
@@ -86,7 +92,8 @@ namespace DCL.LOD.Systems
                 // descriptor in None state — no ISS for this scene; fall through to legacy LOD.
             }
 
-            AssetBundleManifestVersion lodManifest = AssetBundleManifestVersion.CreateForLOD($"LOD/{level.ToString()}", "dummyDate");
+            // LOD files are named by scene id only, so the Unity asset-bundle cache key must carry the LOD source.
+            AssetBundleManifestVersion lodManifest = AssetBundleManifestVersion.CreateForLOD($"LOD/{level.ToString()}", decentralandUrlsSource?.AbgenLodsCacheKey ?? REGULAR_LOD_CACHE_KEY);
 
             var assetBundleIntention = GetAssetBundleIntention.FromHash(
                 lodManifest.GetCdnRequestHash($"{sceneDefinitionComponent.Definition.id.ToLower()}_{level.ToString()}"),

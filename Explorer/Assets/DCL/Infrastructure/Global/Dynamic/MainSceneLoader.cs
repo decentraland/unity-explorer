@@ -340,6 +340,8 @@ namespace Global.Dynamic
             applicationParametersParser.TryGetValue(AppArgsFlags.GATEKEEPER_URL, out string? cliGatekeeperUrl);
 
             bool cliAbgenPipeline = applicationParametersParser.HasFlag(AppArgsFlags.ABGEN_PIPELINE);
+            bool cliAbgenLods = applicationParametersParser.HasFlag(AppArgsFlags.ABGEN_LODS);
+            applicationParametersParser.TryGetValue(AppArgsFlags.ABGEN_LODS_BASE_URL, out string? cliAbgenLodsBaseUrl);
 
             // local-ab only: the embedded abgen JIT server becomes the optimized-assets source (it serves the
             // local scene and read-throughs everything else from production). Brought up to health serially,
@@ -372,7 +374,9 @@ namespace Global.Dynamic
                 localAbBaseUrl,
                 customBaseDomain,
                 cliAbgenPipeline,
-                cliGatewayPrefix);
+                cliGatewayPrefix,
+                cliAbgenLods,
+                cliAbgenLodsBaseUrl);
             DiagnosticInfoUtils.LogEnvironment(decentralandUrlsSource);
 
             var web3AccountFactory = new Web3AccountFactory();

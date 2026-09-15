@@ -279,6 +279,7 @@ namespace Global.Dynamic
                               debugBuilder,
                               dynamicWorldParams.EnableLOD,
                               staticContainer.GPUInstancingService,
+                              bootstrapContainer.DecentralandUrlsSource,
                               cancellationToken
                           )
                          .ThrowOnFail();

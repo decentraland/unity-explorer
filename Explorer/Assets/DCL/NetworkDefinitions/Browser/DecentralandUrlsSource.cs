@@ -6,6 +6,7 @@ using ECS;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using UnityEngine.Pool;
 
 // ReSharper disable once CheckNamespace
@@ -48,6 +49,8 @@ namespace DCL.Browser.DecentralandUrls
         private readonly string? gatekeeperBaseOverride;
         private readonly string? localAbBaseOverride;
         private readonly bool abgenPipelineForced;
+        private readonly bool abgenLodsForced;
+        private readonly string? abgenLodsBaseOverride;
 
         /// <summary>
         ///     The domain <see cref="RawUrl" /> composes every host from.
@@ -63,7 +66,9 @@ namespace DCL.Browser.DecentralandUrls
             string? cliGatekeeperUrl = null,
             string? localAbBaseUrl = null,
             string? customBaseDomain = null,
-            bool abgenPipelineForced = false)
+            bool abgenPipelineForced = false,
+            bool abgenLodsForced = false,
+            string? abgenLodsBaseUrl = null)
         {
             this.environment = environment;
             BaseDomain = ResolveBaseDomain(environment, customBaseDomain);
@@ -73,6 +78,8 @@ namespace DCL.Browser.DecentralandUrls
             ReportHub.Log(ReportCategory.STARTUP, $"Gatekeeper base override: {gatekeeperBaseOverride ?? "(default)"} (source: {source})");
             localAbBaseOverride = localAbBaseUrl?.TrimEnd('/');
             this.abgenPipelineForced = abgenPipelineForced;
+            this.abgenLodsForced = abgenLodsForced;
+            abgenLodsBaseOverride = abgenLodsBaseUrl?.TrimEnd('/');
 
             realmData.RealmType.OnUpdate += ResetRealmDependentUrls;
         }
@@ -257,6 +264,60 @@ namespace DCL.Browser.DecentralandUrls
         }
 
         /// <summary>
+        ///     The abgen LOD source. LOD bundles and ISS descriptors flip together: the descriptors and the bundles
+        ///     describe one generation, as the abgen registry and abgen-cdn do for asset bundles. Resolution order:
+        ///     the "--abgen-lods-base-url" arg, the "--abgen-lods" arg (abgen-cdn), the abgen-lods flag with its
+        ///     "lods-base-url" text variant, the flag alone (abgen-cdn), otherwise the regular host.
+        ///     FeatureFlagsDependent for the same reasons as <see cref="ResolveAbgenPipelineUrl" />.
+        /// </summary>
+        private UrlData ResolveAbgenLodsUrl(UrlData regularHost)
+        {
+            string abgenHost = $"https://abgen-cdn.{BaseDomain}";
+
+            if (abgenLodsBaseOverride is { Length: > 0 })
+                return new UrlData(CacheBehaviour.FeatureFlagsDependent, abgenLodsBaseOverride);
+
+            if (abgenLodsForced)
+                return new UrlData(CacheBehaviour.FeatureFlagsDependent, abgenHost);
+
+            FeatureFlagsConfiguration featureFlags = FeatureFlagsConfiguration.Instance;
+
+            if (featureFlags.IsEmpty)
+                return new UrlData(CacheBehaviour.FeatureFlagsDependent, regularHost.Url!);
+
+            if (!featureFlags.IsEnabled(FeatureFlagsStrings.ABGEN_LODS))
+                return regularHost;
+
+            if (featureFlags.TryGetTextPayload(FeatureFlagsStrings.ABGEN_LODS, FeatureFlagsStrings.ABGEN_LODS_BASE_URL_VARIANT, out string? customBaseUrl) && customBaseUrl is { Length: > 0 })
+                return new UrlData(CacheBehaviour.FeatureFlagsDependent, customBaseUrl.TrimEnd('/'));
+
+            return new UrlData(CacheBehaviour.FeatureFlagsDependent, abgenHost);
+        }
+
+        private bool AbgenLodsActive =>
+            abgenLodsBaseOverride is { Length: > 0 } || abgenLodsForced
+            || (!FeatureFlagsConfiguration.Instance.IsEmpty && FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.ABGEN_LODS));
+
+        /// <inheritdoc />
+        public string? AbgenLodsCacheKey
+        {
+            get
+            {
+                if (!AbgenLodsActive)
+                    return null;
+
+                // The resolved base identifies the source; sanitised so it can travel in file names and hash payloads.
+                string baseUrl = Url(DecentralandUrl.LodAssetBundlesCDN);
+                var key = new StringBuilder("abgen-lods-", baseUrl.Length + 11);
+
+                foreach (char c in baseUrl)
+                    key.Append(char.IsLetterOrDigit(c) ? c : '-');
+
+                return key.ToString();
+            }
+        }
+
+        /// <summary>
         ///     Composes the feature-flags host before any instance exists (the pre-login whitelist fetch), from the
         ///     same <see cref="ResolveBaseDomain" /> decision the instance uses, so the two cannot diverge.
         /// </summary>
@@ -318,9 +379,11 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.Market => $"https://market.{BaseDomain}",
                 DecentralandUrl.AssetBundlesCDN => ResolveOptimizedAssetsUrl(ResolveAbgenPipelineUrl($"https://ab-cdn.{BaseDomain}", $"https://abgen-cdn.{BaseDomain}")),
 
-                // LOD bundles are only produced by the regular pipeline, so they never follow the abgen flip
-                DecentralandUrl.LodAssetBundlesCDN => ResolveOptimizedAssetsUrl($"https://ab-cdn.{BaseDomain}"),
-                DecentralandUrl.LodGeneratorCDN => ResolveOptimizedAssetsUrl($"https://lod-generator-unity-cdn.{BaseDomain}"),
+                // LOD bundles ({base}/LOD/{level}/{sceneId}_{level}_{platform}) and ISS descriptors
+                // ({base}/lods-unity/manifests/{sceneId}_InitialSceneState.json) come from the regular pipeline unless the
+                // abgen-lods flip moves both onto an abgen source; they never follow the asset-bundle abgen flip on their own.
+                DecentralandUrl.LodAssetBundlesCDN => ResolveAbgenLodsUrl(ResolveOptimizedAssetsUrl($"https://ab-cdn.{BaseDomain}")),
+                DecentralandUrl.LodGeneratorCDN => ResolveAbgenLodsUrl(ResolveOptimizedAssetsUrl($"https://lod-generator-unity-cdn.{BaseDomain}")),
                 DecentralandUrl.ArchipelagoStatus => $"https://archipelago-ea-stats.{BaseDomain}/status",
                 DecentralandUrl.ArchipelagoHotScenes => $"https://archipelago-ea-stats.{BaseDomain}/hot-scenes",
                 DecentralandUrl.GatekeeperStatus => $"{RawUrl(DecentralandUrl.Gatekeeper).Url!}/status",
