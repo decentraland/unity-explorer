@@ -280,10 +280,7 @@ namespace DCL.Utility
         private static extern bool CloseHandle(IntPtr hObject);
         
 #elif UNITY_STANDALONE_OSX
-
-        private const int SIGKILL = 9;
-
-        [DllImport("libc", SetLastError = true)]
+        [DllImport("libc")]
         private static extern void _exit(int status);
 
 #endif
