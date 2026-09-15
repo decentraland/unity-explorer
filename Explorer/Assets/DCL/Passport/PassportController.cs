@@ -301,7 +301,8 @@ namespace DCL.Passport
                 mvcManager,
                 nftNamesProvider,
                 decentralandUrlsSource,
-                colorPickerController);
+                colorPickerController,
+                web3IdentityCache);
 
             userBasicInfoPassportModuleController.NameClaimRequested += OnNameClaimRequested;
             commonPassportModules.Add(userBasicInfoPassportModuleController);
