@@ -12,11 +12,10 @@ using DCL.SyntheticInput.Core;
 using DCL.SyntheticInput.UiSimulation;
 using ECS.Abstract;
 using ECS.SceneLifeCycle;
-using ECS.Unity.PrimitiveColliders.Components;
-using ECS.Unity.Transforms.Components;
 using SceneRunner.Scene;
 using UnityEngine;
 using Utility.Arch;
+using static DCL.SyntheticInput.Systems.SyntheticPointerAim;
 using static DCL.SyntheticInput.Systems.SyntheticPointerDiagnostics;
 using PlayerOriginatedRaycastSystem = DCL.Interaction.Systems.PlayerOriginatedRaycastSystem;
 
@@ -56,7 +55,6 @@ namespace DCL.SyntheticInput.Systems
     [LogCategory(ReportCategory.SYNTHETIC_INPUT)]
     public partial class SyntheticPointerEventSystem : BaseUnityLoopSystem
     {
-        private static readonly QueryDescription ALL_ENTITIES = new ();
         private static readonly QueryDescription PIPELINE_ENTITY = new QueryDescription().WithAll<SyntheticPointerInput>();
 
         /// <summary>
@@ -202,15 +200,15 @@ namespace DCL.SyntheticInput.Systems
                 return;
             }
 
-            if (!TryResolveAimPoint(in intent, sceneWorld, targetEntity, out Vector3 aimPoint, out SyntheticPointerResult resolveFailure))
+            Camera camera = playerCamera.GetCameraComponent(World).Camera;
+
+            if (!TryResolveAimPoint(in intent, sceneWorld, targetEntity, camera, uiCoverProbe, out Vector3 aimPoint, out SyntheticPointerResult resolveFailure))
             {
                 CompleteAndRemove(in intent, resolveFailure);
                 return;
             }
 
-            Vector3 cameraPosition = playerCamera.GetCameraComponent(World).Camera.transform.position;
-
-            if ((aimPoint - cameraPosition).sqrMagnitude < SyntheticPointerInput.MIN_AIM_DISTANCE_SQR)
+            if ((aimPoint - camera.transform.position).sqrMagnitude < SyntheticPointerInput.MIN_AIM_DISTANCE_SQR)
             {
                 CompleteAndRemove(in intent, Failure(in intent, "the camera is on top of the aim point; move back and retry"));
                 return;
@@ -277,6 +275,8 @@ namespace DCL.SyntheticInput.Systems
             SyntheticPointerResult result = BuildResult(in intent, sceneWorld,
                 in World.Get<PlayerOriginRaycastResultForSceneEntities>(pipelineEntity),
                 in World.Get<HoverStateComponent>(pipelineEntity),
+                World.Get<HoverFeedbackComponent>(pipelineEntity).Tooltips,
+                collidersGlobalCache,
                 out SyntheticPressHandoff? press);
 
             // An untargeted edge no entity consumed is a broadcast: the scene root received it, exactly as it
@@ -309,8 +309,8 @@ namespace DCL.SyntheticInput.Systems
         }
 
         /// <summary>
-        ///     An aimless button edge has no target to validate: it entered the pipeline the moment it was
-        ///     consumed, so the result only reports, opportunistically, what the cursor ray was hovering.
+        ///     An aimless press hands off Entity.Null: its release is ordered by tick only. The verdict is whatever
+        ///     the cursor ray happened to be hovering when the edge was consumed.
         /// </summary>
         private void CompleteAimless(ref SyntheticPointerEventIntent intent, World sceneWorld)
         {
@@ -324,85 +324,12 @@ namespace DCL.SyntheticInput.Systems
                     Tick = intent.InjectedTick,
                 };
 
-            var result = new SyntheticPointerResult
-            {
-                Hit = false,
-                SceneEntityId = -1,
-                RootBroadcast = true,
-            };
-
-            ref readonly PlayerOriginRaycastResultForSceneEntities raycastResult = ref World.Get<PlayerOriginRaycastResultForSceneEntities>(pipelineEntity);
-            ref readonly HoverStateComponent hoverState = ref World.Get<HoverStateComponent>(pipelineEntity);
-
-            if (raycastResult is { IsValidHit: true, EntityInfo: { } entityInfo }
-                && hoverState.HasCollider && hoverState.LastHitCollider == raycastResult.Collider && hoverState.IsAtDistance)
-            {
-                // The edge also landed entity-bound on the hovered target (which suppresses the global broadcast
-                // for that scene, exactly as a real key press would).
-                result.Hit = true;
-                result.RootBroadcast = false;
-                result.SceneEntityId = entityInfo.ColliderSceneEntityInfo.EntityReference.Id;
-                result.CrdtEntityId = entityInfo.ColliderSceneEntityInfo.SDKEntity.Id;
-                result.HoverText = ResolveHoverText(in entityInfo, World.Get<HoverFeedbackComponent>(pipelineEntity).Tooltips);
-                result.HitPoint = raycastResult.RaycastHit.point;
-                result.Distance = raycastResult.GetDistance();
-            }
+            SyntheticPointerResult result = BuildAimlessResult(
+                in World.Get<PlayerOriginRaycastResultForSceneEntities>(pipelineEntity),
+                in World.Get<HoverStateComponent>(pipelineEntity),
+                World.Get<HoverFeedbackComponent>(pipelineEntity).Tooltips);
 
             CompleteAndRemove(in intent, result, press);
-        }
-
-        private SyntheticPointerResult BuildResult(in SyntheticPointerEventIntent intent, World sceneWorld,
-            in PlayerOriginRaycastResultForSceneEntities raycastResult, in HoverStateComponent hoverState,
-            out SyntheticPressHandoff? press)
-        {
-            press = null;
-
-            // The pipeline echoes the aim it consumed; anything else means the guarded frame ignored the input.
-            if (raycastResult.SyntheticAimPoint != intent.InjectedAimPoint)
-                return Failure(in intent, "the reticle pipeline did not process the synthetic aim (is the cursor panning or the in-world camera active?)");
-
-            if (!raycastResult.IsValidHit)
-                return DiagnoseMiss(in intent, raycastResult.OriginRay, collidersGlobalCache);
-
-            GlobalColliderSceneEntityInfo entityInfo = raycastResult.EntityInfo!.Value;
-            Entity hitEntity = entityInfo.ColliderSceneEntityInfo.EntityReference;
-            int hitCrdtId = entityInfo.ColliderSceneEntityInfo.SDKEntity.Id;
-
-            if (!ReferenceEquals(entityInfo.EcsExecutor.World, sceneWorld))
-                return Failure(in intent, $"the ray landed on a collider of a different scene ('{raycastResult.Collider.name}')");
-
-            if (!IsExpectedTarget(in intent, hitEntity))
-            {
-                SyntheticPointerResult blocked = Failure(in intent, "another collider blocks the line of sight to the target");
-                blocked.BlockedByEntityId = hitEntity.Id;
-                blocked.BlockedByCrdtId = hitCrdtId;
-                blocked.BlockedByColliderName = raycastResult.Collider.name;
-                return blocked;
-            }
-
-            if (hoverState.HasCollider && hoverState.LastHitCollider == raycastResult.Collider && hoverState.IsAtDistance)
-            {
-                if (intent.EventType == PointerEventType.PetDown)
-                    press = new SyntheticPressHandoff
-                    {
-                        World = sceneWorld,
-                        Entity = hitEntity,
-                        Tick = intent.InjectedTick,
-                    };
-
-                return new SyntheticPointerResult
-                {
-                    Hit = true,
-                    SceneEntityId = hitEntity.Id,
-                    CrdtEntityId = hitCrdtId,
-                    HoverText = ResolveHoverText(in entityInfo, World.Get<HoverFeedbackComponent>(pipelineEntity).Tooltips),
-                    HitPoint = raycastResult.RaycastHit.point,
-                    Distance = raycastResult.GetDistance(),
-                };
-            }
-
-            return DiagnoseUnqualified(in intent, in entityInfo, hitEntity, hitCrdtId, raycastResult.GetDistance(),
-                StoppedShortOfAim(in raycastResult, intent.InjectedAimPoint), raycastResult.Collider.name);
         }
 
         /// <summary>
@@ -477,119 +404,5 @@ namespace DCL.SyntheticInput.Systems
             });
         }
 
-        private static Vector3 ResolveAimPoint(in SyntheticPointerEventIntent intent, World sceneWorld, Entity targetEntity) =>
-            intent.AimPoint ?? ResolveEntityAimPoint(sceneWorld, targetEntity);
-
-        /// <summary>
-        ///     Whether the edge was posted without a target entity — the mirror of what TryResolveTargetEntity
-        ///     hands PostSyntheticInput: a first leg that named no entity, or a release whose press handed off
-        ///     Entity.Null. Only such an edge can have been broadcast to the scene root.
-        /// </summary>
-        private static bool IsUntargeted(in SyntheticPointerEventIntent intent) =>
-            intent.Press is { } press ? press.Entity == Entity.Null : intent.TargetEntityId < 0;
-
-        /// <summary>
-        ///     The entity the gesture was promised, or null when it named none. Resolved before the aim, because it
-        ///     is needed even when an explicit aim point makes the entity's own position irrelevant: it is the
-        ///     entity the posted edge is restricted to, and a target id that resolves to nothing is a failure in
-        ///     its own right rather than an aim that lands somewhere and reports a phantom blocker.
-        /// </summary>
-        private static bool TryResolveTargetEntity(in SyntheticPointerEventIntent intent, World sceneWorld, out Entity? targetEntity, out SyntheticPointerResult failure)
-        {
-            failure = default(SyntheticPointerResult);
-            targetEntity = null;
-
-            if (intent.Press is { } press)
-            {
-                // Liveness was checked before the release was ordered. An aimless press hands off Entity.Null:
-                // its release names no entity either.
-                if (press.Entity != Entity.Null)
-                    targetEntity = press.Entity;
-
-                return true;
-            }
-
-            if (intent.TargetEntityId < 0)
-                return true;
-
-            int targetId = intent.TargetEntityId;
-            Entity found = Entity.Null;
-
-            // TODO: resolve through CrdtEcsSynchronizer.EntitiesMap (O(1)) once MCP entity addressing moves from
-            // raw Arch ids to CRDT ids, together with list_scene_entities/get_entity_details/WorldInfo, which scan
-            // for the same reason.
-            sceneWorld.Query(in ALL_ENTITIES, entity =>
-            {
-                if (entity.Id == targetId)
-                    found = entity;
-            });
-
-            if (found == Entity.Null)
-            {
-                failure = Failure(in intent, $"no entity with id {targetId} in the current scene world");
-                return false;
-            }
-
-            targetEntity = found;
-            return true;
-        }
-
-        /// <summary>
-        ///     Resolves the world point the synthetic ray must pass through. An explicit aim is taken as is and
-        ///     needs no entity — the pipeline raycast still validates whatever the ray lands on; a screen-space
-        ///     aim is projected to a far point along the camera ray through it. Otherwise the aim is the collider
-        ///     center of <paramref name="targetEntity" />, already resolved by TryResolveTargetEntity.
-        /// </summary>
-        private bool TryResolveAimPoint(in SyntheticPointerEventIntent intent, World sceneWorld, Entity? targetEntity, out Vector3 aimPoint, out SyntheticPointerResult failure)
-        {
-            failure = default(SyntheticPointerResult);
-            aimPoint = default(Vector3);
-
-            if (intent.AimPoint is { } explicitAim)
-            {
-                aimPoint = explicitAim;
-                return true;
-            }
-
-            if (intent.ScreenPoint is { } screenPoint)
-            {
-                // A screen-addressed aim names a pixel, so whatever owns that pixel intercepts it. The world-aim
-                // path above deliberately keeps the pipeline's UI bypass: there the driver named a world target and
-                // the cursor's position is irrelevant, but here a real click would never reach past the UI.
-                if (!intent.Force && uiCoverProbe != null && uiCoverProbe(screenPoint, out string cover))
-                {
-                    failure = Failure(in intent, $"UI covers that point ({cover}); click the element with ui_click, or pass force to aim through it");
-                    failure.BlockedByUi = cover;
-                    return false;
-                }
-
-                Camera camera = playerCamera.GetCameraComponent(World).Camera;
-                aimPoint = camera.ScreenPointToRay(screenPoint).GetPoint(PlayerOriginatedRaycastSystem.MAX_RAYCAST_DISTANCE);
-                return true;
-            }
-
-            if (targetEntity is not { } target)
-            {
-                failure = Failure(in intent, "the gesture names neither an aim point nor a target entity");
-                return false;
-            }
-
-            // A release aims at wherever its press target sits now, so the hover follows a target that moved
-            // between the legs; a press aims at its own target's collider volume.
-            aimPoint = ResolveEntityAimPoint(sceneWorld, target);
-            return true;
-        }
-
-        /// <summary>Aim at the collider volume when available; entity pivots can sit at hinges or bases and miss.</summary>
-        private static Vector3 ResolveEntityAimPoint(World sceneWorld, Entity entity)
-        {
-            if (sceneWorld.TryGet(entity, out PrimitiveColliderComponent primitiveCollider) && primitiveCollider.Collider != null)
-                return primitiveCollider.Collider.bounds.center;
-
-            if (sceneWorld.TryGet(entity, out TransformComponent transformComponent) && transformComponent.Transform != null)
-                return transformComponent.Transform.position;
-
-            return Vector3.zero;
-        }
     }
 }

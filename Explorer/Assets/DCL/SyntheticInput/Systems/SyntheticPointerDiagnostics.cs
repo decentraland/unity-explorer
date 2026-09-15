@@ -39,6 +39,77 @@ namespace DCL.SyntheticInput.Systems
             return intent.TargetEntityId < 0 || hitEntity.Id == intent.TargetEntityId;
         }
 
+        /// <summary>
+        ///     The verdict of an aimed gesture from the pipeline's answer for the injected frame. A delivered press
+        ///     hands off <paramref name="press" /> so its release can be ordered against it.
+        /// </summary>
+        public static SyntheticPointerResult BuildResult(in SyntheticPointerEventIntent intent, World sceneWorld,
+            in PlayerOriginRaycastResultForSceneEntities raycastResult, in HoverStateComponent hoverState,
+            IReadOnlyList<HoverFeedbackComponent.Tooltip> tooltips, IEntityCollidersGlobalCache collidersGlobalCache,
+            out SyntheticPressHandoff? press)
+        {
+            press = null;
+
+            // The pipeline echoes the aim it consumed; anything else means the guarded frame ignored the input.
+            if (raycastResult.SyntheticAimPoint != intent.InjectedAimPoint)
+                return Failure(in intent, "the reticle pipeline did not process the synthetic aim (is the cursor panning or the in-world camera active?)");
+
+            if (!raycastResult.IsValidHit)
+                return DiagnoseMiss(in intent, raycastResult.OriginRay, collidersGlobalCache);
+
+            GlobalColliderSceneEntityInfo entityInfo = raycastResult.EntityInfo!.Value;
+            Entity hitEntity = entityInfo.ColliderSceneEntityInfo.EntityReference;
+            int hitCrdtId = entityInfo.ColliderSceneEntityInfo.SDKEntity.Id;
+
+            if (!ReferenceEquals(entityInfo.EcsExecutor.World, sceneWorld))
+                return Failure(in intent, $"the ray landed on a collider of a different scene ('{raycastResult.Collider.name}')");
+
+            if (!IsExpectedTarget(in intent, hitEntity))
+            {
+                SyntheticPointerResult blocked = Failure(in intent, "another collider blocks the line of sight to the target");
+                blocked.BlockedByEntityId = hitEntity.Id;
+                blocked.BlockedByCrdtId = hitCrdtId;
+                blocked.BlockedByColliderName = raycastResult.Collider.name;
+                return blocked;
+            }
+
+            if (IsHoveredAtDistance(in raycastResult, in hoverState))
+            {
+                if (intent.EventType == PointerEventType.PetDown)
+                    press = new SyntheticPressHandoff
+                    {
+                        World = sceneWorld,
+                        Entity = hitEntity,
+                        Tick = intent.InjectedTick,
+                    };
+
+                return Hit(in raycastResult, in entityInfo, tooltips);
+            }
+
+            return DiagnoseUnqualified(in intent, in entityInfo, hitEntity, hitCrdtId, raycastResult.GetDistance(),
+                StoppedShortOfAim(in raycastResult, intent.InjectedAimPoint), raycastResult.Collider.name);
+        }
+
+        /// <summary>
+        ///     An aimless button edge has no target to validate: it entered the pipeline the moment it was
+        ///     consumed, so the result only reports, opportunistically, what the cursor ray was hovering. The edge
+        ///     also landed entity-bound on a hovered qualified target (which suppresses the global broadcast for
+        ///     that scene, exactly as a real key press would); otherwise it was broadcast to the scene root.
+        /// </summary>
+        public static SyntheticPointerResult BuildAimlessResult(in PlayerOriginRaycastResultForSceneEntities raycastResult, in HoverStateComponent hoverState,
+            IReadOnlyList<HoverFeedbackComponent.Tooltip> tooltips)
+        {
+            if (raycastResult is { IsValidHit: true, EntityInfo: { } entityInfo } && IsHoveredAtDistance(in raycastResult, in hoverState))
+                return Hit(in raycastResult, in entityInfo, tooltips);
+
+            return new SyntheticPointerResult
+            {
+                Hit = false,
+                SceneEntityId = -1,
+                RootBroadcast = true,
+            };
+        }
+
         /// <summary>The pipeline hit nothing usable: a cold-path raycast tells whether the aim reaches any collider at all.</summary>
         public static SyntheticPointerResult DiagnoseMiss(in SyntheticPointerEventIntent intent, in Ray originRay, IEntityCollidersGlobalCache collidersGlobalCache)
         {
@@ -123,6 +194,22 @@ namespace DCL.SyntheticInput.Systems
 
             return raycastResult.RaycastHit.distance < Vector3.Distance(raycastResult.OriginRay.origin, aimPoint) - TOLERANCE;
         }
+
+        /// <summary>The hovered collider is the one the ray hit, within the range its pointer events declare.</summary>
+        private static bool IsHoveredAtDistance(in PlayerOriginRaycastResultForSceneEntities raycastResult, in HoverStateComponent hoverState) =>
+            hoverState.HasCollider && hoverState.LastHitCollider == raycastResult.Collider && hoverState.IsAtDistance;
+
+        private static SyntheticPointerResult Hit(in PlayerOriginRaycastResultForSceneEntities raycastResult, in GlobalColliderSceneEntityInfo entityInfo,
+            IReadOnlyList<HoverFeedbackComponent.Tooltip> tooltips) =>
+            new ()
+            {
+                Hit = true,
+                SceneEntityId = entityInfo.ColliderSceneEntityInfo.EntityReference.Id,
+                CrdtEntityId = entityInfo.ColliderSceneEntityInfo.SDKEntity.Id,
+                HoverText = ResolveHoverText(in entityInfo, tooltips),
+                HitPoint = raycastResult.RaycastHit.point,
+                Distance = raycastResult.GetDistance(),
+            };
 
         private static bool HasCursorEntry(PBPointerEvents pbPointerEvents)
         {
