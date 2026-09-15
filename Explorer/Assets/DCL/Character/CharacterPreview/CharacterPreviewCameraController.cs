@@ -37,6 +37,9 @@ namespace DCL.CharacterPreview
         public void ResetAvatarMovement() =>
             characterPreviewAvatarContainer.ResetAvatarMovement();
 
+        public void ResetVerticalRotation() =>
+            characterPreviewAvatarContainer.ResetVerticalRotation();
+
         private void OnChangePreviewCategory(AvatarWearableCategoryEnum categoryEnum)
         {
             int positions = cameraSettings.cameraPositions.Length;
@@ -142,8 +145,21 @@ namespace DCL.CharacterPreview
             characterPreviewAvatarContainer.IsDragging = true;
             characterPreviewAvatarContainer.LastDragTime = UnityEngine.Time.time;
 
-            float angularVelocity = characterPreviewAvatarContainer.AngularVelocity;
-            float targetVelocity = -pointerEventData.delta.x / UnityEngine.Time.deltaTime;
+            characterPreviewAvatarContainer.AngularVelocity = Accelerate(characterPreviewAvatarContainer.AngularVelocity, -pointerEventData.delta.x);
+
+            if (!cameraSettings.verticalRotationEnabled) return;
+
+            characterPreviewAvatarContainer.VerticalRotationModifier = cameraSettings.verticalRotationModifier;
+            characterPreviewAvatarContainer.MaxVerticalAngle = cameraSettings.maxVerticalAngle;
+
+            // The avatar tracks the cursor on both axes: dragging up lowers the camera and brings the avatar
+            // up into the frame, the way dragging sideways carries its face across.
+            characterPreviewAvatarContainer.VerticalAngularVelocity = Accelerate(characterPreviewAvatarContainer.VerticalAngularVelocity, pointerEventData.delta.y);
+        }
+
+        private float Accelerate(float angularVelocity, float pointerDelta)
+        {
+            float targetVelocity = pointerDelta / UnityEngine.Time.deltaTime;
 
             if (cameraSettings.rotationInertia <= 0f)
             {
@@ -157,7 +173,7 @@ namespace DCL.CharacterPreview
                 angularVelocity = Mathf.Lerp(angularVelocity, targetVelocity, accelerationRate);
             }
 
-            characterPreviewAvatarContainer.AngularVelocity = Mathf.Clamp(angularVelocity, -MAX_ANGULAR_VELOCITY, MAX_ANGULAR_VELOCITY);
+            return Mathf.Clamp(angularVelocity, -MAX_ANGULAR_VELOCITY, MAX_ANGULAR_VELOCITY);
         }
 
         public void ResetZoom()
