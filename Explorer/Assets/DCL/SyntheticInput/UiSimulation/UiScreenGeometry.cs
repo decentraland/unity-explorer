@@ -10,6 +10,7 @@ namespace DCL.SyntheticInput.UiSimulation
     /// </summary>
     public static class UiScreenGeometry
     {
+        /// <summary>Scratch buffer for <see cref="RectTransform.GetWorldCorners" />; main-thread only, filled and read within one call.</summary>
         private static readonly Vector3[] CORNERS_BUFFER = new Vector3[4];
 
         /// <summary>The element's screen-space rect in image coordinates (top-left origin), for driver-facing output.</summary>

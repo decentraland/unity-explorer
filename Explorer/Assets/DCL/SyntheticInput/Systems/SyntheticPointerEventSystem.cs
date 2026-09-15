@@ -235,10 +235,11 @@ namespace DCL.SyntheticInput.Systems
 
             // The pipeline echoes the aim it consumed; a frame it guarded away (cursor panning, in-world camera)
             // echoes nothing, and an edge it never processed reached nobody.
-            bool pipelineProcessed = World.Get<PlayerOriginRaycastResultForSceneEntities>(pipelineEntity).SyntheticAimPoint == intent.InjectedAimPoint;
+            ref PlayerOriginRaycastResultForSceneEntities raycastResult = ref World.Get<PlayerOriginRaycastResultForSceneEntities>(pipelineEntity);
+            bool pipelineProcessed = raycastResult.SyntheticAimPoint == intent.InjectedAimPoint;
 
             SyntheticPointerResult result = BuildResult(in intent, sceneWorld,
-                in World.Get<PlayerOriginRaycastResultForSceneEntities>(pipelineEntity),
+                in raycastResult,
                 in World.Get<HoverStateComponent>(pipelineEntity),
                 World.Get<HoverFeedbackComponent>(pipelineEntity).Tooltips,
                 collidersGlobalCache,

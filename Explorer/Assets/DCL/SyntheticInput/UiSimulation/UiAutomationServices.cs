@@ -2,6 +2,7 @@ using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Character.CharacterCamera.Components;
 using DCL.SyntheticInput.Core;
+using ECS.Abstract;
 using ECS.SceneLifeCycle;
 using Newtonsoft.Json.Linq;
 using System;
@@ -34,6 +35,9 @@ namespace DCL.SyntheticInput.UiSimulation
 
         private readonly World world;
         private readonly Entity playerEntity;
+
+        /// <summary>The entity carrying <see cref="CursorComponent" />, resolved on first use: it may not exist yet when the session is built.</summary>
+        private Entity cursorEntity = Entity.Null;
 
         public UiDiscovery Discovery { get; }
 
@@ -179,12 +183,23 @@ namespace DCL.SyntheticInput.UiSimulation
         /// <summary>The cursor state name, for driver-facing diagnostics.</summary>
         public string CursorStateName()
         {
-            var stateName = "unknown";
+            if (cursorEntity == Entity.Null)
+                cursorEntity = world.GetSingleInstanceEntityOrNull(in CURSOR_QUERY);
 
-            world.Query(in CURSOR_QUERY, (ref CursorComponent cursor) => stateName = cursor.CursorState.ToString());
-
-            return stateName;
+            return cursorEntity != Entity.Null && world.TryGet(cursorEntity, out CursorComponent cursor)
+                ? CursorStateNameOf(cursor.CursorState)
+                : "unknown";
         }
+
+        private static string CursorStateNameOf(CursorState state) =>
+            state switch
+            {
+                CursorState.Free => nameof(CursorState.Free),
+                CursorState.Locked => nameof(CursorState.Locked),
+                CursorState.Panning => nameof(CursorState.Panning),
+                CursorState.LockedWithUi => nameof(CursorState.LockedWithUi),
+                _ => "unknown",
+            };
     }
 
     /// <summary>
