@@ -21,6 +21,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
 
         private readonly EventsAnalytics eventsAnalytics;
         private readonly PlacesAnalytics placesAnalytics;
+        private readonly ShopAnalytics shopAnalytics;
 
         public ExplorePanelAnalytics(IAnalyticsController analytics, ExplorePanelController controller)
         {
@@ -31,6 +32,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
             this.settingsController = controller.SettingsController;
             this.eventsAnalytics = new EventsAnalytics(analytics, controller);
             this.placesAnalytics = new PlacesAnalytics(analytics, controller);
+            this.shopAnalytics = new ShopAnalytics(analytics, controller);
 
             cameraReelController.Activated += TrackCameraReelOpen;
             cameraReelGalleryController.ScreenshotDeleted += TrackScreenshotDeleted;
@@ -48,6 +50,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
             settingsController.ChatBubblesVisibilityChanged -= OnChatBubblesVisibilityChanged;
             eventsAnalytics.Dispose();
             placesAnalytics.Dispose();
+            shopAnalytics.Dispose();
         }
 
         private void TrackScreenshotDownloaded() =>

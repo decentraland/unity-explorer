@@ -4,6 +4,7 @@ using Nethereum.ABI.Model;
 using Nethereum.Hex.HexConvertors.Extensions;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Generic;
 using System.Numerics;
 using System.Text;
 
@@ -104,17 +105,28 @@ namespace DCL.MarketplaceCredits.Purchase
         ///     accept([trade]) split into the (selector, data) pair consumed by the useCredits externalCall
         ///     struct: the selector is the 4-byte sighash, the data is the ABI-encoded parameters only.
         /// </summary>
-        public static (byte[] selector, byte[] data) BuildAcceptCall(TradeDto trade, string buyer)
+        public static (byte[] selector, byte[] data) BuildAcceptCall(TradeDto trade, string buyer) =>
+            BuildAcceptCall(new[] { trade }, buyer);
+
+        /// <summary>
+        ///     accept([...trades]) for every trade of one marketplace: a single external call fulfils the whole
+        ///     batch, which is what lets a cart settle in one transaction (web `buildAcceptCalldata`).
+        /// </summary>
+        public static (byte[] selector, byte[] data) BuildAcceptCall(IReadOnlyList<TradeDto> trades, string buyer)
         {
-            object[] tradeTree = BuildOnChainTradeTree(trade, buyer);
-            byte[] data = PARAMETERS_ENCODER.EncodeParameters(ACCEPT_FUNCTION.InputParameters, new object[] { new object[] { tradeTree } });
+            var tradesTree = new object[trades.Count];
+
+            for (var i = 0; i < trades.Count; i++)
+                tradesTree[i] = BuildOnChainTradeTree(trades[i], buyer);
+
+            byte[] data = PARAMETERS_ENCODER.EncodeParameters(ACCEPT_FUNCTION.InputParameters, new object[] { tradesTree });
             byte[] selector = ACCEPT_FUNCTION.Sha3Signature.HexToByteArray();
             return (selector, data);
         }
 
         /// <summary>
         ///     buy([item]) split into the (selector, data) pair consumed by the useCredits externalCall struct —
-        ///     the CollectionStore counterpart of <see cref="BuildAcceptCall" />.
+        ///     the CollectionStore counterpart of <see cref="BuildAcceptCall(IReadOnlyList{TradeDto}, string)" />.
         ///     <para>
         ///         The buyer is named EXPLICITLY as the beneficiary, which is what makes a mint relayable at all:
         ///         the store never sees the buyer as msg.sender on either rail (the CreditsManager is the caller),
@@ -127,17 +139,31 @@ namespace DCL.MarketplaceCredits.Purchase
         ///         path where a stale quote is a revert rather than a wrong number.
         ///     </para>
         /// </summary>
-        public static (byte[] selector, byte[] data) BuildStoreBuyCall(string collectionAddress, string itemId, string priceWei, string buyer)
-        {
-            var itemToBuy = new object[]
-            {
-                collectionAddress,
-                new[] { BigInteger.Parse(itemId) },
-                new[] { BigInteger.Parse(priceWei) },
-                new[] { buyer },
-            };
+        public static (byte[] selector, byte[] data) BuildStoreBuyCall(string collectionAddress, string itemId, string priceWei, string buyer) =>
+            BuildStoreBuyCall(new[] { new StoreMintTarget(collectionAddress, itemId, priceWei) }, buyer);
 
-            byte[] data = PARAMETERS_ENCODER.EncodeParameters(STORE_BUY_FUNCTION.InputParameters, new object[] { new object[] { itemToBuy } });
+        /// <summary>
+        ///     buy([...items]) for every mint of a cart: one ItemToBuy PER UNIT, never merged per collection, exactly
+        ///     as the web's `itemsToBuyArg` shapes it, so both clients hand the store byte-identical batches.
+        /// </summary>
+        public static (byte[] selector, byte[] data) BuildStoreBuyCall(IReadOnlyList<StoreMintTarget> mints, string buyer)
+        {
+            var itemsToBuy = new object[mints.Count];
+
+            for (var i = 0; i < mints.Count; i++)
+            {
+                StoreMintTarget mint = mints[i];
+
+                itemsToBuy[i] = new object[]
+                {
+                    mint.CollectionAddress,
+                    new[] { BigInteger.Parse(mint.ItemId) },
+                    new[] { BigInteger.Parse(mint.PriceWei) },
+                    new[] { buyer },
+                };
+            }
+
+            byte[] data = PARAMETERS_ENCODER.EncodeParameters(STORE_BUY_FUNCTION.InputParameters, new object[] { itemsToBuy });
             byte[] selector = STORE_BUY_FUNCTION.Sha3Signature.HexToByteArray();
             return (selector, data);
         }
@@ -185,7 +211,7 @@ namespace DCL.MarketplaceCredits.Purchase
         ///     and the mint differ ONLY in the (target, selector, data) triple. Mirrors the shop's
         ///     `wrapInUseCredits`.
         /// </summary>
-        private static string BuildUseCreditsCalldata(
+        public static string BuildUseCreditsCalldata(
             string externalCallTarget,
             byte[] externalCallSelector,
             byte[] externalCallData,

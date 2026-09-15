@@ -274,6 +274,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.MarketplaceLink => $"https://{BaseDomain}/marketplace",
                 DecentralandUrl.ShopLink => $"https://{BaseDomain}/shop",
                 DecentralandUrl.MarketplaceServer => $"https://marketplace-api.{BaseDomain}",
+                DecentralandUrl.ShopServer => $"https://shop-api.{BaseDomain}",
                 DecentralandUrl.PrivacyPolicy => $"https://{BaseDomain}/privacy",
                 DecentralandUrl.TermsOfUse => $"https://{BaseDomain}/terms",
                 DecentralandUrl.ContentPolicy => $"https://{BaseDomain}/content",

@@ -13,6 +13,7 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Passport.Fields;
 using DCL.Passport.Modules.Creations;
 using DCL.Profiles;
+using DCL.Shop;
 using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
@@ -453,25 +454,7 @@ namespace DCL.Passport.Modules
                                     .Forget();
         }
 
-        private string GetMarketplaceLink(string id)
-        {
-            var marketplace = $"{decentralandUrlsSource.Url(DecentralandUrl.ShopLink)}/item/{{0}}/{{1}}?utm_source=client";
-            ReadOnlySpan<char> idSpan = id.AsSpan();
-            int lastColonIndex = idSpan.LastIndexOf(':');
-
-            if (lastColonIndex == -1)
-                return "";
-
-            var item = idSpan.Slice(lastColonIndex + 1).ToString();
-            idSpan = idSpan.Slice(0, lastColonIndex);
-            int secondLastColonIndex = idSpan.LastIndexOf(':');
-            var contract = idSpan.Slice(secondLastColonIndex + 1).ToString();
-
-            // If this is not correct, we could retrieve the marketplace link by checking TheGraph, but that's super slow
-            if (!contract.StartsWith("0x") || !int.TryParse(item, out int _))
-                return "";
-
-            return string.Format(marketplace, contract, item);
-        }
+        private string GetMarketplaceLink(string id) =>
+            ShopItemLinks.BuildItemUrlFromUrn(decentralandUrlsSource, id);
     }
 }

@@ -3,7 +3,6 @@ using DCL.Diagnostics;
 using DCL.Web3.Identities;
 using System;
 using System.Numerics;
-using System.Security.Cryptography;
 using System.Threading;
 
 namespace DCL.MarketplaceCredits.Purchase
@@ -15,18 +14,14 @@ namespace DCL.MarketplaceCredits.Purchase
     public class CreditsPurchaseService : ICreditsPurchaseService
     {
         private const int CENTS_PER_CREDIT = 10;
-        private const long EXTERNAL_CALL_TTL_SECONDS = 60 * 60 * 24;
-        private static readonly TimeSpan SETTLEMENT_TIMEOUT = TimeSpan.FromSeconds(120);
-        private static readonly TimeSpan RELEASE_INTENT_TIMEOUT = TimeSpan.FromSeconds(15);
 
         private readonly MarketplaceShopAPIClient shopAPIClient;
         private readonly MarketplaceCreditsAPIClient creditsAPIClient;
-        private readonly CreditsManagerMetaTxRelayer metaTxRelayer;
-        private readonly PolygonSettlementPoller settlementPoller;
         private readonly ManaUsdRateReader manaUsdRateReader;
         private readonly CreditsChainConfig chainConfig;
         private readonly IWeb3IdentityCache identityCache;
         private readonly CreditsFeatureAccess creditsFeatureAccess;
+        private readonly UseCreditsExecutor executor;
         private readonly bool isFeatureEnabled;
 
         public event Action<CreditsPurchaseState>? StateChanged;
@@ -44,13 +39,12 @@ namespace DCL.MarketplaceCredits.Purchase
         {
             this.shopAPIClient = shopAPIClient;
             this.creditsAPIClient = creditsAPIClient;
-            this.metaTxRelayer = metaTxRelayer;
-            this.settlementPoller = settlementPoller;
             this.manaUsdRateReader = manaUsdRateReader;
             this.chainConfig = chainConfig;
             this.identityCache = identityCache;
             this.creditsFeatureAccess = creditsFeatureAccess;
             this.isFeatureEnabled = isFeatureEnabled;
+            executor = new UseCreditsExecutor(creditsAPIClient, metaTxRelayer, settlementPoller);
         }
 
         public async UniTask<CreditsQuoteResult> QuoteAsync(ShopListingDto listing, CancellationToken ct)
@@ -67,7 +61,7 @@ namespace DCL.MarketplaceCredits.Purchase
 
             try
             {
-                return IsStoreMint(listing)
+                return listing.IsStoreMint()
                     ? await QuoteStoreMintInternalAsync(listing, ct)
                     : await QuoteInternalAsync(listing.tradeId, identity.Address, ct);
             }
@@ -103,9 +97,6 @@ namespace DCL.MarketplaceCredits.Purchase
                 return new CreditsPurchaseResult(CreditsPurchaseError.UnknownError, message: e.Message);
             }
         }
-
-        private static bool IsStoreMint(ShopListingDto listing) =>
-            string.Equals(listing.acquisition, "store", StringComparison.OrdinalIgnoreCase);
 
         private async UniTask<CreditsQuoteResult> QuoteStoreMintInternalAsync(ShopListingDto listing, CancellationToken ct)
         {
@@ -229,7 +220,7 @@ namespace DCL.MarketplaceCredits.Purchase
                     return Fail(CreditsPurchaseError.ListingNotAvailable, message: e.Message);
                 }
 
-                if (fresh == null || !IsStoreMint(fresh) || fresh.available <= 0 || string.IsNullOrEmpty(fresh.manaWei))
+                if (fresh == null || !fresh.IsStoreMint() || fresh.available <= 0 || string.IsNullOrEmpty(fresh.manaWei))
                     return Fail(CreditsPurchaseError.ListingNotAvailable, message: "The mint is no longer available");
 
                 mint = new StoreMintTarget(mint.CollectionAddress, mint.ItemId, fresh.manaWei!);
@@ -279,116 +270,48 @@ namespace DCL.MarketplaceCredits.Purchase
 
             if (authorization.usdCents > quote.UsdCents)
             {
-                await ReleaseIntentAsync(authorization.credit.id);
+                await executor.ReleaseIntentAsync(authorization.credit.id);
                 return Fail(CreditsPurchaseError.PriceChanged, message: $"Authorized for {authorization.usdCents} cents, buyer confirmed {quote.UsdCents}");
             }
 
-            string useCreditsCalldata;
-            BigInteger authorizedCap;
+            string externalCallTarget;
+            byte[] externalCallSelector;
+            byte[] externalCallData;
 
             try
             {
-                authorizedCap = BigInteger.Parse(authorization.maxCreditedValue)
-                                + CreditsTradeEncoder.UncreditedValue(authorization.maxCreditedValue, authorization.credit.availableAmount);
-
-                long externalCallExpiresAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds() + EXTERNAL_CALL_TTL_SECONDS;
-
-                useCreditsCalldata = quote.Kind == CreditsListingKind.StoreMint
-                    ? CreditsTradeEncoder.BuildStoreMintUseCreditsCalldata(
-                        chainConfig.CollectionStoreAddress, mint.CollectionAddress, mint.ItemId, mint.PriceWei,
-                        buyer, authorization.credit, authorization.maxCreditedValue,
-                        externalCallExpiresAt, RandomSalt())
-                    : CreditsTradeEncoder.BuildUseCreditsCalldata(
-                        quote.Trade!, buyer, authorization.credit, authorization.maxCreditedValue,
-                        externalCallExpiresAt, RandomSalt());
+                if (quote.Kind == CreditsListingKind.StoreMint)
+                {
+                    externalCallTarget = chainConfig.CollectionStoreAddress;
+                    (externalCallSelector, externalCallData) = CreditsTradeEncoder.BuildStoreBuyCall(mint.CollectionAddress, mint.ItemId, mint.PriceWei, buyer);
+                }
+                else
+                {
+                    externalCallTarget = quote.Trade!.contract;
+                    (externalCallSelector, externalCallData) = CreditsTradeEncoder.BuildAcceptCall(quote.Trade!, buyer);
+                }
             }
             catch (Exception e)
             {
                 ReportHub.LogException(e, new ReportData(ReportCategory.CREDITS_PURCHASE));
-                await ReleaseIntentAsync(authorization.credit.id);
+                await executor.ReleaseIntentAsync(authorization.credit.id);
                 return Fail(CreditsPurchaseError.EncodingFailed, message: e.Message);
             }
 
-            if (authorizedCap < requiredManaWei)
-            {
-                ReportHub.LogWarning(ReportCategory.CREDITS_PURCHASE,
-                    $"Authorized cap {authorizedCap} wei cannot cover the {requiredManaWei} wei {QuoteLabel(quote)} draws");
+            var request = new UseCreditsRequest(buyer, QuoteLabel(quote), externalCallTarget, externalCallSelector, externalCallData,
+                authorization.credit, authorization.maxCreditedValue, requiredManaWei, BigInteger.MinusOne);
 
-                await ReleaseIntentAsync(authorization.credit.id);
-                return Fail(CreditsPurchaseError.PriceChanged, message: "The authorized credit cannot cover this purchase");
-            }
+            UseCreditsOutcome outcome = await executor.ExecuteAsync(request, SetState, ct);
 
-            SetState(CreditsPurchaseState.Signing);
-
-            RelayResult relay;
-
-            try { relay = await metaTxRelayer.RelayUseCreditsAsync(buyer, useCreditsCalldata, ct); }
-            catch (OperationCanceledException)
-            {
-                await ReleaseIntentAsync(authorization.credit.id);
-                throw;
-            }
-            string? txHash = null;
-
-            switch (relay.Outcome)
-            {
-                case RelayOutcome.Broadcast:
-                    txHash = relay.TxHash;
-                    break;
-                case RelayOutcome.SignatureRejected:
-                    await ReleaseIntentAsync(authorization.credit.id);
-                    return Fail(CreditsPurchaseError.SignatureRejected, message: relay.Message);
-                case RelayOutcome.SigningFailed:
-                    await ReleaseIntentAsync(authorization.credit.id);
-                    return Fail(CreditsPurchaseError.SigningFailed, message: relay.Message);
-                case RelayOutcome.AmbiguousBroadcast:
-                    SetState(CreditsPurchaseState.Failed);
-                    return new CreditsPurchaseResult(CreditsPurchaseError.SettlementPending, message: relay.Message);
-                case RelayOutcome.RelayerRejected:
-                    ReportHub.LogWarning(ReportCategory.CREDITS_PURCHASE, $"Relayer refused {QuoteLabel(quote)}: {relay.Message}");
-                    await ReleaseIntentAsync(authorization.credit.id);
-                    return Fail(CreditsPurchaseError.RelayerUnavailable, message: relay.Message);
-            }
-
-            if (string.IsNullOrEmpty(txHash))
-            {
-                await ReleaseIntentAsync(authorization.credit.id);
-                return Fail(CreditsPurchaseError.RelayerUnavailable, message: "No transaction hash");
-            }
-
-            SetState(CreditsPurchaseState.WaitingSettlement);
-
-            SettlementOutcome settlement = await settlementPoller.WaitForSettlementAsync(txHash!, SETTLEMENT_TIMEOUT, ct); // non-null: guarded by the IsNullOrEmpty check above
-
-            switch (settlement)
-            {
-                case SettlementOutcome.Confirmed:
-                    SetState(CreditsPurchaseState.Success);
-                    return CreditsPurchaseResult.Ok(txHash!);
-                case SettlementOutcome.Reverted:
-                    await ReleaseIntentAsync(authorization.credit.id);
-                    return Fail(CreditsPurchaseError.TransactionReverted, txHash);
-                default:
-                    SetState(CreditsPurchaseState.Failed);
-                    return new CreditsPurchaseResult(CreditsPurchaseError.SettlementPending, txHash);
-            }
+            return outcome.Success
+                ? CreditsPurchaseResult.Ok(outcome.TxHash!)
+                : new CreditsPurchaseResult(outcome.Error, outcome.TxHash, outcome.Message);
         }
 
         private static string QuoteLabel(in CreditsPurchaseQuote quote) =>
             quote.Kind == CreditsListingKind.StoreMint
                 ? $"mint {quote.Mint.CollectionAddress}-{quote.Mint.ItemId}"
                 : $"trade {quote.Trade!.id}";
-
-        private async UniTask ReleaseIntentAsync(string creditId)
-        {
-            using var timeoutCts = new CancellationTokenSource(RELEASE_INTENT_TIMEOUT);
-
-            try { await creditsAPIClient.ReleaseUsdIntentsAsync(new[] { creditId }, timeoutCts.Token); }
-            catch (Exception e)
-            {
-                ReportHub.LogWarning(ReportCategory.CREDITS_PURCHASE, $"Failed to release credit intent {creditId}: {e.Message}");
-            }
-        }
 
         private CreditsPurchaseResult Fail(CreditsPurchaseError error, string? txHash = null, string? message = null)
         {
@@ -398,15 +321,5 @@ namespace DCL.MarketplaceCredits.Purchase
 
         private void SetState(CreditsPurchaseState state) =>
             StateChanged?.Invoke(state);
-
-        private static byte[] RandomSalt()
-        {
-            var salt = new byte[32];
-
-            using (RandomNumberGenerator rng = RandomNumberGenerator.Create())
-                rng.GetBytes(salt);
-
-            return salt;
-        }
     }
 }
