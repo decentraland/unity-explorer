@@ -89,14 +89,17 @@ namespace DCL.UI.DuplicateIdentityPopup
 
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
         {
-            if (session == null || legacyNotice) { await UniTask.Never(ct); return; }
             do
             {
-                session.CheckWatchdog(DateTime.UtcNow);
+                if (session != null)
+                {
+                    if (session.Current != SessionControl.Status.Active) legacyNotice = false;
+                    session.CheckWatchdog(DateTime.UtcNow);
+                }
                 Refresh();
                 await UniTask.Delay(250, cancellationToken: ct);
             }
-            while (session.Current is not (SessionControl.Status.Active or SessionControl.Status.Authenticating));
+            while (session == null || legacyNotice || session.Current is not (SessionControl.Status.Active or SessionControl.Status.Authenticating));
         }
     }
 }

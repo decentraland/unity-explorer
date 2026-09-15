@@ -110,6 +110,55 @@ namespace DCL.Tests.Editor
         }
 
         [Test]
+        public async Task UpgradeLegacyPopupAndReconnectThroughActualButton()
+        {
+            // Arrange
+            using var oldIdentity = new IWeb3Identity.Random();
+            using var newIdentity = new IWeb3Identity.Random();
+            using var cache = new MemoryWeb3IdentityCache();
+            cache.Identity = oldIdentity;
+            var session = SessionControl.For(cache);
+            var prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEngine.GameObject>("Assets/DCL/UI/DuplicateIdentityPopup/DuplicateIdentityWindow.prefab");
+            var instance = UnityEngine.Object.Instantiate(prefab);
+            var view = instance.GetComponent<UI.DuplicateIdentityPopup.DuplicateIdentityWindowView>();
+            var invoked = false;
+            var controller = new UI.DuplicateIdentityPopup.DuplicateIdentityWindowController(() => view, session,
+                token => session.ReauthenticateAsync(_ =>
+                {
+                    invoked = true;
+                    Assert.IsNull(cache.Identity);
+                    cache.Identity = newIdentity;
+                    return UniTask.CompletedTask;
+                }, token));
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+            try
+            {
+                UniTask lifecycle = controller.LaunchViewLifeCycleAsync(new MVC.CanvasOrdering(MVC.CanvasOrdering.SortingLayer.Overlay, 0), default, cts.Token);
+                Assert.AreEqual("Session Ended", view.Title.text);
+
+                // Act
+                session.Stop(session.Generation, SessionControl.Status.Superseded);
+                await UniTask.Delay(300, cancellationToken: cts.Token);
+                Assert.AreEqual("Connected elsewhere", view.Title.text);
+                Assert.AreEqual("Reconnect here", view.ActionLabel.text);
+                view.ExitButton.onClick.Invoke();
+                await lifecycle;
+
+                // Assert
+                Assert.IsTrue(invoked);
+                Assert.AreSame(newIdentity, cache.Identity);
+                Assert.IsTrue(session.CanRecover(session.Generation));
+            }
+            finally
+            {
+                cts.Cancel();
+                await controller.HideViewAsync(CancellationToken.None);
+                controller.Dispose();
+                UnityEngine.Object.DestroyImmediate(instance);
+            }
+        }
+
+        [Test]
         public void DecodeAndReencodeCanonicalProtocolGoldens()
         {
             string path = Path.Combine(UnityEngine.Application.dataPath, "../TestResources/iteration-2/session-control.json");
