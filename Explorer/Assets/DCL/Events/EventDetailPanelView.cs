@@ -110,7 +110,7 @@ namespace DCL.Communities.EventInfo
             thumbnailLoader.LoadCommunityThumbnailFromUrlAsync(eventData.Image, eventImage, defaultThumbnail, cancellationToken, true).Forget();
             eventDate.text = EventUtilities.GetEventTimeText(eventData);
             eventName.text = eventData.Name;
-            hostName.text = string.Format(HOST_FORMAT, eventData.User_name);
+            hostName.text = string.Format(HOST_FORMAT, eventData.UserName);
             UpdateInterestedButtonState(eventData.Attending);
             eventDescription.text = eventData.Description;
             jumpInButton.gameObject.SetActive(eventData.Live);
@@ -120,7 +120,7 @@ namespace DCL.Communities.EventInfo
             if (placeData != null)
                 placeNameText.text = eventData.World ? $"{placeData.title} ({placeData.world_name})" : $"{placeData.title} ({eventData.X},{eventData.Y})";
             else
-                placeNameText.text = $"{eventData.Scene_name} ({eventData.X},{eventData.Y})";
+                placeNameText.text = $"{eventData.SceneName} ({eventData.X},{eventData.Y})";
 
             GenerateRecurrentSchedules(eventData);
         }
