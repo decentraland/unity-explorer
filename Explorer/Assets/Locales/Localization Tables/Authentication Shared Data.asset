@@ -113,6 +113,14 @@ MonoBehaviour:
     m_Key: BODY_TYPE_B
     m_Metadata:
       m_Items: []
+  - m_Id: 354034004089888768
+    m_Key: PLAY_AS_GUEST
+    m_Metadata:
+      m_Items: []
+  - m_Id: 354053876165369856
+    m_Key: LOGIN_OR_SIGNUP
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:
