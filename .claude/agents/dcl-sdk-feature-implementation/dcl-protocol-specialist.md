@@ -60,13 +60,9 @@ Makefile
   option (ecs_component_id) = <ID>;
   ```
 
-## Component ID Ranges
+## Component ID Range
 
-| Range | Purpose |
-|-------|---------|
-| `12xx` | Main branch components |
-| `14xx` | Experimental branch components |
-| `16xx` | Protocol Squad experimental components |
+All new SDK components take an ID from the `12xx` block (1200–1299). Pick the next free ID after the highest one listed on `main`. The former `14xx` (experimental) and `16xx` (Protocol Squad) ranges were never assigned and are retired now that work branches from `main`.
 
 **Always verify ID uniqueness:**
 ```bash

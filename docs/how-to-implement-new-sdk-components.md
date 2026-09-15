@@ -35,7 +35,7 @@ option (ecs_component_id) = 1100;
 
 > **NOTE:** With the repo cloned locally you can run `make list-components-ids` and `make check-component-id ID=xxx` to make sure your component is using a **unique id**. On Windows you can run this instead: `bash -c "grep -rh 'option (common\.ecs_component_id)' proto/ --include='*.proto' | sed -E 's/.*= ([0-9]+);/\1/' | sort -n | nl"`
 
-**IMPORTANT:** New components going directly to `main` should have a `12xx` ID (or cover the previous unused IDs). New components going to `experimental` should have a `14xx` ID. DAO's Regenesis Labs (AKA Protocol Squad) experimental feature components will have a `16xx` ID. This was defined to avoid ID conflicts when an experimental feature component is taken to `main`.
+**IMPORTANT:** New components take a `12xx` ID: the next free one after the highest listed on `main`. The `14xx` (experimental) and `16xx` (DAO's Regenesis Labs / Protocol Squad) ranges were reserved to avoid conflicts when an experimental component was promoted to `main`. They were never assigned and are retired now that component work branches from `main`.
 
 Example of `.proto`:
 

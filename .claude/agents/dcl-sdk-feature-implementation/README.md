@@ -56,7 +56,7 @@ Fields:
 - `optional bool enabled = 2;` // default true
 - `oneof shape { PointShape point = 10; SphereShape sphere = 11; }`
 
-Component ID: 1201 (main range — verify with `make check-component-id`)
+Component ID: 1201 (`12xx` main range — take the next free ID from `make list-components-ids`)
 
 ### PBYourComponentResult (GOVS — Explorer writes, scene reads)
 Result component that reports events back to the scene.
@@ -109,10 +109,7 @@ The architect will:
 Read the plan carefully before approving. This is the cheapest moment to catch mistakes — corrections at this stage cost nothing, corrections after agents have written code across 4 repos are expensive.
 
 Things to check:
-- Are component IDs in the right range?
-  - `12xx` — main branch components (most common for new work)
-  - `14xx` — experimental branch components
-  - `16xx` — Protocol Squad experimental components
+- Are component IDs in the `12xx` range and free on `main` (`make check-component-id ID=<id>`)? Older docs mention `14xx`/`16xx` experimental ranges; they were never used and are retired.
 - Do field types reuse existing common types (`Vector3`, `Color4`, `FloatRange`, etc.) instead of redefining them?
 - Is the LWW vs GOVS classification correct for each component?
 - Does the plan cover the full component lifecycle: instantiation, update, component removal, entity destruction, world disposal?

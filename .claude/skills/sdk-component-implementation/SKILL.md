@@ -17,10 +17,7 @@ user-invocable: false
 
 ### Step 1: Protocol Definition
 
-Create protobuf definition in the `protocol` repository with a unique component ID:
-- `12xx` -- Main components
-- `14xx` -- Experimental components
-- `16xx` -- Protocol Squad components
+Create protobuf definition in the `protocol` repository (branch from `main`) with a unique component ID from the `12xx` block. Take the next free ID after the highest one listed by `make list-components-ids`. The `14xx`/`16xx` experimental ranges are retired.
 
 ### Step 2: TypeScript Code Generation
 
