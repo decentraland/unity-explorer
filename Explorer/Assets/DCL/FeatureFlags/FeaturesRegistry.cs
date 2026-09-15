@@ -69,7 +69,8 @@ namespace DCL.FeatureFlags
                 [FeatureId.PointAt] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.POINT_AT, featureFlags.IsEnabled(FeatureFlagsStrings.POINT_AT) || Application.isEditor),
                 [FeatureId.AvatarContextMenu] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.AVATAR_CONTEXT_MENU, featureFlags.IsEnabled(FeatureFlagsStrings.AVATAR_CONTEXT_MENU) || Application.isEditor),
                 [FeatureId.DoubleClickWalk] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.DOUBLE_CLICK_WALK, featureFlags.IsEnabled(FeatureFlagsStrings.DOUBLE_CLICK_WALK)),
-                [FeatureId.Pulse] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.PULSE_MULTIPLAYER, featureFlags.IsEnabled(FeatureFlagsStrings.PULSE), requireDebug: false) && !localSceneDevelopment,
+                // Local scene development resolves no remote feature flags, so Pulse is deterministically on there; --pulse false opts back into LiveKit-only.
+                [FeatureId.Pulse] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.PULSE_MULTIPLAYER, localSceneDevelopment || featureFlags.IsEnabled(FeatureFlagsStrings.PULSE), requireDebug: false),
                 [FeatureId.ByteWeightedLoadingProgress] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.BYTE_WEIGHTED_LOADING_PROGRESS, featureFlags.IsEnabled(FeatureFlagsStrings.BYTE_WEIGHTED_LOADING_PROGRESS) || isEditor),
                 [FeatureId.HardwareFingerprint] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.HARDWARE_FINGERPRINT, featureFlags.IsEnabled(FeatureFlagsStrings.HARDWARE_FINGERPRINT)),
                 [FeatureId.McpServer] = appArgs.HasFlag(AppArgsFlags.MCP) || appArgs.HasFlag(AppArgsFlags.MCP_PORT),
@@ -77,6 +78,7 @@ namespace DCL.FeatureFlags
                 [FeatureId.UseCustomMediaPlayerMacSilicon] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.USE_CUSTOM_MEDIA_PLAYER, featureFlags.IsEnabled(FeatureFlagsStrings.USE_CUSTOM_MEDIA_PLAYER_MAC_SILICON), requireDebug: false),
                 [FeatureId.UseCustomMediaPlayerMacIntel] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.USE_CUSTOM_MEDIA_PLAYER, featureFlags.IsEnabled(FeatureFlagsStrings.USE_CUSTOM_MEDIA_PLAYER_MAC_INTEL), requireDebug: false),
                 [FeatureId.BugReport] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.BUG_REPORT, featureFlags.IsEnabled(FeatureFlagsStrings.BUG_REPORT) || isEditor),
+                [FeatureId.InGameShop] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.IN_GAME_SHOP, featureFlags.IsEnabled(FeatureFlagsStrings.IN_GAME_SHOP) || isEditor),
                 // Note: COMMUNITIES feature is not cached here because it depends on user identity
             });
 
@@ -224,5 +226,6 @@ namespace DCL.FeatureFlags
         UseCustomMediaPlayerMacIntel = 73,
         NearbyVoiceChatTip = 74,
         BugReport = 75,
+        InGameShop = 76,
     }
 }

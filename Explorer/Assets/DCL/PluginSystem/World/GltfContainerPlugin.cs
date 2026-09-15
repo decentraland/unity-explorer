@@ -1,9 +1,5 @@
 using Arch.SystemGroups;
-using DCL.SceneRunner.Scene;
 using Cysharp.Threading.Tasks;
-using DCL.Ipfs;
-using DCL.Optimization.Pools;
-using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.RealmNavigation;
 using DCL.ResourcesUnloading;
@@ -19,7 +15,6 @@ using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.GLTFContainer.Systems;
 using ECS.Unity.Visibility.Systems;
 using System.Collections.Generic;
-using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.GLTF;
 using ECS.StreamableLoading.GLTF.DownloadProvider;
 using ECS.Unity.GltfNodeModifiers.Systems;

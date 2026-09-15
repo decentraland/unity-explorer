@@ -24,6 +24,21 @@ namespace Global.AppArgs
         public const string GATEKEEPER_URL = "gatekeeper-url";
 
         /// <summary>
+        ///     Lets a realm's comms adapter be served over cleartext http, as an e2e fixture's is, provided it
+        ///     resolves to loopback. Command line only, and deliberately absent from the deep-link allowlist:
+        ///     it lowers a transport guarantee, which is never a link's call to make.
+        /// </summary>
+        public const string ACCEPT_UNTRUSTED_REALM = "accept-untrusted-realm";
+
+        /// <summary>
+        ///     Routes every supported service through this gateway origin instead of <c>gateway.{base-domain}</c>,
+        ///     and forces routing on: naming a gateway is the opt-in the <c>use-gateway</c> feature flag would
+        ///     otherwise carry, so the flag is ignored. Command line only — it aims the session's whole
+        ///     supported-service traffic at the named host, so a deep link must never set it.
+        /// </summary>
+        public const string GATEWAY = "gateway";
+
+        /// <summary>
         ///     Points every backend host at a deployment served under this base domain instead of
         ///     decentraland.{org,zone}, selecting <c>DecentralandEnvironment.Custom</c>. Applied from the
         ///     command line only: it gates which realm hosts are trusted, so it has to be read before a pending deep
@@ -112,6 +127,8 @@ namespace Global.AppArgs
 
         public const string DISCOVER = "discover";
 
+        public const string IN_GAME_SHOP = "in-game-shop";
+
         public const string FORCE_BACKFACE_CULLING = "force-backface-culling";
 
         public const string NAME_COLOR_CHANGE = "name-color-change";
@@ -169,8 +186,6 @@ namespace Global.AppArgs
         ///     content base is derived from the realm the client already has.
         /// </summary>
         public const string LOCAL_AB = "local-ab";
-
-        public const string OPTIMIZED_ASSETS_URL = "optimized-assets-url";
 
         /// <summary>Presence forces the abgen pipeline on without waiting for the abgen-pipeline feature flag.</summary>
         public const string ABGEN_PIPELINE = "abgen-pipeline";

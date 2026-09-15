@@ -83,7 +83,7 @@ namespace DCL.Web3.Authenticators
         public async UniTask<EthApiResponse> SendAsync(EthApiRequest request, Web3RequestSource source, CancellationToken ct)
         {
             if (!whitelistMethods.Contains(request.method))
-                throw new Web3Exception($"The method is not allowed: {request.method}");
+                throw new Web3MethodNotAllowedException($"The method is not allowed: {request.method}");
 
             if (string.Equals(request.method, "eth_accounts")
                 || string.Equals(request.method, "eth_requestAccounts"))

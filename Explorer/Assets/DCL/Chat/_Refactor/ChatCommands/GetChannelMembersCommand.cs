@@ -1,7 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Chat.ChatViewModels;
 using DCL.UI.ProfileElements;
-using System;
 using System.Collections.Generic;
 using System.Threading;
 
@@ -23,7 +22,7 @@ namespace DCL.Chat.ChatCommands
         {
             targetList.Clear();
 
-            foreach (var member in rawMembers)
+            foreach (ChatMemberListData member in rawMembers)
             {
                 var viewModel = new ChatMemberListViewModel(member.Profile, member.ConnectionStatus == ChatMemberConnectionStatus.Online);
 
@@ -32,9 +31,6 @@ namespace DCL.Chat.ChatCommands
                 GetProfileThumbnailCommand.Instance.ExecuteAsync(viewModel.ProfileThumbnail, chatConfig.DefaultProfileThumbnail, viewModel.Profile, ct)
                                           .Forget();
             }
-
-            targetList.Sort(static (a, b)
-                => string.Compare(a.UserName, b.UserName, StringComparison.OrdinalIgnoreCase));
         }
     }
 }

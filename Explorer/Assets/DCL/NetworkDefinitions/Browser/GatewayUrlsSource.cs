@@ -21,8 +21,10 @@ namespace DCL.Browser
             DecentralandUrl.ApiPlaces,
             DecentralandUrl.ApiWorlds,
             DecentralandUrl.ApiDestinations,
+            DecentralandUrl.POI,
             DecentralandUrl.Map,
             DecentralandUrl.ContentModerationReport,
+            DecentralandUrl.ApiEvents,
 
             DecentralandUrl.ApiAuth,
             DecentralandUrl.ApiChunks,
@@ -37,10 +39,12 @@ namespace DCL.Browser
             DecentralandUrl.RemotePeersWorld,
             DecentralandUrl.ArchipelagoStatus,
             DecentralandUrl.ArchipelagoHotScenes,
+            DecentralandUrl.WorldCommsAdapter,
 
             // Content Servers
             DecentralandUrl.AssetBundlesCDN,
             DecentralandUrl.LodAssetBundlesCDN,
+            DecentralandUrl.WorldServer,
             DecentralandUrl.WorldContentServer,
 
             DecentralandUrl.Genesis,
@@ -81,13 +85,29 @@ namespace DCL.Browser
             "profile-images",
         };
 
+        /// <summary>
+        ///     The abgen pipeline's hosts, spelled as <see cref="DecentralandUrlsSource" /> composes them. They are
+        ///     this deployment's subdomains like the regular ones, so <see cref="RawUrl" /> routes them despite the
+        ///     flag-dependent caching the flip gives them.
+        /// </summary>
+        private static readonly string[] ABGEN_SUBDOMAINS =
+        {
+            "asset-bundle-registry-abgen",
+            "abgen-cdn",
+        };
+
+        // The origin --gateway named, already normalized by TryNormalizeGatewayPrefix, or null to use
+        // gateway.{BaseDomain}. Naming one is itself the opt-in, so it also stands in for the flag.
+        private readonly string? cliGatewayPrefix;
         private readonly List<string> resolvedNonClientHosts;
+        private readonly string[] abgenOrigins;
         private readonly string gatewayPrefix;
         private readonly string domainSuffix;
 
-        // Flag-gated for every environment alike: a custom deployment only routes through a gateway when the
-        // "use-gateway" flag its own feature-flags backend serves says so, so opting in stays that deployment's call.
-        private bool enabled => FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.USE_GATEWAY);
+        // Otherwise flag-gated for every environment alike: a custom deployment only routes through a gateway
+        // when the "use-gateway" flag its own feature-flags backend serves says so, so opting in stays that
+        // deployment's call.
+        private bool enabled => cliGatewayPrefix != null || FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.USE_GATEWAY);
 
         public GatewayUrlsSource(
             DecentralandEnvironment environment,
@@ -96,17 +116,25 @@ namespace DCL.Browser
             GatekeeperMode gatekeeperMode = GatekeeperMode.Org,
             string customGatekeeperUrl = "",
             string? cliGatekeeperUrl = null,
-            string? cliOptimizedAssetsUrl = null,
+            string? localAbBaseUrl = null,
             string? customBaseDomain = null,
-            bool abgenPipelineForced = false)
-            : base(environment, realmData, launchMode, gatekeeperMode, customGatekeeperUrl, cliGatekeeperUrl, cliOptimizedAssetsUrl, customBaseDomain, abgenPipelineForced)
+            bool abgenPipelineForced = false,
+            string? cliGatewayPrefix = null)
+            : base(environment, realmData, launchMode, gatekeeperMode, customGatekeeperUrl, cliGatekeeperUrl, localAbBaseUrl, customBaseDomain, abgenPipelineForced)
         {
+            this.cliGatewayPrefix = cliGatewayPrefix;
+
             resolvedNonClientHosts = new List<string>(SUPPORTED_SUBDOMAINS_OF_NON_CLIENT_ORIGIN.Length);
 
             foreach (string subdomain in SUPPORTED_SUBDOMAINS_OF_NON_CLIENT_ORIGIN)
                 resolvedNonClientHosts.Add($"{subdomain}.{BaseDomain}");
 
-            gatewayPrefix = $"https://{GATEWAY_SUBDOMAIN}.{BaseDomain}/";
+            abgenOrigins = new string[ABGEN_SUBDOMAINS.Length];
+
+            for (var i = 0; i < ABGEN_SUBDOMAINS.Length; i++)
+                abgenOrigins[i] = $"https://{ABGEN_SUBDOMAINS[i]}.{BaseDomain}";
+
+            gatewayPrefix = cliGatewayPrefix ?? $"https://{GATEWAY_SUBDOMAIN}.{BaseDomain}/";
             domainSuffix = $".{BaseDomain}";
         }
 
@@ -115,6 +143,33 @@ namespace DCL.Browser
 
         public new static GatewayUrlsSource CreateForTest(string customBaseDomain, ILaunchMode launchMode) =>
             new (DecentralandEnvironment.Custom, new IRealmData.Fake(), launchMode, customBaseDomain: customBaseDomain);
+
+        /// <summary>
+        ///     <paramref name="gatewayUrl" /> reduced to the prefix every gatewayed url is built from, or false when
+        ///     it is not an absolute http(s) url with a host and without query or fragment. The caller reports and
+        ///     abandons the launch rather than coercing a value into something plausible: this arg forces routing on,
+        ///     so a misread one sends every supported service to a host nobody named.
+        /// </summary>
+        public static bool TryNormalizeGatewayPrefix(string gatewayUrl, out string prefix)
+        {
+            prefix = string.Empty;
+
+            if (!Uri.TryCreate(gatewayUrl.Trim(), UriKind.Absolute, out Uri? uri)
+                || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps)
+                || string.IsNullOrEmpty(uri.Host)
+                || !string.IsNullOrEmpty(uri.Query)
+                || !string.IsNullOrEmpty(uri.Fragment))
+                return false;
+
+            prefix = uri.ToString().TrimEnd('/') + "/";
+            return true;
+        }
+
+        /// <summary>
+        ///     The origin every supported service is routed through, or null while routing is off — a caller must not
+        ///     trust a prefix this source is not actually using.
+        /// </summary>
+        public override string? GatewayOrigin => enabled ? gatewayPrefix : null;
 
         /// <summary>
         ///     Transforms a 3rd party URL, DecentralandURLs are already transformed by <see cref="RawUrl" />
@@ -146,14 +201,33 @@ namespace DCL.Browser
                 return serviceUrl;
 
             // FeatureFlagsDependent from base.RawUrl() signals a consolidated / optimized-assets URL that
-            // must NOT be gateway-rewritten (it resolves to its own origin). If a future URL legitimately
-            // needs FeatureFlagsDependent caching AND gateway routing, give UrlData a dedicated skipGateway
-            // field instead of widening this guard. Custom hosts also pass through untouched.
-            if (serviceUrl.Caching == CacheBehaviour.FeatureFlagsDependent || !IsGatewayTransformable(serviceUrl.Url))
+            // must NOT be gateway-rewritten (it resolves to its own origin). The abgen hosts are the exception:
+            // they carry that caching because the flip decides them, not because they are their own origin.
+            // Custom hosts also pass through untouched.
+            if ((serviceUrl.Caching == CacheBehaviour.FeatureFlagsDependent && !IsAbgenHost(serviceUrl.Url))
+                || !IsGatewayTransformable(serviceUrl.Url))
                 return serviceUrl;
 
             // it is called only once and then cached in the base class
             return new UrlData(CacheBehaviour.FeatureFlagsDependent, TransformToGateway(serviceUrl.Url));
+        }
+
+        /// <summary>
+        ///     True for <c>https://{abgen subdomain}.{BaseDomain}</c> and anything under it. A registry endpoint
+        ///     composed off an already-gatewayed base is not one: its host is the gateway's.
+        /// </summary>
+        private bool IsAbgenHost(string url)
+        {
+            foreach (string origin in abgenOrigins)
+            {
+                if (!url.StartsWith(origin, StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                if (url.Length == origin.Length || url[origin.Length] == '/')
+                    return true;
+            }
+
+            return false;
         }
 
         /// <summary>
@@ -228,45 +302,38 @@ namespace DCL.Browser
 
         /// <summary>
         ///     Transform: https://{subdomain}.{domain}/{path}
-        ///     to: https://gateway.{domain}/{subdomain}/{path}
+        ///     to: {gateway origin}/{subdomain}/{path} — gateway.{BaseDomain} unless <c>--gateway</c> named another.
         /// </summary>
-        private static string TransformToGateway(string url)
+        private string TransformToGateway(string url)
         {
+            string prefix = gatewayPrefix;
+
             int firstDot = url.IndexOf('.', HTTPS_PREFIX_LENGTH);
 
             if (firstDot < 0)
                 return url;
 
             // Already a gateway URL — don't double-transform
-            if (url.AsSpan(HTTPS_PREFIX_LENGTH, firstDot - HTTPS_PREFIX_LENGTH).Equals(GATEWAY_SUBDOMAIN.AsSpan(), StringComparison.OrdinalIgnoreCase))
+            if (url.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
                 return url;
 
             int subdomainLength = firstDot - HTTPS_PREFIX_LENGTH;
             int pathStart = url.IndexOf('/', firstDot);
             int domainEnd = pathStart >= 0 ? pathStart : url.Length;
-            int domainLength = domainEnd - firstDot;
             int pathLength = url.Length - domainEnd;
 
-            int resultLength = HTTPS_PREFIX_LENGTH + GATEWAY_SUBDOMAIN.Length + domainLength + 1 + subdomainLength + pathLength;
+            int resultLength = prefix.Length + subdomainLength + pathLength;
 
-            return string.Create(resultLength, (url, firstDot, domainLength, subdomainLength, pathStart, pathLength), static (span, state) =>
+            return string.Create(resultLength, (url, prefix, subdomainLength, pathStart, pathLength), static (span, state) =>
             {
                 ReadOnlySpan<char> src = state.url.AsSpan();
 
                 var pos = 0;
 
-                "https://".AsSpan().CopyTo(span);
-                pos += 8;
+                state.prefix.AsSpan().CopyTo(span);
+                pos += state.prefix.Length;
 
-                GATEWAY_SUBDOMAIN.AsSpan().CopyTo(span.Slice(pos));
-                pos += GATEWAY_SUBDOMAIN.Length;
-
-                src.Slice(state.firstDot, state.domainLength).CopyTo(span.Slice(pos));
-                pos += state.domainLength;
-
-                span[pos++] = '/';
-
-                src.Slice(8, state.subdomainLength).CopyTo(span.Slice(pos));
+                src.Slice(HTTPS_PREFIX_LENGTH, state.subdomainLength).CopyTo(span.Slice(pos));
                 pos += state.subdomainLength;
 
                 if (state.pathLength > 0)

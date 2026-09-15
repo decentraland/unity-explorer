@@ -37,8 +37,7 @@ namespace Global.Dynamic
         [SerializeField] internal HybridSceneContentServer remoteHybridSceneContentServer = HybridSceneContentServer.Goerli;
         [SerializeField] internal bool useRemoteAssetsBundles;
         [SerializeField] [Tooltip("Local scene development only: serve the scene as asset bundles JIT-converted by the explorer's "
-                                  + "embedded abgen sidecar (reading the preview server's content) instead of loading raw GLTFs; "
-                                  + "an explicit --optimized-assets-url overrides it")] internal bool useLocalAssetBundles;
+                                  + "embedded abgen sidecar (reading the preview server's content) instead of loading raw GLTFs")] internal bool useLocalAssetBundles;
         [SerializeField] [Tooltip("In Worlds there is one LiveKit room for all scenes so it's possible to communicate changes outside of the scene. "
                                   + "In Genesis City there are individual LiveKit rooms and only one connection at a time is maintained. "
                                   + "Toggle this flag to equalize this behavior")] internal bool isolateSceneCommunication;

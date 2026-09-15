@@ -12,11 +12,11 @@ namespace DCL.Multiplayer.Movement
     {
         public void BroadcastTeleport(Vector3 worldPosition)
         {
-            // RealmData is guaranteed to hold the destination realm by the time the teleport is broadcast
-            if (lastBroadcastRealm != null && lastBroadcastRealm != realmData.RealmName)
+            // The realm is guaranteed to hold the destination by the time the teleport is broadcast
+            if (lastBroadcastRealm != null && lastBroadcastRealm != pulseRealm.Value)
                 PurgeDifferentRealmPeers();
 
-            lastBroadcastRealm = realmData.RealmName;
+            lastBroadcastRealm = pulseRealm.Value;
 
             var outgoing = OutgoingMessage.Create(PacketMode.RELIABLE, ClientMessage.MessageOneofCase.Teleport);
 
@@ -33,7 +33,7 @@ namespace DCL.Multiplayer.Movement
             teleport.PositionXQuantized = relativePosition.x;
             teleport.PositionYQuantized = relativePosition.y;
             teleport.PositionZQuantized = relativePosition.z;
-            teleport.Realm = realmData.RealmName;
+            teleport.Realm = pulseRealm.Value;
 
             pulseService.Send(outgoing);
         }
@@ -62,7 +62,7 @@ namespace DCL.Multiplayer.Movement
             }
 
             // A same-tick-range realm change is not re-announced with PlayerLeft, so the removal happens here
-            if (teleport.Realm != realmData.RealmName)
+            if (teleport.Realm != pulseRealm.Value)
             {
                 peerIdCache.Remove(teleport.SubjectId);
                 removeIntentions.Enqueue(wallet);

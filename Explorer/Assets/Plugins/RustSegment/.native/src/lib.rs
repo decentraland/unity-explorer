@@ -10,11 +10,13 @@ pub type OperationHandleId = u64;
 pub const INVALID_OPERATION_HANDLE_ID: OperationHandleId = 0;
 
 #[repr(u8)]
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum Response {
     Success = 0,
     // Errors are propagated vie the error callback
     Error = 1,
+    // SQLITE_FULL from the persistent queue
+    ErrorDiskFull = 2,
 }
 
 /// # SAFTEY: The "C" callback must be threadsafe and not block
@@ -38,6 +40,7 @@ mod tests {
     use std::{println as info, println as warn};
 
     #[test]
+    #[ignore = "needs SEGMENT_WRITE_KEY/SEGMENT_QUEUE_PATH and network access; see README - Testing"]
     fn test_integration() {
         let write_key = std::env::var("SEGMENT_WRITE_KEY").unwrap();
         let persistent_path = std::env::var("SEGMENT_QUEUE_PATH").unwrap();

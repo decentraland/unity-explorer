@@ -1,17 +1,7 @@
-using Arch.Core;
-using Arch.System;
-using Arch.SystemGroups;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
-using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.SDKComponents.AvatarAttach.Components;
-using DCL.Utilities;
-using ECS.Abstract;
-using ECS.Groups;
-using ECS.LifeCycle;
-using ECS.LifeCycle.Components;
 using ECS.Unity.Transforms.Components;
-using SceneRunner.Scene;
 using System;
 using UnityEngine;
 

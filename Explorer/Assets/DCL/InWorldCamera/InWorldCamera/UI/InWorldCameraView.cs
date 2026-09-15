@@ -1,15 +1,12 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Audio;
-using DCL.Diagnostics;
 using DCL.UI;
 using DG.Tweening;
 using MVC;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.AddressableAssets;
 using UnityEngine.UI;
-using Utility.Ownership;
 
 namespace DCL.InWorldCamera.UI
 {

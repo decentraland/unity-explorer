@@ -105,7 +105,7 @@ namespace DCL.Passport.Fields
             cts?.SafeCancelAndDispose();
             cts = null;
             ContainerTransform.localScale = Vector3.one;
-            HoverBackgroundTransform.localScale = Vector3.zero;
+            HoverBackgroundTransform.localScale = Vector3.one;
             HoverBackgroundTransform.gameObject.SetActive(false);
         }
 
@@ -163,7 +163,7 @@ namespace DCL.Passport.Fields
             cts?.SafeCancelAndDispose();
             cts = new CancellationTokenSource();
             ContainerTransform.DOScale(Vector3.one, ANIMATION_TIME).SetEase(Ease.Flash).ToUniTask(cancellationToken: cts.Token);
-            HoverBackgroundTransform.DOScale(Vector3.zero, ANIMATION_TIME).SetEase(Ease.Flash)
+            HoverBackgroundTransform.DOScale(Vector3.one, ANIMATION_TIME).SetEase(Ease.Flash)
                                     .OnComplete(()=>HoverBackgroundTransform.gameObject.SetActive(false)).ToUniTask(cancellationToken: cts.Token);
         }
     }

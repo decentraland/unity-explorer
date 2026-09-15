@@ -17,7 +17,7 @@ Pulse is a direct peer transport built on ENet (reliable-UDP), distinct from Liv
 
 Pulse was introduced as a parallel pipe rather than a LiveKit replacement so:
 
-1. Roll-out can be gated behind `FeatureId.PULSE` and flipped on per-user or per-environment without rebuilding.
+1. Roll-out can be gated behind `FeatureId.Pulse` and flipped on per-user or per-environment without rebuilding.
 2. Messages sent over both transports are transparently de-duplicated by downstream consumers (see [multiplayer.md → Core Interfaces](multiplayer.md#core-interfaces) — the proxy implementations union inputs from both transports).
 3. LiveKit remains the source of truth for chat, voice, and scene-room semantics; Pulse handles player-state traffic that benefits from a tighter, more direct path.
 
@@ -33,16 +33,18 @@ Pulse is toggled by a single logical flag, evaluated by `FeaturesRegistry` as a 
 |---|---|---|
 | Program arg (override) | `--pulse true` / `--pulse false` | `AppArgsFlags.PULSE_MULTIPLAYER = "pulse"` |
 | Remote flag | `"pulse"` | `FeatureFlagsStrings.PULSE = "pulse"` |
-| Registry key | `FeatureId.PULSE` | Final boolean exposed to code |
+| Registry key | `FeatureId.Pulse` | Final boolean exposed to code |
 
 From `DCL/FeatureFlags/FeaturesRegistry.cs`:
 
 ```csharp
-[FeatureId.PULSE] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.PULSE_MULTIPLAYER, featureFlags.IsEnabled(FeatureFlagsStrings.PULSE), requireDebug: false)
-                    && !localSceneDevelopment,
+// Local scene development resolves no remote feature flags, so Pulse is deterministically on there; --pulse false opts back into LiveKit-only.
+[FeatureId.Pulse] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.PULSE_MULTIPLAYER, localSceneDevelopment || featureFlags.IsEnabled(FeatureFlagsStrings.PULSE), requireDebug: false),
 ```
 
-Override semantics: when `--pulse` is **specified** its value wins over the remote flag (`--pulse true` force-enables, `--pulse false` force-disables — useful for local development, integration testing, and ops kill-switching); when it is **not specified**, Pulse is driven by the remote feature flag. Local scene development always forces Pulse off.
+Override semantics: when `--pulse` is **specified** its value wins over the remote flag (`--pulse true` force-enables, `--pulse false` force-disables — useful for local development, integration testing, and ops kill-switching); when it is **not specified**, Pulse is driven by the remote feature flag.
+
+**Local scene development is the exception**: it resolves no remote feature flags (the feature-flag host is the local dev server), so the flag can never be *on* there and Pulse defaults on instead. `--pulse false` is the way back to the LiveKit-only behaviour local scene development had before. See [Realm — `PulseRealm`](#realm--pulserealm) for how concurrent dev processes stay isolated from one another.
 
 ### Where the flag is consumed
 
@@ -54,11 +56,11 @@ The flag is read **once** in `MultiplayerContainer.CreateAsync`, which seeds a s
   - The `PulseMultiplayerBus`, `PulseIncomingProfileAnnouncements`, `PulseRemoveIntentions`, and `ENetTransport` are **always** constructed; activation only swaps the Service and ProfilePropagation paths. The bus and incoming collectors simply never receive traffic when the service is a dummy (or the real service is disconnected).
 - **`LiveKitMessagesBroadcaster`** — holds the `PulseActivation` and reads `IsActive` **live** on every send (movement, emotes, and profiles all route through it). When Pulse is active it sends only to the peers that announced over LiveKit (the rest receive over Pulse); when Pulse is absent it broadcasts to every peer in the rooms.
 
-> `PulseActivation.IsActive` starts equal to `FeatureId.PULSE`. It flips to `false` exactly once — when the start-up connection is unreachable (see [Start-up fallback](#start-up-fallback)). It never flips at runtime.
+> `PulseActivation.IsActive` starts equal to `FeatureId.Pulse`. It flips to `false` exactly once — when the start-up connection is unreachable, or when the realm cannot be resolved (see [Start-up fallback](#start-up-fallback)). It never flips at runtime.
 
 ### Disabling behavior
 
-When Pulse is inactive (`FeatureId.PULSE` off, `--pulse false`, local scene development, or after a start-up fallback):
+When Pulse is inactive (`FeatureId.Pulse` off, `--pulse false`, or after a start-up fallback):
 
 - All four proxies in `MultiplayerContainer` still fan out to Pulse, but the Pulse side is a no-op — `PulseMultiplayerBus` methods early-return against a `Dummy` (or disconnected) service.
 - Incoming proxies' `Fill(...)` / `Bunch()` calls include empty Pulse lists.
@@ -71,10 +73,115 @@ The effective runtime cost of Pulse when disabled is a few dummy virtual calls p
 
 `StartPulseMultiplayerStartupOperation` connects to Pulse during login, passing a bounded attempt count (`5`) to `IPulseMultiplayerService.ConnectAsync(ct, maxAttempts)`:
 
+- Before connecting it awaits `PulseRealm.EnsureResolvedAsync(ct)`. If the realm is still empty afterwards — in local scene development, that means the dev server is unreachable — it calls `PulseActivation.Deactivate()` and returns success without connecting. An empty realm violates the server contract, so connecting anyway would join a session nothing can be filtered into.
 - If the connection keeps failing transiently across all 5 attempts (timing out, or dropped mid-handshake for a retriable reason such as `GRACEFUL` or `SERVER_FULL`), or fails terminally on any attempt (rejected handshake, `BANNED`, or another non-retriable disconnect reason), the operation calls `PulseActivation.Deactivate()` and returns success — login continues and the client behaves as if Pulse were absent.
 - If Pulse is already inactive (disabled / `--pulse false`), the operation is a no-op.
 
 Runtime reconnection failures (after a successful initial connect) do **not** fall back — the `StartRouting` / `HandleDisconnect` reconnection loop keeps retrying without flipping `PulseActivation`. A terminal handshake failure during a runtime reconnect (rejection, ban) stops the loop instead of retrying forever.
+
+---
+
+## Realm — `PulseRealm`
+
+Pulse has no rooms. The server partitions visibility by **exact realm-string match**, so the realm a
+peer announces is the only thing separating two sessions that share a Pulse instance. Every realm read
+and write in `PulseMultiplayerBus` — peer lookup (`GetWalletInRealm`), the stale-peer purge
+(`CollectWalletsNotInRealm` / `RemoveWhereNotInRealm`), the `PlayerJoined` / `TeleportPerformed`
+filters, `BroadcastTeleport`, and the handshake's `PlayerInitialState.Realm` — goes through
+`Connections/Pulse/PulseRealm.cs`:
+
+```csharp
+public class PulseRealm
+{
+    public string Value { get; }
+
+    public PulseRealm(IRealmData realmData, ILocalSceneEntityIdSource? localSceneEntityIdSource = null);
+
+    public UniTask EnsureResolvedAsync(CancellationToken ct);
+}
+```
+
+There is no interface and no second implementation — the optional constructor argument *is* the mode:
+
+| `localSceneEntityIdSource` | `Value` | `EnsureResolvedAsync` |
+|---|---|---|
+| `null` (the normal case) | `IRealmData.RealmName`, read **live** | no-op |
+| supplied (local scene development) | the derived local-development key, resolved once | fetches the dev server's entity id |
+
+The normal case reads live rather than caching because a realm change — teleporting between Genesis
+and a world — has to be visible to the very next message the bus sends or filters. It is a pure
+passthrough: outside local scene development this class changes nothing.
+
+`Value` is empty while a local-development realm is unresolved, and callers must not connect in that
+state: an empty realm violates the server contract and every incoming message would be filtered out.
+
+### The local-development realm key
+
+Local scene development has no realm of its own — every dev process would otherwise land in the same
+one and see each other's avatars. Each process instead derives a key from the preview entity id its
+dev server serves:
+
+```
+previewSceneId = "b64-" + base64(absoluteProjectRoot + "-" + machineId)   // minted by sdk-commands
+realmKey       = "lsd:" + previewSceneId
+```
+
+and, when that would exceed Pulse's `MaxRealmLength` of **255**, it collapses deterministically:
+
+```
+realmKey = "lsd:sha256:" + SHA256Hex(previewSceneId)
+```
+
+The hash is taken over `previewSceneId` **including** its `b64-` prefix, hex-encoded **lowercase**.
+The overflow form is always 75 characters, so it always fits. Hashed rather than truncated on
+purpose — see below.
+
+Because the hostname is part of `previewSceneId`, this yields per-folder **and** per-machine
+isolation: two developers who check the same project out to the same path still get different realms.
+All processes of one dev session share the key, and LAN clients pointed at the same dev server read
+the same served id, so they share it too.
+
+> **Nothing is exchanged.** Every party — this client, `sdk-commands`, bevy-explorer — derives the
+> key independently. That is what makes isolation work without a paired endpoint or handshake, and it
+> is also the failure mode: two implementations that derive even slightly different strings do not
+> error, their peers simply never see each other. This is the same class of bug as the LiveKit
+> `preview-${sceneId}` vs `LocalPreview:{sceneId}` room-name mismatch.
+>
+> The contract is written down once in js-sdk-toolchain's
+> [`docs/lsd-identity-and-pulse-realm.md`](https://github.com/decentraland/js-sdk-toolchain/blob/main/docs/lsd-identity-and-pulse-realm.md);
+> `PulseRealmShould` pins the exact strings, including the worked examples
+> published there. Keep both in sync.
+
+**Stability.** The key derives from the *entity id only*, never from a content hash. js-sdk-toolchain
+[#1529](https://github.com/decentraland/js-sdk-toolchain/pull/1529) versions per-file preview hashes
+by mtime but deliberately leaves the project directory's own entity id path-only, so the realm
+survives content edits, hot reloads and dev-server restarts. A content-shaped input would
+re-partition comms on every file save.
+
+### Where it is resolved
+
+`StartPulseMultiplayerStartupOperation` awaits `EnsureResolvedAsync` **before** `ConnectAsync`,
+because the realm goes out in the very first message — the handshake's `PlayerInitialState.Realm`.
+The fetch is the same two-step the gatekeeper scene room already does (`GET scene.json` → base parcel
+→ `POST content/entities/active` → `result[0].id`), extracted into
+`Connections/GateKeeper/Meta/LocalSceneEntityIdSource.cs` so there is one definition of "the local
+scene's entity id" rather than two that can drift.
+
+It never throws: an unresolvable realm leaves `Value` empty, the start-up operation deactivates Pulse
+and log-in continues on LiveKit alone.
+
+### Caveats
+
+- **Genesis bounds.** Pulse's `FieldValidator` rejects parcel indices outside Genesis City and
+  disconnects the peer, so a local scene outside those bounds would join a realm and then silently
+  fail to sync. `PulseRealm` logs a warning naming the parcel and the bounds when
+  it sees one. (`sdk-commands` already refuses to *start* such a scene, so this only fires for dev
+  servers it did not launch.)
+- **Endpoint.** Local scene development connects to the same org Pulse endpoint as any other session;
+  there is no `--pulse-url` override.
+- **Privacy.** The non-overflow key is reversible base64 of an absolute path and a hostname. The same
+  information already goes to the gatekeeper today, so this is not a new exposure — but it now travels
+  as a comms realm. The hashed form is the switch if that ever becomes a requirement.
 
 ---
 
@@ -1008,5 +1115,5 @@ In short: **Pulse focuses on low-latency player-state traffic** (movement, emote
 
 - **[Multiplayer](multiplayer.md)** — transport-neutral hub: shared interfaces, movement pipeline, entity/profile tables, SDK propagation.
 - **[Network Synchronization](livekit-networking.md)** — LiveKit transport, rooms, voice chat, message pipes.
-- **[Feature Flags](feature-flags.md)** — how `FeaturesRegistry` and `FeatureId.PULSE` are resolved.
+- **[Feature Flags](feature-flags.md)** — how `FeaturesRegistry` and `FeatureId.Pulse` are resolved.
 - **[App Arguments](app-arguments.md)** — `--pulse` and other launch flags.

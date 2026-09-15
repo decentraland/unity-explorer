@@ -1,9 +1,3 @@
-using NUnit.Framework;
-using System.Linq;
-using UnityEditor;
-using UnityEditor.AddressableAssets;
-using UnityEditor.AddressableAssets.Build.AnalyzeRules;
-
 namespace DCL.AssetsProvision.Tests
 {
     public class DuplicateAddressablesTest

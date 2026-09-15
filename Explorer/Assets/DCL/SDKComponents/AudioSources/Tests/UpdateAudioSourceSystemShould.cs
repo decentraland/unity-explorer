@@ -149,5 +149,26 @@ namespace DCL.SDKComponents.AudioSources.Tests
             Assert.That(afterUpdate.AudioSource!.time, Is.GreaterThanOrEqualTo(0f));
             Assert.That(afterUpdate.AudioSource.time, Is.LessThan(TestAudioClip.length));
         }
+
+        [Test]
+        public void SeedCurrentTimeOnCreationSoLaterVolumeChangeDoesNotReseek()
+        {
+            // Arrange
+            world.Add(component.ClipPromise.Entity, new StreamableLoadingResult<AudioClipData>(new AudioClipData(TestAudioClip)));
+
+            ref PBAudioSource sdk = ref world.Get<PBAudioSource>(entity);
+            sdk.AudioClipUrl = component.AudioClipUrl;
+            sdk.Playing = true;
+            sdk.CurrentTime = 0.5f;
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            AudioSourceComponent afterUpdate = world.Get<AudioSourceComponent>(entity);
+            Assert.That(afterUpdate.AudioSource, Is.Not.Null);
+            Assert.That(afterUpdate.AudioSource!.time, Is.GreaterThan(0f));
+            Assert.That(afterUpdate.LastAppliedCurrentTime, Is.EqualTo(afterUpdate.AudioSource.time).Within(0.01f));
+        }
     }
 }

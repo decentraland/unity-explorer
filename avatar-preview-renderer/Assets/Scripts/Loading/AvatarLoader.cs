@@ -45,6 +45,9 @@ namespace Loading
 
         private readonly HashSet<string> _hiddenCategories = new();
 
+        // Built on first use by GetIdlePose, then never again.
+        private Dictionary<string, BonePose> _idlePose;
+
         public async Awaitable LoadAvatar(BodyShape bodyShape, IEnumerable<EntityDefinition> wearableDefinitions,
             [CanBeNull] EntityDefinition emoteDefinition, string[] forceRenderCategories, AvatarColors colors)
         {
@@ -229,6 +232,53 @@ namespace Loading
             UpdateHighlight();
         }
 
+        /// <summary>
+        /// The rig's Idle clip at a fixed time, as bone-local TRS keyed by bone name. The item view
+        /// blends towards this so a solo upper-body wearable is not stuck in the bind pose.
+        /// </summary>
+        /// <remarks>
+        /// Keyed by NAME, not sampled onto the item directly: a clip binds curves by transform PATH and
+        /// the item's hierarchy carries wrapper nodes the rig does not, so paths would not line up.
+        /// Captured once - clip and rig are fixed for the scene's lifetime, and sampling has to briefly
+        /// overwrite the live rig to read it.
+        /// </remarks>
+        public IReadOnlyDictionary<string, BonePose> GetIdlePose()
+        {
+            if (_idlePose != null) return _idlePose;
+
+            _idlePose = new Dictionary<string, BonePose>(avatarBones.Length);
+
+            var clip = avatarAnimation.GetClip(EmoteAnimationController.IDLE_CLIP_NAME);
+
+            if (clip == null)
+            {
+                Debug.LogError(
+                    $"[AvatarLoader] No '{EmoteAnimationController.IDLE_CLIP_NAME}' clip on the rig; " +
+                    "the item view will fall back to the bind pose");
+                return _idlePose;
+            }
+
+            // SampleAnimation writes into the live rig, which may be mid-emote, so restore every bone
+            // afterwards rather than trusting the Animation component to re-assert itself.
+            var restore = new BonePose[avatarBones.Length];
+            for (var i = 0; i < avatarBones.Length; i++)
+                if (avatarBones[i] != null)
+                    restore[i] = BonePose.From(avatarBones[i]);
+
+            // Time 0 so a reloaded preview poses the item identically twice.
+            clip.SampleAnimation(avatarAnimation.gameObject, 0f);
+
+            foreach (var bone in avatarBones)
+                if (bone != null)
+                    _idlePose[bone.name] = BonePose.From(bone);
+
+            for (var i = 0; i < avatarBones.Length; i++)
+                if (avatarBones[i] != null)
+                    restore[i].ApplyTo(avatarBones[i]);
+
+            return _idlePose;
+        }
+
         public void SetSpringBonesParams(SpringBones.SpringBonesParamsPayload payload)
         {
             if (payload == null || string.IsNullOrEmpty(payload.itemId)) return;
@@ -362,6 +412,44 @@ namespace Loading
             BackgroundRendererFeature.HighlightBounds = new Bounds(
                 new Vector3(vpCenter.x, vpCenter.y),
                 new Vector2(viewportWidth, viewportHeight));
+        }
+    }
+
+    /// <summary>
+    /// One bone's local transform, as a value. Local rather than world so it can be lifted off the rig
+    /// and dropped onto a wearable's own skeleton copy, which sits elsewhere.
+    /// </summary>
+    public readonly struct BonePose
+    {
+        public readonly Vector3 LocalPosition;
+        public readonly Quaternion LocalRotation;
+        public readonly Vector3 LocalScale;
+
+        public BonePose(Vector3 localPosition, Quaternion localRotation, Vector3 localScale)
+        {
+            LocalPosition = localPosition;
+            LocalRotation = localRotation;
+            LocalScale = localScale;
+        }
+
+        public static BonePose From(Transform bone) =>
+            new(bone.localPosition, bone.localRotation, bone.localScale);
+
+        public void ApplyTo(Transform bone)
+        {
+            bone.localPosition = LocalPosition;
+            bone.localRotation = LocalRotation;
+            bone.localScale = LocalScale;
+        }
+
+        /// <summary>
+        /// Moves <paramref name="bone" /> a fraction of the way to this pose. 0 leaves it, 1 lands on it.
+        /// </summary>
+        public void BlendOnto(Transform bone, float weight)
+        {
+            bone.localPosition = Vector3.Lerp(bone.localPosition, LocalPosition, weight);
+            bone.localRotation = Quaternion.Slerp(bone.localRotation, LocalRotation, weight);
+            bone.localScale = Vector3.Lerp(bone.localScale, LocalScale, weight);
         }
     }
 

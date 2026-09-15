@@ -39,9 +39,27 @@
         <ui:VisualElement name="MetricsRows" class="metrics-panel__rows" />
     </ui:VisualElement>
     <ui:VisualElement name="Sidebar" class="sidebar">
-        <ui:Button name="ConsoleButton" class="sidebar__button sidebar__button--console dcl-clickable" />
-        <ui:Button name="MetricsButton" class="sidebar__button sidebar__button--metrics dcl-clickable" />
-        <ui:Button name="AbConversionButton" text="AB" class="sidebar__button dcl-clickable" />
-        <ui:Button name="DebugPanelButton" class="sidebar__button sidebar__button--debug dcl-clickable" style="display: none;" />
+        <ui:Button name="CollapseButton" class="sidebar__header dcl-clickable">
+            <ui:Label text="LOCAL TOOLS" class="sidebar__header-label" />
+            <ui:VisualElement name="CollapseArrow" class="sidebar__header-arrow" />
+        </ui:Button>
+        <ui:VisualElement name="SidebarButtons" class="sidebar__buttons">
+            <ui:Button name="ConsoleButton" class="sidebar__button dcl-clickable">
+                <ui:VisualElement class="sidebar__button-icon sidebar__button-icon--console" />
+                <ui:Label text="Console" class="sidebar__button-label" />
+            </ui:Button>
+            <ui:Button name="MetricsButton" class="sidebar__button dcl-clickable">
+                <ui:VisualElement class="sidebar__button-icon sidebar__button-icon--metrics" />
+                <ui:Label text="Scene Stats" class="sidebar__button-label" />
+            </ui:Button>
+            <ui:Button name="AbConversionButton" class="sidebar__button dcl-clickable">
+                <ui:Label text="AB" class="sidebar__button-icon sidebar__button-badge" />
+                <ui:Label text="AB Conversion" class="sidebar__button-label" />
+            </ui:Button>
+            <ui:Button name="DebugPanelButton" class="sidebar__button dcl-clickable" style="display: none;">
+                <ui:VisualElement class="sidebar__button-icon sidebar__button-icon--debug" />
+                <ui:Label text="Debug Panel" class="sidebar__button-label" />
+            </ui:Button>
+        </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

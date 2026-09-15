@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: DCLTextSettings
   m_EditorClassIdentifier: UnityEngine.dll::UnityEngine.UIElements.PanelTextSettings
   m_Version: 
+  m_ShowObsoleteProperties: 0
   m_DefaultFontAsset: {fileID: 0}
   m_DefaultFontAssetPath: Fonts & Materials/
   m_FallbackFontAssets: []
@@ -20,13 +21,13 @@ MonoBehaviour:
   m_MissingCharacterUnicode: 0
   m_ClearDynamicDataOnBuild: 1
   m_EnableEmojiSupport: 0
-  m_EmojiFallbackTextAssets: []
+  m_EmojiFallbackTextAssets:
+  - {fileID: 11400000, guid: 6e91b23f4d82c4cbfb4001ba83a92072, type: 2}
   m_DefaultSpriteAsset: {fileID: 11400000, guid: 6e91b23f4d82c4cbfb4001ba83a92072, type: 2}
   m_DefaultSpriteAssetPath: Sprite Assets/
   m_FallbackSpriteAssets: []
   m_MissingSpriteCharacterUnicode: 0
   m_DefaultStyleSheet: {fileID: 0}
-  m_StyleSheetsResourcePath: Text Style Sheets/
   m_DefaultColorGradientPresetsPath: Text Color Gradients/
   m_UnicodeLineBreakingRules:
     m_UnicodeLineBreakingRules: {fileID: 0}

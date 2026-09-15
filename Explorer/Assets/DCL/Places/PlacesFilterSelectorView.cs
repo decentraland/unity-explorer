@@ -45,6 +45,7 @@ namespace DCL.Places
         {
             sortContentDeselectable.gameObject.SetActive(true);
 
+            // The default sort toggle must match PlacesView.ResetCurrentFilters
             if (invokeEvents)
             {
                 sortByMostActive.isOn = true;

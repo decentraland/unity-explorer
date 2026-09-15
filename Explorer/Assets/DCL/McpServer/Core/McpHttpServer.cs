@@ -9,6 +9,7 @@ using System.Text;
 using System.Threading;
 using UnityEngine;
 using Utility.Multithreading;
+using Utility.Networking;
 
 namespace DCL.McpServer.Core
 {
@@ -299,19 +300,8 @@ namespace DCL.McpServer.Core
             }
         }
 
-        private static bool IsAllowed(string? origin)
-        {
-            if (string.IsNullOrEmpty(origin))
-                return true;
-
-            if (!Uri.TryCreate(origin, UriKind.Absolute, out Uri? originUri))
-                return false;
-
-            if (originUri.Scheme != Uri.UriSchemeHttp && originUri.Scheme != Uri.UriSchemeHttps)
-                return false;
-
-            return originUri.Host is "localhost" or "127.0.0.1" or "::1";
-        }
+        private static bool IsAllowed(string? origin) =>
+            string.IsNullOrEmpty(origin) || LoopbackUrls.IsLoopbackWebUrl(origin);
     }
 
     internal static class HttpListenerResponseExtensions

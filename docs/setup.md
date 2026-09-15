@@ -72,6 +72,20 @@ By default LODs are currently disabled in Explorer Alpha because they are too bi
 
 2. To get LODs working you just need to extract the above into the following folder: `StreamingAssets/AssetBundles/lods`
 
+## Git hooks
+
+Versioned hooks live in [`.githooks/`](../.githooks/). Git does not run them from a checkout on its own, so enable them once per clone:
+
+```bash
+bash scripts/install-git-hooks.sh   # sets git config core.hooksPath .githooks
+```
+
+Currently installed:
+
+- **`pre-commit`** — when a commit adds comment lines to C# files, runs [`scripts/lint/clean-up-excessive-ai-comments.sh`](../scripts/lint/clean-up-excessive-ai-comments.sh) in interactive mode. It asks Claude Code to trim excessive comments introduced by the branch (the repo rule: a comment describes only the code it annotates, never callers or other scopes), shows the proposed edits as a diff and asks to keep, discard, or abort. Requires the `claude` CLI; without it the hook prints a hint and lets the commit through. Bypass one commit with `git commit --no-verify` or `SKIP_AI_COMMENT_CLEANUP=1`.
+
+The same script has a non-interactive `go` mode for batch clean-ups and agents. Run it with `--help` for the full argument reference.
+
 ## Build Automation & CI
 
 For documentation on GitHub workflows, the Python build handler, and Unity Cloud setup, see [Build & CI](build-and-ci.md).

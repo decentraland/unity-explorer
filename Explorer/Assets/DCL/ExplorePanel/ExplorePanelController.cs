@@ -15,6 +15,7 @@ using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.Places;
 using DCL.Settings;
+using DCL.Shop;
 using DCL.UI;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles;
@@ -36,6 +37,7 @@ namespace DCL.ExplorePanel
     public class ExplorePanelController : ControllerBase<ExplorePanelView, ExplorePanelParameter>, IReshowController<ExplorePanelParameter>
     {
         private readonly BackpackController backpackController;
+        private readonly ShopController shopController;
         private readonly SidebarProfileButtonPresenter profileButtonPresenter;
         private readonly ProfileMenuController profileMenuController;
         private readonly DCLInput dclInput;
@@ -43,6 +45,7 @@ namespace DCL.ExplorePanel
         private readonly bool includeCameraReel;
         private readonly IMVCManager mvcManager;
         private readonly bool includeDiscover;
+        private readonly bool includeInGameShop;
         private readonly HttpEventsApiService eventsApiService;
         private readonly JoinedCommunitiesVoiceLiveTracker communitiesLiveTracker;
         private bool includeCommunities;
@@ -82,6 +85,7 @@ namespace DCL.ExplorePanel
             CommunitiesBrowserController communitiesBrowserController,
             PlacesController placesController,
             EventsController eventsController,
+            ShopController shopController,
             IInputBlock inputBlock,
             HttpEventsApiService eventsApiService,
             IMVCManager mvcManager,
@@ -100,6 +104,7 @@ namespace DCL.ExplorePanel
             this.includeCameraReel = FeaturesRegistry.Instance.IsEnabled(FeatureId.CameraReel);
             this.mvcManager = mvcManager;
             this.includeDiscover = FeaturesRegistry.Instance.IsEnabled(FeatureId.Discover);
+            includeInGameShop = FeaturesRegistry.Instance.IsEnabled(FeatureId.InGameShop);
             this.eventsApiService = eventsApiService;
             this.communitiesLiveTracker = communitiesLiveTracker;
             CommunitiesBrowserController = communitiesBrowserController;
@@ -108,6 +113,7 @@ namespace DCL.ExplorePanel
             NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT, p => OnShowSectionFromNotificationAsync(p, ExploreSections.Backpack).Forget());
 
             EventsController = eventsController;
+            this.shopController = shopController;
         }
 
         public override void Dispose()
@@ -170,6 +176,7 @@ namespace DCL.ExplorePanel
                 { ExploreSections.Communities, CommunitiesBrowserController },
                 { ExploreSections.Places, PlacesController },
                 { ExploreSections.Events, EventsController },
+                { ExploreSections.Shop, shopController },
             };
 
             includeCommunities = await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct);
@@ -190,7 +197,8 @@ namespace DCL.ExplorePanel
                 if ((section == ExploreSections.CameraReel && !includeCameraReel) ||
                     (section == ExploreSections.Communities && !includeCommunities) ||
                     (section == ExploreSections.Places && !includeDiscover) ||
-                    (section == ExploreSections.Events && !includeDiscover))
+                    (section == ExploreSections.Events && !includeDiscover) ||
+                    (section == ExploreSections.Shop && !includeInGameShop))
                 {
                     tabSelector.gameObject.SetActive(false);
                     continue;

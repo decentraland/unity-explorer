@@ -12,6 +12,14 @@
     -unity-font-definition: url("project://database/Assets/UI/Font/Inter-UI-Bold%20SDF.asset?fileID=11400000&guid=d16b4f6c5b0564f9aafdb059ebd77bff&type=2#Inter-UI-Bold SDF");
 }
 
+/* Swapped in for as long as a right-button pan drag is under way, so the cursor shows what the
+   drag is actually doing rather than the rotation the frame advertises at rest. Two classes so
+   it outranks .container by SPECIFICITY rather than by source order, which reordering this file
+   could otherwise silently break. */
+.container.container--panning {
+    cursor: var(--dcl-cursor-pan);
+}
+
 .switcher {
     position: absolute;
     right: 0;
@@ -41,54 +49,6 @@
 
 .switcher__button--selected {
     background-color: rgb(231, 63, 78);
-}
-
-.zoomer {
-    position: absolute;
-    top: 0;
-    left: 0;
-    border-top-left-radius: 8px;
-    border-top-right-radius: 8px;
-    border-bottom-right-radius: 8px;
-    border-bottom-left-radius: 8px;
-    overflow: hidden;
-}
-
-.zoomer__button {
-    border-top-width: 0;
-    border-right-width: 0;
-    border-bottom-width: 0;
-    border-left-width: 0;
-    margin-top: 0;
-    margin-right: 0;
-    margin-bottom: 0;
-    margin-left: 0;
-    padding-top: 0;
-    padding-right: 0;
-    padding-bottom: 0;
-    padding-left: 0;
-    background-color: rgba(0, 0, 0, 0.7);
-    width: 32px;
-    height: 32px;
-    background-size: 85% 85%;
-    transition-duration: 0.15s;
-    cursor: var(--dcl-cursor-interactive);
-}
-
-.zoomer__button:hover {
-    background-color: rgb(0, 0, 0);
-}
-
-.zoomer__button:active {
-    background-size: 60% 60%;
-}
-
-.zoomer__button--in {
-    background-image: url("project://database/Assets/UI/Sprites/ZoomIn.png?fileID=2800000&guid=951db5e9d7cdc4e64bc3f990fc130fa2&type=3#ZoomIn");
-}
-
-.zoomer__button--out {
-    background-image: url("project://database/Assets/UI/Sprites/ZoomOut.png?fileID=2800000&guid=02a7e65a07d244303a2618485f704d8b&type=3#ZoomOut");
 }
 
 .emote-controls {

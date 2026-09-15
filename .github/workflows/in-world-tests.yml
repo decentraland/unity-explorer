@@ -189,12 +189,14 @@ jobs:
     # explorer-automation that touch it cannot change release validation here.
     uses: decentraland/explorer-automation/.github/workflows/run-inworld-suite.yml@main
     # Must be a superset of run-inworld-suite.yml's own `permissions:`, or the
-    # call dies at startup. The write is the CI status comment section it
-    # upserts (or the standalone comment it falls back to); this is the only
-    # job that needs one, hence per job rather than at the top of the file.
+    # call dies at startup. pull-requests:write is the CI status comment section
+    # it upserts (or the standalone comment it falls back to); id-token:write is
+    # the AWS OIDC the reusable assumes to provision the fixture. This is the
+    # only job that needs them, hence per job rather than at the top of the file.
     permissions:
       contents: read
       pull-requests: write
+      id-token: write
     with:
       build_url: ${{ needs.resolve.outputs.build_url }}
       filter: ${{ inputs.filter || '' }}
