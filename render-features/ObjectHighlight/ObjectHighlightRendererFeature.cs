@@ -4,52 +4,52 @@ using UnityEngine.Rendering.Universal;
 
 namespace DCL.Rendering.ObjectHighlight
 {
-    public struct ObjectHighlightSettings
+    public readonly struct ObjectHighlightSettings
     {
-        public Color Color;
+        public Color Color { get; init; }
 
         /// <summary>
         ///     Outline width in pixels.
         /// </summary>
-        public float Width;
+        public float Width { get; init; }
 
         /// <summary>
         ///     Opacity applied across the whole visible surface, before the rim is added.
         /// </summary>
-        public float Fill;
+        public float Fill { get; init; }
 
         /// <summary>
         ///     Opacity added at grazing angles, on top of <see cref="Fill" />.
         /// </summary>
-        public float Rim;
+        public float Rim { get; init; }
 
         /// <summary>
         ///     Falloff exponent of the rim. Higher values tighten it against the silhouette.
         /// </summary>
-        public float FresnelPower;
+        public float FresnelPower { get; init; }
 
         /// <summary>
         ///     Ceiling on the combined fill and rim, so the highlight tints the object rather than
         ///     replacing it.
         /// </summary>
-        public float MaxOpacity;
+        public float MaxOpacity { get; init; }
 
         /// <summary>
         ///     Multiplier on the surface opacity, driving the breathing effect.
         /// </summary>
-        public float Pulse;
+        public float Pulse { get; init; }
 
         /// <summary>
         ///     Tolerance in metres before the surface counts as hidden behind other geometry.
         /// </summary>
-        public float SurfaceDepthBias;
+        public float SurfaceDepthBias { get; init; }
 
         /// <summary>
         ///     Tolerance in metres before the outline counts as hidden. Deliberately far looser than
         ///     <see cref="SurfaceDepthBias" />: the outline is drawn outside the silhouette, over ground and
         ///     walls whose depth differs from the object's own.
         /// </summary>
-        public float OutlineDepthBias;
+        public float OutlineDepthBias { get; init; }
     }
 
     /// <summary>

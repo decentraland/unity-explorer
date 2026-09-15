@@ -16,7 +16,6 @@ Shader "DCL/ObjectHighlight/Input"
         #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
         #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
 
-        float4 _Highlight_ObjectOffset;
         float4 _Highlight_Color;
         float _Highlight_OutlineWidth;
         float _Highlight_OutlineDepthBias;
@@ -49,7 +48,7 @@ Shader "DCL/ObjectHighlight/Input"
             UNITY_SETUP_INSTANCE_ID(IN);
             UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(OUT);
 
-            float3 positionWS = TransformObjectToWorld(IN.positionOS.xyz + _Highlight_ObjectOffset.xyz);
+            float3 positionWS = TransformObjectToWorld(IN.positionOS.xyz);
             float4 positionCS = TransformWorldToHClip(positionWS);
 
             // Push each vertex out along its screen-space normal to fatten the silhouette. Guarded because

@@ -22,15 +22,9 @@ namespace DCL.Rendering.ObjectHighlight
             // the avatar highlight silently.
             private static readonly int AVATAR_COLOR = Shader.PropertyToID("_Highlight_Colour");
             private static readonly int AVATAR_WIDTH = Shader.PropertyToID("_Highlight_Width");
-            private static readonly int AVATAR_OBJECT_OFFSET = Shader.PropertyToID("_Highlight_ObjectOffset");
-            private static readonly int AVATAR_NEAREST_DISTANCE = Shader.PropertyToID("_Highlight_Nearest_Distance");
-            private static readonly int AVATAR_FARTHEST_DISTANCE = Shader.PropertyToID("_Highlight_Farthest_Distance");
-            private static readonly int AVATAR_Z_OVER_DRAW_MODE = Shader.PropertyToID("_Highlight_ZOverDrawMode");
-            private static readonly int AVATAR_OFFSET_Z = Shader.PropertyToID("_Highlight_Offset_Z");
 
             // ObjectHighlightInput.shader. Globals rather than material properties so one shared material
             // serves every renderer; a per-draw Material copy would leak for as long as anything is hovered.
-            private static readonly int OBJECT_OFFSET = Shader.PropertyToID("_Highlight_ObjectOffset");
             private static readonly int COLOR = Shader.PropertyToID("_Highlight_Color");
             private static readonly int OUTLINE_WIDTH = Shader.PropertyToID("_Highlight_OutlineWidth");
             private static readonly int OUTLINE_DEPTH_BIAS = Shader.PropertyToID("_Highlight_OutlineDepthBias");
@@ -91,16 +85,15 @@ namespace DCL.Rendering.ObjectHighlight
                 Shader avatarShader = Shader.Find(AVATAR_SHADER_NAME);
 
                 if (avatarShader == null)
+                {
+                    // ReportHub is out of reach: this package also compiles into avatar-preview-renderer,
+                    // which has no DCL.Diagnostics.
+                    Debug.LogWarning($"[ObjectHighlight] Shader '{AVATAR_SHADER_NAME}' not found; avatar highlights disabled.");
                     return;
+                }
 
                 avatarMaterial = new Material(avatarShader);
                 avatarPassID = avatarMaterial.FindPass(AVATAR_HIGHLIGHT_PASS_NAME);
-                avatarMaterial.SetVector(AVATAR_OBJECT_OFFSET, Vector3.zero);
-                avatarMaterial.SetFloat(AVATAR_NEAREST_DISTANCE, 0.5f);
-                avatarMaterial.SetFloat(AVATAR_FARTHEST_DISTANCE, 100.0f);
-                avatarMaterial.SetFloat(AVATAR_Z_OVER_DRAW_MODE, 0.0f);
-                avatarMaterial.SetFloat(AVATAR_OFFSET_Z, 0.0f);
-                avatarMaterial.EnableKeyword("_DCL_COMPUTE_SKINNING");
             }
 
             public void Dispose()
@@ -126,7 +119,6 @@ namespace DCL.Rendering.ObjectHighlight
                     if (!IsDrawable(renderer, data.cullingMask))
                         continue;
 
-                    cmd.SetGlobalVector(OBJECT_OFFSET, Vector3.zero);
                     cmd.SetGlobalColor(COLOR, settings.Color);
                     cmd.SetGlobalFloat(OUTLINE_WIDTH, settings.Width);
                     cmd.SetGlobalFloat(OUTLINE_DEPTH_BIAS, settings.OutlineDepthBias);
@@ -253,7 +245,7 @@ namespace DCL.Rendering.ObjectHighlight
                 internal Material inputMaterial = null!;
                 internal Material blurMaterial = null!;
                 internal Material outputMaterial = null!;
-                internal int avatarPassID;
+                internal int avatarPassID = -1;
                 internal TextureHandle ping;
                 internal TextureHandle pong;
                 internal TextureHandle backBufferColour;
