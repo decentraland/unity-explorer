@@ -13,6 +13,7 @@ namespace DCL.PluginSystem.Global
         [field: Header(nameof(LandscapeSettings))] [field: Space]
         [field: SerializeField] public RealmPartitionSettingsAsset realmPartitionSettings;
         [field: SerializeField] public LandscapeDataRef landscapeData;
+        [field: SerializeField] public GPUIShaderBindingsRef gpuiShaderBindings;
 
     }
 }

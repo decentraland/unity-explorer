@@ -69,4 +69,10 @@ namespace DCL.Landscape.Settings
     {
         public LandscapeDataRef(string guid) : base(guid) { }
     }
+
+    [Serializable]
+    public class GPUIShaderBindingsRef : AssetReferenceT<GPUIShaderBindings>
+    {
+        public GPUIShaderBindingsRef(string guid) : base(guid) { }
+    }
 }
