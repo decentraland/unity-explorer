@@ -92,7 +92,10 @@ module.exports.openNftDialog = async function(message) {
 }
 
 module.exports.openExplorerUi = async function(message) {
-    const openResult = UnityRestrictedActionsApi.OpenExplorerUi(message.ui)
+    // requestId is optional, and 0 is the protocol's value for "no correlation"
+    const openResult = await UnityRestrictedActionsApi.OpenExplorerUi(
+        message.ui,
+        message.requestId != undefined ? message.requestId : 0)
     return { openResult };
 }
 
@@ -118,7 +121,7 @@ module.exports.triggerSceneEmote = async function(message) {
 }
 
 module.exports.stopEmote = async function(message) {
-    const isSuccess = UnityRestrictedActionsApi.StopEmote()
+    const isSuccess = await UnityRestrictedActionsApi.StopEmote()
     return {
         success: isSuccess
     };
