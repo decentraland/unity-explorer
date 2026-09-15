@@ -1061,9 +1061,11 @@ namespace DCL.SyntheticInput.Tests
         {
             Camera camera = cameraGo.GetComponent<Camera>();
 
-            // Aim at a corner so the ray misses the target box entirely and only meets the non-scene geometry.
-            PlaceNonSceneGeometryAt(new Vector3(-20f, 0f, 20f));
+            // Aim at the left screen edge so the ray misses the target box entirely. The non-scene geometry is placed
+            // on that very ray: where the edge points depends on the camera's aspect, which the Editor and a
+            // batch-mode test run do not share.
             var screenCorner = new Vector2(0f, camera.pixelHeight / 2f);
+            PlaceNonSceneGeometryAt(camera.ScreenPointToRay(screenCorner).GetPoint(20f));
 
             var completion = new UniTaskCompletionSource<SyntheticPointerOutcome>();
 

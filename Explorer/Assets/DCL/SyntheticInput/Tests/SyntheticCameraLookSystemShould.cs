@@ -148,6 +148,29 @@ namespace DCL.SyntheticInput.Tests
         }
 
         [Test]
+        public void CompleteTheLookAtWhenTheCameraGetsBlockedMidRefinement()
+        {
+            var target = new Vector3(30f, 30f, 30f);
+            UniTaskCompletionSource<SyntheticInputDelivery> completion = AddIntent(Vector2.zero, secondsFromNow: 0f, lookAtTarget: target);
+
+            system.Update(0);
+            world.Remove<CameraLookAtIntent>(cameraEntity);
+
+            cameraInput.Delta = Vector2.zero;
+            system.Update(0);
+            Assert.That(completion.Task.Status, Is.EqualTo(UniTaskStatus.Pending), "the refinement is under way before the blocker appears");
+
+            world.Add(cameraEntity, new CameraBlockerComponent());
+            cameraInput.Delta = Vector2.zero;
+            system.Update(0);
+
+            Assert.That(completion.Task.Status, Is.EqualTo(UniTaskStatus.Succeeded), "a blocked camera cannot be corrected, so the request completes instead of staying open");
+            Assert.That(completion.Task.GetAwaiter().GetResult(), Is.EqualTo(SyntheticInputDelivery.Completed));
+            Assert.That(world.Has<SyntheticCameraLookIntent>(playerEntity), Is.False);
+            Assert.That(cameraInput.Delta, Is.EqualTo(Vector2.zero), "no correction is written on the frame the blocker is seen");
+        }
+
+        [Test]
         public void StopRefiningWhenTheRigCannotGetAnyCloser()
         {
             // Nothing in the test moves the camera, so every frame measures the same error — what a clamped rig

@@ -226,6 +226,10 @@ namespace DCL.Interaction.PlayerOriginated.Tests
         [Test]
         public void StillIssueHoverEnterToTheEntityTheRayReached()
         {
+            DeclarePointerEvents(
+                Entry(PointerEventType.PetHoverEnter, InputAction.IaPointer, 100f),
+                Entry(PointerEventType.PetDown, InputAction.IaPrimary, 10f));
+
             Entity otherEntity = sceneWorld.Create(new CRDTEntity(TARGET_CRDT_ID + 1));
 
             HoverTarget();

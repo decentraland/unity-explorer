@@ -74,5 +74,48 @@ namespace DCL.SyntheticInput.Tests
 
             Assert.That(world.Has<TestEcsRequest>(entity), Is.False);
         }
+
+        /// <summary>
+        ///     An abandon is the driver-side timeout: the driver has already given up on the awaiter, so the request
+        ///     is dropped silently. Unlike <see cref="EcsRequest.CompleteAndRemove{TIntent,TResult}" /> it never touches the completion source.
+        /// </summary>
+        [Test]
+        public void AbandonDropsTheRequestWithoutResolvingItsAwaiter()
+        {
+            UniTask<int> task = EcsRequest.SendAsync(world, entity, new TestEcsRequest(), -1);
+
+            UniTask abandon = EcsRequest.AbandonAsync<TestEcsRequest>(world, entity);
+
+            Assert.That(abandon.Status, Is.EqualTo(UniTaskStatus.Succeeded), "called from the main thread, the abandon completes synchronously");
+            Assert.That(world.Has<TestEcsRequest>(entity), Is.False);
+            Assert.That(task.Status, Is.EqualTo(UniTaskStatus.Pending));
+        }
+
+        [Test]
+        public void AbandonIsANoOpWhenTheRequestWasAlreadyCompleted()
+        {
+            UniTask<int> task = EcsRequest.SendAsync(world, entity, new TestEcsRequest(), -1);
+            EcsRequest.CompleteAndRemove(world, entity, world.Get<TestEcsRequest>(entity), 42);
+
+            // The timeout losing the race against the fulfilling system is the expected shape of this call.
+            UniTask abandon = EcsRequest.AbandonAsync<TestEcsRequest>(world, entity);
+
+            Assert.That(abandon.Status, Is.EqualTo(UniTaskStatus.Succeeded));
+            Assert.That(world.Has<TestEcsRequest>(entity), Is.False);
+            Assert.That(task.GetAwaiter().GetResult(), Is.EqualTo(42), "the result the system delivered stands");
+        }
+
+        [Test]
+        public void AbandonTolerateRepeatedCalls()
+        {
+            world.Add(entity, new TestEcsRequest());
+
+            UniTask first = EcsRequest.AbandonAsync<TestEcsRequest>(world, entity);
+            UniTask second = EcsRequest.AbandonAsync<TestEcsRequest>(world, entity);
+
+            Assert.That(first.Status, Is.EqualTo(UniTaskStatus.Succeeded));
+            Assert.That(second.Status, Is.EqualTo(UniTaskStatus.Succeeded));
+            Assert.That(world.Has<TestEcsRequest>(entity), Is.False);
+        }
     }
 }
