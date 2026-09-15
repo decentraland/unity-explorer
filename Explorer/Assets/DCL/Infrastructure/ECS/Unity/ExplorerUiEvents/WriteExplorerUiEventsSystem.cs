@@ -30,8 +30,6 @@ namespace ECS.Unity.ExplorerUiEvents
         {
             while (events.TryDequeue(out ExplorerUiEvent uiEvent))
             {
-                // Every field comes off the event itself: the tick it happened on, not the one it is
-                // drained on, is what the scene is promised.
                 ecsToCRDTWriter.AppendMessage<PBExplorerUiEventsResult, ExplorerUiEvent>(static (result, data) =>
                 {
                     result.Ui = data.Ui;

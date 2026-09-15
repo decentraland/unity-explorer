@@ -92,8 +92,7 @@ module.exports.openNftDialog = async function(message) {
 }
 
 module.exports.openExplorerUi = async function(message) {
-    // requestId is optional and 0 is what the events use for "no correlation", so an absent id
-    // collapses onto it rather than travelling as a second way of saying the same thing.
+    // requestId is optional, and 0 is the protocol's value for "no correlation"
     const openResult = await UnityRestrictedActionsApi.OpenExplorerUi(
         message.ui,
         message.requestId != undefined ? message.requestId : 0)

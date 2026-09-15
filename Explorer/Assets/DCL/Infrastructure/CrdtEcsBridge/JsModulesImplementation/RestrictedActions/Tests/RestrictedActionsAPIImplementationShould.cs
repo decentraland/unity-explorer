@@ -187,7 +187,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             // Act
             await restrictedActionsAPIImplementation.TryOpenExplorerUiAsync((int)ExplorerUi.EuMap, 77, CancellationToken.None);
 
-            // Assert: the id is opaque here — nothing on this layer reads it, it only has to arrive intact.
+            // Assert
             explorerUiActions.Received(1).OpenSectionAsync(ExplorerUi.EuMap, ExploreSections.Navmap, 77, Arg.Any<CancellationToken>());
         }
 
@@ -354,8 +354,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             // Arrange
             sceneStateProvider.IsCurrent.Returns(false);
 
-            // Assert: the refusal is the one outcome a scene can act on, so it has to reach it rather
-            // than look the same as a stop that happened.
+            // Assert
             Assert.IsFalse(restrictedActionsAPIImplementation.TryStopEmote());
             globalWorldActions.DidNotReceive().StopEmote();
         }
@@ -513,10 +512,6 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             globalWorldActions.Received(1).TriggerSceneEmoteAsync(sceneData, SRC, HASH, false, AvatarEmoteMask.AemUpperBody, Arg.Any<CancellationToken>());
         }
 
-        /// <summary>
-        ///     Reads a verdict that must already be there. The accepted path hops to the main thread, the
-        ///     gates must not: refusing a misbehaving scene costs a frame only if the gate is evaluated late.
-        /// </summary>
         private static int AnsweredWithoutAFrame(UniTask<int> call)
         {
             Assert.That(call.Status, Is.EqualTo(UniTaskStatus.Succeeded));

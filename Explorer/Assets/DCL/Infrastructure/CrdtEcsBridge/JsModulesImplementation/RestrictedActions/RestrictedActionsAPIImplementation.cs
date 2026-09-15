@@ -215,8 +215,8 @@ namespace CrdtEcsBridge.RestrictedActions
 
         public async UniTask<int> TryOpenExplorerUiAsync(int ui, uint requestId, CancellationToken ct)
         {
-            // Every rejection below returns before the first await, so gating a misbehaving scene still
-            // costs nothing: only an accepted request pays for the hop to the main thread.
+            // Every rejection below returns before the first await, so only an accepted request pays for
+            // the hop to the main thread.
             if (!sceneStateProvider.IsCurrent)
                 return (int)OpenExplorerUiResult.RejectedNotCurrentScene;
 
@@ -347,8 +347,8 @@ namespace CrdtEcsBridge.RestrictedActions
                     gatingFeature = FeatureId.Discover;
                     return true;
                 default:
-                    // EuItemPurchase lands here knowingly: the purchase flow has no explorer implementation,
-                    // so the scene is told the feature is unavailable rather than left waiting on a panel.
+                    // EuItemPurchase falls here on purpose: the explorer has no purchase flow, so the scene
+                    // is told that the feature is unavailable.
                     section = default(ExploreSections);
                     gatingFeature = null;
                     return false;

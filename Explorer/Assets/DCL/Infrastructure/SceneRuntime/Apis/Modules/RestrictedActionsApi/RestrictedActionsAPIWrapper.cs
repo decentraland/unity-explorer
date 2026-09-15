@@ -97,9 +97,8 @@ namespace DCL.SceneRuntime.Apis.RestrictedActionsApi
 
         [UsedImplicitly]
         public object OpenExplorerUi(int ui, uint requestId) =>
-            // No per-call token, unlike the other async restricted actions: a second call is a legitimate
-            // request owed a WasAlreadyOpen answer, and a shared restarted token would cancel the first
-            // one instead. Scene teardown stays the only cancellation.
+            // No SafeRestart token here, unlike the siblings: it would cancel the first of two overlapping
+            // calls, which is the call that owes the second one a WasAlreadyOpen answer.
             api.TryOpenExplorerUiAsync(ui, requestId, disposeCts.Token).ToDisconnectedPromise(this);
 
         [UsedImplicitly]

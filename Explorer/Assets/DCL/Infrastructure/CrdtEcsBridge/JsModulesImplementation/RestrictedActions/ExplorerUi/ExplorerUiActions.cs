@@ -26,11 +26,6 @@ namespace DCL.Infrastructure.CrdtEcsBridge.JsModulesImplementation.RestrictedAct
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly Queue<ExplorerUiEvent> events;
 
-        /// <summary>
-        ///     True from the moment a request of this scene hands the panel to MVC until that panel closes.
-        ///     MVC reports the panel as showing only once the view's life cycle has begun, which is later
-        ///     than the call to <c>ShowAsync</c>, so it cannot answer for a request that is still landing.
-        /// </summary>
         private bool showPending;
 
         public ExplorerUiActions(IMVCManager mvcManager, ISceneStateProvider sceneStateProvider, Queue<ExplorerUiEvent> events)
@@ -52,24 +47,21 @@ namespace DCL.Infrastructure.CrdtEcsBridge.JsModulesImplementation.RestrictedAct
 
             await UniTask.SwitchToMainThread(ct);
 
-            // Deciding the answer here, rather than on the scene's thread, is the whole point of the hop:
-            // the slot can be taken by the user or by this scene's previous request while the call travels.
+            // The answer is decided after the hop, because the slot can be taken while the call travels.
+            // MVC reports a panel as showing only once the view's life cycle starts, which is later than the
+            // call to ShowAsync, so showPending covers the request that is still landing.
             if (showPending || mvcManager.IsShowing<ExplorePanelView, ExplorePanelParameter>())
                 return OpenExplorerUiResult.WasAlreadyOpen;
 
             showPending = true;
 
-            // Queued before the answer leaves, so an Opened verdict always has its life cycle behind it.
             Enqueue(ui, ExplorerUiEventKind.Opened, requestId);
 
             ShowUntilClosedAsync(ui, section, requestId).Forget();
             return OpenExplorerUiResult.Opened;
         }
 
-        /// <summary>
-        ///     <c>ShowAsync</c> resolves when the panel closes, so it is left running rather than awaited by
-        ///     the request: the answer owes the scene nothing beyond the open.
-        /// </summary>
+        // ShowAsync resolves when the panel closes, so this runs detached instead of being awaited.
         private async UniTask ShowUntilClosedAsync(ExplorerUi ui, ExploreSections section, uint requestId)
         {
             try
@@ -85,8 +77,6 @@ namespace DCL.Infrastructure.CrdtEcsBridge.JsModulesImplementation.RestrictedAct
             catch (Exception e) { ReportHub.LogException(e, ReportCategory.RESTRICTED_ACTIONS); }
         }
 
-        // The tick is read here rather than where the queue is drained: a scene is told when the event
-        // happened, and draining can be a tick or more later.
         private void Enqueue(ExplorerUi ui, ExplorerUiEventKind kind, uint requestId) =>
             events.Enqueue(new ExplorerUiEvent(ui, kind, requestId, sceneStateProvider.TickNumber));
     }

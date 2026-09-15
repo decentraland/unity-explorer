@@ -13,8 +13,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
 {
     /// <summary>
     ///     Covers <see cref="WriteExplorerUiEventsSystem" /> turning the queue the restricted actions API fills
-    ///     into appended <see cref="PBExplorerUiEventsResult" /> messages on the scene root entity. Everything
-    ///     the scene is told comes off the queued event, so a late drain cannot rewrite when it happened.
+    ///     into appended <see cref="PBExplorerUiEventsResult" /> messages on the scene root entity.
     /// </summary>
     public class WriteExplorerUiEventsSystemShould : UnitySystemTestBase<WriteExplorerUiEventsSystem>
     {

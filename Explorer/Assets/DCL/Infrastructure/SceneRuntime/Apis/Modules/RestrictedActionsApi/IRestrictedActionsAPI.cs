@@ -26,9 +26,7 @@ namespace DCL.SceneRuntime.Apis.RestrictedActionsApi
 
         void TryCopyToClipboard(string text);
 
-        /// <summary>
-        ///     False when the scene was not the current one and the stop was therefore refused.
-        /// </summary>
+        /// <summary>False when the scene is not the current one, so the stop is refused.</summary>
         bool TryStopEmote();
     }
 }

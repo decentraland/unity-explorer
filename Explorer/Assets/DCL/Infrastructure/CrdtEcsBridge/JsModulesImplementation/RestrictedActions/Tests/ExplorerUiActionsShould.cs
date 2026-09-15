@@ -19,9 +19,8 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
     ///     Covers how <see cref="ExplorerUiActions" /> chooses between opening the explore panel and answering
     ///     the scene that it was already open, and the life cycle events it reports back for the requests it
     ///     did accept. One instance exists per scene, so it cannot have witnessed the panel opening before it
-    ///     was built, and MVC skips OnViewClosed when a view's lifecycle is cancelled — a panel the scene did
-    ///     not open therefore has to be read from MVC at the moment of the decision, while a panel this scene
-    ///     is itself putting up is one MVC does not report yet.
+    ///     was built, and MVC skips OnViewClosed when a view's lifecycle is cancelled — the panel state
+    ///     therefore has to be read from MVC at the moment of the decision.
     /// </summary>
     [TestFixture]
     public class ExplorerUiActionsShould
@@ -49,8 +48,6 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
         [Test]
         public async Task AnswerWasAlreadyOpenForAPanelThisSceneDidNotOpen()
         {
-            // Covers both a panel the user opened before the scene loaded and one they opened while the
-            // request was travelling: the answer is decided at a single point, after the thread hop.
             mvcManager.IsShowing<ExplorePanelView, ExplorePanelParameter>().Returns(true);
 
             Assert.That(await OpenAsync(ExplorerUi.EuMap, ExploreSections.Navmap), Is.EqualTo(OpenExplorerUiResult.WasAlreadyOpen));
@@ -71,8 +68,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
         [Test]
         public async Task RefuseASecondRequestWhileTheFirstOneIsStillPuttingThePanelUp()
         {
-            // MVC reports the panel as hidden throughout: it only flips once the view's life cycle starts,
-            // which is exactly the window a scene firing two calls back to back lands in.
+            // MVC reports the panel as hidden throughout: that is the window two calls back to back land in.
             mvcManager.IsShowing<ExplorePanelView, ExplorePanelParameter>().Returns(false);
 
             mvcManager.ShowAsync(Arg.Any<ShowCommand<ExplorePanelView, ExplorePanelParameter>>(), Arg.Any<CancellationToken>())
@@ -81,7 +77,6 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             Assert.That(await OpenAsync(ExplorerUi.EuEvents, ExploreSections.Events), Is.EqualTo(OpenExplorerUiResult.Opened));
             Assert.That(await OpenAsync(ExplorerUi.EuEvents, ExploreSections.Events), Is.EqualTo(OpenExplorerUiResult.WasAlreadyOpen));
 
-            // One accepted request means one panel and one life cycle: a refused request reports nothing.
             mvcManager.Received(1).ShowAsync(Arg.Any<ShowCommand<ExplorePanelView, ExplorePanelParameter>>(), Arg.Any<CancellationToken>());
 
             Assert.That(events, Is.EqualTo(new[] { new ExplorerUiEvent(ExplorerUi.EuEvents, ExplorerUiEventKind.Opened, 0, TICK) }));
@@ -145,8 +140,6 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
 
             await OpenAsync(ExplorerUi.EuPlaces, ExploreSections.Places, 88);
 
-            // Without the echo on both ends a scene waiting on the close cannot tell which of its calls
-            // the panel it just lost belonged to.
             Assert.That(events, Is.EqualTo(new[]
             {
                 new ExplorerUiEvent(ExplorerUi.EuPlaces, ExplorerUiEventKind.Opened, 88, TICK),
@@ -167,7 +160,6 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             sceneStateProvider.TickNumber.Returns((uint)5);
             await OpenAsync(ExplorerUi.EuMap, ExploreSections.Navmap, 3);
 
-            // The panel stays up across several ticks, so the close cannot share the open's stamp.
             sceneStateProvider.TickNumber.Returns((uint)9);
             show.TrySetResult();
 
@@ -188,7 +180,6 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
 
             await OpenAsync(ExplorerUi.EuMap, ExploreSections.Navmap);
 
-            // A show that never reached the screen must not leave the scene locked out of the panel.
             Assert.That(await OpenAsync(ExplorerUi.EuMap, ExploreSections.Navmap), Is.EqualTo(OpenExplorerUiResult.Opened));
         }
 
