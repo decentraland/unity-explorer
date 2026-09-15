@@ -465,13 +465,14 @@ def download_artifact(id, build_json):
 
     os.remove(filepath)
     print('Artifacts ready!')
-    return True
 
     # Final check to confirm build folder exists
     if os.path.exists(download_dir):
         print(f"Build folder confirmed at: {os.path.join(os.getcwd(), download_dir)}")
     else:
         print(f"ERROR: Build folder not found at expected location: {os.path.join(os.getcwd(), download_dir)}")
+
+    return True
 
 def download_log(id):
     with open('unity_cloud_log.log', 'w') as f:

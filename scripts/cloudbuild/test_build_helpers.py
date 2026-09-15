@@ -387,7 +387,8 @@ class DownloadArtifactTest(EnvMixin, unittest.TestCase):
     def test_uses_the_poll_payload_without_refetching_the_build(self):
         session = self.session_yielding([self.zip_bytes()])
         with mock.patch.object(build, 'retry_session', return_value=session), \
-             mock.patch.object(build.requests, 'get') as bare_get:
+             mock.patch.object(build.requests, 'get') as bare_get, \
+             mock.patch('builtins.print') as printed:
             result = build.download_artifact(12, self.payload())
 
         self.assertTrue(result)
@@ -397,6 +398,8 @@ class DownloadArtifactTest(EnvMixin, unittest.TestCase):
         self.assertEqual(session.get.call_args.kwargs['timeout'], 300)
         self.assertTrue(os.path.exists(os.path.join('build', 'Explorer')))
         self.assertFalse(os.path.exists(os.path.join('build', 'artifact.zip')))
+        self.assertTrue(any('Build folder confirmed at' in str(c)
+                            for c in printed.call_args_list))
 
     def test_missing_links_returns_without_downloading(self):
         session = self.session_yielding([b''])
