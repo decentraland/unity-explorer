@@ -1,36 +1,17 @@
 #!/usr/bin/env python3
 """Gate B: did this runner reproduce the binaries committed to Git LFS?
 
-Compares the cargo-produced artifacts a fresh canonical build has just deployed
-against the sha256 scripts/uuav/uuav-binaries.lock.json records for them - the
-hashes of the committed binaries themselves, which uuav-verify.yml re-asserts
-on every pull request.
+Shared by every plugin with a hash lock; --lock names the plugin's. Compares a
+fresh canonical build's cargo artifacts against the sha256 the lock records for
+them. Byte reproduction is only meaningful on the toolchain that
+produced the committed bytes, pinned at targets.<target>.rust.toolchain as
+component -> identity, matching the lines of the recorded toolchain-<os>.txt.
 
-Byte-identical output needs an identical toolchain, and the two shipped targets
-were built on two hosts whose rustc versions can differ from each other.
-GitHub-hosted runners carry their own rustc, and their mingw and Xcode/ld64
-versions move with the runner image. So the comparison only means anything when
-the runner's toolchain is the one that produced the committed binaries, and the
-expected identity is pinned in the lock at
-
-    targets.<target>.rust.toolchain
-
-as an object of component name -> exact identity string, matching the lines the
-workflow's "Record the toolchain actually used" step writes to
-toolchain-<os>.txt. Only the components the lock lists are compared; anything
-else the runner records is context, not a pin.
-
-Skipped, with a notice naming what differed and the hashes the fresh build
-produced, when:
-
-  - the lock pins no toolchain for this target (nothing to compare against yet)
-  - a pinned component differs from what this runner recorded
-  - native/src no longer matches the source digest this target's binaries were
-    built from, so they could not reproduce on any toolchain; that mismatch is
-    uuav-verify.yml's failure to raise, not this one's
-
-Fails only when toolchain and source both match and the bytes do not - the one
-case where somebody can actually do something about it.
+Skipped (exit 0, with a notice and the fresh hashes) when the lock pins no
+toolchain, a pinned component differs from this runner, or .native/src has
+moved from the recorded source digest. Fails only when toolchain and source
+both match and the bytes differ. Writes <name>-<target>.gate-b.txt (name from
+the lock) with the one-line outcome for the build workflow's summary.
 
 Exit status: 0 reproduced or skipped, 1 did not reproduce, 2 bad usage.
 """
@@ -43,8 +24,6 @@ import json
 import os
 import sys
 
-LOCK_REL = "scripts/uuav/uuav-binaries.lock.json"
-
 IN_ACTIONS = os.environ.get("GITHUB_ACTIONS") == "true"
 
 
@@ -52,7 +31,7 @@ def _load_verify():
     """verify-binaries.py's digest helpers, imported despite the dash."""
     path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                         "verify-binaries.py")
-    spec = importlib.util.spec_from_file_location("uuav_verify", path)
+    spec = importlib.util.spec_from_file_location("native_lock_verify", path)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
@@ -85,25 +64,38 @@ def summarize(lines) -> None:
         handle.write("\n".join(lines) + "\n\n")
 
 
+def record_outcome(repo: str, lock_name: str, target: str, outcome: str) -> None:
+    path = os.path.join(repo, f"{lock_name}-{target}.gate-b.txt")
+    with open(path, "w", encoding="utf-8", newline="\n") as handle:
+        handle.write(outcome + "\n")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("target", help="lock target, e.g. macos-universal")
     parser.add_argument("--toolchain", required=True, metavar="FILE",
                         help="the toolchain-<os>.txt this job recorded")
+    parser.add_argument("--lock", required=True, metavar="PATH",
+                        help="the plugin's lock, relative to the repository root")
     parser.add_argument("--repo", default=None,
                         help="repository root (default: two levels above this script)")
     args = parser.parse_args()
 
     repo = args.repo or os.path.dirname(os.path.dirname(os.path.dirname(
         os.path.abspath(__file__))))
-    lock_path = os.path.join(repo, LOCK_REL)
+    lock_rel = args.lock
+    lock_path = os.path.join(repo, lock_rel)
     if not os.path.exists(lock_path):
         print(f"FAIL: no lock file at {lock_path}", file=sys.stderr)
         return 2
 
     with open(lock_path, encoding="utf-8") as handle:
         lock = json.load(handle)
+    lock_name = lock.get("name")
+    if not lock_name:
+        print(f"FAIL: {lock_rel} has no top-level \"name\"", file=sys.stderr)
+        return 2
     if args.target not in lock["targets"]:
         print(f"FAIL: unknown target '{args.target}'; the lock defines "
               f"{', '.join(lock['targets'])}", file=sys.stderr)
@@ -129,7 +121,7 @@ def main() -> int:
             return 1
         fresh[name] = (verify.sha256_of(path), os.path.getsize(path), artifact)
 
-    print(f"Fresh build vs {LOCK_REL} - {args.target}")
+    print(f"Fresh build vs {lock_rel} - {args.target}")
     for name, (digest, size, _) in fresh.items():
         print(f"  built    {name}  {digest}  ({size} bytes)")
 
@@ -143,12 +135,13 @@ def main() -> int:
         notice(f"[{args.target}] reproduction not checked: the lock pins no "
                f"toolchain for this target, so there is nothing to establish "
                f"that this runner is the host the committed binaries came from. "
-               f"Pin targets.{args.target}.rust.toolchain in {LOCK_REL} with the "
+               f"Pin targets.{args.target}.rust.toolchain in {lock_rel} with the "
                f"identities in {os.path.basename(args.toolchain)}. This runner "
                f"produced: {hashes}")
         summarize([f"### Gate B - reproduction ({args.target})", "",
                    "Skipped: the lock pins no toolchain for this target.", "",
                    "```", *(f"{k}: {v}" for k, v in recorded.items()), "```"])
+        record_outcome(repo, lock_name, args.target, "skipped - the lock pins no toolchain")
         return 0
 
     expected = {key: value for key, value in expected.items() if key != "comment"}
@@ -172,6 +165,8 @@ def main() -> int:
                    *(f"| {c} | `{p}` | `{a}` |" for c, p, a in differing), "",
                    "| artifact | fresh sha256 |", "|---|---|",
                    *(f"| `{n}` | `{d}` |" for n, (d, _, _) in fresh.items())])
+        record_outcome(repo, lock_name, args.target, "skipped - toolchain mismatch: "
+                       + ", ".join(c for c, _, _ in differing))
         return 0
 
     source = lock["rust_source"]
@@ -181,11 +176,12 @@ def main() -> int:
         notice(f"[{args.target}] reproduction not checked: {source['path']} is at "
                f"digest {actual_digest} ({files} files) but this target's binaries "
                f"were built from {spec['rust']['source_digest']}, so they cannot "
-               f"reproduce on any toolchain. uuav-verify.yml fails on that. This "
+               f"reproduce on any toolchain. The verify workflow fails on that. This "
                f"runner produced: {hashes}")
         summarize([f"### Gate B - reproduction ({args.target})", "",
                    f"Skipped: `{source['path']}` has moved on from the digest "
                    f"this target was built at.", ""])
+        record_outcome(repo, lock_name, args.target, "skipped - source digest moved")
         return 0
 
     mismatched = []
@@ -210,6 +206,7 @@ def main() -> int:
                    "**Did not reproduce** on the pinned toolchain.", "",
                    "```", *mismatched, "```", "",
                    "| pinned component | identity |", "|---|---|", *pinned_table])
+        record_outcome(repo, lock_name, args.target, "DID NOT REPRODUCE")
         return 1
 
     print(f"\nGate B PASS - {len(fresh)} cargo-produced artifact(s) reproduced the "
@@ -217,6 +214,7 @@ def main() -> int:
     summarize([f"### Gate B - reproduction ({args.target})", "",
                f"Reproduced {len(fresh)} cargo-produced artifact(s) byte-for-byte.", "",
                "| pinned component | identity |", "|---|---|", *pinned_table])
+    record_outcome(repo, lock_name, args.target, "reproduced")
     return 0
 
 

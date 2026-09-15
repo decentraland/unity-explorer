@@ -20,7 +20,6 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PlacesAPIService;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.UI;
-using DCL.Web3;
 using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
@@ -350,15 +349,7 @@ namespace DCL.Minimap
                 ? $"{decentralandUrls.Url(DecentralandUrl.Host)}/jump?realm={realmData.RealmName}&position={previousParcelPosition.x},{previousParcelPosition.y}"
                 : $"{decentralandUrls.Url(DecentralandUrl.Host)}/jump?position={previousParcelPosition.x},{previousParcelPosition.y}";
 
-            systemClipboard.Set(link + ReferrerQuery());
-        }
-
-        private static string ReferrerQuery()
-        {
-            if (ViewDependencies.CurrentIdentity is not { } identity)
-                return string.Empty;
-
-            return $"&referrer={identity.Address.ToString()}";
+            systemClipboard.Set(ShareLinkUtilities.WithReferrer(link));
         }
 
         private void ExpandMinimap()
@@ -555,7 +546,7 @@ namespace DCL.Minimap
             {
                 return await placesAPIService.GetWorldAsync(parcelPosition, worldName, ct);
             }
-            catch (OperationCanceledException _) { }
+            catch (OperationCanceledException) { }
             catch (NotAPlaceException notAPlaceException)
             {
                 ReportHub.LogWarning(ReportCategory.UNSPECIFIED, $"Not a world requested: {notAPlaceException.Message}");
