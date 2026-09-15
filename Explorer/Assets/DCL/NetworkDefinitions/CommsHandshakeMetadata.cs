@@ -8,20 +8,20 @@ namespace DCL.PrivateWorlds
         public const string INTENT = "dcl:explorer:comms-handshake";
         public const string SIGNER = "dcl:explorer";
 
-        public static string BuildWorldJson(string secret)
+        public static string BuildWorldJson(string secret, bool isGuest)
         {
             var metadata = new MetadataWithSecret
             {
                 intent = INTENT,
                 signer = SIGNER,
-                isGuest = false,
+                isGuest = isGuest,
                 secret = secret,
             };
 
             return JsonUtility.ToJson(metadata);
         }
-        
-        public static string BuildSceneJson(string realmName, string realmServerName, string? sceneId, string secret)
+
+        public static string BuildSceneJson(string realmName, string realmServerName, string? sceneId, string secret, bool isGuest)
         {
             var metadata = new SceneMetadataWithSecret
             {
@@ -30,7 +30,7 @@ namespace DCL.PrivateWorlds
                 sceneId = sceneId,
                 intent = INTENT,
                 signer = SIGNER,
-                isGuest = false,
+                isGuest = isGuest,
                 secret = secret,
             };
 

@@ -4,11 +4,13 @@ Run from anywhere: python3 -m unittest scripts.cloudbuild.test_build_helpers
 (or `python3 -m unittest discover -s scripts/cloudbuild`). build.py's build
 flow is under a __main__ guard, so importing it here executes nothing.
 """
+import io as _io
 import os
 import re
 import sys
 import tempfile
 import unittest
+import zipfile
 from unittest import mock
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -278,6 +280,151 @@ class UpsertLiveCommentRaceTest(EnvMixin, unittest.TestCase):
 
         self.assertFalse(result)
         run.assert_not_called()
+
+
+class RetrySessionTest(unittest.TestCase):
+    def retries(self):
+        return build.retry_session().get_adapter('https://build-api.cloud.unity3d.com').max_retries
+
+    def test_transient_unity_statuses_are_retried(self):
+        forcelist = self.retries().status_forcelist
+        for status in (403, 408, 429, 500, 502, 503, 504):
+            self.assertIn(status, forcelist)
+
+    def test_backoff_is_bounded_and_jittered(self):
+        retries = self.retries()
+        self.assertEqual(retries.total, 5)
+        self.assertTrue(retries.backoff_jitter)
+        self.assertTrue(retries.respect_retry_after_header)
+
+    def test_retry_after_cannot_outlast_the_job(self):
+        # urllib3 defaults this to 6h, which exceeds the 450-min workflow ceiling.
+        self.assertLessEqual(self.retries().retry_after_max, 60)
+
+    def test_post_is_not_retried(self):
+        # Retrying a build-trigger POST would create duplicate Unity Cloud builds.
+        self.assertNotIn('POST', self.retries().allowed_methods)
+        self.assertIn('GET', self.retries().allowed_methods)
+        self.assertIn('DELETE', self.retries().allowed_methods)
+
+
+class DeleteBuildTest(EnvMixin, unittest.TestCase):
+    """delete_build is cleanup: artifacts are already on disk, so it must never exit."""
+
+    def setUp(self):
+        self.set_env(TARGET='windows64-x')
+        silencer = mock.patch('builtins.print')
+        silencer.start()
+        self.addCleanup(silencer.stop)
+
+    def run_with(self, **response):
+        session = mock.Mock()
+        if 'side_effect' in response:
+            session.delete.side_effect = response['side_effect']
+        else:
+            session.delete.return_value = mock.Mock(**response)
+        with mock.patch.object(build, 'retry_session', return_value=session) as factory:
+            build.delete_build(11)
+        self.factory = factory
+        return session
+
+    def test_403_does_not_fail_the_job(self):
+        self.run_with(status_code=403, text='Not authorized.')
+
+    def test_500_does_not_fail_the_job(self):
+        self.run_with(status_code=500, text='boom')
+
+    def test_connection_error_does_not_fail_the_job(self):
+        self.run_with(side_effect=build.requests.exceptions.ConnectionError('socket closed'))
+
+    def test_success_path_still_calls_the_api(self):
+        session = self.run_with(status_code=200, text='')
+        self.assertEqual(session.delete.call_count, 1)
+
+    def test_delete_is_bounded_by_a_timeout(self):
+        session = self.run_with(status_code=200, text='')
+        self.assertEqual(session.delete.call_args.kwargs['timeout'], 30)
+
+    def test_403_is_not_retried_for_cleanup(self):
+        # The result is ignored, so spending the 403 budget here only delays the job.
+        self.run_with(status_code=403, text='')
+        self.assertNotIn(403, self.factory.call_args.kwargs['statuses'])
+
+
+class DownloadArtifactTest(EnvMixin, unittest.TestCase):
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        old_cwd = os.getcwd()
+        self.addCleanup(os.chdir, old_cwd)
+        os.chdir(tmp.name)
+        self.set_env(TARGET='windows64-x')
+        silencer = mock.patch('builtins.print')
+        silencer.start()
+        self.addCleanup(silencer.stop)
+
+    @staticmethod
+    def payload(href='https://storage.example/artifact.zip'):
+        return {'links': {'download_primary': {'href': href}}}
+
+    @staticmethod
+    def zip_bytes():
+        buf = _io.BytesIO()
+        with zipfile.ZipFile(buf, 'w') as archive:
+            archive.writestr('Explorer', 'payload')
+        return buf.getvalue()
+
+    def session_yielding(self, chunks, raise_for_status=None):
+        response = mock.MagicMock()
+        response.__enter__.return_value = response
+        response.iter_content.return_value = chunks
+        if raise_for_status is not None:
+            response.raise_for_status.side_effect = raise_for_status
+        session = mock.Mock()
+        session.get.return_value = response
+        return session
+
+    def test_uses_the_poll_payload_without_refetching_the_build(self):
+        session = self.session_yielding([self.zip_bytes()])
+        with mock.patch.object(build, 'retry_session', return_value=session), \
+             mock.patch.object(build.requests, 'get') as bare_get, \
+             mock.patch('builtins.print') as printed:
+            result = build.download_artifact(12, self.payload())
+
+        self.assertTrue(result)
+        bare_get.assert_not_called()
+        self.assertEqual(session.get.call_count, 1)
+        self.assertEqual(session.get.call_args[0][0], 'https://storage.example/artifact.zip')
+        self.assertEqual(session.get.call_args.kwargs['timeout'], 300)
+        self.assertTrue(os.path.exists(os.path.join('build', 'Explorer')))
+        self.assertFalse(os.path.exists(os.path.join('build', 'artifact.zip')))
+        self.assertTrue(any('Build folder confirmed at' in str(c)
+                            for c in printed.call_args_list))
+
+    def test_missing_links_returns_without_downloading(self):
+        session = self.session_yielding([b''])
+        with mock.patch.object(build, 'retry_session', return_value=session):
+            self.assertFalse(build.download_artifact(12, {'links': {}}))
+        session.get.assert_not_called()
+
+    def test_none_payload_returns_without_downloading(self):
+        session = self.session_yielding([b''])
+        with mock.patch.object(build, 'retry_session', return_value=session):
+            self.assertFalse(build.download_artifact(12, None))
+        session.get.assert_not_called()
+
+    def test_download_failure_exits_one(self):
+        # Must fail via raise_for_status, not by writing an error body and hitting BadZipFile.
+        session = self.session_yielding(
+            [], raise_for_status=build.requests.exceptions.HTTPError('403 Client Error'))
+        with mock.patch.object(build, 'retry_session', return_value=session):
+            with mock.patch('builtins.print') as printed:
+                with self.assertRaises(SystemExit) as caught:
+                    build.download_artifact(12, self.payload())
+        self.assertEqual(caught.exception.code, 1)
+        session.get.return_value.raise_for_status.assert_called_once()
+        self.assertTrue(any('Failed to download build artifact' in str(c)
+                            for c in printed.call_args_list))
 
 
 if __name__ == '__main__':
