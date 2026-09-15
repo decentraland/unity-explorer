@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Character;
+using DCL.Web3.Identities;
 using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.Archipelago.AdapterAddress.Current;
 using DCL.Multiplayer.Connections.Archipelago.LiveConnections;
@@ -7,6 +8,9 @@ using DCL.Multiplayer.Connections.Archipelago.Rooms;
 using DCL.Multiplayer.Connections.Archipelago.SignFlow;
 using DCL.Multiplayer.Connections.Pools;
 using DCL.Multiplayer.Connections.Rooms.Connective;
+using DCL.Multiplayer.Connections.Rooms;
+using LiveKit.Rooms;
+using UnityEngine.Pool;
 using DCL.Utility.Types;
 using Decentraland.Kernel.Comms.V3;
 using Global.AppArgs;
@@ -191,6 +195,134 @@ namespace DCL.Tests.PlayMode
             // Assert
             Assert.IsTrue(DuplicateIdentityDetected(room));
         }
+
+        [UnityTest]
+        public IEnumerator RejectLateIslandAfterAuthoritativeKickWithLegacyFlagDisabled() =>
+            UniTask.ToCoroutine(async () =>
+            {
+                using var cache = new MemoryWeb3IdentityCache();
+                var session = SessionControl.For(cache);
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                var packets = new Queue<ServerPacket>();
+                packets.Enqueue(new ServerPacket { SessionStatus = new SessionStatusMessage { State = SessionStatus.TakeoverPending, RetryAfterMs = 1000 } });
+                packets.Enqueue(new ServerPacket { Kicked = new KickedMessage { Reason = KickedReason.KrNewSession } });
+                packets.Enqueue(new ServerPacket { IslandChanged = new IslandChangedMessage { IslandId = "late", ConnStr = CONNECTION_STRING } });
+                connection.ReceiveAsync(Arg.Any<CancellationToken>()).Returns(call => packets.Count > 0
+                    ? UniTask.FromResult(Packet(packets.Dequeue())) : WaitForCancellationAsync(call.Arg<CancellationToken>()));
+                var signFlow = new LiveConnectionArchipelagoSignFlow(connection, memoryPool, multiPool, session);
+                var assignments = 0;
+                InitializeFeatureRegistry(NewFlags(false));
+                signFlow.StartListeningForConnectionStringAsync((_, _) => Interlocked.Increment(ref assignments), cts.Token).Forget();
+                await UniTask.WaitUntil(() => session.Current == SessionControl.Status.Superseded, cancellationToken: cts.Token);
+                Assert.AreEqual(0, assignments);
+                var room = new ArchipelagoIslandRoom(signFlow, Substitute.For<ICharacterObject>(), Substitute.For<ICurrentAdapterAddress>(), session);
+                Assert.IsFalse(await room.StartAsync());
+                Assert.IsFalse(session.AcceptAssignment(session.Generation));
+                cts.Cancel();
+                room.Dispose();
+            });
+
+        [UnityTest]
+        public IEnumerator ResolvePendingWithNormalAssignmentWithoutHeartbeat() =>
+            UniTask.ToCoroutine(async () =>
+            {
+                using var cache = new MemoryWeb3IdentityCache();
+                var session = SessionControl.For(cache);
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                var pending = new ServerPacket { SessionStatus = new SessionStatusMessage { State = SessionStatus.TakeoverPending, RetryAfterMs = 1000 } };
+                var calls = 0;
+                connection.ReceiveAsync(Arg.Any<CancellationToken>()).Returns(call => Interlocked.Increment(ref calls) switch
+                {
+                    1 => UniTask.FromResult(Packet(pending)),
+                    2 => UniTask.FromResult(IslandAssignment(ISLAND_ID, CONNECTION_STRING)),
+                    _ => WaitForCancellationAsync(call.Arg<CancellationToken>()),
+                });
+                var signFlow = new LiveConnectionArchipelagoSignFlow(connection, memoryPool, multiPool, session);
+                var assigned = new UniTaskCompletionSource<string>();
+                signFlow.StartListeningForConnectionStringAsync((id, _) => assigned.TrySetResult(id), cts.Token).Forget();
+                Assert.AreEqual(ISLAND_ID, await assigned.Task.AttachExternalCancellation(cts.Token));
+                Assert.AreEqual(SessionControl.Status.Active, session.Current);
+                AssertNoHeartbeatWasSent();
+                cts.Cancel();
+            });
+
+        private EnumResult<MemoryWrap, IArchipelagoLiveConnection.ResponseError> Packet(ServerPacket packet)
+        {
+            MemoryWrap memory = memoryPool.Memory(packet);
+            packet.WriteTo(memory.Span());
+            return EnumResult<MemoryWrap, IArchipelagoLiveConnection.ResponseError>.SuccessResult(memory);
+        }
+
+        [UnityTest]
+        public IEnumerator DistinguishBanAndUnknownFromSupersession() =>
+            UniTask.ToCoroutine(async () =>
+            {
+                foreach (KickedReason reason in new[] { KickedReason.KrBanned, (KickedReason)99 })
+                {
+                    using var cache = new MemoryWeb3IdentityCache();
+                    var session = SessionControl.For(cache);
+                    using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                    connection.ReceiveAsync(Arg.Any<CancellationToken>()).Returns(UniTask.FromResult(Packet(new ServerPacket { Kicked = new KickedMessage { Reason = reason } })));
+                    var flow = new LiveConnectionArchipelagoSignFlow(connection, memoryPool, multiPool, session);
+                    flow.StartListeningForConnectionStringAsync((_, _) => Assert.Fail("Kick cannot assign an island"), cts.Token).Forget();
+                    await UniTask.WaitUntil(() => session.Current != SessionControl.Status.Active, cancellationToken: cts.Token);
+                    Assert.AreEqual(reason == KickedReason.KrBanned ? SessionControl.Status.Banned : SessionControl.Status.Unknown, session.Current);
+                    Assert.IsFalse(session.CanRecover(session.Generation));
+                    if (reason == KickedReason.KrBanned) Assert.IsFalse(session.BeginReauthentication());
+                    cts.Cancel();
+                }
+            });
+
+        [UnityTest]
+        public IEnumerator IgnoreKickFromReplacedListenerGeneration() =>
+            UniTask.ToCoroutine(async () =>
+            {
+                using var cache = new MemoryWeb3IdentityCache();
+                var session = SessionControl.For(cache);
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                var oldResponse = new UniTaskCompletionSource<EnumResult<MemoryWrap, IArchipelagoLiveConnection.ResponseError>>();
+                var received = new UniTaskCompletionSource<string>();
+                var calls = 0;
+                connection.ReceiveAsync(Arg.Any<CancellationToken>()).Returns(call => Interlocked.Increment(ref calls) switch
+                {
+                    1 => oldResponse.Task,
+                    2 => UniTask.FromResult(IslandAssignment(ISLAND_ID, CONNECTION_STRING)),
+                    _ => WaitForCancellationAsync(call.Arg<CancellationToken>()),
+                });
+                var flow = new LiveConnectionArchipelagoSignFlow(connection, memoryPool, multiPool, session);
+                flow.StartListeningForConnectionStringAsync((_, _) => Assert.Fail("Old listener callback"), cts.Token).Forget();
+                await UniTask.WaitUntil(() => Volatile.Read(ref calls) == 1, cancellationToken: cts.Token);
+                flow.StartListeningForConnectionStringAsync((id, _) => received.TrySetResult(id), cts.Token).Forget();
+                Assert.AreEqual(ISLAND_ID, await received.Task.AttachExternalCancellation(cts.Token));
+                oldResponse.TrySetResult(Packet(new ServerPacket { Kicked = new KickedMessage { Reason = KickedReason.KrNewSession } }));
+                await UniTask.Delay(100, cancellationToken: cts.Token);
+                Assert.AreEqual(SessionControl.Status.Active, session.Current);
+                cts.Cancel();
+            });
+
+        [UnityTest]
+        public IEnumerator RejectRoomSwapWhenSupersededWhilePreviousRoomDisconnects() =>
+            UniTask.ToCoroutine(async () =>
+            {
+                using var cache = new MemoryWeb3IdentityCache();
+                var session = SessionControl.For(cache);
+                int generation = session.Generation;
+                int revision = session.Revision;
+                var previous = Substitute.For<IRoom>();
+                var replacement = Substitute.For<IRoom>();
+                var pool = Substitute.For<IObjectPool<IRoom>>();
+                var disconnect = new UniTaskCompletionSource();
+                previous.DisconnectAsync(Arg.Any<CancellationToken>()).Returns(disconnect.Task);
+                var interior = new InteriorRoom();
+                UniTask swapping = interior.SwapRoomsAsync(RoomSelection.New, previous, replacement, pool, CancellationToken.None,
+                    () => session.CanCompleteOperation(generation, revision));
+                session.Stop(generation, SessionControl.Status.Superseded);
+                disconnect.TrySetResult();
+                await swapping;
+                Assert.AreSame(NullRoom.INSTANCE.Info, interior.Info);
+                pool.Received(1).Release(replacement);
+                _ = replacement.Received(1).DisconnectAsync(Arg.Any<CancellationToken>());
+            });
 
         [Test]
         public void IgnoreUnrelatedDisconnectsForDuplicateIdentityHandling()

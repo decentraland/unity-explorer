@@ -25,11 +25,13 @@ namespace DCL.Multiplayer.Connections.Archipelago.SignFlow
         private readonly IArchipelagoLiveConnection connection;
         private readonly IMemoryPool memoryPool;
         private readonly IMultiPool multiPool;
-        private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly SessionControl? session;
+        private int listenerGeneration;
 
-        /// <param name="connection">Relies on capabilities of auto-reconnection to transport</param>
-        public LiveConnectionArchipelagoSignFlow(IArchipelagoLiveConnection connection, IMemoryPool memoryPool, IMultiPool multiPool)
+        /// <summary>Uses the connection's automatic transport recovery within the current logical session.</summary>
+        public LiveConnectionArchipelagoSignFlow(IArchipelagoLiveConnection connection, IMemoryPool memoryPool, IMultiPool multiPool, SessionControl? session = null)
         {
+            this.session = session;
             this.connection = connection;
             this.memoryPool = memoryPool;
             this.multiPool = multiPool;
@@ -75,28 +77,85 @@ namespace DCL.Multiplayer.Connections.Archipelago.SignFlow
         /// </summary>
         public async UniTaskVoid StartListeningForConnectionStringAsync(Action<string, string> onNewIslandAssignment, CancellationToken token)
         {
-            await ExecuteOnThreadPoolScope.NewScopeAsync();
-
-            while (token.IsCancellationRequested == false)
+            int listener = DCLInterlocked.Increment(ref listenerGeneration);
+            int generation = session?.Generation ?? 0;
+            var lifetime = CancellationTokenSource.CreateLinkedTokenSource(token);
+            CancellationToken listenerToken = lifetime.Token;
+            void Suppress()
             {
-                EnumResult<MemoryWrap, IArchipelagoLiveConnection.ResponseError> result = await connection.ReceiveAsync(token);
+                if (session?.CanListen(generation) ?? true) return;
+                try { lifetime.Cancel(); }
+                catch (ObjectDisposedException) { }
+            }
+            if (session != null) session.Changed += Suppress;
+            try
+            {
+                await ExecuteOnThreadPoolScope.NewScopeAsync();
 
-                if (result.Success == false)
+                while (!listenerToken.IsCancellationRequested && listener == DCLVolatile.Read(ref listenerGeneration) && (session?.CanListen(generation) ?? true))
                 {
-                    // AutoReconnectLiveConnection will recover the transport itself
-                    if (token.IsCancellationRequested == false)
-                        ReportHub.LogError(ReportCategory.LIVEKIT, $"Cannot listen for connection string: {result.Error?.Message}");
+                    EnumResult<MemoryWrap, IArchipelagoLiveConnection.ResponseError> result = await connection.ReceiveAsync(listenerToken);
 
-                    continue;
+                    if (result.Success == false)
+                    {
+                        // AutoReconnectLiveConnection will recover the transport itself
+                        if (listenerToken.IsCancellationRequested == false)
+                            ReportHub.LogError(ReportCategory.LIVEKIT, $"Cannot listen for connection string: {result.Error?.Message}");
+                        await UniTask.Delay(250, cancellationToken: listenerToken);
+                        continue;
+                    }
+
+                    using MemoryWrap response = result.Value;
+                    using var serverPacket = new SmartWrap<ServerPacket>(response.AsMessageServerPacket(), multiPool);
+
+                    if (listenerToken.IsCancellationRequested || listener != DCLVolatile.Read(ref listenerGeneration) || !(session?.CanListen(generation) ?? true)) return;
+
+                    if (serverPacket.value.MessageCase == ServerPacket.MessageOneofCase.Kicked)
+                    {
+                        session?.Stop(generation, serverPacket.value.Kicked.Reason switch
+                        {
+                            KickedReason.KrNewSession => SessionControl.Status.Superseded,
+                            KickedReason.KrBanned => SessionControl.Status.Banned,
+                            _ => SessionControl.Status.Unknown,
+                        });
+                        return;
+                    }
+
+                    if (serverPacket.value.MessageCase == ServerPacket.MessageOneofCase.SessionStatus)
+                    {
+                        SessionStatusMessage status = serverPacket.value.SessionStatus;
+                        if (status.State == SessionStatus.TakeoverPending) session?.Pending(generation, status.RetryAfterMs, DateTime.UtcNow);
+                        else session?.Stop(generation, status.State == SessionStatus.TakeoverFailed ? SessionControl.Status.Failed : SessionControl.Status.Unknown);
+                        continue;
+                    }
+
+                    if (serverPacket.value.MessageCase is ServerPacket.MessageOneofCase.IslandChanged)
+                    {
+                        using var islandChanged = new SmartWrap<IslandChangedMessage>(serverPacket.value.IslandChanged!, multiPool);
+                        if (string.IsNullOrWhiteSpace(islandChanged.value.IslandId) || string.IsNullOrWhiteSpace(islandChanged.value.ConnStr))
+                        {
+                            session?.Stop(generation, SessionControl.Status.Unknown);
+                            return;
+                        }
+                        if (session?.AcceptAssignment(generation) ?? true)
+                            onNewIslandAssignment(islandChanged.value.IslandId, islandChanged.value.ConnStr);
+                    }
                 }
-
-                using MemoryWrap response = result.Value;
-                using var serverPacket = new SmartWrap<ServerPacket>(response.AsMessageServerPacket(), multiPool);
-
-                if (serverPacket.value.MessageCase is ServerPacket.MessageOneofCase.IslandChanged)
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e)
+            {
+                session?.Stop(generation, SessionControl.Status.Unknown);
+                ReportHub.LogException(e, ReportCategory.LIVEKIT);
+            }
+            finally
+            {
+                if (session != null) session.Changed -= Suppress;
+                lifetime.Dispose();
+                if (session != null && generation == session.Generation && !session.CanListen(generation))
                 {
-                    using var islandChanged = new SmartWrap<IslandChangedMessage>(serverPacket.value.IslandChanged!, multiPool);
-                    onNewIslandAssignment(islandChanged.value.IslandId, islandChanged.value.ConnStr);
+                    try { await connection.DisconnectAsync(CancellationToken.None); }
+                    catch (Exception e) { ReportHub.LogException(e, ReportCategory.LIVEKIT); }
                 }
             }
         }
@@ -104,7 +163,12 @@ namespace DCL.Multiplayer.Connections.Archipelago.SignFlow
         public UniTask DisconnectAsync(CancellationToken token) =>
             connection.DisconnectAsync(token);
 
-        public UniTask<Result> ConnectAsync(string adapterUrl, CancellationToken token) =>
-            connection.ConnectAsync(adapterUrl, token);
+        public async UniTask<Result> ConnectAsync(string adapterUrl, CancellationToken token)
+        {
+            int generation = session?.Generation ?? 0;
+            Result result = await connection.ConnectAsync(adapterUrl, token);
+            if (result.Success) session?.AwaitAssignment(generation, DateTime.UtcNow);
+            return result;
+        }
     }
 }

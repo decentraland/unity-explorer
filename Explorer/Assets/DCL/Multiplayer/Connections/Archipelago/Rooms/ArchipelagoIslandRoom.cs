@@ -43,13 +43,14 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
             // producing unexpected errors when sending the data through the websocket
             new LiveConnectionArchipelagoSignFlow(
                 new ArchipelagoSignedConnection(new WebSocketArchipelagoLiveConnection(memoryPool), multiPool, memoryPool, web3IdentityCache)
-                   .WithLog(), memoryPool, multiPool).WithLog(), characterObject, currentAdapterAddress) { }
+                   .WithLog(), memoryPool, multiPool, SessionControl.For(web3IdentityCache)).WithLog(), characterObject, currentAdapterAddress, SessionControl.For(web3IdentityCache)) { }
 
         public ArchipelagoIslandRoom(
             IArchipelagoSignFlow signFlow,
             ICharacterObject characterObject,
-            ICurrentAdapterAddress currentAdapterAddress
-        )
+            ICurrentAdapterAddress currentAdapterAddress,
+            SessionControl? session = null
+        ) : base(session)
         {
             this.signFlow = signFlow;
             this.characterObject = characterObject;
@@ -91,6 +92,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
         /// </summary>
         internal async UniTask SendHeartbeatIfEnabledAsync(CancellationToken token)
         {
+            if (!sessionAllowsRecovery) return;
             if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.ArchipelagoHeartbeats)) return;
 
             Vector3 position = characterObject.Position;
@@ -104,6 +106,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
 
         private void OnNewIslandAssignment(string islandId, string connectionString)
         {
+            if (!sessionAllowsRecovery) return;
             using var guard = connectionState.Lock(); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
             guard.Value = ConnectionStringState.FromPendingConnection(new PendingConnection(islandId, connectionString));
         }
@@ -127,6 +130,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
 
         private async UniTask TryConnectIfNeededAsync(CancellationToken token)
         {
+            if (!sessionAllowsRecovery) return;
             ConnectionStringState state = ReadAndConsumeConnectionState();
 
             if (CurrentState() is not (IConnectiveRoom.State.Starting or IConnectiveRoom.State.Running)) return;
@@ -215,11 +219,12 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
         /// </summary>
         internal async UniTask ForceFreshIslandAssignmentAsync(CancellationToken token)
         {
+            if (!sessionAllowsRecovery) return;
             ResetConnectionState();
 
             await signFlow.DisconnectAsync(token);
 
-            if (token.IsCancellationRequested) return;
+            if (token.IsCancellationRequested || !sessionAllowsRecovery) return;
 
             await ConnectToArchipelagoAsync(token);
         }
