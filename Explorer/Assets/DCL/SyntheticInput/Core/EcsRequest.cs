@@ -1,6 +1,7 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
 using Utility.Arch;
+using Utility.Multithreading;
 
 namespace DCL.SyntheticInput.Core
 {
@@ -27,11 +28,14 @@ namespace DCL.SyntheticInput.Core
         /// <summary>
         ///     Installs the request on the entity and returns the task its consuming system will complete.
         ///     A pending request of the same type is preempted: its awaiter is released with
-        ///     <paramref name="preemptedResult" /> before the component is replaced. Main thread only.
+        ///     <paramref name="preemptedResult" /> before the component is replaced. Main thread only: the
+        ///     structural change below is not thread-safe, so a driver on another thread must marshal first.
         /// </summary>
         public static UniTask<TResult> SendAsync<TIntent, TResult>(World world, Entity entity, TIntent request, TResult preemptedResult)
             where TIntent : struct, IEcsRequest<TResult>
         {
+            MultithreadingUtility.AssertMainThread(nameof(SendAsync), true);
+
             if (world.TryGet(entity, out TIntent existing))
                 existing.Completion?.TrySetResult(preemptedResult);
 
