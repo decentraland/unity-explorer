@@ -1037,6 +1037,7 @@ MonoBehaviour:
   actionButtonsCanvasGroup: {fileID: 5426593791136559375}
   nameContainer: {fileID: 820100835469798758}
   dateContainer: {fileID: 4072800561882369050}
+  defaultThumbnail: {fileID: 21300000, guid: 50c948c68942a4cf188b1f118ba70f8d, type: 3}
 --- !u!114 &-181359408225968550
 MonoBehaviour:
   m_ObjectHideFlags: 0

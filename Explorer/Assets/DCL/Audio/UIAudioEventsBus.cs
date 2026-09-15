@@ -13,7 +13,7 @@ namespace DCL.Audio
 
         public void Dispose() { }
 
-        public void SendPlayAudioEvent(AudioClipConfig audioClipConfig) =>
+        public void SendPlayAudioEvent(AudioClipConfig? audioClipConfig) =>
             SendPlayAudioEvent(audioClipConfig, 1f);
 
         /// <summary>
@@ -21,25 +21,25 @@ namespace DCL.Audio
         ///     Use the overload without a scale for the default (1.0); pass a lower scale when a single shared
         ///     AudioClipConfig is reused across contexts that need different loudness (e.g. nearby PTT).
         /// </summary>
-        public void SendPlayAudioEvent(AudioClipConfig audioClipConfig, float volumeScale)
+        public void SendPlayAudioEvent(AudioClipConfig? audioClipConfig, float volumeScale)
         {
             if (audioClipConfig != null)
                 PlayUIAudioEvent?.Invoke(audioClipConfig, volumeScale);
         }
 
-        public void SendPlayContinuousAudioEvent(AudioClipConfig audioClipConfig)
+        public void SendPlayContinuousAudioEvent(AudioClipConfig? audioClipConfig)
         {
             if (audioClipConfig != null)
                 PlayContinuousUIAudioEvent?.Invoke(audioClipConfig);
         }
 
-        public void SendStopPlayingContinuousAudioEvent(AudioClipConfig audioClipConfig)
+        public void SendStopPlayingContinuousAudioEvent(AudioClipConfig? audioClipConfig)
         {
             if (audioClipConfig != null)
                 StopContinuousUIAudioEvent?.Invoke(audioClipConfig);
         }
 
-        public void SendMuteContinuousAudioEvent(AudioClipConfig audioClipConfig, bool isMuted)
+        public void SendMuteContinuousAudioEvent(AudioClipConfig? audioClipConfig, bool isMuted)
         {
             if(audioClipConfig != null)
                 MuteContinuousUIAudioEvent?.Invoke(audioClipConfig, isMuted);

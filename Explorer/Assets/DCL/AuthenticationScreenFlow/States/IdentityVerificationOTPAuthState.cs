@@ -72,7 +72,7 @@ namespace DCL.AuthenticationScreenFlow
                     Web3SignatureException ex => new SpanErrorInfo("Web3 signature validation failed", ex),
                     CodeVerificationException ex => new SpanErrorInfo("Code verification failed during authentication", ex),
                     InvalidEmailException ex => new SpanErrorInfo("Invalid email provided during authentication", ex),
-                    Exception ex => new SpanErrorInfo("Unexpected error during authentication flow", ex),
+                    { } ex => new SpanErrorInfo("Unexpected error during authentication flow", ex),
                 };
 
                 if (loginException is not OperationCanceledException && loginException is not InvalidEmailException)
@@ -90,7 +90,7 @@ namespace DCL.AuthenticationScreenFlow
             base.Exit();
         }
 
-        private async UniTaskVoid AuthenticateAsync(string email, CancellationToken ct)
+        private async UniTaskVoid AuthenticateAsync(string emailAddress, CancellationToken ct)
         {
             try
             {
@@ -99,8 +99,8 @@ namespace DCL.AuthenticationScreenFlow
                 compositeWeb3Provider.OTPSendSucceeded += OnOTPSendSucceeded;
 
                 // awaits OTP code being entered
-                IWeb3Identity identity = await compositeWeb3Provider.LoginAsync(LoginPayload.ForOtpFlow(email), ct);
-                machine.Enter<ProfileFetchingAuthState, ProfileFetchingPayload>(new ProfileFetchingPayload(email, identity, false, ct));
+                IWeb3Identity identity = await compositeWeb3Provider.LoginAsync(LoginPayload.ForOtpFlow(emailAddress), ct);
+                machine.Enter<ProfileFetchingAuthState, ProfileFetchingPayload>(new ProfileFetchingPayload(emailAddress, identity, false, ct));
             }
             catch (OperationCanceledException e)
             {
@@ -149,22 +149,22 @@ namespace DCL.AuthenticationScreenFlow
 
         private void OnOTPEntered(string otp)
         {
-            OnOtpEnteredAsync(loginCt).Forget();
+            OnOtpEnteredAsync(email, loginCt).Forget();
             return;
 
-            async UniTask OnOtpEnteredAsync(CancellationToken ct)
+            async UniTask OnOtpEnteredAsync(string emailAddress, CancellationToken ct)
             {
                 try
                 {
                     await compositeWeb3Provider.SubmitOtpAsync(otp, ct);
-                    ShowOtpResult(true);
+                    ShowOtpResult(emailAddress, true, ct);
                 }
                 catch (OperationCanceledException)
                 { /* Expected on cancellation */
                 }
                 catch (CodeVerificationException)
                 {
-                    ShowOtpResult(false);
+                    ShowOtpResult(emailAddress, false, ct);
                 }
                 catch (Exception e)
                 {
@@ -174,9 +174,10 @@ namespace DCL.AuthenticationScreenFlow
             }
         }
 
-        private void ShowOtpResult(bool isSuccess)
+        private void ShowOtpResult(string emailAddress, bool isSuccess, CancellationToken ct)
         {
-            OTPVerified?.Invoke(email, isSuccess);
+            OTPVerified?.Invoke(emailAddress, isSuccess);
+            if (ct != loginCt) return;
 
             if (isSuccess)
                 view.InputField.SetSuccess();
@@ -196,6 +197,7 @@ namespace DCL.AuthenticationScreenFlow
                 try
                 {
                     await compositeWeb3Provider.ResendOtpAsync(ct);
+                    if (ct != loginCt) return;
                     OTPResend?.Invoke();
                     view.InputField.Clear();
                 }
@@ -207,7 +209,7 @@ namespace DCL.AuthenticationScreenFlow
                     ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
                     controller.CancelLoginProcess();
                 }
-                finally { view.ResendCodeButton.interactable = true; }
+                finally { if (ct == loginCt) view.ResendCodeButton.interactable = true; }
             }
         }
     }

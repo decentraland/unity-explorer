@@ -1,4 +1,5 @@
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.RuntimeDeepLink;
 using NUnit.Framework;
 using System.Collections.Generic;
 
@@ -6,6 +7,14 @@ namespace Global.AppArgs.Tests
 {
     public class AppArgsTest
     {
+        [TestCase("{")]
+        [TestCase("{\"deeplink\":")]
+        public void RejectIncompleteBridgeJsonWithoutThrowing(string json)
+        {
+            Assert.IsFalse(DeepLink.FromJson(json).Success);
+            Assert.IsTrue(DeepLink.FromJson("{\"deeplink\":\"decentraland://open?signin=id&authRequestId=req\"}").Success);
+        }
+
         [TearDown]
         public void TearDown()
         {

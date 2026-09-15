@@ -10,6 +10,7 @@ using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
 using ECS.SceneLifeCycle.Realm;
 using System;
 using System.Threading;
@@ -84,21 +85,24 @@ namespace DCL.Events
             AddEventToCalendarClicked?.Invoke(eventData);
         }
 
-        public void JumpInEvent(IEventDTO eventData, CancellationToken ct)
-        {
-            if (eventData.World)
-                realmNavigator.TryChangeRealmAsync(
-                    URLDomain.FromString(new ENS(eventData.Server).ConvertEnsToWorldUrl(decentralandUrlsSource.Url(DecentralandUrl.WorldServer))),
-                    ct,
-                    isWorld: true,
-                    allowsSpawnPointerOverride: true).Forget();
-            else
-                // Land at the event's exact parcel instead of the scene's spawn point — e.g. an event at the
-                // Theatre (0,5) inside the Genesis Plaza scene should drop the player at the Theatre, not at
-                // Genesis Plaza's spawn point.
-                realmNavigator.TeleportToParcelAsync(new Vector2Int(eventData.X, eventData.Y), ct, false, landOnParcel: true).Forget();
+        public void JumpInEvent(IEventDTO eventData, CancellationToken ct) =>
+            JumpInEventAsync(eventData, ct).SuppressToResultAsync(ReportCategory.UI).Forget();
 
+        public async UniTask<EnumResult<TaskError>> JumpInEventAsync(IEventDTO eventData, CancellationToken ct)
+        {
             JumpedInEventPlace?.Invoke(eventData);
+            if (eventData.World)
+            {
+                var result = await realmNavigator.TryChangeRealmAsync(
+                    URLDomain.FromString(new ENS(eventData.Server).ConvertEnsToWorldUrl(decentralandUrlsSource.Url(DecentralandUrl.WorldServer))),
+                    ct, isWorld: true, allowsSpawnPointerOverride: true);
+                return result.As(ChangeRealmErrors.AsTaskError);
+            }
+            else
+            {
+                // Events land at their exact parcel, even when the scene has another spawn point.
+                return await realmNavigator.TeleportToParcelAsync(new Vector2Int(eventData.X, eventData.Y), ct, false, landOnParcel: true);
+            }
         }
 
         public void ShareEvent(IEventDTO eventData)

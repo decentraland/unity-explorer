@@ -2,6 +2,7 @@
     "name": "DCL.EditMode.Tests",
     "rootNamespace": "",
     "references": [
+        "GUID:ba053ae967dabc94a811350e36a486f3",
         "GUID:2f30d6e5229a74284acedda491abcc6e",
         "GUID:9659fcb6593e30b46909c1245ed056df",
         "GUID:dc04f38471c3a459fb4d31124ee9127d",

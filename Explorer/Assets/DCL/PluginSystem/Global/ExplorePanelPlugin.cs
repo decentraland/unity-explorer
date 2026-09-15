@@ -67,10 +67,14 @@ using DCL.MarketplaceCredits.Purchase.TopUp.UI;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Passport;
+using DCL.Notifications.NotificationsMenu;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Places;
+using DCL.ExplorePanel.Lobby;
+using DCL.Multiplayer.Connectivity;
 using DCL.PrivateWorlds;
 using DCL.Quality.Runtime;
+using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.RealmNavigation;
 using DCL.UI.Profiles.Helpers;
 using DCL.SDKComponents.MediaStream.Settings;
@@ -169,8 +173,11 @@ namespace DCL.PluginSystem.Global
         private readonly ILoadingStatus loadingStatus;
         private readonly ImageControllerProvider imageControllerProvider;
         private readonly IFriendsService? friendsService;
+        private readonly FriendsConnectivityStatusTracker? friendsConnectivity;
+        private readonly IOnlineUsersProvider onlineUsersProvider;
         private readonly IDonationsService donationsService;
         private readonly IRealmNavigator realmNavigator;
+        private readonly MenuRealmNavigator? lobbyNavigator;
         private readonly IWorldPermissionsService worldPermissionsService;
         private ICreditsPanelController creditsPanelController = new NullCreditsPanelController();
         private readonly bool isVoiceChatFeatureEnabled;
@@ -188,6 +195,9 @@ namespace DCL.PluginSystem.Global
         private EventInfoPanelController? eventInfoPanelController;
         private CommunitiesBrowserController? communitiesBrowserController;
         private ExplorePanelController? explorePanelController;
+        private LobbyView? lobbyView;
+        private long experimentStartedAt;
+        private readonly bool livingLobbyEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.LivingLobby);
         private PlacesController? placesController;
         private PlaceDetailPanelController? placeDetailPanelController;
         private EventsController? eventsController;
@@ -257,15 +267,19 @@ namespace DCL.PluginSystem.Global
             IDonationsService donationsService,
             IRealmNavigator realmNavigator,
             IFriendsService? friendsService,
+            FriendsConnectivityStatusTracker? friendsConnectivity,
             PublishIpfsEntityCommand publishIpfsEntityCommand,
             IWorldPermissionsService worldPermissionsService,
             IRendererFeaturesCache rendererFeaturesCache,
             SpringBoneSimulationSettings springBoneSimulationSettings,
             JoinedCommunitiesVoiceLiveTracker joinedCommunitiesVoiceLiveTracker,
             IPendingTransferService ownedNftFilter,
-            MarketplaceCreditsAPIClient marketplaceCreditsAPIClient
+            MarketplaceCreditsAPIClient marketplaceCreditsAPIClient,
+            IOnlineUsersProvider onlineUsersProvider,
+            ILoadingScreen loadingScreen
             )
         {
+            this.onlineUsersProvider = onlineUsersProvider;
             this.eventBus = eventBus;
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -328,8 +342,10 @@ namespace DCL.PluginSystem.Global
             this.communityDataService = communityDataService;
             this.loadingStatus = loadingStatus;
             this.donationsService = donationsService;
-            this.realmNavigator = realmNavigator;
+            lobbyNavigator = livingLobbyEnabled ? new MenuRealmNavigator(realmNavigator, loadingStatus, loadingScreen) : null;
+            this.realmNavigator = lobbyNavigator ?? realmNavigator;
             this.friendsService = friendsService;
+            this.friendsConnectivity = friendsConnectivity;
             this.publishIpfsEntityCommand = publishIpfsEntityCommand;
             this.worldPermissionsService = worldPermissionsService;
             this.rendererFeaturesCache = rendererFeaturesCache;
@@ -341,6 +357,9 @@ namespace DCL.PluginSystem.Global
 
         public void Dispose()
         {
+            lobbyNavigator?.Dispose();
+            if (lobbyView != null)
+                lobbyView.NotificationsClicked -= OnLobbyNotificationsClicked;
             upscalingController.Dispose();
             categoryFilterController?.Dispose();
             navmapController?.Dispose();
@@ -350,12 +369,15 @@ namespace DCL.PluginSystem.Global
             communitiesBrowserController?.Dispose();
             placesController?.Dispose();
             explorePanelController?.Dispose();
+            explorePanelController = null;
             eventsController?.Dispose();
             eventDetailPanelController?.Dispose();
             placeDetailPanelController?.Dispose();
             creditsPanelController.Dispose();
 
             dclInput.Shortcuts.MainMenu.canceled -= OnInputShortcutsMainMenuCanceledAsync;
+            loadingStatus.CurrentStage.Unsubscribe(TrackLobbyReady);
+            mvcManager.OnViewClosed -= OnViewClosed;
             dclInput.Shortcuts.Map.performed -= OnInputShortcutsMapPerformedAsync;
             dclInput.Shortcuts.Settings.performed -= OnInputShortcutsSettingsPerformedAsync;
             dclInput.Shortcuts.Backpack.performed -= OnInputShortcutsBackpackPerformedAsync;
@@ -368,6 +390,10 @@ namespace DCL.PluginSystem.Global
 
         public async UniTask InitializeAsync(ExplorePanelSettings settings, CancellationToken ct)
         {
+            experimentStartedAt = System.Diagnostics.Stopwatch.GetTimestamp();
+            TrackExperiment("lobby_experiment_exposed");
+            loadingStatus.CurrentStage.Subscribe(TrackLobbyReady);
+            TrackLobbyReady(loadingStatus.CurrentStage.Value);
             dclInput.Shortcuts.MainMenu.canceled += OnInputShortcutsMainMenuCanceledAsync;
             dclInput.Shortcuts.Map.performed += OnInputShortcutsMapPerformedAsync;
             dclInput.Shortcuts.Settings.performed += OnInputShortcutsSettingsPerformedAsync;
@@ -416,7 +442,7 @@ namespace DCL.PluginSystem.Global
                 ownedNftFilter
             );
 
-            ExplorePanelView panelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ExplorePanelPrefab, ct: ct)).GetComponent<ExplorePanelView>();
+            ExplorePanelView panelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(livingLobbyEnabled ? settings.LobbyExplorePanelPrefab : settings.ExplorePanelPrefab, ct: ct)).GetComponent<ExplorePanelView>();
             ControllerBase<ExplorePanelView, ExplorePanelParameter>.ViewFactoryMethod viewFactoryMethod = ExplorePanelController.Preallocate(panelViewAsset, null, out ExplorePanelView explorePanelView);
 
             ProvidedAsset<AudioMixer> generalAudioMixer = await assetsProvisioner.ProvideMainAssetAsync(settings.GeneralAudioMixer, ct);
@@ -626,7 +652,7 @@ namespace DCL.PluginSystem.Global
                     eventsApiService,
                     mvcManager,
                     joinedCommunitiesVoiceLiveTracker,
-                    creditsPanelController);
+                    CreateLobbyController(explorePanelView, placesCardSocialActionsController, eventCardActionsController));
 
             mvcManager.RegisterController(explorePanelController);
 
@@ -710,11 +736,62 @@ namespace DCL.PluginSystem.Global
             mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Navmap)));
         }
 
+        private LobbyController? CreateLobbyController(ExplorePanelView explorePanelView,
+            PlacesCardSocialActionsController placesCardSocialActionsController, EventCardActionsController eventCardActionsController)
+        {
+            if (!livingLobbyEnabled) return null;
+            lobbyView = explorePanelView.GetComponentInChildren<LobbyView>(true);
+            lobbyView.NotificationsClicked += OnLobbyNotificationsClicked;
+            return new LobbyController(lobbyView,
+                placesAPIService, eventsApiService, friendsConnectivity,
+                new LobbyAvatarController(lobbyView.Avatar, characterPreviewFactory, world, characterPreviewEventBus),
+                selfProfile, profileChangesBus, new SpriteCache(webRequestController), analytics,
+                placesCardSocialActionsController, eventCardActionsController, mvcManager, onlineUsersProvider, realmNavigator, decentralandUrlsSource, loadingStatus);
+        }
+
+        private void OnLobbyNotificationsClicked(RectTransform anchor) =>
+            mvcManager.ShowAndForget(NotificationsPanelController.IssueCommand(anchor));
+
+        private void TrackLobbyReady(LoadingStatus.LoadingStage stage)
+        {
+            if (stage != LoadingStatus.LoadingStage.Completed) return;
+            loadingStatus.CurrentStage.Unsubscribe(TrackLobbyReady);
+            TrackExperiment("lobby_experiment_ready");
+            mvcManager.OnViewClosed += OnViewClosed;
+            TrackWorldEntered();
+        }
+
+        private void OnViewClosed(IController _) => TrackWorldEntered();
+
+        private void TrackWorldEntered()
+        {
+            if (loadingStatus.CurrentStage.Value != LoadingStatus.LoadingStage.Completed || mvcManager.IsAnyModalViewShowing()) return;
+            mvcManager.OnViewClosed -= OnViewClosed;
+            TrackExperiment("lobby_experiment_entered");
+        }
+
+        private void TrackExperiment(string eventName)
+        {
+            var properties = new Newtonsoft.Json.Linq.JObject
+            {
+                ["schema_version"] = 2,
+                ["lobby_enabled"] = livingLobbyEnabled,
+                ["override"] = appArgs.HasFlag(AppArgsFlags.LIVING_LOBBY) || appArgs.HasFlag(AppArgsFlags.OPEN_LOBBY)
+                               || appArgs.HasFlag(AppArgsFlags.FeatureFlags.URL) || appArgs.HasFlag(AppArgsFlags.SKIP_AUTH_SCREEN) || Application.isEditor,
+                ["eligible"] = LobbyStartup.ShouldOpen(appArgs, true),
+                ["platform"] = Application.platform.ToString(),
+                ["build_version"] = Application.version,
+            };
+            if (eventName != "lobby_experiment_exposed")
+                properties["duration_seconds"] = (System.Diagnostics.Stopwatch.GetTimestamp() - experimentStartedAt) / (double)System.Diagnostics.Stopwatch.Frequency;
+            analytics.Track(eventName, properties);
+        }
+
         private void OnInputShortcutsMainMenuCanceledAsync(InputAction.CallbackContext _)
         {
             if (explorePanelController is { State: not ControllerState.ViewHidden }) return;
 
-            mvcManager.ShowAsync(ExplorePanelController.IssueCommand(default(ExplorePanelParameter)));
+            mvcManager.ShowAsync(ExplorePanelController.IssueCommand(livingLobbyEnabled ? new ExplorePanelParameter(ExploreSections.Home, entryPoint: "tab") : default));
         }
 
         private void OnInputShortcutsCameraReelPerformedAsync(InputAction.CallbackContext obj)
@@ -760,6 +837,7 @@ namespace DCL.PluginSystem.Global
         public class ExplorePanelSettings : IDCLPluginSettings
         {
             [field: SerializeField] public AssetReferenceGameObject ExplorePanelPrefab { get; private set; } = null!;
+            [field: SerializeField] public AssetReferenceGameObject LobbyExplorePanelPrefab { get; private set; } = null!;
             [field: SerializeField] public BackpackSettings BackpackSettings { get; private set; } = null!;
             [field: SerializeField] public string[] EmbeddedEmotes { get; private set; } = null!;
             [field: SerializeField] public SettingsMenuConfiguration SettingsMenuConfiguration { get; private set; } = null!;

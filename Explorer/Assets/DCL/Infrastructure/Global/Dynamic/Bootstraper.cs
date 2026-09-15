@@ -4,6 +4,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
+using DCL.ExplorePanel.Lobby;
 using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Notifications.NewNotification;
@@ -320,6 +321,12 @@ namespace Global.Dynamic
             catch (AutoLoginTokenInvalidException e) { ReportHub.LogException(e, ReportCategory.AUTHENTICATION); }
             catch (Exception e) { ReportHub.LogException(e, ReportCategory.AUTHENTICATION); }
 
+            if (LobbyStartup.ShouldOpen(appArgs, FeaturesRegistry.Instance.IsEnabled(FeatureId.LivingLobby)))
+                splashScreen.Hide();
+
+            // Mount the notification overlay before any fullscreen startup UI.
+            dynamicWorldContainer.MvcManager.ShowAsync(NewNotificationController.IssueCommand(), ct).Forget();
+
             await dynamicWorldContainer.UserInAppInAppInitializationFlow.ExecuteAsync(
                 new UserInAppInitializationFlowParameters
                 (
@@ -337,7 +344,6 @@ namespace Global.Dynamic
 
         private void OpenDefaultUI(IMVCManager mvcManager, CancellationToken ct)
         {
-            mvcManager.ShowAsync(NewNotificationController.IssueCommand(), ct).Forget();
             mvcManager.ShowAsync(MainUIController.IssueCommand(), ct).Forget();
 
             if (appArgs.HasFlag(AppArgsFlags.DISABLE_HUD))

@@ -6,6 +6,7 @@ namespace DCL.FeatureFlags
     [Serializable]
     public static class FeatureFlagsStrings
     {
+        public const string LIVING_LOBBY = "alfa-living-lobby";
         public const string MULTIPLAYER_COMPRESSION_WIN = "multiplayer_use_compression_win";
         public const string MULTIPLAYER_COMPRESSION_MAC = "multiplayer_use_compression_mac";
         public const string PORTABLE_EXPERIENCE = "alfa-portable-experiences";

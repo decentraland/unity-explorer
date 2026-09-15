@@ -18,6 +18,8 @@ namespace DCL.ExplorePanel
     {
         private const float ANIMATION_SPEED = 0.2f;
 
+        [field: SerializeField] public Button? HomeButton { get; private set; }
+
         [field: SerializeField]
         public CanvasGroup CanvasGroup { get; private set; } = null!;
 
@@ -76,7 +78,7 @@ namespace DCL.ExplorePanel
 
         public void SetLiveEventsCounter(int count)
         {
-            LiveEventsCounterText.text = count.ToString();
+            LiveEventsCounterText.text = count > 99 ? "99+" : count.ToString();
             LiveEventsCounterText.transform.parent.gameObject.SetActive(count > 0);
         }
     }

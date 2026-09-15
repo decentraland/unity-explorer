@@ -475,6 +475,12 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        <LobbyExplorePanelPrefab>k__BackingField:
+          m_AssetGUID: 07ae770d2aa140eeb767b5dcab7cbbca
+          m_SubObjectName:
+          m_SubObjectType:
+          m_SubObjectGUID:
+          m_EditorAssetChanged: 0
         <BackpackSettings>k__BackingField:
           <CategoryIconsMapping>k__BackingField:
             m_AssetGUID: 4a2a7b610414b45c1b576946ce094877

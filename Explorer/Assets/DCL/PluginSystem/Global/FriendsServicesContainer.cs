@@ -18,6 +18,7 @@ namespace DCL.PluginSystem.Global
         public IFriendsService FriendsService { get; }
         public FriendsCache FriendsCache { get; }
         public FriendsConnectivityStatusTracker ConnectivityStatusTracker { get; }
+        public IRPCSocialServices SocialServicesRpc { get; }
 
         public FriendsServicesContainer(
             ISelfProfile selfProfile,
@@ -26,6 +27,7 @@ namespace DCL.PluginSystem.Global
             bool useAnalytics,
             IAnalyticsController? analyticsController)
         {
+            SocialServicesRpc = socialServicesRPC;
             FriendsCache = new FriendsCache();
             RpcFriendsService = new RPCFriendsService(friendsEventBus, FriendsCache, selfProfile, socialServicesRPC);
             FriendsService = useAnalytics ? new FriendServiceAnalyticsDecorator(RpcFriendsService, analyticsController!) : RpcFriendsService;

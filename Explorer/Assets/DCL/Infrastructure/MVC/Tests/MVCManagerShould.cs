@@ -21,6 +21,7 @@ namespace MVC.Tests
         public void Setup()
         {
             windowsStackManager = Substitute.For<IWindowsStackManager>();
+            windowsStackManager.PushPopup(Arg.Any<IController>()).Returns(new PopupPushInfo(new CanvasOrdering(), new CanvasOrdering(), null, new UniTaskCompletionSource()));
             windowsStackManager.PushFullscreen(Arg.Any<IController>()).Returns(new FullscreenPushInfo(new List<(IController, int)>(), new CanvasOrdering(), new UniTaskCompletionSource()));
             windowsStackManager.PushOverlay(Arg.Any<IController>()).Returns(new OverlayPushInfo(new List<(IController, int)>(), null, new CanvasOrdering()));
             popupCloserView = Substitute.For<IPopupCloserView>();

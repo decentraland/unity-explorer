@@ -33,7 +33,6 @@ namespace DCL.Web3.Authenticators
         private readonly IWebRequestController webRequestController;
         private readonly ReactiveProperty<string?> deeplinkSigninIdentityId;
         private readonly ReactiveProperty<string?> loginAwaitingSigninRequestId;
-        private readonly bool forceBridgeOnly;
         private readonly Web3Address? referrer;
         private readonly URLBuilder urlBuilder = new ();
         private readonly DCLSemaphoreSlim loginMutex = new ();
@@ -46,7 +45,6 @@ namespace DCL.Web3.Authenticators
             IWebRequestController webRequestController,
             ReactiveProperty<string?> deeplinkSigninIdentityId,
             ReactiveProperty<string?> loginAwaitingSigninRequestId,
-            bool forceBridgeOnly,
             string? referrer = null)
         {
             this.webBrowser = webBrowser;
@@ -56,7 +54,6 @@ namespace DCL.Web3.Authenticators
             this.webRequestController = webRequestController;
             this.deeplinkSigninIdentityId = deeplinkSigninIdentityId;
             this.loginAwaitingSigninRequestId = loginAwaitingSigninRequestId;
-            this.forceBridgeOnly = forceBridgeOnly;
 
             // Normalized/validated once at construction so the field is always canonical;
             // an invalid launch-argument value degrades to "no referrer".
@@ -71,55 +68,32 @@ namespace DCL.Web3.Authenticators
         public async UniTask<IWeb3Identity> LoginAsync(LoginPayload payload, CancellationToken ct)
         {
             await loginMutex.WaitAsync(ct);
+            var completionSource = new UniTaskCompletionSource<string>();
 
             try
             {
-                // A signin id stored before this attempt minted its request cannot belong to it: drop it
-                // so a stale or foreign deep link does not complete this login with another session's identity.
-                deeplinkSigninIdentityId.Value = null;
-
                 await UniTask.SwitchToMainThread(ct);
-
-                // Client-generated id embedded in the browser URL; no server round-trip needed before opening the browser.
+                deeplinkSigninIdentityId.Value = null;
                 var authRequestId = Guid.NewGuid().ToString();
-                // `forceBridgeOnly` keeps the login in the deeplink bridge so the launcher does not
-                // spawn a new explorer instance during the confirmation from the website.
-                string url = DeepLinkSignInUrl.Build(signatureWebAppUrl, authRequestId, payload.Method.ToString(), forceBridgeOnly, referrer);
+                loginAwaitingSigninRequestId.Value = authRequestId;
+                using var subscription = deeplinkSigninIdentityId.UseCurrentValueAndSubscribeToUpdate(completionSource,
+                    static (identityId, completion) =>
+                    {
+                        if (!string.IsNullOrEmpty(identityId))
+                            completion.TrySetResult(identityId);
+                    }, ct);
 
-                webBrowser.OpenUrlMainThreadOnly(url);
-
-                // Resolves when the OS delivers the deep link that carries the identity id.
-                string identityId = await WaitForSigninAsync(authRequestId, ct);
-
-                return await FetchIdentityByIdAsync(identityId, ct);
+                webBrowser.OpenUrlMainThreadOnly(DeepLinkSignInUrl.Build(signatureWebAppUrl, authRequestId, payload.Method.ToString(), referrer));
+                string identity = await completionSource.Task.AttachExternalCancellation(ct)
+                                                        .Timeout(TimeSpan.FromSeconds(DEEPLINK_TIMEOUT_SECONDS), DelayType.Realtime);
+                return await FetchIdentityByIdAsync(identity, ct);
             }
-            finally { loginMutex.Release(); }
-        }
-
-        /// <summary>
-        ///     Awaits the first non-empty <c>identityId</c>, starting from the currently stored one, and consumes it.
-        /// </summary>
-        private async UniTask<string> WaitForSigninAsync(string requestId, CancellationToken ct)
-        {
-            var completionSource = new UniTaskCompletionSource<string>();
-
-            // Publishes the request id awaited by the pipeline.
-            loginAwaitingSigninRequestId.Value = requestId;
-
-            using var subscription = deeplinkSigninIdentityId.UseCurrentValueAndSubscribeToUpdate(completionSource,
-                static (identityId, completion) =>
-                {
-                    if (!string.IsNullOrEmpty(identityId))
-                        completion.TrySetResult(identityId);
-                }, ct);
-
-            try { return await completionSource.Task.Timeout(TimeSpan.FromSeconds(DEEPLINK_TIMEOUT_SECONDS), DelayType.Realtime).AttachExternalCancellation(ct); }
             finally
             {
-                // Stop accepting signins and consume the id on success, timeout and cancellation alike, so a
-                // later login attempt never resolves against a signin delivered for this one.
+                completionSource.TrySetCanceled(ct);
                 loginAwaitingSigninRequestId.Value = null;
                 deeplinkSigninIdentityId.Value = null;
+                loginMutex.Release();
             }
         }
 

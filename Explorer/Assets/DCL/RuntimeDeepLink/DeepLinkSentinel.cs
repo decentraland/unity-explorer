@@ -45,11 +45,15 @@ namespace DCL.RuntimeDeepLink
                 // Transient IO read failure: leave the file for the next check-in.
                 if (!contentResult.Success) continue;
 
-                // Parse before deleting: a corrupt file is dropped, a valid one is handled.
                 Result<DeepLink> deepLinkCreateResult = DeepLink.FromJson(contentResult.Value);
 
                 if (deepLinkCreateResult.Success == false)
                 {
+                    if (!deferralTimer.IsRunning)
+                        deferralTimer.Start();
+                    if (deferralTimer.Elapsed < DEFERRED_SIGNIN_LIFETIME)
+                        continue;
+
                     ReportHub.LogError(ReportCategory.RUNTIME_DEEPLINKS, $"Cannot deserialize deeplink content: {deepLinkCreateResult.ErrorMessage}");
                     TryDeleteBridgeFile();
                     deferralTimer.Reset();

@@ -70,7 +70,7 @@ namespace Global.Dynamic
                 PopupCloserView popupCloserView = Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(c.settings.PopupCloserView, CancellationToken.None)).Value.GetComponent<PopupCloserView>()).EnsureNotNull();
                 c.MainUIView = Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(c.settings.MainUIView, CancellationToken.None)).Value.GetComponent<MainUIView>()).EnsureNotNull();
 
-                var coreMvcManager = new MVCManager(new WindowStackManager(), new CancellationTokenSource(), popupCloserView);
+                var coreMvcManager = new MVCManager(new WindowStackManager(DCLInput.Instance.UI.Close), new CancellationTokenSource(), popupCloserView);
 
                 c.MvcManager = enableAnalytics
                     ? new MVCManagerAnalyticsDecorator(coreMvcManager, bootstrapContainer.Analytics.Controller, c.SupportRequestService)

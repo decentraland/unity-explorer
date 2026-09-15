@@ -25,7 +25,7 @@ using Utility;
 
 namespace DCL.Notifications.NotificationsMenu
 {
-    public class NotificationsPanelController : ControllerBase<NotificationsMenuView>,IDisposable
+    public class NotificationsPanelController : ControllerBase<NotificationsMenuView, RectTransform?>, IDisposable
     {
         private const int PIXELS_PER_UNIT = 50;
         private const int DEFAULT_NOTIFICATION_INDEX = 0;
@@ -61,6 +61,9 @@ namespace DCL.Notifications.NotificationsMenu
         private UniTaskCompletionSource? closeViewTask;
         private int unreadNotifications;
         private bool needsInitialRequest = true;
+
+        public static ShowCommand<NotificationsMenuView, RectTransform?> IssueCommand() =>
+            new (null);
 
         public NotificationsPanelController(
             ViewFactoryMethod viewFactory,
@@ -101,6 +104,7 @@ namespace DCL.Notifications.NotificationsMenu
         protected override void OnBeforeViewShow()
         {
             base.OnBeforeViewShow();
+            viewInstance!.SetAnchor(inputData);
 
             if (needsInitialRequest && web3IdentityCache.Identity is { IsExpired: false })
                 InitialNotificationRequestAsync(lifeCycleCts.Token).SuppressCancellationThrow().Forget();
@@ -423,5 +427,6 @@ namespace DCL.Notifications.NotificationsMenu
             viewInstance?.LoopList.SetListItemCount(notifications.Count, false);
             viewInstance?.LoopList.RefreshAllShownItem();
         }
+
     }
 }

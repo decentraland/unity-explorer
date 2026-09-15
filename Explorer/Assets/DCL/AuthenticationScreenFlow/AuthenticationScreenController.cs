@@ -70,7 +70,7 @@ namespace DCL.AuthenticationScreenFlow
         private AuthenticationScreenCharacterPreviewController? characterPreviewController;
         private readonly IInputBlock inputBlock;
 
-        private UniTaskCompletionSource? lifeCycleTask;
+        private UniTaskCompletionSource lifeCycleTask = new ();
         private CancellationTokenSource? loginCancellationTokenSource;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
@@ -147,6 +147,7 @@ namespace DCL.AuthenticationScreenFlow
             viewInstance?.BugReportButton?.onClick.RemoveListener(OpenBugReport);
 
             CancelLoginProcess();
+            lifeCycleTask.TrySetCanceled();
             audio?.Dispose();
             fsm?.Dispose();
         }
@@ -227,6 +228,7 @@ namespace DCL.AuthenticationScreenFlow
             try
             {
                 bool autoLoginSuccess = await web3Authenticator.TryAutoLoginAsync(ct);
+                ct.ThrowIfCancellationRequested();
 
                 if (autoLoginSuccess)
                     fsm?.Enter<ProfileFetchingAuthState, ProfileFetchingPayload>(new (storedIdentity, storedIdentity.Source != IWeb3Identity.Web3IdentitySource.TokenFile, ct));
@@ -259,23 +261,27 @@ namespace DCL.AuthenticationScreenFlow
 
             fsm?.CurrentState?.Exit();
             CancelLoginProcess();
+            lifeCycleTask = new UniTaskCompletionSource();
 
             UnblockUnwantedInputs();
             audio?.OnHide();
         }
 
-        protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
+        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
+            lifeCycleTask.Task.AttachExternalCancellation(ct);
+
+        internal void CompleteExistingAccountLogin(bool isCached)
         {
-            lifeCycleTask?.TrySetCanceled(ct);
-            lifeCycleTask = new UniTaskCompletionSource();
-            await lifeCycleTask.Task;
+            IsCurrentlyNewAccount = false;
+            CurrentState.Value = isCached ? AuthStatus.LoggedInCached : AuthStatus.LoggedIn;
+            if (splashScreen != null)
+                splashScreen.FadeOutAndHide();
+            fsm?.Enter<InitAuthState>();
+            TrySetLifeCycle();
         }
 
-        internal void TrySetLifeCycle()
-        {
-            lifeCycleTask?.TrySetResult();
-            lifeCycleTask = null;
-        }
+        internal void TrySetLifeCycle() =>
+            lifeCycleTask.TrySetResult();
 
         internal void CancelLoginProcess()
         {

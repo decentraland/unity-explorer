@@ -18,7 +18,7 @@ namespace DCL.RuntimeDeepLink
 
         public static Result<DeepLink> FromRaw(string? raw)
         {
-            if (string.IsNullOrWhiteSpace(raw!))
+            if (string.IsNullOrWhiteSpace(raw))
                 return Result<DeepLink>.ErrorResult("Empty Input");
 
             if (raw.StartsWith("decentraland://", StringComparison.Ordinal) == false)
@@ -30,9 +30,8 @@ namespace DCL.RuntimeDeepLink
 
         public static Result<DeepLink> FromJson(string json)
         {
-            DeepLinkDTO dto = JsonUtility.FromJson<DeepLinkDTO>(json);
-            string? raw = dto.deeplink;
-            return FromRaw(raw);
+            try { return FromRaw(JsonUtility.FromJson<DeepLinkDTO>(json).deeplink); }
+            catch (ArgumentException e) { return Result<DeepLink>.ErrorResult(e.Message); }
         }
 
         public string? ValueOf(string key)
@@ -47,6 +46,7 @@ namespace DCL.RuntimeDeepLink
         [Serializable]
         private struct DeepLinkDTO
         {
+            // ReSharper disable once InconsistentNaming
             public string? deeplink;
         }
     }

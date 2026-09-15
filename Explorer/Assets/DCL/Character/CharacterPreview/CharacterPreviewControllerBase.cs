@@ -41,7 +41,7 @@ namespace DCL.CharacterPreview
         private Vector3 avatarPosition;
 
         private RenderTexture? currentRenderTexture;
-        public RenderTexture CurrentRenderTexture => currentRenderTexture;
+        public RenderTexture? CurrentRenderTexture => currentRenderTexture;
 
         protected CharacterPreviewController? previewController;
         protected CharacterPreviewAvatarModel previewAvatarModel;
@@ -302,6 +302,9 @@ namespace DCL.CharacterPreview
 
         private async UniTask UpdateAvatarAsync(CharacterPreviewAvatarModel model, CancellationToken ct) =>
             await (previewController?.UpdateAvatarAsync(model, ct) ?? UniTask.CompletedTask);
+
+        public void SetRenderingActive(bool isActive) =>
+            previewController?.SetCharacterPreviewAvatarContainerActive(isActive);
 
         public void StopEmotes()
         {

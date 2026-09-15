@@ -1,4 +1,6 @@
+using Cysharp.Threading.Tasks;
 using NUnit.Framework;
+using System.Threading;
 
 namespace DCL.AuthenticationScreenFlow.Tests
 {
@@ -8,9 +10,25 @@ namespace DCL.AuthenticationScreenFlow.Tests
         [Test]
         public void NotThrowOnDisposeWhenViewWasNeverShown()
         {
-            // Never-shown lifecycle (--skip-auth-screen with a cached identity): OnViewInstantiated never runs,
-            // so lazily-created members stay null; the constructor only stores dependencies, so null! args are safe.
-            var controller = new AuthenticationScreenController(
+            var controller = new TestController();
+
+            Assert.DoesNotThrow(controller.Dispose);
+        }
+
+        [TestCase(true)]
+        [TestCase(false)]
+        public void CompleteLoginBeforeOrAfterTheViewAppears(bool beforeShow)
+        {
+            using var controller = new TestController();
+            if (beforeShow) controller.TrySetLifeCycle();
+            UniTask closing = controller.WaitAsync();
+            if (!beforeShow) controller.TrySetLifeCycle();
+            Assert.AreEqual(UniTaskStatus.Succeeded, closing.Status);
+        }
+
+        private sealed class TestController : AuthenticationScreenController
+        {
+            public TestController() : base(
                 () => null!,
                 null!,
                 null!,
@@ -29,9 +47,9 @@ namespace DCL.AuthenticationScreenFlow.Tests
                 null!,
                 null!,
                 null!,
-                null!);
+                null!) { }
 
-            Assert.DoesNotThrow(controller.Dispose);
+            public UniTask WaitAsync() => WaitForCloseIntentAsync(CancellationToken.None);
         }
     }
 }

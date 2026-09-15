@@ -3,6 +3,7 @@ using DCL.Profiles;
 using DCL.UI;
 using ECS.TestSuite;
 using NUnit.Framework;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace DCL.Friends.Tests
@@ -12,6 +13,8 @@ namespace DCL.Friends.Tests
         // The tracker debounces status changes for 2000ms; the margin absorbs editor loop jitter
         private const int DEBOUNCE_WAIT_MS = 2500;
         private const string FRIEND_ID = "0x79fdd6f8ba257bda1d5a2a413ae0b43ec300ed10";
+        private const string AWAY_FRIEND_ID = "0x79fdd6f8ba257bda1d5a2a413ae0b43ec300ed11";
+        private const string OFFLINE_FRIEND_ID = "0x79fdd6f8ba257bda1d5a2a413ae0b43ec300ed12";
 
         private DefaultFriendsEventBus eventBus = null!;
         private FriendsConnectivityStatusTracker tracker = null!;
@@ -92,6 +95,28 @@ namespace DCL.Friends.Tests
             //Assert
             Assert.AreEqual(0, onlineEventsCount);
             Assert.AreEqual(OnlineStatus.Offline, tracker.GetFriendStatus(friendProfile.UserId));
+        }
+
+        [Test]
+        public async Task CopyOnlineAndAwayFriendsOnly()
+        {
+            //Arrange
+            var online = new Profile.CompactInfo(UserId.New(FRIEND_ID).Unwrap(), "Online");
+            var away = new Profile.CompactInfo(UserId.New(AWAY_FRIEND_ID).Unwrap(), "Away");
+            var offline = new Profile.CompactInfo(UserId.New(OFFLINE_FRIEND_ID).Unwrap(), "Offline");
+            eventBus.BroadcastFriendConnected(online);
+            eventBus.BroadcastFriendAsAway(away);
+            eventBus.BroadcastFriendConnected(offline);
+            await UniTask.Delay(DEBOUNCE_WAIT_MS);
+            eventBus.BroadcastFriendDisconnected(offline);
+            await UniTask.Delay(DEBOUNCE_WAIT_MS);
+
+            //Act
+            var buffer = new List<Profile.CompactInfo>();
+            tracker.CopyOnlineFriendsTo(buffer);
+
+            //Assert
+            CollectionAssert.AreEquivalent(new[] { online, away }, buffer);
         }
     }
 }

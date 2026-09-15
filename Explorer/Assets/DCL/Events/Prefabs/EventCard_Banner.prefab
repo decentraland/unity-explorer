@@ -1710,6 +1710,7 @@ MonoBehaviour:
   contentRt: {fileID: 543531335378566307}
   contentYPositionWithCarouselDots: 48
   contentYPositionWithoutCarouselDots: 14
+  defaultThumbnail: {fileID: 21300000, guid: 50c948c68942a4cf188b1f118ba70f8d, type: 3}
 --- !u!114 &4683337981261915476
 MonoBehaviour:
   m_ObjectHideFlags: 0

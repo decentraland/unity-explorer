@@ -131,7 +131,7 @@ namespace Global.Tests.PlayMode
                 new MemoryProfileRepository(new DefaultProfileCache()),
                 NullRoomHub.INSTANCE,
                 new MVCManager(
-                    new WindowStackManager(),
+                    new WindowStackManager(DCLInput.Instance.UI.Close),
                     new CancellationTokenSource(),
                     Substitute.For<IPopupCloserView>()
                 ),

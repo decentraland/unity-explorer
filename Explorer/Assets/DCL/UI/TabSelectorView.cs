@@ -26,7 +26,7 @@ namespace DCL.UI
         public GameObject SelectedText { get; private set; }
 
         [field: SerializeField]
-        public Animator tabAnimator;
+        public Animator? tabAnimator;
 
         [field: Header("Audio")]
         [field: SerializeField]
@@ -37,12 +37,11 @@ namespace DCL.UI
 
         private void OnEnable()
         {
-            tabAnimator.enabled = true;
-
             // Animator.Update is only legal on an active-in-hierarchy object; tabs are
             // frequently enabled while their panel is still hidden during UI bootstrap.
             if (tabAnimator != null && tabAnimator.gameObject.activeInHierarchy)
             {
+                tabAnimator.enabled = true;
                 tabAnimator.Rebind();
                 tabAnimator.Update(0);
             }
@@ -53,7 +52,8 @@ namespace DCL.UI
         private void OnDisable()
         {
             TabSelectorToggle.onValueChanged.RemoveListener(OnToggle);
-            tabAnimator.enabled = false;
+            if (tabAnimator != null)
+                tabAnimator.enabled = false;
         }
 
         public void OnPointerEnter(PointerEventData eventData)
