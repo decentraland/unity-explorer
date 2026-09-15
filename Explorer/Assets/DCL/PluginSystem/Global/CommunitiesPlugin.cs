@@ -128,7 +128,7 @@ namespace DCL.PluginSystem.Global
             dclInput = DCLInput.Instance;
             this.socialServiceEventBus = socialServiceEventBus;
             rpcCommunitiesService = new RPCCommunitiesService(rpcSocialServices, communitiesEventBus, socialServiceEventBus, web3IdentityCache);
-            notificationHandler = new NotificationHandler(realmNavigator, decentralandUrlsSource);
+            notificationHandler = new NotificationHandler(mvcManager);
 
             dclInput.Shortcuts.Places.performed += OnInputShortcutsPlacesPerformedAsync;
             dclInput.Shortcuts.Events.performed += OnInputShortcutsEventsPerformedAsync;
