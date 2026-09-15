@@ -48,7 +48,7 @@ All transport-neutral interfaces live under `Explorer/Assets/DCL/Multiplayer/`. 
 | `IMessageDeduplication` | `Deduplication/IMessageDeduplication.cs` | Suppress duplicate messages observed on multiple transports | `MessageDeduplication` |
 | `IEntityParticipantTable` | `Profiles/Tables/IEntityParticipantTable.cs` | Bidirectional wallet ↔ ECS entity map with `RoomSource` reference counting | `EntityParticipantTable` |
 | `IRemoteEntities` | `Profiles/Entities/IRemoteEntities.cs` | Pool and lifecycle of remote-player entities | `RemoteEntities` |
-| `IOnlineUsersProvider` | `Connectivity/IOnlineUsersProvider.cs` | Fetch online players (HTTP) | `ArchipelagoHttpOnlineUsersProvider` (+ decorator) |
+| `IOnlineUsersProvider` | `Connectivity/IOnlineUsersProvider.cs` | Fetch online players (HTTP) | `ArchipelagoHttpOnlineUsersProvider` |
 
 > `IProfileBroadcast` (LiveKit) and `IProfilePropagation` (Pulse) are intentionally asymmetric — LiveKit debounces self-profile version announcements via `DebounceLiveKitProfileBroadcast`; Pulse fires a one-shot propagate on startup. Both ship only the profile *version* on the wire; remote clients fetch the full profile through the HTTP profile repository.
 
@@ -888,7 +888,7 @@ The system's doc comment calls out *why* it can't use the standard `ResetDirtyFl
 
 ## Connectivity — Online Users Lookup
 
-`Explorer/Assets/DCL/Multiplayer/Connectivity/` is a **separate, transport-independent path** for answering "who is online right now". It does not use LiveKit rooms or Pulse peers — it's an HTTP fetch against the Archipelago "peers" endpoint and (optionally) per-user World endpoints. Used for social UI, friend-status, and nearby-player widgets, it runs independently of whether the client has any LiveKit rooms connected.
+`Explorer/Assets/DCL/Multiplayer/Connectivity/` is a **separate, transport-independent path** for answering "who is online right now". It does not inspect LiveKit rooms or the client's Pulse peer table; it fetches the public HTTP `peers` surface, whose presence data comes from Pulse. Used for social UI, friend-status, and nearby-player widgets, it runs independently of whether the client has any LiveKit rooms connected.
 
 > **Note:** "Archipelago" here means the Archipelago HTTP service — same service whose WebSocket adapter drives the LiveKit Island room, but this is the REST API, not the live connection. See the LiveKit room wiring in [livekit-networking.md](livekit-networking.md) for the WebSocket side.
 
@@ -904,8 +904,8 @@ public interface IOnlineUsersProvider
 }
 ```
 
-- No-arg `GetAsync` — returns everyone currently known to Archipelago.
-- `GetAsync(userIds, …)` — filters to a specified wallet set (appended as repeated `id` query parameters on the URL).
+- No-arg `GetAsync` — keeps the main-realm semantics of the unfiltered public endpoint.
+- `GetAsync(userIds, …)` — searches all realms for the specified wallet set, appended as repeated `id` query parameters on one URL.
 
 ### `OnlineUserData`
 
@@ -914,12 +914,12 @@ public struct OnlineUserData
 {
     public bool IsInWorld => !string.IsNullOrEmpty(worldName);
     public Vector3 position;
-    [JsonProperty("world")]  public string? worldName;
-    [JsonProperty("wallet")] public string  avatarId;
+    public string? worldName;
+    public string avatarId;
 }
 ```
 
-`IsInWorld` distinguishes a player standing inside a published World vs. Genesis City — the UI uses it to render a world badge. `position` is a 2D parcel coordinate flattened onto Y=0 (deserialized from the HTTP response via `OnlinePlayersJsonDtoConverter`, which maps `peers[].position[0], position[2]` to `x, z`).
+`IsInWorld` distinguishes a player standing inside a published World vs. Genesis City — the UI uses it to render a world badge. `position` is a 2D parcel coordinate flattened onto Y=0. `worldName` is populated from `peers[].realm` only when the realm ends in `.dcl.eth` (case-insensitive, original spelling preserved).
 
 ### `ArchipelagoHttpOnlineUsersProvider`
 
@@ -935,39 +935,9 @@ For the filtered variant, a `URLBuilder` builds `baseUrl?id=0xA&id=0xB&…` — 
 
 ### `OnlinePlayersJsonDtoConverter`
 
-The response envelope looks like `{ "peers": [ { "address": "...", "position": [x, y, z] }, … ] }` — not a direct list of `OnlineUserData`. The converter unwraps the `peers` array, maps `address → avatarId`, and drops Y (using `position[0], position[2]` with `Y = 0`). Marked `[Preserve]` so Unity IL2CPP doesn't strip it.
+The response envelope looks like `{ "peers": [ { "address": "...", "position": [x, y, z], "realm": "..." }, … ] }` — not a direct list of `OnlineUserData`. The converter unwraps the `peers` array, maps `address → avatarId`, maps world realms to `worldName`, and drops Y (using `position[0], position[2]` with `Y = 0`). Marked `[Preserve]` so Unity IL2CPP doesn't strip it.
 
-### `WorldInfoOnlineUsersProviderDecorator`
-
-Wraps a base `IOnlineUsersProvider` to also query per-user World endpoints — used because a player can be online **inside a World** (separate server) rather than in Genesis City.
-
-```csharp
-public async UniTask<IReadOnlyCollection<OnlineUserData>> GetAsync(IEnumerable<string> userIds, CancellationToken ct)
-{
-    var alreadyReturnedIds = new HashSet<string>();
-    var onlineUsers = (await baseProvider.GetAsync(userIds, ct)).ToList();
-    for (var i = 0; i < onlineUsers.Count; i++)
-        alreadyReturnedIds.Add(onlineUsers[i].avatarId);
-
-    foreach (string userId in userIds)
-    {
-        if (alreadyReturnedIds.Contains(userId)) continue; // in-world and in-genesis are mutually exclusive
-        // Fetch per-user world URL (baseUrlWorlds with [USER-ID] substituted)
-        OnlineUserData worldUserData = await webRequestController.GetAsync(...)
-            .CreateFromNewtonsoftJsonAsync<OnlineUserData>();
-        if (!string.IsNullOrEmpty(worldUserData.worldName))
-            onlineUsers.Add(worldUserData);
-    }
-    return onlineUsers;
-}
-```
-
-Two subtleties from the code:
-- Mutual exclusion — a player in a World cannot simultaneously be in Genesis City, so the decorator skips World lookups for IDs already returned by Archipelago.
-- The no-arg `GetAsync(ct)` path **ignores the World dimension entirely** (World endpoints don't support multi-wallet bulk queries). The decorator is honest about this — the inline comment says *"Using only base one as world user provider doesn't support a multiple wallet request"*.
-- `IGNORE_NOT_FOUND` is passed to the web-request controller so a missing user simply returns an empty `OnlineUserData` rather than raising.
-
-The decorator is the production wiring — `IOnlineUsersProvider` is resolved to a `WorldInfoOnlineUsersProviderDecorator(ArchipelagoHttpOnlineUsersProvider(...), ...)` where cross-dimension presence matters.
+Production wiring resolves `IOnlineUsersProvider` directly to `ArchipelagoHttpOnlineUsersProvider`. A filtered friends lookup obtains Genesis City and World presence from one all-realms `?id=` response; it performs no `/wallet/:wallet/connected-world` request. The unfiltered map lookup remains main-realm-only through the public endpoint redirect.
 
 ---
 
