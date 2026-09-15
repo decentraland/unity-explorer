@@ -18,54 +18,63 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       pull-requests: read
-      statuses: write
       issues: write
     steps:
-      - name: Detect changes and initialize status
+      - name: Classify changes and maintain label
         id: detect
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         with:
           script: |
             const { owner, repo } = context.repo;
             const pull_number = context.payload.pull_request.number;
-            const sha = context.payload.pull_request.head.sha;
-            const status = (state, description) => github.rest.repos.createCommitStatus({
-              owner, repo, sha, state, context: 'Dependency Security Review', description
-            });
-            try {
-              const { data: pr } = await github.rest.pulls.get({ owner, repo, pull_number });
-              if (pr.state !== 'open' || pr.head.sha !== sha ||
-                  pr.base.sha !== context.payload.pull_request.base.sha) {
-                core.notice('Superseded event; leaving the current commit status to its own run.');
-                return;
-              }
-              await status('pending', 'Detecting security-relevant changes for Jarvis');
-              const files = await github.paginate(github.rest.pulls.listFiles, {
-                owner, repo, pull_number, per_page: 100
-              });
-              // GitHub caps this endpoint at 3,000 files. Never treat truncation as no changes.
-              if (files.length !== pr.changed_files) throw new Error('Incomplete changed-file inventory');
-              const relevant = (path) =>
-                /(^|\/)(Packages\/(manifest|packages-lock)\.json|package\.json|package-lock\.json|yarn\.lock|pnpm-lock\.yaml|Cargo\.(toml|lock)|packages\.config|requirements[^/]*\.txt|pyproject\.toml|poetry\.lock)$/.test(path) ||
-                /(^|\/)(Assets\/Plugins|Editor|scripts|\.github|\.claude|\.agents|\.codex|unity-shared-dependencies)\//.test(path) ||
-                /\.(dll|so(\.[0-9.]+)?|dylib|bundle|aar|jar|a|lib|exe|wasm|jslib|asmdef|asmref)(\.meta)?$/i.test(path) ||
-                /\.bundle\//i.test(path) ||
-                /(^|\/)(AGENTS\.md|CLAUDE\.md|SKILL\.md|CODEOWNERS|\.gitmodules|\.npmrc|Dockerfile[^/]*|Build[^/]*\.cs)$/.test(path);
-              const hasChanges = files.some(f => relevant(f.filename) || (f.previous_filename && relevant(f.previous_filename)));
-              if (!hasChanges) {
-                await status('success', 'No dependency, automation or Unity plugin changes');
-                return;
-              }
-              await github.rest.issues.addLabels({ owner, repo, issue_number: pull_number, labels: ['new-dependency'] })
-                .catch(e => core.warning(`Could not add informational label: ${e.message}`));
-              await status('pending', pr.draft
-                ? 'Security review required when this draft is ready'
-                : 'Awaiting Jarvis security review; request decentraland-bot');
-              core.setOutput('request', (!pr.draft).toString());
-            } catch (error) {
-              await status('failure', 'Security change detection failed; inspect workflow logs');
-              throw error;
+            const { data: pr } = await github.rest.pulls.get({ owner, repo, pull_number });
+            if (pr.state !== 'open' || pr.head.sha !== context.payload.pull_request.head.sha ||
+                pr.base.sha !== context.payload.pull_request.base.sha) {
+              core.notice('Superseded event; leaving classification to the current run.');
+              return;
             }
+            const files = await github.paginate(github.rest.pulls.listFiles, {
+              owner, repo, pull_number, per_page: 100
+            });
+            // GitHub caps this endpoint at 3,000 files. Never treat truncation as no changes.
+            if (files.length !== pr.changed_files) throw new Error('Incomplete changed-file inventory');
+            const classifiedHead = pr.head.sha;
+            const classifiedBase = pr.base.sha;
+            const classifiedFileCount = pr.changed_files;
+            const relevant = (path) =>
+              /(^|\/)(Packages\/(manifest|packages-lock)\.json|package\.json|package-lock\.json|yarn\.lock|pnpm-lock\.yaml|Cargo\.(toml|lock)|packages\.config|requirements[^/]*\.txt|pyproject\.toml|poetry\.lock)$/.test(path) ||
+              /^(Explorer|avatar-preview-renderer)\/Packages\/[^/]+\//.test(path) ||
+              /(^|\/)(Assets\/Plugins|Editor|scripts|\.github|\.claude|\.agents|\.codex|unity-shared-dependencies)\//.test(path) ||
+              /\.(dll|so(\.[0-9.]+)?|dylib|bundle|aar|jar|a|lib|exe|wasm|jslib|asmdef|asmref)(\.meta)?$/i.test(path) ||
+              /\.bundle\//i.test(path) ||
+              /(^|\/)(AGENTS\.md|CLAUDE\.md|SKILL\.md|CODEOWNERS|\.gitmodules|\.npmrc|Dockerfile[^/]*|Build[^/]*\.cs)$/.test(path);
+            const hasChanges = files.some(f => relevant(f.filename) || (f.previous_filename && relevant(f.previous_filename)));
+            const { data: current } = await github.rest.pulls.get({ owner, repo, pull_number });
+            if (current.state !== 'open' || current.head.sha !== classifiedHead ||
+                current.base.sha !== classifiedBase || current.changed_files !== classifiedFileCount) {
+              core.notice('PR changed during classification; leaving label maintenance to the current run.');
+              return;
+            }
+            const hasLabel = current.labels.some(label => label.name === 'new-dependency');
+            if (!hasChanges) {
+              if (hasLabel) {
+                try {
+                  await github.rest.issues.removeLabel({
+                    owner, repo, issue_number: pull_number, name: 'new-dependency'
+                  });
+                } catch (error) {
+                  if (error.status !== 404) throw error;
+                }
+              }
+              core.setOutput('request', 'false');
+              return;
+            }
+            if (!hasLabel) {
+              await github.rest.issues.addLabels({
+                owner, repo, issue_number: pull_number, labels: ['new-dependency']
+              });
+            }
+            core.setOutput('request', (!current.draft).toString());
 
       - name: Request Jarvis through the existing reviewer webhook
         if: steps.detect.outputs.request == 'true'
@@ -79,7 +88,8 @@ jobs:
             const pull_number = context.payload.pull_request.number;
             const { data: pr } = await github.rest.pulls.get({ owner, repo, pull_number });
             if (pr.state !== 'open' || pr.draft || pr.head.sha !== context.payload.pull_request.head.sha ||
-                pr.base.sha !== context.payload.pull_request.base.sha) return;
+                pr.base.sha !== context.payload.pull_request.base.sha ||
+                !pr.labels.some(label => label.name === 'new-dependency')) return;
             // External authors cannot auto-start a credential-bearing agent.
             // A collaborator requests decentraland-bot manually after inspecting the PR.
             let allowed = false;
@@ -99,14 +109,3 @@ jobs:
             // follow-up code reviews are on demand. Existing pending requests share
             // that review; a stale run remains non-green and needs a re-request.
             await github.rest.pulls.requestReviewers({ owner, repo, pull_number, reviewers: ['decentraland-bot'] });
-
-      - name: Report request failure
-        if: failure() && steps.detect.outputs.request == 'true'
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
-        with:
-          script: |
-            await github.rest.repos.createCommitStatus({
-              ...context.repo, sha: context.payload.pull_request.head.sha, state: 'failure',
-              context: 'Dependency Security Review',
-              description: 'Jarvis request failed; request decentraland-bot manually'
-            });

@@ -13,7 +13,7 @@ using UnityEngine;
 
 namespace DCL.Web3.Authenticators
 {
-    public class ThirdWebAuthenticator : IWeb3Authenticator, IEthereumApi, IOtpAuthenticator
+    public class ThirdWebAuthenticator : IWeb3Authenticator, IEthereumApi, IOtpAuthenticator, IAccountLinkAuthenticator
     {
         private const string CLIENT_ID = "e1adce863fe287bb6cf0e3fd90bdb77f";
         private const string BUNDLE_ID = "com.Decentraland";
@@ -37,7 +37,8 @@ namespace DCL.Web3.Authenticators
             HashSet<string> readOnlyMethods,
             IWeb3AccountFactory web3AccountFactory,
             IWebRequestController webRequestController,
-            int? identityExpirationDuration = null)
+            int? identityExpirationDuration = null,
+            string? guestSessionIdOverride = null)
         {
             Dictionary<BigInteger, string> rpcOverrides = ChainRpcOverrides(decentralandUrlsSource);
 
@@ -52,7 +53,7 @@ namespace DCL.Web3.Authenticators
                 rpcOverrides: rpcOverrides
             );
 
-            loginService = new ThirdWebLoginService(thirdwebClient, web3AccountFactory, identityExpirationDuration);
+            loginService = new ThirdWebLoginService(thirdwebClient, web3AccountFactory, identityExpirationDuration, guestSessionIdOverride);
             ethereumApi = new ThirdWebEthereumApi(thirdwebClient, whitelistMethods, readOnlyMethods, decentralandUrlsSource, ethereumNetwork, rpcOverrides);
         }
 
@@ -106,6 +107,15 @@ namespace DCL.Web3.Authenticators
 
         public async UniTask ResendOtpAsync(CancellationToken ct = default) =>
             await loginService.ResendOtpAsync(ct);
+
+        public UniTask SendEmailLinkOtpAsync(string email, CancellationToken ct) =>
+            loginService.SendEmailLinkOtpAsync(email, ct);
+
+        public UniTask ResendEmailLinkOtpAsync(CancellationToken ct) =>
+            loginService.ResendEmailLinkOtpAsync(ct);
+
+        public UniTask<IWeb3Identity> LinkEmailAsync(string otp, CancellationToken ct) =>
+            loginService.LinkEmailAsync(otp, ct);
 
         // Ethereum API
         public UniTask<EthApiResponse> SendAsync(EthApiRequest request, Web3RequestSource source, CancellationToken ct) =>
