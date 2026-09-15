@@ -34,11 +34,13 @@ namespace Global.Dynamic
     ///     The binary is never embedded in the build: on first run the pinned release is downloaded
     ///     (<see cref="EnsurePinnedBinaryAsync" />) and verified against its compile-time sha256. Only the
     ///     pinned version is ever executed — a compromised GitHub release cannot propagate here without a
-    ///     deliberate pin+checksum bump in this file. StreamingAssets acts as an explicit developer override.
+    ///     deliberate pin+checksum bump in this file. Installing it removes every earlier install, so a pin
+    ///     bump leaves one copy on disk instead of accumulating them. StreamingAssets acts as an explicit
+    ///     developer override.
     /// </summary>
     public sealed class AbgenSidecar : IDisposable
     {
-        private const string PINNED_VERSION = "0.17.11";
+        private const string PINNED_VERSION = "0.17.13";
         private const int MAX_RESTARTS = 3;
         private const int HEALTH_TIMEOUT_MS = 15000;
         private const int HEALTH_POLL_MS = 250;
@@ -50,6 +52,9 @@ namespace Global.Dynamic
 
         /// <summary>Path under the realm root where a content server exposes its entities and files.</summary>
         private const string CONTENT_PATH = "/content";
+
+        /// <summary>abgen's <c>status</c> for a server that can serve and convert; anything else is degraded.</summary>
+        private const string READY_STATUS = "ready";
 
         private readonly string executablePath;
         private readonly string realmRoot;
@@ -70,6 +75,9 @@ namespace Global.Dynamic
 #endif
         private int restarts;
         private volatile bool disposed;
+
+        /// <summary>True while this instance is using a server it did not launch: it has no child to poll or kill.</summary>
+        private bool adopted;
 
         public string BaseUrl { get; }
 
@@ -94,8 +102,8 @@ namespace Global.Dynamic
         ///     seed the URL sources built early in startup. The server is created on this URL later via
         ///     <see cref="TryCreate" />. Always abgen's default bind (127.0.0.1:5147): exporting the port
         ///     would take the generic HTTP_SERVER_HOST/PORT names, which leak into every child process
-        ///     spawned after <see cref="Launch" />. A second --local-ab instance loses the port and its
-        ///     scene degrades to raw GLTFs — acceptable for a dev-only tool.
+        ///     spawned after <see cref="Launch" />. A server already on the port is reconciled against
+        ///     rather than collided with — see <see cref="StartAsync" />.
         /// </summary>
         public static string ReserveBaseUrl() =>
             $"http://127.0.0.1:{ABGEN_DEFAULT_PORT}";
@@ -129,13 +137,27 @@ namespace Global.Dynamic
         }
 
         /// <summary>
-        ///     Launches the reserved server process and waits until it answers on <see cref="BaseUrl" />.
-        ///     False when it could not start or never became healthy — the process is disposed and a
-        ///     milestone row reports it; requests to <see cref="BaseUrl" /> then fail fast on the dead
-        ///     loopback port.
+        ///     Reconciles whatever already holds <see cref="BaseUrl" /> (see
+        ///     <see cref="ReconcileResidentServerAsync" />), then launches the server process and waits until
+        ///     it answers. False when it could not start, never became healthy, or the port is held by a
+        ///     server this client must not disturb — the process is disposed and a milestone row reports it;
+        ///     requests to <see cref="BaseUrl" /> then fail fast on the dead loopback port.
         /// </summary>
         public async UniTask<bool> StartAsync(CancellationToken ct)
         {
+            switch (await ReconcileResidentServerAsync(ct))
+            {
+                case ResidentServer.Adopted:
+                    adopted = true;
+                    SuperviseAsync(ct).Forget();
+                    return true;
+                case ResidentServer.Blocked:
+                    Dispose();
+                    return false;
+                case ResidentServer.None:
+                    break;
+            }
+
             if (Launch() && await WaitHealthyAsync(ct))
             {
                 SuperviseAsync(ct).Forget();
@@ -145,6 +167,135 @@ namespace Global.Dynamic
             AbgenConversionMetrics.INSTANCE.OnMilestone("abgen sidecar failed to start — the scene loads as raw GLTFs");
             Dispose();
             return false;
+        }
+
+        private enum ResidentServer
+        {
+            /// <summary>Nothing usable holds the port — it is this instance's to bind.</summary>
+            None,
+
+            /// <summary>The pinned build, already serving this realm: used as-is, and left running on dispose.</summary>
+            Adopted,
+
+            /// <summary>Not this instance's port to bind: held by a server it cannot use and will not disturb — the user is told what holds it — or start-up was abandoned before it could tell.</summary>
+            Blocked,
+        }
+
+        /// <summary>
+        ///     Decides what to do about a server already bound to <see cref="BaseUrl" />. abgen is configured
+        ///     entirely by environment at start-up, so a resident server's realm and build are fixed, and
+        ///     <c>/health</c> is the only way to read them.
+        ///     <para>
+        ///     The pinned build, healthy and on this realm, is adopted — which is what lets two clients share
+        ///     one converter and one corpus, and what reclaims a server leaked by a client that exited without
+        ///     disposing. Everything else is left exactly as it is and reported: another build, another realm,
+        ///     a server that calls itself degraded, or something that is not an abgen at all. None of them can
+        ///     serve this scene, and none of them is this instance's to end — a resident may belong to a live
+        ///     session, and nothing in <c>/health</c> distinguishes that from an orphan. The session degrades
+        ///     to raw GLTFs and the AB panel names what holds the port and what to do about it, which is the
+        ///     decision a person can make and this code cannot.
+        ///     </para>
+        /// </summary>
+        private async UniTask<ResidentServer> ReconcileResidentServerAsync(CancellationToken ct)
+        {
+            (bool responded, HealthDto? resident) = await ProbeResidentAsync(ct);
+
+            // A probe that never finished says nothing about the port, and a cancelled start-up has
+            // nothing to report to anyone.
+            if (ct.IsCancellationRequested)
+                return ResidentServer.Blocked;
+
+            if (!responded)
+                return ResidentServer.None;
+
+            if (resident == null)
+                return Unusable("a server that is not an abgen",
+                    "quit whatever is on the port, then relaunch");
+
+            if (resident.version != PINNED_VERSION)
+                return Unusable($"abgen v{resident.version} (pid {resident.pid})",
+                    $"this client speaks to v{PINNED_VERSION} — quit the client that started it, or stop pid {resident.pid}, then relaunch");
+
+            if (resident.catalyst_url != catalystContentUrl)
+                return Unusable($"an abgen serving {resident.catalyst_url} (pid {resident.pid})",
+                    "its realm is fixed at start-up and cannot be re-pointed — quit that client, then relaunch");
+
+            if (resident.status != READY_STATUS)
+                return Unusable($"an abgen reporting itself {resident.status} (pid {resident.pid})",
+                    $"it cannot convert — stop pid {resident.pid}, then relaunch");
+
+            ReportHub.Log(ReportCategory.ASSET_BUNDLES, $"adopting the abgen v{resident.version} already serving {catalystContentUrl} on {BaseUrl}");
+            AbgenConversionMetrics.INSTANCE.OnMilestone("reusing the abgen already serving this scene");
+            return ResidentServer.Adopted;
+        }
+
+        /// <summary>
+        ///     Records that <paramref name="what" /> holds <see cref="BaseUrl" /> and that <paramref name="action" />
+        ///     is what would free it, and opens the AB panel so the reason is seen rather than left in a log.
+        ///     Always <see cref="ResidentServer.Blocked" /> — the resident is left running and untouched.
+        /// </summary>
+        private ResidentServer Unusable(string what, string action)
+        {
+            ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES,
+                $"{BaseUrl} is held by {what}; this scene loads as raw GLTFs — {action}");
+
+            AbgenConversionMetrics.INSTANCE.OnMilestone($"{what} holds {BaseUrl} — the scene loads as raw GLTFs");
+            AbgenConversionMetrics.INSTANCE.OnMilestone($"to use asset bundles: {action}");
+            AbgenConversionMetrics.INSTANCE.RequestPanelOpen();
+            return ResidentServer.Blocked;
+        }
+
+        /// <summary>
+        ///     Answers two questions with one request: <c>responded</c> is whether anything holds
+        ///     <see cref="BaseUrl" /> at all, <c>health</c> is non-null only when what answered
+        ///     identifies itself as an abgen. Asking them as two requests left an interval in which a
+        ///     resident could exit, which read back as a port that was occupied and holding nothing.
+        ///     <para>
+        ///     A non-2xx answer is still parsed: abgen serves <c>/health</c> with 503 whenever it calls
+        ///     itself degraded, and that body carries the same identifying fields as a healthy one.
+        ///     Accepting only 2xx would file the degraded case as a foreign server. A body carrying
+        ///     neither a version nor a pid is not identifying itself as an abgen. A cancelled request
+        ///     returns <c>(false, null)</c>, the same shape as a free port; this method does not tell
+        ///     the two apart.
+        ///     </para>
+        /// </summary>
+        private async UniTask<(bool responded, HealthDto? health)> ProbeResidentAsync(CancellationToken ct)
+        {
+            using UnityWebRequest request = UnityWebRequest.Get($"{BaseUrl}/health");
+            request.timeout = 2;
+
+            try { await request.SendWebRequest().WithCancellation(ct); }
+            catch (OperationCanceledException) { return (false, null); }
+            catch { /* a protocol error still carries its body; a connection error leaves responseCode at 0 */ }
+
+            if (request.responseCode <= 0)
+                return (false, null);
+
+            HealthDto? health;
+
+            // Anything else on the port answers with a body JsonUtility either rejects or reads as blank.
+            try { health = JsonUtility.FromJson<HealthDto>(request.downloadHandler.text); }
+            catch (Exception) { return (true, null); }
+
+            if (health == null || string.IsNullOrEmpty(health.version) || health.pid <= 0)
+                return (true, null);
+
+            return (true, health);
+        }
+
+        /// <summary>Whether anything at all answers on <see cref="BaseUrl" /> — the only liveness signal an adopted server offers.</summary>
+        private async UniTask<bool> RespondsAsync(CancellationToken ct)
+        {
+            using UnityWebRequest request = UnityWebRequest.Head(BaseUrl);
+            request.timeout = 2;
+
+            // A cancelled probe carries no data, so it reports "still there": an incomplete probe must
+            // never read as evidence the port went quiet.
+            try { await request.SendWebRequest().WithCancellation(ct); }
+            catch (OperationCanceledException) { return true; }
+            catch { /* nothing listening */ }
+
+            return request.responseCode > 0;
         }
 
         /// <summary>
@@ -374,11 +525,11 @@ namespace Global.Dynamic
         private static (string target, string sha256)? Platform() =>
             Application.platform switch
             {
-                RuntimePlatform.WindowsPlayer or RuntimePlatform.WindowsEditor => ("x86_64-pc-windows-gnu", "e9509e1041bdf22504123a86fff7a46966ef7bf34d53f7a0976f7d8849e64bf0"),
+                RuntimePlatform.WindowsPlayer or RuntimePlatform.WindowsEditor => ("x86_64-pc-windows-gnu", "f721f6bef2a0aabc80d210dd482d382fae0c431fe4d380cc4075b42cb3a9f7a5"),
                 RuntimePlatform.OSXPlayer or RuntimePlatform.OSXEditor => RuntimeInformation.ProcessArchitecture == Architecture.Arm64
-                    ? ("aarch64-apple-darwin", "8c27e97ab537a1a40683b10b421547a0c551299770ec067b00f38bb5ec8417c3")
-                    : ("x86_64-apple-darwin", "0e30ebe7e969811162b08536a99e78e6be68294c3b328d688e5cac3e2cb997af"),
-                RuntimePlatform.LinuxPlayer or RuntimePlatform.LinuxEditor => ("x86_64-unknown-linux-gnu", "284092fc30dc172336434c07d838e80ba45e58405cbbe84129eb4379092cf674"),
+                    ? ("aarch64-apple-darwin", "ad235ccaf04d60e69615918af8597f77c7f7767e308afe1af9acd564f59f79de")
+                    : ("x86_64-apple-darwin", "2f23e97020c1025de892d8bab08df2c5f7b8d4f93dcd4bb2fb5322dd5af80a97"),
+                RuntimePlatform.LinuxPlayer or RuntimePlatform.LinuxEditor => ("x86_64-unknown-linux-gnu", "294128fe6b7dad6272a6af971ceae6f98f35087d1aac3e1865a57495aef13a39"),
                 _ => null,
             };
 
@@ -460,7 +611,8 @@ namespace Global.Dynamic
 
             // Resolved before the thread switch: persistentDataPath and Application.platform (behind
             // IsWindows) are main-thread-only Unity APIs.
-            string finalDir = Path.Combine(Application.persistentDataPath, AbgenBundleDiskCache.SIDECAR_DIR, "bin", version);
+            string binRoot = Path.Combine(Application.persistentDataPath, AbgenBundleDiskCache.SIDECAR_DIR, "bin");
+            string finalDir = Path.Combine(binRoot, version);
             bool isWindows = IsWindows;
 
             await DCLTask.RunOnThreadPool(() =>
@@ -481,10 +633,28 @@ namespace Global.Dynamic
 
                 if (Directory.Exists(finalDir)) Directory.Delete(finalDir, true);
                 Directory.Move(tmpDir, finalDir);
+                PruneOtherInstalls(binRoot, version);
             });
 
             AbgenConversionMetrics.INSTANCE.OnMilestone($"abgen v{version} installed");
             ReportHub.Log(ReportCategory.ASSET_BUNDLES, $"abgen sidecar binary v{version} downloaded and installed");
+        }
+
+        /// <summary>
+        ///     Deletes every install under <paramref name="binRoot" /> except <paramref name="keep" />, so a
+        ///     bumped pin does not leave its predecessor's copy sitting in persistent storage for good. A
+        ///     directory that will not delete is left alone — on Windows a running executable holds its own
+        ///     file — and the next install makes the attempt again.
+        /// </summary>
+        private static void PruneOtherInstalls(string binRoot, string keep)
+        {
+            foreach (string dir in Directory.GetDirectories(binRoot))
+            {
+                if (Path.GetFileName(dir) == keep) continue;
+
+                try { Directory.Delete(dir, true); }
+                catch (Exception e) { ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES, $"the stale abgen install at {dir} could not be removed: {e.Message}"); }
+            }
         }
 
         /// <summary>Minimal ustar reader: extracts regular files and directories, preserving relative paths.</summary>
@@ -685,32 +855,54 @@ namespace Global.Dynamic
         /// <summary>
         ///     Liveness is polled rather than event-driven — an Exited event needs the managed Process
         ///     object, which player builds don't have. A dead child is relaunched on the same port
-        ///     (consumers already hold <see cref="BaseUrl" />) up to <see cref="MAX_RESTARTS" /> times.
+        ///     (consumers already hold <see cref="BaseUrl" />) up to <see cref="MAX_RESTARTS" /> times; a
+        ///     relaunch only counts as recovered once the child answers.
         /// </summary>
         private async UniTaskVoid SuperviseAsync(CancellationToken ct)
         {
-            while (!disposed && !ct.IsCancellationRequested)
+            try
             {
-                await UniTask.Delay(SUPERVISION_POLL_MS, DelayType.Realtime, cancellationToken: ct).SuppressCancellationThrow();
-
-                if (disposed || ct.IsCancellationRequested) return;
-                if (ChildAlive()) continue;
-
-                // Main-thread only: UniTask.Delay resumes this loop on the player loop, so no atomicity is needed.
-                if (++restarts > MAX_RESTARTS)
+                while (!disposed && !ct.IsCancellationRequested)
                 {
-                    ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES, "abgen sidecar keeps exiting; asset bundles fall back to direct CDN errors");
-                    return;
-                }
+                    await UniTask.Delay(SUPERVISION_POLL_MS, DelayType.Realtime, cancellationToken: ct).SuppressCancellationThrow();
 
-                ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES, $"abgen sidecar exited; restart {restarts}/{MAX_RESTARTS}");
+                    if (disposed || ct.IsCancellationRequested) return;
 
-                if (!Launch())
-                {
-                    ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES, "abgen sidecar restart failed; asset bundles fall back to direct CDN errors");
-                    return;
+                    // An adopted server is another process's child, so pid liveness says nothing about it —
+                    // its death is observed over HTTP. Dropping the flag hands ownership to the relaunch
+                    // below: the port is free again, and this instance kills what it starts.
+                    if (adopted)
+                    {
+                        if (await RespondsAsync(ct)) continue;
+                        adopted = false;
+                    }
+                    else if (ChildAlive())
+                        continue;
+
+                    // Main-thread only: UniTask.Delay resumes this loop on the player loop, so no atomicity is needed.
+                    if (++restarts > MAX_RESTARTS)
+                    {
+                        ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES, "abgen sidecar keeps exiting; asset bundles fall back to direct CDN errors");
+                        return;
+                    }
+
+                    ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES, $"abgen sidecar exited; restart {restarts}/{MAX_RESTARTS}");
+
+                    if (!Launch())
+                    {
+                        ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES, "abgen sidecar restart failed; asset bundles fall back to direct CDN errors");
+                        return;
+                    }
+
+                    if (await WaitHealthyAsync(ct)) continue;
+
+                    // A live child that never answered would pass for recovered on every later poll. Killing
+                    // it makes the next poll see a dead child and spend another bounded restart on it.
+                    KillChild();
                 }
             }
+            catch (OperationCanceledException) { }
+            catch (Exception e) { ReportHub.LogException(e, ReportCategory.ASSET_BUNDLES); }
         }
 
         private async UniTask<bool> WaitHealthyAsync(CancellationToken ct)
@@ -722,10 +914,12 @@ namespace Global.Dynamic
                 using (UnityWebRequest req = UnityWebRequest.Head(BaseUrl))
                 {
                     req.timeout = 1;
-                    try { await req.SendWebRequest(); } catch { /* not up yet */ }
+                    try { await req.SendWebRequest().WithCancellation(ct); } catch { /* not up yet, or cancelled */ }
 
-                    // Any HTTP response (even 404) proves the server is listening.
-                    if (req.responseCode > 0) return true;
+                    // Any HTTP response (even 404) proves a server is listening; only the child's own
+                    // liveness proves it is this one. Without both, a server that beat this child to the
+                    // port is adopted blindly while the child dies on "Address already in use".
+                    if (req.responseCode > 0 && ChildAlive()) return true;
                 }
 
                 // A dead child can never answer — fail fast (supervision only starts after health passes).
@@ -798,6 +992,18 @@ namespace Global.Dynamic
         [DllImport("libc", SetLastError = true)]
         private static extern int kill(int pid, int sig);
 #endif
+
+        /// <summary>The subset of abgen's <c>GET /health</c> this sidecar reconciles against (crate/src/abcdn/handlers/status.rs).</summary>
+        [Serializable]
+        private class HealthDto
+        {
+            public string version = null!;
+            public int pid;
+            public string catalyst_url = null!;
+
+            /// <summary>"ready" or "degraded" — the same verdict the response's status code carries.</summary>
+            public string status = null!;
+        }
 
         /// <summary>abgen <c>GET /progress/{entity}</c> response (crate/src/abcdn/handlers/status.rs).</summary>
         [Serializable]
