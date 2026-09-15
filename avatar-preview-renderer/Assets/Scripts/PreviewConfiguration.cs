@@ -37,9 +37,8 @@ public class PreviewConfiguration
     }
 
     /// <summary>
-    /// Which view the preview opens in, for the modes that offer more than one (currently only
-    /// Marketplace). Null means the caller expressed no preference, in which case the view the user
-    /// last picked is used instead.
+    /// Opening view for Marketplace and Builder. Null uses the last selected view in Marketplace
+    /// and the avatar in Builder.
     /// </summary>
     public PreviewViewType? Type { get; private set; }
 
