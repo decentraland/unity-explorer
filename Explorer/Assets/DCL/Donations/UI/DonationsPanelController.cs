@@ -107,7 +107,7 @@ namespace DCL.Donations.UI
         {
             try
             {
-                viewInstance!.ShowLoading(viewModel, amount, web3Provider.IsThirdWebOTP);
+                viewInstance!.ShowLoading(viewModel, amount, web3Provider.IsThirdWebAccount);
 
                 bool success = await donationsService.SendDonationAsync(viewModel.SceneCreatorAddress, amount, panelLifecycleCts.Token);
 
