@@ -115,6 +115,7 @@ namespace DCL.Backpack.CharacterPreview
             foreach (var f in command.ForceRender)
                 previewAvatarModel.ForceRenderCategories.Add(f);
 
+            ResetVerticalRotation();
             OnModelUpdated();
         }
 
@@ -141,6 +142,7 @@ namespace DCL.Backpack.CharacterPreview
                 previewAvatarModel.BodyShape = i.GetUrn();
             else previewAvatarModel.Wearables.Add(i.GetUrn());
 
+            ResetVerticalRotation();
             OnModelUpdated();
         }
 
@@ -165,6 +167,7 @@ namespace DCL.Backpack.CharacterPreview
         private void OnWearableUnequipped(IWearable i)
         {
             previewAvatarModel.Wearables.Remove(i.GetUrn());
+            ResetVerticalRotation();
             OnModelUpdated();
         }
 
