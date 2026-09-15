@@ -66,6 +66,9 @@ namespace DCL.UI
             startButton.onClick.AddListener(EmitStartButtonPressedEvent);
         }
 
+        public void SetText(string text) =>
+            inputField.text = text;
+
         public void SetSpinnerActive(bool isActive)
         {
             startButton.gameObject.SetActive(!isActive);

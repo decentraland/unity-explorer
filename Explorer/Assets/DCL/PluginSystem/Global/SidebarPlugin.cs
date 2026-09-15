@@ -196,7 +196,8 @@ namespace DCL.PluginSystem.Global
                 globalWorld,
                 chatEventBus,
                 eventsApiService,
-                communitiesLiveTracker
+                communitiesLiveTracker,
+                web3IdentityCache
                 );
 
             mvcManager.RegisterController(controlsPanelController);

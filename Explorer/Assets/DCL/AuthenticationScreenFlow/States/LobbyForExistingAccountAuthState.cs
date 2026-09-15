@@ -14,7 +14,7 @@ using static DCL.AuthenticationScreenFlow.AuthenticationScreenController;
 
 namespace DCL.AuthenticationScreenFlow
 {
-    public class LobbyForExistingAccountAuthState : AuthStateBase, IPayloadedState<(Profile profile, bool isCached, CancellationToken ct)>
+    public class LobbyForExistingAccountAuthState : AuthStateBase, IPayloadedState<(Profile profile, bool isRestoredSession, CancellationToken ct)>
     {
         private readonly CharacterPreviewView characterPreviewView;
         private readonly MVCStateMachine<AuthStateBase> fsm;
@@ -55,7 +55,7 @@ namespace DCL.AuthenticationScreenFlow
             }
         }
 
-        public void Enter((Profile profile, bool isCached, CancellationToken ct) payload)
+        public void Enter((Profile profile, bool isRestoredSession, CancellationToken ct) payload)
         {
             base.Enter();
 
@@ -68,15 +68,13 @@ namespace DCL.AuthenticationScreenFlow
                 splashScreen.FadeOutAndHide();
 
             controller.IsCurrentlyNewAccount = false;
-            currentState.Value = payload.isCached ? AuthStatus.LoggedInCached : AuthStatus.LoggedIn;
+            currentState.Value = payload.isRestoredSession ? AuthStatus.LoggedInCached : AuthStatus.LoggedIn;
 
             Profile? profile = payload.profile;
 
             view.Show(IsNewUser() ? profile.Name : "back " + profile.Name);
 
             view.DiffAccountButton.gameObject.SetActive(true);
-            if (IsNewUser() && !payload.isCached)
-                view.DiffAccountButton.gameObject.SetActive(false);
 
             characterPreviewView.transform.SetParent(view.transform);
             characterPreviewView.transform.SetAsFirstSibling();

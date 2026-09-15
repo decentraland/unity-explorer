@@ -4,7 +4,11 @@ using DCL.Chat.ChatServices;
 using DCL.Chat.ChatServices.ChatContextService;
 using DCL.Chat.ChatViewModels;
 using DCL.Chat.ChatViews;
+using DCL.Chat.History;
 using DCL.Optimization.Pools;
+using DCL.UI.UpgradeGuestAccountPopup;
+using DCL.Web3.Identities;
+using MVC;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -20,6 +24,9 @@ namespace DCL.Chat.ChatFriends
         private readonly GetChannelMembersCommand getChannelMembersCommand;
         private readonly ChatMemberListService memberListService;
         private readonly ChatContextMenuService chatContextMenuService;
+        private readonly IMVCManager mvcManager;
+        private readonly IWeb3IdentityCache identityCache;
+        private readonly IChatHistory chatHistory;
 
         private readonly EventSubscriptionScope scope = new ();
         private CancellationTokenSource lifeCts = new ();
@@ -32,7 +39,10 @@ namespace DCL.Chat.ChatFriends
             ChatEventBus chatEventBus,
             ChatMemberListService memberListService,
             ChatContextMenuService chatContextMenuService,
-            GetChannelMembersCommand getChannelMembersCommand)
+            GetChannelMembersCommand getChannelMembersCommand,
+            IMVCManager mvcManager,
+            IWeb3IdentityCache identityCache,
+            IChatHistory chatHistory)
         {
             this.view = view;
             this.eventBus = eventBus;
@@ -40,6 +50,9 @@ namespace DCL.Chat.ChatFriends
             this.memberListService = memberListService;
             this.getChannelMembersCommand = getChannelMembersCommand;
             this.chatContextMenuService = chatContextMenuService;
+            this.mvcManager = mvcManager;
+            this.identityCache = identityCache;
+            this.chatHistory = chatHistory;
 
             this.view.OnMemberContextMenuRequested += OnMemberContextMenuRequested;
             this.view.OnMemberItemRequested += OnMemberSelectionRequested;
@@ -93,6 +106,13 @@ namespace DCL.Chat.ChatFriends
         {
             if (string.IsNullOrEmpty(userId))
                 return;
+
+            // A guest can answer a conversation someone else started, but cannot start one
+            if (identityCache.IsGuest() && !chatHistory.Channels.ContainsKey(new ChatChannel.ChannelId(userId)))
+            {
+                mvcManager.ShowAndForget(UpgradeGuestAccountPopupController.IssueCommand(new UpgradeGuestAccountPopupController.Params(GuestUpgradeTrigger.DirectMessage)));
+                return;
+            }
 
             chatEventBus.RaiseOpenPrivateConversationRequestedEvent(userId);
         }
