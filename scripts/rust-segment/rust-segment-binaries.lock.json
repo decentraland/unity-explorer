@@ -29,7 +29,7 @@
       ],
       "kind": "file",
       "path": "Explorer/Assets/Plugins/RustSegment/.native/Cargo.lock",
-      "sha256": "765065117c45930b0840fa2a4a064d29df9c29e0ebfdc56f31b2786f6ffa0e15"
+      "sha256": "c9b4b308861e5fcc14971c32f5bdcbf8746b2e3c983ab4e3705ff5f42d627ced"
     },
     "cargo_config": {
       "comment": [
@@ -70,7 +70,7 @@
         "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
         "source_digest": "07c6eccaba3b88ed8e54c5192fcaf18bb03f256b7fa73ae7ac4fb788c90cae88",
         "source_files": 4,
-        "repo_commit": "6a68315e26557cfefe3937deace3e2adf07fe3b3",
+        "repo_commit": "61f9f3c835952b512fbd3b9163f3b6ef2ff6978c",
         "toolchain": {
           "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
           "cargo": "cargo 1.97.1 (c980f4866 2026-06-30)",
@@ -82,8 +82,8 @@
       "artifacts": [
         {
           "path": "Explorer/Assets/Plugins/RustSegment/SegmentServerWrap/Libraries/Mac/segment-server.dylib",
-          "sha256": "152b65b7ff44245fbfad7287b5557404ae8a981ad21b070ba55c5773aebc44f2",
-          "bytes": 6253936,
+          "sha256": "c8e36d077d6d0f132ecd140c42556297734e46e2fb97fa4c672c1460a8d44988",
+          "bytes": 6253968,
           "produced_by": "cargo"
         }
       ]
@@ -97,7 +97,7 @@
         "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
         "source_digest": "07c6eccaba3b88ed8e54c5192fcaf18bb03f256b7fa73ae7ac4fb788c90cae88",
         "source_files": 4,
-        "repo_commit": "6a68315e26557cfefe3937deace3e2adf07fe3b3",
+        "repo_commit": "61f9f3c835952b512fbd3b9163f3b6ef2ff6978c",
         "toolchain": {
           "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
           "cargo": "cargo 1.97.1 (c980f4866 2026-06-30)",
@@ -107,8 +107,8 @@
       "artifacts": [
         {
           "path": "Explorer/Assets/Plugins/RustSegment/SegmentServerWrap/Libraries/Windows/segment-server.dll",
-          "sha256": "ed255e0839487946e61e3aa0ecbac8532755a657260f5457e6f7ee4ceb2f5518",
-          "bytes": 4557824,
+          "sha256": "0cacb28d4ceeb216d2c1328117b2cba3a2aadf44aa356fa39e3ffea2b1f82420",
+          "bytes": 4562432,
           "produced_by": "cargo"
         }
       ]
