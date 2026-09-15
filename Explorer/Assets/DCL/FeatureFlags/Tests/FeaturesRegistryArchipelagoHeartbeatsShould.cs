@@ -75,6 +75,21 @@ namespace DCL.FeatureFlags.Tests
             Assert.IsFalse(configuration.IsEnabled(FeatureFlagsStrings.ARCHIPELAGO_HEARTBEATS));
         }
 
+        [Test]
+        public void SnapshotTheHeartbeatFlagWhenTheRegistryIsConstructed()
+        {
+            // Arrange
+            InitializeFeatureFlags(archipelagoHeartbeats: false);
+            var registry = new FeaturesRegistry(new ApplicationParametersParser(false), localSceneDevelopment: false);
+
+            // Act: changing the fetched configuration does not mutate an already-running registry.
+            FeatureFlagsConfiguration.Reset();
+            InitializeFeatureFlags(archipelagoHeartbeats: true);
+
+            // Assert
+            Assert.IsFalse(registry.IsEnabled(FeatureId.ArchipelagoHeartbeats));
+        }
+
         private static void InitializeFeatureFlags(bool archipelagoHeartbeats)
         {
             var dto = new FeatureFlagsResultDto
