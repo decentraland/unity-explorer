@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: DCLTextSettings
   m_EditorClassIdentifier: UnityEngine.dll::UnityEngine.UIElements.PanelTextSettings
   m_Version: 
+  m_ShowObsoleteProperties: 0
   m_DefaultFontAsset: {fileID: 0}
   m_DefaultFontAssetPath: Fonts & Materials/
   m_FallbackFontAssets: []
@@ -27,7 +28,6 @@ MonoBehaviour:
   m_FallbackSpriteAssets: []
   m_MissingSpriteCharacterUnicode: 0
   m_DefaultStyleSheet: {fileID: 0}
-  m_StyleSheetsResourcePath: Text Style Sheets/
   m_DefaultColorGradientPresetsPath: Text Color Gradients/
   m_UnicodeLineBreakingRules:
     m_UnicodeLineBreakingRules: {fileID: 0}
