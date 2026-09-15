@@ -52,7 +52,7 @@ namespace DCL.McpServer.Tools
         public override async UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
         {
             if (!arguments.TryGetInt("x", out int x) || !arguments.TryGetInt("y", out int y))
-                return McpToolResult.Error("Both x and y parcel coordinates are required.");
+                return McpToolResult.Error("Both x and y parcel coordinates are required." + arguments.NonNumericHint("x", "y"));
 
             bool waitForReady = arguments.GetBool("waitForReady", true);
             float timeoutSec = Mathf.Clamp(arguments.GetFloat("timeoutSec", DEFAULT_TIMEOUT_SEC), MIN_TIMEOUT_SEC, MAX_TIMEOUT_SEC);

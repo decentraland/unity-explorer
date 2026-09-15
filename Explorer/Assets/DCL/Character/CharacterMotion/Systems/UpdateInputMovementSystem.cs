@@ -52,7 +52,9 @@ namespace DCL.CharacterMotion.Systems
             }
         }
 
-        private static MovementKind ProcessInputMovementKind(InputModifierComponent inputModifierComponent, bool runPressed, bool walkPressed)
+        // Shared with SyntheticMovementInputSystem so a synthetic hold degrades through the same fallback
+        // table as real input when a scene disables movement kinds.
+        internal static MovementKind ProcessInputMovementKind(InputModifierComponent inputModifierComponent, bool runPressed, bool walkPressed)
         {
             // Running action wins over walking
             if (runPressed)

@@ -1,0 +1,261 @@
+using Arch.Core;
+using Cysharp.Threading.Tasks;
+using DCL.Character.CharacterCamera.Components;
+using DCL.SyntheticInput.Core;
+using ECS.Abstract;
+using ECS.SceneLifeCycle;
+using Newtonsoft.Json.Linq;
+using System;
+using System.Threading;
+using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.UIElements;
+using MouseButton = UnityEngine.InputSystem.LowLevel.MouseButton;
+
+namespace DCL.SyntheticInput.UiSimulation
+{
+    /// <summary>
+    ///     Reports what UI covers a screen point, if anything. A one-method seam so the pointer system can consult
+    ///     the UI sublayer without taking its whole session object, which needs a World, an Entity, an EventSystem
+    ///     and a scenes cache to build.
+    /// </summary>
+    public delegate bool UiCoverProbe(Vector2 screenPoint, out string cover);
+
+    /// <summary>
+    ///     The UI half of the synthetic input layer, constructed once per automation session and shared by both
+    ///     driver front-ends (MCP tools, AltTester probes).
+    /// </summary>
+    public class UiAutomationServices : IDisposable
+    {
+        /// <summary>Frames are the driver's unit, seconds are the timeout's: a pessimistic frame rate converts one to the other.</summary>
+        private const float ASSUMED_MIN_FPS = 15f;
+        private const float GESTURE_TIMEOUT_GRACE_SEC = 5f;
+
+        private static readonly QueryDescription CURSOR_QUERY = new QueryDescription().WithAll<CursorComponent>();
+
+        private readonly World world;
+        private readonly Entity playerEntity;
+
+        /// <summary>The entity carrying <see cref="CursorComponent" />, resolved on first use: it may not exist yet when the session is built.</summary>
+        private Entity cursorEntity = Entity.Null;
+
+        public UiDiscovery Discovery { get; }
+
+        public UiInteractionSimulator Simulator { get; }
+
+        public SdkUiResolver SdkResolver { get; }
+
+        public AutomationVirtualDevices Devices { get; }
+
+        public UiAutomationServices(World world, Entity playerEntity, EventSystem eventSystem, IScenesCache scenesCache)
+        {
+            this.world = world;
+            this.playerEntity = playerEntity;
+
+            Discovery = new UiDiscovery(eventSystem);
+            SdkResolver = new SdkUiResolver(scenesCache);
+            Simulator = new UiInteractionSimulator(eventSystem, SdkResolver);
+            Devices = new AutomationVirtualDevices();
+        }
+
+        public void Dispose() =>
+            Devices.Dispose();
+
+        /// <summary>
+        ///     What UI, if anything, covers a screen point (Unity screen coordinates) — client interface first, then
+        ///     the current scene's own UI. The cover names what a driver can act on: the scene element's CRDT id
+        ///     where the scene owns the point, the element path where the client interface does.
+        /// </summary>
+        public bool TryFindUiCoverAt(Vector2 screenPoint, out string cover)
+        {
+            if (Discovery.TryFindCoverAt(screenPoint, out string? uguiPath, out IPanel? hostedPanel))
+            {
+                // The uGUI raycast reports a covering UI Toolkit panel as its host GameObject, so for scene UI the
+                // path names Unity plumbing ("EventSystem/DCLScenePanelSettings"). Re-derive the pick inside that
+                // panel to name the element instead.
+                if (hostedPanel != null && SdkResolver.TryDescribeCoverIn(hostedPanel, screenPoint, out string? hostedCover))
+                {
+                    cover = hostedCover!;
+                    return true;
+                }
+
+                cover = uguiPath!;
+                return true;
+            }
+
+            // Reached when the scene's panel raycasts nothing at the point (no PanelRaycaster registered) yet the
+            // panel itself picks an element there; the panel's own hit test is what a real click would obey.
+            if (SdkResolver.TryFindCoverAt(screenPoint, out string? sdkCover))
+            {
+                cover = sdkCover!;
+                return true;
+            }
+
+            cover = string.Empty;
+            return false;
+        }
+
+        /// <summary>
+        ///     The requested stacks' interactable elements, plus the screen size their rects are expressed in.
+        ///     Stating the screen is what makes a rect usable: a screenshot may be downscaled from it, so rects
+        ///     normalize against this and nothing else.
+        /// </summary>
+        public JObject ListInteractableJson(bool includeUgui, bool includeSdk, bool checkOcclusion)
+        {
+            var elements = new JArray();
+
+            if (includeUgui)
+                foreach (JToken entry in Discovery.ListInteractable(checkOcclusion))
+                    elements.Add(entry);
+
+            if (includeSdk)
+                foreach (JToken entry in SdkResolver.ListInteractable())
+                    elements.Add(entry);
+
+            return new JObject
+            {
+                ["count"] = elements.Count,
+                ["elements"] = elements,
+                ["screen"] = UiDiscovery.ScreenJson(),
+            };
+        }
+
+        /// <summary>Runs a virtual-device gesture through UiVirtualDeviceGestureSystem, abandoning one the simulation never completed. Main thread only.</summary>
+        public async UniTask<UiGestureResult> RunGestureAsync(UiDeviceGestureRequest request, float timeoutSec, CancellationToken ct)
+        {
+            UniTask<UiGestureResult> gesture = EcsRequest.SendAsync(world, playerEntity, request,
+                new UiGestureResult { Ok = false, FailureReason = "preempted by a newer gesture" });
+
+            try
+            {
+                return await gesture.AttachExternalCancellation(ct)
+                                    .Timeout(TimeSpan.FromSeconds(timeoutSec));
+            }
+            catch (TimeoutException)
+            {
+                await EcsRequest.AbandonAsync<UiDeviceGestureRequest>(world, playerEntity);
+                return new UiGestureResult { Ok = false, FailureReason = $"the gesture did not complete within {timeoutSec}s (is the simulation paused?)" };
+            }
+        }
+
+        /// <summary>
+        ///     Replays a drag through the virtual devices and reports what its pointer was over at both ends. Owns
+        ///     the gesture's timeout, derived from the requested frame count. Main thread only.
+        /// </summary>
+        public async UniTask<UiDeviceDragOutcome> DragWithDevicesAsync(Vector2 fromScreenPoint, Vector2 toScreenPoint,
+            int durationFrames, MouseButton button, CancellationToken ct)
+        {
+            // Read before the gesture is installed, because the drag moves the pointer itself; null is the world.
+            string? coverAtStart = TryFindUiCoverAt(fromScreenPoint, out string startCover) ? startCover : null;
+            string? coverAtEnd = TryFindUiCoverAt(toScreenPoint, out string endCover) ? endCover : null;
+
+            UiGestureResult gesture = await RunGestureAsync(new UiDeviceGestureRequest
+            {
+                Kind = UiDeviceGestureKind.Drag,
+                From = fromScreenPoint,
+                To = toScreenPoint,
+                DurationFrames = durationFrames,
+                Button = button,
+            }, (durationFrames / ASSUMED_MIN_FPS) + GESTURE_TIMEOUT_GRACE_SEC, ct);
+
+            return UiDeviceDragOutcome.From(in gesture, coverAtStart, coverAtEnd);
+        }
+
+        /// <summary>
+        ///     Drags inside the scene's own UI, if the scene UI is what sits under <paramref name="fromImagePoint" />:
+        ///     UI Toolkit panels consume events sent to their elements rather than virtual-device pointer state, so a
+        ///     positional gesture there has to be synthesized against the elements.
+        /// </summary>
+        public async UniTask<SceneUiDragAttempt> DragSceneUiAsync(Vector2 fromImagePoint, Vector2 toImagePoint, int steps, CancellationToken ct)
+        {
+            if (!SdkResolver.TryGetScenePanel(out IPanel? panel, out string? noPanel) || panel == null)
+                return SceneUiDragAttempt.NotApplicable(noPanel ?? "the current scene has no UI attached to a panel");
+
+            if (panel.Pick(UiScreenGeometry.ImageToPanelPoint(panel, fromImagePoint)) == null)
+                return SceneUiDragAttempt.NotApplicable(
+                    "the scene's UI does not cover the drag start point (nothing pickable there — the UI may still be "
+                    + "attaching or laying out, and only elements declared with pointerFilter PFM_BLOCK are pickable); "
+                    + "ui_list stack:sdk shows what is attached");
+
+            return SceneUiDragAttempt.Delivered(await Simulator.DragSdkAsync(panel, fromImagePoint, toImagePoint, steps, ct));
+        }
+
+        /// <summary>The cursor state name, for driver-facing diagnostics.</summary>
+        public string CursorStateName()
+        {
+            if (cursorEntity == Entity.Null)
+                cursorEntity = world.GetSingleInstanceEntityOrNull(in CURSOR_QUERY);
+
+            return cursorEntity != Entity.Null && world.TryGet(cursorEntity, out CursorComponent cursor)
+                ? CursorStateNameOf(cursor.CursorState)
+                : "unknown";
+        }
+
+        private static string CursorStateNameOf(CursorState state) =>
+            state switch
+            {
+                CursorState.Free => nameof(CursorState.Free),
+                CursorState.Locked => nameof(CursorState.Locked),
+                CursorState.Panning => nameof(CursorState.Panning),
+                CursorState.LockedWithUi => nameof(CursorState.LockedWithUi),
+                _ => "unknown",
+            };
+    }
+
+    /// <summary>
+    ///     The outcome of trying to drag inside the scene's own UI: either the semantic path ran and produced a
+    ///     <see cref="UiActionResult" />, or it did not apply and says why. A driver that falls back to the virtual
+    ///     devices owes its caller that reason, because a fallback drag lands in the 3D world.
+    /// </summary>
+    public struct SceneUiDragAttempt
+    {
+        /// <summary>What the semantic drag achieved, or null when that path did not apply.</summary>
+        public UiActionResult? Result;
+
+        /// <summary>Why the semantic path did not apply, or null when it ran.</summary>
+        public string? SkipReason;
+
+        public static SceneUiDragAttempt Delivered(UiActionResult result) =>
+            new () { Result = result };
+
+        public static SceneUiDragAttempt NotApplicable(string reason) =>
+            new () { SkipReason = reason };
+    }
+
+    /// <summary>
+    ///     What a virtual-device drag achieved. The gesture verifies no target — completing means the mouse states
+    ///     were replayed — so the covers read at both ends before it ran are the only evidence of what could have
+    ///     received it.
+    /// </summary>
+    public struct UiDeviceDragOutcome
+    {
+        public bool Ok;
+
+        public string? FailureReason;
+
+        /// <summary>What covered the drag's start pixel, or null when the world did.</summary>
+        public string? CoverAtStart;
+
+        /// <summary>What covered the drag's end pixel, or null when the world did.</summary>
+        public string? CoverAtEnd;
+
+        /// <summary>Set only for a delivered drag no UI could have received; null whenever there is nothing to add.</summary>
+        public string? DeliveryNote;
+
+        public static UiDeviceDragOutcome From(in UiGestureResult gesture, string? coverAtStart, string? coverAtEnd) =>
+            new ()
+            {
+                Ok = gesture.Ok,
+                FailureReason = gesture.FailureReason,
+                CoverAtStart = coverAtStart,
+                CoverAtEnd = coverAtEnd,
+
+                // A failure already carries its own reason; the note is only for the case a bare success would misreport.
+                DeliveryNote = gesture.Ok && coverAtStart == null && coverAtEnd == null
+                    ? "no UI element received this drag: the pointer was over the world at both ends (nothing in the "
+                      + "client interface or the scene's UI covers either pixel). A held pointer swept across the world is "
+                      + "a press, a camera turn and a release — sweep_pointer."
+                    : null,
+            };
+    }
+}
