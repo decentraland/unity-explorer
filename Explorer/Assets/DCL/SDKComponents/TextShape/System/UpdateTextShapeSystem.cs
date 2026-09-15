@@ -7,6 +7,9 @@ using DCL.SDKComponents.TextShape.Component;
 using DCL.SDKComponents.TextShape.Fonts;
 using ECS.Abstract;
 using ECS.Groups;
+using ECS.LifeCycle.Components;
+using ECS.Prioritization.Components;
+using ECS.StreamableLoading.Fonts;
 using SceneRunner.Scene;
 using UnityEngine;
 using Utility;
@@ -22,21 +25,26 @@ namespace DCL.SDKComponents.TextShape.System
         private readonly IFontsStorage fontsStorage;
         private readonly MaterialPropertyBlock materialPropertyBlock;
         private readonly ParcelMathHelper.SceneGeometry sceneGeometry;
+        private readonly ISceneData sceneData;
+        private readonly IPartitionComponent scenePartition;
 
         private readonly EntityEventBuffer<TextShapeComponent> changedTextMeshes;
 
         public UpdateTextShapeSystem(World world, IFontsStorage fontsStorage, MaterialPropertyBlock materialPropertyBlock,
-            EntityEventBuffer<TextShapeComponent> changedTextMeshes, ISceneData sceneData) : base(world)
+            EntityEventBuffer<TextShapeComponent> changedTextMeshes, ISceneData sceneData, IPartitionComponent scenePartition) : base(world)
         {
             this.fontsStorage = fontsStorage;
             this.materialPropertyBlock = materialPropertyBlock;
             this.changedTextMeshes = changedTextMeshes;
+            this.sceneData = sceneData;
+            this.scenePartition = scenePartition;
             this.sceneGeometry = sceneData.Geometry;
         }
 
         protected override void Update(float t)
         {
             UpdateTextsQuery(World!);
+            ApplyLoadedFontsQuery(World!);
             // Note: It must occur after UpdateTextsQuery in order to properly calculate the bounds of the text with the latest state,
             // and the incoming value of IsDirty flag of the PBTextShape must be available, that's why it is reset in a separate
             // query as a final step
@@ -50,10 +58,30 @@ namespace DCL.SDKComponents.TextShape.System
         {
             if (textShape.IsDirty)
             {
+                if (textShapeComponent.FontRequest.Update(World, sceneData, textShape.FontSrc, scenePartition))
+                    textShapeComponent.CustomFont = null;
+
                 TMPProSdkExtensions.Apply(ref textShapeComponent, textShape, fontsStorage, materialPropertyBlock);
                 textShapeComponent.NeedsBoundsRecalculation = true; // Mark for deferred bounds calculation next frame
                 changedTextMeshes.Add(entity, textShapeComponent);
             }
+        }
+
+        [Query]
+        [None(typeof(DeleteEntityIntention))]
+        private void ApplyLoadedFonts(Entity entity, ref TextShapeComponent textShapeComponent, in PBTextShape textShape)
+        {
+            if (!textShapeComponent.FontRequest.TryConsume(World, out FontFamilyAssets? assets))
+                return;
+
+            textShapeComponent.CustomFont = assets?.TextMeshProFont;
+
+            if (textShapeComponent.CustomFont == null)
+                return;
+
+            TMPProSdkExtensions.Apply(ref textShapeComponent, textShape, fontsStorage, materialPropertyBlock);
+            textShapeComponent.NeedsBoundsRecalculation = true;
+            changedTextMeshes.Add(entity, textShapeComponent);
         }
 
         [Query]

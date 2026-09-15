@@ -468,6 +468,10 @@ MonoBehaviour:
       Severity: 1
     - Category: CREDITS_PURCHASE
       Severity: 4
+    - Category: FONTS
+      Severity: 4
+    - Category: FONTS
+      Severity: 1
   sentryMatrix:
     entries:
     - Category: AUDIO_SOURCES
@@ -899,6 +903,10 @@ MonoBehaviour:
     - Category: VOICE_CHAT
       Severity: 1
     - Category: WEARABLE
+      Severity: 1
+    - Category: FONTS
+      Severity: 4
+    - Category: FONTS
       Severity: 1
   debounceEnabled: 1
   isSentryEnabled: 1

@@ -1,12 +1,17 @@
-﻿using DCL.ECSComponents;
+﻿using CommunicationData.URLHelpers;
+using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Defaults;
 using DCL.SDKComponents.SceneUI.Systems.UIText;
 using DCL.SDKComponents.SceneUI.Utils;
 using Decentraland.Common;
+using ECS.Prioritization.Components;
+using ECS.StreamableLoading.Fonts;
 using ECS.TestSuite;
+using NSubstitute;
 using NUnit.Framework;
+using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using UnityEngine.TextCore.Text;
@@ -18,6 +23,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
     public class UITextInstantiationSystemShould : UnitySystemTestBase<UITextInstantiationSystem>
     {
         private IComponentPoolsRegistry poolsRegistry;
+        private ISceneData sceneData;
         private Entity entity;
         private UITransformComponent uiTransformComponent;
 
@@ -30,7 +36,8 @@ namespace DCL.SDKComponents.SceneUI.Tests
                     { typeof(Label), new ComponentPool.WithDefaultCtor<Label>() },
                 }, null);
 
-            system = new UITextInstantiationSystem(world, poolsRegistry, new []{new StyleFontDefinition()});
+            sceneData = Substitute.For<ISceneData>();
+            system = new UITextInstantiationSystem(world, poolsRegistry, new []{new StyleFontDefinition()}, sceneData, PartitionComponent.TOP_PRIORITY);
             entity = world.Create();
             uiTransformComponent = AddUITransformToEntity(entity);
         }
@@ -114,6 +121,63 @@ namespace DCL.SDKComponents.SceneUI.Tests
                 Assert.IsTrue(input.GetFontSize() == uiTextComponent.Label.style.fontSize);
                 Assert.IsTrue(input.GetTextAlign() == uiTextComponent.Label.style.unityTextAlign);
             }
+        }
+
+        [Test]
+        public void RequestFontWhenFontSrcIsAContentFile()
+        {
+            var fontUrl = URLAddress.FromString("https://peer.decentraland.org/content/contents/bafyfont");
+            sceneData.TryGetMediaUrl("fonts/Lobster-Regular.ttf", out Arg.Any<URLAddress>())
+                     .Returns(x =>
+                      {
+                          x[1] = fontUrl;
+                          return true;
+                      });
+
+            var input = new PBUiText { FontSrc = "fonts/Lobster-Regular.ttf", IsDirty = true };
+            world.Add(entity, input);
+
+            system.Update(0);
+
+            ref UITextComponent uiTextComponent = ref world.Get<UITextComponent>(entity);
+            Assert.That(uiTextComponent.FontRequest.Src, Is.EqualTo("fonts/Lobster-Regular.ttf"));
+            Assert.That(uiTextComponent.FontRequest.Promise, Is.Not.Null);
+
+            GetFontIntention intention = world.Get<GetFontIntention>(uiTextComponent.FontRequest.Promise!.Value.Entity);
+            Assert.That(intention.Kind, Is.EqualTo(FontSourceKind.File));
+            Assert.That(intention.CommonArguments.URL, Is.EqualTo(fontUrl));
+        }
+
+        [Test]
+        public void KeepBuiltInFontWhenFontSrcIsEmpty()
+        {
+            var input = new PBUiText();
+            world.Add(entity, input);
+
+            system.Update(0);
+
+            ref UITextComponent uiTextComponent = ref world.Get<UITextComponent>(entity);
+            Assert.That(uiTextComponent.FontRequest.Src, Is.Null);
+            Assert.That(uiTextComponent.FontRequest.Promise, Is.Null);
+            Assert.That(uiTextComponent.CustomFont, Is.Null);
+        }
+
+        [Test]
+        public void ReplaceRequestWhenFontSrcChanges()
+        {
+            var input = new PBUiText { FontSrc = "Roboto", IsDirty = true };
+            world.Add(entity, input);
+            system.Update(0);
+            Entity firstPromiseEntity = world.Get<UITextComponent>(entity).FontRequest.Promise!.Value.Entity;
+
+            input.FontSrc = "Lobster";
+            input.IsDirty = true;
+            system.Update(0);
+
+            ref UITextComponent uiTextComponent = ref world.Get<UITextComponent>(entity);
+            Assert.That(world.IsAlive(firstPromiseEntity), Is.False);
+            Assert.That(uiTextComponent.FontRequest.Src, Is.EqualTo("Lobster"));
+            Assert.That(world.Get<GetFontIntention>(uiTextComponent.FontRequest.Promise!.Value.Entity).Kind, Is.EqualTo(FontSourceKind.FontsourceFamily));
         }
     }
 }

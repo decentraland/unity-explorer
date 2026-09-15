@@ -27,7 +27,7 @@ namespace DCL.ECSComponents {
             "CipkZWNlbnRyYWxhbmQvc2RrL2NvbXBvbmVudHMvdWlfaW5wdXQucHJvdG8S",
             "G2RlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50cxogZGVjZW50cmFsYW5kL2Nv",
             "bW1vbi9jb2xvcnMucHJvdG8aLmRlY2VudHJhbGFuZC9zZGsvY29tcG9uZW50",
-            "cy9jb21tb24vdGV4dHMucHJvdG8ipQMKCVBCVWlJbnB1dBITCgtwbGFjZWhv",
+            "cy9jb21tb24vdGV4dHMucHJvdG8iyQMKCVBCVWlJbnB1dBITCgtwbGFjZWhv",
             "bGRlchgBIAEoCRIvCgVjb2xvchgCIAEoCzIbLmRlY2VudHJhbGFuZC5jb21t",
             "b24uQ29sb3I0SACIAQESOwoRcGxhY2Vob2xkZXJfY29sb3IYAyABKAsyGy5k",
             "ZWNlbnRyYWxhbmQuY29tbW9uLkNvbG9yNEgBiAEBEhAKCGRpc2FibGVkGAQg",
@@ -35,13 +35,14 @@ namespace DCL.ECSComponents {
             "bXBvbmVudHMuY29tbW9uLlRleHRBbGlnbk1vZGVIAogBARI7CgRmb250GAsg",
             "ASgOMiguZGVjZW50cmFsYW5kLnNkay5jb21wb25lbnRzLmNvbW1vbi5Gb250",
             "SAOIAQESFgoJZm9udF9zaXplGAwgASgFSASIAQESEgoFdmFsdWUYDSABKAlI",
-            "BYgBAUIICgZfY29sb3JCFAoSX3BsYWNlaG9sZGVyX2NvbG9yQg0KC190ZXh0",
-            "X2FsaWduQgcKBV9mb250QgwKCl9mb250X3NpemVCCAoGX3ZhbHVlQhSqAhFE",
-            "Q0wuRUNTQ29tcG9uZW50c2IGcHJvdG8z"));
+            "BYgBARIVCghmb250X3NyYxgQIAEoCUgGiAEBQggKBl9jb2xvckIUChJfcGxh",
+            "Y2Vob2xkZXJfY29sb3JCDQoLX3RleHRfYWxpZ25CBwoFX2ZvbnRCDAoKX2Zv",
+            "bnRfc2l6ZUIICgZfdmFsdWVCCwoJX2ZvbnRfc3JjQhSqAhFEQ0wuRUNTQ29t",
+            "cG9uZW50c2IGcHJvdG8z"));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::Decentraland.Common.ColorsReflection.Descriptor, global::DCL.ECSComponents.TextsReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBUiInput), global::DCL.ECSComponents.PBUiInput.Parser, new[]{ "Placeholder", "Color", "PlaceholderColor", "Disabled", "TextAlign", "Font", "FontSize", "Value" }, new[]{ "Color", "PlaceholderColor", "TextAlign", "Font", "FontSize", "Value" }, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBUiInput), global::DCL.ECSComponents.PBUiInput.Parser, new[]{ "Placeholder", "Color", "PlaceholderColor", "Disabled", "TextAlign", "Font", "FontSize", "Value", "FontSrc" }, new[]{ "Color", "PlaceholderColor", "TextAlign", "Font", "FontSize", "Value", "FontSrc" }, null, null, null)
           }));
     }
     #endregion
@@ -93,6 +94,7 @@ namespace DCL.ECSComponents {
       font_ = other.font_;
       fontSize_ = other.fontSize_;
       value_ = other.value_;
+      fontSrc_ = other.fontSrc_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -272,6 +274,35 @@ namespace DCL.ECSComponents {
       value_ = null;
     }
 
+    /// <summary>Field number for the "font_src" field.</summary>
+    public const int FontSrcFieldNumber = 16;
+    private readonly static string FontSrcDefaultValue = "";
+
+    private string fontSrc_;
+    /// <summary>
+    /// a font file in the scene, or a Google Fonts family name; `font` is the fallback (default: unset)
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public string FontSrc {
+      get { return fontSrc_ ?? FontSrcDefaultValue; }
+      set {
+        fontSrc_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+    /// <summary>Gets whether the "font_src" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasFontSrc {
+      get { return fontSrc_ != null; }
+    }
+    /// <summary>Clears the value of the "font_src" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearFontSrc() {
+      fontSrc_ = null;
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -295,6 +326,7 @@ namespace DCL.ECSComponents {
       if (Font != other.Font) return false;
       if (FontSize != other.FontSize) return false;
       if (Value != other.Value) return false;
+      if (FontSrc != other.FontSrc) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -310,6 +342,7 @@ namespace DCL.ECSComponents {
       if (HasFont) hash ^= Font.GetHashCode();
       if (HasFontSize) hash ^= FontSize.GetHashCode();
       if (HasValue) hash ^= Value.GetHashCode();
+      if (HasFontSrc) hash ^= FontSrc.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -360,6 +393,10 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(106);
         output.WriteString(Value);
       }
+      if (HasFontSrc) {
+        output.WriteRawTag(130, 1);
+        output.WriteString(FontSrc);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -402,6 +439,10 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(106);
         output.WriteString(Value);
       }
+      if (HasFontSrc) {
+        output.WriteRawTag(130, 1);
+        output.WriteString(FontSrc);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -435,6 +476,9 @@ namespace DCL.ECSComponents {
       }
       if (HasValue) {
         size += 1 + pb::CodedOutputStream.ComputeStringSize(Value);
+      }
+      if (HasFontSrc) {
+        size += 2 + pb::CodedOutputStream.ComputeStringSize(FontSrc);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -477,6 +521,9 @@ namespace DCL.ECSComponents {
       }
       if (other.HasValue) {
         Value = other.Value;
+      }
+      if (other.HasFontSrc) {
+        FontSrc = other.FontSrc;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -535,6 +582,10 @@ namespace DCL.ECSComponents {
             Value = input.ReadString();
             break;
           }
+          case 130: {
+            FontSrc = input.ReadString();
+            break;
+          }
         }
       }
     #endif
@@ -590,6 +641,10 @@ namespace DCL.ECSComponents {
           }
           case 106: {
             Value = input.ReadString();
+            break;
+          }
+          case 130: {
+            FontSrc = input.ReadString();
             break;
           }
         }

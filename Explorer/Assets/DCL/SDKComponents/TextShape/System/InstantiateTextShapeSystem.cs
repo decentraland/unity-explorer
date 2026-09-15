@@ -9,7 +9,9 @@ using DCL.SDKComponents.TextShape.Component;
 using DCL.SDKComponents.TextShape.Fonts;
 using ECS.Abstract;
 using ECS.Groups;
+using ECS.Prioritization.Components;
 using ECS.Unity.Transforms.Components;
+using SceneRunner.Scene;
 using TMPro;
 using UnityEngine;
 
@@ -24,17 +26,21 @@ namespace DCL.SDKComponents.TextShape.System
         private readonly IComponentPool<TextMeshPro> textMeshProPool;
         private readonly IFontsStorage fontsStorage;
         private readonly MaterialPropertyBlock materialPropertyBlock;
+        private readonly ISceneData sceneData;
+        private readonly IPartitionComponent scenePartition;
 
         private readonly EntityEventBuffer<TextShapeComponent> changedTextMeshes;
 
         public InstantiateTextShapeSystem(World world, IComponentPool<TextMeshPro> textMeshProPool, IFontsStorage fontsStorage, MaterialPropertyBlock materialPropertyBlock, IPerformanceBudget instantiationFrameTimeBudget,
-            EntityEventBuffer<TextShapeComponent> changedTextMeshes) : base(world)
+            EntityEventBuffer<TextShapeComponent> changedTextMeshes, ISceneData sceneData, IPartitionComponent scenePartition) : base(world)
         {
             this.instantiationFrameTimeBudget = instantiationFrameTimeBudget;
             this.changedTextMeshes = changedTextMeshes;
             this.textMeshProPool = textMeshProPool;
             this.fontsStorage = fontsStorage;
             this.materialPropertyBlock = materialPropertyBlock;
+            this.sceneData = sceneData;
+            this.scenePartition = scenePartition;
         }
 
         protected override void Update(float t)
@@ -53,6 +59,8 @@ namespace DCL.SDKComponents.TextShape.System
             textMeshPro.transform.SetParent(transform.Transform, worldPositionStays: false);
 
             var component = new TextShapeComponent(textMeshPro);
+
+            component.FontRequest.Update(World, sceneData, textShape.FontSrc, scenePartition);
             TMPProSdkExtensions.Apply(ref component, textShape, fontsStorage, materialPropertyBlock);
 
             World.Add(entity, component);

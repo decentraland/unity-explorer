@@ -6,9 +6,12 @@ using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Defaults;
 using DCL.SDKComponents.SceneUI.Systems.UIDropdown;
 using DCL.SDKComponents.SceneUI.Utils;
+using ECS.Prioritization.Components;
+using ECS.StreamableLoading.Fonts;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
+using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -35,7 +38,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
                 }, null);
 
             ecsToCRDTWriter = Substitute.For<IECSToCRDTWriter>();
-            system = new UIDropdownInstantiationSystem(world, poolsRegistry, ecsToCRDTWriter, new []{new StyleFontDefinition()});
+            system = new UIDropdownInstantiationSystem(world, poolsRegistry, ecsToCRDTWriter, new []{new StyleFontDefinition()}, Substitute.For<ISceneData>(), PartitionComponent.TOP_PRIORITY);
             entity = world.Create();
             uiTransformComponent = AddUITransformToEntity(entity);
             world.Add(entity, new CRDTEntity(500));
@@ -217,6 +220,20 @@ namespace DCL.SDKComponents.SceneUI.Tests
             // Assert
             ecsToCRDTWriter.Received(1).PutMessage(Arg.Any<Action<PBUiDropdownResult, int>>(), Arg.Any<CRDTEntity>(), TEST_INDEX);
             Assert.IsFalse(uiDropdownComponent.IsOnValueChangedTriggered);
+        }
+
+        [Test]
+        public void RequestFontWhenFontSrcIsSet()
+        {
+            input.FontSrc = "Roboto";
+            input.IsDirty = true;
+
+            system.Update(0);
+
+            ref UIDropdownComponent uiDropdownComponent = ref world.Get<UIDropdownComponent>(entity);
+            Assert.That(uiDropdownComponent.FontRequest.Src, Is.EqualTo("Roboto"));
+            Assert.That(uiDropdownComponent.FontRequest.Promise, Is.Not.Null);
+            Assert.That(world.Get<GetFontIntention>(uiDropdownComponent.FontRequest.Promise!.Value.Entity).Kind, Is.EqualTo(FontSourceKind.FontsourceFamily));
         }
     }
 }
