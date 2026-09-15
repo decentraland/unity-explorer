@@ -688,6 +688,7 @@ namespace Global.Dynamic
                     donationsService,
                     realmNavigator,
                     friendsServices?.FriendsService,
+                    friendsServices?.ConnectivityStatusTracker,
                     staticContainer.PublishIpfsEntityCommand,
                     realmNavigatorContainer.WorldPermissionsService,
                     staticContainer.QualityContainer.RendererFeaturesCache,

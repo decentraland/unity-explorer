@@ -2,6 +2,7 @@ using DCL.CharacterPreview;
 using DCL.Communities;
 using DCL.UI;
 using DCL.Utilities.Extensions;
+using SuperScrollView;
 using System;
 using System.Threading;
 using TMPro;
@@ -33,13 +34,12 @@ namespace DCL.ExplorePanel.Lobby
         [SerializeField, FormerlySerializedAs("<ReturnStatus>k__BackingField")] private TMP_Text? returnStatus;
         [SerializeField, FormerlySerializedAs("<FeaturedStatus>k__BackingField")] private TMP_Text? featuredStatus;
         [SerializeField, FormerlySerializedAs("<LiveSection>k__BackingField")] private GameObject? liveSection;
-        [SerializeField, FormerlySerializedAs("<FriendsContent>k__BackingField")] private RectTransform? friendsContent;
+        [SerializeField] private LoopListView2? friendsList;
         [SerializeField, FormerlySerializedAs("<EventsContent>k__BackingField")] private RectTransform? eventsContent;
         [SerializeField, FormerlySerializedAs("<ReturnContent>k__BackingField")] private RectTransform? returnContent;
         [SerializeField, FormerlySerializedAs("<FeaturedContent>k__BackingField")] private RectTransform? featuredContent;
         [SerializeField, FormerlySerializedAs("<PlaceCard>k__BackingField")] private LobbyCardView? placeCard;
         [SerializeField, FormerlySerializedAs("<ReturnCard>k__BackingField")] private LobbyCardView? returnCard;
-        [SerializeField, FormerlySerializedAs("<FriendCard>k__BackingField")] private LobbyCardView? friendCard;
         [SerializeField, FormerlySerializedAs("<EventCard>k__BackingField")] private LobbyCardView? eventCard;
         private string portraitUrl = string.Empty;
 
@@ -52,13 +52,12 @@ namespace DCL.ExplorePanel.Lobby
         public TMP_Text ReturnStatus => returnStatus.EnsureNotNull();
         public TMP_Text FeaturedStatus => featuredStatus.EnsureNotNull();
         public GameObject LiveSection => liveSection.EnsureNotNull();
-        public RectTransform FriendsContent => friendsContent.EnsureNotNull();
+        public LoopListView2 FriendsList => friendsList.EnsureNotNull();
         public RectTransform EventsContent => eventsContent.EnsureNotNull();
         public RectTransform ReturnContent => returnContent.EnsureNotNull();
         public RectTransform FeaturedContent => featuredContent.EnsureNotNull();
         public LobbyCardView PlaceCard => placeCard.EnsureNotNull();
         public LobbyCardView ReturnCard => returnCard.EnsureNotNull();
-        public LobbyCardView FriendCard => friendCard.EnsureNotNull();
         public LobbyCardView EventCard => eventCard.EnsureNotNull();
 
         public event Action? CustomizeAvatarClicked;

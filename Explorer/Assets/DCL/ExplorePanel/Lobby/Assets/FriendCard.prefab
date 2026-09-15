@@ -663,6 +663,18 @@ PrefabInstance:
       value: -106
       objectReference: {fileID: 0}
     - target: {fileID: 8110363583284999761, guid: 23d6a6702fb59a4eea7eb663d5be47e8, type: 3}
+      propertyPath: titleText
+      value: 
+      objectReference: {fileID: 5271536082037875197}
+    - target: {fileID: 8110363583284999761, guid: 23d6a6702fb59a4eea7eb663d5be47e8, type: 3}
+      propertyPath: detailText
+      value: 
+      objectReference: {fileID: 7444404058447943351}
+    - target: {fileID: 8110363583284999761, guid: 23d6a6702fb59a4eea7eb663d5be47e8, type: 3}
+      propertyPath: statusText
+      value: 
+      objectReference: {fileID: 2561213052752132503}
+    - target: {fileID: 8110363583284999761, guid: 23d6a6702fb59a4eea7eb663d5be47e8, type: 3}
       propertyPath: <Title>k__BackingField
       value: 
       objectReference: {fileID: 5271536082037875197}
@@ -696,10 +708,30 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 1343800862190689434, guid: 23d6a6702fb59a4eea7eb663d5be47e8, type: 3}
       insertIndex: 4
       addedObject: {fileID: 2489655645804473656}
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 3075289702337352817, guid: 23d6a6702fb59a4eea7eb663d5be47e8, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: -3609883532306565917}
   m_SourcePrefab: {fileID: 100100000, guid: 23d6a6702fb59a4eea7eb663d5be47e8, type: 3}
 --- !u!224 &329816591062171084 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 1343800862190689434, guid: 23d6a6702fb59a4eea7eb663d5be47e8, type: 3}
   m_PrefabInstance: {fileID: 1600358632593498454}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &4366242047721157927 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 3075289702337352817, guid: 23d6a6702fb59a4eea7eb663d5be47e8, type: 3}
+  m_PrefabInstance: {fileID: 1600358632593498454}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &-3609883532306565917
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4366242047721157927}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbcbd7952202d4d44a555aea5af2a351, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: superscrollview.runtime::SuperScrollView.LoopListViewItem2

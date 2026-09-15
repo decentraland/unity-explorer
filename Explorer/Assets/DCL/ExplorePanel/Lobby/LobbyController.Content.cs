@@ -1,6 +1,5 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.Chat;
 using DCL.CommunicationData.URLHelpers;
 using DCL.Friends.UI.FriendPanel;
 using DCL.EventsApi;
@@ -8,9 +7,7 @@ using DCL.Utilities.Extensions;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connectivity;
-using DCL.Passport;
 using DCL.PlacesAPIService;
-using DCL.Profiles;
 using DCL.UI;
 using DCL.Utility.Types;
 using ECS.SceneLifeCycle.Realm;
@@ -49,20 +46,6 @@ namespace DCL.ExplorePanel.Lobby
                     liveEvent.connected_addresses == null ? "Live now" : $"Live · {liveEvent.connected_addresses.Length:N0} here",
                     liveEvent.image, thumbnails, ct, () => TravelAsync("live_now", "event", liveEvent.id, card.transform.GetSiblingIndex(),
                         travelCt => eventsActions.JumpInEventAsync(liveEvent, travelCt)).SuppressToResultAsync(ReportCategory.UI).Forget());
-            });
-        }
-
-        private void RenderFriends(IReadOnlyList<(Profile.CompactInfo Profile, string PlaceName)> friends, CancellationToken ct)
-        {
-            view.FriendsSection.SetActive(friends.Count > 0);
-            RenderCards(friends, view.FriendCard, view.FriendsContent, (card, friend) =>
-            {
-                (Profile.CompactInfo profile, string placeName) = friend;
-                string userId = profile.UserId.Value;
-                card.Bind(profile.DisplayName, placeName, "Online", profile.FaceSnapshotUrl.Value, thumbnails, ct,
-                    () => TravelAsync("friends", "friend", null, card.transform.GetSiblingIndex(), travelCt => JoinFriendAsync(userId, travelCt)).SuppressToResultAsync(ReportCategory.UI).Forget(),
-                    () => { Visit?.Action("chat", "friends"); ChatOpener.Instance.OpenPrivateConversationWithUserId(userId); },
-                    () => { Visit?.Action("profile", "friends"); mvcManager.ShowAndForget(PassportController.IssueCommand(new PassportParams(userId))); });
             });
         }
 

@@ -57,10 +57,12 @@ namespace DCL.PluginSystem.Global
         private UnfriendConfirmationPopupController? unfriendConfirmationPopupController;
         private CancellationTokenSource? prewarmFriendsCancellationToken;
         private CancellationTokenSource? syncBlockingStatusOnRpcConnectionCts;
+        private CancellationTokenSource? connectRpcCts;
 
         private UserBlockingCache? userBlockingCache;
         private readonly FriendsServicesContainer friendsServices;
         private readonly RPCFriendsService rpcFriendsService;
+        private readonly IRPCSocialServices socialServicesRpc;
 
         private readonly FriendsPanelController friendsPanelController;
         private readonly IFriendsService friendsService;
@@ -109,6 +111,7 @@ namespace DCL.PluginSystem.Global
             this.friendsServices = friendsServices;
             friendsCache = friendsServices.FriendsCache;
             rpcFriendsService = friendsServices.RpcFriendsService;
+            socialServicesRpc = friendsServices.SocialServicesRpc;
             friendsService = friendsServices.FriendsService;
             friendsConnectivityStatusTracker = friendsServices.ConnectivityStatusTracker;
 
@@ -159,7 +162,9 @@ namespace DCL.PluginSystem.Global
             socialServiceEventBus.RPCClientReconnected -= OnRPCClientReconnected;
             socialServiceEventBus.TransportClosed -= OnTransportClosed;
             socialServiceEventBus.WebSocketConnectionEstablished -= SyncBlockingStatus;
+            socialServiceEventBus.WebSocketConnectionEstablished -= LaunchSubscriptions;
             syncBlockingStatusOnRpcConnectionCts.SafeCancelAndDispose();
+            connectRpcCts.SafeCancelAndDispose();
             friendsServices.Dispose();
         }
 
@@ -190,6 +195,14 @@ namespace DCL.PluginSystem.Global
             mvcManager.RegisterController(unfriendConfirmationPopupController);
 
             socialServiceEventBus.RPCClientReconnected += OnRPCClientReconnected;
+            socialServiceEventBus.WebSocketConnectionEstablished += LaunchSubscriptions;
+
+            // The lobby lists online friends before the world finishes loading, so the connection cannot wait for the prewarm
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.LivingLobby) && web3IdentityCache.Identity is { IsExpired: false })
+            {
+                connectRpcCts = connectRpcCts.SafeRestart();
+                socialServicesRpc.EnsureRpcConnectionAsync(connectRpcCts.Token).SuppressToResultAsync(ReportCategory.FRIENDS).Forget();
+            }
 
             loadingStatus.CurrentStage.Subscribe(PreWarmFriends);
 
@@ -227,10 +240,6 @@ namespace DCL.PluginSystem.Global
         private void PreWarmFriends(LoadingStatus.LoadingStage stage)
         {
             if (stage != LoadingStatus.LoadingStage.Completed) return;
-
-            friendServiceSubscriptionCts = friendServiceSubscriptionCts.SafeRestart();
-
-            LaunchSubscriptionsAsync(friendServiceSubscriptionCts.Token).Forget();
 
             prewarmFriendsCancellationToken = prewarmFriendsCancellationToken.SafeRestart();
             PrewarmAsync(prewarmFriendsCancellationToken.Token).Forget();
@@ -275,16 +284,17 @@ namespace DCL.PluginSystem.Global
 
         private void OnRPCClientReconnected()
         {
-            friendServiceSubscriptionCts = friendServiceSubscriptionCts.SafeRestart();
-
-            // Reset before re-subscribing: statuses cached for the previous identity would otherwise
-            // suppress the connectivity snapshot the new subscription delivers
+            // Streams relaunched by WebSocketConnectionEstablished cannot deliver before the connection mutex is released, so this drops nothing
             friendsConnectivityStatusTracker.Reset();
             friendsPanelController.Reset();
 
-            // Subscriptions stay open until the next disconnect, so they must not gate the prewarm
-            LaunchSubscriptionsAsync(friendServiceSubscriptionCts.Token).Forget();
             PreWarmFriendsCacheAsync(friendServiceSubscriptionCts.Token).Forget();
+        }
+
+        private void LaunchSubscriptions()
+        {
+            friendServiceSubscriptionCts = friendServiceSubscriptionCts.SafeRestart();
+            LaunchSubscriptionsAsync(friendServiceSubscriptionCts.Token).SuppressToResultAsync(ReportCategory.FRIENDS).Forget();
         }
 
         private async UniTask LaunchSubscriptionsAsync(CancellationToken ct)

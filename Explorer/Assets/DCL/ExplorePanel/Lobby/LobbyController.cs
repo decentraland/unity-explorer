@@ -33,7 +33,7 @@ namespace DCL.ExplorePanel.Lobby
         private readonly LobbyView view;
         private readonly IPlacesAPIService placesApi;
         private readonly HttpEventsApiService eventsApi;
-        private readonly IFriendsService? friendsService;
+        private readonly FriendsConnectivityStatusTracker? connectivity;
         private readonly LobbyAvatarController avatar;
         private readonly ISelfProfile selfProfile;
         private readonly ProfileChangesBus profileChanges;
@@ -60,7 +60,7 @@ namespace DCL.ExplorePanel.Lobby
         public event Action<bool>? WorldReadinessChanged;
 
         public LobbyController(LobbyView view, IPlacesAPIService placesApi, HttpEventsApiService eventsApi,
-            IFriendsService? friendsService, LobbyAvatarController avatar,
+            FriendsConnectivityStatusTracker? connectivity, LobbyAvatarController avatar,
             ISelfProfile selfProfile, ProfileChangesBus profileChanges, ISpriteCache images,
             IAnalyticsController analytics, PlacesCardSocialActionsController placesActions,
             EventCardActionsController eventsActions, IMVCManager mvcManager, IOnlineUsersProvider onlineUsers,
@@ -69,7 +69,7 @@ namespace DCL.ExplorePanel.Lobby
             this.view = view;
             this.placesApi = placesApi;
             this.eventsApi = eventsApi;
-            this.friendsService = friendsService;
+            this.connectivity = connectivity;
             this.avatar = avatar;
             this.selfProfile = selfProfile;
             this.profileChanges = profileChanges;
@@ -95,9 +95,15 @@ namespace DCL.ExplorePanel.Lobby
             view.NextFeaturedClicked += OnNextFeaturedClicked;
             view.SearchClicked += OnSearchClicked;
             view.NotificationsClicked += OnNotificationsClicked;
+            view.FriendsList.InitListView(0, OnGetFriendItem);
             profileChanges.SubscribeToUpdate(ProfileChanged);
             Application.focusChanged += ApplicationFocusChanged;
             loadingStatus.CurrentStage.Subscribe(LoadingStageChanged);
+
+            if (connectivity == null) return;
+            connectivity.OnFriendBecameOnline += FriendBecameOnline;
+            connectivity.OnFriendBecameAway += FriendBecameOnline;
+            connectivity.OnFriendBecameOffline += FriendBecameOffline;
         }
 
         public void Dispose()
@@ -118,6 +124,11 @@ namespace DCL.ExplorePanel.Lobby
             loadingStatus.CurrentStage.Unsubscribe(LoadingStageChanged);
             avatar.Dispose();
             images.Clear();
+
+            if (connectivity == null) return;
+            connectivity.OnFriendBecameOnline -= FriendBecameOnline;
+            connectivity.OnFriendBecameAway -= FriendBecameOnline;
+            connectivity.OnFriendBecameOffline -= FriendBecameOffline;
         }
 
         public void Activate()
@@ -125,13 +136,13 @@ namespace DCL.ExplorePanel.Lobby
             view.gameObject.SetActive(true);
             if (Visit != null) return;
             view.LiveSection.SetActive(false);
-            view.FriendsSection.SetActive(false);
             view.ReturnStatus.text = string.Empty;
             view.FeaturedStatus.text = string.Empty;
             view.PlayerName.text = string.Empty;
             Visit = new LobbyVisit(analytics, EntryPoint, IsWorldReady);
             ShowAvatarAsync(Visit.Token).SuppressToResultAsync(ReportCategory.UI).Forget();
             EntryPoint = "navigation";
+            ResetFriends();
             UpdateFocus(true);
             LoadingStageChanged(loadingStatus.CurrentStage.Value);
         }
@@ -144,6 +155,7 @@ namespace DCL.ExplorePanel.Lobby
                 Visit.Dispose();
                 Visit = null;
                 avatar.OnHide();
+                ClearFriends();
             }
             view.gameObject.SetActive(false);
         }
@@ -174,6 +186,7 @@ namespace DCL.ExplorePanel.Lobby
             {
                 refreshCts = CancellationTokenSource.CreateLinkedTokenSource(visit.Token);
                 RefreshWhileVisibleAsync(refreshCts.Token).SuppressToResultAsync(ReportCategory.UI).Forget();
+                view.FriendsList.RefreshAllShownItem();
             }
             else
             {
@@ -208,14 +221,15 @@ namespace DCL.ExplorePanel.Lobby
             {
                 await RefreshAsync(ct);
                 await UniTask.Delay(TimeSpan.FromSeconds(30), cancellationToken: ct);
+                placeNames.Clear();
+                view.FriendsList.RefreshAllShownItem();
             }
         }
 
         private UniTask RefreshAsync(CancellationToken ct) => UniTask.WhenAll(
             RefreshSectionAsync("featured", LoadPlacesAsync(ct), RenderFeatured, ct),
             RefreshSectionAsync("jump_back_in", LoadReturnPlacesAsync(ct), RenderReturn, ct),
-            RefreshSectionAsync("live_now", LoadEventsAsync(ct), RenderEvents, ct),
-            RefreshSectionAsync("friends", LoadFriendsAsync(ct), RenderFriends, ct));
+            RefreshSectionAsync("live_now", LoadEventsAsync(ct), RenderEvents, ct));
 
         private async UniTask RefreshSectionAsync<T>(string section, UniTask<IReadOnlyList<T>> request,
             Action<IReadOnlyList<T>, CancellationToken> render, CancellationToken ct)

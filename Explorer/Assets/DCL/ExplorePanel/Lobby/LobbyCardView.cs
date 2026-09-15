@@ -29,6 +29,9 @@ namespace DCL.ExplorePanel.Lobby
         private Action? chatSelected;
         private Action? profileSelected;
 
+        /// <summary>Identifies the bound item so a late update can verify the card still shows it.</summary>
+        public string Key { get; set; } = string.Empty;
+
         public TMP_Text Title => titleText.EnsureNotNull();
         public TMP_Text Detail => detailText.EnsureNotNull();
         public TMP_Text Status => statusText.EnsureNotNull();
@@ -62,6 +65,9 @@ namespace DCL.ExplorePanel.Lobby
                 defaultThumbnail, ct, false, () => imageUrl == url).Forget();
             gameObject.SetActive(true);
         }
+
+        public void SetDetail(string detail) =>
+            Detail.text = detail;
 
         private void Select() => selected?.Invoke();
         private void SelectChat() => chatSelected?.Invoke();

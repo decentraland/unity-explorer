@@ -173,6 +173,7 @@ namespace DCL.PluginSystem.Global
         private readonly ILoadingStatus loadingStatus;
         private readonly ImageControllerProvider imageControllerProvider;
         private readonly IFriendsService? friendsService;
+        private readonly FriendsConnectivityStatusTracker? friendsConnectivity;
         private readonly IOnlineUsersProvider onlineUsersProvider;
         private readonly IDonationsService donationsService;
         private readonly IRealmNavigator realmNavigator;
@@ -266,6 +267,7 @@ namespace DCL.PluginSystem.Global
             IDonationsService donationsService,
             IRealmNavigator realmNavigator,
             IFriendsService? friendsService,
+            FriendsConnectivityStatusTracker? friendsConnectivity,
             PublishIpfsEntityCommand publishIpfsEntityCommand,
             IWorldPermissionsService worldPermissionsService,
             IRendererFeaturesCache rendererFeaturesCache,
@@ -343,6 +345,7 @@ namespace DCL.PluginSystem.Global
             lobbyNavigator = livingLobbyEnabled ? new MenuRealmNavigator(realmNavigator, loadingStatus, loadingScreen) : null;
             this.realmNavigator = lobbyNavigator ?? realmNavigator;
             this.friendsService = friendsService;
+            this.friendsConnectivity = friendsConnectivity;
             this.publishIpfsEntityCommand = publishIpfsEntityCommand;
             this.worldPermissionsService = worldPermissionsService;
             this.rendererFeaturesCache = rendererFeaturesCache;
@@ -740,7 +743,7 @@ namespace DCL.PluginSystem.Global
             lobbyView = explorePanelView.GetComponentInChildren<LobbyView>(true);
             lobbyView.NotificationsClicked += OnLobbyNotificationsClicked;
             return new LobbyController(lobbyView,
-                placesAPIService, eventsApiService, friendsService,
+                placesAPIService, eventsApiService, friendsConnectivity,
                 new LobbyAvatarController(lobbyView.Avatar, characterPreviewFactory, world, characterPreviewEventBus),
                 selfProfile, profileChangesBus, new SpriteCache(webRequestController), analytics,
                 placesCardSocialActionsController, eventCardActionsController, mvcManager, onlineUsersProvider, realmNavigator, decentralandUrlsSource, loadingStatus);

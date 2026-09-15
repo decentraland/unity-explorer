@@ -14,7 +14,7 @@ namespace DCL.Friends
         private const int DEBOUNCE_DELAY_MS = 2000;
 
         private readonly IFriendsEventBus friendEventBus;
-        private readonly Dictionary<string, OnlineStatus> friendsOnlineStatus = new ();
+        private readonly Dictionary<string, (Profile.CompactInfo Profile, OnlineStatus Status)> friendsOnlineStatus = new ();
         private readonly Dictionary<string, FriendStatusDebounceInfo> debounceInfo = new ();
 
         public event Action<Profile.CompactInfo>? OnFriendBecameOnline;
@@ -85,14 +85,23 @@ namespace DCL.Friends
         }
 
         public OnlineStatus GetFriendStatus(string friendAddress) =>
-            friendsOnlineStatus.GetValueOrDefault(friendAddress, OnlineStatus.Offline);
+            friendsOnlineStatus.TryGetValue(friendAddress, out (Profile.CompactInfo Profile, OnlineStatus Status) entry) ? entry.Status : OnlineStatus.Offline;
+
+        /// <summary>
+        ///     Appends every friend currently known as online or away.
+        /// </summary>
+        public void CopyOnlineFriendsTo(List<Profile.CompactInfo> buffer)
+        {
+            foreach ((Profile.CompactInfo profile, OnlineStatus status) in friendsOnlineStatus.Values)
+                if (status != OnlineStatus.Offline) buffer.Add(profile);
+        }
 
         private bool FriendOnlineStatusChanged(Profile.CompactInfo friendProfile, OnlineStatus onlineStatus)
         {
-            if (friendsOnlineStatus.TryGetValue(friendProfile.UserId, out OnlineStatus currentStatus) && currentStatus == onlineStatus)
+            if (friendsOnlineStatus.TryGetValue(friendProfile.UserId, out (Profile.CompactInfo Profile, OnlineStatus Status) current) && current.Status == onlineStatus)
                 return false;
 
-            friendsOnlineStatus[friendProfile.UserId] = onlineStatus;
+            friendsOnlineStatus[friendProfile.UserId] = (friendProfile, onlineStatus);
             return true;
         }
 
