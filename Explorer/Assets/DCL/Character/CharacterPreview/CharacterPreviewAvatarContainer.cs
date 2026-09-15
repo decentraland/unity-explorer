@@ -248,11 +248,9 @@ namespace DCL.CharacterPreview
         }
 
         /// <summary>
-        ///     Swings the camera over and under the avatar, which stays upright on its platform.
-        ///     The rig reads its target's rotation (LockToTargetNoRoll binding) and the target hangs off this
-        ///     pivot, so camera and framing point rotate together: the elevation changes and the shot the
-        ///     screen was tuned for survives. Pitching the target instead would orbit around the framing
-        ///     point, which sits off the avatar's axis wherever the shot is angled.
+        ///     Turns the camera rig about the pivot the framing target hangs off, swinging the camera over
+        ///     and under an avatar that stays upright: elevation changes, and the shot the screen was tuned
+        ///     for holds.
         /// </summary>
         private void ApplyCameraPitch()
         {
