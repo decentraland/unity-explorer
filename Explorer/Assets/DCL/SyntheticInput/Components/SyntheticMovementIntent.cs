@@ -7,37 +7,28 @@ namespace DCL.SyntheticInput.Components
 {
     /// <summary>
     ///     Held movement input requested by an automation driver. While present on the player entity,
-    ///     <see cref="SyntheticMovementInputSystem" /> re-asserts it into <see cref="MovementInputComponent" /> every frame.
+    ///     SyntheticMovementInputSystem re-asserts it into <see cref="MovementInputComponent" /> every frame.
     /// </summary>
     public struct SyntheticMovementIntent : IEcsRequest<SyntheticInputDelivery>
     {
-        /// <summary>
-        ///     Normalized camera-relative axes (x = strafe, y = forward).
-        /// </summary>
+        /// <summary>Normalized camera-relative axes (x = strafe, y = forward).</summary>
         public Vector2 Axes;
 
         public MovementKind Kind;
 
-        /// <summary>
-        ///     Value of Time.time at which the hold expires.
-        /// </summary>
+        /// <summary>Value of Time.time at which the hold expires.</summary>
         public float EndTime;
 
-        /// <summary>
-        ///     Requests a single jump; consumed on the first frame of the hold.
-        /// </summary>
+        /// <summary>Requests a single jump; consumed on the first frame of the hold.</summary>
         public bool JumpRequested;
 
         /// <summary>
-        ///     By default the hold obeys the scene's InputModifier locks exactly like real input (a movement lock
-        ///     idles it, disabled kinds degrade through the same fallback table, a jump lock drops the jump).
-        ///     Set for deliberate test escapes that must move the player regardless.
+        ///     By default the hold obeys the scene's InputModifier locks exactly like real input. Set for deliberate
+        ///     test escapes that must move the player regardless.
         /// </summary>
         public bool IgnoreInputModifiers;
 
-        /// <summary>
-        ///     Completed by the system when the hold expires or is preempted by a newer request.
-        /// </summary>
+        /// <summary>Completed by the system when the hold expires or is preempted by a newer request.</summary>
         public UniTaskCompletionSource<SyntheticInputDelivery>? Completion { get; set; }
     }
 

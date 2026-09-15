@@ -14,9 +14,9 @@ namespace DCL.Interaction.PlayerOriginated.Systems
     /// <summary>
     ///     Collects the input actions pressed or released this frame into the buffer every scene's
     ///     WritePointerEventResultsSystem broadcasts to its root entity. Synthetic button edges posted by an
-    ///     automation driver (<see cref="SyntheticPointerInput" />) are appended after the real ones, so a
-    ///     synthetic press fans out to the scene exactly like a real key; the system is pinned between the
-    ///     raycast and the pointer-events processing because the latter consumes the synthetic post.
+    ///     automation driver (<see cref="SyntheticPointerInput" />) are appended after the real ones, so a synthetic
+    ///     press fans out exactly like a real key. Pinned between the raycast and the pointer-events processing,
+    ///     because the latter consumes the synthetic post.
     /// </summary>
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [UpdateAfter(typeof(PlayerOriginatedRaycastSystem))]
@@ -55,12 +55,11 @@ namespace DCL.Interaction.PlayerOriginated.Systems
         }
 
         /// <summary>
-        ///     A synthetic edge of an action the player really pressed or released this same frame is skipped:
-        ///     the real loop above already added it, and the scene must not observe the event twice.
-        ///     An edge that named a target entity is skipped too: it is not a broadcast. The driver asked for one
-        ///     entity, so an edge ProcessPointerEventsSystem cannot deliver there (blocked line of sight, out of
-        ///     range, no PointerEvents) must reach nobody — otherwise a call the driver is told missed still leaves
-        ///     the scene root observing the press.
+        ///     A synthetic edge of an action the player really pressed or released this same frame is skipped: the
+        ///     real loop above already added it, and the scene must not observe the event twice. An edge that named
+        ///     a target entity is skipped too, because it is not a broadcast: one ProcessPointerEventsSystem cannot
+        ///     deliver there must reach nobody, or a call the driver is told missed still leaves the scene root
+        ///     observing the press.
         /// </summary>
         private void AppendSyntheticEntries()
         {

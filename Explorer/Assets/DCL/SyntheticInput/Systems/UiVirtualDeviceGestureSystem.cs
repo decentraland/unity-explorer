@@ -15,16 +15,12 @@ using Utility.Arch;
 namespace DCL.SyntheticInput.Systems
 {
     /// <summary>
-    ///     Drives a <see cref="UiDeviceGestureRequest" /> one input state per frame through the automation
-    ///     virtual devices, so uGUI, UI Toolkit and gameplay all observe the gesture exactly as they would a real
-    ///     mouse or keyboard. Every queued pointer position is also written into the camera entity's
+    ///     Drives a <see cref="UiDeviceGestureRequest" /> one input state per frame through the automation virtual
+    ///     devices, so uGUI, UI Toolkit and gameplay all observe the gesture exactly as they would a real mouse or
+    ///     keyboard. Every queued pointer position is also written into the camera entity's
     ///     <see cref="SyntheticCursorOverride" />, which is what makes the cursor system follow the gesture instead
-    ///     of the hardware mouse (and skip its OS-cursor warps) — hence the ordering against
-    ///     <see cref="UpdateCursorInputSystem" />, which reads that position the same frame.
-    ///     Pointer gestures require a free cursor: with the cursor locked or panning the on-screen UI is not in a
-    ///     clickable state, so the gesture fails instead of silently mutating the lock. That is re-checked every
-    ///     frame, because a left-button drag over the world turns the cursor to panning mid-gesture (TemporalLock
-    ///     is bound to the left mouse button) and the drag a caller asked for never happens.
+    ///     of the hardware mouse — hence the ordering against <see cref="UpdateCursorInputSystem" />, which reads
+    ///     that position the same frame. Pointer gestures require a free cursor, re-checked every frame.
     /// </summary>
     [UpdateInGroup(typeof(InputGroup))]
     [UpdateBefore(typeof(UpdateCursorInputSystem))]
@@ -47,9 +43,7 @@ namespace DCL.SyntheticInput.Systems
             base.Initialize();
             camera = World.CacheCamera();
 
-            // Every system that writes the override installs it beside CursorComponent, so none depends on a
-            // sibling system being registered; the second install is a no-op. The gesture steps only write into
-            // it afterwards, so no structural change happens while a gesture ref is held.
+            // Every system that writes the override installs it here, so none depends on a sibling being registered.
             World.AddOrSet(camera, SyntheticCursorOverride.Inactive);
         }
 
@@ -99,8 +93,7 @@ namespace DCL.SyntheticInput.Systems
         /// <summary>
         ///     Why a pointer gesture cannot run under a captured cursor. A gesture that started and then found the
         ///     cursor panning was itself the cause: a held left button over the world is the camera-pan gesture
-        ///     (TemporalLock binds the left mouse button), so the caller's drag became a camera pan and saying "ok"
-        ///     would report a delivery that never happened.
+        ///     (TemporalLock binds the left mouse button), so the caller's drag became a camera pan.
         /// </summary>
         private static string CaptureFailureReason(in UiDeviceGestureRequest gesture, CursorState capturedState) =>
             gesture.Phase == UiGesturePhase.NotStarted
@@ -200,8 +193,8 @@ namespace DCL.SyntheticInput.Systems
 
         /// <summary>
         ///     The single door every pointer state goes through: the device gets the state, and the cursor system
-        ///     gets the position. Routing both here is what stops a phase from moving the pointer without telling
-        ///     the cursor — the failure that left the world reticle behind while the UI stack followed the gesture.
+        ///     gets the position. Routing both here is what stops a phase from moving the pointer without telling the
+        ///     cursor, leaving the world reticle behind while the UI stack follows the gesture.
         /// </summary>
         private void QueueMouse(Vector2 position, bool leftPressed = false, bool rightPressed = false)
         {

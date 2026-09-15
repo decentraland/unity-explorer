@@ -10,9 +10,9 @@ using UnityEngine.UIElements;
 namespace DCL.SyntheticInput.UiSimulation
 {
     /// <summary>
-    ///     Resolves SDK scene-UI elements by CRDT entity id in the current scene world. Names are useless for
-    ///     addressing here — UI Toolkit element names are only built in the Editor — so the CRDT id a creator
-    ///     sees in their scene code is the one stable key.
+    ///     Resolves SDK scene-UI elements by CRDT entity id in the current scene world. Names cannot address them:
+    ///     UI Toolkit element names are only built in the Editor, so the CRDT id a creator sees in their scene code
+    ///     is the one stable key.
     /// </summary>
     public class SdkUiResolver
     {
@@ -120,11 +120,9 @@ namespace DCL.SyntheticInput.UiSimulation
         }
 
         /// <summary>
-        ///     Describes the current scene's UI covering a screen point (Unity screen coordinates) inside a panel
-        ///     the caller already identified — a uGUI raycast reports the panel, not the element it picked, so the
-        ///     cover has to be re-derived here to name something a driver can act on. False when the point picks
-        ///     nothing or the picked element belongs to no entity of the current scene (another panel's element, or
-        ///     one the scene world does not own), leaving the caller's own description in place.
+        ///     Describes the current scene's UI covering a screen point (Unity screen coordinates) inside a panel the
+        ///     caller already identified — a uGUI raycast reports the panel, not the element it picked. False when
+        ///     the point picks nothing or the picked element belongs to no entity of the current scene.
         /// </summary>
         public bool TryDescribeCoverIn(IPanel panel, UnityEngine.Vector2 screenPoint, out string? cover)
         {
@@ -140,18 +138,11 @@ namespace DCL.SyntheticInput.UiSimulation
             return true;
         }
 
-        /// <summary>
-        ///     How a scene-UI cover is named to a driver. The CRDT id is the whole point: it is the one address
-        ///     ui_click takes for scene UI, so a cover that omits it (the panel host's GameObject path, which is
-        ///     what a raycast reports) tells an agent nothing it can act on.
-        /// </summary>
+        /// <summary>How a scene-UI cover is named to a driver. The CRDT id is included because it is the one address ui_click takes for scene UI.</summary>
         internal static string CoverDescription(int crdtId) =>
             crdtId >= 0 ? $"the scene's UI (crdtId {crdtId})" : "the scene's UI";
 
-        /// <summary>
-        ///     The panel the current scene's UI is attached to — the space positional gestures against scene UI are
-        ///     expressed in. Any attached element identifies it: a scene renders its UI into one panel.
-        /// </summary>
+        /// <summary>The panel the current scene's UI is attached to. Any attached element identifies it: a scene renders its UI into one panel.</summary>
         public bool TryGetScenePanel(out IPanel? panel, out string? failure)
         {
             panel = null;
@@ -212,7 +203,7 @@ namespace DCL.SyntheticInput.UiSimulation
                 };
 
                 // The scene can declare an input or dropdown disabled, which makes it inert for a user and refused by
-                // ui_click/ui_set_text; listing it without saying so invites a call that can only fail.
+                // ui_click/ui_set_text.
                 if ((hasInput && input != null && !input.TextField.enabledInHierarchy)
                     || (hasDropdown && dropdown != null && !dropdown.DropdownField.enabledInHierarchy))
                     entry["disabled"] = true;

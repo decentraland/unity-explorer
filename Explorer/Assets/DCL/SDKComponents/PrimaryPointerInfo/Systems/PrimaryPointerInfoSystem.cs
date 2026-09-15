@@ -61,11 +61,6 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Systems
 
         private void UpdatePointerInfo()
         {
-            // The pointer the cursor pipeline resolved, never the mouse device directly: the device is not the
-            // only thing that moves the pointer (a gamepad's virtual cursor, an automation gesture's injected
-            // one), and reading an input action here also went blank whenever explorer UI took input focus and
-            // disabled the Camera action map. The reticle ray is built from the same position, so the scene and
-            // the client agree on where the pointer is.
             Vector2 cursorPosition = exposedCameraData.PointerScreenPosition;
             CumulativePointerDelta accumulatedDelta = exposedCameraData.AccumulatedPointerDelta;
             Vector2 pointerPos;

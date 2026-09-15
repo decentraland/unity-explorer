@@ -35,10 +35,9 @@ namespace DCL.SyntheticInput.UiSimulation
         /// <summary>
         ///     The UI Toolkit panel a raycast hit stands for, if the hit came from a panel rather than from a
         ///     Graphic: <see cref="PanelRaycaster" /> reports the panel <em>host</em> GameObject, so the hit's name
-        ///     describes Unity plumbing ("EventSystem/DCLScenePanelSettings") and never the element the panel
-        ///     picked. The raycaster itself carries the panel, which is what lets a caller describe the cover in
-        ///     the panel's own terms. Matched on the concrete raycaster because the interface that would express
-        ///     it (IRuntimePanelComponent) is internal to UI Toolkit.
+        ///     describes Unity plumbing ("EventSystem/DCLScenePanelSettings") and never the element the panel picked.
+        ///     Matched on the concrete raycaster because the interface that would express it
+        ///     (IRuntimePanelComponent) is internal to UI Toolkit.
         /// </summary>
         public static bool TryGetHostedPanel(in RaycastResult hit, out IPanel? panel)
         {

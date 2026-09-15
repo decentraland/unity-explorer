@@ -8,9 +8,9 @@ namespace DCL.SyntheticInput.UiSimulation
     /// <summary>
     ///     Virtual mouse and keyboard registered while automation is enabled. Layout-path bindings
     ///     ("&lt;Mouse&gt;/position", "&lt;Keyboard&gt;/e", ...) resolve them into BOTH input-action graphs — the
-    ///     serialized asset driving the UI input module and the DCLInput.Instance clone gameplay polls — which is
-    ///     the whole point of this path: an injected state event behaves like a real device for every consumer.
-    ///     The devices stay enabled for the automation session and are removed on dispose.
+    ///     serialized asset driving the UI input module and the DCLInput.Instance clone gameplay polls — so an
+    ///     injected state event behaves like a real device for every consumer. The devices stay enabled for the
+    ///     automation session and are removed on dispose.
     /// </summary>
     public class AutomationVirtualDevices : IDisposable
     {

@@ -210,8 +210,8 @@ namespace DCL.Interaction.PlayerOriginated.Tests
         public void NotMergeASyntheticEdgeIntoAnEntityItDidNotName()
         {
             // The ray reached the target, but the edge was promised to another entity: whatever the ray found is
-            // an occluder from the driver's point of view, and firing its handler is the delivery that used to
-            // happen a frame before the driver was told its aim was blocked.
+            // an occluder from the driver's point of view, so firing its handler would deliver the press a frame
+            // before the driver is told its aim was blocked.
             Entity otherEntity = sceneWorld.Create(new CRDTEntity(TARGET_CRDT_ID + 1));
 
             HoverTarget();

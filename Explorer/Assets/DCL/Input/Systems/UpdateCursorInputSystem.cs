@@ -112,9 +112,8 @@ namespace DCL.Input.Systems
         private void UpdateCursor(in Entity entity, ref CursorComponent cursorComponent, in ExposedCameraData exposedCameraData)
         {
             // Present only while an automation driver is installed. A gesture steers a virtual mouse of its own,
-            // which this system's single cached device never resolves; while one asserts a position, that is the
-            // pointer, so the UI raycast, the cursor style and the world reticle ray built from
-            // CursorComponent.Position all describe the same pointer.
+            // which this system's single cached device never resolves, so while one asserts a position that is the
+            // pointer.
             SyntheticCursorOverride syntheticCursor = World.TryGet(entity, out SyntheticCursorOverride installed) ? installed : SyntheticCursorOverride.Inactive;
 
             Vector2 mousePos = syntheticCursor.TryGetPointerPosition(out Vector2 syntheticPointer)

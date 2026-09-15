@@ -22,8 +22,7 @@ namespace DCL.McpServer.Tools
     {
         /// <summary>
         ///     Wire-facing gesture kinds: a full click, or a single press/release leg. The member names ARE the
-        ///     wire contract — McpWireEnum derives each argument value from them — so they stay SCREAMING_CASE,
-        ///     as in every other tool's wire enum.
+        ///     wire contract — McpWireEnum derives each argument value from them — so they stay SCREAMING_CASE.
         /// </summary>
         [SuppressMessage("ReSharper", "InconsistentNaming")]
         private enum ClickKind : byte

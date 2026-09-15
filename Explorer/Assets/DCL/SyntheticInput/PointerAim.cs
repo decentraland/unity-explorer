@@ -12,10 +12,7 @@ namespace DCL.SyntheticInput
         /// <summary>Arch entity id, in the current scene world, of the entity the gesture is promised to; null when it names none.</summary>
         public readonly int? EntityId;
 
-        /// <summary>
-        ///     Pins delivery to one scene, matched by the definition id get_scene_state reports: the gesture fails
-        ///     instead of landing in whatever scene is current if the player moved. Null accepts the current scene.
-        /// </summary>
+        /// <summary>Pins delivery to one scene, matched by the scene definition id; null accepts the current scene.</summary>
         public readonly string? SceneId;
 
         /// <summary>Explicit world-space aim point; when null and an entity is named, the aim is its collider center.</summary>

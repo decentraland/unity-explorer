@@ -19,10 +19,9 @@ namespace DCL.SyntheticInput.Systems
     ///     Delivers automation-driver camera-look requests while a <see cref="SyntheticCameraLookIntent" /> is
     ///     present on the player entity. A held delta is re-asserted into <see cref="CameraInput.Delta" /> after
     ///     <see cref="UpdateCameraInputSystem" /> wrote (or zeroed) it, so the Cinemachine axes consume it exactly
-    ///     like mouse-look; unlike real look input it does not require an OS cursor lock, as a driver has no
-    ///     cursor to lock. A look-at is translated into the production <see cref="CameraLookAtIntent" />.
-    ///     A <see cref="CameraBlockerComponent" /> suppresses the held delta the same way it suppresses real
-    ///     camera input; the hold keeps running until its expiry.
+    ///     like mouse-look — but without requiring an OS cursor lock, which a driver has no cursor to take. A
+    ///     look-at is translated into the production <see cref="CameraLookAtIntent" />, and a
+    ///     <see cref="CameraBlockerComponent" /> suppresses the held delta as it suppresses real camera input.
     /// </summary>
     [UpdateInGroup(typeof(InputGroup))]
     [UpdateAfter(typeof(UpdateCameraInputSystem))]
@@ -32,10 +31,7 @@ namespace DCL.SyntheticInput.Systems
         /// <summary>Aim error at which a look-at is considered on target — under half a reticle's worth.</summary>
         private const float AIM_TOLERANCE_DEGREES = 0.75f;
 
-        /// <summary>
-        ///     Seconds the aim refinement may spend before the request completes with whatever it achieved. Bounded
-        ///     in time, not frames, so it stays inside the driver-side completion grace on a slow editor too.
-        /// </summary>
+        /// <summary>Seconds the aim refinement may spend before completing with whatever it achieved; bounded in time, not frames, to stay inside the driver-side grace on a slow editor.</summary>
         private const float CORRECTION_BUDGET_SEC = 2.5f;
 
         /// <summary>Consecutive frames without improvement after which the rig is treated as unable to get closer.</summary>
@@ -103,8 +99,7 @@ namespace DCL.SyntheticInput.Systems
             if (!lookIntent.LookAtIssued)
             {
                 // Written through the ref before the AddOrSet below, which is a structural change. The budget is
-                // stamped here as well: the camera can consume the intent within this same frame, and the
-                // refinement must not find an expired budget when it does.
+                // stamped here too, because the camera can consume the intent within this same frame.
                 lookIntent.LookAtIssued = true;
                 lookIntent.LookAtBestErrorDegrees = float.MaxValue;
                 lookIntent.EndTime = UnityEngine.Time.time + CORRECTION_BUDGET_SEC;
@@ -126,20 +121,12 @@ namespace DCL.SyntheticInput.Systems
         }
 
         /// <summary>
-        ///     <para>
-        ///         Brings the camera the rest of the way onto the target. The production look-at drives the rig's
-        ///         orbit value, which is only an approximation of a pitch: it computes the angle from the player's
-        ///         feet and maps it onto the orbit range, so a third-person camera — which sits behind and above
-        ///         the player — ends up with the right yaw but an aim that misses vertically, by tens of degrees on
-        ///         nearby or steep targets. A driver asking to look at a point means the point ends up under the
-        ///         reticle, so the residual is closed here through the same look-input channel mouse-look uses.
-        ///     </para>
-        ///     <para>
-        ///         Rate limiting inside the rig makes an open-loop correction impossible (a large delta saturates
-        ///         at the axis' max speed), so the error is re-measured every frame and the delta shrinks with it.
-        ///         The loop always terminates: on target, on a frame budget, or as soon as the error stops
-        ///         improving — which is what a clamped rig (third-person pitch limits) looks like from here.
-        ///     </para>
+        ///     Brings the camera the rest of the way onto the target. The production look-at drives the rig's orbit
+        ///     value, which only approximates a pitch: it computes the angle from the player's feet, so a
+        ///     third-person camera ends up with the right yaw but an aim that misses vertically, by tens of degrees
+        ///     on nearby or steep targets. Rate limiting inside the rig rules out an open-loop correction, so the
+        ///     error is re-measured every frame and the delta shrinks with it. The loop terminates on target, on the
+        ///     budget, or as soon as the error stops improving — what a clamped rig looks like from here.
         /// </summary>
         private void RefineLookAt(ref SyntheticCameraLookIntent lookIntent, Vector3 lookAtTarget)
         {
@@ -178,9 +165,8 @@ namespace DCL.SyntheticInput.Systems
         }
 
         /// <summary>
-        ///     Signed yaw/pitch error in degrees between the camera's forward and the direction to the target from
-        ///     the camera itself, in the sign convention of the look input: positive yaw turns right, positive
-        ///     pitch looks up.
+        ///     Signed yaw/pitch error in degrees between the camera's forward and the direction to the target, in
+        ///     the sign convention of the look input: positive yaw turns right, positive pitch looks up.
         /// </summary>
         private static (float yawErrorDegrees, float pitchErrorDegrees) AimError(Transform cameraTransform, Vector3 lookAtTarget)
         {

@@ -101,8 +101,7 @@ namespace DCL.McpServer.Tools
         /// <summary>
         ///     Replays a device click at an SDK element and then reports whether the element actually observed it.
         ///     The gesture succeeding only means the device states were injected; UI Toolkit panels consume events
-        ///     sent to their elements, so a driver must be told when the injected pointer never arrived instead of
-        ///     reading a bare "ok" as a delivered click.
+        ///     sent to their elements, so a bare "ok" would misreport an injected pointer that never arrived.
         /// </summary>
         private async UniTask<UiActionResult> RunDeviceClickOnSdkAsync(SdkUiElement element, ClickButton button, float timeoutSec, CancellationToken ct)
         {
@@ -128,9 +127,9 @@ namespace DCL.McpServer.Tools
         }
 
         /// <summary>
-        ///     Replays the click through the virtual mouse. The element's rect travels with the result: the device
-        ///     path resolved the very same element the semantic path does, so hiding its coordinates would make the
-        ///     two paths answer differently about where the click landed.
+        ///     Replays the click through the virtual mouse. The element's rect travels with the result: this path
+        ///     resolved the same element the semantic one does, so the two must not answer differently about where
+        ///     the click landed.
         /// </summary>
         private async UniTask<UiActionResult> RunDeviceClickAsync(Vector2 screenCenter, Rect imageRect, ClickButton button, float timeoutSec, CancellationToken ct)
         {

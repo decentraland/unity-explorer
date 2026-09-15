@@ -14,16 +14,12 @@ using Utility;
 namespace DCL.SyntheticInput.AltTester
 {
     /// <summary>
-    ///     <para>
-    ///         AltTester front-end of the world/avatar synthetic input: tests call these via
-    ///         <c>AltDriver.CallStaticMethod</c> (assembly <c>DCL.SyntheticInput</c> — this assembly name is a
-    ///         wire contract) and drive the exact same <see cref="SyntheticInputAgent" /> the MCP tools drive.
-    ///     </para>
-    ///     <para>
-    ///         Every gesture is multi-frame, so the API is start/poll: a Start* method returns an operation id,
-    ///         and <see cref="PollJson" /> reports <c>{"done":false}</c> until the payload is ready. Timeouts and
-    ///         failures come back inside the payload — nothing here throws towards the test.
-    ///     </para>
+    ///     AltTester front-end of the world/avatar synthetic input: tests call these via
+    ///     <c>AltDriver.CallStaticMethod</c> (assembly <c>DCL.SyntheticInput</c> — the assembly name is a wire
+    ///     contract) and drive the same <see cref="SyntheticInputAgent" /> the MCP tools drive. Every gesture is
+    ///     multi-frame, so the API is start/poll: a Start* method returns an operation id, and
+    ///     <see cref="PollJson" /> reports <c>{"done":false}</c> until the payload is ready. Timeouts and failures
+    ///     come back inside the payload — nothing here throws towards the test.
     /// </summary>
     public static class WorldAutomationProbe
     {
@@ -33,7 +29,7 @@ namespace DCL.SyntheticInput.AltTester
 
         private static Session? session;
 
-        /// <summary>Written once by DynamicWorldContainer when the automation session starts (the static-latch probe pattern).</summary>
+        /// <summary>Written once, when the automation session starts.</summary>
         public static void Install(SyntheticInputAgent installedAgent, World world, Entity playerEntity) =>
             session = new Session(installedAgent, world, playerEntity);
 
@@ -46,7 +42,6 @@ namespace DCL.SyntheticInput.AltTester
         /// <summary>
         ///     The player's pose right now, in one round-trip:
         ///     <c>{"ok":true,"position":{x,y,z},"rotationEuler":{x,y,z},"parcel":{x,y},"velocity":{x,y,z},"isGrounded":true}</c>.
-        ///     Read it before and after a gesture to assert what the gesture did.
         /// </summary>
         public static string GetPlayerStateJson()
         {
@@ -148,11 +143,10 @@ namespace DCL.SyntheticInput.AltTester
         }
 
         /// <summary>
-        ///     Presses a pointer button on an entity, turns the camera while it is held, then releases — the
-        ///     gesture that sweeps the pointer ray a scene samples from PrimaryPointerInfo: the press parks the
-        ///     pointer on the target and the camera turns under it. Dragging the virtual mouse across the world
-        ///     pans the camera instead, so this is the only way to drive a held sweep. The target has to be on
-        ///     screen for the pointer to be parked at all, so aim the camera at it first.
+        ///     Presses a pointer button on an entity, turns the camera while it is held, then releases — the gesture
+        ///     that sweeps the pointer ray a scene samples from PrimaryPointerInfo. Dragging the virtual mouse across
+        ///     the world pans the camera instead, so this is the only way to drive a held sweep. The target has to be
+        ///     on screen for the pointer to be parked at all, so aim the camera at it first.
         /// </summary>
         public static int StartSweep(int entityId, string sceneId, string button, float deltaX, float deltaY, float seconds, float timeoutSec)
         {
@@ -185,9 +179,8 @@ namespace DCL.SyntheticInput.AltTester
         }
 
         /// <summary>
-        ///     Presses and releases an SDK input action with no aim: it reaches the scene root, because a driver
-        ///     holds no cursor over a target for the reticle to follow. Use <see cref="StartGlobalInputOnEntity" />
-        ///     for the entity-bound half of the fan-out.
+        ///     Presses and releases an SDK input action with no aim, so it reaches the scene root; see
+        ///     <see cref="StartGlobalInputOnEntity" /> for the entity-bound half of the fan-out.
         ///     action ∈ pointer|primary|secondary|jump|forward|backward|right|left|action3..6|walk|modifier.
         /// </summary>
         public static int StartGlobalInput(string action, float holdSeconds) =>
@@ -195,8 +188,7 @@ namespace DCL.SyntheticInput.AltTester
 
         /// <summary>
         ///     Presses and releases an SDK input action while the reticle is aimed at <paramref name="entityId" />,
-        ///     so the scene observes it entity-bound on that target under the real qualification gates — the same
-        ///     event a key pressed while looking at the entity produces.
+        ///     so the scene observes it entity-bound under the real qualification gates.
         /// </summary>
         public static int StartGlobalInputOnEntity(string action, float holdSeconds, int entityId)
         {

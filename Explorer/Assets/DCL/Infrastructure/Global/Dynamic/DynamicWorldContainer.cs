@@ -901,7 +901,7 @@ namespace Global.Dynamic
 
 #if ALTTESTER
                 // AltTester tests reach the layer through CallStaticMethod, so the session's instances are handed
-                // to the static probes once (the static-latch pattern of AlttesterSceneReadinessProbe).
+                // to the static probes once.
                 DCL.SyntheticInput.AltTester.WorldAutomationProbe.Install(syntheticInputAgent, globalWorld, playerEntity);
                 DCL.SyntheticInput.AltTester.UiAutomationProbe.Install(uiAutomation);
                 DCL.SyntheticInput.AltTester.NavigationAutomationProbe.Install(realmNavigator, staticContainer.RealmData, bootstrapContainer.DecentralandUrlsSource,

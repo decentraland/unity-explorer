@@ -13,8 +13,8 @@ namespace DCL.SyntheticInput.UiSimulation
     /// <summary>
     ///     Semantic UI interaction: the target element is resolved first and its events are synthesized directly
     ///     (uGUI via ExecuteEvents, SDK scene UI via UI Toolkit SendEvent), after an occlusion pre-check so a
-    ///     covered element cannot be clicked through its cover. Deterministic and cursor-independent; the
-    ///     virtual-device gesture path exists for cases needing true positional fidelity.
+    ///     covered element cannot be clicked through its cover. The virtual-device gesture path is the alternative
+    ///     when true positional fidelity is needed.
     /// </summary>
     public class UiInteractionSimulator
     {
@@ -68,9 +68,7 @@ namespace DCL.SyntheticInput.UiSimulation
             if (field == null)
                 return UiActionResult.Failure("the element has no TMP_InputField");
 
-            // Assigning field.text goes past uGUI's own guard, so the guard has to be applied here: a user
-            // cannot type into a field the client disabled, and reporting a write it could not perform is the
-            // failure mode this layer exists to avoid.
+            // Assigning field.text goes past uGUI's own guard, so the guard has to be applied here.
             if (!field.IsInteractable())
                 return UiActionResult.Failure("the input is not interactable (disabled by the client, or inside a CanvasGroup that is); a user could not type into it",
                     null, UiScreenGeometry.ImageRectOf((RectTransform)field.transform));
@@ -105,9 +103,8 @@ namespace DCL.SyntheticInput.UiSimulation
 
         /// <summary>
         ///     Clicks an SDK scene-UI element. Every pointer event is sent on its own frame and only after the
-        ///     (throttled) scene system drained the previous one — the scene's pointer-event slot holds a single
-        ///     event, so two events in one drain window lose the earlier one (a same-frame leave would eat the
-        ///     release, a same-frame down would eat the hover enter).
+        ///     (throttled) scene system drained the previous one: the scene's pointer-event slot holds a single
+        ///     event, so two events in one drain window lose the earlier one.
         /// </summary>
         public async UniTask<UiActionResult> ClickSdkAsync(SdkUiElement element, bool force, CancellationToken ct)
         {
@@ -119,8 +116,7 @@ namespace DCL.SyntheticInput.UiSimulation
             Rect imageRect = UiScreenGeometry.PanelRectToImageRect(target.panel, target.worldBound);
 
             // A disabled element is PickingMode.Ignore, so the pick below would miss it and blame a cover that is
-            // not there. Say what actually stops the click, and say it even under force: force skips the occlusion
-            // pre-check, not the element's own state.
+            // not there. force skips the occlusion pre-check, not the element's own state.
             if (!target.enabledInHierarchy)
                 return UiActionResult.Failure("the element is disabled; a user could not click it", null, imageRect);
 
@@ -170,7 +166,6 @@ namespace DCL.SyntheticInput.UiSimulation
         /// <summary>
         ///     Waits until the scene system drained the element's single pointer-event slot, always yielding at
         ///     least one frame so consecutive events land on separate frames. A null owner has no slot to wait on.
-        ///     False when the slot still holds an event after the bounded wait.
         /// </summary>
         private static async UniTask<bool> DrainSdkSlotAsync(UITransformComponent? slotOwner, CancellationToken ct)
         {
@@ -188,11 +183,9 @@ namespace DCL.SyntheticInput.UiSimulation
         }
 
         /// <summary>
-        ///     Drags between two points inside the SDK scene-UI panel by synthesizing the element events a real
-        ///     drag produces: press on the element under <paramref name="fromImagePoint" />, moves along the path,
-        ///     release on the element under <paramref name="toImagePoint" />. This is the semantic counterpart of
-        ///     the virtual-device drag — UI Toolkit panels consume events sent to their elements, and a scene
-        ///     that recognises a drag as "down here, up there" observes exactly what a user produces.
+        ///     Drags between two points inside the SDK scene-UI panel by synthesizing the element events a real drag
+        ///     produces: press on the element under <paramref name="fromImagePoint" />, moves along the path,
+        ///     release on the element under <paramref name="toImagePoint" />.
         /// </summary>
         public async UniTask<UiActionResult> DragSdkAsync(IPanel panel, Vector2 fromImagePoint, Vector2 toImagePoint, int steps, CancellationToken ct)
         {
@@ -241,10 +234,9 @@ namespace DCL.SyntheticInput.UiSimulation
         }
 
         /// <summary>
-        ///     Delivers the release leg: the slot must be free before the up (a same-element drag may still hold
-        ///     the press) and drained after it, so the leave sent last cannot overwrite the release the scene has
-        ///     not read yet. On an unconsumed release the leave is withheld — the release stays in the slot for a
-        ///     slow scene to pick up. True when the scene consumed the release.
+        ///     Delivers the release leg: the slot must be free before the up (a same-element drag may still hold the
+        ///     press) and drained after it, so the leave sent last cannot overwrite a release the scene has not read
+        ///     yet. On an unconsumed release the leave is withheld, leaving the release in the slot.
         /// </summary>
         private async UniTask<bool> ReleaseSdkAsync(VisualElement target, UITransformComponent? slot, CancellationToken ct)
         {
@@ -275,8 +267,7 @@ namespace DCL.SyntheticInput.UiSimulation
             Rect imageRect = UiScreenGeometry.PanelRectToImageRect(textField.panel, textField.worldBound);
 
             // PBUiInput.disabled disables the element and sets pickingMode to Ignore, so a real keystroke never
-            // reaches it. Writing .value would bypass UI Toolkit entirely and fire the scene's onChange for input
-            // the scene declared impossible.
+            // reaches it. Writing .value would fire the scene's onChange for input the scene declared impossible.
             if (!textField.enabledInHierarchy)
                 return UiActionResult.Failure("the input is disabled (PBUiInput.disabled); a user could not type into it", null, imageRect);
 
@@ -318,9 +309,8 @@ namespace DCL.SyntheticInput.UiSimulation
 
         /// <summary>
         ///     Scrolls an SDK scroll container. <paramref name="delta" /> follows the layer's image-coordinate
-        ///     convention (positive y scrolls the content down, toward later rows), which is also UI Toolkit's own
-        ///     scroll-offset direction. The achieved offset is reported: a delta that only hits the clamp moves
-        ///     nothing, and a silent success there is indistinguishable from a broken call.
+        ///     convention (positive y scrolls the content down), which is also UI Toolkit's scroll-offset direction.
+        ///     The achieved offset is reported, because a delta that only hits the clamp moves nothing.
         /// </summary>
         public UiActionResult ScrollSdk(SdkUiElement element, Vector2 delta)
         {
@@ -348,10 +338,10 @@ namespace DCL.SyntheticInput.UiSimulation
             $"({offset.x:F0}, {offset.y:F0})";
 
         /// <summary>
-        ///     Finds the client uGUI surface covering the scene UI at the already-raycast point, if any. The scene
-        ///     UI panel is itself a uGUI raycast target — UI Toolkit registers a PanelRaycaster/PanelEventHandler
-        ///     GameObject per PanelSettings — so its own hit is not a cover, and neither is anything the raycast
-        ///     sorted <em>behind</em> it; only a surface above it can intercept the pointer.
+        ///     Finds the client uGUI surface covering the scene UI at the already-raycast point, if any. Results are
+        ///     sorted front-most first, so only the top hit can intercept the pointer — and the scene UI panel is
+        ///     itself a uGUI raycast target (UI Toolkit registers a PanelRaycaster/PanelEventHandler GameObject per
+        ///     PanelSettings), so its own hit is not a cover.
         /// </summary>
         private bool TryFindClientCover(IPanel targetPanel, out GameObject? cover)
         {
@@ -360,8 +350,6 @@ namespace DCL.SyntheticInput.UiSimulation
             if (raycastResults.Count == 0)
                 return false;
 
-            // Results are sorted front-most first, so only the top hit can intercept the pointer: the scene UI
-            // panel's own hit means nothing is above it, and anything the raycast sorted behind it is irrelevant.
             GameObject topHit = raycastResults[0].gameObject;
 
             if (topHit.TryGetComponent(out PanelEventHandler handler) && ReferenceEquals(handler.panel, targetPanel))
@@ -378,8 +366,8 @@ namespace DCL.SyntheticInput.UiSimulation
 
             // A disabled Selectable swallows the events its own handlers receive (Button.OnPointerClick starts with
             // an IsInteractable guard), so synthesizing them would report a click that did nothing. IsInteractable
-            // also accounts for an ancestor CanvasGroup that disables the subtree. force does not apply: it bypasses
-            // the occlusion check, and there is nothing to bypass here — the element is inert for a user too.
+            // also accounts for an ancestor CanvasGroup that disables the subtree, and force does not apply: the
+            // element is inert for a user too.
             var selectable = target.GetComponent<Selectable>();
 
             if (selectable != null && !selectable.IsInteractable())
@@ -402,8 +390,6 @@ namespace DCL.SyntheticInput.UiSimulation
 
             if (!topHit && !force)
             {
-                // A cover is often invisible: a fully transparent client surface with raycastTarget on takes the
-                // click exactly as an opaque one would, so an agent looking at a screenshot sees nothing there.
                 blockedResult = blocker != null
                     ? UiActionResult.Failure("another element covers the target at its center (a cover can be fully transparent and still take the click); pass force to click through it",
                         PathOf(blocker.transform), UiScreenGeometry.ImageRectOf((RectTransform)target.transform))
@@ -440,7 +426,6 @@ namespace DCL.SyntheticInput.UiSimulation
         }
     }
 
-    /// <summary>Driver-facing outcome of one semantic UI action.</summary>
     public struct UiActionResult
     {
         public bool Ok;
@@ -479,9 +464,8 @@ namespace DCL.SyntheticInput.UiSimulation
             if (BlockedBy != null)
                 json["blockedBy"] = BlockedBy;
 
-            // The screen is stated unconditionally: it is the space every coordinate in this payload (and every
-            // coordinate a caller passes back) is expressed in, and it is knowable even when no element was
-            // resolved — a result that omits it forces the caller to guess the frame of reference.
+            // The screen is stated unconditionally: it is the space every coordinate in this payload is expressed
+            // in, and it is knowable even when no element was resolved.
             json["screen"] = UiDiscovery.ScreenJson();
 
             if (ScreenRect != default(Rect))

@@ -14,9 +14,8 @@ namespace DCL.McpServer.Tools
     /// <summary>
     ///     The held-and-turn gesture, composed by <see cref="SyntheticInputAgent.SweepAsync" /> from a press, a
     ///     camera-look hold and a release. This is the only way a driver can sweep the pointer ray a scene samples
-    ///     (<c>PrimaryPointerInfo.WorldRayDirection</c>, the ray through the pointer's pixel, which the press
-    ///     parks on the target while the camera turns under it): dragging the virtual mouse across the world pans
-    ///     the camera instead, exactly as a human's held-button drag does.
+    ///     (<c>PrimaryPointerInfo.WorldRayDirection</c>): dragging the virtual mouse across the world pans the
+    ///     camera instead, exactly as a human's held-button drag does.
     /// </summary>
     public class SweepPointerTool : McpTool
     {

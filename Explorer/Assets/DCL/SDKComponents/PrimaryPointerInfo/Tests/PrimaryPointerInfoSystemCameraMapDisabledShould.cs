@@ -17,16 +17,12 @@ using ProtoVector3 = Decentraland.Common.Vector3;
 namespace DCL.SDKComponents.PrimaryPointerInfo.Tests
 {
     // Regression coverage for https://github.com/decentraland/unity-explorer/issues/9496:
-    // while the explorer chat is focused, ApplyInputMapsSystem disables the whole `Camera`
-    // action map (ChatInputBlockingService.Block() -> Kind.Camera). PrimaryPointerInfoSystem used
-    // to source its pointer position from `DCLInput.Instance.Camera.Point`, an action in that map,
-    // and a disabled InputAction.ReadValue<Vector2>() returns default(Vector2) - so the system fed
-    // PBPrimaryPointerInfo.ScreenCoordinates = (0,0) to every scene for as long as chat stayed
-    // focused, pinning scene-side UI (e.g. the Genesis Plaza fishing pond's "Toggle Hints"
-    // tooltip) to the bottom-left corner instead of the real cursor.
-    // The feed now takes the pointer the cursor pipeline resolved (IExposedCameraData.
-    // PointerScreenPosition), which no action map can disable; this fixture keeps the guard so
-    // routing the feed back through an input action fails a test instead of a scene.
+    // while the explorer chat is focused, ApplyInputMapsSystem disables the whole `Camera` action
+    // map, and a disabled InputAction.ReadValue<Vector2>() returns default(Vector2) — which fed
+    // PBPrimaryPointerInfo.ScreenCoordinates = (0,0) to every scene while chat stayed focused.
+    // The feed takes the pointer the cursor pipeline resolved (IExposedCameraData.PointerScreenPosition)
+    // instead, which no action map can disable; this fixture keeps routing it back through an input
+    // action a test failure rather than a scene one.
     [TestFixture]
     public class PrimaryPointerInfoSystemCameraMapDisabledShould : InputTestFixture
     {

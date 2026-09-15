@@ -17,19 +17,14 @@ using UnityEngine;
 namespace DCL.SyntheticInput.AltTester
 {
     /// <summary>
-    ///     <para>
-    ///         AltTester front-end for moving the session between realms and parcels: tests call these via
-    ///         <c>AltDriver.CallStaticMethod</c> (assembly <c>DCL.SyntheticInput</c> — this assembly name is a wire
-    ///         contract) so a fixture can put the client in the world and parcel it needs instead of depending on
-    ///         the launch arguments alone. The environment (org/zone) is launch-only and is reported, not changed.
-    ///     </para>
-    ///     <para>
-    ///         Realm changes and teleports go through <see cref="IRealmNavigator" /> — the same path the
-    ///         <c>/goto</c> chat command takes, loading screen included. They are multi-frame, so the API is
-    ///         start/poll like <see cref="WorldAutomationProbe" />: a Start* method returns an operation id and
-    ///         <see cref="PollJson" /> reports <c>{"done":false}</c> until the payload is ready. Nothing here throws
-    ///         towards the test.
-    ///     </para>
+    ///     AltTester front-end for moving the session between realms and parcels: tests call these via
+    ///     <c>AltDriver.CallStaticMethod</c> (assembly <c>DCL.SyntheticInput</c> — the assembly name is a wire
+    ///     contract). The environment (org/zone) is launch-only and is reported, not changed. Realm changes and
+    ///     teleports go through <see cref="IRealmNavigator" />, the same path the <c>/goto</c> chat command takes,
+    ///     loading screen included. They are multi-frame, so the API is start/poll like
+    ///     <see cref="WorldAutomationProbe" />: a Start* method returns an operation id and
+    ///     <see cref="PollJson" /> reports <c>{"done":false}</c> until the payload is ready. Nothing here throws
+    ///     towards the test.
     /// </summary>
     public static class NavigationAutomationProbe
     {
@@ -41,7 +36,7 @@ namespace DCL.SyntheticInput.AltTester
 
         private static Session? session;
 
-        /// <summary>Written once by DynamicWorldContainer when the automation session starts (the static-latch probe pattern).</summary>
+        /// <summary>Written once, when the automation session starts.</summary>
         public static void Install(IRealmNavigator realmNavigator, IRealmData realmData, IDecentralandUrlsSource urlsSource,
             IScenesCache scenesCache, IReadOnlyLoadingStatus loadingStatus, DecentralandEnvironment environment) =>
             session = new Session(realmNavigator, realmData, urlsSource, scenesCache, loadingStatus, environment);
@@ -83,8 +78,8 @@ namespace DCL.SyntheticInput.AltTester
         /// <summary>
         ///     Changes realm to a world and lands on a parcel of it, then waits until the scene there is ready.
         ///     <paramref name="world" /> is a world name (<c>sdk7testscenes</c>, <c>sdk7testscenes.dcl.eth</c>, any
-        ///     ENS name) resolved against this environment's world server — the same resolution the <c>/goto</c>
-        ///     chat command applies. Already being on that world turns this into a parcel teleport.
+        ///     ENS name) resolved against this environment's world server. Already being on that world turns this
+        ///     into a parcel teleport.
         /// </summary>
         public static int StartGoToWorld(string world, int parcelX, int parcelY, float timeoutSec)
         {
@@ -144,10 +139,7 @@ namespace DCL.SyntheticInput.AltTester
             return await WaitForArrivalAsync(ready, parcel, deadline);
         }
 
-        /// <summary>
-        ///     Polls until the player stands on the target parcel with the loading screen down and the scene there
-        ///     ready (or absent), mirroring the MCP teleport tool's arrival check.
-        /// </summary>
+        /// <summary>Polls until the player stands on the target parcel with the loading screen down and the scene there ready (or absent).</summary>
         private static async UniTask<string> WaitForArrivalAsync(Session ready, Vector2Int parcel, float deadline)
         {
             while (UnityEngine.Time.realtimeSinceStartup < deadline)

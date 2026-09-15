@@ -19,10 +19,9 @@ namespace DCL.SyntheticInput.Systems
         private static readonly QueryDescription ALL_ENTITIES = new ();
 
         /// <summary>
-        ///     The entity the gesture was promised, or null when it named none. Resolved before the aim, because it
-        ///     is needed even when an explicit aim point makes the entity's own position irrelevant: it is the
-        ///     entity the posted edge is restricted to, and a target id that resolves to nothing is a failure in
-        ///     its own right rather than an aim that lands somewhere and reports a phantom blocker.
+        ///     The entity the gesture was promised, or null when it named none. Resolved before the aim, because the
+        ///     posted edge is restricted to it even when an explicit aim point makes its position irrelevant, and a
+        ///     target id that resolves to nothing is a failure rather than an aim reporting a phantom blocker.
         /// </summary>
         public static bool TryResolveTargetEntity(in SyntheticPointerEventIntent intent, World sceneWorld, out Entity? targetEntity, out SyntheticPointerResult failure)
         {
@@ -65,11 +64,10 @@ namespace DCL.SyntheticInput.Systems
         }
 
         /// <summary>
-        ///     Resolves the world point the synthetic ray must pass through. An explicit aim is taken as is and
-        ///     needs no entity — the pipeline raycast still validates whatever the ray lands on; a screen-space
-        ///     aim is projected to a far point along the ray of <paramref name="camera" /> through it. Otherwise
-        ///     the aim is the collider center of <paramref name="targetEntity" />, already resolved by
-        ///     <see cref="TryResolveTargetEntity" />.
+        ///     Resolves the world point the synthetic ray must pass through. An explicit aim is taken as is and needs
+        ///     no entity; a screen-space aim is projected to a far point along the ray of
+        ///     <paramref name="camera" /> through it. Otherwise the aim is the collider center of
+        ///     <paramref name="targetEntity" />.
         /// </summary>
         public static bool TryResolveAimPoint(in SyntheticPointerEventIntent intent, World sceneWorld, Entity? targetEntity, Camera camera, UiCoverProbe? uiCoverProbe,
             out Vector3 aimPoint, out SyntheticPointerResult failure)
@@ -86,8 +84,8 @@ namespace DCL.SyntheticInput.Systems
             if (intent.ScreenPoint is { } screenPoint)
             {
                 // A screen-addressed aim names a pixel, so whatever owns that pixel intercepts it. The world-aim
-                // path above deliberately keeps the pipeline's UI bypass: there the driver named a world target and
-                // the cursor's position is irrelevant, but here a real click would never reach past the UI.
+                // path above keeps the pipeline's UI bypass instead: there the driver named a world target and the
+                // cursor's position is irrelevant.
                 if (!intent.Force && uiCoverProbe != null && uiCoverProbe(screenPoint, out string cover))
                 {
                     failure = Failure(in intent, $"UI covers that point ({cover}); click the element with ui_click, or pass force to aim through it");
@@ -115,9 +113,8 @@ namespace DCL.SyntheticInput.Systems
             intent.AimPoint ?? ResolveEntityAimPoint(sceneWorld, targetEntity);
 
         /// <summary>
-        ///     Whether the edge was posted without a target entity — the mirror of what
-        ///     <see cref="TryResolveTargetEntity" /> resolves for the post: a first leg that named no entity, or a
-        ///     release whose press handed off Entity.Null. Only such an edge can have been broadcast to the scene root.
+        ///     Whether the edge was posted without a target entity: a first leg that named none, or a release whose
+        ///     press handed off Entity.Null. Only such an edge can have been broadcast to the scene root.
         /// </summary>
         public static bool IsUntargeted(in SyntheticPointerEventIntent intent) =>
             intent.Press is { } press ? press.Entity == Entity.Null : intent.TargetEntityId < 0;

@@ -10,15 +10,12 @@ using UnityEngine.InputSystem.LowLevel;
 namespace DCL.McpServer.Tools
 {
     /// <summary>
-    ///     Drags between two screen points. Inside the SDK scene UI the drag is synthesized semantically — the
-    ///     element under the start point receives the press, the elements along the path the moves, the element
-    ///     under the end point the release — because UI Toolkit panels consume events sent to their elements
-    ///     rather than virtual-device pointer state. Elsewhere the virtual mouse is replayed instead, which is the
-    ///     path that exercises real drag thresholds and hit-testing. Which path ran is reported, and an automatic
-    ///     fallback to the device path also reports why the semantic one did not apply, so a caller who meant to
-    ///     drag the scene's UI can tell the two apart. The device path additionally reports what its pointer was
-    ///     over at each end: the gesture verifies no target, so a bare success would read as a delivered drag even
-    ///     when the pointer was over the world and no UI could have received it.
+    ///     Drags between two screen points. Inside the SDK scene UI the drag is synthesized semantically — press on
+    ///     the element under the start point, moves along the path, release on the element under the end point —
+    ///     because UI Toolkit panels consume events sent to their elements rather than virtual-device pointer state.
+    ///     Elsewhere the virtual mouse is replayed, the path that exercises real drag thresholds and hit-testing.
+    ///     Which path ran is reported, and a fallback to the device path also reports why the semantic one did not
+    ///     apply, so a caller who meant to drag the scene's UI can tell the two apart.
     /// </summary>
     public class UiDragTool : McpTool
     {

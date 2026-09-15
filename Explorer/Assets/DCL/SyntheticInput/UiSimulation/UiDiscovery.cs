@@ -11,9 +11,8 @@ using IPanel = UnityEngine.UIElements.IPanel;
 namespace DCL.SyntheticInput.UiSimulation
 {
     /// <summary>
-    ///     Enumerates and resolves interactable client-UI (uGUI) elements for automation drivers. Listing is a
-    ///     cold path invoked per driver request; the instance-id registry it refreshes is what makes the
-    ///     <c>id</c> address form valid until the next listing.
+    ///     Enumerates and resolves interactable client-UI (uGUI) elements for automation drivers. Listing refreshes
+    ///     the instance-id registry, which is what keeps the <c>id</c> address form valid until the next listing.
     /// </summary>
     public class UiDiscovery
     {
@@ -64,15 +63,11 @@ namespace DCL.SyntheticInput.UiSimulation
         }
 
         /// <summary>
-        ///     What client UI, if anything, covers a screen point (Unity screen coordinates). A screen-addressed
-        ///     world action must fail against the cover rather than aiming past it: a real click at that pixel
-        ///     lands on the UI, never on the world behind it.
-        ///     <para>
-        ///         The raycast also carries UI Toolkit panels — a panel that picks an element at the point adds a
-        ///         hit for its host GameObject — so <paramref name="hostedPanel" /> reports which panel a covering
-        ///         hit belongs to. A caller that can name the picked element should describe the cover through the
-        ///         panel instead of through <paramref name="path" />, which there names Unity plumbing.
-        ///     </para>
+        ///     What client UI, if anything, covers a screen point (Unity screen coordinates). The raycast also
+        ///     carries UI Toolkit panels — a panel that picks an element at the point adds a hit for its host
+        ///     GameObject — so <paramref name="hostedPanel" /> reports which panel a covering hit belongs to. A
+        ///     caller that can name the picked element should describe the cover through the panel instead of
+        ///     through <paramref name="path" />, which there names Unity plumbing.
         /// </summary>
         public bool TryFindCoverAt(Vector2 screenPoint, out string? path, out IPanel? hostedPanel)
         {

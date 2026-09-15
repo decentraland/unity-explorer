@@ -15,10 +15,7 @@ namespace DCL.SyntheticInput.Components
         /// <summary>Cinemachine input-axis value held while the intent lasts; ignored when <see cref="LookAtTarget" /> is set.</summary>
         public Vector2 AxisValue;
 
-        /// <summary>
-        ///     Value of Time.time at which the hold expires. For a look-at it bounds the aim refinement instead,
-        ///     and is stamped when the camera consumed the look-at.
-        /// </summary>
+        /// <summary>Value of Time.time at which the hold expires. For a look-at it bounds the aim refinement instead, stamped when the camera consumed the look-at.</summary>
         public float EndTime;
 
         /// <summary>Absolute world point to aim the camera at; when set, <see cref="AxisValue" /> and <see cref="EndTime" /> are ignored.</summary>

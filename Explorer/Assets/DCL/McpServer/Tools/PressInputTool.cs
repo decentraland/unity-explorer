@@ -13,11 +13,11 @@ using UnityEngine;
 namespace DCL.McpServer.Tools
 {
     /// <summary>
-    ///     Presses and releases an SDK input action via <see cref="SyntheticInputAgent.GlobalInputAsync" />.
-    ///     Without an aim the edges reach the scene root (a PBPointerEventsResult with no hit); with an aim the
-    ///     reticle is steered at the target for the gesture, so they land entity-bound on it under the real
-    ///     qualification gates — the only way a driver can produce the entity-bound half of the fan-out, having
-    ///     no OS cursor of its own to rest on a target.
+    ///     Presses and releases an SDK input action via <see cref="SyntheticInputAgent.GlobalInputAsync" />. Without
+    ///     an aim the edges reach the scene root (a PBPointerEventsResult with no hit); with an aim the reticle is
+    ///     steered at the target for the gesture, so they land entity-bound under the real qualification gates — the
+    ///     only way a driver can produce the entity-bound half of the fan-out, having no OS cursor to rest on a
+    ///     target.
     /// </summary>
     public class PressInputTool : McpTool
     {
@@ -25,7 +25,7 @@ namespace DCL.McpServer.Tools
         ///     Wire-facing mirror of the SDK <see cref="InputAction" />s a scene can listen to globally. The member
         ///     names ARE the wire contract: McpWireEnum derives each tool argument value from them, so ACTION_3
         ///     yields "action_3" while a PascalCase Action3 would yield "action3" and silently break every agent
-        ///     recipe and doc that spells the value out. Same reason McpWireEnumShould's fixture enum suppresses it.
+        ///     recipe and doc that spells the value out.
         /// </summary>
         [SuppressMessage("ReSharper", "InconsistentNaming")]
         private enum SdkAction : byte
@@ -122,7 +122,7 @@ namespace DCL.McpServer.Tools
 
 
             // Nothing is hovered without an aim: the reticle ray follows the free OS cursor, which no driver is
-            // holding over a target. This is the expected outcome, not a failure.
+            // holding over a target.
             else if (!aimed)
                 json["hint"] = "delivered to the scene root; pass entityId or x/y/z to aim the reticle and land it entity-bound";
 

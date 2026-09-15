@@ -3,19 +3,12 @@ using UnityEngine;
 namespace DCL.Character.CharacterCamera.Components
 {
     /// <summary>
-    ///     <para>
-    ///         Sits beside <see cref="CursorComponent" /> on the camera entity only while an automation driver is
-    ///         installed; retail builds never add it. An automation gesture steers a virtual mouse of its own, which
-    ///         the cursor system's single cached <c>Mouse</c> never resolves, so the gesture states the pointer here
-    ///         instead: while a position is asserted, the cursor system takes it over the hardware mouse and skips
-    ///         its OS-cursor warps, so the UI raycast, the cursor style and the world reticle ray all describe the
-    ///         same pointer.
-    ///     </para>
-    ///     <para>
-    ///         Both signals are frame-stamped and expire on their own, the same contract as the pipeline post in
-    ///         <c>SyntheticPointerInput</c>: a gesture that stops re-asserting hands the pointer back to the hardware
-    ///         mouse, and an aborted gesture leaves no residue to sweep.
-    ///     </para>
+    ///     Sits beside <see cref="CursorComponent" /> on the camera entity only while an automation driver is
+    ///     installed; retail builds never add it. An automation gesture steers a virtual mouse of its own, which the
+    ///     cursor system's single cached <c>Mouse</c> never resolves, so the gesture states the pointer here instead:
+    ///     while a position is asserted, the cursor system takes it over the hardware mouse and skips its OS-cursor
+    ///     warps. Both signals are frame-stamped and expire on their own, so a gesture that stops re-asserting hands
+    ///     the pointer back to the hardware mouse and an aborted gesture leaves no residue.
     /// </summary>
     public struct SyntheticCursorOverride
     {
@@ -38,10 +31,7 @@ namespace DCL.Character.CharacterCamera.Components
         /// <summary>An automation gesture is steering the pointer this frame; the cursor system skips its OS-cursor warps.</summary>
         public readonly bool SuppressOsWarp => UnityEngine.Time.frameCount <= SuppressOsWarpUntilFrame;
 
-        /// <summary>
-        ///     The position an automation gesture queued for the pointer, while that position is still current.
-        ///     False once the gesture stops re-asserting it, which hands the pointer back to the hardware mouse.
-        /// </summary>
+        /// <summary>The position an automation gesture queued, while it is still current. False once the gesture stops re-asserting it.</summary>
         public readonly bool TryGetPointerPosition(out Vector2 position)
         {
             position = PointerPosition;

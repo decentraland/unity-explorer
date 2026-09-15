@@ -10,16 +10,12 @@ using UnityEngine.InputSystem.LowLevel;
 namespace DCL.SyntheticInput.AltTester
 {
     /// <summary>
-    ///     <para>
-    ///         AltTester front-end of the UI simulation: tests call these via <c>AltDriver.CallStaticMethod</c>
-    ///         (assembly <c>DCL.SyntheticInput</c> — this assembly name is a wire contract) and drive the same
-    ///         <see cref="UiAutomationServices" /> the MCP ui_* tools drive.
-    ///     </para>
-    ///     <para>
-    ///         Synchronous semantic actions (uGUI click/text/scroll, SDK text/dropdown/scroll, listing) return
-    ///         their payload in one round-trip; multi-frame ones (SDK clicks, device gestures) use start/poll via
-    ///         <see cref="PollJson" />. uGUI addressing: addressKind ∈ path|altId|id with the matching value.
-    ///     </para>
+    ///     AltTester front-end of the UI simulation: tests call these via <c>AltDriver.CallStaticMethod</c>
+    ///     (assembly <c>DCL.SyntheticInput</c> — the assembly name is a wire contract) and drive the same
+    ///     <see cref="UiAutomationServices" /> the MCP ui_* tools drive. Synchronous semantic actions (uGUI
+    ///     click/text/scroll, SDK text/dropdown/scroll, listing) return their payload in one round-trip; multi-frame
+    ///     ones (SDK clicks, device gestures) use start/poll via <see cref="PollJson" />. uGUI addressing:
+    ///     addressKind ∈ path|altId|id with the matching value.
     /// </summary>
     public static class UiAutomationProbe
     {
@@ -31,7 +27,7 @@ namespace DCL.SyntheticInput.AltTester
 
         private static UiAutomationServices? services;
 
-        /// <summary>Written once by SyntheticInputPlugin when the automation session starts (the static-latch probe pattern).</summary>
+        /// <summary>Written once, when the automation session starts.</summary>
         public static void Install(UiAutomationServices installedServices) =>
             services = installedServices;
 

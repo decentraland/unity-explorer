@@ -22,33 +22,11 @@ using PlayerOriginatedRaycastSystem = DCL.Interaction.Systems.PlayerOriginatedRa
 namespace DCL.SyntheticInput.Systems
 {
     /// <summary>
-    ///     <para>
-    ///         Delivers a single agent-requested pointer event through the real reticle pipeline while a
-    ///         <see cref="SyntheticPointerEventIntent" /> is present on the player entity. Instead of imitating the
-    ///         pipeline, the system posts a <see cref="SyntheticPointerInput" /> (an aim point plus a button edge)
-    ///         that <see cref="PlayerOriginatedRaycastSystem" /> and
-    ///         <see cref="DCL.Interaction.Systems.ProcessPointerEventsSystem" /> consume the same frame, so
-    ///         occlusion, distance gates, hover enter/leave and the scene write-back are all executed by the
-    ///         production code. The outcome is read back one frame later from the pipeline's own raycast and
-    ///         hover state, before the next raycast overwrites them (<see cref="SyntheticPointerDiagnostics" />
-    ///         turns that state into the verdict).
-    ///     </para>
-    ///     <para>
-    ///         A release that follows a press (<see cref="SyntheticPointerEventIntent.Press" />) is posted only once
-    ///         the scene has advanced past the press tick, so the scene observes PetDown on an earlier tick than
-    ///         PetUp; SyntheticInputAgent composes a full click from two such intents. While the release waits,
-    ///         the aim is re-posted every frame so the hover does not leave the target mid-click.
-    ///     </para>
-    ///     <para>
-    ///         Hover-only intents re-post the aim without a button until their hold expires, producing the same
-    ///         hover enter/leave flow as a real cursor. Aimless intents post only the button edge: the cursor ray
-    ///         stays in charge and the edge fans out entity-bound or globally exactly like a real key press.
-    ///     </para>
-    ///     <para>
-    ///         Between an aimed press and its release the pointer itself is parked at the pixel the press landed
-    ///         on (<see cref="SyntheticPointerHold" />), because the frames in between belong to no intent and a
-    ///         driver has no hardware pointer of its own to leave there.
-    ///     </para>
+    ///     Delivers one <see cref="SyntheticPointerEventIntent" /> through the real reticle pipeline: it posts a
+    ///     <see cref="SyntheticPointerInput" /> that <see cref="PlayerOriginatedRaycastSystem" /> and
+    ///     <see cref="DCL.Interaction.Systems.ProcessPointerEventsSystem" /> consume the same frame, then reads the
+    ///     outcome from their raycast and hover state one frame later, before the next raycast overwrites it.
+    ///     Imitating the pipeline here instead would bypass occlusion, distance gates and hover enter/leave.
     /// </summary>
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [UpdateBefore(typeof(PlayerOriginatedRaycastSystem))]
@@ -57,11 +35,7 @@ namespace DCL.SyntheticInput.Systems
     {
         private static readonly QueryDescription PIPELINE_ENTITY = new QueryDescription().WithAll<SyntheticPointerInput>();
 
-        /// <summary>
-        ///     How long a delivered press may keep the pointer parked with no release in sight. Covers the
-        ///     longest hold a driver can ask for (press_input caps it at 30s) plus the driver-side completion
-        ///     grace; past it an abandoned gesture hands the pointer back to the hardware mouse.
-        /// </summary>
+        /// <summary>Covers the longest hold a driver can ask for (press_input caps it at 30s) plus the driver-side completion grace.</summary>
         private const float POINTER_HOLD_TIMEOUT_SEC = 35f;
 
         private readonly IScenesCache scenesCache;
@@ -90,9 +64,7 @@ namespace DCL.SyntheticInput.Systems
             playerCamera = World.CacheCamera();
             pipelineEntity = new SingleInstanceEntity(in PIPELINE_ENTITY, World);
 
-            // Every system that writes the override installs it beside CursorComponent, so none depends on a
-            // sibling system being registered; the second install is a no-op. The parked pointer only writes into
-            // it afterwards, so no structural change happens while an intent ref is held.
+            // Every system that writes the override installs it here, so none depends on a sibling being registered.
             World.AddOrSet(playerCamera, SyntheticCursorOverride.Inactive);
         }
 
@@ -116,7 +88,7 @@ namespace DCL.SyntheticInput.Systems
                 Inject(ref intent, scene!, sceneWorld!);
         }
 
-        /// <summary>Picks the world the pointer event must be delivered to, or completes the request with the reason no delivery is possible.</summary>
+        /// <summary>Picks the world to deliver to; completes and removes the request when no delivery is possible.</summary>
         private bool TryResolve(in SyntheticPointerEventIntent intent, ISceneFacade? scene, out World? sceneWorld)
         {
             sceneWorld = null;
@@ -135,8 +107,8 @@ namespace DCL.SyntheticInput.Systems
 
             World world = scene.EcsExecutor.World;
 
-            // A mid-click reload swaps in a new world for the same parcel; the press handoff belongs to the
-            // disposed one (entity ids get recycled), so the release can only be failed.
+            // A mid-click reload swaps in a new world for the same parcel and recycles entity ids, so a release
+            // whose press belongs to the disposed world can only be failed.
             if (intent.Press.HasValue && !ReferenceEquals(world, intent.Press.Value.World))
             {
                 CompleteAndRemove(in intent, Failure(in intent, "the scene reloaded mid-click"));
@@ -151,12 +123,10 @@ namespace DCL.SyntheticInput.Systems
         private void CompleteAndRemove(in SyntheticPointerEventIntent intent, SyntheticPointerResult result, SyntheticPressHandoff? press = null)
         {
             // Whatever rejected a release that follows a delivered press, the scene observed only the PetDown.
-            // An aimless release has no target to miss, so the flag stays clear.
             if (intent.Press.HasValue && intent.HasAimTarget && !result.Hit)
                 result.UpRayMissed = true;
 
-            // Read before the removals below: every path that ends a release leg ends the hold with it, whether
-            // the release was delivered or rejected — the driver is not holding the button any more either way.
+            // Read before the removal below invalidates the ref.
             bool endsPointerHold = intent.EventType == PointerEventType.PetUp;
 
             EcsRequest.CompleteAndRemove(World, playerEntity, intent, new SyntheticPointerOutcome { Result = result, Press = press });
@@ -165,7 +135,6 @@ namespace DCL.SyntheticInput.Systems
                 World.TryRemove<SyntheticPointerHold>(playerEntity);
         }
 
-        /// <summary>Posts the synthetic aim and/or button edge the pipeline will consume later this frame.</summary>
         private void Inject(ref SyntheticPointerEventIntent intent, ISceneFacade scene, World sceneWorld)
         {
             if (intent.Press is { } press)
@@ -178,7 +147,7 @@ namespace DCL.SyntheticInput.Systems
                     return;
                 }
 
-                // The scene must observe the press on an earlier tick than the release, otherwise ordering is
+                // The scene must observe the press on an earlier tick than the release, otherwise the ordering is
                 // ambiguous; hold the aim meanwhile so the hover does not leave the target.
                 if (scene.SceneStateProvider.TickNumber <= press.Tick)
                 {
@@ -215,7 +184,7 @@ namespace DCL.SyntheticInput.Systems
                 return;
             }
 
-            // The hover hold: keep the aim alive without observing; the outcome is read once the hold expires.
+            // Hold without marking Injected, so the outcome is only read once the hold expires.
             if (intent.IsHover && UnityEngine.Time.time < intent.HoldEndTime)
             {
                 PostSyntheticInput(aimPoint);
@@ -223,7 +192,7 @@ namespace DCL.SyntheticInput.Systems
             }
 
             // The edge carries the entity it was promised to: the pipeline withholds it from anything else its ray
-            // selected, so a blocked or unqualified aim reports a miss having delivered no button anywhere.
+            // selected, so a blocked aim reports a miss having delivered no button anywhere.
             PostSyntheticInput(aimPoint,
                 intent.EventType == PointerEventType.PetDown ? intent.Button : null,
                 intent.EventType == PointerEventType.PetUp ? intent.Button : null,
@@ -234,11 +203,7 @@ namespace DCL.SyntheticInput.Systems
             intent.InjectedAimPoint = aimPoint;
         }
 
-        /// <summary>
-        ///     An aimless button edge keeps the cursor ray: the pipeline appends it entity-bound if a qualified
-        ///     entity happens to be hovered, and PrepareGlobalInputEventsSystem fans it out to the scene root
-        ///     otherwise — exactly the split a real key press goes through.
-        /// </summary>
+        /// <summary>An aimless edge keeps the cursor ray: the pipeline routes it entity-bound or to the scene root, as a real key press is routed.</summary>
         private void InjectAimless(ref SyntheticPointerEventIntent intent, ISceneFacade scene)
         {
             PostSyntheticInput(null,
@@ -250,11 +215,10 @@ namespace DCL.SyntheticInput.Systems
             intent.InjectedAimPoint = Vector3.zero;
         }
 
-        /// <summary>Reads the pipeline's answer for the injected frame and completes the request.</summary>
         private void Observe(ref SyntheticPointerEventIntent intent, World sceneWorld)
         {
-            // The pipeline has not consumed the posted input yet (paused simulation?); the stamp is renewed
-            // so the post stays valid until it does, and the driver-side timeout bounds the wait.
+            // The pipeline has not consumed the posted input yet (paused simulation?); renew the stamp so the
+            // post stays valid until it does.
             ref SyntheticPointerInput pending = ref World.Get<SyntheticPointerInput>(pipelineEntity);
 
             if (pending.AimPoint.HasValue || pending.PressButton.HasValue || pending.ReleaseButton.HasValue)
@@ -270,7 +234,7 @@ namespace DCL.SyntheticInput.Systems
             }
 
             // The pipeline echoes the aim it consumed; a frame it guarded away (cursor panning, in-world camera)
-            // echoes nothing, and an edge it never processed reached nobody — root included.
+            // echoes nothing, and an edge it never processed reached nobody.
             bool pipelineProcessed = World.Get<PlayerOriginRaycastResultForSceneEntities>(pipelineEntity).SyntheticAimPoint == intent.InjectedAimPoint;
 
             SyntheticPointerResult result = BuildResult(in intent, sceneWorld,
@@ -280,10 +244,8 @@ namespace DCL.SyntheticInput.Systems
                 collidersGlobalCache,
                 out SyntheticPressHandoff? press);
 
-            // An untargeted edge no entity consumed is a broadcast: the scene root received it, exactly as it
-            // receives a human's click on nothing. A press the root received hands off its release like the
-            // aimless path does (Entity.Null: tick ordering only), so the driver can let go of what it pressed —
-            // a root left holding a button follows the camera into every gesture made in the meantime.
+            // An untargeted edge no entity consumed reached the scene root. Hand off its release too, or a root
+            // left holding the button follows the camera into every gesture made in the meantime.
             if (!result.Hit && pipelineProcessed && IsUntargeted(in intent))
             {
                 result.RootBroadcast = true;
@@ -294,8 +256,7 @@ namespace DCL.SyntheticInput.Systems
 
             Vector3? deliveredPress = null;
 
-            // A press is usually followed by a release intent installed later this frame: hold the aim so the
-            // hover does not leave the target in the gap between the two legs.
+            // Hold the aim so the hover does not leave the target in the gap before the release leg.
             if (result.Hit && intent.EventType == PointerEventType.PetDown)
             {
                 PostSyntheticInput(intent.InjectedAimPoint);
@@ -309,10 +270,7 @@ namespace DCL.SyntheticInput.Systems
                 ParkPointerAtPress(pressAimPoint);
         }
 
-        /// <summary>
-        ///     An aimless press hands off Entity.Null: its release is ordered by tick only. The verdict is whatever
-        ///     the cursor ray happened to be hovering when the edge was consumed.
-        /// </summary>
+        /// <summary>The verdict is whatever the cursor ray happened to be hovering when the edge was consumed.</summary>
         private void CompleteAimless(ref SyntheticPointerEventIntent intent, World sceneWorld)
         {
             SyntheticPressHandoff? press = null;
@@ -334,10 +292,9 @@ namespace DCL.SyntheticInput.Systems
         }
 
         /// <summary>
-        ///     Re-states the parked pointer position every frame a press is held. The cursor system takes the
-        ///     pointer from <see cref="SyntheticCursorOverride" /> while it is asserted, which is what makes the
-        ///     reticle ray — and the PBPrimaryPointerInfo ray built from the same position — follow the gesture
-        ///     rather than the hardware mouse. A hold nobody released expires here.
+        ///     Re-states the parked pointer every frame a press is held: the cursor system reads
+        ///     <see cref="SyntheticCursorOverride" /> only while it is asserted, and that is what makes the reticle
+        ///     ray follow the gesture rather than the hardware mouse.
         /// </summary>
         private void AssertHeldPointer()
         {
@@ -354,10 +311,9 @@ namespace DCL.SyntheticInput.Systems
         }
 
         /// <summary>
-        ///     Parks the pointer at the pixel the delivered press occupies, for as long as the button stays down.
-        ///     An aim that is not on screen is left alone: a driver can aim at a world point no human could have
-        ///     clicked (behind the camera, out of the viewport), and a projection of it is a pixel the gesture
-        ///     never touched.
+        ///     Parks the pointer at the pixel the delivered press occupies. An off-screen aim is left alone: a
+        ///     driver can aim at a world point no human could have clicked, and projecting it yields a pixel the
+        ///     gesture never touched.
         /// </summary>
         private void ParkPointerAtPress(Vector3 aimPoint)
         {
@@ -379,17 +335,16 @@ namespace DCL.SyntheticInput.Systems
 
             World.AddOrSet(playerEntity, hold);
 
-            // Stated for this frame too: the cursor systems run in an earlier group, so leaving it to the next
-            // Update would hand the frame right after the press back to the hardware mouse.
+            // The cursor systems run in an earlier group, so leaving this to the next Update would hand the frame
+            // right after the press back to the hardware mouse.
             World.Get<SyntheticCursorOverride>(playerCamera).AssertPointerPositionThisFrame(hold.ScreenPosition);
         }
 
         /// <summary>
-        ///     Posts the synthetic aim and/or button edge the pipeline consumes later this frame. A gesture that
-        ///     named an entity passes it as <paramref name="targetEntity" />: only that entity may consume the
-        ///     edge, and an edge no entity may consume is not broadcast to the scene root either. Null names no
-        ///     entity, so an untargeted post stays a broadcast (Entity.Null is not default(Entity), which is why no
-        ///     sentinel stands in for absence here).
+        ///     Posts the aim and/or button edge the pipeline consumes later this frame. Only
+        ///     <paramref name="targetEntity" /> may consume the edge, and an edge it cannot consume reaches nobody;
+        ///     null names no entity and stays a broadcast. Entity.Null is not default(Entity), so absence cannot be
+        ///     spelled with a sentinel here.
         /// </summary>
         private void PostSyntheticInput(Vector3? aimPoint, InputAction? pressButton = null, InputAction? releaseButton = null,
             Entity? targetEntity = null, World? targetWorld = null)

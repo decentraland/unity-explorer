@@ -68,8 +68,6 @@ namespace DCL.Interaction.Systems
             hoverFeedbackComponent.Clear();
             bool candidateForHoverLeaveIsValid = TryGetPreviousEntityInfo(in hoverStateComponent, out GlobalColliderSceneEntityInfo previousEntityInfo);
 
-            // Whether the hover being left behind ever produced an enter: that is what decides whether the leave
-            // completing it must be issued now.
             bool previousHoverEnterIssued = hoverStateComponent.HoverEnterIssued;
             hoverStateComponent.Clear();
 
@@ -349,10 +347,10 @@ namespace DCL.Interaction.Systems
                 InteractionInputUtils.TryAppendButtonAction(sdkInputActionsMap, ref pbPointerEvents.AppendPointerEventResultsIntent);
 
                 // A synthetic edge that named a target entity may be consumed by that entity alone. The ray decides
-                // what is under the reticle, so without this the edge lands on whatever it found — a nearer
-                // interactable collider, or even a proximity entity the aim never pointed at — and fires that
-                // entity's handler, while the driver is told a frame later that its aim was blocked. Hover, feedback
-                // and highlight above are deliberately left ungated: those follow the ray for real input too.
+                // what is under the reticle, so without this the edge lands on whatever it found — a nearer collider,
+                // or a proximity entity the aim never pointed at — while the driver is told a frame later that its
+                // aim was blocked. Hover, feedback and highlight above are left ungated: those follow the ray for
+                // real input too.
                 if (synthetic.MayConsume(entityInfo.EcsExecutor.World, entityInfo.ColliderSceneEntityInfo.EntityReference))
                 {
                     if (synthetic.PressButton.HasValue)

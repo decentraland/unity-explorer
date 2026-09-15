@@ -7,9 +7,7 @@ using UnityEngine;
 
 namespace DCL.McpServer.Utils
 {
-    /// <summary>
-    ///     Builders for the JSON fragments shared by tool outputs.
-    /// </summary>
+    /// <summary>Builders for the JSON fragments shared by tool outputs.</summary>
     public static class JObjectExtensions
     {
         /// <summary>Cap on how much of an unusable argument an error echoes back.</summary>
@@ -114,11 +112,10 @@ namespace DCL.McpServer.Utils
         }
 
         /// <summary>
-        ///     A clause naming every one of <paramref name="names" /> that arrived but not as a number, to append
-        ///     to a tool's own "required argument" error. A caller that sends a coordinate as a string otherwise
-        ///     gets an error naming a cause that is not true ("provide a full x/y/z" when all three were sent),
-        ///     which costs a live run several calls to attribute. Empty when there is nothing to name: an argument
-        ///     that is simply absent is already covered by the tool's own message.
+        ///     A clause naming every one of <paramref name="names" /> that arrived but not as a number, to append to
+        ///     a tool's own "required argument" error. Without it a caller that sends a coordinate as a string gets
+        ///     an error naming a cause that is not true ("provide a full x/y/z" when all three were sent). Empty
+        ///     when there is nothing to name.
         /// </summary>
         public static string NonNumericHint(this JObject arguments, params string[] names)
         {
@@ -144,11 +141,10 @@ namespace DCL.McpServer.Utils
 
         /// <summary>
         ///     The error for an enum argument <see cref="TryGetEnum{T}(JObject,string,out T,T[])" /> refused: what
-        ///     arrived, and the values that are accepted. Wire values are lowercase and matched exactly, so
-        ///     "PRIMARY" misses — and a caller told only "must be one of: primary, …" cannot see that its value
-        ///     was the right word in the wrong case, while one told "is required" for a value it did send re-sends
-        ///     the same thing. The accepted values come from the enum, the same source the schema is built from:
-        ///     a literal list here drifts silently the moment a member is added or renamed.
+        ///     arrived, and the values that are accepted. Wire values are lowercase and matched exactly, so a caller
+        ///     told only "must be one of: primary, …" cannot see that "PRIMARY" was the right word in the wrong
+        ///     case. The accepted values come from the enum, the same source the schema is built from, because a
+        ///     literal list here drifts silently when a member is added or renamed.
         /// </summary>
         public static string EnumArgumentError<T>(this JObject arguments, string name, T[]? allowed = null) where T : struct, Enum
         {

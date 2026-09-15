@@ -20,9 +20,8 @@ namespace DCL.SyntheticInput.UiSimulation
         }
 
         /// <summary>
-        ///     The rect's center as a normalized image point (0..1, top-left origin) — the form ui_drag takes.
-        ///     The screen is the only correct divisor: a screenshot may be downscaled from it, so
-        ///     normalizing a reported rect against the captured image aims somewhere else entirely.
+        ///     The rect's center as a normalized image point (0..1, top-left origin) — the form ui_drag takes. The
+        ///     screen is the only correct divisor: a screenshot may be downscaled from it.
         /// </summary>
         public static Vector2 NormalizedCenterOf(Rect imageRect) =>
             new (Mathf.Clamp01(imageRect.center.x / Mathf.Max(1, Screen.width)),
