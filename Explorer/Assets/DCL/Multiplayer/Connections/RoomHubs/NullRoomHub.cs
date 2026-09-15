@@ -32,6 +32,9 @@ namespace DCL.Multiplayer.Connections.RoomHubs
             return false;
         }
 
+        public RoomSource RoomsOf(string walletId) =>
+            RoomSource.None;
+
         public UniTask StopLocalRoomsAsync() =>
             UniTask.CompletedTask;
 

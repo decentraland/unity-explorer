@@ -194,7 +194,8 @@ namespace DCL.PluginSystem.Global
                 placesAPIService,
                 selfProfile,
                 mvcManager,
-                profileRepository);
+                profileRepository,
+                web3IdentityCache);
             mvcManager.RegisterController(communityCreationEditionController);
 
             rpcCommunitiesService.SubscribeToConnectivityStatus();

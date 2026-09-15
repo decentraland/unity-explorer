@@ -2,13 +2,11 @@
 using Arch.System;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.Character.Components;
-using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Connections.Rooms;
 using DCL.Multiplayer.Connections.Systems.RoomIndicator;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
 using ECS.LifeCycle.Components;
-using UnityEngine.Pool;
 
 // ReSharper disable once CheckNamespace
 namespace DCL.Multiplayer.Connections.Systems
@@ -25,12 +23,16 @@ namespace DCL.Multiplayer.Connections.Systems
         [None(typeof(PlayerComponent))]
         private void UpdateIndicator(in AvatarShapeComponent avatarShapeComponent, NametagHolder nametagHolder, ref DebugRoomIndicatorComponent indicatorComponent)
         {
-            RoomSource prevValue = indicatorComponent.ConnectedTo;
+            RoomSource announced = entityParticipantTable.TryGet(avatarShapeComponent.ID, out IReadOnlyEntityParticipantTable.Entry entry) ? entry.ConnectedTo : RoomSource.None;
+            RoomSource present = roomHub.RoomsOf(avatarShapeComponent.ID);
 
-            indicatorComponent.ConnectedTo = entityParticipantTable.TryGet(avatarShapeComponent.ID, out IReadOnlyEntityParticipantTable.Entry entry) ? entry.ConnectedTo : RoomSource.None;
+            if (announced == indicatorComponent.Announced && present == indicatorComponent.Present)
+                return;
 
-            if (prevValue != indicatorComponent.ConnectedTo)
-                nametagHolder.Nametag.DebugText = indicatorComponent.ConnectedTo.ToString();
+            indicatorComponent.Announced = announced;
+            indicatorComponent.Present = present;
+
+            nametagHolder.Nametag.DebugText = RoomIndicatorLabel.Build(announced, present);
         }
 
         [Query]
@@ -65,6 +67,10 @@ namespace DCL.Multiplayer.Connections.Systems
             if (!debugAvatarsRooms.Value)
             {
                 RemoveAllIndicatorsQuery(World);
+
+                // An avatar out of nametag range has no holder, so the query above cannot reach it; without this its
+                // component would survive the toggle and its stale state would suppress the first write on the way back.
+                RemoveIndicatorOnComponentRemovalQuery(World);
                 return;
             }
 
