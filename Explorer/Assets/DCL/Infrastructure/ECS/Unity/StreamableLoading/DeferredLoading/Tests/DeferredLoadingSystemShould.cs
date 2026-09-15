@@ -2,6 +2,7 @@ using Arch.Core;
 using DCL.Optimization.PerformanceBudgeting;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.Fonts;
 using ECS.StreamableLoading.Textures;
 using ECS.TestSuite;
 using NSubstitute;
@@ -122,6 +123,28 @@ namespace ECS.StreamableLoading.DeferredLoading.Tests
             for (var i = 0; i < entities.Count; i++)
                 Assert.AreEqual(i < 8,
                     world.Get<StreamableLoadingState>(entities[i]).Value == StreamableLoadingState.Status.Allowed);
+        }
+
+        [Test]
+        public void AllowFontIntentions()
+        {
+            Entity entity = world.Create(
+                new GetFontIntention
+                {
+                    Kind = FontSourceKind.FontsourceFamily,
+                    Src = "Roboto",
+                    CommonArguments = new CommonLoadingArguments(""),
+                },
+                (IPartitionComponent)new PartitionComponent
+                {
+                    Bucket = 0,
+                    IsBehind = false,
+                    IsDirty = true,
+                }, new StreamableLoadingState());
+
+            system.Update(0);
+
+            Assert.That(world.Get<StreamableLoadingState>(entity).Value, Is.EqualTo(StreamableLoadingState.Status.Allowed));
         }
     }
 }

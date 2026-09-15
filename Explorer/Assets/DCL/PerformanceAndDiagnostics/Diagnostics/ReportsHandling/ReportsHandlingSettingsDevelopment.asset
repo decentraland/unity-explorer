@@ -728,6 +728,14 @@ MonoBehaviour:
       Severity: 4
     - Category: CREDITS_PURCHASE
       Severity: 1
+    - Category: FONTS
+      Severity: 0
+    - Category: FONTS
+      Severity: 4
+    - Category: FONTS
+      Severity: 1
+    - Category: FONTS
+      Severity: 2
   sentryMatrix:
     entries: []
   debounceEnabled: 1

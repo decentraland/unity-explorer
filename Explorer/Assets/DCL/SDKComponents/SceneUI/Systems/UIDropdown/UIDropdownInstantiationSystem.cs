@@ -7,10 +7,14 @@ using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using DCL.SDKComponents.SceneUI.Components;
+using DCL.SDKComponents.SceneUI.Defaults;
 using DCL.SDKComponents.SceneUI.Groups;
 using DCL.SDKComponents.SceneUI.Utils;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
+using ECS.Prioritization.Components;
+using ECS.StreamableLoading.Fonts;
+using SceneRunner.Scene;
 using UnityEngine.UIElements;
 
 namespace DCL.SDKComponents.SceneUI.Systems.UIDropdown
@@ -35,12 +39,16 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIDropdown
         private readonly IComponentPool<UIDropdownComponent> dropdownsPool;
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
         private readonly StyleFontDefinition[] styleFontDefinitions;
+        private readonly ISceneData sceneData;
+        private readonly IPartitionComponent scenePartition;
 
-        public UIDropdownInstantiationSystem(World world, IComponentPoolsRegistry poolsRegistry, IECSToCRDTWriter ecsToCRDTWriter, in StyleFontDefinition[] styleFontDefinitions) : base(world)
+        public UIDropdownInstantiationSystem(World world, IComponentPoolsRegistry poolsRegistry, IECSToCRDTWriter ecsToCRDTWriter, in StyleFontDefinition[] styleFontDefinitions, ISceneData sceneData, IPartitionComponent scenePartition) : base(world)
         {
             dropdownsPool = poolsRegistry.GetReferenceTypePool<UIDropdownComponent>();
             this.ecsToCRDTWriter = ecsToCRDTWriter;
             this.styleFontDefinitions = styleFontDefinitions;
+            this.sceneData = sceneData;
+            this.scenePartition = scenePartition;
         }
 
         protected override void Update(float t)
@@ -49,6 +57,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIDropdown
 
             InstantiateUIDropdownQuery(World);
             UpdateUIDropdownQuery(World);
+            ApplyLoadedFontQuery(World);
 
             TriggerDropdownResultsQuery(World);
         }
@@ -75,8 +84,24 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIDropdown
         {
             if (!sdkModel.IsDirty) return;
 
+            if (uiDropdownComponent.FontRequest.Update(World, sceneData, sdkModel.FontSrc, scenePartition))
+                uiDropdownComponent.CustomFont = null;
+
             UiElementUtils.SetupUIDropdownComponent(ref uiDropdownComponent, in sdkModel, in styleFontDefinitions);
             sdkModel.IsDirty = false;
+        }
+
+        [Query]
+        [None(typeof(DeleteEntityIntention))]
+        private void ApplyLoadedFont(ref UIDropdownComponent uiDropdownComponent, ref PBUiDropdown sdkModel)
+        {
+            if (!uiDropdownComponent.FontRequest.TryConsume(World, out FontFamilyAssets? assets))
+                return;
+
+            uiDropdownComponent.CustomFont = assets?.UIToolkitFont;
+
+            if (uiDropdownComponent.CustomFont != null)
+                UiElementUtils.SetFont(uiDropdownComponent.DropdownField, sdkModel.GetFont(), in styleFontDefinitions, uiDropdownComponent.CustomFont);
         }
 
         [Query]

@@ -1,6 +1,8 @@
-using System;
 using DCL.SDKComponents.SceneUI.Utils;
+using ECS.StreamableLoading.Fonts;
+using System;
 using UnityEngine.UIElements;
+using FontAsset = UnityEngine.TextCore.Text.FontAsset;
 
 namespace DCL.SDKComponents.SceneUI.Components
 {
@@ -10,6 +12,10 @@ namespace DCL.SDKComponents.SceneUI.Components
         public TextElement TextElement { get; private set; }
         public bool IsOnValueChangedTriggered;
         public int LastIndexSetByScene;
+
+        public SceneFontRequest FontRequest;
+
+        public FontAsset? CustomFont;
 
         internal Action? cachedScheduledAction;
 
@@ -22,6 +28,8 @@ namespace DCL.SDKComponents.SceneUI.Components
 
             IsOnValueChangedTriggered = false;
             LastIndexSetByScene = int.MinValue; // -1 is used for the case of 'accept Empty value'
+            FontRequest = default(SceneFontRequest);
+            CustomFont = null;
 
             this.RegisterDropdownCallbacks();
         }

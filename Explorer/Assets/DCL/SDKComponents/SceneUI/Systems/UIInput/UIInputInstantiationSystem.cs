@@ -14,6 +14,9 @@ using DCL.SDKComponents.SceneUI.Utils;
 using DCL.Utilities.Extensions;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
+using ECS.Prioritization.Components;
+using ECS.StreamableLoading.Fonts;
+using SceneRunner.Scene;
 using UnityEngine.UIElements;
 
 namespace DCL.SDKComponents.SceneUI.Systems.UIInput
@@ -39,13 +42,17 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
         private readonly IInputBlock inputBlock;
         private readonly StyleFontDefinition[] styleFontDefinitions;
+        private readonly ISceneData sceneData;
+        private readonly IPartitionComponent scenePartition;
 
-        public UIInputInstantiationSystem(World world, IComponentPoolsRegistry poolsRegistry, IECSToCRDTWriter ecsToCRDTWriter, IInputBlock inputBlock, in StyleFontDefinition[] styleFontDefinitions) : base(world)
+        public UIInputInstantiationSystem(World world, IComponentPoolsRegistry poolsRegistry, IECSToCRDTWriter ecsToCRDTWriter, IInputBlock inputBlock, in StyleFontDefinition[] styleFontDefinitions, ISceneData sceneData, IPartitionComponent scenePartition) : base(world)
         {
             inputTextsPool = poolsRegistry.GetReferenceTypePool<UIInputComponent>().EnsureNotNull();
             this.ecsToCRDTWriter = ecsToCRDTWriter;
             this.inputBlock = inputBlock;
             this.styleFontDefinitions = styleFontDefinitions;
+            this.sceneData = sceneData;
+            this.scenePartition = scenePartition;
         }
 
         protected override void Update(float t)
@@ -54,6 +61,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
 
             InstantiateUIInputQuery(World!);
             UpdateUIInputQuery(World!);
+            ApplyLoadedFontQuery(World!);
 
             TriggerInputResultsQuery(World!);
         }
@@ -85,8 +93,24 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
             if (!sdkModel.IsDirty)
                 return;
 
+            if (uiInputComponent.FontRequest.Update(World!, sceneData, sdkModel.FontSrc, scenePartition))
+                uiInputComponent.CustomFont = null;
+
             UiElementUtils.SetupUIInputComponent(ref uiInputComponent, in sdkModel, in styleFontDefinitions);
             sdkModel.IsDirty = false;
+        }
+
+        [Query]
+        [None(typeof(DeleteEntityIntention))]
+        private void ApplyLoadedFont(ref UIInputComponent uiInputComponent, ref PBUiInput sdkModel)
+        {
+            if (!uiInputComponent.FontRequest.TryConsume(World!, out FontFamilyAssets? assets))
+                return;
+
+            uiInputComponent.CustomFont = assets?.UIToolkitFont;
+
+            if (uiInputComponent.CustomFont != null)
+                UiElementUtils.SetFont(uiInputComponent.TextField, sdkModel.GetFont(), in styleFontDefinitions, uiInputComponent.CustomFont);
         }
 
         [Query]
