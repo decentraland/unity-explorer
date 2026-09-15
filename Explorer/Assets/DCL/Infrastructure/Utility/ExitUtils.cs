@@ -260,10 +260,9 @@ namespace DCL.Utility
                 CloseHandle(handle);
             }
 #elif UNITY_STANDALONE_OSX
-            if (kill(pid, SIGKILL) != 0)
-            {
-                ReportHub.LogProductionInfo($"[ExitUtils] kill(SIGKILL) failed (errno {Marshal.GetLastWin32Error()})");
-            }
+            // hard self kill, always exits.
+            // more info: https://developer.apple.com/library/archive/documentation/System/Conceptual/ManPages_iPhoneOS/man2/_exit.2.html
+            _exit(0);
 #endif
         }
 
@@ -285,7 +284,7 @@ namespace DCL.Utility
         private const int SIGKILL = 9;
 
         [DllImport("libc", SetLastError = true)]
-        private static extern int kill(int pid, int sig);
+        private static extern void _exit(int status);
 
 #endif
 
