@@ -65,6 +65,41 @@ namespace DCL.SkyBox
         [SerializeField] private AnimationCurve lensFlareIntensity = new ();
         [SerializeField] private List<LensFlareTimeEntry> lensFlareEntries = new ();
 
+        [Header("Celestial path (computed sun and moon rotation)")]
+        [Tooltip("Places the directional light on a computed sun arc by day and a separate moon arc by night instead of sampling the rotation clip. Sun Opacity and Moon Mask Size curves are ignored: the disc hides itself while the light crosses from one body to the other.")]
+        [SerializeField] private bool computeCelestialPath;
+        [Tooltip("Normalized time the sun crosses the horizon on its way up.")]
+        [Range(0f, 1f)] [SerializeField] private float sunriseTime = 0.267f;
+        [Tooltip("Normalized time the sun crosses the horizon on its way down.")]
+        [Range(0f, 1f)] [SerializeField] private float sunsetTime = 0.784f;
+        [Tooltip("Compass direction of the sunrise point in degrees, 0 = +Z, 90 = +X.")]
+        [Range(0f, 360f)] [SerializeField] private float sunPathAzimuth = 225f;
+        [Tooltip("Lean of the sun's arc away from the zenith in degrees. 0 passes overhead; positive leans to the right when facing the sunrise point.")]
+        [Range(-80f, 80f)] [SerializeField] private float sunPathTilt;
+        [Range(0f, 1f)] [SerializeField] private float moonriseTime = 0.896f;
+        [Range(0f, 1f)] [SerializeField] private float moonsetTime = 0.167f;
+        [Range(0f, 360f)] [SerializeField] private float moonPathAzimuth = 225f;
+        [Tooltip("Lean of the moon's arc; 40 keeps the moon low for long night shadows.")]
+        [Range(-80f, 80f)] [SerializeField] private float moonPathTilt = 40f;
+        [Tooltip("Normalized duration of the crossover from sun to moon (ending at moonrise) and back (starting at moonset). The disc is hidden and the light dims while it happens.")]
+        [Range(0.01f, 0.15f)] [SerializeField] private float celestialSwapDuration = 0.042f;
+        [Tooltip("Crescent mask size while the moon is the active body.")]
+        [Range(0f, 0.5f)] [SerializeField] private float computedMoonMaskSize = 0.16f;
+        [Tooltip("Disc size while the moon is the active body, so the crescent keeps one shape all night instead of following the Sun Size curve.")]
+        [Range(0.01f, 0.5f)] [SerializeField] private float computedMoonDiscSize = 0.12f;
+        [Tooltip("Where the crescent hole sits relative to the moon, in its own frame (x = right, y = up, radians), constant all night. The legacy Moon Mask Position is a world-space nudge and changes shape as the moon moves.")]
+        [SerializeField] private Vector2 computedMoonMaskOffset = new (-0.009f, -0.007f);
+        [Tooltip("Moon disc colour over its own rise (0) to set (1) progress.")]
+        [GradientUsage(true)] [SerializeField] private Gradient moonColorRamp = new ();
+
+        [Header("Celestial disc")]
+        [Tooltip("Dims the disc and halo as the active body nears the horizon, like the Unreal celestial quad.")]
+        [SerializeField] private bool discHorizonDarkening;
+        [Tooltip("Sine of the elevation at which the disc is back to full brightness.")]
+        [Range(0.01f, 0.5f)] [SerializeField] private float discHorizonDarkeningHeight = 0.2f;
+        [Tooltip("Brightness multiplier at and below the horizon.")]
+        [Range(0f, 1f)] [SerializeField] private float discHorizonDarkeningFloor = 0.1f;
+
         [Header("Skybox Color")]
         [GradientUsage(true)] [SerializeField] private Gradient skyZenitColorRamp = new ();
         [GradientUsage(true)] [SerializeField] private Gradient skyHorizonColorRamp = new ();
@@ -91,6 +126,26 @@ namespace DCL.SkyBox
         [Tooltip("Noise repeats around the horizon (x) and over the dome height (y).")]
         [SerializeField] private Vector2 skyHorizonNoiseTiling = new (5f, 10f);
         [SerializeField] private float skyHorizonNoiseSpeed = 0.002f;
+
+        [Header("Stars v2 (drawn by the sky lookup)")]
+        [Tooltip("Draws a procedural star field inside the sky lookup with per-phase brightness, twinkle and shooting stars. Set the legacy Stars Brightness to 0 when enabling this. The dim patches sample the Sky Horizon Noise texture.")]
+        [SerializeField] private bool useStarsV2;
+        [SerializeField] private float starsV2Brightness = 2f;
+        [Tooltip("Star cells per cube face side; the sky holds roughly half that squared times six stars.")]
+        [Range(4f, 64f)] [SerializeField] private float starsDensity = 22f;
+        [Tooltip("Star radius in degrees.")]
+        [Range(0.02f, 0.5f)] [SerializeField] private float starsSize = 0.1f;
+        [Tooltip("Brightness multiplier at each phase anchor: Night, Sunrise, Day, Sunset.")]
+        [SerializeField] private Vector4 starsBrightnessByPhase = new (1f, 0.1f, 0f, 0.5f);
+        [SerializeField] private float starsRotationSpeed = 0.002f;
+        [Range(0f, 1f)] [SerializeField] private float starsTwinkle = 0.6f;
+        [SerializeField] private float starsTwinkleSpeed = 0.15f;
+        [Tooltip("How much the slow drifting noise dims regions of the field. 0 = uniform.")]
+        [Range(0f, 1f)] [SerializeField] private float starsPatchStrength = 0.7f;
+        [Tooltip("Stars fade in between these sines of elevation, hiding them in the horizon band.")]
+        [SerializeField] private Vector2 starsHorizonFade = new (0.02f, 0.15f);
+        [Tooltip("Shooting-star frequency, scaled by the star brightness of the phase. 0 = off.")]
+        [Range(0f, 1f)] [SerializeField] private float shootingStarsRate = 0.4f;
 
         [Header("Indirect Lighting")]
         [InspectorName("Enabled")] [SerializeField] private bool indirectLight = true;
@@ -163,6 +218,24 @@ namespace DCL.SkyBox
         public AnimationCurve LensFlareIntensity => lensFlareIntensity;
         public IReadOnlyList<LensFlareTimeEntry> LensFlareEntries => lensFlareEntries;
 
+        public bool ComputeCelestialPath => computeCelestialPath;
+        public float SunriseTime => sunriseTime;
+        public float SunsetTime => sunsetTime;
+        public float SunPathAzimuth => sunPathAzimuth;
+        public float SunPathTilt => sunPathTilt;
+        public float MoonriseTime => moonriseTime;
+        public float MoonsetTime => moonsetTime;
+        public float MoonPathAzimuth => moonPathAzimuth;
+        public float MoonPathTilt => moonPathTilt;
+        public float CelestialSwapDuration => celestialSwapDuration;
+        public float ComputedMoonMaskSize => computedMoonMaskSize;
+        public float ComputedMoonDiscSize => computedMoonDiscSize;
+        public Vector2 ComputedMoonMaskOffset => computedMoonMaskOffset;
+        public Gradient MoonColorRamp => moonColorRamp;
+        public bool DiscHorizonDarkening => discHorizonDarkening;
+        public float DiscHorizonDarkeningHeight => discHorizonDarkeningHeight;
+        public float DiscHorizonDarkeningFloor => discHorizonDarkeningFloor;
+
         public Gradient SkyZenitColorRamp => skyZenitColorRamp;
         public Gradient SkyHorizonColorRamp => skyHorizonColorRamp;
         public Gradient SkyNadirColorRamp => skyNadirColorRamp;
@@ -178,6 +251,17 @@ namespace DCL.SkyBox
         public float SkyHorizonNoiseStrength => skyHorizonNoiseStrength;
         public Vector2 SkyHorizonNoiseTiling => skyHorizonNoiseTiling;
         public float SkyHorizonNoiseSpeed => skyHorizonNoiseSpeed;
+        public bool UseStarsV2 => useStarsV2;
+        public float StarsV2Brightness => starsV2Brightness;
+        public Vector4 StarsBrightnessByPhase => starsBrightnessByPhase;
+        public float StarsDensity => starsDensity;
+        public float StarsSize => starsSize;
+        public float StarsRotationSpeed => starsRotationSpeed;
+        public float StarsTwinkle => starsTwinkle;
+        public float StarsTwinkleSpeed => starsTwinkleSpeed;
+        public float StarsPatchStrength => starsPatchStrength;
+        public Vector2 StarsHorizonFade => starsHorizonFade;
+        public float ShootingStarsRate => shootingStarsRate;
 
         public bool IndirectLight => indirectLight;
         public Gradient IndirectSkyRamp => indirectSkyRamp;

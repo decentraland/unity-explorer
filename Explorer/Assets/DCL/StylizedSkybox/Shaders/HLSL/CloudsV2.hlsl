@@ -14,6 +14,8 @@
 // Legacy path (_DclCloudsMode.w == 0) reproduces Shader Graph's Blend node in Screen mode exactly and passes the
 // legacy cloud colour through as occlusion, so the old look is untouched.
 
+#include "Assets/DCL/StylizedSkybox/Shaders/HLSL/SkyboxGlobals.hlsl"
+
 #define DCL_CLOUDS_V2_PI 3.14159265
 
 TEXTURE2D(_DclCloudStrip0); SAMPLER(sampler_DclCloudStrip0);
@@ -32,7 +34,6 @@ float4 _DclCloudLitColor;      // current phase, HDR
 float4 _DclCloudsParams;       // rampKnee, highlightStrength, highlightThreshold, highlightFalloff
 float4 _DclCloudsMode;         // useRamp, useBacklight, useFlow, useCloudsV2
 float4 _DclCloudsParams2;      // zenithFadeStart, zenithFadeEnd, occlusionStart, occlusionEnd
-float4 _DclSunDirection;       // direction toward the sun, world space
 
 // Per-cloud cycle: grow in over the first 15 %, hold, dissolve top-first, stay absent for the last 10 %.
 float CloudsV2_FlowCurve(float t)
@@ -79,11 +80,14 @@ void CloudsV2_Layer(float4 tex, float u, float4 layer, float opacity, float phas
     float invMask = 1.0 / max(tex.a, 1e-3);
     tex.rgb = saturate(tex.rgb * invMask);
 
-    // Backlight: sun or moon behind the cloud drives R toward the G look and adds a rim.
+    // Backlight: the body behind the cloud drives R toward the G look and adds a rim. With the computed celestial
+    // path the direction is the real body, so only its own side lights; the legacy clip shares one light for both
+    // bodies and keeps the symmetric term. The weight fades the rim out while the light crosses from sun to moon.
     float3 toSun = normalize(_DclSunDirection.xyz);
-    float hl = max(dot(skyDir, toSun), dot(skyDir, -toSun));
+    float facing = dot(skyDir, toSun);
+    float hl = _DclCelestialParams.z > 0.5 ? facing : max(facing, -facing);
     float threshold = _DclCloudsParams.z;
-    float hlAlpha = pow(saturate((hl - threshold) / max(1.0 - threshold, 1e-3)), _DclCloudsParams.w) * _DclCloudsMode.y;
+    float hlAlpha = pow(saturate((hl - threshold) / max(1.0 - threshold, 1e-3)), _DclCloudsParams.w) * _DclCloudsMode.y * _DclCelestialParams.w;
     float t = lerp(tex.r, tex.g, hlAlpha);
 
     float3 shadow = _DclCloudShadowColor.rgb;
