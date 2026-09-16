@@ -8,9 +8,9 @@ using UnityEngine;
 namespace DCL.SkyBox
 {
     /// <summary>
-    ///     Adds a time-of-day scrubber and a four-phase screenshot capture to the skybox controller inspector.
-    ///     Both controls appear only while the authoring scene is playing with the controller in edit mode,
-    ///     so the sky can be reviewed without launching the client.
+    ///     Adds a time-of-day scrubber, a real-time day cycle and a four-phase screenshot capture to the skybox
+    ///     controller inspector. The controls appear only while the authoring scene is playing with the controller in
+    ///     edit mode, so the sky can be reviewed without launching the client.
     /// </summary>
     [CustomEditor(typeof(SkyboxRenderController))]
     public class SkyboxRenderControllerEditor : UnityEditor.Editor
@@ -18,7 +18,10 @@ namespace DCL.SkyBox
         private const string CAPTURE_FOLDER_PREF = "DCL.Skybox.Authoring.CaptureFolder";
         private const string CAPTURE_LABEL_PREF = "DCL.Skybox.Authoring.CaptureLabel";
         private const string CAPTURE_FREEZE_PREF = "DCL.Skybox.Authoring.CaptureFreezesShaderTime";
+        private const string DAY_LENGTH_PREF = "DCL.Skybox.Authoring.DayLengthSeconds";
         private const string DEFAULT_CAPTURE_LABEL = "baseline";
+        private const float DEFAULT_DAY_LENGTH = 60f;
+        private const float MIN_DAY_LENGTH = 1f;
 
         // The reflection cubemap is regenerated every 8 frames in 4 slices, so wait for a full cycle plus margin.
         private const int FRAMES_TO_SETTLE = 24;
@@ -35,6 +38,8 @@ namespace DCL.SkyBox
         private float timeOfDay = 0.5f;
         private bool capturing;
         private bool shaderTimeFrozen;
+        private bool cycling;
+        private double lastCycleTimestamp;
 
         public override void OnInspectorGUI()
         {
@@ -71,6 +76,22 @@ namespace DCL.SkyBox
 
             EditorGUILayout.EndHorizontal();
 
+            EditorGUILayout.BeginHorizontal();
+
+            float dayLength = EditorGUILayout.FloatField(
+                new GUIContent("Day length (s)", "Real seconds for one full day while cycling."),
+                EditorPrefs.GetFloat(DAY_LENGTH_PREF, DEFAULT_DAY_LENGTH));
+
+            EditorPrefs.SetFloat(DAY_LENGTH_PREF, Mathf.Max(dayLength, MIN_DAY_LENGTH));
+
+            using (new EditorGUI.DisabledScope(capturing))
+            {
+                if (GUILayout.Button(cycling ? "Stop" : "Play", GUILayout.Width(60)))
+                    SetCycling(!cycling);
+            }
+
+            EditorGUILayout.EndHorizontal();
+
             EditorGUILayout.Space();
 
             string label = EditorGUILayout.TextField("Capture label", EditorPrefs.GetString(CAPTURE_LABEL_PREF, DEFAULT_CAPTURE_LABEL));
@@ -94,6 +115,8 @@ namespace DCL.SkyBox
             {
                 if (GUILayout.Button("Capture 4 phases"))
                 {
+                    SetCycling(false);
+
                     if (freeze && !shaderTimeFrozen)
                     {
                         controller.DisableSkyboxTime();
@@ -108,6 +131,50 @@ namespace DCL.SkyBox
                 PickCaptureFolder();
 
             EditorGUILayout.EndHorizontal();
+        }
+
+        private void OnEnable()
+        {
+            EditorApplication.update += AdvanceCycle;
+        }
+
+        private void OnDisable()
+        {
+            EditorApplication.update -= AdvanceCycle;
+        }
+
+        private void SetCycling(bool value)
+        {
+            cycling = value;
+            lastCycleTimestamp = EditorApplication.timeSinceStartup;
+        }
+
+        /// <summary>
+        ///     Runs the day forward in real time so the sky can be watched evolving without dragging the slider.
+        ///     Editor time is used rather than game time so the speed is independent of the project's time scale.
+        /// </summary>
+        private void AdvanceCycle()
+        {
+            if (!cycling)
+                return;
+
+            var controller = target as SkyboxRenderController;
+
+            if (controller == null || !Application.isPlaying || !controller.editMode || capturing)
+            {
+                cycling = false;
+                return;
+            }
+
+            double now = EditorApplication.timeSinceStartup;
+            var elapsed = (float)(now - lastCycleTimestamp);
+            lastCycleTimestamp = now;
+
+            float dayLength = Mathf.Max(EditorPrefs.GetFloat(DAY_LENGTH_PREF, DEFAULT_DAY_LENGTH), MIN_DAY_LENGTH);
+
+            timeOfDay = Mathf.Repeat(timeOfDay + (elapsed / dayLength), 1f);
+            controller.UpdateSkybox(timeOfDay);
+            Repaint();
         }
 
         private async UniTaskVoid CaptureAllPhasesAsync(SkyboxRenderController controller, string label)
