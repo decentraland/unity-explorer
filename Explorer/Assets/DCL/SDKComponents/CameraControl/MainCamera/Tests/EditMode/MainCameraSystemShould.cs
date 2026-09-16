@@ -516,7 +516,14 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
         {
             sceneStateProvider.IsCurrent.Returns(true);
 
-            // Disabling the only live vCam leaves the brain without an active camera.
+            // The brain picks from the static CinemachineCore queue, which other fixtures leak enabled vCams into,
+            // so it is restricted to a layer that holds only this test's cameras.
+            const int LAYER = 31;
+            Camera outputCamera = cinemachineBrain.gameObject.AddComponent<Camera>();
+            outputCamera.cullingMask = 1 << LAYER;
+            defaultCinemachineCam.gameObject.layer = LAYER;
+            sdkCinemachineCam1.gameObject.layer = LAYER;
+
             defaultCinemachineCam.enabled = false;
             cinemachineBrain.ManualUpdate();
             Assert.IsNull(cinemachineBrain.ActiveVirtualCamera);
