@@ -8,9 +8,11 @@ using DCL.Input;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
+using DCL.Profiles.Self;
 using DCL.UI.MainUI;
 using DCL.UI.Profiles.Helpers;
 using DCL.Utilities.Extensions;
+using DCL.Web3.Authenticators;
 using MVC;
 using MVC.PopupsController.PopupCloser;
 using System;
@@ -89,8 +91,8 @@ namespace Global.Dynamic
         public ErrorPopupPlugin CreateErrorPopupPlugin(IAssetsProvisioner assetsProvisioner) =>
             new (MvcManager, assetsProvisioner);
 
-        public GenericPopupsPlugin CreateGenericPopupsPlugin(IAssetsProvisioner assetsProvisioner) =>
-            new (assetsProvisioner, MvcManager, ClipboardManager);
+        public GenericPopupsPlugin CreateGenericPopupsPlugin(IAssetsProvisioner assetsProvisioner, IAccountLinkAuthenticator accountLinkAuthenticator, ISelfProfile selfProfile) =>
+            new (assetsProvisioner, MvcManager, ClipboardManager, accountLinkAuthenticator, selfProfile);
 
         public ColorPickerPlugin CreateColorPickerPlugin(IAssetsProvisioner assetsProvisioner) =>
             new (assetsProvisioner, MvcManager);
