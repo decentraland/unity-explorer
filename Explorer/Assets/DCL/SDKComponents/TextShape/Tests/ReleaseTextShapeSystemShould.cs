@@ -1,3 +1,4 @@
+using CommunicationData.URLHelpers;
 using Arch.Core;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
@@ -17,7 +18,7 @@ namespace DCL.SDKComponents.TextShape.Tests
 {
     public class ReleaseTextShapeSystemShould : UnitySystemTestBase<ReleaseTextShapeSystem>
     {
-        private const string FONT_SRC = "Roboto";
+        private const string FONT_SRC = "fonts/Roboto.ttf";
 
         private IComponentPool<TextMeshPro> textMeshProPool = null!;
         private TMP_FontAsset builtInFont = null!;
@@ -38,7 +39,14 @@ namespace DCL.SDKComponents.TextShape.Tests
             system = new ReleaseTextShapeSystem(world, new IFontsStorage.Fake(builtInFont), textMeshProPool);
 
             var component = new TextShapeComponent(textMeshPro) { CustomFont = customFont };
-            component.FontRequest.Update(world, Substitute.For<ISceneData>(), FONT_SRC, PartitionComponent.TOP_PRIORITY);
+            var sceneData = Substitute.For<ISceneData>();
+            sceneData.TryGetContentUrl(FONT_SRC, out Arg.Any<URLAddress>())
+                     .Returns(x =>
+                      {
+                          x[1] = URLAddress.FromString("https://peer.decentraland.org/content/contents/bafyfont");
+                          return true;
+                      });
+            component.FontRequest.Update(world, sceneData, FONT_SRC, PartitionComponent.TOP_PRIORITY);
             promiseEntity = component.FontRequest.Promise!.Value.Entity;
 
             entity = world.Create(new PBTextShape { FontSrc = FONT_SRC }, component);

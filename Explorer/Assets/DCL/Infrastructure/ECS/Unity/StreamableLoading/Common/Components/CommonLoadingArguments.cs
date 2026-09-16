@@ -56,13 +56,6 @@ namespace ECS.StreamableLoading.Common.Components
             CancellationTokenSource cancellationTokenSource = null) :
             this(URLAddress.FromString(url), customEmbeddedSubDirectory, timeout, attempts, permittedSources, currentSource, cancellationTokenSource) { }
 
-        public CommonLoadingArguments WithURL(URLAddress url)
-        {
-            CommonLoadingArguments copy = this;
-            copy.URL = url;
-            return copy;
-        }
-
         // Always override attempts count for streamable assets as repetitions are handled in LoadSystemBase
         public static implicit operator CommonArguments(in CommonLoadingArguments commonLoadingArguments) =>
             new (commonLoadingArguments.URL, RetryPolicy.WithRetries(1), timeout: commonLoadingArguments.Timeout);

@@ -27,7 +27,6 @@ namespace ECS.StreamableLoading.Fonts.Tests
         protected override GetFontIntention CreateSuccessIntention() =>
             new ()
             {
-                Kind = FontSourceKind.File,
                 Src = "LiberationSans-Regular.ttf",
                 CommonArguments = new CommonLoadingArguments(successPath),
             };
@@ -35,7 +34,6 @@ namespace ECS.StreamableLoading.Fonts.Tests
         protected override GetFontIntention CreateNotFoundIntention() =>
             new ()
             {
-                Kind = FontSourceKind.File,
                 Src = "non_existing.ttf",
                 CommonArguments = new CommonLoadingArguments(failPath),
             };
@@ -43,7 +41,6 @@ namespace ECS.StreamableLoading.Fonts.Tests
         protected override GetFontIntention CreateWrongTypeIntention() =>
             new ()
             {
-                Kind = FontSourceKind.File,
                 Src = "arraybuffer.test",
                 CommonArguments = new CommonLoadingArguments(wrongTypePath),
             };

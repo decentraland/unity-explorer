@@ -131,8 +131,7 @@ namespace ECS.StreamableLoading.DeferredLoading.Tests
             Entity entity = world.Create(
                 new GetFontIntention
                 {
-                    Kind = FontSourceKind.FontsourceFamily,
-                    Src = "Roboto",
+                    Src = "fonts/Roboto.ttf",
                     CommonArguments = new CommonLoadingArguments(""),
                 },
                 (IPartitionComponent)new PartitionComponent

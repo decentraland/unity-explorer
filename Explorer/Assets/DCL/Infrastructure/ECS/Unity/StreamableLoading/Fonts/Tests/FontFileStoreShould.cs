@@ -57,7 +57,7 @@ namespace ECS.StreamableLoading.Fonts.Tests
         {
             string path = await store.StoreAsync(BYTES, CancellationToken.None);
 
-            Assert.That(Path.GetDirectoryName(path), Is.EqualTo(directory));
+            Assert.That(Path.GetDirectoryName(Path.GetFullPath(path)), Is.EqualTo(Path.GetFullPath(directory)));
             Assert.That(Path.GetExtension(path), Is.EqualTo(".ttf"));
             Assert.That(File.ReadAllBytes(path), Is.EqualTo(BYTES));
             Assert.That(Directory.GetFiles(directory), Has.Length.EqualTo(1));

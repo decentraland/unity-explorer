@@ -15,8 +15,6 @@ namespace ECS.StreamableLoading.Fonts
         public const int MAX_FILE_BYTES = 16 * 1024 * 1024;
 
         public const string TRUE_TYPE_EXTENSION = ".ttf";
-        public const string OPEN_TYPE_EXTENSION = ".otf";
-
         private const string DIRECTORY_NAME = "SceneFonts";
 
         private const int SFNT_HEADER_BYTES = 12;

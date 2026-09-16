@@ -1,3 +1,4 @@
+using CommunicationData.URLHelpers;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using DCL.SDKComponents.SceneUI.Components;
@@ -22,7 +23,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
 {
     public class UITextReleaseSystemShould : UnitySystemTestBase<UITextReleaseSystem>
     {
-        private const string FONT_SRC = "Roboto";
+        private const string FONT_SRC = "fonts/Roboto.ttf";
 
         private IComponentPool labelPool = null!;
         private FontAsset customFont = null!;
@@ -42,7 +43,14 @@ namespace DCL.SDKComponents.SceneUI.Tests
             UiElementUtils.SetFont(label, Font.FSansSerif, new[] { new StyleFontDefinition() }, customFont);
 
             var component = new UITextComponent { Label = label, CustomFont = customFont };
-            component.FontRequest.Update(world, Substitute.For<ISceneData>(), FONT_SRC, PartitionComponent.TOP_PRIORITY);
+            var sceneData = Substitute.For<ISceneData>();
+            sceneData.TryGetContentUrl(FONT_SRC, out Arg.Any<URLAddress>())
+                     .Returns(x =>
+                      {
+                          x[1] = URLAddress.FromString("https://peer.decentraland.org/content/contents/bafyfont");
+                          return true;
+                      });
+            component.FontRequest.Update(world, sceneData, FONT_SRC, PartitionComponent.TOP_PRIORITY);
             promiseEntity = component.FontRequest.Promise!.Value.Entity;
 
             entity = world.Create(new PBUiText { FontSrc = FONT_SRC }, component);

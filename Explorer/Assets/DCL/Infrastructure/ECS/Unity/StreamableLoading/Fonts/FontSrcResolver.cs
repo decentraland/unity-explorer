@@ -14,46 +14,21 @@ namespace ECS.StreamableLoading.Fonts
         {
             intention = default(GetFontIntention);
 
-            if (LooksLikeFileReference(fontSrc))
+            if (Uri.TryCreate(fontSrc, UriKind.Absolute, out _)
+                || fontSrc.StartsWith("//", StringComparison.Ordinal)
+                || !sceneData.TryGetContentUrl(fontSrc, out URLAddress url))
             {
-                if (!sceneData.TryGetMediaUrl(fontSrc, out URLAddress url))
-                {
-                    ReportHub.LogWarning(ReportCategory.FONTS, $"font_src \"{fontSrc}\" is neither a content file of the scene {sceneData.SceneShortInfo} nor an allowed media URL, the built-in font stays");
-                    return false;
-                }
-
-                intention = new GetFontIntention
-                {
-                    Kind = FontSourceKind.File,
-                    Src = fontSrc,
-                    CommonArguments = new CommonLoadingArguments(url, attempts: ATTEMPTS_COUNT),
-                };
-
-                return true;
-            }
-
-            string? familyId = FontsourceCatalog.ToFamilyId(fontSrc);
-
-            if (familyId == null)
-            {
-                ReportHub.LogWarning(ReportCategory.FONTS, $"font_src \"{fontSrc}\" is neither a scene file, a URL nor a font family name, the built-in font stays");
+                ReportHub.LogWarning(ReportCategory.FONTS, $"font_src \"{fontSrc}\" is not a content file of the scene {sceneData.SceneShortInfo}");
                 return false;
             }
 
             intention = new GetFontIntention
             {
-                Kind = FontSourceKind.FontsourceFamily,
                 Src = fontSrc,
-                CommonArguments = new CommonLoadingArguments(URLAddress.FromString(FontsourceCatalog.ApiUrl(familyId)), attempts: ATTEMPTS_COUNT),
+                CommonArguments = new CommonLoadingArguments(url, attempts: ATTEMPTS_COUNT),
             };
 
             return true;
         }
-
-        private static bool LooksLikeFileReference(string value) =>
-            value.IndexOf('/') >= 0
-            || value.IndexOf('\\') >= 0
-            || value.EndsWith(FontFileStore.TRUE_TYPE_EXTENSION, StringComparison.OrdinalIgnoreCase)
-            || value.EndsWith(FontFileStore.OPEN_TYPE_EXTENSION, StringComparison.OrdinalIgnoreCase);
     }
 }

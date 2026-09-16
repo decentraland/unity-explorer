@@ -6,8 +6,6 @@ namespace ECS.StreamableLoading.Fonts
 {
     public struct GetFontIntention : ILoadingIntention, IEquatable<GetFontIntention>
     {
-        public FontSourceKind Kind;
-
         public string Src;
 
         private int? hashCode;
@@ -17,7 +15,7 @@ namespace ECS.StreamableLoading.Fonts
         public CancellationTokenSource CancellationTokenSource => CommonArguments.CancellationTokenSource;
 
         public bool Equals(GetFontIntention other) =>
-            Kind == other.Kind && this.AreUrlEquals(other);
+            this.AreUrlEquals(other);
 
         public override bool Equals(object? obj) =>
             obj is GetFontIntention other && Equals(other);
@@ -27,11 +25,11 @@ namespace ECS.StreamableLoading.Fonts
             if (hashCode != null)
                 return hashCode.Value;
 
-            hashCode = HashCode.Combine(Kind, CommonArguments.URL);
+            hashCode = CommonArguments.URL.GetHashCode();
             return hashCode.Value;
         }
 
         public override string ToString() =>
-            $"Get Font Intention: {Src} ({Kind}) {CommonArguments.URL}";
+            $"Get Font Intention: {Src} {CommonArguments.URL}";
     }
 }

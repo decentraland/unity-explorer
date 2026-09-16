@@ -1,10 +1,12 @@
+using CommunicationData.URLHelpers;
 using CRDT;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.ECSComponents;
+using DCL.Input;
 using DCL.Optimization.Pools;
 using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Defaults;
-using DCL.SDKComponents.SceneUI.Systems.UIDropdown;
+using DCL.SDKComponents.SceneUI.Systems.UIInput;
 using DCL.SDKComponents.SceneUI.Utils;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Fonts;
@@ -20,13 +22,12 @@ using Entity = Arch.Core.Entity;
 
 namespace DCL.SDKComponents.SceneUI.Tests
 {
-    public class UIDropdownInstantiationSystemShould : UnitySystemTestBase<UIDropdownInstantiationSystem>
+    public class UIInputInstantiationSystemShould : UnitySystemTestBase<UIInputInstantiationSystem>
     {
         private IComponentPoolsRegistry poolsRegistry;
         private IECSToCRDTWriter ecsToCRDTWriter;
         private Entity entity;
         private UITransformComponent uiTransformComponent;
-        private PBUiDropdown input;
 
         [SetUp]
         public void SetUp()
@@ -34,40 +35,55 @@ namespace DCL.SDKComponents.SceneUI.Tests
             poolsRegistry = new ComponentPoolsRegistry(
                 new Dictionary<Type, IComponentPool>
                 {
-                    { typeof(UIDropdownComponent), new ComponentPool.WithDefaultCtor<UIDropdownComponent>() },
+                    { typeof(UIInputComponent), new ComponentPool.WithDefaultCtor<UIInputComponent>() },
                 }, null);
 
+            var sceneData = Substitute.For<ISceneData>();
+            sceneData.TryGetContentUrl("fonts/Roboto.ttf", out Arg.Any<URLAddress>())
+                     .Returns(x =>
+                      {
+                          x[1] = URLAddress.FromString("https://peer.decentraland.org/content/contents/bafyfont");
+                          return true;
+                      });
+
             ecsToCRDTWriter = Substitute.For<IECSToCRDTWriter>();
-            system = new UIDropdownInstantiationSystem(world, poolsRegistry, ecsToCRDTWriter, new []{new StyleFontDefinition()}, Substitute.For<ISceneData>(), PartitionComponent.TOP_PRIORITY);
+            system = new UIInputInstantiationSystem(world, poolsRegistry, ecsToCRDTWriter, Substitute.For<IInputBlock>(), new []{new StyleFontDefinition()}, sceneData, PartitionComponent.TOP_PRIORITY);
             entity = world.Create();
             uiTransformComponent = AddUITransformToEntity(entity);
             world.Add(entity, new CRDTEntity(500));
-
-            input = new PBUiDropdown();
-            input.Options.Add("TestOption1");
-            input.Options.Add("TestOption2");
-            input.Options.Add("TestOption3");
-            world.Add(entity, input);
-            system.Update(0);
         }
 
         [Test]
-        public void InstantiateUIDropdown()
+        public void InstantiateUIInput()
         {
+            // Arrange
+            var input = new PBUiInput();
+
+            // Act
+            world.Add(entity, input);
+            system.Update(0);
+
             // Assert
-            ref UIDropdownComponent uiDropdownComponent = ref world.Get<UIDropdownComponent>(entity);
-            Assert.AreEqual(UiElementUtils.BuildElementName("UIDropdown", entity), uiDropdownComponent.DropdownField.name);
-            Assert.IsTrue(uiDropdownComponent.DropdownField.ClassListContains("dcl-dropdown"));
-            Assert.AreEqual(PickingMode.Position, uiDropdownComponent.DropdownField.pickingMode);
-            Assert.IsTrue(uiTransformComponent.Transform.Contains(uiDropdownComponent.DropdownField));
-            Assert.IsNotNull(uiDropdownComponent.DropdownField);
-            Assert.IsNotNull(uiDropdownComponent.TextElement);
-            Assert.IsTrue(uiDropdownComponent.TextElement.ClassListContains("unity-base-popup-field__text"));
+            ref UIInputComponent uiInputComponent = ref world.Get<UIInputComponent>(entity);
+            Assert.AreEqual(UiElementUtils.BuildElementName("UIInput", entity), uiInputComponent.TextField.name);
+            Assert.IsTrue(uiInputComponent.TextField.ClassListContains("dcl-input"));
+            Assert.AreEqual(PickingMode.Position, uiInputComponent.TextField.pickingMode);
+            Assert.IsTrue(uiTransformComponent.Transform.Contains(uiInputComponent.TextField));
+            Assert.IsNotNull(uiInputComponent.TextField);
+            Assert.IsNotNull(uiInputComponent.Placeholder);
+            Assert.IsNotNull(uiInputComponent.TextElement);
         }
 
         [Test]
         public void ApplyDefaultUiTransformValuesOnInstantiation()
         {
+            // Arrange
+            var input = new PBUiInput();
+            world.Add(entity, input);
+
+            // Act
+            system.Update(0);
+
             // Assert - default transform values should be applied on instantiation
             var transformStyle = uiTransformComponent.Transform.style;
             Assert.AreEqual(Overflow.Hidden, transformStyle.overflow.value);
@@ -88,6 +104,13 @@ namespace DCL.SDKComponents.SceneUI.Tests
         [Test]
         public void ApplyDefaultBackgroundWhenNoPBUiBackground()
         {
+            // Arrange
+            var input = new PBUiInput();
+            world.Add(entity, input);
+
+            // Act
+            system.Update(0);
+
             // Assert - white background applied when entity has no PBUiBackground
             Assert.AreEqual(new StyleColor(Color.white), uiTransformComponent.Transform.style.backgroundColor);
         }
@@ -100,10 +123,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
             var newUiTransform = AddUITransformToEntity(newEntity);
             world.Add(newEntity, new CRDTEntity(501));
             world.Add(newEntity, new PBUiBackground());
-
-            var newInput = new PBUiDropdown();
-            newInput.Options.Add("Option1");
-            world.Add(newEntity, newInput);
+            world.Add(newEntity, new PBUiInput());
 
             // Act
             system.Update(0);
@@ -113,84 +133,62 @@ namespace DCL.SDKComponents.SceneUI.Tests
         }
 
         [Test]
-        public void UpdateUIDropdown()
+        public void UpdateUIInput()
         {
             // Arrange
+            var input = new PBUiInput();
+            world.Add(entity, input);
+            system.Update(0);
             const int NUMBER_OF_UPDATES = 3;
 
             for (var i = 0; i < NUMBER_OF_UPDATES; i++)
             {
                 // Act
-                for (var j = 0; j < i+1; j++) input.Options.Add((j+1).ToString());
+                input.Value = $"Test text {i}";
                 input.FontSize = i + 1;
                 input.TextAlign = (TextAlignMode) i;
+                input.Disabled = i % 2 == 0;
                 input.IsDirty = true;
                 system.Update(0);
 
                 // Assert
-                ref UIDropdownComponent uiDropdownComponent = ref world.Get<UIDropdownComponent>(entity);
-                Assert.AreEqual(input.Options.Count, uiDropdownComponent.DropdownField.choices.Count);
-                Assert.IsTrue(input.GetFontSize() == uiDropdownComponent.DropdownField.style.fontSize);
-                Assert.IsTrue(input.GetTextAlign() == uiDropdownComponent.TextElement.style.unityTextAlign);
+                ref UIInputComponent uiInputComponent = ref world.Get<UIInputComponent>(entity);
+
+                Assert.AreEqual(input.Value, uiInputComponent.TextField.value);
+                Assert.IsTrue(input.GetFontSize() == uiInputComponent.TextField.style.fontSize);
+                Assert.IsTrue(input.GetTextAlign() == uiInputComponent.TextElement.style.unityTextAlign);
             }
         }
 
         [Test]
         [TestCase(true)]
         [TestCase(false)]
-        public void UpdateUIDropdownDisabledState(bool disabled)
+        public void UpdateUIInputDisabledState(bool disabled)
         {
             // Arrange
+            var input = new PBUiInput { Disabled = false };
+            world.Add(entity, input);
+            system.Update(0);
+
+            // Act
             input.Disabled = disabled;
             input.IsDirty = true;
-
-            // Act
             system.Update(0);
 
             // Assert
-            ref UIDropdownComponent uiDropdownComponent = ref world.Get<UIDropdownComponent>(entity);
-            Assert.AreEqual(disabled ? PickingMode.Ignore : PickingMode.Position, uiDropdownComponent.DropdownField.pickingMode);
-            Assert.AreEqual(!disabled, uiDropdownComponent.DropdownField.enabledSelf);
+            ref UIInputComponent uiInputComponent = ref world.Get<UIInputComponent>(entity);
+            Assert.AreEqual(disabled ? PickingMode.Ignore : PickingMode.Position, uiInputComponent.TextField.pickingMode);
+            Assert.AreEqual(!disabled, uiInputComponent.TextField.enabledSelf);
         }
 
         [Test]
-        public void UpdateUIDropdownSelectedIndex()
+        public void UpdateUIInputTransformDefaultsWhenDirty()
         {
             // Arrange
-            ref UIDropdownComponent uiDropdownComponent = ref world.Get<UIDropdownComponent>(entity);
-            input.SelectedIndex = 1;
-            input.IsDirty = true;
-
-            // Act
+            var input = new PBUiInput();
+            world.Add(entity, input);
             system.Update(0);
 
-            // Assert
-            Assert.AreEqual(1, uiDropdownComponent.LastIndexSetByScene);
-            Assert.AreEqual("TestOption2", uiDropdownComponent.DropdownField.value);
-        }
-
-        [Test]
-        public void NotReapplySelectedIndexWhenUnchanged()
-        {
-            // Arrange - first update sets the index
-            ref UIDropdownComponent uiDropdownComponent = ref world.Get<UIDropdownComponent>(entity);
-            input.SelectedIndex = 2;
-            input.IsDirty = true;
-            system.Update(0);
-
-            // Act - second update with same index should not change value
-            input.IsDirty = true;
-            system.Update(0);
-
-            // Assert
-            Assert.AreEqual(2, uiDropdownComponent.LastIndexSetByScene);
-            Assert.AreEqual("TestOption3", uiDropdownComponent.DropdownField.value);
-        }
-
-        [Test]
-        public void UpdateUIDropdownTransformDefaultsWhenDirty()
-        {
-            // Arrange - modify PBUiTransform to be dirty
             ref PBUiTransform pbUiTransform = ref world.Get<PBUiTransform>(entity);
             pbUiTransform.IsDirty = true;
 
@@ -203,37 +201,45 @@ namespace DCL.SDKComponents.SceneUI.Tests
         }
 
         [Test]
-        public void TriggerDropdownResults()
+        [TestCase(true)]
+        [TestCase(false)]
+        public void TriggerInputResults(bool isSubmit)
         {
             // Arrange
-            input.IsDirty = true;
+            const string TEST_VALUE = "Test text";
+            var input = new PBUiInput
+            {
+                Value = TEST_VALUE,
+                IsDirty = true,
+            };
+            world.Add(entity, input);
             system.Update(0);
-            const int TEST_INDEX = 1;
-            ref UIDropdownComponent uiDropdownComponent = ref world.Get<UIDropdownComponent>(entity);
-            uiDropdownComponent.DropdownField.index = TEST_INDEX;
-            uiDropdownComponent.IsOnValueChangedTriggered = true;
-            system.Update(0);
+
+            ref UIInputComponent uiInputComponent = ref world.Get<UIInputComponent>(entity);
+            uiInputComponent.IsOnValueChangedTriggered = !isSubmit;
+            uiInputComponent.IsOnSubmitTriggered = isSubmit;
 
             // Act
             system.Update(0);
 
             // Assert
-            ecsToCRDTWriter.Received(1).PutMessage(Arg.Any<Action<PBUiDropdownResult, int>>(), Arg.Any<CRDTEntity>(), TEST_INDEX);
-            Assert.IsFalse(uiDropdownComponent.IsOnValueChangedTriggered);
+            ecsToCRDTWriter.Received(1).PutMessage(Arg.Any<Action<PBUiInputResult, (bool, string)>>(), Arg.Any<CRDTEntity>(), (isSubmit, TEST_VALUE));
+            Assert.IsFalse(uiInputComponent.IsOnValueChangedTriggered);
+            Assert.IsFalse(uiInputComponent.IsOnSubmitTriggered);
         }
 
         [Test]
         public void RequestFontWhenFontSrcIsSet()
         {
-            input.FontSrc = "Roboto";
-            input.IsDirty = true;
+            var input = new PBUiInput { FontSrc = "fonts/Roboto.ttf", IsDirty = true };
+            world.Add(entity, input);
 
             system.Update(0);
 
-            ref UIDropdownComponent uiDropdownComponent = ref world.Get<UIDropdownComponent>(entity);
-            Assert.That(uiDropdownComponent.FontRequest.Src, Is.EqualTo("Roboto"));
-            Assert.That(uiDropdownComponent.FontRequest.Promise, Is.Not.Null);
-            Assert.That(world.Get<GetFontIntention>(uiDropdownComponent.FontRequest.Promise!.Value.Entity).Kind, Is.EqualTo(FontSourceKind.FontsourceFamily));
+            ref UIInputComponent uiInputComponent = ref world.Get<UIInputComponent>(entity);
+            Assert.That(uiInputComponent.FontRequest.Src, Is.EqualTo("fonts/Roboto.ttf"));
+            Assert.That(uiInputComponent.FontRequest.Promise, Is.Not.Null);
+            Assert.That(world.Get<GetFontIntention>(uiInputComponent.FontRequest.Promise!.Value.Entity).Src, Is.EqualTo(input.FontSrc));
         }
     }
 }

@@ -12,7 +12,6 @@ namespace ECS.StreamableLoading.Fonts.Tests
     {
         private const string ASSET_NAME = "Liberation";
         private const string FAMILY_NAME = "Liberation Sans";
-        private const int REGULAR_WEIGHT_INDEX = 4;
         private const int BOLD_WEIGHT_INDEX = 7;
 
         private static readonly string NOT_A_FONT_PATH = Path.Combine(Application.dataPath, "../TestResources/CRDT/arraybuffer.test");
@@ -38,7 +37,7 @@ namespace ECS.StreamableLoading.Fonts.Tests
         [Test]
         public void BuildBothAssetsFromTheRegularFace()
         {
-            assets = factory.Create(ASSET_NAME, TestFonts.PATH, null, null, null);
+            assets = factory.Create(ASSET_NAME, TestFonts.PATH);
 
             Assert.That(assets, Is.Not.Null);
             Assert.That(assets!.TextMeshProFont.name, Is.EqualTo(ASSET_NAME));
@@ -48,42 +47,17 @@ namespace ECS.StreamableLoading.Fonts.Tests
         }
 
         [Test]
-        public void WireTheVariantsIntoTheWeightTables()
-        {
-            assets = factory.Create(ASSET_NAME, TestFonts.PATH, TestFonts.PATH, TestFonts.PATH, TestFonts.PATH);
-
-            TMP_FontWeightPair[] textMeshProTable = assets!.TextMeshProFont.fontWeightTable;
-            Assert.That(textMeshProTable[BOLD_WEIGHT_INDEX].regularTypeface.name, Is.EqualTo($"{ASSET_NAME} {FontVariant.Bold}"));
-            Assert.That(textMeshProTable[REGULAR_WEIGHT_INDEX].italicTypeface.name, Is.EqualTo($"{ASSET_NAME} {FontVariant.Italic}"));
-            Assert.That(textMeshProTable[BOLD_WEIGHT_INDEX].italicTypeface.name, Is.EqualTo($"{ASSET_NAME} {FontVariant.BoldItalic}"));
-
-            FontWeightPair[] uiToolkitTable = assets.UIToolkitFont.fontWeightTable;
-            Assert.That(uiToolkitTable[BOLD_WEIGHT_INDEX].regularTypeface.name, Is.EqualTo($"{ASSET_NAME} {FontVariant.Bold}"));
-            Assert.That(uiToolkitTable[REGULAR_WEIGHT_INDEX].italicTypeface.name, Is.EqualTo($"{ASSET_NAME} {FontVariant.Italic}"));
-            Assert.That(uiToolkitTable[BOLD_WEIGHT_INDEX].italicTypeface.name, Is.EqualTo($"{ASSET_NAME} {FontVariant.BoldItalic}"));
-        }
-
-        [Test]
         public void BuildNothingWhenTheRegularFaceIsNotAFont()
         {
-            assets = factory.Create(ASSET_NAME, NOT_A_FONT_PATH, null, null, null);
+            assets = factory.Create(ASSET_NAME, NOT_A_FONT_PATH);
 
             Assert.That(assets, Is.Null);
         }
 
         [Test]
-        public void KeepTheRegularFaceWhenAVariantIsNotAFont()
-        {
-            assets = factory.Create(ASSET_NAME, TestFonts.PATH, NOT_A_FONT_PATH, null, null);
-
-            Assert.That(assets, Is.Not.Null);
-            Assert.That(assets!.TextMeshProFont.fontWeightTable[BOLD_WEIGHT_INDEX].regularTypeface, Is.Null);
-        }
-
-        [Test]
         public void TakeTheMaterialAndFallbackFromTheReferenceFont()
         {
-            assets = factory.Create(ASSET_NAME, TestFonts.PATH, null, null, null);
+            assets = factory.Create(ASSET_NAME, TestFonts.PATH);
 
             TMP_FontAsset font = assets!.TextMeshProFont;
             Assert.That(font.material, Is.Not.SameAs(referenceFont.material));
@@ -96,9 +70,8 @@ namespace ECS.StreamableLoading.Fonts.Tests
         [Test]
         public void DestroyEveryAssetItOwns()
         {
-            assets = factory.Create(ASSET_NAME, TestFonts.PATH, TestFonts.PATH, null, null);
+            assets = factory.Create(ASSET_NAME, TestFonts.PATH);
             TMP_FontAsset regular = assets!.TextMeshProFont;
-            TMP_FontAsset bold = regular.fontWeightTable[BOLD_WEIGHT_INDEX].regularTypeface;
             Material material = regular.material;
             FontAsset uiToolkitRegular = assets.UIToolkitFont;
 
@@ -106,7 +79,6 @@ namespace ECS.StreamableLoading.Fonts.Tests
             assets = null;
 
             Assert.That(regular == null, Is.True);
-            Assert.That(bold == null, Is.True);
             Assert.That(material == null, Is.True);
             Assert.That(uiToolkitRegular == null, Is.True);
         }

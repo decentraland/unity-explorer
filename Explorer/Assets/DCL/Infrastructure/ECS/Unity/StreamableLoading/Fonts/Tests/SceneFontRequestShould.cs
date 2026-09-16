@@ -17,7 +17,7 @@ namespace ECS.StreamableLoading.Fonts.Tests
     [TestFixture]
     public class SceneFontRequestShould
     {
-        private const string FAMILY_SRC = "Roboto";
+        private const string OTHER_FILE_SRC = "fonts/Roboto.ttf";
         private const string FILE_SRC = "fonts/Lobster-Regular.ttf";
 
         private World world = null!;
@@ -31,10 +31,17 @@ namespace ECS.StreamableLoading.Fonts.Tests
             world = World.Create();
             sceneData = Substitute.For<ISceneData>();
 
-            sceneData.TryGetMediaUrl(FILE_SRC, out Arg.Any<URLAddress>())
+            sceneData.TryGetContentUrl(FILE_SRC, out Arg.Any<URLAddress>())
                      .Returns(x =>
                       {
                           x[1] = URLAddress.FromString("https://peer.decentraland.org/content/contents/bafyfont");
+                          return true;
+                      });
+
+            sceneData.TryGetContentUrl(OTHER_FILE_SRC, out Arg.Any<URLAddress>())
+                     .Returns(x =>
+                      {
+                          x[1] = URLAddress.FromString("https://peer.decentraland.org/content/contents/otherfont");
                           return true;
                       });
 
@@ -51,14 +58,14 @@ namespace ECS.StreamableLoading.Fonts.Tests
         [Test]
         public void CreateAPromiseWhenTheSourceResolves()
         {
-            bool updated = Update(FAMILY_SRC);
+            bool updated = Update(OTHER_FILE_SRC);
 
             Assert.That(updated, Is.True);
-            Assert.That(request.Src, Is.EqualTo(FAMILY_SRC));
+            Assert.That(request.Src, Is.EqualTo(OTHER_FILE_SRC));
             Assert.That(request.Promise, Is.Not.Null);
             Entity promiseEntity = request.Promise!.Value.Entity;
             Assert.That(world.IsAlive(promiseEntity), Is.True);
-            Assert.That(world.Get<GetFontIntention>(promiseEntity).Kind, Is.EqualTo(FontSourceKind.FontsourceFamily));
+            Assert.That(world.Get<GetFontIntention>(promiseEntity).Src, Is.EqualTo(OTHER_FILE_SRC));
         }
 
         [TestCase(null)]
@@ -108,10 +115,10 @@ namespace ECS.StreamableLoading.Fonts.Tests
         [Test]
         public void KeepThePromiseForTheSameSource()
         {
-            Update(FAMILY_SRC);
+            Update(OTHER_FILE_SRC);
             Entity promiseEntity = request.Promise!.Value.Entity;
 
-            bool updated = Update(FAMILY_SRC);
+            bool updated = Update(OTHER_FILE_SRC);
 
             Assert.That(updated, Is.False);
             Assert.That(request.Promise!.Value.Entity, Is.EqualTo(promiseEntity));
@@ -120,7 +127,7 @@ namespace ECS.StreamableLoading.Fonts.Tests
         [Test]
         public void ReplaceThePromiseWhenTheSourceChanges()
         {
-            Update(FAMILY_SRC);
+            Update(OTHER_FILE_SRC);
             Entity firstPromiseEntity = request.Promise!.Value.Entity;
 
             bool updated = Update(FILE_SRC);
@@ -128,13 +135,13 @@ namespace ECS.StreamableLoading.Fonts.Tests
             Assert.That(updated, Is.True);
             Assert.That(world.IsAlive(firstPromiseEntity), Is.False);
             Assert.That(request.Src, Is.EqualTo(FILE_SRC));
-            Assert.That(world.Get<GetFontIntention>(request.Promise!.Value.Entity).Kind, Is.EqualTo(FontSourceKind.File));
+            Assert.That(world.Get<GetFontIntention>(request.Promise!.Value.Entity).Src, Is.EqualTo(FILE_SRC));
         }
 
         [Test]
         public void ConsumeNothingWhileTheLoadIsPending()
         {
-            Update(FAMILY_SRC);
+            Update(OTHER_FILE_SRC);
 
             bool consumed = request.TryConsume(world, out FontFamilyAssets? _);
 
@@ -144,7 +151,7 @@ namespace ECS.StreamableLoading.Fonts.Tests
         [Test]
         public void ConsumeTheLoadedFamilyOnce()
         {
-            Update(FAMILY_SRC);
+            Update(OTHER_FILE_SRC);
             family = CreateFamily();
             var data = new FontData(family);
             ((IStreamableRefCountData)data).AddReference();
@@ -162,7 +169,7 @@ namespace ECS.StreamableLoading.Fonts.Tests
         [Test]
         public void ConsumeAFailedLoadAsNoFamily()
         {
-            Update(FAMILY_SRC);
+            Update(OTHER_FILE_SRC);
             world.Add(request.Promise!.Value.Entity, new StreamableLoadingResult<FontData>(ReportData.UNSPECIFIED, new FontLoadException("test")));
 
             bool consumed = request.TryConsume(world, out FontFamilyAssets? assets);
@@ -174,7 +181,7 @@ namespace ECS.StreamableLoading.Fonts.Tests
         [Test]
         public void CancelThePendingLoadOnRelease()
         {
-            Update(FAMILY_SRC);
+            Update(OTHER_FILE_SRC);
             Entity promiseEntity = request.Promise!.Value.Entity;
             CancellationToken ct = world.Get<GetFontIntention>(promiseEntity).CommonArguments.CancellationToken;
 
@@ -189,10 +196,10 @@ namespace ECS.StreamableLoading.Fonts.Tests
         [Test]
         public void StartOverAfterRelease()
         {
-            Update(FAMILY_SRC);
+            Update(OTHER_FILE_SRC);
             request.Release(world);
 
-            bool updated = Update(FAMILY_SRC);
+            bool updated = Update(OTHER_FILE_SRC);
 
             Assert.That(updated, Is.True);
             Assert.That(request.Promise, Is.Not.Null);
