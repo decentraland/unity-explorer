@@ -6,7 +6,6 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
-using DCL.Web3.Identities;
 using Global.AppArgs;
 using SceneRunner.Debugging;
 using System.Threading;
@@ -53,7 +52,7 @@ namespace Global.Dynamic
             PluginSettingsContainer pluginSettingsContainer, IAnalyticsController analyticsController,
             CancellationToken ct);
 
-        public UniTask InitializeFeatureFlagsAsync(IWeb3Identity? identity, IDecentralandUrlsSource decentralandUrlsSource, CancellationToken ct);
+        public UniTask InitializeFeatureFlagsAsync(IDecentralandUrlsSource decentralandUrlsSource, CancellationToken ct);
 
         void InitializePlayerEntity(StaticContainer staticContainer, Entity playerEntity);
 
