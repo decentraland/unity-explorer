@@ -27,22 +27,19 @@ namespace ECS.StreamableLoading.Fonts
 
         public FontFamilyAssets? Create(string assetName, string filePath)
         {
-            var textMeshProAssets = new List<TMP_FontAsset>(1);
-            var uiToolkitAssets = new List<FontAsset>(1);
-
-            TMP_FontAsset? textMeshProRegular = CreateTextMeshProAsset(assetName, filePath, textMeshProAssets);
-            FontAsset? uiToolkitRegular = CreateUIToolkitAsset(assetName, filePath, uiToolkitAssets);
+            TMP_FontAsset? textMeshProRegular = CreateTextMeshProAsset(assetName, filePath);
+            FontAsset? uiToolkitRegular = CreateUIToolkitAsset(assetName, filePath);
 
             if (textMeshProRegular == null || uiToolkitRegular == null)
             {
-                FontFamilyAssets.Destroy(textMeshProAssets, uiToolkitAssets);
+                FontFamilyAssets.Destroy(textMeshProRegular, uiToolkitRegular);
                 return null;
             }
 
-            return new FontFamilyAssets(textMeshProRegular, uiToolkitRegular, textMeshProAssets, uiToolkitAssets);
+            return new FontFamilyAssets(textMeshProRegular, uiToolkitRegular);
         }
 
-        private TMP_FontAsset? CreateTextMeshProAsset(string name, string filePath, List<TMP_FontAsset> owned)
+        private TMP_FontAsset? CreateTextMeshProAsset(string name, string filePath)
         {
             TMP_FontAsset? asset = TMP_FontAsset.CreateFontAsset(filePath, 0, SAMPLING_POINT_SIZE, ATLAS_PADDING, RENDER_MODE, ATLAS_SIZE, ATLAS_SIZE);
 
@@ -50,7 +47,6 @@ namespace ECS.StreamableLoading.Fonts
                 return null;
 
             asset.name = name;
-            owned.Add(asset);
 
             // CreateFontAsset looks up "TextMeshPro/Mobile/Distance Field" by name: that shader is in the always-included list
             Material generated = asset.material;
@@ -72,7 +68,7 @@ namespace ECS.StreamableLoading.Fonts
             return asset;
         }
 
-        private static FontAsset? CreateUIToolkitAsset(string name, string filePath, List<FontAsset> owned)
+        private static FontAsset? CreateUIToolkitAsset(string name, string filePath)
         {
             FontAsset? asset = FontAsset.CreateFontAsset(filePath, 0, SAMPLING_POINT_SIZE, ATLAS_PADDING, RENDER_MODE, ATLAS_SIZE, ATLAS_SIZE);
 
@@ -80,7 +76,6 @@ namespace ECS.StreamableLoading.Fonts
                 return null;
 
             asset.name = name;
-            owned.Add(asset);
             return asset;
         }
     }
