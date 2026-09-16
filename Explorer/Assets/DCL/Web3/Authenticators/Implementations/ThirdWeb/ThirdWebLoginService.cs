@@ -24,7 +24,6 @@ namespace DCL.Web3.Authenticators
 
         private readonly IWeb3AccountFactory web3AccountFactory;
         private readonly int? identityExpirationDuration;
-        private readonly string? guestSessionIdOverride;
         public IThirdwebWallet? ActiveWallet { get; private set; }
         private InAppWallet? pendingWallet;
         private InAppWallet? pendingLinkWallet;
@@ -38,13 +37,11 @@ namespace DCL.Web3.Authenticators
 
         private static string storageDirectoryPath => Path.Combine(Application.persistentDataPath, "Thirdweb", "EcosystemWallet");
 
-        public ThirdWebLoginService(ThirdwebClient client, IWeb3AccountFactory web3AccountFactory, int? identityExpirationDuration = null,
-            string? guestSessionIdOverride = null)
+        public ThirdWebLoginService(ThirdwebClient client, IWeb3AccountFactory web3AccountFactory, int? identityExpirationDuration = null)
         {
             this.web3AccountFactory = web3AccountFactory;
             this.client = client;
             this.identityExpirationDuration = identityExpirationDuration;
-            this.guestSessionIdOverride = guestSessionIdOverride;
         }
 
         public async UniTask<bool> TryAutoLoginAsync(CancellationToken ct)
@@ -223,14 +220,13 @@ namespace DCL.Web3.Authenticators
                        .AttachExternalCancellation(ct);
 
         private UniTask<string> LoginWithGuestAsync(InAppWallet wallet, CancellationToken ct) =>
-            wallet.LoginWithGuest(GuestSessionIdProvider.Resolve(guestSessionIdOverride))
+            wallet.LoginWithGuest(GuestSessionIdProvider.Resolve())
                   .AsUniTask()
                   .AttachExternalCancellation(ct);
 
         /// <summary>
-        ///     The guest session id is derived from the device, so the guest flow keeps resolving the same wallet after
-        ///     the account was upgraded through email linking. Connecting it only proves possession of the device, never
-        ///     ownership of the linked email, so such an account is not signed in here: it needs its OTP.
+        ///     The guest session id is stable per install, so the guest flow keeps resolving the same wallet after
+        ///     the account was upgraded through email linking.
         /// </summary>
         private async UniTask ThrowIfAccountWasUpgradedAsync(InAppWallet wallet, CancellationToken ct)
         {
