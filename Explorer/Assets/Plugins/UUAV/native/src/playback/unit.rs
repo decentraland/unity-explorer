@@ -17,6 +17,7 @@ use crate::video_output::{VideoOutput, VideoTextureView};
 use crate::{AudioOptionsView, ErrorCallback, MediaInfo, UUAVState, VideoSize};
 use std::mem;
 use std::os::raw::c_int;
+use std::sync::Arc;
 
 static NETWORK_INIT: Once = Once::new();
 
@@ -43,6 +44,10 @@ pub(crate) struct UnitControls {
     pub(crate) looping: ControlConsume<bool>,
     /// Desired playback rate, in media seconds per wall second.
     pub(crate) rate: ControlConsume<f64>,
+    /// Coalescing seek command; the playback thread services it. Shared
+    /// with the player so a target requested while the media was still
+    /// opening is applied before the first packet is read.
+    pub(crate) seek: Arc<AtomicSeekSlot>,
 }
 
 /// Playback of a single url: the shared state the engine-facing threads
@@ -53,8 +58,6 @@ pub(crate) struct UnitControls {
 pub(crate) struct PlaybackUnit {
     url: String,
     cancel: ReadOnlyCancelToken,
-    /// Coalescing seek command; the playback thread services it.
-    seek: AtomicSeekSlot,
     controls: UnitControls,
     /// Playback state and media clock, as one atomic snapshot.
     transport: AtomicTransport,
@@ -204,7 +207,6 @@ impl PlaybackUnit {
             video_size,
             media_info,
             cancel,
-            seek: AtomicSeekSlot::new(),
             controls,
             transport: AtomicTransport::new(),
             audio: audio_reader,
@@ -275,7 +277,7 @@ impl PlaybackUnit {
                 applied_rate = rate;
             }
 
-            if let Some(target) = self.seek.take() {
+            if let Some(target) = self.controls.seek.take() {
                 if unrouted {
                     // belongs to the pre-seek position
                     packet.unref();
@@ -463,14 +465,10 @@ impl PlaybackUnit {
             PlaybackState::Playing => return,
             PlaybackState::Ended => {
                 // restart from the beginning
-                self.seek.request(0.0);
+                self.controls.seek.request(0.0);
             }
         }
         self.transport.play();
-    }
-
-    pub(crate) fn seek_intent(&self, time: f64) {
-        self.seek.request(time.max(0.0));
     }
 
     pub(crate) const fn duration(&self) -> Option<f64> {

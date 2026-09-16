@@ -8,7 +8,7 @@ use crossbeam_channel::{Receiver, Sender, TrySendError, bounded};
 use crate::ffutil::StreamingProtocol;
 use crate::hw_device::HwDevice;
 use crate::playback::{
-    AudioTelemetry, CancelToken, ControlPush, DEFAULT_PLAYBACK_RATE, PlaybackUnit,
+    AtomicSeekSlot, AudioTelemetry, CancelToken, ControlPush, DEFAULT_PLAYBACK_RATE, PlaybackUnit,
     ReadOnlyCancelToken, SharedAudioTelemetry, UnitControls, fill_silence,
 };
 use crate::video_output::VideoTextureView;
@@ -43,6 +43,7 @@ pub(crate) struct UUAVPlayer {
     play_control: ControlPush<bool>,
     looping_control: ControlPush<bool>,
     rate_control: ControlPush<f64>,
+    seek_control_per_active: Arc<AtomicSeekSlot>,
     sender_open_intent: Sender<OpenIntent>,
     receiver_open_intent: Receiver<OpenIntent>,
     last_cancel_token: Option<CancelToken>,
@@ -70,6 +71,7 @@ impl UUAVPlayer {
         let play_control = ControlPush::new(false);
         let looping_control = ControlPush::new(false);
         let rate_control = ControlPush::new(DEFAULT_PLAYBACK_RATE);
+        let seek_control_per_active = Arc::new(AtomicSeekSlot::new());
         let audio_telemetry: SharedAudioTelemetry = Arc::new(AudioTelemetry::default());
 
         let spawned = thread::Builder::new()
@@ -81,6 +83,7 @@ impl UUAVPlayer {
                 let play_or_pause = play_control.consumer();
                 let looping = looping_control.consumer();
                 let rate = rate_control.consumer();
+                let seek = Arc::clone(&seek_control_per_active);
                 let audio_telemetry = audio_telemetry.clone();
 
                 move || {
@@ -98,6 +101,7 @@ impl UUAVPlayer {
                                 play_or_pause: play_or_pause.clone(),
                                 looping: looping.clone(),
                                 rate: rate.clone(),
+                                seek: Arc::clone(&seek),
                             },
                             audio_telemetry.clone(),
                         ) {
@@ -132,6 +136,7 @@ impl UUAVPlayer {
                 play_control,
                 looping_control,
                 rate_control,
+                seek_control_per_active,
                 sender_open_intent,
                 receiver_open_intent,
                 last_cancel_token: None,
@@ -175,6 +180,8 @@ impl UUAVPlayer {
     pub(crate) fn close_media(&mut self) {
         // Prevent unrequired autoplay on open_media
         self.play_control.push(false);
+        // a target requested for this media must not apply to the next one
+        self.seek_control_per_active.clear();
 
         if let Some(cancel_token) = self.last_cancel_token.take() {
             cancel_token.cancel();
@@ -242,10 +249,19 @@ impl UUAVPlayer {
         self.rate_control.latest()
     }
 
-    // not blocking
+    /// Not blocking. Coalesces repeated calls; a target requested while the
+    /// media is still opening is applied once it is open, before the first
+    /// packet is read. Fails only while no media is open at all.
     pub(crate) fn seek_intent(&self, time: f64) -> Result<()> {
-        self.active_unit()?.seek_intent(time);
-        Ok(())
+        match self.playback.load().as_ref() {
+            Playback::Opening | Playback::Active(_) => {
+                self.seek_control_per_active.request(time.max(0.0));
+                Ok(())
+            }
+            Playback::Closed | Playback::Failed => {
+                Err(anyhow!("no media open: {:?}", self.state()))
+            }
+        }
     }
 
     pub(crate) fn state(&self) -> UUAVState {
