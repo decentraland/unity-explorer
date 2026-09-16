@@ -225,9 +225,8 @@ namespace DCL.Web3.Authenticators
                   .AttachExternalCancellation(ct);
 
         /// <summary>
-        ///     The guest session id is derived from the device, so the guest flow keeps resolving the same wallet after
-        ///     the account was upgraded through email linking. Connecting it only proves possession of the device, never
-        ///     ownership of the linked email, so such an account is not signed in here: it needs its OTP.
+        ///     The guest session id is stable per install, so the guest flow keeps resolving the same wallet after
+        ///     the account was upgraded through email linking.
         /// </summary>
         private async UniTask ThrowIfAccountWasUpgradedAsync(InAppWallet wallet, CancellationToken ct)
         {
