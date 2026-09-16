@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
@@ -9,12 +8,7 @@ namespace DCL.Quality
 {
     public class RendererFeaturesCache : IRendererFeaturesCache
     {
-        /// <summary>
-        ///     Renderer Features are not exposed in the API, so we need to use reflection to access them.
-        /// </summary>
-        private static readonly PropertyInfo RENDERER_FEATURES_PROPERTY = typeof(ScriptableRenderer).GetProperty("rendererFeatures", BindingFlags.Instance | BindingFlags.NonPublic)!;
-
-        private readonly Dictionary<Type, ScriptableRendererFeature> cache = new (10);
+        private readonly Dictionary<Type, ScriptableRendererFeature?> cache = new (10);
 
         public RendererFeaturesCache()
         {
@@ -30,16 +24,33 @@ namespace DCL.Quality
         public T? GetRendererFeature<T>() where T: ScriptableRendererFeature
         {
             if (cache.TryGetValue(typeof(T), out ScriptableRendererFeature? feature))
-                return (T)feature;
+                return (T?)feature;
 
             var asset = (UniversalRenderPipelineAsset)GraphicsSettings.currentRenderPipeline;
             if (!asset) return null;
 
-            ScriptableRenderer pipeline = asset.scriptableRenderer!;
+            // Read the serialized renderer data, not `asset.scriptableRenderer`: that getter lazily constructs the renderer and
+            // calls `Create()` on every feature, which URP forbids until a pipeline instance exists (UUM-44048) and which NREs
+            // when the first frame has not been rendered yet.
+            feature = FindFeature<T>(asset.rendererDataList);
+            cache[typeof(T)] = feature;
+            return (T?)feature;
+        }
 
-            var features = (List<ScriptableRendererFeature>)RENDERER_FEATURES_PROPERTY.GetValue(pipeline)!;
-            cache[typeof(T)] = feature = features.Find(f => f is T);
-            return (T)feature;
+        private static T? FindFeature<T>(ReadOnlySpan<ScriptableRendererData> rendererDataList) where T: ScriptableRendererFeature
+        {
+            foreach (ScriptableRendererData? rendererData in rendererDataList)
+            {
+                if (!rendererData) continue;
+
+                List<ScriptableRendererFeature> features = rendererData!.rendererFeatures;
+
+                for (var i = 0; i < features.Count; i++)
+                    if (features[i] is T feature)
+                        return feature;
+            }
+
+            return null;
         }
 
         private void OnQualityLevelChanged(int from, int to)
