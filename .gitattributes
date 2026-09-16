@@ -71,3 +71,5 @@ Explorer/Assets/*.rsp text eol=lf
 # fail them with "$'\r': command not found" (seen on every Windows cloud build
 # running the UBA preBuildScript).
 *.sh text eol=lf
+
+Explorer/Assets/StreamingAssets/Js/sdk6-adapter.min.js -text
