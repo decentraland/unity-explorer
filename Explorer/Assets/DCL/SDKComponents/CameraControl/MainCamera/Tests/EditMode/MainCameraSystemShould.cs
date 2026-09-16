@@ -511,6 +511,32 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
             GameObject.DestroyImmediate(sdkCinemachineCam.gameObject);
         }
 
+        [Test]
+        public void ApplyVirtualCameraWhenBrainHasNoActiveCamera()
+        {
+            sceneStateProvider.IsCurrent.Returns(true);
+
+            // No live vCam on the brain (scene load, blend or transition in progress)
+            defaultCinemachineCam.enabled = false;
+            cinemachineBrain.ManualUpdate();
+            ICinemachineCamera? noActiveVirtualCamera = cinemachineBrain.ActiveVirtualCamera;
+            Assert.IsNull(noActiveVirtualCamera);
+
+            var pbMainCameraComponent = new PBMainCamera { VirtualCameraEntity = (uint)world.Get<CRDTEntity>(virtualCameraEntity1).Id };
+            world.Set(mainCameraEntity, pbMainCameraComponent);
+
+            SystemUpdate();
+
+            MainCameraComponent mainCameraComponent = world.Get<MainCameraComponent>(mainCameraEntity);
+            Assert.AreEqual(world.Get<CRDTEntity>(virtualCameraEntity1).Id, mainCameraComponent.virtualCameraCRDTEntity!.Value.Id);
+            Assert.AreSame(sdkCinemachineCam1, mainCameraComponent.virtualCameraInstance);
+            Assert.IsTrue(sdkCinemachineCam1.enabled);
+
+            ICinemachineCamera activeVirtualCamera = cinemachineBrain.ActiveVirtualCamera;
+            Assert.IsNotNull(activeVirtualCamera);
+            Assert.AreSame(sdkCinemachineCam1.gameObject, activeVirtualCamera.VirtualCameraGameObject);
+        }
+
         private void SystemUpdate()
         {
             system!.Update(1f);

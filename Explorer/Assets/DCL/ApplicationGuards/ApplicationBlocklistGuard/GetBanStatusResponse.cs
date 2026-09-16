@@ -2,10 +2,12 @@
 
 namespace DCL.ApplicationGuards
 {
+    // Server schema: decentraland/comms-gatekeeper src/controllers/handlers/user-moderation/ban-status-handler.ts#/BanStatusResponse
+    // (the 200 body is a { data } envelope; UNITY-EXPLORER-PW7 observed data missing, so it is declared optional)
     [Serializable]
     public class GetBanStatusResponse
     {
-        public GetBanStatusData data;
+        public GetBanStatusData? data;
     }
 
     [Serializable]

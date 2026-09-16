@@ -14,7 +14,7 @@ namespace DCL.Ipfs
         public SceneMetadataScene scene;
         public string runtimeVersion;
         public string sdkVersion;
-        public List<string> allowedMediaHostnames;
+        public List<string> allowedMediaHostnames = new ();
         public List<string> requiredPermissions = new ();
         public List<SpawnPoint>? spawnPoints;
         public bool isPortableExperience;

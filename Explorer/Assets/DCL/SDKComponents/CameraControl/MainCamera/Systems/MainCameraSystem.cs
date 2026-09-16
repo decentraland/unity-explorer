@@ -84,13 +84,14 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
             bool hasPreviousVirtualCamera = previousVirtualCamera != null && previousVirtualCamera.enabled;
             if (virtualCameraCRDTEntity.HasValue)
             {
-                Vector3 cinemachineCurrentActiveCamPos = cameraData.CinemachineBrain!.ActiveVirtualCamera.VirtualCameraGameObject.transform.position;
+                // Null while the brain has no live camera (e.g. during scene load or a blend in progress)
+                ICinemachineCamera? activeVirtualCamera = cameraData.CinemachineBrain!.ActiveVirtualCamera;
 
                 // It may take more than 1 run to detect the VirtualCamera component on the crdt entity
                 if (!TryApplyVirtualCamera(
                         ref mainCameraComponent,
                         virtualCameraCRDTEntity.Value,
-                        hasPreviousVirtualCamera ? previousVirtualCamera!.transform.position : cinemachineCurrentActiveCamPos))
+                        hasPreviousVirtualCamera ? previousVirtualCamera!.transform.position : activeVirtualCamera?.VirtualCameraGameObject.transform.position))
                     return;
 
                 // virtualCameraCRDTEntity assigned only after successfully applying it, so that
