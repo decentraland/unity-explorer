@@ -14,7 +14,24 @@ namespace DCL.Quality.Runtime
         public static void ApplyMsaa(MsaaLevel level)
         {
             var urpAsset = (UniversalRenderPipelineAsset)GraphicsSettings.currentRenderPipeline;
-            urpAsset.msaaSampleCount = level.ToSampleCount();
+            int sampleCount = ClampToSupportedSampleCount(level.ToSampleCount());
+
+            urpAsset.msaaSampleCount = sampleCount > 0 ? sampleCount : (int)MsaaQuality.Disabled;
+            QualitySettings.antiAliasing = sampleCount;
+        }
+
+        private static int ClampToSupportedSampleCount(int sampleCount)
+        {
+            if (sampleCount <= 1)
+                return 0;
+
+            var descriptor = new RenderTextureDescriptor(Mathf.Max(Screen.width, 1), Mathf.Max(Screen.height, 1), RenderTextureFormat.Default, 24)
+            {
+                msaaSamples = sampleCount,
+            };
+
+            int supported = SystemInfo.GetRenderTextureSupportedMSAASampleCount(descriptor);
+            return supported > 1 ? supported : 0;
         }
 
         public static void ApplyHdr(bool enabled)
