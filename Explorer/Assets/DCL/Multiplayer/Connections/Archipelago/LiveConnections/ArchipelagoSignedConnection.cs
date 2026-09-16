@@ -2,11 +2,9 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Pools;
-using DCL.Multiplayer.Connections.Typing;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
 using DCL.Web3.Identities;
-using DCL.WebRequests;
 using Decentraland.Kernel.Comms.V3;
 using LiveKit.client_sdk_unity.Runtime.Scripts.Internal.FFIClients;
 using LiveKit.Internal.FFIClients.Pools;
@@ -207,7 +205,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
             catch (Exception e) { return Result<string>.ErrorResult($"Cannot sign message for welcome peer id: {e}"); }
 
             ReportHub.Log(ReportCategory.COMMS_SCENE_HANDLER, $"Signed message: {signedMessage}");
-            return await ExecuteHandshakeAsync(signedMessage, token);
+            return await ExecuteHandshakeAsync(signedMessage, generation, token);
         }
 
         private async UniTask<Result<string>> MessageForSignAsync(string ethereumAddress, CancellationToken token)
@@ -245,8 +243,9 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
             return result;
         }
 
-        private async UniTask<Result<string>> ExecuteHandshakeAsync(string signedMessageAuthChainJson, CancellationToken token)
+        private async UniTask<Result<string>> ExecuteHandshakeAsync(string signedMessageAuthChainJson, int generation, CancellationToken token)
         {
+            int socketGeneration = DCLVolatile.Read(ref transportGeneration);
             try
             {
                 using SmartWrap<SignedChallengeMessage> signedMessage = multiPool.TempResource<SignedChallengeMessage>();
@@ -256,31 +255,38 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
                 clientPacket.value.ClearMessage();
                 clientPacket.value.SignedChallenge = signedMessage.value;
 
-                var linkedToken = CancellationTokenSource.CreateLinkedTokenSource(new CancellationTokenSource().Token, token);
+                // Consume the receive result even if socket state changes before its queued frame completes.
+                EnumResult<MemoryWrap, IArchipelagoLiveConnection.ResponseError> result =
+                    await origin.SendAndReceiveAsync(clientPacket.value, memoryPool, token);
 
-                (bool hasResultLeft, EnumResult<MemoryWrap, IArchipelagoLiveConnection.ResponseError> result) result = await UniTask.WhenAny(
-                    origin.SendAndReceiveAsync(clientPacket.value, memoryPool, linkedToken.Token),
-                    origin.WaitDisconnectAsync(linkedToken.Token)
-                );
+                if (!result.Success)
+                    return Result<string>.ErrorResult($"{nameof(ExecuteHandshakeAsync)}: {result.Error?.Message}");
 
-                linkedToken.Cancel();
+                using MemoryWrap response = result.Value;
+                if (!session.CanListen(generation) || socketGeneration != DCLVolatile.Read(ref transportGeneration))
+                    return Result<string>.ErrorResult("Stale handshake response");
 
-                if (result.hasResultLeft)
+                using var serverPacket = new SmartWrap<ServerPacket>(response.AsMessageServerPacket(), multiPool);
+                switch (serverPacket.value.MessageCase)
                 {
-                    if (result.result.Success == false)
-                        return Result<string>.ErrorResult($"{nameof(ExecuteHandshakeAsync)}: {result.result.Error?.Message}");
-
-                    ;
-
-                    using MemoryWrap response = result.result.Value;
-                    using var serverPacket = new SmartWrap<ServerPacket>(response.AsMessageServerPacket(), multiPool);
-                    using var welcomeMessage = new SmartWrap<WelcomeMessage>(serverPacket.value.Welcome!, multiPool);
-                    return Result<string>.SuccessResult(welcomeMessage.value.PeerId);
+                    case ServerPacket.MessageOneofCase.Welcome:
+                        using (var welcomeMessage = new SmartWrap<WelcomeMessage>(serverPacket.value.Welcome, multiPool))
+                            return Result<string>.SuccessResult(welcomeMessage.value.PeerId);
+                    case ServerPacket.MessageOneofCase.Kicked:
+                        SessionControl.Status status = serverPacket.value.Kicked.Reason switch
+                        {
+                            KickedReason.KrBanned => SessionControl.Status.Banned,
+                            KickedReason.KrNewSession => SessionControl.Status.Superseded,
+                            _ => SessionControl.Status.Unknown,
+                        };
+                        session.Stop(generation, status);
+                        return Result<string>.ErrorResult($"Handshake rejected: {status}");
+                    default:
+                        session.Stop(generation, SessionControl.Status.Unknown);
+                        return Result<string>.ErrorResult($"Unexpected handshake response: {serverPacket.value.MessageCase}");
                 }
-
-                return Result<string>.ErrorResult($"{nameof(ExecuteHandshakeAsync)}: Disconnected during handshake");
             }
-            catch (Exception e) { return Result<string>.ErrorResult($"Cannot welcome peer id for signed message {signedMessageAuthChainJson}: {e}"); }
+            catch (Exception e) { return Result<string>.ErrorResult($"Cannot complete signed handshake: {e}"); }
         }
 
         private bool HandshakePayloadIsValid(string payload)

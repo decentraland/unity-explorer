@@ -1,6 +1,8 @@
 using Cysharp.Threading.Tasks;
 using DCL.Character;
 using DCL.Web3.Identities;
+using DCL.Web3.Accounts.Factory;
+using DCL.Web3.Chains;
 using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.Archipelago.AdapterAddress.Current;
 using DCL.Multiplayer.Connections.Archipelago.LiveConnections;
@@ -25,6 +27,7 @@ using System.Reflection;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.TestTools;
+using Utility.Multithreading;
 
 namespace DCL.Tests.PlayMode
 {
@@ -301,6 +304,74 @@ namespace DCL.Tests.PlayMode
             });
 
 #if UNITY_EDITOR
+        [UnityTest]
+        public IEnumerator ShowAccessDeniedForKickBeforeHandshakeWelcome() =>
+            UniTask.ToCoroutine(async () =>
+            {
+                // Arrange
+                var account = new Web3AccountFactory().CreateRandomAccount();
+                var chain = AuthChain.Create();
+                chain.Set(new AuthLink { type = AuthLinkType.SIGNER, payload = account.Address.ToString(), signature = string.Empty });
+                chain.Set(new AuthLink { type = AuthLinkType.ECDSA_EPHEMERAL, payload = "handshake-test", signature = account.Sign("handshake-test") });
+                using var identity = new DecentralandIdentity(account.Address, account, DateTime.UtcNow.AddHours(1), chain, IWeb3Identity.Web3IdentitySource.Cached);
+                using var cache = new MemoryWeb3IdentityCache();
+                cache.Identity = identity;
+                var session = SessionControl.For(cache);
+                var connected = new Atomic<bool>();
+                connection.IsConnected.Returns(_ => connected.Value());
+                connection.ConnectAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(_ =>
+                {
+                    connected.Set(true);
+                    return UniTask.FromResult(Result.SuccessResult());
+                });
+                connection.DisconnectAsync(Arg.Any<CancellationToken>()).Returns(_ =>
+                {
+                    connected.Set(false);
+                    return UniTask.FromResult(Result.SuccessResult());
+                });
+                var replies = 0;
+                connection.ReceiveAsync(Arg.Any<CancellationToken>()).Returns(_ =>
+                {
+                    ServerPacket packet = replies++ == 0
+                        ? new ServerPacket { ChallengeResponse = new ChallengeResponseMessage { ChallengeToSign = "dcl-ban-ui-test" } }
+                        : new ServerPacket { Kicked = new KickedMessage { Reason = KickedReason.KrBanned } };
+                    MemoryWrap memory = memoryPool.Memory(packet);
+                    packet.WriteTo(memory.Span());
+                    return UniTask.FromResult(EnumResult<MemoryWrap, IArchipelagoLiveConnection.ResponseError>.SuccessResult(memory));
+                });
+                var signed = new ArchipelagoSignedConnection(connection, TimeSpan.Zero, multiPool, memoryPool, cache);
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+
+                // Act
+                Assert.IsFalse((await signed.ConnectAsync(ADAPTER_URL, cts.Token)).Success);
+                Assert.AreEqual(SessionControl.Status.Banned, session.Current);
+                var prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/DCL/UI/DuplicateIdentityPopup/DuplicateIdentityWindow.prefab");
+                var instance = UnityEngine.Object.Instantiate(prefab);
+                var view = instance.GetComponent<UI.DuplicateIdentityPopup.DuplicateIdentityWindowView>();
+                var controller = new UI.DuplicateIdentityPopup.DuplicateIdentityWindowController(() => view, session);
+                UniTask lifecycle = controller.LaunchViewLifeCycleAsync(new MVC.CanvasOrdering(MVC.CanvasOrdering.SortingLayer.Overlay, 0), default, cts.Token);
+                try
+                {
+                    // Assert
+                    Assert.AreEqual("Access denied", view.Title.text);
+                    Assert.AreEqual("EXIT APPLICATION", view.ActionLabel.text);
+                    Assert.IsFalse(session.BeginReauthentication());
+                    Assert.IsFalse((await signed.ConnectAsync(ADAPTER_URL, cts.Token)).Success);
+                    _ = connection.Received(1).ConnectAsync(ADAPTER_URL, Arg.Any<CancellationToken>());
+                    Assert.AreEqual(ClientPacket.MessageOneofCase.ChallengeRequest, sentPackets[0].MessageCase);
+                    Assert.AreEqual(ClientPacket.MessageOneofCase.SignedChallenge, sentPackets[1].MessageCase);
+                    Assert.AreEqual(2, sentPackets.Count);
+                }
+                finally
+                {
+                    cts.Cancel();
+                    await lifecycle.SuppressCancellationThrow();
+                    await controller.HideViewAsync(CancellationToken.None);
+                    controller.Dispose();
+                    UnityEngine.Object.DestroyImmediate(instance);
+                }
+            });
+
         [UnityTest]
         public IEnumerator UpgradeLegacyPopupAndReconnectThroughActualButton() =>
             UniTask.ToCoroutine(async () =>

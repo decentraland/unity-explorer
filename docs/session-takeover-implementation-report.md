@@ -1,5 +1,7 @@
 # Session takeover client implementation
 
+September 16 superseding update: see `handshake-ban-sep16-report.md` for the signed-handshake review fix, PR #490 source/artifact provenance and accepted release-overlap decision. Earlier cross-replica/replay blocker wording below is historical: brief rollout overlap is accepted (not fixed), durable multi-replica architecture is out of scope, and a verified immutable PR-CI protocol snapshot now exists. Consumer pin/build verification and controlled Cloud acceptance remain distinct gates.
+
 ## Scope and plan
 
 Implementation follows `session-takeover-client-plan.md` (September 15 amendment and acceptance matrix). The existing checkout at `E:/Decentraland/unity-explorer` remains on `codex/it2-sep15-unity-explorer`, based on the preserved `d7b949e91a` work. At the start, only `.claude/Library-6.4-pulse-lsd/` was untracked. No additional checkout or Library copy was made.
@@ -102,7 +104,7 @@ The connector owner confirmed final same-session replacement is close-only on th
 
 Cross-repository review must verify exact session targeting, ordered kick-before-close, pending/status replay following lost control and reconnection, and no obsolete Gatekeeper credential issuance. Client tests use deterministic socket/transport doubles; they do not establish real LiveKit Cloud revocation or two-client end-to-end correctness. Cloud next-second cutoff/removal evidence and coordinated server/client release remain required. No push, deployment, publication, CI retry, or remote PR edit is performed here.
 
-Connector candidate `822be713d5c3b52bb65c93d691234c4e7d7b1e95` (report head `4ef5c4c`) records an observed RED cross-replica ordering probe: an older held mint resumed after a newer event and published OLD. Its pending/failed replay and remembered displaced-session checks are replica-local TTL mirrors, not durable ownership authority. Those are server-side release blockers; Unity's generation fences only reject stale local callbacks and cannot repair missing or incorrect authoritative control. Stable server protocol pins, two-client LiveKit Cloud acceptance, CI/review evidence, and undrafting remain external integration gates.
+Historical connector candidate `822be713d5c3b52bb65c93d691234c4e7d7b1e95` (report head `4ef5c4c`) records an observed RED cross-replica ordering probe: an older held mint resumed after a newer event and published OLD. Its pending/failed replay and remembered displaced-session checks are replica-local TTL mirrors, not durable ownership authority. The September 16 decision accepts brief release overlap as a limitation, not a blocker; this evidence remains RED and is not described as fixed. Distributed ownership fencing and durable multi-replica replay are out of scope. Single-process ordering and bounded visible recovery after process loss remain required. A verified immutable PR #490 CI artifact now exists; consumer pin/build verification, two-client LiveKit Cloud acceptance, review evidence and undrafting remain separate gates. See `handshake-ban-sep16-report.md` for exact provenance.
 
 ## Verification cleanup and preserved state
 
