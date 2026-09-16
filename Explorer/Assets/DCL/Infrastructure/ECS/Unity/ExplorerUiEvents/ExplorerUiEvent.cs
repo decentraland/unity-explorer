@@ -19,10 +19,18 @@ namespace ECS.Unity.ExplorerUiEvents
         public readonly ExplorerUi Ui;
         public readonly ExplorerUiEventKind Kind;
 
-        public ExplorerUiEvent(ExplorerUi ui, ExplorerUiEventKind kind)
+        /// <summary>Id of the request that produced this event, 0 when that request carried none.</summary>
+        public readonly uint RequestId;
+
+        /// <summary>Scene tick the event happened on, which is earlier than the tick it is written out on.</summary>
+        public readonly uint Tick;
+
+        public ExplorerUiEvent(ExplorerUi ui, ExplorerUiEventKind kind, uint requestId, uint tick)
         {
             Ui = ui;
             Kind = kind;
+            RequestId = requestId;
+            Tick = tick;
         }
     }
 }

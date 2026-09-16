@@ -96,8 +96,10 @@ namespace DCL.SceneRuntime.Apis.RestrictedActionsApi
             api.TryOpenNftDialog(urn);
 
         [UsedImplicitly]
-        public int OpenExplorerUi(int ui) =>
-            api.TryOpenExplorerUi(ui);
+        public object OpenExplorerUi(int ui, uint requestId) =>
+            // No SafeRestart token here, unlike the siblings: it would cancel the first of two overlapping
+            // calls, which is the call that owes the second one a WasAlreadyOpen answer.
+            api.TryOpenExplorerUiAsync(ui, requestId, disposeCts.Token).ToDisconnectedPromise(this);
 
         [UsedImplicitly]
         public object StopEmote()
@@ -108,10 +110,10 @@ namespace DCL.SceneRuntime.Apis.RestrictedActionsApi
 
             return StopEmoteAsync().ToDisconnectedPromise(this);
 
-            async UniTask StopEmoteAsync()
+            async UniTask<bool> StopEmoteAsync()
             {
                 await UniTask.SwitchToMainThread();
-                api.TryStopEmote();
+                return api.TryStopEmote();
             }
         }
 

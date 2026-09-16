@@ -22,10 +22,11 @@ namespace DCL.SceneRuntime.Apis.RestrictedActionsApi
 
         bool TryOpenNftDialog(string urn);
 
-        int TryOpenExplorerUi(int ui);
+        UniTask<int> TryOpenExplorerUiAsync(int ui, uint requestId, CancellationToken ct);
 
         void TryCopyToClipboard(string text);
 
-        void TryStopEmote();
+        /// <summary>False when the scene is not the current one, so the stop is refused.</summary>
+        bool TryStopEmote();
     }
 }
