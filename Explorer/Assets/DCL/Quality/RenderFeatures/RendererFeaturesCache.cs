@@ -29,9 +29,8 @@ namespace DCL.Quality
             var asset = (UniversalRenderPipelineAsset)GraphicsSettings.currentRenderPipeline;
             if (!asset) return null;
 
-            // Read the serialized renderer data, not `asset.scriptableRenderer`: that getter lazily constructs the renderer and
-            // calls `Create()` on every feature, which URP forbids until a pipeline instance exists (UUM-44048) and which NREs
-            // when the first frame has not been rendered yet.
+            // Reads the serialized renderer data instead of asset.scriptableRenderer, whose getter constructs the renderer
+            // and calls Create() on every feature, which URP forbids before a pipeline instance exists (UUM-44048).
             feature = FindFeature<T>(asset.rendererDataList);
             cache[typeof(T)] = feature;
             return (T?)feature;

@@ -84,7 +84,6 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
             bool hasPreviousVirtualCamera = previousVirtualCamera != null && previousVirtualCamera.enabled;
             if (virtualCameraCRDTEntity.HasValue)
             {
-                // Null while the brain has no live camera (e.g. during scene load or a blend in progress)
                 ICinemachineCamera? activeVirtualCamera = cameraData.CinemachineBrain!.ActiveVirtualCamera;
 
                 // It may take more than 1 run to detect the VirtualCamera component on the crdt entity
@@ -117,7 +116,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
         [None(typeof(DeleteEntityIntention))]
         private void HandleActiveVirtualCameraLookAtChange(CRDTEntity crdtEntity, in PBVirtualCamera pbVirtualCamera, ref VirtualCameraComponent virtualCameraComponent)
         {
-            ICinemachineCamera activeVirtualCamera = cameraData.CinemachineBrain!.ActiveVirtualCamera;
+            ICinemachineCamera? activeVirtualCamera = cameraData.CinemachineBrain!.ActiveVirtualCamera;
             if (activeVirtualCamera == null || activeVirtualCamera.VirtualCameraGameObject != virtualCameraComponent.virtualCameraInstance.gameObject) return;
 
             CRDTEntity? pbVirtualCameraLookAtEntity = VirtualCameraUtils.GetPBVirtualCameraLookAtCRDTEntity(pbVirtualCamera, crdtEntity);

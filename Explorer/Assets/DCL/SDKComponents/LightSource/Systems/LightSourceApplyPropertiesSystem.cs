@@ -93,7 +93,7 @@ namespace DCL.SDKComponents.LightSource.Systems
                     break;
 
                 case PBLightSource.TypeOneofCase.Point:
-                    ApplyPointLight(pbLightSource, lightSourceInstance);
+                    ApplyPointLight(lightSourceInstance);
                     break;
             }
 
@@ -111,7 +111,7 @@ namespace DCL.SDKComponents.LightSource.Systems
                 light.spotAngle = pbLightSource.Spot.OuterAngle;
         }
 
-        private static void ApplyPointLight(PBLightSource pbLightSource, Light light)
+        private static void ApplyPointLight(Light light)
         {
             light.type = LightType.Point;
         }
@@ -189,7 +189,7 @@ namespace DCL.SDKComponents.LightSource.Systems
                     break;
 
                 case LightType.Point:
-                    Cubemap cubemap = MakeCookieCubemap(texture.Asset);
+                    Cubemap? cubemap = texture.Asset != null ? MakeCookieCubemap(texture.Asset) : null;
                     lightSourceComponent.LightSourceInstance.cookie = cubemap;
                     lightSourceComponent.Cookie.PointLightCubemap = cubemap;
                     break;
@@ -200,7 +200,7 @@ namespace DCL.SDKComponents.LightSource.Systems
             }
         }
 
-        private Cubemap MakeCookieCubemap(TextureData source)
+        private Cubemap? MakeCookieCubemap(TextureData source)
         {
             Texture2D texture2d = source.EnsureTexture2D();
 

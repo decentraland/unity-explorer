@@ -5,13 +5,15 @@ using UnityEngine;
 using System.ComponentModel;
 
 // ReSharper disable once CheckNamespace
+// ReSharper disable InconsistentNaming
 namespace DCL.Ipfs
 {
+    // Server schema: decentraland/common-schemas src/platform/scene/scene.ts#/Scene
     [Serializable]
     public class SceneMetadata
     {
-        public string main;
-        public SceneMetadataScene scene;
+        public string main = null!;
+        public SceneMetadataScene scene = null!;
         public string runtimeVersion;
         public string sdkVersion;
         public List<string> allowedMediaHostnames = new ();
@@ -70,7 +72,7 @@ namespace DCL.Ipfs
         }
 
         [JsonIgnore]
-        public string OriginalJson { get; set; }
+        public string OriginalJson { get; set; } = string.Empty;
 
         [Serializable]
         public struct SpawnPoint
@@ -96,6 +98,7 @@ namespace DCL.Ipfs
             /// <summary>
             ///     Coordinates is either a single value or a list of values
             /// </summary>
+            [Serializable]
             [JsonConverter(typeof(SpawnPointCoordinateConverter))]
             public struct Coordinate
             {
