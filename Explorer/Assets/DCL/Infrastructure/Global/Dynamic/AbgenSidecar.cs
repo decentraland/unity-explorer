@@ -515,10 +515,17 @@ namespace Global.Dynamic
             return end > start ? aboutJson[start..end] : null;
         }
 
+        /// <summary>
+        ///     An adopted server belongs to another process, so only a child this instance launched is killed.
+        ///     <see cref="SuperviseAsync" /> clears <see cref="adopted" /> before relaunching, so ownership
+        ///     always matches the flag.
+        /// </summary>
         public void Dispose()
         {
             disposed = true;
-            KillChild();
+
+            if (!adopted)
+                KillChild();
         }
 
         /// <summary>Release target triple and the pinned release's archive sha256 for the current platform; null when unsupported.</summary>
