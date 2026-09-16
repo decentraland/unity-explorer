@@ -83,6 +83,32 @@ pub(crate) struct PlaybackUnit {
     error_callback: ErrorCallback,
 }
 
+/// Picks the video and audio streams to play, each negative when absent.
+/// Audio comes from the video's own program when that program has any
+/// (an HLS variant carries its own audio; mixing programs would make the
+/// demuxer fetch two variants), and from anywhere otherwise.
+fn select_streams(input: &Input) -> (c_int, c_int) {
+    let video_index = input.find_best_stream(ff::AVMediaType::AVMEDIA_TYPE_VIDEO, -1);
+    let mut audio_index = input.find_best_stream(ff::AVMediaType::AVMEDIA_TYPE_AUDIO, video_index);
+    if audio_index < 0 && video_index >= 0 {
+        audio_index = input.find_best_stream(ff::AVMediaType::AVMEDIA_TYPE_AUDIO, -1);
+    }
+    (video_index, audio_index)
+}
+
+/// Drops every stream but the selected ones at the demuxer, before the
+/// first packet is read: an HLS master playlist otherwise keeps
+/// downloading and demuxing every variant for the whole playback.
+fn discard_unselected_streams(input: &Input, video_index: c_int, audio_index: c_int) {
+    for index in 0..input.nb_streams() {
+        if index != video_index && index != audio_index {
+            input
+                .stream_at(index)
+                .set_discard(ff::AVDiscard::AVDISCARD_ALL);
+        }
+    }
+}
+
 /// Fills the video half of `info` from the probed stream's parameters.
 fn probe_video_info(info: &mut MediaInfo, stream: Stream) {
     let par = stream.codecpar();
@@ -144,11 +170,11 @@ impl PlaybackUnit {
         });
 
         let input = Input::open(cancel.clone(), &url, protocol_whitelist)?;
-        let video_index = input.find_best_stream(ff::AVMediaType::AVMEDIA_TYPE_VIDEO);
-        let audio_index = input.find_best_stream(ff::AVMediaType::AVMEDIA_TYPE_AUDIO);
+        let (video_index, audio_index) = select_streams(&input);
         if video_index < 0 && audio_index < 0 {
             return Err(anyhow!("media has no playable video or audio stream"));
         }
+        discard_unselected_streams(&input, video_index, audio_index);
 
         let media_info = {
             let mut media_info = MediaInfo::empty();

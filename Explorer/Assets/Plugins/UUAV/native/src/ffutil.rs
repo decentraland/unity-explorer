@@ -155,6 +155,13 @@ impl Stream {
         unsafe { (*self.0).avg_frame_rate }
     }
 
+    /// Tells the demuxer which packets of this stream to drop before they
+    /// reach the caller. `AVDISCARD_ALL` also lets multi-variant demuxers
+    /// (HLS) stop fetching a variant none of whose streams is wanted.
+    pub(crate) fn set_discard(self, discard: ff::AVDiscard) {
+        unsafe { (*self.0).discard = discard };
+    }
+
     pub(crate) fn find_decoder(self) -> Result<*const ff::AVCodec> {
         let codec = unsafe { ff::avcodec_find_decoder(self.codec_id()) };
         if codec.is_null() {
