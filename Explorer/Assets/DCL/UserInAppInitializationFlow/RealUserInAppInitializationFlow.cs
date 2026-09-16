@@ -8,6 +8,8 @@ using DCL.AuthenticationScreenFlow;
 using DCL.Character;
 using DCL.Chat.History;
 using DCL.Diagnostics;
+using DCL.FeatureFlags;
+using DCL.Lobby;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.Pulse;
 using DCL.Multiplayer.Connections.RoomHubs;
@@ -168,6 +170,10 @@ namespace DCL.UserInAppInitializationFlow
                     }
                 }
 
+                // Nothing has been teleported or loaded yet: the lobby holds the flow until the user jumps in
+                if (ShouldShowStartupLobby(parameters.LoadSource))
+                    await mvcManager.ShowAsync(LobbyController.IssueCommand(), ct);
+
                 var flowToRun = parameters.LoadSource is IUserInAppInitializationFlow.LoadSource.Logout
                     ? reloginOps
                     : initOps;
@@ -240,6 +246,14 @@ namespace DCL.UserInAppInitializationFlow
             }
             while (!result.Success && parameters.ShowAuthentication);
         }
+
+        private bool ShouldShowStartupLobby(IUserInAppInitializationFlow.LoadSource loadSource) =>
+            FeaturesRegistry.Instance.IsEnabled(FeatureId.Lobby)
+            && loadSource != IUserInAppInitializationFlow.LoadSource.Recover
+            && !appArgs.HasFlagWithValueTrue(AppArgsFlags.SKIP_AUTH_SCREEN)
+            && !appArgs.HasFlag(AppArgsFlags.AUTOPILOT)
+            && !appArgs.HasFlag(AppArgsFlags.MEASURE_LOADING_TIME)
+            && !appArgs.HasFlag(AppArgsFlags.DISABLE_HUD);
 
         private async UniTask VerifyWorldAccessAndFallbackIfNeededAsync(CancellationToken ct)
         {

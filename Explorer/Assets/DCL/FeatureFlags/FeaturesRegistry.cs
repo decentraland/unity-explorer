@@ -60,6 +60,8 @@ namespace DCL.FeatureFlags
                 [FeatureId.CommunitiesMembersCounter] = featureFlags.IsEnabled(FeatureFlagsStrings.COMMUNITIES_MEMBERS_COUNTER),
                 [FeatureId.EmailOTPAuth] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.EMAIL_OTP_AUTH, featureFlags.IsEnabled(FeatureFlagsStrings.EMAIL_OTP_AUTH)),
                 [FeatureId.GuestLogin] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.GUEST_LOGIN, featureFlags.IsEnabled(FeatureFlagsStrings.GUEST_LOGIN)),
+                // --lobby enables it on its own (no --debug needed), --lobby false forces it off, otherwise the remote flag decides
+                [FeatureId.Lobby] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.LOBBY, featureFlags.IsEnabled(FeatureFlagsStrings.LOBBY), requireDebug: false) && !localSceneDevelopment,
                 [FeatureId.CheckDiskSpace] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.CHECK_DISK_SPACE, featureFlags.IsEnabled(FeatureFlagsStrings.CHECK_DISK_SPACE)),
                 [FeatureId.AvatarHighlight] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.AVATAR_HIGHLIGHT, featureFlags.IsEnabled(FeatureFlagsStrings.AVATAR_HIGHLIGHT) || isEditor, requireDebug: false),
                 [FeatureId.DoubleJump] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.DOUBLE_JUMP, featureFlags.IsEnabled(FeatureFlagsStrings.DOUBLE_JUMP) || Application.isEditor),
@@ -229,5 +231,6 @@ namespace DCL.FeatureFlags
         BugReport = 75,
         InGameShop = 76,
         GuestLogin = 77,
+        Lobby = 78,
     }
 }

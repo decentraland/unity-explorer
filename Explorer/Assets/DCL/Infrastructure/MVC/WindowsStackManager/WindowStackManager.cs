@@ -99,8 +99,6 @@ namespace MVC
 
             fullscreenController = null;
 
-            if (!controller.CanBeClosedByEscape) return;
-
             TryPopCloseable(controller);
         }
 
@@ -190,8 +188,6 @@ namespace MVC
 
         private void TryPopCloseable(IController controller)
         {
-            if (!controller.CanBeClosedByEscape) return;
-
             for (var i = 0; i < closeableStack.Count; i++)
                 if (closeableStack[i].controller == controller)
                 {
