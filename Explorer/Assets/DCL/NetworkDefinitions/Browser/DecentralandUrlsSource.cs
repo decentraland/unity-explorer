@@ -38,6 +38,11 @@ namespace DCL.Browser.DecentralandUrls
         // (see GetFeatureFlagsUrl), so the subdomain is shared rather than the whole url.
         private const string FEATURE_FLAGS_SUBDOMAIN = "feature-flags";
 
+        // LOD_1 prototype: every LOD bundle and ISS descriptor comes from the published abgen world LOD_1 run
+        // b191e06 of 2026-09-15 (decentraland/abgen PR #118) unless "--abgen-lods-base-url" points elsewhere.
+        // Key layout under the prefix: LOD/1/{sceneId}_1_{platform} and lods-unity/manifests/{sceneId}_InitialSceneState.json.
+        private const string LOD1_PROTO_BASE_URL = "https://abgen-lod1-public-175651002275.s3.amazonaws.com/b191e06";
+
         // A base domain feeds host-trust checks, so anything that could turn it into a different authority
         // (scheme, userinfo, port, path) is rejected rather than silently accepted.
         private static readonly char[] BASE_DOMAIN_FORBIDDEN_CHARS = { '/', ':', '@', '?', '#', ' ', '\t' };
@@ -79,7 +84,8 @@ namespace DCL.Browser.DecentralandUrls
             localAbBaseOverride = localAbBaseUrl?.TrimEnd('/');
             this.abgenPipelineForced = abgenPipelineForced;
             this.abgenLodsForced = abgenLodsForced;
-            abgenLodsBaseOverride = abgenLodsBaseUrl?.TrimEnd('/');
+            abgenLodsBaseOverride = (abgenLodsBaseUrl ?? LOD1_PROTO_BASE_URL).TrimEnd('/');
+            ReportHub.Log(ReportCategory.STARTUP, $"Abgen LODs base: {abgenLodsBaseOverride} (source: {(abgenLodsBaseUrl != null ? "--abgen-lods-base-url" : "LOD_1 prototype default")})");
 
             realmData.RealmType.OnUpdate += ResetRealmDependentUrls;
         }
@@ -266,8 +272,10 @@ namespace DCL.Browser.DecentralandUrls
         /// <summary>
         ///     The abgen LOD source. LOD bundles and ISS descriptors flip together: the descriptors and the bundles
         ///     describe one generation, as the abgen registry and abgen-cdn do for asset bundles. Resolution order:
-        ///     the "--abgen-lods-base-url" arg, the "--abgen-lods" arg (abgen-cdn), the abgen-lods flag with its
-        ///     "lods-base-url" text variant, the flag alone (abgen-cdn), otherwise the regular host.
+        ///     the "--abgen-lods-base-url" arg, otherwise <see cref="LOD1_PROTO_BASE_URL" />. In this LOD_1 prototype
+        ///     the base override is therefore always set, so the later branches ("--abgen-lods", the abgen-lods flag
+        ///     with its "lods-base-url" text variant, the flag alone, the regular host) are kept for parity with the
+        ///     main branch but never reached.
         ///     FeatureFlagsDependent for the same reasons as <see cref="ResolveAbgenPipelineUrl" />.
         /// </summary>
         private UrlData ResolveAbgenLodsUrl(UrlData regularHost)
