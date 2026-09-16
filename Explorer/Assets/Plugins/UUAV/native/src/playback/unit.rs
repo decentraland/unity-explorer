@@ -464,8 +464,10 @@ impl PlaybackUnit {
             PlaybackState::Ready | PlaybackState::Paused => {}
             PlaybackState::Playing => return,
             PlaybackState::Ended => {
-                // restart from the beginning
-                self.controls.seek.request(0.0);
+                // restart from the beginning, unless a seek already picked
+                // the position: play and seek land back-to-back, and the
+                // slot is serviced after this in the same loop iteration
+                self.controls.seek.request_if_empty(0.0);
             }
         }
         self.transport.play();

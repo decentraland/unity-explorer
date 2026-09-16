@@ -71,6 +71,15 @@ impl AtomicSeekSlot {
         self.0.store(Some(Arc::new(time)));
     }
 
+    /// Requests a seek only while nothing is pending; an unserviced
+    /// request keeps its target. Returns whether the request was placed.
+    pub(crate) fn request_if_empty(&self, time: f64) -> bool {
+        let previous = self
+            .0
+            .compare_and_swap(std::ptr::null::<f64>(), Some(Arc::new(time)));
+        previous.is_none()
+    }
+
     /// Drops the pending request, if any: a target requested for a media
     /// that is being closed must not carry over to the next one.
     pub(crate) fn clear(&self) {
@@ -103,6 +112,21 @@ mod tests {
         slot.request(1.0);
         slot.request(2.0);
         assert_eq!(slot.take(), Some(2.0));
+    }
+
+    #[test]
+    fn request_if_empty_places_into_an_empty_slot() {
+        let slot = AtomicSeekSlot::new();
+        assert!(slot.request_if_empty(4.0));
+        assert_eq!(slot.take(), Some(4.0));
+    }
+
+    #[test]
+    fn request_if_empty_keeps_the_pending_request() {
+        let slot = AtomicSeekSlot::new();
+        slot.request(7.0);
+        assert!(!slot.request_if_empty(0.0));
+        assert_eq!(slot.take(), Some(7.0), "the pending target survives");
     }
 
     #[test]
