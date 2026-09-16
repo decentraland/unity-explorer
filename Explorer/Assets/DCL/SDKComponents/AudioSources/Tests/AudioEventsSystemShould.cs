@@ -144,7 +144,7 @@ namespace DCL.SDKComponents.AudioSources.Tests
             Assert.That(world.Get<AudioSourceComponent>(entity).LastPropagatedAudioState, Is.EqualTo(MediaState.MsError));
             ecsToCRDTWriter.Received(1).AppendMessage(
                 Arg.Any<Action<PBAudioEvent, AudioEventsSystem.AudioEventReport>>(), Arg.Any<CRDTEntity>(), Arg.Any<int>(),
-                Arg.Is<(MediaState state, uint timestamp)>(data => data.state == MediaState.MsError));
+                Arg.Is<AudioEventsSystem.AudioEventReport>(data => data.State == MediaState.MsError));
         }
 
         [Test]
