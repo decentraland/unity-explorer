@@ -2,10 +2,8 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Archipelago.LiveConnections;
 using DCL.Multiplayer.Connections.Messaging;
-using DCL.Multiplayer.Connections.Pools;
 using DCL.Utility.Types;
 using DCL.Web3.Identities;
-using Decentraland.Common;
 using Decentraland.Kernel.Comms.V3;
 using LiveKit.client_sdk_unity.Runtime.Scripts.Internal.FFIClients;
 using LiveKit.Internal.FFIClients.Pools;
@@ -13,7 +11,6 @@ using LiveKit.Internal.FFIClients.Pools.Memory;
 using System;
 using System.Threading;
 using Utility.Multithreading;
-using Vector3 = UnityEngine.Vector3;
 
 namespace DCL.Multiplayer.Connections.Archipelago.SignFlow
 {
@@ -23,53 +20,16 @@ namespace DCL.Multiplayer.Connections.Archipelago.SignFlow
     public class LiveConnectionArchipelagoSignFlow : IArchipelagoSignFlow
     {
         private readonly IArchipelagoLiveConnection connection;
-        private readonly IMemoryPool memoryPool;
         private readonly IMultiPool multiPool;
         private readonly SessionControl? session;
         private int listenerGeneration;
 
         /// <summary>Uses the connection's automatic transport recovery within the current logical session.</summary>
-        public LiveConnectionArchipelagoSignFlow(IArchipelagoLiveConnection connection, IMemoryPool memoryPool, IMultiPool multiPool, SessionControl? session = null)
+        public LiveConnectionArchipelagoSignFlow(IArchipelagoLiveConnection connection, IMultiPool multiPool, SessionControl? session = null)
         {
             this.session = session;
             this.connection = connection;
-            this.memoryPool = memoryPool;
             this.multiPool = multiPool;
-        }
-
-        /// <summary>
-        ///     A dumb transport: it always builds and sends the packet it is asked for, so a success result
-        ///     always means the position really reached archipelago. Whether a heartbeat is wanted at all is the
-        ///     <c>archipelago-heartbeats</c> kill switch's decision, taken once in
-        ///     <c>ArchipelagoIslandRoom.SendHeartbeatIfEnabledAsync</c>.
-        /// </summary>
-        public async UniTask<Result> SendHeartbeatAsync(Vector3 playerPosition, CancellationToken token)
-        {
-            try
-            {
-                using SmartWrap<Position> position = multiPool.TempResource<Position>();
-                position.value.X = playerPosition.x;
-                position.value.Y = playerPosition.y;
-                position.value.Z = playerPosition.z;
-
-                using SmartWrap<Heartbeat> heartbeat = multiPool.TempResource<Heartbeat>();
-                heartbeat.value.Position = position.value;
-
-                using SmartWrap<ClientPacket> clientPacket = multiPool.TempResource<ClientPacket>();
-                clientPacket.value.ClearMessage();
-                clientPacket.value.Heartbeat = heartbeat.value;
-
-                var result = await connection.SendAsync(clientPacket.value, memoryPool, token);
-
-                return result.Success == false
-                    ? Result.ErrorResult($"Cannot send heartbeat for position {playerPosition}: {result.Error!.Value.Message}")
-                    : Result.SuccessResult();
-            }
-            // It seems to be not required
-            catch (Exception e)
-            {
-                return Result.ErrorResult($"Cannot send heartbeat for position {playerPosition}: {e}");
-            }
         }
 
         /// <summary>

@@ -1,5 +1,7 @@
 # September 15 Unity implementation report
 
+> September 16 direct-cutover decision: heartbeat publisher flags/default-on/rollback instructions below are historical and superseded by [heartbeat-retirement-sep16-report.md](heartbeat-retirement-sep16-report.md). Current client has no application-heartbeat producer or fallback. Backend session controls and Pulse must be ready before release.
+
 ## Result
 
 T06/WP8 was rebased from pull request #10022 head `55eb84d0df4c4c14d8c643f9093d9e8912f1e8d6` onto the verified live `origin/dev` head `06de13e1d490fe47b90ad4908d68820d6b8c4ffa` on local branch `codex/it2-sep15-unity-explorer`. The rebase retained the current-dev malformed-peer handling while adding `realm` to `worldName`, and kept both the RustSegment and iteration-2 fixture LF rules in `.gitattributes`.

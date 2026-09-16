@@ -28,7 +28,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Tests
             connectionMock = Substitute.For<IArchipelagoLiveConnection>();
             memoryPool = new ArrayMemoryPool();
             var dclMultiPool = new DCLMultiPool();
-            signFlow = new LiveConnectionArchipelagoSignFlow(new ArchipelagoSignedConnection(connectionMock, dclMultiPool, memoryPool, new IWeb3IdentityCache.Fake()), memoryPool, dclMultiPool);
+            signFlow = new LiveConnectionArchipelagoSignFlow(new ArchipelagoSignedConnection(connectionMock, dclMultiPool, memoryPool, new IWeb3IdentityCache.Fake()), dclMultiPool);
         }
 
         [Test]

@@ -23,15 +23,6 @@ namespace DCL.FeatureFlags
             result.flags.GetValueOrDefault(id, false);
         public bool IsEmpty => result.IsEmpty;
 
-        /// <summary>
-        ///     The read for a kill switch: the feature is on unless the backend explicitly serves the flag as
-        ///     <c>false</c>, so a client that resolved no flags at all keeps today's behaviour (CONTEXT rule 3).
-        ///     Deliberately not an <see cref="IsEnabled(string)" /> overload: that one defaults to off, and an
-        ///     overload differing only by an argument is one forgotten keyword away from inverting a rollout.
-        /// </summary>
-        public bool IsEnabledUnlessKilled(string id) =>
-            result.flags.GetValueOrDefault(id, true);
-
         public bool IsEnabled(string id, string variantId)
         {
             if (!result.variants.TryGetValue(id, out FeatureFlagVariantDto variant)) return false;

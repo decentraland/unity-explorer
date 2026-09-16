@@ -1,5 +1,7 @@
 # Session takeover client implementation
 
+> September 16 direct-cutover decision: heartbeat publisher flags/default-on/rollback instructions below are historical and superseded by [heartbeat-retirement-sep16-report.md](heartbeat-retirement-sep16-report.md). Current client has no application-heartbeat producer or fallback. Backend session controls and Pulse must be ready before release.
+
 September 16 superseding update: see `handshake-ban-sep16-report.md` for the signed-handshake review fix, PR #490 source/artifact provenance and accepted release-overlap decision. Earlier cross-replica/replay blocker wording below is historical: brief rollout overlap is accepted (not fixed), durable multi-replica architecture is out of scope, and a verified immutable PR-CI protocol snapshot now exists. Consumer pin/build verification and controlled Cloud acceptance remain distinct gates.
 
 ## Scope and plan

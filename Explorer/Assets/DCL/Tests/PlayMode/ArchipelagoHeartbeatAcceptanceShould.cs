@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DCL.Character;
 using DCL.Web3.Identities;
 using DCL.Web3.Accounts.Factory;
 using DCL.Web3.Chains;
@@ -38,8 +37,6 @@ namespace DCL.Tests.PlayMode
         private const string CONNECTION_STRING = "wss://livekit.example.com?access_token=test";
         private const string ISLAND_ID = "island-test";
 
-        private static readonly Vector3 PLAYER_POSITION = new (8f, 1.7f, 16f);
-
         private IArchipelagoLiveConnection connection = null!;
         private IMemoryPool memoryPool = null!;
         private DCLMultiPool multiPool = null!;
@@ -74,36 +71,13 @@ namespace DCL.Tests.PlayMode
         }
 
         [UnityTest]
-        public IEnumerator SendNoHeartbeatWhenTheFlagIsOffInPlayMode() =>
+        public IEnumerator NeverPublishHeartbeatFromRoomCycles() =>
             UniTask.ToCoroutine(async () =>
             {
-                ArchipelagoIslandRoom room = NewRoom(NewFlags(false), NewSignFlow());
-
-                await room.SendHeartbeatIfEnabledAsync(CancellationToken.None);
-
+                ArchipelagoIslandRoom room = NewRoom(NewSignFlow());
+                for (int i = 0; i < 3; i++)
+                    await RunRoomCycleAsync(room, CancellationToken.None);
                 AssertNoHeartbeatWasSent();
-            });
-
-        [UnityTest]
-        public IEnumerator KeepTheDefaultHeartbeatWhenTheFlagIsAbsentInPlayMode() =>
-            UniTask.ToCoroutine(async () =>
-            {
-                ArchipelagoIslandRoom room = NewRoom(FeatureFlagsResultDto.Empty, NewSignFlow());
-
-                await room.SendHeartbeatIfEnabledAsync(CancellationToken.None);
-
-                AssertOneHeartbeatWasSent();
-            });
-
-        [UnityTest]
-        public IEnumerator KeepTheHeartbeatWhenTheFlagIsOnInPlayMode() =>
-            UniTask.ToCoroutine(async () =>
-            {
-                ArchipelagoIslandRoom room = NewRoom(NewFlags(true), NewSignFlow());
-
-                await room.SendHeartbeatIfEnabledAsync(CancellationToken.None);
-
-                AssertOneHeartbeatWasSent();
             });
 
         [UnityTest]
@@ -130,11 +104,11 @@ namespace DCL.Tests.PlayMode
                            });
 
                 LiveConnectionArchipelagoSignFlow signFlow = NewSignFlow();
-                ArchipelagoIslandRoom room = NewRoom(NewFlags(false), signFlow);
+                ArchipelagoIslandRoom room = NewRoom(signFlow);
                 LogAssert.ignoreFailingMessages = true;
 
                 // Act
-                await room.SendHeartbeatIfEnabledAsync(cts.Token);
+                await RunRoomCycleAsync(room, cts.Token);
                 signFlow.StartListeningForConnectionStringAsync((islandId, connectionString) => assignment.TrySetResult((islandId, connectionString)), cts.Token).Forget();
                 (string islandId, string connectionString) received = await assignment.Task.Timeout(TimeSpan.FromSeconds(4));
                 cts.Cancel();
@@ -166,11 +140,11 @@ namespace DCL.Tests.PlayMode
                 LiveConnectionArchipelagoSignFlow signFlow = NewSignFlow();
                 ICurrentAdapterAddress adapterAddress = Substitute.For<ICurrentAdapterAddress>();
                 adapterAddress.AdapterUrl().Returns(ADAPTER_URL);
-                ArchipelagoIslandRoom room = NewRoom(NewFlags(false), signFlow, adapterAddress);
+                ArchipelagoIslandRoom room = NewRoom(signFlow, adapterAddress);
 
                 // Act
                 signFlow.StartListeningForConnectionStringAsync((islandId, connectionString) => assignment.TrySetResult((islandId, connectionString)), cts.Token).Forget();
-                await room.SendHeartbeatIfEnabledAsync(cts.Token);
+                await RunRoomCycleAsync(room, cts.Token);
                 await room.ForceFreshIslandAssignmentAsync(cts.Token);
                 response.TrySetResult(IslandAssignment(ISLAND_ID, CONNECTION_STRING));
                 (string islandId, string connectionString) received = await assignment.Task.Timeout(TimeSpan.FromSeconds(4));
@@ -189,7 +163,7 @@ namespace DCL.Tests.PlayMode
         public void TreatTakeoverDisconnectsAsDuplicateIdentity(string disconnectReason)
         {
             // Arrange
-            InitializeFeatureRegistry(NewFlags(heartbeatEnabled: true, stopOnDuplicateIdentity: true));
+            InitializeFeatureRegistry(NewFlags(stopOnDuplicateIdentity: true));
             var room = new ProbeConnectiveRoom();
 
             // Act
@@ -212,13 +186,13 @@ namespace DCL.Tests.PlayMode
                 packets.Enqueue(new ServerPacket { IslandChanged = new IslandChangedMessage { IslandId = "late", ConnStr = CONNECTION_STRING } });
                 connection.ReceiveAsync(Arg.Any<CancellationToken>()).Returns(call => packets.Count > 0
                     ? UniTask.FromResult(Packet(packets.Dequeue())) : WaitForCancellationAsync(call.Arg<CancellationToken>()));
-                var signFlow = new LiveConnectionArchipelagoSignFlow(connection, memoryPool, multiPool, session);
+                var signFlow = new LiveConnectionArchipelagoSignFlow(connection, multiPool, session);
                 var assignments = 0;
-                InitializeFeatureRegistry(NewFlags(false));
+                InitializeFeatureRegistry(NewFlags());
                 signFlow.StartListeningForConnectionStringAsync((_, _) => Interlocked.Increment(ref assignments), cts.Token).Forget();
                 await UniTask.WaitUntil(() => session.Current == SessionControl.Status.Superseded, cancellationToken: cts.Token);
                 Assert.AreEqual(0, assignments);
-                var room = new ArchipelagoIslandRoom(signFlow, Substitute.For<ICharacterObject>(), Substitute.For<ICurrentAdapterAddress>(), session);
+                var room = new ArchipelagoIslandRoom(signFlow, Substitute.For<ICurrentAdapterAddress>(), session);
                 Assert.IsFalse(await room.StartAsync());
                 Assert.IsFalse(session.AcceptAssignment(session.Generation));
                 cts.Cancel();
@@ -240,7 +214,7 @@ namespace DCL.Tests.PlayMode
                     2 => UniTask.FromResult(IslandAssignment(ISLAND_ID, CONNECTION_STRING)),
                     _ => WaitForCancellationAsync(call.Arg<CancellationToken>()),
                 });
-                var signFlow = new LiveConnectionArchipelagoSignFlow(connection, memoryPool, multiPool, session);
+                var signFlow = new LiveConnectionArchipelagoSignFlow(connection, multiPool, session);
                 var assigned = new UniTaskCompletionSource<string>();
                 signFlow.StartListeningForConnectionStringAsync((id, _) => assigned.TrySetResult(id), cts.Token).Forget();
                 Assert.AreEqual(ISLAND_ID, await assigned.Task.AttachExternalCancellation(cts.Token));
@@ -266,7 +240,7 @@ namespace DCL.Tests.PlayMode
                     var session = SessionControl.For(cache);
                     using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
                     connection.ReceiveAsync(Arg.Any<CancellationToken>()).Returns(UniTask.FromResult(Packet(new ServerPacket { Kicked = new KickedMessage { Reason = reason } })));
-                    var flow = new LiveConnectionArchipelagoSignFlow(connection, memoryPool, multiPool, session);
+                    var flow = new LiveConnectionArchipelagoSignFlow(connection, multiPool, session);
                     flow.StartListeningForConnectionStringAsync((_, _) => Assert.Fail("Kick cannot assign an island"), cts.Token).Forget();
                     await UniTask.WaitUntil(() => session.Current != SessionControl.Status.Active, cancellationToken: cts.Token);
                     Assert.AreEqual(reason == KickedReason.KrBanned ? SessionControl.Status.Banned : SessionControl.Status.Unknown, session.Current);
@@ -292,7 +266,7 @@ namespace DCL.Tests.PlayMode
                     2 => UniTask.FromResult(IslandAssignment(ISLAND_ID, CONNECTION_STRING)),
                     _ => WaitForCancellationAsync(call.Arg<CancellationToken>()),
                 });
-                var flow = new LiveConnectionArchipelagoSignFlow(connection, memoryPool, multiPool, session);
+                var flow = new LiveConnectionArchipelagoSignFlow(connection, multiPool, session);
                 flow.StartListeningForConnectionStringAsync((_, _) => Assert.Fail("Old listener callback"), cts.Token).Forget();
                 await UniTask.WaitUntil(() => Volatile.Read(ref calls) == 1, cancellationToken: cts.Token);
                 flow.StartListeningForConnectionStringAsync((id, _) => received.TrySetResult(id), cts.Token).Forget();
@@ -451,7 +425,7 @@ namespace DCL.Tests.PlayMode
         public void IgnoreUnrelatedDisconnectsForDuplicateIdentityHandling()
         {
             // Arrange
-            InitializeFeatureRegistry(NewFlags(heartbeatEnabled: true, stopOnDuplicateIdentity: true));
+            InitializeFeatureRegistry(NewFlags(stopOnDuplicateIdentity: true));
             var room = new ProbeConnectiveRoom();
 
             // Act
@@ -463,16 +437,13 @@ namespace DCL.Tests.PlayMode
         }
 
         private LiveConnectionArchipelagoSignFlow NewSignFlow() =>
-            new (connection, memoryPool, multiPool);
+            new (connection, multiPool);
 
-        private ArchipelagoIslandRoom NewRoom(FeatureFlagsResultDto flags, IArchipelagoSignFlow signFlow, ICurrentAdapterAddress? adapterAddress = null)
+        private ArchipelagoIslandRoom NewRoom(IArchipelagoSignFlow signFlow, ICurrentAdapterAddress? adapterAddress = null)
         {
-            InitializeFeatureRegistry(flags);
+            InitializeFeatureRegistry(FeatureFlagsResultDto.Empty);
 
-            ICharacterObject characterObject = Substitute.For<ICharacterObject>();
-            characterObject.Position.Returns(PLAYER_POSITION);
-
-            return new ArchipelagoIslandRoom(signFlow, characterObject, adapterAddress ?? Substitute.For<ICurrentAdapterAddress>());
+            return new ArchipelagoIslandRoom(signFlow, adapterAddress ?? Substitute.For<ICurrentAdapterAddress>());
         }
 
         private EnumResult<MemoryWrap, IArchipelagoLiveConnection.ResponseError> IslandAssignment(string islandId, string connectionString)
@@ -504,17 +475,12 @@ namespace DCL.Tests.PlayMode
             CollectionAssert.IsEmpty(sentPackets);
         }
 
-        private void AssertOneHeartbeatWasSent()
-        {
-            connection.Received(1).SendAsync(Arg.Any<MemoryWrap>(), Arg.Any<CancellationToken>());
-            Assert.AreEqual(1, sentPackets.Count);
-            Assert.AreEqual(ClientPacket.MessageOneofCase.Heartbeat, sentPackets[0].MessageCase);
-        }
+        private static UniTask RunRoomCycleAsync(ArchipelagoIslandRoom room, CancellationToken token) =>
+            (UniTask)typeof(ArchipelagoIslandRoom).GetMethod("CycleStepAsync", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(room, new object[] { token })!;
 
-        private static FeatureFlagsResultDto NewFlags(bool heartbeatEnabled, bool stopOnDuplicateIdentity = false)
+        private static FeatureFlagsResultDto NewFlags(bool stopOnDuplicateIdentity = false)
         {
             FeatureFlagsResultDto dto = FeatureFlagsResultDto.Empty;
-            dto.flags[FeatureFlagsStrings.ARCHIPELAGO_HEARTBEATS] = heartbeatEnabled;
             dto.flags[FeatureFlagsStrings.STOP_ON_DUPLICATE_IDENTITY] = stopOnDuplicateIdentity;
             return dto;
         }

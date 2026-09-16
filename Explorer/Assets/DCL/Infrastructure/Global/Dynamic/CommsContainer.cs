@@ -142,7 +142,6 @@ namespace Global.Dynamic
                 identityCache,
                 MultiPoolFactory(),
                 new ArrayMemoryPool(),
-                staticContainer.CharacterContainer.CharacterObject,
                 currentAdapterAddress,
                 staticContainer.WebRequestsContainer.WebRequestController,
                 staticContainer.RealmData,

@@ -80,9 +80,6 @@ namespace DCL.FeatureFlags
                 [FeatureId.BugReport] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.BUG_REPORT, featureFlags.IsEnabled(FeatureFlagsStrings.BUG_REPORT) || isEditor),
                 [FeatureId.InGameShop] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.IN_GAME_SHOP, featureFlags.IsEnabled(FeatureFlagsStrings.IN_GAME_SHOP) || isEditor),
 
-                // A kill switch: an absent flag - a client that resolved none - keeps sending archipelago
-                // heartbeats exactly as it does today, so the rollout stays server-controlled.
-                [FeatureId.ArchipelagoHeartbeats] = featureFlags.IsEnabledUnlessKilled(FeatureFlagsStrings.ARCHIPELAGO_HEARTBEATS),
                 // Note: COMMUNITIES feature is not cached here because it depends on user identity
             });
 
@@ -231,6 +228,5 @@ namespace DCL.FeatureFlags
         NearbyVoiceChatTip = 74,
         BugReport = 75,
         InGameShop = 76,
-        ArchipelagoHeartbeats = 77,
     }
 }
