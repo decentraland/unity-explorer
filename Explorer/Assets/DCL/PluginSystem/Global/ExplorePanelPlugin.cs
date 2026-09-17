@@ -20,6 +20,7 @@ using DCL.CharacterPreview;
 using DCL.ExplorePanel;
 using DCL.Input;
 using DCL.Landscape.Settings;
+using DCL.Lobby;
 using DCL.MapRenderer;
 using DCL.Navmap;
 using DCL.PlacesAPIService;
@@ -95,6 +96,7 @@ using UnityEngine.AddressableAssets;
 using UnityEngine.Audio;
 using UnityEngine.InputSystem;
 using UnityEngine.Pool;
+using UnityEngine.UI;
 using Object = UnityEngine.Object;
 
 // ReSharper disable UnusedAutoPropertyAccessor.Local
@@ -189,6 +191,7 @@ namespace DCL.PluginSystem.Global
         private EventInfoPanelController? eventInfoPanelController;
         private CommunitiesBrowserController? communitiesBrowserController;
         private ExplorePanelController? explorePanelController;
+        private Button? lobbyButton;
         private PlacesController? placesController;
         private PlaceDetailPanelController? placeDetailPanelController;
         private EventsController? eventsController;
@@ -351,6 +354,7 @@ namespace DCL.PluginSystem.Global
             communitiesBrowserController?.Dispose();
             placesController?.Dispose();
             explorePanelController?.Dispose();
+            lobbyButton?.onClick.RemoveListener(OpenLobby);
             eventsController?.Dispose();
             eventDetailPanelController?.Dispose();
             placeDetailPanelController?.Dispose();
@@ -598,6 +602,16 @@ namespace DCL.PluginSystem.Global
 
             explorePanelView.CreditsPanelView.gameObject.SetActive(false);
 
+            // The lobby lives in DCL.UI.Flows, which already depends on the explore panel's assembly, so the button is wired here
+            bool includeLobby = FeaturesRegistry.Instance.IsEnabled(FeatureId.Lobby);
+            explorePanelView.LobbyButton.gameObject.SetActive(includeLobby);
+
+            if (includeLobby)
+            {
+                lobbyButton = explorePanelView.LobbyButton;
+                lobbyButton.onClick.AddListener(OpenLobby);
+            }
+
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.UserCredits))
                 EnableCreditsPanelIfUserAllowedAsync(explorePanelView.CreditsPanelView, ct)
                    .SuppressToResultAsync(ReportCategory.CREDITS_PURCHASE)
@@ -703,6 +717,9 @@ namespace DCL.PluginSystem.Global
                 return placeElementView;
             }
         }
+
+        private void OpenLobby() =>
+            mvcManager.ShowAndForget(LobbyController.IssueCommand(new LobbyParameter(isStartup: false)));
 
         private void OnInputShortcutsBackpackPerformedAsync(InputAction.CallbackContext _)
         {

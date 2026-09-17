@@ -8,5 +8,8 @@ namespace DCL.Lobby
     {
         [field: SerializeField]
         public Button JumpInButton { get; private set; } = null!;
+
+        [field: SerializeField]
+        public Button CloseButton { get; private set; } = null!;
     }
 }

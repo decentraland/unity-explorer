@@ -93,13 +93,15 @@ namespace MVC
             if (controller == null) return;
 
             TryGracefulClose(controller);
+            TryPopCloseable(controller);
+
+            // A controller replaced by another fullscreen one is torn down asynchronously; its late pop must not unregister the successor
+            if (fullscreenController != controller) return;
 
             foreach (IController persistentController in persistentStack)
                 persistentController.Focus();
 
             fullscreenController = null;
-
-            TryPopCloseable(controller);
         }
 
         public PersistentPushInfo PushPersistent(IController controller)

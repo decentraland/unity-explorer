@@ -64,6 +64,18 @@ namespace MVC.Tests
         }
 
         [Test]
+        public void PopFullscreenOfReplacedControllerKeepsCurrent()
+        {
+            IController replacement = Substitute.For<IController>();
+            manager.PushFullscreen(controller);
+            manager.PushFullscreen(replacement);
+
+            manager.PopFullscreen(controller);
+
+            Assert.AreSame(replacement, manager.fullscreenController);
+        }
+
+        [Test]
         public void PushPersistent()
         {
             manager.PushPersistent(controller);

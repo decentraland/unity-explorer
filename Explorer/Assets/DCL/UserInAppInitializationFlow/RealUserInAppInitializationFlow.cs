@@ -172,7 +172,7 @@ namespace DCL.UserInAppInitializationFlow
 
                 // Nothing has been teleported or loaded yet: the lobby holds the flow until the user jumps in
                 if (ShouldShowStartupLobby(parameters.LoadSource))
-                    await mvcManager.ShowAsync(LobbyController.IssueCommand(), ct);
+                    await mvcManager.ShowAsync(LobbyController.IssueCommand(new LobbyParameter(isStartup: true)), ct);
 
                 var flowToRun = parameters.LoadSource is IUserInAppInitializationFlow.LoadSource.Logout
                     ? reloginOps

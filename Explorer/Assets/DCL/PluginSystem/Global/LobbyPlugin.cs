@@ -44,7 +44,7 @@ namespace DCL.PluginSystem.Global
 
             debugContainerBuilder
                .TryAddWidget("Lobby")?
-               .AddSingleButton("Open", () => mvcManager.ShowAsync(LobbyController.IssueCommand()).Forget());
+               .AddSingleButton("Open", () => mvcManager.ShowAndForget(LobbyController.IssueCommand(new LobbyParameter(isStartup: false))));
         }
     }
 }

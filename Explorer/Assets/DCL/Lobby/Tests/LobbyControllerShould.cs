@@ -18,6 +18,7 @@ namespace DCL.Lobby.Tests
     {
         private GameObject root = null!;
         private Button jumpInButton = null!;
+        private Button closeButton = null!;
         private IInputBlock inputBlock = null!;
         private LoadingStatus loadingStatus = null!;
         private LobbyController controller = null!;
@@ -32,8 +33,12 @@ namespace DCL.Lobby.Tests
             buttonGo.transform.SetParent(root.transform);
             jumpInButton = buttonGo.AddComponent<Button>();
 
-            typeof(LobbyView).GetField($"<{nameof(LobbyView.JumpInButton)}>k__BackingField", BindingFlags.Instance | BindingFlags.NonPublic)!
-                             .SetValue(view, jumpInButton);
+            var closeButtonGo = new GameObject("CloseButton");
+            closeButtonGo.transform.SetParent(root.transform);
+            closeButton = closeButtonGo.AddComponent<Button>();
+
+            SetBackingField(view, nameof(LobbyView.JumpInButton), jumpInButton);
+            SetBackingField(view, nameof(LobbyView.CloseButton), closeButton);
 
             inputBlock = Substitute.For<IInputBlock>();
             loadingStatus = new LoadingStatus();
@@ -51,7 +56,7 @@ namespace DCL.Lobby.Tests
         public void CloseOnJumpInAndToggleInputBlock()
         {
             // Arrange
-            UniTask lifeCycle = controller.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Fullscreen, 0), default(ControllerNoData), CancellationToken.None);
+            UniTask lifeCycle = Launch(isStartup: true);
             Assert.That(lifeCycle.Status, Is.EqualTo(UniTaskStatus.Pending));
             inputBlock.Received(1).Disable(InputMapComponent.BLOCK_USER_INPUT);
 
@@ -62,6 +67,31 @@ namespace DCL.Lobby.Tests
             // Assert
             Assert.That(lifeCycle.Status, Is.EqualTo(UniTaskStatus.Succeeded));
             inputBlock.Received(1).Enable(InputMapComponent.BLOCK_USER_INPUT);
+        }
+
+        [Test]
+        public void CloseOnCloseButton()
+        {
+            // Arrange
+            UniTask lifeCycle = Launch(isStartup: false);
+            Assert.That(lifeCycle.Status, Is.EqualTo(UniTaskStatus.Pending));
+
+            // Act
+            closeButton.onClick.Invoke();
+
+            // Assert
+            Assert.That(lifeCycle.Status, Is.EqualTo(UniTaskStatus.Succeeded));
+        }
+
+        [TestCase(true, false)]
+        [TestCase(false, true)]
+        public void ShowCloseButtonOnlyWhenNotStartup(bool isStartup, bool closeButtonVisible)
+        {
+            // Act
+            Launch(isStartup);
+
+            // Assert
+            Assert.That(closeButton.gameObject.activeSelf, Is.EqualTo(closeButtonVisible));
         }
 
         [TestCase(LoadingStatus.LoadingStage.Init, false)]
@@ -76,5 +106,12 @@ namespace DCL.Lobby.Tests
             // Assert
             Assert.That(controller.CanBeClosedByEscape, Is.EqualTo(expected));
         }
+
+        private UniTask Launch(bool isStartup) =>
+            controller.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Fullscreen, 0), new LobbyParameter(isStartup), CancellationToken.None);
+
+        private static void SetBackingField(LobbyView view, string propertyName, Button button) =>
+            typeof(LobbyView).GetField($"<{propertyName}>k__BackingField", BindingFlags.Instance | BindingFlags.NonPublic)!
+                             .SetValue(view, button);
     }
 }

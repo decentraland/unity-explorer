@@ -9,9 +9,9 @@ namespace DCL.Lobby
 {
     /// <summary>
     ///     Fullscreen panel shown before the world starts loading and, later, on demand during gameplay.
-    ///     It only reports the close intent (Jump in); what happens next is up to the caller.
+    ///     It only reports the close intent (Jump in or Close); what happens next is up to the caller.
     /// </summary>
-    public class LobbyController : ControllerBase<LobbyView>
+    public class LobbyController : ControllerBase<LobbyView, LobbyParameter>
     {
         private readonly IInputBlock inputBlock;
         private readonly IReadOnlyLoadingStatus loadingStatus;
@@ -32,14 +32,22 @@ namespace DCL.Lobby
         public override void Dispose()
         {
             base.Dispose();
-            viewInstance?.JumpInButton.onClick.RemoveListener(OnJumpIn);
+            viewInstance?.JumpInButton.onClick.RemoveListener(RequestClose);
+            viewInstance?.CloseButton.onClick.RemoveListener(RequestClose);
             closeIntent?.TrySetCanceled();
         }
 
         protected override void OnViewInstantiated()
         {
             base.OnViewInstantiated();
-            viewInstance!.JumpInButton.onClick.AddListener(OnJumpIn);
+            viewInstance!.JumpInButton.onClick.AddListener(RequestClose);
+            viewInstance.CloseButton.onClick.AddListener(RequestClose);
+        }
+
+        protected override void OnBeforeViewShow()
+        {
+            base.OnBeforeViewShow();
+            viewInstance!.CloseButton.gameObject.SetActive(!inputData.IsStartup);
         }
 
         protected override void OnViewShow()
@@ -61,10 +69,24 @@ namespace DCL.Lobby
             await closeIntent.Task.AttachExternalCancellation(ct);
         }
 
-        private void OnJumpIn()
+        private void RequestClose()
         {
             closeIntent?.TrySetResult();
             closeIntent = null;
+        }
+    }
+
+    public readonly struct LobbyParameter
+    {
+        /// <summary>
+        ///     True when the lobby gates the in-app initialization flow (first show of the session), false when the user opened it on demand in-world.
+        ///     At startup Jump in is the only way out, so no close button is offered.
+        /// </summary>
+        public readonly bool IsStartup;
+
+        public LobbyParameter(bool isStartup)
+        {
+            IsStartup = isStartup;
         }
     }
 }
