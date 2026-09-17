@@ -335,7 +335,9 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.AssetBundleRegistry => ResolveOptimizedAssetsUrl(ResolveAbgenPipelineUrl($"https://asset-bundle-registry.{BaseDomain}", $"https://asset-bundle-registry-abgen.{BaseDomain}")),
 
                 DecentralandUrl.AssetBundleRegistryVersion => ComposeRegistryUrl("/entities/versions"),
-                DecentralandUrl.MarketplaceClaimName => $"https://{BaseDomain}/marketplace/names/claim",
+                // NAMEs are bought in the Shop. Every caller of this url — the passport, the name editor,
+                // the Places results and Community creation — lands on the same purchase flow through it.
+                DecentralandUrl.MarketplaceClaimName => $"https://{BaseDomain}/shop/items?category=names",
                 DecentralandUrl.WorldPermissions => $"https://worlds-content-server.{BaseDomain}/world/{{0}}/permissions",
                 DecentralandUrl.WorldComms => $"https://worlds-content-server.{BaseDomain}/worlds/{{0}}/comms",
                 DecentralandUrl.WorldServer => $"https://worlds-content-server.{BaseDomain}/world",
