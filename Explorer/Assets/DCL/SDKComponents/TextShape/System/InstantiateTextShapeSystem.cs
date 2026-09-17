@@ -9,6 +9,7 @@ using DCL.SDKComponents.TextShape.Component;
 using DCL.SDKComponents.TextShape.Fonts;
 using ECS.Abstract;
 using ECS.Groups;
+using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.Unity.Transforms.Components;
 using SceneRunner.Scene;
@@ -49,7 +50,7 @@ namespace DCL.SDKComponents.TextShape.System
         }
 
         [Query]
-        [None(typeof(TextShapeComponent))]
+        [None(typeof(TextShapeComponent), typeof(DeleteEntityIntention))]
         private void InstantiateRemaining(Entity entity, in TransformComponent transform, in PBTextShape textShape)
         {
             if (instantiationFrameTimeBudget.TrySpendBudget() == false)

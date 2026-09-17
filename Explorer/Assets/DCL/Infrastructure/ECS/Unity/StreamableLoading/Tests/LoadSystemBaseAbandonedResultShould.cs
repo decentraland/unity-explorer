@@ -81,6 +81,62 @@ namespace ECS.StreamableLoading.Tests
             }
         }
 
+        [Test]
+        public async Task KeepCachedResultWhenIntentionCancelledDuringCacheLookup()
+        {
+            using var mockedReportScope = new MockedReportScope();
+            using var cts = new CancellationTokenSource();
+            using var cacheStorage = new NoCache<StubAsset, StubIntention>(true, true);
+            var cache = Substitute.For<IStreamableCache<StubAsset, StubIntention>>();
+            cache.OngoingRequests.Returns(cacheStorage.OngoingRequests);
+            cache.IrrecoverableFailures.Returns(cacheStorage.IrrecoverableFailures);
+
+            var asset = new StubAsset();
+            cache.TryGet(Arg.Any<StubIntention>(), out Arg.Any<StubAsset>()).Returns(call =>
+            {
+                call[1] = asset;
+                cts.Cancel();
+                return true;
+            });
+
+            var world = World.Create();
+            world.Create(new SceneShortInfo(Vector2Int.zero, "TEST"));
+            var system = new TestLoadSystem(world, cache);
+            system.Initialize();
+
+            try
+            {
+                var intention = new StubIntention
+                {
+                    CommonArguments = new CommonLoadingArguments(
+                        CommunicationData.URLHelpers.URLAddress.EMPTY,
+                        cancellationTokenSource: cts,
+                        attempts: 1,
+                        permittedSources: AssetSource.Embedded,
+                        currentSource: AssetSource.Embedded),
+                };
+
+                var promise = AssetPromise<StubAsset, StubIntention>.Create(world, intention, PartitionComponent.TOP_PRIORITY);
+                world.Get<StreamableLoadingState>(promise.Entity).SetAllowed(Substitute.For<IAcquiredBudget>());
+                system.Update(0);
+
+                for (int i = 0; i < 10; i++)
+                    await UniTask.Yield();
+
+                Assert.That(cts.IsCancellationRequested, Is.True);
+                Assert.That(system.FlowStarted, Is.False);
+                Assert.That(world.Get<StreamableLoadingState>(promise.Entity).Value, Is.EqualTo(StreamableLoadingState.Status.Finished));
+                Assert.That(system.DisposeAbandonedCount, Is.Zero);
+                Assert.That(cache.TryGet(in intention, out StubAsset retainedAsset), Is.True);
+                Assert.That(retainedAsset, Is.SameAs(asset));
+            }
+            finally
+            {
+                system.Dispose();
+                world.Dispose();
+            }
+        }
+
         private class StubAsset { }
 
         private struct StubIntention : ILoadingIntention, IEquatable<StubIntention>

@@ -1,3 +1,4 @@
+using Cysharp.Threading.Tasks;
 using NUnit.Framework;
 using System;
 using System.IO;
@@ -64,7 +65,8 @@ namespace ECS.StreamableLoading.Fonts.Tests
         [Test]
         public async Task StoreTheBytesUnderTheirHash()
         {
-            string path = await store.StoreAsync(BYTES, CancellationToken.None);
+            using FontFileStore.Lease lease = await store.StoreAsync(BYTES, CancellationToken.None);
+            string path = lease.Path;
 
             Assert.That(Path.GetDirectoryName(Path.GetFullPath(path)), Is.EqualTo(Path.GetFullPath(directory)));
             Assert.That(Path.GetExtension(path), Is.EqualTo(".ttf"));
@@ -75,23 +77,23 @@ namespace ECS.StreamableLoading.Fonts.Tests
         [Test]
         public async Task ReuseTheFileOfTheSameBytes()
         {
-            string first = await store.StoreAsync(BYTES, CancellationToken.None);
+            using FontFileStore.Lease first = await store.StoreAsync(BYTES, CancellationToken.None);
 
-            string second = await store.StoreAsync(BYTES, CancellationToken.None);
+            using FontFileStore.Lease second = await store.StoreAsync(BYTES, CancellationToken.None);
 
-            Assert.That(second, Is.EqualTo(first));
+            Assert.That(second.Path, Is.EqualTo(first.Path));
             Assert.That(Directory.GetFiles(directory), Has.Length.EqualTo(1));
         }
 
         [Test]
         public async Task KeepDifferentBytesInDifferentFiles()
         {
-            string first = await store.StoreAsync(BYTES, CancellationToken.None);
+            using FontFileStore.Lease first = await store.StoreAsync(BYTES, CancellationToken.None);
 
-            string second = await store.StoreAsync(OTHER_BYTES, CancellationToken.None);
+            using FontFileStore.Lease second = await store.StoreAsync(OTHER_BYTES, CancellationToken.None);
 
-            Assert.That(second, Is.Not.EqualTo(first));
-            Assert.That(File.ReadAllBytes(second), Is.EqualTo(OTHER_BYTES));
+            Assert.That(second.Path, Is.Not.EqualTo(first.Path));
+            Assert.That(File.ReadAllBytes(second.Path), Is.EqualTo(OTHER_BYTES));
             Assert.That(Directory.GetFiles(directory), Has.Length.EqualTo(2));
         }
 
@@ -106,10 +108,47 @@ namespace ECS.StreamableLoading.Fonts.Tests
         }
 
         [Test]
+        public async Task KeepTheFileUntilItsLastOwnerReleasesIt()
+        {
+            using FontFileStore.Lease first = await store.StoreAsync(BYTES, CancellationToken.None);
+            using FontFileStore.Lease second = await store.StoreAsync(BYTES, CancellationToken.None);
+
+            first.Dispose();
+            first.Dispose();
+
+            Assert.That(File.Exists(second.Path), Is.True);
+            second.Dispose();
+            Assert.That(File.Exists(second.Path), Is.False);
+        }
+
+        [Test]
+        public async Task ShareOwnershipAcrossConcurrentWrites()
+        {
+            FontFileStore.Lease[] leases = await Task.WhenAll(
+                store.StoreAsync(BYTES, CancellationToken.None).AsTask(),
+                store.StoreAsync(BYTES, CancellationToken.None).AsTask());
+
+            try
+            {
+                Assert.That(leases[0].Path, Is.EqualTo(leases[1].Path));
+                leases[0].Dispose();
+                Assert.That(File.ReadAllBytes(leases[1].Path), Is.EqualTo(BYTES));
+            }
+            finally
+            {
+                foreach (FontFileStore.Lease lease in leases)
+                    lease.Dispose();
+            }
+
+            Assert.That(File.Exists(leases[0].Path), Is.False);
+        }
+
+        [Test]
         public async Task RemoveEveryFileOnClear()
         {
-            await store.StoreAsync(BYTES, CancellationToken.None);
-
+            using FontFileStore.Lease lease = await store.StoreAsync(BYTES, CancellationToken.None);
+            lease.Dispose();
+            File.WriteAllBytes(Path.Combine(directory, "abandoned.tmp"), BYTES);
             store.Clear();
 
             Assert.That(Directory.Exists(directory), Is.False);
@@ -118,13 +157,14 @@ namespace ECS.StreamableLoading.Fonts.Tests
         [Test]
         public async Task StoreAgainAfterClear()
         {
-            string first = await store.StoreAsync(BYTES, CancellationToken.None);
+            using FontFileStore.Lease first = await store.StoreAsync(BYTES, CancellationToken.None);
+            first.Dispose();
             store.Clear();
 
-            string second = await store.StoreAsync(BYTES, CancellationToken.None);
+            using FontFileStore.Lease second = await store.StoreAsync(BYTES, CancellationToken.None);
 
-            Assert.That(second, Is.EqualTo(first));
-            Assert.That(File.ReadAllBytes(second), Is.EqualTo(BYTES));
+            Assert.That(second.Path, Is.EqualTo(first.Path));
+            Assert.That(File.ReadAllBytes(second.Path), Is.EqualTo(BYTES));
         }
     }
 }

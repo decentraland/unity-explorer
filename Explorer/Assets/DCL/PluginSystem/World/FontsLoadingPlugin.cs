@@ -38,6 +38,7 @@ namespace DCL.PluginSystem.World
 
         public void Dispose()
         {
+            fontsCache.Dispose();
             referenceFont.Dispose();
         }
 

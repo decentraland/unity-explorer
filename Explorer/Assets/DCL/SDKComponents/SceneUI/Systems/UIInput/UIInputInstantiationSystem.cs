@@ -68,7 +68,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
 
         [Query]
         [All(typeof(PBUiInput))]
-        [None(typeof(UIInputComponent))]
+        [None(typeof(UIInputComponent), typeof(DeleteEntityIntention))]
         private void InstantiateUIInput(in Entity entity, in PBUiInput sdkModel, in PBUiTransform pbUiTransform, ref UITransformComponent uiTransformComponent)
         {
             var newUIInputComponent = inputTextsPool.Get()!;

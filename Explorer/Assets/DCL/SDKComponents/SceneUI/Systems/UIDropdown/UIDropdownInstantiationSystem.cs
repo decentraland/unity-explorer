@@ -64,7 +64,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIDropdown
 
         [Query]
         [All(typeof(PBUiDropdown))]
-        [None(typeof(UIDropdownComponent))]
+        [None(typeof(UIDropdownComponent), typeof(DeleteEntityIntention))]
         private void InstantiateUIDropdown(in Entity entity, in PBUiTransform pbUiTransform, ref UITransformComponent uiTransformComponent)
         {
             var newDropdown = dropdownsPool.Get();

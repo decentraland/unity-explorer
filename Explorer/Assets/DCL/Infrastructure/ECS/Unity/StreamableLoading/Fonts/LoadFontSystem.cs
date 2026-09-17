@@ -29,29 +29,43 @@ namespace ECS.StreamableLoading.Fonts
             this.fileStore = fileStore;
         }
 
+        protected override void DisposeAbandonedResult(FontData asset) =>
+            asset.Dispose();
+
         protected override async UniTask<StreamableLoadingResult<FontData>> FlowInternalAsync(GetFontIntention intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
         {
-            string regularPath;
-            string? boldPath = null;
-            string? italicPath = null;
-            string? boldItalicPath = null;
+            var files = new FontFileStore.Lease?[4];
+            bool transferred = false;
 
-            if (intention.Kind == FontSourceKind.FontsourceFamily)
-                (regularPath, boldPath, italicPath, boldItalicPath) = await DownloadFamilyAsync(intention, ct);
-            else
-                regularPath = await DownloadAsync(intention.CommonArguments, intention.Src, ct);
+            try
+            {
+                if (intention.Kind == FontSourceKind.FontsourceFamily)
+                    await DownloadFamilyAsync(intention, files, ct);
+                else
+                    files[0] = await DownloadAsync(intention.CommonArguments, intention.Src, ct);
 
-            await UniTask.SwitchToMainThread(ct);
+                await UniTask.SwitchToMainThread(ct);
 
-            FontFamilyAssets? assets = fontAssetFactory.Create(intention.Src, regularPath, boldPath, italicPath, boldItalicPath);
+                FontFamilyAssets? assets = fontAssetFactory.Create(intention.Src, files[0]!.Path, files[1]?.Path, files[2]?.Path, files[3]?.Path);
 
-            if (assets == null)
-                throw new FontLoadException($"\"{intention.Src}\" is not a font FreeType can read");
+                if (assets == null)
+                    throw new FontLoadException($"\"{intention.Src}\" is not a font FreeType can read");
 
-            return new StreamableLoadingResult<FontData>(new FontData(assets));
+                var data = new FontData(assets, files);
+                transferred = true;
+                return new StreamableLoadingResult<FontData>(data);
+            }
+            finally
+            {
+                if (!transferred)
+                {
+                    await UniTask.SwitchToMainThread();
+                    FontFileStore.ReleaseAfterDestructionAsync(files).Forget(e => ReportHub.LogException(e, ReportCategory.SDK_FONTS));
+                }
+            }
         }
 
-        private async UniTask<(string regularPath, string? boldPath, string? italicPath, string? boldItalicPath)> DownloadFamilyAsync(GetFontIntention intention, CancellationToken ct)
+        private async UniTask DownloadFamilyAsync(GetFontIntention intention, FontFileStore.Lease?[] files, CancellationToken ct)
         {
             FontsourceFamilyRecord record = await webRequestController.GetAsync(intention.CommonArguments, ct, GetReportData())
                                                                       .CreateFromNewtonsoftJsonAsync<FontsourceFamilyRecord>();
@@ -59,17 +73,21 @@ namespace ECS.StreamableLoading.Fonts
             if (!FontsourceCatalog.TryGetVariantUrl(record, FontVariant.Regular, out string regularUrl))
                 throw new FontLoadException($"The font family \"{intention.Src}\" has no regular face on Fontsource");
 
-            string regularPath = await DownloadAsync(intention.CommonArguments.WithURL(URLAddress.FromString(regularUrl)), intention.Src, ct);
+            files[0] = await DownloadAsync(intention.CommonArguments.WithURL(URLAddress.FromString(regularUrl)), intention.Src, ct);
 
-            (string? boldPath, string? italicPath, string? boldItalicPath) = await UniTask.WhenAll(
-                DownloadVariantIfPresentAsync(record, FontVariant.Bold, intention.CommonArguments, intention.Src, ct),
-                DownloadVariantIfPresentAsync(record, FontVariant.Italic, intention.CommonArguments, intention.Src, ct),
-                DownloadVariantIfPresentAsync(record, FontVariant.BoldItalic, intention.CommonArguments, intention.Src, ct));
+            // Settle all writes before the owner can release their leases on cancellation.
+            var (bold, italic, boldItalic) = await UniTask.WhenAll(
+                DownloadVariantIfPresentAsync(record, FontVariant.Bold, intention.CommonArguments, intention.Src, ct).SuppressCancellationThrow(),
+                DownloadVariantIfPresentAsync(record, FontVariant.Italic, intention.CommonArguments, intention.Src, ct).SuppressCancellationThrow(),
+                DownloadVariantIfPresentAsync(record, FontVariant.BoldItalic, intention.CommonArguments, intention.Src, ct).SuppressCancellationThrow());
 
-            return (regularPath, boldPath, italicPath, boldItalicPath);
+            files[1] = bold.Result;
+            files[2] = italic.Result;
+            files[3] = boldItalic.Result;
+            ct.ThrowIfCancellationRequested();
         }
 
-        private async UniTask<string> DownloadAsync(CommonArguments arguments, string src, CancellationToken ct)
+        private async UniTask<FontFileStore.Lease> DownloadAsync(CommonArguments arguments, string src, CancellationToken ct)
         {
             byte[] bytes = await webRequestController.GetAsync(arguments, ct, GetReportData()).GetDataCopyAsync();
 
@@ -82,12 +100,15 @@ namespace ECS.StreamableLoading.Fonts
             return await fileStore.StoreAsync(bytes, ct);
         }
 
-        private async UniTask<string?> DownloadVariantIfPresentAsync(FontsourceFamilyRecord record, FontVariant variant, CommonLoadingArguments commonArguments, string src, CancellationToken ct)
+        private async UniTask<FontFileStore.Lease?> DownloadVariantIfPresentAsync(FontsourceFamilyRecord record, FontVariant variant, CommonLoadingArguments commonArguments, string src, CancellationToken ct)
         {
-            if (!FontsourceCatalog.TryGetVariantUrl(record, variant, out string url))
-                return null;
+            try
+            {
+                if (!FontsourceCatalog.TryGetVariantUrl(record, variant, out string url))
+                    return null;
 
-            try { return await DownloadAsync(commonArguments.WithURL(URLAddress.FromString(url)), src, ct); }
+                return await DownloadAsync(commonArguments.WithURL(URLAddress.FromString(url)), src, ct);
+            }
             catch (Exception e) when (e is not OperationCanceledException)
             {
                 ReportHub.LogWarning(GetReportData(), $"\"{src}\": the {variant} face failed to load, the regular face stands in: {e.Message}");

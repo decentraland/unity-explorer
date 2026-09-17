@@ -1,3 +1,4 @@
+using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Profiling;
 using Unity.Profiling;
@@ -6,7 +7,13 @@ namespace ECS.StreamableLoading.Fonts
 {
     public class FontData : StreamableRefCountData<FontFamilyAssets>
     {
-        public FontData(FontFamilyAssets assets) : base(assets, ReportCategory.SDK_FONTS) { }
+        private readonly FontFileStore.Lease?[] files;
+
+        public FontData(FontFamilyAssets assets, params FontFileStore.Lease?[] files) : base(assets, ReportCategory.SDK_FONTS)
+        {
+            this.files = files;
+            ProfilingCounters.FontsAmount.Value++;
+        }
 
         protected override ref ProfilerCounterValue<int> totalCount => ref ProfilingCounters.FontsAmount;
 
@@ -15,6 +22,7 @@ namespace ECS.StreamableLoading.Fonts
         protected override void DestroyObject()
         {
             Asset.Destroy();
+            FontFileStore.ReleaseAfterDestructionAsync(files).Forget(e => ReportHub.LogException(e, ReportCategory.SDK_FONTS));
         }
     }
 }

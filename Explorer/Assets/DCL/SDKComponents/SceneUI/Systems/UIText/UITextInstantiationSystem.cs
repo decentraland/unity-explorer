@@ -47,7 +47,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIText
 
         [Query]
         [All(typeof(PBUiText), typeof(UITransformComponent))]
-        [None(typeof(UITextComponent))]
+        [None(typeof(UITextComponent), typeof(DeleteEntityIntention))]
         private void InstantiateUIText(in Entity entity, ref UITransformComponent uiTransformComponent)
         {
             var label = labelsPool.Get();
@@ -61,6 +61,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIText
         }
 
         [Query]
+        [None(typeof(DeleteEntityIntention))]
         private void UpdateUIText(ref UITextComponent uiTextComponent, ref PBUiText sdkModel, ref UITransformComponent uiTransformComponent)
         {
             if (!sdkModel.IsDirty)

@@ -34,20 +34,28 @@ namespace ECS.StreamableLoading.Fonts
             var textMeshProAssets = new List<TMP_FontAsset>(4);
             var uiToolkitAssets = new List<FontAsset>(4);
 
-            TMP_FontAsset? textMeshProRegular = CreateTextMeshProAsset(assetName, regularFilePath, textMeshProAssets);
-            FontAsset? uiToolkitRegular = CreateUIToolkitAsset(assetName, regularFilePath, uiToolkitAssets);
+            try
+            {
+                TMP_FontAsset? textMeshProRegular = CreateTextMeshProAsset(assetName, regularFilePath, textMeshProAssets);
+                FontAsset? uiToolkitRegular = CreateUIToolkitAsset(assetName, regularFilePath, uiToolkitAssets);
 
-            if (textMeshProRegular == null || uiToolkitRegular == null)
+                if (textMeshProRegular == null || uiToolkitRegular == null)
+                {
+                    FontFamilyAssets.Destroy(textMeshProAssets, uiToolkitAssets);
+                    return null;
+                }
+
+                WireVariant(assetName, boldFilePath, FontVariant.Bold, textMeshProRegular, uiToolkitRegular, textMeshProAssets, uiToolkitAssets);
+                WireVariant(assetName, italicFilePath, FontVariant.Italic, textMeshProRegular, uiToolkitRegular, textMeshProAssets, uiToolkitAssets);
+                WireVariant(assetName, boldItalicFilePath, FontVariant.BoldItalic, textMeshProRegular, uiToolkitRegular, textMeshProAssets, uiToolkitAssets);
+
+                return new FontFamilyAssets(textMeshProRegular, uiToolkitRegular, textMeshProAssets, uiToolkitAssets);
+            }
+            catch
             {
                 FontFamilyAssets.Destroy(textMeshProAssets, uiToolkitAssets);
-                return null;
+                throw;
             }
-
-            WireVariant(assetName, boldFilePath, FontVariant.Bold, textMeshProRegular, uiToolkitRegular, textMeshProAssets, uiToolkitAssets);
-            WireVariant(assetName, italicFilePath, FontVariant.Italic, textMeshProRegular, uiToolkitRegular, textMeshProAssets, uiToolkitAssets);
-            WireVariant(assetName, boldItalicFilePath, FontVariant.BoldItalic, textMeshProRegular, uiToolkitRegular, textMeshProAssets, uiToolkitAssets);
-
-            return new FontFamilyAssets(textMeshProRegular, uiToolkitRegular, textMeshProAssets, uiToolkitAssets);
         }
 
         private void WireVariant(string assetName, string? filePath, FontVariant variant, TMP_FontAsset textMeshProRegular, FontAsset uiToolkitRegular,
@@ -100,16 +108,17 @@ namespace ECS.StreamableLoading.Fonts
             Material generated = asset.material;
             ShaderUtilities.GetShaderPropertyIDs();
 
-            var material = new Material(referenceFont.material) { name = $"{name} Material" };
+            var material = new Material(referenceFont.material);
+            asset.material = material;
+            UnityObjectUtils.SafeDestroy(generated);
+
+            material.name = $"{name} Material";
             material.SetTexture(ShaderUtilities.ID_MainTex, asset.atlasTexture);
             material.SetFloat(ShaderUtilities.ID_TextureWidth, ATLAS_SIZE);
             material.SetFloat(ShaderUtilities.ID_TextureHeight, ATLAS_SIZE);
             material.SetFloat(ShaderUtilities.ID_GradientScale, ATLAS_PADDING + SDF_PACKING_MODIFIER);
             material.SetFloat(ShaderUtilities.ID_WeightNormal, asset.normalStyle);
             material.SetFloat(ShaderUtilities.ID_WeightBold, asset.boldStyle);
-
-            asset.material = material;
-            UnityObjectUtils.SafeDestroy(generated);
 
             asset.fallbackFontAssetTable = new List<TMP_FontAsset> { referenceFont };
 

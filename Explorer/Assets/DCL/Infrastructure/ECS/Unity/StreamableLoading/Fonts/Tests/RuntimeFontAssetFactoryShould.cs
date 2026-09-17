@@ -72,6 +72,30 @@ namespace ECS.StreamableLoading.Fonts.Tests
         }
 
         [Test]
+        public void DestroyTheCreatedFontWhenMaterialCreationThrows()
+        {
+            const string FAILED_ASSET_NAME = "Failed font factory ownership test";
+            Object.DestroyImmediate(referenceFont);
+
+            try
+            {
+                Assert.That(() => factory.Create(FAILED_ASSET_NAME, TestFonts.PATH), Throws.Exception);
+
+                foreach (TMP_FontAsset font in Resources.FindObjectsOfTypeAll<TMP_FontAsset>())
+                    Assert.That(font.name, Is.Not.EqualTo(FAILED_ASSET_NAME));
+            }
+            finally
+            {
+                foreach (TMP_FontAsset font in Resources.FindObjectsOfTypeAll<TMP_FontAsset>())
+                    if (font.name == FAILED_ASSET_NAME)
+                    {
+                        TMP_ResourceManager.RemoveFontAsset(font);
+                        Object.DestroyImmediate(font);
+                    }
+            }
+        }
+
+        [Test]
         public void KeepTheRegularFaceWhenAVariantIsNotAFont()
         {
             assets = factory.Create(ASSET_NAME, TestFonts.PATH, NOT_A_FONT_PATH, null, null);

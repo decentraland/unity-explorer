@@ -3,6 +3,7 @@ using DCL.Diagnostics;
 using DCL.Optimization.Hashing;
 using ECS.StreamableLoading.Cache.Disk;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using UnityEngine;
@@ -21,6 +22,7 @@ namespace ECS.StreamableLoading.Fonts
         private const uint SFNT_VERSION_TRUE_TYPE = 0x00010000;
 
         private readonly string directory;
+        private readonly Dictionary<string, int> references = new ();
 
         public FontFileStore(string directory)
         {
@@ -56,15 +58,42 @@ namespace ECS.StreamableLoading.Fonts
             }
         }
 
-        public async UniTask<string> StoreAsync(byte[] bytes, CancellationToken ct)
+        public async UniTask<Lease> StoreAsync(byte[] bytes, CancellationToken ct)
         {
             await UniTask.SwitchToThreadPool();
             ct.ThrowIfCancellationRequested();
 
             string path = Path.Combine(directory, FileName(bytes));
 
+            lock (references)
+            {
+                ct.ThrowIfCancellationRequested();
+                Store(bytes, path);
+                references.TryGetValue(path, out int count);
+                references[path] = count + 1;
+                return new Lease(this, path);
+            }
+        }
+
+        internal static async UniTask ReleaseAfterDestructionAsync(Lease?[] files)
+        {
+            if (files.Length == 0)
+                return;
+
+            // Object.Destroy completes after this frame; native fonts may still read their source until then.
+            if (Application.isPlaying)
+                await UniTask.NextFrame();
+
+            await UniTask.SwitchToThreadPool();
+
+            foreach (Lease? file in files)
+                file?.Dispose();
+        }
+
+        private void Store(byte[] bytes, string path)
+        {
             if (File.Exists(path))
-                return path;
+                return;
 
             Directory.CreateDirectory(directory);
 
@@ -85,14 +114,49 @@ namespace ECS.StreamableLoading.Fonts
                 if (File.Exists(temp))
                     File.Delete(temp);
             }
+        }
 
-            return path;
+        private void Release(string path)
+        {
+            lock (references)
+            {
+                int count = references[path];
+
+                if (count > 1)
+                {
+                    references[path] = count - 1;
+                    return;
+                }
+
+                references.Remove(path);
+
+                try { File.Delete(path); }
+                catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+                {
+                    ReportHub.LogWarning(ReportCategory.SDK_FONTS, $"The scene font file {path} could not be removed: {e.Message}");
+                }
+            }
         }
 
         private static string FileName(byte[] bytes)
         {
             using HashKey key = HashKey.FromOwnedMemory(SHA256Hashing.ComputeHash(bytes));
             return HashNamings.HashNameFrom(key, ".ttf");
+        }
+
+        public sealed class Lease : IDisposable
+        {
+            private FontFileStore? owner;
+
+            public string Path { get; }
+
+            internal Lease(FontFileStore owner, string path)
+            {
+                this.owner = owner;
+                Path = path;
+            }
+
+            public void Dispose() => Interlocked.Exchange(ref owner, null)?.Release(Path);
         }
     }
 }

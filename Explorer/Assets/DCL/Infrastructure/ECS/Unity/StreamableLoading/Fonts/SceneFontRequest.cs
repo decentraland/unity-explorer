@@ -46,6 +46,8 @@ namespace ECS.StreamableLoading.Fonts
 
             if (result.Succeeded)
                 assets = result.Asset!.Asset;
+            else
+                result.TryLogException();
 
             return true;
         }

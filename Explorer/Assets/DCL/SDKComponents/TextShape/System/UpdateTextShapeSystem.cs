@@ -44,16 +44,17 @@ namespace DCL.SDKComponents.TextShape.System
         protected override void Update(float t)
         {
             UpdateTextsQuery(World!);
-            ApplyLoadedFontsQuery(World!);
             // Note: It must occur after UpdateTextsQuery in order to properly calculate the bounds of the text with the latest state,
             // and the incoming value of IsDirty flag of the PBTextShape must be available, that's why it is reset in a separate
             // query as a final step
             CalculateIfTextShapesAreInsideSceneBoundariesQuery(World);
+            ApplyLoadedFontsQuery(World!);
             ResetDirtyFlagQuery(World);
         }
 
         [Query]
         [All(typeof(TextShapeComponent), typeof(PBTextShape))]
+        [None(typeof(DeleteEntityIntention))]
         private void UpdateTexts(Entity entity, ref TextShapeComponent textShapeComponent, in PBTextShape textShape)
         {
             if (textShape.IsDirty)
@@ -86,6 +87,7 @@ namespace DCL.SDKComponents.TextShape.System
 
         [Query]
         [All(typeof(PBTextShape))]
+        [None(typeof(DeleteEntityIntention))]
         private void ResetDirtyFlag(PBTextShape textShape)
         {
             textShape.IsDirty = false;
@@ -101,6 +103,7 @@ namespace DCL.SDKComponents.TextShape.System
         /// <param name="pbTextShape">The latest state of the text shape in the scene.</param>
         [Query]
         [All(typeof(TextShapeComponent), typeof(PBTextShape))]
+        [None(typeof(DeleteEntityIntention))]
         private void CalculateIfTextShapesAreInsideSceneBoundaries(ref TextShapeComponent textShapeComponent, PBTextShape pbTextShape)
         {
             // If text just changed (IsDirty is still true), skip bounds calculation.

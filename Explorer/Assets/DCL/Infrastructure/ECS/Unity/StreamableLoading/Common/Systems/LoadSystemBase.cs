@@ -354,7 +354,8 @@ namespace ECS.StreamableLoading.Common.Systems
                 // (e.g. a corrupt disk-cache entry failing to deserialize) would otherwise leave the dangling
                 // completion source in OngoingRequests forever, and every subsequent request for the same
                 // intention would await it indefinitely without ever reaching the network
-                if (result is { Succeeded: true })
+                if (result is { Succeeded: true }
+                    && (!cache.TryGet(in intention, out TAsset cachedAsset) || !ReferenceEquals(cachedAsset, result.Value.Asset)))
                     DisposeAbandonedResult(result.Value.Asset!);
 
                 // Remove from the ongoing requests immediately because finally will be called later than
