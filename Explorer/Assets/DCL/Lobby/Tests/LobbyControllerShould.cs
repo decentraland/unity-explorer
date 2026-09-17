@@ -1,13 +1,21 @@
+using Arch.Core;
 using Cysharp.Threading.Tasks;
+using DCL.CharacterPreview;
+using DCL.ExplorePanel;
 using DCL.Input;
 using DCL.Input.Component;
+using DCL.Profiles;
+using DCL.Profiles.Self;
 using DCL.RealmNavigation;
+using DCL.UI;
 using MVC;
 using NSubstitute;
 using NUnit.Framework;
+using System;
 using System.Reflection;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using Object = UnityEngine.Object;
 
@@ -19,8 +27,12 @@ namespace DCL.Lobby.Tests
         private GameObject root = null!;
         private Button jumpInButton = null!;
         private Button closeButton = null!;
+        private CharacterPreviewInputDetector avatarInputDetector = null!;
+        private CharacterPreviewSettingsSO previewSettings = null!;
         private IInputBlock inputBlock = null!;
+        private IMVCManager mvcManager = null!;
         private LoadingStatus loadingStatus = null!;
+        private World world = null!;
         private LobbyController controller = null!;
 
         [SetUp]
@@ -39,16 +51,27 @@ namespace DCL.Lobby.Tests
 
             SetBackingField(view, nameof(LobbyView.JumpInButton), jumpInButton);
             SetBackingField(view, nameof(LobbyView.CloseButton), closeButton);
+            SetBackingField(view, nameof(LobbyView.CharacterPreviewView), CreateCharacterPreviewView());
 
             inputBlock = Substitute.For<IInputBlock>();
+            mvcManager = Substitute.For<IMVCManager>();
             loadingStatus = new LoadingStatus();
-            controller = new LobbyController(() => view, inputBlock, loadingStatus);
+            world = World.Create();
+
+            // Without an own profile the avatar preview is never initialized, which keeps the rendering stack out of the test
+            ISelfProfile selfProfile = Substitute.For<ISelfProfile>();
+            selfProfile.ProfileAsync(Arg.Any<CancellationToken>()).Returns(UniTask.FromResult<Profile?>(null));
+
+            controller = new LobbyController(() => view, inputBlock, loadingStatus, mvcManager, selfProfile, new ProfileChangesBus(),
+                Substitute.For<ICharacterPreviewFactory>(), new CharacterPreviewEventBus(), new LobbyAvatarSettings(), world);
         }
 
         [TearDown]
         public void TearDown()
         {
             controller.Dispose();
+            World.Destroy(world);
+            Object.DestroyImmediate(previewSettings);
             Object.DestroyImmediate(root);
         }
 
@@ -94,6 +117,19 @@ namespace DCL.Lobby.Tests
             Assert.That(closeButton.gameObject.activeSelf, Is.EqualTo(closeButtonVisible));
         }
 
+        [Test]
+        public void OpenTheBackpackWhenTheAvatarIsClicked()
+        {
+            // Arrange
+            Launch(isStartup: true).Forget();
+
+            // Act
+            avatarInputDetector.OnPointerClick(new PointerEventData(EventSystem.current));
+
+            // Assert
+            mvcManager.Received(1).ShowAsync(Arg.Is<ShowCommand<ExplorePanelView, ExplorePanelParameter>>(c => c.InputData.Section == ExploreSections.Backpack), Arg.Any<CancellationToken>());
+        }
+
         [TestCase(LoadingStatus.LoadingStage.Init, false)]
         [TestCase(LoadingStatus.LoadingStage.AuthenticationScreenShowing, false)]
         [TestCase(LoadingStatus.LoadingStage.PlayerTeleporting, false)]
@@ -110,8 +146,25 @@ namespace DCL.Lobby.Tests
         private UniTask Launch(bool isStartup) =>
             controller.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Fullscreen, 0), new LobbyParameter(isStartup), CancellationToken.None);
 
-        private static void SetBackingField(LobbyView view, string propertyName, Button button) =>
-            typeof(LobbyView).GetField($"<{propertyName}>k__BackingField", BindingFlags.Instance | BindingFlags.NonPublic)!
-                             .SetValue(view, button);
+        private CharacterPreviewView CreateCharacterPreviewView()
+        {
+            var previewGo = new GameObject("CharacterPreviewView");
+            previewGo.transform.SetParent(root.transform);
+            CharacterPreviewView previewView = previewGo.AddComponent<CharacterPreviewView>();
+            avatarInputDetector = previewGo.AddComponent<CharacterPreviewInputDetector>();
+
+            previewSettings = ScriptableObject.CreateInstance<CharacterPreviewSettingsSO>();
+            SetBackingField(previewSettings, nameof(CharacterPreviewSettingsSO.cursorSettings), Array.Empty<CharacterPreviewInputCursorSetting>());
+
+            SetBackingField(previewView, nameof(CharacterPreviewView.CharacterPreviewInputDetector), avatarInputDetector);
+            SetBackingField(previewView, nameof(CharacterPreviewView.CharacterPreviewCursorContainer), previewGo.AddComponent<CharacterPreviewCursorContainer>());
+            SetBackingField(previewView, nameof(CharacterPreviewView.CharacterPreviewSettingsSo), previewSettings);
+
+            return previewView;
+        }
+
+        private static void SetBackingField(object target, string propertyName, object value) =>
+            target.GetType().GetField($"<{propertyName}>k__BackingField", BindingFlags.Instance | BindingFlags.NonPublic)!
+                  .SetValue(target, value);
     }
 }

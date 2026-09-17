@@ -1114,6 +1114,14 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        <AvatarSettings>k__BackingField:
+          <FlavourEmotes>k__BackingField:
+          - wave
+          - fistpump
+          - dab
+          <MinSecondsBetweenFlavourEmotes>k__BackingField: 8
+          <MaxSecondsBetweenFlavourEmotes>k__BackingField: 20
+          <ProfileUpdatedEmoteURN>k__BackingField: fistpump
     - rid: 4938242198007709791
       type: {class: ParticleSystemPlugin/ParticleSystemPluginSettings, ns: DCL.SDKComponents.ParticleSystem.Systems, asm: DCL.Plugins}
       data:

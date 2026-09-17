@@ -15,6 +15,9 @@ namespace DCL.PluginSystem.Global
             [field: SerializeField]
             public LobbyViewRef LobbyPrefab { get; private set; }
 
+            [field: SerializeField]
+            public LobbyAvatarSettings AvatarSettings { get; private set; }
+
             [Serializable]
             public class LobbyViewRef : ComponentReference<LobbyView>
             {
