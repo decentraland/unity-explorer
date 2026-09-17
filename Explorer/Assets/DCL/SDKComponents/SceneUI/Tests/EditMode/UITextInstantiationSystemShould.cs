@@ -22,10 +22,10 @@ namespace DCL.SDKComponents.SceneUI.Tests
 {
     public class UITextInstantiationSystemShould : UnitySystemTestBase<UITextInstantiationSystem>
     {
-        private IComponentPoolsRegistry poolsRegistry;
-        private ISceneData sceneData;
+        private IComponentPoolsRegistry poolsRegistry = null!;
+        private ISceneData sceneData = null!;
         private Entity entity;
-        private UITransformComponent uiTransformComponent;
+        private UITransformComponent uiTransformComponent = null!;
 
         [SetUp]
         public void SetUp()

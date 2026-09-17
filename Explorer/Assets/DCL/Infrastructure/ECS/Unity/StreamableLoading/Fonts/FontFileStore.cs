@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using UnityEngine;
+using Utility.Multithreading;
 
 namespace ECS.StreamableLoading.Fonts
 {
@@ -60,7 +61,7 @@ namespace ECS.StreamableLoading.Fonts
 
         public async UniTask<Lease> StoreAsync(byte[] bytes, CancellationToken ct)
         {
-            await UniTask.SwitchToThreadPool();
+            await DCLTask.SwitchToThreadPool();
             ct.ThrowIfCancellationRequested();
 
             string path = Path.Combine(directory, FileName(bytes));
@@ -84,7 +85,7 @@ namespace ECS.StreamableLoading.Fonts
             if (Application.isPlaying)
                 await UniTask.NextFrame();
 
-            await UniTask.SwitchToThreadPool();
+            await DCLTask.SwitchToThreadPool();
 
             foreach (Lease? file in files)
                 file?.Dispose();
@@ -156,7 +157,7 @@ namespace ECS.StreamableLoading.Fonts
                 Path = path;
             }
 
-            public void Dispose() => Interlocked.Exchange(ref owner, null)?.Release(Path);
+            public void Dispose() => DCLInterlocked.Exchange(ref owner, null)?.Release(Path);
         }
     }
 }

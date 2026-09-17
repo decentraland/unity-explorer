@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace ECS.StreamableLoading.Fonts
 {
@@ -78,7 +79,7 @@ namespace ECS.StreamableLoading.Fonts
                 || !styles.TryGetValue(style, out Dictionary<string, FontsourceFamilyRecord.Files> subsets))
                 return false;
 
-            FontsourceFamilyRecord.Files? files = null;
+            FontsourceFamilyRecord.Files? files;
 
             if (!subsets.TryGetValue(PREFERRED_SUBSET, out files) && record.subsets != null)
                 foreach (string subset in record.subsets)
@@ -88,6 +89,10 @@ namespace ECS.StreamableLoading.Fonts
             string? ttf = files?.url?.ttf;
 
             if (string.IsNullOrEmpty(ttf))
+                return false;
+
+            if (!string.IsNullOrEmpty(record.npmVersion)
+                && !Regex.IsMatch(record.npmVersion, @"\A[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?\z", RegexOptions.CultureInvariant))
                 return false;
 
             url = string.IsNullOrEmpty(record.npmVersion)

@@ -8,7 +8,9 @@ using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
+using Newtonsoft.Json;
 using System;
+using System.Text;
 using System.Threading;
 
 namespace ECS.StreamableLoading.Fonts
@@ -17,6 +19,8 @@ namespace ECS.StreamableLoading.Fonts
     [LogCategory(ReportCategory.SDK_FONTS)]
     public partial class LoadFontSystem : LoadSystemBase<FontData, GetFontIntention>
     {
+        private const int MAX_CATALOG_BYTES = 1024 * 1024;
+
         private readonly IWebRequestController webRequestController;
         private readonly RuntimeFontAssetFactory fontAssetFactory;
         private readonly FontFileStore fileStore;
@@ -46,6 +50,7 @@ namespace ECS.StreamableLoading.Fonts
 
                 await UniTask.SwitchToMainThread(ct);
 
+                // Both download branches populate the required regular face before returning.
                 FontFamilyAssets? assets = fontAssetFactory.Create(intention.Src, files[0]!.Path, files[1]?.Path, files[2]?.Path, files[3]?.Path);
 
                 if (assets == null)
@@ -67,8 +72,9 @@ namespace ECS.StreamableLoading.Fonts
 
         private async UniTask DownloadFamilyAsync(GetFontIntention intention, FontFileStore.Lease?[] files, CancellationToken ct)
         {
-            FontsourceFamilyRecord record = await webRequestController.GetAsync(intention.CommonArguments, ct, GetReportData())
-                                                                      .CreateFromNewtonsoftJsonAsync<FontsourceFamilyRecord>();
+            byte[] catalogBytes = await DownloadBytesAsync(intention.CommonArguments, MAX_CATALOG_BYTES, ct);
+            FontsourceFamilyRecord record = JsonConvert.DeserializeObject<FontsourceFamilyRecord>(Encoding.UTF8.GetString(catalogBytes))
+                                           ?? throw new FontLoadException("Fontsource returned an empty family record");
 
             if (!FontsourceCatalog.TryGetVariantUrl(record, FontVariant.Regular, out string regularUrl))
                 throw new FontLoadException($"The font family \"{intention.Src}\" has no regular face on Fontsource");
@@ -89,15 +95,35 @@ namespace ECS.StreamableLoading.Fonts
 
         private async UniTask<FontFileStore.Lease> DownloadAsync(CommonArguments arguments, string src, CancellationToken ct)
         {
-            byte[] bytes = await webRequestController.GetAsync(arguments, ct, GetReportData()).GetDataCopyAsync();
-
-            if (bytes.Length > FontFileStore.MAX_FILE_BYTES)
-                throw new FontLoadException($"\"{src}\": {arguments.URL} is {bytes.Length} bytes, scene fonts are capped at {FontFileStore.MAX_FILE_BYTES} bytes");
+            byte[] bytes = await DownloadBytesAsync(arguments, FontFileStore.MAX_FILE_BYTES, ct);
 
             if (!FontFileStore.LooksLikeTrueTypeFont(bytes))
                 throw new FontLoadException($"\"{src}\": {arguments.URL} is not a supported TrueType font file");
 
             return await fileStore.StoreAsync(bytes, ct);
+        }
+
+        private async UniTask<byte[]> DownloadBytesAsync(CommonArguments arguments, int maxBytes, CancellationToken ct)
+        {
+            await UniTask.SwitchToMainThread(ct);
+            using var handler = new FontDownloadHandler(maxBytes);
+
+            try
+            {
+                // Each attempt needs a fresh handler: disposing the request also disposes its handler.
+                byte[] bytes = await webRequestController.SendAsync<GenericGetRequest, GenericGetArguments, GenericDownloadHandlerUtils.GetDataCopyOp<GenericGetRequest>, byte[]>(
+                    new CommonArguments(arguments.URL, RetryPolicy.NONE, arguments.Timeout), default(GenericGetArguments),
+                    new GenericDownloadHandlerUtils.GetDataCopyOp<GenericGetRequest>(), ct, GetReportData(), downloadHandler: handler);
+
+                if (handler.LimitExceeded)
+                    throw new FontLoadException($"{arguments.URL} exceeds the download limit of {maxBytes} bytes");
+
+                return bytes;
+            }
+            catch (UnityWebRequestException) when (handler.LimitExceeded)
+            {
+                throw new FontLoadException($"{arguments.URL} exceeds the download limit of {maxBytes} bytes");
+            }
         }
 
         private async UniTask<FontFileStore.Lease?> DownloadVariantIfPresentAsync(FontsourceFamilyRecord record, FontVariant variant, CommonLoadingArguments commonArguments, string src, CancellationToken ct)

@@ -108,6 +108,30 @@ namespace ECS.StreamableLoading.Fonts.Tests
             Assert.That(regular, Is.Null);
         }
 
+        [TestCase("5.0.0/../../other-package")]
+        [TestCase("5.0.0?query")]
+        [TestCase("5.0.0#fragment")]
+        [TestCase("5.0.0%2f")]
+        [TestCase("5.0.0\\other")]
+        [TestCase("5.0.0\n")]
+        public void RejectUnsafePackageVersions(string version)
+        {
+            FontsourceFamilyRecord record = Record(("400", "normal", "latin"));
+            record.npmVersion = version;
+
+            Assert.That(VariantUrl(record, FontVariant.Regular), Is.Null);
+        }
+
+        [TestCase("5.0.0")]
+        [TestCase("5.0.0-beta.1+build.42")]
+        public void AcceptReleaseAndPrereleaseVersions(string version)
+        {
+            FontsourceFamilyRecord record = Record(("400", "normal", "latin"));
+            record.npmVersion = version;
+
+            Assert.That(VariantUrl(record, FontVariant.Regular), Is.EqualTo(Url("400", "normal", "latin", version)));
+        }
+
         private static string? VariantUrl(FontsourceFamilyRecord record, FontVariant variant) =>
             FontsourceCatalog.TryGetVariantUrl(record, variant, out string url) ? url : null;
 

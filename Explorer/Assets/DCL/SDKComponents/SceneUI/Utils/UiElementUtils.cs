@@ -5,6 +5,7 @@ using DCL.ECSComponents;
 using DCL.SDKComponents.SceneUI.Classes;
 using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Defaults;
+using ECS.StreamableLoading.Fonts;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.TextCore.Text;
@@ -337,6 +338,17 @@ namespace DCL.SDKComponents.SceneUI.Utils
 
         public static void ClearCustomFont(VisualElement element) =>
             element.style.unityFontDefinition = new StyleFontDefinition(StyleKeyword.Null);
+
+        public static void ReleaseCustomFont(World world, ref SceneFontRequest request, ref FontAsset? customFont, VisualElement element)
+        {
+            request.Release(world);
+
+            if (customFont == null)
+                return;
+
+            customFont = null;
+            ClearCustomFont(element);
+        }
 
         public static void SetElementDefaultStyle(IStyle elementStyle)
         {

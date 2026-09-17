@@ -66,15 +66,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIDropdown
             uiDropdownComponent.UnregisterDropdownCallbacks();
         }
 
-        private void ReleaseFont(UIDropdownComponent uiDropdownComponent)
-        {
-            uiDropdownComponent.FontRequest.Release(World);
-
-            if (uiDropdownComponent.CustomFont == null)
-                return;
-
-            uiDropdownComponent.CustomFont = null;
-            UiElementUtils.ClearCustomFont(uiDropdownComponent.DropdownField);
-        }
+        private void ReleaseFont(UIDropdownComponent uiDropdownComponent) =>
+            UiElementUtils.ReleaseCustomFont(World, ref uiDropdownComponent.FontRequest, ref uiDropdownComponent.CustomFont, uiDropdownComponent.DropdownField);
     }
 }

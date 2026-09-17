@@ -23,11 +23,11 @@ namespace DCL.SDKComponents.SceneUI.Tests
 {
     public class UIDropdownInstantiationSystemShould : UnitySystemTestBase<UIDropdownInstantiationSystem>
     {
-        private IComponentPoolsRegistry poolsRegistry;
-        private IECSToCRDTWriter ecsToCRDTWriter;
+        private IComponentPoolsRegistry poolsRegistry = null!;
+        private IECSToCRDTWriter ecsToCRDTWriter = null!;
         private Entity entity;
-        private UITransformComponent uiTransformComponent;
-        private PBUiDropdown input;
+        private UITransformComponent uiTransformComponent = null!;
+        private PBUiDropdown input = null!;
 
         [SetUp]
         public void SetUp()

@@ -62,15 +62,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIText
         private void ReleaseFonts(ref UITextComponent uiTextComponent) =>
             ReleaseFont(ref uiTextComponent);
 
-        private void ReleaseFont(ref UITextComponent uiTextComponent)
-        {
-            uiTextComponent.FontRequest.Release(World);
-
-            if (uiTextComponent.CustomFont == null)
-                return;
-
-            uiTextComponent.CustomFont = null;
-            UiElementUtils.ClearCustomFont(uiTextComponent.Label);
-        }
+        private void ReleaseFont(ref UITextComponent uiTextComponent) =>
+            UiElementUtils.ReleaseCustomFont(World, ref uiTextComponent.FontRequest, ref uiTextComponent.CustomFont, uiTextComponent.Label);
     }
 }

@@ -24,10 +24,10 @@ namespace DCL.SDKComponents.SceneUI.Tests
 {
     public class UIInputInstantiationSystemShould : UnitySystemTestBase<UIInputInstantiationSystem>
     {
-        private IComponentPoolsRegistry poolsRegistry;
-        private IECSToCRDTWriter ecsToCRDTWriter;
+        private IComponentPoolsRegistry poolsRegistry = null!;
+        private IECSToCRDTWriter ecsToCRDTWriter = null!;
         private Entity entity;
-        private UITransformComponent uiTransformComponent;
+        private UITransformComponent uiTransformComponent = null!;
 
         [SetUp]
         public void SetUp()

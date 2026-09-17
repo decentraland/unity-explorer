@@ -66,15 +66,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
             uiInputComponent.UnregisterInputCallbacks();
         }
 
-        private void ReleaseFont(UIInputComponent uiInputComponent)
-        {
-            uiInputComponent.FontRequest.Release(World);
-
-            if (uiInputComponent.CustomFont == null)
-                return;
-
-            uiInputComponent.CustomFont = null;
-            UiElementUtils.ClearCustomFont(uiInputComponent.TextField);
-        }
+        private void ReleaseFont(UIInputComponent uiInputComponent) =>
+            UiElementUtils.ReleaseCustomFont(World, ref uiInputComponent.FontRequest, ref uiInputComponent.CustomFont, uiInputComponent.TextField);
     }
 }

@@ -38,7 +38,7 @@ namespace ECS.StreamableLoading.Fonts.Tests
         [Test]
         public void BuildBothAssetsFromTheRegularFace()
         {
-            assets = factory.Create(ASSET_NAME, TestFonts.PATH, null, null, null);
+            assets = factory.Create(ASSET_NAME, TestFonts.PATH);
 
             Assert.That(assets, Is.Not.Null);
             Assert.That(assets!.TextMeshProFont.name, Is.EqualTo(ASSET_NAME));
@@ -98,7 +98,7 @@ namespace ECS.StreamableLoading.Fonts.Tests
         [Test]
         public void KeepTheRegularFaceWhenAVariantIsNotAFont()
         {
-            assets = factory.Create(ASSET_NAME, TestFonts.PATH, NOT_A_FONT_PATH, null, null);
+            assets = factory.Create(ASSET_NAME, TestFonts.PATH, NOT_A_FONT_PATH);
 
             Assert.That(assets, Is.Not.Null);
             Assert.That(assets!.TextMeshProFont.fontWeightTable[BOLD_WEIGHT_INDEX].regularTypeface, Is.Null);
@@ -107,7 +107,7 @@ namespace ECS.StreamableLoading.Fonts.Tests
         [Test]
         public void TakeTheMaterialAndFallbackFromTheReferenceFont()
         {
-            assets = factory.Create(ASSET_NAME, TestFonts.PATH, null, null, null);
+            assets = factory.Create(ASSET_NAME, TestFonts.PATH);
 
             TMP_FontAsset font = assets!.TextMeshProFont;
             Assert.That(font.material, Is.Not.SameAs(referenceFont.material));
@@ -120,7 +120,7 @@ namespace ECS.StreamableLoading.Fonts.Tests
         [Test]
         public void DestroyEveryAssetItOwns()
         {
-            assets = factory.Create(ASSET_NAME, TestFonts.PATH, TestFonts.PATH, null, null);
+            assets = factory.Create(ASSET_NAME, TestFonts.PATH, TestFonts.PATH);
             TMP_FontAsset regular = assets!.TextMeshProFont;
             TMP_FontAsset bold = regular.fontWeightTable[BOLD_WEIGHT_INDEX].regularTypeface;
             Material material = regular.material;
