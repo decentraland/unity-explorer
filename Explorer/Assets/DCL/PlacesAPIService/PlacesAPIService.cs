@@ -89,6 +89,10 @@ namespace DCL.PlacesAPIService
                 onlyPlaces: onlyPlaces);
         }
 
+        // No pagination on purpose: the featured set is curated and small, so the server's own page holds all of it
+        public async UniTask<PlacesData.IPlacesAPIResponse> GetHighlightedDestinationsAsync(CancellationToken ct) =>
+            await client.GetDestinationsAsync(ct, addRealmDetails: true, onlyHighlighted: true);
+
         public async UniTask<PlacesData.PlaceInfo?> GetPlaceAsync(Vector2Int coords, CancellationToken ct, bool renewCache = false)
         {
             if (!AreCoordinatesWithinBounds(coords))

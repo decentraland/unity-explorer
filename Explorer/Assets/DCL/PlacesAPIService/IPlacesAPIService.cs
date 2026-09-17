@@ -24,6 +24,11 @@ namespace DCL.PlacesAPIService
             bool? withLiveEvents = null,
             bool? onlyPlaces = null);
 
+        /// <summary>
+        ///     Every destination the Places menu tags as Featured, in the order the server ranks them.
+        /// </summary>
+        UniTask<PlacesData.IPlacesAPIResponse> GetHighlightedDestinationsAsync(CancellationToken ct);
+
         UniTask<PlacesData.PlaceInfo?> GetPlaceAsync(Vector2Int coords, CancellationToken ct, bool renewCache = false);
 
         UniTask<PlacesData.PlaceInfo?> GetWorldAsync(Vector2Int coords, string worldName, CancellationToken ct);

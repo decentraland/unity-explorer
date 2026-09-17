@@ -54,7 +54,7 @@ namespace DCL.Lobby
         private LobbyCharacterPreviewController? avatarPreview;
         private CancellationTokenSource? avatarCts;
         private CancellationTokenSource? profileMenuCts;
-        private CancellationTokenSource? recentPlacesCts;
+        private CancellationTokenSource? placesCts;
         private CancellationTokenSource? jumpInCts;
         private UniTaskCompletionSource? closeIntent;
 
@@ -112,10 +112,12 @@ namespace DCL.Lobby
 
                 foreach (LobbyPlaceCardView card in viewInstance.RecentPlaceCards)
                     card.Button.onClick.RemoveAllListeners();
+
+                viewInstance.RecommendedPlaces.PlaceClicked = null;
             }
 
             avatarCts.SafeCancelAndDispose();
-            recentPlacesCts.SafeCancelAndDispose();
+            placesCts.SafeCancelAndDispose();
             jumpInCts.SafeCancelAndDispose();
             profileMenuCts.SafeCancelAndDispose();
             avatarPreview?.Dispose();
@@ -131,9 +133,12 @@ namespace DCL.Lobby
             viewInstance.ProfileWidgetView.OpenProfileButton.Button.onClick.AddListener(ShowProfileMenu);
 
             foreach (LobbyPlaceCardView card in viewInstance.RecentPlaceCards)
-                card.Button.onClick.AddListener(() => OnRecentPlaceClicked(card));
+                card.Button.onClick.AddListener(() => { if (card.Place is { } place) OnPlaceClicked(place); });
+
+            viewInstance.RecommendedPlaces.PlaceClicked = OnPlaceClicked;
 
             viewInstance.RecentPlacesSection.SetActive(false);
+            viewInstance.RecommendedPlacesSection.SetActive(false);
 
             avatarPreview = new LobbyCharacterPreviewController(viewInstance.CharacterPreviewView, avatarSettings, characterPreviewFactory, world, characterPreviewEventBus);
         }
@@ -154,12 +159,13 @@ namespace DCL.Lobby
             avatarCts = avatarCts.SafeRestart();
             ShowAvatarAsync(avatarCts.Token).Forget();
 
-            recentPlacesCts = recentPlacesCts.SafeRestart();
-            ShowRecentPlacesAsync(recentPlacesCts.Token).Forget();
-
             profileButtonPresenter.LoadProfile();
             profileMenuCts = profileMenuCts.SafeRestart();
             HideProfileMenuIfOpen();
+
+            placesCts = placesCts.SafeRestart();
+            ShowRecentPlacesAsync(placesCts.Token).Forget();
+            ShowRecommendedPlacesAsync(placesCts.Token).Forget();
         }
 
         protected override void OnViewClose()
@@ -169,7 +175,7 @@ namespace DCL.Lobby
             profileChangesBus.UnsubscribeToUpdate(OnProfileUpdated);
 
             avatarCts.SafeCancelAndDispose();
-            recentPlacesCts.SafeCancelAndDispose();
+            placesCts.SafeCancelAndDispose();
             avatarPreview!.OnHide();
 
             HideProfileMenuIfOpen();
@@ -236,6 +242,25 @@ namespace DCL.Lobby
             viewInstance.RecentPlacesSection.SetActive(shown > 0);
         }
 
+        /// <summary>
+        ///     Fills the "Recommended places" carousel with the featured (highlighted) destinations, the ones the Places menu tags as Featured.
+        /// </summary>
+        private async UniTaskVoid ShowRecommendedPlacesAsync(CancellationToken ct)
+        {
+            Result<PlacesData.IPlacesAPIResponse> result = await placesAPIService.GetHighlightedDestinationsAsync(ct)
+                                                                                 .SuppressToResultAsync(ReportCategory.PLACES);
+
+            if (ct.IsCancellationRequested) return;
+
+            if (result.Success && result.Value.Data.Count > 0)
+            {
+                viewInstance!.RecommendedPlaces.Show(result.Value.Data, thumbnailLoader, ct);
+                viewInstance.RecommendedPlacesSection.SetActive(true);
+            }
+            else
+                viewInstance!.RecommendedPlacesSection.SetActive(false);
+        }
+
         private void OnProfileUpdated(Profile profile) =>
             avatarPreview!.Refresh(profile.Avatar);
 
@@ -243,10 +268,8 @@ namespace DCL.Lobby
         private void OnAvatarClicked(PointerEventData _) =>
             mvcManager.ShowAndForget(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Backpack, BackpackSections.Avatar)));
 
-        private void OnRecentPlaceClicked(LobbyPlaceCardView card)
+        private void OnPlaceClicked(PlacesData.PlaceInfo place)
         {
-            if (card.Place is not { } place) return;
-
             if (startParcel.IsConsumed())
             {
                 jumpInCts = jumpInCts.SafeRestart();

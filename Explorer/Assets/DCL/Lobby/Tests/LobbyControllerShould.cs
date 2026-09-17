@@ -56,6 +56,9 @@ namespace DCL.Lobby.Tests
         private CharacterPreviewSettingsSO previewSettings = null!;
         private GameObject recentPlacesSection = null!;
         private LobbyPlaceCardView[] recentPlaceCards = null!;
+        private GameObject recommendedPlacesSection = null!;
+        private LobbyPlacesCarousel recommendedPlaces = null!;
+        private Transform recommendedDots = null!;
         private IInputBlock inputBlock = null!;
         private IMVCManager mvcManager = null!;
         private IPlacesAPIService placesAPIService = null!;
@@ -87,7 +90,11 @@ namespace DCL.Lobby.Tests
             recentPlaceCards = new LobbyPlaceCardView[RECENT_CARDS];
 
             for (var i = 0; i < RECENT_CARDS; i++)
-                recentPlaceCards[i] = CreatePlaceCard(i);
+                recentPlaceCards[i] = CreatePlaceCard(recentPlacesSection.transform, $"RecentPlace{i}");
+
+            recommendedPlacesSection = new GameObject("RecommendedPlaces");
+            recommendedPlacesSection.transform.SetParent(root.transform);
+            recommendedPlaces = CreateCarousel(recommendedPlacesSection.transform);
 
             SetBackingField(view, nameof(LobbyView.JumpInButton), jumpInButton);
             SetBackingField(view, nameof(LobbyView.CloseButton), closeButton);
@@ -97,6 +104,8 @@ namespace DCL.Lobby.Tests
             SetBackingField(view, nameof(LobbyView.ProfileWidgetView), CreateProfileWidgetView());
             SetBackingField(view, nameof(LobbyView.ProfileMenuView), CreateProfileMenuView());
             SetBackingField(view, nameof(LobbyView.ProfileMenuCloserButton), CreateButton(root.transform, "ProfileMenuCloser"));
+            SetBackingField(view, nameof(LobbyView.RecommendedPlacesSection), recommendedPlacesSection);
+            SetBackingField(view, nameof(LobbyView.RecommendedPlaces), recommendedPlaces);
 
             inputBlock = Substitute.For<IInputBlock>();
             mvcManager = Substitute.For<IMVCManager>();
@@ -109,6 +118,7 @@ namespace DCL.Lobby.Tests
 
             placesAPIService = Substitute.For<IPlacesAPIService>();
             placesAPIService.GetRecentlyVisitedPlaces().Returns(new List<string>());
+            ArrangeRecommendedPlaces();
 
             realmNavigator = Substitute.For<IRealmNavigator>();
             startParcel = new StartParcel(Vector2Int.zero);
@@ -363,6 +373,89 @@ namespace DCL.Lobby.Tests
             realmNavigator.Received(1).TryChangeRealmAsync(URLDomain.FromString($"{WORLD_SERVER_URL}/myworld.dcl.eth"), Arg.Any<CancellationToken>(), default, true, true);
         }
 
+        [Test]
+        public void HideRecommendedPlacesWhenNoneAreFeatured()
+        {
+            // Act
+            Launch(isStartup: true);
+
+            // Assert
+            Assert.That(recommendedPlacesSection.activeSelf, Is.False);
+        }
+
+        [Test]
+        public void ShowFeaturedPlacesInTheCarouselWithOneDotPerPage()
+        {
+            // Arrange
+            var featured = new PlacesData.PlaceInfo[7];
+
+            for (var i = 0; i < featured.Length; i++)
+                featured[i] = CreatePlace($"featured{i}", new Vector2Int(i, 0));
+
+            ArrangeRecommendedPlaces(featured);
+
+            // Act
+            Launch(isStartup: true);
+
+            // Assert
+            placesAPIService.Received(1).GetHighlightedDestinationsAsync(Arg.Any<CancellationToken>());
+            Assert.That(recommendedPlacesSection.activeSelf, Is.True);
+            Assert.That(recommendedPlaces.Cards.Count, Is.EqualTo(featured.Length));
+            Assert.That(recommendedPlaces.Cards[0].Place, Is.SameAs(featured[0]));
+            Assert.That(recommendedPlaces.Cards[6].TitleText.text, Is.EqualTo("featured6"));
+            Assert.That(ActiveDots(), Is.EqualTo(3));
+            Assert.That(recommendedPlaces.CurrentPage, Is.EqualTo(0));
+        }
+
+        [Test]
+        public void ReuseCarouselCardsAcrossShows()
+        {
+            // Arrange
+            ArrangeRecommendedPlaces(CreatePlace("a", Vector2Int.zero), CreatePlace("b", Vector2Int.zero), CreatePlace("c", Vector2Int.zero), CreatePlace("d", Vector2Int.zero));
+            Launch(isStartup: true);
+            controller.HideViewAsync(CancellationToken.None).Forget();
+
+            // Act
+            ArrangeRecommendedPlaces(CreatePlace("e", Vector2Int.zero));
+            Launch(isStartup: true);
+
+            // Assert
+            Assert.That(recommendedPlaces.Cards.Count, Is.EqualTo(4));
+            Assert.That(recommendedPlaces.Cards[0].Place!.id, Is.EqualTo("e"));
+            Assert.That(recommendedPlaces.Cards[1].gameObject.activeSelf, Is.False);
+            Assert.That(ActiveDots(), Is.EqualTo(0));
+        }
+
+        [Test]
+        public void JumpInWhenAFeaturedPlaceIsPicked()
+        {
+            // Arrange
+            ArrangeRecommendedPlaces(CreatePlace("featured", new Vector2Int(-3, 7)));
+            UniTask lifeCycle = Launch(isStartup: true);
+
+            // Act
+            recommendedPlaces.Cards[0].Button.onClick.Invoke();
+
+            // Assert
+            Assert.That(startParcel.Peek(), Is.EqualTo(new Vector2Int(-3, 7)));
+            Assert.That(lifeCycle.Status, Is.EqualTo(UniTaskStatus.Succeeded));
+        }
+
+        private int ActiveDots()
+        {
+            var count = 0;
+
+            foreach (Transform dot in recommendedDots)
+                if (dot.gameObject.activeSelf)
+                    count++;
+
+            return count;
+        }
+
+        private void ArrangeRecommendedPlaces(params PlacesData.PlaceInfo[] featured) =>
+            placesAPIService.GetHighlightedDestinationsAsync(Arg.Any<CancellationToken>())
+                            .Returns(UniTask.FromResult<PlacesData.IPlacesAPIResponse>(new PlacesData.PlacesAPIResponse { data = new List<PlacesData.PlaceInfo>(featured), total = featured.Length }));
+
         private void ArrangeRecentPlaces(List<string> history, params PlacesData.PlaceInfo[] response)
         {
             placesAPIService.GetRecentlyVisitedPlaces().Returns(history);
@@ -396,10 +489,45 @@ namespace DCL.Lobby.Tests
             return count;
         }
 
-        private LobbyPlaceCardView CreatePlaceCard(int index)
+        private LobbyPlacesCarousel CreateCarousel(Transform parent)
         {
-            var cardGo = new GameObject($"RecentPlace{index}");
-            cardGo.transform.SetParent(recentPlacesSection.transform);
+            var carouselGo = new GameObject("Carousel", typeof(RectTransform));
+            carouselGo.transform.SetParent(parent);
+
+            var viewportGo = new GameObject("Viewport", typeof(RectTransform));
+            viewportGo.transform.SetParent(carouselGo.transform);
+            ((RectTransform)viewportGo.transform).sizeDelta = new Vector2(600f, 150f);
+
+            var contentGo = new GameObject("Content", typeof(RectTransform));
+            contentGo.transform.SetParent(viewportGo.transform);
+
+            ScrollRect scrollRect = carouselGo.AddComponent<ScrollRect>();
+            scrollRect.viewport = (RectTransform)viewportGo.transform;
+            scrollRect.content = (RectTransform)contentGo.transform;
+
+            LobbyPlaceCardView cardTemplate = CreatePlaceCard(contentGo.transform, "CardTemplate");
+            cardTemplate.gameObject.SetActive(false);
+
+            recommendedDots = new GameObject("Dots", typeof(RectTransform)).transform;
+            recommendedDots.SetParent(carouselGo.transform);
+            var dotGo = new GameObject("DotTemplate", typeof(RectTransform));
+            dotGo.transform.SetParent(recommendedDots);
+            Image dotTemplate = dotGo.AddComponent<Image>();
+            dotGo.SetActive(false);
+
+            LobbyPlacesCarousel carousel = carouselGo.AddComponent<LobbyPlacesCarousel>();
+            SetField(carousel, "scrollRect", scrollRect);
+            SetField(carousel, "cardTemplate", cardTemplate);
+            SetField(carousel, "dotTemplate", dotTemplate);
+            SetField(carousel, "cardsPerPage", RECENT_CARDS);
+
+            return carousel;
+        }
+
+        private static LobbyPlaceCardView CreatePlaceCard(Transform parent, string name)
+        {
+            var cardGo = new GameObject(name);
+            cardGo.transform.SetParent(parent);
             LobbyPlaceCardView card = cardGo.AddComponent<LobbyPlaceCardView>();
 
             var thumbnailGo = new GameObject("Thumbnail");

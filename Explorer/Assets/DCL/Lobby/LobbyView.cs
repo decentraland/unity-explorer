@@ -42,5 +42,12 @@ namespace DCL.Lobby
         /// </summary>
         [field: SerializeField]
         public LobbyPlaceCardView[] RecentPlaceCards { get; private set; } = null!;
+
+        [field: Header("Recommended places")]
+        [field: SerializeField]
+        public GameObject RecommendedPlacesSection { get; private set; } = null!;
+
+        [field: SerializeField]
+        public LobbyPlacesCarousel RecommendedPlaces { get; private set; } = null!;
     }
 }
