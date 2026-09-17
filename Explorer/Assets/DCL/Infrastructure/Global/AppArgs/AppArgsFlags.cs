@@ -192,7 +192,12 @@ namespace Global.AppArgs
         /// <summary>Presence forces the abgen pipeline on without waiting for the abgen-pipeline feature flag.</summary>
         public const string ABGEN_PIPELINE = "abgen-pipeline";
 
-        /// <summary>Presence forces LOD bundles and ISS descriptors onto the abgen LOD source (abgen-cdn) without waiting for the abgen-lods feature flag.</summary>
+        /// <summary>
+        ///     Presence forces LOD bundles and ISS descriptors onto the abgen LOD source (abgen-cdn) without waiting
+        ///     for the abgen-lods feature flag. Pair it with <see cref="ABGEN_PIPELINE" />: abgen publishes no LOD_0,
+        ///     level 0 comes from the ISS path instead, and both the descriptor's assets and the manifest that gates
+        ///     it on v49+ are resolved by the pipeline flip.
+        /// </summary>
         public const string ABGEN_LODS = "abgen-lods";
 
         /// <summary>Base url for the abgen LOD source, e.g. a bucket prefix holding a specific run, with the abgen key layout underneath; implies <see cref="ABGEN_LODS" />.</summary>
