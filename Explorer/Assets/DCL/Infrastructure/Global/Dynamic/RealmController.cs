@@ -152,7 +152,9 @@ namespace Global.Dynamic
                 GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> genericGetRequest = webRequestController.GetAsync(new CommonArguments(url), ct, ReportCategory.REALM);
                 ServerAbout result = await genericGetRequest.OverwriteFromJsonAsync(serverAbout, WRJsonParser.Unity);
                 localSceneParcels = ParseLocalSceneParcels(result.configurations.localSceneParcels);
-                WorldManifest worldManifest = await worldManifestProvider.FetchWorldManifestAsync(URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.AssetBundleRegistry)), result.configurations.realmName, environment, ct);
+                var ipfsRealm = new IpfsRealm(realm, result);
+                bool realmIsGenesis = ECS.RealmData.ClassifyRealm(isLocalSceneDevelopment, ipfsRealm) is RealmKind.GenesisCity;
+                WorldManifest worldManifest = await worldManifestProvider.FetchWorldManifestAsync(URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.AssetBundleRegistry)), result.configurations.realmName, environment, realmIsGenesis, ct);
 
                 // Custom Catalyst realms are Genesis realms, but they do not have the static Genesis City
                 // manifest hosted by the production environment. Use the local scene pointers advertised by
@@ -170,7 +172,7 @@ namespace Global.Dynamic
                     : null;
 
                 realmData.Reconfigure(
-                    new IpfsRealm(realm, result),
+                    ipfsRealm,
                     result.configurations.realmName.EnsureNotNull("Realm name not found"),
                     result.configurations.networkId,
                     ResolveCommsAdapter(result),

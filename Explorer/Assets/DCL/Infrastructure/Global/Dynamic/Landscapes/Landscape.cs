@@ -57,6 +57,13 @@ namespace Global.Dynamic.Landscapes
                         cancellationToken: ct);
                 else
                     await genesisTerrain.ShowAsync(landscapeLoadReport, ct);
+
+                if (CurrentTerrain.TerrainModel == null)
+                {
+                    genesisTerrain.Hide();
+                    landscapeLoadReport.SetProgress(1f);
+                    return EnumResult<LandscapeError>.ErrorResult(LandscapeError.TerrainDataUnavailable);
+                }
             }
             else
             {

@@ -306,6 +306,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.ApiChunks => $"https://api.{BaseDomain}/v1/map.png",
                 DecentralandUrl.PeerAbout => $"https://peer.{BaseDomain}/about",
                 DecentralandUrl.PeerContent => $"https://peer.{BaseDomain}/content/contents",
+                DecentralandUrl.GenesisWorldManifest => $"https://peer.{BaseDomain}/world-manifest.json",
                 DecentralandUrl.RemotePeers => $"https://archipelago-ea-stats.{BaseDomain}/comms/peers",
                 DecentralandUrl.RemotePeersWorld => $"https://worlds-content-server.{BaseDomain}/wallet/[USER-ID]/connected-world",
                 DecentralandUrl.DAO => $"https://{BaseDomain}/dao/",

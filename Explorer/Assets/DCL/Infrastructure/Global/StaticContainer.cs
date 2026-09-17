@@ -344,7 +344,7 @@ namespace Global
                 promisesAnalyticsPlugin
             };
 
-            container.WorldManifestProvider = new WorldManifestProvider(container.WebRequestsContainer.WebRequestController);
+            container.WorldManifestProvider = new WorldManifestProvider(container.WebRequestsContainer.WebRequestController, decentralandUrlsSource);
 
             return (container, true);
         }

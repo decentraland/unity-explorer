@@ -110,33 +110,35 @@ identity*. Scoping the slot by stack — a slot of its own for `Custom`, or one 
 would separate them again without touching which chain the deployment runs on. Worth deciding
 before a custom deployment is used against a signed-in production session.
 
-## What `Custom` explicitly does *not* change
+## Other environment decisions
 
-These decisions are not domain-derived, and each carries an explicit `Custom` arm:
+These decisions also carry an explicit `Custom` arm:
 
 | Decision | `Custom` resolves to | Why |
 | --- | --- | --- |
 | Community-message router (`LiveKitChatMessagesBus`, `ChatReactionsFactory`) | `message-router-dev-0` | A custom deployment's comms-message-sfu has to join under this identity for relayed messages to authenticate. |
-| Genesis City manifest (`WorldManifestProvider`) | *no manifest* — the fetch is skipped | It describes decentraland's own Genesis City; a custom realm reusing one of its realm names is a different world. |
+| Genesis City manifest (`WorldManifestProvider`) | `https://peer.<base-domain>/world-manifest.json` | The deployment supplies its own occupied parcels instead of using decentraland's static S3 artifact. |
 
 ## World manifest, parcel loading and roads
 
-Two independent signals decide that a realm *is Genesis City*, and they key off different
-things — which matters because only one of them responds to how the deployment names its realm.
+For `Custom`, the manifest provider uses the same realm classification as `RealmData`:
+no fixed scene URNs means Genesis City, unless local scene development is active.
+The realm name is unrestricted; `dcl-one` and `main` both select the deployment's Genesis
+manifest. Org and Zone retain their existing name-based selection and S3 URLs.
 
-**The manifest path is chosen by realm name, matched against decentraland's own list.**
-`WorldManifestProvider.MAIN_REALM_NAMES` is a hardcoded set — `main`, `baldr`, `hela`,
-`heimdallr`, `shiva`, `artemis`, `loki`, `dg`, `hephaestus`, `unicorn`, `marvel`, `nftworld` —
-compared against `configurations.realmName` from the deployment's `/about`. A custom deployment
-calling its main realm `main` collides with that list and takes the genesis branch; calling it
-anything else takes neither the genesis nor the `.dcl.eth` world branch. Both end at
-`WorldManifest.Empty` today, so the name does not change the outcome — but the list is
-decentraland's naming, and a deployment cannot opt out of matching it.
+Publish a JSON manifest at `https://peer.<base-domain>/world-manifest.json`:
 
-**`RealmKind` ignores the name.** It comes from whether `/about` lists fixed scene URNs: none
-means `GenesisCity`, otherwise `World` (`RealmData.Reconfigure`). A custom catalyst realm
-therefore classifies as `GenesisCity` whatever it is called — so renaming away from `main` does
-not change what follows.
+```json
+{
+  "occupied": ["0,0", "1,0"],
+  "spawn_coordinate": { "x": 0, "y": 0 },
+  "total": 2
+}
+```
+
+`occupied` must contain all deployed scene parcels: it drives terrain generation and filters
+scene discovery. Roads and empty-parcel arrays are optional and do not replace `occupied`.
+An incomplete occupied set prevents scenes outside that set from being requested.
 
 **Roads.** `RoadsPresence` switches instanced road rendering purely on
 `RealmKind == GenesisCity`, and the geometry comes from `RoadSettingsAsset` — a local
@@ -147,26 +149,16 @@ regardless of what its own content looks like. Nothing here changes that: it is 
 a deployment that mirrors Genesis City, wrong for one with its own layout — fixing it means
 gating roads on something other than `RealmKind`, or shipping per-deployment road data.
 
-**Manifest.** `Custom` resolves to no genesis manifest (above), so `WorldManifest.IsEmpty`:
+If the manifest is unavailable or empty, the existing `localSceneParcels` fallback in
+`/about` can supply terrain coordinates for a limited deployment. That fallback also selects
+static scene pointers, so it should not be used to enumerate a full city.
 
-- `LoadPointersByIncreasingRadiusSystem` only filters by occupied parcels when the manifest
-  is non-empty, so a custom genesis realm requests pointers for every parcel in radius rather
-  than only occupied ones. An optimisation lost, not a break.
-- `LoadFixedPointersSystem` and `Landscape`/`TerrainGenerator` take their empty-manifest
-  paths, so there is no manifest-derived terrain or spawn coordinate.
-- `RealmData.SingleScene` is unaffected for genesis realms (it returns before consulting the
-  manifest), but a custom *world* without a manifest is treated as single-scene — i.e. as
-  having no gatekeeper-per-room.
+Without either source, Genesis terrain generation is skipped and `TerrainLoaded` is not
+raised. An empty manifest does not itself filter out parcel requests. Position validation
+continues to permit coordinates when there is no terrain model.
 
-Skipping is still the right trade: the alternative was applying decentraland's occupied-parcel
-set to a foreign realm, which would filter *out* that deployment's real parcels and silently
-fail to load scenes wherever decentraland has none.
-
-The forward path is per-deployment manifests. `FetchNonGenesisManifestAsync` already reads
-`{assetBundleRegistry}/worlds/{realmName}/manifest` and the registry follows the base domain,
-so a custom deployment can serve manifests for its own worlds today. Only the *genesis*
-manifest has no per-deployment source, because it is a static S3 artifact rather than a
-registry endpoint.
+Fixed-scene worlds keep their existing manifest endpoint,
+`{assetBundleRegistry}/worlds/{realmName}/manifest`, and scene-URN fallback.
 
 ## Authentication
 
