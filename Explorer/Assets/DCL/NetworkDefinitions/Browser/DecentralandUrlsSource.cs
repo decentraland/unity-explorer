@@ -56,7 +56,6 @@ namespace DCL.Browser.DecentralandUrls
         private readonly string? localAbBaseOverride;
         private readonly bool abgenPipelineForced;
         private readonly bool abgenLodsForced;
-        private readonly string? abgenLodsBaseOverride;
 
         /// <summary>
         ///     The domain <see cref="RawUrl" /> composes every host from.
@@ -73,8 +72,7 @@ namespace DCL.Browser.DecentralandUrls
             string? localAbBaseUrl = null,
             string? customBaseDomain = null,
             bool abgenPipelineForced = false,
-            bool abgenLodsForced = false,
-            string? abgenLodsBaseUrl = null)
+            bool abgenLodsForced = false)
         {
             this.environment = environment;
             BaseDomain = ResolveBaseDomain(environment, customBaseDomain);
@@ -85,7 +83,6 @@ namespace DCL.Browser.DecentralandUrls
             localAbBaseOverride = localAbBaseUrl?.TrimEnd('/');
             this.abgenPipelineForced = abgenPipelineForced;
             this.abgenLodsForced = abgenLodsForced;
-            abgenLodsBaseOverride = abgenLodsBaseUrl?.TrimEnd('/');
 
             realmData.RealmType.OnUpdate += ResetRealmDependentUrls;
         }
@@ -271,19 +268,15 @@ namespace DCL.Browser.DecentralandUrls
 
         /// <summary>
         ///     The abgen LOD source. LOD bundles and ISS descriptors flip together: the descriptors and the bundles
-        ///     describe one generation, as the abgen registry and abgen-cdn do for asset bundles. Resolution order:
-        ///     the "--abgen-lods-base-url" arg, the "--abgen-lods" arg (abgen-cdn), the abgen-lods flag with its
-        ///     "lods-base-url" text variant, the flag alone (abgen-cdn), otherwise the regular host.
-        ///     <paramref name="abgenSubPath" /> is appended to every abgen base and left off the regular host, which
+        ///     describe one generation, as the abgen registry and abgen-cdn do for asset bundles. The "--abgen-lods"
+        ///     arg forces it on without the flag, exactly as "--abgen-pipeline" does for the asset bundles.
+        ///     <paramref name="abgenSubPath" /> is appended to the abgen host and left off the regular one, which
         ///     lays its LOD generation out differently (see <see cref="ABGEN_LODS_DESCRIPTOR_SUBPATH" />).
         ///     FeatureFlagsDependent for the same reasons as <see cref="ResolveAbgenPipelineUrl" />.
         /// </summary>
         private UrlData ResolveAbgenLodsUrl(UrlData regularHost, string abgenSubPath)
         {
             string abgenHost = $"https://abgen-cdn.{BaseDomain}{abgenSubPath}";
-
-            if (abgenLodsBaseOverride is { Length: > 0 })
-                return new UrlData(CacheBehaviour.FeatureFlagsDependent, abgenLodsBaseOverride + abgenSubPath);
 
             if (abgenLodsForced)
                 return new UrlData(CacheBehaviour.FeatureFlagsDependent, abgenHost);
@@ -293,17 +286,13 @@ namespace DCL.Browser.DecentralandUrls
             if (featureFlags.IsEmpty)
                 return new UrlData(CacheBehaviour.FeatureFlagsDependent, regularHost.Url!);
 
-            if (!featureFlags.IsEnabled(FeatureFlagsStrings.ABGEN_LODS))
-                return regularHost;
-
-            if (featureFlags.TryGetTextPayload(FeatureFlagsStrings.ABGEN_LODS, FeatureFlagsStrings.ABGEN_LODS_BASE_URL_VARIANT, out string? customBaseUrl) && customBaseUrl is { Length: > 0 })
-                return new UrlData(CacheBehaviour.FeatureFlagsDependent, customBaseUrl.TrimEnd('/') + abgenSubPath);
-
-            return new UrlData(CacheBehaviour.FeatureFlagsDependent, abgenHost);
+            return featureFlags.IsEnabled(FeatureFlagsStrings.ABGEN_LODS)
+                ? new UrlData(CacheBehaviour.FeatureFlagsDependent, abgenHost)
+                : regularHost;
         }
 
         private bool AbgenLodsActive =>
-            abgenLodsBaseOverride is { Length: > 0 } || abgenLodsForced
+            abgenLodsForced
             || (!FeatureFlagsConfiguration.Instance.IsEmpty && FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.ABGEN_LODS));
 
         /// <inheritdoc />

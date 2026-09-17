@@ -25,7 +25,7 @@ namespace DCL.Browser.DecentralandUrls.Tests
         public void TearDown() => FeatureFlagsConfiguration.Reset();
 
         private static void InitializeFeatureFlags(bool optimizedAssets, string? customBaseUrl = null, bool useGateway = false, bool assetBundleFallback = false, bool abgenPipeline = false,
-            bool abgenLods = false, string? abgenLodsBaseUrl = null)
+            bool abgenLods = false)
         {
             var dto = new FeatureFlagsResultDto
             {
@@ -39,14 +39,6 @@ namespace DCL.Browser.DecentralandUrls.Tests
                 },
                 variants = new Dictionary<string, FeatureFlagVariantDto>(),
             };
-
-            if (abgenLodsBaseUrl != null)
-                dto.variants[FeatureFlagsStrings.ABGEN_LODS] = new FeatureFlagVariantDto
-                {
-                    name = FeatureFlagsStrings.ABGEN_LODS_BASE_URL_VARIANT,
-                    enabled = true,
-                    payload = new FeatureFlagPayload { type = "string", value = abgenLodsBaseUrl },
-                };
 
             if (customBaseUrl != null)
                 dto.variants[FeatureFlagsStrings.OPTIMIZED_ASSETS] = new FeatureFlagVariantDto
@@ -237,7 +229,7 @@ namespace DCL.Browser.DecentralandUrls.Tests
 
             // The descriptors sit under the same "LOD/" prefix the bundles' manifest version supplies
             Assert.AreEqual($"https://abgen-cdn.decentraland.{env}/LOD", urlsSource.Url(DecentralandUrl.LodGeneratorCDN));
-            Assert.IsNotNull(urlsSource.AbgenLodsCacheKey);
+            Assert.AreEqual($"abgen-lods-https---abgen-cdn-decentraland-{env}", urlsSource.AbgenLodsCacheKey);
 
             // Asset bundles and the registry do not follow the LOD flip
             Assert.AreEqual($"https://ab-cdn.decentraland.{env}", urlsSource.Url(DecentralandUrl.AssetBundlesCDN));
@@ -245,28 +237,14 @@ namespace DCL.Browser.DecentralandUrls.Tests
         }
 
         [Test]
-        public void PointAbgenLodsAtTheFlagVariantBaseUrl()
-        {
-            InitializeFeatureFlags(optimizedAssets: false, abgenLods: true, abgenLodsBaseUrl: "https://bucket.example.com/run-1/");
-            DecentralandUrlsSource urlsSource = DecentralandUrlsSource.CreateForTest(DecentralandEnvironment.Org, ILaunchMode.PLAY);
-
-            Assert.AreEqual("https://bucket.example.com/run-1", urlsSource.Url(DecentralandUrl.LodAssetBundlesCDN));
-            Assert.AreEqual("https://bucket.example.com/run-1/LOD", urlsSource.Url(DecentralandUrl.LodGeneratorCDN));
-            Assert.AreEqual("abgen-lods-https---bucket-example-com-run-1", urlsSource.AbgenLodsCacheKey);
-        }
-
-        [Test]
-        public void ForceAbgenLodsOnWithTheLaunchArgs()
+        public void ForceAbgenLodsOnWithTheLaunchArg()
         {
             InitializeFeatureFlags(optimizedAssets: false, abgenLods: false);
 
             var forcedOn = new DecentralandUrlsSource(DecentralandEnvironment.Org, new IRealmData.Fake(), ILaunchMode.PLAY, abgenLodsForced: true);
+
             Assert.AreEqual("https://abgen-cdn.decentraland.org", forcedOn.Url(DecentralandUrl.LodAssetBundlesCDN));
             Assert.AreEqual("https://abgen-cdn.decentraland.org/LOD", forcedOn.Url(DecentralandUrl.LodGeneratorCDN));
-
-            var withBase = new DecentralandUrlsSource(DecentralandEnvironment.Org, new IRealmData.Fake(), ILaunchMode.PLAY, abgenLodsBaseUrl: "https://bucket.example.com/run-1");
-            Assert.AreEqual("https://bucket.example.com/run-1", withBase.Url(DecentralandUrl.LodAssetBundlesCDN));
-            Assert.AreEqual("https://bucket.example.com/run-1/LOD", withBase.Url(DecentralandUrl.LodGeneratorCDN));
         }
 
         [Test]
