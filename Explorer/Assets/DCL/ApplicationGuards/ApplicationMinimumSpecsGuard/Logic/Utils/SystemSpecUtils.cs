@@ -203,7 +203,7 @@ namespace DCL.ApplicationGuards
             public int intel_ultra_supported_minimum_generation;
             public string intel_cpu_supported_version_regex;
             public string intel_ultra_cpu_supported_version_regex;
-            public string intel_core_cpu_supported_version_regex;
+            public string? intel_core_cpu_supported_version_regex;
             public int intel_core_supported_minimum_series;
             public string rtx_gpu_supported_version_regex;
             public string rx_gpu_supported_version_regex;
