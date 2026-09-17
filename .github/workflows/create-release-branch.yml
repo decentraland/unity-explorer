@@ -40,19 +40,20 @@ jobs:
           # Always ensure labels are applied (handles 502 / retry scenarios)
           gh pr edit "$BRANCH_NAME" --add-label "release,auto-pr"
 
-      - name: Fill the CI status comment from dev's runs of this commit
+      - name: Seed the CI status comment from dev's runs of the cut commit
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PUBLIC_URL_PREFIX: ${{ vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL }}
         run: |
           set -euo pipefail
 
-          # Bot-created PRs trigger no workflows, so nothing on this PR ever
-          # writes the unified CI status comment: every section would sit on the
-          # skeleton's "Waiting…" placeholder for the life of the release, each
-          # one describing a run that is never coming. The branch is cut from
-          # dev's tip, whose SHA dev already built, linted and tested — fill the
-          # sections from those runs instead.
+          # The release PR's own build takes ~40 minutes, and its lint and
+          # tests most of that; for that window every section would sit on the
+          # skeleton's "Waiting…" placeholder and testers would have nothing to
+          # install. The branch is cut from dev's tip, whose SHA dev already
+          # built, linted and tested — seed the sections from those runs so the
+          # PR is useful from minute one. The PR's own runs replace them as they
+          # finish, which is the point of writing sections and not a comment.
           #
           # Sections rather than a standalone comment: a standalone one has no
           # update path, so the next push to the release branch left the cut
@@ -203,7 +204,7 @@ jobs:
           # Every reused section says so, and says it will not update: read
           # without that line a green badge on a release PR looks like the PR's
           # own result, and the first push to the branch silently makes it one.
-          REUSED="<sub>Reused from the [\`Unity Test\` run](${TEST_RUN_URL}) of \`${SHORT_SHA}\` on \`${TEST_BRANCH}\`, the commit this release was cut from. The release PR starts no runs of its own until something pushes to the branch.</sub>"
+          REUSED="<sub>Reused from the [\`Unity Test\` run](${TEST_RUN_URL}) of \`${SHORT_SHA}\` on \`${TEST_BRANCH}\`, the commit this release was cut from — this is what was known at the cut. The release PR's own run replaces it when it finishes.</sub>"
 
           TEST_RUNS="${ACTIONS_URL}/workflows/test.yml"
           LINT_STYLE="?logo=jetbrains&logoColor=white&style=for-the-badge"
@@ -275,7 +276,7 @@ jobs:
           {
             echo "![Performance](https://img.shields.io/badge/Performance-Not%20dispatched-lightgrey?logo=speedtest&logoColor=white&style=for-the-badge)"
             echo ""
-            echo "No bare-metal benchmark is dispatched for a release cut: the dispatch rides a build of this PR, and this PR was opened by a token whose events start no workflows. Label it \`force-build\` to build the release branch and get one."
+            echo "No benchmark has been dispatched yet: one rides each *successful* build of this PR, and at the cut there is none — the commit's build ran on dev, which carries no PR number to report against. The release branch's first successful build dispatches one into this section."
           } > performance.md
           upsert performance performance.md
 
