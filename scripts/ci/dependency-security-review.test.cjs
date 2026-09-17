@@ -14,7 +14,7 @@ function script(name) {
 const detect = script('Classify changes and maintain label');
 const request = script('Request Jarvis through the existing reviewer webhook');
 function fixture(files = []) {
-  const pr = { number: 42, state: 'open', draft: false, head: { sha: 'a'.repeat(40), ref: 'feat/example' }, base: { sha: 'b'.repeat(40) }, changed_files: files.length, user: { login: 'author' }, labels: [] };
+  const pr = { number: 42, state: 'open', draft: false, head: { sha: 'a'.repeat(40), ref: 'feat/example' }, base: { sha: 'b'.repeat(40), ref: 'dev' }, changed_files: files.length, user: { login: 'author' }, labels: [] };
   const requests = [], outputs = {}, operations = [];
   const github = {
     paginate: async () => files,
@@ -164,7 +164,7 @@ test('requires a maintainer request for external authors or failed authorization
   }
 });
 for (const [name, mutate] of [
-  ['a release branch', pr => { pr.head.ref = 'release/2026-09-14' }],
+  ['a release branch', pr => { pr.head.ref = 'release/2026-09-14'; pr.base.ref = 'main' }],
   ['an auto-pr PR', pr => pr.labels.push({ name: 'auto-pr' })]
 ]) {
   test(`excludes ${name} from AI review`, async () => {
@@ -192,6 +192,14 @@ for (const [name, mutate] of [
     assert.deepEqual(f.requests, []);
   });
 }
+test('does not let a release-prefixed feature branch opt itself out', async () => {
+  const f = fixture([{ filename: 'Explorer/Packages/manifest.json' }]);
+  f.pr.head.ref = 'release/not-a-release';
+  await detect(f.github, f.context, f.core);
+  await request(f.github, f.context, f.core);
+  assert.equal(f.outputs.request, 'true');
+  assert.deepEqual(f.operations, ['add', 'request']);
+});
 test('grants the write scope that labelling a pull request requires', () => {
   // `issues: write` does not authorize labels on a PR — the silent 403 that
   // disabled the detailed pass between #10033 and this fix.
