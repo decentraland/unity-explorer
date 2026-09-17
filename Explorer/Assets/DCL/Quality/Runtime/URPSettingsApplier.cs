@@ -17,11 +17,6 @@ namespace DCL.Quality.Runtime
             int sampleCount = ClampToSupportedSampleCount(level.ToSampleCount());
 
             urpAsset.msaaSampleCount = sampleCount > 0 ? sampleCount : (int)MsaaQuality.Disabled;
-
-            ReportHub.LogProductionInfo(
-                $"[MSAA] requested {level} ({level.ToSampleCount()}) -> urpAsset.msaaSampleCount {urpAsset.msaaSampleCount}, "
-                + $"QualitySettings.antiAliasing {QualitySettings.antiAliasing}, Screen.msaaSamples {Screen.msaaSamples}, "
-                + $"supportsMultisampledBackBuffer {SystemInfo.supportsMultisampledBackBuffer}");
         }
 
         private static int ClampToSupportedSampleCount(int sampleCount)
