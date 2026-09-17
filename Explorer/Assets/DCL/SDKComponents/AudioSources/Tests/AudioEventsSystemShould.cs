@@ -218,10 +218,64 @@ namespace DCL.SDKComponents.AudioSources.Tests
             Assert.That(AudioEventsSystem.IsNaturalFinish(MediaState.MsPlaying, MediaState.MsError, playing), Is.False);
         }
 
+        // The rule itself is pure, so it is exercised without a GameObject, an AudioSource or an audio device.
+        // Batch-mode CI has no audio device, and a test that depended on real playback would report Inconclusive
+        // there, which does not fail a run: the behaviour would go unverified without anyone noticing.
+
         [Test]
-        public void ReportPlaybackPositionWheneverThePlayheadMoves()
+        public void ReportWhenTheMediaStateChanged()
         {
-            // Arrange: a playing source whose state was already propagated, so only playhead movement can emit a report.
+            AudioSourceComponent component = default(AudioSourceComponent);
+            component.LastPropagatedAudioState = MediaState.MsReady;
+            component.LastPropagatedOffset = 1.5f;
+
+            Assert.That(AudioEventsSystem.ShouldReport(MediaState.MsPlaying, 1.5f, hasClip: true, in component), Is.True);
+        }
+
+        [Test]
+        public void ReportWhenThePlayheadMovedAndTheStateDidNot()
+        {
+            AudioSourceComponent component = default(AudioSourceComponent);
+            component.LastPropagatedAudioState = MediaState.MsPlaying;
+            component.LastPropagatedOffset = 1.5f;
+
+            Assert.That(AudioEventsSystem.ShouldReport(MediaState.MsPlaying, 1.6f, hasClip: true, in component), Is.True);
+        }
+
+        [Test]
+        public void NotReportWhenNeitherTheStateNorThePlayheadChanged()
+        {
+            AudioSourceComponent component = default(AudioSourceComponent);
+            component.LastPropagatedAudioState = MediaState.MsPlaying;
+            component.LastPropagatedOffset = 1.5f;
+
+            Assert.That(AudioEventsSystem.ShouldReport(MediaState.MsPlaying, 1.5f, hasClip: true, in component), Is.False);
+        }
+
+        [Test]
+        public void NotReportAPositionForASourceWithNoClipLoaded()
+        {
+            AudioSourceComponent component = default(AudioSourceComponent);
+            component.LastPropagatedAudioState = MediaState.MsReady;
+
+            Assert.That(AudioEventsSystem.ShouldReport(MediaState.MsReady, 2f, hasClip: false, in component), Is.False);
+        }
+
+        [Test]
+        public void NotReportAFreshSourceSittingAtTheStartOfItsClip()
+        {
+            // Regression: initialising LastPropagatedOffset to NaN made the first examination of every source look
+            // like movement, because 0f.Equals(float.NaN) is false. Zero matches MediaPlayerComponent for video.
+            AudioSourceComponent component = default(AudioSourceComponent);
+            component.LastPropagatedAudioState = MediaState.MsReady;
+
+            Assert.That(AudioEventsSystem.ShouldReport(MediaState.MsReady, 0f, hasClip: true, in component), Is.False);
+        }
+
+        [Test]
+        public void CarryTheTickThePositionAndTheClipLengthInAPositionReport()
+        {
+            // Arrange: a loaded, already-propagated source, so only a moved playhead can emit a report.
             ISceneStateProvider sceneStateProvider = Substitute.For<ISceneStateProvider>();
             sceneStateProvider.TickNumber.Returns(7u);
             IPerformanceBudget budget = Substitute.For<IPerformanceBudget>();
@@ -229,10 +283,7 @@ namespace DCL.SDKComponents.AudioSources.Tests
             system = new AudioEventsSystem(world, ecsToCRDTWriter, sceneStateProvider, budget);
 
             PBAudioSource pbAudioSource = CreatePBAudioSource();
-            Entity entity = CreateLoadedAudioSourceEntity(pbAudioSource, MediaState.MsPlaying);
-            AudioSource audioSource = world.Get<AudioSourceComponent>(entity).AudioSource!;
-            audioSource.Play();
-            Assume.That(audioSource.isPlaying, "the test clip must be playing for the source to report MsPlaying");
+            Entity entity = CreateLoadedAudioSourceEntity(pbAudioSource, MediaState.MsReady);
 
             var reports = new System.Collections.Generic.List<AudioEventsSystem.AudioEventReport>();
             ecsToCRDTWriter.AppendMessage(
@@ -241,26 +292,40 @@ namespace DCL.SDKComponents.AudioSources.Tests
                 Arg.Any<int>(),
                 Arg.Do<AudioEventsSystem.AudioEventReport>(report => reports.Add(report)));
 
-            // Act: first update sees a position that was never propagated; the second sees the same position again.
+            // The source sits at the clip start. Claiming a different last-propagated offset is what a playhead
+            // that has moved looks like to the rule, without needing a device to actually advance one.
             ref AudioSourceComponent component = ref world.Get<AudioSourceComponent>(entity);
-            component.LastPropagatedOffset = float.NaN;
-            system.Update(0);
-            Assert.That(world.Get<AudioSourceComponent>(entity).LastPropagatedOffset, Is.EqualTo(audioSource.time));
-            float frozenOffset = audioSource.time;
-            audioSource.Pause();
-            audioSource.time = frozenOffset;
-            audioSource.Play();
-            component = ref world.Get<AudioSourceComponent>(entity);
-            component.LastPropagatedOffset = audioSource.time;
+            component.LastPropagatedOffset = 1.5f;
+
+            // Act
             system.Update(0);
 
-            // Assert: exactly one report, carrying the tick, the clip position and the clip length.
+            // Assert
             Assert.That(reports.Count, Is.EqualTo(1));
-            Assert.That(reports[0].State, Is.EqualTo(MediaState.MsPlaying));
+            Assert.That(reports[0].State, Is.EqualTo(MediaState.MsReady));
             Assert.That(reports[0].Tick, Is.EqualTo(7u));
             Assert.That(reports[0].HasPosition, Is.True);
+            Assert.That(reports[0].CurrentOffset, Is.EqualTo(0f).Within(0.001f));
             Assert.That(reports[0].ClipLength, Is.EqualTo(TestAudioClip.length).Within(0.001f));
-            Assert.That(reports[0].CurrentOffset, Is.GreaterThanOrEqualTo(0f).And.LessThanOrEqualTo(TestAudioClip.length));
+        }
+
+        [Test]
+        public void StoreThePropagatedOffsetSoAnUnchangedPlayheadStaysQuiet()
+        {
+            PBAudioSource pbAudioSource = CreatePBAudioSource();
+            Entity entity = CreateLoadedAudioSourceEntity(pbAudioSource, MediaState.MsReady);
+
+            ref AudioSourceComponent component = ref world.Get<AudioSourceComponent>(entity);
+            component.LastPropagatedOffset = 1.5f;
+            system.Update(0);
+
+            ecsToCRDTWriter.ClearReceivedCalls();
+
+            // Act: the playhead has not moved since the report above.
+            system.Update(0);
+
+            // Assert
+            ecsToCRDTWriter.DidNotReceive().AppendMessage(Arg.Any<Action<PBAudioEvent, AudioEventsSystem.AudioEventReport>>(), Arg.Any<CRDTEntity>(), Arg.Any<int>(), Arg.Any<AudioEventsSystem.AudioEventReport>());
         }
 
         private Entity CreateLoadedAudioSourceEntity(PBAudioSource pbAudioSource, MediaState lastPropagatedState)

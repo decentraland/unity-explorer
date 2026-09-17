@@ -69,11 +69,8 @@ namespace DCL.SDKComponents.AudioSources
             // audioSource! is safe: a non-null clip implies a non-null source, since the clip was read from audioSource.clip
             float offset = clip != null ? audioSource!.time : 0f;
             bool stateChanged = state != audioSourceComponent.LastPropagatedAudioState;
-            bool positionChanged = clip != null && !offset.Equals(audioSourceComponent.LastPropagatedOffset);
 
-            // Propagate when the state changes or the playhead moved, exactly as VideoEventsSystem does for video;
-            // a paused or stopped clip therefore emits nothing until it changes
-            if (!stateChanged && !positionChanged)
+            if (!ShouldReport(state, offset, hasClip: clip != null, in audioSourceComponent))
             {
 #if AUDIO_EVENTS_DEBUG
                 messagesSkipped++;
@@ -157,6 +154,15 @@ namespace DCL.SDKComponents.AudioSources
                 },
                 sdkEntity, sdkComponent);
         }
+
+        /// <summary>
+        ///     A report goes out when the media state changed or the playhead moved, which is the rule
+        ///     VideoEventsSystem applies to video. A paused or stopped clip therefore emits nothing until something
+        ///     changes, and a source with no clip loaded has no position to report on.
+        /// </summary>
+        internal static bool ShouldReport(MediaState state, float offset, bool hasClip, in AudioSourceComponent audioSourceComponent) =>
+            state != audioSourceComponent.LastPropagatedAudioState
+            || (hasClip && !offset.Equals(audioSourceComponent.LastPropagatedOffset));
 
         internal static MediaState GetAudioSourceState(in AudioSourceComponent audioSourceComponent)
         {
