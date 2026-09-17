@@ -6,6 +6,7 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.Utilities;
 using DCL.Web3;
+using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using MVC;
 using System;
@@ -53,7 +54,7 @@ namespace DCL.AuthenticationScreenFlow
             view.Show();
             view.CancelButton.onClick.AddListener(controller.CancelLoginProcess);
 
-            FetchProfileFlowAsync(payload.Email, payload.Identity, payload.IsCached, payload.Ct).Forget();
+            FetchProfileFlowAsync(payload.Email, payload.Identity, payload.IsRestoredSession, payload.Ct).Forget();
         }
 
         public override void Exit()
@@ -81,7 +82,7 @@ namespace DCL.AuthenticationScreenFlow
             base.Exit();
         }
 
-        private async UniTaskVoid FetchProfileFlowAsync(string email, IWeb3Identity identity, bool isCached, CancellationToken ct)
+        private async UniTaskVoid FetchProfileFlowAsync(string email, IWeb3Identity identity, bool isRestoredSession, CancellationToken ct)
         {
             SentryTransactionNameMapping.Instance.StartSpan(LOADING_TRANSACTION_NAME, new SpanData
             {
@@ -92,19 +93,19 @@ namespace DCL.AuthenticationScreenFlow
 
             if (!IsUserAllowedToAccessToBeta(identity))
             {
-                profileFetchException = new NotAllowedUserException($"User not allowed to access beta - restricted user {email} in {nameof(ProfileFetchingAuthState)} ({(isCached ? "cached" : "main")} flow)");
+                profileFetchException = new NotAllowedUserException($"User not allowed to access beta - restricted user {email} in {nameof(ProfileFetchingAuthState)} ({(isRestoredSession ? "restored" : "main")} flow)");
                 machine.Enter<LoginSelectionAuthState, ErrorType>(ErrorType.RestrictedUser);
             }
             else
             {
                 SentryTransactionNameMapping.Instance.EndCurrentSpan(LOADING_TRANSACTION_NAME);
-                currentState.Value = isCached ? AuthStatus.ProfileFetchingCached : AuthStatus.ProfileFetching;
+                currentState.Value = isRestoredSession ? AuthStatus.ProfileFetchingCached : AuthStatus.ProfileFetching;
 
                 try
                 {
                     SentryTransactionNameMapping.Instance.StartSpan(LOADING_TRANSACTION_NAME, new SpanData
                     {
-                        SpanName = isCached ? "ProfileFetchingCached" : "ProfileFetching",
+                        SpanName = isRestoredSession ? "ProfileFetchingCached" : "ProfileFetching",
                         SpanOperation = "auth.profile_fetching",
                         Depth =  STATE_SPAN_DEPTH + 1,
                     });
@@ -114,42 +115,42 @@ namespace DCL.AuthenticationScreenFlow
                     {
                         // When the profile was already in cache, for example your previous account after logout, we need to ensure that all systems related to the profile will update
                         profile.IsDirty = true;
-                        // Catalysts don't manipulate this field, so at this point we assume that the user is connected to web3
-                        profile.HasConnectedWeb3 = true;
-                        machine.Enter<LobbyForExistingAccountAuthState, (Profile, bool, CancellationToken)>((profile, isCached, ct));
+                        // Convert into guest account, only if was not upgraded before
+                        profile.HasConnectedWeb3 |= identity.Method != LoginMethod.GUEST;
+                        machine.Enter<LobbyForExistingAccountAuthState, (Profile, bool, CancellationToken)>((profile, isRestoredSession, ct));
                     }
-                    else if (isCached)
+                    else if (isRestoredSession)
                     {
-                        // Auto-login restored an identity that has no deployed profile (abandoned onboarding). Clear it and return to login selection.
+                        // Auto-login restored an identity that has no deployed profile (abandoned onboarding). Clear it and start over.
                         identityCache.Clear();
                         profileFetchException = new ProfileNotFoundException();
-                        machine.Enter<LoginSelectionAuthState, int>(SLIDE);
+                        controller.ReturnToOrigin(SLIDE);
                     }
                     else
                     {
-                        profile = CreateRandomProfile(identity.Address.ToString());
-                        machine.Enter<LobbyForNewAccountAuthState, (Profile, string, bool, CancellationToken)>((profile, email, false, ct)); // email is only used for optional newsletter subscription
+                        profile = CreateRandomProfile(identity);
+                        machine.Enter<SelectAvatarForNewAccountAuthState, (Profile, string, bool, CancellationToken)>((profile, email, false, ct)); // email is only used for optional newsletter subscription
                     }
                 }
                 catch (OperationCanceledException e)
                 {
                     profileFetchException = e;
-                    machine.Enter<LoginSelectionAuthState, int>(SLIDE);
+                    controller.ReturnToOrigin(SLIDE);
                 }
                 catch (ProfileNotFoundException e)
                 {
                     profileFetchException = e;
-                    machine.Enter<LoginSelectionAuthState, int>(SLIDE);
+                    controller.ReturnToOrigin(SLIDE);
                 }
                 catch (TimeoutException e)
                 {
                     profileFetchException = e;
-                    machine.Enter<LoginSelectionAuthState, ErrorType>(ErrorType.ConnectionError);
+                    controller.ReturnToOrigin(ErrorType.ConnectionError);
                 }
                 catch (Exception e)
                 {
                     profileFetchException = e;
-                    machine.Enter<LoginSelectionAuthState, ErrorType>(ErrorType.ConnectionError);
+                    controller.ReturnToOrigin(ErrorType.ConnectionError);
                 }
             }
         }
@@ -176,9 +177,9 @@ namespace DCL.AuthenticationScreenFlow
             return null; // genuine "no deployed profile"
         }
 
-        private Profile CreateRandomProfile(string identityAddress)
+        private Profile CreateRandomProfile(IWeb3Identity identity)
         {
-            var profile = Profile.NewRandomProfile(identityAddress);
+            var profile = Profile.NewRandomProfile(identity.Address.ToString());
             profile.HasClaimedName = false;
             profile.Description = string.Empty;
             profile.Country = string.Empty;
@@ -193,8 +194,7 @@ namespace DCL.AuthenticationScreenFlow
             profile.Hobbies = string.Empty;
             profile.TutorialStep = 0;
             profile.Version = 0;
-
-            profile.HasConnectedWeb3 = true;
+            profile.HasConnectedWeb3 = identity.Method != LoginMethod.GUEST;
             profile.IsDirty = true;
 
             return profile;
@@ -223,22 +223,22 @@ namespace DCL.AuthenticationScreenFlow
     {
         public readonly string Email;
         public readonly IWeb3Identity Identity;
-        public readonly bool IsCached;
+        public readonly bool IsRestoredSession;
         public CancellationToken Ct;
 
-        public ProfileFetchingPayload(string email, IWeb3Identity identity, bool isCached, CancellationToken ct)
+        public ProfileFetchingPayload(string email, IWeb3Identity identity, bool isRestoredSession, CancellationToken ct)
         {
             this.Email = email;
             this.Identity = identity;
-            this.IsCached = isCached;
+            this.IsRestoredSession = isRestoredSession;
             this.Ct = ct;
         }
 
-        public ProfileFetchingPayload(IWeb3Identity identity, bool isCached, CancellationToken ct)
+        public ProfileFetchingPayload(IWeb3Identity identity, bool isRestoredSession, CancellationToken ct)
         {
             this.Email = string.Empty;
             this.Identity = identity;
-            this.IsCached = isCached;
+            this.IsRestoredSession = isRestoredSession;
             this.Ct = ct;
         }
     }

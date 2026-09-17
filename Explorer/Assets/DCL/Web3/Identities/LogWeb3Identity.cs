@@ -1,6 +1,7 @@
 using DCL.Diagnostics;
 using DCL.Web3.Abstract;
 using DCL.Web3.Accounts;
+using DCL.Web3.Authenticators;
 using DCL.Web3.Chains;
 using System;
 
@@ -66,17 +67,7 @@ namespace DCL.Web3.Identities
             }
         }
 
-        public IWeb3Identity.Web3IdentitySource Source
-        {
-            get
-            {
-                ReportHub
-                   .WithReport(ReportCategory.PROFILE)
-                   .Log($"Web3Identity Source requested: {origin.Source}");
-
-                return origin.Source;
-            }
-        }
+        public LoginMethod Method => origin.Method;
 
         public AuthChain Sign(string entityId)
         {

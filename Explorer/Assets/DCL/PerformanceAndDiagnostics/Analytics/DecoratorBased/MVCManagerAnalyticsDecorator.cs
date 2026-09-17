@@ -12,6 +12,7 @@ using DCL.Browser;
 using DCL.PerformanceAndDiagnostics.Analytics.EventBased;
 using DCL.UI.ProfileNames;
 using DCL.UI.Sidebar;
+using DCL.UI.UpgradeGuestAccountPopup;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -49,6 +50,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
                 { typeof(MarketplaceCreditsMenuController), CreateAnalytics<MarketplaceCreditsMenuController>(c => new MarketplaceCreditsAnalytics(analytics, c)) },
                 { typeof(CreditsTopUpModalController), CreateAnalytics<CreditsTopUpModalController>(c => new CreditsTopUpAnalytics(analytics, c)) },
                 { typeof(CreditPurchaseModalController), CreateAnalytics<CreditPurchaseModalController>(c => new CreditPurchaseAnalytics(analytics, c)) },
+                { typeof(UpgradeGuestAccountPopupController), CreateAnalytics<UpgradeGuestAccountPopupController>(c => new UpgradeGuestAccountAnalytics(analytics, c)) },
             };
 
             Func<IController, IDisposable> CreateAnalytics<T>(Func<T, IDisposable> factory) where T: IController =>
