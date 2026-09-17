@@ -59,8 +59,6 @@ namespace DCL.SDKComponents.SceneUI.Components
             TextField.pickingMode = PickingMode.Position;
             TextField.SetValueWithoutNotify(text);
 
-            TextElement = TextField.Q<TextElement>();
-
             Placeholder.Initialize(TextField, placeholderValue, placeholderColorValue);
 
             IsOnValueChangedTriggered = false;
@@ -78,6 +76,19 @@ namespace DCL.SDKComponents.SceneUI.Components
         }
 
         /// <summary>
+        ///     Blurs the field if it owns the panel focus. A field detached while focused is disposed without a blur
+        ///     and UI Toolkit restores that focus when the element is attached again, so call this right after
+        ///     attaching a recycled field: otherwise it starts focused without the FocusIn that blocks the input maps.
+        /// </summary>
+        public void BlurIfFocused()
+        {
+            Focusable? focused = TextField.focusController?.focusedElement;
+
+            if (focused is VisualElement focusedElement && (focusedElement == TextField || TextField.Contains(focusedElement)))
+                focusedElement.Blur();
+        }
+
+        /// <summary>
         ///     UI Toolkit never blurs an element that leaves the panel, so a field disposed while focused
         ///     would keep the input maps blocked forever. Must run before the callbacks are unregistered.
         /// </summary>
@@ -85,10 +96,7 @@ namespace DCL.SDKComponents.SceneUI.Components
         {
             // Blurring while still attached dispatches FocusOut synchronously: the registered callback lifts the block
             // and the panel drops the field from its focused list, so a recycled field does not come back focused.
-            Focusable? focused = TextField.focusController?.focusedElement;
-
-            if (focused is VisualElement focusedElement && (focusedElement == TextField || TextField.Contains(focusedElement)))
-                focusedElement.Blur();
+            BlurIfFocused();
 
             // Nothing is dispatched when the field was detached before disposal, so lift the block directly.
             if (!IsFocused) return;

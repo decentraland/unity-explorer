@@ -18,8 +18,14 @@ using Entity = Arch.Core.Entity;
 
 namespace DCL.SDKComponents.SceneUI.Tests
 {
+    /// <summary>
+    ///     Runs against a live runtime panel so the focus events UI Toolkit dispatches (or does not dispatch) are the real ones.
+    /// </summary>
     public class UIInputReleaseSystemShould : UnitySystemTestBase<UIInputReleaseSystem>
     {
+        private GameObject canvasGameObject = null!;
+        private PanelSettings panelSettings = null!;
+        private VisualElement root = null!;
         private IInputBlock inputBlock = null!;
         private Entity entity;
         private UIInputComponent uiInputComponent = null!;
@@ -27,26 +33,40 @@ namespace DCL.SDKComponents.SceneUI.Tests
         [SetUp]
         public void SetUp()
         {
+            canvasGameObject = new GameObject(nameof(UIInputReleaseSystemShould));
+            var canvas = canvasGameObject.AddComponent<UIDocument>();
+            panelSettings = ScriptableObject.CreateInstance<PanelSettings>();
+            canvas.panelSettings = panelSettings;
+            root = canvas.rootVisualElement;
+            Assert.That(root.panel, Is.Not.Null, "The text field must live in a real panel for focus events to be dispatched.");
+
             var poolsRegistry = new ComponentPoolsRegistry(
                 new Dictionary<Type, IComponentPool>
                 {
                     { typeof(UIInputComponent), new ComponentPool.WithDefaultCtor<UIInputComponent>(onRelease: UiElementUtils.ReleaseUIInputComponent) },
-                }, new GameObject(nameof(UIInputReleaseSystemShould)).transform);
+                }, canvasGameObject.transform);
 
             inputBlock = Substitute.For<IInputBlock>();
             system = new UIInputReleaseSystem(world, poolsRegistry);
 
             uiInputComponent = new UIInputComponent();
             uiInputComponent.Initialize(inputBlock, "UIInput", string.Empty, string.Empty, Color.white);
+            root.Add(uiInputComponent.TextField);
 
             entity = world.Create(new CRDTEntity(500), new PBUiInput(), uiInputComponent);
+        }
+
+        protected override void OnTearDown()
+        {
+            UnityEngine.Object.DestroyImmediate(canvasGameObject);
+            UnityEngine.Object.DestroyImmediate(panelSettings);
         }
 
         [Test]
         public void RestoreInputMapsWhenFocusedInputEntityIsDestroyed()
         {
             // Arrange
-            FocusIn();
+            Focus();
             world.Add(entity, new DeleteEntityIntention());
 
             // Act
@@ -54,15 +74,17 @@ namespace DCL.SDKComponents.SceneUI.Tests
 
             // Assert
             inputBlock.Received(1).Enable(UIInputComponent.BLOCKED_INPUT_KINDS);
-            Assert.IsFalse(uiInputComponent.IsFocused);
-            Assert.IsFalse(world.Has<UIInputComponent>(entity));
+            Assert.That(uiInputComponent.IsFocused, Is.False);
+            Assert.That(root.panel.focusController.focusedElement, Is.Null);
+            Assert.That(uiInputComponent.TextField.panel, Is.Null);
+            Assert.That(world.Has<UIInputComponent>(entity), Is.False);
         }
 
         [Test]
         public void RestoreInputMapsWhenFocusedInputComponentIsRemoved()
         {
             // Arrange
-            FocusIn();
+            Focus();
             world.Remove<PBUiInput>(entity);
 
             // Act
@@ -70,7 +92,24 @@ namespace DCL.SDKComponents.SceneUI.Tests
 
             // Assert
             inputBlock.Received(1).Enable(UIInputComponent.BLOCKED_INPUT_KINDS);
-            Assert.IsFalse(world.Has<UIInputComponent>(entity));
+            Assert.That(root.panel.focusController.focusedElement, Is.Null);
+            Assert.That(world.Has<UIInputComponent>(entity), Is.False);
+        }
+
+        [Test]
+        public void RestoreInputMapsWhenFocusedInputWasDetachedBeforeDestruction()
+        {
+            // Arrange
+            Focus();
+            uiInputComponent.TextField.RemoveFromHierarchy();
+            world.Add(entity, new DeleteEntityIntention());
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            inputBlock.Received(1).Enable(UIInputComponent.BLOCKED_INPUT_KINDS);
+            Assert.That(uiInputComponent.IsFocused, Is.False);
         }
 
         [Test]
@@ -90,11 +129,9 @@ namespace DCL.SDKComponents.SceneUI.Tests
         public void NotRestoreInputMapsTwiceWhenInputLostFocusBeforeDestruction()
         {
             // Arrange
-            FocusIn();
-
-            using (FocusOutEvent evt = FocusOutEvent.GetPooled())
-                uiInputComponent.currentOnFocusOut(evt);
-
+            Focus();
+            uiInputComponent.TextField.Blur();
+            inputBlock.Received(1).Enable(UIInputComponent.BLOCKED_INPUT_KINDS);
             world.Add(entity, new DeleteEntityIntention());
 
             // Act
@@ -104,13 +141,12 @@ namespace DCL.SDKComponents.SceneUI.Tests
             inputBlock.Received(1).Enable(UIInputComponent.BLOCKED_INPUT_KINDS);
         }
 
-        private void FocusIn()
+        private void Focus()
         {
-            using (FocusInEvent evt = FocusInEvent.GetPooled())
-                uiInputComponent.currentOnFocusIn(evt);
+            uiInputComponent.TextField.Focus();
 
             inputBlock.Received(1).Disable(UIInputComponent.BLOCKED_INPUT_KINDS);
-            Assert.IsTrue(uiInputComponent.IsFocused);
+            Assert.That(uiInputComponent.IsFocused, Is.True);
         }
     }
 }

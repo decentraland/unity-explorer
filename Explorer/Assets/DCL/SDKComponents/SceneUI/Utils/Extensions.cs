@@ -233,6 +233,10 @@ namespace DCL.SDKComponents.SceneUI.Utils
             EventCallback<FocusOutEvent> newOnFocusOutCallback = evt =>
             {
                 evt.StopPropagation();
+
+                // Only lift a block this field placed: a blur of stale panel focus on a recycled field has no matching FocusIn.
+                if (!uiInputComponent.IsFocused) return;
+
                 uiInputComponent.IsFocused = false;
                 inputBlock.Enable(UIInputComponent.BLOCKED_INPUT_KINDS);
             };
