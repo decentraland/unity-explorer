@@ -14,6 +14,8 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.RealmNavigation;
 using DCL.UI;
+using DCL.UI.ProfileElements;
+using DCL.UI.Profiles;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
 using ECS.SceneLifeCycle.Realm;
@@ -28,7 +30,7 @@ namespace DCL.Lobby
 {
     /// <summary>
     ///     Fullscreen panel shown before the world starts loading and, later, on demand during gameplay.
-    ///     It only reports the close intent (Jump in or Close); what happens next is up to the caller.
+    ///     It only reports the close intent (Jump in, Close or Logout); what happens next is up to the caller.
     /// </summary>
     public class LobbyController : ControllerBase<LobbyView, LobbyParameter>
     {
@@ -46,9 +48,12 @@ namespace DCL.Lobby
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly StartParcel startParcel;
         private readonly ThumbnailLoader thumbnailLoader;
+        private readonly SidebarProfileButtonPresenter profileButtonPresenter;
+        private readonly ProfileMenuController profileMenuController;
 
         private LobbyCharacterPreviewController? avatarPreview;
         private CancellationTokenSource? avatarCts;
+        private CancellationTokenSource? profileMenuCts;
         private CancellationTokenSource? recentPlacesCts;
         private CancellationTokenSource? jumpInCts;
         private UniTaskCompletionSource? closeIntent;
@@ -72,7 +77,9 @@ namespace DCL.Lobby
             IRealmNavigator realmNavigator,
             IDecentralandUrlsSource decentralandUrlsSource,
             StartParcel startParcel,
-            ThumbnailLoader thumbnailLoader) : base(viewFactory)
+            ThumbnailLoader thumbnailLoader,
+            SidebarProfileButtonPresenter profileButtonPresenter,
+            ProfileMenuController profileMenuController) : base(viewFactory)
         {
             this.inputBlock = inputBlock;
             this.loadingStatus = loadingStatus;
@@ -88,6 +95,8 @@ namespace DCL.Lobby
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.startParcel = startParcel;
             this.thumbnailLoader = thumbnailLoader;
+            this.profileButtonPresenter = profileButtonPresenter;
+            this.profileMenuController = profileMenuController;
         }
 
         public override void Dispose()
@@ -99,6 +108,7 @@ namespace DCL.Lobby
                 viewInstance.JumpInButton.onClick.RemoveListener(RequestClose);
                 viewInstance.CloseButton.onClick.RemoveListener(RequestClose);
                 viewInstance.CharacterPreviewView.CharacterPreviewInputDetector.OnPointerClickEvent -= OnAvatarClicked;
+                viewInstance.ProfileWidgetView.OpenProfileButton.Button.onClick.RemoveListener(ShowProfileMenu);
 
                 foreach (LobbyPlaceCardView card in viewInstance.RecentPlaceCards)
                     card.Button.onClick.RemoveAllListeners();
@@ -107,6 +117,7 @@ namespace DCL.Lobby
             avatarCts.SafeCancelAndDispose();
             recentPlacesCts.SafeCancelAndDispose();
             jumpInCts.SafeCancelAndDispose();
+            profileMenuCts.SafeCancelAndDispose();
             avatarPreview?.Dispose();
             closeIntent?.TrySetCanceled();
         }
@@ -117,6 +128,7 @@ namespace DCL.Lobby
             viewInstance!.JumpInButton.onClick.AddListener(RequestClose);
             viewInstance.CloseButton.onClick.AddListener(RequestClose);
             viewInstance.CharacterPreviewView.CharacterPreviewInputDetector.OnPointerClickEvent += OnAvatarClicked;
+            viewInstance.ProfileWidgetView.OpenProfileButton.Button.onClick.AddListener(ShowProfileMenu);
 
             foreach (LobbyPlaceCardView card in viewInstance.RecentPlaceCards)
                 card.Button.onClick.AddListener(() => OnRecentPlaceClicked(card));
@@ -144,6 +156,10 @@ namespace DCL.Lobby
 
             recentPlacesCts = recentPlacesCts.SafeRestart();
             ShowRecentPlacesAsync(recentPlacesCts.Token).Forget();
+
+            profileButtonPresenter.LoadProfile();
+            profileMenuCts = profileMenuCts.SafeRestart();
+            HideProfileMenuIfOpen();
         }
 
         protected override void OnViewClose()
@@ -156,6 +172,9 @@ namespace DCL.Lobby
             recentPlacesCts.SafeCancelAndDispose();
             avatarPreview!.OnHide();
 
+            HideProfileMenuIfOpen();
+            profileMenuCts.SafeCancelAndDispose();
+
             inputBlock.Enable(InputMapComponent.BLOCK_USER_INPUT);
         }
 
@@ -163,7 +182,9 @@ namespace DCL.Lobby
         {
             closeIntent?.TrySetCanceled(ct);
             closeIntent = new UniTaskCompletionSource();
-            await closeIntent.Task.AttachExternalCancellation(ct);
+
+            await UniTask.WhenAny(closeIntent.Task.AttachExternalCancellation(ct),
+                viewInstance!.ProfileMenuView.SystemMenuView.LogoutButton.OnClickAsync(ct));
         }
 
         private async UniTaskVoid ShowAvatarAsync(CancellationToken ct)
@@ -259,6 +280,46 @@ namespace DCL.Lobby
 
         private URLDomain WorldUrl(string worldName) =>
             URLDomain.FromString(new ENS(worldName).ConvertEnsToWorldUrl(decentralandUrlsSource.Url(DecentralandUrl.WorldServer)));
+
+        private void HideProfileMenuIfOpen()
+        {
+            if (profileMenuController.State is ControllerState.ViewFocused or ControllerState.ViewBlurred)
+                profileMenuController.HideViewAsync(CancellationToken.None).Forget();
+        }
+
+        private void ShowProfileMenu()
+        {
+            profileMenuCts = profileMenuCts.SafeRestart();
+
+            if (profileMenuController.State != ControllerState.ViewHidden)
+                return;
+
+            ShowProfileMenuAsync(profileMenuCts.Token).Forget();
+        }
+
+        private async UniTaskVoid ShowProfileMenuAsync(CancellationToken ct)
+        {
+            try
+            {
+                viewInstance!.ProfileMenuCloserButton.gameObject.SetActive(true);
+                viewInstance.ProfileMenuCloserButton.onClick.AddListener(OnProfileMenuCloserClicked);
+
+                await profileMenuController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Popup, 0), new ControllerNoData(), ct);
+                await profileMenuController.HideViewAsync(CancellationToken.None);
+            }
+            catch (OperationCanceledException) { }
+            finally
+            {
+                if (viewInstance != null)
+                {
+                    viewInstance.ProfileMenuCloserButton.onClick.RemoveListener(OnProfileMenuCloserClicked);
+                    viewInstance.ProfileMenuCloserButton.gameObject.SetActive(false);
+                }
+            }
+        }
+
+        private void OnProfileMenuCloserClicked() =>
+            profileMenuCts?.Cancel();
 
         private void RequestClose()
         {

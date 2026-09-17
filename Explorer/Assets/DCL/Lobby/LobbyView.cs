@@ -1,6 +1,7 @@
 using DCL.CharacterPreview;
 using DCL.UI.Credits;
 using DCL.UI.ProfileElements;
+using DCL.UI.Profiles;
 using MVC;
 using UnityEngine;
 using UnityEngine.UI;
@@ -19,6 +20,12 @@ namespace DCL.Lobby
 
         [field: SerializeField]
         public ProfileWidgetView ProfileWidgetView { get; private set; } = null!;
+
+        [field: SerializeField]
+        public ProfileMenuView ProfileMenuView { get; private set; } = null!;
+
+        [field: SerializeField]
+        public Button ProfileMenuCloserButton { get; private set; } = null!;
 
         [field: SerializeField]
         public Button CloseButton { get; private set; } = null!;

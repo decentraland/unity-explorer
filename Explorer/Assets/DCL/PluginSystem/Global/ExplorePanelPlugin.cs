@@ -63,8 +63,6 @@ using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.Ipfs;
 using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.MarketplaceCredits;
-using DCL.MarketplaceCredits.Purchase;
-using DCL.MarketplaceCredits.Purchase.TopUp.UI;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Passport;
@@ -79,7 +77,6 @@ using DCL.Settings.Settings;
 using DCL.SkyBox;
 using DCL.UI;
 using DCL.UI.Credits;
-using DCL.UI.UpgradeGuestAccountPopup;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles;
 using DCL.Utilities;
@@ -600,8 +597,6 @@ namespace DCL.PluginSystem.Global
                 eventCardActionsController);
             mvcManager.RegisterController(eventDetailPanelController);
 
-            explorePanelView.CreditsPanelView.gameObject.SetActive(false);
-
             // The lobby lives in DCL.UI.Flows, which already depends on the explore panel's assembly, so the button is wired here
             bool includeLobby = FeaturesRegistry.Instance.IsEnabled(FeatureId.Lobby);
             explorePanelView.LobbyButton.gameObject.SetActive(includeLobby);
@@ -612,10 +607,9 @@ namespace DCL.PluginSystem.Global
                 lobbyButton.onClick.AddListener(OpenLobby);
             }
 
-            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.UserCredits))
-                EnableCreditsPanelIfUserAllowedAsync(explorePanelView.CreditsPanelView, ct)
-                   .SuppressToResultAsync(ReportCategory.CREDITS_PURCHASE)
-                   .Forget();
+            EnableCreditsPanelAsync(explorePanelView.CreditsPanelView, ct)
+               .SuppressToResultAsync(ReportCategory.CREDITS_PURCHASE)
+               .Forget();
 
             explorePanelController = new
                 ExplorePanelController(
@@ -656,29 +650,9 @@ namespace DCL.PluginSystem.Global
                 BackpackDeepLinkOpener.OpenBackpackWhenLandedAsync(mvcManager, loadingStatus, ct).Forget();
         }
 
-        private async UniTask EnableCreditsPanelIfUserAllowedAsync(CreditsPanelView view, CancellationToken ct)
+        private async UniTask EnableCreditsPanelAsync(CreditsPanelView view, CancellationToken ct)
         {
-            if (!await CreditsFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct))
-                return;
-
-            creditsPanelController = new CreditsPanelController(view, marketplaceCreditsAPIClient, profileChangesBus, web3IdentityCache,
-                topUpEnabled: FeaturesRegistry.Instance.IsEnabled(FeatureId.CreditsTopup),
-                openTopUpPanel: OpenTopUpPanel);
-
-            view.gameObject.SetActive(true);
-
-            return;
-
-            void OpenTopUpPanel()
-            {
-                if (web3IdentityCache.IsGuest())
-                {
-                    mvcManager.ShowAndForget(UpgradeGuestAccountPopupController.IssueCommand(new UpgradeGuestAccountPopupController.Params(GuestUpgradeTrigger.Credits)), ct: ct);
-                    return;
-                }
-
-                mvcManager.ShowAsync(CreditsTopUpModalController.IssueCommand(new CreditsTopUpModalControllerParams(CreditsTopUpModalControllerParams.SOURCE_HUD)), ct).Forget();
-            }
+            creditsPanelController = await CreditsPanelSetup.EnableIfUserAllowedAsync(view, marketplaceCreditsAPIClient, profileChangesBus, web3IdentityCache, mvcManager, ct);
         }
 
         private async UniTask<ObjectPool<PlaceElementView>> InitializePlaceElementsPoolAsync(SearchResultPanelView view, CancellationToken ct)

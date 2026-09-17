@@ -12,6 +12,18 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.RealmNavigation;
 using DCL.UI;
+using DCL.UI.Buttons;
+using DCL.UI.ProfileElements;
+using DCL.UI.Profiles;
+using DCL.UI.Profiles.Helpers;
+using DCL.UI.SystemMenu;
+using DCL.UserInAppInitializationFlow;
+using DCL.Web3;
+using DCL.Web3.Authenticators;
+using DCL.Web3.Identities;
+using DCL.Browser;
+using DCL.Passport;
+using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
 using NSubstitute;
@@ -34,10 +46,12 @@ namespace DCL.Lobby.Tests
         private const string GENESIS_URL = "https://realm-provider.example.com/main";
         private const string WORLD_SERVER_URL = "https://worlds-content-server.example.com/world";
         private const int RECENT_CARDS = 3;
+        private const string OWN_WALLET = "0x0000000000000000000000000000000000000001";
 
         private GameObject root = null!;
         private Button jumpInButton = null!;
         private Button closeButton = null!;
+        private Button logoutButton = null!;
         private CharacterPreviewInputDetector avatarInputDetector = null!;
         private CharacterPreviewSettingsSO previewSettings = null!;
         private GameObject recentPlacesSection = null!;
@@ -48,6 +62,10 @@ namespace DCL.Lobby.Tests
         private IRealmNavigator realmNavigator = null!;
         private StartParcel startParcel = null!;
         private LoadingStatus loadingStatus = null!;
+        private IWeb3IdentityCache identityCache = null!;
+        private IProfileRepository profileRepository = null!;
+        private SidebarProfileButtonPresenter profileButtonPresenter = null!;
+        private ProfileMenuController profileMenuController = null!;
         private World world = null!;
         private LobbyController controller = null!;
 
@@ -76,6 +94,9 @@ namespace DCL.Lobby.Tests
             SetBackingField(view, nameof(LobbyView.CharacterPreviewView), CreateCharacterPreviewView());
             SetBackingField(view, nameof(LobbyView.RecentPlacesSection), recentPlacesSection);
             SetBackingField(view, nameof(LobbyView.RecentPlaceCards), recentPlaceCards);
+            SetBackingField(view, nameof(LobbyView.ProfileWidgetView), CreateProfileWidgetView());
+            SetBackingField(view, nameof(LobbyView.ProfileMenuView), CreateProfileMenuView());
+            SetBackingField(view, nameof(LobbyView.ProfileMenuCloserButton), CreateButton(root.transform, "ProfileMenuCloser"));
 
             inputBlock = Substitute.For<IInputBlock>();
             mvcManager = Substitute.For<IMVCManager>();
@@ -96,15 +117,31 @@ namespace DCL.Lobby.Tests
             urlsSource.Url(DecentralandUrl.Genesis).Returns(GENESIS_URL);
             urlsSource.Url(DecentralandUrl.WorldServer).Returns(WORLD_SERVER_URL);
 
-            controller = new LobbyController(() => view, inputBlock, loadingStatus, mvcManager, selfProfile, new ProfileChangesBus(),
+            // Without an identity the widget has nothing to load until a test provides one
+            identityCache = Substitute.For<IWeb3IdentityCache>();
+            identityCache.Identity.Returns((IWeb3Identity?)null);
+            profileRepository = Substitute.For<IProfileRepository>();
+            IProfileCache profileCache = Substitute.For<IProfileCache>();
+            var profileChangesBus = new ProfileChangesBus();
+
+            profileButtonPresenter = new SidebarProfileButtonPresenter(view.ProfileWidgetView, identityCache, profileRepository, profileChangesBus);
+
+            profileMenuController = new ProfileMenuController(() => view.ProfileMenuView, identityCache, world, default(Entity), new UnityAppWebBrowser(urlsSource),
+                Substitute.For<ICompositeWeb3Provider>(), Substitute.For<IUserInAppInitializationFlow>(), profileCache, Substitute.For<IPassportBridge>(),
+                new ProfileRepositoryWrapper(profileRepository, profileCache, Substitute.For<ISpriteCache>(), identityCache));
+
+            controller = new LobbyController(() => view, inputBlock, loadingStatus, mvcManager, selfProfile, profileChangesBus,
                 Substitute.For<ICharacterPreviewFactory>(), new CharacterPreviewEventBus(), new LobbyAvatarSettings(), world,
-                placesAPIService, realmNavigator, urlsSource, startParcel, new ThumbnailLoader(Substitute.For<ISpriteCache>()));
+                placesAPIService, realmNavigator, urlsSource, startParcel, new ThumbnailLoader(Substitute.For<ISpriteCache>()),
+                profileButtonPresenter, profileMenuController);
         }
 
         [TearDown]
         public void TearDown()
         {
             controller.Dispose();
+            profileButtonPresenter.Dispose();
+            profileMenuController.Dispose();
             World.Destroy(world);
             Object.DestroyImmediate(previewSettings);
             Object.DestroyImmediate(root);
@@ -139,6 +176,36 @@ namespace DCL.Lobby.Tests
 
             // Assert
             Assert.That(lifeCycle.Status, Is.EqualTo(UniTaskStatus.Succeeded));
+        }
+
+        [Test]
+        public void CloseOnLogout()
+        {
+            // Arrange
+            UniTask lifeCycle = Launch(isStartup: false);
+            Assert.That(lifeCycle.Status, Is.EqualTo(UniTaskStatus.Pending));
+
+            // Act
+            logoutButton.onClick.Invoke();
+
+            // Assert
+            Assert.That(lifeCycle.Status, Is.EqualTo(UniTaskStatus.Succeeded));
+        }
+
+        [Test]
+        public void RefreshTheProfileWidgetOnShow()
+        {
+            // Arrange
+            IWeb3Identity identity = Substitute.For<IWeb3Identity>();
+            identity.Address.Returns(new Web3Address(OWN_WALLET));
+            identityCache.Identity.Returns(identity);
+
+            // Act
+            Launch(isStartup: true);
+
+            // Assert
+            profileRepository.Received(1).GetAsync(Arg.Is<string>(id => string.Equals(id, OWN_WALLET, StringComparison.OrdinalIgnoreCase)), 0, null, Arg.Any<CancellationToken>(),
+                true, IProfileRepository.FetchBehaviour.Default, ProfileTier.Kind.Compact, Arg.Any<IPartitionComponent?>());
         }
 
         [TestCase(true, false)]
@@ -356,6 +423,56 @@ namespace DCL.Lobby.Tests
             return textGo.AddComponent<TextMeshProUGUI>();
         }
 
+        private ProfileWidgetView CreateProfileWidgetView()
+        {
+            // HoverableButton wires its Button in Awake, so the object stays inactive until the field is assigned
+            var widgetGo = new GameObject("ProfileWidget");
+            widgetGo.SetActive(false);
+            widgetGo.transform.SetParent(root.transform);
+            ProfileWidgetView widget = widgetGo.AddComponent<ProfileWidgetView>();
+
+            HoverableButton openProfileButton = widgetGo.AddComponent<HoverableButton>();
+            SetBackingField(openProfileButton, nameof(HoverableButton.Button), widgetGo.AddComponent<Button>());
+
+            var pictureGo = new GameObject("ProfilePicture");
+            pictureGo.transform.SetParent(widgetGo.transform);
+            ProfilePictureView picture = pictureGo.AddComponent<ProfilePictureView>();
+
+            var thumbnailGo = new GameObject("Thumbnail");
+            thumbnailGo.transform.SetParent(pictureGo.transform);
+            Image image = thumbnailGo.AddComponent<Image>();
+            ImageView thumbnail = thumbnailGo.AddComponent<ImageView>();
+            SetBackingField(thumbnail, nameof(ImageView.Image), image);
+            SetField(picture, "thumbnailImageView", thumbnail);
+
+            SetBackingField(widget, nameof(ProfileWidgetView.ProfilePictureView), picture);
+            SetBackingField(widget, nameof(ProfileWidgetView.OpenProfileButton), openProfileButton);
+            widgetGo.SetActive(true);
+
+            return widget;
+        }
+
+        private ProfileMenuView CreateProfileMenuView()
+        {
+            var menuGo = new GameObject("ProfileMenu");
+            menuGo.transform.SetParent(root.transform);
+            ProfileMenuView menu = menuGo.AddComponent<ProfileMenuView>();
+
+            SystemMenuView systemMenu = menuGo.AddComponent<SystemMenuView>();
+            logoutButton = CreateButton(menuGo.transform, "Logout");
+            SetBackingField(systemMenu, nameof(SystemMenuView.LogoutButton), logoutButton);
+            SetBackingField(menu, nameof(ProfileMenuView.SystemMenuView), systemMenu);
+
+            return menu;
+        }
+
+        private static Button CreateButton(Transform parent, string name)
+        {
+            var buttonGo = new GameObject(name);
+            buttonGo.transform.SetParent(parent);
+            return buttonGo.AddComponent<Button>();
+        }
+
         private CharacterPreviewView CreateCharacterPreviewView()
         {
             var previewGo = new GameObject("CharacterPreviewView");
@@ -374,7 +491,10 @@ namespace DCL.Lobby.Tests
         }
 
         private static void SetBackingField(object target, string propertyName, object value) =>
-            target.GetType().GetField($"<{propertyName}>k__BackingField", BindingFlags.Instance | BindingFlags.NonPublic)!
+            SetField(target, $"<{propertyName}>k__BackingField", value);
+
+        private static void SetField(object target, string fieldName, object value) =>
+            target.GetType().GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic)!
                   .SetValue(target, value);
     }
 }
