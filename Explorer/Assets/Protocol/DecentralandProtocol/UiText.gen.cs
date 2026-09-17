@@ -265,7 +265,7 @@ namespace DCL.ECSComponents {
 
     private string fontSrc_;
     /// <summary>
-    /// a font file in the scene, or a Google Fonts family name; `font` is the fallback (default: unset)
+    /// a ttf font file in the scene content or a Google Fonts family name; `font` is the fallback (default: unset)
     /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]

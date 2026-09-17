@@ -32,22 +32,31 @@ namespace ECS.StreamableLoading.Fonts.Tests
         }
 
         [TestCase(new byte[] { 0x00, 0x01, 0x00, 0x00, 0, 0, 0, 0, 0, 0, 0, 0 }, true)]
-        [TestCase(new byte[] { 0x4F, 0x54, 0x54, 0x4F, 0, 0, 0, 0, 0, 0, 0, 0 }, true)]
-        [TestCase(new byte[] { 0x74, 0x72, 0x75, 0x65, 0, 0, 0, 0, 0, 0, 0, 0 }, true)]
-        [TestCase(new byte[] { 0x74, 0x74, 0x63, 0x66, 0, 0, 0, 0, 0, 0, 0, 0 }, true)]
+        [TestCase(new byte[] { 0x4F, 0x54, 0x54, 0x4F, 0, 0, 0, 0, 0, 0, 0, 0 }, false)]
+        [TestCase(new byte[] { 0x74, 0x72, 0x75, 0x65, 0, 0, 0, 0, 0, 0, 0, 0 }, false)]
+        [TestCase(new byte[] { 0x74, 0x74, 0x63, 0x66, 0, 0, 0, 0, 0, 0, 0, 0 }, false)]
         [TestCase(new byte[] { 0x00, 0x01, 0x00 }, false)]
         [TestCase(new byte[] { 0x77, 0x4F, 0x46, 0x46, 0, 0, 0, 0, 0, 0, 0, 0 }, false)]
-        public void RecognizeSfntHeaders(byte[] bytes, bool expected)
+        [TestCase(new byte[] { 0x77, 0x4F, 0x46, 0x32, 0, 0, 0, 0, 0, 0, 0, 0 }, false)]
+        public void AcceptOnlyTrueTypeHeaders(byte[] bytes, bool expected)
         {
-            bool looksLikeFont = FontFileStore.LooksLikeFontFile(bytes);
+            bool looksLikeFont = FontFileStore.LooksLikeTrueTypeFont(bytes);
 
             Assert.That(looksLikeFont, Is.EqualTo(expected));
         }
 
         [Test]
+        public void RejectAnOpenTypeFont()
+        {
+            string path = Path.Combine(Application.dataPath, "TextMesh Pro/Fonts & Materials/Asian fallbacks/NotoSansJP-SemiBold.otf");
+
+            Assert.That(FontFileStore.LooksLikeTrueTypeFont(File.ReadAllBytes(path)), Is.False);
+        }
+
+        [Test]
         public void RejectAnHtmlErrorPage()
         {
-            bool looksLikeFont = FontFileStore.LooksLikeFontFile(Encoding.ASCII.GetBytes("<!DOCTYPE html><html>"));
+            bool looksLikeFont = FontFileStore.LooksLikeTrueTypeFont(Encoding.ASCII.GetBytes("<!DOCTYPE html><html>"));
 
             Assert.That(looksLikeFont, Is.False);
         }
@@ -72,24 +81,6 @@ namespace ECS.StreamableLoading.Fonts.Tests
 
             Assert.That(second, Is.EqualTo(first));
             Assert.That(Directory.GetFiles(directory), Has.Length.EqualTo(1));
-        }
-
-        [TestCase(0x00010000u, ".ttf")]
-        [TestCase(0x74727565u, ".ttf")]
-        [TestCase(0x4F54544Fu, ".otf")]
-        [TestCase(0x74746366u, ".ttc")]
-        public async Task UseTheExtensionOfTheFontFormat(uint version, string extension)
-        {
-            var bytes = new byte[12];
-            bytes[0] = (byte)(version >> 24);
-            bytes[1] = (byte)(version >> 16);
-            bytes[2] = (byte)(version >> 8);
-            bytes[3] = (byte)version;
-
-            string path = await store.StoreAsync(bytes, CancellationToken.None);
-
-            Assert.That(Path.GetExtension(path), Is.EqualTo(extension));
-            Assert.That(File.ReadAllBytes(path), Is.EqualTo(bytes));
         }
 
         [Test]

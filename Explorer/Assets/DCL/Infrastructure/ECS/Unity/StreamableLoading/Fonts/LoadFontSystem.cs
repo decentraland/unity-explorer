@@ -76,8 +76,8 @@ namespace ECS.StreamableLoading.Fonts
             if (bytes.Length > FontFileStore.MAX_FILE_BYTES)
                 throw new FontLoadException($"\"{src}\": {arguments.URL} is {bytes.Length} bytes, scene fonts are capped at {FontFileStore.MAX_FILE_BYTES} bytes");
 
-            if (!FontFileStore.LooksLikeFontFile(bytes))
-                throw new FontLoadException($"\"{src}\": {arguments.URL} is not a TrueType/OpenType font file");
+            if (!FontFileStore.LooksLikeTrueTypeFont(bytes))
+                throw new FontLoadException($"\"{src}\": {arguments.URL} is not a supported TrueType font file");
 
             return await fileStore.StoreAsync(bytes, ct);
         }

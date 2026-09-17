@@ -19,9 +19,6 @@ namespace ECS.StreamableLoading.Fonts
         private const int SFNT_HEADER_BYTES = 12;
 
         private const uint SFNT_VERSION_TRUE_TYPE = 0x00010000;
-        private const uint SFNT_VERSION_CFF = 0x4F54544F;
-        private const uint SFNT_VERSION_APPLE_TRUE_TYPE = 0x74727565;
-        private const uint SFNT_VERSION_COLLECTION = 0x74746366;
 
         private readonly string directory;
 
@@ -37,17 +34,14 @@ namespace ECS.StreamableLoading.Fonts
             return store;
         }
 
-        public static bool LooksLikeFontFile(byte[] bytes)
+        public static bool LooksLikeTrueTypeFont(byte[] bytes)
         {
             if (bytes.Length < SFNT_HEADER_BYTES)
                 return false;
 
-            uint version = ReadVersion(bytes);
+            uint version = ((uint)bytes[0] << 24) | ((uint)bytes[1] << 16) | ((uint)bytes[2] << 8) | bytes[3];
 
-            return version is SFNT_VERSION_TRUE_TYPE
-                           or SFNT_VERSION_CFF
-                           or SFNT_VERSION_APPLE_TRUE_TYPE
-                           or SFNT_VERSION_COLLECTION;
+            return version == SFNT_VERSION_TRUE_TYPE;
         }
 
         public void Clear()
@@ -98,17 +92,7 @@ namespace ECS.StreamableLoading.Fonts
         private static string FileName(byte[] bytes)
         {
             using HashKey key = HashKey.FromOwnedMemory(SHA256Hashing.ComputeHash(bytes));
-            string extension = bytes.Length < SFNT_HEADER_BYTES ? ".ttf" : ReadVersion(bytes) switch
-            {
-                SFNT_VERSION_CFF => ".otf",
-                SFNT_VERSION_COLLECTION => ".ttc",
-                _ => ".ttf",
-            };
-
-            return HashNamings.HashNameFrom(key, extension);
+            return HashNamings.HashNameFrom(key, ".ttf");
         }
-
-        private static uint ReadVersion(byte[] bytes) =>
-            ((uint)bytes[0] << 24) | ((uint)bytes[1] << 16) | ((uint)bytes[2] << 8) | bytes[3];
     }
 }
