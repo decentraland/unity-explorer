@@ -797,6 +797,12 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        gpuiShaderBindings:
+          m_AssetGUID: 50f997bbd4ff89a469f03b9794ff393f
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
     - rid: 3414978285727645698
       type: {class: PointerInputAudioPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
