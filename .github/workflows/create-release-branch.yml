@@ -171,6 +171,7 @@ jobs:
           # and "the API would not say" are opposite instructions to whoever
           # reads the section, and only one of them is about this release.
           TEST_RUN_URL=""
+          TEST_BRANCH=""
           TEST_JOBS=""
           TEST_STATE=unknown
           if TEST_RUN=$(gh_api_retry "repos/${GITHUB_REPOSITORY}/actions/workflows/test.yml/runs?head_sha=${HEAD_SHA}&per_page=20" \
@@ -183,6 +184,10 @@ jobs:
             else
               TEST_RUN_ID=$(jq -r '.id' <<< "$TEST_RUN")
               TEST_RUN_URL=$(jq -r '.html_url' <<< "$TEST_RUN")
+              # Named, never assumed to be dev: the selector above takes
+              # pull_request runs too, so any PR whose head is the cut commit
+              # can be the run that answers here.
+              TEST_BRANCH=$(jq -r '.head_branch' <<< "$TEST_RUN")
               if TEST_JOBS=$(gh_api_retry "repos/${GITHUB_REPOSITORY}/actions/runs/${TEST_RUN_ID}/jobs?per_page=100"); then
                 TEST_STATE=ok
               fi
@@ -198,7 +203,7 @@ jobs:
           # Every reused section says so, and says it will not update: read
           # without that line a green badge on a release PR looks like the PR's
           # own result, and the first push to the branch silently makes it one.
-          REUSED="<sub>Reused from dev's [\`Unity Test\` run](${TEST_RUN_URL}) of \`${SHORT_SHA}\`, the commit this release was cut from. The release PR starts no runs of its own until something pushes to the branch.</sub>"
+          REUSED="<sub>Reused from the [\`Unity Test\` run](${TEST_RUN_URL}) of \`${SHORT_SHA}\` on \`${TEST_BRANCH}\`, the commit this release was cut from. The release PR starts no runs of its own until something pushes to the branch.</sub>"
 
           TEST_RUNS="${ACTIONS_URL}/workflows/test.yml"
           LINT_STYLE="?logo=jetbrains&logoColor=white&style=for-the-badge"
@@ -215,13 +220,13 @@ jobs:
             case "$LINT_CONCLUSION" in
               success)
                 LINT_BADGE="[![Lint](https://img.shields.io/badge/Lint-Passed!-3fb950${LINT_STYLE})](${TEST_RUN_URL})"
-                LINT_MSG="Lint succeeded on dev's run of this commit. The ratchet itself gates PRs into dev rather than release cuts — every commit on this branch already passed it there." ;;
+                LINT_MSG="Lint succeeded on the \`${TEST_BRANCH}\` run of this commit. The ratchet itself gates PRs into dev rather than release cuts — every commit on this branch already passed it there." ;;
               skipped|"")
                 LINT_BADGE="[![Lint](https://img.shields.io/badge/Lint-Skipped-lightgrey${LINT_STYLE})](${TEST_RUN_URL})"
                 LINT_MSG="No C# files changed in the commit this release was cut from — the ratchet did not run." ;;
               *)
                 LINT_BADGE="[![Lint](https://img.shields.io/badge/Lint-Unavailable-ff0000${LINT_STYLE})](${TEST_RUN_URL})"
-                LINT_MSG="Lint did not finish (\`${LINT_CONCLUSION}\`) on dev's run of this commit, so the warning count at the cut was never established." ;;
+                LINT_MSG="Lint did not finish (\`${LINT_CONCLUSION}\`) on the \`${TEST_BRANCH}\` run of this commit, so the warning count at the cut was never established." ;;
             esac
           fi
           {
@@ -246,13 +251,13 @@ jobs:
             TESTS_NOTE="$REUSED"
             if [ "$EDITMODE" = "success" ] && [ "$PLAYMODE" = "success" ]; then
               TESTS_BADGE="[![Tests](https://img.shields.io/badge/Tests-Passed!-3fb950${TESTS_STYLE})](${TEST_RUN_URL})"
-              TESTS_MSG="Both suites passed on dev's run of this commit ✅"
+              TESTS_MSG="Both suites passed on the \`${TEST_BRANCH}\` run of this commit ✅"
             elif [ -z "$EDITMODE" ] && [ -z "$PLAYMODE" ]; then
               TESTS_BADGE="[![Tests](https://img.shields.io/badge/Tests-Not%20run-lightgrey${TESTS_STYLE})](${TEST_RUN_URL})"
-              TESTS_MSG="Neither suite ran on dev's run of this commit."
+              TESTS_MSG="Neither suite ran on the \`${TEST_BRANCH}\` run of this commit."
             else
               TESTS_BADGE="[![Tests](https://img.shields.io/badge/Tests-Failed!-ff0000${TESTS_STYLE})](${TEST_RUN_URL})"
-              TESTS_MSG="A suite did not pass on dev's run of this commit ❌ — editmode \`${EDITMODE:-not run}\`, playmode \`${PLAYMODE:-not run}\`."
+              TESTS_MSG="A suite did not pass on the \`${TEST_BRANCH}\` run of this commit ❌ — editmode \`${EDITMODE:-not run}\`, playmode \`${PLAYMODE:-not run}\`."
             fi
           fi
           {
