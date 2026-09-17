@@ -25,5 +25,15 @@ namespace DCL.Lobby
 
         [field: SerializeField]
         public CharacterPreviewView CharacterPreviewView { get; private set; } = null!;
+
+        [field: Header("Jump back in")]
+        [field: SerializeField]
+        public GameObject RecentPlacesSection { get; private set; } = null!;
+
+        /// <summary>
+        ///     Laid out in the prefab; the number of cards caps how many recent places are shown.
+        /// </summary>
+        [field: SerializeField]
+        public LobbyPlaceCardView[] RecentPlaceCards { get; private set; } = null!;
     }
 }

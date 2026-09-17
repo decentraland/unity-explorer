@@ -2,12 +2,18 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.CharacterPreview;
+using DCL.Communities;
 using DCL.DebugUtilities;
 using DCL.Input;
 using DCL.Lobby;
+using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.PlacesAPIService;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.RealmNavigation;
+using DCL.UI;
+using DCL.WebRequests;
+using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System.Threading;
 
@@ -25,6 +31,11 @@ namespace DCL.PluginSystem.Global
         private readonly ICharacterPreviewFactory characterPreviewFactory;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
         private readonly Arch.Core.World world;
+        private readonly IPlacesAPIService placesAPIService;
+        private readonly IRealmNavigator realmNavigator;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
+        private readonly StartParcel startParcel;
+        private readonly IWebRequestController webRequestController;
 
         public LobbyPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -36,7 +47,12 @@ namespace DCL.PluginSystem.Global
             ProfileChangesBus profileChangesBus,
             ICharacterPreviewFactory characterPreviewFactory,
             CharacterPreviewEventBus characterPreviewEventBus,
-            Arch.Core.World world)
+            Arch.Core.World world,
+            IPlacesAPIService placesAPIService,
+            IRealmNavigator realmNavigator,
+            IDecentralandUrlsSource decentralandUrlsSource,
+            StartParcel startParcel,
+            IWebRequestController webRequestController)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -48,6 +64,11 @@ namespace DCL.PluginSystem.Global
             this.characterPreviewFactory = characterPreviewFactory;
             this.characterPreviewEventBus = characterPreviewEventBus;
             this.world = world;
+            this.placesAPIService = placesAPIService;
+            this.realmNavigator = realmNavigator;
+            this.decentralandUrlsSource = decentralandUrlsSource;
+            this.startParcel = startParcel;
+            this.webRequestController = webRequestController;
         }
 
         public void Dispose() { }
@@ -59,7 +80,8 @@ namespace DCL.PluginSystem.Global
             LobbyView prefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.LobbyPrefab, ct: ct)).Value;
 
             mvcManager.RegisterController(new LobbyController(LobbyController.CreateLazily(prefab, null), inputBlock, loadingStatus, mvcManager,
-                selfProfile, profileChangesBus, characterPreviewFactory, characterPreviewEventBus, settings.AvatarSettings, world));
+                selfProfile, profileChangesBus, characterPreviewFactory, characterPreviewEventBus, settings.AvatarSettings, world,
+                placesAPIService, realmNavigator, decentralandUrlsSource, startParcel, new ThumbnailLoader(new SpriteCache(webRequestController))));
 
             debugContainerBuilder
                .TryAddWidget("Lobby")?

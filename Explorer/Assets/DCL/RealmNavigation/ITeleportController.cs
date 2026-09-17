@@ -1,4 +1,5 @@
-﻿using Cysharp.Threading.Tasks;
+﻿using CommunicationData.URLHelpers;
+using Cysharp.Threading.Tasks;
 using DCL.Ipfs;
 using DCL.Utilities;
 using DCL.Utility.Types;
@@ -44,6 +45,11 @@ namespace DCL.RealmNavigation
 
         public string? SpawnPointName { get; private set; }
 
+        /// <summary>
+        ///     Realm the startup teleport lands in. Unset keeps the realm chosen at bootstrap.
+        /// </summary>
+        public URLDomain? Realm { get; private set; }
+
         public bool IsConsumed() =>
             consumed;
 
@@ -52,6 +58,13 @@ namespace DCL.RealmNavigation
             if (consumed) return AssignResult.ParcelAlreadyConsumed;
             value = newParcel;
             SpawnPointName = newSpawnPointName;
+            return AssignResult.Ok;
+        }
+
+        public AssignResult AssignRealm(URLDomain realm)
+        {
+            if (consumed) return AssignResult.ParcelAlreadyConsumed;
+            Realm = realm;
             return AssignResult.Ok;
         }
 

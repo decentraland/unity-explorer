@@ -94,5 +94,34 @@ namespace DCL.PlacesAPIService
             if (place == null) return;
             await placesAPIService.SetPlaceFavoriteAsync(place.id, isFavorite, ct);
         }
+
+        /// <summary>
+        ///     Hydrates the recently visited history, most recent first. The destinations endpoint neither keeps the requested
+        ///     order nor knows every visited place, so the result follows the history and skips the places it cannot resolve.
+        /// </summary>
+        public static async UniTask<PlacesData.IPlacesAPIResponse> GetRecentlyVisitedDestinationsAsync(this IPlacesAPIService placesAPIService, CancellationToken ct, bool? withConnectedUsers = null)
+        {
+            List<string> history = placesAPIService.GetRecentlyVisitedPlaces();
+            var sorted = new PlacesData.PlacesAPIResponse { data = new List<PlacesData.PlaceInfo>(history.Count) };
+
+            if (history.Count == 0)
+                return sorted;
+
+            PlacesData.IPlacesAPIResponse response = await placesAPIService.GetDestinationsByIdsAsync(history, ct, withConnectedUsers: withConnectedUsers);
+
+            foreach (string placeId in history)
+            {
+                foreach (PlacesData.PlaceInfo place in response.Data)
+                {
+                    if (place.id != placeId) continue;
+
+                    sorted.data.Add(place);
+                    break;
+                }
+            }
+
+            sorted.total = sorted.data.Count;
+            return sorted;
+        }
     }
 }

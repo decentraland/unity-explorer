@@ -182,6 +182,8 @@ namespace DCL.UserInAppInitializationFlow
                     .ShowWhileExecuteTaskAsync(
                         async (parentLoadReport, ct) =>
                         {
+                            await ApplyStartRealmAsync(ct);
+
                             // After authentication completes, verify the user can actually access the current realm if it's a world.
                             // The realm was set during bootstrap before the user had a chance to switch accounts, so the identity
                             // that's now authenticated may differ from the one assumed at startup.
@@ -254,6 +256,18 @@ namespace DCL.UserInAppInitializationFlow
             && !appArgs.HasFlag(AppArgsFlags.AUTOPILOT)
             && !appArgs.HasFlag(AppArgsFlags.MEASURE_LOADING_TIME)
             && !appArgs.HasFlag(AppArgsFlags.DISABLE_HUD);
+
+        /// <summary>
+        ///     Switches to the realm picked in the lobby before anything is loaded. A Genesis pick is satisfied by any Genesis realm.
+        /// </summary>
+        private async UniTask ApplyStartRealmAsync(CancellationToken ct)
+        {
+            if (startParcel.Realm is not { } realm) return;
+            if (realm == realmController.CurrentDomain) return;
+            if (realmController.RealmData.IsGenesis() && realm == URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Genesis))) return;
+
+            await realmController.SetRealmAsync(realm, ct);
+        }
 
         private async UniTask VerifyWorldAccessAndFallbackIfNeededAsync(CancellationToken ct)
         {

@@ -1,19 +1,26 @@
 using Arch.Core;
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.CharacterPreview;
+using DCL.Communities;
 using DCL.ExplorePanel;
 using DCL.Input;
 using DCL.Input.Component;
+using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.PlacesAPIService;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.RealmNavigation;
 using DCL.UI;
+using ECS.SceneLifeCycle.Realm;
 using MVC;
 using NSubstitute;
 using NUnit.Framework;
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using System.Threading;
+using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -24,13 +31,22 @@ namespace DCL.Lobby.Tests
     [TestFixture]
     public class LobbyControllerShould
     {
+        private const string GENESIS_URL = "https://realm-provider.example.com/main";
+        private const string WORLD_SERVER_URL = "https://worlds-content-server.example.com/world";
+        private const int RECENT_CARDS = 3;
+
         private GameObject root = null!;
         private Button jumpInButton = null!;
         private Button closeButton = null!;
         private CharacterPreviewInputDetector avatarInputDetector = null!;
         private CharacterPreviewSettingsSO previewSettings = null!;
+        private GameObject recentPlacesSection = null!;
+        private LobbyPlaceCardView[] recentPlaceCards = null!;
         private IInputBlock inputBlock = null!;
         private IMVCManager mvcManager = null!;
+        private IPlacesAPIService placesAPIService = null!;
+        private IRealmNavigator realmNavigator = null!;
+        private StartParcel startParcel = null!;
         private LoadingStatus loadingStatus = null!;
         private World world = null!;
         private LobbyController controller = null!;
@@ -48,10 +64,18 @@ namespace DCL.Lobby.Tests
             var closeButtonGo = new GameObject("CloseButton");
             closeButtonGo.transform.SetParent(root.transform);
             closeButton = closeButtonGo.AddComponent<Button>();
+            recentPlacesSection = new GameObject("RecentPlaces");
+            recentPlacesSection.transform.SetParent(root.transform);
+            recentPlaceCards = new LobbyPlaceCardView[RECENT_CARDS];
+
+            for (var i = 0; i < RECENT_CARDS; i++)
+                recentPlaceCards[i] = CreatePlaceCard(i);
 
             SetBackingField(view, nameof(LobbyView.JumpInButton), jumpInButton);
             SetBackingField(view, nameof(LobbyView.CloseButton), closeButton);
             SetBackingField(view, nameof(LobbyView.CharacterPreviewView), CreateCharacterPreviewView());
+            SetBackingField(view, nameof(LobbyView.RecentPlacesSection), recentPlacesSection);
+            SetBackingField(view, nameof(LobbyView.RecentPlaceCards), recentPlaceCards);
 
             inputBlock = Substitute.For<IInputBlock>();
             mvcManager = Substitute.For<IMVCManager>();
@@ -62,8 +86,19 @@ namespace DCL.Lobby.Tests
             ISelfProfile selfProfile = Substitute.For<ISelfProfile>();
             selfProfile.ProfileAsync(Arg.Any<CancellationToken>()).Returns(UniTask.FromResult<Profile?>(null));
 
+            placesAPIService = Substitute.For<IPlacesAPIService>();
+            placesAPIService.GetRecentlyVisitedPlaces().Returns(new List<string>());
+
+            realmNavigator = Substitute.For<IRealmNavigator>();
+            startParcel = new StartParcel(Vector2Int.zero);
+
+            IDecentralandUrlsSource urlsSource = Substitute.For<IDecentralandUrlsSource>();
+            urlsSource.Url(DecentralandUrl.Genesis).Returns(GENESIS_URL);
+            urlsSource.Url(DecentralandUrl.WorldServer).Returns(WORLD_SERVER_URL);
+
             controller = new LobbyController(() => view, inputBlock, loadingStatus, mvcManager, selfProfile, new ProfileChangesBus(),
-                Substitute.For<ICharacterPreviewFactory>(), new CharacterPreviewEventBus(), new LobbyAvatarSettings(), world);
+                Substitute.For<ICharacterPreviewFactory>(), new CharacterPreviewEventBus(), new LobbyAvatarSettings(), world,
+                placesAPIService, realmNavigator, urlsSource, startParcel, new ThumbnailLoader(Substitute.For<ISpriteCache>()));
         }
 
         [TearDown]
@@ -145,6 +180,181 @@ namespace DCL.Lobby.Tests
 
         private UniTask Launch(bool isStartup) =>
             controller.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Fullscreen, 0), new LobbyParameter(isStartup), CancellationToken.None);
+        [Test]
+        public void HideRecentPlacesWhenNothingWasVisited()
+        {
+            // Act
+            Launch(isStartup: true);
+
+            // Assert
+            Assert.That(recentPlacesSection.activeSelf, Is.False);
+            placesAPIService.DidNotReceive().GetDestinationsByIdsAsync(Arg.Any<IEnumerable<string>>(), Arg.Any<CancellationToken>(), Arg.Any<bool>(), Arg.Any<bool?>());
+        }
+
+        [Test]
+        public void ShowRecentPlacesInVisitOrderRegardlessOfTheResponseOrder()
+        {
+            // Arrange
+            PlacesData.PlaceInfo newest = CreatePlace("newest", new Vector2Int(10, 20));
+            PlacesData.PlaceInfo older = CreatePlace("older", new Vector2Int(-5, 5));
+            ArrangeRecentPlaces(new List<string> { newest.id, older.id, "deleted" }, older, newest);
+
+            // Act
+            Launch(isStartup: true);
+
+            // Assert
+            Assert.That(recentPlacesSection.activeSelf, Is.True);
+            Assert.That(recentPlaceCards[0].Place, Is.SameAs(newest));
+            Assert.That(recentPlaceCards[0].TitleText.text, Is.EqualTo("newest"));
+            Assert.That(recentPlaceCards[1].Place, Is.SameAs(older));
+            Assert.That(recentPlaceCards[2].gameObject.activeSelf, Is.False);
+        }
+
+        [Test]
+        public void RequestTheWholeHistoryAndFillTheCardsWithTheFirstResolvedPlaces()
+        {
+            // Arrange: the endpoint only knows a subset of the history, so unresolved ids are skipped over
+            var history = new List<string> { "unknown", "b", "c", "d", "e" };
+            ArrangeRecentPlaces(history, CreatePlace("e", Vector2Int.zero), CreatePlace("d", Vector2Int.zero), CreatePlace("c", Vector2Int.zero), CreatePlace("b", Vector2Int.zero));
+
+            // Act
+            Launch(isStartup: true);
+
+            // Assert
+            placesAPIService.Received(1).GetDestinationsByIdsAsync(Arg.Is<IEnumerable<string>>(ids => CountOf(ids) == history.Count), Arg.Any<CancellationToken>(), Arg.Any<bool>(), Arg.Any<bool?>());
+            Assert.That(recentPlaceCards[0].Place!.id, Is.EqualTo("b"));
+            Assert.That(recentPlaceCards[1].Place!.id, Is.EqualTo("c"));
+            Assert.That(recentPlaceCards[2].Place!.id, Is.EqualTo("d"));
+        }
+
+        [Test]
+        public void SetTheStartParcelWhenAGenesisPlaceIsPickedBeforeTheWorldLoads()
+        {
+            // Arrange
+            PlacesData.PlaceInfo place = CreatePlace("plaza", new Vector2Int(10, 20));
+            ArrangeRecentPlaces(new List<string> { place.id }, place);
+            UniTask lifeCycle = Launch(isStartup: true);
+
+            // Act
+            recentPlaceCards[0].Button.onClick.Invoke();
+
+            // Assert
+            Assert.That(startParcel.Peek(), Is.EqualTo(new Vector2Int(10, 20)));
+            Assert.That(startParcel.Realm, Is.EqualTo(URLDomain.FromString(GENESIS_URL)));
+            Assert.That(lifeCycle.Status, Is.EqualTo(UniTaskStatus.Succeeded));
+            realmNavigator.DidNotReceiveWithAnyArgs().TeleportToParcelAsync(default, default, default);
+        }
+
+        [Test]
+        public void SetTheStartRealmWhenAWorldIsPickedBeforeTheWorldLoads()
+        {
+            // Arrange
+            PlacesData.PlaceInfo place = CreatePlace("my world", Vector2Int.zero, "MyWorld.dcl.eth");
+            ArrangeRecentPlaces(new List<string> { place.id }, place);
+            UniTask lifeCycle = Launch(isStartup: true);
+
+            // Act
+            recentPlaceCards[0].Button.onClick.Invoke();
+
+            // Assert
+            Assert.That(startParcel.Realm, Is.EqualTo(URLDomain.FromString($"{WORLD_SERVER_URL}/myworld.dcl.eth")));
+            Assert.That(lifeCycle.Status, Is.EqualTo(UniTaskStatus.Succeeded));
+            realmNavigator.DidNotReceiveWithAnyArgs().TryChangeRealmAsync(default, default);
+        }
+
+        [Test]
+        public void TeleportWhenAGenesisPlaceIsPickedInWorld()
+        {
+            // Arrange
+            startParcel.ConsumeByTeleportOperation();
+            PlacesData.PlaceInfo place = CreatePlace("plaza", new Vector2Int(10, 20));
+            ArrangeRecentPlaces(new List<string> { place.id }, place);
+            UniTask lifeCycle = Launch(isStartup: false);
+
+            // Act
+            recentPlaceCards[0].Button.onClick.Invoke();
+
+            // Assert
+            realmNavigator.Received(1).TeleportToParcelAsync(new Vector2Int(10, 20), Arg.Any<CancellationToken>(), false);
+            Assert.That(startParcel.Realm, Is.Null);
+            Assert.That(lifeCycle.Status, Is.EqualTo(UniTaskStatus.Succeeded));
+        }
+
+        [Test]
+        public void ChangeRealmWhenAWorldIsPickedInWorld()
+        {
+            // Arrange
+            startParcel.ConsumeByTeleportOperation();
+            PlacesData.PlaceInfo place = CreatePlace("my world", Vector2Int.zero, "myworld.dcl.eth");
+            ArrangeRecentPlaces(new List<string> { place.id }, place);
+            Launch(isStartup: false);
+
+            // Act
+            recentPlaceCards[0].Button.onClick.Invoke();
+
+            // Assert
+            realmNavigator.Received(1).TryChangeRealmAsync(URLDomain.FromString($"{WORLD_SERVER_URL}/myworld.dcl.eth"), Arg.Any<CancellationToken>(), default, true, true);
+        }
+
+        private void ArrangeRecentPlaces(List<string> history, params PlacesData.PlaceInfo[] response)
+        {
+            placesAPIService.GetRecentlyVisitedPlaces().Returns(history);
+
+            placesAPIService.GetDestinationsByIdsAsync(Arg.Any<IEnumerable<string>>(), Arg.Any<CancellationToken>(), Arg.Any<bool>(), Arg.Any<bool?>())
+                            .Returns(UniTask.FromResult<PlacesData.IPlacesAPIResponse>(new PlacesData.PlacesAPIResponse { data = new List<PlacesData.PlaceInfo>(response), total = response.Length }));
+        }
+
+        private static PlacesData.PlaceInfo CreatePlace(string title, Vector2Int basePosition, string worldName = "")
+        {
+            var place = new PlacesData.PlaceInfo(basePosition)
+            {
+                id = title,
+                title = title,
+                image = string.Empty,
+                contact_name = "creator",
+                world_name = worldName,
+                base_position_processed = basePosition,
+            };
+
+            return place;
+        }
+
+        private static int CountOf(IEnumerable<string> ids)
+        {
+            var count = 0;
+
+            foreach (string _ in ids)
+                count++;
+
+            return count;
+        }
+
+        private LobbyPlaceCardView CreatePlaceCard(int index)
+        {
+            var cardGo = new GameObject($"RecentPlace{index}");
+            cardGo.transform.SetParent(recentPlacesSection.transform);
+            LobbyPlaceCardView card = cardGo.AddComponent<LobbyPlaceCardView>();
+
+            var thumbnailGo = new GameObject("Thumbnail");
+            thumbnailGo.transform.SetParent(cardGo.transform);
+            Image image = thumbnailGo.AddComponent<Image>();
+            ImageView thumbnail = thumbnailGo.AddComponent<ImageView>();
+            SetBackingField(thumbnail, nameof(ImageView.Image), image);
+
+            SetBackingField(card, nameof(LobbyPlaceCardView.Button), cardGo.AddComponent<Button>());
+            SetBackingField(card, nameof(LobbyPlaceCardView.Thumbnail), thumbnail);
+            SetBackingField(card, nameof(LobbyPlaceCardView.TitleText), CreateText(cardGo.transform, "Title"));
+            SetBackingField(card, nameof(LobbyPlaceCardView.CreatorText), CreateText(cardGo.transform, "Creator"));
+
+            return card;
+        }
+
+        private static TMP_Text CreateText(Transform parent, string name)
+        {
+            var textGo = new GameObject(name);
+            textGo.transform.SetParent(parent);
+            return textGo.AddComponent<TextMeshProUGUI>();
+        }
 
         private CharacterPreviewView CreateCharacterPreviewView()
         {
