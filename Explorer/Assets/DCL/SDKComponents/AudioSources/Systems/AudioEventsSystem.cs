@@ -91,6 +91,7 @@ namespace DCL.SDKComponents.AudioSources
 #endif
             AudioSource? audioSource = audioSourceComponent.AudioSource;
             AudioClip? clip = audioSource != null ? audioSource.clip : null;
+            // audioSource! is safe: a non-null clip implies a non-null source, since the clip was read from audioSource.clip
             PropagateAudioEvent(in sdkEntity, new AudioEventReport(state, tick,
                 hasPosition: clip != null, currentOffset: clip != null ? audioSource!.time : 0f, clipLength: clip != null ? clip.length : 0f));
 
