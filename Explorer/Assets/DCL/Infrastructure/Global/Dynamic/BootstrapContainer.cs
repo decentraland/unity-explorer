@@ -139,7 +139,6 @@ namespace Global.Dynamic
                 bool hasSessionId = applicationParametersParser.TryGetValue(AppArgsFlags.Analytics.SESSION_ID, out string? sessionId) && !string.IsNullOrEmpty(sessionId);
 
                 container.reportHandlingSettings = ProvideReportHandlingSettingsAsync(container.settings, applicationParametersParser);
-
                 container.DiagnosticsContainer = DiagnosticsContainer.Create(container.ReportHandlingSettings, realmLaunchSettings.CurrentMode is DCL.Utility.LaunchMode.LocalSceneDevelopment);
                 container.DiagnosticsContainer.AddSentryScopeConfigurator(AddIdentityToSentryScope);
 
@@ -222,8 +221,6 @@ namespace Global.Dynamic
 
             return coreBootstrap;
         }
-
-
 
         private static ICompositeWeb3Provider CreateWeb3Dependencies(
             DynamicSceneLoaderSettings sceneLoaderSettings,

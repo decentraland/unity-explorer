@@ -12,7 +12,7 @@ using static DCL.AuthenticationScreenFlow.AuthenticationScreenController;
 
 namespace DCL.AuthenticationScreenFlow
 {
-    public class LoginSelectionAuthState : AuthStateBase, IState, IPayloadedState<ErrorType>, IPayloadedState<int>
+    public class LoginSelectionAuthState : AuthStateBase, IState, IPayloadedState<ErrorType>, IPayloadedState<int>, IPayloadedState<string>
     {
         private const string REQUEST_BETA_ACCESS_LINK = "https://68zbqa0m12c.typeform.com/to/y9fZeNWm";
 
@@ -151,6 +151,12 @@ namespace DCL.AuthenticationScreenFlow
             view.Show(animHash, moreOptionsExpanded: !enableEmailOTP, otherLoginMethodsEnabled,
                 otherLoginOptionsDisclaimer: isEpicBuild);
             Enter();
+        }
+
+        public void Enter(string email)
+        {
+            Enter(UIAnimationHashes.SLIDE);
+            view.EmailInputField.SetText(email);
         }
 
         // dApp endpoint is case insensitive
