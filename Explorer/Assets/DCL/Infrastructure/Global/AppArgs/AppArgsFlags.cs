@@ -193,7 +193,7 @@ namespace Global.AppArgs
         /// <summary>Presence forces LOD bundles and ISS descriptors onto the abgen LOD source (abgen-cdn) without waiting for the abgen-lods feature flag.</summary>
         public const string ABGEN_LODS = "abgen-lods";
 
-        /// <summary>Base url for the abgen LOD source, e.g. a bucket prefix holding a specific run; implies <see cref="ABGEN_LODS" />.</summary>
+        /// <summary>Base url for the abgen LOD source, e.g. a bucket prefix holding a specific run, with the abgen key layout underneath; implies <see cref="ABGEN_LODS" />.</summary>
         public const string ABGEN_LODS_BASE_URL = "abgen-lods-base-url";
 
         public const string NO_LIVEKIT_MODE = "no-livekit-mode";

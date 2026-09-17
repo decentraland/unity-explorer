@@ -234,7 +234,9 @@ namespace DCL.Browser.DecentralandUrls.Tests
             string env = environment.ToString().ToLower();
 
             Assert.AreEqual($"https://abgen-cdn.decentraland.{env}", urlsSource.Url(DecentralandUrl.LodAssetBundlesCDN));
-            Assert.AreEqual($"https://abgen-cdn.decentraland.{env}", urlsSource.Url(DecentralandUrl.LodGeneratorCDN));
+
+            // The descriptors sit under the same "LOD/" prefix the bundles' manifest version supplies
+            Assert.AreEqual($"https://abgen-cdn.decentraland.{env}/LOD", urlsSource.Url(DecentralandUrl.LodGeneratorCDN));
             Assert.IsNotNull(urlsSource.AbgenLodsCacheKey);
 
             // Asset bundles and the registry do not follow the LOD flip
@@ -249,7 +251,7 @@ namespace DCL.Browser.DecentralandUrls.Tests
             DecentralandUrlsSource urlsSource = DecentralandUrlsSource.CreateForTest(DecentralandEnvironment.Org, ILaunchMode.PLAY);
 
             Assert.AreEqual("https://bucket.example.com/run-1", urlsSource.Url(DecentralandUrl.LodAssetBundlesCDN));
-            Assert.AreEqual("https://bucket.example.com/run-1", urlsSource.Url(DecentralandUrl.LodGeneratorCDN));
+            Assert.AreEqual("https://bucket.example.com/run-1/LOD", urlsSource.Url(DecentralandUrl.LodGeneratorCDN));
             Assert.AreEqual("abgen-lods-https---bucket-example-com-run-1", urlsSource.AbgenLodsCacheKey);
         }
 
@@ -260,11 +262,11 @@ namespace DCL.Browser.DecentralandUrls.Tests
 
             var forcedOn = new DecentralandUrlsSource(DecentralandEnvironment.Org, new IRealmData.Fake(), ILaunchMode.PLAY, abgenLodsForced: true);
             Assert.AreEqual("https://abgen-cdn.decentraland.org", forcedOn.Url(DecentralandUrl.LodAssetBundlesCDN));
-            Assert.AreEqual("https://abgen-cdn.decentraland.org", forcedOn.Url(DecentralandUrl.LodGeneratorCDN));
+            Assert.AreEqual("https://abgen-cdn.decentraland.org/LOD", forcedOn.Url(DecentralandUrl.LodGeneratorCDN));
 
             var withBase = new DecentralandUrlsSource(DecentralandEnvironment.Org, new IRealmData.Fake(), ILaunchMode.PLAY, abgenLodsBaseUrl: "https://bucket.example.com/run-1");
             Assert.AreEqual("https://bucket.example.com/run-1", withBase.Url(DecentralandUrl.LodAssetBundlesCDN));
-            Assert.AreEqual("https://bucket.example.com/run-1", withBase.Url(DecentralandUrl.LodGeneratorCDN));
+            Assert.AreEqual("https://bucket.example.com/run-1/LOD", withBase.Url(DecentralandUrl.LodGeneratorCDN));
         }
 
         [Test]

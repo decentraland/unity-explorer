@@ -65,7 +65,9 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
 
         private async UniTask<ISSDescriptorMetadata?> TryLoadDescriptorAsync(string sceneId, CancellationToken ct)
         {
-            URLAddress url = descriptorBaseUrl.Append(URLPath.FromString($"{DESCRIPTOR_PATH_PREFIX}{sceneId}_InitialSceneState.json"));
+            // Descriptors are written under a lower-cased scene id and the bucket is case-sensitive, so a
+            // mixed-case (Qm) id 404s verbatim. The LOD bundle path lower-cases it for the same reason.
+            URLAddress url = descriptorBaseUrl.Append(URLPath.FromString($"{DESCRIPTOR_PATH_PREFIX}{sceneId.ToLower()}_InitialSceneState.json"));
 
             try
             {
