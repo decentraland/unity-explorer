@@ -48,6 +48,19 @@ namespace ECS.StreamableLoading.Fonts.Tests
         }
 
         [Test]
+        public void BuildBothAssetsFromAnOpenTypeFace()
+        {
+            string path = Path.Combine(Application.dataPath, "TextMesh Pro/Fonts & Materials/Asian fallbacks/NotoSansJP-SemiBold.otf");
+            Assert.That(File.ReadAllBytes(path)[0..4], Is.EqualTo(new byte[] { 0x4F, 0x54, 0x54, 0x4F }));
+
+            assets = factory.Create("OpenType", path);
+
+            Assert.That(assets, Is.Not.Null);
+            Assert.That(assets!.TextMeshProFont.faceInfo.familyName, Is.Not.Empty);
+            Assert.That(assets.UIToolkitFont.faceInfo.familyName, Is.EqualTo(assets.TextMeshProFont.faceInfo.familyName));
+        }
+
+        [Test]
         public void WireTheVariantsIntoTheWeightTables()
         {
             assets = factory.Create(ASSET_NAME, TestFonts.PATH, TestFonts.PATH, TestFonts.PATH, TestFonts.PATH);

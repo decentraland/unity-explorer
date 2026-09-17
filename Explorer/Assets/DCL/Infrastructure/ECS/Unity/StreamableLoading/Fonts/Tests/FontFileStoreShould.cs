@@ -74,6 +74,24 @@ namespace ECS.StreamableLoading.Fonts.Tests
             Assert.That(Directory.GetFiles(directory), Has.Length.EqualTo(1));
         }
 
+        [TestCase(0x00010000u, ".ttf")]
+        [TestCase(0x74727565u, ".ttf")]
+        [TestCase(0x4F54544Fu, ".otf")]
+        [TestCase(0x74746366u, ".ttc")]
+        public async Task UseTheExtensionOfTheFontFormat(uint version, string extension)
+        {
+            var bytes = new byte[12];
+            bytes[0] = (byte)(version >> 24);
+            bytes[1] = (byte)(version >> 16);
+            bytes[2] = (byte)(version >> 8);
+            bytes[3] = (byte)version;
+
+            string path = await store.StoreAsync(bytes, CancellationToken.None);
+
+            Assert.That(Path.GetExtension(path), Is.EqualTo(extension));
+            Assert.That(File.ReadAllBytes(path), Is.EqualTo(bytes));
+        }
+
         [Test]
         public async Task KeepDifferentBytesInDifferentFiles()
         {

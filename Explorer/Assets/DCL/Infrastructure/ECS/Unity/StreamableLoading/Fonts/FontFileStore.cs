@@ -14,7 +14,6 @@ namespace ECS.StreamableLoading.Fonts
     {
         public const int MAX_FILE_BYTES = 16 * 1024 * 1024;
 
-        public const string TRUE_TYPE_EXTENSION = ".ttf";
         private const string DIRECTORY_NAME = "SceneFonts";
 
         private const int SFNT_HEADER_BYTES = 12;
@@ -43,7 +42,7 @@ namespace ECS.StreamableLoading.Fonts
             if (bytes.Length < SFNT_HEADER_BYTES)
                 return false;
 
-            uint version = ((uint)bytes[0] << 24) | ((uint)bytes[1] << 16) | ((uint)bytes[2] << 8) | bytes[3];
+            uint version = ReadVersion(bytes);
 
             return version is SFNT_VERSION_TRUE_TYPE
                            or SFNT_VERSION_CFF
@@ -99,7 +98,17 @@ namespace ECS.StreamableLoading.Fonts
         private static string FileName(byte[] bytes)
         {
             using HashKey key = HashKey.FromOwnedMemory(SHA256Hashing.ComputeHash(bytes));
-            return HashNamings.HashNameFrom(key, TRUE_TYPE_EXTENSION);
+            string extension = bytes.Length < SFNT_HEADER_BYTES ? ".ttf" : ReadVersion(bytes) switch
+            {
+                SFNT_VERSION_CFF => ".otf",
+                SFNT_VERSION_COLLECTION => ".ttc",
+                _ => ".ttf",
+            };
+
+            return HashNamings.HashNameFrom(key, extension);
         }
+
+        private static uint ReadVersion(byte[] bytes) =>
+            ((uint)bytes[0] << 24) | ((uint)bytes[1] << 16) | ((uint)bytes[2] << 8) | bytes[3];
     }
 }
