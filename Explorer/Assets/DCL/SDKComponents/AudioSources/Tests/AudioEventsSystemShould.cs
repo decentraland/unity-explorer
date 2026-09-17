@@ -219,10 +219,11 @@ namespace DCL.SDKComponents.AudioSources.Tests
         }
 
         [Test]
-        public void ReportPlaybackPositionPeriodicallyWhilePlaying()
+        public void ReportPlaybackPositionWheneverThePlayheadMoves()
         {
-            // Arrange: a playing source whose state was already propagated, so only periodic position reports can be emitted.
+            // Arrange: a playing source whose state was already propagated, so only playhead movement can emit a report.
             ISceneStateProvider sceneStateProvider = Substitute.For<ISceneStateProvider>();
+            sceneStateProvider.TickNumber.Returns(7u);
             IPerformanceBudget budget = Substitute.For<IPerformanceBudget>();
             budget.TrySpendBudget().Returns(true);
             system = new AudioEventsSystem(world, ecsToCRDTWriter, sceneStateProvider, budget);
@@ -232,8 +233,6 @@ namespace DCL.SDKComponents.AudioSources.Tests
             AudioSource audioSource = world.Get<AudioSourceComponent>(entity).AudioSource!;
             audioSource.Play();
             Assume.That(audioSource.isPlaying, "the test clip must be playing for the source to report MsPlaying");
-            ref AudioSourceComponent component = ref world.Get<AudioSourceComponent>(entity);
-            component.LastReportedTick = 1;
 
             var reports = new System.Collections.Generic.List<AudioEventsSystem.AudioEventReport>();
             ecsToCRDTWriter.AppendMessage(
@@ -242,18 +241,23 @@ namespace DCL.SDKComponents.AudioSources.Tests
                 Arg.Any<int>(),
                 Arg.Do<AudioEventsSystem.AudioEventReport>(report => reports.Add(report)));
 
-            // Act: too early for a report, then past the cadence, then too early again.
-            sceneStateProvider.TickNumber.Returns(1 + AudioEventsSystem.PLAYBACK_REPORT_INTERVAL_TICKS - 1);
+            // Act: first update sees a position that was never propagated; the second sees the same position again.
+            ref AudioSourceComponent component = ref world.Get<AudioSourceComponent>(entity);
+            component.LastPropagatedOffset = float.NaN;
             system.Update(0);
-            sceneStateProvider.TickNumber.Returns(1 + AudioEventsSystem.PLAYBACK_REPORT_INTERVAL_TICKS);
-            system.Update(0);
-            sceneStateProvider.TickNumber.Returns(1 + AudioEventsSystem.PLAYBACK_REPORT_INTERVAL_TICKS + 1);
+            Assert.That(world.Get<AudioSourceComponent>(entity).LastPropagatedOffset, Is.EqualTo(audioSource.time));
+            float frozenOffset = audioSource.time;
+            audioSource.Pause();
+            audioSource.time = frozenOffset;
+            audioSource.Play();
+            component = ref world.Get<AudioSourceComponent>(entity);
+            component.LastPropagatedOffset = audioSource.time;
             system.Update(0);
 
-            // Assert: exactly one report, carrying the clip position and length at that tick.
+            // Assert: exactly one report, carrying the tick, the clip position and the clip length.
             Assert.That(reports.Count, Is.EqualTo(1));
             Assert.That(reports[0].State, Is.EqualTo(MediaState.MsPlaying));
-            Assert.That(reports[0].Tick, Is.EqualTo(1 + AudioEventsSystem.PLAYBACK_REPORT_INTERVAL_TICKS));
+            Assert.That(reports[0].Tick, Is.EqualTo(7u));
             Assert.That(reports[0].HasPosition, Is.True);
             Assert.That(reports[0].ClipLength, Is.EqualTo(TestAudioClip.length).Within(0.001f));
             Assert.That(reports[0].CurrentOffset, Is.GreaterThanOrEqualTo(0f).And.LessThanOrEqualTo(TestAudioClip.length));

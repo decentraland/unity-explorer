@@ -29,12 +29,6 @@ namespace DCL.SDKComponents.AudioSources
         private static float lastLogTime;
 #endif
 
-        /// <summary>
-        ///     While a clip plays, its position is reported every this many scene ticks (about twice a second at 30 Hz),
-        ///     so scenes can align gameplay with the audio that is actually heard.
-        /// </summary>
-        internal const uint PLAYBACK_REPORT_INTERVAL_TICKS = 15;
-
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IPerformanceBudget frameTimeBudget;
@@ -70,11 +64,16 @@ namespace DCL.SDKComponents.AudioSources
 
             MediaState state = GetAudioSourceState(in audioSourceComponent);
             uint tick = sceneStateProvider.TickNumber;
+            AudioSource? audioSource = audioSourceComponent.AudioSource;
+            AudioClip? clip = audioSource != null ? audioSource.clip : null;
+            // audioSource! is safe: a non-null clip implies a non-null source, since the clip was read from audioSource.clip
+            float offset = clip != null ? audioSource!.time : 0f;
             bool stateChanged = state != audioSourceComponent.LastPropagatedAudioState;
-            bool positionDue = state == MediaState.MsPlaying && tick - audioSourceComponent.LastReportedTick >= PLAYBACK_REPORT_INTERVAL_TICKS;
+            bool positionChanged = clip != null && !offset.Equals(audioSourceComponent.LastPropagatedOffset);
 
-            // Propagate on state changes, and periodically while playing; anything else would be CRDT message spam
-            if (!stateChanged && !positionDue)
+            // Propagate when the state changes or the playhead moved, exactly as VideoEventsSystem does for video;
+            // a paused or stopped clip therefore emits nothing until it changes
+            if (!stateChanged && !positionChanged)
             {
 #if AUDIO_EVENTS_DEBUG
                 messagesSkipped++;
@@ -84,16 +83,13 @@ namespace DCL.SDKComponents.AudioSources
 
             MediaState previousState = audioSourceComponent.LastPropagatedAudioState;
             audioSourceComponent.LastPropagatedAudioState = state;
-            audioSourceComponent.LastReportedTick = tick;
+            audioSourceComponent.LastPropagatedOffset = offset;
 
 #if AUDIO_EVENTS_DEBUG
             messagesSent++;
 #endif
-            AudioSource? audioSource = audioSourceComponent.AudioSource;
-            AudioClip? clip = audioSource != null ? audioSource.clip : null;
-            // audioSource! is safe: a non-null clip implies a non-null source, since the clip was read from audioSource.clip
             PropagateAudioEvent(in sdkEntity, new AudioEventReport(state, tick,
-                hasPosition: clip != null, currentOffset: clip != null ? audioSource!.time : 0f, clipLength: clip != null ? clip.length : 0f));
+                hasPosition: clip != null, currentOffset: offset, clipLength: clip != null ? clip.length : 0f));
 
             if (stateChanged && IsNaturalFinish(previousState, state, sdkComponent))
                 WriteBackNaturalFinish(ecsToCRDTWriter, in sdkEntity, sdkComponent);
