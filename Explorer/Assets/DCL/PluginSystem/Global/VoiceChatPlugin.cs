@@ -82,7 +82,7 @@ namespace DCL.PluginSystem.Global
         private NearbyMicrophoneAudioToggleHandler? nearbyMicrophoneAudioToggleHandler;
         private NearbyVoiceChatButtonController? nearbyButtonController;
         private NearbyVoiceWidgetController? nearbyWidgetController;
-        private VoiceChatConfiguration voiceChatConfiguration;
+        private VoiceChatConfiguration? voiceChatConfiguration;
 
         public VoiceChatPlugin(
             IRoomHub roomHub,
