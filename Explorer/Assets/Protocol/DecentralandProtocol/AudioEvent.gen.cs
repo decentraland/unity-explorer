@@ -26,14 +26,17 @@ namespace DCL.ECSComponents {
           string.Concat(
             "Ci1kZWNlbnRyYWxhbmQvc2RrL2NvbXBvbmVudHMvYXVkaW9fZXZlbnQucHJv",
             "dG8SG2RlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50cxo0ZGVjZW50cmFsYW5k",
-            "L3Nkay9jb21wb25lbnRzL2NvbW1vbi9tZWRpYV9zdGF0ZS5wcm90byJgCgxQ",
-            "QkF1ZGlvRXZlbnQSPQoFc3RhdGUYASABKA4yLi5kZWNlbnRyYWxhbmQuc2Rr",
-            "LmNvbXBvbmVudHMuY29tbW9uLk1lZGlhU3RhdGUSEQoJdGltZXN0YW1wGAIg",
-            "ASgNQhSqAhFEQ0wuRUNTQ29tcG9uZW50c2IGcHJvdG8z"));
+            "L3Nkay9jb21wb25lbnRzL2NvbW1vbi9tZWRpYV9zdGF0ZS5wcm90byLkAQoM",
+            "UEJBdWRpb0V2ZW50Ej0KBXN0YXRlGAEgASgOMi4uZGVjZW50cmFsYW5kLnNk",
+            "ay5jb21wb25lbnRzLmNvbW1vbi5NZWRpYVN0YXRlEhEKCXRpbWVzdGFtcBgC",
+            "IAEoDRIYCgt0aWNrX251bWJlchgDIAEoDUgAiAEBEhsKDmN1cnJlbnRfb2Zm",
+            "c2V0GAQgASgCSAGIAQESGAoLY2xpcF9sZW5ndGgYBSABKAJIAogBAUIOCgxf",
+            "dGlja19udW1iZXJCEQoPX2N1cnJlbnRfb2Zmc2V0Qg4KDF9jbGlwX2xlbmd0",
+            "aEIUqgIRRENMLkVDU0NvbXBvbmVudHNiBnByb3RvMw=="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::DCL.ECSComponents.MediaStateReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBAudioEvent), global::DCL.ECSComponents.PBAudioEvent.Parser, new[]{ "State", "Timestamp" }, null, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBAudioEvent), global::DCL.ECSComponents.PBAudioEvent.Parser, new[]{ "State", "Timestamp", "TickNumber", "CurrentOffset", "ClipLength" }, new[]{ "TickNumber", "CurrentOffset", "ClipLength" }, null, null, null)
           }));
     }
     #endregion
@@ -48,6 +51,7 @@ namespace DCL.ECSComponents {
   {
     private static readonly pb::MessageParser<PBAudioEvent> _parser = new pb::MessageParser<PBAudioEvent>(() => new PBAudioEvent());
     private pb::UnknownFieldSet _unknownFields;
+    private int _hasBits0;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pb::MessageParser<PBAudioEvent> Parser { get { return _parser; } }
@@ -75,8 +79,12 @@ namespace DCL.ECSComponents {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public PBAudioEvent(PBAudioEvent other) : this() {
+      _hasBits0 = other._hasBits0;
       state_ = other.state_;
       timestamp_ = other.timestamp_;
+      tickNumber_ = other.tickNumber_;
+      currentOffset_ = other.currentOffset_;
+      clipLength_ = other.clipLength_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -113,6 +121,98 @@ namespace DCL.ECSComponents {
       }
     }
 
+    /// <summary>Field number for the "tick_number" field.</summary>
+    public const int TickNumberFieldNumber = 3;
+    private readonly static uint TickNumberDefaultValue = 0;
+
+    private uint tickNumber_;
+    /// <summary>
+    /// Playback position report. Renderers write it on every state change and periodically while playing,
+    /// so scenes can align gameplay with the audio that is actually heard (the renderer starts a clip some
+    /// milliseconds after being asked to, and `PBAudioSource.current_time` is a write-only seek).
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public uint TickNumber {
+      get { if ((_hasBits0 & 1) != 0) { return tickNumber_; } else { return TickNumberDefaultValue; } }
+      set {
+        _hasBits0 |= 1;
+        tickNumber_ = value;
+      }
+    }
+    /// <summary>Gets whether the "tick_number" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasTickNumber {
+      get { return (_hasBits0 & 1) != 0; }
+    }
+    /// <summary>Clears the value of the "tick_number" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearTickNumber() {
+      _hasBits0 &= ~1;
+    }
+
+    /// <summary>Field number for the "current_offset" field.</summary>
+    public const int CurrentOffsetFieldNumber = 4;
+    private readonly static float CurrentOffsetDefaultValue = 0F;
+
+    private float currentOffset_;
+    /// <summary>
+    /// playback position of the clip in seconds at that tick
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public float CurrentOffset {
+      get { if ((_hasBits0 & 2) != 0) { return currentOffset_; } else { return CurrentOffsetDefaultValue; } }
+      set {
+        _hasBits0 |= 2;
+        currentOffset_ = value;
+      }
+    }
+    /// <summary>Gets whether the "current_offset" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasCurrentOffset {
+      get { return (_hasBits0 & 2) != 0; }
+    }
+    /// <summary>Clears the value of the "current_offset" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearCurrentOffset() {
+      _hasBits0 &= ~2;
+    }
+
+    /// <summary>Field number for the "clip_length" field.</summary>
+    public const int ClipLengthFieldNumber = 5;
+    private readonly static float ClipLengthDefaultValue = 0F;
+
+    private float clipLength_;
+    /// <summary>
+    /// total length of the clip in seconds, when known
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public float ClipLength {
+      get { if ((_hasBits0 & 4) != 0) { return clipLength_; } else { return ClipLengthDefaultValue; } }
+      set {
+        _hasBits0 |= 4;
+        clipLength_ = value;
+      }
+    }
+    /// <summary>Gets whether the "clip_length" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasClipLength {
+      get { return (_hasBits0 & 4) != 0; }
+    }
+    /// <summary>Clears the value of the "clip_length" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearClipLength() {
+      _hasBits0 &= ~4;
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -130,6 +230,9 @@ namespace DCL.ECSComponents {
       }
       if (State != other.State) return false;
       if (Timestamp != other.Timestamp) return false;
+      if (TickNumber != other.TickNumber) return false;
+      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(CurrentOffset, other.CurrentOffset)) return false;
+      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(ClipLength, other.ClipLength)) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -139,6 +242,9 @@ namespace DCL.ECSComponents {
       int hash = 1;
       if (State != global::DCL.ECSComponents.MediaState.MsNone) hash ^= State.GetHashCode();
       if (Timestamp != 0) hash ^= Timestamp.GetHashCode();
+      if (HasTickNumber) hash ^= TickNumber.GetHashCode();
+      if (HasCurrentOffset) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(CurrentOffset);
+      if (HasClipLength) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(ClipLength);
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -165,6 +271,18 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(16);
         output.WriteUInt32(Timestamp);
       }
+      if (HasTickNumber) {
+        output.WriteRawTag(24);
+        output.WriteUInt32(TickNumber);
+      }
+      if (HasCurrentOffset) {
+        output.WriteRawTag(37);
+        output.WriteFloat(CurrentOffset);
+      }
+      if (HasClipLength) {
+        output.WriteRawTag(45);
+        output.WriteFloat(ClipLength);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -183,6 +301,18 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(16);
         output.WriteUInt32(Timestamp);
       }
+      if (HasTickNumber) {
+        output.WriteRawTag(24);
+        output.WriteUInt32(TickNumber);
+      }
+      if (HasCurrentOffset) {
+        output.WriteRawTag(37);
+        output.WriteFloat(CurrentOffset);
+      }
+      if (HasClipLength) {
+        output.WriteRawTag(45);
+        output.WriteFloat(ClipLength);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -198,6 +328,15 @@ namespace DCL.ECSComponents {
       }
       if (Timestamp != 0) {
         size += 1 + pb::CodedOutputStream.ComputeUInt32Size(Timestamp);
+      }
+      if (HasTickNumber) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(TickNumber);
+      }
+      if (HasCurrentOffset) {
+        size += 1 + 4;
+      }
+      if (HasClipLength) {
+        size += 1 + 4;
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -216,6 +355,15 @@ namespace DCL.ECSComponents {
       }
       if (other.Timestamp != 0) {
         Timestamp = other.Timestamp;
+      }
+      if (other.HasTickNumber) {
+        TickNumber = other.TickNumber;
+      }
+      if (other.HasCurrentOffset) {
+        CurrentOffset = other.CurrentOffset;
+      }
+      if (other.HasClipLength) {
+        ClipLength = other.ClipLength;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -244,6 +392,18 @@ namespace DCL.ECSComponents {
             Timestamp = input.ReadUInt32();
             break;
           }
+          case 24: {
+            TickNumber = input.ReadUInt32();
+            break;
+          }
+          case 37: {
+            CurrentOffset = input.ReadFloat();
+            break;
+          }
+          case 45: {
+            ClipLength = input.ReadFloat();
+            break;
+          }
         }
       }
     #endif
@@ -269,6 +429,18 @@ namespace DCL.ECSComponents {
           }
           case 16: {
             Timestamp = input.ReadUInt32();
+            break;
+          }
+          case 24: {
+            TickNumber = input.ReadUInt32();
+            break;
+          }
+          case 37: {
+            CurrentOffset = input.ReadFloat();
+            break;
+          }
+          case 45: {
+            ClipLength = input.ReadFloat();
             break;
           }
         }
