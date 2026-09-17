@@ -14,7 +14,7 @@ function script(name) {
 const detect = script('Classify changes and maintain label');
 const request = script('Request Jarvis through the existing reviewer webhook');
 function fixture(files = []) {
-  const pr = { number: 42, state: 'open', draft: false, head: { sha: 'a'.repeat(40) }, base: { sha: 'b'.repeat(40) }, changed_files: files.length, user: { login: 'author' }, labels: [] };
+  const pr = { number: 42, state: 'open', draft: false, head: { sha: 'a'.repeat(40), ref: 'feat/example' }, base: { sha: 'b'.repeat(40) }, changed_files: files.length, user: { login: 'author' }, labels: [] };
   const requests = [], outputs = {}, operations = [];
   const github = {
     paginate: async () => files,
@@ -162,6 +162,41 @@ test('requires a maintainer request for external authors or failed authorization
     await request(f.github, f.context, f.core);
     assert.deepEqual(f.requests, []);
   }
+});
+for (const [name, mutate] of [
+  ['a release branch', pr => { pr.head.ref = 'release/2026-09-14' }],
+  ['an auto-pr PR', pr => pr.labels.push({ name: 'auto-pr' })]
+]) {
+  test(`excludes ${name} from AI review`, async () => {
+    const f = fixture([{ filename: 'Explorer/Packages/manifest.json' }]);
+    mutate(f.pr);
+    await detect(f.github, f.context, f.core);
+    await request(f.github, f.context, f.core);
+    assert.equal(f.outputs.request, 'false');
+    assert.deepEqual(f.operations, []);
+    assert.deepEqual(f.requests, []);
+  });
+  test(`strips a stale label from ${name}`, async () => {
+    const f = fixture([{ filename: 'Explorer/Packages/manifest.json' }]);
+    mutate(f.pr);
+    f.pr.labels.push({ name: 'new-dependency' });
+    await detect(f.github, f.context, f.core);
+    assert.equal(f.outputs.request, 'false');
+    assert.deepEqual(f.operations, ['remove']);
+  });
+  test(`refuses to request ${name} carrying the label`, async () => {
+    const f = fixture([{ filename: 'Explorer/Packages/manifest.json' }]);
+    mutate(f.pr);
+    f.pr.labels.push({ name: 'new-dependency' });
+    await request(f.github, f.context, f.core);
+    assert.deepEqual(f.requests, []);
+  });
+}
+test('grants the write scope that labelling a pull request requires', () => {
+  // `issues: write` does not authorize labels on a PR — the silent 403 that
+  // disabled the detailed pass between #10033 and this fix.
+  assert.match(workflow, /^ {6}pull-requests: write$/m);
+  assert.doesNotMatch(workflow, /^ {6}pull-requests: read$/m);
 });
 test('leaves security status publication to Agent Server', () => {
   assert.doesNotMatch(workflow, /createCommitStatus|statuses:\s*write/);

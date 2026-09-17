@@ -17,8 +17,10 @@ jobs:
     if: github.event.action != 'edited' || github.event.changes.base != null
     runs-on: ubuntu-latest
     permissions:
-      pull-requests: read
-      issues: write
+      # Labelling a PR is authorized against the pull-requests scope, not the
+      # issues one: `issues: write` alone yields 403 and the label is what
+      # switches Agent Server onto the detailed pass.
+      pull-requests: write
     steps:
       - name: Classify changes and maintain label
         id: detect
@@ -56,7 +58,14 @@ jobs:
               return;
             }
             const hasLabel = current.labels.some(label => label.name === 'new-dependency');
-            if (!hasChanges) {
+            // `auto-pr` and release branches are excluded from AI review by policy
+            // (docs/branch-and-pr-standards.md): a release PR is an aggregate
+            // dev -> main merge whose commits each ran this pass on their own PR.
+            // Read both from the fetched PR — create-release-branch.yml labels the
+            // PR moments after opening it, so the event payload can still be bare.
+            const excluded = current.head.ref.startsWith('release/') ||
+              current.labels.some(label => label.name === 'auto-pr');
+            if (!hasChanges || excluded) {
               if (hasLabel) {
                 try {
                   await github.rest.issues.removeLabel({
@@ -89,6 +98,8 @@ jobs:
             const { data: pr } = await github.rest.pulls.get({ owner, repo, pull_number });
             if (pr.state !== 'open' || pr.draft || pr.head.sha !== context.payload.pull_request.head.sha ||
                 pr.base.sha !== context.payload.pull_request.base.sha ||
+                pr.head.ref.startsWith('release/') ||
+                pr.labels.some(label => label.name === 'auto-pr') ||
                 !pr.labels.some(label => label.name === 'new-dependency')) return;
             // External authors cannot auto-start a credential-bearing agent.
             // A collaborator requests decentraland-bot manually after inspecting the PR.

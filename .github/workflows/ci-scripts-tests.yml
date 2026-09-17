@@ -5,7 +5,9 @@ name: CI Scripts Tests
 # Tests for the CI plumbing itself: build.py's pure helpers (including the
 # URL_RE drift guard against ucb-build-links), the unified status comment's
 # upsert script and the no-op-build-run probe that decides whether a Unity
-# Cloud Build run may write that comment, all against a stubbed gh. Cheap and
+# Cloud Build run may write that comment, all against a stubbed gh, plus the
+# dependency-security-review classifier, whose inline scripts and permission
+# block are executed straight out of the workflow file. Cheap and
 # network-free, so it runs on any PR touching these paths.
 on:
   pull_request:
@@ -14,6 +16,9 @@ on:
       - ".github/actions/ci-status-comment/**"
       - ".github/actions/ucb-build-links/**"
       - ".github/workflows/ci-scripts-tests.yml"
+      - ".github/workflows/dependency-security-review.yml"
+      - ".github/prompts/review-instructions.md"
+      - "scripts/ci/**"
 
 permissions:
   contents: read
@@ -36,3 +41,6 @@ jobs:
 
       - name: Functional tests (build-run-attempted.sh, stubbed gh)
         run: bash .github/actions/ci-status-comment/test-build-run-attempted.sh
+
+      - name: Unit tests (dependency-security-review inline scripts)
+        run: node --test scripts/ci/dependency-security-review.test.cjs
