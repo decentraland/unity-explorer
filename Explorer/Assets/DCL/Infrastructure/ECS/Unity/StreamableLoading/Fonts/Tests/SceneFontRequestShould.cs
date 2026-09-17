@@ -7,6 +7,7 @@ using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
+using System.Collections.Generic;
 using System.Threading;
 using TMPro;
 using UnityEngine.TextCore.Text;
@@ -212,7 +213,7 @@ namespace ECS.StreamableLoading.Fonts.Tests
             TMP_FontAsset textMeshProFont = TestFonts.CreateTextMeshProFont();
             FontAsset uiToolkitFont = TestFonts.CreateUIToolkitFont();
 
-            return new FontFamilyAssets(textMeshProFont, uiToolkitFont);
+            return new FontFamilyAssets(textMeshProFont, uiToolkitFont, new List<TMP_FontAsset> { textMeshProFont }, new List<FontAsset> { uiToolkitFont });
         }
     }
 }

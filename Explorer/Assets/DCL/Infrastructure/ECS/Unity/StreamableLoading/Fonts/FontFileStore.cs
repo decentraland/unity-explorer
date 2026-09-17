@@ -59,7 +59,7 @@ namespace ECS.StreamableLoading.Fonts
             try { Directory.Delete(directory, true); }
             catch (Exception e) when (e is IOException or UnauthorizedAccessException)
             {
-                ReportHub.LogWarning(ReportCategory.FONTS, $"The scene fonts under {directory} could not be removed: {e.Message}");
+                ReportHub.LogWarning(ReportCategory.SDK_FONTS, $"The scene fonts under {directory} could not be removed: {e.Message}");
             }
         }
 

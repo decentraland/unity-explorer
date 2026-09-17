@@ -6,7 +6,7 @@ namespace ECS.StreamableLoading.Fonts
 {
     public class FontData : StreamableRefCountData<FontFamilyAssets>
     {
-        public FontData(FontFamilyAssets assets) : base(assets, ReportCategory.FONTS) { }
+        public FontData(FontFamilyAssets assets) : base(assets, ReportCategory.SDK_FONTS) { }
 
         protected override ref ProfilerCounterValue<int> totalCount => ref ProfilingCounters.FontsAmount;
 

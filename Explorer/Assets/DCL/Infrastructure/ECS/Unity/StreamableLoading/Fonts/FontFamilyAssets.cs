@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine.TextCore.Text;
 using Utility;
@@ -6,26 +7,37 @@ namespace ECS.StreamableLoading.Fonts
 {
     public class FontFamilyAssets
     {
+        private readonly List<TMP_FontAsset> textMeshProAssets;
+        private readonly List<FontAsset> uiToolkitAssets;
+
         public TMP_FontAsset TextMeshProFont { get; }
 
         public FontAsset UIToolkitFont { get; }
 
-        public FontFamilyAssets(TMP_FontAsset textMeshProFont, FontAsset uiToolkitFont)
+        public FontFamilyAssets(TMP_FontAsset textMeshProFont, FontAsset uiToolkitFont, List<TMP_FontAsset> textMeshProAssets, List<FontAsset> uiToolkitAssets)
         {
             TextMeshProFont = textMeshProFont;
             UIToolkitFont = uiToolkitFont;
+            this.textMeshProAssets = textMeshProAssets;
+            this.uiToolkitAssets = uiToolkitAssets;
         }
 
         public void Destroy() =>
-            Destroy(TextMeshProFont, UIToolkitFont);
+            Destroy(textMeshProAssets, uiToolkitAssets);
 
-        internal static void Destroy(TMP_FontAsset? textMeshProFont, FontAsset? uiToolkitFont)
+        public static void Destroy(List<TMP_FontAsset> textMeshProAssets, List<FontAsset> uiToolkitAssets)
         {
-            if (textMeshProFont != null)
-                TMP_ResourceManager.RemoveFontAsset(textMeshProFont);
+            foreach (TMP_FontAsset asset in textMeshProAssets)
+            {
+                TMP_ResourceManager.RemoveFontAsset(asset);
+                UnityObjectUtils.SafeDestroy(asset);
+            }
 
-            UnityObjectUtils.SafeDestroy(textMeshProFont);
-            UnityObjectUtils.SafeDestroy(uiToolkitFont);
+            foreach (FontAsset asset in uiToolkitAssets)
+                UnityObjectUtils.SafeDestroy(asset);
+
+            textMeshProAssets.Clear();
+            uiToolkitAssets.Clear();
         }
     }
 }

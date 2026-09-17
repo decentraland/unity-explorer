@@ -1,3 +1,4 @@
+using DCL.Diagnostics;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -18,6 +19,9 @@ namespace ECS.StreamableLoading.Fonts
 
         private const int SDF_PACKING_MODIFIER = 1;
 
+        private const int REGULAR_WEIGHT_INDEX = 4;
+        private const int BOLD_WEIGHT_INDEX = 7;
+
         private readonly TMP_FontAsset referenceFont;
 
         public RuntimeFontAssetFactory(TMP_FontAsset referenceFont)
@@ -25,21 +29,64 @@ namespace ECS.StreamableLoading.Fonts
             this.referenceFont = referenceFont;
         }
 
-        public FontFamilyAssets? Create(string assetName, string filePath)
+        public FontFamilyAssets? Create(string assetName, string regularFilePath, string? boldFilePath = null, string? italicFilePath = null, string? boldItalicFilePath = null)
         {
-            TMP_FontAsset? textMeshProRegular = CreateTextMeshProAsset(assetName, filePath);
-            FontAsset? uiToolkitRegular = CreateUIToolkitAsset(assetName, filePath);
+            var textMeshProAssets = new List<TMP_FontAsset>(4);
+            var uiToolkitAssets = new List<FontAsset>(4);
+
+            TMP_FontAsset? textMeshProRegular = CreateTextMeshProAsset(assetName, regularFilePath, textMeshProAssets);
+            FontAsset? uiToolkitRegular = CreateUIToolkitAsset(assetName, regularFilePath, uiToolkitAssets);
 
             if (textMeshProRegular == null || uiToolkitRegular == null)
             {
-                FontFamilyAssets.Destroy(textMeshProRegular, uiToolkitRegular);
+                FontFamilyAssets.Destroy(textMeshProAssets, uiToolkitAssets);
                 return null;
             }
 
-            return new FontFamilyAssets(textMeshProRegular, uiToolkitRegular);
+            WireVariant(assetName, boldFilePath, FontVariant.Bold, textMeshProRegular, uiToolkitRegular, textMeshProAssets, uiToolkitAssets);
+            WireVariant(assetName, italicFilePath, FontVariant.Italic, textMeshProRegular, uiToolkitRegular, textMeshProAssets, uiToolkitAssets);
+            WireVariant(assetName, boldItalicFilePath, FontVariant.BoldItalic, textMeshProRegular, uiToolkitRegular, textMeshProAssets, uiToolkitAssets);
+
+            return new FontFamilyAssets(textMeshProRegular, uiToolkitRegular, textMeshProAssets, uiToolkitAssets);
         }
 
-        private TMP_FontAsset? CreateTextMeshProAsset(string name, string filePath)
+        private void WireVariant(string assetName, string? filePath, FontVariant variant, TMP_FontAsset textMeshProRegular, FontAsset uiToolkitRegular,
+            List<TMP_FontAsset> textMeshProAssets, List<FontAsset> uiToolkitAssets)
+        {
+            if (filePath == null)
+                return;
+
+            string variantName = $"{assetName} {variant}";
+            TMP_FontAsset? textMeshProVariant = CreateTextMeshProAsset(variantName, filePath, textMeshProAssets);
+            FontAsset? uiToolkitVariant = CreateUIToolkitAsset(variantName, filePath, uiToolkitAssets);
+
+            if (textMeshProVariant == null || uiToolkitVariant == null)
+            {
+                ReportHub.LogWarning(ReportCategory.SDK_FONTS, $"The {variant} face of the scene font \"{assetName}\" could not be read, the regular face stands in");
+                return;
+            }
+
+            TMP_FontWeightPair[] textMeshProTable = textMeshProRegular.fontWeightTable;
+            FontWeightPair[] uiToolkitTable = uiToolkitRegular.fontWeightTable;
+
+            switch (variant)
+            {
+                case FontVariant.Bold:
+                    textMeshProTable[BOLD_WEIGHT_INDEX].regularTypeface = textMeshProVariant;
+                    uiToolkitTable[BOLD_WEIGHT_INDEX].regularTypeface = uiToolkitVariant;
+                    break;
+                case FontVariant.Italic:
+                    textMeshProTable[REGULAR_WEIGHT_INDEX].italicTypeface = textMeshProVariant;
+                    uiToolkitTable[REGULAR_WEIGHT_INDEX].italicTypeface = uiToolkitVariant;
+                    break;
+                case FontVariant.BoldItalic:
+                    textMeshProTable[BOLD_WEIGHT_INDEX].italicTypeface = textMeshProVariant;
+                    uiToolkitTable[BOLD_WEIGHT_INDEX].italicTypeface = uiToolkitVariant;
+                    break;
+            }
+        }
+
+        private TMP_FontAsset? CreateTextMeshProAsset(string name, string filePath, List<TMP_FontAsset> owned)
         {
             TMP_FontAsset? asset = TMP_FontAsset.CreateFontAsset(filePath, 0, SAMPLING_POINT_SIZE, ATLAS_PADDING, RENDER_MODE, ATLAS_SIZE, ATLAS_SIZE);
 
@@ -47,6 +94,7 @@ namespace ECS.StreamableLoading.Fonts
                 return null;
 
             asset.name = name;
+            owned.Add(asset);
 
             // CreateFontAsset looks up "TextMeshPro/Mobile/Distance Field" by name: that shader is in the always-included list
             Material generated = asset.material;
@@ -68,7 +116,7 @@ namespace ECS.StreamableLoading.Fonts
             return asset;
         }
 
-        private static FontAsset? CreateUIToolkitAsset(string name, string filePath)
+        private static FontAsset? CreateUIToolkitAsset(string name, string filePath, List<FontAsset> owned)
         {
             FontAsset? asset = FontAsset.CreateFontAsset(filePath, 0, SAMPLING_POINT_SIZE, ATLAS_PADDING, RENDER_MODE, ATLAS_SIZE, ATLAS_SIZE);
 
@@ -76,6 +124,7 @@ namespace ECS.StreamableLoading.Fonts
                 return null;
 
             asset.name = name;
+            owned.Add(asset);
             return asset;
         }
     }

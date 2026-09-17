@@ -468,9 +468,9 @@ MonoBehaviour:
       Severity: 1
     - Category: CREDITS_PURCHASE
       Severity: 4
-    - Category: FONTS
+    - Category: SDK_FONTS
       Severity: 4
-    - Category: FONTS
+    - Category: SDK_FONTS
       Severity: 1
   sentryMatrix:
     entries:
@@ -904,9 +904,9 @@ MonoBehaviour:
       Severity: 1
     - Category: WEARABLE
       Severity: 1
-    - Category: FONTS
+    - Category: SDK_FONTS
       Severity: 4
-    - Category: FONTS
+    - Category: SDK_FONTS
       Severity: 1
   debounceEnabled: 1
   isSentryEnabled: 1

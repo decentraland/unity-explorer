@@ -728,13 +728,13 @@ MonoBehaviour:
       Severity: 4
     - Category: CREDITS_PURCHASE
       Severity: 1
-    - Category: FONTS
+    - Category: SDK_FONTS
       Severity: 0
-    - Category: FONTS
+    - Category: SDK_FONTS
       Severity: 4
-    - Category: FONTS
+    - Category: SDK_FONTS
       Severity: 1
-    - Category: FONTS
+    - Category: SDK_FONTS
       Severity: 2
   sentryMatrix:
     entries: []
