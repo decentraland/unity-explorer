@@ -44,8 +44,13 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIDropdown
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
-        private void HandleEntityDestruction(in Entity entity, ref UIDropdownComponent uiDropdownComponent) =>
+        private void HandleEntityDestruction(in Entity entity, ref UIDropdownComponent uiDropdownComponent, in DeleteEntityIntention deleteEntityIntention)
+        {
+            if (deleteEntityIntention.DeferDeletion)
+                return;
+
             RemoveDropdownField(entity, uiDropdownComponent);
+        }
 
         [Query]
         private void ReleaseFonts(ref UIDropdownComponent uiDropdownComponent) =>
