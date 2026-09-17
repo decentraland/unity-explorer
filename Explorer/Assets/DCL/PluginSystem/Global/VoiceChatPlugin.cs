@@ -6,7 +6,6 @@ using DCL.Audio;
 using DCL.ChatArea;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.DebugUtilities;
-using DCL.Diagnostics;
 using DCL.Friends.UserBlocking;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Tables;
@@ -163,10 +162,16 @@ namespace DCL.PluginSystem.Global
 
         public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
         {
-            ReportHub.LogWarning(ReportCategory.VOICE_CHAT, "VOICE CHAT!");
             AudioConfiguration audioConfig = AudioSettings.GetConfiguration();
-            audioConfig.sampleRate = VoiceChatConstants.LIVEKIT_SAMPLE_RATE;
-            AudioSettings.Reset(audioConfig);
+
+            // Fix ANR: Reset tears the audio manager down and rebuilds it, which waits on every pending
+            // async load and re-enumerates the output devices. The project already requests 48 kHz, so
+            // most machines were paying that for a no-op.
+            if (audioConfig.sampleRate != VoiceChatConstants.LIVEKIT_SAMPLE_RATE)
+            {
+                audioConfig.sampleRate = VoiceChatConstants.LIVEKIT_SAMPLE_RATE;
+                AudioSettings.Reset(audioConfig);
+            }
 
             voiceChatPluginSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.VoiceChatConfigurations, ct: ct);
 
