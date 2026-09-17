@@ -18,6 +18,7 @@ namespace DCL.SDKComponents.SceneUI.Components
             InputMapComponent.Kind.Shortcuts,
             InputMapComponent.Kind.Player,
             InputMapComponent.Kind.InWorldCamera,
+            InputMapComponent.Kind.Submit,
         };
 
         public readonly TextField TextField = new ();
@@ -28,6 +29,7 @@ namespace DCL.SDKComponents.SceneUI.Components
         ///     True between the FocusIn that blocked the input maps and the FocusOut that released them.
         /// </summary>
         public bool IsFocused { get; internal set; }
+
         public bool IsOnValueChangedTriggered;
         public bool IsOnSubmitTriggered;
 
@@ -37,6 +39,11 @@ namespace DCL.SDKComponents.SceneUI.Components
         internal EventCallback<FocusOutEvent> currentOnFocusOut = static _ => { };
 
         private IInputBlock? focusInputBlock;
+
+        public UIInputComponent()
+        {
+            TextElement = TextField.Q<TextElement>();
+        }
 
         public void Initialize(
             IInputBlock inputBlock,
