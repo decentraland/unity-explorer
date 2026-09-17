@@ -43,17 +43,24 @@ jobs:
       - name: Seed the CI status comment from dev's runs of the cut commit
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # For the force-build label only: a label added by GITHUB_TOKEN raises
+          # an event that starts no run, which would defeat its purpose.
+          ORG_TOKEN: ${{ secrets.ORG_ACCESS_TOKEN }}
           PUBLIC_URL_PREFIX: ${{ vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL }}
         run: |
           set -euo pipefail
 
-          # The release PR's own build takes ~40 minutes, and its lint and
-          # tests most of that; for that window every section would sit on the
-          # skeleton's "Waiting…" placeholder and testers would have nothing to
-          # install. The branch is cut from dev's tip, whose SHA dev already
-          # built, linted and tested — seed the sections from those runs so the
-          # PR is useful from minute one. The PR's own runs replace them as they
-          # finish, which is the point of writing sections and not a comment.
+          # The PR above was opened with GITHUB_TOKEN, whose events start no
+          # workflow runs: nothing builds, lints or tests the release branch on
+          # its own, and every section would sit on the skeleton's "Waiting…"
+          # placeholder for good. The branch is cut from dev's tip, whose SHA
+          # dev builds, lints and tests on push — seed the sections from those
+          # runs. Where dev is done, its links are the release's. Where dev is
+          # still running, say so: the pr-comment-* writers resolve a dev run
+          # whose SHA heads an open release PR to that PR
+          # (resolve-comment-pr.sh) and fill the section in when it finishes.
+          # Where dev's build failed, label the PR `force-build` so the release
+          # branch builds itself.
           #
           # Sections rather than a standalone comment: a standalone one has no
           # update path, so the next push to the release branch left the cut
@@ -95,26 +102,90 @@ jobs:
 
           # Scoped to the build workflow file — a repo-wide head_sha listing
           # gets crowded out by bot runs sharing the SHA and the build falls
-          # past the first page.
+          # past the first page. Not filtered on success: a run still going, a
+          # run that failed and no run at all are three different instructions
+          # to whoever reads the section, and only one of them is "rebuild".
+          # `action_required` runs are dropped everywhere below: a repository
+          # that holds bot-opened PRs for approval creates one per workflow the
+          # moment the PR opens, already "completed", with no jobs — newer than
+          # dev's real run and saying nothing about the commit.
+          #
+          # BUILD_STATE is read by the gate step below:
+          #   reused    a green run's links were written; the gate is dispatched
+          #   building  dev is still building; its completion reports into this
+          #             PR (resolve-comment-pr.sh) and dispatches the gate
+          #   forced    dev's build failed; the PR was labeled force-build and
+          #             the release branch's own build dispatches the gate
+          #   notfound  no run exists; the operator has to label force-build
+          #   unknown   the API did not answer
           BUILD_LISTED=1
-          RUN_JSON=$(gh_api_retry "repos/${GITHUB_REPOSITORY}/actions/workflows/build-unitycloud.yml/runs?head_sha=${HEAD_SHA}&status=success&per_page=20" \
-            --jq '[.workflow_runs[] | select(.event == "pull_request" or .event == "push")] | .[0]') || BUILD_LISTED=0
+          RUNS_JSON=$(gh_api_retry "repos/${GITHUB_REPOSITORY}/actions/workflows/build-unitycloud.yml/runs?head_sha=${HEAD_SHA}&per_page=20" \
+            --jq '[.workflow_runs[] | select((.event == "pull_request" or .event == "push") and .conclusion != "action_required")]') || BUILD_LISTED=0
+
+          # A green run wins over a newer cancelled or failed one — its
+          # artifacts exist either way. Otherwise the newest run's fate decides.
+          RUN_JSON=""
+          RUN_STATUS=""
+          RUN_CONCLUSION=""
+          if [ "$BUILD_LISTED" = "1" ]; then
+            RUN_JSON=$(jq -c 'first(.[] | select(.status == "completed" and .conclusion == "success")) // .[0] // empty' <<< "$RUNS_JSON")
+          fi
+          if [ -n "$RUN_JSON" ]; then
+            RUN_STATUS=$(jq -r '.status' <<< "$RUN_JSON")
+            RUN_CONCLUSION=$(jq -r '.conclusion // ""' <<< "$RUN_JSON")
+          fi
 
           if [ "$BUILD_LISTED" = "0" ]; then
+            BUILD_STATE=unknown
             {
               echo "![Build](https://img.shields.io/badge/Build-Unknown-lightgrey${BUILD_STYLE})"
               echo ""
               echo "The Actions API did not answer when listing builds of \`${SHORT_SHA}\`, so whether one exists is unknown — this is not evidence that there is none. Read the [build runs](${BUILD_RUNS}) before deciding to rebuild."
             } > build.md
             upsert build build.md
-          elif [ -z "$RUN_JSON" ] || [ "$RUN_JSON" = "null" ]; then
+          elif [ -z "$RUN_JSON" ]; then
+            BUILD_STATE=notfound
             {
               echo "![Build](https://img.shields.io/badge/Build-Not%20Found-yellow${BUILD_STYLE})"
               echo ""
-              echo "No successful Unity Cloud build of \`${SHORT_SHA}\` exists, so there is nothing to link here — see the [build runs](${BUILD_RUNS}). Label this PR \`force-build\` to build the release branch. Do not re-run *Create Release Branch and PR*: it force-pushes \`${BRANCH_NAME}\` from dev's current tip, re-cutting the release from commits nobody reviewed for it."
+              echo "No Unity Cloud build of \`${SHORT_SHA}\` exists, so there is nothing to link here — see the [build runs](${BUILD_RUNS}). Label this PR \`force-build\` to build the release branch. Do not re-run *Create Release Branch and PR*: it force-pushes \`${BRANCH_NAME}\` from dev's current tip, re-cutting the release from commits nobody reviewed for it."
             } > build.md
             upsert build build.md
+          elif [ "$RUN_STATUS" != "completed" ]; then
+            BUILD_STATE=building
+            RUN_ID=$(jq -r '.id' <<< "$RUN_JSON")
+            RUN_BRANCH=$(jq -r '.head_branch' <<< "$RUN_JSON")
+            {
+              echo "[![Build](https://img.shields.io/badge/Build-Building%20on%20dev-yellow${BUILD_STYLE})](${ACTIONS_URL}/runs/${RUN_ID})"
+              echo ""
+              echo "\`${RUN_BRANCH}\` is still building \`${SHORT_SHA}\`, the commit this release was cut from ([logs](${ACTIONS_URL}/runs/${RUN_ID})). Its links land here when it finishes — the release branch was cut from it, so its artifacts are the release's. If it fails, this PR is labeled \`force-build\` and the release branch builds itself."
+            } > build.md
+            upsert build build.md
+          elif [ "$RUN_CONCLUSION" != "success" ]; then
+            RUN_ID=$(jq -r '.id' <<< "$RUN_JSON")
+            RUN_BRANCH=$(jq -r '.head_branch' <<< "$RUN_JSON")
+            # Written before the label goes on: the labeled event starts a build
+            # whose own writers reset this section, and they have to land after.
+            {
+              echo "[![Build](https://img.shields.io/badge/Build-Building%20release%20branch-yellow${BUILD_STYLE})](${ACTIONS_URL}/runs/${RUN_ID})"
+              echo ""
+              echo "The \`${RUN_BRANCH}\` build of \`${SHORT_SHA}\`, the commit this release was cut from, ended \`${RUN_CONCLUSION}\` ([logs](${ACTIONS_URL}/runs/${RUN_ID})), so there is nothing to reuse. This PR was labeled \`force-build\`; the release branch is building itself and its links land here."
+            } > build.md
+            upsert build build.md
+            if GH_TOKEN="$ORG_TOKEN" gh pr edit "$BRANCH_NAME" --add-label force-build; then
+              BUILD_STATE=forced
+            else
+              BUILD_STATE=notfound
+              echo "::error::Could not add force-build to ${BRANCH_NAME}'s PR (ORG_ACCESS_TOKEN lacks the permission, or the API did not answer); label it by hand to build the release branch."
+              {
+                echo "![Build](https://img.shields.io/badge/Build-Not%20Found-yellow${BUILD_STYLE})"
+                echo ""
+                echo "The \`${RUN_BRANCH}\` build of \`${SHORT_SHA}\`, the commit this release was cut from, ended \`${RUN_CONCLUSION}\` ([logs](${ACTIONS_URL}/runs/${RUN_ID})), so there is nothing to reuse — and labeling this PR \`force-build\` failed. Label it by hand to build the release branch. Do not re-run *Create Release Branch and PR*: it force-pushes \`${BRANCH_NAME}\` from dev's current tip, re-cutting the release from commits nobody reviewed for it."
+              } > build.md
+              upsert build build.md
+            fi
           else
+            BUILD_STATE=reused
             RUN_ID=$(jq -r '.id' <<< "$RUN_JSON")
             RUN_NUMBER=$(jq -r '.run_number' <<< "$RUN_JSON")
             SUITE_ID=$(jq -r '.check_suite_id' <<< "$RUN_JSON")
@@ -162,21 +233,28 @@ jobs:
             } > build.md
             upsert build build.md
           fi
+          echo "BUILD_STATE=$BUILD_STATE" >> "$GITHUB_ENV"
 
           # dev's "Unity Test" run for the same SHA carries the only lint and
-          # test evidence this release will ever have: the PR's own events
-          # start nothing, and nothing but a force-build label will change that.
+          # test evidence this release has at the cut: the PR's own events
+          # start nothing, and only a push to the branch or a force-build label
+          # changes that.
           #
-          # Three outcomes, kept apart for the same reason the InWorld gate
-          # below keeps LISTED apart from UNEXAMINED: "the suite did not run"
-          # and "the API would not say" are opposite instructions to whoever
-          # reads the section, and only one of them is about this release.
+          # Four outcomes, kept apart for the same reason the InWorld gate
+          # below keeps LISTED apart from UNEXAMINED: "the suite did not run",
+          # "the suite is still running" and "the API would not say" are three
+          # different instructions to whoever reads the section, and only the
+          # first is about this release. A running suite's jobs have no
+          # conclusion yet, which read as "never created" would print "no C#
+          # files changed" over a lint that is halfway through.
           TEST_RUN_URL=""
           TEST_BRANCH=""
           TEST_JOBS=""
           TEST_STATE=unknown
+          # A finished run over one still going, the newest of each: the cut
+          # wants the most that is known about the commit.
           if TEST_RUN=$(gh_api_retry "repos/${GITHUB_REPOSITORY}/actions/workflows/test.yml/runs?head_sha=${HEAD_SHA}&per_page=20" \
-            --jq '[.workflow_runs[] | select(.event == "push" or .event == "pull_request")] | .[0]'); then
+            --jq '[.workflow_runs[] | select((.event == "push" or .event == "pull_request") and .conclusion != "action_required")] | first(.[] | select(.status == "completed")) // .[0]'); then
             if [ -z "$TEST_RUN" ] || [ "$TEST_RUN" = "null" ]; then
               # test.yml is path-filtered on pushes to dev, so a commit that
               # touches nothing the suite watches starts no run at all — an
@@ -189,7 +267,9 @@ jobs:
               # pull_request runs too, so any PR whose head is the cut commit
               # can be the run that answers here.
               TEST_BRANCH=$(jq -r '.head_branch' <<< "$TEST_RUN")
-              if TEST_JOBS=$(gh_api_retry "repos/${GITHUB_REPOSITORY}/actions/runs/${TEST_RUN_ID}/jobs?per_page=100"); then
+              if [ "$(jq -r '.status' <<< "$TEST_RUN")" != "completed" ]; then
+                TEST_STATE=running
+              elif TEST_JOBS=$(gh_api_retry "repos/${GITHUB_REPOSITORY}/actions/runs/${TEST_RUN_ID}/jobs?per_page=100"); then
                 TEST_STATE=ok
               fi
             fi
@@ -204,7 +284,7 @@ jobs:
           # Every reused section says so, and says it will not update: read
           # without that line a green badge on a release PR looks like the PR's
           # own result, and the first push to the branch silently makes it one.
-          REUSED="<sub>Reused from the [\`Unity Test\` run](${TEST_RUN_URL}) of \`${SHORT_SHA}\` on \`${TEST_BRANCH}\`, the commit this release was cut from — this is what was known at the cut. The release PR's own run replaces it when it finishes.</sub>"
+          REUSED="<sub>Reused from the [\`Unity Test\` run](${TEST_RUN_URL}) of \`${SHORT_SHA}\` on \`${TEST_BRANCH}\`, the commit this release was cut from — this is what was known at the cut. It stays until a \`Unity Test\` run of this PR — started by a push to the branch or a \`force-build\` label — replaces it.</sub>"
 
           TEST_RUNS="${ACTIONS_URL}/workflows/test.yml"
           LINT_STYLE="?logo=jetbrains&logoColor=white&style=for-the-badge"
@@ -212,6 +292,9 @@ jobs:
           if [ "$TEST_STATE" = "norun" ]; then
             LINT_BADGE="![Lint](https://img.shields.io/badge/Lint-Not%20run-lightgrey${LINT_STYLE})"
             LINT_MSG="No \`Unity Test\` run exists for \`${SHORT_SHA}\`: the commit this release was cut from touches nothing the suite watches, so lint never ran on it."
+          elif [ "$TEST_STATE" = "running" ]; then
+            LINT_BADGE="[![Lint](https://img.shields.io/badge/Lint-Running%20on%20dev-yellow${LINT_STYLE})](${TEST_RUN_URL})"
+            LINT_MSG="\`Unity Test\` is still running on \`${TEST_BRANCH}\` for \`${SHORT_SHA}\`, the commit this release was cut from ([run](${TEST_RUN_URL})). Its lint result lands here when it finishes."
           elif [ "$TEST_STATE" = "unknown" ]; then
             LINT_BADGE="![Lint](https://img.shields.io/badge/Lint-Unknown-lightgrey${LINT_STYLE})"
             LINT_MSG="The Actions API did not answer for \`${SHORT_SHA}\`'s \`Unity Test\` run, so the warning count at the cut is unknown — this is not evidence that lint never ran. See the [test runs](${TEST_RUNS})."
@@ -243,6 +326,9 @@ jobs:
           if [ "$TEST_STATE" = "norun" ]; then
             TESTS_BADGE="![Tests](https://img.shields.io/badge/Tests-Not%20run-lightgrey${TESTS_STYLE})"
             TESTS_MSG="No \`Unity Test\` run exists for \`${SHORT_SHA}\`: the commit this release was cut from touches nothing the suite watches, so neither suite ran on it."
+          elif [ "$TEST_STATE" = "running" ]; then
+            TESTS_BADGE="[![Tests](https://img.shields.io/badge/Tests-Running%20on%20dev-yellow${TESTS_STYLE})](${TEST_RUN_URL})"
+            TESTS_MSG="\`Unity Test\` is still running on \`${TEST_BRANCH}\` for \`${SHORT_SHA}\`, the commit this release was cut from ([run](${TEST_RUN_URL})). Its results land here when it finishes."
           elif [ "$TEST_STATE" = "unknown" ]; then
             TESTS_BADGE="![Tests](https://img.shields.io/badge/Tests-Unknown-lightgrey${TESTS_STYLE})"
             TESTS_MSG="The Actions API did not answer for \`${SHORT_SHA}\`'s \`Unity Test\` run, so whether its suites passed is unknown — this is not evidence that they did not. See the [test runs](${TEST_RUNS})."
@@ -269,14 +355,15 @@ jobs:
           } > tests.md
           upsert tests tests.md
 
-          # The benchmark rides a build of *this* PR — pr-comment-artifact-url
-          # dispatches it, and it needs a PR number the dev push's build never
-          # had. So the placeholder's promise ("results land in this section")
-          # is one nothing on a release cut can keep; say so instead.
+          # The benchmark rides a build that reports into *this* PR —
+          # pr-comment-artifact-url dispatches it with the PR number. A dev
+          # build that finished before the cut never had one, so the
+          # placeholder's promise ("results land in this section") is one
+          # nothing at the cut can keep; say what will.
           {
             echo "![Performance](https://img.shields.io/badge/Performance-Not%20dispatched-lightgrey?logo=speedtest&logoColor=white&style=for-the-badge)"
             echo ""
-            echo "No benchmark has been dispatched yet: one rides each *successful* build of this PR, and at the cut there is none — the commit's build ran on dev, which carries no PR number to report against. The release branch's first successful build dispatches one into this section."
+            echo "No benchmark has been dispatched yet: one rides each *successful* build that reports into this PR, and a dev build that finished before the cut reported into none. The first that does — dev's build of \`${SHORT_SHA}\` finishing after the cut, or the release branch's own — dispatches one into this section."
           } > performance.md
           upsert performance performance.md
 
@@ -307,6 +394,20 @@ jobs:
           # Runs come back newest first, and only the newest few are worth
           # asking about — the same candidate cap resolve-explorer-build uses.
           HEAD_SHA=$(git rev-parse HEAD)
+
+          # Set by the seed step. In these two states the build that will carry
+          # the gate has not finished yet, and pr-comment-artifact-url.yml
+          # (release-gate) dispatches it when that build succeeds; listing runs
+          # here would only end in an error telling the operator to do what the
+          # workflow has already arranged.
+          case "${BUILD_STATE:-}" in
+            building)
+              echo "::notice::dev is still building ${HEAD_SHA:0:7}. When that build succeeds its links are written into the release PR and the InWorld gate is dispatched against ${BRANCH_NAME}; if it does not, the PR is labeled force-build and the release branch's own build does the same."
+              exit 0 ;;
+            forced)
+              echo "::notice::dev's build of ${HEAD_SHA:0:7} failed; the PR was labeled force-build and the InWorld gate is dispatched against ${BRANCH_NAME} when the release branch's build succeeds."
+              exit 0 ;;
+          esac
 
           # The helper resolve-explorer-build defines, duplicated because a
           # composite action cannot export a shell function to its caller. Same
@@ -344,7 +445,7 @@ jobs:
           LISTED=0
           UNEXAMINED=0
           if RUN_IDS=$(gh_api_retry "repos/${GITHUB_REPOSITORY}/actions/workflows/build-unitycloud.yml/runs?head_sha=${HEAD_SHA}&per_page=50" \
-            --jq '[.workflow_runs[] | select(.event == "pull_request" or .event == "push") | .id]'); then
+            --jq '[.workflow_runs[] | select((.event == "pull_request" or .event == "push") and .conclusion != "action_required") | .id]'); then
             LISTED=1
           else
             RUN_IDS=''
