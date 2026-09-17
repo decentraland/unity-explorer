@@ -1,7 +1,6 @@
 using Arch.Core;
 using DCL.ECSComponents;
 using DCL.Input;
-using DCL.Input.Component;
 using DCL.SDKComponents.SceneUI.Classes;
 using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Defaults;
@@ -227,13 +226,15 @@ namespace DCL.SDKComponents.SceneUI.Utils
             EventCallback<FocusInEvent> newOnFocusInCallback = evt =>
             {
                 evt.StopPropagation();
-                inputBlock.Disable(InputMapComponent.Kind.Camera , InputMapComponent.Kind.Shortcuts , InputMapComponent.Kind.Player, InputMapComponent.Kind.InWorldCamera);
+                uiInputComponent.IsFocused = true;
+                inputBlock.Disable(UIInputComponent.BLOCKED_INPUT_KINDS);
             };
 
             EventCallback<FocusOutEvent> newOnFocusOutCallback = evt =>
             {
                 evt.StopPropagation();
-                inputBlock.Enable(InputMapComponent.Kind.Camera , InputMapComponent.Kind.Shortcuts , InputMapComponent.Kind.Player, InputMapComponent.Kind.InWorldCamera);
+                uiInputComponent.IsFocused = false;
+                inputBlock.Enable(UIInputComponent.BLOCKED_INPUT_KINDS);
             };
 
             uiInputComponent.UnregisterInputCallbacks();

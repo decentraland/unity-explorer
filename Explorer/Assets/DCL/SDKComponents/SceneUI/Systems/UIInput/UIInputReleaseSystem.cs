@@ -22,7 +22,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
     {
         private readonly IComponentPool componentPool;
 
-        private UIInputReleaseSystem(World world, IComponentPoolsRegistry poolsRegistry) : base(world)
+        internal UIInputReleaseSystem(World world, IComponentPoolsRegistry poolsRegistry) : base(world)
         {
             poolsRegistry.TryGetPool(typeof(UIInputComponent), out componentPool);
         }
