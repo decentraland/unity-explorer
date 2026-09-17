@@ -516,6 +516,26 @@ namespace DCL.Browser.DecentralandUrls.Tests
             Assert.AreEqual("http://127.0.0.1:8000/lambdas", urlsSource.Url(DecentralandUrl.Lambdas));
         }
 
+        /// <summary>
+        /// NAMEs are bought in the Shop. Four entry points open this url — the passport, the profile name
+        /// editor, the Places results and Community creation — and they all route through this single
+        /// mapping, so pinning it here is what keeps them from drifting apart again.
+        /// </summary>
+        [Test]
+        public void SendClaimNameToTheShopPerEnvironment()
+        {
+            InitializeFeatureFlags(optimizedAssets: false);
+
+            Assert.AreEqual(
+                "https://decentraland.org/shop/items?category=names",
+                DecentralandUrlsSource.CreateForTest(DecentralandEnvironment.Org, ILaunchMode.PLAY).Url(DecentralandUrl.MarketplaceClaimName));
+
+            // Per environment, not a hardcoded .org: a tester on .zone must not be sent to production.
+            Assert.AreEqual(
+                "https://decentraland.zone/shop/items?category=names",
+                DecentralandUrlsSource.CreateForTest(DecentralandEnvironment.Zone, ILaunchMode.PLAY).Url(DecentralandUrl.MarketplaceClaimName));
+        }
+
         private static IRealmData RealmOfKind(RealmKind kind)
         {
             var ipfs = Substitute.For<IIpfsRealm>();
