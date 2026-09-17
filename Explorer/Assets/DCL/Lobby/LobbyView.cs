@@ -3,6 +3,7 @@ using DCL.UI.Credits;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles;
 using MVC;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -10,10 +11,6 @@ namespace DCL.Lobby
 {
     public class LobbyView : ViewBase, IView
     {
-        [field: SerializeField]
-        public Button JumpInButton { get; private set; } = null!;
-
-        [field: Space(10)]
         [field: Header("Top Bar")]
         [field: SerializeField]
         public CreditsPanelView CreditsPanelView { get; private set; } = null!;
@@ -32,6 +29,13 @@ namespace DCL.Lobby
 
         [field: SerializeField]
         public CharacterPreviewView CharacterPreviewView { get; private set; } = null!;
+
+        [field: Header("Quick jump in")]
+        [field: SerializeField]
+        public TMP_Text WelcomeText { get; private set; } = null!;
+
+        [field: SerializeField]
+        public LobbyHomeCardView HomeCard { get; private set; } = null!;
 
         [field: Header("Jump back in")]
         [field: SerializeField]

@@ -33,6 +33,11 @@ namespace DCL.PlacesAPIService
 
         UniTask<PlacesData.PlaceInfo?> GetWorldAsync(Vector2Int coords, string worldName, CancellationToken ct);
 
+        /// <summary>
+        ///     The world registered under the given name, null when the worlds endpoint does not know it.
+        /// </summary>
+        UniTask<PlacesData.PlaceInfo?> GetWorldByNameAsync(string worldName, CancellationToken ct);
+
         [Obsolete("Use GetFavoritesDestinationsAsync instead")]
         UniTask<PlacesData.IPlacesAPIResponse> GetFavoritesAsync(CancellationToken ct,
             int pageNumber = -1, int pageSize = -1,

@@ -8,6 +8,7 @@ using DCL.Diagnostics;
 using DCL.ExplorePanel;
 using DCL.Input;
 using DCL.Input.Component;
+using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
@@ -23,6 +24,7 @@ using MVC;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using UnityEngine;
 using UnityEngine.EventSystems;
 using Utility;
 
@@ -35,6 +37,8 @@ namespace DCL.Lobby
     /// </summary>
     public class LobbyController : ControllerBase<LobbyView, LobbyParameter>
     {
+        private const string GENESIS_PLAZA_TITLE = "Genesis Plaza";
+
         private readonly IInputBlock inputBlock;
         private readonly IReadOnlyLoadingStatus loadingStatus;
         private readonly IMVCManager mvcManager;
@@ -45,6 +49,7 @@ namespace DCL.Lobby
         private readonly LobbyAvatarSettings avatarSettings;
         private readonly World world;
         private readonly IPlacesAPIService placesAPIService;
+        private readonly IHomePlaceSource homePlace;
         private readonly IRealmNavigator realmNavigator;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly StartParcel startParcel;
@@ -75,6 +80,7 @@ namespace DCL.Lobby
             LobbyAvatarSettings avatarSettings,
             World world,
             IPlacesAPIService placesAPIService,
+            IHomePlaceSource homePlace,
             IRealmNavigator realmNavigator,
             IDecentralandUrlsSource decentralandUrlsSource,
             StartParcel startParcel,
@@ -92,6 +98,7 @@ namespace DCL.Lobby
             this.avatarSettings = avatarSettings;
             this.world = world;
             this.placesAPIService = placesAPIService;
+            this.homePlace = homePlace;
             this.realmNavigator = realmNavigator;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.startParcel = startParcel;
@@ -106,7 +113,7 @@ namespace DCL.Lobby
 
             if (viewInstance != null)
             {
-                viewInstance.JumpInButton.onClick.RemoveListener(RequestClose);
+                viewInstance.HomeCard.JumpInButton.Button.onClick.RemoveListener(OnHomeJumpInClicked);
                 viewInstance.CloseButton.onClick.RemoveListener(RequestClose);
                 viewInstance.CharacterPreviewView.CharacterPreviewInputDetector.OnPointerClickEvent -= OnAvatarClicked;
                 viewInstance.ProfileWidgetView.OpenProfileButton.Button.onClick.RemoveListener(ShowProfileMenu);
@@ -128,7 +135,7 @@ namespace DCL.Lobby
         protected override void OnViewInstantiated()
         {
             base.OnViewInstantiated();
-            viewInstance!.JumpInButton.onClick.AddListener(RequestClose);
+            viewInstance!.HomeCard.JumpInButton.Button.onClick.AddListener(OnHomeJumpInClicked);
             viewInstance.CloseButton.onClick.AddListener(RequestClose);
             viewInstance.CharacterPreviewView.CharacterPreviewInputDetector.OnPointerClickEvent += OnAvatarClicked;
             viewInstance.ProfileWidgetView.OpenProfileButton.Button.onClick.AddListener(ShowProfileMenu);
@@ -165,6 +172,8 @@ namespace DCL.Lobby
             HideProfileMenuIfOpen();
 
             placesCts = placesCts.SafeRestart();
+            viewInstance!.HomeCard.ShowLoading();
+            ShowHomePlaceAsync(placesCts.Token).Forget();
             ShowRecentPlacesAsync(placesCts.Token).Forget();
             ShowRecommendedPlacesAsync(placesCts.Token).Forget();
         }
@@ -201,6 +210,8 @@ namespace DCL.Lobby
 
                 if (ct.IsCancellationRequested) return;
 
+                ShowWelcome(profile);
+
                 if (profile == null)
                 {
                     ReportHub.LogWarning(ReportCategory.PROFILE, "Own profile is not available, the lobby avatar is not shown");
@@ -213,6 +224,46 @@ namespace DCL.Lobby
             }
             catch (OperationCanceledException) { }
             catch (Exception e) { ReportHub.LogException(e, ReportCategory.PROFILE); }
+        }
+
+        /// <summary>
+        ///     Fills the hero card with the place set as home, or Genesis Plaza when there is none.
+        ///     The card is always filled: at startup its Jump in is the only way out of the lobby, so when the Places API
+        ///     cannot be reached an offline Genesis Plaza still lets the user in.
+        /// </summary>
+        private async UniTaskVoid ShowHomePlaceAsync(CancellationToken ct)
+        {
+            PlacesData.PlaceInfo? place = await ResolveHomePlaceAsync(ct);
+
+            if (ct.IsCancellationRequested) return;
+
+            place ??= new PlacesData.PlaceInfo(Vector2Int.zero) { title = GENESIS_PLAZA_TITLE };
+
+            viewInstance!.HomeCard.Show(place, thumbnailLoader, ct);
+        }
+
+        private async UniTask<PlacesData.PlaceInfo?> ResolveHomePlaceAsync(CancellationToken ct)
+        {
+            string? homeWorld = homePlace.IsWorldHome ? homePlace.CurrentHomeWorldName : null;
+            Vector2Int homeParcel = homePlace.CurrentHomeCoordinates ?? Vector2Int.zero;
+
+            Result<PlacesData.PlaceInfo?> result = await (homeWorld != null
+                    ? placesAPIService.GetWorldByNameAsync(homeWorld, ct)
+                    : placesAPIService.GetPlaceAsync(homeParcel, ct))
+               .SuppressToResultAsync(ReportCategory.PLACES);
+
+            if (ct.IsCancellationRequested) return null;
+
+            if (result.Success && result.Value != null)
+                return result.Value;
+
+            // A home that no longer resolves (deleted world, parcel with no place) yields to Genesis Plaza
+            if (homeWorld == null && homeParcel == Vector2Int.zero)
+                return null;
+
+            result = await placesAPIService.GetPlaceAsync(Vector2Int.zero, ct).SuppressToResultAsync(ReportCategory.PLACES);
+
+            return result.Success ? result.Value : null;
         }
 
         /// <summary>
@@ -261,8 +312,23 @@ namespace DCL.Lobby
                 viewInstance!.RecommendedPlacesSection.SetActive(false);
         }
 
-        private void OnProfileUpdated(Profile profile) =>
+        private void OnProfileUpdated(Profile profile)
+        {
+            ShowWelcome(profile);
             avatarPreview!.Refresh(profile.Avatar);
+        }
+
+        private void ShowWelcome(Profile? profile)
+        {
+            string? name = profile?.ValidatedName;
+            viewInstance!.WelcomeText.text = string.IsNullOrEmpty(name) ? "WELCOME!" : $"WELCOME {name}!";
+        }
+
+        private void OnHomeJumpInClicked()
+        {
+            if (viewInstance!.HomeCard.Place is { } place)
+                OnPlaceClicked(place);
+        }
 
         // Until the backpack gets its own modal the Explore panel takes over; being fullscreen it also closes this panel.
         private void OnAvatarClicked(PointerEventData _) =>

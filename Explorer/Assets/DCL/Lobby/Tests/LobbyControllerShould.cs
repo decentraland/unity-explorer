@@ -6,6 +6,7 @@ using DCL.Communities;
 using DCL.ExplorePanel;
 using DCL.Input;
 using DCL.Input.Component;
+using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
@@ -35,6 +36,7 @@ using System.Threading;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.TestTools;
 using UnityEngine.UI;
 using Object = UnityEngine.Object;
 
@@ -47,9 +49,12 @@ namespace DCL.Lobby.Tests
         private const string WORLD_SERVER_URL = "https://worlds-content-server.example.com/world";
         private const int RECENT_CARDS = 3;
         private const string OWN_WALLET = "0x0000000000000000000000000000000000000001";
+        private const string GENESIS_PLAZA = "Genesis Plaza";
+        private const string HOME_WORLD = "myworld.dcl.eth";
 
         private GameObject root = null!;
-        private Button jumpInButton = null!;
+        private TMP_Text welcomeText = null!;
+        private LobbyHomeCardView homeCard = null!;
         private Button closeButton = null!;
         private Button logoutButton = null!;
         private CharacterPreviewInputDetector avatarInputDetector = null!;
@@ -62,6 +67,8 @@ namespace DCL.Lobby.Tests
         private IInputBlock inputBlock = null!;
         private IMVCManager mvcManager = null!;
         private IPlacesAPIService placesAPIService = null!;
+        private IHomePlaceSource homePlace = null!;
+        private PlacesData.PlaceInfo genesisPlaza = null!;
         private IRealmNavigator realmNavigator = null!;
         private StartParcel startParcel = null!;
         private LoadingStatus loadingStatus = null!;
@@ -78,9 +85,8 @@ namespace DCL.Lobby.Tests
             root = new GameObject(nameof(LobbyControllerShould));
             LobbyView view = root.AddComponent<LobbyView>();
 
-            var buttonGo = new GameObject("JumpInButton");
-            buttonGo.transform.SetParent(root.transform);
-            jumpInButton = buttonGo.AddComponent<Button>();
+            welcomeText = CreateText(root.transform, "Welcome");
+            homeCard = CreateHomeCard(root.transform);
 
             var closeButtonGo = new GameObject("CloseButton");
             closeButtonGo.transform.SetParent(root.transform);
@@ -96,7 +102,8 @@ namespace DCL.Lobby.Tests
             recommendedPlacesSection.transform.SetParent(root.transform);
             recommendedPlaces = CreateCarousel(recommendedPlacesSection.transform);
 
-            SetBackingField(view, nameof(LobbyView.JumpInButton), jumpInButton);
+            SetBackingField(view, nameof(LobbyView.WelcomeText), welcomeText);
+            SetBackingField(view, nameof(LobbyView.HomeCard), homeCard);
             SetBackingField(view, nameof(LobbyView.CloseButton), closeButton);
             SetBackingField(view, nameof(LobbyView.CharacterPreviewView), CreateCharacterPreviewView());
             SetBackingField(view, nameof(LobbyView.RecentPlacesSection), recentPlacesSection);
@@ -120,6 +127,11 @@ namespace DCL.Lobby.Tests
             placesAPIService.GetRecentlyVisitedPlaces().Returns(new List<string>());
             ArrangeRecommendedPlaces();
 
+            // No home by default: the substitute reports neither a parcel nor a world
+            homePlace = Substitute.For<IHomePlaceSource>();
+            genesisPlaza = CreatePlace(GENESIS_PLAZA, Vector2Int.zero);
+            ArrangePlace(Vector2Int.zero, genesisPlaza);
+
             realmNavigator = Substitute.For<IRealmNavigator>();
             startParcel = new StartParcel(Vector2Int.zero);
 
@@ -142,13 +154,14 @@ namespace DCL.Lobby.Tests
 
             controller = new LobbyController(() => view, inputBlock, loadingStatus, mvcManager, selfProfile, profileChangesBus,
                 Substitute.For<ICharacterPreviewFactory>(), new CharacterPreviewEventBus(), new LobbyAvatarSettings(), world,
-                placesAPIService, realmNavigator, urlsSource, startParcel, new ThumbnailLoader(Substitute.For<ISpriteCache>()),
+                placesAPIService, homePlace, realmNavigator, urlsSource, startParcel, new ThumbnailLoader(Substitute.For<ISpriteCache>()),
                 profileButtonPresenter, profileMenuController);
         }
 
         [TearDown]
         public void TearDown()
         {
+            LogAssert.ignoreFailingMessages = false;
             controller.Dispose();
             profileButtonPresenter.Dispose();
             profileMenuController.Dispose();
@@ -166,12 +179,154 @@ namespace DCL.Lobby.Tests
             inputBlock.Received(1).Disable(InputMapComponent.BLOCK_USER_INPUT);
 
             // Act
-            jumpInButton.onClick.Invoke();
+            homeCard.JumpInButton.Button.onClick.Invoke();
             controller.HideViewAsync(CancellationToken.None).Forget();
 
             // Assert
             Assert.That(lifeCycle.Status, Is.EqualTo(UniTaskStatus.Succeeded));
+            Assert.That(startParcel.Realm, Is.EqualTo(URLDomain.FromString(GENESIS_URL)));
             inputBlock.Received(1).Enable(InputMapComponent.BLOCK_USER_INPUT);
+        }
+
+        [Test]
+        public void WelcomeWithoutANameWhenTheProfileIsMissing()
+        {
+            // Act
+            Launch(isStartup: true);
+
+            // Assert
+            Assert.That(welcomeText.text, Is.EqualTo("WELCOME!"));
+        }
+
+        [Test]
+        public void ShowGenesisPlazaWhenNoHomeIsSet()
+        {
+            // Act
+            Launch(isStartup: true);
+
+            // Assert
+            placesAPIService.Received(1).GetPlaceAsync(Vector2Int.zero, Arg.Any<CancellationToken>());
+            Assert.That(homeCard.Place, Is.SameAs(genesisPlaza));
+            Assert.That(homeCard.TitleText.text, Is.EqualTo(GENESIS_PLAZA));
+            Assert.That(homeCard.CreatorText.text, Is.EqualTo("creator"));
+            Assert.That(homeCard.JumpInButton.Button.interactable, Is.True);
+        }
+
+        [Test]
+        public void ShowTheHomeParcelPlace()
+        {
+            // Arrange
+            var homeParcel = new Vector2Int(10, 20);
+            PlacesData.PlaceInfo home = CreatePlace("home", homeParcel);
+            homePlace.CurrentHomeCoordinates.Returns(homeParcel);
+            ArrangePlace(homeParcel, home);
+
+            // Act
+            Launch(isStartup: true);
+
+            // Assert
+            Assert.That(homeCard.Place, Is.SameAs(home));
+            placesAPIService.DidNotReceive().GetPlaceAsync(Vector2Int.zero, Arg.Any<CancellationToken>());
+        }
+
+        [Test]
+        public void ShowTheHomeWorld()
+        {
+            // Arrange
+            PlacesData.PlaceInfo homeWorld = CreatePlace("my world", Vector2Int.zero, HOME_WORLD);
+            homePlace.IsWorldHome.Returns(true);
+            homePlace.CurrentHomeWorldName.Returns(HOME_WORLD);
+            placesAPIService.GetWorldByNameAsync(HOME_WORLD, Arg.Any<CancellationToken>()).Returns(UniTask.FromResult<PlacesData.PlaceInfo?>(homeWorld));
+
+            // Act
+            Launch(isStartup: true);
+
+            // Assert
+            Assert.That(homeCard.Place, Is.SameAs(homeWorld));
+            placesAPIService.DidNotReceiveWithAnyArgs().GetPlaceAsync(default, default);
+        }
+
+        [Test]
+        public void FallBackToGenesisPlazaWhenTheHomeCannotBeResolved()
+        {
+            // Arrange: the home parcel no longer hosts a place
+            var homeParcel = new Vector2Int(10, 20);
+            homePlace.CurrentHomeCoordinates.Returns(homeParcel);
+            ArrangePlace(homeParcel, null);
+
+            // Act
+            Launch(isStartup: true);
+
+            // Assert
+            Assert.That(homeCard.Place, Is.SameAs(genesisPlaza));
+        }
+
+        [Test]
+        public void KeepJumpInUsableWhenThePlacesAPIFails()
+        {
+            // Arrange
+            LogAssert.ignoreFailingMessages = true;
+            placesAPIService.GetPlaceAsync(Vector2Int.zero, Arg.Any<CancellationToken>()).Returns(UniTask.FromException<PlacesData.PlaceInfo?>(new Exception("offline")));
+            UniTask lifeCycle = Launch(isStartup: true);
+
+            // Act
+            homeCard.JumpInButton.Button.onClick.Invoke();
+
+            // Assert
+            Assert.That(homeCard.TitleText.text, Is.EqualTo(GENESIS_PLAZA));
+            Assert.That(homeCard.OnlineCounter.activeSelf, Is.False);
+            Assert.That(startParcel.Peek(), Is.EqualTo(Vector2Int.zero));
+            Assert.That(startParcel.Realm, Is.EqualTo(URLDomain.FromString(GENESIS_URL)));
+            Assert.That(lifeCycle.Status, Is.EqualTo(UniTaskStatus.Succeeded));
+        }
+
+        [Test]
+        public void DisableJumpInWhileTheHomePlaceLoads()
+        {
+            // Arrange
+            var pending = new UniTaskCompletionSource<PlacesData.PlaceInfo?>();
+            placesAPIService.GetPlaceAsync(Vector2Int.zero, Arg.Any<CancellationToken>()).Returns(pending.Task);
+            UniTask lifeCycle = Launch(isStartup: true);
+
+            // Act
+            homeCard.JumpInButton.Button.onClick.Invoke();
+
+            // Assert
+            Assert.That(homeCard.JumpInButton.Button.interactable, Is.False);
+            Assert.That(homeCard.Place, Is.Null);
+            Assert.That(lifeCycle.Status, Is.EqualTo(UniTaskStatus.Pending));
+
+            pending.TrySetResult(genesisPlaza);
+            Assert.That(homeCard.JumpInButton.Button.interactable, Is.True);
+            Assert.That(homeCard.Place, Is.SameAs(genesisPlaza));
+        }
+
+        [Test]
+        public void CountTheConnectedUsersOverTheUserCount()
+        {
+            // Arrange
+            genesisPlaza.user_count = 7;
+            genesisPlaza.connected_addresses = new[] { "0x1", "0x2" };
+
+            // Act
+            Launch(isStartup: true);
+
+            // Assert
+            Assert.That(homeCard.OnlineCounter.activeSelf, Is.True);
+            Assert.That(homeCard.OnlineCountText.text, Is.EqualTo("2"));
+        }
+
+        [Test]
+        public void HideTheOnlineCounterWhenNobodyIsThere()
+        {
+            // Arrange
+            genesisPlaza.user_count = 0;
+
+            // Act
+            Launch(isStartup: true);
+
+            // Assert
+            Assert.That(homeCard.OnlineCounter.activeSelf, Is.False);
         }
 
         [Test]
@@ -456,6 +611,9 @@ namespace DCL.Lobby.Tests
             placesAPIService.GetHighlightedDestinationsAsync(Arg.Any<CancellationToken>())
                             .Returns(UniTask.FromResult<PlacesData.IPlacesAPIResponse>(new PlacesData.PlacesAPIResponse { data = new List<PlacesData.PlaceInfo>(featured), total = featured.Length }));
 
+        private void ArrangePlace(Vector2Int parcel, PlacesData.PlaceInfo? place) =>
+            placesAPIService.GetPlaceAsync(parcel, Arg.Any<CancellationToken>()).Returns(UniTask.FromResult(place));
+
         private void ArrangeRecentPlaces(List<string> history, params PlacesData.PlaceInfo[] response)
         {
             placesAPIService.GetRecentlyVisitedPlaces().Returns(history);
@@ -530,18 +688,51 @@ namespace DCL.Lobby.Tests
             cardGo.transform.SetParent(parent);
             LobbyPlaceCardView card = cardGo.AddComponent<LobbyPlaceCardView>();
 
-            var thumbnailGo = new GameObject("Thumbnail");
-            thumbnailGo.transform.SetParent(cardGo.transform);
-            Image image = thumbnailGo.AddComponent<Image>();
-            ImageView thumbnail = thumbnailGo.AddComponent<ImageView>();
-            SetBackingField(thumbnail, nameof(ImageView.Image), image);
-
             SetBackingField(card, nameof(LobbyPlaceCardView.Button), cardGo.AddComponent<Button>());
-            SetBackingField(card, nameof(LobbyPlaceCardView.Thumbnail), thumbnail);
+            SetBackingField(card, nameof(LobbyPlaceCardView.Thumbnail), CreateImageView(cardGo.transform));
             SetBackingField(card, nameof(LobbyPlaceCardView.TitleText), CreateText(cardGo.transform, "Title"));
             SetBackingField(card, nameof(LobbyPlaceCardView.CreatorText), CreateText(cardGo.transform, "Creator"));
 
             return card;
+        }
+
+        private static LobbyHomeCardView CreateHomeCard(Transform parent)
+        {
+            var cardGo = new GameObject("HomeCard");
+            cardGo.transform.SetParent(parent);
+            LobbyHomeCardView card = cardGo.AddComponent<LobbyHomeCardView>();
+
+            // ButtonView wires its Button in Awake, so the object stays inactive until the fields are assigned
+            var jumpInGo = new GameObject("JumpIn");
+            jumpInGo.SetActive(false);
+            jumpInGo.transform.SetParent(cardGo.transform);
+            ButtonView jumpIn = jumpInGo.AddComponent<ButtonView>();
+            SetBackingField(jumpIn, nameof(ButtonView.Button), jumpInGo.AddComponent<Button>());
+            SetBackingField(jumpIn, "images", Array.Empty<Image>());
+            SetBackingField(jumpIn, "text", CreateText(jumpInGo.transform, "Label"));
+            jumpInGo.SetActive(true);
+
+            var counterGo = new GameObject("OnlineCounter");
+            counterGo.transform.SetParent(cardGo.transform);
+
+            SetBackingField(card, nameof(LobbyHomeCardView.JumpInButton), jumpIn);
+            SetBackingField(card, nameof(LobbyHomeCardView.Thumbnail), CreateImageView(cardGo.transform));
+            SetBackingField(card, nameof(LobbyHomeCardView.TitleText), CreateText(cardGo.transform, "Title"));
+            SetBackingField(card, nameof(LobbyHomeCardView.CreatorText), CreateText(cardGo.transform, "Creator"));
+            SetBackingField(card, nameof(LobbyHomeCardView.OnlineCounter), counterGo);
+            SetBackingField(card, nameof(LobbyHomeCardView.OnlineCountText), CreateText(counterGo.transform, "Count"));
+
+            return card;
+        }
+
+        private static ImageView CreateImageView(Transform parent)
+        {
+            var thumbnailGo = new GameObject("Thumbnail");
+            thumbnailGo.transform.SetParent(parent);
+            Image image = thumbnailGo.AddComponent<Image>();
+            ImageView thumbnail = thumbnailGo.AddComponent<ImageView>();
+            SetBackingField(thumbnail, nameof(ImageView.Image), image);
+            return thumbnail;
         }
 
         private static TMP_Text CreateText(Transform parent, string name)
