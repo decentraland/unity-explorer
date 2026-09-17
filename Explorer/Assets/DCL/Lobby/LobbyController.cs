@@ -30,7 +30,8 @@ namespace DCL.Lobby
 {
     /// <summary>
     ///     Fullscreen panel shown before the world starts loading and, later, on demand during gameplay.
-    ///     It only reports the close intent (Jump in, Close or Logout); what happens next is up to the caller.
+    ///     It only reports the close intent (Jump in or Close); what happens next is up to the caller.
+    ///     Logout is not a close intent: the system menu drives it and the authentication screen replaces this panel.
     /// </summary>
     public class LobbyController : ControllerBase<LobbyView, LobbyParameter>
     {
@@ -189,8 +190,7 @@ namespace DCL.Lobby
             closeIntent?.TrySetCanceled(ct);
             closeIntent = new UniTaskCompletionSource();
 
-            await UniTask.WhenAny(closeIntent.Task.AttachExternalCancellation(ct),
-                viewInstance!.ProfileMenuView.SystemMenuView.LogoutButton.OnClickAsync(ct));
+            await closeIntent.Task.AttachExternalCancellation(ct);
         }
 
         private async UniTaskVoid ShowAvatarAsync(CancellationToken ct)

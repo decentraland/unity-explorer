@@ -189,17 +189,17 @@ namespace DCL.Lobby.Tests
         }
 
         [Test]
-        public void CloseOnLogout()
+        public void StayOpenOnLogout()
         {
             // Arrange
-            UniTask lifeCycle = Launch(isStartup: false);
+            UniTask lifeCycle = Launch(isStartup: true);
             Assert.That(lifeCycle.Status, Is.EqualTo(UniTaskStatus.Pending));
 
             // Act
             logoutButton.onClick.Invoke();
 
             // Assert
-            Assert.That(lifeCycle.Status, Is.EqualTo(UniTaskStatus.Succeeded));
+            Assert.That(lifeCycle.Status, Is.EqualTo(UniTaskStatus.Pending));
         }
 
         [Test]

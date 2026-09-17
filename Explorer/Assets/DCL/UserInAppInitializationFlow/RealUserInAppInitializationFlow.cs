@@ -61,6 +61,9 @@ namespace DCL.UserInAppInitializationFlow
         private readonly IWorldPermissionsService worldPermissionsService;
         private readonly IChatHistory chatHistory;
 
+        // Cancelled by a Logout execution so the execution parked on the startup lobby gives the flow up instead of loading the world
+        private CancellationTokenSource? startupLobbyGate;
+
         public RealUserInAppInitializationFlow(
             ILoadingStatus loadingStatus,
             IDecentralandUrlsSource decentralandUrlsSource,
@@ -147,6 +150,7 @@ namespace DCL.UserInAppInitializationFlow
                     switch (parameters.LoadSource)
                     {
                         case IUserInAppInitializationFlow.LoadSource.Logout:
+                            startupLobbyGate?.Cancel();
                             await DoLogoutOperationsAsync();
 
                             //Restart the realm and show the authentications screen simultaneously to avoid the "empty space" flicker
@@ -171,8 +175,8 @@ namespace DCL.UserInAppInitializationFlow
                 }
 
                 // Nothing has been teleported or loaded yet: the lobby holds the flow until the user jumps in
-                if (ShouldShowStartupLobby(parameters.LoadSource))
-                    await mvcManager.ShowAsync(LobbyController.IssueCommand(new LobbyParameter(isStartup: true)), ct);
+                if (ShouldShowStartupLobby(parameters.LoadSource) && !await WaitForLobbyJumpInAsync(ct))
+                    return;
 
                 var flowToRun = parameters.LoadSource is IUserInAppInitializationFlow.LoadSource.Logout
                     ? reloginOps
@@ -256,6 +260,27 @@ namespace DCL.UserInAppInitializationFlow
             && !appArgs.HasFlag(AppArgsFlags.AUTOPILOT)
             && !appArgs.HasFlag(AppArgsFlags.MEASURE_LOADING_TIME)
             && !appArgs.HasFlag(AppArgsFlags.DISABLE_HUD);
+
+        /// <summary>
+        ///     Holds the flow on the lobby. Returns false when a Logout execution took the flow over while the lobby was up:
+        ///     the authentication screen has replaced the lobby and this execution must not load the world for the signed-out session.
+        /// </summary>
+        private async UniTask<bool> WaitForLobbyJumpInAsync(CancellationToken ct)
+        {
+            startupLobbyGate = startupLobbyGate.SafeRestart();
+            CancellationTokenSource gate = startupLobbyGate;
+
+            await mvcManager.ShowAsync(LobbyController.IssueCommand(new LobbyParameter(isStartup: true)), ct);
+
+            bool jumpedIn = !gate.IsCancellationRequested;
+
+            // A Logout execution may have opened its own lobby meanwhile; only the gate created here is released
+            if (startupLobbyGate == gate)
+                startupLobbyGate = null;
+
+            gate.Dispose();
+            return jumpedIn;
+        }
 
         /// <summary>
         ///     Switches to the realm picked in the lobby before anything is loaded. A Genesis pick is satisfied by any Genesis realm.
