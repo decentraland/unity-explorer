@@ -80,6 +80,7 @@ namespace Plugins.NativeWindowManager
         private static bool initialized;
         private static bool wasFullScreenBeforeRequest;
         private static bool disableWindowConstraints;
+        private static bool nativeConstraintsUnavailable;
 
         private static ResolutionListener resolutionListener;
 
@@ -217,15 +218,25 @@ namespace Plugins.NativeWindowManager
 
         private static void ApplyConstraints(bool enabled)
         {
-            if (disableWindowConstraints || Application.isEditor) return;
+            if (disableWindowConstraints || nativeConstraintsUnavailable || Application.isEditor) return;
 
-            if (!initialized)
+            try
             {
-                WindowConstraint_Init();
-                initialized = true;
-            }
+                if (!initialized)
+                {
+                    WindowConstraint_Init();
+                    initialized = true;
+                }
 
-            WindowConstraint_Set(enabled ? 1 : 0, MIN_ASPECT_RATIO, MAX_ASPECT_RATIO, MIN_WIDTH, MIN_HEIGHT);
+                WindowConstraint_Set(enabled ? 1 : 0, MIN_ASPECT_RATIO, MAX_ASPECT_RATIO, MIN_WIDTH, MIN_HEIGHT);
+            }
+            catch (Exception e) when (e is DllNotFoundException or EntryPointNotFoundException)
+            {
+                // Platforms without a WindowResizeConstraint native build run without window
+                // constraints; the failure is per-platform-permanent, so give up for the session.
+                nativeConstraintsUnavailable = true;
+                ReportHub.LogWarning(ReportCategory.ENGINE, $"WindowResizeConstraint native plugin unavailable ({e.GetType().Name}); window resize constraints are disabled");
+            }
         }
 
         [DllImport("WindowResizeConstraint")]

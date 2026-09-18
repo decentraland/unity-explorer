@@ -74,6 +74,13 @@ namespace DCL.Utility
             if (string.IsNullOrEmpty(path))
                 return null;
 
+            // Platform #if directives resolve to the active build target, not the OS the process
+            // runs on: a Linux editor (or a Linux player produced from a non-Linux target build)
+            // would otherwise compile the kernel32/libc native path and fail at runtime. Resolve
+            // via managed DriveInfo (statvfs under Mono) whenever the runtime is actually Linux.
+            if (Application.platform is RuntimePlatform.LinuxEditor or RuntimePlatform.LinuxPlayer)
+                return GetManagedDriveInfoForPath(path);
+
             try
             {
 #if UNITY_STANDALONE_WIN
@@ -89,6 +96,8 @@ namespace DCL.Utility
                 return null;
 #elif UNITY_STANDALONE_OSX
                 return GetMacDriveInfoForPath(path);
+#elif UNITY_STANDALONE_LINUX || UNITY_EDITOR_LINUX
+                return GetManagedDriveInfoForPath(path);
 #else
                 return null;
 #endif
@@ -98,6 +107,57 @@ namespace DCL.Utility
                 return null;
             }
         }
+
+        // Queries the volume that actually hosts the path via statvfs, the same way the Windows and macOS
+        // branches query the path directly. Path.GetPathRoot collapses to "/", which under the editor's
+        // FHS sandbox is a small overlay rather than the bind-mounted volume that holds the path.
+        private static DriveData? GetManagedDriveInfoForPath(string path)
+        {
+            try
+            {
+                if (statvfs(path, out StatvfsRaw vfs) != 0)
+                    return null;
+
+                ulong unit = vfs.f_frsize != 0 ? vfs.f_frsize : vfs.f_bsize;
+
+                return new DriveData
+                {
+                    AvailableFreeSpace = vfs.f_bavail * unit,
+                    TotalSize = vfs.f_blocks * unit,
+                };
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+
+        // glibc statvfs on the Linux x86_64 ABI: every field is unsigned long (8 bytes) and fsblkcnt_t is
+        // 64-bit, so no _FILE_OFFSET_BITS variant is needed. Only the block counts are read.
+        [StructLayout(LayoutKind.Sequential)]
+        private struct StatvfsRaw
+        {
+            public ulong f_bsize;
+            public ulong f_frsize;
+            public ulong f_blocks;
+            public ulong f_bfree;
+            public ulong f_bavail;
+            public ulong f_files;
+            public ulong f_ffree;
+            public ulong f_favail;
+            public ulong f_fsid;
+            public ulong f_flag;
+            public ulong f_namemax;
+            private readonly int spare0;
+            private readonly int spare1;
+            private readonly int spare2;
+            private readonly int spare3;
+            private readonly int spare4;
+            private readonly int spare5;
+        }
+
+        [DllImport("libc", SetLastError = true, EntryPoint = "statvfs")]
+        private static extern int statvfs(string path, out StatvfsRaw buf);
 
         public static void ShellExecute(string fileName)
         {
