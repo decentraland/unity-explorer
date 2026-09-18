@@ -1,4 +1,4 @@
-using Arch.Core;
+﻿using Arch.Core;
 using CRDT;
 using CrdtEcsBridge.Components;
 using DCL.ECSComponents;
@@ -27,9 +27,9 @@ namespace DCL.SDKComponents.SceneUI.Tests
     /// </summary>
     public class UITransformSiblingInsertionShould : UnitySystemTestBase<UITransformSortingSystem>
     {
-        private Dictionary<CRDTEntity, Entity> entitiesMap;
+        private Dictionary<CRDTEntity, Entity> entitiesMap = null!;
         private Entity sceneRoot;
-        private UITransformComponent rootComponent;
+        private UITransformComponent rootComponent = null!;
 
         [SetUp]
         public void SetUp()
@@ -76,6 +76,21 @@ namespace DCL.SDKComponents.SceneUI.Tests
 
         private VisualElement GetVisualElement(Entity entity) =>
             world.Get<UITransformComponent>(entity).Transform;
+
+        /// <summary>
+        ///     Removes a child from the parent's linked list and container (simulating UITransformParentingSystem
+        ///     handling a deleted entity) without touching the remaining siblings' rightOf.
+        /// </summary>
+        private void RemoveChild(Entity entity)
+        {
+            UITransformComponent component = world.Get<UITransformComponent>(entity);
+            CRDTEntity crdtEntity = world.Get<CRDTEntity>(entity);
+
+            rootComponent.RelationData.RemoveChild(crdtEntity, ref component.RelationData);
+            rootComponent.ContentContainer.Remove(component.Transform);
+            entitiesMap.Remove(crdtEntity);
+            world.Destroy(entity);
+        }
 
         [Test]
         [Description("Reproduces the exact bug scenario: 2 siblings exist (A, B), then a new sibling C is " +
@@ -344,6 +359,167 @@ namespace DCL.SDKComponents.SceneUI.Tests
 
             CollectionAssert.AreEqual(expected, rootComponent.ContentContainer.Children().ToArray(),
                 "Order should be A → C → B even when A and B have ZIndex=0 and C has ZIndex=null");
+        }
+        [Test]
+        [Description("Raw ECS scenes may create several siblings without rightOf. Every one of them must stay in the list, " +
+                      "in creation order, instead of only the last-enumerated one becoming the head.")]
+        public void ChainEverySiblingWithoutRightOfInCreationOrder()
+        {
+            // Arrange
+            Entity entityA = CreateChild(100, 0);
+            Entity entityB = CreateChild(200, 0);
+            Entity entityC = CreateChild(300, 0);
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            VisualElement[] expected =
+            {
+                GetVisualElement(entityA),
+                GetVisualElement(entityB),
+                GetVisualElement(entityC),
+            };
+
+            CollectionAssert.AreEqual(expected, rootComponent.ContentContainer.Children().ToArray(),
+                "Siblings without rightOf should keep creation order");
+        }
+
+        [Test]
+        [Description("Siblings chained behind a rightOf=0 node must follow it even when several nodes have rightOf=0.")]
+        public void ChainFollowersOfEverySiblingWithoutRightOf()
+        {
+            // Arrange — Two chains: A → B and C → D
+            Entity entityA = CreateChild(100, 0);
+            Entity entityB = CreateChild(200, 100);
+            Entity entityC = CreateChild(300, 0);
+            Entity entityD = CreateChild(400, 300);
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            VisualElement[] expected =
+            {
+                GetVisualElement(entityA),
+                GetVisualElement(entityB),
+                GetVisualElement(entityC),
+                GetVisualElement(entityD),
+            };
+
+            CollectionAssert.AreEqual(expected, rootComponent.ContentContainer.Children().ToArray(),
+                "Order should be A → B → C → D");
+        }
+
+        [Test]
+        [Description("Removing a child frees a dictionary slot that the next child may reuse, so enumeration order " +
+                      "no longer matches creation order. Heads must still be chained in creation order.")]
+        public void KeepCreationOrderOfHeadsAfterARemoval()
+        {
+            // Arrange — A and B without rightOf, then A is removed
+            Entity entityA = CreateChild(100, 0);
+            Entity entityB = CreateChild(200, 0);
+
+            system.Update(0);
+
+            world.Get<PBUiTransform>(entityB).IsDirty = false;
+            RemoveChild(entityA);
+
+            // Act — C is created after B
+            Entity entityC = CreateChild(300, 0);
+
+            system.Update(0);
+
+            // Assert
+            VisualElement[] expected =
+            {
+                GetVisualElement(entityB),
+                GetVisualElement(entityC),
+            };
+
+            CollectionAssert.AreEqual(expected, rootComponent.ContentContainer.Children().ToArray(),
+                "Order should be B → C");
+        }
+
+        [Test]
+        [Description("A child whose rightOf points at an entity that is not a sibling must be appended, not dropped.")]
+        public void AppendChildWithDanglingRightOfTarget()
+        {
+            // Arrange
+            Entity entityA = CreateChild(100, 0);
+            Entity entityB = CreateChild(200, 100);
+            Entity entityC = CreateChild(300, 999);
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            VisualElement[] expected =
+            {
+                GetVisualElement(entityA),
+                GetVisualElement(entityB),
+                GetVisualElement(entityC),
+            };
+
+            CollectionAssert.AreEqual(expected, rootComponent.ContentContainer.Children().ToArray(),
+                "Order should be A → B → C with the dangling child at the end");
+        }
+
+        [Test]
+        [Description("When the head is removed and the next sibling's rightOf update has not arrived, the remaining " +
+                      "chain has no rightOf=0 node. It must still be re-attached in its original order.")]
+        public void ReattachRemainingChildrenWhenHeadIsRemovedWithoutRightOfUpdate()
+        {
+            // Arrange — A → B → C
+            Entity entityA = CreateChild(100, 0);
+            Entity entityB = CreateChild(200, 100);
+            Entity entityC = CreateChild(300, 200);
+
+            system.Update(0);
+
+            world.Get<PBUiTransform>(entityB).IsDirty = false;
+            world.Get<PBUiTransform>(entityC).IsDirty = false;
+
+            // Act — Remove A; B still claims rightOf=A
+            RemoveChild(entityA);
+            rootComponent.RelationData.layoutIsDirty = true;
+
+            system.Update(0);
+
+            // Assert
+            VisualElement[] expected =
+            {
+                GetVisualElement(entityB),
+                GetVisualElement(entityC),
+            };
+
+            CollectionAssert.AreEqual(expected, rootComponent.ContentContainer.Children().ToArray(),
+                "Order should be B → C after the head is removed");
+        }
+
+        [Test]
+        [Description("Siblings whose rightOf values form a cycle are unreachable from any head. They must be appended " +
+                      "after the valid chain instead of being dropped.")]
+        public void AppendCyclicSiblingsAfterTheChain()
+        {
+            // Arrange — A is the head; B and C point at each other
+            Entity entityA = CreateChild(100, 0);
+            Entity entityB = CreateChild(200, 300);
+            Entity entityC = CreateChild(300, 200);
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            VisualElement[] expected =
+            {
+                GetVisualElement(entityA),
+                GetVisualElement(entityB),
+                GetVisualElement(entityC),
+            };
+
+            CollectionAssert.AreEqual(expected, rootComponent.ContentContainer.Children().ToArray(),
+                "Order should be A → B → C with the cyclic pair appended in creation order");
         }
     }
 }

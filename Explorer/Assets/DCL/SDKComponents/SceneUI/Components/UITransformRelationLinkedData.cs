@@ -20,6 +20,13 @@ namespace DCL.SDKComponents.SceneUI.Components
             public Node? Next { get; set; }
             public Node? Previous { get; set; }
 
+            /// <summary>
+            ///     Position in the parent's AddChild sequence; orders siblings that the rightOf chain leaves unordered.
+            /// </summary>
+            internal int insertionIndex;
+
+            internal bool visited;
+
             private Node()
             {
             }
@@ -30,6 +37,8 @@ namespace DCL.SDKComponents.SceneUI.Components
                 RightOf = 0;
                 Next = null;
                 Previous = null;
+                insertionIndex = 0;
+                visited = false;
             }
 
             public void Setup(CRDTEntity entityId)
@@ -47,6 +56,8 @@ namespace DCL.SDKComponents.SceneUI.Components
         private Dictionary<CRDTEntity, Node>? nodes;
         private Dictionary<CRDTEntity, Node>? pendingRightOf; // key is the left entity
         private Dictionary<CRDTEntity, Node>? reverseRightOf; // key is the rightOf target, used for O(n) rebuild
+        private List<Node>? chainStarts; // scratch list reused by RebuildLinkedList
+        private int insertionCounter;
 
         internal Entity parent;
 
@@ -65,6 +76,7 @@ namespace DCL.SDKComponents.SceneUI.Components
             Node newNode = Node.POOL.Get();
             newNode.Setup(childEntity);
             newNode.RightOf = childComponent.rightOf;
+            newNode.insertionIndex = insertionCounter++;
 
             nodes ??= new Dictionary<CRDTEntity, Node>(CHILDREN_DEFAULT_CAPACITY);
             pendingRightOf ??= new Dictionary<CRDTEntity, Node>(CHILDREN_DEFAULT_CAPACITY);
@@ -172,83 +184,141 @@ namespace DCL.SDKComponents.SceneUI.Components
             layoutIsDirty = true;
         }
 
+        /// <summary>
+        ///     Rebuilds the sibling chain from the stored rightOf values so that every node is reachable from <see cref="head" />:
+        ///     each rightOf == 0 node starts a chain (in insertion order), and nodes left unreachable by a duplicate,
+        ///     dangling or cyclic rightOf are appended at the end.
+        /// </summary>
         internal void RebuildLinkedList()
         {
+            head = null;
+
             if (nodes == null || nodes.Count == 0)
-            {
-                head = null;
                 return;
+
+            Dictionary<CRDTEntity, Node> reverse = reverseRightOf ??= new Dictionary<CRDTEntity, Node>(CHILDREN_DEFAULT_CAPACITY);
+            reverse.Clear();
+            List<Node> starts = chainStarts ??= new List<Node>(CHILDREN_DEFAULT_CAPACITY);
+            starts.Clear();
+
+            // Single pass: reset pointers, collect chain starts, build the reverse map (rightOf target → node)
+            foreach (KeyValuePair<CRDTEntity, Node> kvp in nodes)
+            {
+                Node node = kvp.Value;
+                node.Next = null;
+                node.Previous = null;
+                node.visited = false;
+
+                if (node.RightOf.Id == 0)
+                {
+                    starts.Add(node);
+                    continue;
+                }
+
+                if (!reverse.TryGetValue(node.RightOf, out Node claimant))
+                {
+                    reverse[node.RightOf] = node;
+                    continue;
+                }
+
+                // Duplicate rightOf target: two nodes claim to be after the same sibling.
+                // This happens when a new node is inserted between existing siblings and the
+                // existing sibling's rightOf hasn't been updated yet (e.g., CRDT update for
+                // the existing sibling was not processed by ResolveSiblingsOrder).
+                // The earlier-added node keeps the slot; the other one is appended by the leftovers pass below.
+                ReportHub.LogWarning(
+                    new ReportData(ReportCategory.SCENE_UI),
+                    $"[UISort] Duplicate rightOf target {node.RightOf}: "
+                    + $"both {claimant.EntityId} and {node.EntityId} claim it. "
+                    + "The later-added one is appended to the end of the chain.");
+
+                if (node.insertionIndex < claimant.insertionIndex)
+                    reverse[node.RightOf] = node;
             }
 
-            reverseRightOf ??= new Dictionary<CRDTEntity, Node>(CHILDREN_DEFAULT_CAPACITY);
-            reverseRightOf.Clear();
+            Node? tail = null;
 
-            // Single pass: reset pointers, find head, build reverse map (rightOf target → node)
-            head = null;
-            Node? orphanTail = null;
+            // Chain every start in insertion order, each followed by the nodes that point at it
+            SortByInsertionIndex(starts);
 
-            foreach (var kvp in nodes)
+            for (var i = 0; i < starts.Count; i++)
+                tail = AppendChain(starts[i], tail, reverse);
+
+            // Leftovers: nodes still unreachable (duplicate loser, dangling rightOf target, or a cycle) are appended so none is lost
+            starts.Clear();
+
+            foreach (KeyValuePair<CRDTEntity, Node> kvp in nodes)
+                if (!kvp.Value.visited)
+                    starts.Add(kvp.Value);
+
+            SortByInsertionIndex(starts);
+
+            for (var i = 0; i < starts.Count; i++)
             {
-                kvp.Value.Next = null;
-                kvp.Value.Previous = null;
+                Node node = starts[i];
 
-                if (kvp.Value.RightOf.Id == 0)
-                {
-                    head = kvp.Value;
-                }
-                else if (reverseRightOf.ContainsKey(kvp.Value.RightOf))
-                {
-                    // Duplicate rightOf target: two nodes claim to be after the same sibling.
-                    // This happens when a new node is inserted between existing siblings and the
-                    // existing sibling's rightOf hasn't been updated yet (e.g., CRDT update for
-                    // the existing sibling was not processed by ResolveSiblingsOrder).
-                    // Keep the first entry and chain the duplicate at the end to avoid data loss.
+                // Already reached through an earlier leftover's chain
+                if (node.visited)
+                    continue;
+
+                // Duplicate losers were already reported above
+                bool isDuplicateLoser = reverse.TryGetValue(node.RightOf, out Node claimant) && claimant != node;
+
+                if (!isDuplicateLoser)
                     ReportHub.LogWarning(
                         new ReportData(ReportCategory.SCENE_UI),
-                        $"[UISort] Duplicate rightOf target {kvp.Value.RightOf}: "
-                        + $"existing={reverseRightOf[kvp.Value.RightOf].EntityId}, new={kvp.Value.EntityId}. "
-                        + "Appending duplicate to end of chain.");
+                        $"[UISort] Sibling {node.EntityId} has rightOf={node.RightOf} which is not a reachable sibling. "
+                        + "Appending it to the end of the chain.");
 
-                    // Track orphan to append at end
-                    if (orphanTail == null)
-                        orphanTail = kvp.Value;
-                    else
-                    {
-                        orphanTail.Next = kvp.Value;
-                        kvp.Value.Previous = orphanTail;
-                        orphanTail = kvp.Value;
-                    }
-                }
-                else
-                {
-                    reverseRightOf[kvp.Value.RightOf] = kvp.Value;
-                }
+                tail = AppendChain(node, tail, reverse);
+            }
+        }
+
+        /// <summary>
+        ///     Links <paramref name="start" /> after <paramref name="tail" /> (or makes it the head), then follows the
+        ///     reverse map through the not-yet-visited nodes that point at it. Returns the new tail.
+        /// </summary>
+        private Node AppendChain(Node start, Node? tail, Dictionary<CRDTEntity, Node> reverse)
+        {
+            if (tail == null)
+                head = start;
+            else
+            {
+                tail.Next = start;
+                start.Previous = tail;
             }
 
-            if (head == null)
-                return;
+            Node current = start;
+            current.visited = true;
 
-            // Follow the chain using O(1) lookups
-            var current = head;
-
-            while (reverseRightOf.TryGetValue(current.EntityId, out var next))
+            while (reverse.TryGetValue(current.EntityId, out Node next) && !next.visited)
             {
                 current.Next = next;
                 next.Previous = current;
+                next.visited = true;
                 current = next;
             }
 
-            // Append any orphaned nodes (from duplicate rightOf) at the end of the chain
-            if (orphanTail != null)
+            return current;
+        }
+
+        /// <summary>
+        ///     Allocation-free insertion sort; the list holds the few siblings the rightOf chain leaves unordered.
+        /// </summary>
+        private static void SortByInsertionIndex(List<Node> list)
+        {
+            for (var i = 1; i < list.Count; i++)
             {
-                // Find the first orphan (walk back from tail)
-                Node firstOrphan = orphanTail;
+                Node node = list[i];
+                int j = i - 1;
 
-                while (firstOrphan.Previous != null)
-                    firstOrphan = firstOrphan.Previous;
+                while (j >= 0 && list[j].insertionIndex > node.insertionIndex)
+                {
+                    list[j + 1] = list[j];
+                    j--;
+                }
 
-                current.Next = firstOrphan;
-                firstOrphan.Previous = current;
+                list[j + 1] = node;
             }
         }
 
@@ -264,6 +334,7 @@ namespace DCL.SDKComponents.SceneUI.Components
 
             pendingRightOf?.Clear();
             reverseRightOf?.Clear();
+            chainStarts?.Clear();
             head = null;
         }
     }
