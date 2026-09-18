@@ -78,11 +78,8 @@ namespace DCL.SocialService
 
                         do
                         {
-if (totalBytes >= receiveBuffer.Length)
-    throw new InvalidOperationException($"Incoming RPC message exceeds receive buffer capacity ({receiveBuffer.Length} bytes)");
-
-result = await webSocket.ReceiveAsync(
-    new Memory<byte>(receiveBuffer, totalBytes, receiveBuffer.Length - totalBytes), ct);
+                            result = await webSocket.ReceiveAsync(
+                                new Memory<byte>(receiveBuffer, totalBytes, receiveBuffer.Length - totalBytes), ct);
 
                             if (result.MessageType == WebSocketMessageType.Close)
                                 break;
@@ -95,8 +92,7 @@ result = await webSocket.ReceiveAsync(
                                     $"RPC message exceeded receive buffer ({receiveBuffer.Length} bytes), aborting connection");
                                 webSocket.Abort();
                                 OnErrorEvent?.Invoke(new WebSocketException("RPC message too large for receive buffer"));
-                                totalBytes = 0;
-return;
+                                return;
                             }
                         }
                         while (!result.EndOfMessage);
@@ -109,10 +105,15 @@ return;
                             await CloseAsync(ct);
                             break;
                         }
-var data = new byte[totalBytes];
-receiveBuffer.AsSpan(0, totalBytes).CopyTo(data);
 
-OnMessageEvent?.Invoke(data);
+                        var data = new byte[totalBytes];
+                        receiveBuffer.AsSpan(0, totalBytes).CopyTo(data);
+
+                        try { OnMessageEvent?.Invoke(data); }
+                        catch (Exception ex)
+                        {
+                            ReportHub.LogException(ex, ReportCategory.SOCIAL);
+                        }
                     }
                     catch (OperationCanceledException) { break; }
                     catch (WebSocketException e)
