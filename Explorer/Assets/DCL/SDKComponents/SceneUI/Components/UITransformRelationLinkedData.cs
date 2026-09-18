@@ -3,7 +3,6 @@ using CRDT;
 using DCL.Diagnostics;
 using DCL.Optimization.Pools;
 using System.Collections.Generic;
-using UnityEngine.Assertions;
 using UnityEngine.Pool;
 
 namespace DCL.SDKComponents.SceneUI.Components
@@ -52,9 +51,12 @@ namespace DCL.SDKComponents.SceneUI.Components
 
         private const int CHILDREN_DEFAULT_CAPACITY = 10;
 
+        /// <summary>
+        ///     First sibling of the chain produced by the last <see cref="RebuildLinkedList" />; null once the children change.
+        /// </summary>
         internal Node? head;
+
         private Dictionary<CRDTEntity, Node>? nodes;
-        private Dictionary<CRDTEntity, Node>? pendingRightOf; // key is the left entity
         private Dictionary<CRDTEntity, Node>? reverseRightOf; // key is the rightOf target, used for O(n) rebuild
         private List<Node>? chainStarts; // scratch list reused by RebuildLinkedList
         private int insertionCounter;
@@ -73,105 +75,30 @@ namespace DCL.SDKComponents.SceneUI.Components
 
         public void AddChild(Entity thisEntity, CRDTEntity childEntity, ref UITransformRelationLinkedData childComponent)
         {
+            nodes ??= new Dictionary<CRDTEntity, Node>(CHILDREN_DEFAULT_CAPACITY);
+
             Node newNode = Node.POOL.Get();
             newNode.Setup(childEntity);
             newNode.RightOf = childComponent.rightOf;
             newNode.insertionIndex = insertionCounter++;
-
-            nodes ??= new Dictionary<CRDTEntity, Node>(CHILDREN_DEFAULT_CAPACITY);
-            pendingRightOf ??= new Dictionary<CRDTEntity, Node>(CHILDREN_DEFAULT_CAPACITY);
-
-            // If the element is first (or for some reason unspecified)
-            if (childComponent.rightOf.Id > 0)
-            {
-                if (nodes.TryGetValue(childComponent.rightOf, out Node leftNode))
-                {
-                    newNode.Next = leftNode.Next;
-
-                    if (leftNode.Next != null)
-                        leftNode.Next.Previous = newNode;
-
-                    leftNode.Next = newNode;
-                    Assert.AreNotEqual(leftNode.Next.EntityId, leftNode.EntityId);
-
-                    newNode.Previous = leftNode;
-                }
-                else
-                {
-                    // If rightOfEntityId is not yet in the list, add to pending
-                    pendingRightOf[childComponent.rightOf] = newNode;
-                }
-            }
-            else if (head != null)
-            {
-                // if the element is unsorted pull it to the head - make it a new head
-                newNode.Next = head;
-                head.Previous = newNode;
-                head = newNode;
-            }
-
             nodes[childEntity] = newNode;
-
-            head ??= newNode;
-
-            ResolvePending(childEntity, newNode);
 
             childComponent.parent = thisEntity;
 
+            head = null;
             layoutIsDirty = true;
-        }
-
-        private void ResolvePending(CRDTEntity newlyAddedEntityId, Node leftNode)
-        {
-            if (pendingRightOf == null || !pendingRightOf.TryGetValue(newlyAddedEntityId, out var rightNode))
-                return;
-
-            if (leftNode.Next != null)
-                leftNode.Next.Previous = rightNode;
-
-            leftNode.Next = rightNode;
-            rightNode.Previous = leftNode;
-
-            Assert.AreNotEqual(leftNode.Next.EntityId, leftNode.EntityId);
-
-            if (rightNode == head)
-            {
-                // if the current head is the right node then the left-most becomes the new head
-                for (head = rightNode; head.Previous != null; head = head.Previous)
-                {
-                }
-            }
-
-            pendingRightOf?.Remove(newlyAddedEntityId);
         }
 
         public void RemoveChild(CRDTEntity child, ref UITransformRelationLinkedData childData)
         {
             // Child could be already removed from the nodes list if its entity was deleted
-            if (nodes == null || !nodes.TryGetValue(child, out Node? nodeToRemove))
+            if (nodes == null || !nodes.Remove(child, out Node? nodeToRemove))
                 return;
 
-            if (nodeToRemove == head)
-            {
-                head = head.Next;
-
-                if (head != null)
-                    head.Previous = null;
-            }
-            else
-            {
-                if (nodeToRemove.Previous != null)
-                    nodeToRemove.Previous.Next = nodeToRemove.Next;
-                if (nodeToRemove.Next != null)
-                    nodeToRemove.Next.Previous = nodeToRemove.Previous;
-            }
-            nodes.Remove(child);
-
-            // Update pendingRightOf if necessary
-            pendingRightOf?.Remove(child);
-            pendingRightOf?.Remove(childData.rightOf);
-
             childData.parent = Entity.Null;
+
+            head = null;
+            layoutIsDirty = true;
 
             Node.POOL.Release(nodeToRemove);
         }
@@ -332,7 +259,6 @@ namespace DCL.SDKComponents.SceneUI.Components
                 nodes.Clear();
             }
 
-            pendingRightOf?.Clear();
             reverseRightOf?.Clear();
             chainStarts?.Clear();
             head = null;

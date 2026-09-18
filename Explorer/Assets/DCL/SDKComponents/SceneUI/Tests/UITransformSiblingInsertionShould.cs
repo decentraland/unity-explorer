@@ -18,7 +18,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
     ///     a conditionally-rendered UiEntity appears after its siblings are already in the tree.
     ///
     ///     The test simulates the pipeline:
-    ///     1. AddChild (from UITransformParentingSystem) — adds the new entity to the linked list
+    ///     1. AddChild (from UITransformParentingSystem) — registers the new entity as a child
     ///     2. UITransformSortingSystem — resolves rightOf changes and rebuilds the linked list
     ///
     ///     The critical scenario: when Green is added with rightOf=Red, and Blue's rightOf needs
@@ -50,9 +50,9 @@ namespace DCL.SDKComponents.SceneUI.Tests
         }
 
         /// <summary>
-        ///     Creates a child entity with UITransformComponent and PBUiTransform, adds it to the
-        ///     parent's linked list via AddChild (simulating UITransformParentingSystem), and adds
-        ///     its VisualElement to the parent's ContentContainer.
+        ///     Creates a child entity with UITransformComponent and PBUiTransform, registers it on the
+        ///     parent via AddChild (simulating UITransformParentingSystem), and adds its VisualElement
+        ///     to the parent's ContentContainer.
         /// </summary>
         private Entity CreateChild(int crdtId, int rightOf)
         {
@@ -78,7 +78,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
             world.Get<UITransformComponent>(entity).Transform;
 
         /// <summary>
-        ///     Removes a child from the parent's linked list and container (simulating UITransformParentingSystem
+        ///     Removes a child from the parent and its container (simulating UITransformParentingSystem
         ///     handling a deleted entity) without touching the remaining siblings' rightOf.
         /// </summary>
         private void RemoveChild(Entity entity)
@@ -482,7 +482,6 @@ namespace DCL.SDKComponents.SceneUI.Tests
 
             // Act — Remove A; B still claims rightOf=A
             RemoveChild(entityA);
-            rootComponent.RelationData.layoutIsDirty = true;
 
             system.Update(0);
 

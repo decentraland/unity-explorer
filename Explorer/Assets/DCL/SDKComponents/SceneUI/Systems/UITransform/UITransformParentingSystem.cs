@@ -45,24 +45,27 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
             // Remove deleted entity from the parent list
             RemoveFromParent(uiTransformComponentToBeDeleted, sdkEntity);
 
-            var head = uiTransformComponentToBeDeleted.RelationData.head;
-            if (head == null) return;
+            // The chain is only valid right after a rebuild, and RemoveChild resets the released node, so Next is read first
+            uiTransformComponentToBeDeleted.RelationData.RebuildLinkedList();
 
-            for (var current = head; current != null; current = current.Next)
+            for (UITransformRelationLinkedData.Node? current = uiTransformComponentToBeDeleted.RelationData.head; current != null;)
             {
+                UITransformRelationLinkedData.Node? next = current.Next;
+
                 if (entitiesMap.TryGetValue(current.EntityId, out Entity childEntity))
                 {
                     ref UITransformComponent uiTransform = ref World.TryGetRef<UITransformComponent>(childEntity, out bool exists);
 
-                    if (!exists)
+                    if (exists)
                     {
-                        ReportHub.LogError(GetReportData(), $"Trying to unparent an ${nameof(UITransformComponent)}'s child but no component has been found on entity {current.EntityId}");
-                        continue;
+                        uiTransformComponentToBeDeleted.RelationData.RemoveChild(current.EntityId, ref uiTransform.RelationData);
+                        SetNewChild(ref uiTransform, current.EntityId, sceneRoot);
                     }
-
-                    uiTransformComponentToBeDeleted.RelationData.RemoveChild(current.EntityId, ref uiTransform.RelationData);
-                    SetNewChild(ref uiTransform, current.EntityId, sceneRoot);
+                    else
+                        ReportHub.LogError(GetReportData(), $"Trying to unparent an ${nameof(UITransformComponent)}'s child but no component has been found on entity {current.EntityId}");
                 }
+
+                current = next;
             }
         }
 
