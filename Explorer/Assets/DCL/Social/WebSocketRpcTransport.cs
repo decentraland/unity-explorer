@@ -96,7 +96,7 @@ result = await webSocket.ReceiveAsync(
                                 webSocket.Abort();
                                 OnErrorEvent?.Invoke(new WebSocketException("RPC message too large for receive buffer"));
                                 totalBytes = 0;
-                                break;
+return;
                             }
                         }
                         while (!result.EndOfMessage);
