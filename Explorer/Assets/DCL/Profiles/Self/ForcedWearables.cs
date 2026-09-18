@@ -1,6 +1,5 @@
 using CommunicationData.URLHelpers;
 using DCL.Diagnostics;
-using System;
 using System.Collections.Generic;
 
 namespace DCL.Profiles.Self
@@ -11,19 +10,11 @@ namespace DCL.Profiles.Self
     ///     avatar, is built from — and removed again from anything about to be deployed, so they never reach the
     ///     catalyst.
     ///     Lets a wearable be worn without owning it, e.g. to check a locally converted asset bundle in-world.
+    ///     Fixed at construction: the set comes from the launch arguments or the debug settings.
     /// </summary>
     public class ForcedWearables
     {
         private readonly HashSet<URN> wearables = new ();
-
-        /// <summary>
-        ///     Everything forced at any point this session. <see cref="RemoveFrom" /> strips this rather than the
-        ///     current set, so un-forcing a wearable does not narrow what a later strip covers.
-        /// </summary>
-        private readonly HashSet<URN> everForced = new ();
-
-        /// <summary>Raised when the set changes, so the in-world avatar can be rebuilt.</summary>
-        public event Action? Changed;
 
         public ForcedWearables(IEnumerable<URN>? initial = null)
         {
@@ -31,36 +22,7 @@ namespace DCL.Profiles.Self
 
             foreach (URN urn in initial)
                 if (!urn.IsNullOrEmpty())
-                {
-                    URN shortened = urn.Shorten();
-                    wearables.Add(shortened);
-                    everForced.Add(shortened);
-                }
-        }
-
-        public void Add(URN wearable)
-        {
-            if (wearable.IsNullOrEmpty()) return;
-
-            URN shortened = wearable.Shorten();
-            everForced.Add(shortened);
-
-            if (wearables.Add(shortened))
-                Changed?.Invoke();
-        }
-
-        public void Remove(URN wearable)
-        {
-            if (wearables.Remove(wearable.Shorten()))
-                Changed?.Invoke();
-        }
-
-        public void Clear()
-        {
-            if (wearables.Count == 0) return;
-
-            wearables.Clear();
-            Changed?.Invoke();
+                    wearables.Add(urn.Shorten());
         }
 
         public void ApplyTo(Profile profile)
@@ -73,9 +35,9 @@ namespace DCL.Profiles.Self
 
         public void RemoveFrom(Profile profile)
         {
-            if (everForced.Count == 0 || !TryGetBackingSet(profile, out HashSet<URN> profileWearables)) return;
+            if (wearables.Count == 0 || !TryGetBackingSet(profile, out HashSet<URN> profileWearables)) return;
 
-            foreach (URN wearable in everForced)
+            foreach (URN wearable in wearables)
                 profileWearables.Remove(wearable);
         }
 

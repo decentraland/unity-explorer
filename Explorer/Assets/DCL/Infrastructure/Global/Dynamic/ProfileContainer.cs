@@ -8,7 +8,6 @@ using DCL.Chat;
 using DCL.Backpack.Gifting.Services;
 using DCL.Backpack.Gifting.Services.PendingTransfers;
 using DCL.Backpack.Gifting.Services.SnapshotEquipped;
-using DCL.DebugUtilities;
 using DCL.PluginSystem.Global;
 using DCL.Profiles;
 using DCL.Profiles.Self;
@@ -95,8 +94,6 @@ namespace Global.Dynamic
                 staticContainer.EmoteStorage, equippedEmotes, selfEmotes, profileCache, globalWorld, playerEntity,
                 pendingTransferService, forcedWearables);
 
-            AddForcedWearablesWidget(staticContainer.DebugContainerBuilder, forcedWearables);
-
             ISpriteCache thumbnailCache = new SpriteCache(staticContainer.WebRequestsContainer.WebRequestController);
             var profileRepositoryWrapper = new ProfileRepositoryWrapper(profilesRepository, profileCache, thumbnailCache, identityCache);
             GetProfileThumbnailCommand.Initialize(new GetProfileThumbnailCommand(profileRepositoryWrapper));
@@ -147,18 +144,6 @@ namespace Global.Dynamic
             SelfProfile.Dispose();
             ProfileRepositoryWrapper.Dispose();
             PendingTransferService.Dispose();
-        }
-
-        /// <summary>
-        ///     Equip/un-equip a wearable on the own avatar at runtime without owning it and without deploying it —
-        ///     <see cref="ForcedWearables" /> strips them from every profile that goes to the catalyst.
-        /// </summary>
-        private static void AddForcedWearablesWidget(IDebugContainerBuilder debugBuilder, ForcedWearables forcedWearables)
-        {
-            debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.FORCED_WEARABLES)
-                       ?.AddStringFieldWithConfirmation(string.Empty, "Equip URN", urn => forcedWearables.Add(new URN(urn)))
-                        .AddStringFieldWithConfirmation(string.Empty, "Un-equip URN", urn => forcedWearables.Remove(new URN(urn)))
-                        .AddSingleButton("Un-equip all", forcedWearables.Clear);
         }
 
         private static void ParseDebugUrns(IReadOnlyCollection<string>? debugUrns, List<URN> parsed)

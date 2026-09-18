@@ -8,7 +8,6 @@ namespace DCL.Profiles.Tests
     public class ForcedWearablesShould
     {
         private const string WEARABLE = "urn:decentraland:matic:collections-v2:0x9251f5c79923bc80e5dd8fc6d0c9fa02953aa622:0";
-        private const string OTHER_WEARABLE = "urn:decentraland:matic:collections-v2:0xa80aea22d0fe9d34ca72ce304ef427bbefee1f11:2";
         private const string OWNED_WEARABLE = "urn:decentraland:off-chain:base-avatars:f_sweater";
 
         private static Profile NewProfile(params string[] wearables) =>
@@ -28,7 +27,7 @@ namespace DCL.Profiles.Tests
         }
 
         [Test]
-        public void ApplyTheInitialSet()
+        public void ApplyTheForcedSet()
         {
             var forced = new ForcedWearables(new[] { new URN(WEARABLE) });
             Profile profile = NewProfile(OWNED_WEARABLE);
@@ -53,54 +52,25 @@ namespace DCL.Profiles.Tests
         }
 
         [Test]
-        public void StripAWearableThatWasUnForced()
+        public void StripAForcedWearableTheProfileAlreadyCarries()
         {
-            // The safety invariant: un-forcing does not un-equip, so a wearable that reached the equipped set
-            // while it was forced must still be stripped from anything about to be deployed.
-            var forced = new ForcedWearables();
-            forced.Add(new URN(WEARABLE));
-            forced.Remove(new URN(WEARABLE));
+            // The profile about to be deployed is rebuilt from the equipped set, not from the one ApplyTo touched,
+            // so the strip has to work on a wearable this instance never applied itself.
+            var forced = new ForcedWearables(new[] { new URN(WEARABLE) });
+            Profile profile = NewProfile(WEARABLE, OWNED_WEARABLE);
 
-            Profile profile = NewProfile(WEARABLE);
             forced.RemoveFrom(profile);
 
-            Assert.That(profile.Avatar.Wearables, Does.Not.Contain(new URN(WEARABLE)));
-        }
-
-        [Test]
-        public void StripAWearableAfterClear()
-        {
-            var forced = new ForcedWearables();
-            forced.Add(new URN(WEARABLE));
-            forced.Clear();
-
-            Profile profile = NewProfile(WEARABLE);
-            forced.RemoveFrom(profile);
-
-            Assert.That(profile.Avatar.Wearables, Does.Not.Contain(new URN(WEARABLE)));
-        }
-
-        [Test]
-        public void NotApplyAnUnForcedWearable()
-        {
-            var forced = new ForcedWearables();
-            forced.Add(new URN(WEARABLE));
-            forced.Remove(new URN(WEARABLE));
-
-            Profile profile = NewProfile();
-            forced.ApplyTo(profile);
-
-            Assert.That(profile.Avatar.Wearables, Is.Empty);
+            Assert.That(profile.Avatar.Wearables, Is.EquivalentTo(new[] { new URN(OWNED_WEARABLE) }));
         }
 
         [Test]
         public void ShortenUrnsOnTheWayIn()
         {
             // An extended URN carries a token id; the profile holds the shortened form.
-            var forced = new ForcedWearables();
-            forced.Add(new URN($"{WEARABLE}:105"));
-
+            var forced = new ForcedWearables(new[] { new URN($"{WEARABLE}:105") });
             Profile profile = NewProfile();
+
             forced.ApplyTo(profile);
 
             Assert.That(profile.Avatar.Wearables, Does.Contain(new URN(WEARABLE)));
@@ -109,10 +79,9 @@ namespace DCL.Profiles.Tests
         [Test]
         public void StripAWearableForcedByItsExtendedUrn()
         {
-            var forced = new ForcedWearables();
-            forced.Add(new URN($"{WEARABLE}:105"));
-
+            var forced = new ForcedWearables(new[] { new URN($"{WEARABLE}:105") });
             Profile profile = NewProfile(WEARABLE);
+
             forced.RemoveFrom(profile);
 
             Assert.That(profile.Avatar.Wearables, Does.Not.Contain(new URN(WEARABLE)));
@@ -121,44 +90,12 @@ namespace DCL.Profiles.Tests
         [Test]
         public void IgnoreEmptyUrns()
         {
-            var forced = new ForcedWearables(new[] { default(URN) });
-            var raised = false;
-            forced.Changed += () => raised = true;
-
-            forced.Add(default(URN));
-
+            var forced = new ForcedWearables(new[] { default(URN), new URN(WEARABLE) });
             Profile profile = NewProfile();
+
             forced.ApplyTo(profile);
 
-            Assert.That(profile.Avatar.Wearables, Is.Empty);
-            Assert.That(raised, Is.False);
-        }
-
-        [Test]
-        public void RaiseChangedOnlyOnAnActualMutation()
-        {
-            var forced = new ForcedWearables();
-            var count = 0;
-            forced.Changed += () => count++;
-
-            forced.Add(new URN(WEARABLE));
-            Assert.That(count, Is.EqualTo(1), "add");
-
-            forced.Add(new URN(WEARABLE));
-            Assert.That(count, Is.EqualTo(1), "adding the same wearable twice must not raise again");
-
-            forced.Remove(new URN(OTHER_WEARABLE));
-            Assert.That(count, Is.EqualTo(1), "removing a wearable that was never forced must not raise");
-
-            forced.Remove(new URN(WEARABLE));
-            Assert.That(count, Is.EqualTo(2), "remove");
-
-            forced.Clear();
-            Assert.That(count, Is.EqualTo(2), "clearing an empty set must not raise");
-
-            forced.Add(new URN(OTHER_WEARABLE));
-            forced.Clear();
-            Assert.That(count, Is.EqualTo(4), "add + clear");
+            Assert.That(profile.Avatar.Wearables, Is.EquivalentTo(new[] { new URN(WEARABLE) }));
         }
 
         [Test]

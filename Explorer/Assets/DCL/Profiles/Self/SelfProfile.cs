@@ -63,14 +63,12 @@ namespace DCL.Profiles.Self
 
             web3IdentityCache.OnIdentityCleared += InvalidateOwnProfile;
             web3IdentityCache.OnIdentityChanged += InvalidateOwnProfile;
-            forcedWearables.Changed += RebuildAvatarWithForcedWearables;
         }
 
         public void Dispose()
         {
             web3IdentityCache.OnIdentityCleared -= InvalidateOwnProfile;
             web3IdentityCache.OnIdentityChanged -= InvalidateOwnProfile;
-            forcedWearables.Changed -= RebuildAvatarWithForcedWearables;
         }
 
         public async UniTask<Profile?> ProfileAsync(CancellationToken ct)
@@ -228,20 +226,6 @@ namespace DCL.Profiles.Self
                 if (web3IdentityCache.Identity == null) return null;
                 return profileCache.TryGet(web3IdentityCache.Identity.Address, out Profile? profile) ? profile : null;
             }
-        }
-
-        /// <summary>
-        ///     Re-applies the forced set to the cached profile and rebuilds the avatar.
-        ///     Stripping first is what makes an un-force visible: <see cref="ForcedWearables.RemoveFrom" /> clears
-        ///     everything forced this session, then the current set goes back on.
-        /// </summary>
-        private void RebuildAvatarWithForcedWearables()
-        {
-            if (OwnProfile is not { } profile) return;
-
-            forcedWearables.RemoveFrom(profile);
-            forcedWearables.ApplyTo(profile);
-            UpdateAvatarInWorld(profile);
         }
 
         private void UpdateAvatarInWorld(Profile profile)
