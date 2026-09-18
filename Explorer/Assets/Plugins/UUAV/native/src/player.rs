@@ -182,6 +182,7 @@ impl UUAVPlayer {
             }
         }
 
+        // TODO: later, encapsulate the valid transitions into the Playback type
         // nothing will open; do not leave the player reading Opening
         self.playback.rcu(|cur| match cur.as_ref() {
             Playback::Opening => Arc::new(Playback::Closed),
