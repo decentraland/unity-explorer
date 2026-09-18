@@ -2,6 +2,7 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Clipboard;
+using DCL.Input;
 using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.UI.UpgradeGuestAccountPopup;
@@ -20,6 +21,7 @@ namespace DCL.PluginSystem.Global
         private readonly ClipboardManager clipboardManager;
         private readonly IAccountLinkAuthenticator accountLinkAuthenticator;
         private readonly ISelfProfile selfProfile;
+        private readonly IInputBlock inputBlock;
 
         private PastePopupToastController? pasteToastButtonController;
         private ChatEntryMenuPopupController? chatEntryMenuPopupController;
@@ -30,13 +32,15 @@ namespace DCL.PluginSystem.Global
             IMVCManager mvcManager,
             ClipboardManager clipboardManager,
             IAccountLinkAuthenticator accountLinkAuthenticator,
-            ISelfProfile selfProfile)
+            ISelfProfile selfProfile,
+            IInputBlock inputBlock)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
             this.clipboardManager = clipboardManager;
             this.accountLinkAuthenticator = accountLinkAuthenticator;
             this.selfProfile = selfProfile;
+            this.inputBlock = inputBlock;
         }
 
         public void Dispose()
@@ -74,7 +78,7 @@ namespace DCL.PluginSystem.Global
             ControllerBase<UpgradeGuestAccountPopupView, UpgradeGuestAccountPopupController.Params>.ViewFactoryMethod upgradeGuestAccountViewFactoryMethod =
                 UpgradeGuestAccountPopupController.Preallocate(upgradeGuestAccountPopupAsset, null, out _);
 
-            upgradeGuestAccountPopupController = new UpgradeGuestAccountPopupController(upgradeGuestAccountViewFactoryMethod, accountLinkAuthenticator, selfProfile);
+            upgradeGuestAccountPopupController = new UpgradeGuestAccountPopupController(upgradeGuestAccountViewFactoryMethod, accountLinkAuthenticator, selfProfile, inputBlock);
             mvcManager.RegisterController(upgradeGuestAccountPopupController);
         }
 
