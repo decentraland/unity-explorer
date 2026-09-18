@@ -1,5 +1,4 @@
 using DG.Tweening;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -8,26 +7,18 @@ namespace DCL.Lobby
 {
     /// <summary>
     ///     Horizontal strip that pages by dragging: releasing snaps to the nearest page and one dot per page tracks the position.
-    ///     Dots are cloned from an inactive template in the prefab. Subclasses own the cards and report how many are shown.
+    ///     Subclasses own the cards and report how many are shown.
     /// </summary>
     public abstract class LobbyPagedRailView : MonoBehaviour, IEndDragHandler
     {
         private const float SNAP_DURATION = 0.25f;
-        private const float DOT_ANIMATION_DURATION = 0.2f;
 
         [SerializeField] protected ScrollRect scrollRect = null!;
 
         [Tooltip("Cards laid out per page; the viewport width must fit exactly this many cards plus spacing for the snapping to line up")]
         [SerializeField] protected int cardsPerPage = 3;
 
-        [Header("Dots")]
-        [SerializeField] private Image dotTemplate = null!;
-        [SerializeField] private Color selectedDotColor = Color.white;
-        [SerializeField] private Color dotColor = Color.gray;
-        [SerializeField] private float selectedDotWidth = 24f;
-        [SerializeField] private float dotWidth = 8f;
-
-        private readonly List<Image> dots = new ();
+        [SerializeField] private LobbyCarouselDotsView dots = null!;
 
         private Tweener? snapTween;
         private bool scrollListened;
@@ -51,7 +42,7 @@ namespace DCL.Lobby
             }
 
             shownCount = count;
-            ShowDots(PageCount(count));
+            dots.Show(PageCount(count));
 
             if (rewind)
             {
@@ -90,23 +81,6 @@ namespace DCL.Lobby
             return nearest;
         }
 
-        private void ShowDots(int pageCount)
-        {
-            // A single page needs no navigation hint
-            int visibleDots = pageCount > 1 ? pageCount : 0;
-
-            for (var i = 0; i < visibleDots; i++)
-            {
-                if (i == dots.Count)
-                    dots.Add(Instantiate(dotTemplate, dotTemplate.transform.parent));
-
-                dots[i].gameObject.SetActive(true);
-            }
-
-            for (int i = visibleDots; i < dots.Count; i++)
-                dots[i].gameObject.SetActive(false);
-        }
-
         private void OnScrolled(Vector2 _) =>
             SelectPage(PageAt(-scrollRect.content.anchoredPosition.x));
 
@@ -129,19 +103,7 @@ namespace DCL.Lobby
         private void SelectPage(int page)
         {
             CurrentPage = page;
-
-            for (var i = 0; i < dots.Count; i++)
-            {
-                if (!dots[i].gameObject.activeSelf) continue;
-
-                bool selected = i == page;
-                RectTransform dot = dots[i].rectTransform;
-                dots[i].color = selected ? selectedDotColor : dotColor;
-
-                DOTween.To(() => dot.sizeDelta, size => dot.sizeDelta = size, new Vector2(selected ? selectedDotWidth : dotWidth, dot.sizeDelta.y), DOT_ANIMATION_DURATION)
-                       .SetEase(Ease.OutCubic)
-                       .SetLink(dot.gameObject);
-            }
+            dots.Select(page);
         }
     }
 }

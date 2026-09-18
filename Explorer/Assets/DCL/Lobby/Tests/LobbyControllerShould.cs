@@ -1130,11 +1130,13 @@ namespace DCL.Lobby.Tests
             dotGo.transform.SetParent(dots);
             Image dotTemplate = dotGo.AddComponent<Image>();
             dotGo.SetActive(false);
+            LobbyCarouselDotsView dotsView = dots.gameObject.AddComponent<LobbyCarouselDotsView>();
+            SetField(dotsView, "dotTemplate", dotTemplate);
 
             LobbyCarouselView carousel = carouselGo.AddComponent<LobbyCarouselView>();
             SetField(carousel, "scrollRect", scrollRect);
             SetField(carousel, "cardTemplate", cardTemplate);
-            SetField(carousel, "dotTemplate", dotTemplate);
+            SetField(carousel, "dots", dotsView);
             SetField(carousel, "cardsPerPage", cardsPerPage);
 
             return carousel;

@@ -343,11 +343,13 @@ namespace DCL.Lobby.Tests
             dotGo.transform.SetParent(dots);
             Image dotTemplate = dotGo.AddComponent<Image>();
             dotGo.SetActive(false);
+            LobbyCarouselDotsView dotsView = dots.gameObject.AddComponent<LobbyCarouselDotsView>();
+            SetField(dotsView, "dotTemplate", dotTemplate);
 
             LobbyFriendsRailView rail = railGo.AddComponent<LobbyFriendsRailView>();
             SetField(rail, "scrollRect", scrollRect);
             SetField(rail, "cardsPerPage", 4);
-            SetField(rail, "dotTemplate", dotTemplate);
+            SetField(rail, "dots", dotsView);
             SetField(rail, "loopList", loopList);
 
             SetBackingField(sectionView, nameof(LobbyFriendsSectionView.OnlineCountText), CreateText(sectionGo.transform, "OnlineCount"));
