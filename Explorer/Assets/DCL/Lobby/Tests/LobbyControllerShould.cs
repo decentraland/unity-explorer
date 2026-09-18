@@ -400,7 +400,7 @@ namespace DCL.Lobby.Tests
 
             // Assert
             Assert.That(landingCard.TitleText.text, Is.EqualTo(GENESIS_PLAZA));
-            Assert.That(landingCard.OnlineCounter.activeSelf, Is.False);
+            Assert.That(landingCard.OnlineCountText.text, Is.EqualTo("0"));
             Assert.That(startParcel.Peek(), Is.EqualTo(Vector2Int.zero));
             Assert.That(startParcel.Realm, Is.Null);
             Assert.That(lifeCycle.Status, Is.EqualTo(UniTaskStatus.Succeeded));
@@ -443,7 +443,7 @@ namespace DCL.Lobby.Tests
         }
 
         [Test]
-        public void HideTheOnlineCounterWhenNobodyIsThere()
+        public void ShowAZeroOnlineCountWhenNobodyIsThere()
         {
             // Arrange
             genesisPlaza.user_count = 0;
@@ -452,7 +452,8 @@ namespace DCL.Lobby.Tests
             Launch(isStartup: true);
 
             // Assert
-            Assert.That(landingCard.OnlineCounter.activeSelf, Is.False);
+            Assert.That(landingCard.OnlineCounter.activeSelf, Is.True);
+            Assert.That(landingCard.OnlineCountText.text, Is.EqualTo("0"));
         }
 
         [Test]
@@ -863,6 +864,76 @@ namespace DCL.Lobby.Tests
         }
 
         [Test]
+        public void SetTheStartParcelWhenJumpingInFromARecentCardBeforeTheWorldLoads()
+        {
+            // Arrange
+            PlacesData.PlaceInfo place = CreatePlace("plaza", new Vector2Int(10, 20));
+            ArrangeRecentPlaces(new List<string> { place.id }, place);
+            UniTask lifeCycle = Launch(isStartup: true);
+
+            // Act
+            recentPlaceCards[0].JumpInButton!.Button.onClick.Invoke();
+
+            // Assert
+            Assert.That(startParcel.Peek(), Is.EqualTo(new Vector2Int(10, 20)));
+            Assert.That(startParcel.Realm, Is.EqualTo(URLDomain.FromString(GENESIS_URL)));
+            Assert.That(lifeCycle.Status, Is.EqualTo(UniTaskStatus.Succeeded));
+            mvcManager.DidNotReceive().ShowAsync(Arg.Any<ShowCommand<PlaceDetailPanelView, PlaceDetailPanelParameter>>(), Arg.Any<CancellationToken>());
+        }
+
+        [Test]
+        public void TeleportWhenJumpingInFromARecentCardInWorld()
+        {
+            // Arrange
+            startParcel.ConsumeByTeleportOperation();
+            PlacesData.PlaceInfo place = CreatePlace("plaza", new Vector2Int(10, 20));
+            ArrangeRecentPlaces(new List<string> { place.id }, place);
+            UniTask lifeCycle = Launch(isStartup: false);
+
+            // Act
+            recentPlaceCards[0].JumpInButton!.Button.onClick.Invoke();
+
+            // Assert
+            realmNavigator.Received(1).TeleportToParcelAsync(new Vector2Int(10, 20), Arg.Any<CancellationToken>(), false);
+            Assert.That(lifeCycle.Status, Is.EqualTo(UniTaskStatus.Succeeded));
+        }
+
+        [Test]
+        public void ChangeRealmWhenJumpingInFromAFeaturedCardInWorld()
+        {
+            // Arrange
+            startParcel.ConsumeByTeleportOperation();
+            ArrangeRecommendedPlaces(CreatePlace("my world", Vector2Int.zero, "myworld.dcl.eth"));
+            Launch(isStartup: false);
+
+            // Act
+            recommendedPlaces.Cards[0].JumpInButton!.Button.onClick.Invoke();
+
+            // Assert
+            realmNavigator.Received(1).TryChangeRealmAsync(URLDomain.FromString($"{WORLD_SERVER_URL}/myworld.dcl.eth"), Arg.Any<CancellationToken>(), default, true, true);
+        }
+
+        [Test]
+        public void ShowTheOnlineCountOnEveryPlaceCard()
+        {
+            // Arrange
+            PlacesData.PlaceInfo crowded = CreatePlace("crowded", Vector2Int.zero);
+            crowded.user_count = 7;
+            crowded.connected_addresses = new[] { "0x1", "0x2" };
+            PlacesData.PlaceInfo empty = CreatePlace("empty", Vector2Int.one);
+            ArrangeRecentPlaces(new List<string> { crowded.id, empty.id }, crowded, empty);
+
+            // Act
+            Launch(isStartup: true);
+
+            // Assert
+            Assert.That(recentPlaceCards[0].OnlineCounter.activeSelf, Is.True);
+            Assert.That(recentPlaceCards[0].OnlineCountText.text, Is.EqualTo("2"));
+            Assert.That(recentPlaceCards[1].OnlineCounter.activeSelf, Is.True);
+            Assert.That(recentPlaceCards[1].OnlineCountText.text, Is.EqualTo("0"));
+        }
+
+        [Test]
         public void HideEventsWhenNothingIsScheduled()
         {
             // Act
@@ -1147,16 +1218,46 @@ namespace DCL.Lobby.Tests
 
         private static LobbyPlaceCardView CreatePlaceCard(Transform parent, string name)
         {
+            // The card measures its header and footer in Awake, so the object stays inactive until the fields are assigned
             var cardGo = new GameObject(name);
+            cardGo.SetActive(false);
             cardGo.transform.SetParent(parent);
             LobbyPlaceCardView card = cardGo.AddComponent<LobbyPlaceCardView>();
 
+            var jumpInGo = new GameObject("JumpIn");
+            jumpInGo.transform.SetParent(cardGo.transform);
+            ButtonView jumpIn = jumpInGo.AddComponent<ButtonView>();
+            SetBackingField(jumpIn, nameof(ButtonView.Button), jumpInGo.AddComponent<Button>());
+            SetBackingField(jumpIn, "images", Array.Empty<Image>());
+            SetBackingField(jumpIn, "text", CreateText(jumpInGo.transform, "Label"));
+
+            var counterGo = new GameObject("OnlineCounter");
+            counterGo.transform.SetParent(cardGo.transform);
+            TMP_Text creator = CreateText(cardGo.transform, "Creator");
+            var jumpInGroupGo = new GameObject("JumpInGroup", typeof(RectTransform), typeof(CanvasGroup));
+            jumpInGroupGo.transform.SetParent(cardGo.transform);
+
             SetBackingField(card, nameof(LobbyPlaceCardView.Button), cardGo.AddComponent<Button>());
+            SetField(card, "jumpInButton", jumpIn);
             SetBackingField(card, nameof(LobbyPlaceCardView.Thumbnail), CreateImageView(cardGo.transform));
             SetBackingField(card, nameof(LobbyPlaceCardView.TitleText), CreateText(cardGo.transform, "Title"));
-            SetBackingField(card, nameof(LobbyPlaceCardView.CreatorText), CreateText(cardGo.transform, "Creator"));
+            SetBackingField(card, nameof(LobbyPlaceCardView.CreatorText), creator);
+            SetBackingField(card, nameof(LobbyPlaceCardView.OnlineCounter), counterGo);
+            SetBackingField(card, nameof(LobbyPlaceCardView.OnlineCountText), CreateText(counterGo.transform, "Count"));
+            SetField(card, "header", CreateRect(cardGo.transform, "Header"));
+            SetField(card, "footer", CreateRect(cardGo.transform, "Footer"));
+            SetField(card, "creatorGroup", creator.gameObject.AddComponent<CanvasGroup>());
+            SetField(card, "jumpInGroup", jumpInGroupGo.GetComponent<CanvasGroup>());
+            cardGo.SetActive(true);
 
             return card;
+        }
+
+        private static RectTransform CreateRect(Transform parent, string name)
+        {
+            var rectGo = new GameObject(name, typeof(RectTransform));
+            rectGo.transform.SetParent(parent);
+            return (RectTransform)rectGo.transform;
         }
 
         private static LobbyEventCardView CreateEventCard(Transform parent, string name)

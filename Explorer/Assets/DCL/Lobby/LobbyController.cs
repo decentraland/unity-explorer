@@ -30,6 +30,7 @@ using MVC;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using Utility;
@@ -144,9 +145,13 @@ namespace DCL.Lobby
                 viewInstance.NotificationsButton.onClick.RemoveListener(ShowNotifications);
 
                 foreach (LobbyPlaceCardView card in viewInstance.RecentPlaceCards)
+                {
                     card.Button.onClick.RemoveAllListeners();
+                    card.JumpInButton?.Button.onClick.RemoveAllListeners();
+                }
 
                 viewInstance.RecommendedPlaces.CardClicked = null;
+                viewInstance.RecommendedPlaces.CardJumpInClicked = null;
                 viewInstance.LiveEvents.CardClicked = null;
                 viewInstance.UpcomingEvents.CardClicked = null;
             }
@@ -180,9 +185,11 @@ namespace DCL.Lobby
             {
                 int index = i;
                 recentCards[i].Button.onClick.AddListener(() => OnRecentPlaceClicked(index));
+                recentCards[i].JumpInButton?.Button.onClick.AddListener(() => OnRecentPlaceJumpIn(index));
             }
 
             viewInstance.RecommendedPlaces.CardClicked = OnRecommendedPlaceClicked;
+            viewInstance.RecommendedPlaces.CardJumpInClicked = OnRecommendedPlaceJumpIn;
             viewInstance.LiveEvents.CardClicked = OnLiveEventClicked;
             viewInstance.UpcomingEvents.CardClicked = OnUpcomingEventClicked;
 
@@ -454,11 +461,7 @@ namespace DCL.Lobby
             shownLandingPlace = place;
             card.TitleText.text = place.title;
             card.CreatorText.text = place.contact_name;
-
-            int online = place.connected_addresses?.Length ?? place.user_count;
-            card.OnlineCountText.text = online.ToString();
-            card.OnlineCounter.SetActive(online > 0);
-
+            ShowOnlineCount(card.OnlineCounter, card.OnlineCountText, place);
             thumbnailLoader.LoadCommunityThumbnailFromUrlAsync(place.image, card.Thumbnail, card.DefaultThumbnail, ct, true).Forget();
             card.JumpInButton.SetInteractable(true);
         }
@@ -467,7 +470,16 @@ namespace DCL.Lobby
         {
             card.TitleText.text = place.title;
             card.CreatorText.text = place.contact_name;
+            ShowOnlineCount(card.OnlineCounter, card.OnlineCountText, place);
             thumbnailLoader.LoadCommunityThumbnailFromUrlAsync(place.image, card.Thumbnail, card.DefaultThumbnail, ct, true).Forget();
+        }
+
+        // The addresses come only from the endpoints that resolve connected users; the aggregated count is the fallback
+        private static void ShowOnlineCount(GameObject counter, TMP_Text countText, PlacesData.PlaceInfo place)
+        {
+            int online = place.connected_addresses?.Length ?? place.user_count;
+            countText.text = online.ToString();
+            counter.SetActive(true);
         }
 
         private void ShowEventCards(LobbyCarouselView carousel, List<EventDTO> events, CancellationToken ct)
@@ -542,6 +554,18 @@ namespace DCL.Lobby
         {
             if (index < recommendedPlaces.Count)
                 OnPlaceClicked(recommendedPlaces[index]);
+        }
+
+        private void OnRecentPlaceJumpIn(int index)
+        {
+            if (index < recentPlaces.Count)
+                OnPlaceJumpIn(recentPlaces[index]);
+        }
+
+        private void OnRecommendedPlaceJumpIn(int index)
+        {
+            if (index < recommendedPlaces.Count)
+                OnPlaceJumpIn(recommendedPlaces[index]);
         }
 
         private void OnLiveEventClicked(int index)

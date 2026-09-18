@@ -20,6 +20,11 @@ namespace DCL.Lobby
         public Action<int>? CardClicked;
 
         /// <summary>
+        ///     Index in <see cref="Cards" /> of the card whose Jump in button was clicked.
+        /// </summary>
+        public Action<int>? CardJumpInClicked;
+
+        /// <summary>
         ///     Every card cloned so far, shown or hidden. Cards are only ever appended, so indices stay stable.
         /// </summary>
         public IReadOnlyList<LobbyCardView> Cards => cards;
@@ -49,6 +54,10 @@ namespace DCL.Lobby
             LobbyCardView card = Instantiate(cardTemplate, scrollRect.content);
             int index = cards.Count;
             card.Button.onClick.AddListener(() => CardClicked?.Invoke(index));
+
+            if (card.JumpInButton != null)
+                card.JumpInButton.Button.onClick.AddListener(() => CardJumpInClicked?.Invoke(index));
+
             return card;
         }
     }

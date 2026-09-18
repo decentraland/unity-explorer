@@ -20,7 +20,13 @@ namespace DCL.Lobby
         [field: SerializeField]
         public TMP_Text TitleText { get; private set; } = null!;
 
+        [SerializeField] private ButtonView? jumpInButton;
         [SerializeField] private Sprite? defaultThumbnail;
+
+        /// <summary>
+        ///     Left unassigned on cards that cannot jump in on their own.
+        /// </summary>
+        public ButtonView? JumpInButton => jumpInButton;
 
         public Sprite? DefaultThumbnail => defaultThumbnail;
     }
