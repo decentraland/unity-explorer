@@ -21,7 +21,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         private readonly JToken rendererVersion;
         private readonly JToken installSource;
         private readonly JToken os = SystemInfo.operatingSystem;
-        private readonly JToken tzOffsetMinutes = (int)TimeZoneInfo.Local.GetUtcOffset(DateTime.UtcNow).TotalMinutes;
+        private readonly JToken utcOffsetMinutes = (int)TimeZoneInfo.Local.GetUtcOffset(DateTime.UtcNow).TotalMinutes;
         private readonly JToken runtime;
 
         private readonly bool isLocalSceneDevelopment;
@@ -61,7 +61,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             trackEvent["install_source"] = installSource;
             trackEvent["runtime"] = runtime;
             trackEvent["operating_system"] = os;
-            trackEvent["tz_offset_minutes"] = tzOffsetMinutes;
+            trackEvent["utc_offset_minutes"] = utcOffsetMinutes;
             trackEvent["is_local_scene"] = isLocalSceneDevelopment;
 
             if (!string.IsNullOrEmpty(campaignAnonUserId))
