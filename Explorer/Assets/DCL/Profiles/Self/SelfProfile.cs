@@ -30,6 +30,7 @@ namespace DCL.Profiles.Self
         private readonly IEquippedWearables equippedWearables;
         private readonly IEquippedEmotes equippedEmotes;
         private readonly IOwnedNftFilter ownedNftFilter;
+        private readonly ForcedWearables forcedWearables;
 
         public event Action<Profile>? ProfilePropagated;
 
@@ -44,7 +45,8 @@ namespace DCL.Profiles.Self
             IProfileCache profileCache,
             World world,
             Entity playerEntity,
-            IOwnedNftFilter ownedNftFilter)
+            IOwnedNftFilter ownedNftFilter,
+            ForcedWearables forcedWearables)
         {
             this.profileRepository = profileRepository;
             this.web3IdentityCache = web3IdentityCache;
@@ -57,15 +59,18 @@ namespace DCL.Profiles.Self
             this.world = world;
             this.playerEntity = playerEntity;
             this.ownedNftFilter = ownedNftFilter;
+            this.forcedWearables = forcedWearables;
 
             web3IdentityCache.OnIdentityCleared += InvalidateOwnProfile;
             web3IdentityCache.OnIdentityChanged += InvalidateOwnProfile;
+            forcedWearables.Changed += RebuildAvatarWithForcedWearables;
         }
 
         public void Dispose()
         {
             web3IdentityCache.OnIdentityCleared -= InvalidateOwnProfile;
             web3IdentityCache.OnIdentityChanged -= InvalidateOwnProfile;
+            forcedWearables.Changed -= RebuildAvatarWithForcedWearables;
         }
 
         public async UniTask<Profile?> ProfileAsync(CancellationToken ct)
@@ -80,6 +85,8 @@ namespace DCL.Profiles.Self
             );
 
             if (profile == null) return null;
+
+            forcedWearables.ApplyTo(profile);
 
             if (forcedEmotes != null)
                 for (var slot = 0; slot < forcedEmotes.Count && slot < profile.Avatar.Emotes.Count; slot++)
@@ -125,6 +132,10 @@ namespace DCL.Profiles.Self
 
             string address = web3IdentityCache.Identity.Address;
 
+            // The only path that deploys a profile, so stripping here keeps forced wearables out of the catalyst
+            // even after the backpack has copied them from the player entity's profile into IEquippedWearables.
+            forcedWearables.RemoveFrom(newProfile);
+
             // Take a snapshot of the current profile from cache before any mutations
             // This serves as the baseline for duplicate detection and revert on failure
             profileCache.TryGet(address, out Profile? cachedProfile);
@@ -155,6 +166,7 @@ namespace DCL.Profiles.Self
 
                     if (savedProfile != null)
                     {
+                        forcedWearables.ApplyTo(savedProfile);
                         profileCache.Set(savedProfile.UserId, savedProfile);
                         ProfilePropagated?.Invoke(savedProfile);
                     }
@@ -182,6 +194,7 @@ namespace DCL.Profiles.Self
 
                     // We need to re-update the avatar in-world with the new profile because the save operation invalidates the previous profile
                     // breaking the avatar and the backpack
+                    forcedWearables.ApplyTo(savedProfile!);
                     profileCache.Set(savedProfile!.UserId, savedProfile);
                     UpdateAvatarInWorld(savedProfile!);
                     ProfilePropagated?.Invoke(savedProfile);
@@ -216,6 +229,21 @@ namespace DCL.Profiles.Self
                 if (web3IdentityCache.Identity == null) return null;
                 return profileCache.TryGet(web3IdentityCache.Identity.Address, out Profile? profile) ? profile : null;
             }
+        }
+
+        /// <summary>
+        ///     Re-applies the forced set to the cached profile and rebuilds the avatar, so a change made at runtime
+        ///     (debug panel) shows without waiting for the next profile fetch. Stripping first is what makes an
+        ///     un-force visible: <see cref="ForcedWearables.RemoveFrom" /> clears everything forced this session,
+        ///     then the current set goes back on.
+        /// </summary>
+        private void RebuildAvatarWithForcedWearables()
+        {
+            if (OwnProfile is not { } profile) return;
+
+            forcedWearables.RemoveFrom(profile);
+            forcedWearables.ApplyTo(profile);
+            UpdateAvatarInWorld(profile);
         }
 
         private void UpdateAvatarInWorld(Profile profile)

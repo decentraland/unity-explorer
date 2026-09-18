@@ -267,6 +267,25 @@ Only works for PUBLISHED elements (thus having a URN that identifies them).
 
 ---
 
+### `self-force-wearables`
+**Type:** String
+**Description:** Renders specific wearables on your own avatar without owning them. Accepts a comma-separated list of wearable URNs (i.e. `urn:decentraland:matic:collections-v2:0x9251f5c79923bc80e5dd8fc6d0c9fa02953aa622:0`).
+
+The wearables are visible only to you, and are **never deployed**: they are stripped from every profile that goes to the catalyst, including after the backpack has copied them into the equipped set. Un-forcing a wearable strips it again on the next profile update.
+
+Only works for PUBLISHED elements (thus having a URN that identifies them).
+
+Two other ways to reach the same set, useful when iterating:
+- **Debug panel → "Forced Wearables"** — equip/un-equip a URN at runtime, no restart. Requires `--debug`.
+- **`DebugSettings.wearablesToAddToUserProfile`** — inspector array applied at boot, editor-only (like `emotesToAddToUserProfile`).
+
+**Usage:**
+```bash
+--self-force-wearables wearable1,wearable2
+```
+
+---
+
 ### `self-preview-emotes`
 **Type:** String
 **Description:** Enables preview mode for specific emotes. Accepts a comma-separated list of emote URNs (i.e. `urn:decentraland:matic:collections-v2:0xa80aea22d0fe9d34ca72ce304ef427bbefee1f11:2` ) that will be available for preview.
