@@ -78,8 +78,11 @@ namespace DCL.SocialService
 
                         do
                         {
-                            result = await webSocket.ReceiveAsync(
-                                new Memory<byte>(receiveBuffer, totalBytes, receiveBuffer.Length - totalBytes), ct);
+if (totalBytes >= receiveBuffer.Length)
+    throw new InvalidOperationException($"Incoming RPC message exceeds receive buffer capacity ({receiveBuffer.Length} bytes)");
+
+result = await webSocket.ReceiveAsync(
+    new Memory<byte>(receiveBuffer, totalBytes, receiveBuffer.Length - totalBytes), ct);
 
                             if (result.MessageType == WebSocketMessageType.Close)
                                 break;
