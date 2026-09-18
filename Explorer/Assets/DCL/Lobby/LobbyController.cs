@@ -22,6 +22,7 @@ using DCL.UI.ProfileElements;
 using DCL.UI.Profiles;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
+using ECS;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System;
@@ -40,7 +41,6 @@ namespace DCL.Lobby
     /// </summary>
     public class LobbyController : ControllerBase<LobbyView, LobbyParameter>
     {
-        private const string GENESIS_PLAZA_TITLE = "Genesis Plaza";
         private const string EVENT_HOST_FORMAT = "By {0}";
         private const string EVENT_STARTING_NOW = "Starting now";
         private const int MAX_UPCOMING_EVENTS = 10;
@@ -57,6 +57,7 @@ namespace DCL.Lobby
         private readonly LobbyAvatarSettings avatarSettings;
         private readonly World world;
         private readonly IPlacesAPIService placesAPIService;
+        private readonly IRealmData realmData;
         private readonly IHomePlaceSource homePlace;
         private readonly HttpEventsApiService eventsApiService;
         private readonly IRealmNavigator realmNavigator;
@@ -70,7 +71,8 @@ namespace DCL.Lobby
         private readonly List<EventDTO> upcomingEvents = new ();
 
         private LobbyCharacterPreviewController? avatarPreview;
-        private PlacesData.PlaceInfo? shownHomePlace;
+        private PlacesData.PlaceInfo? shownLandingPlace;
+        private LandingDestination? startupDestination;
         private CancellationTokenSource? avatarCts;
         private CancellationTokenSource? placesCts;
         private CancellationTokenSource? eventsCts;
@@ -93,6 +95,7 @@ namespace DCL.Lobby
             LobbyAvatarSettings avatarSettings,
             World world,
             IPlacesAPIService placesAPIService,
+            IRealmData realmData,
             IHomePlaceSource homePlace,
             HttpEventsApiService eventsApiService,
             IRealmNavigator realmNavigator,
@@ -111,6 +114,7 @@ namespace DCL.Lobby
             this.avatarSettings = avatarSettings;
             this.world = world;
             this.placesAPIService = placesAPIService;
+            this.realmData = realmData;
             this.homePlace = homePlace;
             this.eventsApiService = eventsApiService;
             this.realmNavigator = realmNavigator;
@@ -126,7 +130,7 @@ namespace DCL.Lobby
 
             if (viewInstance != null)
             {
-                viewInstance.HomeCard.JumpInButton.Button.onClick.RemoveListener(OnHomeJumpInClicked);
+                viewInstance.LandingCard.JumpInButton.Button.onClick.RemoveListener(OnLandingJumpInClicked);
                 viewInstance.CloseButton.onClick.RemoveListener(RequestClose);
                 viewInstance.CharacterPreviewView.CharacterPreviewInputDetector.OnPointerClickEvent -= OnAvatarClicked;
                 viewInstance.ProfileWidgetView.OpenProfileButton.Button.onClick.RemoveListener(ShowProfileMenu);
@@ -151,7 +155,7 @@ namespace DCL.Lobby
         protected override void OnViewInstantiated()
         {
             base.OnViewInstantiated();
-            viewInstance!.HomeCard.JumpInButton.Button.onClick.AddListener(OnHomeJumpInClicked);
+            viewInstance!.LandingCard.JumpInButton.Button.onClick.AddListener(OnLandingJumpInClicked);
             viewInstance.CloseButton.onClick.AddListener(RequestClose);
             viewInstance.CharacterPreviewView.CharacterPreviewInputDetector.OnPointerClickEvent += OnAvatarClicked;
             viewInstance.ProfileWidgetView.OpenProfileButton.Button.onClick.AddListener(ShowProfileMenu);
@@ -195,8 +199,8 @@ namespace DCL.Lobby
             profileButtonPresenter.LoadProfile();
 
             placesCts = placesCts.SafeRestart();
-            ShowHomeCardLoading();
-            ShowHomePlaceAsync(placesCts.Token).Forget();
+            ShowLandingCardLoading();
+            ShowLandingPlaceAsync(placesCts.Token).Forget();
             ShowRecentPlacesAsync(placesCts.Token).Forget();
             ShowRecommendedPlacesAsync(placesCts.Token).Forget();
 
@@ -251,43 +255,43 @@ namespace DCL.Lobby
         }
 
         /// <summary>
-        ///     Fills the hero card with the place set as home, or Genesis Plaza when there is none.
-        ///     The card is always filled: at startup its Jump in is the only way out of the lobby, so when the Places API
-        ///     cannot be reached an offline Genesis Plaza still lets the user in.
+        ///     Fills the hero card with the destination the session lands in. The card is always filled: at startup its Jump in
+        ///     is the only way out of the lobby, so when the Places API cannot describe the destination an offline stand-in still lets the user in.
         /// </summary>
-        private async UniTaskVoid ShowHomePlaceAsync(CancellationToken ct)
+        private async UniTaskVoid ShowLandingPlaceAsync(CancellationToken ct)
         {
-            PlacesData.PlaceInfo? place = await ResolveHomePlaceAsync(ct);
+            LandingDestination destination = ResolveLandingDestination();
+
+            Result<PlacesData.PlaceInfo?> result = await (destination.WorldName != null
+                    ? placesAPIService.GetWorldByNameAsync(destination.WorldName, ct)
+                    : placesAPIService.GetPlaceAsync(destination.Parcel, ct))
+               .SuppressToResultAsync(ReportCategory.PLACES);
 
             if (ct.IsCancellationRequested) return;
 
-            place ??= new PlacesData.PlaceInfo(Vector2Int.zero) { title = GENESIS_PLAZA_TITLE };
-
-            ShowHomeCard(place, ct);
+            ShowLandingCard(result.Success && result.Value != null ? result.Value : destination.ToOfflinePlace(), ct);
         }
 
-        private async UniTask<PlacesData.PlaceInfo?> ResolveHomePlaceAsync(CancellationToken ct)
+        /// <summary>
+        ///     The launch settings fold app arguments, the saved home and the spawn feature flag into the start parcel and the bootstrap realm;
+        ///     that pick is frozen the first time the lobby shows so the card reads the same for the whole session.
+        ///     Only a destination that was the home keeps following the home, as the user may move it while playing.
+        /// </summary>
+        private LandingDestination ResolveLandingDestination()
         {
-            string? homeWorld = homePlace.IsWorldHome ? homePlace.CurrentHomeWorldName : null;
-            Vector2Int homeParcel = homePlace.CurrentHomeCoordinates ?? Vector2Int.zero;
+            startupDestination ??= new LandingDestination(startParcel.Peek(), realmData.IsWorld() ? realmData.RealmName : null);
 
-            Result<PlacesData.PlaceInfo?> result = await (homeWorld != null
-                    ? placesAPIService.GetWorldByNameAsync(homeWorld, ct)
-                    : placesAPIService.GetPlaceAsync(homeParcel, ct))
-               .SuppressToResultAsync(ReportCategory.PLACES);
+            if (startParcel.Source != StartParcelSource.Home)
+                return startupDestination.Value;
 
-            if (ct.IsCancellationRequested) return null;
+            if (homePlace.IsWorldHome && homePlace.CurrentHomeWorldName is { } homeWorld)
+                return new LandingDestination(Vector2Int.zero, homeWorld);
 
-            if (result.Success && result.Value != null)
-                return result.Value;
+            if (homePlace.CurrentHomeCoordinates is { } homeParcel)
+                return new LandingDestination(homeParcel, null);
 
-            // A home that no longer resolves (deleted world, parcel with no place) yields to Genesis Plaza
-            if (homeWorld == null && homeParcel == Vector2Int.zero)
-                return null;
-
-            result = await placesAPIService.GetPlaceAsync(Vector2Int.zero, ct).SuppressToResultAsync(ReportCategory.PLACES);
-
-            return result.Success ? result.Value : null;
+            // Home was unset during the session: the place the session actually landed in is the closest truth left
+            return startupDestination.Value;
         }
 
         /// <summary>
@@ -390,10 +394,10 @@ namespace DCL.Lobby
             viewInstance.EventsSection.SetActive(liveEvents.Count > 0 || upcomingEvents.Count > 0);
         }
 
-        private void ShowHomeCardLoading()
+        private void ShowLandingCardLoading()
         {
-            LobbyHomeCardView card = viewInstance!.HomeCard;
-            shownHomePlace = null;
+            LobbyLandingCardView card = viewInstance!.LandingCard;
+            shownLandingPlace = null;
             card.TitleText.text = string.Empty;
             card.CreatorText.text = string.Empty;
             card.OnlineCounter.SetActive(false);
@@ -401,10 +405,10 @@ namespace DCL.Lobby
             card.JumpInButton.SetInteractable(false);
         }
 
-        private void ShowHomeCard(PlacesData.PlaceInfo place, CancellationToken ct)
+        private void ShowLandingCard(PlacesData.PlaceInfo place, CancellationToken ct)
         {
-            LobbyHomeCardView card = viewInstance!.HomeCard;
-            shownHomePlace = place;
+            LobbyLandingCardView card = viewInstance!.LandingCard;
+            shownLandingPlace = place;
             card.TitleText.text = place.title;
             card.CreatorText.text = place.contact_name;
 
@@ -474,10 +478,15 @@ namespace DCL.Lobby
             viewInstance!.WelcomeText.text = string.IsNullOrEmpty(name) ? "WELCOME!" : $"WELCOME {name}!";
         }
 
-        private void OnHomeJumpInClicked()
+        private void OnLandingJumpInClicked()
         {
-            if (shownHomePlace != null)
-                OnPlaceClicked(shownHomePlace);
+            if (shownLandingPlace == null) return;
+
+            // Before the world loads the card mirrors the destination the launch settings already picked, so there is nothing to reassign
+            if (startParcel.IsConsumed())
+                OnPlaceClicked(shownLandingPlace);
+            else
+                RequestClose();
         }
 
         private void OnRecentPlaceClicked(int index)
@@ -560,6 +569,31 @@ namespace DCL.Lobby
             closeIntent?.TrySetResult();
             closeIntent = null;
         }
+    }
+
+    /// <summary>
+    ///     Where the session lands: a parcel of Genesis City, or a world (the parcel is then only a stand-in for offline display).
+    /// </summary>
+    internal readonly struct LandingDestination
+    {
+        private const string GENESIS_PLAZA_TITLE = "Genesis Plaza";
+
+        public readonly Vector2Int Parcel;
+        public readonly string? WorldName;
+
+        public LandingDestination(Vector2Int parcel, string? worldName)
+        {
+            Parcel = parcel;
+            WorldName = worldName;
+        }
+
+        public PlacesData.PlaceInfo ToOfflinePlace() =>
+            new (Parcel)
+            {
+                title = WorldName ?? (Parcel == Vector2Int.zero ? GENESIS_PLAZA_TITLE : $"{Parcel.x},{Parcel.y}"),
+                world_name = WorldName ?? string.Empty,
+                base_position_processed = Parcel,
+            };
     }
 
     /// <summary>

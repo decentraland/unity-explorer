@@ -32,6 +32,7 @@ using DCL.Utilities.Extensions;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
+using ECS;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System.Threading;
@@ -51,6 +52,7 @@ namespace DCL.PluginSystem.Global
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
         private readonly Arch.Core.World world;
         private readonly IPlacesAPIService placesAPIService;
+        private readonly IRealmData realmData;
         private readonly IHomePlaceSource homePlace;
         private readonly HttpEventsApiService eventsApiService;
         private readonly IRealmNavigator realmNavigator;
@@ -87,6 +89,7 @@ namespace DCL.PluginSystem.Global
             CharacterPreviewEventBus characterPreviewEventBus,
             Arch.Core.World world,
             IPlacesAPIService placesAPIService,
+            IRealmData realmData,
             IHomePlaceSource homePlace,
             HttpEventsApiService eventsApiService,
             IRealmNavigator realmNavigator,
@@ -116,6 +119,7 @@ namespace DCL.PluginSystem.Global
             this.characterPreviewEventBus = characterPreviewEventBus;
             this.world = world;
             this.placesAPIService = placesAPIService;
+            this.realmData = realmData;
             this.homePlace = homePlace;
             this.eventsApiService = eventsApiService;
             this.realmNavigator = realmNavigator;
@@ -182,7 +186,7 @@ namespace DCL.PluginSystem.Global
 
             lobbyController = new LobbyController(viewFactory, inputBlock, loadingStatus, mvcManager,
                 selfProfile, profileChangesBus, characterPreviewFactory, characterPreviewEventBus, settings.AvatarSettings, world,
-                placesAPIService, homePlace, eventsApiService, realmNavigator, decentralandUrlsSource, startParcel, new ThumbnailLoader(new SpriteCache(webRequestController)),
+                placesAPIService, realmData, homePlace, eventsApiService, realmNavigator, decentralandUrlsSource, startParcel, new ThumbnailLoader(new SpriteCache(webRequestController)),
                 profileButtonPresenter);
 
             mvcManager.RegisterController(lobbyController);

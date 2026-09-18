@@ -5,10 +5,10 @@ using UnityEngine;
 namespace DCL.Lobby
 {
     /// <summary>
-    ///     Hero card of the lobby: the place the user calls home with its thumbnail, title, creator,
+    ///     Hero card of the lobby: the place the session lands in, with its thumbnail, title, creator,
     ///     online users and a Jump in button.
     /// </summary>
-    public class LobbyHomeCardView : MonoBehaviour
+    public class LobbyLandingCardView : MonoBehaviour
     {
         [field: SerializeField]
         public ButtonView JumpInButton { get; private set; } = null!;

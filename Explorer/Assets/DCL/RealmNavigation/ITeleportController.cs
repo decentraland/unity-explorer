@@ -32,18 +32,33 @@ namespace DCL.RealmNavigation
         }
     }
 
+    /// <summary>
+    ///     Which rule of the launch settings picked the startup destination.
+    /// </summary>
+    public enum StartParcelSource
+    {
+        Default,
+        LaunchArgument,
+        EditorOverride,
+        Home,
+        FeatureFlag,
+    }
+
     public class StartParcel
     {
         private Vector2Int value;
         private bool consumed;
 
-        public StartParcel(Vector2Int value, string? spawnPointName = null)
+        public StartParcel(Vector2Int value, string? spawnPointName = null, StartParcelSource source = StartParcelSource.Default)
         {
             this.value = value;
             SpawnPointName = spawnPointName;
+            Source = source;
         }
 
         public string? SpawnPointName { get; private set; }
+
+        public StartParcelSource Source { get; }
 
         /// <summary>
         ///     Realm the startup teleport lands in. Unset keeps the realm chosen at bootstrap.

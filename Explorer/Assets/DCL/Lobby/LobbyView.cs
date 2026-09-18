@@ -39,7 +39,7 @@ namespace DCL.Lobby
         public TMP_Text WelcomeText { get; private set; } = null!;
 
         [field: SerializeField]
-        public LobbyHomeCardView HomeCard { get; private set; } = null!;
+        public LobbyLandingCardView LandingCard { get; private set; } = null!;
 
         [field: Header("Jump back in")]
         [field: SerializeField]
