@@ -11,6 +11,7 @@ using DCL.ExplorePanel;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.MapRenderer.MapLayers.HomeMarker;
+using DCL.Multiplayer.Connectivity;
 using DCL.Notifications.NotificationsMenu;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Places;
@@ -66,6 +67,7 @@ namespace DCL.Lobby
         private readonly StartParcel startParcel;
         private readonly ThumbnailLoader thumbnailLoader;
         private readonly SidebarProfileButtonPresenter profileButtonPresenter;
+        private readonly LobbyFriendsPresenter? friends;
         private readonly List<PlacesData.PlaceInfo> recentPlaces = new ();
         private readonly List<PlacesData.PlaceInfo> recommendedPlaces = new ();
         private readonly List<EventDTO> liveEvents = new ();
@@ -77,6 +79,7 @@ namespace DCL.Lobby
         private CancellationTokenSource? avatarCts;
         private CancellationTokenSource? placesCts;
         private CancellationTokenSource? eventsCts;
+        private CancellationTokenSource? friendsCts;
         private CancellationTokenSource? jumpInCts;
         private UniTaskCompletionSource? closeIntent;
         private bool leaving;
@@ -104,7 +107,8 @@ namespace DCL.Lobby
             IDecentralandUrlsSource decentralandUrlsSource,
             StartParcel startParcel,
             ThumbnailLoader thumbnailLoader,
-            SidebarProfileButtonPresenter profileButtonPresenter) : base(viewFactory)
+            SidebarProfileButtonPresenter profileButtonPresenter,
+            LobbyFriendsPresenter? friends) : base(viewFactory)
         {
             this.inputBlock = inputBlock;
             this.loadingStatus = loadingStatus;
@@ -124,6 +128,7 @@ namespace DCL.Lobby
             this.startParcel = startParcel;
             this.thumbnailLoader = thumbnailLoader;
             this.profileButtonPresenter = profileButtonPresenter;
+            this.friends = friends;
         }
 
         public override void Dispose()
@@ -148,9 +153,13 @@ namespace DCL.Lobby
 
             mvcManager.OnViewClosed -= ShowAgainWhenTheScreenIsFree;
 
+            if (friends != null)
+                friends.JoinRequested = null;
+
             avatarCts.SafeCancelAndDispose();
             placesCts.SafeCancelAndDispose();
             eventsCts.SafeCancelAndDispose();
+            friendsCts.SafeCancelAndDispose();
             jumpInCts.SafeCancelAndDispose();
             avatarPreview?.Dispose();
             closeIntent?.TrySetCanceled();
@@ -180,6 +189,9 @@ namespace DCL.Lobby
             viewInstance.RecentPlacesSection.SetActive(false);
             viewInstance.RecommendedPlacesSection.SetActive(false);
             viewInstance.EventsSection.SetActive(false);
+
+            if (friends != null)
+                friends.JoinRequested = OnFriendJoin;
 
             avatarPreview = new LobbyCharacterPreviewController(viewInstance.CharacterPreviewView, avatarSettings, characterPreviewFactory, world, characterPreviewEventBus);
         }
@@ -212,6 +224,9 @@ namespace DCL.Lobby
 
             eventsCts = eventsCts.SafeRestart();
             ShowEventsAsync(eventsCts.Token).Forget();
+
+            friendsCts = friendsCts.SafeRestart();
+            friends?.Show(friendsCts.Token);
         }
 
         protected override void OnViewClose()
@@ -223,6 +238,8 @@ namespace DCL.Lobby
             avatarCts.SafeCancelAndDispose();
             placesCts.SafeCancelAndDispose();
             eventsCts.SafeCancelAndDispose();
+            friends?.Hide();
+            friendsCts.SafeCancelAndDispose();
             avatarPreview!.OnHide();
 
             inputBlock.Enable(InputMapComponent.BLOCK_USER_INPUT);
@@ -558,6 +575,10 @@ namespace DCL.Lobby
         // Land on the exact parcel of the event rather than on the scene spawn point: the event may be held in a corner of a big scene
         private void OnEventJumpIn(IEventDTO @event) =>
             PickDestination(@event.World ? WorldUrl(@event.Server) : null, new Vector2Int(@event.X, @event.Y), landOnParcel: true);
+
+        // Land next to the friend rather than on the scene spawn point
+        private void OnFriendJoin(OnlineUserData friend) =>
+            PickDestination(friend.worldName is { Length: > 0 } worldName ? WorldUrl(worldName) : null, friend.position.ToParcel(), landOnParcel: true);
 
         /// <summary>
         ///     Before the world is loaded the startup teleport lands directly in the picked destination; once in-world it teleports right away.

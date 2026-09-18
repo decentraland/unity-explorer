@@ -76,5 +76,9 @@ namespace DCL.Lobby
 
         [field: SerializeField]
         public LobbyCarouselView UpcomingEvents { get; private set; } = null!;
+
+        [field: Header("Friends")]
+        [field: SerializeField]
+        public LobbyFriendsSectionView FriendsSection { get; private set; } = null!;
     }
 }

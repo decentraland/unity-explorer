@@ -10,10 +10,12 @@ using DCL.Credits;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.EventsApi;
+using DCL.Friends;
 using DCL.Input;
 using DCL.Lobby;
 using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.MarketplaceCredits;
+using DCL.Multiplayer.Connectivity;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Notifications;
 using DCL.Notifications.NotificationsMenu;
@@ -70,8 +72,11 @@ namespace DCL.PluginSystem.Global
         private readonly IUserInAppInitializationFlow userInAppInitializationFlow;
         private readonly MarketplaceCreditsAPIClient marketplaceCreditsAPIClient;
         private readonly NotificationsRequestController notificationsRequestController;
+        private readonly FriendsConnectivityStatusTracker? friendsConnectivity;
+        private readonly IOnlineUsersProvider onlineUsersProvider;
 
         private LobbyController? lobbyController;
+        private LobbyFriendsPresenter? friendsPresenter;
         private SidebarProfileButtonPresenter? profileButtonPresenter;
         private ProfileMenuController<LobbyPopupParameter>? profileMenuController;
         private NotificationsPanelController<LobbyPopupParameter>? notificationsPanelController;
@@ -106,7 +111,9 @@ namespace DCL.PluginSystem.Global
             ICompositeWeb3Provider web3Authenticator,
             IUserInAppInitializationFlow userInAppInitializationFlow,
             MarketplaceCreditsAPIClient marketplaceCreditsAPIClient,
-            NotificationsRequestController notificationsRequestController)
+            NotificationsRequestController notificationsRequestController,
+            FriendsConnectivityStatusTracker? friendsConnectivity,
+            IOnlineUsersProvider onlineUsersProvider)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -137,11 +144,14 @@ namespace DCL.PluginSystem.Global
             this.userInAppInitializationFlow = userInAppInitializationFlow;
             this.marketplaceCreditsAPIClient = marketplaceCreditsAPIClient;
             this.notificationsRequestController = notificationsRequestController;
+            this.friendsConnectivity = friendsConnectivity;
+            this.onlineUsersProvider = onlineUsersProvider;
         }
 
         public void Dispose()
         {
             lobbyController?.Dispose();
+            friendsPresenter?.Dispose();
             profileButtonPresenter?.Dispose();
             profileMenuController?.Dispose();
             notificationsPanelController?.Dispose();
@@ -184,10 +194,15 @@ namespace DCL.PluginSystem.Global
                 profileRepositoryWrapper,
                 mvcManager);
 
+            // Without connectivity statuses there is nothing to list: the section stays hidden
+            friendsPresenter = friendsConnectivity != null
+                ? new LobbyFriendsPresenter(lobbyView.FriendsSection, friendsConnectivity, onlineUsersProvider, placesAPIService, passportBridge)
+                : null;
+
             lobbyController = new LobbyController(viewFactory, inputBlock, loadingStatus, mvcManager,
                 selfProfile, profileChangesBus, characterPreviewFactory, characterPreviewEventBus, settings.AvatarSettings, world,
                 placesAPIService, realmData, homePlace, eventsApiService, realmNavigator, decentralandUrlsSource, startParcel, new ThumbnailLoader(new SpriteCache(webRequestController)),
-                profileButtonPresenter);
+                profileButtonPresenter, friendsPresenter);
 
             mvcManager.RegisterController(lobbyController);
             mvcManager.RegisterController(profileMenuController);

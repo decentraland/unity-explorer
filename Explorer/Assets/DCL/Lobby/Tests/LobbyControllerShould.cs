@@ -632,7 +632,7 @@ namespace DCL.Lobby.Tests
             controller = new LobbyController(() => view, inputBlock, loadingStatus, mvcManager, selfProfile, profileChangesBus,
                 Substitute.For<ICharacterPreviewFactory>(), new CharacterPreviewEventBus(), new LobbyAvatarSettings(), world,
                 placesAPIService, realmData, homePlace, eventsApiService, realmNavigator, urlsSource, startParcel, new ThumbnailLoader(Substitute.For<ISpriteCache>()),
-                profileButtonPresenter);
+                profileButtonPresenter, friends: null);
         }
 
         private void RestartWithStartParcel(StartParcel parcel)
