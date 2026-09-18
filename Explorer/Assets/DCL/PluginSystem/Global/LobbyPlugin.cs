@@ -9,6 +9,7 @@ using DCL.Communities;
 using DCL.Credits;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
+using DCL.EventsApi;
 using DCL.Input;
 using DCL.Lobby;
 using DCL.MapRenderer.MapLayers.HomeMarker;
@@ -51,6 +52,7 @@ namespace DCL.PluginSystem.Global
         private readonly Arch.Core.World world;
         private readonly IPlacesAPIService placesAPIService;
         private readonly IHomePlaceSource homePlace;
+        private readonly HttpEventsApiService eventsApiService;
         private readonly IRealmNavigator realmNavigator;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly StartParcel startParcel;
@@ -86,6 +88,7 @@ namespace DCL.PluginSystem.Global
             Arch.Core.World world,
             IPlacesAPIService placesAPIService,
             IHomePlaceSource homePlace,
+            HttpEventsApiService eventsApiService,
             IRealmNavigator realmNavigator,
             IDecentralandUrlsSource decentralandUrlsSource,
             StartParcel startParcel,
@@ -114,6 +117,7 @@ namespace DCL.PluginSystem.Global
             this.world = world;
             this.placesAPIService = placesAPIService;
             this.homePlace = homePlace;
+            this.eventsApiService = eventsApiService;
             this.realmNavigator = realmNavigator;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.startParcel = startParcel;
@@ -178,7 +182,7 @@ namespace DCL.PluginSystem.Global
 
             lobbyController = new LobbyController(viewFactory, inputBlock, loadingStatus, mvcManager,
                 selfProfile, profileChangesBus, characterPreviewFactory, characterPreviewEventBus, settings.AvatarSettings, world,
-                placesAPIService, homePlace, realmNavigator, decentralandUrlsSource, startParcel, new ThumbnailLoader(new SpriteCache(webRequestController)),
+                placesAPIService, homePlace, eventsApiService, realmNavigator, decentralandUrlsSource, startParcel, new ThumbnailLoader(new SpriteCache(webRequestController)),
                 profileButtonPresenter);
 
             mvcManager.RegisterController(lobbyController);

@@ -3,6 +3,8 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.CharacterPreview;
 using DCL.Communities;
+using DCL.Communities.EventInfo;
+using DCL.EventsApi;
 using DCL.ExplorePanel;
 using DCL.Input;
 using DCL.Input.Component;
@@ -19,10 +21,12 @@ using DCL.UI.ProfileElements;
 using DCL.UI.Profiles;
 using DCL.Web3;
 using DCL.Web3.Identities;
+using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
 using NSubstitute;
+using NSubstitute.Core;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
@@ -33,6 +37,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.TestTools;
 using UnityEngine.UI;
+using Component = UnityEngine.Component;
 using Object = UnityEngine.Object;
 
 namespace DCL.Lobby.Tests
@@ -42,6 +47,7 @@ namespace DCL.Lobby.Tests
     {
         private const string GENESIS_URL = "https://realm-provider.example.com/main";
         private const string WORLD_SERVER_URL = "https://worlds-content-server.example.com/world";
+        private const string EVENTS_API_URL = "https://events.example.com/api/events";
         private const int RECENT_CARDS = 3;
         private const string OWN_WALLET = "0x0000000000000000000000000000000000000001";
         private const string GENESIS_PLAZA = "Genesis Plaza";
@@ -58,8 +64,14 @@ namespace DCL.Lobby.Tests
         private GameObject recentPlacesSection = null!;
         private LobbyPlaceCardView[] recentPlaceCards = null!;
         private GameObject recommendedPlacesSection = null!;
-        private LobbyPlacesCarousel recommendedPlaces = null!;
+        private LobbyCarouselView recommendedPlaces = null!;
         private Transform recommendedDots = null!;
+        private GameObject eventsSection = null!;
+        private GameObject liveEventsSection = null!;
+        private LobbyCarouselView liveEvents = null!;
+        private GameObject upcomingEventsSection = null!;
+        private LobbyCarouselView upcomingEvents = null!;
+        private IWebRequestController webRequestController = null!;
         private IInputBlock inputBlock = null!;
         private IMVCManager mvcManager = null!;
         private IPlacesAPIService placesAPIService = null!;
@@ -95,7 +107,16 @@ namespace DCL.Lobby.Tests
 
             recommendedPlacesSection = new GameObject("RecommendedPlaces");
             recommendedPlacesSection.transform.SetParent(root.transform);
-            recommendedPlaces = CreateCarousel(recommendedPlacesSection.transform);
+            recommendedPlaces = CreateCarousel(recommendedPlacesSection.transform, CreatePlaceCard, RECENT_CARDS, out recommendedDots);
+
+            eventsSection = new GameObject("Events");
+            eventsSection.transform.SetParent(root.transform);
+            liveEventsSection = new GameObject("LiveEvents");
+            liveEventsSection.transform.SetParent(eventsSection.transform);
+            liveEvents = CreateCarousel(liveEventsSection.transform, CreateEventCard, 1, out _);
+            upcomingEventsSection = new GameObject("UpcomingEvents");
+            upcomingEventsSection.transform.SetParent(eventsSection.transform);
+            upcomingEvents = CreateCarousel(upcomingEventsSection.transform, CreateEventCard, 1, out _);
 
             SetBackingField(view, nameof(LobbyView.WelcomeText), welcomeText);
             SetBackingField(view, nameof(LobbyView.HomeCard), homeCard);
@@ -110,6 +131,11 @@ namespace DCL.Lobby.Tests
             SetBackingField(view, nameof(LobbyView.NotificationsMenuView), CreateNotificationsMenuView());
             SetBackingField(view, nameof(LobbyView.RecommendedPlacesSection), recommendedPlacesSection);
             SetBackingField(view, nameof(LobbyView.RecommendedPlaces), recommendedPlaces);
+            SetBackingField(view, nameof(LobbyView.EventsSection), eventsSection);
+            SetBackingField(view, nameof(LobbyView.LiveEventsSection), liveEventsSection);
+            SetBackingField(view, nameof(LobbyView.LiveEvents), liveEvents);
+            SetBackingField(view, nameof(LobbyView.UpcomingEventsSection), upcomingEventsSection);
+            SetBackingField(view, nameof(LobbyView.UpcomingEvents), upcomingEvents);
 
             inputBlock = Substitute.For<IInputBlock>();
             mvcManager = Substitute.For<IMVCManager>();
@@ -135,6 +161,13 @@ namespace DCL.Lobby.Tests
             IDecentralandUrlsSource urlsSource = Substitute.For<IDecentralandUrlsSource>();
             urlsSource.Url(DecentralandUrl.Genesis).Returns(GENESIS_URL);
             urlsSource.Url(DecentralandUrl.WorldServer).Returns(WORLD_SERVER_URL);
+            urlsSource.Url(DecentralandUrl.ApiEvents).Returns(EVENTS_API_URL);
+            urlsSource.GetOriginalUrl(Arg.Any<string>()).Returns(callInfo => callInfo.Arg<string>());
+
+            // The events service has no interface: the requests it issues are mocked instead
+            webRequestController = Substitute.For<IWebRequestController>();
+            var eventsApiService = new HttpEventsApiService(webRequestController, urlsSource);
+            ArrangeEvents();
 
             // Without an identity the widget has nothing to load until a test provides one
             identityCache = Substitute.For<IWeb3IdentityCache>();
@@ -146,7 +179,7 @@ namespace DCL.Lobby.Tests
 
             controller = new LobbyController(() => view, inputBlock, loadingStatus, mvcManager, selfProfile, profileChangesBus,
                 Substitute.For<ICharacterPreviewFactory>(), new CharacterPreviewEventBus(), new LobbyAvatarSettings(), world,
-                placesAPIService, homePlace, realmNavigator, urlsSource, startParcel, new ThumbnailLoader(Substitute.For<ISpriteCache>()),
+                placesAPIService, homePlace, eventsApiService, realmNavigator, urlsSource, startParcel, new ThumbnailLoader(Substitute.For<ISpriteCache>()),
                 profileButtonPresenter);
         }
 
@@ -197,7 +230,6 @@ namespace DCL.Lobby.Tests
 
             // Assert
             placesAPIService.Received(1).GetPlaceAsync(Vector2Int.zero, Arg.Any<CancellationToken>());
-            Assert.That(homeCard.Place, Is.SameAs(genesisPlaza));
             Assert.That(homeCard.TitleText.text, Is.EqualTo(GENESIS_PLAZA));
             Assert.That(homeCard.CreatorText.text, Is.EqualTo("creator"));
             Assert.That(homeCard.JumpInButton.Button.interactable, Is.True);
@@ -216,7 +248,7 @@ namespace DCL.Lobby.Tests
             Launch(isStartup: true);
 
             // Assert
-            Assert.That(homeCard.Place, Is.SameAs(home));
+            Assert.That(homeCard.TitleText.text, Is.EqualTo("home"));
             placesAPIService.DidNotReceive().GetPlaceAsync(Vector2Int.zero, Arg.Any<CancellationToken>());
         }
 
@@ -233,7 +265,7 @@ namespace DCL.Lobby.Tests
             Launch(isStartup: true);
 
             // Assert
-            Assert.That(homeCard.Place, Is.SameAs(homeWorld));
+            Assert.That(homeCard.TitleText.text, Is.EqualTo("my world"));
             placesAPIService.DidNotReceiveWithAnyArgs().GetPlaceAsync(default, default);
         }
 
@@ -249,7 +281,7 @@ namespace DCL.Lobby.Tests
             Launch(isStartup: true);
 
             // Assert
-            Assert.That(homeCard.Place, Is.SameAs(genesisPlaza));
+            Assert.That(homeCard.TitleText.text, Is.EqualTo(GENESIS_PLAZA));
         }
 
         [Test]
@@ -284,12 +316,12 @@ namespace DCL.Lobby.Tests
 
             // Assert
             Assert.That(homeCard.JumpInButton.Button.interactable, Is.False);
-            Assert.That(homeCard.Place, Is.Null);
+            Assert.That(homeCard.TitleText.text, Is.Empty);
             Assert.That(lifeCycle.Status, Is.EqualTo(UniTaskStatus.Pending));
 
             pending.TrySetResult(genesisPlaza);
             Assert.That(homeCard.JumpInButton.Button.interactable, Is.True);
-            Assert.That(homeCard.Place, Is.SameAs(genesisPlaza));
+            Assert.That(homeCard.TitleText.text, Is.EqualTo(GENESIS_PLAZA));
         }
 
         [Test]
@@ -439,9 +471,8 @@ namespace DCL.Lobby.Tests
 
             // Assert
             Assert.That(recentPlacesSection.activeSelf, Is.True);
-            Assert.That(recentPlaceCards[0].Place, Is.SameAs(newest));
             Assert.That(recentPlaceCards[0].TitleText.text, Is.EqualTo("newest"));
-            Assert.That(recentPlaceCards[1].Place, Is.SameAs(older));
+            Assert.That(recentPlaceCards[1].TitleText.text, Is.EqualTo("older"));
             Assert.That(recentPlaceCards[2].gameObject.activeSelf, Is.False);
         }
 
@@ -457,9 +488,9 @@ namespace DCL.Lobby.Tests
 
             // Assert
             placesAPIService.Received(1).GetDestinationsByIdsAsync(Arg.Is<IEnumerable<string>>(ids => CountOf(ids) == history.Count), Arg.Any<CancellationToken>(), Arg.Any<bool>(), Arg.Any<bool?>());
-            Assert.That(recentPlaceCards[0].Place!.id, Is.EqualTo("b"));
-            Assert.That(recentPlaceCards[1].Place!.id, Is.EqualTo("c"));
-            Assert.That(recentPlaceCards[2].Place!.id, Is.EqualTo("d"));
+            Assert.That(recentPlaceCards[0].TitleText.text, Is.EqualTo("b"));
+            Assert.That(recentPlaceCards[1].TitleText.text, Is.EqualTo("c"));
+            Assert.That(recentPlaceCards[2].TitleText.text, Is.EqualTo("d"));
         }
 
         [Test]
@@ -559,7 +590,7 @@ namespace DCL.Lobby.Tests
             placesAPIService.Received(1).GetHighlightedDestinationsAsync(Arg.Any<CancellationToken>());
             Assert.That(recommendedPlacesSection.activeSelf, Is.True);
             Assert.That(recommendedPlaces.Cards.Count, Is.EqualTo(featured.Length));
-            Assert.That(recommendedPlaces.Cards[0].Place, Is.SameAs(featured[0]));
+            Assert.That(recommendedPlaces.Cards[0].TitleText.text, Is.EqualTo("featured0"));
             Assert.That(recommendedPlaces.Cards[6].TitleText.text, Is.EqualTo("featured6"));
             Assert.That(ActiveDots(), Is.EqualTo(3));
             Assert.That(recommendedPlaces.CurrentPage, Is.EqualTo(0));
@@ -579,7 +610,7 @@ namespace DCL.Lobby.Tests
 
             // Assert
             Assert.That(recommendedPlaces.Cards.Count, Is.EqualTo(4));
-            Assert.That(recommendedPlaces.Cards[0].Place!.id, Is.EqualTo("e"));
+            Assert.That(recommendedPlaces.Cards[0].TitleText.text, Is.EqualTo("e"));
             Assert.That(recommendedPlaces.Cards[1].gameObject.activeSelf, Is.False);
             Assert.That(ActiveDots(), Is.EqualTo(0));
         }
@@ -599,6 +630,146 @@ namespace DCL.Lobby.Tests
             Assert.That(lifeCycle.Status, Is.EqualTo(UniTaskStatus.Succeeded));
         }
 
+        [Test]
+        public void HideEventsWhenNothingIsScheduled()
+        {
+            // Act
+            Launch(isStartup: true);
+
+            // Assert
+            Assert.That(eventsSection.activeSelf, Is.False);
+        }
+
+        [Test]
+        public void ShowLiveEventsAheadOfTheUpcomingOnesSortedByStartTime()
+        {
+            // Arrange
+            EventDTO concert = CreateEvent("concert", new Vector2Int(1, 2), TimeSpan.FromMinutes(-30), live: true, connectedUsers: 24);
+            EventDTO soon = CreateEvent("soon", new Vector2Int(3, 4), TimeSpan.FromHours(2));
+            EventDTO later = CreateEvent("later", new Vector2Int(5, 6), TimeSpan.FromDays(3));
+            ArrangeEvents(concert, later, soon);
+
+            // Act
+            Launch(isStartup: true);
+
+            // Assert
+            Assert.That(EventRequestsReceived(), Is.EqualTo(1));
+            Assert.That(eventsSection.activeSelf, Is.True);
+            Assert.That(liveEventsSection.activeSelf, Is.True);
+            Assert.That(liveEvents.Cards.Count, Is.EqualTo(1));
+            Assert.That(EventCard(liveEvents, 0).TitleText.text, Is.EqualTo("concert"));
+            Assert.That(EventCard(liveEvents, 0).LiveBadge.activeSelf, Is.True);
+            Assert.That(EventCard(liveEvents, 0).AttendeesText.text, Is.EqualTo("24"));
+            Assert.That(EventCard(liveEvents, 0).ScheduleText.gameObject.activeSelf, Is.False);
+
+            Assert.That(upcomingEventsSection.activeSelf, Is.True);
+            Assert.That(upcomingEvents.Cards.Count, Is.EqualTo(2));
+            Assert.That(EventCard(upcomingEvents, 0).TitleText.text, Is.EqualTo("soon"));
+            Assert.That(EventCard(upcomingEvents, 0).ScheduleText.text, Is.EqualTo("In 2 hours"));
+            Assert.That(EventCard(upcomingEvents, 0).HostText.text, Is.EqualTo("By host"));
+            Assert.That(EventCard(upcomingEvents, 0).LiveBadge.activeSelf, Is.False);
+            Assert.That(EventCard(upcomingEvents, 1).TitleText.text, Is.EqualTo("later"));
+            Assert.That(EventCard(upcomingEvents, 1).ScheduleText.text, Is.EqualTo("In 3 days"));
+        }
+
+        [Test]
+        public void HideTheLiveCarouselWhenNothingIsLive()
+        {
+            // Arrange
+            ArrangeEvents(CreateEvent("soon", Vector2Int.zero, TimeSpan.FromMinutes(20)));
+
+            // Act
+            Launch(isStartup: true);
+
+            // Assert
+            Assert.That(eventsSection.activeSelf, Is.True);
+            Assert.That(liveEventsSection.activeSelf, Is.False);
+            Assert.That(upcomingEventsSection.activeSelf, Is.True);
+            Assert.That(EventCard(upcomingEvents, 0).ScheduleText.text, Is.EqualTo("In 20 min"));
+        }
+
+        [Test]
+        public void KeepOnlyTheNextUpcomingEventsAndSkipTheLiveOnes()
+        {
+            // Arrange: the schedule also lists the live event, which belongs to the other carousel
+            var scheduled = new EventDTO[12];
+
+            for (var i = 0; i < scheduled.Length; i++)
+                scheduled[i] = CreateEvent($"event{i}", Vector2Int.zero, TimeSpan.FromHours(i + 1), live: i == 0);
+
+            ArrangeEvents(scheduled);
+
+            // Act
+            Launch(isStartup: true);
+
+            // Assert
+            Assert.That(upcomingEvents.Cards.Count, Is.EqualTo(10));
+            Assert.That(EventCard(upcomingEvents, 0).TitleText.text, Is.EqualTo("event1"));
+            Assert.That(EventCard(upcomingEvents, 9).TitleText.text, Is.EqualTo("event10"));
+        }
+
+        [Test]
+        public void OpenTheEventDetailsInsteadOfJumpingInWhenAnEventCardIsClicked()
+        {
+            // Arrange
+            startParcel.ConsumeByTeleportOperation();
+            ArrangeEvents(CreateEvent("concert", new Vector2Int(3, 4), TimeSpan.FromMinutes(-5), live: true));
+            UniTask lifeCycle = Launch(isStartup: false);
+
+            // Act
+            EventCard(liveEvents, 0).Button.onClick.Invoke();
+
+            // Assert
+            mvcManager.Received(1).ShowAsync(Arg.Is<ShowCommand<EventDetailPanelView, EventDetailPanelParameter>>(c => c.InputData.EventData.Id == "concert"), Arg.Any<CancellationToken>());
+            realmNavigator.DidNotReceiveWithAnyArgs().TeleportToParcelAsync(default, default, default);
+            Assert.That(lifeCycle.Status, Is.EqualTo(UniTaskStatus.Pending));
+        }
+
+        [Test]
+        public void TeleportToTheEventParcelWhenJumpingInFromTheEventDetailsInWorld()
+        {
+            // Arrange
+            startParcel.ConsumeByTeleportOperation();
+            ArrangeEvents(CreateEvent("concert", new Vector2Int(3, 4), TimeSpan.FromMinutes(-5), live: true));
+            UniTask lifeCycle = Launch(isStartup: false);
+            EventCard(liveEvents, 0).Button.onClick.Invoke();
+            EventDetailPanelParameter details = ShownEventDetails();
+
+            // Act
+            details.JumpInHandler!(details.EventData);
+
+            // Assert
+            realmNavigator.Received(1).TeleportToParcelAsync(new Vector2Int(3, 4), Arg.Any<CancellationToken>(), false, true);
+            Assert.That(lifeCycle.Status, Is.EqualTo(UniTaskStatus.Succeeded));
+        }
+
+        [Test]
+        public void SetTheStartRealmWhenJumpingInAWorldEventFromTheEventDetailsBeforeTheWorldLoads()
+        {
+            // Arrange
+            ArrangeEvents(CreateEvent("party", Vector2Int.zero, TimeSpan.FromHours(1), server: "MyWorld.dcl.eth"));
+            UniTask lifeCycle = Launch(isStartup: true);
+            EventCard(upcomingEvents, 0).Button.onClick.Invoke();
+            EventDetailPanelParameter details = ShownEventDetails();
+
+            // Act
+            details.JumpInHandler!(details.EventData);
+
+            // Assert
+            Assert.That(startParcel.Realm, Is.EqualTo(URLDomain.FromString($"{WORLD_SERVER_URL}/myworld.dcl.eth")));
+            Assert.That(lifeCycle.Status, Is.EqualTo(UniTaskStatus.Succeeded));
+            realmNavigator.DidNotReceiveWithAnyArgs().TryChangeRealmAsync(default, default);
+        }
+
+        private EventDetailPanelParameter ShownEventDetails()
+        {
+            foreach (ICall call in mvcManager.ReceivedCalls())
+                if (call.GetArguments()[0] is ShowCommand<EventDetailPanelView, EventDetailPanelParameter> command)
+                    return command.InputData;
+
+            throw new AssertionException("The event details were not shown");
+        }
+
         private int ActiveDots()
         {
             var count = 0;
@@ -609,6 +780,43 @@ namespace DCL.Lobby.Tests
 
             return count;
         }
+
+        /// <summary>
+        ///     The whole schedule, live events included, answers the single request the lobby issues.
+        /// </summary>
+        private void ArrangeEvents(params EventDTO[] events) =>
+            webRequestController
+               .SendAsync<GenericGetRequest, GenericGetArguments, GenericDownloadHandlerUtils.CreateFromJsonOp<EventDTOListResponse, GenericGetRequest>, EventDTOListResponse>(
+                    Arg.Any<RequestEnvelope<GenericGetRequest, GenericGetArguments>>(),
+                    Arg.Any<GenericDownloadHandlerUtils.CreateFromJsonOp<EventDTOListResponse, GenericGetRequest>>())
+               .Returns(UniTask.FromResult(new EventDTOListResponse { ok = true, data = events }));
+
+        private int EventRequestsReceived()
+        {
+            var count = 0;
+
+            foreach (ICall call in webRequestController.ReceivedCalls())
+                if (call.GetArguments()[0] is RequestEnvelope<GenericGetRequest, GenericGetArguments> envelope && envelope.CommonArguments.URL.Value.StartsWith(EVENTS_API_URL))
+                    count++;
+
+            return count;
+        }
+
+        private static EventDTO CreateEvent(string id, Vector2Int parcel, TimeSpan startsIn, bool live = false, string server = "", int connectedUsers = 0) =>
+            new ()
+            {
+                id = id,
+                name = id,
+                image = string.Empty,
+                user_name = "host",
+                live = live,
+                world = server.Length > 0,
+                server = server,
+                x = parcel.x,
+                y = parcel.y,
+                connected_addresses = new string[connectedUsers],
+                NextStartAtProcessed = DateTime.UtcNow + startsIn,
+            };
 
         private void ArrangeRecommendedPlaces(params PlacesData.PlaceInfo[] featured) =>
             placesAPIService.GetHighlightedDestinationsAsync(Arg.Any<CancellationToken>())
@@ -650,7 +858,7 @@ namespace DCL.Lobby.Tests
             return count;
         }
 
-        private LobbyPlacesCarousel CreateCarousel(Transform parent)
+        private static LobbyCarouselView CreateCarousel(Transform parent, Func<Transform, string, LobbyCardView> createCard, int cardsPerPage, out Transform dots)
         {
             var carouselGo = new GameObject("Carousel", typeof(RectTransform));
             carouselGo.transform.SetParent(parent);
@@ -666,24 +874,27 @@ namespace DCL.Lobby.Tests
             scrollRect.viewport = (RectTransform)viewportGo.transform;
             scrollRect.content = (RectTransform)contentGo.transform;
 
-            LobbyPlaceCardView cardTemplate = CreatePlaceCard(contentGo.transform, "CardTemplate");
+            LobbyCardView cardTemplate = createCard(contentGo.transform, "CardTemplate");
             cardTemplate.gameObject.SetActive(false);
 
-            recommendedDots = new GameObject("Dots", typeof(RectTransform)).transform;
-            recommendedDots.SetParent(carouselGo.transform);
+            dots = new GameObject("Dots", typeof(RectTransform)).transform;
+            dots.SetParent(carouselGo.transform);
             var dotGo = new GameObject("DotTemplate", typeof(RectTransform));
-            dotGo.transform.SetParent(recommendedDots);
+            dotGo.transform.SetParent(dots);
             Image dotTemplate = dotGo.AddComponent<Image>();
             dotGo.SetActive(false);
 
-            LobbyPlacesCarousel carousel = carouselGo.AddComponent<LobbyPlacesCarousel>();
+            LobbyCarouselView carousel = carouselGo.AddComponent<LobbyCarouselView>();
             SetField(carousel, "scrollRect", scrollRect);
             SetField(carousel, "cardTemplate", cardTemplate);
             SetField(carousel, "dotTemplate", dotTemplate);
-            SetField(carousel, "cardsPerPage", RECENT_CARDS);
+            SetField(carousel, "cardsPerPage", cardsPerPage);
 
             return carousel;
         }
+
+        private static LobbyEventCardView EventCard(LobbyCarouselView carousel, int index) =>
+            (LobbyEventCardView)carousel.Cards[index];
 
         private static LobbyPlaceCardView CreatePlaceCard(Transform parent, string name)
         {
@@ -695,6 +906,29 @@ namespace DCL.Lobby.Tests
             SetBackingField(card, nameof(LobbyPlaceCardView.Thumbnail), CreateImageView(cardGo.transform));
             SetBackingField(card, nameof(LobbyPlaceCardView.TitleText), CreateText(cardGo.transform, "Title"));
             SetBackingField(card, nameof(LobbyPlaceCardView.CreatorText), CreateText(cardGo.transform, "Creator"));
+
+            return card;
+        }
+
+        private static LobbyEventCardView CreateEventCard(Transform parent, string name)
+        {
+            var cardGo = new GameObject(name);
+            cardGo.transform.SetParent(parent);
+            LobbyEventCardView card = cardGo.AddComponent<LobbyEventCardView>();
+
+            var liveBadge = new GameObject("LiveBadge");
+            liveBadge.transform.SetParent(cardGo.transform);
+            var attendees = new GameObject("Attendees");
+            attendees.transform.SetParent(cardGo.transform);
+
+            SetBackingField(card, nameof(LobbyEventCardView.Button), cardGo.AddComponent<Button>());
+            SetBackingField(card, nameof(LobbyEventCardView.Thumbnail), CreateImageView(cardGo.transform));
+            SetBackingField(card, nameof(LobbyEventCardView.TitleText), CreateText(cardGo.transform, "Title"));
+            SetBackingField(card, nameof(LobbyEventCardView.HostText), CreateText(cardGo.transform, "Host"));
+            SetBackingField(card, nameof(LobbyEventCardView.LiveBadge), liveBadge);
+            SetBackingField(card, nameof(LobbyEventCardView.AttendeesGroup), attendees);
+            SetBackingField(card, nameof(LobbyEventCardView.AttendeesText), CreateText(attendees.transform, "Count"));
+            SetBackingField(card, nameof(LobbyEventCardView.ScheduleText), CreateText(cardGo.transform, "Schedule"));
 
             return card;
         }
@@ -821,8 +1055,20 @@ namespace DCL.Lobby.Tests
         private static void SetBackingField(object target, string propertyName, object value) =>
             SetField(target, $"<{propertyName}>k__BackingField", value);
 
-        private static void SetField(object target, string fieldName, object value) =>
-            target.GetType().GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic)!
-                  .SetValue(target, value);
+        private static void SetField(object target, string fieldName, object value)
+        {
+            // Private fields are only reachable through the type that declares them, so base classes are walked explicitly
+            for (Type? type = target.GetType(); type != null; type = type.BaseType)
+            {
+                FieldInfo? field = type.GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
+
+                if (field == null) continue;
+
+                field.SetValue(target, value);
+                return;
+            }
+
+            throw new MissingFieldException(target.GetType().Name, fieldName);
+        }
     }
 }

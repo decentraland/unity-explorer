@@ -844,7 +844,7 @@ namespace Global.Dynamic
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.Lobby))
                 globalPlugins.Add(new LobbyPlugin(assetsProvisioner, uiShellContainer.MvcManager, staticContainer.InputBlock, staticContainer.LoadingStatus, debugBuilder,
                     profileContainer.SelfProfile, profileContainer.ProfileChangesBus, characterPreviewFactory, characterPreviewEventBus, globalWorld,
-                    placesAndEventsContainer.PlacesAPIService, placesAndEventsContainer.HomePlaceEventBus, realmNavigator, bootstrapContainer.DecentralandUrlsSource, dynamicWorldParams.StartParcel, staticContainer.WebRequestsContainer.WebRequestController,
+                    placesAndEventsContainer.PlacesAPIService, placesAndEventsContainer.HomePlaceEventBus, placesAndEventsContainer.EventsApiService, realmNavigator, bootstrapContainer.DecentralandUrlsSource, dynamicWorldParams.StartParcel, staticContainer.WebRequestsContainer.WebRequestController,
                     identityCache, profilesRepository, profileCache, profileContainer.ProfileRepositoryWrapper, uiShellContainer.PassportBridge, playerEntity, webBrowser,
                     dynamicWorldDependencies.CompositeWeb3Provider, initializationFlowContainer.InitializationFlow, marketplaceCreditsApiClient, notificationsRequestController));
 

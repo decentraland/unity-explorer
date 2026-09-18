@@ -1,15 +1,12 @@
-using DCL.Communities;
-using DCL.PlacesAPIService;
 using DCL.UI;
-using System.Threading;
 using TMPro;
 using UnityEngine;
 
 namespace DCL.Lobby
 {
     /// <summary>
-    ///     Hero card of the lobby: the place the user calls home (or Genesis Plaza) with its thumbnail, title, creator,
-    ///     online users and a Jump in button. Jump in stays disabled until a place is shown.
+    ///     Hero card of the lobby: the place the user calls home with its thumbnail, title, creator,
+    ///     online users and a Jump in button.
     /// </summary>
     public class LobbyHomeCardView : MonoBehaviour
     {
@@ -33,30 +30,6 @@ namespace DCL.Lobby
 
         [SerializeField] private Sprite? defaultThumbnail;
 
-        public PlacesData.PlaceInfo? Place { get; private set; }
-
-        public void ShowLoading()
-        {
-            Place = null;
-            TitleText.text = string.Empty;
-            CreatorText.text = string.Empty;
-            OnlineCounter.SetActive(false);
-            Thumbnail.IsLoading = true;
-            JumpInButton.SetInteractable(false);
-        }
-
-        public void Show(PlacesData.PlaceInfo place, ThumbnailLoader thumbnailLoader, CancellationToken ct)
-        {
-            Place = place;
-            TitleText.text = place.title;
-            CreatorText.text = place.contact_name;
-
-            int online = place.connected_addresses?.Length ?? place.user_count;
-            OnlineCountText.text = online.ToString();
-            OnlineCounter.SetActive(online > 0);
-
-            thumbnailLoader.LoadCommunityThumbnailFromUrlAsync(place.image, Thumbnail, defaultThumbnail, ct, true).Forget();
-            JumpInButton.SetInteractable(true);
-        }
+        public Sprite? DefaultThumbnail => defaultThumbnail;
     }
 }

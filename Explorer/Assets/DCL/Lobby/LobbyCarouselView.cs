@@ -1,9 +1,6 @@
-using DCL.Communities;
-using DCL.PlacesAPIService;
 using DG.Tweening;
 using System;
 using System.Collections.Generic;
-using System.Threading;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -11,16 +8,17 @@ using UnityEngine.UI;
 namespace DCL.Lobby
 {
     /// <summary>
-    ///     Horizontal strip of place cards that pages by dragging: releasing snaps to the nearest page
+    ///     Horizontal strip of cards that pages by dragging: releasing snaps to the nearest page
     ///     and one dot per page tracks the position. Cards and dots are cloned from inactive templates in the prefab.
+    ///     What the cards display is up to the owner that fills them; the view only reports which card was clicked.
     /// </summary>
-    public class LobbyPlacesCarousel : MonoBehaviour, IEndDragHandler
+    public class LobbyCarouselView : MonoBehaviour, IEndDragHandler
     {
         private const float SNAP_DURATION = 0.25f;
         private const float DOT_ANIMATION_DURATION = 0.2f;
 
         [SerializeField] private ScrollRect scrollRect = null!;
-        [SerializeField] private LobbyPlaceCardView cardTemplate = null!;
+        [SerializeField] private LobbyCardView cardTemplate = null!;
 
         [Tooltip("Cards laid out per page; the viewport width must fit exactly this many cards plus spacing for the snapping to line up")]
         [SerializeField] private int cardsPerPage = 3;
@@ -32,20 +30,29 @@ namespace DCL.Lobby
         [SerializeField] private float selectedDotWidth = 24f;
         [SerializeField] private float dotWidth = 8f;
 
-        private readonly List<LobbyPlaceCardView> cards = new ();
+        private readonly List<LobbyCardView> cards = new ();
         private readonly List<Image> dots = new ();
 
         private Tweener? snapTween;
         private bool scrollListened;
-        private int shownCards;
+        private int shownCount;
 
-        public Action<PlacesData.PlaceInfo>? PlaceClicked;
+        /// <summary>
+        ///     Index in <see cref="Cards" /> of the card that was clicked.
+        /// </summary>
+        public Action<int>? CardClicked;
 
         public int CurrentPage { get; private set; }
 
-        public IReadOnlyList<LobbyPlaceCardView> Cards => cards;
+        /// <summary>
+        ///     Every card cloned so far, shown or hidden. Cards are only ever appended, so indices stay stable.
+        /// </summary>
+        public IReadOnlyList<LobbyCardView> Cards => cards;
 
-        public void Show(IReadOnlyList<PlacesData.PlaceInfo> places, ThumbnailLoader thumbnailLoader, CancellationToken ct)
+        /// <summary>
+        ///     Activates the first <paramref name="count" /> cards (cloning the missing ones), hides the rest and rewinds to the first page.
+        /// </summary>
+        public void ShowCards(int count)
         {
             if (!scrollListened)
             {
@@ -53,20 +60,20 @@ namespace DCL.Lobby
                 scrollListened = true;
             }
 
-            shownCards = places.Count;
+            shownCount = count;
 
-            for (var i = 0; i < places.Count; i++)
+            for (var i = 0; i < count; i++)
             {
                 if (i == cards.Count)
                     cards.Add(CreateCard());
 
-                cards[i].Show(places[i], thumbnailLoader, ct);
+                cards[i].gameObject.SetActive(true);
             }
 
-            for (int i = places.Count; i < cards.Count; i++)
-                cards[i].Hide();
+            for (int i = count; i < cards.Count; i++)
+                cards[i].gameObject.SetActive(false);
 
-            ShowDots(PageCount(places.Count));
+            ShowDots(PageCount(count));
 
             snapTween?.Kill();
             scrollRect.velocity = Vector2.zero;
@@ -83,10 +90,11 @@ namespace DCL.Lobby
         private float PageWidth() =>
             scrollRect.viewport.rect.width;
 
-        private LobbyPlaceCardView CreateCard()
+        private LobbyCardView CreateCard()
         {
-            LobbyPlaceCardView card = Instantiate(cardTemplate, scrollRect.content);
-            card.Button.onClick.AddListener(() => { if (card.Place is { } place) PlaceClicked?.Invoke(place); });
+            LobbyCardView card = Instantiate(cardTemplate, scrollRect.content);
+            int index = cards.Count;
+            card.Button.onClick.AddListener(() => CardClicked?.Invoke(index));
             return card;
         }
 
@@ -108,11 +116,11 @@ namespace DCL.Lobby
         }
 
         private void OnScrolled(Vector2 _) =>
-            SelectPage(Mathf.Clamp(Mathf.RoundToInt(-scrollRect.content.anchoredPosition.x / PageWidth()), 0, Mathf.Max(0, PageCount(shownCards) - 1)));
+            SelectPage(Mathf.Clamp(Mathf.RoundToInt(-scrollRect.content.anchoredPosition.x / PageWidth()), 0, Mathf.Max(0, PageCount(shownCount) - 1)));
 
         private void SnapTo(int page)
         {
-            page = Mathf.Clamp(page, 0, Mathf.Max(0, PageCount(shownCards) - 1));
+            page = Mathf.Clamp(page, 0, Mathf.Max(0, PageCount(shownCount) - 1));
             RectTransform content = scrollRect.content;
             float maxOffset = Mathf.Max(0f, content.rect.width - PageWidth());
             var target = new Vector2(-Mathf.Min(page * PageWidth(), maxOffset), content.anchoredPosition.y);

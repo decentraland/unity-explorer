@@ -4,7 +4,9 @@ using Cysharp.Threading.Tasks;
 using DCL.CharacterPreview;
 using DCL.CommunicationData.URLHelpers;
 using DCL.Communities;
+using DCL.Communities.EventInfo;
 using DCL.Diagnostics;
+using DCL.EventsApi;
 using DCL.ExplorePanel;
 using DCL.Input;
 using DCL.Input.Component;
@@ -39,6 +41,11 @@ namespace DCL.Lobby
     public class LobbyController : ControllerBase<LobbyView, LobbyParameter>
     {
         private const string GENESIS_PLAZA_TITLE = "Genesis Plaza";
+        private const string EVENT_HOST_FORMAT = "By {0}";
+        private const string EVENT_STARTING_NOW = "Starting now";
+        private const int MAX_UPCOMING_EVENTS = 10;
+
+        private static readonly Comparison<EventDTO> BY_START_TIME = static (a, b) => a.NextStartAtProcessed.CompareTo(b.NextStartAtProcessed);
 
         private readonly IInputBlock inputBlock;
         private readonly IReadOnlyLoadingStatus loadingStatus;
@@ -51,15 +58,22 @@ namespace DCL.Lobby
         private readonly World world;
         private readonly IPlacesAPIService placesAPIService;
         private readonly IHomePlaceSource homePlace;
+        private readonly HttpEventsApiService eventsApiService;
         private readonly IRealmNavigator realmNavigator;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly StartParcel startParcel;
         private readonly ThumbnailLoader thumbnailLoader;
         private readonly SidebarProfileButtonPresenter profileButtonPresenter;
+        private readonly List<PlacesData.PlaceInfo> recentPlaces = new ();
+        private readonly List<PlacesData.PlaceInfo> recommendedPlaces = new ();
+        private readonly List<EventDTO> liveEvents = new ();
+        private readonly List<EventDTO> upcomingEvents = new ();
 
         private LobbyCharacterPreviewController? avatarPreview;
+        private PlacesData.PlaceInfo? shownHomePlace;
         private CancellationTokenSource? avatarCts;
         private CancellationTokenSource? placesCts;
+        private CancellationTokenSource? eventsCts;
         private CancellationTokenSource? jumpInCts;
         private UniTaskCompletionSource? closeIntent;
 
@@ -80,6 +94,7 @@ namespace DCL.Lobby
             World world,
             IPlacesAPIService placesAPIService,
             IHomePlaceSource homePlace,
+            HttpEventsApiService eventsApiService,
             IRealmNavigator realmNavigator,
             IDecentralandUrlsSource decentralandUrlsSource,
             StartParcel startParcel,
@@ -97,6 +112,7 @@ namespace DCL.Lobby
             this.world = world;
             this.placesAPIService = placesAPIService;
             this.homePlace = homePlace;
+            this.eventsApiService = eventsApiService;
             this.realmNavigator = realmNavigator;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.startParcel = startParcel;
@@ -119,11 +135,14 @@ namespace DCL.Lobby
                 foreach (LobbyPlaceCardView card in viewInstance.RecentPlaceCards)
                     card.Button.onClick.RemoveAllListeners();
 
-                viewInstance.RecommendedPlaces.PlaceClicked = null;
+                viewInstance.RecommendedPlaces.CardClicked = null;
+                viewInstance.LiveEvents.CardClicked = null;
+                viewInstance.UpcomingEvents.CardClicked = null;
             }
 
             avatarCts.SafeCancelAndDispose();
             placesCts.SafeCancelAndDispose();
+            eventsCts.SafeCancelAndDispose();
             jumpInCts.SafeCancelAndDispose();
             avatarPreview?.Dispose();
             closeIntent?.TrySetCanceled();
@@ -138,13 +157,21 @@ namespace DCL.Lobby
             viewInstance.ProfileWidgetView.OpenProfileButton.Button.onClick.AddListener(ShowProfileMenu);
             viewInstance.NotificationsButton.onClick.AddListener(ShowNotifications);
 
-            foreach (LobbyPlaceCardView card in viewInstance.RecentPlaceCards)
-                card.Button.onClick.AddListener(() => { if (card.Place is { } place) OnPlaceClicked(place); });
+            LobbyPlaceCardView[] recentCards = viewInstance.RecentPlaceCards;
 
-            viewInstance.RecommendedPlaces.PlaceClicked = OnPlaceClicked;
+            for (var i = 0; i < recentCards.Length; i++)
+            {
+                int index = i;
+                recentCards[i].Button.onClick.AddListener(() => OnRecentPlaceClicked(index));
+            }
+
+            viewInstance.RecommendedPlaces.CardClicked = OnRecommendedPlaceClicked;
+            viewInstance.LiveEvents.CardClicked = OnLiveEventClicked;
+            viewInstance.UpcomingEvents.CardClicked = OnUpcomingEventClicked;
 
             viewInstance.RecentPlacesSection.SetActive(false);
             viewInstance.RecommendedPlacesSection.SetActive(false);
+            viewInstance.EventsSection.SetActive(false);
 
             avatarPreview = new LobbyCharacterPreviewController(viewInstance.CharacterPreviewView, avatarSettings, characterPreviewFactory, world, characterPreviewEventBus);
         }
@@ -168,10 +195,13 @@ namespace DCL.Lobby
             profileButtonPresenter.LoadProfile();
 
             placesCts = placesCts.SafeRestart();
-            viewInstance!.HomeCard.ShowLoading();
+            ShowHomeCardLoading();
             ShowHomePlaceAsync(placesCts.Token).Forget();
             ShowRecentPlacesAsync(placesCts.Token).Forget();
             ShowRecommendedPlacesAsync(placesCts.Token).Forget();
+
+            eventsCts = eventsCts.SafeRestart();
+            ShowEventsAsync(eventsCts.Token).Forget();
         }
 
         protected override void OnViewClose()
@@ -182,6 +212,7 @@ namespace DCL.Lobby
 
             avatarCts.SafeCancelAndDispose();
             placesCts.SafeCancelAndDispose();
+            eventsCts.SafeCancelAndDispose();
             avatarPreview!.OnHide();
 
             inputBlock.Enable(InputMapComponent.BLOCK_USER_INPUT);
@@ -232,7 +263,7 @@ namespace DCL.Lobby
 
             place ??= new PlacesData.PlaceInfo(Vector2Int.zero) { title = GENESIS_PLAZA_TITLE };
 
-            viewInstance!.HomeCard.Show(place, thumbnailLoader, ct);
+            ShowHomeCard(place, ct);
         }
 
         private async UniTask<PlacesData.PlaceInfo?> ResolveHomePlaceAsync(CancellationToken ct)
@@ -265,25 +296,33 @@ namespace DCL.Lobby
         private async UniTaskVoid ShowRecentPlacesAsync(CancellationToken ct)
         {
             LobbyPlaceCardView[] cards = viewInstance!.RecentPlaceCards;
-            var shown = 0;
 
             Result<PlacesData.IPlacesAPIResponse> result = await placesAPIService.GetRecentlyVisitedDestinationsAsync(ct)
                                                                                  .SuppressToResultAsync(ReportCategory.PLACES);
 
             if (ct.IsCancellationRequested) return;
 
+            recentPlaces.Clear();
+
             if (result.Success)
             {
                 IReadOnlyList<PlacesData.PlaceInfo> places = result.Value.Data;
 
-                for (; shown < places.Count && shown < cards.Length; shown++)
-                    cards[shown].Show(places[shown], thumbnailLoader, ct);
+                for (var i = 0; i < places.Count && i < cards.Length; i++)
+                    recentPlaces.Add(places[i]);
             }
 
-            for (int i = shown; i < cards.Length; i++)
-                cards[i].Hide();
+            for (var i = 0; i < cards.Length; i++)
+            {
+                bool shown = i < recentPlaces.Count;
 
-            viewInstance.RecentPlacesSection.SetActive(shown > 0);
+                if (shown)
+                    ShowPlaceCard(cards[i], recentPlaces[i], ct);
+
+                cards[i].gameObject.SetActive(shown);
+            }
+
+            viewInstance.RecentPlacesSection.SetActive(recentPlaces.Count > 0);
         }
 
         /// <summary>
@@ -296,14 +335,132 @@ namespace DCL.Lobby
 
             if (ct.IsCancellationRequested) return;
 
-            if (result.Success && result.Value.Data.Count > 0)
+            recommendedPlaces.Clear();
+
+            if (result.Success)
             {
-                viewInstance!.RecommendedPlaces.Show(result.Value.Data, thumbnailLoader, ct);
-                viewInstance.RecommendedPlacesSection.SetActive(true);
+                IReadOnlyList<PlacesData.PlaceInfo> places = result.Value.Data;
+
+                for (var i = 0; i < places.Count; i++)
+                    recommendedPlaces.Add(places[i]);
             }
-            else
-                viewInstance!.RecommendedPlacesSection.SetActive(false);
+
+            LobbyCarouselView carousel = viewInstance!.RecommendedPlaces;
+            carousel.ShowCards(recommendedPlaces.Count);
+
+            for (var i = 0; i < recommendedPlaces.Count; i++)
+                ShowPlaceCard((LobbyPlaceCardView)carousel.Cards[i], recommendedPlaces[i], ct);
+
+            viewInstance.RecommendedPlacesSection.SetActive(recommendedPlaces.Count > 0);
         }
+
+        /// <summary>
+        ///     Fills the "Events" carousels from a single fetch of the schedule: what is live right now first, then what comes next.
+        ///     The live carousel is hidden while nothing is live, and the whole section while nothing is scheduled at all.
+        /// </summary>
+        private async UniTaskVoid ShowEventsAsync(CancellationToken ct)
+        {
+            Result<IReadOnlyList<EventDTO>> result = await eventsApiService.GetEventsAsync(ct, withConnectedUsers: true)
+                                                                           .SuppressToResultAsync(ReportCategory.EVENTS);
+
+            if (ct.IsCancellationRequested) return;
+
+            liveEvents.Clear();
+            upcomingEvents.Clear();
+
+            if (result.Success)
+            {
+                IReadOnlyList<EventDTO> events = result.Value;
+
+                for (var i = 0; i < events.Count; i++)
+                    (events[i].live ? liveEvents : upcomingEvents).Add(events[i]);
+            }
+
+            // The schedule is not guaranteed to come sorted and can be long: keep only the next few
+            upcomingEvents.Sort(BY_START_TIME);
+
+            if (upcomingEvents.Count > MAX_UPCOMING_EVENTS)
+                upcomingEvents.RemoveRange(MAX_UPCOMING_EVENTS, upcomingEvents.Count - MAX_UPCOMING_EVENTS);
+
+            ShowEventCards(viewInstance!.LiveEvents, liveEvents, ct);
+            ShowEventCards(viewInstance.UpcomingEvents, upcomingEvents, ct);
+
+            viewInstance.LiveEventsSection.SetActive(liveEvents.Count > 0);
+            viewInstance.UpcomingEventsSection.SetActive(upcomingEvents.Count > 0);
+            viewInstance.EventsSection.SetActive(liveEvents.Count > 0 || upcomingEvents.Count > 0);
+        }
+
+        private void ShowHomeCardLoading()
+        {
+            LobbyHomeCardView card = viewInstance!.HomeCard;
+            shownHomePlace = null;
+            card.TitleText.text = string.Empty;
+            card.CreatorText.text = string.Empty;
+            card.OnlineCounter.SetActive(false);
+            card.Thumbnail.IsLoading = true;
+            card.JumpInButton.SetInteractable(false);
+        }
+
+        private void ShowHomeCard(PlacesData.PlaceInfo place, CancellationToken ct)
+        {
+            LobbyHomeCardView card = viewInstance!.HomeCard;
+            shownHomePlace = place;
+            card.TitleText.text = place.title;
+            card.CreatorText.text = place.contact_name;
+
+            int online = place.connected_addresses?.Length ?? place.user_count;
+            card.OnlineCountText.text = online.ToString();
+            card.OnlineCounter.SetActive(online > 0);
+
+            thumbnailLoader.LoadCommunityThumbnailFromUrlAsync(place.image, card.Thumbnail, card.DefaultThumbnail, ct, true).Forget();
+            card.JumpInButton.SetInteractable(true);
+        }
+
+        private void ShowPlaceCard(LobbyPlaceCardView card, PlacesData.PlaceInfo place, CancellationToken ct)
+        {
+            card.TitleText.text = place.title;
+            card.CreatorText.text = place.contact_name;
+            thumbnailLoader.LoadCommunityThumbnailFromUrlAsync(place.image, card.Thumbnail, card.DefaultThumbnail, ct, true).Forget();
+        }
+
+        private void ShowEventCards(LobbyCarouselView carousel, List<EventDTO> events, CancellationToken ct)
+        {
+            carousel.ShowCards(events.Count);
+
+            for (var i = 0; i < events.Count; i++)
+                ShowEventCard((LobbyEventCardView)carousel.Cards[i], events[i], ct);
+        }
+
+        /// <summary>
+        ///     A live event shows how many people are connected; one yet to start shows how long until it does.
+        /// </summary>
+        private void ShowEventCard(LobbyEventCardView card, EventDTO @event, CancellationToken ct)
+        {
+            card.TitleText.text = @event.name;
+            card.HostText.text = string.Format(EVENT_HOST_FORMAT, @event.user_name);
+
+            int connectedUsers = @event.connected_addresses?.Length ?? 0;
+            card.LiveBadge.SetActive(@event.live);
+            card.AttendeesGroup.SetActive(@event.live && connectedUsers > 0);
+            card.AttendeesText.text = connectedUsers.ToString();
+
+            card.ScheduleText.gameObject.SetActive(!@event.live);
+            card.ScheduleText.text = @event.live ? string.Empty : StartsIn(@event.NextStartAtProcessed - DateTime.UtcNow);
+
+            thumbnailLoader.LoadCommunityThumbnailFromUrlAsync(@event.image, card.Thumbnail, card.DefaultThumbnail, ct, true).Forget();
+        }
+
+        private static string StartsIn(TimeSpan remaining)
+        {
+            if (remaining <= TimeSpan.Zero) return EVENT_STARTING_NOW;
+            if (remaining.TotalHours < 1) return $"In {Mathf.Max(1, Mathf.RoundToInt((float)remaining.TotalMinutes))} min";
+            if (remaining.TotalDays < 1) return InUnits(Mathf.RoundToInt((float)remaining.TotalHours), "hour");
+
+            return InUnits(Mathf.RoundToInt((float)remaining.TotalDays), "day");
+        }
+
+        private static string InUnits(int amount, string unit) =>
+            amount == 1 ? $"In 1 {unit}" : $"In {amount} {unit}s";
 
         private void OnProfileUpdated(Profile profile)
         {
@@ -319,45 +476,73 @@ namespace DCL.Lobby
 
         private void OnHomeJumpInClicked()
         {
-            if (viewInstance!.HomeCard.Place is { } place)
-                OnPlaceClicked(place);
+            if (shownHomePlace != null)
+                OnPlaceClicked(shownHomePlace);
+        }
+
+        private void OnRecentPlaceClicked(int index)
+        {
+            if (index < recentPlaces.Count)
+                OnPlaceClicked(recentPlaces[index]);
+        }
+
+        private void OnRecommendedPlaceClicked(int index)
+        {
+            if (index < recommendedPlaces.Count)
+                OnPlaceClicked(recommendedPlaces[index]);
+        }
+
+        private void OnLiveEventClicked(int index)
+        {
+            if (index < liveEvents.Count)
+                OnEventClicked(liveEvents[index]);
+        }
+
+        private void OnUpcomingEventClicked(int index)
+        {
+            if (index < upcomingEvents.Count)
+                OnEventClicked(upcomingEvents[index]);
         }
 
         // Until the backpack gets its own modal the Explore panel takes over; being fullscreen it also closes this panel.
         private void OnAvatarClicked(PointerEventData _) =>
             mvcManager.ShowAndForget(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Backpack, BackpackSections.Avatar)));
 
-        private void OnPlaceClicked(PlacesData.PlaceInfo place)
+        private void OnPlaceClicked(PlacesData.PlaceInfo place) =>
+            PickDestination(place.IsWorld ? WorldUrl(place.world_name) : null, place.base_position_processed, landOnParcel: false);
+
+        // The event details open in the same modal the Explore menu uses; jumping in from there comes back through OnEventJumpIn
+        private void OnEventClicked(EventDTO @event) =>
+            mvcManager.ShowAndForget(EventDetailPanelController.IssueCommand(new EventDetailPanelParameter(@event, placeData: null, jumpInHandler: OnEventJumpIn)));
+
+        // Land on the exact parcel of the event rather than on the scene spawn point: the event may be held in a corner of a big scene
+        private void OnEventJumpIn(IEventDTO @event) =>
+            PickDestination(@event.World ? WorldUrl(@event.Server) : null, new Vector2Int(@event.X, @event.Y), landOnParcel: true);
+
+        /// <summary>
+        ///     Before the world is loaded the startup teleport lands directly in the picked destination; once in-world it teleports right away.
+        ///     Either way the lobby closes.
+        /// </summary>
+        private void PickDestination(URLDomain? worldUrl, Vector2Int parcel, bool landOnParcel)
         {
             if (startParcel.IsConsumed())
             {
                 jumpInCts = jumpInCts.SafeRestart();
-                JumpIn(place, jumpInCts.Token);
+
+                if (worldUrl.HasValue)
+                    realmNavigator.TryChangeRealmAsync(worldUrl.Value, jumpInCts.Token, isWorld: true, allowsSpawnPointerOverride: true).Forget();
+                else
+                    realmNavigator.TeleportToParcelAsync(parcel, jumpInCts.Token, false, landOnParcel).Forget();
             }
-            else
-                AssignStartDestination(place);
-
-            RequestClose();
-        }
-
-        private void JumpIn(PlacesData.PlaceInfo place, CancellationToken ct)
-        {
-            if (place.IsWorld)
-                realmNavigator.TryChangeRealmAsync(WorldUrl(place.world_name), ct, isWorld: true, allowsSpawnPointerOverride: true).Forget();
-            else
-                realmNavigator.TeleportToParcelAsync(place.base_position_processed, ct, false).Forget();
-        }
-
-        // Nothing is loaded yet: the startup teleport lands directly in the picked place
-        private void AssignStartDestination(PlacesData.PlaceInfo place)
-        {
-            if (place.IsWorld)
-                startParcel.AssignRealm(WorldUrl(place.world_name));
+            else if (worldUrl.HasValue)
+                startParcel.AssignRealm(worldUrl.Value);
             else
             {
                 startParcel.AssignRealm(URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Genesis)));
-                startParcel.Assign(place.base_position_processed);
+                startParcel.Assign(parcel);
             }
+
+            RequestClose();
         }
 
         private URLDomain WorldUrl(string worldName) =>

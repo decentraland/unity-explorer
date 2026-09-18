@@ -56,6 +56,25 @@ namespace DCL.Lobby
         public GameObject RecommendedPlacesSection { get; private set; } = null!;
 
         [field: SerializeField]
-        public LobbyPlacesCarousel RecommendedPlaces { get; private set; } = null!;
+        public LobbyCarouselView RecommendedPlaces { get; private set; } = null!;
+
+        [field: Header("Events")]
+        [field: SerializeField]
+        public GameObject EventsSection { get; private set; } = null!;
+
+        /// <summary>
+        ///     Hidden while nothing is live; the upcoming carousel moves up to take its place.
+        /// </summary>
+        [field: SerializeField]
+        public GameObject LiveEventsSection { get; private set; } = null!;
+
+        [field: SerializeField]
+        public LobbyCarouselView LiveEvents { get; private set; } = null!;
+
+        [field: SerializeField]
+        public GameObject UpcomingEventsSection { get; private set; } = null!;
+
+        [field: SerializeField]
+        public LobbyCarouselView UpcomingEvents { get; private set; } = null!;
     }
 }
