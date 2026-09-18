@@ -73,16 +73,20 @@ namespace DCL.SocialService
                 {
                     try
                     {
-                        WebSocketReceiveResult result = await webSocket.ReceiveAsync(receiveBuffer, ct);
+                        int totalBytes = 0;
+                        WebSocketReceiveResult result;
 
-                        if (result.MessageType is WebSocketMessageType.Text or WebSocketMessageType.Binary)
+                        do
                         {
-                            var data = new byte[result.Count];
-                            receiveBuffer.AsSpan(0, result.Count).CopyTo(data);
+                            result = await webSocket.ReceiveAsync(
+                                new Memory<byte>(receiveBuffer, totalBytes, receiveBuffer.Length - totalBytes), ct);
 
-                            // Buffer.BlockCopy(receiveBuffer, 0, data, 0, result.Count);
-                            OnMessageEvent?.Invoke(data);
+                            if (result.MessageType == WebSocketMessageType.Close)
+                                break;
+
+                            totalBytes += result.Count;
                         }
+                        while (!result.EndOfMessage);
 
                         if (result.MessageType == WebSocketMessageType.Close)
                         {
@@ -91,6 +95,19 @@ namespace DCL.SocialService
 
                             await CloseAsync(ct);
                             break;
+                        }
+
+                        if (totalBytes > 0)
+                        {
+                            var data = new byte[totalBytes];
+                            receiveBuffer.AsSpan(0, totalBytes).CopyTo(data);
+
+                            try { OnMessageEvent?.Invoke(data); }
+                            catch (Exception ex)
+                            {
+                                ReportHub.LogWarning(ReportCategory.SOCIAL,
+                                    $"Failed to process incoming RPC message ({totalBytes} bytes): {ex.Message}");
+                            }
                         }
                     }
                     catch (OperationCanceledException) { break; }
