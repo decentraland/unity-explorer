@@ -45,24 +45,25 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
             // Remove deleted entity from the parent list
             RemoveFromParent(uiTransformComponentToBeDeleted, sdkEntity);
 
-            // The chain is only valid right after a rebuild, and RemoveChild resets the released node, so Next is read first
+            // The chain is only valid right after a rebuild, and RemoveChild resets the released node, so its fields are read first
             uiTransformComponentToBeDeleted.RelationData.RebuildLinkedList();
 
             for (UITransformRelationLinkedData.Node? current = uiTransformComponentToBeDeleted.RelationData.head; current != null;)
             {
+                CRDTEntity childId = current.EntityId;
                 UITransformRelationLinkedData.Node? next = current.Next;
 
-                if (entitiesMap.TryGetValue(current.EntityId, out Entity childEntity))
+                if (entitiesMap.TryGetValue(childId, out Entity childEntity))
                 {
                     ref UITransformComponent uiTransform = ref World.TryGetRef<UITransformComponent>(childEntity, out bool exists);
 
                     if (exists)
                     {
-                        uiTransformComponentToBeDeleted.RelationData.RemoveChild(current.EntityId, ref uiTransform.RelationData);
-                        SetNewChild(ref uiTransform, current.EntityId, sceneRoot);
+                        uiTransformComponentToBeDeleted.RelationData.RemoveChild(childId, ref uiTransform.RelationData);
+                        SetNewChild(ref uiTransform, childId, sceneRoot);
                     }
                     else
-                        ReportHub.LogError(GetReportData(), $"Trying to unparent an ${nameof(UITransformComponent)}'s child but no component has been found on entity {current.EntityId}");
+                        ReportHub.LogError(GetReportData(), $"Trying to unparent a {nameof(UITransformComponent)}'s child but no component has been found on entity {childId}");
                 }
 
                 current = next;

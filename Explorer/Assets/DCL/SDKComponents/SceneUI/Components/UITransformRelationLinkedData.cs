@@ -81,6 +81,10 @@ namespace DCL.SDKComponents.SceneUI.Components
             newNode.Setup(childEntity);
             newNode.RightOf = childComponent.rightOf;
             newNode.insertionIndex = insertionCounter++;
+
+            if (nodes.TryGetValue(childEntity, out Node? existing))
+                Node.POOL.Release(existing);
+
             nodes[childEntity] = newNode;
 
             childComponent.parent = thisEntity;
@@ -261,6 +265,7 @@ namespace DCL.SDKComponents.SceneUI.Components
 
             reverseRightOf?.Clear();
             chainStarts?.Clear();
+            insertionCounter = 0;
             head = null;
         }
     }

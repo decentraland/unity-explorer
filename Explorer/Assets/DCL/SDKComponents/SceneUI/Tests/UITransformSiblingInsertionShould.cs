@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using CRDT;
 using CrdtEcsBridge.Components;
 using DCL.ECSComponents;
@@ -360,6 +360,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
             CollectionAssert.AreEqual(expected, rootComponent.ContentContainer.Children().ToArray(),
                 "Order should be A → C → B even when A and B have ZIndex=0 and C has ZIndex=null");
         }
+
         [Test]
         [Description("Raw ECS scenes may create several siblings without rightOf. Every one of them must stay in the list, " +
                       "in creation order, instead of only the last-enumerated one becoming the head.")]

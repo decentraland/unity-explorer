@@ -75,6 +75,8 @@ namespace DCL.SDKComponents.SceneUI.Tests
             Assert.That(childB.RelationData.parent, Is.EqualTo(sceneRoot));
             Assert.That(sceneRootComponent.ContentContainer.Contains(childA.Transform), Is.True);
             Assert.That(sceneRootComponent.ContentContainer.Contains(childB.Transform), Is.True);
+            Assert.That(sceneRootComponent.RelationData.ContainsNode(new CRDTEntity(200)), Is.True);
+            Assert.That(sceneRootComponent.RelationData.ContainsNode(new CRDTEntity(300)), Is.True);
             Assert.That(parentComponent.RelationData.ContainsNode(new CRDTEntity(200)), Is.False);
             Assert.That(parentComponent.RelationData.ContainsNode(new CRDTEntity(300)), Is.False);
         }
