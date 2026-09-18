@@ -118,8 +118,7 @@ result = await webSocket.ReceiveAsync(
                             try { OnMessageEvent?.Invoke(data); }
                             catch (Exception ex)
                             {
-                                ReportHub.LogWarning(ReportCategory.SOCIAL,
-                                    $"Failed to process incoming RPC message ({totalBytes} bytes): {ex.Message}");
+                                ReportHub.LogException(ex, ReportCategory.SOCIAL);
                             }
                         }
                     }
