@@ -26,10 +26,11 @@ namespace DCL.ECSComponents {
           string.Concat(
             "CjRkZWNlbnRyYWxhbmQvc2RrL2NvbXBvbmVudHMvY29tbW9uL2V4cGxvcmVy",
             "X3VpLnByb3RvEiJkZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMuY29tbW9u",
-            "KoABCgpFeHBsb3JlclVpEg8KC0VVX1NFVFRJTkdTEAASCgoGRVVfTUFQEAES",
+            "KpYBCgpFeHBsb3JlclVpEg8KC0VVX1NFVFRJTkdTEAASCgoGRVVfTUFQEAES",
             "DwoLRVVfQkFDS1BBQ0sQAhISCg5FVV9DQU1FUkFfUkVFTBADEhIKDkVVX0NP",
-            "TU1VTklUSUVTEAQSDQoJRVVfUExBQ0VTEAUSDQoJRVVfRVZFTlRTEAZCFKoC",
-            "EURDTC5FQ1NDb21wb25lbnRzYgZwcm90bzM="));
+            "TU1VTklUSUVTEAQSDQoJRVVfUExBQ0VTEAUSDQoJRVVfRVZFTlRTEAYSFAoQ",
+            "RVVfSVRFTV9QVVJDSEFTRRAHQhSqAhFEQ0wuRUNTQ29tcG9uZW50c2IGcHJv",
+            "dG8z"));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(new[] {typeof(global::DCL.ECSComponents.ExplorerUi), }, null, null));
@@ -39,7 +40,7 @@ namespace DCL.ECSComponents {
   }
   #region Enums
   /// <summary>
-  /// Identifies which fullscreen explorer panel OpenExplorerUi targets.
+  /// Identifies which explorer panel OpenExplorerUi targets. Panels are not all fullscreen.
   /// EU_SETTINGS holds 0 so an unset `ui` field defaults to the least-intrusive panel.
   /// </summary>
   public enum ExplorerUi {
@@ -50,6 +51,10 @@ namespace DCL.ECSComponents {
     [pbr::OriginalName("EU_COMMUNITIES")] EuCommunities = 4,
     [pbr::OriginalName("EU_PLACES")] EuPlaces = 5,
     [pbr::OriginalName("EU_EVENTS")] EuEvents = 6,
+    /// <summary>
+    /// the item-purchase confirmation modal; see OpenExplorerUi for its parameters and result component
+    /// </summary>
+    [pbr::OriginalName("EU_ITEM_PURCHASE")] EuItemPurchase = 7,
   }
 
   #endregion

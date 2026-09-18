@@ -538,19 +538,14 @@ For guidance on detached flows, cancellation, `SuppressToResultAsync`, and the e
 
 To update the protocol to the last version of the protocol, open a terminal like CMD and navigate to your working copy of the repository, there you will see a folder named 'scripts'; execute the following commands:
 
-**[RECOMMENDED]** For using the protocol [experimental branch](https://github.com/decentraland/protocol/tree/experimental) package (the experimental features depend on this otherwise Unity project won't compile due to missing protobuf message for the experimental components):
-```bash
-cd scripts
-npm install @dcl/protocol@experimental
-npm run build-protocol
-```
-
-For using the protocol [main branch](https://github.com/decentraland/protocol) package:
+unity-explorer uses the `@next` package, which is published from the protocol [main branch](https://github.com/decentraland/protocol):
 ```bash
 cd scripts
 npm install @dcl/protocol@next
 npm run build-protocol
 ```
+
+> **NOTE:** always install `@dcl/protocol@next`. Any other tag will be missing component definitions and the Unity project won't compile.
 
 ## How to test scenes
 

@@ -13,9 +13,11 @@ using DCL.PrivateWorlds;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI.Profiles.Helpers;
+using DCL.UI.UpgradeGuestAccountPopup;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
+using DCL.Web3.Identities;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -49,6 +51,7 @@ namespace DCL.Places
         private readonly PlacesCardSocialActionsController placesCardSocialActionsController;
         private readonly IFriendsService? friendsService;
         private readonly IMVCManager mvcManager;
+        private readonly IWeb3IdentityCache identityCache;
         private readonly IWorldPermissionsService worldPermissionsService;
         private readonly HttpEventsApiService eventsApiService;
 
@@ -77,7 +80,8 @@ namespace DCL.Places
             PlacesCardSocialActionsController placesCardSocialActionsController,
             HomePlaceEventBus homePlaceEventBus,
             HttpEventsApiService eventsApiService,
-            IWorldPermissionsService worldPermissionsService)
+            IWorldPermissionsService worldPermissionsService,
+            IWeb3IdentityCache identityCache)
         {
             this.view = view;
             this.placesController = placesController;
@@ -90,6 +94,7 @@ namespace DCL.Places
             this.placesCardSocialActionsController = placesCardSocialActionsController;
             this.eventsApiService = eventsApiService;
             this.worldPermissionsService = worldPermissionsService;
+            this.identityCache = identityCache;
 
             view.BackButtonClicked += OnBackButtonClicked;
             view.ExplorePlacesClicked += OnExplorePlacesClicked;
@@ -139,8 +144,16 @@ namespace DCL.Places
         private void OnExplorePlacesClicked() =>
             placesController.OpenSection(PlacesSection.Browse, force: true, resetCategory: true);
 
-        private void GetANameClicked() =>
+        private void GetANameClicked()
+        {
+            if (identityCache.IsGuest())
+            {
+                mvcManager.ShowAndForget(UpgradeGuestAccountPopupController.IssueCommand(new UpgradeGuestAccountPopupController.Params(GuestUpgradeTrigger.NameClaim)));
+                return;
+            }
+
             webBrowser.OpenUrlMainThreadOnly(DecentralandUrl.MarketplaceClaimName);
+        }
 
         private void TryLoadMorePlaces()
         {

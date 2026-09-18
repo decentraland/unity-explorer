@@ -38,7 +38,7 @@ namespace DCL.Backpack.Gifting.Presenters.GiftTransfer.Commands
         }
 
         public string GetWaitingMessage() =>
-            web3Provider.IsThirdWebOTP
+            web3Provider.IsThirdWebAccount
                 ? GiftingTextIds.WAITING_FOR_WALLET_MESSAGE_THIRD_WEB
                 : GiftingTextIds.WAITING_FOR_WALLET_MESSAGE;
 
