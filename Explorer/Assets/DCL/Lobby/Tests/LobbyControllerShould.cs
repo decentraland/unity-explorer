@@ -11,6 +11,7 @@ using DCL.Input.Component;
 using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Notifications.NotificationsMenu;
+using DCL.Places;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
 using DCL.Profiles.Self;
@@ -611,42 +612,7 @@ namespace DCL.Lobby.Tests
         }
 
         [Test]
-        public void SetTheStartParcelWhenAGenesisPlaceIsPickedBeforeTheWorldLoads()
-        {
-            // Arrange
-            PlacesData.PlaceInfo place = CreatePlace("plaza", new Vector2Int(10, 20));
-            ArrangeRecentPlaces(new List<string> { place.id }, place);
-            UniTask lifeCycle = Launch(isStartup: true);
-
-            // Act
-            recentPlaceCards[0].Button.onClick.Invoke();
-
-            // Assert
-            Assert.That(startParcel.Peek(), Is.EqualTo(new Vector2Int(10, 20)));
-            Assert.That(startParcel.Realm, Is.EqualTo(URLDomain.FromString(GENESIS_URL)));
-            Assert.That(lifeCycle.Status, Is.EqualTo(UniTaskStatus.Succeeded));
-            realmNavigator.DidNotReceiveWithAnyArgs().TeleportToParcelAsync(default, default, default);
-        }
-
-        [Test]
-        public void SetTheStartRealmWhenAWorldIsPickedBeforeTheWorldLoads()
-        {
-            // Arrange
-            PlacesData.PlaceInfo place = CreatePlace("my world", Vector2Int.zero, "MyWorld.dcl.eth");
-            ArrangeRecentPlaces(new List<string> { place.id }, place);
-            UniTask lifeCycle = Launch(isStartup: true);
-
-            // Act
-            recentPlaceCards[0].Button.onClick.Invoke();
-
-            // Assert
-            Assert.That(startParcel.Realm, Is.EqualTo(URLDomain.FromString($"{WORLD_SERVER_URL}/myworld.dcl.eth")));
-            Assert.That(lifeCycle.Status, Is.EqualTo(UniTaskStatus.Succeeded));
-            realmNavigator.DidNotReceiveWithAnyArgs().TryChangeRealmAsync(default, default);
-        }
-
-        [Test]
-        public void TeleportWhenAGenesisPlaceIsPickedInWorld()
+        public void OpenThePlaceDetailsInsteadOfJumpingInWhenAPlaceCardIsClicked()
         {
             // Arrange
             startParcel.ConsumeByTeleportOperation();
@@ -658,22 +624,83 @@ namespace DCL.Lobby.Tests
             recentPlaceCards[0].Button.onClick.Invoke();
 
             // Assert
+            mvcManager.Received(1).ShowAsync(Arg.Is<ShowCommand<PlaceDetailPanelView, PlaceDetailPanelParameter>>(c => c.InputData.PlaceData.title == "plaza"), Arg.Any<CancellationToken>());
+            realmNavigator.DidNotReceiveWithAnyArgs().TeleportToParcelAsync(default, default, default);
+            Assert.That(lifeCycle.Status, Is.EqualTo(UniTaskStatus.Pending));
+        }
+
+        [Test]
+        public void SetTheStartParcelWhenJumpingInAGenesisPlaceFromThePlaceDetailsBeforeTheWorldLoads()
+        {
+            // Arrange
+            PlacesData.PlaceInfo place = CreatePlace("plaza", new Vector2Int(10, 20));
+            ArrangeRecentPlaces(new List<string> { place.id }, place);
+            UniTask lifeCycle = Launch(isStartup: true);
+            recentPlaceCards[0].Button.onClick.Invoke();
+            PlaceDetailPanelParameter details = ShownPlaceDetails();
+
+            // Act
+            details.JumpInHandler!(details.PlaceData);
+
+            // Assert
+            Assert.That(startParcel.Peek(), Is.EqualTo(new Vector2Int(10, 20)));
+            Assert.That(startParcel.Realm, Is.EqualTo(URLDomain.FromString(GENESIS_URL)));
+            Assert.That(lifeCycle.Status, Is.EqualTo(UniTaskStatus.Succeeded));
+            realmNavigator.DidNotReceiveWithAnyArgs().TeleportToParcelAsync(default, default, default);
+        }
+
+        [Test]
+        public void SetTheStartRealmWhenJumpingInAWorldFromThePlaceDetailsBeforeTheWorldLoads()
+        {
+            // Arrange
+            PlacesData.PlaceInfo place = CreatePlace("my world", Vector2Int.zero, "MyWorld.dcl.eth");
+            ArrangeRecentPlaces(new List<string> { place.id }, place);
+            UniTask lifeCycle = Launch(isStartup: true);
+            recentPlaceCards[0].Button.onClick.Invoke();
+            PlaceDetailPanelParameter details = ShownPlaceDetails();
+
+            // Act
+            details.JumpInHandler!(details.PlaceData);
+
+            // Assert
+            Assert.That(startParcel.Realm, Is.EqualTo(URLDomain.FromString($"{WORLD_SERVER_URL}/myworld.dcl.eth")));
+            Assert.That(lifeCycle.Status, Is.EqualTo(UniTaskStatus.Succeeded));
+            realmNavigator.DidNotReceiveWithAnyArgs().TryChangeRealmAsync(default, default);
+        }
+
+        [Test]
+        public void TeleportWhenJumpingInAGenesisPlaceFromThePlaceDetailsInWorld()
+        {
+            // Arrange
+            startParcel.ConsumeByTeleportOperation();
+            PlacesData.PlaceInfo place = CreatePlace("plaza", new Vector2Int(10, 20));
+            ArrangeRecentPlaces(new List<string> { place.id }, place);
+            UniTask lifeCycle = Launch(isStartup: false);
+            recentPlaceCards[0].Button.onClick.Invoke();
+            PlaceDetailPanelParameter details = ShownPlaceDetails();
+
+            // Act
+            details.JumpInHandler!(details.PlaceData);
+
+            // Assert
             realmNavigator.Received(1).TeleportToParcelAsync(new Vector2Int(10, 20), Arg.Any<CancellationToken>(), false);
             Assert.That(startParcel.Realm, Is.Null);
             Assert.That(lifeCycle.Status, Is.EqualTo(UniTaskStatus.Succeeded));
         }
 
         [Test]
-        public void ChangeRealmWhenAWorldIsPickedInWorld()
+        public void ChangeRealmWhenJumpingInAWorldFromThePlaceDetailsInWorld()
         {
             // Arrange
             startParcel.ConsumeByTeleportOperation();
             PlacesData.PlaceInfo place = CreatePlace("my world", Vector2Int.zero, "myworld.dcl.eth");
             ArrangeRecentPlaces(new List<string> { place.id }, place);
             Launch(isStartup: false);
+            recentPlaceCards[0].Button.onClick.Invoke();
+            PlaceDetailPanelParameter details = ShownPlaceDetails();
 
             // Act
-            recentPlaceCards[0].Button.onClick.Invoke();
+            details.JumpInHandler!(details.PlaceData);
 
             // Assert
             realmNavigator.Received(1).TryChangeRealmAsync(URLDomain.FromString($"{WORLD_SERVER_URL}/myworld.dcl.eth"), Arg.Any<CancellationToken>(), default, true, true);
@@ -733,14 +760,16 @@ namespace DCL.Lobby.Tests
         }
 
         [Test]
-        public void JumpInWhenAFeaturedPlaceIsPicked()
+        public void JumpInWhenAFeaturedPlaceIsPickedFromThePlaceDetails()
         {
             // Arrange
             ArrangeRecommendedPlaces(CreatePlace("featured", new Vector2Int(-3, 7)));
             UniTask lifeCycle = Launch(isStartup: true);
+            recommendedPlaces.Cards[0].Button.onClick.Invoke();
+            PlaceDetailPanelParameter details = ShownPlaceDetails();
 
             // Act
-            recommendedPlaces.Cards[0].Button.onClick.Invoke();
+            details.JumpInHandler!(details.PlaceData);
 
             // Assert
             Assert.That(startParcel.Peek(), Is.EqualTo(new Vector2Int(-3, 7)));
@@ -876,6 +905,15 @@ namespace DCL.Lobby.Tests
             Assert.That(startParcel.Realm, Is.EqualTo(URLDomain.FromString($"{WORLD_SERVER_URL}/myworld.dcl.eth")));
             Assert.That(lifeCycle.Status, Is.EqualTo(UniTaskStatus.Succeeded));
             realmNavigator.DidNotReceiveWithAnyArgs().TryChangeRealmAsync(default, default);
+        }
+
+        private PlaceDetailPanelParameter ShownPlaceDetails()
+        {
+            foreach (ICall call in mvcManager.ReceivedCalls())
+                if (call.GetArguments()[0] is ShowCommand<PlaceDetailPanelView, PlaceDetailPanelParameter> command)
+                    return command.InputData;
+
+            throw new AssertionException("The place details were not shown");
         }
 
         private EventDetailPanelParameter ShownEventDetails()

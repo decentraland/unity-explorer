@@ -13,6 +13,7 @@ using DCL.Input.Component;
 using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.Notifications.NotificationsMenu;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Places;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
 using DCL.Profiles.Self;
@@ -484,7 +485,7 @@ namespace DCL.Lobby
 
             // Before the world loads the card mirrors the destination the launch settings already picked, so there is nothing to reassign
             if (startParcel.IsConsumed())
-                OnPlaceClicked(shownLandingPlace);
+                OnPlaceJumpIn(shownLandingPlace);
             else
                 RequestClose();
         }
@@ -517,7 +518,11 @@ namespace DCL.Lobby
         private void OnAvatarClicked(PointerEventData _) =>
             mvcManager.ShowAndForget(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Backpack, BackpackSections.Avatar)));
 
+        // The place details open in the same modal the Places menu uses; jumping in from there comes back through OnPlaceJumpIn
         private void OnPlaceClicked(PlacesData.PlaceInfo place) =>
+            mvcManager.ShowAndForget(PlaceDetailPanelController.IssueCommand(new PlaceDetailPanelParameter(place, jumpInHandler: OnPlaceJumpIn)));
+
+        private void OnPlaceJumpIn(PlacesData.PlaceInfo place) =>
             PickDestination(place.IsWorld ? WorldUrl(place.world_name) : null, place.base_position_processed, landOnParcel: false);
 
         // The event details open in the same modal the Explore menu uses; jumping in from there comes back through OnEventJumpIn
