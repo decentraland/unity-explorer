@@ -19,6 +19,7 @@ namespace DCL.Web3.Authenticators
         private readonly ThirdWebAuthenticator thirdWebAuth;
         private readonly DappWeb3EthereumApi dappEthereumApi;
         private readonly IWeb3Authenticator dappLogin;
+        private readonly IWeb3Authenticator ephemeralGuestLogin;
         private readonly IWeb3IdentityCache identityCache;
         private readonly IAnalyticsController analytics;
 
@@ -32,7 +33,12 @@ namespace DCL.Web3.Authenticators
 
         public bool IsThirdWebAccount => CurrentProvider == AuthProvider.ThirdWeb;
 
-        private IWeb3Authenticator currentAuthenticator => IsThirdWebAccount ? thirdWebAuth : dappLogin;
+        private IWeb3Authenticator currentAuthenticator => CurrentProvider switch
+                                                           {
+                                                               AuthProvider.ThirdWeb => thirdWebAuth,
+                                                               AuthProvider.Ephemeral => ephemeralGuestLogin,
+                                                               _ => dappLogin,
+                                                           };
         private IEthereumApi currentEthereumApi => IsThirdWebAccount ? thirdWebAuth : dappEthereumApi;
 
         public CompositeWeb3Provider(
@@ -40,11 +46,13 @@ namespace DCL.Web3.Authenticators
             DappWeb3EthereumApi dappEthereumApi,
             DappDeepLinkAuthenticator dappLogin,
             IWeb3IdentityCache identityCache,
-            IAnalyticsController analytics)
+            IAnalyticsController analytics,
+            IWeb3Authenticator ephemeralGuestLogin)
         {
             this.thirdWebAuth = thirdWebAuth ?? throw new ArgumentNullException(nameof(thirdWebAuth));
             this.dappEthereumApi = dappEthereumApi ?? throw new ArgumentNullException(nameof(dappEthereumApi));
             this.dappLogin = dappLogin ?? throw new ArgumentNullException(nameof(dappLogin));
+            this.ephemeralGuestLogin = ephemeralGuestLogin ?? throw new ArgumentNullException(nameof(ephemeralGuestLogin));
             this.identityCache = identityCache ?? throw new ArgumentNullException(nameof(identityCache));
             this.analytics = analytics ?? throw new ArgumentNullException(nameof(analytics));
         }
@@ -54,6 +62,7 @@ namespace DCL.Web3.Authenticators
             thirdWebAuth.Dispose();
             dappEthereumApi.Dispose();
             dappLogin.Dispose();
+            ephemeralGuestLogin.Dispose();
             identityCache.Dispose();
         }
 
@@ -128,24 +137,13 @@ namespace DCL.Web3.Authenticators
             if (GuestLoginIsDisabled())
                 DCLPlayerPrefs.DeleteKey(DCLPrefKeys.GUEST_SESSION_ACTIVE, save: true);
 
-            if (DCLPlayerPrefs.GetBool(DCLPrefKeys.GUEST_SESSION_ACTIVE))
-            {
-                CurrentProvider = AuthProvider.ThirdWeb;
-
-                try { return await thirdWebAuth.TryAutoLoginAsync(ct); }
-                catch (GuestAccountUpgradedException)
-                {
-                    DiscardUpgradedGuestSession();
-                    return false;
-                }
-            }
-
             string storedEmail = DCLPlayerPrefs.GetString(DCLPrefKeys.LOGGEDIN_EMAIL, string.Empty);
 
-            // Heuristic: if we have a stored email, assume ThirdWeb OTP flow; otherwise default to Dapp Wallet.
+            // Heuristic: a stored email means the ThirdWeb OTP flow; otherwise the stored identity tells whether
+            // it was generated on the device as a guest, and anything else is a Dapp Wallet.
             if (string.IsNullOrEmpty(storedEmail))
             {
-                CurrentProvider = AuthProvider.Dapp;
+                CurrentProvider = identityCache.IsGuest() ? AuthProvider.Ephemeral : AuthProvider.Dapp;
                 return true;
             }
 

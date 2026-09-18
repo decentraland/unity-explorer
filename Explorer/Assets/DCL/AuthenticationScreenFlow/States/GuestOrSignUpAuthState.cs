@@ -108,7 +108,7 @@ namespace DCL.AuthenticationScreenFlow
 
         private async UniTaskVoid LoginAsGuestAsync(CancellationToken ct)
         {
-            compositeWeb3Provider.CurrentProvider = AuthProvider.ThirdWeb;
+            compositeWeb3Provider.CurrentProvider = AuthProvider.Ephemeral;
             controller.CurrentLoginMethod = LoginMethod.GUEST;
             currentState.Value = AuthStatus.LoginRequested;
 

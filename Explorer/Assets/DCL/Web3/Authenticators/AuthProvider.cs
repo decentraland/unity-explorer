@@ -14,5 +14,10 @@ namespace DCL.Web3.Authenticators
         ///     Dapp authentication via external browser wallet (MetaMask, etc.)
         /// </summary>
         Dapp,
+
+        /// <summary>
+        ///     Guest authentication with an account generated on the device, which lives no longer than its identity
+        /// </summary>
+        Ephemeral,
     }
 }
