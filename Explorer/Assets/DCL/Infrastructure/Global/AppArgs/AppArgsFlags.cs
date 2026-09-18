@@ -87,6 +87,9 @@ namespace Global.AppArgs
         public const string AUTH_BRIDGE_ONLY = "login-bridge-only";
 
         public const string FORCED_EMOTES = "self-force-emotes";
+
+        /// <summary>Comma-separated wearable URNs rendered on the own avatar without owning them. Never deployed.</summary>
+        public const string FORCED_WEARABLES = "self-force-wearables";
         public const string SELF_PREVIEW_EMOTES = "self-preview-emotes";
         public const string SELF_PREVIEW_WEARABLES = "self-preview-wearables";
         public const string SELF_PREVIEW_BUILDER_COLLECTIONS = "self-preview-builder-collections";

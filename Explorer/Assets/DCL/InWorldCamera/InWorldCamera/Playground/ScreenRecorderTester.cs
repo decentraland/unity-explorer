@@ -105,7 +105,8 @@ namespace DCL.InWorldCamera.Playground
                 new DefaultProfileCache(),
                 world,
                 playerEntity,
-                new PassThroughOwnedNftFilter()
+                new PassThroughOwnedNftFilter(),
+                new ForcedWearables()
             );
         }
 

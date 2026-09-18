@@ -30,6 +30,7 @@ namespace DCL.Profiles.Self
         private readonly IEquippedWearables equippedWearables;
         private readonly IEquippedEmotes equippedEmotes;
         private readonly IOwnedNftFilter ownedNftFilter;
+        private readonly ForcedWearables forcedWearables;
 
         public event Action<Profile>? ProfilePropagated;
 
@@ -44,7 +45,8 @@ namespace DCL.Profiles.Self
             IProfileCache profileCache,
             World world,
             Entity playerEntity,
-            IOwnedNftFilter ownedNftFilter)
+            IOwnedNftFilter ownedNftFilter,
+            ForcedWearables forcedWearables)
         {
             this.profileRepository = profileRepository;
             this.web3IdentityCache = web3IdentityCache;
@@ -57,6 +59,7 @@ namespace DCL.Profiles.Self
             this.world = world;
             this.playerEntity = playerEntity;
             this.ownedNftFilter = ownedNftFilter;
+            this.forcedWearables = forcedWearables;
 
             web3IdentityCache.OnIdentityCleared += InvalidateOwnProfile;
             web3IdentityCache.OnIdentityChanged += InvalidateOwnProfile;
@@ -80,6 +83,8 @@ namespace DCL.Profiles.Self
             );
 
             if (profile == null) return null;
+
+            forcedWearables.ApplyTo(profile);
 
             if (forcedEmotes != null)
                 for (var slot = 0; slot < forcedEmotes.Count && slot < profile.Avatar.Emotes.Count; slot++)
@@ -125,6 +130,9 @@ namespace DCL.Profiles.Self
 
             string address = web3IdentityCache.Identity.Address;
 
+            // Strip forced wearables before deploying - this is the only path that reaches SetAsync.
+            forcedWearables.RemoveFrom(newProfile);
+
             // Take a snapshot of the current profile from cache before any mutations
             // This serves as the baseline for duplicate detection and revert on failure
             profileCache.TryGet(address, out Profile? cachedProfile);
@@ -155,6 +163,7 @@ namespace DCL.Profiles.Self
 
                     if (savedProfile != null)
                     {
+                        forcedWearables.ApplyTo(savedProfile);
                         profileCache.Set(savedProfile.UserId, savedProfile);
                         ProfilePropagated?.Invoke(savedProfile);
                     }
@@ -182,6 +191,7 @@ namespace DCL.Profiles.Self
 
                     // We need to re-update the avatar in-world with the new profile because the save operation invalidates the previous profile
                     // breaking the avatar and the backpack
+                    forcedWearables.ApplyTo(savedProfile!);
                     profileCache.Set(savedProfile!.UserId, savedProfile);
                     UpdateAvatarInWorld(savedProfile!);
                     ProfilePropagated?.Invoke(savedProfile);

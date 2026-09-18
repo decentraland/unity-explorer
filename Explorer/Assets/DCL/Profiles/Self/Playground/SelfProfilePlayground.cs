@@ -72,7 +72,8 @@ namespace DCL.Profiles.Self.Playground
                 new DefaultProfileCache(),
                 world,
                 playerEntity,
-                new PassThroughOwnedNftFilter()
+                new PassThroughOwnedNftFilter(),
+                new ForcedWearables()
             );
 
             var profile = await selfProfile.ProfileAsync(ct);
