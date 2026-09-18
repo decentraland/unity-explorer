@@ -73,12 +73,12 @@ namespace DCL.SDKComponents.SceneUI.Components
             this.UnregisterInputCallbacks();
             TextField.UnregisterHoverStyleCallbacks();
             Placeholder.Dispose();
+            focusInputBlock = null;
         }
 
         /// <summary>
-        ///     Blurs the field if it owns the panel focus. A field detached while focused is disposed without a blur
-        ///     and UI Toolkit restores that focus when the element is attached again, so call this right after
-        ///     attaching a recycled field: otherwise it starts focused without the FocusIn that blocks the input maps.
+        ///     Blurs the field if it owns the panel focus. A field detached while focused receives
+        ///     restored focus from UI Toolkit when reattached.
         /// </summary>
         public void BlurIfFocused()
         {
@@ -94,15 +94,14 @@ namespace DCL.SDKComponents.SceneUI.Components
         /// </summary>
         private void ReleaseInputFocus()
         {
-            // Blurring while still attached dispatches FocusOut synchronously: the registered callback lifts the block
-            // and the panel drops the field from its focused list, so a recycled field does not come back focused.
+            // Blurring while still attached dispatches FocusOut synchronously.
             BlurIfFocused();
 
             // Nothing is dispatched when the field was detached before disposal, so lift the block directly.
-            if (!IsFocused) return;
+            if (!IsFocused || focusInputBlock == null) return;
 
             IsFocused = false;
-            focusInputBlock?.Enable(BLOCKED_INPUT_KINDS);
+            focusInputBlock.Enable(BLOCKED_INPUT_KINDS);
         }
     }
 }

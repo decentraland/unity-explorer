@@ -141,6 +141,16 @@ namespace DCL.SDKComponents.SceneUI.Tests
             inputBlock.Received(1).Enable(UIInputComponent.BLOCKED_INPUT_KINDS);
         }
 
+        [Test]
+        public void BlockSubmitActionWhileFocused()
+        {
+            // Act
+            Focus();
+
+            // Assert
+            Assert.That(UIInputComponent.BLOCKED_INPUT_KINDS, Contains.Item(InputMapComponent.Kind.Submit));
+        }
+
         private void Focus()
         {
             uiInputComponent.TextField.Focus();

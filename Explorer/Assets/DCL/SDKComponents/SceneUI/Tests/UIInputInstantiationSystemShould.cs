@@ -231,6 +231,29 @@ namespace DCL.SDKComponents.SceneUI.Tests
         }
 
         [Test]
+        public void TriggerSubmitWhenEnterReachesInnerTextElement()
+        {
+            // Arrange: the inner TextElement consumes Return in the bubble-up phase, so the key only reaches a trickle-down callback
+            canvasGameObject = new GameObject(nameof(UIInputInstantiationSystemShould));
+            var canvas = canvasGameObject.AddComponent<UIDocument>();
+            panelSettings = ScriptableObject.CreateInstance<PanelSettings>();
+            canvas.panelSettings = panelSettings;
+            canvas.rootVisualElement.Add(uiTransformComponent.Transform);
+            world.Add(entity, new PBUiInput());
+            system.Update(0);
+            ref UIInputComponent uiInputComponent = ref world.Get<UIInputComponent>(entity);
+            uiInputComponent.TextField.Focus();
+            Assert.That(uiInputComponent.IsOnSubmitTriggered, Is.False);
+
+            // Act
+            using (KeyDownEvent enter = KeyDownEvent.GetPooled('\n', KeyCode.Return, EventModifiers.None))
+                uiInputComponent.TextElement.SendEvent(enter);
+
+            // Assert
+            Assert.That(uiInputComponent.IsOnSubmitTriggered, Is.True);
+        }
+
+        [Test]
         public void BlurRecycledFieldThatWasDetachedWhileFocused()
         {
             // Arrange: a live panel keeps the focus of an element that left it and restores it when the element comes back

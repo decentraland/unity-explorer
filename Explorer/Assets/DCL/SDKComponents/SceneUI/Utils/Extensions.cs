@@ -244,9 +244,7 @@ namespace DCL.SDKComponents.SceneUI.Utils
             uiInputComponent.UnregisterInputCallbacks();
             uiInputComponent.TextField.RegisterCallback(newOnChangeCallback);
             uiInputComponent.currentOnValueChanged = newOnChangeCallback;
-            // Trickle-down: for a single-line TextField Unity's own key handler consumes the Return
-            // KeyDownEvent with StopPropagation() on the inner TextElement, so a bubble-up callback
-            // never sees it. Claiming the key here also keeps that handler from running at all.
+            // Trickle-down so the callback runs before the inner TextElement consumes Return.
             uiInputComponent.TextField.RegisterCallback(newOnSubmitCallback, TrickleDown.TrickleDown);
             uiInputComponent.currentOnSubmit = newOnSubmitCallback;
             uiInputComponent.TextField.RegisterCallback(newOnFocusInCallback);
