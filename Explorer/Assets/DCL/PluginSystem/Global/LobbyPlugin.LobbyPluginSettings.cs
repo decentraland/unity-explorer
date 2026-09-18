@@ -1,7 +1,10 @@
 using DCL.AssetsProvision;
+using DCL.Backpack;
 using DCL.Lobby;
+using DCL.Notifications;
 using System;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 
 namespace DCL.PluginSystem.Global
 {
@@ -17,6 +20,15 @@ namespace DCL.PluginSystem.Global
 
             [field: SerializeField]
             public LobbyAvatarSettings AvatarSettings { get; private set; }
+
+            [field: SerializeField]
+            public AssetReferenceT<NotificationIconTypes> NotificationIconTypes { get; private set; }
+
+            [field: SerializeField]
+            public AssetReferenceT<NotificationDefaultThumbnails> NotificationDefaultThumbnails { get; private set; }
+
+            [field: SerializeField]
+            public AssetReferenceT<NftTypeIconSO> RarityColorMappings { get; private set; }
 
             [Serializable]
             public class LobbyViewRef : ComponentReference<LobbyView>

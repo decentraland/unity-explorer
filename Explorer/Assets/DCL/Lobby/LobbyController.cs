@@ -9,6 +9,7 @@ using DCL.ExplorePanel;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.MapRenderer.MapLayers.HomeMarker;
+using DCL.Notifications.NotificationsMenu;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
@@ -55,11 +56,9 @@ namespace DCL.Lobby
         private readonly StartParcel startParcel;
         private readonly ThumbnailLoader thumbnailLoader;
         private readonly SidebarProfileButtonPresenter profileButtonPresenter;
-        private readonly ProfileMenuController profileMenuController;
 
         private LobbyCharacterPreviewController? avatarPreview;
         private CancellationTokenSource? avatarCts;
-        private CancellationTokenSource? profileMenuCts;
         private CancellationTokenSource? placesCts;
         private CancellationTokenSource? jumpInCts;
         private UniTaskCompletionSource? closeIntent;
@@ -85,8 +84,7 @@ namespace DCL.Lobby
             IDecentralandUrlsSource decentralandUrlsSource,
             StartParcel startParcel,
             ThumbnailLoader thumbnailLoader,
-            SidebarProfileButtonPresenter profileButtonPresenter,
-            ProfileMenuController profileMenuController) : base(viewFactory)
+            SidebarProfileButtonPresenter profileButtonPresenter) : base(viewFactory)
         {
             this.inputBlock = inputBlock;
             this.loadingStatus = loadingStatus;
@@ -104,7 +102,6 @@ namespace DCL.Lobby
             this.startParcel = startParcel;
             this.thumbnailLoader = thumbnailLoader;
             this.profileButtonPresenter = profileButtonPresenter;
-            this.profileMenuController = profileMenuController;
         }
 
         public override void Dispose()
@@ -117,6 +114,7 @@ namespace DCL.Lobby
                 viewInstance.CloseButton.onClick.RemoveListener(RequestClose);
                 viewInstance.CharacterPreviewView.CharacterPreviewInputDetector.OnPointerClickEvent -= OnAvatarClicked;
                 viewInstance.ProfileWidgetView.OpenProfileButton.Button.onClick.RemoveListener(ShowProfileMenu);
+                viewInstance.NotificationsButton.onClick.RemoveListener(ShowNotifications);
 
                 foreach (LobbyPlaceCardView card in viewInstance.RecentPlaceCards)
                     card.Button.onClick.RemoveAllListeners();
@@ -127,7 +125,6 @@ namespace DCL.Lobby
             avatarCts.SafeCancelAndDispose();
             placesCts.SafeCancelAndDispose();
             jumpInCts.SafeCancelAndDispose();
-            profileMenuCts.SafeCancelAndDispose();
             avatarPreview?.Dispose();
             closeIntent?.TrySetCanceled();
         }
@@ -139,6 +136,7 @@ namespace DCL.Lobby
             viewInstance.CloseButton.onClick.AddListener(RequestClose);
             viewInstance.CharacterPreviewView.CharacterPreviewInputDetector.OnPointerClickEvent += OnAvatarClicked;
             viewInstance.ProfileWidgetView.OpenProfileButton.Button.onClick.AddListener(ShowProfileMenu);
+            viewInstance.NotificationsButton.onClick.AddListener(ShowNotifications);
 
             foreach (LobbyPlaceCardView card in viewInstance.RecentPlaceCards)
                 card.Button.onClick.AddListener(() => { if (card.Place is { } place) OnPlaceClicked(place); });
@@ -168,8 +166,6 @@ namespace DCL.Lobby
             ShowAvatarAsync(avatarCts.Token).Forget();
 
             profileButtonPresenter.LoadProfile();
-            profileMenuCts = profileMenuCts.SafeRestart();
-            HideProfileMenuIfOpen();
 
             placesCts = placesCts.SafeRestart();
             viewInstance!.HomeCard.ShowLoading();
@@ -187,9 +183,6 @@ namespace DCL.Lobby
             avatarCts.SafeCancelAndDispose();
             placesCts.SafeCancelAndDispose();
             avatarPreview!.OnHide();
-
-            HideProfileMenuIfOpen();
-            profileMenuCts.SafeCancelAndDispose();
 
             inputBlock.Enable(InputMapComponent.BLOCK_USER_INPUT);
         }
@@ -370,45 +363,12 @@ namespace DCL.Lobby
         private URLDomain WorldUrl(string worldName) =>
             URLDomain.FromString(new ENS(worldName).ConvertEnsToWorldUrl(decentralandUrlsSource.Url(DecentralandUrl.WorldServer)));
 
-        private void HideProfileMenuIfOpen()
-        {
-            if (profileMenuController.State is ControllerState.ViewFocused or ControllerState.ViewBlurred)
-                profileMenuController.HideViewAsync(CancellationToken.None).Forget();
-        }
+        // Popups stack on top of this fullscreen panel; the MVC manager owns their closer, escape handling and teardown
+        private void ShowProfileMenu() =>
+            mvcManager.ShowAndForget(ProfileMenuController<LobbyPopupParameter>.IssueCommand(new LobbyPopupParameter()));
 
-        private void ShowProfileMenu()
-        {
-            profileMenuCts = profileMenuCts.SafeRestart();
-
-            if (profileMenuController.State != ControllerState.ViewHidden)
-                return;
-
-            ShowProfileMenuAsync(profileMenuCts.Token).Forget();
-        }
-
-        private async UniTaskVoid ShowProfileMenuAsync(CancellationToken ct)
-        {
-            try
-            {
-                viewInstance!.ProfileMenuCloserButton.gameObject.SetActive(true);
-                viewInstance.ProfileMenuCloserButton.onClick.AddListener(OnProfileMenuCloserClicked);
-
-                await profileMenuController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Popup, 0), new ControllerNoData(), ct);
-                await profileMenuController.HideViewAsync(CancellationToken.None);
-            }
-            catch (OperationCanceledException) { }
-            finally
-            {
-                if (viewInstance != null)
-                {
-                    viewInstance.ProfileMenuCloserButton.onClick.RemoveListener(OnProfileMenuCloserClicked);
-                    viewInstance.ProfileMenuCloserButton.gameObject.SetActive(false);
-                }
-            }
-        }
-
-        private void OnProfileMenuCloserClicked() =>
-            profileMenuCts?.Cancel();
+        private void ShowNotifications() =>
+            mvcManager.ShowAndForget(NotificationsPanelController<LobbyPopupParameter>.IssueCommand(new LobbyPopupParameter()));
 
         private void RequestClose()
         {
@@ -416,6 +376,12 @@ namespace DCL.Lobby
             closeIntent = null;
         }
     }
+
+    /// <summary>
+    ///     Input type of the lobby's own profile menu and notifications popups. The MVC manager keys controllers by view and
+    ///     input type, so this keeps them registered next to the sidebar's instances of the same controllers.
+    /// </summary>
+    public readonly struct LobbyPopupParameter { }
 
     public readonly struct LobbyParameter
     {

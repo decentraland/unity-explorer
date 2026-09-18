@@ -846,7 +846,7 @@ namespace Global.Dynamic
                     profileContainer.SelfProfile, profileContainer.ProfileChangesBus, characterPreviewFactory, characterPreviewEventBus, globalWorld,
                     placesAndEventsContainer.PlacesAPIService, placesAndEventsContainer.HomePlaceEventBus, realmNavigator, bootstrapContainer.DecentralandUrlsSource, dynamicWorldParams.StartParcel, staticContainer.WebRequestsContainer.WebRequestController,
                     identityCache, profilesRepository, profileCache, profileContainer.ProfileRepositoryWrapper, uiShellContainer.PassportBridge, playerEntity, webBrowser,
-                    dynamicWorldDependencies.CompositeWeb3Provider, initializationFlowContainer.InitializationFlow, marketplaceCreditsApiClient));
+                    dynamicWorldDependencies.CompositeWeb3Provider, initializationFlowContainer.InitializationFlow, marketplaceCreditsApiClient, notificationsRequestController));
 
             // ReSharper disable once MethodHasAsyncOverloadWithCancellation
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.VoiceChat))

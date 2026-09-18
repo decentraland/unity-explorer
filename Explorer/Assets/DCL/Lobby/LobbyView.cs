@@ -1,4 +1,5 @@
 using DCL.CharacterPreview;
+using DCL.Notifications.NotificationsMenu;
 using DCL.UI.Credits;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles;
@@ -22,7 +23,10 @@ namespace DCL.Lobby
         public ProfileMenuView ProfileMenuView { get; private set; } = null!;
 
         [field: SerializeField]
-        public Button ProfileMenuCloserButton { get; private set; } = null!;
+        public Button NotificationsButton { get; private set; } = null!;
+
+        [field: SerializeField]
+        public NotificationsMenuView NotificationsMenuView { get; private set; } = null!;
 
         [field: SerializeField]
         public Button CloseButton { get; private set; } = null!;

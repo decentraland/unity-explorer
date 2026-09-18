@@ -2,6 +2,7 @@ using Arch.Core;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Backpack;
 using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Communities;
@@ -13,6 +14,8 @@ using DCL.Lobby;
 using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.MarketplaceCredits;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Notifications;
+using DCL.Notifications.NotificationsMenu;
 using DCL.Passport;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
@@ -62,10 +65,12 @@ namespace DCL.PluginSystem.Global
         private readonly ICompositeWeb3Provider web3Authenticator;
         private readonly IUserInAppInitializationFlow userInAppInitializationFlow;
         private readonly MarketplaceCreditsAPIClient marketplaceCreditsAPIClient;
+        private readonly NotificationsRequestController notificationsRequestController;
 
         private LobbyController? lobbyController;
         private SidebarProfileButtonPresenter? profileButtonPresenter;
-        private ProfileMenuController? profileMenuController;
+        private ProfileMenuController<LobbyPopupParameter>? profileMenuController;
+        private NotificationsPanelController<LobbyPopupParameter>? notificationsPanelController;
         private ICreditsPanelController creditsPanelController = new NullCreditsPanelController();
 
         public LobbyPlugin(
@@ -94,7 +99,8 @@ namespace DCL.PluginSystem.Global
             UnityAppWebBrowser webBrowser,
             ICompositeWeb3Provider web3Authenticator,
             IUserInAppInitializationFlow userInAppInitializationFlow,
-            MarketplaceCreditsAPIClient marketplaceCreditsAPIClient)
+            MarketplaceCreditsAPIClient marketplaceCreditsAPIClient,
+            NotificationsRequestController notificationsRequestController)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -122,6 +128,7 @@ namespace DCL.PluginSystem.Global
             this.web3Authenticator = web3Authenticator;
             this.userInAppInitializationFlow = userInAppInitializationFlow;
             this.marketplaceCreditsAPIClient = marketplaceCreditsAPIClient;
+            this.notificationsRequestController = notificationsRequestController;
         }
 
         public void Dispose()
@@ -129,6 +136,7 @@ namespace DCL.PluginSystem.Global
             lobbyController?.Dispose();
             profileButtonPresenter?.Dispose();
             profileMenuController?.Dispose();
+            notificationsPanelController?.Dispose();
             creditsPanelController.Dispose();
         }
 
@@ -137,13 +145,16 @@ namespace DCL.PluginSystem.Global
         public async UniTask InitializeAsync(LobbyPluginSettings settings, CancellationToken ct)
         {
             LobbyView prefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.LobbyPrefab, ct: ct)).Value;
+            NotificationIconTypes notificationIconTypes = (await assetsProvisioner.ProvideMainAssetAsync(settings.NotificationIconTypes, ct)).Value;
+            NotificationDefaultThumbnails notificationDefaultThumbnails = (await assetsProvisioner.ProvideMainAssetAsync(settings.NotificationDefaultThumbnails, ct)).Value;
+            NftTypeIconSO rarityBackgroundMapping = await assetsProvisioner.ProvideMainAssetValueAsync(settings.RarityColorMappings, ct);
 
             // The top-bar presenters bind to the live view, so it is instantiated up front instead of lazily on first show
             ControllerBase<LobbyView, LobbyParameter>.ViewFactoryMethod viewFactory = LobbyController.Preallocate(prefab, null, out LobbyView lobbyView);
 
             profileButtonPresenter = new SidebarProfileButtonPresenter(lobbyView.ProfileWidgetView, identityCache, profileRepository, profileChangesBus);
 
-            profileMenuController = new ProfileMenuController(() => lobbyView.ProfileMenuView,
+            profileMenuController = new ProfileMenuController<LobbyPopupParameter>(() => lobbyView.ProfileMenuView,
                 identityCache,
                 world,
                 playerEntity,
@@ -154,12 +165,25 @@ namespace DCL.PluginSystem.Global
                 passportBridge,
                 profileRepositoryWrapper);
 
+            // The lobby has its own panel instance: the sidebar's one lives inside the sidebar view, which is inactive until the world is loaded
+            notificationsPanelController = new NotificationsPanelController<LobbyPopupParameter>(() => lobbyView.NotificationsMenuView,
+                notificationsRequestController,
+                notificationIconTypes,
+                notificationDefaultThumbnails,
+                webRequestController,
+                rarityBackgroundMapping,
+                identityCache,
+                profileRepositoryWrapper,
+                mvcManager);
+
             lobbyController = new LobbyController(viewFactory, inputBlock, loadingStatus, mvcManager,
                 selfProfile, profileChangesBus, characterPreviewFactory, characterPreviewEventBus, settings.AvatarSettings, world,
                 placesAPIService, homePlace, realmNavigator, decentralandUrlsSource, startParcel, new ThumbnailLoader(new SpriteCache(webRequestController)),
-                profileButtonPresenter, profileMenuController);
+                profileButtonPresenter);
 
             mvcManager.RegisterController(lobbyController);
+            mvcManager.RegisterController(profileMenuController);
+            mvcManager.RegisterController(notificationsPanelController);
 
             EnableCreditsPanelAsync(lobbyView.CreditsPanelView, ct)
                .SuppressToResultAsync(ReportCategory.CREDITS_PURCHASE)

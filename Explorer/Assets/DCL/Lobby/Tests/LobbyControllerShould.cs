@@ -8,6 +8,7 @@ using DCL.Input;
 using DCL.Input.Component;
 using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Notifications.NotificationsMenu;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
 using DCL.Profiles.Self;
@@ -16,14 +17,8 @@ using DCL.UI;
 using DCL.UI.Buttons;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles;
-using DCL.UI.Profiles.Helpers;
-using DCL.UI.SystemMenu;
-using DCL.UserInAppInitializationFlow;
 using DCL.Web3;
-using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
-using DCL.Browser;
-using DCL.Passport;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
@@ -56,7 +51,8 @@ namespace DCL.Lobby.Tests
         private TMP_Text welcomeText = null!;
         private LobbyHomeCardView homeCard = null!;
         private Button closeButton = null!;
-        private Button logoutButton = null!;
+        private Button notificationsButton = null!;
+        private Button openProfileButton = null!;
         private CharacterPreviewInputDetector avatarInputDetector = null!;
         private CharacterPreviewSettingsSO previewSettings = null!;
         private GameObject recentPlacesSection = null!;
@@ -75,7 +71,6 @@ namespace DCL.Lobby.Tests
         private IWeb3IdentityCache identityCache = null!;
         private IProfileRepository profileRepository = null!;
         private SidebarProfileButtonPresenter profileButtonPresenter = null!;
-        private ProfileMenuController profileMenuController = null!;
         private World world = null!;
         private LobbyController controller = null!;
 
@@ -110,7 +105,9 @@ namespace DCL.Lobby.Tests
             SetBackingField(view, nameof(LobbyView.RecentPlaceCards), recentPlaceCards);
             SetBackingField(view, nameof(LobbyView.ProfileWidgetView), CreateProfileWidgetView());
             SetBackingField(view, nameof(LobbyView.ProfileMenuView), CreateProfileMenuView());
-            SetBackingField(view, nameof(LobbyView.ProfileMenuCloserButton), CreateButton(root.transform, "ProfileMenuCloser"));
+            notificationsButton = CreateButton(root.transform, "Notifications");
+            SetBackingField(view, nameof(LobbyView.NotificationsButton), notificationsButton);
+            SetBackingField(view, nameof(LobbyView.NotificationsMenuView), CreateNotificationsMenuView());
             SetBackingField(view, nameof(LobbyView.RecommendedPlacesSection), recommendedPlacesSection);
             SetBackingField(view, nameof(LobbyView.RecommendedPlaces), recommendedPlaces);
 
@@ -143,19 +140,14 @@ namespace DCL.Lobby.Tests
             identityCache = Substitute.For<IWeb3IdentityCache>();
             identityCache.Identity.Returns((IWeb3Identity?)null);
             profileRepository = Substitute.For<IProfileRepository>();
-            IProfileCache profileCache = Substitute.For<IProfileCache>();
             var profileChangesBus = new ProfileChangesBus();
 
             profileButtonPresenter = new SidebarProfileButtonPresenter(view.ProfileWidgetView, identityCache, profileRepository, profileChangesBus);
 
-            profileMenuController = new ProfileMenuController(() => view.ProfileMenuView, identityCache, world, default(Entity), new UnityAppWebBrowser(urlsSource),
-                Substitute.For<ICompositeWeb3Provider>(), Substitute.For<IUserInAppInitializationFlow>(), profileCache, Substitute.For<IPassportBridge>(),
-                new ProfileRepositoryWrapper(profileRepository, profileCache, Substitute.For<ISpriteCache>(), identityCache));
-
             controller = new LobbyController(() => view, inputBlock, loadingStatus, mvcManager, selfProfile, profileChangesBus,
                 Substitute.For<ICharacterPreviewFactory>(), new CharacterPreviewEventBus(), new LobbyAvatarSettings(), world,
                 placesAPIService, homePlace, realmNavigator, urlsSource, startParcel, new ThumbnailLoader(Substitute.For<ISpriteCache>()),
-                profileButtonPresenter, profileMenuController);
+                profileButtonPresenter);
         }
 
         [TearDown]
@@ -164,7 +156,6 @@ namespace DCL.Lobby.Tests
             LogAssert.ignoreFailingMessages = false;
             controller.Dispose();
             profileButtonPresenter.Dispose();
-            profileMenuController.Dispose();
             World.Destroy(world);
             Object.DestroyImmediate(previewSettings);
             Object.DestroyImmediate(root);
@@ -344,20 +335,6 @@ namespace DCL.Lobby.Tests
         }
 
         [Test]
-        public void StayOpenOnLogout()
-        {
-            // Arrange
-            UniTask lifeCycle = Launch(isStartup: true);
-            Assert.That(lifeCycle.Status, Is.EqualTo(UniTaskStatus.Pending));
-
-            // Act
-            logoutButton.onClick.Invoke();
-
-            // Assert
-            Assert.That(lifeCycle.Status, Is.EqualTo(UniTaskStatus.Pending));
-        }
-
-        [Test]
         public void RefreshTheProfileWidgetOnShow()
         {
             // Arrange
@@ -382,6 +359,32 @@ namespace DCL.Lobby.Tests
 
             // Assert
             Assert.That(closeButton.gameObject.activeSelf, Is.EqualTo(closeButtonVisible));
+        }
+
+        [Test]
+        public void OpenTheProfileMenuAsALobbyPopup()
+        {
+            // Arrange
+            Launch(isStartup: true).Forget();
+
+            // Act
+            openProfileButton.onClick.Invoke();
+
+            // Assert
+            mvcManager.Received(1).ShowAsync(Arg.Any<ShowCommand<ProfileMenuView, LobbyPopupParameter>>(), Arg.Any<CancellationToken>());
+        }
+
+        [Test]
+        public void OpenTheNotificationsAsALobbyPopup()
+        {
+            // Arrange
+            Launch(isStartup: true).Forget();
+
+            // Act
+            notificationsButton.onClick.Invoke();
+
+            // Assert
+            mvcManager.Received(1).ShowAsync(Arg.Any<ShowCommand<NotificationsMenuView, LobbyPopupParameter>>(), Arg.Any<CancellationToken>());
         }
 
         [Test]
@@ -751,7 +754,8 @@ namespace DCL.Lobby.Tests
             ProfileWidgetView widget = widgetGo.AddComponent<ProfileWidgetView>();
 
             HoverableButton openProfileButton = widgetGo.AddComponent<HoverableButton>();
-            SetBackingField(openProfileButton, nameof(HoverableButton.Button), widgetGo.AddComponent<Button>());
+            this.openProfileButton = widgetGo.AddComponent<Button>();
+            SetBackingField(openProfileButton, nameof(HoverableButton.Button), this.openProfileButton);
 
             var pictureGo = new GameObject("ProfilePicture");
             pictureGo.transform.SetParent(widgetGo.transform);
@@ -775,12 +779,17 @@ namespace DCL.Lobby.Tests
         {
             var menuGo = new GameObject("ProfileMenu");
             menuGo.transform.SetParent(root.transform);
-            ProfileMenuView menu = menuGo.AddComponent<ProfileMenuView>();
+            return menuGo.AddComponent<ProfileMenuView>();
+        }
 
-            SystemMenuView systemMenu = menuGo.AddComponent<SystemMenuView>();
-            logoutButton = CreateButton(menuGo.transform, "Logout");
-            SetBackingField(systemMenu, nameof(SystemMenuView.LogoutButton), logoutButton);
-            SetBackingField(menu, nameof(ProfileMenuView.SystemMenuView), systemMenu);
+        // Kept inactive like the prefab instance: the view wires its buttons on Awake, which never runs here
+        private NotificationsMenuView CreateNotificationsMenuView()
+        {
+            var menuGo = new GameObject("NotificationsMenu");
+            menuGo.transform.SetParent(root.transform);
+            menuGo.SetActive(false);
+            NotificationsMenuView menu = menuGo.AddComponent<NotificationsMenuView>();
+            SetBackingField(menu, "foundationCommunityButton", CreateButton(menuGo.transform, "FoundationCommunity"));
 
             return menu;
         }
