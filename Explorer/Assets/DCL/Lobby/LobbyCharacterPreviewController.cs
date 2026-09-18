@@ -13,22 +13,26 @@ using Random = UnityEngine.Random;
 namespace DCL.Lobby
 {
     /// <summary>
-    ///     Camera-facing preview of the player's own avatar shown in the lobby.
+    ///     Camera-facing preview of the player's own avatar shown in the lobby, standing on the 3D stage that follows it.
     ///     It idles by default and plays a flavour emote every now and then.
     /// </summary>
     public class LobbyCharacterPreviewController : CharacterPreviewControllerBase
     {
         private readonly LobbyAvatarSettings settings;
+        private readonly LobbyStage stage;
 
         private readonly List<URN> shortenedWearables = new ();
         private readonly HashSet<URN> shortenedEmotes = new ();
 
         private CancellationTokenSource? emotesCts;
 
-        public LobbyCharacterPreviewController(CharacterPreviewView view, LobbyAvatarSettings settings, ICharacterPreviewFactory previewFactory, World world, CharacterPreviewEventBus characterPreviewEventBus)
-            : base(view, previewFactory, world, true, characterPreviewEventBus)
+        public LobbyCharacterPreviewController(CharacterPreviewView view, LobbyAvatarSettings settings, LobbyStage stage, ICharacterPreviewFactory previewFactory, World world, CharacterPreviewEventBus characterPreviewEventBus)
+            : base(view, previewFactory, world, isPreviewPlatformActive: false, characterPreviewEventBus)
         {
             this.settings = settings;
+            this.stage = stage;
+
+            RenderTargetChanged += FitStage;
 
             rotateEnabled = false;
             panEnabled = false;
@@ -38,6 +42,9 @@ namespace DCL.Lobby
         public override void Initialize(Avatar avatar, Vector3 position)
         {
             view.gameObject.SetActive(true);
+
+            stage.transform.position = position;
+            stage.gameObject.SetActive(true);
 
             ApplyAvatar(avatar, position);
 
@@ -62,12 +69,21 @@ namespace DCL.Lobby
             base.OnHide(triggerOnHideBusEvent);
 
             view.gameObject.SetActive(false);
+            stage.gameObject.SetActive(false);
         }
 
         public override void Dispose()
         {
             emotesCts.SafeCancelAndDispose();
+            RenderTargetChanged -= FitStage;
             base.Dispose();
+        }
+
+        // The pooled camera can change with every render target, so the stage is pointed at the current one each time
+        private void FitStage()
+        {
+            SetPostProcessingEnabled(settings.PostProcessing);
+            stage.Track(PreviewCamera);
         }
 
         private void ApplyAvatar(Avatar avatar, Vector3 position)
@@ -131,5 +147,8 @@ namespace DCL.Lobby
         [field: SerializeField, Min(0f)] public float MinSecondsBetweenFlavourEmotes { get; private set; } = 8f;
         [field: SerializeField, Min(0f)] public float MaxSecondsBetweenFlavourEmotes { get; private set; } = 20f;
         [field: SerializeField] public string ProfileUpdatedEmoteURN { get; private set; } = "fistpump";
+
+        [Tooltip("Runs the URP post-processing volume on the lobby preview camera; other previews keep it off")]
+        [field: SerializeField] public bool PostProcessing { get; private set; }
     }
 }

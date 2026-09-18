@@ -38,6 +38,7 @@ using ECS;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System.Threading;
+using Object = UnityEngine.Object;
 
 namespace DCL.PluginSystem.Global
 {
@@ -76,6 +77,7 @@ namespace DCL.PluginSystem.Global
         private readonly IOnlineUsersProvider onlineUsersProvider;
 
         private LobbyController? lobbyController;
+        private LobbyStage? lobbyStage;
         private LobbyFriendsPresenter? friendsPresenter;
         private SidebarProfileButtonPresenter? profileButtonPresenter;
         private ProfileMenuController<LobbyPopupParameter>? profileMenuController;
@@ -150,11 +152,12 @@ namespace DCL.PluginSystem.Global
 
         public void Dispose()
         {
-            lobbyController?.Dispose();
+            // The lobby, profile menu and notifications controllers are registered in the MVC manager, which disposes them itself
+            if (lobbyStage != null)
+                Object.Destroy(lobbyStage.gameObject);
+
             friendsPresenter?.Dispose();
             profileButtonPresenter?.Dispose();
-            profileMenuController?.Dispose();
-            notificationsPanelController?.Dispose();
             creditsPanelController.Dispose();
         }
 
@@ -166,6 +169,10 @@ namespace DCL.PluginSystem.Global
             NotificationIconTypes notificationIconTypes = (await assetsProvisioner.ProvideMainAssetAsync(settings.NotificationIconTypes, ct)).Value;
             NotificationDefaultThumbnails notificationDefaultThumbnails = (await assetsProvisioner.ProvideMainAssetAsync(settings.NotificationDefaultThumbnails, ct)).Value;
             NftTypeIconSO rarityBackgroundMapping = await assetsProvisioner.ProvideMainAssetValueAsync(settings.RarityColorMappings, ct);
+
+            // One stage for the whole session: it is parked at the preview position and only active while the lobby is shown
+            lobbyStage = Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(settings.StagePrefab, ct: ct)).Value);
+            lobbyStage.gameObject.SetActive(false);
 
             // The top-bar presenters bind to the live view, so it is instantiated up front instead of lazily on first show
             ControllerBase<LobbyView, LobbyParameter>.ViewFactoryMethod viewFactory = LobbyController.Preallocate(prefab, null, out LobbyView lobbyView);
@@ -200,7 +207,7 @@ namespace DCL.PluginSystem.Global
                 : null;
 
             lobbyController = new LobbyController(viewFactory, inputBlock, loadingStatus, mvcManager,
-                selfProfile, profileChangesBus, characterPreviewFactory, characterPreviewEventBus, settings.AvatarSettings, world,
+                selfProfile, profileChangesBus, characterPreviewFactory, characterPreviewEventBus, settings.AvatarSettings, lobbyStage, world,
                 placesAPIService, realmData, homePlace, eventsApiService, realmNavigator, decentralandUrlsSource, startParcel, new ThumbnailLoader(new SpriteCache(webRequestController)),
                 profileButtonPresenter, friendsPresenter);
 

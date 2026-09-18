@@ -58,6 +58,7 @@ namespace DCL.Lobby
         private readonly ICharacterPreviewFactory characterPreviewFactory;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
         private readonly LobbyAvatarSettings avatarSettings;
+        private readonly LobbyStage stage;
         private readonly World world;
         private readonly IPlacesAPIService placesAPIService;
         private readonly IRealmData realmData;
@@ -99,6 +100,7 @@ namespace DCL.Lobby
             ICharacterPreviewFactory characterPreviewFactory,
             CharacterPreviewEventBus characterPreviewEventBus,
             LobbyAvatarSettings avatarSettings,
+            LobbyStage stage,
             World world,
             IPlacesAPIService placesAPIService,
             IRealmData realmData,
@@ -119,6 +121,7 @@ namespace DCL.Lobby
             this.characterPreviewFactory = characterPreviewFactory;
             this.characterPreviewEventBus = characterPreviewEventBus;
             this.avatarSettings = avatarSettings;
+            this.stage = stage;
             this.world = world;
             this.placesAPIService = placesAPIService;
             this.realmData = realmData;
@@ -200,7 +203,7 @@ namespace DCL.Lobby
             if (friends != null)
                 friends.JoinRequested = OnFriendJoin;
 
-            avatarPreview = new LobbyCharacterPreviewController(viewInstance.CharacterPreviewView, avatarSettings, characterPreviewFactory, world, characterPreviewEventBus);
+            avatarPreview = new LobbyCharacterPreviewController(viewInstance.CharacterPreviewView, avatarSettings, stage, characterPreviewFactory, world, characterPreviewEventBus);
         }
 
         protected override void OnBeforeViewShow()

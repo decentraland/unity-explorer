@@ -631,7 +631,7 @@ namespace DCL.Lobby.Tests
         private void CreateController()
         {
             controller = new LobbyController(() => view, inputBlock, loadingStatus, mvcManager, selfProfile, profileChangesBus,
-                Substitute.For<ICharacterPreviewFactory>(), new CharacterPreviewEventBus(), new LobbyAvatarSettings(), world,
+                Substitute.For<ICharacterPreviewFactory>(), new CharacterPreviewEventBus(), new LobbyAvatarSettings(), new GameObject(nameof(LobbyStage)).AddComponent<LobbyStage>(), world,
                 placesAPIService, realmData, homePlace, eventsApiService, realmNavigator, urlsSource, startParcel, new ThumbnailLoader(Substitute.For<ISpriteCache>()),
                 profileButtonPresenter, friends: null);
         }

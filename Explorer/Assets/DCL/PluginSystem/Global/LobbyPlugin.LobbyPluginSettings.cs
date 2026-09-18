@@ -19,6 +19,9 @@ namespace DCL.PluginSystem.Global
             public LobbyViewRef LobbyPrefab { get; private set; }
 
             [field: SerializeField]
+            public LobbyStageRef StagePrefab { get; private set; }
+
+            [field: SerializeField]
             public LobbyAvatarSettings AvatarSettings { get; private set; }
 
             [field: SerializeField]
@@ -34,6 +37,12 @@ namespace DCL.PluginSystem.Global
             public class LobbyViewRef : ComponentReference<LobbyView>
             {
                 public LobbyViewRef(string guid) : base(guid) { }
+            }
+
+            [Serializable]
+            public class LobbyStageRef : ComponentReference<LobbyStage>
+            {
+                public LobbyStageRef(string guid) : base(guid) { }
             }
         }
     }

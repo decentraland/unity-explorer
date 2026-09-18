@@ -92,6 +92,18 @@ namespace DCL.CharacterPreview
         public void SetPreviewPlatformActive(bool isActive) =>
             previewPlatform.SetActive(isActive);
 
+        public void SetCameraFarClipPlane(float farClipPlane) =>
+            freeLookCamera.m_Lens.FarClipPlane = farClipPlane;
+
+        public void SetTargetTexture(RenderTexture targetTexture) =>
+            camera.targetTexture = targetTexture;
+
+        public void SetPostProcessingEnabled(bool enabled)
+        {
+            camera.gameObject.TryGetComponent(out UniversalAdditionalCameraData cameraData);
+            cameraData.renderPostProcessing = enabled;
+        }
+
         private void Update()
         {
             UpdateRotation();

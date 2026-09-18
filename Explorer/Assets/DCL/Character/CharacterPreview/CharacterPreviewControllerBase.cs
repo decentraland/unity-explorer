@@ -43,6 +43,13 @@ namespace DCL.CharacterPreview
         private RenderTexture? currentRenderTexture;
         public RenderTexture CurrentRenderTexture => currentRenderTexture;
 
+        /// <summary>
+        ///     Raised when the render texture is created or recreated after a resize, with the preview camera already targeting it.
+        /// </summary>
+        public event Action? RenderTargetChanged;
+
+        protected Camera? PreviewCamera => previewController?.Camera;
+
         protected CharacterPreviewController? previewController;
         protected CharacterPreviewAvatarModel previewAvatarModel;
         protected bool zoomEnabled = true;
@@ -69,6 +76,7 @@ namespace DCL.CharacterPreview
             view.CharacterPreviewInputDetector.OnDraggingEvent += OnDrag;
             view.CharacterPreviewInputDetector.OnPointerUpEvent += OnPointerUp;
             view.CharacterPreviewInputDetector.OnPointerDownEvent += OnPointerDown;
+            view.RectDimensionsChanged += OnViewRectDimensionsChanged;
 
             inputEventBus = new CharacterPreviewInputEventBus();
             cursorController = new CharacterPreviewCursorController(view.CharacterPreviewCursorContainer, inputEventBus, view.CharacterPreviewSettingsSo.cursorSettings);
@@ -97,17 +105,7 @@ namespace DCL.CharacterPreview
         {
             if (initialized) return;
 
-            //Temporal solution to fix issue with render format in Mac VS Windows
-            Vector2 sizeDelta = view.RawImage.rectTransform!.sizeDelta;
-
-            currentRenderTexture = new RenderTexture((int)sizeDelta.x, (int)sizeDelta.y, 16, TextureUtilities.GetColorSpaceFormat())
-            {
-                name = "Preview Texture",
-                antiAliasing = 4,
-                useDynamicScale = true,
-            };
-
-            currentRenderTexture.Create();
+            currentRenderTexture = CreateRenderTexture(RenderTargetSize());
 
             view.RawImage.texture = currentRenderTexture;
 
@@ -117,6 +115,7 @@ namespace DCL.CharacterPreview
 
             ResetAvatarMovement();
             OnModelUpdated();
+            RenderTargetChanged?.Invoke();
         }
 
         public virtual void Dispose()
@@ -128,10 +127,55 @@ namespace DCL.CharacterPreview
             view.CharacterPreviewInputDetector.OnPointerUpEvent -= OnPointerUp;
             view.CharacterPreviewInputDetector.OnPointerDownEvent -= OnPointerDown;
             view.CharacterPreviewInputDetector.OnPointerEnterEvent -= OnPointerEnter;
+            view.RectDimensionsChanged -= OnViewRectDimensionsChanged;
             characterPreviewEventBus.OnAnyCharacterPreviewShowEvent -= OnAnyCharacterPreviewShow;
             characterPreviewEventBus.OnAnyCharacterPreviewHideEvent -= OnAnyCharacterPreviewHide;
             cursorController.Dispose();
             updateModelCancellationToken.SafeCancelAndDispose();
+        }
+
+        // Sized from the pixels the RawImage covers on screen, so a stretched rect (zero sizeDelta) gets a texture matching the view
+        private Vector2Int RenderTargetSize()
+        {
+            RectTransform rectTransform = view.RawImage.rectTransform;
+            Canvas canvas = view.RawImage.canvas;
+            Camera? canvasCamera = canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera;
+
+            Vector2 min = RectTransformUtility.WorldToScreenPoint(canvasCamera, rectTransform.TransformPoint(rectTransform.rect.min));
+            Vector2 max = RectTransformUtility.WorldToScreenPoint(canvasCamera, rectTransform.TransformPoint(rectTransform.rect.max));
+
+            int width = Mathf.RoundToInt(Mathf.Abs(max.x - min.x));
+            int height = Mathf.RoundToInt(Mathf.Abs(max.y - min.y));
+
+            return width > 0 && height > 0 ? new Vector2Int(width, height) : new Vector2Int(Screen.width, Screen.height);
+        }
+
+        private static RenderTexture CreateRenderTexture(Vector2Int size)
+        {
+            //Temporal solution to fix issue with render format in Mac VS Windows
+            var renderTexture = new RenderTexture(size.x, size.y, 16, TextureUtilities.GetColorSpaceFormat())
+            {
+                name = "Preview Texture",
+                antiAliasing = 4,
+                useDynamicScale = true,
+            };
+
+            renderTexture.Create();
+            return renderTexture;
+        }
+
+        private void OnViewRectDimensionsChanged()
+        {
+            if (!initialized || currentRenderTexture == null) return;
+
+            Vector2Int size = RenderTargetSize();
+            if (size.x == currentRenderTexture.width && size.y == currentRenderTexture.height) return;
+
+            ReleaseRenderTexture();
+            currentRenderTexture = CreateRenderTexture(size);
+            view.RawImage.texture = currentRenderTexture;
+            previewController?.SetTargetTexture(currentRenderTexture);
+            RenderTargetChanged?.Invoke();
         }
 
         private void ReleaseRenderTexture()
@@ -351,6 +395,11 @@ namespace DCL.CharacterPreview
         public void SetPlatformVisible(bool isVisible)
         {
             previewController?.SetPreviewPlatformActive(isVisible);
+        }
+
+        protected void SetPostProcessingEnabled(bool enabled)
+        {
+            previewController?.SetPostProcessingEnabled(enabled);
         }
     }
 }

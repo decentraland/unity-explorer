@@ -37,6 +37,9 @@ namespace DCL.CharacterPreview
         private readonly World globalWorld;
         private readonly bool builderEmotesPreview;
 
+        // A default instance has no container and therefore no camera
+        public Camera? Camera => characterPreviewAvatarContainer != null ? characterPreviewAvatarContainer.camera : null;
+
         public CharacterPreviewController(World world, RectTransform renderImage, CharacterPreviewAvatarContainer avatarContainer,
             CharacterPreviewInputEventBus inputEventBus, IComponentPool<CharacterPreviewAvatarContainer> characterPreviewContainerPool,
             CharacterPreviewCameraSettings cameraSettings, IComponentPool<Transform> transformPool, IAppArgs appArgs)
@@ -177,6 +180,12 @@ namespace DCL.CharacterPreview
 
         public void SetPreviewPlatformActive(bool isActive) =>
             characterPreviewAvatarContainer.SetPreviewPlatformActive(isActive);
+
+        public void SetPostProcessingEnabled(bool enabled) =>
+            characterPreviewAvatarContainer.SetPostProcessingEnabled(enabled);
+
+        public void SetTargetTexture(RenderTexture targetTexture) =>
+            characterPreviewAvatarContainer.SetTargetTexture(targetTexture);
 
         public void SetCharacterPreviewAvatarContainerActive(bool isActive)
         {

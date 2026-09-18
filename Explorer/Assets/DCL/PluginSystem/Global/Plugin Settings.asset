@@ -1120,6 +1120,12 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        <StagePrefab>k__BackingField:
+          m_AssetGUID: 656920c5c75f2fdfa40685df8aa57d37
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
         <AvatarSettings>k__BackingField:
           <FlavourEmotes>k__BackingField:
           - wave
@@ -1128,6 +1134,7 @@ MonoBehaviour:
           <MinSecondsBetweenFlavourEmotes>k__BackingField: 8
           <MaxSecondsBetweenFlavourEmotes>k__BackingField: 20
           <ProfileUpdatedEmoteURN>k__BackingField: fistpump
+          <PostProcessing>k__BackingField: 0
         <NotificationIconTypes>k__BackingField:
           m_AssetGUID: 4b896bc1397444f00a2b45725af2b263
           m_SubObjectName: 
