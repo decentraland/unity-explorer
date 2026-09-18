@@ -109,18 +109,10 @@ result = await webSocket.ReceiveAsync(
                             await CloseAsync(ct);
                             break;
                         }
+var data = new byte[totalBytes];
+receiveBuffer.AsSpan(0, totalBytes).CopyTo(data);
 
-                        if (totalBytes > 0)
-                        {
-                            var data = new byte[totalBytes];
-                            receiveBuffer.AsSpan(0, totalBytes).CopyTo(data);
-
-                            try { OnMessageEvent?.Invoke(data); }
-                            catch (Exception ex)
-                            {
-                                ReportHub.LogException(ex, ReportCategory.SOCIAL);
-                            }
-                        }
+OnMessageEvent?.Invoke(data);
                     }
                     catch (OperationCanceledException) { break; }
                     catch (WebSocketException e)
