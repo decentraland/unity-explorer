@@ -88,6 +88,16 @@ result = await webSocket.ReceiveAsync(
                                 break;
 
                             totalBytes += result.Count;
+
+                            if (totalBytes >= receiveBuffer.Length && !result.EndOfMessage)
+                            {
+                                ReportHub.LogError(ReportCategory.SOCIAL,
+                                    $"RPC message exceeded receive buffer ({receiveBuffer.Length} bytes), aborting connection");
+                                webSocket.Abort();
+                                OnErrorEvent?.Invoke(new WebSocketException("RPC message too large for receive buffer"));
+                                totalBytes = 0;
+                                break;
+                            }
                         }
                         while (!result.EndOfMessage);
 
