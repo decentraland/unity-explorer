@@ -4,6 +4,7 @@ using DCL.Multiplayer.Connections.Pools;
 using DCL.Utility.Types;
 using DCL.Web3.Identities;
 using DCL.Web3.Accounts.Factory;
+using DCL.Web3.Authenticators;
 using DCL.Web3.Chains;
 using Decentraland.Kernel.Comms.V3;
 using Google.Protobuf;
@@ -136,7 +137,7 @@ namespace DCL.Tests.Editor
             var chain = AuthChain.Create();
             chain.Set(new AuthLink { type = AuthLinkType.SIGNER, payload = account.Address.ToString(), signature = string.Empty });
             chain.Set(new AuthLink { type = AuthLinkType.ECDSA_EPHEMERAL, payload = "handshake-test", signature = account.Sign("handshake-test") });
-            return new DecentralandIdentity(account.Address, account, DateTime.UtcNow.AddHours(1), chain, IWeb3Identity.Web3IdentitySource.Cached);
+            return new DecentralandIdentity(account.Address, account, DateTime.UtcNow.AddHours(1), chain, LoginMethod.ANY);
         }
 
         private sealed class HandshakeTransport : IArchipelagoLiveConnection

@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Web3.Identities;
 using DCL.Web3.Accounts.Factory;
+using DCL.Web3.Authenticators;
 using DCL.Web3.Chains;
 using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.Archipelago.AdapterAddress.Current;
@@ -287,7 +288,7 @@ namespace DCL.Tests.PlayMode
                 var chain = AuthChain.Create();
                 chain.Set(new AuthLink { type = AuthLinkType.SIGNER, payload = account.Address.ToString(), signature = string.Empty });
                 chain.Set(new AuthLink { type = AuthLinkType.ECDSA_EPHEMERAL, payload = "handshake-test", signature = account.Sign("handshake-test") });
-                using var identity = new DecentralandIdentity(account.Address, account, DateTime.UtcNow.AddHours(1), chain, IWeb3Identity.Web3IdentitySource.Cached);
+                using var identity = new DecentralandIdentity(account.Address, account, DateTime.UtcNow.AddHours(1), chain, LoginMethod.ANY);
                 using var cache = new MemoryWeb3IdentityCache();
                 cache.Identity = identity;
                 var session = SessionControl.For(cache);
