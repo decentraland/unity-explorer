@@ -10,7 +10,7 @@ The [trusted workflow](../.github/workflows/dependency-security-review.yml) read
 
 1. The workflow classifies the current base/head change.
 2. It adds `new-dependency` when detailed review applies, or removes a stale label when it does not. Release branches and `auto-pr` PRs never qualify — [branch-and-pr-standards.md](branch-and-pr-standards.md) excludes them from AI review, and a release PR's commits each ran this pass on their own PR. The job needs both `issues: write` and `pull-requests: write`: without the pull-requests scope the label write 403s, which leaves every relevant PR on the ordinary review only.
-3. For a ready PR by a repository writer, it requests `decentraland-bot` after the label update finishes. Drafts wait until ready. External authors require a maintainer to request the bot.
+3. For a ready PR by a repository writer, it requests `decentraland-bot` after the label update finishes. Drafts wait until ready. External authors require a maintainer to request the bot. After the first review it re-requests only for a head that moved a relevant path since the one Jarvis last read — `new-dependency` describes the PR's cumulative diff, so without that check a single early automation edit would buy a full review on every later push. An unreadable or truncated comparison re-requests anyway.
 4. Agent Server reads repository and label state from the signed review-request webhook. Only Unity Explorer with `new-dependency` starts the detailed path.
 5. Jarvis performs one normal review and extends it with the applicable Unity dependency/plugin or automation checks. It posts one COMMENT review.
 6. Agent Server verifies the bot, head commit, run marker, and verdict, then updates `Dependency Security Review` on that commit.
@@ -43,7 +43,7 @@ Deploy this workflow change with or before Agent Server's label routing. Reclass
 
 After deployment, exercise a renderer-only change, shared-package change, binary/importer or assembly change, automation/prompt change, and unrelated documentation change. Confirm the label matches the current head and that relevant PRs produce one COMMENT review with the matching `commit_id`, run marker, verdict, and advisory status.
 
-Re-request Jarvis after a push, retarget, stale snapshot, invalid verdict, or failed run. If the workflow cannot classify the inventory or maintain the label, fix that failure before requesting manually; otherwise the webhook will intentionally run only the ordinary review.
+Re-request Jarvis after a retarget, stale snapshot, invalid verdict, or failed run, and after any push the classifier judged irrelevant that you still want re-read. If the workflow cannot classify the inventory or maintain the label, fix that failure before requesting manually; otherwise the webhook will intentionally run only the ordinary review.
 
 Run the local workflow checks with:
 
