@@ -69,6 +69,10 @@ namespace ECS.StreamableLoading.Cache.Disk
                         var chunk = data.Current;
                         await stream.WriteAsync(chunk, token);
                     }
+
+                    // The rename below is a metadata-only operation: force the data blocks to disk
+                    // first so a power loss cannot leave a full-length file with unwritten contents.
+                    stream.Flush(flushToDisk: true);
                 }
 
                 if (File.Exists(path))
@@ -123,11 +127,49 @@ namespace ECS.StreamableLoading.Cache.Disk
                     return EnumResult<SlicedOwnedMemory<byte>?, TaskError>.SuccessResult(null);
 
                 SlicedOwnedMemory<byte> data;
+                int length;
+                var totalRead = 0;
 
                 {
                     await using var stream = new FileStream(path, FileMode.Open, FileAccess.Read);
-                    data = new SlicedOwnedMemory<byte>((int)stream.Length);
-                    int _ = await stream.ReadAsync(data.Memory, token);
+                    length = (int)stream.Length;
+                    data = new SlicedOwnedMemory<byte>(length);
+
+                    try
+                    {
+                        // The backing buffer is uninitialized memory and a single ReadAsync may legally
+                        // fill only part of it: keep reading until the whole file is consumed so partial
+                        // reads can never surface garbage bytes as valid cached content.
+                        while (totalRead < length)
+                        {
+                            int read = await stream.ReadAsync(data.Memory.Slice(totalRead), token);
+
+                            if (read == 0)
+                                break;
+
+                            totalRead += read;
+                        }
+                    }
+                    catch
+                    {
+                        data.Dispose();
+                        throw;
+                    }
+                }
+
+                if (totalRead != length)
+                {
+                    // The entry cannot be read back in full: it is corrupt. Evict the file so the
+                    // next read does not encounter it, and report a miss.
+                    data.Dispose();
+                    DeleteNoThrow(path);
+
+                    ReportHub.Log(
+                        ReportCategory.STREAMABLE_LOADING,
+                        $"[DiskCache] READ CORRUPT EVICTED path='{path}' expected={length} read={totalRead}"
+                    );
+
+                    return EnumResult<SlicedOwnedMemory<byte>?, TaskError>.SuccessResult(null);
                 }
 
                 diskCleanUp.NotifyUsed(fileName);
