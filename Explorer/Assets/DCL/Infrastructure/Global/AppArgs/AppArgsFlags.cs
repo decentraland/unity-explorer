@@ -137,6 +137,8 @@ namespace Global.AppArgs
 
         public const string GUEST_LOGIN = "guest-login";
 
+        public const string LOBBY = "lobby";
+
         public const string AVATAR_HIGHLIGHT = "avatar-highlight";
 
         public const string CHAT_MESSAGE_RATE_LIMIT = "chat-message-rate-limit";

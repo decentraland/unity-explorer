@@ -65,7 +65,8 @@ namespace DCL.AuthenticationScreenFlow.Tests
                         controller,
                         new ReactiveProperty<AuthStatus>(AuthStatus.None),
                         selfProfile,
-                        Substitute.For<IWeb3IdentityCache>());
+                        Substitute.For<IWeb3IdentityCache>(),
+                        skipExistingAccountLobby: false);
 
                     state.Enter(new ProfileFetchingPayload(Substitute.For<IWeb3Identity>(), true, cts.Token));
 

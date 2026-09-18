@@ -80,7 +80,7 @@ namespace DCL.AuthenticationScreenFlow
         public string CurrentRequestId { get; internal set; } = string.Empty;
         public LoginMethod CurrentLoginMethod { get; internal set; }
 
-        // Set by the Lobby states on Enter so analytics can tag LOGGED_IN / LOGGED_IN_CACHED with
+        // Set when the login completes so analytics can tag LOGGED_IN / LOGGED_IN_CACHED with
         // whether the session created a new account or restored an existing one. Without this flag
         // the LOGGED_IN vs LOGGED_IN_CACHED split conflates "fresh auth" with "new account",
         // misclassifying returning users whose cached identity expired.
@@ -180,7 +180,8 @@ namespace DCL.AuthenticationScreenFlow
                 new LoginSelectionAuthState(fsm, viewInstance, this, CurrentState, splashScreen, web3Authenticator, webBrowser,
                     enableEmailOTP, otherLoginMethodsEnabled, isEpicBuild),
                 new GuestOrSignUpAuthState(fsm, viewInstance, this, CurrentState, web3Authenticator, splashScreen),
-                new ProfileFetchingAuthState(fsm, viewInstance, this, CurrentState, selfProfile, storedIdentityProvider),
+                new ProfileFetchingAuthState(fsm, viewInstance, this, CurrentState, selfProfile, storedIdentityProvider,
+                    skipExistingAccountLobby: FeaturesRegistry.Instance.IsEnabled(FeatureId.Lobby)),
                 new IdentityVerificationDappDeepLinkAuthState(fsm, viewInstance, this, CurrentState, web3Authenticator),
                 new LobbyForExistingAccountAuthState(fsm, viewInstance, this, splashScreen, CurrentState, characterPreviewController),
                 new LobbyForNewAccountAuthState(fsm, viewInstance, this, CurrentState, characterPreviewController, selfProfile, webBrowser, webRequestController, decentralandUrlsSource, profileChangesBus, storedIdentityProvider, referrer),
@@ -305,6 +306,25 @@ namespace DCL.AuthenticationScreenFlow
         {
             lifeCycleTask?.TrySetResult();
             lifeCycleTask = null;
+        }
+
+        /// <summary>
+        ///     Ends the auth flow right after the profile fetch, replacing the in-screen welcome step
+        ///     while keeping the state transitions the LOGGED_IN analytics rely on.
+        /// </summary>
+        internal void CompleteExistingAccountLogin(Profile profile, bool isRestoredSession)
+        {
+            // splashScreen is destroyed after the first login
+            if (splashScreen != null)
+                splashScreen.FadeOutAndHide();
+
+            IsCurrentlyNewAccount = false;
+            CurrentState.Value = isRestoredSession ? AuthStatus.LoggedInCached : AuthStatus.LoggedIn;
+
+            ReportHub.LogProductionInfo($"Existing account logged in: {profile.WalletId}");
+
+            fsm?.Enter<InitAuthState>();
+            TrySetLifeCycle();
         }
 
         internal void CancelLoginProcess()

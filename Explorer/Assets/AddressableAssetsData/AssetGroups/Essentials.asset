@@ -235,6 +235,16 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8a935b6a6ff72445ab1c4a9bbba48cd1
+    m_Address: Assets/DCL/Lobby/Prefabs/LobbyUI.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 656920c5c75f2fdfa40685df8aa57d37
+    m_Address: Assets/DCL/LobbyStage/Prefabs/LobbyStage.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 8b74e4206cd344b4c80b50f32f6c403a
     m_Address: Assets/DCL/AvatarRendering/AvatarShape/Assets/DestinationMarker/DestinationMarker.prefab
     m_ReadOnly: 0

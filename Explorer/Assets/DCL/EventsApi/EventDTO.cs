@@ -63,7 +63,7 @@ namespace DCL.EventsApi
         public int x;
         public int y;
         public string place_id;
-        public string[] connected_addresses;
+        public string[]? connected_addresses;
         public string community_id;
         public string image_vertical;
         // ReSharper restore InconsistentNaming

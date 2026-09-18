@@ -93,15 +93,15 @@ namespace MVC
             if (controller == null) return;
 
             TryGracefulClose(controller);
+            TryPopCloseable(controller);
+
+            // A controller replaced by another fullscreen one is torn down asynchronously; its late pop must not unregister the successor
+            if (fullscreenController != controller) return;
 
             foreach (IController persistentController in persistentStack)
                 persistentController.Focus();
 
             fullscreenController = null;
-
-            if (!controller.CanBeClosedByEscape) return;
-
-            TryPopCloseable(controller);
         }
 
         public PersistentPushInfo PushPersistent(IController controller)
@@ -129,8 +129,11 @@ namespace MVC
             for (var i = 0; i < controllersClosures.Count; i++)
                 if (controllersClosures[i].controller == controller)
                 {
-                    controllersClosures[i].closer.TrySetResult();
+                    // Completing the closure resumes the controller's flow right here, and a view that hides without an animation
+                    // reaches its own pop before this call returns: the entry goes out first so the re-entry finds nothing to remove
+                    UniTaskCompletionSource closer = controllersClosures[i].closer;
                     controllersClosures.RemoveAt(i);
+                    closer.TrySetResult();
                     break;
                 }
         }
@@ -190,8 +193,6 @@ namespace MVC
 
         private void TryPopCloseable(IController controller)
         {
-            if (!controller.CanBeClosedByEscape) return;
-
             for (var i = 0; i < closeableStack.Count; i++)
                 if (closeableStack[i].controller == controller)
                 {
