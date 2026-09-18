@@ -132,8 +132,7 @@ namespace DCL.Profiles.Self
 
             string address = web3IdentityCache.Identity.Address;
 
-            // The only path that deploys a profile, so stripping here keeps forced wearables out of the catalyst
-            // even after the backpack has copied them from the player entity's profile into IEquippedWearables.
+            // Strip forced wearables before deploying - this is the only path that reaches SetAsync.
             forcedWearables.RemoveFrom(newProfile);
 
             // Take a snapshot of the current profile from cache before any mutations
@@ -232,10 +231,9 @@ namespace DCL.Profiles.Self
         }
 
         /// <summary>
-        ///     Re-applies the forced set to the cached profile and rebuilds the avatar, so a change made at runtime
-        ///     (debug panel) shows without waiting for the next profile fetch. Stripping first is what makes an
-        ///     un-force visible: <see cref="ForcedWearables.RemoveFrom" /> clears everything forced this session,
-        ///     then the current set goes back on.
+        ///     Re-applies the forced set to the cached profile and rebuilds the avatar.
+        ///     Stripping first is what makes an un-force visible: <see cref="ForcedWearables.RemoveFrom" /> clears
+        ///     everything forced this session, then the current set goes back on.
         /// </summary>
         private void RebuildAvatarWithForcedWearables()
         {

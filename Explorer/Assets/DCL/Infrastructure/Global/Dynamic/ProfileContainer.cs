@@ -77,12 +77,12 @@ namespace Global.Dynamic
             var equippedEmotes = new EquippedEmotes();
 
             var selfEmotes = new List<URN>();
-            ParseParamsForcedEmotes(bootstrapContainer.AppArgs, ref selfEmotes);
-            ParseDebugForcedEmotes(bootstrapContainer.DebugSettings.EmotesToAddToUserProfile, ref selfEmotes);
+            ParseParamsUrns(bootstrapContainer.AppArgs, AppArgsFlags.FORCED_EMOTES, selfEmotes);
+            ParseDebugUrns(bootstrapContainer.DebugSettings.EmotesToAddToUserProfile, selfEmotes);
 
             var selfWearables = new List<URN>();
-            ParseParamsForcedUrns(bootstrapContainer.AppArgs, AppArgsFlags.FORCED_WEARABLES, selfWearables);
-            ParseDebugForcedUrns(bootstrapContainer.DebugSettings.WearablesToAddToUserProfile, selfWearables);
+            ParseParamsUrns(bootstrapContainer.AppArgs, AppArgsFlags.FORCED_WEARABLES, selfWearables);
+            ParseDebugUrns(bootstrapContainer.DebugSettings.WearablesToAddToUserProfile, selfWearables);
             var forcedWearables = new ForcedWearables(selfWearables);
 
             IProfileRepository profilesRepository = staticContainer.ProfilesContainer.Repository;
@@ -161,28 +161,16 @@ namespace Global.Dynamic
                         .AddSingleButton("Un-equip all", forcedWearables.Clear);
         }
 
-        private static void ParseDebugForcedUrns(IReadOnlyCollection<string>? debugUrns, List<URN> parsed)
+        private static void ParseDebugUrns(IReadOnlyCollection<string>? debugUrns, List<URN> parsed)
         {
             if (debugUrns?.Count > 0)
                 parsed.AddRange(debugUrns.Select(urn => new URN(urn)));
         }
 
-        private static void ParseParamsForcedUrns(IAppArgs appParams, string flag, List<URN> parsed)
+        private static void ParseParamsUrns(IAppArgs appParams, string flag, List<URN> parsed)
         {
             if (appParams.TryGetValue(flag, out string? csv) && !string.IsNullOrEmpty(csv!))
                 parsed.AddRange(csv.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(urn => new URN(urn)));
-        }
-
-        private static void ParseDebugForcedEmotes(IReadOnlyCollection<string>? debugEmotes, ref List<URN> parsedEmotes)
-        {
-            if (debugEmotes?.Count > 0)
-                parsedEmotes.AddRange(debugEmotes.Select(emote => new URN(emote)));
-        }
-
-        private static void ParseParamsForcedEmotes(IAppArgs appParams, ref List<URN> parsedEmotes)
-        {
-            if (appParams.TryGetValue(AppArgsFlags.FORCED_EMOTES, out string? csv) && !string.IsNullOrEmpty(csv!))
-                parsedEmotes.AddRange(csv.Split(',', StringSplitOptions.RemoveEmptyEntries)?.Select(emote => new URN(emote)) ?? ArraySegment<URN>.Empty);
         }
     }
 }

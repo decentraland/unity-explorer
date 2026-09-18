@@ -9,7 +9,7 @@ namespace DCL.Profiles.Self
     ///     Wearables faked as equipped on the self profile for the current session. They are applied to every
     ///     profile <see cref="SelfProfile" /> hands out — which is what the player entity, and therefore the
     ///     avatar, is built from — and removed again from anything about to be deployed, so they never reach the
-    ///     catalyst even after the backpack has copied them into <c>IEquippedWearables</c>.
+    ///     catalyst.
     ///     Lets a wearable be worn without owning it, e.g. to check a locally converted asset bundle in-world.
     /// </summary>
     public class ForcedWearables
@@ -17,16 +17,13 @@ namespace DCL.Profiles.Self
         private readonly HashSet<URN> wearables = new ();
 
         /// <summary>
-        ///     Everything forced at any point this session. Stripping this rather than the current set matters
-        ///     because un-forcing a wearable does not un-equip it: the backpack may already have copied it into
-        ///     IEquippedWearables, from where it would otherwise be deployed.
+        ///     Everything forced at any point this session. <see cref="RemoveFrom" /> strips this rather than the
+        ///     current set, so un-forcing a wearable does not narrow what a later strip covers.
         /// </summary>
         private readonly HashSet<URN> everForced = new ();
 
         /// <summary>Raised when the set changes, so the in-world avatar can be rebuilt.</summary>
         public event Action? Changed;
-
-        public IReadOnlyCollection<URN> Wearables => wearables;
 
         public ForcedWearables(IEnumerable<URN>? initial = null)
         {
