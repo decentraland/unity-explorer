@@ -156,6 +156,14 @@ impl UUAVPlayer {
         let cancel = CancelToken::new();
         self.last_cancel_token = Some(cancel.clone());
 
+        // The worker flips to Opening only once it dequeues the intent; the
+        // state must read Opening from here so a seek sent right behind the
+        // open queues instead of failing on Closed.
+        self.playback.rcu(|cur| match cur.as_ref() {
+            Playback::Closed | Playback::Failed => Arc::new(Playback::Opening),
+            Playback::Opening | Playback::Active(_) => cur.clone(),
+        });
+
         let mut payload: OpenIntent = (url, cancel.into());
 
         // Send, discard the oldest one if exists
@@ -174,6 +182,11 @@ impl UUAVPlayer {
             }
         }
 
+        // nothing will open; do not leave the player reading Opening
+        self.playback.rcu(|cur| match cur.as_ref() {
+            Playback::Opening => Arc::new(Playback::Closed),
+            Playback::Closed | Playback::Failed | Playback::Active(_) => cur.clone(),
+        });
         Err(anyhow!("Ran out of attempts: {ATTEMPTS}"))
     }
 
