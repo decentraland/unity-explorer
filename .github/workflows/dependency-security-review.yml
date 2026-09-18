@@ -17,9 +17,12 @@ jobs:
     if: github.event.action != 'edited' || github.event.changes.base != null
     runs-on: ubuntu-latest
     permissions:
-      # Labelling a PR is authorized against the pull-requests scope, not the
-      # issues one: `issues: write` alone yields 403 and the label is what
-      # switches Agent Server onto the detailed pass.
+      # The label is what switches Agent Server onto the detailed pass, and
+      # `issues.addLabels` on a PR 403s without the pull-requests scope — #10033
+      # downgraded it to read, so every label write has failed since. The 403
+      # names `issues=write; pull_requests=write`, and jarvis-review-status.yml
+      # labels successfully with exactly this pair, so grant both.
+      issues: write
       pull-requests: write
     steps:
       - name: Classify changes and maintain label

@@ -200,9 +200,10 @@ test('does not let a release-prefixed feature branch opt itself out', async () =
   assert.equal(f.outputs.request, 'true');
   assert.deepEqual(f.operations, ['add', 'request']);
 });
-test('grants the write scope that labelling a pull request requires', () => {
-  // `issues: write` does not authorize labels on a PR — the silent 403 that
-  // disabled the detailed pass between #10033 and this fix.
+test('grants both write scopes that labelling a pull request requires', () => {
+  // The silent 403 that disabled the detailed pass between #10033 and this fix
+  // named `issues=write; pull_requests=write`; #10033 granted only the first.
+  assert.match(workflow, /^ {6}issues: write$/m);
   assert.match(workflow, /^ {6}pull-requests: write$/m);
   assert.doesNotMatch(workflow, /^ {6}pull-requests: read$/m);
 });

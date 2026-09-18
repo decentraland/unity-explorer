@@ -9,7 +9,7 @@ The detailed policy lives in [Agent Server's Unity security-review skill](https:
 The [trusted workflow](../.github/workflows/dependency-security-review.yml) reads PR metadata and the complete changed-file inventory. It never checks out or executes PR code.
 
 1. The workflow classifies the current base/head change.
-2. It adds `new-dependency` when detailed review applies, or removes a stale label when it does not. Release branches and `auto-pr` PRs never qualify — [branch-and-pr-standards.md](branch-and-pr-standards.md) excludes them from AI review, and a release PR's commits each ran this pass on their own PR. The job needs `pull-requests: write`: labelling a PR is authorized against that scope, and `issues: write` alone yields a 403 that leaves every relevant PR on the ordinary review only.
+2. It adds `new-dependency` when detailed review applies, or removes a stale label when it does not. Release branches and `auto-pr` PRs never qualify — [branch-and-pr-standards.md](branch-and-pr-standards.md) excludes them from AI review, and a release PR's commits each ran this pass on their own PR. The job needs both `issues: write` and `pull-requests: write`: without the pull-requests scope the label write 403s, which leaves every relevant PR on the ordinary review only.
 3. For a ready PR by a repository writer, it requests `decentraland-bot` after the label update finishes. Drafts wait until ready. External authors require a maintainer to request the bot.
 4. Agent Server reads repository and label state from the signed review-request webhook. Only Unity Explorer with `new-dependency` starts the detailed path.
 5. Jarvis performs one normal review and extends it with the applicable Unity dependency/plugin or automation checks. It posts one COMMENT review.
