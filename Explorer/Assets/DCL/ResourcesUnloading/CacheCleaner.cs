@@ -13,6 +13,7 @@ using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Cache.InMemory;
+using ECS.StreamableLoading.Fonts;
 using ECS.StreamableLoading.GLTF;
 using ECS.StreamableLoading.NFTShapes;
 using ECS.StreamableLoading.Textures;
@@ -31,6 +32,7 @@ namespace DCL.ResourcesUnloading
         private const int TEXTURE_UNLOAD_CHUNK = 1;
         private const int NFT_SHAPE_UNLOAD_CHUNK = 1;
         private const int AUDIO_CLIP_UNLOAD_CHUNK = 100;
+        private const int FONT_UNLOAD_CHUNK = 1;
         private const int PROFILE_UNLOAD_CHUNK = 10;
 
         private readonly IPerformanceBudget fpsCapBudget;
@@ -46,6 +48,7 @@ namespace DCL.ResourcesUnloading
         private IStreamableCache<TextureData, GetTextureIntention>? texturesCache;
         private ILODCache? lodCache;
         private IStreamableCache<AudioClipData, GetAudioClipIntention>? audioClipsCache;
+        private IStreamableCache<FontData, GetFontIntention>? fontsCache;
         private IAttachmentsAssetsCache? wearableAssetsCache;
         private IWearableStorage? wearableStorage;
         private ITrimmedWearableStorage? trimmedWearableStorage;
@@ -81,6 +84,7 @@ namespace DCL.ResourcesUnloading
 
             texturesCache?.Unload(budgetToUse, budgeted ? TEXTURE_UNLOAD_CHUNK : int.MaxValue);
             audioClipsCache!.Unload(budgetToUse, budgeted ? AUDIO_CLIP_UNLOAD_CHUNK : int.MaxValue);
+            fontsCache?.Unload(budgetToUse, budgeted ? FONT_UNLOAD_CHUNK : int.MaxValue);
             wearableAssetsCache!.Unload(budgetToUse, budgeted ? WEARABLES_UNLOAD_CHUNK : int.MaxValue);
             wearableStorage!.Unload(budgetToUse);
             trimmedWearableStorage!.Unload(budgetToUse);
@@ -143,6 +147,9 @@ namespace DCL.ResourcesUnloading
 
         public void Register(IStreamableCache<AudioClipData, GetAudioClipIntention> audioClipsCache) =>
             this.audioClipsCache = audioClipsCache;
+
+        public void Register(IStreamableCache<FontData, GetFontIntention> fontsCache) =>
+            this.fontsCache = fontsCache;
 
         public void Register(IWearableStorage storage) =>
             wearableStorage = storage;

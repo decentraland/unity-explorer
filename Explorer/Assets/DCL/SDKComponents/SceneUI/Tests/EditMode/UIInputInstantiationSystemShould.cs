@@ -1,3 +1,4 @@
+using CommunicationData.URLHelpers;
 using CRDT;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.ECSComponents;
@@ -7,9 +8,12 @@ using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Defaults;
 using DCL.SDKComponents.SceneUI.Systems.UIInput;
 using DCL.SDKComponents.SceneUI.Utils;
+using ECS.Prioritization.Components;
+using ECS.StreamableLoading.Fonts;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
+using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -20,10 +24,10 @@ namespace DCL.SDKComponents.SceneUI.Tests
 {
     public class UIInputInstantiationSystemShould : UnitySystemTestBase<UIInputInstantiationSystem>
     {
-        private IComponentPoolsRegistry poolsRegistry;
-        private IECSToCRDTWriter ecsToCRDTWriter;
+        private IComponentPoolsRegistry poolsRegistry = null!;
+        private IECSToCRDTWriter ecsToCRDTWriter = null!;
         private Entity entity;
-        private UITransformComponent uiTransformComponent;
+        private UITransformComponent uiTransformComponent = null!;
 
         [SetUp]
         public void SetUp()
@@ -34,8 +38,16 @@ namespace DCL.SDKComponents.SceneUI.Tests
                     { typeof(UIInputComponent), new ComponentPool.WithDefaultCtor<UIInputComponent>() },
                 }, null);
 
+            var sceneData = Substitute.For<ISceneData>();
+            sceneData.TryGetContentUrl("fonts/Roboto.ttf", out Arg.Any<URLAddress>())
+                     .Returns(x =>
+                      {
+                          x[1] = URLAddress.FromString("https://peer.decentraland.org/content/contents/bafyfont");
+                          return true;
+                      });
+
             ecsToCRDTWriter = Substitute.For<IECSToCRDTWriter>();
-            system = new UIInputInstantiationSystem(world, poolsRegistry, ecsToCRDTWriter, Substitute.For<IInputBlock>(), new []{new StyleFontDefinition()});
+            system = new UIInputInstantiationSystem(world, poolsRegistry, ecsToCRDTWriter, Substitute.For<IInputBlock>(), new []{new StyleFontDefinition()}, sceneData, PartitionComponent.TOP_PRIORITY);
             entity = world.Create();
             uiTransformComponent = AddUITransformToEntity(entity);
             world.Add(entity, new CRDTEntity(500));
@@ -214,6 +226,20 @@ namespace DCL.SDKComponents.SceneUI.Tests
             ecsToCRDTWriter.Received(1).PutMessage(Arg.Any<Action<PBUiInputResult, (bool, string)>>(), Arg.Any<CRDTEntity>(), (isSubmit, TEST_VALUE));
             Assert.IsFalse(uiInputComponent.IsOnValueChangedTriggered);
             Assert.IsFalse(uiInputComponent.IsOnSubmitTriggered);
+        }
+
+        [Test]
+        public void RequestFontWhenFontSrcIsSet()
+        {
+            var input = new PBUiInput { FontSrc = "fonts/Roboto.ttf", IsDirty = true };
+            world.Add(entity, input);
+
+            system.Update(0);
+
+            ref UIInputComponent uiInputComponent = ref world.Get<UIInputComponent>(entity);
+            Assert.That(uiInputComponent.FontRequest.Src, Is.EqualTo("fonts/Roboto.ttf"));
+            Assert.That(uiInputComponent.FontRequest.Promise, Is.Not.Null);
+            Assert.That(world.Get<GetFontIntention>(uiInputComponent.FontRequest.Promise!.Value.Entity).Src, Is.EqualTo(input.FontSrc));
         }
     }
 }

@@ -580,6 +580,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 96ae0a2159a39234f858ea23bdcc74ad
+    m_Address: Assets/TextMesh Pro/Fonts & Materials/Inter-SemiBold SDF.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 989cf1173881645c598573447b2b56d8
     m_Address: HidesRow
     m_ReadOnly: 0

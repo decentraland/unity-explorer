@@ -5,8 +5,11 @@ using DCL.ECSComponents;
 using DCL.SDKComponents.SceneUI.Classes;
 using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Defaults;
+using ECS.StreamableLoading.Fonts;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.TextCore.Text;
+using Font = DCL.ECSComponents.Font;
 
 namespace DCL.SDKComponents.SceneUI.Utils
 {
@@ -238,7 +241,7 @@ namespace DCL.SDKComponents.SceneUI.Utils
             }
         }
 
-        public static void SetupLabel(ref Label labelToSetup, ref PBUiText model, ref UITransformComponent uiTransformComponent, in StyleFontDefinition[] styleFontDefinitions)
+        public static void SetupLabel(ref Label labelToSetup, ref PBUiText model, ref UITransformComponent uiTransformComponent, in StyleFontDefinition[] styleFontDefinitions, FontAsset? customFont)
         {
             labelToSetup.style.position = new StyleEnum<Position>(Position.Absolute);
             if (uiTransformComponent.Transform.style.width.keyword == StyleKeyword.Auto || uiTransformComponent.Transform.style.height.keyword == StyleKeyword.Auto)
@@ -249,9 +252,7 @@ namespace DCL.SDKComponents.SceneUI.Utils
             labelToSetup.style.fontSize = model.GetFontSize();
             labelToSetup.style.unityTextAlign = model.GetTextAlign();
 
-            int font = (int)model.GetFont();
-            if (font < styleFontDefinitions.Length)
-                labelToSetup.style.unityFontDefinition = styleFontDefinitions[font];
+            SetFont(labelToSetup, model.GetFont(), in styleFontDefinitions, customFont);
 
             labelToSetup.style.whiteSpace = model.TextWrap == TextWrap.TwWrap ? WhiteSpace.Normal : WhiteSpace.NoWrap;
         }
@@ -277,9 +278,7 @@ namespace DCL.SDKComponents.SceneUI.Utils
             inputToSetup.TextField.isReadOnly = isReadonly;
             inputToSetup.TextField.style.fontSize = model.GetFontSize();
 
-            int font = (int)model.GetFont();
-            if (font < styleFontDefinitions.Length)
-                inputToSetup.TextField.style.unityFontDefinition = styleFontDefinitions[font];
+            SetFont(inputToSetup.TextField, model.GetFont(), in styleFontDefinitions, inputToSetup.CustomFont);
 
             inputToSetup.TextField.SetValueWithoutNotify(model.HasValue ? model.Value : string.Empty);
             inputToSetup.Placeholder.Refresh();
@@ -295,9 +294,7 @@ namespace DCL.SDKComponents.SceneUI.Utils
             dropdownField.style.fontSize = model.GetFontSize();
             dropdownField.style.color = model.GetColor();
 
-            int font = (int)model.GetFont();
-            if (font < styleFontDefinitions.Length)
-                dropdownField.style.unityFontDefinition = styleFontDefinitions[font];
+            SetFont(dropdownField, model.GetFont(), in styleFontDefinitions, dropdownToSetup.CustomFont);
 
             dropdownField.choices.Clear();
             dropdownField.choices.AddRange(model.Options);
@@ -323,6 +320,34 @@ namespace DCL.SDKComponents.SceneUI.Utils
 
             dropdownField.pickingMode = model.Disabled ? PickingMode.Ignore : PickingMode.Position;
             dropdownField.SetEnabled(!model.Disabled);
+        }
+
+        public static void SetFont(VisualElement element, Font font, in StyleFontDefinition[] styleFontDefinitions, FontAsset? customFont)
+        {
+            if (customFont != null)
+            {
+                element.style.unityFontDefinition = new StyleFontDefinition(customFont);
+                return;
+            }
+
+            var fontIndex = (int)font;
+
+            if (fontIndex < styleFontDefinitions.Length)
+                element.style.unityFontDefinition = styleFontDefinitions[fontIndex];
+        }
+
+        public static void ClearCustomFont(VisualElement element) =>
+            element.style.unityFontDefinition = new StyleFontDefinition(StyleKeyword.Null);
+
+        public static void ReleaseCustomFont(World world, ref SceneFontRequest request, ref FontAsset? customFont, VisualElement element)
+        {
+            request.Release(world);
+
+            if (customFont == null)
+                return;
+
+            customFont = null;
+            ClearCustomFont(element);
         }
 
         public static void SetElementDefaultStyle(IStyle elementStyle)

@@ -10,6 +10,7 @@ using DCL.SDKComponents.SceneUI.Groups;
 using DCL.SDKComponents.SceneUI.Utils;
 using ECS.Abstract;
 using ECS.Groups;
+using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
 
 namespace DCL.SDKComponents.SceneUI.Systems.UIInput
@@ -18,11 +19,11 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
     [UpdateBefore(typeof(SceneUIComponentInstantiationGroup))]
     [LogCategory(ReportCategory.SCENE_UI)]
     [ThrottlingEnabled]
-    public partial class UIInputReleaseSystem : BaseUnityLoopSystem
+    public partial class UIInputReleaseSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
         private readonly IComponentPool componentPool;
 
-        private UIInputReleaseSystem(World world, IComponentPoolsRegistry poolsRegistry) : base(world)
+        internal UIInputReleaseSystem(World world, IComponentPoolsRegistry poolsRegistry) : base(world)
         {
             poolsRegistry.TryGetPool(typeof(UIInputComponent), out componentPool);
         }
@@ -33,6 +34,9 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
             HandleUIInputRemovalQuery(World);
         }
 
+        public void FinalizeComponents(in Query query) =>
+            ReleaseFontsQuery(World);
+
         [Query]
         [None(typeof(PBUiInput), typeof(DeleteEntityIntention))]
         private void HandleUIInputRemoval(in Entity entity, ref UIInputComponent uiInputComponent) =>
@@ -40,16 +44,29 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
-        private void HandleEntityDestruction(in Entity entity, ref UIInputComponent uiInputComponent) =>
+        private void HandleEntityDestruction(in Entity entity, ref UIInputComponent uiInputComponent, in DeleteEntityIntention deleteEntityIntention)
+        {
+            if (deleteEntityIntention.DeferDeletion)
+                return;
+
             RemoveTextField(entity, uiInputComponent);
+        }
+
+        [Query]
+        private void ReleaseFonts(ref UIInputComponent uiInputComponent) =>
+            ReleaseFont(uiInputComponent);
 
         private void RemoveTextField(Entity entity, UIInputComponent uiInputComponent)
         {
+            ReleaseFont(uiInputComponent);
             componentPool.Release(uiInputComponent);
 
             //Removing here the component to avoid double release to the pool in ReleaseReferenceComponentsSystem
             World.Remove<UIInputComponent>(entity);
             uiInputComponent.UnregisterInputCallbacks();
         }
+
+        private void ReleaseFont(UIInputComponent uiInputComponent) =>
+            UiElementUtils.ReleaseCustomFont(World, ref uiInputComponent.FontRequest, ref uiInputComponent.CustomFont, uiInputComponent.TextField);
     }
 }

@@ -5,6 +5,7 @@ using ECS.Unity.ColorComponent;
 using System;
 using TMPro;
 using UnityEngine;
+using Utility;
 
 namespace DCL.SDKComponents.TextShape
 {
@@ -23,7 +24,7 @@ namespace DCL.SDKComponents.TextShape
         {
             TextMeshPro tmpText = textShapeComponent.TextMeshPro;
 
-            tmpText.font = fontsStorage.Font(textShape.Font) ?? tmpText.font;
+            SetFont(ref textShapeComponent, textShapeComponent.CustomFont ?? fontsStorage.Font(textShape.Font) ?? tmpText.font);
 
             // NOTE: previously width and height weren't working (setting sizeDelta before anchors and offset result in sizeDelta being reset to 0,0)
             tmpText.rectTransform.anchorMin = Vector2.zero;
@@ -117,6 +118,28 @@ namespace DCL.SDKComponents.TextShape
             }
 
             tmpText.renderer.SetPropertyBlock(materialPropertyBlock);
+        }
+
+        public static void SetFont(ref TextShapeComponent textShapeComponent, TMP_FontAsset font)
+        {
+            TextMeshPro tmpText = textShapeComponent.TextMeshPro;
+
+            if (tmpText.font == font)
+                return;
+
+            Material previousMaterial = tmpText.fontSharedMaterial;
+            bool previousIsInstance = previousMaterial != tmpText.font.material;
+
+            tmpText.font = font;
+
+            if (tmpText.fontSharedMaterial == previousMaterial)
+                return;
+
+            if (previousIsInstance)
+                UnityObjectUtils.SafeDestroy(previousMaterial);
+
+            textShapeComponent.OutlineKeywordEnabled = false;
+            textShapeComponent.UnderlayKeywordEnabled = false;
         }
 
         private static TextAlignmentOptions TextAlignmentOptions(TextAlignMode mode) =>
