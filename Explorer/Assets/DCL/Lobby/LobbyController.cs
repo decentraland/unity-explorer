@@ -79,6 +79,7 @@ namespace DCL.Lobby
         private CancellationTokenSource? eventsCts;
         private CancellationTokenSource? jumpInCts;
         private UniTaskCompletionSource? closeIntent;
+        private bool leaving;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
 
@@ -145,6 +146,8 @@ namespace DCL.Lobby
                 viewInstance.UpcomingEvents.CardClicked = null;
             }
 
+            mvcManager.OnViewClosed -= ShowAgainWhenTheScreenIsFree;
+
             avatarCts.SafeCancelAndDispose();
             placesCts.SafeCancelAndDispose();
             eventsCts.SafeCancelAndDispose();
@@ -184,6 +187,8 @@ namespace DCL.Lobby
         protected override void OnBeforeViewShow()
         {
             base.OnBeforeViewShow();
+            mvcManager.OnViewClosed -= ShowAgainWhenTheScreenIsFree;
+            leaving = false;
             viewInstance!.CloseButton.gameObject.SetActive(!inputData.IsStartup);
         }
 
@@ -221,6 +226,26 @@ namespace DCL.Lobby
             avatarPreview!.OnHide();
 
             inputBlock.Enable(InputMapComponent.BLOCK_USER_INPUT);
+
+            // At startup the lobby is the only way into the world, and a fullscreen panel opened from it (the backpack) replaces
+            // it instead of closing it: the lobby has to come back, otherwise nothing is left on screen and the flow never resumes
+            if (inputData.IsStartup && !leaving)
+                mvcManager.OnViewClosed += ShowAgainWhenTheScreenIsFree;
+        }
+
+        /// <summary>
+        ///     Shows the startup lobby again as soon as the panel that replaced it is gone. A Logout is not a replacement: the
+        ///     authentication screen owns the screen from then on, which the cancelled startup token reports.
+        /// </summary>
+        private void ShowAgainWhenTheScreenIsFree(IController closed)
+        {
+            // This handler is added while the lobby is hiding, so its own closure is reported to it first
+            if (closed == this || mvcManager.IsAnyModalViewShowing()) return;
+
+            mvcManager.OnViewClosed -= ShowAgainWhenTheScreenIsFree;
+
+            if (!inputData.StartupToken.IsCancellationRequested)
+                mvcManager.ShowAndForget(LobbyController.IssueCommand(inputData));
         }
 
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
@@ -514,7 +539,8 @@ namespace DCL.Lobby
                 OnEventClicked(upcomingEvents[index]);
         }
 
-        // Until the backpack gets its own modal the Explore panel takes over; being fullscreen it also closes this panel.
+        // Until the backpack gets its own modal the Explore panel takes over; being fullscreen it replaces this panel, which
+        // at startup comes back on its own once the Explore panel closes.
         private void OnAvatarClicked(PointerEventData _) =>
             mvcManager.ShowAndForget(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Backpack, BackpackSections.Avatar)));
 
@@ -571,6 +597,10 @@ namespace DCL.Lobby
 
         private void RequestClose()
         {
+            // At startup there is no close button: leaving means the user is on their way in, which releases the flow
+            leaving = true;
+            inputData.JumpedIn?.Invoke();
+
             closeIntent?.TrySetResult();
             closeIntent = null;
         }
@@ -615,9 +645,23 @@ namespace DCL.Lobby
         /// </summary>
         public readonly bool IsStartup;
 
-        public LobbyParameter(bool isStartup)
+        /// <summary>
+        ///     Releases the startup flow, which stays parked until the user is on their way in. Being taken off the screen is not
+        ///     enough: a fullscreen panel opened from the lobby (the backpack) replaces it and the lobby comes back when it closes.
+        /// </summary>
+        public readonly Action? JumpedIn;
+
+        /// <summary>
+        ///     Cancelled when a Logout takes the startup flow over: the authentication screen owns the screen from then on and
+        ///     the lobby must not show itself again.
+        /// </summary>
+        public readonly CancellationToken StartupToken;
+
+        public LobbyParameter(bool isStartup, Action? jumpedIn = null, CancellationToken startupToken = default)
         {
             IsStartup = isStartup;
+            JumpedIn = jumpedIn;
+            StartupToken = startupToken;
         }
     }
 }

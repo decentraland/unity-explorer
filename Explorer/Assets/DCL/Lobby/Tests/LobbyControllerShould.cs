@@ -535,6 +535,85 @@ namespace DCL.Lobby.Tests
             mvcManager.Received(1).ShowAsync(Arg.Is<ShowCommand<ExplorePanelView, ExplorePanelParameter>>(c => c.InputData.Section == ExploreSections.Backpack), Arg.Any<CancellationToken>());
         }
 
+        [Test]
+        public void ShowTheLobbyAgainWhenThePanelThatReplacedItClosesAtStartup()
+        {
+            // Arrange: the Explore panel took the screen over, which hides the lobby without closing it
+            Launch(isStartup: true).Forget();
+            controller.HideViewAsync(CancellationToken.None).Forget();
+
+            // Act
+            CloseAnotherView();
+
+            // Assert
+            mvcManager.Received(1).ShowAsync(Arg.Any<ShowCommand<LobbyView, LobbyParameter>>(), Arg.Any<CancellationToken>());
+        }
+
+        [Test]
+        public void LeaveTheLobbyClosedOnceTheUserJumpedIn()
+        {
+            // Arrange
+            Launch(isStartup: true).Forget();
+            landingCard.JumpInButton.Button.onClick.Invoke();
+            controller.HideViewAsync(CancellationToken.None).Forget();
+
+            // Act
+            CloseAnotherView();
+
+            // Assert
+            mvcManager.DidNotReceive().ShowAsync(Arg.Any<ShowCommand<LobbyView, LobbyParameter>>(), Arg.Any<CancellationToken>());
+        }
+
+        [Test]
+        public void LeaveTheLobbyClosedInWorld()
+        {
+            // Arrange
+            Launch(isStartup: false).Forget();
+            controller.HideViewAsync(CancellationToken.None).Forget();
+
+            // Act
+            CloseAnotherView();
+
+            // Assert
+            mvcManager.DidNotReceive().ShowAsync(Arg.Any<ShowCommand<LobbyView, LobbyParameter>>(), Arg.Any<CancellationToken>());
+        }
+
+        [Test]
+        public void LeaveTheLobbyClosedWhenTheStartupFlowWasTakenOver()
+        {
+            // Arrange: a Logout replaced the lobby with the authentication screen
+            using var takenOver = new CancellationTokenSource();
+            Launch(isStartup: true, startupToken: takenOver.Token).Forget();
+            controller.HideViewAsync(CancellationToken.None).Forget();
+            takenOver.Cancel();
+
+            // Act
+            CloseAnotherView();
+
+            // Assert
+            mvcManager.DidNotReceive().ShowAsync(Arg.Any<ShowCommand<LobbyView, LobbyParameter>>(), Arg.Any<CancellationToken>());
+        }
+
+        [Test]
+        public void ReleaseTheStartupFlowOnlyWhenTheUserJumpsIn()
+        {
+            // Arrange
+            var jumpedIn = 0;
+            Launch(isStartup: true, jumpedIn: () => jumpedIn++).Forget();
+
+            // Act: opening the backpack takes the lobby off the screen without releasing the flow
+            avatarInputDetector.OnPointerClick(new PointerEventData(EventSystem.current));
+
+            // Assert
+            Assert.That(jumpedIn, Is.Zero);
+
+            // Act
+            landingCard.JumpInButton.Button.onClick.Invoke();
+
+            // Assert
+            Assert.That(jumpedIn, Is.EqualTo(1));
+        }
+
         [TestCase(LoadingStatus.LoadingStage.Init, false)]
         [TestCase(LoadingStatus.LoadingStage.AuthenticationScreenShowing, false)]
         [TestCase(LoadingStatus.LoadingStage.PlayerTeleporting, false)]
@@ -563,8 +642,15 @@ namespace DCL.Lobby.Tests
             CreateController();
         }
 
-        private UniTask Launch(bool isStartup) =>
-            controller.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Fullscreen, 0), new LobbyParameter(isStartup), CancellationToken.None);
+        private UniTask Launch(bool isStartup, Action? jumpedIn = null, CancellationToken startupToken = default) =>
+            controller.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Fullscreen, 0), new LobbyParameter(isStartup, jumpedIn, startupToken), CancellationToken.None);
+
+        /// <summary>
+        ///     Reports the closure of the view that took the screen over, the way the MVC manager does.
+        /// </summary>
+        private void CloseAnotherView() =>
+            mvcManager.OnViewClosed += Raise.Event<Action<IController>>(Substitute.For<IController>());
+
         [Test]
         public void HideRecentPlacesWhenNothingWasVisited()
         {

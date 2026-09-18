@@ -1,3 +1,4 @@
+using Cysharp.Threading.Tasks;
 using NSubstitute;
 using NUnit.Framework;
 
@@ -73,6 +74,17 @@ namespace MVC.Tests
             manager.PopFullscreen(controller);
 
             Assert.AreSame(replacement, manager.fullscreenController);
+        }
+
+        [Test]
+        public void PopFullscreenWhoseClosureRunsItsOwnPopInline()
+        {
+            // A view that hides without an animation reaches its own pop while the closure completed by this one is still running
+            manager.PushFullscreen(controller);
+            manager.GetControllerClosure(controller)!.Task.ContinueWith(() => manager.PopFullscreen(controller)).Forget();
+
+            Assert.DoesNotThrow(() => manager.PopFullscreen(controller));
+            Assert.IsNull(manager.fullscreenController);
         }
 
         [Test]

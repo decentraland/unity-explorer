@@ -129,8 +129,11 @@ namespace MVC
             for (var i = 0; i < controllersClosures.Count; i++)
                 if (controllersClosures[i].controller == controller)
                 {
-                    controllersClosures[i].closer.TrySetResult();
+                    // Completing the closure resumes the controller's flow right here, and a view that hides without an animation
+                    // reaches its own pop before this call returns: the entry goes out first so the re-entry finds nothing to remove
+                    UniTaskCompletionSource closer = controllersClosures[i].closer;
                     controllersClosures.RemoveAt(i);
+                    closer.TrySetResult();
                     break;
                 }
         }
