@@ -1,10 +1,12 @@
 #if ALTTESTER
+using DCL.Prefs;
 using Global.AppArgs;
 using Newtonsoft.Json;
 using NSubstitute;
 using NUnit.Framework;
 using System;
 using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
 
 namespace DCL.FeatureFlags.Tests
 {
@@ -15,6 +17,11 @@ namespace DCL.FeatureFlags.Tests
         [SetUp]
         public void SetUp()
         {
+            // The status reads every feature, and the lobby one comes from the prefs the editor never initializes.
+            // Inject InMemoryDCLPlayerPrefs via reflection (established test pattern).
+            FieldInfo prefsField = typeof(DCLPlayerPrefs).GetField("dclPrefs", BindingFlags.NonPublic | BindingFlags.Static)!;
+            prefsField.SetValue(null, new InMemoryDCLPlayerPrefs());
+
             // Other suites in this assembly initialize the singletons without resetting them.
             FeaturesRegistry.Reset();
             FeatureFlagsConfiguration.Reset();

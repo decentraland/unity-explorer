@@ -1,5 +1,6 @@
 using CodeLess.Attributes;
 using Cysharp.Threading.Tasks;
+using DCL.Prefs;
 using Global.AppArgs;
 using System;
 using System.Collections.Generic;
@@ -22,6 +23,7 @@ namespace DCL.FeatureFlags
     {
         private readonly Dictionary<FeatureId, bool> featureStates = new ();
         private readonly Dictionary<FeatureId, IFeatureProvider> featureProviders = new ();
+        private readonly Dictionary<FeatureId, Func<bool>> deferredFeatureStates = new ();
 
         public FeaturesRegistry(
             IAppArgs appArgs,
@@ -60,8 +62,6 @@ namespace DCL.FeatureFlags
                 [FeatureId.CommunitiesMembersCounter] = featureFlags.IsEnabled(FeatureFlagsStrings.COMMUNITIES_MEMBERS_COUNTER),
                 [FeatureId.EmailOTPAuth] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.EMAIL_OTP_AUTH, featureFlags.IsEnabled(FeatureFlagsStrings.EMAIL_OTP_AUTH)),
                 [FeatureId.GuestLogin] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.GUEST_LOGIN, featureFlags.IsEnabled(FeatureFlagsStrings.GUEST_LOGIN)),
-                // --lobby enables it on its own (no --debug needed), --lobby false forces it off, otherwise the remote flag decides
-                [FeatureId.Lobby] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.LOBBY, featureFlags.IsEnabled(FeatureFlagsStrings.LOBBY), requireDebug: false) && !localSceneDevelopment,
                 [FeatureId.CheckDiskSpace] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.CHECK_DISK_SPACE, featureFlags.IsEnabled(FeatureFlagsStrings.CHECK_DISK_SPACE)),
                 [FeatureId.AvatarHighlight] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.AVATAR_HIGHLIGHT, featureFlags.IsEnabled(FeatureFlagsStrings.AVATAR_HIGHLIGHT) || isEditor, requireDebug: false),
                 [FeatureId.DoubleJump] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.DOUBLE_JUMP, featureFlags.IsEnabled(FeatureFlagsStrings.DOUBLE_JUMP) || Application.isEditor),
@@ -92,13 +92,45 @@ namespace DCL.FeatureFlags
 
             // The intro tip is a kill switch: unlike the feature itself it stays off until the flag is explicitly enabled.
             SetFeatureState(FeatureId.NearbyVoiceChatTip, IsEnabled(FeatureId.NearbyVoiceChat) && featureFlags.IsEnabled(FeatureFlagsStrings.NEARBY_VOICE_CHAT_TIP));
+
+            // --lobby enables it on its own (no --debug needed), --lobby false forces it off, otherwise the Settings
+            // toggle decides. That toggle lives in player prefs, which only exist in a running player while the
+            // registry is also built outside one, so the state is resolved on the first query instead of here.
+            deferredFeatureStates[FeatureId.Lobby] = () =>
+                appArgs.ResolveFeatureFlagArg(AppArgsFlags.LOBBY, LobbyEnabledSetting, requireDebug: false) && !localSceneDevelopment;
+        }
+
+        /// <summary>
+        ///     The lobby state the user picked in Settings, the remote flag providing the default until they pick one.
+        ///     <see cref="FeatureId.Lobby" /> resolves it once per session, so a change only applies after a restart.
+        /// </summary>
+        public static bool LobbyEnabledSetting
+        {
+            get => DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_LOBBY_ENABLED)
+                ? DCLPlayerPrefs.GetBool(DCLPrefKeys.SETTINGS_LOBBY_ENABLED)
+                : FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.LOBBY);
+
+            set => DCLPlayerPrefs.SetBool(DCLPrefKeys.SETTINGS_LOBBY_ENABLED, value, true);
         }
 
         /// <summary>
         ///     Checks if a feature is enabled.
         /// </summary>
-        public bool IsEnabled(FeatureId featureId) =>
-            featureStates.GetValueOrDefault(featureId, false);
+        public bool IsEnabled(FeatureId featureId)
+        {
+            if (featureStates.TryGetValue(featureId, out bool isEnabled))
+                return isEnabled;
+
+            if (!deferredFeatureStates.TryGetValue(featureId, out Func<bool> resolve))
+                return false;
+
+            // Cached as any other state: a feature cannot change while the session runs.
+            isEnabled = resolve();
+            featureStates[featureId] = isEnabled;
+            deferredFeatureStates.Remove(featureId);
+
+            return isEnabled;
+        }
 
         /// <summary>
         ///     Checks if a feature is enabled in an async way using FeatureProviders that can contain more complex logic.
