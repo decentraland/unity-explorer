@@ -65,9 +65,9 @@
   },
   {
    "number": 10063,
-   "status": "pending",
-   "commit": null,
-   "note": null
+   "status": "fixed",
+   "commit": "86b07b53e",
+   "note": "community connectivity RPC stream now marshals to main thread before broadcasting, mirroring RPCFriendsService"
   },
   {
    "number": 10066,
