@@ -29,9 +29,9 @@
   },
   {
    "number": 10077,
-   "status": "pending",
-   "commit": null,
-   "note": null
+   "status": "fixed",
+   "commit": "97ab98ffb",
+   "note": "UnityEngine.Pool collections raced on thread pool in LoadSceneDefinitionListSystem; replaced with local allocations"
   },
   {
    "number": 10031,
