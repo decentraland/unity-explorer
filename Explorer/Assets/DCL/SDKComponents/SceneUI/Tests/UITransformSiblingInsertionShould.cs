@@ -521,5 +521,100 @@ namespace DCL.SDKComponents.SceneUI.Tests
             CollectionAssert.AreEqual(expected, rootComponent.ContentContainer.Children().ToArray(),
                 "Order should be A → B → C with the cyclic pair appended in creation order");
         }
+
+        [Test]
+        [Description("An explicit zIndex must beat every sibling without one, however small it is. A zIndex of 1 used to " +
+                      "collide with the sibling at chain position 1 and stay below the later ones.")]
+        public void PlaceSmallPositiveZIndexAboveEverySiblingWithoutZIndex()
+        {
+            // Arrange — A → B → C, all without zIndex
+            Entity entityA = CreateChild(100, 0);
+            Entity entityB = CreateChild(200, 100);
+            Entity entityC = CreateChild(300, 200);
+
+            system.Update(0);
+
+            // Act — A gets zIndex 1
+            world.Get<UITransformComponent>(entityA).ZIndex = 1;
+            rootComponent.RelationData.layoutIsDirty = true;
+
+            system.Update(0);
+
+            // Assert
+            VisualElement[] expected =
+            {
+                GetVisualElement(entityB),
+                GetVisualElement(entityC),
+                GetVisualElement(entityA),
+            };
+
+            CollectionAssert.AreEqual(expected, rootComponent.ContentContainer.Children().ToArray(),
+                "Order should be B → C → A: zIndex 1 is above every sibling at zIndex 0");
+        }
+
+        [Test]
+        [Description("Siblings that share a zIndex keep their rightOf chain order, whatever order they were drawn in " +
+                      "before they reached that zIndex.")]
+        public void OrderSiblingsWithEqualZIndexByChainPosition()
+        {
+            // Arrange — A → B → C; A is raised first, so the container is drawn B, C, A
+            Entity entityA = CreateChild(100, 0);
+            Entity entityB = CreateChild(200, 100);
+            Entity entityC = CreateChild(300, 200);
+
+            system.Update(0);
+
+            world.Get<UITransformComponent>(entityA).ZIndex = 2;
+            rootComponent.RelationData.layoutIsDirty = true;
+
+            system.Update(0);
+
+            // Act — B and C reach the same zIndex
+            world.Get<UITransformComponent>(entityB).ZIndex = 2;
+            world.Get<UITransformComponent>(entityC).ZIndex = 2;
+            rootComponent.RelationData.layoutIsDirty = true;
+
+            system.Update(0);
+
+            // Assert
+            VisualElement[] expected =
+            {
+                GetVisualElement(entityA),
+                GetVisualElement(entityB),
+                GetVisualElement(entityC),
+            };
+
+            CollectionAssert.AreEqual(expected, rootComponent.ContentContainer.Children().ToArray(),
+                "Order should be A → B → C: equal zIndexes fall back to the chain order");
+        }
+
+        [Test]
+        [Description("A negative zIndex goes below every sibling without one.")]
+        public void PlaceNegativeZIndexBelowEverySiblingWithoutZIndex()
+        {
+            // Arrange — A → B → C
+            Entity entityA = CreateChild(100, 0);
+            Entity entityB = CreateChild(200, 100);
+            Entity entityC = CreateChild(300, 200);
+
+            system.Update(0);
+
+            // Act — C gets zIndex -1
+            world.Get<UITransformComponent>(entityC).ZIndex = -1;
+            rootComponent.RelationData.layoutIsDirty = true;
+
+            system.Update(0);
+
+            // Assert
+            VisualElement[] expected =
+            {
+                GetVisualElement(entityC),
+                GetVisualElement(entityA),
+                GetVisualElement(entityB),
+            };
+
+            CollectionAssert.AreEqual(expected, rootComponent.ContentContainer.Children().ToArray(),
+                "Order should be C → A → B: zIndex -1 is below every sibling at zIndex 0");
+        }
     }
 }

@@ -10,12 +10,24 @@ namespace DCL.SDKComponents.SceneUI.Components
 {
     public class UITransformComponent
     {
-        private static readonly Comparison<VisualElement> CACHED_COMPARISON = TabIndexComparison;
+        private static readonly Comparison<VisualElement> CACHED_COMPARISON = StackingComparison;
 
+        /// <summary>
+        ///     The element's <see cref="VisualElement.userData" /> points back at this component so the sibling
+        ///     comparison can read <see cref="ZIndex" /> and <see cref="chainIndex" /> from it.
+        /// </summary>
         public VisualElement Transform
         {
-            get => IsRoot ? rootTransform : reusableTransform;
-            internal set { if (IsRoot) rootTransform = value; else reusableTransform = value;}
+            get => (IsRoot ? rootTransform : reusableTransform)
+                   ?? throw new InvalidOperationException($"{nameof(UITransformComponent)} was not initialized");
+
+            internal set
+            {
+                value.userData = this;
+
+                if (IsRoot) rootTransform = value;
+                else reusableTransform = value;
+            }
         }
 
         /// <summary>
@@ -41,8 +53,13 @@ namespace DCL.SDKComponents.SceneUI.Components
         internal EventCallback<PointerEnterEvent>? currentOnPointerEnterCallback;
         internal EventCallback<PointerLeaveEvent>? currentOnPointerLeaveCallback;
 
-        private VisualElement rootTransform;
-        private VisualElement reusableTransform;
+        /// <summary>
+        ///     Position in the parent's rightOf chain as of the last sort; orders siblings that share a zIndex.
+        /// </summary>
+        internal int chainIndex;
+
+        private VisualElement? rootTransform;
+        private VisualElement? reusableTransform;
 
         public void InitializeAsRoot(VisualElement root)
         {
@@ -58,7 +75,7 @@ namespace DCL.SDKComponents.SceneUI.Components
 
         public void InitializeAsChild(string componentName, CRDTEntity entity, CRDTEntity rightOf)
         {
-            reusableTransform ??= new VisualElement();
+            reusableTransform ??= new VisualElement { userData = this };
             Transform.name = UiElementUtils.BuildElementName(componentName, entity);
             IsHidden = false;
             StylesApplied = false;
@@ -82,27 +99,12 @@ namespace DCL.SDKComponents.SceneUI.Components
                 return;
             }
 
-            // Instead of creating a new collection with VisualElements keep the index in the tabIndex
-
-            int i = 0;
+            var i = 0;
 
             for (UITransformRelationLinkedData.Node? node = RelationData.head; node != null; node = node.Next)
             {
-                var childEntityId = node.EntityId;
-
-                if (entitiesMap.TryGetValue(childEntityId, out var child))
-                {
-                    var childTransform = world.Get<UITransformComponent>(child);
-
-                    // Use the explicit ZIndex only when it's a non-zero value.
-                    // ZIndex=0 is treated the same as ZIndex=null (positional ordering)
-                    // because the SDK always sends zIndex:0 in its defaults even when
-                    // the user didn't specify one, making it indistinguishable from "not set".
-                    // This matches CSS semantics where z-index:0 is the default stacking order.
-                    childTransform.Transform.tabIndex = childTransform.ZIndex is not null and not 0
-                        ? childTransform.ZIndex.Value
-                        : i;
-                }
+                if (entitiesMap.TryGetValue(node.EntityId, out Entity child))
+                    world.Get<UITransformComponent>(child).chainIndex = i;
 
                 i++;
             }
@@ -112,8 +114,23 @@ namespace DCL.SDKComponents.SceneUI.Components
             RelationData.layoutIsDirty = false;
         }
 
-        private static int TabIndexComparison(VisualElement x, VisualElement y) =>
-            x.tabIndex.CompareTo(y.tabIndex);
+        /// <summary>
+        ///     Orders siblings by zIndex, then by their position in the rightOf chain, so an explicit zIndex never
+        ///     collides with a positional index and equal zIndexes keep the chain order. A zIndex of 0 counts as
+        ///     unset, matching CSS where z-index 0 is the default stacking level. Widgets added to the container
+        ///     (labels, inputs, dropdowns) carry no component and sort as (0, 0).
+        /// </summary>
+        private static int StackingComparison(VisualElement x, VisualElement y)
+        {
+            var xComponent = x.userData as UITransformComponent;
+            var yComponent = y.userData as UITransformComponent;
+
+            int zIndexComparison = (xComponent?.ZIndex ?? 0).CompareTo(yComponent?.ZIndex ?? 0);
+
+            return zIndexComparison != 0
+                ? zIndexComparison
+                : (xComponent?.chainIndex ?? 0).CompareTo(yComponent?.chainIndex ?? 0);
+        }
 
         public void Dispose()
         {
@@ -121,6 +138,8 @@ namespace DCL.SDKComponents.SceneUI.Components
 
             // If it's not a root, its transform can be reused
             if (IsRoot) return;
+
+            VisualElement transform = Transform;
 
             if (InnerScrollView != null)
             {
@@ -130,16 +149,15 @@ namespace DCL.SDKComponents.SceneUI.Components
                 {
                     var child = content[0];
                     child.RemoveFromHierarchy();
-                    reusableTransform.Add(child);
+                    transform.Add(child);
                 }
                 scrollView.RemoveFromHierarchy();
                 InnerScrollView = null;
             }
 
             this.UnregisterPointerCallbacks();
-            reusableTransform.UnregisterHoverStyleCallbacks();
-            reusableTransform.tabIndex = 0;
-            reusableTransform.RemoveFromHierarchy();
+            transform.UnregisterHoverStyleCallbacks();
+            transform.RemoveFromHierarchy();
         }
     }
 }
