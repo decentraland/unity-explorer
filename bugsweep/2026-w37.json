@@ -17,9 +17,9 @@
  "issues": [
   {
    "number": 10073,
-   "status": "pending",
-   "commit": null,
-   "note": null
+   "status": "fixed",
+   "commit": "d420089d4",
+   "note": "top-left Y-down conversion at CRDT write boundary; regression test added"
   },
   {
    "number": 10059,
