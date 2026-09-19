@@ -7,6 +7,7 @@ using DCL.ECSComponents;
 using DCL.SDKComponents.ParticleSystem.Components;
 using DCL.SDKComponents.Utils;
 using ECS.Abstract;
+using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
@@ -52,6 +53,7 @@ namespace DCL.SDKComponents.ParticleSystem.Systems
         }
 
         [Query]
+        [None(typeof(DeleteEntityIntention))]
         private void ApplyParticleSystemProperties(ref PBParticleSystem particleSystemData, ref ParticleSystemComponent component)
         {
             if (!particleSystemData.IsDirty) return;
@@ -381,6 +383,7 @@ namespace DCL.SDKComponents.ParticleSystem.Systems
         }
 
         [Query]
+        [None(typeof(DeleteEntityIntention))]
         private void ResolveTexturePromise(ref ParticleSystemComponent component)
         {
             var promise = component.TexturePromise;
