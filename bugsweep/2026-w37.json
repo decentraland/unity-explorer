@@ -59,9 +59,9 @@
   },
   {
    "number": 10044,
-   "status": "pending",
-   "commit": null,
-   "note": null
+   "status": "fixed",
+   "commit": "a677929b2",
+   "note": "DeleteEntityIntention filters added across particle-system queries; regression test added"
   },
   {
    "number": 10063,
