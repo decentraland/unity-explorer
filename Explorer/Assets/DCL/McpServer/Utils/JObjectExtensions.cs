@@ -1,15 +1,18 @@
 using DCL.McpServer.Core;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Text;
 using UnityEngine;
 
 namespace DCL.McpServer.Utils
 {
-    /// <summary>
-    ///     Builders for the JSON fragments shared by tool outputs.
-    /// </summary>
+    /// <summary>Builders for the JSON fragments shared by tool outputs.</summary>
     public static class JObjectExtensions
     {
+        /// <summary>Cap on how much of an unusable argument an error echoes back.</summary>
+        private const int MAX_ECHOED_ARGUMENT_LENGTH = 60;
+
         public static JObject ToVector(this Vector3 value) =>
             new ()
             {
@@ -52,6 +55,10 @@ namespace DCL.McpServer.Utils
 
         public static string GetString(this JObject arguments, string name, string defaultValue) =>
             arguments[name]?.Type == JTokenType.String ? arguments[name]!.Value<string>()! : defaultValue;
+
+        /// <summary>The string argument, or null when it is absent or not a string.</summary>
+        public static string? GetStringOrNull(this JObject arguments, string name) =>
+            arguments[name]?.Type == JTokenType.String ? arguments[name]!.Value<string>() : null;
 
         /// <summary>
         ///     Reads an enum argument sent as its wire name (see <see cref="McpWireEnum{T}" />). False when the
@@ -102,6 +109,64 @@ namespace DCL.McpServer.Utils
 
             value = 0;
             return false;
+        }
+
+        /// <summary>
+        ///     A clause naming every one of <paramref name="names" /> that arrived but not as a number, to append to
+        ///     a tool's own "required argument" error. Without it a caller that sends a coordinate as a string gets
+        ///     an error naming a cause that is not true ("provide a full x/y/z" when all three were sent). Empty
+        ///     when there is nothing to name.
+        /// </summary>
+        public static string NonNumericHint(this JObject arguments, params string[] names)
+        {
+            StringBuilder? hint = null;
+
+            foreach (string name in names)
+            {
+                JToken? token = arguments[name];
+
+                if (token == null || token.IsNumber())
+                    continue;
+
+                hint ??= new StringBuilder(" (");
+
+                if (hint.Length > 2)
+                    hint.Append("; ");
+
+                hint.Append(name).Append(" arrived as ").Append(Describe(token)).Append(", not a number");
+            }
+
+            return hint == null ? string.Empty : hint.Append(')').ToString();
+        }
+
+        /// <summary>
+        ///     The error for an enum argument <see cref="TryGetEnum{T}(JObject,string,out T,T[])" /> refused: what
+        ///     arrived, and the values that are accepted. Wire values are lowercase and matched exactly, so a caller
+        ///     told only "must be one of: primary, …" cannot see that "PRIMARY" was the right word in the wrong
+        ///     case. The accepted values come from the enum, the same source the schema is built from, because a
+        ///     literal list here drifts silently when a member is added or renamed.
+        /// </summary>
+        public static string EnumArgumentError<T>(this JObject arguments, string name, T[]? allowed = null) where T : struct, Enum
+        {
+            string values = string.Join(", ", allowed == null ? McpWireEnum<T>.WIRE_NAMES : McpWireEnum<T>.WireNamesOf(allowed));
+
+            return arguments[name] == null
+                ? $"{name} is required, one of: {values}."
+                : $"{name} does not accept {Describe(arguments[name]!)}; the values are lowercase, one of: {values}.";
+        }
+
+        /// <summary>What a token is, plus what it held — truncated, because a caller can pass anything.</summary>
+        private static string Describe(JToken token)
+        {
+            if (token.Type == JTokenType.Null)
+                return "null";
+
+            string text = token.ToString(Formatting.None);
+
+            if (text.Length > MAX_ECHOED_ARGUMENT_LENGTH)
+                text = text.Substring(0, MAX_ECHOED_ARGUMENT_LENGTH) + "…";
+
+            return $"{token.Type.ToString().ToLowerInvariant()} {text}";
         }
 
         private static bool IsNumber(this JToken? token) =>

@@ -4,12 +4,13 @@ using Cysharp.Threading.Tasks;
 using DCL.CharacterCamera;
 using DCL.Chat.MessageBus;
 using DCL.Diagnostics;
-using DCL.Interaction.Utility;
 using DCL.McpServer.Core;
 using DCL.McpServer.Tools;
 using DCL.McpServer.Utils;
 using DCL.PluginSystem.Global;
 using DCL.RealmNavigation;
+using DCL.SyntheticInput;
+using DCL.SyntheticInput.UiSimulation;
 using DCL.UI.DebugMenu.MessageBus;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.CurrentScene;
@@ -44,13 +45,15 @@ namespace DCL.McpServer.Systems
 
         private readonly Arch.Core.World globalWorld;
         private readonly IGlobalWorldActions globalWorldActions;
-        private readonly IEntityCollidersGlobalCache entityCollidersGlobalCache;
         private readonly IWorldInfoHub worldInfoHub;
 
         private readonly IScenesCache scenesCache;
         private readonly ICurrentSceneInfo currentSceneInfo;
         private readonly ECSReloadScene reloadSceneController;
         private readonly bool localSceneDevelopment;
+
+        private readonly SyntheticInputAgent syntheticInput;
+        private readonly UiAutomationServices uiAutomation;
 
         private readonly SceneLogBuffer logBuffer;
         private readonly DebugMenuConsoleLogEntryBus logEntryBus;
@@ -71,7 +74,8 @@ namespace DCL.McpServer.Systems
             ECSReloadScene reloadSceneController,
             DiagnosticsContainer diagnosticsContainer,
             ExposedCameraData exposedCameraData,
-            IEntityCollidersGlobalCache entityCollidersGlobalCache,
+            SyntheticInputAgent syntheticInput,
+            UiAutomationServices uiAutomation,
             ICoroutineRunner coroutineRunner,
             Arch.Core.World globalWorld,
             bool localSceneDevelopment)
@@ -90,7 +94,8 @@ namespace DCL.McpServer.Systems
             this.worldInfoHub = worldInfoHub;
             this.reloadSceneController = reloadSceneController;
             this.exposedCameraData = exposedCameraData;
-            this.entityCollidersGlobalCache = entityCollidersGlobalCache;
+            this.syntheticInput = syntheticInput;
+            this.uiAutomation = uiAutomation;
             this.coroutineRunner = coroutineRunner;
             this.globalWorld = globalWorld;
             this.localSceneDevelopment = localSceneDevelopment;
@@ -111,9 +116,6 @@ namespace DCL.McpServer.Systems
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            McpInputOverrideSystem.InjectToWorld(ref builder, arguments.PlayerEntity);
-            McpPointerEventSystem.InjectToWorld(ref builder, scenesCache, entityCollidersGlobalCache, arguments.PlayerEntity);
-
             screenshotTool = new ScreenshotTool(coroutineRunner, globalWorld, arguments.PlayerEntity);
 
             var toolsRegistry = new McpToolsRegistry()
@@ -125,17 +127,27 @@ namespace DCL.McpServer.Systems
                           .Add(new GetPerformanceStatsTool(scenesCache))
                           .Add(new GetSceneLogsTool(logBuffer))
                           .Add(new TeleportTool(chatMessagesBus, scenesCache, loadingStatus))
-                          .Add(new MoveToTool(globalWorldActions, globalWorld, arguments.PlayerEntity))
-                          .Add(new LookAtTool(globalWorldActions, globalWorld, arguments.PlayerEntity, exposedCameraData))
+                          .Add(new MoveToTool(globalWorldActions, globalWorld, arguments.PlayerEntity, exposedCameraData))
+                          .Add(new LookAtTool(syntheticInput, exposedCameraData))
+                          .Add(new CameraLookTool(syntheticInput, exposedCameraData))
                           .Add(new SetCameraModeTool(globalWorld, exposedCameraData))
                           .Add(new SetCameraPoseTool(globalWorld, arguments.PlayerEntity, exposedCameraData))
-                          .Add(new WalkTool(globalWorld, arguments.PlayerEntity))
+                          .Add(new WalkTool(syntheticInput, globalWorld, arguments.PlayerEntity))
                           .Add(new SendChatTool(chatMessagesBus))
                           .Add(new ReloadSceneTool(reloadSceneController, scenesCache, globalWorld, arguments.PlayerEntity, arguments.SkyboxEntity))
                           .Add(new ListSceneEntitiesTool(worldInfoHub))
                           .Add(new GetEntityDetailsTool(worldInfoHub))
                           .Add(new TriggerEmoteTool(globalWorldActions))
-                          .Add(new ClickEntityTool(globalWorld, arguments.PlayerEntity))
+                          .Add(new ClickEntityTool(syntheticInput))
+                          .Add(new ClickAtTool(syntheticInput))
+                          .Add(new HoverEntityTool(syntheticInput))
+                          .Add(new PressInputTool(syntheticInput))
+                          .Add(new SweepPointerTool(syntheticInput, exposedCameraData))
+                          .Add(new UiListTool(uiAutomation))
+                          .Add(new UiClickTool(uiAutomation))
+                          .Add(new UiSetTextTool(uiAutomation))
+                          .Add(new UiScrollTool(uiAutomation))
+                          .Add(new UiDragTool(uiAutomation))
                           .Build();
 
             server = new McpHttpServer(toolsRegistry, port);
