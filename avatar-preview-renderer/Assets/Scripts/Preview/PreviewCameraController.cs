@@ -9,6 +9,7 @@ namespace Preview
     {
         // Floor for the fit's view-axis depth, so a subject sitting on the lens cannot divide by zero.
         private const float MIN_FRUSTUM_DEPTH = 0.01f;
+        private const float POLE_EPSILON = 0.001f;
 
         [SerializeField] private float minFOV = 10f;
         [SerializeField] private float maxFOV = 30f;
@@ -164,6 +165,8 @@ namespace Preview
         private void ResetFraming(CameraFraming framing)
         {
             framing.HasSubject = false;
+            framing.Orbiting = false;
+            framing.Camera.transform.localRotation = framing.InitialLocalRotation;
             framing.TargetFOV = _initialFOV;
             framing.Camera.Lens.FieldOfView = _initialFOV;
             framing.PanOffset = Vector2.zero;
@@ -224,14 +227,56 @@ namespace Preview
                                          new Vector3(framing.PanOffset.x, framing.PanOffset.y, 0f);
         }
 
-        public void ShowMarketplaceWearable(bool showWearable)
+        public void ShowWearable(bool showWearable, PreviewMode mode)
         {
-            _active = showWearable ? _wearableFraming : _avatarFraming;
+            _active = showWearable ? _wearableFraming : mode == PreviewMode.Builder ? _builderFraming : _avatarFraming;
 
             // A different subject starts from the fit's framing, not last time's zoom and pan.
             Refit(_active);
 
             _active.Camera.Prioritize();
+        }
+
+        public void ChangeCameraPosition(Vector3 delta)
+        {
+            BeginOrbit();
+            _active.Alpha += delta.x;
+            _active.Beta = Mathf.Clamp(_active.Beta + delta.y, POLE_EPSILON, Mathf.PI - POLE_EPSILON);
+            _active.Radius = Mathf.Max(MIN_FRUSTUM_DEPTH, _active.Radius + delta.z);
+            ApplyOrbit();
+        }
+
+        public void SetCameraTarget(Vector3 target)
+        {
+            BeginOrbit();
+            _active.OrbitTarget = target;
+            ApplyOrbit();
+        }
+
+        private void BeginOrbit()
+        {
+            if (_active.Orbiting) return;
+
+            var cameraTransform = _active.Camera.transform;
+            _active.OrbitTarget = cameraTransform.position + cameraTransform.forward * panSubjectDistance;
+            var offset = cameraTransform.position - _active.OrbitTarget;
+            _active.Radius = offset.magnitude;
+            _active.Alpha = Mathf.Atan2(offset.z, offset.x);
+            _active.Beta = Mathf.Acos(Mathf.Clamp(offset.y / _active.Radius, -1f, 1f));
+            _active.TargetFOV = _active.Camera.Lens.FieldOfView;
+            _active.HasSubject = false;
+            _active.Orbiting = true;
+        }
+
+        private void ApplyOrbit()
+        {
+            var horizontalRadius = _active.Radius * Mathf.Sin(_active.Beta);
+            var offset = new Vector3(
+                horizontalRadius * Mathf.Cos(_active.Alpha),
+                _active.Radius * Mathf.Cos(_active.Beta),
+                horizontalRadius * Mathf.Sin(_active.Alpha));
+            _active.Camera.transform.SetPositionAndRotation(_active.OrbitTarget + offset,
+                Quaternion.LookRotation(-offset, Vector3.up));
         }
 
         public void ZoomByWheelDelta(float delta)
@@ -253,6 +298,14 @@ namespace Preview
             var fov = _active.Camera.Lens.FieldOfView;
             var worldHeightAtSubject = 2f * panSubjectDistance * Mathf.Tan(fov * 0.5f * Mathf.Deg2Rad);
 
+            if (_active.Orbiting)
+            {
+                _active.OrbitTarget += _active.Camera.transform.rotation *
+                                       new Vector3(-normalizedDelta.x, normalizedDelta.y, 0f) * worldHeightAtSubject;
+                ApplyOrbit();
+                return;
+            }
+
             _active.PanOffset += new Vector2(-normalizedDelta.x, normalizedDelta.y) * worldHeightAtSubject;
             _active.PanOffset = Vector2.ClampMagnitude(_active.PanOffset, maxPanOffset);
 
@@ -265,6 +318,13 @@ namespace Preview
         {
             public readonly CinemachineCamera Camera;
             public readonly Vector3 InitialLocalPosition;
+            public readonly Quaternion InitialLocalRotation;
+
+            public bool Orbiting;
+            public Vector3 OrbitTarget;
+            public float Alpha;
+            public float Beta;
+            public float Radius;
 
             public float TargetFOV;
             public Vector2 PanOffset;
@@ -278,6 +338,7 @@ namespace Preview
             {
                 Camera = camera;
                 InitialLocalPosition = camera.transform.localPosition;
+                InitialLocalRotation = camera.transform.localRotation;
                 TargetFOV = initialFOV;
             }
         }
