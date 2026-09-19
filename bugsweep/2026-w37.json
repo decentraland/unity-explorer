@@ -77,9 +77,9 @@
   },
   {
    "number": 10079,
-   "status": "pending",
-   "commit": null,
-   "note": null
+   "status": "fixed",
+   "commit": "ced790f47",
+   "note": "spot cookie squareness validated with warn-and-skip; failed texture loads no longer applied"
   },
   {
    "number": 10075,
