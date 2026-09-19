@@ -25,6 +25,8 @@ namespace DCL.Multiplayer.Movement
         private readonly PulseIncomingProfileAnnouncements incomingProfiles;
         private readonly PulseRemoveIntentions removeIntentions;
         private readonly IWeb3IdentityCache identityCache;
+        private readonly SessionControl session;
+        private int sessionGeneration;
 
         private volatile bool isDisposed;
         private volatile bool routingPurgeRequested;
@@ -57,6 +59,7 @@ namespace DCL.Multiplayer.Movement
             this.incomingProfiles = incomingProfiles;
             this.removeIntentions = removeIntentions;
             this.identityCache = identityCache;
+            session = SessionControl.For(identityCache);
             this.pulseRealm = pulseRealm;
             this.selfProfile = selfProfile;
             this.settings = settings;

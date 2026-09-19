@@ -111,7 +111,7 @@ namespace DCL.Multiplayer.Connections.Rooms
             assigned = NullRoom.INSTANCE;
         }
 
-        internal async UniTask SwapRoomsAsync(RoomSelection roomSelection, IRoom previous, IRoom newRoom, IObjectPool<IRoom> roomsPool, CancellationToken ct)
+        internal async UniTask SwapRoomsAsync(RoomSelection roomSelection, IRoom previous, IRoom newRoom, IObjectPool<IRoom> roomsPool, CancellationToken ct, Func<bool>? canAssign = null)
         {
             switch (roomSelection)
             {
@@ -122,16 +122,24 @@ namespace DCL.Multiplayer.Connections.Rooms
                     {
                         Unsubscribe(previous);
 
-                        assigned = newRoom;
-
                         if (previous is not NullRoom)
                             roomsPool.Release(previous);
 
-                        Subscribe(newRoom);
+                        if (canAssign != null && !canAssign())
+                        {
+                            assigned = NullRoom.INSTANCE;
+                            try { await newRoom.DisconnectAsync(CancellationToken.None); }
+                            finally { roomsPool.Release(newRoom); }
+                        }
+                        else
+                        {
+                            assigned = newRoom;
+                            Subscribe(newRoom);
 
-                        // During the connection we skipped the connection callback, so we need to notify the subscribers
-                        if (newRoom is not NullRoom)
-                            SimulateConnectionStateChanged();
+                            // During the connection we skipped the connection callback, so we need to notify the subscribers
+                            if (newRoom is not NullRoom)
+                                SimulateConnectionStateChanged();
+                        }
                     }
 
                     break;

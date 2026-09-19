@@ -31,9 +31,16 @@ namespace DCL.Multiplayer.Movement
         /// </summary>
         private async UniTask HandshakeAsync(UniTaskCompletionSource<(bool success, string? error)> handshakeReceived, CancellationToken ct)
         {
+            int generation = session.Generation;
+            sessionGeneration = generation;
+            while (session.Current == SessionControl.Status.Pending && session.CanListen(generation))
+                await UniTask.Delay(250, cancellationToken: ct);
+            if (isDisposed || !session.CanRecover(generation)) throw new PulseHandshakeDisconnectedException("Session suppressed");
             var handshakePacket = OutgoingMessage.Create(PacketMode.RELIABLE, ClientMessage.MessageOneofCase.Handshake);
             handshakePacket.Message.Handshake.AuthChain = ByteString.CopyFromUtf8(BuildAuthChain());
             handshakePacket.Message.Handshake.ProfileVersion = (await selfProfile.ProfileAsync(ct))?.Version ?? 0;
+
+            if (!session.CanRecover(generation)) throw new PulseHandshakeDisconnectedException("Session changed during handshake");
 
             WriteInitialState(handshakePacket.Message.Handshake);
 

@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Web3.Identities;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.GateKeeper.Meta;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms.Options;
@@ -71,8 +72,9 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 
         public GateKeeperSceneRoom(
             IWebRequestController webRequests,
-            GateKeeperSceneRoomOptions options
-        )
+            GateKeeperSceneRoomOptions options,
+            SessionControl? session = null
+        ) : base(session)
         {
             this.webRequests = webRequests;
             this.options = options;

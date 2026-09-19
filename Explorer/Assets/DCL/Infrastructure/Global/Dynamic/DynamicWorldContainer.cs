@@ -827,8 +827,15 @@ namespace Global.Dynamic
                     dynamicWorldDependencies.CompositeWeb3Provider));
 
             // ReSharper disable once MethodHasAsyncOverloadWithCancellation
-            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.StopOnDuplicateIdentity))
-                globalPlugins.Add(new DuplicateIdentityPlugin(commsContainer.RoomHub, uiShellContainer.MvcManager, assetsProvisioner));
+            var sessionControl = SessionControl.For(identityCache);
+            globalPlugins.Add(new DuplicateIdentityPlugin(commsContainer.RoomHub, uiShellContainer.MvcManager, assetsProvisioner, sessionControl,
+                token => sessionControl.ReauthenticateAsync(async authToken =>
+                {
+                    await dynamicWorldDependencies.CompositeWeb3Provider.LogoutAsync(authToken);
+                    await initializationFlowContainer.InitializationFlow.ExecuteAsync(
+                        new UserInAppInitializationFlowParameters(showAuthentication: true, showLoading: true,
+                            loadSource: IUserInAppInitializationFlow.LoadSource.Logout, world: globalWorld, playerEntity: playerEntity), authToken);
+                }, token)));
 
             // No comms/internet popup while developing against a local scene.
             if (!localSceneDevelopment)
