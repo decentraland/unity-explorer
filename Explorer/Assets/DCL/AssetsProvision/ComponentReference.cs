@@ -31,7 +31,17 @@ namespace DCL.AssetsProvision
 
         private AsyncOperationHandle<TComponent> GameObjectReady(AsyncOperationHandle<GameObject> arg)
         {
+            // The chain callback also runs when the source operation failed (Result is null then);
+            // propagate a failed handle with the original error instead of throwing inside the
+            // ResourceManager callback, where the NRE surfaces with no context on what was loading.
+            if (arg.Status != AsyncOperationStatus.Succeeded || arg.Result == null)
+                return Addressables.ResourceManager.CreateCompletedOperation(default(TComponent), $"Failed to load {AssetGUID}: {arg.OperationException?.Message ?? "no result"}");
+
             TComponent comp = arg.Result.GetComponent<TComponent>();
+
+            if (comp == null)
+                return Addressables.ResourceManager.CreateCompletedOperation(comp, $"Loaded {AssetGUID} but it has no {typeof(TComponent).Name} component");
+
             return Addressables.ResourceManager.CreateCompletedOperation(comp, string.Empty);
         }
 
