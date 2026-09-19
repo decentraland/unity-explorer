@@ -2,7 +2,7 @@
 #define DCL_HIGHLIGHT_VERTEX_INCLUDED
 
 // Includes
-#include "HighlightOutput_Data.hlsl"
+#include "ObjectHighlightOutput_Data.hlsl"
 
 hl_v2f hl_Output_vert(hl_appdata IN)
 {

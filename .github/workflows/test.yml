@@ -7,6 +7,8 @@ on:
       - 'Explorer/**'
       # Explorer consumes unity-shared-dependencies as a local package.
       - 'unity-shared-dependencies/**'
+      # Both projects consume render-features as a local package (render-features/package.json).
+      - 'render-features/**'
       # The rsp-drift job must run when the generator changes, or drift merges unnoticed.
       - 'scripts/generate-ignore-warnings.sh'
     types:
@@ -23,6 +25,8 @@ on:
     paths:
       - 'Explorer/**'
       - 'unity-shared-dependencies/**'
+      # Both projects consume render-features as a local package (render-features/package.json).
+      - 'render-features/**'
       - 'scripts/generate-ignore-warnings.sh'
 
 permissions:
