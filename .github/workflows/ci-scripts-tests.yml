@@ -6,7 +6,9 @@ name: CI Scripts Tests
 # URL_RE drift guard against ucb-build-links), the unified status comment's
 # upsert script, the no-op-build-run probe that decides whether a Unity
 # Cloud Build run may write that comment and the resolver that says which PR a
-# run reports into, all against a stubbed gh. Cheap and
+# run reports into, all against a stubbed gh, plus the dependency-security-review
+# classifier, whose inline scripts and permission block are executed straight out
+# of the workflow file. Cheap and
 # network-free, so it runs on any PR touching these paths.
 on:
   pull_request:
@@ -15,6 +17,9 @@ on:
       - ".github/actions/ci-status-comment/**"
       - ".github/actions/ucb-build-links/**"
       - ".github/workflows/ci-scripts-tests.yml"
+      - ".github/workflows/dependency-security-review.yml"
+      - ".github/prompts/review-instructions.md"
+      - "scripts/ci/**"
 
 permissions:
   contents: read
@@ -40,3 +45,6 @@ jobs:
 
       - name: Functional tests (resolve-comment-pr.sh, stubbed gh)
         run: bash .github/actions/ci-status-comment/test-resolve-comment-pr.sh
+
+      - name: Unit tests (dependency-security-review inline scripts)
+        run: node --test scripts/ci/dependency-security-review.test.cjs
