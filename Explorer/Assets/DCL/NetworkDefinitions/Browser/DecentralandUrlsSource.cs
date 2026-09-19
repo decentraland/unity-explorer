@@ -267,7 +267,7 @@ namespace DCL.Browser.DecentralandUrls
             decentralandUrl switch
             {
                 DecentralandUrl.SupportLink => $"https://{BaseDomain}/help/",
-                DecentralandUrl.DiscordDirectLink => "https://discord.gg/decentraland",
+                DecentralandUrl.DiscordDirectLink => "https://discord.gg/n4kzQvgux7",
                 DecentralandUrl.TwitterLink => "https://x.com/decentraland",
                 DecentralandUrl.TwitterNewPostLink => "https://twitter.com/intent/tweet?text={0}&hashtags={1}&url={2}",
                 DecentralandUrl.NewsletterSubscriptionLink => "https://decentraland.beehiiv.com/?utm_org=dcl&utm_source=client&utm_medium=organic&utm_campaign=marketplacecredits&utm_term=trialend",
