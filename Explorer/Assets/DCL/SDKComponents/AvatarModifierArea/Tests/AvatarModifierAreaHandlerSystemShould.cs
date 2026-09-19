@@ -3,7 +3,9 @@ using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.Optimization.Pools;
 using DCL.SDKEntityTriggerArea.Components;
+using DCL.SDKEntityTriggerArea.Systems;
 using DCL.ECSComponents;
 using DCL.Profiles;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
@@ -432,6 +434,68 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
             Assert.IsFalse(globalWorld.Get<AvatarShapeComponent>(fakeAvatarEntity).HiddenByModifierArea);
 
             Assert.IsFalse(world.Has<AvatarModifierAreaComponent>(triggerAreaEntity));
+        }
+
+        [Test]
+        public void UnhideAvatarWhenCleanupSystemRunsBeforeRemovalHandler()
+        {
+            // Regression coverage for https://github.com/decentraland/unity-explorer/issues/10032:
+            // SDKEntityTriggerAreaCleanupSystem (CleanUpGroup, every frame) can process the
+            // PBAvatarModifierArea removal before AvatarModifierAreaHandlerSystem (throttled group)
+            // does. It must defer teardown while AvatarModifierAreaComponent is still present -
+            // releasing the trigger area first clears CurrentEntitiesInside, the unhide never runs,
+            // the avatar stays hidden permanently and the orphaned modifier component blocks any
+            // future setup on the entity.
+            const string FAKE_USER_ID = "Ia4Ia5Cth0ulhu2Ftaghn2";
+
+            globalWorld.Add(fakeAvatarEntity, new Profile(UserId.New(FAKE_USER_ID).Unwrap(), "fake user", new Avatar(
+                BodyShape.MALE,
+                WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE),
+                WearablesConstants.DefaultColors.GetRandomEyesColor(),
+                WearablesConstants.DefaultColors.GetRandomHairColor(),
+                WearablesConstants.DefaultColors.GetRandomSkinColor())));
+
+            var pbComponent = new PBAvatarModifierArea
+            {
+                Area = new Vector3
+                {
+                    X = 1.68f,
+                    Y = 2.96f,
+                    Z = 8.66f,
+                },
+                IsDirty = true,
+                Modifiers =
+                {
+                    AvatarModifierType.AmtHideAvatars,
+                },
+            };
+
+            world.Add(triggerAreaEntity, pbComponent);
+            system.Update(0);
+
+            // "Enter" trigger area and hide the avatar
+            sdkEntityTriggerArea.OnTriggerEnter(fakeAvatarShapeCollider);
+            SDKEntityTriggerAreaComponent component = world.Get<SDKEntityTriggerAreaComponent>(triggerAreaEntity);
+            component.SetMonoBehaviour(sdkEntityTriggerArea);
+            world.Set(triggerAreaEntity, component);
+            system.Update(0);
+            Assert.IsTrue(globalWorld.Get<AvatarShapeComponent>(fakeAvatarEntity).HiddenByModifierArea);
+
+            world.Remove<PBAvatarModifierArea>(triggerAreaEntity);
+
+            // The cleanup system wins the race: it must leave the trigger area alone
+            var cleanupSystem = new SDKEntityTriggerAreaCleanupSystem(world, Substitute.For<IComponentPool<SDKEntityTriggerArea.SDKEntityTriggerArea>>());
+            cleanupSystem.Update(0);
+            Assert.IsTrue(world.Has<SDKEntityTriggerAreaComponent>(triggerAreaEntity), "cleanup must defer teardown while a consumer component is still present");
+
+            // The consumer's removal handler then unhides and releases its component
+            system.Update(0);
+            Assert.IsFalse(globalWorld.Get<AvatarShapeComponent>(fakeAvatarEntity).HiddenByModifierArea);
+            Assert.IsFalse(world.Has<AvatarModifierAreaComponent>(triggerAreaEntity));
+
+            // And only now does the cleanup release the trigger area
+            cleanupSystem.Update(0);
+            Assert.IsFalse(world.Has<SDKEntityTriggerAreaComponent>(triggerAreaEntity));
         }
 
         [Test]

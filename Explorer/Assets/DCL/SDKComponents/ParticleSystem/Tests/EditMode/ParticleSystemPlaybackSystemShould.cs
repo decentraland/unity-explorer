@@ -1,6 +1,7 @@
 using DCL.ECSComponents;
 using DCL.SDKComponents.ParticleSystem;
 using DCL.SDKComponents.ParticleSystem.Systems;
+using ECS.LifeCycle.Components;
 using ECS.TestSuite;
 using NUnit.Framework;
 using UnityEngine;
@@ -79,6 +80,25 @@ namespace DCL.ParticleSystem.Tests
             system.Update(0);
 
             Assert.IsTrue(testParticleSystem.isStopped);
+        }
+
+        [Test]
+        public void SkipReleasedInstancesWhenStoppingAllOnSceneLeave()
+        {
+            // Regression coverage for https://github.com/decentraland/unity-explorer/issues/10044:
+            // ParticleSystemCleanupSystem.HandleEntityDestruction releases the pooled instance but the
+            // component stays on the entity until the deferred destruction runs. A scene-leave
+            // StopAllParticleSystems in that window dereferenced the released (possibly destroyed)
+            // instance; entities pending deletion must be filtered out.
+            var doomedGO = new GameObject("DoomedPS");
+            var doomedPS = doomedGO.AddComponent<UnityEngine.ParticleSystem>();
+            var doomedComponent = new ParticleSystemComponent(doomedPS, doomedGO);
+            var pb = new PBParticleSystem { IsDirty = true };
+
+            world.Create(pb, doomedComponent, new DeleteEntityIntention());
+            Object.DestroyImmediate(doomedGO);
+
+            Assert.DoesNotThrow(() => system.OnSceneIsCurrentChanged(false));
         }
 
         [Test]

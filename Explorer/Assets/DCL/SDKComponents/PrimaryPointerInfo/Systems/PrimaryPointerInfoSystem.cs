@@ -103,13 +103,20 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Systems
                 Z = ray.direction.z,
             };
 
+            // The SDK screen-space convention is top-left origin with Y increasing downward
+            // (matching UiTransform/UiCanvasInformation and the Bevy/Godot clients), while Unity
+            // reports bottom-left Y-up; convert only at the protocol boundary - the world ray
+            // above must be computed from the native position.
+            var reportedPos = new Vector2(pointerPos.x, Screen.height - pointerPos.y);
+            var reportedDelta = new Vector2(deltaPos.x, -deltaPos.y);
+
             ecsToCRDTWriter.PutMessage<PBPrimaryPointerInfo, (Vector2 pos, Vector2 delta, Vector3 rayDir)>(static (component, data) =>
             {
                 component.PointerType = PointerType.PotMouse;
                 component.ScreenCoordinates = new Decentraland.Common.Vector2 { X = data.pos.x, Y = data.pos.y };
                 component.ScreenDelta = new Decentraland.Common.Vector2 { X = data.delta.x, Y = data.delta.y };
                 component.WorldRayDirection = data.rayDir;
-            }, SpecialEntitiesID.SCENE_ROOT_ENTITY, (pointerPos, deltaPos, worldRayDirection));
+            }, SpecialEntitiesID.SCENE_ROOT_ENTITY, (reportedPos, reportedDelta, worldRayDirection));
         }
     }
 }

@@ -22,7 +22,6 @@ using System.Threading;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
 using Unity.Profiling;
-using UnityEngine.Pool;
 using UnityEngine.Scripting;
 using Utility.Multithreading;
 
@@ -120,13 +119,16 @@ namespace ECS.SceneLifeCycle.SceneDefinition
             // One round-trip of wall-clock instead of one per scene: on a fully reconverted (v49+) city every
             // scene in the batch fetches its manifest, and awaiting them one-by-one held the whole batch —
             // and the destination scene queued behind it — for ~400ms × N.
-            using (ListPool<UniTask>.Get(out List<UniTask> manifestTasks))
-            {
-                foreach (SceneEntityDefinition sceneEntityDefinition in intention.TargetCollection)
-                    manifestTasks.Add(EnsureManifestDataAsync(sceneEntityDefinition, partition, ct));
+            // Allocated locally, not from ListPool: this flow runs on the thread pool and UnityEngine.Pool
+            // statics are not thread-safe — two concurrent flows can be handed the same list, and WhenAll
+            // over a shared list registers a second continuation on the same UniTask
+            // ("Already continuation registered, can not await twice").
+            var manifestTasks = new List<UniTask>(intention.TargetCollection.Count);
 
-                await UniTask.WhenAll(manifestTasks);
-            }
+            foreach (SceneEntityDefinition sceneEntityDefinition in intention.TargetCollection)
+                manifestTasks.Add(EnsureManifestDataAsync(sceneEntityDefinition, partition, ct));
+
+            await UniTask.WhenAll(manifestTasks);
 
             return new StreamableLoadingResult<SceneDefinitions>(
                 new SceneDefinitions(intention.TargetCollection));
@@ -151,8 +153,9 @@ namespace ECS.SceneLifeCycle.SceneDefinition
             if (list.Count <= 1)
                 return;
 
-            var seenIds = HashSetPool<string>.Get();
-            seenIds.EnsureCapacity(list.Count);
+            // Allocated locally, not from HashSetPool: this runs on the thread pool and UnityEngine.Pool
+            // statics are not thread-safe (see the manifestTasks comment in FlowInternalAsync).
+            var seenIds = new HashSet<string>(list.Count);
 
             int write = 0;
 
@@ -166,8 +169,6 @@ namespace ECS.SceneLifeCycle.SceneDefinition
 
             if (write < list.Count)
                 list.RemoveRange(write, list.Count - write);
-
-            HashSetPool<string>.Release(seenIds);
         }
 
         [Preserve]
