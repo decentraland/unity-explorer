@@ -179,10 +179,26 @@ namespace DCL.SDKComponents.LightSource.Systems
             lightSourceComponent.Cookie.LoadingPromise = null;
             lightSourceComponent.Cookie.SourceTextureData = texture.Asset;
 
+            if (!texture.Succeeded)
+            {
+                lightSourceComponent.LightSourceInstance.cookie = null;
+                return;
+            }
+
             switch (lightSourceComponent.LightSourceInstance.type)
             {
                 case LightType.Spot:
-                    lightSourceComponent.LightSourceInstance.cookie = texture.Asset;
+                    // Unity raises "Spotlight cookies must be square" as an error on assignment;
+                    // the texture comes from scene content, so validate instead of erroring
+                    Texture? spotCookie = texture.Asset;
+
+                    if (spotCookie != null && spotCookie.width != spotCookie.height)
+                    {
+                        ReportHub.LogWarning(GetReportCategory(), $"Spot Light cookie texture must be square, got {spotCookie.width}x{spotCookie.height}; cookie ignored");
+                        spotCookie = null;
+                    }
+
+                    lightSourceComponent.LightSourceInstance.cookie = spotCookie;
                     break;
 
                 case LightType.Point:
