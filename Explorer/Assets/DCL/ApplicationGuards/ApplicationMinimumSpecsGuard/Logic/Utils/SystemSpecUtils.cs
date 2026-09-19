@@ -34,6 +34,13 @@ namespace DCL.ApplicationGuards
             if (intelUltraMatch.Success && int.TryParse(intelUltraMatch.Groups[1].Value, out int ultraSeries))
                 return ultraSeries >= minimumRequirements.intel_ultra_supported_minimum_generation;
 
+            if (!string.IsNullOrEmpty(minimumRequirements.intel_core_cpu_supported_version_regex))
+            {
+                var intelCoreMatch = Regex.Match(cpu, minimumRequirements.intel_core_cpu_supported_version_regex);
+                if (intelCoreMatch.Success && int.TryParse(intelCoreMatch.Groups[1].Value, out int coreSeries))
+                    return coreSeries >= minimumRequirements.intel_core_supported_minimum_series;
+            }
+
             var intelMatch = Regex.Match(cpu, minimumRequirements.intel_cpu_supported_version_regex);
             if (intelMatch.Success)
             {
@@ -196,6 +203,8 @@ namespace DCL.ApplicationGuards
             public int intel_ultra_supported_minimum_generation;
             public string intel_cpu_supported_version_regex;
             public string intel_ultra_cpu_supported_version_regex;
+            public string? intel_core_cpu_supported_version_regex;
+            public int intel_core_supported_minimum_series;
             public string rtx_gpu_supported_version_regex;
             public string rx_gpu_supported_version_regex;
             public string arc_gpu_supported_version_regex;
