@@ -1,0 +1,181 @@
+{
+ "status": "active",
+ "prUrl": null,
+ "requester": "U0ADNDHL1T7",
+ "originChannel": "C0BB9H2CS5D",
+ "groups": [
+  [
+   10018,
+   10019
+  ],
+  [
+   10030,
+   10074,
+   10076
+  ]
+ ],
+ "issues": [
+  {
+   "number": 10073,
+   "status": "pending",
+   "commit": null,
+   "note": null
+  },
+  {
+   "number": 10059,
+   "status": "pending",
+   "commit": null,
+   "note": null
+  },
+  {
+   "number": 10077,
+   "status": "pending",
+   "commit": null,
+   "note": null
+  },
+  {
+   "number": 10031,
+   "status": "pending",
+   "commit": null,
+   "note": null
+  },
+  {
+   "number": 10015,
+   "status": "pending",
+   "commit": null,
+   "note": null
+  },
+  {
+   "number": 10032,
+   "status": "pending",
+   "commit": null,
+   "note": null
+  },
+  {
+   "number": 10035,
+   "status": "pending",
+   "commit": null,
+   "note": null
+  },
+  {
+   "number": 10044,
+   "status": "pending",
+   "commit": null,
+   "note": null
+  },
+  {
+   "number": 10063,
+   "status": "pending",
+   "commit": null,
+   "note": null
+  },
+  {
+   "number": 10066,
+   "status": "pending",
+   "commit": null,
+   "note": null
+  },
+  {
+   "number": 10079,
+   "status": "pending",
+   "commit": null,
+   "note": null
+  },
+  {
+   "number": 10075,
+   "status": "pending",
+   "commit": null,
+   "note": null
+  },
+  {
+   "number": 10068,
+   "status": "pending",
+   "commit": null,
+   "note": null
+  },
+  {
+   "number": 10013,
+   "status": "skipped",
+   "commit": null,
+   "note": "scene main script bin/index.js missing from the content manifest of a local preview scene; content misconfiguration, the exception is the intended failure signal, no explorer defect"
+  },
+  {
+   "number": 10018,
+   "status": "skipped",
+   "commit": null,
+   "note": "Unity TextCore engine crash (ReplaceSelection/Insert, il2cpp+engine frames only); no explorer C# source to fix (group)"
+  },
+  {
+   "number": 10019,
+   "status": "skipped",
+   "commit": null,
+   "note": "Unity TextCore engine crash (Backspace/Remove, il2cpp+engine frames only); no explorer C# source to fix (group)"
+  },
+  {
+   "number": 10021,
+   "status": "skipped",
+   "commit": null,
+   "note": "perf warning popup at dclplace observed once, reproduction unknown; popup behaved as designed absent a confirmed perf regression, nothing localized to fix"
+  },
+  {
+   "number": 10030,
+   "status": "skipped",
+   "commit": null,
+   "note": "scene-initiated WebSocket connect/receive failures (ClientWebSocketApiImplementation); transient network errors, same class skipped in sweep 2026-w36 (group)"
+  },
+  {
+   "number": 10036,
+   "status": "skipped",
+   "commit": null,
+   "note": "native EXC_BAD_ACCESS in il2cpp Arch chunk access, generics frames only; no C# source to fix"
+  },
+  {
+   "number": 10039,
+   "status": "skipped",
+   "commit": null,
+   "note": "'Large HTTP payload' Sentry perf span (POST /asset-bundle-registry/entities/active); telemetry alert not a crash, same class skipped in sweep 2026-w36"
+  },
+  {
+   "number": 10043,
+   "status": "skipped",
+   "commit": null,
+   "note": "DNS resolution failure for pulse-server.decentraland.org; transient network/environment, only System internals in trace"
+  },
+  {
+   "number": 10045,
+   "status": "skipped",
+   "commit": null,
+   "note": "NullRef with only generics/il2cpp frames (Generics__34 Apply); no C# source to localize, same class skipped in sweep 2026-w36"
+  },
+  {
+   "number": 10048,
+   "status": "skipped",
+   "commit": null,
+   "note": "InvalidOperationException inside the Sentry SDK's own InnerProcessCacheAsync (Sentry UPM package); third-party package code, not repo source"
+  },
+  {
+   "number": 10071,
+   "status": "skipped",
+   "commit": null,
+   "note": "native uuav tls 'Failed to send close message' log; native library message, no C# source to fix"
+  },
+  {
+   "number": 10074,
+   "status": "skipped",
+   "commit": null,
+   "note": "scene-initiated WebSocket receive failure; transient network, same class skipped in sweep 2026-w36 (group)"
+  },
+  {
+   "number": 10076,
+   "status": "skipped",
+   "commit": null,
+   "note": "scene-initiated WebSocket connect failure; transient network, same class skipped in sweep 2026-w36 (group)"
+  },
+  {
+   "number": 10081,
+   "status": "skipped",
+   "commit": null,
+   "note": "HTTP 404 'Profile not found' surfaced by the web-request tracker; expected server response for a missing profile, not a client defect"
+  }
+ ]
+}
