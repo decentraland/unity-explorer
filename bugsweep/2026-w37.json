@@ -71,9 +71,9 @@
   },
   {
    "number": 10066,
-   "status": "pending",
-   "commit": null,
-   "note": null
+   "status": "fixed",
+   "commit": "908c2d1ea",
+   "note": "failed chained addressables op now returns failed handle with asset GUID instead of NRE"
   },
   {
    "number": 10079,
