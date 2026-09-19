@@ -1,6 +1,6 @@
 {
- "status": "active",
- "prUrl": null,
+ "status": "pr-open",
+ "prUrl": "https://github.com/decentraland/unity-explorer/pull/10173",
  "requester": "U0ADNDHL1T7",
  "originChannel": "C0BB9H2CS5D",
  "groups": [
