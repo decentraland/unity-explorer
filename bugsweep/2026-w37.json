@@ -23,9 +23,9 @@
   },
   {
    "number": 10059,
-   "status": "pending",
+   "status": "skipped",
    "commit": null,
-   "note": null
+   "note": "already fixed in origin/dev by PR #10089 (merged 2026-09-15): FROZEN_INTERVAL_MS sentinel replaces the platform-dependent (int)(1000f/0) cast in SceneFacade.SetTargetFPS; issue can be closed against that PR"
   },
   {
    "number": 10077,
