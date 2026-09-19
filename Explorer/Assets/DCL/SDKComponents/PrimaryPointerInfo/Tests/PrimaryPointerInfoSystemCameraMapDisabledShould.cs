@@ -108,9 +108,9 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Tests
             Assert.IsNotEmpty(putCalls);
             (Vector2 pos, Vector2 _, ProtoVector3 _) = putCalls[putCalls.Count - 1];
 
-            Assert.AreNotEqual(Vector2.zero, pos, "screenCoordinates must not collapse to (0,0) while the Camera map is disabled");
+            Assert.AreNotEqual(new Vector2(0f, Screen.height), pos, "screenCoordinates must not collapse to the disabled-action value while the Camera map is disabled");
             Assert.AreEqual(simulatedPosition.x, pos.x, TOLERANCE);
-            Assert.AreEqual(simulatedPosition.y, pos.y, TOLERANCE);
+            Assert.AreEqual(Screen.height - simulatedPosition.y, pos.y, TOLERANCE);
         }
     }
 }
