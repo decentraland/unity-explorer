@@ -53,9 +53,9 @@
   },
   {
    "number": 10035,
-   "status": "pending",
+   "status": "skipped",
    "commit": null,
-   "note": null
+   "note": "already fixed in origin/dev by PR #10067 (merged 2026-09-15): OrphanChildrenOfDeletedEntity now guards stale/dead child entities before TryGetRef; issue can be closed against that PR"
   },
   {
    "number": 10044,
