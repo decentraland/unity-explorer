@@ -41,9 +41,9 @@
   },
   {
    "number": 10015,
-   "status": "pending",
+   "status": "skipped",
    "commit": null,
-   "note": null
+   "note": "already fixed in origin/dev by PR #10042 (merged 2026-09-10): startup now fails loudly instead of passing a null Profile (with ! suppression) to CreateProfilePicturePromise; Sentry events are from pre-10042 builds"
   },
   {
    "number": 10032,
