@@ -47,9 +47,9 @@
   },
   {
    "number": 10032,
-   "status": "pending",
-   "commit": null,
-   "note": null
+   "status": "fixed",
+   "commit": "c20826e12",
+   "note": "cleanup system now defers trigger-area release until consumer components are gone; regression test added"
   },
   {
    "number": 10035,
