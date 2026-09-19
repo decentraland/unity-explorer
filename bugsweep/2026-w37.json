@@ -83,9 +83,9 @@
   },
   {
    "number": 10075,
-   "status": "pending",
-   "commit": null,
-   "note": null
+   "status": "fixed",
+   "commit": "3f27b1e0b",
+   "note": "desync now invalidates stale monotonic sample and re-probes before dialog; Retry re-probes"
   },
   {
    "number": 10068,
