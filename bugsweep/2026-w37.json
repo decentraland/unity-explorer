@@ -89,9 +89,9 @@
   },
   {
    "number": 10068,
-   "status": "pending",
+   "status": "skipped",
    "commit": null,
-   "note": null
+   "note": "intermittent, observed once; schedule-aligned seek on first World entry needs runtime repro against the live Theatre World to pin the cause (seek-before-stream-ready is plausible but unproven); no evidence to justify a speculative media-playback change"
   },
   {
    "number": 10013,
