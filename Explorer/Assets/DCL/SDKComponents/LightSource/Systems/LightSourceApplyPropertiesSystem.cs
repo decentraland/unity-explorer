@@ -6,6 +6,7 @@ using DCL.ECSComponents;
 using DCL.SDKComponents.Utils;
 using Decentraland.Common;
 using ECS.Abstract;
+using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
@@ -50,6 +51,7 @@ namespace DCL.SDKComponents.LightSource.Systems
         }
 
         [Query]
+        [None(typeof(DeleteEntityIntention))]
         private void UpdateLightSource(in PBLightSource pbLightSource, ref LightSourceComponent lightSourceComponent)
         {
             Light lightSourceInstance = lightSourceComponent.LightSourceInstance;
@@ -91,7 +93,7 @@ namespace DCL.SDKComponents.LightSource.Systems
                     break;
 
                 case PBLightSource.TypeOneofCase.Point:
-                    ApplyPointLight(pbLightSource, lightSourceInstance);
+                    ApplyPointLight(lightSourceInstance);
                     break;
             }
 
@@ -109,7 +111,7 @@ namespace DCL.SDKComponents.LightSource.Systems
                 light.spotAngle = pbLightSource.Spot.OuterAngle;
         }
 
-        private static void ApplyPointLight(PBLightSource pbLightSource, Light light)
+        private static void ApplyPointLight(Light light)
         {
             light.type = LightType.Point;
         }
@@ -168,6 +170,7 @@ namespace DCL.SDKComponents.LightSource.Systems
         }
 
         [Query]
+        [None(typeof(DeleteEntityIntention))]
         private void ResolveTexturePromise(ref LightSourceComponent lightSourceComponent)
         {
             var promise = lightSourceComponent.Cookie.LoadingPromise;
@@ -186,7 +189,7 @@ namespace DCL.SDKComponents.LightSource.Systems
                     break;
 
                 case LightType.Point:
-                    Cubemap cubemap = MakeCookieCubemap(texture.Asset);
+                    Cubemap? cubemap = texture.Asset != null ? MakeCookieCubemap(texture.Asset) : null;
                     lightSourceComponent.LightSourceInstance.cookie = cubemap;
                     lightSourceComponent.Cookie.PointLightCubemap = cubemap;
                     break;
@@ -197,7 +200,7 @@ namespace DCL.SDKComponents.LightSource.Systems
             }
         }
 
-        private Cubemap MakeCookieCubemap(TextureData source)
+        private Cubemap? MakeCookieCubemap(TextureData source)
         {
             Texture2D texture2d = source.EnsureTexture2D();
 
