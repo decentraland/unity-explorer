@@ -103,6 +103,50 @@ namespace UUAV.Tests
         }
 
         [UnityTest]
+        public IEnumerator RestartFromZeroWhenPlayedFromEndedWithoutSeek()
+        {
+            // Arrange
+            UUAVPlayer player = CreatePlayer(out _);
+            yield return OpenPlayAndAwaitPlaying(player, UrlFor(Fixtures.ToneColorBands));
+            yield return AwaitClockRunning(player);
+            player.Seek(Fixtures.DurationSeconds - 1.0);
+            yield return Wait.ForState(player, UUAVState.Ended, StateTimeout, "before restarting");
+
+            // Act
+            player.Play();
+
+            // Assert
+            yield return Wait.Until(
+                () => player.State == UUAVState.Playing && player.CurrentTime < Fixtures.DurationSeconds - 0.5,
+                StateTimeout,
+                () => $"playback never restarted from ENDED\n{Wait.Diagnostics(player)}"
+            );
+            Assert.That(player.CurrentTime, Is.LessThan(1.5), $"a plain Play from ENDED must restart at 0\n{Wait.Diagnostics(player)}");
+        }
+
+        [UnityTest]
+        public IEnumerator FetchOnlyOneHlsVariant()
+        {
+            // Arrange: probing legitimately touches every variant, so only
+            // the segments fetched after playback started count
+            UUAVPlayer player = CreatePlayer(out _);
+            yield return OpenPlayAndAwaitPlaying(player, UrlFor(Fixtures.HlsMaster));
+            yield return AwaitClockRunning(player);
+            int variant0Before = RequestCount(Fixtures.HlsVariant0SegmentPrefix);
+            int variant1Before = RequestCount(Fixtures.HlsVariant1SegmentPrefix);
+
+            // Act
+            yield return Wait.SecondsRealtime(4f);
+
+            // Assert: one variant keeps downloading, the other stopped at the probe
+            int variant0 = RequestCount(Fixtures.HlsVariant0SegmentPrefix) - variant0Before;
+            int variant1 = RequestCount(Fixtures.HlsVariant1SegmentPrefix) - variant1Before;
+            Assert.That(variant0 + variant1, Is.GreaterThan(0), $"no segment was fetched during playback\n{Wait.Diagnostics(player)}");
+            Assert.That(variant0 == 0 || variant1 == 0, Is.True, $"both variants kept downloading (variant0 +{variant0}, variant1 +{variant1})\n{Wait.Diagnostics(player)}");
+            Assert.That(player.State, Is.EqualTo(UUAVState.Playing), Wait.Diagnostics(player));
+        }
+
+        [UnityTest]
         public IEnumerator WrapInsteadOfEndingWhenLooping()
         {
             // Arrange
