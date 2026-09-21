@@ -3,6 +3,7 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Ipfs;
+using DCL.Optimization.ThreadSafePool;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Utilities;
 using DCL.WebRequests;
@@ -34,6 +35,9 @@ namespace ECS.SceneLifeCycle.SceneDefinition
     [LogCategory(ReportCategory.SCENE_LOADING)]
     public partial class LoadSceneDefinitionListSystem : LoadSystemBase<SceneDefinitions, GetSceneDefinitionList>
     {
+        private const int BATCH_CAPACITY = 64;
+        private const int POOL_CAPACITY = 10;
+
         private readonly IWebRequestController webRequestController;
         private readonly EntitiesAnalytics entitiesAnalytics;
         private readonly bool isLocalSceneDevelopment;
@@ -42,6 +46,10 @@ namespace ECS.SceneLifeCycle.SceneDefinition
         // cache
         private readonly StringBuilder bodyBuilder = new ();
         private static readonly SceneMetadataConverter SCENE_METADATA_CONVERTER = new ();
+
+        // Thread-safe pools: the flow runs on the thread pool, where UnityEngine.Pool statics race
+        private static readonly ThreadSafeListPool<UniTask> MANIFEST_TASKS_POOL = new (BATCH_CAPACITY, POOL_CAPACITY);
+        private static readonly ThreadSafeHashSetPool<string> SEEN_IDS_POOL = new (BATCH_CAPACITY, POOL_CAPACITY);
 
         private readonly ProfilerMarker deserializationSampler;
 
@@ -119,16 +127,13 @@ namespace ECS.SceneLifeCycle.SceneDefinition
             // One round-trip of wall-clock instead of one per scene: on a fully reconverted (v49+) city every
             // scene in the batch fetches its manifest, and awaiting them one-by-one held the whole batch —
             // and the destination scene queued behind it — for ~400ms × N.
-            // Allocated locally, not from ListPool: this flow runs on the thread pool and UnityEngine.Pool
-            // statics are not thread-safe — two concurrent flows can be handed the same list, and WhenAll
-            // over a shared list registers a second continuation on the same UniTask
-            // ("Already continuation registered, can not await twice").
-            var manifestTasks = new List<UniTask>(intention.TargetCollection.Count);
+            using (MANIFEST_TASKS_POOL.Get(out List<UniTask> manifestTasks))
+            {
+                foreach (SceneEntityDefinition sceneEntityDefinition in intention.TargetCollection)
+                    manifestTasks.Add(EnsureManifestDataAsync(sceneEntityDefinition, partition, ct));
 
-            foreach (SceneEntityDefinition sceneEntityDefinition in intention.TargetCollection)
-                manifestTasks.Add(EnsureManifestDataAsync(sceneEntityDefinition, partition, ct));
-
-            await UniTask.WhenAll(manifestTasks);
+                await UniTask.WhenAll(manifestTasks);
+            }
 
             return new StreamableLoadingResult<SceneDefinitions>(
                 new SceneDefinitions(intention.TargetCollection));
@@ -153,22 +158,23 @@ namespace ECS.SceneLifeCycle.SceneDefinition
             if (list.Count <= 1)
                 return;
 
-            // Allocated locally, not from HashSetPool: this runs on the thread pool and UnityEngine.Pool
-            // statics are not thread-safe (see the manifestTasks comment in FlowInternalAsync).
-            var seenIds = new HashSet<string>(list.Count);
-
-            int write = 0;
-
-            for (int read = 0; read < list.Count; read++)
+            using (SEEN_IDS_POOL.Get(out HashSet<string> seenIds))
             {
-                var item = list[read];
+                seenIds.EnsureCapacity(list.Count);
 
-                if (seenIds.Add(item.id ?? string.Empty))
-                    list[write++] = item;
+                int write = 0;
+
+                for (int read = 0; read < list.Count; read++)
+                {
+                    var item = list[read];
+
+                    if (seenIds.Add(item.id ?? string.Empty))
+                        list[write++] = item;
+                }
+
+                if (write < list.Count)
+                    list.RemoveRange(write, list.Count - write);
             }
-
-            if (write < list.Count)
-                list.RemoveRange(write, list.Count - write);
         }
 
         [Preserve]
