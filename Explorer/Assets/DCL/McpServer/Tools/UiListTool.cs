@@ -3,7 +3,6 @@ using DCL.McpServer.Core;
 using DCL.McpServer.Utils;
 using DCL.SyntheticInput.UiSimulation;
 using Newtonsoft.Json.Linq;
-using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 
 namespace DCL.McpServer.Tools
@@ -11,13 +10,11 @@ namespace DCL.McpServer.Tools
     /// <summary>Lists the interactable UI elements a driver can address with the other ui_* tools.</summary>
     public class UiListTool : McpTool
     {
-        /// <summary>Wire-facing stack selector; the member names are the argument values McpWireEnum derives.</summary>
-        [SuppressMessage("ReSharper", "InconsistentNaming")]
         private enum ListStack : byte
         {
-            ALL,
-            UGUI,
-            SDK,
+            All,
+            Ugui,
+            Sdk,
         }
 
         private readonly UiAutomationServices uiAutomation;
@@ -45,12 +42,12 @@ namespace DCL.McpServer.Tools
 
         public override UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
         {
-            if (!arguments.TryGetEnum("stack", ListStack.ALL, out ListStack stack))
+            if (!arguments.TryGetEnum("stack", ListStack.All, out ListStack stack))
                 return UniTask.FromResult(McpToolResult.Error(arguments.EnumArgumentError<ListStack>("stack")));
 
             bool checkOcclusion = arguments.GetBool("checkOcclusion", false);
 
-            JObject result = uiAutomation.ListInteractableJson(stack != ListStack.SDK, stack != ListStack.UGUI, checkOcclusion);
+            JObject result = uiAutomation.ListInteractableJson(stack != ListStack.Sdk, stack != ListStack.Ugui, checkOcclusion);
 
             return UniTask.FromResult(McpToolResult.Json(result));
         }

@@ -7,7 +7,6 @@ using DCL.McpServer.Utils;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections;
-using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using Unity.Collections;
 using UnityEngine;
@@ -26,12 +25,10 @@ namespace DCL.McpServer.Tools
     /// </summary>
     public class ScreenshotTool : McpTool, IDisposable
     {
-        /// <summary>Wire-facing image format; the member names are the argument values McpWireEnum derives.</summary>
-        [SuppressMessage("ReSharper", "InconsistentNaming")]
         private enum OutputFormat : byte
         {
-            JPG,
-            PNG,
+            Jpg,
+            Png,
         }
 
         private const int DEFAULT_MAX_WIDTH = 1280;
@@ -84,10 +81,10 @@ namespace DCL.McpServer.Tools
         {
             int maxWidth = Mathf.Clamp(arguments.GetInt("maxWidth", DEFAULT_MAX_WIDTH), MIN_WIDTH, MAX_WIDTH);
 
-            if (!arguments.TryGetEnum("quality", OutputFormat.JPG, out OutputFormat format))
+            if (!arguments.TryGetEnum("quality", OutputFormat.Jpg, out OutputFormat format))
                 return McpToolResult.Error(arguments.EnumArgumentError<OutputFormat>("quality"));
 
-            bool asPng = format == OutputFormat.PNG;
+            bool asPng = format == OutputFormat.Png;
             bool worldOnly = arguments.GetBool("worldOnly", false);
 
             if (capturing)

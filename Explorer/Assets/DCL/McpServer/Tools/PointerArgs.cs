@@ -2,21 +2,16 @@ using DCL.ECSComponents;
 using DCL.McpServer.Utils;
 using DCL.SyntheticInput;
 using Newtonsoft.Json.Linq;
-using System.Diagnostics.CodeAnalysis;
 using UnityEngine;
 
 namespace DCL.McpServer.Tools
 {
-    /// <summary>
-    ///     Wire-facing subset of <see cref="InputAction" />: the three pointer buttons a click or a hold can use.
-    ///     The member names ARE the wire contract (McpWireEnum derives each argument value from them).
-    /// </summary>
-    [SuppressMessage("ReSharper", "InconsistentNaming")]
+    /// <summary>Wire-facing subset of <see cref="InputAction" />: the three pointer buttons a click or a hold can use.</summary>
     public enum PointerButton : byte
     {
-        POINTER,
-        PRIMARY,
-        SECONDARY,
+        Pointer,
+        Primary,
+        Secondary,
     }
 
     /// <summary>Argument parsing shared by the tools that aim a pointer gesture at the world: the button and the aim.</summary>
@@ -30,7 +25,7 @@ namespace DCL.McpServer.Tools
             button = InputAction.IaPointer;
             error = null;
 
-            if (!arguments.TryGetEnum("button", PointerButton.POINTER, out PointerButton wireButton))
+            if (!arguments.TryGetEnum("button", PointerButton.Pointer, out PointerButton wireButton))
             {
                 error = arguments.EnumArgumentError<PointerButton>("button");
                 return false;
@@ -38,8 +33,8 @@ namespace DCL.McpServer.Tools
 
             button = wireButton switch
                      {
-                         PointerButton.PRIMARY => InputAction.IaPrimary,
-                         PointerButton.SECONDARY => InputAction.IaSecondary,
+                         PointerButton.Primary => InputAction.IaPrimary,
+                         PointerButton.Secondary => InputAction.IaSecondary,
                          _ => InputAction.IaPointer,
                      };
 

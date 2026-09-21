@@ -3,7 +3,6 @@ using DCL.McpServer.Core;
 using DCL.McpServer.Utils;
 using DCL.SyntheticInput.UiSimulation;
 using Newtonsoft.Json.Linq;
-using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -18,18 +17,6 @@ namespace DCL.McpServer.Tools
     /// </summary>
     public class UiClickTool : McpTool
     {
-        /// <summary>
-        ///     The member names are the wire contract (McpWireEnum derives "left"/"right"/"middle" from them), so
-        ///     they follow the wire format rather than local enum-member casing.
-        /// </summary>
-        [SuppressMessage("ReSharper", "InconsistentNaming")]
-        private enum ClickButton : byte
-        {
-            LEFT,
-            RIGHT,
-            MIDDLE,
-        }
-
         private const float DEFAULT_TIMEOUT_SEC = 3f;
         private const float MIN_TIMEOUT_SEC = 0.5f;
         private const float MAX_TIMEOUT_SEC = 15f;
@@ -48,7 +35,7 @@ namespace DCL.McpServer.Tools
 
         protected override McpJsonSchema DescribeInput(McpJsonSchema schema) =>
             UiAddressArgs.DescribeAddress(schema)
-                         .Enum<ClickButton>("button", "Mouse button. Default left.")
+                         .Enum<PointerEventData.InputButton>("button", "Mouse button. Default left.")
                          .Boolean("force", "Skip the occlusion pre-check and click even when covered. Default false.")
                          .Boolean("device", "Replay the click through the virtual mouse at the element's center. Default false (semantic events).")
                          .Number("timeoutSec", "Seconds to wait for multi-frame clicks. Default 3, max 15.");
@@ -65,8 +52,8 @@ namespace DCL.McpServer.Tools
             if (!UiAddressArgs.TryParse(arguments, out UiElementAddress address, out string? addressError))
                 return McpToolResult.Error(addressError!);
 
-            if (!arguments.TryGetEnum("button", ClickButton.LEFT, out ClickButton button))
-                return McpToolResult.Error(arguments.EnumArgumentError<ClickButton>("button"));
+            if (!arguments.TryGetEnum("button", PointerEventData.InputButton.Left, out PointerEventData.InputButton button))
+                return McpToolResult.Error(arguments.EnumArgumentError<PointerEventData.InputButton>("button"));
 
             bool force = arguments.GetBool("force", false);
             bool device = arguments.GetBool("device", false);
@@ -92,7 +79,7 @@ namespace DCL.McpServer.Tools
 
                 result = device
                     ? await RunDeviceClickAsync(UiScreenGeometry.ScreenCenterOf(rectTransform), UiScreenGeometry.ImageRectOf(rectTransform), button, timeoutSec, ct)
-                    : uiAutomation.Simulator.ClickUgui(target, ToInputButton(button), force);
+                    : uiAutomation.Simulator.ClickUgui(target, button, force);
             }
 
             return McpToolResult.Json(result.ToJson(uiAutomation.CursorStateName()));
@@ -103,7 +90,7 @@ namespace DCL.McpServer.Tools
         ///     The gesture succeeding only means the device states were injected; UI Toolkit panels consume events
         ///     sent to their elements, so a bare "ok" would misreport an injected pointer that never arrived.
         /// </summary>
-        private async UniTask<UiActionResult> RunDeviceClickOnSdkAsync(SdkUiElement element, ClickButton button, float timeoutSec, CancellationToken ct)
+        private async UniTask<UiActionResult> RunDeviceClickOnSdkAsync(SdkUiElement element, PointerEventData.InputButton button, float timeoutSec, CancellationToken ct)
         {
             Rect imageRect = SdkImageRect(element);
             UiActionResult result = await RunDeviceClickAsync(UiScreenGeometry.ImageToScreenPoint(imageRect.center), imageRect, button, timeoutSec, ct);
@@ -131,7 +118,7 @@ namespace DCL.McpServer.Tools
         ///     resolved the same element the semantic one does, so the two must not answer differently about where
         ///     the click landed.
         /// </summary>
-        private async UniTask<UiActionResult> RunDeviceClickAsync(Vector2 screenCenter, Rect imageRect, ClickButton button, float timeoutSec, CancellationToken ct)
+        private async UniTask<UiActionResult> RunDeviceClickAsync(Vector2 screenCenter, Rect imageRect, PointerEventData.InputButton button, float timeoutSec, CancellationToken ct)
         {
             UiGestureResult gesture = await uiAutomation.RunGestureAsync(new UiDeviceGestureRequest
             {
@@ -148,19 +135,11 @@ namespace DCL.McpServer.Tools
         private static Rect SdkImageRect(in SdkUiElement element) =>
             UiScreenGeometry.PanelRectToImageRect(element.Transform.Transform.panel, element.Transform.Transform.worldBound);
 
-        private static PointerEventData.InputButton ToInputButton(ClickButton button) =>
+        private static MouseButton ToMouseButton(PointerEventData.InputButton button) =>
             button switch
             {
-                ClickButton.RIGHT => PointerEventData.InputButton.Right,
-                ClickButton.MIDDLE => PointerEventData.InputButton.Middle,
-                _ => PointerEventData.InputButton.Left,
-            };
-
-        private static MouseButton ToMouseButton(ClickButton button) =>
-            button switch
-            {
-                ClickButton.RIGHT => MouseButton.Right,
-                ClickButton.MIDDLE => MouseButton.Middle,
+                PointerEventData.InputButton.Right => MouseButton.Right,
+                PointerEventData.InputButton.Middle => MouseButton.Middle,
                 _ => MouseButton.Left,
             };
     }

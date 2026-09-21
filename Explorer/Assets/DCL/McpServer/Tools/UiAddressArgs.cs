@@ -2,19 +2,14 @@ using DCL.McpServer.Core;
 using DCL.McpServer.Utils;
 using DCL.SyntheticInput.UiSimulation;
 using Newtonsoft.Json.Linq;
-using System.Diagnostics.CodeAnalysis;
 
 namespace DCL.McpServer.Tools
 {
-    /// <summary>
-    ///     Wire-facing UI stack selector shared by the ui_* tools. The member names ARE the wire contract
-    ///     (McpWireEnum derives the argument values from them).
-    /// </summary>
-    [SuppressMessage("ReSharper", "InconsistentNaming")]
+    /// <summary>Wire-facing UI stack selector shared by the ui_* tools.</summary>
     public enum UiStackWire : byte
     {
-        UGUI,
-        SDK,
+        Ugui,
+        Sdk,
     }
 
     /// <summary>Shared argument parsing for the ui_* tools: one element address from stack + path/id/altId/crdtId.</summary>
@@ -35,13 +30,13 @@ namespace DCL.McpServer.Tools
             address = default(UiElementAddress);
             error = null;
 
-            if (!arguments.TryGetEnum("stack", UiStackWire.UGUI, out UiStackWire stack))
+            if (!arguments.TryGetEnum("stack", UiStackWire.Ugui, out UiStackWire stack))
             {
                 error = arguments.EnumArgumentError<UiStackWire>("stack");
                 return false;
             }
 
-            if (stack == UiStackWire.SDK)
+            if (stack == UiStackWire.Sdk)
             {
                 if (!arguments.TryGetInt("crdtId", out int crdtId))
                 {

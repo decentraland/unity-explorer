@@ -4,7 +4,6 @@ using DCL.McpServer.Utils;
 using DCL.Optimization.ThreadSafePool;
 using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Threading;
 using UnityEngine;
@@ -13,12 +12,10 @@ namespace DCL.McpServer.Tools
 {
     public class GetSceneLogsTool : McpTool
     {
-        /// <summary>The member names ARE the wire contract (McpWireEnum derives the argument values from them).</summary>
-        [SuppressMessage("ReSharper", "InconsistentNaming")]
         private enum Severity : byte
         {
-            ALL,
-            ERROR,
+            All,
+            Error,
         }
 
         private const int DEFAULT_LIMIT = 100;
@@ -55,10 +52,10 @@ namespace DCL.McpServer.Tools
         {
             int limit = Mathf.Clamp(arguments.GetInt("limit", DEFAULT_LIMIT), 1, MAX_LIMIT);
 
-            if (!arguments.TryGetEnum("severity", Severity.ALL, out Severity severity))
+            if (!arguments.TryGetEnum("severity", Severity.All, out Severity severity))
                 return UniTask.FromResult(McpToolResult.Error(arguments.EnumArgumentError<Severity>("severity")));
 
-            bool errorsOnly = severity == Severity.ERROR;
+            bool errorsOnly = severity == Severity.Error;
             long sinceSeq = arguments.GetLong("sinceSeq", -1);
 
             using var scope = ENTRIES_POOL.Get(out List<SceneLogBuffer.Entry> entries);

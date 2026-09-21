@@ -4,9 +4,7 @@ using DCL.McpServer.Core;
 using DCL.McpServer.Utils;
 using DCL.SyntheticInput;
 using DCL.SyntheticInput.Components;
-using JetBrains.Annotations;
 using Newtonsoft.Json.Linq;
-using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using UnityEngine;
 
@@ -20,20 +18,13 @@ namespace DCL.McpServer.Tools
     /// </summary>
     public class ClickEntityTool : McpTool
     {
-        /// <summary>
-        ///     Wire-facing gesture kinds: a full click, or a single press/release leg. The member names ARE the
-        ///     wire contract — McpWireEnum derives each argument value from them — so they stay SCREAMING_CASE.
-        /// </summary>
-        [SuppressMessage("ReSharper", "InconsistentNaming")]
+        /// <summary>Wire-facing gesture kinds: a full click, or a single press/release leg.</summary>
         private enum ClickKind : byte
         {
             /// <summary>Pointer down, then pointer up on the next scene tick.</summary>
-            CLICK,
-
-            /// <summary>Press-only leg; parsed from the wire and exposed via the schema through reflection over this enum.</summary>
-            [UsedImplicitly]
-            DOWN,
-            UP,
+            Click,
+            Down,
+            Up,
         }
 
         private const float DEFAULT_TIMEOUT_SEC = 3f;
@@ -80,15 +71,15 @@ namespace DCL.McpServer.Tools
             if (!PointerArgs.TryGetButton(arguments, out InputAction button, out string? buttonError))
                 return McpToolResult.Error(buttonError!);
 
-            if (!arguments.TryGetEnum("eventType", ClickKind.CLICK, out ClickKind kind))
+            if (!arguments.TryGetEnum("eventType", ClickKind.Click, out ClickKind kind))
                 return McpToolResult.Error(arguments.EnumArgumentError<ClickKind>("eventType"));
 
             float timeoutSec = Mathf.Clamp(arguments.GetFloat("timeoutSec", DEFAULT_TIMEOUT_SEC), MIN_TIMEOUT_SEC, MAX_TIMEOUT_SEC);
 
             SyntheticPointerResult result = kind switch
                                             {
-                                                ClickKind.DOWN => await syntheticInput.PointerDownAsync(aim, button, timeoutSec, ct),
-                                                ClickKind.UP => await syntheticInput.PointerUpAsync(aim, button, timeoutSec, ct),
+                                                ClickKind.Down => await syntheticInput.PointerDownAsync(aim, button, timeoutSec, ct),
+                                                ClickKind.Up => await syntheticInput.PointerUpAsync(aim, button, timeoutSec, ct),
                                                 _ => await syntheticInput.ClickAsync(aim, button, timeoutSec, ct),
                                             };
 
