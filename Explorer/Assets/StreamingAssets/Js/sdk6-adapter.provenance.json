@@ -1,0 +1,39 @@
+{
+  "version": "0.4.3",
+  "file": "sdk6-adapter.min.js",
+  "sha256": "18e63cfc2a6913bbed658bde0bf4ca2af60336be2b4cd07806b00948662f12c9",
+  "bytes": 1132952,
+  "source": {
+    "repository": "decentraland/sdk6-adapter",
+    "commit": "5ae8391c897821197ff8c1a9a40359df4cfb09fa",
+    "dirty": false
+  },
+  "build": {
+    "runUrl": "https://github.com/decentraland/sdk6-adapter/actions/runs/34679156027/attempts/1",
+    "workflow": "decentraland/sdk6-adapter/.github/workflows/build.yml@refs/heads/main",
+    "node": "v24.19.0"
+  },
+  "inputs": {
+    "package-lock.json": "449adf8162652c51efc8603b939020e4f0165e3fbad73e279b245225d6f8ef9b",
+    "vendor/sdk-runtime.tgz": "a7ca2899557825a92d400e7ffff90b949f85b4d4a139556b805f813acf33fdc3"
+  },
+  "validation": {
+    "version": "0.4.3",
+    "artifacts": [
+      {
+        "file": "index.js",
+        "sha256": "a042ab945e9546ebce1a352662249ca77eae763e02a2e1bae4405adb888965e4"
+      },
+      {
+        "file": "index.min.js",
+        "sha256": "18e63cfc2a6913bbed658bde0bf4ca2af60336be2b4cd07806b00948662f12c9"
+      }
+    ],
+    "status": "PASS_RETAINED_REGRESSIONS",
+    "suites": 18,
+    "regressions": 21,
+    "minifiedParity": 102,
+    "scope": "Core regression suite; excludes broad fuzz, corpus replay and native conformance.",
+    "native": "NOT_RUN"
+  }
+}

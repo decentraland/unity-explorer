@@ -25,19 +25,28 @@ jobs:
   comment:
     runs-on: ubuntu-latest
     steps:
-      - name: Resolve PR number
+      # Own path so checkout's workspace-clean can't wipe the failed-tests/
+      # downloaded further down.
+      - name: Checkout CI status action
+        uses: actions/checkout@v6
+        with:
+          sparse-checkout: .github/actions/ci-status-comment
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+          path: ci-status-action
+
+      # pull_requests[0] for a PR run; for a push run on dev, the open release
+      # or hotfix PR whose head is this SHA, if any (see resolve-comment-pr.sh).
+      - name: Resolve the PR this run reports into
         id: pr
         env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
           WORKFLOW_RUN_EVENT_OBJ: ${{ toJSON(github.event.workflow_run) }}
         run: |
-          PR_NUMBER=$(jq -r '.pull_requests[0].number' <<< "$WORKFLOW_RUN_EVENT_OBJ")
-          echo "PR number: $PR_NUMBER"
-          if [[ -z "$PR_NUMBER" || "$PR_NUMBER" == "null" ]]; then
-            echo "No PR associated with this run, skipping."
-            echo "pr-number=" >> "$GITHUB_OUTPUT"
-          else
-            echo "pr-number=$PR_NUMBER" >> "$GITHUB_OUTPUT"
-          fi
+          bash ci-status-action/.github/actions/ci-status-comment/resolve-comment-pr.sh > resolved.txt
+          cat resolved.txt
+          cat resolved.txt >> "$GITHUB_OUTPUT"
 
       - name: Download editmode failed-test results
         if: steps.pr.outputs.pr-number != ''
@@ -209,16 +218,6 @@ jobs:
             fi
             echo "$DELIM"
           } >> "$GITHUB_OUTPUT"
-
-      - name: Checkout CI status action
-        if: steps.body.outcome == 'success'
-        uses: actions/checkout@v6
-        with:
-          sparse-checkout: .github/actions/ci-status-comment
-          sparse-checkout-cone-mode: false
-          persist-credentials: false
-          # Own path so checkout's workspace-clean can't wipe the already-downloaded failed-tests/.
-          path: ci-status-action
 
       - name: Update tests section
         if: steps.body.outcome == 'success'
