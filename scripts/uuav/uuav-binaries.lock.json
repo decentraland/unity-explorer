@@ -146,9 +146,9 @@
           "-C",
           "link-arg=-Wl,-rpath,@loader_path"
         ],
-        "source_digest": "d15b83662cf7104dee7c353e6fb4616d4cac3ac8623d2173f97532d50cb4b921",
+        "source_digest": "d27e79bd3722cfbc0663b0928be81e618b722367fbd92de55d902b98f45eecee",
         "source_files": 21,
-        "repo_commit": "77fc12626580f93859866a9b0546cdffeaebaaa8"
+        "repo_commit": "f2971f637f0231169a689c09c80fa4aadfe6f635"
       },
       "ffmpeg": {
         "provenance": "built-from-source",
@@ -246,9 +246,9 @@
         "profile": "release",
         "crate_version": "0.3.0",
         "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
-        "source_digest": "d15b83662cf7104dee7c353e6fb4616d4cac3ac8623d2173f97532d50cb4b921",
+        "source_digest": "d27e79bd3722cfbc0663b0928be81e618b722367fbd92de55d902b98f45eecee",
         "source_files": 21,
-        "repo_commit": "77fc12626580f93859866a9b0546cdffeaebaaa8",
+        "repo_commit": "f2971f637f0231169a689c09c80fa4aadfe6f635",
         "toolchain": {
           "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
           "cargo": "cargo 1.97.1 (c980f4866 2026-06-30)",
