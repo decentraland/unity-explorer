@@ -4,9 +4,10 @@ using UnityEngine.Rendering;
 namespace DCL.Lobby
 {
     /// <summary>
-    ///     3D set the lobby avatar stands in: a floor, the platform, a blob shadow and an upright, opaque backdrop wall standing
-    ///     well behind the avatar. The floor dissolves into the backdrop along a line placed at a chosen screen height, which is
-    ///     the whole floor-to-image gradient and is independent of how far back the wall stands.
+    ///     3D set the lobby avatar stands in: a floor, the platform, a blob shadow, a mist plane and an upright, opaque backdrop
+    ///     wall standing well behind the avatar. Everything that depends on the backdrop image comes from a
+    ///     <see cref="LobbyStagePreset" />; the floor dissolves into the image along a line placed at the preset's screen height,
+    ///     independent of how far back the wall stands.
     ///     The avatar is spawned by the character preview, so the stage only has to sit at the same preview position. Once a
     ///     camera is tracked the stage refits itself right before that camera renders, with the lens it actually renders with.
     /// </summary>
@@ -14,6 +15,9 @@ namespace DCL.Lobby
     public class LobbyStage : MonoBehaviour
     {
         private static readonly int BASE_MAP = Shader.PropertyToID("_BaseMap");
+        private static readonly int BASE_COLOR = Shader.PropertyToID("_BaseColor");
+        private static readonly int SPOT_COLOR = Shader.PropertyToID("_SpotColor");
+        private static readonly int COLOR = Shader.PropertyToID("_Color");
         private static readonly int BLEND_AXIS = Shader.PropertyToID("_BlendAxis");
         private static readonly int BLEND_START = Shader.PropertyToID("_BlendStart");
         private static readonly int BLEND_END = Shader.PropertyToID("_BlendEnd");
@@ -21,22 +25,23 @@ namespace DCL.Lobby
 
         [SerializeField] private Renderer backdrop = null!;
         [SerializeField] private Renderer floor = null!;
-
-        [Tooltip("Screen height, from the bottom, where the floor has fully dissolved into the backdrop")]
-        [SerializeField, Range(0.05f, 0.9f)] private float blendScreenHeight = 0.35f;
-
-        [Tooltip("Length of the dissolve on the floor, in metres towards the camera from the blend line")]
-        [SerializeField, Min(0.1f)] private float blendDepth = 4f;
-
-        [Tooltip("How abrupt the dissolve is inside the band: 0 is a smooth gradient over the whole depth, 1 is a hard cut at its middle")]
-        [SerializeField, Range(0f, 1f)] private float blendHardness;
-
-        [Tooltip("Fraction of the image height kept below the blend line, so the visible band starts higher up the image")]
-        [SerializeField, Range(0f, 0.9f)] private float imageBelowBlend = 0.35f;
+        [SerializeField] private Renderer mist = null!;
+        [SerializeField] private LobbyStagePreset? preset;
 
         private MaterialPropertyBlock? backdropProperties;
         private MaterialPropertyBlock? floorProperties;
+        private MaterialPropertyBlock? mistProperties;
+        private Texture? backgroundOverride;
         private Camera? trackedCamera;
+
+        /// <summary>
+        ///     Switches the whole look: image, blend and tints.
+        /// </summary>
+        public void ApplyPreset(LobbyStagePreset newPreset)
+        {
+            preset = newPreset;
+            ApplyPresetValues();
+        }
 
         /// <summary>
         ///     The camera the stage keeps itself fitted to; null stops tracking.
@@ -47,32 +52,32 @@ namespace DCL.Lobby
         }
 
         /// <summary>
-        ///     Swaps the backdrop image without instantiating a material.
+        ///     Shows this image instead of the preset's one until the next <see cref="ApplyPreset" />; null goes back to the preset.
         /// </summary>
-        public void SetBackground(Texture texture)
+        public void SetBackground(Texture? texture)
         {
-            backdropProperties ??= new MaterialPropertyBlock();
-            backdrop.GetPropertyBlock(backdropProperties);
-            backdropProperties.SetTexture(BASE_MAP, texture);
-            backdrop.SetPropertyBlock(backdropProperties);
+            backgroundOverride = texture;
+            ApplyPresetValues();
         }
 
         /// <summary>
-        ///     Places the floor dissolve so it completes at <see cref="blendScreenHeight" />, then stands the backdrop upright facing
-        ///     the camera at its current horizontal distance and scales it so the part above the blend line covers the frustum up
-        ///     to the top edge while keeping the image aspect (the excess is cropped). The lens is read from the camera, so this is
+        ///     Places the floor dissolve so it completes at the preset's screen height, then stands the backdrop upright facing the
+        ///     camera at its current horizontal distance and scales it so the part above the blend line covers the frustum up to
+        ///     the top edge while keeping the image aspect (the excess is cropped). The lens is read from the camera, so this is
         ///     exact when called as the camera is about to render (see <see cref="Track" />).
         /// </summary>
         public void FitBackdrop(Camera camera)
         {
+            if (preset == null) return;
+
             Transform cameraTransform = camera.transform;
             Vector3 cameraPosition = cameraTransform.position;
             Vector3 flatForward = Vector3.ProjectOnPlane(cameraTransform.forward, Vector3.up).normalized;
             float halfHeight = Mathf.Tan(camera.fieldOfView * 0.5f * Mathf.Deg2Rad);
             float aspect = (float)camera.pixelWidth / camera.pixelHeight;
 
-            Ray blendRay = ViewportRay(cameraTransform, halfHeight, aspect, 0.5f, blendScreenHeight);
-            PlaceFloorBlend(blendRay, flatForward);
+            Ray blendRay = ViewportRay(cameraTransform, halfHeight, aspect, 0.5f, preset.BlendScreenHeight);
+            PlaceFloorBlend(blendRay, flatForward, preset);
 
             Transform backdropTransform = backdrop.transform;
             float distance = Vector3.Dot(backdropTransform.position - cameraPosition, flatForward);
@@ -99,10 +104,10 @@ namespace DCL.Lobby
             Texture? texture = CurrentBackground();
             float textureAspect = texture != null ? (float)texture.width / texture.height : aspect;
 
-            Vector2 size = CoverSize(requiredHalfWidth * 2f, requiredTop - blendY, textureAspect, imageBelowBlend);
+            Vector2 size = CoverSize(requiredHalfWidth * 2f, requiredTop - blendY, textureAspect, preset.ImageBelowBlend);
 
             Vector3 centre = wallCentre;
-            centre.y = blendY - (size.y * imageBelowBlend) + (size.y * 0.5f);
+            centre.y = blendY - (size.y * preset.ImageBelowBlend) + (size.y * 0.5f);
 
             backdropTransform.SetPositionAndRotation(centre, Quaternion.LookRotation(flatForward));
             backdropTransform.localScale = new Vector3(size.x, size.y, 1f);
@@ -121,6 +126,7 @@ namespace DCL.Lobby
         private void OnEnable()
         {
             RenderPipelineManager.beginCameraRendering += OnBeginCameraRendering;
+            ApplyPresetValues();
         }
 
         private void OnDisable()
@@ -128,10 +134,45 @@ namespace DCL.Lobby
             RenderPipelineManager.beginCameraRendering -= OnBeginCameraRendering;
         }
 
+#if UNITY_EDITOR
+        private void OnValidate()
+        {
+            ApplyPresetValues();
+        }
+#endif
+
         private void OnBeginCameraRendering(ScriptableRenderContext _, Camera camera)
         {
-            if (camera == trackedCamera)
-                FitBackdrop(camera);
+            if (camera != trackedCamera) return;
+
+            // Re-applied every frame so edits to the preset asset show up live; three property blocks is negligible
+            ApplyPresetValues();
+            FitBackdrop(camera);
+        }
+
+        private void ApplyPresetValues()
+        {
+            if (preset == null) return;
+
+            backdropProperties ??= new MaterialPropertyBlock();
+            backdrop.GetPropertyBlock(backdropProperties);
+            Texture? background = CurrentBackground();
+
+            if (background != null)
+                backdropProperties.SetTexture(BASE_MAP, background);
+
+            backdrop.SetPropertyBlock(backdropProperties);
+
+            floorProperties ??= new MaterialPropertyBlock();
+            floor.GetPropertyBlock(floorProperties);
+            floorProperties.SetColor(BASE_COLOR, preset.FloorColor);
+            floorProperties.SetColor(SPOT_COLOR, preset.SpotColor);
+            floor.SetPropertyBlock(floorProperties);
+
+            mistProperties ??= new MaterialPropertyBlock();
+            mist.GetPropertyBlock(mistProperties);
+            mistProperties.SetColor(COLOR, preset.MistColor);
+            mist.SetPropertyBlock(mistProperties);
         }
 
         // Ray through a viewport point (0..1) for the given lens
@@ -142,7 +183,7 @@ namespace DCL.Lobby
         }
 
         // The dissolve is a world-space band on the floor, perpendicular to the view, ending where the blend ray meets the floor
-        private void PlaceFloorBlend(Ray blendRay, Vector3 flatForward)
+        private void PlaceFloorBlend(Ray blendRay, Vector3 flatForward, LobbyStagePreset activePreset)
         {
             var floorPlane = new Plane(Vector3.up, new Vector3(0f, floor.bounds.max.y, 0f));
             if (!floorPlane.Raycast(blendRay, out float enter)) return;
@@ -152,19 +193,18 @@ namespace DCL.Lobby
             floorProperties ??= new MaterialPropertyBlock();
             floor.GetPropertyBlock(floorProperties);
             floorProperties.SetVector(BLEND_AXIS, flatForward);
-            floorProperties.SetFloat(BLEND_START, blendEnd - blendDepth);
+            floorProperties.SetFloat(BLEND_START, blendEnd - activePreset.BlendDepth);
             floorProperties.SetFloat(BLEND_END, blendEnd);
-            floorProperties.SetFloat(BLEND_HARDNESS, blendHardness);
+            floorProperties.SetFloat(BLEND_HARDNESS, activePreset.BlendHardness);
             floor.SetPropertyBlock(floorProperties);
         }
 
         private Texture? CurrentBackground()
         {
-            backdropProperties ??= new MaterialPropertyBlock();
-            backdrop.GetPropertyBlock(backdropProperties);
+            if (backgroundOverride != null) return backgroundOverride;
+            if (preset != null && preset.Backdrop != null) return preset.Backdrop;
 
-            Texture? overridden = backdropProperties.GetTexture(BASE_MAP);
-            return overridden != null ? overridden : backdrop.sharedMaterial.GetTexture(BASE_MAP);
+            return backdrop.sharedMaterial.GetTexture(BASE_MAP);
         }
     }
 }

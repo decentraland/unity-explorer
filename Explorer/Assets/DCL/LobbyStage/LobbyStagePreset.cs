@@ -1,0 +1,112 @@
+using UnityEngine;
+
+namespace DCL.Lobby
+{
+    /// <summary>
+    ///     Everything on the lobby stage that changes with the backdrop image: the image itself, where and how the floor dissolves
+    ///     into it, which part of the image is visible, and the floor and mist tints that sit with it.
+    /// </summary>
+    [CreateAssetMenu(fileName = "LobbyStagePreset", menuName = "DCL/Lobby/Stage Preset")]
+    public class LobbyStagePreset : ScriptableObject
+    {
+        [field: SerializeField] public Texture2D? Backdrop { get; private set; }
+
+        [field: Header("Blend")]
+        [field: Tooltip("Screen height, from the bottom, where the floor has fully dissolved into the backdrop")]
+        [field: SerializeField, Range(0.05f, 0.9f)] public float BlendScreenHeight { get; private set; } = 0.35f;
+
+        [field: Tooltip("Length of the dissolve on the floor, in metres towards the camera from the blend line")]
+        [field: SerializeField, Min(0.1f)] public float BlendDepth { get; private set; } = 4f;
+
+        [field: Tooltip("How abrupt the dissolve is inside the band: 0 is a smooth gradient over the whole depth, 1 is a hard cut at its middle")]
+        [field: SerializeField, Range(0f, 1f)] public float BlendHardness { get; private set; }
+
+        [field: Tooltip("Fraction of the image height kept below the blend line, so the visible band starts higher up the image")]
+        [field: SerializeField, Range(0f, 0.9f)] public float ImageBelowBlend { get; private set; } = 0.35f;
+
+        [field: Header("Colours")]
+        [field: SerializeField] public Color FloorColor { get; private set; } = new (0.55f, 0.55f, 0.58f, 1f);
+        [field: SerializeField] public Color SpotColor { get; private set; } = new (0.15f, 0.13f, 0.2f, 1f);
+        [field: SerializeField] public Color MistColor { get; private set; } = new (0.6f, 0.5f, 0.8f, 0.35f);
+
+        [field: Tooltip("Fraction of the image height, from the bottom, sampled by 'Match colours to backdrop'")]
+        [field: SerializeField, Range(0.02f, 0.5f)] public float ColorSampleBand { get; private set; } = 0.15f;
+
+#if UNITY_EDITOR
+        private const int SAMPLE_SIZE = 64;
+        private const int HISTOGRAM_LEVELS = 16;
+        private const float DOMINANT_WEIGHT = 0.7f;
+
+        // The floor stays darker and calmer than the image so the ground texture reads; the spot lifts it; the mist sits between
+        private const float FLOOR_SATURATION = 0.6f;
+        private const float FLOOR_VALUE = 0.55f;
+        private const float SPOT_SATURATION = 0.8f;
+        private const float SPOT_VALUE = 0.75f;
+        private const float MIST_SATURATION = 0.7f;
+        private const float MIST_VALUE = 0.85f;
+
+        [ContextMenu("Match colours to backdrop")]
+        private void MatchColorsToBackdrop()
+        {
+            if (Backdrop == null) return;
+
+            Color dominant = DominantBottomColor(Backdrop, ColorSampleBand);
+            Color.RGBToHSV(dominant, out float hue, out float saturation, out float value);
+
+            UnityEditor.Undo.RecordObject(this, "Match colours to backdrop");
+            FloorColor = Color.HSVToRGB(hue, saturation * FLOOR_SATURATION, value * FLOOR_VALUE);
+            SpotColor = Color.HSVToRGB(hue, saturation * SPOT_SATURATION, Mathf.Min(value * SPOT_VALUE, 1f));
+
+            Color mist = Color.HSVToRGB(hue, saturation * MIST_SATURATION, Mathf.Min(value * MIST_VALUE, 1f));
+            mist.a = MistColor.a;
+            MistColor = mist;
+
+            UnityEditor.EditorUtility.SetDirty(this);
+        }
+
+        // Blits only the bottom band into a small texture (UV origin is bottom-left, so no orientation guessing), then blends
+        // the most populated colour bin with the plain average so one bright detail cannot take over
+        private static Color DominantBottomColor(Texture texture, float band)
+        {
+            RenderTexture renderTexture = RenderTexture.GetTemporary(SAMPLE_SIZE, SAMPLE_SIZE, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
+            Graphics.Blit(texture, renderTexture, new Vector2(1f, band), Vector2.zero);
+
+            RenderTexture previous = RenderTexture.active;
+            RenderTexture.active = renderTexture;
+            var readable = new Texture2D(SAMPLE_SIZE, SAMPLE_SIZE, TextureFormat.RGBA32, false);
+            readable.ReadPixels(new Rect(0, 0, SAMPLE_SIZE, SAMPLE_SIZE), 0, 0);
+            readable.Apply();
+            RenderTexture.active = previous;
+            RenderTexture.ReleaseTemporary(renderTexture);
+
+            Color32[] pixels = readable.GetPixels32();
+            DestroyImmediate(readable);
+
+            int shift = 8 - (int)Mathf.Log(HISTOGRAM_LEVELS, 2);
+            var counts = new int[HISTOGRAM_LEVELS * HISTOGRAM_LEVELS * HISTOGRAM_LEVELS];
+            var sums = new Vector3[counts.Length];
+            var total = Vector3.zero;
+
+            foreach (Color32 pixel in pixels)
+            {
+                var rgb = new Vector3(pixel.r, pixel.g, pixel.b);
+                int bin = ((pixel.r >> shift) * HISTOGRAM_LEVELS * HISTOGRAM_LEVELS) + ((pixel.g >> shift) * HISTOGRAM_LEVELS) + (pixel.b >> shift);
+                counts[bin]++;
+                sums[bin] += rgb;
+                total += rgb;
+            }
+
+            int best = 0;
+
+            for (var i = 1; i < counts.Length; i++)
+                if (counts[i] > counts[best]) best = i;
+
+            Vector3 dominant = sums[best] / (counts[best] * 255f);
+            Vector3 average = total / (pixels.Length * 255f);
+            Vector3 result = Vector3.Lerp(average, dominant, DOMINANT_WEIGHT);
+
+            return new Color(result.x, result.y, result.z, 1f);
+        }
+#endif
+    }
+}

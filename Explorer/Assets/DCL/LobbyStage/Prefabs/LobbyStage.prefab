@@ -52,10 +52,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   backdrop: {fileID: 7100000143}
   floor: {fileID: 7100000113}
-  blendScreenHeight: 0.44
-  blendDepth: 4.85
-  blendHardness: 0.45
-  imageBelowBlend: 0.63
+  mist: {fileID: 7100000173}
+  preset: {fileID: 11400000, guid: 22621350e77934169e70f1b35948b020, type: 2}
 --- !u!1 &7100000110
 GameObject:
   m_ObjectHideFlags: 0

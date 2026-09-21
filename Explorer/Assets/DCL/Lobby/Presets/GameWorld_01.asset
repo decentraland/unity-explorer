@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6c3d55383a43e86b45058c0bd01c53fe, type: 3}
+  m_Name: GameWorld_01
+  m_EditorClassIdentifier: 
+  <Backdrop>k__BackingField: {fileID: 2800000, guid: 32d594631da09514e9223708d4ee7a6e, type: 3}
+  <BlendScreenHeight>k__BackingField: 0.44
+  <BlendDepth>k__BackingField: 4.85
+  <BlendHardness>k__BackingField: 0.45
+  <ImageBelowBlend>k__BackingField: 0.372
+  <FloorColor>k__BackingField: {r: 0.8773585, g: 0.3595474, b: 0.27727836, a: 1}
+  <SpotColor>k__BackingField: {r: 0.48568767, g: 0.22329085, b: 0.18171112, a: 1}
+  <MistColor>k__BackingField: {r: 0.55044603, g: 0.29023585, b: 0.2490026, a: 0.7882353}
+  <ColorSampleBand>k__BackingField: 0.121
