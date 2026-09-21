@@ -57,7 +57,6 @@ namespace ECS.SceneLifeCycle.SceneDefinition
 
     public static class SceneDefinitionComponentFactory
     {
-        private static readonly SceneMetadataScene EMPTY_METADATA = new ();
         //This is considering a size of -150 to 150 parcels
         private const float PORTABLE_EXPERIENCE_MAX_VALUES = 2400f;
 

@@ -70,6 +70,8 @@ namespace Utility
         /// <summary>
         ///     Creates scene geometry from multiple occupied parcels
         /// </summary>
+        /// <param name="parcelsCorners">Corners of every parcel the scene occupies</param>
+        /// <param name="baseParcel">The scene's base parcel</param>
         /// <param name="limitHeightByParcels">
         ///     When <c>true</c> the height is derived from the amount of parcels, otherwise it is <see cref="FIXED_SCENE_HEIGHT" />
         /// </param>
