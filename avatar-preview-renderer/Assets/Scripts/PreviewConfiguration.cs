@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Text;
 using System.Web;
 using Services;
@@ -282,6 +283,30 @@ public class PreviewConfiguration
     public int Fps { get; set; } = 60;
 
     /// <summary>
+    /// Render scale override. Unset keeps the default, where small viewports are supersampled at 2x for
+    /// quality. A headless consumer on software rendering sets 1 to shade only the pixels it asked for.
+    /// </summary>
+    public float? RenderScale { get; set; }
+
+    /// <summary>
+    /// HDR colour buffers. Off halves the bandwidth of every pass; the LDR picture is what a screenshot
+    /// returns anyway.
+    /// </summary>
+    public bool Hdr { get; set; } = true;
+
+    /// <summary>
+    /// Main light shadow map size in pixels; 0 turns the shadow pass off. Unset keeps the pipeline
+    /// asset's value.
+    /// </summary>
+    public int? ShadowMap { get; set; }
+
+    /// <summary>
+    /// The camera's post-processing stack (bloom, lens distortion, chromatic aberration, colour grading)
+    /// and its anti-aliasing.
+    /// </summary>
+    public bool PostProcessing { get; set; } = true;
+
+    /// <summary>
     /// If true we load individual items for an avatar one after another, instead of concurrently.
     /// </summary>
     public bool ConcurrentLoad { get; set; } = !Application.isMobilePlatform;
@@ -391,6 +416,18 @@ public class PreviewConfiguration
                     break;
                 case "fps":
                     Instance.Fps = int.Parse(value);
+                    break;
+                case "renderScale":
+                    Instance.RenderScale = float.Parse(value, CultureInfo.InvariantCulture);
+                    break;
+                case "hdr":
+                    Instance.Hdr = ParseToggle(value, "hdr", Instance.Hdr);
+                    break;
+                case "shadowMap":
+                    Instance.ShadowMap = int.Parse(value);
+                    break;
+                case "postProcessing":
+                    Instance.PostProcessing = ParseToggle(value, "postProcessing", Instance.PostProcessing);
                     break;
                 case "concurrentLoad":
                     Instance.ConcurrentLoad = bool.Parse(value);
