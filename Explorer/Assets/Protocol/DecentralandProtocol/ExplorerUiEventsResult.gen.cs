@@ -27,18 +27,19 @@ namespace DCL.ECSComponents {
             "CjtkZWNlbnRyYWxhbmQvc2RrL2NvbXBvbmVudHMvZXhwbG9yZXJfdWlfZXZl",
             "bnRzX3Jlc3VsdC5wcm90bxIbZGVjZW50cmFsYW5kLnNkay5jb21wb25lbnRz",
             "GjRkZWNlbnRyYWxhbmQvc2RrL2NvbXBvbmVudHMvY29tbW9uL2V4cGxvcmVy",
-            "X3VpLnByb3RvIq4CChhQQkV4cGxvcmVyVWlFdmVudHNSZXN1bHQSOgoCdWkY",
+            "X3VpLnByb3RvIsICChhQQkV4cGxvcmVyVWlFdmVudHNSZXN1bHQSOgoCdWkY",
             "ASABKA4yLi5kZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMuY29tbW9uLkV4",
-            "cGxvcmVyVWkSEQoJdGltZXN0YW1wGAIgASgNElAKBm9wZW5lZBgKIAEoCzI+",
-            "LmRlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50cy5QQkV4cGxvcmVyVWlFdmVu",
-            "dHNSZXN1bHQuVWlPcGVuZWRIABJQCgZjbG9zZWQYCyABKAsyPi5kZWNlbnRy",
-            "YWxhbmQuc2RrLmNvbXBvbmVudHMuUEJFeHBsb3JlclVpRXZlbnRzUmVzdWx0",
-            "LlVpQ2xvc2VkSAAaCgoIVWlPcGVuZWQaCgoIVWlDbG9zZWRCBwoFZXZlbnRC",
-            "FKoCEURDTC5FQ1NDb21wb25lbnRzYgZwcm90bzM="));
+            "cGxvcmVyVWkSEQoJdGltZXN0YW1wGAIgASgNEhIKCnJlcXVlc3RfaWQYAyAB",
+            "KA0SUAoGb3BlbmVkGAogASgLMj4uZGVjZW50cmFsYW5kLnNkay5jb21wb25l",
+            "bnRzLlBCRXhwbG9yZXJVaUV2ZW50c1Jlc3VsdC5VaU9wZW5lZEgAElAKBmNs",
+            "b3NlZBgLIAEoCzI+LmRlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50cy5QQkV4",
+            "cGxvcmVyVWlFdmVudHNSZXN1bHQuVWlDbG9zZWRIABoKCghVaU9wZW5lZBoK",
+            "CghVaUNsb3NlZEIHCgVldmVudEIUqgIRRENMLkVDU0NvbXBvbmVudHNiBnBy",
+            "b3RvMw=="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::DCL.ECSComponents.ExplorerUiReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBExplorerUiEventsResult), global::DCL.ECSComponents.PBExplorerUiEventsResult.Parser, new[]{ "Ui", "Timestamp", "Opened", "Closed" }, new[]{ "Event" }, null, null, new pbr::GeneratedClrTypeInfo[] { new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBExplorerUiEventsResult.Types.UiOpened), global::DCL.ECSComponents.PBExplorerUiEventsResult.Types.UiOpened.Parser, null, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBExplorerUiEventsResult), global::DCL.ECSComponents.PBExplorerUiEventsResult.Parser, new[]{ "Ui", "Timestamp", "RequestId", "Opened", "Closed" }, new[]{ "Event" }, null, null, new pbr::GeneratedClrTypeInfo[] { new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBExplorerUiEventsResult.Types.UiOpened), global::DCL.ECSComponents.PBExplorerUiEventsResult.Types.UiOpened.Parser, null, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBExplorerUiEventsResult.Types.UiClosed), global::DCL.ECSComponents.PBExplorerUiEventsResult.Types.UiClosed.Parser, null, null, null, null, null)})
           }));
     }
@@ -47,7 +48,7 @@ namespace DCL.ECSComponents {
   }
   #region Messages
   /// <summary>
-  /// PBExplorerUiEventsResult transports the lifecycle events of fullscreen explorer panels — a panel was
+  /// PBExplorerUiEventsResult transports the lifecycle events of explorer UI panels — a panel was
   /// opened, a panel was closed. It is a grow only value set appended to the scene root entity, so every
   /// event of a tick is delivered and none overwrites another.
   /// </summary>
@@ -88,6 +89,7 @@ namespace DCL.ECSComponents {
     public PBExplorerUiEventsResult(PBExplorerUiEventsResult other) : this() {
       ui_ = other.ui_;
       timestamp_ = other.timestamp_;
+      requestId_ = other.requestId_;
       switch (other.EventCase) {
         case EventOneofCase.Opened:
           Opened = other.Opened.Clone();
@@ -133,6 +135,21 @@ namespace DCL.ECSComponents {
       get { return timestamp_; }
       set {
         timestamp_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "request_id" field.</summary>
+    public const int RequestIdFieldNumber = 3;
+    private uint requestId_;
+    /// <summary>
+    /// The OpenExplorerUiRequest.request_id that caused this event; 0 when the request carried none
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public uint RequestId {
+      get { return requestId_; }
+      set {
+        requestId_ = value;
       }
     }
 
@@ -198,6 +215,7 @@ namespace DCL.ECSComponents {
       }
       if (Ui != other.Ui) return false;
       if (Timestamp != other.Timestamp) return false;
+      if (RequestId != other.RequestId) return false;
       if (!object.Equals(Opened, other.Opened)) return false;
       if (!object.Equals(Closed, other.Closed)) return false;
       if (EventCase != other.EventCase) return false;
@@ -210,6 +228,7 @@ namespace DCL.ECSComponents {
       int hash = 1;
       if (Ui != global::DCL.ECSComponents.ExplorerUi.EuSettings) hash ^= Ui.GetHashCode();
       if (Timestamp != 0) hash ^= Timestamp.GetHashCode();
+      if (RequestId != 0) hash ^= RequestId.GetHashCode();
       if (eventCase_ == EventOneofCase.Opened) hash ^= Opened.GetHashCode();
       if (eventCase_ == EventOneofCase.Closed) hash ^= Closed.GetHashCode();
       hash ^= (int) eventCase_;
@@ -239,6 +258,10 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(16);
         output.WriteUInt32(Timestamp);
       }
+      if (RequestId != 0) {
+        output.WriteRawTag(24);
+        output.WriteUInt32(RequestId);
+      }
       if (eventCase_ == EventOneofCase.Opened) {
         output.WriteRawTag(82);
         output.WriteMessage(Opened);
@@ -265,6 +288,10 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(16);
         output.WriteUInt32(Timestamp);
       }
+      if (RequestId != 0) {
+        output.WriteRawTag(24);
+        output.WriteUInt32(RequestId);
+      }
       if (eventCase_ == EventOneofCase.Opened) {
         output.WriteRawTag(82);
         output.WriteMessage(Opened);
@@ -289,6 +316,9 @@ namespace DCL.ECSComponents {
       if (Timestamp != 0) {
         size += 1 + pb::CodedOutputStream.ComputeUInt32Size(Timestamp);
       }
+      if (RequestId != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(RequestId);
+      }
       if (eventCase_ == EventOneofCase.Opened) {
         size += 1 + pb::CodedOutputStream.ComputeMessageSize(Opened);
       }
@@ -312,6 +342,9 @@ namespace DCL.ECSComponents {
       }
       if (other.Timestamp != 0) {
         Timestamp = other.Timestamp;
+      }
+      if (other.RequestId != 0) {
+        RequestId = other.RequestId;
       }
       switch (other.EventCase) {
         case EventOneofCase.Opened:
@@ -353,6 +386,10 @@ namespace DCL.ECSComponents {
           }
           case 16: {
             Timestamp = input.ReadUInt32();
+            break;
+          }
+          case 24: {
+            RequestId = input.ReadUInt32();
             break;
           }
           case 82: {
@@ -400,6 +437,10 @@ namespace DCL.ECSComponents {
             Timestamp = input.ReadUInt32();
             break;
           }
+          case 24: {
+            RequestId = input.ReadUInt32();
+            break;
+          }
           case 82: {
             global::DCL.ECSComponents.PBExplorerUiEventsResult.Types.UiOpened subBuilder = new global::DCL.ECSComponents.PBExplorerUiEventsResult.Types.UiOpened();
             if (eventCase_ == EventOneofCase.Opened) {
@@ -429,7 +470,8 @@ namespace DCL.ECSComponents {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static partial class Types {
       /// <summary>
-      /// Emitted when a fullscreen explorer panel is opened.
+      /// Emitted when an explorer panel is opened. The OpenExplorerUi response carries the same fact,
+      /// but it reaches only the caller; this channel is scene wide.
       /// </summary>
       [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
       public sealed partial class UiOpened : pb::IMessage<UiOpened>
@@ -593,7 +635,7 @@ namespace DCL.ECSComponents {
       }
 
       /// <summary>
-      /// Emitted when a fullscreen explorer panel is closed.
+      /// Emitted when an explorer panel is closed.
       /// </summary>
       [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
       public sealed partial class UiClosed : pb::IMessage<UiClosed>

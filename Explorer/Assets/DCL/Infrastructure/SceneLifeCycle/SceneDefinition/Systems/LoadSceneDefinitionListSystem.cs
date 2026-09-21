@@ -142,10 +142,7 @@ namespace ECS.SceneLifeCycle.SceneDefinition
 
             // v49+ scene ABs ship a per-file deps digest in their manifest. Fetch it (deduped via the promise cache)
             // so the AB / GLTF / disk caches can differentiate scenes that share a hash but resolve different deps.
-            // SDK7 scenes only: everything else (SDK6 scenes, roads) never instantiates as a scene — it is
-            // permanently represented by LODs from the LOD pipeline (see VisualSceneStateResolver) — so it
-            // never requests its own bundles and its digest map would go unread.
-            if (sceneEntityDefinition.metadata?.runtimeVersion == "7")
+            if (!string.IsNullOrEmpty(sceneEntityDefinition.metadata?.main))
                 await SceneAssetBundleDigestsLoader.EnsureDepsDigestsAsync(World, sceneEntityDefinition, partition, ct, isLocalSceneDevelopment);
         }
 
@@ -163,7 +160,7 @@ namespace ECS.SceneLifeCycle.SceneDefinition
             {
                 var item = list[read];
 
-                if (seenIds.Add(item.id))
+                if (seenIds.Add(item.id ?? string.Empty))
                     list[write++] = item;
             }
 
@@ -210,7 +207,7 @@ namespace ECS.SceneLifeCycle.SceneDefinition
                     serializer.Converters.RemoveAt(0);
 
                     SceneMetadata metadata;
-                    try { metadata = serializer.Deserialize<SceneMetadata>(jsonReader); }
+                    try { metadata = serializer.Deserialize<SceneMetadata>(jsonReader) ?? throw new JsonSerializationException("Scene metadata deserialized to null"); }
                     finally { serializer.Converters.Add(this); }
 
                     int endByte = startByte;
