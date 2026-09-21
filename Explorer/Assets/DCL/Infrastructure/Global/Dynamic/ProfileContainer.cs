@@ -2,7 +2,6 @@
 using CommunicationData.URLHelpers;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.Emotes.Equipped;
-using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.Chat;
 using DCL.Backpack.Gifting.Services;

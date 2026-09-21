@@ -1,6 +1,5 @@
 ﻿using DCL.Browser.DecentralandUrls;
 using DCL.LiveKit.Public;
-using LiveKit.Proto;
 using System;
 using UnityEngine;
 
@@ -45,7 +44,7 @@ namespace Global.Dynamic.DebugSettings
         private string customGatekeeperUrl = string.Empty;
         [Space]
         [SerializeField]
-        private string[] appParameters;
+        private string[] appParameters = Array.Empty<string>();
 
         public static DebugSettings Release() =>
             new ()

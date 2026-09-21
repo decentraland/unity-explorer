@@ -191,9 +191,9 @@ namespace DCL.Profiles.Self
 
                     // We need to re-update the avatar in-world with the new profile because the save operation invalidates the previous profile
                     // breaking the avatar and the backpack
-                    forcedWearables.ApplyTo(savedProfile!);
-                    profileCache.Set(savedProfile!.UserId, savedProfile);
-                    UpdateAvatarInWorld(savedProfile!);
+                    forcedWearables.ApplyTo(savedProfile);
+                    profileCache.Set(savedProfile.UserId, savedProfile);
+                    UpdateAvatarInWorld(savedProfile);
                     ProfilePropagated?.Invoke(savedProfile);
                     return savedProfile;
                 }
@@ -233,7 +233,7 @@ namespace DCL.Profiles.Self
             profile.IsDirty = true;
             // We assume that the profile already exists at this point, so we don't add it but update it
             world.Set(playerEntity, profile);
-            ProfileUtils.CreateProfilePicturePromise(profile!, world, PartitionComponent.TOP_PRIORITY);
+            ProfileUtils.CreateProfilePicturePromise(profile, world, PartitionComponent.TOP_PRIORITY);
         }
 
         private void InvalidateOwnProfile()

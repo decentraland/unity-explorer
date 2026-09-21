@@ -9,7 +9,6 @@ using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Browser.DecentralandUrls;
-using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -18,7 +17,6 @@ using DCL.Utility;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
-using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 
