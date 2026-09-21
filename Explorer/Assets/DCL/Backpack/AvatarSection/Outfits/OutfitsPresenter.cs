@@ -20,6 +20,7 @@ using DCL.Backpack.Slots;
 using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.UI;
 using UnityEngine;
 using Utility;
@@ -34,6 +35,7 @@ namespace DCL.Backpack
         private readonly IBackpackEventBus backpackEventBus;
         private readonly IEquippedWearables equippedWearables;
         private readonly UnityAppWebBrowser webBrowser;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly OutfitApplier outfitApplier;
         private readonly OutfitBannerPresenter outfitBannerPresenter;
         private readonly OutfitsCollection outfitsCollection;
@@ -59,6 +61,7 @@ namespace DCL.Backpack
             OutfitApplier outfitApplier,
             OutfitsCollection outfitsCollection,
             UnityAppWebBrowser webBrowser,
+            IDecentralandUrlsSource decentralandUrlsSource,
             IEquippedWearables equippedWearables,
             LoadOutfitsCommand loadOutfitsCommand,
             SaveOutfitCommand saveOutfitCommand,
@@ -77,6 +80,7 @@ namespace DCL.Backpack
             this.outfitsCollection = outfitsCollection;
             this.equippedWearables = equippedWearables;
             this.webBrowser = webBrowser;
+            this.decentralandUrlsSource = decentralandUrlsSource;
             this.loadOutfitsCommand = loadOutfitsCommand;
             this.saveOutfitCommand = saveOutfitCommand;
             this.deleteOutfitCommand = deleteOutfitCommand;
@@ -525,7 +529,9 @@ namespace DCL.Backpack
 
         private void OnGetANameClicked()
         {
-            webBrowser.OpenUrlMainThreadOnly("https://decentraland.org/marketplace/names/claim");
+            // Resolved, not hardcoded: this entry point pointed at the legacy Marketplace claim route AND
+            // pinned .org, so a .zone tester was sent to production. Same mapping as the other callers.
+            webBrowser.OpenUrlMainThreadOnly(decentralandUrlsSource.Url(DecentralandUrl.MarketplaceClaimName));
             eventBus.Publish(new OutfitsEvents.ClaimExtraOutfitsEvent());
         }
 
