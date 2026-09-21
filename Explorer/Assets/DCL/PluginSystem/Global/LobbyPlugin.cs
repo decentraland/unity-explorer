@@ -5,10 +5,12 @@ using DCL.AssetsProvision;
 using DCL.Backpack;
 using DCL.Browser;
 using DCL.CharacterPreview;
+using DCL.Clipboard;
 using DCL.Communities;
 using DCL.Credits;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
+using DCL.Events;
 using DCL.EventsApi;
 using DCL.Friends;
 using DCL.Input;
@@ -60,6 +62,7 @@ namespace DCL.PluginSystem.Global
         private readonly HttpEventsApiService eventsApiService;
         private readonly IRealmNavigator realmNavigator;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
+        private readonly ISystemClipboard clipboard;
         private readonly StartParcel startParcel;
         private readonly IWebRequestController webRequestController;
         private readonly IWeb3IdentityCache identityCache;
@@ -101,6 +104,7 @@ namespace DCL.PluginSystem.Global
             HttpEventsApiService eventsApiService,
             IRealmNavigator realmNavigator,
             IDecentralandUrlsSource decentralandUrlsSource,
+            ISystemClipboard clipboard,
             StartParcel startParcel,
             IWebRequestController webRequestController,
             IWeb3IdentityCache identityCache,
@@ -133,6 +137,7 @@ namespace DCL.PluginSystem.Global
             this.eventsApiService = eventsApiService;
             this.realmNavigator = realmNavigator;
             this.decentralandUrlsSource = decentralandUrlsSource;
+            this.clipboard = clipboard;
             this.startParcel = startParcel;
             this.webRequestController = webRequestController;
             this.identityCache = identityCache;
@@ -206,9 +211,12 @@ namespace DCL.PluginSystem.Global
                 ? new LobbyFriendsPresenter(lobbyView.FriendsSection, friendsConnectivity, onlineUsersProvider, placesAPIService, passportBridge)
                 : null;
 
+            // The upcoming event cards are the Explore panel's, so their Interested, calendar and share actions run through the same controller
+            var eventCardActions = new EventCardActionsController(eventsApiService, webBrowser, realmNavigator, clipboard, decentralandUrlsSource);
+
             lobbyController = new LobbyController(viewFactory, inputBlock, loadingStatus, mvcManager,
                 selfProfile, profileChangesBus, characterPreviewFactory, characterPreviewEventBus, settings.AvatarSettings, lobbyStage, world,
-                placesAPIService, realmData, homePlace, eventsApiService, realmNavigator, decentralandUrlsSource, startParcel, new ThumbnailLoader(new SpriteCache(webRequestController)),
+                placesAPIService, realmData, homePlace, eventsApiService, eventCardActions, realmNavigator, decentralandUrlsSource, startParcel, new ThumbnailLoader(new SpriteCache(webRequestController)),
                 profileButtonPresenter, friendsPresenter);
 
             mvcManager.RegisterController(lobbyController);

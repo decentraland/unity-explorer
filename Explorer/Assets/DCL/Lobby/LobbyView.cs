@@ -75,7 +75,7 @@ namespace DCL.Lobby
         public GameObject UpcomingEventsSection { get; private set; } = null!;
 
         [field: SerializeField]
-        public LobbyCarouselView UpcomingEvents { get; private set; } = null!;
+        public LobbyEventRailView UpcomingEvents { get; private set; } = null!;
 
         [field: Header("Friends")]
         [field: SerializeField]

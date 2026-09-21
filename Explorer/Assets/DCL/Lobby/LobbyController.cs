@@ -6,6 +6,7 @@ using DCL.CommunicationData.URLHelpers;
 using DCL.Communities;
 using DCL.Communities.EventInfo;
 using DCL.Diagnostics;
+using DCL.Events;
 using DCL.EventsApi;
 using DCL.ExplorePanel;
 using DCL.Input;
@@ -45,7 +46,6 @@ namespace DCL.Lobby
     public class LobbyController : ControllerBase<LobbyView, LobbyParameter>
     {
         private const string EVENT_HOST_FORMAT = "By {0}";
-        private const string EVENT_STARTING_NOW = "Starting now";
         private const int MAX_UPCOMING_EVENTS = 10;
 
         private static readonly Comparison<EventDTO> BY_START_TIME = static (a, b) => a.NextStartAtProcessed.CompareTo(b.NextStartAtProcessed);
@@ -64,6 +64,7 @@ namespace DCL.Lobby
         private readonly IRealmData realmData;
         private readonly IHomePlaceSource homePlace;
         private readonly HttpEventsApiService eventsApiService;
+        private readonly EventCardActionsController eventCardActions;
         private readonly IRealmNavigator realmNavigator;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly StartParcel startParcel;
@@ -106,6 +107,7 @@ namespace DCL.Lobby
             IRealmData realmData,
             IHomePlaceSource homePlace,
             HttpEventsApiService eventsApiService,
+            EventCardActionsController eventCardActions,
             IRealmNavigator realmNavigator,
             IDecentralandUrlsSource decentralandUrlsSource,
             StartParcel startParcel,
@@ -127,6 +129,7 @@ namespace DCL.Lobby
             this.realmData = realmData;
             this.homePlace = homePlace;
             this.eventsApiService = eventsApiService;
+            this.eventCardActions = eventCardActions;
             this.realmNavigator = realmNavigator;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.startParcel = startParcel;
@@ -156,7 +159,10 @@ namespace DCL.Lobby
                 viewInstance.RecommendedPlaces.CardClicked = null;
                 viewInstance.RecommendedPlaces.CardJumpInClicked = null;
                 viewInstance.LiveEvents.CardClicked = null;
-                viewInstance.UpcomingEvents.CardClicked = null;
+                viewInstance.UpcomingEvents.CardCreated = null;
+
+                foreach (EventCardView card in viewInstance.UpcomingEvents.Cards)
+                    UnsubscribeFromUpcomingCard(card);
             }
 
             mvcManager.OnViewClosed -= ShowAgainWhenTheScreenIsFree;
@@ -194,7 +200,7 @@ namespace DCL.Lobby
             viewInstance.RecommendedPlaces.CardClicked = OnRecommendedPlaceClicked;
             viewInstance.RecommendedPlaces.CardJumpInClicked = OnRecommendedPlaceJumpIn;
             viewInstance.LiveEvents.CardClicked = OnLiveEventClicked;
-            viewInstance.UpcomingEvents.CardClicked = OnUpcomingEventClicked;
+            viewInstance.UpcomingEvents.CardCreated = SubscribeToUpcomingCard;
 
             viewInstance.RecentPlacesSection.SetActive(false);
             viewInstance.RecommendedPlacesSection.SetActive(false);
@@ -439,8 +445,8 @@ namespace DCL.Lobby
             if (upcomingEvents.Count > MAX_UPCOMING_EVENTS)
                 upcomingEvents.RemoveRange(MAX_UPCOMING_EVENTS, upcomingEvents.Count - MAX_UPCOMING_EVENTS);
 
-            ShowEventCards(viewInstance!.LiveEvents, liveEvents, ct);
-            ShowEventCards(viewInstance.UpcomingEvents, upcomingEvents, ct);
+            ShowLiveEventCards(viewInstance!.LiveEvents, liveEvents, ct);
+            ShowUpcomingEventCards(viewInstance.UpcomingEvents, upcomingEvents);
 
             viewInstance.LiveEventsSection.SetActive(liveEvents.Count > 0);
             viewInstance.UpcomingEventsSection.SetActive(upcomingEvents.Count > 0);
@@ -485,44 +491,57 @@ namespace DCL.Lobby
             counter.SetActive(true);
         }
 
-        private void ShowEventCards(LobbyCarouselView carousel, List<EventDTO> events, CancellationToken ct)
+        private void ShowLiveEventCards(LobbyCarouselView carousel, List<EventDTO> events, CancellationToken ct)
         {
             carousel.ShowCards(events.Count);
 
             for (var i = 0; i < events.Count; i++)
-                ShowEventCard((LobbyEventCardView)carousel.Cards[i], events[i], ct);
+                ShowLiveEventCard((LobbyLiveEventCardView)carousel.Cards[i], events[i], ct);
         }
 
-        /// <summary>
-        ///     A live event shows how many people are connected; one yet to start shows how long until it does.
-        /// </summary>
-        private void ShowEventCard(LobbyEventCardView card, EventDTO @event, CancellationToken ct)
+        private void ShowLiveEventCard(LobbyLiveEventCardView card, EventDTO @event, CancellationToken ct)
         {
             card.TitleText.text = @event.name;
             card.HostText.text = string.Format(EVENT_HOST_FORMAT, @event.user_name);
 
             int connectedUsers = @event.connected_addresses?.Length ?? 0;
-            card.LiveBadge.SetActive(@event.live);
-            card.AttendeesGroup.SetActive(@event.live && connectedUsers > 0);
+            card.AttendeesGroup.SetActive(connectedUsers > 0);
             card.AttendeesText.text = connectedUsers.ToString();
-
-            card.ScheduleText.gameObject.SetActive(!@event.live);
-            card.ScheduleText.text = @event.live ? string.Empty : StartsIn(@event.NextStartAtProcessed - DateTime.UtcNow);
 
             thumbnailLoader.LoadCommunityThumbnailFromUrlAsync(@event.image, card.Thumbnail, card.DefaultThumbnail, ct, true).Forget();
         }
 
-        private static string StartsIn(TimeSpan remaining)
+        // The Explore card would print the start time of day; here how long until it starts reads better next to the live ones
+        private void ShowUpcomingEventCards(LobbyEventRailView rail, List<EventDTO> events)
         {
-            if (remaining <= TimeSpan.Zero) return EVENT_STARTING_NOW;
-            if (remaining.TotalHours < 1) return $"In {Mathf.Max(1, Mathf.RoundToInt((float)remaining.TotalMinutes))} min";
-            if (remaining.TotalDays < 1) return InUnits(Mathf.RoundToInt((float)remaining.TotalHours), "hour");
+            rail.ShowCards(events.Count);
 
-            return InUnits(Mathf.RoundToInt((float)remaining.TotalDays), "day");
+            for (var i = 0; i < events.Count; i++)
+            {
+                EventCardView card = rail.Cards[i];
+                card.Configure(events[i], thumbnailLoader);
+                card.SetDateText(EventUtilities.GetEventStartsInText(events[i]));
+            }
         }
 
-        private static string InUnits(int amount, string unit) =>
-            amount == 1 ? $"In 1 {unit}" : $"In {amount} {unit}s";
+        // Jump in is not wired: the card hides that button while the event is not live
+        private void SubscribeToUpcomingCard(EventCardView card)
+        {
+            card.MainButtonClicked += OnUpcomingEventClicked;
+            card.InterestedButtonClicked += OnUpcomingEventInterested;
+            card.AddToCalendarButtonClicked += OnUpcomingEventAddToCalendar;
+            card.EventShareButtonClicked += OnUpcomingEventShare;
+            card.EventCopyLinkButtonClicked += OnUpcomingEventCopyLink;
+        }
+
+        private void UnsubscribeFromUpcomingCard(EventCardView card)
+        {
+            card.MainButtonClicked -= OnUpcomingEventClicked;
+            card.InterestedButtonClicked -= OnUpcomingEventInterested;
+            card.AddToCalendarButtonClicked -= OnUpcomingEventAddToCalendar;
+            card.EventShareButtonClicked -= OnUpcomingEventShare;
+            card.EventCopyLinkButtonClicked -= OnUpcomingEventCopyLink;
+        }
 
         private void OnProfileUpdated(Profile profile)
         {
@@ -577,11 +596,21 @@ namespace DCL.Lobby
                 OnEventClicked(liveEvents[index]);
         }
 
-        private void OnUpcomingEventClicked(int index)
-        {
-            if (index < upcomingEvents.Count)
-                OnEventClicked(upcomingEvents[index]);
-        }
+        // The card is handed over so that toggling Interested in the details also updates it
+        private void OnUpcomingEventClicked(EventDTO @event, PlacesData.PlaceInfo? _, EventCardView card) =>
+            OnEventClicked(@event, card);
+
+        private void OnUpcomingEventInterested(EventDTO @event, EventCardView card) =>
+            eventCardActions.SetEventAsInterestedAsync(@event, card, null, eventsCts!.Token).Forget();
+
+        private void OnUpcomingEventAddToCalendar(EventDTO @event) =>
+            eventCardActions.AddEventToCalendar(@event);
+
+        private void OnUpcomingEventShare(EventDTO @event) =>
+            eventCardActions.ShareEvent(@event);
+
+        private void OnUpcomingEventCopyLink(EventDTO @event) =>
+            eventCardActions.CopyEventLink(@event);
 
         // Until the backpack gets its own modal the Explore panel takes over; being fullscreen it replaces this panel, which
         // at startup comes back on its own once the Explore panel closes.
@@ -596,8 +625,8 @@ namespace DCL.Lobby
             PickDestination(place.IsWorld ? WorldUrl(place.world_name) : null, place.base_position_processed, landOnParcel: false);
 
         // The event details open in the same modal the Explore menu uses; jumping in from there comes back through OnEventJumpIn
-        private void OnEventClicked(EventDTO @event) =>
-            mvcManager.ShowAndForget(EventDetailPanelController.IssueCommand(new EventDetailPanelParameter(@event, placeData: null, jumpInHandler: OnEventJumpIn)));
+        private void OnEventClicked(EventDTO @event, EventCardView? card = null) =>
+            mvcManager.ShowAndForget(EventDetailPanelController.IssueCommand(new EventDetailPanelParameter(@event, placeData: null, card, OnEventJumpIn)));
 
         // Land on the exact parcel of the event rather than on the scene spawn point: the event may be held in a corner of a big scene
         private void OnEventJumpIn(IEventDTO @event) =>

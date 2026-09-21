@@ -1,9 +1,12 @@
 using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.Browser;
 using DCL.CharacterPreview;
+using DCL.Clipboard;
 using DCL.Communities;
 using DCL.Communities.EventInfo;
+using DCL.Events;
 using DCL.EventsApi;
 using DCL.ExplorePanel;
 using DCL.Input;
@@ -78,7 +81,7 @@ namespace DCL.Lobby.Tests
         private GameObject liveEventsSection = null!;
         private LobbyCarouselView liveEvents = null!;
         private GameObject upcomingEventsSection = null!;
-        private LobbyCarouselView upcomingEvents = null!;
+        private LobbyEventRailView upcomingEvents = null!;
         private IWebRequestController webRequestController = null!;
         private IInputBlock inputBlock = null!;
         private IMVCManager mvcManager = null!;
@@ -87,6 +90,7 @@ namespace DCL.Lobby.Tests
         private IHomePlaceSource homePlace = null!;
         private PlacesData.PlaceInfo genesisPlaza = null!;
         private IRealmNavigator realmNavigator = null!;
+        private ISystemClipboard clipboard = null!;
         private StartParcel startParcel = null!;
         private LoadingStatus loadingStatus = null!;
         private IWeb3IdentityCache identityCache = null!;
@@ -122,10 +126,10 @@ namespace DCL.Lobby.Tests
             eventsSection.transform.SetParent(root.transform);
             liveEventsSection = new GameObject("LiveEvents");
             liveEventsSection.transform.SetParent(eventsSection.transform);
-            liveEvents = CreateCarousel(liveEventsSection.transform, CreateEventCard, 1, out _);
+            liveEvents = CreateCarousel(liveEventsSection.transform, CreateLiveEventCard, 1, out _);
             upcomingEventsSection = new GameObject("UpcomingEvents");
             upcomingEventsSection.transform.SetParent(eventsSection.transform);
-            upcomingEvents = CreateCarousel(upcomingEventsSection.transform, CreateEventCard, 1, out _);
+            upcomingEvents = CreateEventRail(upcomingEventsSection.transform);
 
             SetBackingField(view, nameof(LobbyView.WelcomeText), welcomeText);
             SetBackingField(view, nameof(LobbyView.LandingCard), landingCard);
@@ -167,6 +171,7 @@ namespace DCL.Lobby.Tests
             ArrangePlace(Vector2Int.zero, genesisPlaza);
 
             realmNavigator = Substitute.For<IRealmNavigator>();
+            clipboard = Substitute.For<ISystemClipboard>();
             startParcel = new StartParcel(Vector2Int.zero);
 
             urlsSource = Substitute.For<IDecentralandUrlsSource>();
@@ -632,7 +637,8 @@ namespace DCL.Lobby.Tests
         {
             controller = new LobbyController(() => view, inputBlock, loadingStatus, mvcManager, selfProfile, profileChangesBus,
                 Substitute.For<ICharacterPreviewFactory>(), new CharacterPreviewEventBus(), new LobbyAvatarSettings(), new GameObject(nameof(LobbyStage)).AddComponent<LobbyStage>(), world,
-                placesAPIService, realmData, homePlace, eventsApiService, realmNavigator, urlsSource, startParcel, new ThumbnailLoader(Substitute.For<ISpriteCache>()),
+                placesAPIService, realmData, homePlace, eventsApiService, new EventCardActionsController(eventsApiService, new UnityAppWebBrowser(urlsSource), realmNavigator, clipboard, urlsSource),
+                realmNavigator, urlsSource, startParcel, new ThumbnailLoader(Substitute.For<ISpriteCache>()),
                 profileButtonPresenter, friends: null);
         }
 
@@ -960,19 +966,18 @@ namespace DCL.Lobby.Tests
             Assert.That(eventsSection.activeSelf, Is.True);
             Assert.That(liveEventsSection.activeSelf, Is.True);
             Assert.That(liveEvents.Cards.Count, Is.EqualTo(1));
-            Assert.That(EventCard(liveEvents, 0).TitleText.text, Is.EqualTo("concert"));
-            Assert.That(EventCard(liveEvents, 0).LiveBadge.activeSelf, Is.True);
-            Assert.That(EventCard(liveEvents, 0).AttendeesText.text, Is.EqualTo("24"));
-            Assert.That(EventCard(liveEvents, 0).ScheduleText.gameObject.activeSelf, Is.False);
+            Assert.That(LiveEventCard(0).TitleText.text, Is.EqualTo("concert"));
+            Assert.That(LiveEventCard(0).HostText.text, Is.EqualTo("By host"));
+            Assert.That(LiveEventCard(0).AttendeesGroup.activeSelf, Is.True);
+            Assert.That(LiveEventCard(0).AttendeesText.text, Is.EqualTo("24"));
 
             Assert.That(upcomingEventsSection.activeSelf, Is.True);
             Assert.That(upcomingEvents.Cards.Count, Is.EqualTo(2));
-            Assert.That(EventCard(upcomingEvents, 0).TitleText.text, Is.EqualTo("soon"));
-            Assert.That(EventCard(upcomingEvents, 0).ScheduleText.text, Is.EqualTo("In 2 hours"));
-            Assert.That(EventCard(upcomingEvents, 0).HostText.text, Is.EqualTo("By host"));
-            Assert.That(EventCard(upcomingEvents, 0).LiveBadge.activeSelf, Is.False);
-            Assert.That(EventCard(upcomingEvents, 1).TitleText.text, Is.EqualTo("later"));
-            Assert.That(EventCard(upcomingEvents, 1).ScheduleText.text, Is.EqualTo("In 3 days"));
+            Assert.That(UpcomingText(0, "eventText"), Is.EqualTo("soon"));
+            Assert.That(UpcomingText(0, "eventDate"), Is.EqualTo("In 2 hours"));
+            Assert.That(UpcomingText(0, "hostName"), Is.EqualTo("By <b>host</b>"));
+            Assert.That(UpcomingText(1, "eventText"), Is.EqualTo("later"));
+            Assert.That(UpcomingText(1, "eventDate"), Is.EqualTo("In 3 days"));
         }
 
         [Test]
@@ -988,7 +993,7 @@ namespace DCL.Lobby.Tests
             Assert.That(eventsSection.activeSelf, Is.True);
             Assert.That(liveEventsSection.activeSelf, Is.False);
             Assert.That(upcomingEventsSection.activeSelf, Is.True);
-            Assert.That(EventCard(upcomingEvents, 0).ScheduleText.text, Is.EqualTo("In 20 min"));
+            Assert.That(UpcomingText(0, "eventDate"), Is.EqualTo("In 20 min"));
         }
 
         [Test]
@@ -1007,8 +1012,8 @@ namespace DCL.Lobby.Tests
 
             // Assert
             Assert.That(upcomingEvents.Cards.Count, Is.EqualTo(10));
-            Assert.That(EventCard(upcomingEvents, 0).TitleText.text, Is.EqualTo("event1"));
-            Assert.That(EventCard(upcomingEvents, 9).TitleText.text, Is.EqualTo("event10"));
+            Assert.That(UpcomingText(0, "eventText"), Is.EqualTo("event1"));
+            Assert.That(UpcomingText(9, "eventText"), Is.EqualTo("event10"));
         }
 
         [Test]
@@ -1020,12 +1025,29 @@ namespace DCL.Lobby.Tests
             UniTask lifeCycle = Launch(isStartup: false);
 
             // Act
-            EventCard(liveEvents, 0).Button.onClick.Invoke();
+            LiveEventCard(0).Button.onClick.Invoke();
 
             // Assert
             mvcManager.Received(1).ShowAsync(Arg.Is<ShowCommand<EventDetailPanelView, EventDetailPanelParameter>>(c => c.InputData.EventData.Id == "concert"), Arg.Any<CancellationToken>());
             realmNavigator.DidNotReceiveWithAnyArgs().TeleportToParcelAsync(default, default, default);
             Assert.That(lifeCycle.Status, Is.EqualTo(UniTaskStatus.Pending));
+        }
+
+        [Test]
+        public void HandTheUpcomingCardOverToTheEventDetailsSoTheyStayInSync()
+        {
+            // Arrange
+            startParcel.ConsumeByTeleportOperation();
+            ArrangeEvents(CreateEvent("party", Vector2Int.zero, TimeSpan.FromHours(1)));
+            Launch(isStartup: false);
+
+            // Act
+            UpcomingMainButton(0).onClick.Invoke();
+
+            // Assert
+            EventDetailPanelParameter details = ShownEventDetails();
+            Assert.That(details.EventData.Id, Is.EqualTo("party"));
+            Assert.That(details.SummonerEventCard, Is.SameAs(upcomingEvents.Cards[0]));
         }
 
         [Test]
@@ -1035,7 +1057,7 @@ namespace DCL.Lobby.Tests
             startParcel.ConsumeByTeleportOperation();
             ArrangeEvents(CreateEvent("concert", new Vector2Int(3, 4), TimeSpan.FromMinutes(-5), live: true));
             UniTask lifeCycle = Launch(isStartup: false);
-            EventCard(liveEvents, 0).Button.onClick.Invoke();
+            LiveEventCard(0).Button.onClick.Invoke();
             EventDetailPanelParameter details = ShownEventDetails();
 
             // Act
@@ -1052,7 +1074,7 @@ namespace DCL.Lobby.Tests
             // Arrange
             ArrangeEvents(CreateEvent("party", Vector2Int.zero, TimeSpan.FromHours(1), server: "MyWorld.dcl.eth"));
             UniTask lifeCycle = Launch(isStartup: true);
-            EventCard(upcomingEvents, 0).Button.onClick.Invoke();
+            UpcomingMainButton(0).onClick.Invoke();
             EventDetailPanelParameter details = ShownEventDetails();
 
             // Act
@@ -1213,8 +1235,81 @@ namespace DCL.Lobby.Tests
             return carousel;
         }
 
-        private static LobbyEventCardView EventCard(LobbyCarouselView carousel, int index) =>
-            (LobbyEventCardView)carousel.Cards[index];
+        private LobbyLiveEventCardView LiveEventCard(int index) =>
+            (LobbyLiveEventCardView)liveEvents.Cards[index];
+
+        private string UpcomingText(int index, string fieldName) =>
+            GetField<TMP_Text>(upcomingEvents.Cards[index], fieldName).text;
+
+        private Button UpcomingMainButton(int index) =>
+            GetField<Button>(upcomingEvents.Cards[index], "mainButton");
+
+        private static LobbyEventRailView CreateEventRail(Transform parent)
+        {
+            var railGo = new GameObject("Rail", typeof(RectTransform));
+            railGo.transform.SetParent(parent);
+
+            var viewportGo = new GameObject("Viewport", typeof(RectTransform));
+            viewportGo.transform.SetParent(railGo.transform);
+            ((RectTransform)viewportGo.transform).sizeDelta = new Vector2(352f, 135f);
+
+            var contentGo = new GameObject("Content", typeof(RectTransform));
+            contentGo.transform.SetParent(viewportGo.transform);
+
+            ScrollRect scrollRect = railGo.AddComponent<ScrollRect>();
+            scrollRect.viewport = (RectTransform)viewportGo.transform;
+            scrollRect.content = (RectTransform)contentGo.transform;
+
+            EventCardView cardTemplate = CreateUpcomingEventCard(contentGo.transform, "CardTemplate");
+            cardTemplate.gameObject.SetActive(false);
+
+            var dotsGo = new GameObject("Dots", typeof(RectTransform));
+            dotsGo.transform.SetParent(railGo.transform);
+            var dotGo = new GameObject("DotTemplate", typeof(RectTransform));
+            dotGo.transform.SetParent(dotsGo.transform);
+            Image dotTemplate = dotGo.AddComponent<Image>();
+            dotGo.SetActive(false);
+            LobbyCarouselDotsView dotsView = dotsGo.AddComponent<LobbyCarouselDotsView>();
+            SetField(dotsView, "dotTemplate", dotTemplate);
+
+            LobbyEventRailView rail = railGo.AddComponent<LobbyEventRailView>();
+            SetField(rail, "scrollRect", scrollRect);
+            SetField(rail, "cardTemplate", cardTemplate);
+            SetField(rail, "dots", dotsView);
+            SetField(rail, "cardsPerPage", 1);
+
+            return rail;
+        }
+
+        /// <summary>
+        ///     The Explore panel's small event card, reduced to what the lobby drives: the card measures its containers in Awake,
+        ///     so the object stays inactive until the fields are assigned.
+        /// </summary>
+        private static EventCardView CreateUpcomingEventCard(Transform parent, string name)
+        {
+            var cardGo = new GameObject(name, typeof(RectTransform));
+            cardGo.SetActive(false);
+            cardGo.transform.SetParent(parent);
+            EventCardSmallView card = cardGo.AddComponent<EventCardSmallView>();
+
+            TMP_Text host = CreateText(cardGo.transform, "Host");
+            var actionsGo = new GameObject("Actions", typeof(RectTransform), typeof(CanvasGroup));
+            actionsGo.transform.SetParent(cardGo.transform);
+
+            SetField(card, "mainButton", cardGo.AddComponent<Button>());
+            SetField(card, "eventThumbnail", CreateImageView(cardGo.transform));
+            SetField(card, "eventText", CreateText(cardGo.transform, "Name"));
+            SetField(card, "hostName", host);
+            SetField(card, "eventDate", CreateText(cardGo.transform, "Date"));
+            SetField(card, "liveMarks", new List<GameObject>());
+            SetField(card, "hostCanvasGroup", host.gameObject.AddComponent<CanvasGroup>());
+            SetField(card, "actionButtonsCanvasGroup", actionsGo.GetComponent<CanvasGroup>());
+            SetField(card, "nameContainer", CreateRect(cardGo.transform, "NameContainer"));
+            SetField(card, "dateContainer", CreateRect(cardGo.transform, "DateContainer"));
+            cardGo.SetActive(true);
+
+            return card;
+        }
 
         private static LobbyPlaceCardView CreatePlaceCard(Transform parent, string name)
         {
@@ -1260,25 +1355,21 @@ namespace DCL.Lobby.Tests
             return (RectTransform)rectGo.transform;
         }
 
-        private static LobbyEventCardView CreateEventCard(Transform parent, string name)
+        private static LobbyLiveEventCardView CreateLiveEventCard(Transform parent, string name)
         {
             var cardGo = new GameObject(name);
             cardGo.transform.SetParent(parent);
-            LobbyEventCardView card = cardGo.AddComponent<LobbyEventCardView>();
+            LobbyLiveEventCardView card = cardGo.AddComponent<LobbyLiveEventCardView>();
 
-            var liveBadge = new GameObject("LiveBadge");
-            liveBadge.transform.SetParent(cardGo.transform);
             var attendees = new GameObject("Attendees");
             attendees.transform.SetParent(cardGo.transform);
 
-            SetBackingField(card, nameof(LobbyEventCardView.Button), cardGo.AddComponent<Button>());
-            SetBackingField(card, nameof(LobbyEventCardView.Thumbnail), CreateImageView(cardGo.transform));
-            SetBackingField(card, nameof(LobbyEventCardView.TitleText), CreateText(cardGo.transform, "Title"));
-            SetBackingField(card, nameof(LobbyEventCardView.HostText), CreateText(cardGo.transform, "Host"));
-            SetBackingField(card, nameof(LobbyEventCardView.LiveBadge), liveBadge);
-            SetBackingField(card, nameof(LobbyEventCardView.AttendeesGroup), attendees);
-            SetBackingField(card, nameof(LobbyEventCardView.AttendeesText), CreateText(attendees.transform, "Count"));
-            SetBackingField(card, nameof(LobbyEventCardView.ScheduleText), CreateText(cardGo.transform, "Schedule"));
+            SetBackingField(card, nameof(LobbyLiveEventCardView.Button), cardGo.AddComponent<Button>());
+            SetBackingField(card, nameof(LobbyLiveEventCardView.Thumbnail), CreateImageView(cardGo.transform));
+            SetBackingField(card, nameof(LobbyLiveEventCardView.TitleText), CreateText(cardGo.transform, "Title"));
+            SetBackingField(card, nameof(LobbyLiveEventCardView.HostText), CreateText(cardGo.transform, "Host"));
+            SetBackingField(card, nameof(LobbyLiveEventCardView.AttendeesGroup), attendees);
+            SetBackingField(card, nameof(LobbyLiveEventCardView.AttendeesText), CreateText(attendees.transform, "Count"));
 
             return card;
         }
@@ -1404,6 +1495,19 @@ namespace DCL.Lobby.Tests
 
         private static void SetBackingField(object target, string propertyName, object value) =>
             SetField(target, $"<{propertyName}>k__BackingField", value);
+
+        private static T GetField<T>(object target, string fieldName)
+        {
+            for (Type? type = target.GetType(); type != null; type = type.BaseType)
+            {
+                FieldInfo? field = type.GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
+
+                if (field != null)
+                    return (T)field.GetValue(target);
+            }
+
+            throw new MissingFieldException(target.GetType().Name, fieldName);
+        }
 
         private static void SetField(object target, string fieldName, object value)
         {
