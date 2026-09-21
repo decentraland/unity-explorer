@@ -346,19 +346,16 @@ namespace DCL.Interaction.Systems
                 // Add all inputs that were pressed/unpressed this frame
                 InteractionInputUtils.TryAppendButtonAction(sdkInputActionsMap, ref pbPointerEvents.AppendPointerEventResultsIntent);
 
-                // A synthetic edge that named a target entity may be consumed by that entity alone. The ray decides
-                // what is under the reticle, so without this the edge lands on whatever it found — a nearer collider,
-                // or a proximity entity the aim never pointed at — while the driver is told a frame later that its
-                // aim was blocked. Hover, feedback and highlight above are left ungated: those follow the ray for
-                // real input too.
-                if (synthetic.MayConsume(entityInfo.EcsExecutor.World, entityInfo.ColliderSceneEntityInfo.EntityReference))
-                {
-                    if (synthetic.PressButton.HasValue)
-                        pbPointerEvents.AppendPointerEventResultsIntent.AddInputAction(synthetic.PressButton.Value, PointerEventType.PetDown);
+                // Only the button edge is gated by the synthetic post's delivery rule. Hover, feedback and highlight
+                // above follow the ray, as they do for real input.
+                synthetic.DeliverableEdgesFor(entityInfo.EcsExecutor.World, entityInfo.ColliderSceneEntityInfo.EntityReference, sdkInputActionsMap,
+                    out InputAction? syntheticPress, out InputAction? syntheticRelease);
 
-                    if (synthetic.ReleaseButton.HasValue)
-                        pbPointerEvents.AppendPointerEventResultsIntent.AddInputAction(synthetic.ReleaseButton.Value, PointerEventType.PetUp);
-                }
+                if (syntheticPress is { } pressed)
+                    pbPointerEvents.AppendPointerEventResultsIntent.AddInputAction(pressed, PointerEventType.PetDown);
+
+                if (syntheticRelease is { } released)
+                    pbPointerEvents.AppendPointerEventResultsIntent.AddInputAction(released, PointerEventType.PetUp);
             }
         }
 

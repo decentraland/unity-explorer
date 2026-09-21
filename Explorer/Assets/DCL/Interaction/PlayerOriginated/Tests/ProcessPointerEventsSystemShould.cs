@@ -32,6 +32,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
         private BoxCollider targetCollider = null!;
 
         private ProcessPointerEventsSystem system = null!;
+        private Keyboard keyboard = null!;
         private UnityEngine.InputSystem.InputAction primaryAction = null!;
 
         [SetUp]
@@ -45,7 +46,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
             cameraGo = new GameObject("pointer-events-test-camera");
             world.Create(new CameraComponent(cameraGo.AddComponent<Camera>()));
 
-            InputSystem.AddDevice<Keyboard>();
+            keyboard = InputSystem.AddDevice<Keyboard>();
             primaryAction = new UnityEngine.InputSystem.InputAction(binding: "<Keyboard>/e");
             primaryAction.Enable();
 
@@ -191,6 +192,22 @@ namespace DCL.Interaction.PlayerOriginated.Tests
             Assert.That(TargetIntent().ValidInputActions,
                 Is.EqualTo(new[] { (InputAction.IaPrimary, PointerEventType.PetDown) }),
                 "the edge must land entity-bound on the hovered entity");
+        }
+
+        [Test]
+        public void NotDuplicateASyntheticEdgeTheRealActionFiredTheSameFrame()
+        {
+            HoverTarget();
+            Press(keyboard.eKey);
+            Assert.That(primaryAction.WasPressedThisFrame(), Is.True, "test precondition: the real press must be visible this frame");
+            PostSyntheticPress(InputAction.IaPrimary);
+
+            system.Update(0);
+
+            // The real-input path already added the primary press; the entity must not observe it twice.
+            Assert.That(TargetIntent().ValidInputActions,
+                Is.EqualTo(new[] { (InputAction.IaPrimary, PointerEventType.PetDown) }),
+                "one real and one synthetic press of the same button must land as a single edge");
         }
 
         [Test]

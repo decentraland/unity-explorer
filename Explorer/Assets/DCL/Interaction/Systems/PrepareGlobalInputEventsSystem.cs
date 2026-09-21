@@ -3,7 +3,6 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
-using DCL.Interaction.PlayerOriginated.Components;
 using ECS.Abstract;
 using System.Collections.Generic;
 using ProcessPointerEventsSystem = DCL.Interaction.Systems.ProcessPointerEventsSystem;
@@ -54,31 +53,17 @@ namespace DCL.Interaction.PlayerOriginated.Systems
             AppendSyntheticEntries();
         }
 
-        /// <summary>
-        ///     A synthetic edge of an action the player really pressed or released this same frame is skipped: the
-        ///     real loop above already added it, and the scene must not observe the event twice. An edge that named
-        ///     a target entity is skipped too, because it is not a broadcast: one ProcessPointerEventsSystem cannot
-        ///     deliver there must reach nobody, or a call the driver is told missed still leaves the scene root
-        ///     observing the press.
-        /// </summary>
+        /// <summary>The scene root is the receiver a null entity names in the post's delivery rule.</summary>
         private void AppendSyntheticEntries()
         {
-            SyntheticPointerInput synthetic = playerInteractionEntity.SyntheticPointerInput;
+            playerInteractionEntity.SyntheticPointerInput.DeliverableEdgesFor(null, null, sdkInputActionsMap,
+                out InputAction? press, out InputAction? release);
 
-            if (!synthetic.IsPostedThisFrame || synthetic.HasTargetEntity)
-                return;
-
-            if (synthetic.PressButton is { } pressed && !WasReallyPressedThisFrame(pressed))
+            if (press is { } pressed)
                 globalInputEvents.Add(new IGlobalInputEvents.Entry(pressed, PointerEventType.PetDown));
 
-            if (synthetic.ReleaseButton is { } released && !WasReallyReleasedThisFrame(released))
+            if (release is { } released)
                 globalInputEvents.Add(new IGlobalInputEvents.Entry(released, PointerEventType.PetUp));
         }
-
-        private bool WasReallyPressedThisFrame(InputAction action) =>
-            sdkInputActionsMap.TryGetValue(action, out UnityEngine.InputSystem.InputAction? unityAction) && unityAction!.WasPressedThisFrame();
-
-        private bool WasReallyReleasedThisFrame(InputAction action) =>
-            sdkInputActionsMap.TryGetValue(action, out UnityEngine.InputSystem.InputAction? unityAction) && unityAction!.WasReleasedThisFrame();
     }
 }

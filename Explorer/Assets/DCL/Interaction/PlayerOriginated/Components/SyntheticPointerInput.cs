@@ -1,5 +1,6 @@
 using Arch.Core;
 using DCL.ECSComponents;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace DCL.Interaction.PlayerOriginated.Components
@@ -9,10 +10,10 @@ namespace DCL.Interaction.PlayerOriginated.Components
     ///     entity by an automation driver: aim the reticle ray at a world point and/or press or release a pointer
     ///     button as if the player did. PlayerOriginatedRaycastSystem reads the aim and echoes the point it consumed
     ///     in <see cref="PlayerOriginRaycastResultForSceneEntities.SyntheticAimPoint" /> (null on frames it guards
-    ///     away); ProcessPointerEventsSystem reads the buttons, applies them under the same qualification gates as
-    ///     real input, and clears the component. Both honour a post only during the frame recorded in
-    ///     <see cref="PostedAtFrame" />, so a post that outlived the frame is discarded unread and nobody has to
-    ///     sweep up instructions abandoned mid-pause. Posting is last-write-wins.
+    ///     away); ProcessPointerEventsSystem and PrepareGlobalInputEventsSystem read the buttons through
+    ///     <see cref="DeliverableEdgesFor" />, and the former clears the component. Both honour a post only during
+    ///     the frame recorded in <see cref="PostedAtFrame" />, so a post that outlived the frame is discarded unread
+    ///     and nobody has to sweep up instructions abandoned mid-pause. Posting is last-write-wins.
     /// </summary>
     public struct SyntheticPointerInput
     {
@@ -55,10 +56,42 @@ namespace DCL.Interaction.PlayerOriginated.Components
         public bool IsPostedThisFrame => PostedAtFrame == UnityEngine.Time.frameCount;
 
         /// <summary>
-        ///     Whether the given scene entity may consume this post's button edge. An untargeted post permits
-        ///     every entity; a targeted one permits exactly its own, matched by world reference and entity.
+        ///     The button edges this post delivers to one receiver this frame: a scene entity, or the scene root
+        ///     when <paramref name="receiver" /> is null. This is the single rule every consumer applies. A targeted
+        ///     post delivers to its own entity alone (matched by world reference and entity), so the edge never lands
+        ///     on the root broadcast or on another entity the ray happened to select. An edge of an action the player
+        ///     really pressed or released this same frame is withheld from every receiver: the real-input path has
+        ///     already added it, and no receiver may observe the same edge twice.
         /// </summary>
-        public readonly bool MayConsume(World entityWorld, Entity entity) =>
-            TargetEntity is not { } target || (ReferenceEquals(entityWorld, TargetWorld) && entity == target);
+        public readonly void DeliverableEdgesFor(World? receiverWorld, Entity? receiver,
+            IReadOnlyDictionary<InputAction, UnityEngine.InputSystem.InputAction> sdkInputActionsMap,
+            out InputAction? press, out InputAction? release)
+        {
+            press = null;
+            release = null;
+
+            if (!IsPostedThisFrame || !MayDeliverEdgeTo(receiverWorld, receiver))
+                return;
+
+            if (PressButton is { } pressed && !WasReallyPressedThisFrame(sdkInputActionsMap, pressed))
+                press = pressed;
+
+            if (ReleaseButton is { } released && !WasReallyReleasedThisFrame(sdkInputActionsMap, released))
+                release = released;
+        }
+
+        /// <summary>
+        ///     Whether a receiver (a scene entity, or the scene root when <paramref name="receiver" /> is null) is a
+        ///     permitted consumer of this post's button edge. An untargeted post permits every receiver; a targeted
+        ///     one permits exactly its own entity.
+        /// </summary>
+        public readonly bool MayDeliverEdgeTo(World? receiverWorld, Entity? receiver) =>
+            TargetEntity is not { } target || (receiver is { } entity && ReferenceEquals(receiverWorld, TargetWorld) && entity == target);
+
+        private static bool WasReallyPressedThisFrame(IReadOnlyDictionary<InputAction, UnityEngine.InputSystem.InputAction> sdkInputActionsMap, InputAction action) =>
+            sdkInputActionsMap.TryGetValue(action, out UnityEngine.InputSystem.InputAction unityAction) && unityAction.WasPressedThisFrame();
+
+        private static bool WasReallyReleasedThisFrame(IReadOnlyDictionary<InputAction, UnityEngine.InputSystem.InputAction> sdkInputActionsMap, InputAction action) =>
+            sdkInputActionsMap.TryGetValue(action, out UnityEngine.InputSystem.InputAction unityAction) && unityAction.WasReleasedThisFrame();
     }
 }

@@ -316,7 +316,7 @@ namespace DCL.SyntheticInput.Tests
             ref SyntheticPointerInput synthetic = ref syntheticInput;
             Assert.That(synthetic.TargetEntity, Is.EqualTo((Entity?)targetEntity));
             Assert.That(ReferenceEquals(synthetic.TargetWorld, sceneWorld), Is.True);
-            Assert.That(synthetic.MayConsume(sceneWorld, targetEntity), Is.True);
+            Assert.That(synthetic.MayDeliverEdgeTo(sceneWorld, targetEntity), Is.True);
         }
 
         [Test]
@@ -331,7 +331,7 @@ namespace DCL.SyntheticInput.Tests
             // defaulted target would restrict the edge to an entity that cannot exist — reaching nothing at all.
             Assert.That(syntheticInput.HasTargetEntity, Is.False);
             Assert.That(syntheticInput.TargetEntity, Is.Null);
-            Assert.That(syntheticInput.MayConsume(sceneWorld, targetEntity), Is.True);
+            Assert.That(syntheticInput.MayDeliverEdgeTo(sceneWorld, targetEntity), Is.True);
         }
 
         [Test]
