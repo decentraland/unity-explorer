@@ -63,7 +63,10 @@ namespace Utility
         /// <summary>
         ///     Creates scene geometry from multiple occupied parcels
         /// </summary>
-        public static SceneGeometry CreateSceneGeometry(IReadOnlyList<ParcelCorners> parcelsCorners, Vector2Int baseParcel)
+        /// <param name="limitHeight">
+        ///     When <c>true</c> the height is derived from the amount of parcels, otherwise the scene has no vertical limit
+        /// </param>
+        public static SceneGeometry CreateSceneGeometry(IReadOnlyList<ParcelCorners> parcelsCorners, Vector2Int baseParcel, bool limitHeight)
         {
             float circumscribedPlaneMinX = float.MaxValue;
             float circumscribedPlaneMaxX = float.MinValue;
@@ -90,7 +93,9 @@ namespace Utility
             circumscribedPlaneMaxZ += EXTEND_AMOUNT;
 
             Vector3 baseParcelPosition = GetPositionByParcelPosition(baseParcel);
-            float sceneHeight = Mathf.Log(parcelsCorners.Count + 1, 2) * 20; // log2(n+1) x 20, where n is the amount of parcels
+            float sceneHeight = limitHeight
+                ? Mathf.Log(parcelsCorners.Count + 1, 2) * 20 // log2(n+1) x 20, where n is the amount of parcels
+                : float.MaxValue;
 
             return new SceneGeometry(
                 baseParcelPosition,
@@ -256,7 +261,7 @@ namespace Utility
             public readonly SceneCircumscribedPlanes CircumscribedPlanes;
 
             /// <summary>
-            /// The height of the scene (in meters) according to the amount of parcels.
+            /// The height of the scene (in meters). <see cref="float.MaxValue" /> when the scene is not limited vertically.
             /// </summary>
             public readonly float Height;
 

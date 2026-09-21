@@ -72,9 +72,9 @@ namespace ECS.SceneLifeCycle.SceneDefinition
         //PX don't care about parcel corners as they work on all the map.
         private static readonly IReadOnlyList<ParcelMathHelper.ParcelCorners> PORTABLE_EXPERIENCES_PARCEL_CORNERS = new List<ParcelMathHelper.ParcelCorners>();
 
-        public static SceneDefinitionComponent CreateFromDefinition(SceneEntityDefinition definition, IpfsPath ipfsPath, bool isPortableExperience = false) =>
+        public static SceneDefinitionComponent CreateFromDefinition(SceneEntityDefinition definition, IpfsPath ipfsPath, bool isPortableExperience = false, bool limitSceneHeight = true) =>
             isPortableExperience ?
-                CreatePortableExperienceSceneDefinitionComponent(definition, ipfsPath) : CreateSceneDefinitionComponent(definition, definition.metadata.scene.DecodedParcels, ipfsPath, isSDK7: definition.metadata.runtimeVersion == "7", isPortableExperience: false);
+                CreatePortableExperienceSceneDefinitionComponent(definition, ipfsPath) : CreateSceneDefinitionComponent(definition, definition.metadata.scene.DecodedParcels, ipfsPath, isSDK7: definition.metadata.runtimeVersion == "7", isPortableExperience: false, limitSceneHeight);
 
         private static SceneDefinitionComponent CreatePortableExperienceSceneDefinitionComponent(SceneEntityDefinition definition, IpfsPath ipfsPath) =>
             new (
@@ -92,10 +92,11 @@ namespace ECS.SceneLifeCycle.SceneDefinition
             IReadOnlyList<Vector2Int> parcels,
             IpfsPath ipfsPath,
             bool isSDK7,
-            bool isPortableExperience)
+            bool isPortableExperience,
+            bool limitSceneHeight)
         {
             var parcelCorners = parcels.Select(ParcelMathHelper.CalculateCorners).ToList();
-            ParcelMathHelper.SceneGeometry sceneGeometry = ParcelMathHelper.CreateSceneGeometry(parcelCorners, definition.metadata.scene.DecodedBase);
+            ParcelMathHelper.SceneGeometry sceneGeometry = ParcelMathHelper.CreateSceneGeometry(parcelCorners, definition.metadata.scene.DecodedBase, limitSceneHeight);
 
             return new SceneDefinitionComponent(
                 definition,
