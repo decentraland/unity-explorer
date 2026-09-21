@@ -69,8 +69,9 @@ namespace DCL.SDKComponents.AudioSources
             // audioSource! is safe: a non-null clip implies a non-null source, since the clip was read from audioSource.clip
             float offset = clip != null ? audioSource!.time : 0f;
             bool stateChanged = state != audioSourceComponent.LastPropagatedAudioState;
+            bool reportsPosition = sdkComponent is { HasReportPlaybackPosition: true, ReportPlaybackPosition: true };
 
-            if (!ShouldReport(state, offset, hasClip: clip != null, in audioSourceComponent))
+            if (!ShouldReport(state, offset, hasClip: clip != null, reportsPosition, in audioSourceComponent))
             {
 #if AUDIO_EVENTS_DEBUG
                 messagesSkipped++;
@@ -86,7 +87,7 @@ namespace DCL.SDKComponents.AudioSources
             messagesSent++;
 #endif
             PropagateAudioEvent(in sdkEntity, new AudioEventReport(state, tick,
-                hasPosition: clip != null, currentOffset: offset, clipLength: clip != null ? clip.length : 0f));
+                hasPosition: reportsPosition && clip != null, currentOffset: offset, clipLength: clip != null ? clip.length : 0f));
 
             if (stateChanged && IsNaturalFinish(previousState, state, sdkComponent))
                 WriteBackNaturalFinish(ecsToCRDTWriter, in sdkEntity, sdkComponent);
@@ -151,18 +152,22 @@ namespace DCL.SDKComponents.AudioSources
                     // re-PUTs playing:true which retriggers playback through the existing seek+Play logic.
                     if (src.HasCurrentTime) dst.CurrentTime = src.CurrentTime;
                     if (src.HasGlobal) dst.Global = src.Global;
+                    if (src.HasReportPlaybackPosition) dst.ReportPlaybackPosition = src.ReportPlaybackPosition;
                 },
                 sdkEntity, sdkComponent);
         }
 
         /// <summary>
-        ///     A report goes out when the media state changed or the playhead moved, which is the rule
+        ///     A report goes out when the media state changed or, for a source that opted in with
+        ///     PBAudioSource.report_playback_position, when the playhead moved; the playhead half is the rule
         ///     VideoEventsSystem applies to video. A paused or stopped clip therefore emits nothing until something
-        ///     changes, and a source with no clip loaded has no position to report on.
+        ///     changes, and a source with no clip loaded, or one that did not opt in, has no position to report on.
+        ///     State changes are reported either way: a scene that never sets the flag keeps every event it used to
+        ///     get, and only pays for the position reports once it asks for them.
         /// </summary>
-        internal static bool ShouldReport(MediaState state, float offset, bool hasClip, in AudioSourceComponent audioSourceComponent) =>
+        internal static bool ShouldReport(MediaState state, float offset, bool hasClip, bool reportsPosition, in AudioSourceComponent audioSourceComponent) =>
             state != audioSourceComponent.LastPropagatedAudioState
-            || (hasClip && !offset.Equals(audioSourceComponent.LastPropagatedOffset));
+            || (reportsPosition && hasClip && !offset.Equals(audioSourceComponent.LastPropagatedOffset));
 
         internal static MediaState GetAudioSourceState(in AudioSourceComponent audioSourceComponent)
         {
