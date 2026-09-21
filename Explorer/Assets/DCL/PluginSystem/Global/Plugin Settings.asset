@@ -232,6 +232,12 @@ MonoBehaviour:
             m_SubObjectType: 
             m_SubObjectGUID: 
             m_EditorAssetChanged: 0
+          <BackpackModalPrefab>k__BackingField:
+            m_AssetGUID: 
+            m_SubObjectName: 
+            m_SubObjectType: 
+            m_SubObjectGUID: 
+            m_EditorAssetChanged: 0
     - rid: 758312499805421571
       type: {class: AudioSourcesPlugin/AudioSourcesPluginSettings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
       data:
@@ -538,6 +544,12 @@ MonoBehaviour:
               Culture=neutral, PublicKeyToken=null
             m_SubObjectGUID: 
             m_EditorAssetChanged: 1
+          <BackpackModalPrefab>k__BackingField:
+            m_AssetGUID: ebd7609b18c5429db0cd1ac5fdc1b8b8
+            m_SubObjectName: 
+            m_SubObjectType: 
+            m_SubObjectGUID: 
+            m_EditorAssetChanged: 0
         <EmbeddedEmotes>k__BackingField: []
         <SettingsMenuConfiguration>k__BackingField: {fileID: 11400000, guid: b47b66eab8da46b4cbcc30100e4194e0, type: 2}
         <GeneralAudioMixer>k__BackingField:

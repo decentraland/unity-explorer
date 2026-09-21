@@ -1,6 +1,7 @@
 using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.Backpack;
 using DCL.CharacterPreview;
 using DCL.CommunicationData.URLHelpers;
 using DCL.Communities;
@@ -8,7 +9,6 @@ using DCL.Communities.EventInfo;
 using DCL.Diagnostics;
 using DCL.Events;
 using DCL.EventsApi;
-using DCL.ExplorePanel;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.MapRenderer.MapLayers.HomeMarker;
@@ -260,7 +260,7 @@ namespace DCL.Lobby
 
             inputBlock.Enable(InputMapComponent.BLOCK_USER_INPUT);
 
-            // At startup the lobby is the only way into the world, and a fullscreen panel opened from it (the backpack) replaces
+            // At startup the lobby is the only way into the world, and a fullscreen panel opened from it replaces
             // it instead of closing it: the lobby has to come back, otherwise nothing is left on screen and the flow never resumes
             if (inputData.IsStartup && !leaving)
                 mvcManager.OnViewClosed += ShowAgainWhenTheScreenIsFree;
@@ -612,10 +612,10 @@ namespace DCL.Lobby
         private void OnUpcomingEventCopyLink(EventDTO @event) =>
             eventCardActions.CopyEventLink(@event);
 
-        // Until the backpack gets its own modal the Explore panel takes over; being fullscreen it replaces this panel, which
-        // at startup comes back on its own once the Explore panel closes.
+        // The backpack stacks on top of this panel as a popup and brings its own avatar preview, so the lobby keeps rendering behind it.
+        // Saving in the backpack pushes a profile update, which is what re-dresses the lobby avatar through OnProfileUpdated
         private void OnAvatarClicked(PointerEventData _) =>
-            mvcManager.ShowAndForget(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Backpack, BackpackSections.Avatar)));
+            mvcManager.ShowAndForget(BackpackModalController.IssueCommand(new BackpackModalParameter(BackpackSections.Avatar)));
 
         // The place details open in the same modal the Places menu uses; jumping in from there comes back through OnPlaceJumpIn
         private void OnPlaceClicked(PlacesData.PlaceInfo place) =>

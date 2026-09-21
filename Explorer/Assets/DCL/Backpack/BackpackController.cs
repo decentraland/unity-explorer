@@ -17,6 +17,7 @@ using DCL.Backpack.CharacterPreview;
 using DCL.Backpack.EmotesSection;
 using DCL.Browser;
 using DCL.CharacterPreview;
+using DCL.Diagnostics;
 using DCL.Input;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles;
@@ -36,10 +37,13 @@ namespace DCL.Backpack
 {
     public class BackpackController : ISection, IDisposable
     {
+        private const float COMPACT_HOST_MARGIN = 40f;
+
         private readonly BackpackView view;
+        private readonly ISelfProfile selfProfile;
         private readonly BackpackCommandBus backpackCommandBus;
         private readonly BackpackInfoPanelController emoteInfoPanelController;
-        private readonly RectTransform rectTransform;
+        private readonly RectTransform homeHost;
         private readonly AvatarController avatarController;
         private readonly BackpackCharacterPreviewController backpackCharacterPreviewController;
         private readonly ICursor cursor;
@@ -53,12 +57,17 @@ namespace DCL.Backpack
         private readonly IBackpackEventBus backpackEventBus;
         private readonly BackpackSections currentSection = BackpackSections.Avatar;
         private readonly IRealmData realmData;
+        private readonly RectSnapshot contentFull;
+        private readonly Vector2[] shiftedFullPositions;
+        private readonly RectSnapshot previewFull;
+        private readonly RectSnapshot previewImageFull;
 
         private BackpackSections lastShownSection;
         private CancellationTokenSource? animationCts;
         private CancellationTokenSource? profileLoadingCts;
         private bool isAvatarLoaded;
         private bool instantSectionToggle;
+        private bool isCompact;
 
         public BackpackController(
             BackpackView view,
@@ -91,6 +100,7 @@ namespace DCL.Backpack
             IOwnedNftFilter ownedNftFilter)
         {
             this.view = view;
+            this.selfProfile = selfProfile;
             this.backpackCommandBus = backpackCommandBus;
             this.emoteInfoPanelController = emoteInfoPanelController;
             this.world = world;
@@ -99,7 +109,16 @@ namespace DCL.Backpack
             this.emotesController = emotesController;
             this.backpackEventBus = backpackEventBus;
             this.backpackCharacterPreviewController = backpackCharacterPreviewController;
-            rectTransform = view.transform.parent.GetComponent<RectTransform>();
+            homeHost = view.transform.parent.GetComponent<RectTransform>();
+
+            contentFull = new RectSnapshot(view.ContentRect);
+            shiftedFullPositions = new Vector2[view.CompactShiftedRects.Length];
+
+            for (var i = 0; i < view.CompactShiftedRects.Length; i++)
+                shiftedFullPositions[i] = view.CompactShiftedRects[i].anchoredPosition;
+
+            previewFull = new RectSnapshot((RectTransform)view.CharacterPreviewView.transform);
+            previewImageFull = new RectSnapshot(view.CharacterPreviewView.RawImage.rectTransform);
 
             var categoriesPresenter = new CategoriesPresenter(avatarView.CategoriesView,
                 backpackGridController,
@@ -239,16 +258,24 @@ namespace DCL.Backpack
 
             isAvatarLoaded = false;
 
-            var avatarShapeComponent = world.Get<AvatarShapeComponent>(playerEntity);
+            // Opened before the world is loaded the player entity carries no avatar yet, and the own profile is the only source
+            Avatar? avatar = world.Has<Profile>(playerEntity)
+                ? world.Get<Profile>(playerEntity).Avatar
+                : (await selfProfile.ProfileAsync(ct))?.Avatar;
 
-            Avatar avatar = world.Get<Profile>(playerEntity).Avatar;
+            if (ct.IsCancellationRequested) return;
+
+            if (avatar == null)
+            {
+                ReportHub.LogWarning(ReportCategory.BACKPACK, "Own profile is not available, the backpack cannot show the avatar");
+                return;
+            }
+
             backpackCharacterPreviewController.Initialize(avatar, CharacterPreviewUtils.BACKPACK_PREVIEW_POSITION);
 
-            while (!avatarShapeComponent.WearablePromise.IsConsumed)
-            {
-                avatarShapeComponent = world.Get<AvatarShapeComponent>(playerEntity);
+            // Equipping while the in-world avatar is still resolving its own wearables would fight with it; with no avatar in the world there is nothing to wait for
+            while (world.TryGet(playerEntity, out AvatarShapeComponent avatarShapeComponent) && !avatarShapeComponent.WearablePromise.IsConsumed)
                 await UniTask.Yield();
-            }
 
             if (ct.IsCancellationRequested) return;
 
@@ -329,8 +356,112 @@ namespace DCL.Backpack
             view.HeaderAnimator.Update(0);
         }
 
+        /// <summary>
+        ///     The slot the view is parented to right now. The hosts use it to tell their own teardown from a late one.
+        /// </summary>
+        public RectTransform? CurrentHost =>
+            view.transform.parent as RectTransform;
+
+        /// <summary>
+        ///     Moves the single backpack view under the host that is about to show it and stretches it to fill the slot. A
+        ///     compact host is narrower than the screen, so the panel gives up its item info column to fit.
+        /// </summary>
+        public void AttachTo(RectTransform host, bool compact)
+        {
+            SetCompactLayout(compact);
+
+            var viewRect = (RectTransform)view.transform;
+
+            if (viewRect.parent == host) return;
+
+            viewRect.SetParent(host, false);
+            viewRect.anchorMin = Vector2.zero;
+            viewRect.anchorMax = Vector2.one;
+            viewRect.offsetMin = Vector2.zero;
+            viewRect.offsetMax = Vector2.zero;
+
+            // Only the explore panel drives the panel animators, so a view coming from anywhere else would keep the state it was left in
+            ResetAnimator();
+        }
+
+        public void AttachToHome() =>
+            AttachTo(homeHost, false);
+
+        /// <summary>
+        ///     Trims the item info column off the content panel and pins what is left to the right border of the host, so every
+        ///     pixel nothing else claims goes to the avatar. Everything centred on the panel is pushed back by half of what was
+        ///     trimmed to hold its place in it. The outfits row is a single fixed width strip and cannot reflow into what is
+        ///     left, so it is scaled down by the same ratio instead.
+        /// </summary>
+        private void SetCompactLayout(bool compact)
+        {
+            if (isCompact == compact) return;
+
+            isCompact = compact;
+
+            foreach (BackpackInfoPanelView itemInfoPanel in view.ItemInfoPanels)
+                itemInfoPanel.gameObject.SetActive(!compact);
+
+            var trim = 0f;
+
+            if (compact)
+            {
+                var itemInfoRect = (RectTransform)view.ItemInfoPanels[0].transform;
+                trim = itemInfoRect.rect.width + Mathf.Abs(itemInfoRect.anchoredPosition.x);
+            }
+
+            float contentWidth = contentFull.SizeDelta.x - trim;
+
+            if (compact)
+            {
+                view.ContentRect.anchorMin = new Vector2(1f, view.ContentRect.anchorMin.y);
+                view.ContentRect.anchorMax = new Vector2(1f, view.ContentRect.anchorMax.y);
+                view.ContentRect.sizeDelta = new Vector2(contentWidth, contentFull.SizeDelta.y);
+                view.ContentRect.anchoredPosition = new Vector2(-(COMPACT_HOST_MARGIN + (contentWidth / 2f)), contentFull.AnchoredPosition.y);
+            }
+            else
+                contentFull.ApplyTo(view.ContentRect);
+
+            for (var i = 0; i < view.CompactShiftedRects.Length; i++)
+                view.CompactShiftedRects[i].anchoredPosition = shiftedFullPositions[i] + new Vector2(trim / 2f, 0f);
+
+            float scale = contentWidth / contentFull.SizeDelta.x;
+            view.OutfitsRect.localScale = new Vector3(scale, scale, 1f);
+
+            SetCompactPreview(compact, contentWidth);
+        }
+
+        /// <summary>
+        ///     Gives the avatar preview the whole border left of the content panel, whatever width the host has, instead of
+        ///     the fixed rect the full screen layout hangs off the left of the screen.
+        /// </summary>
+        private void SetCompactPreview(bool compact, float contentWidth)
+        {
+            var previewRect = (RectTransform)view.CharacterPreviewView.transform;
+            RectTransform previewImageRect = view.CharacterPreviewView.RawImage.rectTransform;
+
+            if (!compact)
+            {
+                // The render texture is measured from the raw image and renewed when the preview resizes, so the image goes first
+                previewImageFull.ApplyTo(previewImageRect);
+                previewFull.ApplyTo(previewRect);
+                return;
+            }
+
+            previewImageRect.anchorMin = Vector2.zero;
+            previewImageRect.anchorMax = Vector2.one;
+            previewImageRect.offsetMin = Vector2.zero;
+            previewImageRect.offsetMax = Vector2.zero;
+
+            previewRect.anchorMin = new Vector2(0f, previewRect.anchorMin.y);
+            previewRect.anchorMax = new Vector2(1f, previewRect.anchorMax.y);
+            previewRect.offsetMin = new Vector2(0f, previewFull.OffsetMin.y);
+            previewRect.offsetMax = new Vector2(-(COMPACT_HOST_MARGIN + contentWidth), previewFull.OffsetMax.y);
+        }
+
+        // The explore panel toggles and positions its own section slot, so it stays behind when the view is borrowed
         public RectTransform GetRectTransform() =>
-            rectTransform;
+            homeHost;
 
         public void Toggle(BackpackSections section)
         {
@@ -344,6 +475,38 @@ namespace DCL.Backpack
             }
 
             instantSectionToggle = tmp;
+        }
+
+        /// <summary>
+        ///     Rect values the compact layout overwrites, kept so the full screen layout is put back exactly as authored.
+        /// </summary>
+        private readonly struct RectSnapshot
+        {
+            public readonly Vector2 OffsetMin;
+            public readonly Vector2 OffsetMax;
+            public readonly Vector2 SizeDelta;
+            public readonly Vector2 AnchoredPosition;
+
+            private readonly Vector2 anchorMin;
+            private readonly Vector2 anchorMax;
+
+            public RectSnapshot(RectTransform rect)
+            {
+                OffsetMin = rect.offsetMin;
+                OffsetMax = rect.offsetMax;
+                SizeDelta = rect.sizeDelta;
+                AnchoredPosition = rect.anchoredPosition;
+                anchorMin = rect.anchorMin;
+                anchorMax = rect.anchorMax;
+            }
+
+            public void ApplyTo(RectTransform rect)
+            {
+                rect.anchorMin = anchorMin;
+                rect.anchorMax = anchorMax;
+                rect.sizeDelta = SizeDelta;
+                rect.anchoredPosition = AnchoredPosition;
+            }
         }
     }
 }

@@ -193,6 +193,7 @@ namespace DCL.PluginSystem.Global
         private PlaceDetailPanelController? placeDetailPanelController;
         private EventsController? eventsController;
         private EventDetailPanelController? eventDetailPanelController;
+        private BackpackModalController? backpackModalController;
         private readonly SpringBoneSimulationSettings springBoneSimulationSettings;
 
         public ExplorePanelPlugin(IEventBus eventBus,
@@ -355,6 +356,7 @@ namespace DCL.PluginSystem.Global
             eventsController?.Dispose();
             eventDetailPanelController?.Dispose();
             placeDetailPanelController?.Dispose();
+            backpackModalController?.Dispose();
             creditsPanelController.Dispose();
 
             dclInput.Shortcuts.MainMenu.canceled -= OnInputShortcutsMainMenuCanceledAsync;
@@ -605,6 +607,11 @@ namespace DCL.PluginSystem.Global
             {
                 lobbyButton = explorePanelView.LobbyButton;
                 lobbyButton.onClick.AddListener(OpenLobby);
+
+                // The lobby shows the backpack on its own; the view it borrows is the one that already lives in the explore panel
+                BackpackModalView backpackModalViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.BackpackSettings.BackpackModalPrefab, ct: ct)).GetComponent<BackpackModalView>();
+                backpackModalController = new BackpackModalController(BackpackModalController.CreateLazily(backpackModalViewAsset, null), backpackSubPlugin.backpackController!);
+                mvcManager.RegisterController(backpackModalController);
             }
 
             EnableCreditsPanelAsync(explorePanelView.CreditsPanelView, ct)

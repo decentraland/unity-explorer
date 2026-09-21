@@ -85,6 +85,8 @@ namespace DCL.CharacterPreview
             characterPreviewEventBus.OnAnyCharacterPreviewHideEvent += OnAnyCharacterPreviewHide;
 
             isPlayingEmoteDelegate = () => previewController?.IsPlayingEmote() ?? false;
+
+            ClearRawImage();
         }
 
         public virtual void Initialize(Avatar avatar, Vector3 position)
@@ -276,6 +278,7 @@ namespace DCL.CharacterPreview
                 previewController = null;
                 initialized = false;
                 ReleaseRenderTexture();
+                ClearRawImage();
             }
 
             if (triggerOnHideBusEvent)
@@ -335,13 +338,28 @@ namespace DCL.CharacterPreview
 
         private GameObject EnableSpinner()
         {
+            HideRawImage();
+            GameObject spinner = view.Spinner;
+            spinner.SetActive(true);
+            return spinner;
+        }
+
+        /// <summary>
+        ///     Leaves the image with nothing to draw at all. With no render target it falls back to whatever texture the prefab
+        ///     carries, or to the one that was just destroyed, and either of those renders as a plain white rect.
+        /// </summary>
+        private void ClearRawImage()
+        {
+            HideRawImage();
+            view.RawImage.texture = null;
+        }
+
+        private void HideRawImage()
+        {
             view.RawImage.DOKill();
             profileColor = view.RawImage.color;
             profileColor.a = 0;
             view.RawImage.color = profileColor;
-            GameObject spinner = view.Spinner;
-            spinner.SetActive(true);
-            return spinner;
         }
 
         private async UniTask UpdateAvatarAsync(CharacterPreviewAvatarModel model, CancellationToken ct) =>

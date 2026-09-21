@@ -8922,6 +8922,19 @@ MonoBehaviour:
   <CharacterPreviewView>k__BackingField: {fileID: 4359593439648312558}
   <PanelAnimator>k__BackingField: {fileID: 358424403103859707}
   <HeaderAnimator>k__BackingField: {fileID: 3841930929175590041}
+  <ContentRect>k__BackingField: {fileID: 2081082932129842408}
+  <ItemInfoPanels>k__BackingField:
+  - {fileID: 4264612748387217685}
+  - {fileID: 5535795034186601730}
+  <CompactShiftedRects>k__BackingField:
+  - {fileID: 5668916703579838269}
+  - {fileID: 224394031250736978}
+  - {fileID: 6714445230611409456}
+  - {fileID: 7414407220035120558}
+  - {fileID: 4360543607954712366}
+  - {fileID: 132851282460279112}
+  - {fileID: 3200635111554123195}
+  <OutfitsRect>k__BackingField: {fileID: 6892231095963020470}
 --- !u!225 &4737286497905025240
 CanvasGroup:
   m_ObjectHideFlags: 0

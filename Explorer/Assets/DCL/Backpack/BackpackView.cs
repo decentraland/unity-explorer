@@ -29,6 +29,25 @@ namespace DCL.Backpack
         [field: SerializeField]
         public Animator HeaderAnimator { get; private set; }
 
+        [field: Header("Compact layout")]
+        [field: SerializeField]
+        public RectTransform ContentRect { get; private set; }
+
+        [field: SerializeField]
+        public BackpackInfoPanelView[] ItemInfoPanels { get; private set; }
+
+        /// <summary>
+        ///     Rects centred on <see cref="ContentRect" />: trimming it moves them, so the compact layout puts them back.
+        /// </summary>
+        [field: SerializeField]
+        public RectTransform[] CompactShiftedRects { get; private set; }
+
+        /// <summary>
+        ///     Outfits row, one fixed width strip that cannot reflow into the trimmed content.
+        /// </summary>
+        [field: SerializeField]
+        public RectTransform OutfitsRect { get; private set; }
+
         private void OnEnable()
         {
             PanelAnimator.enabled = true;

@@ -1,6 +1,7 @@
 using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.Backpack;
 using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Clipboard;
@@ -8,7 +9,6 @@ using DCL.Communities;
 using DCL.Communities.EventInfo;
 using DCL.Events;
 using DCL.EventsApi;
-using DCL.ExplorePanel;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.MapRenderer.MapLayers.HomeMarker;
@@ -529,7 +529,7 @@ namespace DCL.Lobby.Tests
         }
 
         [Test]
-        public void OpenTheBackpackWhenTheAvatarIsClicked()
+        public void OpenTheBackpackModalWhenTheAvatarIsClicked()
         {
             // Arrange
             Launch(isStartup: true).Forget();
@@ -538,7 +538,7 @@ namespace DCL.Lobby.Tests
             avatarInputDetector.OnPointerClick(new PointerEventData(EventSystem.current));
 
             // Assert
-            mvcManager.Received(1).ShowAsync(Arg.Is<ShowCommand<ExplorePanelView, ExplorePanelParameter>>(c => c.InputData.Section == ExploreSections.Backpack), Arg.Any<CancellationToken>());
+            mvcManager.Received(1).ShowAsync(Arg.Is<ShowCommand<BackpackModalView, BackpackModalParameter>>(c => c.InputData.Section == BackpackSections.Avatar), Arg.Any<CancellationToken>());
         }
 
         [Test]

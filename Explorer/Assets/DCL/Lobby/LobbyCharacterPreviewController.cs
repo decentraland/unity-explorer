@@ -25,6 +25,7 @@ namespace DCL.Lobby
         private readonly HashSet<URN> shortenedEmotes = new ();
 
         private CancellationTokenSource? emotesCts;
+        private Avatar? appliedAvatar;
 
         public LobbyCharacterPreviewController(CharacterPreviewView view, LobbyAvatarSettings settings, LobbyStage stage, ICharacterPreviewFactory previewFactory, World world, CharacterPreviewEventBus characterPreviewEventBus)
             : base(view, previewFactory, world, isPreviewPlatformActive: false, characterPreviewEventBus)
@@ -53,10 +54,13 @@ namespace DCL.Lobby
         }
 
         /// <summary>
-        ///     Re-dresses the avatar with an updated profile and plays an emote once the new look is loaded.
+        ///     Re-dresses the avatar with an updated profile and plays an emote once the new look is loaded. A profile that
+        ///     dresses the same is ignored, so the catalyst confirming a look that is already on does not replay it.
         /// </summary>
         public void Refresh(Avatar avatar)
         {
+            if (avatar.IsSameAvatar(appliedAvatar)) return;
+
             ApplyAvatar(avatar, CharacterPreviewUtils.LOBBY_PREVIEW_POSITION);
 
             emotesCts = emotesCts.SafeRestart();
@@ -103,6 +107,7 @@ namespace DCL.Lobby
 
             previewAvatarModel.Wearables = shortenedWearables;
             previewAvatarModel.Emotes = shortenedEmotes;
+            appliedAvatar = avatar;
 
             base.Initialize(avatar, position);
         }
