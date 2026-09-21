@@ -8,9 +8,9 @@ namespace DCL.RealmNavigation.TeleportOperations
     public class PrewarmRoadAssetPoolsTeleportOperation : TeleportOperationBase
     {
         private readonly IRealmController realmController;
-        private readonly RoadAssetsPool roadAssetsPool;
+        private readonly IRoadAssetPool roadAssetsPool;
 
-        public PrewarmRoadAssetPoolsTeleportOperation(IRealmController realmController, RoadAssetsPool roadAssetsPool)
+        public PrewarmRoadAssetPoolsTeleportOperation(IRealmController realmController, IRoadAssetPool roadAssetsPool)
         {
             this.roadAssetsPool = roadAssetsPool;
             this.realmController = realmController;

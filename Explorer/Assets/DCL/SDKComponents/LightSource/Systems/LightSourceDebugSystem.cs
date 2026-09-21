@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using ECS.Abstract;
+using ECS.LifeCycle.Components;
 using UnityEngine;
 
 namespace DCL.SDKComponents.LightSource.Systems
@@ -42,6 +43,7 @@ namespace DCL.SDKComponents.LightSource.Systems
         }
 
         [Query]
+        [None(typeof(DeleteEntityIntention))]
         private void ApplyDebugState([Data] in LightSourceDebugState debugState, in LightSourceComponent lightSourceComponent)
         {
             var light = lightSourceComponent.LightSourceInstance;

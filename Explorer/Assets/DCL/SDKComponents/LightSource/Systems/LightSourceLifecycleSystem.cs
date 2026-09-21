@@ -38,7 +38,7 @@ namespace DCL.SDKComponents.LightSource.Systems
         }
 
         [Query]
-        [None(typeof(LightSourceComponent))]
+        [None(typeof(LightSourceComponent), typeof(DeleteEntityIntention))]
         private void CreateLightSourceComponent(in Entity entity, ref PBLightSource pbLightSource, in TransformComponent transform)
         {
             if (!sceneStateProvider.IsCurrent) return;

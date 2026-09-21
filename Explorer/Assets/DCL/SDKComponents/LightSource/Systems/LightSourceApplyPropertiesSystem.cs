@@ -6,6 +6,7 @@ using DCL.ECSComponents;
 using DCL.SDKComponents.Utils;
 using Decentraland.Common;
 using ECS.Abstract;
+using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
@@ -50,6 +51,7 @@ namespace DCL.SDKComponents.LightSource.Systems
         }
 
         [Query]
+        [None(typeof(DeleteEntityIntention))]
         private void UpdateLightSource(in PBLightSource pbLightSource, ref LightSourceComponent lightSourceComponent)
         {
             Light lightSourceInstance = lightSourceComponent.LightSourceInstance;
@@ -168,6 +170,7 @@ namespace DCL.SDKComponents.LightSource.Systems
         }
 
         [Query]
+        [None(typeof(DeleteEntityIntention))]
         private void ResolveTexturePromise(ref LightSourceComponent lightSourceComponent)
         {
             var promise = lightSourceComponent.Cookie.LoadingPromise;
