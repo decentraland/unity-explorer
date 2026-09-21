@@ -130,7 +130,7 @@ namespace DCL.Profiles.Self
 
             string address = web3IdentityCache.Identity.Address;
 
-            // Strip forced wearables before deploying - this is the only path that reaches SetAsync.
+            // Strip forced wearables before deploying.
             forcedWearables.RemoveFrom(newProfile);
 
             // Take a snapshot of the current profile from cache before any mutations
