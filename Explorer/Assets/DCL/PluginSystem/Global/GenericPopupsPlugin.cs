@@ -103,9 +103,9 @@ namespace DCL.PluginSystem.Global
                 public UpgradeGuestAccountPopupRef(string guid) : base(guid) { }
             }
 
-            [field: SerializeField] public PastePopupToastRef PastePopupToastPrefab;
-            [field: SerializeField] public ChatEntryMenuPopupRef ChatEntryMenuPopupPrefab;
-            [field: SerializeField] public UpgradeGuestAccountPopupRef UpgradeGuestAccountPopupPrefab;
+            [field: SerializeField] public PastePopupToastRef PastePopupToastPrefab = null!;
+            [field: SerializeField] public ChatEntryMenuPopupRef ChatEntryMenuPopupPrefab = null!;
+            [field: SerializeField] public UpgradeGuestAccountPopupRef UpgradeGuestAccountPopupPrefab = null!;
         }
     }
 }
