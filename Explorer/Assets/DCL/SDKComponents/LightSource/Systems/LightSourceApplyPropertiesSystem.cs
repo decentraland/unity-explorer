@@ -190,7 +190,7 @@ namespace DCL.SDKComponents.LightSource.Systems
                 case LightType.Spot:
                     // Unity raises "Spotlight cookies must be square" as an error on assignment;
                     // the texture comes from scene content, so validate instead of erroring
-                    Texture? spotCookie = texture.Asset;
+                    UnityEngine.Texture? spotCookie = texture.Asset;
 
                     if (spotCookie != null && spotCookie.width != spotCookie.height)
                     {
