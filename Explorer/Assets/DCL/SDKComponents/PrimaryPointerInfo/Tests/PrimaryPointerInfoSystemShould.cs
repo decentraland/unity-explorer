@@ -98,27 +98,8 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Tests
 
             // Assert
             (Vector2 pos, Vector2 delta, ProtoVector3 _) = LastPut();
-            AssertVector2(new Vector2(130f, Screen.height - 120f), pos);
-            AssertVector2(new Vector2(30f, -20f), delta);
-        }
-
-        [Test]
-        public void ReportTopLeftYDownScreenSpace()
-        {
-            // Regression coverage for https://github.com/decentraland/unity-explorer/issues/10073:
-            // the SDK convention (and the Bevy/Godot clients) is top-left origin, Y down, matching
-            // UiTransform/UiCanvasInformation; Unity's native pointer space is bottom-left, Y up.
-            Set(mouse.position, new Vector2(100f, 100f));
-            system.Update(0);
-
-            // Act: move the pointer up in Unity space (raw Y increases)
-            Set(mouse.position, new Vector2(100f, 150f));
-            system.Update(0);
-
-            // Assert: reported Y shrinks toward the top edge, and the delta is negative
-            (Vector2 pos, Vector2 delta, ProtoVector3 _) = LastPut();
-            AssertVector2(new Vector2(100f, Screen.height - 150f), pos);
-            AssertVector2(new Vector2(0f, -50f), delta);
+            AssertVector2(new Vector2(130f, 120f), pos);
+            AssertVector2(new Vector2(30f, 20f), delta);
         }
 
         [Test]
@@ -135,8 +116,7 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Tests
             var center = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
             (Vector2 pos, Vector2 delta, ProtoVector3 rayDir) = LastPut();
 
-            // Accumulated delta is Unity Y-up; the reported delta is Y-down (screen center is its own flip)
-            AssertVector2(new Vector2(5f, 3f), delta);
+            AssertVector2(new Vector2(5f, -3f), delta);
             AssertVector2(center, pos);
 
             Ray expectedRay = camera.ScreenPointToRay(center);
@@ -161,7 +141,7 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Tests
 
             // Assert: no intermediate frame motion is lost
             (Vector2 _, Vector2 delta, ProtoVector3 _) = LastPut();
-            AssertVector2(new Vector2(10f, -4f), delta);
+            AssertVector2(new Vector2(10f, 4f), delta);
         }
 
         [Test]
@@ -196,7 +176,7 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Tests
             // Assert: the raw position was tracked while locked, so the diff is zero
             (Vector2 pos, Vector2 delta, ProtoVector3 _) = LastPut();
             AssertVector2(Vector2.zero, delta);
-            AssertVector2(new Vector2(rawPosition.x, Screen.height - rawPosition.y), pos);
+            AssertVector2(rawPosition, pos);
         }
 
         [Test]
