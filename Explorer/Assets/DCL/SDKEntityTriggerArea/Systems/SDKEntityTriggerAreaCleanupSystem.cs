@@ -47,11 +47,7 @@ namespace DCL.SDKEntityTriggerArea.Systems
             typeof(AvatarModifierAreaComponent), typeof(CameraModeAreaComponent), typeof(TriggerAreaComponent))]
         private void HandleComponentRemoval(Entity entity, ref SDKEntityTriggerAreaComponent component)
         {
-            // Consumer components are excluded above because their own removal handlers must run first:
-            // they read CurrentEntitiesInside to undo per-avatar effects (unhide, nametags, interaction),
-            // and releasing the trigger area here clears that list. AvatarModifierAreaHandlerSystem runs in
-            // a throttled group, so this cleanup can win the race within a frame; each consumer removes its
-            // component in its removal handler, after which this query matches and the area is released.
+            // Consumer components are excluded above because releasing the area clears the CurrentEntitiesInside their removal handlers still read (#10032).
             component.TryRelease(poolRegistry);
             World.Remove<SDKEntityTriggerAreaComponent>(entity);
         }

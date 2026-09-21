@@ -11,9 +11,7 @@ namespace DCL.LOD
 
         void Unload(IPerformanceBudget frameTimeBudgetProvider, int maxUnloadAmount);
 
-        /// <summary>
-        ///     Fills every pool up to its initial capacity so the first road placements do not instantiate on demand.
-        /// </summary>
+        /// <summary>Fills every pool to its initial capacity so the first road placements do not instantiate on demand.</summary>
         void Prewarm();
     }
 }

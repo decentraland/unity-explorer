@@ -49,9 +49,7 @@ namespace DCL.SDKComponents.LightSource.Tests
         [Test]
         public void SkipReleasedInstancesOnEntitiesPendingDeletion()
         {
-            // LightSourceLifecycleSystem.ReleaseDestroyedLightSource returns the pooled Light to the pool while the
-            // component stays on the entity until the deferred destruction runs; touching that instance afterwards
-            // is the same pooled-instance-after-release defect as https://github.com/decentraland/unity-explorer/issues/10044.
+            // The pooled Light is released while the component still sits on the entity until the deferred destruction runs (#10044).
             Light light = lightGameObject.AddComponent<Light>();
 
             world.Create(new PBLightSource { IsDirty = true, Spot = new PBLightSource.Types.Spot() }, new LightSourceComponent(light), new DeleteEntityIntention());

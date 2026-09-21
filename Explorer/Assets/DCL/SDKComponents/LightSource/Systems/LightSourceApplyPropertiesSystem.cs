@@ -93,7 +93,7 @@ namespace DCL.SDKComponents.LightSource.Systems
                     break;
 
                 case PBLightSource.TypeOneofCase.Point:
-                    ApplyPointLight(pbLightSource, lightSourceInstance);
+                    ApplyPointLight(lightSourceInstance);
                     break;
             }
 
@@ -111,7 +111,7 @@ namespace DCL.SDKComponents.LightSource.Systems
                 light.spotAngle = pbLightSource.Spot.OuterAngle;
         }
 
-        private static void ApplyPointLight(PBLightSource pbLightSource, Light light)
+        private static void ApplyPointLight(Light light)
         {
             light.type = LightType.Point;
         }
@@ -191,8 +191,7 @@ namespace DCL.SDKComponents.LightSource.Systems
             switch (lightSourceComponent.LightSourceInstance.type)
             {
                 case LightType.Spot:
-                    // Unity raises "Spotlight cookies must be square" as an error on assignment;
-                    // the texture comes from scene content, so validate instead of erroring
+                    // Unity errors on a non-square spot cookie, and the texture comes from scene content.
                     UnityEngine.Texture? spotCookie = texture.Asset;
 
                     if (spotCookie != null && spotCookie.width != spotCookie.height)

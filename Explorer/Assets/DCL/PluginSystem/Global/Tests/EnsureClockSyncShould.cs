@@ -12,15 +12,12 @@ using System.Threading.Tasks;
 namespace DCL.PluginSystem.Global.Tests
 {
     /// <summary>
-    ///     Regression coverage for https://github.com/decentraland/unity-explorer/issues/10075.
-    ///     <see cref="RealmClock" />'s monotonic anchor stops while the OS sleeps, so a sample recorded before
-    ///     sleep reads as a large desync after wake even though the user's clock is fine. The check must discard
-    ///     that sample and re-probe before blaming the user, and every Retry must re-probe as well.
+    ///     Regression coverage for https://github.com/decentraland/unity-explorer/issues/10075: a sample recorded before OS sleep reads as a desync after wake.
     /// </summary>
     [TestFixture]
     public class EnsureClockSyncShould
     {
-        // Well above EnsureClockSync's 60s desync threshold
+        // Well above EnsureClockSync's 60s desync threshold.
         private static readonly TimeSpan STALE_OFFSET = TimeSpan.FromMinutes(10);
 
         private RealmClock realmClock = null!;
@@ -39,8 +36,7 @@ namespace DCL.PluginSystem.Global.Tests
             probeCount = 0;
             promptCount = 0;
 
-            // IsHeadReachableAsync bottoms out in this generic SendAsync call; the production controller records
-            // the response's Date header into the RealmClock, which the queued server responses stand in for.
+            // IsHeadReachableAsync bottoms out in this generic overload, and the queued responses stand in for the Date header the controller records.
             IWebRequestController webRequestController = Substitute.For<IWebRequestController>();
 
             webRequestController

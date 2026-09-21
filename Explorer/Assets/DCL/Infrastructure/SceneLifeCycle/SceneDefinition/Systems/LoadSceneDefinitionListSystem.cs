@@ -47,7 +47,7 @@ namespace ECS.SceneLifeCycle.SceneDefinition
         private readonly StringBuilder bodyBuilder = new ();
         private static readonly SceneMetadataConverter SCENE_METADATA_CONVERTER = new ();
 
-        // Thread-safe pools: the flow runs on the thread pool, where UnityEngine.Pool statics race
+        // The flow runs on the thread pool, where UnityEngine.Pool's statics race.
         private static readonly ThreadSafeListPool<UniTask> MANIFEST_TASKS_POOL = new (BATCH_CAPACITY, POOL_CAPACITY);
         private static readonly ThreadSafeHashSetPool<string> SEEN_IDS_POOL = new (BATCH_CAPACITY, POOL_CAPACITY);
 

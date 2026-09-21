@@ -20,10 +20,10 @@ namespace DCL.AssetsProvision
     {
         public ComponentReference(string guid) : base(guid) { }
 
-        public new AsyncOperationHandle<TComponent> InstantiateAsync(Vector3 position, Quaternion rotation, Transform parent = null) =>
+        public new AsyncOperationHandle<TComponent> InstantiateAsync(Vector3 position, Quaternion rotation, Transform? parent = null) =>
             Addressables.ResourceManager.CreateChainOperation(base.InstantiateAsync(position, Quaternion.identity, parent), GameObjectReady);
 
-        public new AsyncOperationHandle<TComponent> InstantiateAsync(Transform parent = null, bool instantiateInWorldSpace = false) =>
+        public new AsyncOperationHandle<TComponent> InstantiateAsync(Transform? parent = null, bool instantiateInWorldSpace = false) =>
             Addressables.ResourceManager.CreateChainOperation(base.InstantiateAsync(parent, instantiateInWorldSpace), GameObjectReady);
 
         public AsyncOperationHandle<TComponent> LoadAssetAsync() =>
@@ -31,11 +31,9 @@ namespace DCL.AssetsProvision
 
         private AsyncOperationHandle<TComponent> GameObjectReady(AsyncOperationHandle<GameObject> arg)
         {
-            // The chain callback also runs when the source operation failed (Result is null then);
-            // propagate a failed handle with the original error instead of throwing inside the
-            // ResourceManager callback, where the NRE surfaces with no context on what was loading.
+            // The chain callback runs on failure too, where dereferencing the null result throws inside ResourceManager with no context.
             if (arg.Status != AsyncOperationStatus.Succeeded || arg.Result == null)
-                return Addressables.ResourceManager.CreateCompletedOperation(default(TComponent), $"Failed to load {AssetGUID}: {arg.OperationException?.Message ?? "no result"}");
+                return Addressables.ResourceManager.CreateCompletedOperation(default(TComponent)!, $"Failed to load {AssetGUID}: {arg.OperationException?.Message ?? "no result"}");
 
             TComponent comp = arg.Result.GetComponent<TComponent>();
 

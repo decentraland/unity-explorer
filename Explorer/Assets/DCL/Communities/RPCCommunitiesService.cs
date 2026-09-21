@@ -74,9 +74,7 @@ namespace DCL.Communities
                         //that would cause exception later down the flow
                         if (socialServiceRPC.IsDisconnecting) continue;
 
-                        // Stream updates arrive on the transport's background thread, while the broadcasts
-                        // below mutate CommunityUserStateService's online sets that the chat UI iterates on
-                        // the main thread (same pattern as RPCFriendsService)
+                        // Stream updates arrive on a background thread, while the broadcasts below mutate online sets the chat UI iterates on the main thread.
                         await UniTask.SwitchToMainThread(ct);
 
                         switch (response.Status)

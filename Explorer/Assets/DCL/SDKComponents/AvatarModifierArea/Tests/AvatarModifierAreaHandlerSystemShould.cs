@@ -18,7 +18,6 @@ using ECS.TestSuite;
 using ECS.Unity.Transforms.Components;
 using NSubstitute;
 using NUnit.Framework;
-using System.Collections.Generic;
 using UnityEngine;
 using Avatar = DCL.Profiles.Avatar;
 using Entity = Arch.Core.Entity;
@@ -92,7 +91,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
 
             world.Add(triggerAreaEntity, component);
 
-            system!.Update(0);
+            system.Update(0);
 
             Assert.IsTrue(world.TryGet(triggerAreaEntity, out SDKEntityTriggerAreaComponent triggerAreaComponent));
             Assert.AreEqual(new UnityEngine.Vector3(areaSize.X, areaSize.Y, areaSize.Z), triggerAreaComponent.AreaSize);
@@ -277,9 +276,6 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
                 WearablesConstants.DefaultColors.GetRandomHairColor(),
                 WearablesConstants.DefaultColors.GetRandomSkinColor())), new AvatarShapeComponent());
 
-            var excludedIds = new HashSet<string>();
-            excludedIds.Add(FAKE_USER_ID);
-
             system.Update(0f);
 
             Assert.IsFalse(globalWorld.Get<AvatarShapeComponent>(fakeAvatarEntity).HiddenByModifierArea);
@@ -439,13 +435,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
         [Test]
         public void UnhideAvatarWhenCleanupSystemRunsBeforeRemovalHandler()
         {
-            // Regression coverage for https://github.com/decentraland/unity-explorer/issues/10032:
-            // SDKEntityTriggerAreaCleanupSystem (CleanUpGroup, every frame) can process the
-            // PBAvatarModifierArea removal before AvatarModifierAreaHandlerSystem (throttled group)
-            // does. It must defer teardown while AvatarModifierAreaComponent is still present -
-            // releasing the trigger area first clears CurrentEntitiesInside, the unhide never runs,
-            // the avatar stays hidden permanently and the orphaned modifier component blocks any
-            // future setup on the entity.
+            // Regression coverage for https://github.com/decentraland/unity-explorer/issues/10032: an early release clears CurrentEntitiesInside, leaving the avatar hidden forever.
             const string FAKE_USER_ID = "Ia4Ia5Cth0ulhu2Ftaghn2";
 
             globalWorld.Add(fakeAvatarEntity, new Profile(UserId.New(FAKE_USER_ID).Unwrap(), "fake user", new Avatar(
@@ -473,7 +463,6 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
             world.Add(triggerAreaEntity, pbComponent);
             system.Update(0);
 
-            // "Enter" trigger area and hide the avatar
             sdkEntityTriggerArea.OnTriggerEnter(fakeAvatarShapeCollider);
             SDKEntityTriggerAreaComponent component = world.Get<SDKEntityTriggerAreaComponent>(triggerAreaEntity);
             component.SetMonoBehaviour(sdkEntityTriggerArea);
@@ -483,17 +472,14 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
 
             world.Remove<PBAvatarModifierArea>(triggerAreaEntity);
 
-            // The cleanup system wins the race: it must leave the trigger area alone
             var cleanupSystem = new SDKEntityTriggerAreaCleanupSystem(world, Substitute.For<IComponentPool<SDKEntityTriggerArea.SDKEntityTriggerArea>>());
             cleanupSystem.Update(0);
             Assert.IsTrue(world.Has<SDKEntityTriggerAreaComponent>(triggerAreaEntity), "cleanup must defer teardown while a consumer component is still present");
 
-            // The consumer's removal handler then unhides and releases its component
             system.Update(0);
             Assert.IsFalse(globalWorld.Get<AvatarShapeComponent>(fakeAvatarEntity).HiddenByModifierArea);
             Assert.IsFalse(world.Has<AvatarModifierAreaComponent>(triggerAreaEntity));
 
-            // And only now does the cleanup release the trigger area
             cleanupSystem.Update(0);
             Assert.IsFalse(world.Has<SDKEntityTriggerAreaComponent>(triggerAreaEntity));
         }

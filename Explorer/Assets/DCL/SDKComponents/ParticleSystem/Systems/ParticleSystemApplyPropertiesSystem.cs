@@ -68,7 +68,7 @@ namespace DCL.SDKComponents.ParticleSystem.Systems
             ApplyColorOverLifetime(particleSystemData, particleSystem, ref component);
             ApplyForceOverLifetime(particleSystemData, particleSystem);
             ApplyLimitVelocityOverLifetime(particleSystemData, particleSystem);
-            ApplySpriteSheet(particleSystemData, particleSystem, ref component);
+            ApplySpriteSheet(particleSystemData, particleSystem);
             ApplyRenderer(particleSystemData, ref component);
         }
 
@@ -259,7 +259,7 @@ namespace DCL.SDKComponents.ParticleSystem.Systems
             limitVelocityModule.dampen = particleSystemData.LimitVelocity.GetDampen();
         }
 
-        private static void ApplySpriteSheet(PBParticleSystem particleSystemData, UnityEngine.ParticleSystem particleSystem, ref ParticleSystemComponent component)
+        private static void ApplySpriteSheet(PBParticleSystem particleSystemData, UnityEngine.ParticleSystem particleSystem)
         {
             var textureSheetAnimationModule = particleSystem.textureSheetAnimation;
 

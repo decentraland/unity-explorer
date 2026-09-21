@@ -34,11 +34,7 @@ namespace DCL.Time
             }
         }
 
-        /// <summary>
-        ///     Discards the recorded sample so the next trusted response records a fresh one. The monotonic
-        ///     anchor stops while the OS sleeps, so a sample taken before sleep reads arbitrarily far behind
-        ///     real server time after wake.
-        /// </summary>
+        /// <summary>Discards the recorded sample so the next trusted response records a fresh one.</summary>
         public void Invalidate() =>
             hasSample = false;
 

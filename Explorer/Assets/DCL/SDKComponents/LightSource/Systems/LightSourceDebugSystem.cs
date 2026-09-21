@@ -2,7 +2,6 @@
 using Arch.System;
 using Arch.SystemGroups;
 using DCL.Diagnostics;
-using DCL.ECSComponents;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using UnityEngine;

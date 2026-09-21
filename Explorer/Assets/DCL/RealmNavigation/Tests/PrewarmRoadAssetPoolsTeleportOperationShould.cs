@@ -13,10 +13,7 @@ using UnityEngine;
 namespace DCL.RealmNavigation.TeleportOperations.Tests
 {
     /// <summary>
-    ///     Regression coverage for https://github.com/decentraland/unity-explorer/issues/10031.
-    ///     A competing realm change can invalidate <see cref="RealmData" /> between the realm-change step and
-    ///     this one, and <see cref="IRealmData.ScenesAreFixed" /> throws while the realm is unconfigured.
-    ///     Prewarming is optional, so that window must not fail the whole teleport chain.
+    ///     Regression coverage for https://github.com/decentraland/unity-explorer/issues/10031: an unconfigured <see cref="RealmData" /> must not fail the teleport chain.
     /// </summary>
     [TestFixture]
     public class PrewarmRoadAssetPoolsTeleportOperationShould
@@ -44,7 +41,7 @@ namespace DCL.RealmNavigation.TeleportOperations.Tests
         [Test]
         public void SucceedWithoutPrewarmingWhenRealmIsNotConfigured()
         {
-            // The real RealmData is used on purpose: its ScenesAreFixed getter is the one that throws
+            // The real RealmData is used on purpose: its ScenesAreFixed getter is the one that throws.
             realmController.RealmData.Returns(new RealmData());
 
             EnumResult<TaskError> result = Execute();

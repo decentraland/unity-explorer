@@ -41,10 +41,7 @@ namespace DCL.PluginSystem.Global
 
                 if (!IsDesync()) return;
 
-                // The sample itself can be the stale side: RealmClock's monotonic anchor stops while the
-                // OS sleeps (e.g. a Mac lid close), so after wake the anchored time trails real server time
-                // by the sleep duration. Re-sample before blaming the user's clock - this also makes the
-                // dialog's Retry actually re-probe instead of re-reading the same stale sample forever.
+                // The monotonic anchor stops while the OS sleeps, so a pre-sleep sample trails server time after wake without the user's clock being wrong.
                 realmClock.Invalidate();
                 await TryProbeServerTimeAsync(ct);
 
