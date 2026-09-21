@@ -28,7 +28,7 @@ namespace ECS.SceneLifeCycle.Systems
 
         protected Entity CreateSceneEntity(SceneEntityDefinition definition, IpfsPath ipfsPath, ISSDescriptor issDescriptor, bool isPortableExperience = false)
         {
-            SceneDefinitionComponent sceneDefinition = SceneDefinitionComponentFactory.CreateFromDefinition(definition, ipfsPath, isPortableExperience, limitSceneHeight: !realmData.IsWorld());
+            SceneDefinitionComponent sceneDefinition = SceneDefinitionComponentFactory.CreateFromDefinition(definition, ipfsPath, isPortableExperience, limitHeightByParcels: !realmData.IsWorld());
 
             return IsRoad(definition)
                 ? World.Create(sceneDefinition, issDescriptor, RoadInfo.Create(), SceneLoadingState.CreateRoad())

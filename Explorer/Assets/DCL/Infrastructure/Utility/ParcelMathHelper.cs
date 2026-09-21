@@ -12,6 +12,13 @@ namespace Utility
         public const float SQR_PARCEL_SIZE = PARCEL_SIZE * PARCEL_SIZE;
         private const float BOUNDS_OFFSET_EPSILON = 0.3f;
 
+        /// <summary>
+        ///     Height (in meters) of scenes whose vertical limit does not depend on the amount of parcels: Worlds and portable experiences.
+        ///     It is the parcel-based height of the largest scene allowed, a 300x300 World: log2(90000 + 1) x 20 = 329.15 m, rounded up.
+        ///     https://docs.decentraland.org/creator/scenes-sdk7/optimizing/scene-limitations
+        /// </summary>
+        public const float FIXED_SCENE_HEIGHT = 330f;
+
         public static readonly SceneGeometry UNDEFINED_SCENE_GEOMETRY = new (
             Vector3.zero,
             new SceneCircumscribedPlanes(float.MinValue, float.MaxValue, float.MinValue, float.MaxValue), float.MaxValue);
@@ -63,10 +70,10 @@ namespace Utility
         /// <summary>
         ///     Creates scene geometry from multiple occupied parcels
         /// </summary>
-        /// <param name="limitHeight">
-        ///     When <c>true</c> the height is derived from the amount of parcels, otherwise the scene has no vertical limit
+        /// <param name="limitHeightByParcels">
+        ///     When <c>true</c> the height is derived from the amount of parcels, otherwise it is <see cref="FIXED_SCENE_HEIGHT" />
         /// </param>
-        public static SceneGeometry CreateSceneGeometry(IReadOnlyList<ParcelCorners> parcelsCorners, Vector2Int baseParcel, bool limitHeight)
+        public static SceneGeometry CreateSceneGeometry(IReadOnlyList<ParcelCorners> parcelsCorners, Vector2Int baseParcel, bool limitHeightByParcels)
         {
             float circumscribedPlaneMinX = float.MaxValue;
             float circumscribedPlaneMaxX = float.MinValue;
@@ -93,9 +100,9 @@ namespace Utility
             circumscribedPlaneMaxZ += EXTEND_AMOUNT;
 
             Vector3 baseParcelPosition = GetPositionByParcelPosition(baseParcel);
-            float sceneHeight = limitHeight
+            float sceneHeight = limitHeightByParcels
                 ? Mathf.Log(parcelsCorners.Count + 1, 2) * 20 // log2(n+1) x 20, where n is the amount of parcels
-                : float.MaxValue;
+                : FIXED_SCENE_HEIGHT;
 
             return new SceneGeometry(
                 baseParcelPosition,
@@ -261,7 +268,7 @@ namespace Utility
             public readonly SceneCircumscribedPlanes CircumscribedPlanes;
 
             /// <summary>
-            /// The height of the scene (in meters). <see cref="float.MaxValue" /> when the scene is not limited vertically.
+            /// The height of the scene (in meters).
             /// </summary>
             public readonly float Height;
 

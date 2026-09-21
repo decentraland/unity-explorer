@@ -60,7 +60,6 @@ namespace ECS.SceneLifeCycle.SceneDefinition
         private static readonly SceneMetadataScene EMPTY_METADATA = new ();
         //This is considering a size of -150 to 150 parcels
         private const float PORTABLE_EXPERIENCE_MAX_VALUES = 2400f;
-        private const float PORTABLE_EXPERIENCE_MAX_HEIGHT = 300f;
 
         private static readonly ParcelMathHelper.SceneGeometry PORTABLE_EXPERIENCES_SCENE_GEOMETRY = new ParcelMathHelper.SceneGeometry(Vector3.zero,
             new ParcelMathHelper.SceneCircumscribedPlanes(
@@ -68,13 +67,13 @@ namespace ECS.SceneLifeCycle.SceneDefinition
                 maxX: PORTABLE_EXPERIENCE_MAX_VALUES,
                 minZ: -PORTABLE_EXPERIENCE_MAX_VALUES,
                 maxZ: PORTABLE_EXPERIENCE_MAX_VALUES),
-            PORTABLE_EXPERIENCE_MAX_HEIGHT);
+            ParcelMathHelper.FIXED_SCENE_HEIGHT);
         //PX don't care about parcel corners as they work on all the map.
         private static readonly IReadOnlyList<ParcelMathHelper.ParcelCorners> PORTABLE_EXPERIENCES_PARCEL_CORNERS = new List<ParcelMathHelper.ParcelCorners>();
 
-        public static SceneDefinitionComponent CreateFromDefinition(SceneEntityDefinition definition, IpfsPath ipfsPath, bool isPortableExperience = false, bool limitSceneHeight = true) =>
+        public static SceneDefinitionComponent CreateFromDefinition(SceneEntityDefinition definition, IpfsPath ipfsPath, bool isPortableExperience = false, bool limitHeightByParcels = true) =>
             isPortableExperience ?
-                CreatePortableExperienceSceneDefinitionComponent(definition, ipfsPath) : CreateSceneDefinitionComponent(definition, definition.metadata.scene.DecodedParcels, ipfsPath, isSDK7: definition.metadata.runtimeVersion == "7", isPortableExperience: false, limitSceneHeight);
+                CreatePortableExperienceSceneDefinitionComponent(definition, ipfsPath) : CreateSceneDefinitionComponent(definition, definition.metadata.scene.DecodedParcels, ipfsPath, isSDK7: definition.metadata.runtimeVersion == "7", isPortableExperience: false, limitHeightByParcels);
 
         private static SceneDefinitionComponent CreatePortableExperienceSceneDefinitionComponent(SceneEntityDefinition definition, IpfsPath ipfsPath) =>
             new (
@@ -93,10 +92,10 @@ namespace ECS.SceneLifeCycle.SceneDefinition
             IpfsPath ipfsPath,
             bool isSDK7,
             bool isPortableExperience,
-            bool limitSceneHeight)
+            bool limitHeightByParcels)
         {
             var parcelCorners = parcels.Select(ParcelMathHelper.CalculateCorners).ToList();
-            ParcelMathHelper.SceneGeometry sceneGeometry = ParcelMathHelper.CreateSceneGeometry(parcelCorners, definition.metadata.scene.DecodedBase, limitSceneHeight);
+            ParcelMathHelper.SceneGeometry sceneGeometry = ParcelMathHelper.CreateSceneGeometry(parcelCorners, definition.metadata.scene.DecodedBase, limitHeightByParcels);
 
             return new SceneDefinitionComponent(
                 definition,
