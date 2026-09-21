@@ -1,3 +1,4 @@
+using DCL.UI.Utilities;
 using DG.Tweening;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -25,6 +26,11 @@ namespace DCL.Lobby
         private int shownCount;
 
         public int CurrentPage { get; private set; }
+
+        private void Awake()
+        {
+            scrollRect.SetScrollSensitivityBasedOnPlatform();
+        }
 
         public void OnEndDrag(PointerEventData _) =>
             SnapTo(PageAt(-scrollRect.content.anchoredPosition.x));

@@ -1200,7 +1200,9 @@ namespace DCL.Lobby.Tests
 
         private static LobbyCarouselView CreateCarousel(Transform parent, Func<Transform, string, LobbyCardView> createCard, int cardsPerPage, out Transform dots)
         {
+            // The rail tunes its scroll rect in Awake, so the object stays inactive until the fields are assigned
             var carouselGo = new GameObject("Carousel", typeof(RectTransform));
+            carouselGo.SetActive(false);
             carouselGo.transform.SetParent(parent);
 
             var viewportGo = new GameObject("Viewport", typeof(RectTransform));
@@ -1231,6 +1233,7 @@ namespace DCL.Lobby.Tests
             SetField(carousel, "cardTemplate", cardTemplate);
             SetField(carousel, "dots", dotsView);
             SetField(carousel, "cardsPerPage", cardsPerPage);
+            carouselGo.SetActive(true);
 
             return carousel;
         }
@@ -1246,7 +1249,9 @@ namespace DCL.Lobby.Tests
 
         private static LobbyEventRailView CreateEventRail(Transform parent)
         {
+            // The rail tunes its scroll rect in Awake, so the object stays inactive until the fields are assigned
             var railGo = new GameObject("Rail", typeof(RectTransform));
+            railGo.SetActive(false);
             railGo.transform.SetParent(parent);
 
             var viewportGo = new GameObject("Viewport", typeof(RectTransform));
@@ -1277,6 +1282,7 @@ namespace DCL.Lobby.Tests
             SetField(rail, "cardTemplate", cardTemplate);
             SetField(rail, "dots", dotsView);
             SetField(rail, "cardsPerPage", 1);
+            railGo.SetActive(true);
 
             return rail;
         }

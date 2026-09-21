@@ -346,11 +346,14 @@ namespace DCL.Lobby.Tests
             LobbyCarouselDotsView dotsView = dots.gameObject.AddComponent<LobbyCarouselDotsView>();
             SetField(dotsView, "dotTemplate", dotTemplate);
 
+            // The rail tunes its scroll rect in Awake, so the object stays inactive until the fields are assigned
+            railGo.SetActive(false);
             LobbyFriendsRailView rail = railGo.AddComponent<LobbyFriendsRailView>();
             SetField(rail, "scrollRect", scrollRect);
             SetField(rail, "cardsPerPage", 4);
             SetField(rail, "dots", dotsView);
             SetField(rail, "loopList", loopList);
+            railGo.SetActive(true);
 
             SetBackingField(sectionView, nameof(LobbyFriendsSectionView.OnlineCountText), CreateText(sectionGo.transform, "OnlineCount"));
             SetBackingField(sectionView, nameof(LobbyFriendsSectionView.Rail), rail);
