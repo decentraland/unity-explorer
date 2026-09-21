@@ -40,7 +40,6 @@ using System.Reflection;
 using System.Threading;
 using TMPro;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.TestTools;
 using UnityEngine.UI;
 using Component = UnityEngine.Component;
@@ -70,7 +69,7 @@ namespace DCL.Lobby.Tests
         private Button closeButton = null!;
         private Button notificationsButton = null!;
         private Button openProfileButton = null!;
-        private CharacterPreviewInputDetector avatarInputDetector = null!;
+        private Button avatarButton = null!;
         private CharacterPreviewSettingsSO previewSettings = null!;
         private GameObject recentPlacesSection = null!;
         private LobbyPlaceCardView[] recentPlaceCards = null!;
@@ -135,6 +134,11 @@ namespace DCL.Lobby.Tests
             SetBackingField(view, nameof(LobbyView.LandingCard), landingCard);
             SetBackingField(view, nameof(LobbyView.CloseButton), closeButton);
             SetBackingField(view, nameof(LobbyView.CharacterPreviewView), CreateCharacterPreviewView());
+            avatarButton = CreateButton(root.transform, "AvatarHitArea");
+
+            // Kept inactive like the prefab instance: the hit area only comes up once the avatar is shown
+            avatarButton.gameObject.SetActive(false);
+            SetBackingField(view, nameof(LobbyView.AvatarButton), avatarButton);
             SetBackingField(view, nameof(LobbyView.RecentPlacesSection), recentPlacesSection);
             SetBackingField(view, nameof(LobbyView.RecentPlaceCards), recentPlaceCards);
             SetBackingField(view, nameof(LobbyView.ProfileWidgetView), CreateProfileWidgetView());
@@ -529,13 +533,27 @@ namespace DCL.Lobby.Tests
         }
 
         [Test]
+        public void TakeTheAvatarHitAreaDownWithThePanel()
+        {
+            // Arrange
+            Launch(isStartup: true).Forget();
+            avatarButton.gameObject.SetActive(true);
+
+            // Act
+            controller.HideViewAsync(CancellationToken.None).Forget();
+
+            // Assert
+            Assert.That(avatarButton.gameObject.activeSelf, Is.False);
+        }
+
+        [Test]
         public void OpenTheBackpackModalWhenTheAvatarIsClicked()
         {
             // Arrange
             Launch(isStartup: true).Forget();
 
             // Act
-            avatarInputDetector.OnPointerClick(new PointerEventData(EventSystem.current));
+            avatarButton.onClick.Invoke();
 
             // Assert
             mvcManager.Received(1).ShowAsync(Arg.Is<ShowCommand<BackpackModalView, BackpackModalParameter>>(c => c.InputData.Section == BackpackSections.Avatar), Arg.Any<CancellationToken>());
@@ -608,7 +626,7 @@ namespace DCL.Lobby.Tests
             Launch(isStartup: true, jumpedIn: () => jumpedIn++).Forget();
 
             // Act: opening the backpack takes the lobby off the screen without releasing the flow
-            avatarInputDetector.OnPointerClick(new PointerEventData(EventSystem.current));
+            avatarButton.onClick.Invoke();
 
             // Assert
             Assert.That(jumpedIn, Is.Zero);
@@ -1487,12 +1505,11 @@ namespace DCL.Lobby.Tests
             var previewGo = new GameObject("CharacterPreviewView");
             previewGo.transform.SetParent(root.transform);
             CharacterPreviewView previewView = previewGo.AddComponent<CharacterPreviewView>();
-            avatarInputDetector = previewGo.AddComponent<CharacterPreviewInputDetector>();
 
             previewSettings = ScriptableObject.CreateInstance<CharacterPreviewSettingsSO>();
             SetBackingField(previewSettings, nameof(CharacterPreviewSettingsSO.cursorSettings), Array.Empty<CharacterPreviewInputCursorSetting>());
 
-            SetBackingField(previewView, nameof(CharacterPreviewView.CharacterPreviewInputDetector), avatarInputDetector);
+            SetBackingField(previewView, nameof(CharacterPreviewView.CharacterPreviewInputDetector), previewGo.AddComponent<CharacterPreviewInputDetector>());
             SetBackingField(previewView, nameof(CharacterPreviewView.CharacterPreviewCursorContainer), previewGo.AddComponent<CharacterPreviewCursorContainer>());
             SetBackingField(previewView, nameof(CharacterPreviewView.CharacterPreviewSettingsSo), previewSettings);
 

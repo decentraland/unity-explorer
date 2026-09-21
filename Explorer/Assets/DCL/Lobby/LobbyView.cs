@@ -34,6 +34,13 @@ namespace DCL.Lobby
         [field: SerializeField]
         public CharacterPreviewView CharacterPreviewView { get; private set; } = null!;
 
+        /// <summary>
+        ///     Sits over the avatar inside the full-screen preview, so only the figure itself is hoverable and clickable.
+        ///     Its tooltip and cursor swap are wired in the prefab.
+        /// </summary>
+        [field: SerializeField]
+        public Button AvatarButton { get; private set; } = null!;
+
         [field: Header("Quick jump in")]
         [field: SerializeField]
         public TMP_Text WelcomeText { get; private set; } = null!;

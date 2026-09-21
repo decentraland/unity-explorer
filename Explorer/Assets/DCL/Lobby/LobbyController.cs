@@ -33,7 +33,6 @@ using System.Collections.Generic;
 using System.Threading;
 using TMPro;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using Utility;
 
 namespace DCL.Lobby
@@ -146,7 +145,7 @@ namespace DCL.Lobby
             {
                 viewInstance.LandingCard.JumpInButton.Button.onClick.RemoveListener(OnLandingJumpInClicked);
                 viewInstance.CloseButton.onClick.RemoveListener(RequestClose);
-                viewInstance.CharacterPreviewView.CharacterPreviewInputDetector.OnPointerClickEvent -= OnAvatarClicked;
+                viewInstance.AvatarButton.onClick.RemoveListener(OnAvatarClicked);
                 viewInstance.ProfileWidgetView.OpenProfileButton.Button.onClick.RemoveListener(ShowProfileMenu);
                 viewInstance.NotificationsButton.onClick.RemoveListener(ShowNotifications);
 
@@ -184,7 +183,7 @@ namespace DCL.Lobby
             base.OnViewInstantiated();
             viewInstance!.LandingCard.JumpInButton.Button.onClick.AddListener(OnLandingJumpInClicked);
             viewInstance.CloseButton.onClick.AddListener(RequestClose);
-            viewInstance.CharacterPreviewView.CharacterPreviewInputDetector.OnPointerClickEvent += OnAvatarClicked;
+            viewInstance.AvatarButton.onClick.AddListener(OnAvatarClicked);
             viewInstance.ProfileWidgetView.OpenProfileButton.Button.onClick.AddListener(ShowProfileMenu);
             viewInstance.NotificationsButton.onClick.AddListener(ShowNotifications);
 
@@ -257,6 +256,7 @@ namespace DCL.Lobby
             friends?.Hide();
             friendsCts.SafeCancelAndDispose();
             avatarPreview!.OnHide();
+            viewInstance!.AvatarButton.gameObject.SetActive(false);
 
             inputBlock.Enable(InputMapComponent.BLOCK_USER_INPUT);
 
@@ -308,6 +308,9 @@ namespace DCL.Lobby
                 avatarPreview!.Initialize(profile.Avatar, CharacterPreviewUtils.LOBBY_PREVIEW_POSITION);
                 avatarPreview.OnBeforeShow();
                 avatarPreview.OnShow();
+
+                // The hit area only makes sense over a figure, so it comes up with the avatar and goes down with the panel
+                viewInstance!.AvatarButton.gameObject.SetActive(true);
             }
             catch (OperationCanceledException) { }
             catch (Exception e) { ReportHub.LogException(e, ReportCategory.PROFILE); }
@@ -614,7 +617,7 @@ namespace DCL.Lobby
 
         // The backpack stacks on top of this panel as a popup and brings its own avatar preview, so the lobby keeps rendering behind it.
         // Saving in the backpack pushes a profile update, which is what re-dresses the lobby avatar through OnProfileUpdated
-        private void OnAvatarClicked(PointerEventData _) =>
+        private void OnAvatarClicked() =>
             mvcManager.ShowAndForget(BackpackModalController.IssueCommand(new BackpackModalParameter(BackpackSections.Avatar)));
 
         // The place details open in the same modal the Places menu uses; jumping in from there comes back through OnPlaceJumpIn
