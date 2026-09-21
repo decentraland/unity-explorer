@@ -790,7 +790,7 @@ namespace Global.Dynamic
                     profileContainer.ProfileRepositoryWrapper,
                     globalWorld,
                     wearableContainer.WearableCatalog),
-                uiShellContainer.CreateGenericPopupsPlugin(assetsProvisioner, dynamicWorldDependencies.CompositeWeb3Provider, profileContainer.SelfProfile),
+                uiShellContainer.CreateGenericPopupsPlugin(assetsProvisioner, dynamicWorldDependencies.CompositeWeb3Provider, profileContainer.SelfProfile, staticContainer.InputBlock),
                 uiShellContainer.CreateColorPickerPlugin(assetsProvisioner),
                 uiShellContainer.CreateGenericContextMenuPlugin(assetsProvisioner, profileContainer.ProfileRepositoryWrapper),
                 realmNavigatorContainer.CreatePlugin(),
