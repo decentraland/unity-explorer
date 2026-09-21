@@ -34,8 +34,8 @@ namespace DCL.Profiles.Tests
 
             forced.ApplyTo(profile);
 
-            Assert.That(profile.Avatar.Wearables, Does.Contain(new URN(WEARABLE)));
-            Assert.That(profile.Avatar.Wearables, Does.Contain(new URN(OWNED_WEARABLE)), "the profile's own wearables must be left alone");
+            Assert.That(profile.Avatar.Wearables, Has.Member(new URN(WEARABLE)));
+            Assert.That(profile.Avatar.Wearables, Has.Member(new URN(OWNED_WEARABLE)), "the profile's own wearables must be left alone");
         }
 
         [Test]
@@ -47,8 +47,8 @@ namespace DCL.Profiles.Tests
             forced.ApplyTo(profile);
             forced.RemoveFrom(profile);
 
-            Assert.That(profile.Avatar.Wearables, Does.Not.Contain(new URN(WEARABLE)));
-            Assert.That(profile.Avatar.Wearables, Does.Contain(new URN(OWNED_WEARABLE)));
+            Assert.That(profile.Avatar.Wearables, Has.No.Member(new URN(WEARABLE)));
+            Assert.That(profile.Avatar.Wearables, Has.Member(new URN(OWNED_WEARABLE)));
         }
 
         [Test]
@@ -73,7 +73,7 @@ namespace DCL.Profiles.Tests
 
             forced.ApplyTo(profile);
 
-            Assert.That(profile.Avatar.Wearables, Does.Contain(new URN(WEARABLE)));
+            Assert.That(profile.Avatar.Wearables, Has.Member(new URN(WEARABLE)));
         }
 
         [Test]
@@ -84,7 +84,7 @@ namespace DCL.Profiles.Tests
 
             forced.RemoveFrom(profile);
 
-            Assert.That(profile.Avatar.Wearables, Does.Not.Contain(new URN(WEARABLE)));
+            Assert.That(profile.Avatar.Wearables, Has.No.Member(new URN(WEARABLE)));
         }
 
         [Test]
