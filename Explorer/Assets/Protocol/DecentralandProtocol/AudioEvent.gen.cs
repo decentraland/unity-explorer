@@ -127,9 +127,11 @@ namespace DCL.ECSComponents {
 
     private uint tickNumber_;
     /// <summary>
-    /// Playback position report. Renderers write it on every state change and periodically while playing,
-    /// so scenes can align gameplay with the audio that is actually heard (the renderer starts a clip some
-    /// milliseconds after being asked to, and `PBAudioSource.current_time` is a write-only seek).
+    /// Playback position report, written while a source that set `PBAudioSource.report_playback_position`
+    /// is playing, so scenes can align gameplay with the audio that is actually heard (the renderer starts a
+    /// clip some milliseconds after being asked to, and `PBAudioSource.current_time` is a write-only seek).
+    /// Left unset on state changes that carry no position, on sources that did not opt in, and on players
+    /// that expose no position at all, such as live audio streams.
     /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
