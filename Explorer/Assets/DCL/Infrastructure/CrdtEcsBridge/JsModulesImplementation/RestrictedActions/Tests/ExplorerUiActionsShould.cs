@@ -53,7 +53,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             Assert.That(await OpenAsync(ExplorerUi.EuMap, ExploreSections.Navmap), Is.EqualTo(OpenExplorerUiResult.WasAlreadyOpen));
 
             Assert.That(events, Is.Empty);
-            mvcManager.DidNotReceive().ShowAsync(Arg.Any<ShowCommand<ExplorePanelView, ExplorePanelParameter>>(), Arg.Any<CancellationToken>());
+            _ = mvcManager.DidNotReceive().ShowAsync(Arg.Any<ShowCommand<ExplorePanelView, ExplorePanelParameter>>(), Arg.Any<CancellationToken>());
         }
 
         [Test]
@@ -62,7 +62,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             mvcManager.IsShowing<ExplorePanelView, ExplorePanelParameter>().Returns(false);
 
             Assert.That(await OpenAsync(ExplorerUi.EuMap, ExploreSections.Navmap), Is.EqualTo(OpenExplorerUiResult.Opened));
-            mvcManager.Received(1).ShowAsync(Arg.Any<ShowCommand<ExplorePanelView, ExplorePanelParameter>>(), Arg.Any<CancellationToken>());
+            _ = mvcManager.Received(1).ShowAsync(Arg.Any<ShowCommand<ExplorePanelView, ExplorePanelParameter>>(), Arg.Any<CancellationToken>());
         }
 
         [Test]
@@ -77,7 +77,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             Assert.That(await OpenAsync(ExplorerUi.EuEvents, ExploreSections.Events), Is.EqualTo(OpenExplorerUiResult.Opened));
             Assert.That(await OpenAsync(ExplorerUi.EuEvents, ExploreSections.Events), Is.EqualTo(OpenExplorerUiResult.WasAlreadyOpen));
 
-            mvcManager.Received(1).ShowAsync(Arg.Any<ShowCommand<ExplorePanelView, ExplorePanelParameter>>(), Arg.Any<CancellationToken>());
+            _ = mvcManager.Received(1).ShowAsync(Arg.Any<ShowCommand<ExplorePanelView, ExplorePanelParameter>>(), Arg.Any<CancellationToken>());
 
             Assert.That(events, Is.EqualTo(new[] { new ExplorerUiEvent(ExplorerUi.EuEvents, ExplorerUiEventKind.Opened, 0, TICK) }));
         }

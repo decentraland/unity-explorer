@@ -219,7 +219,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
 
             // Assert
             Assert.AreEqual((int)OpenExplorerUiResult.Opened, result);
-            explorerUiActions.Received(1).OpenSectionAsync(ExplorerUi.EuMap, ExploreSections.Navmap, Arg.Any<uint>(), Arg.Any<CancellationToken>());
+            _ = explorerUiActions.Received(1).OpenSectionAsync(ExplorerUi.EuMap, ExploreSections.Navmap, Arg.Any<uint>(), Arg.Any<CancellationToken>());
         }
 
         [Test]
@@ -229,7 +229,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             await restrictedActionsAPIImplementation.TryOpenExplorerUiAsync((int)ExplorerUi.EuMap, 77, CancellationToken.None);
 
             // Assert
-            explorerUiActions.Received(1).OpenSectionAsync(ExplorerUi.EuMap, ExploreSections.Navmap, 77, Arg.Any<CancellationToken>());
+            _ = explorerUiActions.Received(1).OpenSectionAsync(ExplorerUi.EuMap, ExploreSections.Navmap, 77, Arg.Any<CancellationToken>());
         }
 
         [Test]

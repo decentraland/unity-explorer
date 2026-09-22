@@ -83,7 +83,7 @@ namespace DCL.SceneRuntime.Apis.RestrictedActionsApi
         ///     <see cref="AvatarEmoteMask" />: an absent mask means full-body, <c>AM_UPPER_BODY</c> means upper-body.
         /// </summary>
         private static AvatarEmoteMask ToAvatarEmoteMask(uint? mask) =>
-            mask == (uint)DCL.ECSComponents.AvatarMask.AmUpperBody
+            mask == (uint)ECSComponents.AvatarMask.AmUpperBody
                 ? AvatarEmoteMask.AemUpperBody
                 : AvatarEmoteMask.AemFullBody;
 
