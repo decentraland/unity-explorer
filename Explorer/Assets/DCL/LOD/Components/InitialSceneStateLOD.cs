@@ -15,6 +15,12 @@ namespace DCL.LOD.Components
         private readonly List<ISSStoredAsset> Assets = new ();
         public string SceneID { get; private set; } = string.Empty;
         public GameObject ParentContainer { get; private set; }
+
+        /// <summary>
+        ///     Geometry of the scene this LOD stands in for; positions the container and clips its assets to the
+        ///     scene volume the way the runtime clips a live scene's materials.
+        /// </summary>
+        public ParcelMathHelper.SceneGeometry SceneGeometry { get; private set; }
         public IGltfContainerAssetsCache gltfCache { get; private set; }
         public int TotalAssetsToInstantiate { get; private set; }
         public AssetBundleData? AssetBundleData { get; private set; }
@@ -112,9 +118,10 @@ namespace DCL.LOD.Components
         /// <summary>
         ///     Descriptor-only initialization: no shared ISS bundle to hold; each asset will arrive via its own promise.
         /// </summary>
-        public void InitializeFromDescriptor(string sceneID, Vector3 sceneGeometryBaseParcelPosition, IGltfContainerAssetsCache gltfContainerAssetsCache, int assetHashCount)
+        public void InitializeFromDescriptor(string sceneID, in ParcelMathHelper.SceneGeometry sceneGeometry, IGltfContainerAssetsCache gltfContainerAssetsCache, int assetHashCount)
         {
-            EnsureParentContainer(sceneID, sceneGeometryBaseParcelPosition);
+            SceneGeometry = sceneGeometry;
+            EnsureParentContainer(sceneID, sceneGeometry.BaseParcelPosition);
             AssetBundleData = null;
             gltfCache = gltfContainerAssetsCache;
             TotalAssetsToInstantiate = assetHashCount;

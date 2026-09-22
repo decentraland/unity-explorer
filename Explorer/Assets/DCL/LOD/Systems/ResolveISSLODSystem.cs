@@ -16,7 +16,9 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.GLTFContainer;
 using ECS.Unity.GLTFContainer.Asset.Cache;
 using ECS.Unity.GLTFContainer.Asset.Components;
+using ECS.Unity.SceneBoundsChecker;
 using UnityEngine;
+using Utility;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 
 namespace DCL.LOD.Systems
@@ -58,8 +60,7 @@ namespace DCL.LOD.Systems
 
             IReadOnlyList<ISSDescriptorAsset> assets = issDescriptor.Assets;
 
-            initialSceneStateLOD.InitializeFromDescriptor(sceneLODInfo.id, sceneDefinition.SceneGeometry.BaseParcelPosition,
-                gltfCache, assets.Count);
+            initialSceneStateLOD.InitializeFromDescriptor(sceneLODInfo.id, sceneDefinition.SceneGeometry, gltfCache, assets.Count);
 
             SpawnAssetPromises(initialSceneStateLOD, assets, sceneDefinition, issDescriptor);
         }
@@ -157,6 +158,12 @@ namespace DCL.LOD.Systems
             asset.Root.transform.localScale = entry.scale;
 
             asset.ToggleAnimationState(false);
+
+            // Clip to the scene volume exactly as FinalizeGltfContainerLoadingSystem does for the live scene, so an
+            // asset the descriptor places beyond the parcels (a mis-scaled model, a bad descriptor) draws no
+            // further than it would in the running scene.
+            ParcelMathHelper.SceneGeometry sceneGeometry = initialSceneStateLOD.SceneGeometry;
+            ConfigureSceneMaterial.EnableSceneBoundsAndForceCulling(in asset, in sceneGeometry.CircumscribedPlanes, sceneGeometry.Height);
 
             // Suppress rendering while LOD_0 streams in asset-by-asset so the half-assembled LOD_0 never
             // draws on top of the still-visible LOD_1. The GameObject stays active so its colliders remain

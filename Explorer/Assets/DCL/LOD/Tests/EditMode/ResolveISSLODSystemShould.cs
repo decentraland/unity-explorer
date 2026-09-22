@@ -22,6 +22,8 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.TestTools;
+using Utility;
+using Utility.Primitives;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 
 namespace DCL.LOD.Tests
@@ -296,6 +298,43 @@ namespace DCL.LOD.Tests
 
             world.Create(lodInfo, sceneDefinition, descriptor);
             return lodInfo.InitialSceneStateLOD;
+        }
+
+        [Test]
+        public void ClipAssetsToTheSceneVolumeLikeTheRuntimeDoes()
+        {
+            // A placement the descriptor scales far beyond the parcels (a mis-scaled model, a bad descriptor)
+            // must draw no further than it would in the running scene, whose GLTF containers get the same
+            // material clipping from FinalizeGltfContainerLoadingSystem.
+            const string HASH = "OVERSIZED";
+
+            GltfContainerAsset asset = MakeFakeGltfWithRenderer(HASH, out Renderer renderer);
+            Material material = DefaultMaterial.New();
+            renderer.sharedMaterial = material;
+            cache.Stash(HASH, asset);
+
+            ISSDescriptorAsset entry = NewDescriptorEntry(HASH);
+            entry.scale = new Vector3(64799f, 1f, 64799f);
+
+            var descriptor = ISSDescriptor.CreateUninitialized();
+            descriptor.MarkResolved(new[] { entry });
+
+            InitialSceneStateLOD lod = CreateLODEntity(descriptor);
+
+            system!.Update(0);
+
+            ParcelMathHelper.SceneCircumscribedPlanes planes = sceneDefinition.SceneGeometry.CircumscribedPlanes;
+            Vector4 verticalClipping = material.GetVector(Shader.PropertyToID("_VerticalClipping"));
+
+            Assert.That(material.GetVector(Shader.PropertyToID("_PlaneClipping")),
+                Is.EqualTo(new Vector4(planes.MinX, planes.MaxX, planes.MinZ, planes.MaxZ)),
+                "LOD_0 materials must clip to the scene's circumscribed planes");
+
+            Assert.That(verticalClipping.y, Is.EqualTo(sceneDefinition.SceneGeometry.Height),
+                "LOD_0 materials must clip to the scene height");
+
+            lod.Dispose(world);
+            UnityEngine.Object.DestroyImmediate(material);
         }
 
         private Entity FindHelperEntity()
