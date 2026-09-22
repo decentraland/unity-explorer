@@ -7,28 +7,22 @@ namespace DCL.InWorldCamera.Tests
     {
         private const float TOLERANCE = 0.01f;
 
-        private Camera camera;
-
-        [SetUp]
-        public void Setup()
-        {
-            camera = new GameObject(nameof(ScreenshotMetadataBuilderShould)).AddComponent<Camera>();
-            camera.transform.position = Vector3.zero;
-            camera.transform.rotation = Quaternion.identity;
-            camera.fieldOfView = 60f;
-            camera.aspect = ScreenRecorder.TARGET_ASPECT_RATIO;
-        }
+        private Camera? createdCamera;
 
         [TearDown]
         public void TearDown()
         {
-            Object.DestroyImmediate(camera.gameObject);
+            if (createdCamera != null)
+                Object.DestroyImmediate(createdCamera.gameObject);
+
+            createdCamera = null;
         }
 
         [Test]
         public void CentreTheRectOnBoundsInFrontOfTheCamera()
         {
             // Arrange
+            Camera camera = CreateCamera();
             var bounds = new Bounds(new Vector3(0f, 0f, 5f), Vector3.one);
 
             // Act
@@ -45,6 +39,7 @@ namespace DCL.InWorldCamera.Tests
         public void MeasureTheRectFromTheTopOfTheImage()
         {
             // Arrange
+            Camera camera = CreateCamera();
             var above = new Bounds(new Vector3(0f, 1.5f, 5f), Vector3.one);
             var below = new Bounds(new Vector3(0f, -1.5f, 5f), Vector3.one);
 
@@ -61,6 +56,7 @@ namespace DCL.InWorldCamera.Tests
         public void ReturnZeroForBoundsBehindTheCamera()
         {
             // Arrange
+            Camera camera = CreateCamera();
             var bounds = new Bounds(new Vector3(0f, 0f, -5f), Vector3.one);
 
             // Act
@@ -74,6 +70,7 @@ namespace DCL.InWorldCamera.Tests
         public void ReturnZeroForBoundsOutsideTheCroppedFrame()
         {
             // Arrange — far enough to the side that the photo's crop leaves it out.
+            Camera camera = CreateCamera();
             var bounds = new Bounds(new Vector3(20f, 0f, 5f), Vector3.one);
 
             // Act
@@ -87,6 +84,7 @@ namespace DCL.InWorldCamera.Tests
         public void ClampTheRectToTheImageForBoundsLargerThanTheFrame()
         {
             // Arrange
+            Camera camera = CreateCamera();
             var bounds = new Bounds(new Vector3(0f, 0f, 5f), new Vector3(100f, 100f, 1f));
 
             // Act
@@ -103,8 +101,8 @@ namespace DCL.InWorldCamera.Tests
         public void KeepTheSameFrameWhateverTheScreenAspectRatioIs()
         {
             // Arrange — the photo is always 16:9, so a wider screen crops the sides, not the subject.
+            Camera camera = CreateCamera(ScreenRecorder.TARGET_ASPECT_RATIO * 1.5f);
             var bounds = new Bounds(new Vector3(0f, 0f, 5f), Vector3.one);
-            camera.aspect = ScreenRecorder.TARGET_ASPECT_RATIO * 1.5f;
 
             // Act
             Rect rect = ScreenshotMetadataBuilder.CalculateScreenRect(camera, bounds);
@@ -112,6 +110,20 @@ namespace DCL.InWorldCamera.Tests
             // Assert
             Assert.AreEqual(0.5f, rect.center.x, TOLERANCE);
             Assert.AreEqual(0.5f, rect.center.y, TOLERANCE);
+        }
+
+        /// <summary>
+        /// A camera at the origin looking down +Z, framing what the in-world one frames.
+        /// </summary>
+        private Camera CreateCamera(float aspectRatio = ScreenRecorder.TARGET_ASPECT_RATIO)
+        {
+            createdCamera = new GameObject(nameof(ScreenshotMetadataBuilderShould)).AddComponent<Camera>();
+            createdCamera.transform.position = Vector3.zero;
+            createdCamera.transform.rotation = Quaternion.identity;
+            createdCamera.fieldOfView = 60f;
+            createdCamera.aspect = aspectRatio;
+
+            return createdCamera;
         }
     }
 }
