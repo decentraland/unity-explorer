@@ -1,5 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Input;
+using DCL.Input.Component;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.Web3.Authenticators;
@@ -35,6 +37,7 @@ namespace DCL.UI.UpgradeGuestAccountPopup
 
         private readonly IAccountLinkAuthenticator accountLinkAuthenticator;
         private readonly ISelfProfile selfProfile;
+        private readonly IInputBlock inputBlock;
 
         private UniTaskCompletionSource lifeCycleTask = new ();
         private CancellationTokenSource linkCts = new ();
@@ -47,10 +50,12 @@ namespace DCL.UI.UpgradeGuestAccountPopup
         public UpgradeGuestAccountPopupController(
             ViewFactoryMethod viewFactory,
             IAccountLinkAuthenticator accountLinkAuthenticator,
-            ISelfProfile selfProfile) : base(viewFactory)
+            ISelfProfile selfProfile,
+            IInputBlock inputBlock) : base(viewFactory)
         {
             this.accountLinkAuthenticator = accountLinkAuthenticator;
             this.selfProfile = selfProfile;
+            this.inputBlock = inputBlock;
         }
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
@@ -82,9 +87,16 @@ namespace DCL.UI.UpgradeGuestAccountPopup
             PromptShown?.Invoke(inputData.Trigger);
         }
 
+        protected override void OnViewShow()
+        {
+            base.OnViewShow();
+            inputBlock.Disable(InputMapComponent.BLOCK_USER_INPUT);
+        }
+
         protected override void OnViewClose()
         {
             base.OnViewClose();
+            inputBlock.Enable(InputMapComponent.BLOCK_USER_INPUT);
             linkCts = linkCts.SafeRestart();
         }
 
