@@ -168,7 +168,7 @@ namespace Global.Dynamic
 
             LoadISSDescriptorSystem.InjectToWorld(ref builder, webRequestController, lodGeneratorCdnUrl,
                 new NoCache<ISSDescriptorMetadata, GetISSDescriptorIntention>(false, false),
-                new DiskCacheOptions<ISSDescriptorMetadata, GetISSDescriptorIntention>(staticContainer.ISSDescriptorDiskCache, GetISSDescriptorIntention.DiskHashCompute.INSTANCE, "iss.json"));
+                new DiskCacheOptions<ISSDescriptorMetadata, GetISSDescriptorIntention>(staticContainer.ISSDescriptorDiskCache, new GetISSDescriptorIntention.DiskHashCompute(urlsSource), "iss.json"));
 
             // Mutates the entity's ISSDescriptor component (class, ref-shared) in place when the resolver
             // promise spawned by ResolveSceneStateByIncreasingRadiusSystem completes. Cached references in
