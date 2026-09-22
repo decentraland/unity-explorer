@@ -496,6 +496,17 @@ decentraland://?force-open-backpack=true
 
 ---
 
+### `feature-flags-user-id`
+**Type:** String
+**Description:** Overrides the identity feature flags are evaluated against (the `X-Address-Hash` header), replacing the anonymous id the client would otherwise resolve. Use it to reproduce the flags a specific user sees, or to force a particular A/B bucket. The value is not persisted, so it applies only to the launch that passes it. See [Feature Flags](feature-flags.md#which-identity-is-sent).
+
+**Usage:**
+```bash
+--feature-flags-user-id 8f4c2d1e-9a7b-4c3d-8e2f-1a2b3c4d5e6f
+```
+
+---
+
 ## Analytics Flags
 
 ### `session_id`
@@ -516,6 +527,17 @@ decentraland://?force-open-backpack=true
 **Usage:**
 ```bash
 --launcher_anonymous_id user123
+```
+
+---
+
+### `campaign_anon_user_id`
+**Type:** String
+**Description:** Anonymous user ID forwarded by the launcher from the website, so explorer analytics can be joined to the campaign funnel that originated the install. Also used as the feature-flags evaluation identity (`X-Address-Hash`), which keeps A/B bucketing stable from the first pre-login session — see [Feature Flags](feature-flags.md#which-identity-is-sent). Emitted as the `campaign_anon_user_id` analytics trait only when present.
+
+**Usage:**
+```bash
+--campaign_anon_user_id 8f4c2d1e-9a7b-4c3d-8e2f-1a2b3c4d5e6f
 ```
 
 ---
