@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DCL.Ipfs;
+using System;
 
 namespace SceneRunner.Scene
 {
@@ -10,6 +11,9 @@ namespace SceneRunner.Scene
         public string[] files;
         public int exitCode;
         public string date;
+
+        /// <summary>Present once abgen's LOD lane has published the scene's LODs under content-addressed names.</summary>
+        public SceneAbLodsDto? lods;
 
         public string Version => version;
         public string Date => date;

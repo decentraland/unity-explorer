@@ -86,6 +86,11 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
 
                 if (lodSource != null)
                     keyPayload.Put(lodSource);
+
+                // A digest-named descriptor is immutable under its name, so a regenerated LOD is a different
+                // file here as well and never hits the entry cached for the previous one.
+                if (asset.ManifestVersion.TryGetLodDescriptorFile(out string digestNamed))
+                    keyPayload.Put(digestNamed);
             }
         }
     }

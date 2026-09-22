@@ -11,6 +11,7 @@ using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.AssetBundles.InitialSceneState;
 using ECS.TestSuite;
 using ECS.Unity.GLTFContainer.Asset.Cache;
+using DCL.Utility;
 using NSubstitute;
 using NUnit.Framework;
 using UnityEngine;
@@ -83,6 +84,35 @@ namespace DCL.LOD.Tests
 
             var sceneLODInfoRetrieved = world.Get<SceneLODInfo>(entity);
             Assert.AreEqual(sceneLODInfoRetrieved.CurrentLODLevelPromise, expectedLODLevel);
+        }
+
+        [Test]
+        public void RequestTheDigestNamedBundleWhenTheManifestNamesIt()
+        {
+            //Arrange
+            const string DIGEST = "0123456789abcdef0123456789abcdef";
+            string sceneId = fakeHash.ToLower();
+            var manifest = AssetBundleManifestVersion.CreateFromFallback("v49", "2026-09-22");
+
+            manifest.InjectLods(new SceneAbLodsDto
+            {
+                digest = DIGEST,
+                descriptor = $"{sceneId}_{DIGEST}_InitialSceneState.json",
+                levels = new[] { new SceneAbLodLevelDto { level = 1, file = $"{sceneId}_{DIGEST}_1" } },
+            });
+
+            sceneDefinitionComponent.Definition.assetBundleManifestVersion = manifest;
+            partitionComponent.IsDirty = true;
+            partitionComponent.Bucket = 2;
+            Entity entity = world.Create(sceneLODInfo, partitionComponent, sceneDefinitionComponent, SceneLoadingState.CreateBuiltScene(), ISSDescriptor.NONE);
+
+            //Act
+            system.Update(0);
+
+            //Assert
+            var sceneLODInfoRetrieved = world.Get<SceneLODInfo>(entity);
+            Assert.AreEqual(1, sceneLODInfoRetrieved.CurrentLODLevelPromise);
+            Assert.AreEqual($"{sceneId}_{DIGEST}_1{PlatformUtils.GetCurrentPlatform()}", sceneLODInfoRetrieved.CurrentLODPromise.LoadingIntention.Hash);
         }
     }
 }

@@ -56,18 +56,24 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
             if (!intention.ManifestVersion.SupportsISS())
                 return new StreamableLoadingResult<ISSDescriptorMetadata>(GetReportData(), new Exception("ISS unsupported for this manifest version"));
 
-            ISSDescriptorMetadata? metadata = await TryLoadDescriptorAsync(intention.SceneId, ct);
+            ISSDescriptorMetadata? metadata = await TryLoadDescriptorAsync(intention, ct);
             if (!metadata.HasValue)
                 return new StreamableLoadingResult<ISSDescriptorMetadata>(GetReportData(), new Exception("No ISS descriptor JSON for this scene"));
 
             return new StreamableLoadingResult<ISSDescriptorMetadata>(metadata.Value);
         }
 
-        private async UniTask<ISSDescriptorMetadata?> TryLoadDescriptorAsync(string sceneId, CancellationToken ct)
+        private async UniTask<ISSDescriptorMetadata?> TryLoadDescriptorAsync(GetISSDescriptorIntention intention, CancellationToken ct)
         {
-            // Descriptors are written under a lower-cased scene id and the bucket is case-sensitive, so a
-            // mixed-case (Qm) id 404s verbatim. The LOD bundle path lower-cases it for the same reason.
-            URLAddress url = descriptorBaseUrl.Append(URLPath.FromString($"{DESCRIPTOR_PATH_PREFIX}{sceneId.ToLower()}_InitialSceneState.json"));
+            // The manifest names the descriptor by the build's digest when the source publishes such names, and
+            // that object never changes under its name. Otherwise the name is composed from the scene id:
+            // descriptors are written under a lower-cased id and the bucket is case-sensitive, so a mixed-case
+            // (Qm) id 404s verbatim. The LOD bundle path lower-cases it for the same reason.
+            string fileName = intention.ManifestVersion.TryGetLodDescriptorFile(out string digestNamed)
+                ? digestNamed
+                : $"{intention.SceneId.ToLower()}_InitialSceneState.json";
+
+            URLAddress url = descriptorBaseUrl.Append(URLPath.FromString($"{DESCRIPTOR_PATH_PREFIX}{fileName}"));
 
             try
             {
