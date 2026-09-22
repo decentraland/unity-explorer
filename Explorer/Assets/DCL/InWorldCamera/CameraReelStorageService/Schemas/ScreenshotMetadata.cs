@@ -43,6 +43,12 @@ namespace DCL.InWorldCamera.CameraReelStorageService.Schemas
         public bool isGuest;
         public bool isEmoting;
 
+        /// <summary>
+        /// Where this person stands in the saved photo: normalized to the image, with the origin at its
+        /// top-left corner. Zero when the person is in frame but their bounds could not be projected.
+        /// </summary>
+        public Rect screenRect;
+
         public string[] wearables;
     }
 }

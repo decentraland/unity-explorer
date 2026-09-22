@@ -26,6 +26,7 @@ namespace DCL.InWorldCamera
         private readonly List<VisiblePerson> visiblePeople = new (32);
 
         private Plane[]? frustumPlanes;
+        private Camera? camera;
         private Vector2Int sceneParcel;
 
         private ScreenshotMetadata? metadata;
@@ -46,12 +47,13 @@ namespace DCL.InWorldCamera
             return metadata;
         }
 
-        public void Init(Vector2Int sceneParcel, Plane[] frustumPlanes)
+        public void Init(Vector2Int sceneParcel, Plane[] frustumPlanes, Camera camera)
         {
             MetadataIsReady = false;
             visiblePeople.Clear();
 
             this.frustumPlanes = frustumPlanes;
+            this.camera = camera;
             this.sceneParcel = sceneParcel;
         }
 
@@ -68,6 +70,7 @@ namespace DCL.InWorldCamera
                     userAddress = string.IsNullOrEmpty(profile?.UserId) ? UNKNOWN_USER_WALLET : profile!.UserId,
                     isGuest = profile is { HasConnectedWeb3: false },
                     isEmoting = isEmoting,
+                    screenRect = camera is null ? Rect.zero : CalculateScreenRect(camera, avatarCollider.bounds),
                     wearables = FilterNonBaseWearables(profile?.Avatar.Wearables ?? Array.Empty<URN>()),
                 });
             }
@@ -103,6 +106,76 @@ namespace DCL.InWorldCamera
                     wearables.Add(w.ToString());
 
             return wearables.ToArray();
+        }
+
+        /// <summary>
+        /// Projects world bounds onto the saved photo: the returned rectangle is normalized to the image,
+        /// with the origin at its top-left corner. Zero when the bounds do not resolve to an area of it.
+        /// </summary>
+        internal static Rect CalculateScreenRect(Camera camera, Bounds bounds)
+        {
+            Vector3 min = bounds.min;
+            Vector3 size = bounds.size;
+
+            var frameMin = new Vector2(float.MaxValue, float.MaxValue);
+            var frameMax = new Vector2(float.MinValue, float.MinValue);
+            var projectedAnyCorner = false;
+
+            // The eight corners of the box, each bit of the index picking the low or the high side of an axis.
+            for (var corner = 0; corner < 8; corner++)
+            {
+                var world = new Vector3(
+                    min.x + ((corner & 1) == 0 ? 0f : size.x),
+                    min.y + ((corner & 2) == 0 ? 0f : size.y),
+                    min.z + ((corner & 4) == 0 ? 0f : size.z));
+
+                Vector3 viewportPoint = camera.WorldToViewportPoint(world);
+
+                // Behind the camera the projection mirrors, which would stretch the rectangle across the
+                // whole photo. The corners in front of it still describe the visible part of the box.
+                if (viewportPoint.z <= 0f) continue;
+
+                projectedAnyCorner = true;
+
+                Vector2 framePoint = ViewportToFrame(viewportPoint, camera.aspect);
+                frameMin = Vector2.Min(frameMin, framePoint);
+                frameMax = Vector2.Max(frameMax, framePoint);
+            }
+
+            if (!projectedAnyCorner) return Rect.zero;
+
+            frameMin = Vector2.Max(frameMin, Vector2.zero);
+            frameMax = Vector2.Min(frameMax, Vector2.one);
+
+            if (frameMax.x <= frameMin.x || frameMax.y <= frameMin.y) return Rect.zero;
+
+            return new Rect(frameMin.x, frameMin.y, frameMax.x - frameMin.x, frameMax.y - frameMin.y);
+        }
+
+        /// <summary>
+        /// Re-bases a point of the camera's viewport on the frame the photo is cropped to: a centred box of
+        /// the saved image's aspect ratio, scaled by <see cref="ScreenRecorder.FRAME_SCALE" /> on the
+        /// limiting side, and measured from the top down rather than from the bottom up.
+        /// </summary>
+        private static Vector2 ViewportToFrame(Vector3 viewportPoint, float screenAspectRatio)
+        {
+            float frameWidth;
+            float frameHeight;
+
+            if (screenAspectRatio > ScreenRecorder.TARGET_ASPECT_RATIO)
+            {
+                frameHeight = ScreenRecorder.FRAME_SCALE;
+                frameWidth = frameHeight * ScreenRecorder.TARGET_ASPECT_RATIO / screenAspectRatio;
+            }
+            else
+            {
+                frameWidth = ScreenRecorder.FRAME_SCALE;
+                frameHeight = frameWidth * screenAspectRatio / ScreenRecorder.TARGET_ASPECT_RATIO;
+            }
+
+            return new Vector2(
+                (viewportPoint.x - (0.5f - (frameWidth / 2f))) / frameWidth,
+                1f - ((viewportPoint.y - (0.5f - (frameHeight / 2f))) / frameHeight));
         }
 
         internal void FillMetadata(Profile? profile, RealmData realm, Vector2Int playerPosition,

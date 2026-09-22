@@ -23,6 +23,9 @@ namespace DCL.InWorldCamera
         // Relation of screen Canvas to the Scale of the "Rule of three" frame that is an area of the target screenshot. Used in calculation for upscaling screenshot to the target resolution.
         public const float FRAME_SCALE = 0.87f;
 
+        // Aspect ratio of the saved screenshot, which the cropped frame keeps whatever the screen's own is.
+        public const float TARGET_ASPECT_RATIO = (float)TARGET_FRAME_WIDTH / TARGET_FRAME_HEIGHT;
+
         private readonly float targetAspectRatio;
         private readonly RectTransform canvasRectTransform;
 
@@ -36,7 +39,7 @@ namespace DCL.InWorldCamera
 
         public ScreenRecorder(RectTransform canvasRectTransform)
         {
-            targetAspectRatio = (float)TARGET_FRAME_WIDTH / TARGET_FRAME_HEIGHT;
+            targetAspectRatio = TARGET_ASPECT_RATIO;
             Debug.Assert(targetAspectRatio != 0, "Target aspect ratio cannot be zero");
 
             this.canvasRectTransform = canvasRectTransform;
