@@ -18,6 +18,7 @@ using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
 using SceneRuntime.ScenePermissions;
+using System.Text.RegularExpressions;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.TestTools;
@@ -136,10 +137,50 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             Vector2Int testCoords = new Vector2Int(10, 20);
 
             // Act
-            restrictedActionsAPIImplementation.TryTeleportTo(testCoords);
+            restrictedActionsAPIImplementation.TryTeleportTo(testCoords, null);
 
             // Assert
             mvcManager.Received(1).ShowAsync(TeleportPromptController.IssueCommand(new TeleportPromptController.Params(testCoords)));
+        }
+
+        [Test]
+        public void TeleportToParcelInAnotherRealm()
+        {
+            // Arrange
+            Vector2Int testCoords = new Vector2Int(10, 20);
+            const string TEST_REALM = "TestRealm";
+
+            // Act
+            restrictedActionsAPIImplementation.TryTeleportTo(testCoords, TEST_REALM);
+
+            // Assert
+            mvcManager.Received(1).ShowAsync(ChangeRealmPromptController.IssueCommand(new ChangeRealmPromptController.Params(string.Empty, TEST_REALM, testCoords)));
+            mvcManager.DidNotReceive().ShowAsync(TeleportPromptController.IssueCommand(new TeleportPromptController.Params(testCoords)));
+        }
+
+        [Test]
+        public void TeleportToRealmDefaultSpawnWithoutCoordinates()
+        {
+            // Arrange
+            const string TEST_REALM = "TestRealm";
+
+            // Act
+            restrictedActionsAPIImplementation.TryTeleportTo(null, TEST_REALM);
+
+            // Assert
+            mvcManager.Received(1).ShowAsync(ChangeRealmPromptController.IssueCommand(new ChangeRealmPromptController.Params(string.Empty, TEST_REALM)));
+            mvcManager.DidNotReceive().ShowAsync(Arg.Any<ShowCommand<TeleportPromptView, TeleportPromptController.Params>>());
+        }
+
+        [Test]
+        public void IgnoreTeleportWithNeitherCoordinatesNorRealm()
+        {
+            // Act
+            LogAssert.Expect(LogType.Warning, new Regex("TeleportTo"));
+            restrictedActionsAPIImplementation.TryTeleportTo(null, null);
+
+            // Assert
+            Assert.That(mvcManager.ReceivedCalls(), Is.Empty);
         }
 
         [Test]
