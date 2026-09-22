@@ -55,8 +55,9 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
             // unchanged scene ids so cached documents no longer match what the CDN serves.
             // v2: switched from "state byte + raw JSON" to a single JSON document with state field, so files
             // open in text editors.
-            // v3: abgen 0.19.2 regenerates every descriptor with unit-quaternion placements (LOD generation 2);
-            // the ones cached before that carry inflated scales for the same scene id.
+            // v3: abgen 0.19.2 republishes descriptors with unit-quaternion placements under unchanged scene
+            // ids; the ones cached before that carry inflated scales. Descriptors named by the manifest's
+            // digest key on that name below, so this is the last bump such a republish needs.
             private const int ITERATION_NUMBER = 3;
 
             public static readonly DiskHashCompute INSTANCE = new ();
