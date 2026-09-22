@@ -78,6 +78,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
                 sdkModel.Placeholder,
                 sdkModel.GetPlaceholderColor());
             uiTransformComponent.ContentContainer.Add(newUIInputComponent.TextField);
+            newUIInputComponent.BlurIfFocused();
 
             UiElementUtils.ApplyDefaultUiTransformValues(in pbUiTransform, uiTransformComponent.Transform);
             UiElementUtils.ApplyDefaultUiBackgroundValues(World, entity, uiTransformComponent.Transform);

@@ -3,6 +3,7 @@ using CRDT;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.ECSComponents;
 using DCL.Input;
+using DCL.Input.Component;
 using DCL.Optimization.Pools;
 using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Defaults;
@@ -26,8 +27,11 @@ namespace DCL.SDKComponents.SceneUI.Tests
     {
         private IComponentPoolsRegistry poolsRegistry = null!;
         private IECSToCRDTWriter ecsToCRDTWriter = null!;
+        private IInputBlock inputBlock = null!;
         private Entity entity;
         private UITransformComponent uiTransformComponent = null!;
+        private GameObject? canvasGameObject;
+        private PanelSettings? panelSettings;
 
         [SetUp]
         public void SetUp()
@@ -35,7 +39,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
             poolsRegistry = new ComponentPoolsRegistry(
                 new Dictionary<Type, IComponentPool>
                 {
-                    { typeof(UIInputComponent), new ComponentPool.WithDefaultCtor<UIInputComponent>() },
+                    { typeof(UIInputComponent), new ComponentPool.WithDefaultCtor<UIInputComponent>(onRelease: UiElementUtils.ReleaseUIInputComponent) },
                 }, null);
 
             var sceneData = Substitute.For<ISceneData>();
@@ -47,10 +51,20 @@ namespace DCL.SDKComponents.SceneUI.Tests
                       });
 
             ecsToCRDTWriter = Substitute.For<IECSToCRDTWriter>();
-            system = new UIInputInstantiationSystem(world, poolsRegistry, ecsToCRDTWriter, Substitute.For<IInputBlock>(), new []{new StyleFontDefinition()}, sceneData, PartitionComponent.TOP_PRIORITY);
+            inputBlock = Substitute.For<IInputBlock>();
+            system = new UIInputInstantiationSystem(world, poolsRegistry, ecsToCRDTWriter, inputBlock, new []{new StyleFontDefinition()}, sceneData, PartitionComponent.TOP_PRIORITY);
             entity = world.Create();
             uiTransformComponent = AddUITransformToEntity(entity);
             world.Add(entity, new CRDTEntity(500));
+        }
+
+        protected override void OnTearDown()
+        {
+            if (canvasGameObject != null)
+                UnityEngine.Object.DestroyImmediate(canvasGameObject);
+
+            if (panelSettings != null)
+                UnityEngine.Object.DestroyImmediate(panelSettings);
         }
 
         [Test]
@@ -240,6 +254,62 @@ namespace DCL.SDKComponents.SceneUI.Tests
             Assert.That(uiInputComponent.FontRequest.Src, Is.EqualTo("fonts/Roboto.ttf"));
             Assert.That(uiInputComponent.FontRequest.Promise, Is.Not.Null);
             Assert.That(world.Get<GetFontIntention>(uiInputComponent.FontRequest.Promise!.Value.Entity).Src, Is.EqualTo(input.FontSrc));
+        }
+
+        [Test]
+        public void TriggerSubmitWhenEnterReachesInnerTextElement()
+        {
+            // Arrange: the inner TextElement consumes Return in the bubble-up phase, so the key only reaches a trickle-down callback
+            canvasGameObject = new GameObject(nameof(UIInputInstantiationSystemShould));
+            var canvas = canvasGameObject.AddComponent<UIDocument>();
+            panelSettings = ScriptableObject.CreateInstance<PanelSettings>();
+            canvas.panelSettings = panelSettings;
+            canvas.rootVisualElement.Add(uiTransformComponent.Transform);
+            world.Add(entity, new PBUiInput());
+            system.Update(0);
+            ref UIInputComponent uiInputComponent = ref world.Get<UIInputComponent>(entity);
+            uiInputComponent.TextField.Focus();
+            Assert.That(uiInputComponent.IsOnSubmitTriggered, Is.False);
+
+            // Act
+            using (KeyDownEvent enter = KeyDownEvent.GetPooled('\n', KeyCode.Return, EventModifiers.None))
+                uiInputComponent.TextElement.SendEvent(enter);
+
+            // Assert
+            Assert.That(uiInputComponent.IsOnSubmitTriggered, Is.True);
+        }
+
+        [Test]
+        public void BlurRecycledFieldThatWasDetachedWhileFocused()
+        {
+            // Arrange: a live panel keeps the focus of an element that left it and restores it when the element comes back
+            canvasGameObject = new GameObject(nameof(UIInputInstantiationSystemShould));
+            var canvas = canvasGameObject.AddComponent<UIDocument>();
+            panelSettings = ScriptableObject.CreateInstance<PanelSettings>();
+            canvas.panelSettings = panelSettings;
+            VisualElement root = canvas.rootVisualElement;
+            root.Add(uiTransformComponent.Transform);
+
+            IComponentPool<UIInputComponent> pool = poolsRegistry.GetReferenceTypePool<UIInputComponent>();
+            UIInputComponent stale = pool.Get();
+            stale.Initialize(inputBlock, "Stale", string.Empty, string.Empty, Color.white);
+            root.Add(stale.TextField);
+            stale.TextField.Focus();
+            stale.TextField.RemoveFromHierarchy();
+            pool.Release(stale);
+            inputBlock.ClearReceivedCalls();
+
+            // Act
+            world.Add(entity, new PBUiInput());
+            system.Update(0);
+
+            // Assert
+            ref UIInputComponent recycled = ref world.Get<UIInputComponent>(entity);
+            Assert.That(recycled, Is.SameAs(stale), "The pool must hand back the stale field for this test to exercise reuse.");
+            Assert.That(root.panel.focusController.focusedElement, Is.Null);
+            Assert.That(recycled.IsFocused, Is.False);
+            inputBlock.DidNotReceive().Enable(Arg.Any<InputMapComponent.Kind[]>());
+            inputBlock.DidNotReceive().Disable(Arg.Any<InputMapComponent.Kind[]>());
         }
     }
 }

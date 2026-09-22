@@ -21,7 +21,7 @@ namespace DCL.SDKComponents.SceneUI.Utils
         private const float MACOS_MOUSE_WHEEL_SCROLL_SIZE = 4f;
         private const float DEFAULT_MOUSE_WHEEL_SCROLL_SIZE = 18f;
 
-        private static readonly float scrollViewMouseWheelScrollSize =
+        private static readonly float SCROLL_VIEW_MOUSE_WHEEL_SCROLL_SIZE =
             Application.platform is RuntimePlatform.OSXEditor or RuntimePlatform.OSXPlayer
                 ? MACOS_MOUSE_WHEEL_SCROLL_SIZE
                 : DEFAULT_MOUSE_WHEEL_SCROLL_SIZE;
@@ -201,7 +201,7 @@ namespace DCL.SDKComponents.SceneUI.Utils
                     {
                         horizontalScrollerVisibility = ScrollerVisibility.AlwaysVisible,
                         verticalScrollerVisibility = ScrollerVisibility.AlwaysVisible,
-                        mouseWheelScrollSize = scrollViewMouseWheelScrollSize
+                        mouseWheelScrollSize = SCROLL_VIEW_MOUSE_WHEEL_SCROLL_SIZE
                     };
                     scrollView.style.flexGrow = 1;
                     scrollView.style.width = new Length(100, LengthUnit.Percent);

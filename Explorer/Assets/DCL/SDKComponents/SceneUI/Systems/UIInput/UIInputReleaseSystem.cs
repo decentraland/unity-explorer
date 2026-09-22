@@ -7,7 +7,6 @@ using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Groups;
-using DCL.SDKComponents.SceneUI.Utils;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle;
@@ -63,7 +62,6 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
 
             //Removing here the component to avoid double release to the pool in ReleaseReferenceComponentsSystem
             World.Remove<UIInputComponent>(entity);
-            uiInputComponent.UnregisterInputCallbacks();
         }
 
         private void ReleaseFont(UIInputComponent uiInputComponent) =>

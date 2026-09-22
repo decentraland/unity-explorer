@@ -85,5 +85,13 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         public string GetOriginalUrl(string url);
 
         string GetHostnameForFeatureFlag();
+
+        /// <summary>
+        ///     Non-null while LODs come from an abgen source (see the abgen-lods flag and args). LOD bundles and ISS
+        ///     descriptors are named by scene id only, so every LOD source needs its own cache namespace: consumers
+        ///     fold this into the LOD asset-bundle cache key and the ISS descriptor disk-cache key. Null means the
+        ///     regular pipeline and the historical cache keys.
+        /// </summary>
+        string? AbgenLodsCacheKey => null;
     }
 }

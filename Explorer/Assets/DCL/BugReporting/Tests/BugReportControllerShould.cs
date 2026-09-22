@@ -74,9 +74,10 @@ namespace DCL.BugReporting.Tests
         public async Task SendDraftValuesToService()
         {
             // Arrange
-            byte[] imageBytes = { 1, 2, 3 };
-            var image = new BugReportImage(imageBytes, "image/png", null!);
-            var draft = new BugReportDraft(ISSUE_TYPE_INDEX, $"  {DESCRIPTION}  ", image);
+            byte[] firstBytes = { 1, 2, 3 };
+            byte[] secondBytes = { 4, 5, 6 };
+            BugReportImage[] images = { new (firstBytes, "image/png", null!), new (secondBytes, "image/jpeg", null!) };
+            var draft = new BugReportDraft(ISSUE_TYPE_INDEX, $"  {DESCRIPTION}  ", images);
 
             // Act
             Result<string> result = await controller.SubmitDraftAsync(draft, CancellationToken.None);
@@ -86,8 +87,11 @@ namespace DCL.BugReporting.Tests
             Assert.AreEqual("ticket-1", result.Value);
             Assert.AreEqual(BugReportIssueTypes.ALL[ISSUE_TYPE_INDEX].OptionId, captured.IssueType.OptionId);
             Assert.AreEqual(DESCRIPTION, captured.Description);
-            Assert.AreEqual(imageBytes, captured.Image);
-            Assert.AreEqual("image/png", captured.ImageContentType);
+            Assert.AreEqual(2, captured.Images!.Count);
+            Assert.AreSame(firstBytes, captured.Images[0].Bytes);
+            Assert.AreEqual("image/png", captured.Images[0].ContentType);
+            Assert.AreSame(secondBytes, captured.Images[1].Bytes);
+            Assert.AreEqual("image/jpeg", captured.Images[1].ContentType);
             Assert.IsNull(captured.UserName);
             Assert.IsNull(captured.Coordinates);
         }
@@ -172,6 +176,6 @@ namespace DCL.BugReporting.Tests
         }
 
         private static BugReportDraft Draft() =>
-            new (ISSUE_TYPE_INDEX, DESCRIPTION, null);
+            new (ISSUE_TYPE_INDEX, DESCRIPTION, Array.Empty<BugReportImage>());
     }
 }
