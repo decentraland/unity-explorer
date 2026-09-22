@@ -1,15 +1,19 @@
 using DCL.UI;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace DCL.Lobby
 {
     /// <summary>
     ///     Hero card of the lobby: the place the session lands in, with its thumbnail, title, creator,
-    ///     online users and a Jump in button.
+    ///     online users, a Jump in button and a button covering the whole card.
     /// </summary>
     public class LobbyLandingCardView : MonoBehaviour
     {
+        [field: SerializeField]
+        public Button Button { get; private set; } = null!;
+
         [field: SerializeField]
         public ButtonView JumpInButton { get; private set; } = null!;
 

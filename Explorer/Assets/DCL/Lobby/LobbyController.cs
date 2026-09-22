@@ -178,6 +178,7 @@ namespace DCL.Lobby
 
             if (viewInstance != null)
             {
+                viewInstance.LandingCard.Button.onClick.RemoveListener(OnLandingCardClicked);
                 viewInstance.LandingCard.JumpInButton.Button.onClick.RemoveListener(OnLandingJumpInClicked);
                 viewInstance.CloseButton.onClick.RemoveListener(RequestClose);
                 viewInstance.AvatarButton.onClick.RemoveListener(OnAvatarClicked);
@@ -216,7 +217,8 @@ namespace DCL.Lobby
         protected override void OnViewInstantiated()
         {
             base.OnViewInstantiated();
-            viewInstance!.LandingCard.JumpInButton.Button.onClick.AddListener(OnLandingJumpInClicked);
+            viewInstance!.LandingCard.Button.onClick.AddListener(OnLandingCardClicked);
+            viewInstance.LandingCard.JumpInButton.Button.onClick.AddListener(OnLandingJumpInClicked);
             viewInstance.CloseButton.onClick.AddListener(RequestClose);
             viewInstance.AvatarButton.onClick.AddListener(OnAvatarClicked);
             viewInstance.ProfileWidgetView.OpenProfileButton.Button.onClick.AddListener(ShowProfileMenu);
@@ -370,7 +372,8 @@ namespace DCL.Lobby
 
             if (ct.IsCancellationRequested) return;
 
-            ShowLandingCard(result.Success && result.Value != null ? result.Value : destination.ToOfflinePlace(), ct);
+            PlacesData.PlaceInfo? place = result.Success ? result.Value : null;
+            ShowLandingCard(place ?? destination.ToOfflinePlace(), hasDetails: place != null, ct);
         }
 
         /// <summary>
@@ -504,9 +507,11 @@ namespace DCL.Lobby
             card.OnlineCounter.SetActive(false);
             card.Thumbnail.IsLoading = true;
             card.JumpInButton.SetInteractable(false);
+            card.Button.interactable = false;
         }
 
-        private void ShowLandingCard(PlacesData.PlaceInfo place, CancellationToken ct)
+        // An offline stand-in carries nothing but the destination itself, so that card only offers Jump in
+        private void ShowLandingCard(PlacesData.PlaceInfo place, bool hasDetails, CancellationToken ct)
         {
             LobbyLandingCardView card = viewInstance!.LandingCard;
             shownLandingPlace = place;
@@ -515,6 +520,7 @@ namespace DCL.Lobby
             ShowOnlineCount(card.OnlineCounter, card.OnlineCountText, place);
             thumbnailLoader.LoadCommunityThumbnailFromUrlAsync(place.image, card.Thumbnail, card.DefaultThumbnail, ct, true).Forget();
             card.JumpInButton.SetInteractable(true);
+            card.Button.interactable = hasDetails;
         }
 
         private void ShowPlaceCard(LobbyPlaceCardView card, PlacesData.PlaceInfo place, CancellationToken ct)
@@ -609,6 +615,13 @@ namespace DCL.Lobby
                 PlaceJumpedIn?.Invoke(shownLandingPlace, LobbySection.Landing);
                 RequestClose();
             }
+        }
+
+        private void OnLandingCardClicked()
+        {
+            if (shownLandingPlace == null) return;
+
+            OnPlaceClicked(shownLandingPlace, LobbySection.Landing);
         }
 
         private void OnRecentPlaceClicked(int index)

@@ -437,6 +437,39 @@ namespace DCL.Lobby.Tests
         }
 
         [Test]
+        public void OpenTheDetailsOfTheLandingPlaceWhenItsCardIsClicked()
+        {
+            // Arrange
+            startParcel.ConsumeByTeleportOperation();
+            LobbySection? section = null;
+            controller.PlaceOpened += (_, from) => section = from;
+            UniTask lifeCycle = Launch(isStartup: false);
+
+            // Act
+            landingCard.Button.onClick.Invoke();
+
+            // Assert
+            mvcManager.Received(1).ShowAsync(Arg.Is<ShowCommand<PlaceDetailPanelView, PlaceDetailPanelParameter>>(c => c.InputData.PlaceData.title == GENESIS_PLAZA), Arg.Any<CancellationToken>());
+            Assert.That(section, Is.EqualTo(LobbySection.Landing));
+            Assert.That(landingCard.Button.interactable, Is.True);
+            Assert.That(lifeCycle.Status, Is.EqualTo(UniTaskStatus.Pending));
+        }
+
+        [Test]
+        public void LeaveTheLandingCardUnclickableWhileThereAreNoDetailsToOpen()
+        {
+            // Arrange
+            ArrangePlace(Vector2Int.zero, null);
+
+            // Act
+            Launch(isStartup: true);
+
+            // Assert
+            Assert.That(landingCard.Button.interactable, Is.False);
+            Assert.That(landingCard.JumpInButton.Button.interactable, Is.True);
+        }
+
+        [Test]
         public void CountTheConnectedUsersOverTheUserCount()
         {
             // Arrange
@@ -1539,6 +1572,7 @@ namespace DCL.Lobby.Tests
             var counterGo = new GameObject("OnlineCounter");
             counterGo.transform.SetParent(cardGo.transform);
 
+            SetBackingField(card, nameof(LobbyLandingCardView.Button), cardGo.AddComponent<Button>());
             SetBackingField(card, nameof(LobbyLandingCardView.JumpInButton), jumpIn);
             SetBackingField(card, nameof(LobbyLandingCardView.Thumbnail), CreateImageView(cardGo.transform));
             SetBackingField(card, nameof(LobbyLandingCardView.TitleText), CreateText(cardGo.transform, "Title"));
