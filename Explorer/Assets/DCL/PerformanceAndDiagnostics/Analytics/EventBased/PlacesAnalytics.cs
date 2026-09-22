@@ -9,6 +9,9 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
 {
     public class PlacesAnalytics : IDisposable
     {
+        // Where the click happened, which tells the explore panel's places list apart from the lobby's rows
+        private const string SOURCE = "explore";
+
         private readonly IAnalyticsController analytics;
         private readonly ExplorePanelController explorePanelController;
 
@@ -87,6 +90,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
                 { "search_query", filtersApplied.SearchText },
                 { "results_count", resultsCount },
                 { "result_position", cardView.transform.GetSiblingIndex() + 1 },
+                { "source", SOURCE },
             });
         }
 

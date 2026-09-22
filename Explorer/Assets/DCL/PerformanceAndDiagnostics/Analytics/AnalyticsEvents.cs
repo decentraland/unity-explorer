@@ -317,6 +317,18 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             public const string EVENT_LINK_COPIED = "event_link_copied";
         }
 
+        /// <summary>
+        ///     Lifecycle of the lobby panel. What the user does inside it is reported through the events of the
+        ///     surface it mirrors (places, events, friends) with 'source' set to the lobby.
+        /// </summary>
+        public static class Lobby
+        {
+            public const string LOBBY_OPENED = "lobby_opened";
+
+            // Carries how long the panel stayed on screen, in seconds.
+            public const string LOBBY_CLOSED = "lobby_closed";
+        }
+
         public static class Places
         {
             public const string PLACES_SECTION_OPENED = "places_section_opened";

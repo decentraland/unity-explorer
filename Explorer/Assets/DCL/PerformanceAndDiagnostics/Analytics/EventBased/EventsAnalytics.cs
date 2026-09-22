@@ -9,6 +9,9 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
 {
     public class EventsAnalytics : IDisposable
     {
+        // Where the click happened, which tells the explore panel's calendar apart from the lobby's rows
+        private const string SOURCE = "explore";
+
         private readonly IAnalyticsController analytics;
         private readonly ExplorePanelController explorePanelController;
 
@@ -60,8 +63,13 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
         private void OnCreateEventButtonClicked(bool fromHeaderButton) =>
             analytics.Track(AnalyticsEvents.Events.EVENT_CREATION_OPENED, new JObject { { "from_header_button", fromHeaderButton } });
 
-        private void OnEventCardClicked(EventDTO eventInfo) =>
-            analytics.Track(AnalyticsEvents.Events.EVENT_CARD_CLICKED, GetEventJObject(eventInfo));
+        private void OnEventCardClicked(EventDTO eventInfo)
+        {
+            JObject payload = GetEventJObject(eventInfo);
+            payload.Add("source", SOURCE);
+
+            analytics.Track(AnalyticsEvents.Events.EVENT_CARD_CLICKED, payload);
+        }
 
         private void OnEventSetAsInterested(IEventDTO eventInfo) =>
             analytics.Track(AnalyticsEvents.Events.EVENT_SET_AS_INTERESTED, GetEventJObject(eventInfo));

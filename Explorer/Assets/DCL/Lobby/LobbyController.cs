@@ -91,6 +91,41 @@ namespace DCL.Lobby
         // Before the world is loaded Jump in is the only way out; once in-world Escape behaves like any other fullscreen panel.
         public override bool CanBeClosedByEscape => loadingStatus.CurrentStage.Value == LoadingStatus.LoadingStage.Completed;
 
+        /// <summary>
+        ///     The panel is on screen. True at the startup show, false when the user opened it from the world.
+        /// </summary>
+        public event Action<bool>? Opened;
+
+        /// <summary>
+        ///     The panel left the screen, once per <see cref="Opened" />.
+        /// </summary>
+        public event Action? Closed;
+
+        /// <summary>
+        ///     A place card was picked, which opens its details rather than jumping in.
+        /// </summary>
+        public event Action<PlacesData.PlaceInfo, LobbySection>? PlaceOpened;
+
+        /// <summary>
+        ///     The user is on their way to a place, from a card's Jump in or from the details that card opened.
+        /// </summary>
+        public event Action<PlacesData.PlaceInfo, LobbySection>? PlaceJumpedIn;
+
+        /// <summary>
+        ///     An event card was picked, which opens its details rather than jumping in.
+        /// </summary>
+        public event Action<IEventDTO, LobbySection>? EventOpened;
+
+        /// <summary>
+        ///     The user is on their way to an event, from the details its card opened.
+        /// </summary>
+        public event Action<IEventDTO, LobbySection>? EventJumpedIn;
+
+        /// <summary>
+        ///     The user is on their way to where a friend is, with the parcel the friend was at.
+        /// </summary>
+        public event Action<string, Vector2Int>? FriendJoined;
+
         public LobbyController(ViewFactoryMethod viewFactory,
             IInputBlock inputBlock,
             IReadOnlyLoadingStatus loadingStatus,
@@ -242,6 +277,8 @@ namespace DCL.Lobby
 
             friendsCts = friendsCts.SafeRestart();
             friends?.Show(friendsCts.Token);
+
+            Opened?.Invoke(inputData.IsStartup);
         }
 
         protected override void OnViewClose()
@@ -264,6 +301,8 @@ namespace DCL.Lobby
             // it instead of closing it: the lobby has to come back, otherwise nothing is left on screen and the flow never resumes
             if (inputData.IsStartup && !leaving)
                 mvcManager.OnViewClosed += ShowAgainWhenTheScreenIsFree;
+
+            Closed?.Invoke();
         }
 
         /// <summary>
@@ -564,44 +603,47 @@ namespace DCL.Lobby
 
             // Before the world loads the card mirrors the destination the launch settings already picked, so there is nothing to reassign
             if (startParcel.IsConsumed())
-                OnPlaceJumpIn(shownLandingPlace);
+                OnPlaceJumpIn(shownLandingPlace, LobbySection.Landing);
             else
+            {
+                PlaceJumpedIn?.Invoke(shownLandingPlace, LobbySection.Landing);
                 RequestClose();
+            }
         }
 
         private void OnRecentPlaceClicked(int index)
         {
             if (index < recentPlaces.Count)
-                OnPlaceClicked(recentPlaces[index]);
+                OnPlaceClicked(recentPlaces[index], LobbySection.Recent);
         }
 
         private void OnRecommendedPlaceClicked(int index)
         {
             if (index < recommendedPlaces.Count)
-                OnPlaceClicked(recommendedPlaces[index]);
+                OnPlaceClicked(recommendedPlaces[index], LobbySection.Recommended);
         }
 
         private void OnRecentPlaceJumpIn(int index)
         {
             if (index < recentPlaces.Count)
-                OnPlaceJumpIn(recentPlaces[index]);
+                OnPlaceJumpIn(recentPlaces[index], LobbySection.Recent);
         }
 
         private void OnRecommendedPlaceJumpIn(int index)
         {
             if (index < recommendedPlaces.Count)
-                OnPlaceJumpIn(recommendedPlaces[index]);
+                OnPlaceJumpIn(recommendedPlaces[index], LobbySection.Recommended);
         }
 
         private void OnLiveEventClicked(int index)
         {
             if (index < liveEvents.Count)
-                OnEventClicked(liveEvents[index]);
+                OnEventClicked(liveEvents[index], LobbySection.LiveEvents);
         }
 
         // The card is handed over so that toggling Interested in the details also updates it
         private void OnUpcomingEventClicked(EventDTO @event, PlacesData.PlaceInfo? _, EventCardView card) =>
-            OnEventClicked(@event, card);
+            OnEventClicked(@event, LobbySection.UpcomingEvents, card);
 
         private void OnUpcomingEventInterested(EventDTO @event, EventCardView card) =>
             eventCardActions.SetEventAsInterestedAsync(@event, card, null, eventsCts!.Token).Forget();
@@ -620,24 +662,42 @@ namespace DCL.Lobby
         private void OnAvatarClicked() =>
             mvcManager.ShowAndForget(BackpackModalController.IssueCommand(new BackpackModalParameter(BackpackSections.Avatar)));
 
-        // The place details open in the same modal the Places menu uses; jumping in from there comes back through OnPlaceJumpIn
-        private void OnPlaceClicked(PlacesData.PlaceInfo place) =>
-            mvcManager.ShowAndForget(PlaceDetailPanelController.IssueCommand(new PlaceDetailPanelParameter(place, jumpInHandler: OnPlaceJumpIn)));
+        // The place details open in the same modal the Places menu uses; jumping in from there comes back through OnPlaceJumpIn,
+        // which is why the row the card sits in travels with the handler
+        private void OnPlaceClicked(PlacesData.PlaceInfo place, LobbySection section)
+        {
+            PlaceOpened?.Invoke(place, section);
+            mvcManager.ShowAndForget(PlaceDetailPanelController.IssueCommand(new PlaceDetailPanelParameter(place, jumpInHandler: jumped => OnPlaceJumpIn(jumped, section))));
+        }
 
-        private void OnPlaceJumpIn(PlacesData.PlaceInfo place) =>
+        private void OnPlaceJumpIn(PlacesData.PlaceInfo place, LobbySection section)
+        {
+            PlaceJumpedIn?.Invoke(place, section);
             PickDestination(place.IsWorld ? WorldUrl(place.world_name) : null, place.base_position_processed, landOnParcel: false);
+        }
 
         // The event details open in the same modal the Explore menu uses; jumping in from there comes back through OnEventJumpIn
-        private void OnEventClicked(EventDTO @event, EventCardView? card = null) =>
-            mvcManager.ShowAndForget(EventDetailPanelController.IssueCommand(new EventDetailPanelParameter(@event, placeData: null, card, OnEventJumpIn)));
+        private void OnEventClicked(EventDTO @event, LobbySection section, EventCardView? card = null)
+        {
+            EventOpened?.Invoke(@event, section);
+            mvcManager.ShowAndForget(EventDetailPanelController.IssueCommand(new EventDetailPanelParameter(@event, placeData: null, card, jumped => OnEventJumpIn(jumped, section))));
+        }
 
         // Land on the exact parcel of the event rather than on the scene spawn point: the event may be held in a corner of a big scene
-        private void OnEventJumpIn(IEventDTO @event) =>
+        private void OnEventJumpIn(IEventDTO @event, LobbySection section)
+        {
+            EventJumpedIn?.Invoke(@event, section);
             PickDestination(@event.World ? WorldUrl(@event.Server) : null, new Vector2Int(@event.X, @event.Y), landOnParcel: true);
+        }
 
         // Land next to the friend rather than on the scene spawn point
-        private void OnFriendJoin(OnlineUserData friend) =>
-            PickDestination(friend.worldName is { Length: > 0 } worldName ? WorldUrl(worldName) : null, friend.position.ToParcel(), landOnParcel: true);
+        private void OnFriendJoin(OnlineUserData friend)
+        {
+            Vector2Int parcel = friend.position.ToParcel();
+
+            FriendJoined?.Invoke(friend.avatarId, parcel);
+            PickDestination(friend.worldName is { Length: > 0 } worldName ? WorldUrl(worldName) : null, parcel, landOnParcel: true);
+        }
 
         /// <summary>
         ///     Before the world is loaded the startup teleport lands directly in the picked destination; once in-world it teleports right away.
@@ -684,6 +744,18 @@ namespace DCL.Lobby
             closeIntent?.TrySetResult();
             closeIntent = null;
         }
+    }
+
+    /// <summary>
+    ///     The row of the lobby a card was picked from, reported along the card's own events.
+    /// </summary>
+    public enum LobbySection
+    {
+        Landing,
+        Recent,
+        Recommended,
+        LiveEvents,
+        UpcomingEvents,
     }
 
     /// <summary>

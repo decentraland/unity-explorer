@@ -1104,6 +1104,128 @@ namespace DCL.Lobby.Tests
             realmNavigator.DidNotReceiveWithAnyArgs().TryChangeRealmAsync(default, default);
         }
 
+        [TestCase(true)]
+        [TestCase(false)]
+        public void ReportTheVisitAndItsClosure(bool isStartup)
+        {
+            // Arrange
+            var visits = new List<bool>();
+            var closures = 0;
+            controller.Opened += visits.Add;
+            controller.Closed += () => closures++;
+
+            // Act
+            Launch(isStartup);
+            controller.HideViewAsync(CancellationToken.None).Forget();
+
+            // Assert
+            Assert.That(visits, Is.EqualTo(new[] { isStartup }));
+            Assert.That(closures, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void ReportTheRowAPlaceCardBelongsToBothWhenItOpensAndWhenTheUserJumpsIn()
+        {
+            // Arrange
+            startParcel.ConsumeByTeleportOperation();
+            PlacesData.PlaceInfo place = CreatePlace("plaza", new Vector2Int(10, 20));
+            ArrangeRecentPlaces(new List<string> { place.id }, place);
+            LobbySection? opened = null;
+            LobbySection? jumpedIn = null;
+            controller.PlaceOpened += (_, section) => opened = section;
+            controller.PlaceJumpedIn += (_, section) => jumpedIn = section;
+            Launch(isStartup: false);
+
+            // Act
+            recentPlaceCards[0].Button.onClick.Invoke();
+            PlaceDetailPanelParameter details = ShownPlaceDetails();
+            details.JumpInHandler!(details.PlaceData);
+
+            // Assert
+            Assert.That(opened, Is.EqualTo(LobbySection.Recent));
+            Assert.That(jumpedIn, Is.EqualTo(LobbySection.Recent));
+        }
+
+        [Test]
+        public void ReportAFeaturedPlaceJumpedInFromItsOwnCard()
+        {
+            // Arrange
+            startParcel.ConsumeByTeleportOperation();
+            ArrangeRecommendedPlaces(CreatePlace("featured", new Vector2Int(-3, 7)));
+            PlacesData.PlaceInfo? jumpedIn = null;
+            LobbySection? section = null;
+
+            controller.PlaceJumpedIn += (place, from) =>
+            {
+                jumpedIn = place;
+                section = from;
+            };
+
+            Launch(isStartup: false);
+
+            // Act
+            recommendedPlaces.Cards[0].JumpInButton!.Button.onClick.Invoke();
+
+            // Assert
+            Assert.That(jumpedIn?.title, Is.EqualTo("featured"));
+            Assert.That(section, Is.EqualTo(LobbySection.Recommended));
+        }
+
+        [Test]
+        public void ReportTheLandingCardAsItsOwnRowBeforeTheWorldLoads()
+        {
+            // Arrange
+            LobbySection? section = null;
+            controller.PlaceJumpedIn += (_, from) => section = from;
+            Launch(isStartup: true);
+
+            // Act
+            landingCard.JumpInButton.Button.onClick.Invoke();
+
+            // Assert
+            Assert.That(section, Is.EqualTo(LobbySection.Landing));
+        }
+
+        [Test]
+        public void ReportTheRowAnEventCardBelongsTo()
+        {
+            // Arrange
+            startParcel.ConsumeByTeleportOperation();
+
+            ArrangeEvents(CreateEvent("concert", new Vector2Int(3, 4), TimeSpan.FromMinutes(-5), live: true),
+                CreateEvent("party", Vector2Int.zero, TimeSpan.FromHours(1)));
+
+            var opened = new List<LobbySection>();
+            controller.EventOpened += (_, section) => opened.Add(section);
+            Launch(isStartup: false);
+
+            // Act
+            LiveEventCard(0).Button.onClick.Invoke();
+            UpcomingMainButton(0).onClick.Invoke();
+
+            // Assert
+            Assert.That(opened, Is.EqualTo(new[] { LobbySection.LiveEvents, LobbySection.UpcomingEvents }));
+        }
+
+        [Test]
+        public void ReportTheRowAnEventWasJumpedInFrom()
+        {
+            // Arrange
+            startParcel.ConsumeByTeleportOperation();
+            ArrangeEvents(CreateEvent("concert", new Vector2Int(3, 4), TimeSpan.FromMinutes(-5), live: true));
+            LobbySection? section = null;
+            controller.EventJumpedIn += (_, from) => section = from;
+            Launch(isStartup: false);
+            LiveEventCard(0).Button.onClick.Invoke();
+            EventDetailPanelParameter details = ShownEventDetails();
+
+            // Act
+            details.JumpInHandler!(details.EventData);
+
+            // Assert
+            Assert.That(section, Is.EqualTo(LobbySection.LiveEvents));
+        }
+
         private PlaceDetailPanelParameter ShownPlaceDetails()
         {
             foreach (ICall call in mvcManager.ReceivedCalls())
