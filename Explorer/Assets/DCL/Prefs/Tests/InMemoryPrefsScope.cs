@@ -3,10 +3,7 @@ using System.Reflection;
 
 namespace DCL.Prefs.Tests
 {
-    /// <summary>
-    ///     Swaps the store behind <see cref="DCLPlayerPrefs" /> for an in-memory one, and puts the original back
-    ///     on dispose. Reflection is the only seam: the store is chosen once at startup and never re-initialized.
-    /// </summary>
+    /// <summary>Swaps the store behind <see cref="DCLPlayerPrefs" /> for an in-memory one, restoring the original on dispose.</summary>
     public sealed class InMemoryPrefsScope : IDisposable
     {
         private static readonly FieldInfo PREFS_FIELD =
@@ -25,9 +22,7 @@ namespace DCL.Prefs.Tests
             PREFS_FIELD.SetValue(null, originalPrefs);
         }
 
-        /// <summary>
-        ///     Discards everything stored so far, standing in for an installation that has never run before.
-        /// </summary>
+        /// <summary>Discards everything stored so far, standing in for an installation that has never run.</summary>
         public void Reset()
         {
             PREFS_FIELD.SetValue(null, new InMemoryDCLPlayerPrefs());

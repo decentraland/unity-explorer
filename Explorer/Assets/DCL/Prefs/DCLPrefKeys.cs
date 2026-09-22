@@ -6,13 +6,10 @@ namespace DCL.Prefs
 
         public const string LAUNCH_COUNT = "LaunchCount";
 
-        // Random anonymous identity of this installation, owned by AnonymousInstallationId and shared by every
-        // feature that needs one: the A/B bucket feature flags are evaluated against, and the device identifier
-        // sent to comms-gatekeeper.
+        // Owned by AnonymousInstallationId; backs both the feature-flags A/B bucket and the comms device identifier.
         public const string ANONYMOUS_INSTALLATION_ID = "AnonymousInstallationId";
 
-        // Where the anonymous id lived while feature flags were its only consumer. Read once, to carry an existing
-        // installation over to ANONYMOUS_INSTALLATION_ID instead of re-rolling its A/B bucket; never written.
+        // Where that id lived while feature flags were its only consumer. Read for migration, never written.
         public const string LEGACY_FEATURE_FLAGS_USER_ID = "FeatureFlagsUserId";
 
         // Developer-selected path to the Creator Hub executable, remembered across launches so the Chrome
