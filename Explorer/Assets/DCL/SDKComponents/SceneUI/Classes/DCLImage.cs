@@ -56,6 +56,17 @@ namespace DCL.SDKComponents.SceneUI.Classes
 
         private IStyle style => canvas.style;
 
+        // contentRect stops at the padding edge, while CSS paints the background over the padding box.
+        private Rect backgroundRect
+        {
+            get
+            {
+                IResolvedStyle resolvedStyle = canvas.resolvedStyle;
+
+                return ToPaddingRect(canvas.contentRect, resolvedStyle.paddingLeft, resolvedStyle.paddingTop, resolvedStyle.paddingRight, resolvedStyle.paddingBottom);
+            }
+        }
+
         public void Initialize(VisualElement canvasToApply)
         {
             texture = null;
@@ -235,7 +246,7 @@ namespace DCL.SDKComponents.SceneUI.Classes
         private void GenerateStretched(MeshGenerationContext mgc)
         {
             // in local coords
-            PopulateStretchedQuad(VERTICES, canvas.contentRect);
+            PopulateStretchedQuad(VERTICES, backgroundRect);
 
             MeshWriteData? mwd = mgc.Allocate(VERTICES.Length, INDICES.Length, texture);
 
@@ -256,7 +267,7 @@ namespace DCL.SDKComponents.SceneUI.Classes
         private void GenerateCenteredTexture(MeshGenerationContext mgc)
         {
             // in local coords
-            var r = canvas.contentRect;
+            Rect r = backgroundRect;
 
             var panelScale = canvas.worldTransform.lossyScale;
             float targetTextureWidth = texture.width * panelScale[0];
@@ -304,17 +315,24 @@ namespace DCL.SDKComponents.SceneUI.Classes
                 VERTICES[i].tint = color;
         }
 
-        internal static void PopulateStretchedQuad(Vertex[] vertices, Rect contentRect)
+        internal static void PopulateStretchedQuad(Vertex[] vertices, Rect rect)
         {
-            float left = contentRect.x;
-            float right = contentRect.xMax;
-            float top = contentRect.y;
-            float bottom = contentRect.yMax;
+            float left = rect.x;
+            float right = rect.xMax;
+            float top = rect.y;
+            float bottom = rect.yMax;
 
             vertices[0].position = new Vector3(left, bottom, Vertex.nearZ);
             vertices[1].position = new Vector3(left, top, Vertex.nearZ);
             vertices[2].position = new Vector3(right, top, Vertex.nearZ);
             vertices[3].position = new Vector3(right, bottom, Vertex.nearZ);
         }
+
+        internal static Rect ToPaddingRect(Rect contentRect, float paddingLeft, float paddingTop, float paddingRight, float paddingBottom) =>
+            Rect.MinMaxRect(
+                contentRect.xMin - paddingLeft,
+                contentRect.yMin - paddingTop,
+                contentRect.xMax + paddingRight,
+                contentRect.yMax + paddingBottom);
     }
 }

@@ -173,6 +173,22 @@ namespace DCL.SDKComponents.SceneUI.Tests
         }
 
         [Test]
+        public void SetupVisualElement_ClearsFlexBasis_WhenUnitIsUndefined()
+        {
+            // Arrange - a visual element carrying the flex-basis of a previous model, as happens when it comes back from the pool
+            var previousTransform = new PBUiTransform { FlexBasis = 50f, FlexBasisUnit = YGUnit.YguPoint };
+            UiElementUtils.SetupTransformVisualElement(visualElement, ref previousTransform);
+            Assert.AreEqual(new StyleLength(50f), visualElement.style.flexBasis);
+
+            // Act
+            var pbUiTransform = new PBUiTransform();
+            UiElementUtils.SetupTransformVisualElement(visualElement, ref pbUiTransform);
+
+            // Assert
+            Assert.AreEqual(StyleKeyword.Null, visualElement.style.flexBasis.keyword);
+        }
+
+        [Test]
         public void EnsureScrollMode_CreatesInnerScrollView_WhenOverflowIsYgoScroll()
         {
             // Arrange

@@ -35,6 +35,8 @@ namespace DCL.SDKComponents.SceneUI.Utils
             transformVisualElement.style.flexDirection = GetFlexDirection(model.FlexDirection);
             if (model.FlexBasisUnit != YGUnit.YguUndefined)
                 transformVisualElement.style.flexBasis = model.FlexBasisUnit == YGUnit.YguAuto ? new StyleLength(StyleKeyword.Auto) : new Length(model.FlexBasis, GetUnit(model.FlexBasisUnit));
+            else
+                transformVisualElement.style.flexBasis = StyleKeyword.Null;
 
             transformVisualElement.style.flexGrow = model.FlexGrow;
             transformVisualElement.style.flexShrink = model.GetFlexShrink();
