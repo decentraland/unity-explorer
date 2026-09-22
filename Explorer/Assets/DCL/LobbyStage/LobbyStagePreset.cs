@@ -53,6 +53,12 @@ namespace DCL.Lobby
         [field: Tooltip("Fraction of the image height, from the bottom, sampled by 'Match colours to backdrop'")]
         [field: SerializeField, Range(0.02f, 0.5f)] public float ColorSampleBand { get; private set; } = 0.15f;
 
+        [field: Header("Key Light")]
+        [field: Tooltip("Euler angles of the stage's directional light")]
+        [field: SerializeField] public Vector3 LightRotation { get; private set; } = new (25f, 95f, 0f);
+        [field: SerializeField] public Color LightColor { get; private set; } = new (1f, 0.859f, 0.404f, 1f);
+        [field: SerializeField, Min(0f)] public float LightIntensity { get; private set; } = 2f;
+
         [field: Header("Props")]
         [field: SerializeField] public LobbyStageProp[] Props { get; private set; } = Array.Empty<LobbyStageProp>();
 

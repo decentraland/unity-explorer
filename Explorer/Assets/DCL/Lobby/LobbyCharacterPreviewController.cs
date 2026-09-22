@@ -87,6 +87,9 @@ namespace DCL.Lobby
         private void FitStage()
         {
             SetPostProcessingEnabled(settings.PostProcessing);
+
+            // The stage brings its own preset-driven light; the container is pooled, so this runs for every new preview
+            SetPreviewLightActive(false);
             stage.Track(PreviewCamera);
         }
 

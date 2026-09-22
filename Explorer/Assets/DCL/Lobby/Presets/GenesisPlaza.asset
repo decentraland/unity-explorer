@@ -21,4 +21,7 @@ MonoBehaviour:
   <SpotColor>k__BackingField: {r: 0.9716981, g: 0.7147973, b: 0.36209506, a: 1}
   <MistColor>k__BackingField: {r: 0.5641461, g: 0.5333333, b: 0.67058825, a: 0.7882353}
   <ColorSampleBand>k__BackingField: 0.15
+  <LightRotation>k__BackingField: {x: 45, y: 120, z: 0}
+  <LightColor>k__BackingField: {r: 1, g: 0.9050397, b: 0.5990566, a: 1}
+  <LightIntensity>k__BackingField: 2
   <Props>k__BackingField: []

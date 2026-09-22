@@ -181,6 +181,9 @@ namespace DCL.CharacterPreview
         public void SetPreviewPlatformActive(bool isActive) =>
             characterPreviewAvatarContainer.SetPreviewPlatformActive(isActive);
 
+        public void SetLightActive(bool isActive) =>
+            characterPreviewAvatarContainer.SetLightActive(isActive);
+
         public void SetPostProcessingEnabled(bool enabled) =>
             characterPreviewAvatarContainer.SetPostProcessingEnabled(enabled);
 

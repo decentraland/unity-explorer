@@ -419,5 +419,10 @@ namespace DCL.CharacterPreview
         {
             previewController?.SetPostProcessingEnabled(enabled);
         }
+
+        protected void SetPreviewLightActive(bool isActive)
+        {
+            previewController?.SetLightActive(isActive);
+        }
     }
 }

@@ -27,6 +27,7 @@ namespace DCL.Lobby
         [SerializeField] private Renderer floor = null!;
         [SerializeField] private Renderer mist = null!;
         [SerializeField] private Transform propsRoot = null!;
+        [SerializeField] private Light keyLight = null!;
         [SerializeField] private LobbyStagePreset? preset;
 
         private MaterialPropertyBlock? backdropProperties;
@@ -237,6 +238,10 @@ namespace DCL.Lobby
             mist.GetPropertyBlock(mistProperties);
             mistProperties.SetColor(COLOR, preset.MistColor);
             mist.SetPropertyBlock(mistProperties);
+
+            keyLight.transform.localRotation = Quaternion.Euler(preset.LightRotation);
+            keyLight.color = preset.LightColor;
+            keyLight.intensity = preset.LightIntensity;
         }
 
         // Ray through a viewport point (0..1) for the given lens
