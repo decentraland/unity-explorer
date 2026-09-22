@@ -26,6 +26,7 @@ namespace DCL.Lobby
         [SerializeField] private Renderer backdrop = null!;
         [SerializeField] private Renderer floor = null!;
         [SerializeField] private Renderer mist = null!;
+        [SerializeField] private Transform propsRoot = null!;
         [SerializeField] private LobbyStagePreset? preset;
 
         private MaterialPropertyBlock? backdropProperties;
@@ -33,14 +34,17 @@ namespace DCL.Lobby
         private MaterialPropertyBlock? mistProperties;
         private Texture? backgroundOverride;
         private Camera? trackedCamera;
+        private LobbyStagePreset? spawnedPropsPreset;
+        private int spawnedPropsVersion;
 
         /// <summary>
-        ///     Switches the whole look: image, blend and tints.
+        ///     Switches the whole look: image, blend, tints and props.
         /// </summary>
         public void ApplyPreset(LobbyStagePreset newPreset)
         {
             preset = newPreset;
             ApplyPresetValues();
+            RebuildPropsIfStale();
         }
 
         /// <summary>
@@ -127,11 +131,20 @@ namespace DCL.Lobby
         {
             RenderPipelineManager.beginCameraRendering += OnBeginCameraRendering;
             ApplyPresetValues();
+            RebuildPropsIfStale();
+
+#if UNITY_EDITOR
+            LobbyStagePreset.AnyChanged += OnAnyPresetChanged;
+#endif
         }
 
         private void OnDisable()
         {
             RenderPipelineManager.beginCameraRendering -= OnBeginCameraRendering;
+
+#if UNITY_EDITOR
+            LobbyStagePreset.AnyChanged -= OnAnyPresetChanged;
+#endif
         }
 
 #if UNITY_EDITOR
@@ -139,15 +152,66 @@ namespace DCL.Lobby
         {
             ApplyPresetValues();
         }
+
+        // Objects cannot be created or destroyed inside a validation callback, so the refresh runs on the next editor tick
+        private void OnAnyPresetChanged(LobbyStagePreset changed)
+        {
+            if (changed != preset) return;
+
+            UnityEditor.EditorApplication.delayCall += () =>
+            {
+                if (this == null || !isActiveAndEnabled) return;
+
+                ApplyPresetValues();
+                RebuildPropsIfStale();
+                UnityEditor.EditorApplication.QueuePlayerLoopUpdate();
+                UnityEditor.SceneView.RepaintAll();
+            };
+        }
 #endif
 
         private void OnBeginCameraRendering(ScriptableRenderContext _, Camera camera)
         {
             if (camera != trackedCamera) return;
 
-            // Re-applied every frame so edits to the preset asset show up live; three property blocks is negligible
+            // Re-applied every frame so edits to the preset asset show up live; three property blocks is negligible,
+            // props are only rebuilt when the preset or its edit version changed
             ApplyPresetValues();
+            RebuildPropsIfStale();
             FitBackdrop(camera);
+        }
+
+        // Instances are never saved: the preset is the only source of truth, so scenes and the prefab stay clean
+        private void RebuildPropsIfStale()
+        {
+            if (preset == spawnedPropsPreset && (preset == null || preset.Version == spawnedPropsVersion)) return;
+
+            for (int i = propsRoot.childCount - 1; i >= 0; i--)
+            {
+                GameObject child = propsRoot.GetChild(i).gameObject;
+
+                if (Application.isPlaying) Destroy(child);
+                else DestroyImmediate(child);
+            }
+
+            spawnedPropsPreset = preset;
+            spawnedPropsVersion = preset != null ? preset.Version : 0;
+            if (preset == null) return;
+
+            float floorLocalY = floor.transform.localPosition.y;
+
+            foreach (LobbyStageProp prop in preset.Props)
+            {
+                if (prop.Prefab == null) continue;
+
+                GameObject instance = Instantiate(prop.Prefab, propsRoot);
+                instance.hideFlags = HideFlags.DontSave;
+                instance.transform.SetLocalPositionAndRotation(prop.Position + (Vector3.up * floorLocalY), Quaternion.Euler(prop.Rotation));
+                instance.transform.localScale = prop.Scale;
+
+                foreach (Transform child in instance.GetComponentsInChildren<Transform>(true))
+                    child.gameObject.layer = gameObject.layer;
+            }
         }
 
         private void ApplyPresetValues()

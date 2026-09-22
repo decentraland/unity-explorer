@@ -1,10 +1,31 @@
+using System;
 using UnityEngine;
 
 namespace DCL.Lobby
 {
     /// <summary>
+    ///     A set piece placed on the stage by a preset. Position is relative to the stage origin, except Y which is measured
+    ///     from the floor surface so a prop resting on the ground is at Y = 0.
+    /// </summary>
+    [Serializable]
+    public class LobbyStageProp
+    {
+        [field: SerializeField] public GameObject? Prefab { get; private set; }
+        [field: SerializeField] public Vector3 Position { get; private set; }
+        [field: SerializeField] public Vector3 Rotation { get; private set; }
+        [field: SerializeField] public Vector3 Scale { get; private set; } = Vector3.one;
+
+        // A list entry added in the inspector is zero-filled, ignoring the initialiser; a zero scale is never what was meant
+        internal void SanitizeDefaults()
+        {
+            if (Scale == Vector3.zero)
+                Scale = Vector3.one;
+        }
+    }
+
+    /// <summary>
     ///     Everything on the lobby stage that changes with the backdrop image: the image itself, where and how the floor dissolves
-    ///     into it, which part of the image is visible, and the floor and mist tints that sit with it.
+    ///     into it, which part of the image is visible, the floor and mist tints that sit with it, and the set pieces around it.
     /// </summary>
     [CreateAssetMenu(fileName = "LobbyStagePreset", menuName = "DCL/Lobby/Stage Preset")]
     public class LobbyStagePreset : ScriptableObject
@@ -32,7 +53,29 @@ namespace DCL.Lobby
         [field: Tooltip("Fraction of the image height, from the bottom, sampled by 'Match colours to backdrop'")]
         [field: SerializeField, Range(0.02f, 0.5f)] public float ColorSampleBand { get; private set; } = 0.15f;
 
+        [field: Header("Props")]
+        [field: SerializeField] public LobbyStageProp[] Props { get; private set; } = Array.Empty<LobbyStageProp>();
+
+        /// <summary>
+        ///     Bumped on every inspector edit, so a stage can tell when its spawned props are stale without comparing the list.
+        /// </summary>
+        public int Version { get; private set; }
+
 #if UNITY_EDITOR
+        /// <summary>
+        ///     Raised after any preset asset is edited in the inspector, so stages showing it can refresh without waiting for a render.
+        /// </summary>
+        public static event Action<LobbyStagePreset>? AnyChanged;
+
+        private void OnValidate()
+        {
+            foreach (LobbyStageProp prop in Props)
+                prop.SanitizeDefaults();
+
+            Version++;
+            AnyChanged?.Invoke(this);
+        }
+
         private const int SAMPLE_SIZE = 64;
         private const int HISTOGRAM_LEVELS = 16;
         private const float DOMINANT_WEIGHT = 0.7f;
