@@ -39,32 +39,6 @@ namespace DCL.Profiles.Tests
         }
 
         [Test]
-        public void StripOnlyWhatItForced()
-        {
-            var forced = new ForcedWearables(new[] { new URN(WEARABLE) });
-            Profile profile = NewProfile(OWNED_WEARABLE);
-
-            forced.ApplyTo(profile);
-            forced.RemoveFrom(profile);
-
-            Assert.That(profile.Avatar.Wearables, Has.No.Member(new URN(WEARABLE)));
-            Assert.That(profile.Avatar.Wearables, Has.Member(new URN(OWNED_WEARABLE)));
-        }
-
-        [Test]
-        public void StripAForcedWearableTheProfileAlreadyCarries()
-        {
-            // The profile about to be deployed is rebuilt from the equipped set, not from the one ApplyTo touched,
-            // so the strip has to work on a wearable this instance never applied itself.
-            var forced = new ForcedWearables(new[] { new URN(WEARABLE) });
-            Profile profile = NewProfile(WEARABLE, OWNED_WEARABLE);
-
-            forced.RemoveFrom(profile);
-
-            Assert.That(profile.Avatar.Wearables, Is.EquivalentTo(new[] { new URN(OWNED_WEARABLE) }));
-        }
-
-        [Test]
         public void ShortenUrnsOnTheWayIn()
         {
             // An extended URN carries a token id; the profile holds the shortened form.
@@ -74,17 +48,6 @@ namespace DCL.Profiles.Tests
             forced.ApplyTo(profile);
 
             Assert.That(profile.Avatar.Wearables, Has.Member(new URN(WEARABLE)));
-        }
-
-        [Test]
-        public void StripAWearableForcedByItsExtendedUrn()
-        {
-            var forced = new ForcedWearables(new[] { new URN($"{WEARABLE}:105") });
-            Profile profile = NewProfile(WEARABLE);
-
-            forced.RemoveFrom(profile);
-
-            Assert.That(profile.Avatar.Wearables, Has.No.Member(new URN(WEARABLE)));
         }
 
         [Test]
@@ -105,16 +68,24 @@ namespace DCL.Profiles.Tests
             Profile profile = NewProfile(OWNED_WEARABLE);
 
             forced.ApplyTo(profile);
-            forced.RemoveFrom(profile);
 
             Assert.That(profile.Avatar.Wearables, Is.EquivalentTo(new[] { new URN(OWNED_WEARABLE) }));
+        }
+
+        [Test]
+        public void ReportAnEmptySetAsInactive()
+        {
+            // SelfProfile blocks every deploy while this is true, so an empty set must not read as active.
+            Assert.That(new ForcedWearables().Any, Is.False);
+            Assert.That(new ForcedWearables(new[] { default(URN) }).Any, Is.False, "an empty URN is dropped on the way in");
+            Assert.That(new ForcedWearables(new[] { new URN(WEARABLE) }).Any, Is.True);
         }
 
         [Test]
         public void KeepAvatarWearablesBackedByAHashSet()
         {
             // ForcedWearables reaches the backing set through this cast, because Avatar.wearables is internal to
-            // DCL.SharedAPI. Pinned here so a change of backing type fails in CI instead of disabling the strip.
+            // DCL.SharedAPI. Pinned here so a change of backing type fails in CI instead of leaving the avatar bare.
             Assert.That(NewProfile().Avatar.Wearables, Is.InstanceOf<HashSet<URN>>());
         }
     }

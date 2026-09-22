@@ -6,6 +6,7 @@ using DCL.AvatarRendering.Emotes.Equipped;
 using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.Diagnostics;
 using DCL.Profiles.Helpers;
 using DCL.Utility.Types;
 using DCL.Web3.Identities;
@@ -130,9 +131,6 @@ namespace DCL.Profiles.Self
 
             string address = web3IdentityCache.Identity.Address;
 
-            // Strip forced wearables before deploying.
-            forcedWearables.RemoveFrom(newProfile);
-
             // Take a snapshot of the current profile from cache before any mutations
             // This serves as the baseline for duplicate detection and revert on failure
             profileCache.TryGet(address, out Profile? cachedProfile);
@@ -150,6 +148,25 @@ namespace DCL.Profiles.Self
                     throw new Web3IdentityMissingException("Web3 Identity has an empty address");
 
                 newProfile.UserId = selfUserId.Value;
+
+                // Forced wearables and emotes are applied to every profile ProfileAsync hands out, and every
+                // deploy path builds its profile from one of those - the backpack through the equipped set, the
+                // name/links/passport editors through a builder copy. Rather than unpicking the faked set from
+                // each of them, a session that fakes anything does not deploy at all: the local state is updated
+                // as if it had, and nothing reaches the catalyst.
+                if (forcedWearables.Any || forcedEmotes?.Count > 0)
+                {
+                    ReportHub.LogWarning(ReportCategory.PROFILE, "Profile deploy skipped: forced wearables or emotes are active for this session");
+
+                    profileCache.Set(newProfile.UserId, newProfile);
+
+                    if (updateAvatarInWorld)
+                        UpdateAvatarInWorld(newProfile);
+
+                    ProfilePropagated?.Invoke(newProfile);
+                    return newProfile;
+                }
+
                 newProfile.Version++;
 
                 if (!updateAvatarInWorld)
@@ -163,7 +180,6 @@ namespace DCL.Profiles.Self
 
                     if (savedProfile != null)
                     {
-                        forcedWearables.ApplyTo(savedProfile);
                         profileCache.Set(savedProfile.UserId, savedProfile);
                         ProfilePropagated?.Invoke(savedProfile);
                     }
@@ -191,7 +207,6 @@ namespace DCL.Profiles.Self
 
                     // We need to re-update the avatar in-world with the new profile because the save operation invalidates the previous profile
                     // breaking the avatar and the backpack
-                    forcedWearables.ApplyTo(savedProfile);
                     profileCache.Set(savedProfile.UserId, savedProfile);
                     UpdateAvatarInWorld(savedProfile);
                     ProfilePropagated?.Invoke(savedProfile);

@@ -88,7 +88,7 @@ namespace Global.AppArgs
 
         public const string FORCED_EMOTES = "self-force-emotes";
 
-        /// <summary>Comma-separated wearable URNs rendered on the own avatar without owning them. Never deployed.</summary>
+        /// <summary>Comma-separated wearable URNs rendered on the own avatar without owning them. Suppresses profile deploys for the session.</summary>
         public const string FORCED_WEARABLES = "self-force-wearables";
         public const string SELF_PREVIEW_EMOTES = "self-preview-emotes";
         public const string SELF_PREVIEW_WEARABLES = "self-preview-wearables";
