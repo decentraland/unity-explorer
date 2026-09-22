@@ -220,8 +220,12 @@ namespace DCL.Profiles.Self
 
         private void UpdateAvatarInWorld(Profile profile)
         {
+            // The player entity only carries a profile once the startup flow has put one there; until then there is no
+            // in-world avatar to update and setting a component the entity does not have throws
+            if (!world.Has<Profile>(playerEntity))
+                return;
+
             profile.IsDirty = true;
-            // We assume that the profile already exists at this point, so we don't add it but update it
             world.Set(playerEntity, profile);
             ProfileUtils.CreateProfilePicturePromise(profile!, world, PartitionComponent.TOP_PRIORITY);
         }
