@@ -61,6 +61,7 @@ namespace DCL.Backpack
         private readonly Vector2[] shiftedFullPositions;
         private readonly RectSnapshot previewFull;
         private readonly RectSnapshot previewImageFull;
+        private readonly RectSnapshot searchBarFull;
 
         private BackpackSections lastShownSection;
         private CancellationTokenSource? animationCts;
@@ -68,6 +69,11 @@ namespace DCL.Backpack
         private bool isAvatarLoaded;
         private bool instantSectionToggle;
         private bool isCompact;
+
+        /// <summary>
+        ///     Raised by the panel's own close control, which only the compact layout shows.
+        /// </summary>
+        public event Action? CloseRequested;
 
         public BackpackController(
             BackpackView view,
@@ -119,6 +125,7 @@ namespace DCL.Backpack
 
             previewFull = new RectSnapshot((RectTransform)view.CharacterPreviewView.transform);
             previewImageFull = new RectSnapshot(view.CharacterPreviewView.RawImage.rectTransform);
+            searchBarFull = new RectSnapshot(view.SearchBarRect);
 
             var categoriesPresenter = new CategoriesPresenter(avatarView.CategoriesView,
                 backpackGridController,
@@ -214,6 +221,7 @@ namespace DCL.Backpack
             this.cursor = cursor;
             view.TipsButton.onClick.AddListener(ToggleTipsContent);
             view.TipsPanelDeselectable.OnDeselectEvent += ToggleTipsContent;
+            view.CloseButton.onClick.AddListener(RequestClose);
         }
 
         private void ToggleSection(bool isOn, TabSelectorView tabSelectorView, BackpackSections shownSection, bool animate)
@@ -235,6 +243,7 @@ namespace DCL.Backpack
         public void Dispose()
         {
             view.TipsPanelDeselectable.OnDeselectEvent -= ToggleTipsContent;
+            view.CloseButton.onClick.RemoveListener(RequestClose);
             avatarController.Dispose();
             emotesController.Dispose();
             backpackEmoteGridController.Dispose();
@@ -243,6 +252,9 @@ namespace DCL.Backpack
             backpackCharacterPreviewController.Dispose();
             emoteInfoPanelController.Dispose();
         }
+
+        private void RequestClose() =>
+            CloseRequested?.Invoke();
 
         private void ToggleTipsContent()
         {
@@ -429,6 +441,28 @@ namespace DCL.Backpack
             view.OutfitsRect.localScale = new Vector3(scale, scale, 1f);
 
             SetCompactPreview(compact, contentWidth);
+            SetCompactHeader(compact);
+        }
+
+        /// <summary>
+        ///     Hands the close button its slot at the right end of the header and takes that slot off the search strip. The full
+        ///     screen layout has no close button, so there the strip spans the slot too.
+        /// </summary>
+        private void SetCompactHeader(bool compact)
+        {
+            view.CloseButton.gameObject.SetActive(compact);
+
+            if (!compact)
+            {
+                searchBarFull.ApplyTo(view.SearchBarRect);
+                return;
+            }
+
+            var closeRect = (RectTransform)view.CloseButton.transform;
+            var closeSlot = new Vector2(closeRect.rect.width + Mathf.Abs(closeRect.anchoredPosition.x), 0f);
+
+            view.SearchBarRect.sizeDelta = searchBarFull.SizeDelta - closeSlot;
+            view.SearchBarRect.anchoredPosition = searchBarFull.AnchoredPosition - closeSlot;
         }
 
         /// <summary>

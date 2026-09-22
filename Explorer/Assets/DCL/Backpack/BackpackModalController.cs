@@ -13,6 +13,8 @@ namespace DCL.Backpack
     {
         private readonly BackpackController backpack;
 
+        private UniTaskCompletionSource? closeIntent;
+
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         public BackpackModalController(ViewFactoryMethod viewFactory, BackpackController backpack) : base(viewFactory)
@@ -25,12 +27,15 @@ namespace DCL.Backpack
 
         protected override void OnViewShow()
         {
+            backpack.CloseRequested += OnBackpackCloseRequested;
             backpack.Activate();
             backpack.Toggle(inputData.Section);
         }
 
         protected override void OnViewClose()
         {
+            backpack.CloseRequested -= OnBackpackCloseRequested;
+
             // A fullscreen panel closes the popups without waiting for them, so by the time this runs the explore panel may already have claimed the view back
             if (backpack.CurrentHost != viewInstance!.BackpackHost) return;
 
@@ -38,9 +43,17 @@ namespace DCL.Backpack
             backpack.AttachToHome();
         }
 
-        // No close control of its own: the popup closer behind the modal is what ends it
-        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
-            UniTask.Never(ct);
+        private void OnBackpackCloseRequested() =>
+            closeIntent?.TrySetResult();
+
+        // The modal has no close control of its own: it is the backpack's, shown only while the panel is hosted here, on top of the popup closer behind the modal
+        protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
+        {
+            closeIntent?.TrySetCanceled(ct);
+            closeIntent = new UniTaskCompletionSource();
+
+            await closeIntent.Task.AttachExternalCancellation(ct);
+        }
     }
 
     public readonly struct BackpackModalParameter

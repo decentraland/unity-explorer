@@ -48,6 +48,19 @@ namespace DCL.Backpack
         [field: SerializeField]
         public RectTransform OutfitsRect { get; private set; }
 
+        /// <summary>
+        ///     Closes the panel from inside it. Only the compact layout shows it: hosted full screen the panel is a section of
+        ///     another panel, which brings its own close control.
+        /// </summary>
+        [field: SerializeField]
+        public Button CloseButton { get; private set; }
+
+        /// <summary>
+        ///     Search strip in the header. It spans the close button's slot as well while the button is hidden.
+        /// </summary>
+        [field: SerializeField]
+        public RectTransform SearchBarRect { get; private set; }
+
         private void OnEnable()
         {
             PanelAnimator.enabled = true;
