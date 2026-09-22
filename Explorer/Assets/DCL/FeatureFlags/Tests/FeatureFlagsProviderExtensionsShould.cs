@@ -1,33 +1,29 @@
 using DCL.Prefs;
+using DCL.Prefs.Tests;
 using Global.AppArgs;
 using NSubstitute;
 using NUnit.Framework;
 using System;
-using System.Reflection;
 
 namespace DCL.FeatureFlags.Tests
 {
     [TestFixture]
     public class FeatureFlagsProviderExtensionsShould
     {
-        private static readonly FieldInfo PREFS_FIELD =
-            typeof(DCLPlayerPrefs).GetField("dclPrefs", BindingFlags.NonPublic | BindingFlags.Static)!;
-
         private IAppArgs appArgs = null!;
-        private object? originalPrefs;
+        private InMemoryPrefsScope prefs = null!;
 
         [SetUp]
         public void SetUp()
         {
             appArgs = Substitute.For<IAppArgs>();
-            originalPrefs = PREFS_FIELD.GetValue(null);
-            PREFS_FIELD.SetValue(null, new InMemoryDCLPlayerPrefs());
+            prefs = new InMemoryPrefsScope();
         }
 
         [TearDown]
         public void TearDown()
         {
-            PREFS_FIELD.SetValue(null, originalPrefs);
+            prefs.Dispose();
         }
 
         [Test]
@@ -73,17 +69,17 @@ namespace DCL.FeatureFlags.Tests
 
             FeatureFlagsProviderExtensions.ResolveUserId(appArgs);
 
-            Assert.IsEmpty(DCLPlayerPrefs.GetString(DCLPrefKeys.FEATURE_FLAGS_USER_ID));
+            Assert.IsEmpty(DCLPlayerPrefs.GetString(DCLPrefKeys.ANONYMOUS_INSTALLATION_ID));
         }
 
         [Test]
         public void PreferCampaignAnonUserIdOverPersistedId()
         {
-            DCLPlayerPrefs.SetString(DCLPrefKeys.FEATURE_FLAGS_USER_ID, "already-persisted");
+            DCLPlayerPrefs.SetString(DCLPrefKeys.ANONYMOUS_INSTALLATION_ID, "already-persisted");
             GivenArg(AppArgsFlags.Analytics.CAMPAIGN_ANON_USER_ID, "campaign-anon-id");
 
             Assert.AreEqual("campaign-anon-id", FeatureFlagsProviderExtensions.ResolveUserId(appArgs));
-            Assert.AreEqual("already-persisted", DCLPlayerPrefs.GetString(DCLPrefKeys.FEATURE_FLAGS_USER_ID));
+            Assert.AreEqual("already-persisted", DCLPlayerPrefs.GetString(DCLPrefKeys.ANONYMOUS_INSTALLATION_ID));
         }
 
         [Test]
@@ -92,7 +88,7 @@ namespace DCL.FeatureFlags.Tests
             string resolved = FeatureFlagsProviderExtensions.ResolveUserId(appArgs);
 
             Assert.IsTrue(Guid.TryParse(resolved, out _));
-            Assert.AreEqual(resolved, DCLPlayerPrefs.GetString(DCLPrefKeys.FEATURE_FLAGS_USER_ID));
+            Assert.AreEqual(resolved, DCLPlayerPrefs.GetString(DCLPrefKeys.ANONYMOUS_INSTALLATION_ID));
         }
 
         [Test]
@@ -111,7 +107,7 @@ namespace DCL.FeatureFlags.Tests
 
             FeatureFlagsProviderExtensions.ResolveUserId(appArgs);
 
-            Assert.IsEmpty(DCLPlayerPrefs.GetString(DCLPrefKeys.FEATURE_FLAGS_USER_ID));
+            Assert.IsEmpty(DCLPlayerPrefs.GetString(DCLPrefKeys.ANONYMOUS_INSTALLATION_ID));
         }
 
         private void GivenArg(string flag, string value)

@@ -28,16 +28,21 @@ The client sends an **anonymous user id**, never the wallet address. It is resol
 2. `--campaign_anon_user_id`, forwarded by the launcher from the website — the id the user is already known by at
    the original source of the funnel, so the explorer buckets them the same way the website did. The launcher
    passes it on every launch where it exists, so it needs no local copy.
-3. A `Guid` generated on the first launch without a campaign id and persisted under
-   `DCLPrefKeys.FEATURE_FLAGS_USER_ID`.
+3. `AnonymousInstallationId`, a `Guid` generated on the first launch that needs one and persisted under
+   `DCLPrefKeys.ANONYMOUS_INSTALLATION_ID`.
 
 Neither argument is ever written to prefs: the stored id is only the generated fallback.
 
+That third id is not owned by feature flags. It is the installation's single anonymous identity, and the device
+identifier sent to comms-gatekeeper is a hash of the same value (`HardwareFingerprintProvider`), so there is one
+value to reason about and one to reset. Installations that predate the shared key keep the id they already had
+under `FeatureFlagsUserId`, rather than being re-bucketed on upgrade.
+
 The generated id is deliberately random rather than derived from `SystemInfo.deviceUniqueIdentifier`: the device id
 is unavailable on some platforms (`SystemInfo.unsupportedIdentifier`), which would collapse every affected machine
-into one rollout bucket, and it is shared across cloned VM/VDI images. It is also hardware-derived, and this client
-never sends that raw value anywhere — `HardwareFingerprintProvider` and `GuestSessionIdProvider` both hash it behind
-a domain prefix first.
+into one rollout bucket, and it silently collides between cloned VM/VDI images and between machines whose firmware
+reports placeholder serials. `HardwareFingerprintProvider` moved off it for that second reason; `GuestSessionIdProvider`
+still hashes it behind a domain prefix (see issue #10199).
 
 The trade-off is durability: clearing prefs or reinstalling yields a new id, so that install is re-bucketed. Note
 also that concurrent instances each claim their own `userdata_{n}.json` slot and therefore resolve their own id.

@@ -1,15 +1,14 @@
 using DCL.Prefs;
-using System;
 using System.Security.Cryptography;
 using System.Text;
 
 namespace DCL.Multiplayer.Connections.HardwareFingerprint
 {
     /// <summary>
-    ///     SHA-256 hash of a random per-installation id, computed once at construction.
+    ///     SHA-256 hash of the <see cref="AnonymousInstallationId" />, computed once at construction.
     ///     <para>
-    ///         The id is generated on first use and persisted in <see cref="DCLPlayerPrefs" />, so it stays the same
-    ///         across wallets and sessions on one installation and is never shared with another one. It replaces
+    ///         That id stays the same across wallets and sessions on one installation and is never shared with
+    ///         another one. It replaces
     ///         <see cref="UnityEngine.SystemInfo.deviceUniqueIdentifier" />, which collides between unrelated Windows
     ///         machines whose firmware reports placeholder serials and between clones of a VM image, collapsing them
     ///         onto a single moderation identity.
@@ -25,27 +24,12 @@ namespace DCL.Multiplayer.Connections.HardwareFingerprint
 
         public HardwareFingerprintProvider()
         {
-            Fingerprint = ComputeFingerprint(ResolveInstallationId());
+            Fingerprint = ComputeFingerprint(AnonymousInstallationId.Resolve());
         }
 
         /// <summary>
-        ///     Reads the persisted id, generating and storing one on the first call.
-        /// </summary>
-        private static string ResolveInstallationId()
-        {
-            string persisted = DCLPlayerPrefs.GetString(DCLPrefKeys.HARDWARE_FINGERPRINT_ID);
-
-            if (!string.IsNullOrWhiteSpace(persisted))
-                return persisted;
-
-            string generated = Guid.NewGuid().ToString();
-            DCLPlayerPrefs.SetString(DCLPrefKeys.HARDWARE_FINGERPRINT_ID, generated, true);
-
-            return generated;
-        }
-
-        /// <summary>
-        ///     Hashing keeps the stored id off the wire, so a leaked fingerprint cannot be matched against local state.
+        ///     Hashing keeps the installation id itself out of the gatekeeper payload, and the domain prefix keeps
+        ///     this value distinct from anything else derived from that id.
         /// </summary>
         private static string ComputeFingerprint(string installationId)
         {

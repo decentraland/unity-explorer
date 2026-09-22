@@ -3,7 +3,6 @@ using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Prefs;
 using Global.AppArgs;
-using System;
 using System.Threading;
 
 namespace DCL.FeatureFlags
@@ -43,20 +42,7 @@ namespace DCL.FeatureFlags
                 && !string.IsNullOrWhiteSpace(campaignAnonUserId))
                 return campaignAnonUserId;
 
-            return PersistedAnonymousUserId();
-        }
-
-        private static string PersistedAnonymousUserId()
-        {
-            string persisted = DCLPlayerPrefs.GetString(DCLPrefKeys.FEATURE_FLAGS_USER_ID);
-
-            if (!string.IsNullOrWhiteSpace(persisted))
-                return persisted;
-
-            var generated = Guid.NewGuid().ToString();
-            DCLPlayerPrefs.SetString(DCLPrefKeys.FEATURE_FLAGS_USER_ID, generated, true);
-
-            return generated;
+            return AnonymousInstallationId.Resolve();
         }
     }
 }

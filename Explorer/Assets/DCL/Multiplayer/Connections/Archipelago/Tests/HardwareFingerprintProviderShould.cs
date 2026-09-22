@@ -1,29 +1,24 @@
 using DCL.Multiplayer.Connections.HardwareFingerprint;
 using DCL.Prefs;
+using DCL.Prefs.Tests;
 using NUnit.Framework;
-using System;
-using System.Reflection;
 
 namespace DCL.Multiplayer.Connections.HardwareFingerprintTests
 {
     public class HardwareFingerprintProviderShould
     {
-        private static readonly FieldInfo PREFS_FIELD =
-            typeof(DCLPlayerPrefs).GetField("dclPrefs", BindingFlags.NonPublic | BindingFlags.Static)!;
-
-        private object? originalPrefs;
+        private InMemoryPrefsScope prefs = null!;
 
         [SetUp]
         public void SetUp()
         {
-            originalPrefs = PREFS_FIELD.GetValue(null);
-            GivenAFreshInstallation();
+            prefs = new InMemoryPrefsScope();
         }
 
         [TearDown]
         public void TearDown()
         {
-            PREFS_FIELD.SetValue(null, originalPrefs);
+            prefs.Dispose();
         }
 
         [Test]
@@ -34,16 +29,6 @@ namespace DCL.Multiplayer.Connections.HardwareFingerprintTests
 
             //Assert
             Assert.That(fingerprint, Does.Match("^[0-9a-f]{64}$"));
-        }
-
-        [Test]
-        public void PersistAGeneratedIdentifier()
-        {
-            //Act
-            _ = new HardwareFingerprintProvider();
-
-            //Assert
-            Assert.That(Guid.TryParse(DCLPlayerPrefs.GetString(DCLPrefKeys.HARDWARE_FINGERPRINT_ID), out _), Is.True);
         }
 
         [Test]
@@ -60,26 +45,13 @@ namespace DCL.Multiplayer.Connections.HardwareFingerprintTests
         }
 
         [Test]
-        public void ReuseThePersistedIdentifier()
-        {
-            //Arrange
-            DCLPlayerPrefs.SetString(DCLPrefKeys.HARDWARE_FINGERPRINT_ID, "already-persisted");
-
-            //Act
-            _ = new HardwareFingerprintProvider();
-
-            //Assert
-            Assert.That(DCLPlayerPrefs.GetString(DCLPrefKeys.HARDWARE_FINGERPRINT_ID), Is.EqualTo("already-persisted"));
-        }
-
-        [Test]
         public void DifferBetweenInstallations()
         {
             //Arrange
             string first = new HardwareFingerprintProvider().Fingerprint;
 
             //Act
-            GivenAFreshInstallation();
+            prefs.Reset();
             string second = new HardwareFingerprintProvider().Fingerprint;
 
             //Assert
@@ -87,16 +59,13 @@ namespace DCL.Multiplayer.Connections.HardwareFingerprintTests
         }
 
         [Test]
-        public void KeepThePersistedIdentifierOffTheWire()
+        public void KeepTheInstallationIdOffTheWire()
         {
             //Act
             string fingerprint = new HardwareFingerprintProvider().Fingerprint;
 
             //Assert
-            Assert.That(fingerprint, Is.Not.EqualTo(DCLPlayerPrefs.GetString(DCLPrefKeys.HARDWARE_FINGERPRINT_ID)));
+            Assert.That(fingerprint, Is.Not.EqualTo(DCLPlayerPrefs.GetString(DCLPrefKeys.ANONYMOUS_INSTALLATION_ID)));
         }
-
-        private static void GivenAFreshInstallation() =>
-            PREFS_FIELD.SetValue(null, new InMemoryDCLPlayerPrefs());
     }
 }

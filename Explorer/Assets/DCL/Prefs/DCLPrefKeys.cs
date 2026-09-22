@@ -6,14 +6,14 @@ namespace DCL.Prefs
 
         public const string LAUNCH_COUNT = "LaunchCount";
 
-        // Fallback identity feature flags are evaluated against, generated on the first launch that carries no
-        // campaign id from the launcher. Persisted so the install keeps a stable A/B bucket.
-        public const string FEATURE_FLAGS_USER_ID = "FeatureFlagsUserId";
+        // Random anonymous identity of this installation, owned by AnonymousInstallationId and shared by every
+        // feature that needs one: the A/B bucket feature flags are evaluated against, and the device identifier
+        // sent to comms-gatekeeper.
+        public const string ANONYMOUS_INSTALLATION_ID = "AnonymousInstallationId";
 
-        // Random per-installation id the comms-gatekeeper device identifier is derived from, generated the first
-        // time the hardware fingerprint is requested. Persisted so the installation keeps one identity across
-        // wallets and sessions.
-        public const string HARDWARE_FINGERPRINT_ID = "HardwareFingerprintId";
+        // Where the anonymous id lived while feature flags were its only consumer. Read once, to carry an existing
+        // installation over to ANONYMOUS_INSTALLATION_ID instead of re-rolling its A/B bucket; never written.
+        public const string LEGACY_FEATURE_FLAGS_USER_ID = "FeatureFlagsUserId";
 
         // Developer-selected path to the Creator Hub executable, remembered across launches so the Chrome
         // DevTools bridge can relaunch it without re-prompting. Not an app-arg / deep-link input (SEC-005).
