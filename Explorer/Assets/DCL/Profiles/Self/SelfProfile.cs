@@ -149,11 +149,7 @@ namespace DCL.Profiles.Self
 
                 newProfile.UserId = selfUserId.Value;
 
-                // Forced wearables and emotes are applied to every profile ProfileAsync hands out, and every
-                // deploy path builds its profile from one of those - the backpack through the equipped set, the
-                // name/links/passport editors through a builder copy. Rather than unpicking the faked set from
-                // each of them, a session that fakes anything does not deploy at all: the local state is updated
-                // as if it had, and nothing reaches the catalyst.
+                // Every deploy path builds its profile from one ProfileAsync faked, so a faking session skips the deploy and only updates local state.
                 if (forcedWearables.Any || forcedEmotes?.Count > 0)
                 {
                     ReportHub.LogWarning(ReportCategory.PROFILE, "Profile deploy skipped: forced wearables or emotes are active for this session");

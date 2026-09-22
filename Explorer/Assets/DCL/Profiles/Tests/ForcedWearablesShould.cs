@@ -84,8 +84,7 @@ namespace DCL.Profiles.Tests
         [Test]
         public void KeepAvatarWearablesBackedByAHashSet()
         {
-            // ForcedWearables reaches the backing set through this cast, because Avatar.wearables is internal to
-            // DCL.SharedAPI. Pinned here so a change of backing type fails in CI instead of leaving the avatar bare.
+            // Pinned so a change of backing type fails in CI instead of leaving the avatar bare.
             Assert.That(NewProfile().Avatar.Wearables, Is.InstanceOf<HashSet<URN>>());
         }
     }
