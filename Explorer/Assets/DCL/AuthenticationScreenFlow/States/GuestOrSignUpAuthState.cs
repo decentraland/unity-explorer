@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.FeatureFlags;
 using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.Utilities;
 using DCL.Utility;
@@ -108,7 +109,9 @@ namespace DCL.AuthenticationScreenFlow
 
         private async UniTaskVoid LoginAsGuestAsync(CancellationToken ct)
         {
-            compositeWeb3Provider.CurrentProvider = AuthProvider.Ephemeral;
+            compositeWeb3Provider.CurrentProvider = FeaturesRegistry.Instance.IsEnabled(FeatureId.EphemeralGuestAccount)
+                ? AuthProvider.Ephemeral
+                : AuthProvider.ThirdWeb;
             controller.CurrentLoginMethod = LoginMethod.GUEST;
             currentState.Value = AuthStatus.LoginRequested;
 

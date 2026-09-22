@@ -137,6 +137,19 @@ namespace DCL.Web3.Authenticators
             if (GuestLoginIsDisabled())
                 DCLPlayerPrefs.DeleteKey(DCLPrefKeys.GUEST_SESSION_ACTIVE, save: true);
 
+            // Only the ThirdWeb guest flow stores this flag, so it is the one that has a session to restore
+            if (DCLPlayerPrefs.GetBool(DCLPrefKeys.GUEST_SESSION_ACTIVE))
+            {
+                CurrentProvider = AuthProvider.ThirdWeb;
+
+                try { return await thirdWebAuth.TryAutoLoginAsync(ct); }
+                catch (GuestAccountUpgradedException)
+                {
+                    DiscardUpgradedGuestSession();
+                    return false;
+                }
+            }
+
             string storedEmail = DCLPlayerPrefs.GetString(DCLPrefKeys.LOGGEDIN_EMAIL, string.Empty);
 
             // Heuristic: a stored email means the ThirdWeb OTP flow; otherwise the stored identity tells whether
