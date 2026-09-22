@@ -10,6 +10,11 @@ namespace DCL.Prefs
         // campaign id from the launcher. Persisted so the install keeps a stable A/B bucket.
         public const string FEATURE_FLAGS_USER_ID = "FeatureFlagsUserId";
 
+        // Random per-installation id the comms-gatekeeper device identifier is derived from, generated the first
+        // time the hardware fingerprint is requested. Persisted so the installation keeps one identity across
+        // wallets and sessions.
+        public const string HARDWARE_FINGERPRINT_ID = "HardwareFingerprintId";
+
         // Developer-selected path to the Creator Hub executable, remembered across launches so the Chrome
         // DevTools bridge can relaunch it without re-prompting. Not an app-arg / deep-link input (SEC-005).
         public const string CREATOR_HUB_BIN_PATH = "CreatorHub.BinPath";

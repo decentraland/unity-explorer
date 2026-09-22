@@ -1,57 +1,102 @@
 using DCL.Multiplayer.Connections.HardwareFingerprint;
+using DCL.Prefs;
 using NUnit.Framework;
-using UnityEngine;
+using System;
+using System.Reflection;
 
 namespace DCL.Multiplayer.Connections.HardwareFingerprintTests
 {
     public class HardwareFingerprintProviderShould
     {
-        private const string SAMPLE_ID = "abc123-device-identifier";
+        private static readonly FieldInfo PREFS_FIELD =
+            typeof(DCLPlayerPrefs).GetField("dclPrefs", BindingFlags.NonPublic | BindingFlags.Static)!;
+
+        private object? originalPrefs;
+
+        [SetUp]
+        public void SetUp()
+        {
+            originalPrefs = PREFS_FIELD.GetValue(null);
+            GivenAFreshInstallation();
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            PREFS_FIELD.SetValue(null, originalPrefs);
+        }
 
         [Test]
         public void ProduceLowercaseHexOfSha256Length()
         {
-            string fingerprint = HardwareFingerprintProvider.ComputeFingerprint(SAMPLE_ID);
+            //Act
+            string fingerprint = new HardwareFingerprintProvider().Fingerprint;
 
-            Assert.That(fingerprint.Length, Is.EqualTo(64));
+            //Assert
             Assert.That(fingerprint, Does.Match("^[0-9a-f]{64}$"));
         }
 
         [Test]
-        public void BeStableForTheSameInput()
+        public void PersistAGeneratedIdentifier()
         {
-            Assert.That(
-                HardwareFingerprintProvider.ComputeFingerprint(SAMPLE_ID),
-                Is.EqualTo(HardwareFingerprintProvider.ComputeFingerprint(SAMPLE_ID)));
+            //Act
+            _ = new HardwareFingerprintProvider();
+
+            //Assert
+            Assert.That(Guid.TryParse(DCLPlayerPrefs.GetString(DCLPrefKeys.HARDWARE_FINGERPRINT_ID), out _), Is.True);
         }
 
         [Test]
-        public void DifferForDifferentInputs()
+        public void BeStableAcrossInstances()
         {
-            Assert.That(
-                HardwareFingerprintProvider.ComputeFingerprint(SAMPLE_ID),
-                Is.Not.EqualTo(HardwareFingerprintProvider.ComputeFingerprint("a-different-device")));
+            //Arrange
+            string first = new HardwareFingerprintProvider().Fingerprint;
+
+            //Act
+            string second = new HardwareFingerprintProvider().Fingerprint;
+
+            //Assert
+            Assert.That(second, Is.EqualTo(first));
         }
 
         [Test]
-        public void NormalizeCaseAndWhitespace()
+        public void ReuseThePersistedIdentifier()
         {
-            string fingerprint = HardwareFingerprintProvider.ComputeFingerprint(SAMPLE_ID);
+            //Arrange
+            DCLPlayerPrefs.SetString(DCLPrefKeys.HARDWARE_FINGERPRINT_ID, "already-persisted");
 
-            Assert.That(HardwareFingerprintProvider.ComputeFingerprint($"  {SAMPLE_ID.ToUpperInvariant()}  "), Is.EqualTo(fingerprint));
+            //Act
+            _ = new HardwareFingerprintProvider();
+
+            //Assert
+            Assert.That(DCLPlayerPrefs.GetString(DCLPrefKeys.HARDWARE_FINGERPRINT_ID), Is.EqualTo("already-persisted"));
         }
 
         [Test]
-        public void ReturnEmptyForUnsupportedIdentifier()
+        public void DifferBetweenInstallations()
         {
-            Assert.That(HardwareFingerprintProvider.ComputeFingerprint(SystemInfo.unsupportedIdentifier), Is.Empty);
+            //Arrange
+            string first = new HardwareFingerprintProvider().Fingerprint;
+
+            //Act
+            GivenAFreshInstallation();
+            string second = new HardwareFingerprintProvider().Fingerprint;
+
+            //Assert
+            Assert.That(second, Is.Not.EqualTo(first));
         }
 
         [Test]
-        public void ReturnEmptyForMissingIdentifier()
+        public void KeepThePersistedIdentifierOffTheWire()
         {
-            Assert.That(HardwareFingerprintProvider.ComputeFingerprint(null), Is.Empty);
-            Assert.That(HardwareFingerprintProvider.ComputeFingerprint(string.Empty), Is.Empty);
+            //Act
+            string fingerprint = new HardwareFingerprintProvider().Fingerprint;
+
+            //Assert
+            Assert.That(fingerprint, Is.Not.EqualTo(DCLPlayerPrefs.GetString(DCLPrefKeys.HARDWARE_FINGERPRINT_ID)));
         }
+
+        private static void GivenAFreshInstallation() =>
+            PREFS_FIELD.SetValue(null, new InMemoryDCLPlayerPrefs());
     }
 }
