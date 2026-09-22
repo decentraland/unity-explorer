@@ -141,8 +141,11 @@ public class AssetBundleManifestVersion
         /// <summary>The digest-bearing bundle name of a LOD level, without its platform suffix, when the manifest published one.</summary>
         public bool TryGetLodBundleFile(int level, out string file)
         {
-            if (lodBundleFiles != null && lodBundleFiles.TryGetValue(level, out file!))
+            if (lodBundleFiles != null && lodBundleFiles.TryGetValue(level, out string? found))
+            {
+                file = found;
                 return true;
+            }
 
             file = string.Empty;
             return false;
