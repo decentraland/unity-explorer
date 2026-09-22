@@ -51,9 +51,13 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
 
         public class DiskHashCompute : AbstractDiskHashCompute<GetISSDescriptorIntention>
         {
-            // Bump if the on-disk format changes incompatibly. v2: switched from "state byte + raw JSON"
-            // to a single JSON document with state field, so files open in text editors.
-            private const int ITERATION_NUMBER = 2;
+            // Bump if the on-disk format changes incompatibly, or when the source republishes descriptors under
+            // unchanged scene ids so cached documents no longer match what the CDN serves.
+            // v2: switched from "state byte + raw JSON" to a single JSON document with state field, so files
+            // open in text editors.
+            // v3: abgen 0.19.2 regenerates every descriptor with unit-quaternion placements (LOD generation 2);
+            // the ones cached before that carry inflated scales for the same scene id.
+            private const int ITERATION_NUMBER = 3;
 
             public static readonly DiskHashCompute INSTANCE = new ();
 
