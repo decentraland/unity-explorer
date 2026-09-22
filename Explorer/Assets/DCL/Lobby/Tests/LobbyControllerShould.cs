@@ -42,7 +42,6 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.TestTools;
 using UnityEngine.UI;
-using Component = UnityEngine.Component;
 using Object = UnityEngine.Object;
 
 namespace DCL.Lobby.Tests
@@ -97,10 +96,12 @@ namespace DCL.Lobby.Tests
         private SidebarProfileButtonPresenter profileButtonPresenter = null!;
         private World world = null!;
         private LobbyController controller = null!;
+        private ClonedCardAwakener cardAwakener = null!;
 
         [SetUp]
         public void SetUp()
         {
+            cardAwakener = new ClonedCardAwakener();
             root = new GameObject(nameof(LobbyControllerShould));
             view = root.AddComponent<LobbyView>();
 
@@ -1302,9 +1303,15 @@ namespace DCL.Lobby.Tests
         {
             var count = 0;
 
+            // The RequestHub getter is recorded as a received call of its own, without arguments
             foreach (ICall call in webRequestController.ReceivedCalls())
-                if (call.GetArguments()[0] is RequestEnvelope<GenericGetRequest, GenericGetArguments> envelope && envelope.CommonArguments.URL.Value.StartsWith(EVENTS_API_URL))
+            {
+                object[] arguments = call.GetArguments();
+
+                if (arguments.Length > 0 && arguments[0] is RequestEnvelope<GenericGetRequest, GenericGetArguments> envelope
+                                         && envelope.CommonArguments.URL.Value.StartsWith(EVENTS_API_URL))
                     count++;
+            }
 
             return count;
         }
@@ -1414,11 +1421,14 @@ namespace DCL.Lobby.Tests
         private LobbyLiveEventCardView LiveEventCard(int index) =>
             (LobbyLiveEventCardView)liveEvents.Cards[index];
 
+        private EventCardView UpcomingCard(int index) =>
+            cardAwakener.Awaken(upcomingEvents.Cards[index]);
+
         private string UpcomingText(int index, string fieldName) =>
-            GetField<TMP_Text>(upcomingEvents.Cards[index], fieldName).text;
+            GetField<TMP_Text>(UpcomingCard(index), fieldName).text;
 
         private Button UpcomingMainButton(int index) =>
-            GetField<Button>(upcomingEvents.Cards[index], "mainButton");
+            GetField<Button>(UpcomingCard(index), "mainButton");
 
         private static LobbyEventRailView CreateEventRail(Transform parent)
         {
@@ -1668,6 +1678,15 @@ namespace DCL.Lobby.Tests
             SetBackingField(previewView, nameof(CharacterPreviewView.CharacterPreviewInputDetector), previewGo.AddComponent<CharacterPreviewInputDetector>());
             SetBackingField(previewView, nameof(CharacterPreviewView.CharacterPreviewCursorContainer), previewGo.AddComponent<CharacterPreviewCursorContainer>());
             SetBackingField(previewView, nameof(CharacterPreviewView.CharacterPreviewSettingsSo), previewSettings);
+
+            // The preview controller clears the raw image as it is constructed, and reaches for the spinner once an avatar loads
+            var rawImageGo = new GameObject("RawImage", typeof(RectTransform));
+            rawImageGo.transform.SetParent(previewGo.transform);
+            SetBackingField(previewView, nameof(CharacterPreviewView.RawImage), rawImageGo.AddComponent<RawImage>());
+
+            var spinnerGo = new GameObject("Spinner");
+            spinnerGo.transform.SetParent(previewGo.transform);
+            SetBackingField(previewView, nameof(CharacterPreviewView.Spinner), spinnerGo);
 
             return previewView;
         }

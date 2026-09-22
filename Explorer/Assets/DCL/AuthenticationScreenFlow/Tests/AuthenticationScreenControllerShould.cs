@@ -14,6 +14,10 @@ namespace DCL.AuthenticationScreenFlow.Tests
         public void OneTimeSetUp() =>
             EcsTestsUtils.SetUpFeaturesRegistry();
 
+        [OneTimeTearDown]
+        public void OneTimeTearDown() =>
+            EcsTestsUtils.TearDownFeaturesRegistry();
+
         [Test]
         public void NotThrowOnDisposeWhenViewWasNeverShown()
         {

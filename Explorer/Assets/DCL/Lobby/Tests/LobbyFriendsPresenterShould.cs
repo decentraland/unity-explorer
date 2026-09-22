@@ -49,6 +49,7 @@ namespace DCL.Lobby.Tests
         private Transform dots = null!;
         private CancellationTokenSource cts = null!;
         private LobbyFriendsPresenter presenter = null!;
+        private ClonedCardAwakener cardAwakener = null!;
 
         [OneTimeSetUp]
         public void OneTimeSetUp()
@@ -65,9 +66,13 @@ namespace DCL.Lobby.Tests
         [SetUp]
         public void SetUp()
         {
+            // The editor domain may still hold a command initialized by a play-mode session
+            GetProfileThumbnailCommand.Reset();
+
             GetProfileThumbnailCommand.Initialize(new GetProfileThumbnailCommand(new ProfileRepositoryWrapper(Substitute.For<IProfileRepository>(),
                 Substitute.For<IProfileCache>(), Substitute.For<ISpriteCache>(), Substitute.For<IWeb3IdentityCache>())));
 
+            cardAwakener = new ClonedCardAwakener();
             eventBus = new DefaultFriendsEventBus();
             tracker = new FriendsConnectivityStatusTracker(eventBus, isConnectivityStatusEnabled: true);
             onlineUsers = Substitute.For<IOnlineUsersProvider>();
@@ -76,7 +81,7 @@ namespace DCL.Lobby.Tests
             places.GetPlaceAsync(Arg.Any<Vector2Int>(), Arg.Any<CancellationToken>(), Arg.Any<bool>()).Returns(UniTask.FromResult<PlacesData.PlaceInfo?>(null));
             places.GetWorldAsync(Arg.Any<Vector2Int>(), Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(UniTask.FromResult<PlacesData.PlaceInfo?>(null));
             passport = Substitute.For<IPassportBridge>();
-            passport.ShowAsync(Arg.Any<PassportParams>()).Returns(UniTask.CompletedTask);
+            passport.ShowAsync(Arg.Any<string>()).Returns(UniTask.CompletedTask);
 
             root = new GameObject("Root", typeof(RectTransform));
             section = CreateSection(root.transform);
@@ -88,6 +93,7 @@ namespace DCL.Lobby.Tests
         [TearDown]
         public void TearDown()
         {
+            GetProfileThumbnailCommand.Reset();
             presenter.Dispose();
             cts.Cancel();
             cts.Dispose();
@@ -235,7 +241,7 @@ namespace DCL.Lobby.Tests
             ShownCard(0).Button.onClick.Invoke();
 
             //Assert
-            await passport.Received(1).ShowAsync(Arg.Is<PassportParams>(p => p.UserId == AMY_ID));
+            await passport.Received(1).ShowAsync(AMY_ID);
         }
 
         [Test]
@@ -280,7 +286,7 @@ namespace DCL.Lobby.Tests
         }
 
         private LobbyFriendCardView ShownCard(int index) =>
-            (LobbyFriendCardView)loopList.GetShownItemByItemIndex(index).UserObjectData;
+            cardAwakener.Awaken((LobbyFriendCardView)loopList.GetShownItemByItemIndex(index).UserObjectData);
 
         private int ActiveDots()
         {
@@ -361,7 +367,7 @@ namespace DCL.Lobby.Tests
             return sectionView;
         }
 
-        // Inactive like a prefab asset: the pool clones it and activates the clones, which runs their Awake
+        // Inactive like a prefab asset, so the card's Awake never runs here while its fields are still unassigned
         private static GameObject CreateCardTemplate(Transform parent)
         {
             var cardGo = new GameObject("LobbyFriendCard", typeof(RectTransform));
