@@ -22,10 +22,7 @@ namespace DCL.McpServer.Tools
         /// <summary>Frames the teleport/rotation systems get to apply the intents before the pose is read back.</summary>
         private const int APPLY_DELAY_FRAMES = 2;
 
-        /// <summary>
-        ///     Seconds the camera gets to consume the look-at. It normally happens within a frame; a scene-controlled
-        ///     camera never consumes it, which is what the deadline turns into a warning.
-        /// </summary>
+        /// <summary>A scene-controlled camera never consumes the look-at intent, so the wait for it needs a deadline.</summary>
         private const float CAMERA_LOOK_AT_DEADLINE_SEC = 1f;
 
         private const string CAMERA_LOOK_AT_NOT_APPLIED =
@@ -80,8 +77,8 @@ namespace DCL.McpServer.Tools
             float durationSec = Mathf.Clamp(arguments.GetFloat("durationSec", 0f), 0f, MAX_DURATION_SEC);
             var targetPosition = new Vector3(x, y, z);
 
-            // The same two calls, in the same order, as the SDK's movePlayerTo: the camera look-at is its own intent
-            // on the camera entity, MoveAndRotatePlayerAsync only moves and turns the avatar.
+            // As in the SDK's movePlayerTo: MoveAndRotatePlayerAsync only moves and turns the avatar, so the camera
+            // look-at is posted first as its own intent on the camera entity.
             if (lookAtTarget != null)
                 globalWorldActions.RotateCamera(lookAtTarget, targetPosition);
 
@@ -110,10 +107,6 @@ namespace DCL.McpServer.Tools
             return McpToolResult.Json(result);
         }
 
-        /// <summary>
-        ///     True once the camera input system consumed the look-at intent; false when it
-        ///     was still pending at the deadline (a scene-controlled camera leaves it in place).
-        /// </summary>
         private async UniTask<bool> WaitForCameraLookAtAsync(CancellationToken ct)
         {
             SingleInstanceEntity camera = world.CacheCamera();

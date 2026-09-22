@@ -7,7 +7,7 @@ namespace DCL.McpServer.Tests
 {
     public class McpJsonSchemaShould
     {
-        // The members are read through reflection by McpWireEnum, and their names ARE the wire values it derives.
+        // The members are read through reflection by McpWireEnum, and their names are the wire values it derives.
         [SuppressMessage("ReSharper", "UnusedMember.Local")]
         [SuppressMessage("ReSharper", "InconsistentNaming")]
         private enum Speed
@@ -111,7 +111,6 @@ namespace DCL.McpServer.Tests
         [Test]
         public void RefuseUndeclaredKeysInEverySchema()
         {
-            // The dispatcher enforces the same rule server-side; the schema states it so a client can refuse locally.
             Assert.That(McpJsonSchema.Object().String("value").Build()["additionalProperties"]!.Value<bool>(), Is.False);
             Assert.That(McpJsonSchema.Object().Build()["additionalProperties"]!.Value<bool>(), Is.False);
         }

@@ -62,11 +62,6 @@ namespace DCL.Interaction.PlayerOriginated.Tests
             Assert.That(pbPointerEvents.AppendPointerEventResultsIntent.ValidIndexAt(0), Is.EqualTo(0));
         }
 
-        /// <summary>
-        ///     The leave completes an enter that was already issued, so the ray of the frame the hover ended on —
-        ///     which points somewhere else entirely — must not gate it. Regression: a target with a tight
-        ///     maxDistance used to keep a hover the scene could never see end.
-        /// </summary>
         [Test]
         public void IssueHoverLeaveEvenAfterTheReticleMovedOutOfTheTargetRange()
         {

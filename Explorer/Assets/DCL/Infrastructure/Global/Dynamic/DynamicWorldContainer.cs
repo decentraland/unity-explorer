@@ -888,7 +888,6 @@ namespace Global.Dynamic
             bool syntheticInputEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.McpServer);
 
 #if ALTTESTER
-            // AltTester tests drive the same layer through its static probes; the arg alone enables it.
             syntheticInputEnabled = syntheticInputEnabled || appArgs.HasFlag(AppArgsFlags.ALTTESTER);
 #endif
 
@@ -900,8 +899,6 @@ namespace Global.Dynamic
                     UnityEngine.EventSystems.EventSystem.current.EnsureNotNull(), staticContainer.ScenesCache);
 
 #if ALTTESTER
-                // AltTester tests reach the layer through CallStaticMethod, so the session's instances are handed
-                // to the static probes once.
                 DCL.SyntheticInput.AltTester.WorldAutomationProbe.Install(syntheticInputAgent, globalWorld, playerEntity);
                 DCL.SyntheticInput.AltTester.UiAutomationProbe.Install(uiAutomation);
                 DCL.SyntheticInput.AltTester.NavigationAutomationProbe.Install(realmNavigator, staticContainer.RealmData, bootstrapContainer.DecentralandUrlsSource,

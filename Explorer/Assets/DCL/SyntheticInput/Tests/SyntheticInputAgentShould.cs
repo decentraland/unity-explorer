@@ -88,10 +88,6 @@ namespace DCL.SyntheticInput.Tests
             Assert.That(result.BlockedByCrdtId, Is.EqualTo(5));
         }
 
-        /// <summary>
-        ///     A missed press that named an entity was withheld from everyone (no handoff comes back), so there is
-        ///     nothing to release: a release would be a PetUp on a root that never saw the PetDown.
-        /// </summary>
         [Test]
         public void SkipTheReleaseWhenAMissedPressReachedNobody()
         {
@@ -107,11 +103,6 @@ namespace DCL.SyntheticInput.Tests
             Assert.That(world.Has<SyntheticPointerEventIntent>(playerEntity), Is.False, "no release leg may follow a press nobody received");
         }
 
-        /// <summary>
-        ///     A missed press without a target is a broadcast the scene root received, so the system hands off its
-        ///     release; a human's click on nothing releases too. Left held, the root keeps a button down whose ray
-        ///     follows the camera into every gesture the driver makes until the scene's own timeout.
-        /// </summary>
         [Test]
         public void ReleaseToTheRootAMissedPressTheRootReceived()
         {
@@ -171,11 +162,6 @@ namespace DCL.SyntheticInput.Tests
             Assert.That(world.Has<SyntheticPointerEventIntent>(playerEntity), Is.False);
         }
 
-        /// <summary>
-        ///     The sweep is the held-and-turn gesture: the press arms whatever watches for a pointer-down, the
-        ///     camera hold is what moves the ray a scene samples, and the release closes it. The order is the
-        ///     contract — a camera turn with nothing held sweeps nothing.
-        /// </summary>
         [Test]
         public void ComposeASweepFromPressCameraLookAndRelease()
         {
@@ -248,10 +234,6 @@ namespace DCL.SyntheticInput.Tests
             Assert.That(world.Get<SyntheticPointerEventIntent>(playerEntity).TargetEntityId, Is.EqualTo(8));
         }
 
-        /// <summary>
-        ///     The entity-bound half of the global fan-out is only reachable with an aim: a driver has no OS cursor
-        ///     resting on a target for the reticle to follow, so an aimless edge always lands on the scene root.
-        /// </summary>
         [Test]
         public void AimTheGlobalGestureAtAnEntityWhenOneIsRequested()
         {

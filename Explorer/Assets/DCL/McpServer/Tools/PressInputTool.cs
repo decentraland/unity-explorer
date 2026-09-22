@@ -12,20 +12,12 @@ using UnityEngine;
 
 namespace DCL.McpServer.Tools
 {
-    /// <summary>
-    ///     Presses and releases an SDK input action via <see cref="SyntheticInputAgent.GlobalInputAsync" />. Without
-    ///     an aim the edges reach the scene root (a PBPointerEventsResult with no hit); with an aim the reticle is
-    ///     steered at the target for the gesture, so they land entity-bound under the real qualification gates — the
-    ///     only way a driver can produce the entity-bound half of the fan-out, having no OS cursor to rest on a
-    ///     target.
-    /// </summary>
+    /// <summary>Presses and releases an SDK input action, aimed at an entity or broadcast to the scene root.</summary>
     public class PressInputTool : McpTool
     {
         /// <summary>
-        ///     Wire-facing mirror of the SDK <see cref="InputAction" />s a scene can listen to globally. The member
-        ///     names ARE the wire contract: McpWireEnum derives each tool argument value from them, so ACTION_3
-        ///     yields "action_3" while a PascalCase Action3 would yield "action3" and silently break every agent
-        ///     recipe and doc that spells the value out.
+        ///     The member names are the wire contract: McpWireEnum snake-cases them, so ACTION_3 yields "action_3"
+        ///     while a PascalCase Action3 would yield "action3".
         /// </summary>
         [SuppressMessage("ReSharper", "InconsistentNaming")]
         private enum SdkAction : byte
@@ -85,8 +77,6 @@ namespace DCL.McpServer.Tools
 
             float holdSeconds = Mathf.Clamp(arguments.GetFloat("holdSeconds", 0f), 0f, MAX_HOLD_SECONDS);
 
-            // A half-readable aim is refused rather than degraded into an aimless press: the edge would reach the
-            // scene root while the caller reads the result as entity-bound, this tool's hardest failure to spot.
             if (!PointerArgs.TryParseAim(arguments, requireTarget: false, out PointerAim aim, out string? aimError))
                 return McpToolResult.Error(aimError!);
 
@@ -97,15 +87,13 @@ namespace DCL.McpServer.Tools
 
             bool aimed = aim.HasTarget;
 
-            // An aimless gesture can only fail outright (no scene, preempted); an aimed one has the same
-            // legitimate negative outcomes a click has (occluded, out of range), reported the same way.
+            // Without an aim a failure is an error. With an aim it is a legitimate outcome, like a click that is
+            // occluded or out of range, and goes into the result.
             if (result.FailureReason != null && !result.Hit && !aimed)
                 return McpToolResult.Error($"press_input was not delivered: {result.FailureReason}");
 
             var json = new JObject
             {
-                // A qualified hovered entity received the events entity-bound (which suppresses the scene-root
-                // broadcast for that frame); otherwise the scene root got the global events.
                 ["entityBound"] = result.Hit,
             };
 
@@ -120,9 +108,6 @@ namespace DCL.McpServer.Tools
                     json["hoverText"] = result.HoverText;
             }
 
-
-            // Nothing is hovered without an aim: the reticle ray follows the free OS cursor, which no driver is
-            // holding over a target.
             else if (!aimed)
                 json["hint"] = "delivered to the scene root; pass entityId or x/y/z to aim the reticle and land it entity-bound";
 

@@ -138,7 +138,6 @@ namespace DCL.McpServer.Tests
                           .Add(FakeMcpTool.Returning("with_argument"))
                           .Add(new FakeTool("argumentless", McpToolAnnotations.ReadOnly()));
 
-            // Captured at registration, in declaration order: the set the dispatcher checks a tools/call against.
             Assert.That(registry.ArgumentNames("with_argument"), Is.EqualTo(new[] { "value" }));
             Assert.That(registry.ArgumentNames("argumentless"), Is.Empty);
         }

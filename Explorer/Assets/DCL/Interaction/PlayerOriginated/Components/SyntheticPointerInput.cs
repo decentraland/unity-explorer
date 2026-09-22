@@ -8,12 +8,7 @@ namespace DCL.Interaction.PlayerOriginated.Components
     /// <summary>
     ///     Single-frame instructions for the player-origin pointer pipeline, posted onto the player interaction
     ///     entity by an automation driver: aim the reticle ray at a world point and/or press or release a pointer
-    ///     button as if the player did. PlayerOriginatedRaycastSystem reads the aim and echoes the point it consumed
-    ///     in <see cref="PlayerOriginRaycastResultForSceneEntities.SyntheticAimPoint" /> (null on frames it guards
-    ///     away); ProcessPointerEventsSystem and PrepareGlobalInputEventsSystem read the buttons through
-    ///     <see cref="DeliverableEdgesFor" />, and the former clears the component. Both honour a post only during
-    ///     the frame recorded in <see cref="PostedAtFrame" />, so a post that outlived the frame is discarded unread
-    ///     and nobody has to sweep up instructions abandoned mid-pause. Posting is last-write-wins.
+    ///     button as if the player did. Posting is last-write-wins.
     /// </summary>
     public struct SyntheticPointerInput
     {
@@ -32,21 +27,12 @@ namespace DCL.Interaction.PlayerOriginated.Components
         /// <summary>Button reported as released this frame.</summary>
         public InputAction? ReleaseButton;
 
-        /// <summary>
-        ///     The scene world the target entity belongs to; paired with <see cref="TargetEntity" />, since an Arch
-        ///     entity id is only unique within its own world and every loaded scene shares one physics scene.
-        /// </summary>
+        /// <summary>The world that owns <see cref="TargetEntity" />; an Arch entity id is unique only within its world.</summary>
         public World? TargetWorld;
 
-        /// <summary>
-        ///     The only entity allowed to consume this post's button edge. Null accepts whatever the pipeline's own
-        ///     ray selected, the contract of an aim that names no entity. A driver that named an entity has been
-        ///     promised it: the edge must not fall through to a nearer collider the driver was told blocked its aim,
-        ///     nor to a proximity entity it never aimed at.
-        /// </summary>
+        /// <summary>The only entity that may receive this post's button edge. Null lets the edge go to whatever the ray selected.</summary>
         public Entity? TargetEntity;
 
-        /// <summary>True when the post names one entity as the only permitted receiver of its button edge.</summary>
         public readonly bool HasTargetEntity => TargetEntity.HasValue;
 
         /// <summary><see cref="UnityEngine.Time.frameCount" /> at the moment of posting; every poster must stamp it.</summary>
@@ -56,12 +42,9 @@ namespace DCL.Interaction.PlayerOriginated.Components
         public bool IsPostedThisFrame => PostedAtFrame == UnityEngine.Time.frameCount;
 
         /// <summary>
-        ///     The button edges this post delivers to one receiver this frame: a scene entity, or the scene root
-        ///     when <paramref name="receiver" /> is null. This is the single rule every consumer applies. A targeted
-        ///     post delivers to its own entity alone (matched by world reference and entity), so the edge never lands
-        ///     on the root broadcast or on another entity the ray happened to select. An edge of an action the player
-        ///     really pressed or released this same frame is withheld from every receiver: the real-input path has
-        ///     already added it, and no receiver may observe the same edge twice.
+        ///     The button edges this post delivers to a receiver this frame. A null <paramref name="receiver" /> is the
+        ///     scene root. An edge of an action the player really pressed or released this frame is withheld, so that
+        ///     no receiver observes the same edge twice.
         /// </summary>
         public readonly void DeliverableEdgesFor(World? receiverWorld, Entity? receiver,
             IReadOnlyDictionary<InputAction, UnityEngine.InputSystem.InputAction> sdkInputActionsMap,
@@ -80,11 +63,7 @@ namespace DCL.Interaction.PlayerOriginated.Components
                 release = released;
         }
 
-        /// <summary>
-        ///     Whether a receiver (a scene entity, or the scene root when <paramref name="receiver" /> is null) is a
-        ///     permitted consumer of this post's button edge. An untargeted post permits every receiver; a targeted
-        ///     one permits exactly its own entity.
-        /// </summary>
+        /// <summary>True when <paramref name="receiver" /> (null is the scene root) may receive this post's button edge.</summary>
         public readonly bool MayDeliverEdgeTo(World? receiverWorld, Entity? receiver) =>
             TargetEntity is not { } target || (receiver is { } entity && ReferenceEquals(receiverWorld, TargetWorld) && entity == target);
 

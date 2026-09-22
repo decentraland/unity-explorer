@@ -90,8 +90,7 @@ namespace DCL.McpServer.Core
         /// <summary>Materializes the accumulated fields into the JSON Schema object.</summary>
         public JObject Build()
         {
-            // A key the schema does not declare is a mistake the tool would otherwise swallow in silence (an
-            // argument that belongs to a sibling tool, a typo); the dispatcher enforces the same rule server-side.
+            // additionalProperties is false so that an undeclared key is refused instead of ignored.
             var schema = new JObject
             {
                 ["type"] = "object",

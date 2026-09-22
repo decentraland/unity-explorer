@@ -99,8 +99,7 @@ namespace DCL.SyntheticInput.Tests
             JToken rect = entry["screenRect"]!;
             JToken center = entry["center"]!;
 
-            // Asserted as a relation, not as absolute pixels: the EditMode screen is whatever the game view is,
-            // and the point of the field is that a driver can reproduce it without knowing that size.
+            // Asserted as a relation, not as absolute pixels: the EditMode screen size is whatever the game view is.
             float expectedX = (rect["x"]!.Value<float>() + (rect["width"]!.Value<float>() / 2f)) / Screen.width;
             float expectedY = (rect["y"]!.Value<float>() + (rect["height"]!.Value<float>() / 2f)) / Screen.height;
 

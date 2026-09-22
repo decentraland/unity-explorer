@@ -50,7 +50,7 @@ namespace DCL.SyntheticInput.Tests
 
         private ref CursorComponent cursor => ref world.Get<CursorComponent>(cameraEntity);
 
-        /// <summary>What the cursor system will read next frame: installed on the camera entity by the system's Initialize.</summary>
+        /// <summary>Installed on the camera entity by the system's Initialize. The cursor system reads it instead of the hardware mouse.</summary>
         private SyntheticCursorOverride cursorOverride => world.Get<SyntheticCursorOverride>(cameraEntity);
 
         [Test]
@@ -174,8 +174,6 @@ namespace DCL.SyntheticInput.Tests
             var to = new Vector2(50f, 10f);
             Send(new UiDeviceGestureRequest { Kind = UiDeviceGestureKind.Drag, From = from, To = to, DurationFrames = 2, Button = MouseButton.Left });
 
-            // The cursor system reads this instead of the hardware mouse, so every phase that moves the pointer
-            // must publish it — otherwise the world reticle stays behind while the UI stack follows the gesture.
             system.Update(0); // move to the start
             Assert.That(cursorOverride.TryGetPointerPosition(out Vector2 published), Is.True);
             Assert.That(published, Is.EqualTo(from));
@@ -210,8 +208,7 @@ namespace DCL.SyntheticInput.Tests
             system.Update(0); // move
             system.Update(0); // press
 
-            // A held button dragged across the world is the camera-pan gesture (TemporalLock binds the left mouse
-            // button), so the cursor flips to panning and the drag the caller asked for never happens.
+            // Emulates the camera-pan gesture: holding TemporalLock over the world flips the cursor to panning.
             cursor.CursorState = CursorState.Panning;
             system.Update(0);
 

@@ -59,8 +59,7 @@ namespace DCL.McpServer.Tests
         {
             UniTask<McpToolResult> drag = Execute(new JObject { ["path"] = "sdk" });
 
-            // Completing synchronously is the assertion that matters: the virtual-mouse fallback would have
-            // installed a gesture request and awaited the simulation instead of reporting the miss.
+            // Completing synchronously is the real assertion: the virtual-mouse fallback would have awaited the simulation instead.
             Assert.That(drag.Status, Is.EqualTo(UniTaskStatus.Succeeded));
 
             McpToolResult result = drag.GetAwaiter().GetResult();

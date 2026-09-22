@@ -124,15 +124,9 @@ namespace DCL.SyntheticInput.Tests
             Assert.That(cameraInput.Delta, Is.EqualTo(Vector2.zero));
         }
 
-        /// <summary>
-        ///     The production look-at drives the rig's orbit value and leaves the aim off the point (right yaw,
-        ///     wrong pitch on a third-person rig); the request must keep steering the look input until the target
-        ///     is actually under the reticle.
-        /// </summary>
         [Test]
         public void RefineTheAimWhileTheCameraStillMissesTheTarget()
         {
-            // 45 degrees to the right of, and above, the camera's forward.
             var target = new Vector3(30f, 30f, 30f);
             UniTaskCompletionSource<SyntheticInputDelivery> completion = AddIntent(Vector2.zero, secondsFromNow: 0f, lookAtTarget: target);
 
@@ -173,8 +167,7 @@ namespace DCL.SyntheticInput.Tests
         [Test]
         public void StopRefiningWhenTheRigCannotGetAnyCloser()
         {
-            // Nothing in the test moves the camera, so every frame measures the same error — what a clamped rig
-            // (third-person pitch limits) looks like from here.
+            // Nothing in the test moves the camera, so every frame measures the same error, as a rig clamped by its pitch limits would.
             UniTaskCompletionSource<SyntheticInputDelivery> completion = AddIntent(Vector2.zero, secondsFromNow: 0f, lookAtTarget: new Vector3(0f, 100f, 1f));
 
             system.Update(0);

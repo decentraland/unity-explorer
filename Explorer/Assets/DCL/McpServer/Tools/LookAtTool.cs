@@ -13,7 +13,6 @@ namespace DCL.McpServer.Tools
 {
     public class LookAtTool : McpTool
     {
-        /// <summary>Residual aim above which the camera visibly did not reach the point and the driver must be told.</summary>
         private const float RESIDUAL_AIM_WARNING_DEGREES = 2f;
 
         private readonly SyntheticInputAgent syntheticInput;
@@ -50,7 +49,7 @@ namespace DCL.McpServer.Tools
             if (delivery == SyntheticInputDelivery.TimedOut)
                 return McpToolResult.Error("look_at was not applied by the camera (is the simulation paused?).");
 
-            // The exposed camera data is refreshed by its own system; give it one frame to observe the rotation.
+            // ExposedCameraData is written by its own system: wait a frame so it reflects the new rotation.
             await UniTask.DelayFrame(1, cancellationToken: ct);
 
             Vector3 cameraPosition = exposedCameraData.WorldPosition.Value;

@@ -14,10 +14,8 @@ using UnityEngine;
 namespace DCL.SyntheticInput.Systems
 {
     /// <summary>
-    ///     While a <see cref="SyntheticMovementIntent" /> is present on the player entity, re-asserts its axes into
-    ///     <see cref="MovementInputComponent" /> after the real-input systems have written it, so an agent-requested
-    ///     walk survives the per-frame overwrite performed by <see cref="UpdateInputMovementSystem" />.
-    ///     Scene InputModifier locks apply exactly as they do to real input, unless the intent opts out.
+    ///     Re-asserts a <see cref="SyntheticMovementIntent" /> into <see cref="MovementInputComponent" /> after
+    ///     <see cref="UpdateInputMovementSystem" /> has overwritten it.
     /// </summary>
     [UpdateInGroup(typeof(InputGroup))]
     [UpdateAfter(typeof(UpdateInputMovementSystem))]
@@ -55,8 +53,7 @@ namespace DCL.SyntheticInput.Systems
 
                 if (hasMovement)
                 {
-                    // The same locks real input obeys (UpdateInputMovementSystem): a movement lock idles the
-                    // hold, disabled kinds degrade through the shared fallback table.
+                    // Mirrors the lock handling in UpdateInputMovementSystem.
                     if (inputModifier is { DisableAll: true } or { DisableWalk: true, DisableJog: true, DisableRun: true })
                     {
                         movement.Axes = Vector2.zero;
@@ -90,7 +87,6 @@ namespace DCL.SyntheticInput.Systems
                     movement.Kind = MovementKind.Idle;
                 }
 
-                // The intent is copied out before the structural removal; no component refs are touched afterwards.
                 EcsRequest.CompleteAndRemove(World, playerEntity, movementIntent, SyntheticInputDelivery.Completed);
             }
         }

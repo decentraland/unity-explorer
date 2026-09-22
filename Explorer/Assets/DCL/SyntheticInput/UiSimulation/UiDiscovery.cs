@@ -11,8 +11,8 @@ using IPanel = UnityEngine.UIElements.IPanel;
 namespace DCL.SyntheticInput.UiSimulation
 {
     /// <summary>
-    ///     Enumerates and resolves interactable client-UI (uGUI) elements for automation drivers. Listing refreshes
-    ///     the instance-id registry, which is what keeps the <c>id</c> address form valid until the next listing.
+    ///     Enumerates and resolves client-UI (uGUI) elements. The <c>id</c> address form is valid only until the next
+    ///     listing, which rebuilds the instance-id registry.
     /// </summary>
     public class UiDiscovery
     {
@@ -32,7 +32,6 @@ namespace DCL.SyntheticInput.UiSimulation
             pointerEventData = new PointerEventData(eventSystem);
         }
 
-        /// <summary>Lists the interactable uGUI elements currently on screen, refreshing the instance-id registry.</summary>
         public JArray ListInteractable(bool checkOcclusion)
         {
             lastListing.Clear();
@@ -63,11 +62,9 @@ namespace DCL.SyntheticInput.UiSimulation
         }
 
         /// <summary>
-        ///     What client UI, if anything, covers a screen point (Unity screen coordinates). The raycast also
-        ///     carries UI Toolkit panels — a panel that picks an element at the point adds a hit for its host
-        ///     GameObject — so <paramref name="hostedPanel" /> reports which panel a covering hit belongs to. A
-        ///     caller that can name the picked element should describe the cover through the panel instead of
-        ///     through <paramref name="path" />, which there names Unity plumbing.
+        ///     Which client UI covers a screen point (Unity screen coordinates). When the top hit is a UI Toolkit
+        ///     panel, <paramref name="hostedPanel" /> is set and <paramref name="path" /> names the panel host, not
+        ///     the element.
         /// </summary>
         public bool TryFindCoverAt(Vector2 screenPoint, out string? path, out IPanel? hostedPanel)
         {
@@ -86,13 +83,12 @@ namespace DCL.SyntheticInput.UiSimulation
             RaycastResult topHit = raycastResults[0];
             UiOcclusion.TryGetHostedPanel(topHit, out hostedPanel);
 
-            // A panel host reports the panel's selectableGameObject, which a panel need not have.
+            // A panel host hit reports the panel's selectableGameObject, which can be null.
             GameObject? topObject = topHit.gameObject;
             path = topObject != null ? PathOf(topObject.transform) : "an unnamed UI surface";
             return true;
         }
 
-        /// <summary>Resolves a uGUI address to a live GameObject, or explains why it cannot.</summary>
         public bool TryResolve(in UiElementAddress address, out GameObject? target, out string? failure)
         {
             target = null;
@@ -184,7 +180,6 @@ namespace DCL.SyntheticInput.UiSimulation
             return true;
         }
 
-        /// <summary>The element's addressable path: normalized names, with a "[n]" suffix for same-named siblings.</summary>
         public string PathOf(Transform transform)
         {
             pathSegments.Clear();
@@ -284,7 +279,6 @@ namespace DCL.SyntheticInput.UiSimulation
 
         private void Append(JArray entries, GameObject element, string kind, bool checkOcclusion)
         {
-            // EntityId.ToULong is the future-proof numeric form; the listing/addressing wire id carries it.
             ulong instanceId = EntityId.ToULong(element.GetEntityId());
             lastListing[instanceId] = element;
 
@@ -348,8 +342,8 @@ namespace DCL.SyntheticInput.UiSimulation
             };
 
         /// <summary>
-        ///     The screen size every reported rect is expressed in. Driver-facing output states it because a
-        ///     screenshot may be downscaled: without it a rect cannot be turned into a normalized coordinate.
+        ///     The screen size every reported rect is expressed in. Stated because a screenshot may be downscaled from
+        ///     the screen.
         /// </summary>
         internal static JObject ScreenJson() =>
             new ()
@@ -358,7 +352,6 @@ namespace DCL.SyntheticInput.UiSimulation
                 ["height"] = Screen.height,
             };
 
-        /// <summary>The rect's center in the normalized form ui_drag takes (ui_click addresses elements by id, not by position).</summary>
         internal static JObject CenterJson(Rect rect)
         {
             Vector2 center = UiScreenGeometry.NormalizedCenterOf(rect);

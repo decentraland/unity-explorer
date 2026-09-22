@@ -43,8 +43,6 @@ namespace DCL.CharacterCamera.Systems
             exposedCameraData.CameraType.Value = cameraComponent.Mode.ToSDKCameraType();
             exposedCameraData.PointerIsLocked.Value = cursorComponent.CursorState != CursorState.Free;
 
-            // The cursor's own position, not the mouse device's: it survives a disabled Camera action map and
-            // follows a virtual (gamepad, automation) pointer.
             exposedCameraData.PointerScreenPosition = cursorComponent.Position;
 
             // Accumulated every render frame regardless of lock state: scene-tick-throttled consumers

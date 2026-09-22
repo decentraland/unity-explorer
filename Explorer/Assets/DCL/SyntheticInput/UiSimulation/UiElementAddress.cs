@@ -4,24 +4,23 @@ namespace DCL.SyntheticInput.UiSimulation
 {
     public enum UiStack : byte
     {
-        /// <summary>Client uGUI interface (sidebar, chat, panels).</summary>
         UGUI,
 
-        /// <summary>SDK scene UI (UI Toolkit), addressed by CRDT entity id.</summary>
+        /// <summary>SDK scene UI, built with UI Toolkit.</summary>
         SDK,
     }
 
     /// <summary>
-    ///     How a driver names a UI element. uGUI elements are addressed by transform path (with a "[n]" suffix
-    ///     disambiguating same-named siblings), by the instance id a previous listing returned, or by AltId;
-    ///     SDK scene UI is addressed by CRDT entity id only — element names do not exist in player builds.
+    ///     How a driver names a UI element:
+    ///     - uGUI: a transform path ("[n]" suffix for same-named siblings), the id from a previous listing, or an AltId
+    ///     - SDK scene UI: the CRDT entity id only, because element names carry the entity only in Editor builds
     /// </summary>
     public readonly struct UiElementAddress
     {
         public readonly UiStack Stack;
         public readonly string? Path;
 
-        /// <summary>The element's entity id (EntityId.ToULong) as reported by the last listing.</summary>
+        /// <summary>EntityId.ToULong of the element, as reported by the last listing.</summary>
         public readonly ulong? InstanceId;
         public readonly string? AltId;
         public readonly int CrdtId;
@@ -54,11 +53,9 @@ namespace DCL.SyntheticInput.UiSimulation
                 : InstanceId is { } id ? $"ugui:id={id}"
                 : $"ugui:path={Path}";
 
-        /// <summary>Strips the "(Clone)" suffix Unity appends to instantiated prefab roots.</summary>
         public static ReadOnlySpan<char> NormalizeName(string name) =>
             name.EndsWith("(Clone)", StringComparison.Ordinal) ? name.AsSpan(0, name.Length - 7) : name.AsSpan();
 
-        /// <summary>Splits one path segment into its name and optional "[n]" sibling index.</summary>
         public static void ParseSegment(ReadOnlySpan<char> segment, out ReadOnlySpan<char> name, out int siblingIndex)
         {
             siblingIndex = 0;

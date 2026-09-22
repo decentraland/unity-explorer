@@ -15,12 +15,9 @@ using Utility.Arch;
 namespace DCL.SyntheticInput.Systems
 {
     /// <summary>
-    ///     Drives a <see cref="UiDeviceGestureRequest" /> one input state per frame through the automation virtual
-    ///     devices, so uGUI, UI Toolkit and gameplay all observe the gesture exactly as they would a real mouse or
-    ///     keyboard. Every queued pointer position is also written into the camera entity's
-    ///     <see cref="SyntheticCursorOverride" />, which is what makes the cursor system follow the gesture instead
-    ///     of the hardware mouse — hence the ordering against <see cref="UpdateCursorInputSystem" />, which reads
-    ///     that position the same frame. Pointer gestures require a free cursor, re-checked every frame.
+    ///     Replays a <see cref="UiDeviceGestureRequest" /> one input state per frame through the automation virtual devices.
+    ///     Each pointer position is also written into <see cref="SyntheticCursorOverride" />, which
+    ///     <see cref="UpdateCursorInputSystem" /> reads the same frame.
     /// </summary>
     [UpdateInGroup(typeof(InputGroup))]
     [UpdateBefore(typeof(UpdateCursorInputSystem))]
@@ -43,7 +40,7 @@ namespace DCL.SyntheticInput.Systems
             base.Initialize();
             camera = World.CacheCamera();
 
-            // Every system that writes the override installs it here, so none depends on a sibling being registered.
+            // Every system that writes the override installs it, so none depends on a sibling being registered.
             World.AddOrSet(camera, SyntheticCursorOverride.Inactive);
         }
 
@@ -56,7 +53,6 @@ namespace DCL.SyntheticInput.Systems
 
             if (gesture.Kind != UiDeviceGestureKind.KeyPress && TryGetCapturedCursorState(out CursorState capturedState))
             {
-                // The gesture is copied out before the structural removal; no component refs are touched afterwards.
                 EcsRequest.CompleteAndRemove(World, playerEntity, gesture,
                     new UiGestureResult { Ok = false, FailureReason = CaptureFailureReason(in gesture, capturedState) });
 
@@ -90,19 +86,13 @@ namespace DCL.SyntheticInput.Systems
             return true;
         }
 
-        /// <summary>
-        ///     Why a pointer gesture cannot run under a captured cursor. A gesture that started and then found the
-        ///     cursor panning was itself the cause: a held left button over the world is the camera-pan gesture
-        ///     (TemporalLock binds the left mouse button), so the caller's drag became a camera pan.
-        /// </summary>
         private static string CaptureFailureReason(in UiDeviceGestureRequest gesture, CursorState capturedState) =>
             gesture.Phase == UiGesturePhase.NotStarted
-                ? "the cursor is locked or panning — pointer gestures need a free cursor"
+                ? "the cursor is locked or panning, so pointer gestures cannot run"
                 : capturedState == CursorState.Panning
-                    ? "the drag panned the camera instead of dragging: a held button dragged across the world pans, exactly as it does for a human — drag over UI, or use sweep_pointer to hold a button while the camera turns"
+                    ? "the drag panned the camera instead of dragging: a held button dragged across the world pans the camera. Drag over UI, or use sweep_pointer to hold a button while the camera turns"
                     : "the cursor was locked mid-gesture, so the rest of the gesture was not delivered";
 
-        /// <summary>Interpolates the pointer from From to To over the duration; Hover simply uses From == To.</summary>
         private bool StepMove(ref UiDeviceGestureRequest gesture)
         {
             gesture.Phase = UiGesturePhase.Moving;
@@ -114,7 +104,7 @@ namespace DCL.SyntheticInput.Systems
             return gesture.FrameIndex++ >= duration;
         }
 
-        /// <summary>Move to the point, press, release — the button edges land on separate frames like a real click.</summary>
+        // The press and the release land on separate frames, as with a real click.
         private bool StepClick(ref UiDeviceGestureRequest gesture)
         {
             switch (gesture.Phase)
@@ -191,11 +181,7 @@ namespace DCL.SyntheticInput.Systems
                 leftPressed: button == MouseButton.Left && pressed,
                 rightPressed: button == MouseButton.Right && pressed);
 
-        /// <summary>
-        ///     The single door every pointer state goes through: the device gets the state, and the cursor system
-        ///     gets the position. Routing both here is what stops a phase from moving the pointer without telling the
-        ///     cursor, leaving the world reticle behind while the UI stack follows the gesture.
-        /// </summary>
+        // Every pointer state goes through here, so the cursor override never lags behind the device.
         private void QueueMouse(Vector2 position, bool leftPressed = false, bool rightPressed = false)
         {
             devices.QueueMouseState(position, leftPressed, rightPressed);

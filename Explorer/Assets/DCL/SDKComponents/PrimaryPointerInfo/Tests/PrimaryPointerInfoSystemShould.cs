@@ -31,7 +31,6 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Tests
         private PrimaryPointerInfoSystem system = null!;
         private CumulativePointerDelta accumulatedDelta;
 
-        /// <summary>Null until the system performed a write this test: the PUT hands its prepare delegate over.</summary>
         private Action<PBPrimaryPointerInfo, (Vector2 pos, Vector2 delta, ProtoVector3 rayDir)>? capturedPrepare;
         private List<(Vector2 pos, Vector2 delta, ProtoVector3 rayDir)> putCalls = null!;
 
@@ -131,7 +130,7 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Tests
             // Act
             system.Update(0);
 
-            // Assert: a scene sampling worldRayDirection must get the ray through the pointer it was told about
+            // Assert
             (Vector2 pos, Vector2 _, ProtoVector3 rayDir) = LastPut();
             AssertVector2(pointerPosition, pos);
 
@@ -252,7 +251,6 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Tests
         private void SetPointerLocked(bool locked) =>
             exposedCameraData.PointerIsLocked.Returns(new CanBeDirty<bool>(locked));
 
-        /// <summary>The pointer position PrepareExposedCameraDataSystem publishes from the cursor each frame.</summary>
         private void SetPointer(Vector2 position) =>
             exposedCameraData.PointerScreenPosition.Returns(position);
 

@@ -10,7 +10,6 @@ namespace DCL.McpServer.Utils
     /// <summary>Builders for the JSON fragments shared by tool outputs.</summary>
     public static class JObjectExtensions
     {
-        /// <summary>Cap on how much of an unusable argument an error echoes back.</summary>
         private const int MAX_ECHOED_ARGUMENT_LENGTH = 60;
 
         public static JObject ToVector(this Vector3 value) =>
@@ -112,10 +111,8 @@ namespace DCL.McpServer.Utils
         }
 
         /// <summary>
-        ///     A clause naming every one of <paramref name="names" /> that arrived but not as a number, to append to
-        ///     a tool's own "required argument" error. Without it a caller that sends a coordinate as a string gets
-        ///     an error naming a cause that is not true ("provide a full x/y/z" when all three were sent). Empty
-        ///     when there is nothing to name.
+        ///     A clause naming each of <paramref name="names" /> that arrived but not as a number, for appending to a
+        ///     "required argument" error. Empty when there is none to name.
         /// </summary>
         public static string NonNumericHint(this JObject arguments, params string[] names)
         {
@@ -140,11 +137,9 @@ namespace DCL.McpServer.Utils
         }
 
         /// <summary>
-        ///     The error for an enum argument <see cref="TryGetEnum{T}(JObject,string,out T,T[])" /> refused: what
-        ///     arrived, and the values that are accepted. Wire values are lowercase and matched exactly, so a caller
-        ///     told only "must be one of: primary, …" cannot see that "PRIMARY" was the right word in the wrong
-        ///     case. The accepted values come from the enum, the same source the schema is built from, because a
-        ///     literal list here drifts silently when a member is added or renamed.
+        ///     The error for an enum argument that <see cref="TryGetEnum{T}(JObject,string,out T,T[])" /> refused. It
+        ///     says that the values are lowercase, because wire names are matched exactly, and it lists them from the
+        ///     enum so that the list cannot drift from the schema.
         /// </summary>
         public static string EnumArgumentError<T>(this JObject arguments, string name, T[]? allowed = null) where T : struct, Enum
         {
@@ -155,7 +150,6 @@ namespace DCL.McpServer.Utils
                 : $"{name} does not accept {Describe(arguments[name]!)}; the values are lowercase, one of: {values}.";
         }
 
-        /// <summary>What a token is, plus what it held — truncated, because a caller can pass anything.</summary>
         private static string Describe(JToken token)
         {
             if (token.Type == JTokenType.Null)

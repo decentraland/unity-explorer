@@ -9,10 +9,8 @@ namespace DCL.Interaction.PlayerOriginated.Utility
     public static class HoverFeedbackUtils
     {
         /// <summary>
-        ///     Issues the hover leave for the entity hovered until now. The leave completes an enter that was
-        ///     actually issued, so it must never be re-qualified against the ray of the frame the hover ended on:
-        ///     that ray points somewhere else, and a target with a tight maxDistance would keep a hover the scene
-        ///     can never see end.
+        ///     Issues the hover leave for the entity hovered until now. The leave is not re-qualified by distance:
+        ///     the ray of this frame points elsewhere, so a tight maxDistance would keep the hover open forever.
         /// </summary>
         public static void TryIssueLeaveHoverEventForPreviousEntity(in GlobalColliderSceneEntityInfo previousSceneEntityInfo, bool previousHoverEnterIssued)
         {

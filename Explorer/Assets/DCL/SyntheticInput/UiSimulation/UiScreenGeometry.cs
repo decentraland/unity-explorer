@@ -4,31 +4,26 @@ using UnityEngine.UIElements;
 namespace DCL.SyntheticInput.UiSimulation
 {
     /// <summary>
-    ///     Coordinate plumbing between the three spaces the UI sublayer deals with: Unity screen pixels
-    ///     (bottom-left origin, what uGUI raycasts and input devices use), image pixels (top-left origin, what a
-    ///     driver reads off a screenshot), and UI Toolkit panel units.
+    ///     Conversions between the three coordinate spaces of the UI sublayer:
+    ///     - Unity screen pixels: bottom-left origin, used by uGUI raycasts and input devices
+    ///     - image pixels: top-left origin, what a driver reads off a screenshot
+    ///     - UI Toolkit panel units
     /// </summary>
     public static class UiScreenGeometry
     {
-        /// <summary>Scratch buffer for <see cref="RectTransform.GetWorldCorners" />; main-thread only, filled and read within one call.</summary>
+        // Main-thread only: filled and read within one call.
         private static readonly Vector3[] CORNERS_BUFFER = new Vector3[4];
 
-        /// <summary>The element's screen-space rect in image coordinates (top-left origin), for driver-facing output.</summary>
         public static Rect ImageRectOf(RectTransform rectTransform)
         {
             (Vector2 min, Vector2 max) = ScreenBoundsOf(rectTransform);
             return new Rect(min.x, Screen.height - max.y, max.x - min.x, max.y - min.y);
         }
 
-        /// <summary>
-        ///     The rect's center as a normalized image point (0..1, top-left origin) — the form ui_drag takes. The
-        ///     screen is the only correct divisor: a screenshot may be downscaled from it.
-        /// </summary>
         public static Vector2 NormalizedCenterOf(Rect imageRect) =>
             new (Mathf.Clamp01(imageRect.center.x / Mathf.Max(1, Screen.width)),
                 Mathf.Clamp01(imageRect.center.y / Mathf.Max(1, Screen.height)));
 
-        /// <summary>The element's center in Unity screen coordinates (bottom-left origin), for raycasts and devices.</summary>
         public static Vector2 ScreenCenterOf(RectTransform rectTransform)
         {
             (Vector2 min, Vector2 max) = ScreenBoundsOf(rectTransform);
@@ -41,20 +36,15 @@ namespace DCL.SyntheticInput.UiSimulation
         public static Vector2 ScreenToImagePoint(Vector2 screenPoint) =>
             new (screenPoint.x, Screen.height - screenPoint.y);
 
-        /// <summary>
-        ///     A driver's normalized image point (x right 0..1, y down 0..1, origin top-left — the way a screenshot is
-        ///     read) as Unity screen coordinates (bottom-left origin), the space raycasts and devices take.
-        /// </summary>
         public static Vector2 NormalizedImageToScreenPoint(Vector2 normalized) =>
             new (normalized.x * Screen.width, (1f - normalized.y) * Screen.height);
 
-        /// <summary>A driver's normalized image point as image pixels (top-left origin).</summary>
         public static Vector2 NormalizedToImagePoint(Vector2 normalized) =>
             new (normalized.x * Screen.width, normalized.y * Screen.height);
 
         /// <summary>
-        ///     Maps a panel-space point back to image pixels. RuntimePanelUtils only offers screen→panel, so the
-        ///     inverse affine is recovered from two probe conversions.
+        ///     RuntimePanelUtils offers no panel-to-screen conversion, so the inverse is recovered from two probe
+        ///     conversions.
         /// </summary>
         public static Vector2 PanelToImagePoint(IPanel panel, Vector2 panelPoint)
         {
@@ -68,8 +58,8 @@ namespace DCL.SyntheticInput.UiSimulation
         }
 
         /// <summary>
-        ///     Maps an image-pixel point into panel space: the algebraic inverse of <see cref="PanelToImagePoint" />,
-        ///     built from the same two probe conversions so a point round-trips against the rects these tools report.
+        ///     Built from the same probe conversions as <see cref="PanelToImagePoint" /> so a point round-trips
+        ///     exactly, instead of calling ScreenToPanel directly.
         /// </summary>
         public static Vector2 ImageToPanelPoint(IPanel panel, Vector2 imagePoint)
         {
@@ -80,7 +70,6 @@ namespace DCL.SyntheticInput.UiSimulation
             return new Vector2(origin.x + (imagePoint.x * perPixel.x), origin.y + (imagePoint.y * perPixel.y));
         }
 
-        /// <summary>The panel-space rect expressed in image pixels, for driver-facing output.</summary>
         public static Rect PanelRectToImageRect(IPanel panel, Rect panelRect)
         {
             Vector2 min = PanelToImagePoint(panel, panelRect.min);

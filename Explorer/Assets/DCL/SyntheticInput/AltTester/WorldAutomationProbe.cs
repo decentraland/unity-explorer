@@ -14,12 +14,8 @@ using Utility;
 namespace DCL.SyntheticInput.AltTester
 {
     /// <summary>
-    ///     AltTester front-end of the world/avatar synthetic input: tests call these via
-    ///     <c>AltDriver.CallStaticMethod</c> (assembly <c>DCL.SyntheticInput</c> — the assembly name is a wire
-    ///     contract) and drive the same <see cref="SyntheticInputAgent" /> the MCP tools drive. Every gesture is
-    ///     multi-frame, so the API is start/poll: a Start* method returns an operation id, and
-    ///     <see cref="PollJson" /> reports <c>{"done":false}</c> until the payload is ready. Timeouts and failures
-    ///     come back inside the payload — nothing here throws towards the test.
+    ///     AltTester front-end of the world/avatar synthetic input. The class, method and assembly
+    ///     (<c>DCL.SyntheticInput</c>) names are a wire contract: AltTester resolves them by string.
     /// </summary>
     public static class WorldAutomationProbe
     {
@@ -29,7 +25,6 @@ namespace DCL.SyntheticInput.AltTester
 
         private static Session? session;
 
-        /// <summary>Written once, when the automation session starts.</summary>
         public static void Install(SyntheticInputAgent installedAgent, World world, Entity playerEntity) =>
             session = new Session(installedAgent, world, playerEntity);
 
@@ -39,10 +34,6 @@ namespace DCL.SyntheticInput.AltTester
         public static string PollJson(int operationId) =>
             AltOperationRegistry.PollJson(operationId);
 
-        /// <summary>
-        ///     The player's pose right now, in one round-trip:
-        ///     <c>{"ok":true,"position":{x,y,z},"rotationEuler":{x,y,z},"parcel":{x,y},"velocity":{x,y,z},"isGrounded":true}</c>.
-        /// </summary>
         public static string GetPlayerStateJson()
         {
             if (session == null)
@@ -62,10 +53,6 @@ namespace DCL.SyntheticInput.AltTester
             }.ToString();
         }
 
-        /// <summary>
-        ///     Walk/jog/run camera-relative for a duration; kind ∈ walk|jog|run. Scene movement locks apply unless
-        ///     ignoreInputModifiers. The payload carries the start and end positions and the distance covered.
-        /// </summary>
         public static int StartWalk(float directionX, float directionY, string kind, float seconds, bool jump, bool ignoreInputModifiers)
         {
             if (!TryGetAgent(out SyntheticInputAgent readyAgent, out int failedId))
@@ -85,7 +72,7 @@ namespace DCL.SyntheticInput.AltTester
                 WalkPayloadAsync(readyAgent.WalkAsync(direction.normalized, movementKind, clampedSeconds, jump, ignoreInputModifiers)));
         }
 
-        /// <summary>Holds a relative camera-look (mouse-delta units per frame) for a duration.</summary>
+        /// <summary>The deltas are in mouse-delta units per frame.</summary>
         public static int StartCameraLook(float deltaX, float deltaY, float seconds)
         {
             if (!TryGetAgent(out SyntheticInputAgent readyAgent, out int failedId))
@@ -96,7 +83,6 @@ namespace DCL.SyntheticInput.AltTester
                           .ContinueWith(DeliveryPayload));
         }
 
-        /// <summary>Rotates the camera to aim at a world point.</summary>
         public static int StartLookAt(float x, float y, float z)
         {
             if (!TryGetAgent(out SyntheticInputAgent readyAgent, out int failedId))
@@ -105,10 +91,6 @@ namespace DCL.SyntheticInput.AltTester
             return AltOperationRegistry.Start(readyAgent.LookAtAsync(new Vector3(x, y, z)).ContinueWith(DeliveryPayload));
         }
 
-        /// <summary>
-        ///     Presses and releases a pointer button on a scene entity through the real reticle pipeline;
-        ///     button ∈ pointer|primary|secondary, sceneId "" accepts the current scene.
-        /// </summary>
         public static int StartClickEntity(int entityId, string sceneId, string button, float timeoutSec)
         {
             if (!TryGetAgent(out SyntheticInputAgent readyAgent, out int failedId))
@@ -122,11 +104,6 @@ namespace DCL.SyntheticInput.AltTester
                           .ContinueWith(PointerResultPayload));
         }
 
-        /// <summary>
-        ///     Clicks at a screen position in normalized image coordinates (x right 0..1, y DOWN 0..1, origin
-        ///     top-left). Clicks the 3D world only: a point covered by client or scene UI fails with the cover
-        ///     (reported as "blockedByUi") unless <paramref name="force" /> is set.
-        /// </summary>
         public static int StartClickAtScreen(float x, float y, string button, float timeoutSec, bool force)
         {
             if (!TryGetAgent(out SyntheticInputAgent readyAgent, out int failedId))
@@ -142,12 +119,6 @@ namespace DCL.SyntheticInput.AltTester
                           .ContinueWith(PointerResultPayload));
         }
 
-        /// <summary>
-        ///     Presses a pointer button on an entity, turns the camera while it is held, then releases — the gesture
-        ///     that sweeps the pointer ray a scene samples from PrimaryPointerInfo. Dragging the virtual mouse across
-        ///     the world pans the camera instead, so this is the only way to drive a held sweep. The target has to be
-        ///     on screen for the pointer to be parked at all, so aim the camera at it first.
-        /// </summary>
         public static int StartSweep(int entityId, string sceneId, string button, float deltaX, float deltaY, float seconds, float timeoutSec)
         {
             if (!TryGetAgent(out SyntheticInputAgent readyAgent, out int failedId))
@@ -167,7 +138,6 @@ namespace DCL.SyntheticInput.AltTester
                           .ContinueWith(SweepResultPayload));
         }
 
-        /// <summary>Aims at a scene entity and holds the hover (no button) for a duration.</summary>
         public static int StartHover(int entityId, float seconds)
         {
             if (!TryGetAgent(out SyntheticInputAgent readyAgent, out int failedId))
@@ -178,18 +148,9 @@ namespace DCL.SyntheticInput.AltTester
                           .ContinueWith(PointerResultPayload));
         }
 
-        /// <summary>
-        ///     Presses and releases an SDK input action with no aim, so it reaches the scene root; see
-        ///     <see cref="StartGlobalInputOnEntity" /> for the entity-bound half of the fan-out.
-        ///     action ∈ pointer|primary|secondary|jump|forward|backward|right|left|action3..6|walk|modifier.
-        /// </summary>
         public static int StartGlobalInput(string action, float holdSeconds) =>
             StartGlobalInputOnEntity(action, holdSeconds, entityId: -1);
 
-        /// <summary>
-        ///     Presses and releases an SDK input action while the reticle is aimed at <paramref name="entityId" />,
-        ///     so the scene observes it entity-bound under the real qualification gates.
-        /// </summary>
         public static int StartGlobalInputOnEntity(string action, float holdSeconds, int entityId)
         {
             if (!TryGetAgent(out SyntheticInputAgent readyAgent, out int failedId))
@@ -225,7 +186,7 @@ namespace DCL.SyntheticInput.AltTester
         private static string? EmptyToNull(string value) =>
             string.IsNullOrEmpty(value) ? null : value;
 
-        /// <summary>Accepts the SDK action names without their "Ia" prefix, case-insensitive, underscores ignored (e.g. "primary", "action_3").</summary>
+        /// <summary>Matches an <see cref="InputAction" /> name without its "Ia" prefix, ignoring case and underscores.</summary>
         private static bool TryParseInputAction(string value, out InputAction action)
         {
             string normalized = value.Replace("_", "").Replace(" ", "");
@@ -252,7 +213,6 @@ namespace DCL.SyntheticInput.AltTester
                 ["delivery"] = delivery.ToString(),
             }.ToString();
 
-        /// <summary>The delivery payload plus where the hold took the player, mirroring the MCP walk tool.</summary>
         private static async UniTask<string> WalkPayloadAsync(UniTask<SyntheticInputDelivery> walk)
         {
             Vector3 startPosition = ReadPlayerPosition();
@@ -271,7 +231,6 @@ namespace DCL.SyntheticInput.AltTester
             }.ToString();
         }
 
-        /// <summary>Only reached through a Start* method, which already proved the session is installed.</summary>
         private static Vector3 ReadPlayerPosition() =>
             session == null ? Vector3.zero : session.World.Get<CharacterTransform>(session.PlayerEntity).Position;
 
@@ -301,7 +260,6 @@ namespace DCL.SyntheticInput.AltTester
         private static string PointerResultPayload(SyntheticPointerResult result) =>
             PointerResultJson(in result).ToString();
 
-        /// <summary>The pointer-result shape shared with the MCP tools, plus the probe's ok flag.</summary>
         private static JObject PointerResultJson(in SyntheticPointerResult result)
         {
             JObject payload = result.ToJson();

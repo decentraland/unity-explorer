@@ -10,11 +10,7 @@ using UnityEngine;
 
 namespace DCL.McpServer.Tools
 {
-    /// <summary>
-    ///     Holds a relative camera-look input via <see cref="SyntheticInputAgent.CameraLookAsync" />, feeding the
-    ///     same Cinemachine input axes mouse-look feeds. Use look_at for an absolute aim; this tool is for
-    ///     human-like relative turns (e.g. panning across a scene).
-    /// </summary>
+    /// <summary>Holds a relative camera-look input that feeds the same input axes as mouse-look.</summary>
     public class CameraLookTool : McpTool
     {
         private const float DEFAULT_SECONDS = 0.5f;
@@ -62,7 +58,7 @@ namespace DCL.McpServer.Tools
             if (delivery == SyntheticInputDelivery.TimedOut)
                 return McpToolResult.Error($"camera_look did not complete within {seconds + SyntheticInputAgent.COMPLETION_GRACE_SEC}s (is the simulation paused?).");
 
-            // The exposed camera data is refreshed by its own system; give it one frame to observe the rotation.
+            // ExposedCameraData is written by its own system: wait a frame so it reflects the new rotation.
             await UniTask.DelayFrame(1, cancellationToken: ct);
 
             var result = new JObject

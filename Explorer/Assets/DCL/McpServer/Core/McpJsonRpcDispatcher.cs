@@ -134,9 +134,8 @@ namespace DCL.McpServer.Core
             if (!tools.TryGet(toolName, out McpTool? tool))
                 return JsonRpcEnvelope.Error(id, INVALID_PARAMS, $"Unknown tool: {toolName ?? "<missing>"}");
 
-            // An argument the tool does not declare would otherwise be dropped without a word — a caller
-            // that passes a sibling tool's argument (ui_click's `device` to ui_drag) then reads a success that
-            // did not do what it asked. A tool-level error, like every other argument refusal.
+            // An undeclared argument would otherwise be dropped silently while the call reports success.
+            // Reported as a tool error, like every other argument refusal.
             string? unknownArguments = UnknownArguments(tool.Name, arguments, tools.ArgumentNames(tool.Name));
 
             if (unknownArguments != null)

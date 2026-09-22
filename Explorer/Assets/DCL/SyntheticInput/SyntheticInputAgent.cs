@@ -11,18 +11,15 @@ using UnityEngine;
 namespace DCL.SyntheticInput
 {
     /// <summary>
-    ///     Driver-facing entry point of the synthetic input simulation layer, called from the main thread. Requests
-    ///     are delivered by the SyntheticInput systems through the production input pipelines, so collisions,
-    ///     occlusion, distance gates, scene input locks and the scene write-back are the real ones. A request the
-    ///     simulation never completes is abandoned here and reported as timed out, and a newer request preempts a
-    ///     pending one of the same kind — one driver at a time.
+    ///     Driver-facing entry point of the synthetic input simulation layer. Main thread only. A newer request
+    ///     preempts a pending request of the same kind, so only one driver can run at a time.
     /// </summary>
     public class SyntheticInputAgent
     {
         /// <summary>Extra wait beyond a hold's own duration before a request is considered stuck.</summary>
         public const float COMPLETION_GRACE_SEC = 5f;
 
-        /// <summary>The intent's convention for an aim that names no entity.</summary>
+        // the intent's value for an aim that names no entity
         private const int NO_ENTITY = -1;
 
         private readonly World world;
@@ -34,10 +31,7 @@ namespace DCL.SyntheticInput
             this.playerEntity = playerEntity;
         }
 
-        /// <summary>
-        ///     Holds a camera-relative movement input for a duration (x = strafe right, y = forward). Scene
-        ///     InputModifier locks apply as they do to WASD unless <paramref name="ignoreInputModifiers" />.
-        /// </summary>
+        /// <summary>Holds a camera-relative movement input for a duration (x = strafe right, y = forward).</summary>
         public async UniTask<SyntheticInputDelivery> WalkAsync(Vector2 axes, MovementKind kind, float seconds, bool jump = false,
             bool ignoreInputModifiers = false, CancellationToken ct = default)
         {
@@ -53,10 +47,7 @@ namespace DCL.SyntheticInput
             return await AwaitHoldAsync<SyntheticMovementIntent>(hold, seconds, ct);
         }
 
-        /// <summary>
-        ///     Holds a camera-look delta (Cinemachine input-axis value, mouse-look semantics) for a duration.
-        ///     Suppressed while a camera blocker is active, as real look input is.
-        /// </summary>
+        /// <summary>Holds a camera-look delta (Cinemachine input-axis value) for a duration.</summary>
         public async UniTask<SyntheticInputDelivery> CameraLookAsync(Vector2 axisValue, float seconds, CancellationToken ct = default)
         {
             UniTask<SyntheticInputDelivery> hold = EcsRequest.SendAsync(world, playerEntity, new SyntheticCameraLookIntent
@@ -68,7 +59,7 @@ namespace DCL.SyntheticInput
             return await AwaitHoldAsync<SyntheticCameraLookIntent>(hold, seconds, ct);
         }
 
-        /// <summary>Rotates the camera to aim at a world point; completes once the camera consumed the rotation.</summary>
+        /// <summary>Rotates the camera to aim at a world point. Completes once the camera is on target or the correction gives up.</summary>
         public async UniTask<SyntheticInputDelivery> LookAtAsync(Vector3 worldTarget, CancellationToken ct = default)
         {
             UniTask<SyntheticInputDelivery> lookAt = EcsRequest.SendAsync(world, playerEntity, new SyntheticCameraLookIntent
@@ -79,28 +70,21 @@ namespace DCL.SyntheticInput
             return await AwaitHoldAsync<SyntheticCameraLookIntent>(lookAt, 0f, ct);
         }
 
-        /// <summary>
-        ///     Presses and releases a pointer button on what <paramref name="aim" /> names, ordering the release
-        ///     onto a later scene tick than the press. A release that no longer reaches the press target reports
-        ///     the delivered press with the divergence.
-        /// </summary>
+        /// <summary>Presses and releases a pointer button on what <paramref name="aim" /> names. The release lands on a later scene tick than the press.</summary>
         public UniTask<SyntheticPointerResult> ClickAsync(PointerAim aim, InputAction button, float timeoutSec, CancellationToken ct = default, bool force = false) =>
             RunPointerGestureAsync(aim, button, composeClick: true, PointerEventType.PetDown, timeoutSec, force, ct);
 
-        /// <summary>Delivers a lone press leg: the scene observes only the PetDown.</summary>
+        /// <summary>Delivers a press without a release.</summary>
         public UniTask<SyntheticPointerResult> PointerDownAsync(PointerAim aim, InputAction button, float timeoutSec, CancellationToken ct = default, bool force = false) =>
             RunPointerGestureAsync(aim, button, composeClick: false, PointerEventType.PetDown, timeoutSec, force, ct);
 
-        /// <summary>Delivers a lone release leg: the scene observes only the PetUp.</summary>
+        /// <summary>Delivers a release without a press.</summary>
         public UniTask<SyntheticPointerResult> PointerUpAsync(PointerAim aim, InputAction button, float timeoutSec, CancellationToken ct = default, bool force = false) =>
             RunPointerGestureAsync(aim, button, composeClick: false, PointerEventType.PetUp, timeoutSec, force, ct);
 
         /// <summary>
-        ///     The gesture a human paints with: press on a target, turn the camera while it is held, release.
-        ///     Nothing is aimed between the legs, so the ray follows the camera; what holds it steady is the pointer
-        ///     itself, parked at the pressed pixel by <c>SyntheticPointerHold</c> until the release. A press that was
-        ///     never delivered aborts the gesture, because releasing a button that never went down would fake a
-        ///     delivery.
+        ///     Presses on a target, turns the camera while the button is held, then releases. If the press was not
+        ///     delivered, the gesture stops there, because a release without a press would fake a delivery.
         /// </summary>
         public async UniTask<SyntheticSweepResult> SweepAsync(PointerAim aim, InputAction button, Vector2 axisValue, float seconds, float timeoutSec,
             CancellationToken ct = default, bool force = false)
@@ -126,7 +110,7 @@ namespace DCL.SyntheticInput
             };
         }
 
-        /// <summary>Aims the reticle at what <paramref name="aim" /> names and holds the hover for a duration, pressing nothing.</summary>
+        /// <summary>Aims at what <paramref name="aim" /> names and holds the hover for a duration. Presses nothing.</summary>
         public async UniTask<SyntheticPointerResult> HoverAsync(PointerAim aim, float seconds, CancellationToken ct = default)
         {
             try
@@ -144,11 +128,8 @@ namespace DCL.SyntheticInput
         }
 
         /// <summary>
-        ///     Presses and releases an SDK input action. An aimless <paramref name="aim" /> keeps the cursor ray in
-        ///     charge and the edges fan out to the scene root; an aim at an entity or world point steers the reticle
-        ///     at it, so the edges land entity-bound under the real qualification gates and the result carries the
-        ///     same diagnostics a click does. The release lands on a later scene tick, and a positive
-        ///     <paramref name="holdSeconds" /> keeps the action held between the edges.
+        ///     Presses and releases an SDK input action. With an aimless <paramref name="aim" /> the edges reach the
+        ///     scene root. With a target they land on that entity, like a click. The release lands on a later scene tick.
         /// </summary>
         public async UniTask<SyntheticPointerResult> GlobalInputAsync(InputAction action, float holdSeconds = 0f, PointerAim aim = default, CancellationToken ct = default)
         {
@@ -164,7 +145,6 @@ namespace DCL.SyntheticInput
             }
         }
 
-        /// <summary>Awaits a held request with a grace window on top of its duration; a stuck request is abandoned.</summary>
         private async UniTask<SyntheticInputDelivery> AwaitHoldAsync<TIntent>(UniTask<SyntheticInputDelivery> hold, float seconds, CancellationToken ct)
             where TIntent : struct
         {
@@ -185,8 +165,6 @@ namespace DCL.SyntheticInput
         {
             try
             {
-                // A single budget for the whole gesture: it covers both a paused simulation that never runs the
-                // delivering system and a release stuck waiting for the scene tick to advance.
                 return await ComposeGestureAsync(aim, button, composeClick, firstLegType, force)
                             .AttachExternalCancellation(ct)
                             .Timeout(TimeSpan.FromSeconds(timeoutSec));
@@ -197,7 +175,6 @@ namespace DCL.SyntheticInput
             }
         }
 
-        /// <summary>A lone press or release is one delivery; a click is a press plus a release carrying the press handoff, which keeps it on a later scene tick.</summary>
         private async UniTask<SyntheticPointerResult> ComposeGestureAsync(PointerAim aim, InputAction button, bool composeClick, PointerEventType firstLegType, bool force)
         {
             SyntheticPointerOutcome down = await SendPointerAsync(Intent(in aim, button, firstLegType, force: force));
@@ -213,8 +190,6 @@ namespace DCL.SyntheticInput
             if (up.Result.Hit)
                 return up.Result;
 
-            // The release did not reach the target (missed, rejected by a guard, or preempted): report the
-            // delivered press, flag the divergence and keep the release diagnostics.
             SyntheticPointerResult merged = down.Result;
             merged.UpRayMissed = true;
             merged.FailureReason = $"the release did not reach the target ({up.Result.FailureReason}); the scene received only the press";
@@ -224,11 +199,8 @@ namespace DCL.SyntheticInput
             return merged;
         }
 
-        /// <summary>
-        ///     A press that missed its target may still have reached the scene root as a broadcast, and the system
-        ///     hands off only such a press. Release it, or the root holds a button nobody will release and the ray
-        ///     it samples follows the camera into every later gesture. The miss stays the result.
-        /// </summary>
+        // A press that missed its target can still reach the scene root as a broadcast. Release it, or the root
+        // holds a button that nobody releases.
         private async UniTask<SyntheticPointerResult> ReleaseBroadcastPressAsync(PointerAim aim, InputAction button, SyntheticPointerOutcome down, bool force)
         {
             SyntheticPointerResult result = down.Result;

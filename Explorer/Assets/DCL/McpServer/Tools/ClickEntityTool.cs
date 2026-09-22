@@ -11,10 +11,8 @@ using UnityEngine;
 namespace DCL.McpServer.Tools
 {
     /// <summary>
-    ///     Presses a pointer button on a scene entity via <see cref="SyntheticInputAgent" />, which delivers the
-    ///     gesture through the real reticle pipeline (a synthetic aim and button edge posted to it), so occlusion,
-    ///     distance gates and the scene write-back are the production ones. A full click is a press followed by a
-    ///     release ordered onto a later scene tick, merged into one result.
+    ///     Presses a pointer button on a scene entity through the real reticle pipeline, so occlusion, distance
+    ///     gates and the scene write-back are the production ones.
     /// </summary>
     public class ClickEntityTool : McpTool
     {

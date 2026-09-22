@@ -19,7 +19,6 @@ namespace DCL.McpServer.Tools
     {
         public const string BUTTON_DESCRIPTION = "Which input action to press. Default pointer (left click / IA_POINTER).";
 
-        /// <summary>Reads the pointer button; a missing argument is the pointer (left) button.</summary>
         public static bool TryGetButton(JObject arguments, out InputAction button, out string? error)
         {
             button = InputAction.IaPointer;
@@ -42,10 +41,8 @@ namespace DCL.McpServer.Tools
         }
 
         /// <summary>
-        ///     Reads the aim: an entityId and/or a full x/y/z world point, plus the optional sceneId pin.
-        ///     <paramref name="requireTarget" /> refuses an aimless call. An x/y/z that is only half readable is
-        ///     refused in every case rather than dropped: the edge would otherwise be aimed at nothing (or at the
-        ///     entity's center) while the caller reads the result as an aim at the point it sent.
+        ///     A partly readable x/y/z is refused rather than ignored: the gesture would otherwise aim at nothing,
+        ///     or at the entity's center, instead of at the point the caller sent.
         /// </summary>
         public static bool TryParseAim(JObject arguments, bool requireTarget, out PointerAim aim, out string? error)
         {

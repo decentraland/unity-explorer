@@ -8,19 +8,25 @@ namespace DCL.SyntheticInput.UiSimulation
 {
     public enum UiDeviceGestureKind : byte
     {
-        /// <summary>Move the virtual pointer to <see cref="UiDeviceGestureRequest.To" /> over the duration.</summary>
+        /// <summary>Moves the pointer to <see cref="UiDeviceGestureRequest.To" /> over the duration.</summary>
         MoveTo,
 
-        /// <summary>Move to <see cref="UiDeviceGestureRequest.To" />, then press and release the button on separate frames.</summary>
+        /// <summary>
+        ///     Moves to <see cref="UiDeviceGestureRequest.To" />, then presses and releases the button on separate
+        ///     frames.
+        /// </summary>
         Click,
 
-        /// <summary>Press at <see cref="UiDeviceGestureRequest.From" />, drag to <see cref="UiDeviceGestureRequest.To" /> over the duration, release.</summary>
+        /// <summary>
+        ///     Presses at <see cref="UiDeviceGestureRequest.From" />, drags to <see cref="UiDeviceGestureRequest.To" />
+        ///     over the duration, then releases.
+        /// </summary>
         Drag,
 
-        /// <summary>Hold the pointer at <see cref="UiDeviceGestureRequest.To" /> for the duration (hover-timing UI).</summary>
+        /// <summary>Holds the pointer at <see cref="UiDeviceGestureRequest.To" /> for the duration.</summary>
         Hover,
 
-        /// <summary>Press and release <see cref="UiDeviceGestureRequest.Key" />; a duration holds it in between.</summary>
+        /// <summary>Presses and releases <see cref="UiDeviceGestureRequest.Key" />, held for the duration.</summary>
         KeyPress,
     }
 
@@ -35,9 +41,8 @@ namespace DCL.SyntheticInput.UiSimulation
     }
 
     /// <summary>
-    ///     A multi-frame virtual-device gesture, driven one input state per frame by UiVirtualDeviceGestureSystem.
-    ///     Positions are Unity screen coordinates (bottom-left origin). The phase machine lives inside the
-    ///     component; the system stays stateless.
+    ///     A multi-frame virtual-device gesture, driven one input state per frame. Positions are Unity screen
+    ///     coordinates (bottom-left origin).
     /// </summary>
     public struct UiDeviceGestureRequest : IEcsRequest<UiGestureResult>
     {
@@ -45,7 +50,6 @@ namespace DCL.SyntheticInput.UiSimulation
         public Vector2 From;
         public Vector2 To;
 
-        /// <summary>Frames spent moving/dragging/holding; clamped to at least 1 by the consuming system.</summary>
         public int DurationFrames;
 
         public MouseButton Button;

@@ -7,10 +7,9 @@ using System;
 namespace DCL.SyntheticInput.AltTester
 {
     /// <summary>
-    ///     Start/poll bridge for the AltTester probes: CallStaticMethod is synchronous on the main thread, so a
-    ///     multi-frame gesture cannot be awaited inside one call — the test starts it, gets an operation id and
-    ///     polls. Never throws towards the test: failures (the operation's own timeout included) come back as
-    ///     error payloads. A small ring holds the most recent operations; an evicted id polls as an error.
+    ///     Start/poll bridge for the AltTester probes: <c>CallStaticMethod</c> returns synchronously, so a multi-frame
+    ///     gesture cannot be awaited inside one call. Failures, timeouts included, come back as error payloads and
+    ///     never as exceptions.
     /// </summary>
     internal static class AltOperationRegistry
     {
@@ -26,7 +25,7 @@ namespace DCL.SyntheticInput.AltTester
             public string? PayloadJson;
         }
 
-        /// <summary>Registers the operation and returns the id to poll. Main thread only (CallStaticMethod guarantees it).</summary>
+        /// <summary>Main thread only: the slot ring is not thread-safe.</summary>
         public static int Start(UniTask<string> operation)
         {
             int id = ++nextId;

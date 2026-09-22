@@ -16,37 +16,28 @@ using Utility.Arch;
 namespace DCL.SyntheticInput.Systems
 {
     /// <summary>
-    ///     Delivers automation-driver camera-look requests while a <see cref="SyntheticCameraLookIntent" /> is
-    ///     present on the player entity. A held delta is re-asserted into <see cref="CameraInput.Delta" /> after
-    ///     <see cref="UpdateCameraInputSystem" /> wrote (or zeroed) it, so the Cinemachine axes consume it exactly
-    ///     like mouse-look — but without requiring an OS cursor lock, which a driver has no cursor to take. A
-    ///     look-at is translated into the production <see cref="CameraLookAtIntent" />, and a
-    ///     <see cref="CameraBlockerComponent" /> suppresses the held delta as it suppresses real camera input.
+    ///     Re-asserts a held <see cref="SyntheticCameraLookIntent" /> delta into <see cref="CameraInput.Delta" /> after
+    ///     <see cref="UpdateCameraInputSystem" /> has overwritten it, so a driver can turn the camera without an OS cursor lock.
     /// </summary>
     [UpdateInGroup(typeof(InputGroup))]
     [UpdateAfter(typeof(UpdateCameraInputSystem))]
     [LogCategory(ReportCategory.SYNTHETIC_INPUT)]
     public partial class SyntheticCameraLookSystem : BaseUnityLoopSystem
     {
-        /// <summary>Aim error at which a look-at is considered on target — under half a reticle's worth.</summary>
         private const float AIM_TOLERANCE_DEGREES = 0.75f;
 
-        /// <summary>Seconds the aim refinement may spend before completing with whatever it achieved; bounded in time, not frames, to stay inside the driver-side grace on a slow editor.</summary>
+        // Bounded in time, not frames, so the refinement completes inside the driver-side timeout on a slow editor.
         private const float CORRECTION_BUDGET_SEC = 2.5f;
 
-        /// <summary>Consecutive frames without improvement after which the rig is treated as unable to get closer.</summary>
         private const int MAX_STALL_FRAMES = 10;
 
-        /// <summary>Improvement below this is noise, not progress.</summary>
         private const float STALL_IMPROVEMENT_DEGREES = 0.05f;
 
-        /// <summary>Look-input units requested per degree of remaining error; the rig rate-limits the rest.</summary>
         private const float CORRECTION_UNITS_PER_DEGREE = 1f;
 
-        /// <summary>Cap on one frame's correction, so a large residual pans instead of snapping.</summary>
+        // Caps one frame's correction so a large residual pans instead of snapping.
         private const float MAX_CORRECTION_DELTA = 12f;
 
-        /// <summary>A target on top of the camera has no meaningful direction to aim at.</summary>
         private const float MIN_TARGET_DISTANCE_SQR = 0.0001f;
 
         private readonly Entity playerEntity;
@@ -89,7 +80,6 @@ namespace DCL.SyntheticInput.Systems
             }
             else
             {
-                // The intent is copied out before the structural removal; no component refs are touched afterwards.
                 EcsRequest.CompleteAndRemove(World, playerEntity, lookIntent, SyntheticInputDelivery.Completed);
             }
         }
@@ -98,8 +88,7 @@ namespace DCL.SyntheticInput.Systems
         {
             if (!lookIntent.LookAtIssued)
             {
-                // Written through the ref before the AddOrSet below, which is a structural change. The budget is
-                // stamped here too, because the camera can consume the intent within this same frame.
+                // EndTime is stamped here too, because the camera can consume the intent within this same frame.
                 lookIntent.LookAtIssued = true;
                 lookIntent.LookAtBestErrorDegrees = float.MaxValue;
                 lookIntent.EndTime = UnityEngine.Time.time + CORRECTION_BUDGET_SEC;
@@ -109,10 +98,10 @@ namespace DCL.SyntheticInput.Systems
                 return;
             }
 
-            // ApplyCinemachineCameraInputSystem removes the camera intent once it applied the rotation.
+            // CameraLookAtIntent is present until the camera has applied it.
             if (World.Has<CameraLookAtIntent>(camera))
             {
-                // Restamped every frame it waits, so the refinement budget starts when the camera is actually done.
+                // Re-stamped while waiting, so the refinement budget starts once the camera is done.
                 lookIntent.EndTime = UnityEngine.Time.time + CORRECTION_BUDGET_SEC;
                 return;
             }
@@ -120,14 +109,8 @@ namespace DCL.SyntheticInput.Systems
             RefineLookAt(ref lookIntent, lookAtTarget);
         }
 
-        /// <summary>
-        ///     Brings the camera the rest of the way onto the target. The production look-at drives the rig's orbit
-        ///     value, which only approximates a pitch: it computes the angle from the player's feet, so a
-        ///     third-person camera ends up with the right yaw but an aim that misses vertically, by tens of degrees
-        ///     on nearby or steep targets. Rate limiting inside the rig rules out an open-loop correction, so the
-        ///     error is re-measured every frame and the delta shrinks with it. The loop terminates on target, on the
-        ///     budget, or as soon as the error stops improving — what a clamped rig looks like from here.
-        /// </summary>
+        // The production look-at computes its angles from the player position, so in third person the pitch misses on
+        // nearby or steep targets. The rig rate-limits input, so the error is re-measured every frame instead of corrected once.
         private void RefineLookAt(ref SyntheticCameraLookIntent lookIntent, Vector3 lookAtTarget)
         {
             CameraComponent cameraComponent = camera.GetCameraComponent(World);
@@ -147,7 +130,7 @@ namespace DCL.SyntheticInput.Systems
             else
                 lookIntent.LookAtStallFrames++;
 
-            // A blocked camera cannot be corrected at all; completing beats holding the request open.
+            // A blocked camera cannot be corrected, so the request completes instead of waiting.
             bool blocked = World.Has<CameraBlockerComponent>(camera);
 
             if (onTarget || budgetSpent || blocked || lookIntent.LookAtStallFrames >= MAX_STALL_FRAMES)
@@ -164,10 +147,7 @@ namespace DCL.SyntheticInput.Systems
                     Mathf.Clamp(pitchErrorDegrees * CORRECTION_UNITS_PER_DEGREE, -MAX_CORRECTION_DELTA, MAX_CORRECTION_DELTA));
         }
 
-        /// <summary>
-        ///     Signed yaw/pitch error in degrees between the camera's forward and the direction to the target, in
-        ///     the sign convention of the look input: positive yaw turns right, positive pitch looks up.
-        /// </summary>
+        // Signed degrees in the sign convention of the look input: positive yaw turns right, positive pitch looks up.
         private static (float yawErrorDegrees, float pitchErrorDegrees) AimError(Transform cameraTransform, Vector3 lookAtTarget)
         {
             Vector3 desired = lookAtTarget - cameraTransform.position;

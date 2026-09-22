@@ -9,11 +9,7 @@ using Image = UnityEngine.UI.Image;
 
 namespace DCL.SyntheticInput.Tests
 {
-    /// <summary>
-    ///     The pre-checks that decide whether an action is delivered at all. The event synthesis itself is verified
-    ///     end-to-end against a running client; what is pinned here is that the simulator refuses what a user could
-    ///     not do, instead of reporting a success for an action the UI would have ignored.
-    /// </summary>
+    /// <summary>Covers only the pre-checks that refuse an action. The event synthesis is verified end-to-end against a running client.</summary>
     public class UiInteractionSimulatorShould
     {
         private GameObject eventSystemGo = null!;
@@ -92,8 +88,6 @@ namespace DCL.SyntheticInput.Tests
         [Test]
         public void StateTheScreenOnEveryResultEvenWithoutARect()
         {
-            // The device path resolves no rect, but the frame of reference is still knowable — and every caller
-            // normalizes coordinates against it.
             JObject json = UiActionResult.Success(default(Rect)).ToJson("Free");
 
             Assert.That(json["screen"], Is.Not.Null);

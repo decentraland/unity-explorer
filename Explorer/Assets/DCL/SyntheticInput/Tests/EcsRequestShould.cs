@@ -75,10 +75,6 @@ namespace DCL.SyntheticInput.Tests
             Assert.That(world.Has<TestEcsRequest>(entity), Is.False);
         }
 
-        /// <summary>
-        ///     An abandon is the driver-side timeout: the driver has already given up on the awaiter, so the request
-        ///     is dropped silently. Unlike <see cref="EcsRequest.CompleteAndRemove{TIntent,TResult}" /> it never touches the completion source.
-        /// </summary>
         [Test]
         public void AbandonDropsTheRequestWithoutResolvingItsAwaiter()
         {
@@ -97,7 +93,6 @@ namespace DCL.SyntheticInput.Tests
             UniTask<int> task = EcsRequest.SendAsync(world, entity, new TestEcsRequest(), -1);
             EcsRequest.CompleteAndRemove(world, entity, world.Get<TestEcsRequest>(entity), 42);
 
-            // The timeout losing the race against the fulfilling system is the expected shape of this call.
             UniTask abandon = EcsRequest.AbandonAsync<TestEcsRequest>(world, entity);
 
             Assert.That(abandon.Status, Is.EqualTo(UniTaskStatus.Succeeded));

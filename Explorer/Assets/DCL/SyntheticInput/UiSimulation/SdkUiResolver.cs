@@ -9,11 +9,7 @@ using UnityEngine.UIElements;
 
 namespace DCL.SyntheticInput.UiSimulation
 {
-    /// <summary>
-    ///     Resolves SDK scene-UI elements by CRDT entity id in the current scene world. Names cannot address them:
-    ///     UI Toolkit element names are only built in the Editor, so the CRDT id a creator sees in their scene code
-    ///     is the one stable key.
-    /// </summary>
+    /// <summary>Resolves SDK scene-UI elements by CRDT entity id in the current scene world.</summary>
     public class SdkUiResolver
     {
         private static readonly QueryDescription UI_ELEMENTS = new QueryDescription().WithAll<UITransformComponent, CRDTEntity>();
@@ -61,14 +57,13 @@ namespace DCL.SyntheticInput.UiSimulation
         }
 
         /// <summary>
-        ///     The scene-UI component owning a picked visual element: the entity whose UITransform element is the
-        ///     element itself or its closest ancestor (a pick can land on an inner child, and UITransforms nest).
-        ///     Null when nothing in the current scene owns the element.
+        ///     The UITransform whose element is the picked element or its closest ancestor. Null when no entity of the
+        ///     current scene owns the element.
         /// </summary>
         public UITransformComponent? ResolveComponent(VisualElement element) =>
             ResolveComponent(element, out _);
 
-        /// <summary>As <see cref="ResolveComponent(VisualElement)" />, also reporting the owner's CRDT id (-1 if none).</summary>
+        /// <summary>Also reports the owner's CRDT id, or -1 when there is no owner.</summary>
         public UITransformComponent? ResolveComponent(VisualElement element, out int crdtId)
         {
             crdtId = -1;
@@ -105,9 +100,7 @@ namespace DCL.SyntheticInput.UiSimulation
         }
 
         /// <summary>
-        ///     Whether the current scene's UI covers a screen point (Unity screen coordinates), and which entity
-        ///     does. Uses the panel's own hit test, so it agrees with what a real click at that pixel would reach:
-        ///     only elements the scene declared as blocking (pointerFilter PFM_BLOCK) are pickable at all.
+        ///     Whether the current scene's UI covers a screen point (Unity screen coordinates), and which entity does.
         /// </summary>
         public bool TryFindCoverAt(UnityEngine.Vector2 screenPoint, out string? cover)
         {
@@ -119,11 +112,7 @@ namespace DCL.SyntheticInput.UiSimulation
             return TryDescribeCoverIn(panel, screenPoint, out cover);
         }
 
-        /// <summary>
-        ///     Describes the current scene's UI covering a screen point (Unity screen coordinates) inside a panel the
-        ///     caller already identified — a uGUI raycast reports the panel, not the element it picked. False when
-        ///     the point picks nothing or the picked element belongs to no entity of the current scene.
-        /// </summary>
+        /// <summary>As <see cref="TryFindCoverAt" />, inside a panel the caller already identified.</summary>
         public bool TryDescribeCoverIn(IPanel panel, UnityEngine.Vector2 screenPoint, out string? cover)
         {
             cover = null;
@@ -138,11 +127,10 @@ namespace DCL.SyntheticInput.UiSimulation
             return true;
         }
 
-        /// <summary>How a scene-UI cover is named to a driver. The CRDT id is included because it is the one address ui_click takes for scene UI.</summary>
         internal static string CoverDescription(int crdtId) =>
             crdtId >= 0 ? $"the scene's UI (crdtId {crdtId})" : "the scene's UI";
 
-        /// <summary>The panel the current scene's UI is attached to. Any attached element identifies it: a scene renders its UI into one panel.</summary>
+        /// <summary>Any attached element identifies the panel, because a scene renders its UI into one panel.</summary>
         public bool TryGetScenePanel(out IPanel? panel, out string? failure)
         {
             panel = null;
@@ -168,7 +156,6 @@ namespace DCL.SyntheticInput.UiSimulation
             return true;
         }
 
-        /// <summary>Lists the interactable SDK-UI elements of the current scene (pointer targets, inputs, dropdowns, scrolls).</summary>
         public JArray ListInteractable()
         {
             var entries = new JArray();
@@ -202,8 +189,6 @@ namespace DCL.SyntheticInput.UiSimulation
                     ["center"] = UiDiscovery.CenterJson(rect),
                 };
 
-                // The scene can declare an input or dropdown disabled, which makes it inert for a user and refused by
-                // ui_click/ui_set_text.
                 if ((hasInput && input != null && !input.TextField.enabledInHierarchy)
                     || (hasDropdown && dropdown != null && !dropdown.DropdownField.enabledInHierarchy))
                     entry["disabled"] = true;

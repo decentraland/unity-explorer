@@ -5,13 +5,9 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace DCL.McpServer.Tests
 {
-    /// <summary>
-    ///     The shared argument diagnosis the tools report through: the clause a numeric tool appends to its own
-    ///     "required argument" error, and the whole error an enum argument is refused with.
-    /// </summary>
     public class JObjectExtensionsShould
     {
-        /// <summary>Stands in for a tool's wire-facing enum; the wire values derive from these member names.</summary>
+        // The wire values derive from the member names.
         [SuppressMessage("ReSharper", "InconsistentNaming")]
         private enum WireStack : byte
         {
@@ -44,7 +40,6 @@ namespace DCL.McpServer.Tests
         {
             var arguments = new JObject { ["x"] = 1, ["y"] = 2.5f };
 
-            // An argument the caller never sent is the tool's own message to explain; both number types are usable.
             Assert.That(arguments.NonNumericHint("x", "y", "z"), Is.Empty);
         }
 
@@ -55,8 +50,6 @@ namespace DCL.McpServer.Tests
 
             string error = arguments.EnumArgumentError<WireStack>("stack");
 
-            // The right word in the wrong case: a bare "must be one of: ugui, sdk" leaves the caller unable to
-            // see what was wrong with what it sent.
             Assert.That(error, Does.Contain("string \"SDK\""));
             Assert.That(error, Does.Contain("ugui, sdk"));
             Assert.That(error, Does.Not.Contain("required"));
@@ -75,7 +68,6 @@ namespace DCL.McpServer.Tests
         [Test]
         public void ListOnlyTheEnumValuesAToolExposes()
         {
-            // A tool that exposes a subset (set_camera_mode, walk) must not advertise the members it refuses.
             string whole = new JObject().EnumArgumentError("stack", new[] { WireStack.UGUI, WireStack.SDK });
             string subset = new JObject().EnumArgumentError("stack", new[] { WireStack.UGUI });
 

@@ -10,24 +10,18 @@ using UnityEngine.InputSystem.LowLevel;
 namespace DCL.SyntheticInput.AltTester
 {
     /// <summary>
-    ///     AltTester front-end of the UI simulation: tests call these via <c>AltDriver.CallStaticMethod</c>
-    ///     (assembly <c>DCL.SyntheticInput</c> — the assembly name is a wire contract) and drive the same
-    ///     <see cref="UiAutomationServices" /> the MCP ui_* tools drive. Synchronous semantic actions (uGUI
-    ///     click/text/scroll, SDK text/dropdown/scroll, listing) return their payload in one round-trip; multi-frame
-    ///     ones (SDK clicks, device gestures) use start/poll via <see cref="PollJson" />. uGUI addressing:
-    ///     addressKind ∈ path|altId|id with the matching value.
+    ///     AltTester front-end of the UI simulation. The class, method and assembly (<c>DCL.SyntheticInput</c>)
+    ///     names are a wire contract: AltTester resolves them by string.
     /// </summary>
     public static class UiAutomationProbe
     {
         private const float SDK_CLICK_TIMEOUT_SEC = 5f;
         private const float GESTURE_TIMEOUT_GRACE_SEC = 5f;
 
-        /// <summary>What the drag payload reads when no UI covered that pixel — the pointer was over the 3D world.</summary>
         private const string WORLD = "world";
 
         private static UiAutomationServices? services;
 
-        /// <summary>Written once, when the automation session starts.</summary>
         public static void Install(UiAutomationServices installedServices) =>
             services = installedServices;
 
@@ -37,10 +31,6 @@ namespace DCL.SyntheticInput.AltTester
         public static string PollJson(int operationId) =>
             AltOperationRegistry.PollJson(operationId);
 
-        /// <summary>
-        ///     Lists interactable UI; stack ∈ all|ugui|sdk. screenRect is in image pixels (origin top-left) of the
-        ///     client screen, whose size comes back as "screen"; each element also carries its normalized "center".
-        /// </summary>
         public static string ListInteractableJson(string stack, bool checkOcclusion)
         {
             if (!TryGetServices(out UiAutomationServices ready, out string failedPayload))
@@ -52,7 +42,6 @@ namespace DCL.SyntheticInput.AltTester
             return payload.ToString();
         }
 
-        /// <summary>Semantic uGUI click; button ∈ left|right|middle.</summary>
         public static string ClickJson(string addressKind, string addressValue, string button, bool force)
         {
             if (!TryGetServices(out UiAutomationServices ready, out string failedPayload))
@@ -120,7 +109,6 @@ namespace DCL.SyntheticInput.AltTester
             return ready.Simulator.ScrollSdk(element, new Vector2(dx, dy)).ToJson(ready.CursorStateName()).ToString();
         }
 
-        /// <summary>SDK scene-UI click: two-frame, so start/poll.</summary>
         public static int StartSdkClick(int crdtId, bool force)
         {
             if (services == null)
@@ -137,10 +125,6 @@ namespace DCL.SyntheticInput.AltTester
                      .ContinueWith(result => result.ToJson(ready.CursorStateName()).ToString()));
         }
 
-        /// <summary>
-        ///     Virtual-mouse drag between two normalized image points (x right 0..1, y DOWN 0..1, origin top-left).
-        ///     The payload names what the pointer was over at each end, because the gesture verifies no target.
-        /// </summary>
         public static int StartDrag(float fromX, float fromY, float toX, float toY, int durationFrames, bool rightButton)
         {
             if (services == null)
@@ -157,7 +141,6 @@ namespace DCL.SyntheticInput.AltTester
                      .ContinueWith(DragPayload));
         }
 
-        /// <summary>Virtual-mouse positional click at a normalized image point (full input-pipeline fidelity).</summary>
         public static int StartDeviceClick(float x, float y, bool rightButton)
         {
             if (services == null)
@@ -233,7 +216,6 @@ namespace DCL.SyntheticInput.AltTester
                 _ => PointerEventData.InputButton.Left,
             };
 
-        /// <summary>A device drag reports the cover at both ends: "world" is a drag no UI element received.</summary>
         private static string DragPayload(UiDeviceDragOutcome outcome)
         {
             var payload = new JObject

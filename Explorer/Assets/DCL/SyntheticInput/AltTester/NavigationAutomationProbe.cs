@@ -17,14 +17,9 @@ using UnityEngine;
 namespace DCL.SyntheticInput.AltTester
 {
     /// <summary>
-    ///     AltTester front-end for moving the session between realms and parcels: tests call these via
-    ///     <c>AltDriver.CallStaticMethod</c> (assembly <c>DCL.SyntheticInput</c> — the assembly name is a wire
-    ///     contract). The environment (org/zone) is launch-only and is reported, not changed. Realm changes and
-    ///     teleports go through <see cref="IRealmNavigator" />, the same path the <c>/goto</c> chat command takes,
-    ///     loading screen included. They are multi-frame, so the API is start/poll like
-    ///     <see cref="WorldAutomationProbe" />: a Start* method returns an operation id and
-    ///     <see cref="PollJson" /> reports <c>{"done":false}</c> until the payload is ready. Nothing here throws
-    ///     towards the test.
+    ///     AltTester front-end for moving the session between realms and parcels. The class, method and assembly
+    ///     (<c>DCL.SyntheticInput</c>) names are a wire contract: AltTester resolves them by string. The environment
+    ///     (org/zone) is fixed at launch and is only reported.
     /// </summary>
     public static class NavigationAutomationProbe
     {
@@ -36,7 +31,6 @@ namespace DCL.SyntheticInput.AltTester
 
         private static Session? session;
 
-        /// <summary>Written once, when the automation session starts.</summary>
         public static void Install(IRealmNavigator realmNavigator, IRealmData realmData, IDecentralandUrlsSource urlsSource,
             IScenesCache scenesCache, IReadOnlyLoadingStatus loadingStatus, DecentralandEnvironment environment) =>
             session = new Session(realmNavigator, realmData, urlsSource, scenesCache, loadingStatus, environment);
@@ -47,11 +41,6 @@ namespace DCL.SyntheticInput.AltTester
         public static string PollJson(int operationId) =>
             AltOperationRegistry.PollJson(operationId);
 
-        /// <summary>
-        ///     Where the client is right now:
-        ///     <c>{"ok":true,"environment":"zone","realmName":"...","hostname":"...","realmKind":"World","currentParcel":{"x":0,"y":0},"loadingScreenOn":false,"scene":{...}|null}</c>.
-        ///     environment is the lower-cased <see cref="DecentralandEnvironment" /> the client was launched with.
-        /// </summary>
         public static string GetStatusJson()
         {
             if (!TryGetSession(out Session ready, out string failedPayload))
@@ -75,12 +64,6 @@ namespace DCL.SyntheticInput.AltTester
             return payload.ToString();
         }
 
-        /// <summary>
-        ///     Changes realm to a world and lands on a parcel of it, then waits until the scene there is ready.
-        ///     <paramref name="world" /> is a world name (<c>sdk7testscenes</c>, <c>sdk7testscenes.dcl.eth</c>, any
-        ///     ENS name) resolved against this environment's world server. Already being on that world turns this
-        ///     into a parcel teleport.
-        /// </summary>
         public static int StartGoToWorld(string world, int parcelX, int parcelY, float timeoutSec)
         {
             if (!TryGetSession(out Session ready, out string failedPayload))
@@ -92,7 +75,6 @@ namespace DCL.SyntheticInput.AltTester
             return AltOperationRegistry.Start(GoToWorldAsync(ready, world.Trim(), new Vector2Int(parcelX, parcelY), ClampTimeout(timeoutSec)));
         }
 
-        /// <summary>Teleports to a parcel of the current realm (world or Genesis City alike) and waits until the scene there is ready.</summary>
         public static int StartTeleport(int parcelX, int parcelY, float timeoutSec)
         {
             if (!TryGetSession(out Session ready, out string failedPayload))
@@ -129,7 +111,7 @@ namespace DCL.SyntheticInput.AltTester
 
             EnumResult<TaskError> result;
 
-            // isLocal keeps the teleport inside the current realm; false would route it to Genesis City.
+            // isLocal keeps the teleport inside the current realm. False would route it to Genesis City.
             try { result = await ready.RealmNavigator.TeleportToParcelAsync(parcel, cts.Token, isLocal: true); }
             catch (OperationCanceledException) { return AltOperationRegistry.ErrorPayload($"teleport to ({parcel.x},{parcel.y}) did not complete within {timeoutSec}s"); }
 
@@ -139,7 +121,6 @@ namespace DCL.SyntheticInput.AltTester
             return await WaitForArrivalAsync(ready, parcel, deadline);
         }
 
-        /// <summary>Polls until the player stands on the target parcel with the loading screen down and the scene there ready (or absent).</summary>
         private static async UniTask<string> WaitForArrivalAsync(Session ready, Vector2Int parcel, float deadline)
         {
             while (UnityEngine.Time.realtimeSinceStartup < deadline)
@@ -182,7 +163,6 @@ namespace DCL.SyntheticInput.AltTester
             return payload.ToString();
         }
 
-        /// <summary>Short names get the .dcl.eth suffix, full ENS names are kept, then both resolve under this environment's world server.</summary>
         private static URLDomain ResolveWorldUrl(IDecentralandUrlsSource urlsSource, string world)
         {
             string worldName = world;

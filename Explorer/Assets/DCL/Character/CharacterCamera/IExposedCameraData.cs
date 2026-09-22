@@ -54,10 +54,9 @@ namespace DCL.CharacterCamera
         CumulativePointerDelta AccumulatedPointerDelta { get; }
 
         /// <summary>
-        ///     Where the pointer sits, in Unity screen coordinates (bottom-left origin). Resolved by the cursor
-        ///     pipeline rather than read off the mouse device, so it also carries a gamepad's virtual cursor and
-        ///     an automation gesture's injected pointer, and it keeps tracking while the Camera action map is
-        ///     disabled (explorer UI holding input focus).
+        ///     The pointer position in Unity screen coordinates (bottom-left origin). Taken from the cursor pipeline,
+        ///     not from the mouse device, so it also tracks a gamepad or automation pointer and survives a disabled
+        ///     Camera action map.
         /// </summary>
         Vector2 PointerScreenPosition { get; }
 

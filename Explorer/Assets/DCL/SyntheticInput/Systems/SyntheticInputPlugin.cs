@@ -6,12 +6,7 @@ using ECS.SceneLifeCycle;
 
 namespace DCL.SyntheticInput.Systems
 {
-    /// <summary>
-    ///     Registers the synthetic input simulation systems that deliver automation-driver requests
-    ///     (installed through <see cref="SyntheticInputAgent" /> and <see cref="UiAutomationServices" />) via the
-    ///     production input pipelines, and owns the UI-automation session (virtual devices included).
-    ///     Registered only when an automation driver is enabled.
-    /// </summary>
+    /// <summary>Registers the synthetic input systems and owns the UI-automation session, virtual devices included.</summary>
     public class SyntheticInputPlugin : IDCLGlobalPluginWithoutSettings
     {
         private readonly IScenesCache scenesCache;

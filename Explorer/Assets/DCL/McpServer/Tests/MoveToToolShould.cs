@@ -45,7 +45,7 @@ namespace DCL.McpServer.Tests
         [TearDown]
         public void TearDown()
         {
-            // A started call is parked at its first frame delay; cancelling it there keeps it off the disposed world.
+            // A started call is parked at its first frame delay. Cancel it there, so it never touches the disposed world.
             cts.Cancel();
             cts.Dispose();
             world.Dispose();
@@ -55,7 +55,7 @@ namespace DCL.McpServer.Tests
         [Test]
         public void RotateTheCameraTowardTheLookAtFromTheDestination()
         {
-            // Both world actions are issued synchronously, before the first await — in the SDK's movePlayerTo order.
+            // Both world actions are issued synchronously before the first await, in the SDK's movePlayerTo order.
             tool.ExecuteAsync(MoveArgs(withLookAt: true), cts.Token).Forget();
 
             Received.InOrder(() =>

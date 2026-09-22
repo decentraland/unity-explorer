@@ -27,9 +27,8 @@ namespace DCL.McpServer.Core
         }
 
         /// <summary>
-        ///     The argument names <paramref name="toolName" />'s input schema declares, in declaration order —
-        ///     the set a tools/call may use. Captured at registration because the schema is rebuilt on every
-        ///     <see cref="McpTool.InputSchema" /> read.
+        ///     The argument names the tool's input schema declares. Captured at registration because
+        ///     <see cref="McpTool.InputSchema" /> is rebuilt on every read.
         /// </summary>
         public string[] ArgumentNames(string toolName) =>
             argumentNames[toolName];

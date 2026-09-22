@@ -11,11 +11,7 @@ using UnityEngine;
 
 namespace DCL.McpServer.Tools
 {
-    /// <summary>
-    ///     Clicks at a screen position via <see cref="SyntheticInputAgent" />: the reticle ray is built through
-    ///     the given point (image coordinates, matching what a screenshot shows) and whatever scene entity it
-    ///     lands on receives the press/release through the real reticle pipeline.
-    /// </summary>
+    /// <summary>Clicks whatever scene entity the reticle ray through a screen point lands on.</summary>
     public class ClickAtTool : McpTool
     {
         private const float DEFAULT_TIMEOUT_SEC = 3f;

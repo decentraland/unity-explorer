@@ -11,9 +11,8 @@ using UnityEngine.InputSystem.LowLevel;
 namespace DCL.McpServer.Tools
 {
     /// <summary>
-    ///     Clicks a UI element. The default semantic path resolves the element and synthesizes its events after
-    ///     an occlusion pre-check; the device path replays the click positionally through the virtual mouse for
-    ///     full input-pipeline fidelity.
+    ///     Clicks a UI element by synthesizing its events (semantic path) or by replaying the virtual mouse at
+    ///     its position (device path).
     /// </summary>
     public class UiClickTool : McpTool
     {
@@ -21,7 +20,6 @@ namespace DCL.McpServer.Tools
         private const float MIN_TIMEOUT_SEC = 0.5f;
         private const float MAX_TIMEOUT_SEC = 15f;
 
-        /// <summary>Frames a device click at an SDK element is given to show up in the element's pointer-event slot.</summary>
         private const int SDK_DEVICE_OBSERVE_FRAMES = 6;
 
         private readonly UiAutomationServices uiAutomation;
@@ -86,9 +84,8 @@ namespace DCL.McpServer.Tools
         }
 
         /// <summary>
-        ///     Replays a device click at an SDK element and then reports whether the element actually observed it.
-        ///     The gesture succeeding only means the device states were injected; UI Toolkit panels consume events
-        ///     sent to their elements, so a bare "ok" would misreport an injected pointer that never arrived.
+        ///     A successful gesture only means the device states were injected, so the element is watched for
+        ///     the pointer event it should have observed.
         /// </summary>
         private async UniTask<UiActionResult> RunDeviceClickOnSdkAsync(SdkUiElement element, PointerEventData.InputButton button, float timeoutSec, CancellationToken ct)
         {
@@ -113,11 +110,6 @@ namespace DCL.McpServer.Tools
             return result;
         }
 
-        /// <summary>
-        ///     Replays the click through the virtual mouse. The element's rect travels with the result: this path
-        ///     resolved the same element the semantic one does, so the two must not answer differently about where
-        ///     the click landed.
-        /// </summary>
         private async UniTask<UiActionResult> RunDeviceClickAsync(Vector2 screenCenter, Rect imageRect, PointerEventData.InputButton button, float timeoutSec, CancellationToken ct)
         {
             UiGestureResult gesture = await uiAutomation.RunGestureAsync(new UiDeviceGestureRequest

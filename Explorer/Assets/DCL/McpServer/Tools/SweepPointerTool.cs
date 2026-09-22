@@ -12,10 +12,9 @@ using UnityEngine;
 namespace DCL.McpServer.Tools
 {
     /// <summary>
-    ///     The held-and-turn gesture, composed by <see cref="SyntheticInputAgent.SweepAsync" /> from a press, a
-    ///     camera-look hold and a release. This is the only way a driver can sweep the pointer ray a scene samples
-    ///     (<c>PrimaryPointerInfo.WorldRayDirection</c>): dragging the virtual mouse across the world pans the
-    ///     camera instead, exactly as a human's held-button drag does.
+    ///     Presses a pointer button on an entity, turns the camera while it is held, then releases. Dragging the
+    ///     virtual mouse across the world would pan the camera instead, so this is the only way to sweep the
+    ///     pointer ray that a scene samples from <c>PrimaryPointerInfo</c>.
     /// </summary>
     public class SweepPointerTool : McpTool
     {
@@ -70,7 +69,6 @@ namespace DCL.McpServer.Tools
             if (deltaX == 0f && deltaY == 0f)
                 return McpToolResult.Error("deltaX and deltaY must not both be zero: a sweep that does not turn the camera is a click_entity down/up pair.");
 
-            // The press needs a target to arm on, so the aim is mandatory here.
             if (!PointerArgs.TryParseAim(arguments, requireTarget: true, out PointerAim aim, out string? aimError))
                 return McpToolResult.Error(aimError!);
 
@@ -85,7 +83,6 @@ namespace DCL.McpServer.Tools
 
             var json = new JObject
             {
-                // Each leg is shaped like click_entity's result, so the same fields mean the same things.
                 ["pressed"] = sweep.Press.ToJson(),
             };
 
@@ -103,7 +100,7 @@ namespace DCL.McpServer.Tools
                     ? $"the camera hold did not complete within {seconds + SyntheticInputAgent.COMPLETION_GRACE_SEC}s (is the simulation paused?)"
                     : "a newer camera request replaced the sweep before it finished";
 
-            // The exposed camera data is refreshed by its own system; give it one frame to observe the rotation.
+            // ExposedCameraData is written by its own system: wait a frame so it reflects the new rotation.
             await UniTask.DelayFrame(1, cancellationToken: ct);
 
             json["cameraRotationEuler"] = exposedCameraData.WorldRotation.Value.eulerAngles.ToVector();

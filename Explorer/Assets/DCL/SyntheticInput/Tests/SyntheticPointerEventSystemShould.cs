@@ -48,8 +48,7 @@ namespace DCL.SyntheticInput.Tests
         [SetUp]
         public void SetUp()
         {
-            // NUnit reuses one fixture instance for the whole class, so the stubbed cover must be cleared
-            // per test — otherwise an armed cover leaks into every test that runs after it.
+            // NUnit reuses one fixture instance for all tests, so a cover set by an earlier test must be cleared.
             uiCover = null;
 
             sceneWorld = World.Create();
@@ -90,8 +89,7 @@ namespace DCL.SyntheticInput.Tests
                 },
             };
 
-            // The entity needs a TransformComponent for ResolveEntityAimPoint to aim at it; without one the aim
-            // point is Vector3.zero and the pipeline ray misses the collider.
+            // Without a TransformComponent the aim point resolves to Vector3.zero and the pipeline ray misses the collider.
             targetEntity = sceneWorld.Create(targetPointerEvents, new CRDTEntity(TARGET_CRDT_ID), new TransformComponent(targetGo.transform));
 
             // Colliders created/moved this frame are not in the PhysX scene until transforms are synced (no physics step runs in EditMode).
@@ -145,10 +143,8 @@ namespace DCL.SyntheticInput.Tests
             system.Initialize();
         }
 
-        /// <summary>Armed per test: what the stubbed UI probe reports as covering any screen point, if anything.</summary>
         private string? uiCover;
 
-        /// <summary>Non-scene geometry (skybox-like) a test can place on the ray; never registered in the colliders cache.</summary>
         private GameObject? nonSceneGo;
 
         private bool TryFindUiCover(Vector2 screenPoint, out string cover)
@@ -195,11 +191,10 @@ namespace DCL.SyntheticInput.Tests
 
         private ref SyntheticPointerInput syntheticInput => ref world.Get<SyntheticPointerInput>(pipelineEntity);
 
-        /// <summary>The pointer the cursor system will read next frame, if the layer asserted one on the camera entity.</summary>
         private bool TryGetAssertedPointer(out Vector2 position) =>
             world.Get<SyntheticCursorOverride>(cameraEntity).TryGetPointerPosition(out position);
 
-        /// <summary>Clears the frame-scoped assertion, so a test can observe whether the next update re-states it.</summary>
+        /// <summary>Time.frameCount does not advance within a test, so the override never expires on its own.</summary>
         private void ClearAssertedPointer() =>
             world.Set(cameraEntity, SyntheticCursorOverride.Inactive);
 
@@ -245,10 +240,7 @@ namespace DCL.SyntheticInput.Tests
                 raycastResult.Reset();
         }
 
-        /// <summary>
-        ///     Emulates a frame the reticle pipeline guards away (cursor panning, in-world camera): the posted input
-        ///     is still consumed, but no ray is built, so no synthetic-aim echo is published.
-        /// </summary>
+        /// <summary>Emulates a frame the reticle pipeline skips (cursor panning, in-world camera): the post is consumed but nothing is published.</summary>
         private void RunPipelineSkippedFrame()
         {
             syntheticInput = default(SyntheticPointerInput);
@@ -311,8 +303,6 @@ namespace DCL.SyntheticInput.Tests
 
             system.Update(0);
 
-            // The pipeline delivers a posted edge to whatever its ray selected, so an edge that named an entity must
-            // travel with it: anything else the ray finds is an occluder and must not receive the button.
             ref SyntheticPointerInput synthetic = ref syntheticInput;
             Assert.That(synthetic.TargetEntity, Is.EqualTo((Entity?)targetEntity));
             Assert.That(ReferenceEquals(synthetic.TargetWorld, sceneWorld), Is.True);
@@ -326,9 +316,6 @@ namespace DCL.SyntheticInput.Tests
 
             system.Update(0);
 
-            // An aimless edge is the scene-root broadcast case: restricting it to an entity would suppress the
-            // fan-out that is the whole point of posting it without an aim. Entity.Null is not default(Entity), so a
-            // defaulted target would restrict the edge to an entity that cannot exist — reaching nothing at all.
             Assert.That(syntheticInput.HasTargetEntity, Is.False);
             Assert.That(syntheticInput.TargetEntity, Is.Null);
             Assert.That(syntheticInput.MayDeliverEdgeTo(sceneWorld, targetEntity), Is.True);
@@ -349,8 +336,6 @@ namespace DCL.SyntheticInput.Tests
         [Test]
         public void LeaveForeignSyntheticInputAloneWhenNoRequestIsPending()
         {
-            // Another automation driver's post must survive an idle update untouched; stale posts die at the
-            // pipeline's readers, not at a sweeping owner.
             var foreignAim = new Vector3(1f, 2f, 3f);
             syntheticInput = new SyntheticPointerInput { AimPoint = foreignAim, PostedAtFrame = UnityEngine.Time.frameCount };
 
@@ -559,10 +544,6 @@ namespace DCL.SyntheticInput.Tests
             Assert.That(result.FailureReason, Does.Contain("out of range"));
         }
 
-        /// <summary>
-        ///     A miss that named an entity was withheld from everyone, so nothing was broadcast and nothing needs
-        ///     releasing: no handoff, no RootBroadcast. The facade reads exactly these two.
-        /// </summary>
         [Test]
         public void HandOffNoReleaseForATargetedMiss()
         {
@@ -578,10 +559,6 @@ namespace DCL.SyntheticInput.Tests
             Assert.That(outcome.Press, Is.Null);
         }
 
-        /// <summary>
-        ///     The same miss without a target is a broadcast: the pipeline fanned the edge out to the scene root, so
-        ///     the result says so and hands off the release the aimless path hands off (Entity.Null, tick only).
-        /// </summary>
         [Test]
         public void HandOffTheReleaseForAnUntargetedMissTheRootReceived()
         {
@@ -619,7 +596,6 @@ namespace DCL.SyntheticInput.Tests
             RunPipelineSkippedFrame();
             system.Update(0);
 
-            // A frame the pipeline guarded away processed no edge, so the root received nothing to release.
             SyntheticPointerOutcome outcome = OutcomeOf(completion);
             Assert.That(outcome.Result.RootBroadcast, Is.False);
             Assert.That(outcome.Press, Is.Null);
@@ -755,7 +731,7 @@ namespace DCL.SyntheticInput.Tests
             return completion;
         }
 
-        /// <summary>Emulates the pipeline frame of an aimless post: no synthetic-aim echo, and the ray hits whatever sits along the camera's forward direction.</summary>
+        /// <summary>Emulates the pipeline frame of an aimless post: the cursor ray (the camera's forward here) replaces the synthetic aim.</summary>
         private void RunPipelineAimlessFrame(bool cursorHoversTarget)
         {
             ref SyntheticPointerInput synthetic = ref syntheticInput;
@@ -837,7 +813,6 @@ namespace DCL.SyntheticInput.Tests
         [Test]
         public void ReportTheHoveredEntityWhenAnAimlessEdgeLandsEntityBound()
         {
-            // The camera happens to point straight at the target: the edge goes entity-bound, like a real key.
             UniTaskCompletionSource<SyntheticPointerOutcome> completion = AddAimlessIntent(PointerEventType.PetDown);
 
             system.Update(0);
@@ -861,7 +836,7 @@ namespace DCL.SyntheticInput.Tests
             Assert.That(syntheticInput.ReleaseButton, Is.Null);
 
             RunPipelineFrame();
-            system.Update(0); // still holding: the aim is re-posted, no observation happens
+            system.Update(0); // still holding
 
             Assert.That(syntheticInput.AimPoint.HasValue, Is.True);
             Assert.That(completion.Task.Status, Is.EqualTo(UniTaskStatus.Pending));
@@ -873,7 +848,7 @@ namespace DCL.SyntheticInput.Tests
         {
             UniTaskCompletionSource<SyntheticPointerOutcome> completion = AddHoverIntent(holdSecondsFromNow: -1f);
 
-            system.Update(0); // the hold is already over: post once and observe next frame
+            system.Update(0);
 
             Assert.That(syntheticInput.PressButton, Is.Null);
             Assert.That(syntheticInput.ReleaseButton, Is.Null);
@@ -908,11 +883,9 @@ namespace DCL.SyntheticInput.Tests
             Assert.That(syntheticInput.AimPoint.HasValue, Is.True);
             Assert.That(Vector3.Distance(syntheticInput.AimPoint!.Value, expectedAim), Is.LessThan(0.001f));
 
-            // A screen point names a pixel, not an entity: whatever the ray reaches there is the target by
-            // contract, so the edge carries no entity restriction.
             Assert.That(syntheticInput.HasTargetEntity, Is.False);
 
-            // The centered camera looks straight at the target, so the screen-center ray must hit it.
+            // The camera looks straight at the target, so the screen-center ray hits it.
             RunPipelineFrame();
             system.Update(0);
 
@@ -962,7 +935,6 @@ namespace DCL.SyntheticInput.Tests
 
             Assert.That(syntheticInput.AimPoint.HasValue, Is.True, "force aims past the cover");
 
-            // Complete the gesture: an aim left posted on the shared pipeline entity leaks into the next test.
             RunPipelineFrame();
             system.Update(0);
 
@@ -972,8 +944,6 @@ namespace DCL.SyntheticInput.Tests
         [Test]
         public void NeverGateAWorldAimOnUiCover()
         {
-            // The pipeline's UI bypass is correct for a world aim: the driver named a world target, not a pixel.
-            // Gating it here would break click_entity.
             uiCover = "MainUI/Sidebar/ExploreButton";
 
             var completion = new UniTaskCompletionSource<SyntheticPointerOutcome>();
@@ -993,11 +963,6 @@ namespace DCL.SyntheticInput.Tests
             Assert.That(ResultOf(completion).Hit, Is.True);
         }
 
-        /// <summary>
-        ///     Places non-scene geometry (the skybox's collider, in the live client) on the ray and aims at an empty
-        ///     point in front of it. Reporting only the collider the ray met would read as if that object were in the
-        ///     way, when the aim point simply held nothing.
-        /// </summary>
         [Test]
         public void ReportAnEmptyAimPointRatherThanTheGeometryBeyondIt()
         {
@@ -1044,15 +1009,13 @@ namespace DCL.SyntheticInput.Tests
             Assert.That(result.FailureReason, Does.Contain("before it"));
         }
 
-        /// <summary>A screen-point aim is projected to the raycast limit, so no distance to it is worth reporting.</summary>
         [Test]
         public void ReportAScreenPointMissWithoutADistanceToTheAim()
         {
             Camera camera = cameraGo.GetComponent<Camera>();
 
-            // Aim at the left screen edge so the ray misses the target box entirely, and place the non-scene geometry
-            // on that very ray: where the edge points depends on the camera's aspect, which the Editor and a
-            // batch-mode run do not share.
+            // Place the geometry on the edge ray itself: where that ray points depends on the camera aspect,
+            // which differs between the Editor and a batch-mode run.
             var screenCorner = new Vector2(0f, camera.pixelHeight / 2f);
             PlaceNonSceneGeometryAt(camera.ScreenPointToRay(screenCorner).GetPoint(20f));
 
@@ -1073,11 +1036,6 @@ namespace DCL.SyntheticInput.Tests
             Assert.That(result.FailureReason, Does.Not.Contain(" m "), "a screen-point aim has no meaningful distance to report");
         }
 
-        /// <summary>
-        ///     The frames between a press and its release belong to no intent, and a driver has no hardware pointer
-        ///     sitting on the target — so the press pixel is parked for the pipeline (and for the PBPrimaryPointerInfo
-        ///     ray a scene samples) to keep building the reticle ray through it.
-        /// </summary>
         [Test]
         public void ParkThePointerAtThePressedPixelWhileTheButtonIsHeld()
         {
@@ -1093,8 +1051,6 @@ namespace DCL.SyntheticInput.Tests
         {
             DeliverPress();
 
-            // The assertion is frame-scoped, so only re-stating it every frame keeps the pointer on the gesture for
-            // the whole camera sweep a held press is turned into.
             ClearAssertedPointer();
             system.Update(0);
 
@@ -1126,7 +1082,6 @@ namespace DCL.SyntheticInput.Tests
         [Test]
         public void NotParkThePointerForAnAimlessPress()
         {
-            // An aimless edge names no target, so there is no pixel of the driver's choosing to park at.
             AddAimlessIntent(PointerEventType.PetDown);
 
             system.Update(0);
@@ -1140,8 +1095,7 @@ namespace DCL.SyntheticInput.Tests
         [Test]
         public void NotParkThePointerWhenThePressIsAimedOffScreen()
         {
-            // A world aim needs no line of sight, so a driver can press on something behind the camera: there is no
-            // pixel a human could have pressed, and projecting one would invent a position.
+            // The target sits behind the camera, so no screen pixel corresponds to the press.
             targetGo.transform.position = new Vector3(0f, 0f, -5f);
             Physics.SyncTransforms();
 
@@ -1156,7 +1110,6 @@ namespace DCL.SyntheticInput.Tests
         {
             DeliverPress();
 
-            // A driver that died between the legs must not keep the pointer away from the hardware mouse forever.
             world.Set(playerEntity, new SyntheticPointerHold { ScreenPosition = Vector2.one, ExpiryTime = UnityEngine.Time.time - 1f });
             ClearAssertedPointer();
 
@@ -1166,7 +1119,6 @@ namespace DCL.SyntheticInput.Tests
             Assert.That(TryGetAssertedPointer(out _), Is.False);
         }
 
-        /// <summary>Where the target's aim point sits on screen, which is the pixel a press on it occupies.</summary>
         private Vector2 ScreenPointOfTarget()
         {
             Vector3 projected = cameraGo.GetComponent<Camera>().WorldToScreenPoint(targetGo.transform.position);

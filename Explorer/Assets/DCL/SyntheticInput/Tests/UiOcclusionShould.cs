@@ -114,7 +114,7 @@ namespace DCL.SyntheticInput.Tests
             IPanel? panel = document.rootVisualElement?.panel;
             Assert.That(panel, Is.Not.Null, "the document must be attached to a live panel for the hit to stand for one");
 
-            // What PanelRaycaster.Raycast produces: the panel's host GameObject, plus itself as the module.
+            // Mirrors what PanelRaycaster.Raycast produces: the host GameObject as the target and the raycaster itself as the module.
             var raycaster = documentObject.AddComponent<PanelRaycaster>();
             raycaster.panel = panel;
 

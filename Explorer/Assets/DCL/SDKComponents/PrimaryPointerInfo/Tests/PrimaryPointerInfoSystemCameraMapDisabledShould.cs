@@ -16,13 +16,10 @@ using ProtoVector3 = Decentraland.Common.Vector3;
 
 namespace DCL.SDKComponents.PrimaryPointerInfo.Tests
 {
-    // Regression coverage for https://github.com/decentraland/unity-explorer/issues/9496:
-    // while the explorer chat is focused, ApplyInputMapsSystem disables the whole `Camera` action
-    // map, and a disabled InputAction.ReadValue<Vector2>() returns default(Vector2) — which fed
-    // PBPrimaryPointerInfo.ScreenCoordinates = (0,0) to every scene while chat stayed focused.
-    // The feed takes the pointer the cursor pipeline resolved (IExposedCameraData.PointerScreenPosition)
-    // instead, which no action map can disable; this fixture keeps routing it back through an input
-    // action a test failure rather than a scene one.
+    // Regression coverage for https://github.com/decentraland/unity-explorer/issues/9496: while chat is
+    // focused, ApplyInputMapsSystem disables the whole `Camera` action map, and a disabled
+    // InputAction.ReadValue<Vector2>() returns default(Vector2). The pointer feed must therefore come from
+    // IExposedCameraData.PointerScreenPosition, which no action map can disable.
     [TestFixture]
     public class PrimaryPointerInfoSystemCameraMapDisabledShould : InputTestFixture
     {
@@ -90,10 +87,7 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Tests
         [Test]
         public void NotReportZeroScreenCoordinatesWhenCameraMapDisabledByChatFocus()
         {
-            // Arrange: park the pointer device where the cursor pipeline reports it, then disable the
-            // whole `Camera` action map exactly as ApplyInputMapsSystem.cs does when chat gains focus
-            // (DCLInput.Instance.Camera.Disable()) - this puts every action in that map, including
-            // Point, into the Disabled phase.
+            // Arrange: disable the whole `Camera` action map, as ApplyInputMapsSystem does when chat gains focus.
             Set(mouse.position, SIMULATED_POSITION);
             DCLInput.Instance.Camera.Disable();
 

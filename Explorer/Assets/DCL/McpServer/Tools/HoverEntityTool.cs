@@ -9,11 +9,7 @@ using UnityEngine;
 
 namespace DCL.McpServer.Tools
 {
-    /// <summary>
-    ///     Aims the reticle at a scene entity (or an explicit world point) and holds the hover without pressing
-    ///     anything, via <see cref="SyntheticInputAgent.HoverAsync" />: the scene observes the same
-    ///     PetHoverEnter/PetHoverLeave flow a real cursor produces.
-    /// </summary>
+    /// <summary>Aims the reticle at a scene entity and holds the hover without pressing a button.</summary>
     public class HoverEntityTool : McpTool
     {
         private const float DEFAULT_SECONDS = 1f;

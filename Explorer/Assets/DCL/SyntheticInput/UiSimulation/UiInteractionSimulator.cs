@@ -11,14 +11,12 @@ using UnityEngine.UIElements;
 namespace DCL.SyntheticInput.UiSimulation
 {
     /// <summary>
-    ///     Semantic UI interaction: the target element is resolved first and its events are synthesized directly
-    ///     (uGUI via ExecuteEvents, SDK scene UI via UI Toolkit SendEvent), after an occlusion pre-check so a
-    ///     covered element cannot be clicked through its cover. The virtual-device gesture path is the alternative
-    ///     when true positional fidelity is needed.
+    ///     Semantic UI interaction: events are synthesized on the resolved element (uGUI via ExecuteEvents, scene UI
+    ///     via UI Toolkit SendEvent) after an occlusion check, so a covered element is not clicked through its cover.
     /// </summary>
     public class UiInteractionSimulator
     {
-        /// <summary>Upper bound on the frames a (throttled) scene system may take to drain a delivered SDK pointer event.</summary>
+        // The scene system is throttled, so one drain can take many frames.
         private const int MAX_SDK_DRAIN_FRAMES = 60;
 
         private readonly EventSystem eventSystem;
@@ -68,7 +66,7 @@ namespace DCL.SyntheticInput.UiSimulation
             if (field == null)
                 return UiActionResult.Failure("the element has no TMP_InputField");
 
-            // Assigning field.text goes past uGUI's own guard, so the guard has to be applied here.
+            // Assigning field.text bypasses uGUI's interactable guard, so the guard is applied here.
             if (!field.IsInteractable())
                 return UiActionResult.Failure("the input is not interactable (disabled by the client, or inside a CanvasGroup that is); a user could not type into it",
                     null, UiScreenGeometry.ImageRectOf((RectTransform)field.transform));
@@ -92,7 +90,7 @@ namespace DCL.SyntheticInput.UiSimulation
             if (!PrepareUguiPointer(target, UiScreenGeometry.ScreenCenterOf(rectTransform), force, out UiActionResult blockedResult))
                 return blockedResult;
 
-            // Wheel units run opposite to image coordinates: a wheel-up (positive y) scrolls the content up.
+            // The image convention is positive y scrolls down. A uGUI wheel with positive y scrolls up, so negate.
             pointerEventData.scrollDelta = new Vector2(delta.x, -delta.y);
 
             GameObject scrollRoot = raycastResults.Count > 0 ? raycastResults[0].gameObject : target;
@@ -101,11 +99,6 @@ namespace DCL.SyntheticInput.UiSimulation
             return UiActionResult.Success(UiScreenGeometry.ImageRectOf(rectTransform));
         }
 
-        /// <summary>
-        ///     Clicks an SDK scene-UI element. Every pointer event is sent on its own frame and only after the
-        ///     (throttled) scene system drained the previous one: the scene's pointer-event slot holds a single
-        ///     event, so two events in one drain window lose the earlier one.
-        /// </summary>
         public async UniTask<UiActionResult> ClickSdkAsync(SdkUiElement element, bool force, CancellationToken ct)
         {
             VisualElement target = element.Transform.Transform;
@@ -115,8 +108,8 @@ namespace DCL.SyntheticInput.UiSimulation
 
             Rect imageRect = UiScreenGeometry.PanelRectToImageRect(target.panel, target.worldBound);
 
-            // A disabled element is PickingMode.Ignore, so the pick below would miss it and blame a cover that is
-            // not there. force skips the occlusion pre-check, not the element's own state.
+            // Before the pick and regardless of force: a disabled element is PickingMode.Ignore, so the pick would
+            // blame a cover that is not there.
             if (!target.enabledInHierarchy)
                 return UiActionResult.Failure("the element is disabled; a user could not click it", null, imageRect);
 
@@ -131,7 +124,6 @@ namespace DCL.SyntheticInput.UiSimulation
                         picked != null ? $"{picked.name} ({string.Join(' ', picked.GetClasses())})" : "nothing pickable at the point",
                         imageRect);
 
-                // A uGUI surface (e.g. a modal) raycast-hit above the scene UI panel covers it.
                 pointerEventData.Reset();
                 pointerEventData.position = UiScreenGeometry.ImageToScreenPoint(UiScreenGeometry.PanelToImagePoint(target.panel, panelCenter));
                 raycastResults.Clear();
@@ -164,8 +156,9 @@ namespace DCL.SyntheticInput.UiSimulation
         }
 
         /// <summary>
-        ///     Waits until the scene system drained the element's single pointer-event slot, always yielding at
-        ///     least one frame so consecutive events land on separate frames. A null owner has no slot to wait on.
+        ///     The element's pointer-event slot holds one event, so the next event waits until the scene system
+        ///     consumed the previous one. Always yields at least one frame, so consecutive events land on separate
+        ///     frames. A null owner has no slot to wait on.
         /// </summary>
         private static async UniTask<bool> DrainSdkSlotAsync(UITransformComponent? slotOwner, CancellationToken ct)
         {
@@ -182,11 +175,6 @@ namespace DCL.SyntheticInput.UiSimulation
             return slotOwner.PointerEventTriggered == null;
         }
 
-        /// <summary>
-        ///     Drags between two points inside the SDK scene-UI panel by synthesizing the element events a real drag
-        ///     produces: press on the element under <paramref name="fromImagePoint" />, moves along the path,
-        ///     release on the element under <paramref name="toImagePoint" />.
-        /// </summary>
         public async UniTask<UiActionResult> DragSdkAsync(IPanel panel, Vector2 fromImagePoint, Vector2 toImagePoint, int steps, CancellationToken ct)
         {
             Vector2 fromPanelPoint = UiScreenGeometry.ImageToPanelPoint(panel, fromImagePoint);
@@ -207,7 +195,7 @@ namespace DCL.SyntheticInput.UiSimulation
             if (!await DrainSdkSlotAsync(pressSlot, ct))
                 return UiActionResult.Failure("the scene did not consume the press (is the scene paused?); the drag was abandoned", null, imageRect);
 
-            // One move per frame along the path: a scene reading the drag as a gesture sees it progress.
+            // One move per frame, so the scene sees the drag progress.
             for (var step = 1; step <= steps; step++)
             {
                 Vector2 pointOnPath = Vector2.Lerp(fromPanelPoint, toPanelPoint, step / (float)steps);
@@ -233,11 +221,7 @@ namespace DCL.SyntheticInput.UiSimulation
             return result;
         }
 
-        /// <summary>
-        ///     Delivers the release leg: the slot must be free before the up (a same-element drag may still hold the
-        ///     press) and drained after it, so the leave sent last cannot overwrite a release the scene has not read
-        ///     yet. On an unconsumed release the leave is withheld, leaving the release in the slot.
-        /// </summary>
+        /// <summary>Drained after the up, so the leave cannot overwrite a release the scene has not read yet.</summary>
         private async UniTask<bool> ReleaseSdkAsync(VisualElement target, UITransformComponent? slot, CancellationToken ct)
         {
             await DrainSdkSlotAsync(slot, ct);
@@ -266,8 +250,7 @@ namespace DCL.SyntheticInput.UiSimulation
 
             Rect imageRect = UiScreenGeometry.PanelRectToImageRect(textField.panel, textField.worldBound);
 
-            // PBUiInput.disabled disables the element and sets pickingMode to Ignore, so a real keystroke never
-            // reaches it. Writing .value would fire the scene's onChange for input the scene declared impossible.
+            // Writing .value bypasses the disabled state, so it is checked here.
             if (!textField.enabledInHierarchy)
                 return UiActionResult.Failure("the input is disabled (PBUiInput.disabled); a user could not type into it", null, imageRect);
 
@@ -307,11 +290,7 @@ namespace DCL.SyntheticInput.UiSimulation
                 : default(Rect));
         }
 
-        /// <summary>
-        ///     Scrolls an SDK scroll container. <paramref name="delta" /> follows the layer's image-coordinate
-        ///     convention (positive y scrolls the content down), which is also UI Toolkit's scroll-offset direction.
-        ///     The achieved offset is reported, because a delta that only hits the clamp moves nothing.
-        /// </summary>
+        /// <summary>Positive delta.y scrolls down, which matches UI Toolkit's scroll-offset direction.</summary>
         public UiActionResult ScrollSdk(SdkUiElement element, Vector2 delta)
         {
             ScrollView? scrollView = element.Transform.InnerScrollView;
@@ -337,12 +316,7 @@ namespace DCL.SyntheticInput.UiSimulation
         private static string FormatOffset(Vector2 offset) =>
             $"({offset.x:F0}, {offset.y:F0})";
 
-        /// <summary>
-        ///     Finds the client uGUI surface covering the scene UI at the already-raycast point, if any. Results are
-        ///     sorted front-most first, so only the top hit can intercept the pointer — and the scene UI panel is
-        ///     itself a uGUI raycast target (UI Toolkit registers a PanelRaycaster/PanelEventHandler GameObject per
-        ///     PanelSettings), so its own hit is not a cover.
-        /// </summary>
+        /// <summary>The scene UI panel is itself a uGUI raycast target, so its own hit is not a cover.</summary>
         private bool TryFindClientCover(IPanel targetPanel, out GameObject? cover)
         {
             cover = null;
@@ -359,15 +333,11 @@ namespace DCL.SyntheticInput.UiSimulation
             return true;
         }
 
-        /// <summary>Fills the reusable pointer data at the point and runs the interactable and occlusion pre-checks.</summary>
         private bool PrepareUguiPointer(GameObject target, Vector2 screenPoint, bool force, out UiActionResult blockedResult)
         {
             blockedResult = default(UiActionResult);
 
-            // A disabled Selectable swallows the events its own handlers receive (Button.OnPointerClick starts with
-            // an IsInteractable guard), so synthesizing them would report a click that did nothing. IsInteractable
-            // also accounts for an ancestor CanvasGroup that disables the subtree, and force does not apply: the
-            // element is inert for a user too.
+            // Not skipped by force: a disabled Selectable drops the events and the click would report success.
             var selectable = target.GetComponent<Selectable>();
 
             if (selectable != null && !selectable.IsInteractable())
@@ -414,7 +384,7 @@ namespace DCL.SyntheticInput.UiSimulation
             target.SendEvent(pooledEvent);
         }
 
-        /// <summary>Plain hierarchy path for diagnostics (no sibling indices — this string is not an address).</summary>
+        /// <summary>Diagnostics only: no sibling indices, so this string is not an address path.</summary>
         private static string PathOf(Transform transform)
         {
             string path = transform.name;
@@ -431,13 +401,12 @@ namespace DCL.SyntheticInput.UiSimulation
         public bool Ok;
         public string? FailureReason;
 
-        /// <summary>What the action achieved, when a bare "ok" would hide it (e.g. a scroll that hit its clamp).</summary>
+        /// <summary>Set when a bare ok would mislead, for example a scroll that hit its clamp.</summary>
         public string? Info;
 
-        /// <summary>What covered the target, when the occlusion pre-check failed.</summary>
         public string? BlockedBy;
 
-        /// <summary>The target's screen rect in image coordinates (top-left origin), when it could be computed.</summary>
+        /// <summary>Image coordinates (top-left origin). Default when it could not be computed.</summary>
         public Rect ScreenRect;
 
         public static UiActionResult Success(Rect screenRect) =>
@@ -446,7 +415,6 @@ namespace DCL.SyntheticInput.UiSimulation
         public static UiActionResult Failure(string reason, string? blockedBy = null, Rect screenRect = default) =>
             new () { Ok = false, FailureReason = reason, BlockedBy = blockedBy, ScreenRect = screenRect };
 
-        /// <summary>The wire shape both driver front-ends (MCP tools, AltTester probes) hand back for a UI action.</summary>
         public Newtonsoft.Json.Linq.JObject ToJson(string cursorState)
         {
             var json = new Newtonsoft.Json.Linq.JObject
@@ -464,8 +432,7 @@ namespace DCL.SyntheticInput.UiSimulation
             if (BlockedBy != null)
                 json["blockedBy"] = BlockedBy;
 
-            // The screen is stated unconditionally: it is the space every coordinate in this payload is expressed
-            // in, and it is knowable even when no element was resolved.
+            // Stated even without a rect: every coordinate in this payload is in this screen's space.
             json["screen"] = UiDiscovery.ScreenJson();
 
             if (ScreenRect != default(Rect))

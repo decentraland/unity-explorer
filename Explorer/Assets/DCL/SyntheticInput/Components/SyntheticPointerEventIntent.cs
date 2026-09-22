@@ -7,46 +7,44 @@ using UnityEngine;
 
 namespace DCL.SyntheticInput.Components
 {
-    /// <summary>At most one pending agent-requested pointer gesture, held on the player entity until it is delivered.</summary>
+    /// <summary>One pending pointer gesture, held on the player entity until it is delivered.</summary>
     public struct SyntheticPointerEventIntent : IEcsRequest<SyntheticPointerOutcome>
     {
-        /// <summary>Arch entity id in the scene world; -1 when aiming at an explicit point or not aiming at all.</summary>
+        /// <summary>Arch entity id in the scene world. -1 when the aim names no entity.</summary>
         public readonly int TargetEntityId;
 
-        /// <summary>Pins the gesture to one scene, matched by the scene definition id; null accepts the current scene.</summary>
         public readonly string? SceneId;
 
-        /// <summary>Explicit world-space aim point; when null the aim is the target's collider center.</summary>
         public readonly Vector3? AimPoint;
 
-        /// <summary>Screen-space aim, used only when <see cref="AimPoint" /> is null.</summary>
+        /// <summary>Used only when <see cref="AimPoint" /> is null.</summary>
         public readonly Vector2? ScreenPoint;
 
         public readonly InputAction Button;
 
         public readonly PointerEventType EventType;
 
-        /// <summary>Set on the release leg of a click: the press this release must stay ordered after.</summary>
+        /// <summary>On a release: the press that this release must stay ordered after.</summary>
         public readonly SyntheticPressHandoff? Press;
 
-        /// <summary>Absolute Time.time at which a hover hold ends.</summary>
+        /// <summary>Value of Time.time at which a hover hold ends.</summary>
         public readonly float HoldEndTime;
 
-        /// <summary>Aim through UI covering the <see cref="ScreenPoint" />. Off by default, because a real click at a covered pixel lands on the UI.</summary>
+        /// <summary>Aim through UI that covers the <see cref="ScreenPoint" />.</summary>
         public readonly bool Force;
 
         public UniTaskCompletionSource<SyntheticPointerOutcome>? Completion { get; set; }
 
-        /// <summary>Set once the synthetic input was posted; the outcome is observed one frame later.</summary>
+        /// <summary>Written by the delivering system once the input is posted.</summary>
         public bool Injected;
 
-        /// <summary>Scene tick the synthetic input was posted on, carried by the press handoff for release ordering.</summary>
+        /// <summary>Scene tick on which the input was posted.</summary>
         public uint InjectedTick;
 
-        /// <summary>The world point the posted aim targeted, to recognize the pipeline's answer on the observe frame.</summary>
+        /// <summary>World point that the posted aim targeted.</summary>
         public Vector3 InjectedAimPoint;
 
-        /// <summary>A hover-only aim hold; <see cref="Button" /> is ignored.</summary>
+        /// <summary>True for a hover hold. <see cref="Button" /> is ignored then.</summary>
         public bool IsHover => EventType == PointerEventType.PetHoverEnter;
 
         public bool HasAimTarget => TargetEntityId >= 0 || AimPoint.HasValue || ScreenPoint.HasValue;
@@ -90,7 +88,7 @@ namespace DCL.SyntheticInput.Components
             new (targetEntityId, sceneId, aimPoint, screenPoint, holdEndTime, force);
     }
 
-    /// <summary>Where a delivered press landed. An aimless press hands off <see cref="Entity" /> Entity.Null: only the tick ordering and the world guard apply to its release.</summary>
+    /// <summary>Where a delivered press landed. <see cref="Entity" /> is Entity.Null for an aimless press.</summary>
     public struct SyntheticPressHandoff
     {
         public Arch.Core.World World;
@@ -111,19 +109,18 @@ namespace DCL.SyntheticInput.Components
         public int? BlockedByCrdtId;
         public string? BlockedByColliderName;
 
-        /// <summary>What UI covered a screen-addressed aim, when that is why nothing was clicked.</summary>
+        /// <summary>The UI that covered a screen-space aim, when that is why nothing was hit.</summary>
         public string? BlockedByUi;
 
-        /// <summary>The release did not reach the press target, so the scene received only the PetDown.</summary>
+        /// <summary>The release did not reach the press target, so the scene received only the press.</summary>
         public bool UpRayMissed;
 
-        /// <summary>The gesture did not complete within the driver-side timeout; the scene may have observed only part of it.</summary>
+        /// <summary>The gesture did not complete within the driver-side timeout.</summary>
         public bool TimedOut;
 
-        /// <summary>No entity consumed the edge, so the pipeline fanned it out to the scene root.</summary>
+        /// <summary>The edge reached the scene root because no entity consumed it.</summary>
         public bool RootBroadcast;
 
-        /// <summary>The wire shape both driver front-ends (MCP tools, AltTester probes) hand back, so a field means the same thing in either.</summary>
         public readonly JObject ToJson()
         {
             var json = new JObject
@@ -174,17 +171,14 @@ namespace DCL.SyntheticInput.Components
         }
     }
 
-    /// <summary>
-    ///     What a held-and-turn sweep achieved. A sweep whose press never landed reports
-    ///     <see cref="FailureReason" /> and leaves the other two legs at their defaults.
-    /// </summary>
+    /// <summary>Result of a press, camera-turn and release gesture.</summary>
     public struct SyntheticSweepResult
     {
         public SyntheticPointerResult Press;
         public SyntheticInputDelivery CameraSweep;
         public SyntheticPointerResult Release;
 
-        /// <summary>Why the sweep was abandoned before the camera turned; null when the whole gesture ran.</summary>
+        /// <summary>Set when the press failed and the gesture stopped. The later legs are then at their defaults.</summary>
         public string? FailureReason;
     }
 

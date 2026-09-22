@@ -8,10 +8,7 @@ using System.Threading;
 
 namespace DCL.McpServer.Tests
 {
-    /// <summary>
-    ///     Argument diagnosis only: every path past it needs a running simulation, and is covered end-to-end
-    ///     against the client instead.
-    /// </summary>
+    /// <summary>Covers only the argument diagnosis. Every path past it needs a running simulation and is covered end-to-end against the client.</summary>
     public class PressInputToolShould
     {
         private World world = null!;
@@ -35,17 +32,11 @@ namespace DCL.McpServer.Tests
         {
             string[] values = ((JObject)tool.InputSchema["properties"]!)["action"]!["enum"]!.ToObject<string[]>()!;
 
-            // The wire values are derived from the enum members, and an underscored member is what keeps
-            // "action_3" from collapsing into "action3" — the value every doc and recipe spells out.
             CollectionAssert.Contains(values, "primary");
             CollectionAssert.Contains(values, "action_3");
             CollectionAssert.DoesNotContain(values, "PRIMARY");
         }
 
-        /// <summary>
-        ///     The values are matched exactly, so a caller that sent "PRIMARY" must not be told it forgot the
-        ///     argument: it reads that as "resend the same thing" and loops on the same rejection.
-        /// </summary>
         [Test]
         public void NameAnActionValueItDoesNotAccept()
         {

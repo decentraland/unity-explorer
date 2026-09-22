@@ -5,13 +5,7 @@ using UnityEngine.InputSystem.LowLevel;
 
 namespace DCL.SyntheticInput.UiSimulation
 {
-    /// <summary>
-    ///     Virtual mouse and keyboard registered while automation is enabled. Layout-path bindings
-    ///     ("&lt;Mouse&gt;/position", "&lt;Keyboard&gt;/e", ...) resolve them into BOTH input-action graphs — the
-    ///     serialized asset driving the UI input module and the DCLInput.Instance clone gameplay polls — so an
-    ///     injected state event behaves like a real device for every consumer. The devices stay enabled for the
-    ///     automation session and are removed on dispose.
-    /// </summary>
+    /// <summary>Virtual mouse and keyboard, registered for the automation session and removed on dispose.</summary>
     public class AutomationVirtualDevices : IDisposable
     {
         private Vector2 lastMousePosition;
@@ -35,7 +29,7 @@ namespace DCL.SyntheticInput.UiSimulation
                 InputSystem.RemoveDevice(Keyboard);
         }
 
-        /// <summary>Queues one mouse state (position in Unity screen coordinates, bottom-left origin) for the next input update.</summary>
+        /// <summary>Position is in Unity screen coordinates (bottom-left origin).</summary>
         public void QueueMouseState(Vector2 position, bool leftPressed = false, bool rightPressed = false, Vector2 scroll = default)
         {
             var state = new MouseState
@@ -51,7 +45,7 @@ namespace DCL.SyntheticInput.UiSimulation
             lastMousePosition = position;
         }
 
-        /// <summary>Queues a keyboard state holding exactly the given key (or none), replacing the previous state.</summary>
+        /// <summary>Holds only <paramref name="pressedKey" />, so any key pressed before is released.</summary>
         public void QueueKeyState(Key? pressedKey)
         {
             var state = default(KeyboardState);

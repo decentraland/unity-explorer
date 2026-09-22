@@ -190,8 +190,6 @@ namespace DCL.McpServer.Tools
 
                 Vector2Int parcel = world.Get<CharacterTransform>(playerEntity).Position.ToParcel();
 
-                // The screen size is stated whenever the capture was downscaled: the ui_* tools report rects in
-                // screen pixels, so a position measured off this image needs the ratio to be turned into one.
                 string scale = width != Screen.width ? $" (screen {Screen.width}x{Screen.height})" : string.Empty;
                 var caption = $"{width}x{height}{scale} {(worldOnly ? "world-only" : "full-view")} capture at parcel ({parcel.x},{parcel.y})";
 

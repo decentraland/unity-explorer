@@ -34,8 +34,6 @@ namespace DCL.McpServer.Tests
         {
             var properties = (JObject)tool.InputSchema["properties"]!;
 
-            // The sweep half mirrors camera_look and the aim half mirrors click_entity, so an agent that knows
-            // either tool already knows this one.
             foreach (string inherited in new[] { "deltaX", "deltaY", "seconds", "entityId", "x", "y", "z", "sceneId", "button", "timeoutSec" })
                 Assert.That(properties[inherited], Is.Not.Null, $"the schema must declare '{inherited}'");
 
@@ -70,11 +68,6 @@ namespace DCL.McpServer.Tests
             Assert.That(result.Payload["content"]![0]!["text"]!.Value<string>(), Does.Contain("pointer, primary, secondary"));
         }
 
-        /// <summary>
-        ///     A coordinate that arrives as anything but a number reads as an absent one, and the bare "provide a
-        ///     full x/y/z" error then names a cause that is not true — a live run spent several calls attributing
-        ///     exactly that. The error has to name the argument and what it actually was.
-        /// </summary>
         [Test]
         public void NameTheArgumentWhenACoordinateIsNotANumber()
         {

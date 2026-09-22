@@ -100,8 +100,6 @@ namespace DCL.Interaction.Systems
 
                 hoverStateComponent.AssignCollider(collider!, isAtDistance, hoverFeedbackComponent.ScreenPositionOverride == null);
 
-                // An enter is appended only on the frame an entity becomes hovered, for the entries qualified on
-                // that frame; a continuing hover keeps that verdict even if it drifts out of range later.
                 hoverStateComponent.HoverEnterIssued = newEntityIsSelected ? anyEntryAtDistance : previousHoverEnterIssued;
             }
 
@@ -346,8 +344,7 @@ namespace DCL.Interaction.Systems
                 // Add all inputs that were pressed/unpressed this frame
                 InteractionInputUtils.TryAppendButtonAction(sdkInputActionsMap, ref pbPointerEvents.AppendPointerEventResultsIntent);
 
-                // Only the button edge is gated by the synthetic post's delivery rule. Hover, feedback and highlight
-                // above follow the ray, as they do for real input.
+                // The delivery rule gates only the button edge; hover and highlight follow the ray, as for real input.
                 synthetic.DeliverableEdgesFor(entityInfo.EcsExecutor.World, entityInfo.ColliderSceneEntityInfo.EntityReference, sdkInputActionsMap,
                     out InputAction? syntheticPress, out InputAction? syntheticRelease);
 

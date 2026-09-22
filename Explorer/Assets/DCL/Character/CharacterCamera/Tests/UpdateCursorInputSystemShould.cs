@@ -74,9 +74,7 @@ namespace DCL.Character.CharacterCamera.Tests
 
             system.Update(0);
 
-            // The automation mouse is a device of its own, so the hardware position (50, 50) must lose to it:
-            // everything downstream of this value — the UI raycast, the cursor style, and the world reticle ray
-            // PlayerOriginatedRaycastSystem builds from CursorComponent.Position — has to describe the same pointer.
+            // The hardware mouse still sits at (50, 50) from SetUp. The automation pointer must win over it.
             Assert.AreEqual(gesturePoint, world.Get<CursorComponent>(entity).Position);
             eventSystem.Received().RaycastAll(gesturePoint);
         }

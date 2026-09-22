@@ -79,9 +79,6 @@ namespace DCL.Interaction.PlayerOriginated.Tests
         [Test]
         public void SkipTheGlobalAppendOfAnEdgeThatNamedATargetEntity()
         {
-            // A targeted edge is not a broadcast. ProcessPointerEventsSystem delivers it to that entity or to
-            // nobody, so appending it here would leave the scene root observing a press the driver was told
-            // missed — the same "reported miss mutated the scene" the entity filter exists to end.
             playerInteractionEntity.SyntheticPointerInput = new SyntheticPointerInput
             {
                 PressButton = InputAction.IaPrimary,
@@ -112,7 +109,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
             system.Update(0);
             Assert.That(globalInputEvents.Entries, Has.Count.EqualTo(1));
 
-            // The post went stale (its frame passed); nothing may survive into the new frame's buffer.
+            // The post goes stale: its frame has passed.
             playerInteractionEntity.SyntheticPointerInput.PostedAtFrame = UnityEngine.Time.frameCount - 1;
             system.Update(0);
 
@@ -129,7 +126,6 @@ namespace DCL.Interaction.PlayerOriginated.Tests
 
             system.Update(0);
 
-            // The real loop already added the primary press; the synthetic duplicate is skipped.
             Assert.That(globalInputEvents.Entries, Is.EqualTo(new[]
             {
                 Entry(InputAction.IaPrimary, PointerEventType.PetDown),
@@ -143,7 +139,6 @@ namespace DCL.Interaction.PlayerOriginated.Tests
 
             system.Update(0);
 
-            // ProcessPointerEventsSystem owns the clearing; this system only reads the post.
             Assert.That(playerInteractionEntity.SyntheticPointerInput.PressButton, Is.EqualTo((InputAction?)InputAction.IaSecondary));
         }
     }

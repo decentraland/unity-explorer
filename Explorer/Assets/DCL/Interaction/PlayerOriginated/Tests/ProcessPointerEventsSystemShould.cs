@@ -123,7 +123,6 @@ namespace DCL.Interaction.PlayerOriginated.Tests
             new (new SceneEcsExecutor(sceneWorld),
                 new ColliderSceneEntityInfo(targetEntity, new CRDTEntity(TARGET_CRDT_ID), ColliderLayer.ClPointer));
 
-        /// <summary>Replaces the pointer events the target declares.</summary>
         private void DeclarePointerEvents(params PBPointerEvents.Types.Entry[] entries)
         {
             PBPointerEvents pointerEvents = sceneWorld.Get<PBPointerEvents>(targetEntity);
@@ -136,10 +135,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
         private AppendPointerEventResultsIntent TargetIntent() =>
             sceneWorld.Get<PBPointerEvents>(targetEntity).AppendPointerEventResultsIntent;
 
-        /// <summary>
-        ///     Points the pipeline ray at the target through a real raycast, so the hit carries a live collider.
-        ///     <paramref name="distance" /> overrides the distance the qualification reads off the hit.
-        /// </summary>
+        /// <summary>Points the pipeline ray at the target through a real raycast, so the hit carries a live collider. <paramref name="distance" /> overrides the hit distance the qualification reads.</summary>
         private void HoverTarget(float? distance = null)
         {
             Physics.SyncTransforms();
@@ -153,7 +149,6 @@ namespace DCL.Interaction.PlayerOriginated.Tests
             raycastResult.SetupHit(hit, TargetEntityInfo(), distance ?? hit.distance, distance ?? hit.distance);
         }
 
-        /// <summary>The ray reaches nothing this frame, so whatever was hovered is left behind.</summary>
         private void LookAway() =>
             world.Get<PlayerOriginRaycastResultForSceneEntities>(pipelineEntity).Reset();
 
@@ -167,7 +162,6 @@ namespace DCL.Interaction.PlayerOriginated.Tests
             };
         }
 
-        /// <summary>A press restricted to one entity, the way a driver that named an entity posts it.</summary>
         private void PostSyntheticPressTargeting(InputAction button, World targetWorld, Entity target)
         {
             world.Get<SyntheticPointerInput>(pipelineEntity) = new SyntheticPointerInput
@@ -188,7 +182,6 @@ namespace DCL.Interaction.PlayerOriginated.Tests
 
             system.Update(0);
 
-            // An aim that names no entity accepts whatever the ray reached: the edge lands on it like a real key.
             Assert.That(TargetIntent().ValidInputActions,
                 Is.EqualTo(new[] { (InputAction.IaPrimary, PointerEventType.PetDown) }),
                 "the edge must land entity-bound on the hovered entity");
@@ -204,7 +197,6 @@ namespace DCL.Interaction.PlayerOriginated.Tests
 
             system.Update(0);
 
-            // The real-input path already added the primary press; the entity must not observe it twice.
             Assert.That(TargetIntent().ValidInputActions,
                 Is.EqualTo(new[] { (InputAction.IaPrimary, PointerEventType.PetDown) }),
                 "one real and one synthetic press of the same button must land as a single edge");
@@ -226,9 +218,6 @@ namespace DCL.Interaction.PlayerOriginated.Tests
         [Test]
         public void NotMergeASyntheticEdgeIntoAnEntityItDidNotName()
         {
-            // The ray reached the target, but the edge was promised to another entity: whatever the ray found is
-            // an occluder from the driver's point of view, so firing its handler would deliver the press a frame
-            // before the driver is told its aim was blocked.
             Entity otherEntity = sceneWorld.Create(new CRDTEntity(TARGET_CRDT_ID + 1));
 
             HoverTarget();
@@ -254,8 +243,6 @@ namespace DCL.Interaction.PlayerOriginated.Tests
 
             system.Update(0);
 
-            // Only the button edge is withheld. Hover follows the ray for real input too, and a human's cursor
-            // passing over an occluder produces exactly this enter.
             Assert.That(TargetIntent().ValidIndicesCount(), Is.EqualTo(1),
                 "the hover entry of the entity under the ray must still be appended");
         }
@@ -263,8 +250,6 @@ namespace DCL.Interaction.PlayerOriginated.Tests
         [Test]
         public void NotMergeASyntheticEdgeWhoseTargetBelongsToAnotherWorld()
         {
-            // Arch entity ids are unique per world, and every loaded scene shares one physics scene, so the
-            // filter is keyed on (world, entity) — matching the id alone would deliver across scenes.
             World otherWorld = World.Create();
 
             try
@@ -283,11 +268,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
             }
         }
 
-        /// <summary>
-        ///     The entity's qualification for button input follows the last entry iterated; the enter is appended
-        ///     per qualified entry. A tight-range entry declared last must not hide the enter an earlier entry
-        ///     issued, or the leave completing it is never sent and the scene keeps the hover forever.
-        /// </summary>
+        /// <summary>The tight-range entry must be declared last: the qualification for button input follows the last entry iterated.</summary>
         [Test]
         public void IssueTheHoverLeaveWhenOnlyAnEarlierEntryQualified()
         {
@@ -312,10 +293,6 @@ namespace DCL.Interaction.PlayerOriginated.Tests
             Assert.That(afterLeave.ValidIndexAt(0), Is.EqualTo(1));
         }
 
-        /// <summary>
-        ///     A hover that drifts out of range before the ray leaves the entity issued its enter on the frame it
-        ///     began; the leave must still follow when the ray moves on, whatever the range was on that last frame.
-        /// </summary>
         [Test]
         public void IssueTheHoverLeaveWhenTheHoverLeftRangeBeforeTheRayMovedOn()
         {

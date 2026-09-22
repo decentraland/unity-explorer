@@ -10,16 +10,12 @@ using UnityEngine.InputSystem.LowLevel;
 namespace DCL.McpServer.Tools
 {
     /// <summary>
-    ///     Drags between two screen points. Inside the SDK scene UI the drag is synthesized semantically — press on
-    ///     the element under the start point, moves along the path, release on the element under the end point —
-    ///     because UI Toolkit panels consume events sent to their elements rather than virtual-device pointer state.
-    ///     Elsewhere the virtual mouse is replayed, the path that exercises real drag thresholds and hit-testing.
-    ///     Which path ran is reported, and a fallback to the device path also reports why the semantic one did not
-    ///     apply, so a caller who meant to drag the scene's UI can tell the two apart.
+    ///     Drags between two screen points: semantically inside the SDK scene UI, whose UI Toolkit panels take
+    ///     events sent to their elements rather than virtual-device pointer state, and through the virtual mouse
+    ///     elsewhere.
     /// </summary>
     public class UiDragTool : McpTool
     {
-        /// <summary>Which delivery path the caller allows. The default picks one and says which; the others pin it.</summary>
         private enum DragPath : byte
         {
             Auto,
@@ -27,7 +23,6 @@ namespace DCL.McpServer.Tools
             Device,
         }
 
-        /// <summary>What `pointerOver` reads when no UI covered that pixel — the drag ran over the 3D world there.</summary>
         private const string WORLD = "world";
 
         private const int DEFAULT_DURATION_FRAMES = 15;
@@ -101,7 +96,6 @@ namespace DCL.McpServer.Tools
 
                 skippedSceneUi = attempt.SkipReason;
 
-                // The caller pinned the semantic path: falling back would replay the mouse over the world instead.
                 if (path == DragPath.Sdk)
                     return McpToolResult.Error($"the drag was not delivered to the scene's UI: {skippedSceneUi}");
             }
@@ -121,24 +115,17 @@ namespace DCL.McpServer.Tools
                 ["ok"] = true,
                 ["path"] = McpWireEnum<DragPath>.ToWire(DragPath.Device),
                 ["cursorState"] = uiAutomation.CursorStateName(),
-
-                // What the pointer was over at each end. A device gesture verifies no target, so this is the only
-                // thing that separates a drag some UI could have received from one replayed over the world.
                 ["pointerOver"] = new JObject
                 {
                     ["start"] = outcome.CoverAtStart ?? WORLD,
                     ["end"] = outcome.CoverAtEnd ?? WORLD,
                 },
-
-                // The space the from/to coordinates were normalized against, stated like every other UI result.
                 ["screen"] = new JObject { ["width"] = Screen.width, ["height"] = Screen.height },
             };
 
             if (outcome.DeliveryNote != null)
                 result["info"] = outcome.DeliveryNote;
 
-            // The states were replayed, so ok is true — but the semantic path was what a caller aiming at scene UI
-            // asked for. Naming the reason is what separates this from a delivered UI drag.
             if (skippedSceneUi != null)
                 result["pathReason"] = $"the scene-UI path did not apply ({skippedSceneUi}), so the virtual mouse was replayed instead";
 

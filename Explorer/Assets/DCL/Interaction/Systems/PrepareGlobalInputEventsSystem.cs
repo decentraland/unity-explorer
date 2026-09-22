@@ -11,11 +11,8 @@ using PlayerOriginatedRaycastSystem = DCL.Interaction.Systems.PlayerOriginatedRa
 namespace DCL.Interaction.PlayerOriginated.Systems
 {
     /// <summary>
-    ///     Collects the input actions pressed or released this frame into the buffer every scene's
-    ///     WritePointerEventResultsSystem broadcasts to its root entity. Synthetic button edges posted by an
-    ///     automation driver (<see cref="SyntheticPointerInput" />) are appended after the real ones, so a synthetic
-    ///     press fans out exactly like a real key. Pinned between the raycast and the pointer-events processing,
-    ///     because the latter consumes the synthetic post.
+    ///     Collects this frame's real and synthetic button edges into the global input events buffer.
+    ///     Ordered before ProcessPointerEventsSystem, which clears the synthetic post.
     /// </summary>
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [UpdateAfter(typeof(PlayerOriginatedRaycastSystem))]
@@ -53,7 +50,6 @@ namespace DCL.Interaction.PlayerOriginated.Systems
             AppendSyntheticEntries();
         }
 
-        /// <summary>The scene root is the receiver a null entity names in the post's delivery rule.</summary>
         private void AppendSyntheticEntries()
         {
             playerInteractionEntity.SyntheticPointerInput.DeliverableEdgesFor(null, null, sdkInputActionsMap,

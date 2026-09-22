@@ -106,11 +106,6 @@ namespace DCL.McpServer.Tests
             Assert.That(tool.LastArguments!.Count, Is.EqualTo(0));
         }
 
-        /// <summary>
-        ///     A key the tool does not declare used to be dropped in silence, so a caller passing a sibling tool's
-        ///     argument (ui_click's `device` to ui_drag) read a success that did not do what it asked. The refusal
-        ///     is a tool-level error like every other argument refusal, and it lists what the tool does take.
-        /// </summary>
         [Test]
         public void RefuseAnArgumentTheToolDoesNotDeclare()
         {

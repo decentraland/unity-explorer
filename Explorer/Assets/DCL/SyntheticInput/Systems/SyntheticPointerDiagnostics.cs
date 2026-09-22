@@ -11,11 +11,7 @@ using RaycastHit = UnityEngine.RaycastHit;
 
 namespace DCL.SyntheticInput.Systems
 {
-    /// <summary>
-    ///     Turns what the reticle pipeline left behind on the observe frame into the driver-facing verdict of a
-    ///     synthetic pointer gesture. Pure functions of the pipeline's own raycast and hover state, kept apart from
-    ///     <see cref="SyntheticPointerEventSystem" />'s inject/observe/park cycle.
-    /// </summary>
+    /// <summary>Builds the driver-facing verdict of a synthetic pointer gesture from the pipeline's raycast and hover state.</summary>
     internal static class SyntheticPointerDiagnostics
     {
         public static SyntheticPointerResult Failure(in SyntheticPointerEventIntent intent, string reason) =>
@@ -26,10 +22,7 @@ namespace DCL.SyntheticInput.Systems
                 SceneEntityId = intent.TargetEntityId,
             };
 
-        /// <summary>
-        ///     The release must land on the entity that received the press, and a lone event with an explicit target
-        ///     on that target. A pure aim-point event accepts whatever the pipeline hit.
-        /// </summary>
+        /// <summary>A release must hit the press entity, an explicit target must be hit itself, and a pure aim-point event accepts any hit.</summary>
         public static bool IsExpectedTarget(in SyntheticPointerEventIntent intent, Entity hitEntity)
         {
             if (intent.Press is { } press)
@@ -38,10 +31,6 @@ namespace DCL.SyntheticInput.Systems
             return intent.TargetEntityId < 0 || hitEntity.Id == intent.TargetEntityId;
         }
 
-        /// <summary>
-        ///     The verdict of an aimed gesture from the pipeline's answer for the injected frame. A delivered press
-        ///     hands off <paramref name="press" /> so its release can be ordered against it.
-        /// </summary>
         public static SyntheticPointerResult BuildResult(in SyntheticPointerEventIntent intent, World sceneWorld,
             in PlayerOriginRaycastResultForSceneEntities raycastResult, in HoverStateComponent hoverState,
             IReadOnlyList<HoverFeedbackComponent.Tooltip> tooltips, IEntityCollidersGlobalCache collidersGlobalCache,
@@ -49,7 +38,6 @@ namespace DCL.SyntheticInput.Systems
         {
             press = null;
 
-            // The pipeline echoes the aim it consumed; anything else means the guarded frame ignored the input.
             if (raycastResult.SyntheticAimPoint != intent.InjectedAimPoint)
                 return Failure(in intent, "the reticle pipeline did not process the synthetic aim (is the cursor panning or the in-world camera active?)");
 
@@ -89,11 +77,7 @@ namespace DCL.SyntheticInput.Systems
                 StoppedShortOfAim(in raycastResult, intent.InjectedAimPoint), raycastResult.Collider.name);
         }
 
-        /// <summary>
-        ///     An aimless button edge has no target to validate, so the result only reports what the cursor ray was
-        ///     hovering. A hovered qualified target takes the edge entity-bound, suppressing the global broadcast for
-        ///     that scene exactly as a real key press would; otherwise the edge reached the scene root.
-        /// </summary>
+        /// <summary>An aimless edge has no target to validate, so the result reports only what the cursor ray was hovering.</summary>
         public static SyntheticPointerResult BuildAimlessResult(in PlayerOriginRaycastResultForSceneEntities raycastResult, in HoverStateComponent hoverState,
             IReadOnlyList<HoverFeedbackComponent.Tooltip> tooltips)
         {
@@ -108,7 +92,6 @@ namespace DCL.SyntheticInput.Systems
             };
         }
 
-        /// <summary>The pipeline hit nothing usable: a cold-path raycast tells whether the aim reaches any collider at all.</summary>
         public static SyntheticPointerResult DiagnoseMiss(in SyntheticPointerEventIntent intent, in Ray originRay, IEntityCollidersGlobalCache collidersGlobalCache)
         {
             if (!Physics.Raycast(originRay, out RaycastHit hit, PlayerOriginatedRaycastSystem.MAX_RAYCAST_DISTANCE, PhysicsLayers.PLAYER_ORIGIN_RAYCAST_MASK))
@@ -120,15 +103,10 @@ namespace DCL.SyntheticInput.Systems
             return Failure(in intent, DescribeNonSceneHit(in intent, in hit, originRay.origin));
         }
 
-        /// <summary>
-        ///     Names a non-scene collider in terms of the aim, not on its own. Reporting only what the ray met reads
-        ///     as if that object were in the way, when the usual cause is an aim point with nothing at it: the ray
-        ///     passed straight through and met geometry far beyond. The distance to the aim separates the two.
-        /// </summary>
+        // Reports the hit relative to the aim: the usual cause is an aim point with nothing at it, not the geometry the ray met beyond it.
         private static string DescribeNonSceneHit(in SyntheticPointerEventIntent intent, in RaycastHit hit, Vector3 origin)
         {
-            // A screen-point aim is projected to a far point along the camera ray, so its "aim distance" is the
-            // raycast limit and comparing against it says nothing.
+            // A screen-point aim is projected to the raycast limit, so its aim distance says nothing.
             if (intent.ScreenPoint != null)
                 return $"nothing clickable at that point: the ray hit non-scene geometry ('{hit.collider.name}')";
 
@@ -140,11 +118,8 @@ namespace DCL.SyntheticInput.Systems
         }
 
         /// <summary>
-        ///     The ray reached an entity the gesture accepts as its target, but the pipeline did not qualify it for
-        ///     cursor input. For a pure aim-point gesture, an entity without PointerEvents that the ray reached
-        ///     before the aim point is an occluder rather than the target, and is reported as a block. That reading
-        ///     is confined to aim-point gestures: an entity aim point is the collider's center, which the ray always
-        ///     stops short of at the collider's face, and the target must not read as its own occluder.
+        ///     The occluder reading is limited to aim-point gestures: an entity aim is the collider center, and the ray
+        ///     always stops short of it at the collider face.
         /// </summary>
         public static SyntheticPointerResult DiagnoseUnqualified(in SyntheticPointerEventIntent intent, in GlobalColliderSceneEntityInfo entityInfo,
             Entity hitEntity, int hitCrdtId, float distance, bool stoppedShortOfAim, string colliderName)
@@ -177,11 +152,6 @@ namespace DCL.SyntheticInput.Systems
             return result;
         }
 
-        /// <summary>
-        ///     True when the ray was stopped by geometry closer than the point it was aimed through. The
-        ///     camera-origin hit distance is the comparable one: the pipeline's own distance is measured from the
-        ///     player focus in third person.
-        /// </summary>
         public static bool StoppedShortOfAim(in PlayerOriginRaycastResultForSceneEntities raycastResult, Vector3 aimPoint)
         {
             const float TOLERANCE = 0.05f;
@@ -189,7 +159,6 @@ namespace DCL.SyntheticInput.Systems
             return raycastResult.RaycastHit.distance < Vector3.Distance(raycastResult.OriginRay.origin, aimPoint) - TOLERANCE;
         }
 
-        /// <summary>The hovered collider is the one the ray hit, within the range its pointer events declare.</summary>
         private static bool IsHoveredAtDistance(in PlayerOriginRaycastResultForSceneEntities raycastResult, in HoverStateComponent hoverState) =>
             hoverState.HasCollider && hoverState.LastHitCollider == raycastResult.Collider && hoverState.IsAtDistance;
 
@@ -214,11 +183,7 @@ namespace DCL.SyntheticInput.Systems
             return false;
         }
 
-        /// <summary>
-        ///     The hover text a human would read on the target. The client's tooltip is preferred but exists only for
-        ///     press/release entries, so the target's own PointerEvents text is the fallback — without it,
-        ///     hover-only entities report no text at all.
-        /// </summary>
+        /// <summary>Tooltips exist only for press and release entries, so a hover-only entity falls back to its own PointerEvents text.</summary>
         public static string? ResolveHoverText(in GlobalColliderSceneEntityInfo entityInfo, IReadOnlyList<HoverFeedbackComponent.Tooltip> tooltips)
         {
             if (tooltips is { Count: > 0 })
