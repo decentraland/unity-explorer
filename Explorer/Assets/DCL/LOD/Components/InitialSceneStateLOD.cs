@@ -16,10 +16,7 @@ namespace DCL.LOD.Components
         public string SceneID { get; private set; } = string.Empty;
         public GameObject ParentContainer { get; private set; }
 
-        /// <summary>
-        ///     Geometry of the scene this LOD stands in for; positions the container and clips its assets to the
-        ///     scene volume the way the runtime clips a live scene's materials.
-        /// </summary>
+        /// <summary>Geometry of the scene this LOD stands in for.</summary>
         public ParcelMathHelper.SceneGeometry SceneGeometry { get; private set; }
         public IGltfContainerAssetsCache gltfCache { get; private set; }
         public int TotalAssetsToInstantiate { get; private set; }

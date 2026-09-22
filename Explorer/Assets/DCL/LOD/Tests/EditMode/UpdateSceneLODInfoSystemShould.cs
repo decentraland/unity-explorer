@@ -111,7 +111,7 @@ namespace DCL.LOD.Tests
 
             //Assert
             var sceneLODInfoRetrieved = world.Get<SceneLODInfo>(entity);
-            Assert.AreEqual(1, sceneLODInfoRetrieved.CurrentLODLevelPromise);
+            Assert.AreEqual((byte)1, sceneLODInfoRetrieved.CurrentLODLevelPromise);
             Assert.AreEqual($"{sceneId}_{DIGEST}_1{PlatformUtils.GetCurrentPlatform()}", sceneLODInfoRetrieved.CurrentLODPromise.LoadingIntention.Hash);
         }
     }

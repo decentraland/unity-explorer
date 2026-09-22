@@ -40,6 +40,9 @@ namespace DCL.LOD.Tests
     {
         private const string SCENE_ID = "FAKE_ISS_SCENE";
 
+        /// <summary>Scale the LOD generator produced from a non-unit quaternion (abgen#125).</summary>
+        private const float SCALE_BEYOND_ANY_PARCEL = 64799f;
+
         private static GltfContainerTestResources? sharedResources;
         private static StreamableLoadingResult<AssetBundleData> sharedAB;
 
@@ -303,9 +306,7 @@ namespace DCL.LOD.Tests
         [Test]
         public void ClipAssetsToTheSceneVolumeLikeTheRuntimeDoes()
         {
-            // A placement the descriptor scales far beyond the parcels (a mis-scaled model, a bad descriptor)
-            // must draw no further than it would in the running scene, whose GLTF containers get the same
-            // material clipping from FinalizeGltfContainerLoadingSystem.
+            // A placement scaled beyond the parcels must draw no further than it would in the running scene.
             const string HASH = "OVERSIZED";
 
             GltfContainerAsset asset = MakeFakeGltfWithRenderer(HASH, out Renderer renderer);
@@ -314,7 +315,7 @@ namespace DCL.LOD.Tests
             cache.Stash(HASH, asset);
 
             ISSDescriptorAsset entry = NewDescriptorEntry(HASH);
-            entry.scale = new Vector3(64799f, 1f, 64799f);
+            entry.scale = new Vector3(SCALE_BEYOND_ANY_PARCEL, 1f, SCALE_BEYOND_ANY_PARCEL);
 
             var descriptor = ISSDescriptor.CreateUninitialized();
             descriptor.MarkResolved(new[] { entry });

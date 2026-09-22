@@ -53,8 +53,6 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
         {
             // Bump if the on-disk format changes incompatibly. v2: switched from "state byte + raw JSON"
             // to a single JSON document with state field, so files open in text editors.
-            // A republish no longer needs a bump: a descriptor the manifest names by digest keys on that
-            // name below, so new content is a new entry.
             private const int ITERATION_NUMBER = 2;
 
             public static readonly DiskHashCompute INSTANCE = new ();
@@ -85,8 +83,7 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
                 if (lodSource != null)
                     keyPayload.Put(lodSource);
 
-                // A digest-named descriptor is immutable under its name, so a regenerated LOD is a different
-                // file here as well and never hits the entry cached for the previous one.
+                // The digest name is immutable, so a regenerated descriptor keys a different entry.
                 if (asset.ManifestVersion.TryGetLodDescriptorFile(out string digestNamed))
                     keyPayload.Put(digestNamed);
             }

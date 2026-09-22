@@ -12,7 +12,7 @@ namespace SceneRunner.Scene
         public int exitCode;
         public string date;
 
-        /// <summary>Present once abgen's LOD lane has published the scene's LODs under content-addressed names.</summary>
+        /// <summary>Present once the LOD lane has published content-addressed LOD names.</summary>
         public SceneAbLodsDto? lods;
 
         public string Version => version;

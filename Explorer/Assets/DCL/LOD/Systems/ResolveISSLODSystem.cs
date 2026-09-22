@@ -159,9 +159,7 @@ namespace DCL.LOD.Systems
 
             asset.ToggleAnimationState(false);
 
-            // Clip to the scene volume exactly as FinalizeGltfContainerLoadingSystem does for the live scene, so an
-            // asset the descriptor places beyond the parcels (a mis-scaled model, a bad descriptor) draws no
-            // further than it would in the running scene.
+            // An asset the descriptor places beyond the parcels must draw no further than it would in the running scene.
             ParcelMathHelper.SceneGeometry sceneGeometry = initialSceneStateLOD.SceneGeometry;
             ConfigureSceneMaterial.EnableSceneBoundsAndForceCulling(in asset, in sceneGeometry.CircumscribedPlanes, sceneGeometry.Height);
 

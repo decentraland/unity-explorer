@@ -45,7 +45,7 @@ public class AssetBundleManifestVersion
         //Set when the manifest's files[] were injected — only scenes fetch them. Reusable bundles live under the shared assets/ prefix and cache-key on version+hash; wearables/emotes stay entity-scoped and keep buildDate keying.
         private bool hasReusableAssets;
 
-        //Content-addressed LOD names from the manifest's lods block; fed by InjectLods. Absent for sources that publish scene-id-only names.
+        //Digest-bearing LOD names from the manifest's lods block; absent for sources that publish scene-id-only names.
         private string? lodDescriptorFile;
         private Dictionary<int, string>? lodBundleFiles;
 
@@ -106,11 +106,7 @@ public class AssetBundleManifestVersion
             }
         }
 
-        /// <summary>
-        ///     Stores the manifest's <c>lods</c> block: the digest-bearing names the scene's LOD objects are
-        ///     published under beside their scene-id-only names. A LOD path that finds a name here requests it
-        ///     verbatim, so its caches key on content; one that does not composes the legacy name from the scene id.
-        /// </summary>
+        /// <summary>Stores the manifest's <c>lods</c> block: the digest-bearing names the scene's LOD objects are published under.</summary>
         public void InjectLods(SceneAbLodsDto? lods)
         {
             if (assetBundleManifestRequestFailed || lods == null) return;

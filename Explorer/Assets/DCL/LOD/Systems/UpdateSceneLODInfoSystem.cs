@@ -95,8 +95,7 @@ namespace DCL.LOD.Systems
             // LOD files are named by scene id only, so the Unity asset-bundle cache key must carry the LOD source.
             AssetBundleManifestVersion lodManifest = AssetBundleManifestVersion.CreateForLOD($"LOD/{level.ToString()}", decentralandUrlsSource?.AbgenLodsCacheKey ?? REGULAR_LOD_CACHE_KEY);
 
-            // The scene's manifest names the bundle by the build's digest when the source publishes such names;
-            // that name is immutable, so the cache entry it keys stays valid across regenerations.
+            // The manifest's digest-bearing name when it has one: immutable, so its cache entry survives a regeneration.
             AssetBundleManifestVersion sceneManifest = sceneDefinitionComponent.Definition.AssetBundleManifestVersionOrFailed;
 
             string bundleName = sceneManifest.TryGetLodBundleFile(level, out string digestNamed)

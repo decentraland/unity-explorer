@@ -65,10 +65,8 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
 
         private async UniTask<ISSDescriptorMetadata?> TryLoadDescriptorAsync(GetISSDescriptorIntention intention, CancellationToken ct)
         {
-            // The manifest names the descriptor by the build's digest when the source publishes such names, and
-            // that object never changes under its name. Otherwise the name is composed from the scene id:
-            // descriptors are written under a lower-cased id and the bucket is case-sensitive, so a mixed-case
-            // (Qm) id 404s verbatim. The LOD bundle path lower-cases it for the same reason.
+            // The manifest's digest-bearing name when it has one. Otherwise composed from the scene id, lower-cased:
+            // descriptors are written that way and the bucket is case-sensitive, so a mixed-case (Qm) id 404s verbatim.
             string fileName = intention.ManifestVersion.TryGetLodDescriptorFile(out string digestNamed)
                 ? digestNamed
                 : $"{intention.SceneId.ToLower()}_InitialSceneState.json";
