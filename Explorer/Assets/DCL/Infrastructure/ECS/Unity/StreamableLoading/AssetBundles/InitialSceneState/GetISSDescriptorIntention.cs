@@ -51,14 +51,11 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
 
         public class DiskHashCompute : AbstractDiskHashCompute<GetISSDescriptorIntention>
         {
-            // Bump if the on-disk format changes incompatibly, or when the source republishes descriptors under
-            // unchanged scene ids so cached documents no longer match what the CDN serves.
-            // v2: switched from "state byte + raw JSON" to a single JSON document with state field, so files
-            // open in text editors.
-            // v3: abgen 0.19.2 republishes descriptors with unit-quaternion placements under unchanged scene
-            // ids; the ones cached before that carry inflated scales. Descriptors named by the manifest's
-            // digest key on that name below, so this is the last bump such a republish needs.
-            private const int ITERATION_NUMBER = 3;
+            // Bump if the on-disk format changes incompatibly. v2: switched from "state byte + raw JSON"
+            // to a single JSON document with state field, so files open in text editors.
+            // A republish no longer needs a bump: a descriptor the manifest names by digest keys on that
+            // name below, so new content is a new entry.
+            private const int ITERATION_NUMBER = 2;
 
             public static readonly DiskHashCompute INSTANCE = new ();
 
