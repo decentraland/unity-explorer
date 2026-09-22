@@ -1,4 +1,5 @@
 using DCL.Ipfs;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.SceneRunner.Scene;
 using ECS.StreamableLoading.Cache.Disk.Cacheables;
 using ECS.StreamableLoading.Common.Components;
@@ -56,7 +57,19 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
 
             public static readonly DiskHashCompute INSTANCE = new ();
 
+            private readonly IDecentralandUrlsSource? decentralandUrlsSource;
+
             private DiskHashCompute() { }
+
+            /// <summary>
+            ///     Keys descriptors per LOD source: an abgen source publishes a different document under the same
+            ///     scene id as production, so the two must not share disk-cache entries. Read at hash time, as the
+            ///     source can depend on feature flags that load after construction.
+            /// </summary>
+            public DiskHashCompute(IDecentralandUrlsSource decentralandUrlsSource)
+            {
+                this.decentralandUrlsSource = decentralandUrlsSource;
+            }
 
             protected override void FillPayload(IHashKeyPayload keyPayload, in GetISSDescriptorIntention asset)
             {
@@ -64,6 +77,11 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
                 // and the old cache entry becomes inert (LRU evicts it). No need to mix in the manifest version.
                 keyPayload.Put(asset.SceneId);
                 keyPayload.Put(ITERATION_NUMBER);
+
+                string? lodSource = decentralandUrlsSource?.AbgenLodsCacheKey;
+
+                if (lodSource != null)
+                    keyPayload.Put(lodSource);
             }
         }
     }

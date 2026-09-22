@@ -6,6 +6,10 @@ namespace DCL.Prefs
 
         public const string LAUNCH_COUNT = "LaunchCount";
 
+        // Fallback identity feature flags are evaluated against, generated on the first launch that carries no
+        // campaign id from the launcher. Persisted so the install keeps a stable A/B bucket.
+        public const string FEATURE_FLAGS_USER_ID = "FeatureFlagsUserId";
+
         // Developer-selected path to the Creator Hub executable, remembered across launches so the Chrome
         // DevTools bridge can relaunch it without re-prompting. Not an app-arg / deep-link input (SEC-005).
         public const string CREATOR_HUB_BIN_PATH = "CreatorHub.BinPath";
@@ -16,6 +20,7 @@ namespace DCL.Prefs
         public const string WEB3_IDENTITY_ZONE = "Web3Authentication.Identity.zone";
         public const string LOGGEDIN_EMAIL = "LoggedInEmail";
         public const string GUEST_SESSION_ACTIVE = "Web3Authentication.GuestSessionActive";
+        public const string GUEST_SESSION_ID = "Web3Authentication.GuestSessionId";
 
         public const string DONT_SHOW_MIN_SPECS_SCREEN = "dontShowMinSpecsScreen";
         public const string MIN_SPECS_LOW_PRESET_ENFORCED = "minSpecsLowPresetEnforced";
