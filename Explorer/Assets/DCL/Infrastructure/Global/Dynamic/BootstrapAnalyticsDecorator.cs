@@ -8,7 +8,6 @@ using DCL.Optimization.PerformanceBudgeting;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
-using DCL.Web3.Identities;
 using ECS;
 using Global.AppArgs;
 using Global.Versioning;
@@ -96,9 +95,9 @@ namespace Global.Dynamic
             return result;
         }
 
-        public async UniTask InitializeFeatureFlagsAsync(IWeb3Identity? identity, IDecentralandUrlsSource decentralandUrlsSource, CancellationToken ct)
+        public async UniTask InitializeFeatureFlagsAsync(IDecentralandUrlsSource decentralandUrlsSource, CancellationToken ct)
         {
-            await core.InitializeFeatureFlagsAsync(identity, decentralandUrlsSource, ct);
+            await core.InitializeFeatureFlagsAsync(decentralandUrlsSource, ct);
 
             FeatureFlagsConfiguration configuration = FeatureFlagsConfiguration.Instance;
 
