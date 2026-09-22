@@ -24,7 +24,7 @@ namespace DCL.SDKComponents.SceneUI.Classes
             set => SetScaleMode(value);
         }
 
-        public Texture Texture
+        public Texture? Texture
         {
             get => texture;
             set => SetTexture(value);
@@ -99,12 +99,12 @@ namespace DCL.SDKComponents.SceneUI.Classes
             ResolveGenerationWay();
         }
 
-        private void SetTexture(Texture texture)
+        private void SetTexture(Texture? textureValue)
         {
-            if (this.texture == texture)
+            if (this.texture == textureValue)
                 return;
 
-            this.texture = texture;
+            this.texture = textureValue;
             ResolveGenerationWay();
         }
 
@@ -229,26 +229,26 @@ namespace DCL.SDKComponents.SceneUI.Classes
 
         private void OnGenerateVisualContent(MeshGenerationContext mgc)
         {
-            if (!customMeshGenerationRequired)
+            if (!customMeshGenerationRequired || texture == null)
                 return;
 
             switch (scaleMode)
             {
                 case DCLImageScaleMode.Center:
-                    GenerateCenteredTexture(mgc);
+                    GenerateCenteredTexture(mgc, texture);
                     break;
                 case DCLImageScaleMode.Stretch:
-                    GenerateStretched(mgc);
+                    GenerateStretched(mgc, texture);
                     break;
             }
         }
 
-        private void GenerateStretched(MeshGenerationContext mgc)
+        private void GenerateStretched(MeshGenerationContext mgc, Texture textureToDraw)
         {
             // in local coords
             PopulateStretchedQuad(VERTICES, backgroundRect);
 
-            MeshWriteData? mwd = mgc.Allocate(VERTICES.Length, INDICES.Length, texture);
+            MeshWriteData? mwd = mgc.Allocate(VERTICES.Length, INDICES.Length, textureToDraw);
 
             // uv Rect [0;1] that was assigned by the Dynamic atlas by UI Toolkit
             var uvRegion = mwd.uvRegion;
@@ -264,14 +264,14 @@ namespace DCL.SDKComponents.SceneUI.Classes
             mwd.SetAllIndices(INDICES);
         }
 
-        private void GenerateCenteredTexture(MeshGenerationContext mgc)
+        private void GenerateCenteredTexture(MeshGenerationContext mgc, Texture textureToDraw)
         {
             // in local coords
             Rect r = backgroundRect;
 
             var panelScale = canvas.worldTransform.lossyScale;
-            float targetTextureWidth = texture.width * panelScale[0];
-            float targetTextureHeight = texture.height * panelScale[1];
+            float targetTextureWidth = textureToDraw.width * panelScale[0];
+            float targetTextureHeight = textureToDraw.height * panelScale[1];
 
             // Remain the original center
             var center = r.center;
@@ -289,7 +289,7 @@ namespace DCL.SDKComponents.SceneUI.Classes
             VERTICES[2].position = new Vector3(right, top, Vertex.nearZ);
             VERTICES[3].position = new Vector3(right, bottom, Vertex.nearZ);
 
-            MeshWriteData? mwd = mgc.Allocate(VERTICES.Length, INDICES.Length, texture);
+            MeshWriteData? mwd = mgc.Allocate(VERTICES.Length, INDICES.Length, textureToDraw);
 
             // uv Rect [0;1] that was assigned by the Dynamic atlas by UI Toolkit
             var uvRegion = mwd.uvRegion;
