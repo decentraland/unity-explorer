@@ -59,6 +59,15 @@ namespace DCL.Lobby
         [field: SerializeField] public Color LightColor { get; private set; } = new (1f, 0.859f, 0.404f, 1f);
         [field: SerializeField, Min(0f)] public float LightIntensity { get; private set; } = 2f;
 
+        [field: Header("Vignette")]
+        [field: Tooltip("How dark the rim of the frame gets; 0 turns the vignette off")]
+        [field: SerializeField, Range(0f, 1f)] public float VignetteIntensity { get; private set; }
+
+        [field: Tooltip("How far in from the corners the darkening reaches: small values keep it to a thin rim, 1 fades it all the way to the centre")]
+        [field: SerializeField, Range(0.05f, 1f)] public float VignetteSmoothness { get; private set; } = 0.6f;
+
+        [field: SerializeField] public Color VignetteColor { get; private set; } = Color.black;
+
         [field: Header("Props")]
         [field: SerializeField] public LobbyStageProp[] Props { get; private set; } = Array.Empty<LobbyStageProp>();
 

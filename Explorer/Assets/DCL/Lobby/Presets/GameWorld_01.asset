@@ -12,29 +12,32 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6c3d55383a43e86b45058c0bd01c53fe, type: 3}
   m_Name: GameWorld_01
   m_EditorClassIdentifier: 
-  <Backdrop>k__BackingField: {fileID: 2800000, guid: 32d594631da09514e9223708d4ee7a6e, type: 3}
-  <BlendScreenHeight>k__BackingField: 0.44
+  <Backdrop>k__BackingField: {fileID: 2800000, guid: 64582e064419a481390bd73433a6d89c, type: 3}
+  <BlendScreenHeight>k__BackingField: 0.445
   <BlendDepth>k__BackingField: 4.85
-  <BlendHardness>k__BackingField: 0.45
-  <ImageBelowBlend>k__BackingField: 0.401
-  <FloorColor>k__BackingField: {r: 0.8773585, g: 0.3595474, b: 0.27727836, a: 1}
+  <BlendHardness>k__BackingField: 0.342
+  <ImageBelowBlend>k__BackingField: 0.461
+  <FloorColor>k__BackingField: {r: 1, g: 0.2787464, b: 0.16509432, a: 1}
   <SpotColor>k__BackingField: {r: 0.48568767, g: 0.22329085, b: 0.18171112, a: 1}
-  <MistColor>k__BackingField: {r: 0.55044603, g: 0.29023585, b: 0.2490026, a: 0.7882353}
-  <ColorSampleBand>k__BackingField: 0.121
+  <MistColor>k__BackingField: {r: 0.6037736, g: 0.3223843, b: 0.27625492, a: 0.7882353}
+  <ColorSampleBand>k__BackingField: 0.09
   <LightRotation>k__BackingField: {x: 45, y: 120, z: 0}
   <LightColor>k__BackingField: {r: 0.8915094, g: 0.9544319, b: 1, a: 1}
   <LightIntensity>k__BackingField: 2
+  <VignetteIntensity>k__BackingField: 0.687
+  <VignetteSmoothness>k__BackingField: 0.353
+  <VignetteColor>k__BackingField: {r: 0, g: 0, b: 0, a: 1}
   <Props>k__BackingField:
   - <Prefab>k__BackingField: {fileID: 2178143425974505216, guid: 7cf2b50f2c6f2384790b99d61cf61867, type: 3}
     <Position>k__BackingField: {x: 2.6, y: -0.02, z: -1.53}
     <Rotation>k__BackingField: {x: 0, y: 223.59, z: 0}
     <Scale>k__BackingField: {x: 0.4, y: 0.4, z: 0.4}
   - <Prefab>k__BackingField: {fileID: 7135761032911534250, guid: 659ff61970dea7544bed043a3ac17229, type: 3}
-    <Position>k__BackingField: {x: -2.39, y: 0, z: -1.27}
-    <Rotation>k__BackingField: {x: -65.16, y: 487.9, z: 0}
+    <Position>k__BackingField: {x: -1.96, y: -0.1, z: -1.48}
+    <Rotation>k__BackingField: {x: -65.16, y: 566.5, z: 0}
     <Scale>k__BackingField: {x: 0.6, y: 0.6, z: 0.6}
   - <Prefab>k__BackingField: {fileID: 7032699715843421857, guid: 8c65518321ca2c3498f55c47edf4b3e6, type: 3}
-    <Position>k__BackingField: {x: -1.75, y: 0, z: -0.23}
+    <Position>k__BackingField: {x: -1.46, y: 0, z: -0.84}
     <Rotation>k__BackingField: {x: -65.16, y: 487.9, z: 0}
     <Scale>k__BackingField: {x: 0.2, y: 0.2, z: 0.2}
   - <Prefab>k__BackingField: {fileID: 7032699715843421857, guid: 8c65518321ca2c3498f55c47edf4b3e6, type: 3}
@@ -42,6 +45,6 @@ MonoBehaviour:
     <Rotation>k__BackingField: {x: 116.2, y: 631.8, z: 0}
     <Scale>k__BackingField: {x: 0.2, y: 0.2, z: 0.2}
   - <Prefab>k__BackingField: {fileID: 7032699715843421857, guid: 8c65518321ca2c3498f55c47edf4b3e6, type: 3}
-    <Position>k__BackingField: {x: 0.65, y: -0.03, z: -1.51}
-    <Rotation>k__BackingField: {x: 80.9, y: 734.3, z: 0}
+    <Position>k__BackingField: {x: 0.65, y: -0.03, z: -1.46}
+    <Rotation>k__BackingField: {x: 81.8, y: 734.3, z: 0}
     <Scale>k__BackingField: {x: 0.3, y: 0.3, z: 0.3}

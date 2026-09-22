@@ -22,10 +22,13 @@ namespace DCL.Lobby
         private static readonly int BLEND_START = Shader.PropertyToID("_BlendStart");
         private static readonly int BLEND_END = Shader.PropertyToID("_BlendEnd");
         private static readonly int BLEND_HARDNESS = Shader.PropertyToID("_BlendHardness");
+        private static readonly int INTENSITY = Shader.PropertyToID("_Intensity");
+        private static readonly int SMOOTHNESS = Shader.PropertyToID("_Smoothness");
 
         [SerializeField] private Renderer backdrop = null!;
         [SerializeField] private Renderer floor = null!;
         [SerializeField] private Renderer mist = null!;
+        [SerializeField] private Renderer vignette = null!;
         [SerializeField] private Transform propsRoot = null!;
         [SerializeField] private Light keyLight = null!;
         [SerializeField] private LobbyStagePreset? preset;
@@ -33,6 +36,7 @@ namespace DCL.Lobby
         private MaterialPropertyBlock? backdropProperties;
         private MaterialPropertyBlock? floorProperties;
         private MaterialPropertyBlock? mistProperties;
+        private MaterialPropertyBlock? vignetteProperties;
         private Texture? backgroundOverride;
         private Camera? trackedCamera;
         private LobbyStagePreset? spawnedPropsPreset;
@@ -238,6 +242,19 @@ namespace DCL.Lobby
             mist.GetPropertyBlock(mistProperties);
             mistProperties.SetColor(COLOR, preset.MistColor);
             mist.SetPropertyBlock(mistProperties);
+
+            // A fully transparent vignette still costs a full screen of blending, so it is switched off outright
+            vignette.enabled = preset.VignetteIntensity > 0f;
+
+            if (vignette.enabled)
+            {
+                vignetteProperties ??= new MaterialPropertyBlock();
+                vignette.GetPropertyBlock(vignetteProperties);
+                vignetteProperties.SetColor(COLOR, preset.VignetteColor);
+                vignetteProperties.SetFloat(INTENSITY, preset.VignetteIntensity);
+                vignetteProperties.SetFloat(SMOOTHNESS, preset.VignetteSmoothness);
+                vignette.SetPropertyBlock(vignetteProperties);
+            }
 
             keyLight.transform.localRotation = Quaternion.Euler(preset.LightRotation);
             keyLight.color = preset.LightColor;
