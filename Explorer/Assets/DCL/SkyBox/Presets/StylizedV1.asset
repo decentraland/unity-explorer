@@ -1198,7 +1198,7 @@ MonoBehaviour:
     serializedVersion: 2
     key0: {r: 0.28, g: 0.4, b: 0.68, a: 1}
     key1: {r: 1.6216166, g: 0.85757834, b: 0.37480763, a: 1}
-    key2: {r: 0.928883, g: 0.9976892, b: 1.1353015, a: 1}
+    key2: {r: 1.5157166, g: 1.3498304, b: 0.908, a: 1}
     key3: {r: 1.35, g: 0.9, b: 0.8, a: 1}
     key4: {r: 0.28, g: 0.4, b: 0.68, a: 1}
     key5: {r: 0, g: 0, b: 0, a: 0}
@@ -1280,7 +1280,7 @@ MonoBehaviour:
   cloudsV2Backlight: 1
   cloudsV2Flow: 0
   cloudLayers:
-  - Strip: {fileID: 2800000, guid: af264267fa004076aaa8543587772925, type: 3}
+  - Strip: {fileID: 2800000, guid: 3650150171c0abb42b784252b0751a2b, type: 3}
     StretchV: 0.4
     OffsetV: 0.2
     TilingU: 1
@@ -1289,7 +1289,7 @@ MonoBehaviour:
     Strength: 1.2
     Opacity: 1
     FlowByPhase: {x: 1, y: 1, z: 1, w: 1}
-  - Strip: {fileID: 2800000, guid: 0801758dd52c2814da13ed73a001e90e, type: 3}
+  - Strip: {fileID: 2800000, guid: aa655a92acf9ffe4eae6aea7660617a1, type: 3}
     StretchV: 0.42
     OffsetV: -0.17
     TilingU: 1
@@ -1298,7 +1298,7 @@ MonoBehaviour:
     Strength: 1.2
     Opacity: 1
     FlowByPhase: {x: 1, y: 1, z: 1, w: 1}
-  - Strip: {fileID: 2800000, guid: dbe0743944d76c84d9cd69072fb4bd88, type: 3}
+  - Strip: {fileID: 2800000, guid: f5fb6c6222f6a844c94ecdac0c0839ce, type: 3}
     StretchV: 0.4
     OffsetV: -0.064
     TilingU: 1
