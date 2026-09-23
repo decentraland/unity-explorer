@@ -22,10 +22,6 @@ namespace DCL.McpServer.Tools
         private const float MIN_SECONDS = 0.05f;
         private const float MAX_SECONDS = 10f;
         private const float MAX_AXIS = 50f;
-        private const float DEFAULT_TIMEOUT_SEC = 3f;
-        private const float MIN_TIMEOUT_SEC = 0.5f;
-        private const float MAX_TIMEOUT_SEC = 15f;
-
         private readonly SyntheticInputAgent syntheticInput;
         private readonly ExposedCameraData exposedCameraData;
 
@@ -42,16 +38,11 @@ namespace DCL.McpServer.Tools
             + "without dragging anything. Use click_entity for a click in place, and ui_drag for dragging inside UI.";
 
         protected override McpJsonSchema DescribeInput(McpJsonSchema schema) =>
-            schema.Number("deltaX", "Horizontal look speed while the button is held, in mouse-delta units per frame: positive turns right.", isRequired: true)
-                  .Number("deltaY", "Vertical look speed while the button is held: positive looks up.", isRequired: true)
-                  .Number("seconds", "How long the button is held while the camera turns. Default 1, max 10.")
-                  .Integer("entityId", "Entity to press on (from list_scene_entities). Omit only when x/y/z are given, then the ray decides the target.")
-                  .Number("x", "World-space aim point for the press; overrides the automatic aim at the entity's collider center.")
-                  .Number("y")
-                  .Number("z")
-                  .String("sceneId", "Pin the gesture to this scene (id from get_scene_state): it fails instead of landing in another scene if the player moved.")
-                  .Enum<PointerButton>("button", "Which input action to hold. Default pointer (left click / IA_POINTER).")
-                  .Number("timeoutSec", "Seconds to wait for each of the press and release. Default 3, max 15.");
+            PointerArgs.DescribeAim(schema.Number("deltaX", "Horizontal look speed while the button is held, in mouse-delta units per frame: positive turns right.", isRequired: true)
+                                          .Number("deltaY", "Vertical look speed while the button is held: positive looks up.", isRequired: true)
+                                          .Number("seconds", "How long the button is held while the camera turns. Default 1, max 10."), "gesture")
+                       .Enum<PointerButton>("button", "Which input action to hold. Default pointer (left click / IA_POINTER).")
+                       .Number("timeoutSec", "Seconds to wait for each of the press and release. Default 3, max 15.");
 
         public override McpToolAnnotations Annotations => McpToolAnnotations.Mutating(destructive: false, idempotent: false);
 
@@ -70,16 +61,16 @@ namespace DCL.McpServer.Tools
                 return McpToolResult.Error("deltaX and deltaY must not both be zero: a sweep that does not turn the camera is a click_entity down/up pair.");
 
             if (!PointerArgs.TryParseAim(arguments, requireTarget: true, out PointerAim aim, out string? aimError))
-                return McpToolResult.Error(aimError!);
+                return McpToolResult.Error(aimError);
 
             if (!PointerArgs.TryGetButton(arguments, out InputAction button, out string? buttonError))
-                return McpToolResult.Error(buttonError!);
+                return McpToolResult.Error(buttonError);
 
             var axisValue = new Vector2(Mathf.Clamp(deltaX, -MAX_AXIS, MAX_AXIS), Mathf.Clamp(deltaY, -MAX_AXIS, MAX_AXIS));
             float seconds = Mathf.Clamp(arguments.GetFloat("seconds", DEFAULT_SECONDS), MIN_SECONDS, MAX_SECONDS);
-            float timeoutSec = Mathf.Clamp(arguments.GetFloat("timeoutSec", DEFAULT_TIMEOUT_SEC), MIN_TIMEOUT_SEC, MAX_TIMEOUT_SEC);
+            float timeoutSec = PointerArgs.ClampTimeout(arguments);
 
-            SyntheticSweepResult sweep = await syntheticInput.SweepAsync(aim, button, axisValue, seconds, timeoutSec, ct);
+            SyntheticSweepResult sweep = await syntheticInput.SweepAsync(aim, button, axisValue, seconds, timeoutSec, ct: ct);
 
             var json = new JObject
             {
@@ -100,10 +91,9 @@ namespace DCL.McpServer.Tools
                     ? $"the camera hold did not complete within {seconds + SyntheticInputAgent.COMPLETION_GRACE_SEC}s (is the simulation paused?)"
                     : "a newer camera request replaced the sweep before it finished";
 
-            // ExposedCameraData is written by its own system: wait a frame so it reflects the new rotation.
-            await UniTask.DelayFrame(1, cancellationToken: ct);
+            (_, Quaternion cameraRotation) = await exposedCameraData.ReadSettledPoseAsync(ct);
 
-            json["cameraRotationEuler"] = exposedCameraData.WorldRotation.Value.eulerAngles.ToVector();
+            json["cameraRotationEuler"] = cameraRotation.eulerAngles.ToVector();
             json["released"] = sweep.Release.ToJson();
 
             return McpToolResult.Json(json);

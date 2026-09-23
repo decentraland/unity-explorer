@@ -20,7 +20,7 @@ namespace DCL.McpServer.Utils
                 ["z"] = Math.Round(value.z, 2),
             };
 
-        public static JObject ToParcel(this Vector2Int value) =>
+        public static JObject ToParcelJson(this Vector2Int value) =>
             new ()
             {
                 ["x"] = value.x,

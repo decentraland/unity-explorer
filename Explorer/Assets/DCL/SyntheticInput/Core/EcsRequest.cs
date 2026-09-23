@@ -12,7 +12,11 @@ namespace DCL.SyntheticInput.Core
         UniTaskCompletionSource<TResult>? Completion { get; set; }
     }
 
-    /// <summary>The install, complete and abandon steps shared by the synthetic input request components.</summary>
+    /// <summary>
+    ///     The install, complete and abandon steps shared by the synthetic input request components. This is the one
+    ///     deliberate exception to "systems are the sole entry point for entities": a driver only ever adds or removes
+    ///     a request component here, and every read, write and world-side effect stays in the fulfilling system.
+    /// </summary>
     public static class EcsRequest
     {
         /// <summary>Installs the request on the entity. Main thread only. A pending request of the same type is completed with <paramref name="preemptedResult" /> and replaced.</summary>

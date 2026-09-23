@@ -5,6 +5,7 @@ using DCL.SDKComponents.SceneUI.Components;
 using ECS.SceneLifeCycle;
 using Newtonsoft.Json.Linq;
 using SceneRunner.Scene;
+using System.Diagnostics.CodeAnalysis;
 using UnityEngine.UIElements;
 
 namespace DCL.SyntheticInput.UiSimulation
@@ -21,14 +22,13 @@ namespace DCL.SyntheticInput.UiSimulation
             this.scenesCache = scenesCache;
         }
 
-        public bool TryResolve(int crdtId, out SdkUiElement element, out string? failure)
+        public bool TryResolve(int crdtId, out SdkUiElement element, [NotNullWhen(false)] out string? failure)
         {
             element = default(SdkUiElement);
 
-            if (!TryGetRunningSceneWorld(out World? maybeWorld, out failure))
+            if (!TryGetRunningSceneWorld(out World? world, out failure))
                 return false;
 
-            World world = maybeWorld!;
             Entity found = Entity.Null;
             UITransformComponent? transform = null;
 
@@ -52,7 +52,7 @@ namespace DCL.SyntheticInput.UiSimulation
             world.TryGet(found, out UIInputComponent? input);
             world.TryGet(found, out UIDropdownComponent? dropdown);
 
-            element = new SdkUiElement(world, found, transform!, input, dropdown, world.Has<PBPointerEvents>(found));
+            element = new SdkUiElement(transform, input, dropdown);
             return true;
         }
 
@@ -67,7 +67,7 @@ namespace DCL.SyntheticInput.UiSimulation
         public UITransformComponent? ResolveComponent(VisualElement element, out int crdtId)
         {
             crdtId = -1;
-            if (!TryGetRunningSceneWorld(out World? maybeWorld, out _))
+            if (!TryGetRunningSceneWorld(out World? world, out _))
                 return null;
 
             UITransformComponent? closest = null;
@@ -75,7 +75,7 @@ namespace DCL.SyntheticInput.UiSimulation
 
             var closestId = -1;
 
-            maybeWorld!.Query(in UI_ELEMENTS, (ref UITransformComponent uiTransform, ref CRDTEntity crdtEntity) =>
+            world.Query(in UI_ELEMENTS, (ref UITransformComponent uiTransform, ref CRDTEntity crdtEntity) =>
             {
                 var distance = 0;
 
@@ -102,18 +102,18 @@ namespace DCL.SyntheticInput.UiSimulation
         /// <summary>
         ///     Whether the current scene's UI covers a screen point (Unity screen coordinates), and which entity does.
         /// </summary>
-        public bool TryFindCoverAt(UnityEngine.Vector2 screenPoint, out string? cover)
+        public bool TryFindCoverAt(UnityEngine.Vector2 screenPoint, [NotNullWhen(true)] out string? cover)
         {
             cover = null;
 
-            if (!TryGetScenePanel(out IPanel? panel, out _) || panel == null)
+            if (!TryGetScenePanel(out IPanel? panel, out _))
                 return false;
 
             return TryDescribeCoverIn(panel, screenPoint, out cover);
         }
 
         /// <summary>As <see cref="TryFindCoverAt" />, inside a panel the caller already identified.</summary>
-        public bool TryDescribeCoverIn(IPanel panel, UnityEngine.Vector2 screenPoint, out string? cover)
+        public bool TryDescribeCoverIn(IPanel panel, UnityEngine.Vector2 screenPoint, [NotNullWhen(true)] out string? cover)
         {
             cover = null;
 
@@ -131,14 +131,13 @@ namespace DCL.SyntheticInput.UiSimulation
             crdtId >= 0 ? $"the scene's UI (crdtId {crdtId})" : "the scene's UI";
 
         /// <summary>Any attached element identifies the panel, because a scene renders its UI into one panel.</summary>
-        public bool TryGetScenePanel(out IPanel? panel, out string? failure)
+        public bool TryGetScenePanel([NotNullWhen(true)] out IPanel? panel, [NotNullWhen(false)] out string? failure)
         {
             panel = null;
 
-            if (!TryGetRunningSceneWorld(out World? maybeWorld, out failure))
+            if (!TryGetRunningSceneWorld(out World? world, out failure))
                 return false;
 
-            World world = maybeWorld!;
             IPanel? found = null;
 
             world.Query(in UI_ELEMENTS, (ref UITransformComponent uiTransform, ref CRDTEntity _) =>
@@ -160,10 +159,8 @@ namespace DCL.SyntheticInput.UiSimulation
         {
             var entries = new JArray();
 
-            if (!TryGetRunningSceneWorld(out World? maybeWorld, out _))
+            if (!TryGetRunningSceneWorld(out World? world, out _))
                 return entries;
-
-            World world = maybeWorld!;
 
             world.Query(in UI_ELEMENTS, (Entity entity, ref UITransformComponent uiTransform, ref CRDTEntity crdtEntity) =>
             {
@@ -209,7 +206,7 @@ namespace DCL.SyntheticInput.UiSimulation
             return entries;
         }
 
-        private bool TryGetRunningSceneWorld(out World? world, out string? failure)
+        private bool TryGetRunningSceneWorld([NotNullWhen(true)] out World? world, [NotNullWhen(false)] out string? failure)
         {
             world = null;
             failure = null;
@@ -230,21 +227,15 @@ namespace DCL.SyntheticInput.UiSimulation
     /// <summary>A resolved SDK scene-UI element: the entity's runtime UI components in its scene world.</summary>
     public readonly struct SdkUiElement
     {
-        public readonly World World;
-        public readonly Entity Entity;
         public readonly UITransformComponent Transform;
         public readonly UIInputComponent? Input;
         public readonly UIDropdownComponent? Dropdown;
-        public readonly bool HasPointerEvents;
 
-        public SdkUiElement(World world, Entity entity, UITransformComponent transform, UIInputComponent? input, UIDropdownComponent? dropdown, bool hasPointerEvents)
+        public SdkUiElement(UITransformComponent transform, UIInputComponent? input, UIDropdownComponent? dropdown)
         {
-            World = world;
-            Entity = entity;
             Transform = transform;
             Input = input;
             Dropdown = dropdown;
-            HasPointerEvents = hasPointerEvents;
         }
     }
 }

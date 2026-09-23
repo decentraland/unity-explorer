@@ -84,7 +84,7 @@ namespace DCL.McpServer.Tools
                 ["startPosition"] = startPosition.ToVector(),
                 ["endPosition"] = endPosition.ToVector(),
                 ["distance"] = Math.Round(Vector3.Distance(startPosition, endPosition), 2),
-                ["parcel"] = endPosition.ToParcel().ToParcel(),
+                ["parcel"] = endPosition.ToParcel().ToParcelJson(),
             };
 
             return McpToolResult.Json(result);

@@ -8,6 +8,7 @@ using DCL.SyntheticInput.Components;
 using DCL.SyntheticInput.UiSimulation;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Diagnostics.CodeAnalysis;
 using UnityEngine;
 using Utility;
 
@@ -47,7 +48,7 @@ namespace DCL.SyntheticInput.AltTester
                 ["ok"] = true,
                 ["position"] = VectorJson(characterTransform.Position),
                 ["rotationEuler"] = VectorJson(characterTransform.Rotation.eulerAngles),
-                ["parcel"] = ParcelJson(characterTransform.Position.ToParcel()),
+                ["parcel"] = AltOperationRegistry.ParcelJson(characterTransform.Position.ToParcel()),
                 ["velocity"] = VectorJson(rigidTransform?.MoveVelocity.Velocity ?? Vector3.zero),
                 ["isGrounded"] = rigidTransform?.IsGrounded ?? false,
             }.ToString();
@@ -55,7 +56,7 @@ namespace DCL.SyntheticInput.AltTester
 
         public static int StartWalk(float directionX, float directionY, string kind, float seconds, bool jump, bool ignoreInputModifiers)
         {
-            if (!TryGetAgent(out SyntheticInputAgent readyAgent, out int failedId))
+            if (!TryGetAgent(out SyntheticInputAgent? readyAgent, out int failedId))
                 return failedId;
 
             if (!Enum.TryParse(kind, ignoreCase: true, out MovementKind movementKind) || movementKind == MovementKind.Idle)
@@ -75,7 +76,7 @@ namespace DCL.SyntheticInput.AltTester
         /// <summary>The deltas are in mouse-delta units per frame.</summary>
         public static int StartCameraLook(float deltaX, float deltaY, float seconds)
         {
-            if (!TryGetAgent(out SyntheticInputAgent readyAgent, out int failedId))
+            if (!TryGetAgent(out SyntheticInputAgent? readyAgent, out int failedId))
                 return failedId;
 
             return AltOperationRegistry.Start(
@@ -85,7 +86,7 @@ namespace DCL.SyntheticInput.AltTester
 
         public static int StartLookAt(float x, float y, float z)
         {
-            if (!TryGetAgent(out SyntheticInputAgent readyAgent, out int failedId))
+            if (!TryGetAgent(out SyntheticInputAgent? readyAgent, out int failedId))
                 return failedId;
 
             return AltOperationRegistry.Start(readyAgent.LookAtAsync(new Vector3(x, y, z)).ContinueWith(DeliveryPayload));
@@ -93,7 +94,7 @@ namespace DCL.SyntheticInput.AltTester
 
         public static int StartClickEntity(int entityId, string sceneId, string button, float timeoutSec)
         {
-            if (!TryGetAgent(out SyntheticInputAgent readyAgent, out int failedId))
+            if (!TryGetAgent(out SyntheticInputAgent? readyAgent, out int failedId))
                 return failedId;
 
             if (!TryParseInputAction(button, out InputAction inputAction))
@@ -106,7 +107,7 @@ namespace DCL.SyntheticInput.AltTester
 
         public static int StartClickAtScreen(float x, float y, string button, float timeoutSec, bool force)
         {
-            if (!TryGetAgent(out SyntheticInputAgent readyAgent, out int failedId))
+            if (!TryGetAgent(out SyntheticInputAgent? readyAgent, out int failedId))
                 return failedId;
 
             if (!TryParseInputAction(button, out InputAction inputAction))
@@ -121,7 +122,7 @@ namespace DCL.SyntheticInput.AltTester
 
         public static int StartSweep(int entityId, string sceneId, string button, float deltaX, float deltaY, float seconds, float timeoutSec)
         {
-            if (!TryGetAgent(out SyntheticInputAgent readyAgent, out int failedId))
+            if (!TryGetAgent(out SyntheticInputAgent? readyAgent, out int failedId))
                 return failedId;
 
             if (!TryParseInputAction(button, out InputAction inputAction))
@@ -140,7 +141,7 @@ namespace DCL.SyntheticInput.AltTester
 
         public static int StartHover(int entityId, float seconds)
         {
-            if (!TryGetAgent(out SyntheticInputAgent readyAgent, out int failedId))
+            if (!TryGetAgent(out SyntheticInputAgent? readyAgent, out int failedId))
                 return failedId;
 
             return AltOperationRegistry.Start(
@@ -153,7 +154,7 @@ namespace DCL.SyntheticInput.AltTester
 
         public static int StartGlobalInputOnEntity(string action, float holdSeconds, int entityId)
         {
-            if (!TryGetAgent(out SyntheticInputAgent readyAgent, out int failedId))
+            if (!TryGetAgent(out SyntheticInputAgent? readyAgent, out int failedId))
                 return failedId;
 
             if (!TryParseInputAction(action, out InputAction inputAction))
@@ -166,7 +167,7 @@ namespace DCL.SyntheticInput.AltTester
                           .ContinueWith(PointerResultPayload));
         }
 
-        private static bool TryGetAgent(out SyntheticInputAgent readyAgent, out int failedOperationId)
+        private static bool TryGetAgent([NotNullWhen(true)] out SyntheticInputAgent? readyAgent, out int failedOperationId)
         {
             if (session != null)
             {
@@ -175,7 +176,7 @@ namespace DCL.SyntheticInput.AltTester
                 return true;
             }
 
-            readyAgent = null!;
+            readyAgent = null;
             failedOperationId = AltOperationRegistry.Start(UniTask.FromResult(AltOperationRegistry.ErrorPayload(NOT_INSTALLED)));
             return false;
         }
@@ -227,7 +228,7 @@ namespace DCL.SyntheticInput.AltTester
                 ["startPosition"] = VectorJson(startPosition),
                 ["endPosition"] = VectorJson(endPosition),
                 ["distance"] = Math.Round(Vector3.Distance(startPosition, endPosition), 2),
-                ["parcel"] = ParcelJson(endPosition.ToParcel()),
+                ["parcel"] = AltOperationRegistry.ParcelJson(endPosition.ToParcel()),
             }.ToString();
         }
 
@@ -236,9 +237,6 @@ namespace DCL.SyntheticInput.AltTester
 
         private static JObject VectorJson(Vector3 value) =>
             new () { ["x"] = Math.Round(value.x, 3), ["y"] = Math.Round(value.y, 3), ["z"] = Math.Round(value.z, 3) };
-
-        private static JObject ParcelJson(Vector2Int parcel) =>
-            new () { ["x"] = parcel.x, ["y"] = parcel.y };
 
         private static string SweepResultPayload(SyntheticSweepResult sweep)
         {

@@ -58,12 +58,11 @@ namespace DCL.McpServer.Tools
             if (delivery == SyntheticInputDelivery.TimedOut)
                 return McpToolResult.Error($"camera_look did not complete within {seconds + SyntheticInputAgent.COMPLETION_GRACE_SEC}s (is the simulation paused?).");
 
-            // ExposedCameraData is written by its own system: wait a frame so it reflects the new rotation.
-            await UniTask.DelayFrame(1, cancellationToken: ct);
+            (_, Quaternion cameraRotation) = await exposedCameraData.ReadSettledPoseAsync(ct);
 
             var result = new JObject
             {
-                ["cameraRotationEuler"] = exposedCameraData.WorldRotation.Value.eulerAngles.ToVector(),
+                ["cameraRotationEuler"] = cameraRotation.eulerAngles.ToVector(),
             };
 
             return McpToolResult.Json(result);

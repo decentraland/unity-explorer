@@ -19,13 +19,12 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Systems
     [LogCategory(ReportCategory.INPUT)]
     public partial class PrimaryPointerInfoSystem : BaseUnityLoopSystem
     {
-        private readonly World globalWorld;
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IExposedCameraData exposedCameraData;
+        private readonly Camera cachedCamera;
         private Vector2 previousPosition = Vector2.zero;
         private CumulativePointerDelta lastSeenAccumulatedDelta;
-        private Camera cachedCamera = null!;
 
         internal PrimaryPointerInfoSystem(
             World world,
@@ -35,17 +34,15 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Systems
             IExposedCameraData exposedCameraData
         ) : base(world)
         {
-            this.globalWorld = globalWorld;
             this.sceneStateProvider = sceneStateProvider;
             this.ecsToCRDTWriter = ecsToCRDTWriter;
             this.exposedCameraData = exposedCameraData;
+            cachedCamera = globalWorld.CacheCamera().GetCameraComponent(globalWorld).Camera;
         }
 
         public override void Initialize()
         {
             base.Initialize();
-
-            cachedCamera = globalWorld.CacheCamera().GetCameraComponent(globalWorld).Camera;
 
             lastSeenAccumulatedDelta = exposedCameraData.AccumulatedPointerDelta;
 

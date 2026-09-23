@@ -2,6 +2,8 @@
 using Cysharp.Threading.Tasks;
 using DCL.SyntheticInput.UiSimulation;
 using Newtonsoft.Json.Linq;
+using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -25,6 +27,10 @@ namespace DCL.SyntheticInput.AltTester
         public static void Install(UiAutomationServices installedServices) =>
             services = installedServices;
 
+        /// <summary>Withdraws the services before they are disposed, so no probe call reaches a disposed session.</summary>
+        public static void Uninstall() =>
+            services = null;
+
         public static bool IsReady() =>
             services != null;
 
@@ -33,7 +39,7 @@ namespace DCL.SyntheticInput.AltTester
 
         public static string ListInteractableJson(string stack, bool checkOcclusion)
         {
-            if (!TryGetServices(out UiAutomationServices ready, out string failedPayload))
+            if (!TryGetServices(out UiAutomationServices? ready, out string? failedPayload))
                 return failedPayload;
 
             var payload = new JObject { ["ok"] = true };
@@ -44,22 +50,25 @@ namespace DCL.SyntheticInput.AltTester
 
         public static string ClickJson(string addressKind, string addressValue, string button, bool force)
         {
-            if (!TryGetServices(out UiAutomationServices ready, out string failedPayload))
+            if (!TryGetServices(out UiAutomationServices? ready, out string? failedPayload))
                 return failedPayload;
 
-            if (!TryResolveUgui(ready, addressKind, addressValue, out GameObject target, out string resolveFailure))
+            if (!TryResolveUgui(ready, addressKind, addressValue, out GameObject? target, out string? resolveFailure))
                 return resolveFailure;
 
-            UiActionResult result = ready.Simulator.ClickUgui(target, ParseInputButton(button), force);
+            if (!Enum.TryParse(button, ignoreCase: true, out PointerEventData.InputButton inputButton) || !Enum.IsDefined(typeof(PointerEventData.InputButton), inputButton))
+                return AltOperationRegistry.ErrorPayload($"unknown button '{button}' (use left, right or middle)");
+
+            UiActionResult result = ready.Simulator.ClickUgui(target, inputButton, force);
             return result.ToJson(ready.CursorStateName()).ToString();
         }
 
         public static string SetTextJson(string addressKind, string addressValue, string text, bool submit)
         {
-            if (!TryGetServices(out UiAutomationServices ready, out string failedPayload))
+            if (!TryGetServices(out UiAutomationServices? ready, out string? failedPayload))
                 return failedPayload;
 
-            if (!TryResolveUgui(ready, addressKind, addressValue, out GameObject target, out string resolveFailure))
+            if (!TryResolveUgui(ready, addressKind, addressValue, out GameObject? target, out string? resolveFailure))
                 return resolveFailure;
 
             return ready.Simulator.SetTextUgui(target, text, submit).ToJson(ready.CursorStateName()).ToString();
@@ -67,10 +76,10 @@ namespace DCL.SyntheticInput.AltTester
 
         public static string ScrollJson(string addressKind, string addressValue, float dx, float dy, bool force)
         {
-            if (!TryGetServices(out UiAutomationServices ready, out string failedPayload))
+            if (!TryGetServices(out UiAutomationServices? ready, out string? failedPayload))
                 return failedPayload;
 
-            if (!TryResolveUgui(ready, addressKind, addressValue, out GameObject target, out string resolveFailure))
+            if (!TryResolveUgui(ready, addressKind, addressValue, out GameObject? target, out string? resolveFailure))
                 return resolveFailure;
 
             return ready.Simulator.ScrollUgui(target, new Vector2(dx, dy), force).ToJson(ready.CursorStateName()).ToString();
@@ -78,33 +87,33 @@ namespace DCL.SyntheticInput.AltTester
 
         public static string SetTextSdkJson(int crdtId, string text, bool submit)
         {
-            if (!TryGetServices(out UiAutomationServices ready, out string failedPayload))
+            if (!TryGetServices(out UiAutomationServices? ready, out string? failedPayload))
                 return failedPayload;
 
             if (!ready.SdkResolver.TryResolve(crdtId, out SdkUiElement element, out string? failure))
-                return AltOperationRegistry.ErrorPayload(failure!);
+                return AltOperationRegistry.ErrorPayload(failure);
 
             return ready.Simulator.SetTextSdk(element, text, submit).ToJson(ready.CursorStateName()).ToString();
         }
 
         public static string SelectDropdownSdkJson(int crdtId, int optionIndex)
         {
-            if (!TryGetServices(out UiAutomationServices ready, out string failedPayload))
+            if (!TryGetServices(out UiAutomationServices? ready, out string? failedPayload))
                 return failedPayload;
 
             if (!ready.SdkResolver.TryResolve(crdtId, out SdkUiElement element, out string? failure))
-                return AltOperationRegistry.ErrorPayload(failure!);
+                return AltOperationRegistry.ErrorPayload(failure);
 
             return ready.Simulator.SelectDropdownSdk(element, optionIndex).ToJson(ready.CursorStateName()).ToString();
         }
 
         public static string ScrollSdkJson(int crdtId, float dx, float dy)
         {
-            if (!TryGetServices(out UiAutomationServices ready, out string failedPayload))
+            if (!TryGetServices(out UiAutomationServices? ready, out string? failedPayload))
                 return failedPayload;
 
             if (!ready.SdkResolver.TryResolve(crdtId, out SdkUiElement element, out string? failure))
-                return AltOperationRegistry.ErrorPayload(failure!);
+                return AltOperationRegistry.ErrorPayload(failure);
 
             return ready.Simulator.ScrollSdk(element, new Vector2(dx, dy)).ToJson(ready.CursorStateName()).ToString();
         }
@@ -117,11 +126,14 @@ namespace DCL.SyntheticInput.AltTester
             UiAutomationServices ready = services;
 
             if (!ready.SdkResolver.TryResolve(crdtId, out SdkUiElement element, out string? failure))
-                return AltOperationRegistry.Start(UniTask.FromResult(AltOperationRegistry.ErrorPayload(failure!)));
+                return AltOperationRegistry.Start(UniTask.FromResult(AltOperationRegistry.ErrorPayload(failure)));
+
+            // The timeout cancels the click as well, so an expired click does not keep driving the scene UI.
+            var clickCancellation = new CancellationTokenSource();
 
             return AltOperationRegistry.Start(
-                ready.Simulator.ClickSdkAsync(element, force, CancellationToken.None)
-                     .Timeout(System.TimeSpan.FromSeconds(SDK_CLICK_TIMEOUT_SEC))
+                ready.Simulator.ClickSdkAsync(element, force, clickCancellation.Token)
+                     .Timeout(System.TimeSpan.FromSeconds(SDK_CLICK_TIMEOUT_SEC), taskCancellationTokenSource: clickCancellation)
                      .ContinueWith(result => result.ToJson(ready.CursorStateName()).ToString()));
         }
 
@@ -158,16 +170,16 @@ namespace DCL.SyntheticInput.AltTester
             return AltOperationRegistry.Start(ready.RunGestureAsync(request, GESTURE_TIMEOUT_GRACE_SEC, CancellationToken.None).ContinueWith(GesturePayload));
         }
 
-        private static bool TryGetServices(out UiAutomationServices ready, out string failedPayload)
+        private static bool TryGetServices([NotNullWhen(true)] out UiAutomationServices? ready, [NotNullWhen(false)] out string? failedPayload)
         {
             if (services != null)
             {
                 ready = services;
-                failedPayload = string.Empty;
+                failedPayload = null;
                 return true;
             }
 
-            ready = null!;
+            ready = null;
             failedPayload = NotInstalledPayload();
             return false;
         }
@@ -175,10 +187,10 @@ namespace DCL.SyntheticInput.AltTester
         private static string NotInstalledPayload() =>
             AltOperationRegistry.ErrorPayload("the synthetic input layer is not installed (launch with --alttester or --mcp)");
 
-        private static bool TryResolveUgui(UiAutomationServices ready, string addressKind, string addressValue, out GameObject target, out string failedPayload)
+        private static bool TryResolveUgui(UiAutomationServices ready, string addressKind, string addressValue, [NotNullWhen(true)] out GameObject? target, [NotNullWhen(false)] out string? failedPayload)
         {
-            target = null!;
-            failedPayload = string.Empty;
+            target = null;
+            failedPayload = null;
 
             UiElementAddress address;
 
@@ -200,21 +212,13 @@ namespace DCL.SyntheticInput.AltTester
 
             if (!ready.Discovery.TryResolve(in address, out GameObject? resolved, out string? failure))
             {
-                failedPayload = AltOperationRegistry.ErrorPayload(failure!);
+                failedPayload = AltOperationRegistry.ErrorPayload(failure);
                 return false;
             }
 
-            target = resolved!;
+            target = resolved;
             return true;
         }
-
-        private static PointerEventData.InputButton ParseInputButton(string button) =>
-            button switch
-            {
-                "right" => PointerEventData.InputButton.Right,
-                "middle" => PointerEventData.InputButton.Middle,
-                _ => PointerEventData.InputButton.Left,
-            };
 
         private static string DragPayload(UiDeviceDragOutcome outcome)
         {

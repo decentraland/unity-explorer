@@ -27,12 +27,8 @@ namespace DCL.McpServer.Tools
             + "list_scene_entities. For entities whose collider sits away from their pivot, pass an explicit x/y/z world point.";
 
         protected override McpJsonSchema DescribeInput(McpJsonSchema schema) =>
-            schema.Integer("entityId", "Target entity id in the current scene world (from list_scene_entities). Omit only when x/y/z are given, then the ray decides the target.")
-                  .Number("x", "World-space aim point; overrides the automatic aim at the entity's collider center.")
-                  .Number("y")
-                  .Number("z")
-                  .String("sceneId", "Pin the hover to this scene (id from get_scene_state): it fails instead of landing in another scene if the player moved.")
-                  .Number("seconds", "How long to hold the hover. Default 1, max 30.");
+            PointerArgs.DescribeAim(schema, "hover")
+                       .Number("seconds", "How long to hold the hover. Default 1, max 30.");
 
         public override McpToolAnnotations Annotations => McpToolAnnotations.Mutating(destructive: false, idempotent: false);
 
@@ -44,7 +40,7 @@ namespace DCL.McpServer.Tools
         public override async UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
         {
             if (!PointerArgs.TryParseAim(arguments, requireTarget: true, out PointerAim aim, out string? aimError))
-                return McpToolResult.Error(aimError!);
+                return McpToolResult.Error(aimError);
 
             float seconds = Mathf.Clamp(arguments.GetFloat("seconds", DEFAULT_SECONDS), MIN_SECONDS, MAX_SECONDS);
 

@@ -49,11 +49,7 @@ namespace DCL.McpServer.Tools
             if (delivery == SyntheticInputDelivery.TimedOut)
                 return McpToolResult.Error("look_at was not applied by the camera (is the simulation paused?).");
 
-            // ExposedCameraData is written by its own system: wait a frame so it reflects the new rotation.
-            await UniTask.DelayFrame(1, cancellationToken: ct);
-
-            Vector3 cameraPosition = exposedCameraData.WorldPosition.Value;
-            Quaternion cameraRotation = exposedCameraData.WorldRotation.Value;
+            (Vector3 cameraPosition, Quaternion cameraRotation) = await exposedCameraData.ReadSettledPoseAsync(ct);
             var target = new Vector3(x, y, z);
 
             float aimErrorDegrees = Vector3.Angle(cameraRotation * Vector3.forward, target - cameraPosition);

@@ -13,6 +13,7 @@ using DCL.SyntheticInput.UiSimulation;
 using ECS.Abstract;
 using ECS.SceneLifeCycle;
 using SceneRunner.Scene;
+using System.Diagnostics.CodeAnalysis;
 using UnityEngine;
 using Utility.Arch;
 using static DCL.SyntheticInput.Systems.SyntheticPointerAim;
@@ -74,21 +75,20 @@ namespace DCL.SyntheticInput.Systems
             if (!exists)
                 return;
 
-            ISceneFacade? scene = scenesCache.CurrentScene.Value;
-
-            if (!TryResolve(in intent, scene, out World? sceneWorld))
+            if (!TryResolve(in intent, out ISceneFacade? scene, out World? sceneWorld))
                 return;
 
             if (intent.Injected)
-                Observe(ref intent, sceneWorld!);
+                Observe(ref intent, sceneWorld);
             else
-                Inject(ref intent, scene!, sceneWorld!);
+                Inject(ref intent, scene, sceneWorld);
         }
 
         // On failure the request is completed and removed.
-        private bool TryResolve(in SyntheticPointerEventIntent intent, ISceneFacade? scene, out World? sceneWorld)
+        private bool TryResolve(in SyntheticPointerEventIntent intent, [NotNullWhen(true)] out ISceneFacade? scene, [NotNullWhen(true)] out World? sceneWorld)
         {
             sceneWorld = null;
+            scene = scenesCache.CurrentScene.Value;
 
             if (scene == null || !scene.SceneStateProvider.IsCurrent || scene.SceneStateProvider.IsNotRunningState())
             {

@@ -333,5 +333,23 @@ namespace DCL.Interaction.PlayerOriginated.Tests
 
             Assert.That(TargetIntent().ValidIndicesCount(), Is.EqualTo(0), "no enter was issued, so no leave may complete it");
         }
+
+        [Test]
+        public void NotIssueAHoverLeaveWhenOnlyAPressEntryQualified()
+        {
+            DeclarePointerEvents(
+                Entry(PointerEventType.PetDown, InputAction.IaPrimary, 10f),
+                Entry(PointerEventType.PetHoverEnter, InputAction.IaPointer, 1f),
+                Entry(PointerEventType.PetHoverLeave, InputAction.IaPointer, 1f));
+
+            HoverTarget();
+            system.Update(0);
+            Assert.That(TargetIntent().ValidIndicesCount(), Is.EqualTo(0), "test precondition: the hover entries are out of range, so no enter");
+
+            LookAway();
+            system.Update(0);
+
+            Assert.That(TargetIntent().ValidIndicesCount(), Is.EqualTo(0), "a press entry in range opens no hover, so no leave may follow");
+        }
     }
 }

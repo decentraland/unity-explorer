@@ -17,17 +17,11 @@ namespace DCL.CharacterCamera.Systems
     public partial class PrepareExposedCameraDataSystem : BaseUnityLoopSystem
     {
         private readonly CinemachineBrain cinemachineBrain;
-        private InputAction pointerDelta = null!;
+        private readonly InputAction pointerDelta;
 
         internal PrepareExposedCameraDataSystem(World world, CinemachineBrain cinemachineBrain) : base(world)
         {
             this.cinemachineBrain = cinemachineBrain;
-        }
-
-        public override void Initialize()
-        {
-            base.Initialize();
-
             pointerDelta = DCLInput.Instance.Camera.Delta;
         }
 

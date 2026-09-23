@@ -71,15 +71,15 @@ namespace DCL.SyntheticInput
         }
 
         /// <summary>Presses and releases a pointer button on what <paramref name="aim" /> names. The release lands on a later scene tick than the press.</summary>
-        public UniTask<SyntheticPointerResult> ClickAsync(PointerAim aim, InputAction button, float timeoutSec, CancellationToken ct = default, bool force = false) =>
+        public UniTask<SyntheticPointerResult> ClickAsync(PointerAim aim, InputAction button, float timeoutSec, bool force = false, CancellationToken ct = default) =>
             RunPointerGestureAsync(aim, button, composeClick: true, PointerEventType.PetDown, timeoutSec, force, ct);
 
         /// <summary>Delivers a press without a release.</summary>
-        public UniTask<SyntheticPointerResult> PointerDownAsync(PointerAim aim, InputAction button, float timeoutSec, CancellationToken ct = default, bool force = false) =>
+        public UniTask<SyntheticPointerResult> PointerDownAsync(PointerAim aim, InputAction button, float timeoutSec, bool force = false, CancellationToken ct = default) =>
             RunPointerGestureAsync(aim, button, composeClick: false, PointerEventType.PetDown, timeoutSec, force, ct);
 
         /// <summary>Delivers a release without a press.</summary>
-        public UniTask<SyntheticPointerResult> PointerUpAsync(PointerAim aim, InputAction button, float timeoutSec, CancellationToken ct = default, bool force = false) =>
+        public UniTask<SyntheticPointerResult> PointerUpAsync(PointerAim aim, InputAction button, float timeoutSec, bool force = false, CancellationToken ct = default) =>
             RunPointerGestureAsync(aim, button, composeClick: false, PointerEventType.PetUp, timeoutSec, force, ct);
 
         /// <summary>
@@ -87,9 +87,9 @@ namespace DCL.SyntheticInput
         ///     delivered, the gesture stops there, because a release without a press would fake a delivery.
         /// </summary>
         public async UniTask<SyntheticSweepResult> SweepAsync(PointerAim aim, InputAction button, Vector2 axisValue, float seconds, float timeoutSec,
-            CancellationToken ct = default, bool force = false)
+            bool force = false, CancellationToken ct = default)
         {
-            SyntheticPointerResult press = await PointerDownAsync(aim, button, timeoutSec, ct, force);
+            SyntheticPointerResult press = await PointerDownAsync(aim, button, timeoutSec, force, ct);
 
             if (press.TimedOut || press.FailureReason != null)
                 return new SyntheticSweepResult
@@ -106,44 +106,25 @@ namespace DCL.SyntheticInput
             {
                 Press = press,
                 CameraSweep = cameraSweep,
-                Release = await PointerUpAsync(aim, button, timeoutSec, ct, force),
+                Release = await PointerUpAsync(aim, button, timeoutSec, force, ct),
             };
         }
 
         /// <summary>Aims at what <paramref name="aim" /> names and holds the hover for a duration. Presses nothing.</summary>
-        public async UniTask<SyntheticPointerResult> HoverAsync(PointerAim aim, float seconds, CancellationToken ct = default)
+        public UniTask<SyntheticPointerResult> HoverAsync(PointerAim aim, float seconds, CancellationToken ct = default)
         {
-            try
-            {
-                SyntheticPointerOutcome outcome = await SendPointerAsync(SyntheticPointerEventIntent.Hover(aim.EntityId ?? NO_ENTITY, aim.SceneId, aim.AimPoint, aim.ScreenPoint, UnityEngine.Time.time + seconds))
-                                                       .AttachExternalCancellation(ct)
-                                                       .Timeout(TimeSpan.FromSeconds(seconds + COMPLETION_GRACE_SEC));
+            UniTask<SyntheticPointerResult> hover = SendPointerAsync(SyntheticPointerEventIntent.Hover(aim.EntityId ?? NO_ENTITY, aim.SceneId, aim.AimPoint, aim.ScreenPoint, UnityEngine.Time.time + seconds))
+               .ContinueWith(static outcome => outcome.Result);
 
-                return outcome.Result;
-            }
-            catch (TimeoutException)
-            {
-                return await AbandonPointerAsync(aim, seconds + COMPLETION_GRACE_SEC);
-            }
+            return AwaitPointerAsync(hover, aim, seconds + COMPLETION_GRACE_SEC, ct);
         }
 
         /// <summary>
         ///     Presses and releases an SDK input action. With an aimless <paramref name="aim" /> the edges reach the
         ///     scene root. With a target they land on that entity, like a click. The release lands on a later scene tick.
         /// </summary>
-        public async UniTask<SyntheticPointerResult> GlobalInputAsync(InputAction action, float holdSeconds = 0f, PointerAim aim = default, CancellationToken ct = default)
-        {
-            try
-            {
-                return await RunGlobalGestureAsync(action, holdSeconds, aim, ct)
-                            .AttachExternalCancellation(ct)
-                            .Timeout(TimeSpan.FromSeconds(holdSeconds + COMPLETION_GRACE_SEC));
-            }
-            catch (TimeoutException)
-            {
-                return await AbandonPointerAsync(aim, holdSeconds + COMPLETION_GRACE_SEC);
-            }
-        }
+        public UniTask<SyntheticPointerResult> GlobalInputAsync(InputAction action, float holdSeconds = 0f, PointerAim aim = default, CancellationToken ct = default) =>
+            AwaitPointerAsync(RunGlobalGestureAsync(action, holdSeconds, aim, ct), aim, holdSeconds + COMPLETION_GRACE_SEC, ct);
 
         private async UniTask<SyntheticInputDelivery> AwaitHoldAsync<TIntent>(UniTask<SyntheticInputDelivery> hold, float seconds, CancellationToken ct)
             where TIntent : struct
@@ -160,18 +141,21 @@ namespace DCL.SyntheticInput
             }
         }
 
-        private async UniTask<SyntheticPointerResult> RunPointerGestureAsync(PointerAim aim, InputAction button, bool composeClick, PointerEventType firstLegType,
-            float timeoutSec, bool force, CancellationToken ct)
+        private UniTask<SyntheticPointerResult> RunPointerGestureAsync(PointerAim aim, InputAction button, bool composeClick, PointerEventType firstLegType,
+            float timeoutSec, bool force, CancellationToken ct) =>
+            AwaitPointerAsync(ComposeGestureAsync(aim, button, composeClick, firstLegType, force), aim, timeoutSec, ct);
+
+        /// <summary>Bounds a pointer gesture by <paramref name="budgetSec" />: on expiry the pending intent is abandoned and reported as timed out.</summary>
+        private async UniTask<SyntheticPointerResult> AwaitPointerAsync(UniTask<SyntheticPointerResult> gesture, PointerAim aim, float budgetSec, CancellationToken ct)
         {
             try
             {
-                return await ComposeGestureAsync(aim, button, composeClick, firstLegType, force)
-                            .AttachExternalCancellation(ct)
-                            .Timeout(TimeSpan.FromSeconds(timeoutSec));
+                return await gesture.AttachExternalCancellation(ct)
+                                    .Timeout(TimeSpan.FromSeconds(budgetSec));
             }
             catch (TimeoutException)
             {
-                return await AbandonPointerAsync(aim, timeoutSec);
+                return await AbandonPointerAsync(aim, budgetSec);
             }
         }
 

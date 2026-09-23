@@ -1,7 +1,9 @@
 using DCL.ECSComponents;
+using DCL.McpServer.Core;
 using DCL.McpServer.Utils;
 using DCL.SyntheticInput;
 using Newtonsoft.Json.Linq;
+using System.Diagnostics.CodeAnalysis;
 using UnityEngine;
 
 namespace DCL.McpServer.Tools
@@ -19,7 +21,31 @@ namespace DCL.McpServer.Tools
     {
         public const string BUTTON_DESCRIPTION = "Which input action to press. Default pointer (left click / IA_POINTER).";
 
-        public static bool TryGetButton(JObject arguments, out InputAction button, out string? error)
+        public const float DEFAULT_TIMEOUT_SEC = 3f;
+        public const float MIN_TIMEOUT_SEC = 0.5f;
+        public const float MAX_TIMEOUT_SEC = 15f;
+
+        private const string TARGETED_ENTITY_DESCRIPTION = "Target entity id in the current scene world (from list_scene_entities). Omit only when x/y/z are given, then the ray decides the target.";
+        private const string BROADCAST_ENTITY_DESCRIPTION = "Aim the reticle at this entity (from list_scene_entities) so the action lands entity-bound on it. Omit for a scene-root broadcast.";
+        private const string TARGETED_AIM_POINT_DESCRIPTION = "World-space aim point; overrides the automatic aim at the entity's collider center.";
+        private const string BROADCAST_AIM_POINT_DESCRIPTION = "World-space aim point; an alternative to entityId (and it overrides the aim at the entity's collider center).";
+
+        /// <summary>Declares the aim arguments <see cref="TryParseAim" /> reads: entityId, x/y/z and sceneId.</summary>
+        public static McpJsonSchema DescribeAim(McpJsonSchema schema, string gesture, bool requireTarget = true) =>
+            DescribeSceneId(schema.Integer("entityId", requireTarget ? TARGETED_ENTITY_DESCRIPTION : BROADCAST_ENTITY_DESCRIPTION)
+                                  .Number("x", requireTarget ? TARGETED_AIM_POINT_DESCRIPTION : BROADCAST_AIM_POINT_DESCRIPTION)
+                                  .Number("y")
+                                  .Number("z"), gesture);
+
+        /// <summary>Declares the sceneId argument that pins a gesture to one scene.</summary>
+        public static McpJsonSchema DescribeSceneId(McpJsonSchema schema, string gesture) =>
+            schema.String("sceneId", $"Pin the {gesture} to this scene (id from get_scene_state): it fails instead of landing in another scene if the player moved.");
+
+        /// <summary>The timeoutSec argument, clamped to the range every pointer gesture accepts.</summary>
+        public static float ClampTimeout(JObject arguments) =>
+            Mathf.Clamp(arguments.GetFloat("timeoutSec", DEFAULT_TIMEOUT_SEC), MIN_TIMEOUT_SEC, MAX_TIMEOUT_SEC);
+
+        public static bool TryGetButton(JObject arguments, out InputAction button, [NotNullWhen(false)] out string? error)
         {
             button = InputAction.IaPointer;
             error = null;
@@ -44,7 +70,7 @@ namespace DCL.McpServer.Tools
         ///     A partly readable x/y/z is refused rather than ignored: the gesture would otherwise aim at nothing,
         ///     or at the entity's center, instead of at the point the caller sent.
         /// </summary>
-        public static bool TryParseAim(JObject arguments, bool requireTarget, out PointerAim aim, out string? error)
+        public static bool TryParseAim(JObject arguments, bool requireTarget, out PointerAim aim, [NotNullWhen(false)] out string? error)
         {
             aim = PointerAim.None;
             error = null;

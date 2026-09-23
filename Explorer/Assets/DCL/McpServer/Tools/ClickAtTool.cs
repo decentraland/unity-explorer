@@ -14,10 +14,6 @@ namespace DCL.McpServer.Tools
     /// <summary>Clicks whatever scene entity the reticle ray through a screen point lands on.</summary>
     public class ClickAtTool : McpTool
     {
-        private const float DEFAULT_TIMEOUT_SEC = 3f;
-        private const float MIN_TIMEOUT_SEC = 0.5f;
-        private const float MAX_TIMEOUT_SEC = 15f;
-
         private readonly SyntheticInputAgent syntheticInput;
 
         public override string Name => "click_at";
@@ -31,10 +27,9 @@ namespace DCL.McpServer.Tools
             + "is set. Use click_entity when you know the entity id.";
 
         protected override McpJsonSchema DescribeInput(McpJsonSchema schema) =>
-            schema.Number("x", "Normalized horizontal image coordinate, 0 (left) to 1 (right).", isRequired: true)
-                  .Number("y", "Normalized vertical image coordinate, 0 (top) to 1 (bottom).", isRequired: true)
-                  .String("sceneId", "Pin the click to this scene (id from get_scene_state): it fails instead of landing in another scene if the player moved.")
-                  .Enum<PointerButton>("button", PointerArgs.BUTTON_DESCRIPTION)
+            PointerArgs.DescribeSceneId(schema.Number("x", "Normalized horizontal image coordinate, 0 (left) to 1 (right).", isRequired: true)
+                                              .Number("y", "Normalized vertical image coordinate, 0 (top) to 1 (bottom).", isRequired: true), "click")
+                       .Enum<PointerButton>("button", PointerArgs.BUTTON_DESCRIPTION)
                   .Number("timeoutSec", "Seconds to wait for delivery. Default 3, max 15.")
                   .Boolean("force", "Aim through UI covering that point instead of failing. Default false.");
 
@@ -54,14 +49,14 @@ namespace DCL.McpServer.Tools
                 return McpToolResult.Error("x and y must be normalized image coordinates in [0, 1].");
 
             if (!PointerArgs.TryGetButton(arguments, out InputAction button, out string? buttonError))
-                return McpToolResult.Error(buttonError!);
+                return McpToolResult.Error(buttonError);
 
-            float timeoutSec = Mathf.Clamp(arguments.GetFloat("timeoutSec", DEFAULT_TIMEOUT_SEC), MIN_TIMEOUT_SEC, MAX_TIMEOUT_SEC);
+            float timeoutSec = PointerArgs.ClampTimeout(arguments);
             bool force = arguments.GetBool("force", false);
 
             var aim = PointerAim.AtScreenPoint(UiScreenGeometry.NormalizedImageToScreenPoint(new Vector2(x, y)), arguments.GetStringOrNull("sceneId"));
 
-            SyntheticPointerResult result = await syntheticInput.ClickAsync(aim, button, timeoutSec, ct, force);
+            SyntheticPointerResult result = await syntheticInput.ClickAsync(aim, button, timeoutSec, force, ct);
 
             if (result.TimedOut)
                 return McpToolResult.Error($"click_at did not complete within {timeoutSec}s (is the simulation paused?).");

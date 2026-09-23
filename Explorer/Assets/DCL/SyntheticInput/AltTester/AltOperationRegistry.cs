@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using Newtonsoft.Json.Linq;
 using System;
+using UnityEngine;
 
 namespace DCL.SyntheticInput.AltTester
 {
@@ -21,7 +22,8 @@ namespace DCL.SyntheticInput.AltTester
         private sealed class Slot
         {
             public int Id;
-            public bool Done;
+
+            /// <summary>Null until the operation completes.</summary>
             public string? PayloadJson;
         }
 
@@ -43,10 +45,10 @@ namespace DCL.SyntheticInput.AltTester
             if (slot == null || slot.Id != operationId)
                 return new JObject { ["done"] = true, ["ok"] = false, ["error"] = "unknown or evicted operation id (poll sooner, or start fewer concurrent operations)" }.ToString();
 
-            if (!slot.Done)
+            if (slot.PayloadJson is not { } payload)
                 return new JObject { ["done"] = false }.ToString();
 
-            return new JObject { ["done"] = true, ["result"] = new JRaw(slot.PayloadJson!) }.ToString();
+            return new JObject { ["done"] = true, ["result"] = new JRaw(payload) }.ToString();
         }
 
         private static async UniTaskVoid AwaitAsync(UniTask<string> operation, Slot slot)
@@ -61,6 +63,10 @@ namespace DCL.SyntheticInput.AltTester
             {
                 payload = ErrorPayload("the operation was cancelled");
             }
+            catch (TimeoutException)
+            {
+                payload = ErrorPayload("the operation timed out");
+            }
             catch (Exception e)
             {
                 ReportHub.LogException(e, ReportCategory.SYNTHETIC_INPUT);
@@ -68,11 +74,13 @@ namespace DCL.SyntheticInput.AltTester
             }
 
             slot.PayloadJson = payload;
-            slot.Done = true;
         }
 
         internal static string ErrorPayload(string error) =>
             new JObject { ["ok"] = false, ["error"] = error }.ToString();
+
+        internal static JObject ParcelJson(Vector2Int parcel) =>
+            new () { ["x"] = parcel.x, ["y"] = parcel.y };
     }
 }
 #endif

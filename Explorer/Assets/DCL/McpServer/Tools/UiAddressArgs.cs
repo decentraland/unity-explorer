@@ -2,6 +2,7 @@ using DCL.McpServer.Core;
 using DCL.McpServer.Utils;
 using DCL.SyntheticInput.UiSimulation;
 using Newtonsoft.Json.Linq;
+using System.Diagnostics.CodeAnalysis;
 
 namespace DCL.McpServer.Tools
 {
@@ -25,7 +26,7 @@ namespace DCL.McpServer.Tools
                   .String("altId", "ugui: AltId locator (ALTTESTER builds only).")
                   .Integer("crdtId", "sdk: the UI entity's CRDT id (from ui_list or the scene code).");
 
-        public static bool TryParse(JObject arguments, out UiElementAddress address, out string? error)
+        public static bool TryParse(JObject arguments, out UiElementAddress address, [NotNullWhen(false)] out string? error)
         {
             address = default(UiElementAddress);
             error = null;
@@ -48,21 +49,21 @@ namespace DCL.McpServer.Tools
                 return true;
             }
 
-            if (arguments["id"]?.Type == JTokenType.Integer)
+            if (arguments["id"] is { Type: JTokenType.Integer } idToken)
             {
-                address = UiElementAddress.UguiInstance(arguments["id"]!.Value<ulong>());
+                address = UiElementAddress.UguiInstance(idToken.Value<ulong>());
                 return true;
             }
 
-            if (arguments["altId"]?.Type == JTokenType.String)
+            if (arguments.GetStringOrNull("altId") is { } altId)
             {
-                address = UiElementAddress.UguiAltId(arguments["altId"]!.Value<string>()!);
+                address = UiElementAddress.UguiAltId(altId);
                 return true;
             }
 
-            if (arguments["path"]?.Type == JTokenType.String)
+            if (arguments.GetStringOrNull("path") is { } path)
             {
-                address = UiElementAddress.UguiPath(arguments["path"]!.Value<string>()!);
+                address = UiElementAddress.UguiPath(path);
                 return true;
             }
 

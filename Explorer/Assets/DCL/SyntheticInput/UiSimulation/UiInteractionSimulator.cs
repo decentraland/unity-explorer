@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.SDKComponents.SceneUI.Components;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using TMPro;
 using UnityEngine;
@@ -132,7 +133,7 @@ namespace DCL.SyntheticInput.UiSimulation
                 if (TryFindClientCover(target.panel, out GameObject? cover))
                     return UiActionResult.Failure(
                         "a client UI element covers the scene UI at this point (a client surface can be fully transparent and still take the click); pass force to click through it",
-                        PathOf(cover!.transform), imageRect);
+                        PathOf(cover.transform), imageRect);
             }
 
             SendPooled<PointerEnterEvent>(target);
@@ -317,7 +318,7 @@ namespace DCL.SyntheticInput.UiSimulation
             $"({offset.x:F0}, {offset.y:F0})";
 
         /// <summary>The scene UI panel is itself a uGUI raycast target, so its own hit is not a cover.</summary>
-        private bool TryFindClientCover(IPanel targetPanel, out GameObject? cover)
+        private bool TryFindClientCover(IPanel targetPanel, [NotNullWhen(true)] out GameObject? cover)
         {
             cover = null;
 

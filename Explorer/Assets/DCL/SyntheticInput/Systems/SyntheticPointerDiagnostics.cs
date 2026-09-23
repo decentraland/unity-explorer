@@ -41,10 +41,9 @@ namespace DCL.SyntheticInput.Systems
             if (raycastResult.SyntheticAimPoint != intent.InjectedAimPoint)
                 return Failure(in intent, "the reticle pipeline did not process the synthetic aim (is the cursor panning or the in-world camera active?)");
 
-            if (!raycastResult.IsValidHit)
+            if (raycastResult.EntityInfo is not { } entityInfo)
                 return DiagnoseMiss(in intent, raycastResult.OriginRay, collidersGlobalCache);
 
-            GlobalColliderSceneEntityInfo entityInfo = raycastResult.EntityInfo!.Value;
             Entity hitEntity = entityInfo.ColliderSceneEntityInfo.EntityReference;
             int hitCrdtId = entityInfo.ColliderSceneEntityInfo.SDKEntity.Id;
 
@@ -52,13 +51,7 @@ namespace DCL.SyntheticInput.Systems
                 return Failure(in intent, $"the ray landed on a collider of a different scene ('{raycastResult.Collider.name}')");
 
             if (!IsExpectedTarget(in intent, hitEntity))
-            {
-                SyntheticPointerResult blocked = Failure(in intent, "another collider blocks the line of sight to the target");
-                blocked.BlockedByEntityId = hitEntity.Id;
-                blocked.BlockedByCrdtId = hitCrdtId;
-                blocked.BlockedByColliderName = raycastResult.Collider.name;
-                return blocked;
-            }
+                return Blocked(in intent, "the target", hitEntity, hitCrdtId, raycastResult.Collider.name);
 
             if (IsHoveredAtDistance(in raycastResult, in hoverState))
             {
@@ -127,14 +120,11 @@ namespace DCL.SyntheticInput.Systems
             SyntheticPointerResult result;
             bool aimPointOnly = intent.TargetEntityId < 0 && !intent.Press.HasValue;
 
-            if (!entityInfo.TryGetPointerEvents(out PBPointerEvents? pbPointerEvents) || pbPointerEvents == null)
+            if (!entityInfo.TryGetPointerEvents(out PBPointerEvents? pbPointerEvents))
             {
                 if (aimPointOnly && stoppedShortOfAim)
                 {
-                    result = Failure(in intent, "another collider blocks the line of sight to the aim point");
-                    result.BlockedByEntityId = hitEntity.Id;
-                    result.BlockedByCrdtId = hitCrdtId;
-                    result.BlockedByColliderName = colliderName;
+                    result = Blocked(in intent, "the aim point", hitEntity, hitCrdtId, colliderName);
                     result.Distance = distance;
                     return result;
                 }
@@ -174,6 +164,15 @@ namespace DCL.SyntheticInput.Systems
                 Distance = raycastResult.GetDistance(),
             };
 
+        private static SyntheticPointerResult Blocked(in SyntheticPointerEventIntent intent, string what, Entity hitEntity, int hitCrdtId, string colliderName)
+        {
+            SyntheticPointerResult blocked = Failure(in intent, $"another collider blocks the line of sight to {what}");
+            blocked.BlockedByEntityId = hitEntity.Id;
+            blocked.BlockedByCrdtId = hitCrdtId;
+            blocked.BlockedByColliderName = colliderName;
+            return blocked;
+        }
+
         private static bool HasCursorEntry(PBPointerEvents pbPointerEvents)
         {
             for (var i = 0; i < pbPointerEvents.PointerEvents!.Count; i++)
@@ -189,7 +188,7 @@ namespace DCL.SyntheticInput.Systems
             if (tooltips is { Count: > 0 })
                 return tooltips[0].Text;
 
-            if (!entityInfo.TryGetPointerEvents(out PBPointerEvents? pbPointerEvents) || pbPointerEvents == null)
+            if (!entityInfo.TryGetPointerEvents(out PBPointerEvents? pbPointerEvents))
                 return null;
 
             for (var i = 0; i < pbPointerEvents.PointerEvents!.Count; i++)

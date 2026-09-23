@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UIElements;
@@ -31,7 +32,7 @@ namespace DCL.SyntheticInput.UiSimulation
         ///     Matched on the concrete <see cref="PanelRaycaster" /> because IRuntimePanelComponent is internal to
         ///     UI Toolkit.
         /// </summary>
-        public static bool TryGetHostedPanel(in RaycastResult hit, out IPanel? panel)
+        public static bool TryGetHostedPanel(in RaycastResult hit, [NotNullWhen(true)] out IPanel? panel)
         {
             panel = hit.module is PanelRaycaster panelRaycaster ? panelRaycaster.panel : null;
             return panel != null;

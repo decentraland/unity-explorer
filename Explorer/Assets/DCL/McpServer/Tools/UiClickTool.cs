@@ -7,6 +7,7 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem.LowLevel;
+using VisualElement = UnityEngine.UIElements.VisualElement;
 
 namespace DCL.McpServer.Tools
 {
@@ -16,10 +17,6 @@ namespace DCL.McpServer.Tools
     /// </summary>
     public class UiClickTool : McpTool
     {
-        private const float DEFAULT_TIMEOUT_SEC = 3f;
-        private const float MIN_TIMEOUT_SEC = 0.5f;
-        private const float MAX_TIMEOUT_SEC = 15f;
-
         private const int SDK_DEVICE_OBSERVE_FRAMES = 6;
 
         private readonly UiAutomationServices uiAutomation;
@@ -48,21 +45,21 @@ namespace DCL.McpServer.Tools
         public override async UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
         {
             if (!UiAddressArgs.TryParse(arguments, out UiElementAddress address, out string? addressError))
-                return McpToolResult.Error(addressError!);
+                return McpToolResult.Error(addressError);
 
             if (!arguments.TryGetEnum("button", PointerEventData.InputButton.Left, out PointerEventData.InputButton button))
                 return McpToolResult.Error(arguments.EnumArgumentError<PointerEventData.InputButton>("button"));
 
             bool force = arguments.GetBool("force", false);
             bool device = arguments.GetBool("device", false);
-            float timeoutSec = Mathf.Clamp(arguments.GetFloat("timeoutSec", DEFAULT_TIMEOUT_SEC), MIN_TIMEOUT_SEC, MAX_TIMEOUT_SEC);
+            float timeoutSec = PointerArgs.ClampTimeout(arguments);
 
             UiActionResult result;
 
             if (address.Stack == UiStack.SDK)
             {
                 if (!uiAutomation.SdkResolver.TryResolve(address.CrdtId, out SdkUiElement element, out string? failure))
-                    return McpToolResult.Error(failure!);
+                    return McpToolResult.Error(failure);
 
                 result = device
                     ? await RunDeviceClickOnSdkAsync(element, button, timeoutSec, ct)
@@ -71,9 +68,9 @@ namespace DCL.McpServer.Tools
             else
             {
                 if (!uiAutomation.Discovery.TryResolve(in address, out GameObject? target, out string? failure))
-                    return McpToolResult.Error(failure!);
+                    return McpToolResult.Error(failure);
 
-                var rectTransform = (RectTransform)target!.transform;
+                var rectTransform = (RectTransform)target.transform;
 
                 result = device
                     ? await RunDeviceClickAsync(UiScreenGeometry.ScreenCenterOf(rectTransform), UiScreenGeometry.ImageRectOf(rectTransform), button, timeoutSec, ct)
@@ -124,8 +121,11 @@ namespace DCL.McpServer.Tools
                 : UiActionResult.Failure(gesture.FailureReason ?? "the device click failed", null, imageRect);
         }
 
-        private static Rect SdkImageRect(in SdkUiElement element) =>
-            UiScreenGeometry.PanelRectToImageRect(element.Transform.Transform.panel, element.Transform.Transform.worldBound);
+        private static Rect SdkImageRect(in SdkUiElement element)
+        {
+            VisualElement visual = element.Transform.Transform;
+            return UiScreenGeometry.PanelRectToImageRect(visual.panel, visual.worldBound);
+        }
 
         private static MouseButton ToMouseButton(PointerEventData.InputButton button) =>
             button switch

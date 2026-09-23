@@ -35,12 +35,12 @@ namespace DCL.McpServer.Tools
         public override UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
         {
             if (!UiAddressArgs.TryParse(arguments, out UiElementAddress address, out string? addressError))
-                return UniTask.FromResult(McpToolResult.Error(addressError!));
+                return UniTask.FromResult(McpToolResult.Error(addressError));
 
-            bool hasText = arguments["text"]?.Type == JTokenType.String;
+            string? text = arguments.GetStringOrNull("text");
             bool hasOptionIndex = arguments.TryGetInt("optionIndex", out int optionIndex);
 
-            if (!hasText && !hasOptionIndex)
+            if (text == null && !hasOptionIndex)
                 return UniTask.FromResult(McpToolResult.Error("Provide text, or optionIndex for an sdk dropdown."));
 
             bool submit = arguments.GetBool("submit", false);
@@ -50,21 +50,21 @@ namespace DCL.McpServer.Tools
             if (address.Stack == UiStack.SDK)
             {
                 if (!uiAutomation.SdkResolver.TryResolve(address.CrdtId, out SdkUiElement element, out string? failure))
-                    return UniTask.FromResult(McpToolResult.Error(failure!));
+                    return UniTask.FromResult(McpToolResult.Error(failure));
 
-                result = hasOptionIndex
-                    ? uiAutomation.Simulator.SelectDropdownSdk(element, optionIndex)
-                    : uiAutomation.Simulator.SetTextSdk(element, arguments["text"]!.Value<string>()!, submit);
+                result = text != null && !hasOptionIndex
+                    ? uiAutomation.Simulator.SetTextSdk(element, text, submit)
+                    : uiAutomation.Simulator.SelectDropdownSdk(element, optionIndex);
             }
             else
             {
-                if (!hasText)
+                if (text == null)
                     return UniTask.FromResult(McpToolResult.Error("optionIndex applies only to sdk dropdowns; ugui inputs take text."));
 
                 if (!uiAutomation.Discovery.TryResolve(in address, out GameObject? target, out string? failure))
-                    return UniTask.FromResult(McpToolResult.Error(failure!));
+                    return UniTask.FromResult(McpToolResult.Error(failure));
 
-                result = uiAutomation.Simulator.SetTextUgui(target!, arguments["text"]!.Value<string>()!, submit);
+                result = uiAutomation.Simulator.SetTextUgui(target, text, submit);
             }
 
             return UniTask.FromResult(McpToolResult.Json(result.ToJson(uiAutomation.CursorStateName())));

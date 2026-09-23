@@ -38,7 +38,7 @@ namespace DCL.McpServer.Tools
         public override UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
         {
             if (!UiAddressArgs.TryParse(arguments, out UiElementAddress address, out string? addressError))
-                return UniTask.FromResult(McpToolResult.Error(addressError!));
+                return UniTask.FromResult(McpToolResult.Error(addressError));
 
             var delta = new Vector2(arguments.GetFloat("dx", 0f), arguments.GetFloat("dy", 0f));
 
@@ -50,16 +50,16 @@ namespace DCL.McpServer.Tools
             if (address.Stack == UiStack.SDK)
             {
                 if (!uiAutomation.SdkResolver.TryResolve(address.CrdtId, out SdkUiElement element, out string? failure))
-                    return UniTask.FromResult(McpToolResult.Error(failure!));
+                    return UniTask.FromResult(McpToolResult.Error(failure));
 
                 result = uiAutomation.Simulator.ScrollSdk(element, delta);
             }
             else
             {
                 if (!uiAutomation.Discovery.TryResolve(in address, out GameObject? target, out string? failure))
-                    return UniTask.FromResult(McpToolResult.Error(failure!));
+                    return UniTask.FromResult(McpToolResult.Error(failure));
 
-                result = uiAutomation.Simulator.ScrollUgui(target!, delta, arguments.GetBool("force", false));
+                result = uiAutomation.Simulator.ScrollUgui(target, delta, arguments.GetBool("force", false));
             }
 
             return UniTask.FromResult(McpToolResult.Json(result.ToJson(uiAutomation.CursorStateName())));

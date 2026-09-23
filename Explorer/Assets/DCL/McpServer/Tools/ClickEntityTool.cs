@@ -25,10 +25,6 @@ namespace DCL.McpServer.Tools
             Up,
         }
 
-        private const float DEFAULT_TIMEOUT_SEC = 3f;
-        private const float MIN_TIMEOUT_SEC = 0.5f;
-        private const float MAX_TIMEOUT_SEC = 15f;
-
         private readonly SyntheticInputAgent syntheticInput;
 
         public override string Name => "click_entity";
@@ -45,12 +41,8 @@ namespace DCL.McpServer.Tools
             + "sits away from their pivot (e.g. GLTF meshes), pass an explicit x/y/z world point to aim at.";
 
         protected override McpJsonSchema DescribeInput(McpJsonSchema schema) =>
-            schema.Integer("entityId", "Target entity id in the current scene world (from list_scene_entities). Omit only when x/y/z are given, then the ray decides the target.")
-                  .Number("x", "World-space aim point; overrides the automatic aim at the entity's collider center.")
-                  .Number("y")
-                  .Number("z")
-                  .String("sceneId", "Pin the click to this scene (id from get_scene_state): it fails instead of landing in another scene if the player moved.")
-                  .Enum<PointerButton>("button", PointerArgs.BUTTON_DESCRIPTION)
+            PointerArgs.DescribeAim(schema, "click")
+                       .Enum<PointerButton>("button", PointerArgs.BUTTON_DESCRIPTION)
                   .Enum<ClickKind>("eventType", "click = down, then up on the next scene tick. Default click.")
                   .Number("timeoutSec", "Seconds to wait for delivery. Default 3, max 15.");
 
@@ -64,21 +56,21 @@ namespace DCL.McpServer.Tools
         public override async UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
         {
             if (!PointerArgs.TryParseAim(arguments, requireTarget: true, out PointerAim aim, out string? aimError))
-                return McpToolResult.Error(aimError!);
+                return McpToolResult.Error(aimError);
 
             if (!PointerArgs.TryGetButton(arguments, out InputAction button, out string? buttonError))
-                return McpToolResult.Error(buttonError!);
+                return McpToolResult.Error(buttonError);
 
             if (!arguments.TryGetEnum("eventType", ClickKind.Click, out ClickKind kind))
                 return McpToolResult.Error(arguments.EnumArgumentError<ClickKind>("eventType"));
 
-            float timeoutSec = Mathf.Clamp(arguments.GetFloat("timeoutSec", DEFAULT_TIMEOUT_SEC), MIN_TIMEOUT_SEC, MAX_TIMEOUT_SEC);
+            float timeoutSec = PointerArgs.ClampTimeout(arguments);
 
             SyntheticPointerResult result = kind switch
                                             {
-                                                ClickKind.Down => await syntheticInput.PointerDownAsync(aim, button, timeoutSec, ct),
-                                                ClickKind.Up => await syntheticInput.PointerUpAsync(aim, button, timeoutSec, ct),
-                                                _ => await syntheticInput.ClickAsync(aim, button, timeoutSec, ct),
+                                                ClickKind.Down => await syntheticInput.PointerDownAsync(aim, button, timeoutSec, ct: ct),
+                                                ClickKind.Up => await syntheticInput.PointerUpAsync(aim, button, timeoutSec, ct: ct),
+                                                _ => await syntheticInput.ClickAsync(aim, button, timeoutSec, ct: ct),
                                             };
 
             if (result.TimedOut)

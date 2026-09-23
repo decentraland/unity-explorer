@@ -33,8 +33,6 @@ namespace DCL.SyntheticInput.Components
         /// <summary>Aim through UI that covers the <see cref="ScreenPoint" />.</summary>
         public readonly bool Force;
 
-        public UniTaskCompletionSource<SyntheticPointerOutcome>? Completion { get; set; }
-
         /// <summary>Written by the delivering system once the input is posted.</summary>
         public bool Injected;
 
@@ -43,6 +41,8 @@ namespace DCL.SyntheticInput.Components
 
         /// <summary>World point that the posted aim targeted.</summary>
         public Vector3 InjectedAimPoint;
+
+        public UniTaskCompletionSource<SyntheticPointerOutcome>? Completion { get; set; }
 
         /// <summary>True for a hover hold. <see cref="Button" /> is ignored then.</summary>
         public bool IsHover => EventType == PointerEventType.PetHoverEnter;
@@ -68,20 +68,9 @@ namespace DCL.SyntheticInput.Components
         }
 
         private SyntheticPointerEventIntent(int targetEntityId, string? sceneId, Vector3? aimPoint, Vector2? screenPoint, float holdEndTime, bool force)
+            : this(targetEntityId, sceneId, aimPoint, InputAction.IaAny, PointerEventType.PetHoverEnter, null, screenPoint, force)
         {
-            TargetEntityId = targetEntityId;
-            SceneId = sceneId;
-            AimPoint = aimPoint;
-            ScreenPoint = screenPoint;
-            Button = InputAction.IaAny;
-            EventType = PointerEventType.PetHoverEnter;
-            Press = null;
             HoldEndTime = holdEndTime;
-            Force = force;
-            Completion = null;
-            Injected = false;
-            InjectedTick = 0;
-            InjectedAimPoint = Vector3.zero;
         }
 
         public static SyntheticPointerEventIntent Hover(int targetEntityId, string? sceneId, Vector3? aimPoint, Vector2? screenPoint, float holdEndTime, bool force = false) =>

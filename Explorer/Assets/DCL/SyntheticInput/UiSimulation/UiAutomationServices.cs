@@ -66,11 +66,11 @@ namespace DCL.SyntheticInput.UiSimulation
             {
                 if (hostedPanel != null && SdkResolver.TryDescribeCoverIn(hostedPanel, screenPoint, out string? hostedCover))
                 {
-                    cover = hostedCover!;
+                    cover = hostedCover;
                     return true;
                 }
 
-                cover = uguiPath!;
+                cover = uguiPath;
                 return true;
             }
 
@@ -78,7 +78,7 @@ namespace DCL.SyntheticInput.UiSimulation
             // panel itself picks an element there; the panel's own hit test is what a real click would obey.
             if (SdkResolver.TryFindCoverAt(screenPoint, out string? sdkCover))
             {
-                cover = sdkCover!;
+                cover = sdkCover;
                 return true;
             }
 

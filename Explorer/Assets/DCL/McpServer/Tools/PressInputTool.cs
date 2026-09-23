@@ -55,13 +55,9 @@ namespace DCL.McpServer.Tools
             + "press and release. This does NOT move the player — use walk for that.";
 
         protected override McpJsonSchema DescribeInput(McpJsonSchema schema) =>
-            schema.Enum<SdkAction>("action", "Which SDK input action to press.", isRequired: true)
-                  .Number("holdSeconds", "Seconds between the press and the release. Default 0 (release on the next scene tick), max 30.")
-                  .Integer("entityId", "Aim the reticle at this entity for the gesture (from list_scene_entities) so the action lands entity-bound on it. Omit for a scene-root broadcast.")
-                  .Number("x", "World-space aim point; an alternative to entityId (and it overrides the aim at the entity's collider center).")
-                  .Number("y")
-                  .Number("z")
-                  .String("sceneId", "Pin the gesture to this scene (id from get_scene_state): it fails instead of landing in another scene if the player moved.");
+            PointerArgs.DescribeAim(schema.Enum<SdkAction>("action", "Which SDK input action to press.", isRequired: true)
+                                          .Number("holdSeconds", "Seconds between the press and the release. Default 0 (release on the next scene tick), max 30."),
+                "gesture", requireTarget: false);
 
         public override McpToolAnnotations Annotations => McpToolAnnotations.Mutating(destructive: false, idempotent: false);
 
@@ -78,7 +74,7 @@ namespace DCL.McpServer.Tools
             float holdSeconds = Mathf.Clamp(arguments.GetFloat("holdSeconds", 0f), 0f, MAX_HOLD_SECONDS);
 
             if (!PointerArgs.TryParseAim(arguments, requireTarget: false, out PointerAim aim, out string? aimError))
-                return McpToolResult.Error(aimError!);
+                return McpToolResult.Error(aimError);
 
             SyntheticPointerResult result = await syntheticInput.GlobalInputAsync(ToInputAction(action), holdSeconds, aim, ct);
 

@@ -98,7 +98,7 @@ namespace DCL.McpServer.Tools
             var result = new JObject
             {
                 ["position"] = finalPosition.ToVector(),
-                ["parcel"] = finalPosition.ToParcel().ToParcel(),
+                ["parcel"] = finalPosition.ToParcel().ToParcelJson(),
             };
 
             if (lookAtTarget != null)

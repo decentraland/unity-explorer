@@ -11,6 +11,7 @@ using ECS.SceneLifeCycle.Realm;
 using Newtonsoft.Json.Linq;
 using SceneRunner.Scene;
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using UnityEngine;
 
@@ -43,7 +44,7 @@ namespace DCL.SyntheticInput.AltTester
 
         public static string GetStatusJson()
         {
-            if (!TryGetSession(out Session ready, out string failedPayload))
+            if (!TryGetSession(out Session? ready, out string? failedPayload))
                 return failedPayload;
 
             IRealmData realmData = ready.RealmData;
@@ -56,7 +57,7 @@ namespace DCL.SyntheticInput.AltTester
                 ["realmName"] = realmData.Configured ? realmData.RealmName : string.Empty,
                 ["hostname"] = realmData.Configured ? realmData.Hostname : string.Empty,
                 ["realmKind"] = realmData.RealmType.Value.ToString(),
-                ["currentParcel"] = ParcelJson(ready.ScenesCache.CurrentParcel.Value),
+                ["currentParcel"] = AltOperationRegistry.ParcelJson(ready.ScenesCache.CurrentParcel.Value),
                 ["loadingScreenOn"] = ready.LoadingStatus.IsLoadingScreenOn(),
                 ["scene"] = SceneJson(ready.ScenesCache.CurrentScene.Value),
             };
@@ -66,7 +67,7 @@ namespace DCL.SyntheticInput.AltTester
 
         public static int StartGoToWorld(string world, int parcelX, int parcelY, float timeoutSec)
         {
-            if (!TryGetSession(out Session ready, out string failedPayload))
+            if (!TryGetSession(out Session? ready, out string? failedPayload))
                 return AltOperationRegistry.Start(UniTask.FromResult(failedPayload));
 
             if (string.IsNullOrWhiteSpace(world))
@@ -77,7 +78,7 @@ namespace DCL.SyntheticInput.AltTester
 
         public static int StartTeleport(int parcelX, int parcelY, float timeoutSec)
         {
-            if (!TryGetSession(out Session ready, out string failedPayload))
+            if (!TryGetSession(out Session? ready, out string? failedPayload))
                 return AltOperationRegistry.Start(UniTask.FromResult(failedPayload));
 
             return AltOperationRegistry.Start(TeleportAsync(ready, new Vector2Int(parcelX, parcelY), ClampTimeout(timeoutSec)));
@@ -151,9 +152,9 @@ namespace DCL.SyntheticInput.AltTester
             var payload = new JObject
             {
                 ["ok"] = ok,
-                ["targetParcel"] = ParcelJson(parcel),
+                ["targetParcel"] = AltOperationRegistry.ParcelJson(parcel),
                 ["realmName"] = ready.RealmData.Configured ? ready.RealmData.RealmName : string.Empty,
-                ["currentParcel"] = ParcelJson(ready.ScenesCache.CurrentParcel.Value),
+                ["currentParcel"] = AltOperationRegistry.ParcelJson(ready.ScenesCache.CurrentParcel.Value),
                 ["scene"] = SceneJson(ready.ScenesCache.CurrentScene.Value),
             };
 
@@ -174,16 +175,16 @@ namespace DCL.SyntheticInput.AltTester
             return URLDomain.FromString(worldAddress.Value);
         }
 
-        private static bool TryGetSession(out Session ready, out string failedPayload)
+        private static bool TryGetSession([NotNullWhen(true)] out Session? ready, [NotNullWhen(false)] out string? failedPayload)
         {
             if (session != null)
             {
                 ready = session;
-                failedPayload = string.Empty;
+                failedPayload = null;
                 return true;
             }
 
-            ready = null!;
+            ready = null;
             failedPayload = AltOperationRegistry.ErrorPayload("the navigation probe is not installed (launch with --alttester or --mcp)");
             return false;
         }
@@ -194,16 +195,13 @@ namespace DCL.SyntheticInput.AltTester
         private static float ClampTimeout(float timeoutSec) =>
             timeoutSec <= 0f ? DEFAULT_TIMEOUT_SEC : Mathf.Clamp(timeoutSec, MIN_TIMEOUT_SEC, MAX_TIMEOUT_SEC);
 
-        private static JObject ParcelJson(Vector2Int parcel) =>
-            new () { ["x"] = parcel.x, ["y"] = parcel.y };
-
         private static JToken SceneJson(ISceneFacade? scene) =>
             scene == null
                 ? JValue.CreateNull()
                 : new JObject
                 {
                     ["name"] = scene.Info.Name,
-                    ["baseParcel"] = ParcelJson(scene.Info.BaseParcel),
+                    ["baseParcel"] = AltOperationRegistry.ParcelJson(scene.Info.BaseParcel),
                     ["state"] = scene.SceneStateProvider.State.Value().ToString(),
                     ["ready"] = scene.IsSceneReady(),
                 };

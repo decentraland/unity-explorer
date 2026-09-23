@@ -33,6 +33,8 @@ UI interaction is **layered** (see below): a semantic path that synthesizes elem
 
 Driver requests are ECS **intent components** installed on the player entity and fulfilled by the SyntheticInput systems, choreographed by `Core/EcsRequest`:
 
+`EcsRequest` is the one deliberate exception to the rule that systems are the sole entry point for entities: a driver adds or removes a request component through it and nothing else. Every read of world state, every component write and every side effect stays in the fulfilling system, so the request component is a mailbox, not a back door.
+
 - `SendAsync` installs the intent and returns the task the fulfilling system completes. Installation is **last-write-wins**: a pending request of the same kind completes as *preempted*. One driver at a time is supported; concurrent drivers preempt each other.
 - The system calls `CompleteAndRemove` (removal before completion, so continuations observe a clean entity).
 - Timeouts live in the driver facade: a request the simulation never completed (paused Editor, dead scene) is abandoned via `AbandonAsync` and reported as timed out — nothing leaks.

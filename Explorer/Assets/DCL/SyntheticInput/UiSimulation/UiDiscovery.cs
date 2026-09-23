@@ -1,6 +1,7 @@
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using TMPro;
 using UnityEngine;
@@ -66,7 +67,7 @@ namespace DCL.SyntheticInput.UiSimulation
         ///     panel, <paramref name="hostedPanel" /> is set and <paramref name="path" /> names the panel host, not
         ///     the element.
         /// </summary>
-        public bool TryFindCoverAt(Vector2 screenPoint, out string? path, out IPanel? hostedPanel)
+        public bool TryFindCoverAt(Vector2 screenPoint, [NotNullWhen(true)] out string? path, out IPanel? hostedPanel)
         {
             pointerEventData.Reset();
             pointerEventData.position = screenPoint;
@@ -89,7 +90,7 @@ namespace DCL.SyntheticInput.UiSimulation
             return true;
         }
 
-        public bool TryResolve(in UiElementAddress address, out GameObject? target, out string? failure)
+        public bool TryResolve(in UiElementAddress address, [NotNullWhen(true)] out GameObject? target, [NotNullWhen(false)] out string? failure)
         {
             target = null;
             failure = null;
@@ -109,16 +110,16 @@ namespace DCL.SyntheticInput.UiSimulation
             if (address.AltId != null)
                 return TryResolveAltId(address.AltId, out target, out failure);
 
-            if (string.IsNullOrEmpty(address.Path))
+            if (address.Path is not { Length: > 0 } path)
             {
                 failure = "a uGUI address needs a path, an id from ui_list, or an altId";
                 return false;
             }
 
-            return TryResolvePath(address.Path!, out target, out failure);
+            return TryResolvePath(path, out target, out failure);
         }
 
-        private bool TryResolveAltId(string altId, out GameObject? target, out string? failure)
+        private bool TryResolveAltId(string altId, [NotNullWhen(true)] out GameObject? target, [NotNullWhen(false)] out string? failure)
         {
             target = null;
 #if ALTTESTER
@@ -142,7 +143,7 @@ namespace DCL.SyntheticInput.UiSimulation
 #endif
         }
 
-        private bool TryResolvePath(string path, out GameObject? target, out string? failure)
+        private bool TryResolvePath(string path, [NotNullWhen(true)] out GameObject? target, [NotNullWhen(false)] out string? failure)
         {
             target = null;
 

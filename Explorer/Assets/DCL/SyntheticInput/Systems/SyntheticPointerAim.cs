@@ -32,25 +32,26 @@ namespace DCL.SyntheticInput.Systems
                 return true;
 
             int targetId = intent.TargetEntityId;
-            Entity found = Entity.Null;
 
             // TODO: resolve through CrdtEcsSynchronizer.EntitiesMap (O(1)) once MCP entity addressing moves from
             // raw Arch ids to CRDT ids, together with list_scene_entities/get_entity_details/WorldInfo, which scan
-            // for the same reason.
-            sceneWorld.Query(in ALL_ENTITIES, entity =>
+            // for the same reason. Chunk iteration keeps the scan free of the World.Query delegate allocation.
+            foreach (ref Chunk chunk in sceneWorld.Query(in ALL_ENTITIES).GetChunkIterator())
             {
-                if (entity.Id == targetId)
-                    found = entity;
-            });
+                foreach (int i in chunk)
+                {
+                    Entity candidate = chunk.Entity(i);
 
-            if (found == Entity.Null)
-            {
-                failure = Failure(in intent, $"no entity with id {targetId} in the current scene world");
-                return false;
+                    if (candidate.Id != targetId)
+                        continue;
+
+                    targetEntity = candidate;
+                    return true;
+                }
             }
 
-            targetEntity = found;
-            return true;
+            failure = Failure(in intent, $"no entity with id {targetId} in the current scene world");
+            return false;
         }
 
         public static bool TryResolveAimPoint(in SyntheticPointerEventIntent intent, World sceneWorld, Entity? targetEntity, Camera camera, UiCoverProbe? uiCoverProbe,

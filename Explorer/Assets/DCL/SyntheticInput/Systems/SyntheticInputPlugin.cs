@@ -20,8 +20,13 @@ namespace DCL.SyntheticInput.Systems
             this.uiAutomation = uiAutomation;
         }
 
-        public void Dispose() =>
+        public void Dispose()
+        {
+#if ALTTESTER
+            DCL.SyntheticInput.AltTester.UiAutomationProbe.Uninstall();
+#endif
             uiAutomation.Dispose();
+        }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
