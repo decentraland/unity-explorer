@@ -152,13 +152,18 @@ namespace DCL.Web3.Authenticators
                 }
             }
 
+            // An account generated on the device has no session to restore: the stored identity is the session
+            if (identityCache.Identity?.Method == LoginMethod.EPHEMERAL_GUEST)
+            {
+                CurrentProvider = AuthProvider.Ephemeral;
+                return true;
+            }
+
             string storedEmail = DCLPlayerPrefs.GetString(DCLPrefKeys.LOGGEDIN_EMAIL, string.Empty);
 
-            // Heuristic: a stored email means the ThirdWeb OTP flow; otherwise the stored identity tells whether
-            // it was generated on the device as a guest, and anything else is a Dapp Wallet.
             if (string.IsNullOrEmpty(storedEmail))
             {
-                CurrentProvider = identityCache.IsGuest() ? AuthProvider.Ephemeral : AuthProvider.Dapp;
+                CurrentProvider = AuthProvider.Dapp;
                 return true;
             }
 

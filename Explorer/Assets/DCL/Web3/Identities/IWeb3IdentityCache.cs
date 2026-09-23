@@ -110,6 +110,12 @@ namespace DCL.Web3.Identities
         }
 
         public static bool IsGuest(this IWeb3IdentityCache cache) =>
-            cache.Identity?.Method == LoginMethod.GUEST;
+            cache.Identity?.IsGuest() ?? false;
+    }
+
+    public static class Web3IdentityExtensions
+    {
+        public static bool IsGuest(this IWeb3Identity identity) =>
+            identity.Method is LoginMethod.GUEST or LoginMethod.EPHEMERAL_GUEST;
     }
 }

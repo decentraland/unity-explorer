@@ -26,6 +26,7 @@ namespace DCL.Web3.Authenticators
         WALLETCONNECT = 9,
         GUEST = 10,
         TOKEN_FILE = 11,
+        EPHEMERAL_GUEST = 12,
     }
 
     public readonly struct LoginPayload

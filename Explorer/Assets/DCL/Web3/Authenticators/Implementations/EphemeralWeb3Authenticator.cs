@@ -59,7 +59,7 @@ namespace DCL.Web3.Authenticators
                 ephemeralAccount,
                 expiration,
                 authChain,
-                payload.Method
+                LoginMethod.EPHEMERAL_GUEST
             );
 
             return sessionIdentity.AsUniTaskResult();
