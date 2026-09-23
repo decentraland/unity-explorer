@@ -15,6 +15,8 @@ namespace DCL.Web3.Authenticators
 
         private readonly IWeb3AccountFactory accountFactory;
 
+        private IWeb3Identity? sessionIdentity;
+
         public EphemeralWeb3Authenticator(IWeb3AccountFactory accountFactory)
         {
             this.accountFactory = accountFactory;
@@ -24,6 +26,11 @@ namespace DCL.Web3.Authenticators
 
         public UniTask<IWeb3Identity> LoginAsync(LoginPayload payload, CancellationToken ct)
         {
+            // The account is kept for as long as the process runs, so logging out and back in as a guest returns
+            // to the same one. Nothing is stored on disk, so the next launch starts from a new account
+            if (sessionIdentity is { IsExpired: false })
+                return sessionIdentity.AsUniTaskResult();
+
             // The rust sign server holds a single key: the account created last is the one that signs, so the
             // ephemeral account is built after the signer has signed, leaving its key live for every request
             EthECKey ephemeralKey = EthECKey.GenerateKey()!;
@@ -47,13 +54,15 @@ namespace DCL.Web3.Authenticators
             });
 
             // To keep cohesiveness between the platform, convert the user address to lower case
-            return new DecentralandIdentity(
+            sessionIdentity = new DecentralandIdentity(
                 new Web3Address(signer),
                 ephemeralAccount,
                 expiration,
                 authChain,
                 payload.Method
-            ).AsUniTaskResult<IWeb3Identity>();
+            );
+
+            return sessionIdentity.AsUniTaskResult();
         }
     }
 }

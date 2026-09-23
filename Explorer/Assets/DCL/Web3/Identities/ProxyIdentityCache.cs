@@ -70,8 +70,8 @@ namespace DCL.Web3.Identities
 
         public void Clear()
         {
-            memory.Clear();
             storage.Clear();
+            memory.Clear();
         }
     }
 }

@@ -25,8 +25,18 @@ using Utility;
 
 namespace DCL.AuthenticationScreenFlow
 {
-    public class AuthenticationScreenController : ControllerBase<AuthenticationScreenView>
+    public class AuthenticationScreenController : ControllerBase<AuthenticationScreenView, AuthenticationScreenController.Params>
     {
+        public readonly struct Params
+        {
+            public readonly bool StartAtLoginSelection;
+
+            public Params(bool startAtLoginSelection)
+            {
+                StartAtLoginSelection = startAtLoginSelection;
+            }
+        }
+
         public enum AuthStatus
         {
             None = 0,
@@ -206,9 +216,10 @@ namespace DCL.AuthenticationScreenFlow
         protected override void OnBeforeViewShow()
         {
             base.OnBeforeViewShow();
+
+            IWeb3Identity? storedIdentity = storedIdentityProvider.Identity;
             // Force to re-login if the identity will expire in 24hs or less, so we mitigate the chances on
             // getting the identity expired while in-world, provoking signed-fetch requests to fail
-            IWeb3Identity? storedIdentity = storedIdentityProvider.Identity;
             if (storedIdentity is { IsExpired: false } && storedIdentity.Expiration - DateTime.UtcNow > TimeSpan.FromDays(1))
             {
                 CancelLoginProcess();
@@ -218,7 +229,10 @@ namespace DCL.AuthenticationScreenFlow
             }
             else
             {
-                EnterLoginEntryState(UIAnimationHashes.IN);
+                if (inputData.StartAtLoginSelection)
+                    fsm?.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.IN, true);
+                else
+                    EnterLoginEntryState(UIAnimationHashes.IN);
             }
         }
 
@@ -262,7 +276,10 @@ namespace DCL.AuthenticationScreenFlow
                     fsm?.Enter<ProfileFetchingAuthState, ProfileFetchingPayload>(new (storedIdentity, storedIdentity.Method != LoginMethod.TOKEN_FILE, ct));
                 else
                 {
-                    EnterLoginEntryState(UIAnimationHashes.IN);
+                    if (inputData.StartAtLoginSelection)
+                        fsm?.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.IN, true);
+                    else
+                        EnterLoginEntryState(UIAnimationHashes.IN);
                 }
             }
             catch (OperationCanceledException)

@@ -19,7 +19,7 @@ namespace DCL.Web3.Authenticators
         private readonly ThirdWebAuthenticator thirdWebAuth;
         private readonly DappWeb3EthereumApi dappEthereumApi;
         private readonly IWeb3Authenticator dappLogin;
-        private readonly IWeb3Authenticator ephemeralGuestLogin;
+        private readonly EphemeralWeb3Authenticator ephemeralGuestLogin;
         private readonly IWeb3IdentityCache identityCache;
         private readonly IAnalyticsController analytics;
 
@@ -32,6 +32,8 @@ namespace DCL.Web3.Authenticators
         }
 
         public bool IsThirdWebAccount => CurrentProvider == AuthProvider.ThirdWeb;
+
+        public bool IsEphemeralAccount => CurrentProvider == AuthProvider.Ephemeral;
 
         private IWeb3Authenticator currentAuthenticator => CurrentProvider switch
                                                            {
@@ -47,7 +49,7 @@ namespace DCL.Web3.Authenticators
             DappDeepLinkAuthenticator dappLogin,
             IWeb3IdentityCache identityCache,
             IAnalyticsController analytics,
-            IWeb3Authenticator ephemeralGuestLogin)
+            EphemeralWeb3Authenticator ephemeralGuestLogin)
         {
             this.thirdWebAuth = thirdWebAuth ?? throw new ArgumentNullException(nameof(thirdWebAuth));
             this.dappEthereumApi = dappEthereumApi ?? throw new ArgumentNullException(nameof(dappEthereumApi));

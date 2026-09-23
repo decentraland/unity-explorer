@@ -32,6 +32,8 @@ namespace DCL.Web3.Authenticators
         /// </summary>
         bool IsThirdWebAccount { get; }
 
+        bool IsEphemeralAccount { get; }
+
         /// <summary>
         ///     Sets the callback that will be invoked when a transaction requires user confirmation.
         ///     The callback should return true if user confirms, false if user rejects.
