@@ -74,8 +74,6 @@ namespace DCL.Lobby
                 card.Clicked = null;
                 card.JoinClicked = null;
             }
-
-            jumpCts.SafeCancelAndDispose();
         }
 
         /// <summary>
@@ -106,6 +104,7 @@ namespace DCL.Lobby
             tracker.OnFriendBecameOffline -= OnFriendStatusChanged;
             tracker.OnFriendRemoved -= OnFriendRemoved;
             tracker.OnReset -= OnTrackerReset;
+            jumpCts.SafeCancelAndDispose();
         }
 
         private void OnFriendStatusChanged(Profile.CompactInfo _) =>
