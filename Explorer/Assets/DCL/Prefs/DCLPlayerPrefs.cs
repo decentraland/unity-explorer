@@ -146,6 +146,14 @@ namespace DCL.Prefs
         public static void SaveSync() =>
             dclPrefs.SaveSync();
 
+        /// <summary>Replaces the backing store without initialization checks, returning the previous one.</summary>
+        internal static IDCLPrefs SwapForTests(IDCLPrefs prefs)
+        {
+            IDCLPrefs previous = dclPrefs;
+            dclPrefs = prefs;
+            return previous;
+        }
+
         private static void Initialize(bool inMemory)
         {
             if (dclPrefs != null)

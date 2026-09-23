@@ -1,5 +1,4 @@
 using DCL.Prefs;
-using DCL.Prefs.Tests;
 using Global.AppArgs;
 using NSubstitute;
 using NUnit.Framework;
@@ -11,19 +10,19 @@ namespace DCL.FeatureFlags.Tests
     public class FeatureFlagsProviderExtensionsShould
     {
         private IAppArgs appArgs = null!;
-        private InMemoryPrefsScope prefs = null!;
+        private IDCLPrefs originalPrefs = null!;
 
         [SetUp]
         public void SetUp()
         {
             appArgs = Substitute.For<IAppArgs>();
-            prefs = new InMemoryPrefsScope();
+            originalPrefs = DCLPlayerPrefs.SwapForTests(new InMemoryDCLPlayerPrefs());
         }
 
         [TearDown]
         public void TearDown()
         {
-            prefs.Dispose();
+            DCLPlayerPrefs.SwapForTests(originalPrefs);
         }
 
         [Test]

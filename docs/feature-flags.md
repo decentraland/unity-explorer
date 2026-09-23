@@ -34,14 +34,14 @@ The client sends an **anonymous user id**, never the wallet address. It is resol
 Neither argument is ever written to prefs: the stored id is only the generated fallback.
 
 That third id is not owned by feature flags. It is the installation's single anonymous identity, and the device
-identifier sent to comms-gatekeeper is a hash of the same value (`HardwareFingerprintProvider`), so there is one
+identifier sent to comms-gatekeeper is a hash of the same value (`AnonymousInstallationId.ResolveFingerprint`), so there is one
 value to reason about and one to reset. Installations that predate the shared key keep the id they already had
 under `FeatureFlagsUserId`, rather than being re-bucketed on upgrade.
 
 The generated id is deliberately random rather than derived from `SystemInfo.deviceUniqueIdentifier`: the device id
 is unavailable on some platforms (`SystemInfo.unsupportedIdentifier`), which would collapse every affected machine
 into one rollout bucket, and it silently collides between cloned VM/VDI images and between machines whose firmware
-reports placeholder serials. `HardwareFingerprintProvider` moved off it for that second reason; `GuestSessionIdProvider`
+reports placeholder serials. The comms fingerprint moved off it for that second reason; `GuestSessionIdProvider`
 still hashes it behind a domain prefix (see issue #10199).
 
 The trade-off is durability: clearing prefs or reinstalling yields a new id, so that install is re-bucketed. Note

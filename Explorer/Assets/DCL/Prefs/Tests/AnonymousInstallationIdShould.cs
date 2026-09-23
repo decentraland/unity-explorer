@@ -5,18 +5,18 @@ namespace DCL.Prefs.Tests
 {
     public class AnonymousInstallationIdShould
     {
-        private InMemoryPrefsScope prefs = null!;
+        private IDCLPrefs originalPrefs = null!;
 
         [SetUp]
         public void SetUp()
         {
-            prefs = new InMemoryPrefsScope();
+            originalPrefs = DCLPlayerPrefs.SwapForTests(new InMemoryDCLPlayerPrefs());
         }
 
         [TearDown]
         public void TearDown()
         {
-            prefs.Dispose();
+            DCLPlayerPrefs.SwapForTests(originalPrefs);
         }
 
         [Test]
@@ -78,11 +78,58 @@ namespace DCL.Prefs.Tests
             string first = AnonymousInstallationId.Resolve();
 
             //Act
-            prefs.Reset();
+            DCLPlayerPrefs.SwapForTests(new InMemoryDCLPlayerPrefs());
             string second = AnonymousInstallationId.Resolve();
 
             //Assert
             Assert.That(second, Is.Not.EqualTo(first));
+        }
+
+        [Test]
+        public void ProduceFingerprintAsLowercaseHexOfSha256Length()
+        {
+            //Act
+            string fingerprint = AnonymousInstallationId.ResolveFingerprint();
+
+            //Assert
+            Assert.That(fingerprint, Does.Match("^[0-9a-f]{64}$"));
+        }
+
+        [Test]
+        public void KeepTheFingerprintStable()
+        {
+            //Arrange
+            string first = AnonymousInstallationId.ResolveFingerprint();
+
+            //Act
+            string second = AnonymousInstallationId.ResolveFingerprint();
+
+            //Assert
+            Assert.That(second, Is.EqualTo(first));
+        }
+
+        [Test]
+        public void DifferFingerprintBetweenInstallations()
+        {
+            //Arrange
+            string first = AnonymousInstallationId.ResolveFingerprint();
+
+            //Act
+            DCLPlayerPrefs.SwapForTests(new InMemoryDCLPlayerPrefs());
+            string second = AnonymousInstallationId.ResolveFingerprint();
+
+            //Assert
+            Assert.That(second, Is.Not.EqualTo(first));
+        }
+
+        [Test]
+        public void KeepTheIdentifierOutOfTheFingerprint()
+        {
+            //Act
+            string fingerprint = AnonymousInstallationId.ResolveFingerprint();
+
+            //Assert
+            Assert.That(fingerprint, Is.Not.EqualTo(AnonymousInstallationId.Resolve()));
         }
     }
 }

@@ -219,7 +219,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
                     $"[GateKeeperSceneRoom] Non-empty WorldCommsSecret is being sent for scene '{sceneId}'.");
 
             AdapterResponse response = await webRequests
-                                            .SignedFetchPostAsync(url, meta.BuildWithSecret(options.RealmData.WorldCommsSecret, options.HardwareFingerprint), token)
+                                            .SignedFetchPostAsync(url, meta.BuildWithSecret(options.RealmData.WorldCommsSecret, options.InstallationFingerprint), token)
                                             .CreateFromJson<AdapterResponse>(WRJsonParser.Unity);
             
             string connectionString = string.IsNullOrEmpty(response.adapter) ? response.fixedAdapter : response.adapter;

@@ -1,10 +1,8 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.Multiplayer.Connections.HardwareFingerprint;
 using DCL.Multiplayer.Connections.Rooms;
 using DCL.Multiplayer.Connections.Rooms.Connective;
-using DCL.Utility.Types;
 using DCL.WebRequests;
 using LiveKit.Proto;
 using DCL.LiveKit.Public;
@@ -20,15 +18,15 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
 
         private readonly IWebRequestController webRequests;
         private readonly URLAddress adapterAddress;
-        private readonly string hardwareFingerprint;
+        private readonly string installationFingerprint;
 
         public bool Activated { get; private set; }
 
-        public ChatConnectiveRoom(IWebRequestController webRequests, URLAddress adapterAddress, Option<HardwareFingerprintProvider> hardwareFingerprintProvider)
+        public ChatConnectiveRoom(IWebRequestController webRequests, URLAddress adapterAddress, string installationFingerprint)
         {
             this.webRequests = webRequests;
             this.adapterAddress = adapterAddress;
-            hardwareFingerprint = hardwareFingerprintProvider.Has ? hardwareFingerprintProvider.Value.Fingerprint : string.Empty;
+            this.installationFingerprint = installationFingerprint;
         }
 
         public async UniTask ActivateAsync()
@@ -89,7 +87,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
             string metadata = new FixedMetadata
             {
                 signer = "dcl:explorer",
-                deviceIdentifier = hardwareFingerprint,
+                deviceIdentifier = installationFingerprint,
             }.ToJson();
 
             var result = webRequests.SignedFetchGetAsync(adapterAddress, metadata, ct);

@@ -11,7 +11,6 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.GateKeeper.Meta;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms.Options;
-using DCL.Multiplayer.Connections.HardwareFingerprint;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.Pools;
 using DCL.Multiplayer.Connections.RoomHubs;
@@ -25,7 +24,7 @@ using DCL.Multiplayer.Profiles.Poses;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PluginSystem.Global;
-using DCL.Utility.Types;
+using DCL.Prefs;
 using DCL.Web3.Identities;
 using ECS.SceneLifeCycle.CurrentScene;
 using Global.AppArgs;
@@ -122,16 +121,16 @@ namespace Global.Dynamic
             SceneRoomLogMetaDataSource playSceneMetaDataSource = new SceneRoomMetaDataSource(staticContainer.RealmData, staticContainer.CharacterContainer.Transform, globalWorld, isolateScenesCommunication, bootstrapContainer.DecentralandUrlsSource, identityCache).WithLog();
             SceneRoomLogMetaDataSource localDevelopmentMetaDataSource = new LocalSceneDevelopmentSceneRoomMetaDataSource(localSceneEntityIdSource, identityCache).WithLog();
 
-            Option<HardwareFingerprintProvider> hardwareFingerprintProvider = FeaturesRegistry.Instance.IsEnabled(FeatureId.HardwareFingerprint)
-                ? Option<HardwareFingerprintProvider>.Some(new HardwareFingerprintProvider())
-                : Option<HardwareFingerprintProvider>.None;
+            string installationFingerprint = FeaturesRegistry.Instance.IsEnabled(FeatureId.HardwareFingerprint)
+                ? AnonymousInstallationId.ResolveFingerprint()
+                : string.Empty;
 
             var gateKeeperSceneRoomOptions = new GateKeeperSceneRoomOptions(staticContainer.LaunchMode,
                 bootstrapContainer.DecentralandUrlsSource,
                 playSceneMetaDataSource,
                 localDevelopmentMetaDataSource,
                 staticContainer.RealmData,
-                hardwareFingerprintProvider);
+                installationFingerprint);
 
             IGateKeeperSceneRoom gateKeeperSceneRoom = new GateKeeperSceneRoom(staticContainer.WebRequestsContainer.WebRequestController,
                     gateKeeperSceneRoomOptions).AsActivatable();
@@ -149,7 +148,7 @@ namespace Global.Dynamic
                 allowInsecureLocalHttp: appArgs.HasFlag(AppArgsFlags.ACCEPT_UNTRUSTED_REALM)
             );
 
-            var chatRoom = new ChatConnectiveRoom(staticContainer.WebRequestsContainer.WebRequestController, URLAddress.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.ChatAdapter)), hardwareFingerprintProvider);
+            var chatRoom = new ChatConnectiveRoom(staticContainer.WebRequestsContainer.WebRequestController, URLAddress.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.ChatAdapter)), installationFingerprint);
 
             var voiceChatRoom = new VoiceChatActivatableConnectiveRoom();
 
