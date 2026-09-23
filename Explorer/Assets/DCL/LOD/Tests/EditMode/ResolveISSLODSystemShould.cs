@@ -46,6 +46,8 @@ namespace DCL.LOD.Tests
         private static GltfContainerTestResources? sharedResources;
         private static StreamableLoadingResult<AssetBundleData> sharedAB;
 
+        private readonly List<Material> createdMaterials = new ();
+
         private TrackingGltfCache cache = null!;
         private SceneDefinitionComponent sceneDefinition;
 
@@ -73,6 +75,14 @@ namespace DCL.LOD.Tests
             };
 
             sceneDefinition = SceneDefinitionComponentFactory.CreateFromDefinition(sceneEntityDefinition, new IpfsPath());
+        }
+
+        protected override void OnTearDown()
+        {
+            foreach (Material material in createdMaterials)
+                UnityEngine.Object.DestroyImmediate(material);
+
+            createdMaterials.Clear();
         }
 
         [OneTimeTearDown]
@@ -310,8 +320,7 @@ namespace DCL.LOD.Tests
             const string HASH = "OVERSIZED";
 
             GltfContainerAsset asset = MakeFakeGltfWithRenderer(HASH, out Renderer renderer);
-            Material material = DefaultMaterial.New();
-            renderer.sharedMaterial = material;
+            Material material = renderer.sharedMaterial;
             cache.Stash(HASH, asset);
 
             ISSDescriptorAsset entry = NewDescriptorEntry(HASH);
@@ -335,7 +344,6 @@ namespace DCL.LOD.Tests
                 "LOD_0 materials must clip to the scene height");
 
             lod.Dispose(world);
-            UnityEngine.Object.DestroyImmediate(material);
         }
 
         private Entity FindHelperEntity()
@@ -369,10 +377,19 @@ namespace DCL.LOD.Tests
         private static GltfContainerAsset MakeFakeGltf(string label) =>
             GltfContainerAsset.Create(new GameObject($"fake_{label}"), IStreamableRefCountData.Null.INSTANCE);
 
-        private static GltfContainerAsset MakeFakeGltfWithRenderer(string label, out Renderer renderer)
+        /// <summary>
+        ///     Gives the renderer a material, like a converted LOD renderer carries. A bare
+        ///     <see cref="MeshRenderer" /> exposes a single empty material slot instead.
+        /// </summary>
+        private GltfContainerAsset MakeFakeGltfWithRenderer(string label, out Renderer renderer)
         {
             var go = new GameObject($"fake_{label}");
             renderer = go.AddComponent<MeshRenderer>();
+
+            Material material = DefaultMaterial.New();
+            createdMaterials.Add(material);
+            renderer.sharedMaterial = material;
+
             GltfContainerAsset asset = GltfContainerAsset.Create(go, IStreamableRefCountData.Null.INSTANCE);
             asset.Renderers.Add(renderer);
             return asset;
