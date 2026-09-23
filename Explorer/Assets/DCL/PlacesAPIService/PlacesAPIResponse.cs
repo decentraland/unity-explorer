@@ -155,8 +155,10 @@ namespace DCL.PlacesAPIService
 
             public void OnAfterDeserialize()
             {
-                if (positions == null)
-                    return;
+                if (connected_addresses is { Length: 0 })
+                    connected_addresses = null;
+
+                if (positions == null) return;
 
                 Positions = new Vector2Int[positions.Length];
 
