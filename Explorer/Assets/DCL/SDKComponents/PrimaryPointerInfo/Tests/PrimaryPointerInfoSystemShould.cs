@@ -96,7 +96,7 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Tests
             Set(mouse.position, new Vector2(130f, 120f));
             system.Update(0);
 
-            // Assert: reported top-left origin, Y growing downwards
+            // Assert
             (Vector2 pos, Vector2 delta, ProtoVector3 _) = LastPut();
             AssertVector2(new Vector2(130f, Screen.height - 120f), pos);
             AssertVector2(new Vector2(30f, -20f), delta);
@@ -112,7 +112,7 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Tests
             // Act
             system.Update(0);
 
-            // Assert: screen centre is invariant under the Y flip, the ray is cast in Unity's space
+            // Assert
             var center = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
             (Vector2 pos, Vector2 delta, ProtoVector3 rayDir) = LastPut();
 
@@ -197,22 +197,18 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Tests
             AssertVector2(Vector2.zero, delta);
         }
 
-        // Regression coverage for https://github.com/decentraland/unity-explorer/issues/10073:
-        // the SDK specifies a top-left origin with Y growing downwards - the space UiTransform and
-        // UiCanvasInformation use, and the one Bevy and Godot report - but Unity's screen space has
-        // a bottom-left origin with Y growing upwards, so scene UI tracking the pointer used to be
-        // mirrored vertically and camera pitch fed from the delta used to be inverted.
+        // Regression coverage for https://github.com/decentraland/unity-explorer/issues/10073
         [Test]
         public void ReportScreenCoordinatesWithTopLeftOrigin()
         {
-            // Arrange: a pointer near the bottom of the screen in Unity's space
+            // Arrange
             var nearBottom = new Vector2(64f, 10f);
 
             // Act
             Set(mouse.position, nearBottom);
             system.Update(0);
 
-            // Assert: near the bottom in the scene's space too, i.e. a large Y
+            // Assert
             (Vector2 pos, Vector2 _, ProtoVector3 _) = LastPut();
             AssertVector2(new Vector2(nearBottom.x, Screen.height - nearBottom.y), pos);
         }
@@ -224,7 +220,7 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Tests
             Set(mouse.position, new Vector2(100f, 100f));
             system.Update(0);
 
-            // Act: move down the screen, i.e. towards Unity's Y origin
+            // Act: moving down lowers Y in Unity's screen space
             Set(mouse.position, new Vector2(100f, 60f));
             system.Update(0);
 
@@ -240,7 +236,7 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Tests
             SetPointerLocked(true);
             system.Update(0);
 
-            // Act: Unity's pointer delta is Y up, so downwards motion accumulates a negative Y
+            // Act: Unity's pointer delta is Y up, so a downward motion accumulates a negative Y
             AdvanceAccumulatedDelta(new Vector2(0f, -7f));
             system.Update(0);
 

@@ -28,7 +28,6 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Systems
         private CumulativePointerDelta lastSeenAccumulatedDelta;
         private SingleInstanceEntity cameraEntity;
 
-        // The generated wrapper hands back a cached action reference, so there is nothing to cache here.
         private static InputAction inputPoint => DCLInput.Instance.Camera.Point;
 
         internal PrimaryPointerInfoSystem(
@@ -102,10 +101,8 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Systems
                 Z = ray.direction.z,
             };
 
-            // The SDK reports pointer coordinates with a top-left origin and Y growing downwards - the same
-            // space as UiTransform/UiCanvasInformation - while Unity's screen space has a bottom-left origin
-            // and Y growing upwards. Flip both the position and the delta on the way out; the ray above is
-            // cast before the flip because ScreenPointToRay expects Unity's space.
+            // The SDK uses a top-left origin with Y growing downwards, the same space as UiTransform.
+            // Flip only after the ray is cast, because ScreenPointToRay expects Unity's bottom-left origin.
             pointerPos.y = Screen.height - pointerPos.y;
             deltaPos.y = -deltaPos.y;
 
