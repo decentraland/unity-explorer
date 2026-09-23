@@ -26,6 +26,15 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             public const string USED_EMOTE = "used_emote";
         }
 
+        public static class Backpack
+        {
+            // 'source' tells which surface showed it: the explore panel or the lobby's modal.
+            public const string BACKPACK_OPENED = "backpack_opened";
+
+            // A profile published from the backpack with a different avatar; 'source' is the surface the backpack was shown in.
+            public const string AVATAR_CHANGED = "avatar_changed";
+        }
+
         public static class Ui
         {
             public const string MESSAGE_SENT = "chat_message_sent";

@@ -230,6 +230,7 @@ namespace DCL.Backpack
                     profileCache.Set(newProfile.UserId, newProfile);
                     UpdateAvatarInWorld(newProfile);
                     profileChangesBus.PushUpdate(newProfile);
+                    backpackEventBus.SendAvatarChanged();
 
                     return;
                 }
@@ -242,7 +243,10 @@ namespace DCL.Backpack
                 MultithreadingUtility.AssertMainThread(nameof(UpdateProfileAsync), true);
 
                 if (updatedProfile != null)
+                {
                     profileChangesBus.PushUpdate(updatedProfile);
+                    backpackEventBus.SendAvatarChanged();
+                }
             }
             catch (OperationCanceledException) { }
             catch (IdenticalProfileUpdateException)

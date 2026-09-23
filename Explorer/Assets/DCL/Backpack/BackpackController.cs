@@ -332,6 +332,8 @@ namespace DCL.Backpack
             sectionSelectorController.SetAnimationState(true, tabsBySections[BackpackSections.Avatar]);
 
             cursor.Unlock();
+
+            backpackEventBus.SendBackpackActivateEvent(CurrentHost == homeHost);
         }
 
         public void Deactivate()

@@ -13,8 +13,15 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 {
     public class BackpackEventBusAnalyticsDecorator : IBackpackEventBus
     {
+        // The same values the places, events and friends events carry to tell the two surfaces apart
+        private const string EXPLORE_SOURCE = "explore";
+        private const string LOBBY_SOURCE = "lobby";
+
         private readonly IBackpackEventBus core;
         private readonly IAnalyticsController analytics;
+
+        // Kept from the last time the panel was shown, since the profile it publishes on hiding lands after it moved back home
+        private string source = EXPLORE_SOURCE;
 
         public event Action<IWearable> SelectWearableEvent;
         public event Action<IWearable, bool> EquipWearableEvent;
@@ -32,6 +39,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         public event Action<Color, string> ChangeColorEvent;
         public event Action UnEquipAllEvent;
         public event Action PublishProfileEvent;
+        public event Action? AvatarChangedEvent;
+        public event Action<bool>? ActivateEvent;
         public event Action DeactivateEvent;
 
         public BackpackEventBusAnalyticsDecorator(IBackpackEventBus core, IAnalyticsController analytics)
@@ -54,6 +63,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             core.ChangeColorEvent += OnChangeColor;
             core.UnEquipAllEvent += OnUnEquipAll;
             core.PublishProfileEvent += OnPublishProfile;
+            core.AvatarChangedEvent += OnAvatarChanged;
+            core.ActivateEvent += OnActivate;
             core.DeactivateEvent += OnDeactivate;
             core.UnEquipAllWearablesEvent += OnUnEquipAllWearables;
             core.EquipOutfitEvent += OnEquipOutfit;
@@ -77,6 +88,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             core.ChangeColorEvent -= OnChangeColor;
             core.UnEquipAllEvent -= OnUnEquipAll;
             core.PublishProfileEvent -= OnPublishProfile;
+            core.AvatarChangedEvent -= OnAvatarChanged;
+            core.ActivateEvent -= OnActivate;
             core.DeactivateEvent -= OnDeactivate;
             core.UnEquipAllWearablesEvent -= OnUnEquipAllWearables;
             core.EquipOutfitEvent -= OnEquipOutfit;
@@ -124,6 +137,22 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         private void OnPublishProfile() =>
             PublishProfileEvent?.Invoke();
 
+        private void OnAvatarChanged()
+        {
+            AvatarChangedEvent?.Invoke();
+
+            analytics.Track(AnalyticsEvents.Backpack.AVATAR_CHANGED, new JObject { { "source", source } });
+        }
+
+        private void OnActivate(bool isInExplorePanel)
+        {
+            ActivateEvent?.Invoke(isInExplorePanel);
+
+            // The lobby's modal is the only host that borrows the view out of the explore panel
+            source = isInExplorePanel ? EXPLORE_SOURCE : LOBBY_SOURCE;
+            analytics.Track(AnalyticsEvents.Backpack.BACKPACK_OPENED, new JObject { { "source", source } });
+        }
+
         private void OnDeactivate() =>
             DeactivateEvent?.Invoke();
 
@@ -147,6 +176,12 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         public void SendEmoteSlotSelect(int slot) =>
             core.SendEmoteSlotSelect(slot);
+
+        public void SendAvatarChanged() =>
+            core.SendAvatarChanged();
+
+        public void SendBackpackActivateEvent(bool isInExplorePanel) =>
+            core.SendBackpackActivateEvent(isInExplorePanel);
 
         public void SendBackpackDeactivateEvent() =>
             core.SendBackpackDeactivateEvent();
