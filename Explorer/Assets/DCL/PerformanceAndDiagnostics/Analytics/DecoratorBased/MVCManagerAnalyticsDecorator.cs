@@ -36,12 +36,14 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             core.OnViewShowed += c => OnViewShowed?.Invoke(c);
             core.OnViewClosed += c => OnViewClosed?.Invoke(c);
 
+            var pendingGuestUpgrade = new PendingGuestUpgrade();
+
             controllerAnalyticsFactory = new Dictionary<Type, Func<IController, IDisposable>>
             {
                 { typeof(ChatMainSharedAreaController), CreateAnalytics<ChatMainSharedAreaController>(c => new ChatEventsAnalytics(analytics, c)) },
                 { typeof(PhotoDetailController), CreateAnalytics<PhotoDetailController>(c => new PhotoDetailAnalytics(analytics, c)) },
                 { typeof(PassportController), CreateAnalytics<PassportController>(c => new PassportAnalytics(analytics, c)) },
-                { typeof(AuthenticationScreenController), CreateAnalytics<AuthenticationScreenController>(c => new AuthenticationScreenAnalytics(analytics, c)) },
+                { typeof(AuthenticationScreenController), CreateAnalytics<AuthenticationScreenController>(c => new AuthenticationScreenAnalytics(analytics, c, pendingGuestUpgrade)) },
                 { typeof(SidebarController), CreateAnalytics<SidebarController>(c => new SupportAnalytics(analytics, c, supportRequestService)) },
                 { typeof(FriendsPanelController), CreateAnalytics<FriendsPanelController>(c => new FriendsPanelAnalytics(analytics, c)) },
                 { typeof(PersistentFriendPanelOpenerController), CreateAnalytics<PersistentFriendPanelOpenerController>(c => new PersistentFriendPanelOpenerAnalytics(analytics, c)) },
@@ -50,7 +52,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
                 { typeof(MarketplaceCreditsMenuController), CreateAnalytics<MarketplaceCreditsMenuController>(c => new MarketplaceCreditsAnalytics(analytics, c)) },
                 { typeof(CreditsTopUpModalController), CreateAnalytics<CreditsTopUpModalController>(c => new CreditsTopUpAnalytics(analytics, c)) },
                 { typeof(CreditPurchaseModalController), CreateAnalytics<CreditPurchaseModalController>(c => new CreditPurchaseAnalytics(analytics, c)) },
-                { typeof(UpgradeGuestAccountPopupController), CreateAnalytics<UpgradeGuestAccountPopupController>(c => new UpgradeGuestAccountAnalytics(analytics, c)) },
+                { typeof(UpgradeGuestAccountPopupController), CreateAnalytics<UpgradeGuestAccountPopupController>(c => new UpgradeGuestAccountAnalytics(analytics, c, pendingGuestUpgrade)) },
             };
 
             Func<IController, IDisposable> CreateAnalytics<T>(Func<T, IDisposable> factory) where T: IController =>

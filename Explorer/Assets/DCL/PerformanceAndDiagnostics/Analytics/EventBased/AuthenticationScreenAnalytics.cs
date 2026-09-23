@@ -1,4 +1,5 @@
 using DCL.AuthenticationScreenFlow;
+using DCL.UI.UpgradeGuestAccountPopup;
 using Newtonsoft.Json.Linq;
 using System;
 using static DCL.AuthenticationScreenFlow.AuthenticationScreenController;
@@ -10,11 +11,13 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
     {
         private readonly IAnalyticsController analytics;
         private readonly AuthenticationScreenController controller;
+        private readonly PendingGuestUpgrade pendingGuestUpgrade;
 
-        public AuthenticationScreenAnalytics(IAnalyticsController analytics, AuthenticationScreenController controller)
+        public AuthenticationScreenAnalytics(IAnalyticsController analytics, AuthenticationScreenController controller, PendingGuestUpgrade pendingGuestUpgrade)
         {
             this.analytics = analytics;
             this.controller = controller;
+            this.pendingGuestUpgrade = pendingGuestUpgrade;
             controller.CurrentState.OnUpdate += OnAuthenticationScreenStateChanged;
             controller.DiscordButtonClicked += OnDiscordButtonClicked;
             controller.OTPVerified += OnOTPVerified;
@@ -123,11 +126,17 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
                 { "preset_slot", presetSlot },
             }, isInstant: true);
 
-        private void OnProfileFinalized() =>
+        private void OnProfileFinalized()
+        {
             // isInstant: true because this fires moments before the auth screen tears down
             // and the FSM transitions to InitAuthState. Without flushing immediately the event
             // can sit in the buffer past the screen disposal and never make it to Segment.
             analytics.Track(Authentication.PROFILE_FINALIZED, isInstant: true);
+
+            // An account created right after the upgrade popup sent the user here is the end of that funnel
+            if (pendingGuestUpgrade.TryConsume(out GuestUpgradeTrigger trigger))
+                analytics.Track(Authentication.GUEST_UPGRADE_COMPLETED, new JObject { { "trigger", trigger.ToString() } }, isInstant: true);
+        }
 
         private void OnOTPVerified(string email, bool success)
         {

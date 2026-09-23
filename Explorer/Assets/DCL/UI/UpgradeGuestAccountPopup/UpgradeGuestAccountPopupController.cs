@@ -54,6 +54,7 @@ namespace DCL.UI.UpgradeGuestAccountPopup
 
         public event Action<GuestUpgradeTrigger>? PromptShown;
         public event Action<GuestUpgradeTrigger>? UpgradeStarted;
+        public event Action<GuestUpgradeTrigger>? UpgradeRedirectedToAccountCreation;
         public event Action<GuestUpgradeTrigger>? UpgradeCompleted;
         public event Action<GuestUpgradeTrigger, string>? UpgradeFailed;
 
@@ -137,6 +138,7 @@ namespace DCL.UI.UpgradeGuestAccountPopup
             // An ephemeral account holds no wallet to link an email to, so the only way forward is a real login
             if (accountLinkAuthenticator.IsEphemeralAccount)
             {
+                UpgradeRedirectedToAccountCreation?.Invoke(inputData.Trigger);
                 logoutCts = logoutCts.SafeRestart();
                 LogoutAndShowLoginSelectionAsync(logoutCts.Token).Forget();
                 return;
