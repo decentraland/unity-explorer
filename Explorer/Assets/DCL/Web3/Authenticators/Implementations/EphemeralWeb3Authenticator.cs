@@ -22,7 +22,10 @@ namespace DCL.Web3.Authenticators
             this.accountFactory = accountFactory;
         }
 
-        public void Dispose() { }
+        public void Dispose()
+        {
+            sessionIdentity?.Dispose();
+        }
 
         public UniTask<IWeb3Identity> LoginAsync(LoginPayload payload, CancellationToken ct)
         {
