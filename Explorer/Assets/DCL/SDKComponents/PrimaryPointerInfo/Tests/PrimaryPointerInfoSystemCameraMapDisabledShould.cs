@@ -103,7 +103,7 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Tests
 
             Assert.AreNotEqual(Vector2.zero, pos, "screenCoordinates must not collapse to (0,0) while the Camera map is disabled");
             Assert.AreEqual(SIMULATED_POSITION.x, pos.x, TOLERANCE);
-            Assert.AreEqual(SIMULATED_POSITION.y, pos.y, TOLERANCE);
+            Assert.AreEqual(Screen.height - SIMULATED_POSITION.y, pos.y, TOLERANCE);
         }
     }
 }

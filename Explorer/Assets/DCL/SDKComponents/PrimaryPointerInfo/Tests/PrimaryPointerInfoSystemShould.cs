@@ -93,8 +93,8 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Tests
 
             // Assert
             (Vector2 pos, Vector2 delta, ProtoVector3 _) = LastPut();
-            AssertVector2(new Vector2(130f, 120f), pos);
-            AssertVector2(new Vector2(30f, 20f), delta);
+            AssertVector2(new Vector2(130f, Screen.height - 120f), pos);
+            AssertVector2(new Vector2(30f, -20f), delta);
         }
 
         [Test]
@@ -111,7 +111,7 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Tests
             var center = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
             (Vector2 pos, Vector2 delta, ProtoVector3 rayDir) = LastPut();
 
-            AssertVector2(new Vector2(5f, -3f), delta);
+            AssertVector2(new Vector2(5f, 3f), delta);
             AssertVector2(center, pos);
 
             Ray expectedRay = camera.ScreenPointToRay(center);
@@ -132,7 +132,7 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Tests
 
             // Assert
             (Vector2 pos, Vector2 _, ProtoVector3 rayDir) = LastPut();
-            AssertVector2(pointerPosition, pos);
+            AssertVector2(new Vector2(pointerPosition.x, Screen.height - pointerPosition.y), pos);
 
             Ray expectedRay = camera.ScreenPointToRay(pointerPosition);
             Assert.AreEqual(expectedRay.direction.x, rayDir.X, TOLERANCE);
@@ -156,7 +156,7 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Tests
 
             // Assert: no intermediate frame motion is lost
             (Vector2 _, Vector2 delta, ProtoVector3 _) = LastPut();
-            AssertVector2(new Vector2(10f, 4f), delta);
+            AssertVector2(new Vector2(10f, -4f), delta);
         }
 
         [Test]
@@ -191,7 +191,7 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Tests
             // Assert: the pointer position was tracked while locked, so the diff is zero
             (Vector2 pos, Vector2 delta, ProtoVector3 _) = LastPut();
             AssertVector2(Vector2.zero, delta);
-            AssertVector2(pointerPosition, pos);
+            AssertVector2(new Vector2(pointerPosition.x, Screen.height - pointerPosition.y), pos);
         }
 
         [Test]
@@ -210,6 +210,54 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Tests
             // Assert: the accumulated total was tracked while unlocked, so the diff is zero
             (Vector2 _, Vector2 delta, ProtoVector3 _) = LastPut();
             AssertVector2(Vector2.zero, delta);
+        }
+
+        // Regression coverage for https://github.com/decentraland/unity-explorer/issues/10073
+        [Test]
+        public void ReportScreenCoordinatesWithTopLeftOrigin()
+        {
+            // Arrange
+            var nearBottom = new Vector2(64f, 10f);
+
+            // Act
+            SetPointer(nearBottom);
+            system.Update(0);
+
+            // Assert
+            (Vector2 pos, Vector2 _, ProtoVector3 _) = LastPut();
+            AssertVector2(new Vector2(nearBottom.x, Screen.height - nearBottom.y), pos);
+        }
+
+        [Test]
+        public void ReportPositiveScreenDeltaYWhenPointerMovesDown()
+        {
+            // Arrange
+            SetPointer(new Vector2(100f, 100f));
+            system.Update(0);
+
+            // Act: moving down lowers Y in Unity's screen space
+            SetPointer(new Vector2(100f, 60f));
+            system.Update(0);
+
+            // Assert
+            (Vector2 _, Vector2 delta, ProtoVector3 _) = LastPut();
+            AssertVector2(new Vector2(0f, 40f), delta);
+        }
+
+        [Test]
+        public void ReportPositiveScreenDeltaYWhenLockedPointerMovesDown()
+        {
+            // Arrange
+            SetPointerLocked(true);
+            system.Update(0);
+
+            // Act: Unity's pointer delta is Y up, so a downward motion accumulates a negative Y
+            AdvanceAccumulatedDelta(new Vector2(0f, -7f));
+            system.Update(0);
+
+            // Assert
+            (Vector2 _, Vector2 delta, ProtoVector3 _) = LastPut();
+            AssertVector2(new Vector2(0f, 7f), delta);
         }
 
         [Test]

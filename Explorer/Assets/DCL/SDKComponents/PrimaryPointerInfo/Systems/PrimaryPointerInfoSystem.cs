@@ -82,7 +82,7 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Systems
             previousPosition = cursorPosition;
             lastSeenAccumulatedDelta = accumulatedDelta;
 
-            var ray = cachedCamera.ScreenPointToRay(pointerPos);
+            Ray ray = cachedCamera.ScreenPointToRay(pointerPos);
 
             var worldRayDirection = new Vector3
             {
@@ -90,6 +90,11 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Systems
                 Y = ray.direction.y,
                 Z = ray.direction.z,
             };
+
+            // The SDK uses a top-left origin with Y growing downwards, the same space as UiTransform.
+            // Flip only after the ray is cast, because ScreenPointToRay expects Unity's bottom-left origin.
+            pointerPos.y = Screen.height - pointerPos.y;
+            deltaPos.y = -deltaPos.y;
 
             ecsToCRDTWriter.PutMessage<PBPrimaryPointerInfo, (Vector2 pos, Vector2 delta, Vector3 rayDir)>(static (component, data) =>
             {
