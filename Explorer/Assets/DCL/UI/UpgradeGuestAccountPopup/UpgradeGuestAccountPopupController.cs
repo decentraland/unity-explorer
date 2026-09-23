@@ -149,28 +149,33 @@ namespace DCL.UI.UpgradeGuestAccountPopup
 
         private async UniTaskVoid LogoutAndShowLoginSelectionAsync(CancellationToken ct)
         {
-            if (identityCache.Identity == null)
+            try
             {
-                ReportHub.LogError(ReportCategory.UI, "Cannot logout. Identity is null.");
-                return;
+                if (identityCache.Identity == null)
+                {
+                    ReportHub.LogError(ReportCategory.UI, "Cannot logout. Identity is null.");
+                    return;
+                }
+
+                Web3Address address = identityCache.Identity.Address;
+                await accountLinkAuthenticator.LogoutAsync(ct);
+                profileCache.Remove(address);
+                Close();
+
+                await userInAppInitializationFlow.ExecuteAsync(
+                    new UserInAppInitializationFlowParameters(
+                        showAuthentication: true,
+                        showLoading: true,
+                        loadSource: IUserInAppInitializationFlow.LoadSource.Logout,
+                        world: world,
+                        playerEntity: playerEntity,
+                        startAtLoginSelection: true
+                    ),
+                    ct
+                );
             }
-
-            Web3Address address = identityCache.Identity.Address;
-            await accountLinkAuthenticator.LogoutAsync(ct);
-            profileCache.Remove(address);
-            Close();
-
-            await userInAppInitializationFlow.ExecuteAsync(
-                new UserInAppInitializationFlowParameters(
-                    showAuthentication: true,
-                    showLoading: true,
-                    loadSource: IUserInAppInitializationFlow.LoadSource.Logout,
-                    world: world,
-                    playerEntity: playerEntity,
-                    startAtLoginSelection: true
-                ),
-                ct
-            );
+            catch (OperationCanceledException) { }
+            catch (Exception e) { ReportHub.LogException(e, ReportCategory.UI); }
         }
 
         private void ShowStep(Step step)
