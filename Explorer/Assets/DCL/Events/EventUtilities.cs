@@ -56,8 +56,13 @@ namespace DCL.Communities.EventInfo
             TimeSpan remaining = eventDTO.NextStartAtProcessed - DateTime.UtcNow;
 
             if (remaining <= TimeSpan.Zero) return STARTING_NOW;
-            if (remaining.TotalHours < 1) return string.Format(STARTS_IN_FORMAT, Math.Max(1, (int)Math.Round(remaining.TotalMinutes)), MINUTES_STRING);
-            if (remaining.TotalDays < 1) return StartsInUnits((int)Math.Round(remaining.TotalHours), HOUR_STRING);
+
+            // Rounded before picking the unit, so 59.6 minutes reads "In 1 hour" rather than "In 60 min"
+            int minutes = Math.Max(1, (int)Math.Round(remaining.TotalMinutes));
+            if (minutes < 60) return string.Format(STARTS_IN_FORMAT, minutes, MINUTES_STRING);
+
+            var hours = (int)Math.Round(remaining.TotalHours);
+            if (hours < 24) return StartsInUnits(hours, HOUR_STRING);
 
             return StartsInUnits((int)Math.Round(remaining.TotalDays), DAY_STRING);
         }

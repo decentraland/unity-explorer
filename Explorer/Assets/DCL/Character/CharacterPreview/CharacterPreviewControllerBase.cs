@@ -19,6 +19,10 @@ namespace DCL.CharacterPreview
     public abstract class CharacterPreviewControllerBase : IDisposable
     {
         private const float AVATAR_FADE_ANIMATION = 0.5f;
+        private const float MAX_RENDER_TARGET_PIXELS = 1920f * 1080f;
+        private const int MAX_MSAA_4X_RENDER_TARGET_PIXELS = 1024 * 1024;
+
+        private static readonly Vector2Int PLACEHOLDER_RENDER_TARGET_SIZE = new (64, 64);
 
         private readonly List<string> randomBasicEmotes = new()
         {
@@ -136,20 +140,36 @@ namespace DCL.CharacterPreview
             updateModelCancellationToken.SafeCancelAndDispose();
         }
 
-        // Sized from the pixels the RawImage covers on screen, so a stretched rect (zero sizeDelta) gets a texture matching the view
+        // Sized from the pixels the RawImage covers on screen, so a stretched rect (zero sizeDelta) gets a texture matching the view.
+        // Capped to MAX_RENDER_TARGET_PIXELS, keeping the aspect ratio
         private Vector2Int RenderTargetSize()
         {
             RectTransform rectTransform = view.RawImage.rectTransform;
-            Canvas canvas = view.RawImage.canvas;
+            Canvas? canvas = view.RawImage.canvas;
+
+            // Not laid out yet: a tiny target that OnViewRectDimensionsChanged replaces once the rect resolves
+            if (canvas == null) return PLACEHOLDER_RENDER_TARGET_SIZE;
+
             Camera? canvasCamera = canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera;
 
             Vector2 min = RectTransformUtility.WorldToScreenPoint(canvasCamera, rectTransform.TransformPoint(rectTransform.rect.min));
             Vector2 max = RectTransformUtility.WorldToScreenPoint(canvasCamera, rectTransform.TransformPoint(rectTransform.rect.max));
 
-            int width = Mathf.RoundToInt(Mathf.Abs(max.x - min.x));
-            int height = Mathf.RoundToInt(Mathf.Abs(max.y - min.y));
+            float width = Mathf.Abs(max.x - min.x);
+            float height = Mathf.Abs(max.y - min.y);
 
-            return width > 0 && height > 0 ? new Vector2Int(width, height) : new Vector2Int(Screen.width, Screen.height);
+            if (width < 1f || height < 1f) return PLACEHOLDER_RENDER_TARGET_SIZE;
+
+            float pixels = width * height;
+
+            if (pixels > MAX_RENDER_TARGET_PIXELS)
+            {
+                float scale = Mathf.Sqrt(MAX_RENDER_TARGET_PIXELS / pixels);
+                width *= scale;
+                height *= scale;
+            }
+
+            return new Vector2Int(Mathf.Max(1, Mathf.RoundToInt(width)), Mathf.Max(1, Mathf.RoundToInt(height)));
         }
 
         private static RenderTexture CreateRenderTexture(Vector2Int size)
@@ -158,7 +178,9 @@ namespace DCL.CharacterPreview
             var renderTexture = new RenderTexture(size.x, size.y, 16, TextureUtilities.GetColorSpaceFormat())
             {
                 name = "Preview Texture",
-                antiAliasing = 4,
+
+                // Every MSAA sample multiplies the colour and depth memory, only small panel-sized targets can afford 4x
+                antiAliasing = size.x * size.y > MAX_MSAA_4X_RENDER_TARGET_PIXELS ? 2 : 4,
                 useDynamicScale = true,
             };
 

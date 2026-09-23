@@ -289,11 +289,16 @@ namespace DCL.Lobby
 
             profileChangesBus.UnsubscribeToUpdate(OnProfileUpdated);
 
+            // Nulled so a late card callback finds no source instead of reading the token of a disposed one, which throws
             avatarCts.SafeCancelAndDispose();
+            avatarCts = null;
             placesCts.SafeCancelAndDispose();
+            placesCts = null;
             eventsCts.SafeCancelAndDispose();
+            eventsCts = null;
             friends?.Hide();
             friendsCts.SafeCancelAndDispose();
+            friendsCts = null;
             avatarPreview!.OnHide();
             viewInstance!.AvatarButton.gameObject.SetActive(false);
 
@@ -658,8 +663,12 @@ namespace DCL.Lobby
         private void OnUpcomingEventClicked(EventDTO @event, PlacesData.PlaceInfo? _, EventCardView card) =>
             OnEventClicked(@event, LobbySection.UpcomingEvents, card);
 
-        private void OnUpcomingEventInterested(EventDTO @event, EventCardView card) =>
-            eventCardActions.SetEventAsInterestedAsync(@event, card, null, eventsCts!.Token).Forget();
+        private void OnUpcomingEventInterested(EventDTO @event, EventCardView card)
+        {
+            if (eventsCts == null) return;
+
+            eventCardActions.SetEventAsInterestedAsync(@event, card, null, eventsCts.Token).Forget();
+        }
 
         private void OnUpcomingEventAddToCalendar(EventDTO @event) =>
             eventCardActions.AddEventToCalendar(@event);

@@ -68,7 +68,7 @@ namespace DCL.Backpack
         private CancellationTokenSource? profileLoadingCts;
         private bool isAvatarLoaded;
         private bool instantSectionToggle;
-        private bool isCompact;
+        private bool isActive;
 
         /// <summary>
         ///     Raised by the panel's own close control, which only the compact layout shows.
@@ -333,6 +333,7 @@ namespace DCL.Backpack
 
             cursor.Unlock();
 
+            isActive = true;
             backpackEventBus.SendBackpackActivateEvent(CurrentHost == homeHost);
         }
 
@@ -353,6 +354,7 @@ namespace DCL.Backpack
             view.gameObject.SetActive(false);
             backpackCharacterPreviewController.OnHide();
 
+            isActive = false;
             backpackEventBus.SendBackpackDeactivateEvent();
         }
 
@@ -382,9 +384,14 @@ namespace DCL.Backpack
         /// </summary>
         public void AttachTo(RectTransform host, bool compact)
         {
-            SetCompactLayout(compact);
-
             var viewRect = (RectTransform)view.transform;
+
+            // A host can claim the view while another one still has it open (a fullscreen panel closes popups without awaiting
+            // them), so the previous session is ended here: its host skips its own teardown once the view is no longer under it
+            if (isActive && viewRect.parent != host)
+                Deactivate();
+
+            SetCompactLayout(compact);
 
             if (viewRect.parent == host) return;
 
@@ -405,14 +412,11 @@ namespace DCL.Backpack
         ///     Trims the item info column off the content panel and pins what is left to the right border of the host, so every
         ///     pixel nothing else claims goes to the avatar. Everything centred on the panel is pushed back by half of what was
         ///     trimmed to hold its place in it. The outfits row is a single fixed width strip and cannot reflow into what is
-        ///     left, so it is scaled down by the same ratio instead.
+        ///     left, so it is scaled down by the same ratio instead. Applied on every attach, from the authored snapshots, so a
+        ///     width measured before the panel was first laid out never sticks.
         /// </summary>
         private void SetCompactLayout(bool compact)
         {
-            if (isCompact == compact) return;
-
-            isCompact = compact;
-
             foreach (BackpackInfoPanelView itemInfoPanel in view.ItemInfoPanels)
                 itemInfoPanel.gameObject.SetActive(!compact);
 

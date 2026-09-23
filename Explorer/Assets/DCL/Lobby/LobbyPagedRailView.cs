@@ -87,8 +87,14 @@ namespace DCL.Lobby
             return nearest;
         }
 
-        private void OnScrolled(Vector2 _) =>
-            SelectPage(PageAt(-scrollRect.content.anchoredPosition.x));
+        // Raised every frame of a drag or a snap, so the dots are only touched when the page actually changes
+        private void OnScrolled(Vector2 _)
+        {
+            int page = PageAt(-scrollRect.content.anchoredPosition.x);
+            if (page == CurrentPage) return;
+
+            SelectPage(page);
+        }
 
         private void SnapTo(int page)
         {

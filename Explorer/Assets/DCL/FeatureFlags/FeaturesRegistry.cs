@@ -23,7 +23,9 @@ namespace DCL.FeatureFlags
     {
         private readonly Dictionary<FeatureId, bool> featureStates = new ();
         private readonly Dictionary<FeatureId, IFeatureProvider> featureProviders = new ();
-        private readonly Dictionary<FeatureId, Func<bool>> deferredFeatureStates = new ();
+
+        // Filled only in the constructor and never mutated afterwards, so reads stay thread-safe; Lazy<T> resolves each value once under its own lock
+        private readonly Dictionary<FeatureId, Lazy<bool>> deferredFeatureStates = new ();
 
         public FeaturesRegistry(
             IAppArgs appArgs,
@@ -96,8 +98,8 @@ namespace DCL.FeatureFlags
             // --lobby enables it on its own (no --debug needed), --lobby false forces it off, otherwise the Settings
             // toggle decides. That toggle lives in player prefs, which only exist in a running player while the
             // registry is also built outside one, so the state is resolved on the first query instead of here.
-            deferredFeatureStates[FeatureId.Lobby] = () =>
-                appArgs.ResolveFeatureFlagArg(AppArgsFlags.LOBBY, LobbyEnabledSetting, requireDebug: false) && !localSceneDevelopment;
+            deferredFeatureStates[FeatureId.Lobby] = new Lazy<bool>(() =>
+                appArgs.ResolveFeatureFlagArg(AppArgsFlags.LOBBY, LobbyEnabledSetting, requireDebug: false) && !localSceneDevelopment);
         }
 
         /// <summary>
@@ -121,15 +123,8 @@ namespace DCL.FeatureFlags
             if (featureStates.TryGetValue(featureId, out bool isEnabled))
                 return isEnabled;
 
-            if (!deferredFeatureStates.TryGetValue(featureId, out Func<bool> resolve))
-                return false;
-
             // Cached as any other state: a feature cannot change while the session runs.
-            isEnabled = resolve();
-            featureStates[featureId] = isEnabled;
-            deferredFeatureStates.Remove(featureId);
-
-            return isEnabled;
+            return deferredFeatureStates.TryGetValue(featureId, out Lazy<bool> deferredState) && deferredState.Value;
         }
 
         /// <summary>

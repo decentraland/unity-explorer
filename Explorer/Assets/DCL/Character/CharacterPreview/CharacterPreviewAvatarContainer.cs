@@ -1,5 +1,6 @@
 using Cinemachine;
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -110,7 +111,12 @@ namespace DCL.CharacterPreview
 
         public void SetPostProcessingEnabled(bool enabled)
         {
-            camera.gameObject.TryGetComponent(out UniversalAdditionalCameraData cameraData);
+            if (!camera.gameObject.TryGetComponent(out UniversalAdditionalCameraData cameraData))
+            {
+                ReportHub.LogError(ReportCategory.AVATAR, $"{nameof(UniversalAdditionalCameraData)} is missing on the character preview camera, post-processing can't be toggled");
+                return;
+            }
+
             cameraData.renderPostProcessing = enabled;
         }
 

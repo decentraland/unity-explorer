@@ -200,17 +200,23 @@ namespace DCL.Lobby
                 return;
             }
 
+            using PooledObject<List<UniTask>> tasksScope = ListPool<UniTask>.Get(out List<UniTask> tasks);
+
             foreach (string id in ids)
-            {
-                OnlineUserData? data = Find(result.Value, id);
-                string label = data.HasValue ? await PlaceNameAsync(data.Value, ct) : LOBBY_LABEL;
+                tasks.Add(ResolveLocationAsync(id, Find(result.Value, id), ct));
 
-                if (ct.IsCancellationRequested) return;
+            await UniTask.WhenAll(tasks);
+        }
 
-                locations[id] = new FriendLocation(label, canJoin: data.HasValue);
-                resolving.Remove(id);
-                ApplyLocation(id, label, data.HasValue);
-            }
+        private async UniTask ResolveLocationAsync(string userId, OnlineUserData? data, CancellationToken ct)
+        {
+            string label = data.HasValue ? await PlaceNameAsync(data.Value, ct) : LOBBY_LABEL;
+
+            if (ct.IsCancellationRequested) return;
+
+            locations[userId] = new FriendLocation(label, canJoin: data.HasValue);
+            resolving.Remove(userId);
+            ApplyLocation(userId, label, data.HasValue);
         }
 
         private async UniTask<string> PlaceNameAsync(OnlineUserData data, CancellationToken ct)

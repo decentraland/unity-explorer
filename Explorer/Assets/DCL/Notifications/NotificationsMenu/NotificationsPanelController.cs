@@ -26,11 +26,11 @@ using Utility;
 namespace DCL.Notifications.NotificationsMenu
 {
     /// <summary>
-    ///     Lives outside the generic controller so every closed type shares the one list.
+    ///     Lives outside the generic controller so every closed type shares the one set.
     /// </summary>
     internal static class NotificationsPanelIgnoredTypes
     {
-        public static readonly List<NotificationType> VALUES = new ()
+        private static readonly HashSet<NotificationType> VALUES = new ()
         {
             NotificationType.INTERNAL_ARRIVED_TO_DESTINATION,
             NotificationType.COMMUNITY_VOICE_CHAT_STARTED,
@@ -39,6 +39,9 @@ namespace DCL.Notifications.NotificationsMenu
             NotificationType.INTERNAL_SERVER_ERROR,
             NotificationType.INTERNAL_SCENE_CLIPBOARD_WRITE,
         };
+
+        public static bool ShouldBeIgnored(NotificationType type) =>
+            VALUES.Contains(type);
     }
 
     public class NotificationsPanelController : NotificationsPanelController<ControllerNoData>
@@ -186,7 +189,7 @@ namespace DCL.Notifications.NotificationsMenu
             try
             {
                 List<INotification> requestNotifications = await notificationsRequestController.GetMostRecentNotificationsAsync(ct);
-                requestNotifications.RemoveAll(notification => NotificationsPanelIgnoredTypes.VALUES.Contains(notification.Type));
+                requestNotifications.RemoveAll(notification => NotificationsPanelIgnoredTypes.ShouldBeIgnored(notification.Type));
 
                 foreach (INotification requestNotification in requestNotifications)
                     notifications.Add(requestNotification);
@@ -442,7 +445,7 @@ namespace DCL.Notifications.NotificationsMenu
 
         private void OnNotificationReceived(INotification notification)
         {
-            if (NotificationsPanelIgnoredTypes.VALUES.Contains(notification.Type))
+            if (NotificationsPanelIgnoredTypes.ShouldBeIgnored(notification.Type))
                 return;
 
             viewInstance?.ShowEmptyState(false);
