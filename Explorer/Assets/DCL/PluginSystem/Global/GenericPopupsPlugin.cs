@@ -23,7 +23,7 @@ namespace DCL.PluginSystem.Global
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IMVCManager mvcManager;
         private readonly ClipboardManager clipboardManager;
-        private readonly ICompositeWeb3Provider accountLinkAuthenticator;
+        private readonly ICompositeWeb3Provider compositeWeb3Provider;
         private readonly ISelfProfile selfProfile;
         private readonly IInputBlock inputBlock;
         private readonly IWeb3IdentityCache identityCache;
@@ -40,7 +40,7 @@ namespace DCL.PluginSystem.Global
             IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
             ClipboardManager clipboardManager,
-            ICompositeWeb3Provider accountLinkAuthenticator,
+            ICompositeWeb3Provider compositeWeb3Provider,
             ISelfProfile selfProfile,
             IInputBlock inputBlock,
             IWeb3IdentityCache identityCache,
@@ -52,7 +52,7 @@ namespace DCL.PluginSystem.Global
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
             this.clipboardManager = clipboardManager;
-            this.accountLinkAuthenticator = accountLinkAuthenticator;
+            this.compositeWeb3Provider = compositeWeb3Provider;
             this.selfProfile = selfProfile;
             this.inputBlock = inputBlock;
             this.identityCache = identityCache;
@@ -97,7 +97,7 @@ namespace DCL.PluginSystem.Global
             ControllerBase<UpgradeGuestAccountPopupView, UpgradeGuestAccountPopupController.Params>.ViewFactoryMethod upgradeGuestAccountViewFactoryMethod =
                 UpgradeGuestAccountPopupController.Preallocate(upgradeGuestAccountPopupAsset, null, out _);
 
-            upgradeGuestAccountPopupController = new UpgradeGuestAccountPopupController(upgradeGuestAccountViewFactoryMethod, accountLinkAuthenticator, selfProfile, inputBlock,
+            upgradeGuestAccountPopupController = new UpgradeGuestAccountPopupController(upgradeGuestAccountViewFactoryMethod, compositeWeb3Provider, selfProfile, inputBlock,
                 identityCache, profileCache, userInAppInitializationFlow, world, playerEntity);
             mvcManager.RegisterController(upgradeGuestAccountPopupController);
         }
