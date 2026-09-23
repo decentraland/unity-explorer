@@ -26,8 +26,7 @@ namespace DCL.Web3.Authenticators
 
         public UniTask<IWeb3Identity> LoginAsync(LoginPayload payload, CancellationToken ct)
         {
-            // The account is kept for as long as the process runs, so logging out and back in as a guest returns
-            // to the same one. Nothing is stored on disk, so the next launch starts from a new account
+            // The account is kept for as long as the process runs, so logging out and back in as a guest returns to the same one
             if (sessionIdentity is { IsExpired: false })
                 return sessionIdentity.AsUniTaskResult();
 
