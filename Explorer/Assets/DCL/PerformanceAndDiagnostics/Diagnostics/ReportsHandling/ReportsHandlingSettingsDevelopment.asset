@@ -728,10 +728,6 @@ MonoBehaviour:
       Severity: 4
     - Category: CREDITS_PURCHASE
       Severity: 1
-    - Category: ASSET_BUNDLES
-      Severity: 3
-    - Category: ASSET_BUNDLES
-      Severity: 2
   sentryMatrix:
     entries: []
   debounceEnabled: 1
