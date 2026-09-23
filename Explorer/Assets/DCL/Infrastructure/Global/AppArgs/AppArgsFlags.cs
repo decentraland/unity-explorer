@@ -218,6 +218,7 @@ namespace Global.AppArgs
         {
             public const string URL = "feature-flags-url";
             public const string HOSTNAME = "feature-flags-hostname";
+            public const string USER_ID = "feature-flags-user-id";
         }
 
         public static class Analytics

@@ -5,7 +5,6 @@ using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.CharacterCamera;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
-using DCL.Utilities;
 using ECS.Abstract;
 using ECS.Groups;
 using SceneRunner.Scene;
@@ -25,10 +24,11 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Systems
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IExposedCameraData exposedCameraData;
-        private InputAction inputPoint;
         private Vector2 previousPosition = Vector2.zero;
         private CumulativePointerDelta lastSeenAccumulatedDelta;
-        private Camera cachedCamera;
+        private SingleInstanceEntity cameraEntity;
+
+        private static InputAction inputPoint => DCLInput.Instance.Camera.Point;
 
         internal PrimaryPointerInfoSystem(
             World world,
@@ -48,9 +48,7 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Systems
         {
             base.Initialize();
 
-            cachedCamera = globalWorld.CacheCamera().GetCameraComponent(globalWorld).Camera;
-
-            inputPoint = DCLInput.Instance.Camera.Point;
+            cameraEntity = globalWorld.CacheCamera();
             lastSeenAccumulatedDelta = exposedCameraData.AccumulatedPointerDelta;
 
             UpdatePointerInfo();
@@ -94,7 +92,7 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Systems
             previousPosition = rawPosition;
             lastSeenAccumulatedDelta = accumulatedDelta;
 
-            var ray = cachedCamera.ScreenPointToRay(pointerPos);
+            Ray ray = cameraEntity.GetCameraComponent(globalWorld).Camera.ScreenPointToRay(pointerPos);
 
             var worldRayDirection = new Vector3
             {
@@ -102,6 +100,11 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Systems
                 Y = ray.direction.y,
                 Z = ray.direction.z,
             };
+
+            // The SDK uses a top-left origin with Y growing downwards, the same space as UiTransform.
+            // Flip only after the ray is cast, because ScreenPointToRay expects Unity's bottom-left origin.
+            pointerPos.y = Screen.height - pointerPos.y;
+            deltaPos.y = -deltaPos.y;
 
             ecsToCRDTWriter.PutMessage<PBPrimaryPointerInfo, (Vector2 pos, Vector2 delta, Vector3 rayDir)>(static (component, data) =>
             {
