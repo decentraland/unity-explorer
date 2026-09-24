@@ -100,9 +100,11 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
                 Instantiate(entity, setupMesh, ref meshRendererComponent.MeshRenderer, ref meshRendererComponent, sdkComponent,
                     ref transform);
             else
-
+            {
                 // This means that the UVs have changed during runtime of a scene (should be an unusual case), so we update the mesh accordingly
-                setupMesh.Execute(sdkComponent, meshRendererComponent.PrimitiveMesh.Mesh);
+                setupMesh.Execute(sdkComponent, meshRendererComponent.PrimitiveMesh);
+                meshRendererComponent.MeshRenderer.GetComponent<MeshFilter>().mesh = meshRendererComponent.PrimitiveMesh.Mesh;
+            }
         }
 
         /// <summary>
@@ -113,7 +115,7 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
             PBMeshRenderer sdkComponent, ref TransformComponent transformComponent)
         {
             var primitiveMesh = (IPrimitiveMesh)poolRegistry.GetPool(meshSetup.MeshType).Rent();
-            meshSetup.Execute(sdkComponent, primitiveMesh.Mesh);
+            meshSetup.Execute(sdkComponent, primitiveMesh);
 
             rendererComponent.PrimitiveMesh = primitiveMesh;
             rendererComponent.MeshRenderer = meshRendererGo;

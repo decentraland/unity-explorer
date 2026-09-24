@@ -76,7 +76,7 @@ namespace ECS.Unity.PrimitiveRenderer.Tests
 
             //Assert
             Assert.AreEqual(expectedType, meshRendererComponent.SDKType);
-            setupMeshes[input.MeshCase].Received(1).Execute(input, meshRendererComponent.PrimitiveMesh.Mesh);
+            setupMeshes[input.MeshCase].Received(1).Execute(input, meshRendererComponent.PrimitiveMesh);
 
             Assert.AreEqual(meshRendererComponent.MeshRenderer.GetComponent<MeshFilter>().sharedMesh,
                 meshRendererComponent.PrimitiveMesh.Mesh);
@@ -91,10 +91,7 @@ namespace ECS.Unity.PrimitiveRenderer.Tests
             system.Update(0);
 
             //Act
-            // Sphere primitives share a single immutable mesh, so the re-instantiated mesh is the same
-            // object as the initial one. Clear the recorded calls so the assertion below counts only the
-            // Execute triggered by re-instantiation and not the initial setup (which the mesh argument can
-            // no longer disambiguate).
+            // Clear the recorded calls so the assertion below counts only the Execute triggered by re-instantiation
             setupMeshes[input.MeshCase].ClearReceivedCalls();
 
             input.IsDirty = true;
@@ -105,7 +102,7 @@ namespace ECS.Unity.PrimitiveRenderer.Tests
             ref PrimitiveMeshRendererComponent meshRendererComponent = ref world.Get<PrimitiveMeshRendererComponent>(entity);
 
             Assert.AreEqual(expectedType, meshRendererComponent.SDKType);
-            setupMeshes[input.MeshCase].Received(1).Execute(input, meshRendererComponent.PrimitiveMesh.Mesh);
+            setupMeshes[input.MeshCase].Received(1).Execute(input, meshRendererComponent.PrimitiveMesh);
 
             Assert.AreEqual(meshRendererComponent.MeshRenderer.GetComponent<MeshFilter>().sharedMesh,
                 meshRendererComponent.PrimitiveMesh.Mesh);
