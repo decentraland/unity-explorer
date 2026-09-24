@@ -61,25 +61,29 @@ namespace DCL.SDKComponents.SceneUI.Components
         private VisualElement? rootTransform;
         private VisualElement? reusableTransform;
 
+        /// <summary>
+        ///     Sets <see cref="IsRoot" /> before touching <see cref="Transform" />, which resolves through the flag, so
+        ///     a reused instance never writes to the element of the other role.
+        /// </summary>
         public void InitializeAsRoot(VisualElement root)
         {
-            this.rootTransform ??= root;
+            IsRoot = true;
+            Transform = root;
             IsHidden = false;
             StylesApplied = false;
             PointerEventTriggered = null;
             ZIndex = null;
             RelationData.parent = Entity.Null;
             RelationData.rightOf = 0;
-            IsRoot = true;
         }
 
         public void InitializeAsChild(string componentName, CRDTEntity entity, CRDTEntity rightOf)
         {
+            IsRoot = false;
             reusableTransform ??= new VisualElement { userData = this };
             Transform.name = UiElementUtils.BuildElementName(componentName, entity);
             IsHidden = false;
             StylesApplied = false;
-            IsRoot = false;
             PointerEventTriggered = null;
             ZIndex = null;
             RelationData.parent = Entity.Null;
