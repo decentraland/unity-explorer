@@ -139,6 +139,12 @@ namespace DCL.SyntheticInput
                 await EcsRequest.AbandonAsync<TIntent>(world, playerEntity);
                 return SyntheticInputDelivery.TimedOut;
             }
+            catch (OperationCanceledException)
+            {
+                // The driver gave up; without this the intent keeps running until its end time.
+                await EcsRequest.AbandonAsync<TIntent>(world, playerEntity);
+                throw;
+            }
         }
 
         private UniTask<SyntheticPointerResult> RunPointerGestureAsync(PointerAim aim, InputAction button, bool composeClick, PointerEventType firstLegType,
@@ -156,6 +162,12 @@ namespace DCL.SyntheticInput
             catch (TimeoutException)
             {
                 return await AbandonPointerAsync(aim, budgetSec);
+            }
+            catch (OperationCanceledException)
+            {
+                // The driver gave up; without this a pending hover or press keeps being processed.
+                await EcsRequest.AbandonAsync<SyntheticPointerEventIntent>(world, playerEntity);
+                throw;
             }
         }
 

@@ -36,6 +36,10 @@ namespace DCL.SyntheticInput.AltTester
             IScenesCache scenesCache, IReadOnlyLoadingStatus loadingStatus, DecentralandEnvironment environment) =>
             session = new Session(realmNavigator, realmData, urlsSource, scenesCache, loadingStatus, environment);
 
+        /// <summary>Withdraws the session before the layer is disposed, so no probe call reaches disposed services.</summary>
+        public static void Uninstall() =>
+            session = null;
+
         public static bool IsReady() =>
             session != null;
 

@@ -29,6 +29,10 @@ namespace DCL.SyntheticInput.AltTester
         public static void Install(SyntheticInputAgent installedAgent, World world, Entity playerEntity) =>
             session = new Session(installedAgent, world, playerEntity);
 
+        /// <summary>Withdraws the session before the layer is disposed, so no probe call reaches a disposed agent.</summary>
+        public static void Uninstall() =>
+            session = null;
+
         public static bool IsReady() =>
             session != null;
 

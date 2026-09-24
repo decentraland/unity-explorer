@@ -5,6 +5,7 @@ using DCL.ECSComponents;
 using DCL.SyntheticInput.Components;
 using DCL.SyntheticInput.Core;
 using NUnit.Framework;
+using System.Threading;
 using UnityEngine;
 
 namespace DCL.SyntheticInput.Tests
@@ -293,6 +294,32 @@ namespace DCL.SyntheticInput.Tests
 
             Assert.That(press.Status, Is.EqualTo(UniTaskStatus.Succeeded));
             Assert.That(press.GetAwaiter().GetResult().FailureReason, Is.Null);
+        }
+
+        [Test]
+        public void AbandonThePendingPointerIntentWhenTheDriverCancels()
+        {
+            var cts = new CancellationTokenSource();
+            UniTask<SyntheticPointerResult> click = agent.ClickAsync(PointerAim.AtEntity(7), InputAction.IaPointer, timeoutSec: 30f, ct: cts.Token);
+            Assert.That(world.Has<SyntheticPointerEventIntent>(playerEntity), Is.True);
+
+            cts.Cancel();
+
+            Assert.That(click.Status, Is.EqualTo(UniTaskStatus.Canceled));
+            Assert.That(world.Has<SyntheticPointerEventIntent>(playerEntity), Is.False, "a cancelled gesture must not keep being processed");
+        }
+
+        [Test]
+        public void AbandonThePendingHoldWhenTheDriverCancels()
+        {
+            var cts = new CancellationTokenSource();
+            UniTask<SyntheticInputDelivery> look = agent.CameraLookAsync(new Vector2(5f, 0f), seconds: 2f, cts.Token);
+            Assert.That(world.Has<SyntheticCameraLookIntent>(playerEntity), Is.True);
+
+            cts.Cancel();
+
+            Assert.That(look.Status, Is.EqualTo(UniTaskStatus.Canceled));
+            Assert.That(world.Has<SyntheticCameraLookIntent>(playerEntity), Is.False, "a cancelled hold must not run to its end time");
         }
 
         [Test]
