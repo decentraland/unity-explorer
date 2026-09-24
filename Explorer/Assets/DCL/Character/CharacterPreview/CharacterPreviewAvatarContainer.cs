@@ -106,9 +106,6 @@ namespace DCL.CharacterPreview
         public void SetCameraFarClipPlane(float farClipPlane) =>
             freeLookCamera.m_Lens.FarClipPlane = farClipPlane;
 
-        public void SetTargetTexture(RenderTexture targetTexture) =>
-            camera.targetTexture = targetTexture;
-
         public void SetPostProcessingEnabled(bool enabled)
         {
             if (!camera.gameObject.TryGetComponent(out UniversalAdditionalCameraData cameraData))

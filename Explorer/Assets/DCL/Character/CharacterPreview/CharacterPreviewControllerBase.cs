@@ -45,10 +45,13 @@ namespace DCL.CharacterPreview
         private Vector3 avatarPosition;
 
         private RenderTexture? currentRenderTexture;
+        private bool renderTargetSizeDirty;
+        private Vector2Int lastScreenSize;
         public RenderTexture CurrentRenderTexture => currentRenderTexture;
 
         /// <summary>
-        ///     Raised when the render texture is created or recreated after a resize, with the preview camera already targeting it.
+        ///     Raised when the render texture is created, with the preview camera already targeting it. A later resize keeps the
+        ///     same texture and camera, so it does not raise this.
         /// </summary>
         public event Action? RenderTargetChanged;
 
@@ -119,6 +122,10 @@ namespace DCL.CharacterPreview
                 inputEventBus, view.CharacterPreviewSettingsSo.cameraSettings, avatarPosition);
             initialized = true;
 
+            lastScreenSize = new Vector2Int(Screen.width, Screen.height);
+            renderTargetSizeDirty = false;
+            Canvas.willRenderCanvases += FitRenderTargetToView;
+
             ResetAvatarMovement();
             OnModelUpdated();
             RenderTargetChanged?.Invoke();
@@ -134,6 +141,7 @@ namespace DCL.CharacterPreview
             view.CharacterPreviewInputDetector.OnPointerDownEvent -= OnPointerDown;
             view.CharacterPreviewInputDetector.OnPointerEnterEvent -= OnPointerEnter;
             view.RectDimensionsChanged -= OnViewRectDimensionsChanged;
+            Canvas.willRenderCanvases -= FitRenderTargetToView;
             characterPreviewEventBus.OnAnyCharacterPreviewShowEvent -= OnAnyCharacterPreviewShow;
             characterPreviewEventBus.OnAnyCharacterPreviewHideEvent -= OnAnyCharacterPreviewHide;
             cursorController.Dispose();
@@ -178,9 +186,7 @@ namespace DCL.CharacterPreview
             var renderTexture = new RenderTexture(size.x, size.y, 16, TextureUtilities.GetColorSpaceFormat())
             {
                 name = "Preview Texture",
-
-                // Every MSAA sample multiplies the colour and depth memory, only small panel-sized targets can afford 4x
-                antiAliasing = size.x * size.y > MAX_MSAA_4X_RENDER_TARGET_PIXELS ? 2 : 4,
+                antiAliasing = AntiAliasingFor(size),
                 useDynamicScale = true,
             };
 
@@ -188,22 +194,49 @@ namespace DCL.CharacterPreview
             return renderTexture;
         }
 
+        // Every MSAA sample multiplies the colour and depth memory, only small panel-sized targets can afford 4x
+        private static int AntiAliasingFor(Vector2Int size) =>
+            size.x * size.y > MAX_MSAA_4X_RENDER_TARGET_PIXELS ? 2 : 4;
+
         private void OnViewRectDimensionsChanged()
         {
+            renderTargetSizeDirty = true;
+        }
+
+        // Runs once per frame after the canvas scaler has applied this frame's scale, so the rect maps to settled screen pixels.
+        // The rect callback alone is not enough: it fires while the scaler is still mid-update, and a scaled canvas keeps the
+        // same rect across resolutions with the same aspect ratio, so the screen size is compared as well
+        private void FitRenderTargetToView()
+        {
             if (!initialized || currentRenderTexture == null) return;
+
+            var screenSize = new Vector2Int(Screen.width, Screen.height);
+
+            if (screenSize != lastScreenSize)
+            {
+                lastScreenSize = screenSize;
+                renderTargetSizeDirty = true;
+            }
+
+            if (!renderTargetSizeDirty) return;
+
+            renderTargetSizeDirty = false;
 
             Vector2Int size = RenderTargetSize();
             if (size.x == currentRenderTexture.width && size.y == currentRenderTexture.height) return;
 
-            ReleaseRenderTexture();
-            currentRenderTexture = CreateRenderTexture(size);
-            view.RawImage.texture = currentRenderTexture;
-            previewController?.SetTargetTexture(currentRenderTexture);
-            RenderTargetChanged?.Invoke();
+            // Resized in place, so the raw image and the preview camera keep pointing at the same texture object
+            currentRenderTexture.Release();
+            currentRenderTexture.width = size.x;
+            currentRenderTexture.height = size.y;
+            currentRenderTexture.antiAliasing = AntiAliasingFor(size);
+            currentRenderTexture.Create();
         }
 
         private void ReleaseRenderTexture()
         {
+            Canvas.willRenderCanvases -= FitRenderTargetToView;
+
             if (!currentRenderTexture) return;
             currentRenderTexture.Release();
             Object.Destroy(currentRenderTexture);

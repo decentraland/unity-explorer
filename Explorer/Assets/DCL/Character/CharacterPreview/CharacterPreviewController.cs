@@ -187,9 +187,6 @@ namespace DCL.CharacterPreview
         public void SetPostProcessingEnabled(bool enabled) =>
             characterPreviewAvatarContainer.SetPostProcessingEnabled(enabled);
 
-        public void SetTargetTexture(RenderTexture targetTexture) =>
-            characterPreviewAvatarContainer.SetTargetTexture(targetTexture);
-
         public void SetCharacterPreviewAvatarContainerActive(bool isActive)
         {
             // Activation rebinds the Animator, which captures the current pose as its defaults: the Armature must hold its
