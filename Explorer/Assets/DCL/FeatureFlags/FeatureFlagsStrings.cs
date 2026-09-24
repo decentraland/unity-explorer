@@ -49,6 +49,7 @@ namespace DCL.FeatureFlags
         public const string COMMUNITIES_ANNOUNCEMENTS = "alfa-communities-announcements";
         public const string AUTH_CODE_VALIDATION = "number-validation";
         public const string EMAIL_OTP_AUTH = "alfa-email-otp-auth";
+        public const string GUEST_LOGIN = "alfa-guest-login";
         [Obsolete("GPU Instancer Pro terrain is no longer optional so the flag is not needed")]
         public const string GPUI_ENABLED = "alfa-gpui";
         public const string LOADING_SCREEN_TIPS = "alfa-loading-screen-tips";
@@ -93,6 +94,7 @@ namespace DCL.FeatureFlags
         public const string OPTIMIZED_ASSETS = "optimized-assets";
         public const string OPTIMIZED_ASSETS_BASE_URL_VARIANT = "assets-base-url";
         public const string ABGEN_PIPELINE = "alfa-abgen-pipeline";
+        public const string ABGEN_LODS = "alfa-abgen-lods";
         public const string USE_CUSTOM_MEDIA_PLAYER_WINDOWS = "use-custom-media-player-windows";
         public const string USE_CUSTOM_MEDIA_PLAYER_MAC_SILICON = "use-custom-media-player-mac-silicon";
         public const string USE_CUSTOM_MEDIA_PLAYER_MAC_INTEL = "use-custom-media-player-mac-intel";

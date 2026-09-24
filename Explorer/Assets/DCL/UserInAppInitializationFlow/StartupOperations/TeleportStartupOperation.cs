@@ -39,13 +39,9 @@ namespace DCL.UserInAppInitializationFlow
 
         public override async UniTask<EnumResult<TaskError>> ExecuteAsync(IStartupOperation.Params args, CancellationToken ct)
         {
-            // In the editor, when previewing a local scene, ignore the editor start position override
-            // so the scene's own spawn point is used. Builds launched via Creator Hub are not affected.
-            bool editorOverride = editorPositionOverrideActive
-                                  && !(realmController.RealmData.IsLocalSceneDevelopment && Application.isEditor);
-
-            // --position flag or effective editor override → use default start parcel
-            bool useDefault = appArgs.HasFlag(AppArgsFlags.POSITION) || editorOverride;
+            // The Editor start position override is equivalent to passing --position: both win over the world
+            // manifest spawn and over the local scene's base parcel.
+            bool useDefault = appArgs.HasFlag(AppArgsFlags.POSITION) || editorPositionOverrideActive;
 
             string? spawnPointName = startParcel.SpawnPointName;
 

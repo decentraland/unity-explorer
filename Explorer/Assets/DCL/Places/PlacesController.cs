@@ -11,6 +11,7 @@ using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
+using DCL.Web3.Identities;
 using MVC;
 using System;
 using UnityEngine;
@@ -49,7 +50,8 @@ namespace DCL.Places
             PlacesCardSocialActionsController placesCardSocialActionsController,
             HomePlaceEventBus homePlaceEventBus,
             IWorldPermissionsService worldPermissionsService,
-            HttpEventsApiService eventsApiService)
+            HttpEventsApiService eventsApiService,
+            IWeb3IdentityCache identityCache)
         {
             this.view = view;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
@@ -60,7 +62,8 @@ namespace DCL.Places
 
             placesStateService = new PlacesStateService();
             PlacesResultsController = new PlacesResultsController(view.PlacesResultsView, this, placesAPIService, placesStateService, selfProfile, webBrowser,
-                friendsService, profileRepositoryWrapper, mvcManager, thumbnailLoader, placesCardSocialActionsController, homePlaceEventBus, eventsApiService, worldPermissionsService);
+                friendsService, profileRepositoryWrapper, mvcManager, thumbnailLoader, placesCardSocialActionsController, homePlaceEventBus, eventsApiService, worldPermissionsService,
+                identityCache);
 
             view.AnyFilterChanged += OnAnyFilterChanged;
             view.SearchBarSelected += DisableShortcutsInput;

@@ -31,6 +31,12 @@ namespace DCL.Input.Component
             Shortcuts = 1 << 5,
             InWorldCamera = 1 << 6,
             VoiceChat = 1 << 7,
+
+            /// <summary>
+            ///     The single UI/Submit action (Enter), not a whole action map. Blocked while a text field
+            ///     owns the keyboard so Enter reaches that field instead of focusing the chat.
+            /// </summary>
+            Submit = 1 << 8,
         }
 
         private Kind active;

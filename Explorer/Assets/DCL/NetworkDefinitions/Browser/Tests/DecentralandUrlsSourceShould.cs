@@ -24,7 +24,8 @@ namespace DCL.Browser.DecentralandUrls.Tests
         [TearDown]
         public void TearDown() => FeatureFlagsConfiguration.Reset();
 
-        private static void InitializeFeatureFlags(bool optimizedAssets, string? customBaseUrl = null, bool useGateway = false, bool assetBundleFallback = false, bool abgenPipeline = false)
+        private static void InitializeFeatureFlags(bool optimizedAssets, string? customBaseUrl = null, bool useGateway = false, bool assetBundleFallback = false, bool abgenPipeline = false,
+            bool abgenLods = false)
         {
             var dto = new FeatureFlagsResultDto
             {
@@ -34,6 +35,7 @@ namespace DCL.Browser.DecentralandUrls.Tests
                     [FeatureFlagsStrings.USE_GATEWAY] = useGateway,
                     [FeatureFlagsStrings.ASSET_BUNDLE_FALLBACK] = assetBundleFallback,
                     [FeatureFlagsStrings.ABGEN_PIPELINE] = abgenPipeline,
+                    [FeatureFlagsStrings.ABGEN_LODS] = abgenLods,
                 },
                 variants = new Dictionary<string, FeatureFlagVariantDto>(),
             };
@@ -215,17 +217,76 @@ namespace DCL.Browser.DecentralandUrls.Tests
             Assert.AreEqual("https://asset-bundle-registry-abgen.decentraland.org", forcedOn.Url(DecentralandUrl.AssetBundleRegistry));
         }
 
+        [TestCase(DecentralandEnvironment.Org)]
+        [TestCase(DecentralandEnvironment.Zone)]
+        public void FlipLodBundlesAndDescriptorsTogetherWhenAbgenLodsEnabled(DecentralandEnvironment environment)
+        {
+            InitializeFeatureFlags(optimizedAssets: false, abgenLods: true);
+            DecentralandUrlsSource urlsSource = DecentralandUrlsSource.CreateForTest(environment, ILaunchMode.PLAY);
+            string env = environment.ToString().ToLower();
+
+            Assert.AreEqual($"https://abgen-cdn.decentraland.{env}", urlsSource.Url(DecentralandUrl.LodAssetBundlesCDN));
+
+            // The descriptors sit under the same "LOD/" prefix the bundles' manifest version supplies
+            Assert.AreEqual($"https://abgen-cdn.decentraland.{env}/LOD", urlsSource.Url(DecentralandUrl.LodGeneratorCDN));
+            Assert.AreEqual($"abgen-lods-https---abgen-cdn-decentraland-{env}", urlsSource.AbgenLodsCacheKey);
+
+            // Asset bundles and the registry do not follow the LOD flip
+            Assert.AreEqual($"https://ab-cdn.decentraland.{env}", urlsSource.Url(DecentralandUrl.AssetBundlesCDN));
+            Assert.AreEqual($"https://asset-bundle-registry.decentraland.{env}", urlsSource.Url(DecentralandUrl.AssetBundleRegistry));
+        }
+
         [Test]
-        public void KeepAbgenHostsOffTheGatewayButLodsAndProfilesOnIt()
+        public void ForceAbgenLodsOnWithTheLaunchArg()
+        {
+            InitializeFeatureFlags(optimizedAssets: false, abgenLods: false);
+
+            var forcedOn = new DecentralandUrlsSource(DecentralandEnvironment.Org, new IRealmData.Fake(), ILaunchMode.PLAY, abgenLodsForced: true);
+
+            Assert.AreEqual("https://abgen-cdn.decentraland.org", forcedOn.Url(DecentralandUrl.LodAssetBundlesCDN));
+            Assert.AreEqual("https://abgen-cdn.decentraland.org/LOD", forcedOn.Url(DecentralandUrl.LodGeneratorCDN));
+        }
+
+        [Test]
+        public void KeepTheRegularLodHostsAndCacheKeyWhenAbgenLodsIsOff()
+        {
+            InitializeFeatureFlags(optimizedAssets: false, abgenPipeline: true);
+            DecentralandUrlsSource urlsSource = DecentralandUrlsSource.CreateForTest(DecentralandEnvironment.Org, ILaunchMode.PLAY);
+
+            Assert.AreEqual("https://ab-cdn.decentraland.org", urlsSource.Url(DecentralandUrl.LodAssetBundlesCDN));
+            Assert.AreEqual("https://lod-generator-unity-cdn.decentraland.org", urlsSource.Url(DecentralandUrl.LodGeneratorCDN));
+            Assert.IsNull(urlsSource.AbgenLodsCacheKey);
+        }
+
+        // The abgen hosts are subdomains of this deployment like the regular ones, so the flip changes which
+        // service the gateway fronts, not whether it is fronted at all.
+        [Test]
+        public void RouteAbgenHostsThroughTheGatewayAlongsideLodsAndProfiles()
         {
             InitializeFeatureFlags(optimizedAssets: false, useGateway: true, abgenPipeline: true);
             GatewayUrlsSource urlsSource = GatewayUrlsSource.CreateForTest(DecentralandEnvironment.Org, ILaunchMode.PLAY);
 
-            Assert.AreEqual("https://abgen-cdn.decentraland.org", urlsSource.Url(DecentralandUrl.AssetBundlesCDN));
-            Assert.AreEqual("https://asset-bundle-registry-abgen.decentraland.org", urlsSource.Url(DecentralandUrl.AssetBundleRegistry));
+            Assert.AreEqual("https://gateway.decentraland.org/abgen-cdn", urlsSource.Url(DecentralandUrl.AssetBundlesCDN));
+            Assert.AreEqual("https://gateway.decentraland.org/asset-bundle-registry-abgen", urlsSource.Url(DecentralandUrl.AssetBundleRegistry));
+
+            // Composed off the gatewayed registry base, and routed once - not re-prefixed with the gateway subdomain
+            Assert.AreEqual("https://gateway.decentraland.org/asset-bundle-registry-abgen/entities/versions", urlsSource.Url(DecentralandUrl.AssetBundleRegistryVersion));
+            Assert.AreEqual("https://gateway.decentraland.org/asset-bundle-registry-abgen/entities/active", urlsSource.Url(DecentralandUrl.EntitiesActiveElements));
 
             Assert.AreEqual("https://gateway.decentraland.org/ab-cdn", urlsSource.Url(DecentralandUrl.LodAssetBundlesCDN));
             Assert.AreEqual("https://gateway.decentraland.org/asset-bundle-registry/profiles", urlsSource.Url(DecentralandUrl.Profiles));
+        }
+
+        // Consolidation outranks the abgen flip, and the consolidated host is its own origin - never the gateway's.
+        [Test]
+        public void KeepTheConsolidatedHostOffTheGatewayThroughTheAbgenFlip()
+        {
+            InitializeFeatureFlags(optimizedAssets: true, useGateway: true, abgenPipeline: true);
+            GatewayUrlsSource urlsSource = GatewayUrlsSource.CreateForTest(DecentralandEnvironment.Org, ILaunchMode.PLAY);
+
+            Assert.AreEqual("https://abcdn.decentraland.org", urlsSource.Url(DecentralandUrl.AssetBundlesCDN));
+            Assert.AreEqual("https://abcdn.decentraland.org", urlsSource.Url(DecentralandUrl.AssetBundleRegistry));
+            Assert.AreEqual("https://abcdn.decentraland.org/entities/versions", urlsSource.Url(DecentralandUrl.AssetBundleRegistryVersion));
         }
 
         [Test]
