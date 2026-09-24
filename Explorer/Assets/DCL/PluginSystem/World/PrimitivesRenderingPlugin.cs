@@ -1,5 +1,6 @@
 using Arch.SystemGroups;
 using DCL.ECSComponents;
+using DCL.FeatureFlags;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
@@ -7,6 +8,7 @@ using ECS.Abstract;
 using ECS.ComponentsPooling.Systems;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Systems;
+using ECS.Unity.PrimitiveRenderer;
 using ECS.Unity.PrimitiveRenderer.Components;
 using ECS.Unity.PrimitiveRenderer.MeshPrimitive;
 using ECS.Unity.PrimitiveRenderer.Systems;
@@ -21,6 +23,7 @@ namespace DCL.PluginSystem.World
     {
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
         private readonly IPerformanceBudget capFrameTimeBudget;
+        private readonly bool instancingEnabled;
 
         static PrimitivesRenderingPlugin()
         {
@@ -31,6 +34,7 @@ namespace DCL.PluginSystem.World
         {
             componentPoolsRegistry = singletonSharedDependencies.ComponentPoolsRegistry;
             capFrameTimeBudget = singletonSharedDependencies.FrameTimeBudget;
+            instancingEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.PrimitiveInstancing);
 
             componentPoolsRegistry.AddComponentPool<BoxPrimitive>();
             componentPoolsRegistry.AddComponentPool<SpherePrimitive>();
@@ -47,6 +51,9 @@ namespace DCL.PluginSystem.World
             ReleaseOutdatedRenderingSystem.InjectToWorld(ref builder, componentPoolsRegistry);
 
             PrimitivesVisibilitySystem.InjectToWorld(ref builder, buffer);
+
+            if (instancingEnabled)
+                RenderInstancedPrimitivesSystem.InjectToWorld(ref builder, new PrimitiveInstanceBatches());
 
             ResetDirtyFlagSystem<PBMeshRenderer>.InjectToWorld(ref builder);
 

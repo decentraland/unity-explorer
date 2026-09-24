@@ -52,6 +52,12 @@ void ClipFragmentViaPlaneTests(const float3 _positionWS, const float _PlaneClipp
 }
 ```
 
+#### Instanced primitives
+
+Primitives that share a mesh and an applied `PBMaterial` are drawn by `RenderInstancedPrimitivesSystem` through `Graphics.RenderMeshInstanced`, one draw per (mesh, material) pair per 1023 instances, instead of one draw per `MeshRenderer`. The renderer stays on the entity so visibility, highlighting, video-texture bounds and scene-bounds clipping keep working; it is hidden with `forceRenderingOff` while the entity is instanced and restored when the material is removed. Primitives still using the default material (no `PBMaterial`) are not instanced because each of them owns a distinct pooled material. `Scene.shader` compiles the instanced variants in all four passes.
+
+The path is gated by `FeatureId.PrimitiveInstancing` (`alfa-primitive-instancing`, on in the Editor, `--primitive-instancing true|false` overrides it in any build).
+
 ### Colliders
 
 Unlike meshes, colliders can't be clipped partially.

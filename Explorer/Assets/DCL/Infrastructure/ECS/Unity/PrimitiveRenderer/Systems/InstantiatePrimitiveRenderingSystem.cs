@@ -130,6 +130,7 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
             // ensure that meshes that come from the pool are enabled
             rendererComponent.MeshRenderer.enabled = true;
             rendererComponent.MeshRenderer.forceRenderingOff = false;
+            rendererComponent.InstancedRendering = false;
 
             rendererComponent.SetDefaultMaterial(sceneData.Geometry.CircumscribedPlanes, sceneData.Geometry.Height);
 

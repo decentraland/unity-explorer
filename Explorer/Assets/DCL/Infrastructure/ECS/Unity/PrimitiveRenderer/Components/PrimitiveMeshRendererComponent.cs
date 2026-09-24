@@ -14,6 +14,11 @@ namespace ECS.Unity.PrimitiveRenderer.Components
         public PBMeshRenderer.MeshOneofCase SDKType;
         public bool DefaultMaterialIsUsed;
 
+        /// <summary>
+        ///     True while the mesh is drawn through GPU instancing and <see cref="MeshRenderer" /> is hidden from rendering.
+        /// </summary>
+        public bool InstancedRendering;
+
         Type IPoolableComponentProvider<IPrimitiveMesh>.PoolableComponentType => PrimitiveMesh!.GetType();
 
         Type IPoolableComponentProvider<MeshRenderer>.PoolableComponentType => typeof(MeshRenderer);
