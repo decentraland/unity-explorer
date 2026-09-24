@@ -23,6 +23,7 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI;
+using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
 using System;
@@ -41,6 +42,7 @@ namespace DCL.Backpack
 
         private readonly BackpackView view;
         private readonly ISelfProfile selfProfile;
+        private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly BackpackCommandBus backpackCommandBus;
         private readonly BackpackInfoPanelController emoteInfoPanelController;
         private readonly RectTransform homeHost;
@@ -80,6 +82,7 @@ namespace DCL.Backpack
         public BackpackController(
             BackpackView view,
             ISelfProfile selfProfile,
+            IWeb3IdentityCache web3IdentityCache,
             UnityAppWebBrowser webBrowser,
             AvatarView avatarView,
             NftTypeIconSO rarityInfoPanelBackgrounds,
@@ -109,6 +112,7 @@ namespace DCL.Backpack
         {
             this.view = view;
             this.selfProfile = selfProfile;
+            this.web3IdentityCache = web3IdentityCache;
             this.backpackCommandBus = backpackCommandBus;
             this.emoteInfoPanelController = emoteInfoPanelController;
             this.world = world;
@@ -278,9 +282,12 @@ namespace DCL.Backpack
 
             isAvatarLoaded = false;
 
-            // Opened before the world is loaded the player entity carries no avatar yet, and the own profile is the only source
-            Avatar? avatar = world.Has<Profile>(playerEntity)
-                ? world.Get<Profile>(playerEntity).Avatar
+            Profile? inWorldProfile = world.Has<Profile>(playerEntity) ? world.Get<Profile>(playerEntity) : null;
+
+            // Before the world is loaded the player entity carries no profile, and after a logout it still carries the one of the
+            // session that ended until the next world load replaces it, so only a profile owned by the current identity is trusted
+            Avatar? avatar = inWorldProfile != null && inWorldProfile.UserId == web3IdentityCache.Identity?.Address
+                ? inWorldProfile.Avatar
                 : (await selfProfile.ProfileAsync(ct))?.Avatar;
 
             if (ct.IsCancellationRequested) return;
