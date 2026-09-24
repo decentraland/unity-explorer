@@ -252,8 +252,13 @@ namespace DCL.UI
 
             if (isVoiceChatFeatureEnabled)
             {
+                var imGuest = false;
+
+                if (selfProfile.OwnProfile != null)
+                    imGuest = profileCache.IsGuest(selfProfile.OwnProfile.UserId!);
+
                 // A guest cannot receive a call, so there is nothing to start
-                contextMenuCallButton.Enabled = !profileCache.IsGuest(profile.UserId!);
+                contextMenuCallButton.Enabled = !imGuest && !profileCache.IsGuest(profile.UserId!);
                 startCallButtonControlSettings.SetData(profile.UserId!);
             }
 

@@ -50,6 +50,7 @@ using DCL.NotificationsBus.NotificationTypes;
 using DCL.Passport.Modules.Creations;
 using DCL.UI.ConfirmationDialog;
 using DCL.UI.Controls.Configs;
+using DCL.UI.UpgradeGuestAccountPopup;
 using DCL.Utility.Types;
 using UnityEngine;
 using UnityEngine.Assertions;
@@ -485,6 +486,12 @@ namespace DCL.Passport
 
         private void OnStartCallButtonClicked()
         {
+            if (web3IdentityCache.IsGuest())
+            {
+                mvcManager.ShowAndForget(UpgradeGuestAccountPopupController.IssueCommand(new UpgradeGuestAccountPopupController.Params(GuestUpgradeTrigger.Voice)));
+                return;
+            }
+
             ChatOpener.Instance.CloseAllViewsAndFocusChat();
             voiceChatOrchestrator.StartPrivateCallWithUserId(inputData.UserId);
         }

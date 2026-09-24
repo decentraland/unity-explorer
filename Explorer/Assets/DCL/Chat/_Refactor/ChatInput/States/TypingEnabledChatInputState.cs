@@ -1,9 +1,14 @@
 using DCL.Audio;
 using DCL.Chat.ChatCommands;
+using DCL.Chat.ChatServices;
+using DCL.Chat.History;
 using DCL.UI.CustomInputField;
 using DCL.UI.SuggestionPanel;
+using DCL.UI.UpgradeGuestAccountPopup;
+using DCL.Web3.Identities;
 using MVC;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
@@ -25,6 +30,9 @@ namespace DCL.Chat.ChatInput
         private readonly ChatInputView view;
         private readonly ChatEventBus chatEventBus;
         private readonly SendMessageCommand sendMessageCommand;
+        private readonly CurrentChannelService currentChannelService;
+        private readonly IWeb3IdentityCache identityCache;
+        private readonly IMVCManager mvcManager;
 
         private readonly PasteToastState pasteToastState;
         private readonly SuggestionPanelChatInputState suggestionPanelState;
@@ -48,6 +56,9 @@ namespace DCL.Chat.ChatInput
             EmojiPanelView emojiPanelView,
             ProfileRepositoryWrapper profileRepositoryWrapper,
             GetParticipantProfilesCommand getParticipantProfilesCommand,
+            CurrentChannelService currentChannelService,
+            IWeb3IdentityCache identityCache,
+            IMVCManager mvcManager,
             CancellationToken stateMachineDisposalCt)
         {
             this.stateMachine = stateMachine;
@@ -55,6 +66,9 @@ namespace DCL.Chat.ChatInput
             this.chatEventBus = chatEventBus;
             this.sendMessageCommand = sendMessageCommand;
             this.emojiPanelPresenter = emojiPanelPresenter;
+            this.currentChannelService = currentChannelService;
+            this.identityCache = identityCache;
+            this.mvcManager = mvcManager;
 
             pasteToastState = new PasteToastState(view, stateMachineDisposalCt);
             suggestionPanelState = new SuggestionPanelChatInputState(view, emojiMapping, profileRepositoryWrapper, getParticipantProfilesCommand);
@@ -172,9 +186,25 @@ namespace DCL.Chat.ChatInput
             if (string.IsNullOrWhiteSpace(message))
                 return;
 
+            if (IsGuestStartingPrivateConversation(currentChannelService.CurrentChannel))
+            {
+                mvcManager.ShowAndForget(UpgradeGuestAccountPopupController.IssueCommand(new UpgradeGuestAccountPopupController.Params(GuestUpgradeTrigger.DirectMessage)));
+                return;
+            }
+
             inputField.ResetInputField();
 
             sendMessageCommand.Execute(new SendMessageCommandPayload { Body = message });
+        }
+
+        private bool IsGuestStartingPrivateConversation(ChatChannel? channel)
+        {
+            if (channel is not { ChannelType: ChatChannel.ChatChannelType.USER } || !identityCache.IsGuest())
+                return false;
+
+            IReadOnlyList<ChatMessage> messages = channel.Messages;
+
+            return messages.Count == 0;
         }
 
         private void InputFieldOnClicked(PointerEventData.InputButton inputButton)

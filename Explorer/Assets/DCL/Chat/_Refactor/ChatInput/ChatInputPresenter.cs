@@ -5,6 +5,7 @@ using DCL.Emoji;
 using DCL.UI.InputFieldFormatting;
 using DCL.UI.Profiles.Helpers;
 using DCL.Utility.Types;
+using DCL.Web3.Identities;
 using MVC;
 using System;
 using System.Threading;
@@ -34,7 +35,9 @@ namespace DCL.Chat.ChatInput
             ITextFormatter textFormatter,
             EmojiMapping emojiMapping,
             EmojiPanelPresenter emojiPanelPresenter,
-            EmojiPanelView emojiPanelView)
+            EmojiPanelView emojiPanelView,
+            IWeb3IdentityCache identityCache,
+            IMVCManager mvcManager)
         {
             this.view = view;
             this.view.Initialize(chatConfig, textFormatter);
@@ -55,6 +58,9 @@ namespace DCL.Chat.ChatInput
                     emojiPanelView,
                     profileRepositoryWrapper,
                     getParticipantProfilesCommand,
+                    currentChannelService,
+                    identityCache,
+                    mvcManager,
                     fsm.DisposalCt
                 )
             );
