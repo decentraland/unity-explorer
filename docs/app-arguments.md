@@ -267,6 +267,25 @@ Only works for PUBLISHED elements (thus having a URN that identifies them).
 
 ---
 
+### `self-force-wearables`
+**Type:** String
+**Description:** Renders specific wearables on your own avatar without owning them. Accepts a comma-separated list of wearable URNs (i.e. `urn:decentraland:matic:collections-v2:0x9251f5c79923bc80e5dd8fc6d0c9fa02953aa622:0`).
+
+The wearables are visible only to you, and are **never deployed**. While the flag is set the client does not persist your profile at all — backpack saves, name changes and passport edits all take effect locally for the session and are discarded on relaunch, the same way `self-preview-wearables` already suppresses backpack publishing. Relaunch without the flag to go back to your real avatar.
+
+Do not use it on a brand-new account: a first profile has to be deployed to exist, and the flag blocks that.
+
+Only works for PUBLISHED elements (thus having a URN that identifies them).
+
+In the editor the same set can be filled from the inspector instead, via `DebugSettings.wearablesToAddToUserProfile` (like `emotesToAddToUserProfile`). The set is fixed at startup either way.
+
+**Usage:**
+```bash
+--self-force-wearables wearable1,wearable2
+```
+
+---
+
 ### `self-preview-emotes`
 **Type:** String
 **Description:** Enables preview mode for specific emotes. Accepts a comma-separated list of emote URNs (i.e. `urn:decentraland:matic:collections-v2:0xa80aea22d0fe9d34ca72ce304ef427bbefee1f11:2` ) that will be available for preview.
