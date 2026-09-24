@@ -1197,7 +1197,7 @@ MonoBehaviour:
   cloudsColorRamp:
     serializedVersion: 2
     key0: {r: 0.28, g: 0.4, b: 0.68, a: 1}
-    key1: {r: 1.6216166, g: 0.85757834, b: 0.37480763, a: 1}
+    key1: {r: 2.0628636, g: 0.9062017, b: 0.16541831, a: 1}
     key2: {r: 1.5157166, g: 1.3498304, b: 0.908, a: 1}
     key3: {r: 1.35, g: 0.9, b: 0.8, a: 1}
     key4: {r: 0.28, g: 0.4, b: 0.68, a: 1}
@@ -1290,7 +1290,7 @@ MonoBehaviour:
     Opacity: 1
     FlowByPhase: {x: 1, y: 1, z: 1, w: 1}
   - Strip: {fileID: 2800000, guid: aa655a92acf9ffe4eae6aea7660617a1, type: 3}
-    StretchV: 0.42
+    StretchV: 0.28
     OffsetV: -0.17
     TilingU: 1
     OffsetU: 0.5
@@ -1300,7 +1300,7 @@ MonoBehaviour:
     FlowByPhase: {x: 1, y: 1, z: 1, w: 1}
   - Strip: {fileID: 2800000, guid: f5fb6c6222f6a844c94ecdac0c0839ce, type: 3}
     StretchV: 0.4
-    OffsetV: -0.064
+    OffsetV: 0.05
     TilingU: 1
     OffsetU: 0.25
     Speed: 1.4
@@ -1309,11 +1309,11 @@ MonoBehaviour:
     FlowByPhase: {x: 0, y: 0, z: 1, w: 0}
   cloudsShadowColorRamp:
     serializedVersion: 2
-    key0: {r: 0.18039216, g: 0.24705882, b: 0.40392157, a: 1}
+    key0: {r: 0.10980392, g: 0.15294118, b: 0.2627451, a: 1}
     key1: {r: 0.5707547, g: 0.8513301, b: 1, a: 1}
     key2: {r: 0.3537736, g: 0.6480374, b: 1, a: 1}
-    key3: {r: 0.9861467, g: 0.34887266, b: 0.6674326, a: 1}
-    key4: {r: 0.18039216, g: 0.24705882, b: 0.40392157, a: 1}
+    key3: {r: 1, g: 0.33490568, b: 0.6250066, a: 1}
+    key4: {r: 0.10840156, g: 0.15485315, b: 0.26415092, a: 1}
     key5: {r: 0, g: 0, b: 0, a: 0}
     key6: {r: 0, g: 0, b: 0, a: 0}
     key7: {r: 0, g: 0, b: 0, a: 0}
