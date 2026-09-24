@@ -177,10 +177,10 @@ namespace CrdtEcsBridge.RestrictedActions
             return true;
         }
 
-        public void TryStopEmote()
+        public bool TryStopEmote()
         {
             if (!sceneStateProvider.IsCurrent)
-                return;
+                return false;
 
             // Stop full-body emote on global world
             globalWorldActions.StopEmote();
@@ -192,6 +192,8 @@ namespace CrdtEcsBridge.RestrictedActions
                 masked.EmoteUrn = default; // Permanent stop — don't replay on re-entry
                 sceneWorld.Set(scenePlayerEntity, masked);
             }
+
+            return true;
         }
 
         private void TriggerMaskedEmoteOnSceneWorld(CommunicationData.URLHelpers.URN urn, AvatarEmoteMask mask)
@@ -224,8 +226,10 @@ namespace CrdtEcsBridge.RestrictedActions
             return true;
         }
 
-        public int TryOpenExplorerUi(int ui)
+        public async UniTask<int> TryOpenExplorerUiAsync(int ui, uint requestId, CancellationToken ct)
         {
+            // Every rejection below returns before the first await, so only an accepted request pays for
+            // the hop to the main thread.
             if (!sceneStateProvider.IsCurrent)
                 return (int)OpenExplorerUiResult.RejectedNotCurrentScene;
 
@@ -251,7 +255,7 @@ namespace CrdtEcsBridge.RestrictedActions
                 return (int)OpenExplorerUiResult.RejectedFeatureDisabled;
             }
 
-            return (int)explorerUiActions.OpenSection((ExplorerUi)ui, section);
+            return (int)await explorerUiActions.OpenSectionAsync((ExplorerUi)ui, section, requestId, ct);
         }
 
         public void Dispose() { }
@@ -356,6 +360,8 @@ namespace CrdtEcsBridge.RestrictedActions
                     gatingFeature = FeatureId.Discover;
                     return true;
                 default:
+                    // EuItemPurchase falls here on purpose: the explorer has no purchase flow, so the scene
+                    // is told that the feature is unavailable.
                     section = default(ExploreSections);
                     gatingFeature = null;
                     return false;
