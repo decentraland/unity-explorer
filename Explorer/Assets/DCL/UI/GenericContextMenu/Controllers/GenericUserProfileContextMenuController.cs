@@ -252,10 +252,7 @@ namespace DCL.UI
 
             if (isVoiceChatFeatureEnabled)
             {
-                var imGuest = false;
-
-                if (selfProfile.OwnProfile != null)
-                    imGuest = profileCache.IsGuest(selfProfile.OwnProfile.UserId!);
+                var imGuest = web3IdentityCache.IsGuest();
 
                 // Neither a guest caller nor a guest callee can participate in a call
                 contextMenuCallButton.Enabled = !imGuest && !profileCache.IsGuest(profile.UserId!);
