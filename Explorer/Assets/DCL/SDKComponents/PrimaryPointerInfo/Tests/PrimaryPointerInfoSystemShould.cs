@@ -22,18 +22,18 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Tests
     {
         private const float TOLERANCE = 1e-4f;
 
-        private World sceneWorld;
-        private World globalWorld;
-        private Mouse mouse;
-        private GameObject cameraGameObject;
-        private Camera camera;
-        private IECSToCRDTWriter ecsToCRDTWriter;
-        private ISceneStateProvider sceneStateProvider;
-        private IExposedCameraData exposedCameraData;
-        private PrimaryPointerInfoSystem system;
+        private World sceneWorld = null!;
+        private World globalWorld = null!;
+        private Mouse mouse = null!;
+        private GameObject cameraGameObject = null!;
+        private Camera camera = null!;
+        private IECSToCRDTWriter ecsToCRDTWriter = null!;
+        private ISceneStateProvider sceneStateProvider = null!;
+        private IExposedCameraData exposedCameraData = null!;
+        private PrimaryPointerInfoSystem system = null!;
         private CumulativePointerDelta accumulatedDelta;
-        private Action<PBPrimaryPointerInfo, (Vector2 pos, Vector2 delta, ProtoVector3 rayDir)> capturedPrepare;
-        private List<(Vector2 pos, Vector2 delta, ProtoVector3 rayDir)> putCalls;
+        private Action<PBPrimaryPointerInfo, (Vector2 pos, Vector2 delta, ProtoVector3 rayDir)>? capturedPrepare;
+        private List<(Vector2 pos, Vector2 delta, ProtoVector3 rayDir)> putCalls = null!;
 
         [SetUp]
         public void SetUp()
@@ -98,8 +98,8 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Tests
 
             // Assert
             (Vector2 pos, Vector2 delta, ProtoVector3 _) = LastPut();
-            AssertVector2(new Vector2(130f, 120f), pos);
-            AssertVector2(new Vector2(30f, 20f), delta);
+            AssertVector2(new Vector2(130f, Screen.height - 120f), pos);
+            AssertVector2(new Vector2(30f, -20f), delta);
         }
 
         [Test]
@@ -116,7 +116,7 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Tests
             var center = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
             (Vector2 pos, Vector2 delta, ProtoVector3 rayDir) = LastPut();
 
-            AssertVector2(new Vector2(5f, -3f), delta);
+            AssertVector2(new Vector2(5f, 3f), delta);
             AssertVector2(center, pos);
 
             Ray expectedRay = camera.ScreenPointToRay(center);
@@ -141,7 +141,7 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Tests
 
             // Assert: no intermediate frame motion is lost
             (Vector2 _, Vector2 delta, ProtoVector3 _) = LastPut();
-            AssertVector2(new Vector2(10f, 4f), delta);
+            AssertVector2(new Vector2(10f, -4f), delta);
         }
 
         [Test]
@@ -176,7 +176,7 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Tests
             // Assert: the raw position was tracked while locked, so the diff is zero
             (Vector2 pos, Vector2 delta, ProtoVector3 _) = LastPut();
             AssertVector2(Vector2.zero, delta);
-            AssertVector2(rawPosition, pos);
+            AssertVector2(new Vector2(rawPosition.x, Screen.height - rawPosition.y), pos);
         }
 
         [Test]
@@ -195,6 +195,54 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Tests
             // Assert: the accumulated total was tracked while unlocked, so the diff is zero
             (Vector2 _, Vector2 delta, ProtoVector3 _) = LastPut();
             AssertVector2(Vector2.zero, delta);
+        }
+
+        // Regression coverage for https://github.com/decentraland/unity-explorer/issues/10073
+        [Test]
+        public void ReportScreenCoordinatesWithTopLeftOrigin()
+        {
+            // Arrange
+            var nearBottom = new Vector2(64f, 10f);
+
+            // Act
+            Set(mouse.position, nearBottom);
+            system.Update(0);
+
+            // Assert
+            (Vector2 pos, Vector2 _, ProtoVector3 _) = LastPut();
+            AssertVector2(new Vector2(nearBottom.x, Screen.height - nearBottom.y), pos);
+        }
+
+        [Test]
+        public void ReportPositiveScreenDeltaYWhenPointerMovesDown()
+        {
+            // Arrange
+            Set(mouse.position, new Vector2(100f, 100f));
+            system.Update(0);
+
+            // Act: moving down lowers Y in Unity's screen space
+            Set(mouse.position, new Vector2(100f, 60f));
+            system.Update(0);
+
+            // Assert
+            (Vector2 _, Vector2 delta, ProtoVector3 _) = LastPut();
+            AssertVector2(new Vector2(0f, 40f), delta);
+        }
+
+        [Test]
+        public void ReportPositiveScreenDeltaYWhenLockedPointerMovesDown()
+        {
+            // Arrange
+            SetPointerLocked(true);
+            system.Update(0);
+
+            // Act: Unity's pointer delta is Y up, so a downward motion accumulates a negative Y
+            AdvanceAccumulatedDelta(new Vector2(0f, -7f));
+            system.Update(0);
+
+            // Assert
+            (Vector2 _, Vector2 delta, ProtoVector3 _) = LastPut();
+            AssertVector2(new Vector2(0f, 7f), delta);
         }
 
         [Test]
@@ -220,7 +268,7 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Tests
             (Vector2 pos, Vector2 delta, ProtoVector3 rayDir) data = (new Vector2(10f, 20f), new Vector2(1f, 2f), new ProtoVector3 { X = 0.1f, Y = 0.2f, Z = 0.3f });
 
             // Act
-            capturedPrepare(component, data);
+            capturedPrepare!(component, data);
 
             // Assert
             Assert.AreEqual(PointerType.PotMouse, component.PointerType);

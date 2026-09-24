@@ -29,16 +29,16 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Tests
     {
         private const float TOLERANCE = 1e-4f;
 
-        private World sceneWorld;
-        private World globalWorld;
-        private Mouse mouse;
-        private GameObject cameraGameObject;
-        private Camera camera;
-        private IECSToCRDTWriter ecsToCRDTWriter;
-        private ISceneStateProvider sceneStateProvider;
-        private IExposedCameraData exposedCameraData;
-        private PrimaryPointerInfoSystem system;
-        private List<(Vector2 pos, Vector2 delta, ProtoVector3 rayDir)> putCalls;
+        private World sceneWorld = null!;
+        private World globalWorld = null!;
+        private Mouse mouse = null!;
+        private GameObject cameraGameObject = null!;
+        private Camera camera = null!;
+        private IECSToCRDTWriter ecsToCRDTWriter = null!;
+        private ISceneStateProvider sceneStateProvider = null!;
+        private IExposedCameraData exposedCameraData = null!;
+        private PrimaryPointerInfoSystem system = null!;
+        private List<(Vector2 pos, Vector2 delta, ProtoVector3 rayDir)> putCalls = null!;
 
         [SetUp]
         public void SetUp()
@@ -110,7 +110,7 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Tests
 
             Assert.AreNotEqual(Vector2.zero, pos, "screenCoordinates must not collapse to (0,0) while the Camera map is disabled");
             Assert.AreEqual(simulatedPosition.x, pos.x, TOLERANCE);
-            Assert.AreEqual(simulatedPosition.y, pos.y, TOLERANCE);
+            Assert.AreEqual(Screen.height - simulatedPosition.y, pos.y, TOLERANCE);
         }
     }
 }

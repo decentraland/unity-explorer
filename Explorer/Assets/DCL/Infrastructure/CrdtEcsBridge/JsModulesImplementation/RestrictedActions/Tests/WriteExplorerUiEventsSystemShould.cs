@@ -6,7 +6,6 @@ using ECS.TestSuite;
 using ECS.Unity.ExplorerUiEvents;
 using NSubstitute;
 using NUnit.Framework;
-using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 
@@ -20,7 +19,6 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
     {
         private Queue<ExplorerUiEvent> events = null!;
         private IECSToCRDTWriter ecsToCRDTWriter = null!;
-        private ISceneStateProvider sceneStateProvider = null!;
         private List<PBExplorerUiEventsResult> written = null!;
 
         [SetUp]
@@ -28,37 +26,36 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
         {
             events = new Queue<ExplorerUiEvent>();
             written = new List<PBExplorerUiEventsResult>();
-            sceneStateProvider = Substitute.For<ISceneStateProvider>();
             ecsToCRDTWriter = Substitute.For<IECSToCRDTWriter>();
 
             // The payload only exists inside the prepare delegate, so capture the delegate and run it the way
             // the real writer would, against a message of its own.
             ecsToCRDTWriter.AppendMessage(
-                                Arg.Any<Action<PBExplorerUiEventsResult, (ExplorerUiEvent, uint)>>(),
+                                Arg.Any<Action<PBExplorerUiEventsResult, ExplorerUiEvent>>(),
                                 Arg.Any<CRDTEntity>(),
                                 Arg.Any<int>(),
-                                Arg.Any<(ExplorerUiEvent, uint)>())
+                                Arg.Any<ExplorerUiEvent>())
                            .Returns(info =>
                             {
                                 var result = new PBExplorerUiEventsResult();
 
-                                info.ArgAt<Action<PBExplorerUiEventsResult, (ExplorerUiEvent, uint)>>(0)
-                                    .Invoke(result, info.ArgAt<(ExplorerUiEvent, uint)>(3));
+                                info.ArgAt<Action<PBExplorerUiEventsResult, ExplorerUiEvent>>(0)
+                                    .Invoke(result, info.ArgAt<ExplorerUiEvent>(3));
 
                                 written.Add(result);
 
                                 return result;
                             });
 
-            system = new WriteExplorerUiEventsSystem(world, events, ecsToCRDTWriter, sceneStateProvider);
+            system = new WriteExplorerUiEventsSystem(world, events, ecsToCRDTWriter);
         }
 
         [Test]
         public void WriteAQueuedEventToTheSceneRootEntity()
         {
             // Arrange
-            sceneStateProvider.TickNumber.Returns((uint)563);
-            events.Enqueue(new ExplorerUiEvent(ExplorerUi.EuMap, ExplorerUiEventKind.Opened));
+            var uiEvent = new ExplorerUiEvent(ExplorerUi.EuMap, ExplorerUiEventKind.Opened, 12, 563);
+            events.Enqueue(uiEvent);
 
             // Act
             system.Update(0);
@@ -66,37 +63,37 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             // Assert
             ecsToCRDTWriter.Received(1)
                            .AppendMessage(
-                                Arg.Any<Action<PBExplorerUiEventsResult, (ExplorerUiEvent, uint)>>(),
+                                Arg.Any<Action<PBExplorerUiEventsResult, ExplorerUiEvent>>(),
                                 SpecialEntitiesID.SCENE_ROOT_ENTITY,
                                 563,
-                                (new ExplorerUiEvent(ExplorerUi.EuMap, ExplorerUiEventKind.Opened), (uint)563));
+                                uiEvent);
 
             Assert.That(written, Has.Count.EqualTo(1));
             Assert.That(written[0].Ui, Is.EqualTo(ExplorerUi.EuMap));
             Assert.That(written[0].Timestamp, Is.EqualTo(563u));
+            Assert.That(written[0].RequestId, Is.EqualTo(12u));
             Assert.That(written[0].EventCase, Is.EqualTo(PBExplorerUiEventsResult.EventOneofCase.Opened));
         }
 
         [Test]
-        public void WriteEveryQueuedEventInOrder()
+        public void KeepTheTickAndIdEachEventWasQueuedWith()
         {
-            // Arrange
-            sceneStateProvider.TickNumber.Returns((uint)7);
-            events.Enqueue(new ExplorerUiEvent(ExplorerUi.EuBackpack, ExplorerUiEventKind.Opened));
-            events.Enqueue(new ExplorerUiEvent(ExplorerUi.EuBackpack, ExplorerUiEventKind.Closed));
+            // Arrange: two calls on the same panel, opened a tick apart, drained together.
+            events.Enqueue(new ExplorerUiEvent(ExplorerUi.EuBackpack, ExplorerUiEventKind.Opened, 1, 7));
+            events.Enqueue(new ExplorerUiEvent(ExplorerUi.EuBackpack, ExplorerUiEventKind.Closed, 1, 9));
+            events.Enqueue(new ExplorerUiEvent(ExplorerUi.EuBackpack, ExplorerUiEventKind.Opened, 2, 9));
 
             // Act
             system.Update(0);
 
             // Assert
-            Assert.That(written, Has.Count.EqualTo(2));
+            Assert.That(written, Has.Count.EqualTo(3));
             Assert.That(written[0].EventCase, Is.EqualTo(PBExplorerUiEventsResult.EventOneofCase.Opened));
             Assert.That(written[1].EventCase, Is.EqualTo(PBExplorerUiEventsResult.EventOneofCase.Closed));
 
-            // Both share the tick they were drained on: the set is grow-only and the scene reads it as a
-            // window, so a repeated timestamp loses nothing.
-            Assert.That(written[0].Timestamp, Is.EqualTo(7u));
-            Assert.That(written[1].Timestamp, Is.EqualTo(7u));
+            // Sharing a drain would flatten these onto one tick and lose which call each belongs to.
+            Assert.That(written.ConvertAll(static result => (result.Timestamp, result.RequestId)),
+                Is.EqualTo(new[] { (7u, 1u), (9u, 1u), (9u, 2u) }));
         }
 
         [Test]
@@ -113,7 +110,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
         public void DrainTheQueueSoNoEventIsWrittenTwice()
         {
             // Arrange
-            events.Enqueue(new ExplorerUiEvent(ExplorerUi.EuSettings, ExplorerUiEventKind.Opened));
+            events.Enqueue(new ExplorerUiEvent(ExplorerUi.EuSettings, ExplorerUiEventKind.Opened, 0, 1));
 
             // Act
             system.Update(0);
