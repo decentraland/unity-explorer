@@ -155,8 +155,21 @@
         "repo": "https://github.com/FFmpeg/FFmpeg.git",
         "tag": "n8.1",
         "commit": "9047fa1b084f76b1b4d065af2d743df1b40dfb56",
-        "license": "LGPL-2.1-or-later",
+        "license": "LGPL-3.0-or-later (--enable-version3, required by mbedTLS)",
         "macosx_deployment_target": "11.0",
+        "mbedtls": {
+          "comment": [
+            "TLS backend, statically linked into libavformat by the builder",
+            "(replaced SecureTransport, which failed every handshake with",
+            "errSSLBadCert inside the sandboxed helper on some macOS 14",
+            "machines). Cloned with submodules at this tag; nothing from it",
+            "ships as a separate file, so it is pinned by source only."
+          ],
+          "repo": "https://github.com/Mbed-TLS/mbedtls.git",
+          "tag": "mbedtls-3.6.7",
+          "commit": "068ff080b369adfac81509f9b57b2afabaf82dc5",
+          "license": "Apache-2.0 OR GPL-2.0-or-later"
+        },
         "builder": "Explorer/Assets/Plugins/UUAV/native/scripts/build-ffmpeg-macos.sh",
         "builder_sha256_comment": [
           "Digest over the build script's SUBSTANCE, not its text: comments",
@@ -166,9 +179,9 @@
           "15-minute rebuild.",
           "Recompute with verify-binaries.py's build_script_sha256()."
         ],
-        "builder_sha256": "7b784b3acfd592e984221979f6fa08cec517695afb9c9ecc2ec7bda1524e4689",
+        "builder_sha256": "c19fc81007691778df06208c4b129a2b5465141851270399dca5f5afbc6ce008",
         "configure_expected": [
-          "--disable-doc --disable-libxcb --disable-programs --disable-static --disable-xlib --enable-libxml2 --enable-securetransport --enable-shared --enable-videotoolbox --install-name-dir=@rpath"
+          "--disable-doc --disable-libxcb --disable-programs --disable-sdl2 --disable-static --disable-xlib --enable-libxml2 --enable-mbedtls --enable-shared --enable-version3 --enable-videotoolbox --install-name-dir=@rpath --pkg-config-flags=--static"
         ],
         "configure_observed": [
           "--disable-doc --disable-libxcb --disable-programs --disable-static --disable-xlib --enable-libxml2 --enable-securetransport --enable-shared --enable-videotoolbox --install-name-dir=@rpath"
