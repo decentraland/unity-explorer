@@ -26,8 +26,11 @@ Material:
     m_Ints: []
     m_Floats:
     - _Intensity: 0
+    - _MaskSoftness: 0.5
     - _Smoothness: 0.6
     m_Colors:
     - _Color: {r: 0, g: 0, b: 0, a: 1}
+    - _MaskCenter: {r: 0.5, g: 0.55, b: 0, a: 0}
+    - _MaskRadius: {r: 0.3, g: 0.5, b: 0.3, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

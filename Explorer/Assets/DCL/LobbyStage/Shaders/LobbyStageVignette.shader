@@ -1,4 +1,4 @@
-// Screen-space vignette for the lobby stage. The vertex stage writes clip-space positions directly, so the quad covers the whole
+// Screen-space vignette for the lobby stage with a protected oval around the avatar. The vertex stage writes clip-space positions directly, so the quad covers the whole
 // frame of whatever camera draws it and nothing has to be fitted to a lens; only its bounds still take part in culling.
 Shader "DCL/Lobby/StageVignette"
 {
@@ -7,6 +7,9 @@ Shader "DCL/Lobby/StageVignette"
         _Color ("Color", Color) = (0, 0, 0, 1)
         _Intensity ("Intensity", Range(0, 1)) = 0
         _Smoothness ("Smoothness", Range(0.05, 1)) = 0.6
+        _MaskCenter ("Mask Centre (screen UV)", Vector) = (0.5, 0.55, 0, 0)
+        _MaskRadius ("Mask Radii (x, y above centre, y below centre)", Vector) = (0.3, 0.5, 0.3, 0)
+        _MaskSoftness ("Mask Softness", Range(0.01, 1)) = 0.5
     }
 
     SubShader
@@ -40,6 +43,9 @@ Shader "DCL/Lobby/StageVignette"
                 half4 _Color;
                 float _Intensity;
                 float _Smoothness;
+                float4 _MaskCenter;
+                float4 _MaskRadius;
+                float _MaskSoftness;
             CBUFFER_END
 
             struct Attributes
@@ -75,6 +81,15 @@ Shader "DCL/Lobby/StageVignette"
                 float distanceFromCentre = length(centred) * INV_CORNER_DISTANCE;
 
                 float darkening = smoothstep(1.0 - _Smoothness, 1.0, distanceFromCentre);
+
+                // Protected oval around the avatar: 1 inside, fading to 0 across the softness band, so the sky above the
+                // avatar keeps its brightness while the sides and the bottom still darken
+                float2 offset = input.uv - _MaskCenter.xy;
+                float radiusY = offset.y > 0.0 ? _MaskRadius.y : _MaskRadius.z;
+                float maskDistance = length(offset / float2(_MaskRadius.x, radiusY));
+                float protectedArea = 1.0 - smoothstep(1.0 - _MaskSoftness, 1.0, maskDistance);
+
+                darkening *= 1.0 - protectedArea;
 
                 return half4(_Color.rgb, _Color.a * _Intensity * darkening);
             }

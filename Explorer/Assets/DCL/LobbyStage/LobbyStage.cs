@@ -24,6 +24,9 @@ namespace DCL.Lobby
         private static readonly int BLEND_HARDNESS = Shader.PropertyToID("_BlendHardness");
         private static readonly int INTENSITY = Shader.PropertyToID("_Intensity");
         private static readonly int SMOOTHNESS = Shader.PropertyToID("_Smoothness");
+        private static readonly int MASK_CENTER = Shader.PropertyToID("_MaskCenter");
+        private static readonly int MASK_RADIUS = Shader.PropertyToID("_MaskRadius");
+        private static readonly int MASK_SOFTNESS = Shader.PropertyToID("_MaskSoftness");
 
         [SerializeField] private Renderer backdrop = null!;
         [SerializeField] private Renderer floor = null!;
@@ -253,6 +256,9 @@ namespace DCL.Lobby
                 vignetteProperties.SetColor(COLOR, preset.VignetteColor);
                 vignetteProperties.SetFloat(INTENSITY, preset.VignetteIntensity);
                 vignetteProperties.SetFloat(SMOOTHNESS, preset.VignetteSmoothness);
+                vignetteProperties.SetVector(MASK_CENTER, preset.VignetteMaskCenter);
+                vignetteProperties.SetVector(MASK_RADIUS, preset.VignetteMaskRadii);
+                vignetteProperties.SetFloat(MASK_SOFTNESS, preset.VignetteMaskSoftness);
                 vignette.SetPropertyBlock(vignetteProperties);
             }
 

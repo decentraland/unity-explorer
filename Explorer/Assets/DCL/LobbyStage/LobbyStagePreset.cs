@@ -68,6 +68,14 @@ namespace DCL.Lobby
 
         [field: SerializeField] public Color VignetteColor { get; private set; } = Color.black;
 
+        [field: Tooltip("Centre of the protected oval in screen UV, 0..1 from the bottom-left")]
+        [field: SerializeField] public Vector2 VignetteMaskCenter { get; private set; } = new (0.5f, 0.55f);
+
+        [field: Tooltip("Half width, reach above the centre and reach below the centre, in screen UV")]
+        [field: SerializeField] public Vector3 VignetteMaskRadii { get; private set; } = new (0.3f, 0.5f, 0.3f);
+
+        [field: SerializeField, Range(0.01f, 1f)] public float VignetteMaskSoftness { get; private set; } = 0.5f;
+
         [field: Header("Props")]
         [field: SerializeField] public LobbyStageProp[] Props { get; private set; } = Array.Empty<LobbyStageProp>();
 

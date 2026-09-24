@@ -24,4 +24,7 @@ MonoBehaviour:
   <LightRotation>k__BackingField: {x: 45, y: 120, z: 0}
   <LightColor>k__BackingField: {r: 0.9386792, g: 0.9687353, b: 1, a: 1}
   <LightIntensity>k__BackingField: 2
+  <VignetteMaskCenter>k__BackingField: {x: 0.5, y: 0.55}
+  <VignetteMaskRadii>k__BackingField: {x: 0.3, y: 0.5, z: 0.3}
+  <VignetteMaskSoftness>k__BackingField: 0.5
   <Props>k__BackingField: []
