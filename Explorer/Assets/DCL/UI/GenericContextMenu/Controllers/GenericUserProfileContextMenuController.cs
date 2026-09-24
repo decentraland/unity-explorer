@@ -24,6 +24,7 @@ using DCL.Utility.Types;
 using DCL.VoiceChat;
 using DCL.VoiceChat.Nearby;
 using DCL.Web3;
+using DCL.Web3.Identities;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
 using Newtonsoft.Json;
@@ -77,6 +78,7 @@ namespace DCL.UI
         private readonly GenericUserProfileContextMenuSettings contextMenuSettings;
         private readonly ISelfProfile selfProfile;
         private readonly IProfileCache profileCache;
+        private readonly IWeb3IdentityCache web3IdentityCache;
 
         private readonly string[] getUserPositionBuffer = new string[1];
 
@@ -124,10 +126,12 @@ namespace DCL.UI
             IDecentralandUrlsSource decentralandUrlsSource,
             ISelfProfile selfProfile,
             IProfileCache profileCache,
+            IWeb3IdentityCache web3IdentityCache,
             NearbyMuteService? nearbyMuteService = null)
         {
             this.nearbyMuteService = nearbyMuteService;
             this.profileCache = profileCache;
+            this.web3IdentityCache = web3IdentityCache;
             this.friendsService = friendsService;
             this.chatEventBus = chatEventBus;
             this.mvcManager = mvcManager;

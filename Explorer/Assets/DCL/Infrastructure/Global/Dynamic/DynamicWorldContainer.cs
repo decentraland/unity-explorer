@@ -507,6 +507,7 @@ namespace Global.Dynamic
                 bootstrapContainer.WebBrowser,
                 bootstrapContainer.DecentralandUrlsSource,
                 profileContainer.SelfProfile,
+                identityCache,
                 voiceChatContainer.NearbyMuteService);
 
             ViewDependencies.Initialize(new ViewDependencies(
