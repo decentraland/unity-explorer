@@ -142,7 +142,7 @@ namespace DCL.Web3.Authenticators
             if (OtpIsDisabled())
                 DCLPlayerPrefs.DeleteKey(DCLPrefKeys.LOGGEDIN_EMAIL, save: true);
 
-            if (GuestLoginIsDisabled())
+            if (!GuestLoginIsEnabled())
                 DCLPlayerPrefs.DeleteKey(DCLPrefKeys.GUEST_SESSION_ACTIVE, save: true);
 
             // Only the ThirdWeb guest flow stores this flag, so it is the one that has a session to restore
@@ -159,7 +159,7 @@ namespace DCL.Web3.Authenticators
             }
 
             // An account generated on the device has no session to restore: the stored identity is the session
-            if (identityCache.Identity?.Method == LoginMethod.EPHEMERAL_GUEST)
+            if (GuestLoginIsEnabled() && identityCache.Identity?.Method == LoginMethod.EPHEMERAL_GUEST)
             {
                 CurrentProvider = AuthProvider.Ephemeral;
                 return true;
@@ -178,7 +178,7 @@ namespace DCL.Web3.Authenticators
 
             bool OtpIsDisabled() => !FeaturesRegistry.Instance.IsEnabled(FeatureId.EmailOTPAuth);
 
-            bool GuestLoginIsDisabled() => !FeaturesRegistry.Instance.IsEnabled(FeatureId.GuestLogin);
+            bool GuestLoginIsEnabled() => FeaturesRegistry.Instance.IsEnabled(FeatureId.GuestLogin);
         }
 
         public UniTask<EthApiResponse> SendAsync(EthApiRequest request, Web3RequestSource source, CancellationToken ct) =>
