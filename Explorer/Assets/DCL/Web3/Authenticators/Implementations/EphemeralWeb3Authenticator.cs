@@ -55,6 +55,7 @@ namespace DCL.Web3.Authenticators
                 signature = ephemeralSignature,
             });
 
+            sessionIdentity?.Dispose();
             // To keep cohesiveness between the platform, convert the user address to lower case
             sessionIdentity = new DecentralandIdentity(
                 new Web3Address(signer),
