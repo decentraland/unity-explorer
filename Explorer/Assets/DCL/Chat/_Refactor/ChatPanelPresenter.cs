@@ -218,9 +218,7 @@ namespace DCL.Chat
                 textFormatter,
                 emojiMapping,
                 emojiPanelPresenter,
-                view.EmojiPanelView,
-                web3IdentityCache,
-                mvcManager);
+                view.EmojiPanelView);
 
             var memberListPresenter = new ChatMemberFeedPresenter(
                 view.MemberListView,
