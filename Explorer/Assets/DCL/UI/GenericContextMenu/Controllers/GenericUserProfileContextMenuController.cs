@@ -257,7 +257,7 @@ namespace DCL.UI
                 if (selfProfile.OwnProfile != null)
                     imGuest = profileCache.IsGuest(selfProfile.OwnProfile.UserId!);
 
-                // A guest cannot receive a call, so there is nothing to start
+                // Neither a guest caller nor a guest callee can participate in a call
                 contextMenuCallButton.Enabled = !imGuest && !profileCache.IsGuest(profile.UserId!);
                 startCallButtonControlSettings.SetData(profile.UserId!);
             }
