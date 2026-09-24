@@ -31,7 +31,7 @@ namespace ECS.Unity.PrimitiveRenderer.MeshPrimitive
             {
                 Mesh = SharedMesh;
                 sharedUses++;
-                Debug.Log($"JUANI BoxPrimitive shared mesh reused (id {Mesh.GetInstanceID()}), shared uses: {sharedUses}, own meshes: {ownMeshesCreated}");
+                Debug.Log($"JUANI BoxPrimitive shared mesh reused (id {Mesh.GetEntityId()}), shared uses: {sharedUses}, own meshes: {ownMeshesCreated}");
                 return;
             }
 
@@ -42,7 +42,7 @@ namespace ECS.Unity.PrimitiveRenderer.MeshPrimitive
                 Debug.Log($"JUANI BoxPrimitive own mesh created for custom UVs, shared uses: {sharedUses}, own meshes: {ownMeshesCreated}");
             }
             else
-                Debug.Log($"JUANI BoxPrimitive own mesh reused for custom UVs (id {ownMesh.GetInstanceID()})");
+                Debug.Log($"JUANI BoxPrimitive own mesh reused for custom UVs (id {ownMesh.GetEntityId()})");
             BoxFactory.UpdateMesh(ref ownMesh, uvs);
             Mesh = ownMesh;
         }
