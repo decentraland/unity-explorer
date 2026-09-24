@@ -151,6 +151,9 @@ namespace DCL.UserInAppInitializationFlow
                     {
                         case IUserInAppInitializationFlow.LoadSource.Logout:
                             startupLobbyGate?.Cancel();
+
+                            // The start parcel consumed by the session that ends here goes back to the launch destination for the one that starts
+                            startParcel.Reset();
                             await DoLogoutOperationsAsync();
 
                             //Restart the realm and show the authentications screen simultaneously to avoid the "empty space" flicker

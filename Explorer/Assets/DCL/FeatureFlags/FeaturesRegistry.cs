@@ -27,6 +27,8 @@ namespace DCL.FeatureFlags
         // Filled only in the constructor and never mutated afterwards, so reads stay thread-safe; Lazy<T> resolves each value once under its own lock
         private readonly Dictionary<FeatureId, Lazy<bool>> deferredFeatureStates = new ();
 
+        private readonly bool lobbyDefault;
+
         public FeaturesRegistry(
             IAppArgs appArgs,
             bool localSceneDevelopment)
@@ -95,22 +97,23 @@ namespace DCL.FeatureFlags
             // The intro tip is a kill switch: unlike the feature itself it stays off until the flag is explicitly enabled.
             SetFeatureState(FeatureId.NearbyVoiceChatTip, IsEnabled(FeatureId.NearbyVoiceChat) && featureFlags.IsEnabled(FeatureFlagsStrings.NEARBY_VOICE_CHAT_TIP));
 
-            // --lobby enables it on its own (no --debug needed), --lobby false forces it off, otherwise the Settings
-            // toggle decides. That toggle lives in player prefs, which only exist in a running player while the
-            // registry is also built outside one, so the state is resolved on the first query instead of here.
-            deferredFeatureStates[FeatureId.Lobby] = new Lazy<bool>(() =>
-                appArgs.ResolveFeatureFlagArg(AppArgsFlags.LOBBY, LobbyEnabledSetting, requireDebug: false) && !localSceneDevelopment);
+            // --lobby (no --debug needed) or --lobby false replaces the remote flag as the default, but the Settings
+            // toggle wins once the user picks a value. That toggle lives in player prefs, which only exist in a running
+            // player while the registry is also built outside one, so the state is resolved on the first query instead of here.
+            lobbyDefault = appArgs.ResolveFeatureFlagArg(AppArgsFlags.LOBBY, featureFlags.IsEnabled(FeatureFlagsStrings.LOBBY), requireDebug: false);
+            deferredFeatureStates[FeatureId.Lobby] = new Lazy<bool>(() => LobbyEnabledSetting && !localSceneDevelopment);
         }
 
         /// <summary>
-        ///     The lobby state the user picked in Settings, the remote flag providing the default until they pick one.
-        ///     <see cref="FeatureId.Lobby" /> resolves it once per session, so a change only applies after a restart.
+        ///     The lobby state the user picked in Settings, the <c>--lobby</c> app arg or else the remote flag providing
+        ///     the default until they pick one. <see cref="FeatureId.Lobby" /> resolves it once per session, so a change
+        ///     only applies after a restart.
         /// </summary>
-        public static bool LobbyEnabledSetting
+        public bool LobbyEnabledSetting
         {
             get => DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_LOBBY_ENABLED)
                 ? DCLPlayerPrefs.GetBool(DCLPrefKeys.SETTINGS_LOBBY_ENABLED)
-                : FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.LOBBY);
+                : lobbyDefault;
 
             set => DCLPlayerPrefs.SetBool(DCLPrefKeys.SETTINGS_LOBBY_ENABLED, value, true);
         }

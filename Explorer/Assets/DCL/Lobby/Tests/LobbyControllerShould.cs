@@ -940,6 +940,27 @@ namespace DCL.Lobby.Tests
         }
 
         [Test]
+        public void SetTheStartParcelAgainWhenJumpingInAfterARelogin()
+        {
+            // Arrange: the previous session landed at its pick before the user logged out
+            startParcel.Assign(new Vector2Int(-3, 7));
+            startParcel.ConsumeByTeleportOperation();
+            startParcel.Reset();
+            PlacesData.PlaceInfo place = CreatePlace("plaza", new Vector2Int(10, 20));
+            ArrangeRecentPlaces(new List<string> { place.id }, place);
+            UniTask lifeCycle = Launch(isStartup: true);
+
+            // Act
+            recentPlaceCards[0].JumpInButton!.Button.onClick.Invoke();
+
+            // Assert
+            Assert.That(startParcel.Peek(), Is.EqualTo(new Vector2Int(10, 20)));
+            Assert.That(startParcel.Realm, Is.EqualTo(URLDomain.FromString(GENESIS_URL)));
+            Assert.That(lifeCycle.Status, Is.EqualTo(UniTaskStatus.Succeeded));
+            realmNavigator.DidNotReceive().TeleportToParcelAsync(Arg.Any<Vector2Int>(), Arg.Any<CancellationToken>(), Arg.Any<bool>(), Arg.Any<bool>());
+        }
+
+        [Test]
         public void TeleportWhenJumpingInFromARecentCardInWorld()
         {
             // Arrange

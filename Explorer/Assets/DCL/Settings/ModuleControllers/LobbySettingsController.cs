@@ -11,7 +11,7 @@ namespace DCL.Settings.ModuleControllers
         {
             this.view = view;
 
-            view.ConfigureWithoutNotify(FeaturesRegistry.LobbyEnabledSetting);
+            view.ConfigureWithoutNotify(FeaturesRegistry.Instance.LobbyEnabledSetting);
             view.ToggleView.Toggle.onValueChanged.AddListener(OnToggleValueChanged);
         }
 
@@ -19,6 +19,6 @@ namespace DCL.Settings.ModuleControllers
             view.ToggleView.Toggle.onValueChanged.RemoveAllListeners();
 
         private static void OnToggleValueChanged(bool isOn) =>
-            FeaturesRegistry.LobbyEnabledSetting = isOn;
+            FeaturesRegistry.Instance.LobbyEnabledSetting = isOn;
     }
 }

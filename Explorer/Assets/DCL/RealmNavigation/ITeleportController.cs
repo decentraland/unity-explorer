@@ -46,11 +46,16 @@ namespace DCL.RealmNavigation
 
     public class StartParcel
     {
+        private readonly Vector2Int launchValue;
+        private readonly string? launchSpawnPointName;
+
         private Vector2Int value;
         private bool consumed;
 
         public StartParcel(Vector2Int value, string? spawnPointName = null, StartParcelSource source = StartParcelSource.Default)
         {
+            launchValue = value;
+            launchSpawnPointName = spawnPointName;
             this.value = value;
             SpawnPointName = spawnPointName;
             Source = source;
@@ -87,6 +92,17 @@ namespace DCL.RealmNavigation
         {
             consumed = true;
             return value;
+        }
+
+        /// <summary>
+        ///     Puts the launch destination back and lets it be assigned and consumed again, as if the session had just started.
+        /// </summary>
+        public void Reset()
+        {
+            value = launchValue;
+            SpawnPointName = launchSpawnPointName;
+            Realm = null;
+            consumed = false;
         }
 
         public Vector2Int Peek() =>

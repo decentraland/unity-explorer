@@ -62,6 +62,8 @@ namespace DCL.Backpack
         private readonly RectSnapshot previewFull;
         private readonly RectSnapshot previewImageFull;
         private readonly RectSnapshot searchBarFull;
+        private readonly float compactTrim;
+        private readonly Vector2 compactCloseSlot;
 
         private BackpackSections lastShownSection;
         private CancellationTokenSource? animationCts;
@@ -126,6 +128,12 @@ namespace DCL.Backpack
             previewFull = new RectSnapshot((RectTransform)view.CharacterPreviewView.transform);
             previewImageFull = new RectSnapshot(view.CharacterPreviewView.RawImage.rectTransform);
             searchBarFull = new RectSnapshot(view.SearchBarRect);
+
+            // Both are anchored to a single point horizontally, so the authored size delta is their width whether or not they were laid out yet
+            var itemInfoRect = (RectTransform)view.ItemInfoPanels[0].transform;
+            compactTrim = itemInfoRect.sizeDelta.x + Mathf.Abs(itemInfoRect.anchoredPosition.x);
+            var closeRect = (RectTransform)view.CloseButton.transform;
+            compactCloseSlot = new Vector2(closeRect.sizeDelta.x + Mathf.Abs(closeRect.anchoredPosition.x), 0f);
 
             var categoriesPresenter = new CategoriesPresenter(avatarView.CategoriesView,
                 backpackGridController,
@@ -412,22 +420,15 @@ namespace DCL.Backpack
         ///     Trims the item info column off the content panel and pins what is left to the right border of the host, so every
         ///     pixel nothing else claims goes to the avatar. Everything centred on the panel is pushed back by half of what was
         ///     trimmed to hold its place in it. The outfits row is a single fixed width strip and cannot reflow into what is
-        ///     left, so it is scaled down by the same ratio instead. Applied on every attach, from the authored snapshots, so a
-        ///     width measured before the panel was first laid out never sticks.
+        ///     left, so it is scaled down by the same ratio instead. Every width comes from the authored values snapshotted at
+        ///     construction, so neither an unlaid panel nor a previous compact pass can skew it.
         /// </summary>
         private void SetCompactLayout(bool compact)
         {
             foreach (BackpackInfoPanelView itemInfoPanel in view.ItemInfoPanels)
                 itemInfoPanel.gameObject.SetActive(!compact);
 
-            var trim = 0f;
-
-            if (compact)
-            {
-                var itemInfoRect = (RectTransform)view.ItemInfoPanels[0].transform;
-                trim = itemInfoRect.rect.width + Mathf.Abs(itemInfoRect.anchoredPosition.x);
-            }
-
+            float trim = compact ? compactTrim : 0f;
             float contentWidth = contentFull.SizeDelta.x - trim;
 
             if (compact)
@@ -464,11 +465,8 @@ namespace DCL.Backpack
                 return;
             }
 
-            var closeRect = (RectTransform)view.CloseButton.transform;
-            var closeSlot = new Vector2(closeRect.rect.width + Mathf.Abs(closeRect.anchoredPosition.x), 0f);
-
-            view.SearchBarRect.sizeDelta = searchBarFull.SizeDelta - closeSlot;
-            view.SearchBarRect.anchoredPosition = searchBarFull.AnchoredPosition - closeSlot;
+            view.SearchBarRect.sizeDelta = searchBarFull.SizeDelta - compactCloseSlot;
+            view.SearchBarRect.anchoredPosition = searchBarFull.AnchoredPosition - compactCloseSlot;
         }
 
         /// <summary>
