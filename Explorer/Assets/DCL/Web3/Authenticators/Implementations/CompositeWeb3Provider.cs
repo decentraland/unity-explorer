@@ -96,13 +96,19 @@ namespace DCL.Web3.Authenticators
         {
             analytics.Identify(null);
 
-            // ThirdWeb is the only provider holding a login session of its own.
-            if (IsThirdWebAccount)
-                await thirdWebAuth.LogoutAsync(ct);
-            else
-                // Abort any in-flight browser signature confirmation so an approval arriving
-                // after logout cannot complete under the logged-out session.
-                await dappEthereumApi.DisconnectFromAuthApiAsync();
+            switch (CurrentProvider)
+            {
+                case AuthProvider.ThirdWeb:
+                    await thirdWebAuth.LogoutAsync(ct);
+                    break;
+
+                case AuthProvider.Dapp:
+                    await dappEthereumApi.DisconnectFromAuthApiAsync();
+                    break;
+
+                // The account only ever lived in the identity that is cleared below
+                case AuthProvider.Ephemeral: break;
+            }
 
             identityCache.Clear();
         }
