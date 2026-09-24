@@ -10,7 +10,6 @@ using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.InputSystem;
 using Utility;
 using PointerType = DCL.ECSComponents.PointerType;
 using ProtoVector3 = Decentraland.Common.Vector3;
@@ -18,13 +17,12 @@ using ProtoVector3 = Decentraland.Common.Vector3;
 namespace DCL.SDKComponents.PrimaryPointerInfo.Tests
 {
     [TestFixture]
-    public class PrimaryPointerInfoSystemShould : InputTestFixture
+    public class PrimaryPointerInfoSystemShould
     {
         private const float TOLERANCE = 1e-4f;
 
         private World sceneWorld = null!;
         private World globalWorld = null!;
-        private Mouse mouse = null!;
         private GameObject cameraGameObject = null!;
         private Camera camera = null!;
         private IECSToCRDTWriter ecsToCRDTWriter = null!;
@@ -32,17 +30,13 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Tests
         private IExposedCameraData exposedCameraData = null!;
         private PrimaryPointerInfoSystem system = null!;
         private CumulativePointerDelta accumulatedDelta;
+
         private Action<PBPrimaryPointerInfo, (Vector2 pos, Vector2 delta, ProtoVector3 rayDir)>? capturedPrepare;
         private List<(Vector2 pos, Vector2 delta, ProtoVector3 rayDir)> putCalls = null!;
 
         [SetUp]
         public void SetUp()
         {
-            base.Setup();
-
-            mouse = InputSystem.AddDevice<Mouse>();
-            DCLInput.Instance.Enable();
-
             sceneWorld = World.Create();
             globalWorld = World.Create();
 
@@ -65,6 +59,7 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Tests
 
             exposedCameraData = Substitute.For<IExposedCameraData>();
             SetPointerLocked(false);
+            SetPointer(Vector2.zero);
 
             accumulatedDelta = default;
             exposedCameraData.AccumulatedPointerDelta.Returns(accumulatedDelta);
@@ -89,11 +84,11 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Tests
         public void ReportPositionDiffDeltaWhenUnlocked()
         {
             // Arrange
-            Set(mouse.position, new Vector2(100f, 100f));
+            SetPointer(new Vector2(100f, 100f));
             system.Update(0);
 
             // Act
-            Set(mouse.position, new Vector2(130f, 120f));
+            SetPointer(new Vector2(130f, 120f));
             system.Update(0);
 
             // Assert
@@ -126,6 +121,26 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Tests
         }
 
         [Test]
+        public void ReportTheRayThroughThePointerWhenUnlocked()
+        {
+            // Arrange: a pointer well away from screen center, so a center ray would not pass the assert
+            var pointerPosition = new Vector2(Screen.width * 0.25f, Screen.height * 0.75f);
+            SetPointer(pointerPosition);
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            (Vector2 pos, Vector2 _, ProtoVector3 rayDir) = LastPut();
+            AssertVector2(new Vector2(pointerPosition.x, Screen.height - pointerPosition.y), pos);
+
+            Ray expectedRay = camera.ScreenPointToRay(pointerPosition);
+            Assert.AreEqual(expectedRay.direction.x, rayDir.X, TOLERANCE);
+            Assert.AreEqual(expectedRay.direction.y, rayDir.Y, TOLERANCE);
+            Assert.AreEqual(expectedRay.direction.z, rayDir.Z, TOLERANCE);
+        }
+
+        [Test]
         public void SumIntermediateFrameDeltasWhileLocked()
         {
             // Arrange: several render frames accumulate between two scene ticks
@@ -149,7 +164,7 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Tests
         {
             // Arrange
             SetPointerLocked(true);
-            Set(mouse.position, new Vector2(999f, 777f));
+            SetPointer(new Vector2(999f, 777f));
 
             // Act
             system.Update(0);
@@ -163,20 +178,20 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Tests
         [Test]
         public void NotSpikeDeltaOnUnlockTransition()
         {
-            // Arrange: a locked frame at a raw position far from center
-            var rawPosition = new Vector2(200f, 150f);
-            Set(mouse.position, rawPosition);
+            // Arrange: a locked frame at a pointer position far from center
+            var pointerPosition = new Vector2(200f, 150f);
+            SetPointer(pointerPosition);
             SetPointerLocked(true);
             system.Update(0);
 
-            // Act: unlock and update at the same raw position
+            // Act: unlock and update at the same pointer position
             SetPointerLocked(false);
             system.Update(0);
 
-            // Assert: the raw position was tracked while locked, so the diff is zero
+            // Assert: the pointer position was tracked while locked, so the diff is zero
             (Vector2 pos, Vector2 delta, ProtoVector3 _) = LastPut();
             AssertVector2(Vector2.zero, delta);
-            AssertVector2(new Vector2(rawPosition.x, Screen.height - rawPosition.y), pos);
+            AssertVector2(new Vector2(pointerPosition.x, Screen.height - pointerPosition.y), pos);
         }
 
         [Test]
@@ -205,7 +220,7 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Tests
             var nearBottom = new Vector2(64f, 10f);
 
             // Act
-            Set(mouse.position, nearBottom);
+            SetPointer(nearBottom);
             system.Update(0);
 
             // Assert
@@ -217,11 +232,11 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Tests
         public void ReportPositiveScreenDeltaYWhenPointerMovesDown()
         {
             // Arrange
-            Set(mouse.position, new Vector2(100f, 100f));
+            SetPointer(new Vector2(100f, 100f));
             system.Update(0);
 
             // Act: moving down lowers Y in Unity's screen space
-            Set(mouse.position, new Vector2(100f, 60f));
+            SetPointer(new Vector2(100f, 60f));
             system.Update(0);
 
             // Assert
@@ -283,6 +298,9 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Tests
 
         private void SetPointerLocked(bool locked) =>
             exposedCameraData.PointerIsLocked.Returns(new CanBeDirty<bool>(locked));
+
+        private void SetPointer(Vector2 position) =>
+            exposedCameraData.PointerScreenPosition.Returns(position);
 
         private void AdvanceAccumulatedDelta(Vector2 frameDelta)
         {
