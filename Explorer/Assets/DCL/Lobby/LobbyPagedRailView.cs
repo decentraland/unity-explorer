@@ -7,7 +7,8 @@ using UnityEngine.UI;
 namespace DCL.Lobby
 {
     /// <summary>
-    ///     Horizontal strip that pages by dragging: releasing snaps to the nearest page and one dot per page tracks the position.
+    ///     Horizontal strip that pages by dragging or by its hover arrows: releasing a drag snaps to the nearest page and one dot per
+    ///     page tracks the position.
     ///     Subclasses own the cards and report how many are shown.
     /// </summary>
     public abstract class LobbyPagedRailView : MonoBehaviour, IEndDragHandler
@@ -20,6 +21,10 @@ namespace DCL.Lobby
         [SerializeField] protected int cardsPerPage = 3;
 
         [SerializeField] private LobbyCarouselDotsView dots = null!;
+        [SerializeField] private LobbyRailArrowsView arrows = null!;
+
+        [Tooltip("Covers the rail and its arrows; the arrows are shown while the pointer is inside it")]
+        [SerializeField] private HoverableUiElement hoverArea = null!;
 
         private Tweener? snapTween;
         private bool scrollListened;
@@ -30,6 +35,9 @@ namespace DCL.Lobby
         private void Awake()
         {
             scrollRect.SetScrollSensitivityBasedOnPlatform();
+            arrows.Previous.onClick.AddListener(() => SnapTo(CurrentPage - 1));
+            arrows.Next.onClick.AddListener(() => SnapTo(CurrentPage + 1));
+            hoverArea.HoverStateChanged += arrows.SetHovered;
         }
 
         public void OnEndDrag(PointerEventData _) =>
@@ -116,6 +124,7 @@ namespace DCL.Lobby
         {
             CurrentPage = page;
             dots.Select(page);
+            arrows.SetPage(page, PageCount(shownCount));
         }
     }
 }

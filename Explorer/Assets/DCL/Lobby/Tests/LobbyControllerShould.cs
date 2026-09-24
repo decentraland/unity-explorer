@@ -886,6 +886,36 @@ namespace DCL.Lobby.Tests
         }
 
         [Test]
+        public void PageTheCarouselWithItsArrows()
+        {
+            // Arrange
+            var featured = new PlacesData.PlaceInfo[7];
+
+            for (var i = 0; i < featured.Length; i++)
+                featured[i] = CreatePlace($"featured{i}", new Vector2Int(i, 0));
+
+            ArrangeRecommendedPlaces(featured);
+            LobbyRailArrowsView arrows = TestRailArrows.Awaken(recommendedPlaces);
+            Launch(isStartup: true);
+
+            // Act & Assert
+            Assert.That(arrows.Previous.gameObject.activeSelf, Is.False);
+            Assert.That(arrows.Next.gameObject.activeSelf, Is.True);
+
+            arrows.Next.onClick.Invoke();
+            Assert.That(recommendedPlaces.CurrentPage, Is.EqualTo(1));
+            Assert.That(arrows.Previous.gameObject.activeSelf, Is.True);
+            Assert.That(arrows.Next.gameObject.activeSelf, Is.True);
+
+            arrows.Next.onClick.Invoke();
+            Assert.That(recommendedPlaces.CurrentPage, Is.EqualTo(2));
+            Assert.That(arrows.Next.gameObject.activeSelf, Is.False);
+
+            arrows.Previous.onClick.Invoke();
+            Assert.That(recommendedPlaces.CurrentPage, Is.EqualTo(1));
+        }
+
+        [Test]
         public void ReuseCarouselCardsAcrossShows()
         {
             // Arrange
@@ -1434,6 +1464,7 @@ namespace DCL.Lobby.Tests
             SetField(carousel, "cardTemplate", cardTemplate);
             SetField(carousel, "dots", dotsView);
             SetField(carousel, "cardsPerPage", cardsPerPage);
+            TestRailArrows.Attach(carousel);
             carouselGo.SetActive(true);
 
             return carousel;
@@ -1486,6 +1517,7 @@ namespace DCL.Lobby.Tests
             SetField(rail, "cardTemplate", cardTemplate);
             SetField(rail, "dots", dotsView);
             SetField(rail, "cardsPerPage", 1);
+            TestRailArrows.Attach(rail);
             railGo.SetActive(true);
 
             return rail;

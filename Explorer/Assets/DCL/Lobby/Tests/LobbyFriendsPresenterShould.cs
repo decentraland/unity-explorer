@@ -245,6 +245,26 @@ namespace DCL.Lobby.Tests
         }
 
         [Test]
+        public async Task PageTheRailWithItsArrows()
+        {
+            //Arrange
+            for (var i = 0; i < 5; i++)
+                eventBus.BroadcastFriendConnected(Friend($"0x00000000000000000000000000000000000000{i:D2}", $"Friend{i}"));
+
+            await UniTask.Delay(DEBOUNCE_WAIT_MS);
+            LobbyRailArrowsView arrows = TestRailArrows.Awaken(section.Rail);
+            presenter.Show(cts.Token);
+
+            //Act
+            arrows.Next.onClick.Invoke();
+
+            //Assert
+            Assert.AreEqual(1, section.Rail.CurrentPage);
+            Assert.IsTrue(arrows.Previous.gameObject.activeSelf);
+            Assert.IsFalse(arrows.Next.gameObject.activeSelf);
+        }
+
+        [Test]
         public async Task ShowOneDotPerPageOfFourCards()
         {
             //Arrange
@@ -359,6 +379,7 @@ namespace DCL.Lobby.Tests
             SetField(rail, "cardsPerPage", 4);
             SetField(rail, "dots", dotsView);
             SetField(rail, "loopList", loopList);
+            TestRailArrows.Attach(rail);
             railGo.SetActive(true);
 
             SetBackingField(sectionView, nameof(LobbyFriendsSectionView.OnlineCountText), CreateText(sectionGo.transform, "OnlineCount"));
