@@ -26,7 +26,8 @@ Shader "DCL/Lobby/StageFloor"
             "IgnoreProjector" = "True"
         }
 
-        Blend SrcAlpha OneMinusSrcAlpha
+        // Alpha composites as coverage (src + dst * (1 - src)) so drawing over an opaque pixel keeps it opaque
+        Blend SrcAlpha OneMinusSrcAlpha, One OneMinusSrcAlpha
         ZWrite Off
         Cull Back
 
