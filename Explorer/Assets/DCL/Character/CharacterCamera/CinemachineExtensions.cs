@@ -42,6 +42,59 @@ namespace DCL.CharacterCamera
                 cinemachinePreset.FreeCameraData.Camera.m_Lens.FieldOfView = fov.Value;
         }
 
+        /// <summary>
+        ///     Points the free camera straight down from <paramref name="position" /> with an orthographic projection whose
+        ///     half-height is <paramref name="orthographicSize" />. Returns the state to hand back to
+        ///     <see cref="RestoreFreeCameraProjection" /> once the capture is done.
+        /// </summary>
+        public static FreeCameraProjectionState ForceFreeCameraTopDownOrthographic(this ICinemachinePreset cinemachinePreset, Vector3 position, float orthographicSize)
+        {
+            CinemachineVirtualCamera vcam = cinemachinePreset.FreeCameraData.Camera;
+            CinemachinePOV? pov = cinemachinePreset.FreeCameraData.POV;
+            Camera? outputCamera = cinemachinePreset.Brain.OutputCamera;
+
+            var previous = new FreeCameraProjectionState(vcam.m_Lens.ModeOverride, vcam.m_Lens.OrthographicSize,
+                pov != null ? pov.m_VerticalAxis.m_MinValue : 0f, pov != null ? pov.m_VerticalAxis.m_MaxValue : 0f,
+                outputCamera != null && outputCamera.orthographic);
+
+            vcam.transform.position = position;
+            vcam.m_Lens.ModeOverride = LensSettings.OverrideModes.Orthographic;
+            vcam.m_Lens.OrthographicSize = orthographicSize;
+
+            if (pov != null)
+            {
+                // The rig clamps pitch just short of vertical; widen it for the capture so the view is exactly top-down.
+                pov.m_VerticalAxis.m_MinValue = -90f;
+                pov.m_VerticalAxis.m_MaxValue = 90f;
+                pov.m_VerticalAxis.Value = 90f;
+                pov.m_HorizontalAxis.Value = 0f;
+            }
+
+            return previous;
+        }
+
+        public static void RestoreFreeCameraProjection(this ICinemachinePreset cinemachinePreset, in FreeCameraProjectionState state)
+        {
+            CinemachineVirtualCamera vcam = cinemachinePreset.FreeCameraData.Camera;
+            CinemachinePOV? pov = cinemachinePreset.FreeCameraData.POV;
+
+            vcam.m_Lens.ModeOverride = state.ModeOverride;
+            vcam.m_Lens.OrthographicSize = state.OrthographicSize;
+
+            if (pov != null)
+            {
+                pov.m_VerticalAxis.m_MinValue = state.PitchMin;
+                pov.m_VerticalAxis.m_MaxValue = state.PitchMax;
+                pov.m_VerticalAxis.Value = Mathf.Clamp(pov.m_VerticalAxis.Value, state.PitchMin, state.PitchMax);
+            }
+
+            // The brain only pushes the projection while a lens override is active, so the output camera is reset by hand.
+            Camera? outputCamera = cinemachinePreset.Brain.OutputCamera;
+
+            if (outputCamera != null)
+                outputCamera.orthographic = state.OutputCameraOrthographic;
+        }
+
         public static void ForceFreeCameraLookAt(this ICinemachinePreset cinemachinePreset, CameraLookAtIntent lookAtIntent)
         {
             CinemachinePOV? pov = cinemachinePreset.FreeCameraData.POV;
@@ -82,6 +135,25 @@ namespace DCL.CharacterCamera
             float pitchDegrees = Mathf.Atan2(heightDelta, flatDirection.magnitude) * Mathf.Rad2Deg;
 
             return (yawDegrees, pitchDegrees);
+        }
+    }
+
+    /// <summary>Free camera lens and aim state captured before a top-down orthographic override.</summary>
+    public readonly struct FreeCameraProjectionState
+    {
+        public readonly LensSettings.OverrideModes ModeOverride;
+        public readonly float OrthographicSize;
+        public readonly float PitchMin;
+        public readonly float PitchMax;
+        public readonly bool OutputCameraOrthographic;
+
+        public FreeCameraProjectionState(LensSettings.OverrideModes modeOverride, float orthographicSize, float pitchMin, float pitchMax, bool outputCameraOrthographic)
+        {
+            ModeOverride = modeOverride;
+            OrthographicSize = orthographicSize;
+            PitchMin = pitchMin;
+            PitchMax = pitchMax;
+            OutputCameraOrthographic = outputCameraOrthographic;
         }
     }
 }

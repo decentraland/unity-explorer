@@ -924,7 +924,9 @@ namespace Global.Dynamic
                         uiAutomation,
                         coroutineRunner,
                         globalWorld,
-                        localSceneDevelopment));
+                        localSceneDevelopment,
+                        staticContainer.StaticSettings.SkyboxSettings,
+                        staticContainer.RealmData));
             }
 
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.LocalSceneDevelopment) || FeaturesRegistry.Instance.IsEnabled(FeatureId.SelfPreviewBuilderCollections))

@@ -9,6 +9,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         {
             Blocked = 1 << 0,
             Banned  = 1 << 1,
+            MapCapture = 1 << 2,
         }
 
         public HiddenReason Reason;
