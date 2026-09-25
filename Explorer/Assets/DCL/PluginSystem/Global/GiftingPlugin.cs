@@ -142,8 +142,7 @@ namespace DCL.PluginSystem.Global
             var giftTransferRequestCommand = new GiftTransferRequestCommand(eventBus,
                 web3IdentityCache,
                 giftTransferService,
-                pendingTransferService,
-                web3Provider);
+                pendingTransferService);
 
             var loadThumbnailCommand = new LoadGiftableItemThumbnailCommand(thumbnailProvider,
                 eventBus);

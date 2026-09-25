@@ -167,6 +167,7 @@ namespace DCL.AuthenticationScreenFlow
             characterPreviewController = new AuthenticationScreenCharacterPreviewController(viewInstance!.CharacterPreviewView, emotesSettings, characterPreviewFactory, world, characterPreviewEventBus);
 
             bool isEpicBuild = string.Equals(installSource, EPIC_STORE_INSTALL_SOURCE, StringComparison.OrdinalIgnoreCase);
+
             // Epic builds only support emailOTP due to deeplink limitations
             // See: https://github.com/decentraland/unity-explorer/issues/9554
             bool enableEmailOTP = FeaturesRegistry.Instance.IsEnabled(FeatureId.EmailOTPAuth) || isEpicBuild;
@@ -217,22 +218,62 @@ namespace DCL.AuthenticationScreenFlow
         {
             base.OnBeforeViewShow();
 
+            if (inputData.StartAtLoginSelection)
+            {
+                fsm?.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.IN, true);
+                return;
+            }
+
             IWeb3Identity? storedIdentity = storedIdentityProvider.Identity;
+
             // Force to re-login if the identity will expire in 24hs or less, so we mitigate the chances on
             // getting the identity expired while in-world, provoking signed-fetch requests to fail
-            if (storedIdentity is { IsExpired: false } && storedIdentity.Expiration - DateTime.UtcNow > TimeSpan.FromDays(1))
+            if (storedIdentity is { IsExpired: false } && storedIdentity.Expiration - DateTime.UtcNow <= TimeSpan.FromDays(1))
+                ReturnToOrigin(UIAnimationHashes.IN);
+            else
             {
                 CancelLoginProcess();
                 loginCancellationTokenSource = new CancellationTokenSource();
 
-                TryAutoLoginAndProceedAsync(storedIdentity, loginCancellationTokenSource.Token).Forget();
-            }
-            else
-            {
-                if (inputData.StartAtLoginSelection)
-                    fsm?.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.IN, true);
+                if (storedIdentity == null)
+                    ReturnToOrigin(UIAnimationHashes.IN);
                 else
-                    EnterLoginEntryState(UIAnimationHashes.IN);
+                    TryAutoLoginAndProceedAsync(loginCancellationTokenSource.Token).Forget();
+            }
+
+            return;
+
+            async UniTaskVoid TryAutoLoginAndProceedAsync(CancellationToken ct)
+            {
+                try
+                {
+                    bool autoLoginSuccess = await web3Authenticator.TryAutoLoginAsync(ct);
+
+                    if (autoLoginSuccess)
+                        Proceed();
+                    else
+                        ReturnToOrigin(UIAnimationHashes.IN);
+                }
+                catch (OperationCanceledException)
+                { /* Expected on cancellation */
+                }
+                catch (AutoLoginNotNeededException)
+                {
+                    Proceed();
+                }
+                catch (Exception e)
+                {
+                    ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
+                    ReturnToOrigin(UIAnimationHashes.IN);
+                }
+
+                return;
+
+                void Proceed() =>
+                    fsm?.Enter<ProfileFetchingAuthState, ProfileFetchingPayload>(
+                        new ProfileFetchingPayload(storedIdentity,
+                            storedIdentity.Method != LoginMethod.TOKEN_FILE,
+                            ct));
             }
         }
 
@@ -242,20 +283,12 @@ namespace DCL.AuthenticationScreenFlow
         internal void RaiseAvatarSelected(string bodyType, int presetSlot) =>
             AvatarSelected?.Invoke(bodyType, presetSlot);
 
-        internal void EnterLoginEntryState(int animHash)
+        internal void ReturnToOrigin(int animHash)
         {
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.GuestLogin))
                 fsm?.Enter<GuestOrSignUpAuthState>(true);
             else
                 fsm?.Enter<LoginSelectionAuthState, int>(animHash, true);
-        }
-
-        internal void ReturnToOrigin(int animHash)
-        {
-            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.GuestLogin))
-                EnterLoginEntryState(animHash);
-            else
-                fsm?.Enter<LoginSelectionAuthState, int>(animHash);
         }
 
         internal void ReturnToOrigin(ErrorType errorType)
@@ -264,32 +297,6 @@ namespace DCL.AuthenticationScreenFlow
                 fsm?.Enter<GuestOrSignUpAuthState, ErrorType>(errorType, true);
             else
                 fsm?.Enter<LoginSelectionAuthState, ErrorType>(errorType);
-        }
-
-        private async UniTaskVoid TryAutoLoginAndProceedAsync(IWeb3Identity storedIdentity, CancellationToken ct)
-        {
-            try
-            {
-                bool autoLoginSuccess = await web3Authenticator.TryAutoLoginAsync(ct);
-
-                if (autoLoginSuccess)
-                    fsm?.Enter<ProfileFetchingAuthState, ProfileFetchingPayload>(new (storedIdentity, storedIdentity.Method != LoginMethod.TOKEN_FILE, ct));
-                else
-                {
-                    if (inputData.StartAtLoginSelection)
-                        fsm?.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.IN, true);
-                    else
-                        EnterLoginEntryState(UIAnimationHashes.IN);
-                }
-            }
-            catch (OperationCanceledException)
-            { /* Expected on cancellation */
-            }
-            catch (Exception e)
-            {
-                ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-                EnterLoginEntryState(UIAnimationHashes.IN);
-            }
         }
 
         protected override void OnViewShow()
@@ -347,7 +354,7 @@ namespace DCL.AuthenticationScreenFlow
 
                 await web3Authenticator.LogoutAsync(ct);
 
-                EnterLoginEntryState(UIAnimationHashes.SLIDE);
+                ReturnToOrigin(UIAnimationHashes.SLIDE);
             }
         }
 

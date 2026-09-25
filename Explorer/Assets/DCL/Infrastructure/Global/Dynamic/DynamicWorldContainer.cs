@@ -826,7 +826,7 @@ namespace Global.Dynamic
                     webBrowser,
                     bootstrapContainer.DecentralandUrlsSource,
                     staticContainer.InputBlock,
-                    dynamicWorldDependencies.CompositeWeb3Provider));
+                    identityCache));
 
             // ReSharper disable once MethodHasAsyncOverloadWithCancellation
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.StopOnDuplicateIdentity))

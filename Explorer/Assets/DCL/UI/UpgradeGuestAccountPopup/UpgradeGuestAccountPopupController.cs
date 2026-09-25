@@ -136,7 +136,7 @@ namespace DCL.UI.UpgradeGuestAccountPopup
         private void UpgradeAccount()
         {
             // An ephemeral account holds no wallet to link an email to, so the only way forward is a real login
-            if (compositeWeb3Provider.IsEphemeralAccount)
+            if (identityCache.Identity?.Method == LoginMethod.EPHEMERAL_GUEST)
             {
                 UpgradeRedirectedToAccountCreation?.Invoke(inputData.Trigger);
                 logoutCts = logoutCts.SafeRestart();
