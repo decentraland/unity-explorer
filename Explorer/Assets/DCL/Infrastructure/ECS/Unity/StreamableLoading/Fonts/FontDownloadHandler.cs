@@ -22,7 +22,7 @@ namespace ECS.StreamableLoading.Fonts
         protected override void ReceiveContentLengthHeader(ulong contentLength) =>
             LimitExceeded |= contentLength > (ulong)maxBytes;
 
-        protected override bool ReceiveData(byte[] data, int dataLength)
+        protected override bool ReceiveData(byte[] receivedData, int dataLength)
         {
             if (LimitExceeded || dataLength > maxBytes - length)
             {
@@ -35,7 +35,7 @@ namespace ECS.StreamableLoading.Fonts
             if (required > buffer.Length)
                 Array.Resize(ref buffer, Math.Min(maxBytes, Math.Max(required, Math.Max(CHUNK_BYTES, buffer.Length * 2))));
 
-            Buffer.BlockCopy(data, 0, buffer, length, dataLength);
+            Buffer.BlockCopy(receivedData, 0, buffer, length, dataLength);
             length = required;
             return true;
         }

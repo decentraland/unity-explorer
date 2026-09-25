@@ -13,7 +13,6 @@ using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Fonts;
 using SceneRunner.Scene;
-using UnityEngine.TextCore.Text;
 using UnityEngine.UIElements;
 using Entity = Arch.Core.Entity;
 

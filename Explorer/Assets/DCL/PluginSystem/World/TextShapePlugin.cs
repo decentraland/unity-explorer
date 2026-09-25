@@ -11,7 +11,6 @@ using DCL.SDKComponents.TextShape.Fonts.Settings;
 using DCL.SDKComponents.TextShape.System;
 using ECS.Abstract;
 using ECS.LifeCycle;
-using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using System.Threading;

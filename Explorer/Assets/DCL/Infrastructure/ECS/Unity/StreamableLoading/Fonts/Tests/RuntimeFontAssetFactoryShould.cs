@@ -66,7 +66,7 @@ namespace ECS.StreamableLoading.Fonts.Tests
         [Test]
         public void BuildNothingWhenTheRegularFaceIsNotAFont()
         {
-            assets = factory.Create(ASSET_NAME, NOT_A_FONT_PATH, null, null, null);
+            assets = factory.Create(ASSET_NAME, NOT_A_FONT_PATH);
 
             Assert.That(assets, Is.Null);
         }

@@ -110,8 +110,8 @@ namespace ECS.StreamableLoading.Fonts.Tests
         [Test]
         public async Task KeepTheFileUntilItsLastOwnerReleasesIt()
         {
-            using FontFileStore.Lease first = await store.StoreAsync(BYTES, CancellationToken.None);
-            using FontFileStore.Lease second = await store.StoreAsync(BYTES, CancellationToken.None);
+            FontFileStore.Lease first = await store.StoreAsync(BYTES, CancellationToken.None);
+            FontFileStore.Lease second = await store.StoreAsync(BYTES, CancellationToken.None);
 
             first.Dispose();
             first.Dispose();
@@ -146,7 +146,7 @@ namespace ECS.StreamableLoading.Fonts.Tests
         [Test]
         public async Task RemoveEveryFileOnClear()
         {
-            using FontFileStore.Lease lease = await store.StoreAsync(BYTES, CancellationToken.None);
+            FontFileStore.Lease lease = await store.StoreAsync(BYTES, CancellationToken.None);
             lease.Dispose();
             File.WriteAllBytes(Path.Combine(directory, "abandoned.tmp"), BYTES);
             store.Clear();
@@ -157,7 +157,7 @@ namespace ECS.StreamableLoading.Fonts.Tests
         [Test]
         public async Task StoreAgainAfterClear()
         {
-            using FontFileStore.Lease first = await store.StoreAsync(BYTES, CancellationToken.None);
+            FontFileStore.Lease first = await store.StoreAsync(BYTES, CancellationToken.None);
             first.Dispose();
             store.Clear();
 

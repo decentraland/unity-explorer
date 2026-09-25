@@ -14,7 +14,6 @@ using NUnit.Framework;
 using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
-using UnityEngine.TextCore.Text;
 using UnityEngine.UIElements;
 using Entity = Arch.Core.Entity;
 

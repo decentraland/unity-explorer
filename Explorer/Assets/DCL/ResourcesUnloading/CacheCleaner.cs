@@ -15,7 +15,6 @@ using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Cache.InMemory;
 using ECS.StreamableLoading.Fonts;
 using ECS.StreamableLoading.GLTF;
-using ECS.StreamableLoading.NFTShapes;
 using ECS.StreamableLoading.Textures;
 using ECS.Unity.GLTFContainer.Asset.Cache;
 using System;
@@ -30,7 +29,6 @@ namespace DCL.ResourcesUnloading
         private const int GLTF_UNLOAD_CHUNK = 3;
         private const int AB_UNLOAD_CHUNK = 1;
         private const int TEXTURE_UNLOAD_CHUNK = 1;
-        private const int NFT_SHAPE_UNLOAD_CHUNK = 1;
         private const int AUDIO_CLIP_UNLOAD_CHUNK = 100;
         private const int FONT_UNLOAD_CHUNK = 1;
         private const int PROFILE_UNLOAD_CHUNK = 10;
@@ -175,7 +173,7 @@ namespace DCL.ResourcesUnloading
         public void UpdateProfilingCounters()
         {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-            ProfilingCounters.WearablesAssetsInCatalogAmount.Value = ((WearableStorage)wearableStorage).WearableAssetsInCatalog;
+            ProfilingCounters.WearablesAssetsInCatalogAmount.Value = wearableStorage is WearableStorage storage ? storage.WearableAssetsInCatalog : 0;
             ProfilingCounters.WearablesAssetsInCacheAmount.Value = wearableAssetsCache?.AssetsCount ?? 0;
 #endif
         }

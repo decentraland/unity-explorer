@@ -44,9 +44,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIText
         private void HandleUITextRemoval(ref UITextComponent uiTextComponent)
         {
             ReleaseFont(ref uiTextComponent);
-
-            if (componentPool != null)
-                componentPool.Release(uiTextComponent.Label);
+            componentPool.Release(uiTextComponent.Label);
         }
 
         [Query]

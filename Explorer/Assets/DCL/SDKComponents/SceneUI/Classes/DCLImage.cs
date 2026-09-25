@@ -24,7 +24,7 @@ namespace DCL.SDKComponents.SceneUI.Classes
             set => SetScaleMode(value);
         }
 
-        public Texture Texture
+        public Texture? Texture
         {
             get => texture;
             set => SetTexture(value);
@@ -88,7 +88,7 @@ namespace DCL.SDKComponents.SceneUI.Classes
             ResolveGenerationWay();
         }
 
-        private void SetTexture(Texture texture)
+        private void SetTexture(Texture? texture)
         {
             if (this.texture == texture)
                 return;

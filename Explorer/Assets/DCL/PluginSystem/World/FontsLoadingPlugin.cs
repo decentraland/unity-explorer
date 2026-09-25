@@ -6,7 +6,6 @@ using DCL.ResourcesUnloading;
 using DCL.WebRequests;
 using ECS.LifeCycle;
 using ECS.StreamableLoading.Fonts;
-using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using System.Threading;

@@ -58,7 +58,9 @@ namespace DCL.SDKComponents.TextShape
             tmpText.lineSpacing = textShape.HasLineSpacing ? textShape.LineSpacing : 0f;
 
             tmpText.maxVisibleLines = textShape.HasLineCount && textShape.LineCount != 0 ? Mathf.Max(textShape.LineCount, 1) : int.MaxValue;
-            tmpText.enableWordWrapping = textShape is { HasTextWrapping: true, TextWrapping: true } && !tmpText.enableAutoSizing;
+            tmpText.textWrappingMode = textShape is { HasTextWrapping: true, TextWrapping: true } && !tmpText.enableAutoSizing
+                ? TextWrappingModes.Normal
+                : TextWrappingModes.NoWrap;
 
             tmpText.renderer.GetPropertyBlock(materialPropertyBlock);
 

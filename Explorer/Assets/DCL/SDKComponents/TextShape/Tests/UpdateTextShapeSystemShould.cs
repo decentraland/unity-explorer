@@ -16,6 +16,7 @@ using SceneRunner.Scene;
 using TMPro;
 using UnityEngine;
 using Utility;
+using Font = DCL.ECSComponents.Font;
 
 namespace DCL.SDKComponents.TextShape.Tests
 {
@@ -47,7 +48,7 @@ namespace DCL.SDKComponents.TextShape.Tests
                       });
 
             var fontsStorage = Substitute.For<IFontsStorage>();
-            fontsStorage.Font(Arg.Any<DCL.ECSComponents.Font>()).Returns(builtInFont);
+            fontsStorage.Font(Arg.Any<Font>()).Returns(builtInFont);
             system = new UpdateTextShapeSystem(world, fontsStorage, new MaterialPropertyBlock(),
                 new EntityEventBuffer<TextShapeComponent>(1), sceneData, PartitionComponent.TOP_PRIORITY);
 
