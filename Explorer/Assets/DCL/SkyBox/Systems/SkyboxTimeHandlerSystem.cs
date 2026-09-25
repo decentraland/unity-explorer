@@ -19,7 +19,7 @@ namespace DCL.SDKComponents.SkyboxTime.Systems
         private readonly Entity rootEntity;
         private readonly ISceneStateProvider sceneStateProvider;
 
-        private SkyboxTimeHandlerSystem(World world, SkyboxSettingsAsset skyboxSettings, Entity rootEntity,
+        internal SkyboxTimeHandlerSystem(World world, SkyboxSettingsAsset skyboxSettings, Entity rootEntity,
             ISceneStateProvider sceneStateProvider) : base(world)
         {
             this.skyboxSettings = skyboxSettings;
