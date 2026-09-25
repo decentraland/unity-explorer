@@ -69,7 +69,7 @@ namespace DCL.PluginSystem.World
             // the LOD→scene Mordor flicker when ISS pre-populated the world.
             bool hasISS = sharedDependencies.SceneData.ISSDescriptor != null;
             var sceneRootContainerTransform = GetNewTransform(position: hasISS
-                ? sharedDependencies.SceneData.Geometry.BaseParcelPosition
+                ? sharedDependencies.SceneData.Geometry.BaseParcelPosition + new Vector3(0, ParcelMathHelper.SCENE_CONTAINER_Y_OFFSET, 0)
                 : MordorConstants.SCENE_MORDOR_POSITION);
             sceneRootContainerTransform.name = $"{sharedDependencies.SceneData.SceneShortInfo.BaseParcel}_{sharedDependencies.SceneData.SceneShortInfo.Name}_Container";
             builder.World.Add(persistentEntities.SceneContainer, new TransformComponent(sceneRootContainerTransform));

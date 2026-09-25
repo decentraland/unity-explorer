@@ -10,6 +10,7 @@ using DCL.McpServer.Tools;
 using DCL.McpServer.Utils;
 using DCL.PluginSystem.Global;
 using DCL.RealmNavigation;
+using DCL.SkyBox;
 using DCL.UI.DebugMenu.MessageBus;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.CurrentScene;
@@ -54,6 +55,7 @@ namespace DCL.McpServer.Systems
 
         private readonly SceneLogBuffer logBuffer;
         private readonly DebugMenuConsoleLogEntryBus logEntryBus;
+        private readonly SkyboxSettingsAsset skyboxSettings;
 
         private McpHttpServer? server;
         private CancellationTokenSource? serverCts;
@@ -74,8 +76,10 @@ namespace DCL.McpServer.Systems
             IEntityCollidersGlobalCache entityCollidersGlobalCache,
             ICoroutineRunner coroutineRunner,
             Arch.Core.World globalWorld,
-            bool localSceneDevelopment)
+            bool localSceneDevelopment,
+            SkyboxSettingsAsset skyboxSettings)
         {
+            this.skyboxSettings = skyboxSettings;
             port = appArgs.TryGetValue(AppArgsFlags.MCP_PORT, out string? portValue)
                    && int.TryParse(portValue, out int parsedPort)
                    && parsedPort is >= MIN_PORT and <= MAX_PORT
@@ -136,6 +140,8 @@ namespace DCL.McpServer.Systems
                           .Add(new GetEntityDetailsTool(worldInfoHub))
                           .Add(new TriggerEmoteTool(globalWorldActions))
                           .Add(new ClickEntityTool(globalWorld, arguments.PlayerEntity))
+                          .Add(new SetSkyboxTimeTool(skyboxSettings))
+                          .Add(new SetAvatarHiddenTool(globalWorld, arguments.PlayerEntity))
                           .Build();
 
             server = new McpHttpServer(toolsRegistry, port);

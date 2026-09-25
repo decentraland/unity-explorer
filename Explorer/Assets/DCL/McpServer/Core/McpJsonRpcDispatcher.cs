@@ -26,7 +26,10 @@ namespace DCL.McpServer.Core
 
         // A hung tool (e.g. an asset promise that never resolves) would otherwise hold its HttpListenerContext
         // open until the server stops. Cap each call so one stuck tool can't tie up the agent's connection.
-        private static readonly TimeSpan TOOL_CALL_TIMEOUT = TimeSpan.FromSeconds(30);
+        // A tool that accepts its own "timeoutSec" argument (e.g. teleport waiting on a slow scene load) can
+        // ask for more time up to MAX_TOOL_CALL_TIMEOUT; otherwise DEFAULT_TOOL_CALL_TIMEOUT applies.
+        private static readonly TimeSpan DEFAULT_TOOL_CALL_TIMEOUT = TimeSpan.FromSeconds(30);
+        private static readonly TimeSpan MAX_TOOL_CALL_TIMEOUT = TimeSpan.FromSeconds(300);
 
         private readonly McpToolsRegistry tools;
         private readonly string serverVersion;
@@ -133,8 +136,16 @@ namespace DCL.McpServer.Core
             if (!tools.TryGet(toolName, out McpTool? tool))
                 return JsonRpcEnvelope.Error(id, INVALID_PARAMS, $"Unknown tool: {toolName ?? "<missing>"}");
 
+            TimeSpan toolCallTimeout = DEFAULT_TOOL_CALL_TIMEOUT;
+
+            if (arguments.TryGetValue("timeoutSec", out JToken? timeoutSecToken) && timeoutSecToken.Type is JTokenType.Integer or JTokenType.Float)
+            {
+                double requestedSeconds = timeoutSecToken.Value<double>();
+                toolCallTimeout = TimeSpan.FromSeconds(Math.Clamp(requestedSeconds, DEFAULT_TOOL_CALL_TIMEOUT.TotalSeconds, MAX_TOOL_CALL_TIMEOUT.TotalSeconds));
+            }
+
             using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
-            timeout.CancelAfter(TOOL_CALL_TIMEOUT);
+            timeout.CancelAfter(toolCallTimeout);
 
             McpToolResult result;
 
@@ -149,8 +160,8 @@ namespace DCL.McpServer.Core
             }
             catch (OperationCanceledException) when (timeout.IsCancellationRequested && !ct.IsCancellationRequested)
             {
-                ReportHub.LogWarning(ReportCategory.MCP, $"Tool '{toolName}' timed out after {TOOL_CALL_TIMEOUT.TotalSeconds:0}s");
-                result = McpToolResult.Error($"Tool '{toolName}' timed out after {TOOL_CALL_TIMEOUT.TotalSeconds:0}s");
+                ReportHub.LogWarning(ReportCategory.MCP, $"Tool '{toolName}' timed out after {toolCallTimeout.TotalSeconds:0}s");
+                result = McpToolResult.Error($"Tool '{toolName}' timed out after {toolCallTimeout.TotalSeconds:0}s");
             }
             catch (OperationCanceledException) { throw; }
             catch (Exception e)
