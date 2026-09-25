@@ -6,6 +6,7 @@ using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle;
 using SceneRunner.Scene;
+using System;
 using SceneMetadataTransitionMode = DCL.Ipfs.SceneMetadata.TransitionMode;
 using TransitionMode = DCL.ECSComponents.TransitionMode;
 
@@ -62,7 +63,7 @@ namespace DCL.SDKComponents.SkyboxTime.Systems
 
         private void SetSDKSettings(ref PBSkyboxTime sdkSkyboxTime)
         {
-            skyboxSettings.CurrentSDKControlledScene = sceneInfo.BaseParcel;
+            skyboxSettings.CurrentSDKControlledScene = sceneInfo;
             skyboxSettings.TargetTimeOfDayNormalized = SkyboxSettingsAsset.NormalizeTime(sdkSkyboxTime.FixedTime);
 
             skyboxSettings.TransitionMode = sdkSkyboxTime.TransitionMode == TransitionMode.TmForward
@@ -72,7 +73,8 @@ namespace DCL.SDKComponents.SkyboxTime.Systems
 
         private void ResetSDKControlled()
         {
-            if (skyboxSettings.CurrentSDKControlledScene == sceneInfo.BaseParcel)
+            // Base parcels are not unique: portable experiences are always current and usually share (0,0) with world scenes
+            if (Nullable.Equals(skyboxSettings.CurrentSDKControlledScene, sceneInfo))
                 skyboxSettings.CurrentSDKControlledScene = null;
         }
     }

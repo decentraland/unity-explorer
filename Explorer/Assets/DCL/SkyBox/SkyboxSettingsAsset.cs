@@ -1,4 +1,5 @@
 ﻿using DCL.AssetsProvision;
+using DCL.Diagnostics;
 using System;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -38,7 +39,7 @@ namespace DCL.SkyBox
 
         public bool IsUIControlled { get; set; }
         public float UIOverrideTimeOfDayNormalized { get; set; }
-        public Vector2Int? CurrentSDKControlledScene { get; set; }
+        public SceneShortInfo? CurrentSDKControlledScene { get; set; }
         public bool IsDayCycleEnabled
         {
             get => isDayCycleEnabled;
