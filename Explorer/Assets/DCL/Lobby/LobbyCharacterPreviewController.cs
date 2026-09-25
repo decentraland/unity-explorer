@@ -115,11 +115,15 @@ namespace DCL.Lobby
             base.Initialize(avatar, position);
         }
 
+        // The image fills the screen with nothing opaque behind it, so hiding it behind the spinner while the new look loads
+        // would show the world through the lobby: the current look stays on until the new one is instantiated
         private async UniTaskVoid ReloadAndCelebrateAsync(CancellationToken ct)
         {
             try
             {
-                await ShowLoadingSpinnerAndUpdateAvatarAsync(ct);
+                if (previewController != null)
+                    await previewController.Value.UpdateAvatarAsync(previewAvatarModel, ct);
+
                 PlayEmote(settings.ProfileUpdatedEmoteURN);
                 await PlayFlavourEmotesAsync(ct);
             }
