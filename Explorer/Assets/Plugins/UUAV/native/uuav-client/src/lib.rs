@@ -102,10 +102,6 @@ const RESPAWN_DELAYS: [Duration; 3] = [
     Duration::from_secs(3),
 ];
 
-/// How long the recovery worker waits for restored players to leave
-/// OPENING before giving up on their resume seeks.
-const RESTORE_SEEK_WINDOW: Duration = Duration::from_secs(10);
-
 static CLIENT: ArcSwapOption<Client> = ArcSwapOption::const_empty();
 
 pub type PlayerId = u64;
@@ -620,7 +616,9 @@ fn sleep_unless_shutdown(client: &Client, delay: Duration) -> bool {
 }
 
 /// Rebuilds every mirrored player on the fresh helper from desired state:
-/// bind, reopen, resume playback, then seek back once past OPENING.
+/// bind, reopen, resume playback and seek back to where the clock was. Every
+/// command queues on the helper while the media opens, so all of them are
+/// sent back-to-back.
 fn restore_players(client: &Arc<Client>) {
     let conn = client.conn();
     let players = client.registry.snapshot();
@@ -644,55 +642,21 @@ fn restore_players(client: &Arc<Client>) {
         };
         if let Some(url) = desired.url {
             _ = conn.send(ToServer::OpenMedia { id: helper, url });
-            // play/looping/rate queue as pending controls while the media
-            // opens; only seek has no pending slot (handled below)
             if desired.want_playing {
                 _ = conn.send(ToServer::Play { id: helper });
             }
-        }
-    }
-
-    // resume seeks once each player is past OPENING
-    let started = Instant::now();
-    let mut waiting: Vec<&(PlayerId, Arc<PlayerMirror>)> = players
-        .iter()
-        .filter(|(_, mirror)| {
-            mirror
+            // the seek queues like play/looping/rate and becomes the start
+            // position once the media is open; taken so the frozen-time
+            // getters fall back to live snapshots from here on
+            let resume = mirror
                 .desired
                 .lock()
                 .ok()
-                .is_some_and(|desired| desired.resume_time.is_some() && desired.url.is_some())
-        })
-        .collect();
-    while !waiting.is_empty()
-        && started.elapsed() < RESTORE_SEEK_WINDOW
-        && client.lifecycle.get() == Lifecycle::Running
-    {
-        std::thread::sleep(Duration::from_millis(100));
-        waiting.retain(|(_, mirror)| {
-            if mirror.awaiting_snapshot.load(Ordering::Acquire) {
-                return true;
+                .and_then(|mut desired| desired.resume_time.take());
+            if let Some(time) = resume {
+                _ = conn.send(ToServer::Seek { id: helper, time });
             }
-            let Some(cached) = mirror.state.load_full() else {
-                return true;
-            };
-            match cached.update.state {
-                PlayerStateWire::Ready | PlayerStateWire::Playing | PlayerStateWire::Paused => {
-                    let time = mirror
-                        .desired
-                        .lock()
-                        .ok()
-                        .and_then(|mut desired| desired.resume_time.take());
-                    if let (Some(time), Some(helper)) = (time, mirror.helper_id()) {
-                        _ = conn.send(ToServer::Seek { id: helper, time });
-                    }
-                    false
-                }
-                // the stream itself failed or ended; nothing to resume into
-                PlayerStateWire::Error | PlayerStateWire::Closed | PlayerStateWire::Ended => false,
-                PlayerStateWire::Opening | PlayerStateWire::Unknown => true,
-            }
-        });
+        }
     }
 }
 
