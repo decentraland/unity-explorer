@@ -24,7 +24,7 @@ namespace DCL.SDKComponents.SceneUI.Classes
             set => SetScaleMode(value);
         }
 
-        public Texture Texture
+        public Texture? Texture
         {
             get => texture;
             set => SetTexture(value);
@@ -55,6 +55,17 @@ namespace DCL.SDKComponents.SceneUI.Classes
         }
 
         private IStyle style => canvas.style;
+
+        // contentRect stops at the padding edge, while CSS paints the background over the padding box.
+        private Rect backgroundRect
+        {
+            get
+            {
+                IResolvedStyle resolvedStyle = canvas.resolvedStyle;
+
+                return ToPaddingRect(canvas.contentRect, resolvedStyle.paddingLeft, resolvedStyle.paddingTop, resolvedStyle.paddingRight, resolvedStyle.paddingBottom);
+            }
+        }
 
         public void Initialize(VisualElement canvasToApply)
         {
@@ -88,12 +99,12 @@ namespace DCL.SDKComponents.SceneUI.Classes
             ResolveGenerationWay();
         }
 
-        private void SetTexture(Texture texture)
+        private void SetTexture(Texture? textureValue)
         {
-            if (this.texture == texture)
+            if (this.texture == textureValue)
                 return;
 
-            this.texture = texture;
+            this.texture = textureValue;
             ResolveGenerationWay();
         }
 
@@ -218,34 +229,31 @@ namespace DCL.SDKComponents.SceneUI.Classes
 
         private void OnGenerateVisualContent(MeshGenerationContext mgc)
         {
-            if (!customMeshGenerationRequired)
+            if (!customMeshGenerationRequired || texture == null)
                 return;
 
             switch (scaleMode)
             {
                 case DCLImageScaleMode.Center:
-                    GenerateCenteredTexture(mgc);
+                    GenerateCenteredTexture(mgc, texture);
                     break;
                 case DCLImageScaleMode.Stretch:
-                    GenerateStretched(mgc);
+                    GenerateStretched(mgc, texture);
                     break;
             }
         }
 
-        private void GenerateStretched(MeshGenerationContext mgc)
+        private void GenerateStretched(MeshGenerationContext mgc, Texture textureToDraw)
         {
             // in local coords
-            PopulateStretchedQuad(VERTICES, canvas.contentRect);
+            PopulateStretchedQuad(VERTICES, backgroundRect);
 
-            MeshWriteData? mwd = mgc.Allocate(VERTICES.Length, INDICES.Length, texture);
+            MeshWriteData? mwd = mgc.Allocate(VERTICES.Length, INDICES.Length, textureToDraw);
 
-            // uv Rect [0;1] that was assigned by the Dynamic atlas by UI Toolkit
-            var uvRegion = mwd.uvRegion;
-
-            VERTICES[0].uv = (uvs.BottomLeft * uvRegion.size) + uvRegion.min;
-            VERTICES[1].uv = (uvs.TopLeft * uvRegion.size) + uvRegion.min;
-            VERTICES[2].uv = (uvs.TopRight * uvRegion.size) + uvRegion.min;
-            VERTICES[3].uv = (uvs.BottomRight * uvRegion.size) + uvRegion.min;
+            VERTICES[0].uv = uvs.BottomLeft;
+            VERTICES[1].uv = uvs.TopLeft;
+            VERTICES[2].uv = uvs.TopRight;
+            VERTICES[3].uv = uvs.BottomRight;
 
             ApplyVerticesTint();
 
@@ -253,14 +261,14 @@ namespace DCL.SDKComponents.SceneUI.Classes
             mwd.SetAllIndices(INDICES);
         }
 
-        private void GenerateCenteredTexture(MeshGenerationContext mgc)
+        private void GenerateCenteredTexture(MeshGenerationContext mgc, Texture textureToDraw)
         {
             // in local coords
-            var r = canvas.contentRect;
+            Rect r = backgroundRect;
 
             var panelScale = canvas.worldTransform.lossyScale;
-            float targetTextureWidth = texture.width * panelScale[0];
-            float targetTextureHeight = texture.height * panelScale[1];
+            float targetTextureWidth = textureToDraw.width * panelScale[0];
+            float targetTextureHeight = textureToDraw.height * panelScale[1];
 
             // Remain the original center
             var center = r.center;
@@ -278,19 +286,16 @@ namespace DCL.SDKComponents.SceneUI.Classes
             VERTICES[2].position = new Vector3(right, top, Vertex.nearZ);
             VERTICES[3].position = new Vector3(right, bottom, Vertex.nearZ);
 
-            MeshWriteData? mwd = mgc.Allocate(VERTICES.Length, INDICES.Length, texture);
-
-            // uv Rect [0;1] that was assigned by the Dynamic atlas by UI Toolkit
-            var uvRegion = mwd.uvRegion;
+            MeshWriteData? mwd = mgc.Allocate(VERTICES.Length, INDICES.Length, textureToDraw);
 
             // the texture should be cut off if it exceeds the parent rect
             float uvsDisplacementX = (1 - (width / targetTextureWidth)) / 2f;
             float uvsDisplacementY = (1 - (height / targetTextureHeight)) / 2f;
 
-            VERTICES[0].uv = (new Vector2(uvsDisplacementX, uvsDisplacementY) * uvRegion.size) + uvRegion.min;
-            VERTICES[1].uv = (new Vector2(uvsDisplacementX, 1 - uvsDisplacementY) * uvRegion.size) + uvRegion.min;
-            VERTICES[2].uv = (new Vector2(1 - uvsDisplacementX, 1 - uvsDisplacementY) * uvRegion.size) + uvRegion.min;
-            VERTICES[3].uv = (new Vector2(1 - uvsDisplacementX, uvsDisplacementY) * uvRegion.size) + uvRegion.min;
+            VERTICES[0].uv = new Vector2(uvsDisplacementX, uvsDisplacementY);
+            VERTICES[1].uv = new Vector2(uvsDisplacementX, 1 - uvsDisplacementY);
+            VERTICES[2].uv = new Vector2(1 - uvsDisplacementX, 1 - uvsDisplacementY);
+            VERTICES[3].uv = new Vector2(1 - uvsDisplacementX, uvsDisplacementY);
 
             ApplyVerticesTint();
 
@@ -304,17 +309,24 @@ namespace DCL.SDKComponents.SceneUI.Classes
                 VERTICES[i].tint = color;
         }
 
-        internal static void PopulateStretchedQuad(Vertex[] vertices, Rect contentRect)
+        internal static void PopulateStretchedQuad(Vertex[] vertices, Rect rect)
         {
-            float left = contentRect.x;
-            float right = contentRect.xMax;
-            float top = contentRect.y;
-            float bottom = contentRect.yMax;
+            float left = rect.x;
+            float right = rect.xMax;
+            float top = rect.y;
+            float bottom = rect.yMax;
 
             vertices[0].position = new Vector3(left, bottom, Vertex.nearZ);
             vertices[1].position = new Vector3(left, top, Vertex.nearZ);
             vertices[2].position = new Vector3(right, top, Vertex.nearZ);
             vertices[3].position = new Vector3(right, bottom, Vertex.nearZ);
         }
+
+        internal static Rect ToPaddingRect(Rect contentRect, float paddingLeft, float paddingTop, float paddingRight, float paddingBottom) =>
+            Rect.MinMaxRect(
+                contentRect.xMin - paddingLeft,
+                contentRect.yMin - paddingTop,
+                contentRect.xMax + paddingRight,
+                contentRect.yMax + paddingBottom);
     }
 }

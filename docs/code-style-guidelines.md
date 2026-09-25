@@ -75,7 +75,7 @@ Fields populated by JSON deserialization follow the wire format, not local conve
 - **Nullability (CS8618):** fields the schema marks *required* are initialized `= null!` (`= default!` when the field's type is a generic parameter); fields the schema marks *optional* are declared `T?`. A schema-optional field may be kept non-nullable only when every entity type the client consumes guarantees it in practice — state that strengthened contract in the schema-link comment. A field absent from the linked schema is optional unless verified against its actual source. The DTO class must carry a schema-link comment (e.g. `// Server schema: <repo>/<file>#/SchemaName`) so reviewers can verify the contract.
 - **Guards follow the declaration:** a required field (`= null!`) must not be null-guarded at all — no `?.`, no `?? fallback`, no `== null`; an optional `T?` field keeps its guards.
 
-These exceptions apply **only** to deserialized DTO fields — never to locals, return types, or non-DTO code.
+These exceptions apply **only** to deserialized DTO fields — never to locals, return types, or non-DTO code. The one other place `= null!` is allowed is a test fixture field assigned in `[SetUp]`/`[OneTimeSetUp]`.
 
 Reference example — [`EntityDefinitionBase.cs`](https://github.com/decentraland/unity-explorer/blob/main/Explorer/Assets/DCL/NetworkDefinitions/EntityDefinitionBase.cs) and [`EntityDefinitionGeneric.cs`](https://github.com/decentraland/unity-explorer/blob/main/Explorer/Assets/DCL/NetworkDefinitions/EntityDefinitionGeneric.cs):
 
