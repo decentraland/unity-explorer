@@ -558,8 +558,8 @@ namespace DCL.Lobby
             card.HostText.text = string.Format(EVENT_HOST_FORMAT, @event.user_name);
 
             int connectedUsers = @event.connected_addresses?.Length ?? 0;
-            card.AttendeesGroup.SetActive(connectedUsers > 0);
             card.AttendeesText.text = connectedUsers.ToString();
+            card.AttendeesGroup.SetActive(true);
 
             thumbnailLoader.LoadCommunityThumbnailFromUrlAsync(@event.image, card.Thumbnail, card.DefaultThumbnail, ct, true).Forget();
         }

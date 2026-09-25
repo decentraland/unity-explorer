@@ -1084,6 +1084,21 @@ namespace DCL.Lobby.Tests
         }
 
         [Test]
+        public void ShowTheAttendeesCounterOfALiveEventNobodyIsAttending()
+        {
+            // Arrange
+            ArrangeEvents(CreateEvent("empty", Vector2Int.zero, TimeSpan.FromMinutes(-5), live: true, connectedUsers: 0));
+
+            // Act
+            Launch(isStartup: true);
+
+            // Assert
+            Assert.That(liveEvents.Cards.Count, Is.EqualTo(1));
+            Assert.That(LiveEventCard(0).AttendeesGroup.activeSelf, Is.True);
+            Assert.That(LiveEventCard(0).AttendeesText.text, Is.EqualTo("0"));
+        }
+
+        [Test]
         public void HideTheLiveCarouselWhenNothingIsLive()
         {
             // Arrange
@@ -1607,6 +1622,7 @@ namespace DCL.Lobby.Tests
 
             var attendees = new GameObject("Attendees");
             attendees.transform.SetParent(cardGo.transform);
+            attendees.SetActive(false);
 
             SetBackingField(card, nameof(LobbyLiveEventCardView.Button), cardGo.AddComponent<Button>());
             SetBackingField(card, nameof(LobbyLiveEventCardView.Thumbnail), CreateImageView(cardGo.transform));
