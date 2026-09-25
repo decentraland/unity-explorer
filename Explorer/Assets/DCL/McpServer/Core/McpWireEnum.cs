@@ -8,8 +8,8 @@ namespace DCL.McpServer.Core
     ///     Per-enum cache of wire (snake_case) member names, so a tool's schema, its argument parsing and its
     ///     output all derive from the enum itself: "FirstPerson" ↔ "first_person", "WALK" ↔ "walk". Built once
     ///     per type on first touch; parsing and formatting allocate nothing afterwards. Renaming an enum member
-    ///     therefore renames its wire value — connected agents re-read the schema every session, but skill
-    ///     recipes that spell a value out (.claude/skills/mcp-scene-iteration/) must be kept in sync.
+    ///     therefore renames its wire value — connected agents re-read the schema every session, but recipes
+    ///     that spell a value out (the unity-explorer-mcp skill in the sdk-skills repo) must be kept in sync.
     /// </summary>
     public static class McpWireEnum<T> where T : struct, Enum
     {

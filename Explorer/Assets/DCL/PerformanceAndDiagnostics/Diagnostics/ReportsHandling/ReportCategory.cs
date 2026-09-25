@@ -190,6 +190,11 @@
         public const string INPUT = nameof(INPUT);
 
         /// <summary>
+        ///     Synthetic input simulation layer shared by automation drivers (MCP server, AltTester probes)
+        /// </summary>
+        public const string SYNTHETIC_INPUT = nameof(SYNTHETIC_INPUT);
+
+        /// <summary>
         ///     Avatar rendering
         /// </summary>
         public const string AVATAR = nameof(AVATAR);
