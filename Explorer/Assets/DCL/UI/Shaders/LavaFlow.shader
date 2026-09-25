@@ -38,7 +38,7 @@ Shader "Custom/LavaFlow (SoftMaskable)"
             #pragma fragment fragmentShader
 
             #pragma shader_feature _ SOFTMASK_EDITOR
-            #pragma shader_feature_local _ SOFTMASKABLE
+            #pragma multi_compile_local_fragment _ SOFTMASKABLE
             
             #include "Packages/com.coffee.softmask-for-ugui/Shaders/SoftMask.cginc"
             

@@ -845,6 +845,14 @@ namespace Global.Dynamic
 
             globalPlugins.Add(new AnalyticsDiskFullPopupPlugin(bootstrapContainer.Analytics.EventBus, uiShellContainer.MvcManager));
 
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.Lobby))
+                globalPlugins.Add(new LobbyPlugin(assetsProvisioner, uiShellContainer.MvcManager, staticContainer.InputBlock, staticContainer.LoadingStatus, debugBuilder,
+                    profileContainer.SelfProfile, profileContainer.ProfileChangesBus, characterPreviewFactory, characterPreviewEventBus, globalWorld,
+                    placesAndEventsContainer.PlacesAPIService, staticContainer.RealmData, placesAndEventsContainer.HomePlaceEventBus, placesAndEventsContainer.EventsApiService, realmNavigator, bootstrapContainer.DecentralandUrlsSource, uiShellContainer.Clipboard, dynamicWorldParams.StartParcel, staticContainer.WebRequestsContainer.WebRequestController,
+                    identityCache, profilesRepository, profileCache, profileContainer.ProfileRepositoryWrapper, uiShellContainer.PassportBridge, playerEntity, webBrowser,
+                    dynamicWorldDependencies.CompositeWeb3Provider, initializationFlowContainer.InitializationFlow, marketplaceCreditsApiClient, notificationsRequestController,
+                    FeaturesRegistry.Instance.IsEnabled(FeatureId.FriendsConnectivityStatus) ? friendsServices?.ConnectivityStatusTracker : null, placesAndEventsContainer.OnlineUsersProvider));
+
             // ReSharper disable once MethodHasAsyncOverloadWithCancellation
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.VoiceChat))
                 globalPlugins.Add(

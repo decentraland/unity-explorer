@@ -28,6 +28,7 @@ namespace DCL.AuthenticationScreenFlow
         private readonly ISelfProfile selfProfile;
         private readonly IWeb3IdentityCache identityCache;
         private readonly ProfileFetchingAuthView view;
+        private readonly bool skipExistingAccountLobby;
         private Exception? profileFetchException;
 
         public ProfileFetchingAuthState(
@@ -36,7 +37,8 @@ namespace DCL.AuthenticationScreenFlow
             AuthenticationScreenController controller,
             ReactiveProperty<AuthStatus> currentState,
             ISelfProfile selfProfile,
-            IWeb3IdentityCache identityCache) : base(viewInstance)
+            IWeb3IdentityCache identityCache,
+            bool skipExistingAccountLobby) : base(viewInstance)
         {
             view = viewInstance.ProfileFetchingAuthView;
             this.machine = machine;
@@ -44,6 +46,7 @@ namespace DCL.AuthenticationScreenFlow
             this.currentState = currentState;
             this.selfProfile = selfProfile;
             this.identityCache = identityCache;
+            this.skipExistingAccountLobby = skipExistingAccountLobby;
         }
 
         public void Enter(ProfileFetchingPayload payload)
@@ -117,7 +120,11 @@ namespace DCL.AuthenticationScreenFlow
                         profile.IsDirty = true;
                         // Convert into guest account, only if was not upgraded before
                         profile.HasConnectedWeb3 |= identity.Method != LoginMethod.GUEST;
-                        machine.Enter<LobbyForExistingAccountAuthState, (Profile, bool, CancellationToken)>((profile, isRestoredSession, ct));
+
+                        if (skipExistingAccountLobby)
+                            controller.CompleteExistingAccountLogin(profile, isRestoredSession);
+                        else
+                            machine.Enter<LobbyForExistingAccountAuthState, (Profile, bool, CancellationToken)>((profile, isRestoredSession, ct));
                     }
                     else if (isRestoredSession)
                     {

@@ -25,6 +25,7 @@ namespace DCL.PlacesAPIService
         private readonly IPlacesAPIClient client;
         private readonly CancellationTokenSource disposeCts = new ();
         private readonly string[] singlePositionBuffer = new string[1];
+        private readonly string[] worldNameBuffer = new string[1];
         private readonly RecentlyVisitedPlacesController recentlyVisitedPlacesController;
 
         private UniTaskCompletionSource<PlacesData.IPlacesAPIResponse>? serverFavoritesCompletionSource;
@@ -88,6 +89,10 @@ namespace DCL.PlacesAPIService
                 withLiveEvents: withLiveEvents,
                 onlyPlaces: onlyPlaces);
         }
+
+        // No pagination on purpose: the featured set is curated and small, so the server's own page holds all of it
+        public async UniTask<PlacesData.IPlacesAPIResponse> GetHighlightedDestinationsAsync(CancellationToken ct) =>
+            await client.GetDestinationsAsync(ct, addRealmDetails: true, onlyHighlighted: true);
 
         public async UniTask<PlacesData.PlaceInfo?> GetPlaceAsync(Vector2Int coords, CancellationToken ct, bool renewCache = false)
         {
@@ -206,6 +211,20 @@ namespace DCL.PlacesAPIService
         public async UniTask<PlacesData.IPlacesAPIResponse> GetWorldsByOwnerAsync(string ownerAddress, CancellationToken ct, bool renewCache = false) =>
             await client.GetWorldsAsync(ct, ownerAddress: ownerAddress);
 
+        public async UniTask<PlacesData.PlaceInfo?> GetWorldByNameAsync(string worldName, CancellationToken ct)
+        {
+            worldNameBuffer[0] = worldName;
+            PlacesData.PlacesAPIResponse response = await client.GetWorldsAsync(ct, names: worldNameBuffer);
+
+            if (!response.ok || response.data.Count == 0)
+                return null;
+
+            PlacesData.PlaceInfo world = response.data[0];
+            response.Dispose();
+
+            return world;
+        }
+
         public async UniTask<IReadOnlyList<OptimizedPlaceInMapResponse>> GetOptimizedPlacesFromTheMapAsync(string category, CancellationToken ct) =>
             await client.GetOptimizedPlacesFromTheMapAsync(category, ct);
 
@@ -288,7 +307,32 @@ namespace DCL.PlacesAPIService
 
         public async UniTask RatePlaceAsync(bool? isUpvote, string placeId, CancellationToken ct)
         {
-            await client.RatePlaceAsync(isUpvote, placeId, ct);
+            placesById.TryGetValue(placeId, out var place);
+            bool cachedIsLiked = place?.user_like ?? false;
+            bool cachedIsDisliked = place?.user_dislike ?? false;
+
+            // The cached place is the instance every reader of the cache gets, so it carries the new rating right away.
+            // The original values come back if the request fails.
+            TryUpdateCachedPlaceRating(placeId, isLiked: isUpvote == true, isDisliked: isUpvote == false);
+
+            try
+            {
+                await client.RatePlaceAsync(isUpvote, placeId, ct);
+            }
+            catch (Exception)
+            {
+                TryUpdateCachedPlaceRating(placeId, cachedIsLiked, cachedIsDisliked);
+                throw;
+            }
+        }
+
+        private void TryUpdateCachedPlaceRating(string placeId, bool isLiked, bool isDisliked)
+        {
+            if (string.IsNullOrEmpty(placeId) || !placesById.TryGetValue(placeId, out var place))
+                return;
+
+            place.user_like = isLiked;
+            place.user_dislike = isDisliked;
         }
 
         public async UniTask<IReadOnlyList<string>> GetPointsOfInterestCoordsAsync(CancellationToken ct, bool renewCache = false)

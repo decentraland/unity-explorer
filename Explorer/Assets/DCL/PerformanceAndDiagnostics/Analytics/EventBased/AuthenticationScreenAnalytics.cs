@@ -74,7 +74,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
                     analytics.Track(Authentication.AVATAR_SELECTION_SCREEN);
                     break;
 
-                case AuthStatus.LoggedIn: // Triggered WHEN the user gets in Lobby
+                case AuthStatus.LoggedIn: // Triggered WHEN the login completes (welcome step or straight to the Lobby panel)
                     analytics.Track(Authentication.LOGGED_IN, new JObject
                     {
                         { "method", controller.CurrentLoginMethod.ToString() },
@@ -99,7 +99,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
                         { "is_cached", true },
                     });
                     break;
-                case AuthStatus.LoggedInCached: // Triggered WHEN the user gets in Lobby
+                case AuthStatus.LoggedInCached: // Triggered WHEN the login completes (welcome step or straight to the Lobby panel)
                     analytics.Track(Authentication.LOGGED_IN_CACHED, new JObject
                     {
                         { "is_new_account", controller.IsCurrentlyNewAccount },

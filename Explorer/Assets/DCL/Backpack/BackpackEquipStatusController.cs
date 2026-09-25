@@ -193,57 +193,80 @@ namespace DCL.Backpack
 
         private async UniTaskVoid UpdateProfileAsync(CancellationToken ct)
         {
+            // Set once the equipped look is announced ahead of the deployment, so a failed deployment can put the committed one back
+            Profile? profileToRevertTo = null;
+
             try
             {
+                Profile? oldProfile = await selfProfile.ProfileAsync(ct);
+
+                if (oldProfile == null)
+                {
+                    ShowErrorNotificationAsync(ct).Forget();
+                    return;
+                }
+
+                var forceRenderList = new List<string>(equippedWearables.ForceRenderCategories);
+
+                // The version is bumped by whoever commits the profile, so here it still matches the one it is compared against
+                Profile newProfile = oldProfile.CreateNewProfileForUpdate(equippedEmotes,
+                    equippedWearables,
+                    forceRenderList,
+                    emoteStorage,
+                    wearableStorage,
+                    ownedNftFilter,
+                    incrementVersion: false);
+
+                // Skip publishing the same profile
+                if (newProfile.IsSameProfile(oldProfile))
+                {
+                    ReportHub.LogWarning(ReportCategory.PROFILE, "Profile update skipped - no changes detected in avatar configuration");
+                    return;
+                }
+
                 bool publishProfileChange = !appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS)
                                             && !appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_WEARABLES);
 
                 if (!publishProfileChange)
                 {
-                    Profile? oldProfile = await selfProfile.ProfileAsync(ct);
-
-                    if (oldProfile == null)
-                    {
-                        ShowErrorNotificationAsync(ct).Forget();
-                        return;
-                    }
-
-                    var forceRenderList = new List<string>(equippedWearables.ForceRenderCategories);
-
-                    Profile newProfile = oldProfile.CreateNewProfileForUpdate(equippedEmotes,
-                        equippedWearables,
-                        forceRenderList,
-                        emoteStorage,
-                        wearableStorage,
-                        ownedNftFilter);
-
-                    // Skip publishing the same profile
-                    if (newProfile.IsSameProfile(oldProfile))
-                    {
-                        ReportHub.LogWarning(ReportCategory.PROFILE, "Profile update skipped - no changes detected in avatar configuration");
-                        return;
-                    }
-
+                    newProfile.Version++;
                     profileCache.Set(newProfile.UserId, newProfile);
                     UpdateAvatarInWorld(newProfile);
                     profileChangesBus.PushUpdate(newProfile);
+                    backpackEventBus.SendAvatarChanged();
 
                     return;
                 }
 
-                Profile? updatedProfile = await selfProfile.UpdateProfileAsync(ct, updateAvatarInWorld: true);
+                // The deployment waits out a fixed window and then re-reads the profile back from the catalyst, seconds in total.
+                // The equipped look is already final here, so it is announced right away and the catalyst answer only confirms it.
+                // Subscribers get their own copy, already carrying the version it is committed with, as the commit mutates newProfile
+                profileChangesBus.PushUpdate(new ProfileBuilder().From(newProfile).WithVersion(newProfile.Version + 1).Build());
+                profileToRevertTo = oldProfile;
+
+                Profile? updatedProfile = await selfProfile.UpdateProfileAsync(newProfile, ct, updateAvatarInWorld: true);
                 MultithreadingUtility.AssertMainThread(nameof(UpdateProfileAsync), true);
 
                 if (updatedProfile != null)
+                {
                     profileChangesBus.PushUpdate(updatedProfile);
+                    backpackEventBus.SendAvatarChanged();
+                }
             }
+            // No revert on cancellation: it comes from a newer update or an identity change, and either one announces its own profile
             catch (OperationCanceledException) { }
             catch (IdenticalProfileUpdateException)
             {
+                if (profileToRevertTo != null)
+                    profileChangesBus.PushUpdate(profileToRevertTo);
+
                 ReportHub.LogWarning(ReportCategory.PROFILE, "Profile update skipped - no changes detected");
             }
             catch (Exception e)
             {
+                if (profileToRevertTo != null)
+                    profileChangesBus.PushUpdate(profileToRevertTo);
+
                 ReportHub.LogException(e, ReportCategory.PROFILE);
                 ShowErrorNotificationAsync(ct).Forget();
             }

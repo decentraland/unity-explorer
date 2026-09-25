@@ -333,14 +333,8 @@ namespace DCL.Places
                                                          .SuppressToResultAsync(ReportCategory.PLACES);
                     break;
                 case PlacesSection.RecentlyVisited:
-                    var recentlyVisitedPlacesIds = placesAPIService.GetRecentlyVisitedPlaces();
-                    var placesByIdResult = await placesAPIService.GetDestinationsByIdsAsync(recentlyVisitedPlacesIds, ct, withConnectedUsers: true)
-                                                                 .SuppressToResultAsync(ReportCategory.PLACES);
-
-                    // Since GetPlacesByIds endpoint doesn't return the data with the same sorting as the input list, we have to sort it manually
-                    PlacesData.PlacesAPIResponse sortedPlacesResponse = GetRecentlyVisitedPlacesSorted(placesByIdResult, recentlyVisitedPlacesIds);
-                    placesResult = await UniTask.FromResult<PlacesData.IPlacesAPIResponse>(sortedPlacesResponse)
-                                                .SuppressToResultAsync(ReportCategory.PLACES);
+                    placesResult = await placesAPIService.GetRecentlyVisitedDestinationsAsync(ct, withConnectedUsers: true)
+                                                         .SuppressToResultAsync(ReportCategory.PLACES);
 
                     break;
                 default:
@@ -398,23 +392,6 @@ namespace DCL.Places
             view.SetPlacesGridLoadingMoreActive(false);
 
             isPlacesGridLoadingItems = false;
-        }
-
-        private static PlacesData.PlacesAPIResponse GetRecentlyVisitedPlacesSorted(Result<PlacesData.IPlacesAPIResponse> placesResult, List<string> sortedPlacesIds)
-        {
-            PlacesData.PlacesAPIResponse sortedPlacesResponse = new PlacesData.PlacesAPIResponse { data = new List<PlacesData.PlaceInfo>(), total = 0 };
-
-            if (!placesResult.Success)
-                return sortedPlacesResponse;
-
-            var placesById = placesResult.Value.Data.ToDictionary(p => p.id);
-            foreach (string placeId in sortedPlacesIds)
-                if (placesById.TryGetValue(placeId, out var placeInfo))
-                    sortedPlacesResponse.data.Add(placeInfo);
-
-            sortedPlacesResponse.total = sortedPlacesResponse.data.Count;
-
-            return sortedPlacesResponse;
         }
 
         private void UnloadPlaces()

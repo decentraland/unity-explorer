@@ -1,5 +1,6 @@
 using CodeLess.Attributes;
 using Cysharp.Threading.Tasks;
+using DCL.Prefs;
 using Global.AppArgs;
 using System;
 using System.Collections.Generic;
@@ -22,6 +23,11 @@ namespace DCL.FeatureFlags
     {
         private readonly Dictionary<FeatureId, bool> featureStates = new ();
         private readonly Dictionary<FeatureId, IFeatureProvider> featureProviders = new ();
+
+        // Filled only in the constructor and never mutated afterwards, so reads stay thread-safe; Lazy<T> resolves each value once under its own lock
+        private readonly Dictionary<FeatureId, Lazy<bool>> deferredFeatureStates = new ();
+
+        private readonly bool lobbyDefault;
 
         public FeaturesRegistry(
             IAppArgs appArgs,
@@ -90,13 +96,39 @@ namespace DCL.FeatureFlags
 
             // The intro tip is a kill switch: unlike the feature itself it stays off until the flag is explicitly enabled.
             SetFeatureState(FeatureId.NearbyVoiceChatTip, IsEnabled(FeatureId.NearbyVoiceChat) && featureFlags.IsEnabled(FeatureFlagsStrings.NEARBY_VOICE_CHAT_TIP));
+
+            // --lobby (no --debug needed) or --lobby false replaces the remote flag as the default, but the Settings
+            // toggle wins once the user picks a value. That toggle lives in player prefs, which only exist in a running
+            // player while the registry is also built outside one, so the state is resolved on the first query instead of here.
+            lobbyDefault = appArgs.ResolveFeatureFlagArg(AppArgsFlags.LOBBY, featureFlags.IsEnabled(FeatureFlagsStrings.LOBBY), requireDebug: false);
+            deferredFeatureStates[FeatureId.Lobby] = new Lazy<bool>(() => LobbyEnabledSetting && !localSceneDevelopment);
+        }
+
+        /// <summary>
+        ///     The lobby state the user picked in Settings, the <c>--lobby</c> app arg or else the remote flag providing
+        ///     the default until they pick one. <see cref="FeatureId.Lobby" /> resolves it once per session, so a change
+        ///     only applies after a restart.
+        /// </summary>
+        public bool LobbyEnabledSetting
+        {
+            get => DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_LOBBY_ENABLED)
+                ? DCLPlayerPrefs.GetBool(DCLPrefKeys.SETTINGS_LOBBY_ENABLED)
+                : lobbyDefault;
+
+            set => DCLPlayerPrefs.SetBool(DCLPrefKeys.SETTINGS_LOBBY_ENABLED, value, true);
         }
 
         /// <summary>
         ///     Checks if a feature is enabled.
         /// </summary>
-        public bool IsEnabled(FeatureId featureId) =>
-            featureStates.GetValueOrDefault(featureId, false);
+        public bool IsEnabled(FeatureId featureId)
+        {
+            if (featureStates.TryGetValue(featureId, out bool isEnabled))
+                return isEnabled;
+
+            // Cached as any other state: a feature cannot change while the session runs.
+            return deferredFeatureStates.TryGetValue(featureId, out Lazy<bool> deferredState) && deferredState.Value;
+        }
 
         /// <summary>
         ///     Checks if a feature is enabled in an async way using FeatureProviders that can contain more complex logic.
@@ -229,5 +261,6 @@ namespace DCL.FeatureFlags
         BugReport = 75,
         InGameShop = 76,
         GuestLogin = 77,
+        Lobby = 78,
     }
 }

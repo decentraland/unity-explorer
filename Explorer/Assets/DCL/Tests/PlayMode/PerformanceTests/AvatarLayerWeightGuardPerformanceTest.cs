@@ -1,3 +1,4 @@
+using DCL.AvatarRendering.AvatarShape.Tests;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using NUnit.Framework;
 using System.Diagnostics;
@@ -46,17 +47,7 @@ namespace DCL.Tests.PlayMode.PerformanceTests
             typeof(AvatarBase).GetMethod("Awake", BindingFlags.NonPublic | BindingFlags.Instance)!
                               .Invoke(avatarBase, null);
 
-            // The test prefab leaves several serialized IK references unassigned (fileID: 0). ResetState() touches
-            // Armature (via ResetArmatureTransform), HipsConstraint and FeetIKRig, so each would throw
-            // UnassignedReferenceException. Wire throwaway objects into the private serialized backing fields via
-            // reflection (the same technique sibling AvatarBase tests use). The rigging component types are resolved
-            // from the property types, so the test needs no Animation-Rigging asmref.
-            var rigHolder = new GameObject("test-rig-holder");
-            rigHolder.transform.SetParent(avatarGameObject.transform, false);
-
-            WireBackingField("Armature", rigHolder.transform);
-            WireBackingField("FeetIKRig", rigHolder.AddComponent(typeof(AvatarBase).GetProperty("FeetIKRig")!.PropertyType));
-            WireBackingField("HipsConstraint", rigHolder.AddComponent(typeof(AvatarBase).GetProperty("HipsConstraint")!.PropertyType));
+            AvatarBaseTestRigWiring.WireMissingRigReferences(avatarBase);
 
             pointAtIndex = animator.GetLayerIndex("RightPointAtHand");
             rotationIndex = animator.GetLayerIndex("Rotation");
@@ -69,10 +60,6 @@ namespace DCL.Tests.PlayMode.PerformanceTests
         {
             if (avatarGameObject != null) Object.DestroyImmediate(avatarGameObject);
         }
-
-        private void WireBackingField(string propertyName, Object value) =>
-            typeof(AvatarBase).GetField($"<{propertyName}>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance)!
-                              .SetValue(avatarBase, value);
 
         [Test]
         [Performance]

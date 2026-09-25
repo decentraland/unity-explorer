@@ -5,7 +5,7 @@ using Utility;
 
 namespace DCL.MapRenderer.MapLayers.HomeMarker
 {
-    public class HomePlaceEventBus
+    public class HomePlaceEventBus : IHomePlaceSource
     {
         public Vector2Int? CurrentHomeCoordinates => controller?.CurrentCoordinates;
         public string? CurrentHomeWorldName => controller?.CurrentWorldName;

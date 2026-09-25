@@ -24,6 +24,7 @@ namespace DCL.CharacterPreview
             characterPreviewInputEventBus.OnChangePreviewFocusEvent += OnChangePreviewCategory;
 
             OnChangePreviewCategory(AvatarWearableCategoryEnum.Body);
+            characterPreviewAvatarContainer.SetCameraFarClipPlane(cameraSettings.cameraFarClipPlane);
         }
 
         public void Dispose()

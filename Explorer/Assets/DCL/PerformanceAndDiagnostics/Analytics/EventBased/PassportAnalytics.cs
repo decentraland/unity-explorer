@@ -38,6 +38,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
             {
                 {"receiver_id", targetAddress},
                 {"friend_position", parcel.ToString()},
+                {"source", "passport"},
             });
 
         private void OnBadgeSelected(string id, bool isOwnPassport)
