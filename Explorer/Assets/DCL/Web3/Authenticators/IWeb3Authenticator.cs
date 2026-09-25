@@ -48,5 +48,8 @@ namespace DCL.Web3.Authenticators
 
         public static LoginPayload ForGuestFlow() =>
             new (LoginMethod.GUEST);
+
+        public static LoginPayload ForEphemeralGuestFlow() =>
+            new (LoginMethod.EPHEMERAL_GUEST);
     }
 }

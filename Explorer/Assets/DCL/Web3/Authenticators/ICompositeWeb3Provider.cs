@@ -17,11 +17,6 @@ namespace DCL.Web3.Authenticators
     public interface ICompositeWeb3Provider : IWeb3Authenticator, IEthereumApi, IOtpAuthenticator, IAccountLinkAuthenticator
     {
         /// <summary>
-        /// Currently selected authentication method
-        /// </summary>
-        AuthProvider CurrentProvider { set; }
-
-        /// <summary>
         ///     Clears the local session (identity cache, analytics identity) and releases
         ///     provider-side login resources where the current provider holds any.
         /// </summary>

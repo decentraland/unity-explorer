@@ -194,8 +194,6 @@ namespace DCL.AuthenticationScreenFlow
 
         private void Login(LoginMethod method)
         {
-            compositeWeb3Provider.CurrentProvider = AuthProvider.Dapp;
-
             controller.CurrentLoginMethod = method;
             currentState.Value = AuthStatus.LoginRequested;
 
@@ -205,8 +203,6 @@ namespace DCL.AuthenticationScreenFlow
 
         private void OTPLogin()
         {
-            compositeWeb3Provider.CurrentProvider = AuthProvider.ThirdWeb;
-
             controller.CurrentLoginMethod = LoginMethod.EMAIL_OTP;
             currentState.Value = AuthStatus.LoginRequested;
             view.SetEmailInputFieldSpinnerActive(true);

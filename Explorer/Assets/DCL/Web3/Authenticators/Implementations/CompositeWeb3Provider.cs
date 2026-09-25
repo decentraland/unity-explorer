@@ -23,8 +23,6 @@ namespace DCL.Web3.Authenticators
         private readonly IWeb3IdentityCache identityCache;
         private readonly IAnalyticsController analytics;
 
-        public AuthProvider CurrentProvider { private get; set; } = AuthProvider.Dapp;
-
         public event Action<string>? OTPSendSucceeded
         {
             add => thirdWebAuth.OTPSendSucceeded += value;
@@ -63,14 +61,15 @@ namespace DCL.Web3.Authenticators
         {
             IWeb3Identity identity;
 
-            IWeb3Authenticator currentAuthenticator = CurrentProvider switch
-                                                      {
-                                                          AuthProvider.ThirdWeb => thirdWebAuth,
-                                                          AuthProvider.Ephemeral => ephemeralGuestLogin,
-                                                          _ => dappLogin,
-                                                      };
+            // The requested method decides who serves the login: the identity it returns says the same
+            IWeb3Authenticator authenticator = payload.Method switch
+                                               {
+                                                   LoginMethod.EMAIL_OTP or LoginMethod.GUEST => thirdWebAuth,
+                                                   LoginMethod.EPHEMERAL_GUEST => ephemeralGuestLogin,
+                                                   _ => dappLogin,
+                                               };
 
-            try { identity = await currentAuthenticator.LoginAsync(payload, ct); }
+            try { identity = await authenticator.LoginAsync(payload, ct); }
             catch (GuestAccountUpgradedException)
             {
                 DiscardUpgradedGuestSession();
@@ -128,7 +127,6 @@ namespace DCL.Web3.Authenticators
         {
             IWeb3Identity identity = await thirdWebAuth.LinkEmailAsync(otp, ct);
 
-            CurrentProvider = AuthProvider.ThirdWeb;
             identityCache.Identity = identity;
             analytics.Identify(identity);
 

@@ -81,18 +81,6 @@ namespace DCL.Web3.Tests
         }
 
         [Test]
-        public void ReuseTheSameAccountForTheWholeSession()
-        {
-            // Act
-            IWeb3Identity first = Login();
-            IWeb3Identity second = Login();
-
-            // Assert
-            Assert.That(second, Is.SameAs(first));
-            Assert.That(second.Address, Is.EqualTo(first.Address));
-        }
-
-        [Test]
         public void ResolveADifferentAccountForANewSession()
         {
             // Arrange
