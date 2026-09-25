@@ -43,6 +43,11 @@ namespace Server
         // the next is the one captured.
         private const int WEARABLE_SETTLE_FRAMES = 2;
 
+        private const string PROC_STAT = "/proc/self/stat";
+
+        // USER_HZ, which Linux fixes at 100 for procfs on every architecture it ships.
+        private const double CLOCK_TICKS_PER_SECOND = 100;
+
         private const string LABEL_MALE = "male";
         private const string LABEL_FEMALE = "female";
         private const string LABEL_UNISEX = "unisex";
@@ -298,6 +303,20 @@ namespace Server
             return result.Ok;
         }
 
+        // CPU time of the whole process: every thread, the rasteriser's included. IL2CPP has no
+        // Process.TotalProcessorTime, so this reads utime and stime (fields 14 and 15) from procfs, in
+        // clock ticks of 10 ms. 0 where there is no procfs (the Editor on macOS).
+        private static double CpuMilliseconds()
+        {
+            if (!File.Exists(PROC_STAT)) return 0;
+
+            var stat = File.ReadAllText(PROC_STAT);
+            var fields = stat[(stat.LastIndexOf(')') + 2)..].Split(' ');
+
+            return (long.Parse(fields[11], CultureInfo.InvariantCulture) + long.Parse(fields[12], CultureInfo.InvariantCulture))
+                   * 1000.0 / CLOCK_TICKS_PER_SECOND;
+        }
+
         private async Awaitable RenderAsync(RenderJob job, RenderJobResult result)
         {
             if (string.IsNullOrWhiteSpace(job.Urn)) throw new RenderJobException("urn is required");
@@ -344,8 +363,16 @@ namespace Server
             {
                 var profile = bodyShape == BodyShape.Male ? _options.MaleProfile : _options.FemaleProfile;
 
+                var phase = Stopwatch.StartNew();
+                var phaseCpu = CpuMilliseconds();
+
                 await LoadAsync($"{baseQuery}&mode=marketplace&profile={Uri.EscapeDataString(profile)}" +
                                 $"&urn={Uri.EscapeDataString(urn)}&type={(isEmote ? "avatar" : "wearable")}");
+
+                result.LoadMs += phase.Elapsed.TotalMilliseconds;
+                result.LoadCpuMs += CpuMilliseconds() - phaseCpu;
+                phase.Restart();
+                phaseCpu = CpuMilliseconds();
 
                 _preview.HoldFraming();
 
@@ -353,6 +380,9 @@ namespace Server
                     await CaptureEmoteAsync(yaws ?? DEFAULT_EMOTE_YAWS, times, label, id, result);
                 else
                     await CaptureWearableAsync(yaws ?? DEFAULT_WEARABLE_YAWS, job.Pitch, label, id, result);
+
+                result.StillsMs += phase.Elapsed.TotalMilliseconds;
+                result.StillsCpuMs += CpuMilliseconds() - phaseCpu;
             }
         }
 
@@ -365,12 +395,10 @@ namespace Server
                 await FramesAsync(WEARABLE_SETTLE_FRAMES);
 
                 var file = $"{label}_yaw{Format(yaw)}.png";
-                Capture(Path.Combine(_options.OutputDirectory, id, file));
+                var still = new RenderedFile { Path = $"{id}/{file}", BodyShape = label, Yaw = yaw, Pitch = pitch };
+                Capture(Path.Combine(_options.OutputDirectory, id, file), still);
 
-                result.Files.Add(new RenderedFile
-                {
-                    Path = $"{id}/{file}", BodyShape = label, Yaw = yaw, Pitch = pitch
-                });
+                result.Files.Add(still);
             }
         }
 
@@ -394,12 +422,13 @@ namespace Server
                     var file = yaws.Length > 1
                         ? $"{label}_t{Format(time * 100f)}_yaw{Format(yaw)}.png"
                         : $"{label}_t{Format(time * 100f)}.png";
-                    Capture(Path.Combine(_options.OutputDirectory, id, file));
-
-                    result.Files.Add(new RenderedFile
+                    var still = new RenderedFile
                     {
                         Path = $"{id}/{file}", BodyShape = label, Yaw = yaw, Time = time, Seconds = seconds
-                    });
+                    };
+                    Capture(Path.Combine(_options.OutputDirectory, id, file), still);
+
+                    result.Files.Add(still);
                 }
             }
         }
@@ -438,16 +467,24 @@ namespace Server
 
         // Called from the Update phase: the pose, the springs and the Cinemachine camera were all
         // applied in the previous frame, so the transforms hold exactly what gets drawn.
-        private void Capture(string path)
+        private void Capture(string path, RenderedFile still)
         {
+            var stopwatch = Stopwatch.StartNew();
+
             _camera.Render();
 
+            // ReadPixels waits for the draw to finish, so the render time includes it.
             var previous = RenderTexture.active;
             RenderTexture.active = _target;
             _readback.ReadPixels(new Rect(0, 0, _options.Size, _options.Size), 0, 0, false);
             RenderTexture.active = previous;
 
+            still.RenderMs = Math.Round(stopwatch.Elapsed.TotalMilliseconds, 1);
+            stopwatch.Restart();
+
             File.WriteAllBytes(path, _readback.EncodeToPNG());
+
+            still.EncodeMs = Math.Round(stopwatch.Elapsed.TotalMilliseconds, 1);
         }
 
         /// <summary>
@@ -573,6 +610,10 @@ namespace Server
         private void WriteResult(RenderJobResult result, Stopwatch stopwatch)
         {
             result.Milliseconds = stopwatch.ElapsedMilliseconds;
+            result.LoadMs = Math.Round(result.LoadMs, 1);
+            result.LoadCpuMs = Math.Round(result.LoadCpuMs, 1);
+            result.StillsMs = Math.Round(result.StillsMs, 1);
+            result.StillsCpuMs = Math.Round(result.StillsCpuMs, 1);
 
             _results.WriteLine(JsonConvert.SerializeObject(result, Formatting.None));
         }

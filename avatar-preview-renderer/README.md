@@ -176,6 +176,28 @@ window.addEventListener('message', (event) => {
 
 The same project also builds as a native Linux player that writes transparent PNG stills of wearables and emotes, with no browser and no GPU. It renders through Mesa's llvmpipe (OpenGL on the CPU) inside a virtual X display. The server code only compiles with the `DCL_RENDER_SERVER` define, which only this build sets, so the WebGL build and the `SendMessage` API above are unchanged.
 
+### Requirements
+
+Measured by running the same four jobs (18 stills) under Docker limits. That run was x86_64 emulated on Apple Silicon, so a native x86_64 host should do at least as well.
+
+| | Minimum | Recommended |
+|---|---|---|
+| CPU | 1 x86_64 vCPU | 2 to 4 vCPU, with `LP_NUM_THREADS` set to match |
+| Memory | 1 GB (512 MB is killed at startup, 768 MB after the first job) | 1.5 GB limit per worker |
+| GPU | none | none |
+| Disk | about 500 MB for the image | plus room for the stills |
+| Network | the catalyst (`peer.decentraland.org`, or `.zone` with `env=dev`) | |
+
+Render and encode time per still, leaving out the first still of each item:
+
+| vCPU | Wearable on its own | Emote on the avatar | PNG encode |
+|---|---|---|---|
+| 1 | 560 to 950 ms | 980 to 1,080 ms | about 30 ms |
+| 2 | 290 to 390 ms | 520 to 580 ms | about 30 ms |
+| 4 | 160 to 270 ms | 270 to 350 ms | about 30 ms |
+
+The first still of each new item takes 0.2 to 3 s longer: Mesa compiles each shader the first time it is used and the item's textures are uploaded. The item's second body shape does not pay it again. `MESA_SHADER_CACHE_DIR` on a volume keeps compiled shaders across restarts. An emote still also waits `--settle-frames` (0.5 s by default) before it is drawn.
+
 ### Building
 
 1. Install the **Linux Build Support (IL2CPP)** module for the project's Unity version, and make sure Git LFS files are pulled (the avatar rig and the built-in emotes are LFS-tracked).
@@ -238,8 +260,10 @@ docker run --rm -i -v "$PWD/shots:/data/out" avatar-preview-render-server --serv
 - `bodyShapes`: `["male"]`, `["female"]` or both. Left out, both shapes are shot when their representations differ, a single `unisex` set when they are the same files, and only the shapes an item has otherwise.
 - `params`: extra [parameters](#parameters) as a query string, e.g. `"env=dev&glow=on"`. Stills default to a transparent background with no shadow or glow. `mode`, `type`, `profile`, `bodyShape`, `urn`, `base64`, `contract`, `item` and `token` are set by the server and rejected here.
 
+Each still reports `renderMs` (drawing and reading the pixels back) and `encodeMs` (PNG encode and write). Each job reports `loadMs` and `stillsMs`, with the CPU time each used as `loadCpuMs` and `stillsCpuMs`. That CPU time counts every thread, so it can be higher than the wall time.
+
 Files are named `<bodyShape>_yaw<deg>.png` for wearables, and `<bodyShape>_t<percent>.png` for emotes (with `_yaw<deg>` appended when several yaws are requested). Each result line looks like:
 
 ```json
-{"id":"...","urn":"...","ok":true,"type":"emote","files":[{"path":"<id>/male_t50.png","bodyShape":"male","yaw":0,"pitch":0,"time":0.5,"seconds":1.6}],"ms":2140}
+{"id":"...","urn":"...","ok":true,"type":"emote","files":[{"path":"<id>/male_t50.png","bodyShape":"male","yaw":0.0,"pitch":0.0,"time":0.5,"seconds":1.41,"renderMs":307.0,"encodeMs":33.0}],"ms":7138,"loadMs":1126.9,"loadCpuMs":640.0,"stillsMs":5785.6,"stillsCpuMs":8640.0}
 ```

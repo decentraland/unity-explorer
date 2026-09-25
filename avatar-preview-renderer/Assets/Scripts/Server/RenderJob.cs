@@ -39,6 +39,14 @@ namespace Server
         [JsonProperty("error", NullValueHandling = NullValueHandling.Ignore)] public string Error;
         [JsonProperty("files")] public List<RenderedFile> Files = new();
         [JsonProperty("ms")] public long Milliseconds;
+
+        // Where the time went. Loading (download and parse) and the stills (posing, settling, drawing,
+        // encoding) are split so each can be judged on its own. CPU is the whole process, including the
+        // rasteriser's threads, so it can exceed the wall time.
+        [JsonProperty("loadMs")] public double LoadMs;
+        [JsonProperty("loadCpuMs")] public double LoadCpuMs;
+        [JsonProperty("stillsMs")] public double StillsMs;
+        [JsonProperty("stillsCpuMs")] public double StillsCpuMs;
     }
 
     public class RenderedFile
@@ -54,6 +62,12 @@ namespace Server
 
         [JsonProperty("time", NullValueHandling = NullValueHandling.Ignore)] public float? Time;
         [JsonProperty("seconds", NullValueHandling = NullValueHandling.Ignore)] public float? Seconds;
+
+        /// <summary>Drawing the frame and reading its pixels back.</summary>
+        [JsonProperty("renderMs")] public double RenderMs;
+
+        /// <summary>Turning the pixels into a PNG and writing it.</summary>
+        [JsonProperty("encodeMs")] public double EncodeMs;
     }
 
     /// <summary>A job that cannot be rendered: bad input, an unknown urn, or a failed load.</summary>
