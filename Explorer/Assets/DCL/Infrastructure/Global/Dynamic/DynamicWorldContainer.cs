@@ -771,7 +771,6 @@ namespace Global.Dynamic
                     realmNftNamesProvider,
                     profileContainer.ProfileChangesBus,
                     communitiesContainer.IncludeCommunities,
-                    profileContainer.ProfileRepositoryWrapper,
                     voiceChatContainer.VoiceChatOrchestrator,
                     cameraReelContainer.GalleryEventBus,
                     uiShellContainer.Clipboard,
