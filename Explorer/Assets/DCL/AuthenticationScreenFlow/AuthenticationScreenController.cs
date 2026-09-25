@@ -226,24 +226,23 @@ namespace DCL.AuthenticationScreenFlow
 
             IWeb3Identity? storedIdentity = storedIdentityProvider.Identity;
 
-            // Force to re-login if the identity will expire in 24hs or less, so we mitigate the chances on
-            // getting the identity expired while in-world, provoking signed-fetch requests to fail
-            if (storedIdentity is { IsExpired: false } && storedIdentity.Expiration - DateTime.UtcNow <= TimeSpan.FromDays(1))
+            if (storedIdentity == null
+                || storedIdentity.IsExpired
+                // Force to re-login if the identity will expire in 24hs or less, so we mitigate the chances on
+                // getting the identity expired while in-world, provoking signed-fetch requests to fail
+                || storedIdentity.Expiration - DateTime.UtcNow <= TimeSpan.FromDays(1))
                 ReturnToOrigin(UIAnimationHashes.IN);
             else
             {
                 CancelLoginProcess();
                 loginCancellationTokenSource = new CancellationTokenSource();
 
-                if (storedIdentity == null)
-                    ReturnToOrigin(UIAnimationHashes.IN);
-                else
-                    TryAutoLoginAndProceedAsync(loginCancellationTokenSource.Token).Forget();
+                TryAutoLoginAndProceedAsync(storedIdentity, loginCancellationTokenSource.Token).Forget();
             }
 
             return;
 
-            async UniTaskVoid TryAutoLoginAndProceedAsync(CancellationToken ct)
+            async UniTaskVoid TryAutoLoginAndProceedAsync(IWeb3Identity identity, CancellationToken ct)
             {
                 try
                 {
@@ -257,10 +256,7 @@ namespace DCL.AuthenticationScreenFlow
                 catch (OperationCanceledException)
                 { /* Expected on cancellation */
                 }
-                catch (AutoLoginNotNeededException)
-                {
-                    Proceed();
-                }
+                catch (AutoLoginNotNeededException) { Proceed(); }
                 catch (Exception e)
                 {
                     ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
@@ -271,8 +267,8 @@ namespace DCL.AuthenticationScreenFlow
 
                 void Proceed() =>
                     fsm?.Enter<ProfileFetchingAuthState, ProfileFetchingPayload>(
-                        new ProfileFetchingPayload(storedIdentity,
-                            storedIdentity.Method != LoginMethod.TOKEN_FILE,
+                        new ProfileFetchingPayload(identity,
+                            identity.Method != LoginMethod.TOKEN_FILE,
                             ct));
             }
         }
