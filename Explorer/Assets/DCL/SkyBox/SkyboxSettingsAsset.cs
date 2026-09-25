@@ -16,7 +16,7 @@ namespace DCL.SkyBox
 
         [SerializeField] private float fullDayCycleInSeconds = 120 * 60;
         [SerializeField] private float transitionSpeed = 1f;
-        [SerializeField] private float[] refreshIntervalByQuality;
+        [SerializeField] private float[] refreshIntervalByQuality = null!;
 
         public float RefreshInterval => refreshIntervalByQuality[refreshIntervalId];
 
