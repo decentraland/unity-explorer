@@ -40,6 +40,9 @@ namespace DCL.Lobby
             zoomEnabled = false;
         }
 
+        // The stage renders into the same target and is the lobby's backdrop, so it has to be on screen while the figure still loads
+        protected override bool hideImageWhileLoading => false;
+
         public override void Initialize(Avatar avatar, Vector3 position)
         {
             view.gameObject.SetActive(true);

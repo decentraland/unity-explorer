@@ -57,6 +57,12 @@ namespace DCL.CharacterPreview
 
         protected Camera? PreviewCamera => previewController?.Camera;
 
+        /// <summary>
+        ///     The image stays invisible while a look loads and fades in once it is on. A preview whose render target has
+        ///     content of its own before the avatar arrives keeps the image visible from the moment the target exists instead.
+        /// </summary>
+        protected virtual bool hideImageWhileLoading => true;
+
         protected CharacterPreviewController? previewController;
         protected CharacterPreviewAvatarModel previewAvatarModel;
         protected bool zoomEnabled = true;
@@ -117,6 +123,9 @@ namespace DCL.CharacterPreview
             currentRenderTexture = CreateRenderTexture(RenderTargetSize());
 
             view.RawImage.texture = currentRenderTexture;
+
+            if (!hideImageWhileLoading)
+                ShowRawImage();
 
             previewController = previewFactory.Create(world, view.RawImage.rectTransform, currentRenderTexture,
                 inputEventBus, view.CharacterPreviewSettingsSo.cameraSettings, avatarPosition);
@@ -390,13 +399,18 @@ namespace DCL.CharacterPreview
         private void DisableSpinner(GameObject spinner)
         {
             spinner.SetActive(false);
+
+            if (!hideImageWhileLoading) return;
+
             profileColor.a = 1;
             view.RawImage.DOColor(profileColor, AVATAR_FADE_ANIMATION);
         }
 
         private GameObject EnableSpinner()
         {
-            HideRawImage();
+            if (hideImageWhileLoading)
+                HideRawImage();
+
             GameObject spinner = view.Spinner;
             spinner.SetActive(true);
             return spinner;
@@ -417,6 +431,13 @@ namespace DCL.CharacterPreview
             view.RawImage.DOKill();
             profileColor = view.RawImage.color;
             profileColor.a = 0;
+            view.RawImage.color = profileColor;
+        }
+
+        private void ShowRawImage()
+        {
+            view.RawImage.DOKill();
+            profileColor.a = 1;
             view.RawImage.color = profileColor;
         }
 
