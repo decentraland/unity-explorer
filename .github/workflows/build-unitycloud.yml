@@ -756,7 +756,13 @@ jobs:
       - name: Set artifact name
         id: set_artifact_name
         run: |
-          if [ "${{ needs.prebuild.outputs.install_source }}" == "launcher" ]; then
+          case "${{ matrix.target }}" in
+            windows64) PLAT="w64" ;; macos) PLAT="mac" ;; *) PLAT="${{ matrix.target }}" ;;
+          esac
+          PR_NUM="${{ github.event.pull_request.number }}"
+          if [ -n "$PR_NUM" ] && [ "${{ needs.prebuild.outputs.install_source }}" == "launcher" ]; then
+            echo "artifact_name=Decentraland-${PLAT}-${PR_NUM}-$(date -u +%m%d%H%M)" >> $GITHUB_ENV
+          elif [ "${{ needs.prebuild.outputs.install_source }}" == "launcher" ]; then
             echo "artifact_name=Decentraland_${{ matrix.target }}" >> $GITHUB_ENV
           else
             echo "artifact_name=Decentraland_${{ matrix.target }}_${{ needs.prebuild.outputs.install_source }}" >> $GITHUB_ENV
