@@ -146,6 +146,11 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         private Vector3 armatureStartLocalPosition;
         private Vector3 armatureStartLocalScale;
 
+        private Transform[] restPoseTransforms = null!;
+        private Vector3[] restPoseLocalPositions = null!;
+        private Quaternion[] restPoseLocalRotations = null!;
+        private Vector3[] restPoseLocalScales = null!;
+
         public float NametagGlideOffset => nametagGlideOffset;
 
         public bool IsLegacyAnimationPlaying => LegacyAnimation != null && LegacyAnimation.isPlaying;
@@ -177,6 +182,27 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
             armatureStartLocalScale = Armature.localScale;
 
             GhostRenderer = GhostGameObject.GetComponentInChildren<Renderer>();
+
+            CaptureRestPose();
+        }
+
+        // The whole hierarchy, not just the bones: the IK targets, hints and look-at helpers are moved by the IK systems and
+        // their offsets are baked into the rig graph when it is built.
+        private void CaptureRestPose()
+        {
+            restPoseTransforms = GetComponentsInChildren<Transform>(true);
+            int count = restPoseTransforms.Length;
+            restPoseLocalPositions = new Vector3[count];
+            restPoseLocalRotations = new Quaternion[count];
+            restPoseLocalScales = new Vector3[count];
+
+            for (var i = 0; i < count; i++)
+            {
+                Transform t = restPoseTransforms[i];
+                restPoseLocalPositions[i] = t.localPosition;
+                restPoseLocalRotations[i] = t.localRotation;
+                restPoseLocalScales[i] = t.localScale;
+            }
         }
 
         public Transform GetTransform() =>
@@ -275,12 +301,12 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
             Armature.localScale = armatureStartLocalScale;
         }
 
-        // Called onRelease of the pool. Resets stuff to avoid:
-        //   - Armature inclination, offset and scale that could be caused by emote clips animating the Armature node
-        //   - Things that could cause the avatar to shift in X/Y/Z such as animations and feet IK resolution
+        // Called onRelease of the pool. Returns the instance to its prefab state so the next Get() binds the Animator and builds
+        // the rig graph against the rest pose. The release can run while the hierarchy is inactive, where an interrupted emote
+        // stays frozen on the bones and Rebind() has nothing bound to reset, so the pose is written back explicitly.
         public void ResetState()
         {
-            ResetArmatureTransform();
+            RestoreRestPose();
             transform.localPosition = Vector3.zero;
             LegacyAnimation?.Stop();
             maskedLegacyBlender?.Stop();
@@ -291,7 +317,31 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 
             HipsConstraint.data.offset = Vector3.zero;
             HipsConstraint.weight = 0;
+
+            // The prefab ships the RigBuilder disabled: the instantiator enables it once the pose is sane, so the pool's
+            // SetActive(true) does not build the graph and bake the IK offsets from whatever pose the previous owner left.
+            RigBuilder.enabled = false;
             FeetIKRig.enabled = false;
+            FeetIKRig.weight = 0;
+            HandsIKRig.weight = 0;
+            HeadIKRig.weight = 0;
+            TorsoIKRig.weight = 0;
+            CachePoseRig.weight = 0;
+            AdditiveBreathRig.weight = 0;
+            LeftLegIK.weight = 0;
+            RightLegIK.weight = 0;
+        }
+
+        private void RestoreRestPose()
+        {
+            for (var i = 0; i < restPoseTransforms.Length; i++)
+            {
+                Transform t = restPoseTransforms[i];
+                if (t == transform) continue;
+
+                t.SetLocalPositionAndRotation(restPoseLocalPositions[i], restPoseLocalRotations[i]);
+                t.localScale = restPoseLocalScales[i];
+            }
         }
 
         public void SetLayerWeight(int layerIndex, float weight) =>
