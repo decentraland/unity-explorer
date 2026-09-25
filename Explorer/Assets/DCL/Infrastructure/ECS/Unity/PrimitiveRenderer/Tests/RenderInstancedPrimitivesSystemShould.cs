@@ -1,7 +1,6 @@
 using Arch.Core;
 using DCL.ECSComponents;
 using ECS.LifeCycle.Components;
-using ECS.StreamableLoading;
 using ECS.TestSuite;
 using ECS.Unity.Materials.Components;
 using ECS.Unity.PrimitiveRenderer.Components;
@@ -43,7 +42,7 @@ namespace ECS.Unity.PrimitiveRenderer.Tests
         public void HideRendererAndCollectInstance()
         {
             // Arrange
-            Entity entity = CreatePrimitive(LifeCycle.Applied);
+            Entity entity = CreatePrimitive(StreamableLoading.LifeCycle.Applied);
 
             // Act
             system.Update(0);
@@ -60,8 +59,8 @@ namespace ECS.Unity.PrimitiveRenderer.Tests
         public void BatchPrimitivesSharingMeshAndMaterial()
         {
             // Arrange
-            CreatePrimitive(LifeCycle.Applied);
-            CreatePrimitive(LifeCycle.Applied);
+            CreatePrimitive(StreamableLoading.LifeCycle.Applied);
+            CreatePrimitive(StreamableLoading.LifeCycle.Applied);
 
             // Act
             system.Update(0);
@@ -75,7 +74,7 @@ namespace ECS.Unity.PrimitiveRenderer.Tests
         public void LeaveRendererAloneUntilMaterialIsApplied()
         {
             // Arrange
-            Entity entity = CreatePrimitive(LifeCycle.LoadingInProgress);
+            Entity entity = CreatePrimitive(StreamableLoading.LifeCycle.LoadingInProgress);
 
             // Act
             system.Update(0);
@@ -91,7 +90,7 @@ namespace ECS.Unity.PrimitiveRenderer.Tests
         public void SkipDisabledRendererButKeepItHidden()
         {
             // Arrange
-            Entity entity = CreatePrimitive(LifeCycle.Applied);
+            Entity entity = CreatePrimitive(StreamableLoading.LifeCycle.Applied);
             world.Get<PrimitiveMeshRendererComponent>(entity).MeshRenderer.enabled = false;
 
             // Act
@@ -107,7 +106,7 @@ namespace ECS.Unity.PrimitiveRenderer.Tests
         public void RestoreRendererWhenMaterialIsRemoved()
         {
             // Arrange
-            Entity entity = CreatePrimitive(LifeCycle.Applied);
+            Entity entity = CreatePrimitive(StreamableLoading.LifeCycle.Applied);
             system.Update(0);
 
             // Act
@@ -125,7 +124,7 @@ namespace ECS.Unity.PrimitiveRenderer.Tests
         public void SkipEntitiesMarkedForDeletion()
         {
             // Arrange
-            Entity entity = CreatePrimitive(LifeCycle.Applied);
+            Entity entity = CreatePrimitive(StreamableLoading.LifeCycle.Applied);
             world.Add<DeleteEntityIntention>(entity);
 
             // Act
@@ -135,7 +134,7 @@ namespace ECS.Unity.PrimitiveRenderer.Tests
             Assert.AreEqual(0, batches.BatchCount);
         }
 
-        private Entity CreatePrimitive(LifeCycle materialStatus)
+        private Entity CreatePrimitive(StreamableLoading.LifeCycle materialStatus)
         {
             Entity entity = world.Create(new PBMeshRenderer());
             AddTransformToEntity(entity);

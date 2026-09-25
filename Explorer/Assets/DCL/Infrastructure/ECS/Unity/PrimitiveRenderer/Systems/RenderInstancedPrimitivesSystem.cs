@@ -6,7 +6,6 @@ using DCL.ECSComponents;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
-using ECS.StreamableLoading;
 using ECS.Unity.Materials.Components;
 using ECS.Unity.PrimitiveRenderer.Components;
 using ECS.Unity.Transforms.Components;
@@ -46,7 +45,7 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
         {
             Material? material = materialComponent.Result;
 
-            if (materialComponent.Status != LifeCycle.Applied || material == null || rendererComponent.PrimitiveMesh == null)
+            if (materialComponent.Status != StreamableLoading.LifeCycle.Applied || material == null || rendererComponent.PrimitiveMesh == null)
             {
                 RestoreRenderer(ref rendererComponent);
                 return;
