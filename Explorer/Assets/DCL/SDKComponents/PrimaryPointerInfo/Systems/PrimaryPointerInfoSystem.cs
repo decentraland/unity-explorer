@@ -9,7 +9,6 @@ using ECS.Abstract;
 using ECS.Groups;
 using SceneRunner.Scene;
 using UnityEngine;
-using InputAction = UnityEngine.InputSystem.InputAction;
 using PointerType = DCL.ECSComponents.PointerType;
 using Vector2 = UnityEngine.Vector2;
 using Vector3 = Decentraland.Common.Vector3;
@@ -20,15 +19,12 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Systems
     [LogCategory(ReportCategory.INPUT)]
     public partial class PrimaryPointerInfoSystem : BaseUnityLoopSystem
     {
-        private readonly World globalWorld;
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IExposedCameraData exposedCameraData;
+        private readonly Camera cachedCamera;
         private Vector2 previousPosition = Vector2.zero;
         private CumulativePointerDelta lastSeenAccumulatedDelta;
-        private SingleInstanceEntity cameraEntity;
-
-        private static InputAction inputPoint => DCLInput.Instance.Camera.Point;
 
         internal PrimaryPointerInfoSystem(
             World world,
@@ -38,17 +34,16 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Systems
             IExposedCameraData exposedCameraData
         ) : base(world)
         {
-            this.globalWorld = globalWorld;
             this.sceneStateProvider = sceneStateProvider;
             this.ecsToCRDTWriter = ecsToCRDTWriter;
             this.exposedCameraData = exposedCameraData;
+            cachedCamera = globalWorld.CacheCamera().GetCameraComponent(globalWorld).Camera;
         }
 
         public override void Initialize()
         {
             base.Initialize();
 
-            cameraEntity = globalWorld.CacheCamera();
             lastSeenAccumulatedDelta = exposedCameraData.AccumulatedPointerDelta;
 
             UpdatePointerInfo();
@@ -63,12 +58,7 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Systems
 
         private void UpdatePointerInfo()
         {
-            // The Camera action map is disabled while explorer UI holds input focus (chat, passport,
-            // explore panel), and a disabled action reads default(Vector2); the scene-facing pointer
-            // feed must keep tracking the device, so fall back to it (or the last known position).
-            Vector2 rawPosition = inputPoint.enabled
-                ? inputPoint.ReadValue<Vector2>()
-                : UnityEngine.InputSystem.Pointer.current?.position.ReadValue() ?? previousPosition;
+            Vector2 cursorPosition = exposedCameraData.PointerScreenPosition;
             CumulativePointerDelta accumulatedDelta = exposedCameraData.AccumulatedPointerDelta;
             Vector2 pointerPos;
             Vector2 deltaPos;
@@ -83,16 +73,16 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Systems
             }
             else
             {
-                pointerPos = rawPosition;
-                deltaPos = rawPosition - previousPosition;
+                pointerPos = cursorPosition;
+                deltaPos = cursorPosition - previousPosition;
             }
 
-            // Always track the raw position and the accumulated total, so the first frame after a
+            // Always track the cursor position and the accumulated total, so the first frame after a
             // lock-state transition doesn't produce a stale-diff spike.
-            previousPosition = rawPosition;
+            previousPosition = cursorPosition;
             lastSeenAccumulatedDelta = accumulatedDelta;
 
-            Ray ray = cameraEntity.GetCameraComponent(globalWorld).Camera.ScreenPointToRay(pointerPos);
+            Ray ray = cachedCamera.ScreenPointToRay(pointerPos);
 
             var worldRayDirection = new Vector3
             {

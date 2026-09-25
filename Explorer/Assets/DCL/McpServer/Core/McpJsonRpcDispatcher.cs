@@ -3,6 +3,7 @@ using DCL.Diagnostics;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Text;
 using System.Threading;
 using Utility.Multithreading;
 
@@ -133,6 +134,13 @@ namespace DCL.McpServer.Core
             if (!tools.TryGet(toolName, out McpTool? tool))
                 return JsonRpcEnvelope.Error(id, INVALID_PARAMS, $"Unknown tool: {toolName ?? "<missing>"}");
 
+            // An undeclared argument would otherwise be dropped silently while the call reports success.
+            // Reported as a tool error, like every other argument refusal.
+            string? unknownArguments = UnknownArguments(tool.Name, arguments, tools.ArgumentNames(tool.Name));
+
+            if (unknownArguments != null)
+                return JsonRpcEnvelope.Result(id, McpToolResult.Error(unknownArguments).Payload);
+
             using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
             timeout.CancelAfter(TOOL_CALL_TIMEOUT);
 
@@ -165,6 +173,32 @@ namespace DCL.McpServer.Core
                 await DCLTask.SwitchToThreadPool();
 
             return JsonRpcEnvelope.Result(id, result.Payload);
+        }
+
+        /// <summary>The refusal naming every argument the tool does not declare, or null when all of them are known.</summary>
+        private static string? UnknownArguments(string toolName, JObject arguments, string[] declared)
+        {
+            StringBuilder? unknown = null;
+
+            foreach (JProperty argument in arguments.Properties())
+            {
+                if (Array.IndexOf(declared, argument.Name) >= 0)
+                    continue;
+
+                unknown ??= new StringBuilder();
+
+                if (unknown.Length > 0)
+                    unknown.Append(", ");
+
+                unknown.Append('\'').Append(argument.Name).Append('\'');
+            }
+
+            if (unknown == null)
+                return null;
+
+            return declared.Length == 0
+                ? $"{toolName} takes no arguments; remove {unknown}."
+                : $"{toolName} has no argument {unknown}; its arguments are: {string.Join(", ", declared)}.";
         }
 
         private static class JsonRpcEnvelope
