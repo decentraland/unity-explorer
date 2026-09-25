@@ -41,7 +41,6 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
 
         private void OnUpgradeRedirectedToAccountCreation(GuestUpgradeTrigger trigger)
         {
-            // The upgrade continues in the authentication screen, which reports the completion from there
             pendingGuestUpgrade.Set(trigger);
             analytics.Track(Authentication.GUEST_UPGRADE_STARTED, TriggerPayload(trigger), isInstant: true);
         }

@@ -92,7 +92,7 @@ namespace DCL.Web3.Authenticators
         }
 
         // Authenticator API
-        public async UniTask<bool> TryAutoLoginAsync(CancellationToken ct) =>
+        public async UniTask<IOtpAuthenticator.AutoLoginResult> TryAutoLoginAsync(CancellationToken ct) =>
             await loginService.TryAutoLoginAsync(ct);
 
         public async UniTask<IWeb3Identity> LoginAsync(LoginPayload payload, CancellationToken ct) =>

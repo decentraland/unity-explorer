@@ -15,8 +15,6 @@ namespace DCL.Web3.Authenticators
 
         private readonly IWeb3AccountFactory accountFactory;
 
-        private IWeb3Identity? sessionIdentity;
-
         public EphemeralWeb3Authenticator(IWeb3AccountFactory accountFactory)
         {
             this.accountFactory = accountFactory;
@@ -24,18 +22,13 @@ namespace DCL.Web3.Authenticators
 
         public void Dispose()
         {
-            sessionIdentity?.Dispose();
         }
 
         public UniTask<IWeb3Identity> LoginAsync(LoginPayload payload, CancellationToken ct)
         {
-            // The account is kept for as long as the process runs, so logging out and back in as a guest returns to the same one
-            if (sessionIdentity is { IsExpired: false })
-                return sessionIdentity.AsUniTaskResult();
-
             // The rust sign server holds a single key: the account created last is the one that signs, so the
             // ephemeral account is built after the signer has signed, leaving its key live for every request
-            EthECKey ephemeralKey = EthECKey.GenerateKey()!;
+            EthECKey ephemeralKey = EthECKey.GenerateKey();
             IWeb3Account signer = accountFactory.CreateRandomAccount();
             DateTime expiration = DateTime.UtcNow.AddDays(IDENTITY_EXPIRATION_PERIOD_FALLBACK_IN_DAYS);
 
@@ -55,9 +48,8 @@ namespace DCL.Web3.Authenticators
                 signature = ephemeralSignature,
             });
 
-            sessionIdentity?.Dispose();
             // To keep cohesiveness between the platform, convert the user address to lower case
-            sessionIdentity = new DecentralandIdentity(
+            IWeb3Identity identity = new DecentralandIdentity(
                 new Web3Address(signer),
                 ephemeralAccount,
                 expiration,
@@ -65,7 +57,7 @@ namespace DCL.Web3.Authenticators
                 LoginMethod.EPHEMERAL_GUEST
             );
 
-            return sessionIdentity.AsUniTaskResult();
+            return identity.AsUniTaskResult();
         }
     }
 }

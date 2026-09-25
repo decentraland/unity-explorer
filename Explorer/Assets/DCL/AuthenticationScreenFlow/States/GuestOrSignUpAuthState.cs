@@ -61,7 +61,6 @@ namespace DCL.AuthenticationScreenFlow
 
             currentState.Value = AuthStatus.GuestOrSignUpScreen;
 
-            // Hide login selection in case comes from the back action
             viewInstance.LoginSelectionAuthView.Hide();
 
             view.Show();

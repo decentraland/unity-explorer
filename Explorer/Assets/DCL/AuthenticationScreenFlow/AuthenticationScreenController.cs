@@ -246,30 +246,25 @@ namespace DCL.AuthenticationScreenFlow
             {
                 try
                 {
-                    bool autoLoginSuccess = await web3Authenticator.TryAutoLoginAsync(ct);
+                    IOtpAuthenticator.AutoLoginResult autoLoginSuccess = await web3Authenticator.TryAutoLoginAsync(ct);
 
-                    if (autoLoginSuccess)
-                        Proceed();
+                    if (autoLoginSuccess is IOtpAuthenticator.AutoLoginResult.Success
+                        or IOtpAuthenticator.AutoLoginResult.Unnecessary)
+                        fsm?.Enter<ProfileFetchingAuthState, ProfileFetchingPayload>(
+                            new ProfileFetchingPayload(identity,
+                                identity.Method != LoginMethod.TOKEN_FILE,
+                                ct));
                     else
                         ReturnToOrigin(UIAnimationHashes.IN);
                 }
                 catch (OperationCanceledException)
                 { /* Expected on cancellation */
                 }
-                catch (AutoLoginNotNeededException) { Proceed(); }
                 catch (Exception e)
                 {
                     ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
                     ReturnToOrigin(UIAnimationHashes.IN);
                 }
-
-                return;
-
-                void Proceed() =>
-                    fsm?.Enter<ProfileFetchingAuthState, ProfileFetchingPayload>(
-                        new ProfileFetchingPayload(identity,
-                            identity.Method != LoginMethod.TOKEN_FILE,
-                            ct));
             }
         }
 

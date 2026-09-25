@@ -135,7 +135,7 @@ namespace DCL.Web3.Authenticators
             return identity;
         }
 
-        public async UniTask<bool> TryAutoLoginAsync(CancellationToken ct)
+        public async UniTask<IOtpAuthenticator.AutoLoginResult> TryAutoLoginAsync(CancellationToken ct)
         {
             if (OtpIsDisabled())
                 DCLPlayerPrefs.DeleteKey(DCLPrefKeys.LOGGEDIN_EMAIL, save: true);
@@ -143,9 +143,10 @@ namespace DCL.Web3.Authenticators
             if (!GuestLoginIsEnabled())
                 DCLPlayerPrefs.DeleteKey(DCLPrefKeys.GUEST_SESSION_ACTIVE, save: true);
 
-            // Auto-login only works for thirdweb accounts
             if (!identityCache.IsThirdWebAccount())
-                throw new AutoLoginNotNeededException();
+
+                // Auto-login only works for thirdweb accounts
+                return IOtpAuthenticator.AutoLoginResult.Unnecessary;
 
             // Only the ThirdWeb guest flow stores this flag, so it is the one that has a session to restore
             if (DCLPlayerPrefs.GetBool(DCLPrefKeys.GUEST_SESSION_ACTIVE))
@@ -154,7 +155,7 @@ namespace DCL.Web3.Authenticators
                 catch (GuestAccountUpgradedException)
                 {
                     DiscardUpgradedGuestSession();
-                    return false;
+                    return IOtpAuthenticator.AutoLoginResult.Failed;
                 }
             }
 
@@ -163,7 +164,7 @@ namespace DCL.Web3.Authenticators
             if (!string.IsNullOrEmpty(storedEmail))
                 return await thirdWebAuth.TryAutoLoginAsync(ct);
 
-            return true;
+            return IOtpAuthenticator.AutoLoginResult.Success;
 
             bool OtpIsDisabled() =>
                 !FeaturesRegistry.Instance.IsEnabled(FeatureId.EmailOTPAuth);
