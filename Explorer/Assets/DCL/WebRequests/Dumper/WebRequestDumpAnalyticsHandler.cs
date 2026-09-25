@@ -65,7 +65,7 @@ namespace DCL.WebRequests.Dumper
             foreach ((Type type, Func<RequestMetricBase> ctor) in trackedMetrics)
             {
                 var recorder = new RequestMetricRecorder(ctor());
-                WebRequestsDumper.Instance.activeMetrics[MetricsRegistry.INDICES[type]] = recorder;
+                WebRequestsDumper.Instance.activeMetrics[MetricsRegistry.Indices[type]] = recorder;
                 AddFlatMetric(recorder);
             }
         }

@@ -3,6 +3,7 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Ipfs;
+using DCL.Optimization.ThreadSafePool;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Utilities;
 using DCL.WebRequests;
@@ -22,7 +23,6 @@ using System.Threading;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
 using Unity.Profiling;
-using UnityEngine.Pool;
 using UnityEngine.Scripting;
 using Utility.Multithreading;
 
@@ -35,6 +35,9 @@ namespace ECS.SceneLifeCycle.SceneDefinition
     [LogCategory(ReportCategory.SCENE_LOADING)]
     public partial class LoadSceneDefinitionListSystem : LoadSystemBase<SceneDefinitions, GetSceneDefinitionList>
     {
+        private const int BATCH_CAPACITY = 64;
+        private const int POOL_CAPACITY = 10;
+
         private readonly IWebRequestController webRequestController;
         private readonly EntitiesAnalytics entitiesAnalytics;
         private readonly bool isLocalSceneDevelopment;
@@ -43,6 +46,10 @@ namespace ECS.SceneLifeCycle.SceneDefinition
         // cache
         private readonly StringBuilder bodyBuilder = new ();
         private static readonly SceneMetadataConverter SCENE_METADATA_CONVERTER = new ();
+
+        // The flow runs on the thread pool, where UnityEngine.Pool's statics race.
+        private static readonly ThreadSafeListPool<UniTask> MANIFEST_TASKS_POOL = new (BATCH_CAPACITY, POOL_CAPACITY);
+        private static readonly ThreadSafeHashSetPool<string> SEEN_IDS_POOL = new (BATCH_CAPACITY, POOL_CAPACITY);
 
         private readonly ProfilerMarker deserializationSampler;
 
@@ -120,7 +127,7 @@ namespace ECS.SceneLifeCycle.SceneDefinition
             // One round-trip of wall-clock instead of one per scene: on a fully reconverted (v49+) city every
             // scene in the batch fetches its manifest, and awaiting them one-by-one held the whole batch —
             // and the destination scene queued behind it — for ~400ms × N.
-            using (ListPool<UniTask>.Get(out List<UniTask> manifestTasks))
+            using (MANIFEST_TASKS_POOL.Get(out List<UniTask> manifestTasks))
             {
                 foreach (SceneEntityDefinition sceneEntityDefinition in intention.TargetCollection)
                     manifestTasks.Add(EnsureManifestDataAsync(sceneEntityDefinition, partition, ct));
@@ -142,10 +149,7 @@ namespace ECS.SceneLifeCycle.SceneDefinition
 
             // v49+ scene ABs ship a per-file deps digest in their manifest. Fetch it (deduped via the promise cache)
             // so the AB / GLTF / disk caches can differentiate scenes that share a hash but resolve different deps.
-            // SDK7 scenes only: everything else (SDK6 scenes, roads) never instantiates as a scene — it is
-            // permanently represented by LODs from the LOD pipeline (see VisualSceneStateResolver) — so it
-            // never requests its own bundles and its digest map would go unread.
-            if (sceneEntityDefinition.metadata?.runtimeVersion == "7")
+            if (!string.IsNullOrEmpty(sceneEntityDefinition.metadata?.main))
                 await SceneAssetBundleDigestsLoader.EnsureDepsDigestsAsync(World, sceneEntityDefinition, partition, ct, isLocalSceneDevelopment);
         }
 
@@ -154,23 +158,23 @@ namespace ECS.SceneLifeCycle.SceneDefinition
             if (list.Count <= 1)
                 return;
 
-            var seenIds = HashSetPool<string>.Get();
-            seenIds.EnsureCapacity(list.Count);
-
-            int write = 0;
-
-            for (int read = 0; read < list.Count; read++)
+            using (SEEN_IDS_POOL.Get(out HashSet<string> seenIds))
             {
-                var item = list[read];
+                seenIds.EnsureCapacity(list.Count);
 
-                if (seenIds.Add(item.id))
-                    list[write++] = item;
+                int write = 0;
+
+                for (int read = 0; read < list.Count; read++)
+                {
+                    var item = list[read];
+
+                    if (seenIds.Add(item.id ?? string.Empty))
+                        list[write++] = item;
+                }
+
+                if (write < list.Count)
+                    list.RemoveRange(write, list.Count - write);
             }
-
-            if (write < list.Count)
-                list.RemoveRange(write, list.Count - write);
-
-            HashSetPool<string>.Release(seenIds);
         }
 
         [Preserve]
@@ -210,7 +214,7 @@ namespace ECS.SceneLifeCycle.SceneDefinition
                     serializer.Converters.RemoveAt(0);
 
                     SceneMetadata metadata;
-                    try { metadata = serializer.Deserialize<SceneMetadata>(jsonReader); }
+                    try { metadata = serializer.Deserialize<SceneMetadata>(jsonReader) ?? throw new JsonSerializationException("Scene metadata deserialized to null"); }
                     finally { serializer.Converters.Add(this); }
 
                     int endByte = startByte;

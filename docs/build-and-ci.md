@@ -14,6 +14,21 @@ By default, PRs marked as draft will not trigger the build. If this is something
 The `build-release-main` workflow wraps `build-unitycloud` for releases; it is triggered by pushes to `main` and by manual workflow dispatch.
 Release, hotfix, and `main` builds share a single stable cache target per platform — the *release pool* — instead of a per-version target, so the cache is reused across releases without blocking `main`. See [Cache](#cache).
 
+### Release cuts
+
+`create-release-branch.yml` (manual dispatch) cuts `release/<date>` from `dev`'s tip and opens the PR into `main` with `GITHUB_TOKEN`. Events raised by that token start no workflow runs, so the release PR does not build, lint or test itself when it opens. Instead the workflow seeds the PR's unified CI status comment from `dev`'s runs of the cut commit, and the outcome depends on where `dev` was at the cut:
+
+| `dev`'s build of the cut commit | Build section | InWorld gate |
+| --- | --- | --- |
+| Finished green | Its links, marked as reused from `dev` | Dispatched by the cut workflow |
+| Still running | "Building on dev"; the run's completion writes its links into the release PR | Dispatched by `pr-comment-artifact-url.yml` when that build succeeds |
+| Failed or cancelled (at the cut, or later while the PR is open) | The PR is labeled `force-build` and the release branch builds itself | Dispatched by `pr-comment-artifact-url.yml` when the release branch's build succeeds |
+| No run at all (`dev` push touched nothing the build watches) | "Not Found"; label the PR `force-build` by hand | Started by hand from the Actions tab |
+
+Lint and tests follow the same pattern: `dev`'s `Unity Test` results are reused when it finished, "Running on dev" is shown and back-filled when it had not, and a `force-build` label runs both on the release branch. The back-fill works because the `pr-comment-*` writers resolve a `push` run on `dev` to the open release/hotfix PR whose head is the run's SHA (`.github/actions/ci-status-comment/resolve-comment-pr.sh`). For that, `test.yml` uploads the `failed-tests-<mode>` summaries on pushes to `dev` as well as on PRs, and a suite whose job left no summary is reported from that job's conclusion. The lint back-fill reports the `Lint` job's conclusion, because the `warning-result` ratchet artifact only exists for PR runs. The `force-build` label is always added with `ORG_ACCESS_TOKEN` — a label added by `GITHUB_TOKEN` would start nothing either.
+
+Never re-run *Create Release Branch and PR* to fix any of this: it force-pushes the release branch from `dev`'s current tip, re-cutting the release from newer commits. Pushing to the release branch is the normal path — a push starts the build, lint, tests and the InWorld gate through their regular `pull_request` triggers and replaces every reused section.
+
 ## Native plugin binaries (UUAV, RustSegment)
 
 Two Rust plugins ship prebuilt native binaries committed to Git LFS: UUAV (`Explorer/Assets/Plugins/UUAV/`) and the Segment analytics client (`Explorer/Assets/Plugins/RustSegment/`). Each is pinned to its inputs by a hash lock and guarded by the same pair of workflows:
