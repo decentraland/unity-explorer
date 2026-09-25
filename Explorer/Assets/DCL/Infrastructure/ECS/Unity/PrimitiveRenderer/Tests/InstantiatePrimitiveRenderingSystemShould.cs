@@ -52,15 +52,20 @@ namespace ECS.Unity.PrimitiveRenderer.Tests
                     { typeof(PlanePrimitive), new ComponentPool.WithDefaultCtor<PlanePrimitive>() },
                 }, new GameObject().transform);
 
+            system = CreateSystem(setupMeshes);
+
+            entity = world.Create();
+            AddTransformToEntity(entity);
+        }
+
+        private InstantiatePrimitiveRenderingSystem CreateSystem(Dictionary<PBMeshRenderer.MeshOneofCase, ISetupMesh> setupMeshCases)
+        {
             IReleasablePerformanceBudget budget = Substitute.For<IReleasablePerformanceBudget>();
             budget.TrySpendBudget().Returns(true);
 
             var buffer = new EntityEventBuffer<PrimitiveMeshRendererComponent>(10);
 
-            system = new InstantiatePrimitiveRenderingSystem(world, poolsRegistry, budget, Substitute.For<ISceneData>(), buffer, setupMeshes);
-
-            entity = world.Create();
-            AddTransformToEntity(entity);
+            return new InstantiatePrimitiveRenderingSystem(world, poolsRegistry, budget, Substitute.For<ISceneData>(), buffer, setupMeshCases);
         }
 
         [Test]
@@ -76,7 +81,7 @@ namespace ECS.Unity.PrimitiveRenderer.Tests
 
             //Assert
             Assert.AreEqual(expectedType, meshRendererComponent.SDKType);
-            setupMeshes[input.MeshCase].Received(1).Execute(input, meshRendererComponent.PrimitiveMesh.Mesh);
+            setupMeshes[input.MeshCase].Received(1).Execute(input, meshRendererComponent.PrimitiveMesh);
 
             Assert.AreEqual(meshRendererComponent.MeshRenderer.GetComponent<MeshFilter>().sharedMesh,
                 meshRendererComponent.PrimitiveMesh.Mesh);
@@ -91,10 +96,7 @@ namespace ECS.Unity.PrimitiveRenderer.Tests
             system.Update(0);
 
             //Act
-            // Sphere primitives share a single immutable mesh, so the re-instantiated mesh is the same
-            // object as the initial one. Clear the recorded calls so the assertion below counts only the
-            // Execute triggered by re-instantiation and not the initial setup (which the mesh argument can
-            // no longer disambiguate).
+            // Clear the recorded calls so the assertion below counts only the Execute triggered by re-instantiation
             setupMeshes[input.MeshCase].ClearReceivedCalls();
 
             input.IsDirty = true;
@@ -105,10 +107,46 @@ namespace ECS.Unity.PrimitiveRenderer.Tests
             ref PrimitiveMeshRendererComponent meshRendererComponent = ref world.Get<PrimitiveMeshRendererComponent>(entity);
 
             Assert.AreEqual(expectedType, meshRendererComponent.SDKType);
-            setupMeshes[input.MeshCase].Received(1).Execute(input, meshRendererComponent.PrimitiveMesh.Mesh);
+            setupMeshes[input.MeshCase].Received(1).Execute(input, meshRendererComponent.PrimitiveMesh);
 
             Assert.AreEqual(meshRendererComponent.MeshRenderer.GetComponent<MeshFilter>().sharedMesh,
                 meshRendererComponent.PrimitiveMesh.Mesh);
+        }
+
+        [Test]
+        public void SwapBoxMeshOnFilterWhenUVsChangeAtRuntime()
+        {
+            //Arrange
+            // The substituted setups never swap the mesh, so use the real box setup
+            system.Dispose();
+            system = CreateSystem(new Dictionary<PBMeshRenderer.MeshOneofCase, ISetupMesh> { { PBMeshRenderer.MeshOneofCase.Box, new MeshSetupBox() } });
+
+            var input = new PBMeshRenderer { Box = new PBMeshRenderer.Types.BoxMesh() };
+            world.Add(entity, input);
+            system.Update(0);
+
+            MeshFilter meshFilter = world.Get<PrimitiveMeshRendererComponent>(entity).MeshRenderer.GetComponent<MeshFilter>();
+            Mesh sharedMesh = meshFilter.sharedMesh;
+
+            //Act
+            for (var i = 0; i < 48; i++)
+                input.Box.Uvs.Add(0.5f);
+
+            input.IsDirty = true;
+            system.Update(0);
+
+            //Assert
+            Mesh customMesh = world.Get<PrimitiveMeshRendererComponent>(entity).PrimitiveMesh.Mesh;
+            Assert.AreNotSame(sharedMesh, customMesh);
+            Assert.AreSame(customMesh, meshFilter.sharedMesh);
+
+            //Act
+            input.Box.Uvs.Clear();
+            input.IsDirty = true;
+            system.Update(0);
+
+            //Assert
+            Assert.AreSame(sharedMesh, meshFilter.sharedMesh);
         }
 
         public static object[][] TestCases()
