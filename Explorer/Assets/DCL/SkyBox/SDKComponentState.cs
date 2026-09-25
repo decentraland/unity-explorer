@@ -1,4 +1,3 @@
-using System;
 using DCL.SceneRestrictionBusController.SceneRestriction;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using ECS.SceneLifeCycle;
@@ -25,8 +24,9 @@ namespace DCL.SkyBox
 
         // The logic of this behavior is mostly processed at SkyboxTimeHandlerSystem
         public bool Applies() =>
-            skyboxSettings.CurrentSDKControlledScene != null
-            && Nullable.Equals(scenes.CurrentScene.Value?.Info, skyboxSettings.CurrentSDKControlledScene);
+            skyboxSettings.CurrentSDKControlledScene is { } owner
+            && scenes.CurrentScene.Value is { } currentScene
+            && currentScene.Info.Equals(owner);
 
         public void Enter()
         {
