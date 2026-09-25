@@ -17,7 +17,7 @@ namespace DCL.Lobby
 
         [SerializeField] protected ScrollRect scrollRect = null!;
 
-        [Tooltip("Cards laid out per page; the viewport width must fit exactly this many cards plus spacing for the snapping to line up")]
+        [Tooltip("Cards a page advances by; a page is this many card strides wide, whatever the viewport shows")]
         [SerializeField] protected int cardsPerPage = 3;
 
         [SerializeField] private LobbyCarouselDotsView dots = null!;
@@ -71,12 +71,14 @@ namespace DCL.Lobby
         protected int PageCount(int cardCount) =>
             (cardCount + cardsPerPage - 1) / Mathf.Max(1, cardsPerPage);
 
-        private float PageWidth() =>
-            scrollRect.viewport.rect.width;
+        /// <summary>
+        ///     Distance from one card's left edge to the next one's, spacing included.
+        /// </summary>
+        protected abstract float CardStride();
 
         // The content cannot scroll past its end, so the last page starts wherever the content ends rather than a full page in
         private float PageOffset(int page) =>
-            Mathf.Min(page * PageWidth(), Mathf.Max(0f, scrollRect.content.rect.width - PageWidth()));
+            Mathf.Min(page * cardsPerPage * CardStride(), Mathf.Max(0f, scrollRect.content.rect.width - scrollRect.viewport.rect.width));
 
         private int PageAt(float offset)
         {

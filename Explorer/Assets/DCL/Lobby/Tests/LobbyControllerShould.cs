@@ -1462,6 +1462,7 @@ namespace DCL.Lobby.Tests
             LobbyCarouselView carousel = carouselGo.AddComponent<LobbyCarouselView>();
             SetField(carousel, "scrollRect", scrollRect);
             SetField(carousel, "cardTemplate", cardTemplate);
+            SetField(carousel, "layout", contentGo.AddComponent<HorizontalLayoutGroup>());
             SetField(carousel, "dots", dotsView);
             SetField(carousel, "cardsPerPage", cardsPerPage);
             TestRailArrows.Attach(carousel);
@@ -1515,6 +1516,7 @@ namespace DCL.Lobby.Tests
             LobbyEventRailView rail = railGo.AddComponent<LobbyEventRailView>();
             SetField(rail, "scrollRect", scrollRect);
             SetField(rail, "cardTemplate", cardTemplate);
+            SetField(rail, "layout", contentGo.AddComponent<HorizontalLayoutGroup>());
             SetField(rail, "dots", dotsView);
             SetField(rail, "cardsPerPage", 1);
             TestRailArrows.Attach(rail);

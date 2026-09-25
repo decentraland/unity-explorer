@@ -635,6 +635,7 @@ MonoBehaviour:
   arrows: {fileID: 66652866707505174}
   hoverArea: {fileID: 69000000000000101}
   cardTemplate: {fileID: 70222024344535446}
+  layout: {fileID: 62000000000000016}
 --- !u!1 &62000000000000014
 GameObject:
   m_ObjectHideFlags: 0
@@ -1128,6 +1129,7 @@ MonoBehaviour:
   arrows: {fileID: 66652866707505190}
   hoverArea: {fileID: 69000000000000102}
   cardTemplate: {fileID: 56329869455737130}
+  layout: {fileID: 63000000000000122}
 --- !u!1 &63000000000000120
 GameObject:
   m_ObjectHideFlags: 0
@@ -1398,6 +1400,7 @@ MonoBehaviour:
   arrows: {fileID: 66652866707505206}
   hoverArea: {fileID: 69000000000000103}
   cardTemplate: {fileID: 4196146986101637438}
+  layout: {fileID: 63000000000000222}
 --- !u!1 &63000000000000220
 GameObject:
   m_ObjectHideFlags: 0

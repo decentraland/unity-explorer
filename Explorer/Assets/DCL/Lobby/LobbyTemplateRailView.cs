@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace DCL.Lobby
 {
@@ -10,6 +11,9 @@ namespace DCL.Lobby
     public abstract class LobbyTemplateRailView<TCard> : LobbyPagedRailView where TCard : Component
     {
         [SerializeField] private TCard cardTemplate = null!;
+
+        [Tooltip("Lays the cards out in the content; its spacing is part of the stride the pages snap by")]
+        [SerializeField] private HorizontalLayoutGroup layout = null!;
 
         private readonly List<TCard> cards = new ();
 
@@ -41,6 +45,10 @@ namespace DCL.Lobby
             scrollRect.content.anchoredPosition = Vector2.zero;
             OnCountChanged(count, rewind: true);
         }
+
+        // Clones keep the template's width because the layout does not control child widths
+        protected override float CardStride() =>
+            ((RectTransform)cardTemplate.transform).rect.width + layout.spacing;
 
         protected abstract void OnCardCreated(TCard card, int index);
     }

@@ -12,6 +12,8 @@ namespace DCL.Lobby
     {
         [SerializeField] private LoopListView2 loopList = null!;
 
+        private float cardStride;
+
         public int ShownCount => loopList.ShownItemCount;
 
         public void Init(Func<LoopListView2, int, LoopListViewItem2> onGetItem)
@@ -20,7 +22,8 @@ namespace DCL.Lobby
             LoopListViewInitParam initParam = LoopListViewInitParam.CopyDefaultInitParam();
 
             // The content is sized from this before any card has been laid out; the page snap relies on that width being right from the start
-            initParam.mItemDefaultWithPaddingSize = ((RectTransform)prefabData.mItemPrefab.transform).rect.width + prefabData.mPadding;
+            cardStride = ((RectTransform)prefabData.mItemPrefab.transform).rect.width + prefabData.mPadding;
+            initParam.mItemDefaultWithPaddingSize = cardStride;
             loopList.InitListView(0, onGetItem, initParam);
         }
 
@@ -54,5 +57,8 @@ namespace DCL.Lobby
 
         public LobbyFriendCardView ShownCardAt(int shownIndex) =>
             (LobbyFriendCardView)loopList.GetShownItemByIndex(shownIndex).UserObjectData;
+
+        protected override float CardStride() =>
+            cardStride;
     }
 }
