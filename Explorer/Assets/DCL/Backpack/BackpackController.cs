@@ -138,6 +138,7 @@ namespace DCL.Backpack
                 outfitApplier,
                 outfitsCollection,
                 webBrowser,
+                decentralandUrlsSource,
                 equippedWearables,
                 loadOutfitsCommand,
                 saveOutfitCommand,
