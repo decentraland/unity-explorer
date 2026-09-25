@@ -473,6 +473,18 @@ namespace DCL.SDKComponents.SceneUI.Tests
             input.Dispose();
         }
 
+        [Test]
+        public void AlignUIInputTextMiddleLeftWhenUnset()
+        {
+            Assert.AreEqual(TextAnchor.MiddleLeft, new PBUiInput().GetTextAlign());
+        }
+
+        [Test]
+        public void KeepExplicitUIInputTextAlign()
+        {
+            Assert.AreEqual(TextAnchor.UpperRight, new PBUiInput { TextAlign = TextAlignMode.TamTopRight }.GetTextAlign());
+        }
+
         // --- Hover feedback with textured background tests ---
 
         private const float BORDER_DARKEN = 0.3f;

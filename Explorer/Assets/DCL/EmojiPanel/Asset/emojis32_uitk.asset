@@ -17918,6 +17918,21 @@ MonoBehaviour:
     m_GlyphIndex: 3575
     m_Scale: 1
     m_Name: fe82b
+  - m_ElementType: 2
+    m_Unicode: 65038
+    m_GlyphIndex: 3576
+    m_Scale: 1
+    m_Name: fe0e
+  - m_ElementType: 2
+    m_Unicode: 65039
+    m_GlyphIndex: 3576
+    m_Scale: 1
+    m_Name: fe0f
+  - m_ElementType: 2
+    m_Unicode: 9873
+    m_GlyphIndex: 226
+    m_Scale: 1
+    m_Name: 2691
   m_SpriteGlyphTable:
   - m_Index: 0
     m_Metrics:
@@ -75131,6 +75146,22 @@ MonoBehaviour:
       m_Y: 256
       m_Width: 32
       m_Height: 32
+    m_Scale: 1
+    m_AtlasIndex: 0
+    m_ClassDefinitionType: 0
+    sprite: {fileID: 0}
+  - m_Index: 3576
+    m_Metrics:
+      m_Width: 0
+      m_Height: 0
+      m_HorizontalBearingX: 0
+      m_HorizontalBearingY: 0
+      m_HorizontalAdvance: 0
+    m_GlyphRect:
+      m_X: 0
+      m_Y: 0
+      m_Width: 0
+      m_Height: 0
     m_Scale: 1
     m_AtlasIndex: 0
     m_ClassDefinitionType: 0
