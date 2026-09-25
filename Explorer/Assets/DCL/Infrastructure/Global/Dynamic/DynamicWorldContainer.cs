@@ -507,6 +507,7 @@ namespace Global.Dynamic
                 bootstrapContainer.WebBrowser,
                 bootstrapContainer.DecentralandUrlsSource,
                 profileContainer.SelfProfile,
+                identityCache,
                 voiceChatContainer.NearbyMuteService);
 
             ViewDependencies.Initialize(new ViewDependencies(
@@ -770,7 +771,6 @@ namespace Global.Dynamic
                     realmNftNamesProvider,
                     profileContainer.ProfileChangesBus,
                     communitiesContainer.IncludeCommunities,
-                    profileContainer.ProfileRepositoryWrapper,
                     voiceChatContainer.VoiceChatOrchestrator,
                     cameraReelContainer.GalleryEventBus,
                     uiShellContainer.Clipboard,
