@@ -29,7 +29,7 @@ namespace DCL.PlacesAPIService.Serialization
             var rootObject = JObject.Load(reader).ToObject<RootObject>();
             foreach ((string? key, DataObject? value) in rootObject.data)
             {
-                existingValue.Add(new OptimizedPlaceInMapResponse()
+                existingValue.Add(new OptimizedPlaceInMapResponse
                 {
                     base_position = ConvertStringToVector2Int(key),
                     name = value.title

@@ -267,6 +267,25 @@ Only works for PUBLISHED elements (thus having a URN that identifies them).
 
 ---
 
+### `self-force-wearables`
+**Type:** String
+**Description:** Renders specific wearables on your own avatar without owning them. Accepts a comma-separated list of wearable URNs (i.e. `urn:decentraland:matic:collections-v2:0x9251f5c79923bc80e5dd8fc6d0c9fa02953aa622:0`).
+
+The wearables are visible only to you, and are **never deployed**. While the flag is set the client does not persist your profile at all — backpack saves, name changes and passport edits all take effect locally for the session and are discarded on relaunch, the same way `self-preview-wearables` already suppresses backpack publishing. Relaunch without the flag to go back to your real avatar.
+
+Do not use it on a brand-new account: a first profile has to be deployed to exist, and the flag blocks that.
+
+Only works for PUBLISHED elements (thus having a URN that identifies them).
+
+In the editor the same set can be filled from the inspector instead, via `DebugSettings.wearablesToAddToUserProfile` (like `emotesToAddToUserProfile`). The set is fixed at startup either way.
+
+**Usage:**
+```bash
+--self-force-wearables wearable1,wearable2
+```
+
+---
+
 ### `self-preview-emotes`
 **Type:** String
 **Description:** Enables preview mode for specific emotes. Accepts a comma-separated list of emote URNs (i.e. `urn:decentraland:matic:collections-v2:0xa80aea22d0fe9d34ca72ce304ef427bbefee1f11:2` ) that will be available for preview.
@@ -496,6 +515,17 @@ decentraland://?force-open-backpack=true
 
 ---
 
+### `feature-flags-user-id`
+**Type:** String
+**Description:** Overrides the identity feature flags are evaluated against (the `X-Address-Hash` header), replacing the anonymous id the client would otherwise resolve. Use it to reproduce the flags a specific user sees, or to force a particular A/B bucket. The value is not persisted, so it applies only to the launch that passes it. See [Feature Flags](feature-flags.md#which-identity-is-sent).
+
+**Usage:**
+```bash
+--feature-flags-user-id 8f4c2d1e-9a7b-4c3d-8e2f-1a2b3c4d5e6f
+```
+
+---
+
 ## Analytics Flags
 
 ### `session_id`
@@ -516,6 +546,17 @@ decentraland://?force-open-backpack=true
 **Usage:**
 ```bash
 --launcher_anonymous_id user123
+```
+
+---
+
+### `campaign_anon_user_id`
+**Type:** String
+**Description:** Anonymous user ID forwarded by the launcher from the website, so explorer analytics can be joined to the campaign funnel that originated the install. Also used as the feature-flags evaluation identity (`X-Address-Hash`), which keeps A/B bucketing stable from the first pre-login session — see [Feature Flags](feature-flags.md#which-identity-is-sent). Emitted as the `campaign_anon_user_id` analytics trait only when present.
+
+**Usage:**
+```bash
+--campaign_anon_user_id 8f4c2d1e-9a7b-4c3d-8e2f-1a2b3c4d5e6f
 ```
 
 ---

@@ -235,7 +235,12 @@ namespace DCL.EventsApi
         //No need to serialize anything more than the already present fields
         public void OnBeforeSerialize() { }
 
-        public void OnAfterDeserialize() =>
+        public void OnAfterDeserialize()
+        {
+            if (connected_addresses is { Length: 0 })
+                connected_addresses = null;
+
             EventDataParser.ParseDeserializedDates(ref this);
+        }
     }
 }

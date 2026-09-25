@@ -49,6 +49,9 @@ using DCL.RuntimeDeepLink;
 using DCL.SDKComponents.AvatarLocomotion;
 using DCL.SDKComponents.AvatarNametag;
 using DCL.SkyBox;
+using DCL.SyntheticInput;
+using DCL.SyntheticInput.Systems;
+using DCL.SyntheticInput.UiSimulation;
 using DCL.UI;
 using DCL.UI.ConfirmationDialog;
 using DCL.UI.InputFieldFormatting;
@@ -891,22 +894,46 @@ namespace Global.Dynamic
                 globalPlugins.Add(lodContainer.RoadPlugin);
             }
 
-            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.McpServer))
-                globalPlugins.Add(new McpServerPlugin(
-                    appArgs,
-                    new GlobalWorldActions(globalWorld, playerEntity, localSceneDevelopment, bootstrapContainer.UseRemoteAssetBundles, FeaturesRegistry.Instance.IsEnabled(FeatureId.SelfPreviewBuilderCollections)),
-                    chatContainer.ChatMessagesBus,
-                    staticContainer.ScenesCache,
-                    commsContainer.CurrentSceneInfo,
-                    staticContainer.LoadingStatus,
-                    realmNavigatorContainer.WorldInfoHub,
-                    realmContainer.ReloadSceneController,
-                    bootstrapContainer.DiagnosticsContainer,
-                    exposedGlobalDataContainer.ExposedCameraData,
-                    staticContainer.EntityCollidersGlobalCache,
-                    coroutineRunner,
-                    globalWorld,
-                    localSceneDevelopment));
+            bool syntheticInputEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.McpServer);
+
+#if ALTTESTER
+            syntheticInputEnabled = syntheticInputEnabled || appArgs.HasFlag(AppArgsFlags.ALTTESTER);
+#endif
+
+            if (syntheticInputEnabled)
+            {
+                var syntheticInputAgent = new SyntheticInputAgent(globalWorld, playerEntity);
+
+                var uiAutomation = new UiAutomationServices(globalWorld, playerEntity,
+                    UnityEngine.EventSystems.EventSystem.current.EnsureNotNull(), staticContainer.ScenesCache);
+
+#if ALTTESTER
+                DCL.SyntheticInput.AltTester.WorldAutomationProbe.Install(syntheticInputAgent, globalWorld, playerEntity);
+                DCL.SyntheticInput.AltTester.UiAutomationProbe.Install(uiAutomation);
+                DCL.SyntheticInput.AltTester.NavigationAutomationProbe.Install(realmNavigator, staticContainer.RealmData, bootstrapContainer.DecentralandUrlsSource,
+                    staticContainer.ScenesCache, staticContainer.LoadingStatus, bootstrapContainer.Environment);
+#endif
+
+                globalPlugins.Add(new SyntheticInputPlugin(staticContainer.ScenesCache, staticContainer.EntityCollidersGlobalCache, uiAutomation));
+
+                if (FeaturesRegistry.Instance.IsEnabled(FeatureId.McpServer))
+                    globalPlugins.Add(new McpServerPlugin(
+                        appArgs,
+                        new GlobalWorldActions(globalWorld, playerEntity, localSceneDevelopment, bootstrapContainer.UseRemoteAssetBundles, FeaturesRegistry.Instance.IsEnabled(FeatureId.SelfPreviewBuilderCollections)),
+                        chatContainer.ChatMessagesBus,
+                        staticContainer.ScenesCache,
+                        commsContainer.CurrentSceneInfo,
+                        staticContainer.LoadingStatus,
+                        realmNavigatorContainer.WorldInfoHub,
+                        realmContainer.ReloadSceneController,
+                        bootstrapContainer.DiagnosticsContainer,
+                        exposedGlobalDataContainer.ExposedCameraData,
+                        syntheticInputAgent,
+                        uiAutomation,
+                        coroutineRunner,
+                        globalWorld,
+                        localSceneDevelopment));
+            }
 
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.LocalSceneDevelopment) || FeaturesRegistry.Instance.IsEnabled(FeatureId.SelfPreviewBuilderCollections))
                 globalPlugins.Add(new GlobalGLTFLoadingPlugin(staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, wearableContainer.BuilderContentUrl.Value, localSceneDevelopment, staticContainer.ComponentsContainer.ComponentPoolsRegistry.RootContainerTransform()));

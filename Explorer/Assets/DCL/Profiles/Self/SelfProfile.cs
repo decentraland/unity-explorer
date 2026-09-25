@@ -6,6 +6,7 @@ using DCL.AvatarRendering.Emotes.Equipped;
 using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.Diagnostics;
 using DCL.Profiles.Helpers;
 using DCL.Utility.Types;
 using DCL.Web3.Identities;
@@ -30,6 +31,7 @@ namespace DCL.Profiles.Self
         private readonly IEquippedWearables equippedWearables;
         private readonly IEquippedEmotes equippedEmotes;
         private readonly IOwnedNftFilter ownedNftFilter;
+        private readonly ForcedWearables forcedWearables;
 
         public event Action<Profile>? ProfilePropagated;
 
@@ -44,7 +46,8 @@ namespace DCL.Profiles.Self
             IProfileCache profileCache,
             World world,
             Entity playerEntity,
-            IOwnedNftFilter ownedNftFilter)
+            IOwnedNftFilter ownedNftFilter,
+            ForcedWearables forcedWearables)
         {
             this.profileRepository = profileRepository;
             this.web3IdentityCache = web3IdentityCache;
@@ -57,6 +60,7 @@ namespace DCL.Profiles.Self
             this.world = world;
             this.playerEntity = playerEntity;
             this.ownedNftFilter = ownedNftFilter;
+            this.forcedWearables = forcedWearables;
 
             web3IdentityCache.OnIdentityCleared += InvalidateOwnProfile;
             web3IdentityCache.OnIdentityChanged += InvalidateOwnProfile;
@@ -80,6 +84,8 @@ namespace DCL.Profiles.Self
             );
 
             if (profile == null) return null;
+
+            forcedWearables.ApplyTo(profile);
 
             if (forcedEmotes != null)
                 for (var slot = 0; slot < forcedEmotes.Count && slot < profile.Avatar.Emotes.Count; slot++)
@@ -142,6 +148,21 @@ namespace DCL.Profiles.Self
                     throw new Web3IdentityMissingException("Web3 Identity has an empty address");
 
                 newProfile.UserId = selfUserId.Value;
+
+                // Every deploy path builds its profile from one ProfileAsync faked, so a faking session skips the deploy and only updates local state.
+                if (forcedWearables.Any || forcedEmotes?.Count > 0)
+                {
+                    ReportHub.LogWarning(ReportCategory.PROFILE, "Profile deploy skipped: forced wearables or emotes are active for this session");
+
+                    profileCache.Set(newProfile.UserId, newProfile);
+
+                    if (updateAvatarInWorld)
+                        UpdateAvatarInWorld(newProfile);
+
+                    ProfilePropagated?.Invoke(newProfile);
+                    return newProfile;
+                }
+
                 newProfile.Version++;
 
                 if (!updateAvatarInWorld)
@@ -182,8 +203,8 @@ namespace DCL.Profiles.Self
 
                     // We need to re-update the avatar in-world with the new profile because the save operation invalidates the previous profile
                     // breaking the avatar and the backpack
-                    profileCache.Set(savedProfile!.UserId, savedProfile);
-                    UpdateAvatarInWorld(savedProfile!);
+                    profileCache.Set(savedProfile.UserId, savedProfile);
+                    UpdateAvatarInWorld(savedProfile);
                     ProfilePropagated?.Invoke(savedProfile);
                     return savedProfile;
                 }
@@ -227,7 +248,7 @@ namespace DCL.Profiles.Self
 
             profile.IsDirty = true;
             world.Set(playerEntity, profile);
-            ProfileUtils.CreateProfilePicturePromise(profile!, world, PartitionComponent.TOP_PRIORITY);
+            ProfileUtils.CreateProfilePicturePromise(profile, world, PartitionComponent.TOP_PRIORITY);
         }
 
         private void InvalidateOwnProfile()
