@@ -17,8 +17,6 @@ namespace DCL.McpServer.Tools
         private const float DEFAULT_TIMEOUT_SEC = 5f;
         private const float MIN_TIMEOUT_SEC = 0.5f;
         private const float MAX_TIMEOUT_SEC = 15f;
-        private const float SETTLE_EPSILON = 0.001f;
-        private const int POLL_INTERVAL_MS = 50;
 
         private readonly SkyboxSettingsAsset skyboxSettings;
 
@@ -52,34 +50,8 @@ namespace DCL.McpServer.Tools
 
             float timeoutSec = Mathf.Clamp(arguments.GetFloat("timeoutSec", DEFAULT_TIMEOUT_SEC), MIN_TIMEOUT_SEC, MAX_TIMEOUT_SEC);
 
-            float totalMinutes = hour * 60f + minute;
-            float normalized = Mathf.Clamp01(totalMinutes / SkyboxSettingsAsset.TOTAL_MINUTES_IN_DAY);
-
-            skyboxSettings.IsUIControlled = true;
-            skyboxSettings.TargetTimeOfDayNormalized = normalized;
-            skyboxSettings.UIOverrideTimeOfDayNormalized = normalized;
-            skyboxSettings.TimeOfDayNormalized = normalized;
-
-            // Something else (e.g. a day-cycle/global-time state) can re-touch TimeOfDayNormalized or
-            // TargetTimeOfDayNormalized on a later frame and reopen an interpolation away from what we
-            // just set -- poll the live value instead of trusting the assignment above to stick, and
-            // re-assert it each time it's found to have drifted.
-            var settled = false;
-            float deadline = UnityEngine.Time.realtimeSinceStartup + timeoutSec;
-
-            while (UnityEngine.Time.realtimeSinceStartup < deadline)
-            {
-                if (Mathf.Abs(skyboxSettings.TimeOfDayNormalized - normalized) <= SETTLE_EPSILON)
-                {
-                    settled = true;
-                    break;
-                }
-
-                skyboxSettings.TargetTimeOfDayNormalized = normalized;
-                skyboxSettings.TimeOfDayNormalized = normalized;
-
-                await UniTask.Delay(POLL_INTERVAL_MS, cancellationToken: ct);
-            }
+            float normalized = SkyboxTimeControl.Normalize(hour, minute);
+            bool settled = await SkyboxTimeControl.SetAndWaitAsync(skyboxSettings, normalized, timeoutSec, ct);
 
             var result = new JObject
             {

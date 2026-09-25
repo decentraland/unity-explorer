@@ -58,7 +58,21 @@ namespace DCL.McpServer.Core
             });
 
         public static McpToolResult Image(byte[] imageBytes, string mimeType, string caption) =>
-            new (new JObject
+            new (ImagePayload(imageBytes, mimeType, caption));
+
+        /// <summary>
+        ///     An image result that also carries <paramref name="structured" /> as structuredContent, with its indented
+        ///     JSON as the caption so clients without structured support still read the capture metadata.
+        /// </summary>
+        public static McpToolResult ImageWithStructured(byte[] imageBytes, string mimeType, JObject structured)
+        {
+            JObject payload = ImagePayload(imageBytes, mimeType, structured.ToString(Formatting.Indented));
+            payload["structuredContent"] = structured;
+            return new McpToolResult(payload);
+        }
+
+        private static JObject ImagePayload(byte[] imageBytes, string mimeType, string caption) =>
+            new ()
             {
                 ["content"] = new JArray
                 {
@@ -70,7 +84,7 @@ namespace DCL.McpServer.Core
                     },
                     TextItem(caption),
                 },
-            });
+            };
 
         private static JObject TextItem(string text) =>
             new ()

@@ -898,7 +898,8 @@ namespace Global.Dynamic
                     coroutineRunner,
                     globalWorld,
                     localSceneDevelopment,
-                    staticContainer.StaticSettings.SkyboxSettings));
+                    staticContainer.StaticSettings.SkyboxSettings,
+                    staticContainer.RealmData));
 
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.LocalSceneDevelopment) || FeaturesRegistry.Instance.IsEnabled(FeatureId.SelfPreviewBuilderCollections))
                 globalPlugins.Add(new GlobalGLTFLoadingPlugin(staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, wearableContainer.BuilderContentUrl.Value, localSceneDevelopment, staticContainer.ComponentsContainer.ComponentPoolsRegistry.RootContainerTransform()));

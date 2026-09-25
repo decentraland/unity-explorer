@@ -74,6 +74,10 @@ namespace ECS
         public bool IsParcelInsideBoundaries(int x, int y) =>
             !IsEmpty && x >= minX && x <= maxX && y >= minY && y <= maxY;
 
+        /// <summary>True for a parcel the manifest knows has no scene; false when unknown (no manifest) or occupied.</summary>
+        public bool IsParcelKnownEmpty(int x, int y) =>
+            !IsEmpty && !occupiedParcels.Contains(new int2(x, y));
+
         private static bool IsNullOrEmpty(string[]? a) => a == null || a.Length == 0;
 
         public NativeHashSet<int2> GetOccupiedParcels() => occupiedParcels;

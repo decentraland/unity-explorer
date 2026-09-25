@@ -40,7 +40,13 @@ namespace DCL.McpServer.Tools
         public override UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
         {
             bool hidden = arguments.GetBool("hidden", true);
+            SetHidden(world, playerEntity, hidden);
+            return UniTask.FromResult(McpToolResult.Json(new JObject { ["hidden"] = hidden }));
+        }
 
+        /// <summary>Main thread only. Toggles the MapCapture hide reason without disturbing the other reasons.</summary>
+        internal static void SetHidden(World world, Entity playerEntity, bool hidden)
+        {
             ref HiddenPlayerComponent attached = ref world.TryGetRef<HiddenPlayerComponent>(playerEntity, out bool isAttached);
 
             if (hidden)
@@ -57,8 +63,6 @@ namespace DCL.McpServer.Tools
                 if (attached.Reason == 0)
                     world.TryRemove<HiddenPlayerComponent>(playerEntity);
             }
-
-            return UniTask.FromResult(McpToolResult.Json(new JObject { ["hidden"] = hidden }));
         }
     }
 }
