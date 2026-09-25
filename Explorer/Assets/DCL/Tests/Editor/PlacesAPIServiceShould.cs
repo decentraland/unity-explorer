@@ -1,9 +1,11 @@
 using Cysharp.Threading.Tasks;
 using DCL.PlacesAPIService;
+using DCL.Prefs;
 using NSubstitute;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -22,6 +24,9 @@ namespace DCL.Tests.Editor
         [SetUp]
         public async Task SetUp()
         {
+            // The service constructor reads the recently visited places from the prefs, which nothing initializes in edit mode
+            SetPrefs(new InMemoryDCLPlayerPrefs());
+
             place = new PlacesData.PlaceInfo(PARCEL) { id = PLACE_ID };
 
             client = Substitute.For<IPlacesAPIClient>();
@@ -35,6 +40,13 @@ namespace DCL.Tests.Editor
 
             // Warms the cache so the rating has an instance to land on
             await service.GetPlaceAsync(PARCEL, CancellationToken.None);
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            service.Dispose();
+            SetPrefs(null);
         }
 
         [Test]
@@ -81,6 +93,12 @@ namespace DCL.Tests.Editor
 
             Assert.That(place.user_like, Is.False);
             Assert.That(place.user_dislike, Is.True);
+        }
+
+        private static void SetPrefs(IDCLPrefs? prefs)
+        {
+            FieldInfo field = typeof(DCLPlayerPrefs).GetField("dclPrefs", BindingFlags.NonPublic | BindingFlags.Static)!;
+            field.SetValue(null, prefs);
         }
     }
 }
