@@ -3,7 +3,7 @@ using JetBrains.Annotations;
 using Loading;
 using UnityEngine;
 
-public class EmoteAnimationController : MonoBehaviour
+public partial class EmoteAnimationController : MonoBehaviour
 {
     // Public because AvatarLoader samples the same clip to build the item view's blended pose, and a
     // second literal would let the two drift apart silently.
