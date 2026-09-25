@@ -43,6 +43,12 @@ namespace DCL.Backpack
         public RectTransform[] CompactShiftedRects { get; private set; }
 
         /// <summary>
+        ///     Rects spanning the item info column as well as the grid: the compact layout takes the column off them too.
+        /// </summary>
+        [field: SerializeField]
+        public RectTransform[] CompactTrimmedRects { get; private set; }
+
+        /// <summary>
         ///     Outfits row, one fixed width strip that cannot reflow into the trimmed content.
         /// </summary>
         [field: SerializeField]

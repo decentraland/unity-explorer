@@ -40,6 +40,12 @@ namespace DCL.Backpack
     {
         private const float COMPACT_HOST_MARGIN = 40f;
 
+        /// <summary>
+        ///     Gap the trimmed rects keep off the content panel's right border. Their contents are centred, so they move left
+        ///     by half of it.
+        /// </summary>
+        private const float COMPACT_TRIMMED_RIGHT_MARGIN = 20f;
+
         private readonly BackpackView view;
         private readonly ISelfProfile selfProfile;
         private readonly IWeb3IdentityCache web3IdentityCache;
@@ -61,6 +67,7 @@ namespace DCL.Backpack
         private readonly IRealmData realmData;
         private readonly RectSnapshot contentFull;
         private readonly Vector2[] shiftedFullPositions;
+        private readonly RectSnapshot[] trimmedFull;
         private readonly RectSnapshot previewFull;
         private readonly RectSnapshot previewImageFull;
         private readonly RectSnapshot searchBarFull;
@@ -128,6 +135,11 @@ namespace DCL.Backpack
 
             for (var i = 0; i < view.CompactShiftedRects.Length; i++)
                 shiftedFullPositions[i] = view.CompactShiftedRects[i].anchoredPosition;
+
+            trimmedFull = new RectSnapshot[view.CompactTrimmedRects.Length];
+
+            for (var i = 0; i < view.CompactTrimmedRects.Length; i++)
+                trimmedFull[i] = new RectSnapshot(view.CompactTrimmedRects[i]);
 
             previewFull = new RectSnapshot((RectTransform)view.CharacterPreviewView.transform);
             previewImageFull = new RectSnapshot(view.CharacterPreviewView.RawImage.rectTransform);
@@ -426,9 +438,11 @@ namespace DCL.Backpack
         /// <summary>
         ///     Trims the item info column off the content panel and pins what is left to the right border of the host, so every
         ///     pixel nothing else claims goes to the avatar. Everything centred on the panel is pushed back by half of what was
-        ///     trimmed to hold its place in it. The outfits row is a single fixed width strip and cannot reflow into what is
-        ///     left, so it is scaled down by the same ratio instead. Every width comes from the authored values snapshotted at
-        ///     construction, so neither an unlaid panel nor a previous compact pass can skew it.
+        ///     trimmed to hold its place in it. Rects that span the item info column themselves lose the same width instead:
+        ///     centred, that keeps their left edge and re-centres their contents on the grid. The outfits row is a single
+        ///     fixed width strip and cannot reflow into what is left, so it is scaled down by the same ratio instead. Every
+        ///     width comes from the authored values snapshotted at construction, so neither an unlaid panel nor a previous
+        ///     compact pass can skew it.
         /// </summary>
         private void SetCompactLayout(bool compact)
         {
@@ -450,6 +464,18 @@ namespace DCL.Backpack
 
             for (var i = 0; i < view.CompactShiftedRects.Length; i++)
                 view.CompactShiftedRects[i].anchoredPosition = shiftedFullPositions[i] + new Vector2(trim / 2f, 0f);
+
+            for (var i = 0; i < view.CompactTrimmedRects.Length; i++)
+            {
+                if (!compact)
+                {
+                    trimmedFull[i].ApplyTo(view.CompactTrimmedRects[i]);
+                    continue;
+                }
+
+                view.CompactTrimmedRects[i].sizeDelta = trimmedFull[i].SizeDelta - new Vector2(trim + COMPACT_TRIMMED_RIGHT_MARGIN, 0f);
+                view.CompactTrimmedRects[i].anchoredPosition = trimmedFull[i].AnchoredPosition - new Vector2(COMPACT_TRIMMED_RIGHT_MARGIN / 2f, 0f);
+            }
 
             float scale = contentWidth / contentFull.SizeDelta.x;
             view.OutfitsRect.localScale = new Vector3(scale, scale, 1f);
