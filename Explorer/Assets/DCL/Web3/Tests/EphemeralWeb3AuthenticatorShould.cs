@@ -88,13 +88,13 @@ namespace DCL.Web3.Tests
 
             // Act
             using var otherSession = new EphemeralWeb3Authenticator(new Web3AccountFactory());
-            IWeb3Identity second = otherSession.LoginAsync(LoginPayload.ForGuestFlow(), CancellationToken.None).GetAwaiter().GetResult();
+            IWeb3Identity second = otherSession.LoginAsync(LoginPayload.ForEphemeralGuestFlow(), CancellationToken.None).GetAwaiter().GetResult();
 
             // Assert
             Assert.That(second.Address, Is.Not.EqualTo(first.Address));
         }
 
         private IWeb3Identity Login() =>
-            authenticator.LoginAsync(LoginPayload.ForGuestFlow(), CancellationToken.None).GetAwaiter().GetResult();
+            authenticator.LoginAsync(LoginPayload.ForEphemeralGuestFlow(), CancellationToken.None).GetAwaiter().GetResult();
     }
 }
