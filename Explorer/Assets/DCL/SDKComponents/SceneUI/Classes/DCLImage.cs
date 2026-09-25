@@ -250,13 +250,10 @@ namespace DCL.SDKComponents.SceneUI.Classes
 
             MeshWriteData? mwd = mgc.Allocate(VERTICES.Length, INDICES.Length, textureToDraw);
 
-            // uv Rect [0;1] that was assigned by the Dynamic atlas by UI Toolkit
-            var uvRegion = mwd.uvRegion;
-
-            VERTICES[0].uv = (uvs.BottomLeft * uvRegion.size) + uvRegion.min;
-            VERTICES[1].uv = (uvs.TopLeft * uvRegion.size) + uvRegion.min;
-            VERTICES[2].uv = (uvs.TopRight * uvRegion.size) + uvRegion.min;
-            VERTICES[3].uv = (uvs.BottomRight * uvRegion.size) + uvRegion.min;
+            VERTICES[0].uv = uvs.BottomLeft;
+            VERTICES[1].uv = uvs.TopLeft;
+            VERTICES[2].uv = uvs.TopRight;
+            VERTICES[3].uv = uvs.BottomRight;
 
             ApplyVerticesTint();
 
@@ -291,17 +288,14 @@ namespace DCL.SDKComponents.SceneUI.Classes
 
             MeshWriteData? mwd = mgc.Allocate(VERTICES.Length, INDICES.Length, textureToDraw);
 
-            // uv Rect [0;1] that was assigned by the Dynamic atlas by UI Toolkit
-            var uvRegion = mwd.uvRegion;
-
             // the texture should be cut off if it exceeds the parent rect
             float uvsDisplacementX = (1 - (width / targetTextureWidth)) / 2f;
             float uvsDisplacementY = (1 - (height / targetTextureHeight)) / 2f;
 
-            VERTICES[0].uv = (new Vector2(uvsDisplacementX, uvsDisplacementY) * uvRegion.size) + uvRegion.min;
-            VERTICES[1].uv = (new Vector2(uvsDisplacementX, 1 - uvsDisplacementY) * uvRegion.size) + uvRegion.min;
-            VERTICES[2].uv = (new Vector2(1 - uvsDisplacementX, 1 - uvsDisplacementY) * uvRegion.size) + uvRegion.min;
-            VERTICES[3].uv = (new Vector2(1 - uvsDisplacementX, uvsDisplacementY) * uvRegion.size) + uvRegion.min;
+            VERTICES[0].uv = new Vector2(uvsDisplacementX, uvsDisplacementY);
+            VERTICES[1].uv = new Vector2(uvsDisplacementX, 1 - uvsDisplacementY);
+            VERTICES[2].uv = new Vector2(1 - uvsDisplacementX, 1 - uvsDisplacementY);
+            VERTICES[3].uv = new Vector2(1 - uvsDisplacementX, uvsDisplacementY);
 
             ApplyVerticesTint();
 

@@ -1,10 +1,12 @@
 using Arch.Core;
 using CRDT;
 using DCL.ECSComponents;
+using DCL.Input;
 using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Defaults;
 using DCL.SDKComponents.SceneUI.Utils;
 using Decentraland.Common;
+using NSubstitute;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -16,9 +18,9 @@ namespace DCL.SDKComponents.SceneUI.Tests
 {
     public class UiElementUtilsShould
     {
-        private World world;
+        private World world = null!;
         private Entity entity;
-        private VisualElement visualElement;
+        private VisualElement visualElement = null!;
 
         [SetUp]
         public void SetUp()
@@ -31,7 +33,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
         [TearDown]
         public void TearDown()
         {
-            world?.Dispose();
+            world.Dispose();
         }
 
         // --- ApplyDefaultUiTransformValues tests ---
@@ -202,7 +204,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
 
             // Assert
             Assert.IsNotNull(component.InnerScrollView);
-            Assert.AreSame(component.InnerScrollView.contentContainer, component.ContentContainer);
+            Assert.AreSame(component.InnerScrollView!.contentContainer, component.ContentContainer);
             Assert.AreEqual(ScrollerVisibility.AlwaysVisible, component.InnerScrollView.horizontalScrollerVisibility);
             Assert.AreEqual(ScrollerVisibility.AlwaysVisible, component.InnerScrollView.verticalScrollerVisibility);
         }
@@ -252,7 +254,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
             Assert.IsNotNull(component.InnerScrollView);
             Assert.AreEqual(1, component.Transform.childCount);
             Assert.AreSame(component.InnerScrollView, component.Transform[0]);
-            var content = component.InnerScrollView.contentContainer;
+            var content = component.InnerScrollView!.contentContainer;
             Assert.AreEqual(3, content.childCount);
             Assert.AreSame(child1, content[0]);
             Assert.AreSame(child2, content[1]);
@@ -273,7 +275,8 @@ namespace DCL.SDKComponents.SceneUI.Tests
             var child2 = new VisualElement();
             component.ContentContainer.Add(child1);
             component.ContentContainer.Add(child2);
-            Assert.AreEqual(2, component.InnerScrollView.contentContainer.childCount);
+            Assert.IsNotNull(component.InnerScrollView);
+            Assert.AreEqual(2, component.InnerScrollView!.contentContainer.childCount);
 
             pbUiTransform.Overflow = YGOverflow.YgoVisible;
 
@@ -305,7 +308,8 @@ namespace DCL.SDKComponents.SceneUI.Tests
             };
             UiElementUtils.SetupTransformVisualElement(component.Transform, ref pbUiTransform);
             UiElementUtils.EnsureScrollMode(component, in pbUiTransform);
-            var content = component.InnerScrollView.contentContainer;
+            Assert.IsNotNull(component.InnerScrollView);
+            var content = component.InnerScrollView!.contentContainer;
             Assert.AreEqual(FlexDirection.Column, content.style.flexDirection.value);
             Assert.AreEqual(Justify.FlexStart, content.style.justifyContent.value);
             Assert.AreEqual(Align.Stretch, content.style.alignItems.value);
@@ -375,10 +379,10 @@ namespace DCL.SDKComponents.SceneUI.Tests
             Assert.AreEqual(StyleKeyword.Undefined, visualElement.style.borderTopColor.keyword);
         }
 
-        // --- SetupUIDropdownComponent selectedIndex tests ---
+        // --- SetupUiDropdownComponent selectedIndex tests ---
 
         [Test]
-        public void SetupUIDropdownComponentUpdatesSelectedIndex()
+        public void SetupUiDropdownComponentUpdatesSelectedIndex()
         {
             // Arrange
             var dropdown = new UIDropdownComponent();
@@ -391,7 +395,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
             var fonts = new[] { new StyleFontDefinition() };
 
             // Act
-            UiElementUtils.SetupUIDropdownComponent(ref dropdown, in model, in fonts);
+            UiElementUtils.SetupUiDropdownComponent(ref dropdown, in model, in fonts);
 
             // Assert
             Assert.AreEqual(1, dropdown.LastIndexSetByScene);
@@ -401,7 +405,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
         }
 
         [Test]
-        public void SetupUIDropdownComponentDoesNotReapplyWhenIndexUnchanged()
+        public void SetupUiDropdownComponentDoesNotReapplyWhenIndexUnchanged()
         {
             // Arrange
             var dropdown = new UIDropdownComponent();
@@ -413,14 +417,14 @@ namespace DCL.SDKComponents.SceneUI.Tests
             var fonts = new[] { new StyleFontDefinition() };
 
             // First call sets the index
-            UiElementUtils.SetupUIDropdownComponent(ref dropdown, in model, in fonts);
+            UiElementUtils.SetupUiDropdownComponent(ref dropdown, in model, in fonts);
             Assert.AreEqual(0, dropdown.LastIndexSetByScene);
 
             // Manually change the value to simulate user interaction
             dropdown.DropdownField.SetValueWithoutNotify("Option2");
 
             // Act - second call with same selectedIndex should not override user selection
-            UiElementUtils.SetupUIDropdownComponent(ref dropdown, in model, in fonts);
+            UiElementUtils.SetupUiDropdownComponent(ref dropdown, in model, in fonts);
 
             // Assert - value should remain as user set it because selectedIndex did not change
             Assert.AreEqual("Option2", dropdown.DropdownField.value);
@@ -429,7 +433,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
         }
 
         [Test]
-        public void SetupUIDropdownComponentUsesEmptyLabelWhenIndexOutOfRange()
+        public void SetupUiDropdownComponentUsesEmptyLabelWhenIndexOutOfRange()
         {
             // Arrange
             var dropdown = new UIDropdownComponent();
@@ -440,7 +444,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
             var fonts = new[] { new StyleFontDefinition() };
 
             // Act
-            UiElementUtils.SetupUIDropdownComponent(ref dropdown, in model, in fonts);
+            UiElementUtils.SetupUiDropdownComponent(ref dropdown, in model, in fonts);
 
             // Assert - should fall back to EmptyLabel
             Assert.AreEqual("Select...", dropdown.DropdownField.value);
@@ -448,21 +452,21 @@ namespace DCL.SDKComponents.SceneUI.Tests
             dropdown.Dispose();
         }
 
-        // --- SetupUIInputComponent tests ---
+        // --- SetupUiInputComponent tests ---
 
         [Test]
         [TestCase(true)]
         [TestCase(false)]
-        public void SetupUIInputComponentDisabledState(bool disabled)
+        public void SetupUiInputComponentDisabledState(bool disabled)
         {
             // Arrange
             var input = new UIInputComponent();
-            input.Initialize(NSubstitute.Substitute.For<DCL.Input.IInputBlock>(), "TestInput", "", "", Color.gray);
+            input.Initialize(Substitute.For<IInputBlock>(), "TestInput", "", "", Color.gray);
             var model = new PBUiInput { Disabled = disabled };
             var fonts = new[] { new StyleFontDefinition() };
 
             // Act
-            UiElementUtils.SetupUIInputComponent(ref input, in model, in fonts);
+            UiElementUtils.SetupUiInputComponent(ref input, in model, in fonts);
 
             // Assert
             Assert.AreEqual(disabled ? PickingMode.Ignore : PickingMode.Position, input.TextField.pickingMode);
@@ -472,16 +476,16 @@ namespace DCL.SDKComponents.SceneUI.Tests
         }
 
         [Test]
-        public void SetupUIInputComponentTextAlignOnTextElement()
+        public void SetupUiInputComponentTextAlignOnTextElement()
         {
             // Arrange
             var input = new UIInputComponent();
-            input.Initialize(NSubstitute.Substitute.For<DCL.Input.IInputBlock>(), "TestInput", "", "", Color.gray);
+            input.Initialize(Substitute.For<IInputBlock>(), "TestInput", "", "", Color.gray);
             var model = new PBUiInput { TextAlign = TextAlignMode.TamTopLeft };
             var fonts = new[] { new StyleFontDefinition() };
 
             // Act
-            UiElementUtils.SetupUIInputComponent(ref input, in model, in fonts);
+            UiElementUtils.SetupUiInputComponent(ref input, in model, in fonts);
 
             // Assert - textAlign should be applied to TextElement, not TextField
             Assert.AreEqual(model.GetTextAlign(), input.TextElement.style.unityTextAlign.value);
@@ -494,14 +498,10 @@ namespace DCL.SDKComponents.SceneUI.Tests
         private const float BORDER_DARKEN = 0.3f;
         private const float BACKGROUND_DARKEN = 0.15f;
 
-        private HoverStyleBehaviourData CreateHoverData(VisualElement hoverTarget = null, VisualElement uiTransform = null)
-        {
-            hoverTarget ??= visualElement;
-            uiTransform ??= visualElement;
-
-            return new HoverStyleBehaviourData(
-                hoverTarget,
-                uiTransform,
+        private HoverStyleBehaviourData CreateHoverData() =>
+            new (
+                visualElement,
+                visualElement,
                 world,
                 entity,
                 BORDER_DARKEN,
@@ -510,7 +510,6 @@ namespace DCL.SDKComponents.SceneUI.Tests
                 Color.gray,
                 Color.gray,
                 Color.gray);
-        }
 
         [Test]
         public void HoverEnter_WithTexturedBackground_DarkenImageTintColor()
