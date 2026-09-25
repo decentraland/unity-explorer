@@ -231,6 +231,9 @@ namespace DCL.CharacterPreview
             currentRenderTexture.height = size.y;
             currentRenderTexture.antiAliasing = AntiAliasingFor(size);
             currentRenderTexture.Create();
+
+            // The camera only reads the aspect off its target when the target is assigned, so a resize leaves it rendering with the old one
+            PreviewCamera?.ResetAspect();
         }
 
         private void ReleaseRenderTexture()
