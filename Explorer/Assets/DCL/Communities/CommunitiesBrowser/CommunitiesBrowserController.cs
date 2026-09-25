@@ -912,6 +912,12 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void OnCallUser(ICommunityMemberData profile)
         {
+            if (web3IdentityCache.IsGuest())
+            {
+                mvcManager.ShowAndForget(UpgradeGuestAccountPopupController.IssueCommand(new UpgradeGuestAccountPopupController.Params(GuestUpgradeTrigger.Voice)));
+                return;
+            }
+
             ChatOpener.Instance.CloseAllViewsAndFocusChat();
             orchestrator.StartPrivateCallWithUserId(profile.Address);
         }

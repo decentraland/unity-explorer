@@ -18,7 +18,6 @@ using DCL.Multiplayer.Connectivity;
 using DCL.Multiplayer.Profiles.Poses;
 using DCL.Passport;
 using DCL.Profiles;
-using DCL.UI.Profiles.Helpers;
 using DCL.Profiles.Self;
 using DCL.UI.ProfileNames;
 using DCL.VoiceChat;
@@ -61,7 +60,6 @@ namespace DCL.PluginSystem.Global
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly INftNamesProvider nftNamesProvider;
         private readonly ProfileChangesBus profileChangesBus;
-        private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
         private readonly IThumbnailProvider thumbnailProvider;
         private readonly GalleryEventBus galleryEventBus;
@@ -98,7 +96,6 @@ namespace DCL.PluginSystem.Global
             INftNamesProvider nftNamesProvider,
             ProfileChangesBus profileChangesBus,
             bool isCommunitiesFeatureEnabled,
-            ProfileRepositoryWrapper profileDataProvider,
             IVoiceChatOrchestrator voiceChatOrchestrator,
             GalleryEventBus galleryEventBus,
             ISystemClipboard systemClipboard,
@@ -131,7 +128,6 @@ namespace DCL.PluginSystem.Global
             this.web3IdentityCache = web3IdentityCache;
             this.nftNamesProvider = nftNamesProvider;
             this.profileChangesBus = profileChangesBus;
-            this.profileRepositoryWrapper = profileDataProvider;
             this.voiceChatOrchestrator = voiceChatOrchestrator;
             this.thumbnailProvider = thumbnailProvider;
             this.galleryEventBus = galleryEventBus;
@@ -193,7 +189,6 @@ namespace DCL.PluginSystem.Global
                 passportSettings.ThumbnailHeight,
                 passportSettings.ThumbnailWidth,
                 isCommunitiesFeatureEnabled,
-                profileRepositoryWrapper,
                 voiceChatOrchestrator,
                 passport3DPreviewCamera,
                 galleryEventBus,
