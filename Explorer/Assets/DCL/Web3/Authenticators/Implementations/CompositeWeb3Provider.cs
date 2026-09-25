@@ -159,7 +159,9 @@ namespace DCL.Web3.Authenticators
             }
 
             // An account generated on the device has no session to restore: the stored identity is the session
-            if (GuestLoginIsEnabled() && identityCache.Identity?.Method == LoginMethod.EPHEMERAL_GUEST)
+            if (GuestLoginIsEnabled()
+                && FeaturesRegistry.Instance.IsEnabled(FeatureId.EphemeralGuestAccount)
+                && identityCache.Identity?.Method == LoginMethod.EPHEMERAL_GUEST)
             {
                 CurrentProvider = AuthProvider.Ephemeral;
                 return true;
