@@ -1,4 +1,5 @@
 ﻿using DCL.AssetsProvision;
+using DCL.Diagnostics;
 using System;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -15,7 +16,7 @@ namespace DCL.SkyBox
 
         [SerializeField] private float fullDayCycleInSeconds = 120 * 60;
         [SerializeField] private float transitionSpeed = 1f;
-        [SerializeField] private float[] refreshIntervalByQuality;
+        [SerializeField] private float[] refreshIntervalByQuality = null!;
 
         public float RefreshInterval => refreshIntervalByQuality[refreshIntervalId];
 
@@ -38,7 +39,7 @@ namespace DCL.SkyBox
 
         public bool IsUIControlled { get; set; }
         public float UIOverrideTimeOfDayNormalized { get; set; }
-        public Vector2Int? CurrentSDKControlledScene { get; set; }
+        public SceneShortInfo? CurrentSDKControlledScene { get; set; }
         public bool IsDayCycleEnabled
         {
             get => isDayCycleEnabled;
@@ -99,6 +100,10 @@ namespace DCL.SkyBox
         {
             refreshIntervalId = (uint)Math.Min(qualityPresetId, refreshIntervalByQuality.Length - 1);
         }
+
+        // Compares the full scene identity: base parcels are not unique, portable experiences usually share (0,0) with world scenes
+        public bool IsSDKControlledBy(SceneShortInfo scene) =>
+            CurrentSDKControlledScene is { } owner && owner.Equals(scene);
 
         public void Reset()
         {
