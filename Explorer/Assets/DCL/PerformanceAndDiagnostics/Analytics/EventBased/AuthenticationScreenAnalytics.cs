@@ -43,6 +43,9 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
                 // Triggered WHEN the entry screen is shown
                 case AuthStatus.GuestOrSignUpScreen:
                     analytics.Track(Authentication.ENTRY_SCREEN);
+
+                    // Coming back here abandons the upgrade the popup sent the user away to complete
+                    pendingGuestUpgrade.Clear();
                     break;
 
                 // Triggered WHEN login screen is shown
@@ -133,7 +136,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
             // can sit in the buffer past the screen disposal and never make it to Segment.
             analytics.Track(Authentication.PROFILE_FINALIZED, isInstant: true);
 
-            // An account created right after the upgrade popup sent the user here is the end of that funnel
+            // An account created after the upgrade popup sent the user here is the end of that funnel
             if (pendingGuestUpgrade.TryConsume(out GuestUpgradeTrigger trigger))
                 analytics.Track(Authentication.GUEST_UPGRADE_COMPLETED, new JObject { { "trigger", trigger.ToString() } }, isInstant: true);
         }

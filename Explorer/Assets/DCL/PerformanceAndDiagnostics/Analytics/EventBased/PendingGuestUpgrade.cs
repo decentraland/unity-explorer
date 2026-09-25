@@ -14,6 +14,9 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
         public void Set(GuestUpgradeTrigger value) =>
             trigger = value;
 
+        public void Clear() =>
+            trigger = null;
+
         public bool TryConsume(out GuestUpgradeTrigger value)
         {
             value = trigger ?? default(GuestUpgradeTrigger);
