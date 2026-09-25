@@ -269,14 +269,36 @@ jobs:
               '[.artifacts[] | select(.expired==false and .name==$name)] | max_by(.created_at) | .id // empty' \
               <<< "$RUN_ARTIFACTS"
           }
+          newest_artifact_by_prefix() {
+            jq -r --arg pfx "$1" \
+              '[.artifacts[] | select(.expired==false and (.name | startswith($pfx)))] | max_by(.created_at) | .id // empty' \
+              <<< "$RUN_ARTIFACTS"
+          }
+          newest_artifact_name_by_prefix() {
+            jq -r --arg pfx "$1" \
+              '[.artifacts[] | select(.expired==false and (.name | startswith($pfx)))] | max_by(.created_at) | .name // empty' \
+              <<< "$RUN_ARTIFACTS"
+          }
 
-          WINDOWS_ARTIFACT_ID=$(newest_artifact_id "Decentraland_windows64")
-          echo "Windows Artifact ID: $WINDOWS_ARTIFACT_ID"
+          WINDOWS_ARTIFACT_ID=$(newest_artifact_by_prefix "Decentraland-w64")
+          WINDOWS_ARTIFACT_NAME=$(newest_artifact_name_by_prefix "Decentraland-w64")
+          if [ -z "$WINDOWS_ARTIFACT_ID" ]; then
+            WINDOWS_ARTIFACT_ID=$(newest_artifact_id "Decentraland_windows64")
+            WINDOWS_ARTIFACT_NAME="Decentraland_windows64"
+          fi
+          echo "Windows Artifact ID: $WINDOWS_ARTIFACT_ID (name: $WINDOWS_ARTIFACT_NAME)"
           echo "WINDOWS_ARTIFACT_ID=$WINDOWS_ARTIFACT_ID" >> "$GITHUB_ENV"
+          echo "WINDOWS_ARTIFACT_NAME=$WINDOWS_ARTIFACT_NAME" >> "$GITHUB_ENV"
 
-          MAC_ARTIFACT_ID=$(newest_artifact_id "Decentraland_macos")
-          echo "Mac Artifact ID: $MAC_ARTIFACT_ID"
+          MAC_ARTIFACT_ID=$(newest_artifact_by_prefix "Decentraland-mac")
+          MAC_ARTIFACT_NAME=$(newest_artifact_name_by_prefix "Decentraland-mac")
+          if [ -z "$MAC_ARTIFACT_ID" ]; then
+            MAC_ARTIFACT_ID=$(newest_artifact_id "Decentraland_macos")
+            MAC_ARTIFACT_NAME="Decentraland_macos"
+          fi
+          echo "Mac Artifact ID: $MAC_ARTIFACT_ID (name: $MAC_ARTIFACT_NAME)"
           echo "MAC_ARTIFACT_ID=$MAC_ARTIFACT_ID" >> "$GITHUB_ENV"
+          echo "MAC_ARTIFACT_NAME=$MAC_ARTIFACT_NAME" >> "$GITHUB_ENV"
 
           ORIGINAL_EVENT=$(jq -r '.event' <<< "$WORKFLOW_RUN_EVENT_OBJ")
           echo "Original Event: $ORIGINAL_EVENT"
@@ -375,7 +397,9 @@ jobs:
           # here so the coupling between the two steps is visible without tracing it.
           SUITE_ID: ${{ env.SUITE_ID }}
           WINDOWS_ARTIFACT_ID: ${{ env.WINDOWS_ARTIFACT_ID }}
+          WINDOWS_ARTIFACT_NAME: ${{ env.WINDOWS_ARTIFACT_NAME }}
           MAC_ARTIFACT_ID: ${{ env.MAC_ARTIFACT_ID }}
+          MAC_ARTIFACT_NAME: ${{ env.MAC_ARTIFACT_NAME }}
           GITHUB_SERVER_URL: ${{ github.server_url }}
           GITHUB_REPOSITORY: ${{ github.repository }}
         run: |
@@ -393,8 +417,8 @@ jobs:
           DELIM="PLATFORM_ROWS_EOF_${RANDOM}${RANDOM}_$$"
           {
             echo "PLATFORM_ROWS<<$DELIM"
-            compose_row "Windows" "$WINDOWS_CELL" "${WINDOWS_ARTIFACT_ID:-}" "Decentraland_windows64.zip"
-            compose_row "Mac" "$MAC_CELL" "${MAC_ARTIFACT_ID:-}" "Decentraland_macos.zip"
+            compose_row "Windows" "$WINDOWS_CELL" "${WINDOWS_ARTIFACT_ID:-}" "${WINDOWS_ARTIFACT_NAME:-Decentraland_windows64}.zip"
+            compose_row "Mac" "$MAC_CELL" "${MAC_ARTIFACT_ID:-}" "${MAC_ARTIFACT_NAME:-Decentraland_macos}.zip"
             echo "$DELIM"
           } >> "$GITHUB_ENV"
 
@@ -436,9 +460,9 @@ jobs:
             {
               "run_name": ${{ toJSON(github.event.workflow_run.display_title) }},
               "pr_number": "${{ needs.pre-validation.outputs.pr-number }}",
-              "win_change_build_url": ${{ toJSON(format('{0}/{1}/Decentraland_windows64.zip', vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL, env.ARTIFACT_S3_DESTINATION_PATH)) }},
+              "win_change_build_url": ${{ toJSON(format('{0}/{1}/{2}.zip', vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL, env.ARTIFACT_S3_DESTINATION_PATH, env.WINDOWS_ARTIFACT_NAME)) }},
               "win_base_build_url": "${{ vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL }}/@dcl/unity-explorer/releases/${{ env.RELEASE_TAG }}/Decentraland_windows64.zip",
-              "mac_change_build_url": ${{ toJSON(format('{0}/{1}/Decentraland_macos.zip', vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL, env.ARTIFACT_S3_DESTINATION_PATH)) }},
+              "mac_change_build_url": ${{ toJSON(format('{0}/{1}/{2}.zip', vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL, env.ARTIFACT_S3_DESTINATION_PATH, env.MAC_ARTIFACT_NAME)) }},
               "mac_base_build_url": "${{ vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL }}/@dcl/unity-explorer/releases/${{ env.RELEASE_TAG }}/Decentraland_macos.zip"
             }
 
