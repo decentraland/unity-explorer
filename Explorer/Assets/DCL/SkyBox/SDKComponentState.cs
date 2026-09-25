@@ -24,9 +24,8 @@ namespace DCL.SkyBox
 
         // The logic of this behavior is mostly processed at SkyboxTimeHandlerSystem
         public bool Applies() =>
-            skyboxSettings.CurrentSDKControlledScene is { } owner
-            && scenes.CurrentScene.Value is { } currentScene
-            && currentScene.Info.Equals(owner);
+            scenes.CurrentScene.Value is { } currentScene
+            && skyboxSettings.IsSDKControlledBy(currentScene.Info);
 
         public void Enter()
         {

@@ -101,6 +101,10 @@ namespace DCL.SkyBox
             refreshIntervalId = (uint)Math.Min(qualityPresetId, refreshIntervalByQuality.Length - 1);
         }
 
+        // Compares the full scene identity: base parcels are not unique, portable experiences usually share (0,0) with world scenes
+        public bool IsSDKControlledBy(SceneShortInfo scene) =>
+            CurrentSDKControlledScene is { } owner && owner.Equals(scene);
+
         public void Reset()
         {
             TimeOfDayNormalized = GlobalTimeOfDayNormalized;

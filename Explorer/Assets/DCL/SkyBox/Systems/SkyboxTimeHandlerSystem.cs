@@ -6,7 +6,6 @@ using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle;
 using SceneRunner.Scene;
-using System;
 using SceneMetadataTransitionMode = DCL.Ipfs.SceneMetadata.TransitionMode;
 using TransitionMode = DCL.ECSComponents.TransitionMode;
 
@@ -73,8 +72,7 @@ namespace DCL.SDKComponents.SkyboxTime.Systems
 
         private void ResetSDKControlled()
         {
-            // Base parcels are not unique: portable experiences are always current and usually share (0,0) with world scenes
-            if (Nullable.Equals(skyboxSettings.CurrentSDKControlledScene, sceneInfo))
+            if (skyboxSettings.IsSDKControlledBy(sceneInfo))
                 skyboxSettings.CurrentSDKControlledScene = null;
         }
     }
