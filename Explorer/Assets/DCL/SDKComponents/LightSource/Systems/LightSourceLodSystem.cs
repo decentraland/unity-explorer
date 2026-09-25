@@ -4,8 +4,7 @@ using Arch.SystemGroups;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using ECS.Abstract;
-using JetBrains.Annotations;
-using System;
+using ECS.LifeCycle.Components;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -33,6 +32,7 @@ namespace DCL.SDKComponents.LightSource.Systems
         }
 
         [Query]
+        [None(typeof(DeleteEntityIntention))]
         private void SelectLOD(in PBLightSource pbLightSource, ref LightSourceComponent lightSourceComponent)
         {
             if (!LightSourceHelper.IsPBLightSourceActive(pbLightSource, settings.DefaultValues.Active)) return;
