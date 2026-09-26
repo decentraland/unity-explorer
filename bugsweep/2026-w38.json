@@ -8,9 +8,9 @@
   "issues": [
     {
       "number": 10170,
-      "status": "pending",
-      "commit": null,
-      "note": ""
+      "status": "fixed",
+      "commit": "1f9e3766002fde43db3e4dc9ad5d6b7accc1bb07",
+      "note": "discord invite URL updated to discord.gg/n4kzQvgux7"
     },
     {
       "number": 10103,
