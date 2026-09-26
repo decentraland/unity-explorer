@@ -53,7 +53,7 @@ namespace SceneRuntime.Apis.Modules.PortableExperiencesApi
             if (!portableExperiencesController.CanKillPortableExperience(portableExperienceId))
                 return new IPortableExperiencesController.ExitResponse { status = false };
 
-            return portableExperiencesController.UnloadPortableExperienceById(portableExperienceId);
+            return portableExperiencesController.KillPortableExperienceById(portableExperienceId);
         }
 
         private async UniTask<IPortableExperiencesController.ExitResponse> ExitAsync()
