@@ -73,16 +73,29 @@ namespace DCL.SocialService
                 {
                     try
                     {
-                        WebSocketReceiveResult result = await webSocket.ReceiveAsync(receiveBuffer, ct);
+                        int totalBytes = 0;
+                        WebSocketReceiveResult result;
 
-                        if (result.MessageType is WebSocketMessageType.Text or WebSocketMessageType.Binary)
+                        do
                         {
-                            var data = new byte[result.Count];
-                            receiveBuffer.AsSpan(0, result.Count).CopyTo(data);
+                            result = await webSocket.ReceiveAsync(
+                                new Memory<byte>(receiveBuffer, totalBytes, receiveBuffer.Length - totalBytes), ct);
 
-                            // Buffer.BlockCopy(receiveBuffer, 0, data, 0, result.Count);
-                            OnMessageEvent?.Invoke(data);
+                            if (result.MessageType == WebSocketMessageType.Close)
+                                break;
+
+                            totalBytes += result.Count;
+
+                            if (totalBytes >= receiveBuffer.Length && !result.EndOfMessage)
+                            {
+                                ReportHub.LogError(ReportCategory.SOCIAL,
+                                    $"RPC message exceeded receive buffer ({receiveBuffer.Length} bytes), aborting connection");
+                                webSocket.Abort();
+                                OnErrorEvent?.Invoke(new WebSocketException("RPC message too large for receive buffer"));
+                                return;
+                            }
                         }
+                        while (!result.EndOfMessage);
 
                         if (result.MessageType == WebSocketMessageType.Close)
                         {
@@ -91,6 +104,15 @@ namespace DCL.SocialService
 
                             await CloseAsync(ct);
                             break;
+                        }
+
+                        var data = new byte[totalBytes];
+                        receiveBuffer.AsSpan(0, totalBytes).CopyTo(data);
+
+                        try { OnMessageEvent?.Invoke(data); }
+                        catch (Exception ex)
+                        {
+                            ReportHub.LogException(ex, ReportCategory.SOCIAL);
                         }
                     }
                     catch (OperationCanceledException) { break; }
