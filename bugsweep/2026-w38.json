@@ -14,9 +14,9 @@
     },
     {
       "number": 10103,
-      "status": "pending",
-      "commit": null,
-      "note": ""
+      "status": "fixed",
+      "commit": "e36a7af21cd11e3603c28a614f7d48641a7f4173",
+      "note": "WebSocketException constructors now forward message and inner exception to base"
     },
     {
       "number": 10130,
