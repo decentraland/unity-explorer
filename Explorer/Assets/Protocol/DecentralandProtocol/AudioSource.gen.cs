@@ -25,17 +25,19 @@ namespace DCL.ECSComponents {
       byte[] descriptorData = global::System.Convert.FromBase64String(
           string.Concat(
             "Ci5kZWNlbnRyYWxhbmQvc2RrL2NvbXBvbmVudHMvYXVkaW9fc291cmNlLnBy",
-            "b3RvEhtkZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMi7wEKDVBCQXVkaW9T",
+            "b3RvEhtkZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMiswIKDVBCQXVkaW9T",
             "b3VyY2USFAoHcGxheWluZxgBIAEoCEgAiAEBEhMKBnZvbHVtZRgCIAEoAkgB",
             "iAEBEhEKBGxvb3AYAyABKAhIAogBARISCgVwaXRjaBgEIAEoAkgDiAEBEhYK",
             "DmF1ZGlvX2NsaXBfdXJsGAUgASgJEhkKDGN1cnJlbnRfdGltZRgGIAEoAkgE",
-            "iAEBEhMKBmdsb2JhbBgHIAEoCEgFiAEBQgoKCF9wbGF5aW5nQgkKB192b2x1",
-            "bWVCBwoFX2xvb3BCCAoGX3BpdGNoQg8KDV9jdXJyZW50X3RpbWVCCQoHX2ds",
-            "b2JhbEIUqgIRRENMLkVDU0NvbXBvbmVudHNiBnByb3RvMw=="));
+            "iAEBEhMKBmdsb2JhbBgHIAEoCEgFiAEBEiUKGHJlcG9ydF9wbGF5YmFja19w",
+            "b3NpdGlvbhgIIAEoCEgGiAEBQgoKCF9wbGF5aW5nQgkKB192b2x1bWVCBwoF",
+            "X2xvb3BCCAoGX3BpdGNoQg8KDV9jdXJyZW50X3RpbWVCCQoHX2dsb2JhbEIb",
+            "ChlfcmVwb3J0X3BsYXliYWNrX3Bvc2l0aW9uQhSqAhFEQ0wuRUNTQ29tcG9u",
+            "ZW50c2IGcHJvdG8z"));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBAudioSource), global::DCL.ECSComponents.PBAudioSource.Parser, new[]{ "Playing", "Volume", "Loop", "Pitch", "AudioClipUrl", "CurrentTime", "Global" }, new[]{ "Playing", "Volume", "Loop", "Pitch", "CurrentTime", "Global" }, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBAudioSource), global::DCL.ECSComponents.PBAudioSource.Parser, new[]{ "Playing", "Volume", "Loop", "Pitch", "AudioClipUrl", "CurrentTime", "Global", "ReportPlaybackPosition" }, new[]{ "Playing", "Volume", "Loop", "Pitch", "CurrentTime", "Global", "ReportPlaybackPosition" }, null, null, null)
           }));
     }
     #endregion
@@ -104,6 +106,7 @@ namespace DCL.ECSComponents {
       audioClipUrl_ = other.audioClipUrl_;
       currentTime_ = other.currentTime_;
       global_ = other.global_;
+      reportPlaybackPosition_ = other.reportPlaybackPosition_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -308,6 +311,39 @@ namespace DCL.ECSComponents {
       _hasBits0 &= ~32;
     }
 
+    /// <summary>Field number for the "report_playback_position" field.</summary>
+    public const int ReportPlaybackPositionFieldNumber = 8;
+    private readonly static bool ReportPlaybackPositionDefaultValue = false;
+
+    private bool reportPlaybackPosition_;
+    /// <summary>
+    /// Whether the renderer should report this source's playback position in `PBAudioEvent` while it plays
+    /// (default: false). Media state changes are reported either way; this only enables the position reports,
+    /// which a renderer writes far more often. Scenes that align gameplay with the audio they can actually hear
+    /// set it; scenes playing fire-and-forget sounds leave it unset and pay nothing.
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool ReportPlaybackPosition {
+      get { if ((_hasBits0 & 64) != 0) { return reportPlaybackPosition_; } else { return ReportPlaybackPositionDefaultValue; } }
+      set {
+        _hasBits0 |= 64;
+        reportPlaybackPosition_ = value;
+      }
+    }
+    /// <summary>Gets whether the "report_playback_position" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasReportPlaybackPosition {
+      get { return (_hasBits0 & 64) != 0; }
+    }
+    /// <summary>Clears the value of the "report_playback_position" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearReportPlaybackPosition() {
+      _hasBits0 &= ~64;
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -330,6 +366,7 @@ namespace DCL.ECSComponents {
       if (AudioClipUrl != other.AudioClipUrl) return false;
       if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(CurrentTime, other.CurrentTime)) return false;
       if (Global != other.Global) return false;
+      if (ReportPlaybackPosition != other.ReportPlaybackPosition) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -344,6 +381,7 @@ namespace DCL.ECSComponents {
       if (AudioClipUrl.Length != 0) hash ^= AudioClipUrl.GetHashCode();
       if (HasCurrentTime) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(CurrentTime);
       if (HasGlobal) hash ^= Global.GetHashCode();
+      if (HasReportPlaybackPosition) hash ^= ReportPlaybackPosition.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -390,6 +428,10 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(56);
         output.WriteBool(Global);
       }
+      if (HasReportPlaybackPosition) {
+        output.WriteRawTag(64);
+        output.WriteBool(ReportPlaybackPosition);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -428,6 +470,10 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(56);
         output.WriteBool(Global);
       }
+      if (HasReportPlaybackPosition) {
+        output.WriteRawTag(64);
+        output.WriteBool(ReportPlaybackPosition);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -457,6 +503,9 @@ namespace DCL.ECSComponents {
         size += 1 + 4;
       }
       if (HasGlobal) {
+        size += 1 + 1;
+      }
+      if (HasReportPlaybackPosition) {
         size += 1 + 1;
       }
       if (_unknownFields != null) {
@@ -491,6 +540,9 @@ namespace DCL.ECSComponents {
       }
       if (other.HasGlobal) {
         Global = other.Global;
+      }
+      if (other.HasReportPlaybackPosition) {
+        ReportPlaybackPosition = other.ReportPlaybackPosition;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -539,6 +591,10 @@ namespace DCL.ECSComponents {
             Global = input.ReadBool();
             break;
           }
+          case 64: {
+            ReportPlaybackPosition = input.ReadBool();
+            break;
+          }
         }
       }
     #endif
@@ -584,6 +640,10 @@ namespace DCL.ECSComponents {
           }
           case 56: {
             Global = input.ReadBool();
+            break;
+          }
+          case 64: {
+            ReportPlaybackPosition = input.ReadBool();
             break;
           }
         }
