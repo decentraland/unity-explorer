@@ -1,0 +1,6 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <DCL.DebugUtilities.Views.DebugFloatFieldElement style="align-self: stretch;">
+        <ui:FloatField value="4.5644"
+                       style="flex-direction: row; justify-content: flex-start; -unity-text-align: upper-left;"/>
+    </DCL.DebugUtilities.Views.DebugFloatFieldElement>
+</ui:UXML>

@@ -1,0 +1,12 @@
+# UUAV is a vendored standalone UPM package (com.nickkhalow.uuav) that keeps its
+# upstream Unity/C# naming conventions; its AVProCompat layer must mirror AVPro's
+# exact API member names to stay a drop-in facade.
+[*.cs]
+# Package style: PascalCase enum members, UUAV* type names.
+resharper_inconsistent_naming_highlighting = none
+# InspectCode runs without Unity-awareness here and flags Unity event methods
+# (Awake/Update/...) and inspector-only [SerializeField] debug fields as unused.
+resharper_unused_member_local_highlighting = none
+resharper_not_accessed_field_local_highlighting = none
+# Pre-Awake guards on fields initialized in Awake (declared null! per Unity idiom).
+resharper_condition_is_always_true_or_false_according_to_nullable_api_contract_highlighting = none

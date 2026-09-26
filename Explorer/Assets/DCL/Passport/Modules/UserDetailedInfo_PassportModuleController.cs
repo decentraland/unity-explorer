@@ -1,0 +1,163 @@
+using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
+using DCL.Passport.Modals;
+using DCL.Profiles;
+using DCL.Profiles.Self;
+using MVC;
+using System;
+using System.Threading;
+using Utility;
+
+namespace DCL.Passport.Modules
+{
+    public class UserDetailedInfo_PassportModuleController : IPassportModuleController
+    {
+        private readonly UserDetailedInfoPassportModuleView view;
+        private readonly ISelfProfile selfProfile;
+        private readonly PassportErrorsController passportErrorsController;
+        private readonly UserAdditionalFieldsPassportSubModuleController additionalFieldsController;
+        private readonly UserDescription_PassportSubModuleController descriptionController;
+        private readonly UserLinksPassportSubModuleController linksController;
+        private readonly PassportProfileInfoController passportProfileInfoController;
+
+        private Profile currentProfile;
+        private CancellationTokenSource checkEditionAvailabilityCts;
+        private CancellationTokenSource saveInfoCts;
+
+        public UserDetailedInfo_PassportModuleController(
+            UserDetailedInfoPassportModuleView view,
+            IMVCManager mvcManager,
+            ISelfProfile selfProfile,
+            AddLink_PassportModal addLinkModal,
+            PassportErrorsController passportErrorsController,
+            PassportProfileInfoController passportProfileInfoController)
+        {
+            this.view = view;
+            this.selfProfile = selfProfile;
+            this.passportErrorsController = passportErrorsController;
+            this.passportProfileInfoController = passportProfileInfoController;
+
+            additionalFieldsController = new UserAdditionalFieldsPassportSubModuleController(view);
+            descriptionController = new UserDescription_PassportSubModuleController(view, additionalFieldsController);
+            linksController = new UserLinksPassportSubModuleController(view, addLinkModal, mvcManager, passportProfileInfoController);
+
+            view.InfoEditionButton.onClick.AddListener(() => SetInfoSectionAsEditionMode(true));
+            view.CancelInfoButton.onClick.AddListener(() => SetInfoSectionAsEditionMode(false));
+            view.SaveInfoButton.onClick.AddListener(SaveInfoSection);
+        }
+
+        public void Setup(Profile profile)
+        {
+            currentProfile = profile;
+            Clear();
+            additionalFieldsController.Setup(profile);
+            descriptionController.Setup(profile);
+            linksController.Setup(profile);
+            SetInfoSectionAsEditionMode(false);
+            checkEditionAvailabilityCts = checkEditionAvailabilityCts.SafeRestart();
+            CheckForEditionAvailabilityAsync(checkEditionAvailabilityCts.Token).Forget();
+        }
+
+        public void Clear()
+        {
+            checkEditionAvailabilityCts.SafeCancelAndDispose();
+            saveInfoCts.SafeCancelAndDispose();
+            additionalFieldsController.ClearAllAdditionalInfoFields();
+            linksController.ClearAllLinks();
+        }
+
+        public void Dispose()
+        {
+            Clear();
+            descriptionController.Dispose();
+            view.InfoEditionButton.onClick.RemoveAllListeners();
+            view.CancelInfoButton.onClick.RemoveAllListeners();
+            view.SaveInfoButton.onClick.RemoveAllListeners();
+            linksController.Dispose();
+        }
+
+        private async UniTaskVoid CheckForEditionAvailabilityAsync(CancellationToken ct)
+        {
+            try
+            {
+                view.InfoEditionButton.gameObject.SetActive(false);
+                linksController.SetLinksEditionButtonAsActive(false);
+                var ownProfile = await selfProfile.ProfileAsync(ct);
+                if (ownProfile?.UserId == currentProfile.UserId)
+                {
+                    view.InfoEditionButton.gameObject.SetActive(true);
+                    linksController.SetLinksEditionButtonAsActive(true);
+                }
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e)
+            {
+                const string ERROR_MESSAGE = "There was an error while trying to check your profile. Please try again!";
+                passportErrorsController.Show(ERROR_MESSAGE);
+                ReportHub.LogError(ReportCategory.PROFILE, $"{ERROR_MESSAGE} ERROR: {e.Message}");
+            }
+        }
+
+        private void SetInfoSectionAsEditionMode(bool isEditMode)
+        {
+            SetInfoSectionAsSavingStatus(false);
+
+            foreach (var editionObj in view.InfoEditionObjects)
+                editionObj.SetActive(isEditMode);
+
+            foreach (var readOnlyObj in view.InfoReadOnlyObjects)
+                readOnlyObj.SetActive(!isEditMode);
+
+            additionalFieldsController.ResetEdition();
+
+            if (isEditMode)
+                descriptionController.ResetEdition();
+            else
+            {
+                view.AdditionalInfoContainer.gameObject.SetActive(additionalFieldsController.CurrentAdditionalFieldsCount > 0);
+                saveInfoCts.SafeCancelAndDispose();
+            }
+        }
+
+        private void SaveInfoSection()
+        {
+            saveInfoCts = saveInfoCts.SafeRestart();
+            SaveInfoAsync(saveInfoCts.Token).Forget();
+        }
+
+        private async UniTaskVoid SaveInfoAsync(CancellationToken ct)
+        {
+            try
+            {
+                SetInfoSectionAsSavingStatus(true);
+                //create a copy to avoid mutating the cached profile in-place, otherwise the deploy would not see changes in the profile
+                Profile profileCopy = new ProfileBuilder().From(currentProfile).Build();
+                descriptionController.SaveDataIntoProfile(profileCopy);
+                additionalFieldsController.SaveDataIntoProfile(profileCopy);
+                await passportProfileInfoController.UpdateProfileAsync(profileCopy, ct);
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e)
+            {
+                const string ERROR_MESSAGE = "There was an error while trying to save your profile. Please try again!";
+                passportErrorsController.Show(ERROR_MESSAGE);
+                ReportHub.LogError(ReportCategory.PROFILE, $"{ERROR_MESSAGE} ERROR: {e.Message}");
+            }
+            finally
+            {
+                SetInfoSectionAsSavingStatus(false);
+                SetInfoSectionAsEditionMode(false);
+            }
+        }
+
+        private void SetInfoSectionAsSavingStatus(bool isSaving)
+        {
+            view.SaveInfoButtonLoading.SetActive(isSaving);
+            view.CancelInfoButton.gameObject.SetActive(!isSaving);
+            view.SaveInfoButton.gameObject.SetActive(!isSaving);
+            descriptionController.SetAsInteractable(!isSaving);
+            linksController.SetSaveButtonAsInteractable(!isSaving);
+            additionalFieldsController.SetAsInteractable(!isSaving);
+        }
+    }
+}

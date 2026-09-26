@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e658e8ab172c4695b52464e0201349b5, type: 3}
+  m_Name: MapLayerIconMapping
+  m_EditorClassIdentifier: 
+  nftIcons:
+  - key: 8
+    value: {fileID: 21300000, guid: fa52936e6ce564a07ac976145f3d489a, type: 3}
+  - key: 4096
+    value: {fileID: 21300000, guid: e177591664b9842f98c79c9dc3665311, type: 3}
+  - key: 8192
+    value: {fileID: 21300000, guid: 98e1f4574749948e7ae1b009d34be37b, type: 3}
+  defaultIcon: {fileID: 21300000, guid: e177591664b9842f98c79c9dc3665311, type: 3}

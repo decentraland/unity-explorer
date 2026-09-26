@@ -1,0 +1,330 @@
+using System;
+using DCL.Chat;
+using DCL.Chat.ChatReactions.Configs;
+using DCL.Chat.ChatReactions.Core;
+using DCL.Chat.ChatReactions.Views;
+using DCL.Chat.ChatServices;
+using DCL.Emoji;
+using DCL.FeatureFlags;
+using DCL.Input;
+using DCL.Prefs;
+using DCL.Settings.Settings;
+using UnityEngine;
+using Utility;
+
+namespace DCL.Chat.ChatReactions.Presenters
+{
+    /// <summary>
+    /// Top-level presenter that coordinates the reaction button, shortcuts bar,
+    /// and emoji panel. Supports two modes:
+    /// - Situational mode (default): bar opens from bottom button, emoji clicks fire particles.
+    /// - Message mode: bar opens near a message's reaction button, emoji clicks toggle reactions.
+    /// Each mode uses its own selector view instance so positioning is handled by the hierarchy.
+    /// </summary>
+    public sealed class ChatReactionsPresenter : IDisposable
+    {
+        private enum ReactionMode { Situational, Message }
+
+        private readonly ChatReactionButtonPresenter buttonPresenter;
+        private readonly ChatReactionsSelectorPresenter situationalSelectorPresenter;
+        private readonly ChatReactionsSelectorPresenter messageSelectorPresenter;
+        private readonly SituationalReactionFacade reactionService;
+        private readonly ChatClickDetectionHandler clickDetectionHandler;
+        private readonly EmojiPanelReactionBridge emojiPanelBridge;
+        private readonly ReactionPanelPositioner panelPositioner;
+        private readonly RectTransform buttonRect;
+        private readonly ChatSettingsAsset chatSettingsAsset;
+        private readonly ChatReactionsSelectorView situationalSelectorView;
+        private readonly ChatReactionRecentsService recentsService;
+        private readonly IEventBus eventBus;
+        private readonly bool isChatReactionsEnabled;
+        private ReactionMode currentMode = ReactionMode.Situational;
+
+        private Transform? messageAnchor;
+
+        /// <summary>Fired in message mode when the user picks an emoji (atlas index).</summary>
+        public event Action<int>? MessageReactionRequested;
+
+        /// <summary>Fired when the message-mode bar closes (click outside, dismiss, etc.).</summary>
+        public event Action? MessageBarDismissed;
+
+        internal ChatReactionsPresenter(
+            ChatReactionButtonView buttonView,
+            ChatReactionsSelectorView situationalSelectorView,
+            ChatReactionsSelectorView messageSelectorView,
+            SituationalReactionFacade reactionService,
+            ChatReactionsAtlasConfig atlasConfig,
+            ChatReactionRecentsService recentsService,
+            int[] fixedDefaults,
+            EmojiPanelView emojiPanelView,
+            EmojiPanelPresenter emojiPanelPresenter,
+            ChatReactionsMessageConfig messageReactionsConfig,
+            ChatSettingsAsset chatSettingsAsset,
+            IEventBus eventBus,
+            IInputBlock inputBlock)
+        {
+            this.reactionService = reactionService;
+            this.chatSettingsAsset = chatSettingsAsset;
+            this.eventBus = eventBus;
+            this.situationalSelectorView = situationalSelectorView;
+            this.recentsService = recentsService;
+            isChatReactionsEnabled = FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.CHAT_REACTIONS_ENABLED);
+
+            panelPositioner = new ReactionPanelPositioner(
+                messageSelectorView.RectTransform,
+                (RectTransform)emojiPanelView.transform,
+                messageReactionsConfig);
+
+            emojiPanelBridge = new EmojiPanelReactionBridge(
+                emojiPanelPresenter, panelPositioner, atlasConfig, inputBlock);
+
+            emojiPanelBridge.EmojiSelected += OnEmojiPanelSelected;
+
+            situationalSelectorPresenter = new ChatReactionsSelectorPresenter(
+                situationalSelectorView,
+                recentsService,
+                atlasConfig,
+                situationalSelectorView.ItemPrefab,
+                fixedDefaults);
+
+            messageSelectorPresenter = new ChatReactionsSelectorPresenter(
+                messageSelectorView,
+                recentsService,
+                atlasConfig,
+                messageSelectorView.ItemPrefab,
+                fixedDefaults);
+
+            buttonPresenter = new ChatReactionButtonPresenter(buttonView);
+            buttonRect = buttonPresenter.ButtonRect;
+
+            // Click-outside detection: ignore the button, both selectors, and emoji panel.
+            clickDetectionHandler = new ChatClickDetectionHandler(
+                situationalSelectorView.transform,
+                buttonView.transform,
+                emojiPanelView.transform);
+
+            clickDetectionHandler.AddIgnoredTransform(messageSelectorView.transform);
+
+            clickDetectionHandler.OnClickOutside += OnClickOutside;
+            clickDetectionHandler.Pause();
+
+            buttonPresenter.ButtonClicked += OnButtonClicked;
+            situationalSelectorPresenter.ReactionClicked += OnSelectorReactionClicked;
+            situationalSelectorPresenter.AddClicked += OnAddClicked;
+            messageSelectorPresenter.ReactionClicked += OnSelectorReactionClicked;
+            messageSelectorPresenter.AddClicked += OnAddClicked;
+
+            if (situationalSelectorView.ShowOthersToggle != null)
+            {
+                situationalSelectorView.ShowOthersToggle.Toggle.onValueChanged.AddListener(OnShowOthersToggleChanged);
+                chatSettingsAsset.ChatReactionsEnabledChanged += OnReactionsEnabledSettingChanged;
+            }
+        }
+
+        public bool IsReactionPopupActive =>
+            situationalSelectorPresenter.IsVisible
+            || messageSelectorPresenter.IsVisible
+            || emojiPanelBridge.IsOpen;
+
+        /// <summary>
+        /// True while the user has an active popup anchored to a specific chat message
+        /// </summary>
+        public bool IsMessageModePopupActive =>
+            IsInMessageMode && (messageSelectorPresenter.IsVisible || emojiPanelBridge.IsOpen);
+
+        private bool IsInMessageMode => currentMode == ReactionMode.Message;
+
+        private ChatReactionsSelectorPresenter ActivePresenter =>
+            IsInMessageMode ? messageSelectorPresenter : situationalSelectorPresenter;
+
+        /// <summary>
+        /// Opens the message selector bar near a message's reaction button anchor.
+        /// </summary>
+        public void ShowForMessage(RectTransform anchor, bool isOwnMessage)
+        {
+            HideBar();
+
+            currentMode = ReactionMode.Message;
+            messageAnchor = anchor;
+
+            clickDetectionHandler.AddIgnoredTransform(anchor);
+
+            messageSelectorPresenter.Show();
+            panelPositioner.PositionShortcutsBarAboveAnchor(anchor, isOwnMessage);
+            clickDetectionHandler.Resume();
+        }
+
+        /// <summary>
+        /// Closes the bar if currently in message mode. No-op in situational mode.
+        /// </summary>
+        public void CloseForMessage()
+        {
+            if (IsInMessageMode)
+                HideBar();
+        }
+
+        private void OnButtonClicked()
+        {
+            if (IsInMessageMode)
+            {
+                HideBar();
+                return;
+            }
+
+            eventBus.Publish(new ChatEvents.BlurRequestedEvent());
+
+            if (situationalSelectorPresenter.IsVisible)
+            {
+                HideBar();
+            }
+            else
+            {
+                situationalSelectorView.SetOptionsVisible(true);
+                situationalSelectorPresenter.Show();
+                SyncShowOthersToggle();
+                clickDetectionHandler.Resume();
+            }
+        }
+
+        private void OnSelectorReactionClicked(int atlasIndex)
+        {
+            DispatchReaction(atlasIndex);
+
+            // NOTE: RecordUsage is intentionally NOT called here to keep the bar
+            // spatially stable — re-clicking an existing shortcut should not reshuffle
+            // the recents order. If we later want bar clicks to update recency,
+            // add: ActivePresenter.RecordUsage(atlasIndex);
+
+            if (IsInMessageMode)
+                HideBar();
+            else
+                emojiPanelBridge.Hide();
+        }
+
+        private void OnClickOutside()
+        {
+            HideBar();
+        }
+
+        private void HideBar()
+        {
+            emojiPanelBridge.Hide();
+            situationalSelectorPresenter.Hide();
+            messageSelectorPresenter.Hide();
+            clickDetectionHandler.Pause();
+            ClearMessageMode();
+            recentsService.FlushIfDirty();
+        }
+
+        private void ClearMessageMode()
+        {
+            if (!IsInMessageMode) return;
+
+            if (messageAnchor != null)
+                clickDetectionHandler.RemoveIgnoredTransform(messageAnchor);
+
+            messageAnchor = null;
+            currentMode = ReactionMode.Situational;
+
+            MessageBarDismissed?.Invoke();
+        }
+
+        private void OnAddClicked()
+        {
+            if (IsInMessageMode && !emojiPanelBridge.IsOpen)
+                messageSelectorPresenter.Hide();
+
+            RectTransform referenceRect = IsInMessageMode
+                ? (RectTransform)messageAnchor!
+                : situationalSelectorPresenter.View.AddButtonRect;
+
+            emojiPanelBridge.Toggle(referenceRect, IsInMessageMode);
+        }
+
+        private void OnEmojiPanelSelected(int atlasIndex)
+        {
+            DispatchReaction(atlasIndex);
+            ActivePresenter.RecordUsage(atlasIndex);
+
+            if (IsInMessageMode)
+                HideBar();
+        }
+
+        /// <summary>
+        /// Routes a reaction to the appropriate handler based on the current mode.
+        /// In message mode, invokes the message reaction callback.
+        /// In situational mode, triggers a UI particle reaction.
+        /// </summary>
+        private void DispatchReaction(int atlasIndex)
+        {
+            if (IsInMessageMode)
+                MessageReactionRequested?.Invoke(atlasIndex);
+            else
+                reactionService.TriggerUIReactionFromRect(buttonRect, atlasIndex, count: 1);
+        }
+
+        public void Show()
+        {
+            if (!isChatReactionsEnabled)
+                return;
+
+            HideBar();
+            buttonPresenter.Show();
+        }
+
+        public void Hide()
+        {
+            HideBar();
+            buttonPresenter.Hide();
+        }
+
+        private void SyncShowOthersToggle()
+        {
+            SetShowOthersToggleSilently(chatSettingsAsset.chatReactionsEnabled);
+        }
+
+        private void OnShowOthersToggleChanged(bool enabled)
+        {
+            chatSettingsAsset.SetReactionsEnabled(enabled);
+            DCLPlayerPrefs.SetBool(DCLPrefKeys.SETTINGS_CHAT_REACTIONS_ENABLED, enabled, save: true);
+        }
+
+        private void OnReactionsEnabledSettingChanged(bool enabled)
+        {
+            SetShowOthersToggleSilently(enabled);
+        }
+
+        private void SetShowOthersToggleSilently(bool value)
+        {
+            if (situationalSelectorView.ShowOthersToggle == null) return;
+
+            situationalSelectorView.ShowOthersToggle.Toggle.SetIsOnWithoutNotify(value);
+            situationalSelectorView.ShowOthersToggle.SetToggleGraphics(value);
+        }
+
+        public void Dispose()
+        {
+            recentsService.FlushIfDirty();
+            emojiPanelBridge.EmojiSelected -= OnEmojiPanelSelected;
+            emojiPanelBridge.Dispose();
+            ClearMessageMode();
+            clickDetectionHandler.OnClickOutside -= OnClickOutside;
+            clickDetectionHandler.Dispose();
+            buttonPresenter.ButtonClicked -= OnButtonClicked;
+            situationalSelectorPresenter.ReactionClicked -= OnSelectorReactionClicked;
+            situationalSelectorPresenter.AddClicked -= OnAddClicked;
+            messageSelectorPresenter.ReactionClicked -= OnSelectorReactionClicked;
+            messageSelectorPresenter.AddClicked -= OnAddClicked;
+
+            if (situationalSelectorView.ShowOthersToggle != null)
+            {
+                situationalSelectorView.ShowOthersToggle.Toggle.onValueChanged.RemoveListener(OnShowOthersToggleChanged);
+                chatSettingsAsset.ChatReactionsEnabledChanged -= OnReactionsEnabledSettingChanged;
+            }
+
+            buttonPresenter.Dispose();
+            situationalSelectorPresenter.Dispose();
+            messageSelectorPresenter.Dispose();
+        }
+    }
+}

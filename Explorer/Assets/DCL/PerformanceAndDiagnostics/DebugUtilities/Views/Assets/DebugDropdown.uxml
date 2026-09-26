@@ -1,0 +1,5 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <DCL.DebugUtilities.Views.DebugDropdownElement>
+        <ui:DropdownField label="Dropdown" index="-1" choices="System.Collections.Generic.List`1[System.String]" />
+    </DCL.DebugUtilities.Views.DebugDropdownElement>
+</ui:UXML>

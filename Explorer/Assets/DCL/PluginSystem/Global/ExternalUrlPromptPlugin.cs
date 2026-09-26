@@ -1,0 +1,62 @@
+﻿using System;
+using Arch.SystemGroups;
+using Cysharp.Threading.Tasks;
+using DCL.AssetsProvision;
+using DCL.Browser;
+using DCL.ExternalUrlPrompt;
+using DCL.Input;
+using MVC;
+using System.Threading;
+using UnityEngine;
+using UnityEngine.AddressableAssets;
+
+namespace DCL.PluginSystem.Global
+{
+    public class ExternalUrlPromptPlugin : IDCLGlobalPlugin<ExternalUrlPromptPlugin.ExternalUrlPromptSettings>
+    {
+        private readonly IAssetsProvisioner assetsProvisioner;
+        private readonly UnityAppWebBrowser webBrowser;
+        private readonly IMVCManager mvcManager;
+        private readonly ICursor cursor;
+        private ExternalUrlPromptController? externalUrlPromptController;
+
+        public ExternalUrlPromptPlugin(
+            IAssetsProvisioner assetsProvisioner,
+            UnityAppWebBrowser webBrowser,
+            IMVCManager mvcManager,
+            ICursor cursor)
+        {
+            this.assetsProvisioner = assetsProvisioner;
+            this.webBrowser = webBrowser;
+            this.mvcManager = mvcManager;
+            this.cursor = cursor;
+        }
+
+        public async UniTask InitializeAsync(ExternalUrlPromptSettings promptSettings, CancellationToken ct)
+        {
+            externalUrlPromptController = new ExternalUrlPromptController(
+                ExternalUrlPromptController.CreateLazily(
+                    (await assetsProvisioner.ProvideMainAssetAsync(promptSettings.ExternalUrlPromptPrefab, ct: ct)).Value.GetComponent<ExternalUrlPromptView>(), null),
+                webBrowser,
+                cursor);
+
+            mvcManager.RegisterController(externalUrlPromptController);
+        }
+
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
+
+        public void Dispose()
+        {
+            externalUrlPromptController?.Dispose();
+        }
+
+        [Serializable]
+        public class ExternalUrlPromptSettings : IDCLPluginSettings
+        {
+            [field: Header(nameof(ExternalUrlPromptPlugin) + "." + nameof(ExternalUrlPromptSettings))]
+            [field: Space]
+            [field: SerializeField]
+            public AssetReferenceGameObject ExternalUrlPromptPrefab;
+        }
+    }
+}

@@ -1,0 +1,151 @@
+.container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    margin-top: 20px;
+    margin-right: 20px;
+    margin-bottom: 20px;
+    margin-left: 20px;
+    cursor: var(--dcl-cursor-rotate);
+    -unity-font-definition: url("project://database/Assets/UI/Font/Inter-UI-Bold%20SDF.asset?fileID=11400000&guid=d16b4f6c5b0564f9aafdb059ebd77bff&type=2#Inter-UI-Bold SDF");
+}
+
+/* Swapped in for as long as a right-button pan drag is under way, so the cursor shows what the
+   drag is actually doing rather than the rotation the frame advertises at rest. Two classes so
+   it outranks .container by SPECIFICITY rather than by source order, which reordering this file
+   could otherwise silently break. */
+.container.container--panning {
+    cursor: var(--dcl-cursor-pan);
+}
+
+.switcher {
+    position: absolute;
+    right: 0;
+    top: 0;
+    height: 32px;
+    width: 80px;
+    flex-direction: row;
+    background-color: rgb(32, 30, 36);
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    border-bottom-right-radius: 8px;
+    border-bottom-left-radius: 8px;
+    overflow: hidden;
+}
+
+.switcher__button {
+    flex-grow: 1;
+    transition-duration: 0.1s;
+    background-size: 20px 20px;
+    cursor: var(--dcl-cursor-interactive);
+}
+
+.switcher__button:disabled {
+    background-color: rgb(128, 128, 128);
+    cursor: initial;
+}
+
+.switcher__button--selected {
+    background-color: rgb(231, 63, 78);
+}
+
+.emote-controls {
+    bottom: 0;
+    left: 0;
+    position: absolute;
+    flex-direction: row;
+}
+
+.emote-controls__button {
+    height: 32px;
+    background-color: rgb(255, 255, 255);
+    border-top-width: 0;
+    border-right-width: 0;
+    border-bottom-width: 0;
+    border-left-width: 0;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    border-bottom-right-radius: 8px;
+    border-bottom-left-radius: 8px;
+    font-size: 14px;
+    padding-left: 0;
+    padding-right: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+.emote-controls__button-play {
+    flex-direction: row;
+    align-items: center;
+    padding-left: 7px;
+    padding-right: 12px;
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+.emote-controls__button-play > #Icon {
+    background-image: url("project://database/Assets/UI/Sprites/Stop.png?fileID=2800000&guid=28e0d51a19ed34aecb058780d9b403f4&type=3#Stop");
+    width: 30px;
+    height: 30px;
+    -unity-background-image-tint-color: rgb(0, 0, 0);
+}
+
+.emote-controls__button-play > #Title {
+    padding-left: 0;
+    padding-right: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    margin-left: 0;
+    margin-right: 0;
+    margin-top: 1px;
+    margin-bottom: 0;
+}
+
+.emote-controls__button-play--stopped > #Icon {
+    background-image: url("project://database/Assets/UI/Sprites/PlayArrow.png?fileID=2800000&guid=ca1d83f1697844068946eb106c84ca99&type=3#PlayArrow");
+}
+
+.emote-controls__button-mute {
+    width: 32px;
+    background-image: url("project://database/Assets/UI/Sprites/SoundOn.png?fileID=2800000&guid=5f1250c501834456a8e777e82527654c&type=3#SoundOn");
+    -unity-background-image-tint-color: rgb(0, 0, 0);
+    background-size: 75% 75%;
+}
+
+.emote-controls__button-mute--muted {
+    background-image: url("project://database/Assets/UI/Sprites/SoundOff.png?fileID=2800000&guid=c0b3991a86c5d476fba7cdcc52b2e782&type=3#SoundOff");
+}
+
+.loader {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    justify-content: center;
+    align-items: center;
+}
+
+.loader__icon {
+    width: 64px;
+    height: 64px;
+    background-image: url("project://database/Assets/UI/Sprites/Spinner.png?fileID=2800000&guid=7277d900fbbbd4d2986e2ff79fd14803&type=3#Spinner");
+}
+
+.tooltip {
+    position: absolute;
+    background-color: rgb(92, 88, 100);
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    border-bottom-right-radius: 4px;
+    border-bottom-left-radius: 4px;
+    color: rgb(255, 255, 255);
+    padding-right: 10px;
+    padding-left: 10px;
+    font-size: 12px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+    visibility: hidden;
+}

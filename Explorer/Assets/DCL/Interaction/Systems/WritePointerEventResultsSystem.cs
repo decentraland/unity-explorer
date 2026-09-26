@@ -1,0 +1,138 @@
+using Arch.Core;
+using Arch.System;
+using Arch.SystemGroups;
+using CRDT;
+using CrdtEcsBridge.Components;
+using CrdtEcsBridge.ECSToCRDTWriter;
+using DCL.Diagnostics;
+using DCL.ECSComponents;
+using DCL.Interaction.Utility;
+using DCL.Optimization.Pools;
+using ECS.Abstract;
+using ECS.Groups;
+using ECS.LifeCycle.Components;
+using SceneRunner.Scene;
+using UnityEngine;
+using RaycastHit = DCL.ECSComponents.RaycastHit;
+
+namespace DCL.Interaction.PlayerOriginated.Systems
+{
+    /// <summary>
+    ///     Writes the results of the pointer events in the scene world
+    ///     <para>
+    ///         Must be executed after <see cref="Interaction.Systems.ProcessPointerEventsSystem" />. As they exist in different worlds we must attach them to different
+    ///         root system groups as we can't make dependencies between them directly
+    ///     </para>
+    /// </summary>
+    [UpdateInGroup(typeof(SyncedPreRenderingSystemGroup))]
+    [LogCategory(ReportCategory.INPUT)]
+    public partial class WritePointerEventResultsSystem : BaseUnityLoopSystem
+    {
+        private readonly ISceneData sceneData;
+        private readonly IECSToCRDTWriter ecsToCRDTWriter;
+
+        private readonly ISceneStateProvider sceneStateProvider;
+        private readonly IGlobalInputEvents globalInputEvents;
+
+        private readonly IComponentPool<RaycastHit> raycastHitPool;
+
+        internal WritePointerEventResultsSystem(
+            World world,
+            ISceneData sceneData,
+            IECSToCRDTWriter ecsToCRDTWriter,
+            ISceneStateProvider sceneStateProvider,
+            IGlobalInputEvents globalInputEvents,
+            IComponentPool<RaycastHit> raycastHitPool
+        ) : base(world)
+        {
+            this.sceneData = sceneData;
+            this.ecsToCRDTWriter = ecsToCRDTWriter;
+
+            this.sceneStateProvider = sceneStateProvider;
+            this.globalInputEvents = globalInputEvents;
+            this.raycastHitPool = raycastHitPool;
+        }
+
+        protected override void Update(float t)
+        {
+            if (!sceneStateProvider.IsCurrent) return;
+
+            var messageSent = false;
+            WriteResultsQuery(World!, sceneData.Geometry.BaseParcelPosition, ref messageSent);
+
+            if (!messageSent)
+                WriteGlobalEvents();
+        }
+
+        private void WriteGlobalEvents()
+        {
+            // ReSharper disable once ForCanBeConvertedToForeach
+            for (var i = 0; i < globalInputEvents.Entries.Count; i++)
+            {
+                IGlobalInputEvents.Entry entry = globalInputEvents.Entries[i];
+                AppendMessage(SpecialEntitiesID.SCENE_ROOT_ENTITY, null, entry.InputAction, entry.PointerEventType);
+            }
+        }
+
+        [Query]
+        [None(typeof(DeleteEntityIntention))]
+        private void WriteResults([Data] in Vector3 scenePosition, [Data] ref bool messageSent, ref PBPointerEvents pbPointerEvents, ref CRDTEntity sdkEntity)
+        {
+            AppendPointerEventResultsIntent intent = pbPointerEvents.AppendPointerEventResultsIntent;
+            int validIndicesCount = intent.ValidIndicesCount();
+
+            for (var i = 0; i < validIndicesCount; i++)
+            {
+                byte validIndex = intent.ValidIndexAt(i);
+                PBPointerEvents.Types.Entry entry = pbPointerEvents.PointerEvents![validIndex]!;
+                PBPointerEvents.Types.Info info = entry.EventInfo!;
+
+                //Note: If the event is a Hover, the scenes are expecting an input action of type IaPointer.
+                //This logic is extracted from previous renderer in ECSPointerInputSystem.
+                InputAction inputAction = entry.EventType is PointerEventType.PetHoverEnter or PointerEventType.PetHoverLeave ? InputAction.IaPointer : info.Button;
+                AppendSingleResult(sdkEntity, scenePosition, intent, inputAction, entry.EventType);
+            }
+
+            if (intent.ValidInputActions != null)
+            {
+                for (var i = 0; i < intent.ValidInputActions.Count; i++)
+                {
+                    (InputAction inputAction, PointerEventType pointerEventType) entry = intent.ValidInputActions[i];
+                    messageSent |= AppendSingleResult(sdkEntity, scenePosition, intent, entry.inputAction, entry.pointerEventType);
+                }
+            }
+
+            intent.Clear();
+        }
+
+        /// <summary>
+        /// Appends one pointer event result. Returns true if the event should suppress global input (non-hover).
+        /// </summary>
+        private bool AppendSingleResult(CRDTEntity sdkEntity, in Vector3 scenePosition, in AppendPointerEventResultsIntent intent, InputAction button, PointerEventType eventType)
+        {
+            RaycastHit raycastHit = raycastHitPool.Get();
+            raycastHit.FillSDKRaycastHit(scenePosition, intent, sdkEntity);
+            AppendMessage(sdkEntity, raycastHit, button, eventType);
+
+            bool isNonHover = eventType is not (PointerEventType.PetHoverEnter or PointerEventType.PetHoverLeave);
+
+            if (isNonHover)
+                sceneStateProvider.LastUserInputTick = sceneStateProvider.TickNumber;
+
+            return isNonHover;
+        }
+
+        private void AppendMessage(CRDTEntity sdkEntity, RaycastHit? sdkHit, InputAction button, PointerEventType eventType)
+        {
+            ecsToCRDTWriter.AppendMessage<PBPointerEventsResult, (RaycastHit? sdkHit, InputAction button, PointerEventType eventType, ISceneStateProvider sceneStateProvider)>(
+                static (result, data) =>
+                {
+                    result.Hit = data.sdkHit;
+                    result.Button = data.button;
+                    result.State = data.eventType;
+                    result.Timestamp = data.sceneStateProvider!.TickNumber;
+                    result.TickNumber = data.sceneStateProvider.TickNumber;
+                }, sdkEntity, (int)sceneStateProvider.TickNumber, (sdkHit, button, eventType, sceneStateProvider));
+        }
+    }
+}

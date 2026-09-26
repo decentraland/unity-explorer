@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f7b645546a5e9429283f6deb2ee629b7, type: 3}
+  m_Name: LoadingTipCatalog
+  m_EditorClassIdentifier: DCL.RealmNavigation::DCL.SceneLoadingScreens.LoadingTipCatalogSO
+  entries:
+  - Key: say_hi
+    Prefab: {fileID: 1783000424325389566, guid: dfee83d4e12e048269f60e1c7b26f595, type: 3}
+  - Key: add_friends
+    Prefab: {fileID: 4400946940171711142, guid: 7927e9396966748d59ffbbb20bd01a6c, type: 3}
+  - Key: earn_badges
+    Prefab: {fileID: 4400946940171711142, guid: b91776af3f00347ebac046682894ff9c, type: 3}
+  - Key: hang_out
+    Prefab: {fileID: 4400946940171711142, guid: 84bd561921154477a977fd33da88ef81, type: 3}
+  - Key: live_now
+    Prefab: {fileID: 4400946940171711142, guid: fa3c0a75eab0f493993a9ffd5eb0f676, type: 3}
+  - Key: make_move
+    Prefab: {fileID: 4400946940171711142, guid: 6bf283ebe8ea045709bfb5e7592d5808, type: 3}
+  - Key: take_shot
+    Prefab: {fileID: 4400946940171711142, guid: 525c9e896226d4676a4a00a4b92963d2, type: 3}
+  - Key: your_people
+    Prefab: {fileID: 4400946940171711142, guid: 779a0a65c61fa4d6496090668344bf6f, type: 3}

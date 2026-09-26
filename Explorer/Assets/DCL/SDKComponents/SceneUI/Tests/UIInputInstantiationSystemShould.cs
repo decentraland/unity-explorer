@@ -1,0 +1,289 @@
+using CRDT;
+using CrdtEcsBridge.ECSToCRDTWriter;
+using DCL.ECSComponents;
+using DCL.Input;
+using DCL.Input.Component;
+using DCL.Optimization.Pools;
+using DCL.SDKComponents.SceneUI.Components;
+using DCL.SDKComponents.SceneUI.Defaults;
+using DCL.SDKComponents.SceneUI.Systems.UIInput;
+using DCL.SDKComponents.SceneUI.Utils;
+using ECS.TestSuite;
+using NSubstitute;
+using NUnit.Framework;
+using System;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UIElements;
+using Entity = Arch.Core.Entity;
+
+namespace DCL.SDKComponents.SceneUI.Tests
+{
+    public class UIInputInstantiationSystemShould : UnitySystemTestBase<UIInputInstantiationSystem>
+    {
+        private IComponentPoolsRegistry poolsRegistry;
+        private IECSToCRDTWriter ecsToCRDTWriter;
+        private IInputBlock inputBlock;
+        private Entity entity;
+        private UITransformComponent uiTransformComponent;
+        private GameObject? canvasGameObject;
+        private PanelSettings? panelSettings;
+
+        [SetUp]
+        public void SetUp()
+        {
+            poolsRegistry = new ComponentPoolsRegistry(
+                new Dictionary<Type, IComponentPool>
+                {
+                    { typeof(UIInputComponent), new ComponentPool.WithDefaultCtor<UIInputComponent>(onRelease: UiElementUtils.ReleaseUIInputComponent) },
+                }, null);
+
+            ecsToCRDTWriter = Substitute.For<IECSToCRDTWriter>();
+            inputBlock = Substitute.For<IInputBlock>();
+            system = new UIInputInstantiationSystem(world, poolsRegistry, ecsToCRDTWriter, inputBlock, new []{new StyleFontDefinition()});
+            entity = world.Create();
+            uiTransformComponent = AddUITransformToEntity(entity);
+            world.Add(entity, new CRDTEntity(500));
+        }
+
+        protected override void OnTearDown()
+        {
+            if (canvasGameObject != null)
+                UnityEngine.Object.DestroyImmediate(canvasGameObject);
+
+            if (panelSettings != null)
+                UnityEngine.Object.DestroyImmediate(panelSettings);
+        }
+
+        [Test]
+        public void InstantiateUIInput()
+        {
+            // Arrange
+            var input = new PBUiInput();
+
+            // Act
+            world.Add(entity, input);
+            system.Update(0);
+
+            // Assert
+            ref UIInputComponent uiInputComponent = ref world.Get<UIInputComponent>(entity);
+            Assert.AreEqual(UiElementUtils.BuildElementName("UIInput", entity), uiInputComponent.TextField.name);
+            Assert.IsTrue(uiInputComponent.TextField.ClassListContains("dcl-input"));
+            Assert.AreEqual(PickingMode.Position, uiInputComponent.TextField.pickingMode);
+            Assert.IsTrue(uiTransformComponent.Transform.Contains(uiInputComponent.TextField));
+            Assert.IsNotNull(uiInputComponent.TextField);
+            Assert.IsNotNull(uiInputComponent.Placeholder);
+            Assert.IsNotNull(uiInputComponent.TextElement);
+        }
+
+        [Test]
+        public void ApplyDefaultUiTransformValuesOnInstantiation()
+        {
+            // Arrange
+            var input = new PBUiInput();
+            world.Add(entity, input);
+
+            // Act
+            system.Update(0);
+
+            // Assert - default transform values should be applied on instantiation
+            var transformStyle = uiTransformComponent.Transform.style;
+            Assert.AreEqual(Overflow.Hidden, transformStyle.overflow.value);
+            Assert.AreEqual(new StyleLength(10f), transformStyle.borderBottomLeftRadius);
+            Assert.AreEqual(new StyleLength(10f), transformStyle.borderBottomRightRadius);
+            Assert.AreEqual(new StyleLength(10f), transformStyle.borderTopLeftRadius);
+            Assert.AreEqual(new StyleLength(10f), transformStyle.borderTopRightRadius);
+            Assert.AreEqual(new StyleFloat(1f), transformStyle.borderTopWidth);
+            Assert.AreEqual(new StyleFloat(1f), transformStyle.borderRightWidth);
+            Assert.AreEqual(new StyleFloat(1f), transformStyle.borderBottomWidth);
+            Assert.AreEqual(new StyleFloat(1f), transformStyle.borderLeftWidth);
+            Assert.AreEqual(new StyleColor(Color.gray), transformStyle.borderTopColor);
+            Assert.AreEqual(new StyleColor(Color.gray), transformStyle.borderRightColor);
+            Assert.AreEqual(new StyleColor(Color.gray), transformStyle.borderBottomColor);
+            Assert.AreEqual(new StyleColor(Color.gray), transformStyle.borderLeftColor);
+        }
+
+        [Test]
+        public void ApplyDefaultBackgroundWhenNoPBUiBackground()
+        {
+            // Arrange
+            var input = new PBUiInput();
+            world.Add(entity, input);
+
+            // Act
+            system.Update(0);
+
+            // Assert - white background applied when entity has no PBUiBackground
+            Assert.AreEqual(new StyleColor(Color.white), uiTransformComponent.Transform.style.backgroundColor);
+        }
+
+        [Test]
+        public void NotApplyDefaultBackgroundWhenPBUiBackgroundExists()
+        {
+            // Arrange - create a new entity with PBUiBackground
+            var newEntity = world.Create();
+            var newUiTransform = AddUITransformToEntity(newEntity);
+            world.Add(newEntity, new CRDTEntity(501));
+            world.Add(newEntity, new PBUiBackground());
+            world.Add(newEntity, new PBUiInput());
+
+            // Act
+            system.Update(0);
+
+            // Assert - background should NOT be overridden to white
+            Assert.AreNotEqual(new StyleColor(Color.white), newUiTransform.Transform.style.backgroundColor);
+        }
+
+        [Test]
+        public void UpdateUIInput()
+        {
+            // Arrange
+            var input = new PBUiInput();
+            world.Add(entity, input);
+            system.Update(0);
+            const int NUMBER_OF_UPDATES = 3;
+
+            for (var i = 0; i < NUMBER_OF_UPDATES; i++)
+            {
+                // Act
+                input.Value = $"Test text {i}";
+                input.FontSize = i + 1;
+                input.TextAlign = (TextAlignMode) i;
+                input.Disabled = i % 2 == 0;
+                input.IsDirty = true;
+                system.Update(0);
+
+                // Assert
+                ref UIInputComponent uiInputComponent = ref world.Get<UIInputComponent>(entity);
+
+                Assert.AreEqual(input.Value, uiInputComponent.TextField.value);
+                Assert.IsTrue(input.GetFontSize() == uiInputComponent.TextField.style.fontSize);
+                Assert.IsTrue(input.GetTextAlign() == uiInputComponent.TextElement.style.unityTextAlign);
+            }
+        }
+
+        [Test]
+        [TestCase(true)]
+        [TestCase(false)]
+        public void UpdateUIInputDisabledState(bool disabled)
+        {
+            // Arrange
+            var input = new PBUiInput { Disabled = false };
+            world.Add(entity, input);
+            system.Update(0);
+
+            // Act
+            input.Disabled = disabled;
+            input.IsDirty = true;
+            system.Update(0);
+
+            // Assert
+            ref UIInputComponent uiInputComponent = ref world.Get<UIInputComponent>(entity);
+            Assert.AreEqual(disabled ? PickingMode.Ignore : PickingMode.Position, uiInputComponent.TextField.pickingMode);
+            Assert.AreEqual(!disabled, uiInputComponent.TextField.enabledSelf);
+        }
+
+        [Test]
+        public void UpdateUIInputTransformDefaultsWhenDirty()
+        {
+            // Arrange
+            var input = new PBUiInput();
+            world.Add(entity, input);
+            system.Update(0);
+
+            ref PBUiTransform pbUiTransform = ref world.Get<PBUiTransform>(entity);
+            pbUiTransform.IsDirty = true;
+
+            // Act
+            system.Update(0);
+
+            // Assert - defaults should be reapplied and hover styles re-configured with current border colors
+            Assert.AreEqual(Overflow.Hidden, uiTransformComponent.Transform.style.overflow.value);
+            Assert.AreEqual(new StyleColor(Color.gray), uiTransformComponent.Transform.style.borderTopColor);
+        }
+
+        [Test]
+        [TestCase(true)]
+        [TestCase(false)]
+        public void TriggerInputResults(bool isSubmit)
+        {
+            // Arrange
+            const string TEST_VALUE = "Test text";
+            var input = new PBUiInput
+            {
+                Value = TEST_VALUE,
+                IsDirty = true,
+            };
+            world.Add(entity, input);
+            system.Update(0);
+
+            ref UIInputComponent uiInputComponent = ref world.Get<UIInputComponent>(entity);
+            uiInputComponent.IsOnValueChangedTriggered = !isSubmit;
+            uiInputComponent.IsOnSubmitTriggered = isSubmit;
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            ecsToCRDTWriter.Received(1).PutMessage(Arg.Any<Action<PBUiInputResult, (bool, string)>>(), Arg.Any<CRDTEntity>(), (isSubmit, TEST_VALUE));
+            Assert.IsFalse(uiInputComponent.IsOnValueChangedTriggered);
+            Assert.IsFalse(uiInputComponent.IsOnSubmitTriggered);
+        }
+
+        [Test]
+        public void TriggerSubmitWhenEnterReachesInnerTextElement()
+        {
+            // Arrange: the inner TextElement consumes Return in the bubble-up phase, so the key only reaches a trickle-down callback
+            canvasGameObject = new GameObject(nameof(UIInputInstantiationSystemShould));
+            var canvas = canvasGameObject.AddComponent<UIDocument>();
+            panelSettings = ScriptableObject.CreateInstance<PanelSettings>();
+            canvas.panelSettings = panelSettings;
+            canvas.rootVisualElement.Add(uiTransformComponent.Transform);
+            world.Add(entity, new PBUiInput());
+            system.Update(0);
+            ref UIInputComponent uiInputComponent = ref world.Get<UIInputComponent>(entity);
+            uiInputComponent.TextField.Focus();
+            Assert.That(uiInputComponent.IsOnSubmitTriggered, Is.False);
+
+            // Act
+            using (KeyDownEvent enter = KeyDownEvent.GetPooled('\n', KeyCode.Return, EventModifiers.None))
+                uiInputComponent.TextElement.SendEvent(enter);
+
+            // Assert
+            Assert.That(uiInputComponent.IsOnSubmitTriggered, Is.True);
+        }
+
+        [Test]
+        public void BlurRecycledFieldThatWasDetachedWhileFocused()
+        {
+            // Arrange: a live panel keeps the focus of an element that left it and restores it when the element comes back
+            canvasGameObject = new GameObject(nameof(UIInputInstantiationSystemShould));
+            var canvas = canvasGameObject.AddComponent<UIDocument>();
+            panelSettings = ScriptableObject.CreateInstance<PanelSettings>();
+            canvas.panelSettings = panelSettings;
+            VisualElement root = canvas.rootVisualElement;
+            root.Add(uiTransformComponent.Transform);
+
+            IComponentPool<UIInputComponent> pool = poolsRegistry.GetReferenceTypePool<UIInputComponent>();
+            UIInputComponent stale = pool.Get();
+            stale.Initialize(inputBlock, "Stale", string.Empty, string.Empty, Color.white);
+            root.Add(stale.TextField);
+            stale.TextField.Focus();
+            stale.TextField.RemoveFromHierarchy();
+            pool.Release(stale);
+            inputBlock.ClearReceivedCalls();
+
+            // Act
+            world.Add(entity, new PBUiInput());
+            system.Update(0);
+
+            // Assert
+            ref UIInputComponent recycled = ref world.Get<UIInputComponent>(entity);
+            Assert.That(recycled, Is.SameAs(stale), "The pool must hand back the stale field for this test to exercise reuse.");
+            Assert.That(root.panel.focusController.focusedElement, Is.Null);
+            Assert.That(recycled.IsFocused, Is.False);
+            inputBlock.DidNotReceive().Enable(Arg.Any<InputMapComponent.Kind[]>());
+            inputBlock.DidNotReceive().Disable(Arg.Any<InputMapComponent.Kind[]>());
+        }
+    }
+}

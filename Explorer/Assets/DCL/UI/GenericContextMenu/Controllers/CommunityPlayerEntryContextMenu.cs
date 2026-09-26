@@ -1,0 +1,383 @@
+using Cysharp.Threading.Tasks;
+using DCL.Chat;
+using DCL.Communities.CommunitiesCard.Members;
+using DCL.Communities.CommunitiesDataProvider;
+using DCL.Diagnostics;
+using DCL.Friends;
+using DCL.Friends.UI;
+using DCL.Friends.UI.FriendPanel.Sections.Friends;
+using DCL.Friends.UI.Requests;
+using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Multiplayer.Connectivity;
+using DCL.Passport;
+using DCL.PerformanceAndDiagnostics.Analytics;
+using DCL.Profiles;
+using DCL.UI.ConfirmationDialog.Opener;
+using DCL.UI.Controls.Configs;
+using DCL.Utilities;
+using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
+using DCL.VoiceChat;
+using DCL.Web3;
+using ECS.SceneLifeCycle.Realm;
+using MVC;
+using Newtonsoft.Json.Linq;
+using System;
+using System.Threading;
+using UnityEngine;
+using Utility;
+using FriendshipStatus = DCL.Friends.FriendshipStatus;
+
+namespace DCL.UI
+{
+    public class CommunityPlayerEntryContextMenu
+    {
+        private delegate void StringDelegate(string id);
+
+        private const string BAN_MEMBER_TEXT_FORMAT = "Are you sure you want to ban [{0}] from the [{1}] Community?";
+        private const string BAN_MEMBER_CANCEL_TEXT = "CANCEL";
+        private const string BAN_MEMBER_CONFIRM_TEXT = "BAN";
+
+        private static readonly Vector2 CONTEXT_MENU_OFFSET = new (5, -10);
+
+        private readonly IFriendsService? friendsService;
+        private readonly FriendsConnectivityStatusTracker? friendOnlineStatusCache;
+        private readonly IMVCManager mvcManager;
+        private readonly IAnalyticsController analytics;
+        private readonly IOnlineUsersProvider onlineUsersProvider;
+        private readonly IRealmNavigator realmNavigator;
+        private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
+        private readonly CommunityVoiceChatContextMenuConfiguration voiceChatContextMenuSettings;
+        private readonly CommunitiesDataProvider communityDataProvider;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
+
+        private readonly string[] getUserPositionBuffer = new string[1];
+
+        private readonly GenericContextMenu contextMenu;
+        private readonly UserProfileContextMenuControlSettings userProfileControlSettings;
+        private readonly ButtonWithDelegateContextMenuControlSettings<string> openUserProfileButtonControlSettings;
+        private readonly ButtonWithDelegateContextMenuControlSettings<string> jumpInButtonControlSettings;
+        private readonly ButtonWithDelegateContextMenuControlSettings<string> openConversationControlSettings;
+        private readonly ButtonWithDelegateContextMenuControlSettings<string> demoteSpeakerButtonControlSettings;
+        private readonly ButtonWithDelegateContextMenuControlSettings<string> promoteToSpeakerButtonControlSettings;
+        private readonly ButtonWithDelegateContextMenuControlSettings<string> kickFromStreamButtonControlSettings;
+        private readonly ButtonWithDelegateContextMenuControlSettings<string> banFromCommunityButtonControlSettings;
+        private readonly GenericContextMenuElement jumpInButton;
+        private readonly GenericContextMenuElement demoteSpeakerButton;
+        private readonly GenericContextMenuElement promoteToSpeakerButton;
+        private readonly GenericContextMenuElement kickFromStreamButton;
+        private readonly GenericContextMenuElement banFromCommunityButton;
+        private readonly GenericContextMenuElement separatorElement;
+        private readonly GenericContextMenuElement viewProfileButton;
+        private readonly GenericContextMenuElement chatButton;
+
+        private CancellationTokenSource cts = new ();
+        private UniTaskCompletionSource closeContextMenuTask = new ();
+
+        public CommunityPlayerEntryContextMenu(
+            IFriendsService? friendsService,
+            IMVCManager mvcManager,
+            GenericUserProfileContextMenuSettings contextMenuSettings,
+            IAnalyticsController analytics,
+            IOnlineUsersProvider onlineUsersProvider,
+            IRealmNavigator realmNavigator,
+            FriendsConnectivityStatusTracker? friendOnlineStatusCache,
+            CommunityVoiceChatContextMenuConfiguration voiceChatContextMenuSettings,
+            IVoiceChatOrchestrator voiceChatOrchestrator, CommunitiesDataProvider communityDataProvider,
+            IDecentralandUrlsSource decentralandUrlsSource)
+        {
+            this.friendsService = friendsService;
+            this.mvcManager = mvcManager;
+            this.analytics = analytics;
+            this.onlineUsersProvider = onlineUsersProvider;
+            this.realmNavigator = realmNavigator;
+            this.friendOnlineStatusCache = friendOnlineStatusCache;
+            this.voiceChatContextMenuSettings = voiceChatContextMenuSettings;
+            this.voiceChatOrchestrator = voiceChatOrchestrator;
+            this.communityDataProvider = communityDataProvider;
+            this.decentralandUrlsSource = decentralandUrlsSource;
+
+            userProfileControlSettings = new UserProfileContextMenuControlSettings(OnFriendsButtonClicked, null, false, false);
+
+            openUserProfileButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.OpenUserProfileButtonConfig.Text, contextMenuSettings.OpenUserProfileButtonConfig.Sprite, new StringDelegate(OnShowUserPassportClicked));
+            jumpInButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.JumpInButtonConfig.Text, contextMenuSettings.JumpInButtonConfig.Sprite, new StringDelegate(OnJumpInClicked));
+            openConversationControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.OpenConversationButtonConfig.Text, contextMenuSettings.OpenConversationButtonConfig.Sprite, new StringDelegate(OnOpenConversationButtonClicked));
+            demoteSpeakerButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(voiceChatContextMenuSettings.DemoteSpeakerText, voiceChatContextMenuSettings.DemoteSpeakerSprite, new StringDelegate(OnDemoteSpeakerClicked));
+            promoteToSpeakerButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(voiceChatContextMenuSettings.PromoteToSpeakerText, voiceChatContextMenuSettings.PromoteToSpeakerSprite, new StringDelegate(OnPromoteToSpeakerClicked));
+            kickFromStreamButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(voiceChatContextMenuSettings.KickFromStreamText, voiceChatContextMenuSettings.KickFromStreamSprite, new StringDelegate(OnKickUserClicked));
+            banFromCommunityButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(voiceChatContextMenuSettings.BanUserText, voiceChatContextMenuSettings.BanUserSprite, new StringDelegate(OnBanUserClicked));
+
+            jumpInButton = new GenericContextMenuElement(jumpInButtonControlSettings, false);
+            demoteSpeakerButton = new GenericContextMenuElement(demoteSpeakerButtonControlSettings, false);
+            promoteToSpeakerButton = new GenericContextMenuElement(promoteToSpeakerButtonControlSettings, false);
+            kickFromStreamButton = new GenericContextMenuElement(kickFromStreamButtonControlSettings, false);
+            banFromCommunityButton = new GenericContextMenuElement(banFromCommunityButtonControlSettings, false);
+            separatorElement = new GenericContextMenuElement(new SeparatorContextMenuControlSettings(voiceChatContextMenuSettings.SeparatorHeight, -voiceChatContextMenuSettings.VerticalPadding.left, -voiceChatContextMenuSettings.VerticalPadding.right), false);
+            viewProfileButton = new GenericContextMenuElement(openUserProfileButtonControlSettings, false);
+            chatButton = new GenericContextMenuElement(openConversationControlSettings, false);
+
+            contextMenu = new GenericContextMenu(voiceChatContextMenuSettings.ContextMenuWidth, CONTEXT_MENU_OFFSET, voiceChatContextMenuSettings.VerticalPadding, voiceChatContextMenuSettings.ElementsSpacing, anchorPoint: ContextMenuOpenDirection.BottomRight)
+                         .AddControl(userProfileControlSettings)
+                         .AddControl(new SeparatorContextMenuControlSettings(voiceChatContextMenuSettings.SeparatorHeight, -voiceChatContextMenuSettings.VerticalPadding.left, -voiceChatContextMenuSettings.VerticalPadding.right))
+                         .AddControl(demoteSpeakerButton)
+                         .AddControl(promoteToSpeakerButton)
+                         .AddControl(kickFromStreamButton)
+                         .AddControl(banFromCommunityButton)
+                         .AddControl(separatorElement)
+                         .AddControl(viewProfileButton)
+                         .AddControl(chatButton)
+                         .AddControl(jumpInButton)
+                          ;
+        }
+
+        public async UniTask ShowUserProfileContextMenuAsync(Profile.CompactInfo targetProfile, Vector3 position, Vector2 offset,
+            CancellationToken ct, UniTask closeMenuTask, Action? onContextMenuHide = null,
+            ContextMenuOpenDirection anchorPoint = ContextMenuOpenDirection.BottomRight,
+            bool targetIsSpeaker = false)
+        {
+
+            var localParticipant = voiceChatOrchestrator.ParticipantsStateService.LocalParticipantState;
+
+            Option<string> localWalletId = localParticipant.WalletId;
+            bool targetIsLocalParticipant = localWalletId.Has && string.Equals(targetProfile.UserId, localWalletId.Value, StringComparison.InvariantCultureIgnoreCase);
+            bool localParticipantIsMod = voiceChatOrchestrator.ParticipantsStateService.LocalParticipantState.Role.Value is VoiceChatParticipantCommunityRole.Moderator or VoiceChatParticipantCommunityRole.Owner;
+
+            closeContextMenuTask.TrySetResult();
+            closeContextMenuTask = new UniTaskCompletionSource();
+            UniTask closeTask = UniTask.WhenAny(closeContextMenuTask.Task, closeMenuTask);
+            UserProfileContextMenuControlSettings.FriendshipStatus contextMenuFriendshipStatus = UserProfileContextMenuControlSettings.FriendshipStatus.Disabled;
+
+            if (!targetIsLocalParticipant && friendsService != null)
+            {
+                FriendshipStatus friendshipStatus = await friendsService.GetFriendshipStatusAsync(targetProfile.UserId, ct);
+                contextMenuFriendshipStatus = ConvertFriendshipStatus(friendshipStatus);
+                jumpInButtonControlSettings.SetData(targetProfile.UserId);
+
+                jumpInButton.Enabled = friendshipStatus == FriendshipStatus.Friend && friendOnlineStatusCache != null &&
+                                                  friendOnlineStatusCache.GetFriendStatus(targetProfile.UserId) != OnlineStatus.Offline;
+            }
+
+            userProfileControlSettings.SetInitialData(targetProfile, contextMenuFriendshipStatus);
+
+            openUserProfileButtonControlSettings.SetData(targetProfile.UserId);
+            openConversationControlSettings.SetData(targetProfile.UserId);
+            demoteSpeakerButtonControlSettings.SetData(targetProfile.UserId);
+            promoteToSpeakerButtonControlSettings.SetData(targetProfile.UserId);
+            kickFromStreamButtonControlSettings.SetData(targetProfile.UserId);
+            banFromCommunityButtonControlSettings.SetData(targetProfile.UserId);
+
+            chatButton.Enabled = !targetIsLocalParticipant;
+            viewProfileButton.Enabled = !targetIsLocalParticipant;
+            separatorElement.Enabled = !targetIsLocalParticipant && localParticipantIsMod;
+            promoteToSpeakerButton.Enabled = !targetIsSpeaker && localParticipantIsMod;
+            demoteSpeakerButton.Enabled = targetIsSpeaker && localParticipantIsMod;
+            kickFromStreamButton.Enabled = !targetIsLocalParticipant && localParticipantIsMod;
+            banFromCommunityButton.Enabled = !targetIsLocalParticipant && localParticipantIsMod;
+
+            contextMenu.ChangeAnchorPoint(anchorPoint);
+
+            if (offset == default(Vector2))
+                offset = CONTEXT_MENU_OFFSET;
+
+            contextMenu.ChangeOffsetFromTarget(offset);
+
+            await mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(
+                new GenericContextMenuParameter(contextMenu, position, actionOnHide: onContextMenuHide, closeTask: closeTask)), ct);
+        }
+
+        private UserProfileContextMenuControlSettings.FriendshipStatus ConvertFriendshipStatus(FriendshipStatus friendshipStatus)
+        {
+            return friendshipStatus switch
+                   {
+                       FriendshipStatus.None => UserProfileContextMenuControlSettings.FriendshipStatus.None,
+                       FriendshipStatus.Friend => UserProfileContextMenuControlSettings.FriendshipStatus.Friend,
+                       FriendshipStatus.RequestSent => UserProfileContextMenuControlSettings.FriendshipStatus.RequestSent,
+                       FriendshipStatus.RequestReceived => UserProfileContextMenuControlSettings.FriendshipStatus.RequestReceived,
+                       FriendshipStatus.Blocked => UserProfileContextMenuControlSettings.FriendshipStatus.Blocked,
+                       _ => UserProfileContextMenuControlSettings.FriendshipStatus.None,
+                   };
+        }
+
+        private void OnFriendsButtonClicked(Profile.CompactInfo userData, UserProfileContextMenuControlSettings.FriendshipStatus friendshipStatus)
+        {
+            switch (friendshipStatus)
+            {
+                case UserProfileContextMenuControlSettings.FriendshipStatus.None:
+                    SendFriendRequest(userData.UserId);
+                    break;
+                case UserProfileContextMenuControlSettings.FriendshipStatus.Friend:
+                    RemoveFriend(userData.UserId);
+                    break;
+                case UserProfileContextMenuControlSettings.FriendshipStatus.RequestSent:
+                    CancelFriendRequest(userData.UserId);
+                    break;
+                case UserProfileContextMenuControlSettings.FriendshipStatus.RequestReceived:
+                    AcceptFriendship(userData.UserId);
+                    break;
+                case UserProfileContextMenuControlSettings.FriendshipStatus.Blocked: break;
+                default: throw new ArgumentOutOfRangeException(nameof(friendshipStatus), friendshipStatus, null);
+            }
+        }
+
+        private void RemoveFriend(string userAddress)
+        {
+            cts = cts.SafeRestart();
+            RemoveFriendAsync(cts.Token).Forget();
+            return;
+
+            async UniTaskVoid RemoveFriendAsync(CancellationToken ct)
+            {
+                await mvcManager.ShowAsync(UnfriendConfirmationPopupController.IssueCommand(new UnfriendConfirmationPopupController.Params
+                {
+                    UserId = new Web3Address(userAddress),
+                }), ct);
+            }
+        }
+
+        private void CancelFriendRequest(string userAddress)
+        {
+            if (friendsService == null) return;
+
+            IFriendsService friendService = friendsService;
+            cts = cts.SafeRestart();
+            CancelFriendRequestThenChangeInteractionStatusAsync(cts.Token).Forget();
+            return;
+
+            async UniTaskVoid CancelFriendRequestThenChangeInteractionStatusAsync(CancellationToken ct)
+            {
+                await friendService.CancelFriendshipAsync(userAddress, ct).SuppressToResultAsync(ReportCategory.FRIENDS);
+            }
+        }
+
+        private void SendFriendRequest(string userAddress)
+        {
+            cts = cts.SafeRestart();
+            ShowFriendRequestUIAsync(cts.Token).Forget();
+            return;
+
+            async UniTaskVoid ShowFriendRequestUIAsync(CancellationToken ct)
+            {
+                await mvcManager.ShowAsync(FriendRequestController.IssueCommand(new FriendRequestParams
+                {
+                    DestinationUser = new Web3Address(userAddress),
+                }), ct);
+            }
+        }
+
+        private void AcceptFriendship(string userAddress)
+        {
+            cts = cts.SafeRestart();
+            IFriendsService friendService = friendsService!;
+
+            AcceptFriendRequestThenChangeInteractionStatusAsync(cts.Token).Forget();
+            return;
+
+            async UniTaskVoid AcceptFriendRequestThenChangeInteractionStatusAsync(CancellationToken ct)
+            {
+                await friendService.AcceptFriendshipAsync(userAddress, ct);
+            }
+        }
+
+        private void OnShowUserPassportClicked(string userId)
+        {
+            cts = cts.SafeRestart();
+            closeContextMenuTask.TrySetResult();
+            ShowPassport(userId, cts.Token).Forget();
+        }
+
+        private void OnOpenConversationButtonClicked(string userId)
+        {
+            closeContextMenuTask.TrySetResult();
+            ChatOpener.Instance.OpenPrivateConversationWithUserId(userId);
+        }
+
+        private void OnJumpInClicked(string userId)
+        {
+            cts = cts.SafeRestart();
+            FriendListSectionUtilities.JumpToFriendLocation(userId, cts, getUserPositionBuffer, onlineUsersProvider, realmNavigator, decentralandUrlsSource,parcel => JumpToFriendClicked(userId, parcel));
+        }
+
+        private UniTask ShowPassport(string userId, CancellationToken ct) =>
+            mvcManager.ShowAsync(PassportController.IssueCommand(new PassportParams(userId)), ct);
+
+        private void JumpToFriendClicked(string targetAddress, Vector2Int parcel) =>
+            analytics.Track(AnalyticsEvents.Friends.JUMP_TO_FRIEND_CLICKED, new JObject
+            {
+                { "receiver_id", targetAddress },
+                { "friend_position", parcel.ToString() },
+            });
+
+        private void OnDemoteSpeakerClicked(string walletId)
+        {
+            voiceChatOrchestrator.DemoteFromSpeakerInCurrentCall(walletId);
+            closeContextMenuTask.TrySetResult();
+        }
+
+        private void OnPromoteToSpeakerClicked(string walletId)
+        {
+            voiceChatOrchestrator.PromoteToSpeakerInCurrentCall(walletId);
+            closeContextMenuTask.TrySetResult();
+        }
+
+        private void OnKickUserClicked(string walletId)
+        {
+            voiceChatOrchestrator.KickPlayerFromCurrentCall(walletId);
+            closeContextMenuTask.TrySetResult();
+        }
+
+        private void OnBanUserClicked(string walletId)
+        {
+            closeContextMenuTask.TrySetResult();
+            ShowBanConfirmationDialog(walletId);
+        }
+
+        private void ShowBanConfirmationDialog(string walletId)
+        {
+            string currentCommunityId = voiceChatOrchestrator.CurrentCommunityId.Value;
+
+            if (!voiceChatOrchestrator.TryGetActiveCommunityData(currentCommunityId, out var community)) return;
+
+            if (!voiceChatOrchestrator.ParticipantsStateService.TryGetParticipantState(walletId, out var participant)) return;
+
+            Option<Profile.CompactInfo> participantProfile = participant.Profile;
+
+            if (!participantProfile.Has) return;
+
+            string communityName = community.communityName;
+
+            cts = cts.SafeRestart();
+            ShowBanConfirmationDialogAsync(cts.Token).Forget();
+            return;
+
+            async UniTaskVoid ShowBanConfirmationDialogAsync(CancellationToken ct)
+            {
+                Result<ConfirmationResult> dialogResult = await ViewDependencies.ConfirmationDialogOpener.OpenConfirmationDialogAsync(new ConfirmationDialogParameter(
+                                                                                         string.Format(BAN_MEMBER_TEXT_FORMAT, participantProfile.Value.Name, communityName),
+                                                                                         BAN_MEMBER_CANCEL_TEXT,
+                                                                                         BAN_MEMBER_CONFIRM_TEXT,
+                                                                                         voiceChatContextMenuSettings.BanUserPopupSprite,
+                                                                                         false, false,
+                                                                                         userInfo: participantProfile.Value),
+                                                                                     ct)
+                                                                                .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+                if (ct.IsCancellationRequested || !dialogResult.Success || dialogResult.Value == ConfirmationResult.Cancel) return;
+
+                BanUser(walletId, currentCommunityId);
+            }
+        }
+
+        private void BanUser(string userWallet, string communityId)
+        {
+            cts = cts.SafeRestart();
+            BanUserAsync(cts.Token).Forget();
+            return;
+
+            async UniTaskVoid BanUserAsync(CancellationToken token)
+            {
+                await communityDataProvider.BanUserFromCommunityAsync(userWallet, communityId, token)
+                                                                   .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+            }
+        }
+    }
+}

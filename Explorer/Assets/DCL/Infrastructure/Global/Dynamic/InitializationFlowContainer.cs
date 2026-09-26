@@ -1,0 +1,119 @@
+﻿using DCL.ApplicationGuards;
+using DCL.Audio;
+using DCL.Character.Plugin;
+using DCL.Chat.History;
+using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.Pulse;
+using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.Multiplayer.HealthChecks;
+using DCL.PrivateWorlds;
+using DCL.Profiles.Self;
+using DCL.RealmNavigation;
+using DCL.RealmNavigation.LoadingOperation;
+using DCL.SceneLoadingScreens.LoadingScreen;
+using DCL.Utilities.Extensions;
+using Global;
+using Global.AppArgs;
+using Global.Dynamic;
+using MVC;
+using System.Collections.Generic;
+
+namespace DCL.UserInAppInitializationFlow
+{
+    public class InitializationFlowContainer
+    {
+        public IUserInAppInitializationFlow InitializationFlow { get; private init; } = null!;
+
+        public static InitializationFlowContainer Create(
+            StaticContainer staticContainer,
+            BootstrapContainer bootstrapContainer,
+            RealmContainer realmContainer,
+            RealmNavigationContainer realmNavigationContainer,
+            TerrainContainer terrainContainer,
+            ILoadingScreen loadingScreen,
+            IHealthCheck liveKitHealthCheck,
+            IMVCManager mvcManager,
+            ISelfProfile selfProfile,
+            DynamicWorldParams dynamicWorldParams,
+            IAppArgs appArgs,
+            AudioClipConfig backgroundMusic,
+            IRoomHub roomHub,
+            bool localSceneDevelopment,
+            CharacterContainer characterContainer,
+            ModerationDataProvider moderationDataProvider,
+            IPulseMultiplayerService pulseMultiplayerService,
+            IProfilePropagation profilePropagation,
+            PulseActivation pulseActivation,
+            PulseRealm pulseRealm,
+            IWorldPermissionsService worldPermissionsService,
+            IChatHistory chatHistory)
+        {
+            ILoadingStatus loadingStatus = staticContainer.LoadingStatus;
+
+            var ensureLivekitConnectionStartupOperation = new EnsureLivekitConnectionStartupOperation(liveKitHealthCheck, roomHub);
+            var blocklistCheckStartupOperation = new BlocklistCheckStartupOperation(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.IdentityCache!, bootstrapContainer.DecentralandUrlsSource, moderationDataProvider);
+            var loadPlayerAvatarStartupOperation = new LoadPlayerAvatarStartupOperation(loadingStatus, selfProfile, staticContainer.MainPlayerAvatarBaseProxy);
+            var startPulseMultiplayerStartupOperation = new StartPulseMultiplayerStartupOperation(pulseMultiplayerService, profilePropagation, selfProfile, pulseActivation, pulseRealm);
+            var loadLandscapeStartupOperation = new LoadLandscapeStartupOperation(loadingStatus, terrainContainer.Landscape);
+            var teleportStartupOperation = new TeleportStartupOperation(loadingStatus, realmContainer.RealmController, staticContainer.ExposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, realmContainer.TeleportController, staticContainer.ExposedGlobalDataContainer.CameraSamplingData, dynamicWorldParams.StartParcel, appArgs, roomHub, dynamicWorldParams.EditorPositionOverrideActive);
+
+            var loadingOperations = new List<IStartupOperation>
+            {
+                blocklistCheckStartupOperation,
+                loadPlayerAvatarStartupOperation,
+                startPulseMultiplayerStartupOperation,
+                loadLandscapeStartupOperation,
+                teleportStartupOperation
+            };
+
+            // The Global PX operation is the 3rd most time-consuming loading stage and it's currently not needed in Local Scene Development
+            // More loading stage measurements for Local Scene Development at https://github.com/decentraland/unity-explorer/pull/3630
+            // TODO review why loadGlobalPxOperation is invoked on recovery
+            if (!localSceneDevelopment)
+                loadingOperations.Add(new LoadGlobalPortableExperiencesStartupOperation(loadingStatus, bootstrapContainer.DebugSettings, staticContainer.PortableExperiencesController));
+
+            var startUpOps = new AnalyticsSequentialLoadingOperation<IStartupOperation.Params>(
+                loadingStatus,
+                loadingOperations,
+                ReportCategory.STARTUP,
+                bootstrapContainer.Analytics.Controller,
+                "start-up");
+
+            startUpOps.AddDebugControl(realmContainer.DebugView.DebugWidgetBuilder, "Initialization Flow");
+
+            var reLoginOps = new AnalyticsSequentialLoadingOperation<IStartupOperation.Params>(
+                loadingStatus,
+                loadingOperations,
+                ReportCategory.STARTUP,
+                bootstrapContainer.Analytics.Controller,
+                "re-login");
+
+            reLoginOps.AddDebugControl(realmContainer.DebugView.DebugWidgetBuilder, "Re-Login Flow");
+
+            return new InitializationFlowContainer
+            {
+                InitializationFlow = new RealUserInAppInitializationFlow(loadingStatus,
+                    bootstrapContainer.DecentralandUrlsSource,
+                    mvcManager,
+                    backgroundMusic,
+                    realmNavigationContainer.RealmNavigator,
+                    loadingScreen,
+                    realmContainer.RealmController,
+                    staticContainer.PortableExperiencesController,
+                    roomHub,
+                    startUpOps,
+                    reLoginOps,
+                    bootstrapContainer.IdentityCache.EnsureNotNull(),
+                    ensureLivekitConnectionStartupOperation,
+                    appArgs,
+                    characterContainer.CharacterObject,
+                    characterContainer.Transform,
+                    dynamicWorldParams.StartParcel,
+                    pulseMultiplayerService,
+                    localSceneDevelopment,
+                    worldPermissionsService,
+                    chatHistory),
+            };
+        }
+    }
+}

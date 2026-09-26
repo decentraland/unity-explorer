@@ -1,0 +1,306 @@
+using CommunicationData.URLHelpers;
+using Cysharp.Threading.Tasks;
+using DCL.Browser;
+using DCL.CharacterPreview;
+using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Profiles;
+using DCL.Profiles.Self;
+using DCL.UI;
+using DCL.Utilities;
+using DCL.Web3;
+using DCL.Web3.Identities;
+using DCL.WebRequests;
+using MVC;
+using System;
+using System.Threading;
+using UnityEngine;
+using static DCL.AuthenticationScreenFlow.AuthenticationScreenController;
+using Avatar = DCL.Profiles.Avatar;
+
+namespace DCL.AuthenticationScreenFlow
+{
+    public class LobbyForNewAccountAuthState : AuthStateBase, IPayloadedState<(Profile profile, string email, bool isRestoredSession, CancellationToken ct)>
+    {
+        private readonly MVCStateMachine<AuthStateBase> fsm;
+        private readonly AuthenticationScreenController controller;
+        private readonly ReactiveProperty<AuthStatus> currentState;
+        private readonly AuthenticationScreenCharacterPreviewController characterPreviewController;
+        private readonly ISelfProfile selfProfile;
+        private readonly LobbyForNewAccountAuthView view;
+
+        private readonly UnityAppWebBrowser webBrowser;
+        private readonly IWebRequestController webRequestController;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
+        private readonly ProfileChangesBus profileChangesBus;
+        private readonly IWeb3IdentityCache identityCache;
+        private readonly Web3Address? referrer;
+
+        private Profile newUserProfile;
+        private string userEmail;
+        private CancellationToken loginCt;
+
+        private readonly CharacterPreviewView characterPreviewView;
+        private readonly Vector3 characterPreviewOrigPosition;
+
+        public LobbyForNewAccountAuthState(MVCStateMachine<AuthStateBase> fsm,
+            AuthenticationScreenView viewInstance,
+            AuthenticationScreenController controller,
+            ReactiveProperty<AuthStatus> currentState,
+            AuthenticationScreenCharacterPreviewController characterPreviewController,
+            ISelfProfile selfProfile,
+            UnityAppWebBrowser webBrowser,
+            IWebRequestController webRequestController,
+            IDecentralandUrlsSource decentralandUrlsSource,
+            ProfileChangesBus profileChangesBus,
+            IWeb3IdentityCache identityCache,
+            string? referrer = null) : base(viewInstance)
+        {
+            view = viewInstance.LobbyForNewAccountAuthView;
+
+            this.fsm = fsm;
+            this.controller = controller;
+            this.currentState = currentState;
+            this.characterPreviewController = characterPreviewController;
+            this.selfProfile = selfProfile;
+            this.webBrowser = webBrowser;
+            this.webRequestController = webRequestController;
+            this.decentralandUrlsSource = decentralandUrlsSource;
+            this.profileChangesBus = profileChangesBus;
+            this.identityCache = identityCache;
+            // Normalized/validated once at construction so the field is always canonical;
+            // an invalid launch-argument value degrades to "no referral tracking".
+            this.referrer = Web3Address.FromUntrusted(referrer);
+
+            characterPreviewView = viewInstance.CharacterPreviewView;
+            characterPreviewOrigPosition = characterPreviewView.transform.localPosition;
+
+            view.OnViewHidden += ReparentCharacterPreview;
+        }
+
+        public void Enter((Profile profile, string email, bool isRestoredSession, CancellationToken ct) payload)
+        {
+            base.Enter();
+
+            loginCt = payload.ct;
+            userEmail = payload.email;
+            newUserProfile = payload.profile;
+
+            // The avatar was already picked in SelectAvatarForNewAccountAuthState
+            UpdateCharacterPreview(payload.profile.Avatar);
+
+            controller.IsCurrentlyNewAccount = true;
+            currentState.Value = payload.isRestoredSession ? AuthStatus.LoggedInCached : AuthStatus.LoggedIn;
+
+            view.Show();
+            characterPreviewView.transform.SetParent(view.transform);
+            characterPreviewView.transform.SetAsFirstSibling();
+            characterPreviewView.transform.localPosition = characterPreviewOrigPosition;
+
+            view.ProfileNameInputField.InputValueChanged += OnProfileNameChanged;
+
+            view.FinalizeNewUserButton.onClick.AddListener(FinalizeNewUser);
+            view.BackButton.onClick.AddListener(OnBackButtonClicked);
+
+            // A guest has no email to subscribe with
+            view.SubscribeRoot.SetActive(!identityCache.IsGuest());
+
+            // Toggle listeners for terms agreement
+            view.SubscribeToggle.SetIsOnWithoutNotify(false);
+            view.TermsOfUse.SetIsOnWithoutNotify(false);
+
+            view.SubscribeToggle.onValueChanged.AddListener(OnToggleChanged);
+            view.TermsOfUse.onValueChanged.AddListener(OnToggleChanged);
+
+            view.TermsOfUseAndPrivacyLink.OnLinkClicked += OpenClickableURL;
+
+            UpdateFinalizeButtonState();
+
+            view.JumpInIcon.SetActive(true);
+            view.FinalizeLoading.SetActive(false);
+        }
+
+        public override void Exit()
+        {
+            characterPreviewController.OnHide();
+
+
+            // Listeners
+            view.ProfileNameInputField.InputValueChanged -= OnProfileNameChanged;
+
+            view.FinalizeNewUserButton.onClick.RemoveAllListeners();
+            view.BackButton.onClick.RemoveAllListeners();
+
+            // Toggle listeners for terms agreement
+            view.SubscribeToggle.onValueChanged.RemoveAllListeners();
+            view.TermsOfUse.onValueChanged.RemoveAllListeners();
+
+            view.SubscribeToggle.SetIsOnWithoutNotify(false);
+            view.TermsOfUse.SetIsOnWithoutNotify(false);
+
+            view.TermsOfUseAndPrivacyLink.OnLinkClicked -= OpenClickableURL;
+            base.Exit();
+        }
+
+        private void ReparentCharacterPreview()
+        {
+            characterPreviewView.transform.SetParent(viewInstance.transform);
+            characterPreviewView.transform.localPosition = characterPreviewOrigPosition;
+        }
+
+        private void OpenClickableURL(string url) =>
+            webBrowser.OpenUrlMainThreadOnly(url);
+
+        private void OnBackButtonClicked()
+        {
+            view.Hide(UIAnimationHashes.SLIDE);
+            controller.ChangeAccount();
+        }
+
+        private void UpdateCharacterPreview(Avatar newAvatar)
+        {
+            newUserProfile.Avatar = newAvatar;
+            characterPreviewController.Initialize(newAvatar, CharacterPreviewUtils.AUTH_SCREEN_PREVIEW_POSITION);
+            characterPreviewController.OnBeforeShow();
+            characterPreviewController.OnShow();
+        }
+
+        private void OnToggleChanged(bool _) =>
+            UpdateFinalizeButtonState();
+
+        private void OnProfileNameChanged(bool _) =>
+            UpdateFinalizeButtonState();
+
+        private void UpdateFinalizeButtonState() =>
+            view.FinalizeNewUserButton.interactable =
+                view.ProfileNameInputField.IsValidName &&
+                view.TermsOfUse.isOn;
+
+        private void FinalizeNewUser()
+        {
+            view.FinalizeNewUserButton.interactable = false;
+            view.BackButton.interactable = false;
+            view.JumpInIcon.SetActive(false);
+            view.FinalizeLoading.SetActive(true);
+
+            if (view.SubscribeToggle.isOn && !string.IsNullOrEmpty(userEmail))
+                SubscribeToNewsletterAsync(userEmail).Forget();
+
+            PublishNewProfileAsync(loginCt).Forget();
+
+            return;
+
+            async UniTaskVoid PublishNewProfileAsync(CancellationToken ct)
+            {
+                try
+                {
+                    newUserProfile.Name = view.ProfileNameInputField.Text;
+
+                    Profile? publishedProfile = await selfProfile.UpdateProfileAsync(newUserProfile, ct, updateAvatarInWorld: false);
+                    newUserProfile = publishedProfile ?? throw new ProfileNotFoundException();
+
+                    // Notify profile-bus subscribers (sidebar thumbnail, explore panel, chat) that the
+                    // freshly created profile is live
+                    profileChangesBus.PushUpdate(newUserProfile);
+
+                    // Register the referral here — awaited BEFORE the user proceeds to the world —
+                    // so the referral exists before the first LOGGED_IN event reaches the backend
+                    // (whose finalize step drops events for referrals that don't exist yet). Best
+                    // effort: a failed call must not fail onboarding.
+                    await RegisterReferralAsync(ct);
+
+                    // Mark the analytics-visible end of the onboarding step. Anything between
+                    // LOGGED_IN (avatar customization shown) and PROFILE_FINALIZED is the user
+                    // setting up their account.
+                    controller.RaiseProfileFinalized();
+
+                    await characterPreviewController.PlayJumpInEmoteAndAwaitItAsync();
+
+                    view.Hide(UIAnimationHashes.OUT);
+                    await UniTask.Delay(ANIMATION_DELAY, cancellationToken: ct);
+                    characterPreviewController.OnHide();
+
+                    fsm.Enter<InitAuthState>();
+                    controller.TrySetLifeCycle();
+                }
+                catch (OperationCanceledException)
+                { /* Expected on cancellation */
+                }
+                catch (Exception e)
+                {
+                    ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
+                    spanErrorInfo = new SpanErrorInfo("Exception on finalizing new user", e);
+
+                    view.Hide(UIAnimationHashes.SLIDE);
+                    fsm.Enter<LoginSelectionAuthState, ErrorType>(ErrorType.ConnectionError);
+                }
+            }
+        }
+
+        /// <summary>
+        ///     Registers the referral: POST creates it, PATCH marks the invited user as signed up.
+        ///     Awaited by the caller so the create completes before the user enters the world, and
+        ///     best-effort so a failure never fails onboarding. Runs on the login-flow token, so
+        ///     abandoning the flow abandons the attribution too.
+        /// </summary>
+        private async UniTask RegisterReferralAsync(CancellationToken ct)
+        {
+            if (referrer == null)
+                return;
+
+            try
+            {
+                string url = decentralandUrlsSource.Url(DecentralandUrl.ReferralProgress);
+
+                // referrer is validated at construction (Web3Address.FromUntrusted), safe to interpolate
+                var jsonBody = $"{{\"referrer\":\"{referrer.Value}\"}}";
+
+                await webRequestController.SignedFetchPostAsync(
+                                               new CommonArguments(URLAddress.FromString(url)),
+                                               GenericPostArguments.CreateJson(jsonBody),
+                                               string.Empty,
+                                               ct)
+                                          .WithNoOpAsync();
+
+                await webRequestController.SignedFetchPatchAsync(
+                                               new CommonArguments(URLAddress.FromString(url)),
+                                               GenericPostArguments.Empty,
+                                               string.Empty,
+                                               ct)
+                                          .WithNoOpAsync();
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e)
+            {
+                // Best-effort attribution: any failure (timeout, network) must not surface as a
+                // Sentry error nor block onboarding. The POST is idempotent server-side (a same-
+                // referrer duplicate returns 204, not an error), so a retry — here on re-entry, or
+                // from a future login-time retry using the launcher-persisted referrer — is safe.
+                ReportHub.LogWarning(ReportCategory.AUTHENTICATION, $"Referral registration failed: {e.Message}");
+            }
+        }
+
+        private async UniTaskVoid SubscribeToNewsletterAsync(string email)
+        {
+            try
+            {
+                string url = decentralandUrlsSource.Url(DecentralandUrl.BuilderApiNewsletter);
+                var jsonBody = $"{{\"email\":\"{email}\",\"source\":\"auth\"}}";
+
+                await webRequestController.PostAsync(
+                                               new CommonArguments(URLAddress.FromString(url)),
+                                               GenericPostArguments.CreateJson(jsonBody),
+                                               CancellationToken.None, // no cancellation for newsletter subscription
+                                               ReportCategory.AUTHENTICATION)
+                                          .WithNoOpAsync();
+            }
+            catch (OperationCanceledException)
+            { /* Ignore cancellation */
+            }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, ReportCategory.AUTHENTICATION);
+            }
+        }
+    }
+}

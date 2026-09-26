@@ -1,0 +1,72 @@
+using DCL.Multiplayer.Connections.Rooms;
+using DCL.SDKComponents.MediaStream;
+using LiveKit.Proto;
+using LiveKit.Rooms.Participants;
+using LiveKit.Rooms.TrackPublications;
+using Newtonsoft.Json;
+using System;
+
+namespace SceneRuntime.Apis.Modules.CommsApi
+{
+    public static class GetActiveVideoStreamsResponse
+    {
+        private static VideoTrackSourceType From(TrackSource trackSource) =>
+            trackSource switch
+            {
+                TrackSource.SourceUnknown => VideoTrackSourceType.VtstUnknown,
+                TrackSource.SourceCamera => VideoTrackSourceType.VtstCamera,
+                TrackSource.SourceMicrophone => VideoTrackSourceType.VtstUnknown,
+                TrackSource.SourceScreenshare => VideoTrackSourceType.VtstScreenShare,
+                TrackSource.SourceScreenshareAudio => VideoTrackSourceType.VtstScreenShare,
+                _ => throw new ArgumentOutOfRangeException()
+            };
+
+        private static string DisplayNameOf(LKParticipant participant)
+        {
+            return string.IsNullOrEmpty(participant.Name) ? participant.Identity : participant.Name;
+        }
+
+        private static void WriteTo(JsonWriter writer, string identity, string trackSid, LKParticipant participant, TrackPublication publication)
+        {
+            var sourceType = From(publication.Source);
+            string displayName = DisplayNameOf(participant);
+
+            writer.WriteStartObject();
+            writer.WritePropertyName("identity");
+            writer.WriteValue(identity);
+            writer.WritePropertyName("trackSid");
+            writer.WriteValue(trackSid);
+            writer.WritePropertyName("sourceType");
+            writer.WriteValue(sourceType);
+            writer.WritePropertyName("name");
+            writer.WriteValue(displayName);
+            writer.WritePropertyName("speaking");
+            writer.WriteValue(participant.Speaking);
+            writer.WritePropertyName("trackName");
+            writer.WriteValue(publication.Name);
+            writer.WritePropertyName("width");
+            writer.WriteValue(publication.Width);
+            writer.WritePropertyName("height");
+            writer.WriteValue(publication.Height);
+            writer.WriteEndObject();
+        }
+
+        public static void WriteTo(JsonWriter writer, string identity, LKParticipant participant, TrackPublication publication)
+        {
+            // like in unity-renderer version trackSid: `livekit-video://${sid}/${videoSid}`,
+            // https://github.com/decentraland/unity-renderer/blob/ae68fec703f3c0ebd2251ce7cff2ad465f6f7f7d/browser-interface/packages/shared/apis/host/CommsAPI.ts#L19
+            string address = identity.ToLivekitAddress(publication.Sid);
+            WriteTo(writer, identity, address, participant, publication);
+        }
+
+        public static void WriteAsCurrentTo(JsonWriter writer, string identity, LKParticipant participant, TrackPublication publication) =>
+            WriteTo(writer, identity, LiveKitMediaExtensions.LIVEKIT_CURRENT_STREAM, participant, publication);
+
+        public enum VideoTrackSourceType
+        {
+            VtstUnknown = 0,
+            VtstCamera = 1,
+            VtstScreenShare = 2,
+        }
+    }
+}

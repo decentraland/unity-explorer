@@ -1,0 +1,87 @@
+using CodeLess.Interfaces;
+using DCL.AvatarRendering.Emotes;
+using DCL.AvatarRendering.Wearables.Components;
+using DCL.CharacterPreview;
+using DCL.UI;
+using System;
+using System.Collections.Generic;
+using DCL.Backpack.AvatarSection.Outfits.Commands;
+using UnityEngine;
+
+namespace DCL.Backpack.BackpackBus
+{
+    [AutoInterface]
+    public class BackpackEventBus : IBackpackEventBus
+    {
+        public event Action<IWearable>? SelectWearableEvent;
+        public event Action<IWearable, bool>? EquipWearableEvent;
+        public event Action<IWearable>? UnEquipWearableEvent;
+        public event Action<int, IEmote, bool>? EquipEmoteEvent;
+        public event Action<int, IEmote?>? UnEquipEmoteEvent;
+        public event Action<int>? EmoteSlotSelectEvent;
+        public event Action<IEmote>? SelectEmoteEvent;
+        public event Action<IReadOnlyCollection<string>>? ForceRenderEvent;
+        public event Action<BackpackSections>? ChangedBackpackSectionEvent;
+        public event Action? DeactivateEvent;
+        public event Action? UnEquipAllEvent;
+        public event Action? UnEquipAllWearablesEvent;
+        public event Action<Color, string>? ChangeColorEvent;
+        public event Action? PublishProfileEvent;
+        public event Action<string?, AvatarWearableCategoryEnum?, string?>? FilterEvent;
+        public event Action<BackpackEquipOutfitCommand, IReadOnlyCollection<IWearable>>? EquipOutfitEvent;
+        public event Action? EquipOutfitCompletedEvent;
+
+        public void SendWearableSelect(IWearable equipWearable) =>
+            SelectWearableEvent?.Invoke(equipWearable);
+
+        public void SendEquipWearable(IWearable equipWearable, bool isManuallyEquipped) =>
+            EquipWearableEvent?.Invoke(equipWearable, isManuallyEquipped);
+
+        public void SendUnEquipWearable(IWearable unEquipWearable) =>
+            UnEquipWearableEvent?.Invoke(unEquipWearable);
+
+        public void SendUnEquipAll() =>
+            UnEquipAllEvent?.Invoke();
+
+        public void SendUnEquipAllWearables()
+        {
+            UnEquipAllWearablesEvent?.Invoke();
+        }
+
+        public void SendChangeColor(Color newColor, string category) =>
+            ChangeColorEvent?.Invoke(newColor, category);
+
+        public void SendForceRender(IReadOnlyCollection<string> forceRender) =>
+            ForceRenderEvent?.Invoke(forceRender);
+
+        public void SendFilter(string? category, AvatarWearableCategoryEnum? categoryEnum, string? searchText) =>
+            FilterEvent?.Invoke(category, categoryEnum, searchText);
+
+        public void SendPublishProfile() =>
+            PublishProfileEvent?.Invoke();
+
+        public void SendUnEquipEmote(int slot, IEmote? emote) =>
+            UnEquipEmoteEvent?.Invoke(slot, emote);
+
+        public void SendEquipEmote(int slot, IEmote emote, bool isManuallyEquipped) =>
+            EquipEmoteEvent?.Invoke(slot, emote, isManuallyEquipped);
+
+        public void SendEmoteSelect(IEmote emote) =>
+            SelectEmoteEvent?.Invoke(emote);
+
+        public void SendEmoteSlotSelect(int slot) =>
+            EmoteSlotSelectEvent?.Invoke(slot);
+
+        public void SendChangedBackpackSectionEvent(BackpackSections backpackSections) =>
+            ChangedBackpackSectionEvent?.Invoke(backpackSections);
+
+        public void SendBackpackDeactivateEvent() =>
+            DeactivateEvent?.Invoke();
+
+        public void SendEquipOutfit(BackpackEquipOutfitCommand command, IReadOnlyCollection<IWearable> wearables) =>
+            EquipOutfitEvent?.Invoke(command, wearables);
+
+        public void SendEquipOutfitCompleted() =>
+            EquipOutfitCompletedEvent?.Invoke();
+    }
+}

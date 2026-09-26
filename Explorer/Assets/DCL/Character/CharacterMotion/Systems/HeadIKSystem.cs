@@ -1,0 +1,229 @@
+﻿using Arch.Core;
+using Arch.System;
+using Arch.SystemGroups;
+using Arch.SystemGroups.DefaultSystemGroups;
+using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.AvatarRendering.Emotes;
+using Utility.Animations;
+using DCL.Character;
+using DCL.Character.CharacterMotion.Components;
+using DCL.Character.Components;
+using DCL.CharacterCamera;
+using DCL.CharacterMotion.Components;
+using DCL.CharacterMotion.IK;
+using DCL.CharacterMotion.Settings;
+using DCL.CharacterPreview.Components;
+using DCL.DebugUtilities;
+using DCL.DebugUtilities.UIBindings;
+using DCL.Diagnostics;
+using DCL.FeatureFlags;
+using DCL.InWorldCamera;
+using DCL.Multiplayer.Movement;
+using ECS.Abstract;
+using ECS.LifeCycle.Components;
+using System.Runtime.CompilerServices;
+using UnityEngine;
+#if UNITY_EDITOR
+using DCL.AvatarRendering.DemoScripts.Components;
+#endif
+
+namespace DCL.CharacterMotion.Systems
+{
+    [LogCategory(ReportCategory.MOTION)]
+    [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [UpdateAfter(typeof(ChangeCharacterPositionGroup))]
+    public partial class HeadIKSystem : BaseUnityLoopSystem
+    {
+        private bool debugHeadIKIsEnabled;
+        private SingleInstanceEntity camera;
+        private SingleInstanceEntity playerEntity;
+        private readonly ElementBinding<float> verticalLimit;
+        private readonly ElementBinding<float> horizontalLimit;
+        private readonly ElementBinding<float> horizontalReset;
+        private readonly ElementBinding<float> speed;
+        private readonly ICharacterControllerSettings settings;
+        private readonly DCLInput dclInput;
+        private float remotePlayersDistanceSq;
+
+        private HeadIKSystem(World world, IDebugContainerBuilder builder, ICharacterControllerSettings settings) : base(world)
+        {
+            this.settings = settings;
+            dclInput = DCLInput.Instance;
+
+            verticalLimit = new ElementBinding<float>(0);
+            horizontalLimit = new ElementBinding<float>(0);
+            horizontalReset = new ElementBinding<float>(0);
+            speed = new ElementBinding<float>(0);
+
+            builder.TryAddWidget("Locomotion: Head IK")
+                  ?.AddToggleField("Enabled", (evt) => { debugHeadIKIsEnabled = evt.newValue; }, true)
+                   .AddFloatField("Vertical Limit", verticalLimit)
+                   .AddFloatField("Horizontal Limit", horizontalLimit)
+                   .AddFloatField("Horizontal Reset", horizontalReset)
+                   .AddFloatField("Rotation Speed", speed);
+        }
+
+        public override void Initialize()
+        {
+            camera = World.CacheCamera();
+            playerEntity = World.CachePlayer();
+
+            debugHeadIKIsEnabled = settings.HeadIKIsEnabled;
+            verticalLimit.Value = settings.HeadIKVerticalAngleLimit;
+            horizontalLimit.Value = settings.HeadIKHorizontalAngleLimit;
+            horizontalReset.Value = settings.HeadIKHorizontalAngleReset;
+            speed.Value = settings.HeadIKRotationSpeed;
+            remotePlayersDistanceSq = settings.HeadIKRemotePlayersDistance * settings.HeadIKRemotePlayersDistance;
+        }
+
+        protected override void Update(float t)
+        {
+            UpdateDebugValues();
+            UpdatePreviewAvatarIKQuery(World, t);
+
+            UpdateIKQuery(World, t, in camera.GetCameraComponent(World), World.Has<InWorldCameraComponent>(camera));
+
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.HeadSync) && playerEntity != Entity.Null && World.TryGet<CharacterTransform>(playerEntity, out var playerTransform))
+                UpdateRemoteIKQuery(World, t, playerTransform.Position);
+        }
+
+        [Query]
+        [None(typeof(DeleteEntityIntention))]
+        private void UpdatePreviewAvatarIK([Data] float dt, in CharacterPreviewComponent previewComponent, ref HeadIKComponent headIK,
+            ref AvatarBase avatarBase, in CharacterEmoteComponent emoteComponent)
+        {
+            bool isEnabled = emoteComponent.CurrentEmoteReference == null && debugHeadIKIsEnabled && headIK.IsEnabled;
+            avatarBase.HeadIKRig.weight = Mathf.MoveTowards(avatarBase.HeadIKRig.weight, isEnabled ? 1 : 0, settings.HeadIKWeightChangeSpeed * dt);
+
+            if (!isEnabled) return;
+
+            (Vector3 bottomLeft, Vector3 topRight) = GetImageScreenCorners(previewComponent.RenderImageRect);
+            Vector3 viewportPos = previewComponent.Camera.WorldToViewportPoint(avatarBase.HeadPositionConstraint.position);
+
+            Vector3 objectScreenPos = new Vector3(
+                Mathf.Lerp(bottomLeft.x, topRight.x, viewportPos.x),
+                Mathf.Lerp(bottomLeft.y, topRight.y, viewportPos.y),
+                previewComponent.Settings.MinAvatarDepth);
+
+            if(!dclInput.UI.Point.enabled)
+                dclInput.UI.Point.Enable();
+
+            Vector2 mousePos = dclInput.UI.Point.ReadValue<Vector2>();
+            Vector3 mouseScreenPos = new Vector3(mousePos.x, mousePos.y, 0);
+
+            var screenVector = objectScreenPos - mouseScreenPos;
+            screenVector.y = -screenVector.y;
+            screenVector.z = LerpAvatarDepth(previewComponent, screenVector);
+
+            ApplyHeadLookAt.Execute(screenVector.normalized, avatarBase, dt * previewComponent.Settings.HeadMoveSpeed, settings, useFrontalReset: false);
+        }
+
+        private static float LerpAvatarDepth(CharacterPreviewComponent previewComponent, Vector3 screenVector)
+        {
+            float screenVector2DMagnitude = new Vector2(screenVector.x, screenVector.y).magnitude;
+            float screenHalfDiagonal = new Vector2(Screen.width, Screen.height).magnitude / 2;
+            float normalizedMagnitude = Mathf.Clamp01(screenVector2DMagnitude / screenHalfDiagonal);
+            float minZ = previewComponent.Settings.MinAvatarDepth;
+            float maxZ = previewComponent.Settings.MaxAvatarDepth;
+
+            return Mathf.Lerp(minZ, maxZ, normalizedMagnitude);
+        }
+
+        private static (Vector3 bottomLeft, Vector3 topRight) GetImageScreenCorners(RectTransform imageRect)
+        {
+            Rect rect = imageRect.rect;
+            var bottomLeftLocal = new Vector3(rect.x, rect.y, 0.0f);
+            var topRightLocal = new Vector3(rect.xMax, rect.yMax, 0.0f);
+
+            Matrix4x4 localToWorldMatrix = imageRect.transform.localToWorldMatrix;
+
+            return (
+                bottomLeft: RectTransformUtility.WorldToScreenPoint(null, localToWorldMatrix.MultiplyPoint(bottomLeftLocal)),
+                topRight: RectTransformUtility.WorldToScreenPoint(null, localToWorldMatrix.MultiplyPoint(topRightLocal)));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void UpdateDebugValues()
+        {
+            settings.HeadIKVerticalAngleLimit = verticalLimit.Value;
+            settings.HeadIKHorizontalAngleLimit = horizontalLimit.Value;
+            settings.HeadIKHorizontalAngleReset = horizontalReset.Value;
+            settings.HeadIKRotationSpeed = speed.Value;
+        }
+
+        [Query]
+#if UNITY_EDITOR
+        // This prevents all random avatars from moving the head when the player's camera is moved
+        [None(typeof(RandomAvatar))]
+#endif
+        [None(typeof(RemotePlayerMovementComponent), typeof(DeleteEntityIntention))]
+        private void UpdateIK([Data] float dt,
+            [Data] in CameraComponent cameraComponent,
+            [Data] bool inWorldCameraActive,
+            ref HeadIKComponent headIK,
+            ref AvatarBase avatarBase,
+            in CharacterRigidTransform rigidTransform,
+            in StunComponent stunComponent,
+            in CharacterEmoteComponent emoteComponent,
+            in CharacterPlatformComponent platformComponent,
+            in HandPointAtComponent handPointAtComponent)
+        {
+            // Check the upper body layer animator state to detect masked emotes.
+            // The component lives in scene worlds (not global), so we check the animator directly.
+            int maskedLayerTag = avatarBase.GetAnimatorCurrentStateTag(avatarBase.UpperBodyLayerIndex);
+            bool isPlayingMaskedEmote = maskedLayerTag == AnimationHashes.MASKED_EMOTE || maskedLayerTag == AnimationHashes.MASKED_EMOTE_LOOP;
+
+            bool pitchEnabled = debugHeadIKIsEnabled &&
+                                rigidTransform is { IsGrounded: true, IsOnASteepSlope: false } &&
+                                !(rigidTransform.MoveVelocity.Velocity.sqrMagnitude > 0.5f) &&
+                                !stunComponent.IsStunned &&
+                                !emoteComponent.IsPlayingEmote &&
+                                !isPlayingMaskedEmote &&
+                                !platformComponent.PositionChanged;
+            bool yawEnabled = pitchEnabled && cameraComponent.Mode != CameraMode.FirstPerson;
+            headIK.SetEnabled(yawEnabled, pitchEnabled);
+
+            avatarBase.HeadIKRig.weight = UpdateIKWeight(avatarBase.HeadIKRig.weight, headIK.IsEnabled, settings.HeadIKWeightChangeSpeed * dt);
+
+            // TODO: When enabling and disabling we should reset the reference position
+            if (!headIK.IsEnabled || inWorldCameraActive) return;
+
+            // TODO: Tie this to a proper look-at system to decide what to look at
+            headIK.LookAt = handPointAtComponent.IsPointing
+                ? handPointAtComponent.WorldHitPoint - avatarBase.HeadAnchorPoint.position
+                : cameraComponent.Camera.transform.forward;
+
+            ApplyHeadLookAt.Execute(headIK.LookAt, avatarBase, dt, settings);
+        }
+
+        [Query]
+        [All(typeof(RemotePlayerMovementComponent))]
+        [None(typeof(DeleteEntityIntention))]
+        private void UpdateRemoteIK([Data] float dt, [Data] Vector3 playerPosition, ref HeadIKComponent headIK, ref AvatarBase avatarBase, in CharacterTransform transform)
+        {
+            // Head IK enabled flag and look-at vector are received from the remote client
+
+            bool isEnabled = debugHeadIKIsEnabled && headIK.IsEnabled;
+
+            if (isEnabled)
+            {
+                // Prevent calculations if the remote avatar is beyond a certain distance
+                float distanceSq = (playerPosition - transform.Position).sqrMagnitude;
+                isEnabled &= distanceSq < remotePlayersDistanceSq;
+            }
+
+            avatarBase.HeadIKRig.weight = UpdateIKWeight(avatarBase.HeadIKRig.weight, isEnabled, settings.HeadIKWeightChangeSpeed * dt);
+
+            if (!isEnabled) return;
+
+            Vector3 lookAt = headIK.LookAt.sqrMagnitude > 0.0001f
+                ? headIK.LookAt
+                : avatarBase.HeadIKRig.transform.forward;
+
+            ApplyHeadLookAt.Execute(lookAt, headIK.YawEnabled, headIK.PitchEnabled, avatarBase, dt, settings);
+        }
+
+        private float UpdateIKWeight(float current, bool isEnabled, float maxDelta) =>
+            Mathf.MoveTowards(current, isEnabled ? 1 : 0, maxDelta);
+    }
+}

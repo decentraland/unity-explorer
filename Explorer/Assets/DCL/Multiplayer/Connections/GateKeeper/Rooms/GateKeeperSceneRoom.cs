@@ -1,0 +1,240 @@
+using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.GateKeeper.Meta;
+using DCL.Multiplayer.Connections.GateKeeper.Rooms.Options;
+using DCL.Multiplayer.Connections.Rooms.Connective;
+using DCL.WebRequests;
+using DCL.LiveKit.Public;
+using System;
+using System.Threading;
+
+namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
+{
+    public class GateKeeperSceneRoom : ConnectiveRoom
+    {
+        private class Activatable : ActivatableConnectiveRoom, IGateKeeperSceneRoom
+        {
+            private readonly GateKeeperSceneRoom origin;
+
+            public Activatable(GateKeeperSceneRoom origin, bool initialState = true) : base(origin, initialState)
+            {
+                this.origin = origin;
+                origin.CurrentSceneRoomConnected += OnCurrentSceneRoomConnected;
+                origin.CurrentSceneRoomDisconnected += OnCurrentSceneRoomDisconnected;
+                origin.CurrentSceneRoomForbiddenAccess += OnCurrentSceneRoomForbiddenAccess;
+            }
+
+            public bool IsSceneConnected(string? sceneId) =>
+                origin.IsSceneConnected(sceneId);
+
+            public override void Dispose()
+            {
+                origin.CurrentSceneRoomConnected -= OnCurrentSceneRoomConnected;
+                origin.CurrentSceneRoomDisconnected -= OnCurrentSceneRoomDisconnected;
+                origin.CurrentSceneRoomForbiddenAccess -= OnCurrentSceneRoomForbiddenAccess;
+                base.Dispose();
+            }
+
+            public event Action? CurrentSceneRoomConnected;
+            public event Action? CurrentSceneRoomDisconnected;
+            public event Action? CurrentSceneRoomForbiddenAccess;
+            public MetaData? ConnectedScene => origin.ConnectedScene;
+
+            public bool IsSceneRoomSettled(string sceneId)
+            {
+                // States in which the room will never connect must not hold callers waiting
+                if (!Activated || origin.options.IsCommsOffline || AttemptToConnectState is AttemptToConnectState.ForbiddenAccess)
+                    return true;
+
+                return IsSceneConnected(sceneId);
+            }
+
+            private void OnCurrentSceneRoomConnected() =>
+                CurrentSceneRoomConnected?.Invoke();
+
+            private void OnCurrentSceneRoomDisconnected() =>
+                CurrentSceneRoomDisconnected?.Invoke();
+
+            private void OnCurrentSceneRoomForbiddenAccess() =>
+                CurrentSceneRoomForbiddenAccess?.Invoke();
+        }
+
+        private readonly IWebRequestController webRequests;
+        private readonly GateKeeperSceneRoomOptions options;
+
+        private event Action? CurrentSceneRoomConnected;
+        private event Action? CurrentSceneRoomDisconnected;
+        private event Action? CurrentSceneRoomForbiddenAccess;
+        private MetaData? currentMetaData;
+
+        public MetaData? ConnectedScene => currentMetaData;
+
+        public GateKeeperSceneRoom(
+            IWebRequestController webRequests,
+            GateKeeperSceneRoomOptions options
+        )
+        {
+            this.webRequests = webRequests;
+            this.options = options;
+        }
+
+        public IGateKeeperSceneRoom AsActivatable() =>
+            new Activatable(this);
+
+        private bool IsSceneConnected(string? sceneId)
+        {
+            if (options.IsCommsOffline)
+                return false;
+
+            if (CurrentState() is not IConnectiveRoom.State.Running)
+                return false;
+
+            if (options.SceneRoomMetaDataSource.ScenesCommunicationIsIsolated
+                && !string.Equals(sceneId, currentMetaData?.sceneId, StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            return true;
+        }
+
+        public override async UniTask StopAsync()
+        {
+            await base.StopAsync();
+
+            // We need to reset the metadata, so we can later re-connect to the scene on RunConnectCycleStepAsync.ProcessMetaDataAsync
+            // Otherwise flows like the logout->login will not work due to metadata not changing
+            currentMetaData = null;
+
+            CurrentSceneRoomDisconnected?.Invoke();
+        }
+
+        protected override void OnForbiddenAccess()
+        {
+            base.OnForbiddenAccess();
+
+            // We need to notify the upper layer that the current room is forbidden (that means the player is banned)
+            CurrentSceneRoomForbiddenAccess?.Invoke();
+        }
+
+        protected override RoomSelection SelectValidRoom() =>
+            options.SceneRoomMetaDataSource.GetMetadataInput().Equals(currentMetaData.GetValueOrDefault()) ? RoomSelection.Previous : RoomSelection.New;
+
+        protected override UniTask PrewarmAsync(CancellationToken token) =>
+            UniTask.CompletedTask;
+
+        protected override async UniTask CycleStepAsync(CancellationToken token)
+        {
+            if (options.IsCommsOffline)
+            {
+                if (AttemptToConnectState is not AttemptToConnectState.NoConnectionRequired)
+                    SetNoConnectionRequired();
+                return;
+            }
+
+            MetaData meta = default;
+
+            try
+            {
+                // Captured so the waits below can detect input changes that occur while this cycle is busy awaiting
+                MetaData.Input input = options.SceneRoomMetaDataSource.GetMetadataInput();
+                var result = await options.SceneRoomMetaDataSource.MetaDataAsync(input, token);
+
+                if (result.Success == false)
+                    return;
+
+                meta = result.Value;
+
+                UniTask waitForReconnectionRequiredTask;
+
+                // Disconnect if no sceneId assigned, disconnection can't be interrupted
+                if (meta.sceneId == null)
+                {
+                    await DisconnectCurrentRoomAsync(true, token);
+                    CurrentSceneRoomDisconnected?.Invoke();
+
+                    // After disconnection we need to wait for metadata to change
+                    waitForReconnectionRequiredTask = WaitForMetadataInputChangedAsync(input, token);
+
+                    currentMetaData = meta;
+
+                    async UniTask WaitForMetadataInputChangedAsync(MetaData.Input usedInput, CancellationToken ct)
+                    {
+                        while (options.SceneRoomMetaDataSource.GetMetadataInput().Equals(usedInput))
+                            await UniTask.Yield(ct);
+                    }
+                }
+                else
+                {
+                    if (!meta.Equals(currentMetaData.GetValueOrDefault()) || Room().Info.ConnectionState != LKConnectionState.ConnConnected)
+                    {
+                        string connectionString = await ConnectionStringAsync(meta.sceneId, meta, token);
+
+                        if (Room().Info.ConnectionState != LKConnectionState.ConnConnected)
+                            currentMetaData = null;
+
+                        // if the player returns to the previous scene but the new room has been connected, the previous connection should be preserved
+                        // and the new connection should be discarded
+                        RoomSelection roomSelection = await TryConnectToRoomAsync(
+                            connectionString,
+                            token);
+
+                        CurrentSceneRoomConnected?.Invoke();
+
+                        if (roomSelection == RoomSelection.New)
+                            currentMetaData = meta;
+                    }
+
+                    waitForReconnectionRequiredTask = WaitForReconnectionRequiredAsync(input, token);
+
+                    // Either room has disconnected or metadata has changed
+                    async UniTask WaitForReconnectionRequiredAsync(MetaData.Input usedInput, CancellationToken ct)
+                    {
+                        while (CurrentState() is IConnectiveRoom.State.Running
+                               && Room().Info.ConnectionState == LKConnectionState.ConnConnected
+                               && options.SceneRoomMetaDataSource.GetMetadataInput().Equals(usedInput))
+                            await UniTask.Yield(ct);
+                    }
+                }
+
+                await waitForReconnectionRequiredTask;
+            }
+            catch (Exception e) when (e is not OperationCanceledException)
+            {
+                // if we don't catch an exception, any failure leads to the loop being stopped
+                ReportHub.Log(ReportCategory.COMMS_SCENE_HANDLER, $"Exception occured in {nameof(CycleStepAsync)} when {meta} was being processed: {e}");
+
+                // The upper layer has a recovery loop on its own so notify it
+                throw;
+            }
+        }
+
+        private async UniTask<string> ConnectionStringAsync(string sceneId, MetaData meta, CancellationToken token)
+        {
+            string url = options.GetAdapterURL(sceneId);
+
+            ReportHub.Log(ReportCategory.COMMS_SCENE_HANDLER,
+                $"[GateKeeperSceneRoom] Requesting adapter from '{url}' for scene '{sceneId}' (secretLength={options.RealmData.WorldCommsSecret.Length})");
+
+            if (!string.IsNullOrEmpty(options.RealmData.WorldCommsSecret))
+                ReportHub.LogWarning(ReportCategory.COMMS_SCENE_HANDLER,
+                    $"[GateKeeperSceneRoom] Non-empty WorldCommsSecret is being sent for scene '{sceneId}'.");
+
+            AdapterResponse response = await webRequests
+                                            .SignedFetchPostAsync(url, meta.BuildWithSecret(options.RealmData.WorldCommsSecret, options.HardwareFingerprint), token)
+                                            .CreateFromJson<AdapterResponse>(WRJsonParser.Unity);
+            
+            string connectionString = string.IsNullOrEmpty(response.adapter) ? response.fixedAdapter : response.adapter;
+            
+            ReportHub.WithReport(ReportCategory.COMMS_SCENE_HANDLER).Log($"String is: {connectionString}");
+            
+            return connectionString;
+        }
+
+        [Serializable]
+        private struct AdapterResponse
+        {
+            public string adapter;
+            public string fixedAdapter;
+        }
+
+    }
+}

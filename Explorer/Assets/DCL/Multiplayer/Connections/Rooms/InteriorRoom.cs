@@ -1,0 +1,299 @@
+using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.Rooms.Connective;
+using DCL.Multiplayer.Connections.Rooms.Interior;
+using LiveKit.Proto;
+using LiveKit.Rooms;
+using LiveKit.Rooms.ActiveSpeakers;
+using LiveKit.Rooms.DataPipes;
+using LiveKit.Rooms.Info;
+using LiveKit.Rooms.Participants;
+
+#if !UNITY_WEBGL || UNITY_EDITOR
+using LiveKit.Rooms.Streaming.Audio;
+using LiveKit.Rooms.TrackPublications;
+#endif
+
+using LiveKit.Rooms.Tracks;
+using LiveKit.Rooms.Tracks.Hub;
+using LiveKit.Rooms.VideoStreaming;
+using System;
+using System.Threading;
+using UnityEngine.Pool;
+using RichTypes;
+using DCL.LiveKit.Public;
+
+namespace DCL.Multiplayer.Connections.Rooms
+{
+    public class InteriorRoom : IRoom, IInterior<IRoom>
+    {
+        private readonly InteriorActiveSpeakers activeSpeakers = new ();
+        private readonly InteriorParticipantsHub participants = new ();
+        private readonly InteriorDataPipe dataPipe = new ();
+
+#if !UNITY_WEBGL || UNITY_EDITOR
+        private readonly InteriorVideoStreams videoStreams = new ();
+        private readonly InteriorAudioStreams audioStreams = new ();
+        private readonly InteriorLocalTracks localTracks = new ();
+#endif
+
+        private const int RESET_ROOM_TIMEOUT_SECONDS = 5;
+
+        public IActiveSpeakers ActiveSpeakers => activeSpeakers;
+        public IParticipantsHub Participants => participants;
+        public IDataPipe DataPipe => dataPipe;
+        public IRoomInfo Info => assigned.Info;
+
+#if !UNITY_WEBGL || UNITY_EDITOR
+        public IVideoStreams VideoStreams => videoStreams;
+        public IAudioStreams AudioStreams => audioStreams;
+        public ILocalTracks LocalTracks => localTracks;
+#endif
+
+        internal IRoom assigned { get; private set; } = NullRoom.INSTANCE;
+
+        public event Room.MetaDelegate? RoomMetadataChanged;
+        public event Room.SidDelegate? RoomSidChanged;
+
+#if !UNITY_WEBGL || UNITY_EDITOR
+        public event LocalPublishDelegate? LocalTrackPublished;
+        public event LocalPublishDelegate? LocalTrackUnpublished;
+        public event PublishDelegate? TrackPublished;
+        public event PublishDelegate? TrackUnpublished;
+        public event SubscribeDelegate? TrackSubscribed;
+        public event SubscribeDelegate? TrackUnsubscribed;
+        public event MuteDelegate? TrackMuted;
+        public event MuteDelegate? TrackUnmuted;
+#endif
+
+        public event ConnectionQualityChangeDelegate? ConnectionQualityChanged;
+        public event ConnectionStateChangeDelegate? ConnectionStateChanged;
+        public event ConnectionDelegate? ConnectionUpdated;
+
+        /// <summary>
+        ///     It's not safe to call this method as the previous room can be "forgotten" without notifications
+        /// </summary>
+        public void Assign(IRoom room, out IRoom? previous)
+        {
+            if (assigned is { Info: { ConnectionState: LKConnectionState.ConnConnected or LKConnectionState.ConnReconnecting } })
+                ReportHub.LogError(ReportCategory.LIVEKIT, "Assigning a new room without disconnecting the previous one");
+
+            previous = assigned;
+
+            Unsubscribe(previous);
+
+            previous = previous is NullRoom ? null : previous;
+
+            assigned = room;
+
+            Subscribe(assigned);
+        }
+
+        /// <summary>
+        ///     Disconnects from the current room and connects to the <see cref="NullRoom" />
+        /// </summary>
+        public UniTask ResetRoom(IObjectPool<IRoom> roomsPool, CancellationToken ct) =>
+            SwapRoomsAsync(RoomSelection.New, assigned, NullRoom.INSTANCE, roomsPool, ct);
+
+        /// <summary>
+        ///     Disconnects from the current room and connects to the <see cref="NullRoom" /> without using the RoomPool
+        /// </summary>
+        public async UniTask ResetRoomAsync(CancellationToken ct)
+        {
+            var disconnectTask = assigned.DisconnectAsync(ct);
+            var timeoutTask = UniTask.Delay(TimeSpan.FromSeconds(RESET_ROOM_TIMEOUT_SECONDS), cancellationToken: ct);
+            var winIndex = await UniTask.WhenAny(disconnectTask, timeoutTask);
+            if (winIndex != 0)
+            {
+                ReportHub.LogWarning(ReportCategory.LIVEKIT, $"ResetRoomAsync timed out after {RESET_ROOM_TIMEOUT_SECONDS} seconds");
+            }
+            Unsubscribe(assigned);
+            assigned = NullRoom.INSTANCE;
+        }
+
+        internal async UniTask SwapRoomsAsync(RoomSelection roomSelection, IRoom previous, IRoom newRoom, IObjectPool<IRoom> roomsPool, CancellationToken ct)
+        {
+            switch (roomSelection)
+            {
+                case RoomSelection.New:
+                    // Disconnect the previous room, but make its callbacks pass through
+                    try { await previous.DisconnectAsync(ct); }
+                    finally
+                    {
+                        Unsubscribe(previous);
+
+                        assigned = newRoom;
+
+                        if (previous is not NullRoom)
+                            roomsPool.Release(previous);
+
+                        Subscribe(newRoom);
+
+                        // During the connection we skipped the connection callback, so we need to notify the subscribers
+                        if (newRoom is not NullRoom)
+                            SimulateConnectionStateChanged();
+                    }
+
+                    break;
+                case RoomSelection.Previous:
+                    // drop the new room
+                    await newRoom.DisconnectAsync(ct);
+
+                    // don't change the assigned room
+                    break;
+                default: throw new ArgumentOutOfRangeException(nameof(roomSelection));
+            }
+        }
+
+        public void SimulateConnectionStateChanged()
+        {
+            // It's not clear why LiveKit has two different events for the same thing
+            LKConnectionState currentState = assigned.Info.ConnectionState;
+
+            ConnectionUpdate connectionUpdate = currentState switch
+                                                {
+                                                    LKConnectionState.ConnConnected => ConnectionUpdate.Connected,
+                                                    LKConnectionState.ConnDisconnected => ConnectionUpdate.Disconnected,
+                                                    LKConnectionState.ConnReconnecting => ConnectionUpdate.Reconnecting,
+                                                    _ => throw new ArgumentOutOfRangeException(),
+                                                };
+
+            // TODO check the order of these messages
+            ConnectionUpdated?.Invoke(assigned, connectionUpdate);
+            ConnectionStateChanged?.Invoke(currentState);
+        }
+
+        private void Subscribe(IRoom room)
+        {
+            activeSpeakers.Assign(room.ActiveSpeakers);
+            participants.Assign(room.Participants);
+            dataPipe.Assign(room.DataPipe);
+
+#if !UNITY_WEBGL || UNITY_EDITOR
+            videoStreams.Assign(room.VideoStreams);
+            audioStreams.Assign(room.AudioStreams);
+            localTracks.Assign(room.LocalTracks);
+#endif
+
+            room.RoomMetadataChanged += RoomOnRoomMetadataChanged;
+            room.RoomSidChanged += RoomOnRoomSidChanged;
+
+#if !UNITY_WEBGL || UNITY_EDITOR
+            room.LocalTrackPublished += RoomOnLocalTrackPublished;
+            room.LocalTrackUnpublished += RoomOnLocalTrackUnpublished;
+            room.TrackPublished += RoomOnTrackPublished;
+            room.TrackUnpublished += RoomOnTrackUnpublished;
+            room.TrackSubscribed += RoomOnTrackSubscribed;
+            room.TrackUnsubscribed += RoomOnTrackUnsubscribed;
+            room.TrackMuted += RoomOnTrackMuted;
+            room.TrackUnmuted += RoomOnTrackUnmuted;
+#endif
+
+            room.ConnectionQualityChanged += RoomOnConnectionQualityChanged;
+            room.ConnectionStateChanged += RoomOnConnectionStateChanged;
+            room.ConnectionUpdated += RoomOnConnectionUpdated;
+        }
+
+        private void Unsubscribe(IRoom previous)
+        {
+            previous.RoomMetadataChanged -= RoomOnRoomMetadataChanged;
+            previous.RoomSidChanged -= RoomOnRoomSidChanged;
+
+#if !UNITY_WEBGL || UNITY_EDITOR
+            previous.LocalTrackPublished -= RoomOnLocalTrackPublished;
+            previous.LocalTrackUnpublished -= RoomOnLocalTrackUnpublished;
+            previous.TrackPublished -= RoomOnTrackPublished;
+            previous.TrackUnpublished -= RoomOnTrackUnpublished;
+            previous.TrackSubscribed -= RoomOnTrackSubscribed;
+            previous.TrackUnsubscribed -= RoomOnTrackUnsubscribed;
+            previous.TrackMuted -= RoomOnTrackMuted;
+            previous.TrackUnmuted -= RoomOnTrackUnmuted;
+#endif
+
+            previous.ConnectionQualityChanged -= RoomOnConnectionQualityChanged;
+            previous.ConnectionStateChanged -= RoomOnConnectionStateChanged;
+            previous.ConnectionUpdated -= RoomOnConnectionUpdated;
+        }
+
+        private void RoomOnConnectionUpdated(IRoom room, ConnectionUpdate connectionupdate, LKDisconnectReason? disconnectReason = null)
+        {
+            ConnectionUpdated?.Invoke(room, connectionupdate, disconnectReason);
+        }
+
+        private void RoomOnConnectionStateChanged(LKConnectionState connectionstate)
+        {
+            ConnectionStateChanged?.Invoke(connectionstate);
+        }
+
+        private void RoomOnConnectionQualityChanged(
+                LKConnectionQuality quality,
+                LKParticipant participant)
+        {
+            ConnectionQualityChanged?.Invoke(quality, participant);
+        }
+
+#if !UNITY_WEBGL || UNITY_EDITOR
+        private void RoomOnTrackUnmuted(global::LiveKit.Rooms.TrackPublications.TrackPublication publication, LKParticipant participant)
+        {
+            TrackUnmuted?.Invoke(publication, participant);
+        }
+
+        private void RoomOnTrackMuted(global::LiveKit.Rooms.TrackPublications.TrackPublication publication, LKParticipant participant)
+        {
+            TrackMuted?.Invoke(publication, participant);
+        }
+
+        private void RoomOnTrackUnsubscribed(global::LiveKit.Rooms.Tracks.ITrack track, global::LiveKit.Rooms.TrackPublications.TrackPublication publication, LKParticipant participant)
+        {
+            TrackUnsubscribed?.Invoke(track, publication, participant);
+        }
+
+        private void RoomOnTrackSubscribed(global::LiveKit.Rooms.Tracks.ITrack track, global::LiveKit.Rooms.TrackPublications.TrackPublication publication, LKParticipant participant)
+        {
+            TrackSubscribed?.Invoke(track, publication, participant);
+        }
+
+        private void RoomOnTrackUnpublished(global::LiveKit.Rooms.TrackPublications.TrackPublication publication, LKParticipant participant)
+        {
+            TrackUnpublished?.Invoke(publication, participant);
+        }
+
+        private void RoomOnTrackPublished(global::LiveKit.Rooms.TrackPublications.TrackPublication publication, LKParticipant participant)
+        {
+            TrackPublished?.Invoke(publication, participant);
+        }
+
+        private void RoomOnLocalTrackUnpublished(global::LiveKit.Rooms.TrackPublications.TrackPublication publication, LKParticipant participant)
+        {
+            LocalTrackUnpublished?.Invoke(publication, participant);
+        }
+
+        private void RoomOnLocalTrackPublished(global::LiveKit.Rooms.TrackPublications.TrackPublication publication, LKParticipant participant)
+        {
+            LocalTrackPublished?.Invoke(publication, participant);
+        }
+#endif
+
+        private void RoomOnRoomMetadataChanged(string metadata)
+        {
+            RoomMetadataChanged?.Invoke(metadata);
+        }
+
+        private void RoomOnRoomSidChanged(string sid)
+        {
+            RoomSidChanged?.Invoke(sid);
+        }
+
+        public void UpdateLocalMetadata(string metadata) =>
+            assigned.UpdateLocalMetadata(metadata);
+
+        public void SetLocalName(string name) =>
+            assigned.SetLocalName(name);
+
+        public UniTask<Result> ConnectAsync(string url, string authToken, CancellationToken cancelToken, bool autoSubscribe) =>
+            assigned.EnsureAssigned().ConnectAsync(url, authToken, cancelToken, autoSubscribe);
+
+        public UniTask DisconnectAsync(CancellationToken token) =>
+            assigned.EnsureAssigned().DisconnectAsync(token);
+    }
+}

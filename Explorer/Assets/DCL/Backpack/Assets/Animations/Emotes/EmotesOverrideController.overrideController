@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!221 &22100000
+AnimatorOverrideController:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: EmotesOverrideController
+  m_Controller: {fileID: 9100000, guid: 71845af413a8a5944ba027f6a10d3325, type: 2}
+  m_Clips:
+  - m_OriginalClip: {fileID: 7400000, guid: 168f4926815a48947939e2e064125e20, type: 2}
+    m_OverrideClip: {fileID: 7400000, guid: a432407fc673f304abaa76025595c796, type: 2}
+  - m_OriginalClip: {fileID: 7400000, guid: e779fcac094cdef449fb61cb18ff35cd, type: 2}
+    m_OverrideClip: {fileID: 7400000, guid: 41060d99f0d2cc247b6802506a82cff4, type: 2}
+  - m_OriginalClip: {fileID: 7400000, guid: a41e8162c65975b4fbf990cb16106c4d, type: 2}
+    m_OverrideClip: {fileID: 7400000, guid: d4ef8321d7010eb44b220ab3656a8056, type: 2}
+  - m_OriginalClip: {fileID: 7400000, guid: eef0f957886f7fa4ebf00f4befe77b64, type: 2}
+    m_OverrideClip: {fileID: 7400000, guid: caa9f706bbe52ab479d46fd3500a3c21, type: 2}
+  - m_OriginalClip: {fileID: 7400000, guid: 434cbe564a5c3664e8ffff13d9254f3d, type: 2}
+    m_OverrideClip: {fileID: 7400000, guid: 420adfa13c6145642a519467467b4a5b, type: 2}

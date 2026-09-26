@@ -1,0 +1,149 @@
+﻿using Arch.Core;
+using Cysharp.Threading.Tasks;
+using DCL.AssetsProvision;
+using DCL.AssetsProvision.CodeResolver;
+using DCL.Browser.DecentralandUrls;
+using DCL.CharacterCamera;
+using DCL.DebugUtilities;
+using DCL.Diagnostics;
+using DCL.FeatureFlags;
+using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Multiplayer.Connections.Messaging.Hubs;
+using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.Multiplayer.Profiles.Poses;
+using DCL.Optimization.PerformanceBudgeting;
+using DCL.PluginSystem;
+using DCL.PluginSystem.World;
+using DCL.Profiles;
+using DCL.Time;
+using DCL.Web3;
+using DCL.Web3.Identities;
+using DCL.WebRequests;
+using DCL.Clipboard;
+using ECS;
+using MVC;
+using MVC.PopupsController.PopupCloser;
+using NSubstitute;
+using System;
+using System.Threading;
+using DCL.Audio;
+using DCL.Character.Components;
+using DCL.CharacterMotion.Components;
+using DCL.Multiplayer.Movement;
+using DCL.PerformanceAndDiagnostics.Analytics;
+using DCL.SDKComponents.InputModifier.Components;
+using DCL.Utility;
+using DCL.WebRequests.Analytics;
+using DCL.WebRequests.ChromeDevtool;
+using ECS.StreamableLoading.Cache.Disk;
+using ECS.StreamableLoading.Common.Components;
+using Global.AppArgs;
+using Global.Versioning;
+using SceneRuntime.Factory.WebSceneSource;
+using UnityEngine;
+using UnityEngine.AddressableAssets;
+
+namespace Global.Tests.PlayMode
+{
+    public static class IntegrationTestsSuite
+    {
+        private const string CONTAINER_ADDRESS = "Integration Tests Container";
+
+        public static async UniTask<(StaticContainer staticContainer, SceneSharedContainer sceneSharedContainer)> CreateStaticContainer(CancellationToken ct)
+        {
+            var appArgs = new ApplicationParametersParser();
+
+            FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(FeatureFlagsResultDto.Empty));
+            FeaturesRegistry.Initialize(new FeaturesRegistry(appArgs, false));
+            PluginSettingsContainer settingsContainer = await Addressables.LoadAssetAsync<PluginSettingsContainer>(CONTAINER_ADDRESS);
+            IAssetsProvisioner assetProvisioner = new AddressablesProvisioner().WithErrorTrace();
+            IDecentralandUrlsSource dclUrls = DecentralandUrlsSource.CreateForTest(DecentralandEnvironment.Org, ILaunchMode.PLAY);
+
+            IWeb3IdentityCache identityCache = new MemoryWeb3IdentityCache();
+
+            IWebJsSources webJsSources = new WebJsSources(
+                new JsCodeResolver(
+                    IWebRequestController.TEST
+                )
+            );
+
+            IReportsHandlingSettings? reportSettings = Substitute.For<IReportsHandlingSettings>();
+            reportSettings.IsEnabled(ReportHandler.DebugLog).Returns(true);
+
+            var diagnosticsContainer = DiagnosticsContainer.Create(reportSettings, false);
+
+            var world = World.Create();
+            var cameraEntity = world.Create();
+
+            var cameraGameObject = new GameObject("TestCamera");
+            var camera = cameraGameObject.AddComponent<Camera>();
+
+            var cameraComponent = new CameraComponent(camera);
+            world.Add(cameraEntity, cameraComponent);
+            Entity playerEntity = world.Create(new PlayerComponent(),
+                new CharacterTransform(),
+                new PlayerMovementNetworkComponent(),
+                new InputModifierComponent(),
+                new CharacterRigidTransform());
+
+            IDebugContainerBuilder? debugBuilder = Substitute.For<IDebugContainerBuilder>();
+
+            AnalyticsContainer? analyticsContainer = await AnalyticsContainer.CreateAsync(appArgs, identityCache, ILaunchMode.PLAY, debugBuilder, string.Empty, settingsContainer, DCLVersion.FromAppArgs(appArgs), ct);
+
+            (StaticContainer? staticContainer, bool success) = await StaticContainer.CreateAsync(
+                analyticsContainer,
+                dclUrls,
+                new RealmData(),
+                assetProvisioner,
+                Substitute.For<IReportsHandlingSettings>(),
+                debugBuilder,
+                await WebRequestsContainer.CreateAsync(settingsContainer, new IWeb3IdentityCache.Default(), debugBuilder, dclUrls, ChromeDevToolHandler.NewForTest(), null, new RealmClock(), ct),
+                settingsContainer,
+                diagnosticsContainer,
+                identityCache,
+                Substitute.For<IEthereumApi>(),
+                ILaunchMode.PLAY,
+                useRemoteAssetBundles: false,
+                useLocalAssetBundles: false,
+                world,
+                playerEntity,
+                new SystemMemoryCap(),
+                new VolumeBus(),
+                enableAnalytics: false,
+                new IDiskCache.Fake(),
+                Substitute.For<IDiskCache<PartialLoadingState>>(),
+                ct,
+                appArgs,
+                enableGPUInstancing: false
+            );
+
+            if (!success)
+                throw new Exception("Cannot create the static container");
+
+            await UniTask.WhenAll(staticContainer!.ECSWorldPlugins.Select(gp => settingsContainer.InitializePluginAsync(gp, ct)));
+
+            var sceneSharedContainer = SceneSharedContainer.Create(
+                in staticContainer,
+                dclUrls,
+                identityCache,
+                Substitute.For<IWebRequestController>(),
+                new IRealmData.Fake(),
+                new MemoryProfileRepository(new DefaultProfileCache()),
+                NullRoomHub.INSTANCE,
+                new MVCManager(
+                    new WindowStackManager(),
+                    new CancellationTokenSource(),
+                    Substitute.For<IPopupCloserView>()
+                ),
+                new IMessagePipesHub.Fake(),
+                Substitute.For<IRemoteMetadata>(),
+                webJsSources,
+                DecentralandEnvironment.Org,
+                Substitute.For<ISystemClipboard>(),
+                Array.Empty<IDCLWorldPlugin>()
+            );
+
+            return (staticContainer, sceneSharedContainer);
+        }
+    }
+}

@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ea799a483c3f4db8afbf38b0e6c08665, type: 3}
+  m_Name: Avatar_AnimEvent_Clap
+  m_EditorClassIdentifier: 
+  audioClips:
+  - {fileID: 8300000, guid: 5f8de323f6b1088449c8bda9158a6aa4, type: 3}
+  - {fileID: 8300000, guid: 39cfa97709b1ddc4b8e00ca7192c7def, type: 3}
+  - {fileID: 8300000, guid: 5dd7a75f7b4b46d4f8f53914ac8186e6, type: 3}
+  - {fileID: 8300000, guid: e9b86f19b5ea5974ba9bf6215f8d3e24, type: 3}
+  - {fileID: 8300000, guid: 5938b5cfae277f54eba7b869c836dbef, type: 3}
+  - {fileID: 8300000, guid: 47b37b2b60a215649bf929e69b718140, type: 3}
+  - {fileID: 8300000, guid: 22d1c6673a2196142b1864c65da9949e, type: 3}
+  - {fileID: 8300000, guid: 41b6d671236d83644ab244c60a0e65ab, type: 3}
+  relativeVolume: 1
+  audioCategory: 3
+  pitchVariation: 0.05
+  clipSelectionMode: 0

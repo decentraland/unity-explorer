@@ -1,0 +1,33 @@
+[package]
+name = "uuav-server"
+version = "0.3.0"
+edition = "2024"
+
+[[bin]]
+name = "uuav-helper"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = "1.0.98"
+crossbeam-channel = "0.5.16"
+uuav-core = { path = ".." }
+uuav-ipc = { path = "../uuav-ipc" }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+libc = "0.2"
+objc2 = "0.6"
+objc2-core-foundation = "0.3"
+objc2-io-surface = { version = "0.3", features = ["libc", "objc2-core-foundation"] }
+objc2-metal = { version = "0.3", features = ["objc2-io-surface"] }
+
+[target.'cfg(windows)'.dependencies]
+windows = { version = "0.61", features = [
+    "Win32_Foundation",
+    "Win32_Graphics_Direct3D",
+    "Win32_Graphics_Direct3D11",
+    "Win32_Graphics_Dxgi",
+    "Win32_Graphics_Dxgi_Common",
+    # SECURITY_ATTRIBUTES in CreateSharedHandle's signature
+    "Win32_Security",
+    "Win32_System_Threading",
+] }

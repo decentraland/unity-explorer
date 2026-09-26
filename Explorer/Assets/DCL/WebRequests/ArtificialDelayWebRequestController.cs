@@ -1,0 +1,44 @@
+using Cysharp.Threading.Tasks;
+using DCL.WebRequests.RequestsHub;
+using System;
+using System.Threading;
+
+namespace DCL.WebRequests
+{
+    public class ArtificialDelayWebRequestController : IWebRequestController
+    {
+        private readonly IWebRequestController origin;
+        private readonly IReadOnlyOptions options;
+
+        public ArtificialDelayWebRequestController(IWebRequestController origin, IReadOnlyOptions options)
+        {
+            this.origin = origin;
+            this.options = options;
+        }
+
+        public async UniTask<TResult?> SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp, TResult>(
+            RequestEnvelope<TWebRequest, TWebRequestArgs> envelope,
+            TWebRequestOp op,
+            long expectedContentLength = -1,
+            IProgress<float>? progressReporter = null
+        )
+            where TWebRequest: struct, ITypedWebRequest
+            where TWebRequestArgs: struct
+            where TWebRequestOp: IWebRequestOp<TWebRequest, TResult>
+        {
+            (float delaySeconds, bool useDelay) = await options.GetOptionsAsync(envelope.Ct);
+
+            if (useDelay)
+                await UniTask.Delay(TimeSpan.FromSeconds(delaySeconds), cancellationToken: envelope.Ct);
+
+            return await origin.SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp, TResult>(envelope, op, expectedContentLength, progressReporter);
+        }
+
+        IRequestHub IWebRequestController.RequestHub => origin.RequestHub;
+
+        public interface IReadOnlyOptions
+        {
+            UniTask<(float ArtificialDelaySeconds, bool UseDelay)> GetOptionsAsync(CancellationToken ct);
+        }
+    }
+}

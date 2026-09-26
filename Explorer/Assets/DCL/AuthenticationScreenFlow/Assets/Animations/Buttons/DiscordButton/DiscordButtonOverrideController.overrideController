@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!221 &22100000
+AnimatorOverrideController:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: DiscordButtonOverrideController
+  m_Controller: {fileID: 9100000, guid: 0d42aba180578bc4fabe4271d636df09, type: 2}
+  m_Clips:
+  - m_OriginalClip: {fileID: 7400000, guid: 97a23c059e97e6546b8457a410dc43fd, type: 2}
+    m_OverrideClip: {fileID: 7400000, guid: cade0e19f80ba794b8ffd9a6104cd19c, type: 2}
+  - m_OriginalClip: {fileID: 7400000, guid: a2b54fb84100f924ba4afcd98be6f144, type: 2}
+    m_OverrideClip: {fileID: 7400000, guid: 3beae67c3464b394ab2c78f8d7f1cbfb, type: 2}
+  - m_OriginalClip: {fileID: 7400000, guid: 81d24dfaa6331e64ca389acfb2d5e49a, type: 2}
+    m_OverrideClip: {fileID: 7400000, guid: e7db6304fd34b6548a8cfcfdebc23261, type: 2}
+  - m_OriginalClip: {fileID: 7400000, guid: 2a9cf587a430ff944984a1da532410a0, type: 2}
+    m_OverrideClip: {fileID: 7400000, guid: 9ea32f40775439e4ab911858ab57498c, type: 2}

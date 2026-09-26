@@ -1,0 +1,360 @@
+name: Jarvis Review Status
+on:
+  pull_request_review:
+    types: [submitted]
+  issue_comment:
+    types: [created]
+
+jobs:
+  apply-verdict:
+    if: |
+      github.event_name == 'pull_request_review' &&
+      github.event.review.user.login == 'decentraland-bot'
+    runs-on: ubuntu-latest
+    concurrency:
+      group: jarvis-review-status-${{ github.event.pull_request.number }}
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+      statuses: write
+    steps:
+      - name: Parse review verdict
+        id: verdict
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const review = context.payload.review;
+            const pr = context.payload.pull_request;
+
+            // Stale guard: this verdict was submitted against an older commit
+            // than the PR's current head — it must not gate the newer SHA. A push
+            // that lands while the bot is still a pending reviewer is debounced by
+            // the request workflow (no re-request), so nothing else recovers this
+            // case: signal `stale` and let the next step re-request a fresh review.
+            if (review.commit_id !== pr.head.sha) {
+              core.notice(`Review is for ${review.commit_id.substring(0, 7)} but head is ${pr.head.sha.substring(0, 7)} — skipping stale verdict and re-requesting.`);
+              core.setOutput('proceed', 'false');
+              core.setOutput('stale', 'true');
+              return;
+            }
+            core.setOutput('proceed', 'true');
+
+            const body = review.body || '';
+            console.log('Review body preview:', body.slice(0, 300));
+            core.setOutput('has-review-result', body.includes('REVIEW_RESULT:').toString());
+            core.setOutput('failed', body.includes('REVIEW_RESULT: FAIL').toString());
+            core.setOutput('is-simple', body.includes('COMPLEXITY: SIMPLE').toString());
+            core.setOutput('qa-required', (!body.includes('QA_REQUIRED: NO')).toString());
+
+      - name: Re-request review on stale verdict
+        if: steps.verdict.outputs.stale == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.ORG_ACCESS_TOKEN }}
+        run: |
+          gh api --method POST \
+            "repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/requested_reviewers" \
+            -f 'reviewers[]=decentraland-bot' --silent \
+            && echo "Re-requested review from decentraland-bot for the current HEAD." \
+            || echo "::warning::Could not re-request review — request it manually from the Reviewers panel."
+
+      - name: Fail status when verdict markers are missing
+        if: |
+          steps.verdict.outputs.proceed == 'true' &&
+          steps.verdict.outputs.has-review-result != 'true'
+        uses: actions/github-script@v8
+        with:
+          script: |
+            await github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: context.payload.pull_request.head.sha,
+              state: 'failure',
+              context: 'Claude Review',
+              description: 'Jarvis review missing verdict — re-request review'
+            });
+
+      - name: Checkout team config
+        if: |
+          steps.verdict.outputs.proceed == 'true' &&
+          steps.verdict.outputs.has-review-result == 'true'
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          sparse-checkout: .github/auto_assign_config_dev.yml
+          fetch-depth: 1
+
+      # Inlined on purpose rather than a shared `./.github/actions/check-team-dev`
+      # composite action: a local action is resolved from the checked-out tree, and
+      # we check out the team list at the PR BASE sha (trusted — so a PR can't add
+      # its own author to the list). A local action would therefore have to already
+      # exist on the base branch and cannot bootstrap on the PR that introduces it.
+      # jarvis-review-request.yml carries the same ~12 lines for the same reason.
+      - name: Check if PR author is a team dev
+        id: team
+        if: |
+          steps.verdict.outputs.proceed == 'true' &&
+          steps.verdict.outputs.has-review-result == 'true'
+        env:
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          HAS_EXT_LABEL: ${{ contains(github.event.pull_request.labels.*.name, 'ext-contribution') }}
+        run: |
+          if [[ "$HAS_EXT_LABEL" == "true" ]]; then
+            echo "Author $PR_AUTHOR has ext-contribution label — treating as external"
+            echo "is-team-dev=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          TEAM_DEVS=$(yq eval '.reviewGroups | .[] | .[]' .github/auto_assign_config_dev.yml)
+          if echo "$TEAM_DEVS" | grep -qxF "$PR_AUTHOR"; then
+            echo "is-team-dev=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "is-team-dev=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check PR type and sensitive paths
+        id: check-type
+        if: |
+          steps.verdict.outputs.proceed == 'true' &&
+          steps.verdict.outputs.has-review-result == 'true'
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const title = context.payload.pull_request.title || '';
+            const isAutoReview = /^(fix|chore)(\(.*?\))?!?:/i.test(title);
+
+            let touchesSensitive = false;
+            if (isAutoReview) {
+              const files = await github.paginate(github.rest.pulls.listFiles, {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: context.payload.pull_request.number,
+              });
+              touchesSensitive = files.some(f =>
+                f.filename.startsWith('.github/prompts/') ||
+                f.filename.startsWith('.github/workflows/') ||
+                f.filename === 'CODEOWNERS'
+              );
+              if (touchesSensitive) {
+                core.notice('Sensitive paths modified (.github/prompts, .github/workflows, or CODEOWNERS): Jarvis reviews but never auto-approves these. Human DEV review required; QA can still be waived if the review reports QA_REQUIRED: NO.');
+              }
+            }
+
+            core.setOutput('is-auto-review', isAutoReview.toString());
+            core.setOutput('touches-sensitive', touchesSensitive.toString());
+
+      - name: Apply verdict — status, approval, labels
+        if: |
+          steps.verdict.outputs.proceed == 'true' &&
+          steps.verdict.outputs.has-review-result == 'true'
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const prNumber = context.payload.pull_request.number;
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            const failed = '${{ steps.verdict.outputs.failed }}' === 'true';
+            const isSimple = '${{ steps.verdict.outputs.is-simple }}' === 'true';
+            const qaRequired = '${{ steps.verdict.outputs.qa-required }}' === 'true';
+            const isAutoReview = '${{ steps.check-type.outputs.is-auto-review }}' === 'true';
+            const touchesSensitive = '${{ steps.check-type.outputs.touches-sensitive }}' === 'true';
+            const isTeamDev = '${{ steps.team.outputs.is-team-dev }}' === 'true';
+            const passed = !failed;
+
+            const prLabels = (context.payload.pull_request.labels || []).map(l => l.name);
+            const COMPLEX_MARKER = '🔍 Jarvis reviewed this PR and found no blocking issues';
+            const SENSITIVE_MARKER = '🔒 Jarvis reviewed this PR — sensitive paths modified';
+
+            // Approvals and labels are managed ONLY for the auto-review population
+            // (fix/chore PRs from team devs) — exact parity with the old auto-review
+            // job, which was the only place this logic ran. Feature-PR and external
+            // reviews must not touch approvals or labels (e.g. a manually applied
+            // 'no QA needed' on a feature PR survives a Jarvis review).
+            const canAutoApprove = passed && isSimple && !touchesSensitive;
+            const canWaiveQa = passed && isSimple && !qaRequired;
+
+            if (isAutoReview && isTeamDev) {
+              const reviews = await github.paginate(github.rest.pulls.listReviews, {
+                owner, repo, pull_number: prNumber, per_page: 100
+              });
+              const ourApprovals = reviews.filter(r =>
+                r.user?.login === 'github-actions[bot]' && r.state === 'APPROVED'
+              );
+              const comments = await github.paginate(github.rest.issues.listComments, {
+                owner, repo, issue_number: prNumber, per_page: 100
+              });
+
+              if (canAutoApprove) {
+                let approvalOk = true;
+                if (ourApprovals.length === 0) {
+                  const approvalBody = qaRequired
+                    ? 'Auto-approved based on Jarvis review — simple fix/chore with no blocking issues. QA approval is still required.'
+                    : 'Auto-approved based on Jarvis review — simple fix/chore with no blocking issues. No QA needed (non-runtime changes only).';
+                  approvalOk = await github.rest.pulls.createReview({
+                    owner, repo, pull_number: prNumber, event: 'APPROVE', body: approvalBody
+                  }).then(() => true).catch(e => { console.log(`createReview: ${e.message}`); return false; });
+                }
+                if (approvalOk) {
+                  await github.rest.issues.addLabels({
+                    owner, repo, issue_number: prNumber, labels: ['claude-approved']
+                  }).catch(e => console.log(`addLabels claude-approved: ${e.message}`));
+                }
+              } else {
+                for (const r of ourApprovals) {
+                  await github.rest.pulls.dismissReview({
+                    owner, repo, pull_number: prNumber, review_id: r.id,
+                    message: 'Dismissed: latest Jarvis review no longer auto-approves this PR.'
+                  }).catch(e => console.log(`dismissReview: ${e.message}`));
+                }
+                if (prLabels.includes('claude-approved')) {
+                  await github.rest.issues.removeLabel({
+                    owner, repo, issue_number: prNumber, name: 'claude-approved'
+                  }).catch(e => console.log(`removeLabel claude-approved: ${e.message}`));
+                }
+                if (touchesSensitive && passed && isSimple && !comments.some(c =>
+                    c.user?.login === 'github-actions[bot]' && c.body?.startsWith(SENSITIVE_MARKER))) {
+                  const qaNote = qaRequired
+                    ? 'QA approval is still required.'
+                    : 'No QA needed (Jarvis reported `QA_REQUIRED: NO`).';
+                  await github.rest.issues.createComment({
+                    owner, repo, issue_number: prNumber,
+                    body: `${SENSITIVE_MARKER} (\`.github/prompts\`, \`.github/workflows\`, or \`CODEOWNERS\`). Jarvis will not auto-approve these PRs — human DEV review is required. ${qaNote}`
+                  }).catch(e => console.log(`createComment sensitive: ${e.message}`));
+                } else if (!touchesSensitive && passed && !isSimple && !comments.some(c =>
+                    c.user?.login === 'github-actions[bot]' && c.body?.startsWith(COMPLEX_MARKER))) {
+                  await github.rest.issues.createComment({
+                    owner, repo, issue_number: prNumber,
+                    body: COMPLEX_MARKER + ', but assessed it as **complex** — human DEV review is still required before merging.'
+                  }).catch(e => console.log(`createComment complex: ${e.message}`));
+                }
+              }
+
+              // Asymmetric on purpose: the automation only ADDS the QA waiver for
+              // SIMPLE PRs (conservative), but only REMOVES it when the verdict
+              // actively contradicts it (QA_REQUIRED: YES). COMPLEXITY answers
+              // "does a DEV need to look?", QA_REQUIRED answers "does QA need to
+              // test runtime behavior?" — a COMPLEX verdict with QA_REQUIRED: NO
+              // must not strip a deliberately applied 'no QA needed' label.
+              if (canWaiveQa) {
+                if (!prLabels.includes('no QA needed')) {
+                  await github.rest.issues.addLabels({
+                    owner, repo, issue_number: prNumber, labels: ['no QA needed']
+                  }).catch(e => console.log(`addLabels no QA needed: ${e.message}`));
+                }
+              } else if (qaRequired && prLabels.includes('no QA needed')) {
+                await github.rest.issues.removeLabel({
+                  owner, repo, issue_number: prNumber, name: 'no QA needed'
+                }).catch(e => console.log(`removeLabel no QA needed: ${e.message}`));
+              }
+            }
+
+            let description;
+            if (failed) {
+              description = 'Jarvis found issues that must be resolved';
+            } else if (!isAutoReview || !isTeamDev) {
+              description = 'No blocking issues found';
+            } else if (touchesSensitive && isSimple) {
+              description = canWaiveQa
+                ? 'No blocking issues — sensitive paths, DEV review required (no QA needed)'
+                : 'No blocking issues — sensitive paths, DEV review required';
+            } else if (isSimple) {
+              description = 'No blocking issues found — PR auto-approved';
+            } else {
+              description = 'No blocking issues — complex change, DEV review required';
+            }
+
+            await github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: context.payload.pull_request.head.sha,
+              state: failed ? 'failure' : 'success',
+              context: 'Claude Review',
+              description
+            });
+
+      - name: Re-run failed enforce-approvals check
+        if: |
+          always() &&
+          steps.check-type.outputs.is-auto-review == 'true' &&
+          steps.team.outputs.is-team-dev == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.ORG_ACCESS_TOKEN }}
+        run: |
+          SHA="${{ github.event.pull_request.head.sha }}"
+          REPO="${{ github.repository }}"
+
+          # The bot's submitted review co-triggers an enforce run that reads the
+          # labels BEFORE this workflow applied them. Wait for every enforce run
+          # for this SHA to conclude, then re-run the failed ones (any event type)
+          # so the final "QA and DEV Approvals" status reflects the labels as
+          # they are now.
+          for i in $(seq 1 30); do
+            IN_PROGRESS=$(gh run list \
+              --workflow="Enforce QA and DEV Approvals" \
+              --limit 100 \
+              --repo "$REPO" \
+              --json headSha,status \
+              | jq -r --arg SHA "$SHA" '
+                  map(select(.headSha == $SHA and (.status == "in_progress" or .status == "queued"))) | length
+              ')
+            # A transient gh/API failure yields an empty string — treat it as 0
+            # so the step degrades to "proceed to re-run" instead of erroring.
+            IN_PROGRESS=${IN_PROGRESS:-0}
+            if [ "$IN_PROGRESS" -eq 0 ]; then
+              break
+            fi
+            echo "Waiting for $IN_PROGRESS in-flight enforce-approvals run(s) to conclude ($i/30)..."
+            sleep 10
+          done
+
+          FAILED_RUN_IDS=$(gh run list \
+            --workflow="Enforce QA and DEV Approvals" \
+            --limit 100 \
+            --repo "$REPO" \
+            --json databaseId,headSha,conclusion \
+            | jq -r --arg SHA "$SHA" '
+                .[] |
+                select(.headSha == $SHA) |
+                select(.conclusion == "failure") |
+                .databaseId
+            ')
+
+          if [ -z "$FAILED_RUN_IDS" ]; then
+            echo "No failed enforce-approvals runs found for this commit."
+            exit 0
+          fi
+
+          for RUN_ID in $FAILED_RUN_IDS; do
+            echo "Re-running failed enforce-approvals workflow: $RUN_ID"
+            gh run rerun "$RUN_ID" --repo "$REPO" || echo "::warning::Could not re-run $RUN_ID"
+          done
+
+  error-status:
+    if: |
+      github.event_name == 'issue_comment' &&
+      github.event.issue.pull_request != null &&
+      github.event.comment.user.login == 'decentraland-bot' &&
+      contains(github.event.comment.body, 'Sorry, I encountered an error processing your review request')
+    runs-on: ubuntu-latest
+    permissions:
+      statuses: write
+      pull-requests: read
+    steps:
+      - name: Set failure status
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number
+            });
+            await github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: pr.head.sha,
+              state: 'failure',
+              context: 'Claude Review',
+              description: 'Jarvis review errored — re-request review from decentraland-bot'
+            });

@@ -1,0 +1,142 @@
+﻿using Arch.Core;
+using Arch.System;
+using Arch.SystemGroups;
+using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
+using DCL.LOD.Components;
+using ECS.Abstract;
+using ECS.Groups;
+using ECS.LifeCycle;
+using ECS.LifeCycle.Components;
+using ECS.SceneLifeCycle.Components;
+using ECS.SceneLifeCycle.IncreasingRadius;
+using ECS.SceneLifeCycle.SceneDefinition;
+using ECS.StreamableLoading.Common;
+using SceneRunner.Scene;
+
+namespace ECS.SceneLifeCycle.Systems
+{
+    /// <summary>
+    ///     Based on formerly created intentions unloads the scene or interrupts its loading
+    /// </summary>
+    [UpdateInGroup(typeof(CleanUpGroup))]
+    public partial class UnloadSceneSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
+    {
+        private readonly IScenesCache scenesCache;
+        private readonly bool localSceneDevelopment;
+
+        internal UnloadSceneSystem(World world, IScenesCache scenesCache, bool localSceneDevelopment) : base(world)
+        {
+            this.scenesCache = scenesCache;
+            this.localSceneDevelopment = localSceneDevelopment;
+        }
+
+        protected override void Update(float t)
+        {
+            UnloadLoadedSceneQuery(World);
+            UnloadLoadedPortableExperienceSceneQuery(World);
+
+            CleanSceneFacadeWhenLODQuery(World);
+            CleanScenePromiseWhenLODQuery(World);
+
+            AbortLoadingScenesQuery(World);
+        }
+
+        public void FinalizeComponents(in Query query)
+        {
+            AbortSucceededScenesPromisesQuery(World);
+        }
+
+        [Query]
+        [All(typeof(SceneLODInfo))]
+        private void CleanSceneFacadeWhenLOD(in Entity entity, ref SceneDefinitionComponent sceneDefinitionComponent,
+            ref ISceneFacade sceneFacade, ref SceneLoadingState sceneLoadingState)
+        {
+            if (sceneLoadingState.VisualSceneState == VisualSceneState.ShowingLod)
+            {
+                var state = sceneFacade.SceneStateProvider.State.Value();
+
+                switch (state)
+                {
+                    case SceneState.Disposed:
+                        // Fully disposed - safe to remove component
+                        World.Remove<ISceneFacade, AssetPromise<ISceneFacade, GetSceneFacadeIntention>>(entity);
+                        break;
+
+                    case SceneState.Disposing:
+                        // Already disposing - wait for next frame
+                        // Save the provider so LOD system can check disposal state
+                        break;
+
+                    case SceneState.NotStarted:
+                    case SceneState.Running:
+                    case SceneState.EngineError:
+                    case SceneState.EcsError:
+                    case SceneState.JavaScriptError:
+                    default:
+                        // Start disposal, will be Disposing next check
+                        sceneFacade.DisposeSceneFacadeAndRemoveFromCache(scenesCache, sceneDefinitionComponent.Parcels);
+                        break;
+                }
+            }
+        }
+
+        [Query]
+        [All(typeof(SceneLODInfo))]
+        private void CleanScenePromiseWhenLOD(in Entity entity,
+            ref AssetPromise<ISceneFacade, GetSceneFacadeIntention> promise, ref SceneLoadingState sceneLoadingState)
+        {
+            if (sceneLoadingState.VisualSceneState == VisualSceneState.ShowingLod)
+            {
+                //TODO: Wait until LOD is Ready
+                //Dispose scene
+                promise.ForgetLoading(World);
+                World.Remove<AssetPromise<ISceneFacade, GetSceneFacadeIntention>>(entity);
+            }
+        }
+
+        [Query]
+        [All(typeof(DeleteEntityIntention))]
+        [None(typeof(PortableExperienceComponent), typeof(SmartWearableId))]
+        private void UnloadLoadedScene(in Entity entity, ref SceneDefinitionComponent definitionComponent, ref ISceneFacade sceneFacade)
+        {
+            sceneFacade.DisposeSceneFacadeAndRemoveFromCache(scenesCache, definitionComponent.Parcels);
+            ReportHub.LogProductionInfo($"Scene '{definitionComponent.Definition?.GetLogSceneName()}' disposed");
+            ReportHub.Log(ReportCategory.SCENE_LOADING, $"UnloadSceneSystem: UnloadLoadedScene '{definitionComponent.Definition?.GetLogSceneName()}'");
+
+            // Keep definition so it won't be downloaded again = Cache in ECS itself
+            if (!localSceneDevelopment)
+                World.Remove<ISceneFacade, AssetPromise<ISceneFacade, GetSceneFacadeIntention>, DeleteEntityIntention>(entity);
+        }
+
+
+        [Query]
+        [All(typeof(DeleteEntityIntention))]
+        [Any(typeof(PortableExperienceComponent), typeof(SmartWearableId))]
+        private void UnloadLoadedPortableExperienceScene(in Entity entity, ref SceneDefinitionComponent definitionComponent, ref ISceneFacade sceneFacade)
+        {
+            sceneFacade.DisposeAsync().Forget();
+            scenesCache.RemovePortableExperienceFacade(definitionComponent.IpfsPath.EntityId);
+            ReportHub.Log(ReportCategory.SCENE_LOADING, $"UnloadSceneSystem: UnloadLoadedPortableExperienceScene '{definitionComponent.Definition?.GetLogSceneName()}'");
+            World.Destroy(entity);
+        }
+
+        [Query]
+        [All(typeof(DeleteEntityIntention))]
+        private void AbortLoadingScenes(in Entity entity, ref AssetPromise<ISceneFacade, GetSceneFacadeIntention> promise)
+        {
+            ReportHub.Log(ReportCategory.SCENE_LOADING, "UnloadSceneSystem: AbortLoadingScenes");
+            promise.ForgetLoading(World);
+            World.Remove<AssetPromise<ISceneFacade, GetSceneFacadeIntention>, DeleteEntityIntention>(entity);
+        }
+
+        [Query]
+        private void AbortSucceededScenesPromises(ref AssetPromise<ISceneFacade, GetSceneFacadeIntention> promise)
+        {
+            if (!promise.IsConsumed && promise.TryConsume(World, out var result) && result.Succeeded)
+                result.Asset!.DisposeAsync().Forget();
+            else
+                promise.ForgetLoading(World);
+        }
+    }
+}

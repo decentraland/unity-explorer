@@ -1,0 +1,59 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!78 &1
+TagManager:
+  serializedVersion: 3
+  tags:
+  - LongRoad
+  layers:
+  - Default
+  - TransparentFX
+  - Ignore Raycast
+  - 
+  - Water
+  - UI
+  - Floor
+  - InvisibleColliders
+  - 
+  - OnPointerEvent
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - CharacterController
+  - CharacterOnly
+  - SDKAvatarTriggerArea
+  - SDKEntityTriggerArea
+  - SDKAvatarHit
+  - 
+  - 
+  - 
+  - 
+  - 
+  - SDKCustomLayer
+  - Minimap
+  - ReactionLaneFX
+  - NameTag
+  - OtherAvatars
+  - CharacterPreview
+  m_SortingLayers:
+  - name: Default
+    uniqueID: 0
+    locked: 0
+  - name: Persistent
+    uniqueID: 1391672535
+    locked: 0
+  - name: Fullscreen
+    uniqueID: 1288386503
+    locked: 0
+  - name: Popup
+    uniqueID: 943831229
+    locked: 0
+  - name: Top
+    uniqueID: 4139610399
+    locked: 0
+  m_RenderingLayers:
+  - Default
+  m_MigratedRenderPipelines: []

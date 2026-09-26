@@ -1,0 +1,119 @@
+using DCL.Diagnostics;
+using System;
+using UnityEngine;
+using UnityEngine.Pool;
+using Utility;
+
+namespace DCL.Optimization.Pools
+{
+    public class GameObjectPool<T> : IComponentPool<T> where T: Component
+    {
+        private static readonly string DEFAULT_COMPONENT_NAME = $"POOL_OBJECT_{typeof(T).Name}";
+
+        private readonly IExtendedObjectPool<T> gameObjectPool;
+
+        private readonly Action<T>? onRelease;
+        private readonly Action<T>? onGet;
+
+        public int CountInactive => gameObjectPool.CountInactive;
+
+        // Auto-created child GameObject ("POOL_CONTAINER_<T>") that parks released instances and any owner-side hierarchy parent (live instances).
+        // Exposed so callers can rename it for editor diagnostics or destroy it during their own teardown without re-implementing the wrapper.
+        public Transform ParentContainer { get; }
+
+        public GameObjectPool(Transform? rootContainer, Func<T>? creationHandler = null, Action<T>? onRelease = null, int maxSize = 2048, Action<T>? onGet = null)
+        {
+            ParentContainer = new GameObject($"POOL_CONTAINER_{typeof(T).Name}").transform;
+            // Transform.SetParent(null) is legal — places the container at scene root; callers that
+            // don't need a wrapper hierarchy can pass null and parent / rename Container themselves.
+            ParentContainer.SetParent(rootContainer);
+
+            if (onRelease != null) this.onRelease += onRelease;
+            if (onGet != null) this.onGet += onGet;
+
+            gameObjectPool = new ExtendedObjectPool<T>(
+                creationHandler ?? HandleCreation,
+                actionOnGet: HandleGet,
+                actionOnRelease: HandleRelease,
+                actionOnDestroy: UnityObjectUtils.SafeDestroyGameObject,
+                defaultCapacity: maxSize / 4,
+                maxSize: maxSize);
+        }
+
+        public void Dispose() =>
+            Clear();
+
+        public PooledObject<T> Get(out T v) =>
+            new (v = Get(), this);
+
+        public void Release(T element)
+        {
+            // If Application is quitting game objects can be already destroyed
+            if (UnityObjectUtils.IsQuitting) return;
+
+            if (element == null)
+            {
+                ReportHub.LogError(ReportCategory.ENGINE, $"Trying to release `null` reference of type {typeof(T).Name} to the pool");
+                return;
+            }
+
+            gameObjectPool.Release(element);
+        }
+
+        public T Get()
+        {
+            T component = gameObjectPool.Get();
+
+            while (component == null && !UnityObjectUtils.IsQuitting)
+            {
+                ReportHub.LogError(ReportCategory.ENGINE,
+                    $"{typeof(T).Name} has been destroyed while in the pool.");
+                component = gameObjectPool.Get();
+            }
+
+            return component!;
+        }
+
+        public void Clear() =>
+            gameObjectPool.Clear();
+
+        public void ClearThrottled(int maxChunkSize) =>
+            gameObjectPool.ClearThrottled(maxChunkSize);
+
+        private static T HandleCreation()
+        {
+            var go = new GameObject(DEFAULT_COMPONENT_NAME);
+            go.gameObject.SetActive(false);
+            return go.TryAddComponent<T>();
+        }
+
+        private void HandleGet(T component)
+        {
+            if (UnityObjectUtils.IsQuitting)
+            {
+                ReportHub.LogError(ReportCategory.ENGINE, $"Trying to get a component {typeof(T).Name} from a pool while quitting!");
+                return;
+            }
+
+            if (component == null)
+                return;
+
+            component.gameObject.SetActive(true);
+            onGet?.Invoke(component);
+        }
+
+        private void HandleRelease(T component)
+        {
+            if (component == null || UnityObjectUtils.IsQuitting)
+                return;
+
+            onRelease?.Invoke(component);
+
+            GameObject gameObject;
+            (gameObject = component.gameObject).SetActive(false);
+            gameObject.name = DEFAULT_COMPONENT_NAME;
+
+            component.gameObject.transform.SetParent(ParentContainer, false);
+        }
+    }
+}

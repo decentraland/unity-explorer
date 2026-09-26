@@ -1,0 +1,80 @@
+using Cysharp.Threading.Tasks;
+using DCL.PerformanceAndDiagnostics.Analytics;
+using Newtonsoft.Json.Linq;
+using System;
+using System.Threading;
+using UnityEngine;
+
+namespace Plugins.RustSegment.SegmentServerWrap.Playground
+{
+    public class RustSegmentPerformancePlayground : MonoBehaviour
+    {
+        [SerializeField] private float delayBetweenRequests = 0.1f;
+        [SerializeField] private float delayBetweenFlushes = 5f;
+        [SerializeField] private int brakesMilliseconds = 100;
+
+        private RustSegmentAnalyticsService rust = null!;
+
+        private void Start()
+        {
+            string key = Environment.GetEnvironmentVariable("SEGMENT_WRITE_KEY")!;
+            SetUp(key);
+        }
+
+        private void Update()
+        {
+            Thread.Sleep(brakesMilliseconds);
+        }
+
+        private void SetUp(string key)
+        {
+                rust = new RustSegmentAnalyticsService(key, null);
+        }
+
+        private async UniTaskVoid TrackAsync(CancellationToken token)
+        {
+            var message = new JObject { { "mode", "rust" } };
+
+            while (token.IsCancellationRequested == false)
+            {
+                await UniTask.Delay(TimeSpan.FromSeconds(delayBetweenRequests), cancellationToken: token);
+                CurrentService().Track("PERFORMANCE_TEST", message);
+            }
+        }
+
+        private async UniTaskVoid FlushAsync(CancellationToken token)
+        {
+            while (token.IsCancellationRequested == false)
+            {
+                await UniTask.Delay(TimeSpan.FromSeconds(delayBetweenFlushes), cancellationToken: token);
+                CurrentService().Flush();
+            }
+        }
+
+        private IAnalyticsService CurrentService() =>
+            rust;
+
+        [ContextMenu(nameof(LaunchLoop))]
+        public void LaunchLoop()
+        {
+            var token = destroyCancellationToken;
+            FlushAsync(token).Forget();
+            TrackAsync(token).Forget();
+        }
+
+        [ContextMenu(nameof(EnqueueTracks))]
+        public void EnqueueTracks()
+        {
+            const int COUNT = 15;
+
+            for (var i = 0; i < COUNT; i++)
+                CurrentService().Track("FLUSH_TEST", new JObject { { "mode", "rust" } });
+        }
+
+        [ContextMenu(nameof(MeasureFlush))]
+        public void MeasureFlush()
+        {
+            CurrentService().Flush();
+        }
+    }
+}

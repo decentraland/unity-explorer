@@ -1,0 +1,250 @@
+using Cysharp.Threading.Tasks;
+using DCL.Browser;
+using DCL.Diagnostics;
+using DCL.Input;
+using DCL.Input.Component;
+using DCL.MarketplaceCredits.Fields;
+using DCL.Profiles.Self;
+using System;
+using System.Threading;
+using Utility;
+
+namespace DCL.MarketplaceCredits.Sections
+{
+    public class MarketplaceCreditsWelcomeSubController : IDisposable
+    {
+
+        private readonly MarketplaceCreditsWelcomeSubView subView;
+        private readonly MarketplaceCreditsTotalCreditsWidgetView totalCreditsWidgetView;
+        private readonly MarketplaceCreditsMenuController marketplaceCreditsMenuController;
+        private readonly MarketplaceCreditsVerifyEmailSubController marketplaceCreditsVerifyEmailSubController;
+        private readonly MarketplaceCreditsGoalsOfTheWeekSubController marketplaceCreditsGoalsOfTheWeekSubController;
+        private readonly MarketplaceCreditsWeekGoalsCompletedSubController marketplaceCreditsWeekGoalsCompletedSubController;
+        private readonly MarketplaceCreditsProgramEndedSubController marketplaceCreditsProgramEndedSubController;
+        private readonly UnityAppWebBrowser webBrowser;
+        private readonly MarketplaceCreditsAPIClient marketplaceCreditsAPIClient;
+        private readonly ISelfProfile selfProfile;
+        private readonly IInputBlock inputBlock;
+
+        private CreditsProgramProgressResponse currentCreditsProgramProgress;
+        private CancellationTokenSource fetchProgramRegistrationInfoCts;
+        private CancellationTokenSource registerInTheProgramCts;
+
+        public MarketplaceCreditsWelcomeSubController(
+            MarketplaceCreditsWelcomeSubView subView,
+            MarketplaceCreditsTotalCreditsWidgetView totalCreditsWidgetView,
+            MarketplaceCreditsMenuController marketplaceCreditsMenuController,
+            MarketplaceCreditsVerifyEmailSubController marketplaceCreditsVerifyEmailSubController,
+            MarketplaceCreditsGoalsOfTheWeekSubController marketplaceCreditsGoalsOfTheWeekSubController,
+            MarketplaceCreditsWeekGoalsCompletedSubController marketplaceCreditsWeekGoalsCompletedSubController,
+            MarketplaceCreditsProgramEndedSubController marketplaceCreditsProgramEndedSubController,
+            UnityAppWebBrowser webBrowser,
+            MarketplaceCreditsAPIClient marketplaceCreditsAPIClient,
+            ISelfProfile selfProfile,
+            IInputBlock inputBlock)
+        {
+            this.subView = subView;
+            this.totalCreditsWidgetView = totalCreditsWidgetView;
+            this.marketplaceCreditsMenuController = marketplaceCreditsMenuController;
+            this.marketplaceCreditsVerifyEmailSubController = marketplaceCreditsVerifyEmailSubController;
+            this.marketplaceCreditsGoalsOfTheWeekSubController = marketplaceCreditsGoalsOfTheWeekSubController;
+            this.marketplaceCreditsWeekGoalsCompletedSubController = marketplaceCreditsWeekGoalsCompletedSubController;
+            this.marketplaceCreditsProgramEndedSubController = marketplaceCreditsProgramEndedSubController;
+            this.webBrowser = webBrowser;
+            this.marketplaceCreditsAPIClient = marketplaceCreditsAPIClient;
+            this.selfProfile = selfProfile;
+            this.inputBlock = inputBlock;
+
+            subView.LearnMoreLinkButton.onClick.AddListener(OpenLearnMoreLink);
+            subView.EmailLogin.Submitted += RegisterInTheProgramWithNewEmail;
+            subView.StartButton.onClick.AddListener(RegisterInTheProgramWithExistingEmail);
+        }
+
+        public void OpenSection()
+        {
+            subView.gameObject.SetActive(true);
+            totalCreditsWidgetView.gameObject.SetActive(false);
+
+            fetchProgramRegistrationInfoCts = fetchProgramRegistrationInfoCts.SafeRestart();
+            LoadProgramRegistrationInfoAsync(fetchProgramRegistrationInfoCts.Token).Forget();
+        }
+
+        public void CloseSection()
+        {
+            subView.gameObject.SetActive(false);
+
+            inputBlock.Enable(InputMapComponent.BLOCK_USER_INPUT);
+            // We need to cancel the operation, otherwise after it finishes, it will disable the input, even if the ui is closed already,
+            // making it impossible to move the avatar again
+            fetchProgramRegistrationInfoCts.SafeCancelAndDispose();
+        }
+
+        public void Dispose()
+        {
+            subView.LearnMoreLinkButton.onClick.RemoveListener(OpenLearnMoreLink);
+            subView.EmailLogin.Submitted -= RegisterInTheProgramWithNewEmail;
+            subView.StartButton.onClick.RemoveListener(RegisterInTheProgramWithExistingEmail);
+            fetchProgramRegistrationInfoCts.SafeCancelAndDispose();
+            registerInTheProgramCts.SafeCancelAndDispose();
+        }
+
+        private async UniTask LoadProgramRegistrationInfoAsync(CancellationToken ct)
+        {
+            try
+            {
+                subView.SetAsLoading(true);
+
+                var ownProfile = await selfProfile.ProfileAsync(ct);
+                if (ownProfile != null)
+                {
+                    currentCreditsProgramProgress = await marketplaceCreditsAPIClient.GetProgramProgressAsync(ownProfile.UserId, ct);
+                    RedirectToSection();
+                }
+
+                subView.SetAsLoading(false);
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e)
+            {
+                const string ERROR_MESSAGE = "There was an error loading the Credits Program. Please try again!";
+                marketplaceCreditsMenuController.ShowErrorNotification(ERROR_MESSAGE);
+                ReportHub.LogError(ReportCategory.MARKETPLACE_CREDITS, $"{ERROR_MESSAGE} ERROR: {e.Message}");
+            }
+        }
+
+        private void RegisterInTheProgramWithNewEmail()
+        {
+            registerInTheProgramCts = registerInTheProgramCts.SafeRestart();
+            RegisterInTheProgramWithNewEmailAsync(
+                string.IsNullOrEmpty(currentCreditsProgramProgress.user.email) ? subView.EmailLogin.Text : currentCreditsProgramProgress.user.email,
+                registerInTheProgramCts.Token).Forget();
+        }
+
+        private async UniTaskVoid RegisterInTheProgramWithNewEmailAsync(string email, CancellationToken ct)
+        {
+            const string ERROR_MESSAGE = "An error occurred. Please enter your email and try again.";
+
+            try
+            {
+                subView.SetAsLoading(true);
+                var result = await marketplaceCreditsAPIClient.SubscribeEmailAsync(email, ct);
+                if (result.Success)
+                {
+                    currentCreditsProgramProgress.user.email = email;
+                    currentCreditsProgramProgress.user.isEmailConfirmed = false;
+                    RedirectToSection(ignoreHasUserStartedProgramFlag: true);
+                    marketplaceCreditsMenuController.SetSidebarButtonAnimationAsAlert(false);
+                }
+                else if (result.Error!.Value.State == EmailSubscriptionError.HandledError)
+                {
+                    marketplaceCreditsMenuController.ShowErrorNotification(result.Error!.Value.Message);
+                }
+                else
+                {
+                    marketplaceCreditsMenuController.ShowErrorNotification(ERROR_MESSAGE);
+                    ReportHub.LogError(ReportCategory.MARKETPLACE_CREDITS, $"{ERROR_MESSAGE} ERROR: {result.Error!.Value.Message}");
+                }
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e)
+            {
+                marketplaceCreditsMenuController.ShowErrorNotification(ERROR_MESSAGE);
+                ReportHub.LogError(ReportCategory.MARKETPLACE_CREDITS, $"{ERROR_MESSAGE} ERROR: {e.Message}");
+            }
+            finally
+            {
+                subView.SetAsLoading(false);
+            }
+        }
+
+        private void RegisterInTheProgramWithExistingEmail()
+        {
+            registerInTheProgramCts = registerInTheProgramCts.SafeRestart();
+            RegisterInTheProgramWithExistingEmailAsync(registerInTheProgramCts.Token).Forget();
+        }
+
+        private async UniTaskVoid RegisterInTheProgramWithExistingEmailAsync(CancellationToken ct)
+        {
+            try
+            {
+                subView.SetAsLoading(true);
+
+                if (currentCreditsProgramProgress.IsUserEmailVerified())
+                {
+                    await marketplaceCreditsAPIClient.MarkUserAsStartedProgramAsync(ct);
+                    await LoadProgramRegistrationInfoAsync(ct);
+                }
+                else
+                    RedirectToSection(ignoreHasUserStartedProgramFlag: true);
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e)
+            {
+                const string ERROR_MESSAGE = "There was an error registering in the Credits Program. Please try again!";
+                marketplaceCreditsMenuController.ShowErrorNotification(ERROR_MESSAGE);
+                ReportHub.LogError(ReportCategory.MARKETPLACE_CREDITS, $"{ERROR_MESSAGE} ERROR: {e.Message}");
+            }
+            finally
+            {
+                subView.SetAsLoading(false);
+            }
+        }
+
+        private void RedirectToSection(bool ignoreHasUserStartedProgramFlag = false)
+        {
+            subView.SetEmailLoginVisibility(isVisible: false);
+            totalCreditsWidgetView.SetCredits(MarketplaceCreditsUtils.FormatTotalCredits(currentCreditsProgramProgress.credits.available));
+            totalCreditsWidgetView.SetDaysToExpire(MarketplaceCreditsUtils.FormatCreditsExpireIn(currentCreditsProgramProgress.credits.expiresIn));
+            totalCreditsWidgetView.SetDaysToExpireVisible(currentCreditsProgramProgress.credits.available > 0);
+
+            // PROGRAM ENDED FLOW
+            if (currentCreditsProgramProgress.IsProgramEnded())
+            {
+                marketplaceCreditsProgramEndedSubController.Setup(currentCreditsProgramProgress);
+                marketplaceCreditsMenuController.OpenSection(MarketplaceCreditsSection.ProgramEnded);
+                totalCreditsWidgetView.gameObject.SetActive(
+                    currentCreditsProgramProgress.currentSeason.state != nameof(MarketplaceCreditsUtils.SeasonState.ERR_PROGRAM_PAUSED));
+                return;
+            }
+
+            totalCreditsWidgetView.gameObject.SetActive(true);
+
+            // NON-REGISTERED USER FLOW
+            if (!currentCreditsProgramProgress.IsUserEmailRegistered())
+            {
+                subView.SetEmailLoginVisibility(isVisible: true);
+                inputBlock.Disable(InputMapComponent.BLOCK_USER_INPUT);
+                totalCreditsWidgetView.gameObject.SetActive(false);
+                return;
+            }
+
+            if (!ignoreHasUserStartedProgramFlag && !currentCreditsProgramProgress.HasUserStartedProgram())
+                return;
+
+            // REGISTERED BUT NON-VERIFIED USER FLOW
+            if (!currentCreditsProgramProgress.IsUserEmailVerified())
+            {
+                marketplaceCreditsVerifyEmailSubController.Setup(currentCreditsProgramProgress.user.email);
+                marketplaceCreditsMenuController.OpenSection(MarketplaceCreditsSection.VerifyEmail);
+                return;
+            }
+
+            // ALREADY REGISTERED USER FLOW
+            if (currentCreditsProgramProgress.AreWeekGoalsCompleted())
+            {
+                marketplaceCreditsWeekGoalsCompletedSubController.Setup(currentCreditsProgramProgress);
+                marketplaceCreditsMenuController.OpenSection(MarketplaceCreditsSection.WeekGoalsCompleted);
+            }
+            else
+            {
+                marketplaceCreditsGoalsOfTheWeekSubController.Setup(currentCreditsProgramProgress);
+                marketplaceCreditsMenuController.OpenSection(MarketplaceCreditsSection.GoalsOfTheWeek);
+            }
+        }
+
+        private void OpenLearnMoreLink() =>
+            webBrowser.OpenUrlMainThreadOnly(MarketplaceCreditsMenuController.WEEKLY_REWARDS_INFO_LINK);
+
+
+    }
+}

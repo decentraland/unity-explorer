@@ -1,0 +1,99 @@
+using Arch.SystemGroups;
+using CommunicationData.URLHelpers;
+using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
+using DCL.FeatureFlags;
+using DCL.PluginSystem.Global;
+using DCL.PluginSystem.World.Dependencies;
+using DCL.ResourcesUnloading;
+using DCL.Utility;
+using DCL.WebRequests;
+using ECS.LifeCycle;
+using ECS.StreamableLoading;
+using ECS.StreamableLoading.AssetBundles;
+using ECS.StreamableLoading.Cache;
+using ECS.StreamableLoading.Cache.Disk;
+using ECS.StreamableLoading.Common.Components;
+using ECS.Unity.GLTFContainer.Asset.Cache;
+using SceneRunner.Scene;
+using System;
+using System.Buffers;
+using System.Collections.Generic;
+using System.Threading;
+using UnityEngine;
+
+namespace DCL.PluginSystem.World
+{
+    public class AssetBundlesPlugin : IDCLWorldPluginWithoutSettings, IDCLGlobalPluginWithoutSettings
+    {
+        public static readonly URLDomain STREAMING_ASSETS_URL =
+            URLDomain.FromString(
+#if UNITY_EDITOR || UNITY_STANDALONE
+                $"file://{Application.streamingAssetsPath}/AssetBundles/"
+#else
+            $"{Application.streamingAssetsPath}/AssetBundles/"
+#endif
+            );
+
+        private readonly IReportsHandlingSettings reportsHandlingSettings;
+
+        private readonly AssetBundleCache assetBundleCache;
+        private readonly AssetBundleLoadingMutex assetBundleLoadingMutex;
+        private readonly IWebRequestController webRequestController;
+        private readonly ArrayPool<byte> buffersPool;
+        private readonly IDiskCache<PartialLoadingState> partialsDiskCache;
+        private readonly URLDomain assetBundleURL;
+        private readonly URLDomain lodAssetBundleURL;
+        private readonly IGltfContainerAssetsCache gltfContainerAssetsCache;
+        private readonly ILaunchMode launchMode;
+
+        public AssetBundlesPlugin(IReportsHandlingSettings reportsHandlingSettings, CacheCleaner cacheCleaner, IWebRequestController webRequestController, ArrayPool<byte> buffersPool, IDiskCache<PartialLoadingState> partialsDiskCache,
+            URLDomain assetBundleURL, URLDomain lodAssetBundleURL, IGltfContainerAssetsCache gltfContainerAssetsCache, ILaunchMode launchMode)
+        {
+            this.lodAssetBundleURL = lodAssetBundleURL;
+            this.reportsHandlingSettings = reportsHandlingSettings;
+            this.webRequestController = webRequestController;
+            this.buffersPool = buffersPool;
+            this.partialsDiskCache = partialsDiskCache;
+            this.assetBundleURL = assetBundleURL;
+            this.launchMode = launchMode;
+            assetBundleCache = new AssetBundleCache();
+            assetBundleLoadingMutex = new AssetBundleLoadingMutex();
+            this.gltfContainerAssetsCache = gltfContainerAssetsCache;
+
+            cacheCleaner.Register(assetBundleCache);
+        }
+
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in SystemsDependencies systemsDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
+        {
+            // Asset Bundles
+            PrepareAssetBundleLoadingParametersSystem.InjectToWorld(ref builder, STREAMING_ASSETS_URL, assetBundleURL, launchMode.CurrentMode is LaunchMode.LocalSceneDevelopment);
+
+            bool byteWeightedProgress = FeaturesRegistry.Instance.IsEnabled(FeatureId.ByteWeightedLoadingProgress);
+
+            // TODO create a runtime ref-counting cache
+            LoadAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, webRequestController, buffersPool, assetBundleLoadingMutex, partialsDiskCache, byteWeightedProgress);
+        }
+
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
+        {
+            // Asset Bundles
+            PrepareGlobalAssetBundleLoadingParametersSystem.InjectToWorld(ref builder, STREAMING_ASSETS_URL, assetBundleURL, lodAssetBundleURL);
+
+            LoadAssetBundleManifestSystem.InjectToWorld(ref builder, new NoCache<SceneAssetBundleManifest, GetAssetBundleManifestIntention>(true, true), assetBundleURL, webRequestController);
+
+            bool byteWeightedProgress = FeaturesRegistry.Instance.IsEnabled(FeatureId.ByteWeightedLoadingProgress);
+
+            // TODO create a runtime ref-counting cache
+            LoadGlobalAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, webRequestController, assetBundleLoadingMutex, buffersPool, partialsDiskCache, byteWeightedProgress);
+        }
+
+        UniTask IDCLPlugin<NoExposedPluginSettings>.InitializeAsync(NoExposedPluginSettings settings, CancellationToken ct) =>
+            UniTask.CompletedTask;
+
+        void IDisposable.Dispose()
+        {
+            assetBundleCache.Dispose();
+        }
+    }
+}

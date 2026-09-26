@@ -1,0 +1,184 @@
+﻿using System;
+using Arch.Core;
+using Arch.System;
+using Arch.SystemGroups;
+using CommunicationData.URLHelpers;
+using DCL.Ipfs;
+using DCL.Multiplayer.Connections.DecentralandUrls;
+using ECS.Prioritization;
+using ECS.SceneLifeCycle.Components;
+using ECS.SceneLifeCycle.SceneDefinition;
+using ECS.SceneLifeCycle.Systems;
+using ECS.StreamableLoading.Common;
+using ECS.StreamableLoading.Common.Components;
+using System.Collections.Generic;
+using Unity.Collections;
+using Unity.Mathematics;
+using UnityEngine;
+using Utility;
+
+namespace ECS.SceneLifeCycle.IncreasingRadius
+{
+    [UpdateAfter(typeof(LoadFixedPointersSystem))]
+    [UpdateInGroup(typeof(RealmGroup))]
+    public partial class LoadPointersByIncreasingRadiusSystem : LoadScenePointerSystemBase
+    {
+        private readonly ParcelMathJobifiedHelper parcelMathJobifiedHelper;
+        private readonly IRealmPartitionSettings realmPartitionSettings;
+        private readonly IPartitionSettings partitionSettings;
+        private readonly IDecentralandUrlsSource urlsSource;
+
+        private float[]? sqrDistances;
+
+        private bool splitIsPending;
+
+        internal LoadPointersByIncreasingRadiusSystem(World world,
+            ParcelMathJobifiedHelper parcelMathJobifiedHelper,
+            IRealmPartitionSettings realmPartitionSettings, IPartitionSettings partitionSettings,
+            HashSet<Vector2Int> roadCoordinates, IRealmData realmData,
+            IDecentralandUrlsSource urlsSource) : base(world, roadCoordinates, realmData)
+        {
+            this.parcelMathJobifiedHelper = parcelMathJobifiedHelper;
+            this.realmPartitionSettings = realmPartitionSettings;
+            this.partitionSettings = partitionSettings;
+            this.urlsSource = urlsSource;
+        }
+
+        protected override void Update(float t)
+        {
+            if (realmPartitionSettings.ScenesDefinitionsRequestBatchSize != sqrDistances?.Length)
+                sqrDistances = new float[realmPartitionSettings.ScenesDefinitionsRequestBatchSize];
+
+            // VolatileScenePointers should be created from RealmController
+
+            // job started means that there was a new split initiated (dirty state)
+            if (parcelMathJobifiedHelper.JobStarted)
+            {
+                // no matter what finish the current split
+                parcelMathJobifiedHelper.Complete();
+                splitIsPending = true;
+            }
+
+            ResolveActivePromiseQuery(World);
+            StartLoadingFromVolatilePointersQuery(World);
+        }
+
+        /// <summary>
+        ///     We can't use this flow if realm/world provides with a fixed pointers list
+        ///     as EntitiesActiveEndpoint is not supported by its content server
+        /// </summary>
+        [Query]
+        [All(typeof(RealmComponent))]
+        [None(typeof(FixedScenePointers))]
+        private void StartLoadingFromVolatilePointers(ref RealmComponent realm, ref VolatileScenePointers volatileScenePointers, ref ProcessedScenePointers processedScenePointers)
+        {
+            if (!splitIsPending) return;
+
+            // maintain one bulk request at a time
+            if (volatileScenePointers.ActivePromise != null) return;
+
+            // Take up to <ScenesDefinitionsRequestBatchSize> closest pointers that were not processed yet
+            List<int2> input = volatileScenePointers.InputReusableList;
+
+            ref NativeArray<ParcelMathJobifiedHelper.ParcelInfo> flatArray = ref parcelMathJobifiedHelper.LastSplit;
+            int i;
+
+            splitIsPending = false;
+
+            for (i = 0; i < flatArray.Length; i++)
+            {
+                ParcelMathJobifiedHelper.ParcelInfo parcelInfo = flatArray[i];
+
+                if (parcelInfo.AlreadyProcessed)
+                    continue;
+
+                // Already processed won't be set for the pointers there were being processed at the moment of the split
+                // but as we maintain only one active promise at a time, here the processed pointers will contain all pointers that were already processed
+                if (processedScenePointers.Value.Contains(parcelInfo.Parcel))
+                    continue;
+
+                if (input.Count < realmPartitionSettings.ScenesDefinitionsRequestBatchSize)
+                {
+                    if (!realmData.WorldManifest.IsEmpty && !realmData.WorldManifest.GetOccupiedParcels().Contains(parcelInfo.Parcel))
+                        // If parcel is empty skip request but mark as processed...
+                        processedScenePointers.Value.Add(parcelInfo.Parcel);
+                    else
+                    {
+                        // ...else add to parcels to be requested
+                        sqrDistances![input.Count] = parcelInfo.RingSqrDistance;
+                        input.Add(parcelInfo.Parcel);
+                    }
+
+                    parcelInfo.AlreadyProcessed = true; // it will set the flag until the next split only
+                    flatArray[i] = parcelInfo;
+                }
+                else
+                {
+                    splitIsPending = true;
+                    break;
+                }
+            }
+
+            if (input.Count == 0) return;
+
+            Array.Clear(sqrDistances!, input.Count, sqrDistances!.Length - input.Count);
+
+            // Use median instead of average as the latter can affect the resulting bucket unpredictably (tends to give higher values)
+            Array.Sort(sqrDistances!);
+            float median = sqrDistances![input.Count / 2];
+
+            // Find the bucket
+            byte bucketIndex = 0;
+
+            for (; bucketIndex < partitionSettings.SqrDistanceBuckets.Count; bucketIndex++)
+            {
+                if (median < partitionSettings.SqrDistanceBuckets[bucketIndex])
+                    break;
+            }
+
+            volatileScenePointers.ActivePartitionComponent.Bucket = bucketIndex;
+
+            volatileScenePointers.ActivePromise
+                = AssetPromise<SceneDefinitions, GetSceneDefinitionList>.Create(World,
+                    new GetSceneDefinitionList(volatileScenePointers.RetrievedReusableList, input,
+                        new CommonLoadingArguments(urlsSource.Url(DecentralandUrl.EntitiesActive))),
+                    volatileScenePointers.ActivePartitionComponent);
+        }
+
+        [Query]
+        private void ResolveActivePromise(ref VolatileScenePointers volatileScenePointers, ref ProcessedScenePointers processedScenePointers)
+        {
+            if (!volatileScenePointers.ActivePromise.HasValue) return;
+
+            AssetPromise<SceneDefinitions, GetSceneDefinitionList> promise = volatileScenePointers.ActivePromise.Value;
+
+            if (!promise.TryConsume(World, out StreamableLoadingResult<SceneDefinitions> result)) return;
+
+            // contains the list of parcels that were requested
+            IReadOnlyList<int2> requestedList = promise.LoadingIntention.Pointers;
+
+            if (result.Succeeded)
+            {
+                List<SceneEntityDefinition> definitions = result.Asset.Value;
+
+                for (var i = 0; i < definitions.Count; i++)
+                {
+                    SceneEntityDefinition scene = definitions[i];
+                    if (scene.pointers.Length == 0) continue;
+
+                    TryCreateSceneEntity(scene, new IpfsPath(scene.id, URLDomain.FromString(urlsSource.Url(DecentralandUrl.Content))), processedScenePointers.Value);
+                }
+            }
+            else
+            {
+                // Signal that those parcels should not be requested again
+                for (var i = 0; i < requestedList.Count; i++)
+                    processedScenePointers.Value.Add(requestedList[i]);
+            }
+
+            volatileScenePointers.ActivePromise = null;
+            volatileScenePointers.InputReusableList.Clear();
+            volatileScenePointers.RetrievedReusableList.Clear();
+        }
+    }
+}

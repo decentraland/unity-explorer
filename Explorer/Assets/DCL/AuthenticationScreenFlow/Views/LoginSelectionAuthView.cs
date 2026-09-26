@@ -1,0 +1,171 @@
+﻿using Cysharp.Threading.Tasks;
+using DCL.UI;
+using DCL.Utility.Extensions;
+using MVC;
+using System.Threading;
+using UnityEngine;
+using UnityEngine.UI;
+
+namespace DCL.AuthenticationScreenFlow
+{
+    [RequireComponent(typeof(Animator), typeof(CanvasGroup))]
+    public class LoginSelectionAuthView : ViewBase
+    {
+        [field: Space]
+        [field: SerializeField]
+        public Button CancelLoginButton { get; private set; } = null!;
+
+        [field: Header("PRIMARY LOGIN")]
+        [field: SerializeField]
+        public GameObject EmailOTPContainer { get; private set; } = null!;
+
+        [field: SerializeField]
+        public EmailInputFieldView EmailInputField { get; private set; } = null!;
+
+        [field: Header("SECONDARY LOGINS")]
+        [field: SerializeField]
+        public GameObject OtherLoginContainer { get; private set; } = null!;
+
+        [field: SerializeField]
+        public GameObject OtherLoginOptionsDisclaimer { get; private set; } = null!;
+
+        [field: SerializeField]
+        public TMP_Text_ClickeableLink OtherLoginOptionsDisclaimerLink { get; private set; } = null!;
+
+        [field: SerializeField]
+        public GameObject ContinueWithTextContainer { get; private set; } = null!;
+
+        [field: SerializeField]
+        public Button LoginMetamaskButton { get; private set; } = null!;
+
+        [field: SerializeField]
+        public Button LoginGoogleButton { get; private set; } = null!;
+
+        [field: SerializeField]
+        public Button LoginDiscordButton { get; private set; } = null!;
+
+        [field: SerializeField]
+        public Button LoginAppleButton { get; private set; } = null!;
+
+        [field: SerializeField]
+        public Button LoginXButton { get; private set; } = null!;
+
+        [field: SerializeField]
+        public Button LoginFortmaticButton { get; private set; } = null!;
+
+        [field: SerializeField]
+        public Button LoginCoinbaseButton { get; private set; } = null!;
+
+        [field: SerializeField]
+        public Button LoginWalletConnectButton { get; private set; } = null!;
+
+        [field: Header("OTHER OPTIONS")]
+        [field: SerializeField]
+        public Button MoreOptionsButton { get; private set; } = null!;
+
+        [field: SerializeField]
+        public RectTransform MoreOptionsButtonDirIcon { get; private set; } = null!;
+
+        [field: Header("ERROR POPUP")]
+        [field: SerializeField]
+        public GameObject ErrorPopupRoot { get; private set; } = null!;
+
+        [field: SerializeField]
+        public Button ErrorPopupRetryButton { get; private set; } = null!;
+
+        [field: SerializeField]
+        public Button ErrorPopupExitButton { get; private set; } = null!;
+
+        [field: SerializeField]
+        public Button ErrorPopupCloseButton { get; private set; } = null!;
+
+        [field: Header("RESTRICTED USER")]
+        [field: SerializeField]
+        public GameObject RestrictedUserContainer { get; private set; } = null!;
+
+        [field: SerializeField]
+        public Button RequestAlphaAccessButton { get; private set; } = null!;
+
+        [field: Space]
+        [field: SerializeField]
+        public Button[] UseAnotherAccountButton { get; private set; } = null!;
+
+        [Space]
+        [SerializeField] private GameObject moreOptionsPanel = null!;
+
+        [Space]
+        [SerializeField] private Animator animator = null!;
+        [SerializeField] private CanvasGroup canvasGroup = null!;
+
+        [SerializeField] private GameObject loadingSpinner = null!;
+        [SerializeField] private GameObject mainElementsPanel = null!;
+
+        private int showAnimHash = UIAnimationHashes.OUT;
+        private bool areOptionsExpanded;
+
+        public void ToggleOptionsPanelExpansion()
+        {
+            areOptionsExpanded = !areOptionsExpanded;
+            SetOptionsPanelVisibility(areOptionsExpanded);
+        }
+
+        private void SetOptionsPanelVisibility(bool isExpanded)
+        {
+            MoreOptionsButtonDirIcon.localScale = new Vector3(1, isExpanded ? -1 : 1, 1);
+            moreOptionsPanel.SetActive(isExpanded);
+        }
+
+        public void Show(int animHash, bool moreOptionsExpanded, bool otherLoginMethodsEnabled, bool otherLoginOptionsDisclaimer)
+        {
+            showAnimHash = animHash;
+            ShowAsync(CancellationToken.None).Forget();
+
+            areOptionsExpanded = moreOptionsExpanded;
+            OtherLoginContainer.SetActive(otherLoginMethodsEnabled);
+            ContinueWithTextContainer.SetActive(otherLoginMethodsEnabled && !moreOptionsExpanded);
+            OtherLoginOptionsDisclaimer.SetActive(otherLoginOptionsDisclaimer);
+            SetOptionsPanelVisibility(areOptionsExpanded && otherLoginMethodsEnabled);
+
+            SetLoadingSpinnerVisibility(false);
+        }
+
+        public void Hide()
+        {
+            mainElementsPanel.SetActive(false);
+            loadingSpinner.SetActive(false);
+            SetEmailInputFieldSpinnerActive(false);
+
+            HideAsync(CancellationToken.None).Forget();
+        }
+
+        public void SetLoadingSpinnerVisibility(bool isLoading)
+        {
+            mainElementsPanel.SetActive(!isLoading);
+            loadingSpinner.SetActive(isLoading);
+        }
+
+        public void SetEmailInputFieldSpinnerActive(bool isActive) =>
+            EmailInputField.SetSpinnerActive(isActive);
+
+        public void SetEmailInputFieldErrorState(bool hasError) =>
+            EmailInputField.SetErrorState(hasError);
+
+        public override async UniTask ShowAsync(CancellationToken ct)
+        {
+            await base.ShowAsync(ct);
+            canvasGroup.interactable = true;
+        }
+
+        public override async UniTask HideAsync(CancellationToken ct, bool isInstant = false)
+        {
+            canvasGroup.interactable = false;
+            await base.HideAsync(ct, isInstant);
+        }
+
+        protected override async UniTask PlayShowAnimationAsync(CancellationToken ct) =>
+            await animator.PlayAndAwaitAsync(showAnimHash, showAnimHash, ct: ct);
+
+        protected override async UniTask PlayHideAnimationAsync(CancellationToken ct) =>
+            await animator.PlayAndAwaitAsync(UIAnimationHashes.OUT, UIAnimationHashes.OUT, ct: ct);
+    }
+}

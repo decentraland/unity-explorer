@@ -1,0 +1,166 @@
+using Cysharp.Threading.Tasks;
+using DCL.Browser;
+using DCL.Diagnostics;
+using DCL.FeatureFlags;
+using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Profiles;
+using DCL.Profiles.Self;
+using DCL.UI;
+using DCL.UI.ProfileElements;
+using DCL.UI.ProfileNames;
+using DCL.UI.UpgradeGuestAccountPopup;
+using DCL.Web3;
+using DCL.Web3.Identities;
+using MVC;
+using System;
+using System.Threading;
+using Utility;
+
+namespace DCL.Passport.Modules
+{
+    public class UserBasicInfoPassportModuleController : IPassportModuleController
+    {
+        private readonly UserNameElementPresenter userNameElementPresenter;
+        private readonly UserWalletAddressElementPresenter walletAddressElementPresenter;
+        private readonly UserBasicInfoPassportModuleView view;
+        private readonly ISelfProfile selfProfile;
+        private readonly UnityAppWebBrowser webBrowser;
+        private readonly IMVCManager mvcManager;
+        private readonly INftNamesProvider nftNamesProvider;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
+        private readonly bool isNameEditorFeatureEnabled;
+        private readonly NameColorPickerController colorPickerController;
+        private readonly IWeb3IdentityCache identityCache;
+
+        private CancellationTokenSource? checkNameEditionCancellationToken;
+        private CancellationTokenSource? showNameEditorCancellationToken;
+        private Profile? currentProfile;
+
+        public event Action? NameClaimRequested;
+
+        public UserBasicInfoPassportModuleController(
+            UserBasicInfoPassportModuleView view,
+            ISelfProfile selfProfile,
+            UnityAppWebBrowser webBrowser,
+            IMVCManager mvcManager,
+            INftNamesProvider nftNamesProvider,
+            IDecentralandUrlsSource decentralandUrlsSource,
+            NameColorPickerController colorPickerController,
+            IWeb3IdentityCache identityCache
+            )
+        {
+            this.view = view;
+            this.selfProfile = selfProfile;
+            this.webBrowser = webBrowser;
+            this.mvcManager = mvcManager;
+            this.nftNamesProvider = nftNamesProvider;
+            this.decentralandUrlsSource = decentralandUrlsSource;
+            this.colorPickerController = colorPickerController;
+            this.identityCache = identityCache;
+            isNameEditorFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.ProfileNameEditor);
+            userNameElementPresenter = new UserNameElementPresenter(view.UserNameElement);
+            walletAddressElementPresenter = new UserWalletAddressElementPresenter(view.UserWalletAddressElement);
+
+            view.ClaimNameButton.onClick.AddListener(ClaimName);
+            view.EditNameButton.onClick.AddListener(ShowNameEditor);
+        }
+
+        public void Setup(Profile profile)
+        {
+            currentProfile = profile;
+
+            userNameElementPresenter.Setup(profile.Compact);
+            walletAddressElementPresenter.Setup(profile.Compact);
+
+            checkNameEditionCancellationToken = checkNameEditionCancellationToken.SafeRestart();
+            CheckForEditionAvailabilityAsync(checkNameEditionCancellationToken.Token).Forget();
+        }
+
+        public void Clear()
+        {
+            userNameElementPresenter.Element.CopyNameWarningNotification.Hide(true);
+            walletAddressElementPresenter.Element.CopyWalletWarningNotification.Hide(true);
+        }
+
+        public void Dispose()
+        {
+            userNameElementPresenter.Dispose();
+            walletAddressElementPresenter.Dispose();
+            view.ClaimNameButton.onClick.RemoveListener(ClaimName);
+            view.EditNameButton.onClick.RemoveListener(ShowNameEditor);
+        }
+
+        private async UniTaskVoid CheckForEditionAvailabilityAsync(CancellationToken ct)
+        {
+            try
+            {
+                view.EditNameButton.gameObject.SetActive(false);
+                view.ClaimNameButton.gameObject.SetActive(false);
+                view.NameColorPickerView.gameObject.SetActive(false);
+
+                Profile? ownProfile = await selfProfile.ProfileAsync(ct);
+
+                if (ownProfile == null) return;
+
+                if (ownProfile.UserId == currentProfile?.UserId)
+                {
+                    view.EditNameButton.gameObject.SetActive(isNameEditorFeatureEnabled);
+                    view.ClaimNameButton.gameObject.SetActive(false);
+
+                    view.NameColorPickerView.gameObject.SetActive(
+                        FeaturesRegistry.Instance.IsEnabled(FeatureId.NameColorChange) && ownProfile.HasClaimedName
+                    );
+                    colorPickerController.SetColor(ownProfile.UserNameColor);
+
+                    if (isNameEditorFeatureEnabled)
+                    {
+                        using var names =
+                            await nftNamesProvider.GetAsync(new Web3Address(currentProfile.UserId), 1, 1, ct);
+                        view.ClaimNameButton.gameObject.SetActive(names.TotalAmount <= 0);
+                    }
+                    else
+                        view.ClaimNameButton.gameObject.SetActive(false);
+                }
+                else
+                {
+                    view.EditNameButton.gameObject.SetActive(false);
+                    view.ClaimNameButton.gameObject.SetActive(false);
+                }
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e) { ReportHub.LogException(e, ReportCategory.PROFILE); }
+        }
+
+        private void ShowNameEditor()
+        {
+            if (currentProfile == null) return;
+
+            showNameEditorCancellationToken = showNameEditorCancellationToken.SafeRestart();
+            ShowNameEditorAsync(showNameEditorCancellationToken.Token).Forget();
+            return;
+
+            async UniTaskVoid ShowNameEditorAsync(CancellationToken ct)
+            {
+                await mvcManager.ShowAsync(ProfileNameEditorController.IssueCommand(), ct);
+
+                Profile? profile = await selfProfile.ProfileAsync(ct);
+
+                // Re-configure ui
+                if (profile != null)
+                    Setup(profile);
+            }
+        }
+
+        private void ClaimName()
+        {
+            if (identityCache.IsGuest())
+            {
+                mvcManager.ShowAndForget(UpgradeGuestAccountPopupController.IssueCommand(new UpgradeGuestAccountPopupController.Params(GuestUpgradeTrigger.NameClaim)));
+                return;
+            }
+
+            webBrowser.OpenUrlMainThreadOnly(decentralandUrlsSource.Url(DecentralandUrl.MarketplaceClaimName));
+            NameClaimRequested?.Invoke();
+        }
+    }
+}

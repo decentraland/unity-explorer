@@ -1,0 +1,54 @@
+﻿// TRUST_WEBGL_THREAD_SAFETY_FLAG - TODO: do we even need this code? It doesn't seem to be used
+#if !UNITY_WEBGL
+
+using Cysharp.Threading.Tasks;
+using LiveKit.Audio;
+using LiveKit.Internal;
+using LiveKit.Rooms.Streaming.Audio;
+using Livekit.Types;
+using System;
+using Utility.Multithreading; 
+
+namespace DCL.Multiplayer.Connections.Audio
+{
+    public class ThreadedAudioRemixConveyor : IAudioRemixConveyor
+    {
+        private readonly AudioResampler.ThreadSafe resampler = new ();
+
+        public void Dispose()
+        {
+            resampler.Dispose();
+        }
+
+        public void Process(
+            OwnedAudioFrame ownedAudioFrame,
+            Livekit.Types.Mutex<RingBuffer> outputBuffer,
+            uint numChannels,
+            uint sampleRate
+        )
+        {
+            ProcessAsync(ownedAudioFrame, outputBuffer, numChannels, sampleRate).Forget();
+        }
+
+        private async UniTaskVoid ProcessAsync(
+            OwnedAudioFrame ownedAudioFrame,
+            Livekit.Types.Mutex<RingBuffer> outputBuffer,
+            uint numChannels,
+            uint sampleRate
+        )
+        {
+            await DCLTask.SwitchToThreadPool();
+            using OwnedAudioFrame uFrame = resampler.RemixAndResample(ownedAudioFrame, numChannels, sampleRate);
+            Write(uFrame, outputBuffer);
+        }
+
+        private static void Write(OwnedAudioFrame frame, Livekit.Types.Mutex<RingBuffer> buffer)
+        {
+            Span<byte> data = frame.AsSpan();
+            using Livekit.Types.Mutex<RingBuffer>.Guard guard = buffer.Lock();
+            guard.Value.Write(data);
+        }
+    }
+}
+
+#endif

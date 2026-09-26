@@ -1,0 +1,424 @@
+using Cysharp.Threading.Tasks;
+using DCL.Communities.CommunitiesDataProvider.DTOs;
+using DCL.Diagnostics;
+using DCL.Friends.UI.FriendPanel;
+using DCL.Profiles;
+using DCL.Profiles.Self;
+using DCL.UI;
+using DCL.UI.ConfirmationDialog.Opener;
+using DCL.UI.Controls.Configs;
+using DCL.UI.Profiles.Helpers;
+using SuperScrollView;
+using UnityEngine;
+using DCL.UI.Utilities;
+using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
+using MVC;
+using Nethereum.Siwe.Core.Recap;
+using System;
+using System.Threading;
+using DCL.FeatureFlags;
+using UnityEngine.UI;
+using Utility;
+
+namespace DCL.Communities.CommunitiesCard.Members
+{
+    public class MembersListView : MonoBehaviour, ICommunityFetchingView<ICommunityMemberData>
+    {
+        public enum MemberListSections
+        {
+            Members,
+            Banned,
+            Requests,
+            Invites,
+        }
+
+        private const int ELEMENT_MISSING_THRESHOLD = 5;
+        private const string TRANSFER_OWNERSHIP_TEXT_FORMAT = "Transferring Community Ownership to {0}";
+        private const string TRANSFER_OWNERSHIP_SUB_TEXT_FORMAT = "Once you transfer ownership of a Community, you will be demoted from Owner to Moderator. This action cannot be undone by you.";
+        private const string TRANSFER_OWNERSHIP_NON_INTERACTABLE_FEEDBACK = "Community ownership can only be transferred to users who own a NAME.";
+        private const string KICK_MEMBER_TEXT_FORMAT = "Are you sure you want to remove [{0}] from the [{1}] Community?";
+        private const string BAN_MEMBER_TEXT_FORMAT = "Are you sure you want to ban [{0}] from the [{1}] Community?";
+        private const string TRANSFER_OWNERSHIP_CANCEL_TEXT = "CANCEL";
+        private const string TRANSFER_OWNERSHIP_CONFIRM_TEXT = "TRANSFER";
+        private const string KICK_MEMBER_CANCEL_TEXT = "CANCEL";
+        private const string KICK_MEMBER_CONFIRM_TEXT = "KICK";
+        private const string BAN_MEMBER_CANCEL_TEXT = "CANCEL";
+        private const string BAN_MEMBER_CONFIRM_TEXT = "BAN";
+
+        private static readonly Vector2 ITEM_CONTEXT_MENU_SUBMENU_OFFSET = new Vector2(0.0f, -26.0f);
+
+        [field: SerializeField] private LoopGridView loopGrid { get; set; } = null!;
+        [field: SerializeField] private ScrollRect loopListScrollRect { get; set; } = null!;
+        [field: SerializeField] private RectTransform sectionButtons { get; set; } = null!;
+        [field: SerializeField] private RectTransform scrollViewRect { get; set; } = null!;
+        [field: SerializeField] private MemberListSectionMapping[] memberListSectionsElements { get; set; } = null!;
+        [field: SerializeField] private SkeletonLoadingView loadingObject { get; set; } = null!;
+        [field: SerializeField] private NotificationIndicatorView requestsNotificationIndicator { get; set; } = null!;
+        [field: SerializeField] private GameObject emptyStateParent { get; set; } = null!;
+        [field: SerializeField] private GameObject resultsLoadingMoreSpinner { get; set; } = null!;
+
+        [field: Header("Assets")]
+        [field: SerializeField] private CommunityMemberListContextMenuConfiguration contextMenuSettings = null!;
+        [field: SerializeField] private Sprite transferOwnershipSprite { get; set; } = null!;
+        [field: SerializeField] private Sprite kickSprite { get; set; } = null!;
+        [field: SerializeField] private Sprite banSprite { get; set; } = null!;
+
+        public Sprite ReportSprite => contextMenuSettings.ReportSprite;
+
+        public event Action<MemberListSections>? ActiveSectionChanged;
+        public event Action? NewDataRequested;
+        public event Action<ICommunityMemberData>? ElementMainButtonClicked;
+        public event Action<ICommunityMemberData>? ElementFriendButtonClicked;
+        public event Action<ICommunityMemberData>? ElementUnbanButtonClicked;
+        public event Action<ICommunityMemberData, InviteRequestIntention>? ElementManageRequestClicked;
+
+        public event Action<Profile.CompactInfo, UserProfileContextMenuControlSettings.FriendshipStatus>? ContextMenuUserProfileButtonClicked;
+        public event Action<ICommunityMemberData>? OpenProfilePassportRequested;
+        public event Action<ICommunityMemberData>? GiftUserRequested;
+        public event Action<ICommunityMemberData>? OpenUserChatRequested;
+        public event Action<ICommunityMemberData>? CallUserRequested;
+        public event Action<ICommunityMemberData>? BlockUserRequested;
+        public event Action<ICommunityMemberData>? ReportUserRequested;
+        public event Action<ICommunityMemberData>? RemoveModeratorRequested;
+        public event Action<ICommunityMemberData>? AddModeratorRequested;
+        public event Action<ICommunityMemberData>? TransferOwnershipRequested;
+        public event Action<ICommunityMemberData>? KickUserRequested;
+        public event Action<ICommunityMemberData>? BanUserRequested;
+
+        private MemberListSections currentSection;
+        private CancellationTokenSource confirmationDialogCts = new ();
+        private SectionFetchData<ICommunityMemberData> membersData = null!;
+        private ProfileRepositoryWrapper? profileRepositoryWrapper;
+        private ICommunityMemberData lastClickedProfileCtx = null!;
+        private GenericContextMenu? contextMenu;
+        private UserProfileContextMenuControlSettings? userProfileContextMenuControlSettings;
+        private GenericContextMenuElement? removeModeratorContextMenuElement;
+        private GenericContextMenuElement? addModeratorContextMenuElement;
+        private GenericContextMenuElement? blockUserContextMenuElement;
+        private GenericContextMenuElement? transferOwnershipContextMenuElement;
+        private GenericContextMenuElement? kickUserContextMenuElement;
+        private GenericContextMenuElement? banUserContextMenuElement;
+        private GenericContextMenuElement? communityOptionsSeparatorContextMenuElement;
+        private GenericContextMenuElement? contextMenuGiftButton;
+        private GetCommunityResponse.CommunityData? communityData;
+        private CancellationTokenSource contextMenuCts = new ();
+        private UniTask panelTask;
+
+        private CommunityInvitationContextMenuButtonHandler? invitationButtonHandler;
+        private CommunitiesDataProvider.CommunitiesDataProvider? communitiesDataProvider;
+        private ISelfProfile? selfProfile;
+
+        private void Awake()
+        {
+            loopListScrollRect.SetScrollSensitivityBasedOnPlatform();
+
+            foreach (var sectionMapping in memberListSectionsElements)
+                sectionMapping.Button.onClick.AddListener(() => ToggleSection(sectionMapping.Section));
+
+            Color redColor = ContextMenuColors.DESTRUCTIVE_ACTION;
+            contextMenu = new GenericContextMenu(contextMenuSettings.ContextMenuWidth, verticalLayoutPadding: contextMenuSettings.VerticalPadding, elementsSpacing: contextMenuSettings.ElementsSpacing, showRim: true)
+                .AddControl(userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings((user, friendshipStatus) => ContextMenuUserProfileButtonClicked?.Invoke(user, friendshipStatus), showProfilePicture: false))
+                .AddControl(new SeparatorContextMenuControlSettings(contextMenuSettings.SeparatorHeight, -contextMenuSettings.VerticalPadding.left, -contextMenuSettings.VerticalPadding.right))
+                .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.ViewProfileText, contextMenuSettings.ViewProfileSprite, () => OpenProfilePassportRequested?.Invoke(lastClickedProfileCtx!)))
+                .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.ChatText, contextMenuSettings.ChatSprite, () => OpenUserChatRequested?.Invoke(lastClickedProfileCtx!)))
+                .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.CallText, contextMenuSettings.CallSprite, () => CallUserRequested?.Invoke(lastClickedProfileCtx!)));
+
+            if (FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.GIFTING_ENABLED))
+                contextMenu.AddControl(contextMenuGiftButton =
+                    new GenericContextMenuElement(
+                        new ButtonContextMenuControlSettings(contextMenuSettings.GiftUserText,
+                            contextMenuSettings.GiftUserSprite,
+                            () => GiftUserRequested?.Invoke(lastClickedProfileCtx!))));
+
+            contextMenu.AddControl(communityOptionsSeparatorContextMenuElement = new GenericContextMenuElement(new SeparatorContextMenuControlSettings(contextMenuSettings.SeparatorHeight, -contextMenuSettings.VerticalPadding.left, -contextMenuSettings.VerticalPadding.right)))
+                .AddControl(removeModeratorContextMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(contextMenuSettings.RemoveModeratorText, contextMenuSettings.RemoveModeratorSprite, () => RemoveModeratorRequested?.Invoke(lastClickedProfileCtx!))))
+                .AddControl(addModeratorContextMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(contextMenuSettings.AddModeratorText, contextMenuSettings.AddModeratorSprite, () => AddModeratorRequested?.Invoke(lastClickedProfileCtx!))))
+                .AddControl(transferOwnershipContextMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(contextMenuSettings.TransferOwnershipText, contextMenuSettings.TransferOwnershipSprite, () => ShowTransferOwnershipConfirmationDialog(lastClickedProfileCtx!, communityData?.name!))))
+                .AddControl(kickUserContextMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(contextMenuSettings.KickUserText, contextMenuSettings.KickUserSprite, () => ShowKickConfirmationDialog(lastClickedProfileCtx!, communityData?.name!))))
+                .AddControl(banUserContextMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(contextMenuSettings.BanUserText, contextMenuSettings.BanUserSprite, () => ShowBanConfirmationDialog(lastClickedProfileCtx!, communityData?.name!))));
+
+            contextMenu.AddControl(new SeparatorContextMenuControlSettings(contextMenuSettings.SeparatorHeight, -contextMenuSettings.VerticalPadding.left, -contextMenuSettings.VerticalPadding.right))
+                       .AddControl(blockUserContextMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(contextMenuSettings.BlockText, contextMenuSettings.BlockSprite, () => BlockUserRequested?.Invoke(lastClickedProfileCtx!), iconColor: redColor, textColor: redColor)));
+
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.ReportUser))
+                contextMenu.AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.ReportText, contextMenuSettings.ReportOptionSprite, () => ReportUserRequested?.Invoke(lastClickedProfileCtx!), iconColor: redColor, textColor: redColor));
+        }
+
+        public void Close()
+        {
+            ToggleSection(MemberListSections.Members, false);
+            confirmationDialogCts.SafeCancelAndDispose();
+            contextMenuCts.SafeCancelAndDispose();
+        }
+
+        public void UpdateRequestsCounter(int amount) =>
+            requestsNotificationIndicator.SetNotificationCount(amount);
+
+        private void OnContextMenuButtonClicked(ICommunityMemberData profile, Vector2 buttonPosition, MemberListItemView elementView)
+        {
+            lastClickedProfileCtx = profile;
+            contextMenuCts = contextMenuCts.SafeRestart();
+            UserProfileContextMenuControlSettings.FriendshipStatus status = profile.FriendshipStatus.Convert();
+
+            userProfileContextMenuControlSettings!.SetInitialData(profile.Profile, status == UserProfileContextMenuControlSettings.FriendshipStatus.Friend ? status : UserProfileContextMenuControlSettings.FriendshipStatus.Disabled);
+            elementView.CanUnHover = false;
+
+            removeModeratorContextMenuElement!.Enabled = profile.Role == CommunityMemberRole.moderator && communityData?.role is CommunityMemberRole.owner;
+            addModeratorContextMenuElement!.Enabled = profile.Role == CommunityMemberRole.member && communityData?.role is CommunityMemberRole.owner;
+            blockUserContextMenuElement!.Enabled = profile.FriendshipStatus != FriendshipStatus.blocked && profile.FriendshipStatus != FriendshipStatus.blocked_by;
+
+            if (FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.GIFTING_ENABLED))
+            {
+                bool isOwnProfile = profile.Address.EqualsIgnoreCase(ViewDependencies.CurrentIdentity?.Address);
+                bool isBlocked = profile.FriendshipStatus is FriendshipStatus.blocked or FriendshipStatus.blocked_by;
+                contextMenuGiftButton!.Enabled = !isOwnProfile && !isBlocked;
+            }
+
+            transferOwnershipContextMenuElement!.Enabled = communityData?.role == CommunityMemberRole.owner && profile.Role is CommunityMemberRole.member or CommunityMemberRole.moderator;
+            transferOwnershipContextMenuElement!.Interactable = profile.HasClaimedName;
+            if (!transferOwnershipContextMenuElement!.Interactable)
+                transferOwnershipContextMenuElement!.NonInteractableFeedback = TRANSFER_OWNERSHIP_NON_INTERACTABLE_FEEDBACK;
+
+            // Owner can kick / ban either members and moderators,
+            // moderators can only kick / ban members
+            bool viewerCanKickOrBan = communityData?.role is CommunityMemberRole.owner
+                ? profile.Role is not CommunityMemberRole.owner
+                : communityData?.role is CommunityMemberRole.moderator && profile.Role is not CommunityMemberRole.owner && profile.Role is not CommunityMemberRole.moderator;
+
+            kickUserContextMenuElement!.Enabled = viewerCanKickOrBan && currentSection == MemberListSections.Members;
+            banUserContextMenuElement!.Enabled = viewerCanKickOrBan && currentSection == MemberListSections.Members;
+
+            communityOptionsSeparatorContextMenuElement!.Enabled = removeModeratorContextMenuElement.Enabled ||
+                                                                   addModeratorContextMenuElement.Enabled ||
+                                                                   transferOwnershipContextMenuElement.Enabled ||
+                                                                   kickUserContextMenuElement.Enabled ||
+                                                                   banUserContextMenuElement.Enabled;
+
+            if (invitationButtonHandler == null)
+            {
+                invitationButtonHandler = new CommunityInvitationContextMenuButtonHandler(communitiesDataProvider, contextMenuSettings.ElementsSpacing);
+                invitationButtonHandler.AddSubmenuControlToContextMenu(contextMenu, ITEM_CONTEXT_MENU_SUBMENU_OFFSET, contextMenuSettings.InviteToCommunityText, contextMenuSettings.InviteToCommunitySprite);
+            }
+
+            invitationButtonHandler.SetUserToInvite(profile.Address);
+
+            ViewDependencies.ContextMenuOpener.OpenContextMenu(new GenericContextMenuParameter(contextMenu, buttonPosition,
+                actionOnHide: () => elementView.CanUnHover = true,
+                closeTask: panelTask), contextMenuCts.Token);
+        }
+
+        private void ShowTransferOwnershipConfirmationDialog(ICommunityMemberData profile, string communityName)
+        {
+            confirmationDialogCts = confirmationDialogCts.SafeRestart();
+            ShowTransferOwnershipConfirmationDialogAsync(confirmationDialogCts.Token).Forget();
+            return;
+
+            async UniTaskVoid ShowTransferOwnershipConfirmationDialogAsync(CancellationToken ct)
+            {
+                var ownProfile = selfProfile != null ? await selfProfile.ProfileAsync(ct) : null;
+
+                Result<ConfirmationResult> dialogResult = await ViewDependencies.ConfirmationDialogOpener.OpenConfirmationDialogAsync(new ConfirmationDialogParameter(
+                             string.Format(TRANSFER_OWNERSHIP_TEXT_FORMAT, profile.Name),
+                             TRANSFER_OWNERSHIP_CANCEL_TEXT,
+                             TRANSFER_OWNERSHIP_CONFIRM_TEXT,
+                             transferOwnershipSprite,
+                             false, false,
+                             subText: TRANSFER_OWNERSHIP_SUB_TEXT_FORMAT,
+                             userInfo: profile.Profile,
+                             fromUserInfo: ownProfile?.Compact ?? default(Profile.CompactInfo)), ct)
+                    .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+                if (ct.IsCancellationRequested || !dialogResult.Success || dialogResult.Value == ConfirmationResult.Cancel) return;
+
+                TransferOwnershipRequested?.Invoke(profile);
+            }
+        }
+
+        private void ShowKickConfirmationDialog(ICommunityMemberData profile, string communityName)
+        {
+            confirmationDialogCts = confirmationDialogCts.SafeRestart();
+            ShowKickConfirmationDialogAsync(confirmationDialogCts.Token).Forget();
+            return;
+
+            async UniTaskVoid ShowKickConfirmationDialogAsync(CancellationToken ct)
+            {
+                Result<ConfirmationResult> dialogResult = await ViewDependencies.ConfirmationDialogOpener.OpenConfirmationDialogAsync(new ConfirmationDialogParameter(string.Format(KICK_MEMBER_TEXT_FORMAT, profile.Name, communityName),
+                                                                                         KICK_MEMBER_CANCEL_TEXT,
+                                                                                         KICK_MEMBER_CONFIRM_TEXT,
+                                                                                         kickSprite,
+                                                                                         false, false,
+                                                                                         userInfo: profile.Profile),
+                                                                                     ct)
+                                                                                .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+                if (ct.IsCancellationRequested || !dialogResult.Success || dialogResult.Value == ConfirmationResult.Cancel) return;
+
+                KickUserRequested?.Invoke(profile);
+            }
+        }
+
+        private void ShowBanConfirmationDialog(ICommunityMemberData profile, string communityName)
+        {
+            confirmationDialogCts = confirmationDialogCts.SafeRestart();
+            ShowBanConfirmationDialogAsync(confirmationDialogCts.Token).Forget();
+            return;
+
+            async UniTaskVoid ShowBanConfirmationDialogAsync(CancellationToken ct)
+            {
+                Result<ConfirmationResult> dialogResult = await ViewDependencies.ConfirmationDialogOpener.OpenConfirmationDialogAsync(new ConfirmationDialogParameter(string.Format(BAN_MEMBER_TEXT_FORMAT, profile.Name, communityName),
+                                                                                         BAN_MEMBER_CANCEL_TEXT,
+                                                                                         BAN_MEMBER_CONFIRM_TEXT,
+                                                                                         banSprite,
+                                                                                         false, false,
+                                                                                         userInfo: profile.Profile),
+                                                                                     ct)
+                                                                                .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+                if (ct.IsCancellationRequested || !dialogResult.Success || dialogResult.Value == ConfirmationResult.Cancel) return;
+
+                BanUserRequested?.Invoke(profile);
+            }
+        }
+
+        public void SetActive(bool active) => gameObject.SetActive(active);
+
+        private void ToggleSection(MemberListSections section, bool invokeEvent = true)
+        {
+            if (currentSection == section) return;
+
+            foreach (var sectionMapping in memberListSectionsElements)
+            {
+                sectionMapping.SelectedBackground.SetActive(sectionMapping.Section == section);
+                sectionMapping.SelectedText.SetActive(sectionMapping.Section == section);
+                sectionMapping.UnselectedBackground.SetActive(sectionMapping.Section != section);
+                sectionMapping.UnselectedText.SetActive(sectionMapping.Section != section);
+            }
+
+            currentSection = section;
+            if (invokeEvent)
+                ActiveSectionChanged?.Invoke(section);
+        }
+
+        public void SetSectionButtonsActive(bool isActive)
+        {
+            sectionButtons.gameObject.SetActive(isActive);
+            scrollViewRect.offsetMax = new Vector2(scrollViewRect.offsetMax.x, isActive ? -sectionButtons.sizeDelta.y : 0);
+        }
+
+        public void InitGrid()
+        {
+            loopGrid.InitGridView(0, GetLoopGridItemByIndex);
+        }
+
+        public void SetProfileDataProvider(ProfileRepositoryWrapper profileDataProvider)
+        {
+            this.profileRepositoryWrapper = profileDataProvider;
+        }
+
+        public void SetCommunitiesDataProvider(CommunitiesDataProvider.CommunitiesDataProvider dataProvider)
+        {
+            this.communitiesDataProvider = dataProvider;
+        }
+
+        public void SetSelfProfile(ISelfProfile selfProfileData) =>
+            selfProfile = selfProfileData;
+
+        public void SetCommunityData(GetCommunityResponse.CommunityData community, UniTask panelTask)
+        {
+            communityData = community;
+            this.panelTask = panelTask;
+
+            foreach (var sectionMapping in memberListSectionsElements)
+            {
+                sectionMapping.Button.gameObject.SetActive(true);
+
+                if (community.privacy != CommunityPrivacy.@private && sectionMapping.ForPrivateCommunitiesOnly)
+                    sectionMapping.Button.gameObject.SetActive(false);
+            }
+
+        }
+
+        private LoopGridViewItem GetLoopGridItemByIndex(LoopGridView loopGridView, int index, int row, int column)
+        {
+            LoopGridViewItem listItem = loopGridView.NewListViewItem(loopGridView.ItemPrefabDataList[0].mItemPrefab.name);
+            MemberListItemView elementView = listItem.GetComponent<MemberListItemView>();
+
+            ICommunityMemberData memberData = membersData.Items[index];
+            elementView.Configure(memberData, currentSection, memberData.Address.EqualsIgnoreCase(ViewDependencies.CurrentIdentity?.Address), profileRepositoryWrapper);
+
+            elementView.SubscribeToInteractions(member => ElementMainButtonClicked?.Invoke(member),
+                OnContextMenuButtonClicked,
+                member => ElementFriendButtonClicked?.Invoke(member),
+                member => ElementUnbanButtonClicked?.Invoke(member),
+                (member, intention) => ElementManageRequestClicked?.Invoke(member, intention));
+
+            if (index >= membersData.TotalFetched - ELEMENT_MISSING_THRESHOLD && membersData.TotalFetched < membersData.TotalToFetch)
+                NewDataRequested?.Invoke();
+
+            return listItem;
+        }
+
+        public void RefreshGrid(SectionFetchData<ICommunityMemberData> data, bool redraw)
+        {
+            membersData = data;
+
+            loopGrid.SetListItemCount(membersData.Items.Count, false);
+
+            if (redraw)
+                loopGrid.RefreshAllShownItem();
+        }
+
+        public void SetEmptyStateActive(bool active)
+        {
+            if (active)
+            {
+                emptyStateParent.SetActive(true);
+                foreach (var sectionMapping in memberListSectionsElements)
+                    sectionMapping.EmptyState.SetActive(sectionMapping.Section == currentSection);
+            }
+            else
+                emptyStateParent.SetActive(false);
+        }
+
+        public void SetLoadingStateActive(bool active)
+        {
+            if (active)
+                loadingObject.ShowLoading();
+            else
+                loadingObject.HideLoading();
+        }
+
+        public void SetLoadingMoreBadgeActive(bool isActive) =>
+            resultsLoadingMoreSpinner.SetActive(isActive);
+
+        [Serializable]
+        public struct MemberListSectionMapping
+        {
+            [field: SerializeField]
+            public MemberListSections Section { get; private set; }
+
+            [field: SerializeField]
+            public bool ForPrivateCommunitiesOnly { get; private set; }
+
+            [field: SerializeField]
+            public Button Button { get; private set; }
+
+            [field: SerializeField]
+            public GameObject SelectedBackground { get; private set; }
+
+            [field: SerializeField]
+            public GameObject SelectedText { get; private set; }
+
+            [field: SerializeField]
+            public GameObject UnselectedBackground { get; private set; }
+
+            [field: SerializeField]
+            public GameObject UnselectedText { get; private set; }
+
+            [field: Space(10)]
+            [field: SerializeField]
+            public GameObject EmptyState { get; private set; }
+        }
+    }
+}

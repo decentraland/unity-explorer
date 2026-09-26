@@ -1,0 +1,65 @@
+using DCL.Web3.Authenticators;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System.Text;
+
+namespace DCL.Web3
+{
+    /// <summary>
+    ///     Renders a web3 request verbatim for the raw review panel, shown when the request maps to
+    ///     <see cref="TransactionKind.Unknown" /> and there is nothing to summarize.
+    /// </summary>
+    public static class TransactionRawPayload
+    {
+        // Re-serializing a payload that repeats a key would keep only one of the values; such a payload is
+        // left exactly as it arrived instead.
+        private static readonly JsonLoadSettings NO_DUPLICATE_KEYS = new () { DuplicatePropertyNameHandling = DuplicatePropertyNameHandling.Error };
+
+        public static string Format(TransactionConfirmationRequest request)
+        {
+            var payload = new StringBuilder();
+
+            AppendField(payload, "Method", request.Method);
+            AppendField(payload, "Network", Network(request));
+
+            if (request.IsTypedDataSignature)
+                AppendField(payload, "Typed data", WithIndent(request.TypedData));
+            else
+            {
+                AppendField(payload, "To", request.To);
+
+                // A zero value and empty calldata reach the popup as null; both are still worth stating.
+                AppendField(payload, "Value", string.IsNullOrEmpty(request.Value) ? "0x0" : request.Value!);
+                AppendField(payload, "Data", string.IsNullOrEmpty(request.Data) ? "0x" : request.Data!);
+            }
+
+            return payload.ToString().TrimEnd();
+        }
+
+        private static string Network(TransactionConfirmationRequest request) =>
+            string.IsNullOrEmpty(request.NetworkName)
+                ? request.ChainId.ToString()
+                : $"{request.NetworkName} ({request.ChainId})";
+
+        private static void AppendField(StringBuilder payload, string label, string? value)
+        {
+            if (string.IsNullOrEmpty(value))
+                return;
+
+            payload.Append(label).Append('\n').Append(value).Append("\n\n");
+        }
+
+        /// <summary>
+        ///     Indents so a one-line EIP-712 payload is readable, leaving anything unparseable or ambiguous
+        ///     as it arrived.
+        /// </summary>
+        private static string? WithIndent(string? json)
+        {
+            if (string.IsNullOrEmpty(json))
+                return json;
+
+            try { return JToken.Parse(json, NO_DUPLICATE_KEYS).ToString(Formatting.Indented); }
+            catch (JsonException) { return json; }
+        }
+    }
+}

@@ -1,0 +1,123 @@
+﻿#include "Includes/PlatformSpecifications.cginc"
+#include "Includes/Structures.cginc"
+
+// Uncomment for debug symbols - do not commit uncommented
+//#pragma enable_d3d11_debug_symbols
+#pragma kernel ComputeLODBufferAccumulation
+
+////////////////////
+// UNIFORM INPUTS
+////////////////////
+shared RWStructuredBuffer<uint> arrLODCount;
+RWStructuredBuffer<PerInstanceLODLevels> PerInstance_LODLevels; // LOD_A, LOD_B, LOD_Dither, LOD_Shadow
+StructuredBuffer<GroupData> GroupDataBuffer;
+
+////////////////////
+// UNIFORM OUTPUTS
+////////////////////
+RWStructuredBuffer<InstanceLookUpAndDither> InstanceLookUpAndDitherBuffer;
+
+[numthreads(GPUI_THREADS, 1, 1)]
+void ComputeLODBufferAccumulation(uint3 id : SV_DispatchThreadID)
+{
+    if (id.x >= GroupDataBuffer[0].nInstBufferSize)
+        return;
+        
+    uint original_out;
+    uint nLOD_A = PerInstance_LODLevels[id.x].LOD_A;
+    uint nLOD_B = PerInstance_LODLevels[id.x].LOD_B;
+    uint nLOD_Shadow = PerInstance_LODLevels[id.x].LOD_Shadow;
+    if (nLOD_A < GroupDataBuffer[0].nLODCount)
+    {
+        if (nLOD_A == 0)
+        {
+            InterlockedAdd(arrLODCount[0], 1, original_out);
+            InstanceLookUpAndDitherBuffer[original_out + (GroupDataBuffer[0].nInstBufferSize * 0)].nInstanceLookUp = id.x;
+            InstanceLookUpAndDitherBuffer[original_out + (GroupDataBuffer[0].nInstBufferSize * 0)].nDither = PerInstance_LODLevels[id.x].LOD_Dither;
+            if (nLOD_B < GroupDataBuffer[0].nLODCount)
+            {
+                InterlockedAdd(arrLODCount[1], 1, original_out);
+                InstanceLookUpAndDitherBuffer[original_out + (GroupDataBuffer[0].nInstBufferSize * 1)].nInstanceLookUp = id.x;
+                InstanceLookUpAndDitherBuffer[original_out + (GroupDataBuffer[0].nInstBufferSize * 1)].nDither = 0;
+            }
+        }
+        else if (nLOD_A == 1)
+        {
+            InterlockedAdd(arrLODCount[1], 1, original_out);
+            InstanceLookUpAndDitherBuffer[original_out + (GroupDataBuffer[0].nInstBufferSize * 1)].nInstanceLookUp = id.x;
+            InstanceLookUpAndDitherBuffer[original_out + (GroupDataBuffer[0].nInstBufferSize * 1)].nDither = PerInstance_LODLevels[id.x].LOD_Dither;
+            if (nLOD_B < GroupDataBuffer[0].nLODCount)
+            {
+                InterlockedAdd(arrLODCount[2], 1, original_out);
+                InstanceLookUpAndDitherBuffer[original_out + (GroupDataBuffer[0].nInstBufferSize * 2)].nInstanceLookUp = id.x;
+                InstanceLookUpAndDitherBuffer[original_out + (GroupDataBuffer[0].nInstBufferSize * 2)].nDither = 0;
+            }
+        }
+        else if (nLOD_A == 2)
+        {
+            InterlockedAdd(arrLODCount[2], 1, original_out);
+            InstanceLookUpAndDitherBuffer[original_out + (GroupDataBuffer[0].nInstBufferSize * 2)].nInstanceLookUp = id.x;
+            InstanceLookUpAndDitherBuffer[original_out + (GroupDataBuffer[0].nInstBufferSize * 2)].nDither = PerInstance_LODLevels[id.x].LOD_Dither;
+            if (nLOD_B < GroupDataBuffer[0].nLODCount)
+            {
+                InterlockedAdd(arrLODCount[3], 1, original_out);
+                InstanceLookUpAndDitherBuffer[original_out + (GroupDataBuffer[0].nInstBufferSize * 3)].nInstanceLookUp = id.x;
+                InstanceLookUpAndDitherBuffer[original_out + (GroupDataBuffer[0].nInstBufferSize * 3)].nDither = 0;
+            }
+        }
+        else if (nLOD_A == 3)
+        {
+            InterlockedAdd(arrLODCount[3], 1, original_out);
+            InstanceLookUpAndDitherBuffer[original_out + (GroupDataBuffer[0].nInstBufferSize * 3)].nInstanceLookUp = id.x;
+            InstanceLookUpAndDitherBuffer[original_out + (GroupDataBuffer[0].nInstBufferSize * 3)].nDither = PerInstance_LODLevels[id.x].LOD_Dither;
+            if (nLOD_B < GroupDataBuffer[0].nLODCount)
+            {
+                InterlockedAdd(arrLODCount[4], 1, original_out);
+                InstanceLookUpAndDitherBuffer[original_out + (GroupDataBuffer[0].nInstBufferSize * 4)].nInstanceLookUp = id.x;
+                InstanceLookUpAndDitherBuffer[original_out + (GroupDataBuffer[0].nInstBufferSize * 4)].nDither = 0;
+            }
+        }
+        else if (nLOD_A == 4)
+        {
+            InterlockedAdd(arrLODCount[4], 1, original_out);
+            InstanceLookUpAndDitherBuffer[original_out + (GroupDataBuffer[0].nInstBufferSize * 4)].nInstanceLookUp = id.x;
+            InstanceLookUpAndDitherBuffer[original_out + (GroupDataBuffer[0].nInstBufferSize * 4)].nDither = PerInstance_LODLevels[id.x].LOD_Dither;
+            if (nLOD_B < GroupDataBuffer[0].nLODCount)
+            {
+                InterlockedAdd(arrLODCount[5], 1, original_out);
+                InstanceLookUpAndDitherBuffer[original_out + (GroupDataBuffer[0].nInstBufferSize * 5)].nInstanceLookUp = id.x;
+                InstanceLookUpAndDitherBuffer[original_out + (GroupDataBuffer[0].nInstBufferSize * 5)].nDither = 0;
+            }
+        }
+        else if (nLOD_A == 5)
+        {
+            InterlockedAdd(arrLODCount[5], 1, original_out);
+            InstanceLookUpAndDitherBuffer[original_out + (GroupDataBuffer[0].nInstBufferSize * 5)].nInstanceLookUp = id.x;
+            InstanceLookUpAndDitherBuffer[original_out + (GroupDataBuffer[0].nInstBufferSize * 5)].nDither = PerInstance_LODLevels[id.x].LOD_Dither;
+            if (nLOD_B < GroupDataBuffer[0].nLODCount)
+            {
+                InterlockedAdd(arrLODCount[6], 1, original_out);
+                InstanceLookUpAndDitherBuffer[original_out + (GroupDataBuffer[0].nInstBufferSize * 6)].nInstanceLookUp = id.x;
+                InstanceLookUpAndDitherBuffer[original_out + (GroupDataBuffer[0].nInstBufferSize * 6)].nDither = 0;
+            }
+        }
+        else if (nLOD_A == 6)
+        {
+            InterlockedAdd(arrLODCount[6], 1, original_out);
+            InstanceLookUpAndDitherBuffer[original_out + (GroupDataBuffer[0].nInstBufferSize * 6)].nInstanceLookUp = id.x;
+            InstanceLookUpAndDitherBuffer[original_out + (GroupDataBuffer[0].nInstBufferSize * 6)].nDither = PerInstance_LODLevels[id.x].LOD_Dither;
+            if (nLOD_B < GroupDataBuffer[0].nLODCount)
+            {
+                InterlockedAdd(arrLODCount[7], 1, original_out);
+                InstanceLookUpAndDitherBuffer[original_out + (GroupDataBuffer[0].nInstBufferSize * 7)].nInstanceLookUp = id.x;
+                InstanceLookUpAndDitherBuffer[original_out + (GroupDataBuffer[0].nInstBufferSize * 7)].nDither = 0;
+            }
+        }
+        else if (nLOD_A == 7)
+        {
+            InterlockedAdd(arrLODCount[7], 1, original_out);
+            InstanceLookUpAndDitherBuffer[original_out + (GroupDataBuffer[0].nInstBufferSize * 7)].nInstanceLookUp = id.x;
+            InstanceLookUpAndDitherBuffer[original_out + (GroupDataBuffer[0].nInstBufferSize * 7)].nDither = PerInstance_LODLevels[id.x].LOD_Dither;
+        }
+    }
+}

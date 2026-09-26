@@ -1,0 +1,398 @@
+using Arch.Core;
+using CommunicationData.URLHelpers;
+using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.NotificationsBus;
+using DCL.NotificationsBus.NotificationTypes;
+using DCL.PerformanceAndDiagnostics.Analytics;
+using DCL.PrivateWorlds;
+using DCL.RealmNavigation.LoadingOperation;
+using DCL.RealmNavigation.TeleportOperations;
+using DCL.SceneLoadingScreens.LoadingScreen;
+using DCL.Utilities;
+using DCL.Utility.Types;
+using ECS;
+using ECS.Prioritization.Components;
+using ECS.SceneLifeCycle;
+using ECS.SceneLifeCycle.Realm;
+using Newtonsoft.Json.Linq;
+using SceneRunner.Scene;
+using System;
+using System.Threading;
+using UnityEngine;
+
+namespace DCL.RealmNavigation
+{
+    public class RealmNavigator : IRealmNavigator
+    {
+        private const int MAX_REALM_CHANGE_RETRIES = 3;
+        private const string TELEPORT_NOT_ALLOWED_LOCAL_SCENE =
+            "Teleport is not allowed in local scene development mode";
+        private const string PERMISSION_CHECK_FAILED_MESSAGE =
+            "Could not verify world permissions. You may experience access issues.";
+
+        public event Action<Vector2Int>? NavigationExecuted;
+
+        private readonly ILoadingScreen loadingScreen;
+        private readonly IRealmController realmController;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
+        private readonly World globalWorld;
+        private readonly ObjectProxy<Entity> cameraEntity;
+        private readonly CameraSamplingData cameraSamplingData;
+
+        private Vector2Int currentParcel;
+
+        private readonly SequentialLoadingOperation<TeleportParams> realmChangeOperations;
+        private readonly SequentialLoadingOperation<TeleportParams> teleportInSameRealmOperation;
+        private readonly ILoadingStatus loadingStatus;
+        private readonly IAnalyticsController analyticsController;
+        private readonly ILandscape landscape;
+        private readonly IWorldAccessGate worldAccessGate;
+        private readonly IScenesCache scenesCache;
+
+        public RealmNavigator(
+            ILoadingScreen loadingScreen,
+            IRealmController realmController,
+            IDecentralandUrlsSource decentralandUrlsSource,
+            World globalWorld,
+            ObjectProxy<Entity> cameraEntity,
+            CameraSamplingData cameraSamplingData,
+            ILoadingStatus loadingStatus,
+            ILandscape landscape,
+            IAnalyticsController analyticsController,
+            SequentialLoadingOperation<TeleportParams> realmChangeOperations,
+            SequentialLoadingOperation<TeleportParams> teleportInSameRealmOperation,
+            IWorldAccessGate worldAccessGate,
+            IScenesCache scenesCache)
+        {
+            this.loadingScreen = loadingScreen;
+            this.realmController = realmController;
+            this.cameraEntity = cameraEntity;
+            this.cameraSamplingData = cameraSamplingData;
+            this.decentralandUrlsSource = decentralandUrlsSource;
+            this.globalWorld = globalWorld;
+            this.loadingStatus = loadingStatus;
+            this.analyticsController = analyticsController;
+            this.realmChangeOperations = realmChangeOperations;
+            this.teleportInSameRealmOperation = teleportInSameRealmOperation;
+            this.landscape = landscape;
+            this.worldAccessGate = worldAccessGate;
+            this.scenesCache = scenesCache;
+        }
+
+        public bool IsAlreadyOnRealm(URLDomain realm)
+        {
+            if (!realmController.RealmData.Configured)
+                return false;
+
+            return realm == realmController.CurrentDomain || realm == realmController.RealmData.Ipfs.CatalystBaseUrl;
+        }
+
+        public async UniTask<EnumResult<ChangeRealmError>> TryChangeRealmAsync(
+            URLDomain realm,
+            CancellationToken ct,
+            Vector2Int parcelToTeleport = default,
+            bool isWorld = false,
+            bool allowsWorldPositionOverride = false,
+            bool landOnParcel = false,
+            string? spawnPointName = null
+        )
+        {
+            if (ct.IsCancellationRequested)
+                return EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.ChangeCancelled);
+
+            if (realmController.RealmData.IsLocalSceneDevelopment)
+                return EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.LocalSceneDevelopmentBlocked);
+
+            if (await realmController.IsReachableAsync(realm, ct) == false)
+                return EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.NotReachable);
+
+            // We use worldName != null to determine if the target is a world, instead of
+            // RealmData.IsWorld(), because RealmData reflects the *current* realm — not the target.
+            // This also avoids parsing the URL to extract a world name from the realm domain.
+            if (isWorld)
+            {
+                if (TryExtractWorldName(realm, out string worldName))
+                {
+                    var result = await CheckWorldAccessAsync(worldName, realm, ct);
+
+                    if (result == WorldAccessResult.CheckFailed)
+                    {
+                        ReportHub.LogWarning(ReportCategory.REALM, $"[RealmNavigator] Permission check failed for '{worldName}'");
+                        NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(PERMISSION_CHECK_FAILED_MESSAGE));
+                        return EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.UnauthorizedWorldAccess);
+                    }
+
+                    if (result != WorldAccessResult.Allowed)
+                        return MapToChangeRealmError(result);
+                }
+                else
+                {
+                    ReportHub.LogWarning(ReportCategory.REALM,
+                        $"[RealmNavigator] Could not extract world name from realm URL '{realm}', skipping local permission pre-check");
+                }
+            }
+
+            URLDomain? previousRealm = realmController.CurrentDomain;
+
+            var operation = DoChangeRealmAsync(realm, previousRealm, parcelToTeleport, allowsWorldPositionOverride, landOnParcel, spawnPointName);
+            var loadResult = await loadingScreen.ShowWhileExecuteTaskAsync(operation, ct);
+
+            if (!loadResult.Success)
+            {
+                if (!globalWorld.Has<CameraSamplingData>(cameraEntity.Object))
+                    globalWorld.Add(cameraEntity.Object, cameraSamplingData);
+
+                ReportHub.LogError(ReportCategory.REALM,
+                    $"Error trying to teleport to a realm {realm}: {loadResult.Error!.Value.Message}");
+
+                // A cancellation (e.g. the loading screen timeout) can interrupt the chain after the previous realm
+                // was torn down; the in-chain fallback shares the cancelled token, so recovery needs a fresh one
+                if (!realmController.RealmData.Configured && !ct.IsCancellationRequested)
+                    await RecoverUnconfiguredRealmAsync(previousRealm);
+
+                return loadResult.As(ChangeRealmErrors.AsChangeRealmError);
+            }
+
+            NavigationExecuted?.Invoke(parcelToTeleport);
+
+            return EnumResult<ChangeRealmError>.SuccessResult();
+        }
+
+        private async UniTask RecoverUnconfiguredRealmAsync(URLDomain? previousRealm)
+        {
+            URLDomain recoveryRealm = previousRealm ?? URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Genesis));
+
+            ReportHub.LogWarning(ReportCategory.REALM, $"Realm is left unconfigured after a failed change, recovering to {recoveryRealm}");
+
+            var recoveryOperation = DoChangeRealmAsync(recoveryRealm, null, currentParcel, false);
+
+            // CancellationToken.None on purpose: recovery must not inherit the already-cancelled teleport
+            // token, and the loading screen applies its own timeout so the operation stays bounded
+            EnumResult<TaskError> recoveryResult = await loadingScreen.ShowWhileExecuteTaskAsync(recoveryOperation, CancellationToken.None);
+
+            if (!recoveryResult.Success)
+                ReportHub.LogError(ReportCategory.REALM,
+                    $"Error trying to recover to realm {recoveryRealm}: {recoveryResult.Error!.Value.Message}");
+        }
+
+        private async UniTask<WorldAccessResult> CheckWorldAccessAsync(string worldName, URLDomain realm, CancellationToken ct)
+        {
+            try
+            {
+                return await worldAccessGate.CheckAccessAsync(worldName, null, realm, ct);
+            }
+            catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+            {
+                return WorldAccessResult.CheckFailed;
+            }
+        }
+
+        private static EnumResult<ChangeRealmError> MapToChangeRealmError(WorldAccessResult result) =>
+            result switch
+            {
+                WorldAccessResult.Denied => EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.WhitelistAccessDenied),
+                WorldAccessResult.PasswordCancelled => EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.PasswordCancelled),
+                _ => EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.PasswordRequired)
+            };
+
+        private static bool TryExtractWorldName(URLDomain realm, out string worldName)
+        {
+            worldName = string.Empty;
+
+            if (string.IsNullOrEmpty(realm.Value))
+                return false;
+
+            if (!Uri.TryCreate(realm.Value, UriKind.Absolute, out Uri? uri))
+                return false;
+
+            string path = uri.AbsolutePath.Trim('/');
+            if (string.IsNullOrEmpty(path))
+                return false;
+
+            string[] segments = path.Split('/', StringSplitOptions.RemoveEmptyEntries);
+            if (segments.Length == 0)
+                return false;
+
+            worldName = segments[^1];
+            return !string.IsNullOrEmpty(worldName);
+        }
+
+        private async UniTask<EnumResult<TaskError>> ExecuteTeleportOperationsAsync(
+            TeleportParams teleportParams,
+            SequentialLoadingOperation<TeleportParams> ops,
+            string logOpName,
+            int attemptsCount,
+            bool trackDuration,
+            CancellationToken ct
+        )
+        {
+            // Snapshot the source before ops run: realm-change ops clear the scenes cache
+            string source = SceneHashOrParcel(scenesCache.CurrentScene.Value, scenesCache.CurrentParcel.Value);
+            float startTime = UnityEngine.Time.realtimeSinceStartup;
+
+            ReportHub.LogProductionInfo($"Trying to teleport to {teleportParams.CurrentDestinationParcel}. Attempt #{attemptsCount}");
+            EnumResult<TaskError> lastOpResult = await ops.ExecuteAsync(logOpName, attemptsCount, teleportParams, ct);
+
+            if (lastOpResult.Success)
+                teleportParams.Report.SetProgress(loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Completed));
+
+            if (lastOpResult.Success == false)
+            {
+                // On failure, move LoadingStatus to Completed so it doesn't stay stuck at PlayerTeleporting,
+                // which would make CommandsHandleChatMessageBus.Send silently drop further chat commands (#8880).
+                loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Completed);
+
+                analyticsController.Track(
+                    AnalyticsEvents.General.LOADING_ERROR,
+                    new JObject
+                    {
+                        ["type"] = "teleportation",
+                        ["message"] = lastOpResult.AsResult().ErrorMessage,
+                    }
+                );
+            }
+            else
+            {
+                if (trackDuration)
+                {
+                    float loadingTime = UnityEngine.Time.realtimeSinceStartup - startTime;
+
+                    // The destination scene is already cached: teleport ops wait for scene readiness before completing
+                    scenesCache.TryGetByParcel(teleportParams.CurrentDestinationParcel, out ISceneFacade destinationScene);
+
+                    analyticsController.Track(AnalyticsEvents.General.TELEPORT_OPERATION_DURATION, new JObject
+                    {
+                        ["source"] = source,
+                        ["destination"] = SceneHashOrParcel(destinationScene, teleportParams.CurrentDestinationParcel),
+                        ["loading_time"] = loadingTime,
+                    });
+                }
+
+                NavigationExecuted?.Invoke(teleportParams.CurrentDestinationParcel);
+            }
+
+            return lastOpResult;
+        }
+
+        private static string SceneHashOrParcel(ISceneFacade? scene, Vector2Int parcel) =>
+            scene is { IsEmpty: false } ? scene.Info.Name : parcel.ToString();
+
+        private Func<AsyncLoadProcessReport, CancellationToken, UniTask<EnumResult<TaskError>>> DoChangeRealmAsync(URLDomain realm, URLDomain? fallbackRealm, Vector2Int parcelToTeleport, bool allowsWorldPositionOverride, bool landOnParcel = false, string? spawnPointName = null)
+        {
+            return async (parentLoadReport, ct) =>
+            {
+                const string LOG_NAME = "Changing Realm";
+                const string FALLBACK_LOG_NAME = "Returning to Previous Realm";
+
+                if (ct.IsCancellationRequested)
+                    return EnumResult<TaskError>.CancelledResult(TaskError.Cancelled);
+
+                var teleportParams = new TeleportParams(realm, parcelToTeleport, parentLoadReport, loadingStatus, allowsWorldPositionOverride, landOnParcel, spawnPointName);
+
+                EnumResult<TaskError> opResult = await ExecuteTeleportOperationsAsync(teleportParams, realmChangeOperations, LOG_NAME, MAX_REALM_CHANGE_RETRIES, trackDuration: true, ct);
+
+                if (opResult.Success)
+                    return opResult;
+
+                if (!fallbackRealm.HasValue)
+                {
+                    ReportHub.LogWarning(ReportCategory.REALM, "All attempts failed. No fallback realm is provided.");
+                    return opResult;
+                }
+
+                // On a cancelled token the fallback can only produce a second round of teardown side effects:
+                // its own SetRealmAsync would rethrow the cancellation immediately
+                if (ct.IsCancellationRequested)
+                    return opResult;
+
+                // All retries failed, try with the previous realm and parcel
+                ReportHub.LogWarning(ReportCategory.REALM, "All attempts failed. Trying with previous realm and parcel.");
+
+                teleportParams.ChangeDestination(fallbackRealm.Value, currentParcel);
+
+                // The recovery trip back is not a user-intended teleport: keep it out of the duration metric
+                opResult = await ExecuteTeleportOperationsAsync(teleportParams, realmChangeOperations, FALLBACK_LOG_NAME, 1, trackDuration: false, ct);
+
+                if (!opResult.Success)
+                    parentLoadReport.SetProgress(1);
+
+                return opResult;
+            };
+        }
+
+
+
+        public void RemoveCameraSamplingData()
+        {
+            if (globalWorld.Has<CameraSamplingData>(cameraEntity.Object))
+                globalWorld.Remove<CameraSamplingData>(cameraEntity.Object);
+        }
+
+        public async UniTask<EnumResult<TaskError>> TeleportToParcelAsync(
+            Vector2Int parcel,
+            CancellationToken ct,
+            bool isLocal = false,
+            bool landOnParcel = false,
+            string? spawnPointName = null
+        )
+        {
+            if (ct.IsCancellationRequested)
+                return EnumResult<TaskError>.CancelledResult(TaskError.Cancelled);
+
+            if (!isLocal && realmController.RealmData.IsLocalSceneDevelopment)
+                return EnumResult<TaskError>.ErrorResult(TaskError.MessageError, TELEPORT_NOT_ALLOWED_LOCAL_SCENE);
+
+            Result parcelCheckResult = landscape.IsParcelInsideTerrain(parcel, isLocal);
+
+            if (!parcelCheckResult.Success)
+                return parcelCheckResult.AsEnumResult(TaskError.MessageError);
+
+            if (!isLocal && !realmController.RealmData.IsGenesis())
+            {
+                var enumResult = await TryChangeToGenesisAsync(parcel, ct, landOnParcel, spawnPointName);
+                return enumResult.As(ChangeRealmErrors.AsTaskError);
+            }
+
+            EnumResult<TaskError> loadResult = await loadingScreen.ShowWhileExecuteTaskAsync(TeleportToParcelAsyncOperation(parcel, landOnParcel, spawnPointName), ct);
+
+            if (!loadResult.Success)
+                ReportHub.LogError(
+                    ReportCategory.SCENE_LOADING,
+                    $"Error trying to teleport to a parcel {parcel}: {loadResult.Error!.Value.Message}"
+                );
+
+            return loadResult;
+        }
+
+        private async UniTask<EnumResult<ChangeRealmError>> TryChangeToGenesisAsync(Vector2Int parcel, CancellationToken ct, bool landOnParcel = false, string? spawnPointName = null)
+        {
+            var genesisUrl = URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Genesis));
+            var enumResult = await TryChangeRealmAsync(genesisUrl, ct, parcel, landOnParcel: landOnParcel, spawnPointName: spawnPointName);
+            return enumResult;
+        }
+
+        private Func<AsyncLoadProcessReport, CancellationToken, UniTask<EnumResult<TaskError>>> TeleportToParcelAsyncOperation(Vector2Int parcel, bool landOnParcel = false, string? spawnPointName = null) =>
+            async (parentLoadReport, ct) =>
+            {
+                const string LOG_NAME = "Teleporting to Parcel";
+
+                if (ct.IsCancellationRequested)
+                    return EnumResult<TaskError>.CancelledResult(TaskError.Cancelled);
+
+                var teleportParams = new TeleportParams(
+                    currentDestinationParcel: parcel,
+                    loadingStatus: loadingStatus,
+                    report: parentLoadReport,
+                    currentDestinationRealm: URLDomain.EMPTY,
+                    allowsWorldPositionOverride: false,
+                    landOnParcel: landOnParcel,
+                    spawnPointName: spawnPointName
+                );
+
+                EnumResult<TaskError> result = await ExecuteTeleportOperationsAsync(teleportParams, teleportInSameRealmOperation, LOG_NAME, 1, trackDuration: true, ct);
+                return result;
+            };
+    }
+}

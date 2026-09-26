@@ -1,0 +1,144 @@
+using CommunicationData.URLHelpers;
+using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.Rooms;
+using DCL.Multiplayer.Profiles.Announcements;
+using DCL.Multiplayer.Profiles.Bunches;
+using DCL.Multiplayer.Profiles.Poses;
+using DCL.Optimization.Pools;
+using DCL.Profiles;
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using Utility;
+
+namespace DCL.Multiplayer.Profiles.RemoteProfiles
+{
+    public class RemoteProfiles
+    {
+        private readonly struct PendingRequest
+        {
+            public readonly int Version;
+            public readonly CancellationTokenSource Cts;
+            public readonly DateTime StartedAt;
+            public readonly RoomSource FromRoom;
+
+            public PendingRequest(int version, CancellationTokenSource cts, DateTime startedAt, RoomSource fromRoom)
+            {
+                Version = version;
+                Cts = cts;
+                StartedAt = startedAt;
+                FromRoom = fromRoom;
+            }
+
+            internal bool TryAddRoom(RoomSource roomSource, out PendingRequest result)
+            {
+                if (EnumUtils.HasFlag(FromRoom, roomSource))
+                {
+                    result = default(PendingRequest);
+                    return false;
+                }
+
+                result = new PendingRequest(Version, Cts, StartedAt, FromRoom | roomSource);
+                return true;
+            }
+        }
+
+        private readonly IProfileRepository profileRepository;
+        private readonly List<RemoteProfile> remoteProfiles = new ();
+        private readonly Dictionary<string, PendingRequest> pendingProfiles = new (PoolConstants.AVATARS_COUNT);
+        private readonly IRemoteMetadata remoteMetadata;
+
+        public RemoteProfiles(IProfileRepository profileRepository, IRemoteMetadata remoteMetadata)
+        {
+            this.profileRepository = profileRepository;
+            this.remoteMetadata = remoteMetadata;
+        }
+
+        public void Download(IReadOnlyCollection<RemoteAnnouncement> list)
+        {
+            foreach (RemoteAnnouncement remoteAnnouncement in list)
+                TryDownloadAsync(remoteAnnouncement).Forget();
+        }
+
+        public bool NewBunchAvailable() =>
+            remoteProfiles.Count > 0;
+
+        public Bunch<RemoteProfile> Bunch() =>
+            new (remoteProfiles);
+
+        public void Reset()
+        {
+            foreach (var kv in pendingProfiles)
+                kv.Value.Cts.SafeCancelAndDispose();
+
+            pendingProfiles.Clear();
+            remoteProfiles.Clear();
+        }
+
+        private async UniTaskVoid TryDownloadAsync(RemoteAnnouncement remoteAnnouncement)
+        {
+            URLDomain? lambdasEndpoint = remoteMetadata.GetLambdaDomainOrNull(remoteAnnouncement.WalletId);
+
+            DateTime startedAt = DateTime.Now;
+
+            if (pendingProfiles.TryGetValue(remoteAnnouncement.WalletId, out PendingRequest pendingRequest))
+            {
+                if (pendingRequest.Version < remoteAnnouncement.Version)
+                {
+                    ReportHub.Log(ReportCategory.PROFILE,
+                        $"Profile announcement {remoteAnnouncement.WalletId} V:{pendingRequest.Version} was super-seeded by V:{remoteAnnouncement.Version} "
+                        + $"after {(startedAt - pendingRequest.StartedAt).TotalSeconds} s.");
+
+                    // Cancel the request with older version, it's no longer valid
+                    pendingRequest.Cts.Cancel();
+                }
+                else
+                {
+                    // The new one is already being requested, update the room source if needed
+                    if (pendingRequest.TryAddRoom(remoteAnnouncement.FromRoom, out PendingRequest result))
+                        pendingProfiles[remoteAnnouncement.WalletId] = result;
+                    return;
+                }
+            }
+
+            var cts = new CancellationTokenSource();
+
+            pendingProfiles[remoteAnnouncement.WalletId] = new PendingRequest(remoteAnnouncement.Version, cts, startedAt,
+                remoteAnnouncement.FromRoom | pendingRequest.FromRoom);
+
+            try
+            {
+                // Delay the profile resolution in case it's not found, as otherwise it will be re-requested every frame - it's not the desired behaviour
+                // In case it needs to be retrieved, force it to the catalyst, otherwise we get outdated profiles
+                Profile? profile = await profileRepository.GetAsync(remoteAnnouncement.WalletId, remoteAnnouncement.Version, lambdasEndpoint, cts.Token,
+                    batchBehaviour: IProfileRepository.FetchBehaviour.DelayUntilResolved);
+
+                if (profile is null)
+                    return;
+
+                // Reset() may have cancelled and cleared pendingProfiles while we were awaiting.
+                if (cts.IsCancellationRequested || !pendingProfiles.TryGetValue(remoteAnnouncement.WalletId, out PendingRequest currentRequest))
+                    return;
+
+                remoteProfiles.Add(new RemoteProfile(profile, remoteAnnouncement.WalletId, currentRequest.FromRoom));
+
+                ReportHub.Log(ReportCategory.PROFILE,
+                    $"{remoteAnnouncement} was downloaded for {(DateTime.Now - startedAt).TotalSeconds} s.");
+            }
+            catch (Exception)
+            {
+                // exceptions are logged by the remote repository
+            }
+            finally
+            {
+                // Just an additional protection if the inner request was cancelled while being off the main thread
+                await UniTask.SwitchToMainThread();
+
+                // Clean-up pending profile request only if it is the same version (not overriden)
+                if (pendingProfiles.TryGetValue(remoteAnnouncement.WalletId, out pendingRequest) && pendingRequest.Version == remoteAnnouncement.Version)
+                    pendingProfiles.Remove(remoteAnnouncement.WalletId);
+            }
+        }
+    }
+}

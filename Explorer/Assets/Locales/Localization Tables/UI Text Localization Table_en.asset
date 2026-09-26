@@ -1,0 +1,63 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e9620f8c34305754d8cc9a7e49e852d9, type: 3}
+  m_Name: UI Text Localization Table_en
+  m_EditorClassIdentifier: 
+  m_LocaleId:
+    m_Code: en
+  m_SharedData: {fileID: 11400000, guid: fa6d78a0e08f14179b202ccca9720bb9, type: 2}
+  m_Metadata:
+    m_Items:
+    - rid: 6697045577537945602
+  m_TableData:
+  - m_Id: 23119123067166720
+    m_Localized: Backpack
+    m_Metadata:
+      m_Items: []
+  - m_Id: 56257508879097856
+    m_Localized: None
+    m_Metadata:
+      m_Items: []
+  - m_Id: 56990860166815744
+    m_Localized: Emote {slotId}
+    m_Metadata:
+      m_Items:
+      - rid: 6697045577537945602
+  - m_Id: 65668131220086784
+    m_Localized: Not compatible with equipped body shape.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 136891422374617088
+    m_Localized: Gallery
+    m_Metadata:
+      m_Items: []
+  - m_Id: 208414847697555456
+    m_Localized: Communities
+    m_Metadata:
+      m_Items: []
+  - m_Id: 294575855150305280
+    m_Localized: Places
+    m_Metadata:
+      m_Items: []
+  - m_Id: 301924463168196608
+    m_Localized: Events
+    m_Metadata:
+      m_Items: []
+  references:
+    version: 2
+    RefIds:
+    - rid: 6697045577537945602
+      type: {class: SmartFormatTag, ns: UnityEngine.Localization.Metadata, asm: Unity.Localization}
+      data:
+        m_Entries: 
+        m_SharedEntries:
+        - id: 56990860166815744

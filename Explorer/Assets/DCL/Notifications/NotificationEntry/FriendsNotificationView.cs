@@ -1,0 +1,155 @@
+using DCL.Audio;
+using DCL.NotificationsBus.NotificationTypes;
+using DCL.Profiles;
+using DCL.UI;
+using DCL.Profiles.Helpers;
+using DCL.Utilities;
+using System;
+using TMPro;
+using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.UI;
+
+namespace DCL.Notifications.NotificationEntry
+{
+    public class FriendsNotificationView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, INotificationView
+    {
+        private const string FRIEND_REQUEST_CLAIMED_NAME_TEMPLATE = "<color=#{0}>{1} <color=#ECEBED>{2}";
+        private const string FRIEND_REQUEST_UNCLAIMED_NAME_TEMPLATE = "<color=#{0}>{1}<color=#A09BA8>#{2} <color=#ECEBED>{3}";
+        private const string UKNOWN_USER_TEXT = "Unknown";
+
+        public event Action<NotificationType, INotification> NotificationClicked;
+        public NotificationType NotificationType { get; set; }
+        public INotification Notification { get; set; }
+
+        [field: SerializeField]
+        public Color NormalColor { get; private set; }
+
+        [field: SerializeField]
+        public Color HoveredColor { get; private set; }
+
+        [field: SerializeField]
+        public Image Background { get; private set; }
+
+        [field: SerializeField]
+        public GameObject UnreadImage { get; set; }
+
+        [field: SerializeField]
+        public Button MainButton { get; private set; }
+
+        [field: SerializeField]
+        public Button CloseButton { get; set; }
+
+        [field: SerializeField]
+        public TMP_Text HeaderText { get; set; }
+
+        [field: SerializeField]
+        public TMP_Text TitleText { get; set; }
+
+        [field: SerializeField]
+        public TMP_Text TimeText { get; set; }
+
+        [field: SerializeField]
+        public ImageView NotificationImage { get; set; }
+
+        [field: SerializeField]
+        public Image NotificationImageBackground { get; set; }
+
+        [field: SerializeField]
+        public Image NotificationTypeImage { get; set; }
+
+        [field: SerializeField]
+        public AudioClipConfig RequestNotificationAudio { get; private set; }
+
+        [field: SerializeField]
+        public AudioClipConfig AcceptedNotificationAudio { get; private set; }
+
+        public void PlayRequestNotificationAudio() =>
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(RequestNotificationAudio);
+
+        public void PlayAcceptedNotificationAudio() =>
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(AcceptedNotificationAudio);
+
+        public void ConfigureFromAcceptedNotificationData(FriendRequestAcceptedNotification notification)
+        {
+            Color userColor = NameColorHelper.GetNameColor(notification.Metadata.Sender.Name);
+            SetTitleText(notification, notification.Metadata.Sender, userColor);
+            NotificationImageBackground.color = userColor;
+            Notification = notification;
+            NotificationType = notification.Type;
+        }
+
+        public void ConfigureFromTipReceivedNotificationData(TipReceivedNotification notification)
+        {
+            string userName;
+            string userAddress;
+            Color userColor;
+            bool hasClaimedName;
+
+            if (notification.SenderProfile.HasValue)
+            {
+                userName = notification.SenderProfile.Value.Name;
+                userAddress = notification.SenderProfile.Value.Address;
+                userColor = notification.SenderProfile.Value.UserNameColor;
+                hasClaimedName = notification.SenderProfile.Value.HasClaimedName;
+            }
+            else
+            {
+                userName = UKNOWN_USER_TEXT;
+                userAddress = string.Empty;
+                userColor = Color.gray;
+                hasClaimedName = true;
+            }
+
+            NotificationImageBackground.color = userColor;
+
+            TitleText.SetText(hasClaimedName
+                ? string.Format(FRIEND_REQUEST_CLAIMED_NAME_TEMPLATE, ColorUtility.ToHtmlStringRGB(userColor), userName,
+                    string.Format(notification.GetTitle(), notification.Metadata.TipAmount))
+                : string.Format(FRIEND_REQUEST_UNCLAIMED_NAME_TEMPLATE, ColorUtility.ToHtmlStringRGB(userColor), userName, userAddress[^4..],
+                    string.Format(notification.GetTitle(), notification.Metadata.TipAmount)));
+
+            Notification = notification;
+            NotificationType = notification.Type;
+        }
+
+        public void ConfigureFromReceivedNotificationData(FriendRequestReceivedNotification notification)
+        {
+            Color userColor = NameColorHelper.GetNameColor(notification.Metadata.Sender.Name);
+            SetTitleText(notification, notification.Metadata.Sender, userColor);
+            NotificationImageBackground.color = userColor;
+            Notification = notification;
+            NotificationType = notification.Type;
+        }
+
+        private void SetTitleText(NotificationBase notification, FriendRequestProfile sender, Color userColor)
+        {
+            TitleText.SetText(sender.HasClaimedName
+                ? string.Format(FRIEND_REQUEST_CLAIMED_NAME_TEMPLATE, ColorUtility.ToHtmlStringRGB(userColor), sender.Name, notification.GetTitle())
+                : string.Format(FRIEND_REQUEST_UNCLAIMED_NAME_TEMPLATE, ColorUtility.ToHtmlStringRGB(userColor), sender.Name, sender.Address[^4..], notification.GetTitle()));
+        }
+
+        private void Start()
+        {
+            Background.color = NormalColor;
+
+            MainButton.onClick.RemoveAllListeners();
+            MainButton.onClick.AddListener(OnPointerClick);
+        }
+
+        private void OnPointerClick()
+        {
+            NotificationClicked?.Invoke(NotificationType, Notification);
+        }
+
+        public void OnPointerEnter(PointerEventData eventData)
+        {
+            Background.color = HoveredColor;
+        }
+
+        public void OnPointerExit(PointerEventData eventData)
+        {
+            Background.color = NormalColor;
+        }
+    }
+}

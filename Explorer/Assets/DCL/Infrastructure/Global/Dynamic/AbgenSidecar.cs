@@ -1,0 +1,1044 @@
+using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
+using DCL.Utility;
+using ECS.StreamableLoading.AssetBundles;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.IO.Compression;
+using System.Runtime.InteropServices;
+using System.Security.Cryptography;
+using System.Threading;
+using UnityEngine;
+using UnityEngine.Networking;
+using Utility.Multithreading;
+#if !UNITY_EDITOR && !UNITY_STANDALONE_WIN
+using Plugins.DclNativeProcesses;
+using RichTypes;
+#endif
+
+// ReSharper disable InconsistentNaming
+
+namespace Global.Dynamic
+{
+    /// <summary>
+    ///     Runs the abgen JIT asset-bundle server as a supervised localhost sidecar. The client's unchanged
+    ///     loading path consumes its base URL as the optimized-assets source; the server JIT-converts the
+    ///     local scene and answers everything else from the production upstream (ab-cdn read-through and
+    ///     registry pass-through), caching converted bundles on disk.
+    ///     Two-step lifecycle: <see cref="ReserveBaseUrl" /> (synchronous — a loopback port only, so the
+    ///     URL can seed the URL sources built early in startup), then <see cref="AbgenSidecarBootstrap" />
+    ///     creates the instance on that URL (<see cref="TryCreate" />) and launches it
+    ///     (<see cref="StartAsync" />), owning it from there on.
+    ///     The binary is never embedded in the build: on first run the pinned release is downloaded
+    ///     (<see cref="EnsurePinnedBinaryAsync" />) and verified against its compile-time sha256. Only the
+    ///     pinned version is ever executed — a compromised GitHub release cannot propagate here without a
+    ///     deliberate pin+checksum bump in this file. Installing it removes every earlier install, so a pin
+    ///     bump leaves one copy on disk instead of accumulating them. StreamingAssets acts as an explicit
+    ///     developer override.
+    /// </summary>
+    public sealed class AbgenSidecar : IDisposable
+    {
+        private const string PINNED_VERSION = "0.17.13";
+        private const int MAX_RESTARTS = 3;
+        private const int HEALTH_TIMEOUT_MS = 15000;
+        private const int HEALTH_POLL_MS = 250;
+        private const int PROGRESS_POLL_MS = 500;
+
+        /// <summary>abgen's built-in default bind port (crate/src/abcdn/config.rs) — never exported as an env var.</summary>
+        private const int ABGEN_DEFAULT_PORT = 5147;
+        private const int SUPERVISION_POLL_MS = 2000;
+
+        /// <summary>Path under the realm root where a content server exposes its entities and files.</summary>
+        private const string CONTENT_PATH = "/content";
+
+        /// <summary>abgen's <c>status</c> for a server that can serve and convert; anything else is degraded.</summary>
+        private const string READY_STATUS = "ready";
+
+        private readonly string executablePath;
+        private readonly string realmRoot;
+        private readonly string catalystContentUrl;
+        private readonly string upstreamCdnUrl;
+        private readonly string cacheRoot;
+        private readonly bool jitContentDigest;
+
+        // System.Diagnostics.Process cannot spawn under IL2CPP (Win32Exception "Native error= Success"),
+        // so player builds hold the child as a raw OS handle/pid; only the editor's Mono runtime keeps
+        // the managed Process object (and its drained stdout/stderr pipes).
+#if UNITY_EDITOR
+        private Process? process;
+#elif UNITY_STANDALONE_WIN
+        private IntPtr processHandle;
+#else
+        private int processId;
+#endif
+        private int restarts;
+        private volatile bool disposed;
+
+        /// <summary>True while this instance is using a server it did not launch: it has no child to poll or kill.</summary>
+        private bool adopted;
+
+        public string BaseUrl { get; }
+
+        private AbgenSidecar(string baseUrl, string executablePath, string realmRoot, string upstreamCdnUrl, string cacheRoot, bool jitContentDigest)
+        {
+            BaseUrl = baseUrl;
+            this.executablePath = executablePath;
+            this.realmRoot = realmRoot;
+            catalystContentUrl = realmRoot + CONTENT_PATH;
+            this.upstreamCdnUrl = upstreamCdnUrl;
+            this.cacheRoot = cacheRoot;
+            this.jitContentDigest = jitContentDigest;
+        }
+
+        public static string StreamingAssetsExecutablePath =>
+            Path.Combine(Application.streamingAssetsPath, IsWindows ? "abgen.exe" : "abgen");
+
+        private static bool IsWindows => Application.platform is RuntimePlatform.WindowsPlayer or RuntimePlatform.WindowsEditor;
+
+        /// <summary>
+        ///     The server's endpoint WITHOUT creating or starting anything — synchronous, so the URL can
+        ///     seed the URL sources built early in startup. The server is created on this URL later via
+        ///     <see cref="TryCreate" />. Always abgen's default bind (127.0.0.1:5147): exporting the port
+        ///     would take the generic HTTP_SERVER_HOST/PORT names, which leak into every child process
+        ///     spawned after <see cref="Launch" />. A server already on the port is reconciled against
+        ///     rather than collided with — see <see cref="StartAsync" />.
+        /// </summary>
+        public static string ReserveBaseUrl() =>
+            $"http://127.0.0.1:{ABGEN_DEFAULT_PORT}";
+
+        /// <summary>
+        ///     Resolves the server binary and creates the (not yet started) sidecar on
+        ///     <paramref name="baseUrl" />; <see cref="StartAsync" /> launches it. Returns null when no
+        ///     binary is installed — <see cref="EnsurePinnedBinaryAsync" /> downloads it.
+        ///     <para>
+        ///     <paramref name="realmRootOverride" /> points the server at a non-catalyst realm (the
+        ///     local-scene-development preview server), whose /content endpoints the scene is read through;
+        ///     its cache is kept apart from the catalyst one.
+        ///     <paramref name="jitContentDigest" /> enables abgen's dev-mode freshness: every manifest request
+        ///     re-downloads and re-hashes the entity's content, so edits reconvert even under LSD's
+        ///     path-derived hashes, which never change.
+        ///     </para>
+        /// </summary>
+        public static AbgenSidecar? TryCreate(string baseUrl, string baseDomain, string? cacheRoot = null, string? realmRootOverride = null, bool jitContentDigest = false)
+        {
+            string? exe = TryFindPinnedExecutable() ?? (File.Exists(StreamingAssetsExecutablePath) ? StreamingAssetsExecutablePath : null);
+
+            if (exe == null)
+                return null;
+
+            return new AbgenSidecar(baseUrl,
+                exe,
+                realmRootOverride?.TrimEnd('/') ?? $"https://peer.{baseDomain}",
+                $"https://ab-cdn.{baseDomain}",
+                cacheRoot ?? Path.Combine(Application.persistentDataPath, realmRootOverride == null ? AbgenBundleDiskCache.SIDECAR_DIR : AbgenBundleDiskCache.SIDECAR_LSD_DIR),
+                jitContentDigest);
+        }
+
+        /// <summary>
+        ///     Reconciles whatever already holds <see cref="BaseUrl" /> (see
+        ///     <see cref="ReconcileResidentServerAsync" />), then launches the server process and waits until
+        ///     it answers. False when it could not start, never became healthy, or the port is held by a
+        ///     server this client must not disturb — the process is disposed and a milestone row reports it;
+        ///     requests to <see cref="BaseUrl" /> then fail fast on the dead loopback port.
+        /// </summary>
+        public async UniTask<bool> StartAsync(CancellationToken ct)
+        {
+            switch (await ReconcileResidentServerAsync(ct))
+            {
+                case ResidentServer.Adopted:
+                    adopted = true;
+                    SuperviseAsync(ct).Forget();
+                    return true;
+                case ResidentServer.Blocked:
+                    Dispose();
+                    return false;
+                case ResidentServer.None:
+                    break;
+            }
+
+            if (Launch() && await WaitHealthyAsync(ct))
+            {
+                SuperviseAsync(ct).Forget();
+                return true;
+            }
+
+            AbgenConversionMetrics.INSTANCE.OnMilestone("abgen sidecar failed to start — the scene loads as raw GLTFs");
+            Dispose();
+            return false;
+        }
+
+        private enum ResidentServer
+        {
+            /// <summary>Nothing usable holds the port — it is this instance's to bind.</summary>
+            None,
+
+            /// <summary>The pinned build, already serving this realm: used as-is, and left running on dispose.</summary>
+            Adopted,
+
+            /// <summary>Not this instance's port to bind: held by a server it cannot use and will not disturb — the user is told what holds it — or start-up was abandoned before it could tell.</summary>
+            Blocked,
+        }
+
+        /// <summary>
+        ///     Decides what to do about a server already bound to <see cref="BaseUrl" />. abgen is configured
+        ///     entirely by environment at start-up, so a resident server's realm and build are fixed, and
+        ///     <c>/health</c> is the only way to read them.
+        ///     <para>
+        ///     The pinned build, healthy and on this realm, is adopted — which is what lets two clients share
+        ///     one converter and one corpus, and what reclaims a server leaked by a client that exited without
+        ///     disposing. Everything else is left exactly as it is and reported: another build, another realm,
+        ///     a server that calls itself degraded, or something that is not an abgen at all. None of them can
+        ///     serve this scene, and none of them is this instance's to end — a resident may belong to a live
+        ///     session, and nothing in <c>/health</c> distinguishes that from an orphan. The session degrades
+        ///     to raw GLTFs and the AB panel names what holds the port and what to do about it, which is the
+        ///     decision a person can make and this code cannot.
+        ///     </para>
+        /// </summary>
+        private async UniTask<ResidentServer> ReconcileResidentServerAsync(CancellationToken ct)
+        {
+            (bool responded, HealthDto? resident) = await ProbeResidentAsync(ct);
+
+            // A probe that never finished says nothing about the port, and a cancelled start-up has
+            // nothing to report to anyone.
+            if (ct.IsCancellationRequested)
+                return ResidentServer.Blocked;
+
+            if (!responded)
+                return ResidentServer.None;
+
+            if (resident == null)
+                return Unusable("a server that is not an abgen",
+                    "quit whatever is on the port, then relaunch");
+
+            if (resident.version != PINNED_VERSION)
+                return Unusable($"abgen v{resident.version} (pid {resident.pid})",
+                    $"this client speaks to v{PINNED_VERSION} — quit the client that started it, or stop pid {resident.pid}, then relaunch");
+
+            if (resident.catalyst_url != catalystContentUrl)
+                return Unusable($"an abgen serving {resident.catalyst_url} (pid {resident.pid})",
+                    "its realm is fixed at start-up and cannot be re-pointed — quit that client, then relaunch");
+
+            if (resident.status != READY_STATUS)
+                return Unusable($"an abgen reporting itself {resident.status} (pid {resident.pid})",
+                    $"it cannot convert — stop pid {resident.pid}, then relaunch");
+
+            ReportHub.Log(ReportCategory.ASSET_BUNDLES, $"adopting the abgen v{resident.version} already serving {catalystContentUrl} on {BaseUrl}");
+            AbgenConversionMetrics.INSTANCE.OnMilestone("reusing the abgen already serving this scene");
+            return ResidentServer.Adopted;
+        }
+
+        /// <summary>
+        ///     Records that <paramref name="what" /> holds <see cref="BaseUrl" /> and that <paramref name="action" />
+        ///     is what would free it, and opens the AB panel so the reason is seen rather than left in a log.
+        ///     Always <see cref="ResidentServer.Blocked" /> — the resident is left running and untouched.
+        /// </summary>
+        private ResidentServer Unusable(string what, string action)
+        {
+            ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES,
+                $"{BaseUrl} is held by {what}; this scene loads as raw GLTFs — {action}");
+
+            AbgenConversionMetrics.INSTANCE.OnMilestone($"{what} holds {BaseUrl} — the scene loads as raw GLTFs");
+            AbgenConversionMetrics.INSTANCE.OnMilestone($"to use asset bundles: {action}");
+            AbgenConversionMetrics.INSTANCE.RequestPanelOpen();
+            return ResidentServer.Blocked;
+        }
+
+        /// <summary>
+        ///     Answers two questions with one request: <c>responded</c> is whether anything holds
+        ///     <see cref="BaseUrl" /> at all, <c>health</c> is non-null only when what answered
+        ///     identifies itself as an abgen. Asking them as two requests left an interval in which a
+        ///     resident could exit, which read back as a port that was occupied and holding nothing.
+        ///     <para>
+        ///     A non-2xx answer is still parsed: abgen serves <c>/health</c> with 503 whenever it calls
+        ///     itself degraded, and that body carries the same identifying fields as a healthy one.
+        ///     Accepting only 2xx would file the degraded case as a foreign server. A body carrying
+        ///     neither a version nor a pid is not identifying itself as an abgen. A cancelled request
+        ///     returns <c>(false, null)</c>, the same shape as a free port; this method does not tell
+        ///     the two apart.
+        ///     </para>
+        /// </summary>
+        private async UniTask<(bool responded, HealthDto? health)> ProbeResidentAsync(CancellationToken ct)
+        {
+            using UnityWebRequest request = UnityWebRequest.Get($"{BaseUrl}/health");
+            request.timeout = 2;
+
+            try { await request.SendWebRequest().WithCancellation(ct); }
+            catch (OperationCanceledException) { return (false, null); }
+            catch { /* a protocol error still carries its body; a connection error leaves responseCode at 0 */ }
+
+            if (request.responseCode <= 0)
+                return (false, null);
+
+            HealthDto? health;
+
+            // Anything else on the port answers with a body JsonUtility either rejects or reads as blank.
+            try { health = JsonUtility.FromJson<HealthDto>(request.downloadHandler.text); }
+            catch (Exception) { return (true, null); }
+
+            if (health == null || string.IsNullOrEmpty(health.version) || health.pid <= 0)
+                return (true, null);
+
+            return (true, health);
+        }
+
+        /// <summary>Whether anything at all answers on <see cref="BaseUrl" /> — the only liveness signal an adopted server offers.</summary>
+        private async UniTask<bool> RespondsAsync(CancellationToken ct)
+        {
+            using UnityWebRequest request = UnityWebRequest.Head(BaseUrl);
+            request.timeout = 2;
+
+            // A cancelled probe carries no data, so it reports "still there": an incomplete probe must
+            // never read as evidence the port went quiet.
+            try { await request.SendWebRequest().WithCancellation(ct); }
+            catch (OperationCanceledException) { return true; }
+            catch { /* nothing listening */ }
+
+            return request.responseCode > 0;
+        }
+
+        /// <summary>
+        ///     Eager scene pre-conversion: resolves the realm's scene entity from its /about and requests that
+        ///     entity's manifest, which makes the server JIT-convert every convertible file of the scene into
+        ///     its corpus in one pass (observable at <c>/progress/{entity}</c>). Bundle requests that arrive
+        ///     while the build runs coalesce with it; anything requested after is a disk hit. Failures are
+        ///     logged and harmless — the lazy per-request lane still converts on demand.
+        /// </summary>
+        public async UniTask WarmUpLocalSceneAsync(CancellationToken ct)
+        {
+            string? convertingFile = null;
+
+            try
+            {
+                using UnityWebRequest aboutRequest = UnityWebRequest.Get($"{realmRoot}/about");
+                aboutRequest.timeout = 10;
+                await aboutRequest.SendWebRequest().WithCancellation(ct);
+
+                string? entityId = ParseFirstSceneEntityId(aboutRequest.downloadHandler.text)
+                                   ?? await ResolveEntityIdFromParcelAsync(aboutRequest.downloadHandler.text, ct);
+
+                if (entityId == null)
+                {
+                    AbgenConversionMetrics.INSTANCE.OnMilestone("warm-up skipped — could not resolve the scene entity (no scenesUrn or localSceneParcels in the realm's /about)");
+                    ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES, "abgen warm-up skipped: could not resolve the scene entity from the realm's /about");
+                    return;
+                }
+
+                AbgenConversionMetrics.INSTANCE.OnWarmUpStarted(entityId);
+                AbgenConversionMetrics.INSTANCE.OnMilestone($"warm-up started — converting scene {entityId} in the background");
+                ReportHub.Log(ReportCategory.ASSET_BUNDLES, $"abgen warm-up: converting scene {entityId} — asset bundles are being built in the background");
+
+                var stopwatch = Stopwatch.StartNew();
+
+                using UnityWebRequest manifestRequest = UnityWebRequest.Get($"{BaseUrl}/manifest/{entityId}{PlatformUtils.GetCurrentPlatform()}.json");
+                manifestRequest.timeout = 0; // a cold heavy scene converts for minutes; the server paces the build
+                UnityWebRequestAsyncOperation manifestOperation = manifestRequest.SendWebRequest();
+
+                // While the server holds the manifest request, mirror its per-file build progress into
+                // the metrics the scene dev console's AB tab renders. done/total are the server's own
+                // authoritative counters — the sampled per-file rows are color, not the count.
+                var lastDone = -1;
+                var lastTotal = -1;
+                var sawBuildProgress = false;
+
+                while (!manifestOperation.isDone)
+                {
+                    await UniTask.Delay(PROGRESS_POLL_MS, DelayType.Realtime, cancellationToken: ct);
+
+                    BuildProgress? progress = await TryGetBuildProgressAsync(entityId, ct);
+                    if (progress == null) continue;
+
+                    sawBuildProgress = true;
+                    AbgenConversionMetrics metrics = AbgenConversionMetrics.INSTANCE;
+
+                    if (progress.done != lastDone || progress.total != lastTotal)
+                    {
+                        lastDone = progress.done;
+                        lastTotal = progress.total;
+                        metrics.OnWarmUpProgress(progress.done, progress.total);
+                    }
+
+                    if (progress.file != convertingFile)
+                    {
+                        if (convertingFile != null)
+                            metrics.OnProcessed(convertingFile);
+
+                        convertingFile = null;
+
+                        if (!string.IsNullOrEmpty(progress.file))
+                        {
+                            metrics.OnStarted(progress.file);
+                            convertingFile = progress.file;
+                        }
+                    }
+                }
+
+                if (convertingFile != null)
+                {
+                    AbgenConversionMetrics.INSTANCE.OnProcessed(convertingFile);
+                    convertingFile = null;
+                }
+
+                if (manifestRequest.result != UnityWebRequest.Result.Success)
+                    throw new IOException($"manifest request failed ({manifestRequest.responseCode}): {manifestRequest.error}");
+
+                // The progress poll only samples whichever file is converting at each tick, so fast files
+                // leave no row; backfill the panel with the scene's full convertible file list.
+                await ReconcileCensusAsync(entityId, ct);
+
+                AbgenConversionMetrics.INSTANCE.OnWarmUpReady((float)stopwatch.Elapsed.TotalSeconds, alreadyWarm: !sawBuildProgress);
+
+                AbgenConversionMetrics.INSTANCE.OnMilestone(sawBuildProgress
+                    ? $"manifest retrieved — asset bundles ready in {stopwatch.Elapsed.TotalSeconds:F1}s"
+                    : "asset bundles already converted — manifest served from warm cache");
+
+                ReportHub.Log(ReportCategory.ASSET_BUNDLES, sawBuildProgress
+                    ? $"abgen warm-up: manifest retrieved — asset bundles READY for scene {entityId} in {stopwatch.Elapsed.TotalSeconds:F1}s"
+                    : $"abgen warm-up: asset bundles already converted (warm cache) — manifest for scene {entityId} served in {stopwatch.Elapsed.TotalSeconds:F1}s");
+
+                int exitCode = JsonUtility.FromJson<CorpusManifest>(manifestRequest.downloadHandler.text).exitCode;
+
+                if (exitCode != 0)
+                {
+                    AbgenConversionMetrics.INSTANCE.OnMilestone($"some files failed server-side conversion (manifest exitCode {exitCode})");
+                    ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES, $"abgen warm-up: manifest exitCode {exitCode} — some files failed server-side conversion; check the sidecar's cache logs");
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                if (convertingFile != null)
+                    AbgenConversionMetrics.INSTANCE.OnCancelled(convertingFile);
+            }
+            catch (Exception e)
+            {
+                if (convertingFile != null)
+                    AbgenConversionMetrics.INSTANCE.OnCancelled(convertingFile);
+
+                AbgenConversionMetrics.INSTANCE.OnWarmUpFailed();
+                AbgenConversionMetrics.INSTANCE.OnMilestone($"warm-up failed ({e.Message}) — bundles still convert lazily per request");
+                ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES, "abgen warm-up failed — bundles still convert lazily per request");
+                ReportHub.LogException(e, ReportCategory.ASSET_BUNDLES);
+            }
+        }
+
+        /// <summary>
+        ///     Backfills the AB panel with every convertible file of the scene entity, sourced from the
+        ///     entity definition's content list (readable paths — the manifest only carries hashed artifact
+        ///     names). Best effort: a failure leaves the sampled rows as they are.
+        /// </summary>
+        private async UniTask ReconcileCensusAsync(string entityId, CancellationToken ct)
+        {
+            try
+            {
+                using UnityWebRequest request = UnityWebRequest.Get($"{catalystContentUrl}/contents/{entityId}");
+                request.timeout = 10;
+                await request.SendWebRequest().WithCancellation(ct);
+
+                EntityContent? entity = JsonUtility.FromJson<EntityContent>(request.downloadHandler.text);
+                if (entity?.content == null) return;
+
+                var files = new List<string>(entity.content.Length);
+
+                foreach (EntityContent.FileEntry entry in entity.content)
+                    if (IsConvertible(entry.file))
+                        files.Add(entry.file);
+
+                AbgenConversionMetrics.INSTANCE.ReconcileWarmUpCensus(files);
+            }
+            catch (Exception e) when (e is not OperationCanceledException)
+            {
+                ReportHub.LogException(e, ReportCategory.ASSET_BUNDLES);
+            }
+        }
+
+        /// <summary>The extensions abgen's corpus build converts: models and the standalone images they reference.</summary>
+        private static bool IsConvertible(string file) =>
+            file.EndsWith(".glb", StringComparison.OrdinalIgnoreCase)
+            || file.EndsWith(".gltf", StringComparison.OrdinalIgnoreCase)
+            || file.EndsWith(".png", StringComparison.OrdinalIgnoreCase)
+            || file.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase)
+            || file.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase);
+
+        /// <summary>Null when no build for the entity is in flight (the route 404s before the build registers and after it finishes).</summary>
+        private async UniTask<BuildProgress?> TryGetBuildProgressAsync(string entityId, CancellationToken ct)
+        {
+            using UnityWebRequest request = UnityWebRequest.Get($"{BaseUrl}/progress/{entityId}");
+            request.timeout = 2;
+
+            try { await request.SendWebRequest().WithCancellation(ct); }
+            catch (OperationCanceledException) { throw; }
+            catch { return null; }
+
+            return JsonUtility.FromJson<BuildProgress>(request.downloadHandler.text);
+        }
+
+        /// <summary>
+        ///     Resolves the scene entity by parcel pointer, for realms whose /about carries no scenesUrn —
+        ///     the LSD preview server advertises <c>localSceneParcels</c> instead. Null when that field is
+        ///     absent too or the content server returns no active entity for the parcel.
+        /// </summary>
+        private async UniTask<string?> ResolveEntityIdFromParcelAsync(string aboutJson, CancellationToken ct)
+        {
+            string? parcel = ParseJsonStringAfter(aboutJson, "\"localSceneParcels\":[\"");
+            if (parcel == null) return null;
+
+            using UnityWebRequest request = UnityWebRequest.Post($"{catalystContentUrl}/entities/active", $"{{\"pointers\":[\"{parcel}\"]}}", "application/json");
+            request.timeout = 10;
+            await request.SendWebRequest().WithCancellation(ct);
+
+            return ParseJsonStringAfter(request.downloadHandler.text, "\"id\":\"");
+        }
+
+        private static string? ParseJsonStringAfter(string json, string marker)
+        {
+            int start = json.IndexOf(marker, StringComparison.Ordinal);
+            if (start < 0) return null;
+            start += marker.Length;
+
+            int end = json.IndexOf('"', start);
+            return end > start ? json[start..end] : null;
+        }
+
+        /// <summary>First <c>urn:decentraland:entity:{id}</c> in the /about JSON; the id runs until the urn's query string or the JSON string ends.</summary>
+        private static string? ParseFirstSceneEntityId(string aboutJson)
+        {
+            const string URN_PREFIX = "urn:decentraland:entity:";
+
+            int start = aboutJson.IndexOf(URN_PREFIX, StringComparison.Ordinal);
+            if (start < 0) return null;
+            start += URN_PREFIX.Length;
+
+            int end = start;
+            while (end < aboutJson.Length && aboutJson[end] != '?' && aboutJson[end] != '"' && aboutJson[end] != '\\') end++;
+
+            return end > start ? aboutJson[start..end] : null;
+        }
+
+        /// <summary>
+        ///     An adopted server belongs to another process, so only a child this instance launched is killed.
+        ///     <see cref="SuperviseAsync" /> clears <see cref="adopted" /> before relaunching, so ownership
+        ///     always matches the flag.
+        /// </summary>
+        public void Dispose()
+        {
+            disposed = true;
+
+            if (!adopted)
+                KillChild();
+        }
+
+        /// <summary>Release target triple and the pinned release's archive sha256 for the current platform; null when unsupported.</summary>
+        private static (string target, string sha256)? Platform() =>
+            Application.platform switch
+            {
+                RuntimePlatform.WindowsPlayer or RuntimePlatform.WindowsEditor => ("x86_64-pc-windows-gnu", "f721f6bef2a0aabc80d210dd482d382fae0c431fe4d380cc4075b42cb3a9f7a5"),
+                RuntimePlatform.OSXPlayer or RuntimePlatform.OSXEditor => RuntimeInformation.ProcessArchitecture == Architecture.Arm64
+                    ? ("aarch64-apple-darwin", "ad235ccaf04d60e69615918af8597f77c7f7767e308afe1af9acd564f59f79de")
+                    : ("x86_64-apple-darwin", "2f23e97020c1025de892d8bab08df2c5f7b8d4f93dcd4bb2fb5322dd5af80a97"),
+                RuntimePlatform.LinuxPlayer or RuntimePlatform.LinuxEditor => ("x86_64-unknown-linux-gnu", "294128fe6b7dad6272a6af971ceae6f98f35087d1aac3e1865a57495aef13a39"),
+                _ => null,
+            };
+
+        /// <summary>The pinned version installed under <c>bin/{version}/abgen-v{version}-{target}/</c>, or null. Other installed versions are never executed.</summary>
+        private static string? TryFindPinnedExecutable()
+        {
+            string? target = Platform()?.target;
+            if (target == null) return null;
+
+            string exe = Path.Combine(Application.persistentDataPath, AbgenBundleDiskCache.SIDECAR_DIR, "bin",
+                PINNED_VERSION, $"abgen-v{PINNED_VERSION}-{target}", IsWindows ? "abgen.exe" : "abgen");
+
+            return File.Exists(exe) ? exe : null;
+        }
+
+        /// <summary>
+        ///     Downloads and installs the pinned release, verified against its compile-time sha256.
+        ///     Progress is reported to the AB panel as milestone rows. True when the binary is installed
+        ///     and <see cref="TryCreate" /> will resolve it; false on an unsupported platform,
+        ///     cancellation or a failed download.
+        /// </summary>
+        public static async UniTask<bool> EnsurePinnedBinaryAsync(CancellationToken ct)
+        {
+            if (Platform() == null)
+                return false;
+
+            try
+            {
+                (string target, string sha256) = Platform()!.Value;
+                await DownloadAndInstallAsync(PINNED_VERSION, target, sha256, ct);
+                return true;
+            }
+            catch (OperationCanceledException) { return false; }
+            catch (Exception e)
+            {
+                AbgenConversionMetrics.INSTANCE.OnMilestone($"abgen download failed ({e.Message}) — retried on the next launch");
+                ReportHub.LogException(e, ReportCategory.ASSET_BUNDLES);
+                return false;
+            }
+        }
+
+        private static async UniTask DownloadAndInstallAsync(string version, string target, string sha256, CancellationToken ct)
+        {
+            string url = $"https://github.com/decentraland/abgen/releases/download/v{version}/abgen-v{version}-{target}.tar.gz";
+
+            AbgenConversionMetrics.INSTANCE.OnMilestone($"abgen binary not installed — downloading the pinned release v{version}");
+
+            using UnityWebRequest req = UnityWebRequest.Get(url);
+            req.timeout = 600;
+            UnityWebRequestAsyncOperation downloadOperation = req.SendWebRequest();
+            var lastReportedQuarter = 0;
+
+            // Disposing the request (the using above) aborts the transfer when ct fires mid-download.
+            while (!downloadOperation.isDone)
+            {
+                await UniTask.Delay(500, DelayType.Realtime, cancellationToken: ct);
+
+                var quarter = (int)(req.downloadProgress * 4f);
+
+                if (quarter > lastReportedQuarter && quarter < 4)
+                {
+                    lastReportedQuarter = quarter;
+                    AbgenConversionMetrics.INSTANCE.OnMilestone($"downloading abgen v{version} — {quarter * 25}% ({req.downloadedBytes / (1024 * 1024)} MB)");
+                }
+            }
+
+            if (req.result != UnityWebRequest.Result.Success)
+                throw new IOException($"abgen archive download failed: {req.error}");
+
+            byte[] archive = req.downloadHandler.data;
+
+            using (var sha = SHA256.Create())
+            {
+                string actual = BitConverter.ToString(sha.ComputeHash(archive)).Replace("-", "").ToLowerInvariant();
+
+                if (actual != sha256)
+                    throw new IOException($"abgen archive checksum mismatch: {actual}");
+            }
+
+            // Resolved before the thread switch: persistentDataPath and Application.platform (behind
+            // IsWindows) are main-thread-only Unity APIs.
+            string binRoot = Path.Combine(Application.persistentDataPath, AbgenBundleDiskCache.SIDECAR_DIR, "bin");
+            string finalDir = Path.Combine(binRoot, version);
+            bool isWindows = IsWindows;
+
+            await DCLTask.RunOnThreadPool(() =>
+            {
+                string tmpDir = finalDir + ".tmp";
+                if (Directory.Exists(tmpDir)) Directory.Delete(tmpDir, true);
+                ExtractTarGz(archive, tmpDir);
+
+                if (!isWindows)
+                {
+                    // Straight through libc — a chmod subprocess needs System.Diagnostics.Process,
+                    // which cannot spawn under IL2CPP.
+                    PosixChmod(tmpDir, UNIX_MODE_755);
+
+                    foreach (string entry in Directory.GetFileSystemEntries(tmpDir, "*", SearchOption.AllDirectories))
+                        PosixChmod(entry, UNIX_MODE_755);
+                }
+
+                if (Directory.Exists(finalDir)) Directory.Delete(finalDir, true);
+                Directory.Move(tmpDir, finalDir);
+                PruneOtherInstalls(binRoot, version);
+            });
+
+            AbgenConversionMetrics.INSTANCE.OnMilestone($"abgen v{version} installed");
+            ReportHub.Log(ReportCategory.ASSET_BUNDLES, $"abgen sidecar binary v{version} downloaded and installed");
+        }
+
+        /// <summary>
+        ///     Deletes every install under <paramref name="binRoot" /> except <paramref name="keep" />, so a
+        ///     bumped pin does not leave its predecessor's copy sitting in persistent storage for good. A
+        ///     directory that will not delete is left alone — on Windows a running executable holds its own
+        ///     file — and the next install makes the attempt again.
+        /// </summary>
+        private static void PruneOtherInstalls(string binRoot, string keep)
+        {
+            foreach (string dir in Directory.GetDirectories(binRoot))
+            {
+                if (Path.GetFileName(dir) == keep) continue;
+
+                try { Directory.Delete(dir, true); }
+                catch (Exception e) { ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES, $"the stale abgen install at {dir} could not be removed: {e.Message}"); }
+            }
+        }
+
+        /// <summary>Minimal ustar reader: extracts regular files and directories, preserving relative paths.</summary>
+        private static void ExtractTarGz(byte[] archive, string destination)
+        {
+            using var gz = new GZipStream(new MemoryStream(archive), CompressionMode.Decompress);
+            var header = new byte[512];
+
+            while (ReadBlock(gz, header) && header[0] != 0)
+            {
+                string name = ReadString(header, 0, 100);
+                string prefix = ReadString(header, 345, 155);
+                if (prefix.Length > 0) name = prefix + "/" + name;
+                long size = Convert.ToInt64(ReadString(header, 124, 12).Trim(), 8);
+                byte type = header[156];
+                string path = Path.Combine(destination, name);
+
+                // Defense in depth: a ".." component would escape the destination. The archive is
+                // sha256-pinned, so this only fires on a hostile or corrupt file — skip the entry.
+                if (name.Contains(".."))
+                    SkipBytes(gz, size);
+                else if (type == (byte)'5')
+                    Directory.CreateDirectory(path);
+                else if (type is (byte)'0' or 0 && size >= 0)
+                {
+                    Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+
+                    using FileStream file = File.Create(path);
+                    var buffer = new byte[81920];
+                    long remaining = size;
+
+                    while (remaining > 0)
+                    {
+                        int n = gz.Read(buffer, 0, (int)Math.Min(buffer.Length, remaining));
+                        if (n == 0) throw new IOException("truncated tar entry");
+                        file.Write(buffer, 0, n);
+                        remaining -= n;
+                    }
+                }
+                else
+                    SkipBytes(gz, size);
+
+                SkipBytes(gz, (512 - (size % 512)) % 512);
+            }
+        }
+
+        private static bool ReadBlock(Stream stream, byte[] block)
+        {
+            var read = 0;
+
+            while (read < block.Length)
+            {
+                int n = stream.Read(block, read, block.Length - read);
+                if (n == 0) return false;
+                read += n;
+            }
+
+            return true;
+        }
+
+        private static void SkipBytes(Stream stream, long count)
+        {
+            var buffer = new byte[512];
+
+            while (count > 0)
+            {
+                int n = stream.Read(buffer, 0, (int)Math.Min(buffer.Length, count));
+                if (n == 0) return;
+                count -= n;
+            }
+        }
+
+        private static string ReadString(byte[] block, int offset, int length)
+        {
+            int end = offset;
+            while (end < offset + length && block[end] != 0) end++;
+            return System.Text.Encoding.UTF8.GetString(block, offset, end - offset);
+        }
+
+        private bool Launch()
+        {
+            try
+            {
+                // abgen is configured entirely through environment variables, and every spawn path
+                // below launches the child with this process's environment. The bind endpoint is NOT
+                // exported: the server's defaults already match ReserveBaseUrl (127.0.0.1:5147), and
+                // HTTP_SERVER_HOST/PORT are generic names any later-spawned child could misread.
+                Environment.SetEnvironmentVariable("ABGEN_CACHE_DIR", Path.Combine(cacheRoot, "cache"));
+                Environment.SetEnvironmentVariable("ABGEN_OUT_ROOT", Path.Combine(cacheRoot, "out"));
+                Environment.SetEnvironmentVariable("ABGEN_CATALYST_URL", catalystContentUrl);
+                Environment.SetEnvironmentVariable("ABGEN_UPSTREAM_AB_CDN", upstreamCdnUrl);
+                Environment.SetEnvironmentVariable("ABGEN_JIT_CONTENT_DIGEST", jitContentDigest ? "1" : null);
+
+                // With no backend pinned abgen auto-tries its GPU BC7/BC5 encoder, and arming CUDA
+                // costs ~60s before the HTTP listener binds — far past HEALTH_TIMEOUT_MS, so the
+                // sidecar is killed before it ever answers. The CPU encoder produces byte-identical
+                // bundles, so pinning it off only trades encode throughput for a ~1s startup.
+                Environment.SetEnvironmentVariable("ABGEN_GPU_BACKEND", "off");
+
+                return LaunchChild();
+            }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, ReportCategory.ASSET_BUNDLES);
+                return false;
+            }
+        }
+
+        private bool LaunchChild()
+        {
+#if UNITY_EDITOR
+            var psi = new ProcessStartInfo
+            {
+                FileName = executablePath,
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+            };
+
+            process = Process.Start(psi);
+            if (process == null) return false;
+
+            // Drain pipes so the child never blocks on a full stdout/stderr buffer.
+            process.OutputDataReceived += static (_, _) => { };
+            process.ErrorDataReceived += static (_, _) => { };
+            process.BeginOutputReadLine();
+            process.BeginErrorReadLine();
+            return true;
+#elif UNITY_STANDALONE_WIN
+            // CREATE_NO_WINDOW keeps the console-subsystem server from opening a console window;
+            // the child's null std handles are swallowed by its runtime.
+            var startupInfo = new STARTUPINFO { cb = Marshal.SizeOf<STARTUPINFO>() };
+
+            if (!CreateProcessW(null, new System.Text.StringBuilder($"\"{executablePath}\""), IntPtr.Zero, IntPtr.Zero, false,
+                    CREATE_NO_WINDOW, IntPtr.Zero, null, ref startupInfo, out PROCESS_INFORMATION processInformation))
+            {
+                ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES, $"abgen CreateProcess failed (err {Marshal.GetLastWin32Error()})");
+                return false;
+            }
+
+            CloseHandle(processInformation.hThread);
+
+            if (processHandle != IntPtr.Zero) CloseHandle(processHandle);
+            processHandle = processInformation.hProcess;
+            return true;
+#else
+            Result<int> result = DclProcesses.Start(executablePath, Array.Empty<string>());
+
+            if (!result.Success)
+            {
+                ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES, $"abgen spawn failed: {result.ErrorMessage}");
+                return false;
+            }
+
+            processId = result.Value;
+            return true;
+#endif
+        }
+
+        private bool ChildAlive()
+        {
+#if UNITY_EDITOR
+            try { return process is { HasExited: false }; }
+            catch (Exception) { return false; }
+#elif UNITY_STANDALONE_WIN
+            return processHandle != IntPtr.Zero && WaitForSingleObject(processHandle, 0) == WAIT_TIMEOUT;
+#else
+            return processId > 0 && kill(processId, 0) == 0;
+#endif
+        }
+
+        private void KillChild()
+        {
+#if UNITY_EDITOR
+            try
+            {
+                if (process is { HasExited: false }) process.Kill();
+                process?.Dispose();
+            }
+            catch (Exception)
+            {
+                // Already exited or inaccessible — nothing to clean up.
+            }
+
+            process = null;
+#elif UNITY_STANDALONE_WIN
+            if (processHandle == IntPtr.Zero) return;
+            TerminateProcess(processHandle, 0);
+            CloseHandle(processHandle);
+            processHandle = IntPtr.Zero;
+#else
+            if (processId > 0) kill(processId, SIGKILL);
+            processId = 0;
+#endif
+        }
+
+        /// <summary>
+        ///     Liveness is polled rather than event-driven — an Exited event needs the managed Process
+        ///     object, which player builds don't have. A dead child is relaunched on the same port
+        ///     (consumers already hold <see cref="BaseUrl" />) up to <see cref="MAX_RESTARTS" /> times; a
+        ///     relaunch only counts as recovered once the child answers.
+        /// </summary>
+        private async UniTaskVoid SuperviseAsync(CancellationToken ct)
+        {
+            try
+            {
+                while (!disposed && !ct.IsCancellationRequested)
+                {
+                    await UniTask.Delay(SUPERVISION_POLL_MS, DelayType.Realtime, cancellationToken: ct).SuppressCancellationThrow();
+
+                    if (disposed || ct.IsCancellationRequested) return;
+
+                    // An adopted server is another process's child, so pid liveness says nothing about it —
+                    // its death is observed over HTTP. Dropping the flag hands ownership to the relaunch
+                    // below: the port is free again, and this instance kills what it starts.
+                    if (adopted)
+                    {
+                        if (await RespondsAsync(ct)) continue;
+                        adopted = false;
+                    }
+                    else if (ChildAlive())
+                        continue;
+
+                    // Main-thread only: UniTask.Delay resumes this loop on the player loop, so no atomicity is needed.
+                    if (++restarts > MAX_RESTARTS)
+                    {
+                        ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES, "abgen sidecar keeps exiting; asset bundles fall back to direct CDN errors");
+                        return;
+                    }
+
+                    ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES, $"abgen sidecar exited; restart {restarts}/{MAX_RESTARTS}");
+
+                    if (!Launch())
+                    {
+                        ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES, "abgen sidecar restart failed; asset bundles fall back to direct CDN errors");
+                        return;
+                    }
+
+                    if (await WaitHealthyAsync(ct)) continue;
+
+                    // A live child that never answered would pass for recovered on every later poll. Killing
+                    // it makes the next poll see a dead child and spend another bounded restart on it.
+                    KillChild();
+                }
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e) { ReportHub.LogException(e, ReportCategory.ASSET_BUNDLES); }
+        }
+
+        private async UniTask<bool> WaitHealthyAsync(CancellationToken ct)
+        {
+            float deadline = Time.realtimeSinceStartup + (HEALTH_TIMEOUT_MS / 1000f);
+
+            while (Time.realtimeSinceStartup < deadline && !ct.IsCancellationRequested)
+            {
+                using (UnityWebRequest req = UnityWebRequest.Head(BaseUrl))
+                {
+                    req.timeout = 1;
+                    try { await req.SendWebRequest().WithCancellation(ct); } catch { /* not up yet, or cancelled */ }
+
+                    // Any HTTP response (even 404) proves a server is listening; only the child's own
+                    // liveness proves it is this one. Without both, a server that beat this child to the
+                    // port is adopted blindly while the child dies on "Address already in use".
+                    if (req.responseCode > 0 && ChildAlive()) return true;
+                }
+
+                // A dead child can never answer — fail fast (supervision only starts after health passes).
+                if (!ChildAlive())
+                    return false;
+
+                await UniTask.Delay(HEALTH_POLL_MS, DelayType.Realtime, cancellationToken: ct).SuppressCancellationThrow();
+            }
+
+            return false;
+        }
+
+        private const uint UNIX_MODE_755 = 0x1ED; // rwxr-xr-x
+
+        // Never called on Windows (IsWindows-guarded call sites); the import only binds on first call.
+        [DllImport("libc", EntryPoint = "chmod", SetLastError = true)]
+        private static extern int PosixChmod(string path, uint mode);
+
+#if !UNITY_EDITOR && UNITY_STANDALONE_WIN
+        private const uint CREATE_NO_WINDOW = 0x08000000;
+        private const uint WAIT_TIMEOUT = 0x102;
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct STARTUPINFO
+        {
+            public int cb;
+            public IntPtr lpReserved;
+            public IntPtr lpDesktop;
+            public IntPtr lpTitle;
+            public int dwX;
+            public int dwY;
+            public int dwXSize;
+            public int dwYSize;
+            public int dwXCountChars;
+            public int dwYCountChars;
+            public int dwFillAttribute;
+            public int dwFlags;
+            public short wShowWindow;
+            public short cbReserved2;
+            public IntPtr lpReserved2;
+            public IntPtr hStdInput;
+            public IntPtr hStdOutput;
+            public IntPtr hStdError;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct PROCESS_INFORMATION
+        {
+            public IntPtr hProcess;
+            public IntPtr hThread;
+            public int dwProcessId;
+            public int dwThreadId;
+        }
+
+        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        private static extern bool CreateProcessW(string? lpApplicationName, System.Text.StringBuilder lpCommandLine, IntPtr lpProcessAttributes, IntPtr lpThreadAttributes,
+            bool bInheritHandles, uint dwCreationFlags, IntPtr lpEnvironment, string? lpCurrentDirectory, ref STARTUPINFO lpStartupInfo, out PROCESS_INFORMATION lpProcessInformation);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern bool TerminateProcess(IntPtr hProcess, uint uExitCode);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern bool CloseHandle(IntPtr hObject);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern uint WaitForSingleObject(IntPtr hHandle, uint dwMilliseconds);
+#elif !UNITY_EDITOR
+        private const int SIGKILL = 9;
+
+        [DllImport("libc", SetLastError = true)]
+        private static extern int kill(int pid, int sig);
+#endif
+
+        /// <summary>The subset of abgen's <c>GET /health</c> this sidecar reconciles against (crate/src/abcdn/handlers/status.rs).</summary>
+        [Serializable]
+        private class HealthDto
+        {
+            public string version = null!;
+            public int pid;
+            public string catalyst_url = null!;
+
+            /// <summary>"ready" or "degraded" — the same verdict the response's status code carries.</summary>
+            public string status = null!;
+        }
+
+        /// <summary>abgen <c>GET /progress/{entity}</c> response (crate/src/abcdn/handlers/status.rs).</summary>
+        [Serializable]
+        private class BuildProgress
+        {
+            public int done;
+            public int total;
+            public string file = null!;
+        }
+
+        /// <summary>The corpus manifest's failure indicator (crate/src/manifest.rs); the rest of the document is ignored here.</summary>
+        [Serializable]
+        private class CorpusManifest
+        {
+            public int exitCode;
+        }
+
+        /// <summary>The content mapping of a deployed entity (ADR-80 entity schema); the rest of the document is ignored here.</summary>
+        [Serializable]
+        private class EntityContent
+        {
+            public FileEntry[] content = null!;
+
+            [Serializable]
+            public class FileEntry
+            {
+                public string file = null!;
+            }
+        }
+    }
+}

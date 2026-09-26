@@ -1,0 +1,35 @@
+using Utility.Multithreading;
+
+namespace SceneRunner.Scene
+{
+    public interface ISceneStateProvider
+    {
+        /// <summary>
+        ///     Is this scene the player's currently on?
+        /// </summary>
+        bool IsCurrent { get; set; }
+
+        Atomic<SceneState> State { get; set; }
+
+        uint TickNumber { get; set; }
+
+        /// <summary>
+        ///     Tick at which the most recent non-hover pointer (down/up) result was written for this scene.
+        /// </summary>
+        uint LastUserInputTick { get; set; }
+
+        ref readonly SceneEngineStartInfo EngineStartInfo { get; }
+
+        void Start(SceneEngineStartInfo startInfo);
+    }
+
+    public static class SceneStateProviderExtensions
+    {
+        public static bool IsNotRunningState(this ISceneStateProvider sceneStateProvider) =>
+            sceneStateProvider.State.Value()
+                is SceneState.Disposing
+                or SceneState.Disposed
+                or SceneState.JavaScriptError
+                or SceneState.EngineError;
+    }
+}

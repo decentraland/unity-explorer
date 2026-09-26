@@ -1,0 +1,111 @@
+name: Dependency Security Review
+
+on:
+  # Metadata only: runs trusted default-branch code, including for fork PRs.
+  # Never add a PR checkout, local action, package install or LLM to this job.
+  pull_request_target:
+    types: [opened, synchronize, reopened, ready_for_review, edited]
+
+permissions: {}
+
+concurrency:
+  group: dependency-security-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  request-security-review:
+    if: github.event.action != 'edited' || github.event.changes.base != null
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+      issues: write
+    steps:
+      - name: Classify changes and maintain label
+        id: detect
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const pull_number = context.payload.pull_request.number;
+            const { data: pr } = await github.rest.pulls.get({ owner, repo, pull_number });
+            if (pr.state !== 'open' || pr.head.sha !== context.payload.pull_request.head.sha ||
+                pr.base.sha !== context.payload.pull_request.base.sha) {
+              core.notice('Superseded event; leaving classification to the current run.');
+              return;
+            }
+            const files = await github.paginate(github.rest.pulls.listFiles, {
+              owner, repo, pull_number, per_page: 100
+            });
+            // GitHub caps this endpoint at 3,000 files. Never treat truncation as no changes.
+            if (files.length !== pr.changed_files) throw new Error('Incomplete changed-file inventory');
+            const classifiedHead = pr.head.sha;
+            const classifiedBase = pr.base.sha;
+            const classifiedFileCount = pr.changed_files;
+            const relevant = (path) =>
+              /(^|\/)(Packages\/(manifest|packages-lock)\.json|package\.json|package-lock\.json|yarn\.lock|pnpm-lock\.yaml|Cargo\.(toml|lock)|packages\.config|requirements[^/]*\.txt|pyproject\.toml|poetry\.lock)$/.test(path) ||
+              /^(Explorer|avatar-preview-renderer)\/Packages\/[^/]+\//.test(path) ||
+              /(^|\/)(Assets\/Plugins|Editor|scripts|\.github|\.claude|\.agents|\.codex|unity-shared-dependencies)\//.test(path) ||
+              /\.(dll|so(\.[0-9.]+)?|dylib|bundle|aar|jar|a|lib|exe|wasm|jslib|asmdef|asmref)(\.meta)?$/i.test(path) ||
+              /\.bundle\//i.test(path) ||
+              /(^|\/)(AGENTS\.md|CLAUDE\.md|SKILL\.md|CODEOWNERS|\.gitmodules|\.npmrc|Dockerfile[^/]*|Build[^/]*\.cs)$/.test(path);
+            const hasChanges = files.some(f => relevant(f.filename) || (f.previous_filename && relevant(f.previous_filename)));
+            const { data: current } = await github.rest.pulls.get({ owner, repo, pull_number });
+            if (current.state !== 'open' || current.head.sha !== classifiedHead ||
+                current.base.sha !== classifiedBase || current.changed_files !== classifiedFileCount) {
+              core.notice('PR changed during classification; leaving label maintenance to the current run.');
+              return;
+            }
+            const hasLabel = current.labels.some(label => label.name === 'new-dependency');
+            if (!hasChanges) {
+              if (hasLabel) {
+                try {
+                  await github.rest.issues.removeLabel({
+                    owner, repo, issue_number: pull_number, name: 'new-dependency'
+                  });
+                } catch (error) {
+                  if (error.status !== 404) throw error;
+                }
+              }
+              core.setOutput('request', 'false');
+              return;
+            }
+            if (!hasLabel) {
+              await github.rest.issues.addLabels({
+                owner, repo, issue_number: pull_number, labels: ['new-dependency']
+              });
+            }
+            core.setOutput('request', (!current.draft).toString());
+
+      - name: Request Jarvis through the existing reviewer webhook
+        if: steps.detect.outputs.request == 'true'
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        with:
+          # A PAT is required: GITHUB_TOKEN-created review requests do not trigger
+          # the downstream automation. Jarvis also checks this actor's repo access.
+          github-token: ${{ secrets.ORG_ACCESS_TOKEN }}
+          script: |
+            const { owner, repo } = context.repo;
+            const pull_number = context.payload.pull_request.number;
+            const { data: pr } = await github.rest.pulls.get({ owner, repo, pull_number });
+            if (pr.state !== 'open' || pr.draft || pr.head.sha !== context.payload.pull_request.head.sha ||
+                pr.base.sha !== context.payload.pull_request.base.sha ||
+                !pr.labels.some(label => label.name === 'new-dependency')) return;
+            // External authors cannot auto-start a credential-bearing agent.
+            // A collaborator requests decentraland-bot manually after inspecting the PR.
+            let allowed = false;
+            try {
+              const { data } = await github.rest.repos.getCollaboratorPermissionLevel({
+                owner, repo, username: pr.user.login
+              });
+              allowed = ['admin', 'write', 'maintain'].includes(data.permission);
+            } catch (error) {
+              core.warning(`Author access could not be verified: ${error.message}`);
+            }
+            if (!allowed) {
+              core.notice('Maintainer must request decentraland-bot; security status remains pending.');
+              return;
+            }
+            // Security changes require a review on every head, even when ordinary
+            // follow-up code reviews are on demand. Existing pending requests share
+            // that review; a stale run remains non-green and needs a re-request.
+            await github.rest.pulls.requestReviewers({ owner, repo, pull_number, reviewers: ['decentraland-bot'] });

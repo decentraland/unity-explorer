@@ -1,0 +1,52 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 49ee1f2493e44e029443e1a749da5565, type: 3}
+  m_Name: TerrainData
+  m_EditorClassIdentifier: 
+  parcelSize: 16
+  terrainSize: 4800
+  chunkSize: 1024
+  heightScaleNerf: 0.25
+  seed: 97
+  terrainHoleEdgeSize: 0.5
+  minHeight: 0
+  pondDepth: 0
+  stepHeight: 1.8
+  borderPadding: 2
+  terrainHeightNoise: {fileID: 11400000, guid: 9c77fb8d5e4c2f34aa2299f12ba5920f, type: 2}
+  terrainMaterial: {fileID: 2100000, guid: 01f1076962f95af4aa8276dd6e16f6d6, type: 2}
+  terrainLayers:
+  - {fileID: 8574412962073106934, guid: dc4e1ba31adc87647bf8f733af6ab483, type: 2}
+  - {fileID: 8574412962073106934, guid: 717087acc9c59af41995f7a1854878e3, type: 2}
+  layerNoise:
+  - {fileID: 0}
+  - {fileID: 11400000, guid: b657b0bf94dcd69409655b68574b520e, type: 2}
+  treeAssets:
+  - {fileID: 11400000, guid: 20e3f9f040e171341b946aa63509181b, type: 2}
+  - {fileID: 11400000, guid: a06fc7504bc359c40a3dcf979b9551fa, type: 2}
+  - {fileID: 11400000, guid: b32fcb9f8bf234544937fe6db29eb426, type: 2}
+  - {fileID: 11400000, guid: fa3ee0386e904c049875eb81b66b7b6d, type: 2}
+  - {fileID: 11400000, guid: f85bd668b0ab99c4a9e2dd9e37bdc0f5, type: 2}
+  - {fileID: 11400000, guid: b85bd4609a9a4c444aa451b635508010, type: 2}
+  - {fileID: 11400000, guid: 10e4b5ecbf9c6a94ea0dae58a1b4e9c4, type: 2}
+  - {fileID: 11400000, guid: a78cd698d190eb440b100b0875e95351, type: 2}
+  detailScatterMode: 0
+  detailAssets:
+  - {fileID: 11400000, guid: 9562d0db9d722e94aa155825ea4cc6dc, type: 2}
+  - {fileID: 11400000, guid: 63d82bb2140227e45bff82fc232ca334, type: 2}
+  - {fileID: 11400000, guid: 9623ccec70348cb45a92353f30041900, type: 2}
+  - {fileID: 11400000, guid: 051623a3b828236469637f4efda4e65c, type: 2}
+  cliffSide: {fileID: 6030867905791830421, guid: 2f76a12199e28c34787cd3957bd7aa34, type: 3}
+  cliffCorner: {fileID: 7130223872809235836, guid: 28fe79bce715ec543aef1e2d9a7fe1d8, type: 3}
+  ocean: {fileID: 5279076375242104403, guid: 55904b3465b0bbb4c9f09ea3c835df3c, type: 3}
+  wind: {fileID: 4984400270765111023, guid: 4ced4aac10a193c41ba708f28429b518, type: 3}
+  grassRenderer: {fileID: 6741635715941149560, guid: 8ae2a797632ad94409ca29f2f2b754ba, type: 3}

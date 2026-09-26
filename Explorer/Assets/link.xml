@@ -1,0 +1,30 @@
+﻿<linker>
+	<assembly fullname="Unity.RenderPipelines.Universal.Runtime" preserve="all" />
+	<assembly fullname="Unity.RenderPipelines.Core.Runtime" preserve="all" />
+	<assembly fullname="UnityEngine.UIElementsModule" preserve="all" />
+    <assembly fullname="DCL.AvatarRendering" preserve="all" />
+    <assembly fullname="SceneRuntime" preserve="all" />
+    <assembly fullname="DCL.SharedAPI" preserve="all" />
+    <assembly fullname="Decentraland.ClearScript" preserve="all" />
+    
+    <!--  Because of Ipfs.ProtobufHelper  -->
+    <assembly fullname="Google.Protobuf">
+        <type fullname="Google.Protobuf.CodedOutputStream" preserve="all" />
+        <type fullname="Google.Protobuf.CodedInputStream" preserve="all" />
+    </assembly>
+
+    <!--  AltTester static probes are reflection-only entry points (AltDriver.CallStaticMethod); High stripping
+          would remove their uncalled methods. The linker ignores entries whose types don't exist, so these are
+          no-ops in release builds where ALTTESTER is stripped.  -->
+    <assembly fullname="DCL.SyntheticInput">
+        <type fullname="DCL.SyntheticInput.AltTester.WorldAutomationProbe" preserve="all" />
+        <type fullname="DCL.SyntheticInput.AltTester.UiAutomationProbe" preserve="all" />
+        <type fullname="DCL.SyntheticInput.AltTester.NavigationAutomationProbe" preserve="all" />
+    </assembly>
+    <assembly fullname="DCL.Network">
+        <type fullname="DCL.FeatureFlags.AltTesterFeatureFlagsProbe" preserve="all" />
+    </assembly>
+    <assembly fullname="SceneRunner.Scene">
+        <type fullname="SceneRunner.Scene.AlttesterSceneReadinessProbe" preserve="all" />
+    </assembly>
+</linker>

@@ -1,0 +1,19 @@
+{
+  "name": "com.nickkhalow.uuav",
+  "version": "0.0.1",
+  "displayName": "UUAV",
+  "description": "FFmpeg-based video/audio player with a native Rust core and Unity integration",
+  "unity": "2019.1",
+  "keywords": [
+    "video",
+    "audio",
+    "ffmpeg",
+    "media",
+    "player"
+  ],
+  "author": {
+    "name": "Nick Khalow",
+    "url": "https://github.com/NickKhalow",
+    "email": "nickhalow@gmail.com"
+  }
+}

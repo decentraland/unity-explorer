@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 29a97ef075d8c414184d10c1056ad9ec, type: 3}
+  m_Name: ChatReactionsMessageConfig
+  m_EditorClassIdentifier: DCL.Social::DCL.Chat.Reactions.ChatReactionsMessageConfig
+  <FixedDefaultEmojiUnicodes>k__BackingField: 652600004ff401004df401004ef4010023f9010025f5010022f60100
+  <MaxRecentEmojis>k__BackingField: 3
+  <MaxDistinctReactionsPerMessage>k__BackingField: 18
+  <ReactionLimitMessage>k__BackingField: This message has reached the reaction limit.
+  <NetworkDebounceSeconds>k__BackingField: 0.3
+  <NetworkFlushThreshold>k__BackingField: 10
+  <HoverScale>k__BackingField: 1
+  <HoverAnimDuration>k__BackingField: 0.1
+  <TooltipHoverDelay>k__BackingField: 0.3
+  <ShortcutsBarOffset>k__BackingField: {x: -28, y: 40}
+  <ShortcutsBarOffsetOwnMessage>k__BackingField: {x: -5, y: 40}
+  <EmojiPanelOffset>k__BackingField: {x: 10, y: -18}
+  <EmojiPanelMessageOffset>k__BackingField: {x: -170, y: -20}
+  <TooltipOffset>k__BackingField: {x: 0, y: 90}
+  <TooltipArrowMinX>k__BackingField: -140
+  <TooltipArrowMaxX>k__BackingField: 140
+  <TooltipArrowXOffset>k__BackingField: 10
+  <TooltipActionTextColor>k__BackingField: {r: 0.627451, g: 0.60784316, b: 0.65882355, a: 1}

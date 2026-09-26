@@ -1,0 +1,232 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Arch.System</name>
+    </assembly>
+    <members>
+        <member name="T:Arch.System.QueryAttribute">
+            <summary>
+                Marks a method to generate a high performance query for it. 
+            </summary>
+        </member>
+        <member name="P:Arch.System.QueryAttribute.Parallel">
+            <summary>
+            If set to true, Query will be run in parallel.
+            </summary>
+        </member>
+        <member name="T:Arch.System.DataAttribute">
+            <summary>
+                Marks a parameter as "data". This will be taken into account during source generation and will still be passed as a parameter in the query method.
+                Is not treated as an entity component.
+            </summary>
+        </member>
+        <member name="T:Arch.System.AllAttribute">
+            <summary>
+                Defines a set of components each entity requires. 
+            </summary>
+        </member>
+        <member name="P:Arch.System.AllAttribute.ComponentTypes">
+            <summary>
+            The types of the component.
+            </summary>
+        </member>
+        <member name="T:Arch.System.AnyAttribute">
+            <summary>
+                Defines a set of components each entity requires any from. 
+            </summary>
+        </member>
+        <member name="P:Arch.System.AnyAttribute.ComponentTypes">
+            <summary>
+            The types of the component.
+            </summary>
+        </member>
+        <member name="T:Arch.System.NoneAttribute">
+            <summary>
+                Defines a set of components none of the entities should have. 
+            </summary>
+        </member>
+        <member name="P:Arch.System.NoneAttribute.ComponentTypes">
+            <summary>
+            The types of the component.
+            </summary>
+        </member>
+        <member name="T:Arch.System.ExclusiveAttribute">
+            <summary>
+                Defines an exclusive set of components an entity should have. 
+            </summary>
+        </member>
+        <member name="P:Arch.System.ExclusiveAttribute.ComponentTypes">
+            <summary>
+            The types of the component.
+            </summary>
+        </member>
+        <member name="T:Arch.System.ISystem`1">
+            <summary>
+                An interface providing several methods for a system. 
+            </summary>
+            <typeparam name="T">The type passed to each method. For example a delta time or some other data.</typeparam>
+        </member>
+        <member name="M:Arch.System.ISystem`1.Initialize">
+            <summary>
+                Initializes a system, before its first ever run.
+            </summary>
+        </member>
+        <member name="M:Arch.System.ISystem`1.BeforeUpdate(`0@)">
+            <summary>
+                Runs before <see cref="M:Arch.System.ISystem`1.Update(`0@)"/>.
+            </summary>
+            <param name="t">An instance passed to it.</param>
+        </member>
+        <member name="M:Arch.System.ISystem`1.Update(`0@)">
+            <summary>
+                Updates the system.
+            </summary>
+            <param name="t">An instance passed to it.</param>
+        </member>
+        <member name="M:Arch.System.ISystem`1.AfterUpdate(`0@)">
+            <summary>
+                Runs after <see cref="M:Arch.System.ISystem`1.Update(`0@)"/>.
+            </summary>
+            <param name="t">An instance passed to it.</param>
+        </member>
+        <member name="T:Arch.System.BaseSystem`2">
+            <summary>
+                A basic implementation of a <see cref="T:Arch.System.ISystem`1"/>.
+            </summary>
+            <typeparam name="W">The world type.</typeparam>
+            <typeparam name="T">The type passed to the <see cref="T:Arch.System.ISystem`1"/> interface.</typeparam>
+        </member>
+        <member name="M:Arch.System.BaseSystem`2.#ctor(`0)">
+            <summary>
+                Creates an instance. 
+            </summary>
+            <param name="world">The <see cref="P:Arch.System.BaseSystem`2.World"/>.</param>
+        </member>
+        <member name="P:Arch.System.BaseSystem`2.World">
+            <summary>
+                The world instance. 
+            </summary>
+        </member>
+        <member name="M:Arch.System.BaseSystem`2.Initialize">
+            <inheritdoc />
+        </member>
+        <member name="M:Arch.System.BaseSystem`2.BeforeUpdate(`1@)">
+            <inheritdoc />
+        </member>
+        <member name="M:Arch.System.BaseSystem`2.Update(`1@)">
+            <inheritdoc />
+        </member>
+        <member name="M:Arch.System.BaseSystem`2.AfterUpdate(`1@)">
+            <inheritdoc />
+        </member>
+        <member name="M:Arch.System.BaseSystem`2.Dispose">
+            <inheritdoc />
+        </member>
+        <member name="T:Arch.System.Group`1">
+            <summary>
+                A group of <see cref="T:Arch.System.ISystem`1"/>'s to organize them.
+                They will run in order.
+            </summary>
+            <typeparam name="T">The type passed to the <see cref="T:Arch.System.ISystem`1"/>.</typeparam>
+        </member>
+        <member name="P:Arch.System.Group`1.Name">
+            <summary>
+            A unique name to identify this group
+            </summary>
+        </member>
+        <member name="F:Arch.System.Group`1._systems">
+            <summary>
+            All <see cref="T:Arch.System.Group`1.SystemEntry"/>'s in this group. 
+            </summary>
+        </member>
+        <member name="M:Arch.System.Group`1.#ctor(System.String,Arch.System.ISystem{`0}[])">
+            <summary>
+                Creates an instance with an array of <see cref="T:Arch.System.ISystem`1"/>'s that will belong to this group.
+            </summary>
+            <param name="name">A unique name to identify this group</param>
+            <param name="systems">An <see cref="T:Arch.System.ISystem`1"/> array.</param>
+        </member>
+        <member name="M:Arch.System.Group`1.#ctor(System.String,System.Collections.Generic.IEnumerable{Arch.System.ISystem{`0}})">
+            <summary>
+                Creates an instance with an <see cref="T:System.Collections.Generic.IEnumerable`1"/> of <see cref="T:Arch.System.ISystem`1"/>'s that will belong to this group.
+            </summary>
+            <param name="name">A unique name to identify this group</param>
+            <param name="systems">An <see cref="T:System.Collections.Generic.IEnumerable`1"/> of <see cref="T:Arch.System.ISystem`1"/>.</param>
+        </member>
+        <member name="M:Arch.System.Group`1.Add(Arch.System.ISystem{`0}[])">
+            <summary>
+                Adds several new <see cref="T:Arch.System.ISystem`1"/>'s to this group.
+            </summary>
+            <param name="systems">An <see cref="T:Arch.System.ISystem`1"/> array.</param>
+            <returns>The same <see cref="T:Arch.System.Group`1"/>.</returns>
+        </member>
+        <member name="M:Arch.System.Group`1.Add``1">
+            <summary>
+                Adds an single <see cref="T:Arch.System.ISystem`1"/> to this group by its generic.
+                Automatically initializes it properly. Must be contructorless.
+            </summary>
+            <typeparam name="G">Its generic type.</typeparam>
+            <returns>The same <see cref="T:Arch.System.Group`1"/>.</returns>
+        </member>
+        <member name="M:Arch.System.Group`1.Add(Arch.System.ISystem{`0})">
+            <summary>
+                Adds an single <see cref="T:Arch.System.ISystem`1"/> to this group.
+            </summary>
+            <param name="system"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Arch.System.Group`1.Get``1">
+            <summary>
+                Return the first <see cref="!:G"/> which was found in the hierachy.
+            </summary>
+            <typeparam name="G">The Type.</typeparam>
+            <returns></returns>
+        </member>
+        <member name="M:Arch.System.Group`1.Find``1">
+            <summary>
+                Finds all <see cref="T:Arch.System.ISystem`1"/>s which can be cast into the given type.
+            </summary>
+            <typeparam name="G">The Type.</typeparam>
+            <returns></returns>
+        </member>
+        <member name="M:Arch.System.Group`1.Initialize">
+            <summary>
+                Initializes all <see cref="T:Arch.System.ISystem`1"/>'s in this <see cref="T:Arch.System.Group`1"/>.
+            </summary>
+        </member>
+        <member name="M:Arch.System.Group`1.BeforeUpdate(`0@)">
+            <summary>
+                Runs <see cref="M:Arch.System.ISystem`1.BeforeUpdate(`0@)"/> on each <see cref="T:Arch.System.ISystem`1"/> of this <see cref="T:Arch.System.Group`1"/>..
+            </summary>
+            <param name="t">An instance passed to each <see cref="M:Arch.System.ISystem`1.Initialize"/> method.</param>
+        </member>
+        <member name="M:Arch.System.Group`1.Update(`0@)">
+            <summary>
+                Runs <see cref="M:Arch.System.ISystem`1.Update(`0@)"/> on each <see cref="T:Arch.System.ISystem`1"/> of this <see cref="T:Arch.System.Group`1"/>..
+            </summary>
+            <param name="t">An instance passed to each <see cref="M:Arch.System.ISystem`1.Initialize"/> method.</param>
+        </member>
+        <member name="M:Arch.System.Group`1.AfterUpdate(`0@)">
+            <summary>
+                Runs <see cref="M:Arch.System.ISystem`1.AfterUpdate(`0@)"/> on each <see cref="T:Arch.System.ISystem`1"/> of this <see cref="T:Arch.System.Group`1"/>..
+            </summary>
+            <param name="t">An instance passed to each <see cref="M:Arch.System.ISystem`1.Initialize"/> method.</param>
+        </member>
+        <member name="M:Arch.System.Group`1.Dispose">
+            <summary>
+                Disposes this <see cref="T:Arch.System.Group`1"/> and all <see cref="T:Arch.System.ISystem`1"/>'s within.
+            </summary>
+        </member>
+        <member name="M:Arch.System.Group`1.ToString">
+            <summary>
+                Converts this <see cref="T:Arch.System.Group`1"/> to a human readable string.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="T:Arch.System.Group`1.SystemEntry">
+            <summary>
+                The struct <see cref="T:Arch.System.Group`1.SystemEntry"/> represents the given <see cref="T:Arch.System.ISystem`1"/> in the <see cref="T:Arch.System.Group`1"/> with all its performance statistics.
+            </summary>
+        </member>
+    </members>
+</doc>

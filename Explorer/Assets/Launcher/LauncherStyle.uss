@@ -1,0 +1,53 @@
+.unity-popup-field .unity-popup-field__input:hover {
+    background-color: rgb(235, 235, 235);
+}
+
+.unity-popup-field .unity-popup-field__input {
+    background-color: rgb(163, 186, 163);
+    border-radius: 4px;
+    border-color: rgb(13, 68, 21);
+    border-width: 1px;
+    padding: 4px;
+}
+
+.unity-base-dropdown__container-outer {
+    background-color: rgb(163, 186, 163);
+    border-radius: 4px;
+    border-color: rgb(196, 196, 196);
+    border-width: 1px;
+    padding: 4px;
+}
+
+.unity-base-dropdown__item {
+    background-color: rgb(163, 186, 163);
+}
+
+.unity-popup-field .unity-label {
+    -unity-font-style: bold;
+}
+
+#FPS .unity-base-field__input {
+    background-color: rgb(163, 186, 163);
+    border-radius: 4px;
+    border-color: rgb(13, 68, 21);
+    border-width: 1px;
+    padding: 4px;
+    -unity-font-style: bold;
+    min-width: 120px;
+}
+
+#FPS .unity-label {
+    -unity-font-style: bold;
+    color: #073607;
+}
+
+#StopButton {
+    background-color: rgb(163, 186, 163);
+    border-radius: 4px;
+    border-color: rgb(13, 68, 21);
+    border-width: 1px;
+    padding: 4px;
+    padding-left: 10px;
+    padding-right: 10px;
+    -unity-font-style: bold;
+}

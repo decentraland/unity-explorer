@@ -1,0 +1,83 @@
+using CodeLess.Interfaces;
+using DCL.Profiles;
+using System;
+
+namespace DCL.Friends
+{
+    [AutoInterface]
+    public class DefaultFriendsEventBus : IFriendsEventBus
+    {
+        public delegate void UserIdOperation(string userId);
+
+        public event Action<FriendRequest>? OnFriendRequestReceived;
+        public event UserIdOperation? OnOtherUserRemovedTheFriendship;
+        public event UserIdOperation? OnOtherUserAcceptedYourRequest;
+        public event UserIdOperation? OnOtherUserRejectedYourRequest;
+        public event UserIdOperation? OnOtherUserCancelledTheRequest;
+        public event Action<FriendRequest>? OnYouSentFriendRequestToOtherUser;
+        public event UserIdOperation? OnYouRemovedFriend;
+        public event UserIdOperation? OnYouCancelledFriendRequestSentToOtherUser;
+        public event UserIdOperation? OnYouAcceptedFriendRequestReceivedFromOtherUser;
+        public event UserIdOperation? OnYouRejectedFriendRequestReceivedFromOtherUser;
+        public event Action<Profile.CompactInfo>? OnFriendConnected;
+        public event Action<Profile.CompactInfo>? OnFriendDisconnected;
+        public event Action<Profile.CompactInfo>? OnFriendAway;
+
+        public event Action<BlockedProfile>? OnYouBlockedProfile;
+        public event Action<BlockedProfile>? OnYouUnblockedProfile;
+
+        public event Action<string>? OnYouBlockedByUser;
+        public event Action<string>? OnYouUnblockedByUser;
+
+        public void BroadcastFriendRequestReceived(FriendRequest request) =>
+            OnFriendRequestReceived?.Invoke(request);
+
+        public void BroadcastThatYouSentFriendRequestToOtherUser(FriendRequest request) =>
+            OnYouSentFriendRequestToOtherUser?.Invoke(request);
+
+        public void BroadcastThatYouRemovedFriend(string userId) =>
+            OnYouRemovedFriend?.Invoke(userId);
+
+        public void BroadcastThatYouAcceptedFriendRequestReceivedFromOtherUser(string userId) =>
+            OnYouAcceptedFriendRequestReceivedFromOtherUser?.Invoke(userId);
+
+        public void BroadcastThatYouCancelledFriendRequestSentToOtherUser(string userId) =>
+            OnYouCancelledFriendRequestSentToOtherUser?.Invoke(userId);
+
+        public void BroadcastThatYouRejectedFriendRequestReceivedFromOtherUser(string userId) =>
+            OnYouRejectedFriendRequestReceivedFromOtherUser?.Invoke(userId);
+
+        public void BroadcastThatOtherUserAcceptedYourRequest(string userId) =>
+            OnOtherUserAcceptedYourRequest?.Invoke(userId);
+
+        public void BroadcastThatOtherUserRejectedYourRequest(string userId) =>
+            OnOtherUserRejectedYourRequest?.Invoke(userId);
+
+        public void BroadcastThatOtherUserCancelledTheRequest(string userId) =>
+            OnOtherUserCancelledTheRequest?.Invoke(userId);
+
+        public void BroadcastThatOtherUserRemovedTheFriendship(string userId) =>
+            OnOtherUserRemovedTheFriendship?.Invoke(userId);
+
+        public void BroadcastFriendConnected(Profile.CompactInfo friend) =>
+            OnFriendConnected?.Invoke(friend);
+
+        public void BroadcastFriendDisconnected(Profile.CompactInfo friend) =>
+            OnFriendDisconnected?.Invoke(friend);
+
+        public void BroadcastFriendAsAway(Profile.CompactInfo friend) =>
+            OnFriendAway?.Invoke(friend);
+
+        public void BroadcastYouBlockedProfile(BlockedProfile profile) =>
+            OnYouBlockedProfile?.Invoke(profile);
+
+        public void BroadcastYouUnblockedProfile(BlockedProfile profile) =>
+            OnYouUnblockedProfile?.Invoke(profile);
+
+        public void BroadcastOtherUserBlockedYou(string userId) =>
+            OnYouBlockedByUser?.Invoke(userId);
+
+        public void BroadcastOtherUserUnblockedYou(string userId) =>
+            OnYouUnblockedByUser?.Invoke(userId);
+    }
+}

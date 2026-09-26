@@ -1,0 +1,347 @@
+﻿using DCL.Diagnostics;
+using System;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.Rendering;
+using Cysharp.Threading.Tasks;
+using System.Threading;
+using Utility;
+
+public class SkyboxRenderController : MonoBehaviour
+{
+    [Serializable]
+    public class LensFlareTimeEntry
+    {
+        [Range(0f, 1f)]
+        public float StartTime;
+        public LensFlareDataSRP FlareAsset = null!;
+    }
+
+    private static readonly int ZENIT_COLOR = Shader.PropertyToID("_ZenitColor");
+    private static readonly int HORIZON_COLOR = Shader.PropertyToID("_HorizonColor");
+    private static readonly int NADIR_COLOR = Shader.PropertyToID("_NadirColor");
+    private static readonly int SUN_COLOR = Shader.PropertyToID("_SunColor");
+    private static readonly int RIM_COLOR = Shader.PropertyToID("_RimColor");
+    private static readonly int CLOUDS_COLOR = Shader.PropertyToID("_CloudsColor");
+    private static readonly int CLOUD_HIGHLIGHTS = Shader.PropertyToID("_Cloud_Highlights");
+    private static readonly int SUN_SIZE = Shader.PropertyToID("_SunSize");
+    private static readonly int SUN_OPACITY = Shader.PropertyToID("_SunOpacity");
+    private static readonly int SUN_RADIANCE = Shader.PropertyToID("_Sun_Radiance");
+    private static readonly int SUN_RADIANCE_INTENSITY = Shader.PropertyToID("_Sun_Radiance_Intensity");
+    private static readonly int MOON_MASK_SIZE = Shader.PropertyToID("_Moon_Mask_Size");
+    private static readonly int CLOUDS_ROTATION_SPEED = Shader.PropertyToID("_CloudsRotationSpeed");
+    private static readonly int SECOND_SUN_ROTATION_SPEED = Shader.PropertyToID("_Second_Sun_Rotation_Speed");
+    private static readonly int TIME_PARAMETERS = Shader.PropertyToID("_TimeParameters");
+
+    [Header("Directional Light")]
+    [SerializeField] private Light directionalLight;
+    [SerializeField] private AnimationClip lightAnimation;
+    private Animation lightAnimator;
+
+    [GradientUsage(true)]
+    [SerializeField] private Gradient directionalColorRamp;
+
+    [GradientUsage(true)]
+    [SerializeField] private Gradient sunColorRamp;
+
+    [SerializeField] private AnimationCurve sunRadiance;
+    [SerializeField] private AnimationCurve sunRadianceIntensity;
+    [SerializeField] private AnimationCurve moonMaskSize;
+
+    [Header("Lens Flare")]
+    [SerializeField] private AnimationCurve lensFlareIntensity;
+    [SerializeField] private List<LensFlareTimeEntry> lensFlareEntries = new();
+    private LensFlareComponentSRP? lensFlare;
+    private LensFlareDataSRP? activeLensFlareData;
+
+    [Header("Skybox Color")]
+    [GradientUsage(true)] [SerializeField] private Gradient skyZenitColorRamp;
+    [GradientUsage(true)] [SerializeField] private Gradient skyHorizonColorRamp;
+    [GradientUsage(true)] [SerializeField] private Gradient skyNadirColorRamp;
+
+    [InspectorName("Rim Light Color")]
+    [GradientUsage(true)] [SerializeField] private Gradient rimColorRamp;
+
+    [Header("Indirect Lighting")]
+    [InspectorName("Enabled")] [SerializeField] private bool indirectLight = true;
+    [GradientUsage(true)] [SerializeField] private Gradient indirectSkyRamp;
+    [GradientUsage(true)] [SerializeField] private Gradient indirectEquatorRamp;
+    [GradientUsage(true)] [SerializeField] private Gradient groundEquatorRamp;
+
+    [Header("Clouds")]
+    [GradientUsage(true)] [SerializeField] private Gradient cloudsColorRamp;
+    [SerializeField] private AnimationCurve cloudsHighlightsIntensity;
+
+    [Header("Fog")]
+    [InspectorName("Enabled")] [SerializeField] private bool fog = true;
+    [GradientUsage(true)] [SerializeField] private Gradient fogColorRamp;
+
+    private Material skyboxMaterial;
+
+    private float directionalLightTimeOfDay = float.MinValue;
+    private float targetTimeOfDay = float.MinValue;
+    private CancellationTokenSource transitionCancellationTokenSource;
+
+    [Header("Transition Settings")]
+    [SerializeField] private float transitionDuration;
+
+    public void Initialize(Material skyboxMat, Light dirLight, AnimationClip skyboxAnimationClip, float initialTimeOfDay, bool lensFlareEnabled = true, bool freezeTime = false)
+    {
+        // Pre-seed transition target so UpdateSkybox below short-circuits and skips the directional-light
+        // coroutine, whose first sync tick would Lerp from float.MinValue and clamp the gradient samplers.
+        if (freezeTime)
+        {
+            directionalLightTimeOfDay = initialTimeOfDay;
+            targetTimeOfDay = initialTimeOfDay;
+        }
+
+        if (skyboxMat)
+        {
+#if UNITY_EDITOR
+
+            // Create a copy so that the original asset does not get modified by UpdateSkyboxColor. Else
+            // we will get annoying mystery changes in Git.
+            skyboxMat = new Material(skyboxMat);
+#endif
+            skyboxMaterial = skyboxMat;
+        }
+
+        if (dirLight)
+            directionalLight = dirLight;
+
+        if (skyboxAnimationClip)
+            lightAnimation = skyboxAnimationClip;
+
+        //setup skybox material
+        if (!skyboxMaterial)
+            ReportHub.LogWarning(ReportCategory.LANDSCAPE, "Skybox Controller: No skybox material assigned");
+        else
+            RenderSettings.skybox = skyboxMaterial; //assign skybox to render settings
+
+        //setup directional light
+        if (!directionalLight)
+            ReportHub.LogWarning(ReportCategory.LANDSCAPE, "Skybox Controller: Directional Light has not been assigned");
+        else
+        {
+            //assign light to render settings
+            RenderSettings.sun = directionalLight;
+
+            //create animation component in runtime and assign animation clip
+            lightAnimator = directionalLight.gameObject.GetComponent<Animation>();
+
+            if (!lightAnimator)
+                lightAnimator = directionalLight.gameObject.AddComponent<Animation>();
+
+            if (!lightAnimation)
+                ReportHub.LogWarning(ReportCategory.LANDSCAPE, "Skybox Controller: Directional Light animation has not been assigned");
+            else
+                lightAnimator.AddClip(lightAnimation, lightAnimation.name);
+
+            InitializeLensFlare(lensFlareEnabled);
+        }
+
+        //setup indirect light
+        if (indirectLight)
+            RenderSettings.ambientMode = AmbientMode.Trilight;
+
+        //setup fog
+        if (fog)
+            RenderSettings.fog = true;
+
+        UpdateSkybox(initialTimeOfDay);
+
+        directionalLightTimeOfDay = initialTimeOfDay;
+        UpdateDirectionalLight(initialTimeOfDay);
+    }
+
+    /// <summary>,
+    ///     Calls all the necessary methods to update the skybox and environment
+    /// </summary>
+    public void UpdateSkybox(float timeOfDay)
+    {
+        UpdateIndirectLight(timeOfDay);
+        UpdateSkyboxColor(timeOfDay);
+        UpdateFog(timeOfDay);
+
+        // we update light in intervals to hide visible artifacts for moving shadows (anti-aliasing related, espescially on the benches)
+        if (!Mathf.Approximately(targetTimeOfDay, timeOfDay))
+        {
+            targetTimeOfDay = timeOfDay;
+            StartDirectionalLightTransitionAsync(timeOfDay, transitionDuration).Forget();
+        }
+    }
+
+    private async UniTaskVoid StartDirectionalLightTransitionAsync(float newTimeOfDay, float duration)
+    {
+        transitionCancellationTokenSource = transitionCancellationTokenSource.SafeRestart();
+
+        CancellationToken token = transitionCancellationTokenSource.Token;
+        float startTime = directionalLightTimeOfDay;
+        float startTimeStamp = UnityEngine.Time.time;
+
+        while (UnityEngine.Time.time - startTimeStamp < duration && !token.IsCancellationRequested)
+        {
+            float progress = (UnityEngine.Time.time - startTimeStamp) / duration;
+            float lerpedTimeOfDay = Mathf.Lerp(startTime, newTimeOfDay, progress);
+
+            directionalLightTimeOfDay = lerpedTimeOfDay;
+            UpdateDirectionalLight(lerpedTimeOfDay);
+
+            await UniTask.Yield(token);
+        }
+
+        directionalLightTimeOfDay = newTimeOfDay;
+        UpdateDirectionalLight(newTimeOfDay);
+    }
+
+    /// <summary>
+    ///     Updates the indirect light of the render settings sampling the colors
+    ///     from the defined gradients based on the normalized time
+    /// </summary>
+    private void UpdateIndirectLight(float timeOfDay)
+    {
+        if (!indirectLight) return;
+
+        RenderSettings.ambientSkyColor = indirectSkyRamp.Evaluate(timeOfDay);
+        RenderSettings.ambientEquatorColor = indirectEquatorRamp.Evaluate(timeOfDay);
+        RenderSettings.ambientGroundColor = groundEquatorRamp.Evaluate(timeOfDay);
+    }
+
+    /// <summary>
+    ///     Updates the directional light color by sampling the colors
+    ///     from the defined gradient and plays the corresponding animation frame
+    /// </summary>
+    private void UpdateDirectionalLight(float timeOfDay)
+    {
+        if (!directionalLight) return;
+
+        //change the color of the light based on the color ramp
+        directionalLight.color = directionalColorRamp.Evaluate(timeOfDay);
+
+        //sample the right frame of the animation
+        if (lightAnimation)
+        {
+            lightAnimator[lightAnimation.name].time = timeOfDay * lightAnimator[lightAnimation.name].length;
+            lightAnimator.Play(lightAnimation.name);
+            lightAnimator.Sample();
+            lightAnimator.Stop();
+        }
+
+        var directionalLightLocalScale = directionalLight.gameObject.transform.localScale;
+        RenderSettings.skybox.SetFloat(SUN_SIZE, directionalLightLocalScale.x);
+        RenderSettings.skybox.SetFloat(SUN_OPACITY, directionalLightLocalScale.y);
+
+        //sampling sun radiance and intensity curves
+        RenderSettings.skybox.SetFloat(SUN_RADIANCE, sunRadiance.Evaluate(timeOfDay));
+        RenderSettings.skybox.SetFloat(SUN_RADIANCE_INTENSITY, sunRadianceIntensity.Evaluate(timeOfDay));
+
+        //change size of moon mask
+        RenderSettings.skybox.SetFloat(MOON_MASK_SIZE, moonMaskSize.Evaluate(timeOfDay));
+
+        UpdateLensFlare(timeOfDay);
+    }
+
+    private void InitializeLensFlare(bool lensFlareEnabled)
+    {
+        lensFlare = directionalLight.gameObject.GetComponent<LensFlareComponentSRP>()
+                    ?? directionalLight.gameObject.AddComponent<LensFlareComponentSRP>();
+
+        lensFlare.useOcclusion = true;
+        lensFlare.enabled = lensFlareEnabled;
+
+        lensFlareEntries.Sort(static (a, b) => a.StartTime.CompareTo(b.StartTime));
+    }
+
+    private void UpdateLensFlare(float timeOfDay)
+    {
+        if (lensFlare == null) return;
+
+        lensFlare.intensity = lensFlareIntensity.Evaluate(timeOfDay);
+
+        LensFlareDataSRP? newFlareData = GetActiveLensFlareData(timeOfDay);
+
+        if (newFlareData != activeLensFlareData)
+        {
+            activeLensFlareData = newFlareData;
+            lensFlare.lensFlareData = newFlareData;
+        }
+    }
+
+    private LensFlareDataSRP? GetActiveLensFlareData(float timeOfDay)
+    {
+        if (lensFlareEntries.Count == 0)
+            return null;
+
+        // Find the last entry whose StartTime is <= current time
+        LensFlareDataSRP? result = null;
+
+        for (int i = 0; i < lensFlareEntries.Count; i++)
+        {
+            if (lensFlareEntries[i].StartTime <= timeOfDay)
+                result = lensFlareEntries[i].FlareAsset;
+        }
+
+        // If timeOfDay is before the first entry, wrap around to the last
+        return result ?? lensFlareEntries[lensFlareEntries.Count - 1].FlareAsset;
+    }
+
+    /// <summary>
+    ///     Updates the exposed parameters of the material to update gradient colors
+    ///     and sun size
+    /// </summary>
+    private void UpdateSkyboxColor(float timeOfDay)
+    {
+        RenderSettings.skybox.SetColor(ZENIT_COLOR, skyZenitColorRamp.Evaluate(timeOfDay));
+        RenderSettings.skybox.SetColor(HORIZON_COLOR, skyHorizonColorRamp.Evaluate(timeOfDay));
+        RenderSettings.skybox.SetColor(NADIR_COLOR, skyNadirColorRamp.Evaluate(timeOfDay));
+        RenderSettings.skybox.SetColor(SUN_COLOR, sunColorRamp.Evaluate(timeOfDay));
+        RenderSettings.skybox.SetColor(RIM_COLOR, rimColorRamp.Evaluate(timeOfDay));
+        RenderSettings.skybox.SetColor(CLOUDS_COLOR, cloudsColorRamp.Evaluate(timeOfDay));
+        RenderSettings.skybox.SetFloat(CLOUD_HIGHLIGHTS, cloudsHighlightsIntensity.Evaluate(timeOfDay));
+    }
+
+    /// <summary>
+    ///     Updates the fog color of the RenderSettings if enabled
+    /// </summary>
+    private void UpdateFog(float timeOfDay)
+    {
+        if (fog)
+            RenderSettings.fogColor = fogColorRamp.Evaluate(timeOfDay);
+    }
+
+    public void DisableSkyboxTime()
+    {
+        skyboxMaterial.SetFloat(CLOUDS_ROTATION_SPEED, 0f);
+        skyboxMaterial.SetFloat(SECOND_SUN_ROTATION_SPEED, 0f);
+
+        // Override shader-side time per-material to disable stars rotation and sky oscillation,
+        // which are driven by Unity's _TimeParameters global but have no material speed property.
+        skyboxMaterial.SetVector(TIME_PARAMETERS, Vector4.one);
+
+        // Cancel the pending directional light transition started during Initialize(),
+        // which would lerp from float.MinValue and corrupt the light's position.
+        transitionCancellationTokenSource?.Cancel();
+    }
+
+    private void OnDestroy()
+    {
+        transitionCancellationTokenSource.SafeCancelAndDispose();
+    }
+
+    private void OnDisable()
+    {
+        transitionCancellationTokenSource.SafeCancelAndDispose();
+    }
+
+#if UNITY_EDITOR
+    public bool editMode;
+
+    public void Awake()
+    {
+        //Added the flag to allow editing of the prefab in a separate scene
+        //that doesn't have the regular plugin init flow
+        if (editMode)
+            Initialize(RenderSettings.skybox, null!, null!, 0.5f);
+    }
+#endif
+}
