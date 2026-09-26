@@ -1,10 +1,8 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.Multiplayer.Connections.Typing;
 using DCL.Utility.Types;
 using System;
 using System.Threading;
-using UnityEngine;
 
 namespace DCL.Multiplayer.Connections.Archipelago.SignFlow
 {
@@ -30,14 +28,6 @@ namespace DCL.Multiplayer.Connections.Archipelago.SignFlow
             log($"{PREFIX} WelcomePeerIdAsync start for json {signedMessageAuthChainJson}");
             Result result = await origin.ConnectAsync(signedMessageAuthChainJson, token);
             log($"{PREFIX} WelcomePeerIdAsync finish for json {result} with result {result}");
-            return result;
-        }
-
-        public async UniTask<Result> SendHeartbeatAsync(Vector3 playerPosition, CancellationToken token)
-        {
-            log($"{PREFIX} SendHeartbeatAsync start for position {playerPosition}");
-            var result = await origin.SendHeartbeatAsync(playerPosition, token);
-            log($"{PREFIX} SendHeartbeatAsync finish for position {playerPosition} with success: {result.Success}");
             return result;
         }
 

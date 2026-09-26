@@ -51,7 +51,7 @@ public async UniTask<bool> StartAsync()
 `ConnectiveRoom` is the base class for all persistent room connections. It runs an infinite reconnection loop that survives transient failures:
 
 1. **PrewarmAsync** -- one-time initialization (e.g., fetch connection credentials)
-2. **CycleStepAsync** -- repeated heartbeat, called every 1 second
+2. **CycleStepAsync** -- repeated connection maintenance, called every 1 second; the Island room also sends a position heartbeat while its kill switch is enabled
 3. On failure, wait 5 seconds (`CONNECTION_LOOP_RECOVER_INTERVAL`) then retry
 
 State machine: `Stopped -> Starting -> Running -> Stopping -> Stopped`
@@ -65,9 +65,13 @@ private readonly Atomic<IConnectiveRoom.ConnectionLoopHealth> connectionLoopHeal
     new (IConnectiveRoom.ConnectionLoopHealth.Stopped);
 ```
 
-When a `DuplicateIdentity` disconnect reason is detected (same wallet connected from another client), the reconnection loop stops entirely rather than entering an infinite reconnect cycle.
+When a `DuplicateIdentity` or takeover `ParticipantRemoved` disconnect reason is detected, the reconnection loop stops entirely rather than entering an infinite reconnect cycle. Other LiveKit disconnect reasons retain their existing recovery behavior.
 
-For that reason `ArchipelagoIslandRoom` refuses to re-join an island it already holds. The server re-announces a player's current island on any reconnect it cannot distinguish from a second session, and joining the held room again would put two participants under one wallet identity in it — LiveKit would evict the older, which is this client's own room, and the loop above would then terminate the client. The re-announced string is still cached, so a later genuine reconnect uses its fresher token.
+`ArchipelagoIslandRoom` therefore refuses to re-join an island it already holds. The re-announced string is still cached, so a later genuine reconnect uses its fresher token without placing a second participant under the same identity in the held room.
+
+Application-level Archipelago Heartbeat packets are retired unconditionally. There is no heartbeat feature flag, default-on path, legacy presence fallback or flag rollback. Pulse/ENet movement and WebSocket transport keepalive remain enabled.
+
+Pulse and the Archipelago WebSocket do not mint separate connection identities. `IWeb3IdentityCache.Default` persists one ephemeral identity through `PlayerPrefsIdentityProvider`; the same cache instance is injected into `PulseContainer` for its signed auth chain and into `IArchipelagoIslandRoom.NewDefault` for the WebSocket challenge. On every WebSocket handshake, ws-connector publishes `peer.{address}.{session}.connect` with that session address and comms-gatekeeper re-sends the session-addressed island assignment. Release requires iteration-2 session-addressed assignments, pending/failure/supersession/ban controls and Pulse presence to be ready and verified on the backend before this client ships. No client heartbeat is required for socket reconnect or forced fresh-handshake recovery.
 
 ### Why Two Entity Rooms
 

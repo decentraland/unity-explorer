@@ -1,5 +1,6 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.Web3.Identities;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.HardwareFingerprint;
 using DCL.Multiplayer.Connections.Rooms;
@@ -24,7 +25,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
 
         public bool Activated { get; private set; }
 
-        public ChatConnectiveRoom(IWebRequestController webRequests, URLAddress adapterAddress, Option<HardwareFingerprintProvider> hardwareFingerprintProvider)
+        public ChatConnectiveRoom(IWebRequestController webRequests, URLAddress adapterAddress, Option<HardwareFingerprintProvider> hardwareFingerprintProvider, SessionControl? session = null) : base(session)
         {
             this.webRequests = webRequests;
             this.adapterAddress = adapterAddress;

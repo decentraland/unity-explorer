@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Web3.Identities;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests;
@@ -29,12 +30,15 @@ namespace DCL.Multiplayer.Connections.Pulse
         private HandshakeHandler? handshakeHandler;
         private CancellationTokenSource? connectionLifeCycleCts;
         private volatile bool isAuthenticated;
+        private readonly SessionControl? session;
 
         public PulseMultiplayerService(
             ITransport transport,
             MessagePipe pipe,
-            IDecentralandUrlsSource urlsSource)
+            IDecentralandUrlsSource urlsSource, SessionControl? session = null)
         {
+            this.session = session;
+            if (session != null) session.Changed += OnSessionChanged;
             this.transport = transport;
             this.pipe = pipe;
             this.urlsSource = urlsSource;
@@ -44,6 +48,7 @@ namespace DCL.Multiplayer.Connections.Pulse
 
         public void Dispose()
         {
+            if (session != null) session.Changed -= OnSessionChanged;
             isAuthenticated = false;
             UnregisterAllHandlers();
             transport.Dispose();
@@ -79,6 +84,7 @@ namespace DCL.Multiplayer.Connections.Pulse
 
         public async UniTask<bool> ConnectAsync(CancellationToken ct, int maxAttempts = int.MaxValue)
         {
+            if (!(session?.CanListen(session.Generation) ?? true)) return false;
             if (transport.State is ITransport.TransportState.Connected or ITransport.TransportState.Connecting)
                 return true;
 
@@ -104,7 +110,7 @@ namespace DCL.Multiplayer.Connections.Pulse
 
         public void Send(OutgoingMessage outgoingMessage)
         {
-            if (transport.State != ITransport.TransportState.Connected)
+            if (transport.State != ITransport.TransportState.Connected || !(session?.CanListen(session.Generation) ?? true))
             {
                 outgoingMessage.Dispose();
                 return;
@@ -116,9 +122,11 @@ namespace DCL.Multiplayer.Connections.Pulse
         private async UniTask<bool> ConnectWithRetriesAsync(CancellationToken ct, int maxAttempts)
         {
             var attempt = 1;
+            int generation = session?.Generation ?? 0;
 
             while (true)
             {
+                if (!(session?.CanListen(generation) ?? true)) return false;
                 try
                 {
                     await ConnectInternalAsync(ct);
@@ -160,7 +168,10 @@ namespace DCL.Multiplayer.Connections.Pulse
 
         private async UniTask ConnectInternalAsync(CancellationToken ct)
         {
+            int generation = session?.Generation ?? 0;
+            if (!(session?.CanListen(generation) ?? true)) throw new PulseHandshakeDisconnectedException("Session suppressed");
             await transport.ConnectAsync(urlsSource.Url(DecentralandUrl.Pulse), PORT, ct);
+            if (!(session?.CanListen(generation) ?? true)) throw new PulseHandshakeDisconnectedException("Session changed during connect");
 
             // Register handshake handler before starting the routing loop so it's visible immediately.
             // Extract fields inside the handler — the underlying proto message is returned to pool after the handler returns.
@@ -187,11 +198,14 @@ namespace DCL.Multiplayer.Connections.Pulse
                 // reconnection path instead of the handshake-failure path.
                 handshakeCompletion.TrySetResult((true, null));
 
+            if (!(session?.CanListen(generation) ?? true)) throw new PulseHandshakeDisconnectedException("Session changed during authentication");
             isAuthenticated = true;
         }
 
         private void StartRouting(UniTaskCompletionSource<(bool success, string? error)> handshakeCompletion, CancellationToken connectionCt, CancellationToken parentCt)
         {
+            int generation = session?.Generation ?? 0;
+            DisconnectHandler? currentDisconnectHandler = disconnectHandler;
             // RunOnThreadPool with configureAwait: false ensures all await continuations
             // stay on the thread pool — matching the ENet transport pattern.
             // UniTask.Delay is NOT used here because it schedules on the Unity player loop
@@ -203,8 +217,17 @@ namespace DCL.Multiplayer.Connections.Pulse
                         {
                             await foreach (MessagePipeEvent evt in pipe.ReadEventsAsync(connectionCt))
                             {
+                                if (connectionCt.IsCancellationRequested || !(session?.CanListen(generation) ?? true))
+                                {
+                                    evt.Dispose();
+                                    break;
+                                }
                                 if (evt.IsDisconnectEvent(out MessagePipeEvent.DisconnectEvent disconnectEvent))
                                 {
+                                    if (disconnectEvent.Reason == DisconnectReason.DUPLICATE_SESSION)
+                                        session?.Stop(generation, SessionControl.Status.Superseded);
+                                    else if (disconnectEvent.Reason == DisconnectReason.BANNED)
+                                        session?.Stop(generation, SessionControl.Status.Banned);
                                     // The server may drop the connection before sending a HandshakeResponse.
                                     // Fault the pending handshake instead of reconnecting from here — recovery is
                                     // owned by the connection attempt awaiting it, and a competing reconnection
@@ -212,7 +235,7 @@ namespace DCL.Multiplayer.Connections.Pulse
                                     if (handshakeCompletion.TrySetException(new PulseHandshakeDisconnectedException(disconnectEvent.Reason)))
                                         break;
 
-                                    (bool reconnectionAllowed, TimeSpan reconnectionDelay) = disconnectHandler?.Invoke(disconnectEvent) ?? (false, TimeSpan.Zero);
+                                    (bool reconnectionAllowed, TimeSpan reconnectionDelay) = currentDisconnectHandler?.Invoke(disconnectEvent) ?? (false, TimeSpan.Zero);
 
                                     if (reconnectionAllowed && !parentCt.IsCancellationRequested)
                                     {
@@ -222,7 +245,7 @@ namespace DCL.Multiplayer.Connections.Pulse
 
                                         await DCLTask.Delay(reconnectionDelay, parentCt);
 
-                                        try { await ConnectAsync(parentCt); }
+                                        try { if (session?.CanListen(generation) ?? true) await ConnectAsync(parentCt); }
                                         catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, ReportCategory.MULTIPLAYER); }
                                         finally
                                         {
@@ -251,6 +274,17 @@ namespace DCL.Multiplayer.Connections.Pulse
                         catch (OperationCanceledException) { }
                     }, configureAwait: false, cancellationToken: connectionCt)
                    .Forget();
+        }
+
+        private void OnSessionChanged()
+        {
+            if (session != null && !session.CanListen(session.Generation)) StopSuppressedSessionAsync().Forget();
+        }
+
+        private async UniTaskVoid StopSuppressedSessionAsync()
+        {
+            try { await DisconnectAsync(); }
+            catch (Exception e) { ReportHub.LogException(e, ReportCategory.MULTIPLAYER); }
         }
     }
 }

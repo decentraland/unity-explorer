@@ -20,7 +20,6 @@ namespace DCL.PlacesAPIService
             SortBy sortBy = SortBy.MOST_ACTIVE, SortDirection sortDirection = SortDirection.DESC,
             string? category = null,
             bool? withConnectedUsers = null,
-            bool? onlySdk7 = null,
             bool? withLiveEvents = null,
             bool? onlyPlaces = null);
 
@@ -37,7 +36,6 @@ namespace DCL.PlacesAPIService
             int pageNumber = -1, int pageSize = -1,
             SortBy sortByBy = SortBy.MOST_ACTIVE, SortDirection sortDirection = SortDirection.DESC,
             bool? withConnectedUsers = null,
-            bool? onlySdk7 = null,
             bool? withLiveEvents = null,
             bool? onlyPlaces = null);
 
@@ -47,7 +45,7 @@ namespace DCL.PlacesAPIService
         UniTask<PlacesData.IPlacesAPIResponse> GetDestinationsByIdsAsync(IEnumerable<string> placeIds, CancellationToken ct, bool renewCache = false, bool? withConnectedUsers = null);
         [Obsolete("Use GetDestinationsByOwnerAsync instead")]
         UniTask<PlacesData.IPlacesAPIResponse> GetPlacesByOwnerAsync(string ownerAddress, CancellationToken ct, bool renewCache = false);
-        UniTask<PlacesData.IPlacesAPIResponse> GetDestinationsByOwnerAsync(string ownerAddress, CancellationToken ct, bool renewCache = false, bool? withConnectedUsers = null, bool? onlySdk7 = null, bool? withLiveEvents = null);
+        UniTask<PlacesData.IPlacesAPIResponse> GetDestinationsByOwnerAsync(string ownerAddress, CancellationToken ct, bool renewCache = false, bool? withConnectedUsers = null, bool? withLiveEvents = null);
         UniTask<PlacesData.IPlacesAPIResponse> GetWorldsByOwnerAsync(string ownerAddress, CancellationToken ct, bool renewCache = false);
 
         UniTask<IReadOnlyList<OptimizedPlaceInMapResponse>> GetOptimizedPlacesFromTheMapAsync(string category, CancellationToken ct);

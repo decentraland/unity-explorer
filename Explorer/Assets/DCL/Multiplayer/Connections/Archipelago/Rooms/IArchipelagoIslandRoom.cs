@@ -1,4 +1,3 @@
-using DCL.Character;
 using DCL.Multiplayer.Connections.Archipelago.AdapterAddress.Current;
 using DCL.Multiplayer.Connections.Archipelago.Rooms.Fixed;
 using DCL.Multiplayer.Connections.Rooms.Connective;
@@ -16,7 +15,6 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
             IWeb3IdentityCache identityCache,
             IMultiPool multiPool,
             IMemoryPool memoryPool,
-            ICharacterObject characterObject,
             ICurrentAdapterAddress currentAdapterAddress,
             IWebRequestController webRequestController,
             IRealmData realmData,
@@ -25,7 +23,6 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
             new ForkGlobalRealmRoom(
                 currentAdapterAddress,
                 () => new ArchipelagoIslandRoom(
-                    characterObject,
                     identityCache,
                     multiPool,
                     memoryPool,

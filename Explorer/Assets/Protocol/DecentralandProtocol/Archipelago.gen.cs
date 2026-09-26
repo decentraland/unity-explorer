@@ -39,47 +39,55 @@ namespace Decentraland.Kernel.Comms.V3 {
             "ZWVyX2lkGAIgASgJIjcKEUpvaW5Jc2xhbmRNZXNzYWdlEhEKCWlzbGFuZF9p",
             "ZBgBIAEoCRIPCgdwZWVyX2lkGAIgASgJIksKDUtpY2tlZE1lc3NhZ2USOgoG",
             "cmVhc29uGAEgASgOMiouZGVjZW50cmFsYW5kLmtlcm5lbC5jb21tcy52My5L",
-            "aWNrZWRSZWFzb24izQMKDFNlcnZlclBhY2tldBJUChJjaGFsbGVuZ2VfcmVz",
-            "cG9uc2UYASABKAsyNi5kZWNlbnRyYWxhbmQua2VybmVsLmNvbW1zLnYzLkNo",
-            "YWxsZW5nZVJlc3BvbnNlTWVzc2FnZUgAEj8KB3dlbGNvbWUYAiABKAsyLC5k",
-            "ZWNlbnRyYWxhbmQua2VybmVsLmNvbW1zLnYzLldlbGNvbWVNZXNzYWdlSAAS",
-            "TAoOaXNsYW5kX2NoYW5nZWQYAyABKAsyMi5kZWNlbnRyYWxhbmQua2VybmVs",
-            "LmNvbW1zLnYzLklzbGFuZENoYW5nZWRNZXNzYWdlSAASRgoLbGVmdF9pc2xh",
-            "bmQYBCABKAsyLy5kZWNlbnRyYWxhbmQua2VybmVsLmNvbW1zLnYzLkxlZnRJ",
-            "c2xhbmRNZXNzYWdlSAASRgoLam9pbl9pc2xhbmQYBSABKAsyLy5kZWNlbnRy",
-            "YWxhbmQua2VybmVsLmNvbW1zLnYzLkpvaW5Jc2xhbmRNZXNzYWdlSAASPQoG",
-            "a2lja2VkGAYgASgLMisuZGVjZW50cmFsYW5kLmtlcm5lbC5jb21tcy52My5L",
-            "aWNrZWRNZXNzYWdlSABCCQoHbWVzc2FnZSIqChdDaGFsbGVuZ2VSZXF1ZXN0",
-            "TWVzc2FnZRIPCgdhZGRyZXNzGAEgASgJIjEKFlNpZ25lZENoYWxsZW5nZU1l",
-            "c3NhZ2USFwoPYXV0aF9jaGFpbl9qc29uGAEgASgJImgKCUhlYXJ0YmVhdBIv",
-            "Cghwb3NpdGlvbhgBIAEoCzIdLmRlY2VudHJhbGFuZC5jb21tb24uUG9zaXRp",
-            "b24SGQoMZGVzaXJlZF9yb29tGAIgASgJSACIAQFCDwoNX2Rlc2lyZWRfcm9v",
-            "bSL9AQoMQ2xpZW50UGFja2V0ElIKEWNoYWxsZW5nZV9yZXF1ZXN0GAEgASgL",
-            "MjUuZGVjZW50cmFsYW5kLmtlcm5lbC5jb21tcy52My5DaGFsbGVuZ2VSZXF1",
-            "ZXN0TWVzc2FnZUgAElAKEHNpZ25lZF9jaGFsbGVuZ2UYAiABKAsyNC5kZWNl",
-            "bnRyYWxhbmQua2VybmVsLmNvbW1zLnYzLlNpZ25lZENoYWxsZW5nZU1lc3Nh",
-            "Z2VIABI8CgloZWFydGJlYXQYAyABKAsyJy5kZWNlbnRyYWxhbmQua2VybmVs",
-            "LmNvbW1zLnYzLkhlYXJ0YmVhdEgAQgkKB21lc3NhZ2UieQoKSXNsYW5kRGF0",
-            "YRIKCgJpZBgBIAEoCRINCgVwZWVycxgCIAMoCRIRCgltYXhfcGVlcnMYAyAB",
-            "KA0SLQoGY2VudGVyGAQgASgLMh0uZGVjZW50cmFsYW5kLmNvbW1vbi5Qb3Np",
-            "dGlvbhIOCgZyYWRpdXMYBSABKAEiTQoTSXNsYW5kU3RhdHVzTWVzc2FnZRI2",
-            "CgRkYXRhGAEgAygLMiguZGVjZW50cmFsYW5kLmtlcm5lbC5jb21tcy52My5J",
-            "c2xhbmREYXRhImMKDVNlcnZpY2VTdGF0dXMSFAoMY3VycmVudF90aW1lGAEg",
-            "ASgEEhgKC2NvbW1pdF9oYXNoGAIgASgJSACIAQESEgoKdXNlcl9jb3VudBgD",
-            "IAEoDUIOCgxfY29tbWl0X2hhc2giawoXU2VydmljZURpc2NvdmVyeU1lc3Nh",
-            "Z2USEwoLc2VydmVyX25hbWUYASABKAkSOwoGc3RhdHVzGAIgASgLMisuZGVj",
-            "ZW50cmFsYW5kLmtlcm5lbC5jb21tcy52My5TZXJ2aWNlU3RhdHVzKiIKDEtp",
-            "Y2tlZFJlYXNvbhISCg5LUl9ORVdfU0VTU0lPThAAYgZwcm90bzM="));
+            "aWNrZWRSZWFzb24iagoUU2Vzc2lvblN0YXR1c01lc3NhZ2USOgoFc3RhdGUY",
+            "ASABKA4yKy5kZWNlbnRyYWxhbmQua2VybmVsLmNvbW1zLnYzLlNlc3Npb25T",
+            "dGF0dXMSFgoOcmV0cnlfYWZ0ZXJfbXMYAiABKA0imwQKDFNlcnZlclBhY2tl",
+            "dBJUChJjaGFsbGVuZ2VfcmVzcG9uc2UYASABKAsyNi5kZWNlbnRyYWxhbmQu",
+            "a2VybmVsLmNvbW1zLnYzLkNoYWxsZW5nZVJlc3BvbnNlTWVzc2FnZUgAEj8K",
+            "B3dlbGNvbWUYAiABKAsyLC5kZWNlbnRyYWxhbmQua2VybmVsLmNvbW1zLnYz",
+            "LldlbGNvbWVNZXNzYWdlSAASTAoOaXNsYW5kX2NoYW5nZWQYAyABKAsyMi5k",
+            "ZWNlbnRyYWxhbmQua2VybmVsLmNvbW1zLnYzLklzbGFuZENoYW5nZWRNZXNz",
+            "YWdlSAASRgoLbGVmdF9pc2xhbmQYBCABKAsyLy5kZWNlbnRyYWxhbmQua2Vy",
+            "bmVsLmNvbW1zLnYzLkxlZnRJc2xhbmRNZXNzYWdlSAASRgoLam9pbl9pc2xh",
+            "bmQYBSABKAsyLy5kZWNlbnRyYWxhbmQua2VybmVsLmNvbW1zLnYzLkpvaW5J",
+            "c2xhbmRNZXNzYWdlSAASPQoGa2lja2VkGAYgASgLMisuZGVjZW50cmFsYW5k",
+            "Lmtlcm5lbC5jb21tcy52My5LaWNrZWRNZXNzYWdlSAASTAoOc2Vzc2lvbl9z",
+            "dGF0dXMYByABKAsyMi5kZWNlbnRyYWxhbmQua2VybmVsLmNvbW1zLnYzLlNl",
+            "c3Npb25TdGF0dXNNZXNzYWdlSABCCQoHbWVzc2FnZSIqChdDaGFsbGVuZ2VS",
+            "ZXF1ZXN0TWVzc2FnZRIPCgdhZGRyZXNzGAEgASgJIjEKFlNpZ25lZENoYWxs",
+            "ZW5nZU1lc3NhZ2USFwoPYXV0aF9jaGFpbl9qc29uGAEgASgJImgKCUhlYXJ0",
+            "YmVhdBIvCghwb3NpdGlvbhgBIAEoCzIdLmRlY2VudHJhbGFuZC5jb21tb24u",
+            "UG9zaXRpb24SGQoMZGVzaXJlZF9yb29tGAIgASgJSACIAQFCDwoNX2Rlc2ly",
+            "ZWRfcm9vbSL9AQoMQ2xpZW50UGFja2V0ElIKEWNoYWxsZW5nZV9yZXF1ZXN0",
+            "GAEgASgLMjUuZGVjZW50cmFsYW5kLmtlcm5lbC5jb21tcy52My5DaGFsbGVu",
+            "Z2VSZXF1ZXN0TWVzc2FnZUgAElAKEHNpZ25lZF9jaGFsbGVuZ2UYAiABKAsy",
+            "NC5kZWNlbnRyYWxhbmQua2VybmVsLmNvbW1zLnYzLlNpZ25lZENoYWxsZW5n",
+            "ZU1lc3NhZ2VIABI8CgloZWFydGJlYXQYAyABKAsyJy5kZWNlbnRyYWxhbmQu",
+            "a2VybmVsLmNvbW1zLnYzLkhlYXJ0YmVhdEgAQgkKB21lc3NhZ2UieQoKSXNs",
+            "YW5kRGF0YRIKCgJpZBgBIAEoCRINCgVwZWVycxgCIAMoCRIRCgltYXhfcGVl",
+            "cnMYAyABKA0SLQoGY2VudGVyGAQgASgLMh0uZGVjZW50cmFsYW5kLmNvbW1v",
+            "bi5Qb3NpdGlvbhIOCgZyYWRpdXMYBSABKAEiTQoTSXNsYW5kU3RhdHVzTWVz",
+            "c2FnZRI2CgRkYXRhGAEgAygLMiguZGVjZW50cmFsYW5kLmtlcm5lbC5jb21t",
+            "cy52My5Jc2xhbmREYXRhImMKDVNlcnZpY2VTdGF0dXMSFAoMY3VycmVudF90",
+            "aW1lGAEgASgEEhgKC2NvbW1pdF9oYXNoGAIgASgJSACIAQESEgoKdXNlcl9j",
+            "b3VudBgDIAEoDUIOCgxfY29tbWl0X2hhc2giawoXU2VydmljZURpc2NvdmVy",
+            "eU1lc3NhZ2USEwoLc2VydmVyX25hbWUYASABKAkSOwoGc3RhdHVzGAIgASgL",
+            "MisuZGVjZW50cmFsYW5kLmtlcm5lbC5jb21tcy52My5TZXJ2aWNlU3RhdHVz",
+            "KjEKDEtpY2tlZFJlYXNvbhISCg5LUl9ORVdfU0VTU0lPThAAEg0KCUtSX0JB",
+            "Tk5FRBABKksKDVNlc3Npb25TdGF0dXMSDwoLVU5TUEVDSUZJRUQQABIUChBU",
+            "QUtFT1ZFUl9QRU5ESU5HEAESEwoPVEFLRU9WRVJfRkFJTEVEEAJiBnByb3Rv",
+            "Mw=="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::Decentraland.Common.VectorsReflection.Descriptor, },
-          new pbr::GeneratedClrTypeInfo(new[] {typeof(global::Decentraland.Kernel.Comms.V3.KickedReason), }, null, new pbr::GeneratedClrTypeInfo[] {
+          new pbr::GeneratedClrTypeInfo(new[] {typeof(global::Decentraland.Kernel.Comms.V3.KickedReason), typeof(global::Decentraland.Kernel.Comms.V3.SessionStatus), }, null, new pbr::GeneratedClrTypeInfo[] {
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.V3.ChallengeResponseMessage), global::Decentraland.Kernel.Comms.V3.ChallengeResponseMessage.Parser, new[]{ "ChallengeToSign", "AlreadyConnected" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.V3.WelcomeMessage), global::Decentraland.Kernel.Comms.V3.WelcomeMessage.Parser, new[]{ "PeerId" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.V3.IslandChangedMessage), global::Decentraland.Kernel.Comms.V3.IslandChangedMessage.Parser, new[]{ "IslandId", "ConnStr", "FromIslandId", "Peers" }, new[]{ "FromIslandId" }, null, null, new pbr::GeneratedClrTypeInfo[] { null, }),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.V3.LeftIslandMessage), global::Decentraland.Kernel.Comms.V3.LeftIslandMessage.Parser, new[]{ "IslandId", "PeerId" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.V3.JoinIslandMessage), global::Decentraland.Kernel.Comms.V3.JoinIslandMessage.Parser, new[]{ "IslandId", "PeerId" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.V3.KickedMessage), global::Decentraland.Kernel.Comms.V3.KickedMessage.Parser, new[]{ "Reason" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.V3.ServerPacket), global::Decentraland.Kernel.Comms.V3.ServerPacket.Parser, new[]{ "ChallengeResponse", "Welcome", "IslandChanged", "LeftIsland", "JoinIsland", "Kicked" }, new[]{ "Message" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.V3.SessionStatusMessage), global::Decentraland.Kernel.Comms.V3.SessionStatusMessage.Parser, new[]{ "State", "RetryAfterMs" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.V3.ServerPacket), global::Decentraland.Kernel.Comms.V3.ServerPacket.Parser, new[]{ "ChallengeResponse", "Welcome", "IslandChanged", "LeftIsland", "JoinIsland", "Kicked", "SessionStatus" }, new[]{ "Message" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.V3.ChallengeRequestMessage), global::Decentraland.Kernel.Comms.V3.ChallengeRequestMessage.Parser, new[]{ "Address" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.V3.SignedChallengeMessage), global::Decentraland.Kernel.Comms.V3.SignedChallengeMessage.Parser, new[]{ "AuthChainJson" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.V3.Heartbeat), global::Decentraland.Kernel.Comms.V3.Heartbeat.Parser, new[]{ "Position", "DesiredRoom" }, new[]{ "DesiredRoom" }, null, null, null),
@@ -95,7 +103,17 @@ namespace Decentraland.Kernel.Comms.V3 {
   }
   #region Enums
   public enum KickedReason {
+    /// <summary>
+    /// Authoritative logical-session supersession, not same-session socket replacement.
+    /// </summary>
     [pbr::OriginalName("KR_NEW_SESSION")] KrNewSession = 0,
+    [pbr::OriginalName("KR_BANNED")] KrBanned = 1,
+  }
+
+  public enum SessionStatus {
+    [pbr::OriginalName("UNSPECIFIED")] Unspecified = 0,
+    [pbr::OriginalName("TAKEOVER_PENDING")] TakeoverPending = 1,
+    [pbr::OriginalName("TAKEOVER_FAILED")] TakeoverFailed = 2,
   }
 
   #endregion
@@ -104,7 +122,6 @@ namespace Decentraland.Kernel.Comms.V3 {
   /// <summary>
   /// Server->Client messsages
   /// </summary>
-  [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
   public sealed partial class ChallengeResponseMessage : pb::IMessage<ChallengeResponseMessage>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
@@ -289,11 +306,7 @@ namespace Decentraland.Kernel.Comms.V3 {
     #else
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
-      if ((tag & 7) == 4) {
-        // Abort on any end group tag.
-        return;
-      }
-      switch(tag) {
+        switch(tag) {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
             break;
@@ -316,11 +329,7 @@ namespace Decentraland.Kernel.Comms.V3 {
     void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
-      if ((tag & 7) == 4) {
-        // Abort on any end group tag.
-        return;
-      }
-      switch(tag) {
+        switch(tag) {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
@@ -339,7 +348,6 @@ namespace Decentraland.Kernel.Comms.V3 {
 
   }
 
-  [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
   public sealed partial class WelcomeMessage : pb::IMessage<WelcomeMessage>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
@@ -495,11 +503,7 @@ namespace Decentraland.Kernel.Comms.V3 {
     #else
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
-      if ((tag & 7) == 4) {
-        // Abort on any end group tag.
-        return;
-      }
-      switch(tag) {
+        switch(tag) {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
             break;
@@ -518,11 +522,7 @@ namespace Decentraland.Kernel.Comms.V3 {
     void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
-      if ((tag & 7) == 4) {
-        // Abort on any end group tag.
-        return;
-      }
-      switch(tag) {
+        switch(tag) {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
@@ -537,7 +537,6 @@ namespace Decentraland.Kernel.Comms.V3 {
 
   }
 
-  [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
   public sealed partial class IslandChangedMessage : pb::IMessage<IslandChangedMessage>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
@@ -611,13 +610,11 @@ namespace Decentraland.Kernel.Comms.V3 {
 
     /// <summary>Field number for the "from_island_id" field.</summary>
     public const int FromIslandIdFieldNumber = 3;
-    private readonly static string FromIslandIdDefaultValue = "";
-
     private string fromIslandId_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public string FromIslandId {
-      get { return fromIslandId_ ?? FromIslandIdDefaultValue; }
+      get { return fromIslandId_ ?? ""; }
       set {
         fromIslandId_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
       }
@@ -783,11 +780,7 @@ namespace Decentraland.Kernel.Comms.V3 {
     #else
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
-      if ((tag & 7) == 4) {
-        // Abort on any end group tag.
-        return;
-      }
-      switch(tag) {
+        switch(tag) {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
             break;
@@ -818,11 +811,7 @@ namespace Decentraland.Kernel.Comms.V3 {
     void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
-      if ((tag & 7) == 4) {
-        // Abort on any end group tag.
-        return;
-      }
-      switch(tag) {
+        switch(tag) {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
@@ -849,7 +838,6 @@ namespace Decentraland.Kernel.Comms.V3 {
 
   }
 
-  [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
   public sealed partial class LeftIslandMessage : pb::IMessage<LeftIslandMessage>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
@@ -1034,11 +1022,7 @@ namespace Decentraland.Kernel.Comms.V3 {
     #else
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
-      if ((tag & 7) == 4) {
-        // Abort on any end group tag.
-        return;
-      }
-      switch(tag) {
+        switch(tag) {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
             break;
@@ -1061,11 +1045,7 @@ namespace Decentraland.Kernel.Comms.V3 {
     void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
-      if ((tag & 7) == 4) {
-        // Abort on any end group tag.
-        return;
-      }
-      switch(tag) {
+        switch(tag) {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
@@ -1084,7 +1064,6 @@ namespace Decentraland.Kernel.Comms.V3 {
 
   }
 
-  [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
   public sealed partial class JoinIslandMessage : pb::IMessage<JoinIslandMessage>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
@@ -1269,11 +1248,7 @@ namespace Decentraland.Kernel.Comms.V3 {
     #else
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
-      if ((tag & 7) == 4) {
-        // Abort on any end group tag.
-        return;
-      }
-      switch(tag) {
+        switch(tag) {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
             break;
@@ -1296,11 +1271,7 @@ namespace Decentraland.Kernel.Comms.V3 {
     void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
-      if ((tag & 7) == 4) {
-        // Abort on any end group tag.
-        return;
-      }
-      switch(tag) {
+        switch(tag) {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
@@ -1319,7 +1290,6 @@ namespace Decentraland.Kernel.Comms.V3 {
 
   }
 
-  [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
   public sealed partial class KickedMessage : pb::IMessage<KickedMessage>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
@@ -1475,11 +1445,7 @@ namespace Decentraland.Kernel.Comms.V3 {
     #else
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
-      if ((tag & 7) == 4) {
-        // Abort on any end group tag.
-        return;
-      }
-      switch(tag) {
+        switch(tag) {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
             break;
@@ -1498,11 +1464,7 @@ namespace Decentraland.Kernel.Comms.V3 {
     void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
-      if ((tag & 7) == 4) {
-        // Abort on any end group tag.
-        return;
-      }
-      switch(tag) {
+        switch(tag) {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
@@ -1517,7 +1479,239 @@ namespace Decentraland.Kernel.Comms.V3 {
 
   }
 
-  [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
+  /// <summary>
+  /// Session-addressed control. Success is still IslandChangedMessage with usable credentials.
+  /// </summary>
+  public sealed partial class SessionStatusMessage : pb::IMessage<SessionStatusMessage>
+  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      , pb::IBufferMessage
+  #endif
+  {
+    private static readonly pb::MessageParser<SessionStatusMessage> _parser = new pb::MessageParser<SessionStatusMessage>(() => new SessionStatusMessage());
+    private pb::UnknownFieldSet _unknownFields;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pb::MessageParser<SessionStatusMessage> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::Decentraland.Kernel.Comms.V3.ArchipelagoReflection.Descriptor.MessageTypes[6]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public SessionStatusMessage() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public SessionStatusMessage(SessionStatusMessage other) : this() {
+      state_ = other.state_;
+      retryAfterMs_ = other.retryAfterMs_;
+      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public SessionStatusMessage Clone() {
+      return new SessionStatusMessage(this);
+    }
+
+    /// <summary>Field number for the "state" field.</summary>
+    public const int StateFieldNumber = 1;
+    private global::Decentraland.Kernel.Comms.V3.SessionStatus state_ = global::Decentraland.Kernel.Comms.V3.SessionStatus.Unspecified;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::Decentraland.Kernel.Comms.V3.SessionStatus State {
+      get { return state_; }
+      set {
+        state_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "retry_after_ms" field.</summary>
+    public const int RetryAfterMsFieldNumber = 2;
+    private uint retryAfterMs_;
+    /// <summary>
+    /// Minimum recovery suppression interval, not a countdown to a new handshake.
+    /// Pending waits on the existing authenticated connection; failed requires explicit retry.
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public uint RetryAfterMs {
+      get { return retryAfterMs_; }
+      set {
+        retryAfterMs_ = value;
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override bool Equals(object other) {
+      return Equals(other as SessionStatusMessage);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool Equals(SessionStatusMessage other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if (State != other.State) return false;
+      if (RetryAfterMs != other.RetryAfterMs) return false;
+      return Equals(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (State != global::Decentraland.Kernel.Comms.V3.SessionStatus.Unspecified) hash ^= State.GetHashCode();
+      if (RetryAfterMs != 0) hash ^= RetryAfterMs.GetHashCode();
+      if (_unknownFields != null) {
+        hash ^= _unknownFields.GetHashCode();
+      }
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void WriteTo(pb::CodedOutputStream output) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      output.WriteRawMessage(this);
+    #else
+      if (State != global::Decentraland.Kernel.Comms.V3.SessionStatus.Unspecified) {
+        output.WriteRawTag(8);
+        output.WriteEnum((int) State);
+      }
+      if (RetryAfterMs != 0) {
+        output.WriteRawTag(16);
+        output.WriteUInt32(RetryAfterMs);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(output);
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+      if (State != global::Decentraland.Kernel.Comms.V3.SessionStatus.Unspecified) {
+        output.WriteRawTag(8);
+        output.WriteEnum((int) State);
+      }
+      if (RetryAfterMs != 0) {
+        output.WriteRawTag(16);
+        output.WriteUInt32(RetryAfterMs);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(ref output);
+      }
+    }
+    #endif
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int CalculateSize() {
+      int size = 0;
+      if (State != global::Decentraland.Kernel.Comms.V3.SessionStatus.Unspecified) {
+        size += 1 + pb::CodedOutputStream.ComputeEnumSize((int) State);
+      }
+      if (RetryAfterMs != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(RetryAfterMs);
+      }
+      if (_unknownFields != null) {
+        size += _unknownFields.CalculateSize();
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(SessionStatusMessage other) {
+      if (other == null) {
+        return;
+      }
+      if (other.State != global::Decentraland.Kernel.Comms.V3.SessionStatus.Unspecified) {
+        State = other.State;
+      }
+      if (other.RetryAfterMs != 0) {
+        RetryAfterMs = other.RetryAfterMs;
+      }
+      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(pb::CodedInputStream input) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      input.ReadRawMessage(this);
+    #else
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            break;
+          case 8: {
+            State = (global::Decentraland.Kernel.Comms.V3.SessionStatus) input.ReadEnum();
+            break;
+          }
+          case 16: {
+            RetryAfterMs = input.ReadUInt32();
+            break;
+          }
+        }
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+            break;
+          case 8: {
+            State = (global::Decentraland.Kernel.Comms.V3.SessionStatus) input.ReadEnum();
+            break;
+          }
+          case 16: {
+            RetryAfterMs = input.ReadUInt32();
+            break;
+          }
+        }
+      }
+    }
+    #endif
+
+  }
+
   public sealed partial class ServerPacket : pb::IMessage<ServerPacket>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
@@ -1532,7 +1726,7 @@ namespace Decentraland.Kernel.Comms.V3 {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.Kernel.Comms.V3.ArchipelagoReflection.Descriptor.MessageTypes[6]; }
+      get { return global::Decentraland.Kernel.Comms.V3.ArchipelagoReflection.Descriptor.MessageTypes[7]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -1570,6 +1764,9 @@ namespace Decentraland.Kernel.Comms.V3 {
           break;
         case MessageOneofCase.Kicked:
           Kicked = other.Kicked.Clone();
+          break;
+        case MessageOneofCase.SessionStatus:
+          SessionStatus = other.SessionStatus.Clone();
           break;
       }
 
@@ -1654,6 +1851,18 @@ namespace Decentraland.Kernel.Comms.V3 {
       }
     }
 
+    /// <summary>Field number for the "session_status" field.</summary>
+    public const int SessionStatusFieldNumber = 7;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::Decentraland.Kernel.Comms.V3.SessionStatusMessage SessionStatus {
+      get { return messageCase_ == MessageOneofCase.SessionStatus ? (global::Decentraland.Kernel.Comms.V3.SessionStatusMessage) message_ : null; }
+      set {
+        message_ = value;
+        messageCase_ = value == null ? MessageOneofCase.None : MessageOneofCase.SessionStatus;
+      }
+    }
+
     private object message_;
     /// <summary>Enum of possible cases for the "message" oneof.</summary>
     public enum MessageOneofCase {
@@ -1664,6 +1873,7 @@ namespace Decentraland.Kernel.Comms.V3 {
       LeftIsland = 4,
       JoinIsland = 5,
       Kicked = 6,
+      SessionStatus = 7,
     }
     private MessageOneofCase messageCase_ = MessageOneofCase.None;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -1700,6 +1910,7 @@ namespace Decentraland.Kernel.Comms.V3 {
       if (!object.Equals(LeftIsland, other.LeftIsland)) return false;
       if (!object.Equals(JoinIsland, other.JoinIsland)) return false;
       if (!object.Equals(Kicked, other.Kicked)) return false;
+      if (!object.Equals(SessionStatus, other.SessionStatus)) return false;
       if (MessageCase != other.MessageCase) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
@@ -1714,6 +1925,7 @@ namespace Decentraland.Kernel.Comms.V3 {
       if (messageCase_ == MessageOneofCase.LeftIsland) hash ^= LeftIsland.GetHashCode();
       if (messageCase_ == MessageOneofCase.JoinIsland) hash ^= JoinIsland.GetHashCode();
       if (messageCase_ == MessageOneofCase.Kicked) hash ^= Kicked.GetHashCode();
+      if (messageCase_ == MessageOneofCase.SessionStatus) hash ^= SessionStatus.GetHashCode();
       hash ^= (int) messageCase_;
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
@@ -1757,6 +1969,10 @@ namespace Decentraland.Kernel.Comms.V3 {
         output.WriteRawTag(50);
         output.WriteMessage(Kicked);
       }
+      if (messageCase_ == MessageOneofCase.SessionStatus) {
+        output.WriteRawTag(58);
+        output.WriteMessage(SessionStatus);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -1791,6 +2007,10 @@ namespace Decentraland.Kernel.Comms.V3 {
         output.WriteRawTag(50);
         output.WriteMessage(Kicked);
       }
+      if (messageCase_ == MessageOneofCase.SessionStatus) {
+        output.WriteRawTag(58);
+        output.WriteMessage(SessionStatus);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -1818,6 +2038,9 @@ namespace Decentraland.Kernel.Comms.V3 {
       }
       if (messageCase_ == MessageOneofCase.Kicked) {
         size += 1 + pb::CodedOutputStream.ComputeMessageSize(Kicked);
+      }
+      if (messageCase_ == MessageOneofCase.SessionStatus) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(SessionStatus);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -1868,6 +2091,12 @@ namespace Decentraland.Kernel.Comms.V3 {
           }
           Kicked.MergeFrom(other.Kicked);
           break;
+        case MessageOneofCase.SessionStatus:
+          if (SessionStatus == null) {
+            SessionStatus = new global::Decentraland.Kernel.Comms.V3.SessionStatusMessage();
+          }
+          SessionStatus.MergeFrom(other.SessionStatus);
+          break;
       }
 
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
@@ -1881,11 +2110,7 @@ namespace Decentraland.Kernel.Comms.V3 {
     #else
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
-      if ((tag & 7) == 4) {
-        // Abort on any end group tag.
-        return;
-      }
-      switch(tag) {
+        switch(tag) {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
             break;
@@ -1943,6 +2168,15 @@ namespace Decentraland.Kernel.Comms.V3 {
             Kicked = subBuilder;
             break;
           }
+          case 58: {
+            global::Decentraland.Kernel.Comms.V3.SessionStatusMessage subBuilder = new global::Decentraland.Kernel.Comms.V3.SessionStatusMessage();
+            if (messageCase_ == MessageOneofCase.SessionStatus) {
+              subBuilder.MergeFrom(SessionStatus);
+            }
+            input.ReadMessage(subBuilder);
+            SessionStatus = subBuilder;
+            break;
+          }
         }
       }
     #endif
@@ -1954,11 +2188,7 @@ namespace Decentraland.Kernel.Comms.V3 {
     void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
-      if ((tag & 7) == 4) {
-        // Abort on any end group tag.
-        return;
-      }
-      switch(tag) {
+        switch(tag) {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
@@ -2016,6 +2246,15 @@ namespace Decentraland.Kernel.Comms.V3 {
             Kicked = subBuilder;
             break;
           }
+          case 58: {
+            global::Decentraland.Kernel.Comms.V3.SessionStatusMessage subBuilder = new global::Decentraland.Kernel.Comms.V3.SessionStatusMessage();
+            if (messageCase_ == MessageOneofCase.SessionStatus) {
+              subBuilder.MergeFrom(SessionStatus);
+            }
+            input.ReadMessage(subBuilder);
+            SessionStatus = subBuilder;
+            break;
+          }
         }
       }
     }
@@ -2026,7 +2265,6 @@ namespace Decentraland.Kernel.Comms.V3 {
   /// <summary>
   /// Client->Server messsages
   /// </summary>
-  [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
   public sealed partial class ChallengeRequestMessage : pb::IMessage<ChallengeRequestMessage>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
@@ -2041,7 +2279,7 @@ namespace Decentraland.Kernel.Comms.V3 {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.Kernel.Comms.V3.ArchipelagoReflection.Descriptor.MessageTypes[7]; }
+      get { return global::Decentraland.Kernel.Comms.V3.ArchipelagoReflection.Descriptor.MessageTypes[8]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -2182,11 +2420,7 @@ namespace Decentraland.Kernel.Comms.V3 {
     #else
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
-      if ((tag & 7) == 4) {
-        // Abort on any end group tag.
-        return;
-      }
-      switch(tag) {
+        switch(tag) {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
             break;
@@ -2205,11 +2439,7 @@ namespace Decentraland.Kernel.Comms.V3 {
     void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
-      if ((tag & 7) == 4) {
-        // Abort on any end group tag.
-        return;
-      }
-      switch(tag) {
+        switch(tag) {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
@@ -2224,7 +2454,6 @@ namespace Decentraland.Kernel.Comms.V3 {
 
   }
 
-  [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
   public sealed partial class SignedChallengeMessage : pb::IMessage<SignedChallengeMessage>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
@@ -2239,7 +2468,7 @@ namespace Decentraland.Kernel.Comms.V3 {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.Kernel.Comms.V3.ArchipelagoReflection.Descriptor.MessageTypes[8]; }
+      get { return global::Decentraland.Kernel.Comms.V3.ArchipelagoReflection.Descriptor.MessageTypes[9]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -2380,11 +2609,7 @@ namespace Decentraland.Kernel.Comms.V3 {
     #else
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
-      if ((tag & 7) == 4) {
-        // Abort on any end group tag.
-        return;
-      }
-      switch(tag) {
+        switch(tag) {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
             break;
@@ -2403,11 +2628,7 @@ namespace Decentraland.Kernel.Comms.V3 {
     void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
-      if ((tag & 7) == 4) {
-        // Abort on any end group tag.
-        return;
-      }
-      switch(tag) {
+        switch(tag) {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
@@ -2422,7 +2643,6 @@ namespace Decentraland.Kernel.Comms.V3 {
 
   }
 
-  [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
   public sealed partial class Heartbeat : pb::IMessage<Heartbeat>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
@@ -2437,7 +2657,7 @@ namespace Decentraland.Kernel.Comms.V3 {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.Kernel.Comms.V3.ArchipelagoReflection.Descriptor.MessageTypes[9]; }
+      get { return global::Decentraland.Kernel.Comms.V3.ArchipelagoReflection.Descriptor.MessageTypes[10]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -2482,13 +2702,11 @@ namespace Decentraland.Kernel.Comms.V3 {
 
     /// <summary>Field number for the "desired_room" field.</summary>
     public const int DesiredRoomFieldNumber = 2;
-    private readonly static string DesiredRoomDefaultValue = "";
-
     private string desiredRoom_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public string DesiredRoom {
-      get { return desiredRoom_ ?? DesiredRoomDefaultValue; }
+      get { return desiredRoom_ ?? ""; }
       set {
         desiredRoom_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
       }
@@ -2624,11 +2842,7 @@ namespace Decentraland.Kernel.Comms.V3 {
     #else
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
-      if ((tag & 7) == 4) {
-        // Abort on any end group tag.
-        return;
-      }
-      switch(tag) {
+        switch(tag) {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
             break;
@@ -2654,11 +2868,7 @@ namespace Decentraland.Kernel.Comms.V3 {
     void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
-      if ((tag & 7) == 4) {
-        // Abort on any end group tag.
-        return;
-      }
-      switch(tag) {
+        switch(tag) {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
@@ -2680,7 +2890,6 @@ namespace Decentraland.Kernel.Comms.V3 {
 
   }
 
-  [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
   public sealed partial class ClientPacket : pb::IMessage<ClientPacket>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
@@ -2695,7 +2904,7 @@ namespace Decentraland.Kernel.Comms.V3 {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.Kernel.Comms.V3.ArchipelagoReflection.Descriptor.MessageTypes[10]; }
+      get { return global::Decentraland.Kernel.Comms.V3.ArchipelagoReflection.Descriptor.MessageTypes[11]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -2939,11 +3148,7 @@ namespace Decentraland.Kernel.Comms.V3 {
     #else
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
-      if ((tag & 7) == 4) {
-        // Abort on any end group tag.
-        return;
-      }
-      switch(tag) {
+        switch(tag) {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
             break;
@@ -2985,11 +3190,7 @@ namespace Decentraland.Kernel.Comms.V3 {
     void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
-      if ((tag & 7) == 4) {
-        // Abort on any end group tag.
-        return;
-      }
-      switch(tag) {
+        switch(tag) {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
@@ -3030,7 +3231,6 @@ namespace Decentraland.Kernel.Comms.V3 {
   /// <summary>
   /// Others
   /// </summary>
-  [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
   public sealed partial class IslandData : pb::IMessage<IslandData>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
@@ -3045,7 +3245,7 @@ namespace Decentraland.Kernel.Comms.V3 {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.Kernel.Comms.V3.ArchipelagoReflection.Descriptor.MessageTypes[11]; }
+      get { return global::Decentraland.Kernel.Comms.V3.ArchipelagoReflection.Descriptor.MessageTypes[12]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -3294,11 +3494,7 @@ namespace Decentraland.Kernel.Comms.V3 {
     #else
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
-      if ((tag & 7) == 4) {
-        // Abort on any end group tag.
-        return;
-      }
-      switch(tag) {
+        switch(tag) {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
             break;
@@ -3336,11 +3532,7 @@ namespace Decentraland.Kernel.Comms.V3 {
     void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
-      if ((tag & 7) == 4) {
-        // Abort on any end group tag.
-        return;
-      }
-      switch(tag) {
+        switch(tag) {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
@@ -3374,7 +3566,6 @@ namespace Decentraland.Kernel.Comms.V3 {
 
   }
 
-  [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
   public sealed partial class IslandStatusMessage : pb::IMessage<IslandStatusMessage>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
@@ -3389,7 +3580,7 @@ namespace Decentraland.Kernel.Comms.V3 {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.Kernel.Comms.V3.ArchipelagoReflection.Descriptor.MessageTypes[12]; }
+      get { return global::Decentraland.Kernel.Comms.V3.ArchipelagoReflection.Descriptor.MessageTypes[13]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -3519,11 +3710,7 @@ namespace Decentraland.Kernel.Comms.V3 {
     #else
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
-      if ((tag & 7) == 4) {
-        // Abort on any end group tag.
-        return;
-      }
-      switch(tag) {
+        switch(tag) {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
             break;
@@ -3542,11 +3729,7 @@ namespace Decentraland.Kernel.Comms.V3 {
     void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
-      if ((tag & 7) == 4) {
-        // Abort on any end group tag.
-        return;
-      }
-      switch(tag) {
+        switch(tag) {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
@@ -3561,7 +3744,6 @@ namespace Decentraland.Kernel.Comms.V3 {
 
   }
 
-  [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
   public sealed partial class ServiceStatus : pb::IMessage<ServiceStatus>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
@@ -3576,7 +3758,7 @@ namespace Decentraland.Kernel.Comms.V3 {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.Kernel.Comms.V3.ArchipelagoReflection.Descriptor.MessageTypes[13]; }
+      get { return global::Decentraland.Kernel.Comms.V3.ArchipelagoReflection.Descriptor.MessageTypes[14]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -3622,13 +3804,11 @@ namespace Decentraland.Kernel.Comms.V3 {
 
     /// <summary>Field number for the "commit_hash" field.</summary>
     public const int CommitHashFieldNumber = 2;
-    private readonly static string CommitHashDefaultValue = "";
-
     private string commitHash_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public string CommitHash {
-      get { return commitHash_ ?? CommitHashDefaultValue; }
+      get { return commitHash_ ?? ""; }
       set {
         commitHash_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
       }
@@ -3789,11 +3969,7 @@ namespace Decentraland.Kernel.Comms.V3 {
     #else
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
-      if ((tag & 7) == 4) {
-        // Abort on any end group tag.
-        return;
-      }
-      switch(tag) {
+        switch(tag) {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
             break;
@@ -3820,11 +3996,7 @@ namespace Decentraland.Kernel.Comms.V3 {
     void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
-      if ((tag & 7) == 4) {
-        // Abort on any end group tag.
-        return;
-      }
-      switch(tag) {
+        switch(tag) {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
@@ -3847,7 +4019,6 @@ namespace Decentraland.Kernel.Comms.V3 {
 
   }
 
-  [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
   public sealed partial class ServiceDiscoveryMessage : pb::IMessage<ServiceDiscoveryMessage>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
@@ -3862,7 +4033,7 @@ namespace Decentraland.Kernel.Comms.V3 {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.Kernel.Comms.V3.ArchipelagoReflection.Descriptor.MessageTypes[14]; }
+      get { return global::Decentraland.Kernel.Comms.V3.ArchipelagoReflection.Descriptor.MessageTypes[15]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -4035,11 +4206,7 @@ namespace Decentraland.Kernel.Comms.V3 {
     #else
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
-      if ((tag & 7) == 4) {
-        // Abort on any end group tag.
-        return;
-      }
-      switch(tag) {
+        switch(tag) {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
             break;
@@ -4065,11 +4232,7 @@ namespace Decentraland.Kernel.Comms.V3 {
     void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
-      if ((tag & 7) == 4) {
-        // Abort on any end group tag.
-        return;
-      }
-      switch(tag) {
+        switch(tag) {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
