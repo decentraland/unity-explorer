@@ -21,7 +21,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
     /// <summary>
     ///     Runs against a live runtime panel so the focus events UI Toolkit dispatches (or does not dispatch) are the real ones.
     /// </summary>
-    public class UIInputReleaseSystemShould : UnitySystemTestBase<UIInputReleaseSystem>
+    public class UIInputReleaseSystemFocusShould : UnitySystemTestBase<UIInputReleaseSystem>
     {
         private GameObject canvasGameObject = null!;
         private PanelSettings panelSettings = null!;
@@ -33,7 +33,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
         [SetUp]
         public void SetUp()
         {
-            canvasGameObject = new GameObject(nameof(UIInputReleaseSystemShould));
+            canvasGameObject = new GameObject(nameof(UIInputReleaseSystemFocusShould));
             var canvas = canvasGameObject.AddComponent<UIDocument>();
             panelSettings = ScriptableObject.CreateInstance<PanelSettings>();
             canvas.panelSettings = panelSettings;

@@ -8,6 +8,7 @@ using DCL.SDKComponents.TextShape.Component;
 using DCL.SDKComponents.TextShape.Fonts;
 using DCL.SDKComponents.TextShape.System;
 using ECS.Abstract;
+using ECS.Prioritization.Components;
 using ECS.Unity.Transforms.Components;
 using SceneRunner.Scene;
 using System.Collections.Generic;
@@ -35,8 +36,8 @@ namespace DCL.SDKComponents.TextShape.Demo
                     foreach ((PBTextShape textShape, PBVisibilityComponent visibility, PBBillboard billboard) in list)
                         w.Create(textShape, visibility, billboard, NewTransform());
                 },
-                w => new InstantiateTextShapeSystem(w, pool, fontsStorage, new MaterialPropertyBlock(), new NullPerformanceBudget(), buffer),
-                w => new UpdateTextShapeSystem(w, fontsStorage, new MaterialPropertyBlock(), buffer, sceneData),
+                w => new InstantiateTextShapeSystem(w, pool, fontsStorage, new MaterialPropertyBlock(), new NullPerformanceBudget(), buffer, sceneData, PartitionComponent.TOP_PRIORITY),
+                w => new UpdateTextShapeSystem(w, fontsStorage, new MaterialPropertyBlock(), buffer, sceneData, PartitionComponent.TOP_PRIORITY),
                 w => new VisibilityTextShapeSystem(w, buffer));
         }
 

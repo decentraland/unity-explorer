@@ -85,6 +85,7 @@ MonoBehaviour:
   - rid: 6784895264912310272
   - rid: 7162477752737071106
   - rid: 857448815798779906
+  - rid: 857448815798779907
   - rid: 7493825610294857301
   - rid: 3511243270148325472
   - rid: 1709771649487732831
@@ -276,6 +277,15 @@ MonoBehaviour:
       data:
         <FontList>k__BackingField:
           m_AssetGUID: 353f2294734a94b57b061c9b83eb275d
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+    - rid: 857448815798779907
+      type: {class: FontsLoadingPlugin/Settings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
+      data:
+        <ReferenceFont>k__BackingField:
+          m_AssetGUID: 96ae0a2159a39234f858ea23bdcc74ad
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 

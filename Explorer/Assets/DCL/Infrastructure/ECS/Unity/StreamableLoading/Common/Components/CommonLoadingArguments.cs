@@ -53,8 +53,15 @@ namespace ECS.StreamableLoading.Common.Components
             int attempts = StreamableLoadingDefaults.ATTEMPTS_COUNT,
             AssetSource permittedSources = AssetSource.Web,
             AssetSource currentSource = AssetSource.Web,
-            CancellationTokenSource cancellationTokenSource = null) :
+            CancellationTokenSource? cancellationTokenSource = null) :
             this(URLAddress.FromString(url), customEmbeddedSubDirectory, timeout, attempts, permittedSources, currentSource, cancellationTokenSource) { }
+
+        public CommonLoadingArguments WithURL(URLAddress url)
+        {
+            CommonLoadingArguments copy = this;
+            copy.URL = url;
+            return copy;
+        }
 
         // Always override attempts count for streamable assets as repetitions are handled in LoadSystemBase
         public static implicit operator CommonArguments(in CommonLoadingArguments commonLoadingArguments) =>

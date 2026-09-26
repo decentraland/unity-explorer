@@ -1,3 +1,4 @@
+using CommunicationData.URLHelpers;
 using CRDT;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.ECSComponents;
@@ -6,9 +7,12 @@ using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Defaults;
 using DCL.SDKComponents.SceneUI.Systems.UIDropdown;
 using DCL.SDKComponents.SceneUI.Utils;
+using ECS.Prioritization.Components;
+using ECS.StreamableLoading.Fonts;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
+using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -19,11 +23,11 @@ namespace DCL.SDKComponents.SceneUI.Tests
 {
     public class UIDropdownInstantiationSystemShould : UnitySystemTestBase<UIDropdownInstantiationSystem>
     {
-        private IComponentPoolsRegistry poolsRegistry;
-        private IECSToCRDTWriter ecsToCRDTWriter;
+        private IComponentPoolsRegistry poolsRegistry = null!;
+        private IECSToCRDTWriter ecsToCRDTWriter = null!;
         private Entity entity;
-        private UITransformComponent uiTransformComponent;
-        private PBUiDropdown input;
+        private UITransformComponent uiTransformComponent = null!;
+        private PBUiDropdown input = null!;
 
         [SetUp]
         public void SetUp()
@@ -34,8 +38,16 @@ namespace DCL.SDKComponents.SceneUI.Tests
                     { typeof(UIDropdownComponent), new ComponentPool.WithDefaultCtor<UIDropdownComponent>() },
                 }, null);
 
+            var sceneData = Substitute.For<ISceneData>();
+            sceneData.TryGetContentUrl("fonts/Roboto.ttf", out Arg.Any<URLAddress>())
+                     .Returns(x =>
+                      {
+                          x[1] = URLAddress.FromString("https://peer.decentraland.org/content/contents/bafyfont");
+                          return true;
+                      });
+
             ecsToCRDTWriter = Substitute.For<IECSToCRDTWriter>();
-            system = new UIDropdownInstantiationSystem(world, poolsRegistry, ecsToCRDTWriter, new []{new StyleFontDefinition()});
+            system = new UIDropdownInstantiationSystem(world, poolsRegistry, ecsToCRDTWriter, new []{new StyleFontDefinition()}, sceneData, PartitionComponent.TOP_PRIORITY);
             entity = world.Create();
             uiTransformComponent = AddUITransformToEntity(entity);
             world.Add(entity, new CRDTEntity(500));
@@ -217,6 +229,20 @@ namespace DCL.SDKComponents.SceneUI.Tests
             // Assert
             ecsToCRDTWriter.Received(1).PutMessage(Arg.Any<Action<PBUiDropdownResult, int>>(), Arg.Any<CRDTEntity>(), TEST_INDEX);
             Assert.IsFalse(uiDropdownComponent.IsOnValueChangedTriggered);
+        }
+
+        [Test]
+        public void RequestFontWhenFontSrcIsSet()
+        {
+            input.FontSrc = "fonts/Roboto.ttf";
+            input.IsDirty = true;
+
+            system.Update(0);
+
+            ref UIDropdownComponent uiDropdownComponent = ref world.Get<UIDropdownComponent>(entity);
+            Assert.That(uiDropdownComponent.FontRequest.Src, Is.EqualTo("fonts/Roboto.ttf"));
+            Assert.That(uiDropdownComponent.FontRequest.Promise, Is.Not.Null);
+            Assert.That(world.Get<GetFontIntention>(uiDropdownComponent.FontRequest.Promise!.Value.Entity).Src, Is.EqualTo(input.FontSrc));
         }
     }
 }
