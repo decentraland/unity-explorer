@@ -23,7 +23,7 @@ surfaces the client adopts directly, so the frame path stays on the GPU.
 
 The helper fetches its own media: FFmpeg's ordinary `http`/`https` protocols
 run inside it, gated by the protocol whitelist the client passes at init. TLS
-terminates in the helper against the platform stack (SecureTransport on macOS,
+terminates in the helper (mbedTLS statically linked into the macOS FFmpeg,
 Schannel in the Windows FFmpeg build). The sandbox therefore allows outbound
 network and is deny-default about most everything else.
 
