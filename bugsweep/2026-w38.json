@@ -1,0 +1,298 @@
+{
+  "status": "active",
+  "prUrl": null,
+  "authReview": null,
+  "requester": "U0ADNDHL1T7",
+  "originChannel": "C0BB9H2CS5D",
+  "groups": [],
+  "issues": [
+    {
+      "number": 10170,
+      "status": "pending",
+      "commit": null,
+      "note": ""
+    },
+    {
+      "number": 10103,
+      "status": "pending",
+      "commit": null,
+      "note": ""
+    },
+    {
+      "number": 10130,
+      "status": "skipped",
+      "commit": null,
+      "note": "fix in progress: PR #10157 is open"
+    },
+    {
+      "number": 10126,
+      "status": "skipped",
+      "commit": null,
+      "note": "fix in progress: PR #10127 is open"
+    },
+    {
+      "number": 10183,
+      "status": "skipped",
+      "commit": null,
+      "note": "auto-created Sentry duplicate; anonymous message is the symptom fixed in #10103"
+    },
+    {
+      "number": 10177,
+      "status": "skipped",
+      "commit": null,
+      "note": "auto-created Sentry duplicate; anonymous message is the symptom fixed in #10103"
+    },
+    {
+      "number": 10175,
+      "status": "skipped",
+      "commit": null,
+      "note": "auto-created Sentry duplicate; anonymous message is the symptom fixed in #10103"
+    },
+    {
+      "number": 10174,
+      "status": "skipped",
+      "commit": null,
+      "note": "auto-created Sentry duplicate; anonymous message is the symptom fixed in #10103"
+    },
+    {
+      "number": 10172,
+      "status": "skipped",
+      "commit": null,
+      "note": "auto-created Sentry duplicate; anonymous message is the symptom fixed in #10103"
+    },
+    {
+      "number": 10159,
+      "status": "skipped",
+      "commit": null,
+      "note": "auto-created Sentry duplicate; anonymous message is the symptom fixed in #10103"
+    },
+    {
+      "number": 10158,
+      "status": "skipped",
+      "commit": null,
+      "note": "auto-created Sentry duplicate; anonymous message is the symptom fixed in #10103"
+    },
+    {
+      "number": 10137,
+      "status": "skipped",
+      "commit": null,
+      "note": "auto-created Sentry duplicate; anonymous message is the symptom fixed in #10103"
+    },
+    {
+      "number": 10124,
+      "status": "skipped",
+      "commit": null,
+      "note": "auto-created Sentry duplicate; anonymous message is the symptom fixed in #10103"
+    },
+    {
+      "number": 10099,
+      "status": "skipped",
+      "commit": null,
+      "note": "auto-created Sentry duplicate; anonymous message is the symptom fixed in #10103"
+    },
+    {
+      "number": 10098,
+      "status": "skipped",
+      "commit": null,
+      "note": "auto-created Sentry duplicate; anonymous message is the symptom fixed in #10103"
+    },
+    {
+      "number": 10180,
+      "status": "skipped",
+      "commit": null,
+      "note": "auto-created Sentry duplicate NRE; no repro steps, stack in il2cpp codegen"
+    },
+    {
+      "number": 10179,
+      "status": "skipped",
+      "commit": null,
+      "note": "auto-created Sentry duplicate NRE; no repro steps"
+    },
+    {
+      "number": 10178,
+      "status": "skipped",
+      "commit": null,
+      "note": "auto-created Sentry duplicate NRE; no repro steps"
+    },
+    {
+      "number": 10176,
+      "status": "skipped",
+      "commit": null,
+      "note": "auto-created Sentry duplicate NRE; no repro steps"
+    },
+    {
+      "number": 10169,
+      "status": "skipped",
+      "commit": null,
+      "note": "auto-created Sentry duplicate NRE; no repro steps"
+    },
+    {
+      "number": 10100,
+      "status": "skipped",
+      "commit": null,
+      "note": "auto-created Sentry duplicate NRE; no repro steps"
+    },
+    {
+      "number": 10153,
+      "status": "skipped",
+      "commit": null,
+      "note": "auto-created Sentry issue in Sentry SDK SendAsync internals, not client code"
+    },
+    {
+      "number": 10121,
+      "status": "skipped",
+      "commit": null,
+      "note": "auto-created Sentry duplicate InvalidOperationException; task already completed"
+    },
+    {
+      "number": 10120,
+      "status": "skipped",
+      "commit": null,
+      "note": "auto-created Sentry duplicate InvalidOperationException; same pattern as #10121"
+    },
+    {
+      "number": 10094,
+      "status": "skipped",
+      "commit": null,
+      "note": "auto-created Sentry duplicate InvalidOperationException; task already completed"
+    },
+    {
+      "number": 10181,
+      "status": "skipped",
+      "commit": null,
+      "note": "Unity PhysX engine warning during mesh cleaning; not a C# exception, not client-fixable"
+    },
+    {
+      "number": 10148,
+      "status": "skipped",
+      "commit": null,
+      "note": "Unity PhysX engine warning, duplicate of #10181; not client-fixable"
+    },
+    {
+      "number": 10182,
+      "status": "skipped",
+      "commit": null,
+      "note": "network-level curl error (connection reset by peer); not a client code defect"
+    },
+    {
+      "number": 10154,
+      "status": "skipped",
+      "commit": null,
+      "note": "Unity engine screen position warning logged by engine, no C# fix"
+    },
+    {
+      "number": 10151,
+      "status": "skipped",
+      "commit": null,
+      "note": "auto-created Sentry NRE in LightSourceApplyPropertiesSystem; no repro steps, needs more telemetry"
+    },
+    {
+      "number": 10138,
+      "status": "skipped",
+      "commit": null,
+      "note": "Sentry performance issue (large HTTP payload to ABgen); no C# code fix"
+    },
+    {
+      "number": 10113,
+      "status": "skipped",
+      "commit": null,
+      "note": "auto-created Sentry; scene content making HTTP (not HTTPS) request, not a client defect"
+    },
+    {
+      "number": 10117,
+      "status": "skipped",
+      "commit": null,
+      "note": "auto-created Sentry ArgumentOutOfRangeException; no repro steps"
+    },
+    {
+      "number": 10125,
+      "status": "skipped",
+      "commit": null,
+      "note": "auto-created Sentry SceneExecutionException; no repro steps"
+    },
+    {
+      "number": 10088,
+      "status": "skipped",
+      "commit": null,
+      "note": "auto-created Sentry SceneExecutionException; no repro steps"
+    },
+    {
+      "number": 10085,
+      "status": "skipped",
+      "commit": null,
+      "note": "SIGABRT in LiveKit Rust FFI (cxxbridge); native crash, not fixable in C#"
+    },
+    {
+      "number": 10086,
+      "status": "skipped",
+      "commit": null,
+      "note": "user disk full IOException; user's disk is full, not a client bug"
+    },
+    {
+      "number": 10128,
+      "status": "skipped",
+      "commit": null,
+      "note": "auto-created Sentry; profile loading async chain failure with no clear root cause; needs more telemetry"
+    },
+    {
+      "number": 10129,
+      "status": "skipped",
+      "commit": null,
+      "note": "Genesis Plaza sitting point misplaced; scene content issue, not client code"
+    },
+    {
+      "number": 10097,
+      "status": "skipped",
+      "commit": null,
+      "note": "Nekko Bar sitting interaction broken; scene content issue, not client code"
+    },
+    {
+      "number": 10115,
+      "status": "skipped",
+      "commit": null,
+      "note": "feature request (bulk gifting tool); not a bug fix"
+    },
+    {
+      "number": 10133,
+      "status": "skipped",
+      "commit": null,
+      "note": "tech debt / refactor request; not a bug fix"
+    },
+    {
+      "number": 10087,
+      "status": "skipped",
+      "commit": null,
+      "note": "perceived 2-3s voice chat delay; spans Rust audio, LiveKit jitter buffer, C# ring buffer; too complex for a sweep fix"
+    },
+    {
+      "number": 10109,
+      "status": "skipped",
+      "commit": null,
+      "note": "Single Player Mode avatars visible; requires multiplayer server-side enforcement, not a client-only fix"
+    },
+    {
+      "number": 10107,
+      "status": "skipped",
+      "commit": null,
+      "note": "home location persists across accounts; fix requires threading wallet address through multiple files plus migration; too broad for a sweep fix"
+    },
+    {
+      "number": 10131,
+      "status": "skipped",
+      "commit": null,
+      "note": "avatar stuck after panel+ESC; timing race in Unity input system across multiple subsystems; too complex to fix safely"
+    },
+    {
+      "number": 10122,
+      "status": "skipped",
+      "commit": null,
+      "note": "visible nearby user missing from @mention; gap between LiveKit room participants and rendered avatars; complex to fix safely"
+    },
+    {
+      "number": 10166,
+      "status": "skipped",
+      "commit": null,
+      "note": "Worlds absent from Recent tab (regression of #9376); may involve backend API ID mismatch; needs investigation beyond client scope"
+    }
+  ]
+}
