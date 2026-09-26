@@ -1,11 +1,12 @@
 name: In-World Tests
 
-# Dispatcher for the InWorld NUnit suite. The mechanics — Explorer install,
-# AltTester, `mf explorer test`, Allure upload, and reporting into the unified
-# CI status comment's InWorld section (standalone comment as fallback) — live
-# in decentraland/explorer-automation's `run-inworld-suite.yml`. This file only
-# decides when to run and against which build, and shares its build resolution
-# with visual-regression.yml via .github/actions/resolve-explorer-build.
+# Dispatcher for the InWorld and Visual NUnit suites. The mechanics — Explorer
+# install, AltTester, `mf explorer test`, Allure upload, and reporting into the
+# unified CI status comment (standalone comment as fallback) — live in
+# decentraland/explorer-automation's `run-inworld-suite.yml` and
+# `run-visual-suite.yml`. This file only decides when to run and against which
+# build, and shares its build resolution with visual-regression.yml via
+# .github/actions/resolve-explorer-build.
 #
 # Triggers:
 #   - Every PR into main from a `release/**` or `hotfix/**` branch. `pull_request`
@@ -16,8 +17,8 @@ name: In-World Tests
 #   - Manually, from the Actions tab, against any ref.
 #
 # To make a red suite block the merge, add `InWorld suite result` to main's
-# required status checks. That job is the gate: it is the only name worth
-# requiring, it stays stable when the reusable workflow's own job names change,
+# required status checks. That job gates both suites: it is the only name worth
+# requiring, it stays stable when the reusable workflows' own job names change,
 # and it passes for PRs into main that are not release or hotfix.
 #
 # Release PRs are opened by create-release-branch.yml with GITHUB_TOKEN, and
@@ -229,9 +230,30 @@ jobs:
       scope: ${{ (inputs.filter || '') == '' && 'ALL' || '' }}
     secrets: inherit
 
+  visual-suite:
+    name: Visual suite
+    needs: resolve
+    # @main pins the merged version of the reusable, as for the InWorld suite above.
+    uses: decentraland/explorer-automation/.github/workflows/run-visual-suite.yml@main
+    # Must be a superset of run-visual-suite.yml's own `permissions:`. contents:write
+    # is its record-mode baseline commit, unused in test mode but declared upstream;
+    # pull-requests:write is the CI status comment's automation section it upserts
+    # (or the standalone comment it falls back to).
+    permissions:
+      contents: write
+      pull-requests: write
+    with:
+      mode: test
+      build_url: ${{ needs.resolve.outputs.build_url }}
+      pr_number: ${{ needs.resolve.outputs.pr_number }}
+      tests_ref: ${{ needs.resolve.outputs.tests_ref }}
+      commit_sha: ${{ needs.resolve.outputs.commit_sha }}
+      branch_label: ${{ needs.resolve.outputs.branch_label }}
+    secrets: inherit
+
   result:
     name: InWorld suite result
-    needs: [resolve, run-suite]
+    needs: [resolve, run-suite, visual-suite]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -244,18 +266,19 @@ jobs:
         env:
           RESOLVE: ${{ needs.resolve.result }}
           SUITE: ${{ needs.run-suite.result }}
+          VISUAL: ${{ needs.visual-suite.result }}
         run: |
           set -euo pipefail
           if [ "$RESOLVE" = "skipped" ]; then
-            echo "::notice::Not a release or hotfix PR — the InWorld suite does not gate this one."
+            echo "::notice::Not a release or hotfix PR — the InWorld and Visual suites do not gate this one."
             exit 0
           fi
-          if [ "$RESOLVE" = "success" ] && [ "$SUITE" = "success" ]; then
-            echo "::notice::InWorld suite passed."
+          if [ "$RESOLVE" = "success" ] && [ "$SUITE" = "success" ] && [ "$VISUAL" = "success" ]; then
+            echo "::notice::InWorld and Visual suites passed."
             exit 0
           fi
           # Cancelled counts as failure on purpose: a merge gate must not go
           # green because the run was interrupted. The superseding run reports
           # its own result.
-          echo "::error::InWorld gate failed — build: ${RESOLVE}, suite: ${SUITE}. See the Allure report linked in the suite's job summary."
+          echo "::error::Gate failed — build: ${RESOLVE}, InWorld: ${SUITE}, Visual: ${VISUAL}. See the Allure reports linked in the suites' job summaries."
           exit 1
