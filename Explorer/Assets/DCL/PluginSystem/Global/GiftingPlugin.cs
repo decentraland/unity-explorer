@@ -1,10 +1,6 @@
 using Arch.SystemGroups;
-using System;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
-using DCL.Backpack.Gifting.Views;
-using MVC;
-using System.Threading;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Helpers;
@@ -20,16 +16,18 @@ using DCL.Backpack.Gifting.Services.GiftItemLoaderService;
 using DCL.Backpack.Gifting.Services.PendingTransfers;
 using DCL.Backpack.Gifting.Services.SnapshotEquipped;
 using DCL.Backpack.Gifting.Styling;
+using DCL.Backpack.Gifting.Views;
 using DCL.Browser;
 using DCL.Input;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles;
 using DCL.UI;
-using DCL.UI.Profiles.Helpers;
-using DCL.Utility;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
+using MVC;
+using System;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using Utility;
@@ -60,7 +58,6 @@ namespace DCL.PluginSystem.Global
         private GiftTransferController? giftTransferStatusController;
         private GiftTransferSuccessController? giftTransferSuccessController;
         private GiftReceivedPopupController? giftReceivedPopupController;
-        private GiftNotificationOpenerController? giftNotificationOpenerController;
 
         public GiftingPlugin(IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
@@ -121,7 +118,7 @@ namespace DCL.PluginSystem.Global
             var giftReceivedView = (await assetsProvisioner.ProvideMainAssetAsync(settings.GiftReceivedPopupPrefab, ct))
                 .Value.GetComponent<GiftReceivedPopupView>();
 
-            var (rarityColors, categoryIcons, rarityBackgrounds, rarityInfoPanelBackgroundsMapping) = await UniTask
+            var (rarityColors, categoryIcons, rarityBackgrounds, _) = await UniTask
                 .WhenAll(assetsProvisioner.ProvideMainAssetValueAsync(settings.BackpackSettings.RarityColorMappings, ct),
                     assetsProvisioner.ProvideMainAssetValueAsync(settings.BackpackSettings.CategoryIconsMapping, ct),
                     assetsProvisioner.ProvideMainAssetValueAsync(settings.BackpackSettings.RarityBackgroundsMapping, ct),
@@ -142,8 +139,7 @@ namespace DCL.PluginSystem.Global
             var giftTransferRequestCommand = new GiftTransferRequestCommand(eventBus,
                 web3IdentityCache,
                 giftTransferService,
-                pendingTransferService,
-                web3Provider);
+                pendingTransferService);
 
             var loadThumbnailCommand = new LoadGiftableItemThumbnailCommand(thumbnailProvider,
                 eventBus);
@@ -198,7 +194,7 @@ namespace DCL.PluginSystem.Global
             mvcManager.RegisterController(giftTransferSuccessController);
             mvcManager.RegisterController(giftReceivedPopupController);
 
-            giftNotificationOpenerController = new GiftNotificationOpenerController(mvcManager);
+            _ = new GiftNotificationOpenerController(mvcManager);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
@@ -209,20 +205,20 @@ namespace DCL.PluginSystem.Global
             [field: Header(nameof(GiftingPlugin) + "." + nameof(GiftingSettings))]
             [field: Space]
             [field: SerializeField]
-            public AssetReferenceGameObject GiftSelectionPopupPrefab;
+            public AssetReferenceGameObject GiftSelectionPopupPrefab = null!;
 
             [field: SerializeField]
-            public AssetReferenceGameObject GiftTransferPopupPrefab;
+            public AssetReferenceGameObject GiftTransferPopupPrefab = null!;
 
             [field: SerializeField]
-            public AssetReferenceGameObject GiftTransferPopupSuccessPrefab;
+            public AssetReferenceGameObject GiftTransferPopupSuccessPrefab = null!;
 
             [field: Header("Notifications")]
             [field: SerializeField]
-            public AssetReferenceGameObject GiftReceivedPopupPrefab;
+            public AssetReferenceGameObject GiftReceivedPopupPrefab = null!;
 
             [field: SerializeField]
-            public BackpackSettings BackpackSettings { get; private set; }
+            public BackpackSettings BackpackSettings { get; private set; } = null!;
         }
     }
 }

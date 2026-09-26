@@ -150,7 +150,7 @@ namespace DCL.UserInAppInitializationFlow
                             //Restart the realm and show the authentications screen simultaneously to avoid the "empty space" flicker
                             //No error should be possible at this point
                             // TODO move SetRealmAsync to an operation
-                            await UniTask.WhenAll(ShowAuthenticationScreenAsync(ct),
+                            await UniTask.WhenAll(ShowAuthenticationScreenAsync(parameters.StartAtLoginSelection, ct),
                                 realmController.SetRealmAsync(
                                     URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Genesis)), ct));
 
@@ -160,7 +160,7 @@ namespace DCL.UserInAppInitializationFlow
                             goto default;
                         default:
                             await UniTask.WhenAll(
-                                ShowAuthenticationScreenAsync(ct),
+                                ShowAuthenticationScreenAsync(parameters.StartAtLoginSelection, ct),
                                 ShowErrorPopupIfRequired(result, ct)
                             );
 
@@ -333,9 +333,9 @@ namespace DCL.UserInAppInitializationFlow
             await roomHub.StopAsync().Timeout(TimeSpan.FromSeconds(10));
         }
 
-        private async UniTask ShowAuthenticationScreenAsync(CancellationToken ct)
+        private async UniTask ShowAuthenticationScreenAsync(bool startAtLoginSelection, CancellationToken ct)
         {
-            await mvcManager.ShowAsync(AuthenticationScreenController.IssueCommand(), ct);
+            await mvcManager.ShowAsync(AuthenticationScreenController.IssueCommand(new AuthenticationScreenController.Params(startAtLoginSelection)), ct);
         }
 
         private UniTask ShowErrorPopupIfRequired(EnumResult<TaskError> result, CancellationToken ct)

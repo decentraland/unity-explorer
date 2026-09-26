@@ -1,10 +1,14 @@
+using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.Profiles;
 using DCL.Profiles.Self;
+using DCL.UserInAppInitializationFlow;
+using DCL.Web3;
 using DCL.Web3.Authenticators;
+using DCL.Web3.Identities;
 using MVC;
 using System;
 using System.Threading;
@@ -35,27 +39,44 @@ namespace DCL.UI.UpgradeGuestAccountPopup
             Error,
         }
 
-        private readonly IAccountLinkAuthenticator accountLinkAuthenticator;
+        private readonly ICompositeWeb3Provider compositeWeb3Provider;
         private readonly ISelfProfile selfProfile;
         private readonly IInputBlock inputBlock;
+        private readonly IWeb3IdentityCache identityCache;
+        private readonly IProfileCache profileCache;
+        private readonly IUserInAppInitializationFlow userInAppInitializationFlow;
+        private readonly World world;
+        private readonly Entity playerEntity;
 
         private UniTaskCompletionSource lifeCycleTask = new ();
         private CancellationTokenSource linkCts = new ();
+        private CancellationTokenSource logoutCts = new ();
 
         public event Action<GuestUpgradeTrigger>? PromptShown;
         public event Action<GuestUpgradeTrigger>? UpgradeStarted;
+        public event Action<GuestUpgradeTrigger>? UpgradeRedirectedToAccountCreation;
         public event Action<GuestUpgradeTrigger>? UpgradeCompleted;
         public event Action<GuestUpgradeTrigger, string>? UpgradeFailed;
 
         public UpgradeGuestAccountPopupController(
             ViewFactoryMethod viewFactory,
-            IAccountLinkAuthenticator accountLinkAuthenticator,
+            ICompositeWeb3Provider compositeWeb3Provider,
             ISelfProfile selfProfile,
-            IInputBlock inputBlock) : base(viewFactory)
+            IInputBlock inputBlock,
+            IWeb3IdentityCache identityCache,
+            IProfileCache profileCache,
+            IUserInAppInitializationFlow userInAppInitializationFlow,
+            World world,
+            Entity playerEntity) : base(viewFactory)
         {
-            this.accountLinkAuthenticator = accountLinkAuthenticator;
+            this.compositeWeb3Provider = compositeWeb3Provider;
             this.selfProfile = selfProfile;
             this.inputBlock = inputBlock;
+            this.identityCache = identityCache;
+            this.profileCache = profileCache;
+            this.userInAppInitializationFlow = userInAppInitializationFlow;
+            this.world = world;
+            this.playerEntity = playerEntity;
         }
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
@@ -69,7 +90,7 @@ namespace DCL.UI.UpgradeGuestAccountPopup
             viewInstance.VerifyOTPCloseButton.onClick.AddListener(Close);
             viewInstance.ConfirmSuccessButton.onClick.AddListener(Close);
 
-            viewInstance.UpgradeAccountButton.onClick.AddListener(() => ShowStep(Step.RegisterEmail));
+            viewInstance.UpgradeAccountButton.onClick.AddListener(UpgradeAccount);
             viewInstance.VerifyOTPBackButton.onClick.AddListener(() => ShowStep(Step.RegisterEmail));
             viewInstance.TryAnotherEmailButton.onClick.AddListener(() => ShowStep(Step.RegisterEmail));
             viewInstance.ErrorRetryButton.onClick.AddListener(() => ShowStep(Step.RegisterEmail));
@@ -104,11 +125,57 @@ namespace DCL.UI.UpgradeGuestAccountPopup
         {
             base.Dispose();
             linkCts.SafeCancelAndDispose();
+            logoutCts.SafeCancelAndDispose();
 
             if (viewInstance == null) return;
 
             viewInstance.EMailInputField.Submitted -= OnEmailSubmitted;
             viewInstance.OTPInputField.CodeEntered -= OnOTPEntered;
+        }
+
+        private void UpgradeAccount()
+        {
+            // An ephemeral account holds no wallet to link an email to, so the only way forward is a real login
+            if (identityCache.Identity?.Method == LoginMethod.EPHEMERAL_GUEST)
+            {
+                UpgradeRedirectedToAccountCreation?.Invoke(inputData.Trigger);
+                logoutCts = logoutCts.SafeRestart();
+                LogoutAndShowLoginSelectionAsync(logoutCts.Token).Forget();
+                return;
+            }
+
+            ShowStep(Step.RegisterEmail);
+        }
+
+        private async UniTaskVoid LogoutAndShowLoginSelectionAsync(CancellationToken ct)
+        {
+            try
+            {
+                if (identityCache.Identity == null)
+                {
+                    ReportHub.LogError(ReportCategory.UI, "Cannot logout. Identity is null.");
+                    return;
+                }
+
+                Web3Address address = identityCache.Identity.Address;
+                await compositeWeb3Provider.LogoutAsync(ct);
+                profileCache.Remove(address);
+                Close();
+
+                await userInAppInitializationFlow.ExecuteAsync(
+                    new UserInAppInitializationFlowParameters(
+                        showAuthentication: true,
+                        showLoading: true,
+                        loadSource: IUserInAppInitializationFlow.LoadSource.Logout,
+                        world: world,
+                        playerEntity: playerEntity,
+                        startAtLoginSelection: true
+                    ),
+                    ct
+                );
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e) { ReportHub.LogException(e, ReportCategory.UI); }
         }
 
         private void ShowStep(Step step)
@@ -154,7 +221,7 @@ namespace DCL.UI.UpgradeGuestAccountPopup
         {
             try
             {
-                await accountLinkAuthenticator.SendEmailLinkOtpAsync(email, ct);
+                await compositeWeb3Provider.SendEmailLinkOtpAsync(email, ct);
 
                 if (ct.IsCancellationRequested) return;
 
@@ -185,7 +252,7 @@ namespace DCL.UI.UpgradeGuestAccountPopup
         {
             try
             {
-                await accountLinkAuthenticator.LinkEmailAsync(otp, ct);
+                await compositeWeb3Provider.LinkEmailAsync(otp, ct);
 
                 if (ct.IsCancellationRequested) return;
 
@@ -244,7 +311,7 @@ namespace DCL.UI.UpgradeGuestAccountPopup
 
             try
             {
-                await accountLinkAuthenticator.ResendEmailLinkOtpAsync(ct);
+                await compositeWeb3Provider.ResendEmailLinkOtpAsync(ct);
 
                 if (ct.IsCancellationRequested) return;
 

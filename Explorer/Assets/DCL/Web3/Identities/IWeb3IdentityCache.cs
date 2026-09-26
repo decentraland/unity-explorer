@@ -110,6 +110,22 @@ namespace DCL.Web3.Identities
         }
 
         public static bool IsGuest(this IWeb3IdentityCache cache) =>
-            cache.Identity?.Method == LoginMethod.GUEST;
+            cache.Identity?.IsGuest() ?? false;
+
+        public static bool IsThirdWebAccount(this IWeb3IdentityCache cache) =>
+            cache.Identity?.IsThirdWebAccount() ?? false;
+    }
+
+    public static class Web3IdentityExtensions
+    {
+        public static bool IsGuest(this IWeb3Identity identity) =>
+            identity.Method is LoginMethod.GUEST or LoginMethod.EPHEMERAL_GUEST;
+
+        /// <summary>
+        ///     The methods ThirdWeb signs for: an account of its own, reachable with an email and its OTP,
+        ///     or the guest wallet it hands out. Everything else is signed elsewhere.
+        /// </summary>
+        public static bool IsThirdWebAccount(this IWeb3Identity identity) =>
+            identity.Method is LoginMethod.EMAIL_OTP or LoginMethod.GUEST;
     }
 }
