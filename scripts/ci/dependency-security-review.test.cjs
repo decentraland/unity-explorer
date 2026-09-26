@@ -13,25 +13,30 @@ function script(name) {
 }
 const detect = script('Classify changes and maintain label');
 const request = script('Request Jarvis through the existing reviewer webhook');
-function fixture(files = []) {
-  const pr = { number: 42, state: 'open', draft: false, head: { sha: 'a'.repeat(40) }, base: { sha: 'b'.repeat(40) }, changed_files: files.length, user: { login: 'author' }, labels: [] };
+function fixture(files = [], reviews = [], since = []) {
+  const listFiles = () => {};
+  const listReviews = () => {};
+  const pr = { number: 42, state: 'open', draft: false, head: { sha: 'a'.repeat(40), ref: 'feat/example' }, base: { sha: 'b'.repeat(40), ref: 'dev' }, changed_files: files.length, user: { login: 'author' }, labels: [] };
   const requests = [], outputs = {}, operations = [];
   const github = {
-    paginate: async () => files,
+    paginate: async endpoint => (endpoint === listReviews ? reviews : files),
     rest: {
       pulls: {
         get: async () => ({ data: structuredClone(pr) }),
-        listFiles: () => {},
+        listFiles, listReviews,
         requestReviewers: async args => { operations.push('request'); requests.push(args); }
       },
-      repos: { getCollaboratorPermissionLevel: async () => ({ data: { permission: 'write' } }) },
+      repos: {
+        getCollaboratorPermissionLevel: async () => ({ data: { permission: 'write' } }),
+        compareCommitsWithBasehead: async () => ({ data: { files: since } })
+      },
       issues: {
         addLabels: async () => { operations.push('add'); pr.labels.push({ name: 'new-dependency' }); },
         removeLabel: async () => { operations.push('remove'); pr.labels = pr.labels.filter(label => label.name !== 'new-dependency'); }
       }
     }
   };
-  return { pr, requests, outputs, operations, github,
+  return { pr, requests, outputs, operations, github, listReviews,
     context: { repo: { owner: 'decentraland', repo: 'unity-explorer' }, payload: { pull_request: structuredClone(pr) } },
     core: { notice() {}, warning() {}, setOutput: (key, value) => { outputs[key] = value } }
   };
@@ -162,6 +167,100 @@ test('requires a maintainer request for external authors or failed authorization
     await request(f.github, f.context, f.core);
     assert.deepEqual(f.requests, []);
   }
+});
+for (const [name, mutate] of [
+  ['a release branch', pr => { pr.head.ref = 'release/2026-09-14'; pr.base.ref = 'main' }],
+  ['an auto-pr PR', pr => pr.labels.push({ name: 'auto-pr' })]
+]) {
+  test(`excludes ${name} from AI review`, async () => {
+    const f = fixture([{ filename: 'Explorer/Packages/manifest.json' }]);
+    mutate(f.pr);
+    await detect(f.github, f.context, f.core);
+    await request(f.github, f.context, f.core);
+    assert.equal(f.outputs.request, 'false');
+    assert.deepEqual(f.operations, []);
+    assert.deepEqual(f.requests, []);
+  });
+  test(`strips a stale label from ${name}`, async () => {
+    const f = fixture([{ filename: 'Explorer/Packages/manifest.json' }]);
+    mutate(f.pr);
+    f.pr.labels.push({ name: 'new-dependency' });
+    await detect(f.github, f.context, f.core);
+    assert.equal(f.outputs.request, 'false');
+    assert.deepEqual(f.operations, ['remove']);
+  });
+  test(`refuses to request ${name} carrying the label`, async () => {
+    const f = fixture([{ filename: 'Explorer/Packages/manifest.json' }]);
+    mutate(f.pr);
+    f.pr.labels.push({ name: 'new-dependency' });
+    await request(f.github, f.context, f.core);
+    assert.deepEqual(f.requests, []);
+  });
+}
+test('does not let a release-prefixed feature branch opt itself out', async () => {
+  const f = fixture([{ filename: 'Explorer/Packages/manifest.json' }]);
+  f.pr.head.ref = 'release/not-a-release';
+  await detect(f.github, f.context, f.core);
+  await request(f.github, f.context, f.core);
+  assert.equal(f.outputs.request, 'true');
+  assert.deepEqual(f.operations, ['add', 'request']);
+});
+const reviewed = sha => [{ user: { login: 'decentraland-bot' }, commit_id: sha }];
+test('requests the first review when Jarvis has not read this PR yet', async () => {
+  const f = fixture([{ filename: 'Explorer/Packages/manifest.json' }]);
+  await detect(f.github, f.context, f.core);
+  assert.equal(f.outputs.request, 'true');
+});
+test('re-requests when the range since the last review carries a relevant path', async () => {
+  const f = fixture([{ filename: 'Explorer/Packages/manifest.json' }], reviewed('d'.repeat(40)), [{ filename: 'scripts/build.sh' }]);
+  await detect(f.github, f.context, f.core);
+  assert.equal(f.outputs.request, 'true');
+  assert.deepEqual(f.operations, ['add']);
+});
+test('does not re-request when nothing relevant moved since the last review', async () => {
+  const f = fixture([{ filename: 'Explorer/Packages/manifest.json' }], reviewed('d'.repeat(40)), [{ filename: 'Explorer/Assets/DCL/Thing.cs' }]);
+  await detect(f.github, f.context, f.core);
+  // `request` is gated by `if: steps.detect.outputs.request == 'true'`, so the
+  // false verdict is what suppresses the step — it is never entered to be asked.
+  assert.equal(f.outputs.request, 'false');
+  assert.deepEqual(f.operations, ['add']);
+});
+test('keeps the label while declining to re-request', async () => {
+  const f = fixture([{ filename: 'Explorer/Packages/manifest.json' }], reviewed('d'.repeat(40)), [{ filename: 'docs/x.md' }]);
+  f.pr.labels.push({ name: 'new-dependency' });
+  await detect(f.github, f.context, f.core);
+  assert.equal(f.outputs.request, 'false');
+  assert.deepEqual(f.operations, []);
+  assert.deepEqual(f.pr.labels, [{ name: 'new-dependency' }]);
+});
+test('does not re-review a head Jarvis already read', async () => {
+  const f = fixture([{ filename: 'Explorer/Packages/manifest.json' }], reviewed('a'.repeat(40)));
+  await detect(f.github, f.context, f.core);
+  assert.equal(f.outputs.request, 'false');
+});
+test('ignores reviews by anyone other than the bot', async () => {
+  const f = fixture([{ filename: 'Explorer/Packages/manifest.json' }], [{ user: { login: 'someone' }, commit_id: 'd'.repeat(40) }]);
+  await detect(f.github, f.context, f.core);
+  assert.equal(f.outputs.request, 'true');
+});
+for (const [name, brk] of [
+  ['an unreadable', f => { f.github.rest.repos.compareCommitsWithBasehead = async () => { throw new Error('410 gone') } }],
+  ['a truncated', f => { f.github.rest.repos.compareCommitsWithBasehead =
+    async () => ({ data: { files: Array.from({ length: 300 }, (_, i) => ({ filename: `src/f${i}.cs` })) } }) }]
+]) {
+  test(`fails open on ${name} comparison`, async () => {
+    const f = fixture([{ filename: 'Explorer/Packages/manifest.json' }], reviewed('d'.repeat(40)));
+    brk(f);
+    await detect(f.github, f.context, f.core);
+    assert.equal(f.outputs.request, 'true');
+  });
+}
+test('grants both write scopes that labelling a pull request requires', () => {
+  // The silent 403 that disabled the detailed pass between #10033 and this fix
+  // named `issues=write; pull_requests=write`; #10033 granted only the first.
+  assert.match(workflow, /^ {6}issues: write$/m);
+  assert.match(workflow, /^ {6}pull-requests: write$/m);
+  assert.doesNotMatch(workflow, /^ {6}pull-requests: read$/m);
 });
 test('leaves security status publication to Agent Server', () => {
   assert.doesNotMatch(workflow, /createCommitStatus|statuses:\s*write/);
