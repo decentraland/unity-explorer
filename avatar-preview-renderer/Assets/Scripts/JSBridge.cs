@@ -196,13 +196,26 @@ public class JSBridge : MonoBehaviour
 
     public static class NativeCalls
     {
-#if UNITY_EDITOR
+        // The jslib only exists in a WebGL player. Everywhere else (the Editor, the native render
+        // server) the calls are logged and the two a driver waits on are raised as events.
+#if UNITY_EDITOR || !UNITY_WEBGL
+        public static event Action LoadCompleted;
+        public static event Action<string> ErrorReported;
+
         public static void OnScreenshotTaken(string base64Str) =>
-            Debug.Log($"NativeCall OnScreenshotTaken({base64Str.Length} bytes)");
+            Debug.Log($"NativeCall OnScreenshotTaken({base64Str?.Length ?? 0} bytes)");
 
-        public static void OnLoadComplete() => Debug.Log("NativeCall OnLoadComplete");
+        public static void OnLoadComplete()
+        {
+            Debug.Log("NativeCall OnLoadComplete");
+            LoadCompleted?.Invoke();
+        }
 
-        public static void OnError(string message) => Debug.LogError($"NativeCall OnError({message})");
+        public static void OnError(string message)
+        {
+            Debug.LogError($"NativeCall OnError({message})");
+            ErrorReported?.Invoke(message);
+        }
 
         public static void OnCustomizationDone(string message) => Debug.Log($"NativeCall OnCustomizationDone({message})");
 
