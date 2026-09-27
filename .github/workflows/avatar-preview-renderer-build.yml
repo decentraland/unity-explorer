@@ -6,6 +6,8 @@ on:
     paths:
       - 'avatar-preview-renderer/**'
       - 'unity-shared-dependencies/**'
+      # Both projects consume render-features as a local package (render-features/package.json).
+      - 'render-features/**'
       - 'scripts/avatar-preview-renderer/**'
       - '.github/workflows/avatar-preview-renderer-build.yml'
   push:
@@ -14,6 +16,8 @@ on:
     paths:
       - 'avatar-preview-renderer/**'
       - 'unity-shared-dependencies/**'
+      # Both projects consume render-features as a local package (render-features/package.json).
+      - 'render-features/**'
       - 'scripts/avatar-preview-renderer/**'
       - '.github/workflows/avatar-preview-renderer-build.yml'
   workflow_dispatch:

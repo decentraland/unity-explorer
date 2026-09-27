@@ -4,7 +4,7 @@ using Arch.SystemGroups;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.Diagnostics;
 using DCL.Interaction.Raycast.Components;
-using DCL.Rendering.RenderGraphs.RenderFeatures.ObjectHighlight;
+using DCL.Rendering.ObjectHighlight;
 using ECS.Abstract;
 using UnityEngine;
 
@@ -41,7 +41,8 @@ namespace DCL.AvatarRendering.AvatarShape
                 var newValue = Mathf.MoveTowards(highlight.Opacity, settings.OutlineVfxOpacity, step * t);
                 highlight.Opacity = newValue;
             }
-            RenderFeature_ObjectHighlight.HighlightedObjects_Avatar.Highlight(avatarShape.OutlineCompatibleRenderers, BuildColor(highlight.Opacity), settings.OutlineThickness);
+            ObjectHighlightSettings highlightSettings = BuildSettings(highlight.Opacity);
+            ObjectHighlightRendererFeature.HIGHLIGHTED_OBJECTS_AVATAR.Highlight(avatarShape.OutlineCompatibleRenderers, in highlightSettings);
         }
 
         /// <summary>
@@ -57,10 +58,19 @@ namespace DCL.AvatarRendering.AvatarShape
 
             var step = settings.OutlineVfxOpacity / settings.FadeOutTimeSeconds;
             highlight.Opacity = Mathf.MoveTowards(highlight.Opacity, 0, step * t);
-            RenderFeature_ObjectHighlight.HighlightedObjects_Avatar.Highlight(avatarShape.OutlineCompatibleRenderers, BuildColor(highlight.Opacity), settings.OutlineThickness);
+            ObjectHighlightSettings highlightSettings = BuildSettings(highlight.Opacity);
+            ObjectHighlightRendererFeature.HIGHLIGHTED_OBJECTS_AVATAR.Highlight(avatarShape.OutlineCompatibleRenderers, in highlightSettings);
         }
 
-        private Color BuildColor(float opacity) =>
-            new (settings.OutlineColor.r, settings.OutlineColor.g, settings.OutlineColor.b, opacity);
+        /// <summary>
+        ///     Avatars are drawn through DCL_Toon's own Highlight pass, which reads only colour and width;
+        ///     the surface fields stay at their defaults.
+        /// </summary>
+        private ObjectHighlightSettings BuildSettings(float opacity) =>
+            new ()
+            {
+                Color = new Color(settings.OutlineColor.r, settings.OutlineColor.g, settings.OutlineColor.b, opacity),
+                Width = settings.OutlineThickness,
+            };
     }
 }

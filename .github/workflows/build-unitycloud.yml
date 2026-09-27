@@ -18,6 +18,8 @@ on:
     paths:
       - 'Explorer/**'
       - 'unity-shared-dependencies/**'
+      # Both projects consume render-features as a local package (render-features/package.json).
+      - 'render-features/**'
       - 'scripts/cloudbuild/**'
       - '.github/workflows/build-unitycloud.yml'
   workflow_dispatch:
