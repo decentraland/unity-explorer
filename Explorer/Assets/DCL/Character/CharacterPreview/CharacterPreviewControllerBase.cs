@@ -343,6 +343,11 @@ namespace DCL.CharacterPreview
             previewController?.ResetAvatarMovement();
         }
 
+        public void ResetVerticalRotation()
+        {
+            previewController?.ResetVerticalRotation();
+        }
+
         public void ResetZoom()
         {
             previewController?.ResetZoom();

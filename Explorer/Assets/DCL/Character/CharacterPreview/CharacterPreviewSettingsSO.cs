@@ -47,6 +47,20 @@ namespace DCL.CharacterPreview
         [field: SerializeField] public bool rotationEnabled { get; private set; }
         [field: SerializeField] public float rotationModifier { get; private set; }
         [field: SerializeField, Min(0f)] public float rotationInertia { get; private set; }
+
+        [field: Header("Vertical Rotation Settings")]
+        [field: SerializeField] internal bool verticalRotationEnabled { get; private set; }
+
+        /// <summary>
+        ///     Degrees of camera pitch per pixel of vertical drag. A negative value inverts the orbit direction.
+        /// </summary>
+        [field: SerializeField] internal float verticalRotationModifier { get; private set; }
+
+        /// <summary>
+        ///     Elevation the camera may reach above and below its default framing. Stays short of the
+        ///     right angle where the rig's reference orientation degenerates.
+        /// </summary>
+        [field: SerializeField, Range(0f, 80f)] internal float maxVerticalAngle { get; private set; }
     }
 
     [Serializable]

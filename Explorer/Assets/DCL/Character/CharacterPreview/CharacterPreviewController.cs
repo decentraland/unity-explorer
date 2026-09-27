@@ -191,6 +191,9 @@ namespace DCL.CharacterPreview
         public void ResetAvatarMovement() =>
             cameraController.ResetAvatarMovement();
 
+        public void ResetVerticalRotation() =>
+            cameraController.ResetVerticalRotation();
+
         public void ResetZoom()
         {
             cameraController.ResetZoom();
