@@ -118,6 +118,8 @@ namespace Global
         public HttpFeatureFlagsProvider FeatureFlagsProvider { get; private set; } = null!;
         public IPortableExperiencesController PortableExperiencesController { get; private set; } = null!;
         public SmartWearableCache SmartWearableCache { get; private set; } = null!;
+        public LocalPortableExperienceCache LocalPortableExperienceCache { get; private set; } = null!;
+        public GlobalPortableExperienceCache GlobalPortableExperienceCache { get; private set; } = null!;
         public ImageControllerProvider ImageControllerProvider { get; private set; } = null!;
         public IDebugContainerBuilder DebugContainerBuilder { get; private set; } = null!;
         public ISceneRestrictionBusController SceneRestrictionBusController { get; private set; } = null!;
@@ -232,8 +234,10 @@ namespace Global
             container.EntityCollidersGlobalCache = new EntityCollidersGlobalCache();
             container.ExposedGlobalDataContainer = exposedGlobalDataContainer;
             container.WebRequestsContainer = webRequestsContainer;
-            container.PortableExperiencesController = new ECSPortableExperiencesController(web3IdentityProvider, container.WebRequestsContainer.WebRequestController, container.ScenesCache, launchMode, decentralandUrlsSource);
             container.SmartWearableCache = new SmartWearableCache(webRequestsContainer.WebRequestController, decentralandUrlsSource);
+            container.LocalPortableExperienceCache = new LocalPortableExperienceCache(container.WebRequestsContainer.WebRequestController);
+            container.GlobalPortableExperienceCache = new GlobalPortableExperienceCache();
+            container.PortableExperiencesController = new ECSPortableExperiencesController(web3IdentityProvider, container.WebRequestsContainer.WebRequestController, container.ScenesCache, container.LocalPortableExperienceCache, container.GlobalPortableExperienceCache, container.SmartWearableCache, launchMode, decentralandUrlsSource);
             container.ImageControllerProvider = new ImageControllerProvider(globalWorld);
 
             container.FeatureFlagsProvider = new HttpFeatureFlagsProvider(container.WebRequestsContainer.WebRequestController);
