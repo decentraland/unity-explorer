@@ -17,8 +17,13 @@ jobs:
     if: github.event.action != 'edited' || github.event.changes.base != null
     runs-on: ubuntu-latest
     permissions:
-      pull-requests: read
+      # The label is what switches Agent Server onto the detailed pass, and
+      # `issues.addLabels` on a PR 403s without the pull-requests scope — #10033
+      # downgraded it to read, so every label write has failed since. The 403
+      # names `issues=write; pull_requests=write`, and jarvis-review-status.yml
+      # labels successfully with exactly this pair, so grant both.
       issues: write
+      pull-requests: write
     steps:
       - name: Classify changes and maintain label
         id: detect
@@ -56,7 +61,16 @@ jobs:
               return;
             }
             const hasLabel = current.labels.some(label => label.name === 'new-dependency');
-            if (!hasChanges) {
+            // `auto-pr` and release PRs are excluded from AI review by policy
+            // (docs/branch-and-pr-standards.md): a release PR is an aggregate
+            // dev -> main merge whose commits each ran this pass on their own PR.
+            // The base is pinned so that `release/`-prefixed feature branches, which
+            // create-release-branch.yml never produces, cannot opt themselves out.
+            // Read both from the fetched PR — that workflow labels the PR moments
+            // after opening it, so the event payload can still be bare.
+            const excluded = (current.base.ref === 'main' && current.head.ref.startsWith('release/')) ||
+              current.labels.some(label => label.name === 'auto-pr');
+            if (!hasChanges || excluded) {
               if (hasLabel) {
                 try {
                   await github.rest.issues.removeLabel({
@@ -74,7 +88,47 @@ jobs:
                 owner, repo, issue_number: pull_number, labels: ['new-dependency']
               });
             }
-            core.setOutput('request', (!current.draft).toString());
+            if (current.draft) {
+              core.setOutput('request', 'false');
+              return;
+            }
+            // `hasChanges` describes the PR's cumulative diff, so on its own it would
+            // buy a full review on every later push once a single automation file had
+            // been touched. Re-request only for a head that moved something relevant
+            // since the one Jarvis last read.
+            const reviews = await github.paginate(github.rest.pulls.listReviews, {
+              owner, repo, pull_number, per_page: 100
+            });
+            const reviewedHead = reviews
+              .filter(review => review.user.login === 'decentraland-bot' && review.commit_id)
+              .map(review => review.commit_id).pop();
+            if (!reviewedHead) {
+              core.setOutput('request', 'true');
+              return;
+            }
+            if (reviewedHead === classifiedHead) {
+              core.notice('This head has already been reviewed.');
+              core.setOutput('request', 'false');
+              return;
+            }
+            // Anything unreadable or truncated fails open: a repeated review costs
+            // money, a missed one costs coverage.
+            let since;
+            try {
+              const { data } = await github.rest.repos.compareCommitsWithBasehead({
+                owner, repo, basehead: `${reviewedHead}...${classifiedHead}`
+              });
+              since = data.files || [];
+            } catch (error) {
+              core.warning(`Could not diff ${reviewedHead}...${classifiedHead}: ${error.message}`);
+              core.setOutput('request', 'true');
+              return;
+            }
+            // The compare endpoint caps `files` at 300 and does not flag the cut.
+            const changedSince = since.length >= 300 ||
+              since.some(f => relevant(f.filename) || (f.previous_filename && relevant(f.previous_filename)));
+            if (!changedSince) core.notice('No security-relevant change since the last reviewed head.');
+            core.setOutput('request', changedSince.toString());
 
       - name: Request Jarvis through the existing reviewer webhook
         if: steps.detect.outputs.request == 'true'
@@ -89,6 +143,8 @@ jobs:
             const { data: pr } = await github.rest.pulls.get({ owner, repo, pull_number });
             if (pr.state !== 'open' || pr.draft || pr.head.sha !== context.payload.pull_request.head.sha ||
                 pr.base.sha !== context.payload.pull_request.base.sha ||
+                (pr.base.ref === 'main' && pr.head.ref.startsWith('release/')) ||
+                pr.labels.some(label => label.name === 'auto-pr') ||
                 !pr.labels.some(label => label.name === 'new-dependency')) return;
             // External authors cannot auto-start a credential-bearing agent.
             // A collaborator requests decentraland-bot manually after inspecting the PR.
@@ -105,7 +161,8 @@ jobs:
               core.notice('Maintainer must request decentraland-bot; security status remains pending.');
               return;
             }
-            // Security changes require a review on every head, even when ordinary
-            // follow-up code reviews are on demand. Existing pending requests share
-            // that review; a stale run remains non-green and needs a re-request.
+            // Security changes are reviewed on every head that moved one, even when
+            // ordinary follow-up reviews are on demand; the classifier decides that.
+            // Existing pending requests share that review; a stale run remains
+            // non-green and needs a re-request.
             await github.rest.pulls.requestReviewers({ owner, repo, pull_number, reviewers: ['decentraland-bot'] });
