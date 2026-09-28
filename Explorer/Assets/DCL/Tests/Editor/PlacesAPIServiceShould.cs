@@ -89,7 +89,10 @@ namespace DCL.Tests.Editor
             client.RatePlaceAsync(default, default!, default).ReturnsForAnyArgs(UniTask.FromException(new Exception("rate failed")));
 
             try { await service.RatePlaceAsync(true, PLACE_ID, CancellationToken.None); }
-            catch (Exception) { }
+            catch (Exception)
+            {
+                // the failing request is the scenario under test, only the restored rating matters
+            }
 
             Assert.That(place.user_like, Is.False);
             Assert.That(place.user_dislike, Is.True);

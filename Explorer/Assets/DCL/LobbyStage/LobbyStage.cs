@@ -259,8 +259,8 @@ namespace DCL.Lobby
 
         private static Ray ViewportRay(Transform cameraTransform, float halfHeight, float aspect, float viewportX, float viewportY)
         {
-            var directionCS = new Vector3(((viewportX * 2f) - 1f) * halfHeight * aspect, ((viewportY * 2f) - 1f) * halfHeight, 1f);
-            return new Ray(cameraTransform.position, cameraTransform.TransformDirection(directionCS));
+            var directionCs = new Vector3(((viewportX * 2f) - 1f) * halfHeight * aspect, ((viewportY * 2f) - 1f) * halfHeight, 1f);
+            return new Ray(cameraTransform.position, cameraTransform.TransformDirection(directionCs));
         }
 
         // The dissolve is a world-space band on the floor, perpendicular to the view, ending where the blend ray meets the floor

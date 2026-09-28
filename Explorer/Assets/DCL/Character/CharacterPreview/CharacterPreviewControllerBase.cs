@@ -20,7 +20,7 @@ namespace DCL.CharacterPreview
     {
         private const float AVATAR_FADE_ANIMATION = 0.5f;
         private const float MAX_RENDER_TARGET_PIXELS = 1920f * 1080f;
-        private const int MAX_MSAA_4X_RENDER_TARGET_PIXELS = 1024 * 1024;
+        private const int MAX_MSAA_4_SAMPLES_RENDER_TARGET_PIXELS = 1024 * 1024;
 
         private static readonly Vector2Int PLACEHOLDER_RENDER_TARGET_SIZE = new (64, 64);
 
@@ -54,7 +54,7 @@ namespace DCL.CharacterPreview
         /// </summary>
         public event Action? RenderTargetChanged;
 
-        protected Camera? PreviewCamera => previewController?.Camera;
+        protected Camera? previewCamera => previewController?.Camera;
 
         /// <summary>
         ///     A preview whose render target has content of its own before the avatar arrives keeps the image visible instead.
@@ -202,7 +202,7 @@ namespace DCL.CharacterPreview
 
         // Every MSAA sample multiplies the colour and depth memory, only small panel-sized targets can afford 4x
         private static int AntiAliasingFor(Vector2Int size) =>
-            size.x * size.y > MAX_MSAA_4X_RENDER_TARGET_PIXELS ? 2 : 4;
+            size.x * size.y > MAX_MSAA_4_SAMPLES_RENDER_TARGET_PIXELS ? 2 : 4;
 
         private void OnViewRectDimensionsChanged()
         {
@@ -237,7 +237,7 @@ namespace DCL.CharacterPreview
             currentRenderTexture.Create();
 
             // The camera only reads the aspect off its target when the target is assigned, so a resize leaves it rendering with the old one
-            PreviewCamera?.ResetAspect();
+            previewCamera?.ResetAspect();
         }
 
         private void ReleaseRenderTexture()

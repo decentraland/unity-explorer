@@ -95,7 +95,7 @@ namespace DCL.Lobby
 
             // The stage brings its own preset-driven light; the container is pooled, so this runs for every new preview
             SetPreviewLightActive(false);
-            stage.Track(PreviewCamera);
+            stage.Track(previewCamera);
         }
 
         private void ApplyAvatar(Avatar avatar, Vector3 position)

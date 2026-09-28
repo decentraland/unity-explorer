@@ -36,7 +36,7 @@ namespace DCL.CharacterPreview
         [field: SerializeField] internal AvatarPreviewHeadIKSettings headIKSettings { get; private set; }
 
         // Resolved from the hierarchy so the shared prefab needs no new reference
-        private Light PreviewLight => previewLight ??= GetComponentInChildren<Light>(true);
+        private Light GetPreviewLight() => previewLight ??= GetComponentInChildren<Light>(true);
 
         internal float TargetFOV { get; set; }
         internal float RotationModifier { get; set; }
@@ -101,12 +101,12 @@ namespace DCL.CharacterPreview
             previewPlatform.SetActive(isActive);
 
         public void SetLightActive(bool isActive) =>
-            PreviewLight.gameObject.SetActive(isActive);
+            GetPreviewLight().gameObject.SetActive(isActive);
 
         public void SetCameraFarClipPlane(float farClipPlane) =>
             freeLookCamera.m_Lens.FarClipPlane = farClipPlane;
 
-        public void SetPostProcessingEnabled(bool enabled)
+        public void SetPostProcessingEnabled(bool isEnabled)
         {
             if (!camera.gameObject.TryGetComponent(out UniversalAdditionalCameraData cameraData))
             {
@@ -114,7 +114,7 @@ namespace DCL.CharacterPreview
                 return;
             }
 
-            cameraData.renderPostProcessing = enabled;
+            cameraData.renderPostProcessing = isEnabled;
         }
 
         private void Update()
