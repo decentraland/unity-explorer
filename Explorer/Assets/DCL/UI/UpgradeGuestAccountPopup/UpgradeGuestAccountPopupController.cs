@@ -58,7 +58,7 @@ namespace DCL.UI.UpgradeGuestAccountPopup
             this.inputBlock = inputBlock;
         }
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         protected override void OnViewInstantiated()
         {

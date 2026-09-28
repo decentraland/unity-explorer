@@ -46,11 +46,11 @@ namespace DCL.PluginSystem.World
             this.assetsProvisioner = assetsProvisioner;
             this.inputBlock = inputBlock;
             componentPoolsRegistry = singletonSharedDependencies.ComponentPoolsRegistry;
-            transformsPool = componentPoolsRegistry.AddComponentPool<UITransformComponent>(onRelease: UiElementUtils.ReleaseUITransformComponent, maxSize: 200);
-            componentPoolsRegistry.AddComponentPool<Label>(onRelease: UiElementUtils.ReleaseUIElement, maxSize: 100);
+            transformsPool = componentPoolsRegistry.AddComponentPool<UITransformComponent>(onRelease: UiElementUtils.ReleaseUiTransformComponent, maxSize: 200);
+            componentPoolsRegistry.AddComponentPool<Label>(onRelease: UiElementUtils.ReleaseUiElement, maxSize: 100);
             componentPoolsRegistry.AddComponentPool<DCLImage>(onRelease: UiElementUtils.ReleaseDCLImage, maxSize: 100);
-            componentPoolsRegistry.AddComponentPool<UIInputComponent>(onRelease: UiElementUtils.ReleaseUIInputComponent, maxSize: 50);
-            componentPoolsRegistry.AddComponentPool<UIDropdownComponent>(onRelease: UiElementUtils.ReleaseUIDropdownComponent, maxSize: 50);
+            componentPoolsRegistry.AddComponentPool<UIInputComponent>(onRelease: UiElementUtils.ReleaseUiInputComponent, maxSize: 50);
+            componentPoolsRegistry.AddComponentPool<UIDropdownComponent>(onRelease: UiElementUtils.ReleaseUiDropdownComponent, maxSize: 50);
 
             frameTimeBudgetProvider = singletonSharedDependencies.FrameTimeBudget;
             memoryBudgetProvider = singletonSharedDependencies.MemoryBudget;

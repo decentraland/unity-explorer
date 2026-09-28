@@ -153,7 +153,6 @@ namespace DCL.Communities.CommunitiesCard.Events
                 realmNavigator.TryChangeRealmAsync(
                     URLDomain.FromString(new ENS(eventData.Place.world_name).ConvertEnsToWorldUrl(decentralandUrlsSource.Url(DecentralandUrl.WorldServer))),
                     eventCardOperationsCts.Token,
-                    default,
                     isWorld: true,
                     allowsSpawnPointerOverride: true).Forget();
             else
