@@ -15,8 +15,7 @@ using Utility;
 namespace DCL.Lobby
 {
     /// <summary>
-    ///     Compact friend card of the lobby rail: picture with the online dot, name, and a location row that hovering swaps for a
-    ///     Join button while the friend can be joined. Pooled by the rail, so its callbacks are wired once and rebound by content.
+    ///     Compact friend card of the lobby rail; pooled, so its callbacks are wired once and rebound by content.
     /// </summary>
     public class LobbyFriendCardView : MonoBehaviour
     {

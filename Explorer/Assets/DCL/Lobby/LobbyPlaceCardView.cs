@@ -6,8 +6,7 @@ using UnityEngine.EventSystems;
 namespace DCL.Lobby
 {
     /// <summary>
-    ///     Compact place card of the lobby: thumbnail with the online users on top, title and creator.
-    ///     Hovering raises the footer over the thumbnail, swapping the creator for the Jump in button.
+    ///     Compact place card of the lobby; hovering raises the footer over the thumbnail, swapping the creator for the Jump in button.
     /// </summary>
     public class LobbyPlaceCardView : LobbyCardView, IPointerEnterHandler, IPointerExitHandler
     {

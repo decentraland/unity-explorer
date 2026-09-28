@@ -7,9 +7,7 @@ using UnityEngine.UI;
 namespace DCL.Lobby
 {
     /// <summary>
-    ///     Horizontal strip that pages by dragging or by its hover arrows: releasing a drag snaps to the nearest page and one dot per
-    ///     page tracks the position.
-    ///     Subclasses own the cards and report how many are shown.
+    ///     Horizontal strip that pages by dragging or by its hover arrows; subclasses own the cards and report how many are shown.
     /// </summary>
     public abstract class LobbyPagedRailView : MonoBehaviour, IEndDragHandler
     {
@@ -44,8 +42,7 @@ namespace DCL.Lobby
             SnapTo(PageAt(-scrollRect.content.anchoredPosition.x));
 
         /// <summary>
-        ///     Rebuilds the dots for <paramref name="count" /> cards and either rewinds to the first page or keeps the current one,
-        ///     clamped so a shrinking list never leaves the view on a page that no longer exists.
+        ///     Rebuilds the dots and clamps the current page so a shrinking list never leaves the view on a page that no longer exists.
         /// </summary>
         protected void OnCountChanged(int count, bool rewind)
         {

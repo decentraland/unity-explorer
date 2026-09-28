@@ -195,8 +195,7 @@ namespace DCL.PluginSystem.Global
 
             loadingStatus.CurrentStage.Subscribe(PreWarmFriends);
 
-            // The startup lobby lists online friends before the world loads, and a session that is already signed in raises no
-            // identity change, so nothing else would open the connectivity stream in time
+            // A session already signed in raises no identity change, and the startup lobby needs the connectivity stream before the world loads
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.Lobby) && web3IdentityCache.Identity is { IsExpired: false })
                 LaunchSubscriptionsIfNeeded();
 
@@ -297,8 +296,7 @@ namespace DCL.PluginSystem.Global
         }
 
         /// <summary>
-        ///     A cancelled stream is never closed server-side, so relaunching it on a live connection is rejected as a duplicate:
-        ///     streams are only (re)opened once the previous ones are gone.
+        ///     A cancelled stream is never closed server-side, so relaunching it on a live connection is rejected as a duplicate.
         /// </summary>
         private void LaunchSubscriptionsIfNeeded()
         {

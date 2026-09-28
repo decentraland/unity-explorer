@@ -186,8 +186,7 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
             CaptureRestPose();
         }
 
-        // The whole hierarchy, not just the bones: the IK targets, hints and look-at helpers are moved by the IK systems and
-        // their offsets are baked into the rig graph when it is built.
+        // The IK targets, hints and look-at helpers are moved by the IK systems too, so the whole hierarchy is captured, not just the bones
         private void CaptureRestPose()
         {
             restPoseTransforms = GetComponentsInChildren<Transform>(true);
@@ -301,9 +300,7 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
             Armature.localScale = armatureStartLocalScale;
         }
 
-        // Called onRelease of the pool. Returns the instance to its prefab state so the next Get() binds the Animator and builds
-        // the rig graph against the rest pose. The release can run while the hierarchy is inactive, where an interrupted emote
-        // stays frozen on the bones and Rebind() has nothing bound to reset, so the pose is written back explicitly.
+        // Runs on pool release, possibly with the hierarchy inactive, where Rebind() has nothing bound to reset a frozen emote pose
         public void ResetState()
         {
             RestoreRestPose();
@@ -318,8 +315,7 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
             HipsConstraint.data.offset = Vector3.zero;
             HipsConstraint.weight = 0;
 
-            // The prefab ships the RigBuilder disabled: the instantiator enables it once the pose is sane, so the pool's
-            // SetActive(true) does not build the graph and bake the IK offsets from whatever pose the previous owner left.
+            // Left disabled as in the prefab, so the pool's SetActive(true) does not bake IK offsets from the previous owner's pose
             RigBuilder.enabled = false;
             FeetIKRig.enabled = false;
             FeetIKRig.weight = 0;

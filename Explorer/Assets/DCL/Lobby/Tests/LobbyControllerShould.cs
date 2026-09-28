@@ -1543,8 +1543,7 @@ namespace DCL.Lobby.Tests
         }
 
         /// <summary>
-        ///     The Explore panel's small event card, reduced to what the lobby drives: the card measures its containers in Awake,
-        ///     so the object stays inactive until the fields are assigned.
+        ///     The Explore panel's small event card reduced to what the lobby drives; it measures its containers in Awake, so it stays inactive until wired.
         /// </summary>
         private static EventCardView CreateUpcomingEventCard(Transform parent, string name)
         {

@@ -4,8 +4,7 @@ using UnityEngine;
 namespace DCL.Lobby
 {
     /// <summary>
-    ///     A set piece placed on the stage by a preset. Position is relative to the stage origin, except Y which is measured
-    ///     from the floor surface so a prop resting on the ground is at Y = 0.
+    ///     A set piece placed on the stage; Y is measured from the floor surface so a prop resting on the ground is at Y = 0.
     /// </summary>
     [Serializable]
     public class LobbyStageProp
@@ -24,8 +23,7 @@ namespace DCL.Lobby
     }
 
     /// <summary>
-    ///     Everything on the lobby stage that changes with the backdrop image: the image itself, where and how the floor dissolves
-    ///     into it, which part of the image is visible, the floor and mist tints that sit with it, and the set pieces around it.
+    ///     Everything on the lobby stage that changes with the backdrop image.
     /// </summary>
     [CreateAssetMenu(fileName = "LobbyStagePreset", menuName = "DCL/Lobby/Stage Preset")]
     public class LobbyStagePreset : ScriptableObject
@@ -130,8 +128,7 @@ namespace DCL.Lobby
             UnityEditor.EditorUtility.SetDirty(this);
         }
 
-        // Blits only the bottom band into a small texture (UV origin is bottom-left, so no orientation guessing), then blends
-        // the most populated colour bin with the plain average so one bright detail cannot take over
+        // Samples only the bottom band, then blends the most populated colour bin with the plain average so one bright detail cannot take over
         private static Color DominantBottomColor(Texture texture, float band)
         {
             RenderTexture renderTexture = RenderTexture.GetTemporary(SAMPLE_SIZE, SAMPLE_SIZE, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);

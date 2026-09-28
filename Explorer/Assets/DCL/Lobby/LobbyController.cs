@@ -38,9 +38,7 @@ using Utility;
 namespace DCL.Lobby
 {
     /// <summary>
-    ///     Fullscreen panel shown before the world starts loading and, later, on demand during gameplay.
-    ///     It only reports the close intent (Jump in or Close); what happens next is up to the caller.
-    ///     Logout is not a close intent: the system menu drives it and the authentication screen replaces this panel.
+    ///     Fullscreen panel shown before the world loads and on demand in-world; it only reports the close intent, what follows is up to the caller.
     /// </summary>
     public class LobbyController : ControllerBase<LobbyView, LobbyParameter>
     {
@@ -310,8 +308,7 @@ namespace DCL.Lobby
 
             inputBlock.Enable(InputMapComponent.BLOCK_USER_INPUT);
 
-            // At startup the lobby is the only way into the world, and a fullscreen panel opened from it replaces
-            // it instead of closing it: the lobby has to come back, otherwise nothing is left on screen and the flow never resumes
+            // A fullscreen panel opened from the startup lobby replaces it instead of closing it, so the lobby has to come back or the flow never resumes
             if (inputData.IsStartup && !leaving)
                 mvcManager.OnViewClosed += ShowAgainWhenTheScreenIsFree;
 
@@ -319,8 +316,7 @@ namespace DCL.Lobby
         }
 
         /// <summary>
-        ///     Shows the startup lobby again as soon as the panel that replaced it is gone. A Logout is not a replacement: the
-        ///     authentication screen owns the screen from then on, which the cancelled startup token reports.
+        ///     Shows the startup lobby again once the panel that replaced it is gone; a cancelled startup token means a Logout owns the screen instead.
         /// </summary>
         private void ShowAgainWhenTheScreenIsFree(IController closed)
         {
@@ -369,8 +365,7 @@ namespace DCL.Lobby
         }
 
         /// <summary>
-        ///     Fills the hero card with the destination the session lands in. The card is always filled: at startup its Jump in
-        ///     is the only way out of the lobby, so when the Places API cannot describe the destination an offline stand-in still lets the user in.
+        ///     At startup the hero card's Jump in is the only way out, so an offline stand-in fills it when the Places API cannot describe the destination.
         /// </summary>
         private async UniTaskVoid ShowLandingPlaceAsync(CancellationToken ct)
         {
@@ -388,9 +383,7 @@ namespace DCL.Lobby
         }
 
         /// <summary>
-        ///     The launch settings fold app arguments, the saved home and the spawn feature flag into the start parcel and the bootstrap realm;
-        ///     that pick is frozen the first time the lobby shows so the card reads the same for the whole session.
-        ///     Only a destination that was the home keeps following the home, as the user may move it while playing.
+        ///     The launch pick is frozen on first show so the card reads the same all session; only a home destination keeps following the home, which the user may move.
         /// </summary>
         private LandingDestination ResolveLandingDestination()
         {
@@ -409,9 +402,6 @@ namespace DCL.Lobby
             return startupDestination.Value;
         }
 
-        /// <summary>
-        ///     Fills the "Jump back in" cards with the most recently visited places, one card per place.
-        /// </summary>
         private async UniTaskVoid ShowRecentPlacesAsync(CancellationToken ct)
         {
             LobbyPlaceCardView[] cards = viewInstance!.RecentPlaceCards;
@@ -444,9 +434,6 @@ namespace DCL.Lobby
             viewInstance.RecentPlacesSection.SetActive(recentPlaces.Count > 0);
         }
 
-        /// <summary>
-        ///     Fills the "Recommended places" carousel with the featured (highlighted) destinations, the ones the Places menu tags as Featured.
-        /// </summary>
         private async UniTaskVoid ShowRecommendedPlacesAsync(CancellationToken ct)
         {
             Result<PlacesData.IPlacesAPIResponse> result = await placesAPIService.GetHighlightedDestinationsAsync(ct)
@@ -474,8 +461,7 @@ namespace DCL.Lobby
         }
 
         /// <summary>
-        ///     Fills the "Events" carousels from a single fetch of the schedule: what is live right now first, then what comes next.
-        ///     The live carousel is hidden while nothing is live, and the whole section while nothing is scheduled at all.
+        ///     A single schedule fetch feeds both the live and the upcoming carousels.
         /// </summary>
         private async UniTaskVoid ShowEventsAsync(CancellationToken ct)
         {
@@ -685,8 +671,7 @@ namespace DCL.Lobby
         private void OnUpcomingEventCopyLink(EventDTO @event) =>
             eventCardActions.CopyEventLink(@event);
 
-        // The backpack stacks on top of this panel as a popup and brings its own avatar preview, so the lobby keeps rendering behind it.
-        // Saving in the backpack pushes a profile update, which is what re-dresses the lobby avatar through OnProfileUpdated
+        // The backpack stacks on this panel as a popup; saving there pushes the profile update that re-dresses the lobby avatar
         private void OnAvatarClicked() =>
             mvcManager.ShowAndForget(BackpackModalController.IssueCommand(new BackpackModalParameter(BackpackSections.Avatar)));
 
@@ -696,8 +681,7 @@ namespace DCL.Lobby
         private void OnAvatarUnhovered() =>
             avatarPreview!.SetHovered(false);
 
-        // The place details open in the same modal the Places menu uses; jumping in from there comes back through OnPlaceJumpIn,
-        // which is why the row the card sits in travels with the handler
+        // The section travels with the handler so a Jump in from the details is attributed to the row the card sits in
         private void OnPlaceClicked(PlacesData.PlaceInfo place, LobbySection section)
         {
             PlaceOpened?.Invoke(place, section);
@@ -710,7 +694,6 @@ namespace DCL.Lobby
             PickDestination(place.IsWorld ? WorldUrl(place.world_name) : null, place.base_position_processed, landOnParcel: false);
         }
 
-        // The event details open in the same modal the Explore menu uses; jumping in from there comes back through OnEventJumpIn
         private void OnEventClicked(EventDTO @event, LobbySection section, EventCardView? card = null)
         {
             EventOpened?.Invoke(@event, section);
@@ -734,8 +717,7 @@ namespace DCL.Lobby
         }
 
         /// <summary>
-        ///     Before the world is loaded the startup teleport lands directly in the picked destination; once in-world it teleports right away.
-        ///     Either way the lobby closes.
+        ///     Before the world loads the pick becomes the startup destination, in-world it teleports right away; either way the lobby closes.
         /// </summary>
         private void PickDestination(URLDomain? worldUrl, Vector2Int parcel, bool landOnParcel)
         {
@@ -818,28 +800,24 @@ namespace DCL.Lobby
     }
 
     /// <summary>
-    ///     Input type of the lobby's own profile menu and notifications popups. The MVC manager keys controllers by view and
-    ///     input type, so this keeps them registered next to the sidebar's instances of the same controllers.
+    ///     The MVC manager keys controllers by view and input type, so this distinct type registers the lobby's popups next to the sidebar's.
     /// </summary>
     public readonly struct LobbyPopupParameter { }
 
     public readonly struct LobbyParameter
     {
         /// <summary>
-        ///     True when the lobby gates the in-app initialization flow (first show of the session), false when the user opened it on demand in-world.
-        ///     At startup Jump in is the only way out, so no close button is offered.
+        ///     True when the lobby gates the startup flow, where Jump in is the only way out and no close button is offered.
         /// </summary>
         public readonly bool IsStartup;
 
         /// <summary>
-        ///     Releases the startup flow, which stays parked until the user is on their way in. Being taken off the screen is not
-        ///     enough: a fullscreen panel opened from the lobby (the backpack) replaces it and the lobby comes back when it closes.
+        ///     Releases the startup flow; leaving the screen is not enough, as a fullscreen panel opened from the lobby replaces it and it comes back.
         /// </summary>
         public readonly Action? JumpedIn;
 
         /// <summary>
-        ///     Cancelled when a Logout takes the startup flow over: the authentication screen owns the screen from then on and
-        ///     the lobby must not show itself again.
+        ///     Cancelled when a Logout takes the startup flow over, so the lobby must not show itself again.
         /// </summary>
         public readonly CancellationToken StartupToken;
 

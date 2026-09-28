@@ -6,8 +6,7 @@ using System.Threading;
 namespace DCL.Backpack
 {
     /// <summary>
-    ///     Shows the backpack on its own, over the panel that opened it. There is a single backpack view in the whole client and it
-    ///     normally lives in the explore panel, so this controller only borrows it for as long as the modal is open.
+    ///     Shows the backpack on its own over the panel that opened it, borrowing the single backpack view from the explore panel.
     /// </summary>
     public class BackpackModalController : ControllerBase<BackpackModalView, BackpackModalParameter>
     {
@@ -46,7 +45,7 @@ namespace DCL.Backpack
         private void OnBackpackCloseRequested() =>
             closeIntent?.TrySetResult();
 
-        // The modal has no close control of its own: it is the backpack's, shown only while the panel is hosted here, on top of the popup closer behind the modal
+        // The close control is the backpack's own, shown only while it is hosted here
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
         {
             closeIntent?.TrySetCanceled(ct);
@@ -58,9 +57,6 @@ namespace DCL.Backpack
 
     public readonly struct BackpackModalParameter
     {
-        /// <summary>
-        ///     Backpack tab the modal opens on.
-        /// </summary>
         public readonly BackpackSections Section;
 
         public BackpackModalParameter(BackpackSections section)

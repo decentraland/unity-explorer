@@ -4,8 +4,7 @@ using System;
 namespace DCL.Lobby
 {
     /// <summary>
-    ///     Rail of the Explore panel's event cards. Each card reports its own clicks, so the owner subscribes to them
-    ///     as soon as a card is cloned.
+    ///     Rail of the Explore panel's event cards; each card reports its own clicks, so the owner subscribes as soon as one is cloned.
     /// </summary>
     public class LobbyEventRailView : LobbyTemplateRailView<EventCardView>
     {

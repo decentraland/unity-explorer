@@ -5,8 +5,7 @@ using UnityEngine.UI;
 namespace DCL.Lobby
 {
     /// <summary>
-    ///     Paged rail whose cards are cloned from an inactive template in the prefab.
-    ///     What the cards display is up to the owner that fills them; subclasses only wire what a freshly cloned card reports.
+    ///     Paged rail whose cards are cloned from an inactive template in the prefab; subclasses only wire what a fresh clone reports.
     /// </summary>
     public abstract class LobbyTemplateRailView<TCard> : LobbyPagedRailView where TCard : Component
     {

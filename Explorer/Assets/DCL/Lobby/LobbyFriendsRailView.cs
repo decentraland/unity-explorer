@@ -5,8 +5,7 @@ using UnityEngine;
 namespace DCL.Lobby
 {
     /// <summary>
-    ///     Paged rail backed by a <see cref="LoopListView2" />: only the cards in and around the viewport exist, so the list can be as
-    ///     long as the friend list. Item snapping stays off in the prefab; the base paging snap moves the content instead.
+    ///     Rail backed by a <see cref="LoopListView2" /> so only the cards around the viewport exist; item snapping stays off, the base paging snap moves the content.
     /// </summary>
     public class LobbyFriendsRailView : LobbyPagedRailView
     {
@@ -28,8 +27,7 @@ namespace DCL.Lobby
         }
 
         /// <summary>
-        ///     Takes a pooled item for the next card. <paramref name="created" /> is true the first time this pooled item is handed out,
-        ///     which is when its one-time callbacks must be wired.
+        ///     <paramref name="created" /> is true the first time this pooled item is handed out, when its one-time callbacks must be wired.
         /// </summary>
         public LoopListViewItem2 NewItem(out LobbyFriendCardView card, out bool created)
         {

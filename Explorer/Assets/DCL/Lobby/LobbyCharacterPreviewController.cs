@@ -14,8 +14,7 @@ using Random = UnityEngine.Random;
 namespace DCL.Lobby
 {
     /// <summary>
-    ///     Camera-facing preview of the player's own avatar shown in the lobby, standing on the 3D stage that follows it.
-    ///     It idles by default and plays a flavour emote every now and then.
+    ///     Preview of the player's own avatar shown in the lobby on the 3D stage; it idles and plays a flavour emote every now and then.
     /// </summary>
     public class LobbyCharacterPreviewController : CharacterPreviewControllerBase
     {
@@ -58,8 +57,7 @@ namespace DCL.Lobby
         }
 
         /// <summary>
-        ///     Re-dresses the avatar with an updated profile and plays an emote once the new look is loaded. A profile that
-        ///     dresses the same is ignored, so the catalyst confirming a look that is already on does not replay it.
+        ///     Re-dresses the avatar and celebrates with an emote; an identical look is ignored so the catalyst confirming it does not replay.
         /// </summary>
         public void Refresh(Avatar avatar)
         {
@@ -122,8 +120,7 @@ namespace DCL.Lobby
             base.Initialize(avatar, position);
         }
 
-        // The image fills the screen with nothing opaque behind it, so hiding it behind the spinner while the new look loads
-        // would show the world through the lobby: the current look stays on until the new one is instantiated
+        // Nothing opaque sits behind the full-screen image, so the current look stays on until the new one is instantiated instead of showing the world through
         private async UniTaskVoid ReloadAndCelebrateAsync(CancellationToken ct)
         {
             try

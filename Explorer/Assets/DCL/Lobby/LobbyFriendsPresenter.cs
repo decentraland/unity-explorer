@@ -19,8 +19,7 @@ using Utility;
 namespace DCL.Lobby
 {
     /// <summary>
-    ///     Online friends rail of the lobby: the list mirrors the connectivity tracker, each shown card resolves where its friend is
-    ///     (place title, or "Lobby" when the friend has no position in the world) and Join hands the friend's live position to the owner.
+    ///     Online friends rail of the lobby: mirrors the connectivity tracker and resolves where each shown friend is.
     /// </summary>
     public class LobbyFriendsPresenter : IDisposable
     {
@@ -78,8 +77,7 @@ namespace DCL.Lobby
         }
 
         /// <summary>
-        ///     Lists the friends currently online and follows the tracker until <see cref="Hide" />. Locations are resolved again on
-        ///     every show: the previous ones may be minutes old.
+        ///     Locations are resolved again on every show, as the previous ones may be minutes old.
         /// </summary>
         public void Show(CancellationToken ct)
         {

@@ -80,10 +80,7 @@ namespace DCL.AuthenticationScreenFlow
         public string CurrentRequestId { get; internal set; } = string.Empty;
         public LoginMethod CurrentLoginMethod { get; internal set; }
 
-        // Set when the login completes so analytics can tag LOGGED_IN / LOGGED_IN_CACHED with
-        // whether the session created a new account or restored an existing one. Without this flag
-        // the LOGGED_IN vs LOGGED_IN_CACHED split conflates "fresh auth" with "new account",
-        // misclassifying returning users whose cached identity expired.
+        // A cached-vs-fresh login alone cannot tell a new account from a returning user whose cached identity expired
         public bool IsCurrentlyNewAccount { get; internal set; }
 
         public event Action? DiscordButtonClicked;
@@ -309,8 +306,7 @@ namespace DCL.AuthenticationScreenFlow
         }
 
         /// <summary>
-        ///     Ends the auth flow right after the profile fetch, replacing the in-screen welcome step
-        ///     while keeping the state transitions the LOGGED_IN analytics rely on.
+        ///     Ends the auth flow right after the profile fetch, skipping the in-screen welcome step.
         /// </summary>
         internal void CompleteExistingAccountLogin(Profile profile, bool isRestoredSession)
         {

@@ -6,8 +6,7 @@ using UnityEngine.UI;
 namespace DCL.Lobby.Tests
 {
     /// <summary>
-    ///     Gives a rail built by hand in a test the arrows and hover area its prefab carries. Edit mode never runs the rail's
-    ///     Awake, so a test that pages with the arrows awakens the rail explicitly.
+    ///     Gives a hand-built rail the arrows its prefab carries; edit mode never runs Awake, so the rail is awakened explicitly.
     /// </summary>
     public static class TestRailArrows
     {

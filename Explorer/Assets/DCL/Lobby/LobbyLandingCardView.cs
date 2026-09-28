@@ -6,8 +6,7 @@ using UnityEngine.UI;
 namespace DCL.Lobby
 {
     /// <summary>
-    ///     Hero card of the lobby: the place the session lands in, with its thumbnail, title, creator,
-    ///     online users, a Jump in button and a button covering the whole card.
+    ///     Hero card of the lobby showing the place the session lands in.
     /// </summary>
     public class LobbyLandingCardView : MonoBehaviour
     {

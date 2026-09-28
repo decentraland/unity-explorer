@@ -6,8 +6,7 @@ using UnityEngine.EventSystems;
 namespace DCL.UI
 {
     /// <summary>
-    ///     Swaps the hardware cursor for the interaction one while the pointer is over this element, so clickable areas
-    ///     that are not standard buttons still read as clickable.
+    ///     Swaps the cursor for the interaction one while hovered, so clickable areas that are not standard buttons read as clickable.
     /// </summary>
     public class InteractionCursorOnHover : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {

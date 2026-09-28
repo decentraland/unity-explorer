@@ -4,12 +4,7 @@ using UnityEngine.Rendering;
 namespace DCL.Lobby
 {
     /// <summary>
-    ///     3D set the lobby avatar stands in: a floor, the platform, a blob shadow, a mist plane and an upright, opaque backdrop
-    ///     wall standing well behind the avatar. Everything that depends on the backdrop image comes from a
-    ///     <see cref="LobbyStagePreset" />; the floor dissolves into the image along a line placed at the preset's screen height,
-    ///     independent of how far back the wall stands.
-    ///     The avatar is spawned by the character preview, so the stage only has to sit at the same preview position. Once a
-    ///     camera is tracked the stage refits itself right before that camera renders, with the lens it actually renders with.
+    ///     3D set the lobby avatar stands in, driven by a <see cref="LobbyStagePreset" />; once a camera is tracked it refits itself right before that camera renders.
     /// </summary>
     [ExecuteAlways]
     public class LobbyStage : MonoBehaviour
@@ -73,10 +68,7 @@ namespace DCL.Lobby
         }
 
         /// <summary>
-        ///     Places the floor dissolve so it completes at the preset's screen height, then stands the backdrop upright facing the
-        ///     camera at its current horizontal distance and scales it so the part above the blend line covers the frustum up to
-        ///     the top edge while keeping the image aspect (the excess is cropped). The lens is read from the camera, so this is
-        ///     exact when called as the camera is about to render (see <see cref="Track" />).
+        ///     Places the floor dissolve at the preset's screen height and scales the backdrop to cover the frustum above it; exact when called as the camera is about to render.
         /// </summary>
         public void FitBackdrop(Camera camera)
         {
@@ -126,8 +118,7 @@ namespace DCL.Lobby
         }
 
         /// <summary>
-        ///     Smallest size with the texture aspect whose part above the blend line (1 - belowBlend of the height) covers the
-        ///     required width and height.
+        ///     Smallest size with the texture aspect whose part above the blend line covers the required width and height.
         /// </summary>
         public static Vector2 CoverSize(float requiredWidth, float requiredHeightAboveBlend, float textureAspect, float belowBlend)
         {
@@ -182,8 +173,7 @@ namespace DCL.Lobby
         {
             if (camera != trackedCamera) return;
 
-            // Re-applied every frame so edits to the preset asset show up live; three property blocks is negligible,
-            // props are only rebuilt when the preset or its edit version changed
+            // Re-applied every frame so preset edits show up live; props are only rebuilt when the preset or its version changed
             ApplyPresetValues();
             RebuildPropsIfStale();
             FitBackdrop(camera);
@@ -267,7 +257,6 @@ namespace DCL.Lobby
             keyLight.intensity = preset.LightIntensity;
         }
 
-        // Ray through a viewport point (0..1) for the given lens
         private static Ray ViewportRay(Transform cameraTransform, float halfHeight, float aspect, float viewportX, float viewportY)
         {
             var directionCS = new Vector3(((viewportX * 2f) - 1f) * halfHeight * aspect, ((viewportY * 2f) - 1f) * halfHeight, 1f);

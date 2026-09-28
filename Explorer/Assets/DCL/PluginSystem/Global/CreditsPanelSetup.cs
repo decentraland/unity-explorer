@@ -19,8 +19,7 @@ namespace DCL.PluginSystem.Global
     public static class CreditsPanelSetup
     {
         /// <summary>
-        ///     Keeps the view hidden unless the credits feature is on and the current user is allowed to use it,
-        ///     in which case it returns a live controller bound to the view.
+        ///     Keeps the view hidden unless the credits feature is on and the user is allowed, in which case it returns a live controller.
         /// </summary>
         public static async UniTask<ICreditsPanelController> EnableIfUserAllowedAsync(
             CreditsPanelView view,

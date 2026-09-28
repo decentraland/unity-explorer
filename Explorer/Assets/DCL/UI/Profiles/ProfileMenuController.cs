@@ -35,8 +35,7 @@ namespace DCL.UI.Profiles
     }
 
     /// <summary>
-    ///     The MVC manager keys controllers by view and input type, so a host that needs its own instance next to the
-    ///     sidebar's (e.g. the lobby) registers it with a distinct <typeparamref name="TInputData" />. The data itself is unused.
+    ///     The MVC manager keys controllers by view and input type, so a host needing its own instance registers a distinct <typeparamref name="TInputData" />.
     /// </summary>
     public class ProfileMenuController<TInputData> : ControllerBase<ProfileMenuView, TInputData>
     {

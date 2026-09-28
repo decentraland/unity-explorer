@@ -241,8 +241,7 @@ namespace DCL.Profiles.Self
 
         private void UpdateAvatarInWorld(Profile profile)
         {
-            // The player entity only carries a profile once the startup flow has put one there; until then there is no
-            // in-world avatar to update and setting a component the entity does not have throws
+            // The entity only carries a profile once the startup flow put one there, and setting a missing component throws
             if (!world.Has<Profile>(playerEntity))
                 return;
 

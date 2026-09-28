@@ -104,10 +104,10 @@ namespace DCL.Lobby.Tests
         [Test]
         public void HideSectionWithoutOnlineFriends()
         {
-            //Act
+            // Act
             presenter.Show(cts.Token);
 
-            //Assert
+            // Assert
             Assert.IsFalse(section.gameObject.activeSelf);
             Assert.AreEqual("0 Online", section.OnlineCountText.text);
         }
@@ -115,18 +115,18 @@ namespace DCL.Lobby.Tests
         [Test]
         public async Task ShowOnlineFriendsSortedByNameAndReadLobbyWhenTheyHaveNoPosition()
         {
-            //Arrange
+            // Arrange
             eventBus.BroadcastFriendConnected(Friend(ZED_ID, "Zed"));
             eventBus.BroadcastFriendConnected(Friend(AMY_ID, "Amy"));
             await UniTask.Delay(DEBOUNCE_WAIT_MS);
 
-            //Act
+            // Act
             presenter.Show(cts.Token);
             LobbyFriendCardView card = ShownCard(0);
             string initialLocation = card.LocationText.text;
             await UniTask.DelayFrame(3);
 
-            //Assert
+            // Assert
             Assert.IsTrue(section.gameObject.activeSelf);
             Assert.AreEqual("2 Online", section.OnlineCountText.text);
             Assert.AreEqual(AMY_ID, card.UserId);
@@ -140,7 +140,7 @@ namespace DCL.Lobby.Tests
         [Test]
         public async Task ShowPlaceTitleAndJoinWithTheLivePosition()
         {
-            //Arrange
+            // Arrange
             OnlineUserData location = InGenesis(AMY_ID, PARCEL);
             SetOnlineUsers(location);
             places.GetPlaceAsync(PARCEL, Arg.Any<CancellationToken>(), Arg.Any<bool>()).Returns(UniTask.FromResult<PlacesData.PlaceInfo?>(CreatePlace("Cool Place", PARCEL)));
@@ -149,7 +149,7 @@ namespace DCL.Lobby.Tests
             OnlineUserData? joined = null;
             presenter.JoinRequested = data => joined = data;
 
-            //Act
+            // Act
             presenter.Show(cts.Token);
             LobbyFriendCardView card = ShownCard(0);
             await UniTask.DelayFrame(3);
@@ -158,7 +158,7 @@ namespace DCL.Lobby.Tests
             card.JoinButton.onClick.Invoke();
             await UniTask.DelayFrame(2);
 
-            //Assert
+            // Assert
             Assert.AreEqual("Cool Place", card.LocationText.text);
             Assert.IsTrue(joinShownOnHover);
             Assert.IsFalse(card.LocationGroup.activeSelf);
@@ -169,18 +169,18 @@ namespace DCL.Lobby.Tests
         [Test]
         public async Task FallBackToTheWorldNameWhenThePlaceIsUnknown()
         {
-            //Arrange
+            // Arrange
             var location = new OnlineUserData { avatarId = AMY_ID, worldName = "myworld.dcl.eth", position = Vector3.zero };
             SetOnlineUsers(location);
             eventBus.BroadcastFriendConnected(Friend(AMY_ID, "Amy"));
             await UniTask.Delay(DEBOUNCE_WAIT_MS);
 
-            //Act
+            // Act
             presenter.Show(cts.Token);
             LobbyFriendCardView card = ShownCard(0);
             await UniTask.DelayFrame(3);
 
-            //Assert
+            // Assert
             Assert.AreEqual("myworld.dcl.eth", card.LocationText.text);
             await places.Received(1).GetWorldAsync(Vector2Int.zero, "myworld.dcl.eth", Arg.Any<CancellationToken>());
         }
@@ -188,7 +188,7 @@ namespace DCL.Lobby.Tests
         [Test]
         public async Task RevertToLobbyWhenTheFriendLeftBeforeJoining()
         {
-            //Arrange
+            // Arrange
             SetOnlineUsers(InGenesis(AMY_ID, PARCEL));
             eventBus.BroadcastFriendConnected(Friend(AMY_ID, "Amy"));
             await UniTask.Delay(DEBOUNCE_WAIT_MS);
@@ -198,13 +198,13 @@ namespace DCL.Lobby.Tests
             LobbyFriendCardView card = ShownCard(0);
             await UniTask.DelayFrame(3);
 
-            //Act
+            // Act
             SetOnlineUsers();
             card.JoinButton.onClick.Invoke();
             await UniTask.DelayFrame(2);
             card.Hover.OnPointerEnter(new PointerEventData(null));
 
-            //Assert
+            // Assert
             Assert.AreEqual(0, joinRequests);
             Assert.AreEqual(LOBBY, card.LocationText.text);
             Assert.IsFalse(card.JoinButton.gameObject.activeSelf);
@@ -213,18 +213,18 @@ namespace DCL.Lobby.Tests
         [Test]
         public async Task RemoveFriendsGoingOfflineAndHideAtZero()
         {
-            //Arrange
+            // Arrange
             Profile.CompactInfo amy = Friend(AMY_ID, "Amy");
             eventBus.BroadcastFriendConnected(amy);
             await UniTask.Delay(DEBOUNCE_WAIT_MS);
             presenter.Show(cts.Token);
             Assert.IsTrue(section.gameObject.activeSelf);
 
-            //Act
+            // Act
             eventBus.BroadcastFriendDisconnected(amy);
             await UniTask.Delay(DEBOUNCE_WAIT_MS);
 
-            //Assert
+            // Assert
             Assert.IsFalse(section.gameObject.activeSelf);
             Assert.AreEqual("0 Online", section.OnlineCountText.text);
         }
@@ -232,22 +232,22 @@ namespace DCL.Lobby.Tests
         [Test]
         public async Task OpenThePassportWhenTheCardIsClicked()
         {
-            //Arrange
+            // Arrange
             eventBus.BroadcastFriendConnected(Friend(AMY_ID, "Amy"));
             await UniTask.Delay(DEBOUNCE_WAIT_MS);
             presenter.Show(cts.Token);
 
-            //Act
+            // Act
             ShownCard(0).Button.onClick.Invoke();
 
-            //Assert
+            // Assert
             await passport.Received(1).ShowAsync(AMY_ID);
         }
 
         [Test]
         public async Task PageTheRailWithItsArrows()
         {
-            //Arrange
+            // Arrange
             for (var i = 0; i < 5; i++)
                 eventBus.BroadcastFriendConnected(Friend($"0x00000000000000000000000000000000000000{i:D2}", $"Friend{i}"));
 
@@ -255,10 +255,10 @@ namespace DCL.Lobby.Tests
             LobbyRailArrowsView arrows = TestRailArrows.Awaken(section.Rail);
             presenter.Show(cts.Token);
 
-            //Act
+            // Act
             arrows.Next.onClick.Invoke();
 
-            //Assert
+            // Assert
             Assert.AreEqual(1, section.Rail.CurrentPage);
             Assert.IsTrue(arrows.Previous.gameObject.activeSelf);
             Assert.IsFalse(arrows.Next.gameObject.activeSelf);
@@ -267,16 +267,16 @@ namespace DCL.Lobby.Tests
         [Test]
         public async Task ShowOneDotPerPageOfFourCards()
         {
-            //Arrange
+            // Arrange
             for (var i = 0; i < 5; i++)
                 eventBus.BroadcastFriendConnected(Friend($"0x00000000000000000000000000000000000000{i:D2}", $"Friend{i}"));
 
             await UniTask.Delay(DEBOUNCE_WAIT_MS);
 
-            //Act
+            // Act
             presenter.Show(cts.Token);
 
-            //Assert
+            // Assert
             Assert.AreEqual("5 Online", section.OnlineCountText.text);
             Assert.AreEqual(2, ActiveDots());
             Assert.AreEqual(0, section.Rail.CurrentPage);
@@ -285,7 +285,7 @@ namespace DCL.Lobby.Tests
         [Test]
         public async Task IgnoreLocationsResolvedAfterHiding()
         {
-            //Arrange
+            // Arrange
             var pending = new UniTaskCompletionSource<IReadOnlyCollection<OnlineUserData>>();
             onlineUsers.GetAsync(Arg.Any<IEnumerable<string>>(), Arg.Any<CancellationToken>()).Returns(_ => pending.Task);
             places.GetPlaceAsync(PARCEL, Arg.Any<CancellationToken>(), Arg.Any<bool>()).Returns(UniTask.FromResult<PlacesData.PlaceInfo?>(CreatePlace("Cool Place", PARCEL)));
@@ -295,13 +295,13 @@ namespace DCL.Lobby.Tests
             LobbyFriendCardView card = ShownCard(0);
             await UniTask.DelayFrame(2);
 
-            //Act
+            // Act
             presenter.Hide();
             cts.Cancel();
             pending.TrySetResult(new[] { InGenesis(AMY_ID, PARCEL) });
             await UniTask.DelayFrame(3);
 
-            //Assert
+            // Assert
             Assert.AreEqual(LOCATING, card.LocationText.text);
         }
 

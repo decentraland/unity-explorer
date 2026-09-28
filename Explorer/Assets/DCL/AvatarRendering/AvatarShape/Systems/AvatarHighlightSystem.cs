@@ -61,8 +61,7 @@ namespace DCL.AvatarRendering.AvatarShape
                 FadeOut(t, ref highlight, in avatarShape);
         }
 
-        // The render feature keeps the renderers until they are disparaged: an avatar released mid-fade would leave its
-        // pooled renderers outlined for whichever avatar picks them up next
+        // The render feature keeps outlining the renderers, so an avatar released mid-fade would outline whichever avatar reuses them
         [Query]
         [All(typeof(DeleteEntityIntention))]
         private void ClearHighlight(ref AvatarHighlightComponent highlight, in AvatarShapeComponent avatarShape)

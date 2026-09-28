@@ -5,8 +5,7 @@ using UnityEngine;
 namespace DCL.AvatarRendering.AvatarShape.Tests
 {
     /// <summary>
-    ///     The AvatarBase test prefab leaves its rig references unassigned, and <see cref="AvatarBase.ResetState" /> touches all
-    ///     of them. Wires a throwaway component of each property's type into the private serialized backing fields.
+    ///     Wires a throwaway component into each rig reference the test prefab leaves unassigned, as <see cref="AvatarBase.ResetState" /> touches all of them.
     /// </summary>
     public static class AvatarBaseTestRigWiring
     {
@@ -17,8 +16,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
         };
 
         /// <summary>
-        ///     Parents one holder object per rig reference under the avatar. Run it after the avatar's Awake so the holders are
-        ///     not part of the rest pose the avatar captured.
+        ///     Run after the avatar's Awake so the holders are not part of the captured rest pose.
         /// </summary>
         public static void WireMissingRigReferences(AvatarBase avatarBase)
         {

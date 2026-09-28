@@ -50,16 +50,14 @@ namespace DCL.CharacterPreview
         public RenderTexture CurrentRenderTexture => currentRenderTexture;
 
         /// <summary>
-        ///     Raised when the render texture is created, with the preview camera already targeting it. A later resize keeps the
-        ///     same texture and camera, so it does not raise this.
+        ///     Raised when the render texture is created; a resize keeps the same texture and camera, so it does not raise this.
         /// </summary>
         public event Action? RenderTargetChanged;
 
         protected Camera? PreviewCamera => previewController?.Camera;
 
         /// <summary>
-        ///     The image stays invisible while a look loads and fades in once it is on. A preview whose render target has
-        ///     content of its own before the avatar arrives keeps the image visible from the moment the target exists instead.
+        ///     A preview whose render target has content of its own before the avatar arrives keeps the image visible instead.
         /// </summary>
         protected virtual bool hideImageWhileLoading => true;
 
@@ -157,8 +155,7 @@ namespace DCL.CharacterPreview
             updateModelCancellationToken.SafeCancelAndDispose();
         }
 
-        // Sized from the pixels the RawImage covers on screen, so a stretched rect (zero sizeDelta) gets a texture matching the view.
-        // Capped to MAX_RENDER_TARGET_PIXELS, keeping the aspect ratio
+        // Sized from the pixels the RawImage covers on screen, capped to MAX_RENDER_TARGET_PIXELS keeping the aspect ratio
         private Vector2Int RenderTargetSize()
         {
             RectTransform rectTransform = view.RawImage.rectTransform;
@@ -212,9 +209,7 @@ namespace DCL.CharacterPreview
             renderTargetSizeDirty = true;
         }
 
-        // Runs once per frame after the canvas scaler has applied this frame's scale, so the rect maps to settled screen pixels.
-        // The rect callback alone is not enough: it fires while the scaler is still mid-update, and a scaled canvas keeps the
-        // same rect across resolutions with the same aspect ratio, so the screen size is compared as well
+        // The rect callback fires while the canvas scaler is mid-update and a scaled canvas keeps the same rect across same-aspect resolutions, hence the per-frame screen size check
         private void FitRenderTargetToView()
         {
             if (!initialized || currentRenderTexture == null) return;
@@ -417,8 +412,7 @@ namespace DCL.CharacterPreview
         }
 
         /// <summary>
-        ///     Leaves the image with nothing to draw at all. With no render target it falls back to whatever texture the prefab
-        ///     carries, or to the one that was just destroyed, and either of those renders as a plain white rect.
+        ///     With no render target the image falls back to the prefab texture or the destroyed one, either rendering as a white rect.
         /// </summary>
         private void ClearRawImage()
         {

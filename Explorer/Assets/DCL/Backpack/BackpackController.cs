@@ -41,8 +41,7 @@ namespace DCL.Backpack
         private const float COMPACT_HOST_MARGIN = 40f;
 
         /// <summary>
-        ///     Gap the trimmed rects keep off the content panel's right border. Their contents are centred, so they move left
-        ///     by half of it.
+        ///     Gap the trimmed rects keep off the content panel's right border; their centred contents move left by half of it.
         /// </summary>
         private const float COMPACT_TRIMMED_RIGHT_MARGIN = 20f;
 
@@ -296,8 +295,7 @@ namespace DCL.Backpack
 
             Profile? inWorldProfile = world.Has<Profile>(playerEntity) ? world.Get<Profile>(playerEntity) : null;
 
-            // Before the world is loaded the player entity carries no profile, and after a logout it still carries the one of the
-            // session that ended until the next world load replaces it, so only a profile owned by the current identity is trusted
+            // Before the world loads the player entity has no profile, and after a logout it still carries the ended session's, so only the current identity's is trusted
             Avatar? avatar = inWorldProfile != null && inWorldProfile.UserId == web3IdentityCache.Identity?.Address
                 ? inWorldProfile.Avatar
                 : (await selfProfile.ProfileAsync(ct))?.Avatar;
@@ -399,22 +397,17 @@ namespace DCL.Backpack
             view.HeaderAnimator.Update(0);
         }
 
-        /// <summary>
-        ///     The slot the view is parented to right now. The hosts use it to tell their own teardown from a late one.
-        /// </summary>
         public RectTransform? CurrentHost =>
             view.transform.parent as RectTransform;
 
         /// <summary>
-        ///     Moves the single backpack view under the host that is about to show it and stretches it to fill the slot. A
-        ///     compact host is narrower than the screen, so the panel gives up its item info column to fit.
+        ///     Moves the single backpack view under the host about to show it; a compact host is narrower than the screen, so the item info column is dropped.
         /// </summary>
         public void AttachTo(RectTransform host, bool compact)
         {
             var viewRect = (RectTransform)view.transform;
 
-            // A host can claim the view while another one still has it open (a fullscreen panel closes popups without awaiting
-            // them), so the previous session is ended here: its host skips its own teardown once the view is no longer under it
+            // A fullscreen panel closes popups without awaiting them, so another host can claim the view while this one still has it open
             if (isActive && viewRect.parent != host)
                 Deactivate();
 
@@ -436,13 +429,7 @@ namespace DCL.Backpack
             AttachTo(homeHost, false);
 
         /// <summary>
-        ///     Trims the item info column off the content panel and pins what is left to the right border of the host, so every
-        ///     pixel nothing else claims goes to the avatar. Everything centred on the panel is pushed back by half of what was
-        ///     trimmed to hold its place in it. Rects that span the item info column themselves lose the same width instead:
-        ///     centred, that keeps their left edge and re-centres their contents on the grid. The outfits row is a single
-        ///     fixed width strip and cannot reflow into what is left, so it is scaled down by the same ratio instead. Every
-        ///     width comes from the authored values snapshotted at construction, so neither an unlaid panel nor a previous
-        ///     compact pass can skew it.
+        ///     Trims the item info column off the content panel and gives the freed width to the avatar, from the authored rects snapshotted at construction so repeated passes do not compound.
         /// </summary>
         private void SetCompactLayout(bool compact)
         {
@@ -485,8 +472,7 @@ namespace DCL.Backpack
         }
 
         /// <summary>
-        ///     Hands the close button its slot at the right end of the header and takes that slot off the search strip. The full
-        ///     screen layout has no close button, so there the strip spans the slot too.
+        ///     The full screen layout has no close button, so the search strip spans its slot; compact gives the slot back to the button.
         /// </summary>
         private void SetCompactHeader(bool compact)
         {
@@ -503,8 +489,7 @@ namespace DCL.Backpack
         }
 
         /// <summary>
-        ///     Gives the avatar preview the whole border left of the content panel, whatever width the host has, instead of
-        ///     the fixed rect the full screen layout hangs off the left of the screen.
+        ///     Compact hosts vary in width, so the preview takes whatever is left of the content panel instead of the authored fixed rect.
         /// </summary>
         private void SetCompactPreview(bool compact, float contentWidth)
         {

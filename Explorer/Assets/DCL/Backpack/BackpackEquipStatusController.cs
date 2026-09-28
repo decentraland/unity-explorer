@@ -238,9 +238,7 @@ namespace DCL.Backpack
                     return;
                 }
 
-                // The deployment waits out a fixed window and then re-reads the profile back from the catalyst, seconds in total.
-                // The equipped look is already final here, so it is announced right away and the catalyst answer only confirms it.
-                // Subscribers get their own copy, already carrying the version it is committed with, as the commit mutates newProfile
+                // The equipped look is final here, so it is announced ahead of the slow deployment; a copy is pushed because the commit mutates newProfile
                 profileChangesBus.PushUpdate(new ProfileBuilder().From(newProfile).WithVersion(newProfile.Version + 1).Build());
                 profileToRevertTo = oldProfile;
 

@@ -31,9 +31,6 @@ namespace DCL.CharacterPreview
         [field: SerializeField]
         public AudioClipConfig ZoomOutAudio { get; private set; }
 
-        /// <summary>
-        ///     Raised when the view rect is resized, so a render texture sized to it can follow.
-        /// </summary>
         public event Action? RectDimensionsChanged;
 
         private void OnRectTransformDimensionsChange()

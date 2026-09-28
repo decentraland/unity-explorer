@@ -17,8 +17,7 @@ namespace DCL.FeatureFlags.Tests
         [SetUp]
         public void SetUp()
         {
-            // The status reads every feature, and the lobby one comes from the prefs the editor never initializes.
-            // Inject InMemoryDCLPlayerPrefs via reflection (established test pattern).
+            // The lobby state reads player prefs, which the editor never initializes
             FieldInfo prefsField = typeof(DCLPlayerPrefs).GetField("dclPrefs", BindingFlags.NonPublic | BindingFlags.Static)!;
             prefsField.SetValue(null, new InMemoryDCLPlayerPrefs());
 

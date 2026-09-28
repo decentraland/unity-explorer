@@ -8,9 +8,7 @@ using UnityEngine;
 namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
 {
     /// <summary>
-    ///     Reports lobby usage through the same events the explore panel reports, told apart by 'source', so one query
-    ///     compares how much each surface is used. Every payload mirrors the explore panel's for the same event.
-    ///     On top of that the panel reports its own lifecycle, the closure carrying how long it stayed on screen.
+    ///     Reports lobby usage through the explore panel's events told apart by 'source', plus the panel's own lifecycle.
     /// </summary>
     public class LobbyAnalytics : IDisposable
     {

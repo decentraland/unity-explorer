@@ -19,7 +19,7 @@ namespace DCL.Web3.Tests
         [SetUp]
         public void SetUp()
         {
-            // Inject InMemoryDCLPlayerPrefs via reflection (established test pattern)
+            // Nothing initializes the prefs in edit mode
             SetPrefs(new InMemoryDCLPlayerPrefs());
 
             identity = Substitute.For<IWeb3Identity>();

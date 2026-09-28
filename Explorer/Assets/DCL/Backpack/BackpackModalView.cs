@@ -17,8 +17,7 @@ namespace DCL.Backpack
         public CanvasGroup CanvasGroup { get; private set; } = null!;
 
         /// <summary>
-        ///     Slot the backpack view is parented to for as long as this modal is open. The backpack paints its own panel background over
-        ///     the whole slot, so this rect is what gives the modal its frame.
+        ///     The backpack paints its own background over this whole slot, so this rect is what frames the modal.
         /// </summary>
         [field: SerializeField]
         public RectTransform BackpackHost { get; private set; } = null!;

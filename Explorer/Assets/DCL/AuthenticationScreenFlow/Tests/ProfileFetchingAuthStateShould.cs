@@ -148,8 +148,7 @@ namespace DCL.AuthenticationScreenFlow.Tests
                 Assert.That(selfProfile.Calls, Is.EqualTo(1), "a genuine \"no deployed profile\" must resolve on the single fetch");
             });
 
-        // The machine holds no lobby state, so entering it throws and the flow falls into the connection-error path:
-        // reaching LoggedIn proves the login was completed on the controller without going through the lobby
+        // Entering the missing lobby state throws into the connection-error path, so reaching LoggedIn proves the login completed without the lobby
         private static IEnumerator CompleteExistingAccountLoginWhenLobbyIsSkippedAsync(bool isRestoredSession, AuthStatus expectedStatus) =>
             UniTask.ToCoroutine(async () =>
             {

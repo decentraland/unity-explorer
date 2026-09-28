@@ -7,9 +7,7 @@ using UnityEngine;
 namespace DCL.AvatarRendering.AvatarShape.Tests
 {
     /// <summary>
-    ///     ResetState runs when a pooled avatar is released. The release may happen while the hierarchy is inactive (a character
-    ///     preview whose container was deactivated mid-emote), so it has to write the prefab pose back explicitly and return the
-    ///     rig to the prefab state for the next owner.
+    ///     ResetState may run while the pooled hierarchy is inactive, so it must restore the prefab pose and rig state explicitly.
     /// </summary>
     public class AvatarBaseResetStateShould
     {

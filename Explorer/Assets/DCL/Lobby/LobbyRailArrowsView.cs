@@ -5,8 +5,7 @@ using UnityEngine.UI;
 namespace DCL.Lobby
 {
     /// <summary>
-    ///     Previous and Next buttons framing a paged rail. They fade in while the rail is hovered, and the button that has no page
-    ///     left to go to is hidden.
+    ///     Previous and Next buttons of a paged rail; they fade in on hover and the one with no page left to go to is hidden.
     /// </summary>
     public class LobbyRailArrowsView : MonoBehaviour
     {

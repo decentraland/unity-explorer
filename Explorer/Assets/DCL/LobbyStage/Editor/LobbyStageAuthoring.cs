@@ -8,10 +8,7 @@ using UnityEngine.Rendering;
 namespace DCL.Lobby.Editor
 {
     /// <summary>
-    ///     Editor-only stage authoring: opens an unsaved scene with the real character preview rig, the stage prefab and an
-    ///     avatar-sized mannequin, framed by the Lobby camera preset, so presets, props and lighting can be tuned without running
-    ///     the application. While that scene is open, the preview camera is kept on the preset every editor tick, in edit mode
-    ///     and in Play mode, and the stage fits itself to it as it renders.
+    ///     Opens an unsaved authoring scene with the preview rig, the stage and a mannequin so presets, props and lighting can be tuned without running the app.
     /// </summary>
     public static class LobbyStageAuthoring
     {

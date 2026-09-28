@@ -38,8 +38,7 @@ namespace DCL.Passport
 
                 if (updatedProfile != null)
                 {
-                    // Update player entity in world. It only carries a profile once the startup flow has put one there,
-                    // and setting a component the entity does not have corrupts memory instead of failing
+                    // The entity only carries a profile once the startup flow put one there, and setting a missing component corrupts memory
                     if (world.Has<Profile>(playerEntity))
                     {
                         updatedProfile.IsDirty = true;

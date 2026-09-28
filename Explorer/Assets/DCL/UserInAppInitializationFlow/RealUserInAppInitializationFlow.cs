@@ -265,9 +265,7 @@ namespace DCL.UserInAppInitializationFlow
             && !appArgs.HasFlag(AppArgsFlags.DISABLE_HUD);
 
         /// <summary>
-        ///     Holds the flow until the user picks a destination in the lobby. Returns false when a Logout execution took the flow
-        ///     over while the lobby was up: the authentication screen has replaced the lobby and this execution must not load the
-        ///     world for the signed-out session.
+        ///     Holds the flow until the user picks a destination; false when a Logout took the flow over, so this execution must not load the world.
         /// </summary>
         private async UniTask<bool> WaitForLobbyJumpInAsync(CancellationToken ct)
         {
@@ -276,8 +274,7 @@ namespace DCL.UserInAppInitializationFlow
 
             var jumpIn = new UniTaskCompletionSource();
 
-            // The lobby steps aside for the fullscreen panels it opens (the backpack) and shows itself again when they close,
-            // so the flow waits for the destination the user picks instead of for the lobby to leave the screen
+            // The lobby steps aside for the panels it opens and comes back, so the flow waits for the pick rather than for the lobby leaving the screen
             mvcManager.ShowAndForget(LobbyController.IssueCommand(new LobbyParameter(isStartup: true, () => jumpIn.TrySetResult(), gate.Token)), ct);
 
             using (CancellationTokenSource lobbyUp = CancellationTokenSource.CreateLinkedTokenSource(ct, gate.Token))

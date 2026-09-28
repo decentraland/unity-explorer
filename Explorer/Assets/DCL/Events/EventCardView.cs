@@ -205,7 +205,7 @@ namespace DCL.Events
         }
 
         /// <summary>
-        ///     Replaces the schedule text <see cref="Configure" /> derived from the event with a wording of the owner's choice.
+        ///     Overrides the schedule text derived by <see cref="Configure" />.
         /// </summary>
         public void SetDateText(string text)
         {

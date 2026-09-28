@@ -6,8 +6,7 @@ using UnityEngine.UI;
 namespace DCL.Lobby
 {
     /// <summary>
-    ///     What every card of a <see cref="LobbyCarouselView" /> has: a thumbnail, a title and a button covering the whole card.
-    ///     What else it displays is up to the subclass and to the owner filling it.
+    ///     Base of every card of a <see cref="LobbyCarouselView" />: a thumbnail, a title and a button covering the whole card.
     /// </summary>
     public abstract class LobbyCardView : MonoBehaviour
     {

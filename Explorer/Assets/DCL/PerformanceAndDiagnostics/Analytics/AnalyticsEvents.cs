@@ -327,8 +327,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         }
 
         /// <summary>
-        ///     Lifecycle of the lobby panel. What the user does inside it is reported through the events of the
-        ///     surface it mirrors (places, events, friends) with 'source' set to the lobby.
+        ///     Lifecycle of the lobby panel; what the user does inside it is reported through the mirrored surface's events with 'source' set to lobby.
         /// </summary>
         public static class Lobby
         {

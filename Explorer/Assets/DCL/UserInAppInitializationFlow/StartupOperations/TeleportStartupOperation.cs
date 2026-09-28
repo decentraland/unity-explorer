@@ -42,8 +42,7 @@ namespace DCL.UserInAppInitializationFlow
             string? spawnPointName = startParcel.SpawnPointName;
             Vector2Int destination = await ResolveDestinationAsync(ct);
 
-            // Consumed on every path, also when the world manifest or the local scene picks the destination instead of the start parcel:
-            // a consumed start parcel is the mark that the startup teleport happened
+            // Consumed on every path: a consumed start parcel is the mark that the startup teleport happened
             startParcel.ConsumeByTeleportOperation();
 
             return await InternalExecuteAsync(args, destination, ct, spawnPointName: spawnPointName);

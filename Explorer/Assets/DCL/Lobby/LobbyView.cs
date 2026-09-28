@@ -37,7 +37,6 @@ namespace DCL.Lobby
 
         /// <summary>
         ///     Sits over the avatar inside the full-screen preview, so only the figure itself is hoverable and clickable.
-        ///     Its tooltip and cursor swap are wired in the prefab.
         /// </summary>
         [field: SerializeField]
         public HoverableButton AvatarButton { get; private set; } = null!;

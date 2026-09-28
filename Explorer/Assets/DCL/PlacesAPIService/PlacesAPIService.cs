@@ -311,8 +311,7 @@ namespace DCL.PlacesAPIService
             bool cachedIsLiked = place?.user_like ?? false;
             bool cachedIsDisliked = place?.user_dislike ?? false;
 
-            // The cached place is the instance every reader of the cache gets, so it carries the new rating right away.
-            // The original values come back if the request fails.
+            // The cached instance is what every reader gets, so it carries the new rating right away; the original comes back if the request fails
             TryUpdateCachedPlaceRating(placeId, isLiked: isUpvote == true, isDisliked: isUpvote == false);
 
             try

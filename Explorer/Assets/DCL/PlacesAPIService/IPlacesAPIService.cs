@@ -106,8 +106,7 @@ namespace DCL.PlacesAPIService
         }
 
         /// <summary>
-        ///     Hydrates the recently visited history, most recent first. The destinations endpoint neither keeps the requested
-        ///     order nor knows every visited place, so the result follows the history and skips the places it cannot resolve.
+        ///     The destinations endpoint neither keeps the requested order nor knows every place, so the result follows the history and skips unresolved ones.
         /// </summary>
         public static async UniTask<PlacesData.IPlacesAPIResponse> GetRecentlyVisitedDestinationsAsync(this IPlacesAPIService placesAPIService, CancellationToken ct, bool? withConnectedUsers = null)
         {

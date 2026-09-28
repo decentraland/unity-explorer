@@ -55,8 +55,7 @@ namespace DCL.Backpack
         public RectTransform OutfitsRect { get; private set; }
 
         /// <summary>
-        ///     Closes the panel from inside it. Only the compact layout shows it: hosted full screen the panel is a section of
-        ///     another panel, which brings its own close control.
+        ///     Only shown in the compact layout: hosted full screen the panel is a section of another panel with its own close control.
         /// </summary>
         [field: SerializeField]
         public Button CloseButton { get; private set; }
