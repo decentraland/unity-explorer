@@ -27,8 +27,8 @@ namespace DCL.McpServer.Tools
     {
         private enum OutputFormat : byte
         {
-            JPG,
-            PNG,
+            Jpg,
+            Png,
         }
 
         private const int DEFAULT_MAX_WIDTH = 1280;
@@ -81,10 +81,10 @@ namespace DCL.McpServer.Tools
         {
             int maxWidth = Mathf.Clamp(arguments.GetInt("maxWidth", DEFAULT_MAX_WIDTH), MIN_WIDTH, MAX_WIDTH);
 
-            if (!arguments.TryGetEnum("quality", OutputFormat.JPG, out OutputFormat format))
-                return McpToolResult.Error("quality must be one of: jpg, png.");
+            if (!arguments.TryGetEnum("quality", OutputFormat.Jpg, out OutputFormat format))
+                return McpToolResult.Error(arguments.EnumArgumentError<OutputFormat>("quality"));
 
-            bool asPng = format == OutputFormat.PNG;
+            bool asPng = format == OutputFormat.Png;
             bool worldOnly = arguments.GetBool("worldOnly", false);
 
             if (capturing)
@@ -189,7 +189,9 @@ namespace DCL.McpServer.Tools
                 }
 
                 Vector2Int parcel = world.Get<CharacterTransform>(playerEntity).Position.ToParcel();
-                var caption = $"{width}x{height} {(worldOnly ? "world-only" : "full-view")} capture at parcel ({parcel.x},{parcel.y})";
+
+                string scale = width != Screen.width ? $" (screen {Screen.width}x{Screen.height})" : string.Empty;
+                var caption = $"{width}x{height}{scale} {(worldOnly ? "world-only" : "full-view")} capture at parcel ({parcel.x},{parcel.y})";
 
                 // Base64 conversion of the encoded image happens off the main thread.
                 await DCLTask.SwitchToThreadPool();

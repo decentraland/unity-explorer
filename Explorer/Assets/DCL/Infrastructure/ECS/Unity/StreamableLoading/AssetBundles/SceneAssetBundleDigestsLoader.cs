@@ -40,7 +40,10 @@ namespace ECS.StreamableLoading.AssetBundles
             StreamableLoadingResult<SceneAssetBundleManifest> result = (await promise.ToUniTaskAsync(world, cancellationToken: ct)).Result.Value;
 
             if (result.Succeeded)
+            {
                 manifestVersion.InjectDepsDigests(result.Asset.GetFiles());
+                manifestVersion.InjectLods(result.Asset.GetLods());
+            }
             else if (result.Exception != null)
                 ReportHub.LogException(result.Exception, ReportCategory.ASSET_BUNDLES);
         }

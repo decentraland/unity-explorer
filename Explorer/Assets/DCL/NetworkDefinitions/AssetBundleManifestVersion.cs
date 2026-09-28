@@ -45,6 +45,10 @@ public class AssetBundleManifestVersion
         //Set when the manifest's files[] were injected — only scenes fetch them. Reusable bundles live under the shared assets/ prefix and cache-key on version+hash; wearables/emotes stay entity-scoped and keep buildDate keying.
         private bool hasReusableAssets;
 
+        //Digest-bearing LOD names from the manifest's lods block; absent for sources that publish scene-id-only names.
+        private string? lodDescriptorFile;
+        private Dictionary<int, string>? lodBundleFiles;
+
         private bool HasHashInPath()
         {
             HasHashInPathValue ??= TryParseVersionNumber(GetAssetBundleManifestVersion(), out int version) && version >= ASSET_BUNDLE_VERSION_REQUIRES_HASH;
@@ -100,6 +104,51 @@ public class AssetBundleManifestVersion
                 cdnFiles ??= new Dictionary<string, string>(new UrlHashComparer());
                 cdnFiles[parts[0]] = file;
             }
+        }
+
+        /// <summary>Stores the manifest's <c>lods</c> block: the digest-bearing names the scene's LOD objects are published under.</summary>
+        public void InjectLods(SceneAbLodsDto? lods)
+        {
+            if (assetBundleManifestRequestFailed || lods == null) return;
+
+            if (!string.IsNullOrEmpty(lods.descriptor))
+                lodDescriptorFile = lods.descriptor;
+
+            if (lods.levels == null) return;
+
+            foreach (SceneAbLodLevelDto level in lods.levels)
+            {
+                if (string.IsNullOrEmpty(level.file)) continue;
+
+                lodBundleFiles ??= new Dictionary<int, string>(lods.levels.Length);
+                lodBundleFiles[level.level] = level.file;
+            }
+        }
+
+        /// <summary>The digest-bearing descriptor file name, when the manifest published one.</summary>
+        public bool TryGetLodDescriptorFile(out string file)
+        {
+            if (lodDescriptorFile != null)
+            {
+                file = lodDescriptorFile;
+                return true;
+            }
+
+            file = string.Empty;
+            return false;
+        }
+
+        /// <summary>The digest-bearing bundle name of a LOD level, without its platform suffix, when the manifest published one.</summary>
+        public bool TryGetLodBundleFile(int level, out string file)
+        {
+            if (lodBundleFiles != null && lodBundleFiles.TryGetValue(level, out string? found))
+            {
+                file = found;
+                return true;
+            }
+
+            file = string.Empty;
+            return false;
         }
 
         /// <summary>Translates a bare hash to the hash requested from the CDN: the canonical manifest file name when known (digest-bearing, correctly cased), otherwise the platform-suffixed bare hash.</summary>
