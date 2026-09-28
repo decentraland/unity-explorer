@@ -485,6 +485,12 @@ namespace DCL.SDKComponents.SceneUI.Tests
             Assert.AreEqual(TextAnchor.UpperRight, new PBUiInput { TextAlign = TextAlignMode.TamTopRight }.GetTextAlign());
         }
 
+        [Test]
+        public void ReturnProtocolPlaceholderColorWhenUnset()
+        {
+            Assert.AreEqual(new Color(0.3f, 0.3f, 0.3f, 1f), new PBUiInput().GetPlaceholderColor());
+        }
+
         // --- Hover feedback with textured background tests ---
 
         private const float BORDER_DARKEN = 0.3f;
