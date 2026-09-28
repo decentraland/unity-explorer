@@ -59,6 +59,7 @@ namespace DCL.CharacterPreview
             characterPreviewEntity = world.Create(
                 new CharacterTransform(parent),
                 new AvatarShapeComponent(CHARACTER_PREVIEW_NAME, CHARACTER_PREVIEW_NAME) { IsPreview = true },
+                new AvatarHighlightComponent(),
                 new CharacterPreviewComponent { Camera = avatarContainer.camera, RenderImageRect = renderImage, Settings = avatarContainer.headIKSettings },
                 new CharacterEmoteComponent(),
                 new HeadIKComponent());
@@ -158,6 +159,12 @@ namespace DCL.CharacterPreview
                 globalWorld.Set(characterPreviewEntity, intent);
             else
                 globalWorld.Add(characterPreviewEntity, intent);
+        }
+
+        public void SetHovered(bool hovered)
+        {
+            ref CharacterPreviewComponent preview = ref globalWorld.Get<CharacterPreviewComponent>(characterPreviewEntity);
+            preview.IsHovered = hovered;
         }
 
         public void ResetEmote()

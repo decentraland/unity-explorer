@@ -70,6 +70,9 @@ namespace DCL.Lobby
             ReloadAndCelebrateAsync(emotesCts.Token).Forget();
         }
 
+        public void SetHovered(bool hovered) =>
+            previewController?.SetHovered(hovered);
+
         public override void OnHide(bool triggerOnHideBusEvent = true)
         {
             emotesCts.SafeCancelAndDispose();

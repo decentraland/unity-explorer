@@ -1,5 +1,6 @@
 using DCL.CharacterPreview;
 using DCL.Notifications.NotificationsMenu;
+using DCL.UI.Buttons;
 using DCL.UI.Credits;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles;
@@ -39,7 +40,7 @@ namespace DCL.Lobby
         ///     Its tooltip and cursor swap are wired in the prefab.
         /// </summary>
         [field: SerializeField]
-        public Button AvatarButton { get; private set; } = null!;
+        public HoverableButton AvatarButton { get; private set; } = null!;
 
         [field: Header("Quick jump in")]
         [field: SerializeField]

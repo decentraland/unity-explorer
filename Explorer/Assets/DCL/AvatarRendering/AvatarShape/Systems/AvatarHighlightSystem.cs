@@ -2,10 +2,12 @@
 using Arch.System;
 using Arch.SystemGroups;
 using DCL.AvatarRendering.AvatarShape.Components;
+using DCL.CharacterPreview.Components;
 using DCL.Diagnostics;
 using DCL.Interaction.Raycast.Components;
 using DCL.Rendering.RenderGraphs.RenderFeatures.ObjectHighlight;
 using ECS.Abstract;
+using ECS.LifeCycle.Components;
 using UnityEngine;
 
 namespace DCL.AvatarRendering.AvatarShape
@@ -25,6 +27,8 @@ namespace DCL.AvatarRendering.AvatarShape
         {
             HighlightAvatarQuery(World, t);
             RemoveHighlightAvatarQuery(World, t);
+            HighlightPreviewQuery(World, t);
+            ClearHighlightQuery(World);
         }
 
         /// <summary>
@@ -33,29 +37,60 @@ namespace DCL.AvatarRendering.AvatarShape
         /// </summary>
         [Query]
         [All(typeof(HoveredComponent))]
-        private void HighlightAvatar([Data] float t, ref AvatarHighlightComponent highlight, ref AvatarShapeComponent avatarShape)
-        {
-            if (!Mathf.Approximately(highlight.Opacity, settings.OutlineVfxOpacity))
-            {
-                var step = settings.OutlineVfxOpacity / settings.FadeInTimeSeconds;
-                var newValue = Mathf.MoveTowards(highlight.Opacity, settings.OutlineVfxOpacity, step * t);
-                highlight.Opacity = newValue;
-            }
-            RenderFeature_ObjectHighlight.HighlightedObjects_Avatar.Highlight(avatarShape.OutlineCompatibleRenderers, BuildColor(highlight.Opacity), settings.OutlineThickness);
-        }
+        [None(typeof(DeleteEntityIntention))]
+        private void HighlightAvatar([Data] float t, ref AvatarHighlightComponent highlight, in AvatarShapeComponent avatarShape) =>
+            FadeIn(t, ref highlight, in avatarShape);
 
         /// <summary>
         /// Fades out avatar outline when HoveredComponent is not present.
         /// Smoothly decreases opacity to 0 over FadeOutTimeSeconds.
         /// </summary>
         [Query]
-        [None(typeof(HoveredComponent))]
-        private void RemoveHighlightAvatar([Data] float t, ref AvatarHighlightComponent highlight, ref AvatarShapeComponent avatarShape)
+        [None(typeof(HoveredComponent), typeof(CharacterPreviewComponent), typeof(DeleteEntityIntention))]
+        private void RemoveHighlightAvatar([Data] float t, ref AvatarHighlightComponent highlight, in AvatarShapeComponent avatarShape) =>
+            FadeOut(t, ref highlight, in avatarShape);
+
+        // A preview is never raycast, so its hover comes from the UI hosting it through the component flag
+        [Query]
+        [None(typeof(HoveredComponent), typeof(DeleteEntityIntention))]
+        private void HighlightPreview([Data] float t, in CharacterPreviewComponent preview, ref AvatarHighlightComponent highlight, in AvatarShapeComponent avatarShape)
+        {
+            if (preview.IsHovered)
+                FadeIn(t, ref highlight, in avatarShape);
+            else
+                FadeOut(t, ref highlight, in avatarShape);
+        }
+
+        // The render feature keeps the renderers until they are disparaged: an avatar released mid-fade would leave its
+        // pooled renderers outlined for whichever avatar picks them up next
+        [Query]
+        [All(typeof(DeleteEntityIntention))]
+        private void ClearHighlight(ref AvatarHighlightComponent highlight, in AvatarShapeComponent avatarShape)
         {
             if (highlight.Opacity <= 0)
                 return;
 
-            var step = settings.OutlineVfxOpacity / settings.FadeOutTimeSeconds;
+            highlight.Opacity = 0;
+            RenderFeature_ObjectHighlight.HighlightedObjects_Avatar.Disparage(avatarShape.OutlineCompatibleRenderers);
+        }
+
+        private void FadeIn(float t, ref AvatarHighlightComponent highlight, in AvatarShapeComponent avatarShape)
+        {
+            if (!Mathf.Approximately(highlight.Opacity, settings.OutlineVfxOpacity))
+            {
+                float step = settings.OutlineVfxOpacity / settings.FadeInTimeSeconds;
+                highlight.Opacity = Mathf.MoveTowards(highlight.Opacity, settings.OutlineVfxOpacity, step * t);
+            }
+
+            RenderFeature_ObjectHighlight.HighlightedObjects_Avatar.Highlight(avatarShape.OutlineCompatibleRenderers, BuildColor(highlight.Opacity), settings.OutlineThickness);
+        }
+
+        private void FadeOut(float t, ref AvatarHighlightComponent highlight, in AvatarShapeComponent avatarShape)
+        {
+            if (highlight.Opacity <= 0)
+                return;
+
+            float step = settings.OutlineVfxOpacity / settings.FadeOutTimeSeconds;
             highlight.Opacity = Mathf.MoveTowards(highlight.Opacity, 0, step * t);
             RenderFeature_ObjectHighlight.HighlightedObjects_Avatar.Highlight(avatarShape.OutlineCompatibleRenderers, BuildColor(highlight.Opacity), settings.OutlineThickness);
         }

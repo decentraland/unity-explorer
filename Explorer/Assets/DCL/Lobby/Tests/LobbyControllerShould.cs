@@ -139,7 +139,9 @@ namespace DCL.Lobby.Tests
 
             // Kept inactive like the prefab instance: the hit area only comes up once the avatar is shown
             avatarButton.gameObject.SetActive(false);
-            SetBackingField(view, nameof(LobbyView.AvatarButton), avatarButton);
+            HoverableButton avatarHitArea = avatarButton.gameObject.AddComponent<HoverableButton>();
+            SetBackingField(avatarHitArea, nameof(HoverableButton.Button), avatarButton);
+            SetBackingField(view, nameof(LobbyView.AvatarButton), avatarHitArea);
             SetBackingField(view, nameof(LobbyView.RecentPlacesSection), recentPlacesSection);
             SetBackingField(view, nameof(LobbyView.RecentPlaceCards), recentPlaceCards);
             SetBackingField(view, nameof(LobbyView.ProfileWidgetView), CreateProfileWidgetView());

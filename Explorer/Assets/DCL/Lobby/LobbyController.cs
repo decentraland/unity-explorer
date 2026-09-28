@@ -182,6 +182,8 @@ namespace DCL.Lobby
                 viewInstance.LandingCard.JumpInButton.Button.onClick.RemoveListener(OnLandingJumpInClicked);
                 viewInstance.CloseButton.onClick.RemoveListener(RequestClose);
                 viewInstance.AvatarButton.onClick.RemoveListener(OnAvatarClicked);
+                viewInstance.AvatarButton.OnButtonHover -= OnAvatarHovered;
+                viewInstance.AvatarButton.OnButtonUnhover -= OnAvatarUnhovered;
                 viewInstance.ProfileWidgetView.OpenProfileButton.Button.onClick.RemoveListener(ShowProfileMenu);
                 viewInstance.NotificationsButton.onClick.RemoveListener(ShowNotifications);
 
@@ -221,6 +223,8 @@ namespace DCL.Lobby
             viewInstance.LandingCard.JumpInButton.Button.onClick.AddListener(OnLandingJumpInClicked);
             viewInstance.CloseButton.onClick.AddListener(RequestClose);
             viewInstance.AvatarButton.onClick.AddListener(OnAvatarClicked);
+            viewInstance.AvatarButton.OnButtonHover += OnAvatarHovered;
+            viewInstance.AvatarButton.OnButtonUnhover += OnAvatarUnhovered;
             viewInstance.ProfileWidgetView.OpenProfileButton.Button.onClick.AddListener(ShowProfileMenu);
             viewInstance.NotificationsButton.onClick.AddListener(ShowNotifications);
 
@@ -683,6 +687,12 @@ namespace DCL.Lobby
         // Saving in the backpack pushes a profile update, which is what re-dresses the lobby avatar through OnProfileUpdated
         private void OnAvatarClicked() =>
             mvcManager.ShowAndForget(BackpackModalController.IssueCommand(new BackpackModalParameter(BackpackSections.Avatar)));
+
+        private void OnAvatarHovered() =>
+            avatarPreview!.SetHovered(true);
+
+        private void OnAvatarUnhovered() =>
+            avatarPreview!.SetHovered(false);
 
         // The place details open in the same modal the Places menu uses; jumping in from there comes back through OnPlaceJumpIn,
         // which is why the row the card sits in travels with the handler
