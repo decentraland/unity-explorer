@@ -56,8 +56,12 @@ namespace DCL.Lobby
                 image.sprite = selected ? selectedSprite : unselectedSprite;
                 image.type = selected ? Image.Type.Sliced : Image.Type.Simple;
 
+                // Scroll callbacks re-select every frame of a drag: a still-running tween on the same dot would fight the new one
+                DOTween.Kill(dot);
+
                 DOTween.To(() => dot.sizeDelta, size => dot.sizeDelta = size, new Vector2(selected ? selectedWidth : unselectedWidth, dot.sizeDelta.y), ANIMATION_DURATION)
                        .SetEase(Ease.OutCubic)
+                       .SetTarget(dot)
                        .SetLink(dot.gameObject);
             }
         }

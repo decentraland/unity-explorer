@@ -2,6 +2,7 @@ using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.CharacterPreview;
+using DCL.Diagnostics;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -134,6 +135,7 @@ namespace DCL.Lobby
                 await PlayFlavourEmotesAsync(ct);
             }
             catch (OperationCanceledException) { }
+            catch (Exception e) { ReportHub.LogException(e, ReportCategory.UI); }
         }
 
         private async UniTask PlayFlavourEmotesAsync(CancellationToken ct)

@@ -47,6 +47,7 @@ namespace DCL.Lobby
         private CancellationToken showCt;
         private CancellationTokenSource? jumpCts;
         private bool flushScheduled;
+        private int shownOnlineCount = -1;
 
         public LobbyFriendsPresenter(LobbyFriendsSectionView view,
             FriendsConnectivityStatusTracker tracker,
@@ -130,7 +131,14 @@ namespace DCL.Lobby
 
             int count = onlineFriends.Count;
             view.gameObject.SetActive(count > 0);
-            view.OnlineCountText.text = string.Concat(count.ToString(), ONLINE_COUNT_SUFFIX);
+
+            // Every status change rebuilds; the label string is only worth allocating when the number it shows moves
+            if (count != shownOnlineCount)
+            {
+                view.OnlineCountText.text = string.Concat(count.ToString(), ONLINE_COUNT_SUFFIX);
+                shownOnlineCount = count;
+            }
+
             view.Rail.SetCount(count, rewind);
             view.Rail.RefreshShown();
         }

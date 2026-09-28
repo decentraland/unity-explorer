@@ -44,7 +44,7 @@ namespace DCL.AuthenticationScreenFlow.Tests
 
         // Never-shown lifecycle (--skip-auth-screen with a cached identity): OnViewInstantiated never runs,
         // so lazily-created members stay null; the constructor only stores dependencies, so null! args are safe.
-        private static AuthenticationScreenController NewNeverShownController() =>
+        internal static AuthenticationScreenController NewNeverShownController() =>
             new (
                 () => null!,
                 null!,

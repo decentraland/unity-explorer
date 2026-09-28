@@ -45,6 +45,8 @@ namespace DCL.Lobby
     public class LobbyController : ControllerBase<LobbyView, LobbyParameter>
     {
         private const string EVENT_HOST_FORMAT = "By {0}";
+        private const string WELCOME_FALLBACK = "Welcome!";
+        private const string WELCOME_FORMAT = "Welcome {0}!";
         private const int MAX_UPCOMING_EVENTS = 10;
 
         private static readonly Comparison<EventDTO> BY_START_TIME = static (a, b) => a.NextStartAtProcessed.CompareTo(b.NextStartAtProcessed);
@@ -609,7 +611,7 @@ namespace DCL.Lobby
         private void ShowWelcome(Profile? profile)
         {
             string? name = profile?.ValidatedName;
-            viewInstance!.WelcomeText.text = string.IsNullOrEmpty(name) ? "WELCOME!" : $"WELCOME {name}!";
+            viewInstance!.WelcomeText.text = string.IsNullOrEmpty(name) ? WELCOME_FALLBACK : string.Format(WELCOME_FORMAT, name);
         }
 
         private void OnLandingJumpInClicked()
