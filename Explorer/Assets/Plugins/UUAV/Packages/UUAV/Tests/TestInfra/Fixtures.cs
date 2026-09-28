@@ -19,6 +19,12 @@ namespace UUAV.Tests
         /// <summary>Valid ftyp with a cut-off moov; probing must fail.</summary>
         public const string Truncated = "truncated.mp4";
 
+        /// <summary>12 s two-variant HLS master playlist; segments are named by variant, see the prefixes below.</summary>
+        public const string HlsMaster = "hls_master.m3u8";
+
+        public const string HlsVariant0SegmentPrefix = "hls_v0_";
+        public const string HlsVariant1SegmentPrefix = "hls_v1_";
+
         public const double DurationSeconds = 6.0;
         public const int Width = 320;
         public const int Height = 240;
