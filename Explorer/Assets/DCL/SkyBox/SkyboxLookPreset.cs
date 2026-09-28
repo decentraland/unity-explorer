@@ -100,6 +100,30 @@ namespace DCL.SkyBox
         [Tooltip("Brightness multiplier at and below the horizon.")]
         [Range(0f, 1f)] [SerializeField] private float discHorizonDarkeningFloor = 0.1f;
 
+        [Header("Sun haze (near the horizon, computed path only)")]
+        [Tooltip("Dresses the sun while it rises or sets: the disc grows, flattens, softens, takes a ragged rim and grades from the top colour to the bottom colour. Fades out above Sun Haze Height. Never applies to the moon.")]
+        [SerializeField] private bool sunHaze;
+        [Tooltip("Sine of the sun elevation at which the haze has fully faded out.")]
+        [Range(0.01f, 0.5f)] [SerializeField] private float sunHazeHeight = 0.12f;
+        [Tooltip("Disc size multiplier at the horizon.")]
+        [Range(1f, 3f)] [SerializeField] private float sunHazeSizeBoost = 1.5f;
+        [Tooltip("Vertical scale of the disc at the horizon; below 1 flattens it.")]
+        [Range(0.3f, 1f)] [SerializeField] private float sunHazeSquash = 0.8f;
+        [Tooltip("Width of the soft edge at the horizon, as a fraction of the disc radius.")]
+        [Range(0f, 1f)] [SerializeField] private float sunHazeEdgeSoftness = 0.15f;
+        [Tooltip("How far the ragged rim wobbles in and out, as a fraction of the disc radius.")]
+        [Range(0f, 0.3f)] [SerializeField] private float sunHazeRimStrength = 0.05f;
+        [Tooltip("Number of lobes around the rim.")]
+        [Range(1f, 16f)] [SerializeField] private float sunHazeRimDetail = 6f;
+        [Tooltip("How fast the rim wobbles.")]
+        [Range(0f, 5f)] [SerializeField] private float sunHazeRimSpeed = 0.6f;
+        [Tooltip("Shapes the top-to-bottom gradient: above 1 pushes the bottom colour higher up the disc.")]
+        [Range(0.25f, 4f)] [SerializeField] private float sunHazeGradientPower = 1f;
+        [Tooltip("Disc colour at the top of the hazed disc (HDR).")]
+        [ColorUsage(false, true)] [SerializeField] private Color sunHazeTopColor = new (6f, 5f, 2.6f);
+        [Tooltip("Disc colour at the bottom of the hazed disc (HDR); may be dimmer than the top.")]
+        [ColorUsage(false, true)] [SerializeField] private Color sunHazeBottomColor = new (3.2f, 0.9f, 0.25f);
+
         [Header("Skybox Color")]
         [GradientUsage(true)] [SerializeField] private Gradient skyZenitColorRamp = new ();
         [GradientUsage(true)] [SerializeField] private Gradient skyHorizonColorRamp = new ();
@@ -235,6 +259,17 @@ namespace DCL.SkyBox
         public bool DiscHorizonDarkening => discHorizonDarkening;
         public float DiscHorizonDarkeningHeight => discHorizonDarkeningHeight;
         public float DiscHorizonDarkeningFloor => discHorizonDarkeningFloor;
+        public bool SunHaze => sunHaze;
+        public float SunHazeHeight => sunHazeHeight;
+        public float SunHazeSizeBoost => sunHazeSizeBoost;
+        public float SunHazeSquash => sunHazeSquash;
+        public float SunHazeEdgeSoftness => sunHazeEdgeSoftness;
+        public float SunHazeRimStrength => sunHazeRimStrength;
+        public float SunHazeRimDetail => sunHazeRimDetail;
+        public float SunHazeRimSpeed => sunHazeRimSpeed;
+        public float SunHazeGradientPower => sunHazeGradientPower;
+        public Color SunHazeTopColor => sunHazeTopColor;
+        public Color SunHazeBottomColor => sunHazeBottomColor;
 
         public Gradient SkyZenitColorRamp => skyZenitColorRamp;
         public Gradient SkyHorizonColorRamp => skyHorizonColorRamp;

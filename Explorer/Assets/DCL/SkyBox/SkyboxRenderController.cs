@@ -67,6 +67,10 @@ public class SkyboxRenderController : MonoBehaviour
     private static readonly int STARS_PARAMS = Shader.PropertyToID("_DclStarsParams");
     private static readonly int STARS_PARAMS2 = Shader.PropertyToID("_DclStarsParams2");
     private static readonly int STARS_PARAMS3 = Shader.PropertyToID("_DclStarsParams3");
+    private static readonly int SUN_HAZE_PARAMS = Shader.PropertyToID("_DclSunHazeParams");
+    private static readonly int SUN_HAZE_PARAMS2 = Shader.PropertyToID("_DclSunHazeParams2");
+    private static readonly int SUN_HAZE_TOP = Shader.PropertyToID("_DclSunHazeTop");
+    private static readonly int SUN_HAZE_BOTTOM = Shader.PropertyToID("_DclSunHazeBottom");
     private const int MAX_CLOUD_LAYERS = 3;
 
     // Fraction of the light intensity removed at the middle of the sun/moon crossover, so the direction swing is invisible.
@@ -229,6 +233,7 @@ public class SkyboxRenderController : MonoBehaviour
         Shader.SetGlobalVector(HORIZON_NOISE_PARAMS, Vector4.zero);
         Shader.SetGlobalVector(CELESTIAL_PARAMS, Vector4.zero);
         Shader.SetGlobalVector(STARS_PARAMS, Vector4.zero);
+        Shader.SetGlobalVector(SUN_HAZE_PARAMS, Vector4.zero);
 
         for (var i = 0; i < MAX_CLOUD_LAYERS; i++)
             Shader.SetGlobalTexture(CLOUD_STRIPS[i], null);
@@ -263,6 +268,12 @@ public class SkyboxRenderController : MonoBehaviour
         // Stars v2 statics; the per-phase brightness is written every frame by UpdateStarsV2.
         Shader.SetGlobalVector(STARS_PARAMS2, new Vector4(preset.StarsDensity, preset.StarsSize * Mathf.Deg2Rad, preset.StarsRotationSpeed, preset.StarsTwinkleSpeed));
         Shader.SetGlobalVector(STARS_PARAMS3, new Vector4(preset.StarsHorizonFade.x, preset.StarsHorizonFade.y, 0f, 0f));
+
+        // Sun haze statics; the factor (x) is written every frame by UpdateCelestialPath and stays 0 otherwise.
+        Shader.SetGlobalVector(SUN_HAZE_PARAMS, new Vector4(0f, preset.SunHazeSizeBoost, preset.SunHazeSquash, preset.SunHazeEdgeSoftness));
+        Shader.SetGlobalVector(SUN_HAZE_PARAMS2, new Vector4(preset.SunHazeRimStrength, preset.SunHazeRimDetail, preset.SunHazeRimSpeed, preset.SunHazeGradientPower));
+        Shader.SetGlobalVector(SUN_HAZE_TOP, preset.SunHazeTopColor);
+        Shader.SetGlobalVector(SUN_HAZE_BOTTOM, preset.SunHazeBottomColor);
         skyboxMaterial.SetFloat(STARS_BRIGHTNESS, preset.StarsBrightness);
         skyboxMaterial.SetTexture(STARS_TEXTURE, preset.StarsTexture);
         skyboxMaterial.SetTexture(CLOUDS_CUBEMAP, preset.CloudsCubemap);
@@ -480,6 +491,10 @@ public class SkyboxRenderController : MonoBehaviour
         directionalLight.transform.rotation = Quaternion.LookRotation(-lightDirection, upHint);
 
         Shader.SetGlobalVector(SUN_DIRECTION, moonActive ? moonDirection : sunDirection);
+
+        // The haze dresses the sun only: nothing at the top of its window, full at the horizon and below.
+        float hazeFactor = preset.SunHaze && !moonActive ? 1f - Smooth01(0f, preset.SunHazeHeight, sunDirection.y) : 0f;
+        Shader.SetGlobalVector(SUN_HAZE_PARAMS, new Vector4(hazeFactor, preset.SunHazeSizeBoost, preset.SunHazeSquash, preset.SunHazeEdgeSoftness));
         RenderSettings.skybox.SetFloat(SUN_OPACITY, 1f - dip);
         RenderSettings.skybox.SetFloat(MOON_MASK_SIZE, moonActive ? preset.ComputedMoonMaskSize : 0f);
 
