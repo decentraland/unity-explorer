@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Web3.Identities;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using NSubstitute;
 using NUnit.Framework;
@@ -52,7 +53,26 @@ namespace DCL.Multiplayer.Connections.Pulse.Tests
             // Assert
             Assert.IsFalse(connected);
             Assert.IsFalse(service.IsAuthenticated);
-            transport.Received(1).ConnectAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<CancellationToken>());
+            _ = transport.Received(1).ConnectAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<CancellationToken>());
+        }
+
+        [Test]
+        public async Task LatchDuplicateSessionDuringHandshakeBeforeAnyRetry()
+        {
+            using var cache = new MemoryWeb3IdentityCache();
+            var session = SessionControl.For(cache);
+            service.Dispose();
+            service = new PulseMultiplayerService(transport, pipe, urlsSource, session);
+            service.RegisterHandshakeHandler(async (completion, _) =>
+            {
+                pipe.OnDisconnected(DisconnectReason.DUPLICATE_SESSION);
+                await completion.Task;
+            });
+            bool connected = await service.ConnectAsync(cts.Token, maxAttempts: 3);
+            Assert.IsFalse(connected);
+            Assert.AreEqual(SessionControl.Status.Superseded, session.Current);
+            Assert.IsFalse(await service.ConnectAsync(cts.Token, maxAttempts: 3));
+            _ = transport.Received(1).ConnectAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<CancellationToken>());
         }
 
         [Test]
@@ -130,7 +150,7 @@ namespace DCL.Multiplayer.Connections.Pulse.Tests
             // Assert
             Assert.IsFalse(connected);
             Assert.IsFalse(service.IsAuthenticated);
-            transport.Received(1).ConnectAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<CancellationToken>());
+            _ = transport.Received(1).ConnectAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<CancellationToken>());
         }
 
         [Test]
@@ -149,7 +169,7 @@ namespace DCL.Multiplayer.Connections.Pulse.Tests
             // Assert
             Assert.IsFalse(connected);
             Assert.IsFalse(service.IsAuthenticated);
-            transport.Received(1).ConnectAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<CancellationToken>());
+            _ = transport.Received(1).ConnectAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<CancellationToken>());
         }
 
         [Test]

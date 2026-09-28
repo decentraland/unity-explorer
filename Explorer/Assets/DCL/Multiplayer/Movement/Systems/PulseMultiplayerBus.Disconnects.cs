@@ -28,6 +28,11 @@ namespace DCL.Multiplayer.Movement
 
             RemoveAllPeers();
 
+            if (reason == DisconnectReason.DUPLICATE_SESSION && !isDisposed)
+                session.Stop(sessionGeneration, Web3.Identities.SessionControl.Status.Superseded);
+
+            if (isDisposed || !session.CanListen(sessionGeneration)) return (false, TimeSpan.Zero);
+
             return reason switch
                    {
                        DisconnectReason.GRACEFUL or DisconnectReason.AUTH_TIMEOUT or DisconnectReason.AUTH_FAILED or DisconnectReason.NONE => (true, TimeSpan.FromMilliseconds(settings.DefaultRetryDelayMs)),

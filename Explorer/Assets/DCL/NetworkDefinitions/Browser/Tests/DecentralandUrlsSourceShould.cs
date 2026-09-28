@@ -465,6 +465,7 @@ namespace DCL.Browser.DecentralandUrls.Tests
         [TestCase(DecentralandUrl.Host, "https://" + CUSTOM_DOMAIN)]
         [TestCase(DecentralandUrl.PeerAbout, "https://peer." + CUSTOM_DOMAIN + "/about")]
         [TestCase(DecentralandUrl.PeerContent, "https://peer." + CUSTOM_DOMAIN + "/content/contents")]
+        [TestCase(DecentralandUrl.RemotePeers, "https://archipelago-ea-stats." + CUSTOM_DOMAIN + "/comms/peers")]
         [TestCase(DecentralandUrl.Servers, "https://peer." + CUSTOM_DOMAIN + "/lambdas/contracts/servers")]
         [TestCase(DecentralandUrl.FeatureFlags, "https://feature-flags." + CUSTOM_DOMAIN)]
         [TestCase(DecentralandUrl.Gatekeeper, "https://comms-gatekeeper." + CUSTOM_DOMAIN)]

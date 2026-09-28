@@ -75,7 +75,7 @@ namespace DCL.Multiplayer.Movement
             lifeCycleCts = lifeCycleCts.SafeRestart();
 
             transport = new ENetTransport(settings.ENetTransportOptions, messagePipe);
-            pulseMultiplayerService = pulseActivation.IsActive ? new PulseMultiplayerService(transport, messagePipe, urlsSource) : new IPulseMultiplayerService.Dummy();
+            pulseMultiplayerService = pulseActivation.IsActive ? new PulseMultiplayerService(transport, messagePipe, urlsSource, SessionControl.For(identityCache)) : new IPulseMultiplayerService.Dummy();
 
             pulseMultiplayerBus = new PulseMultiplayerBus(pulseMultiplayerService, peerIdCache, movementInbox,
                 parcelEncoder, IncomingProfiles, RemoveIntentions, identityCache, settings.ReconnectionSettings, selfProfile, pulseRealm);

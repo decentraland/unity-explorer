@@ -47,7 +47,6 @@ namespace DCL.PlacesAPIService
             bool? onlyPlaces = null,
             bool? onlyWorlds = null,
             bool? onlyHighlighted = null,
-            bool? onlySdk7 = null,
             bool? withLiveEvents = null);
 
         UniTask<PlacesData.PlacesAPIResponse> GetWorldAsync(string coord, string realmName, CancellationToken ct);

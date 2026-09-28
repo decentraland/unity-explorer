@@ -134,7 +134,7 @@ namespace Global.Dynamic
                 hardwareFingerprintProvider);
 
             IGateKeeperSceneRoom gateKeeperSceneRoom = new GateKeeperSceneRoom(staticContainer.WebRequestsContainer.WebRequestController,
-                    gateKeeperSceneRoomOptions).AsActivatable();
+                    gateKeeperSceneRoomOptions, SessionControl.For(identityCache)).AsActivatable();
 
             var currentAdapterAddress = ICurrentAdapterAddress.NewDefault(staticContainer.RealmData);
 
@@ -142,14 +142,13 @@ namespace Global.Dynamic
                 identityCache,
                 MultiPoolFactory(),
                 new ArrayMemoryPool(),
-                staticContainer.CharacterContainer.CharacterObject,
                 currentAdapterAddress,
                 staticContainer.WebRequestsContainer.WebRequestController,
                 staticContainer.RealmData,
                 allowInsecureLocalHttp: appArgs.HasFlag(AppArgsFlags.ACCEPT_UNTRUSTED_REALM)
             );
 
-            var chatRoom = new ChatConnectiveRoom(staticContainer.WebRequestsContainer.WebRequestController, URLAddress.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.ChatAdapter)), hardwareFingerprintProvider);
+            var chatRoom = new ChatConnectiveRoom(staticContainer.WebRequestsContainer.WebRequestController, URLAddress.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.ChatAdapter)), hardwareFingerprintProvider, SessionControl.For(identityCache));
 
             var voiceChatRoom = new VoiceChatActivatableConnectiveRoom();
 

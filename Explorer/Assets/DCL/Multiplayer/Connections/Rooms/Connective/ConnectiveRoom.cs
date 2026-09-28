@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Web3.Identities;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.Credentials;
@@ -65,11 +66,18 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 
         private CancellationTokenSource? cancellationTokenSource;
         private bool isDuplicateIdentityDetected;
+        private readonly SessionControl? session;
+        private int sessionGeneration;
+        private int operationRevision;
+
+        protected bool sessionAllowsRecovery => session == null || session.CanRecover(sessionGeneration);
 
         public IConnectiveRoom.ConnectionLoopHealth CurrentConnectionLoopHealth => connectionLoopHealth.Value();
 
-        protected ConnectiveRoom()
+        protected ConnectiveRoom(SessionControl? session = null)
         {
+            this.session = session;
+            if (session != null) session.Changed += OnSessionChanged;
             isDuplicateIdentityStopFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.StopOnDuplicateIdentity);
 
             logPrefix = GetType().Name;
@@ -100,6 +108,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 
         public void Dispose()
         {
+            if (session != null) session.Changed -= OnSessionChanged;
             room.ConnectionUpdated -= OnConnectionUpdated;
             cancellationTokenSource.SafeCancelAndDispose();
             cancellationTokenSource = null;
@@ -117,6 +126,8 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 
         public async UniTask<bool> StartAsync()
         {
+            sessionGeneration = session?.Generation ?? 0;
+            if (!(session?.CanListen(sessionGeneration) ?? true)) return false;
             if (CurrentState() is not IConnectiveRoom.State.Stopped)
                 throw new InvalidOperationException("Room is already running");
 
@@ -185,7 +196,14 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
             {
                 try
                 {
+                    if (!sessionAllowsRecovery && !(funcName == nameof(PrewarmAsync) && (session?.CanListen(sessionGeneration) ?? false)))
+                    {
+                        SetNoConnectionRequired();
+                        await UniTask.Delay(CONNECTION_LOOP_RECOVER_INTERVAL, cancellationToken: ct);
+                        return;
+                    }
                     connectionLoopHealth.Set(enterState);
+                    operationRevision = session?.Revision ?? 0;
                     await func(ct);
                 }
                 catch (Exception e) when (e is not OperationCanceledException)
@@ -231,6 +249,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 
         protected async UniTask<RoomSelection> TryConnectToRoomAsync(string connectionString, CancellationToken token)
         {
+            if (token.IsCancellationRequested || !(session?.CanCompleteOperation(sessionGeneration, operationRevision) ?? true)) return RoomSelection.Previous;
             ReportHub.Log(ReportCategory.LIVEKIT, $"{logPrefix} - Trying to connect to started: {connectionString}");
 
             var credentials = new ConnectionStringCredentials(connectionString);
@@ -270,6 +289,8 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
         private async UniTask<(Result connectResult, RoomSelection selection)> ChangeRoomsAsync<T>(IObjectPool<IRoom> roomsPool, T credentials, CancellationToken ct)
             where T: ICredentials
         {
+            int generation = sessionGeneration;
+            int revision = operationRevision;
             IRoom? newRoom = roomsPool.Get();
             IRoom previous = room.assigned;
 
@@ -287,6 +308,13 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
                 throw;
             }
 
+            if (ct.IsCancellationRequested || !(session?.CanCompleteOperation(generation, revision) ?? true))
+            {
+                await newRoom.DisconnectAsync(CancellationToken.None);
+                roomsPool.Release(newRoom);
+                return (connectResult, RoomSelection.Previous);
+            }
+
             if (connectResult.Success == false)
             {
                 roomsPool.Release(newRoom);
@@ -296,7 +324,14 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
             // now it's a moment to check if we should drop the new room and keep the previous one
             RoomSelection roomSelection = SelectValidRoom();
 
-            await room.SwapRoomsAsync(roomSelection, previous, newRoom, roomsPool, ct);
+            await room.SwapRoomsAsync(roomSelection, previous, newRoom, roomsPool, ct,
+                () => !ct.IsCancellationRequested && (session?.CanCompleteOperation(generation, revision) ?? true));
+
+            if (!(session?.CanCompleteOperation(generation, revision) ?? true) && session?.Generation == generation)
+            {
+                await room.ResetRoom(roomsPool, CancellationToken.None);
+                return (connectResult, RoomSelection.Previous);
+            }
 
             return (connectResult, roomSelection);
         }
@@ -310,6 +345,22 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
                 cancellationTokenSource?.SafeCancelAndDispose();
                 ReportHub.LogWarning(ReportCategory.LIVEKIT, $"{logPrefix} - DuplicateIdentity disconnect reason received, interrupting reconnection attempts");
             }
+        }
+
+        private void OnSessionChanged()
+        {
+            if (session != null && !session.CanListen(sessionGeneration)) DisconnectSuppressedAsync().Forget();
+        }
+
+        private async UniTaskVoid DisconnectSuppressedAsync()
+        {
+            try
+            {
+                await UniTask.SwitchToMainThread();
+                if (session != null && !session.CanListen(sessionGeneration))
+                    await room.DisconnectAsync(CancellationToken.None);
+            }
+            catch (Exception e) { ReportHub.LogException(e, ReportCategory.LIVEKIT); }
         }
     }
 }

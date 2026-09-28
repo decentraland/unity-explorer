@@ -20,7 +20,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Fixed
         private readonly IRealmData realmData;
 
         public FixedConnectiveRoom(IWebRequestController webRequests, ICurrentAdapterAddress currentAdapterAddress, IWeb3IdentityCache identityCache,
-            IRealmData realmData)
+            IRealmData realmData) : base(SessionControl.For(identityCache))
         {
             this.webRequests = webRequests;
             this.currentAdapterAddress = currentAdapterAddress;

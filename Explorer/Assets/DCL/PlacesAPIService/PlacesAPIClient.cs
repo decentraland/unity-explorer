@@ -25,7 +25,6 @@ namespace DCL.PlacesAPIService
         private static readonly URLParameter ONLY_PLACES = new ("only_places", "true");
         private static readonly URLParameter ONLY_WORLDS = new ("only_worlds", "true");
         private static readonly URLParameter ONLY_HIGHLIGHTED = new ("only_highlighted", "true");
-        private static readonly URLParameter ONLY_SDK7 = new ("only_sdk7", "true");
         private static readonly URLParameter WITH_LIVE_EVENTS = new ("with_live_events", "true");
 
         private readonly IWebRequestController webRequestController;
@@ -200,7 +199,6 @@ namespace DCL.PlacesAPIService
             bool? onlyPlaces = null,
             bool? onlyWorlds = null,
             bool? onlyHighlighted = null,
-            bool? onlySdk7 = null,
             bool? withLiveEvents = null)
         {
             urlBuilder.Clear();
@@ -252,9 +250,6 @@ namespace DCL.PlacesAPIService
 
             if (onlyHighlighted != null)
                 urlBuilder.AppendParameter(ONLY_HIGHLIGHTED);
-
-            if (onlySdk7 != null)
-                urlBuilder.AppendParameter(ONLY_SDK7);
 
             if (withLiveEvents != null)
                 urlBuilder.AppendParameter(WITH_LIVE_EVENTS);

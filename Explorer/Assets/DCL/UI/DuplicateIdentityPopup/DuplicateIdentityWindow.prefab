@@ -1219,6 +1219,9 @@ MonoBehaviour:
   <canvas>k__BackingField: {fileID: 1064261176652212057}
   <raycaster>k__BackingField: {fileID: 6667136558194311972}
   <ExitButton>k__BackingField: {fileID: 5253154071969957262}
+  <Title>k__BackingField: {fileID: 5735352817325460739}
+  <Description>k__BackingField: {fileID: 5113080992443770684}
+  <ActionLabel>k__BackingField: {fileID: 6253527772090840774}
 --- !u!1 &7473356248565233579
 GameObject:
   m_ObjectHideFlags: 0

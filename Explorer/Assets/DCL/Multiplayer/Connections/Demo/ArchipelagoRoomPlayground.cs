@@ -23,8 +23,6 @@ namespace DCL.Multiplayer.Connections.Demo
 {
     public class ArchipelagoRoomPlayground : MonoBehaviour
     {
-        [SerializeField] private LoonCharacterObject loonCharacterObject = new ();
-
         private BaseUnityLoopSystem system = null!;
 
         private void Start()
@@ -49,7 +47,6 @@ namespace DCL.Multiplayer.Connections.Demo
             IWeb3IdentityCache? identityCache = await ArchipelagoFakeIdentityCache.NewAsync(DecentralandUrlsSource.CreateForTest(DecentralandEnvironment.Zone, ILaunchMode.PLAY), new Web3AccountFactory(), EthereumNetwork.Sepolia);
 
             var archipelagoIslandRoom = new ArchipelagoIslandRoom(
-                loonCharacterObject,
                 identityCache,
                 multiPool,
                 memoryPool,

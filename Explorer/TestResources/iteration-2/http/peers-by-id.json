@@ -1,0 +1,40 @@
+{
+  "request": "GET /peers?id=0x0000000000000000000000000000000000000003&id=0x0000000000000000000000000000000000000001&id=0x0000000000000000000000000000000000000009",
+  "note": "ALL realms; ids matched case-insensitively; unknown ids omitted; each peer carries realm; sorted by address. /comms/peers?id= is the same handler",
+  "status": 200,
+  "body": {
+    "ok": true,
+    "peers": [
+      {
+        "id": "0x0000000000000000000000000000000000000001",
+        "address": "0x0000000000000000000000000000000000000001",
+        "lastPing": 1788515567804,
+        "parcel": [
+          -1,
+          0
+        ],
+        "position": [
+          -0.31,
+          1.73,
+          4.62
+        ],
+        "realm": "main"
+      },
+      {
+        "id": "0x0000000000000000000000000000000000000003",
+        "address": "0x0000000000000000000000000000000000000003",
+        "lastPing": 1788515567790,
+        "parcel": [
+          0,
+          0
+        ],
+        "position": [
+          8,
+          0,
+          8
+        ],
+        "realm": "cozyfarm.dcl.eth"
+      }
+    ]
+  }
+}

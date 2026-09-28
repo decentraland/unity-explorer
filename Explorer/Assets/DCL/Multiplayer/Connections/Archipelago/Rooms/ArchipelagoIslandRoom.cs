@@ -1,22 +1,18 @@
 using Cysharp.Threading.Tasks;
-using DCL.Character;
 using DCL.Diagnostics;
 using DCL.LiveKit.Public;
 using DCL.Multiplayer.Connections.Archipelago.AdapterAddress.Current;
 using DCL.Multiplayer.Connections.Archipelago.LiveConnections;
 using DCL.Multiplayer.Connections.Archipelago.SignFlow;
 using DCL.Multiplayer.Connections.Rooms.Connective;
-using DCL.Multiplayer.Connections.Typing;
 using DCL.Utility.Types;
 using DCL.Web3.Identities;
 using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Internal.FFIClients.Pools.Memory;
 using LiveKit.Rooms.Info;
 using System;
-using System.Buffers;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
-using UnityEngine;
 using Utility.Multithreading;
 
 namespace DCL.Multiplayer.Connections.Archipelago.Rooms
@@ -27,7 +23,6 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
         private static readonly TimeSpan RECONNECT_BACKOFF = TimeSpan.FromSeconds(5);
 
         private readonly IArchipelagoSignFlow signFlow;
-        private readonly ICharacterObject characterObject;
 
         private readonly ICurrentAdapterAddress currentAdapterAddress;
 
@@ -36,7 +31,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
         private int consecutiveConnectFailures;
         private DateTime nextReconnectAttemptUtc = DateTime.MinValue;
 
-        public ArchipelagoIslandRoom(ICharacterObject characterObject, IWeb3IdentityCache web3IdentityCache,
+        public ArchipelagoIslandRoom(IWeb3IdentityCache web3IdentityCache,
             IMultiPool multiPool, IMemoryPool memoryPool, ICurrentAdapterAddress currentAdapterAddress) : this(
 
             // TODO Validate the following assumption
@@ -44,16 +39,15 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
             // producing unexpected errors when sending the data through the websocket
             new LiveConnectionArchipelagoSignFlow(
                 new ArchipelagoSignedConnection(new WebSocketArchipelagoLiveConnection(memoryPool), multiPool, memoryPool, web3IdentityCache)
-                   .WithLog(), memoryPool, multiPool).WithLog(), characterObject, currentAdapterAddress) { }
+                   .WithLog(), multiPool, SessionControl.For(web3IdentityCache)).WithLog(), currentAdapterAddress, SessionControl.For(web3IdentityCache)) { }
 
         public ArchipelagoIslandRoom(
             IArchipelagoSignFlow signFlow,
-            ICharacterObject characterObject,
-            ICurrentAdapterAddress currentAdapterAddress
-        ) : base()
+            ICurrentAdapterAddress currentAdapterAddress,
+            SessionControl? session = null
+        ) : base(session)
         {
             this.signFlow = signFlow;
-            this.characterObject = characterObject;
             this.currentAdapterAddress = currentAdapterAddress;
         }
 
@@ -75,18 +69,13 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
 
             if (token.IsCancellationRequested) return;
 
+            // Keep the room cycle on the player loop; movement presence is published by Pulse/ENet.
             await UniTask.SwitchToMainThread(token);
-            Vector3 position = characterObject.Position;
-            await using ExecuteOnThreadPoolScope _ = await ExecuteOnThreadPoolScope.NewScopeWithReturnOnMainThreadAsync();
-
-            var result = await signFlow.SendHeartbeatAsync(position, token);
-
-            if (result.Success == false)
-                ReportHub.LogWarning(ReportCategory.COMMS_SCENE_HANDLER, $"Cannot send heartbeat, connection is closed: {result.ErrorMessage}");
         }
 
         private void OnNewIslandAssignment(string islandId, string connectionString)
         {
+            if (!sessionAllowsRecovery) return;
             using var guard = connectionState.Lock(); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
             guard.Value = ConnectionStringState.FromPendingConnection(new PendingConnection(islandId, connectionString));
         }
@@ -110,6 +99,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
 
         private async UniTask TryConnectIfNeededAsync(CancellationToken token)
         {
+            if (!sessionAllowsRecovery) return;
             ConnectionStringState state = ReadAndConsumeConnectionState();
 
             if (CurrentState() is not (IConnectiveRoom.State.Starting or IConnectiveRoom.State.Running)) return;
@@ -190,16 +180,19 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
 
         /// <summary>
         ///     The cached connection string keeps being rejected (e.g. its token expired during a long outage):
-        ///     re-handshaking with archipelago creates a new peer session, which makes the server push a fresh
-        ///     <c>IslandChangedMessage</c> after the next heartbeat.
+        ///     re-handshaking with archipelago makes ws-connector announce the peer on
+        ///     <c>peer.{address}.{session}.connect</c>, and comms-gatekeeper re-sends the current
+        ///     session-addressed island assignment. Application heartbeats are retired unconditionally;
+        ///     session-aware backend recovery/control must be ready before releasing this client.
         /// </summary>
-        private async UniTask ForceFreshIslandAssignmentAsync(CancellationToken token)
+        internal async UniTask ForceFreshIslandAssignmentAsync(CancellationToken token)
         {
+            if (!sessionAllowsRecovery) return;
             ResetConnectionState();
 
             await signFlow.DisconnectAsync(token);
 
-            if (token.IsCancellationRequested) return;
+            if (token.IsCancellationRequested || !sessionAllowsRecovery) return;
 
             await ConnectToArchipelagoAsync(token);
         }

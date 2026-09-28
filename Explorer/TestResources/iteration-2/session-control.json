@@ -1,0 +1,13 @@
+[
+  { "name": "legacy welcome", "type": "ServerPacket", "hex": "12030a0170", "json": { "welcome": { "peerId": "p" } } },
+  { "name": "legacy assignment", "type": "ServerPacket", "hex": "1a060a0169120163", "json": { "islandChanged": { "islandId": "i", "connStr": "c" } } },
+  { "name": "legacy supersession envelope", "type": "ServerPacket", "hex": "3200", "json": { "kicked": { "reason": "KR_NEW_SESSION" } } },
+  { "name": "legacy bare supersession", "type": "KickedMessage", "hex": "", "json": { "reason": "KR_NEW_SESSION" } },
+  { "name": "bare ban", "type": "KickedMessage", "hex": "0801", "json": { "reason": "KR_BANNED" } },
+  { "name": "ban envelope", "type": "ServerPacket", "hex": "32020801", "json": { "kicked": { "reason": "KR_BANNED" } } },
+  { "name": "bare pending 1500ms", "type": "SessionStatusMessage", "hex": "080110dc0b", "json": { "state": "TAKEOVER_PENDING", "retryAfterMs": 1500 } },
+  { "name": "pending envelope", "type": "ServerPacket", "hex": "3a05080110dc0b", "json": { "sessionStatus": { "state": "TAKEOVER_PENDING", "retryAfterMs": 1500 } } },
+  { "name": "bare failure", "type": "SessionStatusMessage", "hex": "0802", "json": { "state": "TAKEOVER_FAILED" } },
+  { "name": "failure envelope", "type": "ServerPacket", "hex": "3a020802", "json": { "sessionStatus": { "state": "TAKEOVER_FAILED" } } },
+  { "name": "unspecified envelope", "type": "ServerPacket", "hex": "3a00", "json": { "sessionStatus": {} } }
+]
