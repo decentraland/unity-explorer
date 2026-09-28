@@ -2,6 +2,7 @@
 // TRUST_WEBGL_SYSTEM_TASKS_SAFETY_FLAG
 #if !UNITY_WEBGL
 
+using DCL.Diagnostics;
 using Newtonsoft.Json;
 using Plugins.DclNativeProcesses;
 using System;
@@ -222,7 +223,7 @@ namespace DCL.Prefs
                 // A full disk or a locked file is the user's environment, not a defect. Unobserved it would resurface
                 // as an unhandled exception on the finalizer thread; flagged again, the data is retried by the next save.
                 dataChanged = true;
-                Debug.LogWarning($"[DCLPlayerPrefs] Preferences could not be written to disk: {e.Message}");
+                ReportHub.LogWarning(ReportCategory.UNSPECIFIED, $"[DCLPlayerPrefs] Preferences could not be written to disk: {e.Message}");
             }
         }
 
