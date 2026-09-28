@@ -17,7 +17,7 @@ namespace DCL.UIToolkit.Tests
         [OneTimeSetUp]
         public void OneTimeSetUp()
         {
-            FontEngine.InitializeFontEngine();
+            Assert.AreEqual(FontEngine.InitializeFontEngine(), FontEngineError.Success);
         }
 
         [SetUp]
