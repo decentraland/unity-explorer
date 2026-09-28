@@ -100,8 +100,9 @@ namespace DCL.Prefs
 
         public const string MARKETPLACE_CREDITS_LAST_SEASON_SHOWN_WEEK_START = "MarketPlaceCredits_LastSeasonShownWeekStart";
 
-        public const string MAP_HOME_MARKER_DATA = "Map_HomeMarker";
-        public const string MAP_HOME_WORLD_NAME = "Map_HomeWorldName";
+        // Home is an account setting: the keys are formatted with the wallet address so accounts sharing a machine never inherit each other's home
+        public const string MAP_HOME_MARKER_DATA = "Map_HomeMarker_{0}";
+        public const string MAP_HOME_WORLD_NAME = "Map_HomeWorldName_{0}";
 
         public const string GIFTING_PENDING_GIFTS = "PendingGifts_{0}";
 

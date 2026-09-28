@@ -1,3 +1,4 @@
+using System;
 using System.Reflection;
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
@@ -5,6 +6,7 @@ using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.Navmap;
 using DCL.PlacesAPIService;
 using DCL.Prefs;
+using DCL.Web3.Identities;
 using NSubstitute;
 using NUnit.Framework;
 using UnityEngine;
@@ -15,17 +17,18 @@ namespace DCL.MapRenderer.Tests.HomeMarker
 	[TestFixture]
 	public class HomeMarkerControllerShould
 	{
-		private HomeMarkerController controller;
-		private IHomeMarker marker;
-		private ICoordsUtils coordsUtils;
-		private IMapCullingController cullingController;
-		private INavmapBus navmapBus;
-		private IPlacesAPIService placesAPIService;
-		private HomePlaceEventBus homePlaceEventBus;
-		private IEventBus eventBus;
-		private Transform parent;
+		private HomeMarkerController controller = null!;
+		private IHomeMarker marker = null!;
+		private ICoordsUtils coordsUtils = null!;
+		private IMapCullingController cullingController = null!;
+		private INavmapBus navmapBus = null!;
+		private IPlacesAPIService placesAPIService = null!;
+		private HomePlaceEventBus homePlaceEventBus = null!;
+		private IEventBus eventBus = null!;
+		private IWeb3IdentityCache identityCache = null!;
+		private Transform parent = null!;
 
-		private static IDCLPrefs originalPrefs;
+		private static IDCLPrefs? originalPrefs;
 		private static bool prefsInitialized;
 
 		[OneTimeSetUp]
@@ -53,6 +56,8 @@ namespace DCL.MapRenderer.Tests.HomeMarker
 			placesAPIService = Substitute.For<IPlacesAPIService>();
 			homePlaceEventBus = new HomePlaceEventBus();
 			eventBus = Substitute.For<IEventBus>();
+			identityCache = Substitute.For<IWeb3IdentityCache>();
+			identityCache.Identity.Returns(new IWeb3Identity.Random());
 
 			coordsUtils.CoordsToPositionWithOffset(Arg.Any<Vector2>())
 				.Returns(callInfo =>
@@ -62,35 +67,32 @@ namespace DCL.MapRenderer.Tests.HomeMarker
 				});
 
 			controller = new HomeMarkerController(
-				(p) => marker,
+				_ => marker,
 				parent,
 				coordsUtils,
 				cullingController,
 				navmapBus,
 				placesAPIService,
-				eventBus
+				eventBus,
+				identityCache
 			);
 			homePlaceEventBus.SetController(controller);
 
 			// Clear prefs keys (safe because player prefs are replaced for test duration)
-			if (DCLPlayerPrefs.HasVectorKey(DCLPrefKeys.MAP_HOME_MARKER_DATA))
-				DCLPlayerPrefs.DeleteVector2Key(DCLPrefKeys.MAP_HOME_MARKER_DATA);
-			if (DCLPlayerPrefs.HasKey(DCLPrefKeys.MAP_HOME_WORLD_NAME))
-				DCLPlayerPrefs.DeleteKey(DCLPrefKeys.MAP_HOME_WORLD_NAME);
+			HomeMarkerController.Serialize(identityCache, null);
+			HomeMarkerController.SerializeWorldName(identityCache, null);
 		}
 
 		[TearDown]
         public void TearDown()
         {
-			controller?.Dispose();
+			controller.Dispose();
 			if (parent != null && parent.gameObject != null)
 				Object.DestroyImmediate(parent.gameObject);
 
 			// Clean up test data
-			if (DCLPlayerPrefs.HasVectorKey(DCLPrefKeys.MAP_HOME_MARKER_DATA))
-				DCLPlayerPrefs.DeleteVector2Key(DCLPrefKeys.MAP_HOME_MARKER_DATA);
-			if (DCLPlayerPrefs.HasKey(DCLPrefKeys.MAP_HOME_WORLD_NAME))
-				DCLPlayerPrefs.DeleteKey(DCLPrefKeys.MAP_HOME_WORLD_NAME);
+			HomeMarkerController.Serialize(identityCache, null);
+			HomeMarkerController.SerializeWorldName(identityCache, null);
         }
 
 		private static void InitializeTestPrefs()
@@ -168,7 +170,7 @@ namespace DCL.MapRenderer.Tests.HomeMarker
             marker.Received(1).SetActive(true);
             marker.Received(1).SetPosition(new Vector3(15, 25, 0));
             Assert.IsTrue(controller.HomeIsSet);
-            Assert.IsTrue(HomeMarkerController.HasSerializedPosition());
+            Assert.IsTrue(HomeMarkerController.HasSerializedPosition(identityCache));
         }
 
         [Test]
@@ -184,7 +186,7 @@ namespace DCL.MapRenderer.Tests.HomeMarker
             // Assert
             marker.Received(2).SetActive(false); // Once on unset, once initially
             Assert.IsFalse(controller.HomeIsSet);
-            Assert.IsFalse(HomeMarkerController.HasSerializedPosition());
+            Assert.IsFalse(HomeMarkerController.HasSerializedPosition(identityCache));
         }
 
         [Test]
@@ -289,9 +291,9 @@ namespace DCL.MapRenderer.Tests.HomeMarker
 
             homePlaceEventBus.SetAsHome(worldName);
 
-            Assert.IsTrue(HomeMarkerController.HasSerializedWorldName());
-            Assert.AreEqual(worldName, HomeMarkerController.DeserializeWorldName());
-            Assert.IsFalse(HomeMarkerController.HasSerializedPosition());
+            Assert.IsTrue(HomeMarkerController.HasSerializedWorldName(identityCache));
+            Assert.AreEqual(worldName, HomeMarkerController.DeserializeWorldName(identityCache));
+            Assert.IsFalse(HomeMarkerController.HasSerializedPosition(identityCache));
         }
 
         [Test]
@@ -359,6 +361,48 @@ namespace DCL.MapRenderer.Tests.HomeMarker
 
             // Act & Assert
             Assert.IsFalse(homePlaceEventBus.IsHome(placeInfo));
+        }
+
+        [Test]
+        public void KeepHomePerAccountWhenIdentityChanges()
+        {
+            // Arrange
+            IWeb3Identity? firstAccount = identityCache.Identity;
+            var secondAccount = new IWeb3Identity.Random();
+            var firstHome = new Vector2Int(10, 20);
+
+            controller.Initialize();
+            homePlaceEventBus.SetAsHome(firstHome);
+
+            // Act
+            identityCache.Identity.Returns(secondAccount);
+            identityCache.OnIdentityChanged += Raise.Event<Action>();
+
+            // Assert
+            Assert.IsFalse(controller.HomeIsSet);
+            Assert.IsNull(homePlaceEventBus.CurrentHomeCoordinates);
+
+            // Act
+            identityCache.Identity.Returns(firstAccount);
+            identityCache.OnIdentityChanged += Raise.Event<Action>();
+
+            // Assert
+            Assert.AreEqual(firstHome, homePlaceEventBus.CurrentHomeCoordinates);
+        }
+
+        [Test]
+        public void NotPersistHomeWithoutAnAccount()
+        {
+            // Arrange
+            identityCache.Identity.Returns((IWeb3Identity?)null);
+            controller.Initialize();
+
+            // Act
+            homePlaceEventBus.SetAsHome(new Vector2Int(3, 4));
+
+            // Assert
+            Assert.IsTrue(controller.HomeIsSet);
+            Assert.IsFalse(HomeMarkerController.HasSerializedHome(identityCache));
         }
 	}
 }

@@ -79,7 +79,9 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
         {
             if (string.IsNullOrEmpty(urn)) return;
 
-            if (wearableStorage.TryGetElement(urn, out IWearable w))
+            // The storage also holds placeholders whose DTO is still being fetched (or failed to);
+            // every consumer of the outfit reads the DTO, so those must be fetched again like a missing one
+            if (wearableStorage.TryGetElement(urn, out IWearable w) && w.DTO != null)
                 result.Add(w);
             else
                 missingUrns.Add(urn);

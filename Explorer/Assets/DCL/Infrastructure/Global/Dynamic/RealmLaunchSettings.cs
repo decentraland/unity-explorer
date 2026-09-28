@@ -12,6 +12,7 @@ using DCL.FeatureFlags;
 using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.UserInAppInitializationFlow.StartupOperations;
 using DCL.Utility;
+using DCL.Web3.Identities;
 using Unity.Mathematics;
 using UnityEngine;
 
@@ -191,7 +192,8 @@ namespace Global.Dynamic
         private bool IsRealmAWorld(string realmParam) =>
             realmParam.IsEns();
 
-        public void CheckStartParcelOverride(IAppArgs appArgs, FeatureFlagsConfiguration featureFlagsConfigurationCache)
+        // The saved home honoured here belongs to the identity restored from the previous session, the only one known this early in the startup
+        public void CheckStartParcelOverride(IAppArgs appArgs, FeatureFlagsConfiguration featureFlagsConfigurationCache, IWeb3IdentityCache identityCache)
         {
             // Priority 1: App argument position (highest - from command line/Creator Hub)
             if (HasAppArgPosition(appArgs))
@@ -209,17 +211,17 @@ namespace Global.Dynamic
 
             // Priority 3: Serialized home (used when no feature flag exists, or feature flag is set to "0,0";
             // skipped when an explicit realm is requested, so a deep link cannot be overridden by the saved home)
-            if (HomeMarkerController.HasSerializedHome() && !HasAppArgRealm(appArgs) && (!hasDefaultSpawnFlag || parcelToTeleportOverride == "0,0"))
+            if (HomeMarkerController.HasSerializedHome(identityCache) && !HasAppArgRealm(appArgs) && (!hasDefaultSpawnFlag || parcelToTeleportOverride == "0,0"))
             {
-                if (HomeMarkerController.HasSerializedWorldName())
+                if (HomeMarkerController.DeserializeWorldName(identityCache) is { } homeWorldName)
                 {
-                    SetWorldRealm(HomeMarkerController.DeserializeWorldName()!);
+                    SetWorldRealm(homeWorldName);
                     return;
                 }
 
-                if (HomeMarkerController.HasSerializedPosition())
+                if (HomeMarkerController.Deserialize(identityCache) is { } homeParcel)
                 {
-                    targetScene = HomeMarkerController.Deserialize()!.Value;
+                    targetScene = homeParcel;
                     return;
                 }
             }

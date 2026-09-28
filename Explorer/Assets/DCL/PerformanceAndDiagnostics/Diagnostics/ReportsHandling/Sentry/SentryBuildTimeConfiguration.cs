@@ -1,4 +1,3 @@
-using Sentry;
 using Sentry.Unity;
 using System;
 using UnityEngine;
@@ -22,8 +21,6 @@ namespace DCL.Diagnostics.Sentry
         /// Learn more at https://docs.sentry.io/platforms/unity/configuration/options/#programmatic-configuration
         public override void Configure(SentryUnityOptions options)
         {
-            options.SetBeforeSend(AddUnspecifiedCategory);
-
             // Implements custom ANR tracing with minidumps and callstack collection
             SentryMonoBehaviour monoInstance = SentryMonoBehaviour.Instance;
             DclAnrIntegration anrIntegration = new DclAnrIntegration(monoInstance);
@@ -66,14 +63,6 @@ namespace DCL.Diagnostics.Sentry
             }
 #endif
 
-        }
-
-        private SentryEvent AddUnspecifiedCategory(SentryEvent @event)
-        {
-            if (!@event.Tags.ContainsKey("category"))
-                @event.SetTag("category", "UNSPECIFIED");
-
-            return @event;
         }
 
 #if UNITY_EDITOR

@@ -5,6 +5,7 @@ using Sentry;
 using Sentry.Unity;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -16,12 +17,30 @@ namespace DCL.Diagnostics.Sentry
 
         private static readonly TimeSpan SESSION_FLUSH_TIMEOUT = TimeSpan.FromSeconds(2);
         private const string UNKNOWN_SCENE_NAME = "unknown-scene";
+        private const string CATEGORY_TAG = "category";
 
-        // Un-actionable native engine messages, e.g. PhysX mesh-cooking warnings from creator assets (#7928)
-        private static readonly string[] SENTRY_IGNORED_NATIVE_MESSAGE_PREFIXES =
+        // Native engine messages are captured by the Sentry Unity SDK's own log integration and never pass through ReportHub,
+        // so they can only be filtered on the SDK's BeforeSend gateway. All of them are un-actionable for the client:
+        // PhysX mesh-cooking warnings from creator assets (#7928, #10148, #10181), libcurl transport failures (#10182)
+        // and camera projection warnings of off-screen points (#10154)
+        private static readonly string[] IGNORED_NATIVE_MESSAGE_PREFIXES =
         {
             "[Physics.PhysX]",
+            "Curl error ",
+            "Screen position out of view frustum",
         };
+
+        // Errors raised by scene code inside the ClearScript engine, matched by name so this assembly does not reference the engine (#10088, #10125)
+        private const string SCRIPT_ENGINE_EXCEPTION_TYPE = "Microsoft.ClearScript.ScriptEngineException";
+
+        // Connect failures of scene-owned websockets are the scene's problem; the same wrapper type is kept for the client's own sockets (#10103)
+        private const string SCENE_WEBSOCKET_EXCEPTION_TYPE = "Utility.Networking.WebSocketException";
+
+        // Thrown by the runtime's task machinery inside third-party transports (Sentry SDK, System.Net.Http) with no client frame (#10094, #10120, #10121, #10153)
+        private const string TASK_ALREADY_COMPLETED_MESSAGE = "An attempt was made to transition a task to a final state when it had already completed.";
+
+        // The user's disk is full: an environment condition, not a client defect (#10086)
+        private const string DISK_FULL_MESSAGE_PREFIX = "Disk full";
 
 #if UNITY_EDITOR
         private const string EDITOR_DSN_ENV_VAR = "DCL_SENTRY_DSN";
@@ -58,6 +77,9 @@ namespace DCL.Diagnostics.Sentry
 
             options.Enabled = true;
             options.TracesSampler = sentrySampler.Execute;
+
+            // The single gateway every event passes through, whether it was captured via ReportHub or directly by the SDK's integrations
+            options.SetBeforeSend(BeforeSend);
 
 #if UNITY_EDITOR
             // The asset carries a placeholder DSN that only CI replaces, so editor sessions resolve one from the environment instead.
@@ -177,13 +199,6 @@ namespace DCL.Diagnostics.Sentry
 
         private void CaptureMessage(string message, ReportData reportData, LogType logType)
         {
-            // Native messages always arrive as UNSPECIFIED; demote the ignored ones to breadcrumbs
-            if (reportData.Category == ReportCategory.UNSPECIFIED && IsIgnoredNativeMessage(message))
-            {
-                SentrySdk.AddBreadcrumb(message, reportData.Category, level: BreadcrumbLevel.Warning);
-                return;
-            }
-
             // Avoid reporting non-errors to sentry as separate issues (even if they are enabled in the matrix)
             // Report them as breadcrumbs instead
 
@@ -210,13 +225,74 @@ namespace DCL.Diagnostics.Sentry
             }
         }
 
+        /// <summary>
+        ///     Drops the events the client cannot act on, keeping them as breadcrumbs of the next real report,
+        ///     and tags the remaining ones with a category so Sentry can always filter by it.
+        /// </summary>
+        internal static SentryEvent? BeforeSend(SentryEvent @event)
+        {
+            string? category = @event.Tags.TryGetValue(CATEGORY_TAG, out string? tag) ? tag : null;
+
+            string? message = @event.Message?.Formatted ?? @event.Message?.Message;
+
+            if (message != null && IsIgnoredNativeMessage(message))
+                return Demote(message);
+
+            if (@event.Exception != null && IsIgnoredException(@event.Exception, category))
+                return Demote(@event.Exception.Message);
+
+            if (category == null)
+                @event.SetTag(CATEGORY_TAG, ReportCategory.UNSPECIFIED);
+
+            return @event;
+        }
+
+        private static SentryEvent? Demote(string message)
+        {
+            SentrySdk.AddBreadcrumb(message, level: BreadcrumbLevel.Warning);
+            return null;
+        }
+
         private static bool IsIgnoredNativeMessage(string message)
         {
-            for (var i = 0; i < SENTRY_IGNORED_NATIVE_MESSAGE_PREFIXES.Length; i++)
-                if (message.StartsWith(SENTRY_IGNORED_NATIVE_MESSAGE_PREFIXES[i], StringComparison.Ordinal))
+            for (var i = 0; i < IGNORED_NATIVE_MESSAGE_PREFIXES.Length; i++)
+                if (message.StartsWith(IGNORED_NATIVE_MESSAGE_PREFIXES[i], StringComparison.Ordinal))
                     return true;
 
             return false;
+        }
+
+        private static bool IsIgnoredException(Exception exception, string? category)
+        {
+            switch (exception)
+            {
+                // An aggregate (e.g. SceneExecutionException, an unobserved task) is ignored only when every inner exception is
+                case AggregateException aggregate:
+                    if (aggregate.InnerExceptions.Count == 0)
+                        return false;
+
+                    for (var i = 0; i < aggregate.InnerExceptions.Count; i++)
+                        if (!IsIgnoredException(aggregate.InnerExceptions[i], category))
+                            return false;
+
+                    return true;
+
+                case IOException:
+                    return exception.Message.StartsWith(DISK_FULL_MESSAGE_PREFIX, StringComparison.Ordinal);
+
+                case InvalidOperationException:
+                    return exception.Message.StartsWith(TASK_ALREADY_COMPLETED_MESSAGE, StringComparison.Ordinal);
+            }
+
+            string? typeName = exception.GetType().FullName;
+
+            if (typeName == SCRIPT_ENGINE_EXCEPTION_TYPE)
+                return true;
+
+            if (typeName == SCENE_WEBSOCKET_EXCEPTION_TYPE)
+                return category == ReportCategory.JAVASCRIPT;
+
+            return exception.InnerException != null && IsIgnoredException(exception.InnerException, category);
         }
 
         private bool IsValidConfiguration(SentryUnityOptions options) =>

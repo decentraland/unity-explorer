@@ -129,8 +129,12 @@ namespace MVC
             for (var i = 0; i < controllersClosures.Count; i++)
                 if (controllersClosures[i].controller == controller)
                 {
-                    controllersClosures[i].closer.TrySetResult();
+                    UniTaskCompletionSource closer = controllersClosures[i].closer;
+
+                    // Completing the closer resumes the controller's show flow synchronously, which pops further windows
+                    // and mutates this list re-entrantly, so the entry must be gone before the index can go stale
                     controllersClosures.RemoveAt(i);
+                    closer.TrySetResult();
                     break;
                 }
         }

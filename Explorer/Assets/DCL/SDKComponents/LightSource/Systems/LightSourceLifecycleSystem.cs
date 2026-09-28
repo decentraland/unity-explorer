@@ -61,9 +61,13 @@ namespace DCL.SDKComponents.LightSource.Systems
 
         [Query]
         [None(typeof(PBLightSource), typeof(DeleteEntityIntention))]
-        private void ReleaseLightSourceRemovedFromScene(in LightSourceComponent lightSourceComponent)
+        private void ReleaseLightSourceRemovedFromScene(Entity entity, in LightSourceComponent lightSourceComponent)
         {
             ReleaseLightSource(lightSourceComponent);
+
+            // The component must leave with its light: otherwise it is released again every frame and, once the scene
+            // re-adds PBLightSource, the properties system drives a pooled or already destroyed light
+            World.Remove<LightSourceComponent>(entity);
         }
 
         [Query]

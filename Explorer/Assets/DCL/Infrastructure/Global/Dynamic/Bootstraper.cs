@@ -287,9 +287,9 @@ namespace Global.Dynamic
             await dynamicWorldContainer.RealmController.SetRealmAsync(startingRealm.Value, ct);
         }
 
-        public void ApplyFeatureFlagConfigs(FeatureFlagsConfiguration featureFlagsConfigurationCache)
+        public void ApplyFeatureFlagConfigs(FeatureFlagsConfiguration featureFlagsConfigurationCache, IWeb3IdentityCache identityCache)
         {
-            realmLaunchSettings.CheckStartParcelOverride(appArgs, featureFlagsConfigurationCache);
+            realmLaunchSettings.CheckStartParcelOverride(appArgs, featureFlagsConfigurationCache, identityCache);
             webRequestsContainer.SetKTXEnabled(featureFlagsConfigurationCache.IsEnabled(FeatureFlagsStrings.KTX2_CONVERSION));
         }
 

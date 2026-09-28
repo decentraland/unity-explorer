@@ -210,7 +210,18 @@ namespace DCL.Prefs
             dataChanged = false;
 
             // Run save on a background thread
-            Task.Run(WriteToDisk);
+            Task.Run(WriteToDiskInBackground);
+        }
+
+        private void WriteToDiskInBackground()
+        {
+            try { WriteToDisk(); }
+            catch (IOException e)
+            {
+                // A full disk or a locked file is the user's environment, not a defect; the data stays in memory for the next save.
+                // Unobserved it would resurface as an unhandled exception on the finalizer thread.
+                Debug.LogWarning($"[DCLPlayerPrefs] Preferences could not be written to disk: {e.Message}");
+            }
         }
 
         public void SaveSync()
