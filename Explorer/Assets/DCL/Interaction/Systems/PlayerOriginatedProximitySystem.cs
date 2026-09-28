@@ -106,7 +106,7 @@ namespace DCL.Interaction.Systems
 
                 // Skip if scene entity has no pointer events of proximity type
                 if (!sceneEntityInfo.TryGetPointerEvents(out PBPointerEvents? pointerEvents)
-                    || !HasProximityEvent(in pointerEvents!))
+                    || !HasProximityEvent(in pointerEvents))
                     continue;
 
                 // Compute vector from player to target's collider closest point
@@ -115,7 +115,7 @@ namespace DCL.Interaction.Systems
                 float sqrDistanceToPlayer = toTargetVec.sqrMagnitude;
 
                 // Get minimum max player distance and highest priority among pointer events entries
-                GetMaxDistanceAndHighestPriority(pointerEvents!, out float maxPlayerDistance, out uint priority);
+                GetMaxDistanceAndHighestPriority(pointerEvents, out float maxPlayerDistance, out uint priority);
                 float sqrMaxPlayerDistance = maxPlayerDistance * maxPlayerDistance;
 
                 // Skip if no pointer event is close enough

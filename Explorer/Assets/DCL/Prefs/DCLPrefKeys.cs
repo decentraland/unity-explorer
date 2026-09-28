@@ -6,6 +6,10 @@ namespace DCL.Prefs
 
         public const string LAUNCH_COUNT = "LaunchCount";
 
+        // Fallback identity feature flags are evaluated against, generated on the first launch that carries no
+        // campaign id from the launcher. Persisted so the install keeps a stable A/B bucket.
+        public const string FEATURE_FLAGS_USER_ID = "FeatureFlagsUserId";
+
         // Developer-selected path to the Creator Hub executable, remembered across launches so the Chrome
         // DevTools bridge can relaunch it without re-prompting. Not an app-arg / deep-link input (SEC-005).
         public const string CREATOR_HUB_BIN_PATH = "CreatorHub.BinPath";

@@ -90,10 +90,12 @@ namespace DCL.McpServer.Core
         /// <summary>Materializes the accumulated fields into the JSON Schema object.</summary>
         public JObject Build()
         {
+            // additionalProperties is false so that an undeclared key is refused instead of ignored.
             var schema = new JObject
             {
                 ["type"] = "object",
                 ["properties"] = properties,
+                ["additionalProperties"] = false,
             };
 
             if (requiredNames.Count > 0)

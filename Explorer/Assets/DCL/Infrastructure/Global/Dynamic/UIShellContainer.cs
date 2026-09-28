@@ -91,8 +91,8 @@ namespace Global.Dynamic
         public ErrorPopupPlugin CreateErrorPopupPlugin(IAssetsProvisioner assetsProvisioner) =>
             new (MvcManager, assetsProvisioner);
 
-        public GenericPopupsPlugin CreateGenericPopupsPlugin(IAssetsProvisioner assetsProvisioner, IAccountLinkAuthenticator accountLinkAuthenticator, ISelfProfile selfProfile) =>
-            new (assetsProvisioner, MvcManager, ClipboardManager, accountLinkAuthenticator, selfProfile);
+        public GenericPopupsPlugin CreateGenericPopupsPlugin(IAssetsProvisioner assetsProvisioner, IAccountLinkAuthenticator accountLinkAuthenticator, ISelfProfile selfProfile, IInputBlock inputBlock) =>
+            new (assetsProvisioner, MvcManager, ClipboardManager, accountLinkAuthenticator, selfProfile, inputBlock);
 
         public ColorPickerPlugin CreateColorPickerPlugin(IAssetsProvisioner assetsProvisioner) =>
             new (assetsProvisioner, MvcManager);

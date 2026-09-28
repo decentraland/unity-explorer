@@ -209,9 +209,9 @@ namespace Global.Dynamic
             return anyFailure;
         }
 
-        public async UniTask InitializeFeatureFlagsAsync(IWeb3Identity? identity, IDecentralandUrlsSource decentralandUrlsSource, CancellationToken ct)
+        public async UniTask InitializeFeatureFlagsAsync(IDecentralandUrlsSource decentralandUrlsSource, CancellationToken ct)
         {
-            try { await featureFlagsProvider.InitializeAsync(decentralandUrlsSource, identity?.Address, appArgs, ct); }
+            try { await featureFlagsProvider.InitializeAsync(decentralandUrlsSource, appArgs, ct); }
             catch (Exception e) when (e is not OperationCanceledException)
             {
                 FeatureFlagsConfiguration.Reset();
