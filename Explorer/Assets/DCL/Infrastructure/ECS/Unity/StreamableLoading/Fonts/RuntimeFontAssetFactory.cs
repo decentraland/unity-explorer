@@ -1,6 +1,7 @@
 using DCL.Diagnostics;
 using System.Collections.Generic;
 using TMPro;
+using Unity.Profiling;
 using UnityEngine;
 using UnityEngine.TextCore.LowLevel;
 using UnityEngine.TextCore.Text;
@@ -22,6 +23,10 @@ namespace ECS.StreamableLoading.Fonts
         private const int REGULAR_WEIGHT_INDEX = 4;
         private const int BOLD_WEIGHT_INDEX = 7;
 
+        private static readonly ProfilerMarker CREATE_FAMILY_MARKER = new ($"{nameof(RuntimeFontAssetFactory)}.{nameof(Create)}");
+        private static readonly ProfilerMarker CREATE_TEXT_MESH_PRO_MARKER = new ($"{nameof(RuntimeFontAssetFactory)}.{nameof(CreateTextMeshProAsset)}");
+        private static readonly ProfilerMarker CREATE_UI_TOOLKIT_MARKER = new ($"{nameof(RuntimeFontAssetFactory)}.{nameof(CreateUIToolkitAsset)}");
+
         private readonly TMP_FontAsset referenceFont;
 
         public RuntimeFontAssetFactory(TMP_FontAsset referenceFont)
@@ -31,6 +36,8 @@ namespace ECS.StreamableLoading.Fonts
 
         public FontFamilyAssets? Create(string assetName, string regularFilePath, string? boldFilePath = null, string? italicFilePath = null, string? boldItalicFilePath = null)
         {
+            using ProfilerMarker.AutoScope _ = CREATE_FAMILY_MARKER.Auto();
+
             var textMeshProAssets = new List<TMP_FontAsset>(4);
             var uiToolkitAssets = new List<FontAsset>(4);
 
@@ -96,6 +103,8 @@ namespace ECS.StreamableLoading.Fonts
 
         private TMP_FontAsset? CreateTextMeshProAsset(string name, string filePath, List<TMP_FontAsset> owned)
         {
+            using ProfilerMarker.AutoScope _ = CREATE_TEXT_MESH_PRO_MARKER.Auto();
+
             TMP_FontAsset? asset = TMP_FontAsset.CreateFontAsset(filePath, 0, SAMPLING_POINT_SIZE, ATLAS_PADDING, RENDER_MODE, ATLAS_SIZE, ATLAS_SIZE);
 
             if (asset == null)
@@ -127,6 +136,8 @@ namespace ECS.StreamableLoading.Fonts
 
         private static FontAsset? CreateUIToolkitAsset(string name, string filePath, List<FontAsset> owned)
         {
+            using ProfilerMarker.AutoScope _ = CREATE_UI_TOOLKIT_MARKER.Auto();
+
             FontAsset? asset = FontAsset.CreateFontAsset(filePath, 0, SAMPLING_POINT_SIZE, ATLAS_PADDING, RENDER_MODE, ATLAS_SIZE, ATLAS_SIZE);
 
             if (asset == null)
