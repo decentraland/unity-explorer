@@ -7,6 +7,7 @@ using DCL.FeatureFlags;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Prefs;
+using DCL.Quality;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.SkyBox.Components;
 using ECS;
@@ -26,6 +27,7 @@ namespace DCL.SkyBox
         private readonly IScenesCache scenesCache;
         private readonly ISceneRestrictionBusController sceneRestrictionController;
         private readonly IRealmData realmData;
+        private readonly IRendererFeaturesCache rendererFeaturesCache;
         private readonly bool skyboxTimeEnabled;
 
         private SkyboxSettings settingsJson;
@@ -38,6 +40,7 @@ namespace DCL.SkyBox
             IScenesCache scenesCache,
             ISceneRestrictionBusController sceneRestrictionController,
             IRealmData realmData,
+            IRendererFeaturesCache rendererFeaturesCache,
             bool skyboxTimeEnabled = true)
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -45,6 +48,7 @@ namespace DCL.SkyBox
             this.scenesCache = scenesCache;
             this.sceneRestrictionController = sceneRestrictionController;
             this.realmData = realmData;
+            this.rendererFeaturesCache = rendererFeaturesCache;
             this.skyboxTimeEnabled = skyboxTimeEnabled;
         }
 
@@ -52,6 +56,10 @@ namespace DCL.SkyBox
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in GlobalPluginArguments arguments)
         {
+            // Tags the skybox entity so scene worlds can locate it and write their overrides
+            builder.World.Add(arguments.SkyboxEntity, new SceneSkyboxOverrides());
+            ApplySceneSkyboxOverridesSystem.InjectToWorld(ref builder, rendererFeaturesCache, skyboxRenderController, arguments.SkyboxEntity);
+
             if (skyboxTimeEnabled)
                 SkyboxTimeUpdateSystem.InjectToWorld(ref builder, skyboxSettings, scenesCache, sceneRestrictionController, skyboxRenderController, realmData, arguments.SkyboxEntity);
         }
@@ -80,6 +88,7 @@ namespace DCL.SkyBox
 
                 skyboxRenderController.Initialize(
                     skyboxSettings.SkyboxMaterial,
+                    skyboxSettings.PanoramicSkyboxMaterial,
                     directionalLight,
                     skyboxAnimation,
                     skyboxSettings.TimeOfDayNormalized,
@@ -102,48 +111,48 @@ namespace DCL.SkyBox
 
             return;
 
-            void SetInitialTime(SkyboxSettings jsonConfig, SkyboxSettingsAsset skyboxSettings, bool timeEnabled)
+            void SetInitialTime(SkyboxSettings jsonConfig, SkyboxSettingsAsset settings, bool timeEnabled)
             {
                 // When skybox time is disabled, pin the initial time to noon so it's independent of host
                 // clock / PlayerPrefs / FF — the update system that would honor those isn't injected here.
                 if (!timeEnabled)
                 {
                     const float NOON = 0.5f;
-                    skyboxSettings.TimeOfDayNormalized = NOON;
-                    skyboxSettings.TargetTimeOfDayNormalized = NOON;
-                    skyboxSettings.UIOverrideTimeOfDayNormalized = NOON;
-                    skyboxSettings.IsUIControlled = true;
-                    skyboxSettings.IsDayCycleEnabled = false;
+                    settings.TimeOfDayNormalized = NOON;
+                    settings.TargetTimeOfDayNormalized = NOON;
+                    settings.UIOverrideTimeOfDayNormalized = NOON;
+                    settings.IsUIControlled = true;
+                    settings.IsDayCycleEnabled = false;
                     return;
                 }
 
                 if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SKYBOX_FIXED_TIME))
                 {
                     float fixedTime = DCLPlayerPrefs.GetFloat(DCLPrefKeys.SKYBOX_FIXED_TIME);
-                    skyboxSettings.TimeOfDayNormalized = fixedTime;
-                    skyboxSettings.TargetTimeOfDayNormalized = fixedTime;
-                    skyboxSettings.UIOverrideTimeOfDayNormalized = fixedTime;
+                    settings.TimeOfDayNormalized = fixedTime;
+                    settings.TargetTimeOfDayNormalized = fixedTime;
+                    settings.UIOverrideTimeOfDayNormalized = fixedTime;
                     // Force the state to not cycle, as it was previously assigned by the user
-                    skyboxSettings.IsUIControlled = true;
-                    skyboxSettings.IsDayCycleEnabled = false;
+                    settings.IsUIControlled = true;
+                    settings.IsDayCycleEnabled = false;
                 }
                 else
                 {
                     if (jsonConfig.FixedTimeInSeconds != null)
                     {
                         float normalizedTime = SkyboxSettingsAsset.NormalizeTime(jsonConfig.FixedTimeInSeconds.Value);
-                        skyboxSettings.TimeOfDayNormalized = normalizedTime;
-                        skyboxSettings.TargetTimeOfDayNormalized = normalizedTime;
-                        skyboxSettings.UIOverrideTimeOfDayNormalized = normalizedTime;
+                        settings.TimeOfDayNormalized = normalizedTime;
+                        settings.TargetTimeOfDayNormalized = normalizedTime;
+                        settings.UIOverrideTimeOfDayNormalized = normalizedTime;
                         // Force the state to not cycle, as the time has been set by the feature flag
-                        skyboxSettings.IsUIControlled = true;
-                        skyboxSettings.IsDayCycleEnabled = false;
+                        settings.IsUIControlled = true;
+                        settings.IsDayCycleEnabled = false;
                     }
                     else
                     {
-                        float globalTime = skyboxSettings.GlobalTimeOfDayNormalized;
-                        skyboxSettings.TimeOfDayNormalized = globalTime;
-                        skyboxSettings.TargetTimeOfDayNormalized = globalTime;
+                        float globalTime = settings.GlobalTimeOfDayNormalized;
+                        settings.TimeOfDayNormalized = globalTime;
+                        settings.TargetTimeOfDayNormalized = globalTime;
                     }
                 }
             }

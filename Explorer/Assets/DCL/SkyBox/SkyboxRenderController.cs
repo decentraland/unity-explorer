@@ -77,15 +77,16 @@ public class SkyboxRenderController : MonoBehaviour
     [GradientUsage(true)] [SerializeField] private Gradient fogColorRamp;
 
     private Material skyboxMaterial;
+    private Material? panoramicSkyboxMaterial;
 
     private float directionalLightTimeOfDay = float.MinValue;
     private float targetTimeOfDay = float.MinValue;
-    private CancellationTokenSource transitionCancellationTokenSource;
+    private CancellationTokenSource? transitionCancellationTokenSource;
 
     [Header("Transition Settings")]
     [SerializeField] private float transitionDuration;
 
-    public void Initialize(Material skyboxMat, Light dirLight, AnimationClip skyboxAnimationClip, float initialTimeOfDay, bool lensFlareEnabled = true, bool freezeTime = false)
+    public void Initialize(Material skyboxMat, Material panoramicSkyboxMat, Light dirLight, AnimationClip skyboxAnimationClip, float initialTimeOfDay, bool lensFlareEnabled = true, bool freezeTime = false)
     {
         // Pre-seed transition target so UpdateSkybox below short-circuits and skips the directional-light
         // coroutine, whose first sync tick would Lerp from float.MinValue and clamp the gradient samplers.
@@ -104,6 +105,14 @@ public class SkyboxRenderController : MonoBehaviour
             skyboxMat = new Material(skyboxMat);
 #endif
             skyboxMaterial = skyboxMat;
+        }
+
+        if (panoramicSkyboxMat)
+        {
+#if UNITY_EDITOR
+            panoramicSkyboxMat = new Material(panoramicSkyboxMat);
+#endif
+            panoramicSkyboxMaterial = panoramicSkyboxMat;
         }
 
         if (dirLight)
@@ -154,6 +163,21 @@ public class SkyboxRenderController : MonoBehaviour
         UpdateDirectionalLight(initialTimeOfDay);
     }
 
+    /// <summary>
+    ///     Shows the equirectangular texture as the visible sky through the panoramic material; null restores the time-of-day skybox material.
+    ///     Time-of-day keeps updating the skybox material while it is swapped out, so restoring it is seamless.
+    /// </summary>
+    public void SetSkyboxOverride(Texture2D? equirect)
+    {
+        if (equirect != null && panoramicSkyboxMaterial != null)
+        {
+            panoramicSkyboxMaterial.mainTexture = equirect;
+            RenderSettings.skybox = panoramicSkyboxMaterial;
+        }
+        else
+            RenderSettings.skybox = skyboxMaterial;
+    }
+
     /// <summary>,
     ///     Calls all the necessary methods to update the skybox and environment
     /// </summary>
@@ -177,11 +201,11 @@ public class SkyboxRenderController : MonoBehaviour
 
         CancellationToken token = transitionCancellationTokenSource.Token;
         float startTime = directionalLightTimeOfDay;
-        float startTimeStamp = UnityEngine.Time.time;
+        float startTimeStamp = Time.time;
 
-        while (UnityEngine.Time.time - startTimeStamp < duration && !token.IsCancellationRequested)
+        while (Time.time - startTimeStamp < duration && !token.IsCancellationRequested)
         {
-            float progress = (UnityEngine.Time.time - startTimeStamp) / duration;
+            float progress = (Time.time - startTimeStamp) / duration;
             float lerpedTimeOfDay = Mathf.Lerp(startTime, newTimeOfDay, progress);
 
             directionalLightTimeOfDay = lerpedTimeOfDay;
@@ -228,15 +252,15 @@ public class SkyboxRenderController : MonoBehaviour
         }
 
         var directionalLightLocalScale = directionalLight.gameObject.transform.localScale;
-        RenderSettings.skybox.SetFloat(SUN_SIZE, directionalLightLocalScale.x);
-        RenderSettings.skybox.SetFloat(SUN_OPACITY, directionalLightLocalScale.y);
+        skyboxMaterial.SetFloat(SUN_SIZE, directionalLightLocalScale.x);
+        skyboxMaterial.SetFloat(SUN_OPACITY, directionalLightLocalScale.y);
 
         //sampling sun radiance and intensity curves
-        RenderSettings.skybox.SetFloat(SUN_RADIANCE, sunRadiance.Evaluate(timeOfDay));
-        RenderSettings.skybox.SetFloat(SUN_RADIANCE_INTENSITY, sunRadianceIntensity.Evaluate(timeOfDay));
+        skyboxMaterial.SetFloat(SUN_RADIANCE, sunRadiance.Evaluate(timeOfDay));
+        skyboxMaterial.SetFloat(SUN_RADIANCE_INTENSITY, sunRadianceIntensity.Evaluate(timeOfDay));
 
         //change size of moon mask
-        RenderSettings.skybox.SetFloat(MOON_MASK_SIZE, moonMaskSize.Evaluate(timeOfDay));
+        skyboxMaterial.SetFloat(MOON_MASK_SIZE, moonMaskSize.Evaluate(timeOfDay));
 
         UpdateLensFlare(timeOfDay);
     }
@@ -291,13 +315,13 @@ public class SkyboxRenderController : MonoBehaviour
     /// </summary>
     private void UpdateSkyboxColor(float timeOfDay)
     {
-        RenderSettings.skybox.SetColor(ZENIT_COLOR, skyZenitColorRamp.Evaluate(timeOfDay));
-        RenderSettings.skybox.SetColor(HORIZON_COLOR, skyHorizonColorRamp.Evaluate(timeOfDay));
-        RenderSettings.skybox.SetColor(NADIR_COLOR, skyNadirColorRamp.Evaluate(timeOfDay));
-        RenderSettings.skybox.SetColor(SUN_COLOR, sunColorRamp.Evaluate(timeOfDay));
-        RenderSettings.skybox.SetColor(RIM_COLOR, rimColorRamp.Evaluate(timeOfDay));
-        RenderSettings.skybox.SetColor(CLOUDS_COLOR, cloudsColorRamp.Evaluate(timeOfDay));
-        RenderSettings.skybox.SetFloat(CLOUD_HIGHLIGHTS, cloudsHighlightsIntensity.Evaluate(timeOfDay));
+        skyboxMaterial.SetColor(ZENIT_COLOR, skyZenitColorRamp.Evaluate(timeOfDay));
+        skyboxMaterial.SetColor(HORIZON_COLOR, skyHorizonColorRamp.Evaluate(timeOfDay));
+        skyboxMaterial.SetColor(NADIR_COLOR, skyNadirColorRamp.Evaluate(timeOfDay));
+        skyboxMaterial.SetColor(SUN_COLOR, sunColorRamp.Evaluate(timeOfDay));
+        skyboxMaterial.SetColor(RIM_COLOR, rimColorRamp.Evaluate(timeOfDay));
+        skyboxMaterial.SetColor(CLOUDS_COLOR, cloudsColorRamp.Evaluate(timeOfDay));
+        skyboxMaterial.SetFloat(CLOUD_HIGHLIGHTS, cloudsHighlightsIntensity.Evaluate(timeOfDay));
     }
 
     /// <summary>
@@ -341,7 +365,7 @@ public class SkyboxRenderController : MonoBehaviour
         //Added the flag to allow editing of the prefab in a separate scene
         //that doesn't have the regular plugin init flow
         if (editMode)
-            Initialize(RenderSettings.skybox, null!, null!, 0.5f);
+            Initialize(RenderSettings.skybox, null!, null!, null!, 0.5f);
     }
 #endif
 }

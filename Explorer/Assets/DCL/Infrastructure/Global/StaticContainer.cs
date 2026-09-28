@@ -326,6 +326,7 @@ namespace Global
                 new PrimaryPointerInfoPlugin(globalWorld, exposedGlobalDataContainer.ExposedCameraData),
                 promisesAnalyticsPlugin,
                 new SkyboxTimePlugin(),
+                new SceneSkyboxPlugin(globalWorld),
                 new AvatarLocomotionOverridesWorldPlugin(globalWorld, playerEntity),
 #if UNITY_EDITOR
                 new GizmosWorldPlugin(),

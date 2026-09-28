@@ -33,6 +33,7 @@ public class SkyboxToCubemapRenderPass : ScriptableRenderPass
         private readonly Material material;
         private readonly Material cubeCopyMaterial;
         private readonly Material cubeBlurMaterial;
+        private readonly Material equirectToCubeMaterial;
         private readonly ProfilingSampler profilingSampler_convolution;
         private readonly ProfilingSampler profilingSampler_remapping;
 
@@ -41,10 +42,13 @@ public class SkyboxToCubemapRenderPass : ScriptableRenderPass
         public Action<RTHandle> onGenerationComplete;
         internal Slice slice = Slice.Full;
         private Material skyboxMaterial;
+        private Texture overrideSource;
         private int skyBoxCubeMapWidth = 256;
         private int skyBoxCubeMapHeight = 256;
         private int mipCount = 9;
 
+        // Equirect shader vars
+        private readonly int kSLPropMainTex_equirect;
         // Copy shader vars
         private readonly int kSLPropMainTex_copy;
         private readonly int kSLPropLevel_copy;
@@ -57,14 +61,18 @@ public class SkyboxToCubemapRenderPass : ScriptableRenderPass
         private readonly int kSLPropCurrentCubeFace_blur;
         
 
-        public SkyboxToCubemapRenderPass(Material material, Material cubeCopyMaterial, Material cubeBlurMaterial)
+        public SkyboxToCubemapRenderPass(Material material, Material cubeCopyMaterial, Material cubeBlurMaterial, Material equirectToCubeMaterial)
         {
             this.material = material;
             this.cubeCopyMaterial = cubeCopyMaterial;
             this.cubeBlurMaterial = cubeBlurMaterial;
-            
+            this.equirectToCubeMaterial = equirectToCubeMaterial;
+
+            // Equirect shader vars
+            int tempPropId = equirectToCubeMaterial.shader.FindPropertyIndex("_MainTex");
+            kSLPropMainTex_equirect = equirectToCubeMaterial.shader.GetPropertyNameId(tempPropId);
             // Copy shader vars
-            int tempPropId = cubeCopyMaterial.shader.FindPropertyIndex("_MainTex");
+            tempPropId = cubeCopyMaterial.shader.FindPropertyIndex("_MainTex");
             kSLPropMainTex_copy = cubeCopyMaterial.shader.GetPropertyNameId(tempPropId);
             tempPropId = cubeCopyMaterial.shader.FindPropertyIndex("_MipLevel");
             kSLPropLevel_copy = cubeCopyMaterial.shader.GetPropertyNameId(tempPropId);
@@ -101,16 +109,36 @@ public class SkyboxToCubemapRenderPass : ScriptableRenderPass
             return this.skyboxMaterial != null;
         }
 
+        /// <summary>
+        ///     Equirectangular texture the Initial pass projects instead of rendering the skybox material; null renders the skybox material.
+        /// </summary>
+        internal void SetOverrideSource(Texture source)
+        {
+            overrideSource = source;
+        }
+
         public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
         {
             if (!material || !skyboxMaterial || !cubeCopyMaterial || !cubeBlurMaterial)
                 return;
 
-            // Copy properties from the original material as it is being constantly modified
-            material.CopyPropertiesFromMaterial(skyboxMaterial);
+            Material initialMaterial;
+
+            if (overrideSource && equirectToCubeMaterial)
+            {
+                // The shared property block only carries _CubemapFace, so the source texture goes on the material itself
+                equirectToCubeMaterial.SetTexture(kSLPropMainTex_equirect, overrideSource);
+                initialMaterial = equirectToCubeMaterial;
+            }
+            else
+            {
+                // Copy properties from the original material as it is being constantly modified
+                material.CopyPropertiesFromMaterial(skyboxMaterial);
+                initialMaterial = material;
+            }
 
             if (slice is Slice.Full or Slice.Initial)
-                AddInitialPass(renderGraph);
+                AddInitialPass(renderGraph, initialMaterial);
 
             if (slice is Slice.Full or Slice.BlurLow)
                 AddConvolutionPass(renderGraph, 1, BLUR_SPLIT_MIP);
@@ -123,12 +151,12 @@ public class SkyboxToCubemapRenderPass : ScriptableRenderPass
         }
 
         // PASS 1: Initial Skybox Rendering to Cubemap faces
-        private void AddInitialPass(RenderGraph renderGraph)
+        private void AddInitialPass(RenderGraph renderGraph, Material initialMaterial)
         {
             using (var builder = renderGraph.AddUnsafePass<CubeMapGenerationPassData>("SkyboxToCubemap_InitialRender", out var passData))
             {
                 passData.materialPropertyBlock = materialPropertyBlock;
-                passData.newMaterial = material;
+                passData.newMaterial = initialMaterial;
                 passData.skyBoxCubeMapRTHandle = skyBoxCubeMapRTHandle;
                 
                 builder.AllowPassCulling(false);
