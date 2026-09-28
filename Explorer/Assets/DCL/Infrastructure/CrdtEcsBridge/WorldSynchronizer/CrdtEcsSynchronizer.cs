@@ -47,7 +47,8 @@ namespace CrdtEcsBridge.WorldSynchronizer
         public void Dispose()
         {
             // Flagged first so a buffer the scene thread is about to apply is discarded instead of hitting the freed world
-            disposed = true;
+            // Flagged first so a buffer the scene thread is about to apply is discarded instead of hitting the freed world
+            Volatile.Write(ref disposed, true);
 
             reusableCommandBuffer.Dispose();
             semaphore.Dispose();
