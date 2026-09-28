@@ -93,8 +93,8 @@ public class SkyboxRenderController : MonoBehaviour
     private Material skyboxMaterial;
     private bool shaderTimeDisabled;
 
-    // x/y/z are preset statics, w is the per-frame backlight weight; see SkyboxGlobals.hlsl.
-    private Vector4 celestialParams = new (0f, 0f, 0f, 1f);
+    // x is a preset static, y the per-frame backlight weight; see SkyboxGlobals.hlsl.
+    private Vector4 celestialParams = new (0f, 1f, 0f, 0f);
 
     private float directionalLightTimeOfDay = float.MinValue;
     private float targetTimeOfDay = float.MinValue;
@@ -261,8 +261,8 @@ public class SkyboxRenderController : MonoBehaviour
         float noiseStrength = preset.UseSkyLut && preset.SkyHorizonNoise != null ? preset.SkyHorizonNoiseStrength : 0f;
         Shader.SetGlobalVector(HORIZON_NOISE_PARAMS, new Vector4(noiseStrength, preset.SkyHorizonNoiseTiling.x, preset.SkyHorizonNoiseTiling.y, preset.SkyHorizonNoiseSpeed));
 
-        // Disc darkening (height 0 = off) and the backlight mode; the backlight weight (w) is written per frame.
-        celestialParams = new Vector4(preset.DiscHorizonDarkening ? preset.DiscHorizonDarkeningHeight : 0f, preset.DiscHorizonDarkeningFloor, preset.ComputeCelestialPath ? 1f : 0f, celestialParams.w);
+        // Backlight mode; the backlight weight (y) is written per frame.
+        celestialParams.x = preset.ComputeCelestialPath ? 1f : 0f;
         Shader.SetGlobalVector(CELESTIAL_PARAMS, celestialParams);
 
         // Stars v2 statics; the per-phase brightness is written every frame by UpdateStarsV2.
@@ -455,7 +455,7 @@ public class SkyboxRenderController : MonoBehaviour
         }
 
         // The cloud backlight fades with the same dip that hides the disc, so its direction can switch bodies unseen.
-        celestialParams.w = 1f - swapDip;
+        celestialParams.y = 1f - swapDip;
         Shader.SetGlobalVector(CELESTIAL_PARAMS, celestialParams);
 
         // The clip carries intensity and the disc size as localScale.x; a preset curve overrides each when authored.

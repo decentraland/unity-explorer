@@ -92,4 +92,15 @@ void SunDisc_float(float3 Direction, float3 LightDirection, float SunSize, float
     SunAndMoon = clamp(sun + secondSun, 0.0, 1.0) * color * SunOpacity * SunOpacity * mask;
 }
 
+// Half-precision entry point, which the sub-graph preview shader asks for; the maths stays in float.
+void SunDisc_half(half3 Direction, half3 LightDirection, half SunSize, half4 SunColor, half SunOpacity,
+    half MoonMaskSize, half2 MoonMaskPosition, bool InvertDirection, half SecondSunSizeFactor,
+    half SecondSunRotationSpeed, half SecondSunOrbitSize, out half4 SunAndMoon)
+{
+    float4 result;
+    SunDisc_float(Direction, LightDirection, SunSize, SunColor, SunOpacity, MoonMaskSize, MoonMaskPosition,
+        InvertDirection, SecondSunSizeFactor, SecondSunRotationSpeed, SecondSunOrbitSize, result);
+    SunAndMoon = result;
+}
+
 #endif

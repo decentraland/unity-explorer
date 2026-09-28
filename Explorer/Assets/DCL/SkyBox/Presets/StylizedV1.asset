@@ -843,9 +843,6 @@ MonoBehaviour:
     m_ColorSpace: -1
     m_NumColorKeys: 4
     m_NumAlphaKeys: 2
-  discHorizonDarkening: 0
-  discHorizonDarkeningHeight: 0.2
-  discHorizonDarkeningFloor: 0.1
   skyZenitColorRamp:
     serializedVersion: 2
     key0: {r: 0.3, g: 0.34, b: 0.52, a: 1}

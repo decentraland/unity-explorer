@@ -85,9 +85,9 @@ void CloudsV2_Layer(float4 tex, float u, float4 layer, float opacity, float phas
     // bodies and keeps the symmetric term. The weight fades the rim out while the light crosses from sun to moon.
     float3 toSun = normalize(_DclSunDirection.xyz);
     float facing = dot(skyDir, toSun);
-    float hl = _DclCelestialParams.z > 0.5 ? facing : max(facing, -facing);
+    float hl = _DclCelestialParams.x > 0.5 ? facing : max(facing, -facing);
     float threshold = _DclCloudsParams.z;
-    float hlAlpha = pow(saturate((hl - threshold) / max(1.0 - threshold, 1e-3)), _DclCloudsParams.w) * _DclCloudsMode.y * _DclCelestialParams.w;
+    float hlAlpha = pow(saturate((hl - threshold) / max(1.0 - threshold, 1e-3)), _DclCloudsParams.w) * _DclCloudsMode.y * _DclCelestialParams.y;
     float t = lerp(tex.r, tex.g, hlAlpha);
 
     float3 shadow = _DclCloudShadowColor.rgb;

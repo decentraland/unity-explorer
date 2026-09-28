@@ -92,14 +92,6 @@ namespace DCL.SkyBox
         [Tooltip("Moon disc colour over its own rise (0) to set (1) progress.")]
         [GradientUsage(true)] [SerializeField] private Gradient moonColorRamp = new ();
 
-        [Header("Celestial disc")]
-        [Tooltip("Dims the disc and halo as the active body nears the horizon, like the Unreal celestial quad.")]
-        [SerializeField] private bool discHorizonDarkening;
-        [Tooltip("Sine of the elevation at which the disc is back to full brightness.")]
-        [Range(0.01f, 0.5f)] [SerializeField] private float discHorizonDarkeningHeight = 0.2f;
-        [Tooltip("Brightness multiplier at and below the horizon.")]
-        [Range(0f, 1f)] [SerializeField] private float discHorizonDarkeningFloor = 0.1f;
-
         [Header("Sun haze (near the horizon, computed path only)")]
         [Tooltip("Dresses the sun while it rises or sets: the disc grows, flattens, softens, takes a ragged rim and grades from the top colour to the bottom colour. Fades out above Sun Haze Height. Never applies to the moon.")]
         [SerializeField] private bool sunHaze;
@@ -256,9 +248,6 @@ namespace DCL.SkyBox
         public float ComputedMoonDiscSize => computedMoonDiscSize;
         public Vector2 ComputedMoonMaskOffset => computedMoonMaskOffset;
         public Gradient MoonColorRamp => moonColorRamp;
-        public bool DiscHorizonDarkening => discHorizonDarkening;
-        public float DiscHorizonDarkeningHeight => discHorizonDarkeningHeight;
-        public float DiscHorizonDarkeningFloor => discHorizonDarkeningFloor;
         public bool SunHaze => sunHaze;
         public float SunHazeHeight => sunHazeHeight;
         public float SunHazeSizeBoost => sunHazeSizeBoost;
