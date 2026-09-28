@@ -297,6 +297,7 @@ MonoBehaviour:
   editorRegionMin: {x: -2, y: 72}
   editorRegionMax: {x: 5, y: 79}
   editorOutputDir: 
+  editorBundleCacheDir: 
   editorBlockSize: 8
   editorPixelsPerParcel: 128
   editorHour: 10

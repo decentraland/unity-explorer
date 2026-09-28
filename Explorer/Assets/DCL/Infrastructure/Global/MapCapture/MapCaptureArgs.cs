@@ -40,6 +40,9 @@ namespace Global.MapCapture
         public readonly Vector2Int GridOrigin;
         public readonly string OutputDir;
 
+        /// <summary>Folder for Unity's asset bundle cache, or null to leave the default cache alone.</summary>
+        public readonly string? CacheDir;
+
         /// <summary>Parcels per rendered block side; each block becomes one image.</summary>
         public readonly int BlockSize;
         public readonly int PixelsPerParcel;
@@ -57,13 +60,14 @@ namespace Global.MapCapture
 
         public int RenderPixels => BlockSize * PixelsPerParcel;
 
-        private MapCaptureArgs(Vector2Int min, Vector2Int max, Vector2Int gridOrigin, string outputDir, int blockSize, int pixelsPerParcel, int outputPixels, bool jpeg,
+        private MapCaptureArgs(Vector2Int min, Vector2Int max, Vector2Int gridOrigin, string outputDir, string? cacheDir, int blockSize, int pixelsPerParcel, int outputPixels, bool jpeg,
             bool clientMap, int chunkSize, float hour, float cameraHeight, float loadTimeoutSec)
         {
             Min = min;
             Max = max;
             GridOrigin = gridOrigin;
             OutputDir = outputDir;
+            CacheDir = cacheDir;
             BlockSize = blockSize;
             PixelsPerParcel = pixelsPerParcel;
             OutputPixels = outputPixels;
@@ -81,7 +85,9 @@ namespace Global.MapCapture
             error = string.Empty;
 
             bool clientMap = args.HasFlag(AppArgsFlags.MapCapture.CLIENT_MAP);
-            bool hasRegion = args.TryGetValue(AppArgsFlags.MapCapture.REGION, out string? region) && TryParseRegion(region, out Vector2Int min, out Vector2Int max);
+            Vector2Int min = Vector2Int.zero;
+            Vector2Int max = Vector2Int.zero;
+            bool hasRegion = args.TryGetValue(AppArgsFlags.MapCapture.REGION, out string? region) && TryParseRegion(region, out min, out max);
 
             if (!hasRegion)
             {
@@ -103,6 +109,8 @@ namespace Global.MapCapture
                 ? dir
                 : Path.Combine(Application.persistentDataPath, DEFAULT_OUTPUT_FOLDER);
 
+            string? cacheDir = args.TryGetValue(AppArgsFlags.MapCapture.CACHE_DIR, out string? cache) && !string.IsNullOrWhiteSpace(cache) ? cache : null;
+
             if (clientMap)
             {
                 min = Vector2Int.Max(min, CLIENT_GRID_MIN);
@@ -114,7 +122,7 @@ namespace Global.MapCapture
                     return false;
                 }
 
-                result = new MapCaptureArgs(min, max, CLIENT_GRID_MIN, outputDir, CLIENT_CHUNK_PARCELS, CLIENT_RENDER_PIXELS_PER_PARCEL, CLIENT_CHUNK_PIXELS, true,
+                result = new MapCaptureArgs(min, max, CLIENT_GRID_MIN, outputDir, cacheDir, CLIENT_CHUNK_PARCELS, CLIENT_RENDER_PIXELS_PER_PARCEL, CLIENT_CHUNK_PIXELS, true,
                     true, CLIENT_CHUNK_PARCELS, hour, cameraHeight, loadTimeoutSec);
 
                 return true;
@@ -132,7 +140,7 @@ namespace Global.MapCapture
             int chunkSize = Mathf.Max(ReadInt(args, AppArgsFlags.MapCapture.CHUNK_SIZE, DEFAULT_CHUNK_SIZE), blockSize);
             chunkSize = (chunkSize + blockSize - 1) / blockSize * blockSize;
 
-            result = new MapCaptureArgs(min, max, min, outputDir, blockSize, pixelsPerParcel, blockSize * pixelsPerParcel, false,
+            result = new MapCaptureArgs(min, max, min, outputDir, cacheDir, blockSize, pixelsPerParcel, blockSize * pixelsPerParcel, false,
                 false, chunkSize, hour, cameraHeight, loadTimeoutSec);
 
             return true;

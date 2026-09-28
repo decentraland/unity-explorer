@@ -232,6 +232,12 @@ namespace Global.AppArgs
             ///     minimap fetches them. The region then selects chunks and defaults to the whole grid.
             /// </summary>
             public const string CLIENT_MAP = "map-capture-client-map";
+
+            /// <summary>
+            ///     Folder for Unity's asset bundle cache during the run, with no size cap. Without it bundles go to the
+            ///     default cache on the system drive, which is capped and evicts mid-run.
+            /// </summary>
+            public const string CACHE_DIR = "map-capture-cache";
         }
 
         public static class Multiplayer

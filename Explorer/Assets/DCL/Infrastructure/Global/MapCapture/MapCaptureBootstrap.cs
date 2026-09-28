@@ -35,6 +35,7 @@ using Global.Dynamic.Landscapes;
 using Global.Versioning;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading;
 using UnityEngine;
 
@@ -49,9 +50,12 @@ namespace Global.MapCapture
         private const string QUALITY_LEVEL = "High";
         private const string GENESIS_INSTALL_SOURCE = "";
 
-        public static async UniTask<MapCaptureRuntime> CreateAsync(IAppArgs appArgs, PluginSettingsContainer settingsContainer, Light directionalLight,
+        public static async UniTask<MapCaptureRuntime> CreateAsync(IAppArgs appArgs, string? bundleCacheDir, PluginSettingsContainer settingsContainer, Light directionalLight,
             DecentralandEnvironment environment, MonoBehaviour coroutineRunner, CancellationToken ct)
         {
+            if (bundleCacheDir != null)
+                RedirectBundleCache(bundleCacheDir);
+
             // Offline flags: only the switches the capture depends on, so a run never depends on the flags service.
             FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(CaptureFlags()));
             FeaturesRegistry.Initialize(new FeaturesRegistry(appArgs, false));
@@ -134,6 +138,22 @@ namespace Global.MapCapture
                 throw new InvalidOperationException($"Terrain generation failed: {terrain.Error?.Message}");
 
             return new MapCaptureRuntime(world, systems, staticContainer, realmData, feeder, camera, staticContainer.StaticSettings.SkyboxSettings);
+        }
+
+        /// <summary>
+        ///     Bundles download through Unity's own cache. Its default lives on the system drive and is size-capped, so
+        ///     a whole-city run points it at a folder of its own with no cap. Every cache stays readable; only writes move.
+        /// </summary>
+        private static void RedirectBundleCache(string directory)
+        {
+            Directory.CreateDirectory(directory);
+            Cache cache = Caching.AddCache(directory);
+
+            if (!cache.valid)
+                throw new InvalidOperationException($"Cannot use {directory} as the asset bundle cache");
+
+            cache.maximumAvailableStorageSpace = long.MaxValue;
+            Caching.currentCacheForWriting = cache;
         }
 
         private static FeatureFlagsResultDto CaptureFlags() =>

@@ -29,6 +29,7 @@ namespace Global.MapCapture
         [SerializeField] private Vector2Int editorRegionMin = new (-2, 72);
         [SerializeField] private Vector2Int editorRegionMax = new (5, 79);
         [SerializeField] private string editorOutputDir = string.Empty;
+        [SerializeField] private string editorBundleCacheDir = string.Empty;
         [SerializeField] private int editorBlockSize = 8;
         [SerializeField] private int editorPixelsPerParcel = 128;
         [SerializeField] private float editorHour = 10f;
@@ -67,7 +68,7 @@ namespace Global.MapCapture
                 return EXIT_BAD_ARGUMENTS;
             }
 
-            runtime = await MapCaptureBootstrap.CreateAsync(appArgs, pluginSettingsContainer, directionalLight, environment, this, ct);
+            runtime = await MapCaptureBootstrap.CreateAsync(appArgs, args.CacheDir, pluginSettingsContainer, directionalLight, environment, this, ct);
 
             MapCaptureJob.Summary summary = await new MapCaptureJob(runtime, args).RunAsync(ct);
             ReportHub.Log(ReportCategory.ENGINE, $"[MapCapture] {summary}");
@@ -95,6 +96,12 @@ namespace Global.MapCapture
 
             if (editorClientMap)
                 arguments.Add($"--{AppArgsFlags.MapCapture.CLIENT_MAP}");
+
+            if (!string.IsNullOrWhiteSpace(editorBundleCacheDir))
+            {
+                arguments.Add($"--{AppArgsFlags.MapCapture.CACHE_DIR}");
+                arguments.Add(editorBundleCacheDir);
+            }
 
             return new ApplicationParametersParser(arguments.ToArray());
         }
