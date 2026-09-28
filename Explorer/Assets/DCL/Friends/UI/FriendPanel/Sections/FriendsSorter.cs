@@ -12,7 +12,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
         public static void SortFriendList(List<BlockedProfile> blockedProfiles) =>
             blockedProfiles.Sort(static (r1, r2) => string.Compare(r1.Profile.Name, r2.Profile.Name, StringComparison.CurrentCulture));
 
-        internal static void SortFriendList(List<Profile.CompactInfo> friends) =>
+        public static void SortFriendList(List<Profile.CompactInfo> friends) =>
             friends.Sort(CACHED_PROFILE_COMPARISON);
 
         internal static void SortFriendRequestList(List<FriendRequest> friends) =>

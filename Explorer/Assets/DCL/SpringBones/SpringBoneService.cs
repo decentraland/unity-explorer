@@ -182,7 +182,7 @@ namespace DCL.SpringBones
                     {
                         int idx = baseIndex + j;
                         Transform t = managedTransforms[idx];
-                        float3 pos = (float3)t.position;
+                        float3 pos = t.position;
                         prevTails[idx] = pos;
                         currentTails[idx] = pos;
                         nextTails[idx] = pos;

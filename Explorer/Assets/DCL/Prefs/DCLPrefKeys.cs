@@ -124,5 +124,7 @@ namespace DCL.Prefs
         public const string CHAT_REACTION_FAVORITES = "ChatReaction_Favorites";
 
         public const string BUG_REPORT_PERFORMANCE_PROMPT_DISMISSED = "BugReport_PerformancePromptDismissed";
+
+        public const string SETTINGS_LOBBY_ENABLED = "Settings_LobbyEnabled";
     }
 }
