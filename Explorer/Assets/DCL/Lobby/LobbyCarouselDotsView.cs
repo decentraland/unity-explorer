@@ -6,13 +6,17 @@ using UnityEngine.UI;
 namespace DCL.Lobby
 {
     /// <summary>
-    ///     One dot per page of a paged rail, the selected one stretched and tinted. Dots are cloned from an inactive template child.
+    ///     One dot per page of a paged rail, the selected one stretched into a sliced pill and tinted. Dots are cloned from an inactive template child.
     /// </summary>
     public class LobbyCarouselDotsView : MonoBehaviour
     {
         private const float ANIMATION_DURATION = 0.2f;
 
         [SerializeField] private Image dotTemplate = null!;
+
+        // Sliced pill for the selected page, plain circle for the rest: a circle is not 9-sliceable and a sliced pill shrunk to a circle aliases
+        [SerializeField] private Sprite selectedSprite = null!;
+        [SerializeField] private Sprite unselectedSprite = null!;
         [SerializeField] private Color selectedColor = Color.white;
         [SerializeField] private Color unselectedColor = Color.gray;
         [SerializeField] private float selectedWidth = 24f;
@@ -46,8 +50,11 @@ namespace DCL.Lobby
                 if (!dots[i].gameObject.activeSelf) continue;
 
                 bool selected = i == page;
-                RectTransform dot = dots[i].rectTransform;
-                dots[i].color = selected ? selectedColor : unselectedColor;
+                Image image = dots[i];
+                RectTransform dot = image.rectTransform;
+                image.color = selected ? selectedColor : unselectedColor;
+                image.sprite = selected ? selectedSprite : unselectedSprite;
+                image.type = selected ? Image.Type.Sliced : Image.Type.Simple;
 
                 DOTween.To(() => dot.sizeDelta, size => dot.sizeDelta = size, new Vector2(selected ? selectedWidth : unselectedWidth, dot.sizeDelta.y), ANIMATION_DURATION)
                        .SetEase(Ease.OutCubic)
