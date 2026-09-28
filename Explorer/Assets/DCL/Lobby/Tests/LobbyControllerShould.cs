@@ -239,7 +239,7 @@ namespace DCL.Lobby.Tests
             Launch(isStartup: true);
 
             // Assert
-            Assert.That(welcomeText.text, Is.EqualTo("WELCOME!"));
+            Assert.That(welcomeText.text, Is.EqualTo("Welcome!"));
         }
 
         [Test]

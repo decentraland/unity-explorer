@@ -38,7 +38,7 @@ namespace DCL.Lobby
         [field: SerializeField, Min(0.1f)] public float BlendDepth { get; private set; } = 4f;
 
         [field: Tooltip("How abrupt the dissolve is inside the band: 0 is a smooth gradient over the whole depth, 1 is a hard cut at its middle")]
-        [field: SerializeField, Range(0f, 1f)] public float BlendHardness { get; private set; }
+        [field: SerializeField, Range(0f, 1f)] public float BlendHardness { get; private set; } = 0f;
 
         [field: Tooltip("Fraction of the image height kept below the blend line, so the visible band starts higher up the image")]
         [field: SerializeField, Range(0f, 0.9f)] public float ImageBelowBlend { get; private set; } = 0.35f;
@@ -59,7 +59,7 @@ namespace DCL.Lobby
 
         [field: Header("Vignette")]
         [field: Tooltip("How dark the rim of the frame gets; 0 turns the vignette off")]
-        [field: SerializeField, Range(0f, 1f)] public float VignetteIntensity { get; private set; }
+        [field: SerializeField, Range(0f, 1f)] public float VignetteIntensity { get; private set; } = 0f;
 
         [field: Tooltip("How far in from the corners the darkening reaches: small values keep it to a thin rim, 1 fades it all the way to the centre")]
         [field: SerializeField, Range(0.05f, 1f)] public float VignetteSmoothness { get; private set; } = 0.6f;

@@ -40,7 +40,7 @@ namespace DCL.Backpack
         public AssetReferenceSprite DeleteOutfitIcon { get; private set; }
 
         [field: SerializeField]
-        public AssetReferenceGameObject BackpackModalPrefab { get; private set; }
+        public AssetReferenceGameObject BackpackModalPrefab { get; private set; } = null!;
 
     }
 }

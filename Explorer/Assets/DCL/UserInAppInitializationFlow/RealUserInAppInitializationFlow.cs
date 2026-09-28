@@ -270,25 +270,27 @@ namespace DCL.UserInAppInitializationFlow
         private async UniTask<bool> WaitForLobbyJumpInAsync(CancellationToken ct)
         {
             startupLobbyGate = startupLobbyGate.SafeRestart();
-            CancellationTokenSource gate = startupLobbyGate;
+            CancellationToken gateToken = startupLobbyGate.Token;
 
             var jumpIn = new UniTaskCompletionSource();
 
             // The lobby steps aside for the panels it opens and comes back, so the flow waits for the pick rather than for the lobby leaving the screen
-            mvcManager.ShowAndForget(LobbyController.IssueCommand(new LobbyParameter(isStartup: true, () => jumpIn.TrySetResult(), gate.Token)), ct);
+            mvcManager.ShowAndForget(LobbyController.IssueCommand(new LobbyParameter(isStartup: true, () => jumpIn.TrySetResult(), gateToken)), ct);
 
-            using (CancellationTokenSource lobbyUp = CancellationTokenSource.CreateLinkedTokenSource(ct, gate.Token))
+            using (CancellationTokenSource lobbyUp = CancellationTokenSource.CreateLinkedTokenSource(ct, gateToken))
                 await jumpIn.Task.AttachExternalCancellation(lobbyUp.Token).SuppressCancellationThrow();
 
             ct.ThrowIfCancellationRequested();
 
-            bool jumpedIn = !gate.IsCancellationRequested;
+            bool jumpedIn = !gateToken.IsCancellationRequested;
 
             // A Logout execution may have opened its own lobby meanwhile; only the gate created here is released
-            if (startupLobbyGate == gate)
+            if (startupLobbyGate != null && startupLobbyGate.Token == gateToken)
+            {
+                startupLobbyGate.Dispose();
                 startupLobbyGate = null;
+            }
 
-            gate.Dispose();
             return jumpedIn;
         }
 
