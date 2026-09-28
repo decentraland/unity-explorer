@@ -177,7 +177,7 @@ namespace DCL.McpServer.Tools
             var cameraPosition = new Vector3(corner.x + (footprint / 2f), cameraHeight, corner.z + (footprint / 2f));
 
             // A square target makes the camera aspect 1, so the orthographic half-height spans exactly half the block.
-            FreeCameraProjectionState previousProjection = cinemachinePreset.ForceFreeCameraTopDownOrthographic(cameraPosition, footprint / 2f);
+            FreeCameraProjectionOverride projection = cinemachinePreset.ForceFreeCameraTopDownOrthographic(cameraPosition, footprint / 2f);
 
             try
             {
@@ -188,11 +188,11 @@ namespace DCL.McpServer.Tools
 
                 var structured = new JObject
                 {
-                    ["parcel"] = minParcel.ToParcel(),
+                    ["parcel"] = minParcel.ToParcelJson(),
                     ["size"] = size,
                     ["pixels"] = pixels,
                     ["loaded"] = pendingParcels.Count == 0,
-                    ["pendingParcels"] = new JArray(pendingParcels.ConvertAll(p => p.ToParcel())),
+                    ["pendingParcels"] = new JArray(pendingParcels.ConvertAll(p => p.ToParcelJson())),
                     ["playerMoved"] = playerMoved,
                     ["cameraSettled"] = cameraSettled,
                     ["skyboxSettled"] = skyboxSettled,
@@ -206,7 +206,7 @@ namespace DCL.McpServer.Tools
             finally
             {
                 await UniTask.SwitchToMainThread();
-                cinemachinePreset.RestoreFreeCameraProjection(in previousProjection);
+                projection.Dispose();
             }
         }
 

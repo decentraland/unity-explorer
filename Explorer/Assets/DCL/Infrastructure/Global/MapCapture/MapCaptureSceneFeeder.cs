@@ -1,0 +1,221 @@
+using Arch.Core;
+using CommunicationData.URLHelpers;
+using DCL.Diagnostics;
+using DCL.Ipfs;
+using DCL.LOD.Components;
+using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Roads.Components;
+using DCL.SceneRunner.Scene;
+using ECS;
+using ECS.LifeCycle.Components;
+using ECS.Prioritization.Components;
+using ECS.SceneLifeCycle;
+using ECS.SceneLifeCycle.IncreasingRadius;
+using ECS.SceneLifeCycle.SceneDefinition;
+using ECS.StreamableLoading.AssetBundles.InitialSceneState;
+using ECS.StreamableLoading.Common;
+using ECS.StreamableLoading.Common.Components;
+using System.Collections.Generic;
+using Unity.Mathematics;
+using UnityEngine;
+using Utility;
+
+namespace Global.MapCapture
+{
+    /// <summary>Marks the entities the feeder created, so a chunk unload touches nothing else.</summary>
+    public struct MapCaptureSceneTag { }
+
+    /// <summary>
+    ///     Feeds scene definition entities for explicit parcel lists instead of the player-centred radius streaming.
+    ///     Roads and LOD scenes get the same components the pointer loader would give them, so the existing road
+    ///     and ISS LOD_0 systems load them unchanged; readiness is answered per parcel.
+    /// </summary>
+    public class MapCaptureSceneFeeder
+    {
+        private readonly IDecentralandUrlsSource urls;
+        private readonly IScenesCache scenesCache;
+        private readonly IRealmData realmData;
+        private readonly HashSet<Vector2Int> roadCoordinates;
+        private readonly int batchSize;
+
+        private readonly Queue<List<int2>> pendingRequests = new ();
+        private readonly List<SceneEntityDefinition> definitionsBuffer = new ();
+        private readonly Dictionary<Vector2Int, Entity> entitiesByParcel = new ();
+        private readonly HashSet<string> sceneIds = new ();
+        private readonly HashSet<Vector2Int> emptyParcels = new ();
+        private readonly List<Entity> awaitingDescriptor = new ();
+
+        private AssetPromise<SceneDefinitions, GetSceneDefinitionList>? activePromise;
+
+        public bool HasRequestsInFlight => activePromise.HasValue || pendingRequests.Count > 0;
+
+        public MapCaptureSceneFeeder(IDecentralandUrlsSource urls, IScenesCache scenesCache, IRealmData realmData, HashSet<Vector2Int> roadCoordinates, int batchSize)
+        {
+            this.urls = urls;
+            this.scenesCache = scenesCache;
+            this.realmData = realmData;
+            this.roadCoordinates = roadCoordinates;
+            this.batchSize = Mathf.Max(1, batchSize);
+        }
+
+        public void Request(IReadOnlyList<Vector2Int> parcels)
+        {
+            var batch = new List<int2>(batchSize);
+
+            foreach (Vector2Int parcel in parcels)
+            {
+                if (IsCovered(parcel)) continue;
+
+                batch.Add(parcel.ToInt2());
+
+                if (batch.Count < batchSize) continue;
+
+                pendingRequests.Enqueue(batch);
+                batch = new List<int2>(batchSize);
+            }
+
+            if (batch.Count > 0)
+                pendingRequests.Enqueue(batch);
+        }
+
+        /// <summary>Main thread, once per frame from <see cref="MapCaptureFeedSystem" />.</summary>
+        public void Update(World world)
+        {
+            ConsumeActiveRequest(world);
+            StartNextRequest(world);
+            AttachLodInfo(world);
+        }
+
+        public bool IsParcelReady(World world, Vector2Int parcel, out bool failed)
+        {
+            failed = false;
+
+            if (emptyParcels.Contains(parcel) || realmData.WorldManifest.IsParcelKnownEmpty(parcel.x, parcel.y))
+                return true;
+
+            if (!entitiesByParcel.TryGetValue(parcel, out Entity entity) || !world.IsAlive(entity))
+                return false;
+
+            if (world.Has<RoadInfo>(entity))
+                return scenesCache.ContainsNonRealScene(parcel);
+
+            if (!world.TryGet(entity, out SceneLODInfo lodInfo) || !lodInfo.IsLODInstantiated(0))
+                return false;
+
+            failed = SceneLODInfoUtils.HasLODResult(lodInfo.metadata.FailedLODs, 0);
+            return true;
+        }
+
+        public void UnloadAll(World world)
+        {
+            foreach (Entity entity in awaitingDescriptor)
+                if (world.IsAlive(entity))
+                    world.Get<AssetPromise<ISSDescriptorMetadata, GetISSDescriptorIntention>>(entity).ForgetLoading(world);
+
+            awaitingDescriptor.Clear();
+
+            foreach (Entity entity in new HashSet<Entity>(entitiesByParcel.Values))
+                if (world.IsAlive(entity) && !world.Has<DeleteEntityIntention>(entity))
+                    world.Add(entity, new DeleteEntityIntention());
+
+            entitiesByParcel.Clear();
+            sceneIds.Clear();
+            emptyParcels.Clear();
+            pendingRequests.Clear();
+
+            if (!activePromise.HasValue) return;
+
+            activePromise.Value.ForgetLoading(world);
+            activePromise = null;
+        }
+
+        private bool IsCovered(Vector2Int parcel) =>
+            entitiesByParcel.ContainsKey(parcel) || emptyParcels.Contains(parcel) || realmData.WorldManifest.IsParcelKnownEmpty(parcel.x, parcel.y);
+
+        private void StartNextRequest(World world)
+        {
+            if (activePromise.HasValue || pendingRequests.Count == 0) return;
+
+            List<int2> pointers = pendingRequests.Dequeue();
+            definitionsBuffer.Clear();
+
+            activePromise = AssetPromise<SceneDefinitions, GetSceneDefinitionList>.Create(world,
+                new GetSceneDefinitionList(definitionsBuffer, pointers, new CommonLoadingArguments(urls.Url(DecentralandUrl.EntitiesActive))),
+                PartitionComponent.TOP_PRIORITY);
+        }
+
+        private void ConsumeActiveRequest(World world)
+        {
+            if (!activePromise.HasValue) return;
+
+            AssetPromise<SceneDefinitions, GetSceneDefinitionList> promise = activePromise.Value;
+
+            if (!promise.TryConsume(world, out StreamableLoadingResult<SceneDefinitions> result)) return;
+
+            activePromise = null;
+
+            if (result.Succeeded)
+            {
+                foreach (SceneEntityDefinition definition in result.Asset.Value)
+                    CreateSceneEntity(world, definition);
+            }
+            else
+                ReportHub.LogWarning(ReportCategory.SCENE_LOADING, $"[MapCapture] Scene definitions request failed: {result.Exception?.Message}");
+
+            // Requested parcels no definition claimed hold no scene (or could not be resolved): nothing to wait for there.
+            foreach (int2 pointer in promise.LoadingIntention.Pointers)
+            {
+                Vector2Int parcel = pointer.ToVector2Int();
+
+                if (!entitiesByParcel.ContainsKey(parcel))
+                    emptyParcels.Add(parcel);
+            }
+        }
+
+        private void CreateSceneEntity(World world, SceneEntityDefinition definition)
+        {
+            if (definition.pointers.Length == 0 || !sceneIds.Add(definition.id)) return;
+
+            var ipfsPath = new IpfsPath(definition.id, URLDomain.FromString(urls.Url(DecentralandUrl.Content)));
+            SceneDefinitionComponent component = SceneDefinitionComponentFactory.CreateFromDefinition(definition, ipfsPath, false, limitHeightByParcels: true);
+
+            var partition = new PartitionComponent { Bucket = 0, IsBehind = false, RawSqrDistance = 0f, OutOfRange = false, IsDirty = true };
+            ISSDescriptor descriptor = ISSDescriptor.CreateUninitialized();
+            Entity entity;
+
+            if (roadCoordinates.Contains(definition.metadata.scene.DecodedBase))
+                entity = world.Create(component, descriptor, RoadInfo.Create(), SceneLoadingState.CreateRoad(), partition, new MapCaptureSceneTag());
+            else
+            {
+                entity = world.Create(component, descriptor, SceneLoadingState.CreateHighQualityLOD(), partition, new MapCaptureSceneTag(),
+                    AssetPromise<ISSDescriptorMetadata, GetISSDescriptorIntention>.Create(world, GetISSDescriptorIntention.For(definition), partition));
+
+                awaitingDescriptor.Add(entity);
+            }
+
+            foreach (Vector2Int parcel in component.Parcels)
+                entitiesByParcel[parcel] = entity;
+        }
+
+        private void AttachLodInfo(World world)
+        {
+            for (int i = awaitingDescriptor.Count - 1; i >= 0; i--)
+            {
+                Entity entity = awaitingDescriptor[i];
+
+                if (!world.IsAlive(entity))
+                {
+                    awaitingDescriptor.RemoveAt(i);
+                    continue;
+                }
+
+                // UpdateSceneLODInfoSystem reads the descriptor the moment SceneLODInfo appears; attaching it
+                // before the descriptor resolves would send the scene down the legacy LOD path.
+                if (world.Get<ISSDescriptor>(entity).CurrentState == ISSDescriptorState.Uninitialized) continue;
+
+                world.Add(entity, SceneLODInfo.Create());
+                awaitingDescriptor.RemoveAt(i);
+            }
+        }
+    }
+}

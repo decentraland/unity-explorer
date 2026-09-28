@@ -212,6 +212,28 @@ namespace Global.AppArgs
         /// </summary>
         public const string SOFT_SHUTDOWN = "soft-shutdown";
 
+        /// <summary>
+        ///     Map-capture build only (the MapCapture scene): renders top-down tiles of a parcel region and exits.
+        /// </summary>
+        public static class MapCapture
+        {
+            /// <summary>Inclusive parcel bounds "x0,y0,x1,y1". Required.</summary>
+            public const string REGION = "map-capture-region";
+            public const string OUTPUT_DIR = "map-capture-out";
+            public const string BLOCK_SIZE = "map-capture-block";
+            public const string PIXELS_PER_PARCEL = "map-capture-ppp";
+            public const string HOUR = "map-capture-hour";
+            public const string CHUNK_SIZE = "map-capture-chunk";
+            public const string CAMERA_HEIGHT = "map-capture-height";
+            public const string LOAD_TIMEOUT_SEC = "map-capture-timeout";
+
+            /// <summary>
+            ///     Presence renders the client's own satellite grid: 40x40-parcel chunks as 512 px JPEGs named the way the
+            ///     minimap fetches them. The region then selects chunks and defaults to the whole grid.
+            /// </summary>
+            public const string CLIENT_MAP = "map-capture-client-map";
+        }
+
         public static class Multiplayer
         {
             public const string COMPRESSION = "compression";

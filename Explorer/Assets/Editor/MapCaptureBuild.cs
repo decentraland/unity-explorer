@@ -1,35 +1,32 @@
-using System.Linq;
 using UnityEditor;
+using UnityEditor.AddressableAssets.Settings;
 using UnityEngine;
 
 namespace Editor
 {
-    // Minimal local build for the map-capture pipeline (headless MCP-driven screenshots).
-    // Not part of the Cloud Build pipeline (see CloudBuild.cs) — just a plain BuildPipeline.BuildPlayer
-    // invocation so this can run via `Unity.exe -batchmode -quit -executeMethod Editor.MapCaptureBuild.Build`.
+    // Windows build of the MapCapture scene alone: `Unity.exe -batchmode -quit -executeMethod Editor.MapCaptureBuild.Build`.
+    // Not part of the Cloud Build pipeline (see CloudBuild.cs).
     public static class MapCaptureBuild
     {
+        private const string SCENE_PATH = "Assets/Scenes/MapCapture.unity";
+        private const string OUTPUT_PATH = "Builds/MapCapture/MapCapture.exe";
+
         public static void Build()
         {
-            string outputPath = "Builds/Windows/Explorer.exe";
-
-            string[] scenes = EditorBuildSettings.scenes
-                                                  .Where(s => s.enabled)
-                                                  .Select(s => s.path)
-                                                  .ToArray();
-
             // The project's default app icon (Assets/Textures/Icons/Logo.jpg) crashes Unity 6000.5.9f1's
-            // batch-mode AddIconToWindowsExecutable step. Irrelevant for a headless capture build, so clear
+            // batch-mode AddIconToWindowsExecutable step. Irrelevant for a capture build, so clear
             // it in-memory only (never saved back to ProjectSettings.asset) to skip that codepath entirely.
             PlayerSettings.SetIconsForTargetGroup(BuildTargetGroup.Unknown, new Texture2D[0]);
             PlayerSettings.SetIconsForTargetGroup(BuildTargetGroup.Standalone, new Texture2D[0]);
 
-            Debug.Log($"[MapCaptureBuild] Building {scenes.Length} scene(s) to {outputPath}");
+            AddressableAssetSettings.BuildPlayerContent();
+
+            Debug.Log($"[MapCaptureBuild] Building {SCENE_PATH} to {OUTPUT_PATH}");
 
             var options = new BuildPlayerOptions
             {
-                scenes = scenes,
-                locationPathName = outputPath,
+                scenes = new[] { SCENE_PATH },
+                locationPathName = OUTPUT_PATH,
                 target = BuildTarget.StandaloneWindows64,
                 options = BuildOptions.CleanBuildCache,
             };

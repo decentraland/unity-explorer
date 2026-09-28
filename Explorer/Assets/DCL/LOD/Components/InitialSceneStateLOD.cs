@@ -129,7 +129,8 @@ namespace DCL.LOD.Components
             SceneID = sceneID;
             if (ParentContainer == null)
                 ParentContainer = new GameObject($"{sceneID}_ISS_LOD");
-            ParentContainer.transform.position = sceneGeometryBaseParcelPosition;
+            // Lifted like a live scene's container, so the floor does not z-fight the terrain and roads at the same height.
+            ParentContainer.transform.position = sceneGeometryBaseParcelPosition + new Vector3(0, ParcelMathHelper.SCENE_CONTAINER_Y_OFFSET, 0);
         }
 
         /// <summary>

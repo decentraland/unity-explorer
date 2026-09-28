@@ -1,5 +1,6 @@
 ﻿using Cinemachine;
 using DCL.CharacterCamera.Components;
+using System;
 using UnityEngine;
 
 namespace DCL.CharacterCamera
@@ -44,56 +45,10 @@ namespace DCL.CharacterCamera
 
         /// <summary>
         ///     Points the free camera straight down from <paramref name="position" /> with an orthographic projection whose
-        ///     half-height is <paramref name="orthographicSize" />. Returns the state to hand back to
-        ///     <see cref="RestoreFreeCameraProjection" /> once the capture is done.
+        ///     half-height is <paramref name="orthographicSize" />. Dispose the result to restore the previous projection.
         /// </summary>
-        public static FreeCameraProjectionState ForceFreeCameraTopDownOrthographic(this ICinemachinePreset cinemachinePreset, Vector3 position, float orthographicSize)
-        {
-            CinemachineVirtualCamera vcam = cinemachinePreset.FreeCameraData.Camera;
-            CinemachinePOV? pov = cinemachinePreset.FreeCameraData.POV;
-            Camera? outputCamera = cinemachinePreset.Brain.OutputCamera;
-
-            var previous = new FreeCameraProjectionState(vcam.m_Lens.ModeOverride, vcam.m_Lens.OrthographicSize,
-                pov != null ? pov.m_VerticalAxis.m_MinValue : 0f, pov != null ? pov.m_VerticalAxis.m_MaxValue : 0f,
-                outputCamera != null && outputCamera.orthographic);
-
-            vcam.transform.position = position;
-            vcam.m_Lens.ModeOverride = LensSettings.OverrideModes.Orthographic;
-            vcam.m_Lens.OrthographicSize = orthographicSize;
-
-            if (pov != null)
-            {
-                // The rig clamps pitch just short of vertical; widen it for the capture so the view is exactly top-down.
-                pov.m_VerticalAxis.m_MinValue = -90f;
-                pov.m_VerticalAxis.m_MaxValue = 90f;
-                pov.m_VerticalAxis.Value = 90f;
-                pov.m_HorizontalAxis.Value = 0f;
-            }
-
-            return previous;
-        }
-
-        public static void RestoreFreeCameraProjection(this ICinemachinePreset cinemachinePreset, in FreeCameraProjectionState state)
-        {
-            CinemachineVirtualCamera vcam = cinemachinePreset.FreeCameraData.Camera;
-            CinemachinePOV? pov = cinemachinePreset.FreeCameraData.POV;
-
-            vcam.m_Lens.ModeOverride = state.ModeOverride;
-            vcam.m_Lens.OrthographicSize = state.OrthographicSize;
-
-            if (pov != null)
-            {
-                pov.m_VerticalAxis.m_MinValue = state.PitchMin;
-                pov.m_VerticalAxis.m_MaxValue = state.PitchMax;
-                pov.m_VerticalAxis.Value = Mathf.Clamp(pov.m_VerticalAxis.Value, state.PitchMin, state.PitchMax);
-            }
-
-            // The brain only pushes the projection while a lens override is active, so the output camera is reset by hand.
-            Camera? outputCamera = cinemachinePreset.Brain.OutputCamera;
-
-            if (outputCamera != null)
-                outputCamera.orthographic = state.OutputCameraOrthographic;
-        }
+        public static FreeCameraProjectionOverride ForceFreeCameraTopDownOrthographic(this ICinemachinePreset cinemachinePreset, Vector3 position, float orthographicSize) =>
+            new (cinemachinePreset, position, orthographicSize);
 
         public static void ForceFreeCameraLookAt(this ICinemachinePreset cinemachinePreset, CameraLookAtIntent lookAtIntent)
         {
@@ -138,22 +93,68 @@ namespace DCL.CharacterCamera
         }
     }
 
-    /// <summary>Free camera lens and aim state captured before a top-down orthographic override.</summary>
-    public readonly struct FreeCameraProjectionState
+    /// <summary>
+    ///     A top-down orthographic override of the free camera. Its state stays private so callers in assemblies
+    ///     that do not reference Cinemachine can hold and dispose it.
+    /// </summary>
+    public sealed class FreeCameraProjectionOverride : IDisposable
     {
-        public readonly LensSettings.OverrideModes ModeOverride;
-        public readonly float OrthographicSize;
-        public readonly float PitchMin;
-        public readonly float PitchMax;
-        public readonly bool OutputCameraOrthographic;
+        private const float TOP_DOWN_PITCH = 90f;
 
-        public FreeCameraProjectionState(LensSettings.OverrideModes modeOverride, float orthographicSize, float pitchMin, float pitchMax, bool outputCameraOrthographic)
+        private readonly ICinemachinePreset cinemachinePreset;
+        private readonly LensSettings.OverrideModes previousModeOverride;
+        private readonly float previousOrthographicSize;
+        private readonly float previousPitchMin;
+        private readonly float previousPitchMax;
+        private readonly bool previousOutputCameraOrthographic;
+
+        internal FreeCameraProjectionOverride(ICinemachinePreset cinemachinePreset, Vector3 position, float orthographicSize)
         {
-            ModeOverride = modeOverride;
-            OrthographicSize = orthographicSize;
-            PitchMin = pitchMin;
-            PitchMax = pitchMax;
-            OutputCameraOrthographic = outputCameraOrthographic;
+            this.cinemachinePreset = cinemachinePreset;
+
+            CinemachineVirtualCamera vcam = cinemachinePreset.FreeCameraData.Camera;
+            CinemachinePOV? pov = cinemachinePreset.FreeCameraData.POV;
+            Camera? outputCamera = cinemachinePreset.Brain.OutputCamera;
+
+            previousModeOverride = vcam.m_Lens.ModeOverride;
+            previousOrthographicSize = vcam.m_Lens.OrthographicSize;
+            previousPitchMin = pov != null ? pov.m_VerticalAxis.m_MinValue : 0f;
+            previousPitchMax = pov != null ? pov.m_VerticalAxis.m_MaxValue : 0f;
+            previousOutputCameraOrthographic = outputCamera != null && outputCamera.orthographic;
+
+            vcam.transform.position = position;
+            vcam.m_Lens.ModeOverride = LensSettings.OverrideModes.Orthographic;
+            vcam.m_Lens.OrthographicSize = orthographicSize;
+
+            if (pov == null) return;
+
+            // The rig clamps pitch just short of vertical; widen it for the capture so the view is exactly top-down.
+            pov.m_VerticalAxis.m_MinValue = -TOP_DOWN_PITCH;
+            pov.m_VerticalAxis.m_MaxValue = TOP_DOWN_PITCH;
+            pov.m_VerticalAxis.Value = TOP_DOWN_PITCH;
+            pov.m_HorizontalAxis.Value = 0f;
+        }
+
+        public void Dispose()
+        {
+            CinemachineVirtualCamera vcam = cinemachinePreset.FreeCameraData.Camera;
+            CinemachinePOV? pov = cinemachinePreset.FreeCameraData.POV;
+
+            vcam.m_Lens.ModeOverride = previousModeOverride;
+            vcam.m_Lens.OrthographicSize = previousOrthographicSize;
+
+            if (pov != null)
+            {
+                pov.m_VerticalAxis.m_MinValue = previousPitchMin;
+                pov.m_VerticalAxis.m_MaxValue = previousPitchMax;
+                pov.m_VerticalAxis.Value = Mathf.Clamp(pov.m_VerticalAxis.Value, previousPitchMin, previousPitchMax);
+            }
+
+            // The brain only pushes the projection while a lens override is active, so the output camera is reset by hand.
+            Camera? outputCamera = cinemachinePreset.Brain.OutputCamera;
+
+            if (outputCamera != null)
+                outputCamera.orthographic = previousOutputCameraOrthographic;
         }
     }
 }
