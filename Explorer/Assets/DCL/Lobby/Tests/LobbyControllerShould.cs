@@ -1573,7 +1573,7 @@ namespace DCL.Lobby.Tests
         private static LobbyPlaceCardView CreatePlaceCard(Transform parent, string name)
         {
             // The card measures its header and footer in Awake, so the object stays inactive until the fields are assigned
-            var cardGo = new GameObject(name);
+            var cardGo = new GameObject(name, typeof(RectTransform));
             cardGo.SetActive(false);
             cardGo.transform.SetParent(parent);
             LobbyPlaceCardView card = cardGo.AddComponent<LobbyPlaceCardView>();
@@ -1616,7 +1616,7 @@ namespace DCL.Lobby.Tests
 
         private static LobbyLiveEventCardView CreateLiveEventCard(Transform parent, string name)
         {
-            var cardGo = new GameObject(name);
+            var cardGo = new GameObject(name, typeof(RectTransform));
             cardGo.transform.SetParent(parent);
             LobbyLiveEventCardView card = cardGo.AddComponent<LobbyLiveEventCardView>();
 
