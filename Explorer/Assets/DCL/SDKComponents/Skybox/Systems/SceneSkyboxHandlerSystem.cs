@@ -191,18 +191,18 @@ namespace DCL.SDKComponents.Skybox.Systems
             ref SceneSkyboxOverrides overrides = ref globalWorld.Get<SceneSkyboxOverrides>(globalSkyboxEntity);
             overrides.ReflectionMap = component.ReflectionMap.TextureData?.EnsureTexture2D();
             overrides.SkyboxTexture = component.SkyboxTexture.TextureData?.EnsureTexture2D();
-            overrides.OwnerBaseParcel = sceneInfo.BaseParcel;
+            overrides.Owner = sceneInfo;
         }
 
         private void ClearOverridesIfOwner()
         {
             ref SceneSkyboxOverrides overrides = ref globalWorld.Get<SceneSkyboxOverrides>(globalSkyboxEntity);
 
-            if (overrides.OwnerBaseParcel != sceneInfo.BaseParcel) return;
+            if (overrides.Owner is not { } owner || !owner.Equals(sceneInfo)) return;
 
             overrides.ReflectionMap = null;
             overrides.SkyboxTexture = null;
-            overrides.OwnerBaseParcel = null;
+            overrides.Owner = null;
         }
     }
 }

@@ -29,9 +29,9 @@ namespace DCL.SDKComponents.Skybox.Tests
         private const string SRC_A = "images/a.png";
         private const string SRC_B = "images/b.png";
 
-        // The scene world created by the base fixture reports Vector2Int.zero as its base parcel
-        private static readonly Vector2Int OWN_PARCEL = Vector2Int.zero;
-        private static readonly Vector2Int OTHER_PARCEL = new (5, 5);
+        // The base fixture's scene world holds SceneShortInfo((0,0), "TEST"); the other scene shares the base parcel like a portable experience
+        private static readonly SceneShortInfo OWN_SCENE = new (Vector2Int.zero, "TEST");
+        private static readonly SceneShortInfo OTHER_SCENE = new (Vector2Int.zero, "PORTABLE_EXPERIENCE");
 
         private readonly List<Texture2D> textures = new ();
 
@@ -114,7 +114,7 @@ namespace DCL.SDKComponents.Skybox.Tests
             // Assert
             Assert.That(Override(reflection), Is.SameAs(data.EnsureTexture2D()));
             Assert.That(Override(!reflection), Is.Null);
-            Assert.That(Overrides().OwnerBaseParcel, Is.EqualTo(OWN_PARCEL));
+            Assert.That(Overrides().Owner, Is.EqualTo(OWN_SCENE));
             Assert.That(Slot(reflection).TextureData, Is.SameAs(data));
             Assert.That(Slot(reflection).LoadingPromise, Is.Null);
         }
@@ -156,7 +156,7 @@ namespace DCL.SDKComponents.Skybox.Tests
 
             // Assert
             Assert.That(Override(reflection), Is.SameAs(data.EnsureTexture2D()));
-            Assert.That(Overrides().OwnerBaseParcel, Is.EqualTo(OWN_PARCEL));
+            Assert.That(Overrides().Owner, Is.EqualTo(OWN_SCENE));
             Assert.That(Slot(reflection).LoadingPromise, Is.Null);
         }
 
@@ -167,14 +167,14 @@ namespace DCL.SDKComponents.Skybox.Tests
             Texture2D foreignTexture = CreateTexture();
             ref SceneSkyboxOverrides overrides = ref Overrides();
             overrides.SkyboxTexture = foreignTexture;
-            overrides.OwnerBaseParcel = OTHER_PARCEL;
+            overrides.Owner = OTHER_SCENE;
 
             // Act
             system.OnSceneIsCurrentChanged(false);
 
             // Assert
             Assert.That(Overrides().SkyboxTexture, Is.SameAs(foreignTexture));
-            Assert.That(Overrides().OwnerBaseParcel, Is.EqualTo(OTHER_PARCEL));
+            Assert.That(Overrides().Owner, Is.EqualTo(OTHER_SCENE));
         }
 
         [Test]
@@ -309,7 +309,7 @@ namespace DCL.SDKComponents.Skybox.Tests
             // Assert
             Assert.That(Overrides().ReflectionMap, Is.Null);
             Assert.That(Overrides().SkyboxTexture, Is.SameAs(skyboxData.EnsureTexture2D()));
-            Assert.That(Overrides().OwnerBaseParcel, Is.EqualTo(OWN_PARCEL));
+            Assert.That(Overrides().Owner, Is.EqualTo(OWN_SCENE));
             Assert.That(Slot(true).TextureData, Is.Null);
             Assert.That(Slot(false).TextureData, Is.SameAs(skyboxData));
         }
@@ -329,7 +329,7 @@ namespace DCL.SDKComponents.Skybox.Tests
             // Assert
             Assert.That(Overrides().ReflectionMap, Is.SameAs(reflectionData.EnsureTexture2D()));
             Assert.That(Overrides().SkyboxTexture, Is.SameAs(skyboxData.EnsureTexture2D()));
-            Assert.That(Overrides().OwnerBaseParcel, Is.EqualTo(OWN_PARCEL));
+            Assert.That(Overrides().Owner, Is.EqualTo(OWN_SCENE));
         }
 
         private static TextureUnion FileTexture(string src) =>
@@ -395,7 +395,7 @@ namespace DCL.SDKComponents.Skybox.Tests
         {
             Assert.That(Overrides().ReflectionMap, Is.Null);
             Assert.That(Overrides().SkyboxTexture, Is.Null);
-            Assert.That(Overrides().OwnerBaseParcel, Is.Null);
+            Assert.That(Overrides().Owner, Is.Null);
         }
     }
 }

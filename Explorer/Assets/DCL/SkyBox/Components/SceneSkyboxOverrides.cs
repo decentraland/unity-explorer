@@ -1,3 +1,4 @@
+using DCL.Diagnostics;
 using UnityEngine;
 
 namespace DCL.SkyBox.Components
@@ -10,7 +11,8 @@ namespace DCL.SkyBox.Components
     {
         public Texture2D? ReflectionMap;
         public Texture2D? SkyboxTexture;
-        public Vector2Int? OwnerBaseParcel;
+        // Full scene identity: base parcels are not unique, portable experiences usually share (0,0) with world scenes
+        public SceneShortInfo? Owner;
 
         public Texture2D? AppliedSkyboxTexture;
         public Texture2D? AppliedReflectionSource;
