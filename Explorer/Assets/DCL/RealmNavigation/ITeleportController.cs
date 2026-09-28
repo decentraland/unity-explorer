@@ -1,4 +1,5 @@
-﻿using Cysharp.Threading.Tasks;
+﻿using CommunicationData.URLHelpers;
+using Cysharp.Threading.Tasks;
 using DCL.Ipfs;
 using DCL.Utilities;
 using DCL.Utility.Types;
@@ -31,18 +32,43 @@ namespace DCL.RealmNavigation
         }
     }
 
+    /// <summary>
+    ///     Which rule of the launch settings picked the startup destination.
+    /// </summary>
+    public enum StartParcelSource
+    {
+        Default,
+        LaunchArgument,
+        EditorOverride,
+        Home,
+        FeatureFlag,
+    }
+
     public class StartParcel
     {
+        private readonly Vector2Int launchValue;
+        private readonly string? launchSpawnPointName;
+
         private Vector2Int value;
         private bool consumed;
 
-        public StartParcel(Vector2Int value, string? spawnPointName = null)
+        public StartParcel(Vector2Int value, string? spawnPointName = null, StartParcelSource source = StartParcelSource.Default)
         {
+            launchValue = value;
+            launchSpawnPointName = spawnPointName;
             this.value = value;
             SpawnPointName = spawnPointName;
+            Source = source;
         }
 
         public string? SpawnPointName { get; private set; }
+
+        public StartParcelSource Source { get; }
+
+        /// <summary>
+        ///     Realm the startup teleport lands in. Unset keeps the realm chosen at bootstrap.
+        /// </summary>
+        public URLDomain? Realm { get; private set; }
 
         public bool IsConsumed() =>
             consumed;
@@ -55,10 +81,28 @@ namespace DCL.RealmNavigation
             return AssignResult.Ok;
         }
 
+        public AssignResult AssignRealm(URLDomain realm)
+        {
+            if (consumed) return AssignResult.ParcelAlreadyConsumed;
+            Realm = realm;
+            return AssignResult.Ok;
+        }
+
         public Vector2Int ConsumeByTeleportOperation()
         {
             consumed = true;
             return value;
+        }
+
+        /// <summary>
+        ///     Puts the launch destination back and lets it be assigned and consumed again, as if the session had just started.
+        /// </summary>
+        public void Reset()
+        {
+            value = launchValue;
+            SpawnPointName = launchSpawnPointName;
+            Realm = null;
+            consumed = false;
         }
 
         public Vector2Int Peek() =>

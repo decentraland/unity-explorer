@@ -4,6 +4,7 @@ using DCL.ChatArea;
 using DCL.ExplorePanel;
 using DCL.Friends.UI.FriendPanel;
 using DCL.InWorldCamera.PhotoDetail;
+using DCL.Lobby;
 using DCL.MarketplaceCredits;
 using DCL.MarketplaceCredits.Purchase.TopUp.UI;
 using DCL.MarketplaceCredits.Purchase.UI;
@@ -46,6 +47,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
                 { typeof(FriendsPanelController), CreateAnalytics<FriendsPanelController>(c => new FriendsPanelAnalytics(analytics, c)) },
                 { typeof(PersistentFriendPanelOpenerController), CreateAnalytics<PersistentFriendPanelOpenerController>(c => new PersistentFriendPanelOpenerAnalytics(analytics, c)) },
                 { typeof(ExplorePanelController), CreateAnalytics<ExplorePanelController>(c => new ExplorePanelAnalytics(analytics, c)) },
+                { typeof(LobbyController), CreateAnalytics<LobbyController>(c => new LobbyAnalytics(analytics, c)) },
                 { typeof(ProfileNameEditorController), CreateAnalytics<ProfileNameEditorController>(c => new ProfileNameEditorAnalytics(analytics, c)) },
                 { typeof(MarketplaceCreditsMenuController), CreateAnalytics<MarketplaceCreditsMenuController>(c => new MarketplaceCreditsAnalytics(analytics, c)) },
                 { typeof(CreditsTopUpModalController), CreateAnalytics<CreditsTopUpModalController>(c => new CreditsTopUpAnalytics(analytics, c)) },

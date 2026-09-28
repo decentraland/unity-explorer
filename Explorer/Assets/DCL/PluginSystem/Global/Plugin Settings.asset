@@ -56,6 +56,7 @@ MonoBehaviour:
   - rid: 3022170012058910723
   - rid: 3414978285727645699
   - rid: 4107643854440628226
+  - rid: 4933664074294100087
   - rid: 1970080267461197826
   - rid: 634089542387236867
   - rid: 8813103964372074592
@@ -226,6 +227,12 @@ MonoBehaviour:
             m_SubObjectGUID: 
             m_EditorAssetChanged: 0
           <DeleteOutfitIcon>k__BackingField:
+            m_AssetGUID: 
+            m_SubObjectName: 
+            m_SubObjectType: 
+            m_SubObjectGUID: 
+            m_EditorAssetChanged: 0
+          <BackpackModalPrefab>k__BackingField:
             m_AssetGUID: 
             m_SubObjectName: 
             m_SubObjectType: 
@@ -537,6 +544,12 @@ MonoBehaviour:
               Culture=neutral, PublicKeyToken=null
             m_SubObjectGUID: 
             m_EditorAssetChanged: 1
+          <BackpackModalPrefab>k__BackingField:
+            m_AssetGUID: ebd7609b18c5429db0cd1ac5fdc1b8b8
+            m_SubObjectName: 
+            m_SubObjectType: 
+            m_SubObjectGUID: 
+            m_EditorAssetChanged: 0
         <EmbeddedEmotes>k__BackingField: []
         <SettingsMenuConfiguration>k__BackingField: {fileID: 11400000, guid: b47b66eab8da46b4cbcc30100e4194e0, type: 2}
         <GeneralAudioMixer>k__BackingField:
@@ -1106,6 +1119,48 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         GenericContextMenuButtonListPrefab:
           m_AssetGUID: 03dabb815fc004f9581a9528b72c106f
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+    - rid: 4933664074294100087
+      type: {class: LobbyPlugin/LobbyPluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        <LobbyPrefab>k__BackingField:
+          m_AssetGUID: 8a935b6a6ff72445ab1c4a9bbba48cd1
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <StagePrefab>k__BackingField:
+          m_AssetGUID: 656920c5c75f2fdfa40685df8aa57d37
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <AvatarSettings>k__BackingField:
+          <FlavourEmotes>k__BackingField:
+          - wave
+          - fistpump
+          - dab
+          <MinSecondsBetweenFlavourEmotes>k__BackingField: 8
+          <MaxSecondsBetweenFlavourEmotes>k__BackingField: 20
+          <ProfileUpdatedEmoteURN>k__BackingField: fistpump
+          <PostProcessing>k__BackingField: 0
+        <NotificationIconTypes>k__BackingField:
+          m_AssetGUID: 4b896bc1397444f00a2b45725af2b263
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <NotificationDefaultThumbnails>k__BackingField:
+          m_AssetGUID: 594ae6e7cd408424cb8433ddba60315d
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <RarityColorMappings>k__BackingField:
+          m_AssetGUID: 04a7ffcd277754f7c91237894604f522
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 
