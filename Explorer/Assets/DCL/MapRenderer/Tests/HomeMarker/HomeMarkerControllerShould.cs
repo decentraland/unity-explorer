@@ -11,6 +11,7 @@ using NSubstitute;
 using NUnit.Framework;
 using UnityEngine;
 using Utility;
+using Object = UnityEngine.Object;
 
 namespace DCL.MapRenderer.Tests.HomeMarker
 {
