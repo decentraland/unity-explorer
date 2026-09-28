@@ -5,6 +5,9 @@ using DCL.SDKEntityTriggerArea.Components;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
+using DCL.SDKComponents.AvatarModifierArea.Components;
+using DCL.SDKComponents.CameraModeArea.Components;
+using DCL.SDKComponents.TriggerArea.Components;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle;
@@ -40,9 +43,11 @@ namespace DCL.SDKEntityTriggerArea.Systems
         }
 
         [Query]
-        [None(typeof(DeleteEntityIntention), typeof(PBCameraModeArea), typeof(PBAvatarModifierArea), typeof(PBTriggerArea))]
+        [None(typeof(DeleteEntityIntention), typeof(PBCameraModeArea), typeof(PBAvatarModifierArea), typeof(PBTriggerArea),
+            typeof(AvatarModifierAreaComponent), typeof(CameraModeAreaComponent), typeof(TriggerAreaComponent))]
         private void HandleComponentRemoval(Entity entity, ref SDKEntityTriggerAreaComponent component)
         {
+            // Consumer components are excluded above because releasing the area clears the CurrentEntitiesInside their removal handlers still read (#10032).
             component.TryRelease(poolRegistry);
             World.Remove<SDKEntityTriggerAreaComponent>(entity);
         }
