@@ -18,6 +18,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using Utility;
 using Object = UnityEngine.Object;
 
 namespace DCL.SkyBox
@@ -31,8 +32,12 @@ namespace DCL.SkyBox
         private readonly IRealmData realmData;
         private readonly IDebugContainerBuilder debugBuilder;
         private readonly bool skyboxTimeEnabled;
+        private readonly CancellationTokenSource debugLookCancellation = new ();
 
         private SkyboxSettings settingsJson;
+
+        // One slot per debug entry, filled the first time that look is picked.
+        private ProvidedAsset<SkyboxLookPreset>?[] debugLookPresets = Array.Empty<ProvidedAsset<SkyboxLookPreset>?>();
 
         private SkyboxSettingsAsset? skyboxSettings;
         private SkyboxRenderController? skyboxRenderController;
@@ -54,7 +59,13 @@ namespace DCL.SkyBox
             this.skyboxTimeEnabled = skyboxTimeEnabled;
         }
 
-        public void Dispose() { }
+        public void Dispose()
+        {
+            debugLookCancellation.SafeCancelAndDispose();
+
+            for (var i = 0; i < debugLookPresets.Length; i++)
+                debugLookPresets[i]?.Dispose();
+        }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in GlobalPluginArguments arguments)
         {
@@ -89,14 +100,13 @@ namespace DCL.SkyBox
                     directionalLight,
                     skyboxAnimation,
                     skyboxSettings.TimeOfDayNormalized,
-                    lensFlareEnabled,
-                    freezeTime: !skyboxTimeEnabled
+                    lensFlareEnabled
                 );
 
                 if (!skyboxTimeEnabled)
                     skyboxRenderController.DisableSkyboxTime();
 
-                AddLookPresetDebugWidget(skyboxRenderController);
+                AddLookPresetDebugWidget(skyboxRenderController, skyboxSettings);
             }
             catch (OperationCanceledException)
             {
@@ -157,22 +167,55 @@ namespace DCL.SkyBox
             }
         }
 
-        private void AddLookPresetDebugWidget(SkyboxRenderController controller)
+        /// <summary>
+        ///     Debug dropdown to compare looks at runtime. Index 0 is the look the prefab ships with, already loaded;
+        ///     the others come from the settings entries and are loaded the first time they are picked, so nothing
+        ///     but the shipped look is resident until then.
+        /// </summary>
+        private void AddLookPresetDebugWidget(SkyboxRenderController controller, SkyboxSettingsAsset settings)
         {
-            IReadOnlyList<SkyboxLookPreset> presets = controller.AvailablePresets;
+            SkyboxSettingsAsset.LookPresetEntry[] entries = settings.DebugLookPresets;
 
-            if (presets.Count == 0)
+            if (entries.Length == 0)
                 return;
 
-            var names = new List<string>(presets.Count);
+            SkyboxLookPreset shippedPreset = controller.Preset;
+            debugLookPresets = new ProvidedAsset<SkyboxLookPreset>?[entries.Length];
 
-            for (var i = 0; i < presets.Count; i++)
-                names.Add(presets[i].name);
+            var names = new List<string>(entries.Length + 1) { shippedPreset.name };
 
-            var binding = new IndexedElementBinding(names, controller.Preset.name, evt => controller.ApplyPreset(presets[evt.index]));
+            for (var i = 0; i < entries.Length; i++)
+                names.Add(entries[i].Name);
+
+            var binding = new IndexedElementBinding(names, shippedPreset.name, evt => SwitchLookAsync(controller, shippedPreset, entries, evt.index, debugLookCancellation.Token).Forget());
 
             debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.SKYBOX)
                        ?.AddControl(new DebugDropdownDef(binding, "Look preset"), null);
+        }
+
+        private async UniTaskVoid SwitchLookAsync(SkyboxRenderController controller, SkyboxLookPreset shippedPreset, SkyboxSettingsAsset.LookPresetEntry[] entries, int index, CancellationToken ct)
+        {
+            try
+            {
+                SkyboxLookPreset preset = shippedPreset;
+
+                if (index > 0)
+                {
+                    ProvidedAsset<SkyboxLookPreset>? loaded = debugLookPresets[index - 1];
+
+                    if (loaded == null)
+                    {
+                        loaded = await assetsProvisioner.ProvideMainAssetAsync(entries[index - 1].Preset, ct);
+                        debugLookPresets[index - 1] = loaded;
+                    }
+
+                    preset = loaded.Value.Value;
+                }
+
+                controller.ApplyPreset(preset);
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e) { ReportHub.LogException(e, ReportCategory.SKYBOX); }
         }
 
         [Serializable]

@@ -32,3 +32,11 @@ MonoBehaviour:
     m_SubObjectType: 
     m_SubObjectGUID: 
     m_EditorAssetChanged: 0
+  DebugLookPresets:
+  - Name: StylizedV1
+    Preset:
+      m_AssetGUID: 0296d6a0d77243a7833863a582c2f4ba
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0

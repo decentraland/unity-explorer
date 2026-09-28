@@ -87,7 +87,7 @@ namespace DCL.SkyBox
         [Range(0f, 0.5f)] [SerializeField] private float computedMoonMaskSize = 0.16f;
         [Tooltip("Disc size while the moon is the active body, so the crescent keeps one shape all night instead of following the Sun Size curve.")]
         [Range(0.01f, 0.5f)] [SerializeField] private float computedMoonDiscSize = 0.12f;
-        [Tooltip("Where the crescent hole sits relative to the moon, in its own frame (x = right, y = up, radians), constant all night. The legacy Moon Mask Position is a world-space nudge and changes shape as the moon moves.")]
+        [Tooltip("Where the crescent hole sits relative to the moon, in its own frame (x = right, y = up, radians), constant all night. Replaces the legacy Moon Mask Position, a world-space nudge that changes shape as the moon moves.")]
         [SerializeField] private Vector2 computedMoonMaskOffset = new (-0.009f, -0.007f);
         [Tooltip("Moon disc colour over its own rise (0) to set (1) progress.")]
         [GradientUsage(true)] [SerializeField] private Gradient moonColorRamp = new ();
@@ -126,7 +126,8 @@ namespace DCL.SkyBox
 
         [Header("Sky Lookup (phase x elevation)")]
         [Tooltip("Replaces the zenith/horizon/nadir bands with a per-phase colour-over-elevation lookup. "
-                 + "The rim (horizon band) is disabled while this is on because the band is authored inside these gradients.")]
+                 + "The rim (horizon band) is disabled while this is on because the band is authored inside these gradients. "
+                 + "Also selects the stylized shader variant: the legacy sky, stars and cloud cubemap are compiled out, so Stars v2 and Clouds v2 need this on.")]
         [SerializeField] private bool useSkyLut;
         [Tooltip("Colour over elevation, 0 = horizon, 1 = zenith. One gradient per phase anchor.")]
         [GradientUsage(true)] [SerializeField] private Gradient skyNight = new ();
@@ -174,7 +175,7 @@ namespace DCL.SkyBox
         [SerializeField] private AnimationCurve cloudsHighlightsIntensity = new ();
 
         [Header("Clouds v2 (layered strips)")]
-        [Tooltip("Replaces the cloud cubemap with up to three packed strips (R shading, G backlit look, B growth order, A mask).")]
+        [Tooltip("Replaces the cloud cubemap with up to three packed strips (R shading, G backlit look, B growth order, A mask). Needs Use Sky Lut; off with it on means no clouds.")]
         [SerializeField] private bool useCloudsV2;
         [Tooltip("Colour clouds through the shadow-to-lit ramp instead of a flat tint.")]
         [SerializeField] private bool cloudsV2Ramp = true;

@@ -1381,8 +1381,8 @@ MonoBehaviour:
   rimSpread: 0.362
   rimOpacity: 0.94
   starsBrightness: 0
-  starsTexture: {fileID: 2800000, guid: 1f19dbb2b85e7a94987d2b6cb4687dde, type: 3}
-  cloudsCubemap: {fileID: 8900000, guid: eb386b27e6fba534cb691c004ef063be, type: 3}
+  starsTexture: {fileID: 0}
+  cloudsCubemap: {fileID: 0}
   cloudOpacity: 1
   cloudsRotationSpeed: 0.01
   moonMaskPosition: {x: 0.01, y: -0.01}

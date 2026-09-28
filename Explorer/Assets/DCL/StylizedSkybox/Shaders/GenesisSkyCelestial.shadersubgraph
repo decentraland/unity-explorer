@@ -1491,7 +1491,7 @@
     "m_SourceType": 0,
     "m_FunctionName": "SunDisc",
     "m_FunctionSource": "507b067651070107151c4d1d5bfd7209",
-    "m_FunctionSourceUsePragmas": true,
+    "m_FunctionSourceUsePragmas": false,
     "m_FunctionBody": "Enter function body here..."
 }
 

@@ -15,13 +15,12 @@
 TEXTURE2D(_DclHorizonNoise); SAMPLER(sampler_DclHorizonNoise);
 float4 _DclHorizonNoiseParams; // strength, tilingU, tilingV, speed (0 strength = off)
 
-float SkyLut_HorizonNoise(float3 skyDir, float elevation)
+// `azimuth` is in turns, `elevationDeg` in degrees; both come from SkyLut_float so the trig runs once per pixel.
+float SkyLut_HorizonNoise(float azimuth, float elevationDeg)
 {
     float strength = _DclHorizonNoiseParams.x;
     if (strength <= 0.0) return 0.0;
 
-    float azimuth = atan2(skyDir.x, skyDir.z) / (2.0 * DCL_SKY_LUT_PI);
-    float elevationDeg = degrees(asin(clamp(skyDir.y, -1.0, 1.0)));
     float vDome = (90.0 - elevationDeg) / DCL_SKY_LUT_DOME_SPAN_DEG;
 
     float2 uv = float2(azimuth * _DclHorizonNoiseParams.y + _TimeParameters.x * _DclHorizonNoiseParams.w, vDome * _DclHorizonNoiseParams.z);
@@ -168,15 +167,15 @@ float SkyLut_ShootingStars(float2 sky, float time, float rate)
     return streak * sin(p * DCL_SKY_LUT_PI) * fires;
 }
 
-float3 SkyLut_Stars(float3 skyDir)
+// `azimuth` is in turns, `elevationRad` in radians; both come from SkyLut_float so the trig runs once per pixel.
+float3 SkyLut_Stars(float3 skyDir, float azimuth, float elevationRad)
 {
     float brightness = _DclStarsParams.x;
     float shootingRate = _DclStarsParams.w;
     if (brightness <= 0.0 && shootingRate <= 0.0) return 0.0;
 
     float time = _TimeParameters.x;
-    float azimuth = atan2(skyDir.x, skyDir.z) / (2.0 * DCL_SKY_LUT_PI);
-    float elevation = asin(clamp(skyDir.y, -1.0, 1.0)) / DCL_SKY_LUT_PI + 0.5;
+    float elevation = elevationRad / DCL_SKY_LUT_PI + 0.5;
 
     // The field turns slowly about the zenith.
     float turn = time * _DclStarsParams2.z * 2.0 * DCL_SKY_LUT_PI;
@@ -194,17 +193,25 @@ float3 SkyLut_Stars(float3 skyDir)
     return (star * brightness + shooting) * horizonFade;
 }
 
+// The _DCL_SKY_STYLIZED variant (global keyword, set by SkyboxRenderController with the preset) draws the lookup and the
+// stars; the other variant passes the legacy sky through. UseLut is kept for the graph wiring but the keyword decides.
 void SkyLut_float(UnityTexture2D Lut, float Phase, float3 ViewDirectionWS, float4 Fallback, float UseLut, out float4 Out)
 {
+#ifdef _DCL_SKY_STYLIZED
     // Fed from the same wire as the sky subgraph's Direction input: the per-pixel direction into the sky, valid in the cubemap bake too.
     float3 skyDir = normalize(ViewDirectionWS);
-    float elevation = saturate(skyDir.y + SkyLut_HorizonNoise(skyDir, skyDir.y));
+    float azimuth = atan2(skyDir.x, skyDir.z) / (2.0 * DCL_SKY_LUT_PI);
+    float elevationRad = asin(clamp(skyDir.y, -1.0, 1.0));
+    float elevation = saturate(skyDir.y + SkyLut_HorizonNoise(azimuth, degrees(elevationRad)));
 
     float rowV = Phase * (DCL_SKY_LUT_ROWS - 1.0) / DCL_SKY_LUT_ROWS + 0.5 / DCL_SKY_LUT_ROWS;
     float3 lut = SAMPLE_TEXTURE2D(Lut.tex, Lut.samplerstate, float2(elevation, rowV)).rgb;
 
-    Out = UseLut > 0.5 ? float4(lut, Fallback.a) : Fallback;
-    Out.rgb += SkyLut_Stars(skyDir);
+    Out = float4(lut, Fallback.a);
+    Out.rgb += SkyLut_Stars(skyDir, azimuth, elevationRad);
+#else
+    Out = Fallback;
+#endif
 }
 
 #endif

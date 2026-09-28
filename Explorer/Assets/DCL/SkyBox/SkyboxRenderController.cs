@@ -1,12 +1,8 @@
 using DCL.Diagnostics;
 using DCL.SkyBox;
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
-using Cysharp.Threading.Tasks;
-using System.Threading;
-using Utility;
 
 public class SkyboxRenderController : MonoBehaviour
 {
@@ -42,6 +38,11 @@ public class SkyboxRenderController : MonoBehaviour
     private static readonly int SECOND_SUN_SIZE_FACTOR = Shader.PropertyToID("_Second_Sun_Size_Factor");
     private static readonly int SECOND_SUN_ORBIT_SIZE = Shader.PropertyToID("_Second_Sun_Orbit_Size");
 
+    // Selects the stylized shader variant (sky lookup, stars v2, cloud strips) or the legacy one; global, so the
+    // reflection bake follows. Declared as a multi_compile keyword on both sky graphs. Set by name: a GlobalKeyword
+    // cannot be created while the component is being constructed, and this is written once per preset.
+    private const string STYLIZED_KEYWORD = "_DCL_SKY_STYLIZED";
+
     // Sky lookup (phase x elevation). The float switch is copied to the reflection bake material along with the texture.
     private static readonly int USE_SKY_LUT = Shader.PropertyToID("_UseSkyLut");
     private static readonly int SKY_LUT = Shader.PropertyToID("_SkyLut");
@@ -67,6 +68,7 @@ public class SkyboxRenderController : MonoBehaviour
     private static readonly int STARS_PARAMS = Shader.PropertyToID("_DclStarsParams");
     private static readonly int STARS_PARAMS2 = Shader.PropertyToID("_DclStarsParams2");
     private static readonly int STARS_PARAMS3 = Shader.PropertyToID("_DclStarsParams3");
+    private static readonly int MOON_MASK_OFFSET = Shader.PropertyToID("_DclMoonMaskOffset");
     private static readonly int SUN_HAZE_PARAMS = Shader.PropertyToID("_DclSunHazeParams");
     private static readonly int SUN_HAZE_PARAMS2 = Shader.PropertyToID("_DclSunHazeParams2");
     private static readonly int SUN_HAZE_TOP = Shader.PropertyToID("_DclSunHazeTop");
@@ -77,10 +79,8 @@ public class SkyboxRenderController : MonoBehaviour
     private const float CELESTIAL_SWAP_INTENSITY_DIP = 0.99f;
 
     [Header("Look")]
+    [Tooltip("The look that ships; alternatives for the debug dropdown live on the skybox settings asset.")]
     [SerializeField] private SkyboxLookPreset preset = null!;
-
-    [Tooltip("Presets offered by the debug panel dropdown for runtime comparison.")]
-    [SerializeField] private SkyboxLookPreset[] availablePresets = Array.Empty<SkyboxLookPreset>();
 
     [Header("Directional Light")]
     [SerializeField] private Light directionalLight;
@@ -96,27 +96,19 @@ public class SkyboxRenderController : MonoBehaviour
     // x is a preset static, y the per-frame backlight weight; see SkyboxGlobals.hlsl.
     private Vector4 celestialParams = new (0f, 1f, 0f, 0f);
 
-    private float directionalLightTimeOfDay = float.MinValue;
-    private float targetTimeOfDay = float.MinValue;
-    private CancellationTokenSource transitionCancellationTokenSource;
+    // Time the palette and light were last evaluated at; MinValue until Initialize.
+    private float currentTimeOfDay = float.MinValue;
 
-    [Header("Transition Settings")]
-    [SerializeField] private float transitionDuration;
+    // Light intensity before the crossover dip; the fallback for an empty intensity curve on the computed path.
+    private float lightIntensityBeforeDip;
+
+    // Whether the disc currently shows the moon; written with the light, read for the disc colour.
+    private bool moonActive;
 
     public SkyboxLookPreset Preset => preset;
 
-    public IReadOnlyList<SkyboxLookPreset> AvailablePresets => availablePresets;
-
-    public void Initialize(Material skyboxMat, Light dirLight, AnimationClip skyboxAnimationClip, float initialTimeOfDay, bool lensFlareEnabled = true, bool freezeTime = false)
+    public void Initialize(Material skyboxMat, Light dirLight, AnimationClip skyboxAnimationClip, float initialTimeOfDay, bool lensFlareEnabled = true)
     {
-        // Pre-seed transition target so UpdateSkybox below short-circuits and skips the directional-light
-        // coroutine, whose first sync tick would Lerp from float.MinValue and clamp the gradient samplers.
-        if (freezeTime)
-        {
-            directionalLightTimeOfDay = initialTimeOfDay;
-            targetTimeOfDay = initialTimeOfDay;
-        }
-
         if (skyboxMat)
         {
 #if UNITY_EDITOR
@@ -159,15 +151,12 @@ public class SkyboxRenderController : MonoBehaviour
             else
                 lightAnimator.AddClip(lightAnimation, lightAnimation.name);
 
+            lightIntensityBeforeDip = directionalLight.intensity;
             InitializeLensFlare(lensFlareEnabled);
         }
 
         ApplyPresetStatics();
-
         UpdateSkybox(initialTimeOfDay);
-
-        directionalLightTimeOfDay = initialTimeOfDay;
-        UpdateDirectionalLight(initialTimeOfDay);
     }
 
     /// <summary>
@@ -183,19 +172,17 @@ public class SkyboxRenderController : MonoBehaviour
         RefreshLook();
     }
 
-    /// <summary>,
-    ///     Calls all the necessary methods to update the skybox and environment
+    /// <summary>
+    ///     Evaluates the light and the palette at the time of day. The light goes first so the disc colour can
+    ///     read which body it belongs to. A repeated time (paused clock) is skipped.
     /// </summary>
     public void UpdateSkybox(float timeOfDay)
     {
-        UpdatePalette(timeOfDay);
+        if (currentTimeOfDay == timeOfDay) return;
 
-        // we update light in intervals to hide visible artifacts for moving shadows (anti-aliasing related, espescially on the benches)
-        if (!Mathf.Approximately(targetTimeOfDay, timeOfDay))
-        {
-            targetTimeOfDay = timeOfDay;
-            StartDirectionalLightTransitionAsync(timeOfDay, transitionDuration).Forget();
-        }
+        currentTimeOfDay = timeOfDay;
+        UpdateDirectionalLight(timeOfDay);
+        UpdatePalette(timeOfDay);
     }
 
     public void DisableSkyboxTime()
@@ -207,21 +194,15 @@ public class SkyboxRenderController : MonoBehaviour
         // Override shader-side time per-material to disable stars rotation and sky oscillation,
         // which are driven by Unity's _TimeParameters global but have no material speed property.
         skyboxMaterial.SetVector(TIME_PARAMETERS, Vector4.one);
-
-        // Cancel the pending directional light transition started during Initialize(),
-        // which would lerp from float.MinValue and corrupt the light's position.
-        transitionCancellationTokenSource?.Cancel();
     }
 
     private void OnDestroy()
     {
-        transitionCancellationTokenSource.SafeCancelAndDispose();
         ResetGlobals();
     }
 
     private void OnDisable()
     {
-        transitionCancellationTokenSource.SafeCancelAndDispose();
         ResetGlobals();
     }
 
@@ -234,6 +215,8 @@ public class SkyboxRenderController : MonoBehaviour
         Shader.SetGlobalVector(CELESTIAL_PARAMS, Vector4.zero);
         Shader.SetGlobalVector(STARS_PARAMS, Vector4.zero);
         Shader.SetGlobalVector(SUN_HAZE_PARAMS, Vector4.zero);
+        Shader.SetGlobalVector(MOON_MASK_OFFSET, Vector4.zero);
+        Shader.DisableKeyword(STYLIZED_KEYWORD);
 
         for (var i = 0; i < MAX_CLOUD_LAYERS; i++)
             Shader.SetGlobalTexture(CLOUD_STRIPS[i], null);
@@ -254,6 +237,12 @@ public class SkyboxRenderController : MonoBehaviour
         // With the lookup on, the horizon band lives inside the elevation gradients, so the rim line is switched off.
         skyboxMaterial.SetFloat(RIM_OPACITY, preset.UseSkyLut ? 0f : preset.RimOpacity);
         skyboxMaterial.SetFloat(USE_SKY_LUT, preset.UseSkyLut ? 1f : 0f);
+
+        if (preset.UseSkyLut)
+            Shader.EnableKeyword(STYLIZED_KEYWORD);
+        else
+            Shader.DisableKeyword(STYLIZED_KEYWORD);
+
         skyboxMaterial.SetTexture(SKY_LUT, preset.SkyLut);
 
         // Horizon noise for the lookup path; strength 0 (or no texture) disables it in the shader.
@@ -265,9 +254,15 @@ public class SkyboxRenderController : MonoBehaviour
         celestialParams.x = preset.ComputeCelestialPath ? 1f : 0f;
         Shader.SetGlobalVector(CELESTIAL_PARAMS, celestialParams);
 
+        // The computed path places the crescent hole in the moon's own frame; legacy keeps the material's world nudge.
+        Shader.SetGlobalVector(MOON_MASK_OFFSET, new Vector4(preset.ComputedMoonMaskOffset.x, preset.ComputedMoonMaskOffset.y, preset.ComputeCelestialPath ? 1f : 0f, 0f));
+
         // Stars v2 statics; the per-phase brightness is written every frame by UpdateStarsV2.
         Shader.SetGlobalVector(STARS_PARAMS2, new Vector4(preset.StarsDensity, preset.StarsSize * Mathf.Deg2Rad, preset.StarsRotationSpeed, preset.StarsTwinkleSpeed));
         Shader.SetGlobalVector(STARS_PARAMS3, new Vector4(preset.StarsHorizonFade.x, preset.StarsHorizonFade.y, 0f, 0f));
+
+        if (!preset.UseStarsV2)
+            Shader.SetGlobalVector(STARS_PARAMS, Vector4.zero);
 
         // Sun haze statics; the factor (x) is written every frame by UpdateCelestialPath and stays 0 otherwise.
         Shader.SetGlobalVector(SUN_HAZE_PARAMS, new Vector4(0f, preset.SunHazeSizeBoost, preset.SunHazeSquash, preset.SunHazeEdgeSoftness));
@@ -306,11 +301,11 @@ public class SkyboxRenderController : MonoBehaviour
 
         ApplyPresetStatics();
 
-        if (targetTimeOfDay > float.MinValue)
-            UpdatePalette(targetTimeOfDay);
-
-        if (directionalLightTimeOfDay > float.MinValue)
-            UpdateDirectionalLight(directionalLightTimeOfDay);
+        if (currentTimeOfDay > float.MinValue)
+        {
+            UpdateDirectionalLight(currentTimeOfDay);
+            UpdatePalette(currentTimeOfDay);
+        }
     }
 
     private void ApplyCloudsV2Statics()
@@ -369,29 +364,6 @@ public class SkyboxRenderController : MonoBehaviour
         Shader.SetGlobalVector(CLOUD_LAYER_FLOW, flow);
     }
 
-    private async UniTaskVoid StartDirectionalLightTransitionAsync(float newTimeOfDay, float duration)
-    {
-        transitionCancellationTokenSource = transitionCancellationTokenSource.SafeRestart();
-
-        CancellationToken token = transitionCancellationTokenSource.Token;
-        float startTime = directionalLightTimeOfDay;
-        float startTimeStamp = UnityEngine.Time.time;
-
-        while (UnityEngine.Time.time - startTimeStamp < duration && !token.IsCancellationRequested)
-        {
-            float progress = (UnityEngine.Time.time - startTimeStamp) / duration;
-            float lerpedTimeOfDay = Mathf.Lerp(startTime, newTimeOfDay, progress);
-
-            directionalLightTimeOfDay = lerpedTimeOfDay;
-            UpdateDirectionalLight(lerpedTimeOfDay);
-
-            await UniTask.Yield(token);
-        }
-
-        directionalLightTimeOfDay = newTimeOfDay;
-        UpdateDirectionalLight(newTimeOfDay);
-    }
-
     /// <summary>
     ///     Everything colour-like is sampled at the preset's phase, so the palette timing is authored once on the
     ///     time-to-phase curve. Sun position, disc size and halo stay on time (see <see cref="UpdateDirectionalLight" />).
@@ -431,7 +403,7 @@ public class SkyboxRenderController : MonoBehaviour
         directionalLight.color = preset.DirectionalColorRamp.Evaluate(preset.EvaluatePhase(timeOfDay));
 
         var swapDip = 0f;
-        var moonActive = false;
+        moonActive = false;
 
         if (preset.ComputeCelestialPath)
             swapDip = UpdateCelestialPath(timeOfDay, out moonActive);
@@ -459,9 +431,13 @@ public class SkyboxRenderController : MonoBehaviour
         Shader.SetGlobalVector(CELESTIAL_PARAMS, celestialParams);
 
         // The clip carries intensity and the disc size as localScale.x; a preset curve overrides each when authored.
+        // The computed path has no clip, so its fallback is the last undipped value rather than the light itself, which
+        // already carries the previous frame's dip and would decay through the crossover.
         // The moon keeps one disc size so its crescent does not change shape through the night.
         Vector3 directionalLightLocalScale = directionalLight.gameObject.transform.localScale;
-        directionalLight.intensity = EvaluateOrFallback(preset.LightIntensity, timeOfDay, directionalLight.intensity) * (1f - swapDip * CELESTIAL_SWAP_INTENSITY_DIP);
+        float intensityFallback = preset.ComputeCelestialPath ? lightIntensityBeforeDip : directionalLight.intensity;
+        lightIntensityBeforeDip = EvaluateOrFallback(preset.LightIntensity, timeOfDay, intensityFallback);
+        directionalLight.intensity = lightIntensityBeforeDip * (1f - swapDip * CELESTIAL_SWAP_INTENSITY_DIP);
         float discSize = moonActive ? preset.ComputedMoonDiscSize : EvaluateOrFallback(preset.SunSize, timeOfDay, directionalLightLocalScale.x);
         RenderSettings.skybox.SetFloat(SUN_SIZE, discSize);
 
@@ -498,31 +474,7 @@ public class SkyboxRenderController : MonoBehaviour
         RenderSettings.skybox.SetFloat(SUN_OPACITY, 1f - dip);
         RenderSettings.skybox.SetFloat(MOON_MASK_SIZE, moonActive ? preset.ComputedMoonMaskSize : 0f);
 
-        if (moonActive)
-            RenderSettings.skybox.SetVector(MOON_MASK_POSITION, MoonMaskNudge(moonDirection));
-
         return dip;
-    }
-
-    /// <summary>
-    ///     The shader centres the crescent hole on normalize(lightDirection + (x, y, 0)), a world-space nudge. This
-    ///     returns the nudge that lands the hole exactly on the wanted direction, the moon rotated by the preset
-    ///     offset in its own frame, so the crescent keeps one shape wherever the moon is. The nudge must be
-    ///     nudge = s * wanted - moon with nudge.z = 0, which fixes s; it has no solution for the few minutes the moon
-    ///     crosses the depth plane, where the nudge falls back to the offset with its depth dropped.
-    /// </summary>
-    private Vector4 MoonMaskNudge(Vector3 moonDirection)
-    {
-        Vector3 right = Vector3.Cross(Vector3.up, moonDirection).normalized;
-        Vector3 up = Vector3.Cross(moonDirection, right);
-        Vector3 across = right * preset.ComputedMoonMaskOffset.x + up * preset.ComputedMoonMaskOffset.y;
-        Vector3 wanted = (moonDirection + across).normalized;
-
-        if (Mathf.Abs(wanted.z) < 1e-4f || Mathf.Sign(wanted.z) != Mathf.Sign(moonDirection.z))
-            return new Vector4(across.x, across.y, 0f, 0f);
-
-        Vector3 nudge = wanted * (moonDirection.z / wanted.z) - moonDirection;
-        return new Vector4(nudge.x, nudge.y, 0f, 0f);
     }
 
     /// <summary>
@@ -598,28 +550,20 @@ public class SkyboxRenderController : MonoBehaviour
     }
 
     /// <summary>
-    ///     Sun disc colour at the phase; with the computed path the moon has its own ramp over its own rise-to-set progress.
+    ///     Sun disc colour at the phase; while the moon is the active body it has its own ramp over its own
+    ///     rise-to-set progress.
     /// </summary>
     private Color DiscColor(float phase, float timeOfDay)
     {
-        if (preset.ComputeCelestialPath)
-        {
-            EvaluateCelestialSwap(timeOfDay, out float moonWeight, out _);
-
-            if (moonWeight > 0.5f)
-                return preset.MoonColorRamp.Evaluate(Mathf.Clamp01(CelestialProgress(timeOfDay, preset.MoonriseTime, preset.MoonsetTime)));
-        }
+        if (moonActive)
+            return preset.MoonColorRamp.Evaluate(Mathf.Clamp01(CelestialProgress(timeOfDay, preset.MoonriseTime, preset.MoonsetTime)));
 
         return preset.SunColorRamp.Evaluate(phase);
     }
 
     private void UpdateStarsV2(float phase)
     {
-        if (!preset.UseStarsV2)
-        {
-            Shader.SetGlobalVector(STARS_PARAMS, Vector4.zero);
-            return;
-        }
+        if (!preset.UseStarsV2) return;
 
         float visibility = SkyboxLookPreset.EvaluateByPhase(preset.StarsBrightnessByPhase, phase);
         Shader.SetGlobalVector(STARS_PARAMS, new Vector4(preset.StarsV2Brightness * visibility, preset.StarsTwinkle, preset.StarsPatchStrength, preset.ShootingStarsRate * visibility));

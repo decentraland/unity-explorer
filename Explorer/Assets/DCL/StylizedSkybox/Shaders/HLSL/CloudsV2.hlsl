@@ -11,8 +11,9 @@
 // All parameters are global shader values set by SkyboxRenderController (Shader.SetGlobal*), so the main sky and the
 // reflection-cubemap bake read the same data and the graphs need no extra properties.
 //
-// Legacy path (_DclCloudsMode.w == 0) reproduces Shader Graph's Blend node in Screen mode exactly and passes the
-// legacy cloud colour through as occlusion, so the old look is untouched.
+// The legacy variant (no _DCL_SKY_STYLIZED keyword) reproduces Shader Graph's Blend node in Screen mode exactly and
+// passes the legacy cloud colour through as occlusion, so the old look is untouched. In the stylized variant the graph
+// feeds zero fallbacks and _DclCloudsMode.w (use clouds v2) can still switch the strips off.
 
 #include "Assets/DCL/StylizedSkybox/Shaders/HLSL/SkyboxGlobals.hlsl"
 
@@ -70,8 +71,9 @@ float3 CloudsV2_Ramp(float t, float3 shadow, float3 lit, float knee)
     return t < knee ? lerp(shadow, mid, lower) : lerp(mid, lit, upper);
 }
 
+// `hlAlpha` is the backlight amount, the same for every layer, computed once by CloudsV2Layers_float.
 void CloudsV2_Layer(float4 tex, float u, float4 layer, float opacity, float phaseFlow, float layerIndex,
-    float3 skyDir, inout float3 color, inout float alpha)
+    float3 skyDir, float hlAlpha, inout float3 color, inout float alpha)
 {
     float time = _TimeParameters.x;
 
@@ -80,14 +82,7 @@ void CloudsV2_Layer(float4 tex, float u, float4 layer, float opacity, float phas
     float invMask = 1.0 / max(tex.a, 1e-3);
     tex.rgb = saturate(tex.rgb * invMask);
 
-    // Backlight: the body behind the cloud drives R toward the G look and adds a rim. With the computed celestial
-    // path the direction is the real body, so only its own side lights; the legacy clip shares one light for both
-    // bodies and keeps the symmetric term. The weight fades the rim out while the light crosses from sun to moon.
-    float3 toSun = normalize(_DclSunDirection.xyz);
-    float facing = dot(skyDir, toSun);
-    float hl = _DclCelestialParams.x > 0.5 ? facing : max(facing, -facing);
-    float threshold = _DclCloudsParams.z;
-    float hlAlpha = pow(saturate((hl - threshold) / max(1.0 - threshold, 1e-3)), _DclCloudsParams.w) * _DclCloudsMode.y * _DclCelestialParams.y;
+    // Backlight: the body behind the cloud drives R toward the G look and adds a rim.
     float t = lerp(tex.r, tex.g, hlAlpha);
 
     float3 shadow = _DclCloudShadowColor.rgb;
@@ -116,10 +111,9 @@ void CloudsV2_Layer(float4 tex, float u, float4 layer, float opacity, float phas
 // against the Unreal Classic layout: mid layer ~4-28 deg, overhead layer ~46-70 deg).
 #define DCL_CLOUDS_V2_DOME_SPAN_DEG 113.6
 
-float2 CloudsV2_Uv(float4 layer, float tiling, float offsetU, float3 skyDir, float azimuth)
+// `vDome` is the dome V (0 zenith .. 1 bottom rim) and `azimuth` is in turns; both computed once per pixel by the caller.
+float2 CloudsV2_Uv(float4 layer, float tiling, float offsetU, float vDome, float azimuth)
 {
-    float elevationDeg = degrees(asin(clamp(skyDir.y, -1.0, 1.0)));
-    float vDome = (90.0 - elevationDeg) / DCL_CLOUDS_V2_DOME_SPAN_DEG;
     float vTex = ((vDome + layer.y) - 0.5) / max(layer.x, 1e-3) + 0.5;
     float u = azimuth * tiling + offsetU - _TimeParameters.x * layer.z * 0.0004;
     return float2(u, saturate(1.0 - vTex));
@@ -130,16 +124,30 @@ float2 CloudsV2_Uv(float4 layer, float tiling, float offsetU, float3 skyDir, flo
 void CloudsV2Layers_float(float3 SkyDir, float4 FallbackColor, float FallbackOpacity,
     out float4 CloudColor, out float CloudAlpha, out float4 Occlusion)
 {
+#ifndef _DCL_SKY_STYLIZED
+    CloudColor = FallbackColor;
+    CloudAlpha = FallbackOpacity;
+    Occlusion = FallbackColor;
+#else
     if (_DclCloudsMode.w < 0.5)
     {
-        CloudColor = FallbackColor;
-        CloudAlpha = FallbackOpacity;
-        Occlusion = FallbackColor;
+        CloudColor = 0;
+        CloudAlpha = 0;
+        Occlusion = 0;
         return;
     }
 
     float3 d = normalize(SkyDir);
     float azimuth = atan2(d.x, d.z) / (2.0 * DCL_CLOUDS_V2_PI);
+    float vDome = (90.0 - degrees(asin(clamp(d.y, -1.0, 1.0)))) / DCL_CLOUDS_V2_DOME_SPAN_DEG;
+
+    // Backlight amount, shared by the layers. With the computed celestial path the direction is the real body, so only
+    // its own side lights; the legacy clip shares one light for both bodies and keeps the symmetric term. The weight
+    // fades the rim out while the light crosses from sun to moon. The direction arrives unit length from C#.
+    float facing = dot(d, _DclSunDirection.xyz);
+    float hl = _DclCelestialParams.x > 0.5 ? facing : max(facing, -facing);
+    float threshold = _DclCloudsParams.z;
+    float hlAlpha = pow(saturate((hl - threshold) / max(1.0 - threshold, 1e-3)), _DclCloudsParams.w) * _DclCloudsMode.y * _DclCelestialParams.y;
 
     float3 color = 0;
     float alpha = 0;
@@ -148,23 +156,23 @@ void CloudsV2Layers_float(float3 SkyDir, float4 FallbackColor, float FallbackOpa
     // Back to front: layer 0 is the highest / farthest.
     if (layerCount > 0.5)
     {
-        float2 uv = CloudsV2_Uv(_DclCloudLayer0, _DclCloudLayerTiling.x, _DclCloudLayerOffsetU.x, d, azimuth);
+        float2 uv = CloudsV2_Uv(_DclCloudLayer0, _DclCloudLayerTiling.x, _DclCloudLayerOffsetU.x, vDome, azimuth);
         float4 tex = CloudsV2_Sample(TEXTURE2D_ARGS(_DclCloudStrip0, sampler_DclCloudStrip0), uv);
-        CloudsV2_Layer(tex, uv.x, _DclCloudLayer0, _DclCloudLayerOpacity.x, _DclCloudLayerFlow.x, 0.0, d, color, alpha);
+        CloudsV2_Layer(tex, uv.x, _DclCloudLayer0, _DclCloudLayerOpacity.x, _DclCloudLayerFlow.x, 0.0, d, hlAlpha, color, alpha);
     }
 
     if (layerCount > 1.5)
     {
-        float2 uv = CloudsV2_Uv(_DclCloudLayer1, _DclCloudLayerTiling.y, _DclCloudLayerOffsetU.y, d, azimuth);
+        float2 uv = CloudsV2_Uv(_DclCloudLayer1, _DclCloudLayerTiling.y, _DclCloudLayerOffsetU.y, vDome, azimuth);
         float4 tex = CloudsV2_Sample(TEXTURE2D_ARGS(_DclCloudStrip1, sampler_DclCloudStrip1), uv);
-        CloudsV2_Layer(tex, uv.x, _DclCloudLayer1, _DclCloudLayerOpacity.y, _DclCloudLayerFlow.y, 1.0, d, color, alpha);
+        CloudsV2_Layer(tex, uv.x, _DclCloudLayer1, _DclCloudLayerOpacity.y, _DclCloudLayerFlow.y, 1.0, d, hlAlpha, color, alpha);
     }
 
     if (layerCount > 2.5)
     {
-        float2 uv = CloudsV2_Uv(_DclCloudLayer2, _DclCloudLayerTiling.z, _DclCloudLayerOffsetU.z, d, azimuth);
+        float2 uv = CloudsV2_Uv(_DclCloudLayer2, _DclCloudLayerTiling.z, _DclCloudLayerOffsetU.z, vDome, azimuth);
         float4 tex = CloudsV2_Sample(TEXTURE2D_ARGS(_DclCloudStrip2, sampler_DclCloudStrip2), uv);
-        CloudsV2_Layer(tex, uv.x, _DclCloudLayer2, _DclCloudLayerOpacity.z, _DclCloudLayerFlow.z, 2.0, d, color, alpha);
+        CloudsV2_Layer(tex, uv.x, _DclCloudLayer2, _DclCloudLayerOpacity.z, _DclCloudLayerFlow.z, 2.0, d, hlAlpha, color, alpha);
     }
 
     // CloudColor is premultiplied by CloudAlpha.
@@ -174,19 +182,18 @@ void CloudsV2Layers_float(float3 SkyDir, float4 FallbackColor, float FallbackOpa
     // Only mostly opaque cloud hides the sun and its halo; occluding at soft edges paints a dark ring around clouds.
     float occlusion = smoothstep(_DclCloudsParams2.z, _DclCloudsParams2.w, alpha);
     Occlusion = float4(occlusion, occlusion, occlusion, occlusion);
+#endif
 }
 
 // Node B (after the sun composite): draws the clouds over the sky. Legacy is Shader Graph's Blend (Screen) exactly.
 void CloudsV2Composite_float(float4 Base, float4 CloudColor, float CloudAlpha, out float4 Composited)
 {
-    if (_DclCloudsMode.w < 0.5)
-    {
-        float4 screen = 1.0 - (1.0 - CloudColor) * (1.0 - Base);
-        Composited = lerp(Base, screen, CloudAlpha);
-        return;
-    }
-
+#ifndef _DCL_SKY_STYLIZED
+    float4 screen = 1.0 - (1.0 - CloudColor) * (1.0 - Base);
+    Composited = lerp(Base, screen, CloudAlpha);
+#else
     Composited = float4(Base.rgb * (1.0 - CloudAlpha) + CloudColor.rgb, Base.a);
+#endif
 }
 
 #endif

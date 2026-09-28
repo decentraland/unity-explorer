@@ -33,7 +33,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Clouds_Cubemap:
-        m_Texture: {fileID: 8900000, guid: eb386b27e6fba534cb691c004ef063be, type: 3}
+        m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _CubemapAsset_1857d7d2fb644b47955ea0627bf61710_Out_0_Cubemap:
@@ -109,7 +109,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Stars_Texture:
-        m_Texture: {fileID: 2800000, guid: 1f19dbb2b85e7a94987d2b6cb4687dde, type: 3}
+        m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _SunTexture:
