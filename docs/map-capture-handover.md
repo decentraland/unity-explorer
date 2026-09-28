@@ -94,6 +94,29 @@ day pass it downloads nothing.
 - Images that are sky or a horizon instead of a top-down view: the camera brain is not being
   updated; report it, this is a code problem.
 
+## Full city from a build (preferred once a few chunks render in the editor)
+
+A build is faster per chunk, survives a multi-hour run better than play mode, and exits with a
+code the orchestrator can act on: 0 when every chunk rendered with all scenes loaded, 1 otherwise.
+Use the editor for the first chunks on a new machine, where a boot failure is easier to read in
+the Console, then switch to the build.
+
+Build it (also builds addressables):
+
+```
+Unity.exe -batchmode -quit -projectPath <repo>\Explorer -executeMethod Editor.MapCaptureBuild.Build
+```
+
+Run it from `Builds\MapCapture\`:
+
+```
+MapCapture.exe --map-capture-client-map --map-capture-out <OUTPUT_DIR> --map-capture-cache <CACHE_DIR> --map-capture-hour 10 --map-capture-timeout 600
+```
+
+Add `--map-capture-region x0,y0,x1,y1` to render only the chunks a region touches, e.g.
+`-152,-167,7,152` and `8,-167,167,152` to split the city in two. The log is the player log; the
+output folder and manifest are the same as in the editor.
+
 ## Do not commit editor noise
 
 Unity creates files when the project opens that must not be committed: anything under
