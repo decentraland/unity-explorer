@@ -15,7 +15,7 @@ namespace DCL.MapRenderer.MapLayers.HomeMarker
 {
     /// <summary>
     ///     Controls the home marker on the map, handling placement, highlighting, and interaction with the home location.
-    ///     The home location belongs to the signed-in account: it is persisted per wallet and reloaded whenever the identity changes.
+    ///     The home location belongs to the signed-in account: it is persisted per wallet address and reloaded whenever the identity changes.
     /// </summary>
     public class HomeMarkerController : MapLayerControllerBase, IMapLayerController, IZoomScalingLayer
     {
@@ -76,25 +76,43 @@ namespace DCL.MapRenderer.MapLayers.HomeMarker
             homeMarker.Dispose();
         }
 
-        public static Vector2Int? Deserialize(IWeb3IdentityCache identityCache)
+        /// <summary>
+        ///     The account whose home applies before sign-in: the session restored from the previous run or, when that
+        ///     session has already expired, the last account the map loaded a home for. The account-less home of earlier
+        ///     releases is adopted by it.
+        /// </summary>
+        public static string? ResolveStartupAccount(IWeb3IdentityCache identityCache)
         {
-            if (identityCache.Identity is not { } identity)
+            string? account = AccountOf(identityCache);
+
+            if (account == null && DCLPlayerPrefs.HasKey(DCLPrefKeys.MAP_HOME_LAST_ACCOUNT))
+                account = DCLPlayerPrefs.GetString(DCLPrefKeys.MAP_HOME_LAST_ACCOUNT);
+
+            if (!string.IsNullOrEmpty(account))
+                AdoptLegacyHome(account);
+
+            return string.IsNullOrEmpty(account) ? null : account;
+        }
+
+        public static Vector2Int? Deserialize(string? account)
+        {
+            if (account == null)
                 return null;
 
-            string key = PositionKey(identity);
+            string key = PositionKey(account);
 
             return DCLPlayerPrefs.HasVectorKey(key) ? DCLPlayerPrefs.GetVector2Int(key, Vector2Int.zero) : null;
         }
 
-        public static bool HasSerializedPosition(IWeb3IdentityCache identityCache) =>
-            identityCache.Identity is { } identity && DCLPlayerPrefs.HasVectorKey(PositionKey(identity));
+        public static bool HasSerializedPosition(string? account) =>
+            account != null && DCLPlayerPrefs.HasVectorKey(PositionKey(account));
 
-        public static string? DeserializeWorldName(IWeb3IdentityCache identityCache)
+        public static string? DeserializeWorldName(string? account)
         {
-            if (identityCache.Identity is not { } identity)
+            if (account == null)
                 return null;
 
-            string key = WorldNameKey(identity);
+            string key = WorldNameKey(account);
 
             if (!DCLPlayerPrefs.HasKey(key))
                 return null;
@@ -103,47 +121,48 @@ namespace DCL.MapRenderer.MapLayers.HomeMarker
             return string.IsNullOrEmpty(value) ? null : value;
         }
 
-        public static bool HasSerializedWorldName(IWeb3IdentityCache identityCache) =>
-            DeserializeWorldName(identityCache) != null;
+        public static bool HasSerializedWorldName(string? account) =>
+            DeserializeWorldName(account) != null;
 
-        public static bool HasSerializedHome(IWeb3IdentityCache identityCache) =>
-            HasSerializedWorldName(identityCache) || HasSerializedPosition(identityCache);
+        public static bool HasSerializedHome(string? account) =>
+            HasSerializedWorldName(account) || HasSerializedPosition(account);
 
-        internal static void Serialize(IWeb3IdentityCache identityCache, Vector2Int? coordinates)
+        internal static void Serialize(string? account, Vector2Int? coordinates)
         {
             // Without an account there is nobody to keep the home for
-            if (identityCache.Identity is not { } identity)
+            if (account == null)
                 return;
 
             if (!coordinates.HasValue)
             {
-                DCLPlayerPrefs.DeleteVector2Key(PositionKey(identity));
+                DCLPlayerPrefs.DeleteVector2Key(PositionKey(account));
                 return;
             }
 
-            DCLPlayerPrefs.SetVector2Int(PositionKey(identity), coordinates.Value);
+            DCLPlayerPrefs.SetVector2Int(PositionKey(account), coordinates.Value);
         }
 
-        internal static void SerializeWorldName(IWeb3IdentityCache identityCache, string? worldName)
+        internal static void SerializeWorldName(string? account, string? worldName)
         {
-            if (identityCache.Identity is not { } identity)
+            if (account == null)
                 return;
 
             if (string.IsNullOrEmpty(worldName))
             {
-                DCLPlayerPrefs.DeleteKey(WorldNameKey(identity));
+                DCLPlayerPrefs.DeleteKey(WorldNameKey(account));
                 return;
             }
 
-            DCLPlayerPrefs.SetString(WorldNameKey(identity), worldName);
+            DCLPlayerPrefs.SetString(WorldNameKey(account), worldName);
         }
 
         public void SetMarker(Vector2Int? coordinates)
         {
             ApplyMarker(coordinates);
 
-            Serialize(identityCache, CurrentCoordinates);
-            SerializeWorldName(identityCache, null);
+            string? account = AccountOf(identityCache);
+            Serialize(account, CurrentCoordinates);
+            SerializeWorldName(account, null);
             analyticsEventBus.Publish(new HomeMarkerEvents.MessageHomePositionChanged(CurrentCoordinates));
         }
 
@@ -151,8 +170,9 @@ namespace DCL.MapRenderer.MapLayers.HomeMarker
         {
             ApplyWorldMarker(worldName);
 
-            Serialize(identityCache, null);
-            SerializeWorldName(identityCache, worldName);
+            string? account = AccountOf(identityCache);
+            Serialize(account, null);
+            SerializeWorldName(account, worldName);
             analyticsEventBus.Publish(new HomeMarkerEvents.MessageHomePositionChanged(null, worldName));
         }
 
@@ -248,16 +268,24 @@ namespace DCL.MapRenderer.MapLayers.HomeMarker
         }
 
         /// <summary>
-        ///     Shows the home persisted for the current account without writing it back or announcing a change.
+        ///     Shows the home persisted for the signed-in account without writing it back or announcing a change.
         /// </summary>
         private void RestoreHome()
         {
-            string? worldName = DeserializeWorldName(identityCache);
+            string? account = AccountOf(identityCache);
+
+            if (account != null)
+            {
+                AdoptLegacyHome(account);
+                DCLPlayerPrefs.SetString(DCLPrefKeys.MAP_HOME_LAST_ACCOUNT, account);
+            }
+
+            string? worldName = DeserializeWorldName(account);
 
             if (!string.IsNullOrEmpty(worldName))
                 ApplyWorldMarker(worldName);
             else
-                ApplyMarker(Deserialize(identityCache));
+                ApplyMarker(Deserialize(account));
         }
 
         private void ApplyMarker(Vector2Int? coordinates)
@@ -277,10 +305,38 @@ namespace DCL.MapRenderer.MapLayers.HomeMarker
             CurrentWorldName = worldName;
         }
 
-        private static string PositionKey(IWeb3Identity identity) =>
-            string.Format(DCLPrefKeys.MAP_HOME_MARKER_DATA, identity.Address);
+        /// <summary>
+        ///     Moves the account-less home written by earlier releases under the given account, unless that account already
+        ///     has one, and removes the old keys so no later account inherits it.
+        /// </summary>
+        private static void AdoptLegacyHome(string account)
+        {
+            if (DCLPlayerPrefs.HasKey(DCLPrefKeys.MAP_HOME_WORLD_NAME_LEGACY))
+            {
+                string legacyWorldName = DCLPlayerPrefs.GetString(DCLPrefKeys.MAP_HOME_WORLD_NAME_LEGACY);
 
-        private static string WorldNameKey(IWeb3Identity identity) =>
-            string.Format(DCLPrefKeys.MAP_HOME_WORLD_NAME, identity.Address);
+                if (!string.IsNullOrEmpty(legacyWorldName) && !HasSerializedHome(account))
+                    DCLPlayerPrefs.SetString(WorldNameKey(account), legacyWorldName);
+
+                DCLPlayerPrefs.DeleteKey(DCLPrefKeys.MAP_HOME_WORLD_NAME_LEGACY);
+            }
+
+            if (DCLPlayerPrefs.HasVectorKey(DCLPrefKeys.MAP_HOME_MARKER_DATA_LEGACY))
+            {
+                if (!HasSerializedHome(account))
+                    DCLPlayerPrefs.SetVector2Int(PositionKey(account), DCLPlayerPrefs.GetVector2Int(DCLPrefKeys.MAP_HOME_MARKER_DATA_LEGACY, Vector2Int.zero));
+
+                DCLPlayerPrefs.DeleteVector2Key(DCLPrefKeys.MAP_HOME_MARKER_DATA_LEGACY);
+            }
+        }
+
+        private static string? AccountOf(IWeb3IdentityCache identityCache) =>
+            identityCache.Identity is { } identity ? identity.Address.ToString() : null;
+
+        private static string PositionKey(string account) =>
+            string.Format(DCLPrefKeys.MAP_HOME_MARKER_DATA, account);
+
+        private static string WorldNameKey(string account) =>
+            string.Format(DCLPrefKeys.MAP_HOME_WORLD_NAME, account);
     }
 }

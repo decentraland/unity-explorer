@@ -18,6 +18,7 @@ namespace Global.Tests.EditMode
         private RealmLaunchSettings launchSettings = null!;
         private IAppArgs appArgs = null!;
         private IWeb3IdentityCache identityCache = null!;
+        private string account = null!;
 
         private static IDCLPrefs? originalPrefs;
         private static bool prefsInitialized;
@@ -41,21 +42,79 @@ namespace Global.Tests.EditMode
         {
             launchSettings = new RealmLaunchSettings();
             appArgs = Substitute.For<IAppArgs>();
-            identityCache = new IWeb3IdentityCache.Fake();
+            var identity = new IWeb3Identity.Random();
+            account = identity.Address;
+            identityCache = new IWeb3IdentityCache.Fake(identity);
         }
 
         [TearDown]
         public void TearDown()
         {
-            HomeMarkerController.Serialize(identityCache, null);
-            HomeMarkerController.SerializeWorldName(identityCache, null);
+            HomeMarkerController.Serialize(account, null);
+            HomeMarkerController.SerializeWorldName(account, null);
+            DCLPlayerPrefs.DeleteVector2Key(DCLPrefKeys.MAP_HOME_MARKER_DATA_LEGACY);
+            DCLPlayerPrefs.DeleteKey(DCLPrefKeys.MAP_HOME_WORLD_NAME_LEGACY);
+            DCLPlayerPrefs.DeleteKey(DCLPrefKeys.MAP_HOME_LAST_ACCOUNT);
+        }
+
+        [Test]
+        public void UseHomeOfLastAccountWhenStoredSessionHasExpired()
+        {
+            // Arrange
+            var homePosition = new Vector2Int(100, 200);
+            HomeMarkerController.Serialize(account, homePosition);
+            DCLPlayerPrefs.SetString(DCLPrefKeys.MAP_HOME_LAST_ACCOUNT, account);
+            launchSettings.targetScene = new Vector2Int(0, 0);
+            launchSettings.EditorSceneStartPosition = false;
+            var featureFlags = GetFeatureFlagsConfiguration(true, "0,0");
+
+            // Act
+            launchSettings.CheckStartParcelOverride(appArgs, featureFlags, new IWeb3IdentityCache.Fake(null));
+
+            // Assert
+            Assert.AreEqual(homePosition, launchSettings.targetScene);
+        }
+
+        [Test]
+        public void NotUseAnyHomeWithoutSessionOrLastAccount()
+        {
+            // Arrange
+            HomeMarkerController.Serialize(account, new Vector2Int(100, 200));
+            launchSettings.targetScene = new Vector2Int(0, 0);
+            launchSettings.EditorSceneStartPosition = false;
+            var featureFlags = GetFeatureFlagsConfiguration(true, "0,0");
+
+            // Act
+            launchSettings.CheckStartParcelOverride(appArgs, featureFlags, new IWeb3IdentityCache.Fake(null));
+
+            // Assert
+            Assert.AreEqual(new Vector2Int(0, 0), launchSettings.targetScene);
+        }
+
+        [Test]
+        public void AdoptLegacyHomeOfEarlierReleasesForTheRestoredAccount()
+        {
+            // Arrange
+            var legacyHome = new Vector2Int(100, 200);
+            DCLPlayerPrefs.SetVector2Int(DCLPrefKeys.MAP_HOME_MARKER_DATA_LEGACY, legacyHome);
+            launchSettings.targetScene = new Vector2Int(0, 0);
+            launchSettings.EditorSceneStartPosition = false;
+            var featureFlags = GetFeatureFlagsConfiguration(true, "0,0");
+
+            // Act
+            launchSettings.CheckStartParcelOverride(appArgs, featureFlags, identityCache);
+
+            // Assert
+            Assert.AreEqual(legacyHome, launchSettings.targetScene);
+            Assert.AreEqual(legacyHome, HomeMarkerController.Deserialize(account));
+            Assert.IsFalse(DCLPlayerPrefs.HasVectorKey(DCLPrefKeys.MAP_HOME_MARKER_DATA_LEGACY));
         }
 
         [Test]
         public void NotUseHomePositionOfAnotherAccount()
         {
             // Arrange
-            HomeMarkerController.Serialize(identityCache, new Vector2Int(100, 200));
+            HomeMarkerController.Serialize(account, new Vector2Int(100, 200));
             launchSettings.targetScene = new Vector2Int(0, 0);
             launchSettings.EditorSceneStartPosition = false;
             var featureFlags = GetFeatureFlagsConfiguration(true, "0,0");
@@ -107,7 +166,7 @@ namespace Global.Tests.EditMode
         {
             // Arrange
             var homePosition = new Vector2Int(100, 200);
-            HomeMarkerController.Serialize(identityCache, homePosition);
+            HomeMarkerController.Serialize(account, homePosition);
             launchSettings.targetScene = new Vector2Int(0, 0);
             appArgs.HasFlag(AppArgsFlags.POSITION).Returns(true);
             string featureFlagPosition = "0,0";
@@ -125,7 +184,7 @@ namespace Global.Tests.EditMode
         {
             // Arrange
             var homePosition = new Vector2Int(100, 200);
-            HomeMarkerController.Serialize(identityCache, homePosition);
+            HomeMarkerController.Serialize(account, homePosition);
             launchSettings.HasEditorPositionOverride().Returns(true);
             launchSettings.targetScene = new Vector2Int(50, 50);
             string featureFlagPosition = "0,0";
@@ -160,7 +219,7 @@ namespace Global.Tests.EditMode
         {
             // Arrange
             var homePosition = new Vector2Int(100, 200);
-            HomeMarkerController.Serialize(identityCache, homePosition);
+            HomeMarkerController.Serialize(account, homePosition);
             launchSettings.targetScene = new Vector2Int(0, 0);
             launchSettings.EditorSceneStartPosition = false;
 
@@ -194,7 +253,7 @@ namespace Global.Tests.EditMode
         [Test]
         public void UseWorldHomeWhenFeatureFlagIsDefaultButWorldHomeExists()
         {
-            HomeMarkerController.SerializeWorldName(identityCache, "testworld.dcl.eth");
+            HomeMarkerController.SerializeWorldName(account, "testworld.dcl.eth");
             launchSettings.targetScene = new Vector2Int(0, 0);
             launchSettings.EditorSceneStartPosition = false;
 
@@ -207,7 +266,7 @@ namespace Global.Tests.EditMode
         [Test]
         public void UseDeepLinkRealmOverSavedWorldHome()
         {
-            HomeMarkerController.SerializeWorldName(identityCache, "myhome.dcl.eth");
+            HomeMarkerController.SerializeWorldName(account, "myhome.dcl.eth");
             launchSettings.EditorSceneStartPosition = false;
             appArgs.HasFlag(AppArgsFlags.REALM).Returns(true);
 
@@ -230,7 +289,7 @@ namespace Global.Tests.EditMode
         [Test]
         public void NotUseHomePositionWhenDeepLinkRealmProvided()
         {
-            HomeMarkerController.Serialize(identityCache, new Vector2Int(100, 200));
+            HomeMarkerController.Serialize(account, new Vector2Int(100, 200));
             launchSettings.targetScene = new Vector2Int(5, 5);
             launchSettings.EditorSceneStartPosition = false;
             appArgs.HasFlag(AppArgsFlags.REALM).Returns(true);
@@ -245,8 +304,8 @@ namespace Global.Tests.EditMode
         [Test]
         public void PreferWorldHomeOverCoordinateHome()
         {
-            HomeMarkerController.Serialize(identityCache, new Vector2Int(100, 200));
-            HomeMarkerController.SerializeWorldName(identityCache, "testworld.dcl.eth");
+            HomeMarkerController.Serialize(account, new Vector2Int(100, 200));
+            HomeMarkerController.SerializeWorldName(account, "testworld.dcl.eth");
             launchSettings.targetScene = new Vector2Int(0, 0);
             launchSettings.EditorSceneStartPosition = false;
 

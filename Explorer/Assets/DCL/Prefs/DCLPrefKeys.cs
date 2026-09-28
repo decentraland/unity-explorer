@@ -104,6 +104,13 @@ namespace DCL.Prefs
         public const string MAP_HOME_MARKER_DATA = "Map_HomeMarker_{0}";
         public const string MAP_HOME_WORLD_NAME = "Map_HomeWorldName_{0}";
 
+        // The account-less home of the releases before it became per account; adopted by the first account that loads its home
+        public const string MAP_HOME_MARKER_DATA_LEGACY = "Map_HomeMarker";
+        public const string MAP_HOME_WORLD_NAME_LEGACY = "Map_HomeWorldName";
+
+        // The last account the map loaded a home for; resolves the home at startup when the stored session has already expired
+        public const string MAP_HOME_LAST_ACCOUNT = "Map_HomeLastAccount";
+
         public const string GIFTING_PENDING_GIFTS = "PendingGifts_{0}";
 
         public const string SETTINGS_HEAD_SYNC_ENABLED = "Settings_HeadSync";

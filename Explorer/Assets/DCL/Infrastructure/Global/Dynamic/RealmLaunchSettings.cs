@@ -192,7 +192,7 @@ namespace Global.Dynamic
         private bool IsRealmAWorld(string realmParam) =>
             realmParam.IsEns();
 
-        // The saved home honoured here belongs to the identity restored from the previous session, the only one known this early in the startup
+        // The saved home honoured here belongs to the account known this early in the startup: the restored session, or the last one the map served
         public void CheckStartParcelOverride(IAppArgs appArgs, FeatureFlagsConfiguration featureFlagsConfigurationCache, IWeb3IdentityCache identityCache)
         {
             // Priority 1: App argument position (highest - from command line/Creator Hub)
@@ -211,15 +211,17 @@ namespace Global.Dynamic
 
             // Priority 3: Serialized home (used when no feature flag exists, or feature flag is set to "0,0";
             // skipped when an explicit realm is requested, so a deep link cannot be overridden by the saved home)
-            if (HomeMarkerController.HasSerializedHome(identityCache) && !HasAppArgRealm(appArgs) && (!hasDefaultSpawnFlag || parcelToTeleportOverride == "0,0"))
+            string? homeAccount = HomeMarkerController.ResolveStartupAccount(identityCache);
+
+            if (HomeMarkerController.HasSerializedHome(homeAccount) && !HasAppArgRealm(appArgs) && (!hasDefaultSpawnFlag || parcelToTeleportOverride == "0,0"))
             {
-                if (HomeMarkerController.DeserializeWorldName(identityCache) is { } homeWorldName)
+                if (HomeMarkerController.DeserializeWorldName(homeAccount) is { } homeWorldName)
                 {
                     SetWorldRealm(homeWorldName);
                     return;
                 }
 
-                if (HomeMarkerController.Deserialize(identityCache) is { } homeParcel)
+                if (HomeMarkerController.Deserialize(homeAccount) is { } homeParcel)
                 {
                     targetScene = homeParcel;
                     return;

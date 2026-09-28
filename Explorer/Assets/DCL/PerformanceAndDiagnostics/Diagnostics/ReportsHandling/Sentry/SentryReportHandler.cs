@@ -39,7 +39,11 @@ namespace DCL.Diagnostics.Sentry
         // Thrown by the runtime's task machinery inside third-party transports (Sentry SDK, System.Net.Http) with no client frame (#10094, #10120, #10121, #10153)
         private const string TASK_ALREADY_COMPLETED_MESSAGE = "An attempt was made to transition a task to a final state when it had already completed.";
 
-        // The user's disk is full: an environment condition, not a client defect (#10086)
+        // The user's disk is full: an environment condition, not a client defect (#10086). Matched by HRESULT first
+        // (HRESULT_FROM_WIN32 of ERROR_HANDLE_DISK_FULL and ERROR_DISK_FULL, the codes the runtime attaches on every platform)
+        // because the message text is platform-specific: Mono's own "Disk full. Path ..." on Unix, the OS-localized text on Windows
+        private const int HANDLE_DISK_FULL_HRESULT = unchecked((int)0x80070027);
+        private const int DISK_FULL_HRESULT = unchecked((int)0x80070070);
         private const string DISK_FULL_MESSAGE_PREFIX = "Disk full";
 
 #if UNITY_EDITOR
@@ -278,7 +282,8 @@ namespace DCL.Diagnostics.Sentry
                     return true;
 
                 case IOException:
-                    return exception.Message.StartsWith(DISK_FULL_MESSAGE_PREFIX, StringComparison.Ordinal);
+                    return exception.HResult is HANDLE_DISK_FULL_HRESULT or DISK_FULL_HRESULT
+                           || exception.Message.StartsWith(DISK_FULL_MESSAGE_PREFIX, StringComparison.Ordinal);
 
                 case InvalidOperationException:
                     return exception.Message.StartsWith(TASK_ALREADY_COMPLETED_MESSAGE, StringComparison.Ordinal);

@@ -26,6 +26,7 @@ namespace DCL.MapRenderer.Tests.HomeMarker
 		private HomePlaceEventBus homePlaceEventBus = null!;
 		private IEventBus eventBus = null!;
 		private IWeb3IdentityCache identityCache = null!;
+		private string account = null!;
 		private Transform parent = null!;
 
 		private static IDCLPrefs? originalPrefs;
@@ -56,8 +57,10 @@ namespace DCL.MapRenderer.Tests.HomeMarker
 			placesAPIService = Substitute.For<IPlacesAPIService>();
 			homePlaceEventBus = new HomePlaceEventBus();
 			eventBus = Substitute.For<IEventBus>();
+			var identity = new IWeb3Identity.Random();
+			account = identity.Address;
 			identityCache = Substitute.For<IWeb3IdentityCache>();
-			identityCache.Identity.Returns(new IWeb3Identity.Random());
+			identityCache.Identity.Returns(identity);
 
 			coordsUtils.CoordsToPositionWithOffset(Arg.Any<Vector2>())
 				.Returns(callInfo =>
@@ -79,8 +82,8 @@ namespace DCL.MapRenderer.Tests.HomeMarker
 			homePlaceEventBus.SetController(controller);
 
 			// Clear prefs keys (safe because player prefs are replaced for test duration)
-			HomeMarkerController.Serialize(identityCache, null);
-			HomeMarkerController.SerializeWorldName(identityCache, null);
+			HomeMarkerController.Serialize(account, null);
+			HomeMarkerController.SerializeWorldName(account, null);
 		}
 
 		[TearDown]
@@ -91,8 +94,11 @@ namespace DCL.MapRenderer.Tests.HomeMarker
 				Object.DestroyImmediate(parent.gameObject);
 
 			// Clean up test data
-			HomeMarkerController.Serialize(identityCache, null);
-			HomeMarkerController.SerializeWorldName(identityCache, null);
+			HomeMarkerController.Serialize(account, null);
+			HomeMarkerController.SerializeWorldName(account, null);
+			DCLPlayerPrefs.DeleteVector2Key(DCLPrefKeys.MAP_HOME_MARKER_DATA_LEGACY);
+			DCLPlayerPrefs.DeleteKey(DCLPrefKeys.MAP_HOME_WORLD_NAME_LEGACY);
+			DCLPlayerPrefs.DeleteKey(DCLPrefKeys.MAP_HOME_LAST_ACCOUNT);
         }
 
 		private static void InitializeTestPrefs()
@@ -170,7 +176,7 @@ namespace DCL.MapRenderer.Tests.HomeMarker
             marker.Received(1).SetActive(true);
             marker.Received(1).SetPosition(new Vector3(15, 25, 0));
             Assert.IsTrue(controller.HomeIsSet);
-            Assert.IsTrue(HomeMarkerController.HasSerializedPosition(identityCache));
+            Assert.IsTrue(HomeMarkerController.HasSerializedPosition(account));
         }
 
         [Test]
@@ -186,7 +192,7 @@ namespace DCL.MapRenderer.Tests.HomeMarker
             // Assert
             marker.Received(2).SetActive(false); // Once on unset, once initially
             Assert.IsFalse(controller.HomeIsSet);
-            Assert.IsFalse(HomeMarkerController.HasSerializedPosition(identityCache));
+            Assert.IsFalse(HomeMarkerController.HasSerializedPosition(account));
         }
 
         [Test]
@@ -291,9 +297,9 @@ namespace DCL.MapRenderer.Tests.HomeMarker
 
             homePlaceEventBus.SetAsHome(worldName);
 
-            Assert.IsTrue(HomeMarkerController.HasSerializedWorldName(identityCache));
-            Assert.AreEqual(worldName, HomeMarkerController.DeserializeWorldName(identityCache));
-            Assert.IsFalse(HomeMarkerController.HasSerializedPosition(identityCache));
+            Assert.IsTrue(HomeMarkerController.HasSerializedWorldName(account));
+            Assert.AreEqual(worldName, HomeMarkerController.DeserializeWorldName(account));
+            Assert.IsFalse(HomeMarkerController.HasSerializedPosition(account));
         }
 
         [Test]
@@ -402,7 +408,50 @@ namespace DCL.MapRenderer.Tests.HomeMarker
 
             // Assert
             Assert.IsTrue(controller.HomeIsSet);
-            Assert.IsFalse(HomeMarkerController.HasSerializedHome(identityCache));
+            Assert.IsFalse(HomeMarkerController.HasSerializedHome(account));
+        }
+
+        [Test]
+        public void AdoptLegacyHomeOfEarlierReleasesOnInitialize()
+        {
+            // Arrange
+            var legacyHome = new Vector2Int(7, 8);
+            DCLPlayerPrefs.SetVector2Int(DCLPrefKeys.MAP_HOME_MARKER_DATA_LEGACY, legacyHome);
+
+            // Act
+            controller.Initialize();
+
+            // Assert
+            Assert.AreEqual(legacyHome, controller.CurrentCoordinates);
+            Assert.AreEqual(legacyHome, HomeMarkerController.Deserialize(account));
+            Assert.IsFalse(DCLPlayerPrefs.HasVectorKey(DCLPrefKeys.MAP_HOME_MARKER_DATA_LEGACY));
+        }
+
+        [Test]
+        public void KeepOwnHomeOverLegacyHomeOnInitialize()
+        {
+            // Arrange
+            var ownHome = new Vector2Int(1, 2);
+            HomeMarkerController.Serialize(account, ownHome);
+            DCLPlayerPrefs.SetString(DCLPrefKeys.MAP_HOME_WORLD_NAME_LEGACY, "legacy.dcl.eth");
+
+            // Act
+            controller.Initialize();
+
+            // Assert
+            Assert.AreEqual(ownHome, controller.CurrentCoordinates);
+            Assert.IsFalse(controller.IsWorldHome);
+            Assert.IsFalse(DCLPlayerPrefs.HasKey(DCLPrefKeys.MAP_HOME_WORLD_NAME_LEGACY));
+        }
+
+        [Test]
+        public void RecordTheAccountWhoseHomeWasLoaded()
+        {
+            // Act
+            controller.Initialize();
+
+            // Assert
+            Assert.AreEqual(account, DCLPlayerPrefs.GetString(DCLPrefKeys.MAP_HOME_LAST_ACCOUNT));
         }
 	}
 }

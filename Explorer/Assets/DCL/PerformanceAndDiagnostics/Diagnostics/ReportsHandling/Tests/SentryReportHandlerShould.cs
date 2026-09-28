@@ -43,6 +43,23 @@ namespace DCL.Diagnostics.Tests
             Assert.IsNull(SentryReportHandler.BeforeSend(@event));
         }
 
+        [TestCase(unchecked((int)0x80070027))]
+        [TestCase(unchecked((int)0x80070070))]
+        public void DropDiskFullByHResultWhateverTheMessageSays(int hresult)
+        {
+            var @event = new SentryEvent(new IOException("Win32 IO returned ERROR_DISK_FULL. Path C:\\Users\\jane\\userdata_0.json", hresult));
+
+            Assert.IsNull(SentryReportHandler.BeforeSend(@event));
+        }
+
+        [Test]
+        public void KeepOtherIoExceptions()
+        {
+            var @event = new SentryEvent(new IOException("Sharing violation on path C:\\Users\\jane\\userdata_0.json", unchecked((int)0x80070020)));
+
+            Assert.IsNotNull(SentryReportHandler.BeforeSend(@event));
+        }
+
         [Test]
         public void DropTaskAlreadyCompletedTransitions()
         {
