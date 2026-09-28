@@ -56,7 +56,7 @@ namespace DCL.SDKComponents.MediaStream
             // Every MediaPlayer instance picks its backend at Awake from this
             // selection, so it must be installed before the first player is created.
             MediaPlayerBackendSelection.Install(FeaturesRegistry.Instance.IsEnabled(CurrentPlatformMediaPlayerFeature()));
-            ReportHub.Log(ReportCategory.MEDIA_STREAM, $"Media player backend: {(MediaPlayerBackendSelection.UseCustomPlayer ? "UUAV" : "AVPro")}");
+            ReportHub.LogProductionInfo(MediaPlayerBackendSelection.UseCustomPlayer ? "Media player backend: UUAV" : "Media player backend: AVPro");
 
             MediaPlayer mediaPlayerPrefab = (await assetsProvisioner.ProvideMainAssetAsync(containerSettings.MediaPlayerPrefab, ct: ct)).Value;
 
