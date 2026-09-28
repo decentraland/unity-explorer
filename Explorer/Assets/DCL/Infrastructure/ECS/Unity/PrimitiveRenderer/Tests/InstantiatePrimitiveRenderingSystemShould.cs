@@ -129,7 +129,9 @@ namespace ECS.Unity.PrimitiveRenderer.Tests
             Mesh sharedMesh = meshFilter.sharedMesh;
 
             //Act
-            for (var i = 0; i < 48; i++)
+            const int BOX_UV_FLOAT_COUNT = 48; // 24 vertices × 2 floats (u, v) per vertex
+
+            for (var i = 0; i < BOX_UV_FLOAT_COUNT; i++)
                 input.Box.Uvs.Add(0.5f);
 
             input.IsDirty = true;
