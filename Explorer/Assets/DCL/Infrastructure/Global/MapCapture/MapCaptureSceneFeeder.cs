@@ -46,6 +46,7 @@ namespace Global.MapCapture
         private readonly List<Entity> awaitingDescriptor = new ();
         private readonly List<Entity> awaitingLod = new ();
         private readonly HashSet<Entity> withoutDescriptor = new ();
+        private readonly HashSet<Entity> partiallyAssembled = new ();
         private int requestCounter;
 
         private AssetPromise<SceneDefinitions, GetSceneDefinitionList>? activePromise;
@@ -148,7 +149,7 @@ namespace Global.MapCapture
             if (!world.TryGet(entity, out SceneLODInfo lodInfo) || !lodInfo.IsLODInstantiated(0))
                 return false;
 
-            failed = SceneLODInfoUtils.HasLODResult(lodInfo.metadata.FailedLODs, 0);
+            failed = SceneLODInfoUtils.HasLODResult(lodInfo.metadata.FailedLODs, 0) || partiallyAssembled.Contains(entity);
             return true;
         }
 
@@ -161,6 +162,7 @@ namespace Global.MapCapture
             awaitingDescriptor.Clear();
             awaitingLod.Clear();
             withoutDescriptor.Clear();
+            partiallyAssembled.Clear();
 
             Debug.Log($"[JUANI] Unloading {sceneIds.Count} scene entities");
 
@@ -315,11 +317,23 @@ namespace Global.MapCapture
                 if (!world.TryGet(entity, out SceneLODInfo lodInfo) || !lodInfo.IsLODInstantiated(0)) continue;
 
                 string id = world.Get<SceneDefinitionComponent>(entity).Definition.id;
+                int total = lodInfo.InitialSceneStateLOD.TotalAssetsToInstantiate;
+                int failedAssets = lodInfo.InitialSceneStateLOD.FailedAssetCount();
 
                 if (SceneLODInfoUtils.HasLODResult(lodInfo.metadata.FailedLODs, 0))
                     Debug.LogWarning($"[JUANI] LOD_0 FAILED for {id}");
+                else if (failedAssets > 0)
+                {
+                    Debug.LogWarning($"[JUANI] LOD_0 ready for {id} with {failedAssets} of {total} assets FAILED to load");
+                    partiallyAssembled.Add(entity);
+                }
                 else
-                    Debug.Log($"[JUANI] LOD_0 ready for {id}");
+                    Debug.Log($"[JUANI] LOD_0 ready for {id}: {total} assets in place");
+
+                // The client wraps each scene in a LODGroup whose thresholds assume a perspective camera at ground
+                // level. Seen from an orthographic camera over a whole chunk most scenes fall below the LOD_0
+                // threshold and switch to LOD_1, which this capture never loads, so they vanish. Pin LOD_0.
+                lodInfo.metadata.LodGroup.ForceLOD(0);
 
                 awaitingLod.RemoveAt(i);
             }

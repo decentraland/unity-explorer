@@ -100,6 +100,17 @@ namespace DCL.LOD.Components
         public bool AllAssetsInstantiated() =>
             ParentContainer != null && Assets.Count == TotalAssetsToInstantiate;
 
+        public int FailedAssetCount()
+        {
+            var failed = 0;
+
+            foreach (ISSStoredAsset asset in Assets)
+                if (!asset.succeded)
+                    failed++;
+
+            return failed;
+        }
+
         public bool IsProcessing() =>
             CurrentState is State.Processing;
 
