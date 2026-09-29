@@ -104,7 +104,7 @@ namespace DCL.PluginSystem.Global
         public async UniTask InitializeAsync(Web3AuthPluginSettings settings, CancellationToken ct)
         {
             AuthenticationScreenView authScreenPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.AuthScreenPrefab, ct: ct)).Value;
-            ControllerBase<AuthenticationScreenView, ControllerNoData>.ViewFactoryMethod authScreenFactory = AuthenticationScreenController.CreateLazily(authScreenPrefab, null);
+            ControllerBase<AuthenticationScreenView, AuthenticationScreenController.Params>.ViewFactoryMethod authScreenFactory = AuthenticationScreenController.CreateLazily(authScreenPrefab, null);
 
             string? referrer = appArgs.TryGetValue(AppArgsFlags.REFERRER, out string? referrerValue) ? referrerValue : null;
 
