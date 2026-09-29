@@ -9,7 +9,7 @@ using DCL.Input.Component;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles;
 using DCL.UI.ProfileElements;
-using DCL.Web3.Authenticators;
+using DCL.Web3.Identities;
 using MVC;
 using System;
 using System.Threading;
@@ -38,7 +38,7 @@ namespace DCL.Donations.UI
         private readonly UnityAppWebBrowser webBrowser;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IInputBlock inputBlock;
-        private readonly ICompositeWeb3Provider web3Provider;
+        private readonly IWeb3IdentityCache identityCache;
 
         private CancellationTokenSource panelLifecycleCts = new ();
         private UniTaskCompletionSource closeIntentCompletionSource = new ();
@@ -53,7 +53,7 @@ namespace DCL.Donations.UI
             UnityAppWebBrowser webBrowser,
             IDecentralandUrlsSource decentralandUrlsSource,
             IInputBlock inputBlock,
-            ICompositeWeb3Provider web3Provider,
+            IWeb3IdentityCache identityCache,
             decimal[] recommendedDonationAmount)
             : base(viewFactory)
         {
@@ -64,7 +64,7 @@ namespace DCL.Donations.UI
             this.webBrowser = webBrowser;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.inputBlock = inputBlock;
-            this.web3Provider = web3Provider;
+            this.identityCache = identityCache;
             this.recommendedDonationAmount = recommendedDonationAmount;
         }
 
@@ -107,7 +107,7 @@ namespace DCL.Donations.UI
         {
             try
             {
-                viewInstance!.ShowLoading(viewModel, amount, web3Provider.IsThirdWebAccount);
+                viewInstance!.ShowLoading(viewModel, amount, identityCache.IsThirdWebAccount());
 
                 bool success = await donationsService.SendDonationAsync(viewModel.SceneCreatorAddress, amount, panelLifecycleCts.Token);
 

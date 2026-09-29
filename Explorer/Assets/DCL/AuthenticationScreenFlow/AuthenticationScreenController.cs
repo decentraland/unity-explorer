@@ -25,8 +25,18 @@ using Utility;
 
 namespace DCL.AuthenticationScreenFlow
 {
-    public class AuthenticationScreenController : ControllerBase<AuthenticationScreenView>
+    public class AuthenticationScreenController : ControllerBase<AuthenticationScreenView, AuthenticationScreenController.Params>
     {
+        public readonly struct Params
+        {
+            public readonly bool StartAtLoginSelection;
+
+            public Params(bool startAtLoginSelection)
+            {
+                StartAtLoginSelection = startAtLoginSelection;
+            }
+        }
+
         public enum AuthStatus
         {
             None = 0,
@@ -154,6 +164,7 @@ namespace DCL.AuthenticationScreenFlow
             characterPreviewController = new AuthenticationScreenCharacterPreviewController(viewInstance!.CharacterPreviewView, emotesSettings, characterPreviewFactory, world, characterPreviewEventBus);
 
             bool isEpicBuild = string.Equals(installSource, EPIC_STORE_INSTALL_SOURCE, StringComparison.OrdinalIgnoreCase);
+
             // Epic builds only support emailOTP due to deeplink limitations
             // See: https://github.com/decentraland/unity-explorer/issues/9554
             bool enableEmailOTP = FeaturesRegistry.Instance.IsEnabled(FeatureId.EmailOTPAuth) || isEpicBuild;
@@ -204,19 +215,54 @@ namespace DCL.AuthenticationScreenFlow
         protected override void OnBeforeViewShow()
         {
             base.OnBeforeViewShow();
-            // Force to re-login if the identity will expire in 24hs or less, so we mitigate the chances on
-            // getting the identity expired while in-world, provoking signed-fetch requests to fail
+
+            if (inputData.StartAtLoginSelection)
+            {
+                fsm?.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.IN, true);
+                return;
+            }
+
             IWeb3Identity? storedIdentity = storedIdentityProvider.Identity;
-            if (storedIdentity is { IsExpired: false } && storedIdentity.Expiration - DateTime.UtcNow > TimeSpan.FromDays(1))
+
+            if (storedIdentity == null
+                || storedIdentity.IsExpired
+                // Force to re-login if the identity will expire in 24hs or less, so we mitigate the chances on
+                // getting the identity expired while in-world, provoking signed-fetch requests to fail
+                || storedIdentity.Expiration - DateTime.UtcNow <= TimeSpan.FromDays(1))
+                ReturnToOrigin(UIAnimationHashes.IN);
+            else
             {
                 CancelLoginProcess();
                 loginCancellationTokenSource = new CancellationTokenSource();
 
                 TryAutoLoginAndProceedAsync(storedIdentity, loginCancellationTokenSource.Token).Forget();
             }
-            else
+
+            return;
+
+            async UniTaskVoid TryAutoLoginAndProceedAsync(IWeb3Identity identity, CancellationToken ct)
             {
-                EnterLoginEntryState(UIAnimationHashes.IN);
+                try
+                {
+                    IOtpAuthenticator.AutoLoginResult autoLoginSuccess = await web3Authenticator.TryAutoLoginAsync(ct);
+
+                    if (autoLoginSuccess is IOtpAuthenticator.AutoLoginResult.Success
+                        or IOtpAuthenticator.AutoLoginResult.Unnecessary)
+                        fsm?.Enter<ProfileFetchingAuthState, ProfileFetchingPayload>(
+                            new ProfileFetchingPayload(identity,
+                                identity.Method != LoginMethod.TOKEN_FILE,
+                                ct));
+                    else
+                        ReturnToOrigin(UIAnimationHashes.IN);
+                }
+                catch (OperationCanceledException)
+                { /* Expected on cancellation */
+                }
+                catch (Exception e)
+                {
+                    ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
+                    ReturnToOrigin(UIAnimationHashes.IN);
+                }
             }
         }
 
@@ -226,20 +272,12 @@ namespace DCL.AuthenticationScreenFlow
         internal void RaiseAvatarSelected(string bodyType, int presetSlot) =>
             AvatarSelected?.Invoke(bodyType, presetSlot);
 
-        internal void EnterLoginEntryState(int animHash)
+        internal void ReturnToOrigin(int animHash)
         {
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.GuestLogin))
                 fsm?.Enter<GuestOrSignUpAuthState>(true);
             else
                 fsm?.Enter<LoginSelectionAuthState, int>(animHash, true);
-        }
-
-        internal void ReturnToOrigin(int animHash)
-        {
-            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.GuestLogin))
-                EnterLoginEntryState(animHash);
-            else
-                fsm?.Enter<LoginSelectionAuthState, int>(animHash);
         }
 
         internal void ReturnToOrigin(ErrorType errorType)
@@ -248,29 +286,6 @@ namespace DCL.AuthenticationScreenFlow
                 fsm?.Enter<GuestOrSignUpAuthState, ErrorType>(errorType, true);
             else
                 fsm?.Enter<LoginSelectionAuthState, ErrorType>(errorType);
-        }
-
-        private async UniTaskVoid TryAutoLoginAndProceedAsync(IWeb3Identity storedIdentity, CancellationToken ct)
-        {
-            try
-            {
-                bool autoLoginSuccess = await web3Authenticator.TryAutoLoginAsync(ct);
-
-                if (autoLoginSuccess)
-                    fsm?.Enter<ProfileFetchingAuthState, ProfileFetchingPayload>(new (storedIdentity, storedIdentity.Method != LoginMethod.TOKEN_FILE, ct));
-                else
-                {
-                    EnterLoginEntryState(UIAnimationHashes.IN);
-                }
-            }
-            catch (OperationCanceledException)
-            { /* Expected on cancellation */
-            }
-            catch (Exception e)
-            {
-                ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-                EnterLoginEntryState(UIAnimationHashes.IN);
-            }
         }
 
         protected override void OnViewShow()
@@ -346,7 +361,7 @@ namespace DCL.AuthenticationScreenFlow
 
                 await web3Authenticator.LogoutAsync(ct);
 
-                EnterLoginEntryState(UIAnimationHashes.SLIDE);
+                ReturnToOrigin(UIAnimationHashes.SLIDE);
             }
         }
 

@@ -794,7 +794,8 @@ namespace Global.Dynamic
                     profileContainer.ProfileRepositoryWrapper,
                     globalWorld,
                     wearableContainer.WearableCatalog),
-                uiShellContainer.CreateGenericPopupsPlugin(assetsProvisioner, dynamicWorldDependencies.CompositeWeb3Provider, profileContainer.SelfProfile, staticContainer.InputBlock),
+                uiShellContainer.CreateGenericPopupsPlugin(assetsProvisioner, dynamicWorldDependencies.CompositeWeb3Provider, profileContainer.SelfProfile, staticContainer.InputBlock,
+                    identityCache, profileCache, initializationFlowContainer.InitializationFlow, globalWorld, playerEntity),
                 uiShellContainer.CreateColorPickerPlugin(assetsProvisioner),
                 uiShellContainer.CreateGenericContextMenuPlugin(assetsProvisioner, profileContainer.ProfileRepositoryWrapper),
                 realmNavigatorContainer.CreatePlugin(),
@@ -828,7 +829,7 @@ namespace Global.Dynamic
                     webBrowser,
                     bootstrapContainer.DecentralandUrlsSource,
                     staticContainer.InputBlock,
-                    dynamicWorldDependencies.CompositeWeb3Provider));
+                    identityCache));
 
             // ReSharper disable once MethodHasAsyncOverloadWithCancellation
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.StopOnDuplicateIdentity))

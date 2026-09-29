@@ -51,6 +51,7 @@ namespace DCL.FeatureFlags
         public const string EMAIL_OTP_AUTH = "alfa-email-otp-auth";
         public const string GUEST_LOGIN = "alfa-guest-login";
         public const string LOBBY = "alfa-lobby";
+        public const string EPHEMERAL_GUEST_ACCOUNT = "alfa-ephemeral-guest-account";
         [Obsolete("GPU Instancer Pro terrain is no longer optional so the flag is not needed")]
         public const string GPUI_ENABLED = "alfa-gpui";
         public const string LOADING_SCREEN_TIPS = "alfa-loading-screen-tips";
@@ -110,7 +111,7 @@ namespace DCL.FeatureFlags
 
     public enum FeatureFlag
     {
-    
+
         None = 0,
         MultiplayerCompressionWin,
         MultiplayerCompressionMac,

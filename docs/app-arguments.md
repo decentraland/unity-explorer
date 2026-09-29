@@ -250,6 +250,20 @@ Only affects player builds — the Editor always behaves as if the flag were set
 
 ---
 
+### `ephemeral-guest-account`
+**Type:** Boolean (`true` / `false`)
+**Description:** Overrides the `alfa-ephemeral-guest-account` feature flag: enabled, "play as guest" generates the account on the device; disabled, it uses the ThirdWeb guest wallet.
+
+Enabling it requires [`--debug`](#debug); `--ephemeral-guest-account false` disables it in any build.
+
+**Usage:**
+```bash
+--debug --ephemeral-guest-account true
+--ephemeral-guest-account false
+```
+
+---
+
 ## Avatar & Profile Flags
 
 ### `self-force-emotes`
