@@ -166,6 +166,8 @@ namespace DCL.SkyBox
 
         [Header("Indirect Lighting")]
         [InspectorName("Enabled")] [SerializeField] private bool indirectLight = true;
+        [Tooltip("Multiplier on the environment (sky) reflections; scales what glossy surfaces mirror without touching the sky or the ambient light.")]
+        [Range(0f, 2f)] [SerializeField] private float reflectionIntensity = 1f;
         [GradientUsage(true)] [SerializeField] private Gradient indirectSkyRamp = new ();
         [GradientUsage(true)] [SerializeField] private Gradient indirectEquatorRamp = new ();
         [GradientUsage(true)] [SerializeField] private Gradient groundEquatorRamp = new ();
@@ -201,6 +203,8 @@ namespace DCL.SkyBox
         [Header("Fog")]
         [InspectorName("Enabled")] [SerializeField] private bool fog = true;
         [GradientUsage(true)] [SerializeField] private Gradient fogColorRamp = new ();
+        [Tooltip("Exponential fog density at each phase anchor: Night, Sunrise, Day, Sunset. 0.0005 is about 2 km to the 1/e point.")]
+        [SerializeField] private Vector4 fogDensityByPhase = new (0.0005f, 0.0005f, 0.0005f, 0.0005f);
 
         [Header("Material (applied once per preset)")]
         [SerializeField] private float zenitSpread = 0.404f;
@@ -289,6 +293,7 @@ namespace DCL.SkyBox
         public float ShootingStarsRate => shootingStarsRate;
 
         public bool IndirectLight => indirectLight;
+        public float ReflectionIntensity => reflectionIntensity;
         public Gradient IndirectSkyRamp => indirectSkyRamp;
         public Gradient IndirectEquatorRamp => indirectEquatorRamp;
         public Gradient GroundEquatorRamp => groundEquatorRamp;
@@ -313,6 +318,7 @@ namespace DCL.SkyBox
 
         public bool Fog => fog;
         public Gradient FogColorRamp => fogColorRamp;
+        public Vector4 FogDensityByPhase => fogDensityByPhase;
 
         public float ZenitSpread => zenitSpread;
         public float ZenitBlend => zenitBlend;

@@ -11,7 +11,8 @@ Material:
   m_Shader: {fileID: -6465566751694194690, guid: 5d5e932e2940cf64f9e1d096e5d30910, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
-  m_ValidKeywords: []
+  m_ValidKeywords:
+  - _DCL_SKY_STYLIZED
   m_InvalidKeywords: []
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
@@ -108,6 +109,10 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _SkyLut:
+        m_Texture: {fileID: 2800000, guid: b6fe7200b57b72b4ba04231c0a3d5f60, type: 2}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _Stars_Texture:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -199,8 +204,10 @@ Material:
     - _SrcBlend: 1
     - _SrcBlendAlpha: 1
     - _Stars_Brightness: 4.62
+    - _SkyPhase: 0.5
     - _SunOpacity: 1
     - _SunSize: 0.1
+    - _UseSkyLut: 1
     - _Sun_Flare: 0.3
     - _Sun_Flare_Distance: -0.21
     - _Sun_Flare_Intensity: 1

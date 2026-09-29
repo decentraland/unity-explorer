@@ -38,9 +38,10 @@ public class SkyboxRenderController : MonoBehaviour
     private static readonly int SECOND_SUN_SIZE_FACTOR = Shader.PropertyToID("_Second_Sun_Size_Factor");
     private static readonly int SECOND_SUN_ORBIT_SIZE = Shader.PropertyToID("_Second_Sun_Orbit_Size");
 
-    // Selects the stylized shader variant (sky lookup, stars v2, cloud strips) or the legacy one; global, so the
-    // reflection bake follows. Declared as a multi_compile keyword on both sky graphs. Set by name: a GlobalKeyword
-    // cannot be created while the component is being constructed, and this is written once per preset.
+    // Selects the stylized shader variant (sky lookup, stars v2, cloud strips) or the legacy one. Set globally so the
+    // reflection bake follows, and on the material so a preset overrides the state saved on the material asset (which
+    // carries the stylized defaults for the Scene view outside Play). Set by name: a GlobalKeyword cannot be created
+    // while the component is being constructed, and this is written once per preset.
     private const string STYLIZED_KEYWORD = "_DCL_SKY_STYLIZED";
 
     // Sky lookup (phase x elevation). The float switch is copied to the reflection bake material along with the texture.
@@ -239,9 +240,15 @@ public class SkyboxRenderController : MonoBehaviour
         skyboxMaterial.SetFloat(USE_SKY_LUT, preset.UseSkyLut ? 1f : 0f);
 
         if (preset.UseSkyLut)
+        {
             Shader.EnableKeyword(STYLIZED_KEYWORD);
+            skyboxMaterial.EnableKeyword(STYLIZED_KEYWORD);
+        }
         else
+        {
             Shader.DisableKeyword(STYLIZED_KEYWORD);
+            skyboxMaterial.DisableKeyword(STYLIZED_KEYWORD);
+        }
 
         skyboxMaterial.SetTexture(SKY_LUT, preset.SkyLut);
 
@@ -285,6 +292,8 @@ public class SkyboxRenderController : MonoBehaviour
 
         if (preset.IndirectLight)
             RenderSettings.ambientMode = AmbientMode.Trilight;
+
+        RenderSettings.reflectionIntensity = preset.ReflectionIntensity;
 
         if (preset.Fog)
             RenderSettings.fog = true;
@@ -644,12 +653,14 @@ public class SkyboxRenderController : MonoBehaviour
     }
 
     /// <summary>
-    ///     Updates the fog color of the RenderSettings if enabled
+    ///     Fog colour and exponential density at the phase, when the preset drives fog.
     /// </summary>
     private void UpdateFog(float phase)
     {
-        if (preset.Fog)
-            RenderSettings.fogColor = preset.FogColorRamp.Evaluate(phase);
+        if (!preset.Fog) return;
+
+        RenderSettings.fogColor = preset.FogColorRamp.Evaluate(phase);
+        RenderSettings.fogDensity = SkyboxLookPreset.EvaluateByPhase(preset.FogDensityByPhase, phase);
     }
 
 #if UNITY_EDITOR
