@@ -39,8 +39,8 @@ namespace DCL.RealmNavigation.Tests
             startParcel.Reset();
 
             // Act
-            AssignResult parcelResult = startParcel.Assign(new Vector2Int(1, 2));
             AssignResult realmResult = startParcel.AssignRealm(URLDomain.FromString("https://realm.example.com/main"));
+            AssignResult parcelResult = startParcel.Assign(new Vector2Int(1, 2));
 
             // Assert
             Assert.That(parcelResult, Is.EqualTo(AssignResult.Ok));
