@@ -45,7 +45,9 @@ In client-map mode it renders the minimap's own satellite grid: 8x8 chunks of 40
    | Editor Load Timeout Sec | 600 |
 
    Block size and pixels per parcel are ignored in client-map mode; the grid fixes them at 40
-   parcels and 512 px. Save the scene so the values persist.
+   parcels and 512 px. Each chunk is loaded in four 20-parcel quarters, rendered into its
+   quadrant of the image, so no more than 400 parcels are resident at once. Save the scene so
+   the values persist.
 
 ## Run
 
@@ -89,8 +91,9 @@ day pass it downloads nothing.
 - A compile error: report it with the file and line; do not work around it.
 - An exception at boot names the stage (static container, textures, LOD container, plugin
   initialization, realm, terrain). Report the full message.
-- Chunks with many pending parcels: raise the load timeout, or run the region in halves
-  (X -152..7 and X 8..167) if the editor is under memory pressure.
+- Chunks with many pending parcels: raise the load timeout.
+- A GPU crash or display driver reset: too much resident at once for the GPU. Rerun with
+  `--map-capture-chunk 10` (build) so each load is a quarter of the default.
 - Images that are sky or a horizon instead of a top-down view: the camera brain is not being
   updated; report it, this is a code problem.
 
@@ -114,7 +117,9 @@ MapCapture.exe --map-capture-client-map --map-capture-out <OUTPUT_DIR> --map-cap
 ```
 
 Add `--map-capture-region x0,y0,x1,y1` to render only the chunks a region touches, e.g.
-`-152,-167,7,152` and `8,-167,167,152` to split the city in two. The log is the player log; the
+`-152,-167,7,152` and `8,-167,167,152` to split the city in two. `--map-capture-chunk 10` loads
+each chunk in sixteen 10-parcel parts instead of four 20-parcel ones if the machine runs out of
+GPU memory; `40` loads a whole chunk at once on a machine with plenty. The log is the player log; the
 output folder and manifest are the same as in the editor.
 
 ## Do not commit editor noise

@@ -3,6 +3,7 @@ using DCL.Diagnostics;
 using DCL.SkyBox;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
@@ -56,7 +57,7 @@ namespace Global.MapCapture
             await FixSkyboxAsync(ct);
 
             // Blocks tile the grid from its origin; the region is widened to whole blocks so every image is a full
-            // block. Chunks are block multiples, so a block never straddles two.
+            // block. A load is either several whole blocks or a whole fraction of one, never straddling an image.
             var blocksMin = new Vector2Int(
                 args.GridOrigin.x + (FloorDiv(args.Min.x - args.GridOrigin.x, args.BlockSize) * args.BlockSize),
                 args.GridOrigin.y + (FloorDiv(args.Min.y - args.GridOrigin.y, args.BlockSize) * args.BlockSize));
@@ -69,46 +70,10 @@ namespace Global.MapCapture
             var total = 0;
             var complete = 0;
 
-            for (int cy = blocksMin.y; cy <= blocksMax.y; cy += args.ChunkSize)
-            for (int cx = blocksMin.x; cx <= blocksMax.x; cx += args.ChunkSize)
-            {
-                var chunkMin = new Vector2Int(cx, cy);
-                var chunkMax = new Vector2Int(Mathf.Min(cx + args.ChunkSize - 1, blocksMax.x), Mathf.Min(cy + args.ChunkSize - 1, blocksMax.y));
-
-                List<Vector2Int> parcels = ParcelsIn(chunkMin, chunkMax);
-                runtime.Feeder.Request(parcels);
-                await WaitForParcelsAsync(parcels, ct);
-
-                for (int by = chunkMin.y; by <= chunkMax.y; by += args.BlockSize)
-                for (int bx = chunkMin.x; bx <= chunkMax.x; bx += args.BlockSize)
-                {
-                    var blockMin = new Vector2Int(bx, by);
-                    (JArray pending, JArray failed) = BlockStatus(blockMin);
-
-                    byte[] image = await runtime.Camera.RenderBlockAsync(blockMin, args.BlockSize, args.RenderPixels, args.OutputPixels, args.Jpeg, args.CameraHeight, ct);
-                    string file = args.ClientMap ? args.ClientChunkName(blockMin) : $"{bx}_{by}.png";
-                    File.WriteAllBytes(Path.Combine(args.OutputDir, file), image);
-
-                    total++;
-
-                    if (pending.Count == 0 && failed.Count == 0)
-                        complete++;
-
-                    blocks.Add(new JObject
-                    {
-                        ["x"] = bx,
-                        ["y"] = by,
-                        ["file"] = file,
-                        ["pendingParcels"] = pending,
-                        ["failedParcels"] = failed,
-                    });
-
-                    ReportHub.Log(ReportCategory.ENGINE, $"[MapCapture] block ({bx},{by}) written; pending {pending.Count}, failed {failed.Count}");
-                }
-
-                runtime.Feeder.UnloadAll(runtime.World);
-                await UniTask.DelayFrame(UNLOAD_SETTLE_FRAMES, cancellationToken: ct);
-            }
+            if (args.ChunkSize >= args.BlockSize)
+                await RenderBlocksPerLoadAsync(blocksMin, blocksMax, blocks, ct, () => total++, () => complete++);
+            else
+                await RenderLoadsPerBlockAsync(blocksMin, blocksMax, blocks, ct, () => total++, () => complete++);
 
             var manifest = new JObject
             {
@@ -116,6 +81,7 @@ namespace Global.MapCapture
                 ["clientMap"] = args.ClientMap,
                 ["gridOrigin"] = new JObject { ["x"] = args.GridOrigin.x, ["y"] = args.GridOrigin.y },
                 ["blockSize"] = args.BlockSize,
+                ["chunkSize"] = args.ChunkSize,
                 ["pixelsPerParcel"] = args.PixelsPerParcel,
                 ["outputPixels"] = args.OutputPixels,
                 ["hour"] = args.Hour,
@@ -125,6 +91,98 @@ namespace Global.MapCapture
 
             File.WriteAllText(Path.Combine(args.OutputDir, MANIFEST_FILE), manifest.ToString(Formatting.Indented));
             return new Summary(total, complete);
+        }
+
+        /// <summary>A load covers several blocks: load once, render each block, unload.</summary>
+        private async UniTask RenderBlocksPerLoadAsync(Vector2Int blocksMin, Vector2Int blocksMax, JArray blocks, CancellationToken ct, Action onBlock, Action onComplete)
+        {
+            for (int cy = blocksMin.y; cy <= blocksMax.y; cy += args.ChunkSize)
+            for (int cx = blocksMin.x; cx <= blocksMax.x; cx += args.ChunkSize)
+            {
+                var chunkMin = new Vector2Int(cx, cy);
+                var chunkMax = new Vector2Int(Mathf.Min(cx + args.ChunkSize - 1, blocksMax.x), Mathf.Min(cy + args.ChunkSize - 1, blocksMax.y));
+
+                await LoadAsync(chunkMin, chunkMax, ct);
+
+                for (int by = chunkMin.y; by <= chunkMax.y; by += args.BlockSize)
+                for (int bx = chunkMin.x; bx <= chunkMax.x; bx += args.BlockSize)
+                {
+                    var blockMin = new Vector2Int(bx, by);
+                    var pending = new JArray();
+                    var failed = new JArray();
+                    CollectStatus(blockMin, args.BlockSize, pending, failed);
+
+                    byte[] image = await runtime.Camera.RenderBlockAsync(blockMin, args.BlockSize, args.RenderPixels, args.OutputPixels, args.Jpeg, args.CameraHeight, ct);
+                    WriteBlock(blockMin, image, pending, failed, blocks, onBlock, onComplete);
+                }
+
+                await UnloadAsync(ct);
+            }
+        }
+
+        /// <summary>A block needs several loads: load a part, render it into the image, unload, repeat, then write.</summary>
+        private async UniTask RenderLoadsPerBlockAsync(Vector2Int blocksMin, Vector2Int blocksMax, JArray blocks, CancellationToken ct, Action onBlock, Action onComplete)
+        {
+            int partPixels = args.RenderPixels / (args.BlockSize / args.ChunkSize);
+
+            for (int by = blocksMin.y; by <= blocksMax.y; by += args.BlockSize)
+            for (int bx = blocksMin.x; bx <= blocksMax.x; bx += args.BlockSize)
+            {
+                var blockMin = new Vector2Int(bx, by);
+                var pending = new JArray();
+                var failed = new JArray();
+                MapCaptureCamera.BlockImage image = runtime.Camera.BeginBlock(args.RenderPixels);
+
+                for (int py = 0; py < args.BlockSize; py += args.ChunkSize)
+                for (int px = 0; px < args.BlockSize; px += args.ChunkSize)
+                {
+                    var partMin = new Vector2Int(bx + px, by + py);
+                    await LoadAsync(partMin, partMin + (Vector2Int.one * (args.ChunkSize - 1)), ct);
+                    CollectStatus(partMin, args.ChunkSize, pending, failed);
+
+                    var pixelOffset = new Vector2Int(px / args.ChunkSize * partPixels, py / args.ChunkSize * partPixels);
+                    await runtime.Camera.RenderIntoAsync(image, partMin, args.ChunkSize, pixelOffset, partPixels, args.CameraHeight, ct);
+                    await UnloadAsync(ct);
+                }
+
+                byte[] bytes = await runtime.Camera.EndBlockAsync(image, args.OutputPixels, args.Jpeg, ct);
+                WriteBlock(blockMin, bytes, pending, failed, blocks, onBlock, onComplete);
+            }
+        }
+
+        private async UniTask LoadAsync(Vector2Int min, Vector2Int max, CancellationToken ct)
+        {
+            List<Vector2Int> parcels = ParcelsIn(min, max);
+            runtime.Feeder.Request(parcels);
+            await WaitForParcelsAsync(parcels, ct);
+        }
+
+        private async UniTask UnloadAsync(CancellationToken ct)
+        {
+            runtime.Feeder.UnloadAll(runtime.World);
+            await UniTask.DelayFrame(UNLOAD_SETTLE_FRAMES, cancellationToken: ct);
+        }
+
+        private void WriteBlock(Vector2Int blockMin, byte[] image, JArray pending, JArray failed, JArray blocks, Action onBlock, Action onComplete)
+        {
+            string file = args.ClientMap ? args.ClientChunkName(blockMin) : $"{blockMin.x}_{blockMin.y}.png";
+            File.WriteAllBytes(Path.Combine(args.OutputDir, file), image);
+
+            onBlock();
+
+            if (pending.Count == 0 && failed.Count == 0)
+                onComplete();
+
+            blocks.Add(new JObject
+            {
+                ["x"] = blockMin.x,
+                ["y"] = blockMin.y,
+                ["file"] = file,
+                ["pendingParcels"] = pending,
+                ["failedParcels"] = failed,
+            });
+
+            ReportHub.Log(ReportCategory.ENGINE, $"[MapCapture] block ({blockMin.x},{blockMin.y}) written to {file}; pending {pending.Count}, failed {failed.Count}");
         }
 
         private async UniTask FixSkyboxAsync(CancellationToken ct)
@@ -179,23 +237,18 @@ namespace Global.MapCapture
             return true;
         }
 
-        private (JArray pending, JArray failed) BlockStatus(Vector2Int blockMin)
+        private void CollectStatus(Vector2Int min, int size, JArray pending, JArray failed)
         {
-            var pending = new JArray();
-            var failed = new JArray();
-
-            for (int dy = 0; dy < args.BlockSize; dy++)
-            for (int dx = 0; dx < args.BlockSize; dx++)
+            for (int dy = 0; dy < size; dy++)
+            for (int dx = 0; dx < size; dx++)
             {
-                var parcel = new Vector2Int(blockMin.x + dx, blockMin.y + dy);
+                var parcel = new Vector2Int(min.x + dx, min.y + dy);
 
                 if (!runtime.Feeder.IsParcelReady(runtime.World, parcel, out bool parcelFailed))
                     pending.Add(ParcelJson(parcel));
                 else if (parcelFailed)
                     failed.Add(ParcelJson(parcel));
             }
-
-            return (pending, failed);
         }
 
         private static List<Vector2Int> ParcelsIn(Vector2Int min, Vector2Int max)

@@ -29,6 +29,7 @@ namespace Global.MapCapture
         private const int CLIENT_CHUNK_PIXELS = 512;
         private const int CLIENT_RENDER_PIXELS_PER_PARCEL = 16;
         private const int CLIENT_GRID_CHUNKS = 8;
+        private const int CLIENT_DEFAULT_LOAD_PARCELS = 20;
         private static readonly Vector2Int CLIENT_GRID_MIN = new (-152, 113 - (CLIENT_CHUNK_PARCELS * (CLIENT_GRID_CHUNKS - 1)));
         private static readonly Vector2Int CLIENT_GRID_MAX = CLIENT_GRID_MIN + (Vector2Int.one * ((CLIENT_CHUNK_PARCELS * CLIENT_GRID_CHUNKS) - 1));
 
@@ -52,7 +53,10 @@ namespace Global.MapCapture
         public readonly bool Jpeg;
         public readonly bool ClientMap;
 
-        /// <summary>Parcels per loaded chunk side, always a multiple of <see cref="BlockSize" />.</summary>
+        /// <summary>
+        ///     Parcels per loaded chunk side. Either a multiple of <see cref="BlockSize" /> (several images per load) or a
+        ///     divisor of it (one image assembled from several loads), so a load and an image never straddle each other.
+        /// </summary>
         public readonly int ChunkSize;
         public readonly float Hour;
         public readonly float CameraHeight;
@@ -122,8 +126,13 @@ namespace Global.MapCapture
                     return false;
                 }
 
+                int loadSize = ReadInt(args, AppArgsFlags.MapCapture.CHUNK_SIZE, CLIENT_DEFAULT_LOAD_PARCELS);
+
+                if (loadSize <= 0 || CLIENT_CHUNK_PARCELS % loadSize != 0)
+                    loadSize = CLIENT_DEFAULT_LOAD_PARCELS;
+
                 result = new MapCaptureArgs(min, max, CLIENT_GRID_MIN, outputDir, cacheDir, CLIENT_CHUNK_PARCELS, CLIENT_RENDER_PIXELS_PER_PARCEL, CLIENT_CHUNK_PIXELS, true,
-                    true, CLIENT_CHUNK_PARCELS, hour, cameraHeight, loadTimeoutSec);
+                    true, loadSize, hour, cameraHeight, loadTimeoutSec);
 
                 return true;
             }
@@ -137,8 +146,12 @@ namespace Global.MapCapture
                 return false;
             }
 
-            int chunkSize = Mathf.Max(ReadInt(args, AppArgsFlags.MapCapture.CHUNK_SIZE, DEFAULT_CHUNK_SIZE), blockSize);
-            chunkSize = (chunkSize + blockSize - 1) / blockSize * blockSize;
+            int chunkSize = Mathf.Max(ReadInt(args, AppArgsFlags.MapCapture.CHUNK_SIZE, DEFAULT_CHUNK_SIZE), 1);
+
+            if (chunkSize >= blockSize)
+                chunkSize = (chunkSize + blockSize - 1) / blockSize * blockSize;
+            else if (blockSize % chunkSize != 0)
+                chunkSize = blockSize;
 
             result = new MapCaptureArgs(min, max, min, outputDir, cacheDir, blockSize, pixelsPerParcel, blockSize * pixelsPerParcel, false,
                 false, chunkSize, hour, cameraHeight, loadTimeoutSec);

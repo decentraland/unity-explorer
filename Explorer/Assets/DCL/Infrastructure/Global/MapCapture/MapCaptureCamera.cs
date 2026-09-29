@@ -79,14 +79,36 @@ namespace Global.MapCapture
         }
 
         /// <summary>
-        ///     Renders the block at <paramref name="renderPixels" /> and writes it at <paramref name="outputPixels" />; the
-        ///     downscale rides on the same blit that converts the HDR render to sRGB.
+        ///     An image under assembly: an HDR target the size of the full render that sub-blocks are copied into as
+        ///     their scenes come and go, then written at the output size.
         /// </summary>
-        public async UniTask<byte[]> RenderBlockAsync(Vector2Int minParcel, int blockSize, int renderPixels, int outputPixels, bool jpeg, float height, CancellationToken ct)
+        public sealed class BlockImage : IDisposable
+        {
+            internal readonly RenderTexture Accumulator;
+            internal readonly int RenderPixels;
+
+            internal BlockImage(int renderPixels)
+            {
+                RenderPixels = renderPixels;
+                Accumulator = RenderTexture.GetTemporary(renderPixels, renderPixels, 0, RenderTextureFormat.DefaultHDR);
+            }
+
+            public void Dispose() =>
+                RenderTexture.ReleaseTemporary(Accumulator);
+        }
+
+        public BlockImage BeginBlock(int renderPixels) =>
+            new (renderPixels);
+
+        /// <summary>
+        ///     Renders <paramref name="parcels" /> parcels from <paramref name="minParcel" /> and copies them into the
+        ///     image at <paramref name="pixelOffset" /> (texture space, so a southern sub-block lands at the bottom).
+        /// </summary>
+        public async UniTask RenderIntoAsync(BlockImage image, Vector2Int minParcel, int parcels, Vector2Int pixelOffset, int pixels, float height, CancellationToken ct)
         {
             EnsureShadowDistance(height);
 
-            float footprint = blockSize * ParcelMathHelper.PARCEL_SIZE;
+            float footprint = parcels * ParcelMathHelper.PARCEL_SIZE;
             Vector3 corner = ParcelMathHelper.GetPositionByParcelPosition(minParcel);
 
             virtualCamera.transform.SetPositionAndRotation(new Vector3(corner.x + (footprint * 0.5f), height, corner.z + (footprint * 0.5f)), TOP_DOWN);
@@ -100,24 +122,37 @@ namespace Global.MapCapture
                 await UniTask.NextFrame(ct);
 
             // HDR target for the same reason as the screenshot tool: an LDR target downgrades the whole URP render
-            // and clamps emissives. The blit into the sRGB target below performs the linear-to-sRGB conversion.
-            RenderTexture worldRender = RenderTexture.GetTemporary(renderPixels, renderPixels, 24, RenderTextureFormat.DefaultHDR);
-            RenderTexture? output = null;
+            // and clamps emissives. The final blit into the sRGB target performs the linear-to-sRGB conversion.
+            RenderTexture worldRender = RenderTexture.GetTemporary(pixels, pixels, 24, RenderTextureFormat.DefaultHDR);
             RenderTexture? previousTarget = Camera.targetTexture;
 
             try
             {
-                // A square target makes the aspect 1, so the orthographic half-height spans exactly half the block.
+                // A square target makes the aspect 1, so the orthographic half-height spans exactly half the footprint.
                 Camera.targetTexture = worldRender;
                 await UniTask.WaitForEndOfFrame(coroutineRunner, ct);
                 Camera.targetTexture = previousTarget;
 
-                output = RenderTexture.GetTemporary(new RenderTextureDescriptor(outputPixels, outputPixels)
-                {
-                    graphicsFormat = OutputGraphicsFormat(), sRGB = true, msaaSamples = 1, depthBufferBits = 0, mipCount = 1, useMipMap = false,
-                });
+                Graphics.CopyTexture(worldRender, 0, 0, 0, 0, pixels, pixels, image.Accumulator, 0, 0, pixelOffset.x, pixelOffset.y);
+            }
+            finally
+            {
+                Camera.targetTexture = previousTarget;
+                RenderTexture.ReleaseTemporary(worldRender);
+            }
+        }
 
-                Graphics.Blit(worldRender, output);
+        /// <summary>Writes the assembled image at <paramref name="outputPixels" />; the downscale rides on the sRGB blit.</summary>
+        public async UniTask<byte[]> EndBlockAsync(BlockImage image, int outputPixels, bool jpeg, CancellationToken ct)
+        {
+            RenderTexture output = RenderTexture.GetTemporary(new RenderTextureDescriptor(outputPixels, outputPixels)
+            {
+                graphicsFormat = OutputGraphicsFormat(), sRGB = true, msaaSamples = 1, depthBufferBits = 0, mipCount = 1, useMipMap = false,
+            });
+
+            try
+            {
+                Graphics.Blit(image.Accumulator, output);
 
                 AsyncGPUReadbackRequest readback = await AsyncGPUReadback.Request(output).WithCancellation(ct);
 
@@ -132,12 +167,17 @@ namespace Global.MapCapture
             }
             finally
             {
-                Camera.targetTexture = previousTarget;
-                RenderTexture.ReleaseTemporary(worldRender);
-
-                if (output != null)
-                    RenderTexture.ReleaseTemporary(output);
+                RenderTexture.ReleaseTemporary(output);
+                image.Dispose();
             }
+        }
+
+        /// <summary>One load, one image: the whole block rendered and written in a single pass.</summary>
+        public async UniTask<byte[]> RenderBlockAsync(Vector2Int minParcel, int blockSize, int renderPixels, int outputPixels, bool jpeg, float height, CancellationToken ct)
+        {
+            BlockImage image = BeginBlock(renderPixels);
+            await RenderIntoAsync(image, minParcel, blockSize, Vector2Int.zero, renderPixels, height, ct);
+            return await EndBlockAsync(image, outputPixels, jpeg, ct);
         }
 
         /// <summary>
