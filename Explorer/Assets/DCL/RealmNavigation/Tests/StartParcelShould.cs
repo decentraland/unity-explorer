@@ -47,5 +47,82 @@ namespace DCL.RealmNavigation.Tests
             Assert.That(realmResult, Is.EqualTo(AssignResult.Ok));
             Assert.That(startParcel.ConsumeByTeleportOperation(), Is.EqualTo(new Vector2Int(1, 2)));
         }
+
+        [Test]
+        public void ReportAJumpInRequestBeforeTheTeleport()
+        {
+            // Arrange
+            var startParcel = new StartParcel(LAUNCH_PARCEL);
+            var requests = 0;
+            startParcel.OnJumpInRequested = () => requests++;
+
+            // Act
+            startParcel.RequestJumpIn();
+
+            // Assert
+            Assert.That(startParcel.JumpInRequested, Is.True);
+            Assert.That(requests, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void IgnoreAJumpInRequestOnceConsumed()
+        {
+            // Arrange
+            var startParcel = new StartParcel(LAUNCH_PARCEL);
+            var requests = 0;
+            startParcel.OnJumpInRequested = () => requests++;
+            startParcel.ConsumeByTeleportOperation();
+
+            // Act
+            startParcel.RequestJumpIn();
+
+            // Assert
+            Assert.That(startParcel.JumpInRequested, Is.False);
+            Assert.That(requests, Is.Zero);
+        }
+
+        [Test]
+        public void ForgetTheJumpInRequestAndTheAssignedParcelOnReset()
+        {
+            // Arrange
+            var startParcel = new StartParcel(LAUNCH_PARCEL);
+            startParcel.Assign(new Vector2Int(1, 2));
+            startParcel.RequestJumpIn();
+            startParcel.ConsumeByTeleportOperation();
+
+            // Act
+            startParcel.Reset();
+
+            // Assert
+            Assert.That(startParcel.JumpInRequested, Is.False);
+            Assert.That(startParcel.IsParcelAssigned, Is.False);
+        }
+
+        [Test]
+        public void CarryTheSpawnPointOfTheAssignedRealm()
+        {
+            // Arrange
+            var startParcel = new StartParcel(LAUNCH_PARCEL, LAUNCH_SPAWN_POINT);
+
+            // Act
+            startParcel.AssignRealm(URLDomain.FromString("https://worlds.example.com/myworld.dcl.eth"), "physics");
+
+            // Assert
+            Assert.That(startParcel.SpawnPointName, Is.EqualTo("physics"));
+            Assert.That(startParcel.IsParcelAssigned, Is.False);
+        }
+
+        [Test]
+        public void DropTheLaunchSpawnPointWhenARealmIsAssignedWithoutOne()
+        {
+            // Arrange
+            var startParcel = new StartParcel(LAUNCH_PARCEL, LAUNCH_SPAWN_POINT);
+
+            // Act
+            startParcel.AssignRealm(URLDomain.FromString("https://worlds.example.com/myworld.dcl.eth"));
+
+            // Assert
+            Assert.That(startParcel.SpawnPointName, Is.Null);
+        }
     }
 }

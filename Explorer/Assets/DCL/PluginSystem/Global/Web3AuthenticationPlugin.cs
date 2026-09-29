@@ -126,6 +126,7 @@ namespace DCL.PluginSystem.Global
                 decentralandUrlsSource,
                 profileChangesBus,
                 mvcManager,
+                appArgs.HasLaunchDestination(),
                 referrer);
 
             mvcManager.RegisterController(authenticationScreenController);

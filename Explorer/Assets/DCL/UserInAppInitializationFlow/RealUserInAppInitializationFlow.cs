@@ -178,7 +178,7 @@ namespace DCL.UserInAppInitializationFlow
                 }
 
                 // Nothing has been teleported or loaded yet: the lobby holds the flow until the user jumps in
-                if (ShouldShowStartupLobby(parameters.LoadSource) && !await WaitForLobbyJumpInAsync(ct))
+                if (ShouldShowStartupLobby(FeaturesRegistry.Instance.IsEnabled(FeatureId.Lobby), appArgs, startParcel, parameters.LoadSource) && !await WaitForLobbyJumpInAsync(ct))
                     return;
 
                 var flowToRun = parameters.LoadSource is IUserInAppInitializationFlow.LoadSource.Logout
@@ -256,9 +256,11 @@ namespace DCL.UserInAppInitializationFlow
             while (!result.Success && parameters.ShowAuthentication);
         }
 
-        private bool ShouldShowStartupLobby(IUserInAppInitializationFlow.LoadSource loadSource) =>
-            FeaturesRegistry.Instance.IsEnabled(FeatureId.Lobby)
+        internal static bool ShouldShowStartupLobby(bool lobbyEnabled, IAppArgs appArgs, StartParcel startParcel, IUserInAppInitializationFlow.LoadSource loadSource) =>
+            lobbyEnabled
             && loadSource != IUserInAppInitializationFlow.LoadSource.Recover
+            && !(loadSource == IUserInAppInitializationFlow.LoadSource.StartUp && appArgs.HasLaunchDestination())
+            && !startParcel.JumpInRequested
             && !appArgs.HasFlagWithValueTrue(AppArgsFlags.SKIP_AUTH_SCREEN)
             && !appArgs.HasFlag(AppArgsFlags.AUTOPILOT)
             && !appArgs.HasFlag(AppArgsFlags.MEASURE_LOADING_TIME)

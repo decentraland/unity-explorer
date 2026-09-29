@@ -67,6 +67,7 @@ namespace DCL.AuthenticationScreenFlow
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly ProfileChangesBus profileChangesBus;
         private readonly IMVCManager mvcManager;
+        private readonly bool launchHasDestination;
         private readonly string? referrer;
 
         private AuthenticationScreenCharacterPreviewController? characterPreviewController;
@@ -74,6 +75,7 @@ namespace DCL.AuthenticationScreenFlow
 
         private UniTaskCompletionSource? lifeCycleTask;
         private CancellationTokenSource? loginCancellationTokenSource;
+        private bool shownBefore;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
         public ReactiveProperty<AuthStatus> CurrentState { get; } = new (AuthStatus.None);
@@ -82,6 +84,8 @@ namespace DCL.AuthenticationScreenFlow
 
         // A cached-vs-fresh login alone cannot tell a new account from a returning user whose cached identity expired
         public bool IsCurrentlyNewAccount { get; internal set; }
+
+        public bool SkipExistingAccountLobby { get; internal set; }
 
         public event Action? DiscordButtonClicked;
         public event Action<string, bool>? OTPVerified;
@@ -112,6 +116,7 @@ namespace DCL.AuthenticationScreenFlow
             IDecentralandUrlsSource decentralandUrlsSource,
             ProfileChangesBus profileChangesBus,
             IMVCManager mvcManager,
+            bool launchHasDestination,
             string? referrer = null)
             : base(viewFactory)
         {
@@ -132,6 +137,7 @@ namespace DCL.AuthenticationScreenFlow
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.profileChangesBus = profileChangesBus;
             this.mvcManager = mvcManager;
+            this.launchHasDestination = launchHasDestination;
             this.referrer = referrer;
         }
 
@@ -177,8 +183,7 @@ namespace DCL.AuthenticationScreenFlow
                 new LoginSelectionAuthState(fsm, viewInstance, this, CurrentState, splashScreen, web3Authenticator, webBrowser,
                     enableEmailOTP, otherLoginMethodsEnabled, isEpicBuild),
                 new GuestOrSignUpAuthState(fsm, viewInstance, this, CurrentState, web3Authenticator, splashScreen),
-                new ProfileFetchingAuthState(fsm, viewInstance, this, CurrentState, selfProfile, storedIdentityProvider,
-                    skipExistingAccountLobby: FeaturesRegistry.Instance.IsEnabled(FeatureId.Lobby)),
+                new ProfileFetchingAuthState(fsm, viewInstance, this, CurrentState, selfProfile, storedIdentityProvider),
                 new IdentityVerificationDappDeepLinkAuthState(fsm, viewInstance, this, CurrentState, web3Authenticator),
                 new LobbyForExistingAccountAuthState(fsm, viewInstance, this, splashScreen, CurrentState, characterPreviewController),
                 new LobbyForNewAccountAuthState(fsm, viewInstance, this, CurrentState, characterPreviewController, selfProfile, webBrowser, webRequestController, decentralandUrlsSource, profileChangesBus, storedIdentityProvider, referrer),
@@ -204,6 +209,11 @@ namespace DCL.AuthenticationScreenFlow
         protected override void OnBeforeViewShow()
         {
             base.OnBeforeViewShow();
+
+            // Only the bootstrap show lands straight at the launch destination: a re-login after logout offers the welcome step again
+            SkipExistingAccountLobby = FeaturesRegistry.Instance.IsEnabled(FeatureId.Lobby) || (launchHasDestination && !shownBefore);
+            shownBefore = true;
+
             // Force to re-login if the identity will expire in 24hs or less, so we mitigate the chances on
             // getting the identity expired while in-world, provoking signed-fetch requests to fail
             IWeb3Identity? storedIdentity = storedIdentityProvider.Identity;

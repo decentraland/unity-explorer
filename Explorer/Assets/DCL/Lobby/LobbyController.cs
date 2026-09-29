@@ -284,12 +284,18 @@ namespace DCL.Lobby
             friendsCts = friendsCts.SafeRestart();
             friends?.Show(friendsCts.Token);
 
+            if (inputData.IsStartup)
+                startParcel.OnJumpInRequested = RequestClose;
+
             Opened?.Invoke(inputData.IsStartup);
         }
 
         protected override void OnViewClose()
         {
             base.OnViewClose();
+
+            if (inputData.IsStartup)
+                startParcel.OnJumpInRequested = null;
 
             profileChangesBus.UnsubscribeToUpdate(OnProfileUpdated);
 

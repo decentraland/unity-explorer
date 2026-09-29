@@ -143,6 +143,28 @@ namespace DCL.UserInAppInitializationFlow.Tests
         }
 
         [Test]
+        public void UsesAssignedParcelEvenWithWorldManifest()
+        {
+            worldManifest = WorldManifest.Create(new WorldManifestDto
+            {
+                occupied = new[] { "10,20" },
+                spawn_coordinate = new SpawnCoordinateData(5, 7),
+                total = 1,
+            });
+            realmData.WorldManifest.Returns(worldManifest);
+            appArgs.HasFlag(AppArgsFlags.POSITION).Returns(false);
+
+            var startParcel = new StartParcel(Vector2Int.zero);
+            startParcel.Assign(new Vector2Int(10, 20));
+
+            CreateOperation(startParcel)
+                .ExecuteAsync(MakeParams(), cts.Token).GetAwaiter().GetResult();
+
+            teleportController.Received(1)
+                .TeleportToSceneSpawnPointAsync(new Vector2Int(10, 20), Arg.Any<AsyncLoadProcessReport>(), Arg.Any<CancellationToken>());
+        }
+
+        [Test]
         public void UsesStartParcelWhenEditorPositionOverrideActiveInLocalSceneDevelopment()
         {
             worldManifest = WorldManifest.Create(new[] { new int2(0, 0) });

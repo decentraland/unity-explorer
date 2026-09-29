@@ -4,6 +4,7 @@ using DCL.Ipfs;
 using DCL.Utilities;
 using DCL.Utility.Types;
 using ECS.SceneLifeCycle.Reporting;
+using System;
 using System.Threading;
 using UnityEngine;
 
@@ -46,6 +47,9 @@ namespace DCL.RealmNavigation
 
     public class StartParcel
     {
+        // Single subscriber (the startup lobby), so no event
+        public Action? OnJumpInRequested;
+
         private readonly Vector2Int launchValue;
         private readonly string? launchSpawnPointName;
 
@@ -70,6 +74,10 @@ namespace DCL.RealmNavigation
         /// </summary>
         public URLDomain? Realm { get; private set; }
 
+        public bool IsParcelAssigned { get; private set; }
+
+        public bool JumpInRequested { get; private set; }
+
         public bool IsConsumed() =>
             consumed;
 
@@ -78,14 +86,23 @@ namespace DCL.RealmNavigation
             if (consumed) return AssignResult.ParcelAlreadyConsumed;
             value = newParcel;
             SpawnPointName = newSpawnPointName;
+            IsParcelAssigned = true;
             return AssignResult.Ok;
         }
 
-        public AssignResult AssignRealm(URLDomain realm)
+        public AssignResult AssignRealm(URLDomain realm, string? spawnPointName = null)
         {
             if (consumed) return AssignResult.ParcelAlreadyConsumed;
             Realm = realm;
+            SpawnPointName = spawnPointName;
             return AssignResult.Ok;
+        }
+
+        public void RequestJumpIn()
+        {
+            if (consumed) return;
+            JumpInRequested = true;
+            OnJumpInRequested?.Invoke();
         }
 
         public Vector2Int ConsumeByTeleportOperation()
@@ -102,6 +119,8 @@ namespace DCL.RealmNavigation
             value = launchValue;
             SpawnPointName = launchSpawnPointName;
             Realm = null;
+            IsParcelAssigned = false;
+            JumpInRequested = false;
             consumed = false;
         }
 

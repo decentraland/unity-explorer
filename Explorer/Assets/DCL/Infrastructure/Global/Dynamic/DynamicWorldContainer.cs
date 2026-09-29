@@ -326,6 +326,7 @@ namespace Global.Dynamic
                 realmContainer.ReloadSceneController,
                 realmContainer.TeleportController,
                 realmNavigator,
+                dynamicWorldParams.StartParcel,
                 debugBuilder,
                 dclVersion,
                 appArgs,
@@ -484,7 +485,7 @@ namespace Global.Dynamic
 
             // Deep link listening stays alive in every mode so browser sign-in can complete; local scene
             // development only opts out of navigation routing (teleports would break the scene under test).
-            var deepLinkHandleImplementation = new DeepLinkHandle(dynamicWorldParams.StartParcel, chatContainer.ChatTeleporter, ct, communitiesDataService, uiShellContainer.MvcManager, staticContainer.LoadingStatus, bootstrapContainer.DeeplinkSigninIdentityId,
+            var deepLinkHandleImplementation = new DeepLinkHandle(chatContainer.ChatTeleporter, ct, communitiesDataService, uiShellContainer.MvcManager, staticContainer.LoadingStatus, bootstrapContainer.DeeplinkSigninIdentityId,
                 bootstrapContainer.DeeplinkLoginAwaitingSigninRequestId, routeNavigationDeepLinks: !appArgs.HasFlag(AppArgsFlags.LOCAL_SCENE));
 
             deepLinkHandleImplementation.StartListenForDeepLinksAsync(ct).Forget();

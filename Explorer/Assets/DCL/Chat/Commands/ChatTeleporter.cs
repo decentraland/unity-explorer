@@ -2,6 +2,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.CommunicationData.URLHelpers;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.RealmNavigation;
 using DCL.Utility.Types;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Realm;
@@ -23,13 +24,15 @@ namespace DCL.Chat.Commands
         private readonly IScenesCache scenesCache;
         private readonly Dictionary<string, string> paramUrls;
         private readonly ChatEnvironmentValidator environmentValidator;
+        private readonly StartParcel startParcel;
         private readonly URLDomain worldDomain;
 
-        public ChatTeleporter(IRealmNavigator realmNavigator, ChatEnvironmentValidator environmentValidator, IDecentralandUrlsSource decentralandUrlsSource, IScenesCache scenesCache)
+        public ChatTeleporter(IRealmNavigator realmNavigator, ChatEnvironmentValidator environmentValidator, IDecentralandUrlsSource decentralandUrlsSource, IScenesCache scenesCache, StartParcel startParcel)
         {
             this.realmNavigator = realmNavigator;
             this.scenesCache = scenesCache;
             this.environmentValidator = environmentValidator;
+            this.startParcel = startParcel;
             worldDomain = URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.WorldServer));
 
             paramUrls = new Dictionary<string, string>
@@ -49,6 +52,9 @@ namespace DCL.Chat.Commands
 
             if(!ValidEnvironment(realmURL, out string errorMessage))
                 return errorMessage;
+
+            if (TryStartAt(realmURL, null, spawnPointName))
+                return HeadingTo(realm);
 
             if (realmNavigator.IsAlreadyOnRealm(realmURL))
             {
@@ -89,6 +95,9 @@ namespace DCL.Chat.Commands
 
             if(!ValidEnvironment(realmURL, out string errorMessage))
                 return errorMessage;
+
+            if (TryStartAt(realmURL, targetPosition, spawnPointName))
+                return HeadingTo(realm);
 
             if(realmNavigator.IsAlreadyOnRealm(realmURL))
                 return await TeleportToParcelAsync(targetPosition, true, ct, spawnPointName);
@@ -164,6 +173,9 @@ namespace DCL.Chat.Commands
         /// </summary>
         public async UniTask<string> TeleportToParcelAsync(Vector2Int targetPosition, bool local, CancellationToken ct, string? spawnPointName = null)
         {
+            if (TryStartAt(null, targetPosition, spawnPointName))
+                return HeadingTo($"{targetPosition.x},{targetPosition.y}");
+
             var result = await realmNavigator.TeleportToParcelAsync(targetPosition, ct, local, spawnPointName: spawnPointName);
 
             if (result.Success)
@@ -180,6 +192,24 @@ namespace DCL.Chat.Commands
                        _ => throw new ArgumentOutOfRangeException(),
                    };
         }
+
+        // Before the startup teleport there is nowhere to navigate from, so the request becomes the startup destination
+        private bool TryStartAt(URLDomain? realmURL, Vector2Int? parcel, string? spawnPointName)
+        {
+            if (startParcel.IsConsumed()) return false;
+
+            if (realmURL is { } realm)
+                startParcel.AssignRealm(realm, spawnPointName);
+
+            if (parcel is { } target)
+                startParcel.Assign(target, spawnPointName);
+
+            startParcel.RequestJumpIn();
+            return true;
+        }
+
+        private static string HeadingTo(string destination) =>
+            $"🟢 Heading to {destination}!";
 
         private string GetWorldAddress(string worldPath) =>
             worldDomain.Append(URLPath.FromString(worldPath)).Value;

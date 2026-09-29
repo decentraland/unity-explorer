@@ -147,7 +147,7 @@ On a `base-domain` deployment, where the value *is* read, anything that does not
 
 ### `realm`
 **Type:** String (URL)
-**Description:** Specifies a custom realm server URL to connect to. Used for connecting to local or custom Decentraland servers. The URL should include the protocol (http:// or https://).
+**Description:** Specifies a custom realm server URL to connect to. Used for connecting to local or custom Decentraland servers. The URL should include the protocol (http:// or https://). A launch that names a destination (this flag or [`position`](#position)) skips the startup lobby and loads straight into it once authentication, if any is needed, completes; a `decentraland://` link and the command line behave the same.
 
 **Usage:**
 ```bash
@@ -217,7 +217,7 @@ On a `base-domain` deployment, where the value *is* read, anything that does not
 
 ### `position`
 **Type:** String (coordinates)
-**Description:** Sets the initial spawn position in the world. Format is typically `x,y` coordinates.
+**Description:** Sets the initial spawn position in the world. Format is typically `x,y` coordinates. Like [`realm`](#realm), naming it skips the startup lobby: the client lands on the parcel right after authentication, whether the flag came from a `decentraland://` link or the command line.
 
 **Usage:**
 ```bash
@@ -597,6 +597,7 @@ Visual regression tests need a deterministic scene: a fixed window, no time-of-d
 - Some flags accept string values that can be boolean-like (`"true"` or `"false"`).
 - Flags can be combined in a single command line invocation.
 - Deep links can embed multiple flags: `decentraland://?realm=http://127.0.0.1:8000&local-scene=true&skip-auth-screen=true`
+- A launch naming a destination through `realm` or `position` skips the startup lobby and lands directly in world. A link reaching a client that is still on the lobby or the auth screen does the same: its destination becomes the startup one and the lobby closes.
 - The `debug` flag is automatically added when running in Unity Editor.
 - Some flags are only effective when combined with the `debug` flag or when running in Unity Editor.
 

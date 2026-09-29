@@ -625,6 +625,36 @@ namespace DCL.Lobby.Tests
         }
 
         [Test]
+        public void JumpInWhenADestinationIsRequestedAtStartup()
+        {
+            // Arrange
+            var jumpedIn = false;
+            UniTask lifeCycle = Launch(isStartup: true, jumpedIn: () => jumpedIn = true);
+
+            // Act
+            startParcel.RequestJumpIn();
+            controller.HideViewAsync(CancellationToken.None).Forget();
+
+            // Assert
+            Assert.That(jumpedIn, Is.True);
+            Assert.That(lifeCycle.Status, Is.EqualTo(UniTaskStatus.Succeeded));
+            Assert.That(startParcel.OnJumpInRequested, Is.Null, "the lobby must let go of the start parcel once it left");
+        }
+
+        [Test]
+        public void LeaveDestinationRequestsAloneInWorld()
+        {
+            // Arrange
+            Launch(isStartup: false).Forget();
+
+            // Act
+            startParcel.RequestJumpIn();
+
+            // Assert
+            Assert.That(startParcel.OnJumpInRequested, Is.Null);
+        }
+
+        [Test]
         public void LeaveTheLobbyClosedInWorld()
         {
             // Arrange

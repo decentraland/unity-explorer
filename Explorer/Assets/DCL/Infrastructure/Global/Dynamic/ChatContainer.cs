@@ -92,6 +92,7 @@ namespace Global.Dynamic
             ECSReloadScene reloadSceneController,
             TeleportController teleportController,
             IRealmNavigator realmNavigator,
+            StartParcel startParcel,
             IDebugContainerBuilder debugBuilder,
             DCLVersion dclVersion,
             IAppArgs appArgs,
@@ -103,7 +104,7 @@ namespace Global.Dynamic
             var chatHistory = new ChatHistory();
             var chatEventBus = new ChatEventBus();
 
-            var chatTeleporter = new ChatTeleporter(realmNavigator, new ChatEnvironmentValidator(bootstrapContainer.DecentralandUrlsSource), bootstrapContainer.DecentralandUrlsSource, staticContainer.ScenesCache);
+            var chatTeleporter = new ChatTeleporter(realmNavigator, new ChatEnvironmentValidator(bootstrapContainer.DecentralandUrlsSource), bootstrapContainer.DecentralandUrlsSource, staticContainer.ScenesCache, startParcel);
 
             var reloadSceneChatCommand = new ReloadSceneChatCommand(reloadSceneController, globalWorld, playerEntity, staticContainer.ScenesCache, teleportController, localSceneDevelopment);
 

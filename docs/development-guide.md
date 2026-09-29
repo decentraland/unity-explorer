@@ -492,6 +492,8 @@ Beware that environment scenes are currently not being converted to Asset Bundle
 
 Regardless of being on Windows or macOS, when opening a Decentraland deep link the launcher will be opened and so the latest released build will be used.
 
+A link (or command line) that names a destination through `realm` or `position` skips the startup lobby: after authentication, if any is needed, the client loads straight into it.
+
 Any relevant parameter can be used through the deep link, some examples:
 * For connecting to a locally running scene: `decentraland://?realm=http://127.0.0.1:8000/&position=-139,-28&local-scene=true&debug`
 * For connecting to genesis city directly on the specified position: `decentraland://?position=66,66`
