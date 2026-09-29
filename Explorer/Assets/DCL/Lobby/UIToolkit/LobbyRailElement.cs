@@ -16,6 +16,7 @@ namespace DCL.Lobby
     {
         private const string USS_BLOCK = "lobby-rail";
         private const string USS_INSTANT = USS_BLOCK + "--instant";
+        private const string USS_TRACK = USS_BLOCK + "__track";
         private const string USS_VIEWPORT = USS_BLOCK + "__viewport";
         private const string USS_CONTENT = USS_BLOCK + "__content";
         private const string USS_ARROW = USS_BLOCK + "__arrow";
@@ -25,12 +26,16 @@ namespace DCL.Lobby
         private const string USS_DOTS = USS_BLOCK + "__dots";
         private const string USS_DOT = USS_BLOCK + "__dot";
         private const string USS_DOT_SELECTED = USS_DOT + "--selected";
+        private const string USS_CARD = USS_BLOCK + "__card";
 
         private const string PREVIOUS_NAME = "Previous";
         private const string NEXT_NAME = "Next";
 
         // Pointer travel before a press on a card turns into a drag of the rail
         private const float DRAG_THRESHOLD = 8f;
+
+        // Bit of PointerEventBase.pressedButtons that stands for the left mouse button
+        private const int LEFT_BUTTON_MASK = 1;
 
         // Matches the snap duration of the stylesheet: wheel events arriving faster than that are dropped
         private const float WHEEL_COOLDOWN = 0.25f;
@@ -51,6 +56,9 @@ namespace DCL.Lobby
         private float pressX;
         private float pressOffset;
         private bool dragging;
+
+        // The descendant holding the pointer capture of the press, hearing the moves and the release on the rail's behalf
+        private VisualElement? pressedCaptor;
 
         /// <summary>
         ///     Cards a page advances by; a page is this many card strides wide, whatever the viewport shows.
@@ -75,9 +83,14 @@ namespace DCL.Lobby
         {
             AddToClassList(USS_BLOCK);
 
+            // The track holds the viewport and, outside it, the arrows: the viewport clips its cards, the track lets the arrows hang beside them
+            var track = new VisualElement { name = "Track" };
+            track.AddToClassList(USS_TRACK);
+            hierarchy.Add(track);
+
             viewport = new VisualElement { name = "Viewport", pickingMode = PickingMode.Position };
             viewport.AddToClassList(USS_VIEWPORT);
-            hierarchy.Add(viewport);
+            track.Add(viewport);
 
             content = new VisualElement { name = "Content", pickingMode = PickingMode.Ignore };
             content.AddToClassList(USS_CONTENT);
@@ -85,8 +98,8 @@ namespace DCL.Lobby
 
             previous = CreateArrow(PREVIOUS_NAME, USS_ARROW_PREVIOUS);
             next = CreateArrow(NEXT_NAME, USS_ARROW_NEXT);
-            viewport.Add(previous);
-            viewport.Add(next);
+            track.Add(previous);
+            track.Add(next);
 
             dots = new VisualElement { name = "Dots", pickingMode = PickingMode.Ignore };
             dots.AddToClassList(USS_DOTS);
@@ -97,10 +110,15 @@ namespace DCL.Lobby
             previous.clicked += OnPreviousClicked;
             next.clicked += OnNextClicked;
 
-            // Trickle down: a press lands on a card, whose click handler stops the event before it would bubble up here
+            // Trickle down: the press is seen before the pressed card captures the pointer and stops the event
             RegisterCallback<PointerDownEvent>(OnPointerDown, TrickleDown.TrickleDown);
-            RegisterCallback<PointerMoveEvent>(OnPointerMove, TrickleDown.TrickleDown);
-            RegisterCallback<PointerUpEvent>(OnPointerUp, TrickleDown.TrickleDown);
+
+            // Once a descendant captures the pointer, the panel delivers the pointer events to that element alone and skips every
+            // ancestor: the moves and the release are heard through the captor itself (see OnPointerCapture) and through the viewport,
+            // which is the target while nothing captures and once the rail takes the pointer over
+            RegisterCallback<PointerCaptureEvent>(OnPointerCapture);
+            viewport.RegisterCallback<PointerMoveEvent>(OnPointerMove);
+            viewport.RegisterCallback<PointerUpEvent>(OnPointerUp);
             viewport.RegisterCallback<PointerCaptureOutEvent>(OnPointerCaptureOut);
             RegisterCallback<WheelEvent>(OnWheel);
             content.RegisterCallback<GeometryChangedEvent>(OnContentGeometryChanged);
@@ -115,6 +133,11 @@ namespace DCL.Lobby
         public void SetCardCount(int count, bool rewind = true)
         {
             shownCount = count;
+
+            // The stylesheet spaces the cards through this class: a wildcard child selector on the strip left them touching
+            for (var i = 0; i < content.childCount; i++)
+                content[i].AddToClassList(USS_CARD);
+
             ShowDots(PageCount);
 
             if (rewind)
@@ -158,18 +181,36 @@ namespace DCL.Lobby
         // Presses on the arrows are theirs: dragging from one would steal the click
         private void OnPointerDown(PointerDownEvent evt)
         {
-            if (evt.button != 0 || pressedPointerId != PointerId.invalidPointerId) return;
+            if (evt.button != 0) return;
             if (evt.target is VisualElement target && (previous.Contains(target) || next.Contains(target))) return;
+
+            // A press still tracked here is stale: its release went to an element the rail could not hear
+            EndPress();
 
             pressedPointerId = evt.pointerId;
             pressX = evt.position.x;
             pressOffset = offset;
         }
 
+        // The capture event bubbles up from the captor, the only element the pressed pointer's events reach from now on
+        private void OnPointerCapture(PointerCaptureEvent evt)
+        {
+            if (evt.pointerId != pressedPointerId || evt.target is not VisualElement captor || captor == viewport || captor == pressedCaptor) return;
+
+            ListenToCaptor(captor);
+        }
+
         // Past the threshold the rail takes the pointer over: the pressed card loses its capture and never reports the click
         private void OnPointerMove(PointerMoveEvent evt)
         {
             if (evt.pointerId != pressedPointerId) return;
+
+            // The button is up: the release was delivered to an element outside the rail's hearing, so the press is over
+            if ((evt.pressedButtons & LEFT_BUTTON_MASK) == 0)
+            {
+                EndPress();
+                return;
+            }
 
             float delta = evt.position.x - pressX;
 
@@ -189,20 +230,48 @@ namespace DCL.Lobby
         {
             if (evt.pointerId != pressedPointerId) return;
 
-            pressedPointerId = PointerId.invalidPointerId;
-
-            if (!dragging) return;
-
-            viewport.ReleasePointer(evt.pointerId);
-            EndDrag();
+            EndPress();
         }
 
-        // The capture can be taken away mid-drag (by the system or another element); the rail must not stay stuck between pages
-        private void OnPointerCaptureOut(PointerCaptureOutEvent _)
+        // The capture can be taken away mid-drag (by the system or another element); the rail must not stay stuck between pages.
+        // The capture-out of a card the rail takes the pointer from bubbles through here too: only the viewport's own counts
+        private void OnPointerCaptureOut(PointerCaptureOutEvent evt)
         {
+            if (evt.target != viewport || !dragging) return;
+
+            EndPress();
+        }
+
+        private void ListenToCaptor(VisualElement captor)
+        {
+            StopListeningToCaptor();
+            pressedCaptor = captor;
+            captor.RegisterCallback<PointerMoveEvent>(OnPointerMove);
+            captor.RegisterCallback<PointerUpEvent>(OnPointerUp);
+        }
+
+        private void StopListeningToCaptor()
+        {
+            if (pressedCaptor == null) return;
+
+            pressedCaptor.UnregisterCallback<PointerMoveEvent>(OnPointerMove);
+            pressedCaptor.UnregisterCallback<PointerUpEvent>(OnPointerUp);
+            pressedCaptor = null;
+        }
+
+        /// <summary>
+        ///     Forgets the tracked press and, when it had turned into a drag, gives the pointer back and snaps to the nearest page.
+        /// </summary>
+        private void EndPress()
+        {
+            int pointerId = pressedPointerId;
+            pressedPointerId = PointerId.invalidPointerId;
+            StopListeningToCaptor();
+
             if (!dragging) return;
 
-            pressedPointerId = PointerId.invalidPointerId;
+            // Only releases while the viewport still holds the pointer, so a capture already taken away is left alone
+            viewport.ReleasePointer(pointerId);
             EndDrag();
         }
 

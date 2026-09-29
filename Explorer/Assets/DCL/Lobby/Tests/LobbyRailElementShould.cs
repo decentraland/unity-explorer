@@ -1,16 +1,31 @@
 using NUnit.Framework;
+using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace DCL.Lobby.Tests
 {
     public class LobbyRailElementShould
     {
+        private static readonly int MOUSE = PointerId.mousePointerId;
+
         private LobbyRailElement rail = null!;
+        private GameObject? documentGameObject;
+        private PanelSettings? panelSettings;
 
         [SetUp]
         public void SetUp()
         {
             rail = new LobbyRailElement { CardsPerPage = 3 };
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            if (documentGameObject != null)
+                Object.DestroyImmediate(documentGameObject);
+
+            if (panelSettings != null)
+                Object.DestroyImmediate(panelSettings);
         }
 
         [Test]
@@ -22,7 +37,7 @@ namespace DCL.Lobby.Tests
 
             // Assert
             Assert.AreEqual(2, rail.childCount);
-            Assert.AreEqual(2, rail.hierarchy.childCount, "Only the viewport and the dots hang from the rail itself");
+            Assert.AreEqual(2, rail.hierarchy.childCount, "Only the track and the dots hang from the rail itself");
         }
 
         [Test]
@@ -127,6 +142,131 @@ namespace DCL.Lobby.Tests
 
             // Assert
             Assert.AreEqual(1, rail.CurrentPage);
+        }
+
+        [Test]
+        public void GiveThePointerBackWhenADragStartedOnACardEnds()
+        {
+            // Arrange
+            VisualElement root = AttachToPanel();
+            var presses = 0;
+            ShowCapturingCards(7, () => presses++);
+            VisualElement viewport = rail.Q("Viewport");
+
+            // Act: the pressed card captures the pointer, so the panel hands the moves to it alone until the rail takes the pointer over
+            Press(rail[0], 100f);
+            Move(rail[0], 130f);
+
+            // Assert
+            Assert.IsTrue(viewport.HasPointerCapture(MOUSE), "The rail takes the pointer over past the drag threshold");
+
+            // Act
+            Release(viewport, 130f);
+
+            // Assert
+            Assert.IsFalse(viewport.HasPointerCapture(MOUSE), "The rail gives the pointer back on release");
+            Assert.IsFalse(rail.ClassListContains("lobby-rail--instant"), "The drag is over");
+
+            // Act
+            Press(rail[1], 300f);
+            Release(rail[1], 300f);
+
+            // Assert
+            Assert.AreEqual(2, presses, "The cards take presses again once the drag is over");
+            Assert.IsNull(root.panel.GetCapturingElement(MOUSE));
+        }
+
+        [Test]
+        public void HearTheReleaseThroughTheCardThatCapturedThePointer()
+        {
+            // Arrange
+            AttachToPanel();
+            var presses = 0;
+            ShowCapturingCards(7, () => presses++);
+            VisualElement viewport = rail.Q("Viewport");
+
+            // Act: the panel delivers the release to the capturing card alone, then the pointer moves on over the rail with no button held
+            Press(rail[0], 100f);
+            Release(rail[0], 100f);
+            Move(viewport, 150f);
+
+            // Assert
+            Assert.IsFalse(viewport.HasPointerCapture(MOUSE), "A move after the release does not start a drag");
+            Assert.IsFalse(rail.ClassListContains("lobby-rail--instant"));
+
+            // Act
+            Press(rail[1], 300f);
+
+            // Assert
+            Assert.AreEqual(2, presses, "The cards still take presses");
+        }
+
+        [Test]
+        public void DropAStalePressOnTheFirstMoveWithoutTheButton()
+        {
+            // Arrange
+            VisualElement root = AttachToPanel();
+            var presses = 0;
+            ShowCapturingCards(7, () => presses++);
+            VisualElement viewport = rail.Q("Viewport");
+
+            // Act: the release lands outside the rail altogether, then the pointer moves on over the rail with no button held
+            Press(rail[0], 100f);
+            rail[0].ReleasePointer(MOUSE);
+            Release(root, 100f);
+            Move(viewport, 150f);
+
+            // Assert
+            Assert.IsFalse(viewport.HasPointerCapture(MOUSE), "A move without the button held does not start a drag");
+            Assert.IsFalse(rail.ClassListContains("lobby-rail--instant"));
+
+            // Act
+            Press(rail[1], 300f);
+
+            // Assert
+            Assert.AreEqual(2, presses, "The cards still take presses");
+        }
+
+        private VisualElement AttachToPanel()
+        {
+            documentGameObject = new GameObject(nameof(LobbyRailElementShould));
+            var document = documentGameObject.AddComponent<UIDocument>();
+            panelSettings = ScriptableObject.CreateInstance<PanelSettings>();
+            document.panelSettings = panelSettings;
+            document.rootVisualElement.Add(rail);
+            return document.rootVisualElement;
+        }
+
+        // Like the lobby cards, each card captures the pointer while pressed; the press counter is registered first so the capture cannot cut it off
+        private void ShowCapturingCards(int count, System.Action onPress)
+        {
+            for (var i = 0; i < count; i++)
+            {
+                var card = new VisualElement();
+                card.RegisterCallback<PointerDownEvent>(_ => onPress());
+                card.AddManipulator(new Clickable(() => { }));
+                rail.Add(card);
+            }
+
+            rail.SetCardCount(count);
+        }
+
+        private static void Press(VisualElement target, float x)
+        {
+            using PointerDownEvent evt = PointerDownEvent.GetPooled(new Event { type = EventType.MouseDown, button = 0, mousePosition = new Vector2(x, 10f) });
+            target.SendEvent(evt);
+        }
+
+        private static void Move(VisualElement target, float x)
+        {
+            using PointerMoveEvent evt = PointerMoveEvent.GetPooled(new Event { type = EventType.MouseMove, mousePosition = new Vector2(x, 10f) });
+            target.SendEvent(evt);
+        }
+
+        private static void Release(VisualElement target, float x)
+        {
+            using PointerUpEvent evt = PointerUpEvent.GetPooled(new Event { type = EventType.MouseUp, button = 0, mousePosition = new Vector2(x, 10f) });
+            target.SendEvent(evt);
         }
 
         private void ShowCards(int count)

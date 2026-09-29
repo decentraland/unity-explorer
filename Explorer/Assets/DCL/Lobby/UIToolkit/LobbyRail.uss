@@ -2,13 +2,22 @@
     --rail-snap-duration: 0.25s;
     --rail-arrow-fade-duration: 0.15s;
     --rail-dot-duration: 0.2s;
-    --rail-card-spacing: 8px;
-    --rail-dot-selected-color: rgb(255, 51, 153);
+    --rail-dot-selected-color: rgb(255, 45, 85);
     --rail-dot-color: rgba(255, 255, 255, 0.4);
 }
 
 .lobby-rail {
     flex-direction: column;
+}
+
+/* Wider than the rail by an arrow and its 8px gap on each side, so the arrows sit in the gutters beside the cards rather than
+   over them; the padding keeps the gaps inside the rail, so crossing one to reach an arrow does not drop the hover that shows it */
+.lobby-rail__track {
+    flex-grow: 1;
+    margin-left: -39px;
+    margin-right: -39px;
+    padding-left: 39px;
+    padding-right: 39px;
 }
 
 .lobby-rail__viewport {
@@ -30,9 +39,11 @@
     transition-duration: 0s;
 }
 
-/* The spacing is part of the stride the pages snap by */
-.lobby-rail__content > * {
-    margin-right: var(--rail-card-spacing);
+/* 12px between the cards of the design, part of the stride the pages snap by. The strip is measured against the viewport,
+   which would shrink the cards to fit it rather than let them overflow into pages: they keep their own width */
+.lobby-rail__card {
+    flex-shrink: 0;
+    margin-right: 12px;
 }
 
 .lobby-rail__arrow {
@@ -57,12 +68,13 @@
     background-color: var(--dcl-color-black-80);
 }
 
+/* At the outer edges of the track: 31px wide, that leaves the 8px gap to the cards */
 .lobby-rail__arrow--previous {
-    left: 20px;
+    left: 0;
 }
 
 .lobby-rail__arrow--next {
-    right: 20px;
+    right: 0;
 }
 
 .lobby-rail__arrow-icon {
@@ -75,24 +87,25 @@
     background-image: url('/Assets/Textures/Common/ArrowRight.png');
 }
 
+/* 10px dots 8px apart, the selected one stretched to 29px; the owner sets how far under the viewport the row sits */
 .lobby-rail__dots {
-    height: 8px;
-    margin-top: 8px;
+    height: 10px;
+    margin-top: 16px;
     flex-direction: row;
     justify-content: center;
     align-items: center;
 }
 
 .lobby-rail__dot {
-    width: 8px;
-    height: 8px;
-    margin: 0 2px;
-    border-radius: 4px;
+    width: 10px;
+    height: 10px;
+    margin: 0 4px;
+    border-radius: 5px;
     background-color: var(--rail-dot-color);
     transition: width var(--rail-dot-duration) ease-out, background-color var(--rail-dot-duration) ease-out;
 }
 
 .lobby-rail__dot--selected {
-    width: 24px;
+    width: 29px;
     background-color: var(--rail-dot-selected-color);
 }
