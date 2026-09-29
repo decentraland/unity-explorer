@@ -39,7 +39,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.Rendering;
 
 namespace Global.MapCapture
 {
@@ -51,6 +50,7 @@ namespace Global.MapCapture
     {
         private const string QUALITY_LEVEL = "High";
         private const string GENESIS_INSTALL_SOURCE = "";
+        private const string LENS_FLARE_COMPONENT = "LensFlareComponentSRP";
 
         public static async UniTask<MapCaptureRuntime> CreateAsync(IAppArgs appArgs, string? bundleCacheDir, PluginSettingsContainer settingsContainer, Light directionalLight,
             DecentralandEnvironment environment, MonoBehaviour coroutineRunner, CancellationToken ct)
@@ -131,7 +131,8 @@ namespace Global.MapCapture
                     throw new InvalidOperationException($"Cannot initialize {plugin.GetType().Name}");
             }
 
-            if (directionalLight.TryGetComponent(out LensFlareComponentSRP lensFlare))
+            // Looked up by name: the SRP core assembly that declares LensFlareComponentSRP is not referenced here.
+            if (directionalLight.GetComponent(LENS_FLARE_COMPONENT) is Behaviour lensFlare)
                 lensFlare.enabled = false;
 
             MapCaptureCamera camera = await MapCaptureCamera.CreateAsync(settingsContainer, assetsProvisioner, world, coroutineRunner, ct);
