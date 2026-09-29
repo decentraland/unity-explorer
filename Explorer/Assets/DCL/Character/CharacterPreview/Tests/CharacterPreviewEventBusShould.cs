@@ -1,11 +1,7 @@
 using Arch.Core;
 using NSubstitute;
 using NUnit.Framework;
-using System;
 using System.Collections.Generic;
-using System.Reflection;
-using UnityEngine;
-using UnityEngine.UI;
 using Object = UnityEngine.Object;
 
 namespace DCL.CharacterPreview.Tests
@@ -125,68 +121,76 @@ namespace DCL.CharacterPreview.Tests
         }
 
         [Test]
-        public void RaiseShowAndHideForSubscribers()
+        public void RaiseShowForSubscribers()
         {
             // Arrange
             CharacterPreviewControllerBase preview = CreatePreview();
             CharacterPreviewControllerBase? shown = null;
-            CharacterPreviewControllerBase? hidden = null;
             bus.OnAnyCharacterPreviewShowEvent += p => shown = p;
-            bus.OnAnyCharacterPreviewHideEvent += p => hidden = p;
 
             // Act
             preview.OnShow();
-            preview.OnHide();
 
             // Assert
             Assert.AreSame(preview, shown);
-            Assert.AreSame(preview, hidden);
+        }
+
+        [Test]
+        public void RestoreOnlyTheNewTopWhenTheTopHides()
+        {
+            // Arrange
+            CharacterPreviewControllerBase first = CreatePreview();
+            CharacterPreviewControllerBase second = CreatePreview();
+            CharacterPreviewControllerBase third = CreatePreview();
+            first.OnShow();
+            second.OnShow();
+            third.OnShow();
+            var restored = new List<CharacterPreviewControllerBase>();
+            bus.OnCharacterPreviewRestoredEvent += restored.Add;
+
+            // Act
+            third.OnHide();
+
+            // Assert
+            CollectionAssert.AreEqual(new[] { second }, restored);
+        }
+
+        [Test]
+        public void RestoreNothingWhenALowerOneHides()
+        {
+            // Arrange
+            CharacterPreviewControllerBase first = CreatePreview();
+            CharacterPreviewControllerBase second = CreatePreview();
+            first.OnShow();
+            second.OnShow();
+            var restored = new List<CharacterPreviewControllerBase>();
+            bus.OnCharacterPreviewRestoredEvent += restored.Add;
+
+            // Act
+            first.OnHide();
+
+            // Assert
+            CollectionAssert.IsEmpty(restored);
+        }
+
+        [Test]
+        public void RestoreNothingWhenTheLastOneHides()
+        {
+            // Arrange
+            CharacterPreviewControllerBase preview = CreatePreview();
+            preview.OnShow();
+            var restored = new List<CharacterPreviewControllerBase>();
+            bus.OnCharacterPreviewRestoredEvent += restored.Add;
+
+            // Act
+            preview.OnHide();
+
+            // Assert
+            CollectionAssert.IsEmpty(restored);
         }
 
         private CharacterPreviewControllerBase CreatePreview() =>
-            new TestPreview(CreateView(), Substitute.For<ICharacterPreviewFactory>(), world, bus);
-
-        private CharacterPreviewView CreateView()
-        {
-            var viewGo = new GameObject("CharacterPreviewView");
-            created.Add(viewGo);
-            CharacterPreviewView view = viewGo.AddComponent<CharacterPreviewView>();
-
-            var settings = ScriptableObject.CreateInstance<CharacterPreviewSettingsSO>();
-            created.Add(settings);
-            SetBackingField(settings, nameof(CharacterPreviewSettingsSO.cursorSettings), Array.Empty<CharacterPreviewInputCursorSetting>());
-
-            SetBackingField(view, nameof(CharacterPreviewView.CharacterPreviewInputDetector), viewGo.AddComponent<CharacterPreviewInputDetector>());
-            SetBackingField(view, nameof(CharacterPreviewView.CharacterPreviewCursorContainer), viewGo.AddComponent<CharacterPreviewCursorContainer>());
-            SetBackingField(view, nameof(CharacterPreviewView.CharacterPreviewSettingsSo), settings);
-
-            var rawImageGo = new GameObject("RawImage", typeof(RectTransform));
-            rawImageGo.transform.SetParent(viewGo.transform);
-            SetBackingField(view, nameof(CharacterPreviewView.RawImage), rawImageGo.AddComponent<RawImage>());
-
-            var spinnerGo = new GameObject("Spinner");
-            spinnerGo.transform.SetParent(viewGo.transform);
-            SetBackingField(view, nameof(CharacterPreviewView.Spinner), spinnerGo);
-
-            return view;
-        }
-
-        private static void SetBackingField(object target, string propertyName, object value)
-        {
-            // Private fields are only reachable through the type that declares them, so base classes are walked explicitly.
-            string fieldName = $"<{propertyName}>k__BackingField";
-
-            for (Type? type = target.GetType(); type != null; type = type.BaseType)
-            {
-                FieldInfo? field = type.GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
-                if (field == null) continue;
-
-                field.SetValue(target, value);
-                return;
-            }
-
-            throw new MissingFieldException(target.GetType().Name, fieldName);
-        }
+            new TestPreview(CharacterPreviewTestViews.Create(created), Substitute.For<ICharacterPreviewFactory>(), world, bus);
 
         private class TestPreview : CharacterPreviewControllerBase
         {

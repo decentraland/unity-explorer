@@ -93,7 +93,7 @@ namespace DCL.CharacterPreview
             cursorController = new CharacterPreviewCursorController(view.CharacterPreviewCursorContainer, inputEventBus, view.CharacterPreviewSettingsSo.cursorSettings);
 
             characterPreviewEventBus.OnAnyCharacterPreviewShowEvent += OnAnyCharacterPreviewShow;
-            characterPreviewEventBus.OnAnyCharacterPreviewHideEvent += OnAnyCharacterPreviewHide;
+            characterPreviewEventBus.OnCharacterPreviewRestoredEvent += OnCharacterPreviewRestored;
 
             isPlayingEmoteDelegate = () => previewController?.IsPlayingEmote() ?? false;
 
@@ -150,7 +150,7 @@ namespace DCL.CharacterPreview
             view.RectDimensionsChanged -= OnViewRectDimensionsChanged;
             Canvas.willRenderCanvases -= FitRenderTargetToView;
             characterPreviewEventBus.OnAnyCharacterPreviewShowEvent -= OnAnyCharacterPreviewShow;
-            characterPreviewEventBus.OnAnyCharacterPreviewHideEvent -= OnAnyCharacterPreviewHide;
+            characterPreviewEventBus.OnCharacterPreviewRestoredEvent -= OnCharacterPreviewRestored;
             characterPreviewEventBus.Forget(this);
             cursorController.Dispose();
             updateModelCancellationToken.SafeCancelAndDispose();
@@ -358,10 +358,9 @@ namespace DCL.CharacterPreview
             previewController?.SetCharacterPreviewAvatarContainerActive(false);
         }
 
-        // Only the top of the stack comes back: preview containers share a layer and a priority, so with two on every preview brain follows the same virtual camera.
-        private void OnAnyCharacterPreviewHide(CharacterPreviewControllerBase characterPreviewController)
+        private void OnCharacterPreviewRestored(CharacterPreviewControllerBase characterPreviewController)
         {
-            if (characterPreviewController == this || characterPreviewEventBus.Top != this)
+            if (characterPreviewController != this)
                 return;
 
             previewController?.SetCharacterPreviewAvatarContainerActive(true);
