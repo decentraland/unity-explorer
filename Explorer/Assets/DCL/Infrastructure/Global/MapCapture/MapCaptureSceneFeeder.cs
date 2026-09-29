@@ -45,6 +45,7 @@ namespace Global.MapCapture
         private readonly HashSet<Vector2Int> emptyParcels = new ();
         private readonly List<Entity> awaitingDescriptor = new ();
         private readonly List<Entity> awaitingLod = new ();
+        private readonly HashSet<Entity> withoutDescriptor = new ();
         private int requestCounter;
 
         private AssetPromise<SceneDefinitions, GetSceneDefinitionList>? activePromise;
@@ -111,6 +112,9 @@ namespace Global.MapCapture
             if (world.Has<RoadInfo>(entity))
                 return $"road {id} not instantiated";
 
+            if (withoutDescriptor.Contains(entity))
+                return $"scene {id}: no ISS descriptor";
+
             ISSDescriptorState descriptorState = world.Get<ISSDescriptor>(entity).CurrentState;
 
             if (!world.TryGet(entity, out SceneLODInfo lodInfo))
@@ -135,6 +139,12 @@ namespace Global.MapCapture
             if (world.Has<RoadInfo>(entity))
                 return scenesCache.ContainsNonRealScene(parcel);
 
+            if (withoutDescriptor.Contains(entity))
+            {
+                failed = true;
+                return true;
+            }
+
             if (!world.TryGet(entity, out SceneLODInfo lodInfo) || !lodInfo.IsLODInstantiated(0))
                 return false;
 
@@ -150,6 +160,7 @@ namespace Global.MapCapture
 
             awaitingDescriptor.Clear();
             awaitingLod.Clear();
+            withoutDescriptor.Clear();
 
             Debug.Log($"[JUANI] Unloading {sceneIds.Count} scene entities");
 
@@ -272,13 +283,19 @@ namespace Global.MapCapture
                 if (descriptor.CurrentState == ISSDescriptorState.Uninitialized) continue;
 
                 string id = world.Get<SceneDefinitionComponent>(entity).Definition.id;
-
-                Debug.Log(descriptor.CurrentState == ISSDescriptorState.Descriptor
-                    ? $"[JUANI] Descriptor for {id}: {descriptor.Assets.Count} assets -> assembling ISS LOD_0"
-                    : $"[JUANI] Descriptor for {id}: NONE -> falling back to the legacy LOD_0 bundle, which abgen does not publish");
-
-                world.Add(entity, SceneLODInfo.Create());
                 awaitingDescriptor.RemoveAt(i);
+
+                // Without a descriptor the LOD systems would fall back to a legacy LOD_0 bundle, which abgen never
+                // publishes; that is a failed scene, and the reason is in the "ISSDescriptor is unavailable" log line.
+                if (descriptor.CurrentState != ISSDescriptorState.Descriptor)
+                {
+                    Debug.LogWarning($"[JUANI] Descriptor for {id}: NONE -> scene marked failed, no ISS LOD_0 to assemble");
+                    withoutDescriptor.Add(entity);
+                    continue;
+                }
+
+                Debug.Log($"[JUANI] Descriptor for {id}: {descriptor.Assets.Count} assets -> assembling ISS LOD_0");
+                world.Add(entity, SceneLODInfo.Create());
                 awaitingLod.Add(entity);
             }
         }
