@@ -21,7 +21,7 @@ namespace DCL.Tests
         [TestCase(0.25f, 0f)]
         [TestCase(0.5f, 0.5f)]
         [TestCase(0.75f, 1f)]
-        [TestCase(0.875f, 1.5f)]
+        [TestCase(0.875f, 1.25f)]
         [TestCase(0f, 1.5f)]
         [TestCase(0.125f, 1.75f)]
         public void ProgressRunsRiseToSetThenBelowTheHorizon(float timeOfDay, float expected) =>

@@ -18,6 +18,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 using Utility;
 using Object = UnityEngine.Object;
 
@@ -37,6 +38,7 @@ namespace DCL.SkyBox
         private SkyboxSettings settingsJson;
 
         // One slot per debug entry, filled the first time that look is picked.
+        private SkyboxSettingsAsset.LookPresetEntry[] debugLookEntries = Array.Empty<SkyboxSettingsAsset.LookPresetEntry>();
         private ProvidedAsset<SkyboxLookPreset>?[] debugLookPresets = Array.Empty<ProvidedAsset<SkyboxLookPreset>?>();
 
         private SkyboxSettingsAsset? skyboxSettings;
@@ -64,7 +66,13 @@ namespace DCL.SkyBox
             debugLookCancellation.SafeCancelAndDispose();
 
             for (var i = 0; i < debugLookPresets.Length; i++)
-                debugLookPresets[i]?.Dispose();
+            {
+                // A load cancelled before it reached its slot still holds the reference's handle.
+                if (debugLookPresets[i] != null)
+                    debugLookPresets[i]?.Dispose();
+                else if (debugLookEntries[i].Preset.OperationHandle.IsValid())
+                    debugLookEntries[i].Preset.ReleaseAsset();
+            }
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in GlobalPluginArguments arguments)
@@ -180,6 +188,7 @@ namespace DCL.SkyBox
                 return;
 
             SkyboxLookPreset shippedPreset = controller.Preset;
+            debugLookEntries = entries;
             debugLookPresets = new ProvidedAsset<SkyboxLookPreset>?[entries.Length];
 
             var names = new List<string>(entries.Length + 1) { shippedPreset.name };
@@ -210,18 +219,15 @@ namespace DCL.SkyBox
 
                     if (loaded == null)
                     {
-                        ProvidedAsset<SkyboxLookPreset> provided = await assetsProvisioner.ProvideMainAssetAsync(entries[index - 1].Preset, ct);
+                        AssetReferenceT<SkyboxLookPreset> reference = entries[index - 1].Preset;
 
-                        // The slot may have been filled by an earlier pick while this one loaded; keep a single handle.
-                        if (debugLookPresets[index - 1] != null)
-                            provided.Dispose();
-                        else
-                            debugLookPresets[index - 1] = provided;
+                        // A load cancelled by an earlier pick keeps running on the reference, and the provisioner hands that
+                        // handle back unfinished; waiting on it first means the provided asset is always complete.
+                        if (reference.OperationHandle.IsValid())
+                            await reference.OperationHandle.WithCancellation(ct);
 
-                        if (ct.IsCancellationRequested)
-                            return;
-
-                        loaded = debugLookPresets[index - 1];
+                        loaded = await assetsProvisioner.ProvideMainAssetAsync(reference, ct);
+                        debugLookPresets[index - 1] = loaded;
                     }
 
                     preset = loaded.Value.Value;

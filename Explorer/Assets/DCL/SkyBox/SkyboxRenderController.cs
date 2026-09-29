@@ -76,6 +76,9 @@ public class SkyboxRenderController : MonoBehaviour
     // Fraction of the light intensity removed at the middle of the sun/moon crossover, so the direction swing is invisible.
     private const float CELESTIAL_SWAP_INTENSITY_DIP = 0.99f;
 
+    // |y| of the light direction above which world up is too close to parallel for LookRotation.
+    private const float LOOK_ROTATION_POLE_THRESHOLD = 0.99f;
+
     [Header("Look")]
     [Tooltip("The look that ships; alternatives for the debug dropdown live on the skybox settings asset.")]
     [SerializeField] private SkyboxLookPreset preset = null!;
@@ -170,6 +173,9 @@ public class SkyboxRenderController : MonoBehaviour
 
         if (preset.UseSkyLut && preset.SkyLut == null)
             ReportHub.LogWarning(ReportCategory.SKYBOX, $"Skybox preset {preset.name}: Use Sky Lut is on but no sky LUT is baked");
+
+        if (preset.SunHaze && !preset.ComputeCelestialPath)
+            ReportHub.LogWarning(ReportCategory.SKYBOX, $"Skybox preset {preset.name}: Sun Haze needs Compute Celestial Path and is ignored");
     }
 
     /// <summary>
@@ -235,6 +241,7 @@ public class SkyboxRenderController : MonoBehaviour
         Shader.SetGlobalVector(SUN_HAZE_PARAMS, Vector4.zero);
         Shader.SetGlobalVector(MOON_MASK_OFFSET, Vector4.zero);
         Shader.DisableKeyword(STYLIZED_KEYWORD);
+        Shader.SetGlobalTexture(HORIZON_NOISE, null);
 
         for (var i = 0; i < MAX_CLOUD_LAYERS; i++)
             Shader.SetGlobalTexture(CLOUD_STRIPS[i], null);
@@ -481,7 +488,7 @@ public class SkyboxRenderController : MonoBehaviour
         moonActive = moonWeight > SkyboxCelestialMath.MOON_ACTIVE_WEIGHT;
 
         Vector3 lightDirection = Vector3.Slerp(sunDirection, moonDirection, moonWeight);
-        Vector3 upHint = Mathf.Abs(lightDirection.y) > 0.99f ? Vector3.forward : Vector3.up;
+        Vector3 upHint = Mathf.Abs(lightDirection.y) > LOOK_ROTATION_POLE_THRESHOLD ? Vector3.forward : Vector3.up;
         directionalLight.transform.rotation = Quaternion.LookRotation(-lightDirection, upHint);
 
         Shader.SetGlobalVector(SUN_DIRECTION, moonActive ? moonDirection : sunDirection);

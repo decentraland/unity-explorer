@@ -23,10 +23,12 @@ float SkyLut_HorizonNoise(float azimuth, float elevationDeg)
 
     float vDome = (90.0 - elevationDeg) / DCL_SKY_LUT_DOME_SPAN_DEG;
 
-    float2 uv = float2(azimuth * _DclHorizonNoiseParams.y + _TimeParameters.x * _DclHorizonNoiseParams.w, vDome * _DclHorizonNoiseParams.z);
+    // A whole repeat count, so the strip meets itself at the azimuth wrap.
+    float tilingU = max(round(_DclHorizonNoiseParams.y), 1.0);
+    float2 uv = float2(azimuth * tilingU + _TimeParameters.x * _DclHorizonNoiseParams.w, vDome * _DclHorizonNoiseParams.z);
 
     // u jumps by the repeat count at the azimuth wrap; removing whole periods from the derivative keeps the mip level continuous there.
-    float period = max(_DclHorizonNoiseParams.y, 1.0);
+    float period = tilingU;
     float2 dx = ddx(uv), dy = ddy(uv);
     dx.x -= round(dx.x / period) * period;
     dy.x -= round(dy.x / period) * period;
@@ -185,7 +187,11 @@ float3 SkyLut_Stars(float3 skyDir, float azimuth, float elevationRad)
     float star = SkyLut_StarField(turned, time);
 
     // Drifting dim patches (Unreal StarNoise) from the horizon noise.
-    float patchNoise = SAMPLE_TEXTURE2D(_DclHorizonNoise, sampler_DclHorizonNoise, float2(azimuth * 3.0 + time * 0.002, elevation * 3.0)).r;
+    float2 patchUv = float2(azimuth * 3.0 + time * 0.002, elevation * 3.0);
+    float2 patchDx = ddx(patchUv), patchDy = ddy(patchUv);
+    patchDx.x -= round(patchDx.x / 3.0) * 3.0;
+    patchDy.x -= round(patchDy.x / 3.0) * 3.0;
+    float patchNoise = SAMPLE_TEXTURE2D_GRAD(_DclHorizonNoise, sampler_DclHorizonNoise, patchUv, patchDx, patchDy).r;
     star *= lerp(1.0, lerp(0.02, 1.0, patchNoise * patchNoise * patchNoise), _DclStarsParams.z);
 
     float horizonFade = smoothstep(_DclStarsParams3.x, _DclStarsParams3.y, skyDir.y);
