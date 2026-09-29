@@ -24,6 +24,7 @@ namespace Global.MapCapture
         private const float SKYBOX_SETTLE_EPSILON = 0.001f;
         private const float SKYBOX_TIMEOUT_SEC = 15f;
         private const string MANIFEST_FILE = "manifest.json";
+        private const int TIMEOUT_REPORT_LIMIT = 40;
 
         private readonly MapCaptureRuntime runtime;
         private readonly MapCaptureArgs args;
@@ -153,8 +154,11 @@ namespace Global.MapCapture
         private async UniTask LoadAsync(Vector2Int min, Vector2Int max, CancellationToken ct)
         {
             List<Vector2Int> parcels = ParcelsIn(min, max);
+            float started = UnityEngine.Time.realtimeSinceStartup;
+            Debug.Log($"[JUANI] Load ({min.x},{min.y})-({max.x},{max.y}) started");
             runtime.Feeder.Request(parcels);
             await WaitForParcelsAsync(parcels, ct);
+            Debug.Log($"[JUANI] Load ({min.x},{min.y})-({max.x},{max.y}) finished in {UnityEngine.Time.realtimeSinceStartup - started:0.0}s");
         }
 
         private async UniTask UnloadAsync(CancellationToken ct)
@@ -225,7 +229,13 @@ namespace Global.MapCapture
                 await UniTask.Delay(POLL_INTERVAL_MS, cancellationToken: ct);
             }
 
-            ReportHub.LogWarning(ReportCategory.ENGINE, $"[MapCapture] Chunk at ({parcels[0].x},{parcels[0].y}) did not finish loading within {args.LoadTimeoutSec:0}s; rendering what is there");
+            var pending = new List<string>();
+
+            foreach (Vector2Int parcel in parcels)
+                if (!runtime.Feeder.IsParcelReady(runtime.World, parcel, out _))
+                    pending.Add($"({parcel.x},{parcel.y}) {runtime.Feeder.DescribeParcel(runtime.World, parcel)}");
+
+            Debug.LogWarning($"[JUANI] Load at ({parcels[0].x},{parcels[0].y}) TIMED OUT after {args.LoadTimeoutSec:0}s with {pending.Count} parcels pending:\n{string.Join("\n", pending.GetRange(0, Mathf.Min(pending.Count, TIMEOUT_REPORT_LIMIT)))}");
         }
 
         private bool AllReady(List<Vector2Int> parcels)

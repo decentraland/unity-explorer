@@ -44,6 +44,8 @@ namespace Global.MapCapture
         private readonly HashSet<string> sceneIds = new ();
         private readonly HashSet<Vector2Int> emptyParcels = new ();
         private readonly List<Entity> awaitingDescriptor = new ();
+        private readonly List<Entity> awaitingLod = new ();
+        private int requestCounter;
 
         private AssetPromise<SceneDefinitions, GetSceneDefinitionList>? activePromise;
 
@@ -61,10 +63,16 @@ namespace Global.MapCapture
         public void Request(IReadOnlyList<Vector2Int> parcels)
         {
             var batch = new List<int2>(batchSize);
+            var skipped = 0;
+            int batchesBefore = pendingRequests.Count;
 
             foreach (Vector2Int parcel in parcels)
             {
-                if (IsCovered(parcel)) continue;
+                if (IsCovered(parcel))
+                {
+                    skipped++;
+                    continue;
+                }
 
                 batch.Add(parcel.ToInt2());
 
@@ -76,6 +84,8 @@ namespace Global.MapCapture
 
             if (batch.Count > 0)
                 pendingRequests.Enqueue(batch);
+
+            Debug.Log($"[JUANI] Request for {parcels.Count} parcels from ({parcels[0].x},{parcels[0].y}): {pendingRequests.Count - batchesBefore} registry batches queued, {skipped} parcels already covered or known empty");
         }
 
         /// <summary>Main thread, once per frame from <see cref="MapCaptureFeedSystem" />.</summary>
@@ -84,6 +94,32 @@ namespace Global.MapCapture
             ConsumeActiveRequest(world);
             StartNextRequest(world);
             AttachLodInfo(world);
+            LogLodOutcomes(world);
+        }
+
+        /// <summary>Why a parcel is not ready yet, for the timeout report.</summary>
+        public string DescribeParcel(World world, Vector2Int parcel)
+        {
+            if (!entitiesByParcel.TryGetValue(parcel, out Entity entity))
+                return "no scene entity: the registry never answered for it";
+
+            if (!world.IsAlive(entity))
+                return "scene entity destroyed";
+
+            string id = world.Get<SceneDefinitionComponent>(entity).Definition.id;
+
+            if (world.Has<RoadInfo>(entity))
+                return $"road {id} not instantiated";
+
+            ISSDescriptorState descriptorState = world.Get<ISSDescriptor>(entity).CurrentState;
+
+            if (!world.TryGet(entity, out SceneLODInfo lodInfo))
+                return $"scene {id}: descriptor {descriptorState}, no LOD info yet";
+
+            if (!lodInfo.IsInitialized())
+                return $"scene {id}: descriptor {descriptorState}, LOD info not initialized";
+
+            return $"scene {id}: descriptor {descriptorState}, LOD_0 loading (promise level {lodInfo.CurrentLODLevelPromise}, ISS state {lodInfo.InitialSceneStateLOD.CurrentState})";
         }
 
         public bool IsParcelReady(World world, Vector2Int parcel, out bool failed)
@@ -113,6 +149,9 @@ namespace Global.MapCapture
                     world.Get<AssetPromise<ISSDescriptorMetadata, GetISSDescriptorIntention>>(entity).ForgetLoading(world);
 
             awaitingDescriptor.Clear();
+            awaitingLod.Clear();
+
+            Debug.Log($"[JUANI] Unloading {sceneIds.Count} scene entities");
 
             foreach (Entity entity in new HashSet<Entity>(entitiesByParcel.Values))
                 if (world.IsAlive(entity) && !world.Has<DeleteEntityIntention>(entity))
@@ -139,9 +178,14 @@ namespace Global.MapCapture
             List<int2> pointers = pendingRequests.Dequeue();
             definitionsBuffer.Clear();
 
+            string url = urls.Url(DecentralandUrl.EntitiesActive);
+
             activePromise = AssetPromise<SceneDefinitions, GetSceneDefinitionList>.Create(world,
-                new GetSceneDefinitionList(definitionsBuffer, pointers, new CommonLoadingArguments(urls.Url(DecentralandUrl.EntitiesActive))),
+                new GetSceneDefinitionList(definitionsBuffer, pointers, new CommonLoadingArguments(url)),
                 PartitionComponent.TOP_PRIORITY);
+
+            requestCounter++;
+            Debug.Log($"[JUANI] Registry request #{requestCounter}: {pointers.Count} pointers starting at ({pointers[0].x},{pointers[0].y}) -> {url}");
         }
 
         private void ConsumeActiveRequest(World world)
@@ -153,6 +197,7 @@ namespace Global.MapCapture
             if (!promise.TryConsume(world, out StreamableLoadingResult<SceneDefinitions> result)) return;
 
             activePromise = null;
+            int entitiesBefore = sceneIds.Count;
 
             if (result.Succeeded)
             {
@@ -160,16 +205,22 @@ namespace Global.MapCapture
                     CreateSceneEntity(world, definition);
             }
             else
-                ReportHub.LogWarning(ReportCategory.SCENE_LOADING, $"[MapCapture] Scene definitions request failed: {result.Exception?.Message}");
+                Debug.LogWarning($"[JUANI] Registry request #{requestCounter} FAILED: {result.Exception}");
 
             // Requested parcels no definition claimed hold no scene (or could not be resolved): nothing to wait for there.
+            var newlyEmpty = 0;
+
             foreach (int2 pointer in promise.LoadingIntention.Pointers)
             {
                 Vector2Int parcel = pointer.ToVector2Int();
 
-                if (!entitiesByParcel.ContainsKey(parcel))
-                    emptyParcels.Add(parcel);
+                if (entitiesByParcel.ContainsKey(parcel)) continue;
+
+                emptyParcels.Add(parcel);
+                newlyEmpty++;
             }
+
+            Debug.Log($"[JUANI] Registry request #{requestCounter} answered: {(result.Succeeded ? result.Asset.Value.Count : 0)} definitions, {sceneIds.Count - entitiesBefore} new scene entities, {newlyEmpty} of {promise.LoadingIntention.Pointers.Count} requested parcels have no scene");
         }
 
         private void CreateSceneEntity(World world, SceneEntityDefinition definition)
@@ -182,8 +233,9 @@ namespace Global.MapCapture
             var partition = new PartitionComponent { Bucket = 0, IsBehind = false, RawSqrDistance = 0f, OutOfRange = false, IsDirty = true };
             ISSDescriptor descriptor = ISSDescriptor.CreateUninitialized();
             Entity entity;
+            bool isRoad = roadCoordinates.Contains(definition.metadata.scene.DecodedBase);
 
-            if (roadCoordinates.Contains(definition.metadata.scene.DecodedBase))
+            if (isRoad)
                 entity = world.Create(component, descriptor, RoadInfo.Create(), SceneLoadingState.CreateRoad(), partition, new MapCaptureSceneTag());
             else
             {
@@ -192,6 +244,10 @@ namespace Global.MapCapture
 
                 awaitingDescriptor.Add(entity);
             }
+
+            Vector2Int basePosition = definition.metadata.scene.DecodedBase;
+            string abVersion = definition.assetBundleManifestVersion?.GetAssetBundleManifestVersion() ?? "none";
+            Debug.Log($"[JUANI] Scene {definition.id} base ({basePosition.x},{basePosition.y}) {component.Parcels.Count} parcels sdk7={component.IsSDK7} ab={abVersion} -> {(isRoad ? "road" : "ISS LOD_0")}");
 
             foreach (Vector2Int parcel in component.Parcels)
                 entitiesByParcel[parcel] = entity;
@@ -211,10 +267,44 @@ namespace Global.MapCapture
 
                 // UpdateSceneLODInfoSystem reads the descriptor the moment SceneLODInfo appears; attaching it
                 // before the descriptor resolves would send the scene down the legacy LOD path.
-                if (world.Get<ISSDescriptor>(entity).CurrentState == ISSDescriptorState.Uninitialized) continue;
+                ISSDescriptor descriptor = world.Get<ISSDescriptor>(entity);
+
+                if (descriptor.CurrentState == ISSDescriptorState.Uninitialized) continue;
+
+                string id = world.Get<SceneDefinitionComponent>(entity).Definition.id;
+
+                Debug.Log(descriptor.CurrentState == ISSDescriptorState.Descriptor
+                    ? $"[JUANI] Descriptor for {id}: {descriptor.Assets.Count} assets -> assembling ISS LOD_0"
+                    : $"[JUANI] Descriptor for {id}: NONE -> falling back to the legacy LOD_0 bundle, which abgen does not publish");
 
                 world.Add(entity, SceneLODInfo.Create());
                 awaitingDescriptor.RemoveAt(i);
+                awaitingLod.Add(entity);
+            }
+        }
+
+        private void LogLodOutcomes(World world)
+        {
+            for (int i = awaitingLod.Count - 1; i >= 0; i--)
+            {
+                Entity entity = awaitingLod[i];
+
+                if (!world.IsAlive(entity))
+                {
+                    awaitingLod.RemoveAt(i);
+                    continue;
+                }
+
+                if (!world.TryGet(entity, out SceneLODInfo lodInfo) || !lodInfo.IsLODInstantiated(0)) continue;
+
+                string id = world.Get<SceneDefinitionComponent>(entity).Definition.id;
+
+                if (SceneLODInfoUtils.HasLODResult(lodInfo.metadata.FailedLODs, 0))
+                    Debug.LogWarning($"[JUANI] LOD_0 FAILED for {id}");
+                else
+                    Debug.Log($"[JUANI] LOD_0 ready for {id}");
+
+                awaitingLod.RemoveAt(i);
             }
         }
     }
