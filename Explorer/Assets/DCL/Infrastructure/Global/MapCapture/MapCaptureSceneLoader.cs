@@ -26,6 +26,7 @@ namespace Global.MapCapture
 
         [Header("Editor run (used when the command line carries no map-capture-region)")]
         [SerializeField] private bool editorClientMap;
+        [SerializeField] private bool editorKeepBloom;
         [SerializeField] private Vector2Int editorRegionMin = new (-2, 72);
         [SerializeField] private Vector2Int editorRegionMax = new (5, 79);
         [SerializeField] private string editorOutputDir = string.Empty;
@@ -68,7 +69,7 @@ namespace Global.MapCapture
                 return EXIT_BAD_ARGUMENTS;
             }
 
-            runtime = await MapCaptureBootstrap.CreateAsync(appArgs, args.CacheDir, pluginSettingsContainer, directionalLight, environment, this, ct);
+            runtime = await MapCaptureBootstrap.CreateAsync(appArgs, args.CacheDir, args.KeepBloom, pluginSettingsContainer, directionalLight, environment, this, ct);
 
             MapCaptureJob.Summary summary = await new MapCaptureJob(runtime, args).RunAsync(ct);
             ReportHub.Log(ReportCategory.ENGINE, $"[MapCapture] {summary}");
@@ -96,6 +97,9 @@ namespace Global.MapCapture
 
             if (editorClientMap)
                 arguments.Add($"--{AppArgsFlags.MapCapture.CLIENT_MAP}");
+
+            if (editorKeepBloom)
+                arguments.Add($"--{AppArgsFlags.MapCapture.KEEP_BLOOM}");
 
             if (!string.IsNullOrWhiteSpace(editorBundleCacheDir))
             {

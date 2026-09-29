@@ -294,6 +294,7 @@ MonoBehaviour:
   directionalLight: {fileID: 203}
   environment: 0
   editorClientMap: 0
+  editorKeepBloom: 0
   editorRegionMin: {x: -2, y: 72}
   editorRegionMax: {x: 5, y: 79}
   editorOutputDir: 

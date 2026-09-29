@@ -52,7 +52,7 @@ namespace Global.MapCapture
         private const string GENESIS_INSTALL_SOURCE = "";
         private const string LENS_FLARE_COMPONENT = "LensFlareComponentSRP";
 
-        public static async UniTask<MapCaptureRuntime> CreateAsync(IAppArgs appArgs, string? bundleCacheDir, PluginSettingsContainer settingsContainer, Light directionalLight,
+        public static async UniTask<MapCaptureRuntime> CreateAsync(IAppArgs appArgs, string? bundleCacheDir, bool keepBloom, PluginSettingsContainer settingsContainer, Light directionalLight,
             DecentralandEnvironment environment, MonoBehaviour coroutineRunner, CancellationToken ct)
         {
             if (bundleCacheDir != null)
@@ -135,7 +135,7 @@ namespace Global.MapCapture
             if (directionalLight.GetComponent(LENS_FLARE_COMPONENT) is Behaviour lensFlare)
                 lensFlare.enabled = false;
 
-            MapCaptureCamera camera = await MapCaptureCamera.CreateAsync(settingsContainer, assetsProvisioner, world, coroutineRunner, ct);
+            MapCaptureCamera camera = await MapCaptureCamera.CreateAsync(settingsContainer, assetsProvisioner, world, coroutineRunner, keepBloom, ct);
             var feeder = new MapCaptureSceneFeeder(urls, staticContainer.ScenesCache, realmData, lodContainer.RoadCoordinates, staticContainer.RealmPartitionSettings.ScenesDefinitionsRequestBatchSize);
             SystemGroupWorld systems = MapCaptureWorldFactory.Create(world, staticContainer, urls, realmData, analytics.EntitiesAnalytics, lodContainer, plugins, playerEntity, feeder, camera.Camera);
 

@@ -34,6 +34,8 @@ namespace Global.MapCapture
         private const int LIVE_TIMEOUT_FRAMES = 60;
         private const int JPEG_QUALITY = 90;
         private const string VIRTUAL_CAMERA_NAME = "MapCaptureVirtualCamera";
+        private const string NO_BLOOM_VOLUME_NAME = "MapCaptureNoBloom";
+        private const float NO_BLOOM_VOLUME_PRIORITY = 1000f;
 
         private static readonly Quaternion TOP_DOWN = Quaternion.Euler(90f, 0f, 0f);
 
@@ -65,11 +67,47 @@ namespace Global.MapCapture
         }
 
         public static async UniTask<MapCaptureCamera> CreateAsync(IPluginSettingsContainer settingsContainer, IAssetsProvisioner assetsProvisioner, World world,
-            MonoBehaviour coroutineRunner, CancellationToken ct)
+            MonoBehaviour coroutineRunner, bool keepBloom, CancellationToken ct)
         {
             CharacterCameraSettings cameraSettings = settingsContainer.GetSettings<CharacterCameraSettings>();
             ProvidedInstance<CinemachinePreset> rig = await assetsProvisioner.ProvideInstanceAsync(cameraSettings.cinemachinePreset, Vector3.zero, Quaternion.identity, ct: ct);
-            return new MapCaptureCamera(rig, world, coroutineRunner);
+            var camera = new MapCaptureCamera(rig, world, coroutineRunner);
+
+            if (!keepBloom)
+                camera.DisableBloom();
+
+            return camera;
+        }
+
+        /// <summary>
+        ///     A global volume that overrides bloom to zero, on a layer the rig's camera evaluates. Emissives keep their
+        ///     brightness; only the halo that would spread over neighbouring parcels goes.
+        /// </summary>
+        private void DisableBloom()
+        {
+            var volumeObject = new GameObject(NO_BLOOM_VOLUME_NAME);
+            volumeObject.transform.SetParent(virtualCamera.transform);
+
+            if (Camera.TryGetComponent(out UniversalAdditionalCameraData cameraData))
+                volumeObject.layer = FirstLayer(cameraData.volumeLayerMask);
+
+            var profile = ScriptableObject.CreateInstance<VolumeProfile>();
+            Bloom bloom = profile.Add<Bloom>(true);
+            bloom.intensity.Override(0f);
+
+            Volume volume = volumeObject.AddComponent<Volume>();
+            volume.isGlobal = true;
+            volume.priority = NO_BLOOM_VOLUME_PRIORITY;
+            volume.sharedProfile = profile;
+        }
+
+        private static int FirstLayer(LayerMask mask)
+        {
+            for (var layer = 0; layer < 32; layer++)
+                if ((mask.value & (1 << layer)) != 0)
+                    return layer;
+
+            return 0;
         }
 
         public void Dispose()

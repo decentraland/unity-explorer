@@ -52,6 +52,7 @@ namespace Global.MapCapture
         public readonly int OutputPixels;
         public readonly bool Jpeg;
         public readonly bool ClientMap;
+        public readonly bool KeepBloom;
 
         /// <summary>
         ///     Parcels per loaded chunk side. Either a multiple of <see cref="BlockSize" /> (several images per load) or a
@@ -65,8 +66,9 @@ namespace Global.MapCapture
         public int RenderPixels => BlockSize * PixelsPerParcel;
 
         private MapCaptureArgs(Vector2Int min, Vector2Int max, Vector2Int gridOrigin, string outputDir, string? cacheDir, int blockSize, int pixelsPerParcel, int outputPixels, bool jpeg,
-            bool clientMap, int chunkSize, float hour, float cameraHeight, float loadTimeoutSec)
+            bool clientMap, bool keepBloom, int chunkSize, float hour, float cameraHeight, float loadTimeoutSec)
         {
+            KeepBloom = keepBloom;
             Min = min;
             Max = max;
             GridOrigin = gridOrigin;
@@ -89,6 +91,7 @@ namespace Global.MapCapture
             error = string.Empty;
 
             bool clientMap = args.HasFlag(AppArgsFlags.MapCapture.CLIENT_MAP);
+            bool keepBloom = args.HasFlag(AppArgsFlags.MapCapture.KEEP_BLOOM);
             Vector2Int min = Vector2Int.zero;
             Vector2Int max = Vector2Int.zero;
             bool hasRegion = args.TryGetValue(AppArgsFlags.MapCapture.REGION, out string? region) && TryParseRegion(region, out min, out max);
@@ -132,7 +135,7 @@ namespace Global.MapCapture
                     loadSize = CLIENT_DEFAULT_LOAD_PARCELS;
 
                 result = new MapCaptureArgs(min, max, CLIENT_GRID_MIN, outputDir, cacheDir, CLIENT_CHUNK_PARCELS, CLIENT_RENDER_PIXELS_PER_PARCEL, CLIENT_CHUNK_PIXELS, true,
-                    true, loadSize, hour, cameraHeight, loadTimeoutSec);
+                    true, keepBloom, loadSize, hour, cameraHeight, loadTimeoutSec);
 
                 return true;
             }
@@ -154,7 +157,7 @@ namespace Global.MapCapture
                 chunkSize = blockSize;
 
             result = new MapCaptureArgs(min, max, min, outputDir, cacheDir, blockSize, pixelsPerParcel, blockSize * pixelsPerParcel, false,
-                false, chunkSize, hour, cameraHeight, loadTimeoutSec);
+                false, keepBloom, chunkSize, hour, cameraHeight, loadTimeoutSec);
 
             return true;
         }

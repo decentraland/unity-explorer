@@ -238,6 +238,9 @@ namespace Global.AppArgs
             ///     default cache on the system drive, which is capped and evicts mid-run.
             /// </summary>
             public const string CACHE_DIR = "map-capture-cache";
+
+            /// <summary>Presence keeps bloom on. Off by default: from above, a bright emissive haloes over its neighbours.</summary>
+            public const string KEEP_BLOOM = "map-capture-keep-bloom";
         }
 
         public static class Multiplayer
