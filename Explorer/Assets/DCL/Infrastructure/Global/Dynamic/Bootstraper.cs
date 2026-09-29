@@ -170,7 +170,7 @@ namespace Global.Dynamic
                 {
                     StaticLoadPositions = realmLaunchSettings.GetPredefinedParcels(),
                     Realms = settings.Realms,
-                    StartParcel = new StartParcel(realmLaunchSettings.targetScene, realmLaunchSettings.spawnPointName),
+                    StartParcel = new StartParcel(realmLaunchSettings.targetScene, realmLaunchSettings.spawnPointName, realmLaunchSettings.startParcelSource),
                     EditorPositionOverrideActive = realmLaunchSettings.HasEditorPositionOverride(),
                     IsolateScenesCommunication = realmLaunchSettings.isolateSceneCommunication,
                     EnableLandscape = debugSettings.EnableLandscape,

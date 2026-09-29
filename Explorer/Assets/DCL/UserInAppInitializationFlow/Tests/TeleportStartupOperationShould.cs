@@ -208,6 +208,45 @@ namespace DCL.UserInAppInitializationFlow.Tests
         }
 
         [Test]
+        public void ConsumeStartParcelWhenManifestSpawnWins()
+        {
+            worldManifest = WorldManifest.Create(new WorldManifestDto
+            {
+                occupied = new[] { "5,7" },
+                spawn_coordinate = new SpawnCoordinateData(5, 7),
+                total = 1,
+            });
+            realmData.WorldManifest.Returns(worldManifest);
+            appArgs.HasFlag(AppArgsFlags.POSITION).Returns(false);
+
+            var startParcel = new StartParcel(new Vector2Int(10, 20));
+            CreateOperation(startParcel).ExecuteAsync(MakeParams(), cts.Token).GetAwaiter().GetResult();
+
+            Assert.IsTrue(startParcel.IsConsumed());
+        }
+
+        [Test]
+        public void ConsumeStartParcelWhenLocalSceneBaseParcelWins()
+        {
+            realmData.RealmType.Returns(new ReactiveProperty<RealmKind>(RealmKind.LocalScene));
+            realmData.IsLocalSceneDevelopment.Returns(true);
+            appArgs.HasFlag(AppArgsFlags.POSITION).Returns(false);
+
+            var definition = new SceneEntityDefinition
+            {
+                metadata = new SceneMetadata { scene = new SceneMetadataScene { DecodedBase = new Vector2Int(3, 4) } },
+            };
+
+            realmController.WaitForStaticScenesEntityDefinitionsAsync(Arg.Any<CancellationToken>())
+                .Returns(UniTask.FromResult<SceneDefinitions?>(new SceneDefinitions(new List<SceneEntityDefinition> { definition })));
+
+            var startParcel = new StartParcel(new Vector2Int(10, 20));
+            CreateOperation(startParcel).ExecuteAsync(MakeParams(), cts.Token).GetAwaiter().GetResult();
+
+            Assert.IsTrue(startParcel.IsConsumed());
+        }
+
+        [Test]
         public void StartsSceneRoomConnectionOnWorldTeleport()
         {
             worldManifest = WorldManifest.Create(new WorldManifestDto

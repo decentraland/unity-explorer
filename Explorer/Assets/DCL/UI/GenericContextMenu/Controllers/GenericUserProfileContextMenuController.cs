@@ -490,6 +490,7 @@ namespace DCL.UI
             {
                 { "receiver_id", targetAddress },
                 { "friend_position", parcel.ToString() },
+                { "source", "user_context_menu" },
             });
 
         private void OnGiftUserClicked(string payload)

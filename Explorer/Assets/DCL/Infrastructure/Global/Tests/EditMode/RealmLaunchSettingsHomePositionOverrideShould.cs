@@ -1,6 +1,7 @@
 using DCL.FeatureFlags;
 using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.Prefs;
+using DCL.RealmNavigation;
 using DCL.Web3.Identities;
 using Global.AppArgs;
 using Global.Dynamic;
@@ -177,6 +178,7 @@ namespace Global.Tests.EditMode
 
             // Assert
             Assert.AreEqual(new Vector2Int(0, 0), launchSettings.targetScene);
+            Assert.AreEqual(StartParcelSource.LaunchArgument, launchSettings.startParcelSource);
         }
 
         [Test]
@@ -212,6 +214,7 @@ namespace Global.Tests.EditMode
 
             // Assert
             Assert.AreEqual(new Vector2Int(75, 80), launchSettings.targetScene);
+            Assert.AreEqual(StartParcelSource.FeatureFlag, launchSettings.startParcelSource);
         }
 
         [Test]
@@ -231,6 +234,7 @@ namespace Global.Tests.EditMode
 
             // Assert
             Assert.AreEqual(homePosition, launchSettings.targetScene);
+            Assert.AreEqual(StartParcelSource.Home, launchSettings.startParcelSource);
         }
 
         [Test]

@@ -24,9 +24,19 @@ namespace DCL.PlacesAPIService
             bool? withLiveEvents = null,
             bool? onlyPlaces = null);
 
+        /// <summary>
+        ///     Every destination the Places menu tags as Featured, in the order the server ranks them.
+        /// </summary>
+        UniTask<PlacesData.IPlacesAPIResponse> GetHighlightedDestinationsAsync(CancellationToken ct);
+
         UniTask<PlacesData.PlaceInfo?> GetPlaceAsync(Vector2Int coords, CancellationToken ct, bool renewCache = false);
 
         UniTask<PlacesData.PlaceInfo?> GetWorldAsync(Vector2Int coords, string worldName, CancellationToken ct);
+
+        /// <summary>
+        ///     The world registered under the given name, null when the worlds endpoint does not know it.
+        /// </summary>
+        UniTask<PlacesData.PlaceInfo?> GetWorldByNameAsync(string worldName, CancellationToken ct);
 
         [Obsolete("Use GetFavoritesDestinationsAsync instead")]
         UniTask<PlacesData.IPlacesAPIResponse> GetFavoritesAsync(CancellationToken ct,
@@ -93,6 +103,34 @@ namespace DCL.PlacesAPIService
             PlacesData.PlaceInfo? place = await placesAPIService.GetPlaceAsync(coords, ct);
             if (place == null) return;
             await placesAPIService.SetPlaceFavoriteAsync(place.id, isFavorite, ct);
+        }
+
+        /// <summary>
+        ///     The destinations endpoint neither keeps the requested order nor knows every place, so the result follows the history and skips unresolved ones.
+        /// </summary>
+        public static async UniTask<PlacesData.IPlacesAPIResponse> GetRecentlyVisitedDestinationsAsync(this IPlacesAPIService placesAPIService, CancellationToken ct, bool? withConnectedUsers = null)
+        {
+            List<string> history = placesAPIService.GetRecentlyVisitedPlaces();
+            var sorted = new PlacesData.PlacesAPIResponse { data = new List<PlacesData.PlaceInfo>(history.Count) };
+
+            if (history.Count == 0)
+                return sorted;
+
+            PlacesData.IPlacesAPIResponse response = await placesAPIService.GetDestinationsByIdsAsync(history, ct, withConnectedUsers: withConnectedUsers);
+
+            foreach (string placeId in history)
+            {
+                foreach (PlacesData.PlaceInfo place in response.Data)
+                {
+                    if (place.id != placeId) continue;
+
+                    sorted.data.Add(place);
+                    break;
+                }
+            }
+
+            sorted.total = sorted.data.Count;
+            return sorted;
         }
     }
 }

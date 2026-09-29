@@ -10,6 +10,7 @@ using SceneRunner.Scene;
 using System.Text.RegularExpressions;
 using DCL.FeatureFlags;
 using DCL.MapRenderer.MapLayers.HomeMarker;
+using DCL.RealmNavigation;
 using DCL.UserInAppInitializationFlow.StartupOperations;
 using DCL.Utility;
 using DCL.Web3.Identities;
@@ -47,6 +48,7 @@ namespace Global.Dynamic
 
         private bool isLocalSceneDevelopmentRealm;
         internal string? spawnPointName;
+        internal StartParcelSource startParcelSource;
 
         public LaunchMode CurrentMode => isLocalSceneDevelopmentRealm
 
@@ -197,11 +199,17 @@ namespace Global.Dynamic
         {
             // Priority 1: App argument position (highest - from command line/Creator Hub)
             if (HasAppArgPosition(appArgs))
+            {
+                startParcelSource = StartParcelSource.LaunchArgument;
                 return;
+            }
 
             // Priority 2: Editor position override (for development convenience)
             if (HasEditorPositionOverride())
+            {
+                startParcelSource = StartParcelSource.EditorOverride;
                 return;
+            }
 
             string? parcelToTeleportOverride = "0,0";
             bool hasDefaultSpawnFlag = featureFlagsConfigurationCache.IsEnabled(FeatureFlagsStrings.GENESIS_STARTING_PARCEL)
@@ -218,12 +226,14 @@ namespace Global.Dynamic
                 if (HomeMarkerController.DeserializeWorldName(homeAccount) is { } homeWorldName)
                 {
                     SetWorldRealm(homeWorldName);
+                    startParcelSource = StartParcelSource.Home;
                     return;
                 }
 
                 if (HomeMarkerController.Deserialize(homeAccount) is { } homeParcel)
                 {
                     targetScene = homeParcel;
+                    startParcelSource = StartParcelSource.Home;
                     return;
                 }
             }
@@ -232,7 +242,10 @@ namespace Global.Dynamic
             // Note: If you don't want the feature flag for localhost, remove it from the feature flag configuration
             // (https://features.decentraland.systems/#/features/strategies/explorer-alfa-genesis-spawn-parcel)
             if (hasDefaultSpawnFlag)
+            {
                 ParsePositionAppParameter(parcelToTeleportOverride!);
+                startParcelSource = StartParcelSource.FeatureFlag;
+            }
         }
 
         /// <summary>
