@@ -20,6 +20,7 @@ using DCL.CharacterPreview;
 using DCL.ExplorePanel;
 using DCL.Input;
 using DCL.Landscape.Settings;
+using DCL.Lobby;
 using DCL.MapRenderer;
 using DCL.Navmap;
 using DCL.PlacesAPIService;
@@ -62,8 +63,6 @@ using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.Ipfs;
 using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.MarketplaceCredits;
-using DCL.MarketplaceCredits.Purchase;
-using DCL.MarketplaceCredits.Purchase.TopUp.UI;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Passport;
@@ -94,6 +93,7 @@ using UnityEngine.AddressableAssets;
 using UnityEngine.Audio;
 using UnityEngine.InputSystem;
 using UnityEngine.Pool;
+using UnityEngine.UI;
 using Object = UnityEngine.Object;
 
 // ReSharper disable UnusedAutoPropertyAccessor.Local
@@ -188,10 +188,12 @@ namespace DCL.PluginSystem.Global
         private EventInfoPanelController? eventInfoPanelController;
         private CommunitiesBrowserController? communitiesBrowserController;
         private ExplorePanelController? explorePanelController;
+        private Button? lobbyButton;
         private PlacesController? placesController;
         private PlaceDetailPanelController? placeDetailPanelController;
         private EventsController? eventsController;
         private EventDetailPanelController? eventDetailPanelController;
+        private BackpackModalController? backpackModalController;
         private readonly SpringBoneSimulationSettings springBoneSimulationSettings;
 
         public ExplorePanelPlugin(IEventBus eventBus,
@@ -350,9 +352,11 @@ namespace DCL.PluginSystem.Global
             communitiesBrowserController?.Dispose();
             placesController?.Dispose();
             explorePanelController?.Dispose();
+            lobbyButton?.onClick.RemoveListener(OpenLobby);
             eventsController?.Dispose();
             eventDetailPanelController?.Dispose();
             placeDetailPanelController?.Dispose();
+            backpackModalController?.Dispose();
             creditsPanelController.Dispose();
 
             dclInput.Shortcuts.MainMenu.canceled -= OnInputShortcutsMainMenuCanceledAsync;
@@ -563,13 +567,15 @@ namespace DCL.PluginSystem.Global
                 communityDataService,
                 loadingStatus,
                 webBrowser,
-                decentralandUrlsSource);
+                decentralandUrlsSource,
+                web3IdentityCache);
 
             var placesCardSocialActionsController = new PlacesCardSocialActionsController(placesAPIService, realmNavigator, webBrowser, clipboard, decentralandUrlsSource, navmapBus, mapPathEventBus, homePlaceEventBus);
             var placesThumbnailLoader = new ThumbnailLoader(new SpriteCache(webRequestController));
             PlacesView placesView = explorePanelView.GetComponentInChildren<PlacesView>();
             placesController = new PlacesController(placesView, cursor, placesAPIService, placeCategoriesSO.Value, inputBlock, selfProfile, webBrowser,
-                friendsService, profileRepositoryWrapper, mvcManager, placesThumbnailLoader, placesCardSocialActionsController, homePlaceEventBus, worldPermissionsService, eventsApiService);
+                friendsService, profileRepositoryWrapper, mvcManager, placesThumbnailLoader, placesCardSocialActionsController, homePlaceEventBus, worldPermissionsService, eventsApiService,
+                web3IdentityCache);
 
             PlaceDetailPanelView placeDetailPanelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.PlaceDetailPanelPrefab, ct: ct)).GetComponent<PlaceDetailPanelView>();
             var placeDetailPanelViewFactory = PlaceDetailPanelController.CreateLazily(placeDetailPanelViewAsset, null);
@@ -593,12 +599,24 @@ namespace DCL.PluginSystem.Global
                 eventCardActionsController);
             mvcManager.RegisterController(eventDetailPanelController);
 
-            explorePanelView.CreditsPanelView.gameObject.SetActive(false);
+            // The lobby lives in DCL.UI.Flows, which already depends on the explore panel's assembly, so the button is wired here
+            bool includeLobby = FeaturesRegistry.Instance.IsEnabled(FeatureId.Lobby);
+            explorePanelView.LobbyButton.gameObject.SetActive(includeLobby);
 
-            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.UserCredits))
-                EnableCreditsPanelIfUserAllowedAsync(explorePanelView.CreditsPanelView, ct)
-                   .SuppressToResultAsync(ReportCategory.CREDITS_PURCHASE)
-                   .Forget();
+            if (includeLobby)
+            {
+                lobbyButton = explorePanelView.LobbyButton;
+                lobbyButton.onClick.AddListener(OpenLobby);
+
+                // The lobby shows the backpack on its own; the view it borrows is the one that already lives in the explore panel
+                BackpackModalView backpackModalViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.BackpackSettings.BackpackModalPrefab, ct: ct)).GetComponent<BackpackModalView>();
+                backpackModalController = new BackpackModalController(BackpackModalController.CreateLazily(backpackModalViewAsset, null), backpackSubPlugin.backpackController!);
+                mvcManager.RegisterController(backpackModalController);
+            }
+
+            EnableCreditsPanelAsync(explorePanelView.CreditsPanelView, ct)
+               .SuppressToResultAsync(ReportCategory.CREDITS_PURCHASE)
+               .Forget();
 
             explorePanelController = new
                 ExplorePanelController(
@@ -639,16 +657,9 @@ namespace DCL.PluginSystem.Global
                 BackpackDeepLinkOpener.OpenBackpackWhenLandedAsync(mvcManager, loadingStatus, ct).Forget();
         }
 
-        private async UniTask EnableCreditsPanelIfUserAllowedAsync(CreditsPanelView view, CancellationToken ct)
+        private async UniTask EnableCreditsPanelAsync(CreditsPanelView view, CancellationToken ct)
         {
-            if (!await CreditsFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct))
-                return;
-
-            creditsPanelController = new CreditsPanelController(view, marketplaceCreditsAPIClient, profileChangesBus, web3IdentityCache,
-                topUpEnabled: FeaturesRegistry.Instance.IsEnabled(FeatureId.CreditsTopup),
-                openTopUpPanel: () => mvcManager.ShowAsync(CreditsTopUpModalController.IssueCommand(new CreditsTopUpModalControllerParams(CreditsTopUpModalControllerParams.SOURCE_HUD))).Forget());
-
-            view.gameObject.SetActive(true);
+            creditsPanelController = await CreditsPanelSetup.EnableIfUserAllowedAsync(view, marketplaceCreditsAPIClient, profileChangesBus, web3IdentityCache, mvcManager, ct);
         }
 
         private async UniTask<ObjectPool<PlaceElementView>> InitializePlaceElementsPoolAsync(SearchResultPanelView view, CancellationToken ct)
@@ -687,6 +698,9 @@ namespace DCL.PluginSystem.Global
                 return placeElementView;
             }
         }
+
+        private void OpenLobby() =>
+            mvcManager.ShowAndForget(LobbyController.IssueCommand(new LobbyParameter(isStartup: false)));
 
         private void OnInputShortcutsBackpackPerformedAsync(InputAction.CallbackContext _)
         {

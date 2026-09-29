@@ -71,8 +71,7 @@ npm install "https://sdk-team-cdn.decentraland.org/@dcl/protocol/branch/<branch>
 
 **For final PR** (after protocol is merged):
 ```bash
-npm install @dcl/protocol@next          # main branch
-npm install @dcl/protocol@experimental  # experimental branch
+npm install @dcl/protocol@next   # main branch — the tag unity-explorer consumes
 ```
 
 **From local protocol repo** (for rapid iteration):

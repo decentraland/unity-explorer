@@ -8,6 +8,8 @@ using DCL.AuthenticationScreenFlow;
 using DCL.Character;
 using DCL.Chat.History;
 using DCL.Diagnostics;
+using DCL.FeatureFlags;
+using DCL.Lobby;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.Pulse;
 using DCL.Multiplayer.Connections.RoomHubs;
@@ -58,6 +60,9 @@ namespace DCL.UserInAppInitializationFlow
         private readonly bool isLocalSceneDevelopment;
         private readonly IWorldPermissionsService worldPermissionsService;
         private readonly IChatHistory chatHistory;
+
+        // Cancelled by a Logout execution so the execution parked on the startup lobby gives the flow up instead of loading the world
+        private CancellationTokenSource? startupLobbyGate;
 
         public RealUserInAppInitializationFlow(
             ILoadingStatus loadingStatus,
@@ -145,12 +150,16 @@ namespace DCL.UserInAppInitializationFlow
                     switch (parameters.LoadSource)
                     {
                         case IUserInAppInitializationFlow.LoadSource.Logout:
+                            startupLobbyGate?.Cancel();
+
+                            // The start parcel consumed by the session that ends here goes back to the launch destination for the one that starts
+                            startParcel.Reset();
                             await DoLogoutOperationsAsync();
 
                             //Restart the realm and show the authentications screen simultaneously to avoid the "empty space" flicker
                             //No error should be possible at this point
                             // TODO move SetRealmAsync to an operation
-                            await UniTask.WhenAll(ShowAuthenticationScreenAsync(ct),
+                            await UniTask.WhenAll(ShowAuthenticationScreenAsync(parameters.StartAtLoginSelection, ct),
                                 realmController.SetRealmAsync(
                                     URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Genesis)), ct));
 
@@ -160,13 +169,17 @@ namespace DCL.UserInAppInitializationFlow
                             goto default;
                         default:
                             await UniTask.WhenAll(
-                                ShowAuthenticationScreenAsync(ct),
+                                ShowAuthenticationScreenAsync(parameters.StartAtLoginSelection, ct),
                                 ShowErrorPopupIfRequired(result, ct)
                             );
 
                             break;
                     }
                 }
+
+                // Nothing has been teleported or loaded yet: the lobby holds the flow until the user jumps in
+                if (ShouldShowStartupLobby(parameters.LoadSource) && !await WaitForLobbyJumpInAsync(ct))
+                    return;
 
                 var flowToRun = parameters.LoadSource is IUserInAppInitializationFlow.LoadSource.Logout
                     ? reloginOps
@@ -176,6 +189,8 @@ namespace DCL.UserInAppInitializationFlow
                     .ShowWhileExecuteTaskAsync(
                         async (parentLoadReport, ct) =>
                         {
+                            await ApplyStartRealmAsync(ct);
+
                             // After authentication completes, verify the user can actually access the current realm if it's a world.
                             // The realm was set during bootstrap before the user had a chance to switch accounts, so the identity
                             // that's now authenticated may differ from the one assumed at startup.
@@ -239,6 +254,56 @@ namespace DCL.UserInAppInitializationFlow
                 }
             }
             while (!result.Success && parameters.ShowAuthentication);
+        }
+
+        private bool ShouldShowStartupLobby(IUserInAppInitializationFlow.LoadSource loadSource) =>
+            FeaturesRegistry.Instance.IsEnabled(FeatureId.Lobby)
+            && loadSource != IUserInAppInitializationFlow.LoadSource.Recover
+            && !appArgs.HasFlagWithValueTrue(AppArgsFlags.SKIP_AUTH_SCREEN)
+            && !appArgs.HasFlag(AppArgsFlags.AUTOPILOT)
+            && !appArgs.HasFlag(AppArgsFlags.MEASURE_LOADING_TIME)
+            && !appArgs.HasFlag(AppArgsFlags.DISABLE_HUD);
+
+        /// <summary>
+        ///     Holds the flow until the user picks a destination; false when a Logout took the flow over, so this execution must not load the world.
+        /// </summary>
+        private async UniTask<bool> WaitForLobbyJumpInAsync(CancellationToken ct)
+        {
+            startupLobbyGate = startupLobbyGate.SafeRestart();
+            CancellationToken gateToken = startupLobbyGate.Token;
+
+            var jumpIn = new UniTaskCompletionSource();
+
+            // The lobby steps aside for the panels it opens and comes back, so the flow waits for the pick rather than for the lobby leaving the screen
+            mvcManager.ShowAndForget(LobbyController.IssueCommand(new LobbyParameter(isStartup: true, () => jumpIn.TrySetResult(), gateToken)), ct);
+
+            using (CancellationTokenSource lobbyUp = CancellationTokenSource.CreateLinkedTokenSource(ct, gateToken))
+                await jumpIn.Task.AttachExternalCancellation(lobbyUp.Token).SuppressCancellationThrow();
+
+            ct.ThrowIfCancellationRequested();
+
+            bool jumpedIn = !gateToken.IsCancellationRequested;
+
+            // A Logout execution may have opened its own lobby meanwhile; only the gate created here is released
+            if (startupLobbyGate != null && startupLobbyGate.Token == gateToken)
+            {
+                startupLobbyGate.Dispose();
+                startupLobbyGate = null;
+            }
+
+            return jumpedIn;
+        }
+
+        /// <summary>
+        ///     Switches to the realm picked in the lobby before anything is loaded. A Genesis pick is satisfied by any Genesis realm.
+        /// </summary>
+        private async UniTask ApplyStartRealmAsync(CancellationToken ct)
+        {
+            if (startParcel.Realm is not { } realm) return;
+            if (realm == realmController.CurrentDomain) return;
+            if (realmController.RealmData.IsGenesis() && realm == URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Genesis))) return;
+
+            await realmController.SetRealmAsync(realm, ct);
         }
 
         private async UniTask VerifyWorldAccessAndFallbackIfNeededAsync(CancellationToken ct)
@@ -333,9 +398,9 @@ namespace DCL.UserInAppInitializationFlow
             await roomHub.StopAsync().Timeout(TimeSpan.FromSeconds(10));
         }
 
-        private async UniTask ShowAuthenticationScreenAsync(CancellationToken ct)
+        private async UniTask ShowAuthenticationScreenAsync(bool startAtLoginSelection, CancellationToken ct)
         {
-            await mvcManager.ShowAsync(AuthenticationScreenController.IssueCommand(), ct);
+            await mvcManager.ShowAsync(AuthenticationScreenController.IssueCommand(new AuthenticationScreenController.Params(startAtLoginSelection)), ct);
         }
 
         private UniTask ShowErrorPopupIfRequired(EnumResult<TaskError> result, CancellationToken ct)

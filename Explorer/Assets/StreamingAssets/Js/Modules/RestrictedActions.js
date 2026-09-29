@@ -53,9 +53,12 @@ module.exports.movePlayerTo = async function(message) {
 }
 
 module.exports.teleportTo = async function(message) {
-    const x = Number(message.worldCoordinates.x);
-    const y = Number(message.worldCoordinates.y);
-    UnityRestrictedActionsApi.TeleportTo(x, y);
+    // Unpack optional fields and forward to the C# bridge; both are nullable.
+    const coords = message.worldCoordinates
+    UnityRestrictedActionsApi.TeleportTo(
+        coords != undefined ? Number(coords.x) : null,
+        coords != undefined ? Number(coords.y) : null,
+        message.realm != undefined ? message.realm : null);
     return {};
 }
 
@@ -92,7 +95,10 @@ module.exports.openNftDialog = async function(message) {
 }
 
 module.exports.openExplorerUi = async function(message) {
-    const openResult = UnityRestrictedActionsApi.OpenExplorerUi(message.ui)
+    // requestId is optional, and 0 is the protocol's value for "no correlation"
+    const openResult = await UnityRestrictedActionsApi.OpenExplorerUi(
+        message.ui,
+        message.requestId != undefined ? message.requestId : 0)
     return { openResult };
 }
 
@@ -118,7 +124,7 @@ module.exports.triggerSceneEmote = async function(message) {
 }
 
 module.exports.stopEmote = async function(message) {
-    const isSuccess = UnityRestrictedActionsApi.StopEmote()
+    const isSuccess = await UnityRestrictedActionsApi.StopEmote()
     return {
         success: isSuccess
     };

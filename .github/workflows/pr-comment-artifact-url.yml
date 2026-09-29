@@ -11,6 +11,15 @@ name: Comment Artifact URL on PR
 # 'completed' -> fill the section back in: Success (with artifact links) /
 #                Failed / Skipped (no changes under Explorer/).
 #
+# Both resolve their PR through resolve-comment-pr.sh: the run's own PR, or —
+# for a push run on dev — the open release/hotfix PR whose head is the run's
+# SHA. create-release-branch.yml cuts release/* from dev's tip and opens the PR
+# with GITHUB_TOKEN, whose events start no runs, so when the cut lands while
+# dev is still building that commit, this dev run is the one whose result the
+# release PR's comment has to carry (release-gate and release-force-build below
+# finish that job: start the InWorld gate on success, label the PR
+# `force-build` on anything else).
+#
 # Both are gated on build-run-attempted.sh. build-unitycloud.yml also runs for
 # events that build nothing on purpose — any pull_request labeled/unlabeled
 # (only four label names re-trigger a build, and `on:` cannot filter by name),
@@ -41,19 +50,28 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       pr-number: ${{ steps.check-pr.outputs.pr-number }}
+      head-ref: ${{ steps.check-pr.outputs.head-ref }}
+      head-sha: ${{ steps.check-pr.outputs.head-sha }}
+      release-pr: ${{ steps.check-pr.outputs.release-pr }}
+      backfill: ${{ steps.check-pr.outputs.backfill }}
     steps:
-      - name: Check if PR number exists
+      - name: Checkout CI status action
+        uses: actions/checkout@v6
+        with:
+          sparse-checkout: .github/actions/ci-status-comment
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
+      - name: Resolve the PR this run reports into
         id: check-pr
         env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
           WORKFLOW_RUN_EVENT_OBJ: ${{ toJSON(github.event.workflow_run) }}
         run: |
-          PR_NUMBER=$(jq -r '.pull_requests[0].number' <<< "$WORKFLOW_RUN_EVENT_OBJ")
-          echo "Pull request Number: $PR_NUMBER"
-          if [[ -z "$PR_NUMBER" || "$PR_NUMBER" == "null" ]]; then
-            echo "PR_NUMBER is not set, skipping comment update."
-            exit 0
-          fi
-          echo "pr-number=$PR_NUMBER" >> $GITHUB_OUTPUT
+          bash .github/actions/ci-status-comment/resolve-comment-pr.sh > resolved.txt
+          cat resolved.txt
+          cat resolved.txt >> "$GITHUB_OUTPUT"
 
   comment-pending:
     needs: pre-validation
@@ -532,3 +550,99 @@ jobs:
             If the error repeats please consider the `clean-build` tag.
 
             ${{ steps.ucb.outputs.section }}
+
+  # A release PR cannot start its own InWorld gate on the two paths that reach
+  # here. The PR was opened with GITHUB_TOKEN, whose events start no runs, so a
+  # dev build that finished after the cut (a back-filled run) has no gate; and
+  # in-world-tests.yml does not listen to label events, so neither does a build
+  # the `force-build` label started. Dispatch it against the release branch —
+  # the dispatch path resolves the build with no wait, and both zips are up by
+  # the time this run fires. A push to the branch starts the gate through its
+  # own pull_request trigger, so a gate already in flight or green for this SHA
+  # is left alone rather than cancelled by a second run in its concurrency group.
+  release-gate:
+    needs: [pre-validation, check-build-ran]
+    if: github.event.workflow_run.conclusion == 'success' && needs.pre-validation.outputs.release-pr == 'true' && needs.check-build-ran.outputs.player-artifacts == 'true' && needs.check-build-ran.outputs.build-attempted == 'true'
+    runs-on: ubuntu-latest
+    # actions: write — `gh workflow run`. workflow_dispatch is the one event
+    # GITHUB_TOKEN is allowed to start a run with.
+    permissions:
+      actions: write
+      pull-requests: read
+    steps:
+      - name: Dispatch the InWorld gate
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ needs.pre-validation.outputs.pr-number }}
+          HEAD_REF: ${{ needs.pre-validation.outputs.head-ref }}
+          HEAD_SHA: ${{ needs.pre-validation.outputs.head-sha }}
+        run: |
+          set -euo pipefail
+          # A dispatch attaches its checks to the branch tip. A tip that moved
+          # since this build belongs to a newer build, whose own completion
+          # dispatches for it.
+          LIVE_SHA=$(gh pr view "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --json headRefOid --jq '.headRefOid')
+          if [ "$LIVE_SHA" != "$HEAD_SHA" ]; then
+            echo "::notice::PR #${PR_NUMBER} moved from ${HEAD_SHA:0:7} to ${LIVE_SHA:0:7}; the newer build's completion dispatches the gate."
+            exit 0
+          fi
+          COVERED=$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/in-world-tests.yml/runs?head_sha=${HEAD_SHA}&per_page=20" \
+            --jq '[.workflow_runs[] | select(.status != "completed" or .conclusion == "success")] | length')
+          if [ "$COVERED" != "0" ]; then
+            echo "::notice::An InWorld gate run for ${HEAD_SHA:0:7} is in flight or green; not dispatching another."
+            exit 0
+          fi
+          gh workflow run in-world-tests.yml --repo "$GITHUB_REPOSITORY" --ref "$HEAD_REF"
+          echo "::notice::InWorld gate dispatched against ${HEAD_REF} for ${HEAD_SHA:0:7}."
+
+  # A dev build of the cut commit that ends in anything but success leaves the
+  # release with no build and no event that would start one: the cut seeded
+  # "Building on dev" into the comment, and the PR raises no events of its own.
+  # `force-build` builds a PR regardless, so add it — with the org token, since
+  # a label added by GITHUB_TOKEN starts no run either. Back-filled dev runs
+  # only: a release branch's own failed build is for a human to look at, and
+  # re-labelling would not even re-trigger (the label is already on the PR).
+  # Ordered after the failed/cancelled writers so this text is what stays up
+  # until the new build's own writers reset the section.
+  release-force-build:
+    needs: [pre-validation, check-build-ran, comment-failed, comment-cancelled]
+    if: >-
+      !cancelled() &&
+      github.event.action == 'completed' &&
+      github.event.workflow_run.conclusion != 'success' &&
+      needs.pre-validation.outputs.backfill == 'true' &&
+      needs.check-build-ran.outputs.build-attempted == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout CI status action
+        uses: actions/checkout@v6
+        with:
+          sparse-checkout: .github/actions/ci-status-comment
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
+      - name: Label the release PR force-build
+        id: label
+        env:
+          GH_TOKEN: ${{ secrets.ORG_ACCESS_TOKEN }}
+          PR_NUMBER: ${{ needs.pre-validation.outputs.pr-number }}
+          HEAD_SHA: ${{ needs.pre-validation.outputs.head-sha }}
+        run: |
+          echo "short-sha=${HEAD_SHA:0:7}" >> "$GITHUB_OUTPUT"
+          if gh pr edit "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --add-label force-build; then
+            echo "labeled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::error::Could not add force-build to PR #${PR_NUMBER}; label it by hand to build the release branch."
+            echo "labeled=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Update build section
+        uses: ./.github/actions/ci-status-comment
+        with:
+          pr-number: ${{ needs.pre-validation.outputs.pr-number }}
+          section: build
+          github-token: ${{ github.token }}
+          body: |-
+            [![Build](https://img.shields.io/badge/Build-${{ steps.label.outputs.labeled == 'true' && 'Building%20release%20branch' || 'Not%20Found' }}-yellow?logo=unity&logoColor=white&style=for-the-badge)](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }})
+
+            The `dev` build of `${{ steps.label.outputs.short-sha }}`, the commit this release was cut from, ended `${{ github.event.workflow_run.conclusion }}` ([logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }})), so there is nothing to reuse. ${{ steps.label.outputs.labeled == 'true' && 'This PR was labeled `force-build`; the release branch is building itself and its links land here.' || 'Labeling this PR `force-build` failed — add the label by hand to build the release branch.' }}

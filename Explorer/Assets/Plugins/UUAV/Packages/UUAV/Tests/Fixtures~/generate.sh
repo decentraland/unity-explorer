@@ -51,4 +51,24 @@ if ffprobe -v error truncated.mp4 2>/dev/null; then
     exit 1
 fi
 
-ls -la *.mp4 *.m4a
+# hls_master.m3u8: a two-variant master playlist (320x240 and 160x120, each
+# with its own muxed audio), 12 s in 2 s TS segments, flat file names so the
+# fixture server can stay directory-free. Both variants carry the same
+# picture, so which one the demuxer picks is irrelevant; the tests only
+# assert that a single variant keeps downloading once playback runs.
+ffmpeg -hide_banner -loglevel error -y \
+    -f lavfi -i "color=c=red:size=320x240:rate=30:duration=12" \
+    -f lavfi -i "sine=frequency=440:sample_rate=48000:duration=12" \
+    -filter_complex "[0:v]split=2[v0][v1];[v1]scale=160:120[v1s];[1:a]volume=18dB,aformat=sample_fmts=fltp:channel_layouts=stereo,asplit=2[a0][a1]" \
+    -map "[v0]" -map "[a0]" -map "[v1s]" -map "[a1]" \
+    -c:v libx264 -preset veryfast -profile:v baseline -pix_fmt yuv420p \
+    -g 30 -keyint_min 30 \
+    -b:v:0 400k -b:v:1 100k \
+    -c:a aac -b:a 64k \
+    -f hls -hls_time 2 -hls_list_size 0 -hls_playlist_type vod \
+    -hls_segment_filename "hls_v%v_%03d.ts" \
+    -master_pl_name hls_master.m3u8 \
+    -var_stream_map "v:0,a:0 v:1,a:1" \
+    "hls_v%v.m3u8"
+
+ls -la *.mp4 *.m4a *.m3u8 *.ts

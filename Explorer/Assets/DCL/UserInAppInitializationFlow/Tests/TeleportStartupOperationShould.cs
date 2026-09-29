@@ -16,6 +16,7 @@ using NSubstitute;
 using NUnit.Framework;
 using System.Collections.Generic;
 using System.Threading;
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace DCL.UserInAppInitializationFlow.Tests
@@ -142,6 +143,46 @@ namespace DCL.UserInAppInitializationFlow.Tests
         }
 
         [Test]
+        public void UsesStartParcelWhenEditorPositionOverrideActiveInLocalSceneDevelopment()
+        {
+            worldManifest = WorldManifest.Create(new[] { new int2(0, 0) });
+            realmData.WorldManifest.Returns(worldManifest);
+            realmData.RealmType.Returns(new ReactiveProperty<RealmKind>(RealmKind.LocalScene));
+            realmData.IsLocalSceneDevelopment.Returns(true);
+            appArgs.HasFlag(AppArgsFlags.POSITION).Returns(false);
+
+            CreateOperation(new StartParcel(new Vector2Int(10, 20)), editorPositionOverrideActive: true)
+                .ExecuteAsync(MakeParams(), cts.Token).GetAwaiter().GetResult();
+
+            teleportController.Received(1)
+                .TeleportToSceneSpawnPointAsync(new Vector2Int(10, 20), Arg.Any<AsyncLoadProcessReport>(), Arg.Any<CancellationToken>());
+
+            realmController.DidNotReceive().WaitForStaticScenesEntityDefinitionsAsync(Arg.Any<CancellationToken>());
+        }
+
+        [Test]
+        public void UsesLocalSceneBaseParcelWhenNoPositionArgAndNoEditorOverride()
+        {
+            realmData.RealmType.Returns(new ReactiveProperty<RealmKind>(RealmKind.LocalScene));
+            realmData.IsLocalSceneDevelopment.Returns(true);
+            appArgs.HasFlag(AppArgsFlags.POSITION).Returns(false);
+
+            var definition = new SceneEntityDefinition
+            {
+                metadata = new SceneMetadata { scene = new SceneMetadataScene { DecodedBase = new Vector2Int(3, 4) } },
+            };
+
+            realmController.WaitForStaticScenesEntityDefinitionsAsync(Arg.Any<CancellationToken>())
+                .Returns(UniTask.FromResult<SceneDefinitions?>(new SceneDefinitions(new List<SceneEntityDefinition> { definition })));
+
+            CreateOperation(new StartParcel(new Vector2Int(10, 20)))
+                .ExecuteAsync(MakeParams(), cts.Token).GetAwaiter().GetResult();
+
+            teleportController.Received(1)
+                .TeleportToSceneSpawnPointAsync(new Vector2Int(3, 4), Arg.Any<AsyncLoadProcessReport>(), Arg.Any<CancellationToken>());
+        }
+
+        [Test]
         public void UsesStartParcelWhenNonWorldRealm()
         {
             realmData.RealmType.Returns(new ReactiveProperty<RealmKind>(RealmKind.GenesisCity));
@@ -159,6 +200,45 @@ namespace DCL.UserInAppInitializationFlow.Tests
         {
             realmData.RealmType.Returns(new ReactiveProperty<RealmKind>(RealmKind.GenesisCity));
             appArgs.HasFlag(AppArgsFlags.POSITION).Returns(false);
+
+            var startParcel = new StartParcel(new Vector2Int(10, 20));
+            CreateOperation(startParcel).ExecuteAsync(MakeParams(), cts.Token).GetAwaiter().GetResult();
+
+            Assert.IsTrue(startParcel.IsConsumed());
+        }
+
+        [Test]
+        public void ConsumeStartParcelWhenManifestSpawnWins()
+        {
+            worldManifest = WorldManifest.Create(new WorldManifestDto
+            {
+                occupied = new[] { "5,7" },
+                spawn_coordinate = new SpawnCoordinateData(5, 7),
+                total = 1,
+            });
+            realmData.WorldManifest.Returns(worldManifest);
+            appArgs.HasFlag(AppArgsFlags.POSITION).Returns(false);
+
+            var startParcel = new StartParcel(new Vector2Int(10, 20));
+            CreateOperation(startParcel).ExecuteAsync(MakeParams(), cts.Token).GetAwaiter().GetResult();
+
+            Assert.IsTrue(startParcel.IsConsumed());
+        }
+
+        [Test]
+        public void ConsumeStartParcelWhenLocalSceneBaseParcelWins()
+        {
+            realmData.RealmType.Returns(new ReactiveProperty<RealmKind>(RealmKind.LocalScene));
+            realmData.IsLocalSceneDevelopment.Returns(true);
+            appArgs.HasFlag(AppArgsFlags.POSITION).Returns(false);
+
+            var definition = new SceneEntityDefinition
+            {
+                metadata = new SceneMetadata { scene = new SceneMetadataScene { DecodedBase = new Vector2Int(3, 4) } },
+            };
+
+            realmController.WaitForStaticScenesEntityDefinitionsAsync(Arg.Any<CancellationToken>())
+                .Returns(UniTask.FromResult<SceneDefinitions?>(new SceneDefinitions(new List<SceneEntityDefinition> { definition })));
 
             var startParcel = new StartParcel(new Vector2Int(10, 20));
             CreateOperation(startParcel).ExecuteAsync(MakeParams(), cts.Token).GetAwaiter().GetResult();

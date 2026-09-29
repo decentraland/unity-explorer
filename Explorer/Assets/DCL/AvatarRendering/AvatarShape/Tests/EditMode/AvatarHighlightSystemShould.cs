@@ -1,6 +1,8 @@
 using Arch.Core;
 using DCL.AvatarRendering.AvatarShape.Components;
+using DCL.CharacterPreview.Components;
 using DCL.Interaction.Raycast.Components;
+using ECS.LifeCycle.Components;
 using ECS.TestSuite;
 using NUnit.Framework;
 using UnityEngine;
@@ -126,6 +128,52 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             system.Update(0.1f);
 
             // Assert: Opacity should remain 0
+            highlight = ref world.Get<AvatarHighlightComponent>(avatarEntity);
+            Assert.That(highlight.Opacity, Is.EqualTo(0));
+        }
+
+        [Test]
+        public void FadeInPreviewWhenFlaggedAsHovered()
+        {
+            // Arrange
+            Entity previewEntity = world.Create(new AvatarShapeComponent("Preview", "preview-id"), new AvatarHighlightComponent(), new CharacterPreviewComponent { IsHovered = true });
+
+            // Act
+            system.Update(0.1f);
+
+            // Assert
+            ref AvatarHighlightComponent highlight = ref world.Get<AvatarHighlightComponent>(previewEntity);
+            Assert.That(highlight.Opacity, Is.GreaterThan(0));
+            Assert.That(highlight.Opacity, Is.LessThanOrEqualTo(OUTLINE_OPACITY));
+        }
+
+        [Test]
+        public void FadeOutPreviewWhenNoLongerHovered()
+        {
+            // Arrange
+            Entity previewEntity = world.Create(new AvatarShapeComponent("Preview", "preview-id"), new AvatarHighlightComponent { Opacity = OUTLINE_OPACITY }, new CharacterPreviewComponent { IsHovered = false });
+
+            // Act
+            system.Update(FADE_OUT_TIME + 0.1f);
+
+            // Assert
+            ref AvatarHighlightComponent highlight = ref world.Get<AvatarHighlightComponent>(previewEntity);
+            Assert.That(highlight.Opacity, Is.EqualTo(0).Within(0.01f));
+        }
+
+        [Test]
+        public void ClearHighlightWhenAvatarIsDeletedMidFade()
+        {
+            // Arrange
+            ref AvatarHighlightComponent highlight = ref world.Get<AvatarHighlightComponent>(avatarEntity);
+            highlight.Opacity = OUTLINE_OPACITY;
+            world.Add<HoveredComponent>(avatarEntity);
+            world.Add<DeleteEntityIntention>(avatarEntity);
+
+            // Act
+            system.Update(0.1f);
+
+            // Assert
             highlight = ref world.Get<AvatarHighlightComponent>(avatarEntity);
             Assert.That(highlight.Opacity, Is.EqualTo(0));
         }

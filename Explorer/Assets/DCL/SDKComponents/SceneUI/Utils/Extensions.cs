@@ -1,7 +1,6 @@
 using Arch.Core;
 using DCL.ECSComponents;
 using DCL.Input;
-using DCL.Input.Component;
 using DCL.SDKComponents.SceneUI.Classes;
 using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Defaults;
@@ -227,19 +226,26 @@ namespace DCL.SDKComponents.SceneUI.Utils
             EventCallback<FocusInEvent> newOnFocusInCallback = evt =>
             {
                 evt.StopPropagation();
-                inputBlock.Disable(InputMapComponent.Kind.Camera , InputMapComponent.Kind.Shortcuts , InputMapComponent.Kind.Player, InputMapComponent.Kind.InWorldCamera);
+                uiInputComponent.IsFocused = true;
+                inputBlock.Disable(UIInputComponent.BLOCKED_INPUT_KINDS);
             };
 
             EventCallback<FocusOutEvent> newOnFocusOutCallback = evt =>
             {
                 evt.StopPropagation();
-                inputBlock.Enable(InputMapComponent.Kind.Camera , InputMapComponent.Kind.Shortcuts , InputMapComponent.Kind.Player, InputMapComponent.Kind.InWorldCamera);
+
+                // Only lift a block this field placed: a blur of stale panel focus on a recycled field has no matching FocusIn.
+                if (!uiInputComponent.IsFocused) return;
+
+                uiInputComponent.IsFocused = false;
+                inputBlock.Enable(UIInputComponent.BLOCKED_INPUT_KINDS);
             };
 
             uiInputComponent.UnregisterInputCallbacks();
             uiInputComponent.TextField.RegisterCallback(newOnChangeCallback);
             uiInputComponent.currentOnValueChanged = newOnChangeCallback;
-            uiInputComponent.TextField.RegisterCallback(newOnSubmitCallback);
+            // Trickle-down so the callback runs before the inner TextElement consumes Return.
+            uiInputComponent.TextField.RegisterCallback(newOnSubmitCallback, TrickleDown.TrickleDown);
             uiInputComponent.currentOnSubmit = newOnSubmitCallback;
             uiInputComponent.TextField.RegisterCallback(newOnFocusInCallback);
             uiInputComponent.currentOnFocusIn = newOnFocusInCallback;
@@ -250,7 +256,7 @@ namespace DCL.SDKComponents.SceneUI.Utils
         public static void UnregisterInputCallbacks(this UIInputComponent uiInputComponent)
         {
             uiInputComponent.TextField.UnregisterCallback(uiInputComponent.currentOnValueChanged);
-            uiInputComponent.TextField.UnregisterCallback(uiInputComponent.currentOnSubmit);
+            uiInputComponent.TextField.UnregisterCallback(uiInputComponent.currentOnSubmit, TrickleDown.TrickleDown);
             uiInputComponent.TextField.UnregisterCallback(uiInputComponent.currentOnFocusIn);
             uiInputComponent.TextField.UnregisterCallback(uiInputComponent.currentOnFocusOut);
         }

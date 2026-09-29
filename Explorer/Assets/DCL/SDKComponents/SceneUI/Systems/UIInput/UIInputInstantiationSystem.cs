@@ -70,6 +70,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
                 sdkModel.Placeholder,
                 sdkModel.GetPlaceholderColor());
             uiTransformComponent.ContentContainer.Add(newUIInputComponent.TextField);
+            newUIInputComponent.BlurIfFocused();
 
             UiElementUtils.ApplyDefaultUiTransformValues(in pbUiTransform, uiTransformComponent.Transform);
             UiElementUtils.ApplyDefaultUiBackgroundValues(World, entity, uiTransformComponent.Transform);
@@ -85,7 +86,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
             if (!sdkModel.IsDirty)
                 return;
 
-            UiElementUtils.SetupUIInputComponent(ref uiInputComponent, in sdkModel, in styleFontDefinitions);
+            UiElementUtils.SetupUiInputComponent(ref uiInputComponent, in sdkModel, in styleFontDefinitions);
             sdkModel.IsDirty = false;
         }
 

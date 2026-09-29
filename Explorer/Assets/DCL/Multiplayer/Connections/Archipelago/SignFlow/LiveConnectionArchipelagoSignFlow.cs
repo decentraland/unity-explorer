@@ -67,7 +67,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.SignFlow
         /// <summary>
         ///     This loop is launched once and should be free from exceptions
         /// </summary>
-        public async UniTaskVoid StartListeningForConnectionStringAsync(Action<string> onNewConnectionString, CancellationToken token)
+        public async UniTaskVoid StartListeningForConnectionStringAsync(Action<string, string> onNewIslandAssignment, CancellationToken token)
         {
             await ExecuteOnThreadPoolScope.NewScopeAsync();
 
@@ -90,7 +90,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.SignFlow
                 if (serverPacket.value.MessageCase is ServerPacket.MessageOneofCase.IslandChanged)
                 {
                     using var islandChanged = new SmartWrap<IslandChangedMessage>(serverPacket.value.IslandChanged!, multiPool);
-                    onNewConnectionString(islandChanged.value.ConnStr);
+                    onNewIslandAssignment(islandChanged.value.IslandId, islandChanged.value.ConnStr);
                 }
             }
         }

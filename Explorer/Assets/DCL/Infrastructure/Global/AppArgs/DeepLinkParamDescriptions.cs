@@ -56,6 +56,7 @@ namespace Global.AppArgs
             [AppArgsFlags.SELF_PREVIEW_WEARABLES] = "Loads wearables from a local preview folder.",
             [AppArgsFlags.SELF_PREVIEW_EMOTES] = "Loads emotes from a local preview folder.",
             [AppArgsFlags.FORCED_EMOTES] = "Adds emotes to your profile for this session.",
+            [AppArgsFlags.FORCED_WEARABLES] = "Renders wearables on your avatar for this session. No profile change is saved while it is set.",
 
             // Session, cache and window behaviour.
             [AppArgsFlags.IDENTITY_EXPIRATION_DURATION] = "Changes how long you stay signed in.",

@@ -13,9 +13,11 @@ using DCL.PrivateWorlds;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI.Profiles.Helpers;
+using DCL.UI.UpgradeGuestAccountPopup;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
+using DCL.Web3.Identities;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -49,6 +51,7 @@ namespace DCL.Places
         private readonly PlacesCardSocialActionsController placesCardSocialActionsController;
         private readonly IFriendsService? friendsService;
         private readonly IMVCManager mvcManager;
+        private readonly IWeb3IdentityCache identityCache;
         private readonly IWorldPermissionsService worldPermissionsService;
         private readonly HttpEventsApiService eventsApiService;
 
@@ -77,7 +80,8 @@ namespace DCL.Places
             PlacesCardSocialActionsController placesCardSocialActionsController,
             HomePlaceEventBus homePlaceEventBus,
             HttpEventsApiService eventsApiService,
-            IWorldPermissionsService worldPermissionsService)
+            IWorldPermissionsService worldPermissionsService,
+            IWeb3IdentityCache identityCache)
         {
             this.view = view;
             this.placesController = placesController;
@@ -90,6 +94,7 @@ namespace DCL.Places
             this.placesCardSocialActionsController = placesCardSocialActionsController;
             this.eventsApiService = eventsApiService;
             this.worldPermissionsService = worldPermissionsService;
+            this.identityCache = identityCache;
 
             view.BackButtonClicked += OnBackButtonClicked;
             view.ExplorePlacesClicked += OnExplorePlacesClicked;
@@ -139,8 +144,16 @@ namespace DCL.Places
         private void OnExplorePlacesClicked() =>
             placesController.OpenSection(PlacesSection.Browse, force: true, resetCategory: true);
 
-        private void GetANameClicked() =>
+        private void GetANameClicked()
+        {
+            if (identityCache.IsGuest())
+            {
+                mvcManager.ShowAndForget(UpgradeGuestAccountPopupController.IssueCommand(new UpgradeGuestAccountPopupController.Params(GuestUpgradeTrigger.NameClaim)));
+                return;
+            }
+
             webBrowser.OpenUrlMainThreadOnly(DecentralandUrl.MarketplaceClaimName);
+        }
 
         private void TryLoadMorePlaces()
         {
@@ -320,14 +333,8 @@ namespace DCL.Places
                                                          .SuppressToResultAsync(ReportCategory.PLACES);
                     break;
                 case PlacesSection.RecentlyVisited:
-                    var recentlyVisitedPlacesIds = placesAPIService.GetRecentlyVisitedPlaces();
-                    var placesByIdResult = await placesAPIService.GetDestinationsByIdsAsync(recentlyVisitedPlacesIds, ct, withConnectedUsers: true)
-                                                                 .SuppressToResultAsync(ReportCategory.PLACES);
-
-                    // Since GetPlacesByIds endpoint doesn't return the data with the same sorting as the input list, we have to sort it manually
-                    PlacesData.PlacesAPIResponse sortedPlacesResponse = GetRecentlyVisitedPlacesSorted(placesByIdResult, recentlyVisitedPlacesIds);
-                    placesResult = await UniTask.FromResult<PlacesData.IPlacesAPIResponse>(sortedPlacesResponse)
-                                                .SuppressToResultAsync(ReportCategory.PLACES);
+                    placesResult = await placesAPIService.GetRecentlyVisitedDestinationsAsync(ct, withConnectedUsers: true)
+                                                         .SuppressToResultAsync(ReportCategory.PLACES);
 
                     break;
                 default:
@@ -385,23 +392,6 @@ namespace DCL.Places
             view.SetPlacesGridLoadingMoreActive(false);
 
             isPlacesGridLoadingItems = false;
-        }
-
-        private static PlacesData.PlacesAPIResponse GetRecentlyVisitedPlacesSorted(Result<PlacesData.IPlacesAPIResponse> placesResult, List<string> sortedPlacesIds)
-        {
-            PlacesData.PlacesAPIResponse sortedPlacesResponse = new PlacesData.PlacesAPIResponse { data = new List<PlacesData.PlaceInfo>(), total = 0 };
-
-            if (!placesResult.Success)
-                return sortedPlacesResponse;
-
-            var placesById = placesResult.Value.Data.ToDictionary(p => p.id);
-            foreach (string placeId in sortedPlacesIds)
-                if (placesById.TryGetValue(placeId, out var placeInfo))
-                    sortedPlacesResponse.data.Add(placeInfo);
-
-            sortedPlacesResponse.total = sortedPlacesResponse.data.Count;
-
-            return sortedPlacesResponse;
         }
 
         private void UnloadPlaces()
