@@ -151,6 +151,7 @@ namespace DCL.CharacterPreview
             Canvas.willRenderCanvases -= FitRenderTargetToView;
             characterPreviewEventBus.OnAnyCharacterPreviewShowEvent -= OnAnyCharacterPreviewShow;
             characterPreviewEventBus.OnAnyCharacterPreviewHideEvent -= OnAnyCharacterPreviewHide;
+            characterPreviewEventBus.Forget(this);
             cursorController.Dispose();
             updateModelCancellationToken.SafeCancelAndDispose();
         }
@@ -357,10 +358,10 @@ namespace DCL.CharacterPreview
             previewController?.SetCharacterPreviewAvatarContainerActive(false);
         }
 
-        // Once any other character preview is closed, we activate back the current one.
+        // Only the preview shown last comes back: with two containers on, every preview brain follows the same virtual camera
         private void OnAnyCharacterPreviewHide(CharacterPreviewControllerBase characterPreviewController)
         {
-            if (characterPreviewController == this)
+            if (characterPreviewController == this || characterPreviewEventBus.Top != this)
                 return;
 
             previewController?.SetCharacterPreviewAvatarContainerActive(true);
