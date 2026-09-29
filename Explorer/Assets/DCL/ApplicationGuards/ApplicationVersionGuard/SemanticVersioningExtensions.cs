@@ -9,8 +9,8 @@ namespace DCL.ApplicationGuards
 
         private static bool IsOlderThan(this (int Major, int Minor, int Patch) current, (int Major, int Minor, int Patch) latest)
         {
-            if (current.Major < latest.Major) return true;
-            if (current.Minor < latest.Minor) return true;
+            if (current.Major != latest.Major) return current.Major < latest.Major;
+            if (current.Minor != latest.Minor) return current.Minor < latest.Minor;
             return current.Patch < latest.Patch;
         }
 
@@ -21,9 +21,13 @@ namespace DCL.ApplicationGuards
             if (!match.Success) return (0, 0, 0); // Default if no version found
 
             var major = int.Parse(match.Groups[1].Value);
-            int minor = match.Groups[2].Success ? int.Parse(match.Groups[2].Value) : 0;
-            int patch = match.Groups[3].Success ? int.Parse(match.Groups[3].Value) : 0;
+            int minor = ParseOptional(match.Groups[2]);
+            int patch = ParseOptional(match.Groups[3]);
             return (major, minor, patch);
         }
+
+        // The optional groups match an empty string when the component is absent
+        private static int ParseOptional(Group group) =>
+            group.Value.Length > 0 ? int.Parse(group.Value) : 0;
     }
 }

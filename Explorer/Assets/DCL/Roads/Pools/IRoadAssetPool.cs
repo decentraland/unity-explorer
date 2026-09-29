@@ -10,5 +10,8 @@ namespace DCL.LOD
         void Release(string key, Transform asset);
 
         void Unload(IPerformanceBudget frameTimeBudgetProvider, int maxUnloadAmount);
+
+        /// <summary>Fills every pool to its initial capacity so the first road placements do not instantiate on demand.</summary>
+        void Prewarm();
     }
 }

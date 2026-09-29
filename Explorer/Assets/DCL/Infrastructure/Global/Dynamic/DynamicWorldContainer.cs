@@ -49,6 +49,9 @@ using DCL.RuntimeDeepLink;
 using DCL.SDKComponents.AvatarLocomotion;
 using DCL.SDKComponents.AvatarNametag;
 using DCL.SkyBox;
+using DCL.SyntheticInput;
+using DCL.SyntheticInput.Systems;
+using DCL.SyntheticInput.UiSimulation;
 using DCL.UI;
 using DCL.UI.ConfirmationDialog;
 using DCL.UI.InputFieldFormatting;
@@ -504,6 +507,7 @@ namespace Global.Dynamic
                 bootstrapContainer.WebBrowser,
                 bootstrapContainer.DecentralandUrlsSource,
                 profileContainer.SelfProfile,
+                identityCache,
                 voiceChatContainer.NearbyMuteService);
 
             ViewDependencies.Initialize(new ViewDependencies(
@@ -767,7 +771,6 @@ namespace Global.Dynamic
                     realmNftNamesProvider,
                     profileContainer.ProfileChangesBus,
                     communitiesContainer.IncludeCommunities,
-                    profileContainer.ProfileRepositoryWrapper,
                     voiceChatContainer.VoiceChatOrchestrator,
                     cameraReelContainer.GalleryEventBus,
                     uiShellContainer.Clipboard,
@@ -842,6 +845,14 @@ namespace Global.Dynamic
 
             globalPlugins.Add(new AnalyticsDiskFullPopupPlugin(bootstrapContainer.Analytics.EventBus, uiShellContainer.MvcManager));
 
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.Lobby))
+                globalPlugins.Add(new LobbyPlugin(assetsProvisioner, uiShellContainer.MvcManager, staticContainer.InputBlock, staticContainer.LoadingStatus, debugBuilder,
+                    profileContainer.SelfProfile, profileContainer.ProfileChangesBus, characterPreviewFactory, characterPreviewEventBus, globalWorld,
+                    placesAndEventsContainer.PlacesAPIService, staticContainer.RealmData, placesAndEventsContainer.HomePlaceEventBus, placesAndEventsContainer.EventsApiService, realmNavigator, bootstrapContainer.DecentralandUrlsSource, uiShellContainer.Clipboard, dynamicWorldParams.StartParcel, staticContainer.WebRequestsContainer.WebRequestController,
+                    identityCache, profilesRepository, profileCache, profileContainer.ProfileRepositoryWrapper, uiShellContainer.PassportBridge, playerEntity, webBrowser,
+                    dynamicWorldDependencies.CompositeWeb3Provider, initializationFlowContainer.InitializationFlow, marketplaceCreditsApiClient, notificationsRequestController,
+                    FeaturesRegistry.Instance.IsEnabled(FeatureId.FriendsConnectivityStatus) ? friendsServices?.ConnectivityStatusTracker : null, placesAndEventsContainer.OnlineUsersProvider));
+
             // ReSharper disable once MethodHasAsyncOverloadWithCancellation
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.VoiceChat))
                 globalPlugins.Add(
@@ -883,22 +894,46 @@ namespace Global.Dynamic
                 globalPlugins.Add(lodContainer.RoadPlugin);
             }
 
-            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.McpServer))
-                globalPlugins.Add(new McpServerPlugin(
-                    appArgs,
-                    new GlobalWorldActions(globalWorld, playerEntity, localSceneDevelopment, bootstrapContainer.UseRemoteAssetBundles, FeaturesRegistry.Instance.IsEnabled(FeatureId.SelfPreviewBuilderCollections)),
-                    chatContainer.ChatMessagesBus,
-                    staticContainer.ScenesCache,
-                    commsContainer.CurrentSceneInfo,
-                    staticContainer.LoadingStatus,
-                    realmNavigatorContainer.WorldInfoHub,
-                    realmContainer.ReloadSceneController,
-                    bootstrapContainer.DiagnosticsContainer,
-                    exposedGlobalDataContainer.ExposedCameraData,
-                    staticContainer.EntityCollidersGlobalCache,
-                    coroutineRunner,
-                    globalWorld,
-                    localSceneDevelopment));
+            bool syntheticInputEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.McpServer);
+
+#if ALTTESTER
+            syntheticInputEnabled = syntheticInputEnabled || appArgs.HasFlag(AppArgsFlags.ALTTESTER);
+#endif
+
+            if (syntheticInputEnabled)
+            {
+                var syntheticInputAgent = new SyntheticInputAgent(globalWorld, playerEntity);
+
+                var uiAutomation = new UiAutomationServices(globalWorld, playerEntity,
+                    UnityEngine.EventSystems.EventSystem.current.EnsureNotNull(), staticContainer.ScenesCache);
+
+#if ALTTESTER
+                DCL.SyntheticInput.AltTester.WorldAutomationProbe.Install(syntheticInputAgent, globalWorld, playerEntity);
+                DCL.SyntheticInput.AltTester.UiAutomationProbe.Install(uiAutomation);
+                DCL.SyntheticInput.AltTester.NavigationAutomationProbe.Install(realmNavigator, staticContainer.RealmData, bootstrapContainer.DecentralandUrlsSource,
+                    staticContainer.ScenesCache, staticContainer.LoadingStatus, bootstrapContainer.Environment);
+#endif
+
+                globalPlugins.Add(new SyntheticInputPlugin(staticContainer.ScenesCache, staticContainer.EntityCollidersGlobalCache, uiAutomation));
+
+                if (FeaturesRegistry.Instance.IsEnabled(FeatureId.McpServer))
+                    globalPlugins.Add(new McpServerPlugin(
+                        appArgs,
+                        new GlobalWorldActions(globalWorld, playerEntity, localSceneDevelopment, bootstrapContainer.UseRemoteAssetBundles, FeaturesRegistry.Instance.IsEnabled(FeatureId.SelfPreviewBuilderCollections)),
+                        chatContainer.ChatMessagesBus,
+                        staticContainer.ScenesCache,
+                        commsContainer.CurrentSceneInfo,
+                        staticContainer.LoadingStatus,
+                        realmNavigatorContainer.WorldInfoHub,
+                        realmContainer.ReloadSceneController,
+                        bootstrapContainer.DiagnosticsContainer,
+                        exposedGlobalDataContainer.ExposedCameraData,
+                        syntheticInputAgent,
+                        uiAutomation,
+                        coroutineRunner,
+                        globalWorld,
+                        localSceneDevelopment));
+            }
 
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.LocalSceneDevelopment) || FeaturesRegistry.Instance.IsEnabled(FeatureId.SelfPreviewBuilderCollections))
                 globalPlugins.Add(new GlobalGLTFLoadingPlugin(staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, wearableContainer.BuilderContentUrl.Value, localSceneDevelopment, staticContainer.ComponentsContainer.ComponentPoolsRegistry.RootContainerTransform()));

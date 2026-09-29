@@ -271,6 +271,7 @@ namespace DCL.PluginSystem.Global
             backpackController = new BackpackController(
                 view,
                 selfProfile,
+                web3Identity,
                 webBrowser,
                 avatarView,
                 rarityBackgroundsMapping,

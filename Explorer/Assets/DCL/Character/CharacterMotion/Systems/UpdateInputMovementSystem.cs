@@ -52,7 +52,7 @@ namespace DCL.CharacterMotion.Systems
             }
         }
 
-        private static MovementKind ProcessInputMovementKind(InputModifierComponent inputModifierComponent, bool runPressed, bool walkPressed)
+        internal static MovementKind ProcessInputMovementKind(InputModifierComponent inputModifierComponent, bool runPressed, bool walkPressed)
         {
             // Running action wins over walking
             if (runPressed)
