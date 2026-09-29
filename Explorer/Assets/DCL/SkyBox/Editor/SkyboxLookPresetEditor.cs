@@ -84,7 +84,7 @@ namespace DCL.SkyBox
             DrawBake();
         }
 
-        // Drawn under the palette and again at the end, so a bake is one click away from either place.
+        // Bake button with its stale-LUT warning.
         private void DrawBake()
         {
             if (lutDirty)

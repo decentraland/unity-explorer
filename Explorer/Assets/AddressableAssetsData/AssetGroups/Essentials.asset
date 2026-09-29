@@ -65,8 +65,8 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 0296d6a0d77243a7833863a582c2f4ba
-    m_Address: SkyboxLookPreset_StylizedV1
+  - m_GUID: 32976ee587c04db88e083b6775e5ee5f
+    m_Address: SkyboxLookPreset_Legacy
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

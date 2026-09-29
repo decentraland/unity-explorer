@@ -52,14 +52,13 @@ float CloudsV2_CloudOffset(float u)
     return 0.5 + 0.5 * sin(u * 2.0 * DCL_CLOUDS_V2_PI * 2.0);
 }
 
-// Samples the strip with gradients that ignore the azimuth wrap, so the seam column does not jump to a coarse mip.
-float4 CloudsV2_Sample(TEXTURE2D_PARAM(strip, samp), float2 uv)
+// Samples the strip with derivatives that ignore the azimuth wrap: u jumps by exactly `period` (the repeat count)
+// there, so removing whole periods from the derivative keeps the mip level continuous across the seam column.
+float4 CloudsV2_Sample(TEXTURE2D_PARAM(strip, samp), float2 uv, float period)
 {
-    float2 uvAlt = float2(frac(uv.x + 0.5), uv.y);
     float2 dx = ddx(uv), dy = ddy(uv);
-    float2 dxAlt = ddx(uvAlt), dyAlt = ddy(uvAlt);
-    if (abs(dxAlt.x) < abs(dx.x)) dx.x = dxAlt.x;
-    if (abs(dyAlt.x) < abs(dy.x)) dy.x = dyAlt.x;
+    dx.x -= round(dx.x / period) * period;
+    dy.x -= round(dy.x / period) * period;
     return SAMPLE_TEXTURE2D_GRAD(strip, samp, uv, dx, dy);
 }
 
@@ -147,7 +146,7 @@ void CloudsV2Layers_float(float3 SkyDir, float4 FallbackColor, float FallbackOpa
     float facing = dot(d, _DclSunDirection.xyz);
     float hl = _DclCelestialParams.x > 0.5 ? facing : max(facing, -facing);
     float threshold = _DclCloudsParams.z;
-    float hlAlpha = pow(saturate((hl - threshold) / max(1.0 - threshold, 1e-3)), _DclCloudsParams.w) * _DclCloudsMode.y * _DclCelestialParams.y;
+    float hlAlpha = pow(saturate((hl - threshold) / max(1.0 - threshold, 1e-3)), max(_DclCloudsParams.w, 1e-3)) * _DclCloudsMode.y * _DclCelestialParams.y;
 
     float3 color = 0;
     float alpha = 0;
@@ -157,21 +156,21 @@ void CloudsV2Layers_float(float3 SkyDir, float4 FallbackColor, float FallbackOpa
     if (layerCount > 0.5)
     {
         float2 uv = CloudsV2_Uv(_DclCloudLayer0, _DclCloudLayerTiling.x, _DclCloudLayerOffsetU.x, vDome, azimuth);
-        float4 tex = CloudsV2_Sample(TEXTURE2D_ARGS(_DclCloudStrip0, sampler_DclCloudStrip0), uv);
+        float4 tex = CloudsV2_Sample(TEXTURE2D_ARGS(_DclCloudStrip0, sampler_DclCloudStrip0), uv, max(_DclCloudLayerTiling.x, 1.0));
         CloudsV2_Layer(tex, uv.x, _DclCloudLayer0, _DclCloudLayerOpacity.x, _DclCloudLayerFlow.x, 0.0, d, hlAlpha, color, alpha);
     }
 
     if (layerCount > 1.5)
     {
         float2 uv = CloudsV2_Uv(_DclCloudLayer1, _DclCloudLayerTiling.y, _DclCloudLayerOffsetU.y, vDome, azimuth);
-        float4 tex = CloudsV2_Sample(TEXTURE2D_ARGS(_DclCloudStrip1, sampler_DclCloudStrip1), uv);
+        float4 tex = CloudsV2_Sample(TEXTURE2D_ARGS(_DclCloudStrip1, sampler_DclCloudStrip1), uv, max(_DclCloudLayerTiling.y, 1.0));
         CloudsV2_Layer(tex, uv.x, _DclCloudLayer1, _DclCloudLayerOpacity.y, _DclCloudLayerFlow.y, 1.0, d, hlAlpha, color, alpha);
     }
 
     if (layerCount > 2.5)
     {
         float2 uv = CloudsV2_Uv(_DclCloudLayer2, _DclCloudLayerTiling.z, _DclCloudLayerOffsetU.z, vDome, azimuth);
-        float4 tex = CloudsV2_Sample(TEXTURE2D_ARGS(_DclCloudStrip2, sampler_DclCloudStrip2), uv);
+        float4 tex = CloudsV2_Sample(TEXTURE2D_ARGS(_DclCloudStrip2, sampler_DclCloudStrip2), uv, max(_DclCloudLayerTiling.z, 1.0));
         CloudsV2_Layer(tex, uv.x, _DclCloudLayer2, _DclCloudLayerOpacity.z, _DclCloudLayerFlow.z, 2.0, d, hlAlpha, color, alpha);
     }
 

@@ -81,7 +81,7 @@ void SunDisc_float(float3 Direction, float3 LightDirection, float SunSize, float
         color.rgb = lerp(SunColor.rgb, hazeColor, hazeFactor);
     }
     else
-        sun = step(acos(dot(LightDirection, dir)), discRadius);
+        sun = step(acos(clamp(dot(LightDirection, dir), -1.0, 1.0)), discRadius);
 
     // Crescent: a second circle off the disc centre cuts a hole; size 0 leaves the disc whole. The computed path
     // offsets it in the moon's own frame so the crescent keeps one shape all night; legacy nudges it in world space.
@@ -101,7 +101,7 @@ void SunDisc_float(float3 Direction, float3 LightDirection, float SunSize, float
         maskCenter = normalize(LightDirection + maskNudge);
     }
 
-    float mask = step(MoonMaskSize * MoonMaskSize, acos(dot(maskCenter, dir)));
+    float mask = step(MoonMaskSize * MoonMaskSize, acos(clamp(dot(maskCenter, dir), -1.0, 1.0)));
 
     // Second sun: a small body orbiting the main disc, pulsing in size with its orbit.
     float3 orbit = float3(1.0, 0.0, 1.0);
@@ -109,7 +109,7 @@ void SunDisc_float(float3 Direction, float3 LightDirection, float SunSize, float
     float rotation = SecondSunRotationSpeed * _TimeParameters.x;
     orbit = SunDisc_RotateAboutAxis(orbit, float3(0.0, 1.0, 0.0), rotation) * SecondSunOrbitSize;
     float secondRadius = discRadius * SecondSunSizeFactor;
-    float secondSun = step(acos(dot(normalize(LightDirection + orbit), dir)), secondRadius + secondRadius * ((cos(rotation) + 1.0) / 2.0));
+    float secondSun = step(acos(clamp(dot(normalize(LightDirection + orbit), dir), -1.0, 1.0)), secondRadius + secondRadius * ((cos(rotation) + 1.0) / 2.0));
 
     SunAndMoon = clamp(sun + secondSun, 0.0, 1.0) * color * SunOpacity * SunOpacity * mask;
 }

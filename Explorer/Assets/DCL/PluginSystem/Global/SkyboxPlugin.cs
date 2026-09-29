@@ -32,7 +32,7 @@ namespace DCL.SkyBox
         private readonly IRealmData realmData;
         private readonly IDebugContainerBuilder debugBuilder;
         private readonly bool skyboxTimeEnabled;
-        private readonly CancellationTokenSource debugLookCancellation = new ();
+        private CancellationTokenSource debugLookCancellation = new ();
 
         private SkyboxSettings settingsJson;
 
@@ -187,7 +187,12 @@ namespace DCL.SkyBox
             for (var i = 0; i < entries.Length; i++)
                 names.Add(entries[i].Name);
 
-            var binding = new IndexedElementBinding(names, shippedPreset.name, evt => SwitchLookAsync(controller, shippedPreset, entries, evt.index, debugLookCancellation.Token).Forget());
+            var binding = new IndexedElementBinding(names, shippedPreset.name, evt =>
+            {
+                // A newer pick cancels the previous load so a late one cannot apply over it.
+                debugLookCancellation = debugLookCancellation.SafeRestart();
+                SwitchLookAsync(controller, shippedPreset, entries, evt.index, debugLookCancellation.Token).Forget();
+            });
 
             debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.SKYBOX)
                        ?.AddControl(new DebugDropdownDef(binding, "Look preset"), null);
@@ -205,8 +210,18 @@ namespace DCL.SkyBox
 
                     if (loaded == null)
                     {
-                        loaded = await assetsProvisioner.ProvideMainAssetAsync(entries[index - 1].Preset, ct);
-                        debugLookPresets[index - 1] = loaded;
+                        ProvidedAsset<SkyboxLookPreset> provided = await assetsProvisioner.ProvideMainAssetAsync(entries[index - 1].Preset, ct);
+
+                        // The slot may have been filled by an earlier pick while this one loaded; keep a single handle.
+                        if (debugLookPresets[index - 1] != null)
+                            provided.Dispose();
+                        else
+                            debugLookPresets[index - 1] = provided;
+
+                        if (ct.IsCancellationRequested)
+                            return;
+
+                        loaded = debugLookPresets[index - 1];
                     }
 
                     preset = loaded.Value.Value;

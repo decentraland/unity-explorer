@@ -24,11 +24,12 @@ float SkyLut_HorizonNoise(float azimuth, float elevationDeg)
     float vDome = (90.0 - elevationDeg) / DCL_SKY_LUT_DOME_SPAN_DEG;
 
     float2 uv = float2(azimuth * _DclHorizonNoiseParams.y + _TimeParameters.x * _DclHorizonNoiseParams.w, vDome * _DclHorizonNoiseParams.z);
-    float2 uvAlt = float2(frac(uv.x + 0.5), uv.y);
+
+    // u jumps by the repeat count at the azimuth wrap; removing whole periods from the derivative keeps the mip level continuous there.
+    float period = max(_DclHorizonNoiseParams.y, 1.0);
     float2 dx = ddx(uv), dy = ddy(uv);
-    float2 dxAlt = ddx(uvAlt), dyAlt = ddy(uvAlt);
-    if (abs(dxAlt.x) < abs(dx.x)) dx.x = dxAlt.x;
-    if (abs(dyAlt.x) < abs(dy.x)) dy.x = dyAlt.x;
+    dx.x -= round(dx.x / period) * period;
+    dy.x -= round(dy.x / period) * period;
     float noise = SAMPLE_TEXTURE2D_GRAD(_DclHorizonNoise, sampler_DclHorizonNoise, uv, dx, dy).r;
 
     // Only below ~22 degrees of elevation, full at the horizon (Unreal: remap dome V 0.6..0.9).

@@ -192,7 +192,7 @@ namespace DCL.SkyBox
         [Range(0.02f, 0.9f)] [SerializeField] private float cloudsRampKnee = 0.15f;
         [SerializeField] private float cloudsHighlightStrength = 2f;
         [Range(0f, 0.99f)] [SerializeField] private float cloudsHighlightThreshold = 0.6f;
-        [SerializeField] private float cloudsHighlightFalloff = 3f;
+        [Min(0.01f)] [SerializeField] private float cloudsHighlightFalloff = 3f;
         [Tooltip("Elevation (0 horizon .. 1 zenith) where clouds start fading out, so the strip never pinches at the zenith.")]
         [Range(0f, 1f)] [SerializeField] private float cloudsZenithFadeStart = 0.55f;
         [Range(0f, 1f)] [SerializeField] private float cloudsZenithFadeEnd = 0.8f;
@@ -343,6 +343,32 @@ namespace DCL.SkyBox
         /// </summary>
         public float EvaluatePhase(float timeOfDay) =>
             timeToPhase.length == 0 ? timeOfDay : Mathf.Clamp01(timeToPhase.Evaluate(timeOfDay));
+
+        /// <summary>
+        ///     The entry with the latest StartTime at or before the time, wrapping to the latest entry of the day when the
+        ///     time is before every StartTime. Entry order is irrelevant. Null when there are no entries.
+        /// </summary>
+        public static LensFlareTimeEntry? ActiveLensFlareEntry(IReadOnlyList<LensFlareTimeEntry> entries, float timeOfDay)
+        {
+            if (entries.Count == 0)
+                return null;
+
+            LensFlareTimeEntry? active = null;
+            LensFlareTimeEntry latest = entries[0];
+
+            for (var i = 0; i < entries.Count; i++)
+            {
+                LensFlareTimeEntry entry = entries[i];
+
+                if (entry.StartTime <= timeOfDay && (active == null || entry.StartTime > active.StartTime))
+                    active = entry;
+
+                if (entry.StartTime > latest.StartTime)
+                    latest = entry;
+            }
+
+            return active ?? latest;
+        }
 
         /// <summary>
         ///     Linear interpolation of a per-anchor value (Night, Sunrise, Day, Sunset, wrapping back to Night) at the phase.
