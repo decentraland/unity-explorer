@@ -3,15 +3,21 @@ using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Ipfs;
 using DCL.WebRequests;
 using ECS.Prioritization.Components;
+using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Cache;
+using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
 using Newtonsoft.Json;
 using System;
 using System.Text;
 using System.Threading;
+using TMPro;
+using UnityEngine.TextCore.Text;
+using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 
 namespace ECS.StreamableLoading.Fonts
 {
@@ -20,6 +26,10 @@ namespace ECS.StreamableLoading.Fonts
     public partial class LoadFontSystem : LoadSystemBase<FontData, GetFontIntention>
     {
         private const int MAX_CATALOG_BYTES = 1024 * 1024;
+
+        // The names the converter gives a font bundle's two font assets (abgen builder::font).
+        private const string BUNDLE_TEXT_MESH_PRO_ASSET = "tmp";
+        private const string BUNDLE_UI_TOOLKIT_ASSET = "uitk";
 
         private readonly IWebRequestController webRequestController;
         private readonly RuntimeFontAssetFactory fontAssetFactory;
@@ -43,6 +53,14 @@ namespace ECS.StreamableLoading.Fonts
 
             try
             {
+                if (intention.AssetBundleHash != null)
+                {
+                    FontData? bundled = await TryLoadConvertedAsync(intention, partition, ct);
+
+                    if (bundled != null)
+                        return new StreamableLoadingResult<FontData>(bundled);
+                }
+
                 if (intention.Kind == FontSourceKind.FontsourceFamily)
                     await DownloadFamilyAsync(intention, files, ct);
                 else
@@ -68,6 +86,44 @@ namespace ECS.StreamableLoading.Fonts
                     FontFileStore.ReleaseAfterDestructionAsync(files).Forget(e => ReportHub.LogException(e, ReportCategory.SDK_FONTS));
                 }
             }
+        }
+
+        /// <summary>
+        ///     Loads the font from the bundle the converter built for it: both font assets already built, their atlases
+        ///     pre-filled with the common characters, and the source font inside for the rest. Null when the bundle
+        ///     cannot be used, and the caller falls back to the font file.
+        /// </summary>
+        private async UniTask<FontData?> TryLoadConvertedAsync(GetFontIntention intention, IPartitionComponent partition, CancellationToken ct)
+        {
+            await UniTask.SwitchToMainThread(ct);
+
+            AssetBundleManifestVersion manifest = intention.AssetBundleManifest!;
+            var promise = AssetBundlePromise.Create(World,
+                GetAssetBundleIntention.FromHash(manifest.GetCdnRequestHash(intention.AssetBundleHash!), manifest, parentEntityID: intention.SceneId),
+                partition);
+
+            try { promise = await promise.ToUniTaskAsync(World, cancellationToken: ct); }
+            catch (OperationCanceledException)
+            {
+                promise.ForgetLoading(World);
+                throw;
+            }
+
+            if (!promise.TryGetResult(World, out StreamableLoadingResult<AssetBundleData> result) || result is not { Succeeded: true, Asset: { } bundle })
+            {
+                ReportHub.LogWarning(GetReportData(), $"\"{intention.Src}\": its converted font bundle did not load, the font file is loaded instead: {result.Exception?.Message}");
+                return null;
+            }
+
+            if (!bundle.TryGetAsset(out TMP_FontAsset textMeshPro, BUNDLE_TEXT_MESH_PRO_ASSET)
+                || !bundle.TryGetAsset(out FontAsset uiToolkit, BUNDLE_UI_TOOLKIT_ASSET))
+            {
+                bundle.Dereference();
+                ReportHub.LogWarning(GetReportData(), $"\"{intention.Src}\": its converted font bundle holds no font assets, the font file is loaded instead");
+                return null;
+            }
+
+            return new FontData(fontAssetFactory.AdoptBundled(intention.Src, textMeshPro, uiToolkit), bundle);
         }
 
         private async UniTask DownloadFamilyAsync(GetFontIntention intention, FontFileStore.Lease?[] files, CancellationToken ct)

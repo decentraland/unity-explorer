@@ -1,4 +1,5 @@
 using CommunicationData.URLHelpers;
+using DCL.Ipfs;
 using ECS.StreamableLoading.Common.Components;
 using NSubstitute;
 using NUnit.Framework;
@@ -11,6 +12,7 @@ namespace ECS.StreamableLoading.Fonts.Tests
     {
         private const string CONTENT_FILE = "fonts/Lobster-Regular.ttf";
         private const string CONTENT_URL = "https://peer.decentraland.org/content/contents/bafyfont";
+        private const string CONTENT_HASH = "bafyfont";
 
         private ISceneData sceneData = null!;
 
@@ -91,6 +93,43 @@ namespace ECS.StreamableLoading.Fonts.Tests
 
             Assert.That(intention.Kind, Is.EqualTo(FontSourceKind.File));
             Assert.That(intention.CommonArguments.URL.Value, Is.EqualTo(CONTENT_URL));
+        }
+
+        [Test]
+        public void PreferTheConvertedBundleWhenTheManifestListsTheFont()
+        {
+            AssetBundleManifestVersion manifest = WithSceneManifest($"{CONTENT_HASH}_0123456789abcdef0123456789abcdef_windows");
+
+            FontSrcResolver.TryCreateIntention(CONTENT_FILE, sceneData, out GetFontIntention intention);
+
+            Assert.That(intention.AssetBundleHash, Is.EqualTo(CONTENT_HASH));
+            Assert.That(intention.AssetBundleManifest, Is.SameAs(manifest));
+            Assert.That(intention.SceneId, Is.EqualTo("scene"));
+            Assert.That(intention.CommonArguments.URL.Value, Is.EqualTo(CONTENT_URL), "the raw file stays the fallback");
+        }
+
+        [Test]
+        public void LoadTheFileWhenTheManifestListsNoBundleForIt()
+        {
+            WithSceneManifest("bafyotherfile_0123456789abcdef0123456789abcdef_windows");
+
+            FontSrcResolver.TryCreateIntention(CONTENT_FILE, sceneData, out GetFontIntention intention);
+
+            Assert.That(intention.AssetBundleHash, Is.Null);
+        }
+
+        private AssetBundleManifestVersion WithSceneManifest(params string[] files)
+        {
+            var manifest = AssetBundleManifestVersion.CreateFromFallback("v49", "2026-05-01");
+            manifest.InjectDepsDigests(files);
+            sceneData.SceneEntityDefinition.Returns(new SceneEntityDefinition("scene", new SceneMetadata()) { assetBundleManifestVersion = manifest });
+            sceneData.TryGetHash(CONTENT_FILE, out Arg.Any<string>())
+                     .Returns(x =>
+                      {
+                          x[1] = CONTENT_HASH;
+                          return true;
+                      });
+            return manifest;
         }
 
         [Test]

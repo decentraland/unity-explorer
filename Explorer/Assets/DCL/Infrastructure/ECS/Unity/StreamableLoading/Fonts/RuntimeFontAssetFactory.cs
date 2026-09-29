@@ -65,6 +65,19 @@ namespace ECS.StreamableLoading.Fonts
             }
         }
 
+        /// <summary>
+        ///     Readies the font assets a converted font bundle ships. They arrive built and pre-filled, so the only
+        ///     work left is what a bundle cannot carry: the TMP material, whose shader lives in the build, and the
+        ///     fallback to the built-in font.
+        /// </summary>
+        public FontFamilyAssets AdoptBundled(string assetName, TMP_FontAsset textMeshPro, FontAsset uiToolkit)
+        {
+            Material material = CreateMaterial(assetName, textMeshPro);
+            textMeshPro.material = material;
+            textMeshPro.fallbackFontAssetTable = new List<TMP_FontAsset> { referenceFont };
+            return FontFamilyAssets.FromBundle(textMeshPro, uiToolkit, material);
+        }
+
         private void WireVariant(string assetName, string? filePath, FontVariant variant, TMP_FontAsset textMeshProRegular, FontAsset uiToolkitRegular,
             List<TMP_FontAsset> textMeshProAssets, List<FontAsset> uiToolkitAssets)
         {
@@ -115,12 +128,19 @@ namespace ECS.StreamableLoading.Fonts
 
             // CreateFontAsset looks up "TextMeshPro/Mobile/Distance Field" by name: that shader is in the always-included list
             Material generated = asset.material;
+            asset.material = CreateMaterial(name, asset);
+            UnityObjectUtils.SafeDestroy(generated);
+
+            asset.fallbackFontAssetTable = new List<TMP_FontAsset> { referenceFont };
+
+            return asset;
+        }
+
+        private Material CreateMaterial(string name, TMP_FontAsset asset)
+        {
             ShaderUtilities.GetShaderPropertyIDs();
 
             var material = new Material(referenceFont.material);
-            asset.material = material;
-            UnityObjectUtils.SafeDestroy(generated);
-
             material.name = $"{name} Material";
             material.SetTexture(ShaderUtilities.ID_MainTex, asset.atlasTexture);
             material.SetFloat(ShaderUtilities.ID_TextureWidth, ATLAS_SIZE);
@@ -128,10 +148,7 @@ namespace ECS.StreamableLoading.Fonts
             material.SetFloat(ShaderUtilities.ID_GradientScale, ATLAS_PADDING + SDF_PACKING_MODIFIER);
             material.SetFloat(ShaderUtilities.ID_WeightNormal, asset.normalStyle);
             material.SetFloat(ShaderUtilities.ID_WeightBold, asset.boldStyle);
-
-            asset.fallbackFontAssetTable = new List<TMP_FontAsset> { referenceFont };
-
-            return asset;
+            return material;
         }
 
         private static FontAsset? CreateUIToolkitAsset(string name, string filePath, List<FontAsset> owned)

@@ -1,5 +1,6 @@
 using CommunicationData.URLHelpers;
 using DCL.Diagnostics;
+using DCL.Ipfs;
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
 using System;
@@ -44,7 +45,26 @@ namespace ECS.StreamableLoading.Fonts
                 CommonArguments = new CommonLoadingArguments(url, attempts: ATTEMPTS_COUNT),
             };
 
+            if (kind == FontSourceKind.File)
+                PreferAssetBundle(fontSrc, sceneData, ref intention);
+
             return true;
+        }
+
+        private static void PreferAssetBundle(string fontSrc, ISceneData sceneData, ref GetFontIntention intention)
+        {
+            if (sceneData.SceneEntityDefinition is not { } definition
+                || !sceneData.TryGetHash(fontSrc, out string hash))
+                return;
+
+            AssetBundleManifestVersion manifest = definition.AssetBundleManifestVersionOrFailed;
+
+            if (manifest.assetBundleManifestRequestFailed || manifest.IsLSDAsset || !manifest.ListsConvertedFile(hash))
+                return;
+
+            intention.AssetBundleHash = hash;
+            intention.AssetBundleManifest = manifest;
+            intention.SceneId = definition.id ?? string.Empty;
         }
     }
 }
