@@ -8,6 +8,7 @@ using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Realm;
 using NSubstitute;
 using NUnit.Framework;
+using System;
 using System.Threading;
 using UnityEngine;
 
@@ -118,8 +119,8 @@ namespace DCL.Chat.Commands.Tests
             // Act
             string result = NewTeleporter(pending).TeleportToRealmAsync("https://evil.example/world/x.dcl.eth", CancellationToken.None).GetAwaiter().GetResult();
 
-            // Assert
-            Assert.That(result, Does.Not.StartWith("🟢"));
+            // Assert (ordinal: the culture-aware StartsWith behind Does.StartWith treats emoji as ignorable on the Linux runner)
+            Assert.That(result.StartsWith("🟢", StringComparison.Ordinal), Is.False, result);
             Assert.That(pending.Realm, Is.Null);
             Assert.That(pending.JumpInRequested, Is.False);
         }
