@@ -38,6 +38,9 @@ namespace DCL.Chat.Commands.Tests
             urlsSource.Url(Arg.Any<DecentralandUrl>()).Returns("https://peer.decentraland.org");
             urlsSource.BaseDomain.Returns(IDecentralandUrlsSource.ORG_DOMAIN);
 
+            // No gateway routing: an auto-substituted empty origin would let every realm pass the environment check
+            urlsSource.GatewayOrigin.Returns((string?)null);
+
             IReadonlyReactiveProperty<Vector2Int> currentParcel = Substitute.For<IReadonlyReactiveProperty<Vector2Int>>();
             currentParcel.Value.Returns(CURRENT_PARCEL);
 

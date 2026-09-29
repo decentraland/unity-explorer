@@ -48,15 +48,15 @@ namespace DCL.Chat.Commands
 
         public async UniTask<string> TeleportToRealmAsync(string realm, CancellationToken ct, string? spawnPointName = null)
         {
-            ExtractWorldData(realm, out URLDomain realmURL, out bool isWorld);
+            ExtractWorldData(realm, out URLDomain realmUrl, out bool isWorld);
 
-            if(!ValidEnvironment(realmURL, out string errorMessage))
+            if(!ValidEnvironment(realmUrl, out string errorMessage))
                 return errorMessage;
 
-            if (TryStartAt(realmURL, null, spawnPointName))
+            if (TryStartAt(realmUrl, null, spawnPointName))
                 return HeadingTo(realm);
 
-            if (realmNavigator.IsAlreadyOnRealm(realmURL))
+            if (realmNavigator.IsAlreadyOnRealm(realmUrl))
             {
                 if (spawnPointName == null)
                     return $"🟡 You are already in {realm}!";
@@ -64,7 +64,7 @@ namespace DCL.Chat.Commands
                 return await TeleportToParcelAsync(scenesCache.CurrentParcel.Value, true, ct, spawnPointName);
             }
 
-            var result = await realmNavigator.TryChangeRealmAsync(realmURL, ct, default, isWorld, true, spawnPointName: spawnPointName);
+            var result = await realmNavigator.TryChangeRealmAsync(realmUrl, ct, default, isWorld, true, spawnPointName: spawnPointName);
 
             if (result.Success)
                 return $"🟢 Welcome to the {realm} world!";
@@ -91,18 +91,18 @@ namespace DCL.Chat.Commands
         /// </summary>
         public async UniTask<string> TeleportToRealmAsync(string realm, Vector2Int targetPosition, CancellationToken ct, string? spawnPointName = null)
         {
-            ExtractWorldData(realm, out URLDomain realmURL, out bool isWorld);
+            ExtractWorldData(realm, out URLDomain realmUrl, out bool isWorld);
 
-            if(!ValidEnvironment(realmURL, out string errorMessage))
+            if(!ValidEnvironment(realmUrl, out string errorMessage))
                 return errorMessage;
 
-            if (TryStartAt(realmURL, targetPosition, spawnPointName))
+            if (TryStartAt(realmUrl, targetPosition, spawnPointName))
                 return HeadingTo(realm);
 
-            if(realmNavigator.IsAlreadyOnRealm(realmURL))
+            if(realmNavigator.IsAlreadyOnRealm(realmUrl))
                 return await TeleportToParcelAsync(targetPosition, true, ct, spawnPointName);
 
-            var result = await realmNavigator.TryChangeRealmAsync(realmURL, ct, targetPosition, isWorld, spawnPointName: spawnPointName);
+            var result = await realmNavigator.TryChangeRealmAsync(realmUrl, ct, targetPosition, isWorld, spawnPointName: spawnPointName);
 
             if (result.Success)
                 return $"🟢 Welcome to the {realm} world!";
@@ -121,9 +121,9 @@ namespace DCL.Chat.Commands
                    };
         }
 
-        private bool ValidEnvironment(URLDomain realmURL, out string errorMessage)
+        private bool ValidEnvironment(URLDomain realmUrl, out string errorMessage)
         {
-            var environmentValidationResult = environmentValidator.ValidateTeleport(realmURL.ToString());
+            var environmentValidationResult = environmentValidator.ValidateTeleport(realmUrl.ToString());
             errorMessage = "";
 
             if (!environmentValidationResult.Success)
@@ -135,12 +135,12 @@ namespace DCL.Chat.Commands
             return true;
         }
 
-        private void ExtractWorldData(string realm, out URLDomain realmURL, out bool isWorld)
+        private void ExtractWorldData(string realm, out URLDomain realmUrl, out bool isWorld)
         {
             // 1) Already a URL => not a world
             if (realm.StartsWith("https", StringComparison.OrdinalIgnoreCase))
             {
-                realmURL = URLDomain.FromString(realm);
+                realmUrl = URLDomain.FromString(realm);
                 isWorld = false;
                 return;
             }
@@ -148,7 +148,7 @@ namespace DCL.Chat.Commands
             // 2) Known param URL => not a world
             if (paramUrls.TryGetValue(realm, out string realmAddress))
             {
-                realmURL = URLDomain.FromString(realmAddress);
+                realmUrl = URLDomain.FromString(realmAddress);
                 isWorld = false;
                 return;
             }
@@ -163,7 +163,7 @@ namespace DCL.Chat.Commands
 
             string worldAddress = GetWorldAddress(worldName);
 
-            realmURL = URLDomain.FromString(worldAddress);
+            realmUrl = URLDomain.FromString(worldAddress);
             isWorld = true;
         }
 
@@ -194,11 +194,11 @@ namespace DCL.Chat.Commands
         }
 
         // Before the startup teleport there is nowhere to navigate from, so the request becomes the startup destination
-        private bool TryStartAt(URLDomain? realmURL, Vector2Int? parcel, string? spawnPointName)
+        private bool TryStartAt(URLDomain? realmUrl, Vector2Int? parcel, string? spawnPointName)
         {
             if (startParcel.IsConsumed()) return false;
 
-            if (realmURL is { } realm)
+            if (realmUrl is { } realm)
                 startParcel.AssignRealm(realm, spawnPointName);
 
             if (parcel is { } target)
