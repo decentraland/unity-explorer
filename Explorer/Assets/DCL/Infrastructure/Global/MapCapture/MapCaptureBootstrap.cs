@@ -16,6 +16,7 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PluginSystem;
+using DCL.Prefs;
 using DCL.PluginSystem.Global;
 using DCL.RealmNavigation;
 using DCL.SkyBox;
@@ -38,6 +39,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace Global.MapCapture
 {
@@ -104,6 +106,9 @@ namespace Global.MapCapture
             var worldsTerrain = new WorldTerrainGenerator();
             var landscape = new Landscape(new MapCaptureRealmController(realmData), genesisTerrain, worldsTerrain, true);
             var landscapePlugin = new LandscapePlugin(realmData, genesisTerrain, worldsTerrain, assetsProvisioner, debugBuilder, new MapRendererTextureContainer(), true, landscape);
+            // A straight-down camera never faces the sun, but the sun's lens flare still draws; the skybox reads this
+            // preference when it sets the flare up, and the component is disabled again below in case anything re-enables it.
+            DCLPlayerPrefs.SetBool(DCLPrefKeys.PS_SUN_LENS_FLARE, false);
             var skyboxPlugin = new SkyboxPlugin(assetsProvisioner, directionalLight, staticContainer.ScenesCache, staticContainer.SceneRestrictionBusController, realmData);
 
             if (staticContainer.GPUInstancingService != null)
@@ -125,6 +130,9 @@ namespace Global.MapCapture
                 if (!initialized)
                     throw new InvalidOperationException($"Cannot initialize {plugin.GetType().Name}");
             }
+
+            if (directionalLight.TryGetComponent(out LensFlareComponentSRP lensFlare))
+                lensFlare.enabled = false;
 
             MapCaptureCamera camera = await MapCaptureCamera.CreateAsync(settingsContainer, assetsProvisioner, world, coroutineRunner, ct);
             var feeder = new MapCaptureSceneFeeder(urls, staticContainer.ScenesCache, realmData, lodContainer.RoadCoordinates, staticContainer.RealmPartitionSettings.ScenesDefinitionsRequestBatchSize);
