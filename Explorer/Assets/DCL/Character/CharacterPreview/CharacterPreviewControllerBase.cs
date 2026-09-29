@@ -358,7 +358,7 @@ namespace DCL.CharacterPreview
             previewController?.SetCharacterPreviewAvatarContainerActive(false);
         }
 
-        // Only the preview shown last comes back: with two containers on, every preview brain follows the same virtual camera
+        // Only the top of the stack comes back: preview containers share a layer and a priority, so with two on every preview brain follows the same virtual camera.
         private void OnAnyCharacterPreviewHide(CharacterPreviewControllerBase characterPreviewController)
         {
             if (characterPreviewController == this || characterPreviewEventBus.Top != this)

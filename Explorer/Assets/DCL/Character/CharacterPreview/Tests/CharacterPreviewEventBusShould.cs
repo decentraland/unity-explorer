@@ -146,7 +146,6 @@ namespace DCL.CharacterPreview.Tests
         private CharacterPreviewControllerBase CreatePreview() =>
             new TestPreview(CreateView(), Substitute.For<ICharacterPreviewFactory>(), world, bus);
 
-        // Mirrors the view the prefab provides: the controller wires the input detector, the cursor container and the raw image as it is constructed
         private CharacterPreviewView CreateView()
         {
             var viewGo = new GameObject("CharacterPreviewView");
@@ -174,7 +173,7 @@ namespace DCL.CharacterPreview.Tests
 
         private static void SetBackingField(object target, string propertyName, object value)
         {
-            // Private fields are only reachable through the type that declares them, so base classes are walked explicitly
+            // Private fields are only reachable through the type that declares them, so base classes are walked explicitly.
             string fieldName = $"<{propertyName}>k__BackingField";
 
             for (Type? type = target.GetType(); type != null; type = type.BaseType)

@@ -4,8 +4,7 @@ using System.Collections.Generic;
 namespace DCL.CharacterPreview
 {
     /// <summary>
-    ///     Keeps the shown previews in show order so that only the last one has its container on: preview containers share a layer and a priority,
-    ///     so with two of them on every preview brain follows the same virtual camera.
+    ///     Show-order stack of the previews on screen; only the top one has its container on.
     /// </summary>
     public class CharacterPreviewEventBus
     {
@@ -14,9 +13,6 @@ namespace DCL.CharacterPreview
         public event Action<CharacterPreviewControllerBase>? OnAnyCharacterPreviewShowEvent;
         public event Action<CharacterPreviewControllerBase>? OnAnyCharacterPreviewHideEvent;
 
-        /// <summary>
-        ///     The preview shown last among those still shown; the only one whose container should be active.
-        /// </summary>
         public CharacterPreviewControllerBase? Top => shown.Count > 0 ? shown[^1] : null;
 
         public void OnAnyCharacterPreviewShow(CharacterPreviewControllerBase characterPreviewController)
@@ -32,9 +28,7 @@ namespace DCL.CharacterPreview
             OnAnyCharacterPreviewHideEvent?.Invoke(characterPreviewController);
         }
 
-        /// <summary>
-        ///     Drops a disposed preview without waking the one below it.
-        /// </summary>
+        // A disposed preview leaves without waking the one below it.
         public void Forget(CharacterPreviewControllerBase characterPreviewController) =>
             shown.Remove(characterPreviewController);
     }
