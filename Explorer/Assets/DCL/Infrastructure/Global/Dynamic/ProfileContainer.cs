@@ -2,7 +2,6 @@
 using CommunicationData.URLHelpers;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.Emotes.Equipped;
-using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.Chat;
 using DCL.Backpack.Gifting.Services;
@@ -76,8 +75,13 @@ namespace Global.Dynamic
             var equippedEmotes = new EquippedEmotes();
 
             var selfEmotes = new List<URN>();
-            ParseParamsForcedEmotes(bootstrapContainer.AppArgs, ref selfEmotes);
-            ParseDebugForcedEmotes(bootstrapContainer.DebugSettings.EmotesToAddToUserProfile, ref selfEmotes);
+            ParseParamsUrns(bootstrapContainer.AppArgs, AppArgsFlags.FORCED_EMOTES, selfEmotes);
+            ParseDebugUrns(bootstrapContainer.DebugSettings.EmotesToAddToUserProfile, selfEmotes);
+
+            var selfWearables = new List<URN>();
+            ParseParamsUrns(bootstrapContainer.AppArgs, AppArgsFlags.FORCED_WEARABLES, selfWearables);
+            ParseDebugUrns(bootstrapContainer.DebugSettings.WearablesToAddToUserProfile, selfWearables);
+            var forcedWearables = new ForcedWearables(selfWearables);
 
             IProfileRepository profilesRepository = staticContainer.ProfilesContainer.Repository;
             IProfileCache profileCache = staticContainer.ProfilesContainer.Cache;
@@ -87,7 +91,7 @@ namespace Global.Dynamic
 
             var selfProfile = new SelfProfile(profilesRepository, identityCache, equippedWearables, wearableContainer.WearableCatalog,
                 staticContainer.EmoteStorage, equippedEmotes, selfEmotes, profileCache, globalWorld, playerEntity,
-                pendingTransferService);
+                pendingTransferService, forcedWearables);
 
             ISpriteCache thumbnailCache = new SpriteCache(staticContainer.WebRequestsContainer.WebRequestController);
             var profileRepositoryWrapper = new ProfileRepositoryWrapper(profilesRepository, profileCache, thumbnailCache, identityCache);
@@ -141,16 +145,16 @@ namespace Global.Dynamic
             PendingTransferService.Dispose();
         }
 
-        private static void ParseDebugForcedEmotes(IReadOnlyCollection<string>? debugEmotes, ref List<URN> parsedEmotes)
+        private static void ParseDebugUrns(IReadOnlyCollection<string>? debugUrns, List<URN> parsed)
         {
-            if (debugEmotes?.Count > 0)
-                parsedEmotes.AddRange(debugEmotes.Select(emote => new URN(emote)));
+            if (debugUrns?.Count > 0)
+                parsed.AddRange(debugUrns.Select(urn => new URN(urn)));
         }
 
-        private static void ParseParamsForcedEmotes(IAppArgs appParams, ref List<URN> parsedEmotes)
+        private static void ParseParamsUrns(IAppArgs appParams, string flag, List<URN> parsed)
         {
-            if (appParams.TryGetValue(AppArgsFlags.FORCED_EMOTES, out string? csv) && !string.IsNullOrEmpty(csv!))
-                parsedEmotes.AddRange(csv.Split(',', StringSplitOptions.RemoveEmptyEntries)?.Select(emote => new URN(emote)) ?? ArraySegment<URN>.Empty);
+            if (appParams.TryGetValue(flag, out string? csv) && !string.IsNullOrEmpty(csv!))
+                parsed.AddRange(csv.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(urn => new URN(urn)));
         }
     }
 }

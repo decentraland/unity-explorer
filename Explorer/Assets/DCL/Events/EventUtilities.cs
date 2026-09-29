@@ -10,6 +10,8 @@ namespace DCL.Communities.EventInfo
     public static class EventUtilities
     {
         private const string STARTED_EVENT_TIME_FORMAT = "Started {0} {1} ago";
+        private const string STARTING_NOW = "Starting now";
+        private const string STARTS_IN_FORMAT = "In {0} {1}";
         private const string EVENT_TIME_FORMAT = "ddd, MMM dd @ h:mmtt";
         private const string EVENT_TIME_FORMAT_ONLY_HOURS = "h:mmtt";
         private const string EVENT_DAY_FORMAT = "ddd, MMM dd";
@@ -45,6 +47,28 @@ namespace DCL.Communities.EventInfo
 
             return schedule;
         }
+
+        /// <summary>
+        ///     How long until the event starts, in the coarsest unit that fits: "In 20 min", "In 2 hours", "In 3 days".
+        /// </summary>
+        public static string GetEventStartsInText(IEventDTO eventDTO)
+        {
+            TimeSpan remaining = eventDTO.NextStartAtProcessed - DateTime.UtcNow;
+
+            if (remaining <= TimeSpan.Zero) return STARTING_NOW;
+
+            // Rounded before picking the unit, so 59.6 minutes reads "In 1 hour" rather than "In 60 min"
+            int minutes = Math.Max(1, (int)Math.Round(remaining.TotalMinutes));
+            if (minutes < 60) return string.Format(STARTS_IN_FORMAT, minutes, MINUTES_STRING);
+
+            var hours = (int)Math.Round(remaining.TotalHours);
+            if (hours < 24) return StartsInUnits(hours, HOUR_STRING);
+
+            return StartsInUnits((int)Math.Round(remaining.TotalDays), DAY_STRING);
+        }
+
+        private static string StartsInUnits(int amount, string unit) =>
+            string.Format(STARTS_IN_FORMAT, amount, amount == 1 ? unit : unit + "s");
 
         public static string GetEventDayText(IEventDTO eventDTO)
         {

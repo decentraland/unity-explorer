@@ -55,14 +55,16 @@ jobs:
           target = json.load(open(os.environ["LOCK"]))["targets"]["macos-universal"]
           print(f"ffmpeg_tag={target['ffmpeg']['tag']}")
           print(f"ffmpeg_commit={target['ffmpeg']['commit']}")
+          print(f"mbedtls_tag={target['ffmpeg']['mbedtls']['tag']}")
+          print(f"mbedtls_commit={target['ffmpeg']['mbedtls']['commit']}")
           print(f"builder={target['ffmpeg']['builder']}")
           PY
 
-      # pkg-config: FFmpeg's configure only finds libxml2 (DASH demuxer)
-      # through pkg-config, against the .pc file build-ffmpeg-macos.sh
-      # synthesizes from the SDK
-      - name: Install nasm and pkg-config
-        run: brew install nasm pkg-config
+      # pkg-config: FFmpeg's configure only finds libxml2 (DASH demuxer) and
+      # mbedtls through pkg-config, against the .pc files build-ffmpeg-macos.sh
+      # synthesizes from the SDK and installs from the mbedTLS build
+      - name: Install nasm, pkg-config and cmake
+        run: brew install nasm pkg-config cmake
 
       # In native/, always: rustup reads native/rust-toolchain.toml there, and
       # nowhere else in this checkout. At the repo root every rustc/cargo/rustup
@@ -115,6 +117,13 @@ jobs:
             exit 1
           fi
           echo "FFmpeg source commit $actual matches the lock."
+          actual=$(git -C .mbedtls-src rev-parse HEAD)
+          expected="${{ steps.pins.outputs.mbedtls_commit }}"
+          if [ "$actual" != "$expected" ]; then
+            echo "::error::mbedTLS tag ${{ steps.pins.outputs.mbedtls_tag }} resolved to $actual but the lock pins $expected"
+            exit 1
+          fi
+          echo "mbedTLS source commit $actual matches the lock."
 
       - name: Gate A - the same runner must build the same bytes twice
         run: bash scripts/uuav/repro-gate.sh macos-universal

@@ -87,6 +87,9 @@ namespace Global.AppArgs
         public const string AUTH_BRIDGE_ONLY = "login-bridge-only";
 
         public const string FORCED_EMOTES = "self-force-emotes";
+
+        /// <summary>Comma-separated wearable URNs rendered on the own avatar without owning them. Suppresses profile deploys for the session.</summary>
+        public const string FORCED_WEARABLES = "self-force-wearables";
         public const string SELF_PREVIEW_EMOTES = "self-preview-emotes";
         public const string SELF_PREVIEW_WEARABLES = "self-preview-wearables";
         public const string SELF_PREVIEW_BUILDER_COLLECTIONS = "self-preview-builder-collections";
@@ -136,6 +139,8 @@ namespace Global.AppArgs
         public const string EMAIL_OTP_AUTH = "email-otp-auth";
 
         public const string GUEST_LOGIN = "guest-login";
+
+        public const string LOBBY = "lobby";
 
         public const string EPHEMERAL_GUEST_ACCOUNT = "ephemeral-guest-account";
 

@@ -42,6 +42,7 @@ namespace DCL.Settings.Configuration
             DoubleTapToMove = 14,
             MuteMicInBackgroundFeature = 15,
             SpringBoneSimulationFeature = 16,
+            LobbyFeature = 17,
         }
 
         public override async UniTask<SettingsFeatureController> CreateModuleAsync(
@@ -81,6 +82,7 @@ namespace DCL.Settings.Configuration
                 ToggleFeatures.DoubleTapToMove => new DoubleTapToMoveSettingsController(viewInstance),
                 ToggleFeatures.MuteMicInBackgroundFeature => new MuteMicInBackgroundController(viewInstance),
                 ToggleFeatures.SpringBoneSimulationFeature => CreateSimpleToggle(viewInstance, qualitySettingsController, qualitySettingsController.SetSpringBoneSimulation, x => x.SpringBoneSimulation),
+                ToggleFeatures.LobbyFeature => new LobbySettingsController(viewInstance),
                 // add other cases...
                 _ => throw new ArgumentOutOfRangeException(nameof(viewInstance))
             };
