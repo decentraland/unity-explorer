@@ -1,0 +1,141 @@
+:root {
+    --place-card-hover-duration: 0.3s;
+    /* Hovering moves 24px from the header to the footer, raising it over the thumbnail */
+    --place-card-header-height: 110px;
+    --place-card-header-height-hovered: 86px;
+    --place-card-footer-height: 55px;
+    --place-card-footer-height-hovered: 79px;
+}
+
+.lobby-place-card {
+    width: 280px;
+    height: 165px;
+    border-radius: 8px;
+    background-color: rgba(20, 20, 26, 0.9);
+}
+
+.lobby-place-card__header {
+    height: var(--place-card-header-height);
+    transition: height var(--place-card-hover-duration) ease-out;
+}
+
+.lobby-place-card:hover .lobby-place-card__header {
+    height: var(--place-card-header-height-hovered);
+}
+
+.lobby-place-card__thumbnail {
+    flex-grow: 1;
+    border-radius: 8px;
+    background-image: url('/Assets/Textures/ExplorePanel/DefaultImagePlace.png');
+    -unity-background-scale-mode: scale-and-crop;
+}
+
+.lobby-place-card--loading .lobby-place-card__thumbnail {
+    background-image: none;
+    background-color: rgba(143, 66, 219, 0.35);
+}
+
+.lobby-place-card__online {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    height: 28px;
+    flex-direction: row;
+    align-items: center;
+    padding: 4px 6px;
+    border-radius: 12px;
+    background-color: var(--dcl-color-shadow);
+}
+
+.lobby-place-card__online-dot {
+    width: 8px;
+    height: 8px;
+    margin-right: 4px;
+    border-radius: 4px;
+    background-color: rgb(48, 205, 0);
+}
+
+.lobby-place-card__online-icon {
+    width: 16px;
+    height: 16px;
+    margin-right: 4px;
+    background-image: url('/Assets/Textures/Common/PlayersIcn.png');
+}
+
+.lobby-place-card__online-count {
+    font-size: 14px;
+    -unity-font-definition: var(--dcl-font-inter-semibold);
+    color: var(--dcl-color-snow);
+}
+
+.lobby-place-card__footer {
+    height: var(--place-card-footer-height);
+    padding: 8px 10px;
+    transition: height var(--place-card-hover-duration) ease-out;
+}
+
+.lobby-place-card:hover .lobby-place-card__footer {
+    height: var(--place-card-footer-height-hovered);
+}
+
+.lobby-place-card__title {
+    height: 20px;
+    font-size: 14px;
+    -unity-font-definition: var(--dcl-font-inter-semibold);
+    -unity-font-style: bold;
+    -unity-text-align: middle-left;
+    color: white;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.lobby-place-card__creator {
+    height: 16px;
+    margin-top: 2px;
+    font-size: 11px;
+    -unity-text-align: middle-left;
+    color: rgb(191, 191, 199);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: opacity var(--place-card-hover-duration) ease-out;
+}
+
+.lobby-place-card:hover .lobby-place-card__creator {
+    opacity: 0;
+}
+
+/* Only reachable while the card is hovered, so its invisible state never takes a click meant for the card itself */
+.lobby-place-card__jump-in {
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+    height: 32px;
+    border-radius: 8px;
+    background-color: rgb(255, 45, 85);
+    font-size: 14px;
+    -unity-font-definition: var(--dcl-font-inter-semibold);
+    -unity-text-align: middle-center;
+    color: var(--dcl-color-snow);
+    opacity: 0;
+    transition: opacity var(--place-card-hover-duration) ease-out, background-color 0.1s;
+}
+
+.lobby-place-card:hover .lobby-place-card__jump-in {
+    opacity: 1;
+}
+
+.lobby-place-card__jump-in:active {
+    background-color: rgb(200, 35, 67);
+}
+
+.lobby-place-card__jump-in-icon {
+    position: absolute;
+    left: 10px;
+    top: 4px;
+    width: 24px;
+    height: 24px;
+    background-image: url('/Assets/Textures/Common/JumpInOutline.png');
+}

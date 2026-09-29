@@ -145,10 +145,8 @@ namespace DCL.Lobby.Tests
             SetBackingField(view, nameof(LobbyView.RecentPlacesSection), recentPlacesSection);
             SetBackingField(view, nameof(LobbyView.RecentPlaceCards), recentPlaceCards);
             SetBackingField(view, nameof(LobbyView.ProfileWidgetView), CreateProfileWidgetView());
-            SetBackingField(view, nameof(LobbyView.ProfileMenuView), CreateProfileMenuView());
             notificationsButton = CreateButton(root.transform, "Notifications");
             SetBackingField(view, nameof(LobbyView.NotificationsButton), notificationsButton);
-            SetBackingField(view, nameof(LobbyView.NotificationsMenuView), CreateNotificationsMenuView());
             SetBackingField(view, nameof(LobbyView.RecommendedPlacesSection), recommendedPlacesSection);
             SetBackingField(view, nameof(LobbyView.RecommendedPlaces), recommendedPlaces);
             SetBackingField(view, nameof(LobbyView.EventsSection), eventsSection);
@@ -1710,25 +1708,6 @@ namespace DCL.Lobby.Tests
             widgetGo.SetActive(true);
 
             return widget;
-        }
-
-        private ProfileMenuView CreateProfileMenuView()
-        {
-            var menuGo = new GameObject("ProfileMenu");
-            menuGo.transform.SetParent(root.transform);
-            return menuGo.AddComponent<ProfileMenuView>();
-        }
-
-        // Kept inactive like the prefab instance: the view wires its buttons on Awake, which never runs here
-        private NotificationsMenuView CreateNotificationsMenuView()
-        {
-            var menuGo = new GameObject("NotificationsMenu");
-            menuGo.transform.SetParent(root.transform);
-            menuGo.SetActive(false);
-            NotificationsMenuView menu = menuGo.AddComponent<NotificationsMenuView>();
-            SetBackingField(menu, "foundationCommunityButton", CreateButton(menuGo.transform, "FoundationCommunity"));
-
-            return menu;
         }
 
         private static Button CreateButton(Transform parent, string name)

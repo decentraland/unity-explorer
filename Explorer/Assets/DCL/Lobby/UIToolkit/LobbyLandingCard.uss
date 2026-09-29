@@ -1,0 +1,130 @@
+/* Same footprint as the hero card of the uGUI lobby: 524x300 with 24px corners, the thumbnail filling it */
+.lobby-landing-card {
+    width: 524px;
+    height: 300px;
+    border-radius: 24px;
+    background-color: rgba(20, 20, 26, 0.9);
+    overflow: hidden;
+}
+
+.lobby-landing-card__thumbnail {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 24px;
+    background-image: url('/Assets/Textures/ExplorePanel/DefaultImagePlace.png');
+    -unity-background-scale-mode: scale-and-crop;
+}
+
+.lobby-landing-card--loading .lobby-landing-card__thumbnail {
+    background-image: none;
+    background-color: rgba(143, 66, 219, 0.35);
+}
+
+.lobby-landing-card__online {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    height: 28px;
+    flex-direction: row;
+    align-items: center;
+    padding: 4px 6px;
+    border-radius: 12px;
+    background-color: var(--dcl-color-shadow);
+    display: none;
+}
+
+.lobby-landing-card--with-online .lobby-landing-card__online {
+    display: flex;
+}
+
+.lobby-landing-card__online-dot {
+    width: 8px;
+    height: 8px;
+    margin-right: 4px;
+    border-radius: 4px;
+    background-color: rgb(48, 205, 0);
+}
+
+.lobby-landing-card__online-icon {
+    width: 16px;
+    height: 16px;
+    margin-right: 4px;
+    background-image: url('/Assets/Textures/Common/PlayersIcn.png');
+}
+
+.lobby-landing-card__online-count {
+    font-size: 14px;
+    -unity-font-definition: var(--dcl-font-inter-semibold);
+    color: var(--dcl-color-snow);
+}
+
+/* The texts keep clear of the Jump in button on the right */
+.lobby-landing-card__footer {
+    position: absolute;
+    left: 16px;
+    bottom: 16px;
+    width: 334px;
+}
+
+.lobby-landing-card__title {
+    height: 30px;
+    margin-bottom: 4px;
+    font-size: 22px;
+    -unity-font-definition: var(--dcl-font-inter-semibold);
+    -unity-font-style: bold;
+    -unity-text-align: middle-left;
+    color: white;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.lobby-landing-card__creator {
+    height: 22px;
+    font-size: 14px;
+    -unity-font-definition: var(--dcl-font-inter-regular);
+    -unity-text-align: middle-left;
+    color: rgb(191, 191, 199);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.lobby-landing-card__jump-in {
+    position: absolute;
+    right: 16px;
+    bottom: 16px;
+    width: 153px;
+    height: 40px;
+    border-radius: 12px;
+    background-color: rgb(255, 45, 85);
+    font-size: 16px;
+    -unity-font-definition: var(--dcl-font-inter-semibold);
+    -unity-text-align: middle-center;
+    color: var(--dcl-color-snow);
+    transition: background-color 0.1s;
+}
+
+.lobby-landing-card__jump-in:hover {
+    background-color: rgb(255, 77, 111);
+}
+
+.lobby-landing-card__jump-in:active {
+    background-color: rgb(200, 35, 67);
+}
+
+.lobby-landing-card__jump-in:disabled {
+    opacity: 0.5;
+}
+
+.lobby-landing-card__jump-in-icon {
+    position: absolute;
+    left: 10px;
+    top: 8px;
+    width: 24px;
+    height: 24px;
+    background-image: url('/Assets/Textures/Common/JumpInOutline.png');
+}

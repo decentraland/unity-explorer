@@ -1,0 +1,43 @@
+/* The row along the top edge, right-aligned: credits, notifications, profile and close, 10px apart, 50px from the edge */
+.lobby__top-bar {
+    position: absolute;
+    top: 0;
+    right: 0;
+    height: 100px;
+    flex-direction: row;
+    align-items: center;
+    padding-right: 50px;
+}
+
+/* The credits and profile widgets are moved into the slots at runtime; a slot is only as big as what it holds */
+.lobby__top-bar-slot {
+    flex-direction: row;
+    margin-left: 10px;
+}
+
+.lobby__top-bar-button {
+    width: 40px;
+    height: 40px;
+    margin-left: 10px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    background-color: black;
+    transition: background-color 0.1s;
+}
+
+.lobby__top-bar-button:hover {
+    background-color: rgb(31, 31, 31);
+}
+
+.lobby__notifications-icon {
+    width: 22px;
+    height: 22px;
+    background-image: url('/Assets/Textures/Common/NotificationIcn.png');
+}
+
+.lobby__close-icon {
+    width: 12px;
+    height: 12px;
+    background-image: url('/Assets/Textures/Common/CloseIcnThin.png');
+}

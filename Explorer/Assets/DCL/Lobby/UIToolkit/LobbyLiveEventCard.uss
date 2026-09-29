@@ -1,0 +1,131 @@
+.lobby-live-event-card {
+    width: 352px;
+    height: 214px;
+    border-radius: 8px;
+    background-color: rgba(20, 20, 26, 0.9);
+}
+
+/* The thumbnail fills the card; the badges and the texts sit over it */
+.lobby-live-event-card__thumbnail {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 8px;
+    overflow: hidden;
+    background-image: url('/Assets/Textures/ExplorePanel/DefaultImagePlace.png');
+    -unity-background-scale-mode: scale-and-crop;
+}
+
+.lobby-live-event-card--loading .lobby-live-event-card__thumbnail {
+    background-image: none;
+    background-color: rgba(143, 66, 219, 0.35);
+}
+
+/* Darkens the lower part of the thumbnail so the title and the host stay readable over it */
+.lobby-live-event-card__gradient {
+    position: absolute;
+    left: 0;
+    top: 80px;
+    right: 0;
+    bottom: 0;
+    background-image: url('/Assets/Textures/ExplorePanel/GradientBanner.png');
+    -unity-background-scale-mode: stretch-to-fill;
+    -unity-background-image-tint-color: rgba(0, 0, 0, 0.89);
+}
+
+.lobby-live-event-card__badges {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    height: 28px;
+    flex-direction: row;
+    align-items: center;
+}
+
+.lobby-live-event-card__live {
+    height: 28px;
+    margin-right: 6px;
+    flex-direction: row;
+    align-items: center;
+    padding: 4px 8px 4px 6px;
+    border-radius: 12px;
+    background-color: rgb(255, 0, 0);
+}
+
+.lobby-live-event-card__live-icon {
+    width: 16px;
+    height: 16px;
+    margin-right: 4px;
+    background-image: url('/Assets/Textures/ExplorePanel/LiveIcn.png');
+}
+
+.lobby-live-event-card__live-text {
+    font-size: 12px;
+    -unity-font-definition: var(--dcl-font-inter-semibold);
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    color: var(--dcl-color-snow);
+}
+
+.lobby-live-event-card__attendees {
+    height: 28px;
+    flex-direction: row;
+    align-items: center;
+    padding: 4px 6px;
+    border-radius: 12px;
+    background-color: var(--dcl-color-shadow);
+}
+
+.lobby-live-event-card__attendees-dot {
+    width: 8px;
+    height: 8px;
+    margin-right: 4px;
+    border-radius: 4px;
+    background-color: rgb(48, 205, 0);
+}
+
+.lobby-live-event-card__attendees-icon {
+    width: 16px;
+    height: 16px;
+    margin-right: 4px;
+    background-image: url('/Assets/Textures/Common/PlayersIcn.png');
+}
+
+.lobby-live-event-card__attendees-count {
+    font-size: 14px;
+    -unity-font-definition: var(--dcl-font-inter-semibold);
+    -unity-text-align: middle-center;
+    color: var(--dcl-color-snow);
+}
+
+.lobby-live-event-card__title {
+    position: absolute;
+    left: 16px;
+    right: 16px;
+    bottom: 42px;
+    height: 30px;
+    font-size: 22px;
+    -unity-font-definition: var(--dcl-font-inter-semibold);
+    -unity-font-style: bold;
+    -unity-text-align: middle-left;
+    color: white;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.lobby-live-event-card__host {
+    position: absolute;
+    left: 16px;
+    right: 16px;
+    bottom: 16px;
+    height: 22px;
+    font-size: 14px;
+    -unity-text-align: middle-left;
+    color: rgb(191, 191, 199);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}

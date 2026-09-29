@@ -1,0 +1,30 @@
+/* Outline pill with the logo and the amount centered; the outline lights up on hover while top-up is possible */
+.credits-panel {
+    width: 100px;
+    height: 46px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    border-width: 1px;
+    border-radius: 12px;
+    border-color: rgb(113, 107, 124);
+    transition: border-color 0.1s;
+}
+
+.credits-panel--top-up:hover {
+    border-color: white;
+}
+
+.credits-panel__icon {
+    width: 20px;
+    height: 20px;
+    margin-right: 4px;
+    background-image: url('/Assets/DCL/MarketplaceCredits/Textures/NewCreditsLogo.png');
+}
+
+.credits-panel__amount {
+    font-size: 21px;
+    -unity-font-definition: var(--dcl-font-inter-semibold);
+    -unity-text-align: middle-center;
+    color: var(--dcl-color-snow);
+}

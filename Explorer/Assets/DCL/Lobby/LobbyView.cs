@@ -1,9 +1,7 @@
 using DCL.CharacterPreview;
-using DCL.Notifications.NotificationsMenu;
 using DCL.UI.Buttons;
 using DCL.UI.Credits;
 using DCL.UI.ProfileElements;
-using DCL.UI.Profiles;
 using MVC;
 using TMPro;
 using UnityEngine;
@@ -21,13 +19,7 @@ namespace DCL.Lobby
         public ProfileWidgetView ProfileWidgetView { get; private set; } = null!;
 
         [field: SerializeField]
-        public ProfileMenuView ProfileMenuView { get; private set; } = null!;
-
-        [field: SerializeField]
         public Button NotificationsButton { get; private set; } = null!;
-
-        [field: SerializeField]
-        public NotificationsMenuView NotificationsMenuView { get; private set; } = null!;
 
         [field: SerializeField]
         public Button CloseButton { get; private set; } = null!;

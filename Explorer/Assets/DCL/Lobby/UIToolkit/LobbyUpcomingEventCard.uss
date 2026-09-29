@@ -1,0 +1,119 @@
+.lobby-upcoming-event-card {
+    width: 352px;
+    height: 135px;
+    border-radius: 8px;
+    background-color: rgba(20, 20, 26, 0.9);
+}
+
+/* An event the user is interested in is tinted like the Remind me state of the Explore card */
+.lobby-upcoming-event-card--interested {
+    background-color: rgb(152, 36, 226);
+}
+
+/* The thumbnail is a square along the right edge; the texts and the buttons take the rest */
+.lobby-upcoming-event-card__thumbnail {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 135px;
+    border-radius: 8px;
+    background-image: url('/Assets/Textures/ExplorePanel/DefaultImagePlace.png');
+    -unity-background-scale-mode: scale-and-crop;
+}
+
+.lobby-upcoming-event-card--loading .lobby-upcoming-event-card__thumbnail {
+    background-image: none;
+    background-color: rgba(143, 66, 219, 0.35);
+}
+
+.lobby-upcoming-event-card__info {
+    position: absolute;
+    left: 18px;
+    top: 12px;
+    right: 151px;
+    bottom: 10px;
+}
+
+.lobby-upcoming-event-card__title {
+    height: 24px;
+    font-size: 20px;
+    -unity-font-definition: var(--dcl-font-inter-semibold);
+    -unity-font-style: bold;
+    -unity-text-align: middle-left;
+    color: white;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.lobby-upcoming-event-card__host {
+    height: 16px;
+    font-size: 13px;
+    -unity-text-align: middle-left;
+    color: rgb(191, 191, 199);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* A pill only as wide as its text, so the tint does not stretch across the column */
+.lobby-upcoming-event-card__schedule {
+    margin-top: 8px;
+    height: 24px;
+    align-self: flex-start;
+    flex-direction: row;
+    align-items: center;
+    padding: 0 8px;
+    border-radius: 12px;
+    background-color: var(--dcl-color-white-10);
+}
+
+.lobby-upcoming-event-card__schedule-icon {
+    width: 16px;
+    height: 16px;
+    margin-right: 4px;
+    background-image: url('/Assets/Textures/Common/TimeIcn.png');
+}
+
+.lobby-upcoming-event-card__schedule-text {
+    font-size: 14px;
+    -unity-font-definition: var(--dcl-font-inter-semibold);
+    -unity-text-align: middle-left;
+    color: var(--dcl-color-snow);
+}
+
+.lobby-upcoming-event-card__actions {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    flex-direction: row;
+}
+
+.lobby-upcoming-event-card__action {
+    width: 32px;
+    height: 32px;
+    margin-right: 8px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    background-color: var(--dcl-color-white-10);
+    transition: background-color 0.1s;
+}
+
+.lobby-upcoming-event-card__action:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.lobby-upcoming-event-card__action-icon {
+    width: 20px;
+    height: 20px;
+}
+
+.lobby-upcoming-event-card__action-icon--calendar {
+    background-image: url('/Assets/Textures/ExplorePanel/AddToCalendarIcn.png');
+}
+
+.lobby-upcoming-event-card__action-icon--share {
+    background-image: url('/Assets/Textures/Common/ShareIcn.png');
+}

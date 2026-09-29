@@ -240,6 +240,16 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8ae3fb61048040438ec8a0347e048766
+    m_Address: Assets/DCL/Lobby/UIToolkit/LobbyDocument.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c85615cb88b54cc9a85e397318aff22f
+    m_Address: Assets/DCL/Lobby/Prefabs/LobbyPopups.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 656920c5c75f2fdfa40685df8aa57d37
     m_Address: Assets/DCL/LobbyStage/Prefabs/LobbyStage.prefab
     m_ReadOnly: 0

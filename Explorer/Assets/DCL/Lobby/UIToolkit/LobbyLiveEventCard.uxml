@@ -1,0 +1,21 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/DCL/Lobby/UIToolkit/LobbyLiveEventCard.uss" />
+    <DCL.Lobby.LobbyLiveEventCardElement name="LiveEventCard" title="Event Name" host="By Host" attendees="0">
+        <ui:VisualElement name="Thumbnail" class="lobby-live-event-card__thumbnail" picking-mode="Ignore">
+            <ui:VisualElement name="Gradient" class="lobby-live-event-card__gradient" picking-mode="Ignore" />
+        </ui:VisualElement>
+        <ui:VisualElement name="Badges" class="lobby-live-event-card__badges" picking-mode="Ignore">
+            <ui:VisualElement name="LiveBadge" class="lobby-live-event-card__live" picking-mode="Ignore">
+                <ui:VisualElement name="LiveIcon" class="lobby-live-event-card__live-icon" picking-mode="Ignore" />
+                <ui:Label name="LiveText" text="LIVE" class="lobby-live-event-card__live-text" picking-mode="Ignore" />
+            </ui:VisualElement>
+            <ui:VisualElement name="AttendeesCounter" class="lobby-live-event-card__attendees" picking-mode="Ignore">
+                <ui:VisualElement name="OnlineStatus" class="lobby-live-event-card__attendees-dot" picking-mode="Ignore" />
+                <ui:VisualElement name="PlayerIcon" class="lobby-live-event-card__attendees-icon" picking-mode="Ignore" />
+                <ui:Label name="Attendees" text="0" class="lobby-live-event-card__attendees-count" picking-mode="Ignore" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:Label name="Title" text="Event Name" class="lobby-live-event-card__title" picking-mode="Ignore" />
+        <ui:Label name="Host" text="By Host" class="lobby-live-event-card__host" picking-mode="Ignore" />
+    </DCL.Lobby.LobbyLiveEventCardElement>
+</ui:UXML>

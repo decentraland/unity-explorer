@@ -86,6 +86,9 @@ namespace DCL.PluginSystem.Global
         private ProfileMenuController<LobbyPopupParameter>? profileMenuController;
         private NotificationsPanelController<LobbyPopupParameter>? notificationsPanelController;
         private ICreditsPanelController creditsPanelController = new NullCreditsPanelController();
+        private SidebarProfileButtonPresenter? documentProfileButtonPresenter;
+        private ICreditsPanelController documentCreditsPanelController = new NullCreditsPanelController();
+        private LobbyPopupsView? lobbyPopups;
 
         public LobbyPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -161,9 +164,14 @@ namespace DCL.PluginSystem.Global
             if (lobbyStage != null)
                 Object.Destroy(lobbyStage.gameObject);
 
+            if (lobbyPopups != null)
+                Object.Destroy(lobbyPopups.gameObject);
+
             friendsPresenter?.Dispose();
             profileButtonPresenter?.Dispose();
+            documentProfileButtonPresenter?.Dispose();
             creditsPanelController.Dispose();
+            documentCreditsPanelController.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
@@ -171,6 +179,8 @@ namespace DCL.PluginSystem.Global
         public async UniTask InitializeAsync(LobbyPluginSettings settings, CancellationToken ct)
         {
             LobbyView prefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.LobbyPrefab, ct: ct)).Value;
+            LobbyDocumentView documentPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.DocumentPrefab, ct: ct)).Value;
+            LobbyPopupsView popupsPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.PopupsPrefab, ct: ct)).Value;
             NotificationIconTypes notificationIconTypes = (await assetsProvisioner.ProvideMainAssetAsync(settings.NotificationIconTypes, ct)).Value;
             NotificationDefaultThumbnails notificationDefaultThumbnails = (await assetsProvisioner.ProvideMainAssetAsync(settings.NotificationDefaultThumbnails, ct)).Value;
             NftTypeIconSO rarityBackgroundMapping = await assetsProvisioner.ProvideMainAssetValueAsync(settings.RarityColorMappings, ct);
@@ -184,7 +194,11 @@ namespace DCL.PluginSystem.Global
 
             profileButtonPresenter = new SidebarProfileButtonPresenter(lobbyView.ProfileWidgetView, identityCache, profileRepository, profileChangesBus);
 
-            profileMenuController = new ProfileMenuController<LobbyPopupParameter>(() => lobbyView.ProfileMenuView,
+            // The popups both lobbies open from their top bar hang from a canvas of their own: neither lobby view is active while the other is shown
+            LobbyPopupsView popups = Object.Instantiate(popupsPrefab);
+            lobbyPopups = popups;
+
+            profileMenuController = new ProfileMenuController<LobbyPopupParameter>(() => popups.ProfileMenuView,
                 identityCache,
                 world,
                 playerEntity,
@@ -196,7 +210,7 @@ namespace DCL.PluginSystem.Global
                 profileRepositoryWrapper);
 
             // The lobby has its own panel instance: the sidebar's one lives inside the sidebar view, which is inactive until the world is loaded
-            notificationsPanelController = new NotificationsPanelController<LobbyPopupParameter>(() => lobbyView.NotificationsMenuView,
+            notificationsPanelController = new NotificationsPanelController<LobbyPopupParameter>(() => popups.NotificationsMenuView,
                 notificationsRequestController,
                 notificationIconTypes,
                 notificationDefaultThumbnails,
@@ -211,30 +225,46 @@ namespace DCL.PluginSystem.Global
                 ? new LobbyFriendsPresenter(lobbyView.FriendsSection, friendsConnectivity, onlineUsersProvider, placesAPIService, passportBridge)
                 : null;
 
-            // The upcoming event cards are the Explore panel's, so their Interested, calendar and share actions run through the same controller
+            // Both lobbies show the same place thumbnails, so they share one cache
+            var spriteCache = new SpriteCache(webRequestController);
+
+            // The upcoming event cards mirror the Explore panel's, so their Interested, calendar and share actions run through the same controller
             var eventCardActions = new EventCardActionsController(eventsApiService, webBrowser, realmNavigator, clipboard, decentralandUrlsSource);
 
             lobbyController = new LobbyController(viewFactory, inputBlock, loadingStatus, mvcManager,
                 selfProfile, profileChangesBus, characterPreviewFactory, characterPreviewEventBus, settings.AvatarSettings, lobbyStage, world,
-                placesAPIService, realmData, homePlace, eventsApiService, eventCardActions, realmNavigator, decentralandUrlsSource, startParcel, new ThumbnailLoader(new SpriteCache(webRequestController)),
+                placesAPIService, realmData, homePlace, eventsApiService, eventCardActions, realmNavigator, decentralandUrlsSource, startParcel, new ThumbnailLoader(spriteCache),
                 profileButtonPresenter, friendsPresenter);
 
             mvcManager.RegisterController(lobbyController);
             mvcManager.RegisterController(profileMenuController);
             mvcManager.RegisterController(notificationsPanelController);
 
-            EnableCreditsPanelAsync(lobbyView.CreditsPanelView, ct)
+            // UI Toolkit rebuild of the lobby: the one the startup flow shows. The uGUI lobby stays reachable from the debug panel.
+            // Its top-bar presenters bind to the live view as well, so it is also instantiated up front
+            ControllerBase<LobbyDocumentView, LobbyParameter>.ViewFactoryMethod documentViewFactory = LobbyDocumentController.Preallocate(documentPrefab, null, out LobbyDocumentView documentView);
+            documentProfileButtonPresenter = new SidebarProfileButtonPresenter(documentView.Profile, identityCache, profileRepository, profileChangesBus);
+
+            var lobbyDocumentController = new LobbyDocumentController(documentViewFactory,
+                inputBlock, loadingStatus, mvcManager,
+                selfProfile, profileChangesBus, characterPreviewFactory, characterPreviewEventBus, settings.AvatarSettings, lobbyStage, world,
+                placesAPIService, realmData, homePlace, eventsApiService, eventCardActions, realmNavigator, decentralandUrlsSource, startParcel, spriteCache, documentProfileButtonPresenter);
+            mvcManager.RegisterController(lobbyDocumentController);
+
+            EnableCreditsPanelsAsync(lobbyView.CreditsPanelView, documentView.Credits, ct)
                .SuppressToResultAsync(ReportCategory.CREDITS_PURCHASE)
                .Forget();
 
             debugContainerBuilder
                .TryAddWidget("Lobby")?
-               .AddSingleButton("Open", () => mvcManager.ShowAndForget(LobbyController.IssueCommand(new LobbyParameter(isStartup: false))));
+               .AddSingleButton("Open", () => mvcManager.ShowAndForget(LobbyController.IssueCommand(new LobbyParameter(isStartup: false))))
+               .AddSingleButton("Open UI Toolkit", () => mvcManager.ShowAndForget(LobbyDocumentController.IssueCommand(new LobbyParameter(isStartup: false))));
         }
 
-        private async UniTask EnableCreditsPanelAsync(CreditsPanelView view, CancellationToken ct)
+        private async UniTask EnableCreditsPanelsAsync(CreditsPanelView view, CreditsPanelElement element, CancellationToken ct)
         {
             creditsPanelController = await CreditsPanelSetup.EnableIfUserAllowedAsync(view, marketplaceCreditsAPIClient, profileChangesBus, identityCache, mvcManager, ct);
+            documentCreditsPanelController = await CreditsPanelSetup.EnableIfUserAllowedAsync(element, marketplaceCreditsAPIClient, profileChangesBus, identityCache, mvcManager, ct);
         }
     }
 }

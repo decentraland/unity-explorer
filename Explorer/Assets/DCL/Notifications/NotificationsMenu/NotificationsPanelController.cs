@@ -214,8 +214,13 @@ namespace DCL.Notifications.NotificationsMenu
 
         private void UpdateUnreadNotificationRender()
         {
-            viewInstance?.unreadNotificationCounterText.SetText("{0}", unreadNotifications);
-            viewInstance?.notificationIndicator.SetActive(unreadNotifications > 0);
+            if (viewInstance == null) return;
+
+            if (viewInstance.unreadNotificationCounterText != null)
+                viewInstance.unreadNotificationCounterText.SetText("{0}", unreadNotifications);
+
+            if (viewInstance.notificationIndicator != null)
+                viewInstance.notificationIndicator.SetActive(unreadNotifications > 0);
         }
 
         private void ManageNotificationReadStatus(INotification notificationData, bool isViewOpen)

@@ -1132,6 +1132,18 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        <DocumentPrefab>k__BackingField:
+          m_AssetGUID: 8ae3fb61048040438ec8a0347e048766
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <PopupsPrefab>k__BackingField:
+          m_AssetGUID: c85615cb88b54cc9a85e397318aff22f
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
         <StagePrefab>k__BackingField:
           m_AssetGUID: 656920c5c75f2fdfa40685df8aa57d37
           m_SubObjectName: 

@@ -1,0 +1,56 @@
+/* Rounded box with the picture on the left and the texts centered in the rest; it only lights up faintly on hover */
+.profile-widget {
+    width: 163px;
+    height: 46px;
+    flex-direction: row;
+    align-items: center;
+    border-width: 1px;
+    border-radius: 12px;
+    border-color: rgba(255, 255, 255, 0.03);
+    background-color: transparent;
+    transition: background-color 0.1s;
+}
+
+.profile-widget:hover {
+    background-color: rgba(255, 255, 255, 0.03);
+}
+
+/* The profile color fills the circle while the picture is missing; the picture itself is set inline by the element */
+.profile-widget__picture {
+    flex-shrink: 0;
+    width: 42px;
+    height: 42px;
+    margin-left: 1px;
+    border-radius: 21px;
+    background-color: white;
+    background-image: url('/Assets/DCL/Chat/Textures/DefaultProfileThumbnail.png');
+    -unity-background-scale-mode: scale-and-crop;
+}
+
+.profile-widget--loading .profile-widget__picture {
+    background-image: none;
+}
+
+.profile-widget__texts {
+    flex-grow: 1;
+    flex-shrink: 1;
+    margin-left: 5px;
+    margin-right: 9px;
+    overflow: hidden;
+}
+
+.profile-widget__name {
+    font-size: 16px;
+    -unity-font-definition: var(--dcl-font-inter-semibold);
+    -unity-text-align: middle-center;
+    color: var(--dcl-color-snow);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.profile-widget__address {
+    font-size: 12px;
+    -unity-text-align: middle-center;
+    color: var(--dcl-color-silver);
+}
