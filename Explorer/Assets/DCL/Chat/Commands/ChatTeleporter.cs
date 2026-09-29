@@ -19,6 +19,7 @@ namespace DCL.Chat.Commands
     public class ChatTeleporter
     {
         private const string WORLD_SUFFIX = ".dcl.eth";
+        private const string GENESIS_LABEL = "genesis";
 
         private readonly IRealmNavigator realmNavigator;
         private readonly IScenesCache scenesCache;
@@ -37,7 +38,7 @@ namespace DCL.Chat.Commands
 
             paramUrls = new Dictionary<string, string>
             {
-                { "genesis", decentralandUrlsSource.Url(DecentralandUrl.Genesis) },
+                { GENESIS_LABEL, decentralandUrlsSource.Url(DecentralandUrl.Genesis) },
                 { "goerli", IRealmNavigator.GOERLI_URL },
                 { "goerli-old", IRealmNavigator.GOERLI_OLD_URL },
                 { "stream", IRealmNavigator.STREAM_WORLD_URL },
@@ -173,7 +174,8 @@ namespace DCL.Chat.Commands
         /// </summary>
         public async UniTask<string> TeleportToParcelAsync(Vector2Int targetPosition, bool local, CancellationToken ct, string? spawnPointName = null)
         {
-            if (TryStartAt(null, targetPosition, spawnPointName))
+            // A non-local parcel means Genesis, the same realm the in-world teleport below switches to
+            if (TryStartAt(local ? null : URLDomain.FromString(paramUrls[GENESIS_LABEL]), targetPosition, spawnPointName))
                 return HeadingTo($"{targetPosition.x},{targetPosition.y}");
 
             var result = await realmNavigator.TeleportToParcelAsync(targetPosition, ct, local, spawnPointName: spawnPointName);

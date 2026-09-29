@@ -642,6 +642,22 @@ namespace DCL.Lobby.Tests
         }
 
         [Test]
+        public void JumpInWhenADestinationWasRequestedBeforeTheLobbyShowed()
+        {
+            // Arrange
+            var jumpedIn = false;
+            startParcel.RequestJumpIn();
+
+            // Act
+            UniTask lifeCycle = Launch(isStartup: true, jumpedIn: () => jumpedIn = true);
+            controller.HideViewAsync(CancellationToken.None).Forget();
+
+            // Assert
+            Assert.That(jumpedIn, Is.True);
+            Assert.That(lifeCycle.Status, Is.EqualTo(UniTaskStatus.Succeeded));
+        }
+
+        [Test]
         public void LeaveDestinationRequestsAloneInWorld()
         {
             // Arrange

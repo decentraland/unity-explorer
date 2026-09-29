@@ -730,6 +730,9 @@ namespace Global.Dynamic
                             // TODO: surface the teleport result (chat bus / notification) like the no-position path below,
                             // and plumb a real cancellation token instead of None (composition-root fire-and-forget for now).
                             chatContainer.ChatTeleporter.TeleportToRealmAsync(realmUrl, position.Value, CancellationToken.None).Forget();
+                        // Chat commands are dropped until loading completes
+                        else if (!dynamicWorldParams.StartParcel.IsConsumed())
+                            chatContainer.ChatTeleporter.TeleportToRealmAsync(realmUrl, CancellationToken.None).Forget();
                         else
                             chatContainer.ChatMessagesBus.SendWithUtcNowTimestamp(ChatChannel.NEARBY_CHANNEL, $"/{ChatCommandsUtils.COMMAND_GOTO} {realmUrl}", ChatMessageOrigin.RestrictedActionApi);
                     }),

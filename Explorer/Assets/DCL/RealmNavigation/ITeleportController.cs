@@ -47,7 +47,7 @@ namespace DCL.RealmNavigation
 
     public class StartParcel
     {
-        // Single subscriber (the startup lobby), so no event
+        /// <summary>Invoked when a destination is requested before the startup teleport; holds a single listener.</summary>
         public Action? OnJumpInRequested;
 
         private readonly Vector2Int launchValue;
@@ -95,6 +95,8 @@ namespace DCL.RealmNavigation
             if (consumed) return AssignResult.ParcelAlreadyConsumed;
             Realm = realm;
             SpawnPointName = spawnPointName;
+            value = launchValue;
+            IsParcelAssigned = false;
             return AssignResult.Ok;
         }
 

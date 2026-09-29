@@ -126,7 +126,7 @@ namespace DCL.PluginSystem.Global
                 decentralandUrlsSource,
                 profileChangesBus,
                 mvcManager,
-                appArgs.HasLaunchDestination(),
+                appArgs.HasLaunchDestination() && !appArgs.HasFlagWithValueTrue(AppArgsFlags.SKIP_AUTH_SCREEN),
                 referrer);
 
             mvcManager.RegisterController(authenticationScreenController);

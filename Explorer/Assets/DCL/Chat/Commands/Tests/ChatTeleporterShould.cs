@@ -104,10 +104,25 @@ namespace DCL.Chat.Commands.Tests
             NewTeleporter(pending).TeleportToParcelAsync(new Vector2Int(1, 2), false, CancellationToken.None).GetAwaiter().GetResult();
 
             // Assert
-            Assert.That(pending.Realm, Is.Null);
+            Assert.That(pending.Realm, Is.EqualTo(URLDomain.FromString("https://peer.decentraland.org")));
             Assert.That(pending.Peek(), Is.EqualTo(new Vector2Int(1, 2)));
             Assert.That(pending.JumpInRequested, Is.True);
             realmNavigator.DidNotReceiveWithAnyArgs().TeleportToParcelAsync(default, default, default);
+        }
+
+        [Test]
+        public void KeepTheCurrentRealmForALocalParcelBeforeTheWorldLoads()
+        {
+            // Arrange
+            var pending = new StartParcel(Vector2Int.zero);
+
+            // Act
+            NewTeleporter(pending).TeleportToParcelAsync(new Vector2Int(1, 2), true, CancellationToken.None).GetAwaiter().GetResult();
+
+            // Assert
+            Assert.That(pending.Realm, Is.Null);
+            Assert.That(pending.Peek(), Is.EqualTo(new Vector2Int(1, 2)));
+            Assert.That(pending.JumpInRequested, Is.True);
         }
 
         [Test]

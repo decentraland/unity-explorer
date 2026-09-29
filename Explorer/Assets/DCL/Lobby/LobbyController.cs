@@ -338,9 +338,14 @@ namespace DCL.Lobby
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
         {
             closeIntent?.TrySetCanceled(ct);
-            closeIntent = new UniTaskCompletionSource();
+            var intent = new UniTaskCompletionSource();
+            closeIntent = intent;
 
-            await closeIntent.Task.AttachExternalCancellation(ct);
+            // A request made while the view was loading or covered by another panel had no listener
+            if (inputData.IsStartup && startParcel.JumpInRequested)
+                RequestClose();
+
+            await intent.Task.AttachExternalCancellation(ct);
         }
 
         private async UniTaskVoid ShowAvatarAsync(CancellationToken ct)

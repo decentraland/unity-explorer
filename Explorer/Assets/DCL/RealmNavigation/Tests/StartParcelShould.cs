@@ -113,6 +113,21 @@ namespace DCL.RealmNavigation.Tests
         }
 
         [Test]
+        public void DropAnEarlierParcelWhenARealmIsAssigned()
+        {
+            // Arrange
+            var startParcel = new StartParcel(LAUNCH_PARCEL);
+            startParcel.Assign(new Vector2Int(10, 10));
+
+            // Act
+            startParcel.AssignRealm(URLDomain.FromString("https://worlds.example.com/myworld.dcl.eth"));
+
+            // Assert
+            Assert.That(startParcel.IsParcelAssigned, Is.False);
+            Assert.That(startParcel.Peek(), Is.EqualTo(LAUNCH_PARCEL));
+        }
+
+        [Test]
         public void DropTheLaunchSpawnPointWhenARealmIsAssignedWithoutOne()
         {
             // Arrange
