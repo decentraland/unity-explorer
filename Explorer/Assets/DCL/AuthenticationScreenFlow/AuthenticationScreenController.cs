@@ -30,10 +30,12 @@ namespace DCL.AuthenticationScreenFlow
         public readonly struct Params
         {
             public readonly bool StartAtLoginSelection;
+            public readonly bool LandAtLaunchDestination;
 
-            public Params(bool startAtLoginSelection)
+            public Params(bool startAtLoginSelection, bool landAtLaunchDestination = false)
             {
                 StartAtLoginSelection = startAtLoginSelection;
+                LandAtLaunchDestination = landAtLaunchDestination;
             }
         }
 
@@ -77,7 +79,6 @@ namespace DCL.AuthenticationScreenFlow
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly ProfileChangesBus profileChangesBus;
         private readonly IMVCManager mvcManager;
-        private readonly bool launchHasDestination;
         private readonly string? referrer;
 
         private AuthenticationScreenCharacterPreviewController? characterPreviewController;
@@ -85,7 +86,6 @@ namespace DCL.AuthenticationScreenFlow
 
         private UniTaskCompletionSource? lifeCycleTask;
         private CancellationTokenSource? loginCancellationTokenSource;
-        private bool shownBefore;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
         public ReactiveProperty<AuthStatus> CurrentState { get; } = new (AuthStatus.None);
@@ -126,7 +126,6 @@ namespace DCL.AuthenticationScreenFlow
             IDecentralandUrlsSource decentralandUrlsSource,
             ProfileChangesBus profileChangesBus,
             IMVCManager mvcManager,
-            bool launchHasDestination,
             string? referrer = null)
             : base(viewFactory)
         {
@@ -147,7 +146,6 @@ namespace DCL.AuthenticationScreenFlow
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.profileChangesBus = profileChangesBus;
             this.mvcManager = mvcManager;
-            this.launchHasDestination = launchHasDestination;
             this.referrer = referrer;
         }
 
@@ -221,9 +219,7 @@ namespace DCL.AuthenticationScreenFlow
         {
             base.OnBeforeViewShow();
 
-            // Only the bootstrap show lands straight at the launch destination: a re-login after logout offers the welcome step again
-            SkipExistingAccountLobby = FeaturesRegistry.Instance.IsEnabled(FeatureId.Lobby) || (launchHasDestination && !shownBefore);
-            shownBefore = true;
+            SkipExistingAccountLobby = FeaturesRegistry.Instance.IsEnabled(FeatureId.Lobby) || inputData.LandAtLaunchDestination;
 
             if (inputData.StartAtLoginSelection)
             {

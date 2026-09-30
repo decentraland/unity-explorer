@@ -203,6 +203,7 @@ namespace DCL.Lobby
             }
 
             mvcManager.OnViewClosed -= ShowAgainWhenTheScreenIsFree;
+            startParcel.JumpInRequestRaised -= RequestClose;
 
             if (friends != null)
                 friends.JoinRequested = null;
@@ -285,7 +286,7 @@ namespace DCL.Lobby
             friends?.Show(friendsCts.Token);
 
             if (inputData.IsStartup)
-                startParcel.OnJumpInRequested = RequestClose;
+                startParcel.JumpInRequestRaised += RequestClose;
 
             Opened?.Invoke(inputData.IsStartup);
         }
@@ -295,7 +296,7 @@ namespace DCL.Lobby
             base.OnViewClose();
 
             if (inputData.IsStartup)
-                startParcel.OnJumpInRequested = null;
+                startParcel.JumpInRequestRaised -= RequestClose;
 
             profileChangesBus.UnsubscribeToUpdate(OnProfileUpdated);
 

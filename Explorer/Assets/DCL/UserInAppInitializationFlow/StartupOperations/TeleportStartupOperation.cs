@@ -50,9 +50,9 @@ namespace DCL.UserInAppInitializationFlow
 
         private async UniTask<Vector2Int> ResolveDestinationAsync(CancellationToken ct)
         {
-            // The Editor start position override and a parcel assigned before the teleport are equivalent to passing
-            // --position: all win over the world manifest spawn and over the local scene's base parcel.
-            bool useDefault = appArgs.HasFlag(AppArgsFlags.POSITION) || editorPositionOverrideActive || startParcel.IsParcelAssigned;
+            // The launch --position and the Editor override belong to the launch realm, so a realm picked afterwards spawns at its own default
+            bool useDefault = startParcel.IsParcelAssigned
+                              || (startParcel.Realm == null && (appArgs.HasFlag(AppArgsFlags.POSITION) || editorPositionOverrideActive));
 
             if (useDefault)
                 return startParcel.Peek();

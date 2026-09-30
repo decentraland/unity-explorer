@@ -159,7 +159,7 @@ namespace DCL.UserInAppInitializationFlow
                             //Restart the realm and show the authentications screen simultaneously to avoid the "empty space" flicker
                             //No error should be possible at this point
                             // TODO move SetRealmAsync to an operation
-                            await UniTask.WhenAll(ShowAuthenticationScreenAsync(parameters.StartAtLoginSelection, ct),
+                            await UniTask.WhenAll(ShowAuthenticationScreenAsync(parameters, ct),
                                 realmController.SetRealmAsync(
                                     URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Genesis)), ct));
 
@@ -169,7 +169,7 @@ namespace DCL.UserInAppInitializationFlow
                             goto default;
                         default:
                             await UniTask.WhenAll(
-                                ShowAuthenticationScreenAsync(parameters.StartAtLoginSelection, ct),
+                                ShowAuthenticationScreenAsync(parameters, ct),
                                 ShowErrorPopupIfRequired(result, ct)
                             );
 
@@ -259,7 +259,7 @@ namespace DCL.UserInAppInitializationFlow
         internal static bool ShouldShowStartupLobby(bool lobbyEnabled, IAppArgs appArgs, StartParcel startParcel, IUserInAppInitializationFlow.LoadSource loadSource) =>
             lobbyEnabled
             && loadSource != IUserInAppInitializationFlow.LoadSource.Recover
-            && !(loadSource == IUserInAppInitializationFlow.LoadSource.StartUp && appArgs.HasLaunchDestination())
+            && !LandsAtLaunchDestination(appArgs, loadSource)
             && !startParcel.JumpInRequested
             && !appArgs.HasFlagWithValueTrue(AppArgsFlags.SKIP_AUTH_SCREEN)
             && !appArgs.HasFlag(AppArgsFlags.AUTOPILOT)
@@ -296,11 +296,16 @@ namespace DCL.UserInAppInitializationFlow
             return jumpedIn;
         }
 
+        internal static bool LandsAtLaunchDestination(IAppArgs appArgs, IUserInAppInitializationFlow.LoadSource loadSource) =>
+            loadSource == IUserInAppInitializationFlow.LoadSource.StartUp && appArgs.HasLaunchDestination();
+
         /// <summary>
         ///     Switches to the realm picked in the lobby before anything is loaded. A Genesis pick is satisfied by any Genesis realm.
         /// </summary>
         private async UniTask ApplyStartRealmAsync(CancellationToken ct)
         {
+            startParcel.MarkRealmApplied();
+
             if (startParcel.Realm is not { } realm) return;
             if (realm == realmController.CurrentDomain) return;
             if (realmController.RealmData.IsGenesis() && realm == URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Genesis))) return;
@@ -400,9 +405,10 @@ namespace DCL.UserInAppInitializationFlow
             await roomHub.StopAsync().Timeout(TimeSpan.FromSeconds(10));
         }
 
-        private async UniTask ShowAuthenticationScreenAsync(bool startAtLoginSelection, CancellationToken ct)
+        private async UniTask ShowAuthenticationScreenAsync(UserInAppInitializationFlowParameters parameters, CancellationToken ct)
         {
-            await mvcManager.ShowAsync(AuthenticationScreenController.IssueCommand(new AuthenticationScreenController.Params(startAtLoginSelection)), ct);
+            var authParams = new AuthenticationScreenController.Params(parameters.StartAtLoginSelection, LandsAtLaunchDestination(appArgs, parameters.LoadSource));
+            await mvcManager.ShowAsync(AuthenticationScreenController.IssueCommand(authParams), ct);
         }
 
         private UniTask ShowErrorPopupIfRequired(EnumResult<TaskError> result, CancellationToken ct)

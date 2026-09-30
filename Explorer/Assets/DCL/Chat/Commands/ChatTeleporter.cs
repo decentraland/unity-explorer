@@ -27,6 +27,7 @@ namespace DCL.Chat.Commands
         private readonly ChatEnvironmentValidator environmentValidator;
         private readonly StartParcel startParcel;
         private readonly URLDomain worldDomain;
+        private readonly URLDomain genesisDomain;
 
         public ChatTeleporter(IRealmNavigator realmNavigator, ChatEnvironmentValidator environmentValidator, IDecentralandUrlsSource decentralandUrlsSource, IScenesCache scenesCache, StartParcel startParcel)
         {
@@ -35,10 +36,11 @@ namespace DCL.Chat.Commands
             this.environmentValidator = environmentValidator;
             this.startParcel = startParcel;
             worldDomain = URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.WorldServer));
+            genesisDomain = URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Genesis));
 
             paramUrls = new Dictionary<string, string>
             {
-                { GENESIS_LABEL, decentralandUrlsSource.Url(DecentralandUrl.Genesis) },
+                { GENESIS_LABEL, genesisDomain.Value },
                 { "goerli", IRealmNavigator.GOERLI_URL },
                 { "goerli-old", IRealmNavigator.GOERLI_OLD_URL },
                 { "stream", IRealmNavigator.STREAM_WORLD_URL },
@@ -174,8 +176,7 @@ namespace DCL.Chat.Commands
         /// </summary>
         public async UniTask<string> TeleportToParcelAsync(Vector2Int targetPosition, bool local, CancellationToken ct, string? spawnPointName = null)
         {
-            // A non-local parcel means Genesis, the same realm the in-world teleport below switches to
-            if (TryStartAt(local ? null : URLDomain.FromString(paramUrls[GENESIS_LABEL]), targetPosition, spawnPointName))
+            if (TryStartAt(local ? null : genesisDomain, targetPosition, spawnPointName))
                 return HeadingTo($"{targetPosition.x},{targetPosition.y}");
 
             var result = await realmNavigator.TeleportToParcelAsync(targetPosition, ct, local, spawnPointName: spawnPointName);
@@ -195,13 +196,17 @@ namespace DCL.Chat.Commands
                    };
         }
 
-        // Before the startup teleport there is nowhere to navigate from, so the request becomes the startup destination
         private bool TryStartAt(URLDomain? realmUrl, Vector2Int? parcel, string? spawnPointName)
         {
             if (startParcel.IsConsumed()) return false;
 
             if (realmUrl is { } realm)
+            {
+                // The startup realm is applied once, so a different realm after that needs a regular realm change
+                if (startParcel.IsRealmApplied && !realmNavigator.IsAlreadyOnRealm(realm)) return false;
+
                 startParcel.AssignRealm(realm, spawnPointName);
+            }
 
             if (parcel is { } target)
                 startParcel.Assign(target, spawnPointName);

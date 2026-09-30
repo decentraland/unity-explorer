@@ -628,17 +628,32 @@ namespace DCL.Lobby.Tests
         public void JumpInWhenADestinationIsRequestedAtStartup()
         {
             // Arrange
-            var jumpedIn = false;
-            UniTask lifeCycle = Launch(isStartup: true, jumpedIn: () => jumpedIn = true);
+            var jumpedIn = 0;
+            UniTask lifeCycle = Launch(isStartup: true, jumpedIn: () => jumpedIn++);
 
             // Act
             startParcel.RequestJumpIn();
             controller.HideViewAsync(CancellationToken.None).Forget();
+            startParcel.RequestJumpIn();
 
             // Assert
-            Assert.That(jumpedIn, Is.True);
+            Assert.That(jumpedIn, Is.EqualTo(1), "the lobby must let go of the start parcel once it left");
             Assert.That(lifeCycle.Status, Is.EqualTo(UniTaskStatus.Succeeded));
-            Assert.That(startParcel.OnJumpInRequested, Is.Null, "the lobby must let go of the start parcel once it left");
+        }
+
+        [Test]
+        public void LetGoOfTheStartParcelOnDispose()
+        {
+            // Arrange
+            var jumpedIn = false;
+            Launch(isStartup: true, jumpedIn: () => jumpedIn = true).Forget();
+
+            // Act
+            controller.Dispose();
+            startParcel.RequestJumpIn();
+
+            // Assert
+            Assert.That(jumpedIn, Is.False);
         }
 
         [Test]
@@ -661,13 +676,15 @@ namespace DCL.Lobby.Tests
         public void LeaveDestinationRequestsAloneInWorld()
         {
             // Arrange
-            Launch(isStartup: false).Forget();
+            var jumpedIn = false;
+            UniTask lifeCycle = Launch(isStartup: false, jumpedIn: () => jumpedIn = true);
 
             // Act
             startParcel.RequestJumpIn();
 
             // Assert
-            Assert.That(startParcel.OnJumpInRequested, Is.Null);
+            Assert.That(jumpedIn, Is.False);
+            Assert.That(lifeCycle.Status, Is.EqualTo(UniTaskStatus.Pending));
         }
 
         [Test]

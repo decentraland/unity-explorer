@@ -54,7 +54,7 @@ namespace DCL.RealmNavigation.Tests
             // Arrange
             var startParcel = new StartParcel(LAUNCH_PARCEL);
             var requests = 0;
-            startParcel.OnJumpInRequested = () => requests++;
+            startParcel.JumpInRequestRaised += () => requests++;
 
             // Act
             startParcel.RequestJumpIn();
@@ -70,7 +70,7 @@ namespace DCL.RealmNavigation.Tests
             // Arrange
             var startParcel = new StartParcel(LAUNCH_PARCEL);
             var requests = 0;
-            startParcel.OnJumpInRequested = () => requests++;
+            startParcel.JumpInRequestRaised += () => requests++;
             startParcel.ConsumeByTeleportOperation();
 
             // Act
@@ -96,6 +96,21 @@ namespace DCL.RealmNavigation.Tests
             // Assert
             Assert.That(startParcel.JumpInRequested, Is.False);
             Assert.That(startParcel.IsParcelAssigned, Is.False);
+        }
+
+        [Test]
+        public void ForgetTheAppliedRealmOnReset()
+        {
+            // Arrange
+            var startParcel = new StartParcel(LAUNCH_PARCEL);
+            startParcel.MarkRealmApplied();
+            startParcel.ConsumeByTeleportOperation();
+
+            // Act
+            startParcel.Reset();
+
+            // Assert
+            Assert.That(startParcel.IsRealmApplied, Is.False);
         }
 
         [Test]

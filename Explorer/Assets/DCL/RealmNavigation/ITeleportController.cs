@@ -47,9 +47,6 @@ namespace DCL.RealmNavigation
 
     public class StartParcel
     {
-        /// <summary>Invoked when a destination is requested before the startup teleport; holds a single listener.</summary>
-        public Action? OnJumpInRequested;
-
         private readonly Vector2Int launchValue;
         private readonly string? launchSpawnPointName;
 
@@ -78,6 +75,10 @@ namespace DCL.RealmNavigation
 
         public bool JumpInRequested { get; private set; }
 
+        public bool IsRealmApplied { get; private set; }
+
+        public event Action? JumpInRequestRaised;
+
         public bool IsConsumed() =>
             consumed;
 
@@ -104,8 +105,11 @@ namespace DCL.RealmNavigation
         {
             if (consumed) return;
             JumpInRequested = true;
-            OnJumpInRequested?.Invoke();
+            JumpInRequestRaised?.Invoke();
         }
+
+        public void MarkRealmApplied() =>
+            IsRealmApplied = true;
 
         public Vector2Int ConsumeByTeleportOperation()
         {
@@ -122,6 +126,7 @@ namespace DCL.RealmNavigation
             SpawnPointName = launchSpawnPointName;
             Realm = null;
             IsParcelAssigned = false;
+            IsRealmApplied = false;
             JumpInRequested = false;
             consumed = false;
         }

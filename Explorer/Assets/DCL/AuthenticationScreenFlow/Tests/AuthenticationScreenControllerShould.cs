@@ -62,7 +62,6 @@ namespace DCL.AuthenticationScreenFlow.Tests
                 null!,
                 null!,
                 null!,
-                null!,
-                launchHasDestination: false);
+                null!);
     }
 }

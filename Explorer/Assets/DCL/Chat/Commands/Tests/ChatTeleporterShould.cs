@@ -60,7 +60,7 @@ namespace DCL.Chat.Commands.Tests
             // Arrange
             var pending = new StartParcel(Vector2Int.zero);
             var jumpInRequests = 0;
-            pending.OnJumpInRequested = () => jumpInRequests++;
+            pending.JumpInRequestRaised += () => jumpInRequests++;
 
             // Act
             string result = NewTeleporter(pending).TeleportToRealmAsync("flutterecho", new Vector2Int(3, 4), CancellationToken.None, "physics").GetAwaiter().GetResult();
@@ -123,6 +123,43 @@ namespace DCL.Chat.Commands.Tests
             Assert.That(pending.Realm, Is.Null);
             Assert.That(pending.Peek(), Is.EqualTo(new Vector2Int(1, 2)));
             Assert.That(pending.JumpInRequested, Is.True);
+        }
+
+        [Test]
+        public void NavigateToARealmRequestedAfterTheStartupRealmWasApplied()
+        {
+            // Arrange
+            var pending = new StartParcel(Vector2Int.zero);
+            pending.MarkRealmApplied();
+            realmNavigator.IsAlreadyOnRealm(Arg.Any<URLDomain>()).Returns(false);
+
+            // Act
+            NewTeleporter(pending).TeleportToRealmAsync("flutterecho", new Vector2Int(3, 4), CancellationToken.None).GetAwaiter().GetResult();
+
+            // Assert
+            Assert.That(pending.Realm, Is.Null);
+            Assert.That(pending.IsParcelAssigned, Is.False);
+            Assert.That(pending.JumpInRequested, Is.False);
+            realmNavigator.Received(1).TryChangeRealmAsync(Arg.Any<URLDomain>(), Arg.Any<CancellationToken>(), new Vector2Int(3, 4), Arg.Any<bool>(), Arg.Any<bool>(), Arg.Any<bool>(), Arg.Any<string?>());
+        }
+
+        [Test]
+        public void TakeAParcelInTheAppliedRealmAsTheStartupDestination()
+        {
+            // Arrange
+            var pending = new StartParcel(Vector2Int.zero);
+            pending.MarkRealmApplied();
+            realmNavigator.IsAlreadyOnRealm(Arg.Any<URLDomain>()).Returns(true);
+
+            // Act
+            string result = NewTeleporter(pending).TeleportToRealmAsync("flutterecho", new Vector2Int(3, 4), CancellationToken.None).GetAwaiter().GetResult();
+
+            // Assert
+            Assert.That(result, Does.StartWith("🟢"));
+            Assert.That(pending.IsParcelAssigned, Is.True);
+            Assert.That(pending.Peek(), Is.EqualTo(new Vector2Int(3, 4)));
+            Assert.That(pending.JumpInRequested, Is.True);
+            realmNavigator.DidNotReceiveWithAnyArgs().TeleportToParcelAsync(default, default, default);
         }
 
         [Test]

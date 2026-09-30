@@ -1,4 +1,5 @@
 using Arch.Core;
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Ipfs;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
@@ -162,6 +163,28 @@ namespace DCL.UserInAppInitializationFlow.Tests
 
             teleportController.Received(1)
                 .TeleportToSceneSpawnPointAsync(new Vector2Int(10, 20), Arg.Any<AsyncLoadProcessReport>(), Arg.Any<CancellationToken>());
+        }
+
+        [Test]
+        public void UsesManifestSpawnWhenARealmWasPickedAfterALaunchPosition()
+        {
+            worldManifest = WorldManifest.Create(new WorldManifestDto
+            {
+                occupied = new[] { "5,7" },
+                spawn_coordinate = new SpawnCoordinateData(5, 7),
+                total = 1,
+            });
+            realmData.WorldManifest.Returns(worldManifest);
+            appArgs.HasFlag(AppArgsFlags.POSITION).Returns(true);
+
+            var startParcel = new StartParcel(new Vector2Int(10, 20));
+            startParcel.AssignRealm(URLDomain.FromString("https://worlds.example.com/myworld.dcl.eth"));
+
+            CreateOperation(startParcel)
+                .ExecuteAsync(MakeParams(), cts.Token).GetAwaiter().GetResult();
+
+            teleportController.Received(1)
+                .TeleportToSceneSpawnPointAsync(new Vector2Int(5, 7), Arg.Any<AsyncLoadProcessReport>(), Arg.Any<CancellationToken>());
         }
 
         [Test]

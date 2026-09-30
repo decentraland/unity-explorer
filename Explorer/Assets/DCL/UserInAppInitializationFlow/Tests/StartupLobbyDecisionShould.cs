@@ -77,6 +77,32 @@ namespace DCL.UserInAppInitializationFlow.Tests
             Assert.That(show, Is.False);
         }
 
+        [TestCase("--realm", "https://peer.decentraland.org")]
+        [TestCase("--position", "10,20")]
+        public void LandAtTheLaunchDestinationOnTheStartupLoadOnly(string flag, string value)
+        {
+            // Arrange
+            IAppArgs appArgs = new ApplicationParametersParser(false, flag, value);
+
+            // Act
+            bool atStartup = RealUserInAppInitializationFlow.LandsAtLaunchDestination(appArgs, LoadSource.StartUp);
+            bool afterLogout = RealUserInAppInitializationFlow.LandsAtLaunchDestination(appArgs, LoadSource.Logout);
+
+            // Assert
+            Assert.That(atStartup, Is.True);
+            Assert.That(afterLogout, Is.False, "a re-login after logout offers the welcome step again");
+        }
+
+        [Test]
+        public void KeepTheRegularFlowWhenTheLaunchNamesNoDestination()
+        {
+            // Act
+            bool lands = RealUserInAppInitializationFlow.LandsAtLaunchDestination(new ApplicationParametersParser(false), LoadSource.StartUp);
+
+            // Assert
+            Assert.That(lands, Is.False);
+        }
+
         [Test]
         public void NeverShowTheLobbyWhenTheFeatureIsOff()
         {
