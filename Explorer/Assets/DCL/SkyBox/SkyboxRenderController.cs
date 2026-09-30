@@ -87,6 +87,7 @@ public class SkyboxRenderController : MonoBehaviour
     [SerializeField] private Light directionalLight;
     [SerializeField] private AnimationClip lightAnimation;
     private Animation lightAnimator;
+    private string lightClipName = string.Empty;
 
     private LensFlareComponentSRP? lensFlare;
     private LensFlareDataSRP? activeLensFlareData;
@@ -150,7 +151,10 @@ public class SkyboxRenderController : MonoBehaviour
             if (!lightAnimation)
                 ReportHub.LogWarning(ReportCategory.LANDSCAPE, "Skybox Controller: Directional Light animation has not been assigned");
             else
-                lightAnimator.AddClip(lightAnimation, lightAnimation.name);
+            {
+                lightClipName = lightAnimation.name;
+                lightAnimator.AddClip(lightAnimation, lightClipName);
+            }
 
             lightIntensityBeforeDip = directionalLight.intensity;
             InitializeLensFlare(lensFlareEnabled);
@@ -231,7 +235,14 @@ public class SkyboxRenderController : MonoBehaviour
         ResetGlobals();
     }
 
-    // Clears every global this controller writes, so none of them outlives it.
+    // Restores what OnDisable cleared; before Initialize there is nothing to restore.
+    private void OnEnable()
+    {
+        if (skyboxMaterial && preset)
+            RefreshLook();
+    }
+
+    // Zeroes the mode and strength globals and unbinds the textures, which gates off every other global this controller writes.
     private static void ResetGlobals()
     {
         Shader.SetGlobalVector(CLOUDS_MODE, Vector4.zero);
@@ -438,8 +449,9 @@ public class SkyboxRenderController : MonoBehaviour
             //sample the right frame of the animation
             if (lightAnimation)
             {
-                lightAnimator[lightAnimation.name].time = timeOfDay * lightAnimator[lightAnimation.name].length;
-                lightAnimator.Play(lightAnimation.name);
+                AnimationState lightState = lightAnimator[lightClipName];
+                lightState.time = timeOfDay * lightState.length;
+                lightAnimator.Play(lightClipName);
                 lightAnimator.Sample();
                 lightAnimator.Stop();
             }
@@ -494,7 +506,7 @@ public class SkyboxRenderController : MonoBehaviour
         Shader.SetGlobalVector(SUN_DIRECTION, moonActive ? moonDirection : sunDirection);
 
         // The haze dresses the sun only: nothing at the top of its window, full at the horizon and below.
-        float hazeFactor = preset.SunHaze && !moonActive ? 1f - SkyboxCelestialMath.Smooth01(0f, preset.SunHazeHeight, sunDirection.y) : 0f;
+        float hazeFactor = preset.SunHaze && preset.UseSkyLut && !moonActive ? 1f - SkyboxCelestialMath.Smooth01(0f, preset.SunHazeHeight, sunDirection.y) : 0f;
         Shader.SetGlobalVector(SUN_HAZE_PARAMS, new Vector4(hazeFactor, preset.SunHazeSizeBoost, preset.SunHazeSquash, preset.SunHazeEdgeSoftness));
         RenderSettings.skybox.SetFloat(SUN_OPACITY, 1f - dip);
         RenderSettings.skybox.SetFloat(MOON_MASK_SIZE, moonActive ? preset.ComputedMoonMaskSize : 0f);

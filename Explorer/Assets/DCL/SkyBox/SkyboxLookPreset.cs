@@ -375,10 +375,11 @@ namespace DCL.SkyBox
         /// </summary>
         public static float EvaluateByPhase(Vector4 byPhase, float phase)
         {
-            float scaled = Mathf.Clamp01(phase) * 4f;
-            int anchor = Mathf.Min((int)scaled, 3);
+            const int PHASE_ANCHOR_COUNT = 4;
+            float scaled = Mathf.Clamp01(phase) * PHASE_ANCHOR_COUNT;
+            int anchor = Mathf.Min((int)scaled, PHASE_ANCHOR_COUNT - 1);
             float from = byPhase[anchor];
-            float to = anchor == 3 ? byPhase[0] : byPhase[anchor + 1];
+            float to = anchor == PHASE_ANCHOR_COUNT - 1 ? byPhase[0] : byPhase[anchor + 1];
             return Mathf.Lerp(from, to, scaled - anchor);
         }
     }

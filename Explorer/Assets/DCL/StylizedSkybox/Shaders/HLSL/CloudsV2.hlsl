@@ -179,7 +179,8 @@ void CloudsV2Layers_float(float3 SkyDir, float4 FallbackColor, float FallbackOpa
     CloudAlpha = alpha;
 
     // Only mostly opaque cloud hides the sun and its halo; occluding at soft edges paints a dark ring around clouds.
-    float occlusion = smoothstep(_DclCloudsParams2.z, _DclCloudsParams2.w, alpha);
+    // Edges kept apart: smoothstep with equal edges divides by zero.
+    float occlusion = smoothstep(_DclCloudsParams2.z, max(_DclCloudsParams2.w, _DclCloudsParams2.z + 1e-4), alpha);
     Occlusion = float4(occlusion, occlusion, occlusion, occlusion);
 #endif
 }

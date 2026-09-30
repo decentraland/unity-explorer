@@ -68,8 +68,8 @@ namespace DCL.SkyBox
             for (var i = 0; i < debugLookPresets.Length; i++)
             {
                 // A load cancelled before it reached its slot still holds the reference's handle.
-                if (debugLookPresets[i] != null)
-                    debugLookPresets[i]?.Dispose();
+                if (debugLookPresets[i] is { } provided)
+                    provided.Dispose();
                 else if (debugLookEntries[i].Preset.OperationHandle.IsValid())
                     debugLookEntries[i].Preset.ReleaseAsset();
             }

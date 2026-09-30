@@ -232,7 +232,8 @@ namespace DCL.SkyBox
 
         private static string FormatTime(float normalizedTime)
         {
-            int totalMinutes = Mathf.RoundToInt(normalizedTime * 24f * 60f) % (24 * 60);
+            const int MINUTES_IN_DAY = 24 * 60;
+            int totalMinutes = Mathf.RoundToInt(normalizedTime * MINUTES_IN_DAY) % MINUTES_IN_DAY;
             return $"{totalMinutes / 60:00}:{totalMinutes % 60:00}";
         }
     }

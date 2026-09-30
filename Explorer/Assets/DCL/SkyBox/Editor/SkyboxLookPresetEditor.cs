@@ -319,9 +319,15 @@ namespace DCL.SkyBox
 
             if (keys.Length < MAX_GRADIENT_KEYS)
             {
-                var grown = new GradientColorKey[keys.Length + 1];
+                // Night owns both ends of the ramp, so it gets the wrapped key at 1 as well when there is room.
+                bool wrapNight = anchor == 0f && keys.Length + 1 < MAX_GRADIENT_KEYS;
+                var grown = new GradientColorKey[keys.Length + (wrapNight ? 2 : 1)];
                 keys.CopyTo(grown, 0);
                 grown[keys.Length] = new GradientColorKey(color, anchor);
+
+                if (wrapNight)
+                    grown[keys.Length + 1] = new GradientColorKey(color, 1f);
+
                 Array.Sort(grown, (a, b) => a.time.CompareTo(b.time));
                 gradient.colorKeys = grown;
                 return;

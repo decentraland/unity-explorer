@@ -13,7 +13,7 @@ namespace DCL.Tests
         private const float RISE = 0.25f;
         private const float SET = 0.75f;
 
-        // Moon up from 21:36 to 04:48, one-hour crossovers (window [20:36, 21:36) and [04:48, 05:48)).
+        // Moon up from 21:36 to 04:48, 2.4-hour crossovers (windows [19:12, 21:36) and [04:48, 07:12)).
         private const float MOONRISE = 0.9f;
         private const float MOONSET = 0.2f;
         private const float SWAP = 0.1f;
