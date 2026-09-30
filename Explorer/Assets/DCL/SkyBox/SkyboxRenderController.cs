@@ -387,17 +387,20 @@ public class SkyboxRenderController : MonoBehaviour
     }
 
     /// <summary>
-    ///     Updates the exposed color parameters of the material from the defined gradients, or from the sky and sun
-    ///     colors of the scene environment override
+    ///     Updates the exposed color parameters of the material from the defined gradients, or from the sky, sun, rim
+    ///     and cloud colors of the scene environment override. The rim follows an explicit rim override first, then an
+    ///     overridden horizon, otherwise its default gradient.
     /// </summary>
     private void UpdateSkyboxColor(Material material, float timeOfDay)
     {
+        ColorRamp? rim = environmentOverride?.Rim ?? environmentOverride?.Horizon;
+
         material.SetColor(ZENIT_COLOR, Sample(environmentOverride?.Zenith, skyZenitColorRamp, timeOfDay));
         material.SetColor(HORIZON_COLOR, Sample(environmentOverride?.Horizon, skyHorizonColorRamp, timeOfDay));
         material.SetColor(NADIR_COLOR, Sample(environmentOverride?.Nadir, skyNadirColorRamp, timeOfDay));
         material.SetColor(SUN_COLOR, Sample(environmentOverride?.SunColor, sunColorRamp, timeOfDay));
-        material.SetColor(RIM_COLOR, rimColorRamp.Evaluate(timeOfDay));
-        material.SetColor(CLOUDS_COLOR, cloudsColorRamp.Evaluate(timeOfDay));
+        material.SetColor(RIM_COLOR, Sample(rim, rimColorRamp, timeOfDay));
+        material.SetColor(CLOUDS_COLOR, Sample(environmentOverride?.CloudsColor, cloudsColorRamp, timeOfDay));
         material.SetFloat(CLOUD_HIGHLIGHTS, cloudsHighlightsIntensity.Evaluate(timeOfDay));
     }
 

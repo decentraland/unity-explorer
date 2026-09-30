@@ -30,6 +30,9 @@ namespace DCL.SkyBox.Tests
         private const string SUN_OPACITY = "_SunOpacity";
         private const string SUN_RADIANCE = "_Sun_Radiance";
         private const string SECOND_SUN_SIZE_FACTOR = "_Second_Sun_Size_Factor";
+        private const string HORIZON_COLOR = "_HorizonColor";
+        private const string RIM_COLOR = "_RimColor";
+        private const string CLOUDS_COLOR = "_CloudsColor";
         private const float DEFAULT_CLOUD_OPACITY = 1f;
         private const float DEFAULT_CLOUDS_ROTATION_SPEED = 0.01f;
         private const float DEFAULT_STARS_BRIGHTNESS = 4.62f;
@@ -334,8 +337,72 @@ namespace DCL.SkyBox.Tests
             system.Update(0);
 
             // Assert
-            ColorRampShould.AssertColor(genesisCopy.GetColor("_HorizonColor"), Color.green);
+            ColorRampShould.AssertColor(genesisCopy.GetColor(HORIZON_COLOR), Color.green);
             ColorRampShould.AssertColor(genesisCopy.GetColor("_ZenitColor"), defaultZenith);
+        }
+
+        [Test]
+        public void DeriveRimFromHorizonWhenRimUnset()
+        {
+            // Arrange
+            Overrides().Environment = Profile(new PBSkybox { SkyColors = new PBSkybox.Types.SkyColors { Horizon = Gradient((0f, Color.red)) } });
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            ColorRampShould.AssertColor(genesisCopy.GetColor(RIM_COLOR), Color.red);
+            ColorRampShould.AssertColor(genesisCopy.GetColor(HORIZON_COLOR), Color.red);
+        }
+
+        [Test]
+        public void PreferExplicitRimOverHorizon()
+        {
+            // Arrange
+            Overrides().Environment = Profile(new PBSkybox
+            {
+                SkyColors = new PBSkybox.Types.SkyColors
+                {
+                    Horizon = Gradient((0f, Color.red)),
+                    Rim = Gradient((0f, Color.blue)),
+                },
+            });
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            ColorRampShould.AssertColor(genesisCopy.GetColor(RIM_COLOR), Color.blue);
+            ColorRampShould.AssertColor(genesisCopy.GetColor(HORIZON_COLOR), Color.red);
+        }
+
+        [Test]
+        public void TintCloudsColor()
+        {
+            // Arrange
+            Overrides().Environment = Profile(new PBSkybox { Clouds = new PBSkybox.Types.Clouds { Color = Gradient((0f, Color.green)) } });
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            ColorRampShould.AssertColor(genesisCopy.GetColor(CLOUDS_COLOR), Color.green);
+        }
+
+        [Test]
+        public void KeepDefaultRimAndCloudsColorWhenOnlyFogIsSet()
+        {
+            // Arrange
+            Color defaultRim = genesisCopy.GetColor(RIM_COLOR);
+            Color defaultClouds = genesisCopy.GetColor(CLOUDS_COLOR);
+            Overrides().Environment = Profile(new PBSkybox { Fog = new PBSkybox.Types.Fog { Color = Gradient((0f, Color.red)) } });
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            ColorRampShould.AssertColor(genesisCopy.GetColor(RIM_COLOR), defaultRim);
+            ColorRampShould.AssertColor(genesisCopy.GetColor(CLOUDS_COLOR), defaultClouds);
         }
 
         [Test]

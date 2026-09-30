@@ -101,6 +101,39 @@ namespace DCL.SkyBox.Tests
         }
 
         [Test]
+        public void BuildProfileFromCloudsColorAlone()
+        {
+            // Arrange
+            var pbSkybox = new PBSkybox { Clouds = new PBSkybox.Types.Clouds { Color = ColorRampShould.Gradient((0f, Color.green)) } };
+
+            // Act
+            SceneEnvironmentProfile? profile = SceneEnvironmentProfile.FromProto(pbSkybox);
+
+            // Assert
+            Assert.That(profile, Is.Not.Null);
+            Assert.That(profile!.CloudsColor, Is.Not.Null);
+            ColorRampShould.AssertColor(profile.CloudsColor!.Evaluate(0.5f), Color.green);
+            Assert.That(profile.CloudsOpacity, Is.Null);
+            Assert.That(profile.CloudsSpeed, Is.Null);
+        }
+
+        [Test]
+        public void BuildProfileFromRimAlone()
+        {
+            // Arrange
+            var pbSkybox = new PBSkybox { SkyColors = new PBSkybox.Types.SkyColors { Rim = ColorRampShould.Gradient((0f, Color.magenta)) } };
+
+            // Act
+            SceneEnvironmentProfile? profile = SceneEnvironmentProfile.FromProto(pbSkybox);
+
+            // Assert
+            Assert.That(profile, Is.Not.Null);
+            Assert.That(profile!.Rim, Is.Not.Null);
+            ColorRampShould.AssertColor(profile.Rim!.Evaluate(0.5f), Color.magenta);
+            Assert.That(profile.Horizon, Is.Null);
+        }
+
+        [Test]
         public void BuildRampsPerSkyChannel()
         {
             // Arrange

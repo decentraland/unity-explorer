@@ -4,9 +4,9 @@ using UnityEngine;
 namespace DCL.SkyBox
 {
     /// <summary>
-    ///     Immutable snapshot of the environment overrides of a PBSkybox: color ramps sampled by normalized time of day,
-    ///     constant floats for the cloud layer and the star field, and the sun visibility. A null member keeps the
-    ///     time-of-day default.
+    ///     Immutable snapshot of the environment overrides of a PBSkybox: color ramps sampled by normalized time of day
+    ///     for the sun, the sky bands, the horizon rim, the fog and the cloud tint, constant floats for the cloud layer
+    ///     and the star field, and the sun visibility. A null member keeps the time-of-day default.
     /// </summary>
     public sealed class SceneEnvironmentProfile
     {
@@ -14,7 +14,13 @@ namespace DCL.SkyBox
         public readonly ColorRamp? Zenith;
         public readonly ColorRamp? Horizon;
         public readonly ColorRamp? Nadir;
+
+        /// <summary>
+        ///     Glow along the horizon line. Null follows <see cref="Horizon" /> when that is set, otherwise the time-of-day default.
+        /// </summary>
+        public readonly ColorRamp? Rim;
         public readonly ColorRamp? FogColor;
+        public readonly ColorRamp? CloudsColor;
         public readonly float? CloudsOpacity;
         public readonly float? CloudsSpeed;
         public readonly float? StarsBrightness;
@@ -24,14 +30,16 @@ namespace DCL.SkyBox
         /// </summary>
         public readonly bool? SunVisible;
 
-        private SceneEnvironmentProfile(ColorRamp? sunColor, ColorRamp? zenith, ColorRamp? horizon, ColorRamp? nadir, ColorRamp? fogColor,
-            float? cloudsOpacity, float? cloudsSpeed, float? starsBrightness, bool? sunVisible)
+        private SceneEnvironmentProfile(ColorRamp? sunColor, ColorRamp? zenith, ColorRamp? horizon, ColorRamp? nadir, ColorRamp? rim,
+            ColorRamp? fogColor, ColorRamp? cloudsColor, float? cloudsOpacity, float? cloudsSpeed, float? starsBrightness, bool? sunVisible)
         {
             SunColor = sunColor;
             Zenith = zenith;
             Horizon = horizon;
             Nadir = nadir;
+            Rim = rim;
             FogColor = fogColor;
+            CloudsColor = cloudsColor;
             CloudsOpacity = cloudsOpacity;
             CloudsSpeed = cloudsSpeed;
             StarsBrightness = starsBrightness;
@@ -52,21 +60,23 @@ namespace DCL.SkyBox
             ColorRamp? zenith = ColorRamp.FromProto(skyColors?.Zenith);
             ColorRamp? horizon = ColorRamp.FromProto(skyColors?.Horizon);
             ColorRamp? nadir = ColorRamp.FromProto(skyColors?.Nadir);
+            ColorRamp? rim = ColorRamp.FromProto(skyColors?.Rim);
 
             ColorRamp? fogColor = ColorRamp.FromProto(pbSkybox.Fog?.Color);
 
             PBSkybox.Types.Clouds? clouds = pbSkybox.Clouds;
+            ColorRamp? cloudsColor = ColorRamp.FromProto(clouds?.Color);
             float? cloudsOpacity = clouds is { HasOpacity: true } ? Mathf.Clamp01(clouds.Opacity) : null;
             float? cloudsSpeed = clouds is { HasSpeed: true } ? Mathf.Max(0f, clouds.Speed) : null;
 
             PBSkybox.Types.Stars? stars = pbSkybox.Stars;
             float? starsBrightness = stars is { HasBrightness: true } ? Mathf.Max(0f, stars.Brightness) : null;
 
-            bool anySet = sunColor != null || zenith != null || horizon != null || nadir != null || fogColor != null
-                          || cloudsOpacity != null || cloudsSpeed != null || starsBrightness != null || sunVisible != null;
+            bool anySet = sunColor != null || zenith != null || horizon != null || nadir != null || rim != null || fogColor != null
+                          || cloudsColor != null || cloudsOpacity != null || cloudsSpeed != null || starsBrightness != null || sunVisible != null;
 
             return anySet
-                ? new SceneEnvironmentProfile(sunColor, zenith, horizon, nadir, fogColor, cloudsOpacity, cloudsSpeed, starsBrightness, sunVisible)
+                ? new SceneEnvironmentProfile(sunColor, zenith, horizon, nadir, rim, fogColor, cloudsColor, cloudsOpacity, cloudsSpeed, starsBrightness, sunVisible)
                 : null;
         }
     }

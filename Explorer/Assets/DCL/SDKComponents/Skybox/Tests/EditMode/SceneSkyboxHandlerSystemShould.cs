@@ -368,6 +368,28 @@ namespace DCL.SDKComponents.Skybox.Tests
         }
 
         [Test]
+        public void PushRimColorWhenDirty()
+        {
+            // Arrange
+            world.Add(rootEntity, new PBSkybox
+            {
+                IsDirty = true,
+                SkyColors = new PBSkybox.Types.SkyColors { Rim = Fog(Color.blue).Color },
+            });
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            SceneEnvironmentProfile? environment = Overrides().Environment;
+            Assert.That(environment, Is.Not.Null);
+            Assert.That(environment!.Rim, Is.Not.Null);
+            Assert.That(environment.Rim!.Evaluate(0.5f), Is.EqualTo(Color.blue));
+            Assert.That(environment.Horizon, Is.Null);
+            Assert.That(Overrides().Owner, Is.EqualTo(OWN_SCENE));
+        }
+
+        [Test]
         public void KeepSameProfileReferenceWhenNotDirty()
         {
             // Arrange

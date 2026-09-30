@@ -27,7 +27,7 @@ namespace DCL.ECSComponents {
             "CihkZWNlbnRyYWxhbmQvc2RrL2NvbXBvbmVudHMvc2t5Ym94LnByb3RvEhtk",
             "ZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMaIWRlY2VudHJhbGFuZC9jb21t",
             "b24vdGV4dHVyZS5wcm90bxoiZGVjZW50cmFsYW5kL2NvbW1vbi9ncmFkaWVu",
-            "dC5wcm90byK1CAoIUEJTa3lib3gSPgoOcmVmbGVjdGlvbl9tYXAYASABKAsy",
+            "dC5wcm90byK2CQoIUEJTa3lib3gSPgoOcmVmbGVjdGlvbl9tYXAYASABKAsy",
             "IS5kZWNlbnRyYWxhbmQuY29tbW9uLlRleHR1cmVVbmlvbkgAiAEBEj4KDnNr",
             "eWJveF90ZXh0dXJlGAIgASgLMiEuZGVjZW50cmFsYW5kLmNvbW1vbi5UZXh0",
             "dXJlVW5pb25IAYgBARI7CgNzdW4YAyABKAsyKS5kZWNlbnRyYWxhbmQuc2Rr",
@@ -39,26 +39,29 @@ namespace DCL.ECSComponents {
             "c0gFiAEBEj8KBXN0YXJzGAcgASgLMisuZGVjZW50cmFsYW5kLnNkay5jb21w",
             "b25lbnRzLlBCU2t5Ym94LlN0YXJzSAaIAQEaaQoDU3VuEjYKBWNvbG9yGAEg",
             "ASgLMiIuZGVjZW50cmFsYW5kLmNvbW1vbi5Db2xvckdyYWRpZW50SACIAQES",
-            "FAoHdmlzaWJsZRgCIAEoCEgBiAEBQggKBl9jb2xvckIKCghfdmlzaWJsZRrX",
-            "AQoJU2t5Q29sb3JzEjcKBnplbml0aBgBIAEoCzIiLmRlY2VudHJhbGFuZC5j",
+            "FAoHdmlzaWJsZRgCIAEoCEgBiAEBQggKBl9jb2xvckIKCghfdmlzaWJsZRqV",
+            "AgoJU2t5Q29sb3JzEjcKBnplbml0aBgBIAEoCzIiLmRlY2VudHJhbGFuZC5j",
             "b21tb24uQ29sb3JHcmFkaWVudEgAiAEBEjgKB2hvcml6b24YAiABKAsyIi5k",
             "ZWNlbnRyYWxhbmQuY29tbW9uLkNvbG9yR3JhZGllbnRIAYgBARI2CgVuYWRp",
             "chgDIAEoCzIiLmRlY2VudHJhbGFuZC5jb21tb24uQ29sb3JHcmFkaWVudEgC",
-            "iAEBQgkKB196ZW5pdGhCCgoIX2hvcml6b25CCAoGX25hZGlyGkcKA0ZvZxI2",
-            "CgVjb2xvchgBIAEoCzIiLmRlY2VudHJhbGFuZC5jb21tb24uQ29sb3JHcmFk",
-            "aWVudEgAiAEBQggKBl9jb2xvchpICgZDbG91ZHMSFAoHb3BhY2l0eRgBIAEo",
-            "AkgAiAEBEhIKBXNwZWVkGAIgASgCSAGIAQFCCgoIX29wYWNpdHlCCAoGX3Nw",
-            "ZWVkGi8KBVN0YXJzEhcKCmJyaWdodG5lc3MYASABKAJIAIgBAUINCgtfYnJp",
-            "Z2h0bmVzc0IRCg9fcmVmbGVjdGlvbl9tYXBCEQoPX3NreWJveF90ZXh0dXJl",
-            "QgYKBF9zdW5CDQoLX3NreV9jb2xvcnNCBgoEX2ZvZ0IJCgdfY2xvdWRzQggK",
-            "Bl9zdGFyc0IUqgIRRENMLkVDU0NvbXBvbmVudHNiBnByb3RvMw=="));
+            "iAEBEjQKA3JpbRgEIAEoCzIiLmRlY2VudHJhbGFuZC5jb21tb24uQ29sb3JH",
+            "cmFkaWVudEgDiAEBQgkKB196ZW5pdGhCCgoIX2hvcml6b25CCAoGX25hZGly",
+            "QgYKBF9yaW0aRwoDRm9nEjYKBWNvbG9yGAEgASgLMiIuZGVjZW50cmFsYW5k",
+            "LmNvbW1vbi5Db2xvckdyYWRpZW50SACIAQFCCAoGX2NvbG9yGooBCgZDbG91",
+            "ZHMSFAoHb3BhY2l0eRgBIAEoAkgAiAEBEhIKBXNwZWVkGAIgASgCSAGIAQES",
+            "NgoFY29sb3IYAyABKAsyIi5kZWNlbnRyYWxhbmQuY29tbW9uLkNvbG9yR3Jh",
+            "ZGllbnRIAogBAUIKCghfb3BhY2l0eUIICgZfc3BlZWRCCAoGX2NvbG9yGi8K",
+            "BVN0YXJzEhcKCmJyaWdodG5lc3MYASABKAJIAIgBAUINCgtfYnJpZ2h0bmVz",
+            "c0IRCg9fcmVmbGVjdGlvbl9tYXBCEQoPX3NreWJveF90ZXh0dXJlQgYKBF9z",
+            "dW5CDQoLX3NreV9jb2xvcnNCBgoEX2ZvZ0IJCgdfY2xvdWRzQggKBl9zdGFy",
+            "c0IUqgIRRENMLkVDU0NvbXBvbmVudHNiBnByb3RvMw=="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::Decentraland.Common.TextureReflection.Descriptor, global::Decentraland.Common.GradientReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
             new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBSkybox), global::DCL.ECSComponents.PBSkybox.Parser, new[]{ "ReflectionMap", "SkyboxTexture", "Sun", "SkyColors", "Fog", "Clouds", "Stars" }, new[]{ "ReflectionMap", "SkyboxTexture", "Sun", "SkyColors", "Fog", "Clouds", "Stars" }, null, null, new pbr::GeneratedClrTypeInfo[] { new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBSkybox.Types.Sun), global::DCL.ECSComponents.PBSkybox.Types.Sun.Parser, new[]{ "Color", "Visible" }, new[]{ "Color", "Visible" }, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBSkybox.Types.SkyColors), global::DCL.ECSComponents.PBSkybox.Types.SkyColors.Parser, new[]{ "Zenith", "Horizon", "Nadir" }, new[]{ "Zenith", "Horizon", "Nadir" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBSkybox.Types.SkyColors), global::DCL.ECSComponents.PBSkybox.Types.SkyColors.Parser, new[]{ "Zenith", "Horizon", "Nadir", "Rim" }, new[]{ "Zenith", "Horizon", "Nadir", "Rim" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBSkybox.Types.Fog), global::DCL.ECSComponents.PBSkybox.Types.Fog.Parser, new[]{ "Color" }, new[]{ "Color" }, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBSkybox.Types.Clouds), global::DCL.ECSComponents.PBSkybox.Types.Clouds.Parser, new[]{ "Opacity", "Speed" }, new[]{ "Opacity", "Speed" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBSkybox.Types.Clouds), global::DCL.ECSComponents.PBSkybox.Types.Clouds.Parser, new[]{ "Opacity", "Speed", "Color" }, new[]{ "Opacity", "Speed", "Color" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBSkybox.Types.Stars), global::DCL.ECSComponents.PBSkybox.Types.Stars.Parser, new[]{ "Brightness" }, new[]{ "Brightness" }, null, null, null)})
           }));
     }
@@ -892,6 +895,7 @@ namespace DCL.ECSComponents {
           zenith_ = other.zenith_ != null ? other.zenith_.Clone() : null;
           horizon_ = other.horizon_ != null ? other.horizon_.Clone() : null;
           nadir_ = other.nadir_ != null ? other.nadir_.Clone() : null;
+          rim_ = other.rim_ != null ? other.rim_.Clone() : null;
           _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
         }
 
@@ -946,6 +950,21 @@ namespace DCL.ECSComponents {
           }
         }
 
+        /// <summary>Field number for the "rim" field.</summary>
+        public const int RimFieldNumber = 4;
+        private global::Decentraland.Common.ColorGradient rim_;
+        /// <summary>
+        /// glow along the horizon line. Unset = follows `horizon` when that is set, otherwise the time-of-day default
+        /// </summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public global::Decentraland.Common.ColorGradient Rim {
+          get { return rim_; }
+          set {
+            rim_ = value;
+          }
+        }
+
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
         public override bool Equals(object other) {
@@ -964,6 +983,7 @@ namespace DCL.ECSComponents {
           if (!object.Equals(Zenith, other.Zenith)) return false;
           if (!object.Equals(Horizon, other.Horizon)) return false;
           if (!object.Equals(Nadir, other.Nadir)) return false;
+          if (!object.Equals(Rim, other.Rim)) return false;
           return Equals(_unknownFields, other._unknownFields);
         }
 
@@ -974,6 +994,7 @@ namespace DCL.ECSComponents {
           if (zenith_ != null) hash ^= Zenith.GetHashCode();
           if (horizon_ != null) hash ^= Horizon.GetHashCode();
           if (nadir_ != null) hash ^= Nadir.GetHashCode();
+          if (rim_ != null) hash ^= Rim.GetHashCode();
           if (_unknownFields != null) {
             hash ^= _unknownFields.GetHashCode();
           }
@@ -1004,6 +1025,10 @@ namespace DCL.ECSComponents {
             output.WriteRawTag(26);
             output.WriteMessage(Nadir);
           }
+          if (rim_ != null) {
+            output.WriteRawTag(34);
+            output.WriteMessage(Rim);
+          }
           if (_unknownFields != null) {
             _unknownFields.WriteTo(output);
           }
@@ -1026,6 +1051,10 @@ namespace DCL.ECSComponents {
             output.WriteRawTag(26);
             output.WriteMessage(Nadir);
           }
+          if (rim_ != null) {
+            output.WriteRawTag(34);
+            output.WriteMessage(Rim);
+          }
           if (_unknownFields != null) {
             _unknownFields.WriteTo(ref output);
           }
@@ -1044,6 +1073,9 @@ namespace DCL.ECSComponents {
           }
           if (nadir_ != null) {
             size += 1 + pb::CodedOutputStream.ComputeMessageSize(Nadir);
+          }
+          if (rim_ != null) {
+            size += 1 + pb::CodedOutputStream.ComputeMessageSize(Rim);
           }
           if (_unknownFields != null) {
             size += _unknownFields.CalculateSize();
@@ -1074,6 +1106,12 @@ namespace DCL.ECSComponents {
               Nadir = new global::Decentraland.Common.ColorGradient();
             }
             Nadir.MergeFrom(other.Nadir);
+          }
+          if (other.rim_ != null) {
+            if (rim_ == null) {
+              Rim = new global::Decentraland.Common.ColorGradient();
+            }
+            Rim.MergeFrom(other.Rim);
           }
           _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
         }
@@ -1115,6 +1153,13 @@ namespace DCL.ECSComponents {
                 input.ReadMessage(Nadir);
                 break;
               }
+              case 34: {
+                if (rim_ == null) {
+                  Rim = new global::Decentraland.Common.ColorGradient();
+                }
+                input.ReadMessage(Rim);
+                break;
+              }
             }
           }
         #endif
@@ -1153,6 +1198,13 @@ namespace DCL.ECSComponents {
                   Nadir = new global::Decentraland.Common.ColorGradient();
                 }
                 input.ReadMessage(Nadir);
+                break;
+              }
+              case 34: {
+                if (rim_ == null) {
+                  Rim = new global::Decentraland.Common.ColorGradient();
+                }
+                input.ReadMessage(Rim);
                 break;
               }
             }
@@ -1411,6 +1463,7 @@ namespace DCL.ECSComponents {
           _hasBits0 = other._hasBits0;
           opacity_ = other.opacity_;
           speed_ = other.speed_;
+          color_ = other.color_ != null ? other.color_.Clone() : null;
           _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
         }
 
@@ -1480,6 +1533,21 @@ namespace DCL.ECSComponents {
           _hasBits0 &= ~2;
         }
 
+        /// <summary>Field number for the "color" field.</summary>
+        public const int ColorFieldNumber = 3;
+        private global::Decentraland.Common.ColorGradient color_;
+        /// <summary>
+        /// tint of the cloud layer. Unset = time-of-day default
+        /// </summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public global::Decentraland.Common.ColorGradient Color {
+          get { return color_; }
+          set {
+            color_ = value;
+          }
+        }
+
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
         public override bool Equals(object other) {
@@ -1497,6 +1565,7 @@ namespace DCL.ECSComponents {
           }
           if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(Opacity, other.Opacity)) return false;
           if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(Speed, other.Speed)) return false;
+          if (!object.Equals(Color, other.Color)) return false;
           return Equals(_unknownFields, other._unknownFields);
         }
 
@@ -1506,6 +1575,7 @@ namespace DCL.ECSComponents {
           int hash = 1;
           if (HasOpacity) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(Opacity);
           if (HasSpeed) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(Speed);
+          if (color_ != null) hash ^= Color.GetHashCode();
           if (_unknownFields != null) {
             hash ^= _unknownFields.GetHashCode();
           }
@@ -1532,6 +1602,10 @@ namespace DCL.ECSComponents {
             output.WriteRawTag(21);
             output.WriteFloat(Speed);
           }
+          if (color_ != null) {
+            output.WriteRawTag(26);
+            output.WriteMessage(Color);
+          }
           if (_unknownFields != null) {
             _unknownFields.WriteTo(output);
           }
@@ -1550,6 +1624,10 @@ namespace DCL.ECSComponents {
             output.WriteRawTag(21);
             output.WriteFloat(Speed);
           }
+          if (color_ != null) {
+            output.WriteRawTag(26);
+            output.WriteMessage(Color);
+          }
           if (_unknownFields != null) {
             _unknownFields.WriteTo(ref output);
           }
@@ -1565,6 +1643,9 @@ namespace DCL.ECSComponents {
           }
           if (HasSpeed) {
             size += 1 + 4;
+          }
+          if (color_ != null) {
+            size += 1 + pb::CodedOutputStream.ComputeMessageSize(Color);
           }
           if (_unknownFields != null) {
             size += _unknownFields.CalculateSize();
@@ -1583,6 +1664,12 @@ namespace DCL.ECSComponents {
           }
           if (other.HasSpeed) {
             Speed = other.Speed;
+          }
+          if (other.color_ != null) {
+            if (color_ == null) {
+              Color = new global::Decentraland.Common.ColorGradient();
+            }
+            Color.MergeFrom(other.Color);
           }
           _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
         }
@@ -1611,6 +1698,13 @@ namespace DCL.ECSComponents {
                 Speed = input.ReadFloat();
                 break;
               }
+              case 26: {
+                if (color_ == null) {
+                  Color = new global::Decentraland.Common.ColorGradient();
+                }
+                input.ReadMessage(Color);
+                break;
+              }
             }
           }
         #endif
@@ -1636,6 +1730,13 @@ namespace DCL.ECSComponents {
               }
               case 21: {
                 Speed = input.ReadFloat();
+                break;
+              }
+              case 26: {
+                if (color_ == null) {
+                  Color = new global::Decentraland.Common.ColorGradient();
+                }
+                input.ReadMessage(Color);
                 break;
               }
             }
