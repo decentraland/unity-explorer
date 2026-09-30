@@ -147,7 +147,7 @@ On a `base-domain` deployment, where the value *is* read, anything that does not
 
 ### `realm`
 **Type:** String (URL)
-**Description:** Specifies a custom realm server URL to connect to. Used for connecting to local or custom Decentraland servers. The URL should include the protocol (http:// or https://). A launch that names a destination (this flag or [`position`](#position)) skips the startup lobby and loads straight into it once authentication, if any is needed, completes; a `decentraland://` link and the command line behave the same.
+**Description:** Specifies a custom realm server URL to connect to. Used for connecting to local or custom Decentraland servers. The URL should include the protocol (http:// or https://). A launch that names a destination (this flag or [`position`](#position)) skips the startup lobby and loads straight into it once authentication, if any is needed, completes; a `decentraland://` link and the command line behave the same. An unreachable realm keeps the current one.
 
 **Usage:**
 ```bash
@@ -611,7 +611,7 @@ Visual regression tests need a deterministic scene: a fixed window, no time-of-d
 - Some flags accept string values that can be boolean-like (`"true"` or `"false"`).
 - Flags can be combined in a single command line invocation.
 - Deep links can embed multiple flags: `decentraland://?realm=http://127.0.0.1:8000&local-scene=true&skip-auth-screen=true`
-- A launch naming a destination through `realm` or `position` skips the startup lobby and lands directly in world. A link reaching a client that is still on the startup lobby or the auth screen does the same: its destination becomes the startup one and the lobby closes. With the lobby feature off, a link opened while the "Welcome back" step is showing is applied when the user clicks "Jump into World".
+- A launch naming a destination through `realm` or `position` skips the startup lobby and lands directly in it. A link reaching a running client that is still on the startup lobby or the auth screen replaces the startup destination (a realm outside the allowlist first asks for consent); the lobby closes once no other panel covers it. An unreachable realm keeps the current one, and a world you cannot enter falls back to Genesis. With the lobby feature off, a link opened on the "Welcome back" step is applied when you click "Jump into World".
 - The `debug` flag is automatically added when running in Unity Editor.
 - Some flags are only effective when combined with the `debug` flag or when running in Unity Editor.
 

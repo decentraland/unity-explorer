@@ -724,13 +724,10 @@ namespace Global.Dynamic
                     uiShellContainer.Cursor,
                     (realmUrl, position) =>
                     {
-                        // With a target parcel: teleport with the typed position (works for URL realms too).
-                        // Without one: keep the existing chat-command route so the switch surfaces in nearby chat.
+                        // In-world without a parcel the switch goes through the chat command so its result surfaces in nearby chat
+                        // TODO: surface the teleporter result (chat bus / notification) on the direct paths too.
                         if (position.HasValue)
-                            // TODO: surface the teleport result (chat bus / notification) like the no-position path below,
-                            // and plumb a real cancellation token instead of None (composition-root fire-and-forget for now).
-                            chatContainer.ChatTeleporter.TeleportToRealmAsync(realmUrl, position.Value, CancellationToken.None).Forget();
-                        // The chat bus drops commands until the world is loaded, so an early switch goes straight to the teleporter
+                            chatContainer.ChatTeleporter.TeleportToRealmAsync(realmUrl, position.Value, ct).Forget();
                         else if (!dynamicWorldParams.StartParcel.IsConsumed())
                             chatContainer.ChatTeleporter.TeleportToRealmAsync(realmUrl, ct).Forget();
                         else

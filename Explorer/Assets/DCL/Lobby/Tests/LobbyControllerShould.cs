@@ -628,7 +628,7 @@ namespace DCL.Lobby.Tests
         public void JumpInWhenADestinationIsRequestedAtStartup()
         {
             // Arrange
-            var jumpedIn = 0;
+            int jumpedIn = 0;
             UniTask lifeCycle = Launch(isStartup: true, jumpedIn: () => jumpedIn++);
 
             // Act
@@ -645,7 +645,7 @@ namespace DCL.Lobby.Tests
         public void LetGoOfTheStartParcelOnDispose()
         {
             // Arrange
-            var jumpedIn = false;
+            bool jumpedIn = false;
             Launch(isStartup: true, jumpedIn: () => jumpedIn = true).Forget();
 
             // Act
@@ -660,7 +660,7 @@ namespace DCL.Lobby.Tests
         public void JumpInWhenADestinationWasRequestedBeforeTheLobbyShowed()
         {
             // Arrange
-            var jumpedIn = false;
+            bool jumpedIn = false;
             startParcel.RequestJumpIn();
 
             // Act
@@ -673,10 +673,27 @@ namespace DCL.Lobby.Tests
         }
 
         [Test]
+        public void ReleaseTheFlowWithoutShowingAgainWhenADestinationWasRequestedWhileCovered()
+        {
+            // Arrange
+            bool jumpedIn = false;
+            Launch(isStartup: true, jumpedIn: () => jumpedIn = true).Forget();
+            controller.HideViewAsync(CancellationToken.None).Forget();
+            startParcel.RequestJumpIn();
+
+            // Act
+            CloseAnotherView();
+
+            // Assert
+            Assert.That(jumpedIn, Is.True);
+            mvcManager.DidNotReceive().ShowAsync(Arg.Any<ShowCommand<LobbyView, LobbyParameter>>(), Arg.Any<CancellationToken>());
+        }
+
+        [Test]
         public void LeaveDestinationRequestsAloneInWorld()
         {
             // Arrange
-            var jumpedIn = false;
+            bool jumpedIn = false;
             UniTask lifeCycle = Launch(isStartup: false, jumpedIn: () => jumpedIn = true);
 
             // Act
@@ -721,7 +738,7 @@ namespace DCL.Lobby.Tests
         public void ReleaseTheStartupFlowOnlyWhenTheUserJumpsIn()
         {
             // Arrange
-            var jumpedIn = 0;
+            int jumpedIn = 0;
             Launch(isStartup: true, jumpedIn: () => jumpedIn++).Forget();
 
             // Act: opening the backpack takes the lobby off the screen without releasing the flow

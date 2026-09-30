@@ -332,7 +332,12 @@ namespace DCL.Lobby
 
             mvcManager.OnViewClosed -= ShowAgainWhenTheScreenIsFree;
 
-            if (!inputData.StartupToken.IsCancellationRequested)
+            if (inputData.StartupToken.IsCancellationRequested) return;
+
+            // A destination requested while the lobby was covered releases the flow without showing it again
+            if (startParcel.JumpInRequested)
+                RequestClose();
+            else
                 mvcManager.ShowAndForget(LobbyController.IssueCommand(inputData));
         }
 

@@ -189,7 +189,7 @@ namespace DCL.UserInAppInitializationFlow
                     .ShowWhileExecuteTaskAsync(
                         async (parentLoadReport, ct) =>
                         {
-                            await ApplyStartRealmAsync(startParcel, realmController, URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Genesis)), ct);
+                            await ApplyStartRealmAsync(startParcel, realmController, chatHistory, URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Genesis)), ct);
 
                             // After authentication completes, verify the user can actually access the current realm if it's a world.
                             // The realm was set during bootstrap before the user had a chance to switch accounts, so the identity
@@ -252,9 +252,8 @@ namespace DCL.UserInAppInitializationFlow
                     string message = result.Error.AsMessage();
                     ReportHub.LogError(ReportCategory.AUTHENTICATION, message);
 
-                    // The retry shows the auth screen or the lobby again, where a link may still pick another realm
-                    if (!startParcel.IsConsumed())
-                        startParcel.ClearRealmApplied();
+                    // A link on the retried auth screen may still pick another realm before the next switch
+                    startParcel.ClearRealmApplied();
                 }
             }
             while (!result.Success && parameters.ShowAuthentication);
@@ -269,6 +268,36 @@ namespace DCL.UserInAppInitializationFlow
             && !appArgs.HasFlag(AppArgsFlags.AUTOPILOT)
             && !appArgs.HasFlag(AppArgsFlags.MEASURE_LOADING_TIME)
             && !appArgs.HasFlag(AppArgsFlags.DISABLE_HUD);
+
+        internal static bool LandsAtLaunchDestination(IAppArgs appArgs, IUserInAppInitializationFlow.LoadSource loadSource) =>
+            loadSource == IUserInAppInitializationFlow.LoadSource.StartUp && appArgs.HasLaunchDestination();
+
+        /// <summary>
+        ///     Switches to the realm picked before anything is loaded. A Genesis pick is satisfied by any Genesis realm, and an unreachable realm keeps the current one.
+        /// </summary>
+        internal static async UniTask ApplyStartRealmAsync(StartParcel startParcel, IRealmController realmController, IChatHistory chatHistory, URLDomain genesis, CancellationToken ct)
+        {
+            startParcel.MarkRealmApplied();
+
+            if (startParcel.Realm is not { } realm) return;
+            if (realm == realmController.CurrentDomain) return;
+            if (realmController.RealmData.IsGenesis() && realm == genesis) return;
+
+            if (!await realmController.IsReachableAsync(realm, ct))
+            {
+                ReportHub.LogWarning(ReportCategory.REALM, $"Startup realm {realm} is not reachable, keeping {realmController.CurrentDomain}");
+                string destination = TryExtractWorldName(realm, out string worldName) ? worldName : realm.Value;
+                chatHistory.AddMessage(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY, ChatMessage.NewFromSystem($"Could not reach '{destination}'. You were sent to {realmController.RealmData.RealmName}."));
+
+                // The parcel that came with the unreachable realm belongs to it, so the kept realm spawns at its own default
+                if (realmController.CurrentDomain is { } kept)
+                    startParcel.AssignRealm(kept);
+
+                return;
+            }
+
+            await realmController.SetRealmAsync(realm, ct);
+        }
 
         /// <summary>
         ///     Holds the flow until the user picks a destination; false when a Logout took the flow over, so this execution must not load the world.
@@ -298,29 +327,6 @@ namespace DCL.UserInAppInitializationFlow
             }
 
             return jumpedIn;
-        }
-
-        internal static bool LandsAtLaunchDestination(IAppArgs appArgs, IUserInAppInitializationFlow.LoadSource loadSource) =>
-            loadSource == IUserInAppInitializationFlow.LoadSource.StartUp && appArgs.HasLaunchDestination();
-
-        /// <summary>
-        ///     Switches to the realm picked before anything is loaded. A Genesis pick is satisfied by any Genesis realm, and an unreachable realm keeps the current one.
-        /// </summary>
-        internal static async UniTask ApplyStartRealmAsync(StartParcel startParcel, IRealmController realmController, URLDomain genesis, CancellationToken ct)
-        {
-            startParcel.MarkRealmApplied();
-
-            if (startParcel.Realm is not { } realm) return;
-            if (realm == realmController.CurrentDomain) return;
-            if (realmController.RealmData.IsGenesis() && realm == genesis) return;
-
-            if (!await realmController.IsReachableAsync(realm, ct))
-            {
-                ReportHub.LogWarning(ReportCategory.REALM, $"Startup realm {realm} is not reachable, keeping {realmController.CurrentDomain}");
-                return;
-            }
-
-            await realmController.SetRealmAsync(realm, ct);
         }
 
         private async UniTask VerifyWorldAccessAndFallbackIfNeededAsync(CancellationToken ct)

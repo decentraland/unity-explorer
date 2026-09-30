@@ -19,7 +19,7 @@ namespace DCL.Chat.Commands
     public class ChatTeleporter
     {
         private const string WORLD_SUFFIX = ".dcl.eth";
-        private const string GENESIS_LABEL = "genesis";
+        private const string CANCELLED_MESSAGE = "🔴 Error: The operation was canceled!";
 
         private readonly IRealmNavigator realmNavigator;
         private readonly IScenesCache scenesCache;
@@ -40,7 +40,7 @@ namespace DCL.Chat.Commands
 
             paramUrls = new Dictionary<string, string>
             {
-                { GENESIS_LABEL, genesisDomain.Value },
+                { "genesis", genesisDomain.Value },
                 { "goerli", IRealmNavigator.GOERLI_URL },
                 { "goerli-old", IRealmNavigator.GOERLI_OLD_URL },
                 { "stream", IRealmNavigator.STREAM_WORLD_URL },
@@ -60,7 +60,7 @@ namespace DCL.Chat.Commands
                 return HeadingTo(realm);
 
             if (!await WaitForStartupTeleportAsync(ct))
-                return "🔴 Error: The operation was canceled!";
+                return CANCELLED_MESSAGE;
 
             if (realmNavigator.IsAlreadyOnRealm(realmUrl))
             {
@@ -81,7 +81,7 @@ namespace DCL.Chat.Commands
                    {
                        ChangeRealmError.MessageError => $"🔴 Teleport was not fully successful to {realm} world!",
                        ChangeRealmError.NotReachable => $"🔴 Error: The world {realm} doesn't exist or not reachable!",
-                       ChangeRealmError.ChangeCancelled => "🔴 Error: The operation was canceled!",
+                       ChangeRealmError.ChangeCancelled => CANCELLED_MESSAGE,
                        ChangeRealmError.LocalSceneDevelopmentBlocked => "🔴 Error: Realm changes are not allowed in local scene development mode",
                        ChangeRealmError.UnauthorizedWorldAccess => "🔴 Error: User is not authorized to access the requested world",
                        ChangeRealmError.Timeout => "🔴 Error: We were unable to connect to the realm. Please verify your connection.",
@@ -106,7 +106,7 @@ namespace DCL.Chat.Commands
                 return HeadingTo(realm);
 
             if (!await WaitForStartupTeleportAsync(ct))
-                return "🔴 Error: The operation was canceled!";
+                return CANCELLED_MESSAGE;
 
             if(realmNavigator.IsAlreadyOnRealm(realmUrl))
                 return await TeleportToParcelAsync(targetPosition, true, ct, spawnPointName);
@@ -122,7 +122,7 @@ namespace DCL.Chat.Commands
                    {
                        ChangeRealmError.MessageError => $"🔴 Teleport was not fully successful to {realm} world!",
                        ChangeRealmError.NotReachable => $"🔴 Error: The world {realm} doesn't exist or not reachable!",
-                       ChangeRealmError.ChangeCancelled => "🔴 Error: The operation was canceled!",
+                       ChangeRealmError.ChangeCancelled => CANCELLED_MESSAGE,
                        ChangeRealmError.LocalSceneDevelopmentBlocked => "🔴 Error: Realm changes are not allowed in local scene development mode",
                        ChangeRealmError.UnauthorizedWorldAccess => "🔴 Error: User is not authorized to access the requested world",
                        ChangeRealmError.Timeout => "🔴 Error: We were unable to connect to the realm. Please verify your connection.",
@@ -186,7 +186,7 @@ namespace DCL.Chat.Commands
                 return HeadingTo($"{targetPosition.x},{targetPosition.y}");
 
             if (!await WaitForStartupTeleportAsync(ct))
-                return "🔴 Error: The operation was canceled!";
+                return CANCELLED_MESSAGE;
 
             var result = await realmNavigator.TeleportToParcelAsync(targetPosition, ct, local, spawnPointName: spawnPointName);
 
@@ -199,7 +199,7 @@ namespace DCL.Chat.Commands
                    {
                        TaskError.MessageError => $"🔴 Error: {error.Message}",
                        TaskError.Timeout => "🔴 Error: Timeout. Verify your connection.",
-                       TaskError.Cancelled => "🔴 Error: The operation was canceled!",
+                       TaskError.Cancelled => CANCELLED_MESSAGE,
                        TaskError.UnexpectedException => $"🔴 Error: {error.Message}",
                        _ => throw new ArgumentOutOfRangeException(),
                    };
@@ -211,8 +211,7 @@ namespace DCL.Chat.Commands
 
             if (realmUrl is { } realm)
             {
-                // The startup realm is applied once, so a different realm after that needs a regular realm change
-                if (startParcel.IsRealmApplied && !realmNavigator.IsAlreadyOnRealm(realm)) return false;
+                if (!CanJoinStartupRealm(realm)) return false;
 
                 startParcel.AssignRealm(realm, spawnPointName);
             }
@@ -223,6 +222,10 @@ namespace DCL.Chat.Commands
             startParcel.RequestJumpIn();
             return true;
         }
+
+        // Once the startup realm is applied, only a link to the picked realm can still join the startup destination
+        private bool CanJoinStartupRealm(URLDomain realm) =>
+            !startParcel.IsRealmApplied || (realmNavigator.IsAlreadyOnRealm(realm) && (startParcel.Realm is not { } picked || picked == realm));
 
         private static string HeadingTo(string destination) =>
             $"🟢 Heading to {destination}!";
