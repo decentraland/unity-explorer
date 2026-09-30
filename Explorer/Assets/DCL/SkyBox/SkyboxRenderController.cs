@@ -1,6 +1,7 @@
 ﻿using DCL.Diagnostics;
 using DCL.SkyBox;
 using System;
+using System.Diagnostics.CodeAnalysis;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Serialization;
@@ -24,6 +25,7 @@ public class SkyboxRenderController : MonoBehaviour
     private static readonly int SUN_COLOR = Shader.PropertyToID("_SunColor");
     private static readonly int RIM_COLOR = Shader.PropertyToID("_RimColor");
     private static readonly int CLOUDS_COLOR = Shader.PropertyToID("_CloudsColor");
+    private static readonly int CLOUDS_CUBEMAP = Shader.PropertyToID("_Clouds_Cubemap");
     private static readonly int CLOUD_HIGHLIGHTS = Shader.PropertyToID("_Cloud_Highlights");
     private static readonly int SUN_SIZE = Shader.PropertyToID("_SunSize");
     private static readonly int SUN_OPACITY = Shader.PropertyToID("_SunOpacity");
@@ -84,6 +86,10 @@ public class SkyboxRenderController : MonoBehaviour
     private Material? panoramicSkyboxMaterial;
 
     private SceneEnvironmentProfile? environmentOverride;
+    private Texture? cloudsOverride;
+    private Texture? defaultCloudsCubemap;
+    private EquirectCubemapConverter? cloudsConverter;
+    private bool cloudsConverterUnavailable;
     private float lastTimeOfDay;
     private float defaultCloudsOpacity;
     private float defaultCloudsRotationSpeed;
@@ -127,6 +133,7 @@ public class SkyboxRenderController : MonoBehaviour
             defaultStarsBrightness = skyboxMaterial.GetFloat(STARS_BRIGHTNESS);
             defaultSecondSunSizeFactor = skyboxMaterial.GetFloat(SECOND_SUN_SIZE_FACTOR);
             defaultSunOpacity = skyboxMaterial.GetFloat(SUN_OPACITY);
+            defaultCloudsCubemap = skyboxMaterial.GetTexture(CLOUDS_CUBEMAP);
         }
 
         if (panoramicSkyboxMat)
@@ -218,7 +225,7 @@ public class SkyboxRenderController : MonoBehaviour
     ///     Shows the equirectangular texture as the visible sky through the panoramic material; null restores the time-of-day skybox material.
     ///     Time-of-day keeps updating the skybox material while it is swapped out, so restoring it is seamless.
     /// </summary>
-    public void SetSkyboxOverride(Texture2D? equirect)
+    public void SetSkyboxOverride(Texture? equirect)
     {
         if (equirect != null && panoramicSkyboxMaterial != null)
         {
@@ -229,7 +236,38 @@ public class SkyboxRenderController : MonoBehaviour
             RenderSettings.skybox = skyboxMaterial;
     }
 
-    /// <summary>,
+    /// <summary>
+    ///     Projects the equirectangular texture into the cloud cubemap of the time-of-day skybox material; null restores the
+    ///     default cloud cubemap and releases the projected one. A render texture source (live video) is projected again on
+    ///     every <see cref="ProjectLiveClouds" /> call.
+    /// </summary>
+    public void SetCloudsOverride(Texture? equirect)
+    {
+        cloudsOverride = equirect;
+
+        if (skyboxMaterial == null) return;
+
+        if (equirect == null)
+        {
+            skyboxMaterial.SetTexture(CLOUDS_CUBEMAP, defaultCloudsCubemap);
+            cloudsConverter?.ReleaseCubemap();
+            return;
+        }
+
+        ConvertClouds(skyboxMaterial, equirect);
+    }
+
+    /// <summary>
+    ///     Re-projects a render texture clouds override (live video) into the cloud cubemap; a static override or none is a no-op.
+    ///     Independent of <see cref="UpdateSkybox" /> so the layer keeps moving while skybox time is paused or frozen.
+    /// </summary>
+    public void ProjectLiveClouds()
+    {
+        if (skyboxMaterial != null && cloudsOverride is RenderTexture liveClouds)
+            ConvertClouds(skyboxMaterial, liveClouds);
+    }
+
+    /// <summary>
     ///     Calls all the necessary methods to update the skybox and environment
     /// </summary>
     public void UpdateSkybox(float timeOfDay)
@@ -424,6 +462,31 @@ public class SkyboxRenderController : MonoBehaviour
         material.SetFloat(CLOUDS_ROTATION_SPEED, skyboxTimeDisabled ? 0f : environmentOverride?.CloudsSpeed ?? defaultCloudsRotationSpeed);
     }
 
+    private void ConvertClouds(Material material, Texture equirect)
+    {
+        if (TryGetCloudsConverter(out EquirectCubemapConverter? converter))
+            material.SetTexture(CLOUDS_CUBEMAP, converter.Convert(equirect));
+    }
+
+    /// <summary>
+    ///     Creates the converter on first use; when the shader cannot be created the failure is logged once and the
+    ///     default clouds are kept.
+    /// </summary>
+    private bool TryGetCloudsConverter([NotNullWhen(true)] out EquirectCubemapConverter? converter)
+    {
+        if (cloudsConverter == null && !cloudsConverterUnavailable)
+        {
+            cloudsConverter = EquirectCubemapConverter.TryCreate();
+            cloudsConverterUnavailable = cloudsConverter == null;
+
+            if (cloudsConverterUnavailable)
+                ReportHub.LogWarning(ReportCategory.SKYBOX, "Skybox Controller: clouds texture override unavailable, the equirect-to-cube shader could not be created");
+        }
+
+        converter = cloudsConverter;
+        return converter != null;
+    }
+
     public void DisableSkyboxTime()
     {
         skyboxTimeDisabled = true;
@@ -444,6 +507,7 @@ public class SkyboxRenderController : MonoBehaviour
     private void OnDestroy()
     {
         transitionCancellationTokenSource.SafeCancelAndDispose();
+        cloudsConverter?.Dispose();
     }
 
     [JetBrains.Annotations.UsedImplicitly] // Unity event function

@@ -1,6 +1,7 @@
 using Arch.SystemGroups;
 using DCL.ECSComponents;
 using DCL.PluginSystem.World.Dependencies;
+using DCL.SDKComponents.MediaStream;
 using DCL.SDKComponents.Skybox.Systems;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Systems;
@@ -14,10 +15,12 @@ namespace DCL.PluginSystem.World
     public class SceneSkyboxPlugin : IDCLWorldPluginWithoutSettings
     {
         private readonly Arch.Core.World globalWorld;
+        private readonly MediaFactoryBuilder mediaFactory;
 
-        public SceneSkyboxPlugin(Arch.Core.World globalWorld)
+        public SceneSkyboxPlugin(Arch.Core.World globalWorld, MediaFactoryBuilder mediaFactory)
         {
             this.globalWorld = globalWorld;
+            this.mediaFactory = mediaFactory;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder,
@@ -34,7 +37,8 @@ namespace DCL.PluginSystem.World
                 persistentEntities.SceneRoot,
                 sharedDependencies.SceneData,
                 sharedDependencies.ScenePartition,
-                sharedDependencies.SceneStateProvider);
+                sharedDependencies.SceneStateProvider,
+                mediaFactory.CreateForScene(builder.World, sharedDependencies, systemsDependencies.RoomHub, placeholderSource: null));
 
             finalizeWorldSystems.Add(handler);
             sceneIsCurrentListeners.Add(handler);

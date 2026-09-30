@@ -37,8 +37,7 @@ namespace DCL.SDKComponents.MediaStream
         private readonly List<VideoStateByPriorityComponent> sortedVideoPriorities = new ();
 
         // Note: it was necessary to cache this in order to avoid a change in FOV when the character runs that ruins the computation of priorities
-        private float cachedCameraVerticalFOV;
-        private float cachedCameraHorizontalFOV;
+        private float cachedCameraHorizontalFov;
         private float cachedCameraTanValue; // A pre-calculated value of the tangent of half the FOV, used to calculate the size on screen
 
 #if DEBUG_VIDEO_PRIORITIES
@@ -57,9 +56,9 @@ namespace DCL.SDKComponents.MediaStream
 
             if (exposedCameraData.CinemachineBrain != null)
             {
-                cachedCameraVerticalFOV = exposedCameraData.CinemachineBrain!.OutputCamera.fieldOfView;
-                cachedCameraHorizontalFOV = Camera.VerticalToHorizontalFieldOfView(exposedCameraData.CinemachineBrain.OutputCamera.fieldOfView, exposedCameraData.CinemachineBrain.OutputCamera.aspect);
-                float cameraHalfFov = cachedCameraVerticalFOV * 0.5f * Mathf.Deg2Rad;
+                float cameraVerticalFov = exposedCameraData.CinemachineBrain!.OutputCamera.fieldOfView;
+                cachedCameraHorizontalFov = Camera.VerticalToHorizontalFieldOfView(cameraVerticalFov, exposedCameraData.CinemachineBrain.OutputCamera.aspect);
+                float cameraHalfFov = cameraVerticalFov * 0.5f * Mathf.Deg2Rad;
                 cachedCameraTanValue = Mathf.Tan(cameraHalfFov);
             }
             else
@@ -70,7 +69,7 @@ namespace DCL.SDKComponents.MediaStream
         {
             sortedVideoPriorities.Clear();
             AddVideoStatesByPriorityQuery(World);
-            UpdateVideoPrioritiesQuery(World, cachedCameraVerticalFOV, cachedCameraHorizontalFOV, exposedCameraData.WorldPosition.Value, exposedCameraData.WorldRotation.Value);
+            UpdateVideoPrioritiesQuery(World, cachedCameraHorizontalFov, exposedCameraData.WorldPosition.Value, exposedCameraData.WorldRotation.Value);
             UpdateVideoStateDependingOnPriorityQuery(World, videoPrioritizationSettings.MaximumSimultaneousVideos);
 
 #if DEBUG_VIDEO_PRIORITIES
@@ -91,16 +90,16 @@ namespace DCL.SDKComponents.MediaStream
         /// Adds the VideoStateByPriorityComponent to all entities streaming a video with a MediaPlayer.
         /// </summary>
         [Query]
-        [All(typeof(PBVideoPlayer))]
+        [All(typeof(PBVideoPlayer), typeof(VideoTextureConsumer))]
         [None(typeof(VideoStateByPriorityComponent))]
-        private void AddVideoStatesByPriority(Entity entity, in MediaPlayerComponent mediaPlayer, in VideoTextureConsumer videoTextureConsumer)
+        private void AddVideoStatesByPriority(Entity entity, in MediaPlayerComponent mediaPlayer)
         {
             VideoStateByPriorityComponent newVideoStateByPriority = new VideoStateByPriorityComponent(entity, mediaPlayer.IsPlaying);
 
 #if DEBUG_VIDEO_PRIORITIES
             // Adds a colored cube to a corner of the video mesh renderer which shows the priority of the video
             GameObject prioritySign = CreateDebugPrioritySign();
-            prioritySign.transform.position = videoTextureConsumer.BoundsMax;
+            prioritySign.transform.position = World.Get<VideoTextureConsumer>(entity).GetBounds().max;
             newVideoStateByPriority.DebugPrioritySign = prioritySign.GetComponent<MeshRenderer>();
 #endif
 
@@ -116,17 +115,18 @@ namespace DCL.SDKComponents.MediaStream
         /// D = The distance from the camera to the video mesh renderer, with a maximum.
         /// A = The angle of the camera with respect to the video mesh renderer (the nearer to the center of the screen, the higher).
         /// The first M videos with the highest score will resume / keep playing (were M is the maximum amount of videos allowed), the rest will be culled.
+        /// A video with screen-space consumers (see <see cref="VideoTextureConsumer.ScreenSpaceConsumers"/>) has no renderer to measure: it covers the whole
+        /// screen, so it gets the maximum score and outranks every other video while still counting against the maximum.
         /// Every video is stored in a list sorted by score.
         /// </summary>
         [Query]
-        private void UpdateVideoPriorities([Data] float cameraFov, [Data] float cameraHorizontalFov,
-            [Data] Vector3 cameraWorldPosition, [Data] Quaternion cameraWorldRotation,
+        private void UpdateVideoPriorities([Data] float cameraHorizontalFov, [Data] Vector3 cameraWorldPosition, [Data] Quaternion cameraWorldRotation,
             in MediaPlayerComponent mediaPlayer,
             ref VideoStateByPriorityComponent videoStateByPriority,
             ref VideoTextureConsumer videoTextureConsumer)
         {
 #if DEBUG_VIDEO_PRIORITIES
-            videoStateByPriority.DebugPrioritySign.transform.position = videoTextureConsumer.BoundsMax;
+            videoStateByPriority.DebugPrioritySign.transform.position = videoTextureConsumer.GetBounds().max;
             videoStateByPriority.DebugPrioritySign.material.color = Color.black;
 #endif
 
@@ -157,58 +157,13 @@ namespace DCL.SDKComponents.MediaStream
             // If the video should be playing according to external state changes...
             if (videoStateByPriority.WantsToPlay)
             {
-                videoStateByPriority.Score = float.MinValue;
-
-                // Use GetBounds() to calculate both min bounds and max bound in a single pass (to avoid duplicate Renderer.bounds calls that are heavy)
-                var (boundsMin, boundsMax) = videoTextureConsumer.GetBounds();
-                Vector3 videoCenterPosition = (boundsMax + boundsMin) * 0.5f;
-
-                bool isCameraInVideoBoundingBox = cameraWorldPosition.x >= boundsMin.x && cameraWorldPosition.y >= boundsMin.y && cameraWorldPosition.z >= boundsMin.z &&
-                                                  cameraWorldPosition.x <= boundsMax.x && cameraWorldPosition.y <= boundsMax.y && cameraWorldPosition.z <= boundsMax.z;
-
-                Vector3 cameraToVideo = (videoCenterPosition - cameraWorldPosition).normalized;
-                Vector3 cameraDirection = cameraWorldRotation * Vector3.forward;
-                bool isVideoInCameraFrustum = false;
-
-                if (!isCameraInVideoBoundingBox) // If the camera is inside the BB, it's not necessary to calculate anything else, the video is considered in camera
-                {
-                    // Note: It was necessary to calculate a flattened version of the dot product to prevent some videos from pausing when they were big and
-                    //       the character was too close, so the height of the center of the screen did not affect the result
-                    Vector3 cameraToVideoFlattened = new Vector3(cameraToVideo.x, 0.0f, cameraToVideo.z).normalized;
-                    Vector3 cameraDirectionFlattened = new Vector3(cameraDirection.x, 0.0f, cameraDirection.z).normalized;
-
-                    float dotProductInXZ = Vector3.Dot(cameraToVideoFlattened, cameraDirectionFlattened);
-                    isVideoInCameraFrustum = Mathf.Acos(dotProductInXZ) * Mathf.Rad2Deg <= cameraHorizontalFov * 0.5f;
-                }
-
-                // Skips videos that are out of the camera frustum in XZ
-                if (isCameraInVideoBoundingBox || isVideoInCameraFrustum)
-                {
-                    float distance = (videoCenterPosition - cameraWorldPosition).magnitude;
-
-                    // Skips videos that are too far
-                    if (distance <= videoPrioritizationSettings.MaximumDistanceLimit)
-                    {
-                        // Using the diagonal of the box instead of the height, meshes that occupy "the same" area on screen should have the same priority
-                        float videoMeshLocalSize = (boundsMax - boundsMin).magnitude;
-                        float screenSize = Mathf.Clamp01(CalculateObjectHeightRelativeToScreenHeight(videoMeshLocalSize, distance));
-
-                        // Skips videos that are too small on screen
-                        if (screenSize >= videoPrioritizationSettings.MinimumSizeLimit)
-                        {
-                            float dotProduct = Vector3.Dot(cameraToVideo, cameraDirection);
-
-                            // Final score
-                            videoStateByPriority.Score = (videoPrioritizationSettings.MaximumDistanceLimit - distance) / videoPrioritizationSettings.MaximumDistanceLimit * videoPrioritizationSettings.DistanceWeight +
-                                                         screenSize * videoPrioritizationSettings.SizeInScreenWeight +
-                                                         dotProduct * videoPrioritizationSettings.AngleWeight;
+                videoStateByPriority.Score = videoTextureConsumer.ScreenSpaceConsumers > 0
+                    ? float.MaxValue
+                    : CalculateScore(cameraHorizontalFov, cameraWorldPosition, cameraWorldRotation, ref videoTextureConsumer);
 
 #if DEBUG_VIDEO_PRIORITIES
-                            ReportHub.Log(GetReportData(),$"VIDEO ENTITY[{videoStateByPriority.Entity.Id}] Dist: {distance} HSize:{videoMeshLocalSize} / {CalculateObjectHeightRelativeToScreenHeight(videoMeshLocalSize, distance)} Dot:{dotProduct} SCORE:{videoStateByPriority.Score}");
+                ReportHub.Log(GetReportData(),$"VIDEO ENTITY[{videoStateByPriority.Entity.Id}] SCORE:{videoStateByPriority.Score}");
 #endif
-                        }
-                    }
-                }
 
                 // Sorts the playing video list by score, on insertion
                 int i = 0;
@@ -220,6 +175,67 @@ namespace DCL.SDKComponents.MediaStream
                 if (i <= sortedVideoPriorities.Count)
                     sortedVideoPriorities.Insert(i, videoStateByPriority);
             }
+        }
+
+        /// <summary>
+        /// Scores a video by the renderers that draw it: <see cref="float.MinValue"/> when it is out of the camera frustum, too far or too small on screen.
+        /// </summary>
+        private float CalculateScore(float cameraHorizontalFov, Vector3 cameraWorldPosition, Quaternion cameraWorldRotation, ref VideoTextureConsumer videoTextureConsumer)
+        {
+            float score = float.MinValue;
+
+            // Use GetBounds() to calculate both min bounds and max bound in a single pass (to avoid duplicate Renderer.bounds calls that are heavy)
+            var (boundsMin, boundsMax) = videoTextureConsumer.GetBounds();
+            Vector3 videoCenterPosition = (boundsMax + boundsMin) * 0.5f;
+
+            bool isCameraInVideoBoundingBox = cameraWorldPosition.x >= boundsMin.x && cameraWorldPosition.y >= boundsMin.y && cameraWorldPosition.z >= boundsMin.z &&
+                                              cameraWorldPosition.x <= boundsMax.x && cameraWorldPosition.y <= boundsMax.y && cameraWorldPosition.z <= boundsMax.z;
+
+            Vector3 cameraToVideo = (videoCenterPosition - cameraWorldPosition).normalized;
+            Vector3 cameraDirection = cameraWorldRotation * Vector3.forward;
+            bool isVideoInCameraFrustum = false;
+
+            if (!isCameraInVideoBoundingBox) // If the camera is inside the BB, it's not necessary to calculate anything else, the video is considered in camera
+            {
+                // Note: It was necessary to calculate a flattened version of the dot product to prevent some videos from pausing when they were big and
+                //       the character was too close, so the height of the center of the screen did not affect the result
+                Vector3 cameraToVideoFlattened = new Vector3(cameraToVideo.x, 0.0f, cameraToVideo.z).normalized;
+                Vector3 cameraDirectionFlattened = new Vector3(cameraDirection.x, 0.0f, cameraDirection.z).normalized;
+
+                float dotProductInXz = Vector3.Dot(cameraToVideoFlattened, cameraDirectionFlattened);
+                isVideoInCameraFrustum = Mathf.Acos(dotProductInXz) * Mathf.Rad2Deg <= cameraHorizontalFov * 0.5f;
+            }
+
+            // Skips videos that are out of the camera frustum in XZ
+            if (isCameraInVideoBoundingBox || isVideoInCameraFrustum)
+            {
+                float distance = (videoCenterPosition - cameraWorldPosition).magnitude;
+
+                // Skips videos that are too far
+                if (distance <= videoPrioritizationSettings.MaximumDistanceLimit)
+                {
+                    // Using the diagonal of the box instead of the height, meshes that occupy "the same" area on screen should have the same priority
+                    float videoMeshLocalSize = (boundsMax - boundsMin).magnitude;
+                    float screenSize = Mathf.Clamp01(CalculateObjectHeightRelativeToScreenHeight(videoMeshLocalSize, distance));
+
+                    // Skips videos that are too small on screen
+                    if (screenSize >= videoPrioritizationSettings.MinimumSizeLimit)
+                    {
+                        float dotProduct = Vector3.Dot(cameraToVideo, cameraDirection);
+
+                        // Final score
+                        score = ((videoPrioritizationSettings.MaximumDistanceLimit - distance) / videoPrioritizationSettings.MaximumDistanceLimit * videoPrioritizationSettings.DistanceWeight) +
+                                (screenSize * videoPrioritizationSettings.SizeInScreenWeight) +
+                                (dotProduct * videoPrioritizationSettings.AngleWeight);
+
+#if DEBUG_VIDEO_PRIORITIES
+                        ReportHub.Log(GetReportData(),$"VIDEO Dist: {distance} HSize:{videoMeshLocalSize} / {CalculateObjectHeightRelativeToScreenHeight(videoMeshLocalSize, distance)} Dot:{dotProduct} SCORE:{score}");
+#endif
+                    }
+                }
+            }
+
+            return score;
         }
 
         /// <summary>
@@ -325,7 +341,7 @@ namespace DCL.SDKComponents.MediaStream
         [Query]
         private void DestroyAllDebuggingSigns(in VideoStateByPriorityComponent videoStateByPriorityComponent)
         {
-            GameObject.Destroy(videoStateByPriorityComponent.DebugPrioritySign?.gameObject);
+            Object.Destroy(videoStateByPriorityComponent.DebugPrioritySign?.gameObject);
         }
 
 #if DEBUG_VIDEO_PRIORITIES
@@ -339,7 +355,7 @@ namespace DCL.SDKComponents.MediaStream
             cubeMaterial.color = Color.white;
             plane.GetComponent<MeshRenderer>().material = cubeMaterial;
 
-            GameObject.Destroy(plane.GetComponent<Collider>());
+            Object.Destroy(plane.GetComponent<Collider>());
 
             return plane;
         }

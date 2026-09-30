@@ -10,8 +10,8 @@ using UnityEngine;
 namespace DCL.SkyBox
 {
     /// <summary>
-    ///     Pushes the environment overrides requested by the current scene to the time-of-day controller, the visible sky
-    ///     and the reflection cubemap.
+    ///     Pushes the environment overrides requested by the current scene to the time-of-day controller, the visible sky,
+    ///     the cloud layer and the reflection cubemap.
     /// </summary>
     [UpdateInGroup(typeof(SimulationSystemGroup))]
     [LogCategory(ReportCategory.SKYBOX)]
@@ -48,7 +48,15 @@ namespace DCL.SkyBox
                 overrides.AppliedSkyboxTexture = overrides.SkyboxTexture;
             }
 
-            Texture2D? reflectionSource = overrides.ReflectionSource;
+            if (!ReferenceEquals(overrides.CloudsTexture, overrides.AppliedCloudsTexture))
+            {
+                skyboxRenderController.SetCloudsOverride(overrides.CloudsTexture);
+                overrides.AppliedCloudsTexture = overrides.CloudsTexture;
+            }
+            else
+                skyboxRenderController.ProjectLiveClouds();
+
+            Texture? reflectionSource = overrides.ReflectionSource;
 
             if (ReferenceEquals(reflectionSource, overrides.AppliedReflectionSource))
                 return;

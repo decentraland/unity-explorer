@@ -205,8 +205,9 @@ public class SkyboxToCubemapRendererFeature : ScriptableRendererFeature
             return;
         }
 
-        // The override is a static image, so the cubemap generated on set stays valid
-        if (overrideActive)
+        // A static override image only changes when it is set, so the cubemap generated then stays valid;
+        // a RenderTexture override (live video) is regenerated on the regular cadence like the skybox material
+        if (overrideActive && reflectionOverride is not RenderTexture)
             return;
 
         if (!due)

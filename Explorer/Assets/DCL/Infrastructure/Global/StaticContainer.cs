@@ -9,7 +9,6 @@ using DCL.AvatarRendering.Emotes;
 using DCL.Character.Plugin;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
-using DCL.FeatureFlags;
 using DCL.Gizmos.Plugin;
 using DCL.Input;
 using DCL.Interaction.Utility;
@@ -115,7 +114,6 @@ namespace Global
         public IInputBlock InputBlock { get; private set; } = null!;
         public IScenesCache ScenesCache { get; private set; } = null!;
         public ISceneReadinessReportQueue SceneReadinessReportQueue { get; private set; } = null!;
-        public HttpFeatureFlagsProvider FeatureFlagsProvider { get; private set; } = null!;
         public IPortableExperiencesController PortableExperiencesController { get; private set; } = null!;
         public SmartWearableCache SmartWearableCache { get; private set; } = null!;
         public ImageControllerProvider ImageControllerProvider { get; private set; } = null!;
@@ -129,7 +127,7 @@ namespace Global
         public IGltfContainerAssetsCache GltfContainerAssetsCache { get; private set; } = null!;
         public AssetPreLoadCache AssetPreLoadCache { get; private set; } = null!;
         public CharacterDataPropagationUtility CharacterDataPropagationUtility { get; private set; } = null!;
-        public DiskCache<ISSDescriptorMetadata, SerializeMemoryIterator<StringDiskSerializer.State>> ISSDescriptorDiskCache { get; private set; } = null!;
+        public DiskCache<ISSDescriptorMetadata, SerializeMemoryIterator<StringDiskSerializer.State>> IssDescriptorDiskCache { get; private set; } = null!;
 
         public void Dispose()
         {
@@ -236,8 +234,6 @@ namespace Global
             container.SmartWearableCache = new SmartWearableCache(webRequestsContainer.WebRequestController, decentralandUrlsSource);
             container.ImageControllerProvider = new ImageControllerProvider(globalWorld);
 
-            container.FeatureFlagsProvider = new HttpFeatureFlagsProvider(container.WebRequestsContainer.WebRequestController);
-
             ArrayPool<byte> buffersPool = ArrayPool<byte>.Create(1024 * 1024 * 50, 50);
 
             var assetBundlePlugin = new AssetBundlesPlugin(reportHandlingSettings, container.CacheCleaner, container.WebRequestsContainer.WebRequestController, buffersPool, partialsDiskCache, URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.AssetBundlesCDN)), URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.LodAssetBundlesCDN)), container.GltfContainerAssetsCache, launchMode);
@@ -245,7 +241,7 @@ namespace Global
             var textureDiskCache = new DiskCache<TextureData, SerializeMemoryIterator<TextureDiskSerializer.State>>(diskCache, new TextureDiskSerializer());
             var textureResolvePlugin = new TexturesLoadingPlugin(container.WebRequestsContainer.WebRequestController, container.CacheCleaner, textureDiskCache, launchMode, container.ProfilesContainer.Repository);
 
-            container.ISSDescriptorDiskCache = new DiskCache<ISSDescriptorMetadata, SerializeMemoryIterator<StringDiskSerializer.State>>(diskCache, new ISSDescriptorDiskSerializer());
+            container.IssDescriptorDiskCache = new DiskCache<ISSDescriptorMetadata, SerializeMemoryIterator<StringDiskSerializer.State>>(diskCache, new ISSDescriptorDiskSerializer());
 
             diagnosticsContainer.AddSentryScopeConfigurator(scope =>
             {
@@ -270,7 +266,7 @@ namespace Global
             var renderFeature = container.QualityContainer.RendererFeaturesCache.GetRendererFeature<GPUInstancingRenderFeature>();
             if (!UnityEngine.SystemInfo.supportsComputeShaders)
                 ReportHub.LogWarning(ReportCategory.GPU_INSTANCING, "Compute shaders not supported on this platform; GPU instancing disabled.");
-            else if (enableGPUInstancing && renderFeature != null && renderFeature.Settings != null && renderFeature.Settings.FrustumCullingAndLODGenComputeShader != null)
+            else if (enableGPUInstancing && renderFeature != null && renderFeature.Settings.FrustumCullingAndLODGenComputeShader != null)
             {
                 container.GPUInstancingService = new GPUInstancingService(renderFeature.Settings);
                 renderFeature.Initialize(container.GPUInstancingService, container.RealmData);
@@ -326,7 +322,7 @@ namespace Global
                 new PrimaryPointerInfoPlugin(globalWorld, exposedGlobalDataContainer.ExposedCameraData),
                 promisesAnalyticsPlugin,
                 new SkyboxTimePlugin(),
-                new SceneSkyboxPlugin(globalWorld),
+                new SceneSkyboxPlugin(globalWorld, container.MediaContainer.mediaFactoryBuilder),
                 new AvatarLocomotionOverridesWorldPlugin(globalWorld, playerEntity),
 #if UNITY_EDITOR
                 new GizmosWorldPlugin(),

@@ -10,6 +10,7 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using Entity = Arch.Core.Entity;
 using Object = UnityEngine.Object;
+using Texture = UnityEngine.Texture;
 
 namespace DCL.SkyBox.Tests
 {
@@ -33,6 +34,7 @@ namespace DCL.SkyBox.Tests
         private const string HORIZON_COLOR = "_HorizonColor";
         private const string RIM_COLOR = "_RimColor";
         private const string CLOUDS_COLOR = "_CloudsColor";
+        private const string CLOUDS_CUBEMAP = "_Clouds_Cubemap";
         private const float DEFAULT_CLOUD_OPACITY = 1f;
         private const float DEFAULT_CLOUDS_ROTATION_SPEED = 0.01f;
         private const float DEFAULT_STARS_BRIGHTNESS = 4.62f;
@@ -49,6 +51,8 @@ namespace DCL.SkyBox.Tests
         private Material panoramicCopy = null!;
         private Texture2D reflectionMap = null!;
         private Texture2D skyboxTexture = null!;
+        private Texture2D cloudsTexture = null!;
+        private RenderTexture videoTexture = null!;
 
         private Material? previousSkybox;
         private Light? previousSun;
@@ -86,6 +90,8 @@ namespace DCL.SkyBox.Tests
             panoramicMaterial = new Material(Shader.Find("Skybox/Panoramic")) { name = PANORAMIC_NAME };
             reflectionMap = new Texture2D(2, 2);
             skyboxTexture = new Texture2D(2, 2);
+            cloudsTexture = new Texture2D(2, 2);
+            videoTexture = new RenderTexture(2, 2, 0);
 
             feature = ScriptableObject.CreateInstance<SkyboxToCubemapRendererFeature>();
             rendererFeaturesCache = Substitute.For<IRendererFeaturesCache>();
@@ -135,6 +141,8 @@ namespace DCL.SkyBox.Tests
             Object.DestroyImmediate(panoramicMaterial);
             Object.DestroyImmediate(reflectionMap);
             Object.DestroyImmediate(skyboxTexture);
+            Object.DestroyImmediate(cloudsTexture);
+            Object.DestroyImmediate(videoTexture);
         }
 
         [Test]
@@ -263,6 +271,81 @@ namespace DCL.SkyBox.Tests
             // Assert
             Assert.That(feature.ReflectionOverride, Is.SameAs(reflectionMap));
             Assert.That(RenderSettings.skybox.mainTexture, Is.SameAs(skyboxTexture));
+        }
+
+        [Test]
+        public void PushVideoRenderTextureToSkyAndReflections()
+        {
+            // Arrange
+            Overrides().SkyboxTexture = videoTexture;
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            Assert.That(RenderSettings.skybox.name, Is.EqualTo(PANORAMIC_NAME));
+            Assert.That(RenderSettings.skybox.mainTexture, Is.SameAs(videoTexture));
+            Assert.That(feature.ReflectionOverride, Is.SameAs(videoTexture));
+            Assert.That(Overrides().AppliedSkyboxTexture, Is.SameAs(videoTexture));
+            Assert.That(Overrides().AppliedReflectionSource, Is.SameAs(videoTexture));
+        }
+
+        [Test]
+        public void TrackAppliedCloudsTextureAndRestoreDefaultCubemapOnClear()
+        {
+            // Arrange
+            Texture defaultCubemap = genesisCopy.GetTexture(CLOUDS_CUBEMAP);
+            Assert.That(defaultCubemap, Is.Not.Null);
+            Overrides().CloudsTexture = cloudsTexture;
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            Assert.That(Overrides().AppliedCloudsTexture, Is.SameAs(cloudsTexture));
+
+            // Act
+            Overrides().CloudsTexture = null;
+            system.Update(0);
+
+            // Assert
+            Assert.That(Overrides().AppliedCloudsTexture, Is.Null);
+            Assert.That(genesisCopy.GetTexture(CLOUDS_CUBEMAP), Is.SameAs(defaultCubemap));
+        }
+
+        [Test]
+        public void BindProjectedCubemapToGenesisMaterial()
+        {
+            if (SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null)
+                Assert.Ignore("The equirect-to-cube projection needs a graphics device");
+
+            // Arrange
+            Overrides().CloudsTexture = cloudsTexture;
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            Texture bound = genesisCopy.GetTexture(CLOUDS_CUBEMAP);
+            Assert.That(bound, Is.InstanceOf<RenderTexture>());
+            Assert.That(((RenderTexture)bound).dimension, Is.EqualTo(TextureDimension.Cube));
+            Assert.That(bound.width, Is.EqualTo(256));
+        }
+
+        [Test]
+        public void NotReprojectCloudsWhenReferenceUnchanged()
+        {
+            // Arrange
+            Overrides().CloudsTexture = cloudsTexture;
+            system.Update(0);
+            Texture applied = genesisCopy.GetTexture(CLOUDS_CUBEMAP);
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            Assert.That(genesisCopy.GetTexture(CLOUDS_CUBEMAP), Is.SameAs(applied));
+            Assert.That(Overrides().AppliedCloudsTexture, Is.SameAs(cloudsTexture));
         }
 
         [Test]

@@ -27,7 +27,7 @@ namespace DCL.ECSComponents {
             "CihkZWNlbnRyYWxhbmQvc2RrL2NvbXBvbmVudHMvc2t5Ym94LnByb3RvEhtk",
             "ZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMaIWRlY2VudHJhbGFuZC9jb21t",
             "b24vdGV4dHVyZS5wcm90bxoiZGVjZW50cmFsYW5kL2NvbW1vbi9ncmFkaWVu",
-            "dC5wcm90byK2CQoIUEJTa3lib3gSPgoOcmVmbGVjdGlvbl9tYXAYASABKAsy",
+            "dC5wcm90byL7CQoIUEJTa3lib3gSPgoOcmVmbGVjdGlvbl9tYXAYASABKAsy",
             "IS5kZWNlbnRyYWxhbmQuY29tbW9uLlRleHR1cmVVbmlvbkgAiAEBEj4KDnNr",
             "eWJveF90ZXh0dXJlGAIgASgLMiEuZGVjZW50cmFsYW5kLmNvbW1vbi5UZXh0",
             "dXJlVW5pb25IAYgBARI7CgNzdW4YAyABKAsyKS5kZWNlbnRyYWxhbmQuc2Rr",
@@ -47,21 +47,23 @@ namespace DCL.ECSComponents {
             "iAEBEjQKA3JpbRgEIAEoCzIiLmRlY2VudHJhbGFuZC5jb21tb24uQ29sb3JH",
             "cmFkaWVudEgDiAEBQgkKB196ZW5pdGhCCgoIX2hvcml6b25CCAoGX25hZGly",
             "QgYKBF9yaW0aRwoDRm9nEjYKBWNvbG9yGAEgASgLMiIuZGVjZW50cmFsYW5k",
-            "LmNvbW1vbi5Db2xvckdyYWRpZW50SACIAQFCCAoGX2NvbG9yGooBCgZDbG91",
+            "LmNvbW1vbi5Db2xvckdyYWRpZW50SACIAQFCCAoGX2NvbG9yGs8BCgZDbG91",
             "ZHMSFAoHb3BhY2l0eRgBIAEoAkgAiAEBEhIKBXNwZWVkGAIgASgCSAGIAQES",
             "NgoFY29sb3IYAyABKAsyIi5kZWNlbnRyYWxhbmQuY29tbW9uLkNvbG9yR3Jh",
-            "ZGllbnRIAogBAUIKCghfb3BhY2l0eUIICgZfc3BlZWRCCAoGX2NvbG9yGi8K",
-            "BVN0YXJzEhcKCmJyaWdodG5lc3MYASABKAJIAIgBAUINCgtfYnJpZ2h0bmVz",
-            "c0IRCg9fcmVmbGVjdGlvbl9tYXBCEQoPX3NreWJveF90ZXh0dXJlQgYKBF9z",
-            "dW5CDQoLX3NreV9jb2xvcnNCBgoEX2ZvZ0IJCgdfY2xvdWRzQggKBl9zdGFy",
-            "c0IUqgIRRENMLkVDU0NvbXBvbmVudHNiBnByb3RvMw=="));
+            "ZGllbnRIAogBARI3Cgd0ZXh0dXJlGAQgASgLMiEuZGVjZW50cmFsYW5kLmNv",
+            "bW1vbi5UZXh0dXJlVW5pb25IA4gBAUIKCghfb3BhY2l0eUIICgZfc3BlZWRC",
+            "CAoGX2NvbG9yQgoKCF90ZXh0dXJlGi8KBVN0YXJzEhcKCmJyaWdodG5lc3MY",
+            "ASABKAJIAIgBAUINCgtfYnJpZ2h0bmVzc0IRCg9fcmVmbGVjdGlvbl9tYXBC",
+            "EQoPX3NreWJveF90ZXh0dXJlQgYKBF9zdW5CDQoLX3NreV9jb2xvcnNCBgoE",
+            "X2ZvZ0IJCgdfY2xvdWRzQggKBl9zdGFyc0IUqgIRRENMLkVDU0NvbXBvbmVu",
+            "dHNiBnByb3RvMw=="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::Decentraland.Common.TextureReflection.Descriptor, global::Decentraland.Common.GradientReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
             new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBSkybox), global::DCL.ECSComponents.PBSkybox.Parser, new[]{ "ReflectionMap", "SkyboxTexture", "Sun", "SkyColors", "Fog", "Clouds", "Stars" }, new[]{ "ReflectionMap", "SkyboxTexture", "Sun", "SkyColors", "Fog", "Clouds", "Stars" }, null, null, new pbr::GeneratedClrTypeInfo[] { new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBSkybox.Types.Sun), global::DCL.ECSComponents.PBSkybox.Types.Sun.Parser, new[]{ "Color", "Visible" }, new[]{ "Color", "Visible" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBSkybox.Types.SkyColors), global::DCL.ECSComponents.PBSkybox.Types.SkyColors.Parser, new[]{ "Zenith", "Horizon", "Nadir", "Rim" }, new[]{ "Zenith", "Horizon", "Nadir", "Rim" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBSkybox.Types.Fog), global::DCL.ECSComponents.PBSkybox.Types.Fog.Parser, new[]{ "Color" }, new[]{ "Color" }, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBSkybox.Types.Clouds), global::DCL.ECSComponents.PBSkybox.Types.Clouds.Parser, new[]{ "Opacity", "Speed", "Color" }, new[]{ "Opacity", "Speed", "Color" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBSkybox.Types.Clouds), global::DCL.ECSComponents.PBSkybox.Types.Clouds.Parser, new[]{ "Opacity", "Speed", "Color", "Texture" }, new[]{ "Opacity", "Speed", "Color", "Texture" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBSkybox.Types.Stars), global::DCL.ECSComponents.PBSkybox.Types.Stars.Parser, new[]{ "Brightness" }, new[]{ "Brightness" }, null, null, null)})
           }));
     }
@@ -71,14 +73,16 @@ namespace DCL.ECSComponents {
   #region Messages
   /// <summary>
   /// PBSkybox lets a scene customize the environment rendering while the player is inside it.
-  /// It is only read on the scene root entity (engine.RootEntity). Textures are equirectangular 2:1,
-  /// only `Texture` sources. Every override is active ONLY while the player is inside the scene;
-  /// when the player leaves, the component is removed, or a group/field is unset, the environment
-  /// returns to the default time-of-day skybox. Gradients use `time` as normalized time of day
-  /// (0 = 00:00, 0.5 = 12:00, 1 = 24:00); single-key gradients are constant colors, and both
-  /// ends clamp (no midnight wrap). Overrides are global render state while active, affecting
-  /// how neighbouring parcels look from inside the scene, with instant application. Time-of-day
-  /// lighting continues underneath; ambient lighting is derived from `sky_colors`.
+  /// It is only read on the scene root entity (engine.RootEntity). Textures are equirectangular 2:1
+  /// and accept `Texture` (file) and `VideoTexture` sources; `AvatarTexture` is ignored. A video
+  /// source is sampled live; reflections derived from a video follow it with a few frames of delay.
+  /// Every override is active ONLY while the player is inside the scene; when the player leaves,
+  /// the component is removed, or a group/field is unset, the environment returns to the default
+  /// time-of-day skybox. Gradients use `time` as normalized time of day (0 = 00:00, 0.5 = 12:00,
+  /// 1 = 24:00); single-key gradients are constant colors, and both ends clamp (no midnight wrap).
+  /// Overrides are global render state while active, affecting how neighbouring parcels look from
+  /// inside the scene, with instant application. Time-of-day lighting continues underneath; ambient
+  /// lighting is derived from `sky_colors`.
   /// </summary>
   [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
   public sealed partial class PBSkybox : pb::IMessage<PBSkybox>
@@ -135,7 +139,9 @@ namespace DCL.ECSComponents {
     public const int ReflectionMapFieldNumber = 1;
     private global::Decentraland.Common.TextureUnion reflectionMap_;
     /// <summary>
-    /// Replaces the reflection cubemap used by every reflective material.
+    /// Replaces the reflection cubemap used by every reflective material. Equirectangular 2:1 image;
+    /// accepts `Texture` (file) and `VideoTexture` sources; `AvatarTexture` is ignored. A video source
+    /// is sampled live; reflections follow it with a few frames of delay.
     /// Unset: reflections are derived from `skybox_texture` when set, otherwise default.
     /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -151,8 +157,9 @@ namespace DCL.ECSComponents {
     public const int SkyboxTextureFieldNumber = 2;
     private global::Decentraland.Common.TextureUnion skyboxTexture_;
     /// <summary>
-    /// Replaces the visible sky. Time-of-day lighting (ambient, sun, fog) is unaffected.
-    /// Unset = default procedural skybox.
+    /// Replaces the visible sky. Equirectangular 2:1 image; accepts `Texture` (file) and `VideoTexture`
+    /// sources; `AvatarTexture` is ignored. A video source is sampled live.
+    /// Time-of-day lighting (ambient, sun, fog) is unaffected. Unset = default procedural skybox.
     /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
@@ -1464,6 +1471,7 @@ namespace DCL.ECSComponents {
           opacity_ = other.opacity_;
           speed_ = other.speed_;
           color_ = other.color_ != null ? other.color_.Clone() : null;
+          texture_ = other.texture_ != null ? other.texture_.Clone() : null;
           _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
         }
 
@@ -1548,6 +1556,24 @@ namespace DCL.ECSComponents {
           }
         }
 
+        /// <summary>Field number for the "texture" field.</summary>
+        public const int TextureFieldNumber = 4;
+        private global::Decentraland.Common.TextureUnion texture_;
+        /// <summary>
+        /// Equirectangular 2:1 cloud layer image replacing the default clouds. Channels: R = cloud tint
+        /// intensity (multiplied by `color`), G = opacity/coverage, B = sun-highlight mask; a grayscale
+        /// image works as a plain cloud mask. `Texture` and `VideoTexture` sources are supported.
+        /// Unset = default clouds. Inert while `skybox_texture` is set.
+        /// </summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public global::Decentraland.Common.TextureUnion Texture {
+          get { return texture_; }
+          set {
+            texture_ = value;
+          }
+        }
+
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
         public override bool Equals(object other) {
@@ -1566,6 +1592,7 @@ namespace DCL.ECSComponents {
           if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(Opacity, other.Opacity)) return false;
           if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(Speed, other.Speed)) return false;
           if (!object.Equals(Color, other.Color)) return false;
+          if (!object.Equals(Texture, other.Texture)) return false;
           return Equals(_unknownFields, other._unknownFields);
         }
 
@@ -1576,6 +1603,7 @@ namespace DCL.ECSComponents {
           if (HasOpacity) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(Opacity);
           if (HasSpeed) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(Speed);
           if (color_ != null) hash ^= Color.GetHashCode();
+          if (texture_ != null) hash ^= Texture.GetHashCode();
           if (_unknownFields != null) {
             hash ^= _unknownFields.GetHashCode();
           }
@@ -1606,6 +1634,10 @@ namespace DCL.ECSComponents {
             output.WriteRawTag(26);
             output.WriteMessage(Color);
           }
+          if (texture_ != null) {
+            output.WriteRawTag(34);
+            output.WriteMessage(Texture);
+          }
           if (_unknownFields != null) {
             _unknownFields.WriteTo(output);
           }
@@ -1628,6 +1660,10 @@ namespace DCL.ECSComponents {
             output.WriteRawTag(26);
             output.WriteMessage(Color);
           }
+          if (texture_ != null) {
+            output.WriteRawTag(34);
+            output.WriteMessage(Texture);
+          }
           if (_unknownFields != null) {
             _unknownFields.WriteTo(ref output);
           }
@@ -1646,6 +1682,9 @@ namespace DCL.ECSComponents {
           }
           if (color_ != null) {
             size += 1 + pb::CodedOutputStream.ComputeMessageSize(Color);
+          }
+          if (texture_ != null) {
+            size += 1 + pb::CodedOutputStream.ComputeMessageSize(Texture);
           }
           if (_unknownFields != null) {
             size += _unknownFields.CalculateSize();
@@ -1670,6 +1709,12 @@ namespace DCL.ECSComponents {
               Color = new global::Decentraland.Common.ColorGradient();
             }
             Color.MergeFrom(other.Color);
+          }
+          if (other.texture_ != null) {
+            if (texture_ == null) {
+              Texture = new global::Decentraland.Common.TextureUnion();
+            }
+            Texture.MergeFrom(other.Texture);
           }
           _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
         }
@@ -1705,6 +1750,13 @@ namespace DCL.ECSComponents {
                 input.ReadMessage(Color);
                 break;
               }
+              case 34: {
+                if (texture_ == null) {
+                  Texture = new global::Decentraland.Common.TextureUnion();
+                }
+                input.ReadMessage(Texture);
+                break;
+              }
             }
           }
         #endif
@@ -1737,6 +1789,13 @@ namespace DCL.ECSComponents {
                   Color = new global::Decentraland.Common.ColorGradient();
                 }
                 input.ReadMessage(Color);
+                break;
+              }
+              case 34: {
+                if (texture_ == null) {
+                  Texture = new global::Decentraland.Common.TextureUnion();
+                }
+                input.ReadMessage(Texture);
                 break;
               }
             }

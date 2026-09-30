@@ -1,7 +1,9 @@
 using Arch.Core;
 using Arch.SystemGroups;
+using CRDT;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
+using DCL.SDKComponents.MediaStream;
 using DCL.SDKComponents.Utils;
 using DCL.SkyBox;
 using DCL.SkyBox.Components;
@@ -39,6 +41,7 @@ namespace DCL.SDKComponents.Skybox.Systems
         private readonly ISceneData sceneData;
         private readonly IPartitionComponent scenePartition;
         private readonly ISceneStateProvider sceneStateProvider;
+        private readonly IMediaFactory mediaFactory;
         private readonly SingleInstanceEntity globalSkyboxEntity;
 
         internal SceneSkyboxHandlerSystem(World world,
@@ -46,13 +49,15 @@ namespace DCL.SDKComponents.Skybox.Systems
             Entity rootEntity,
             ISceneData sceneData,
             IPartitionComponent scenePartition,
-            ISceneStateProvider sceneStateProvider) : base(world)
+            ISceneStateProvider sceneStateProvider,
+            IMediaFactory mediaFactory) : base(world)
         {
             this.globalWorld = globalWorld;
             this.rootEntity = rootEntity;
             this.sceneData = sceneData;
             this.scenePartition = scenePartition;
             this.sceneStateProvider = sceneStateProvider;
+            this.mediaFactory = mediaFactory;
 
             globalSkyboxEntity = new SingleInstanceEntity(GLOBAL_SKYBOX_QUERY, globalWorld);
         }
@@ -65,9 +70,18 @@ namespace DCL.SDKComponents.Skybox.Systems
         public void OnSceneIsCurrentChanged(bool value)
         {
             if (value)
+            {
                 Sync(skipDirtyCheck: true);
-            else
-                ClearOverridesIfOwner();
+                return;
+            }
+
+            ClearOverridesIfOwner();
+
+            // File textures stay loaded for an instant re-apply; video consumers are released and re-added by the next sync
+            ref SceneSkyboxComponent component = ref World.Get<SceneSkyboxComponent>(rootEntity);
+            ReleaseVideo(ref component.ReflectionMap);
+            ReleaseVideo(ref component.SkyboxTexture);
+            ReleaseVideo(ref component.CloudsTexture);
         }
 
         public void FinalizeComponents(in Query query)
@@ -78,9 +92,7 @@ namespace DCL.SDKComponents.Skybox.Systems
 
             if (!hasComponent) return;
 
-            component.ReflectionMap.CleanUp(World);
-            component.SkyboxTexture.CleanUp(World);
-            component.Environment = null;
+            ReleaseAll(ref component);
         }
 
         protected override void Update(float t)
@@ -97,9 +109,7 @@ namespace DCL.SDKComponents.Skybox.Systems
 
             if (!hasPbSkybox)
             {
-                Release(ref component.ReflectionMap);
-                Release(ref component.SkyboxTexture);
-                component.Environment = null;
+                ReleaseAll(ref component);
                 ClearOverridesIfOwner();
                 return;
             }
@@ -110,11 +120,13 @@ namespace DCL.SDKComponents.Skybox.Systems
             {
                 changed |= UpdateSlot(pbSkybox.ReflectionMap, ref component.ReflectionMap);
                 changed |= UpdateSlot(pbSkybox.SkyboxTexture, ref component.SkyboxTexture);
+                changed |= UpdateSlot(pbSkybox.Clouds?.Texture, ref component.CloudsTexture);
                 changed |= UpdateEnvironment(pbSkybox, ref component);
             }
 
             changed |= ResolveSlot(ref component.ReflectionMap);
             changed |= ResolveSlot(ref component.SkyboxTexture);
+            changed |= ResolveSlot(ref component.CloudsTexture);
 
             if (changed || skipDirtyCheck)
                 PushOverrides(in component);
@@ -129,9 +141,9 @@ namespace DCL.SDKComponents.Skybox.Systems
             if (texture == null)
                 return Release(ref slot);
 
-            if (texture.TexCase != TextureUnion.TexOneofCase.Texture)
+            if (texture.TexCase == TextureUnion.TexOneofCase.AvatarTexture)
             {
-                ReportHub.LogWarning(GetReportData(), $"{nameof(PBSkybox)} supports file textures only, ignoring {texture.TexCase}");
+                ReportHub.LogWarning(GetReportData(), $"{nameof(PBSkybox)} supports file and video textures only, ignoring {texture.TexCase}");
                 return Release(ref slot);
             }
 
@@ -142,8 +154,15 @@ namespace DCL.SDKComponents.Skybox.Systems
 
             TextureComponent requested = textureComponent.Value;
 
+            return requested.IsVideoTexture
+                ? UpdateVideoSlot(requested.VideoPlayerEntity, ref slot)
+                : UpdateFileSlot(in requested, ref slot);
+        }
+
+        private bool UpdateFileSlot(in TextureComponent requested, ref TextureSlot slot)
+        {
             // Same source as the loading or loaded texture
-            if (TextureComponentUtils.Equals(in requested, in slot.LoadingIntention))
+            if (!slot.IsVideoTexture && TextureComponentUtils.Equals(in requested, in slot.LoadingIntention))
                 return false;
 
             bool released = Release(ref slot);
@@ -157,8 +176,28 @@ namespace DCL.SDKComponents.Skybox.Systems
             return released;
         }
 
+        /// <summary>
+        ///     Records the video source; <see cref="ResolveSlot" /> adds the consumer in the same sync.
+        /// </summary>
+        private bool UpdateVideoSlot(CRDTEntity videoPlayerEntity, ref TextureSlot slot)
+        {
+            // Same video player as the pending or resolved consumer
+            if (slot.IsVideoTexture && slot.VideoPlayerEntity.Equals(videoPlayerEntity))
+                return false;
+
+            bool released = Release(ref slot);
+
+            slot.IsVideoTexture = true;
+            slot.VideoPlayerEntity = videoPlayerEntity;
+
+            return released;
+        }
+
         /// <returns>True when a loaded texture was resolved into the slot.</returns>
-        private bool ResolveSlot(ref TextureSlot slot)
+        private bool ResolveSlot(ref TextureSlot slot) =>
+            slot.IsVideoTexture ? ResolveVideoSlot(ref slot) : ResolveFileSlot(ref slot);
+
+        private bool ResolveFileSlot(ref TextureSlot slot)
         {
             if (slot.LoadingPromise == null)
                 return false;
@@ -182,12 +221,53 @@ namespace DCL.SDKComponents.Skybox.Systems
             return true;
         }
 
+        /// <summary>
+        ///     Retries every sync until the video player entity is registered and playing into its texture. A resolved
+        ///     texture is dropped again when its video player entity is deleted: the pooled render texture behind it can be
+        ///     handed to another video, so the slot goes back to retrying until the entity is recreated.
+        /// </summary>
+        /// <returns>True when the published texture changed.</returns>
+        private bool ResolveVideoSlot(ref TextureSlot slot)
+        {
+            if (slot.TextureData != null)
+            {
+                if (mediaFactory.HasVideoTexture(slot.VideoPlayerEntity))
+                    return false;
+
+                CRDTEntity videoPlayerEntity = slot.VideoPlayerEntity;
+                slot.CleanUp(World, mediaFactory);
+                slot.IsVideoTexture = true;
+                slot.VideoPlayerEntity = videoPlayerEntity;
+                return true;
+            }
+
+            if (!mediaFactory.TryAddScreenSpaceConsumer(slot.VideoPlayerEntity, out TextureData? textureData))
+                return false;
+
+            slot.TextureData = textureData;
+            return true;
+        }
+
         /// <returns>True when a loaded texture was released.</returns>
         private bool Release(ref TextureSlot slot)
         {
             bool hadTexture = slot.TextureData != null;
-            slot.CleanUp(World);
+            slot.CleanUp(World, mediaFactory);
             return hadTexture;
+        }
+
+        private void ReleaseVideo(ref TextureSlot slot)
+        {
+            if (slot.IsVideoTexture)
+                slot.CleanUp(World, mediaFactory);
+        }
+
+        private void ReleaseAll(ref SceneSkyboxComponent component)
+        {
+            component.ReflectionMap.CleanUp(World, mediaFactory);
+            component.SkyboxTexture.CleanUp(World, mediaFactory);
+            component.CloudsTexture.CleanUp(World, mediaFactory);
+            component.Environment = null;
         }
 
         /// <summary>
@@ -210,8 +290,9 @@ namespace DCL.SDKComponents.Skybox.Systems
         private void PushOverrides(in SceneSkyboxComponent component)
         {
             ref SceneSkyboxOverrides overrides = ref globalWorld.Get<SceneSkyboxOverrides>(globalSkyboxEntity);
-            overrides.ReflectionMap = component.ReflectionMap.TextureData?.EnsureTexture2D();
-            overrides.SkyboxTexture = component.SkyboxTexture.TextureData?.EnsureTexture2D();
+            overrides.ReflectionMap = component.ReflectionMap.TextureData?.Asset.Texture;
+            overrides.SkyboxTexture = component.SkyboxTexture.TextureData?.Asset.Texture;
+            overrides.CloudsTexture = component.CloudsTexture.TextureData?.Asset.Texture;
             overrides.Environment = component.Environment;
             overrides.Owner = sceneInfo;
         }
@@ -224,6 +305,7 @@ namespace DCL.SDKComponents.Skybox.Systems
 
             overrides.ReflectionMap = null;
             overrides.SkyboxTexture = null;
+            overrides.CloudsTexture = null;
             overrides.Environment = null;
             overrides.Owner = null;
         }
