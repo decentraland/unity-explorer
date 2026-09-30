@@ -59,7 +59,7 @@
         </ui:VisualElement>
         <ui:VisualElement name="FeaturedPlaces" class="lobby__places lobby__places--featured">
             <ui:Label name="Title" text="Recommended Places" class="lobby__places-title" picking-mode="Ignore" />
-            <DCL.Lobby.LobbyRailElement name="Rail" class="lobby__places-rail" cards-per-page="3" />
+            <DCL.Lobby.LobbyRailElement name="Rail" class="lobby__places-rail" cards-per-page="3" arrows-move-one-card="true" />
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

@@ -85,6 +85,12 @@ namespace DCL.Lobby
             set => cardsPerPage = Mathf.Max(1, value);
         }
 
+        /// <summary>
+        ///     Makes the arrows slide a single card instead of a whole page; the wheel and the dots keep going by pages.
+        /// </summary>
+        [UxmlAttribute]
+        public bool ArrowsMoveOneCard { get; set; }
+
         public int CurrentPage { get; private set; }
 
         public int PageCount => (shownCount + cardsPerPage - 1) / cardsPerPage;
@@ -187,11 +193,28 @@ namespace DCL.Lobby
             return arrow;
         }
 
-        private void OnPreviousClicked() =>
-            SnapTo(PageBefore());
+        private void OnPreviousClicked()
+        {
+            if (ArrowsMoveOneCard)
+                StepToCard(currentCard - 1);
+            else
+                SnapTo(PageBefore());
+        }
 
-        private void OnNextClicked() =>
-            SnapTo(PageAfter());
+        private void OnNextClicked()
+        {
+            if (ArrowsMoveOneCard)
+                StepToCard(currentCard + 1);
+            else
+                SnapTo(PageAfter());
+        }
+
+        // The last cards share the offset of the end: stepping into them lands on the first of those, so one step back leaves the end
+        private void StepToCard(int card)
+        {
+            card = CardAt(CardOffset(Mathf.Clamp(card, 0, Mathf.Max(0, shownCount - 1))));
+            SnapToCard(card, PageAt(CardOffset(card)));
+        }
 
         // Presses on the arrows are theirs: dragging from one would steal the click
         private void OnPointerDown(PointerDownEvent evt)
