@@ -399,7 +399,8 @@ namespace DCL.Profiles.Tests
             (SelfProfileModel next, SelfProfileCmd cmd) = SelfProfileModel.Update(model, msg);
 
             Assert.That(next, Is.EqualTo(model), $"{msg} should not change the model");
-            Assert.That(cmd.GetKind(), Is.EqualTo(SelfProfileCmd.Kind.None), $"{msg} should not emit a command");
+            Assert.That(cmd.IsIgnore(out string? reason), Is.True, $"{msg} should be ignored, got {cmd}");
+            Assert.That(reason, Is.Not.Empty);
         }
 
         private static Identified AssertIdentified(in SelfProfileModel model)
