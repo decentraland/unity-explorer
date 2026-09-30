@@ -116,9 +116,6 @@ namespace MVC
 
         public async UniTask HideViewAsync(CancellationToken ct)
         {
-            // A close intent (Escape, the popup closer, a replacing view) can land while the show animation is still playing.
-            // Tearing down right away would run OnViewClose before OnViewShow; the lifecycle still awaiting the animation would
-            // then apply OnViewShow to an already hidden view, keeping its input blocks and leaving the state stuck at ViewFocused.
             UniTaskCompletionSource? pendingShow = showInProgress;
 
             if (pendingShow != null)
