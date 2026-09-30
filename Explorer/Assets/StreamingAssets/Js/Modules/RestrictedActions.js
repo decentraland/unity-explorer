@@ -35,16 +35,19 @@ module.exports.movePlayerTo = async function(message) {
     const avatarTarget = message.avatarTarget != undefined
     const duration = message.duration != undefined
     
+    // Each optional target is sent as a presence flag followed by its coordinates (0 when absent).
     const isSuccess = await UnityRestrictedActionsApi.MovePlayerTo(
         message.newRelativePosition.x,
         message.newRelativePosition.y,
         message.newRelativePosition.z,
-        cameraTarget ? message.cameraTarget.x : null,
-        cameraTarget ? message.cameraTarget.y : null,
-        cameraTarget ? message.cameraTarget.z : null,
-        avatarTarget ? message.avatarTarget.x : null,
-        avatarTarget ? message.avatarTarget.y : null,
-        avatarTarget ? message.avatarTarget.z : null,
+        cameraTarget,
+        cameraTarget ? message.cameraTarget.x : 0,
+        cameraTarget ? message.cameraTarget.y : 0,
+        cameraTarget ? message.cameraTarget.z : 0,
+        avatarTarget,
+        avatarTarget ? message.avatarTarget.x : 0,
+        avatarTarget ? message.avatarTarget.y : 0,
+        avatarTarget ? message.avatarTarget.z : 0,
         duration ? message.duration : null)
     
     return {
@@ -53,11 +56,13 @@ module.exports.movePlayerTo = async function(message) {
 }
 
 module.exports.teleportTo = async function(message) {
-    // Unpack optional fields and forward to the C# bridge; both are nullable.
+    // Coordinates are sent as a presence flag followed by x and y (0 when absent); realm is nullable.
     const coords = message.worldCoordinates
+    const hasCoords = coords != undefined
     UnityRestrictedActionsApi.TeleportTo(
-        coords != undefined ? Number(coords.x) : null,
-        coords != undefined ? Number(coords.y) : null,
+        hasCoords,
+        hasCoords ? Number(coords.x) : 0,
+        hasCoords ? Number(coords.y) : 0,
         message.realm != undefined ? message.realm : null);
     return {};
 }
