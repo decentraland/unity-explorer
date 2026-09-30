@@ -16,6 +16,7 @@
     --dcl-font-azeretmono-medium: url('/Assets/DCL/UIToolkit/Fonts/AzeretMono-Medium SDF.asset');
     --dcl-font-inter-regular: url('/Assets/DCL/UIToolkit/Fonts/Inter_18pt-Regular SDF.asset');
     --dcl-font-inter-semibold: url('/Assets/DCL/UIToolkit/Fonts/Inter_18pt-SemiBold SDF.asset');
+    --dcl-font-inter-bold: url('/Assets/DCL/UIToolkit/Fonts/Inter_18pt-Bold SDF.asset');
 
     -unity-font-definition: var(--dcl-font-inter-regular);
     color: var(--dcl-color-snow);

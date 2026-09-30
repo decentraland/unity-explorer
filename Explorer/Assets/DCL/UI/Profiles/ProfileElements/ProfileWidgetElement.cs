@@ -1,13 +1,12 @@
 using DCL.Utilities;
 using System;
 using UnityEngine.UIElements;
-using Utility.UIToolkit;
 
 namespace DCL.UI.ProfileElements
 {
     /// <summary>
     ///     UI Toolkit counterpart of <see cref="ProfileWidgetView" />: the picture of the current user next to the name, with the wallet
-    ///     tag under it while there is one; a click anywhere on it is reported through <see cref="Clicked" />. It builds its own children,
+    ///     tag beside it while there is one; a click anywhere on it is reported through <see cref="Clicked" />. It builds its own children,
     ///     so it is complete wherever it is created; ProfileWidget.uss styles them, so the document that hosts it imports that stylesheet.
     /// </summary>
     [UxmlElement]
@@ -19,6 +18,7 @@ namespace DCL.UI.ProfileElements
         private const string USS_TEXTS = USS_BLOCK + "__texts";
         private const string USS_NAME = USS_BLOCK + "__name";
         private const string USS_ADDRESS = USS_BLOCK + "__address";
+        private const string USS_ADDRESS_EMPTY = USS_ADDRESS + "--empty";
 
         private const string PICTURE_NAME = "Picture";
         private const string TEXTS_NAME = "Texts";
@@ -41,7 +41,7 @@ namespace DCL.UI.ProfileElements
         }
 
         /// <summary>
-        ///     Hidden while empty.
+        ///     Marked empty, which the stylesheet hides, while there is nothing to show.
         /// </summary>
         [UxmlAttribute]
         public string Address
@@ -51,7 +51,7 @@ namespace DCL.UI.ProfileElements
             set
             {
                 addressLabel.text = value;
-                addressLabel.SetDisplayed(!string.IsNullOrEmpty(value));
+                addressLabel.EnableInClassList(USS_ADDRESS_EMPTY, string.IsNullOrEmpty(value));
             }
         }
 
@@ -96,10 +96,9 @@ namespace DCL.UI.ProfileElements
             thumbnailSubscription = thumbnail.Subscribe(OnThumbnailUpdated);
         }
 
-        // The name takes the profile color; without a picture it fills the circle too, and a fetch keeps the previous picture up while there is one
+        // The profile color fills the circle without a picture, and a fetch keeps the previous picture up while there is one
         private void OnThumbnailUpdated(ProfileThumbnailViewModel model)
         {
-            nameLabel.style.color = model.ProfileColor;
             picture.style.backgroundColor = model.ProfileColor;
             picture.style.backgroundImage = model.Sprite == null ? StyleKeyword.Null : new StyleBackground(model.Sprite);
             EnableInClassList(USS_LOADING, model.ThumbnailState == ProfileThumbnailViewModel.State.Loading && model.Sprite == null);

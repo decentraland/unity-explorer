@@ -1,29 +1,30 @@
-/* Outlined dark pill with the picture on the left and the texts centered in the rest; the outline lights up on hover */
+/* Solid black 163x46 pill like ProfileWidget.prefab as the lobby draws it, with a 3% white outline; the fill lightens on hover */
 .profile-widget {
-    width: 167px;
+    width: 163px;
     height: 46px;
     flex-direction: row;
     align-items: center;
-    padding: 1px 10px 1px 1px;
     border-width: 2px;
     border-radius: 23px;
-    border-color: rgba(255, 255, 255, 0.1);
-    background-color: rgba(0, 0, 0, 0.6);
-    transition: border-color 0.1s;
+    border-color: rgba(255, 255, 255, 0.03);
+    background-color: black;
+    transition: background-color 0.1s;
 }
 
 .profile-widget:hover {
-    border-color: rgba(255, 255, 255, 0.3);
+    background-color: rgb(31, 31, 31);
 }
 
-/* The profile color fills the circle while the picture is missing; the picture itself is set inline by the element */
+/* 42px circle 2px in from the left edge, ringed by the 6px outline of the 256px ellipse of ProfilePictureView at this size. The profile color fills it while the picture is missing; the picture itself is set inline by the element */
 .profile-widget__picture {
-    flex-shrink: 0;
-    width: 40px;
-    height: 40px;
-    border-width: 2px;
-    border-radius: 20px;
-    border-color: rgba(255, 255, 255, 0.5);
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 42px;
+    height: 42px;
+    border-width: 1px;
+    border-radius: 21px;
+    border-color: rgba(255, 255, 255, 0.2);
     background-color: white;
     background-image: url('/Assets/DCL/Chat/Textures/DefaultProfileThumbnail.png');
     -unity-background-scale-mode: scale-and-crop;
@@ -33,18 +34,18 @@
     background-image: none;
 }
 
-/* The name and the wallet tag sit on one line, centered in what the picture leaves */
+/* The name and the wallet tag sit on one line, centred between 50px and 153px of the pill */
 .profile-widget__texts {
     flex-grow: 1;
     flex-shrink: 1;
-    margin-left: 10px;
+    margin-left: 48px;
+    margin-right: 8px;
     flex-direction: row;
     align-items: center;
     justify-content: center;
     overflow: hidden;
 }
 
-/* Takes the profile color, set inline by the element */
 .profile-widget__name {
     flex-shrink: 1;
     font-size: 16px;
@@ -62,4 +63,8 @@
     font-size: 14px;
     -unity-text-align: middle-center;
     color: var(--dcl-color-silver);
+}
+
+.profile-widget__address--empty {
+    display: none;
 }

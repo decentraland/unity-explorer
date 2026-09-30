@@ -2,23 +2,31 @@
     --place-card-hover-duration: 0.3s;
 }
 
-/* The Featured Places card of the design: 280x156 with 16px corners, the thumbnail filling it and the texts over its bottom */
+/* The place card of the uGUI lobby: 280x165 with 24px corners, the thumbnail over a 55px footer that holds the texts */
 .lobby-place-card {
     width: 280px;
-    height: 156px;
-    border-radius: 16px;
-    background-color: var(--dcl-color-black-40);
+    height: 165px;
+    border-radius: 24px;
+    background-color: var(--lobby-card-color);
     overflow: hidden;
 }
 
+/* Hovering raises the footer over the thumbnail, so the thumbnail gives up as much as the footer grows */
 .lobby-place-card__thumbnail {
     position: absolute;
     left: 0;
     top: 0;
     right: 0;
-    bottom: 0;
+    height: 110px;
     background-image: url('/Assets/Textures/ExplorePanel/DefaultImagePlace.png');
-    -unity-background-scale-mode: scale-and-crop;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    transition: height var(--place-card-hover-duration) ease-out;
+}
+
+.lobby-place-card:hover .lobby-place-card__thumbnail {
+    height: 86px;
 }
 
 /* Without a thumbnail the dark fill of the card shows */
@@ -28,13 +36,13 @@
 
 .lobby-place-card__online {
     position: absolute;
-    top: 10px;
-    left: 10px;
-    height: 26px;
+    top: 12px;
+    left: 12px;
+    height: 28px;
     flex-direction: row;
     align-items: center;
     padding: 0 6px;
-    border-radius: 8px;
+    border-radius: 12px;
     background-color: var(--dcl-color-shadow);
 }
 
@@ -59,60 +67,62 @@
     color: var(--dcl-color-snow);
 }
 
-/* Black fade under the texts, from clear at its top to solid at the bottom edge of the card; hovering makes room on its right
-   for the Jump in button */
+/* The texts hang from its top, so they rise with it while hovered */
 .lobby-place-card__footer {
     position: absolute;
     left: 0;
     right: 0;
     bottom: 0;
-    height: 80px;
-    padding: 0 20px 10px;
-    justify-content: flex-end;
-    background-image: url('/Assets/Textures/Common/GradientVertical.png');
-    -unity-background-scale-mode: stretch-to-fill;
-    -unity-background-image-tint-color: black;
-    transition: padding-right var(--place-card-hover-duration) ease-out;
+    height: 55px;
+    padding: 8px 10px 0;
+    transition: height var(--place-card-hover-duration) ease-out;
 }
 
 .lobby-place-card:hover .lobby-place-card__footer {
-    padding-right: 128px;
+    height: 79px;
 }
 
 .lobby-place-card__title {
-    height: 19px;
-    margin-bottom: 4px;
-    font-size: 16px;
+    height: 20px;
+    margin-bottom: 2px;
+    font-size: 14px;
     -unity-font-definition: var(--dcl-font-inter-semibold);
-    -unity-text-align: lower-left;
-    color: var(--dcl-color-snow);
+    -unity-font-style: bold;
+    -unity-text-align: middle-left;
+    color: white;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
+/* Fades out while hovered, giving its place to the Jump in button */
 .lobby-place-card__creator {
-    height: 15px;
-    font-size: 12px;
+    height: 16px;
+    font-size: 11px;
     -unity-font-definition: var(--dcl-font-inter-regular);
     -unity-text-align: middle-left;
-    color: var(--dcl-color-white-70);
+    color: var(--lobby-subtitle-color);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    transition: opacity var(--place-card-hover-duration) ease-out;
+}
+
+.lobby-place-card:hover .lobby-place-card__creator {
+    opacity: 0;
 }
 
 /* Only reachable while the card is hovered, so its invisible state never takes a click meant for the card itself */
 .lobby-place-card__jump-in {
     position: absolute;
-    right: 12px;
-    bottom: 12px;
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
     height: 32px;
     flex-direction: row;
     align-items: center;
     justify-content: center;
-    padding: 0 10px 0 12px;
-    border-radius: 8px;
+    border-radius: 12px;
     background-color: rgb(255, 45, 85);
     opacity: 0;
     transition: opacity var(--place-card-hover-duration) ease-out, background-color 0.1s;

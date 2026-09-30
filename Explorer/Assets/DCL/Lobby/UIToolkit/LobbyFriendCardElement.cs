@@ -203,7 +203,7 @@ namespace DCL.Lobby
         private void ApplyPicture()
         {
             picture!.style.backgroundColor = pictureColor;
-            picture.style.backgroundImage = pictureSprite == null ? StyleKeyword.Null : new StyleBackground(pictureSprite);
+            picture.style.backgroundImage = LobbyCardBackground.From(pictureSprite);
         }
 
         private void OnClicked() =>

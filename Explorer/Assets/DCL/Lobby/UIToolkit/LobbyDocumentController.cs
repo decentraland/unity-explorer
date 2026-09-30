@@ -50,8 +50,8 @@ namespace DCL.Lobby
     {
         private const string LIVE_EVENT_HOST_FORMAT = "By {0}";
         private const string UPCOMING_EVENT_HOST_FORMAT = "By <b>{0}</b>";
-        private const string WELCOME_FALLBACK = "WELCOME!";
-        private const string WELCOME_FORMAT = "WELCOME {0}!";
+        private const string WELCOME_FALLBACK = "Welcome!";
+        private const string WELCOME_FORMAT = "Welcome {0}!";
         private const int MAX_UPCOMING_EVENTS = 10;
 
         private static readonly Comparison<EventDTO> BY_START_TIME = static (a, b) => a.NextStartAtProcessed.CompareTo(b.NextStartAtProcessed);
@@ -674,6 +674,15 @@ namespace DCL.Lobby
 
             closeIntent?.TrySetResult();
             closeIntent = null;
+        }
+
+        // Dev only: leaves the screen for the other lobby implementation without releasing the startup flow, handing over the parameter it was shown with
+        public LobbyParameter DevLeaveForSwitch()
+        {
+            leaving = true;
+            closeIntent?.TrySetResult();
+            closeIntent = null;
+            return inputData;
         }
 
         private readonly struct PlaceholderFriend

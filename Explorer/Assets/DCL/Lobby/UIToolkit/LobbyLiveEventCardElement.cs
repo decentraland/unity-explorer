@@ -132,7 +132,7 @@ namespace DCL.Lobby
 
         private void ApplyThumbnail()
         {
-            thumbnail!.style.backgroundImage = thumbnailSprite == null ? StyleKeyword.Null : new StyleBackground(thumbnailSprite);
+            thumbnail!.style.backgroundImage = LobbyCardBackground.From(thumbnailSprite);
         }
 
         private void OnClicked() =>

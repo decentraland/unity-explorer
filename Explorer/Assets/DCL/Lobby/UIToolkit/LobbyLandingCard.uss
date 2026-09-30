@@ -1,9 +1,9 @@
-/* The MainPlace card of the design: 475x267 with 24px corners, the thumbnail filling it */
+/* The landing card of the uGUI lobby: 524x300 with 24px corners, the thumbnail filling it */
 .lobby-landing-card {
-    width: 475px;
-    height: 267px;
+    width: 524px;
+    height: 300px;
     border-radius: 24px;
-    background-color: var(--dcl-color-black-40);
+    background-color: var(--lobby-card-color);
     overflow: hidden;
 }
 
@@ -14,7 +14,9 @@
     right: 0;
     bottom: 0;
     background-image: url('/Assets/Textures/ExplorePanel/DefaultImagePlace.png');
-    -unity-background-scale-mode: scale-and-crop;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
 }
 
 /* Without a thumbnail the dark fill of the card shows */
@@ -22,7 +24,7 @@
     background-image: none;
 }
 
-/* Darkens the bottom of the thumbnail under the texts and the button: 32px of fade over the tallest of them */
+/* Darkens the bottom of the thumbnail under the texts and the button */
 .lobby-landing-card__gradient {
     position: absolute;
     left: 0;
@@ -30,19 +32,19 @@
     bottom: 0;
     height: 100px;
     background-image: url('/Assets/Textures/ExplorePanel/GradientBanner.png');
-    -unity-background-scale-mode: stretch-to-fill;
+    background-size: 100% 100%;
     -unity-background-image-tint-color: var(--dcl-color-black-80);
 }
 
 .lobby-landing-card__online {
     position: absolute;
-    top: 8px;
-    left: 8px;
-    height: 26px;
+    top: 12px;
+    left: 12px;
+    height: 28px;
     flex-direction: row;
     align-items: center;
     padding: 0 6px;
-    border-radius: 8px;
+    border-radius: 12px;
     background-color: var(--dcl-color-shadow);
     display: none;
 }
@@ -75,29 +77,30 @@
 /* The texts keep clear of the Jump in button on the right */
 .lobby-landing-card__footer {
     position: absolute;
-    left: 18px;
-    right: 181px;
-    bottom: 14px;
+    left: 16px;
+    right: 190px;
+    bottom: 16px;
 }
 
 .lobby-landing-card__title {
-    height: 22px;
+    height: 30px;
     margin-bottom: 4px;
-    font-size: 18px;
+    font-size: 22px;
     -unity-font-definition: var(--dcl-font-inter-semibold);
+    -unity-font-style: bold;
     -unity-text-align: lower-left;
-    color: var(--dcl-color-snow);
+    color: white;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
 .lobby-landing-card__creator {
-    height: 17px;
+    height: 22px;
     font-size: 14px;
     -unity-font-definition: var(--dcl-font-inter-regular);
     -unity-text-align: middle-left;
-    color: var(--dcl-color-white-70);
+    color: var(--lobby-subtitle-color);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -105,10 +108,10 @@
 
 .lobby-landing-card__jump-in {
     position: absolute;
-    right: 18px;
-    bottom: 14px;
-    width: 151px;
-    height: 46px;
+    right: 16px;
+    bottom: 16px;
+    width: 153px;
+    height: 40px;
     flex-direction: row;
     align-items: center;
     justify-content: center;

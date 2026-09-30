@@ -1,9 +1,11 @@
-/* Layout of the 1920x1080 Figma frame: 50px margins, the top bar at 21px, the side columns at 150px and the place rows along the bottom. */
+/* Layout of the uGUI lobby (LobbyUI.prefab) at 1920x1080: 50px margins, a 100px header band, the side columns at 180px and the place rows along the bottom. */
 :root {
     --lobby-margin: 50px;
-    --lobby-columns-top: 150px;
+    --lobby-columns-top: 180px;
+    --lobby-card-color: rgba(20, 20, 26, 0.9);
     --lobby-card-border-color: rgba(255, 255, 255, 0.1);
-    --lobby-title-color: var(--dcl-color-snow);
+    --lobby-title-color: white;
+    --lobby-subtitle-color: rgb(191, 191, 199);
 }
 
 .lobby {
@@ -20,7 +22,7 @@
     left: 0;
     right: 0;
     background-image: url('/Assets/Textures/ExplorePanel/GradientBanner.png');
-    -unity-background-scale-mode: stretch-to-fill;
+    background-size: 100% 100%;
     -unity-background-image-tint-color: rgba(0, 0, 0, 0.6);
 }
 
@@ -47,79 +49,85 @@
     margin-top: -350px;
 }
 
-/* 874x120 texture at the 24px height of the design */
+/* 874x120 texture at 256x35, centred in the 100px header band */
 .lobby__logo {
     position: absolute;
     left: var(--lobby-margin);
     top: 32px;
-    width: 175px;
-    height: 24px;
+    width: 256px;
+    height: 35px;
     background-image: url('/Assets/Textures/ExplorePanel/DecentralandLogo.png');
 }
 
-/* The greeting and the landing card hang under the top bar along the left edge, the mirror of the events on the right. */
+/* The greeting and the landing card hang under the header along the left edge, the mirror of the events on the right. */
 .lobby__welcome {
     position: absolute;
     left: var(--lobby-margin);
     top: var(--lobby-columns-top);
-    width: 475px;
+    width: 524px;
 }
 
+/* The section titles share one look: 24px Inter Bold, white, sentence case */
+.lobby__welcome-title,
+.lobby__events-title,
+.lobby__friends-title,
+.lobby__places-title {
+    font-size: 24px;
+    -unity-font-definition: var(--dcl-font-inter-bold);
+    color: var(--lobby-title-color);
+}
+
+/* The friends and place titles are 30px tall with the text centred in them */
+.lobby__friends-title,
+.lobby__places-title {
+    height: 30px;
+    -unity-text-align: middle-left;
+}
+
+/* The welcome and events titles hang their text from the top of a 29px row */
 .lobby__welcome-title,
 .lobby__events-title {
-    height: 22px;
-    margin-bottom: 8px;
-    font-size: 16px;
-    -unity-font-definition: var(--dcl-font-inter-semibold);
-    -unity-text-align: lower-left;
-    color: var(--lobby-title-color);
+    height: 29px;
+    -unity-text-align: upper-left;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
-/* The friends row sits under the landing card: 42px below it, plus the 12px the section is padded by. */
+/* 10px between the greeting and the landing card */
+.lobby__welcome-title {
+    margin-bottom: 10px;
+}
+
+/* The friends row sits under the landing card, its header centred 25.8px under the middle of the screen: 180px tall in all */
 .lobby__friends {
     position: absolute;
     left: var(--lobby-margin);
-    top: 501px;
-    width: 476px;
+    top: 566px;
+    width: 524px;
 }
 
 .lobby__friends-header {
-    height: 29px;
+    height: 30px;
     flex-direction: row;
-    align-items: flex-end;
-}
-
-.lobby__friends-title {
-    font-size: 24px;
-    -unity-font-definition: var(--dcl-font-inter-semibold);
-    -unity-font-style: bold;
-    -unity-text-align: lower-left;
-    color: var(--lobby-title-color);
+    align-items: center;
 }
 
 .lobby__friends-online-count {
-    margin-left: 12px;
-    margin-bottom: 4px;
+    margin-left: 15px;
     font-size: 12px;
     -unity-font-definition: var(--dcl-font-inter-regular);
-    -unity-text-align: lower-left;
-    color: var(--lobby-title-color);
+    -unity-text-align: middle-left;
+    color: var(--lobby-subtitle-color);
 }
 
-/* The cards are 115px tall; the rest is the dots row under the viewport */
+/* The cards are 132px tall, 2px under the header; the rest is the dots row under the viewport */
 .lobby__friends-rail {
-    margin-top: 8px;
-    height: 133px;
+    margin-top: 2px;
+    height: 148px;
 }
 
-.lobby__friends-rail .lobby-rail__dots {
-    margin-top: 8px;
-}
-
-/* The events hang under the top bar along the right edge, one card wide: the live card on top, the upcoming card under it. */
+/* The events hang under the header along the right edge, one card wide: the live card on top, the upcoming card under it. */
 .lobby__events {
     position: absolute;
     right: var(--lobby-margin);
@@ -127,28 +135,37 @@
     width: 358px;
 }
 
-/* The cards are 199px tall; the rest is the dots row under the viewport, and the row keeps 16px more under the dots */
+/* The title is 29px tall with 9px under it, so the first card starts 38px under the section */
+.lobby__events-title {
+    margin-bottom: 9px;
+}
+
+/* The cards are 214px tall; the rest is the dots row under the viewport, and the row keeps 16px more under the dots */
 .lobby__live-events {
     margin-bottom: 16px;
 }
 
 .lobby__live-events-rail {
-    height: 225px;
+    height: 230px;
 }
 
 .lobby__upcoming-events {
-    margin-top: 12px;
+    margin-top: 4px;
 }
 
-/* The cards are 135px tall; the rest is the dots row under the viewport */
+/* The cards are 135px tall, 12px over the dots; the rest is the dots row under the viewport */
 .lobby__upcoming-events-rail {
-    height: 161px;
+    height: 155px;
+}
+
+.lobby__upcoming-events-rail .lobby-rail__dots {
+    margin-top: 12px;
 }
 
 /* The place rows sit along the bottom edge, one on each side of the avatar; three cards and their spacing fill a row. */
 .lobby__places {
     position: absolute;
-    bottom: 15px;
+    bottom: 13px;
     width: 864px;
 }
 
@@ -161,32 +178,10 @@
 }
 
 .lobby__places-title {
-    height: 29px;
-    margin-bottom: 12px;
-    font-size: 24px;
-    -unity-font-definition: var(--dcl-font-inter-semibold);
-    -unity-font-style: bold;
-    -unity-text-align: lower-left;
-    color: var(--lobby-title-color);
-    text-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+    margin-bottom: 5px;
 }
 
-/* The cards are 156px tall; the rest is the dots row under the viewport */
+/* The cards are 165px tall; the rest is the dots row under the viewport */
 .lobby__places-rail {
-    height: 192px;
-}
-
-.lobby__places-rail .lobby-rail__dots {
-    margin-top: 26px;
-}
-
-/* 2px hairline between the two rows, as tall as their cards, centred in the band between the margins */
-.lobby__places-divider {
-    position: absolute;
-    left: 50%;
-    bottom: 51px;
-    width: 2px;
-    height: 156px;
-    margin-left: -4px;
-    background-color: var(--lobby-card-border-color);
+    height: 181px;
 }

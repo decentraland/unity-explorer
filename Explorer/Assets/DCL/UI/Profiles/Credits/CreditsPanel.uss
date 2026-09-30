@@ -1,31 +1,29 @@
-/* Outlined dark pill with the logo and the amount centered; the outline lights up on hover while top-up is possible */
+/* Solid black 100x46 pill like CreditsPanel.prefab as the lobby draws it: the 20px logo 15px in from the left edge, the amount centred in the 55px after it. The fill lightens on hover while top-up is possible */
 .credits-panel {
-    height: 42px;
+    width: 100px;
+    height: 46px;
     flex-direction: row;
     align-items: center;
-    justify-content: center;
-    padding: 0 12px;
-    border-width: 2px;
-    border-radius: 21px;
-    border-color: rgba(255, 255, 255, 0.1);
-    background-color: rgba(0, 0, 0, 0.6);
-    transition: border-color 0.1s;
+    padding-left: 15px;
+    border-radius: 23px;
+    background-color: black;
+    transition: background-color 0.1s;
 }
 
 .credits-panel--top-up:hover {
-    border-color: rgba(255, 255, 255, 0.3);
+    background-color: rgb(31, 31, 31);
 }
 
-/* 116x121 texture at the 24px height of the design */
 .credits-panel__icon {
-    width: 23px;
-    height: 24px;
-    margin-right: 8px;
+    width: 20px;
+    height: 20px;
     background-image: url('/Assets/DCL/MarketplaceCredits/Textures/NewCreditsLogo.png');
 }
 
 .credits-panel__amount {
-    font-size: 16px;
+    width: 55px;
+    margin-left: 2px;
+    font-size: 21.2px;
     -unity-font-definition: var(--dcl-font-inter-semibold);
     -unity-text-align: middle-center;
     color: var(--dcl-color-snow);

@@ -36,14 +36,14 @@ namespace DCL.UI.ProfileElements.Tests
 
             //Assert
             Assert.AreEqual("Amy", widget.Q<Label>("Name").text);
-            Assert.AreEqual(DisplayStyle.None, widget.Q<Label>("Address").style.display.value);
+            Assert.IsTrue(widget.Q<Label>("Address").ClassListContains("profile-widget__address--empty"));
 
             //Act
             widget.Address = "#1a2b";
 
             //Assert
             Assert.AreEqual("#1a2b", widget.Q<Label>("Address").text);
-            Assert.AreEqual(DisplayStyle.Flex, widget.Q<Label>("Address").style.display.value);
+            Assert.IsFalse(widget.Q<Label>("Address").ClassListContains("profile-widget__address--empty"));
         }
 
         [Test]

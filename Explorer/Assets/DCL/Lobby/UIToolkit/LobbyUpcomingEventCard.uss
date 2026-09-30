@@ -1,8 +1,8 @@
-/* The upcoming Events card of the design: 358x135 with 16px corners, the square thumbnail along its left edge */
+/* The upcoming event card of the uGUI lobby (EventCard_Small): 358x135 with 24px corners, the thumbnail along its right edge */
 .lobby-upcoming-event-card {
     width: 358px;
     height: 135px;
-    border-radius: 16px;
+    border-radius: 24px;
     background-color: var(--dcl-color-black-70);
     overflow: hidden;
 }
@@ -16,12 +16,13 @@
 .lobby-upcoming-event-card__thumbnail {
     position: absolute;
     top: 0;
-    left: 0;
+    right: 0;
     bottom: 0;
-    width: 135px;
-    border-radius: 16px;
+    width: 140px;
     background-image: url('/Assets/Textures/ExplorePanel/DefaultImagePlace.png');
-    -unity-background-scale-mode: scale-and-crop;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
 }
 
 .lobby-upcoming-event-card--loading .lobby-upcoming-event-card__thumbnail {
@@ -29,22 +30,20 @@
     background-color: rgb(207, 205, 212);
 }
 
-/* 170px column between the thumbnail and the 24px right padding, its rows centred */
+/* 18px in from the left edge, 28px down, up to the thumbnail */
 .lobby-upcoming-event-card__info {
     position: absolute;
-    left: 162px;
-    top: 0;
-    right: 22px;
+    left: 18px;
+    top: 28px;
+    right: 158px;
     bottom: 0;
-    justify-content: center;
 }
 
 .lobby-upcoming-event-card__title {
-    height: 19px;
-    margin-bottom: 4px;
-    font-size: 16px;
+    height: 24px;
+    font-size: 20px;
     -unity-font-definition: var(--dcl-font-inter-semibold);
-    -unity-text-align: lower-left;
+    -unity-text-align: middle-left;
     color: var(--dcl-color-snow);
     white-space: nowrap;
     overflow: hidden;
@@ -56,7 +55,7 @@
     font-size: 13px;
     -unity-font-definition: var(--dcl-font-inter-regular);
     -unity-text-align: middle-left;
-    color: var(--dcl-color-white-70);
+    color: rgba(255, 255, 255, 0.5);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -64,13 +63,13 @@
 
 /* A pill only as wide as its text, so the tint does not stretch across the column */
 .lobby-upcoming-event-card__schedule {
-    margin-top: 14px;
+    margin-top: 12px;
     height: 24px;
     align-self: flex-start;
     flex-direction: row;
     align-items: center;
     padding: 0 4px;
-    border-radius: 6px;
+    border-radius: 12px;
     background-color: var(--dcl-color-white-10);
 }
 
@@ -82,16 +81,16 @@
 }
 
 .lobby-upcoming-event-card__schedule-text {
-    font-size: 14px;
+    font-size: 16px;
     -unity-font-definition: var(--dcl-font-inter-semibold);
     -unity-text-align: middle-left;
     color: var(--dcl-color-snow);
 }
 
-/* Only reachable while the card is hovered, so their invisible state never takes a click meant for the card itself */
+/* Beside the thumbnail, only reachable while the card is hovered, so their invisible state never takes a click meant for the card itself */
 .lobby-upcoming-event-card__actions {
     position: absolute;
-    right: 10px;
+    right: 150px;
     bottom: 10px;
     flex-direction: row;
     opacity: 0;

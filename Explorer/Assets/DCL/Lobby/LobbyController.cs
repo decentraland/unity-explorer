@@ -760,6 +760,15 @@ namespace DCL.Lobby
             closeIntent?.TrySetResult();
             closeIntent = null;
         }
+
+        // Dev only: leaves the screen for the other lobby implementation without releasing the startup flow, handing over the parameter it was shown with
+        public LobbyParameter DevLeaveForSwitch()
+        {
+            leaving = true;
+            closeIntent?.TrySetResult();
+            closeIntent = null;
+            return inputData;
+        }
     }
 
     /// <summary>

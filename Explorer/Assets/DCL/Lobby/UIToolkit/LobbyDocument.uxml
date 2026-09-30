@@ -31,12 +31,12 @@
         </ui:VisualElement>
         <!-- The greeting and the hero card of the place the session lands in; the card only offers Jump in until the place is known -->
         <ui:VisualElement name="Welcome" class="lobby__welcome" picking-mode="Ignore">
-            <ui:Label name="WelcomeText" text="WELCOME!" class="lobby__welcome-title" picking-mode="Ignore" />
+            <ui:Label name="WelcomeText" text="Welcome!" class="lobby__welcome-title" picking-mode="Ignore" />
             <ui:Instance template="LobbyLandingCard" />
         </ui:VisualElement>
         <!-- Hidden until the schedule has something to list; each row hides itself while its share of it is empty, so the upcoming one moves up when nothing is live -->
         <ui:VisualElement name="Events" class="lobby__events" style="display: none;">
-            <ui:Label name="Title" text="EVENTS" class="lobby__events-title" picking-mode="Ignore" />
+            <ui:Label name="Title" text="Events" class="lobby__events-title" picking-mode="Ignore" />
             <ui:VisualElement name="LiveEvents" class="lobby__live-events" style="display: none;">
                 <DCL.Lobby.LobbyRailElement name="Rail" class="lobby__live-events-rail" cards-per-page="1" />
             </ui:VisualElement>
@@ -56,7 +56,6 @@
             <ui:Label name="Title" text="Jump Back In" class="lobby__places-title" picking-mode="Ignore" />
             <DCL.Lobby.LobbyRailElement name="Rail" class="lobby__places-rail" cards-per-page="3" />
         </ui:VisualElement>
-        <ui:VisualElement name="PlacesDivider" class="lobby__places-divider" picking-mode="Ignore" />
         <ui:VisualElement name="FeaturedPlaces" class="lobby__places lobby__places--featured">
             <ui:Label name="Title" text="Recommended Places" class="lobby__places-title" picking-mode="Ignore" />
             <DCL.Lobby.LobbyRailElement name="Rail" class="lobby__places-rail" cards-per-page="3" />

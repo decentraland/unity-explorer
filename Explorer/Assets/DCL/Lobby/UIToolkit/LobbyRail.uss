@@ -2,7 +2,7 @@
     --rail-snap-duration: 0.25s;
     --rail-arrow-fade-duration: 0.15s;
     --rail-dot-duration: 0.2s;
-    --rail-dot-selected-color: rgb(255, 45, 85);
+    --rail-dot-selected-color: rgb(255, 51, 153);
     --rail-dot-color: rgba(255, 255, 255, 0.4);
 }
 
@@ -39,11 +39,11 @@
     transition-duration: 0s;
 }
 
-/* 12px between the cards of the design, part of the stride the pages snap by. The strip is measured against the viewport,
+/* 8px between the cards of the uGUI rows, part of the stride the pages snap by. The strip is measured against the viewport,
    which would shrink the cards to fit it rather than let them overflow into pages: they keep their own width */
 .lobby-rail__card {
     flex-shrink: 0;
-    margin-right: 12px;
+    margin-right: 8px;
 }
 
 .lobby-rail__arrow {
@@ -87,25 +87,25 @@
     background-image: url('/Assets/Textures/Common/ArrowRight.png');
 }
 
-/* 10px dots 8px apart, the selected one stretched to 29px; the owner sets how far under the viewport the row sits */
+/* 8px dots 4px apart, the selected one stretched to 24px, 8px under the viewport */
 .lobby-rail__dots {
-    height: 10px;
-    margin-top: 16px;
+    height: 8px;
+    margin-top: 8px;
     flex-direction: row;
     justify-content: center;
     align-items: center;
 }
 
 .lobby-rail__dot {
-    width: 10px;
-    height: 10px;
-    margin: 0 4px;
-    border-radius: 5px;
+    width: 8px;
+    height: 8px;
+    margin: 0 2px;
+    border-radius: 4px;
     background-color: var(--rail-dot-color);
     transition: width var(--rail-dot-duration) ease-out, background-color var(--rail-dot-duration) ease-out;
 }
 
 .lobby-rail__dot--selected {
-    width: 29px;
+    width: 24px;
     background-color: var(--rail-dot-selected-color);
 }
