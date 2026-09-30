@@ -30,10 +30,12 @@ namespace DCL.AuthenticationScreenFlow
         public readonly struct Params
         {
             public readonly bool StartAtLoginSelection;
+            public readonly bool LandAtLaunchDestination;
 
-            public Params(bool startAtLoginSelection)
+            public Params(bool startAtLoginSelection, bool landAtLaunchDestination = false)
             {
                 StartAtLoginSelection = startAtLoginSelection;
+                LandAtLaunchDestination = landAtLaunchDestination;
             }
         }
 
@@ -92,6 +94,8 @@ namespace DCL.AuthenticationScreenFlow
 
         // A cached-vs-fresh login alone cannot tell a new account from a returning user whose cached identity expired
         public bool IsCurrentlyNewAccount { get; internal set; }
+
+        public bool SkipExistingAccountLobby { get; internal set; }
 
         public event Action? DiscordButtonClicked;
         public event Action<string, bool>? OTPVerified;
@@ -156,6 +160,9 @@ namespace DCL.AuthenticationScreenFlow
             fsm?.Dispose();
         }
 
+        internal static bool ShouldSkipExistingAccountLobby(bool lobbyEnabled, in Params inputData) =>
+            lobbyEnabled || inputData.LandAtLaunchDestination;
+
         protected override void OnViewInstantiated()
         {
             base.OnViewInstantiated();
@@ -188,8 +195,7 @@ namespace DCL.AuthenticationScreenFlow
                 new LoginSelectionAuthState(fsm, viewInstance, this, CurrentState, splashScreen, web3Authenticator, webBrowser,
                     enableEmailOTP, otherLoginMethodsEnabled, isEpicBuild),
                 new GuestOrSignUpAuthState(fsm, viewInstance, this, CurrentState, web3Authenticator, splashScreen),
-                new ProfileFetchingAuthState(fsm, viewInstance, this, CurrentState, selfProfile, storedIdentityProvider,
-                    skipExistingAccountLobby: FeaturesRegistry.Instance.IsEnabled(FeatureId.Lobby)),
+                new ProfileFetchingAuthState(fsm, viewInstance, this, CurrentState, selfProfile, storedIdentityProvider),
                 new IdentityVerificationDappDeepLinkAuthState(fsm, viewInstance, this, CurrentState, web3Authenticator),
                 new LobbyForExistingAccountAuthState(fsm, viewInstance, this, splashScreen, CurrentState, characterPreviewController),
                 new LobbyForNewAccountAuthState(fsm, viewInstance, this, CurrentState, characterPreviewController, selfProfile, webBrowser, webRequestController, decentralandUrlsSource, profileChangesBus, storedIdentityProvider, referrer),
@@ -215,6 +221,8 @@ namespace DCL.AuthenticationScreenFlow
         protected override void OnBeforeViewShow()
         {
             base.OnBeforeViewShow();
+
+            SkipExistingAccountLobby = ShouldSkipExistingAccountLobby(FeaturesRegistry.Instance.IsEnabled(FeatureId.Lobby), inputData);
 
             if (inputData.StartAtLoginSelection)
             {

@@ -629,6 +629,86 @@ namespace DCL.Lobby.Tests
         }
 
         [Test]
+        public void JumpInWhenADestinationIsRequestedAtStartup()
+        {
+            // Arrange
+            int jumpedIn = 0;
+            UniTask lifeCycle = Launch(isStartup: true, jumpedIn: () => jumpedIn++);
+
+            // Act
+            startParcel.RequestJumpIn();
+            controller.HideViewAsync(CancellationToken.None).Forget();
+            startParcel.RequestJumpIn();
+
+            // Assert
+            Assert.That(jumpedIn, Is.EqualTo(1), "the lobby must let go of the start parcel once it left");
+            Assert.That(lifeCycle.Status, Is.EqualTo(UniTaskStatus.Succeeded));
+        }
+
+        [Test]
+        public void LetGoOfTheStartParcelOnDispose()
+        {
+            // Arrange
+            bool jumpedIn = false;
+            Launch(isStartup: true, jumpedIn: () => jumpedIn = true).Forget();
+
+            // Act
+            RestartWithStartParcel(startParcel);
+            startParcel.RequestJumpIn();
+
+            // Assert
+            Assert.That(jumpedIn, Is.False);
+        }
+
+        [Test]
+        public void JumpInWhenADestinationWasRequestedBeforeTheLobbyShowed()
+        {
+            // Arrange
+            bool jumpedIn = false;
+            startParcel.RequestJumpIn();
+
+            // Act
+            UniTask lifeCycle = Launch(isStartup: true, jumpedIn: () => jumpedIn = true);
+            controller.HideViewAsync(CancellationToken.None).Forget();
+
+            // Assert
+            Assert.That(jumpedIn, Is.True);
+            Assert.That(lifeCycle.Status, Is.EqualTo(UniTaskStatus.Succeeded));
+        }
+
+        [Test]
+        public void ReleaseTheFlowWithoutShowingAgainWhenADestinationWasRequestedWhileCovered()
+        {
+            // Arrange
+            bool jumpedIn = false;
+            Launch(isStartup: true, jumpedIn: () => jumpedIn = true).Forget();
+            controller.HideViewAsync(CancellationToken.None).Forget();
+            startParcel.RequestJumpIn();
+
+            // Act
+            CloseAnotherView();
+
+            // Assert
+            Assert.That(jumpedIn, Is.True);
+            mvcManager.DidNotReceive().ShowAsync(Arg.Any<ShowCommand<LobbyView, LobbyParameter>>(), Arg.Any<CancellationToken>());
+        }
+
+        [Test]
+        public void LeaveDestinationRequestsAloneInWorld()
+        {
+            // Arrange
+            bool jumpedIn = false;
+            UniTask lifeCycle = Launch(isStartup: false, jumpedIn: () => jumpedIn = true);
+
+            // Act
+            startParcel.RequestJumpIn();
+
+            // Assert
+            Assert.That(jumpedIn, Is.False);
+            Assert.That(lifeCycle.Status, Is.EqualTo(UniTaskStatus.Pending));
+        }
+
+        [Test]
         public void LeaveTheLobbyClosedInWorld()
         {
             // Arrange
@@ -662,7 +742,7 @@ namespace DCL.Lobby.Tests
         public void ReleaseTheStartupFlowOnlyWhenTheUserJumpsIn()
         {
             // Arrange
-            var jumpedIn = 0;
+            int jumpedIn = 0;
             Launch(isStartup: true, jumpedIn: () => jumpedIn++).Forget();
 
             // Act: opening the backpack takes the lobby off the screen without releasing the flow

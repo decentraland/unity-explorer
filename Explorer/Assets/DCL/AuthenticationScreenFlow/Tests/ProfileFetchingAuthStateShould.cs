@@ -201,14 +201,15 @@ namespace DCL.AuthenticationScreenFlow.Tests
             SetBackingField(fetchingView, typeof(ProfileFetchingAuthView), nameof(ProfileFetchingAuthView.CancelButton), cancelButton);
             SetBackingField(screenView, typeof(AuthenticationScreenView), nameof(AuthenticationScreenView.ProfileFetchingAuthView), fetchingView);
 
+            controller.SkipExistingAccountLobby = skipExistingAccountLobby;
+
             return new ProfileFetchingAuthState(
                 machine,
                 screenView,
                 controller,
                 currentState,
                 selfProfile,
-                Substitute.For<IWeb3IdentityCache>(),
-                skipExistingAccountLobby);
+                Substitute.For<IWeb3IdentityCache>());
         }
 
         private static void SetBackingField(object target, Type declaringType, string propertyName, object value)
