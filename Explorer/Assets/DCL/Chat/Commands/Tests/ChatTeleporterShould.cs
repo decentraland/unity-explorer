@@ -63,6 +63,7 @@ namespace DCL.Chat.Commands.Tests
             // In-world by default: the startup teleport already happened
             var landed = new StartParcel(Vector2Int.zero);
             landed.ConsumeByTeleportOperation();
+            landed.MarkLanded();
             chatTeleporter = NewTeleporter(landed);
         }
 
@@ -152,6 +153,7 @@ namespace DCL.Chat.Commands.Tests
                 await UniTask.Yield();
                 bool navigatedDuringStartup = teleport.Status.IsCompleted();
                 pending.ConsumeByTeleportOperation();
+                pending.MarkLanded();
                 await UniTask.Yield();
                 bool navigatedWhileTeleporting = teleport.Status.IsCompleted();
                 mvcManager.IsShowing<SceneLoadingScreenView, SceneLoadingScreenController.Params>().Returns(true);
@@ -228,6 +230,7 @@ namespace DCL.Chat.Commands.Tests
                 await UniTask.Yield();
                 bool startedDuringSwitch = teleport.Status.IsCompleted();
                 pending.ConsumeByTeleportOperation();
+                pending.MarkLanded();
                 await teleport;
 
                 // Assert

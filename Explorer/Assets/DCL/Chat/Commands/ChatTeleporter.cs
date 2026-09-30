@@ -239,15 +239,15 @@ namespace DCL.Chat.Commands
         // A request that could not become the startup destination runs after the startup teleport, never alongside it
         private async UniTask<bool> WaitForStartupTeleportAsync(CancellationToken ct)
         {
-            if (HasLanded()) return true;
+            if (IsIdleAfterStartup()) return true;
 
-            bool cancelled = await UniTask.WaitUntil(HasLanded, cancellationToken: ct).SuppressCancellationThrow();
+            bool cancelled = await UniTask.WaitUntil(IsIdleAfterStartup, cancellationToken: ct).SuppressCancellationThrow();
             return !cancelled;
         }
 
         // Reads false again during every later teleport, so a parked request never runs alongside one
-        private bool HasLanded() =>
-            startParcel.IsConsumed()
+        private bool IsIdleAfterStartup() =>
+            startParcel.HasLanded
             && loadingStatus.CurrentStage.Value == LoadingStatus.LoadingStage.Completed
             && !mvcManager.IsShowing<SceneLoadingScreenView, SceneLoadingScreenController.Params>();
 

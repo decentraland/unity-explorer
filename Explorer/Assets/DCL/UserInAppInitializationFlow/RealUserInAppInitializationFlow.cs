@@ -42,7 +42,6 @@ namespace DCL.UserInAppInitializationFlow
         private readonly AudioClipConfig backgroundMusic;
         private readonly IRealmNavigator realmNavigator;
         private readonly ILoadingScreen loadingScreen;
-        private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly SequentialLoadingOperation<IStartupOperation.Params> initOps;
         private readonly SequentialLoadingOperation<IStartupOperation.Params> reloginOps;
 
@@ -102,7 +101,6 @@ namespace DCL.UserInAppInitializationFlow
             this.chatHistory = chatHistory;
 
             this.loadingStatus = loadingStatus;
-            this.decentralandUrlsSource = decentralandUrlsSource;
             genesisDomain = URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Genesis));
             this.mvcManager = mvcManager;
             this.backgroundMusic = backgroundMusic;
@@ -230,7 +228,8 @@ namespace DCL.UserInAppInitializationFlow
                                     parentLoadReport.SetProgress(
                                         loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Completed));
 
-                                    startParcel.MarkLanded();
+                                    if (operationResult.Success)
+                                        startParcel.MarkLanded();
                                 }
                                 else
                                 {
@@ -356,7 +355,6 @@ namespace DCL.UserInAppInitializationFlow
             if (isLocalSceneDevelopment) return;
             if (!realmController.RealmData.IsWorld()) return;
             if (realmController.CurrentDomain == null) return;
-
 
             if (!TryExtractWorldName(realmController.CurrentDomain.Value, out string worldName))
             {
