@@ -144,6 +144,12 @@ namespace DCL.Profiles
             return guest.Value;
         }
 
+        /// <summary>
+        ///     Identity and version only, for logs; never the profile contents.
+        /// </summary>
+        public override string ToString() =>
+            $"{UserId.Value} v{Version}";
+
         public void ClearLinks()
         {
             if (links == null)
