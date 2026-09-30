@@ -153,11 +153,13 @@ namespace DCL.Chat.Commands.Tests
                 await UniTask.Yield();
                 bool navigatedDuringStartup = teleport.Status.IsCompleted();
                 pending.ConsumeByTeleportOperation();
-                pending.MarkLanded();
                 await UniTask.Yield();
                 bool navigatedWhileTeleporting = teleport.Status.IsCompleted();
-                mvcManager.IsShowing<SceneLoadingScreenView, SceneLoadingScreenController.Params>().Returns(true);
                 loadingStage.Value = LoadingStatus.LoadingStage.Completed;
+                await UniTask.Yield();
+                bool navigatedBeforeLanding = teleport.Status.IsCompleted();
+                pending.MarkLanded();
+                mvcManager.IsShowing<SceneLoadingScreenView, SceneLoadingScreenController.Params>().Returns(true);
                 await UniTask.Yield();
                 bool navigatedWhileFading = teleport.Status.IsCompleted();
                 mvcManager.IsShowing<SceneLoadingScreenView, SceneLoadingScreenController.Params>().Returns(false);
@@ -165,7 +167,8 @@ namespace DCL.Chat.Commands.Tests
 
                 // Assert
                 Assert.That(navigatedDuringStartup, Is.False, "the request must wait for the startup teleport");
-                Assert.That(navigatedWhileTeleporting, Is.False, "consuming the parcel only starts the teleport, landing ends it");
+                Assert.That(navigatedWhileTeleporting, Is.False, "consuming the parcel only starts the teleport");
+                Assert.That(navigatedBeforeLanding, Is.False, "a consumed parcel has not landed until the startup flow marks it");
                 Assert.That(navigatedWhileFading, Is.False, "the previous loading screen must be gone so the switch gets its own");
                 AssertLeadsWith(result, "🟢");
                 Assert.That(pending.Realm, Is.Null);
