@@ -5,6 +5,7 @@ using CrdtEcsBridge.Components;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.SDKComponents.Skybox.Systems;
+using DCL.SkyBox;
 using DCL.SkyBox.Components;
 using Decentraland.Common;
 using ECS.Prioritization.Components;
@@ -332,8 +333,198 @@ namespace DCL.SDKComponents.Skybox.Tests
             Assert.That(Overrides().Owner, Is.EqualTo(OWN_SCENE));
         }
 
+        [Test]
+        public void PushEnvironmentWithOwnerWhenDirty()
+        {
+            // Arrange
+            AddPbSkybox(Fog(Color.red));
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            SceneEnvironmentProfile? environment = Overrides().Environment;
+            Assert.That(environment, Is.Not.Null);
+            Assert.That(environment, Is.SameAs(Component().Environment));
+            Assert.That(environment!.FogColor, Is.Not.Null);
+            Assert.That(environment.FogColor!.Evaluate(0.5f), Is.EqualTo(Color.red));
+            Assert.That(Overrides().Owner, Is.EqualTo(OWN_SCENE));
+        }
+
+        [Test]
+        public void PushSunVisibilityWhenDirty()
+        {
+            // Arrange
+            world.Add(rootEntity, new PBSkybox { IsDirty = true, Sun = new PBSkybox.Types.Sun { Visible = false } });
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            SceneEnvironmentProfile? environment = Overrides().Environment;
+            Assert.That(environment, Is.Not.Null);
+            Assert.That(environment!.SunVisible, Is.False);
+            Assert.That(Overrides().Owner, Is.EqualTo(OWN_SCENE));
+        }
+
+        [Test]
+        public void KeepSameProfileReferenceWhenNotDirty()
+        {
+            // Arrange
+            PBSkybox pbSkybox = AddPbSkybox(Fog(Color.red));
+            system.Update(0);
+            SceneEnvironmentProfile? environment = Overrides().Environment;
+
+            // Act
+            pbSkybox.IsDirty = false;
+            system.Update(0);
+
+            // Assert
+            Assert.That(environment, Is.Not.Null);
+            Assert.That(Overrides().Environment, Is.SameAs(environment));
+            Assert.That(Component().Environment, Is.SameAs(environment));
+        }
+
+        [Test]
+        public void ReplaceProfileWhenDirty()
+        {
+            // Arrange
+            PBSkybox pbSkybox = AddPbSkybox(Fog(Color.red));
+            system.Update(0);
+            SceneEnvironmentProfile? previous = Overrides().Environment;
+
+            // Act
+            pbSkybox.Fog = Fog(Color.blue);
+            pbSkybox.IsDirty = true;
+            system.Update(0);
+
+            // Assert
+            SceneEnvironmentProfile? environment = Overrides().Environment;
+            Assert.That(environment, Is.Not.Null);
+            Assert.That(environment, Is.Not.SameAs(previous));
+            Assert.That(environment!.FogColor!.Evaluate(0.5f), Is.EqualTo(Color.blue));
+        }
+
+        [Test]
+        public void ClearEnvironmentOnComponentRemoval()
+        {
+            // Arrange
+            AddPbSkybox(Fog(Color.red));
+            system.Update(0);
+
+            // Act
+            world.Remove<PBSkybox>(rootEntity);
+            system.Update(0);
+
+            // Assert
+            AssertGlobalCleared();
+            Assert.That(Component().Environment, Is.Null);
+        }
+
+        [Test]
+        public void ClearEnvironmentOnLeaveAndRebuildFromProtoOnCurrent()
+        {
+            // Arrange
+            PBSkybox pbSkybox = AddPbSkybox(Fog(Color.red));
+            system.Update(0);
+
+            // Act
+            system.OnSceneIsCurrentChanged(false);
+
+            // Assert
+            AssertGlobalCleared();
+
+            // Arrange: the scene changes the fog while the player is away; the dirty flag is reset before it becomes current again
+            pbSkybox.Fog = Fog(Color.blue);
+            pbSkybox.IsDirty = false;
+
+            // Act
+            system.OnSceneIsCurrentChanged(true);
+
+            // Assert
+            SceneEnvironmentProfile? environment = Overrides().Environment;
+            Assert.That(environment, Is.Not.Null);
+            Assert.That(environment!.FogColor!.Evaluate(0.5f), Is.EqualTo(Color.blue));
+            Assert.That(Component().Environment, Is.SameAs(environment));
+            Assert.That(Overrides().Owner, Is.EqualTo(OWN_SCENE));
+        }
+
+        [Test]
+        public void ClearEnvironmentOnFinalize()
+        {
+            // Arrange
+            AddPbSkybox(Fog(Color.red));
+            system.Update(0);
+
+            // Act
+            system.FinalizeComponents(world.Query(new QueryDescription().WithAll<CRDTEntity>()));
+
+            // Assert
+            AssertGlobalCleared();
+            Assert.That(Component().Environment, Is.Null);
+        }
+
+        [Test]
+        public void NotClearForeignEnvironmentOnLeave()
+        {
+            // Arrange
+            SceneEnvironmentProfile? foreignEnvironment = SceneEnvironmentProfile.FromProto(new PBSkybox { Fog = Fog(Color.red) });
+            ref SceneSkyboxOverrides overrides = ref Overrides();
+            overrides.Environment = foreignEnvironment;
+            overrides.Owner = OTHER_SCENE;
+
+            // Act
+            system.OnSceneIsCurrentChanged(false);
+
+            // Assert
+            Assert.That(foreignEnvironment, Is.Not.Null);
+            Assert.That(Overrides().Environment, Is.SameAs(foreignEnvironment));
+            Assert.That(Overrides().Owner, Is.EqualTo(OTHER_SCENE));
+        }
+
+        [Test]
+        public void NotPushEnvironmentWhenNotCurrent()
+        {
+            // Arrange
+            sceneStateProvider.IsCurrent.Returns(false);
+            AddPbSkybox(Fog(Color.red));
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            AssertGlobalCleared();
+            Assert.That(Component().Environment, Is.Null);
+        }
+
+        [Test]
+        public void PushNullEnvironmentWhenAllGroupsUnset()
+        {
+            // Arrange
+            AddPbSkybox(false, FileTexture(SRC_A));
+            system.Update(0);
+            ResolvePromise(false);
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            Assert.That(Overrides().Owner, Is.EqualTo(OWN_SCENE));
+            Assert.That(Overrides().Environment, Is.Null);
+            Assert.That(Component().Environment, Is.Null);
+        }
+
         private static TextureUnion FileTexture(string src) =>
             new () { Texture = new Texture { Src = src } };
+
+        private static PBSkybox.Types.Fog Fog(Color color) =>
+            new ()
+            {
+                Color = new ColorGradient
+                {
+                    Keys = { new ColorKey { Time = 0f, Color = new Color4 { R = color.r, G = color.g, B = color.b, A = color.a } } },
+                },
+            };
 
         private static void SetTexture(PBSkybox pbSkybox, bool reflection, TextureUnion? texture)
         {
@@ -355,9 +546,19 @@ namespace DCL.SDKComponents.Skybox.Tests
             return pbSkybox;
         }
 
+        private PBSkybox AddPbSkybox(PBSkybox.Types.Fog fog)
+        {
+            var pbSkybox = new PBSkybox { IsDirty = true, Fog = fog };
+            world.Add(rootEntity, pbSkybox);
+            return pbSkybox;
+        }
+
+        private SceneSkyboxComponent Component() =>
+            world.Get<SceneSkyboxComponent>(rootEntity);
+
         private TextureSlot Slot(bool reflection)
         {
-            SceneSkyboxComponent component = world.Get<SceneSkyboxComponent>(rootEntity);
+            SceneSkyboxComponent component = Component();
             return reflection ? component.ReflectionMap : component.SkyboxTexture;
         }
 
@@ -395,6 +596,7 @@ namespace DCL.SDKComponents.Skybox.Tests
         {
             Assert.That(Overrides().ReflectionMap, Is.Null);
             Assert.That(Overrides().SkyboxTexture, Is.Null);
+            Assert.That(Overrides().Environment, Is.Null);
             Assert.That(Overrides().Owner, Is.Null);
         }
     }

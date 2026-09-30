@@ -26,15 +26,40 @@ namespace DCL.ECSComponents {
           string.Concat(
             "CihkZWNlbnRyYWxhbmQvc2RrL2NvbXBvbmVudHMvc2t5Ym94LnByb3RvEhtk",
             "ZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMaIWRlY2VudHJhbGFuZC9jb21t",
-            "b24vdGV4dHVyZS5wcm90byKwAQoIUEJTa3lib3gSPgoOcmVmbGVjdGlvbl9t",
-            "YXAYASABKAsyIS5kZWNlbnRyYWxhbmQuY29tbW9uLlRleHR1cmVVbmlvbkgA",
-            "iAEBEj4KDnNreWJveF90ZXh0dXJlGAIgASgLMiEuZGVjZW50cmFsYW5kLmNv",
-            "bW1vbi5UZXh0dXJlVW5pb25IAYgBAUIRCg9fcmVmbGVjdGlvbl9tYXBCEQoP",
-            "X3NreWJveF90ZXh0dXJlQhSqAhFEQ0wuRUNTQ29tcG9uZW50c2IGcHJvdG8z"));
+            "b24vdGV4dHVyZS5wcm90bxoiZGVjZW50cmFsYW5kL2NvbW1vbi9ncmFkaWVu",
+            "dC5wcm90byK1CAoIUEJTa3lib3gSPgoOcmVmbGVjdGlvbl9tYXAYASABKAsy",
+            "IS5kZWNlbnRyYWxhbmQuY29tbW9uLlRleHR1cmVVbmlvbkgAiAEBEj4KDnNr",
+            "eWJveF90ZXh0dXJlGAIgASgLMiEuZGVjZW50cmFsYW5kLmNvbW1vbi5UZXh0",
+            "dXJlVW5pb25IAYgBARI7CgNzdW4YAyABKAsyKS5kZWNlbnRyYWxhbmQuc2Rr",
+            "LmNvbXBvbmVudHMuUEJTa3lib3guU3VuSAKIAQESSAoKc2t5X2NvbG9ycxgE",
+            "IAEoCzIvLmRlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50cy5QQlNreWJveC5T",
+            "a3lDb2xvcnNIA4gBARI7CgNmb2cYBSABKAsyKS5kZWNlbnRyYWxhbmQuc2Rr",
+            "LmNvbXBvbmVudHMuUEJTa3lib3guRm9nSASIAQESQQoGY2xvdWRzGAYgASgL",
+            "MiwuZGVjZW50cmFsYW5kLnNkay5jb21wb25lbnRzLlBCU2t5Ym94LkNsb3Vk",
+            "c0gFiAEBEj8KBXN0YXJzGAcgASgLMisuZGVjZW50cmFsYW5kLnNkay5jb21w",
+            "b25lbnRzLlBCU2t5Ym94LlN0YXJzSAaIAQEaaQoDU3VuEjYKBWNvbG9yGAEg",
+            "ASgLMiIuZGVjZW50cmFsYW5kLmNvbW1vbi5Db2xvckdyYWRpZW50SACIAQES",
+            "FAoHdmlzaWJsZRgCIAEoCEgBiAEBQggKBl9jb2xvckIKCghfdmlzaWJsZRrX",
+            "AQoJU2t5Q29sb3JzEjcKBnplbml0aBgBIAEoCzIiLmRlY2VudHJhbGFuZC5j",
+            "b21tb24uQ29sb3JHcmFkaWVudEgAiAEBEjgKB2hvcml6b24YAiABKAsyIi5k",
+            "ZWNlbnRyYWxhbmQuY29tbW9uLkNvbG9yR3JhZGllbnRIAYgBARI2CgVuYWRp",
+            "chgDIAEoCzIiLmRlY2VudHJhbGFuZC5jb21tb24uQ29sb3JHcmFkaWVudEgC",
+            "iAEBQgkKB196ZW5pdGhCCgoIX2hvcml6b25CCAoGX25hZGlyGkcKA0ZvZxI2",
+            "CgVjb2xvchgBIAEoCzIiLmRlY2VudHJhbGFuZC5jb21tb24uQ29sb3JHcmFk",
+            "aWVudEgAiAEBQggKBl9jb2xvchpICgZDbG91ZHMSFAoHb3BhY2l0eRgBIAEo",
+            "AkgAiAEBEhIKBXNwZWVkGAIgASgCSAGIAQFCCgoIX29wYWNpdHlCCAoGX3Nw",
+            "ZWVkGi8KBVN0YXJzEhcKCmJyaWdodG5lc3MYASABKAJIAIgBAUINCgtfYnJp",
+            "Z2h0bmVzc0IRCg9fcmVmbGVjdGlvbl9tYXBCEQoPX3NreWJveF90ZXh0dXJl",
+            "QgYKBF9zdW5CDQoLX3NreV9jb2xvcnNCBgoEX2ZvZ0IJCgdfY2xvdWRzQggK",
+            "Bl9zdGFyc0IUqgIRRENMLkVDU0NvbXBvbmVudHNiBnByb3RvMw=="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
-          new pbr::FileDescriptor[] { global::Decentraland.Common.TextureReflection.Descriptor, },
+          new pbr::FileDescriptor[] { global::Decentraland.Common.TextureReflection.Descriptor, global::Decentraland.Common.GradientReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBSkybox), global::DCL.ECSComponents.PBSkybox.Parser, new[]{ "ReflectionMap", "SkyboxTexture" }, new[]{ "ReflectionMap", "SkyboxTexture" }, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBSkybox), global::DCL.ECSComponents.PBSkybox.Parser, new[]{ "ReflectionMap", "SkyboxTexture", "Sun", "SkyColors", "Fog", "Clouds", "Stars" }, new[]{ "ReflectionMap", "SkyboxTexture", "Sun", "SkyColors", "Fog", "Clouds", "Stars" }, null, null, new pbr::GeneratedClrTypeInfo[] { new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBSkybox.Types.Sun), global::DCL.ECSComponents.PBSkybox.Types.Sun.Parser, new[]{ "Color", "Visible" }, new[]{ "Color", "Visible" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBSkybox.Types.SkyColors), global::DCL.ECSComponents.PBSkybox.Types.SkyColors.Parser, new[]{ "Zenith", "Horizon", "Nadir" }, new[]{ "Zenith", "Horizon", "Nadir" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBSkybox.Types.Fog), global::DCL.ECSComponents.PBSkybox.Types.Fog.Parser, new[]{ "Color" }, new[]{ "Color" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBSkybox.Types.Clouds), global::DCL.ECSComponents.PBSkybox.Types.Clouds.Parser, new[]{ "Opacity", "Speed" }, new[]{ "Opacity", "Speed" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBSkybox.Types.Stars), global::DCL.ECSComponents.PBSkybox.Types.Stars.Parser, new[]{ "Brightness" }, new[]{ "Brightness" }, null, null, null)})
           }));
     }
     #endregion
@@ -42,10 +67,15 @@ namespace DCL.ECSComponents {
   }
   #region Messages
   /// <summary>
-  /// PBSkybox lets a scene customize the environment rendering while the player is
-  /// inside it. It is only read on the scene root entity (engine.RootEntity).
-  /// Both textures are equirectangular (2:1 latitude-longitude panoramas). Only
-  /// `Texture` (file) sources are supported; avatar and video textures are ignored.
+  /// PBSkybox lets a scene customize the environment rendering while the player is inside it.
+  /// It is only read on the scene root entity (engine.RootEntity). Textures are equirectangular 2:1,
+  /// only `Texture` sources. Every override is active ONLY while the player is inside the scene;
+  /// when the player leaves, the component is removed, or a group/field is unset, the environment
+  /// returns to the default time-of-day skybox. Gradients use `time` as normalized time of day
+  /// (0 = 00:00, 0.5 = 12:00, 1 = 24:00); single-key gradients are constant colors, and both
+  /// ends clamp (no midnight wrap). Overrides are global render state while active, affecting
+  /// how neighbouring parcels look from inside the scene, with instant application. Time-of-day
+  /// lighting continues underneath; ambient lighting is derived from `sky_colors`.
   /// </summary>
   [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
   public sealed partial class PBSkybox : pb::IMessage<PBSkybox>
@@ -84,6 +114,11 @@ namespace DCL.ECSComponents {
     public PBSkybox(PBSkybox other) : this() {
       reflectionMap_ = other.reflectionMap_ != null ? other.reflectionMap_.Clone() : null;
       skyboxTexture_ = other.skyboxTexture_ != null ? other.skyboxTexture_.Clone() : null;
+      sun_ = other.sun_ != null ? other.sun_.Clone() : null;
+      skyColors_ = other.skyColors_ != null ? other.skyColors_.Clone() : null;
+      fog_ = other.fog_ != null ? other.fog_.Clone() : null;
+      clouds_ = other.clouds_ != null ? other.clouds_.Clone() : null;
+      stars_ = other.stars_ != null ? other.stars_.Clone() : null;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -125,6 +160,82 @@ namespace DCL.ECSComponents {
       }
     }
 
+    /// <summary>Field number for the "sun" field.</summary>
+    public const int SunFieldNumber = 3;
+    private global::DCL.ECSComponents.PBSkybox.Types.Sun sun_;
+    /// <summary>
+    /// Directional light (sun/moon) override. Unset = time-of-day default.
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::DCL.ECSComponents.PBSkybox.Types.Sun Sun {
+      get { return sun_; }
+      set {
+        sun_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "sky_colors" field.</summary>
+    public const int SkyColorsFieldNumber = 4;
+    private global::DCL.ECSComponents.PBSkybox.Types.SkyColors skyColors_;
+    /// <summary>
+    /// Procedural sky colors. They also drive the ambient lighting: zenith sets the sky ambient, horizon the equator ambient and nadir the ground ambient.
+    /// Inert while `skybox_texture` is set (the panorama replaces the procedural sky).
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::DCL.ECSComponents.PBSkybox.Types.SkyColors SkyColors {
+      get { return skyColors_; }
+      set {
+        skyColors_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "fog" field.</summary>
+    public const int FogFieldNumber = 5;
+    private global::DCL.ECSComponents.PBSkybox.Types.Fog fog_;
+    /// <summary>
+    /// Fog color override. Whether fog renders at all remains a user quality setting; a scene cannot force it on or off.
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::DCL.ECSComponents.PBSkybox.Types.Fog Fog {
+      get { return fog_; }
+      set {
+        fog_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "clouds" field.</summary>
+    public const int CloudsFieldNumber = 6;
+    private global::DCL.ECSComponents.PBSkybox.Types.Clouds clouds_;
+    /// <summary>
+    /// Cloud layer of the procedural sky. Inert while `skybox_texture` is set.
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::DCL.ECSComponents.PBSkybox.Types.Clouds Clouds {
+      get { return clouds_; }
+      set {
+        clouds_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "stars" field.</summary>
+    public const int StarsFieldNumber = 7;
+    private global::DCL.ECSComponents.PBSkybox.Types.Stars stars_;
+    /// <summary>
+    /// Star field of the procedural sky. Inert while `skybox_texture` is set.
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::DCL.ECSComponents.PBSkybox.Types.Stars Stars {
+      get { return stars_; }
+      set {
+        stars_ = value;
+      }
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -142,6 +253,11 @@ namespace DCL.ECSComponents {
       }
       if (!object.Equals(ReflectionMap, other.ReflectionMap)) return false;
       if (!object.Equals(SkyboxTexture, other.SkyboxTexture)) return false;
+      if (!object.Equals(Sun, other.Sun)) return false;
+      if (!object.Equals(SkyColors, other.SkyColors)) return false;
+      if (!object.Equals(Fog, other.Fog)) return false;
+      if (!object.Equals(Clouds, other.Clouds)) return false;
+      if (!object.Equals(Stars, other.Stars)) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -151,6 +267,11 @@ namespace DCL.ECSComponents {
       int hash = 1;
       if (reflectionMap_ != null) hash ^= ReflectionMap.GetHashCode();
       if (skyboxTexture_ != null) hash ^= SkyboxTexture.GetHashCode();
+      if (sun_ != null) hash ^= Sun.GetHashCode();
+      if (skyColors_ != null) hash ^= SkyColors.GetHashCode();
+      if (fog_ != null) hash ^= Fog.GetHashCode();
+      if (clouds_ != null) hash ^= Clouds.GetHashCode();
+      if (stars_ != null) hash ^= Stars.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -177,6 +298,26 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(18);
         output.WriteMessage(SkyboxTexture);
       }
+      if (sun_ != null) {
+        output.WriteRawTag(26);
+        output.WriteMessage(Sun);
+      }
+      if (skyColors_ != null) {
+        output.WriteRawTag(34);
+        output.WriteMessage(SkyColors);
+      }
+      if (fog_ != null) {
+        output.WriteRawTag(42);
+        output.WriteMessage(Fog);
+      }
+      if (clouds_ != null) {
+        output.WriteRawTag(50);
+        output.WriteMessage(Clouds);
+      }
+      if (stars_ != null) {
+        output.WriteRawTag(58);
+        output.WriteMessage(Stars);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -195,6 +336,26 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(18);
         output.WriteMessage(SkyboxTexture);
       }
+      if (sun_ != null) {
+        output.WriteRawTag(26);
+        output.WriteMessage(Sun);
+      }
+      if (skyColors_ != null) {
+        output.WriteRawTag(34);
+        output.WriteMessage(SkyColors);
+      }
+      if (fog_ != null) {
+        output.WriteRawTag(42);
+        output.WriteMessage(Fog);
+      }
+      if (clouds_ != null) {
+        output.WriteRawTag(50);
+        output.WriteMessage(Clouds);
+      }
+      if (stars_ != null) {
+        output.WriteRawTag(58);
+        output.WriteMessage(Stars);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -210,6 +371,21 @@ namespace DCL.ECSComponents {
       }
       if (skyboxTexture_ != null) {
         size += 1 + pb::CodedOutputStream.ComputeMessageSize(SkyboxTexture);
+      }
+      if (sun_ != null) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(Sun);
+      }
+      if (skyColors_ != null) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(SkyColors);
+      }
+      if (fog_ != null) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(Fog);
+      }
+      if (clouds_ != null) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(Clouds);
+      }
+      if (stars_ != null) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(Stars);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -234,6 +410,36 @@ namespace DCL.ECSComponents {
           SkyboxTexture = new global::Decentraland.Common.TextureUnion();
         }
         SkyboxTexture.MergeFrom(other.SkyboxTexture);
+      }
+      if (other.sun_ != null) {
+        if (sun_ == null) {
+          Sun = new global::DCL.ECSComponents.PBSkybox.Types.Sun();
+        }
+        Sun.MergeFrom(other.Sun);
+      }
+      if (other.skyColors_ != null) {
+        if (skyColors_ == null) {
+          SkyColors = new global::DCL.ECSComponents.PBSkybox.Types.SkyColors();
+        }
+        SkyColors.MergeFrom(other.SkyColors);
+      }
+      if (other.fog_ != null) {
+        if (fog_ == null) {
+          Fog = new global::DCL.ECSComponents.PBSkybox.Types.Fog();
+        }
+        Fog.MergeFrom(other.Fog);
+      }
+      if (other.clouds_ != null) {
+        if (clouds_ == null) {
+          Clouds = new global::DCL.ECSComponents.PBSkybox.Types.Clouds();
+        }
+        Clouds.MergeFrom(other.Clouds);
+      }
+      if (other.stars_ != null) {
+        if (stars_ == null) {
+          Stars = new global::DCL.ECSComponents.PBSkybox.Types.Stars();
+        }
+        Stars.MergeFrom(other.Stars);
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -266,6 +472,41 @@ namespace DCL.ECSComponents {
               SkyboxTexture = new global::Decentraland.Common.TextureUnion();
             }
             input.ReadMessage(SkyboxTexture);
+            break;
+          }
+          case 26: {
+            if (sun_ == null) {
+              Sun = new global::DCL.ECSComponents.PBSkybox.Types.Sun();
+            }
+            input.ReadMessage(Sun);
+            break;
+          }
+          case 34: {
+            if (skyColors_ == null) {
+              SkyColors = new global::DCL.ECSComponents.PBSkybox.Types.SkyColors();
+            }
+            input.ReadMessage(SkyColors);
+            break;
+          }
+          case 42: {
+            if (fog_ == null) {
+              Fog = new global::DCL.ECSComponents.PBSkybox.Types.Fog();
+            }
+            input.ReadMessage(Fog);
+            break;
+          }
+          case 50: {
+            if (clouds_ == null) {
+              Clouds = new global::DCL.ECSComponents.PBSkybox.Types.Clouds();
+            }
+            input.ReadMessage(Clouds);
+            break;
+          }
+          case 58: {
+            if (stars_ == null) {
+              Stars = new global::DCL.ECSComponents.PBSkybox.Types.Stars();
+            }
+            input.ReadMessage(Stars);
             break;
           }
         }
@@ -301,10 +542,1329 @@ namespace DCL.ECSComponents {
             input.ReadMessage(SkyboxTexture);
             break;
           }
+          case 26: {
+            if (sun_ == null) {
+              Sun = new global::DCL.ECSComponents.PBSkybox.Types.Sun();
+            }
+            input.ReadMessage(Sun);
+            break;
+          }
+          case 34: {
+            if (skyColors_ == null) {
+              SkyColors = new global::DCL.ECSComponents.PBSkybox.Types.SkyColors();
+            }
+            input.ReadMessage(SkyColors);
+            break;
+          }
+          case 42: {
+            if (fog_ == null) {
+              Fog = new global::DCL.ECSComponents.PBSkybox.Types.Fog();
+            }
+            input.ReadMessage(Fog);
+            break;
+          }
+          case 50: {
+            if (clouds_ == null) {
+              Clouds = new global::DCL.ECSComponents.PBSkybox.Types.Clouds();
+            }
+            input.ReadMessage(Clouds);
+            break;
+          }
+          case 58: {
+            if (stars_ == null) {
+              Stars = new global::DCL.ECSComponents.PBSkybox.Types.Stars();
+            }
+            input.ReadMessage(Stars);
+            break;
+          }
         }
       }
     }
     #endif
+
+    #region Nested types
+    /// <summary>Container for nested types declared in the PBSkybox message type.</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static partial class Types {
+      [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
+      public sealed partial class Sun : pb::IMessage<Sun>
+      #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          , pb::IBufferMessage
+      #endif
+      {
+        private static readonly pb::MessageParser<Sun> _parser = new pb::MessageParser<Sun>(() => new Sun());
+        private pb::UnknownFieldSet _unknownFields;
+        private int _hasBits0;
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public static pb::MessageParser<Sun> Parser { get { return _parser; } }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public static pbr::MessageDescriptor Descriptor {
+          get { return global::DCL.ECSComponents.PBSkybox.Descriptor.NestedTypes[0]; }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        pbr::MessageDescriptor pb::IMessage.Descriptor {
+          get { return Descriptor; }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public Sun() {
+          OnConstruction();
+        }
+
+        partial void OnConstruction();
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public Sun(Sun other) : this() {
+          _hasBits0 = other._hasBits0;
+          color_ = other.color_ != null ? other.color_.Clone() : null;
+          visible_ = other.visible_;
+          _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public Sun Clone() {
+          return new Sun(this);
+        }
+
+        /// <summary>Field number for the "color" field.</summary>
+        public const int ColorFieldNumber = 1;
+        private global::Decentraland.Common.ColorGradient color_;
+        /// <summary>
+        /// tints the directional light and the sun disc. Gradient time is the normalized time of day. Unset = time-of-day default
+        /// </summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public global::Decentraland.Common.ColorGradient Color {
+          get { return color_; }
+          set {
+            color_ = value;
+          }
+        }
+
+        /// <summary>Field number for the "visible" field.</summary>
+        public const int VisibleFieldNumber = 2;
+        private readonly static bool VisibleDefaultValue = false;
+
+        private bool visible_;
+        /// <summary>
+        /// default = true. false hides the sun and moon discs and the lens flare; the lighting they cast is unaffected
+        /// </summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public bool Visible {
+          get { if ((_hasBits0 & 1) != 0) { return visible_; } else { return VisibleDefaultValue; } }
+          set {
+            _hasBits0 |= 1;
+            visible_ = value;
+          }
+        }
+        /// <summary>Gets whether the "visible" field is set</summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public bool HasVisible {
+          get { return (_hasBits0 & 1) != 0; }
+        }
+        /// <summary>Clears the value of the "visible" field</summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void ClearVisible() {
+          _hasBits0 &= ~1;
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override bool Equals(object other) {
+          return Equals(other as Sun);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public bool Equals(Sun other) {
+          if (ReferenceEquals(other, null)) {
+            return false;
+          }
+          if (ReferenceEquals(other, this)) {
+            return true;
+          }
+          if (!object.Equals(Color, other.Color)) return false;
+          if (Visible != other.Visible) return false;
+          return Equals(_unknownFields, other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override int GetHashCode() {
+          int hash = 1;
+          if (color_ != null) hash ^= Color.GetHashCode();
+          if (HasVisible) hash ^= Visible.GetHashCode();
+          if (_unknownFields != null) {
+            hash ^= _unknownFields.GetHashCode();
+          }
+          return hash;
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override string ToString() {
+          return pb::JsonFormatter.ToDiagnosticString(this);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void WriteTo(pb::CodedOutputStream output) {
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          output.WriteRawMessage(this);
+        #else
+          if (color_ != null) {
+            output.WriteRawTag(10);
+            output.WriteMessage(Color);
+          }
+          if (HasVisible) {
+            output.WriteRawTag(16);
+            output.WriteBool(Visible);
+          }
+          if (_unknownFields != null) {
+            _unknownFields.WriteTo(output);
+          }
+        #endif
+        }
+
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+          if (color_ != null) {
+            output.WriteRawTag(10);
+            output.WriteMessage(Color);
+          }
+          if (HasVisible) {
+            output.WriteRawTag(16);
+            output.WriteBool(Visible);
+          }
+          if (_unknownFields != null) {
+            _unknownFields.WriteTo(ref output);
+          }
+        }
+        #endif
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public int CalculateSize() {
+          int size = 0;
+          if (color_ != null) {
+            size += 1 + pb::CodedOutputStream.ComputeMessageSize(Color);
+          }
+          if (HasVisible) {
+            size += 1 + 1;
+          }
+          if (_unknownFields != null) {
+            size += _unknownFields.CalculateSize();
+          }
+          return size;
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void MergeFrom(Sun other) {
+          if (other == null) {
+            return;
+          }
+          if (other.color_ != null) {
+            if (color_ == null) {
+              Color = new global::Decentraland.Common.ColorGradient();
+            }
+            Color.MergeFrom(other.Color);
+          }
+          if (other.HasVisible) {
+            Visible = other.Visible;
+          }
+          _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void MergeFrom(pb::CodedInputStream input) {
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          input.ReadRawMessage(this);
+        #else
+          uint tag;
+          while ((tag = input.ReadTag()) != 0) {
+          if ((tag & 7) == 4) {
+            // Abort on any end group tag.
+            return;
+          }
+          switch(tag) {
+              default:
+                _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+                break;
+              case 10: {
+                if (color_ == null) {
+                  Color = new global::Decentraland.Common.ColorGradient();
+                }
+                input.ReadMessage(Color);
+                break;
+              }
+              case 16: {
+                Visible = input.ReadBool();
+                break;
+              }
+            }
+          }
+        #endif
+        }
+
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+          uint tag;
+          while ((tag = input.ReadTag()) != 0) {
+          if ((tag & 7) == 4) {
+            // Abort on any end group tag.
+            return;
+          }
+          switch(tag) {
+              default:
+                _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+                break;
+              case 10: {
+                if (color_ == null) {
+                  Color = new global::Decentraland.Common.ColorGradient();
+                }
+                input.ReadMessage(Color);
+                break;
+              }
+              case 16: {
+                Visible = input.ReadBool();
+                break;
+              }
+            }
+          }
+        }
+        #endif
+
+      }
+
+      [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
+      public sealed partial class SkyColors : pb::IMessage<SkyColors>
+      #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          , pb::IBufferMessage
+      #endif
+      {
+        private static readonly pb::MessageParser<SkyColors> _parser = new pb::MessageParser<SkyColors>(() => new SkyColors());
+        private pb::UnknownFieldSet _unknownFields;
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public static pb::MessageParser<SkyColors> Parser { get { return _parser; } }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public static pbr::MessageDescriptor Descriptor {
+          get { return global::DCL.ECSComponents.PBSkybox.Descriptor.NestedTypes[1]; }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        pbr::MessageDescriptor pb::IMessage.Descriptor {
+          get { return Descriptor; }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public SkyColors() {
+          OnConstruction();
+        }
+
+        partial void OnConstruction();
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public SkyColors(SkyColors other) : this() {
+          zenith_ = other.zenith_ != null ? other.zenith_.Clone() : null;
+          horizon_ = other.horizon_ != null ? other.horizon_.Clone() : null;
+          nadir_ = other.nadir_ != null ? other.nadir_.Clone() : null;
+          _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public SkyColors Clone() {
+          return new SkyColors(this);
+        }
+
+        /// <summary>Field number for the "zenith" field.</summary>
+        public const int ZenithFieldNumber = 1;
+        private global::Decentraland.Common.ColorGradient zenith_;
+        /// <summary>
+        /// color at the top of the sky. Unset = time-of-day default
+        /// </summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public global::Decentraland.Common.ColorGradient Zenith {
+          get { return zenith_; }
+          set {
+            zenith_ = value;
+          }
+        }
+
+        /// <summary>Field number for the "horizon" field.</summary>
+        public const int HorizonFieldNumber = 2;
+        private global::Decentraland.Common.ColorGradient horizon_;
+        /// <summary>
+        /// color at the horizon line. Unset = time-of-day default
+        /// </summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public global::Decentraland.Common.ColorGradient Horizon {
+          get { return horizon_; }
+          set {
+            horizon_ = value;
+          }
+        }
+
+        /// <summary>Field number for the "nadir" field.</summary>
+        public const int NadirFieldNumber = 3;
+        private global::Decentraland.Common.ColorGradient nadir_;
+        /// <summary>
+        /// color below the horizon. Unset = time-of-day default
+        /// </summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public global::Decentraland.Common.ColorGradient Nadir {
+          get { return nadir_; }
+          set {
+            nadir_ = value;
+          }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override bool Equals(object other) {
+          return Equals(other as SkyColors);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public bool Equals(SkyColors other) {
+          if (ReferenceEquals(other, null)) {
+            return false;
+          }
+          if (ReferenceEquals(other, this)) {
+            return true;
+          }
+          if (!object.Equals(Zenith, other.Zenith)) return false;
+          if (!object.Equals(Horizon, other.Horizon)) return false;
+          if (!object.Equals(Nadir, other.Nadir)) return false;
+          return Equals(_unknownFields, other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override int GetHashCode() {
+          int hash = 1;
+          if (zenith_ != null) hash ^= Zenith.GetHashCode();
+          if (horizon_ != null) hash ^= Horizon.GetHashCode();
+          if (nadir_ != null) hash ^= Nadir.GetHashCode();
+          if (_unknownFields != null) {
+            hash ^= _unknownFields.GetHashCode();
+          }
+          return hash;
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override string ToString() {
+          return pb::JsonFormatter.ToDiagnosticString(this);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void WriteTo(pb::CodedOutputStream output) {
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          output.WriteRawMessage(this);
+        #else
+          if (zenith_ != null) {
+            output.WriteRawTag(10);
+            output.WriteMessage(Zenith);
+          }
+          if (horizon_ != null) {
+            output.WriteRawTag(18);
+            output.WriteMessage(Horizon);
+          }
+          if (nadir_ != null) {
+            output.WriteRawTag(26);
+            output.WriteMessage(Nadir);
+          }
+          if (_unknownFields != null) {
+            _unknownFields.WriteTo(output);
+          }
+        #endif
+        }
+
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+          if (zenith_ != null) {
+            output.WriteRawTag(10);
+            output.WriteMessage(Zenith);
+          }
+          if (horizon_ != null) {
+            output.WriteRawTag(18);
+            output.WriteMessage(Horizon);
+          }
+          if (nadir_ != null) {
+            output.WriteRawTag(26);
+            output.WriteMessage(Nadir);
+          }
+          if (_unknownFields != null) {
+            _unknownFields.WriteTo(ref output);
+          }
+        }
+        #endif
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public int CalculateSize() {
+          int size = 0;
+          if (zenith_ != null) {
+            size += 1 + pb::CodedOutputStream.ComputeMessageSize(Zenith);
+          }
+          if (horizon_ != null) {
+            size += 1 + pb::CodedOutputStream.ComputeMessageSize(Horizon);
+          }
+          if (nadir_ != null) {
+            size += 1 + pb::CodedOutputStream.ComputeMessageSize(Nadir);
+          }
+          if (_unknownFields != null) {
+            size += _unknownFields.CalculateSize();
+          }
+          return size;
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void MergeFrom(SkyColors other) {
+          if (other == null) {
+            return;
+          }
+          if (other.zenith_ != null) {
+            if (zenith_ == null) {
+              Zenith = new global::Decentraland.Common.ColorGradient();
+            }
+            Zenith.MergeFrom(other.Zenith);
+          }
+          if (other.horizon_ != null) {
+            if (horizon_ == null) {
+              Horizon = new global::Decentraland.Common.ColorGradient();
+            }
+            Horizon.MergeFrom(other.Horizon);
+          }
+          if (other.nadir_ != null) {
+            if (nadir_ == null) {
+              Nadir = new global::Decentraland.Common.ColorGradient();
+            }
+            Nadir.MergeFrom(other.Nadir);
+          }
+          _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void MergeFrom(pb::CodedInputStream input) {
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          input.ReadRawMessage(this);
+        #else
+          uint tag;
+          while ((tag = input.ReadTag()) != 0) {
+          if ((tag & 7) == 4) {
+            // Abort on any end group tag.
+            return;
+          }
+          switch(tag) {
+              default:
+                _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+                break;
+              case 10: {
+                if (zenith_ == null) {
+                  Zenith = new global::Decentraland.Common.ColorGradient();
+                }
+                input.ReadMessage(Zenith);
+                break;
+              }
+              case 18: {
+                if (horizon_ == null) {
+                  Horizon = new global::Decentraland.Common.ColorGradient();
+                }
+                input.ReadMessage(Horizon);
+                break;
+              }
+              case 26: {
+                if (nadir_ == null) {
+                  Nadir = new global::Decentraland.Common.ColorGradient();
+                }
+                input.ReadMessage(Nadir);
+                break;
+              }
+            }
+          }
+        #endif
+        }
+
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+          uint tag;
+          while ((tag = input.ReadTag()) != 0) {
+          if ((tag & 7) == 4) {
+            // Abort on any end group tag.
+            return;
+          }
+          switch(tag) {
+              default:
+                _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+                break;
+              case 10: {
+                if (zenith_ == null) {
+                  Zenith = new global::Decentraland.Common.ColorGradient();
+                }
+                input.ReadMessage(Zenith);
+                break;
+              }
+              case 18: {
+                if (horizon_ == null) {
+                  Horizon = new global::Decentraland.Common.ColorGradient();
+                }
+                input.ReadMessage(Horizon);
+                break;
+              }
+              case 26: {
+                if (nadir_ == null) {
+                  Nadir = new global::Decentraland.Common.ColorGradient();
+                }
+                input.ReadMessage(Nadir);
+                break;
+              }
+            }
+          }
+        }
+        #endif
+
+      }
+
+      [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
+      public sealed partial class Fog : pb::IMessage<Fog>
+      #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          , pb::IBufferMessage
+      #endif
+      {
+        private static readonly pb::MessageParser<Fog> _parser = new pb::MessageParser<Fog>(() => new Fog());
+        private pb::UnknownFieldSet _unknownFields;
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public static pb::MessageParser<Fog> Parser { get { return _parser; } }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public static pbr::MessageDescriptor Descriptor {
+          get { return global::DCL.ECSComponents.PBSkybox.Descriptor.NestedTypes[2]; }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        pbr::MessageDescriptor pb::IMessage.Descriptor {
+          get { return Descriptor; }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public Fog() {
+          OnConstruction();
+        }
+
+        partial void OnConstruction();
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public Fog(Fog other) : this() {
+          color_ = other.color_ != null ? other.color_.Clone() : null;
+          _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public Fog Clone() {
+          return new Fog(this);
+        }
+
+        /// <summary>Field number for the "color" field.</summary>
+        public const int ColorFieldNumber = 1;
+        private global::Decentraland.Common.ColorGradient color_;
+        /// <summary>
+        /// Unset = time-of-day default
+        /// </summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public global::Decentraland.Common.ColorGradient Color {
+          get { return color_; }
+          set {
+            color_ = value;
+          }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override bool Equals(object other) {
+          return Equals(other as Fog);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public bool Equals(Fog other) {
+          if (ReferenceEquals(other, null)) {
+            return false;
+          }
+          if (ReferenceEquals(other, this)) {
+            return true;
+          }
+          if (!object.Equals(Color, other.Color)) return false;
+          return Equals(_unknownFields, other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override int GetHashCode() {
+          int hash = 1;
+          if (color_ != null) hash ^= Color.GetHashCode();
+          if (_unknownFields != null) {
+            hash ^= _unknownFields.GetHashCode();
+          }
+          return hash;
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override string ToString() {
+          return pb::JsonFormatter.ToDiagnosticString(this);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void WriteTo(pb::CodedOutputStream output) {
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          output.WriteRawMessage(this);
+        #else
+          if (color_ != null) {
+            output.WriteRawTag(10);
+            output.WriteMessage(Color);
+          }
+          if (_unknownFields != null) {
+            _unknownFields.WriteTo(output);
+          }
+        #endif
+        }
+
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+          if (color_ != null) {
+            output.WriteRawTag(10);
+            output.WriteMessage(Color);
+          }
+          if (_unknownFields != null) {
+            _unknownFields.WriteTo(ref output);
+          }
+        }
+        #endif
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public int CalculateSize() {
+          int size = 0;
+          if (color_ != null) {
+            size += 1 + pb::CodedOutputStream.ComputeMessageSize(Color);
+          }
+          if (_unknownFields != null) {
+            size += _unknownFields.CalculateSize();
+          }
+          return size;
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void MergeFrom(Fog other) {
+          if (other == null) {
+            return;
+          }
+          if (other.color_ != null) {
+            if (color_ == null) {
+              Color = new global::Decentraland.Common.ColorGradient();
+            }
+            Color.MergeFrom(other.Color);
+          }
+          _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void MergeFrom(pb::CodedInputStream input) {
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          input.ReadRawMessage(this);
+        #else
+          uint tag;
+          while ((tag = input.ReadTag()) != 0) {
+          if ((tag & 7) == 4) {
+            // Abort on any end group tag.
+            return;
+          }
+          switch(tag) {
+              default:
+                _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+                break;
+              case 10: {
+                if (color_ == null) {
+                  Color = new global::Decentraland.Common.ColorGradient();
+                }
+                input.ReadMessage(Color);
+                break;
+              }
+            }
+          }
+        #endif
+        }
+
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+          uint tag;
+          while ((tag = input.ReadTag()) != 0) {
+          if ((tag & 7) == 4) {
+            // Abort on any end group tag.
+            return;
+          }
+          switch(tag) {
+              default:
+                _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+                break;
+              case 10: {
+                if (color_ == null) {
+                  Color = new global::Decentraland.Common.ColorGradient();
+                }
+                input.ReadMessage(Color);
+                break;
+              }
+            }
+          }
+        }
+        #endif
+
+      }
+
+      [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
+      public sealed partial class Clouds : pb::IMessage<Clouds>
+      #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          , pb::IBufferMessage
+      #endif
+      {
+        private static readonly pb::MessageParser<Clouds> _parser = new pb::MessageParser<Clouds>(() => new Clouds());
+        private pb::UnknownFieldSet _unknownFields;
+        private int _hasBits0;
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public static pb::MessageParser<Clouds> Parser { get { return _parser; } }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public static pbr::MessageDescriptor Descriptor {
+          get { return global::DCL.ECSComponents.PBSkybox.Descriptor.NestedTypes[3]; }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        pbr::MessageDescriptor pb::IMessage.Descriptor {
+          get { return Descriptor; }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public Clouds() {
+          OnConstruction();
+        }
+
+        partial void OnConstruction();
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public Clouds(Clouds other) : this() {
+          _hasBits0 = other._hasBits0;
+          opacity_ = other.opacity_;
+          speed_ = other.speed_;
+          _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public Clouds Clone() {
+          return new Clouds(this);
+        }
+
+        /// <summary>Field number for the "opacity" field.</summary>
+        public const int OpacityFieldNumber = 1;
+        private readonly static float OpacityDefaultValue = 0F;
+
+        private float opacity_;
+        /// <summary>
+        /// default = 1, in the 0..1 range. 0 hides the clouds
+        /// </summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public float Opacity {
+          get { if ((_hasBits0 & 1) != 0) { return opacity_; } else { return OpacityDefaultValue; } }
+          set {
+            _hasBits0 |= 1;
+            opacity_ = value;
+          }
+        }
+        /// <summary>Gets whether the "opacity" field is set</summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public bool HasOpacity {
+          get { return (_hasBits0 & 1) != 0; }
+        }
+        /// <summary>Clears the value of the "opacity" field</summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void ClearOpacity() {
+          _hasBits0 &= ~1;
+        }
+
+        /// <summary>Field number for the "speed" field.</summary>
+        public const int SpeedFieldNumber = 2;
+        private readonly static float SpeedDefaultValue = 0F;
+
+        private float speed_;
+        /// <summary>
+        /// default = 0.01, rotation speed of the cloud layer. 0 = static clouds
+        /// </summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public float Speed {
+          get { if ((_hasBits0 & 2) != 0) { return speed_; } else { return SpeedDefaultValue; } }
+          set {
+            _hasBits0 |= 2;
+            speed_ = value;
+          }
+        }
+        /// <summary>Gets whether the "speed" field is set</summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public bool HasSpeed {
+          get { return (_hasBits0 & 2) != 0; }
+        }
+        /// <summary>Clears the value of the "speed" field</summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void ClearSpeed() {
+          _hasBits0 &= ~2;
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override bool Equals(object other) {
+          return Equals(other as Clouds);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public bool Equals(Clouds other) {
+          if (ReferenceEquals(other, null)) {
+            return false;
+          }
+          if (ReferenceEquals(other, this)) {
+            return true;
+          }
+          if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(Opacity, other.Opacity)) return false;
+          if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(Speed, other.Speed)) return false;
+          return Equals(_unknownFields, other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override int GetHashCode() {
+          int hash = 1;
+          if (HasOpacity) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(Opacity);
+          if (HasSpeed) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(Speed);
+          if (_unknownFields != null) {
+            hash ^= _unknownFields.GetHashCode();
+          }
+          return hash;
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override string ToString() {
+          return pb::JsonFormatter.ToDiagnosticString(this);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void WriteTo(pb::CodedOutputStream output) {
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          output.WriteRawMessage(this);
+        #else
+          if (HasOpacity) {
+            output.WriteRawTag(13);
+            output.WriteFloat(Opacity);
+          }
+          if (HasSpeed) {
+            output.WriteRawTag(21);
+            output.WriteFloat(Speed);
+          }
+          if (_unknownFields != null) {
+            _unknownFields.WriteTo(output);
+          }
+        #endif
+        }
+
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+          if (HasOpacity) {
+            output.WriteRawTag(13);
+            output.WriteFloat(Opacity);
+          }
+          if (HasSpeed) {
+            output.WriteRawTag(21);
+            output.WriteFloat(Speed);
+          }
+          if (_unknownFields != null) {
+            _unknownFields.WriteTo(ref output);
+          }
+        }
+        #endif
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public int CalculateSize() {
+          int size = 0;
+          if (HasOpacity) {
+            size += 1 + 4;
+          }
+          if (HasSpeed) {
+            size += 1 + 4;
+          }
+          if (_unknownFields != null) {
+            size += _unknownFields.CalculateSize();
+          }
+          return size;
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void MergeFrom(Clouds other) {
+          if (other == null) {
+            return;
+          }
+          if (other.HasOpacity) {
+            Opacity = other.Opacity;
+          }
+          if (other.HasSpeed) {
+            Speed = other.Speed;
+          }
+          _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void MergeFrom(pb::CodedInputStream input) {
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          input.ReadRawMessage(this);
+        #else
+          uint tag;
+          while ((tag = input.ReadTag()) != 0) {
+          if ((tag & 7) == 4) {
+            // Abort on any end group tag.
+            return;
+          }
+          switch(tag) {
+              default:
+                _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+                break;
+              case 13: {
+                Opacity = input.ReadFloat();
+                break;
+              }
+              case 21: {
+                Speed = input.ReadFloat();
+                break;
+              }
+            }
+          }
+        #endif
+        }
+
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+          uint tag;
+          while ((tag = input.ReadTag()) != 0) {
+          if ((tag & 7) == 4) {
+            // Abort on any end group tag.
+            return;
+          }
+          switch(tag) {
+              default:
+                _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+                break;
+              case 13: {
+                Opacity = input.ReadFloat();
+                break;
+              }
+              case 21: {
+                Speed = input.ReadFloat();
+                break;
+              }
+            }
+          }
+        }
+        #endif
+
+      }
+
+      [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
+      public sealed partial class Stars : pb::IMessage<Stars>
+      #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          , pb::IBufferMessage
+      #endif
+      {
+        private static readonly pb::MessageParser<Stars> _parser = new pb::MessageParser<Stars>(() => new Stars());
+        private pb::UnknownFieldSet _unknownFields;
+        private int _hasBits0;
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public static pb::MessageParser<Stars> Parser { get { return _parser; } }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public static pbr::MessageDescriptor Descriptor {
+          get { return global::DCL.ECSComponents.PBSkybox.Descriptor.NestedTypes[4]; }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        pbr::MessageDescriptor pb::IMessage.Descriptor {
+          get { return Descriptor; }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public Stars() {
+          OnConstruction();
+        }
+
+        partial void OnConstruction();
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public Stars(Stars other) : this() {
+          _hasBits0 = other._hasBits0;
+          brightness_ = other.brightness_;
+          _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public Stars Clone() {
+          return new Stars(this);
+        }
+
+        /// <summary>Field number for the "brightness" field.</summary>
+        public const int BrightnessFieldNumber = 1;
+        private readonly static float BrightnessDefaultValue = 0F;
+
+        private float brightness_;
+        /// <summary>
+        /// default = 4.62. Stars are only visible during the night part of the day cycle
+        /// </summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public float Brightness {
+          get { if ((_hasBits0 & 1) != 0) { return brightness_; } else { return BrightnessDefaultValue; } }
+          set {
+            _hasBits0 |= 1;
+            brightness_ = value;
+          }
+        }
+        /// <summary>Gets whether the "brightness" field is set</summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public bool HasBrightness {
+          get { return (_hasBits0 & 1) != 0; }
+        }
+        /// <summary>Clears the value of the "brightness" field</summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void ClearBrightness() {
+          _hasBits0 &= ~1;
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override bool Equals(object other) {
+          return Equals(other as Stars);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public bool Equals(Stars other) {
+          if (ReferenceEquals(other, null)) {
+            return false;
+          }
+          if (ReferenceEquals(other, this)) {
+            return true;
+          }
+          if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(Brightness, other.Brightness)) return false;
+          return Equals(_unknownFields, other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override int GetHashCode() {
+          int hash = 1;
+          if (HasBrightness) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(Brightness);
+          if (_unknownFields != null) {
+            hash ^= _unknownFields.GetHashCode();
+          }
+          return hash;
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override string ToString() {
+          return pb::JsonFormatter.ToDiagnosticString(this);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void WriteTo(pb::CodedOutputStream output) {
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          output.WriteRawMessage(this);
+        #else
+          if (HasBrightness) {
+            output.WriteRawTag(13);
+            output.WriteFloat(Brightness);
+          }
+          if (_unknownFields != null) {
+            _unknownFields.WriteTo(output);
+          }
+        #endif
+        }
+
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+          if (HasBrightness) {
+            output.WriteRawTag(13);
+            output.WriteFloat(Brightness);
+          }
+          if (_unknownFields != null) {
+            _unknownFields.WriteTo(ref output);
+          }
+        }
+        #endif
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public int CalculateSize() {
+          int size = 0;
+          if (HasBrightness) {
+            size += 1 + 4;
+          }
+          if (_unknownFields != null) {
+            size += _unknownFields.CalculateSize();
+          }
+          return size;
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void MergeFrom(Stars other) {
+          if (other == null) {
+            return;
+          }
+          if (other.HasBrightness) {
+            Brightness = other.Brightness;
+          }
+          _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void MergeFrom(pb::CodedInputStream input) {
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          input.ReadRawMessage(this);
+        #else
+          uint tag;
+          while ((tag = input.ReadTag()) != 0) {
+          if ((tag & 7) == 4) {
+            // Abort on any end group tag.
+            return;
+          }
+          switch(tag) {
+              default:
+                _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+                break;
+              case 13: {
+                Brightness = input.ReadFloat();
+                break;
+              }
+            }
+          }
+        #endif
+        }
+
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+          uint tag;
+          while ((tag = input.ReadTag()) != 0) {
+          if ((tag & 7) == 4) {
+            // Abort on any end group tag.
+            return;
+          }
+          switch(tag) {
+              default:
+                _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+                break;
+              case 13: {
+                Brightness = input.ReadFloat();
+                break;
+              }
+            }
+          }
+        }
+        #endif
+
+      }
+
+    }
+    #endregion
 
   }
 

@@ -10,7 +10,8 @@ using UnityEngine;
 namespace DCL.SkyBox
 {
     /// <summary>
-    ///     Pushes the environment overrides requested by the current scene to the visible sky and to the reflection cubemap.
+    ///     Pushes the environment overrides requested by the current scene to the time-of-day controller, the visible sky
+    ///     and the reflection cubemap.
     /// </summary>
     [UpdateInGroup(typeof(SimulationSystemGroup))]
     [LogCategory(ReportCategory.SKYBOX)]
@@ -33,6 +34,12 @@ namespace DCL.SkyBox
         protected override void Update(float t)
         {
             ref SceneSkyboxOverrides overrides = ref World.Get<SceneSkyboxOverrides>(skyboxEntity);
+
+            if (!ReferenceEquals(overrides.Environment, overrides.AppliedEnvironment))
+            {
+                skyboxRenderController.SetEnvironmentOverride(overrides.Environment);
+                overrides.AppliedEnvironment = overrides.Environment;
+            }
 
             // Sky first: on clear the renderer feature then sees the restored skybox material and the cleared override in the same frame
             if (!ReferenceEquals(overrides.SkyboxTexture, overrides.AppliedSkyboxTexture))

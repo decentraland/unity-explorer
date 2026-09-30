@@ -3,6 +3,7 @@ using Arch.SystemGroups;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.SDKComponents.Utils;
+using DCL.SkyBox;
 using DCL.SkyBox.Components;
 using DCL.WebRequests;
 using Decentraland.Common;
@@ -22,8 +23,8 @@ using TextureSlot = DCL.SDKComponents.Skybox.SceneSkyboxComponent.TextureSlot;
 namespace DCL.SDKComponents.Skybox.Systems
 {
     /// <summary>
-    ///     Loads the textures of the PBSkybox on the scene root entity and, while the scene is current,
-    ///     publishes them to the global world as the scene environment overrides.
+    ///     Loads the textures of the PBSkybox on the scene root entity, builds its environment profile and, while the scene
+    ///     is current, publishes them to the global world as the scene environment overrides.
     /// </summary>
     [UpdateInGroup(typeof(SyncedInitializationSystemGroup))]
     [LogCategory(ReportCategory.SKYBOX)]
@@ -79,6 +80,7 @@ namespace DCL.SDKComponents.Skybox.Systems
 
             component.ReflectionMap.CleanUp(World);
             component.SkyboxTexture.CleanUp(World);
+            component.Environment = null;
         }
 
         protected override void Update(float t)
@@ -97,6 +99,7 @@ namespace DCL.SDKComponents.Skybox.Systems
             {
                 Release(ref component.ReflectionMap);
                 Release(ref component.SkyboxTexture);
+                component.Environment = null;
                 ClearOverridesIfOwner();
                 return;
             }
@@ -107,6 +110,7 @@ namespace DCL.SDKComponents.Skybox.Systems
             {
                 changed |= UpdateSlot(pbSkybox.ReflectionMap, ref component.ReflectionMap);
                 changed |= UpdateSlot(pbSkybox.SkyboxTexture, ref component.SkyboxTexture);
+                changed |= UpdateEnvironment(pbSkybox, ref component);
             }
 
             changed |= ResolveSlot(ref component.ReflectionMap);
@@ -186,11 +190,29 @@ namespace DCL.SDKComponents.Skybox.Systems
             return hadTexture;
         }
 
+        /// <summary>
+        ///     Rebuilds the environment profile from the component data, also on the re-push that skips the dirty check:
+        ///     the dirty flag is reset every frame while the scene is not current, so a profile cached before leaving
+        ///     could miss changes made in the meantime.
+        /// </summary>
+        /// <returns>True when the profile changed.</returns>
+        private static bool UpdateEnvironment(PBSkybox pbSkybox, ref SceneSkyboxComponent component)
+        {
+            SceneEnvironmentProfile? environment = SceneEnvironmentProfile.FromProto(pbSkybox);
+
+            if (environment == null && component.Environment == null)
+                return false;
+
+            component.Environment = environment;
+            return true;
+        }
+
         private void PushOverrides(in SceneSkyboxComponent component)
         {
             ref SceneSkyboxOverrides overrides = ref globalWorld.Get<SceneSkyboxOverrides>(globalSkyboxEntity);
             overrides.ReflectionMap = component.ReflectionMap.TextureData?.EnsureTexture2D();
             overrides.SkyboxTexture = component.SkyboxTexture.TextureData?.EnsureTexture2D();
+            overrides.Environment = component.Environment;
             overrides.Owner = sceneInfo;
         }
 
@@ -202,6 +224,7 @@ namespace DCL.SDKComponents.Skybox.Systems
 
             overrides.ReflectionMap = null;
             overrides.SkyboxTexture = null;
+            overrides.Environment = null;
             overrides.Owner = null;
         }
     }

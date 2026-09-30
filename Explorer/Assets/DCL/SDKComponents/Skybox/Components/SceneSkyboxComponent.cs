@@ -1,16 +1,19 @@
 using Arch.Core;
+using DCL.SkyBox;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Textures;
 
 namespace DCL.SDKComponents.Skybox
 {
     /// <summary>
-    ///     Texture loading state of the scene skybox component on the scene root entity, one slot per PBSkybox field.
+    ///     State of the scene skybox component on the scene root entity: one texture slot per PBSkybox texture field
+    ///     and the environment profile built from its color and float groups.
     /// </summary>
     public struct SceneSkyboxComponent
     {
         public TextureSlot ReflectionMap;
         public TextureSlot SkyboxTexture;
+        public SceneEnvironmentProfile? Environment;
 
         public struct TextureSlot
         {
