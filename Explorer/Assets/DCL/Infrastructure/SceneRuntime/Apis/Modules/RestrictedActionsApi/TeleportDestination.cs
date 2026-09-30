@@ -1,9 +1,10 @@
 using REnum;
+using System;
 using UnityEngine;
 
 namespace DCL.SceneRuntime.Apis.RestrictedActionsApi
 {
-    public readonly struct RealmDestination
+    public readonly struct RealmDestination : IEquatable<RealmDestination>
     {
         public readonly string Realm;
 
@@ -15,6 +16,15 @@ namespace DCL.SceneRuntime.Apis.RestrictedActionsApi
             Realm = realm;
             Parcel = parcel;
         }
+
+        public bool Equals(RealmDestination other) =>
+            Realm == other.Realm && Parcel == other.Parcel;
+
+        public override bool Equals(object? obj) =>
+            obj is RealmDestination other && Equals(other);
+
+        public override int GetHashCode() =>
+            HashCode.Combine(Realm, Parcel);
     }
 
     /// <summary>
