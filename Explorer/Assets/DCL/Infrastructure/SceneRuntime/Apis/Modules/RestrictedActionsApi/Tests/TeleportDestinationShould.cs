@@ -1,8 +1,7 @@
-using DCL.SceneRuntime.Apis.RestrictedActionsApi;
 using NUnit.Framework;
 using UnityEngine;
 
-namespace CrdtEcsBridge.RestrictedActions.Tests
+namespace DCL.SceneRuntime.Apis.RestrictedActionsApi.Tests
 {
     public class TeleportDestinationShould
     {

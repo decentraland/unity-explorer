@@ -34,7 +34,13 @@ module.exports.movePlayerTo = async function(message) {
     const cameraTarget = message.cameraTarget != undefined
     const avatarTarget = message.avatarTarget != undefined
     const duration = message.duration != undefined
-    
+
+    // A present target must carry all three components: the host method takes plain doubles, so a
+    // null or undefined component cannot be bound and is rejected here instead of failing inside interop.
+    const isCompleteVector3 = v => v.x != undefined && v.y != undefined && v.z != undefined
+    if ((cameraTarget && !isCompleteVector3(message.cameraTarget)) || (avatarTarget && !isCompleteVector3(message.avatarTarget)))
+        return { success: false }
+
     // Each optional target is sent as a presence flag followed by its coordinates (0 when absent).
     const isSuccess = await UnityRestrictedActionsApi.MovePlayerTo(
         message.newRelativePosition.x,
