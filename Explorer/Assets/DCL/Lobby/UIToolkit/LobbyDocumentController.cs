@@ -54,6 +54,9 @@ namespace DCL.Lobby
         private const string WELCOME_FORMAT = "Welcome {0}!";
         private const int MAX_UPCOMING_EVENTS = 10;
 
+        // The recent row holds the latest few in a plain row; the featured rail pages through them all
+        private const int MAX_RECENT_PLACES = 3;
+
         private static readonly Comparison<EventDTO> BY_START_TIME = static (a, b) => a.NextStartAtProcessed.CompareTo(b.NextStartAtProcessed);
 
         private readonly IInputBlock inputBlock;
@@ -237,8 +240,8 @@ namespace DCL.Lobby
             placesCts = placesCts.SafeRestart();
             ShowLandingCardLoading(landingCard);
             ShowLandingPlaceAsync(placesCts.Token).Forget();
-            ShowPlacesAsync(recentPlacesRail, recentPlaces, placesAPIService.GetRecentlyVisitedDestinationsAsync(placesCts.Token), placesCts.Token).Forget();
-            ShowPlacesAsync(featuredPlacesRail, featuredPlaces, placesAPIService.GetHighlightedDestinationsAsync(placesCts.Token), placesCts.Token).Forget();
+            ShowPlacesAsync(recentPlacesRail, recentPlaces, placesAPIService.GetRecentlyVisitedDestinationsAsync(placesCts.Token), MAX_RECENT_PLACES, placesCts.Token).Forget();
+            ShowPlacesAsync(featuredPlacesRail, featuredPlaces, placesAPIService.GetHighlightedDestinationsAsync(placesCts.Token), int.MaxValue, placesCts.Token).Forget();
 
             eventsCts = eventsCts.SafeRestart();
             ShowEventsAsync(eventsCts.Token).Forget();
@@ -437,9 +440,10 @@ namespace DCL.Lobby
             };
 
         /// <summary>
-        ///     Fills a row with the places <paramref name="fetch" /> resolves to, one card per place; a failed fetch leaves the row hidden.
+        ///     Fills a row with the first <paramref name="maxCount" /> places <paramref name="fetch" /> resolves to, one card per place;
+        ///     a failed fetch leaves the row hidden.
         /// </summary>
-        private async UniTaskVoid ShowPlacesAsync(LobbyPlacesRail rail, List<PlacesData.PlaceInfo> places, UniTask<PlacesData.IPlacesAPIResponse> fetch, CancellationToken ct)
+        private async UniTaskVoid ShowPlacesAsync(LobbyPlacesRail rail, List<PlacesData.PlaceInfo> places, UniTask<PlacesData.IPlacesAPIResponse> fetch, int maxCount, CancellationToken ct)
         {
             Result<PlacesData.IPlacesAPIResponse> result = await fetch.SuppressToResultAsync(ReportCategory.PLACES);
 
@@ -451,7 +455,7 @@ namespace DCL.Lobby
             {
                 IReadOnlyList<PlacesData.PlaceInfo> data = result.Value.Data;
 
-                for (var i = 0; i < data.Count; i++)
+                for (var i = 0; i < data.Count && i < maxCount; i++)
                     places.Add(data[i]);
             }
 

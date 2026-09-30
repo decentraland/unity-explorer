@@ -87,6 +87,29 @@ namespace DCL.Lobby.Tests
         }
 
         [Test]
+        public void FillAPlainRowWhenTheSectionHasNoRail()
+        {
+            //Arrange
+            var row = new VisualElement { name = "Cards" };
+            var rowSection = new VisualElement { name = "RecentPlaces" };
+            rowSection.Add(new Label { name = "Title", text = "RECENT PLACES" });
+            rowSection.Add(row);
+
+            //Act
+            places.Show(rowSection);
+            places.SetCount(3);
+            places.SetCount(2);
+
+            //Assert
+            Assert.AreEqual(DisplayStyle.Flex, rowSection.style.display.value);
+            Assert.AreEqual(3, row.childCount, "The cards land in the row itself");
+            Assert.AreEqual(DisplayStyle.Flex, row[0].style.display.value);
+            Assert.AreEqual(DisplayStyle.Flex, row[1].style.display.value);
+            Assert.AreEqual(DisplayStyle.None, row[2].style.display.value);
+            Assert.IsNull(rowSection.Q<LobbyRailElement>(), "A plain row gets no rail chrome");
+        }
+
+        [Test]
         public void MoveTheCardsIntoTheNextSection()
         {
             //Arrange

@@ -185,3 +185,14 @@
 .lobby__places-rail {
     height: 181px;
 }
+
+/* The recent row has no dots: its cards are padded to the height of the rail so both rows line up along the bottom */
+.lobby__places-row {
+    flex-direction: row;
+    height: 165px;
+    margin-bottom: 16px;
+}
+
+.lobby__places-row > .lobby-place-card {
+    margin-right: 8px;
+}

@@ -5,16 +5,20 @@ using Utility.UIToolkit;
 namespace DCL.Lobby
 {
     /// <summary>
-    ///     UI Toolkit counterpart of <see cref="LobbyTemplateRailView{TCard}" />: the <see cref="LobbyRailElement" /> of a lobby section,
-    ///     filled with clones of a card template. The section only exists while the document is shown, so it is handed over on every
-    ///     <see cref="Show" />; the cards outlive it and move into the next one. What the cards display is up to the owner that fills
-    ///     them; subclasses only wire what a freshly cloned card reports.
+    ///     UI Toolkit counterpart of <see cref="LobbyTemplateRailView{TCard}" />: the card strip of a lobby section, filled with clones
+    ///     of a card template. The strip is the section's <see cref="LobbyRailElement" /> when it pages, or a plain row named
+    ///     <see cref="CARDS_NAME" /> when the section shows a fixed few. The section only exists while the document is shown, so it is
+    ///     handed over on every <see cref="Show" />; the cards outlive it and move into the next one. What the cards display is up to
+    ///     the owner that fills them; subclasses only wire what a freshly cloned card reports.
     /// </summary>
     public abstract class LobbyCardRail<TCard> where TCard: VisualElement
     {
+        private const string CARDS_NAME = "Cards";
+
         private readonly VisualTreeAsset cardTemplate;
         private readonly List<TCard> cards = new ();
 
+        private VisualElement? strip;
         private LobbyRailElement? rail;
 
         /// <summary>
@@ -38,26 +42,28 @@ namespace DCL.Lobby
         }
 
         /// <summary>
-        ///     Takes <paramref name="newSection" /> over and moves the cards into its rail, hidden, until <see cref="SetCount" /> shows them.
+        ///     Takes <paramref name="newSection" /> over and moves the cards into its strip, hidden, until <see cref="SetCount" /> shows them.
         /// </summary>
         public void Show(VisualElement newSection)
         {
             Section = newSection;
             rail = newSection.Q<LobbyRailElement>();
+            strip = rail ?? newSection.Q(CARDS_NAME);
             Count = 0;
 
             foreach (TCard card in cards)
             {
                 card.SetDisplayed(false);
-                rail.Add(card);
+                strip.Add(card);
             }
 
-            rail.SetCardCount(0);
+            rail?.SetCardCount(0);
         }
 
         /// <summary>
         ///     Shows the first <paramref name="count" /> cards (cloning the missing ones), hides the rest and the section when there is
-        ///     nothing to list. Rewinding jumps to the first page; otherwise the rail stays on its page, or on the last one the cards still fill.
+        ///     nothing to list. A rail rewinds to its first page, or stays on its page or the last one the cards still fill; a plain row
+        ///     has no pages to keep.
         /// </summary>
         public void SetCount(int count, bool rewind = true)
         {
@@ -74,7 +80,7 @@ namespace DCL.Lobby
             for (int i = count; i < cards.Count; i++)
                 cards[i].SetDisplayed(false);
 
-            rail!.SetCardCount(count, rewind);
+            rail?.SetCardCount(count, rewind);
             Section!.SetDisplayed(count > 0);
             OnCountChanged(count);
         }
@@ -83,6 +89,7 @@ namespace DCL.Lobby
         {
             Section?.SetDisplayed(false);
             Section = null;
+            strip = null;
             rail = null;
         }
 
@@ -96,7 +103,7 @@ namespace DCL.Lobby
             TCard card = cardTemplate.InstantiateForElement<TCard>();
             card.RemoveFromHierarchy();
             OnCardCreated(card, index);
-            rail!.Add(card);
+            strip!.Add(card);
             return card;
         }
     }

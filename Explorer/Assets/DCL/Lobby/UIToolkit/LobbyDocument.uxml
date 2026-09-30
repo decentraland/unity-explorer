@@ -52,9 +52,10 @@
             </ui:VisualElement>
             <DCL.Lobby.LobbyRailElement name="Rail" class="lobby__friends-rail" cards-per-page="4" />
         </ui:VisualElement>
+        <!-- The three latest places in a plain row: nothing to page through -->
         <ui:VisualElement name="RecentPlaces" class="lobby__places lobby__places--recent">
             <ui:Label name="Title" text="Jump Back In" class="lobby__places-title" picking-mode="Ignore" />
-            <DCL.Lobby.LobbyRailElement name="Rail" class="lobby__places-rail" cards-per-page="3" />
+            <ui:VisualElement name="Cards" class="lobby__places-row" />
         </ui:VisualElement>
         <ui:VisualElement name="FeaturedPlaces" class="lobby__places lobby__places--featured">
             <ui:Label name="Title" text="Recommended Places" class="lobby__places-title" picking-mode="Ignore" />
