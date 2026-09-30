@@ -33,25 +33,6 @@ namespace DCL.Profiles.Self
             $"{Address.Value} {Failure}";
     }
 
-    public readonly struct DeployRequested
-    {
-        public readonly UserId Address;
-        public readonly Profile Profile;
-
-        /// <summary>When true the pending profile is published locally before the catalyst confirms it.</summary>
-        public readonly bool Optimistic;
-
-        public DeployRequested(UserId address, Profile profile, bool optimistic)
-        {
-            Address = address;
-            Profile = profile;
-            Optimistic = optimistic;
-        }
-
-        public override string ToString() =>
-            $"{Address.Value} v{Profile.Version} optimistic {Optimistic}";
-    }
-
     public readonly struct DeploySucceeded
     {
         public readonly UserId Address;
@@ -85,34 +66,33 @@ namespace DCL.Profiles.Self
     }
 
     /// <summary>
-    ///     Facts fed into the self-profile FSM. Identity messages come from the identity cache; every other message
-    ///     is produced by the command executor and carries the address the IO was started for, so a result
-    ///     that arrives after the identity changed can be recognised as stale.
-    ///     <c>IdentityChanged</c>, <c>FetchRequested</c> and <c>FetchNotFound</c> carry only that address.
+    ///     Facts fed into the self-profile FSM. They state what happened, never what to do; the update derives the intention.
+    ///     Identity messages come from the identity cache. <c>ProfileEdited</c> means the user finished composing a new
+    ///     profile version for the current identity. Fetch and deploy results are produced by the command executor and
+    ///     carry the address the IO was started for, so a result that arrives after the identity changed is recognised as stale.
     /// </summary>
     [REnum(EnumUnderlyingType.Byte)]
     [REnumField(typeof(UserId), "IdentityChanged")]
     [REnumFieldEmpty("IdentityCleared")]
-    [REnumField(typeof(UserId), "FetchRequested")]
     [REnumField(typeof(FetchSucceeded))]
     [REnumField(typeof(UserId), "FetchNotFound")]
     [REnumField(typeof(FetchFailed))]
-    [REnumField(typeof(DeployRequested))]
+    [REnumField(typeof(Profile), "ProfileEdited")]
     [REnumField(typeof(DeploySucceeded))]
     [REnumField(typeof(DeployFailed))]
     public readonly partial struct SelfProfileMsg
     {
         /// <summary>
-        ///     The address this message is about; null only for <c>IdentityCleared</c>.
+        ///     The address the message was produced for. Null for <c>IdentityCleared</c> and <c>ProfileEdited</c>,
+        ///     which are about whatever identity is current.
         /// </summary>
         public UserId? Address => Match<UserId?>(
             onIdentityChanged: static address => address,
             onIdentityCleared: static () => null,
-            onFetchRequested: static address => address,
             onFetchSucceeded: static m => m.Address,
             onFetchNotFound: static address => address,
             onFetchFailed: static m => m.Address,
-            onDeployRequested: static m => m.Address,
+            onProfileEdited: static _ => null,
             onDeploySucceeded: static m => m.Address,
             onDeployFailed: static m => m.Address
         );
