@@ -111,6 +111,9 @@ namespace DCL.RealmNavigation
         public void MarkRealmApplied() =>
             IsRealmApplied = true;
 
+        public void ClearRealmApplied() =>
+            IsRealmApplied = false;
+
         public Vector2Int ConsumeByTeleportOperation()
         {
             consumed = true;

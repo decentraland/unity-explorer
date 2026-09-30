@@ -189,7 +189,7 @@ namespace DCL.UserInAppInitializationFlow
                     .ShowWhileExecuteTaskAsync(
                         async (parentLoadReport, ct) =>
                         {
-                            await ApplyStartRealmAsync(ct);
+                            await ApplyStartRealmAsync(startParcel, realmController, URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Genesis)), ct);
 
                             // After authentication completes, verify the user can actually access the current realm if it's a world.
                             // The realm was set during bootstrap before the user had a chance to switch accounts, so the identity
@@ -251,6 +251,10 @@ namespace DCL.UserInAppInitializationFlow
                     //Fail straight away
                     string message = result.Error.AsMessage();
                     ReportHub.LogError(ReportCategory.AUTHENTICATION, message);
+
+                    // The retry shows the auth screen or the lobby again, where a link may still pick another realm
+                    if (!startParcel.IsConsumed())
+                        startParcel.ClearRealmApplied();
                 }
             }
             while (!result.Success && parameters.ShowAuthentication);
@@ -300,15 +304,21 @@ namespace DCL.UserInAppInitializationFlow
             loadSource == IUserInAppInitializationFlow.LoadSource.StartUp && appArgs.HasLaunchDestination();
 
         /// <summary>
-        ///     Switches to the realm picked in the lobby before anything is loaded. A Genesis pick is satisfied by any Genesis realm.
+        ///     Switches to the realm picked before anything is loaded. A Genesis pick is satisfied by any Genesis realm, and an unreachable realm keeps the current one.
         /// </summary>
-        private async UniTask ApplyStartRealmAsync(CancellationToken ct)
+        internal static async UniTask ApplyStartRealmAsync(StartParcel startParcel, IRealmController realmController, URLDomain genesis, CancellationToken ct)
         {
             startParcel.MarkRealmApplied();
 
             if (startParcel.Realm is not { } realm) return;
             if (realm == realmController.CurrentDomain) return;
-            if (realmController.RealmData.IsGenesis() && realm == URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Genesis))) return;
+            if (realmController.RealmData.IsGenesis() && realm == genesis) return;
+
+            if (!await realmController.IsReachableAsync(realm, ct))
+            {
+                ReportHub.LogWarning(ReportCategory.REALM, $"Startup realm {realm} is not reachable, keeping {realmController.CurrentDomain}");
+                return;
+            }
 
             await realmController.SetRealmAsync(realm, ct);
         }

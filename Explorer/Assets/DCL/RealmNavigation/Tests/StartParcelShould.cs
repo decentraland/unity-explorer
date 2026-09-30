@@ -143,6 +143,20 @@ namespace DCL.RealmNavigation.Tests
         }
 
         [Test]
+        public void TakeAnotherRealmOnceTheAppliedOneIsCleared()
+        {
+            // Arrange
+            var startParcel = new StartParcel(LAUNCH_PARCEL);
+            startParcel.MarkRealmApplied();
+
+            // Act
+            startParcel.ClearRealmApplied();
+
+            // Assert
+            Assert.That(startParcel.IsRealmApplied, Is.False);
+        }
+
+        [Test]
         public void DropTheLaunchSpawnPointWhenARealmIsAssignedWithoutOne()
         {
             // Arrange
