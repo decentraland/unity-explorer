@@ -316,7 +316,7 @@ namespace DCL.SkyBox
                     onWrap = true;
             }
 
-            // A recoloured wrapped key alone is not enough: phase 0 still reads the first key, so the anchor key is added below.
+            // A recoloured wrapped key alone is not enough: phase 0 still reads the first key, so the anchor key is still written below.
             if (onAnchor)
             {
                 gradient.colorKeys = keys;

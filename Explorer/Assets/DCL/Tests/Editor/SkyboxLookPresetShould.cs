@@ -12,7 +12,7 @@ namespace DCL.Tests
     {
         private const float TOLERANCE = 1e-4f;
 
-        private SkyboxLookPreset preset;
+        private SkyboxLookPreset preset = null!;
 
         [SetUp]
         public void SetUp()

@@ -54,7 +54,7 @@ float SunDisc_Haze(float3 dir, float3 lightDirection, float discRadius, float fa
     float disc = depth > 0.0 ? 1.0 - smoothstep(raggedRadius - edge, raggedRadius + edge, length(q)) : 0.0;
 
     // 0 at the bottom of the disc, 1 at the top; the power biases where the red band sits.
-    float v = pow(saturate(q.y / radius * 0.5 + 0.5), _DclSunHazeParams2.w);
+    float v = pow(saturate(q.y / max(radius, 1e-5) * 0.5 + 0.5), _DclSunHazeParams2.w);
     hazeColor = lerp(_DclSunHazeBottom.rgb, _DclSunHazeTop.rgb, v);
 
     return disc;
