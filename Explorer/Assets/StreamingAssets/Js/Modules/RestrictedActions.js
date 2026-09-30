@@ -65,6 +65,11 @@ module.exports.teleportTo = async function(message) {
     // Coordinates are sent as a presence flag followed by x and y (0 when absent); realm is nullable.
     const coords = message.worldCoordinates
     const hasCoords = coords != undefined
+
+    // Present coordinates must carry both components; an incomplete pair never reaches the host call.
+    if (hasCoords && (coords.x == undefined || coords.y == undefined))
+        return {}
+
     UnityRestrictedActionsApi.TeleportTo(
         hasCoords,
         hasCoords ? Number(coords.x) : 0,
