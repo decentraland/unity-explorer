@@ -90,7 +90,6 @@ namespace MVC.Tests
             UniTask hide = ((IController)controller).HideViewAsync(CancellationToken.None);
 
             // Assert
-            // The hide must not tear down a view whose show is still in flight
             Assert.That(hide.Status, Is.EqualTo(UniTaskStatus.Pending));
             Assert.That(controller.State, Is.EqualTo(ControllerState.ViewShowing));
             Assert.That(controller.Callbacks, Is.Empty);

@@ -44,10 +44,7 @@ namespace MVC
 
         private List<IMVCControllerModule>? modules;
 
-        /// <summary>
-        ///     Pending while the view plays its show animation, completed once <see cref="OnViewShow" /> has run
-        ///     (or the show failed). A hide requested in the meantime waits on it.
-        /// </summary>
+        // Pending while the view plays its show animation; completed once OnViewShow has run or the show failed
         private UniTaskCompletionSource? showInProgress;
 
         protected ControllerBase(ViewFactoryMethod viewFactory)
@@ -107,7 +104,7 @@ namespace MVC
             }
             finally
             {
-                // Released only after OnViewShow so a hide that arrived mid-animation runs OnViewClose after it, never before.
+                // Released only after OnViewShow has run, so OnViewClose can never precede it
                 showInProgress = null;
                 showCompletion.TrySetResult();
             }
