@@ -4,6 +4,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Backpack;
 using DCL.Browser;
 using DCL.CharacterPreview;
+using DCL.CharacterPreview.Tests;
 using DCL.Clipboard;
 using DCL.Communities;
 using DCL.Communities.EventInfo;
@@ -57,6 +58,7 @@ namespace DCL.Lobby.Tests
         private const string GENESIS_PLAZA = "Genesis Plaza";
         private const string START_WORLD = "myworld.dcl.eth";
 
+        private readonly List<Object> previewObjects = new ();
         private GameObject root = null!;
         private LobbyView view = null!;
         private ISelfProfile selfProfile = null!;
@@ -69,7 +71,6 @@ namespace DCL.Lobby.Tests
         private Button notificationsButton = null!;
         private Button openProfileButton = null!;
         private Button avatarButton = null!;
-        private CharacterPreviewSettingsSO previewSettings = null!;
         private GameObject recentPlacesSection = null!;
         private LobbyPlaceCardView[] recentPlaceCards = null!;
         private GameObject recommendedPlacesSection = null!;
@@ -134,7 +135,7 @@ namespace DCL.Lobby.Tests
             SetBackingField(view, nameof(LobbyView.WelcomeText), welcomeText);
             SetBackingField(view, nameof(LobbyView.LandingCard), landingCard);
             SetBackingField(view, nameof(LobbyView.CloseButton), closeButton);
-            SetBackingField(view, nameof(LobbyView.CharacterPreviewView), CreateCharacterPreviewView());
+            SetBackingField(view, nameof(LobbyView.CharacterPreviewView), CharacterPreviewTestViews.Create(previewObjects, root.transform));
             avatarButton = CreateButton(root.transform, "AvatarHitArea");
 
             // Kept inactive like the prefab instance: the hit area only comes up once the avatar is shown
@@ -210,7 +211,10 @@ namespace DCL.Lobby.Tests
             controller.Dispose();
             profileButtonPresenter.Dispose();
             World.Destroy(world);
-            Object.DestroyImmediate(previewSettings);
+            foreach (Object obj in previewObjects)
+                Object.DestroyImmediate(obj);
+
+            previewObjects.Clear();
             Object.DestroyImmediate(root);
         }
 
@@ -625,6 +629,86 @@ namespace DCL.Lobby.Tests
         }
 
         [Test]
+        public void JumpInWhenADestinationIsRequestedAtStartup()
+        {
+            // Arrange
+            int jumpedIn = 0;
+            UniTask lifeCycle = Launch(isStartup: true, jumpedIn: () => jumpedIn++);
+
+            // Act
+            startParcel.RequestJumpIn();
+            controller.HideViewAsync(CancellationToken.None).Forget();
+            startParcel.RequestJumpIn();
+
+            // Assert
+            Assert.That(jumpedIn, Is.EqualTo(1), "the lobby must let go of the start parcel once it left");
+            Assert.That(lifeCycle.Status, Is.EqualTo(UniTaskStatus.Succeeded));
+        }
+
+        [Test]
+        public void LetGoOfTheStartParcelOnDispose()
+        {
+            // Arrange
+            bool jumpedIn = false;
+            Launch(isStartup: true, jumpedIn: () => jumpedIn = true).Forget();
+
+            // Act
+            RestartWithStartParcel(startParcel);
+            startParcel.RequestJumpIn();
+
+            // Assert
+            Assert.That(jumpedIn, Is.False);
+        }
+
+        [Test]
+        public void JumpInWhenADestinationWasRequestedBeforeTheLobbyShowed()
+        {
+            // Arrange
+            bool jumpedIn = false;
+            startParcel.RequestJumpIn();
+
+            // Act
+            UniTask lifeCycle = Launch(isStartup: true, jumpedIn: () => jumpedIn = true);
+            controller.HideViewAsync(CancellationToken.None).Forget();
+
+            // Assert
+            Assert.That(jumpedIn, Is.True);
+            Assert.That(lifeCycle.Status, Is.EqualTo(UniTaskStatus.Succeeded));
+        }
+
+        [Test]
+        public void ReleaseTheFlowWithoutShowingAgainWhenADestinationWasRequestedWhileCovered()
+        {
+            // Arrange
+            bool jumpedIn = false;
+            Launch(isStartup: true, jumpedIn: () => jumpedIn = true).Forget();
+            controller.HideViewAsync(CancellationToken.None).Forget();
+            startParcel.RequestJumpIn();
+
+            // Act
+            CloseAnotherView();
+
+            // Assert
+            Assert.That(jumpedIn, Is.True);
+            mvcManager.DidNotReceive().ShowAsync(Arg.Any<ShowCommand<LobbyView, LobbyParameter>>(), Arg.Any<CancellationToken>());
+        }
+
+        [Test]
+        public void LeaveDestinationRequestsAloneInWorld()
+        {
+            // Arrange
+            bool jumpedIn = false;
+            UniTask lifeCycle = Launch(isStartup: false, jumpedIn: () => jumpedIn = true);
+
+            // Act
+            startParcel.RequestJumpIn();
+
+            // Assert
+            Assert.That(jumpedIn, Is.False);
+            Assert.That(lifeCycle.Status, Is.EqualTo(UniTaskStatus.Pending));
+        }
+
+        [Test]
         public void LeaveTheLobbyClosedInWorld()
         {
             // Arrange
@@ -658,7 +742,7 @@ namespace DCL.Lobby.Tests
         public void ReleaseTheStartupFlowOnlyWhenTheUserJumpsIn()
         {
             // Arrange
-            var jumpedIn = 0;
+            int jumpedIn = 0;
             Launch(isStartup: true, jumpedIn: () => jumpedIn++).Forget();
 
             // Act: opening the backpack takes the lobby off the screen without releasing the flow
@@ -1736,31 +1820,6 @@ namespace DCL.Lobby.Tests
             var buttonGo = new GameObject(name);
             buttonGo.transform.SetParent(parent);
             return buttonGo.AddComponent<Button>();
-        }
-
-        private CharacterPreviewView CreateCharacterPreviewView()
-        {
-            var previewGo = new GameObject("CharacterPreviewView");
-            previewGo.transform.SetParent(root.transform);
-            CharacterPreviewView previewView = previewGo.AddComponent<CharacterPreviewView>();
-
-            previewSettings = ScriptableObject.CreateInstance<CharacterPreviewSettingsSO>();
-            SetBackingField(previewSettings, nameof(CharacterPreviewSettingsSO.cursorSettings), Array.Empty<CharacterPreviewInputCursorSetting>());
-
-            SetBackingField(previewView, nameof(CharacterPreviewView.CharacterPreviewInputDetector), previewGo.AddComponent<CharacterPreviewInputDetector>());
-            SetBackingField(previewView, nameof(CharacterPreviewView.CharacterPreviewCursorContainer), previewGo.AddComponent<CharacterPreviewCursorContainer>());
-            SetBackingField(previewView, nameof(CharacterPreviewView.CharacterPreviewSettingsSo), previewSettings);
-
-            // The preview controller clears the raw image as it is constructed, and reaches for the spinner once an avatar loads
-            var rawImageGo = new GameObject("RawImage", typeof(RectTransform));
-            rawImageGo.transform.SetParent(previewGo.transform);
-            SetBackingField(previewView, nameof(CharacterPreviewView.RawImage), rawImageGo.AddComponent<RawImage>());
-
-            var spinnerGo = new GameObject("Spinner");
-            spinnerGo.transform.SetParent(previewGo.transform);
-            SetBackingField(previewView, nameof(CharacterPreviewView.Spinner), spinnerGo);
-
-            return previewView;
         }
 
         private static void SetBackingField(object target, string propertyName, object value) =>

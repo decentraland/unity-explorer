@@ -2,6 +2,7 @@ using DCL.FeatureFlags;
 using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.Prefs;
 using DCL.RealmNavigation;
+using DCL.Web3.Identities;
 using Global.AppArgs;
 using Global.Dynamic;
 using NSubstitute;
@@ -17,8 +18,10 @@ namespace Global.Tests.EditMode
     {
         private RealmLaunchSettings launchSettings = null!;
         private IAppArgs appArgs = null!;
+        private IWeb3IdentityCache identityCache = null!;
+        private string account = null!;
 
-        private static IDCLPrefs originalPrefs = null!;
+        private static IDCLPrefs? originalPrefs;
         private static bool prefsInitialized;
 
         [OneTimeSetUp]
@@ -40,13 +43,88 @@ namespace Global.Tests.EditMode
         {
             launchSettings = new RealmLaunchSettings();
             appArgs = Substitute.For<IAppArgs>();
+            var identity = new IWeb3Identity.Random();
+            account = identity.Address;
+            identityCache = new IWeb3IdentityCache.Fake(identity);
         }
 
         [TearDown]
         public void TearDown()
         {
-            DCLPlayerPrefs.DeleteVector2Key(DCLPrefKeys.MAP_HOME_MARKER_DATA);
-            DCLPlayerPrefs.DeleteKey(DCLPrefKeys.MAP_HOME_WORLD_NAME);
+            HomeMarkerController.Serialize(account, null);
+            HomeMarkerController.SerializeWorldName(account, null);
+            DCLPlayerPrefs.DeleteVector2Key(DCLPrefKeys.MAP_HOME_MARKER_DATA_LEGACY);
+            DCLPlayerPrefs.DeleteKey(DCLPrefKeys.MAP_HOME_WORLD_NAME_LEGACY);
+            DCLPlayerPrefs.DeleteKey(DCLPrefKeys.MAP_HOME_LAST_ACCOUNT);
+        }
+
+        [Test]
+        public void UseHomeOfLastAccountWhenStoredSessionHasExpired()
+        {
+            // Arrange
+            var homePosition = new Vector2Int(100, 200);
+            HomeMarkerController.Serialize(account, homePosition);
+            DCLPlayerPrefs.SetString(DCLPrefKeys.MAP_HOME_LAST_ACCOUNT, account);
+            launchSettings.targetScene = new Vector2Int(0, 0);
+            launchSettings.EditorSceneStartPosition = false;
+            var featureFlags = GetFeatureFlagsConfiguration(true, "0,0");
+
+            // Act
+            launchSettings.CheckStartParcelOverride(appArgs, featureFlags, new IWeb3IdentityCache.Fake(null));
+
+            // Assert
+            Assert.AreEqual(homePosition, launchSettings.targetScene);
+        }
+
+        [Test]
+        public void NotUseAnyHomeWithoutSessionOrLastAccount()
+        {
+            // Arrange
+            HomeMarkerController.Serialize(account, new Vector2Int(100, 200));
+            launchSettings.targetScene = new Vector2Int(0, 0);
+            launchSettings.EditorSceneStartPosition = false;
+            var featureFlags = GetFeatureFlagsConfiguration(true, "0,0");
+
+            // Act
+            launchSettings.CheckStartParcelOverride(appArgs, featureFlags, new IWeb3IdentityCache.Fake(null));
+
+            // Assert
+            Assert.AreEqual(new Vector2Int(0, 0), launchSettings.targetScene);
+        }
+
+        [Test]
+        public void AdoptLegacyHomeOfEarlierReleasesForTheRestoredAccount()
+        {
+            // Arrange
+            var legacyHome = new Vector2Int(100, 200);
+            DCLPlayerPrefs.SetVector2Int(DCLPrefKeys.MAP_HOME_MARKER_DATA_LEGACY, legacyHome);
+            launchSettings.targetScene = new Vector2Int(0, 0);
+            launchSettings.EditorSceneStartPosition = false;
+            var featureFlags = GetFeatureFlagsConfiguration(true, "0,0");
+
+            // Act
+            launchSettings.CheckStartParcelOverride(appArgs, featureFlags, identityCache);
+
+            // Assert
+            Assert.AreEqual(legacyHome, launchSettings.targetScene);
+            Assert.AreEqual(legacyHome, HomeMarkerController.Deserialize(account));
+            Assert.IsFalse(DCLPlayerPrefs.HasVectorKey(DCLPrefKeys.MAP_HOME_MARKER_DATA_LEGACY));
+        }
+
+        [Test]
+        public void NotUseHomePositionOfAnotherAccount()
+        {
+            // Arrange
+            HomeMarkerController.Serialize(account, new Vector2Int(100, 200));
+            launchSettings.targetScene = new Vector2Int(0, 0);
+            launchSettings.EditorSceneStartPosition = false;
+            var featureFlags = GetFeatureFlagsConfiguration(true, "0,0");
+
+            // Act
+            launchSettings.CheckStartParcelOverride(appArgs, featureFlags, new IWeb3IdentityCache.Fake());
+
+            // Assert
+            Assert.AreEqual(new Vector2Int(0, 0), launchSettings.targetScene);
         }
 
         private static void InitializeTestPrefs()
@@ -89,14 +167,14 @@ namespace Global.Tests.EditMode
         {
             // Arrange
             var homePosition = new Vector2Int(100, 200);
-            HomeMarkerController.Serialize(homePosition);
+            HomeMarkerController.Serialize(account, homePosition);
             launchSettings.targetScene = new Vector2Int(0, 0);
             appArgs.HasFlag(AppArgsFlags.POSITION).Returns(true);
             string featureFlagPosition = "0,0";
             var featureFlags = GetFeatureFlagsConfiguration(true, featureFlagPosition);
 
             // Act
-            launchSettings.CheckStartParcelOverride(appArgs, featureFlags);
+            launchSettings.CheckStartParcelOverride(appArgs, featureFlags, identityCache);
 
             // Assert
             Assert.AreEqual(new Vector2Int(0, 0), launchSettings.targetScene);
@@ -108,14 +186,14 @@ namespace Global.Tests.EditMode
         {
             // Arrange
             var homePosition = new Vector2Int(100, 200);
-            HomeMarkerController.Serialize(homePosition);
+            HomeMarkerController.Serialize(account, homePosition);
             launchSettings.HasEditorPositionOverride().Returns(true);
             launchSettings.targetScene = new Vector2Int(50, 50);
             string featureFlagPosition = "0,0";
             var featureFlags = GetFeatureFlagsConfiguration(true, featureFlagPosition);
 
             // Act
-            launchSettings.CheckStartParcelOverride(appArgs, featureFlags);
+            launchSettings.CheckStartParcelOverride(appArgs, featureFlags, identityCache);
 
             // Assert
             Assert.AreEqual(new Vector2Int(50, 50), launchSettings.targetScene);
@@ -132,7 +210,7 @@ namespace Global.Tests.EditMode
             var featureFlags = GetFeatureFlagsConfiguration(true, featureFlagPosition);
 
             // Act
-            launchSettings.CheckStartParcelOverride(appArgs, featureFlags);
+            launchSettings.CheckStartParcelOverride(appArgs, featureFlags, identityCache);
 
             // Assert
             Assert.AreEqual(new Vector2Int(75, 80), launchSettings.targetScene);
@@ -144,7 +222,7 @@ namespace Global.Tests.EditMode
         {
             // Arrange
             var homePosition = new Vector2Int(100, 200);
-            HomeMarkerController.Serialize(homePosition);
+            HomeMarkerController.Serialize(account, homePosition);
             launchSettings.targetScene = new Vector2Int(0, 0);
             launchSettings.EditorSceneStartPosition = false;
 
@@ -152,7 +230,7 @@ namespace Global.Tests.EditMode
             var featureFlags = GetFeatureFlagsConfiguration(true, featureFlagPosition);
 
             // Act
-            launchSettings.CheckStartParcelOverride(appArgs, featureFlags);
+            launchSettings.CheckStartParcelOverride(appArgs, featureFlags, identityCache);
 
             // Assert
             Assert.AreEqual(homePosition, launchSettings.targetScene);
@@ -170,7 +248,7 @@ namespace Global.Tests.EditMode
             var featureFlags = GetFeatureFlagsConfiguration(false, featureFlagPosition);
 
             // Act
-            launchSettings.CheckStartParcelOverride(appArgs, featureFlags);
+            launchSettings.CheckStartParcelOverride(appArgs, featureFlags, identityCache);
 
             // Assert
             Assert.AreEqual(initialPosition, launchSettings.targetScene);
@@ -179,20 +257,20 @@ namespace Global.Tests.EditMode
         [Test]
         public void UseWorldHomeWhenFeatureFlagIsDefaultButWorldHomeExists()
         {
-            HomeMarkerController.SerializeWorldName("testworld.dcl.eth");
+            HomeMarkerController.SerializeWorldName(account, "testworld.dcl.eth");
             launchSettings.targetScene = new Vector2Int(0, 0);
             launchSettings.EditorSceneStartPosition = false;
 
             var featureFlags = GetFeatureFlagsConfiguration(true, "0,0");
 
-            launchSettings.CheckStartParcelOverride(appArgs, featureFlags);
+            launchSettings.CheckStartParcelOverride(appArgs, featureFlags, identityCache);
             Assert.AreEqual(InitialRealm.World, launchSettings.initialRealm);
         }
 
         [Test]
         public void UseDeepLinkRealmOverSavedWorldHome()
         {
-            HomeMarkerController.SerializeWorldName("myhome.dcl.eth");
+            HomeMarkerController.SerializeWorldName(account, "myhome.dcl.eth");
             launchSettings.EditorSceneStartPosition = false;
             appArgs.HasFlag(AppArgsFlags.REALM).Returns(true);
 
@@ -206,7 +284,7 @@ namespace Global.Tests.EditMode
             var featureFlags = GetFeatureFlagsConfiguration(true, "0,0");
 
             launchSettings.ApplyConfig(appArgs);
-            launchSettings.CheckStartParcelOverride(appArgs, featureFlags);
+            launchSettings.CheckStartParcelOverride(appArgs, featureFlags, identityCache);
 
             Assert.AreEqual(InitialRealm.World, launchSettings.initialRealm);
             Assert.AreEqual("cozyfarm.dcl.eth", launchSettings.TargetWorld);
@@ -215,14 +293,14 @@ namespace Global.Tests.EditMode
         [Test]
         public void NotUseHomePositionWhenDeepLinkRealmProvided()
         {
-            HomeMarkerController.Serialize(new Vector2Int(100, 200));
+            HomeMarkerController.Serialize(account, new Vector2Int(100, 200));
             launchSettings.targetScene = new Vector2Int(5, 5);
             launchSettings.EditorSceneStartPosition = false;
             appArgs.HasFlag(AppArgsFlags.REALM).Returns(true);
 
             var featureFlags = GetFeatureFlagsConfiguration(false, "0,0");
 
-            launchSettings.CheckStartParcelOverride(appArgs, featureFlags);
+            launchSettings.CheckStartParcelOverride(appArgs, featureFlags, identityCache);
 
             Assert.AreEqual(new Vector2Int(5, 5), launchSettings.targetScene);
         }
@@ -230,15 +308,15 @@ namespace Global.Tests.EditMode
         [Test]
         public void PreferWorldHomeOverCoordinateHome()
         {
-            HomeMarkerController.Serialize(new Vector2Int(100, 200));
-            HomeMarkerController.SerializeWorldName("testworld.dcl.eth");
+            HomeMarkerController.Serialize(account, new Vector2Int(100, 200));
+            HomeMarkerController.SerializeWorldName(account, "testworld.dcl.eth");
             launchSettings.targetScene = new Vector2Int(0, 0);
             launchSettings.EditorSceneStartPosition = false;
 
             string featureFlagPosition = "0,0";
             var featureFlags = GetFeatureFlagsConfiguration(true, featureFlagPosition);
 
-            launchSettings.CheckStartParcelOverride(appArgs, featureFlags);
+            launchSettings.CheckStartParcelOverride(appArgs, featureFlags, identityCache);
             Assert.AreEqual(InitialRealm.World, launchSettings.initialRealm);
         }
 
