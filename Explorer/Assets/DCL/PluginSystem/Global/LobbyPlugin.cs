@@ -255,15 +255,10 @@ namespace DCL.PluginSystem.Global
                .SuppressToResultAsync(ReportCategory.CREDITS_PURCHASE)
                .Forget();
 
-            // Dev only: F8 swaps the visible lobby for the other implementation, startup included
-            var devSwitcher = new UnityEngine.GameObject("LobbyDevSwitcher").AddComponent<LobbyDevSwitcher>();
-            devSwitcher.Initialize(mvcManager, lobbyController, lobbyDocumentController, lobbyView);
-
             debugContainerBuilder
                .TryAddWidget("Lobby")?
                .AddSingleButton("Open", () => mvcManager.ShowAndForget(LobbyController.IssueCommand(new LobbyParameter(isStartup: false))))
-               .AddSingleButton("Open UI Toolkit", () => mvcManager.ShowAndForget(LobbyDocumentController.IssueCommand(new LobbyParameter(isStartup: false))))
-               .AddSingleButton("Switch uGUI <-> UI Toolkit (F8)", devSwitcher.Switch);
+               .AddSingleButton("Open UI Toolkit", () => mvcManager.ShowAndForget(LobbyDocumentController.IssueCommand(new LobbyParameter(isStartup: false))));
         }
 
         private async UniTask EnableCreditsPanelsAsync(CreditsPanelView view, CreditsPanelElement element, CancellationToken ct)
