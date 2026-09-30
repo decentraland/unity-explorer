@@ -9,11 +9,9 @@ namespace MVC.Tests
 {
     public class ControllerBaseShould
     {
-        private TestController controller;
-        private ControllerBase<ITestView, TestInputData>.ViewFactoryMethod viewFactoryMethod;
-        private ITestView testView;
-
-        private IMVCControllerModule module;
+        private TestController controller = null!;
+        private ControllerBase<ITestView, TestInputData>.ViewFactoryMethod viewFactoryMethod = null!;
+        private ITestView testView = null!;
 
         [SetUp]
         public void SetUp()
@@ -147,7 +145,7 @@ namespace MVC.Tests
 
             public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
 
-            internal TestInputData Input => inputData;
+            public TestInputData Input => inputData;
 
             public TestController(ViewFactoryMethod viewFactory) : base(viewFactory)
             {

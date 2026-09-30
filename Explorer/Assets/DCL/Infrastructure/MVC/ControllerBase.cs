@@ -42,7 +42,7 @@ namespace MVC
         public static ShowCommand<TView, TInputData> IssueCommand(TInputData inputData) =>
             new (inputData);
 
-        private List<IMVCControllerModule> modules;
+        private List<IMVCControllerModule>? modules;
 
         /// <summary>
         ///     Pending while the view plays its show animation, completed once <see cref="OnViewShow" /> has run
@@ -58,7 +58,8 @@ namespace MVC
 
         protected TView? viewInstance { get; private set; }
 
-        protected TInputData inputData { get; private set; }
+        // Assigned by LaunchViewLifeCycleAsync before any callback that reads it runs
+        protected TInputData inputData { get; private set; } = default!;
 
         public ControllerState State { get; private set; }
 
