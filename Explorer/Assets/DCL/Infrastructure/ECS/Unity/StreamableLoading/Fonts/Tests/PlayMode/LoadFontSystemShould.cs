@@ -75,7 +75,7 @@ namespace ECS.StreamableLoading.Fonts.Tests
             referenceFont = font;
 
             return new LoadFontSystem(world, cache, TestWebRequestController.INSTANCE, new RuntimeFontAssetFactory(font),
-                new FontFileStore(Path.Combine(Application.temporaryCachePath, "SceneFontsTests")));
+                new FontFileStore(Path.Combine(Application.temporaryCachePath, "SceneFontsTests")), tryUnlistedBundles: false);
         }
 
         protected override void AssertSuccess(FontData data)

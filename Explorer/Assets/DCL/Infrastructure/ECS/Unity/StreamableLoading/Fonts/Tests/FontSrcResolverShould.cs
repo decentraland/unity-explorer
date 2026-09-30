@@ -103,6 +103,7 @@ namespace ECS.StreamableLoading.Fonts.Tests
             FontSrcResolver.TryCreateIntention(CONTENT_FILE, sceneData, out GetFontIntention intention);
 
             Assert.That(intention.AssetBundleHash, Is.EqualTo(CONTENT_HASH));
+            Assert.That(intention.AssetBundleListed, Is.True);
             Assert.That(intention.AssetBundleManifest, Is.SameAs(manifest));
             Assert.That(intention.SceneId, Is.EqualTo("scene"));
             Assert.That(intention.CommonArguments.URL.Value, Is.EqualTo(CONTENT_URL), "the raw file stays the fallback");
@@ -115,7 +116,7 @@ namespace ECS.StreamableLoading.Fonts.Tests
 
             FontSrcResolver.TryCreateIntention(CONTENT_FILE, sceneData, out GetFontIntention intention);
 
-            Assert.That(intention.AssetBundleHash, Is.Null);
+            Assert.That(intention.AssetBundleListed, Is.False);
         }
 
         private AssetBundleManifestVersion WithSceneManifest(params string[] files)

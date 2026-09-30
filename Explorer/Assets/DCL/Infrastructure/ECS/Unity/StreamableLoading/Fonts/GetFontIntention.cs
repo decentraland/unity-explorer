@@ -11,8 +11,11 @@ namespace ECS.StreamableLoading.Fonts
 
         public string Src;
 
-        // Set when the scene's manifest lists a converted bundle for the font file: the bundle is tried first, the raw file is the fallback.
+        // Set for a scene font file with a usable asset bundle manifest; when a bundle is tried, the raw file is the fallback.
         public string? AssetBundleHash;
+
+        // The manifest's files[] name a bundle for AssetBundleHash. Local scene development never reads files[], so there a bundle is tried unlisted.
+        public bool AssetBundleListed;
 
         public AssetBundleManifestVersion? AssetBundleManifest;
 

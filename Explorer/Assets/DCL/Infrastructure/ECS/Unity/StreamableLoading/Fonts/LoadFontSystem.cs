@@ -34,13 +34,19 @@ namespace ECS.StreamableLoading.Fonts
         private readonly IWebRequestController webRequestController;
         private readonly RuntimeFontAssetFactory fontAssetFactory;
         private readonly FontFileStore fileStore;
+        private readonly bool tryUnlistedBundles;
 
+        /// <param name="tryUnlistedBundles">
+        ///     Local scene development with local asset bundles: the scene's manifest files[] are never read there, so
+        ///     every scene font file is tried as a bundle and the ones the converter skipped fall back to the file.
+        /// </param>
         internal LoadFontSystem(World world, IStreamableCache<FontData, GetFontIntention> cache, IWebRequestController webRequestController,
-            RuntimeFontAssetFactory fontAssetFactory, FontFileStore fileStore) : base(world, cache)
+            RuntimeFontAssetFactory fontAssetFactory, FontFileStore fileStore, bool tryUnlistedBundles) : base(world, cache)
         {
             this.webRequestController = webRequestController;
             this.fontAssetFactory = fontAssetFactory;
             this.fileStore = fileStore;
+            this.tryUnlistedBundles = tryUnlistedBundles;
         }
 
         protected override void DisposeAbandonedResult(FontData asset) =>
@@ -53,7 +59,7 @@ namespace ECS.StreamableLoading.Fonts
 
             try
             {
-                if (intention.AssetBundleHash != null)
+                if (intention.AssetBundleHash != null && (intention.AssetBundleListed || tryUnlistedBundles))
                 {
                     FontData? bundled = await TryLoadConvertedAsync(intention, partition, ct);
 

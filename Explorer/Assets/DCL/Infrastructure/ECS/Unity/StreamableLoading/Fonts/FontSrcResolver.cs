@@ -59,10 +59,11 @@ namespace ECS.StreamableLoading.Fonts
 
             AssetBundleManifestVersion manifest = definition.AssetBundleManifestVersionOrFailed;
 
-            if (manifest.assetBundleManifestRequestFailed || manifest.IsLSDAsset || !manifest.ListsConvertedFile(hash))
+            if (manifest.assetBundleManifestRequestFailed || manifest.IsLSDAsset)
                 return;
 
             intention.AssetBundleHash = hash;
+            intention.AssetBundleListed = manifest.ListsConvertedFile(hash);
             intention.AssetBundleManifest = manifest;
             intention.SceneId = definition.id ?? string.Empty;
         }

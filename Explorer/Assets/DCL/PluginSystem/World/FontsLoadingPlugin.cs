@@ -21,13 +21,16 @@ namespace DCL.PluginSystem.World
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly FontsCache fontsCache;
         private readonly FontFileStore fontFileStore;
+        private readonly bool tryUnlistedBundles;
 
         private ProvidedAsset<TMP_FontAsset> referenceFont;
         private RuntimeFontAssetFactory fontAssetFactory = null!;
 
-        public FontsLoadingPlugin(IWebRequestController webRequestController, CacheCleaner cacheCleaner, IAssetsProvisioner assetsProvisioner)
+        /// <param name="localSceneAssetBundles">Local scene development converting the scene through the local abgen (<c>--local-ab</c>).</param>
+        public FontsLoadingPlugin(IWebRequestController webRequestController, CacheCleaner cacheCleaner, IAssetsProvisioner assetsProvisioner, bool localSceneAssetBundles)
         {
             this.webRequestController = webRequestController;
+            tryUnlistedBundles = localSceneAssetBundles;
             this.assetsProvisioner = assetsProvisioner;
 
             fontsCache = new FontsCache();
@@ -49,7 +52,7 @@ namespace DCL.PluginSystem.World
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in SystemsDependencies systemsDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
-            LoadFontSystem.InjectToWorld(ref builder, fontsCache, webRequestController, fontAssetFactory, fontFileStore);
+            LoadFontSystem.InjectToWorld(ref builder, fontsCache, webRequestController, fontAssetFactory, fontFileStore, tryUnlistedBundles);
         }
 
         [Serializable]
