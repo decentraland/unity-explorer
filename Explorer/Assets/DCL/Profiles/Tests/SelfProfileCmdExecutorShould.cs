@@ -1,0 +1,442 @@
+using Arch.Core;
+using CommunicationData.URLHelpers;
+using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.Emotes;
+using DCL.AvatarRendering.Emotes.Equipped;
+using DCL.AvatarRendering.Wearables.Equipped;
+using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.Profiles.Self;
+using ECS.Prioritization.Components;
+using ECS.TestSuite;
+using Newtonsoft.Json;
+using NSubstitute;
+using NUnit.Framework;
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using Utility.Fsm;
+
+namespace DCL.Profiles.Tests
+{
+    public class SelfProfileCmdExecutorShould
+    {
+        private class RecordingInbox : IMsgInbox<SelfProfileMsg>
+        {
+            public readonly List<SelfProfileMsg> Sent = new ();
+
+            public void Send(in SelfProfileMsg msg) =>
+                Sent.Add(msg);
+        }
+
+        private static readonly UserId ALICE = UserId.New("0xAlice").Unwrap();
+        private static readonly UserId BOB = UserId.New("0xBob").Unwrap();
+        private static readonly URN BASE_EMOTE = "urn:decentraland:off-chain:base-emotes:wave";
+        private static readonly URN FORCED_WEARABLE = "urn:decentraland:off-chain:base-avatars:red_hoodie";
+
+        private IProfileRepository profileRepository = null!;
+        private IProfileCache profileCache = null!;
+        private IWearableStorage wearableStorage = null!;
+        private IEmoteStorage emoteStorage = null!;
+        private IEquippedWearables equippedWearables = null!;
+        private IEquippedEmotes equippedEmotes = null!;
+        private World world = null!;
+        private Entity playerEntity;
+        private RecordingInbox inbox = null!;
+        private SelfProfileCmdExecutor executor = null!;
+
+        [SetUp]
+        public void SetUp()
+        {
+            // Constructing a Profile validates its name against the feature flags.
+            EcsTestsUtils.SetUpFeaturesRegistry();
+
+            profileRepository = Substitute.For<IProfileRepository>();
+            profileCache = Substitute.For<IProfileCache>();
+            wearableStorage = Substitute.For<IWearableStorage>();
+            emoteStorage = Substitute.For<IEmoteStorage>();
+            emoteStorage.BaseEmotesUrns.Returns(new List<URN> { BASE_EMOTE });
+            equippedWearables = Substitute.For<IEquippedWearables>();
+            equippedEmotes = Substitute.For<IEquippedEmotes>();
+            world = World.Create();
+            playerEntity = world.Create();
+            inbox = new RecordingInbox();
+            executor = NewExecutor(new ForcedWearables());
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            executor.Dispose();
+            World.Destroy(world);
+            EcsTestsUtils.TearDownFeaturesRegistry();
+        }
+
+        [Test]
+        public void ReportTheFetchedProfile()
+        {
+            // Arrange
+            Profile fetched = NewProfile(ALICE, 3);
+            AnyGet().Returns(UniTask.FromResult<ProfileTier?>(fetched));
+
+            // Act
+            executor.Execute(SelfProfileCmd.FromFetch(ALICE), inbox);
+
+            // Assert
+            Assert.That(SingleSent().IsFetchSucceeded(out FetchSucceeded msg), Is.True);
+            Assert.That(msg.Address, Is.EqualTo(ALICE));
+            Assert.That(msg.Profile, Is.SameAs(fetched));
+        }
+
+        [Test]
+        public void FetchWithASingleImmediateRequest()
+        {
+            // Arrange
+            AnyGet().Returns(UniTask.FromResult<ProfileTier?>(NewProfile(ALICE, 3)));
+
+            // Act
+            executor.Execute(SelfProfileCmd.FromFetch(ALICE), inbox);
+
+            // Assert
+            profileRepository.Received(1).GetAsync(ALICE.Value, 0, null, Arg.Any<CancellationToken>(), true,
+                IProfileRepository.FetchBehaviour.EnforceSingleGet, ProfileTier.Kind.Full, Arg.Any<IPartitionComponent?>());
+        }
+
+        [Test]
+        public void ReportNotFoundWhenTheRepositoryReturnsNull()
+        {
+            // Arrange
+            AnyGet().Returns(UniTask.FromResult<ProfileTier?>(null));
+
+            // Act
+            executor.Execute(SelfProfileCmd.FromFetch(ALICE), inbox);
+
+            // Assert
+            Assert.That(SingleSent().IsFetchNotFound(out UserId? address), Is.True);
+            Assert.That(address, Is.EqualTo(ALICE));
+        }
+
+        [Test]
+        public void ReportATransientFailureWhenTheFetchThrows()
+        {
+            // Arrange
+            var error = new TimeoutException("catalyst timed out");
+            AnyGet().Returns(UniTask.FromException<ProfileTier?>(error));
+
+            // Act
+            executor.Execute(SelfProfileCmd.FromFetch(ALICE), inbox);
+
+            // Assert
+            Assert.That(SingleSent().IsFetchFailed(out FetchFailed msg), Is.True);
+            Assert.That(msg.Address, Is.EqualTo(ALICE));
+            Assert.That(msg.Failure.Kind, Is.EqualTo(FailureKind.Transient));
+            Assert.That(msg.Failure.Exception, Is.SameAs(error));
+        }
+
+        [Test]
+        public void ReportAMalformedFailureWhenTheFetchThrowsAJsonError()
+        {
+            // Arrange
+            AnyGet().Returns(UniTask.FromException<ProfileTier?>(new JsonReaderException("unexpected token")));
+
+            // Act
+            executor.Execute(SelfProfileCmd.FromFetch(ALICE), inbox);
+
+            // Assert
+            Assert.That(SingleSent().IsFetchFailed(out FetchFailed msg), Is.True);
+            Assert.That(msg.Failure.Kind, Is.EqualTo(FailureKind.Malformed));
+        }
+
+        [Test]
+        public void FillAnEmptyEmoteWheelWithTheBaseEmotes()
+        {
+            // Arrange
+            Profile fetched = NewProfile(ALICE, 3);
+            AnyGet().Returns(UniTask.FromResult<ProfileTier?>(fetched));
+
+            // Act
+            executor.Execute(SelfProfileCmd.FromFetch(ALICE), inbox);
+
+            // Assert
+            Assert.That(fetched.Avatar.Emotes[0], Is.EqualTo(BASE_EMOTE));
+        }
+
+        [Test]
+        public void ApplyForcedWearablesToTheFetchedProfile()
+        {
+            // Arrange
+            executor.Dispose();
+            executor = NewExecutor(new ForcedWearables(new[] { FORCED_WEARABLE }));
+            Profile fetched = NewProfile(ALICE, 3);
+            AnyGet().Returns(UniTask.FromResult<ProfileTier?>(fetched));
+
+            // Act
+            executor.Execute(SelfProfileCmd.FromFetch(ALICE), inbox);
+
+            // Assert
+            // Has.Member, not Does.Contain: URN converts to string implicitly and would be compared as a substring.
+            Assert.That(fetched.Avatar.Wearables, Has.Member(FORCED_WEARABLE));
+        }
+
+        [Test]
+        public void ReportNothingForAFetchCancelledByANewerFetch()
+        {
+            // Arrange
+            var pending = new UniTaskCompletionSource();
+            AnyGet().Returns(call => CompleteWhenReleasedAsync(pending, call.Arg<CancellationToken>(), NewProfile(BOB, 1)));
+
+            // Act
+            executor.Execute(SelfProfileCmd.FromFetch(ALICE), inbox);
+            executor.Execute(SelfProfileCmd.FromFetch(BOB), inbox);
+            pending.TrySetResult();
+
+            // Assert
+            Assert.That(SingleSent().IsFetchSucceeded(out FetchSucceeded msg), Is.True);
+            Assert.That(msg.Address, Is.EqualTo(BOB));
+        }
+
+        [Test]
+        public void CancelTheActivityInFlightOnReset()
+        {
+            // Arrange
+            CancellationToken fetchToken = StartPendingFetch();
+
+            // Act
+            executor.Execute(SelfProfileCmd.ResetLocalState(), inbox);
+
+            // Assert
+            Assert.That(fetchToken.IsCancellationRequested, Is.True);
+        }
+
+        [Test]
+        public void CancelTheActivityInFlightOnDispose()
+        {
+            // Arrange
+            CancellationToken fetchToken = StartPendingFetch();
+
+            // Act
+            executor.Dispose();
+
+            // Assert
+            Assert.That(fetchToken.IsCancellationRequested, Is.True);
+        }
+
+        [Test]
+        public void ClearTheLocalRegistriesOnReset()
+        {
+            // Act
+            executor.Execute(SelfProfileCmd.ResetLocalState(), inbox);
+
+            // Assert
+            wearableStorage.Received(1).ClearOwnedNftRegistry();
+            emoteStorage.Received(1).ClearOwnedNftRegistry();
+            equippedWearables.Received(1).Clear();
+            equippedEmotes.Received(1).UnEquipAll();
+            Assert.That(inbox.Sent, Is.Empty);
+        }
+
+        [Test]
+        public void PutThePublishedProfileInTheCache()
+        {
+            // Arrange
+            Profile published = NewProfile(ALICE, 3);
+            ProfileTier cached = default;
+            profileCache.Set(Arg.Any<string>(), Arg.Do<ProfileTier>(tier => cached = tier));
+
+            // Act
+            executor.Execute(SelfProfileCmd.FromPublish(published), inbox);
+
+            // Assert
+            profileCache.Received(1).Set(ALICE.Value, Arg.Any<ProfileTier>());
+            Assert.That(cached.IsFull(out Profile? full), Is.True);
+            Assert.That(full, Is.SameAs(published));
+            Assert.That(inbox.Sent, Is.Empty);
+        }
+
+        [Test]
+        public void ReplaceTheProfileOnThePlayerEntityWhenItCarriesOne()
+        {
+            // Arrange
+            world.Add(playerEntity, NewProfile(ALICE, 2));
+            Profile published = NewProfile(ALICE, 3);
+
+            // Act
+            executor.Execute(SelfProfileCmd.FromPublish(published), inbox);
+
+            // Assert
+            Assert.That(world.Get<Profile>(playerEntity), Is.SameAs(published));
+            Assert.That(published.IsDirty, Is.True);
+        }
+
+        [Test]
+        public void LeaveThePlayerEntityAloneUntilItCarriesAProfile()
+        {
+            // Act
+            executor.Execute(SelfProfileCmd.FromPublish(NewProfile(ALICE, 3)), inbox);
+
+            // Assert
+            Assert.That(world.Has<Profile>(playerEntity), Is.False);
+        }
+
+        [Test]
+        public void DeployThenReportTheSavedProfile()
+        {
+            // Arrange
+            Profile sent = NewProfile(BOB, 4);
+            Profile saved = NewProfile(ALICE, 4);
+            AnyGet().Returns(UniTask.FromResult<ProfileTier?>(saved));
+
+            // Act
+            executor.Execute(SelfProfileCmd.FromDeploy(new DeployCmd(ALICE, sent)), inbox);
+
+            // Assert
+            profileRepository.Received(1).SetAsync(sent, Arg.Any<CancellationToken>());
+            Assert.That(sent.UserId, Is.EqualTo(ALICE), "the deployed profile is stamped with the address");
+            Assert.That(SingleSent().IsDeploySucceeded(out DeploySucceeded msg), Is.True);
+            Assert.That(msg.Address, Is.EqualTo(ALICE));
+            Assert.That(msg.Sent, Is.SameAs(sent));
+            Assert.That(msg.Saved, Is.SameAs(saved));
+        }
+
+        [Test]
+        public void ReReadTheDeployedVersionFromTheCatalyst()
+        {
+            // Arrange
+            Profile sent = NewProfile(ALICE, 4);
+            AnyGet().Returns(UniTask.FromResult<ProfileTier?>(NewProfile(ALICE, 4)));
+
+            // Act
+            executor.Execute(SelfProfileCmd.FromDeploy(new DeployCmd(ALICE, sent)), inbox);
+
+            // Assert
+            profileRepository.Received(1).GetAsync(ALICE.Value, 4, null, Arg.Any<CancellationToken>(), false,
+                IProfileRepository.FetchBehaviour.ForceFetchFromCatalyst | IProfileRepository.FetchBehaviour.DelayUntilResolved,
+                ProfileTier.Kind.Full, Arg.Any<IPartitionComponent?>());
+        }
+
+        [Test]
+        public void ReportADeployFailureWhenTheSaveThrows()
+        {
+            // Arrange
+            Profile sent = NewProfile(ALICE, 4);
+            var error = new InvalidOperationException("deploy rejected");
+            profileRepository.SetAsync(Arg.Any<Profile>(), Arg.Any<CancellationToken>()).Returns(UniTask.FromException(error));
+
+            // Act
+            executor.Execute(SelfProfileCmd.FromDeploy(new DeployCmd(ALICE, sent)), inbox);
+
+            // Assert
+            Assert.That(SingleSent().IsDeployFailed(out DeployFailed msg), Is.True);
+            Assert.That(msg.Address, Is.EqualTo(ALICE));
+            Assert.That(msg.Sent, Is.SameAs(sent));
+            Assert.That(msg.Exception, Is.SameAs(error));
+            profileRepository.DidNotReceiveWithAnyArgs().GetAsync(default!, default, default, default, default, default, default, default);
+        }
+
+        [Test]
+        public void ReportADeployFailureWhenTheSavedProfileIsMissing()
+        {
+            // Arrange
+            Profile sent = NewProfile(ALICE, 4);
+            AnyGet().Returns(UniTask.FromResult<ProfileTier?>(null));
+
+            // Act
+            executor.Execute(SelfProfileCmd.FromDeploy(new DeployCmd(ALICE, sent)), inbox);
+
+            // Assert
+            Assert.That(SingleSent().IsDeployFailed(out DeployFailed msg), Is.True);
+            Assert.That(msg.Sent, Is.SameAs(sent));
+            Assert.That(msg.Exception, Is.TypeOf<ProfileNotFoundAfterDeployException>());
+        }
+
+        [Test]
+        public void SkipTheDeployInAFakingSession()
+        {
+            // Arrange
+            executor.Dispose();
+            executor = NewExecutor(new ForcedWearables(new[] { FORCED_WEARABLE }));
+            Profile sent = NewProfile(ALICE, 4);
+
+            // Act
+            executor.Execute(SelfProfileCmd.FromDeploy(new DeployCmd(ALICE, sent)), inbox);
+
+            // Assert
+            profileRepository.DidNotReceiveWithAnyArgs().SetAsync(default!, default);
+            Assert.That(SingleSent().IsDeploySucceeded(out DeploySucceeded msg), Is.True);
+            Assert.That(msg.Sent, Is.SameAs(sent));
+            Assert.That(msg.Saved, Is.SameAs(sent));
+        }
+
+        [Test]
+        public void ExecuteABatchInOrder()
+        {
+            // Arrange
+            AnyGet().Returns(UniTask.FromResult<ProfileTier?>(NewProfile(ALICE, 3)));
+
+            // Act
+            executor.Execute(SelfProfileCmd.FromBatch(new[] { SelfProfileCmd.ResetLocalState(), SelfProfileCmd.FromFetch(ALICE) }), inbox);
+
+            // Assert
+            Received.InOrder(() =>
+            {
+                equippedWearables.Clear();
+                profileRepository.GetAsync(ALICE.Value, 0, null, Arg.Any<CancellationToken>(), true,
+                    IProfileRepository.FetchBehaviour.EnforceSingleGet, ProfileTier.Kind.Full, Arg.Any<IPartitionComponent?>());
+            });
+
+            Assert.That(SingleSent().IsFetchSucceeded(out _), Is.True);
+        }
+
+        [Test]
+        public void DoNothingForNone()
+        {
+            // Act
+            executor.Execute(SelfProfileCmd.None(), inbox);
+
+            // Assert
+            Assert.That(inbox.Sent, Is.Empty);
+            profileRepository.DidNotReceiveWithAnyArgs().GetAsync(default!, default, default, default, default, default, default, default);
+        }
+
+        private SelfProfileCmdExecutor NewExecutor(ForcedWearables forcedWearables) =>
+            new (profileRepository, profileCache, wearableStorage, emoteStorage, equippedWearables, equippedEmotes,
+                forcedWearables, forcedEmotes: null, world, playerEntity);
+
+        private static Profile NewProfile(UserId userId, int version) =>
+            new (userId, "self", new Avatar()) { Version = version };
+
+        /// <summary>The repository call the executor makes for any fetch or re-read, ready for <c>Returns</c>.</summary>
+        private UniTask<ProfileTier?> AnyGet() =>
+            profileRepository.GetAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<URLDomain?>(), Arg.Any<CancellationToken>(),
+                Arg.Any<bool>(), Arg.Any<IProfileRepository.FetchBehaviour>(), Arg.Any<ProfileTier.Kind>(), Arg.Any<IPartitionComponent?>());
+
+        /// <summary>Starts a fetch whose repository call never completes and returns the token the executor gave it.</summary>
+        private CancellationToken StartPendingFetch()
+        {
+            CancellationToken token = default;
+            AnyGet().Returns(call =>
+            {
+                token = call.Arg<CancellationToken>();
+                return new UniTaskCompletionSource<ProfileTier?>().Task;
+            });
+
+            executor.Execute(SelfProfileCmd.FromFetch(ALICE), inbox);
+
+            Assert.That(token.CanBeCanceled, Is.True, "the executor should pass a cancellable token to the repository");
+            return token;
+        }
+
+        /// <summary>Behaves like the repository: completes when released, and throws if its token was cancelled meanwhile.</summary>
+        private static async UniTask<ProfileTier?> CompleteWhenReleasedAsync(UniTaskCompletionSource release, CancellationToken ct, Profile profile)
+        {
+            await release.Task;
+            ct.ThrowIfCancellationRequested();
+            return profile;
+        }
+
+        private SelfProfileMsg SingleSent()
+        {
+            Assert.That(inbox.Sent, Has.Count.EqualTo(1), "exactly one message should reach the inbox");
+            return inbox.Sent[0];
+        }
+    }
+}
