@@ -1,33 +1,39 @@
-/* The row along the top edge, right-aligned: credits, notifications, profile and close, 10px apart, 50px from the edge */
+/* The row along the top edge, right-aligned: credits, notifications, profile and close, 12px apart, 50px from the edge */
 .lobby__top-bar {
     position: absolute;
-    top: 0;
-    right: 0;
-    height: 100px;
+    top: 21px;
+    right: var(--lobby-margin);
+    height: 46px;
     flex-direction: row;
     align-items: center;
-    padding-right: 50px;
 }
 
 /* The credits and profile widgets are moved into the slots at runtime; a slot is only as big as what it holds */
 .lobby__top-bar-slot {
     flex-direction: row;
-    margin-left: 10px;
+    margin-left: 12px;
 }
 
+/* Outlined dark circle, like the pills the widgets are drawn as */
 .lobby__top-bar-button {
-    width: 40px;
-    height: 40px;
-    margin-left: 10px;
+    width: 42px;
+    height: 42px;
+    margin-left: 12px;
     align-items: center;
     justify-content: center;
-    border-radius: 12px;
-    background-color: black;
-    transition: background-color 0.1s;
+    border-width: 2px;
+    border-radius: 21px;
+    border-color: var(--lobby-card-border-color);
+    background-color: var(--dcl-color-black-70);
+    transition: background-color 0.1s, border-color 0.1s;
 }
 
 .lobby__top-bar-button:hover {
-    background-color: rgb(31, 31, 31);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.lobby__top-bar-button:active {
+    background-color: var(--dcl-color-black-80);
 }
 
 .lobby__notifications-icon {
@@ -37,7 +43,7 @@
 }
 
 .lobby__close-icon {
-    width: 12px;
-    height: 12px;
+    width: 14px;
+    height: 14px;
     background-image: url('/Assets/Textures/Common/CloseIcnThin.png');
 }

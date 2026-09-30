@@ -2,6 +2,7 @@
     <Style src="project://database/Assets/DCL/Lobby/UIToolkit/LobbyLandingCard.uss" />
     <DCL.Lobby.LobbyLandingCardElement name="LandingCard" title="Place Name" creator="Creator" online-count="0" has-online-count="true" can-jump-in="true">
         <ui:VisualElement name="Thumbnail" class="lobby-landing-card__thumbnail" picking-mode="Ignore" />
+        <ui:VisualElement name="Gradient" class="lobby-landing-card__gradient" picking-mode="Ignore" />
         <ui:VisualElement name="OnlineCounter" class="lobby-landing-card__online" picking-mode="Ignore">
             <ui:VisualElement name="OnlineStatus" class="lobby-landing-card__online-dot" picking-mode="Ignore" />
             <ui:VisualElement name="PlayerIcon" class="lobby-landing-card__online-icon" picking-mode="Ignore" />
@@ -11,7 +12,8 @@
             <ui:Label name="Title" text="Place Name" class="lobby-landing-card__title" picking-mode="Ignore" />
             <ui:Label name="Creator" text="Creator" class="lobby-landing-card__creator" picking-mode="Ignore" />
         </ui:VisualElement>
-        <ui:Button name="JumpIn" text="JUMP IN" class="lobby-landing-card__jump-in">
+        <ui:Button name="JumpIn" class="lobby-landing-card__jump-in">
+            <ui:Label name="JumpInText" text="JUMP IN" class="lobby-landing-card__jump-in-text" picking-mode="Ignore" />
             <ui:VisualElement name="JumpInIcon" class="lobby-landing-card__jump-in-icon" picking-mode="Ignore" />
         </ui:Button>
     </DCL.Lobby.LobbyLandingCardElement>

@@ -96,9 +96,10 @@ namespace DCL.UI.ProfileElements
             thumbnailSubscription = thumbnail.Subscribe(OnThumbnailUpdated);
         }
 
-        // Without a picture the profile color fills the circle; a fetch keeps the previous picture up while there is one
+        // The name takes the profile color; without a picture it fills the circle too, and a fetch keeps the previous picture up while there is one
         private void OnThumbnailUpdated(ProfileThumbnailViewModel model)
         {
+            nameLabel.style.color = model.ProfileColor;
             picture.style.backgroundColor = model.ProfileColor;
             picture.style.backgroundImage = model.Sprite == null ? StyleKeyword.Null : new StyleBackground(model.Sprite);
             EnableInClassList(USS_LOADING, model.ThumbnailState == ProfileThumbnailViewModel.State.Loading && model.Sprite == null);

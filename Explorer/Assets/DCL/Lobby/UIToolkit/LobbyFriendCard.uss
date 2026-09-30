@@ -4,23 +4,29 @@
     --friend-card-status-offline: var(--dcl-color-silver);
 }
 
+/* The Friends card of the design: 110x115 with 12px corners and padding, darker while hovered */
 .lobby-friend-card {
-    width: 124px;
-    height: 132px;
-    border-radius: 8px;
-    background-color: rgba(20, 20, 26, 0.9);
+    width: 110px;
+    height: 115px;
+    border-radius: 12px;
+    background-color: rgba(22, 21, 24, 0.7);
+    transition: background-color 0.1s;
+}
+
+.lobby-friend-card:hover {
+    background-color: var(--dcl-color-shadow);
 }
 
 /* The profile color fills the circle while the picture is missing; the picture itself is set inline by the element */
 .lobby-friend-card__picture {
     position: absolute;
     top: 10px;
-    left: 40px;
-    width: 44px;
-    height: 44px;
-    border-radius: 22px;
-    border-width: 1px;
-    border-color: rgba(255, 255, 255, 0.2);
+    left: 37px;
+    width: 32px;
+    height: 32px;
+    border-radius: 16px;
+    border-width: 2px;
+    border-color: rgba(255, 255, 255, 0.7);
     background-color: white;
     background-image: url('/Assets/DCL/Chat/Textures/DefaultProfileThumbnail.png');
     -unity-background-scale-mode: scale-and-crop;
@@ -30,15 +36,16 @@
     background-image: none;
 }
 
+/* Over the top-right of the picture */
 .lobby-friend-card__online {
     position: absolute;
-    top: 43px;
-    left: 73px;
-    width: 12px;
-    height: 12px;
-    border-radius: 6px;
-    border-width: 1.5px;
-    border-color: black;
+    top: 8px;
+    left: 61px;
+    width: 10px;
+    height: 10px;
+    border-radius: 5px;
+    border-width: 2px;
+    border-color: var(--dcl-color-shadow);
     background-color: var(--friend-card-status-offline);
 }
 
@@ -52,22 +59,23 @@
 
 .lobby-friend-card__user-name {
     position: absolute;
-    top: 58px;
-    left: 6px;
-    right: 6px;
-    height: 20px;
+    top: 48px;
+    left: 10px;
+    right: 10px;
+    height: 17px;
     flex-direction: row;
     align-items: center;
     justify-content: center;
     overflow: hidden;
 }
 
+/* The name takes the profile color, set inline by the element */
 .lobby-friend-card__name {
     flex-shrink: 1;
-    font-size: 12px;
+    font-size: 14px;
     -unity-font-definition: var(--dcl-font-inter-semibold);
     -unity-text-align: middle-center;
-    color: white;
+    color: var(--dcl-color-snow);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -76,9 +84,10 @@
 .lobby-friend-card__wallet-tag {
     flex-shrink: 0;
     margin-left: 2px;
-    font-size: 12px;
+    font-size: 14px;
+    -unity-font-definition: var(--dcl-font-inter-regular);
     -unity-text-align: middle-center;
-    color: white;
+    color: var(--dcl-color-snow);
 }
 
 .lobby-friend-card--verified .lobby-friend-card__wallet-tag {
@@ -100,30 +109,29 @@
 
 .lobby-friend-card__location {
     position: absolute;
-    bottom: 10px;
-    left: 6px;
-    right: 6px;
-    height: 16px;
+    top: 69px;
+    left: 10px;
+    right: 10px;
+    height: 24px;
     flex-direction: row;
     align-items: center;
-    justify-content: center;
     overflow: hidden;
 }
 
 .lobby-friend-card__location-icon {
     flex-shrink: 0;
-    width: 12px;
-    height: 12px;
-    margin-right: 3px;
+    width: 16px;
+    height: 16px;
     background-image: url('/Assets/Textures/Common/LocationIcn.png');
-    -unity-background-image-tint-color: rgb(191, 191, 199);
+    -unity-background-image-tint-color: var(--dcl-color-silver);
 }
 
 .lobby-friend-card__location-text {
     flex-shrink: 1;
-    font-size: 11px;
-    -unity-text-align: middle-center;
-    color: white;
+    font-size: 12px;
+    -unity-font-definition: var(--dcl-font-inter-regular);
+    -unity-text-align: middle-left;
+    color: var(--dcl-color-silver);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -133,14 +141,14 @@
 .lobby-friend-card__join {
     display: none;
     position: absolute;
-    bottom: 8px;
-    left: 16px;
-    width: 92px;
-    height: 24px;
+    top: 71px;
+    left: 10px;
+    right: 10px;
+    height: 30px;
     flex-direction: row;
     align-items: center;
     justify-content: center;
-    border-radius: 4px;
+    border-radius: 8px;
     background-color: rgb(255, 45, 85);
     transition: background-color 0.1s;
 }
@@ -154,19 +162,23 @@
 }
 
 .lobby-friend-card__join:hover {
-    background-color: rgb(118, 21, 39);
+    background-color: rgb(255, 77, 111);
 }
 
-.lobby-friend-card__join-icon {
-    width: 14px;
-    height: 14px;
-    margin-right: 2px;
-    background-image: url('/Assets/Textures/Common/JumpInSolid.png');
+.lobby-friend-card__join:active {
+    background-color: rgb(200, 35, 67);
 }
 
 .lobby-friend-card__join-text {
+    margin-right: 4px;
     font-size: 11px;
     -unity-font-definition: var(--dcl-font-inter-semibold);
     -unity-text-align: middle-center;
     color: var(--dcl-color-snow);
+}
+
+.lobby-friend-card__join-icon {
+    width: 13px;
+    height: 12px;
+    background-image: url('/Assets/Textures/Common/JumpInSolid.png');
 }

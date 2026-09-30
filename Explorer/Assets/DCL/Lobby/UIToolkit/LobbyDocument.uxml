@@ -12,8 +12,12 @@
     <Style src="project://database/Assets/DCL/Lobby/UIToolkit/LobbyUpcomingEventCard.uss" />
     <ui:Template name="LobbyLandingCard" src="project://database/Assets/DCL/Lobby/UIToolkit/LobbyLandingCard.uxml?fileID=9197481963319205126&amp;guid=f260689364e4454c8f4a329cd3e46b06&amp;type=3#LobbyLandingCard" />
     <ui:VisualElement name="Lobby" class="lobby">
+        <!-- Darken the top and bottom edges of the stage so the texts along them stay readable -->
+        <ui:VisualElement name="TopGradient" class="lobby__gradient lobby__gradient--top" picking-mode="Ignore" />
+        <ui:VisualElement name="BottomGradient" class="lobby__gradient lobby__gradient--bottom" picking-mode="Ignore" />
         <!-- The uGUI preview canvas of the prefab draws under the panel: the stage it renders is the background, this only catches the hover and the click over the figure. Hidden until the avatar is shown -->
         <ui:VisualElement name="AvatarHitArea" class="lobby__avatar-hit-area" style="display: none;" />
+        <ui:VisualElement name="Logo" class="lobby__logo" picking-mode="Ignore" />
         <ui:VisualElement name="TopBar" class="lobby__top-bar" picking-mode="Ignore">
             <ui:VisualElement name="CreditsSlot" class="lobby__top-bar-slot" picking-mode="Ignore" />
             <ui:Button name="Notifications" class="lobby__top-bar-button">
@@ -27,7 +31,7 @@
         </ui:VisualElement>
         <!-- The greeting and the hero card of the place the session lands in; the card only offers Jump in until the place is known -->
         <ui:VisualElement name="Welcome" class="lobby__welcome" picking-mode="Ignore">
-            <ui:Label name="WelcomeText" text="Welcome!" class="lobby__welcome-title" picking-mode="Ignore" />
+            <ui:Label name="WelcomeText" text="WELCOME!" class="lobby__welcome-title" picking-mode="Ignore" />
             <ui:Instance template="LobbyLandingCard" />
         </ui:VisualElement>
         <!-- Hidden until the schedule has something to list; each row hides itself while its share of it is empty, so the upcoming one moves up when nothing is live -->
@@ -43,17 +47,18 @@
         <!-- Hidden until it has online friends to list -->
         <ui:VisualElement name="Friends" class="lobby__friends" style="display: none;">
             <ui:VisualElement name="Header" class="lobby__friends-header" picking-mode="Ignore">
-                <ui:Label name="Title" text="FRIENDS" class="lobby__friends-title" picking-mode="Ignore" />
+                <ui:Label name="Title" text="Friends" class="lobby__friends-title" picking-mode="Ignore" />
                 <ui:Label name="OnlineCount" text="0 Online" class="lobby__friends-online-count" picking-mode="Ignore" />
             </ui:VisualElement>
             <DCL.Lobby.LobbyRailElement name="Rail" class="lobby__friends-rail" cards-per-page="4" />
         </ui:VisualElement>
         <ui:VisualElement name="RecentPlaces" class="lobby__places lobby__places--recent">
-            <ui:Label name="Title" text="RECENT PLACES" class="lobby__places-title" picking-mode="Ignore" />
+            <ui:Label name="Title" text="Jump Back In" class="lobby__places-title" picking-mode="Ignore" />
             <DCL.Lobby.LobbyRailElement name="Rail" class="lobby__places-rail" cards-per-page="3" />
         </ui:VisualElement>
+        <ui:VisualElement name="PlacesDivider" class="lobby__places-divider" picking-mode="Ignore" />
         <ui:VisualElement name="FeaturedPlaces" class="lobby__places lobby__places--featured">
-            <ui:Label name="Title" text="FEATURED PLACES" class="lobby__places-title" picking-mode="Ignore" />
+            <ui:Label name="Title" text="Recommended Places" class="lobby__places-title" picking-mode="Ignore" />
             <DCL.Lobby.LobbyRailElement name="Rail" class="lobby__places-rail" cards-per-page="3" />
         </ui:VisualElement>
     </ui:VisualElement>

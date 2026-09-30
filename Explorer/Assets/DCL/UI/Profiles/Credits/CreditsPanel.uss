@@ -1,29 +1,31 @@
-/* Outline pill with the logo and the amount centered; the outline lights up on hover while top-up is possible */
+/* Outlined dark pill with the logo and the amount centered; the outline lights up on hover while top-up is possible */
 .credits-panel {
-    width: 100px;
-    height: 46px;
+    height: 42px;
     flex-direction: row;
     align-items: center;
     justify-content: center;
-    border-width: 1px;
-    border-radius: 12px;
-    border-color: rgb(113, 107, 124);
+    padding: 0 12px;
+    border-width: 2px;
+    border-radius: 21px;
+    border-color: rgba(255, 255, 255, 0.1);
+    background-color: rgba(0, 0, 0, 0.6);
     transition: border-color 0.1s;
 }
 
 .credits-panel--top-up:hover {
-    border-color: white;
+    border-color: rgba(255, 255, 255, 0.3);
 }
 
+/* 116x121 texture at the 24px height of the design */
 .credits-panel__icon {
-    width: 20px;
-    height: 20px;
-    margin-right: 4px;
+    width: 23px;
+    height: 24px;
+    margin-right: 8px;
     background-image: url('/Assets/DCL/MarketplaceCredits/Textures/NewCreditsLogo.png');
 }
 
 .credits-panel__amount {
-    font-size: 21px;
+    font-size: 16px;
     -unity-font-definition: var(--dcl-font-inter-semibold);
     -unity-text-align: middle-center;
     color: var(--dcl-color-snow);

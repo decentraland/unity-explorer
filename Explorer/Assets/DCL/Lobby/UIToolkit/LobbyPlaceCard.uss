@@ -1,49 +1,40 @@
 :root {
     --place-card-hover-duration: 0.3s;
-    /* Hovering moves 24px from the header to the footer, raising it over the thumbnail */
-    --place-card-header-height: 110px;
-    --place-card-header-height-hovered: 86px;
-    --place-card-footer-height: 55px;
-    --place-card-footer-height-hovered: 79px;
 }
 
+/* The Featured Places card of the design: 280x156 with 16px corners, the thumbnail filling it and the texts over its bottom */
 .lobby-place-card {
     width: 280px;
-    height: 165px;
-    border-radius: 8px;
-    background-color: rgba(20, 20, 26, 0.9);
-}
-
-.lobby-place-card__header {
-    height: var(--place-card-header-height);
-    transition: height var(--place-card-hover-duration) ease-out;
-}
-
-.lobby-place-card:hover .lobby-place-card__header {
-    height: var(--place-card-header-height-hovered);
+    height: 156px;
+    border-radius: 16px;
+    background-color: var(--dcl-color-black-40);
+    overflow: hidden;
 }
 
 .lobby-place-card__thumbnail {
-    flex-grow: 1;
-    border-radius: 8px;
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
     background-image: url('/Assets/Textures/ExplorePanel/DefaultImagePlace.png');
     -unity-background-scale-mode: scale-and-crop;
 }
 
+/* Without a thumbnail the dark fill of the card shows */
 .lobby-place-card--loading .lobby-place-card__thumbnail {
     background-image: none;
-    background-color: rgba(143, 66, 219, 0.35);
 }
 
 .lobby-place-card__online {
     position: absolute;
-    top: 12px;
-    left: 12px;
-    height: 28px;
+    top: 10px;
+    left: 10px;
+    height: 26px;
     flex-direction: row;
     align-items: center;
-    padding: 4px 6px;
-    border-radius: 12px;
+    padding: 0 6px;
+    border-radius: 8px;
     background-color: var(--dcl-color-shadow);
 }
 
@@ -68,57 +59,61 @@
     color: var(--dcl-color-snow);
 }
 
+/* Black fade under the texts, from clear at its top to solid at the bottom edge of the card; hovering makes room on its right
+   for the Jump in button */
 .lobby-place-card__footer {
-    height: var(--place-card-footer-height);
-    padding: 8px 10px;
-    transition: height var(--place-card-hover-duration) ease-out;
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 80px;
+    padding: 0 20px 10px;
+    justify-content: flex-end;
+    background-image: url('/Assets/Textures/Common/GradientVertical.png');
+    -unity-background-scale-mode: stretch-to-fill;
+    -unity-background-image-tint-color: black;
+    transition: padding-right var(--place-card-hover-duration) ease-out;
 }
 
 .lobby-place-card:hover .lobby-place-card__footer {
-    height: var(--place-card-footer-height-hovered);
+    padding-right: 128px;
 }
 
 .lobby-place-card__title {
-    height: 20px;
-    font-size: 14px;
+    height: 19px;
+    margin-bottom: 4px;
+    font-size: 16px;
     -unity-font-definition: var(--dcl-font-inter-semibold);
-    -unity-font-style: bold;
-    -unity-text-align: middle-left;
-    color: white;
+    -unity-text-align: lower-left;
+    color: var(--dcl-color-snow);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
 .lobby-place-card__creator {
-    height: 16px;
-    margin-top: 2px;
-    font-size: 11px;
+    height: 15px;
+    font-size: 12px;
+    -unity-font-definition: var(--dcl-font-inter-regular);
     -unity-text-align: middle-left;
-    color: rgb(191, 191, 199);
+    color: var(--dcl-color-white-70);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    transition: opacity var(--place-card-hover-duration) ease-out;
-}
-
-.lobby-place-card:hover .lobby-place-card__creator {
-    opacity: 0;
 }
 
 /* Only reachable while the card is hovered, so its invisible state never takes a click meant for the card itself */
 .lobby-place-card__jump-in {
     position: absolute;
-    left: 8px;
-    right: 8px;
-    bottom: 8px;
+    right: 12px;
+    bottom: 12px;
     height: 32px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    padding: 0 10px 0 12px;
     border-radius: 8px;
     background-color: rgb(255, 45, 85);
-    font-size: 14px;
-    -unity-font-definition: var(--dcl-font-inter-semibold);
-    -unity-text-align: middle-center;
-    color: var(--dcl-color-snow);
     opacity: 0;
     transition: opacity var(--place-card-hover-duration) ease-out, background-color 0.1s;
 }
@@ -131,11 +126,17 @@
     background-color: rgb(200, 35, 67);
 }
 
+.lobby-place-card__jump-in-text {
+    margin-right: 4px;
+    font-size: 12px;
+    -unity-font-definition: var(--dcl-font-inter-semibold);
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    color: var(--dcl-color-snow);
+}
+
 .lobby-place-card__jump-in-icon {
-    position: absolute;
-    left: 10px;
-    top: 4px;
-    width: 24px;
-    height: 24px;
+    width: 20px;
+    height: 20px;
     background-image: url('/Assets/Textures/Common/JumpInOutline.png');
 }

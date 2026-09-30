@@ -1,6 +1,7 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
     <Style src="project://database/Assets/DCL/Lobby/UIToolkit/LobbyUpcomingEventCard.uss" />
     <DCL.Lobby.LobbyUpcomingEventCardElement name="UpcomingEventCard" title="Event Name" host="By Host" starts-in="In 2 hours">
+        <ui:VisualElement name="Thumbnail" class="lobby-upcoming-event-card__thumbnail" picking-mode="Ignore" />
         <ui:VisualElement name="Info" class="lobby-upcoming-event-card__info" picking-mode="Ignore">
             <ui:Label name="Title" text="Event Name" class="lobby-upcoming-event-card__title" picking-mode="Ignore" />
             <ui:Label name="Host" text="By Host" class="lobby-upcoming-event-card__host" picking-mode="Ignore" />
@@ -8,15 +9,14 @@
                 <ui:VisualElement name="ClockIcon" class="lobby-upcoming-event-card__schedule-icon" picking-mode="Ignore" />
                 <ui:Label name="StartsIn" text="In 2 hours" class="lobby-upcoming-event-card__schedule-text" picking-mode="Ignore" />
             </ui:VisualElement>
-            <ui:VisualElement name="Actions" class="lobby-upcoming-event-card__actions" picking-mode="Ignore">
-                <ui:Button name="AddToCalendar" class="lobby-upcoming-event-card__action">
-                    <ui:VisualElement name="Icon" class="lobby-upcoming-event-card__action-icon lobby-upcoming-event-card__action-icon--calendar" picking-mode="Ignore" />
-                </ui:Button>
-                <ui:Button name="Share" class="lobby-upcoming-event-card__action">
-                    <ui:VisualElement name="Icon" class="lobby-upcoming-event-card__action-icon lobby-upcoming-event-card__action-icon--share" picking-mode="Ignore" />
-                </ui:Button>
-            </ui:VisualElement>
         </ui:VisualElement>
-        <ui:VisualElement name="Thumbnail" class="lobby-upcoming-event-card__thumbnail" picking-mode="Ignore" />
+        <ui:VisualElement name="Actions" class="lobby-upcoming-event-card__actions" picking-mode="Ignore">
+            <ui:Button name="AddToCalendar" class="lobby-upcoming-event-card__action">
+                <ui:VisualElement name="Icon" class="lobby-upcoming-event-card__action-icon lobby-upcoming-event-card__action-icon--calendar" picking-mode="Ignore" />
+            </ui:Button>
+            <ui:Button name="Share" class="lobby-upcoming-event-card__action">
+                <ui:VisualElement name="Icon" class="lobby-upcoming-event-card__action-icon lobby-upcoming-event-card__action-icon--share" picking-mode="Ignore" />
+            </ui:Button>
+        </ui:VisualElement>
     </DCL.Lobby.LobbyUpcomingEventCardElement>
 </ui:UXML>

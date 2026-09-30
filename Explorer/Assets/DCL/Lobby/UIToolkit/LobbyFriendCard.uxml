@@ -13,8 +13,8 @@
             <ui:Label name="LocationText" text="Locating…" class="lobby-friend-card__location-text" picking-mode="Ignore" />
         </ui:VisualElement>
         <ui:Button name="Join" class="lobby-friend-card__join">
-            <ui:VisualElement name="JoinIcon" class="lobby-friend-card__join-icon" picking-mode="Ignore" />
             <ui:Label name="JoinText" text="JOIN" class="lobby-friend-card__join-text" picking-mode="Ignore" />
+            <ui:VisualElement name="JoinIcon" class="lobby-friend-card__join-icon" picking-mode="Ignore" />
         </ui:Button>
     </DCL.Lobby.LobbyFriendCardElement>
 </ui:UXML>
