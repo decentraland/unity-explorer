@@ -40,7 +40,7 @@ namespace DCL.Lobby
     /// <summary>
     ///     Fullscreen panel shown before the world loads and on demand in-world; it only reports the close intent, what follows is up to the caller.
     /// </summary>
-    public class LobbyController : ControllerBase<LobbyView, LobbyParameter>
+    public class LobbyController : ControllerBase<LobbyView, LobbyParameter>, ILobbyController
     {
         private const string EVENT_HOST_FORMAT = "By {0}";
         private const string WELCOME_FALLBACK = "Welcome!";
@@ -91,39 +91,12 @@ namespace DCL.Lobby
         // Before the world is loaded Jump in is the only way out; once in-world Escape behaves like any other fullscreen panel.
         public override bool CanBeClosedByEscape => loadingStatus.CurrentStage.Value == LoadingStatus.LoadingStage.Completed;
 
-        /// <summary>
-        ///     The panel is on screen. True at the startup show, false when the user opened it from the world.
-        /// </summary>
         public event Action<bool>? Opened;
-
-        /// <summary>
-        ///     The panel left the screen, once per <see cref="Opened" />.
-        /// </summary>
         public event Action? Closed;
-
-        /// <summary>
-        ///     A place card was picked, which opens its details rather than jumping in.
-        /// </summary>
         public event Action<PlacesData.PlaceInfo, LobbySection>? PlaceOpened;
-
-        /// <summary>
-        ///     The user is on their way to a place, from a card's Jump in or from the details that card opened.
-        /// </summary>
         public event Action<PlacesData.PlaceInfo, LobbySection>? PlaceJumpedIn;
-
-        /// <summary>
-        ///     An event card was picked, which opens its details rather than jumping in.
-        /// </summary>
         public event Action<IEventDTO, LobbySection>? EventOpened;
-
-        /// <summary>
-        ///     The user is on their way to an event, from the details its card opened.
-        /// </summary>
         public event Action<IEventDTO, LobbySection>? EventJumpedIn;
-
-        /// <summary>
-        ///     The user is on their way to where a friend is, with the parcel the friend was at.
-        /// </summary>
         public event Action<string, Vector2Int>? FriendJoined;
 
         public LobbyController(ViewFactoryMethod viewFactory,
@@ -760,27 +733,6 @@ namespace DCL.Lobby
             closeIntent?.TrySetResult();
             closeIntent = null;
         }
-
-        // Dev only: leaves the screen for the other lobby implementation without releasing the startup flow, handing over the parameter it was shown with
-        public LobbyParameter DevLeaveForSwitch()
-        {
-            leaving = true;
-            closeIntent?.TrySetResult();
-            closeIntent = null;
-            return inputData;
-        }
-    }
-
-    /// <summary>
-    ///     The row of the lobby a card was picked from, reported along the card's own events.
-    /// </summary>
-    public enum LobbySection
-    {
-        Landing,
-        Recent,
-        Recommended,
-        LiveEvents,
-        UpcomingEvents,
     }
 
     /// <summary>

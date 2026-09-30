@@ -56,9 +56,11 @@ namespace DCL.Lobby.Tests
         {
             //Arrange
             var clicked = -1;
+            var interested = -1;
             var calendar = -1;
             var shared = -1;
             events.CardClicked = index => clicked = index;
+            events.CardInterestedClicked = index => interested = index;
             events.CardAddToCalendarClicked = index => calendar = index;
             events.CardShareClicked = index => shared = index;
             events.Show(section);
@@ -66,11 +68,13 @@ namespace DCL.Lobby.Tests
 
             //Act
             Card(2).Clicked!.Invoke();
+            Card(1).InterestedClicked!.Invoke();
             Card(0).AddToCalendarClicked!.Invoke();
             Card(1).ShareClicked!.Invoke();
 
             //Assert
             Assert.AreEqual(2, clicked);
+            Assert.AreEqual(1, interested);
             Assert.AreEqual(0, calendar);
             Assert.AreEqual(1, shared);
         }

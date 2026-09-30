@@ -10,11 +10,11 @@ using UnityEngine.UIElements;
 namespace DCL.Lobby
 {
     /// <summary>
-    ///     Lobby screen built with UI Toolkit. Its hierarchy lives in LobbyDocument.uxml and only exists while the view is shown.
+    ///     Lobby screen built with UI Toolkit. Its hierarchy lives in LobbyDocument.uxml and is reachable only while the view is shown.
     ///     The avatar preview stays uGUI: the prefab carries it in a canvas that sorts just under the panel, so the stage it renders
     ///     is the background and the document draws over it without painting anything behind the figure.
     /// </summary>
-    public class LobbyDocumentView : UIDocumentViewBase
+    public class LobbyDocumentView : PanelRendererViewBase
     {
         private const string AVATAR_HIT_AREA_NAME = "AvatarHitArea";
         private const string WELCOME_TEXT_NAME = "WelcomeText";
@@ -77,7 +77,7 @@ namespace DCL.Lobby
         public VisualElement AvatarHitArea => Element<VisualElement>(AVATAR_HIT_AREA_NAME);
 
         /// <summary>
-        ///     Credits widget of the top bar. Unlike the hierarchy it survives the hide, so what is bound to it stays bound;
+        ///     Credits widget of the top bar. It outlives the hierarchy, so what is bound to it stays bound;
         ///     <see cref="AttachTopBarWidgets" /> puts it back into each new hierarchy.
         /// </summary>
         public CreditsPanelElement Credits => credits ??= new CreditsPanelElement();
@@ -108,7 +108,7 @@ namespace DCL.Lobby
         public LobbyLandingCardElement LandingCard => Element<LobbyLandingCardElement>(LANDING_CARD_NAME);
 
         /// <summary>
-        ///     Section of the most recently visited places, with its title and its rail. Exists only while the view is shown.
+        ///     Section of the most recently visited places, with its title and its row of cards. Exists only while the view is shown.
         /// </summary>
         public VisualElement RecentPlaces => Section(RECENT_PLACES_NAME);
 
@@ -138,8 +138,8 @@ namespace DCL.Lobby
         public VisualElement UpcomingEvents => Section(UPCOMING_EVENTS_NAME);
 
         /// <summary>
-        ///     Moves <see cref="Credits" /> and <see cref="Profile" /> into their slots of the current hierarchy, which the document
-        ///     rebuilds on every show.
+        ///     Moves <see cref="Credits" /> and <see cref="Profile" /> into their slots of the current hierarchy. The renderer keeps
+        ///     the hierarchy across hides, so this is a no-op until it rebuilds one for a changed LobbyDocument.uxml.
         /// </summary>
         public void AttachTopBarWidgets()
         {

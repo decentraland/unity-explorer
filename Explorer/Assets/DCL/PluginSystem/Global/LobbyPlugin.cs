@@ -82,6 +82,7 @@ namespace DCL.PluginSystem.Global
         private LobbyController? lobbyController;
         private LobbyStage? lobbyStage;
         private LobbyFriendsPresenter? friendsPresenter;
+        private LobbyDocumentFriendsPresenter? documentFriendsPresenter;
         private SidebarProfileButtonPresenter? profileButtonPresenter;
         private ProfileMenuController<LobbyPopupParameter>? profileMenuController;
         private NotificationsPanelController<LobbyPopupParameter>? notificationsPanelController;
@@ -168,6 +169,7 @@ namespace DCL.PluginSystem.Global
                 Object.Destroy(lobbyPopups.gameObject);
 
             friendsPresenter?.Dispose();
+            documentFriendsPresenter?.Dispose();
             profileButtonPresenter?.Dispose();
             documentProfileButtonPresenter?.Dispose();
             creditsPanelController.Dispose();
@@ -245,10 +247,15 @@ namespace DCL.PluginSystem.Global
             ControllerBase<LobbyDocumentView, LobbyParameter>.ViewFactoryMethod documentViewFactory = LobbyDocumentController.Preallocate(documentPrefab, null, out LobbyDocumentView documentView);
             documentProfileButtonPresenter = new SidebarProfileButtonPresenter(documentView.Profile, identityCache, profileRepository, profileChangesBus);
 
+            documentFriendsPresenter = friendsConnectivity != null
+                ? new LobbyDocumentFriendsPresenter(new LobbyFriendsRail(documentView.FriendCardTemplate), friendsConnectivity, onlineUsersProvider, placesAPIService, passportBridge)
+                : null;
+
             var lobbyDocumentController = new LobbyDocumentController(documentViewFactory,
                 inputBlock, loadingStatus, mvcManager,
                 selfProfile, profileChangesBus, characterPreviewFactory, characterPreviewEventBus, settings.AvatarSettings, lobbyStage, world,
-                placesAPIService, realmData, homePlace, eventsApiService, eventCardActions, realmNavigator, decentralandUrlsSource, startParcel, spriteCache, documentProfileButtonPresenter);
+                placesAPIService, realmData, homePlace, eventsApiService, eventCardActions, realmNavigator, decentralandUrlsSource, startParcel, spriteCache, documentProfileButtonPresenter,
+                documentFriendsPresenter);
             mvcManager.RegisterController(lobbyDocumentController);
 
             EnableCreditsPanelsAsync(lobbyView.CreditsPanelView, documentView.Credits, ct)

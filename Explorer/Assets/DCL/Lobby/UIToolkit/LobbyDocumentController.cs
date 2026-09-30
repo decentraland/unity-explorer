@@ -12,6 +12,7 @@ using DCL.Input;
 using DCL.Input.Component;
 using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Multiplayer.Connectivity;
 using DCL.Notifications.NotificationsMenu;
 using DCL.Places;
 using DCL.PlacesAPIService;
@@ -43,10 +44,11 @@ namespace DCL.Lobby
     ///     preview the view carries, and clicking it opens the backpack. It greets the user over the hero card of the place the session
     ///     lands in, whose Jump in is the only way out at startup. It lists the recently visited and the featured places;
     ///     a card opens the place details and Jump in leaves for the place. It lists the live events and the next upcoming ones;
-    ///     a card opens the event details, from where Jump in leaves for the event's parcel. Its top bar shows the credits and the
-    ///     profile of the user, whose popups stack on top of it. It only reports the close intent; what happens next is up to the caller.
+    ///     a card opens the event details, from where Jump in leaves for the event's parcel. It lists the online friends, whose Join
+    ///     leaves for where the friend is. Its top bar shows the credits and the profile of the user, whose popups stack on top of it.
+    ///     It only reports the close intent; what happens next is up to the caller.
     /// </summary>
-    public class LobbyDocumentController : ControllerBase<LobbyDocumentView, LobbyParameter>
+    public class LobbyDocumentController : ControllerBase<LobbyDocumentView, LobbyParameter>, ILobbyController
     {
         private const string LIVE_EVENT_HOST_FORMAT = "By {0}";
         private const string UPCOMING_EVENT_HOST_FORMAT = "By <b>{0}</b>";
@@ -83,28 +85,17 @@ namespace DCL.Lobby
         private readonly List<PlacesData.PlaceInfo> featuredPlaces = new ();
         private readonly List<EventDTO> liveEvents = new ();
         private readonly List<EventDTO> upcomingEvents = new ();
-
-        // Stand-ins shown in the friends row until the friends logic is ported, so the row can be laid out with cards in it
-        private static readonly PlaceholderFriend[] PLACEHOLDER_FRIENDS =
-        {
-            new ("Amy", "#1a2b", OnlineStatus.Online, "Genesis Plaza", canJoin: true, isVerified: false),
-            new ("Bob", string.Empty, OnlineStatus.Online, "Lobby", canJoin: false, isVerified: true),
-            new ("Carla", "#3c4d", OnlineStatus.Away, "Locating…", canJoin: false, isVerified: false),
-            new ("Dan", string.Empty, OnlineStatus.Online, "myworld.dcl.eth", canJoin: true, isVerified: true),
-            new ("Eve", "#5e6f", OnlineStatus.Online, "12,-34", canJoin: true, isVerified: false),
-        };
+        private readonly LobbyDocumentFriendsPresenter? friends;
 
         // The rails need the card template of the view, which exists only from the first show on
         private LobbyPlacesRail? recentPlacesRail;
         private LobbyPlacesRail? featuredPlacesRail;
-        private LobbyFriendsRail? friendsRail;
         private LobbyLiveEventsRail? liveEventsRail;
         private LobbyUpcomingEventsRail? upcomingEventsRail;
         private LobbyCharacterPreviewController? avatarPreview;
 
-        // Null while the landing place loads, when the card takes no click; without details the card only offers Jump in
+        // Null while the landing place loads; the card itself knows whether it has details to open
         private PlacesData.PlaceInfo? landingPlace;
-        private bool landingPlaceHasDetails;
         private LandingDestination? startupDestination;
 
         // One menu serves every Share button; the event it acts on is the one whose button opened it
@@ -113,6 +104,7 @@ namespace DCL.Lobby
         private CancellationTokenSource? avatarCts;
         private CancellationTokenSource? placesCts;
         private CancellationTokenSource? eventsCts;
+        private CancellationTokenSource? friendsCts;
         private CancellationTokenSource? jumpInCts;
         private UniTaskCompletionSource? closeIntent;
         private bool leaving;
@@ -121,6 +113,14 @@ namespace DCL.Lobby
 
         // At startup the lobby is the only way into the world, so it cannot be dismissed before a destination is picked
         public override bool CanBeClosedByEscape => loadingStatus.CurrentStage.Value == LoadingStatus.LoadingStage.Completed;
+
+        public event Action<bool>? Opened;
+        public event Action? Closed;
+        public event Action<PlacesData.PlaceInfo, LobbySection>? PlaceOpened;
+        public event Action<PlacesData.PlaceInfo, LobbySection>? PlaceJumpedIn;
+        public event Action<IEventDTO, LobbySection>? EventOpened;
+        public event Action<IEventDTO, LobbySection>? EventJumpedIn;
+        public event Action<string, Vector2Int>? FriendJoined;
 
         public LobbyDocumentController(ViewFactoryMethod viewFactory,
             IInputBlock inputBlock,
@@ -142,7 +142,8 @@ namespace DCL.Lobby
             IDecentralandUrlsSource decentralandUrlsSource,
             StartParcel startParcel,
             ISpriteCache spriteCache,
-            SidebarProfileButtonPresenter profileButtonPresenter) : base(viewFactory)
+            SidebarProfileButtonPresenter profileButtonPresenter,
+            LobbyDocumentFriendsPresenter? friends) : base(viewFactory)
         {
             this.inputBlock = inputBlock;
             this.loadingStatus = loadingStatus;
@@ -164,6 +165,10 @@ namespace DCL.Lobby
             this.startParcel = startParcel;
             this.spriteCache = spriteCache;
             this.profileButtonPresenter = profileButtonPresenter;
+            this.friends = friends;
+
+            if (friends != null)
+                friends.JoinRequested = OnFriendJoin;
         }
 
         public override void Dispose()
@@ -174,10 +179,15 @@ namespace DCL.Lobby
                 viewInstance.Profile.Clicked = null;
 
             mvcManager.OnViewClosed -= ShowAgainWhenTheScreenIsFree;
+            eventCardActions.EventSetAsInterested -= OnEventInterestChanged;
+
+            if (friends != null)
+                friends.JoinRequested = null;
 
             avatarCts.SafeCancelAndDispose();
             placesCts.SafeCancelAndDispose();
             eventsCts.SafeCancelAndDispose();
+            friendsCts.SafeCancelAndDispose();
             jumpInCts.SafeCancelAndDispose();
             avatarPreview?.Dispose();
             closeIntent?.TrySetCanceled();
@@ -223,14 +233,10 @@ namespace DCL.Lobby
             landingCard.Clicked = OnLandingCardClicked;
             landingCard.JumpInClicked = OnLandingJumpInClicked;
 
-            recentPlacesRail ??= CreatePlacesRail(recentPlaces);
-            featuredPlacesRail ??= CreatePlacesRail(featuredPlaces);
+            recentPlacesRail ??= CreatePlacesRail(recentPlaces, LobbySection.Recent);
+            featuredPlacesRail ??= CreatePlacesRail(featuredPlaces, LobbySection.Recommended);
             recentPlacesRail.Show(viewInstance.RecentPlaces);
             featuredPlacesRail.Show(viewInstance.FeaturedPlaces);
-
-            friendsRail ??= new LobbyFriendsRail(viewInstance.FriendCardTemplate);
-            friendsRail.Show(viewInstance.Friends);
-            ShowPlaceholderFriends(friendsRail);
 
             liveEventsRail ??= new LobbyLiveEventsRail(viewInstance.LiveEventCardTemplate) { CardClicked = OnLiveEventClicked };
             upcomingEventsRail ??= CreateUpcomingEventsRail();
@@ -244,12 +250,19 @@ namespace DCL.Lobby
             ShowPlacesAsync(featuredPlacesRail, featuredPlaces, placesAPIService.GetHighlightedDestinationsAsync(placesCts.Token), int.MaxValue, placesCts.Token).Forget();
 
             eventsCts = eventsCts.SafeRestart();
+            eventCardActions.EventSetAsInterested += OnEventInterestChanged;
             ShowEventsAsync(eventsCts.Token).Forget();
+
+            friendsCts = friendsCts.SafeRestart();
+            friends?.Show(viewInstance.Friends, friendsCts.Token);
+
+            Opened?.Invoke(inputData.IsStartup);
         }
 
         protected override void OnViewClose()
         {
             profileChangesBus.UnsubscribeToUpdate(OnProfileUpdated);
+            eventCardActions.EventSetAsInterested -= OnEventInterestChanged;
 
             // Nulled so a late callback finds no source instead of reading the token of a disposed one, which throws
             avatarCts.SafeCancelAndDispose();
@@ -258,13 +271,15 @@ namespace DCL.Lobby
             placesCts = null;
             eventsCts.SafeCancelAndDispose();
             eventsCts = null;
+            friends?.Hide();
+            friendsCts.SafeCancelAndDispose();
+            friendsCts = null;
 
             // The hit area goes down with the hierarchy; the preview and its stage are released here since they outlive it
             avatarPreview!.OnHide();
 
             recentPlacesRail?.Hide();
             featuredPlacesRail?.Hide();
-            friendsRail?.Hide();
             liveEventsRail?.Hide();
             upcomingEventsRail?.Hide();
 
@@ -274,6 +289,8 @@ namespace DCL.Lobby
             // it instead of closing it: the lobby has to come back, otherwise nothing is left on screen and the flow never resumes
             if (inputData.IsStartup && !leaving)
                 mvcManager.OnViewClosed += ShowAgainWhenTheScreenIsFree;
+
+            Closed?.Invoke();
         }
 
         /// <summary>
@@ -341,11 +358,11 @@ namespace DCL.Lobby
         private void ShowLandingCardLoading(LobbyLandingCardElement card)
         {
             landingPlace = null;
-            landingPlaceHasDetails = false;
             card.Title = string.Empty;
             card.Creator = string.Empty;
             card.HasOnlineCount = false;
             card.CanJumpIn = false;
+            card.CanOpen = false;
             card.Thumbnail = null;
             card.IsLoading = true;
         }
@@ -392,7 +409,6 @@ namespace DCL.Lobby
         private void ShowLandingCard(PlacesData.PlaceInfo place, bool hasDetails, CancellationToken ct)
         {
             landingPlace = place;
-            landingPlaceHasDetails = hasDetails;
 
             LobbyLandingCardElement card = viewInstance!.LandingCard;
             card.Title = place.title;
@@ -402,14 +418,15 @@ namespace DCL.Lobby
             card.OnlineCount = place.connected_addresses?.Length ?? place.user_count;
             card.HasOnlineCount = true;
             card.CanJumpIn = true;
+            card.CanOpen = hasDetails;
 
             LoadThumbnailAsync(card, place.image, ReportCategory.PLACES, ct).Forget();
         }
 
         private void OnLandingCardClicked()
         {
-            if (landingPlace != null && landingPlaceHasDetails)
-                OnPlaceClicked(landingPlace);
+            if (landingPlace != null)
+                OnPlaceClicked(landingPlace, LobbySection.Landing);
         }
 
         private void OnLandingJumpInClicked()
@@ -418,9 +435,12 @@ namespace DCL.Lobby
 
             // Before the world loads the card mirrors the destination the launch settings already picked, so there is nothing to reassign
             if (startParcel.IsConsumed())
-                OnPlaceJumpIn(landingPlace);
+                OnPlaceJumpIn(landingPlace, LobbySection.Landing);
             else
+            {
+                PlaceJumpedIn?.Invoke(landingPlace, LobbySection.Landing);
                 RequestClose();
+            }
         }
 
         private void OnAvatarClicked() =>
@@ -432,11 +452,12 @@ namespace DCL.Lobby
         private void OnAvatarPointerLeave(PointerLeaveEvent evt) =>
             avatarPreview!.SetHovered(false);
 
-        private LobbyPlacesRail CreatePlacesRail(List<PlacesData.PlaceInfo> places) =>
+        // The section travels with the handlers so a Jump in from the details is attributed to the row the card sits in
+        private LobbyPlacesRail CreatePlacesRail(List<PlacesData.PlaceInfo> places, LobbySection section) =>
             new (viewInstance!.PlaceCardTemplate)
             {
-                CardClicked = index => OnPlaceClicked(places[index]),
-                CardJumpInClicked = index => OnPlaceJumpIn(places[index]),
+                CardClicked = index => OnPlaceClicked(places[index], section),
+                CardJumpInClicked = index => OnPlaceJumpIn(places[index], section),
             };
 
         /// <summary>
@@ -501,6 +522,7 @@ namespace DCL.Lobby
             new (viewInstance!.UpcomingEventCardTemplate)
             {
                 CardClicked = OnUpcomingEventClicked,
+                CardInterestedClicked = OnUpcomingEventInterested,
                 CardAddToCalendarClicked = OnUpcomingEventAddToCalendar,
                 CardShareClicked = OnUpcomingEventShare,
             };
@@ -565,35 +587,48 @@ namespace DCL.Lobby
             LoadThumbnailAsync(card, @event.image, ReportCategory.EVENTS, ct).Forget();
         }
 
-        private static void ShowPlaceholderFriends(LobbyFriendsRail rail)
+        // The details open in the same modal the Explore menu uses; jumping in from there comes back through OnPlaceJumpIn
+        private void OnPlaceClicked(PlacesData.PlaceInfo place, LobbySection section)
         {
-            rail.SetCount(PLACEHOLDER_FRIENDS.Length);
-
-            for (var i = 0; i < PLACEHOLDER_FRIENDS.Length; i++)
-            {
-                PlaceholderFriend friend = PLACEHOLDER_FRIENDS[i];
-                LobbyFriendCardElement card = rail.Cards[i];
-                card.UserName = friend.Name;
-                card.WalletTag = friend.WalletTag;
-                card.OnlineStatus = friend.Status;
-                card.Location = friend.Location;
-                card.CanJoin = friend.CanJoin;
-                card.IsVerified = friend.IsVerified;
-            }
+            PlaceOpened?.Invoke(place, section);
+            mvcManager.ShowAndForget(PlaceDetailPanelController.IssueCommand(new PlaceDetailPanelParameter(place, jumpInHandler: jumped => OnPlaceJumpIn(jumped, section))));
         }
 
-        // The details open in the same modal the Explore menu uses; jumping in from there comes back through OnPlaceJumpIn
-        private void OnPlaceClicked(PlacesData.PlaceInfo place) =>
-            mvcManager.ShowAndForget(PlaceDetailPanelController.IssueCommand(new PlaceDetailPanelParameter(place, jumpInHandler: OnPlaceJumpIn)));
-
-        private void OnPlaceJumpIn(PlacesData.PlaceInfo place) =>
+        private void OnPlaceJumpIn(PlacesData.PlaceInfo place, LobbySection section)
+        {
+            PlaceJumpedIn?.Invoke(place, section);
             PickDestination(place.IsWorld ? WorldUrl(place.world_name) : null, place.base_position_processed, landOnParcel: false);
+        }
 
         private void OnLiveEventClicked(int index) =>
-            OpenEventDetails(liveEvents[index]);
+            OpenEventDetails(liveEvents[index], LobbySection.LiveEvents);
 
         private void OnUpcomingEventClicked(int index) =>
-            OpenEventDetails(upcomingEvents[index]);
+            OpenEventDetails(upcomingEvents[index], LobbySection.UpcomingEvents);
+
+        private void OnUpcomingEventInterested(int index)
+        {
+            if (eventsCts == null) return;
+
+            eventCardActions.SetEventAsInterestedAsync(upcomingEvents[index], null, null, eventsCts.Token).Forget();
+        }
+
+        /// <summary>
+        ///     Interest is toggled on a boxed copy of the event, from the card's button or from the details it opened, so the listed
+        ///     event and its card are brought in line by id.
+        /// </summary>
+        private void OnEventInterestChanged(IEventDTO @event)
+        {
+            for (var i = 0; i < upcomingEvents.Count; i++)
+            {
+                if (upcomingEvents[i].id != @event.Id) continue;
+
+                EventDTO listed = upcomingEvents[i];
+                listed.attending = @event.Attending;
+                upcomingEvents[i] = listed;
+                upcomingEventsRail!.Cards[i].IsInterested = @event.Attending;
+            }
+        }
 
         private void OnUpcomingEventAddToCalendar(int index) =>
             eventCardActions.AddEventToCalendar(upcomingEvents[index]);
@@ -627,12 +662,27 @@ namespace DCL.Lobby
             eventCardActions.CopyEventLink(sharedEvent);
 
         // The details open in the same modal the Explore menu uses; jumping in from there comes back through OnEventJumpIn
-        private void OpenEventDetails(EventDTO @event) =>
-            mvcManager.ShowAndForget(EventDetailPanelController.IssueCommand(new EventDetailPanelParameter(@event, placeData: null, jumpInHandler: OnEventJumpIn)));
+        private void OpenEventDetails(EventDTO @event, LobbySection section)
+        {
+            EventOpened?.Invoke(@event, section);
+            mvcManager.ShowAndForget(EventDetailPanelController.IssueCommand(new EventDetailPanelParameter(@event, placeData: null, jumpInHandler: jumped => OnEventJumpIn(jumped, section))));
+        }
 
         // Land on the exact parcel of the event rather than on the scene spawn point: the event may be held in a corner of a big scene
-        private void OnEventJumpIn(IEventDTO @event) =>
+        private void OnEventJumpIn(IEventDTO @event, LobbySection section)
+        {
+            EventJumpedIn?.Invoke(@event, section);
             PickDestination(@event.World ? WorldUrl(@event.Server) : null, new Vector2Int(@event.X, @event.Y), landOnParcel: true);
+        }
+
+        // Land next to the friend rather than on the scene spawn point
+        private void OnFriendJoin(OnlineUserData friend)
+        {
+            Vector2Int parcel = friend.position.ToParcel();
+
+            FriendJoined?.Invoke(friend.avatarId, parcel);
+            PickDestination(friend.worldName is { Length: > 0 } worldName ? WorldUrl(worldName) : null, parcel, landOnParcel: true);
+        }
 
         /// <summary>
         ///     Before the world is loaded the startup teleport lands directly in the picked destination; once in-world it teleports right away.
@@ -678,35 +728,6 @@ namespace DCL.Lobby
 
             closeIntent?.TrySetResult();
             closeIntent = null;
-        }
-
-        // Dev only: leaves the screen for the other lobby implementation without releasing the startup flow, handing over the parameter it was shown with
-        public LobbyParameter DevLeaveForSwitch()
-        {
-            leaving = true;
-            closeIntent?.TrySetResult();
-            closeIntent = null;
-            return inputData;
-        }
-
-        private readonly struct PlaceholderFriend
-        {
-            public readonly string Name;
-            public readonly string WalletTag;
-            public readonly OnlineStatus Status;
-            public readonly string Location;
-            public readonly bool CanJoin;
-            public readonly bool IsVerified;
-
-            public PlaceholderFriend(string name, string walletTag, OnlineStatus status, string location, bool canJoin, bool isVerified)
-            {
-                Name = name;
-                WalletTag = walletTag;
-                Status = status;
-                Location = location;
-                CanJoin = canJoin;
-                IsVerified = isVerified;
-            }
         }
     }
 }

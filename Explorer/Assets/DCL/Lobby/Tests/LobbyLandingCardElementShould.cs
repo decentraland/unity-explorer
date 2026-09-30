@@ -67,6 +67,22 @@ namespace DCL.Lobby.Tests
         }
 
         [Test]
+        public void MarkItselfStaticWhileItCannotOpen()
+        {
+            //Act
+            card.CanOpen = false;
+
+            //Assert
+            Assert.IsTrue(card.ClassListContains("lobby-landing-card--static"));
+
+            //Act
+            card.CanOpen = true;
+
+            //Assert
+            Assert.IsFalse(card.ClassListContains("lobby-landing-card--static"));
+        }
+
+        [Test]
         public void ReportTheCardAndTheJumpInClicksApart()
         {
             //Arrange

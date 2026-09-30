@@ -11,6 +11,9 @@
             </ui:VisualElement>
         </ui:VisualElement>
         <ui:VisualElement name="Actions" class="lobby-upcoming-event-card__actions" picking-mode="Ignore">
+            <ui:Button name="Interested" class="lobby-upcoming-event-card__action">
+                <ui:VisualElement name="Icon" class="lobby-upcoming-event-card__action-icon lobby-upcoming-event-card__action-icon--interested" picking-mode="Ignore" />
+            </ui:Button>
             <ui:Button name="AddToCalendar" class="lobby-upcoming-event-card__action">
                 <ui:VisualElement name="Icon" class="lobby-upcoming-event-card__action-icon lobby-upcoming-event-card__action-icon--calendar" picking-mode="Ignore" />
             </ui:Button>

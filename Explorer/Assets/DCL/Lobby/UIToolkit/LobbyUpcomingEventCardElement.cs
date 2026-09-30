@@ -9,7 +9,7 @@ namespace DCL.Lobby
     ///     UI Toolkit counterpart of the small Explore event card the uGUI lobby lists the upcoming events with: name, host and how long
     ///     until the event starts on the left, the thumbnail on the right, plus the Add to calendar and Share buttons. Its hierarchy comes
     ///     from LobbyUpcomingEventCard.uxml, so the children only exist once that template is instantiated; LobbyUpcomingEventCard.uss
-    ///     lays it out and tints the events the user is interested in.
+    ///     lays it out and tints the events the user is interested in, whose Interested button shows as toggled on.
     /// </summary>
     [UxmlElement]
     public partial class LobbyUpcomingEventCardElement : VisualElement, ILobbyThumbnailCard
@@ -22,6 +22,7 @@ namespace DCL.Lobby
         private const string HOST_NAME = "Host";
         private const string STARTS_IN_NAME = "StartsIn";
         private const string THUMBNAIL_NAME = "Thumbnail";
+        private const string INTERESTED_NAME = "Interested";
         private const string ADD_TO_CALENDAR_NAME = "AddToCalendar";
         private const string SHARE_NAME = "Share";
 
@@ -30,6 +31,7 @@ namespace DCL.Lobby
         /// </summary>
         public Action? Clicked;
 
+        public Action? InterestedClicked;
         public Action? AddToCalendarClicked;
         public Action? ShareClicked;
 
@@ -37,6 +39,7 @@ namespace DCL.Lobby
         private Label? hostLabel;
         private Label? startsInLabel;
         private VisualElement? thumbnail;
+        private Button? interestedButton;
         private Button? addToCalendarButton;
         private Button? shareButton;
 
@@ -144,9 +147,11 @@ namespace DCL.Lobby
             hostLabel = this.Q<Label>(HOST_NAME);
             startsInLabel = this.Q<Label>(STARTS_IN_NAME);
             thumbnail = this.Q<VisualElement>(THUMBNAIL_NAME);
+            interestedButton = this.Q<Button>(INTERESTED_NAME);
             addToCalendarButton = this.Q<Button>(ADD_TO_CALENDAR_NAME);
             shareButton = this.Q<Button>(SHARE_NAME);
 
+            interestedButton.clicked += OnInterestedClicked;
             addToCalendarButton.clicked += OnAddToCalendarClicked;
             shareButton.clicked += OnShareClicked;
 
@@ -163,6 +168,9 @@ namespace DCL.Lobby
 
         private void OnClicked() =>
             Clicked?.Invoke();
+
+        private void OnInterestedClicked() =>
+            InterestedClicked?.Invoke();
 
         private void OnAddToCalendarClicked() =>
             AddToCalendarClicked?.Invoke();

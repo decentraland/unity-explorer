@@ -1,6 +1,6 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
     <Style src="project://database/Assets/DCL/Lobby/UIToolkit/LobbyLandingCard.uss" />
-    <DCL.Lobby.LobbyLandingCardElement name="LandingCard" title="Place Name" creator="Creator" online-count="0" has-online-count="true" can-jump-in="true">
+    <DCL.Lobby.LobbyLandingCardElement name="LandingCard" title="Place Name" creator="Creator" online-count="0" has-online-count="true" can-jump-in="true" can-open="true">
         <ui:VisualElement name="Thumbnail" class="lobby-landing-card__thumbnail" picking-mode="Ignore" />
         <ui:VisualElement name="Gradient" class="lobby-landing-card__gradient" picking-mode="Ignore" />
         <ui:VisualElement name="OnlineCounter" class="lobby-landing-card__online" picking-mode="Ignore">

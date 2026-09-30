@@ -15,6 +15,7 @@ namespace DCL.Lobby
         private const string USS_BLOCK = "lobby-landing-card";
         private const string USS_LOADING = USS_BLOCK + "--loading";
         private const string USS_WITH_ONLINE = USS_BLOCK + "--with-online";
+        private const string USS_STATIC = USS_BLOCK + "--static";
 
         private const string TITLE_NAME = "Title";
         private const string CREATOR_NAME = "Creator";
@@ -23,7 +24,7 @@ namespace DCL.Lobby
         private const string JUMP_IN_NAME = "JumpIn";
 
         /// <summary>
-        ///     Raised on a click anywhere on the card except the Jump in button.
+        ///     Raised on a click anywhere on the card except the Jump in button, while <see cref="CanOpen" />.
         /// </summary>
         public Action? Clicked;
 
@@ -110,6 +111,17 @@ namespace DCL.Lobby
         }
 
         /// <summary>
+        ///     The card takes no click and is marked static, which the stylesheet dims, while false: while the place is still unknown,
+        ///     or when it has no details to open.
+        /// </summary>
+        [UxmlAttribute]
+        public bool CanOpen
+        {
+            get => !ClassListContains(USS_STATIC);
+            set => EnableInClassList(USS_STATIC, !value);
+        }
+
+        /// <summary>
         ///     Null falls back to the default place thumbnail of the stylesheet.
         /// </summary>
         public Sprite? Thumbnail
@@ -164,8 +176,11 @@ namespace DCL.Lobby
             thumbnail!.style.backgroundImage = LobbyCardBackground.From(thumbnailSprite);
         }
 
-        private void OnClicked() =>
-            Clicked?.Invoke();
+        private void OnClicked()
+        {
+            if (CanOpen)
+                Clicked?.Invoke();
+        }
 
         private void OnJumpInClicked() =>
             JumpInClicked?.Invoke();

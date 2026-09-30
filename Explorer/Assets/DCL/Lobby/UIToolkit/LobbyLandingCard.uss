@@ -7,6 +7,11 @@
     overflow: hidden;
 }
 
+/* A card with nothing to open is dimmed like the disabled uGUI button tints its dark fill, visible while the thumbnail is missing */
+.lobby-landing-card--static {
+    background-color: rgba(16, 16, 20, 0.45);
+}
+
 .lobby-landing-card__thumbnail {
     position: absolute;
     left: 0;

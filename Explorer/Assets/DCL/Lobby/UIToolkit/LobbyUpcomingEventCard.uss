@@ -121,6 +121,15 @@
     height: 18px;
 }
 
+/* The star fills in once the user is interested, like the Explore card's toggle */
+.lobby-upcoming-event-card__action-icon--interested {
+    background-image: url('/Assets/Textures/ExplorePanel/InterestedOff.png');
+}
+
+.lobby-upcoming-event-card--interested .lobby-upcoming-event-card__action-icon--interested {
+    background-image: url('/Assets/Textures/ExplorePanel/InterestedOn.png');
+}
+
 .lobby-upcoming-event-card__action-icon--calendar {
     background-image: url('/Assets/Textures/ExplorePanel/AddToCalendarIcn.png');
 }
