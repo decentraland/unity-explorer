@@ -194,7 +194,7 @@ float3 SkyLut_Stars(float3 skyDir, float azimuth, float elevationRad)
     float patchNoise = SAMPLE_TEXTURE2D_GRAD(_DclHorizonNoise, sampler_DclHorizonNoise, patchUv, patchDx, patchDy).r;
     star *= lerp(1.0, lerp(0.02, 1.0, patchNoise * patchNoise * patchNoise), _DclStarsParams.z);
 
-    float horizonFade = smoothstep(_DclStarsParams3.x, _DclStarsParams3.y, skyDir.y);
+    float horizonFade = smoothstep(_DclStarsParams3.x, max(_DclStarsParams3.y, _DclStarsParams3.x + 1e-4), skyDir.y);
     float shooting = shootingRate > 0.0 ? SkyLut_ShootingStars(float2(azimuth + 0.5, elevation), time, shootingRate) * 3.0 : 0.0;
 
     return (star * brightness + shooting) * horizonFade;

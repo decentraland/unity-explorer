@@ -301,17 +301,23 @@ namespace DCL.SkyBox
         private static void SetAnchorKey(Gradient gradient, float anchor, Color color)
         {
             GradientColorKey[] keys = gradient.colorKeys;
-            var found = false;
+            var onAnchor = false;
+            var onWrap = false;
 
             for (var k = 0; k < keys.Length; k++)
             {
                 if (!IsAnchorKey(keys[k].time, anchor)) continue;
 
                 keys[k].color = color;
-                found = true;
+
+                if (Mathf.Abs(keys[k].time - anchor) <= KEY_TOLERANCE)
+                    onAnchor = true;
+                else
+                    onWrap = true;
             }
 
-            if (found)
+            // A recoloured wrapped key alone is not enough: phase 0 still reads the first key, so the anchor key is added below.
+            if (onAnchor)
             {
                 gradient.colorKeys = keys;
                 return;
@@ -319,8 +325,8 @@ namespace DCL.SkyBox
 
             if (keys.Length < MAX_GRADIENT_KEYS)
             {
-                // Night owns both ends of the ramp, so it gets the wrapped key at 1 as well when there is room.
-                bool wrapNight = anchor == 0f && keys.Length + 1 < MAX_GRADIENT_KEYS;
+                // Night owns both ends of the ramp, so it gets the wrapped key at 1 as well when there is room and none exists.
+                bool wrapNight = anchor == 0f && !onWrap && keys.Length + 1 < MAX_GRADIENT_KEYS;
                 var grown = new GradientColorKey[keys.Length + (wrapNight ? 2 : 1)];
                 keys.CopyTo(grown, 0);
                 grown[keys.Length] = new GradientColorKey(color, anchor);

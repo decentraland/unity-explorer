@@ -96,7 +96,8 @@ void CloudsV2_Layer(float4 tex, float u, float4 layer, float opacity, float phas
     float a = tex.a * saturate((flow * 1.3 - tex.b) / 0.3);
 
     // Fade into the horizon haze, hide below the horizon, and fade out toward the zenith where the strip pinches.
-    a *= smoothstep(-0.35, -0.05, skyDir.y) * (1.0 - smoothstep(_DclCloudsParams2.x, _DclCloudsParams2.y, skyDir.y)) * opacity;
+    // The zenith edges are kept apart: smoothstep with equal edges divides by zero.
+    a *= smoothstep(-0.35, -0.05, skyDir.y) * (1.0 - smoothstep(_DclCloudsParams2.x, max(_DclCloudsParams2.y, _DclCloudsParams2.x + 1e-4), skyDir.y)) * opacity;
 
     // Premultiplied "over": colour carries its own alpha, so soft edges keep full cloud colour instead of darkening.
     color = color * (1.0 - a) + col * a;

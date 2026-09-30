@@ -235,12 +235,9 @@ public class SkyboxRenderController : MonoBehaviour
         ResetGlobals();
     }
 
-    // Restores what OnDisable cleared; before Initialize there is nothing to restore.
-    private void OnEnable()
-    {
-        if (skyboxMaterial && preset)
-            RefreshLook();
-    }
+    // Restores what OnDisable cleared; before Initialize RefreshLook has no material and returns.
+    private void OnEnable() =>
+        RefreshLook();
 
     // Zeroes the mode and strength globals and unbinds the textures, which gates off every other global this controller writes.
     private static void ResetGlobals()
