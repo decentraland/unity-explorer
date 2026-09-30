@@ -101,6 +101,24 @@ namespace DCL.UserInAppInitializationFlow.Tests
         }
 
         [Test]
+        public void DropTheParcelOfAWorldThePlayerCannotEnter()
+        {
+            // Arrange
+            startParcel.AssignRealm(WORLD);
+            startParcel.Assign(new Vector2Int(5, 5), "physics");
+
+            // Act
+            RealUserInAppInitializationFlow.FallBackToGenesisAsync(startParcel, realmController, chatHistory, GENESIS, "myworld", CancellationToken.None).GetAwaiter().GetResult();
+
+            // Assert
+            realmController.Received(1).SetRealmAsync(GENESIS, Arg.Any<CancellationToken>());
+            Assert.That(startParcel.Realm, Is.EqualTo(GENESIS));
+            Assert.That(startParcel.IsParcelAssigned, Is.False);
+            Assert.That(startParcel.SpawnPointName, Is.Null);
+            chatHistory.Received(1).AddMessage(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY, Arg.Any<ChatMessage>());
+        }
+
+        [Test]
         public void LeaveTheRealmAloneWhenNoneWasPicked()
         {
             // Act

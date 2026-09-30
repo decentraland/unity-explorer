@@ -3,9 +3,11 @@ using Cysharp.Threading.Tasks;
 using DCL.CommunicationData.URLHelpers;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.RealmNavigation;
+using DCL.SceneLoadingScreens;
 using DCL.Utility.Types;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Realm;
+using MVC;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -26,15 +28,19 @@ namespace DCL.Chat.Commands
         private readonly Dictionary<string, string> paramUrls;
         private readonly ChatEnvironmentValidator environmentValidator;
         private readonly StartParcel startParcel;
+        private readonly IReadOnlyLoadingStatus loadingStatus;
+        private readonly IMVCManager mvcManager;
         private readonly URLDomain worldDomain;
         private readonly URLDomain genesisDomain;
 
-        public ChatTeleporter(IRealmNavigator realmNavigator, ChatEnvironmentValidator environmentValidator, IDecentralandUrlsSource decentralandUrlsSource, IScenesCache scenesCache, StartParcel startParcel)
+        public ChatTeleporter(IRealmNavigator realmNavigator, ChatEnvironmentValidator environmentValidator, IDecentralandUrlsSource decentralandUrlsSource, IScenesCache scenesCache, StartParcel startParcel, IReadOnlyLoadingStatus loadingStatus, IMVCManager mvcManager)
         {
             this.realmNavigator = realmNavigator;
             this.scenesCache = scenesCache;
             this.environmentValidator = environmentValidator;
             this.startParcel = startParcel;
+            this.loadingStatus = loadingStatus;
+            this.mvcManager = mvcManager;
             worldDomain = URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.WorldServer));
             genesisDomain = URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Genesis));
 
@@ -233,11 +239,17 @@ namespace DCL.Chat.Commands
         // A request that could not become the startup destination runs after the startup teleport, never alongside it
         private async UniTask<bool> WaitForStartupTeleportAsync(CancellationToken ct)
         {
-            if (startParcel.IsConsumed()) return true;
+            if (HasLanded()) return true;
 
-            bool cancelled = await UniTask.WaitUntil(startParcel.IsConsumed, cancellationToken: ct).SuppressCancellationThrow();
+            bool cancelled = await UniTask.WaitUntil(HasLanded, cancellationToken: ct).SuppressCancellationThrow();
             return !cancelled;
         }
+
+        // Consumption only starts the startup teleport; landing needs the stage completed and the loading screen gone
+        private bool HasLanded() =>
+            startParcel.IsConsumed()
+            && loadingStatus.CurrentStage.Value == LoadingStatus.LoadingStage.Completed
+            && !mvcManager.IsShowing<SceneLoadingScreenView, SceneLoadingScreenController.Params>();
 
         private string GetWorldAddress(string worldPath) =>
             worldDomain.Append(URLPath.FromString(worldPath)).Value;

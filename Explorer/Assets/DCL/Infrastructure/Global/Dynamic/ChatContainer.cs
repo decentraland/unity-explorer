@@ -104,7 +104,7 @@ namespace Global.Dynamic
             var chatHistory = new ChatHistory();
             var chatEventBus = new ChatEventBus();
 
-            var chatTeleporter = new ChatTeleporter(realmNavigator, new ChatEnvironmentValidator(bootstrapContainer.DecentralandUrlsSource), bootstrapContainer.DecentralandUrlsSource, staticContainer.ScenesCache, startParcel);
+            var chatTeleporter = new ChatTeleporter(realmNavigator, new ChatEnvironmentValidator(bootstrapContainer.DecentralandUrlsSource), bootstrapContainer.DecentralandUrlsSource, staticContainer.ScenesCache, startParcel, staticContainer.LoadingStatus, uiShellContainer.MvcManager);
 
             var reloadSceneChatCommand = new ReloadSceneChatCommand(reloadSceneController, globalWorld, playerEntity, staticContainer.ScenesCache, teleportController, localSceneDevelopment);
 

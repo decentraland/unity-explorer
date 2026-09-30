@@ -2,10 +2,12 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.RealmNavigation;
+using DCL.SceneLoadingScreens;
 using DCL.Utilities;
 using DCL.Utility.Types;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Realm;
+using MVC;
 using NSubstitute;
 using NUnit.Framework;
 using System;
@@ -24,6 +26,9 @@ namespace DCL.Chat.Commands.Tests
         private IRealmNavigator realmNavigator = null!;
         private IDecentralandUrlsSource urlsSource = null!;
         private IScenesCache scenesCache = null!;
+        private IReadOnlyLoadingStatus loadingStatus = null!;
+        private ReactiveProperty<LoadingStatus.LoadingStage> loadingStage = null!;
+        private IMVCManager mvcManager = null!;
         private ChatTeleporter chatTeleporter = null!;
 
         [SetUp]
@@ -49,6 +54,11 @@ namespace DCL.Chat.Commands.Tests
 
             scenesCache = Substitute.For<IScenesCache>();
             scenesCache.CurrentParcel.Returns(currentParcel);
+
+            loadingStage = new ReactiveProperty<LoadingStatus.LoadingStage>(LoadingStatus.LoadingStage.Completed);
+            loadingStatus = Substitute.For<IReadOnlyLoadingStatus>();
+            loadingStatus.CurrentStage.Returns(loadingStage);
+            mvcManager = Substitute.For<IMVCManager>();
 
             // In-world by default: the startup teleport already happened
             var landed = new StartParcel(Vector2Int.zero);
@@ -134,6 +144,7 @@ namespace DCL.Chat.Commands.Tests
                 // Arrange
                 var pending = new StartParcel(Vector2Int.zero);
                 pending.MarkRealmApplied();
+                loadingStage.Value = LoadingStatus.LoadingStage.PlayerTeleporting;
                 realmNavigator.IsAlreadyOnRealm(Arg.Any<URLDomain>()).Returns(false);
 
                 // Act
@@ -141,15 +152,24 @@ namespace DCL.Chat.Commands.Tests
                 await UniTask.Yield();
                 bool navigatedDuringStartup = teleport.Status.IsCompleted();
                 pending.ConsumeByTeleportOperation();
+                await UniTask.Yield();
+                bool navigatedWhileTeleporting = teleport.Status.IsCompleted();
+                mvcManager.IsShowing<SceneLoadingScreenView, SceneLoadingScreenController.Params>().Returns(true);
+                loadingStage.Value = LoadingStatus.LoadingStage.Completed;
+                await UniTask.Yield();
+                bool navigatedWhileFading = teleport.Status.IsCompleted();
+                mvcManager.IsShowing<SceneLoadingScreenView, SceneLoadingScreenController.Params>().Returns(false);
                 string result = await teleport;
 
                 // Assert
                 Assert.That(navigatedDuringStartup, Is.False, "the request must wait for the startup teleport");
+                Assert.That(navigatedWhileTeleporting, Is.False, "consuming the parcel only starts the teleport, landing ends it");
+                Assert.That(navigatedWhileFading, Is.False, "the previous loading screen must be gone so the switch gets its own");
                 AssertLeadsWith(result, "🟢");
                 Assert.That(pending.Realm, Is.Null);
                 Assert.That(pending.IsParcelAssigned, Is.False);
                 Assert.That(pending.JumpInRequested, Is.False);
-                realmNavigator.Received(1).TryChangeRealmAsync(Arg.Any<URLDomain>(), Arg.Any<CancellationToken>(), new Vector2Int(3, 4), Arg.Any<bool>(), Arg.Any<bool>(), Arg.Any<bool>(), Arg.Any<string?>());
+                await realmNavigator.Received(1).TryChangeRealmAsync(Arg.Any<URLDomain>(), Arg.Any<CancellationToken>(), new Vector2Int(3, 4), Arg.Any<bool>(), Arg.Any<bool>(), Arg.Any<bool>(), Arg.Any<string?>());
             });
 
         [UnityTest]
@@ -170,7 +190,7 @@ namespace DCL.Chat.Commands.Tests
 
                 // Assert
                 AssertLeadsWith(result, "🔴");
-                realmNavigator.DidNotReceiveWithAnyArgs().TeleportToParcelAsync(default, default, default);
+                await realmNavigator.DidNotReceiveWithAnyArgs().TeleportToParcelAsync(default, default, default);
             });
 
         [Test]
@@ -214,7 +234,7 @@ namespace DCL.Chat.Commands.Tests
                 Assert.That(startedDuringSwitch, Is.False);
                 Assert.That(pending.Realm, Is.EqualTo(picked));
                 Assert.That(pending.IsParcelAssigned, Is.False);
-                realmNavigator.Received(1).TeleportToParcelAsync(new Vector2Int(1, 2), Arg.Any<CancellationToken>(), false, spawnPointName: null);
+                await realmNavigator.Received(1).TeleportToParcelAsync(new Vector2Int(1, 2), Arg.Any<CancellationToken>(), false, spawnPointName: null);
             });
 
         [Test]
@@ -312,7 +332,7 @@ namespace DCL.Chat.Commands.Tests
         }
 
         private ChatTeleporter NewTeleporter(StartParcel startParcel) =>
-            new (realmNavigator, new ChatEnvironmentValidator(urlsSource), urlsSource, scenesCache, startParcel);
+            new (realmNavigator, new ChatEnvironmentValidator(urlsSource), urlsSource, scenesCache, startParcel, loadingStatus, mvcManager);
 
         // Ordinal: the culture-aware StartsWith behind Does.StartWith treats emoji as ignorable on the Linux runner
         private static void AssertLeadsWith(string result, string marker, bool expected = true) =>
