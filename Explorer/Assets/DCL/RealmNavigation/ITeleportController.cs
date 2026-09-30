@@ -77,6 +77,8 @@ namespace DCL.RealmNavigation
 
         public bool IsRealmApplied { get; private set; }
 
+        public bool HasLanded { get; private set; }
+
         public event Action? JumpInRequestRaised;
 
         public bool IsConsumed() =>
@@ -117,6 +119,11 @@ namespace DCL.RealmNavigation
             IsRealmApplied = false;
         }
 
+        public void MarkLanded()
+        {
+            if (consumed) HasLanded = true;
+        }
+
         public Vector2Int ConsumeByTeleportOperation()
         {
             consumed = true;
@@ -133,6 +140,7 @@ namespace DCL.RealmNavigation
             Realm = null;
             IsParcelAssigned = false;
             IsRealmApplied = false;
+            HasLanded = false;
             JumpInRequested = false;
             consumed = false;
         }

@@ -60,6 +60,7 @@ namespace DCL.UserInAppInitializationFlow
         private readonly bool isLocalSceneDevelopment;
         private readonly IWorldPermissionsService worldPermissionsService;
         private readonly IChatHistory chatHistory;
+        private readonly URLDomain genesisDomain;
 
         // Cancelled by a Logout execution so the execution parked on the startup lobby gives the flow up instead of loading the world
         private CancellationTokenSource? startupLobbyGate;
@@ -102,6 +103,7 @@ namespace DCL.UserInAppInitializationFlow
 
             this.loadingStatus = loadingStatus;
             this.decentralandUrlsSource = decentralandUrlsSource;
+            genesisDomain = URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Genesis));
             this.mvcManager = mvcManager;
             this.backgroundMusic = backgroundMusic;
             this.realmNavigator = realmNavigator;
@@ -160,8 +162,7 @@ namespace DCL.UserInAppInitializationFlow
                             //No error should be possible at this point
                             // TODO move SetRealmAsync to an operation
                             await UniTask.WhenAll(ShowAuthenticationScreenAsync(parameters, ct),
-                                realmController.SetRealmAsync(
-                                    URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Genesis)), ct));
+                                realmController.SetRealmAsync(genesisDomain, ct));
 
                             break;
                         case IUserInAppInitializationFlow.LoadSource.Recover:
@@ -189,7 +190,7 @@ namespace DCL.UserInAppInitializationFlow
                     .ShowWhileExecuteTaskAsync(
                         async (parentLoadReport, loadCt) =>
                         {
-                            await ApplyStartRealmAsync(startParcel, realmController, chatHistory, URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Genesis)), loadCt);
+                            await ApplyStartRealmAsync(startParcel, realmController, chatHistory, genesisDomain, loadCt);
 
                             // After authentication completes, verify the user can actually access the current realm if it's a world.
                             // The realm was set during bootstrap before the user had a chance to switch accounts, so the identity
@@ -228,14 +229,20 @@ namespace DCL.UserInAppInitializationFlow
                                     // Local scene development doesn't strictly need livekit to run
                                     parentLoadReport.SetProgress(
                                         loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Completed));
+
+                                    startParcel.MarkLanded();
                                 }
                                 else
                                 {
                                     operationResult = livekitOperationResult;
 
                                     if (operationResult.Success)
+                                    {
                                         parentLoadReport.SetProgress(
                                             loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Completed));
+
+                                        startParcel.MarkLanded();
+                                    }
                                 }
                             }
 
@@ -350,13 +357,12 @@ namespace DCL.UserInAppInitializationFlow
             if (!realmController.RealmData.IsWorld()) return;
             if (realmController.CurrentDomain == null) return;
 
-            URLDomain genesis = URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Genesis));
 
             if (!TryExtractWorldName(realmController.CurrentDomain.Value, out string worldName))
             {
                 ReportHub.LogWarning(ReportCategory.REALM,
                     $"[RealmController] Failed to extract world name from realm '{realmController.CurrentDomain.Value.ToString()}'.");
-                await FallBackToGenesisAsync(startParcel, realmController, chatHistory, genesis, worldName, ct);
+                await FallBackToGenesisAsync(startParcel, realmController, chatHistory, genesisDomain, worldName, ct);
                 return;
             }
 
@@ -371,7 +377,7 @@ namespace DCL.UserInAppInitializationFlow
             {
                 ReportHub.LogWarning(ReportCategory.REALM,
                     $"[StartUp] Failed to verify world access for '{worldName}' via world permissions: {e.Message}");
-                await FallBackToGenesisAsync(startParcel, realmController, chatHistory, genesis, worldName, ct);
+                await FallBackToGenesisAsync(startParcel, realmController, chatHistory, genesisDomain, worldName, ct);
                 return;
             }
 
@@ -384,7 +390,7 @@ namespace DCL.UserInAppInitializationFlow
                 case WorldAccessCheckResult.PasswordRequired:
                     ReportHub.LogWarning(ReportCategory.REALM,
                         $"[StartUp] World '{worldName}' is not authorized for auto-entry, falling back to Genesis.");
-                    await FallBackToGenesisAsync(startParcel, realmController, chatHistory, genesis, worldName, ct);
+                    await FallBackToGenesisAsync(startParcel, realmController, chatHistory, genesisDomain, worldName, ct);
                     return;
                 default: throw new ArgumentOutOfRangeException();
             }

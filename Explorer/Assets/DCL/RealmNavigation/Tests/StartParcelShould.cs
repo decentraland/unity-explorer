@@ -157,6 +157,36 @@ namespace DCL.RealmNavigation.Tests
         }
 
         [Test]
+        public void StayLandedUntilReset()
+        {
+            // Arrange
+            var startParcel = new StartParcel(LAUNCH_PARCEL);
+            startParcel.ConsumeByTeleportOperation();
+
+            // Act
+            startParcel.MarkLanded();
+            bool landed = startParcel.HasLanded;
+            startParcel.Reset();
+
+            // Assert
+            Assert.That(landed, Is.True);
+            Assert.That(startParcel.HasLanded, Is.False);
+        }
+
+        [Test]
+        public void NotLandBeforeTheParcelIsConsumed()
+        {
+            // Arrange
+            var startParcel = new StartParcel(LAUNCH_PARCEL);
+
+            // Act
+            startParcel.MarkLanded();
+
+            // Assert
+            Assert.That(startParcel.HasLanded, Is.False);
+        }
+
+        [Test]
         public void KeepTheAppliedRealmOnceConsumed()
         {
             // Arrange

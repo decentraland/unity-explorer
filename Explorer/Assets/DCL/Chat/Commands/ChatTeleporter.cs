@@ -136,14 +136,6 @@ namespace DCL.Chat.Commands
                    };
         }
 
-        /// <summary>
-        ///     True once the startup teleport landed and its loading screen is gone; a consumed parcel alone only marks its start.
-        /// </summary>
-        public bool HasLanded() =>
-            startParcel.IsConsumed()
-            && loadingStatus.CurrentStage.Value == LoadingStatus.LoadingStage.Completed
-            && !mvcManager.IsShowing<SceneLoadingScreenView, SceneLoadingScreenController.Params>();
-
         private bool ValidEnvironment(URLDomain realmUrl, out string errorMessage)
         {
             var environmentValidationResult = environmentValidator.ValidateTeleport(realmUrl.ToString());
@@ -252,6 +244,12 @@ namespace DCL.Chat.Commands
             bool cancelled = await UniTask.WaitUntil(HasLanded, cancellationToken: ct).SuppressCancellationThrow();
             return !cancelled;
         }
+
+        // Reads false again during every later teleport, so a parked request never runs alongside one
+        private bool HasLanded() =>
+            startParcel.IsConsumed()
+            && loadingStatus.CurrentStage.Value == LoadingStatus.LoadingStage.Completed
+            && !mvcManager.IsShowing<SceneLoadingScreenView, SceneLoadingScreenController.Params>();
 
         private string GetWorldAddress(string worldPath) =>
             worldDomain.Append(URLPath.FromString(worldPath)).Value;
