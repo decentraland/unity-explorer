@@ -9,8 +9,10 @@ using ECS.SceneLifeCycle.Realm;
 using NSubstitute;
 using NUnit.Framework;
 using System;
+using System.Collections;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace DCL.Chat.Commands.Tests
 {
@@ -125,23 +127,51 @@ namespace DCL.Chat.Commands.Tests
             Assert.That(pending.JumpInRequested, Is.True);
         }
 
-        [Test]
-        public void NavigateToARealmRequestedAfterTheStartupRealmWasApplied()
-        {
-            // Arrange
-            var pending = new StartParcel(Vector2Int.zero);
-            pending.MarkRealmApplied();
-            realmNavigator.IsAlreadyOnRealm(Arg.Any<URLDomain>()).Returns(false);
+        [UnityTest]
+        public IEnumerator NavigateToAnotherRealmOnlyAfterTheStartupTeleport() =>
+            UniTask.ToCoroutine(async () =>
+            {
+                // Arrange
+                var pending = new StartParcel(Vector2Int.zero);
+                pending.MarkRealmApplied();
+                realmNavigator.IsAlreadyOnRealm(Arg.Any<URLDomain>()).Returns(false);
 
-            // Act
-            NewTeleporter(pending).TeleportToRealmAsync("flutterecho", new Vector2Int(3, 4), CancellationToken.None).GetAwaiter().GetResult();
+                // Act
+                UniTask<string> teleport = NewTeleporter(pending).TeleportToRealmAsync("flutterecho", new Vector2Int(3, 4), CancellationToken.None);
+                await UniTask.Yield();
+                bool navigatedDuringStartup = teleport.Status.IsCompleted();
+                pending.ConsumeByTeleportOperation();
+                string result = await teleport;
 
-            // Assert
-            Assert.That(pending.Realm, Is.Null);
-            Assert.That(pending.IsParcelAssigned, Is.False);
-            Assert.That(pending.JumpInRequested, Is.False);
-            realmNavigator.Received(1).TryChangeRealmAsync(Arg.Any<URLDomain>(), Arg.Any<CancellationToken>(), new Vector2Int(3, 4), Arg.Any<bool>(), Arg.Any<bool>(), Arg.Any<bool>(), Arg.Any<string?>());
-        }
+                // Assert
+                Assert.That(navigatedDuringStartup, Is.False, "the request must wait for the startup teleport");
+                Assert.That(result, Does.StartWith("🟢"));
+                Assert.That(pending.Realm, Is.Null);
+                Assert.That(pending.IsParcelAssigned, Is.False);
+                Assert.That(pending.JumpInRequested, Is.False);
+                realmNavigator.Received(1).TryChangeRealmAsync(Arg.Any<URLDomain>(), Arg.Any<CancellationToken>(), new Vector2Int(3, 4), Arg.Any<bool>(), Arg.Any<bool>(), Arg.Any<bool>(), Arg.Any<string?>());
+            });
+
+        [UnityTest]
+        public IEnumerator GiveUpWaitingForTheStartupTeleportWhenCancelled() =>
+            UniTask.ToCoroutine(async () =>
+            {
+                // Arrange
+                var pending = new StartParcel(Vector2Int.zero);
+                pending.MarkRealmApplied();
+                realmNavigator.IsAlreadyOnRealm(Arg.Any<URLDomain>()).Returns(false);
+                using var cts = new CancellationTokenSource();
+
+                // Act
+                UniTask<string> teleport = NewTeleporter(pending).TeleportToParcelAsync(new Vector2Int(3, 4), false, cts.Token);
+                await UniTask.Yield();
+                cts.Cancel();
+                string result = await teleport;
+
+                // Assert
+                Assert.That(result, Does.StartWith("🔴"));
+                realmNavigator.DidNotReceiveWithAnyArgs().TeleportToParcelAsync(default, default, default);
+            });
 
         [Test]
         public void TakeAParcelInTheAppliedRealmAsTheStartupDestination()

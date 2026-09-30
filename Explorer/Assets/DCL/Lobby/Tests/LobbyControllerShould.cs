@@ -649,7 +649,7 @@ namespace DCL.Lobby.Tests
             Launch(isStartup: true, jumpedIn: () => jumpedIn = true).Forget();
 
             // Act
-            controller.Dispose();
+            RestartWithStartParcel(startParcel);
             startParcel.RequestJumpIn();
 
             // Assert

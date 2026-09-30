@@ -160,6 +160,9 @@ namespace DCL.AuthenticationScreenFlow
             fsm?.Dispose();
         }
 
+        internal static bool ShouldSkipExistingAccountLobby(bool lobbyEnabled, in Params inputData) =>
+            lobbyEnabled || inputData.LandAtLaunchDestination;
+
         protected override void OnViewInstantiated()
         {
             base.OnViewInstantiated();
@@ -219,7 +222,7 @@ namespace DCL.AuthenticationScreenFlow
         {
             base.OnBeforeViewShow();
 
-            SkipExistingAccountLobby = FeaturesRegistry.Instance.IsEnabled(FeatureId.Lobby) || inputData.LandAtLaunchDestination;
+            SkipExistingAccountLobby = ShouldSkipExistingAccountLobby(FeaturesRegistry.Instance.IsEnabled(FeatureId.Lobby), inputData);
 
             if (inputData.StartAtLoginSelection)
             {

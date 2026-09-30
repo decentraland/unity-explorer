@@ -59,6 +59,9 @@ namespace DCL.Chat.Commands
             if (TryStartAt(realmUrl, null, spawnPointName))
                 return HeadingTo(realm);
 
+            if (!await WaitForStartupTeleportAsync(ct))
+                return "🔴 Error: The operation was canceled!";
+
             if (realmNavigator.IsAlreadyOnRealm(realmUrl))
             {
                 if (spawnPointName == null)
@@ -101,6 +104,9 @@ namespace DCL.Chat.Commands
 
             if (TryStartAt(realmUrl, targetPosition, spawnPointName))
                 return HeadingTo(realm);
+
+            if (!await WaitForStartupTeleportAsync(ct))
+                return "🔴 Error: The operation was canceled!";
 
             if(realmNavigator.IsAlreadyOnRealm(realmUrl))
                 return await TeleportToParcelAsync(targetPosition, true, ct, spawnPointName);
@@ -179,6 +185,9 @@ namespace DCL.Chat.Commands
             if (TryStartAt(local ? null : genesisDomain, targetPosition, spawnPointName))
                 return HeadingTo($"{targetPosition.x},{targetPosition.y}");
 
+            if (!await WaitForStartupTeleportAsync(ct))
+                return "🔴 Error: The operation was canceled!";
+
             var result = await realmNavigator.TeleportToParcelAsync(targetPosition, ct, local, spawnPointName: spawnPointName);
 
             if (result.Success)
@@ -217,6 +226,15 @@ namespace DCL.Chat.Commands
 
         private static string HeadingTo(string destination) =>
             $"🟢 Heading to {destination}!";
+
+        // A request that could not become the startup destination runs after the startup teleport, never alongside it
+        private async UniTask<bool> WaitForStartupTeleportAsync(CancellationToken ct)
+        {
+            if (startParcel.IsConsumed()) return true;
+
+            bool cancelled = await UniTask.WaitUntil(startParcel.IsConsumed, cancellationToken: ct).SuppressCancellationThrow();
+            return !cancelled;
+        }
 
         private string GetWorldAddress(string worldPath) =>
             worldDomain.Append(URLPath.FromString(worldPath)).Value;
