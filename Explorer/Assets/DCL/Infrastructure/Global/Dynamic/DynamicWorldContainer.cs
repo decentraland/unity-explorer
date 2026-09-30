@@ -728,7 +728,7 @@ namespace Global.Dynamic
                         // TODO: surface the teleporter result (chat bus / notification) on the direct paths too.
                         if (position.HasValue)
                             chatContainer.ChatTeleporter.TeleportToRealmAsync(realmUrl, position.Value, ct).Forget();
-                        else if (!dynamicWorldParams.StartParcel.IsConsumed())
+                        else if (!chatContainer.ChatTeleporter.HasLanded())
                             chatContainer.ChatTeleporter.TeleportToRealmAsync(realmUrl, ct).Forget();
                         else
                             chatContainer.ChatMessagesBus.SendWithUtcNowTimestamp(ChatChannel.NEARBY_CHANNEL, $"/{ChatCommandsUtils.COMMAND_GOTO} {realmUrl}", ChatMessageOrigin.RestrictedActionApi);

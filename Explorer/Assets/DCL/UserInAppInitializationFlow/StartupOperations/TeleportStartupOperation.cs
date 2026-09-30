@@ -50,7 +50,7 @@ namespace DCL.UserInAppInitializationFlow
 
         private async UniTask<Vector2Int> ResolveDestinationAsync(CancellationToken ct)
         {
-            // The launch --position and the Editor override belong to the launch realm, so they are skipped once another realm was picked
+            // A picked realm's manifest spawn wins over the launch --position and the Editor override; the launch value stays the last fallback
             bool useDefault = startParcel.IsParcelAssigned
                               || (startParcel.Realm == null && (appArgs.HasFlag(AppArgsFlags.POSITION) || editorPositionOverrideActive));
 
