@@ -611,7 +611,7 @@ Visual regression tests need a deterministic scene: a fixed window, no time-of-d
 - Some flags accept string values that can be boolean-like (`"true"` or `"false"`).
 - Flags can be combined in a single command line invocation.
 - Deep links can embed multiple flags: `decentraland://?realm=http://127.0.0.1:8000&local-scene=true&skip-auth-screen=true`
-- A launch naming a destination through `realm` or `position` skips the startup lobby and lands directly in world. A link reaching a client that is still on the lobby or the auth screen does the same: its destination becomes the startup one and the lobby closes.
+- A launch naming a destination through `realm` or `position` skips the startup lobby and lands directly in world. A link reaching a client that is still on the startup lobby or the auth screen does the same: its destination becomes the startup one and the lobby closes. With the lobby feature off, a link opened while the "Welcome back" step is showing is applied when the user clicks "Jump into World".
 - The `debug` flag is automatically added when running in Unity Editor.
 - Some flags are only effective when combined with the `debug` flag or when running in Unity Editor.
 
