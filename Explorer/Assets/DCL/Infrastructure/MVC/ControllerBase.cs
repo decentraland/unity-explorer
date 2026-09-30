@@ -44,6 +44,12 @@ namespace MVC
 
         private List<IMVCControllerModule> modules;
 
+        /// <summary>
+        ///     Pending while the view plays its show animation, completed once <see cref="OnViewShow" /> has run
+        ///     (or the show failed). A hide requested in the meantime waits on it.
+        /// </summary>
+        private UniTaskCompletionSource? showInProgress;
+
         protected ControllerBase(ViewFactoryMethod viewFactory)
         {
             this.viewFactory = viewFactory;
@@ -85,21 +91,39 @@ namespace MVC
             OnBeforeViewShow();
 
             State = ControllerState.ViewShowing;
+            UniTaskCompletionSource showCompletion = showInProgress = new UniTaskCompletionSource();
 
-            await viewInstance.ShowAsync(ct);
+            try
+            {
+                await viewInstance.ShowAsync(ct);
 
-            State = ControllerState.ViewFocused;
+                State = ControllerState.ViewFocused;
 
-            OnViewShow();
+                OnViewShow();
 
-            for (var i = 0; i < modules?.Count; i++)
-                modules[i].OnViewShow();
+                for (var i = 0; i < modules?.Count; i++)
+                    modules[i].OnViewShow();
+            }
+            finally
+            {
+                // Released only after OnViewShow so a hide that arrived mid-animation runs OnViewClose after it, never before.
+                showInProgress = null;
+                showCompletion.TrySetResult();
+            }
 
             await WaitForCloseIntentAsync(ct);
         }
 
         public async UniTask HideViewAsync(CancellationToken ct)
         {
+            // A close intent (Escape, the popup closer, a replacing view) can land while the show animation is still playing.
+            // Tearing down right away would run OnViewClose before OnViewShow; the lifecycle still awaiting the animation would
+            // then apply OnViewShow to an already hidden view, keeping its input blocks and leaving the state stuck at ViewFocused.
+            UniTaskCompletionSource? pendingShow = showInProgress;
+
+            if (pendingShow != null)
+                await pendingShow.Task;
+
             State = ControllerState.ViewHiding;
 
             for (var i = 0; i < modules?.Count; i++)

@@ -1,6 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
 using NSubstitute;
 using NUnit.Framework;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -79,6 +80,33 @@ namespace MVC.Tests
         }
 
         [Test]
+        public async Task RunCloseAfterShowWhenHideIsRequestedWhileShowing()
+        {
+            // Arrange
+            var showAnimation = new UniTaskCompletionSource();
+            testView.ShowAsync(Arg.Any<CancellationToken>()).Returns(showAnimation.Task);
+
+            UniTask lifeCycle = controller.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Fullscreen, 100), new TestInputData(), CancellationToken.None);
+
+            // Act
+            UniTask hide = ((IController)controller).HideViewAsync(CancellationToken.None);
+
+            // Assert
+            // The hide must not tear down a view whose show is still in flight
+            Assert.That(hide.Status, Is.EqualTo(UniTaskStatus.Pending));
+            Assert.That(controller.State, Is.EqualTo(ControllerState.ViewShowing));
+            Assert.That(controller.Callbacks, Is.Empty);
+
+            showAnimation.TrySetResult();
+            await hide;
+
+            Assert.That(controller.Callbacks, Is.EqualTo(new[] { "Show", "Close" }));
+            Assert.That(controller.State, Is.EqualTo(ControllerState.ViewHidden));
+            Assert.That(lifeCycle.Status, Is.EqualTo(UniTaskStatus.Pending));
+            await testView.Received(1).HideAsync(CancellationToken.None);
+        }
+
+        [Test]
         public void Blur()
         {
             controller.Blur();
@@ -115,6 +143,8 @@ namespace MVC.Tests
 
             public readonly IMVCControllerModule Module;
 
+            public readonly List<string> Callbacks = new ();
+
             public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
 
             internal TestInputData Input => inputData;
@@ -123,6 +153,12 @@ namespace MVC.Tests
             {
                 AddModule(Module = Substitute.For<IMVCControllerModule>());
             }
+
+            protected override void OnViewShow() =>
+                Callbacks.Add("Show");
+
+            protected override void OnViewClose() =>
+                Callbacks.Add("Close");
 
             protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
                 CompletionSource.Task;
