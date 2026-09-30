@@ -37,32 +37,41 @@ namespace DCL.Profiles.Self
     {
         public readonly UserId Address;
 
-        /// <summary>The profile as re-read from the catalyst after the deploy, not the one that was sent.</summary>
-        public readonly Profile Profile;
+        /// <summary>The profile instance the deploy was started with. Identifies which deploy this result belongs to.</summary>
+        public readonly Profile Sent;
 
-        public DeploySucceeded(UserId address, Profile profile)
+        /// <summary>The profile as re-read from the catalyst after the deploy, not the one that was sent.</summary>
+        public readonly Profile Saved;
+
+        public DeploySucceeded(UserId address, Profile sent, Profile saved)
         {
             Address = address;
-            Profile = profile;
+            Sent = sent;
+            Saved = saved;
         }
 
         public override string ToString() =>
-            $"{Address.Value} v{Profile.Version}";
+            $"{Address.Value} sent v{Sent.Version} saved v{Saved.Version}";
     }
 
     public readonly struct DeployFailed
     {
         public readonly UserId Address;
+
+        /// <summary>The profile instance the deploy was started with. Identifies which deploy this result belongs to.</summary>
+        public readonly Profile Sent;
+
         public readonly Exception Exception;
 
-        public DeployFailed(UserId address, Exception exception)
+        public DeployFailed(UserId address, Profile sent, Exception exception)
         {
             Address = address;
+            Sent = sent;
             Exception = exception;
         }
 
         public override string ToString() =>
-            $"{Address.Value} {Exception.GetType().Name}: {Exception.Message}";
+            $"{Address.Value} sent v{Sent.Version} {Exception.GetType().Name}: {Exception.Message}";
     }
 
     /// <summary>
@@ -70,6 +79,7 @@ namespace DCL.Profiles.Self
     ///     Identity messages come from the identity cache. <c>ProfileEdited</c> means the user finished composing a new
     ///     profile version for the current identity. Fetch and deploy results are produced by the command executor and
     ///     carry the address the IO was started for, so a result that arrives after the identity changed is recognised as stale.
+    ///     Deploy results also carry the profile instance that was sent, so the result of a superseded deploy is recognised too.
     /// </summary>
     [REnum(EnumUnderlyingType.Byte)]
     [REnumField(typeof(UserId), "IdentityChanged")]
