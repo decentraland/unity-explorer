@@ -419,11 +419,10 @@ namespace Global.Dynamic
 
                 Entity playerEntity = world.Create(new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY));
 
-                await bootstrap.InitializeFeatureFlagsAsync(bootstrapContainer.IdentityCache!.Identity,
-                    bootstrapContainer.DecentralandUrlsSource, ct);
+                await bootstrap.InitializeFeatureFlagsAsync(bootstrapContainer.DecentralandUrlsSource, ct);
 
                 bootstrap.InitializeFeaturesRegistry();
-                bootstrap.ApplyFeatureFlagConfigs(FeatureFlagsConfiguration.Instance);
+                bootstrap.ApplyFeatureFlagConfigs(FeatureFlagsConfiguration.Instance, bootstrapContainer.IdentityCache.EnsureNotNull());
 
                 // Refresh the deep-link world whitelist from the now-fully-loaded feature flags — covers runtime
                 // (post-launch) deep links and the case where the preemptive cold-start fetch was unavailable.

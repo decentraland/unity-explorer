@@ -6,6 +6,7 @@ using DCL.MapRenderer.MapLayers;
 using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.Navmap;
 using DCL.PlacesAPIService;
+using DCL.Web3.Identities;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -27,6 +28,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             IAssetsProvisioner assetsProvisioner,
             HomePlaceEventBus homePlaceEventBus,
             IEventBus analyticsEventBus,
+            IWeb3IdentityCache identityCache,
             CancellationToken cancellationToken)
         {
             HomeMarkerObject prefab = (await assetsProvisioner.ProvideMainAssetAsync(mapSettings.HomeMarker, ct: cancellationToken)).Value;
@@ -38,7 +40,8 @@ namespace DCL.MapRenderer.ComponentsFactory
                 cullingController,
                 navmapBus,
                 placesAPIService,
-                analyticsEventBus
+                analyticsEventBus,
+                identityCache
             );
 
             homePlaceEventBus.SetController(homeMarkerController);

@@ -6,6 +6,10 @@ namespace DCL.Prefs
 
         public const string LAUNCH_COUNT = "LaunchCount";
 
+        // Fallback identity feature flags are evaluated against, generated on the first launch that carries no
+        // campaign id from the launcher. Persisted so the install keeps a stable A/B bucket.
+        public const string FEATURE_FLAGS_USER_ID = "FeatureFlagsUserId";
+
         // Developer-selected path to the Creator Hub executable, remembered across launches so the Chrome
         // DevTools bridge can relaunch it without re-prompting. Not an app-arg / deep-link input (SEC-005).
         public const string CREATOR_HUB_BIN_PATH = "CreatorHub.BinPath";
@@ -96,8 +100,16 @@ namespace DCL.Prefs
 
         public const string MARKETPLACE_CREDITS_LAST_SEASON_SHOWN_WEEK_START = "MarketPlaceCredits_LastSeasonShownWeekStart";
 
-        public const string MAP_HOME_MARKER_DATA = "Map_HomeMarker";
-        public const string MAP_HOME_WORLD_NAME = "Map_HomeWorldName";
+        // Home is an account setting: the keys are formatted with the wallet address so accounts sharing a machine never inherit each other's home
+        public const string MAP_HOME_MARKER_DATA = "Map_HomeMarker_{0}";
+        public const string MAP_HOME_WORLD_NAME = "Map_HomeWorldName_{0}";
+
+        // The account-less home of the releases before it became per account; adopted by the first account that loads its home
+        public const string MAP_HOME_MARKER_DATA_LEGACY = "Map_HomeMarker";
+        public const string MAP_HOME_WORLD_NAME_LEGACY = "Map_HomeWorldName";
+
+        // The last account the map loaded a home for; resolves the home at startup when the stored session has already expired
+        public const string MAP_HOME_LAST_ACCOUNT = "Map_HomeLastAccount";
 
         public const string GIFTING_PENDING_GIFTS = "PendingGifts_{0}";
 
@@ -120,5 +132,7 @@ namespace DCL.Prefs
         public const string CHAT_REACTION_FAVORITES = "ChatReaction_Favorites";
 
         public const string BUG_REPORT_PERFORMANCE_PROMPT_DISMISSED = "BugReport_PerformancePromptDismissed";
+
+        public const string SETTINGS_LOBBY_ENABLED = "Settings_LobbyEnabled";
     }
 }

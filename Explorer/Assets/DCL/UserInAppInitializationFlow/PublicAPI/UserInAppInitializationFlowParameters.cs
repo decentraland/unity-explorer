@@ -9,6 +9,7 @@ namespace DCL.UserInAppInitializationFlow
         public bool ShowLoading { get; }
         public IUserInAppInitializationFlow.LoadSource LoadSource { get; }
         public EnumResult<TaskError> RecoveryError { get; }
+        public bool StartAtLoginSelection { get; }
         public World World { get; }
         public Entity PlayerEntity { get; }
 
@@ -18,7 +19,8 @@ namespace DCL.UserInAppInitializationFlow
             IUserInAppInitializationFlow.LoadSource loadSource,
             World world,
             Entity playerEntity,
-            EnumResult<TaskError> recoveryError = default
+            EnumResult<TaskError> recoveryError = default,
+            bool startAtLoginSelection = false
         )
         {
             ShowAuthentication = showAuthentication;
@@ -27,6 +29,7 @@ namespace DCL.UserInAppInitializationFlow
             World = world;
             PlayerEntity = playerEntity;
             RecoveryError = recoveryError;
+            StartAtLoginSelection = startAtLoginSelection;
         }
     }
 }

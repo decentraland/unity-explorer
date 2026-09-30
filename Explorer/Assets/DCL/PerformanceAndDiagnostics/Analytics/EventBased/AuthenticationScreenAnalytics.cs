@@ -1,4 +1,5 @@
 using DCL.AuthenticationScreenFlow;
+using DCL.UI.UpgradeGuestAccountPopup;
 using Newtonsoft.Json.Linq;
 using System;
 using static DCL.AuthenticationScreenFlow.AuthenticationScreenController;
@@ -10,11 +11,13 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
     {
         private readonly IAnalyticsController analytics;
         private readonly AuthenticationScreenController controller;
+        private readonly PendingGuestUpgrade pendingGuestUpgrade;
 
-        public AuthenticationScreenAnalytics(IAnalyticsController analytics, AuthenticationScreenController controller)
+        public AuthenticationScreenAnalytics(IAnalyticsController analytics, AuthenticationScreenController controller, PendingGuestUpgrade pendingGuestUpgrade)
         {
             this.analytics = analytics;
             this.controller = controller;
+            this.pendingGuestUpgrade = pendingGuestUpgrade;
             controller.CurrentState.OnUpdate += OnAuthenticationScreenStateChanged;
             controller.DiscordButtonClicked += OnDiscordButtonClicked;
             controller.OTPVerified += OnOTPVerified;
@@ -40,6 +43,9 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
                 // Triggered WHEN the entry screen is shown
                 case AuthStatus.GuestOrSignUpScreen:
                     analytics.Track(Authentication.ENTRY_SCREEN);
+
+                    // Coming back here abandons the upgrade the popup sent the user away to complete
+                    pendingGuestUpgrade.Clear();
                     break;
 
                 // Triggered WHEN login screen is shown
@@ -74,7 +80,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
                     analytics.Track(Authentication.AVATAR_SELECTION_SCREEN);
                     break;
 
-                case AuthStatus.LoggedIn: // Triggered WHEN the user gets in Lobby
+                case AuthStatus.LoggedIn: // Triggered WHEN the login completes (welcome step or straight to the Lobby panel)
                     analytics.Track(Authentication.LOGGED_IN, new JObject
                     {
                         { "method", controller.CurrentLoginMethod.ToString() },
@@ -99,7 +105,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
                         { "is_cached", true },
                     });
                     break;
-                case AuthStatus.LoggedInCached: // Triggered WHEN the user gets in Lobby
+                case AuthStatus.LoggedInCached: // Triggered WHEN the login completes (welcome step or straight to the Lobby panel)
                     analytics.Track(Authentication.LOGGED_IN_CACHED, new JObject
                     {
                         { "is_new_account", controller.IsCurrentlyNewAccount },
@@ -123,11 +129,17 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
                 { "preset_slot", presetSlot },
             }, isInstant: true);
 
-        private void OnProfileFinalized() =>
+        private void OnProfileFinalized()
+        {
             // isInstant: true because this fires moments before the auth screen tears down
             // and the FSM transitions to InitAuthState. Without flushing immediately the event
             // can sit in the buffer past the screen disposal and never make it to Segment.
             analytics.Track(Authentication.PROFILE_FINALIZED, isInstant: true);
+
+            // An account created after the upgrade popup sent the user here is the end of that funnel
+            if (pendingGuestUpgrade.TryConsume(out GuestUpgradeTrigger trigger))
+                analytics.Track(Authentication.GUEST_UPGRADE_COMPLETED, new JObject { { "trigger", trigger.ToString() } }, isInstant: true);
+        }
 
         private void OnOTPVerified(string email, bool success)
         {

@@ -12,7 +12,6 @@ namespace DCL.PlacesAPIService
 {
     public static class PlacesData
     {
-        public static readonly ObjectPool<PlaceInfo> PLACE_INFO_POOL = new (() => new PlaceInfo(Vector2Int.zero), defaultCapacity: 10, maxSize: 1000);
         internal static readonly ListObjectPool<PlaceInfo> PLACE_INFO_LIST_POOL = new (listInstanceDefaultCapacity: 100, defaultCapacity: 4);
 
         // Preallocate the list so it will be reused every time it's parsed into
@@ -53,9 +52,9 @@ namespace DCL.PlacesAPIService
             public int dislikes;
             public string[] categories;
             public bool highlighted;
-            public string highlighted_image;
+            public string? highlighted_image;
             public bool featured;
-            public string featured_image;
+            public string? featured_image;
             public bool user_favorite;
             public bool user_like;
             public bool user_dislike;
@@ -66,7 +65,7 @@ namespace DCL.PlacesAPIService
             public bool live;
             public string[]? connected_addresses;
 
-            [SerializeField] private string[] positions;
+            [SerializeField] private string[]? positions;
 
             // ReSharper restore InconsistentNaming
 
@@ -155,8 +154,10 @@ namespace DCL.PlacesAPIService
 
             public void OnAfterDeserialize()
             {
-                if (positions == null)
-                    return;
+                if (connected_addresses is { Length: 0 })
+                    connected_addresses = null;
+
+                if (positions == null) return;
 
                 Positions = new Vector2Int[positions.Length];
 

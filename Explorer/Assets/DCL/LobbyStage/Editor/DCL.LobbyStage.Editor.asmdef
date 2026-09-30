@@ -1,0 +1,20 @@
+{
+    "name": "DCL.LobbyStage.Editor",
+    "rootNamespace": "",
+    "references": [
+        "DCL.UI.Flows",
+        "DCL.Character",
+        "Cinemachine"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

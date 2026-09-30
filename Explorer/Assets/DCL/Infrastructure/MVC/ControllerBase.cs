@@ -58,6 +58,8 @@ namespace MVC
 
         public abstract CanvasOrdering.SortingLayer Layer { get; }
 
+        public virtual bool CanBeClosedByEscape => Layer is not CanvasOrdering.SortingLayer.Persistent and not CanvasOrdering.SortingLayer.Overlay;
+
         /// <summary>
         ///     Add a module to the controller
         /// </summary>

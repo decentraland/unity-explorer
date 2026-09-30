@@ -9,7 +9,6 @@ using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Browser.DecentralandUrls;
-using DCL.DebugUtilities;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.Ipfs;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -22,7 +21,6 @@ using DCL.WebRequests;
 using ECS;
 using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using Utility;
@@ -40,7 +38,7 @@ namespace DCL.InWorldCamera.Playground
         public Texture2D Texture;
         public ScreenshotMetadata metadata;
 
-        private ScreenRecorder recorder;
+        private ScreenRecorder? recorder;
 
         private void OnDestroy()
         {
@@ -105,7 +103,8 @@ namespace DCL.InWorldCamera.Playground
                 new DefaultProfileCache(),
                 world,
                 playerEntity,
-                new PassThroughOwnedNftFilter()
+                new PassThroughOwnedNftFilter(),
+                new ForcedWearables()
             );
         }
 
