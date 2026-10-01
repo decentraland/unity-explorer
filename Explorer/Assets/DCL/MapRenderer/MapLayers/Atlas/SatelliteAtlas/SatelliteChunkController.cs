@@ -9,6 +9,7 @@ using System.Threading;
 using UnityEngine;
 using Utility;
 using UnityEngine.AddressableAssets;
+using UnityEngine.ResourceManagement.AsyncOperations;
 
 namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
 {
@@ -27,6 +28,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
         private static readonly int SATURATION = Shader.PropertyToID("_Saturation");
 
         private Texture2D? currentOwnedTexture;
+        private AsyncOperationHandle<Texture2D> bundledTextureHandle;
 
         public SatelliteChunkController(
             SpriteRenderer prefab,
@@ -61,8 +63,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             internalCts?.Dispose();
             internalCts = null;
 
-            UnityObjectUtils.SafeDestroy(currentOwnedTexture);
-            currentOwnedTexture = null;
+            ReleaseTextures();
 
             if (atlasChunk)
                 UnityObjectUtils.SafeDestroy(atlasChunk.gameObject);
@@ -71,35 +72,22 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
         public async UniTask LoadImageAsync(Vector2Int chunkId, float chunkWorldSize, CancellationToken ct)
         {
             linkedCts = CancellationTokenSource.CreateLinkedTokenSource(internalCts.Token, ct);
+            CancellationToken loadCt = linkedCts.Token;
             atlasChunk.MainSpriteRenderer.enabled = false;
             atlasChunk.MainSpriteRenderer.color = AtlasChunkConstants.INITIAL_COLOR;
-            var url = $"{CHUNKS_API}{chunkId.x}%2C{chunkId.y}.jpg";
 
-            var textureTask = webRequestController.GetTextureAsync(
-                new CommonArguments(URLAddress.FromString(url), RetryPolicy.WithRetries(1)),
-                new GetTextureArguments(TextureType.Albedo),
-                GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp, FilterMode.Trilinear),
-                linkedCts.Token,
-                ReportCategory.UI
-            );
+            ReleaseTextures();
 
-            Texture2D texture;
+            Texture2D? texture = await LoadBundledTextureAsync(chunkId) ?? await DownloadTextureAsync(chunkId, loadCt);
 
-            UnityObjectUtils.SafeDestroy(currentOwnedTexture);
-            currentOwnedTexture = null;
-
-            try
+            if (loadCt.IsCancellationRequested)
             {
-                currentOwnedTexture = await textureTask;
-                await UniTask.SwitchToMainThread();
-                texture = currentOwnedTexture;
+                ReleaseTextures();
+                return;
             }
-            catch (OperationCanceledException) { return; }
-            catch (Exception e)
-            {
-                ReportHub.LogException(e, ReportCategory.UI);
-                texture = await Addressables.LoadAssetAsync<Texture2D>($"{chunkId.x},{chunkId.y}").Task;
-            }
+
+            if (texture == null)
+                return;
 
             // Closing this in try catch, because SpriteRenderer on application closing is being disposed before this code executes.
             try
@@ -123,6 +111,56 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             }
 
             textureContainer.AddChunk(chunkId, texture);
+        }
+
+        private async UniTask<Texture2D?> LoadBundledTextureAsync(Vector2Int chunkId)
+        {
+            bundledTextureHandle = Addressables.LoadAssetAsync<Texture2D>($"{chunkId.x},{chunkId.y}");
+            await bundledTextureHandle.Task;
+
+            if (bundledTextureHandle.Status == AsyncOperationStatus.Succeeded)
+                return bundledTextureHandle.Result;
+
+            ReportHub.LogError(ReportCategory.UI, $"Bundled satellite chunk {chunkId} failed to load, downloading it instead");
+            Addressables.Release(bundledTextureHandle);
+            bundledTextureHandle = default;
+            return null;
+        }
+
+        private async UniTask<Texture2D?> DownloadTextureAsync(Vector2Int chunkId, CancellationToken ct)
+        {
+            var url = $"{CHUNKS_API}{chunkId.x}%2C{chunkId.y}.jpg";
+
+            try
+            {
+                currentOwnedTexture = await webRequestController.GetTextureAsync(
+                    new CommonArguments(URLAddress.FromString(url), RetryPolicy.WithRetries(1)),
+                    new GetTextureArguments(TextureType.Albedo),
+                    GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp, FilterMode.Trilinear),
+                    ct,
+                    ReportCategory.UI
+                );
+
+                await UniTask.SwitchToMainThread();
+                return currentOwnedTexture;
+            }
+            catch (OperationCanceledException) { return null; }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, ReportCategory.UI);
+                return null;
+            }
+        }
+
+        private void ReleaseTextures()
+        {
+            UnityObjectUtils.SafeDestroy(currentOwnedTexture);
+            currentOwnedTexture = null;
+
+            if (bundledTextureHandle.IsValid())
+                Addressables.Release(bundledTextureHandle);
+
+            bundledTextureHandle = default;
         }
     }
 }
