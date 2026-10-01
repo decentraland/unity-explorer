@@ -784,6 +784,13 @@ namespace Global.Dynamic
             if (!hasMinimumSpecs && !skipScreen)
                 SavedQualitySettingsApplier.EnforceLowPresetOnce();
 
+            bool singleSceneMode = applicationParametersParser.ResolveFeatureFlagArg(AppArgsFlags.FORCE_SINGLE_SCENE_MODE,
+                                          !hasMinimumSpecs && FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.SINGLE_SCENE_MODE),
+                                          requireDebug: false)
+                                      && launchSettings.CurrentMode is not LaunchMode.LocalSceneDevelopment;
+
+            staticContainer!.SingleSceneMode.SetActive(singleSceneMode);
+
             bool userWantsToSkip = DCLPlayerPrefs.GetBool(DCLPrefKeys.DONT_SHOW_MIN_SPECS_SCREEN);
 
             bootstrapContainer!.DiagnosticsContainer.AddSentryScopeConfigurator(scope => { bootstrapContainer!.DiagnosticsContainer.Sentry!.AddMeetMinimumRequirements(scope, hasMinimumSpecs); });
