@@ -242,7 +242,7 @@ namespace DCL.Backpack
                 profileChangesBus.PushUpdate(new ProfileBuilder().From(newProfile).WithVersion(newProfile.Version + 1).Build());
                 profileToRevertTo = oldProfile;
 
-                Profile? updatedProfile = await selfProfile.UpdateProfileAsync(newProfile, ct, updateAvatarInWorld: true);
+                Profile? updatedProfile = await selfProfile.DeployProfileAsync(newProfile, ct, updateAvatarInWorld: true);
                 MultithreadingUtility.AssertMainThread(nameof(UpdateProfileAsync), true);
 
                 if (updatedProfile != null)

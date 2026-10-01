@@ -32,7 +32,7 @@ namespace DCL.Passport
             try
             {
                 // Update profile data
-                var updatedProfile = await selfProfile.UpdateProfileAsync(profile, ct,
+                var updatedProfile = await selfProfile.DeployProfileAsync(profile, ct,
                     // No need to update avatar, since the only thing you can update from the passport is the profile description, not wearables nor emotes
                     updateAvatarInWorld: false);
 

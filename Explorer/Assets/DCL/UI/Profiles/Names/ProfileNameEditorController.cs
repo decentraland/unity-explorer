@@ -228,7 +228,7 @@ namespace DCL.UI.ProfileNames
 
                     try
                     {
-                        Profile? updatedProfile = await selfProfile.UpdateProfileAsync(newProfile, ct);
+                        Profile? updatedProfile = await selfProfile.DeployProfileAsync(newProfile, ct);
                         NameChanged?.Invoke();
 
                         if (updatedProfile != null)
@@ -268,7 +268,7 @@ namespace DCL.UI.ProfileNames
 
                     try
                     {
-                        Profile? updatedProfile = await selfProfile.UpdateProfileAsync(newProfile, ct);
+                        Profile? updatedProfile = await selfProfile.DeployProfileAsync(newProfile, ct);
                         NameChanged?.Invoke();
 
                         if (updatedProfile != null)

@@ -299,7 +299,7 @@ namespace DCL.UI.UpgradeGuestAccountPopup
                                                           .WithGuestMode(false)
                                                           .Build();
 
-            await selfProfile.UpdateProfileAsync(promotedProfile, ct);
+            await selfProfile.DeployProfileAsync(promotedProfile, ct); // TODO should consume the result
         }
 
         private void ResendOTP() =>

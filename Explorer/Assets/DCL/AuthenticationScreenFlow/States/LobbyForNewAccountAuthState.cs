@@ -196,7 +196,7 @@ namespace DCL.AuthenticationScreenFlow
                 {
                     newUserProfile.Name = view.ProfileNameInputField.Text;
 
-                    Profile? publishedProfile = await selfProfile.UpdateProfileAsync(newUserProfile, ct, updateAvatarInWorld: false);
+                    Profile? publishedProfile = await selfProfile.DeployProfileAsync(newUserProfile, ct, updateAvatarInWorld: false);
                     newUserProfile = publishedProfile ?? throw new ProfileNotFoundException();
 
                     // Notify profile-bus subscribers (sidebar thumbnail, explore panel, chat) that the

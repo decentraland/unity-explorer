@@ -605,7 +605,7 @@ namespace DCL.Passport
                     newProfile.ClaimedNameColor = colorPickerController.CurrentColor;
                     try
                     {
-                        Profile? updatedProfile = await selfProfile.UpdateProfileAsync(newProfile, ct);
+                        Profile? updatedProfile = await selfProfile.DeployProfileAsync(newProfile, ct);
 
                         if (updatedProfile != null)
                             profileChangesBus.PushUpdate(updatedProfile);
