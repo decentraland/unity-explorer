@@ -114,35 +114,38 @@ namespace DCL.InWorldCamera
         /// </summary>
         internal static Rect CalculateScreenRect(Camera camera, Bounds bounds)
         {
-            Vector3 min = bounds.min;
-            Vector3 size = bounds.size;
+            Transform cameraTransform = camera.transform;
+            Vector3 cameraPosition = cameraTransform.position;
+            Vector3 cameraForward = cameraTransform.forward;
+            float nearPlane = camera.nearClipPlane;
 
             var frameMin = new Vector2(float.MaxValue, float.MaxValue);
             var frameMax = new Vector2(float.MinValue, float.MinValue);
-            var projectedAnyCorner = false;
+            var projectedAnyPoint = false;
 
-            // The eight corners of the box, each bit of the index picking the low or the high side of an axis.
+            // Each bit of a corner index picks the low or the high side of an axis. The visible part of the box is
+            // its corners in front of the near plane plus the points where its edges cross that plane.
             for (var corner = 0; corner < 8; corner++)
             {
-                var world = new Vector3(
-                    min.x + ((corner & 1) == 0 ? 0f : size.x),
-                    min.y + ((corner & 2) == 0 ? 0f : size.y),
-                    min.z + ((corner & 4) == 0 ? 0f : size.z));
+                Vector3 from = GetCorner(bounds, corner);
+                float fromDepth = Vector3.Dot(from - cameraPosition, cameraForward);
 
-                Vector3 viewportPoint = camera.WorldToViewportPoint(world);
+                if (fromDepth >= nearPlane)
+                    Include(from);
 
-                // Behind the camera the projection mirrors, which would stretch the rectangle across the
-                // whole photo. The corners in front of it still describe the visible part of the box.
-                if (viewportPoint.z <= 0f) continue;
+                for (var axisBit = 1; axisBit < 8; axisBit <<= 1)
+                {
+                    if ((corner & axisBit) != 0) continue;
 
-                projectedAnyCorner = true;
+                    Vector3 to = GetCorner(bounds, corner | axisBit);
+                    float toDepth = Vector3.Dot(to - cameraPosition, cameraForward);
 
-                Vector2 framePoint = ViewportToFrame(viewportPoint, camera.aspect);
-                frameMin = Vector2.Min(frameMin, framePoint);
-                frameMax = Vector2.Max(frameMax, framePoint);
+                    if ((fromDepth >= nearPlane) != (toDepth >= nearPlane))
+                        Include(Vector3.Lerp(from, to, (fromDepth - nearPlane) / (fromDepth - toDepth)));
+                }
             }
 
-            if (!projectedAnyCorner) return Rect.zero;
+            if (!projectedAnyPoint) return Rect.zero;
 
             frameMin = Vector2.Max(frameMin, Vector2.zero);
             frameMax = Vector2.Min(frameMax, Vector2.one);
@@ -150,6 +153,25 @@ namespace DCL.InWorldCamera
             if (frameMax.x <= frameMin.x || frameMax.y <= frameMin.y) return Rect.zero;
 
             return new Rect(frameMin.x, frameMin.y, frameMax.x - frameMin.x, frameMax.y - frameMin.y);
+
+            void Include(Vector3 world)
+            {
+                Vector2 framePoint = ViewportToFrame(camera.WorldToViewportPoint(world), camera.aspect);
+                frameMin = Vector2.Min(frameMin, framePoint);
+                frameMax = Vector2.Max(frameMax, framePoint);
+                projectedAnyPoint = true;
+            }
+        }
+
+        private static Vector3 GetCorner(Bounds bounds, int corner)
+        {
+            Vector3 min = bounds.min;
+            Vector3 max = bounds.max;
+
+            return new Vector3(
+                (corner & 1) == 0 ? min.x : max.x,
+                (corner & 2) == 0 ? min.y : max.y,
+                (corner & 4) == 0 ? min.z : max.z);
         }
 
         /// <summary>

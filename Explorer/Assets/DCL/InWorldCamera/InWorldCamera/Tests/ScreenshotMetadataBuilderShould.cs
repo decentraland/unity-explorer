@@ -112,6 +112,20 @@ namespace DCL.InWorldCamera.Tests
             Assert.AreEqual(0.5f, rect.center.y, TOLERANCE);
         }
 
+        [Test]
+        public void ReachTheEdgeOfTheImageForBoundsThatStraddleTheCamera()
+        {
+            // Arrange — the box spans z −1 → 3, just right of the camera, so part of it is behind the lens.
+            Camera camera = CreateCamera();
+            var bounds = new Bounds(new Vector3(0.3f, 0f, 1f), new Vector3(0.2f, 1f, 4f));
+
+            // Act
+            Rect rect = ScreenshotMetadataBuilder.CalculateScreenRect(camera, bounds);
+
+            // Assert
+            Assert.AreEqual(1f, rect.xMax, TOLERANCE);
+        }
+
         /// <summary>
         /// A camera at the origin looking down +Z, framing what the in-world one frames.
         /// </summary>

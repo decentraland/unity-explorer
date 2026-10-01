@@ -163,7 +163,7 @@ namespace DCL.InWorldCamera.Systems
         private void CollectMetadata()
         {
             Camera captureCamera = camera.GetCameraComponent(World).Camera;
-            GetScaledFrustumPlanes(captureCamera, ScreenRecorder.FRAME_SCALE, out Plane[]? frustumPlanes);
+            GetPhotoFrustumPlanes(captureCamera, out Plane[] frustumPlanes);
 
             metadataBuilder.Init(sceneParcel: World.Get<CharacterTransform>(playerEntity).Position.ToParcel(), frustumPlanes, captureCamera);
 
@@ -181,21 +181,13 @@ namespace DCL.InWorldCamera.Systems
         private bool UserIsEmoting(Entity entity) =>
             World.TryGet(entity, out CharacterEmoteComponent emoteComponent) && emoteComponent.IsPlayingEmote;
 
-        private static void GetScaledFrustumPlanes(Camera camera, float scaleFactor, out Plane[] frustumPlanes)
+        private static void GetPhotoFrustumPlanes(Camera camera, out Plane[] frustumPlanes)
         {
-            float originalFOV = camera.fieldOfView;
-            float originalAspect = camera.aspect;
+            Vector2 frameSize = ScreenRecorder.CalculateNormalizedFrameSize(camera.aspect);
+            float photoFieldOfView = Mathf.Atan(Mathf.Tan(camera.fieldOfView * Mathf.Deg2Rad / 2f) * frameSize.y) * 2f * Mathf.Rad2Deg;
 
-            // Calculate new FOV and aspect ratio for the scaled view
-            camera.fieldOfView = Mathf.Atan(Mathf.Tan(originalFOV * Mathf.Deg2Rad / 2f) * scaleFactor) * 2f * Mathf.Rad2Deg;
-            camera.aspect = originalAspect; // Maintain the same aspect ratio since we're scaling uniformly
-
-            // Get the scaled frustum planes
-            frustumPlanes = GeometryUtility.CalculateFrustumPlanes(camera);
-
-            // Restore original camera settings
-            camera.fieldOfView = originalFOV;
-            camera.aspect = originalAspect;
+            Matrix4x4 photoProjection = Matrix4x4.Perspective(photoFieldOfView, ScreenRecorder.TARGET_ASPECT_RATIO, camera.nearClipPlane, camera.farClipPlane);
+            frustumPlanes = GeometryUtility.CalculateFrustumPlanes(photoProjection * camera.worldToCameraMatrix);
         }
     }
 }

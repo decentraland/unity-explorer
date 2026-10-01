@@ -161,6 +161,15 @@ namespace DCL.InWorldCamera
             return screenFrameData;
         }
 
+        /// <summary>
+        /// Size of the cropped frame as a fraction of the screen on each axis: a centred box of
+        /// <see cref="TARGET_ASPECT_RATIO" />, scaled by <see cref="FRAME_SCALE" /> on the limiting side.
+        /// </summary>
+        public static Vector2 CalculateNormalizedFrameSize(float screenAspectRatio) =>
+            screenAspectRatio > TARGET_ASPECT_RATIO
+                ? new Vector2(FRAME_SCALE * TARGET_ASPECT_RATIO / screenAspectRatio, FRAME_SCALE)
+                : new Vector2(FRAME_SCALE, FRAME_SCALE * screenAspectRatio / TARGET_ASPECT_RATIO);
+
         private static float CalculateScaleFactorToTargetSize(ScreenFrameData currentScreenFrameData)
         {
             var screenFrameData = new ScreenFrameData();
