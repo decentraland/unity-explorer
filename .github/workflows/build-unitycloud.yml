@@ -1054,17 +1054,36 @@ jobs:
           echo "=== Extracted Errors for ${{ matrix.target }} ${{ needs.prebuild.outputs.install_source }} ==="
           grep -iE "error c|fatal" unity_cloud_log.log | sed 's/^/\x1b[31m/' | sed 's/$/\x1b[0m/' || echo "No 'error c' or 'fatal' errors found in ${{ matrix.target }} log."
 
-      - name: Generate Shader Compilation Report
-        shell: pwsh
+      - name: Generate shader and cache report
+        if: ${{ always() && hashFiles('unity_cloud_log.log') != '' }}
+        env:
+          REPORT_PLATFORM: ${{ matrix.target }}
+          REPORT_INSTALL_SOURCE: ${{ needs.prebuild.outputs.install_source }}
+          REPORT_COMMIT_SHA: ${{ needs.prebuild.outputs.commit_sha }}
+          REPORT_CLEAN_BUILD: ${{ needs.prebuild.outputs.clean_build }}
+          REPORT_CACHE_STRATEGY: ${{ needs.prebuild.outputs.cache_strategy }}
         run: |
-          ./scripts/Generate-ShaderReport.ps1 -InputLog "unity_cloud_log.log" -OutputReport "shader_compilation_report.log"
+          python scripts/cloudbuild/build_report.py \
+            --input-log unity_cloud_log.log \
+            --build-info unity_cloud_build_info.env \
+            --output-report shader_compilation_report.log \
+            --output-json unity_build_metrics.json
 
       - name: Upload Shader Compilation Report
+        if: ${{ always() && hashFiles('shader_compilation_report.log') != '' }}
         uses: actions/upload-artifact@v6
         with:
           name: ${{ matrix.target }}_${{ needs.prebuild.outputs.install_source }}_shader_compilation_report
           path: shader_compilation_report.log
-          if-no-files-found: warn
+          if-no-files-found: error
+
+      - name: Upload Unity build metrics
+        if: ${{ always() && hashFiles('unity_build_metrics.json') != '' }}
+        uses: actions/upload-artifact@v6
+        with:
+          name: ${{ matrix.target }}_${{ needs.prebuild.outputs.install_source }}_build_metrics
+          path: unity_build_metrics.json
+          if-no-files-found: error
 
   build-gate:
     name: Build Gate (Windows + macOS)
