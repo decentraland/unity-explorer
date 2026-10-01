@@ -69,9 +69,11 @@ def parse_log(lines):
             restore = {'key': match[1], 'status': 'unknown', 'started_at': at,
                        'extraction_started_at': None, 'finished_at': None}
             restores.append(restore)
-        if MISSING_CACHE.search(line):
+        match = MISSING_CACHE.search(line)
+        if match:
             # Unity can repeat the missing-cache warning during postbuild.
-            if restore is None:
+            kind = match[0].split()[1].casefold()
+            if restore is None or not (restore['key'] or kind).casefold().startswith(kind):
                 restore = {'key': None, 'status': 'unknown', 'started_at': None,
                            'extraction_started_at': None, 'finished_at': None}
                 restores.append(restore)
