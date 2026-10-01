@@ -50,9 +50,10 @@ jobs:
         run: |
           set -euo pipefail
 
-          # The PR above was opened with GITHUB_TOKEN, whose events start no
-          # workflow runs: nothing builds, lints or tests the release branch on
-          # its own, and every section would sit on the skeleton's "Waiting…"
+          # The PR above was opened with GITHUB_TOKEN. Its events start runs only
+          # as action_required, owned by the bot even once approved, so none of
+          # them reports into this comment (build-unitycloud.yml does not build
+          # for them at all): every section would sit on the skeleton's "Waiting…"
           # placeholder for good. The branch is cut from dev's tip, whose SHA
           # dev builds, lints and tests on push — seed the sections from those
           # runs. Where dev is done, its links are the release's. Where dev is
@@ -368,7 +369,8 @@ jobs:
           upsert performance performance.md
 
       # The PR above was opened with GITHUB_TOKEN, whose events start no workflow
-      # runs — the same suppression the CI-status step above exists to work around.
+      # run without manual approval — the same suppression the CI-status step above
+      # exists to work around.
       # So the InWorld gate has to be started explicitly, by a token that can.
       #
       # Dispatching against the release branch is what puts the gate on the PR:
