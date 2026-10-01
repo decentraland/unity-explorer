@@ -7,6 +7,7 @@ using DCL.Backpack.AvatarSection.Outfits.Models;
 using DCL.Backpack.AvatarSection.Outfits.Repository;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.WebRequests;
 using ECS;
@@ -41,9 +42,9 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
             // repository, so a failed load can't leave it publishing from empty/stale state.
             outfitsRepository.Invalidate();
 
-            var profile = await selfProfile.ProfileAsync(ct);
             var empty = new Dictionary<int, OutfitItem>();
-            if (profile == null)
+
+            if (!(await selfProfile.ProfileAsync(ct)).IsOk(out Profile? profile))
             {
                 outfitsLogger.LogError("Cannot get outfits, self profile is not loaded.");
                 return empty;
@@ -60,7 +61,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
 
                 if (response == null)
                 {
-                    outfitsLogger.LogInfo($"[OUTFIT_LOAD] No outfits found for user {profile?.UserId} (404). This is a normal case for new users.");
+                    outfitsLogger.LogInfo($"[OUTFIT_LOAD] No outfits found for user {profile.UserId} (404). This is a normal case for new users.");
                     outfitsRepository.Initialize(empty.Values);
                     return empty;
                 }

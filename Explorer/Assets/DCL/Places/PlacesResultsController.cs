@@ -322,8 +322,7 @@ namespace DCL.Places
                                                          .SuppressToResultAsync(ReportCategory.PLACES);
                     break;
                 case PlacesSection.MyPlaces:
-                    Profile? ownProfile = await selfProfile.ProfileAsync(ct);
-                    if (ownProfile == null) return;
+                    if (!(await selfProfile.ProfileAsync(ct)).IsOk(out Profile? ownProfile)) return;
                     placesResult = await placesAPIService.GetDestinationsByOwnerAsync(
                                                               ownerAddress: ownProfile.UserId,
                                                               ct: ct,

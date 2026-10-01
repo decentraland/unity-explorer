@@ -164,7 +164,7 @@ namespace DCL.Lobby.Tests
 
             // Without an own profile the avatar preview is never initialized, which keeps the rendering stack out of the test
             selfProfile = Substitute.For<ISelfProfile>();
-            selfProfile.ProfileAsync(Arg.Any<CancellationToken>()).Returns(UniTask.FromResult<Profile?>(null));
+            selfProfile.ProfileAsync(Arg.Any<CancellationToken>()).Returns(UniTask.FromResult(ProfileReadResult.FromError(ProfileReadError.NotFound)));
 
             placesAPIService = Substitute.For<IPlacesAPIService>();
             placesAPIService.GetRecentlyVisitedPlaces().Returns(new List<string>());

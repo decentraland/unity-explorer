@@ -44,9 +44,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
             IEquippedWearables equippedWearables,
             CancellationToken ct)
         {
-            var profile = await selfProfile.ProfileAsync(ct);
-
-            if (profile == null)
+            if (!(await selfProfile.ProfileAsync(ct)).IsOk(out Profile? profile))
                 throw new InvalidOperationException("Cannot save outfit, self profile is not loaded.");
 
             outfitsLogger.LogEquippedState("[SaveOutfitCommand - outfit state]", profile.UserId, equippedWearables);

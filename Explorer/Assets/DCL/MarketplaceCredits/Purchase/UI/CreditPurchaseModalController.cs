@@ -407,12 +407,12 @@ namespace DCL.MarketplaceCredits.Purchase.UI
             try
             {
 
-                Profile? profile = await selfProfile.ProfileAsync(ct);
+                ProfileReadResult profileResult = await selfProfile.ProfileAsync(ct);
 
                 if (ct.IsCancellationRequested)
                     return;
 
-                if (profile == null)
+                if (!profileResult.IsOk(out Profile? profile))
                 {
                     ReportHub.LogWarning(ReportCategory.CREDITS_PURCHASE, "Try-on preview aborted: own profile is unavailable.");
                     ResetCharacterPreview();

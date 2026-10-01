@@ -251,7 +251,7 @@ namespace Utility.Tests
 
                             break;
                         case CmdKind.Observe:
-                            ObservedModels.Add(Runtime.Model);
+                            ObservedModels.Add(Runtime.ModelSnapshot);
 
                             if (ThrowOnObserve)
                                 throw new InvalidOperationException("Executor failure");

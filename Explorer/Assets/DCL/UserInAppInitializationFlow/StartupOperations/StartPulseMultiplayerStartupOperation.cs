@@ -59,12 +59,12 @@ namespace DCL.UserInAppInitializationFlow
                 return;
             }
 
-            Profile? profile = await selfProfile.ProfileAsync(ct);
+            ProfileReadResult read = await selfProfile.ProfileAsync(ct);
 
-            if (profile == null)
-                throw new InvalidOperationException("Own profile could not be resolved, nothing to propagate to Pulse");
+            if (!read.IsOk(out Profile? profile))
+                throw new InvalidOperationException($"Own profile could not be resolved ({read}), nothing to propagate to Pulse");
 
-            profilePropagation.Propagate(profile);
+            profilePropagation.PropagateIfNewVersion(profile);
             await UniTask.SwitchToMainThread();
         }
     }

@@ -78,23 +78,13 @@ namespace DCL.Passport.Modules
 
         private async UniTaskVoid CheckForEditionAvailabilityAsync(CancellationToken ct)
         {
-            try
+            view.InfoEditionButton.gameObject.SetActive(false);
+            linksController.SetLinksEditionButtonAsActive(false);
+
+            if ((await selfProfile.ProfileAsync(ct)).IsOk(out Profile? ownProfile) && ownProfile.UserId == currentProfile.UserId)
             {
-                view.InfoEditionButton.gameObject.SetActive(false);
-                linksController.SetLinksEditionButtonAsActive(false);
-                var ownProfile = await selfProfile.ProfileAsync(ct);
-                if (ownProfile?.UserId == currentProfile.UserId)
-                {
-                    view.InfoEditionButton.gameObject.SetActive(true);
-                    linksController.SetLinksEditionButtonAsActive(true);
-                }
-            }
-            catch (OperationCanceledException) { }
-            catch (Exception e)
-            {
-                const string ERROR_MESSAGE = "There was an error while trying to check your profile. Please try again!";
-                passportErrorsController.Show(ERROR_MESSAGE);
-                ReportHub.LogError(ReportCategory.PROFILE, $"{ERROR_MESSAGE} ERROR: {e.Message}");
+                view.InfoEditionButton.gameObject.SetActive(true);
+                linksController.SetLinksEditionButtonAsActive(true);
             }
         }
 

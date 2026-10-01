@@ -306,7 +306,7 @@ namespace DCL.Profiles.Tests
             // Assert
             Assert.That(AssertIdentified(next).Activity.GetKind(), Is.EqualTo(ProfileActivity.Kind.Idle));
             AssertPublish(cmd, saved);
-            Assert.That(AssertDeployResult(next, DEPLOY).IsOk(out Profile actual), Is.True);
+            Assert.That(AssertDeployResult(next, DEPLOY).IsOk(out Profile? actual), Is.True);
             Assert.That(actual, Is.SameAs(saved));
         }
 
@@ -493,7 +493,7 @@ namespace DCL.Profiles.Tests
             // Assert
             Assert.That(next.Session, Is.EqualTo(model.Session));
             Assert.That(cmd.GetKind(), Is.EqualTo(SelfProfileCmd.Kind.None));
-            Assert.That(AssertReadResult(next, READ).IsOk(out Profile actual), Is.True);
+            Assert.That(AssertReadResult(next, READ).IsOk(out Profile? actual), Is.True);
             Assert.That(actual, Is.SameAs(known));
         }
 
@@ -575,7 +575,7 @@ namespace DCL.Profiles.Tests
             // Assert
             Assert.That(AssertIdentified(next).PendingReads.Count, Is.EqualTo(0));
             AssertPublish(cmd, fetched);
-            Assert.That(AssertReadResult(next, READ).IsOk(out Profile actual), Is.True);
+            Assert.That(AssertReadResult(next, READ).IsOk(out Profile? actual), Is.True);
             Assert.That(actual, Is.SameAs(fetched));
         }
 
@@ -638,7 +638,7 @@ namespace DCL.Profiles.Tests
             // Assert
             Assert.That(AssertIdentified(next).PendingReads.Count, Is.EqualTo(0));
             AssertPublish(cmd, saved);
-            Assert.That(AssertReadResult(next, READ).IsOk(out Profile actual), Is.True);
+            Assert.That(AssertReadResult(next, READ).IsOk(out Profile? actual), Is.True);
             Assert.That(actual, Is.SameAs(saved));
         }
 
@@ -722,7 +722,7 @@ namespace DCL.Profiles.Tests
 
         /// <summary>A deploy in flight, published optimistically when the knowledge before it was known.</summary>
         private static SelfProfileModel Deploying(Profile pending, ProfileKnowledge before) =>
-            Deploying(pending, before, default);
+            Deploying(pending, before, default(RequestIds));
 
         private static SelfProfileModel Deploying(Profile pending, ProfileKnowledge before, RequestIds requests)
         {

@@ -259,7 +259,7 @@ namespace DCL.Passport
             isVoiceCallFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.VoiceChat);
             isGiftFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.GiftingEnabled);
 
-            passportProfileInfoController = new PassportProfileInfoController(selfProfile, world, playerEntity);
+            passportProfileInfoController = new PassportProfileInfoController(selfProfile);
             NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.BADGE_GRANTED, OnBadgeNotificationReceived);
             NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.BADGE_GRANTED, OnBadgeNotificationClicked);
             NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.REFERRAL_INVITED_USERS_ACCEPTED, OnReferralUserAcceptedNotificationClicked);
@@ -596,23 +596,19 @@ namespace DCL.Passport
                 if (colorPickerController == null)
                     return;
 
-                Profile? profile = await selfProfile.ProfileAsync(ct);
-                if (profile != null)
-                {
-                    // Create a copy to avoid mutating the cached profile in-place,
-                    // which would cause UpdateProfileAsync to see no changes (IdenticalProfileUpdateException)
-                    Profile newProfile = new ProfileBuilder().From(profile).Build();
-                    newProfile.ClaimedNameColor = colorPickerController.CurrentColor;
-                    try
-                    {
-                        Profile? updatedProfile = await selfProfile.DeployProfileAsync(newProfile, ct);
+                if (!(await selfProfile.ProfileAsync(ct)).IsOk(out Profile? profile))
+                    return;
 
-                        if (updatedProfile != null)
-                            profileChangesBus.PushUpdate(updatedProfile);
-                    }
-                    catch (IdenticalProfileUpdateException) { }
-                    catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, ReportCategory.PROFILE); }
-                }
+                // Create a copy to avoid mutating the cached profile in-place, which would make the deploy see no changes
+                Profile newProfile = new ProfileBuilder().From(profile).Build();
+                newProfile.ClaimedNameColor = colorPickerController.CurrentColor;
+
+                ProfileDeployResult deploy = await selfProfile.DeployProfileAsync(newProfile, ct);
+
+                if (deploy.IsOk(out Profile? updatedProfile))
+                    profileChangesBus.PushUpdate(updatedProfile);
+                else if (deploy.IsError(out ProfileDeployError error) && error is ProfileDeployError.DeployFailed or ProfileDeployError.NoIdentity)
+                    ReportHub.LogError(ReportCategory.PROFILE, $"Claimed name color deploy failed: {error}");
             }
         }
 
@@ -871,7 +867,8 @@ namespace DCL.Passport
         {
             try
             {
-                ownProfile ??= await selfProfile.ProfileAsync(ct);
+                if (ownProfile == null && (await selfProfile.ProfileAsync(ct)).IsOk(out Profile? readProfile))
+                    ownProfile = readProfile;
 
                 if (ownProfile != null)
                 {
@@ -912,10 +909,8 @@ namespace DCL.Passport
                 try
                 {
                     // Fetch our own profile since inputData.IsOwnProfile sometimes is wrong
-                    Profile? myOwnProfile = await selfProfile.ProfileAsync(ct);
-
                     // Dont show any interaction for our own user
-                    if (myOwnProfile == null || myOwnProfile.UserId == inputData.UserId) return;
+                    if (!(await selfProfile.ProfileAsync(ct)).IsOk(out Profile? myOwnProfile) || myOwnProfile.UserId == inputData.UserId) return;
 
                     viewInstance!.CallButton.gameObject.SetActive(isVoiceCallFeatureEnabled);
 

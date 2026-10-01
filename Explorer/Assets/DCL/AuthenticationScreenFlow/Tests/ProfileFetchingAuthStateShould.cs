@@ -91,7 +91,7 @@ namespace DCL.AuthenticationScreenFlow.Tests
                 var selfProfile = new StalledSelfProfile();
                 using var cts = new CancellationTokenSource();
 
-                UniTask<Profile?> fetch = ProfileFetchingAuthState.FetchProfileWithTimeoutAsync(
+                UniTask<ProfileReadResult> fetch = ProfileFetchingAuthState.FetchProfileWithTimeoutAsync(
                     selfProfile, TimeSpan.FromSeconds(FETCH_TIMEOUT_SECONDS), cts.Token);
 
                 float deadline = UnityEngine.Time.realtimeSinceStartup + 5f;
@@ -103,32 +103,23 @@ namespace DCL.AuthenticationScreenFlow.Tests
 
                 cts.Cancel();
 
-                try
-                {
-                    Profile? result = await fetch;
+                ProfileReadResult result = await fetch;
 
-                    Assert.Fail("cancelling the flow token must surface as OperationCanceledException, not be read as " +
-                                $"\"no deployed profile\" (got {(result == null ? "null" : "a profile")}); a null here wipes " +
-                                "a still-valid cached identity on the cached flow");
-                }
-                catch (OperationCanceledException) { }
+                Assert.That(result.IsError(out ProfileReadError error), Is.True, $"cancelling the flow token must surface as a result, got {result}");
+                Assert.That(error, Is.EqualTo(ProfileReadError.Cancelled), "a cancelled read must not be read as \"no deployed profile\"; that wipes a still-valid cached identity on the cached flow");
             });
 
         [UnityTest]
-        public IEnumerator ThrowTimeoutWhenFetchStalls() =>
+        public IEnumerator ReturnCancelledWhenFetchStalls() =>
             UniTask.ToCoroutine(async () =>
             {
                 var selfProfile = new StalledSelfProfile();
 
-                try
-                {
-                    await ProfileFetchingAuthState.FetchProfileWithTimeoutAsync(
-                        selfProfile, TimeSpan.FromSeconds(0.25), CancellationToken.None);
+                ProfileReadResult result = await ProfileFetchingAuthState.FetchProfileWithTimeoutAsync(
+                    selfProfile, TimeSpan.FromSeconds(0.25), CancellationToken.None);
 
-                    Assert.Fail("a stalled fetch must surface as TimeoutException");
-                }
-                catch (TimeoutException) { }
-
+                Assert.That(result.IsError(out ProfileReadError error), Is.True, $"a stalled fetch must give up, got {result}");
+                Assert.That(error, Is.EqualTo(ProfileReadError.Cancelled));
                 Assert.That(selfProfile.CapturedTokens.Count, Is.EqualTo(1), "the fetch must run exactly once");
 
                 Assert.That(selfProfile.CapturedTokens[0].IsCancellationRequested, Is.True,
@@ -136,15 +127,16 @@ namespace DCL.AuthenticationScreenFlow.Tests
             });
 
         [UnityTest]
-        public IEnumerator ReturnNullWhenProfileIsNotDeployed() =>
+        public IEnumerator ReturnNotFoundWhenProfileIsNotDeployed() =>
             UniTask.ToCoroutine(async () =>
             {
                 var selfProfile = new MissingProfileSelfProfile();
 
-                Profile? result = await ProfileFetchingAuthState.FetchProfileWithTimeoutAsync(
+                ProfileReadResult result = await ProfileFetchingAuthState.FetchProfileWithTimeoutAsync(
                     selfProfile, TimeSpan.FromSeconds(FETCH_TIMEOUT_SECONDS), CancellationToken.None);
 
-                Assert.That(result, Is.Null);
+                Assert.That(result.IsError(out ProfileReadError error), Is.True, $"expected NotFound, got {result}");
+                Assert.That(error, Is.EqualTo(ProfileReadError.NotFound));
                 Assert.That(selfProfile.Calls, Is.EqualTo(1), "a genuine \"no deployed profile\" must resolve on the single fetch");
             });
 
@@ -219,30 +211,24 @@ namespace DCL.AuthenticationScreenFlow.Tests
         }
 
         /// <summary>
-        ///     Stalled catalyst request. Mirrors <see cref="SelfProfile.ProfileAsync" />: cancellation is
-        ///     suppressed into a null profile, never surfaced as an exception.
+        ///     Stalled catalyst request: the read settles only when its token is cancelled, as <c>Cancelled</c>.
         /// </summary>
         private class StalledSelfProfile : ISelfProfile
         {
             public readonly List<CancellationToken> CapturedTokens = new ();
 
-            public event Action<Profile>? ProfilePropagated;
+            public SelfProfileModel CurrentProfileSnapshot => SelfProfileModel.NoIdentity();
 
-            public Profile? OwnProfile => null;
-
-            public async UniTask<Profile?> ProfileAsync(CancellationToken ct)
+            public async UniTask<ProfileReadResult> ProfileAsync(CancellationToken ct)
             {
                 CapturedTokens.Add(ct);
 
-                try { return await UniTask.Never<Profile?>(ct); }
-                catch (OperationCanceledException) { return null; }
+                try { return await UniTask.Never<ProfileReadResult>(ct); }
+                catch (OperationCanceledException) { return ProfileReadResult.FromError(ProfileReadError.Cancelled); }
             }
 
-            public UniTask<Profile?> UpdateProfileAsync(CancellationToken ct, bool updateAvatarInWorld = true) =>
-                UniTask.FromResult<Profile?>(null);
-
-            public UniTask<Profile?> UpdateProfileAsync(Profile profile, CancellationToken ct, bool updateAvatarInWorld = true) =>
-                UniTask.FromResult<Profile?>(null);
+            public UniTask<ProfileDeployResult> DeployProfileAsync(Profile edited, CancellationToken ct) =>
+                UniTask.FromResult(ProfileDeployResult.FromError(ProfileDeployError.NoIdentity));
 
             public void Dispose() { }
         }
@@ -252,54 +238,50 @@ namespace DCL.AuthenticationScreenFlow.Tests
         /// </summary>
         private class ExistingProfileSelfProfile : ISelfProfile
         {
+            private readonly Profile profile;
+
             public int Calls { get; private set; }
 
-            public Profile OwnProfile { get; }
-
-            public event Action<Profile>? ProfilePropagated;
+            public SelfProfileModel CurrentProfileSnapshot =>
+                SelfProfileModel.FromIdentified(new Identified(profile.UserId, ProfileKnowledge.FromKnown(profile), ProfileActivity.Idle()));
 
             public ExistingProfileSelfProfile(Profile profile)
             {
-                OwnProfile = profile;
+                this.profile = profile;
             }
 
-            public UniTask<Profile?> ProfileAsync(CancellationToken ct)
+            public UniTask<ProfileReadResult> ProfileAsync(CancellationToken ct)
             {
                 Calls++;
-                return UniTask.FromResult<Profile?>(OwnProfile);
+                return UniTask.FromResult(ProfileReadResult.FromOk(profile));
             }
 
-            public UniTask<Profile?> UpdateProfileAsync(CancellationToken ct, bool updateAvatarInWorld = true) =>
-                UniTask.FromResult<Profile?>(OwnProfile);
-
-            public UniTask<Profile?> UpdateProfileAsync(Profile updatedProfile, CancellationToken ct, bool updateAvatarInWorld = true) =>
-                UniTask.FromResult<Profile?>(updatedProfile);
+            public UniTask<ProfileDeployResult> DeployProfileAsync(Profile edited, CancellationToken ct) =>
+                UniTask.FromResult(ProfileDeployResult.FromOk(edited));
 
             public void Dispose() { }
         }
 
         /// <summary>
-        ///     Responsive catalyst with no deployed profile: resolves to null immediately, no cancellation involved.
+        ///     Responsive catalyst with no deployed profile: resolves to <c>NotFound</c> immediately, no cancellation involved.
         /// </summary>
         private class MissingProfileSelfProfile : ISelfProfile
         {
+            private readonly UserId address = UserId.NewRandom();
+
             public int Calls { get; private set; }
 
-            public event Action<Profile>? ProfilePropagated;
+            public SelfProfileModel CurrentProfileSnapshot =>
+                SelfProfileModel.FromIdentified(new Identified(address, ProfileKnowledge.Missing(), ProfileActivity.Idle()));
 
-            public Profile? OwnProfile => null;
-
-            public UniTask<Profile?> ProfileAsync(CancellationToken ct)
+            public UniTask<ProfileReadResult> ProfileAsync(CancellationToken ct)
             {
                 Calls++;
-                return UniTask.FromResult<Profile?>(null);
+                return UniTask.FromResult(ProfileReadResult.FromError(ProfileReadError.NotFound));
             }
 
-            public UniTask<Profile?> UpdateProfileAsync(CancellationToken ct, bool updateAvatarInWorld = true) =>
-                UniTask.FromResult<Profile?>(null);
-
-            public UniTask<Profile?> UpdateProfileAsync(Profile profile, CancellationToken ct, bool updateAvatarInWorld = true) =>
-                UniTask.FromResult<Profile?>(null);
+            public UniTask<ProfileDeployResult> DeployProfileAsync(Profile edited, CancellationToken ct) =>
+                UniTask.FromResult(ProfileDeployResult.FromError(ProfileDeployError.NoIdentity));
 
             public void Dispose() { }
         }

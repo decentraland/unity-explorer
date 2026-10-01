@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.Pulse;
+using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.Web3.Chains;
 using DCL.Web3.Identities;
@@ -33,7 +34,8 @@ namespace DCL.Multiplayer.Movement
         {
             var handshakePacket = OutgoingMessage.Create(PacketMode.RELIABLE, ClientMessage.MessageOneofCase.Handshake);
             handshakePacket.Message.Handshake.AuthChain = ByteString.CopyFromUtf8(BuildAuthChain());
-            handshakePacket.Message.Handshake.ProfileVersion = (await selfProfile.ProfileAsync(ct))?.Version ?? 0;
+            ProfileReadResult profileRead = await selfProfile.ProfileAsync(ct);
+            handshakePacket.Message.Handshake.ProfileVersion = profileRead.IsOk(out Profile? profile) ? profile.Version : 0;
 
             WriteInitialState(handshakePacket.Message.Handshake);
 

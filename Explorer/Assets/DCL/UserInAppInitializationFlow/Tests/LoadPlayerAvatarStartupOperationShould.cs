@@ -66,7 +66,7 @@ namespace DCL.UserInAppInitializationFlow.Tests
         {
             var profile = Profile.NewRandomProfile("0x8a5b1234567890abcdef1234567890abcdef1234");
             selfProfile.ProfileAsync(Arg.Any<CancellationToken>())
-                .Returns(UniTask.FromResult<Profile?>(profile));
+                .Returns(UniTask.FromResult(ProfileReadResult.FromOk(profile)));
 
             Entity playerEntity = world.Create();
             var operation = new LoadPlayerAvatarStartupOperation(loadingStatus, selfProfile, avatarBaseProxy);
@@ -82,7 +82,7 @@ namespace DCL.UserInAppInitializationFlow.Tests
             var oldProfile = Profile.NewRandomProfile("0x1a2b1234567890abcdef1234567890abcdef1234");
             var newProfile = Profile.NewRandomProfile("0x3c4d1234567890abcdef1234567890abcdef1234");
             selfProfile.ProfileAsync(Arg.Any<CancellationToken>())
-                .Returns(UniTask.FromResult<Profile?>(newProfile));
+                .Returns(UniTask.FromResult(ProfileReadResult.FromOk(newProfile)));
 
             Entity playerEntity = world.Create();
             world.Add(playerEntity, oldProfile);
@@ -98,9 +98,9 @@ namespace DCL.UserInAppInitializationFlow.Tests
         {
             // Arrange
             selfProfile.ProfileAsync(Arg.Any<CancellationToken>())
-                .Returns(UniTask.FromResult<Profile?>(null));
+                .Returns(UniTask.FromResult(ProfileReadResult.FromError(ProfileReadError.NotFound)));
 
-            LogAssert.Expect(LogType.Exception, "InvalidOperationException: Own profile could not be resolved, the player entity cannot be initialized");
+            LogAssert.Expect(LogType.Exception, "InvalidOperationException: Own profile could not be resolved (NotFound), the player entity cannot be initialized");
 
             Entity playerEntity = world.Create();
             var operation = new LoadPlayerAvatarStartupOperation(loadingStatus, selfProfile, avatarBaseProxy);

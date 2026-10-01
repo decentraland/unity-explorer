@@ -86,7 +86,7 @@ namespace DCL.UserInAppInitializationFlow.Tests
 
             // Assert
             Assert.IsFalse(activation.IsActive);
-            profilePropagation.DidNotReceive().Propagate(Arg.Any<Profile>());
+            profilePropagation.DidNotReceive().PropagateIfNewVersion(Arg.Any<Profile>());
         }
 
         [Test]
@@ -99,7 +99,7 @@ namespace DCL.UserInAppInitializationFlow.Tests
                           .Returns(UniTask.FromResult(Result<LocalSceneEntity>.SuccessResult(new LocalSceneEntity(ENTITY_ID, Vector2Int.zero))));
 
             var profile = Profile.NewRandomProfile("0x8a5b1234567890abcdef1234567890abcdef1234");
-            selfProfile.ProfileAsync(Arg.Any<CancellationToken>()).Returns(UniTask.FromResult<Profile?>(profile));
+            selfProfile.ProfileAsync(Arg.Any<CancellationToken>()).Returns(UniTask.FromResult(ProfileReadResult.FromOk(profile)));
 
             var pulseRealm = new PulseRealm(realmData, entityIdSource);
             StartPulseMultiplayerStartupOperation operation = Operation(activation, pulseRealm);
@@ -112,7 +112,7 @@ namespace DCL.UserInAppInitializationFlow.Tests
             Assert.That(pulseRealm.Value, Is.EqualTo("lsd:" + ENTITY_ID));
             _ = service.Received(1).ConnectAsync(Arg.Any<CancellationToken>(), Arg.Any<int>());
             Assert.IsTrue(activation.IsActive);
-            profilePropagation.Received(1).Propagate(profile);
+            profilePropagation.Received(1).PropagateIfNewVersion(profile);
         }
 
         [Test]
@@ -133,7 +133,7 @@ namespace DCL.UserInAppInitializationFlow.Tests
             Assert.That(pulseRealm.Value, Is.Empty);
             Assert.IsFalse(activation.IsActive);
             _ = service.DidNotReceive().ConnectAsync(Arg.Any<CancellationToken>(), Arg.Any<int>());
-            profilePropagation.DidNotReceive().Propagate(Arg.Any<Profile>());
+            profilePropagation.DidNotReceive().PropagateIfNewVersion(Arg.Any<Profile>());
         }
 
         private StartPulseMultiplayerStartupOperation Operation(PulseActivation activation, PulseRealm pulseRealm) =>

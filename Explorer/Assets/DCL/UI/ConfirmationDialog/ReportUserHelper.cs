@@ -34,10 +34,10 @@ namespace DCL.UI.ConfirmationDialog
                 if (!confirmed)
                     return;
 
-                Profile? ownProfile = await selfProfile.ProfileAsync(ct);
+                ProfileReadResult ownProfileResult = await selfProfile.ProfileAsync(ct);
 
                 webBrowser.OpenUrlMainThreadOnly(string.Format(decentralandUrlsSource.Url(DecentralandUrl.ReportUserForm),
-                    ownProfile != null ? ownProfile.UserId : string.Empty,
+                    ownProfileResult.IsOk(out Profile? ownProfile) ? ownProfile.UserId : string.Empty,
                     reportedUserId));
             }
             catch (OperationCanceledException) { }

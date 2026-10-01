@@ -20,14 +20,11 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
 
         public async UniTask<bool> ShouldShowExtraOutfitSlotsAsync(CancellationToken ct)
         {
-            var profile = await selfProfile.ProfileAsync(ct);
-            if (profile != null)
-            {
-                var names = await nftNamesProvider.GetAsync(new Web3Address(profile.UserId), 1, 1, ct);
-                return names.TotalAmount > 0;
-            }
+            if (!(await selfProfile.ProfileAsync(ct)).IsOk(out Profile? profile))
+                return false;
 
-            return false;
+            INftNamesProvider.PaginatedNamesResponse names = await nftNamesProvider.GetAsync(new Web3Address(profile.UserId), 1, 1, ct);
+            return names.TotalAmount > 0;
         }
     }
 }

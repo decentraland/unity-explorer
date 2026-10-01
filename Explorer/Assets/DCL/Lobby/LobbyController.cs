@@ -341,17 +341,18 @@ namespace DCL.Lobby
         {
             try
             {
-                Profile? profile = await selfProfile.ProfileAsync(ct);
+                ProfileReadResult profileResult = await selfProfile.ProfileAsync(ct);
 
                 if (ct.IsCancellationRequested) return;
 
-                ShowWelcome(profile);
-
-                if (profile == null)
+                if (!profileResult.IsOk(out Profile? profile))
                 {
+                    ShowWelcome(null);
                     ReportHub.LogWarning(ReportCategory.PROFILE, "Own profile is not available, the lobby avatar is not shown");
                     return;
                 }
+
+                ShowWelcome(profile);
 
                 avatarPreview!.Initialize(profile.Avatar, CharacterPreviewUtils.LOBBY_PREVIEW_POSITION);
                 avatarPreview.OnBeforeShow();

@@ -185,8 +185,7 @@ namespace DCL.Multiplayer.Movement
 
         private readonly PulseContainer pulseContainer;
         private readonly LiveKitMultiplayerContainer liveKitContainer;
-        private readonly ISelfProfile selfProfile;
-
+        public readonly ISelfProfile SelfProfile;
         public readonly IMovementMessageBus MovementMessageBus;
         public readonly IRemoteAnnouncements RemoteAnnouncements;
         public readonly IEmotesMessageBus EmotesMessageBus;
@@ -206,7 +205,7 @@ namespace DCL.Multiplayer.Movement
         {
             this.pulseContainer = pulseContainer;
             this.liveKitContainer = liveKitContainer;
-            this.selfProfile = selfProfile;
+            SelfProfile = selfProfile;
             PulseActivation = pulseActivation;
             PulseRealm = pulseRealm;
 
@@ -215,8 +214,6 @@ namespace DCL.Multiplayer.Movement
             RemoteAnnouncements = new RemoteAnnouncementsProxy(pulseContainer.IncomingProfiles, liveKitContainer.RemoteAnnouncements);
             EmotesMessageBus = new EmoteMessageBusProxy(pulseContainer.pulseMultiplayerBus!, liveKitContainer.EmotesMessageBus);
             RemoveIntentions = new RemoveIntentionsProxy(pulseContainer.RemoveIntentions, liveKitContainer.RemoveIntentions);
-
-            selfProfile.ProfilePropagated += OnSelfProfilePropagated;
         }
 
         public static async UniTask<MultiplayerContainer> CreateAsync(
@@ -267,15 +264,8 @@ namespace DCL.Multiplayer.Movement
                 commsContainer.RemoteMetadata,
                 ParcelEncoder);
 
-        private void OnSelfProfilePropagated(Profile profile)
-        {
-            if (PulseActivation.IsActive)
-                ProfilePropagation.Propagate(profile);
-        }
-
         public void Dispose()
         {
-            selfProfile.ProfilePropagated -= OnSelfProfilePropagated;
             pulseContainer.Dispose();
             liveKitContainer.Dispose();
         }

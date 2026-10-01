@@ -31,11 +31,10 @@ namespace DCL.UserInAppInitializationFlow
         protected override async UniTask InternalExecuteAsync(IStartupOperation.Params args, CancellationToken ct)
         {
             float finalizationProgress = loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.ProfileLoading);
-            Profile? profile = await selfProfile.ProfileAsync(ct);
+            ProfileReadResult read = await selfProfile.ProfileAsync(ct);
 
-            // Fetch failures surface as null; a null Profile component would make every profile system throw each frame.
-            if (profile == null)
-                throw new InvalidOperationException("Own profile could not be resolved, the player entity cannot be initialized");
+            if (!read.IsOk(out Profile? profile))
+                throw new InvalidOperationException($"Own profile could not be resolved ({read}), the player entity cannot be initialized");
 
             args.Report.SetProgress(finalizationProgress);
 

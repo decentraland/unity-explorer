@@ -4,6 +4,7 @@ using DCL.Diagnostics;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.MarketplaceCredits.Fields;
+using DCL.Profiles;
 using DCL.Profiles.Self;
 using System;
 using System.Threading;
@@ -94,8 +95,7 @@ namespace DCL.MarketplaceCredits.Sections
             {
                 subView.SetAsLoading(true);
 
-                var ownProfile = await selfProfile.ProfileAsync(ct);
-                if (ownProfile != null)
+                if ((await selfProfile.ProfileAsync(ct)).IsOk(out Profile? ownProfile))
                 {
                     currentCreditsProgramProgress = await marketplaceCreditsAPIClient.GetProgramProgressAsync(ownProfile.UserId, ct);
                     RedirectToSection();

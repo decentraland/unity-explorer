@@ -291,15 +291,16 @@ namespace DCL.UI.UpgradeGuestAccountPopup
 
         private async UniTask PromoteProfileAsync(CancellationToken ct)
         {
-            Profile? profile = await selfProfile.ProfileAsync(ct);
-
-            if (profile == null || profile.HasConnectedWeb3) return;
+            if (!(await selfProfile.ProfileAsync(ct)).IsOk(out Profile? profile) || profile.HasConnectedWeb3) return;
 
             Profile promotedProfile = new ProfileBuilder().From(profile)
                                                           .WithGuestMode(false)
                                                           .Build();
 
-            await selfProfile.DeployProfileAsync(promotedProfile, ct); // TODO should consume the result
+            ProfileDeployResult deploy = await selfProfile.DeployProfileAsync(promotedProfile, ct);
+
+            if (deploy.IsError(out ProfileDeployError error) && error is ProfileDeployError.DeployFailed or ProfileDeployError.NoIdentity)
+                throw new InvalidOperationException($"The promoted profile could not be deployed: {error}");
         }
 
         private void ResendOTP() =>

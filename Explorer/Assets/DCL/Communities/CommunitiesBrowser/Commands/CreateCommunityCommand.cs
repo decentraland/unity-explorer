@@ -32,9 +32,8 @@ namespace DCL.Communities.CommunitiesBrowser.Commands
             async UniTaskVoid CreateCommunityAsync()
             {
                 var canCreate = false;
-                Profile? ownProfile = await selfProfile.ProfileAsync(ct);
 
-                if (ownProfile != null)
+                if ((await selfProfile.ProfileAsync(ct)).IsOk(out Profile? ownProfile))
                 {
                     INftNamesProvider.PaginatedNamesResponse names = await nftNamesProvider.GetAsync(new Web3Address(ownProfile.UserId), 1, 1, ct);
                     canCreate = names.TotalAmount > 0;

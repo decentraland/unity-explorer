@@ -278,9 +278,7 @@ namespace DCL.Communities.CommunityCreation
             addedCommunityPlaces.Clear();
             List<string> placesToAdd = new ();
 
-            var ownProfile = await selfProfile.ProfileAsync(ct);
-
-            if (ownProfile != null)
+            if ((await selfProfile.ProfileAsync(ct)).IsOk(out Profile? ownProfile))
             {
                 // Lands owned or managed by the user
                 var placesResult = await placesAPIService.GetDestinationsByOwnerAsync(ownProfile.UserId, ct)

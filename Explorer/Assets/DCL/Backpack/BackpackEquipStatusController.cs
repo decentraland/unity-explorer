@@ -198,9 +198,7 @@ namespace DCL.Backpack
 
             try
             {
-                Profile? oldProfile = await selfProfile.ProfileAsync(ct);
-
-                if (oldProfile == null)
+                if (!(await selfProfile.ProfileAsync(ct)).IsOk(out Profile? oldProfile))
                 {
                     ShowErrorNotificationAsync(ct).Forget();
                     return;
@@ -242,24 +240,29 @@ namespace DCL.Backpack
                 profileChangesBus.PushUpdate(new ProfileBuilder().From(newProfile).WithVersion(newProfile.Version + 1).Build());
                 profileToRevertTo = oldProfile;
 
-                Profile? updatedProfile = await selfProfile.DeployProfileAsync(newProfile, ct, updateAvatarInWorld: true);
+                ProfileDeployResult deploy = await selfProfile.DeployProfileAsync(newProfile, ct);
                 MultithreadingUtility.AssertMainThread(nameof(UpdateProfileAsync), true);
 
-                if (updatedProfile != null)
+                if (deploy.IsOk(out Profile? updatedProfile))
                 {
                     profileChangesBus.PushUpdate(updatedProfile);
                     backpackEventBus.SendAvatarChanged();
                 }
-            }
-            // No revert on cancellation: it comes from a newer update or an identity change, and either one announces its own profile
-            catch (OperationCanceledException) { }
-            catch (IdenticalProfileUpdateException)
-            {
-                if (profileToRevertTo != null)
-                    profileChangesBus.PushUpdate(profileToRevertTo);
+                // No revert on cancellation: it comes from a newer update or an identity change, and either one announces its own profile
+                else if (deploy.IsError(out ProfileDeployError error) && error != ProfileDeployError.Cancelled)
+                {
+                    profileChangesBus.PushUpdate(oldProfile);
 
-                ReportHub.LogWarning(ReportCategory.PROFILE, "Profile update skipped - no changes detected");
+                    if (error == ProfileDeployError.NothingChanged)
+                        ReportHub.LogWarning(ReportCategory.PROFILE, "Profile update skipped - no changes detected");
+                    else
+                    {
+                        ReportHub.LogError(ReportCategory.PROFILE, $"Profile deploy failed: {error}");
+                        ShowErrorNotificationAsync(ct).Forget();
+                    }
+                }
             }
+            catch (OperationCanceledException) { }
             catch (Exception e)
             {
                 if (profileToRevertTo != null)

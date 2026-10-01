@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Loading;
@@ -111,7 +112,8 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
 
         private async UniTask<Outfit> CreateOutfitFromEquippedAsync(CancellationToken ct)
         {
-            var profile = await selfProfile.ProfileAsync(ct);
+            if (!(await selfProfile.ProfileAsync(ct)).IsOk(out Profile? profile))
+                throw new InvalidOperationException("Cannot preview outfit, self profile is not loaded.");
 
             var (hair, eyes, skin) = equippedWearables.GetColors();
 
@@ -119,7 +121,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
 
             var bodyShape = bodyShapeWearable?.GetUrn() ?? "";
 
-            outfitsLogger.LogEquippedState("[PreviewOutfitCommand - outfit state]", profile?.UserId, equippedWearables);
+            outfitsLogger.LogEquippedState("[PreviewOutfitCommand - outfit state]", profile.UserId, equippedWearables);
 
             return new Outfit
             {

@@ -31,7 +31,8 @@ namespace DCL.Multiplayer.Profiles.BroadcastProfiles
         {
             async UniTaskVoid GetProfileVersionThenSendAsync(CancellationToken ct)
             {
-                Profile? profile = await selfProfile.ProfileAsync(ct);
+                ProfileReadResult read = await selfProfile.ProfileAsync(ct);
+                Profile? profile = read.IsOk(out Profile? ownProfile) ? ownProfile : null;
 
                 broadcaster.Send<Profile?, AnnounceProfileVersion>(static (p, version) => BuildMessage(p, version), profile, LKDataPacketKind.KindReliable, ct);
             }

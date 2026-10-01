@@ -196,8 +196,17 @@ namespace DCL.AuthenticationScreenFlow
                 {
                     newUserProfile.Name = view.ProfileNameInputField.Text;
 
-                    Profile? publishedProfile = await selfProfile.DeployProfileAsync(newUserProfile, ct, updateAvatarInWorld: false);
-                    newUserProfile = publishedProfile ?? throw new ProfileNotFoundException();
+                    ProfileDeployResult deploy = await selfProfile.DeployProfileAsync(newUserProfile, ct);
+
+                    if (!deploy.IsOk(out Profile? publishedProfile))
+                    {
+                        if (deploy.IsError(out ProfileDeployError error) && error == ProfileDeployError.Cancelled)
+                            return;
+
+                        throw new InvalidOperationException($"The new profile could not be deployed: {deploy}");
+                    }
+
+                    newUserProfile = publishedProfile;
 
                     // Notify profile-bus subscribers (sidebar thumbnail, explore panel, chat) that the
                     // freshly created profile is live

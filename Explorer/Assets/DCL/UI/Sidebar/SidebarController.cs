@@ -304,8 +304,8 @@ namespace DCL.UI.Sidebar
             {
                 try
                 {
-                    Profile? myProfile = await selfProfile.ProfileAsync(ct);
-                    if (myProfile == null) return;
+                    if (!(await selfProfile.ProfileAsync(ct)).IsOk(out Profile? myProfile)) return;
+                    // TODO (Nick): do we really need it to be async? Maybe just take the snapshot?
 
                     urlBuilder.Clear();
 
@@ -362,9 +362,7 @@ namespace DCL.UI.Sidebar
             viewInstance?.MarketplaceCreditsButton.gameObject.SetActive(false);
 
             await UniTask.WaitUntil(() => realmData.Configured, cancellationToken: ct);
-            Profile? ownProfile = await selfProfile.ProfileAsync(ct);
-
-            if (ownProfile == null)
+            if (!(await selfProfile.ProfileAsync(ct)).IsOk(out Profile? ownProfile))
                 return;
 
             isMarketplaceCreditsFeatureEnabled = MarketplaceCreditsUtils.IsUserAllowedToUseTheFeatureAsync(ownProfile.UserId.Value, ct);

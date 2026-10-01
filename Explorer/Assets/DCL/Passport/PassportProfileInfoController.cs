@@ -1,4 +1,3 @@
-using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Profiles;
@@ -14,47 +13,27 @@ namespace DCL.Passport
         public event Action PublishError;
 
         private readonly ISelfProfile selfProfile;
-        private readonly World world;
-        private readonly Entity playerEntity;
 
-        public PassportProfileInfoController(
-            ISelfProfile selfProfile,
-            World world,
-            Entity playerEntity)
+        public PassportProfileInfoController(ISelfProfile selfProfile)
         {
             this.selfProfile = selfProfile;
-            this.world = world;
-            this.playerEntity = playerEntity;
         }
 
         public async UniTask UpdateProfileAsync(Profile profile, CancellationToken ct)
         {
-            try
+            ProfileDeployResult deploy = await selfProfile.DeployProfileAsync(profile, ct);
+
+            if (deploy.IsOk(out Profile? updatedProfile))
             {
-                // Update profile data
-                var updatedProfile = await selfProfile.DeployProfileAsync(profile, ct,
-                    // No need to update avatar, since the only thing you can update from the passport is the profile description, not wearables nor emotes
-                    updateAvatarInWorld: false);
-
-                if (updatedProfile != null)
-                {
-                    // The entity only carries a profile once the startup flow put one there, and setting a missing component corrupts memory
-                    if (world.Has<Profile>(playerEntity))
-                    {
-                        updatedProfile.IsDirty = true;
-                        world.Set(playerEntity, updatedProfile);
-                    }
-
-                    OnProfilePublished?.Invoke(updatedProfile);
-                }
+                OnProfilePublished?.Invoke(updatedProfile);
+                return;
             }
-            catch (OperationCanceledException) { }
-            catch (IdenticalProfileUpdateException) { }
-            catch (Exception e)
+
+            if (deploy.IsError(out ProfileDeployError error) && error is ProfileDeployError.DeployFailed or ProfileDeployError.NoIdentity)
             {
                 const string ERROR_MESSAGE = "There was an error while trying to update your profile info. Please try again!";
                 PublishError?.Invoke();
-                ReportHub.LogError(ReportCategory.PROFILE, $"{ERROR_MESSAGE} ERROR: {e.Message}");
+                ReportHub.LogError(ReportCategory.PROFILE, $"{ERROR_MESSAGE} ERROR: {error}");
             }
         }
     }

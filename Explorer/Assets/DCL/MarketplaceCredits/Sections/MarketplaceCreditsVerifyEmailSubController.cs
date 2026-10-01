@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Profiles;
 using DCL.Profiles.Self;
 using System;
 using System.Threading;
@@ -76,8 +77,7 @@ namespace DCL.MarketplaceCredits.Sections
 
                 try
                 {
-                    var ownProfile = await selfProfile.ProfileAsync(ct);
-                    if (ownProfile != null)
+                    if ((await selfProfile.ProfileAsync(ct)).IsOk(out Profile? ownProfile))
                     {
                         var creditsProgramProgressResponse = await marketplaceCreditsAPIClient.GetProgramProgressAsync(ownProfile.UserId, ct);
                         if (!creditsProgramProgressResponse.IsUserEmailVerified())
@@ -110,8 +110,7 @@ namespace DCL.MarketplaceCredits.Sections
             {
                 subView.SetAsLoading(true);
 
-                var ownProfile = await selfProfile.ProfileAsync(ct);
-                if (ownProfile != null)
+                if ((await selfProfile.ProfileAsync(ct)).IsOk(out _))
                 {
                     // Removes email subscription
                     await marketplaceCreditsAPIClient.SubscribeEmailAsync(string.Empty, ct);
@@ -143,8 +142,7 @@ namespace DCL.MarketplaceCredits.Sections
             {
                 subView.SetAsLoading(true);
 
-                var ownProfile = await selfProfile.ProfileAsync(ct);
-                if (ownProfile != null)
+                if ((await selfProfile.ProfileAsync(ct)).IsOk(out _))
                     // Reset the email subscription
                     await marketplaceCreditsAPIClient.SubscribeEmailAsync(currentEmail, ct);
             }
