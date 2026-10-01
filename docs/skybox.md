@@ -6,7 +6,7 @@ The sky is rendered by one Shader Graph material (`GenesisSkybox.mat`) driven by
 
 | Preset | Role | Where it is referenced |
 |---|---|---|
-| `StylizedV1.asset` | **The look that ships.** Stylized sky with a baked colour lookup, layered cloud strips, computed sun and moon arcs, procedural stars and a horizon haze. | `Prefab/SkyboxRenderController.prefab` → `preset` |
+| `StylizedV1.asset` | **The look that ships.** Stylized sky with a baked colour lookup, layered cloud strips, computed sun and moon arcs and procedural stars. Sun haze is available but ships off. | `Prefab/SkyboxRenderController.prefab` → `preset` |
 | `Legacy.asset` | The previous sky, a 1:1 migration of the values that used to be hard-coded. **Do not delete it.** | `SkyboxSettings.asset` → `DebugLookPresets`, Addressable `SkyboxLookPreset_Legacy` in the `Essentials` group |
 
 Legacy stays for two reasons:
@@ -52,7 +52,7 @@ SkyboxTimeUpdateSystem (every frame)
 | Ambient / fog / reflections | trilight ramps, `fogColorRamp`, `fogDensityByPhase`, `reflectionIntensity` | |
 | Material (legacy bands) | spreads, blends, rim, legacy stars, cloud cubemap, second sun | Used by the legacy variant only; hidden in the inspector while the lookup is on. |
 
-Fields that one mode ignores are folded away by the preset inspector, and `SkyboxRenderController` warns once per preset about unsupported combinations (for example Clouds v2 without the sky lookup).
+Fields that one mode ignores are folded away by the preset inspector, and `SkyboxRenderController` warns about unsupported combinations each time a preset is applied (for example Clouds v2 without the sky lookup).
 
 ## Shader
 
@@ -82,5 +82,5 @@ The stylized logic lives in HLSL Custom Function files under `Assets/DCL/Stylize
 ## Known caveats
 
 - The stylized path takes authored colours **as-is** (no sRGB→linear conversion), consistently across the lookup, clouds and haze; `StylizedV1` was tuned against that behaviour. Changing it means re-tuning.
-- Legacy sits in the `Essentials` Addressables group so QA can compare both looks in builds; that keeps about 5 MB of legacy-only textures resident. Drop the entry once Legacy is only needed for SDK-controlled scenes.
-- Fog on/off is owned by the quality settings; presets drive fog colour and density only.
+- Legacy sits in the `Essentials` Addressables group so QA can compare both looks in builds. It is only loaded when picked in the debug dropdown, but it adds to the shipped bundle. Drop the entry once Legacy is only needed for SDK-controlled scenes.
+- Fog on/off is also written by the quality settings. A preset with fog enabled turns fog on once when the controller initialises, then drives fog colour and density every frame.
