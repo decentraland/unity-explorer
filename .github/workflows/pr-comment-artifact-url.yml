@@ -631,9 +631,6 @@ jobs:
           HEAD_SHA: ${{ needs.pre-validation.outputs.head-sha }}
         run: |
           echo "short-sha=${HEAD_SHA:0:7}" >> "$GITHUB_OUTPUT"
-          # Removed first: after a same-day re-cut the label may already be on
-          # the PR, and re-adding it raises no event, so nothing would build.
-          gh pr edit "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --remove-label force-build >/dev/null 2>&1 || true
           if gh pr edit "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --add-label force-build; then
             echo "labeled=true" >> "$GITHUB_OUTPUT"
           else
