@@ -78,6 +78,8 @@ namespace DCL.PluginSystem.World
 
             [field: SerializeField] public Material FlipMaterial { get; private set; } = null!;
 
+            [field: SerializeField] public Material CompositorMaterial { get; private set; } = null!;
+
             [field: SerializeField] [field: Tooltip("Shown on LiveKit screens when the streamer turns their camera off. Falls back to black if unset.")]
             public Texture2D CameraOffPlaceholder { get; private set; } = null!;
 
