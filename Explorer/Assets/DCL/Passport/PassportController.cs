@@ -62,13 +62,11 @@ namespace DCL.Passport
 {
     public class PassportController : ControllerBase<PassportView, PassportParams>
     {
-        private enum OpenBadgeSectionOrigin
-        {
-            BUTTON,
-            NOTIFICATION
-        }
-
         private const int MUTUAL_PAGE_SIZE = 3;
+
+        // Sent as analytics values, so they keep their uppercase form.
+        private const string BADGES_SECTION_ORIGIN_BUTTON = "BUTTON";
+        private const string BADGES_SECTION_ORIGIN_NOTIFICATION = "NOTIFICATION";
         private static readonly int BG_SHADER_COLOR_1 = Shader.PropertyToID("_Color1");
         private static readonly RectOffset CONTEXT_MENU_VERTICAL_LAYOUT_PADDING = new (15, 15, 20, 25);
         private static readonly Vector2 CONTEXT_MENU_OFFSET = new (25, 0);
@@ -127,6 +125,7 @@ namespace DCL.Passport
         private readonly CameraReelGalleryMessagesConfiguration cameraReelGalleryMessagesConfiguration;
         private readonly CommunitiesDataProvider communitiesDataProvider;
         private readonly BadgePreviewCameraView badge3DPreviewCamera;
+        private readonly UpscalingController upscalingController;
         private readonly ImageControllerProvider imageControllerProvider;
         private readonly ColorPresetsSO colorPresets;
 
@@ -204,6 +203,7 @@ namespace DCL.Passport
             bool isCommunitiesFeatureEnabled,
             IVoiceChatOrchestrator voiceChatOrchestrator,
             BadgePreviewCameraView badge3DPreviewCameraPrefab,
+            UpscalingController upscalingController,
             GalleryEventBus galleryEventBus,
             ISystemClipboard systemClipboard,
             CameraReelGalleryMessagesConfiguration cameraReelGalleryMessagesConfiguration,
@@ -238,6 +238,7 @@ namespace DCL.Passport
             this.realmNavigator = realmNavigator;
             this.web3IdentityCache = web3IdentityCache;
             this.badge3DPreviewCamera = Object.Instantiate(badge3DPreviewCameraPrefab);
+            this.upscalingController = upscalingController;
             this.nftNamesProvider = nftNamesProvider;
             this.gridLayoutFixedColumnCount = gridLayoutFixedColumnCount;
             this.thumbnailHeight = thumbnailHeight;
@@ -558,6 +559,9 @@ namespace DCL.Passport
 
             PassportOpened?.Invoke(currentUserId, isOwnProfile);
             badge3DPreviewCamera.gameObject.SetActive(true);
+
+            // The badge camera clears to transparent, so the upscaler must stay off while it renders.
+            upscalingController.RequireFullRenderScale(badge3DPreviewCamera);
         }
 
         protected override void OnViewClose()
@@ -586,6 +590,7 @@ namespace DCL.Passport
             currentSection = PassportSection.None;
             contextMenuCloseTask?.TrySetResult();
             badge3DPreviewCamera.gameObject.SetActive(false);
+            upscalingController.ReleaseFullRenderScale(badge3DPreviewCamera);
 
             if(isOwnProfile)
                 TrySaveAsync(CancellationToken.None).Forget();
@@ -816,7 +821,7 @@ namespace DCL.Passport
             SetCharacterPreviewVisible(false, false);
 
             bool isOwnPassport = ownProfile?.UserId == currentUserId;
-            BadgesSectionOpened?.Invoke(currentUserId!, isOwnPassport, nameof(OpenBadgeSectionOrigin.BUTTON));
+            BadgesSectionOpened?.Invoke(currentUserId!, isOwnPassport, BADGES_SECTION_ORIGIN_BUTTON);
         }
 
         private void SetCharacterPreviewVisible(bool visible, bool triggerOnShowBusEvent = true)
@@ -875,7 +880,7 @@ namespace DCL.Passport
 
                 if (ownProfile != null)
                 {
-                    BadgesSectionOpened?.Invoke(ownProfile.UserId!, true, nameof(OpenBadgeSectionOrigin.NOTIFICATION));
+                    BadgesSectionOpened?.Invoke(ownProfile.UserId!, true, BADGES_SECTION_ORIGIN_NOTIFICATION);
                     mvcManager.ShowAsync(IssueCommand(new PassportParams(ownProfile.UserId!, badgeIdToOpen, isOwnProfile: true)), ct).Forget();
                 }
             }

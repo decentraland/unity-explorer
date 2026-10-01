@@ -79,3 +79,21 @@ If `Update In Editor` is ticked then all the aforementioned behavior is applied 
 ![image](https://github.com/decentraland/unity-explorer/assets/118179774/9492b387-e68c-436e-911a-aef640fce5c7)
 
 If the game is launched from the `Main` scene it's always applied at runtime.
+
+## Resolution Scale While Previews Render
+
+URP applies the asset's `renderScale` to every game camera, including the offscreen cameras that draw the character
+previews and the Passport badge into a RenderTexture, so at the user's Resolution Scale those images come out
+pixelated. With the FSR filter selected the FSR pass also runs at 100% and writes alpha 1, which turns a camera that
+clears to transparent into an opaque black square.
+
+`UpscalingController` (`Assets/DCL/Settings/UpscalingController.cs`) therefore holds the user's scale and overrides it
+with `renderScale = 1` and the `Auto` filter while anyone requires it:
+
+- Shown character previews, through `CharacterPreviewEventBus.OnAnyShownChangedEvent`: the first preview that shows
+  acquires the override and the last one to hide or dispose releases it. Every `CharacterPreviewControllerBase`
+  is covered without registration.
+- Explicit requesters via `RequireFullRenderScale(owner)` / `ReleaseFullRenderScale(owner)`, keyed by owner so an
+  unbalanced call cannot leave the scale stuck. The Passport badge camera uses this while the Passport is open.
+
+A Resolution Scale change made while the override is held is stored and applied on release.
