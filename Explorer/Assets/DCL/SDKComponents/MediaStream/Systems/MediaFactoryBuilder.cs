@@ -24,10 +24,11 @@ namespace DCL.SDKComponents.MediaStream
         private readonly IObjectPool<RenderTexture> videoTexturesPool;
         private readonly AssetPreLoadCache assetPreLoadCache;
         private readonly IAnalyticsController analyticsController;
+        private readonly SlideTextureCache? slideCache;
 
         public MediaFactoryBuilder(IWebRequestController webRequestController, MediaVolume volumeBus,
             IPerformanceBudget performanceBudget, MediaPlayer mediaPlayerPrefab, IObjectPool<RenderTexture> videoTexturesPool,
-            AssetPreLoadCache assetPreLoadCache, IAnalyticsController analyticsController)
+            AssetPreLoadCache assetPreLoadCache, IAnalyticsController analyticsController, SlideTextureCache? slideCache)
         {
             this.webRequestController = webRequestController;
             this.performanceBudget = performanceBudget;
@@ -35,15 +36,17 @@ namespace DCL.SDKComponents.MediaStream
             this.volumeBus = volumeBus;
             this.assetPreLoadCache = assetPreLoadCache;
             this.analyticsController = analyticsController;
+            this.slideCache = slideCache;
 
             mediaPlayerCustomPool = new MediaPlayerCustomPool(mediaPlayerPrefab);
         }
 
-        public MediaFactory CreateForScene(World world, in ECSWorldInstanceSharedDependencies sceneDeps, IRoomHub roomHub, AvatarPlaceHolderTextureSource? placeholderSource) =>
+        public MediaFactory CreateForScene(World world, in ECSWorldInstanceSharedDependencies sceneDeps, IRoomHub roomHub, AvatarPlaceHolderTextureSource? placeholderSource,
+            Material? compositorMaterial = null) =>
             new (sceneDeps.SceneData, roomHub.StreamingRoom(),
                 () => roomHub.SceneRoom().CurrentState() == IConnectiveRoom.State.Running,
                 mediaPlayerCustomPool, sceneDeps.SceneStateProvider,
                 volumeBus, videoTexturesPool, sceneDeps.EntitiesMap, world, webRequestController, performanceBudget, assetPreLoadCache,
-                analyticsController, placeholderSource);
+                analyticsController, placeholderSource, slideCache, compositorMaterial);
     }
 }

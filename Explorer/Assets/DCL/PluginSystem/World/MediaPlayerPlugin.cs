@@ -64,6 +64,7 @@ namespace DCL.PluginSystem.World
                 settings.VideoPrioritizationSettings,
                 mediaFactory,
                 settings.FlipMaterial,
+                settings.CompositorMaterial,
                 placeholderSource,
                 debugRegistry
             );

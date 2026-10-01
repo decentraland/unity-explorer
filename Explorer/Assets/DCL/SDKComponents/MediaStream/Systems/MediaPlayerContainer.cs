@@ -32,6 +32,7 @@ namespace DCL.SDKComponents.MediaStream
         private readonly IAnalyticsController analyticsController;
 
         private readonly MediaVolume mediaVolume;
+        private readonly SlideTextureCache? slideCache;
 
         public MediaPlayerContainer(IAssetsProvisioner assetsProvisioner, IWebRequestController webRequestController, VolumeBus volumeBus, IPerformanceBudget frameBudget,
             CacheCleaner cacheCleaner, AssetPreLoadCache assetPreLoadCache, IAnalyticsController analyticsController)
@@ -44,6 +45,11 @@ namespace DCL.SDKComponents.MediaStream
             this.analyticsController = analyticsController;
 
             mediaVolume = new MediaVolume(volumeBus);
+#if !UNITY_EDITOR_LINUX && !UNITY_STANDALONE_LINUX
+            slideCache = new SlideTextureCache(webRequestController);
+#else
+            slideCache = null;
+#endif
         }
 
         internal MediaFactoryBuilder mediaFactoryBuilder { get; private set; } = null!;
@@ -75,11 +81,14 @@ namespace DCL.SDKComponents.MediaStream
 
             cacheCleaner.Register(videoTexturesPool);
 
-            mediaFactoryBuilder = new MediaFactoryBuilder(webRequestController, mediaVolume, frameBudget, mediaPlayerPrefab, videoTexturesPool, assetPreLoadCache, analyticsController);
+            mediaFactoryBuilder = new MediaFactoryBuilder(webRequestController, mediaVolume, frameBudget, mediaPlayerPrefab, videoTexturesPool, assetPreLoadCache, analyticsController, slideCache);
         }
 
-        public override void Dispose() =>
+        public override void Dispose()
+        {
             mediaVolume.Dispose();
+            slideCache?.Dispose();
+        }
 
         private static FeatureId CurrentPlatformMediaPlayerFeature()
         {

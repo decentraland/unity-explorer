@@ -287,7 +287,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
         {
             (LivekitPlayer p, _) = DrawSecondFrame();
 
-            Assert.IsTrue(p.LastComposeDrewVideo);
+            Assert.IsTrue(p.lastComposeDrewVideo);
         }
 
         [Test]
@@ -299,7 +299,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
             p.EnsureVideoIsPlaying();
             p.LastTexture();
 
-            Assert.IsTrue(p.LastComposeDrewVideo);
+            Assert.IsTrue(p.lastComposeDrewVideo);
         }
 
         [Test]
@@ -311,7 +311,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
             p.EnsureVideoIsPlaying();
             p.LastTexture();
 
-            Assert.IsFalse(p.LastComposeDrewVideo);
+            Assert.IsFalse(p.lastComposeDrewVideo);
         }
 
         [Test]
@@ -379,7 +379,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
             SetMetadata(bot, V2("0", "playing"));
             p.EnsureVideoIsPlaying();
             p.LastTexture();
-            Assert.IsFalse(p.LastComposeDrewVideo);
+            Assert.IsFalse(p.lastComposeDrewVideo);
 
             Texture2D second = NewFrame();
             video.DecodeLastFrame().Returns(second);
@@ -467,14 +467,12 @@ namespace DCL.SDKComponents.MediaStream.Tests
 
         private sealed class FakeActiveSpeakers : IActiveSpeakers
         {
-            private readonly HashSet<string> speakers = new ();
-
-            public int Count => speakers.Count;
+            public int Count => 0;
 
             public event Action Updated { add { } remove { } }
 
             public IEnumerator<string> GetEnumerator() =>
-                speakers.GetEnumerator();
+                ((IEnumerable<string>)Array.Empty<string>()).GetEnumerator();
 
             IEnumerator IEnumerable.GetEnumerator() =>
                 GetEnumerator();

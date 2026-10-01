@@ -16,17 +16,17 @@ namespace DCL.SDKComponents.MediaStream
 {
     public class MediaPlayerPluginWrapper : IDisposable
     {
-        // ReSharper disable NotAccessedField.Local -- consumed by InjectToWorld, whose body is compiled out under the Linux defines InspectCode runs with.
+        // ReSharper disable NotAccessedField.Local
         private readonly IPerformanceBudget frameTimeBudget;
         private readonly IExposedCameraData exposedCameraData;
         private readonly float audioFadeSpeed;
         private readonly VideoPrioritizationSettings videoPrioritizationSettings;
         private readonly MediaFactoryBuilder mediaFactory;
         private readonly Material flipMaterial;
+        private readonly Material compositorMaterial;
         private readonly MediaPlayerDebugRegistry debugRegistry;
         // ReSharper restore NotAccessedField.Local
 
-        // Null on platforms where the LiveKit media feature is compiled out (see InjectToWorld guard).
         private readonly AvatarPlaceHolderTextureSource? placeholderSource;
 
         public MediaPlayerPluginWrapper(
@@ -36,6 +36,7 @@ namespace DCL.SDKComponents.MediaStream
             VideoPrioritizationSettings videoPrioritizationSettings,
             MediaFactoryBuilder mediaFactory,
             Material flipMaterial,
+            Material compositorMaterial,
             AvatarPlaceHolderTextureSource? placeholderSource,
             MediaPlayerDebugRegistry debugRegistry)
         {
@@ -45,6 +46,7 @@ namespace DCL.SDKComponents.MediaStream
             this.videoPrioritizationSettings = videoPrioritizationSettings;
             this.mediaFactory = mediaFactory;
             this.flipMaterial = flipMaterial;
+            this.compositorMaterial = compositorMaterial;
             this.placeholderSource = placeholderSource;
             this.debugRegistry = debugRegistry;
         }
@@ -53,7 +55,7 @@ namespace DCL.SDKComponents.MediaStream
             List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
 #if !UNITY_EDITOR_LINUX && !UNITY_STANDALONE_LINUX
-            MediaFactory sceneMediaFactory = mediaFactory.CreateForScene(builder.World, sceneDeps, roomHub, placeholderSource);
+            MediaFactory sceneMediaFactory = mediaFactory.CreateForScene(builder.World, sceneDeps, roomHub, placeholderSource, compositorMaterial);
 
             CreateMediaPlayerSystem.InjectToWorld(ref builder, sceneDeps.SceneStateProvider, sceneMediaFactory);
             sceneIsCurrentListeners.Add(UpdateMediaPlayerSystem.InjectToWorld(ref builder, sceneDeps.SceneData, sceneDeps.SceneStateProvider, frameTimeBudget, sceneMediaFactory, audioFadeSpeed, flipMaterial, videoPrioritizationSettings));
