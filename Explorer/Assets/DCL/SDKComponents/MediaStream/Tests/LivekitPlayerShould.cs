@@ -29,6 +29,11 @@ namespace DCL.SDKComponents.MediaStream.Tests
         private const string BOT = "presentation-bot:room:1";
         private const string PRESENTER = "stream:place:1";
         private const string OTHER = "0xOTHER";
+        private const string STREAMER = "0xSTREAMER";
+        private const string NEW_STREAMER = "0xNEWSTREAMER";
+        private const string CAMERA_SID = "TR_camera";
+        private const string NEW_CAMERA_SID = "TR_camera_2";
+        private const string SCREEN_SID = "TR_screen";
         private const string SLIDE_URL = "https://example.com/slide.png";
         private const string LEGACY_METADATA = "{\"role\":\"presentation\",\"presentationId\":\"p1\"}";
         private const string V2_METADATA = "{\"role\":\"presentation\",\"slide\":{\"url\":\"" + SLIDE_URL + "\",\"width\":1920,\"height\":1080},\"presenterIdentity\":\"" + PRESENTER
@@ -365,6 +370,127 @@ namespace DCL.SDKComponents.MediaStream.Tests
             videoStreams.Received().Release(new StreamKey(PRESENTER, "TR_cam"));
         }
 
+        [Test]
+        public void OpenCameraStream_WhenRemoteCameraTrackSubscribed()
+        {
+            LivekitPlayer p = NewLegacyPlayer();
+            LKParticipant streamer = AddParticipant(STREAMER);
+            Texture2D cameraFrame = SubscribeWithFrame(streamer, AddTrack(streamer, CAMERA_SID, TrackKind.KindVideo, TrackSource.SourceCamera));
+
+            p.OpenMedia(LivekitAddress.CurrentStream());
+
+            Assert.That(p.IsVideoOpened, Is.True);
+            Assert.That(p.LastTexture(), Is.SameAs(cameraFrame));
+        }
+
+        [Test]
+        public void OpenScreenShareStream_WhenScreenShareTrackSubscribed()
+        {
+            LivekitPlayer p = NewLegacyPlayer();
+            LKParticipant streamer = AddParticipant(STREAMER);
+            Texture2D screenFrame = SubscribeWithFrame(streamer, AddTrack(streamer, SCREEN_SID, TrackKind.KindVideo, TrackSource.SourceScreenshare));
+
+            p.OpenMedia(LivekitAddress.CurrentStream());
+
+            Assert.That(p.IsVideoOpened, Is.True);
+            Assert.That(p.LastTexture(), Is.SameAs(screenFrame));
+        }
+
+        [Test]
+        [Ignore("Fails on dev: initial selection picks the unsubscribed screen share over the subscribed camera")]
+        public void ShowCamera_WhenScreenShareIsAnnouncedButNotYetSubscribed()
+        {
+            LivekitPlayer p = NewLegacyPlayer();
+            LKParticipant streamer = AddParticipant(STREAMER);
+            Texture2D cameraFrame = SubscribeWithFrame(streamer, AddTrack(streamer, CAMERA_SID, TrackKind.KindVideo, TrackSource.SourceCamera));
+            AddTrack(streamer, SCREEN_SID, TrackKind.KindVideo, TrackSource.SourceScreenshare);
+
+            p.OpenMedia(LivekitAddress.CurrentStream());
+
+            Assert.That(p.IsVideoOpened, Is.True, "an unsubscribed screen share must not shadow an available camera");
+            Assert.That(p.LastTexture(), Is.SameAs(cameraFrame));
+        }
+
+        [Test]
+        [Ignore("Fails on dev: the follow pass switches to the unsubscribed screen share")]
+        public void KeepCamera_WhenScreenShareArrivesUnsubscribedMidStream()
+        {
+            LivekitPlayer p = NewLegacyPlayer();
+            LKParticipant streamer = AddParticipant(STREAMER);
+            Texture2D cameraFrame = SubscribeWithFrame(streamer, AddTrack(streamer, CAMERA_SID, TrackKind.KindVideo, TrackSource.SourceCamera));
+            p.OpenMedia(LivekitAddress.CurrentStream());
+            Assert.That(p.IsVideoOpened, Is.True);
+
+            AddTrack(streamer, SCREEN_SID, TrackKind.KindVideo, TrackSource.SourceScreenshare);
+            p.EnsureVideoIsPlaying();
+
+            Assert.That(p.IsVideoOpened, Is.True, "a still-subscribing screen share must not blank the playing camera");
+            Assert.That(p.LastTexture(), Is.SameAs(cameraFrame));
+        }
+
+        [Test]
+        public void SwitchToScreenShare_WhenItBecomesSubscribed()
+        {
+            LivekitPlayer p = NewLegacyPlayer();
+            LKParticipant streamer = AddParticipant(STREAMER);
+            SubscribeWithFrame(streamer, AddTrack(streamer, CAMERA_SID, TrackKind.KindVideo, TrackSource.SourceCamera));
+            p.OpenMedia(LivekitAddress.CurrentStream());
+
+            Texture2D screenFrame = SubscribeWithFrame(streamer, AddTrack(streamer, SCREEN_SID, TrackKind.KindVideo, TrackSource.SourceScreenshare));
+            p.EnsureVideoIsPlaying();
+
+            Assert.That(p.IsVideoOpened, Is.True);
+            Assert.That(p.LastTexture(), Is.SameAs(screenFrame), "a subscribed screen share must take priority over the camera");
+        }
+
+        [Test]
+        public void RecoverStream_WhenTrackSubscribedArrivesAfterOpen()
+        {
+            LivekitPlayer p = NewLegacyPlayer();
+            LKParticipant streamer = AddParticipant(STREAMER);
+            TrackPublication camera = AddTrack(streamer, CAMERA_SID, TrackKind.KindVideo, TrackSource.SourceCamera);
+            p.OpenMedia(LivekitAddress.CurrentStream());
+            Assert.That(p.IsVideoOpened, Is.False, "nothing renders until the track is subscribed");
+
+            Texture2D cameraFrame = SubscribeWithFrame(streamer, camera);
+            p.EnsureVideoIsPlaying();
+
+            Assert.That(p.IsVideoOpened, Is.True);
+            Assert.That(p.LastTexture(), Is.SameAs(cameraFrame));
+        }
+
+        [Test]
+        [Ignore("Fails on dev: the follow pass keeps the departed caster's stale stream")]
+        public void SwitchToNewCaster_AfterCurrentCasterLeavesFollowingRoomReset()
+        {
+            LivekitPlayer p = NewLegacyPlayer();
+            LKParticipant streamer = AddParticipant(STREAMER);
+            Texture2D frameA = SubscribeWithFrame(streamer, AddTrack(streamer, CAMERA_SID, TrackKind.KindVideo, TrackSource.SourceCamera));
+            p.OpenMedia(LivekitAddress.CurrentStream());
+            Assert.That(p.LastTexture(), Is.SameAs(frameA));
+
+            resolvedStreams.Remove(new StreamKey(STREAMER, CAMERA_SID));
+            remoteParticipants.Remove(STREAMER);
+            participantsHub.RemoteParticipant(STREAMER).Returns((LKParticipant?)null);
+            LKParticipant newStreamer = AddParticipant(NEW_STREAMER);
+            Texture2D frameB = SubscribeWithFrame(newStreamer, AddTrack(newStreamer, NEW_CAMERA_SID, TrackKind.KindVideo, TrackSource.SourceCamera));
+            p.EnsureVideoIsPlaying();
+
+            Assert.That(p.IsVideoOpened, Is.True);
+            Assert.That(p.LastTexture(), Is.SameAs(frameB));
+        }
+
+        [Test]
+        public void RenderNothing_WhenNoVideoTracksAvailable()
+        {
+            LivekitPlayer p = NewLegacyPlayer();
+
+            p.OpenMedia(LivekitAddress.CurrentStream());
+
+            Assert.That(p.IsVideoOpened, Is.False);
+            Assert.That(p.LastTexture(), Is.Null);
+        }
+
         private (LivekitPlayer player, LKParticipant bot) DrawSecondFrame()
         {
             LKParticipant bot = AddParticipant(BOT, V2("null", "idle"));
@@ -440,6 +566,13 @@ namespace DCL.SDKComponents.MediaStream.Tests
             resolvedStreams[new StreamKey(participant.Identity, track.Sid)] = new Owned<IVideoStream>(stream).Downgrade();
             room.TrackSubscribed += Raise.Event<SubscribeDelegate>(null!, track, participant);
             return stream;
+        }
+
+        private Texture2D SubscribeWithFrame(LKParticipant participant, TrackPublication track)
+        {
+            Texture2D frame = NewFrame();
+            Subscribe(participant, track).DecodeLastFrame().Returns(frame);
+            return frame;
         }
 
         private Texture2D NewFrame()
