@@ -78,7 +78,12 @@ SkyboxRenderController.SetSceneLook       profile.ApplyTo(sceneCopy, Legacy) →
 - `SkyboxLookPreset` exposes `internal` setters for exactly those values; the asset is never written, only the runtime copy.
 - SDK gradients are protocol `ColorGradient`s converted by `ColorGradientConverter`. `UnityEngine.Gradient` holds at most 8 colour keys, so a gradient with more keys is resampled at 8 evenly spaced times.
 - The per-frame code has no override branches: it evaluates `preset.*` as for any other look. The only SDK paths outside the preset are the texture overrides: `SetSkyboxOverride` swaps `RenderSettings.skybox` to the `DCL/PanoramicSkybox` material while the time-of-day values keep going to the Genesis material (which is why those writes target the cached material, not `RenderSettings.skybox`), `SetCloudsOverride` projects an equirect image into a cube render texture that becomes the scene copy's `cloudsCubemap`, and the reflection override goes to `SkyboxToCubemapRendererFeature`.
-- `SceneSkyboxOverrides.Owner` is the scene identity that owns the overrides; any `PBSkybox` on the current scene makes it the owner, whatever fields it sets, so a scene with only a `skybox_texture` also runs on the Legacy base.
+- **Video sources.** The three texture fields also accept a `VideoTexture`, which reaches the controller as the video player's live `RenderTexture`:
+  - live clouds are re-projected every frame by `ProjectLiveClouds`, which `ApplySceneSkyboxOverridesSystem` calls independently of `UpdateSkybox` (that one stops while skybox time is paused or frozen);
+  - `SkyboxToCubemapRendererFeature` keeps regenerating on its sliced cadence while the reflection override is a `RenderTexture` (a static override stops regeneration);
+  - the handler registers a *screen-space consumer* (`IMediaFactory.TryAddScreenSpaceConsumer`); `UpdateMediaPlayerPrioritizationSystem` never culls a video with one, though it still counts against the simultaneous-video limit. Leaving the scene releases the consumer, re-entering re-adds it;
+  - if the video player entity is deleted, the slot drops the texture (its `RenderTexture` returns to the shared pool, where another video may reuse it) and retries until the entity exists again.
+- `SceneSkyboxOverrides.Owner` is the scene identity that owns the overrides: a `SceneShortInfo`, not a base parcel, since portable experiences share `0,0`. Any `PBSkybox` on the current scene makes it the owner, whatever fields it sets, so a scene with only a `skybox_texture` also runs on the Legacy base.
 
 ## Debug panel
 
@@ -100,4 +105,6 @@ SkyboxRenderController.SetSceneLook       profile.ApplyTo(sceneCopy, Legacy) →
 
 - The stylized path takes authored colours **as-is** (no sRGB→linear conversion), consistently across the lookup, clouds and haze; `StylizedV1` was tuned against that behaviour. Changing it means re-tuning.
 - Legacy is referenced by the controller prefab (SDK-controlled scenes start from it) and listed in the `Essentials` Addressables group for the debug dropdown, so it is always resident.
+- `DCL/PanoramicSkybox` (visible sky) and `DCL/EquirectToCube` (reflection and cloud cubemaps) share one lat-long mapping, `uv = (atan2(d.x, d.z) / 2π + 0.5, asin(d.y) / π + 0.5)`. Change both together, or the reflections stop matching the sky.
+- `DCL/EquirectToCube` is created through `Shader.Find`, so it must stay in *Always Included Shaders* (`ProjectSettings/GraphicsSettings.asset`), otherwise player builds strip it. It builds a fullscreen triangle from `SV_VertexID`, so `EquirectCubemapConverter` draws each face with `CoreUtils.DrawFullScreen`; `Graphics.Blit` would feed it quad vertices.
 - Fog on/off is also written by the quality settings. A preset with fog enabled turns fog on once when the controller initialises, then drives fog colour and density every frame.
