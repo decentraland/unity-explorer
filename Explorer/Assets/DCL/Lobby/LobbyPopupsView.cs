@@ -5,8 +5,8 @@ using UnityEngine;
 namespace DCL.Lobby
 {
     /// <summary>
-    ///     Canvas of the popups the lobby opens from its top bar, laid out under the widgets that open them. Neither lobby view is
-    ///     active while the other is shown, so the popups hang from this canvas rather than from either of them.
+    ///     Canvas of the popups the lobby opens from its top bar, laid out under the widgets that open them. The lobby is a UI Toolkit
+    ///     panel while the popups are uGUI views, so they hang from this canvas rather than from the lobby.
     /// </summary>
     public class LobbyPopupsView : MonoBehaviour
     {

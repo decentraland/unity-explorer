@@ -5,7 +5,7 @@ using UnityEngine.UIElements;
 namespace DCL.Lobby
 {
     /// <summary>
-    ///     UI Toolkit counterpart of <see cref="LobbyPlaceCardView" />: thumbnail with the online users on top, title and creator.
+    ///     Thumbnail with the online users on top, title and creator.
     ///     Its hierarchy comes from LobbyPlaceCard.uxml, so the children only exist once that template is instantiated; hovering
     ///     raises the footer over the thumbnail and swaps the creator for the Jump in button, all driven by LobbyPlaceCard.uss.
     /// </summary>

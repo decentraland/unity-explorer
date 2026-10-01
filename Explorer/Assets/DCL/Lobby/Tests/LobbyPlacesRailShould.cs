@@ -123,11 +123,11 @@ namespace DCL.Lobby.Tests
             places.Show(nextSection);
 
             //Assert
-            Assert.AreEqual(DisplayStyle.None, section.style.display.value);
             Assert.AreEqual(0, Rail().childCount);
             Assert.AreSame(card, nextSection.Q<LobbyRailElement>()[0]);
-            Assert.AreEqual(DisplayStyle.None, card.style.display.value, "A moved card stays hidden until the next fill");
-            Assert.AreEqual(0, places.Count);
+            Assert.AreEqual(DisplayStyle.Flex, card.style.display.value, "A moved card stays shown with its last content until the next fill");
+            Assert.AreEqual(DisplayStyle.Flex, nextSection.style.display.value);
+            Assert.AreEqual(1, places.Count);
         }
 
         private LobbyRailElement Rail() =>

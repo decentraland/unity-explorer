@@ -5,7 +5,7 @@ using Utility.UIToolkit;
 namespace DCL.Lobby
 {
     /// <summary>
-    ///     UI Toolkit counterpart of <see cref="LobbyTemplateRailView{TCard}" />: the card strip of a lobby section, filled with clones
+    ///     The card strip of a lobby section, filled with clones
     ///     of a card template. The strip is the section's <see cref="LobbyRailElement" /> when it pages, or a plain row named
     ///     <see cref="CARDS_NAME" /> when the section shows a fixed few. The section only exists while the document is shown, so it is
     ///     handed over on every <see cref="Show" />; the cards outlive it and move into the next one. What the cards display is up to
@@ -42,22 +42,26 @@ namespace DCL.Lobby
         }
 
         /// <summary>
-        ///     Takes <paramref name="newSection" /> over and moves the cards into its strip, hidden, until <see cref="SetCount" /> shows them.
+        ///     Takes <paramref name="newSection" /> over and moves the cards into its strip. The first <see cref="Count" /> stay shown with
+        ///     what they last displayed, so the row does not go empty until <see cref="SetCount" /> refreshes it.
         /// </summary>
         public void Show(VisualElement newSection)
         {
             Section = newSection;
             rail = newSection.Q<LobbyRailElement>();
             strip = rail ?? newSection.Q(CARDS_NAME);
-            Count = 0;
 
-            foreach (TCard card in cards)
+            for (var i = 0; i < cards.Count; i++)
             {
-                card.SetDisplayed(false);
-                strip.Add(card);
+                cards[i].SetDisplayed(i < Count);
+                strip.Add(cards[i]);
             }
 
-            rail?.SetCardCount(0);
+            rail?.SetCardCount(Count);
+
+            // A section of a rebuilt hierarchy starts in the state its template authored
+            if (Count > 0)
+                Section.SetDisplayed(true);
         }
 
         /// <summary>
@@ -85,9 +89,9 @@ namespace DCL.Lobby
             OnCountChanged(count);
         }
 
+        // The section keeps the state the last SetCount left it in, so the row comes back as it was on the next Show
         public void Hide()
         {
-            Section?.SetDisplayed(false);
             Section = null;
             strip = null;
             rail = null;

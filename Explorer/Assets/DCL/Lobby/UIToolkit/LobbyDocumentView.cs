@@ -66,7 +66,7 @@ namespace DCL.Lobby
         public EventContextMenuConfiguration EventContextMenuSettings => eventContextMenuSettings;
 
         /// <summary>
-        ///     The uGUI avatar preview nested in the prefab, the same one the uGUI lobby uses. Like the widgets it survives the hide.
+        ///     The uGUI avatar preview nested in the prefab. Like the widgets it survives the hide.
         /// </summary>
         public CharacterPreviewView CharacterPreviewView => characterPreviewView;
 

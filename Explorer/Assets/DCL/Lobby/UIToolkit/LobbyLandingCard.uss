@@ -22,11 +22,13 @@
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
+    transition: opacity var(--lobby-thumbnail-fade-duration) ease-out;
 }
 
-/* Without a thumbnail the dark fill of the card shows */
+/* While the picture is on its way the dark fill of the card shows; the picture then fades in over it rather than popping up */
 .lobby-landing-card--loading .lobby-landing-card__thumbnail {
-    background-image: none;
+    opacity: 0;
+    transition: opacity 0s;
 }
 
 /* Darkens the bottom of the thumbnail under the texts and the button */
@@ -111,26 +113,35 @@
     text-overflow: ellipsis;
 }
 
+/* Drawn with the 12px container sprite that carries its drop shadow (see LobbyDocument.uss), so the box runs the shadow's
+   6px under the 153x40 button it shows, 16px in from the card's corner, and the label is padded off that strip */
 .lobby-landing-card__jump-in {
     position: absolute;
-    right: 16px;
-    bottom: 16px;
-    width: 153px;
-    height: 40px;
+    right: 15px;
+    bottom: 10px;
+    width: 155px;
+    height: 46px;
+    padding: 0 0 6px;
     flex-direction: row;
     align-items: center;
     justify-content: center;
-    border-radius: 12px;
-    background-color: rgb(255, 45, 85);
-    transition: background-color 0.1s;
+    background-color: transparent;
+    background-image: var(--lobby-button-shadow-image);
+    -unity-slice-left: 26;
+    -unity-slice-top: 24;
+    -unity-slice-right: 25;
+    -unity-slice-bottom: 36;
+    -unity-slice-scale: 0.5px;
+    -unity-background-image-tint-color: var(--lobby-jump-in-color);
+    transition: -unity-background-image-tint-color 0.1s;
 }
 
 .lobby-landing-card__jump-in:hover {
-    background-color: rgb(255, 77, 111);
+    -unity-background-image-tint-color: var(--lobby-jump-in-hover-color);
 }
 
 .lobby-landing-card__jump-in:active {
-    background-color: rgb(200, 35, 67);
+    -unity-background-image-tint-color: var(--lobby-jump-in-pressed-color);
 }
 
 .lobby-landing-card__jump-in:disabled {

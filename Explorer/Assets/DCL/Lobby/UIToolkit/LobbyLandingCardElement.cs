@@ -5,7 +5,7 @@ using UnityEngine.UIElements;
 namespace DCL.Lobby
 {
     /// <summary>
-    ///     UI Toolkit counterpart of <see cref="LobbyLandingCardView" />: the hero card showing the place the session lands in, with the
+    ///     The hero card showing the place the session lands in, with the
     ///     thumbnail filling it, the online users on top, and the title, the creator and the Jump in button along the bottom. Its hierarchy
     ///     comes from LobbyLandingCard.uxml, so the children only exist once that template is instantiated; LobbyLandingCard.uss lays it out.
     /// </summary>

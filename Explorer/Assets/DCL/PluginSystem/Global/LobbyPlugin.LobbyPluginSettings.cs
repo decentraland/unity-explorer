@@ -16,9 +16,6 @@ namespace DCL.PluginSystem.Global
             [field: Header(nameof(LobbyPlugin) + "." + nameof(LobbyPluginSettings))]
             [field: Space]
             [field: SerializeField]
-            public LobbyViewRef LobbyPrefab { get; private set; }
-
-            [field: SerializeField]
             public LobbyDocumentViewRef DocumentPrefab { get; private set; }
 
             [field: SerializeField]
@@ -38,12 +35,6 @@ namespace DCL.PluginSystem.Global
 
             [field: SerializeField]
             public AssetReferenceT<NftTypeIconSO> RarityColorMappings { get; private set; }
-
-            [Serializable]
-            public class LobbyViewRef : ComponentReference<LobbyView>
-            {
-                public LobbyViewRef(string guid) : base(guid) { }
-            }
 
             [Serializable]
             public class LobbyDocumentViewRef : ComponentReference<LobbyDocumentView>

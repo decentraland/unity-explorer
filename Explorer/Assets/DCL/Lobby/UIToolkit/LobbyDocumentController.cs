@@ -39,7 +39,7 @@ using Utility.UIToolkit;
 namespace DCL.Lobby
 {
     /// <summary>
-    ///     UI Toolkit rebuild of <see cref="LobbyController" />: the fullscreen panel shown before the world starts loading and,
+    ///     The fullscreen panel shown before the world starts loading and,
     ///     later, on demand during gameplay. The player's avatar stands on the stage behind everything else, drawn by the uGUI
     ///     preview the view carries, and clicking it opens the backpack. It greets the user over the hero card of the place the session
     ///     lands in, whose Jump in is the only way out at startup. It lists the recently visited and the featured places;
@@ -182,6 +182,7 @@ namespace DCL.Lobby
                 viewInstance.Profile.Clicked = null;
 
             mvcManager.OnViewClosed -= ShowAgainWhenTheScreenIsFree;
+            startParcel.JumpInRequestRaised -= RequestClose;
             eventCardActions.EventSetAsInterested -= OnEventInterestChanged;
 
             if (friends != null)
@@ -264,11 +265,17 @@ namespace DCL.Lobby
             friendsCts = friendsCts.SafeRestart();
             friends?.Show(viewInstance.Friends, friendsCts.Token);
 
+            if (inputData.IsStartup)
+                startParcel.JumpInRequestRaised += RequestClose;
+
             Opened?.Invoke(inputData.IsStartup);
         }
 
         protected override void OnViewClose()
         {
+            if (inputData.IsStartup)
+                startParcel.JumpInRequestRaised -= RequestClose;
+
             profileChangesBus.UnsubscribeToUpdate(OnProfileUpdated);
             eventCardActions.EventSetAsInterested -= OnEventInterestChanged;
 
@@ -312,16 +319,26 @@ namespace DCL.Lobby
 
             mvcManager.OnViewClosed -= ShowAgainWhenTheScreenIsFree;
 
-            if (!inputData.StartupToken.IsCancellationRequested)
+            if (inputData.StartupToken.IsCancellationRequested) return;
+
+            // A destination requested while the lobby was covered releases the flow without showing it again
+            if (startParcel.JumpInRequested)
+                RequestClose();
+            else
                 mvcManager.ShowAndForget(IssueCommand(inputData));
         }
 
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
         {
             closeIntent?.TrySetCanceled(ct);
-            closeIntent = new UniTaskCompletionSource();
+            var intent = new UniTaskCompletionSource();
+            closeIntent = intent;
 
-            await closeIntent.Task.AttachExternalCancellation(ct);
+            // A request made while the view was loading or covered by another panel had no listener
+            if (inputData.IsStartup && startParcel.JumpInRequested)
+                RequestClose();
+
+            await intent.Task.AttachExternalCancellation(ct);
         }
 
         private async UniTaskVoid ShowAvatarAsync(CancellationToken ct)

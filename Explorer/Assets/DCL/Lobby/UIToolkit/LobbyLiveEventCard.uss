@@ -1,10 +1,27 @@
-/* The live event card of the uGUI lobby: 358x214 with 24px corners, the thumbnail filling it */
+/* The live event card of the uGUI lobby: 358x214 with 24px corners, the thumbnail filling it. The card casts a shadow past its
+   edges, so it does not clip: each layer rounds its own corners instead */
 .lobby-live-event-card {
     width: 358px;
     height: 214px;
     border-radius: 24px;
     background-color: var(--lobby-card-color);
-    overflow: hidden;
+}
+
+/* Drawn under everything with the 24px container sprite that carries its drop shadow (see LobbyDocument.uss), hanging the shadow's
+   6px past the sides and 10px under the card; its body is tinted like the card, as the thumbnail covers it only once loaded */
+.lobby-live-event-card__shadow {
+    position: absolute;
+    left: -6px;
+    top: 0;
+    right: -6px;
+    bottom: -10px;
+    background-image: var(--lobby-card-shadow-image);
+    -unity-slice-left: 60;
+    -unity-slice-top: 45;
+    -unity-slice-right: 60;
+    -unity-slice-bottom: 68;
+    -unity-slice-scale: 0.5px;
+    -unity-background-image-tint-color: var(--lobby-card-color);
 }
 
 /* The badges and the texts sit over it */
@@ -14,15 +31,18 @@
     top: 0;
     right: 0;
     bottom: 0;
+    border-radius: 24px;
     background-image: url('/Assets/Textures/ExplorePanel/DefaultImagePlace.png');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
+    transition: opacity var(--lobby-thumbnail-fade-duration) ease-out;
 }
 
-/* Without a thumbnail the dark fill of the card shows */
+/* While the picture is on its way the dark fill of the card shows; the picture then fades in over it rather than popping up */
 .lobby-live-event-card--loading .lobby-live-event-card__thumbnail {
-    background-image: none;
+    opacity: 0;
+    transition: opacity 0s;
 }
 
 /* Darkens the bottom of the thumbnail under the title and the host */
@@ -32,6 +52,8 @@
     right: 0;
     bottom: 0;
     height: 100px;
+    border-bottom-left-radius: 24px;
+    border-bottom-right-radius: 24px;
     background-image: url('/Assets/Textures/ExplorePanel/GradientBanner.png');
     background-size: 100% 100%;
     -unity-background-image-tint-color: var(--dcl-color-black-80);

@@ -5,7 +5,7 @@ using UnityEngine.UIElements;
 namespace DCL.Lobby
 {
     /// <summary>
-    ///     UI Toolkit counterpart of <see cref="LobbyLiveEventCardView" />: full-bleed thumbnail with the Live badge and how many people
+    ///     Full-bleed thumbnail with the Live badge and how many people
     ///     are attending on top, plus the name and the host over the gradient at the bottom. Its hierarchy comes from LobbyLiveEventCard.uxml,
     ///     so the children only exist once that template is instantiated; the badges and the gradient are laid out by LobbyLiveEventCard.uss.
     /// </summary>

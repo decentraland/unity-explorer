@@ -21,7 +21,7 @@ using Utility;
 namespace DCL.Lobby
 {
     /// <summary>
-    ///     UI Toolkit counterpart of <see cref="LobbyFriendsPresenter" />: fills the online friends row of the document from the
+    ///     Fills the online friends row of the document from the
     ///     connectivity tracker and resolves where each shown friend is. The row shows every online friend at once, so every card is
     ///     bound on each rebuild; a card keeps its picture while it shows the same friend.
     /// </summary>

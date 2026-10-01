@@ -6,7 +6,7 @@ using Utility.UIToolkit;
 namespace DCL.Lobby
 {
     /// <summary>
-    ///     UI Toolkit counterpart of <see cref="LobbyPagedRailView" />: a horizontal strip of cards that pages by the mouse wheel or by
+    ///     A horizontal strip of cards that pages by the mouse wheel or by
     ///     the arrows shown while it is hovered, and scrolls freely by dragging. Releasing a drag lets the strip run on with the fling and
     ///     settles it on the nearest card; the arrows page on from that card and one dot per page tracks the nearest page.
     ///     The cards are its children, added by the owner; the chrome (viewport, arrows and dots) is built here and styled by LobbyRail.uss,
@@ -379,8 +379,9 @@ namespace DCL.Lobby
         private float CardStride() =>
             content.childCount > 1 ? content[1].layout.x - content[0].layout.x : 0f;
 
+        // Measured against the content box of the viewport: its padding, when it has any, is room for the shadows of the cards at its edges
         private float MaxOffset() =>
-            Mathf.Max(0f, content.layout.width - viewport.layout.width);
+            Mathf.Max(0f, content.layout.width - viewport.contentRect.width);
 
         // The content cannot slide past its end, so the last cards start wherever the content ends rather than a full stride further in
         private float CardOffset(int card) =>

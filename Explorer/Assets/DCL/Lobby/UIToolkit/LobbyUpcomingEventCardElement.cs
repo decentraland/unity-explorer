@@ -6,7 +6,7 @@ using Utility.UIToolkit;
 namespace DCL.Lobby
 {
     /// <summary>
-    ///     UI Toolkit counterpart of the small Explore event card the uGUI lobby lists the upcoming events with: name, host and how long
+    ///     Upcoming event card modelled on the small Explore event card: name, host and how long
     ///     until the event starts on the left, the thumbnail on the right, plus the Add to calendar and Share buttons. Its hierarchy comes
     ///     from LobbyUpcomingEventCard.uxml, so the children only exist once that template is instantiated; LobbyUpcomingEventCard.uss
     ///     lays it out and tints the events the user is interested in, whose Interested button shows as toggled on.

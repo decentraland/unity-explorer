@@ -11,27 +11,30 @@
     overflow: hidden;
 }
 
-/* Hovering raises the footer over the thumbnail, so the thumbnail gives up as much as the footer grows */
+/* Hovering raises the footer over the thumbnail, so the thumbnail gives up as much as the footer grows. Its corners are rounded
+   like the 16px mask of the uGUI card, so the dark strip under it curves into it; the top ones end up under the 24px ones of the card */
 .lobby-place-card__thumbnail {
     position: absolute;
     left: 0;
     top: 0;
     right: 0;
     height: 110px;
+    border-radius: 16px;
     background-image: url('/Assets/Textures/ExplorePanel/DefaultImagePlace.png');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-    transition: height var(--place-card-hover-duration) ease-out;
+    transition: height var(--place-card-hover-duration) ease-out, opacity var(--lobby-thumbnail-fade-duration) ease-out;
 }
 
 .lobby-place-card:hover .lobby-place-card__thumbnail {
     height: 86px;
 }
 
-/* Without a thumbnail the dark fill of the card shows */
+/* While the picture is on its way the dark fill of the card shows; the picture then fades in over it rather than popping up */
 .lobby-place-card--loading .lobby-place-card__thumbnail {
-    background-image: none;
+    opacity: 0;
+    transition: height var(--place-card-hover-duration) ease-out, opacity 0s;
 }
 
 .lobby-place-card__online {
@@ -112,20 +115,29 @@
     opacity: 0;
 }
 
-/* Only reachable while the card is hovered, so its invisible state never takes a click meant for the card itself */
+/* Only reachable while the card is hovered, so its invisible state never takes a click meant for the card itself.
+   Drawn with the 12px container sprite that carries its drop shadow (see LobbyDocument.uss), so the box runs the shadow's
+   6px under the 32px button it shows, 8px in from the card's edges, and the label is padded off that strip */
 .lobby-place-card__jump-in {
     position: absolute;
-    left: 8px;
-    right: 8px;
-    bottom: 8px;
-    height: 32px;
+    left: 7px;
+    right: 7px;
+    bottom: 2px;
+    height: 38px;
+    padding: 0 0 6px;
     flex-direction: row;
     align-items: center;
     justify-content: center;
-    border-radius: 12px;
-    background-color: rgb(255, 45, 85);
+    background-color: transparent;
+    background-image: var(--lobby-button-shadow-image);
+    -unity-slice-left: 26;
+    -unity-slice-top: 24;
+    -unity-slice-right: 25;
+    -unity-slice-bottom: 36;
+    -unity-slice-scale: 0.5px;
+    -unity-background-image-tint-color: var(--lobby-jump-in-color);
     opacity: 0;
-    transition: opacity var(--place-card-hover-duration) ease-out, background-color 0.1s;
+    transition: opacity var(--place-card-hover-duration) ease-out, -unity-background-image-tint-color 0.1s;
 }
 
 .lobby-place-card:hover .lobby-place-card__jump-in {
@@ -133,7 +145,7 @@
 }
 
 .lobby-place-card__jump-in:active {
-    background-color: rgb(200, 35, 67);
+    -unity-background-image-tint-color: var(--lobby-jump-in-pressed-color);
 }
 
 .lobby-place-card__jump-in-text {

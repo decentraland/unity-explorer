@@ -6,7 +6,7 @@ using UnityEngine;
 namespace DCL.Lobby
 {
     /// <summary>
-    ///     What either lobby implementation reports about the user's visit and picks, told apart by the row the pick was made in.
+    ///     What the lobby reports about the user's visit and picks, told apart by the row the pick was made in.
     /// </summary>
     public interface ILobbyController
     {

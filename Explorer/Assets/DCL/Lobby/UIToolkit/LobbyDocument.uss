@@ -6,6 +6,14 @@
     --lobby-card-border-color: rgba(255, 255, 255, 0.1);
     --lobby-title-color: white;
     --lobby-subtitle-color: rgb(191, 191, 199);
+    --lobby-jump-in-color: rgb(255, 45, 85);
+    --lobby-jump-in-hover-color: rgb(255, 77, 111);
+    --lobby-jump-in-pressed-color: rgb(200, 35, 67);
+    --lobby-thumbnail-fade-duration: 0.3s;
+    /* The uGUI drop shadows: 9-sliced container sprites authored at twice the size, a 12px-corner one with a 4px shadow for the
+       buttons and a 24px-corner one with a 10px shadow for the cards, drawn at half scale with the slices of their import settings */
+    --lobby-button-shadow-image: url('/Assets/Textures/Common/Container12Shadow4.png');
+    --lobby-card-shadow-image: url('/Assets/Textures/Common/Container24Shadow10.png');
 }
 
 .lobby {
@@ -147,6 +155,18 @@
 
 .lobby__live-events-rail {
     height: 230px;
+}
+
+/* The live cards cast a shadow 6px past their sides and 10px under them: the viewport bleeds that far into the gutters and over
+   the dots, clipping at the shadow's edge instead of the card's. Its padding keeps the cards where they were, and tells the rail
+   how much of it the cards have (see LobbyRailElement) */
+.lobby__live-events-rail .lobby-rail__viewport {
+    margin: 0 -6px -10px;
+    padding: 0 6px 10px;
+}
+
+.lobby__live-events-rail .lobby-rail__content {
+    left: 6px;
 }
 
 .lobby__upcoming-events {

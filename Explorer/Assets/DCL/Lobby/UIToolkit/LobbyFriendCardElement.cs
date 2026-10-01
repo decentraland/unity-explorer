@@ -6,7 +6,7 @@ using UnityEngine.UIElements;
 namespace DCL.Lobby
 {
     /// <summary>
-    ///     UI Toolkit counterpart of <see cref="LobbyFriendCardView" />: picture with the online dot, name, and a location row that
+    ///     Picture with the online dot, name, and a location row that
     ///     hovering swaps for a Join button while the friend can be joined. Its hierarchy comes from LobbyFriendCard.uxml, so the
     ///     children only exist once that template is instantiated; the hover swap and the status colors are driven by LobbyFriendCard.uss.
     /// </summary>
