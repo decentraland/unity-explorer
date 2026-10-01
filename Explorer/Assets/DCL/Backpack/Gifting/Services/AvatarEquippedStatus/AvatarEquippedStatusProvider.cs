@@ -3,6 +3,7 @@ using System.Text;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Profiles;
 using DCL.Profiles.Self;
 
 namespace DCL.Backpack.Gifting.Services.SnapshotEquipped
@@ -21,8 +22,7 @@ namespace DCL.Backpack.Gifting.Services.SnapshotEquipped
         {
             equippedUrns.Clear();
 
-            var profile = await selfProfile.ProfileAsync(ct);
-            if (ct.IsCancellationRequested || profile == null) return;
+            if (!(await selfProfile.ProfileAsync(ct)).IsOk(out Profile profile) || ct.IsCancellationRequested) return;
 
             foreach (var w in profile.Avatar.Wearables)
                 if (!string.IsNullOrEmpty(w))
