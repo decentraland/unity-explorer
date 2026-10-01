@@ -10,10 +10,7 @@ using ECS.Abstract;
 
 namespace DCL.Multiplayer.Movement
 {
-    /// <summary>
-    ///     Announces the trusted self profile to Pulse while Pulse is active. The bus ignores repeats of the same
-    ///     profile version, so this system keeps no state of its own.
-    /// </summary>
+    /// <summary>Announces the trusted self profile to Pulse while Pulse is active.</summary>
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [LogCategory(ReportCategory.MULTIPLAYER)]
     public partial class PropagateSelfProfileSystem : BaseUnityLoopSystem

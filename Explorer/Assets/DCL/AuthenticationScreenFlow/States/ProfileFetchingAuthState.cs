@@ -164,10 +164,7 @@ namespace DCL.AuthenticationScreenFlow
             }
         }
 
-        /// <summary>
-        ///     Reads under a linked token so a stalled read gives up after <paramref name="timeout" />. A timeout surfaces
-        ///     as <c>Cancelled</c> while <paramref name="ct" /> itself is not cancelled.
-        /// </summary>
+        /// <summary>Reads under a linked token that cancels after <paramref name="timeout" />; a timeout surfaces as <c>Cancelled</c> with <paramref name="ct" /> not cancelled.</summary>
         internal static async UniTask<ProfileReadResult> FetchProfileWithTimeoutAsync(ISelfProfile selfProfile, TimeSpan timeout, CancellationToken ct)
         {
             using CancellationTokenSource timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);

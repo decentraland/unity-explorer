@@ -248,7 +248,7 @@ namespace DCL.Backpack
                     profileChangesBus.PushUpdate(updatedProfile);
                     backpackEventBus.SendAvatarChanged();
                 }
-                // No revert on cancellation: it comes from a newer update or an identity change, and either one announces its own profile
+                // A cancelled deploy is superseded; nothing to revert
                 else if (deploy.IsError(out ProfileDeployError error) && error != ProfileDeployError.Cancelled)
                 {
                     profileChangesBus.PushUpdate(oldProfile);

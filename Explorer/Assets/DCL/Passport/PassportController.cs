@@ -599,7 +599,7 @@ namespace DCL.Passport
                 if (!(await selfProfile.ProfileAsync(ct)).IsOk(out Profile? profile))
                     return;
 
-                // Create a copy to avoid mutating the cached profile in-place, which would make the deploy see no changes
+                // Copy so the cached profile is not mutated in place
                 Profile newProfile = new ProfileBuilder().From(profile).Build();
                 newProfile.ClaimedNameColor = colorPickerController.CurrentColor;
 

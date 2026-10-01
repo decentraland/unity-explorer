@@ -218,7 +218,7 @@ namespace DCL.UI.ProfileNames
 
                 if ((await selfProfile.ProfileAsync(ct)).IsOk(out Profile? profile))
                 {
-                    // Create a copy to avoid mutating the cached profile directly, which would make the deploy see no changes
+                    // Copy so the cached profile is not mutated in place
                     Profile newProfile = new ProfileBuilder().From(profile).Build();
                     newProfile.Name = config.nameInputField.Text;
                     newProfile.ClaimedNameColor = null;
@@ -247,7 +247,7 @@ namespace DCL.UI.ProfileNames
 
                 if ((await selfProfile.ProfileAsync(ct)).IsOk(out Profile? profile))
                 {
-                    // Create a copy to avoid mutating the cached profile directly, which would make the deploy see no changes
+                    // Copy so the cached profile is not mutated in place
                     Profile newProfile = new ProfileBuilder().From(profile).Build();
                     newProfile.Name = config.claimedNameDropdown.options[config.claimedNameDropdown.value].text;
                     newProfile.HasClaimedName = true;
