@@ -29,7 +29,7 @@ namespace DCL.Backpack
         private readonly IBackpackEventBus backpackEventBus;
         private readonly IEquippedEmotes equippedEmotes;
         private readonly IEquippedWearables equippedWearables;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly IProfileCache profileCache;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IEmoteStorage emoteStorage;
@@ -46,7 +46,7 @@ namespace DCL.Backpack
             IBackpackEventBus backpackEventBus,
             IEquippedEmotes equippedEmotes,
             IEquippedWearables equippedWearables,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             IProfileCache profileCache,
             IEmoteStorage emoteStorage,
             IWearableStorage wearableStorage,

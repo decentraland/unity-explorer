@@ -19,7 +19,7 @@ namespace DCL.UI.ProfileNames
     public class ProfileNameEditorController : ControllerBase<ProfileNameEditorView>
     {
         private readonly UnityAppWebBrowser webBrowser;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly INftNamesProvider nftNamesProvider;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly ProfileChangesBus profileChangesBus;
@@ -37,7 +37,7 @@ namespace DCL.UI.ProfileNames
 
         public ProfileNameEditorController(ViewFactoryMethod viewFactory,
             UnityAppWebBrowser webBrowser,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             INftNamesProvider nftNamesProvider,
             IDecentralandUrlsSource decentralandUrlsSource,
             ProfileChangesBus profileChangesBus,

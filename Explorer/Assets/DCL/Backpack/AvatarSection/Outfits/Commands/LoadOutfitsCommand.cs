@@ -18,13 +18,13 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
     public class LoadOutfitsCommand
     {
         private readonly IWebRequestController webRequestController;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly IDecentralandUrlsSource urlsSource;
         private readonly OutfitsLogger outfitsLogger;
         private readonly OutfitsRepository outfitsRepository;
 
         public LoadOutfitsCommand(IWebRequestController webRequestController,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             IDecentralandUrlsSource urlsSource,
             OutfitsLogger outfitsLogger,
             OutfitsRepository outfitsRepository)

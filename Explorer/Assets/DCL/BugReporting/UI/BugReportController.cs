@@ -29,7 +29,7 @@ namespace DCL.BugReporting.UI
         private const int ABOVE_OVERLAYS_ORDER = 100;
 
         private readonly BugReportService bugReportService;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly IInputBlock inputBlock;
         private readonly World globalWorld;
         private readonly Entity playerEntity;
@@ -52,7 +52,7 @@ namespace DCL.BugReporting.UI
         public BugReportController(
             ViewFactoryMethod viewFactory,
             BugReportService bugReportService,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             IInputBlock inputBlock,
             World globalWorld,
             Entity playerEntity,

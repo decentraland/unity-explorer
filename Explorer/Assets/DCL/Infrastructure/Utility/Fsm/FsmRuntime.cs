@@ -10,7 +10,7 @@ namespace Utility.Fsm
     ///     The pure <see cref="UpdateFn"/> produces the next model and one command; the executor performs the command.
     ///     Messages the executor sends while executing are queued and applied later in the same drain, never nested.
     /// </summary>
-    public class FsmRuntime<TModel, TMsg, TCmd> : IMsgInbox<TMsg>
+    public class FsmRuntime<TModel, TMsg, TCmd> : IMsgInbox<TMsg>, IDisposable
     {
         /// <summary>
         ///     Pure transition. No IO, no time, no shared state: the same model and message always yield the same result.
@@ -45,6 +45,9 @@ namespace Utility.Fsm
             this.executor = executor;
             model = new Mutex<TModel>(initialModel); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
         }
+
+        public void Dispose() =>
+            executor.Dispose();
 
         public void Send(in TMsg msg) =>
             inbox.Enqueue(msg);

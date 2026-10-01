@@ -54,7 +54,7 @@ namespace DCL.UI.Sidebar
         private readonly SmartWearablesSideBarTooltipController smartWearablesTooltipController;
         private readonly UnityAppWebBrowser webBrowser;
         private readonly IChatHistory chatHistory;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly IRealmData realmData;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly URLBuilder urlBuilder = new ();
@@ -94,7 +94,7 @@ namespace DCL.UI.Sidebar
             SmartWearablesSideBarTooltipController smartWearablesTooltipController,
             UnityAppWebBrowser webBrowser,
             IChatHistory chatHistory,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             IRealmData realmData,
             IDecentralandUrlsSource decentralandUrlsSource,
             World globalWorld,

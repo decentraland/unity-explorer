@@ -18,7 +18,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
     {
         private readonly OutfitApplier outfitApplier;
         private readonly IEquippedWearables equippedWearables;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly IWearableStorage wearableStorage;
         private readonly OutfitsLogger outfitsLogger;
         private readonly IOwnedNftFilter ownedNftFilter;
@@ -28,7 +28,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
 
         public PreviewOutfitCommand(OutfitApplier outfitApplier,
             IEquippedWearables equippedWearables,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             IWearableStorage wearableStorage,
             OutfitsLogger outfitsLogger,
             IOwnedNftFilter ownedNftFilter)

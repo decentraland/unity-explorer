@@ -12,9 +12,9 @@ namespace DCL.Passport
         public event Action<Profile>? OnProfilePublished;
         public event Action PublishError;
 
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
 
-        public PassportProfileInfoController(ISelfProfile selfProfile)
+        public PassportProfileInfoController(SelfProfile selfProfile)
         {
             this.selfProfile = selfProfile;
         }

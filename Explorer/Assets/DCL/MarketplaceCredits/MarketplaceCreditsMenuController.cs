@@ -46,7 +46,7 @@ namespace DCL.MarketplaceCredits
 
         private readonly HoverableAndSelectableButtonWithAnimator sidebarButton;
         private readonly MarketplaceCreditsAPIClient marketplaceCreditsAPIClient;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly IWebRequestController webRequestController;
         private readonly UnityAppWebBrowser webBrowser;
         private readonly IInputBlock inputBlock;
@@ -78,7 +78,7 @@ namespace DCL.MarketplaceCredits
             UnityAppWebBrowser webBrowser,
             IInputBlock inputBlock,
             MarketplaceCreditsAPIClient marketplaceCreditsAPIClient,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             IWebRequestController webRequestController,
             IMVCManager mvcManager,
             Animator sidebarCreditsButtonAnimator,

@@ -65,7 +65,7 @@ namespace DCL.Friends.Tests
         {
             eventBus = Substitute.For<IFriendsEventBus>();
             friendsCache = new FriendsCache();
-            service = new RPCFriendsService(eventBus, friendsCache, Substitute.For<ISelfProfile>(), Substitute.For<IRPCSocialServices>());
+            service = new RPCFriendsService(eventBus, friendsCache, Substitute.For<SelfProfile>(), Substitute.For<IRPCSocialServices>());
         }
 
         [Test]

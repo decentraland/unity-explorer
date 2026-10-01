@@ -40,7 +40,7 @@ namespace DCL.UI.UpgradeGuestAccountPopup
         }
 
         private readonly ICompositeWeb3Provider compositeWeb3Provider;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly IInputBlock inputBlock;
         private readonly IWeb3IdentityCache identityCache;
         private readonly IProfileCache profileCache;
@@ -61,7 +61,7 @@ namespace DCL.UI.UpgradeGuestAccountPopup
         public UpgradeGuestAccountPopupController(
             ViewFactoryMethod viewFactory,
             ICompositeWeb3Provider compositeWeb3Provider,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             IInputBlock inputBlock,
             IWeb3IdentityCache identityCache,
             IProfileCache profileCache,

@@ -11,12 +11,12 @@ namespace DCL.Communities.CommunitiesBrowser.Commands
 {
     public class CreateCommunityCommand
     {
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly INftNamesProvider nftNamesProvider;
         private readonly ISpriteCache spriteCache;
         private readonly IMVCManager mvcManager;
 
-        public CreateCommunityCommand(ISelfProfile selfProfile, INftNamesProvider nftNamesProvider, IMVCManager mvcManager, ISpriteCache spriteCache)
+        public CreateCommunityCommand(SelfProfile selfProfile, INftNamesProvider nftNamesProvider, IMVCManager mvcManager, ISpriteCache spriteCache)
         {
             this.selfProfile = selfProfile;
             this.nftNamesProvider = nftNamesProvider;

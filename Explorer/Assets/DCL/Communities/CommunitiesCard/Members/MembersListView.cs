@@ -107,7 +107,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
         private CommunityInvitationContextMenuButtonHandler? invitationButtonHandler;
         private CommunitiesDataProvider.CommunitiesDataProvider? communitiesDataProvider;
-        private ISelfProfile? selfProfile;
+        private SelfProfile? selfProfile;
 
         private void Awake()
         {
@@ -324,7 +324,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             this.communitiesDataProvider = dataProvider;
         }
 
-        public void SetSelfProfile(ISelfProfile selfProfileData) =>
+        public void SetSelfProfile(SelfProfile selfProfileData) =>
             selfProfile = selfProfileData;
 
         public void SetCommunityData(GetCommunityResponse.CommunityData community, UniTask panelTask)

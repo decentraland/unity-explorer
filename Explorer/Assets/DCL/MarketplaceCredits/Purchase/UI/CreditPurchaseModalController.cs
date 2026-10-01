@@ -58,7 +58,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
         private readonly UnityAppWebBrowser webBrowser;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly World world;
         private readonly IWearableStorage wearableStorage;
@@ -100,7 +100,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
             UnityAppWebBrowser webBrowser,
             ICharacterPreviewFactory characterPreviewFactory,
             CharacterPreviewEventBus characterPreviewEventBus,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             ProfileRepositoryWrapper profileRepositoryWrapper,
             World world,
             IWearableStorage wearableStorage,

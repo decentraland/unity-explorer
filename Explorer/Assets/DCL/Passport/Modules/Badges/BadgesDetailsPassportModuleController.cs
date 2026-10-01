@@ -21,7 +21,7 @@ namespace DCL.Passport.Modules.Badges
         private readonly BadgesDetailsPassportModuleView view;
         private readonly BadgesAPIClient badgesAPIClient;
         private readonly PassportErrorsController passportErrorsController;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly BadgesCategoriesPassportModuleSubController badgesCategoriesController;
         private readonly BadgeInfoPassportModuleSubController badgeInfoController;
         private readonly BadgeDetailsCardsPassportModuleSubController badgeDetailsCardsController;
@@ -39,7 +39,7 @@ namespace DCL.Passport.Modules.Badges
             BadgeInfoPassportModuleView badgeInfoModuleView,
             BadgesAPIClient badgesAPIClient,
             PassportErrorsController passportErrorsController,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             BadgePreviewCameraView badge3DPreviewCamera,
             ImageControllerProvider imageControllerProvider)
         {

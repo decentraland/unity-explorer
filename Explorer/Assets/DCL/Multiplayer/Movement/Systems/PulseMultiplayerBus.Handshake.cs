@@ -16,7 +16,7 @@ namespace DCL.Multiplayer.Movement
 {
     public partial class PulseMultiplayerBus
     {
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly PulseRealm pulseRealm;
 
         private readonly Dictionary<string, string> authChainBuffer = new ();

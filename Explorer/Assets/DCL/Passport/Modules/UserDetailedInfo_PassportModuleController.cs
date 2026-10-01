@@ -13,7 +13,7 @@ namespace DCL.Passport.Modules
     public class UserDetailedInfo_PassportModuleController : IPassportModuleController
     {
         private readonly UserDetailedInfoPassportModuleView view;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly PassportErrorsController passportErrorsController;
         private readonly UserAdditionalFieldsPassportSubModuleController additionalFieldsController;
         private readonly UserDescription_PassportSubModuleController descriptionController;
@@ -27,7 +27,7 @@ namespace DCL.Passport.Modules
         public UserDetailedInfo_PassportModuleController(
             UserDetailedInfoPassportModuleView view,
             IMVCManager mvcManager,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             AddLink_PassportModal addLinkModal,
             PassportErrorsController passportErrorsController,
             PassportProfileInfoController passportProfileInfoController)

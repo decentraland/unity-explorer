@@ -86,7 +86,7 @@ namespace DCL.Passport
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
         private readonly ProfileChangesBus profileChangesBus;
         private readonly IMVCManager mvcManager;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly World world;
         private readonly IThumbnailProvider thumbnailProvider;
         private readonly UnityAppWebBrowser webBrowser;
@@ -181,7 +181,7 @@ namespace DCL.Passport
             CharacterPreviewEventBus characterPreviewEventBus,
             ProfileChangesBus profileChangesBus,
             IMVCManager mvcManager,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             World world,
             Entity playerEntity,
             IThumbnailProvider thumbnailProvider,

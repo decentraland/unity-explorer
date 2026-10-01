@@ -232,6 +232,8 @@ namespace Utility.Tests
 
             private int depth;
 
+            public void Dispose() { }
+
             public void Execute(in CounterCmd cmd, IMsgInbox<CounterMsg> inbox)
             {
                 depth++;

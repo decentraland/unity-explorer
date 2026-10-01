@@ -10,10 +10,10 @@ namespace DCL.Backpack.Gifting.Services.SnapshotEquipped
 {
     public class AvatarEquippedStatusProvider : IAvatarEquippedStatusProvider
     {
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly HashSet<string> equippedUrns = new ();
 
-        public AvatarEquippedStatusProvider(ISelfProfile selfProfile)
+        public AvatarEquippedStatusProvider(SelfProfile selfProfile)
         {
             this.selfProfile = selfProfile;
         }

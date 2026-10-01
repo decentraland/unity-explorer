@@ -46,7 +46,7 @@ namespace DCL.Backpack
         private const float COMPACT_TRIMMED_RIGHT_MARGIN = 20f;
 
         private readonly BackpackView view;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly BackpackCommandBus backpackCommandBus;
         private readonly BackpackInfoPanelController emoteInfoPanelController;
@@ -87,7 +87,7 @@ namespace DCL.Backpack
 
         public BackpackController(
             BackpackView view,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             IWeb3IdentityCache web3IdentityCache,
             UnityAppWebBrowser webBrowser,
             AvatarView avatarView,

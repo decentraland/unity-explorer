@@ -16,10 +16,10 @@ namespace DCL.Backpack.AvatarSection.Outfits.Services
 {
     public class AvatarScreenshotService : IAvatarScreenshotService
     {
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly string baseOutfitsDirectory;
 
-        public AvatarScreenshotService(ISelfProfile selfProfile)
+        public AvatarScreenshotService(SelfProfile selfProfile)
         {
             this.selfProfile = selfProfile;
             baseOutfitsDirectory = Path.Combine(Application.persistentDataPath, "outfits");

@@ -52,7 +52,7 @@ namespace DCL.Lobby
         private readonly IInputBlock inputBlock;
         private readonly IReadOnlyLoadingStatus loadingStatus;
         private readonly IMVCManager mvcManager;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly ProfileChangesBus profileChangesBus;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
@@ -130,7 +130,7 @@ namespace DCL.Lobby
             IInputBlock inputBlock,
             IReadOnlyLoadingStatus loadingStatus,
             IMVCManager mvcManager,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             ProfileChangesBus profileChangesBus,
             ICharacterPreviewFactory characterPreviewFactory,
             CharacterPreviewEventBus characterPreviewEventBus,

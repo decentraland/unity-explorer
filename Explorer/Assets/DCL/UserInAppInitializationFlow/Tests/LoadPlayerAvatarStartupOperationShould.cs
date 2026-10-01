@@ -20,7 +20,7 @@ namespace DCL.UserInAppInitializationFlow.Tests
     {
         private World world = null!;
         private ILoadingStatus loadingStatus = null!;
-        private ISelfProfile selfProfile = null!;
+        private SelfProfile selfProfile = null!;
         private ObjectProxy<AvatarBase> avatarBaseProxy = null!;
         private GameObject avatarGameObject = null!;
         private CancellationTokenSource cts = null!;
@@ -41,7 +41,7 @@ namespace DCL.UserInAppInitializationFlow.Tests
             loadingStatus = Substitute.For<ILoadingStatus>();
             loadingStatus.SetCurrentStage(Arg.Any<LoadingStatus.LoadingStage>()).Returns(0.5f);
 
-            selfProfile = Substitute.For<ISelfProfile>();
+            selfProfile = Substitute.For<SelfProfile>();
 
             avatarGameObject = new GameObject("AvatarBase");
             AvatarBase avatarBase = avatarGameObject.AddComponent<AvatarBase>();

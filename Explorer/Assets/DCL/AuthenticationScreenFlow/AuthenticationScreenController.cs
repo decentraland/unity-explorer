@@ -62,7 +62,7 @@ namespace DCL.AuthenticationScreenFlow
         private const string EPIC_STORE_INSTALL_SOURCE = "epic";
 
         private readonly ICompositeWeb3Provider web3Authenticator;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly UnityAppWebBrowser webBrowser;
         private readonly IWeb3IdentityCache storedIdentityProvider;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
@@ -106,7 +106,7 @@ namespace DCL.AuthenticationScreenFlow
         public AuthenticationScreenController(
             ViewFactoryMethod viewFactory,
             ICompositeWeb3Provider web3Authenticator,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             UnityAppWebBrowser webBrowser,
             IWeb3IdentityCache storedIdentityProvider,
             ICharacterPreviewFactory characterPreviewFactory,

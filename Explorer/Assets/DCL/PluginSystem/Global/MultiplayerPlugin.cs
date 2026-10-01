@@ -69,7 +69,7 @@ namespace DCL.PluginSystem.Global
         private readonly IRemoteAnnouncements remoteAnnouncements;
         private readonly IRemoveIntentions removeIntentions;
         private readonly MovementInbox movementInbox;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly IProfilePropagation profilePropagation;
         private readonly PulseActivation pulseActivation;
 
@@ -98,7 +98,7 @@ namespace DCL.PluginSystem.Global
             IRemoteAnnouncements remoteAnnouncements,
             IRemoveIntentions removeIntentions,
             MovementInbox movementInbox,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             IProfilePropagation profilePropagation,
             PulseActivation pulseActivation)
         {

@@ -21,7 +21,7 @@ namespace DCL.BugReporting.Tests
         private const string DESCRIPTION = "The avatar falls through the floor.";
 
         private BugReportService bugReportService = null!;
-        private ISelfProfile selfProfile = null!;
+        private SelfProfile selfProfile = null!;
         private World world = null!;
         private BugReportController controller = null!;
 
@@ -38,7 +38,7 @@ namespace DCL.BugReporting.Tests
             bugReportService.SubmitAsync(Arg.Do<BugReportInput>(input => captured = input), Arg.Any<CancellationToken>())
                             .Returns(UniTask.FromResult(Result<string>.SuccessResult("ticket-1")));
 
-            selfProfile = Substitute.For<ISelfProfile>();
+            selfProfile = Substitute.For<SelfProfile>();
             selfProfile.ProfileAsync(Arg.Any<CancellationToken>()).Returns(UniTask.FromResult(ProfileReadResult.FromError(ProfileReadError.NotFound)));
 
             world = World.Create();

@@ -16,7 +16,7 @@ namespace DCL.Tests.PlayMode.PerformanceTests
     {
         [SetUp]
         public void CreateService() =>
-            friendsService = new RPCFriendsService(Substitute.For<IFriendsEventBus>(), new FriendsCache(), Substitute.For<ISelfProfile>(), socialService);
+            friendsService = new RPCFriendsService(Substitute.For<IFriendsEventBus>(), new FriendsCache(), Substitute.For<SelfProfile>(), socialService);
 
         private static readonly object[] TEST_CASES_SOURCE =
         {

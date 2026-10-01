@@ -13,7 +13,7 @@ namespace DCL.MarketplaceCredits.Sections
         private const int CHECKING_EMAIL_VERIFICATION_TIME_INTERVAL_MS = 5000;
 
         private readonly MarketplaceCreditsVerifyEmailSubView subView;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly MarketplaceCreditsAPIClient marketplaceCreditsAPIClient;
         private readonly MarketplaceCreditsMenuController marketplaceCreditsMenuController;
 
@@ -24,7 +24,7 @@ namespace DCL.MarketplaceCredits.Sections
 
         public MarketplaceCreditsVerifyEmailSubController(
             MarketplaceCreditsVerifyEmailSubView subView,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             MarketplaceCreditsAPIClient marketplaceCreditsAPIClient,
             MarketplaceCreditsMenuController marketplaceCreditsMenuController)
         {

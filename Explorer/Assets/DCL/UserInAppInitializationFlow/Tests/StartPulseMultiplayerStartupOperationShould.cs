@@ -25,7 +25,7 @@ namespace DCL.UserInAppInitializationFlow.Tests
         private World world = null!;
         private IPulseMultiplayerService service = null!;
         private IProfilePropagation profilePropagation = null!;
-        private ISelfProfile selfProfile = null!;
+        private SelfProfile selfProfile = null!;
         private IRealmData realmData = null!;
         private ILocalSceneEntityIdSource entityIdSource = null!;
         private CancellationTokenSource cts = null!;
@@ -44,7 +44,7 @@ namespace DCL.UserInAppInitializationFlow.Tests
             world = World.Create();
             service = Substitute.For<IPulseMultiplayerService>();
             profilePropagation = Substitute.For<IProfilePropagation>();
-            selfProfile = Substitute.For<ISelfProfile>();
+            selfProfile = Substitute.For<SelfProfile>();
             realmData = Substitute.For<IRealmData>();
             realmData.RealmName.Returns(REALM);
             entityIdSource = Substitute.For<ILocalSceneEntityIdSource>();

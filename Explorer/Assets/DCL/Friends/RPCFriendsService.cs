@@ -37,7 +37,7 @@ namespace DCL.Friends
 
         private readonly IFriendsEventBus eventBus;
         private readonly FriendsCache friendsCache;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
 
         private readonly List<FriendRequest> receivedFriendRequestsBuffer = new ();
         private readonly List<FriendRequest> sentFriendRequestsBuffer = new ();
@@ -47,7 +47,7 @@ namespace DCL.Friends
         public RPCFriendsService(
             IFriendsEventBus eventBus,
             FriendsCache friendsCache,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             IRPCSocialServices socialServiceRPC) : base(socialServiceRPC, ReportCategory.FRIENDS)
         {
             this.eventBus = eventBus;

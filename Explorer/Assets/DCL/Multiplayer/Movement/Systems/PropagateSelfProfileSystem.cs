@@ -15,11 +15,11 @@ namespace DCL.Multiplayer.Movement
     [LogCategory(ReportCategory.MULTIPLAYER)]
     public partial class PropagateSelfProfileSystem : BaseUnityLoopSystem
     {
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly IProfilePropagation profilePropagation;
         private readonly PulseActivation pulseActivation;
 
-        internal PropagateSelfProfileSystem(World world, ISelfProfile selfProfile, IProfilePropagation profilePropagation, PulseActivation pulseActivation) : base(world)
+        internal PropagateSelfProfileSystem(World world, SelfProfile selfProfile, IProfilePropagation profilePropagation, PulseActivation pulseActivation) : base(world)
         {
             this.selfProfile = selfProfile;
             this.profilePropagation = profilePropagation;

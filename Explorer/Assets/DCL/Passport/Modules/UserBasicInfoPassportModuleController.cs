@@ -23,7 +23,7 @@ namespace DCL.Passport.Modules
         private readonly UserNameElementPresenter userNameElementPresenter;
         private readonly UserWalletAddressElementPresenter walletAddressElementPresenter;
         private readonly UserBasicInfoPassportModuleView view;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly UnityAppWebBrowser webBrowser;
         private readonly IMVCManager mvcManager;
         private readonly INftNamesProvider nftNamesProvider;
@@ -40,7 +40,7 @@ namespace DCL.Passport.Modules
 
         public UserBasicInfoPassportModuleController(
             UserBasicInfoPassportModuleView view,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             UnityAppWebBrowser webBrowser,
             IMVCManager mvcManager,
             INftNamesProvider nftNamesProvider,

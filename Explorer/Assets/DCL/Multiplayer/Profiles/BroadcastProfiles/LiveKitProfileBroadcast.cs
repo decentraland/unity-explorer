@@ -10,11 +10,11 @@ namespace DCL.Multiplayer.Profiles.BroadcastProfiles
     public class LiveKitProfileBroadcast : IProfileBroadcast
     {
         private const int CURRENT_PROFILE_VERSION = 0;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly LiveKitMessagesBroadcaster broadcaster;
         private readonly CancellationTokenSource cancellationTokenSource = new ();
 
-        public LiveKitProfileBroadcast(ISelfProfile selfProfile,
+        public LiveKitProfileBroadcast(SelfProfile selfProfile,
             LiveKitMessagesBroadcaster broadcaster)
         {
             this.selfProfile = selfProfile;

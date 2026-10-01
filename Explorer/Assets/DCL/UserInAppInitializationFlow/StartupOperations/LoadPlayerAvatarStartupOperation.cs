@@ -22,10 +22,10 @@ namespace DCL.UserInAppInitializationFlow
     public class LoadPlayerAvatarStartupOperation : IStartupOperation
     {
         private readonly ILoadingStatus loadingStatus;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy;
 
-        public LoadPlayerAvatarStartupOperation(ILoadingStatus loadingStatus, ISelfProfile selfProfile, ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy)
+        public LoadPlayerAvatarStartupOperation(ILoadingStatus loadingStatus, SelfProfile selfProfile, ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy)
         {
             this.loadingStatus = loadingStatus;
             this.selfProfile = selfProfile;

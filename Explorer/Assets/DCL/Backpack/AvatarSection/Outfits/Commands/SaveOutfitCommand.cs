@@ -18,14 +18,14 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
 {
     public class SaveOutfitCommand
     {
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly OutfitsRepository outfitsRepository;
         private readonly IWearableStorage wearableStorage;
         private readonly IEventBus eventBus;
         private readonly OutfitsLogger outfitsLogger;
         private readonly IOwnedNftFilter ownedNftFilter;
 
-        public SaveOutfitCommand(ISelfProfile selfProfile,
+        public SaveOutfitCommand(SelfProfile selfProfile,
             OutfitsRepository outfitsRepository,
             IWearableStorage wearableStorage,
             IEventBus eventBus,

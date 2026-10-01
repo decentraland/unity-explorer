@@ -178,7 +178,7 @@ namespace DCL.AuthenticationScreenFlow.Tests
             });
 
         private static ProfileFetchingAuthState NewState(GameObject root, MVCStateMachine<AuthStateBase> machine, AuthenticationScreenController controller,
-            ReactiveProperty<AuthStatus> currentState, ISelfProfile selfProfile, bool skipExistingAccountLobby)
+            ReactiveProperty<AuthStatus> currentState, SelfProfile selfProfile, bool skipExistingAccountLobby)
         {
             AuthenticationScreenView screenView = root.AddComponent<AuthenticationScreenView>();
 
@@ -213,13 +213,13 @@ namespace DCL.AuthenticationScreenFlow.Tests
         /// <summary>
         ///     Stalled catalyst request: the read settles only when its token is cancelled, as <c>Cancelled</c>.
         /// </summary>
-        private class StalledSelfProfile : ISelfProfile
+        private class StalledSelfProfile : SelfProfile
         {
             public readonly List<CancellationToken> CapturedTokens = new ();
 
-            public SelfProfileModel CurrentProfileSnapshot => SelfProfileModel.NoIdentity();
+            public override SelfProfileModel CurrentProfileSnapshot => SelfProfileModel.NoIdentity();
 
-            public async UniTask<ProfileReadResult> ProfileAsync(CancellationToken ct)
+            public override async UniTask<ProfileReadResult> ProfileAsync(CancellationToken ct)
             {
                 CapturedTokens.Add(ct);
 
@@ -227,22 +227,20 @@ namespace DCL.AuthenticationScreenFlow.Tests
                 catch (OperationCanceledException) { return ProfileReadResult.FromError(ProfileReadError.Cancelled); }
             }
 
-            public UniTask<ProfileDeployResult> DeployProfileAsync(Profile edited, CancellationToken ct) =>
+            public override UniTask<ProfileDeployResult> DeployProfileAsync(Profile edited, CancellationToken ct) =>
                 UniTask.FromResult(ProfileDeployResult.FromError(ProfileDeployError.NoIdentity));
-
-            public void Dispose() { }
         }
 
         /// <summary>
         ///     Responsive catalyst with a deployed profile: resolves to it immediately.
         /// </summary>
-        private class ExistingProfileSelfProfile : ISelfProfile
+        private class ExistingProfileSelfProfile : SelfProfile
         {
             private readonly Profile profile;
 
             public int Calls { get; private set; }
 
-            public SelfProfileModel CurrentProfileSnapshot =>
+            public override SelfProfileModel CurrentProfileSnapshot =>
                 SelfProfileModel.FromIdentified(new Identified(profile.UserId, ProfileKnowledge.FromKnown(profile), ProfileActivity.Idle()));
 
             public ExistingProfileSelfProfile(Profile profile)
@@ -250,40 +248,36 @@ namespace DCL.AuthenticationScreenFlow.Tests
                 this.profile = profile;
             }
 
-            public UniTask<ProfileReadResult> ProfileAsync(CancellationToken ct)
+            public override UniTask<ProfileReadResult> ProfileAsync(CancellationToken ct)
             {
                 Calls++;
                 return UniTask.FromResult(ProfileReadResult.FromOk(profile));
             }
 
-            public UniTask<ProfileDeployResult> DeployProfileAsync(Profile edited, CancellationToken ct) =>
+            public override UniTask<ProfileDeployResult> DeployProfileAsync(Profile edited, CancellationToken ct) =>
                 UniTask.FromResult(ProfileDeployResult.FromOk(edited));
-
-            public void Dispose() { }
         }
 
         /// <summary>
         ///     Responsive catalyst with no deployed profile: resolves to <c>NotFound</c> immediately, no cancellation involved.
         /// </summary>
-        private class MissingProfileSelfProfile : ISelfProfile
+        private class MissingProfileSelfProfile : SelfProfile
         {
             private readonly UserId address = UserId.NewRandom();
 
             public int Calls { get; private set; }
 
-            public SelfProfileModel CurrentProfileSnapshot =>
+            public override SelfProfileModel CurrentProfileSnapshot =>
                 SelfProfileModel.FromIdentified(new Identified(address, ProfileKnowledge.Missing(), ProfileActivity.Idle()));
 
-            public UniTask<ProfileReadResult> ProfileAsync(CancellationToken ct)
+            public override UniTask<ProfileReadResult> ProfileAsync(CancellationToken ct)
             {
                 Calls++;
                 return UniTask.FromResult(ProfileReadResult.FromError(ProfileReadError.NotFound));
             }
 
-            public UniTask<ProfileDeployResult> DeployProfileAsync(Profile edited, CancellationToken ct) =>
+            public override UniTask<ProfileDeployResult> DeployProfileAsync(Profile edited, CancellationToken ct) =>
                 UniTask.FromResult(ProfileDeployResult.FromError(ProfileDeployError.NoIdentity));
-
-            public void Dispose() { }
         }
     }
 

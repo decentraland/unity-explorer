@@ -24,7 +24,7 @@ namespace DCL.MarketplaceCredits.Sections
         private readonly MarketplaceCreditsProgramEndedSubController marketplaceCreditsProgramEndedSubController;
         private readonly UnityAppWebBrowser webBrowser;
         private readonly MarketplaceCreditsAPIClient marketplaceCreditsAPIClient;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly IInputBlock inputBlock;
 
         private CreditsProgramProgressResponse currentCreditsProgramProgress;
@@ -41,7 +41,7 @@ namespace DCL.MarketplaceCredits.Sections
             MarketplaceCreditsProgramEndedSubController marketplaceCreditsProgramEndedSubController,
             UnityAppWebBrowser webBrowser,
             MarketplaceCreditsAPIClient marketplaceCreditsAPIClient,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             IInputBlock inputBlock)
         {
             this.subView = subView;

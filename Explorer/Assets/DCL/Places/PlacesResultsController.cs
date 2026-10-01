@@ -46,7 +46,7 @@ namespace DCL.Places
         private readonly PlacesController placesController;
         private readonly IPlacesAPIService placesAPIService;
         private readonly PlacesStateService placesStateService;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly UnityAppWebBrowser webBrowser;
         private readonly PlacesCardSocialActionsController placesCardSocialActionsController;
         private readonly IFriendsService? friendsService;
@@ -71,7 +71,7 @@ namespace DCL.Places
             PlacesController placesController,
             IPlacesAPIService placesAPIService,
             PlacesStateService placesStateService,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             UnityAppWebBrowser webBrowser,
             IFriendsService? friendsService,
             ProfileRepositoryWrapper profileRepositoryWrapper,

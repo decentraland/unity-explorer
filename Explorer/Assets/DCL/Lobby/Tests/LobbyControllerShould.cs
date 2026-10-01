@@ -59,7 +59,7 @@ namespace DCL.Lobby.Tests
 
         private GameObject root = null!;
         private LobbyView view = null!;
-        private ISelfProfile selfProfile = null!;
+        private SelfProfile selfProfile = null!;
         private IDecentralandUrlsSource urlsSource = null!;
         private HttpEventsApiService eventsApiService = null!;
         private ProfileChangesBus profileChangesBus = null!;
@@ -163,7 +163,7 @@ namespace DCL.Lobby.Tests
             world = World.Create();
 
             // Without an own profile the avatar preview is never initialized, which keeps the rendering stack out of the test
-            selfProfile = Substitute.For<ISelfProfile>();
+            selfProfile = Substitute.For<SelfProfile>();
             selfProfile.ProfileAsync(Arg.Any<CancellationToken>()).Returns(UniTask.FromResult(ProfileReadResult.FromError(ProfileReadError.NotFound)));
 
             placesAPIService = Substitute.For<IPlacesAPIService>();

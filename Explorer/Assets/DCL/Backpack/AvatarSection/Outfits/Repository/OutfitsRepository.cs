@@ -35,7 +35,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Repository
 
         private readonly PublishIpfsEntityCommand publishIpfsEntityCommand;
         private readonly INftNamesProvider nftNamesProvider;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
 
         private readonly Dictionary<int, OutfitItem> committed = new ();
         private ulong lastPublishTimestampInSeconds;
@@ -43,7 +43,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Repository
 
         public OutfitsRepository(PublishIpfsEntityCommand publishIpfsEntityCommand,
             INftNamesProvider nftNamesProvider,
-            ISelfProfile selfProfile)
+            SelfProfile selfProfile)
         {
             this.publishIpfsEntityCommand = publishIpfsEntityCommand;
             this.nftNamesProvider = nftNamesProvider;

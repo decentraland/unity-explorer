@@ -24,7 +24,7 @@ namespace DCL.AuthenticationScreenFlow
         private readonly MVCStateMachine<AuthStateBase> machine;
         private readonly AuthenticationScreenController controller;
         private readonly ReactiveProperty<AuthStatus> currentState;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly IWeb3IdentityCache identityCache;
         private readonly ProfileFetchingAuthView view;
         private readonly bool skipExistingAccountLobby;
@@ -35,7 +35,7 @@ namespace DCL.AuthenticationScreenFlow
             AuthenticationScreenView viewInstance,
             AuthenticationScreenController controller,
             ReactiveProperty<AuthStatus> currentState,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             IWeb3IdentityCache identityCache,
             bool skipExistingAccountLobby) : base(viewInstance)
         {
@@ -165,7 +165,7 @@ namespace DCL.AuthenticationScreenFlow
         }
 
         /// <summary>Reads under a linked token that cancels after <paramref name="timeout" />; a timeout surfaces as <c>Cancelled</c> with <paramref name="ct" /> not cancelled.</summary>
-        internal static async UniTask<ProfileReadResult> FetchProfileWithTimeoutAsync(ISelfProfile selfProfile, TimeSpan timeout, CancellationToken ct)
+        internal static async UniTask<ProfileReadResult> FetchProfileWithTimeoutAsync(SelfProfile selfProfile, TimeSpan timeout, CancellationToken ct)
         {
             using CancellationTokenSource timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
             using IDisposable timeoutTimer = timeoutCts.CancelAfterSlim(timeout);

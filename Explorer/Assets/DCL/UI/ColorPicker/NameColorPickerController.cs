@@ -16,7 +16,7 @@ namespace DCL.UI
         public event Action OnColorPickerClosed;
 
         private readonly IMVCManager mvcManager;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly ProfileChangesBus profileChangesBus;
         private readonly NameColorPickerView view;
         private readonly ColorPresetsSO colorPresets;
@@ -27,7 +27,7 @@ namespace DCL.UI
 
         public NameColorPickerController(
             IMVCManager mvcManager,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             ProfileChangesBus profileChangesBus,
             NameColorPickerView view,
             ColorPresetsSO colorPresets)

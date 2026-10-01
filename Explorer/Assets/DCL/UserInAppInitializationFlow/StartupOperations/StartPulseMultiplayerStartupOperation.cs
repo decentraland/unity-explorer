@@ -14,13 +14,13 @@ namespace DCL.UserInAppInitializationFlow
 
         private readonly IPulseMultiplayerService service;
         private readonly IProfilePropagation profilePropagation;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly PulseActivation pulseActivation;
         private readonly PulseRealm pulseRealm;
 
         public StartPulseMultiplayerStartupOperation(IPulseMultiplayerService service,
             IProfilePropagation profilePropagation,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             PulseActivation pulseActivation,
             PulseRealm pulseRealm)
         {

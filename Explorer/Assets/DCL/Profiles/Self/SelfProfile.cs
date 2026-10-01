@@ -15,19 +15,19 @@ using Utility.Fsm;
 
 namespace DCL.Profiles.Self
 {
-    public class SelfProfile : ISelfProfile
+    /// <summary>Thread-safe</summary>
+    public class SelfProfile : IDisposable
     {
         private const string FSM_TAG = "SelfProfile";
 
         private readonly IWeb3IdentityCache web3IdentityCache;
-        private readonly SelfProfileCmdExecutor executor;
         private readonly FsmRuntime<SelfProfileModel, SelfProfileMsg, SelfProfileCmd> runtime;
         private readonly CancellationTokenSource drainCts = new ();
         private readonly CancellationToken drainToken;
 
         private long lastRequestId;
 
-        public SelfProfileModel CurrentProfileSnapshot => runtime.ModelSnapshot;
+        public virtual SelfProfileModel CurrentProfileSnapshot => runtime.ModelSnapshot;
 
         public SelfProfile(
             IProfileRepository profileRepository,
@@ -45,7 +45,7 @@ namespace DCL.Profiles.Self
             this.web3IdentityCache = web3IdentityCache;
             drainToken = drainCts.Token;
 
-            executor = new SelfProfileCmdExecutor(profileRepository, profileCache, wearableStorage, emoteStorage, equippedWearables, equippedEmotes,
+            var executor = new SelfProfileCmdExecutor(profileRepository, profileCache, wearableStorage, emoteStorage, equippedWearables, equippedEmotes,
                 forcedWearables, forcedEmotes, world, playerEntity);
 
             runtime = new FsmRuntime<SelfProfileModel, SelfProfileMsg, SelfProfileCmd>(FSM_TAG, SelfProfileModel.NoIdentity(), SelfProfileModel.Update, executor);
@@ -57,22 +57,41 @@ namespace DCL.Profiles.Self
             DrainLoopAsync(drainCts.Token).Forget();
         }
 
-        public void Dispose()
+#if UNITY_INCLUDE_TESTS
+        /// <summary>
+        ///     Test seam: no identity events and no drain loop, the model stays at <c>NoIdentity</c>.
+        ///     Substitutes and fakes override the virtual members.
+        /// </summary>
+        protected SelfProfile()
+        {
+            web3IdentityCache = new MemoryWeb3IdentityCache();
+            drainToken = drainCts.Token;
+            runtime = new FsmRuntime<SelfProfileModel, SelfProfileMsg, SelfProfileCmd>(FSM_TAG, SelfProfileModel.NoIdentity(), SelfProfileModel.Update, new InertCmdExecutor());
+        }
+#endif
+
+        public virtual void Dispose()
         {
             drainCts.SafeCancelAndDispose();
             web3IdentityCache.OnIdentityChanged -= SendCurrentIdentity;
             web3IdentityCache.OnIdentityCleared -= SendIdentityCleared;
-            executor.Dispose();
+            runtime.Dispose();
         }
 
-        public UniTask<ProfileReadResult> ProfileAsync(CancellationToken ct)
+        /// <summary>
+        ///     Waits until the current identity's profile is resolved. A failed read is retried once per call.
+        /// </summary>
+        public virtual UniTask<ProfileReadResult> ProfileAsync(CancellationToken ct)
         {
             RequestId id = NextRequestId();
             runtime.Send(SelfProfileMsg.FromProfileReadRequested(id));
             return AwaitResultAsync(id, static model => model.ReadResults, ProfileReadResult.FromError(ProfileReadError.Cancelled), ct);
         }
 
-        public UniTask<ProfileDeployResult> DeployProfileAsync(Profile edited, CancellationToken ct)
+        /// <summary>
+        ///     Cancelling the token stops waiting; the deploy itself always runs to its end.
+        /// </summary>
+        public virtual UniTask<ProfileDeployResult> DeployProfileAsync(Profile edited, CancellationToken ct)
         {
             RequestId id = NextRequestId();
             runtime.Send(SelfProfileMsg.FromDeployProfileOnEditRequested(new DeployRequest(id, edited)));
@@ -132,5 +151,14 @@ namespace DCL.Profiles.Self
                 runtime.Drain();
             }
         }
+
+#if UNITY_INCLUDE_TESTS
+        private class InertCmdExecutor : ICmdExecutor<SelfProfileCmd, SelfProfileMsg>
+        {
+            public void Dispose() { }
+
+            public void Execute(in SelfProfileCmd cmd, IMsgInbox<SelfProfileMsg> inbox) { }
+        }
+#endif
     }
 }

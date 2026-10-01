@@ -57,7 +57,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private readonly IInputBlock inputBlock;
         private readonly IMVCManager mvcManager;
         private readonly IWeb3IdentityCache web3IdentityCache;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly ISpriteCache spriteCache;
         private readonly CommunitiesBrowserEventBus browserEventBus;
         private readonly EventSubscriptionScope scope = new ();
@@ -98,7 +98,7 @@ namespace DCL.Communities.CommunitiesBrowser
             IInputBlock inputBlock,
             IMVCManager mvcManager,
             ProfileRepositoryWrapper profileRepositoryWrapper,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             INftNamesProvider nftNamesProvider,
             ICommunityCallOrchestrator orchestrator,
             IAnalyticsController analytics,

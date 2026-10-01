@@ -185,7 +185,7 @@ namespace DCL.Multiplayer.Movement
 
         private readonly PulseContainer pulseContainer;
         private readonly LiveKitMultiplayerContainer liveKitContainer;
-        public readonly ISelfProfile SelfProfile;
+        public readonly SelfProfile SelfProfile;
         public readonly IMovementMessageBus MovementMessageBus;
         public readonly IRemoteAnnouncements RemoteAnnouncements;
         public readonly IEmotesMessageBus EmotesMessageBus;
@@ -201,7 +201,7 @@ namespace DCL.Multiplayer.Movement
         public PulseMultiplayerBus PulseMultiplayerBus => pulseContainer.pulseMultiplayerBus!;
         public ITransport PulseTransport => pulseContainer.transport!;
 
-        private MultiplayerContainer(PulseContainer pulseContainer, LiveKitMultiplayerContainer liveKitContainer, ISelfProfile selfProfile, PulseActivation pulseActivation, PulseRealm pulseRealm)
+        private MultiplayerContainer(PulseContainer pulseContainer, LiveKitMultiplayerContainer liveKitContainer, SelfProfile selfProfile, PulseActivation pulseActivation, PulseRealm pulseRealm)
         {
             this.pulseContainer = pulseContainer;
             this.liveKitContainer = liveKitContainer;
@@ -227,7 +227,7 @@ namespace DCL.Multiplayer.Movement
             IMessagePipesHub messagePipesHub,
             MultiplayerDebugSettings multiplayerDebugSettings,
             IUserBlockingCache userBlockingCache,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             CancellationToken ct)
         {
             // Single session-wide source of truth for whether Pulse is the active transport.

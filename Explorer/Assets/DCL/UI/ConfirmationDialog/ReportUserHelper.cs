@@ -18,7 +18,7 @@ namespace DCL.UI.ConfirmationDialog
             Sprite? reportSprite,
             string reportCategory,
             string reportedUserId,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             UnityAppWebBrowser webBrowser,
             IDecentralandUrlsSource decentralandUrlsSource,
             CancellationToken ct)

@@ -8,10 +8,10 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
 {
     public class CheckOutfitsBannerVisibilityCommand
     {
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly INftNamesProvider nftNamesProvider;
 
-        public CheckOutfitsBannerVisibilityCommand(ISelfProfile selfProfile,
+        public CheckOutfitsBannerVisibilityCommand(SelfProfile selfProfile,
             INftNamesProvider nftNamesProvider)
         {
             this.selfProfile = selfProfile;

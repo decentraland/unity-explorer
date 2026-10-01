@@ -51,7 +51,7 @@ namespace DCL.PluginSystem.Global
         private readonly IInputBlock inputBlock;
         private readonly IReadOnlyLoadingStatus loadingStatus;
         private readonly IDebugContainerBuilder debugContainerBuilder;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly ProfileChangesBus profileChangesBus;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
@@ -93,7 +93,7 @@ namespace DCL.PluginSystem.Global
             IInputBlock inputBlock,
             IReadOnlyLoadingStatus loadingStatus,
             IDebugContainerBuilder debugContainerBuilder,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             ProfileChangesBus profileChangesBus,
             ICharacterPreviewFactory characterPreviewFactory,
             CharacterPreviewEventBus characterPreviewEventBus,
