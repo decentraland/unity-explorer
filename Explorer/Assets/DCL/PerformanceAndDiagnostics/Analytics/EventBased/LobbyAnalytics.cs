@@ -15,13 +15,13 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
         private const string SOURCE = "lobby";
 
         private readonly IAnalyticsController analytics;
-        private readonly ILobbyController lobby;
+        private readonly LobbyDocumentController lobby;
 
         // The startup lobby is the only way into the world, so a visit there is not the choice an in-world visit is
         private bool isStartupVisit;
         private float openedAt;
 
-        public LobbyAnalytics(IAnalyticsController analytics, ILobbyController lobby)
+        public LobbyAnalytics(IAnalyticsController analytics, LobbyDocumentController lobby)
         {
             this.analytics = analytics;
             this.lobby = lobby;

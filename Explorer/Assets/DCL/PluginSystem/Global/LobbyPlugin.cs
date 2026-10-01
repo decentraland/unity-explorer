@@ -82,9 +82,10 @@ namespace DCL.PluginSystem.Global
         private LobbyDocumentFriendsPresenter? friendsPresenter;
         private SidebarProfileButtonPresenter? profileButtonPresenter;
         private ProfileMenuController<LobbyPopupParameter>? profileMenuController;
-        private NotificationsPanelController<LobbyPopupParameter>? notificationsPanelController;
         private ICreditsPanelController creditsPanelController = new NullCreditsPanelController();
         private LobbyPopupsView? lobbyPopups;
+        private LobbyDocumentView? lobbyDocumentView;
+        private bool disposed;
 
         public LobbyPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -163,9 +164,13 @@ namespace DCL.PluginSystem.Global
             if (lobbyPopups != null)
                 Object.Destroy(lobbyPopups.gameObject);
 
+            if (lobbyDocumentView != null)
+                Object.Destroy(lobbyDocumentView.gameObject);
+
             friendsPresenter?.Dispose();
             profileButtonPresenter?.Dispose();
             creditsPanelController.Dispose();
+            disposed = true;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
@@ -184,6 +189,7 @@ namespace DCL.PluginSystem.Global
 
             // The top-bar presenters bind to the live view, so it is instantiated up front instead of lazily on first show
             ControllerBase<LobbyDocumentView, LobbyParameter>.ViewFactoryMethod viewFactory = LobbyDocumentController.Preallocate(documentPrefab, null, out LobbyDocumentView lobbyView);
+            lobbyDocumentView = lobbyView;
 
             profileButtonPresenter = new SidebarProfileButtonPresenter(lobbyView.Profile, identityCache, profileRepository, profileChangesBus);
 
@@ -213,8 +219,6 @@ namespace DCL.PluginSystem.Global
                 profileRepositoryWrapper,
                 mvcManager);
 
-            notificationsPanelController = notificationsPanel;
-
             // Without connectivity statuses there is nothing to list: the section stays hidden
             friendsPresenter = friendsConnectivity != null
                 ? new LobbyDocumentFriendsPresenter(new LobbyFriendsRail(lobbyView.FriendCardTemplate), friendsConnectivity, onlineUsersProvider, placesAPIService, passportBridge)
@@ -231,7 +235,7 @@ namespace DCL.PluginSystem.Global
 
             mvcManager.RegisterController(lobbyController);
             mvcManager.RegisterController(profileMenuController);
-            mvcManager.RegisterController(notificationsPanelController);
+            mvcManager.RegisterController(notificationsPanel);
 
             EnableCreditsPanelAsync(lobbyView.Credits, ct)
                .SuppressToResultAsync(ReportCategory.CREDITS_PURCHASE)
@@ -242,9 +246,15 @@ namespace DCL.PluginSystem.Global
                .AddSingleButton("Open", () => mvcManager.ShowAndForget(LobbyDocumentController.IssueCommand(new LobbyParameter(isStartup: false))));
         }
 
+        // The panel can resolve after Dispose has run, in which case nothing else will release it
         private async UniTask EnableCreditsPanelAsync(CreditsPanelElement element, CancellationToken ct)
         {
-            creditsPanelController = await CreditsPanelSetup.EnableIfUserAllowedAsync(element, marketplaceCreditsAPIClient, profileChangesBus, identityCache, mvcManager, ct);
+            ICreditsPanelController panel = await CreditsPanelSetup.EnableIfUserAllowedAsync(element, marketplaceCreditsAPIClient, profileChangesBus, identityCache, mvcManager, ct);
+
+            if (disposed)
+                panel.Dispose();
+            else
+                creditsPanelController = panel;
         }
     }
 }

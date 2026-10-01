@@ -1,4 +1,4 @@
-/* The landing card of the uGUI lobby: 524x300 with 24px corners, the thumbnail filling it */
+/* 524x300 with 24px corners, the thumbnail filling it */
 .lobby-landing-card {
     width: 524px;
     height: 300px;
@@ -7,7 +7,7 @@
     overflow: hidden;
 }
 
-/* A card with nothing to open is dimmed like the disabled uGUI button tints its dark fill, visible while the thumbnail is missing */
+/* A card with nothing to open is dimmed, visible while the thumbnail is missing */
 .lobby-landing-card--static {
     background-color: rgba(16, 16, 20, 0.45);
 }

@@ -2,7 +2,7 @@
     --place-card-hover-duration: 0.3s;
 }
 
-/* The place card of the uGUI lobby: 280x165 with 24px corners, the thumbnail over a 55px footer that holds the texts */
+/* 280x165 with 24px corners: the thumbnail over a 55px footer that holds the texts */
 .lobby-place-card {
     width: 280px;
     height: 165px;
@@ -11,8 +11,8 @@
     overflow: hidden;
 }
 
-/* Hovering raises the footer over the thumbnail, so the thumbnail gives up as much as the footer grows. Its corners are rounded
-   like the 16px mask of the uGUI card, so the dark strip under it curves into it; the top ones end up under the 24px ones of the card */
+/* Hovering raises the footer over the thumbnail, so the thumbnail gives up as much as the footer grows. Its 16px corners make
+   the dark strip under it curve into it; the top ones end up under the 24px ones of the card */
 .lobby-place-card__thumbnail {
     position: absolute;
     left: 0;

@@ -10,7 +10,7 @@ namespace DCL.UI.ProfileElements
     ///     so it is complete wherever it is created; ProfileWidget.uss styles them, so the document that hosts it imports that stylesheet.
     /// </summary>
     [UxmlElement]
-    public partial class ProfileWidgetElement : VisualElement, IProfileWidgetView
+    public partial class ProfileWidgetElement : VisualElement, IProfileWidgetView, IDisposable
     {
         private const string USS_BLOCK = "profile-widget";
         private const string USS_LOADING = USS_BLOCK + "--loading";
@@ -94,6 +94,12 @@ namespace DCL.UI.ProfileElements
             thumbnail.TryBind();
             OnThumbnailUpdated(thumbnail.Value);
             thumbnailSubscription = thumbnail.Subscribe(OnThumbnailUpdated);
+        }
+
+        public void Dispose()
+        {
+            thumbnailSubscription?.Dispose();
+            thumbnailSubscription = null;
         }
 
         // The profile color fills the circle without a picture, and a fetch keeps the previous picture up while there is one

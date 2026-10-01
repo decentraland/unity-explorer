@@ -39,16 +39,9 @@ using Utility.UIToolkit;
 namespace DCL.Lobby
 {
     /// <summary>
-    ///     The fullscreen panel shown before the world starts loading and,
-    ///     later, on demand during gameplay. The player's avatar stands on the stage behind everything else, drawn by the uGUI
-    ///     preview the view carries, and clicking it opens the backpack. It greets the user over the hero card of the place the session
-    ///     lands in, whose Jump in is the only way out at startup. It lists the recently visited and the featured places;
-    ///     a card opens the place details and Jump in leaves for the place. It lists the live events and the next upcoming ones;
-    ///     a card opens the event details, from where Jump in leaves for the event's parcel. It lists the online friends, whose Join
-    ///     leaves for where the friend is. Its top bar shows the credits and the profile of the user, whose popups stack on top of it.
-    ///     It only reports the close intent; what happens next is up to the caller.
+    ///     Fullscreen panel shown before the world loads and on demand in-world. It only reports the close intent; what follows is up to the caller.
     /// </summary>
-    public class LobbyDocumentController : ControllerBase<LobbyDocumentView, LobbyParameter>, ILobbyController
+    public class LobbyDocumentController : ControllerBase<LobbyDocumentView, LobbyParameter>
     {
         private const string LIVE_EVENT_HOST_FORMAT = "By {0}";
         private const string WELCOME_FALLBACK = "Welcome!";
@@ -120,12 +113,39 @@ namespace DCL.Lobby
         // At startup the lobby is the only way into the world, so it cannot be dismissed before a destination is picked
         public override bool CanBeClosedByEscape => loadingStatus.CurrentStage.Value == LoadingStatus.LoadingStage.Completed;
 
+        /// <summary>
+        ///     The panel is on screen. True at the startup show, false when the user opened it from the world.
+        /// </summary>
         public event Action<bool>? Opened;
+
+        /// <summary>
+        ///     The panel left the screen, once per <see cref="Opened" />.
+        /// </summary>
         public event Action? Closed;
+
+        /// <summary>
+        ///     A place card was picked, which opens its details rather than jumping in.
+        /// </summary>
         public event Action<PlacesData.PlaceInfo, LobbySection>? PlaceOpened;
+
+        /// <summary>
+        ///     The user is on their way to a place, from a card's Jump in or from the details that card opened.
+        /// </summary>
         public event Action<PlacesData.PlaceInfo, LobbySection>? PlaceJumpedIn;
+
+        /// <summary>
+        ///     An event card was picked, which opens its details rather than jumping in.
+        /// </summary>
         public event Action<IEventDTO, LobbySection>? EventOpened;
+
+        /// <summary>
+        ///     The user is on their way to an event, from the details its card opened.
+        /// </summary>
         public event Action<IEventDTO, LobbySection>? EventJumpedIn;
+
+        /// <summary>
+        ///     The user is on their way to where a friend is, with the parcel the friend was at.
+        /// </summary>
         public event Action<string, Vector2Int>? FriendJoined;
 
         public LobbyDocumentController(ViewFactoryMethod viewFactory,
@@ -184,7 +204,10 @@ namespace DCL.Lobby
             base.Dispose();
 
             if (viewInstance != null)
+            {
                 viewInstance.Profile.Clicked = null;
+                viewInstance.Profile.Dispose();
+            }
 
             mvcManager.OnViewClosed -= ShowAgainWhenTheScreenIsFree;
             startParcel.JumpInRequestRaised -= RequestClose;
@@ -218,12 +241,13 @@ namespace DCL.Lobby
             leaving = false;
         }
 
-        // The hierarchy is only reachable while the view is shown, so the rows are handed their section here rather than once at instantiation
+        // The hierarchy exists from the first show on, so the rows are handed their section here rather than at instantiation
         protected override void OnViewShow()
         {
             inputBlock.Disable(InputMapComponent.BLOCK_USER_INPUT);
 
-            // The renderer keeps the hierarchy across hides, so every handler is removed before it is added and stays registered once
+            // The renderer keeps the hierarchy across hides, so every handler is removed before it is added and stays registered once;
+            // the top-bar widgets outlive the show cycle as well, so their presenters stay bound
             viewInstance!.AttachTopBarWidgets();
             viewInstance.Profile.Clicked = ShowProfileMenu;
             viewInstance.NotificationsButton.clicked -= ShowNotifications;
@@ -428,7 +452,12 @@ namespace DCL.Lobby
 
             if (ct.IsCancellationRequested) return;
 
-            if (!result.Success && landingDestination is { } shown && shown.Equals(destination)) return;
+            // A hide while the picture was loading left the kept card on its loading look, so the picture is loaded again
+            if (!result.Success && landingDestination is { } shown && shown.Equals(destination) && landingPlace is { } kept)
+            {
+                LoadThumbnailAsync(viewInstance!.LandingCard, kept.image, ReportCategory.PLACES, ct).Forget();
+                return;
+            }
 
             PlacesData.PlaceInfo? place = result.Success ? result.Value : null;
             ShowLandingCard(destination, place ?? destination.ToOfflinePlace(), hasDetails: place != null, ct);
@@ -461,16 +490,10 @@ namespace DCL.Lobby
             landingDestination = destination;
 
             LobbyLandingCardElement card = viewInstance!.LandingCard;
-            card.Title = place.title;
-            card.Creator = place.contact_name;
-
-            // The addresses come only from the endpoints that resolve connected users; the aggregated count is the fallback
-            card.OnlineCount = place.connected_addresses?.Length ?? place.user_count;
             card.HasOnlineCount = true;
             card.CanJumpIn = true;
             card.CanOpen = hasDetails;
-
-            LoadThumbnailAsync(card, place.image, ReportCategory.PLACES, ct).Forget();
+            ShowPlaceCard(card, place, ct);
         }
 
         private void OnLandingCardClicked()
@@ -581,8 +604,8 @@ namespace DCL.Lobby
             };
 
         /// <summary>
-        ///     A single schedule fetch feeds both event rows; a failed fetch keeps the events of the last one that succeeded, so the
-        ///     rows are only hidden while none have ever arrived.
+        ///     A single schedule fetch feeds both event rows. A failed fetch keeps the upcoming events of the last one that succeeded,
+        ///     so that row is only hidden while none have ever arrived, but drops the live ones: a stale LIVE badge is a false claim.
         /// </summary>
         private async UniTaskVoid ShowEventsAsync(CancellationToken ct)
         {
@@ -606,6 +629,8 @@ namespace DCL.Lobby
                 if (upcomingEvents.Count > MAX_UPCOMING_EVENTS)
                     upcomingEvents.RemoveRange(MAX_UPCOMING_EVENTS, upcomingEvents.Count - MAX_UPCOMING_EVENTS);
             }
+            else
+                liveEvents.Clear();
 
             liveEventsRail!.SetCount(liveEvents.Count);
 
