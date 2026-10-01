@@ -148,12 +148,16 @@ So the one line that copies *from another target* is the dev seed for a fresh de
 
 #### Confirming cache behavior from CI
 
-The *Generate shader and cache report* step writes a GitHub job summary, the existing
-`{platform}_{install_source}_shader_compilation_report` artifact, and a new
+The *Generate shader and cache report* step writes a GitHub job summary, the
+`{platform}_{install_source}_shader_compilation_report` artifact, and the
 `{platform}_{install_source}_build_metrics` artifact containing `unity_build_metrics.json`.
-It also runs on failed builds when a cloud log is available. The parser is
+It also runs on failed builds when a cloud log is available. Report generation
+errors are non-blocking diagnostics. The parser is
 `scripts/cloudbuild/build_report.py` (Python standard library only).
 
+- **Which pool a build used:** `build.py` logs `Updated name for target: <target>` in
+  the *Execute Unity Cloud build* step (also `context.build_target` in the JSON).
+  The same target name across branches identifies the same cache pool.
 - **Target identity:** JSON `context` records the Unity build target/number, GitHub
   run/attempt, commit, platform, install source and requested clean/cache settings.
   `requested_clean_build: false` does **not** prove that a cache was available.
@@ -175,7 +179,7 @@ It also runs on failed builds when a cloud log is available. The parser is
   compilation. Totals cover recognized summaries; a detected format mismatch emits
   a warning. No summaries means `null` counts, not zero. Individual pass durations
   can overlap, so `summed_pass_seconds` is not wall-clock build time. JSON timings
-  use seconds; the human-readable summary uses whole minutes.
+  use seconds; the human-readable summary uses H:MM:SS rounded to whole seconds.
 
 These artifacts are diagnostic outputs; they are not automatically ingested into
 Snowflake or the build dashboard. Run the parser locally against a downloaded log:

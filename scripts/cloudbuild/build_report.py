@@ -1,7 +1,6 @@
 """Report observed shader work and cache timings from a Unity Cloud Build log."""
 import argparse
 import datetime
-import html
 import json
 import os
 from pathlib import Path
@@ -14,9 +13,11 @@ PASS = re.compile(r'\b[Pp]ass "?(.*?)"? \(([^)]+)\)')
 COMPILATION = re.compile(
     r'finished in (-?\d+(?:\.\d+)?) seconds\. Local cache hits (\d+(?:,\d{3})*)\b.*?'
     r'remote cache hits (\d+(?:,\d{3})*)\b.*?compiled (\d+(?:,\d{3})*) variants\b')
-FETCH = re.compile(r'Fetching Cached ((?:library|workspace)[\w.-]*)')
-RESTORED = re.compile(r'((?:library|workspace)[\w.-]*) successfully fetched and unpacked from remote cache')
+FETCH = re.compile(r'Fetching Cached ((?:library|workspace)[\w.-]*)', re.IGNORECASE)
+RESTORED = re.compile(r'((?:library|workspace)[\w.-]*) successfully fetched and unpacked from remote cache', re.IGNORECASE)
+MISSING_CACHE = re.compile(r'No (?:Library|Workspace) cache found', re.IGNORECASE)
 ARCHIVE = re.compile(r'Zipping cache files from (\w+) using compression level (\w+)')
+SLOWEST_PASSES_SHOWN = 5
 
 
 def timestamp(line):
@@ -39,7 +40,7 @@ def elapsed(start, end):
 def parse_log(lines):
     passes, restores, archives = [], [], []
     shader = legacy_pass = None
-    shader_markers = summary_markers = unparsed_summaries = 0
+    shader_markers = unparsed_summaries = 0
     restore = archive = None
     for line in lines:
         at = timestamp(line)
@@ -49,10 +50,8 @@ def parse_log(lines):
             shader = match[1]
             legacy_pass = PASS.search(line[match.end():])
         match = COMPILATION.search(line)
-        if 'Local cache hits' in line:
-            summary_markers += 1
-            if not match:
-                unparsed_summaries += 1
+        if 'Local cache hits' in line and not match:
+            unparsed_summaries += 1
         if match:
             pass_match = PASS.search(line) or legacy_pass
             passes.append({
@@ -70,7 +69,7 @@ def parse_log(lines):
             restore = {'key': match[1], 'status': 'unknown', 'started_at': at,
                        'extraction_started_at': None, 'finished_at': None}
             restores.append(restore)
-        if re.search(r'No (?:Library|Workspace) cache found', line, re.IGNORECASE):
+        if MISSING_CACHE.search(line):
             # Unity can repeat the missing-cache warning during postbuild.
             if restore is None:
                 restore = {'key': None, 'status': 'unknown', 'started_at': None,
@@ -82,10 +81,12 @@ def parse_log(lines):
             restore['extraction_started_at'] = at
         match = RESTORED.search(line)
         if match:
-            if restore is None or restore['key'] != match[1] or restore['status'] != 'unknown':
+            same_key = restore is not None and (restore['key'] or '').casefold() == match[1].casefold()
+            if not same_key or restore['status'] == 'miss':
                 restore = {'key': match[1], 'started_at': None, 'extraction_started_at': None}
                 restores.append(restore)
-            restore.update(status='hit', finished_at=at)
+            if restore.get('status') != 'hit':
+                restore.update(status='hit', finished_at=at)
         match = ARCHIVE.search(line)
         if match:
             archive = {'source': match[1], 'compression': match[2], 'started_at': at,
@@ -121,7 +122,6 @@ def parse_log(lines):
         'shaders': {
             'status': status,
             'shader_markers': shader_markers,
-            'summary_markers': summary_markers,
             'unparsed_summaries': unparsed_summaries,
             'summaries_parsed': len(passes),
             **totals,
@@ -151,14 +151,18 @@ def context_from_env(env, build_info):
     return context
 
 
+def markdown_cell(text):
+    return re.sub(r'([\\`*_\[\]<>|])', r'\\\1', text)
+
+
 def render_summary(report):
     def count(value):
         return f'{value:,}' if value is not None else 'unknown'
 
-    def minutes(value):
+    def duration(value):
         if value is None:
             return 'unknown'
-        return '<1 min' if 0 < value < 60 else f'{value / 60:.0f} min'
+        return str(datetime.timedelta(seconds=round(max(value, 0))))
 
     shaders = report['shaders']
     lines = ['### Unity shader and cache report', '',
@@ -167,18 +171,18 @@ def render_summary(report):
              f"| Variants actually compiled | {count(shaders['compiled_variants'])} |",
              f"| Local cache hits | {count(shaders['local_cache_hits'])} |",
              f"| Remote cache hits | {count(shaders['remote_cache_hits'])} |",
-             f"| Sum of pass durations (can overlap) | {minutes(shaders['summed_pass_seconds'])} |", '',
+             f"| Sum of pass durations (can overlap) | {duration(shaders['summed_pass_seconds'])} |", '',
              'Local shader hits can come from a restored Library cache. Remote hits are a separate shader cache metric.', '',
              '| Cache restore | Result | Total | Before extraction | Extraction |', '|---|---|---:|---:|---:|']
     for item in report['cache']['restores']:
-        lines.append(f"| {item['key'] or 'unknown'} | {item['status']} | {minutes(item['restore_seconds'])} | "
-                     f"{minutes(item['fetch_to_extraction_seconds'])} | {minutes(item['extraction_seconds'])} |")
+        lines.append(f"| {item['key'] or 'unknown'} | {item['status']} | {duration(item['restore_seconds'])} | "
+                     f"{duration(item['fetch_to_extraction_seconds'])} | {duration(item['extraction_seconds'])} |")
     if not report['cache']['restores']:
         lines.append('| No recognized restore markers | unknown | unknown | unknown | unknown |')
     lines += ['', '| Cache archive | Compression | Creation | Archive → postbuild end |', '|---|---|---:|---:|']
     for item in report['cache']['archives']:
-        lines.append(f"| {item['source']} | {item['compression']} | {minutes(item['archive_seconds'])} | "
-                     f"{minutes(item['archive_to_postbuild_end_seconds'])} |")
+        lines.append(f"| {item['source']} | {item['compression']} | {duration(item['archive_seconds'])} | "
+                     f"{duration(item['archive_to_postbuild_end_seconds'])} |")
     if not report['cache']['archives']:
         lines.append('| No recognized archive markers | unknown | unknown | unknown |')
     lines += ['', 'Archive → postbuild end includes transfer and other finalization work; it is not a measured upload duration.',
@@ -186,10 +190,10 @@ def render_summary(report):
     if shaders['passes']:
         lines += ['| Slowest observed shader passes | Pass / type | Compiled variants | Duration |',
                   '|---|---|---:|---:|']
-        for item in sorted(shaders['passes'], key=lambda p: p['duration_seconds'], reverse=True)[:5]:
-            name = html.escape(item['shader'] or 'Unattributed (no shader header)').replace('|', '&#124;')
-            pass_name = html.escape(f"{item['pass'] or '(unnamed)'} / {item['type'] or 'unknown'}").replace('|', '&#124;')
-            lines.append(f"| {name} | {pass_name} | {count(item['compiled_variants'])} | {minutes(item['duration_seconds'])} |")
+        for item in sorted(shaders['passes'], key=lambda p: p['duration_seconds'], reverse=True)[:SLOWEST_PASSES_SHOWN]:
+            name = markdown_cell(item['shader'] or 'Unattributed (no shader header)')
+            pass_name = markdown_cell(f"{item['pass'] or '(unnamed)'} / {item['type'] or 'unknown'}")
+            lines.append(f"| {name} | {pass_name} | {count(item['compiled_variants'])} | {duration(item['duration_seconds'])} |")
         lines.append('')
     lines.extend(f'- Warning: {warning}' for warning in report['warnings'])
     return '\n'.join(lines) + '\n'

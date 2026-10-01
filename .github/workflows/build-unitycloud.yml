@@ -1056,6 +1056,7 @@ jobs:
 
       - name: Generate shader and cache report
         if: ${{ always() && hashFiles('unity_cloud_log.log') != '' }}
+        continue-on-error: true
         env:
           REPORT_PLATFORM: ${{ matrix.target }}
           REPORT_INSTALL_SOURCE: ${{ needs.prebuild.outputs.install_source }}

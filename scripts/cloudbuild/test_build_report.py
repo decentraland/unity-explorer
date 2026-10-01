@@ -46,7 +46,6 @@ class ShaderReportTest(unittest.TestCase):
         self.assertEqual(archive['compression'], 'none')
         self.assertEqual(archive['archive_seconds'], 27.773)
         self.assertEqual(archive['archive_to_postbuild_end_seconds'], 674.44)
-        self.assertNotIn('upload_seconds', archive)
 
     def test_legacy_header_and_grouped_counts(self):
         report = parse('''[2026-09-30T10:00:00Z - Unity] Compiling shader "Example" pass "Forward" (vp)
@@ -120,6 +119,51 @@ No Library cache found - ALL assets will be re-imported.
 [2026-09-30T10:00:00Z] INFO: library_example successfully fetched and unpacked from remote cache''')
         self.assertIsNone(report['cache']['restores'][0]['restore_seconds'])
 
+    def test_repeated_hit_preserves_original_restore_and_timings(self):
+        report = parse('''[2026-09-30T10:00:00Z] INFO: Fetching Cached library_example
+[2026-09-30T10:01:00Z] INFO: Extracting cache files to /example
+[2026-09-30T10:02:00Z] INFO: library_example successfully fetched and unpacked from remote cache
+[2026-09-30T10:03:00Z] INFO: library_example successfully fetched and unpacked from remote cache''')
+        restores = report['cache']['restores']
+        self.assertEqual(len(restores), 1)
+        self.assertEqual(restores[0]['status'], 'hit')
+        self.assertEqual(restores[0]['restore_seconds'], 120)
+        self.assertEqual(restores[0]['extraction_seconds'], 60)
+
+    def test_new_fetch_of_same_key_is_a_separate_restore(self):
+        report = parse('''[2026-09-30T10:00:00Z] INFO: Fetching Cached library_example
+[2026-09-30T10:02:00Z] INFO: library_example successfully fetched and unpacked from remote cache
+[2026-09-30T11:00:00Z] INFO: Fetching Cached library_example
+[2026-09-30T11:03:00Z] INFO: library_example successfully fetched and unpacked from remote cache''')
+        restores = report['cache']['restores']
+        self.assertEqual(len(restores), 2)
+        self.assertEqual([r['restore_seconds'] for r in restores], [120, 180])
+
+    def test_cache_markers_are_case_insensitive(self):
+        report = parse('''[2026-09-30T10:00:00Z] INFO: FETCHING CACHED LIBRARY_example
+[2026-09-30T10:02:00Z] INFO: library_example SUCCESSFULLY FETCHED AND UNPACKED FROM REMOTE CACHE
+[2026-09-30T10:03:00Z] INFO: LIBRARY_example successfully fetched and unpacked from remote cache
+[2026-09-30T11:00:00Z] INFO: fetching cached workspace_other
+NO WORKSPACE CACHE FOUND''')
+        restores = report['cache']['restores']
+        self.assertEqual([r['status'] for r in restores], ['hit', 'miss'])
+        self.assertEqual(restores[0]['restore_seconds'], 120)
+
+
+class ReportSummaryTest(unittest.TestCase):
+    def test_short_and_negative_durations_use_nonnegative_hms(self):
+        for seconds, expected in ((27.773, '0:00:28'), (-0.01, '0:00:00'), (-0.0, '0:00:00')):
+            with self.subTest(seconds=seconds):
+                report = parse(f'Pass Forward (vp) finished in {seconds:.3f} seconds. Local cache hits 0 (0s), remote cache hits 0 (0s), compiled 1 variants (0s).')
+                self.assertIn(f'| Forward / vp | 1 | {expected} |', render_summary(report))
+
+    def test_shader_and_pass_names_render_as_literal_markdown(self):
+        report = parse('''Compiling shader "[x](https://example.com) <tag>"
+Pass [pass]*_`| (vp) finished in 1 seconds. Local cache hits 0 (0s), remote cache hits 0 (0s), compiled 1 variants (0s).''')
+        summary = render_summary(report)
+        self.assertIn(r'\[x\](https://example.com) \<tag\>', summary)
+        self.assertIn(r'\[pass\]\*\_\`\| / vp', summary)
+
 
 class ReportCommandTest(unittest.TestCase):
     def test_context_only_reads_allowlisted_fields(self):
@@ -150,7 +194,8 @@ class ReportCommandTest(unittest.TestCase):
             self.assertEqual(data['schema_version'], 1)
             self.assertEqual(data['cache']['restores'][0]['status'], 'hit')
             self.assertTrue(summary.read_text().startswith('Existing summary\n'))
-            self.assertIn('12 min', summary.read_text())
+            self.assertIn('0:11:50', summary.read_text())
+            self.assertIn('0:00:28', summary.read_text())
             self.assertIn((dest / 'report.log').read_text(), summary.read_text())
 
 
