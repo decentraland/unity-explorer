@@ -286,7 +286,7 @@ namespace DCL.Profiles.Tests
             AnyGet().Returns(UniTask.FromResult<ProfileTier?>(saved));
 
             // Act
-            executor.Execute(SelfProfileCmd.FromDeploy(new DeployCmd(ALICE, sent)), inbox);
+            executor.Execute(SelfProfileCmd.FromDeploy(new DeployCmd(ALICE, sent, sent.Version)), inbox);
 
             // Assert
             profileRepository.Received(1).SetAsync(sent, Arg.Any<CancellationToken>());
@@ -305,7 +305,7 @@ namespace DCL.Profiles.Tests
             AnyGet().Returns(UniTask.FromResult<ProfileTier?>(NewProfile(ALICE, 4)));
 
             // Act
-            executor.Execute(SelfProfileCmd.FromDeploy(new DeployCmd(ALICE, sent)), inbox);
+            executor.Execute(SelfProfileCmd.FromDeploy(new DeployCmd(ALICE, sent, sent.Version)), inbox);
 
             // Assert
             profileRepository.Received(1).GetAsync(ALICE.Value, 4, null, Arg.Any<CancellationToken>(), false,
@@ -322,7 +322,7 @@ namespace DCL.Profiles.Tests
             profileRepository.SetAsync(Arg.Any<Profile>(), Arg.Any<CancellationToken>()).Returns(UniTask.FromException(error));
 
             // Act
-            executor.Execute(SelfProfileCmd.FromDeploy(new DeployCmd(ALICE, sent)), inbox);
+            executor.Execute(SelfProfileCmd.FromDeploy(new DeployCmd(ALICE, sent, sent.Version)), inbox);
 
             // Assert
             Assert.That(SingleSent().IsDeployFailed(out DeployFailed msg), Is.True);
@@ -340,7 +340,7 @@ namespace DCL.Profiles.Tests
             AnyGet().Returns(UniTask.FromResult<ProfileTier?>(null));
 
             // Act
-            executor.Execute(SelfProfileCmd.FromDeploy(new DeployCmd(ALICE, sent)), inbox);
+            executor.Execute(SelfProfileCmd.FromDeploy(new DeployCmd(ALICE, sent, sent.Version)), inbox);
 
             // Assert
             Assert.That(SingleSent().IsDeployFailed(out DeployFailed msg), Is.True);
@@ -357,7 +357,7 @@ namespace DCL.Profiles.Tests
             Profile sent = NewProfile(ALICE, 4);
 
             // Act
-            executor.Execute(SelfProfileCmd.FromDeploy(new DeployCmd(ALICE, sent)), inbox);
+            executor.Execute(SelfProfileCmd.FromDeploy(new DeployCmd(ALICE, sent, sent.Version)), inbox);
 
             // Assert
             profileRepository.DidNotReceiveWithAnyArgs().SetAsync(default!, default);

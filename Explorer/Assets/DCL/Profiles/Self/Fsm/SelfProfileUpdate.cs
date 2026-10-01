@@ -1,3 +1,5 @@
+using DCL.Utility.Types;
+
 namespace DCL.Profiles.Self
 {
     public readonly partial struct SelfProfileModel
@@ -14,6 +16,9 @@ namespace DCL.Profiles.Self
         private const string DEPLOY_FOR_ANOTHER_IDENTITY = "the deploy was started for another identity";
         private const string NO_DEPLOY_IN_FLIGHT = "no deploy is in flight";
         private const string DEPLOY_SUPERSEDED = "the deploy was superseded by a later edit";
+        private const string NO_IDENTITY_TO_RETRY_FOR = "there is no identity to read the profile of";
+        private const string LAST_READ_DID_NOT_FAIL = "the last read did not fail, there is nothing to retry";
+        private const string ACTIVITY_ALREADY_IN_FLIGHT = "an activity is already in flight";
 
         /// <summary>
         ///     Pure transition of the self-profile FSM. No IO, no time, no shared state.
@@ -28,7 +33,8 @@ namespace DCL.Profiles.Self
                 onFetchFailed: static (model, failed) => OnFetchFailed(model, failed),
                 onProfileEdited: static (model, edited) => OnProfileEdited(model, edited),
                 onDeploySucceeded: static (model, deployed) => OnDeploySucceeded(model, deployed),
-                onDeployFailed: static (model, failed) => OnDeployFailed(model, failed)
+                onDeployFailed: static (model, failed) => OnDeployFailed(model, failed),
+                onRetryRequested: static model => OnRetryRequested(model)
             );
 
         private static (SelfProfileModel, SelfProfileCmd) OnIdentityChanged(in SelfProfileModel model, UserId address) =>
@@ -96,14 +102,18 @@ namespace DCL.Profiles.Self
                 onDeploying: static (_, inFlight) => inFlight.Before
             );
 
+            // The next version follows the trusted profile, which during a deploy is the pending edit.
+            int version = current.Knowledge.IsKnown(out Profile known) ? known.Version + 1 : edited.Version + 1;
+
             ProfileActivity deploying = ProfileActivity.FromDeploying(new Deploying(edited, before));
-            SelfProfileCmd deploy = SelfProfileCmd.FromDeploy(new DeployCmd(current.Address, edited));
+            SelfProfileCmd deploy = SelfProfileCmd.FromDeploy(new DeployCmd(current.Address, edited, version));
 
             // Only a known profile is trusted locally before the catalyst confirms the edit.
             if (!before.IsKnown(out _))
-                return (FromIdentified(current.With(before, deploying)), deploy);
+                return (FromIdentified(current.With(before, deploying, Option<DeployFailure>.None)), deploy);
 
-            return (FromIdentified(current.With(ProfileKnowledge.FromKnown(edited), deploying)), SelfProfileCmd.FromBatch(new[] { SelfProfileCmd.FromPublish(edited), deploy }));
+            return (FromIdentified(current.With(ProfileKnowledge.FromKnown(edited), deploying, Option<DeployFailure>.None)),
+                SelfProfileCmd.FromBatch(new[] { SelfProfileCmd.FromPublish(edited), deploy }));
         }
 
         private static (SelfProfileModel, SelfProfileCmd) OnDeploySucceeded(in SelfProfileModel model, in DeploySucceeded msg)
@@ -111,7 +121,7 @@ namespace DCL.Profiles.Self
             if (StaleDeployReason(model, msg.Address, msg.Sent, out Identified current, out _) is { } reason)
                 return Ignored(model, reason);
 
-            return (FromIdentified(current.With(ProfileKnowledge.FromKnown(msg.Saved), ProfileActivity.Idle())), SelfProfileCmd.FromPublish(msg.Saved));
+            return (FromIdentified(current.With(ProfileKnowledge.FromKnown(msg.Saved), ProfileActivity.Idle(), Option<DeployFailure>.None)), SelfProfileCmd.FromPublish(msg.Saved));
         }
 
         private static (SelfProfileModel, SelfProfileCmd) OnDeployFailed(in SelfProfileModel model, in DeployFailed msg)
@@ -119,7 +129,8 @@ namespace DCL.Profiles.Self
             if (StaleDeployReason(model, msg.Address, msg.Sent, out Identified current, out Deploying deploying) is { } reason)
                 return Ignored(model, reason);
 
-            SelfProfileModel reverted = FromIdentified(current.With(deploying.Before, ProfileActivity.Idle()));
+            var failure = Option<DeployFailure>.Some(new DeployFailure(msg.Sent, msg.Exception));
+            SelfProfileModel reverted = FromIdentified(current.With(deploying.Before, ProfileActivity.Idle(), failure));
 
             // Only a known profile was published before the deploy, so only then is there something to republish.
             SelfProfileCmd cmd = deploying.Before.Match(
@@ -130,6 +141,24 @@ namespace DCL.Profiles.Self
             );
 
             return (reverted, cmd);
+        }
+
+        private static (SelfProfileModel, SelfProfileCmd) OnRetryRequested(in SelfProfileModel model) =>
+            model.Match(
+                onNoIdentity: static () => Ignored(NoIdentity(), NO_IDENTITY_TO_RETRY_FOR),
+                onIdentified: static current => Retry(current)
+            );
+
+        /// <summary>A retry re-reads only after a failed read; the failed knowledge stays until the new read answers.</summary>
+        private static (SelfProfileModel, SelfProfileCmd) Retry(in Identified current)
+        {
+            if (!current.Activity.IsIdle())
+                return Ignored(FromIdentified(current), ACTIVITY_ALREADY_IN_FLIGHT);
+
+            if (!current.Knowledge.IsFailed(out _))
+                return Ignored(FromIdentified(current), LAST_READ_DID_NOT_FAIL);
+
+            return (FromIdentified(current.WithActivity(ProfileActivity.Fetching())), SelfProfileCmd.FromFetch(current.Address));
         }
 
         private static SelfProfileModel StartFetching(UserId address) =>

@@ -7,14 +7,18 @@ namespace DCL.Profiles.Self
         public readonly UserId Address;
         public readonly Profile Profile;
 
-        public DeployCmd(UserId address, Profile profile)
+        /// <summary>The version the profile is deployed as.</summary>
+        public readonly int Version;
+
+        public DeployCmd(UserId address, Profile profile, int version)
         {
             Address = address;
             Profile = profile;
+            Version = version;
         }
 
         public override string ToString() =>
-            $"{Address.Value} v{Profile.Version}";
+            $"{Address.Value} v{Version}";
     }
 
     /// <summary>

@@ -1,4 +1,5 @@
 using DCL.Profiles.Self;
+using DCL.Utility.Types;
 using ECS.TestSuite;
 using NUnit.Framework;
 using System;
@@ -375,8 +376,136 @@ namespace DCL.Profiles.Tests
             AssertDeploy(cmd, edited);
         }
 
+        [Test]
+        public void RefetchWhenARetryIsRequestedAfterAFailedRead()
+        {
+            // Arrange
+            SelfProfileModel model = Model(ProfileKnowledge.FromFailed(TRANSIENT_FAILURE), ProfileActivity.Idle());
+
+            // Act
+            (SelfProfileModel next, SelfProfileCmd cmd) = SelfProfileModel.Update(model, SelfProfileMsg.RetryRequested());
+
+            // Assert
+            Identified identified = AssertIdentified(next);
+            Assert.That(identified.Knowledge.GetKind(), Is.EqualTo(ProfileKnowledge.Kind.Failed));
+            Assert.That(identified.Activity.GetKind(), Is.EqualTo(ProfileActivity.Kind.Fetching));
+            AssertFetch(cmd, ALICE);
+        }
+
+        [Test]
+        public void IgnoreARetryWhenTheLastReadDidNotFail()
+        {
+            // Arrange
+            SelfProfileModel known = Known(NewProfile(3));
+            SelfProfileModel missing = Model(ProfileKnowledge.Missing(), ProfileActivity.Idle());
+
+            // Act & Assert
+            AssertUnchanged(known, SelfProfileMsg.RetryRequested());
+            AssertUnchanged(missing, SelfProfileMsg.RetryRequested());
+        }
+
+        [Test]
+        public void IgnoreARetryWhileAnActivityIsInFlight()
+        {
+            // Arrange
+            SelfProfileModel model = Fetching();
+
+            // Act & Assert
+            AssertUnchanged(model, SelfProfileMsg.RetryRequested());
+        }
+
+        [Test]
+        public void IgnoreARetryWithoutIdentity()
+        {
+            // Arrange
+            SelfProfileModel model = SelfProfileModel.NoIdentity();
+
+            // Act & Assert
+            AssertUnchanged(model, SelfProfileMsg.RetryRequested());
+        }
+
+        [Test]
+        public void DeployTheEditAsTheNextVersionOfTheKnownProfile()
+        {
+            // Arrange
+            Profile edited = NewProfile(3);
+            SelfProfileModel model = Known(NewProfile(3));
+
+            // Act
+            (_, SelfProfileCmd cmd) = SelfProfileModel.Update(model, SelfProfileMsg.FromProfileEdited(edited));
+
+            // Assert
+            SelfProfileCmd[] batch = AssertBatch(cmd, 2);
+            Assert.That(AssertDeploy(batch[1], edited).Version, Is.EqualTo(4));
+        }
+
+        [Test]
+        public void DeployTheEditAsItsOwnNextVersionWhenNothingIsKnown()
+        {
+            // Arrange
+            Profile edited = NewProfile(0);
+            SelfProfileModel model = Model(ProfileKnowledge.Missing(), ProfileActivity.Idle());
+
+            // Act
+            (_, SelfProfileCmd cmd) = SelfProfileModel.Update(model, SelfProfileMsg.FromProfileEdited(edited));
+
+            // Assert
+            Assert.That(AssertDeploy(cmd, edited).Version, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void RecordTheFailureWhenADeployFails()
+        {
+            // Arrange
+            Profile pending = NewProfile(4);
+            SelfProfileModel model = Deploying(pending, ProfileKnowledge.FromKnown(NewProfile(3)));
+
+            // Act
+            (SelfProfileModel next, _) = SelfProfileModel.Update(model, SelfProfileMsg.FromDeployFailed(new DeployFailed(ALICE, pending, DEPLOY_ERROR)));
+
+            // Assert
+            Identified identified = AssertIdentified(next);
+            Assert.That(identified.LastDeployFailure.Has, Is.True);
+            Assert.That(identified.LastDeployFailure.Value.Sent, Is.SameAs(pending));
+            Assert.That(identified.LastDeployFailure.Value.Exception, Is.SameAs(DEPLOY_ERROR));
+        }
+
+        [Test]
+        public void ForgetTheLastDeployFailureOnANewEdit()
+        {
+            // Arrange
+            SelfProfileModel model = WithDeployFailure(Known(NewProfile(3)));
+
+            // Act
+            (SelfProfileModel next, _) = SelfProfileModel.Update(model, SelfProfileMsg.FromProfileEdited(NewProfile(3)));
+
+            // Assert
+            Assert.That(AssertIdentified(next).LastDeployFailure.Has, Is.False);
+        }
+
+        [Test]
+        public void ForgetTheLastDeployFailureWhenADeploySucceeds()
+        {
+            // Arrange
+            Profile pending = NewProfile(4);
+            SelfProfileModel model = WithDeployFailure(Deploying(pending, ProfileKnowledge.FromKnown(NewProfile(3))));
+
+            // Act
+            (SelfProfileModel next, _) = SelfProfileModel.Update(model, SelfProfileMsg.FromDeploySucceeded(new DeploySucceeded(ALICE, pending, NewProfile(4))));
+
+            // Assert
+            Assert.That(AssertIdentified(next).LastDeployFailure.Has, Is.False);
+        }
+
         private static Profile NewProfile(int version) =>
             new (ALICE, "alice", new Avatar()) { Version = version };
+
+        private static SelfProfileModel WithDeployFailure(in SelfProfileModel model)
+        {
+            Identified identified = AssertIdentified(model);
+            var failure = Option<DeployFailure>.Some(new DeployFailure(NewProfile(9), DEPLOY_ERROR));
+            return SelfProfileModel.FromIdentified(identified.With(identified.Knowledge, identified.Activity, failure));
+        }
 
         private static SelfProfileModel Model(ProfileKnowledge knowledge, ProfileActivity activity) =>
             SelfProfileModel.FromIdentified(new Identified(ALICE, knowledge, activity));
@@ -434,11 +563,12 @@ namespace DCL.Profiles.Tests
             Assert.That(actual, Is.SameAs(expected));
         }
 
-        private static void AssertDeploy(in SelfProfileCmd cmd, Profile expected)
+        private static DeployCmd AssertDeploy(in SelfProfileCmd cmd, Profile expected)
         {
             Assert.That(cmd.IsDeploy(out DeployCmd deploy), Is.True, $"expected Deploy, got {cmd}");
             Assert.That(deploy.Address, Is.EqualTo(ALICE));
             Assert.That(deploy.Profile, Is.SameAs(expected));
+            return deploy;
         }
 
         private static SelfProfileCmd[] AssertBatch(in SelfProfileCmd cmd, int count)

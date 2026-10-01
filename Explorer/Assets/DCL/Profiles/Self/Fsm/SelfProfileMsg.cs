@@ -80,6 +80,7 @@ namespace DCL.Profiles.Self
     ///     profile version for the current identity. Fetch and deploy results are produced by the command executor and
     ///     carry the address the IO was started for, so a result that arrives after the identity changed is recognised as stale.
     ///     Deploy results also carry the profile instance that was sent, so the result of a superseded deploy is recognised too.
+    ///     <c>RetryRequested</c> asks for a new read of the current identity's profile after a failed one.
     /// </summary>
     [REnum(EnumUnderlyingType.Byte)]
     [REnumField(typeof(UserId), "IdentityChanged")]
@@ -90,11 +91,12 @@ namespace DCL.Profiles.Self
     [REnumField(typeof(Profile), "ProfileEdited")]
     [REnumField(typeof(DeploySucceeded))]
     [REnumField(typeof(DeployFailed))]
+    [REnumFieldEmpty("RetryRequested")]
     public readonly partial struct SelfProfileMsg
     {
         /// <summary>
-        ///     The address the message was produced for. Null for <c>IdentityCleared</c> and <c>ProfileEdited</c>,
-        ///     which are about whatever identity is current.
+        ///     The address the message was produced for. Null for <c>IdentityCleared</c>, <c>ProfileEdited</c> and
+        ///     <c>RetryRequested</c>, which are about whatever identity is current.
         /// </summary>
         public UserId? Address => Match<UserId?>(
             onIdentityChanged: static address => address,
@@ -104,7 +106,8 @@ namespace DCL.Profiles.Self
             onFetchFailed: static m => m.Address,
             onProfileEdited: static _ => null,
             onDeploySucceeded: static m => m.Address,
-            onDeployFailed: static m => m.Address
+            onDeployFailed: static m => m.Address,
+            onRetryRequested: static () => null
         );
     }
 }
