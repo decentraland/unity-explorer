@@ -142,8 +142,6 @@ MonoBehaviour:
           samplingRate: 0.01
         - url: 51
           samplingRate: 0.01
-        - url: 73
-          samplingRate: 0.005
     - rid: 745469515127586908
       type: {class: GiftingPlugin/GiftingSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:

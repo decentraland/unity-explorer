@@ -42,6 +42,18 @@ namespace DCL.AuthenticationScreenFlow.Tests
             Assert.That(controller.IsCurrentlyNewAccount, Is.False);
         }
 
+        [TestCase(false, false, false)]
+        [TestCase(true, false, true)]
+        [TestCase(false, true, true)]
+        public void SkipTheWelcomeStepWhenTheLobbyIsOnOrTheLaunchNamesADestination(bool lobbyEnabled, bool landAtLaunchDestination, bool expected)
+        {
+            // Act
+            bool skip = ShouldSkipExistingAccountLobby(lobbyEnabled, new Params(startAtLoginSelection: false, landAtLaunchDestination));
+
+            // Assert
+            Assert.That(skip, Is.EqualTo(expected));
+        }
+
         // Mirrors --skip-auth-screen with a cached identity: the view is never instantiated, so the constructor only stores the null! dependencies
         internal static AuthenticationScreenController NewNeverShownController() =>
             new (

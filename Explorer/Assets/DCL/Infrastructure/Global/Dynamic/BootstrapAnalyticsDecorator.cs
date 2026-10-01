@@ -8,6 +8,7 @@ using DCL.Optimization.PerformanceBudgeting;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
+using DCL.Web3.Identities;
 using ECS;
 using Global.AppArgs;
 using Global.Versioning;
@@ -167,9 +168,9 @@ namespace Global.Dynamic
             });
         }
 
-        public void ApplyFeatureFlagConfigs(FeatureFlagsConfiguration featureFlagsConfigurationCache)
+        public void ApplyFeatureFlagConfigs(FeatureFlagsConfiguration featureFlagsConfigurationCache, IWeb3IdentityCache identityCache)
         {
-            core.ApplyFeatureFlagConfigs(featureFlagsConfigurationCache);
+            core.ApplyFeatureFlagConfigs(featureFlagsConfigurationCache, identityCache);
 
             //No analytics to track on this step
         }

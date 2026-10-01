@@ -42,7 +42,6 @@ namespace DCL.UserInAppInitializationFlow
         private readonly AudioClipConfig backgroundMusic;
         private readonly IRealmNavigator realmNavigator;
         private readonly ILoadingScreen loadingScreen;
-        private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly SequentialLoadingOperation<IStartupOperation.Params> initOps;
         private readonly SequentialLoadingOperation<IStartupOperation.Params> reloginOps;
 
@@ -60,6 +59,7 @@ namespace DCL.UserInAppInitializationFlow
         private readonly bool isLocalSceneDevelopment;
         private readonly IWorldPermissionsService worldPermissionsService;
         private readonly IChatHistory chatHistory;
+        private readonly URLDomain genesisDomain;
 
         // Cancelled by a Logout execution so the execution parked on the startup lobby gives the flow up instead of loading the world
         private CancellationTokenSource? startupLobbyGate;
@@ -101,7 +101,7 @@ namespace DCL.UserInAppInitializationFlow
             this.chatHistory = chatHistory;
 
             this.loadingStatus = loadingStatus;
-            this.decentralandUrlsSource = decentralandUrlsSource;
+            genesisDomain = URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Genesis));
             this.mvcManager = mvcManager;
             this.backgroundMusic = backgroundMusic;
             this.realmNavigator = realmNavigator;
@@ -159,9 +159,8 @@ namespace DCL.UserInAppInitializationFlow
                             //Restart the realm and show the authentications screen simultaneously to avoid the "empty space" flicker
                             //No error should be possible at this point
                             // TODO move SetRealmAsync to an operation
-                            await UniTask.WhenAll(ShowAuthenticationScreenAsync(ct),
-                                realmController.SetRealmAsync(
-                                    URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Genesis)), ct));
+                            await UniTask.WhenAll(ShowAuthenticationScreenAsync(parameters, ct),
+                                realmController.SetRealmAsync(genesisDomain, ct));
 
                             break;
                         case IUserInAppInitializationFlow.LoadSource.Recover:
@@ -169,7 +168,7 @@ namespace DCL.UserInAppInitializationFlow
                             goto default;
                         default:
                             await UniTask.WhenAll(
-                                ShowAuthenticationScreenAsync(ct),
+                                ShowAuthenticationScreenAsync(parameters, ct),
                                 ShowErrorPopupIfRequired(result, ct)
                             );
 
@@ -178,7 +177,7 @@ namespace DCL.UserInAppInitializationFlow
                 }
 
                 // Nothing has been teleported or loaded yet: the lobby holds the flow until the user jumps in
-                if (ShouldShowStartupLobby(parameters.LoadSource) && !await WaitForLobbyJumpInAsync(ct))
+                if (ShouldShowStartupLobby(FeaturesRegistry.Instance.IsEnabled(FeatureId.Lobby), appArgs, startParcel, parameters.LoadSource) && !await WaitForLobbyJumpInAsync(ct))
                     return;
 
                 var flowToRun = parameters.LoadSource is IUserInAppInitializationFlow.LoadSource.Logout
@@ -187,14 +186,14 @@ namespace DCL.UserInAppInitializationFlow
 
                 var loadingResult = await LoadingScreen(parameters.ShowLoading)
                     .ShowWhileExecuteTaskAsync(
-                        async (parentLoadReport, ct) =>
+                        async (parentLoadReport, loadCt) =>
                         {
-                            await ApplyStartRealmAsync(ct);
+                            await ApplyStartRealmAsync(startParcel, realmController, chatHistory, genesisDomain, loadCt);
 
                             // After authentication completes, verify the user can actually access the current realm if it's a world.
                             // The realm was set during bootstrap before the user had a chance to switch accounts, so the identity
                             // that's now authenticated may differ from the one assumed at startup.
-                            await VerifyWorldAccessAndFallbackIfNeededAsync(ct);
+                            await VerifyWorldAccessAndFallbackIfNeededAsync(loadCt);
 
                             //Set initial position and start async livekit connection
                             characterExposedTransform.Position.Value
@@ -206,15 +205,15 @@ namespace DCL.UserInAppInitializationFlow
                             // However, this approach introduces potential risks.
                             // If any of the LiveKit parameters change after this call (e.g., realm configuration),
                             // the task may become outdated, leading to an inconsistent state.
-                            UniTask<EnumResult<TaskError>> livekitHandshake = ensureLivekitConnectionStartupOperation.LaunchLivekitConnectionAsync(ct);
+                            UniTask<EnumResult<TaskError>> livekitHandshake = ensureLivekitConnectionStartupOperation.LaunchLivekitConnectionAsync(loadCt);
 
                             //Create a child report to be able to hold the parallel livekit operation
                             AsyncLoadProcessReport sequentialFlowReport = parentLoadReport.CreateChildReport(0.95f);
-                            EnumResult<TaskError> operationResult = await flowToRun.ExecuteAsync(parameters.LoadSource.ToString(), 1, new IStartupOperation.Params(sequentialFlowReport, parameters), ct);
+                            EnumResult<TaskError> operationResult = await flowToRun.ExecuteAsync(parameters.LoadSource.ToString(), 1, new IStartupOperation.Params(sequentialFlowReport, parameters), loadCt);
 
                             // HACK: Game is irrecoverably dead. We dont care anything that goes beyond this
                             if (operationResult.Error is { Exception: UserBlockedException })
-                                mvcManager.ShowAsync(BlockedScreenController.IssueCommand(new BlockedScreenParameters(((UserBlockedException)operationResult.Error.Value.Exception).BanStatusData.ban)), ct).Forget();
+                                mvcManager.ShowAsync(BlockedScreenController.IssueCommand(new BlockedScreenParameters(((UserBlockedException)operationResult.Error.Value.Exception).BanStatusData.ban)), loadCt).Forget();
                             else
                             {
                                 // Finally, wait for livekit to end handshake that started before.
@@ -228,14 +227,21 @@ namespace DCL.UserInAppInitializationFlow
                                     // Local scene development doesn't strictly need livekit to run
                                     parentLoadReport.SetProgress(
                                         loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Completed));
+
+                                    if (operationResult.Success)
+                                        startParcel.MarkLanded();
                                 }
                                 else
                                 {
                                     operationResult = livekitOperationResult;
 
                                     if (operationResult.Success)
+                                    {
                                         parentLoadReport.SetProgress(
                                             loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Completed));
+
+                                        startParcel.MarkLanded();
+                                    }
                                 }
                             }
 
@@ -251,18 +257,68 @@ namespace DCL.UserInAppInitializationFlow
                     //Fail straight away
                     string message = result.Error.AsMessage();
                     ReportHub.LogError(ReportCategory.AUTHENTICATION, message);
+
+                    // A link on the retried auth screen may still pick another realm before the next switch
+                    startParcel.ClearRealmApplied();
                 }
             }
             while (!result.Success && parameters.ShowAuthentication);
         }
 
-        private bool ShouldShowStartupLobby(IUserInAppInitializationFlow.LoadSource loadSource) =>
-            FeaturesRegistry.Instance.IsEnabled(FeatureId.Lobby)
+        internal static bool ShouldShowStartupLobby(bool lobbyEnabled, IAppArgs appArgs, StartParcel startParcel, IUserInAppInitializationFlow.LoadSource loadSource) =>
+            lobbyEnabled
             && loadSource != IUserInAppInitializationFlow.LoadSource.Recover
+            && !LandsAtLaunchDestination(appArgs, loadSource)
+            && !startParcel.JumpInRequested
             && !appArgs.HasFlagWithValueTrue(AppArgsFlags.SKIP_AUTH_SCREEN)
             && !appArgs.HasFlag(AppArgsFlags.AUTOPILOT)
             && !appArgs.HasFlag(AppArgsFlags.MEASURE_LOADING_TIME)
             && !appArgs.HasFlag(AppArgsFlags.DISABLE_HUD);
+
+        internal static bool LandsAtLaunchDestination(IAppArgs appArgs, IUserInAppInitializationFlow.LoadSource loadSource) =>
+            loadSource == IUserInAppInitializationFlow.LoadSource.StartUp && appArgs.HasLaunchDestination();
+
+        /// <summary>
+        ///     Switches to the realm picked before anything is loaded. A Genesis pick is satisfied by any Genesis realm, and an unreachable realm keeps the current one.
+        /// </summary>
+        internal static async UniTask ApplyStartRealmAsync(StartParcel startParcel, IRealmController realmController, IChatHistory chatHistory, URLDomain genesis, CancellationToken ct)
+        {
+            startParcel.MarkRealmApplied();
+
+            if (startParcel.Realm is not { } realm) return;
+            if (realm == realmController.CurrentDomain) return;
+            if (realmController.RealmData.IsGenesis() && realm == genesis) return;
+
+            if (!await realmController.IsReachableAsync(realm, ct))
+            {
+                ReportHub.LogWarning(ReportCategory.REALM, $"Startup realm {realm} is not reachable, keeping {realmController.CurrentDomain}");
+                string destination = TryExtractWorldName(realm, out string worldName) ? worldName : realm.Value;
+                chatHistory.AddMessage(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY, ChatMessage.NewFromSystem($"Could not reach '{destination}'. You were sent to {realmController.RealmData.RealmName}."));
+
+                // The parcel that came with the unreachable realm belongs to it
+                if (realmController.CurrentDomain is { } kept)
+                    startParcel.AssignRealm(kept);
+
+                return;
+            }
+
+            await realmController.SetRealmAsync(realm, ct);
+        }
+
+        /// <summary>
+        ///     Leaves a world the player cannot enter for Genesis and tells the player so.
+        /// </summary>
+        internal static async UniTask FallBackToGenesisAsync(StartParcel startParcel, IRealmController realmController, IChatHistory chatHistory, URLDomain genesis, string worldName, CancellationToken ct)
+        {
+            chatHistory.AddMessage(
+                ChatChannel.NEARBY_CHANNEL_ID,
+                ChatChannel.ChatChannelType.NEARBY,
+                ChatMessage.NewFromSystem($"Could not enter '{worldName}' due to world permissions. You were sent to Genesis Plaza."));
+
+            // The parcel that came with the denied world belongs to it
+            startParcel.AssignRealm(genesis);
+            await realmController.SetRealmAsync(genesis, ct);
+        }
 
         /// <summary>
         ///     Holds the flow until the user picks a destination; false when a Logout took the flow over, so this execution must not load the world.
@@ -294,18 +350,6 @@ namespace DCL.UserInAppInitializationFlow
             return jumpedIn;
         }
 
-        /// <summary>
-        ///     Switches to the realm picked in the lobby before anything is loaded. A Genesis pick is satisfied by any Genesis realm.
-        /// </summary>
-        private async UniTask ApplyStartRealmAsync(CancellationToken ct)
-        {
-            if (startParcel.Realm is not { } realm) return;
-            if (realm == realmController.CurrentDomain) return;
-            if (realmController.RealmData.IsGenesis() && realm == URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Genesis))) return;
-
-            await realmController.SetRealmAsync(realm, ct);
-        }
-
         private async UniTask VerifyWorldAccessAndFallbackIfNeededAsync(CancellationToken ct)
         {
             if (isLocalSceneDevelopment) return;
@@ -316,7 +360,7 @@ namespace DCL.UserInAppInitializationFlow
             {
                 ReportHub.LogWarning(ReportCategory.REALM,
                     $"[RealmController] Failed to extract world name from realm '{realmController.CurrentDomain.Value.ToString()}'.");
-                await GenesisFallbackAsync();
+                await FallBackToGenesisAsync(startParcel, realmController, chatHistory, genesisDomain, worldName, ct);
                 return;
             }
 
@@ -331,7 +375,7 @@ namespace DCL.UserInAppInitializationFlow
             {
                 ReportHub.LogWarning(ReportCategory.REALM,
                     $"[StartUp] Failed to verify world access for '{worldName}' via world permissions: {e.Message}");
-                await GenesisFallbackAsync();
+                await FallBackToGenesisAsync(startParcel, realmController, chatHistory, genesisDomain, worldName, ct);
                 return;
             }
 
@@ -344,20 +388,9 @@ namespace DCL.UserInAppInitializationFlow
                 case WorldAccessCheckResult.PasswordRequired:
                     ReportHub.LogWarning(ReportCategory.REALM,
                         $"[StartUp] World '{worldName}' is not authorized for auto-entry, falling back to Genesis.");
-                    await GenesisFallbackAsync();
+                    await FallBackToGenesisAsync(startParcel, realmController, chatHistory, genesisDomain, worldName, ct);
                     return;
                 default: throw new ArgumentOutOfRangeException();
-            }
-
-            async UniTask GenesisFallbackAsync()
-            {
-                chatHistory.AddMessage(
-                    ChatChannel.NEARBY_CHANNEL_ID,
-                    ChatChannel.ChatChannelType.NEARBY,
-                    ChatMessage.NewFromSystem($"Could not enter '{worldName}' due to world permissions. You were sent to Genesis Plaza."));
-
-                await realmController.SetRealmAsync(
-                    URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Genesis)), ct);
             }
         }
 
@@ -398,9 +431,10 @@ namespace DCL.UserInAppInitializationFlow
             await roomHub.StopAsync().Timeout(TimeSpan.FromSeconds(10));
         }
 
-        private async UniTask ShowAuthenticationScreenAsync(CancellationToken ct)
+        private async UniTask ShowAuthenticationScreenAsync(UserInAppInitializationFlowParameters parameters, CancellationToken ct)
         {
-            await mvcManager.ShowAsync(AuthenticationScreenController.IssueCommand(), ct);
+            var authParams = new AuthenticationScreenController.Params(parameters.StartAtLoginSelection, LandsAtLaunchDestination(appArgs, parameters.LoadSource));
+            await mvcManager.ShowAsync(AuthenticationScreenController.IssueCommand(authParams), ct);
         }
 
         private UniTask ShowErrorPopupIfRequired(EnumResult<TaskError> result, CancellationToken ct)
@@ -442,7 +476,7 @@ namespace DCL.UserInAppInitializationFlow
                    };
         }
 
-        private ILoadingScreen LoadingScreen(bool withUI) =>
-            withUI ? loadingScreen : EMPTY_LOADING_SCREEN;
+        private ILoadingScreen LoadingScreen(bool withUi) =>
+            withUi ? loadingScreen : EMPTY_LOADING_SCREEN;
     }
 }

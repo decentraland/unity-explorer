@@ -1,3 +1,4 @@
+using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.Emotes;
@@ -8,11 +9,14 @@ using DCL.Input;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
+using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI.MainUI;
 using DCL.UI.Profiles.Helpers;
+using DCL.UserInAppInitializationFlow;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Authenticators;
+using DCL.Web3.Identities;
 using MVC;
 using MVC.PopupsController.PopupCloser;
 using System;
@@ -91,8 +95,9 @@ namespace Global.Dynamic
         public ErrorPopupPlugin CreateErrorPopupPlugin(IAssetsProvisioner assetsProvisioner) =>
             new (MvcManager, assetsProvisioner);
 
-        public GenericPopupsPlugin CreateGenericPopupsPlugin(IAssetsProvisioner assetsProvisioner, IAccountLinkAuthenticator accountLinkAuthenticator, ISelfProfile selfProfile, IInputBlock inputBlock) =>
-            new (assetsProvisioner, MvcManager, ClipboardManager, accountLinkAuthenticator, selfProfile, inputBlock);
+        public GenericPopupsPlugin CreateGenericPopupsPlugin(IAssetsProvisioner assetsProvisioner, ICompositeWeb3Provider compositeWeb3Provider, ISelfProfile selfProfile, IInputBlock inputBlock,
+            IWeb3IdentityCache identityCache, IProfileCache profileCache, IUserInAppInitializationFlow userInAppInitializationFlow, World world, Entity playerEntity) =>
+            new (assetsProvisioner, MvcManager, ClipboardManager, compositeWeb3Provider, selfProfile, inputBlock, identityCache, profileCache, userInAppInitializationFlow, world, playerEntity);
 
         public ColorPickerPlugin CreateColorPickerPlugin(IAssetsProvisioner assetsProvisioner) =>
             new (assetsProvisioner, MvcManager);

@@ -405,11 +405,10 @@ namespace SceneRunner.Tests
             {
                 sceneFacade.deps.Runtime.Dispose();
 
-                // World facade is not mockable
-                // sceneFacade.deps.SyncDeps.ECSWorldFacade.Dispose();
+                // The synchronizer goes before the world it writes to; the world facade itself is not mockable
+                sceneFacade.deps.SyncDeps.CRDTWorldSynchronizer.Dispose();
                 sceneFacade.deps.SyncDeps.CRDTProtocol.Dispose();
                 sceneFacade.deps.SyncDeps.OutgoingCRDTMessagesProvider.Dispose();
-                sceneFacade.deps.SyncDeps.CRDTWorldSynchronizer.Dispose();
                 sceneFacade.deps.SyncDeps.PoolsProvider.Dispose();
                 sceneFacade.deps.SyncDeps.CRDTMemoryAllocator.Dispose();
 
