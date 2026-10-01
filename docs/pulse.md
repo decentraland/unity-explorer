@@ -64,7 +64,7 @@ When Pulse is inactive (`FeatureId.Pulse` off, `--pulse false`, or after a start
 
 - All four proxies in `MultiplayerContainer` still fan out to Pulse, but the Pulse side is a no-op — `PulseMultiplayerBus` methods early-return against a `Dummy` (or disconnected) service.
 - Incoming proxies' `Fill(...)` / `Bunch()` calls include empty Pulse lists.
-- `IProfilePropagation` is a no-op (the profile still propagates over LiveKit via `IProfileBroadcast`); `MultiplayerContainer.OnSelfProfilePropagated` also gates on `IsActive`.
+- `IProfilePropagation` is a no-op (the profile still propagates over LiveKit via `IProfileBroadcast`); `PropagateSelfProfileSystem` also gates on `IsActive`.
 - `LiveKitMessagesBroadcaster` broadcasts to all peers (its original serialization mode).
 
 The effective runtime cost of Pulse when disabled is a few dummy virtual calls per frame.
@@ -930,7 +930,7 @@ Key facts:
 
 ### Where it's called from
 
-`DCL/UserInAppInitializationFlow/StartupOperations/StartPulseMultiplayerStartupOperation.cs` is the main (and currently only regular) caller:
+`DCL/UserInAppInitializationFlow/StartupOperations/StartPulseMultiplayerStartupOperation.cs` announces the first version at connect:
 
 ```csharp
 protected override async UniTask InternalExecuteAsync(IStartupOperation.Params args, CancellationToken ct)
@@ -943,15 +943,19 @@ protected override async UniTask InternalExecuteAsync(IStartupOperation.Params a
         return;
     }
 
-    Profile? profile = await selfProfile.ProfileAsync(ct);
-    profilePropagation.Propagate(profile!);
+    ProfileReadResult read = await selfProfile.ProfileAsync(ct);
+
+    if (!read.IsOk(out Profile? profile))
+        throw new InvalidOperationException($"Own profile could not be resolved ({read}), nothing to propagate to Pulse");
+
+    profilePropagation.PropagateIfNewVersion(profile);
     await UniTask.SwitchToMainThread();
 }
 ```
 
-On startup, connect to Pulse, fetch the host's profile, and announce its version. The connect is bounded to 5 attempts; if the server is unreachable the operation deactivates Pulse (full fallback to LiveKit) and lets login continue — see [Start-up fallback](#start-up-fallback). The propagate is a **one-shot** at connect — there's no debounce mechanism like `DebounceLiveKitProfileBroadcast` watching `ISelfProfile.ProfilePropagated` continuously. (LiveKit's broadcast runs on every profile change; Pulse only fires at connect time today.)
+On startup, connect to Pulse, read the host's profile, and announce its version. The connect is bounded to 5 attempts; if the server is unreachable the operation deactivates Pulse (full fallback to LiveKit) and lets login continue — see [Start-up fallback](#start-up-fallback). `SelfProfile.ProfileAsync` never throws: the read resolves to `Ok(profile)` or to a `ProfileReadError`, and by this point the avatar start-up operation has already resolved the profile, so a non-`Ok` read only means the identity was lost mid-flow.
 
-`MultiplayerContainer` does also subscribe to `ISelfProfile.ProfilePropagated` and invoke `ProfilePropagation.Propagate(profile)` for later updates — so subsequent profile changes do reach Pulse. But there's no timer-based throttle wrapping that call, so the cadence is whatever `ISelfProfile` chooses to fire at.
+Later versions reach Pulse through `PropagateSelfProfileSystem` (`Movement/Systems/PropagateSelfProfileSystem.cs`): every frame while `PulseActivation.IsActive` it reads `SelfProfile.CurrentProfileSnapshot.KnownProfile` and calls `PropagateIfNewVersion`. `PulseProfilePropagationBus` sends only when the profile instance or its version differs from the last announcement, so the per-frame poll costs one comparison and no throttle is needed.
 
 ---
 
@@ -1098,7 +1102,7 @@ Note: `pulseMultiplayerService.Dispose()` disposes the underlying `ENetTransport
 | Movement encoding | `NetworkMessageEncoder` bit-packing (160 bits per frame) when `UseCompression` is on | `PlayerStateInput` proto with quantized fields + delta encoding (`PlayerStateDeltaTier0`) |
 | Identity | Per-room participants keyed by wallet (`LKParticipant.Identity`) | Server-assigned `PeerId uint` mapped to wallets via `PeerIdCache` |
 | Movement loss handling | Periodic full-state via send system's adaptive rate | Sequence-baselined deltas with on-demand `ResyncRequest` when a gap is detected |
-| Profile announcement trigger | `DebounceLiveKitProfileBroadcast` watching `ISelfProfile.ProfilePropagated` continuously | One-shot at connect from `StartPulseMultiplayerStartupOperation` |
+| Profile announcement trigger | `MultiplayerProfilesSystem` calls `IProfileBroadcast.NotifyRemotes()` each update, throttled by `DebounceLiveKitProfileBroadcast`; the broadcast reads `SelfProfile.ProfileAsync` | `StartPulseMultiplayerStartupOperation` at connect, then `PropagateSelfProfileSystem` polling `SelfProfile.CurrentProfileSnapshot.KnownProfile` with version dedupe in the bus |
 | Profile wire payload | Version only (`AnnounceProfileVersion`) | Version only (`ProfileVersionAnnouncement`) |
 | Disconnect semantics | `IConnectiveRoom` state machine with per-room reconnection; `DuplicateIdentity` stops the loop | Single-connection; reconnect only on `NONE` (timeout) or `GRACEFUL` disconnect reasons |
 | Voice chat | `VoiceChatActivatableConnectiveRoom` (on-demand room) | ❌ Not supported — no voice track plumbing on Pulse |
