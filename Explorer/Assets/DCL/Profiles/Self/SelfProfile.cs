@@ -3,37 +3,25 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Equipped;
-using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
-using DCL.Diagnostics;
-using DCL.Profiles.Helpers;
 using DCL.Utility.Types;
 using DCL.Web3.Identities;
-using ECS.Prioritization.Components;
-using System;
 using System.Collections.Generic;
 using System.Threading;
+using Utility.Fsm;
 
 namespace DCL.Profiles.Self
 {
     public class SelfProfile : ISelfProfile
     {
-        private readonly IProfileRepository profileRepository;
-        private readonly IWeb3IdentityCache web3IdentityCache;
-        private readonly IWearableStorage wearableStorage;
-        private readonly IEmoteStorage emoteStorage;
-        private readonly IReadOnlyList<URN>? forcedEmotes;
-        private readonly IProfileCache profileCache;
-        private readonly World world;
-        private readonly Entity playerEntity;
-        private readonly ProfileBuilder profileBuilder = new ();
-        private readonly IEquippedWearables equippedWearables;
-        private readonly IEquippedEmotes equippedEmotes;
-        private readonly IOwnedNftFilter ownedNftFilter;
-        private readonly ForcedWearables forcedWearables;
+        private const string FSM_TAG = "SelfProfile";
 
-        public event Action<Profile>? ProfilePropagated;
+        private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly SelfProfileCmdExecutor executor;
+        private readonly FsmRuntime<SelfProfileModel, SelfProfileMsg, SelfProfileCmd> runtime;
+
+        public SelfProfileModel CurrentProfileSnapshot => runtime.ModelSnapshot;
 
         public SelfProfile(
             IProfileRepository profileRepository,
@@ -46,218 +34,129 @@ namespace DCL.Profiles.Self
             IProfileCache profileCache,
             World world,
             Entity playerEntity,
-            IOwnedNftFilter ownedNftFilter,
             ForcedWearables forcedWearables)
         {
-            this.profileRepository = profileRepository;
             this.web3IdentityCache = web3IdentityCache;
-            this.equippedWearables = equippedWearables;
-            this.wearableStorage = wearableStorage;
-            this.emoteStorage = emoteStorage;
-            this.equippedEmotes = equippedEmotes;
-            this.forcedEmotes = forcedEmotes;
-            this.profileCache = profileCache;
-            this.world = world;
-            this.playerEntity = playerEntity;
-            this.ownedNftFilter = ownedNftFilter;
-            this.forcedWearables = forcedWearables;
 
-            web3IdentityCache.OnIdentityCleared += InvalidateOwnProfile;
-            web3IdentityCache.OnIdentityChanged += InvalidateOwnProfile;
+            executor = new SelfProfileCmdExecutor(profileRepository, profileCache, wearableStorage, emoteStorage, equippedWearables, equippedEmotes,
+                forcedWearables, forcedEmotes, world, playerEntity);
+
+            runtime = new FsmRuntime<SelfProfileModel, SelfProfileMsg, SelfProfileCmd>(FSM_TAG, SelfProfileModel.NoIdentity(), SelfProfileModel.Update, executor);
+
+            web3IdentityCache.OnIdentityChanged += SendCurrentIdentity;
+            web3IdentityCache.OnIdentityCleared += SendIdentityCleared;
+            SendCurrentIdentity();
         }
 
         public void Dispose()
         {
-            web3IdentityCache.OnIdentityCleared -= InvalidateOwnProfile;
-            web3IdentityCache.OnIdentityChanged -= InvalidateOwnProfile;
+            web3IdentityCache.OnIdentityChanged -= SendCurrentIdentity;
+            web3IdentityCache.OnIdentityCleared -= SendIdentityCleared;
+            executor.Dispose();
         }
 
-        public async UniTask<Profile?> ProfileAsync(CancellationToken ct)
+        /// <summary>Applies the queued messages. Call it once per frame on the main thread.</summary>
+        public void Drain() => // TODO SelfProfile should manage the drain itself with UniTask and CancellationTokenSource, an update loop until dispoed. no external public drains
+            runtime.Drain();
+
+        // TODO too complex logic, both ProfileAsync and DeployProfileAsync. It would be better to store the lastProfile result alongside ID of the request, current approach manually splits the logic
+        // and looses FSM
+        public async UniTask<ProfileReadResult> ProfileAsync(CancellationToken ct)
         {
-            if (web3IdentityCache.Identity == null)
-                throw new Web3IdentityMissingException("Web3 Identity is not initialized");
+            Option<ProfileFailure> retriedAfter = Option<ProfileFailure>.None;
 
-            Profile? profile = await profileRepository.GetAsync(
-                web3IdentityCache.Identity.Address,
-                ct,
-                batchBehaviour: IProfileRepository.FetchBehaviour.EnforceSingleGet
-            );
-
-            if (profile == null) return null;
-
-            forcedWearables.ApplyTo(profile);
-
-            if (forcedEmotes != null)
-                for (var slot = 0; slot < forcedEmotes.Count && slot < profile.Avatar.Emotes.Count; slot++)
-                    profile.Avatar.emotes[slot] = forcedEmotes[slot];
-
-            if (profile.Avatar.IsEmotesWheelEmpty())
-                for (var slot = 0; slot < emoteStorage.BaseEmotesUrns.Count && slot < profile.Avatar.Emotes.Count; slot++)
-                    profile.Avatar.emotes[slot] = emoteStorage.BaseEmotesUrns[slot];
-
-            return profile;
-        }
-
-        /// <summary>Updates the profile based on the IEquippedEmotes, IEquippedWearables & force render</summary>
-        /// <param name="ct"></param>
-        /// <param name="updateAvatarInWorld">Updates the avatar in-world immediately and performs a revert operation in case of failure</param>
-        /// <returns>The updated avatar</returns>
-        public async UniTask<Profile?> UpdateProfileAsync(CancellationToken ct, bool updateAvatarInWorld = true)
-        {
-            if (web3IdentityCache.Identity == null)
-                throw new Web3IdentityMissingException("Web3 Identity is not initialized");
-
-            Profile? profile = OwnProfile ?? await ProfileAsync(ct);
-
-            if (profile == null)
-                throw new Exception("Self profile not found");
-
-            var forceRenderList = new List<string>(equippedWearables.ForceRenderCategories);
-
-            Profile newProfile = profile.CreateNewProfileForUpdate(equippedEmotes, equippedWearables, forceRenderList, emoteStorage, wearableStorage,
-                ownedNftFilter,
-                // Don't update the version as it will be incremented at UpdateProfileAsync function
-                incrementVersion: false);
-
-            return await UpdateProfileAsync(newProfile, ct, updateAvatarInWorld);
-        }
-
-        public async UniTask<Profile?> UpdateProfileAsync(Profile newProfile, CancellationToken ct, bool updateAvatarInWorld = true)
-        {
-            ct.ThrowIfCancellationRequested();
-
-            if (web3IdentityCache.Identity == null)
-                throw new Web3IdentityMissingException("Web3 Identity is not initialized");
-
-            string address = web3IdentityCache.Identity.Address;
-
-            // Take a snapshot of the current profile from cache before any mutations
-            // This serves as the baseline for duplicate detection and revert on failure
-            profileCache.TryGet(address, out Profile? cachedProfile);
-            Profile? previousProfile = cachedProfile != null ? profileBuilder.From(cachedProfile).Build() : null;
-
-            try
+            while (!ct.IsCancellationRequested)
             {
-                // Skip publishing the same profile
-                if (previousProfile != null && newProfile.IsSameProfile(previousProfile))
-                    throw new IdenticalProfileUpdateException();
+                if (!CurrentProfileSnapshot.IsIdentified(out Identified identified))
+                    return ProfileReadResult.FromError(ProfileReadError.NoIdentity);
 
-                Option<UserId> selfUserId = UserId.From(web3IdentityCache.Identity.Address);
+                if (identified.Knowledge.IsKnown(out Profile known))
+                    return ProfileReadResult.FromOk(known);
 
-                if (!selfUserId.Has)
-                    throw new Web3IdentityMissingException("Web3 Identity has an empty address");
+                if (identified.Knowledge.IsMissing())
+                    return ProfileReadResult.FromError(ProfileReadError.NotFound);
 
-                newProfile.UserId = selfUserId.Value;
-
-                // Every deploy path builds its profile from one ProfileAsync faked, so a faking session skips the deploy and only updates local state.
-                if (forcedWearables.Any || forcedEmotes?.Count > 0)
+                if (identified.Knowledge.IsFailed(out ProfileFailure failure) && identified.Activity.IsIdle())
                 {
-                    ReportHub.LogWarning(ReportCategory.PROFILE, "Profile deploy skipped: forced wearables or emotes are active for this session");
-
-                    profileCache.Set(newProfile.UserId, newProfile);
-
-                    if (updateAvatarInWorld)
-                        UpdateAvatarInWorld(newProfile);
-
-                    ProfilePropagated?.Invoke(newProfile);
-                    return newProfile;
-                }
-
-                newProfile.Version++;
-
-                if (!updateAvatarInWorld)
-                {
-                    await profileRepository.SetAsync(newProfile, ct);
-
-                    Profile? savedProfile = await profileRepository.GetAsync(newProfile.UserId, newProfile.Version, ct,
-
-                        // force to fetch the profile: there are some fields that might change, like the profile picture url
-                        false, IProfileRepository.FetchBehaviour.ForceFetchFromCatalyst | IProfileRepository.FetchBehaviour.DelayUntilResolved);
-
-                    if (savedProfile != null)
+                    // One retry per call: a retried read ends in a new failure instance.
+                    if (!retriedAfter.Has)
                     {
-                        profileCache.Set(savedProfile.UserId, savedProfile);
-                        ProfilePropagated?.Invoke(savedProfile);
+                        retriedAfter = Option<ProfileFailure>.Some(failure);
+                        runtime.Send(SelfProfileMsg.RetryRequested());
                     }
-
-                    return savedProfile;
+                    else if (!ReferenceEquals(retriedAfter.Value.Exception, failure.Exception))
+                        return ProfileReadResult.FromError(ProfileReadError.ReadFailed);
                 }
 
-                // Update profile immediately to prevent UI inconsistencies
-                // Without this immediate update, temporary desync can occur between backpack closure and catalyst validation
-                // Example: Opening the emote wheel before catalyst validation would show outdated emote selections
-                profileCache.Set(newProfile.UserId, newProfile);
-                UpdateAvatarInWorld(newProfile);
-
-                try
-                {
-                    await profileRepository.SetAsync(newProfile, ct);
-
-                    Profile? savedProfile = await profileRepository.GetAsync(newProfile.UserId, newProfile.Version, ct,
-
-                        // force to fetch the profile: there are some fields that might change, like the profile picture url
-                        false, IProfileRepository.FetchBehaviour.ForceFetchFromCatalyst | IProfileRepository.FetchBehaviour.DelayUntilResolved);
-
-                    if (savedProfile == null)
-                        throw new Exception($"Profile not found after save for user {newProfile.UserId}");
-
-                    // We need to re-update the avatar in-world with the new profile because the save operation invalidates the previous profile
-                    // breaking the avatar and the backpack
-                    profileCache.Set(savedProfile.UserId, savedProfile);
-                    UpdateAvatarInWorld(savedProfile);
-                    ProfilePropagated?.Invoke(savedProfile);
-                    return savedProfile;
-                }
-                catch (Exception e) when (e is not OperationCanceledException)
-                {
-                    // If we cleared the identity while waiting for the profile to be saved, just propagate without reverting
-                    if (web3IdentityCache.Identity == null) throw;
-
-                    // Revert to the previous profile so we are aligned to the catalyst's version
-                    if (previousProfile != null)
-                    {
-                        Profile revertProfile = profileBuilder.From(previousProfile).Build();
-                        profileCache.Set(revertProfile.UserId, revertProfile);
-                        UpdateAvatarInWorld(revertProfile);
-                    }
-
-                    throw;
-                }
+                await UniTask.Yield(PlayerLoopTiming.Update);
             }
-            finally { previousProfile?.Dispose(); }
+
+            return ProfileReadResult.FromError(ProfileReadError.Cancelled);
         }
 
-        /// <summary>
-        ///     The own profile resolved from the cache. Can be null if the profile hasn't been fetched yet.
-        /// </summary>
-        public Profile? OwnProfile
+        public async UniTask<ProfileDeployResult> DeployProfileAsync(Profile edited, CancellationToken ct)
         {
-            get
+            if (ct.IsCancellationRequested)
+                return ProfileDeployResult.FromError(ProfileDeployError.Cancelled);
+
+            if (!CurrentProfileSnapshot.IsIdentified(out Identified identified))
+                return ProfileDeployResult.FromError(ProfileDeployError.NoIdentity);
+
+            int baseVersion = edited.Version;
+
+            if (identified.Knowledge.IsKnown(out Profile known))
             {
-                if (web3IdentityCache.Identity == null) return null;
-                return profileCache.TryGet(web3IdentityCache.Identity.Address, out Profile? profile) ? profile : null;
+                if (edited.IsSameProfile(known))
+                    return ProfileDeployResult.FromError(ProfileDeployError.NothingChanged);
+
+                baseVersion = known.Version;
             }
+
+            runtime.Send(SelfProfileMsg.FromProfileEdited(edited));
+            return await DeployOutcomeAsync(identified.Address, edited, baseVersion, ct);
         }
 
-        private void UpdateAvatarInWorld(Profile profile)
+        private async UniTask<ProfileDeployResult> DeployOutcomeAsync(UserId address, Profile edited, int baseVersion, CancellationToken ct)
         {
-            // The entity only carries a profile once the startup flow put one there, and setting a missing component throws
-            if (!world.Has<Profile>(playerEntity))
+            Profile awaited = edited;
+
+            while (!ct.IsCancellationRequested)
+            {
+                if (!CurrentProfileSnapshot.IsIdentified(out Identified identified) || !identified.Address.Equals(address))
+                    return ProfileDeployResult.FromError(ProfileDeployError.NoIdentity);
+
+                if (identified.LastDeployFailure.Has && ReferenceEquals(identified.LastDeployFailure.Value.Sent, awaited))
+                    return ProfileDeployResult.FromError(ProfileDeployError.DeployFailed);
+
+                // A later edit supersedes the awaited one and carries its changes, so its outcome becomes this call's outcome.
+                if (identified.Activity.IsDeploying(out Deploying deploying))
+                    awaited = deploying.Pending;
+                else if (identified.Knowledge.IsKnown(out Profile saved) && saved.Version > baseVersion)
+                    return ProfileDeployResult.FromOk(saved);
+
+                await UniTask.Yield(PlayerLoopTiming.Update);
+            }
+
+            return ProfileDeployResult.FromError(ProfileDeployError.Cancelled);
+        }
+
+        private void SendCurrentIdentity()
+        {
+            IWeb3Identity? identity = web3IdentityCache.Identity;
+
+            if (identity == null)
+            {
+                runtime.Send(SelfProfileMsg.IdentityCleared());
                 return;
+            }
 
-            profile.IsDirty = true;
-            world.Set(playerEntity, profile);
-            ProfileUtils.CreateProfilePicturePromise(profile, world, PartitionComponent.TOP_PRIORITY);
+            Option<UserId> address = UserId.From(identity.Address);
+
+            // An identity without an address cannot own a profile; it counts as no identity.
+            runtime.Send(address.Has ? SelfProfileMsg.FromIdentityChanged(address.Value) : SelfProfileMsg.IdentityCleared());
         }
 
-        private void InvalidateOwnProfile()
-        {
-            // We also need to clear the owned nfts since they need to be re-initialized, otherwise we might end up with wrong nftIds (last part of the urn chunks)
-            wearableStorage.ClearOwnedNftRegistry();
-            emoteStorage.ClearOwnedNftRegistry();
-
-            equippedWearables.Clear();
-            equippedEmotes.UnEquipAll();
-        }
+        private void SendIdentityCleared() =>
+            runtime.Send(SelfProfileMsg.IdentityCleared());
     }
 }

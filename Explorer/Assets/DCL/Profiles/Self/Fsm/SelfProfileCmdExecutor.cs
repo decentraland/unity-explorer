@@ -172,6 +172,7 @@ namespace DCL.Profiles.Self
         {
             Profile sent = deploy.Profile;
             sent.UserId = deploy.Address;
+            sent.Version = deploy.Version;
 
             // A faking session never deploys what it fakes; the edit is confirmed as sent so the model settles.
             if (forcedWearables.Any || forcedEmotes?.Count > 0)
