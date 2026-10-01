@@ -224,15 +224,15 @@ namespace DCL.Multiplayer.Movement.Tests
         }
 
         [Test]
-        public void RemovePeerOnTeleportToDifferentRealm()
+        public void HidePeerOnTeleportToDifferentRealm()
         {
             Handle(PlayerJoinedMessage(7, WALLET_1, REALM_A));
             DrainAnnouncements();
 
-            // No PlayerLeft is issued for a peer that changes realms within the same tick range
+            // The server keeps the view and won't announce the peer again when it returns, so only its avatar is removed
             Handle(TeleportMessage(7, REALM_B));
 
-            Assert.IsFalse(peerIdCache.TryGetWallet(7, out _));
+            Assert.IsTrue(peerIdCache.TryGetWallet(7, out _));
 
             using (OwnedBunch<RemoveIntention> bunch = removeIntentions.Bunch())
                 CollectionAssert.AreEquivalent(new[] { new RemoveIntention(WALLET_1, RoomSource.Pulse) }, bunch.Collection());

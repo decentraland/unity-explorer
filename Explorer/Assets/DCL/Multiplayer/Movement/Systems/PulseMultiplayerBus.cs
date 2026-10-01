@@ -32,8 +32,12 @@ namespace DCL.Multiplayer.Movement
         // BroadcastTeleport is main-thread-only, so single-threaded reuse is safe
         private readonly HashSet<string> staleWalletsBuffer = new ();
 
-        // Null until the first broadcast so the spawn teleport doesn't purge current-realm announcements
-        private string? lastBroadcastRealm;
+        // Null until the first broadcast so the spawn teleport doesn't purge current-realm announcements.
+        // Written after the TeleportRequest is queued, so a realm probe that reads it reaches the server after the teleport
+        private volatile string? lastBroadcastRealm;
+
+        // Routing thread only: hidden peers asked about since our last realm change, whose full state can be adopted
+        private readonly HashSet<uint> realmProbes = new ();
 
         internal long ResyncCount { get; private set; }
 
@@ -78,12 +82,59 @@ namespace DCL.Multiplayer.Movement
                     ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Received {messageType} from unknown peer {subjectId}");
                     return false;
                 case PeerIdCache.LookupResult.RealmMismatch:
+                    ProbeRealm(subjectId);
+
                     // Expected while a realm-change purge is pending, so not a warning
                     ReportHub.Log(ReportCategory.MULTIPLAYER, $"Dropped {messageType} from peer {subjectId} in a different realm");
                     return false;
                 default:
                     return true;
             }
+        }
+
+        /// <summary>
+        ///     A hidden peer that followed us gets no announcement once its TeleportPerformed has left the server's snapshot history.
+        ///     The server handles our messages in order and answers a resync only for peers visible in our realm,
+        ///     so asking after our TeleportRequest tells whether the peer is here.
+        ///     A probe the server drops gets no reply, so every message from a hidden peer asks again.
+        /// </summary>
+        private void ProbeRealm(uint subjectId)
+        {
+            if (lastBroadcastRealm != pulseRealm.Value)
+                return;
+
+            realmProbes.Add(subjectId);
+
+            // No snapshot carries this sequence, so the answer is a full state
+            SendResyncRequest(subjectId, uint.MaxValue);
+        }
+
+        private bool TryAdoptProbedPeer(uint subjectId, out Web3Address wallet)
+        {
+            string realm = pulseRealm.Value;
+
+            if (!realmProbes.Remove(subjectId)
+                || lastBroadcastRealm != realm
+                || peerIdCache.GetWalletInRealm(subjectId, realm, out _) != PeerIdCache.LookupResult.RealmMismatch
+                || !peerIdCache.TryGetWallet(subjectId, out wallet))
+            {
+                wallet = default(Web3Address);
+                return false;
+            }
+
+            peerIdCache.Set(wallet, subjectId, realm);
+            Reannounce(subjectId, wallet);
+            return true;
+        }
+
+        /// <summary>
+        ///     The server keeps a view across realm changes and announces it only once, so a hidden peer is shown again here.
+        /// </summary>
+        private void Reannounce(uint subjectId, Web3Address wallet)
+        {
+            removeIntentions.Cancel(wallet);
+            incomingProfiles.Enqueue(wallet, profileVersions.GetValueOrDefault(subjectId));
+            pendingResyncs.Remove(subjectId);
         }
 
         public void Dispose()
@@ -115,6 +166,8 @@ namespace DCL.Multiplayer.Movement
             lastMovementMessages.Clear();
             pendingResyncs.Clear();
             emotingSubjects.Clear();
+            profileVersions.Clear();
+            realmProbes.Clear();
         }
 
         /// <summary>
@@ -152,7 +205,20 @@ namespace DCL.Multiplayer.Movement
 
             routingPurgeRequested = false;
 
-            peerIdCache.RemoveWhereNotInRealm(pulseRealm.Value, PurgeQueues);
+            // Peers are hidden, not forgotten, on a realm change; the ones in the realm we arrived in are shown again
+            string realm = pulseRealm.Value;
+            realmProbes.Clear();
+
+            foreach (KeyValuePair<uint, (uint sequence, NetworkMovementMessage message)> last in lastMovementMessages)
+            {
+                if (peerIdCache.GetWalletInRealm(last.Key, realm, out Web3Address wallet) == PeerIdCache.LookupResult.Found)
+                {
+                    Reannounce(last.Key, wallet);
+                    Inbox(last.Value.message, wallet);
+                }
+                else
+                    emotingSubjects.Remove(last.Key);
+            }
         }
 
         private void PurgeQueues(uint subjectId)
@@ -160,6 +226,8 @@ namespace DCL.Multiplayer.Movement
             lastMovementMessages.Remove(subjectId);
             pendingResyncs.Remove(subjectId);
             emotingSubjects.Remove(subjectId);
+            profileVersions.Remove(subjectId);
+            realmProbes.Remove(subjectId);
         }
 
         private void Inbox(NetworkMovementMessage fullMovementMessage, string @for)

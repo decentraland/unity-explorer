@@ -20,6 +20,7 @@ namespace DCL.Multiplayer.Movement
         // Concurrent collections are not needed as messages are processed strictly from a single thread at a time message by message
         private readonly Dictionary<uint, (uint sequence, NetworkMovementMessage message)> lastMovementMessages = new ();
         private readonly Dictionary<uint, byte> pendingResyncs = new ();
+        private readonly Dictionary<uint, int> profileVersions = new ();
 
         public void Send(NetworkMovementMessage message)
         {
@@ -67,6 +68,7 @@ namespace DCL.Multiplayer.Movement
 
             NetworkMovementMessage movementMessage = ToNetworkMovementMessage(playerJoined.State);
             lastMovementMessages[playerJoined.State.SubjectId] = (playerJoined.State.Sequence, movementMessage);
+            profileVersions[playerJoined.State.SubjectId] = playerJoined.ProfileVersion;
 
             Inbox(movementMessage, resolvedWallet);
         }
@@ -99,7 +101,8 @@ namespace DCL.Multiplayer.Movement
 
             PlayerStateFull playerStateFull = message.Message.PlayerStateFull;
 
-            if (!TryGetWalletInCurrentRealm(playerStateFull.SubjectId, PLAYER_STATE_MESSAGE, out Web3Address wallet))
+            if (!TryAdoptProbedPeer(playerStateFull.SubjectId, out Web3Address wallet)
+                && !TryGetWalletInCurrentRealm(playerStateFull.SubjectId, PLAYER_STATE_MESSAGE, out wallet))
                 return;
 
             NetworkMovementMessage movementMessage = ToNetworkMovementMessage(playerStateFull);
@@ -174,20 +177,23 @@ namespace DCL.Multiplayer.Movement
                 if (!pendingResyncs.TryAdd(subjectId, 0)) return false;
 
                 ResyncCount++;
-
-                OutgoingMessage resyncMessage = OutgoingMessage.Create(PacketMode.RELIABLE,
-                    ClientMessage.MessageOneofCase.Resync);
-
-                resyncMessage.Message.Resync = new ResyncRequest
-                {
-                    SubjectId = subjectId,
-                    KnownSeq = knownSequence,
-                };
-
-                pulseService.Send(resyncMessage);
-
+                SendResyncRequest(subjectId, knownSequence);
                 return true;
             }
+        }
+
+        private void SendResyncRequest(uint subjectId, uint knownSequence)
+        {
+            OutgoingMessage resyncMessage = OutgoingMessage.Create(PacketMode.RELIABLE,
+                ClientMessage.MessageOneofCase.Resync);
+
+            resyncMessage.Message.Resync = new ResyncRequest
+            {
+                SubjectId = subjectId,
+                KnownSeq = knownSequence,
+            };
+
+            pulseService.Send(resyncMessage);
         }
 
         private void TryUpdateLastMovementAndCompleteResync(uint serverTick, uint subjectId, uint sequence, NetworkMovementMessage movementMessage, bool allowOverrides = false)
