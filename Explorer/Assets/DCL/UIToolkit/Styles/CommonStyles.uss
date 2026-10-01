@@ -46,3 +46,23 @@
 .dcl-clickable:active {
     scale: 0.9;
 }
+
+/* Dropdown popup menus inherit the white text above, so they get a light box with dark text to stay readable. */
+.unity-base-dropdown__container-outer {
+    background-color: rgba(255, 255, 255, 0.95);
+    border-color: rgba(18, 0, 131, 0.59);
+    border-width: 2px;
+    border-radius: 3px;
+}
+
+.unity-base-dropdown__item:hover {
+    background-color: rgba(18, 0, 131, 0.15);
+}
+
+.unity-base-dropdown__label {
+    color: rgb(46, 46, 46);
+}
+
+.unity-base-dropdown__checkmark {
+    -unity-background-image-tint-color: rgb(46, 46, 46);
+}
