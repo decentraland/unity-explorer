@@ -9,6 +9,7 @@ using DCL.Utility.Types;
 using DCL.Web3.Identities;
 using System.Collections.Generic;
 using System.Threading;
+using Utility;
 using Utility.Fsm;
 
 namespace DCL.Profiles.Self
@@ -20,6 +21,7 @@ namespace DCL.Profiles.Self
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly SelfProfileCmdExecutor executor;
         private readonly FsmRuntime<SelfProfileModel, SelfProfileMsg, SelfProfileCmd> runtime;
+        private readonly CancellationTokenSource drainCts = new ();
 
         public SelfProfileModel CurrentProfileSnapshot => runtime.ModelSnapshot;
 
@@ -46,18 +48,17 @@ namespace DCL.Profiles.Self
             web3IdentityCache.OnIdentityChanged += SendCurrentIdentity;
             web3IdentityCache.OnIdentityCleared += SendIdentityCleared;
             SendCurrentIdentity();
+
+            DrainLoopAsync(drainCts.Token).Forget();
         }
 
         public void Dispose()
         {
+            drainCts.SafeCancelAndDispose();
             web3IdentityCache.OnIdentityChanged -= SendCurrentIdentity;
             web3IdentityCache.OnIdentityCleared -= SendIdentityCleared;
             executor.Dispose();
         }
-
-        /// <summary>Applies the queued messages. Call it once per frame on the main thread.</summary>
-        public void Drain() => // TODO SelfProfile should manage the drain itself with UniTask and CancellationTokenSource, an update loop until dispoed. no external public drains
-            runtime.Drain();
 
         // TODO too complex logic, both ProfileAsync and DeployProfileAsync. It would be better to store the lastProfile result alongside ID of the request, current approach manually splits the logic
         // and looses FSM
@@ -158,5 +159,19 @@ namespace DCL.Profiles.Self
 
         private void SendIdentityCleared() =>
             runtime.Send(SelfProfileMsg.IdentityCleared());
+
+        /// <summary>Applies the queued messages once per frame, in the Initialization phase, until disposed.</summary>
+        private async UniTaskVoid DrainLoopAsync(CancellationToken ct)
+        {
+            while (true)
+            {
+                await UniTask.Yield(PlayerLoopTiming.Initialization);
+
+                if (ct.IsCancellationRequested)
+                    return;
+
+                runtime.Drain();
+            }
+        }
     }
 }

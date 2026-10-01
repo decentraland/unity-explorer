@@ -79,7 +79,7 @@ namespace DCL.Profiles.Self.Playground
                 new ForcedWearables()
             );
 
-            ProfileReadResult read = await DrivenAsync(selfProfile, selfProfile.ProfileAsync(ct));
+            ProfileReadResult read = await selfProfile.ProfileAsync(ct);
             ReportHub.Log(ReportData.UNSPECIFIED, $"Profile read: {read}");
 
             if (!read.IsOk(out Profile profile))
@@ -88,19 +88,8 @@ namespace DCL.Profiles.Self.Playground
             Profile edited = profile.CreateNewProfileForUpdate(equippedEmotes, equippedWearables, new List<string>(equippedWearables.ForceRenderCategories),
                 emoteStorage, wearableStorage, incrementVersion: false);
 
-            ProfileDeployResult deploy = await DrivenAsync(selfProfile, selfProfile.DeployProfileAsync(edited, ct));
+            ProfileDeployResult deploy = await selfProfile.DeployProfileAsync(edited, ct);
             ReportHub.Log(ReportData.UNSPECIFIED, $"Profile deploy: {deploy}");
-        }
-
-        private static async UniTask<T> DrivenAsync<T>(SelfProfile selfProfile, UniTask<T> call)
-        {
-            while (call.Status == UniTaskStatus.Pending)
-            {
-                selfProfile.Drain();
-                await UniTask.Yield();
-            }
-
-            return await call;
         }
     }
 }
