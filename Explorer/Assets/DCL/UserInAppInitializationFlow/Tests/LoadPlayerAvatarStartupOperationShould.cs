@@ -1,5 +1,6 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
+using DCL.AuthenticationScreenFlow;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Profiles;
 using DCL.Profiles.Self;
@@ -11,7 +12,6 @@ using NSubstitute;
 using NUnit.Framework;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.TestTools;
 
 namespace DCL.UserInAppInitializationFlow.Tests
 {
@@ -94,13 +94,11 @@ namespace DCL.UserInAppInitializationFlow.Tests
         }
 
         [Test]
-        public void FailWithoutAddingProfileWhenProfileCannotBeResolved()
+        public void ReportProfileNotFoundWithoutAddingProfileWhenTheProfileIsNotDeployed()
         {
             // Arrange
             selfProfile.ProfileAsync(Arg.Any<CancellationToken>())
                 .Returns(UniTask.FromResult(ProfileReadResult.FromError(ProfileReadError.NotFound)));
-
-            LogAssert.Expect(LogType.Exception, "InvalidOperationException: Own profile could not be resolved (NotFound), the player entity cannot be initialized");
 
             Entity playerEntity = world.Create();
             var operation = new LoadPlayerAvatarStartupOperation(loadingStatus, selfProfile, avatarBaseProxy);
@@ -110,7 +108,43 @@ namespace DCL.UserInAppInitializationFlow.Tests
 
             // Assert
             Assert.IsFalse(result.Success, "A missing own profile must fail the operation instead of continuing with a null profile");
+            Assert.AreEqual(TaskError.MessageError, result.Error!.Value.State);
+            Assert.IsInstanceOf<ProfileNotFoundException>(result.Error.Value.Exception, "The flow recognizes the missing profile by its exception to show the explicit popup");
             Assert.IsFalse(world.Has<Profile>(playerEntity), "A null Profile component would make every profile system throw each frame");
+        }
+
+        [Test]
+        public void ReportATimeoutWhenTheProfileFetchFails()
+        {
+            // Arrange
+            selfProfile.ProfileAsync(Arg.Any<CancellationToken>())
+                .Returns(UniTask.FromResult(ProfileReadResult.FromError(ProfileReadError.FetchFailed)));
+
+            var operation = new LoadPlayerAvatarStartupOperation(loadingStatus, selfProfile, avatarBaseProxy);
+
+            // Act
+            EnumResult<TaskError> result = operation.ExecuteAsync(MakeParams(world.Create()), cts.Token).GetAwaiter().GetResult();
+
+            // Assert
+            Assert.IsFalse(result.Success);
+            Assert.AreEqual(TaskError.Timeout, result.Error!.Value.State);
+        }
+
+        [Test]
+        public void ReportCancellationWhenTheProfileReadIsCancelled()
+        {
+            // Arrange
+            selfProfile.ProfileAsync(Arg.Any<CancellationToken>())
+                .Returns(UniTask.FromResult(ProfileReadResult.FromError(ProfileReadError.Cancelled)));
+
+            var operation = new LoadPlayerAvatarStartupOperation(loadingStatus, selfProfile, avatarBaseProxy);
+
+            // Act
+            EnumResult<TaskError> result = operation.ExecuteAsync(MakeParams(world.Create()), cts.Token).GetAwaiter().GetResult();
+
+            // Assert
+            Assert.IsFalse(result.Success);
+            Assert.AreEqual(TaskError.Cancelled, result.Error!.Value.State);
         }
 
         private IStartupOperation.Params MakeParams(Entity playerEntity)

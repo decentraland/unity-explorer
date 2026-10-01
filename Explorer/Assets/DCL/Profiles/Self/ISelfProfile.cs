@@ -15,7 +15,7 @@ namespace DCL.Profiles.Self
         UniTask<ProfileReadResult> ProfileAsync(CancellationToken ct);
 
         /// <summary>
-        ///     Cancelling the token stops waiting; the deploy itself runs to its end. // TODO can we cancel the deploy itself?
+        ///     Cancelling the token stops waiting; the deploy itself always runs to its end.
         /// </summary>
         UniTask<ProfileDeployResult> DeployProfileAsync(Profile edited, CancellationToken ct);
     }
