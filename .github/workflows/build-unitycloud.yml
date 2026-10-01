@@ -186,7 +186,8 @@ concurrency:
   # Only cancel an in-flight build when the new event will actually produce a new useful build.
   # Otherwise an incidental pull_request event (e.g. converted_to_draft race, non-override label change)
   # would cancel a real in-progress build and let the new run skip prebuild/build, leaving the
-  # Build Gate falsely green.
+  # Build Gate falsely green. Events raised by github-actions[bot] never build (see prebuild.if),
+  # so they never cancel either.
   cancel-in-progress: >-
     ${{
       github.event_name == 'push' ||
@@ -194,6 +195,7 @@ concurrency:
       github.event_name == 'merge_group' ||
       (
         github.event_name == 'pull_request' &&
+        github.actor != 'github-actions[bot]' &&
         (
           github.event.action == 'opened' ||
           github.event.action == 'reopened' ||
