@@ -74,40 +74,46 @@ namespace DCL.Profiles.Self
             $"{Address.Value} sent v{Sent.Version} {Exception.GetType().Name}: {Exception.Message}";
     }
 
-    /// <summary>
-    ///     Facts fed into the self-profile FSM. They state what happened, never what to do; the update derives the intention.
-    ///     Identity messages come from the identity cache. <c>DeployProfileEditRequested</c> means the user finished composing a new
-    ///     profile version for the current identity. Fetch and deploy results are produced by the command executor and
-    ///     carry the address the IO was started for, so a result that arrives after the identity changed is recognised as stale.
-    ///     Deploy results also carry the profile instance that was sent, so the result of a superseded deploy is recognised too.
-    ///     <c>ProfileRefetchRequested</c> asks for a new fetch of the current identity's profile after a failed one.
-    /// </summary>
+    public readonly struct DeployRequest
+    {
+        public readonly RequestId Id;
+        public readonly Profile Edited;
+
+        public DeployRequest(RequestId id, Profile edited)
+        {
+            Id = id;
+            Edited = edited;
+        }
+
+        public override string ToString() =>
+            $"{Id} v{Edited.Version}";
+    }
+
     [REnum(EnumUnderlyingType.Byte)]
     [REnumField(typeof(UserId), "IdentityChanged")]
     [REnumFieldEmpty("IdentityCleared")]
     [REnumField(typeof(FetchSucceeded))]
     [REnumField(typeof(UserId), "FetchNotFound")]
     [REnumField(typeof(FetchFailed))]
-    [REnumField(typeof(Profile), "DeployProfileOnEditRequested")]
+    [REnumField(typeof(DeployRequest), "DeployProfileOnEditRequested")]
     [REnumField(typeof(DeploySucceeded))]
     [REnumField(typeof(DeployFailed))]
-    [REnumFieldEmpty("ProfileRefetchRequested")]
+    [REnumField(typeof(RequestId), "ProfileReadRequested")]
+    [REnumField(typeof(RequestId), "RequestClosed")]
     public readonly partial struct SelfProfileMsg
     {
-        /// <summary>
-        ///     The address the message was produced for. Null for <c>IdentityCleared</c>, <c>DeployProfileEditRequested</c> and
-        ///     <c>ProfileRefetchRequested</c>, which are about whatever identity is current.
-        /// </summary>
+        /// <summary>The address the message was produced for; null for the messages about whatever identity is current.</summary>
         public UserId? Address => Match<UserId?>(
             onIdentityChanged: static address => address,
             onIdentityCleared: static () => null,
             onFetchSucceeded: static m => m.Address,
             onFetchNotFound: static address => address,
             onFetchFailed: static m => m.Address,
-            onDeployProfileEditRequested: static _ => null,
+            onDeployProfileOnEditRequested: static _ => null,
             onDeploySucceeded: static m => m.Address,
             onDeployFailed: static m => m.Address,
-            onProfileRefetchRequested: static () => null
+            onProfileReadRequested: static _ => null,
+            onRequestClosed: static _ => null
         );
     }
 }

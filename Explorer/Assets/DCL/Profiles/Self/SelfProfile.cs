@@ -7,6 +7,7 @@ using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Utility.Types;
 using DCL.Web3.Identities;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using Utility;
@@ -22,6 +23,9 @@ namespace DCL.Profiles.Self
         private readonly SelfProfileCmdExecutor executor;
         private readonly FsmRuntime<SelfProfileModel, SelfProfileMsg, SelfProfileCmd> runtime;
         private readonly CancellationTokenSource drainCts = new ();
+        private readonly CancellationToken drainToken;
+
+        private long lastRequestId;
 
         public SelfProfileModel CurrentProfileSnapshot => runtime.ModelSnapshot;
 
@@ -39,6 +43,7 @@ namespace DCL.Profiles.Self
             ForcedWearables forcedWearables)
         {
             this.web3IdentityCache = web3IdentityCache;
+            drainToken = drainCts.Token;
 
             executor = new SelfProfileCmdExecutor(profileRepository, profileCache, wearableStorage, emoteStorage, equippedWearables, equippedEmotes,
                 forcedWearables, forcedEmotes, world, playerEntity);
@@ -60,85 +65,36 @@ namespace DCL.Profiles.Self
             executor.Dispose();
         }
 
-        // TODO too complex logic, both ProfileAsync and DeployProfileAsync. It would be better to store the lastProfile result alongside ID of the request, current approach manually splits the logic
-        // and looses FSM
-        public async UniTask<ProfileReadResult> ProfileAsync(CancellationToken ct)
+        public UniTask<ProfileReadResult> ProfileAsync(CancellationToken ct)
         {
-            Option<ProfileFailure> refetchRequestedAfter = Option<ProfileFailure>.None;
+            RequestId id = NextRequestId();
+            runtime.Send(SelfProfileMsg.FromProfileReadRequested(id));
+            return AwaitResultAsync(id, static model => model.ReadResults, ProfileReadResult.FromError(ProfileReadError.Cancelled), ct);
+        }
 
-            while (!ct.IsCancellationRequested)
+        public UniTask<ProfileDeployResult> DeployProfileAsync(Profile edited, CancellationToken ct)
+        {
+            RequestId id = NextRequestId();
+            runtime.Send(SelfProfileMsg.FromDeployProfileOnEditRequested(new DeployRequest(id, edited)));
+            return AwaitResultAsync(id, static model => model.DeployResults, ProfileDeployResult.FromError(ProfileDeployError.Cancelled), ct);
+        }
+
+        /// <summary>Waits until the model holds the result of the request, then closes the request so the model drops it.</summary>
+        private async UniTask<T> AwaitResultAsync<T>(RequestId id, Func<SelfProfileModel, RequestResults<T>> resultsOf, T cancelled, CancellationToken ct) where T: struct
+        {
+            try
             {
-                if (!CurrentProfileSnapshot.IsIdentified(out Identified identified))
-                    return ProfileReadResult.FromError(ProfileReadError.NoIdentity);
-
-                if (identified.Knowledge.IsKnown(out Profile known))
-                    return ProfileReadResult.FromOk(known);
-
-                if (identified.Knowledge.IsMissing())
-                    return ProfileReadResult.FromError(ProfileReadError.NotFound);
-
-                if (identified.Knowledge.IsFailed(out ProfileFailure failure) && identified.Activity.IsIdle())
+                while (!ct.IsCancellationRequested && !drainToken.IsCancellationRequested)
                 {
-                    // One refetch per call: a refetch ends in a new failure instance.
-                    if (!refetchRequestedAfter.Has)
-                    {
-                        refetchRequestedAfter = Option<ProfileFailure>.Some(failure);
-                        runtime.Send(SelfProfileMsg.ProfileRefetchRequested());
-                    }
-                    else if (!ReferenceEquals(refetchRequestedAfter.Value.Exception, failure.Exception))
-                        return ProfileReadResult.FromError(ProfileReadError.FetchFailed);
+                    if (resultsOf(CurrentProfileSnapshot).TryGet(id, out T result))
+                        return result;
+
+                    await UniTask.Yield(PlayerLoopTiming.Update);
                 }
 
-                await UniTask.Yield(PlayerLoopTiming.Update);
+                return cancelled;
             }
-
-            return ProfileReadResult.FromError(ProfileReadError.Cancelled);
-        }
-
-        public async UniTask<ProfileDeployResult> DeployProfileAsync(Profile edited, CancellationToken ct)
-        {
-            if (ct.IsCancellationRequested)
-                return ProfileDeployResult.FromError(ProfileDeployError.Cancelled);
-
-            if (!CurrentProfileSnapshot.IsIdentified(out Identified identified))
-                return ProfileDeployResult.FromError(ProfileDeployError.NoIdentity);
-
-            int baseVersion = edited.Version;
-
-            if (identified.Knowledge.IsKnown(out Profile known))
-            {
-                if (edited.IsSameProfile(known))
-                    return ProfileDeployResult.FromError(ProfileDeployError.NothingChanged);
-
-                baseVersion = known.Version;
-            }
-
-            runtime.Send(SelfProfileMsg.FromDeployProfileEditRequested(edited));
-            return await DeployOutcomeAsync(identified.Address, edited, baseVersion, ct);
-        }
-
-        private async UniTask<ProfileDeployResult> DeployOutcomeAsync(UserId address, Profile edited, int baseVersion, CancellationToken ct)
-        {
-            Profile awaited = edited;
-
-            while (!ct.IsCancellationRequested)
-            {
-                if (!CurrentProfileSnapshot.IsIdentified(out Identified identified) || !identified.Address.Equals(address))
-                    return ProfileDeployResult.FromError(ProfileDeployError.NoIdentity);
-
-                if (identified.LastDeployFailure.Has && ReferenceEquals(identified.LastDeployFailure.Value.Sent, awaited))
-                    return ProfileDeployResult.FromError(ProfileDeployError.DeployFailed);
-
-                // A later edit supersedes the awaited one and carries its changes, so its outcome becomes this call's outcome.
-                if (identified.Activity.IsDeploying(out Deploying deploying))
-                    awaited = deploying.Pending;
-                else if (identified.Knowledge.IsKnown(out Profile saved) && saved.Version > baseVersion)
-                    return ProfileDeployResult.FromOk(saved);
-
-                await UniTask.Yield(PlayerLoopTiming.Update);
-            }
-
-            return ProfileDeployResult.FromError(ProfileDeployError.Cancelled);
+            finally { runtime.Send(SelfProfileMsg.FromRequestClosed(id)); }
         }
 
         private void SendCurrentIdentity()
@@ -159,6 +115,9 @@ namespace DCL.Profiles.Self
 
         private void SendIdentityCleared() =>
             runtime.Send(SelfProfileMsg.IdentityCleared());
+
+        private RequestId NextRequestId() =>
+            new (Interlocked.Increment(ref lastRequestId));
 
         /// <summary>Applies the queued messages once per frame, in the Initialization phase, until disposed.</summary>
         private async UniTaskVoid DrainLoopAsync(CancellationToken ct)

@@ -1,27 +1,10 @@
 using DCL.Utility.Types;
 using REnum;
-using System;
 
 namespace DCL.Profiles.Self
 {
-    /// <summary>A deploy that did not land: the edit that was sent and why it failed.</summary>
-    public readonly struct DeployFailure
-    {
-        public readonly Profile Sent;
-        public readonly Exception Exception;
-
-        public DeployFailure(Profile sent, Exception exception)
-        {
-            Sent = sent;
-            Exception = exception;
-        }
-
-        public override string ToString() =>
-            $"v{Sent.Version} {Exception.GetType().Name}: {Exception.Message}";
-    }
-
     /// <summary>
-    ///     Model of the self-profile FSM while an identity is present. Knowledge and activity exist only together
+    ///     Session of the self-profile FSM while an identity is present. Knowledge and activity exist only together
     ///     with the address they belong to.
     /// </summary>
     public readonly struct Identified
@@ -30,18 +13,18 @@ namespace DCL.Profiles.Self
         public readonly ProfileKnowledge Knowledge;
         public readonly ProfileActivity Activity;
 
-        /// <summary>The last failed deploy of this identity, if any.</summary>
-        public readonly Option<DeployFailure> LastDeployFailure;
+        /// <summary>Reads waiting for the knowledge to settle.</summary>
+        public readonly RequestIds PendingReads;
 
         public Identified(UserId address, ProfileKnowledge knowledge, ProfileActivity activity)
-            : this(address, knowledge, activity, Option<DeployFailure>.None) { }
+            : this(address, knowledge, activity, default) { }
 
-        public Identified(UserId address, ProfileKnowledge knowledge, ProfileActivity activity, Option<DeployFailure> lastDeployFailure)
+        public Identified(UserId address, ProfileKnowledge knowledge, ProfileActivity activity, RequestIds pendingReads)
         {
             Address = address;
             Knowledge = knowledge;
             Activity = activity;
-            LastDeployFailure = lastDeployFailure;
+            PendingReads = pendingReads;
         }
 
         /// <summary>A fresh identity: nothing known, nothing in flight.</summary>
@@ -49,36 +32,119 @@ namespace DCL.Profiles.Self
             new (address, ProfileKnowledge.Unknown(), ProfileActivity.Idle());
 
         public Identified WithKnowledge(ProfileKnowledge knowledge) =>
-            new (Address, knowledge, Activity, LastDeployFailure);
+            new (Address, knowledge, Activity, PendingReads);
 
         public Identified WithActivity(ProfileActivity activity) =>
-            new (Address, Knowledge, activity, LastDeployFailure);
+            new (Address, Knowledge, activity, PendingReads);
+
+        public Identified WithPendingReads(RequestIds pendingReads) =>
+            new (Address, Knowledge, Activity, pendingReads);
 
         public Identified With(ProfileKnowledge knowledge, ProfileActivity activity) =>
-            new (Address, knowledge, activity, LastDeployFailure);
+            new (Address, knowledge, activity, PendingReads);
 
-        public Identified With(ProfileKnowledge knowledge, ProfileActivity activity, Option<DeployFailure> lastDeployFailure) =>
-            new (Address, knowledge, activity, lastDeployFailure);
+        /// <summary>The same session without the request among the pending reads or the requests of the deploy in flight.</summary>
+        public Identified WithoutRequest(RequestId id)
+        {
+            ProfileActivity activity = Activity.IsDeploying(out Deploying deploying)
+                ? ProfileActivity.FromDeploying(new Deploying(deploying.Pending, deploying.Before, deploying.Requests.Remove(id)))
+                : Activity;
+
+            return new Identified(Address, Knowledge, activity, PendingReads.Remove(id));
+        }
 
         public override string ToString() =>
-            LastDeployFailure.Has
-                ? $"{Address.Value} knowledge {Knowledge} activity {Activity} last deploy failure {LastDeployFailure.Value}"
-                : $"{Address.Value} knowledge {Knowledge} activity {Activity}";
+            PendingReads.Count == 0
+                ? $"{Address.Value} knowledge {Knowledge} activity {Activity}"
+                : $"{Address.Value} knowledge {Knowledge} activity {Activity} pending reads {PendingReads}";
     }
 
     /// <summary>
-    ///     Immutable model of the self-profile FSM. <c>NoIdentity</c> = no wallet is signed in, so there is nothing to know
-    ///     and nothing to do; <c>Identified</c> = the address plus what is known about its profile and what is in flight.
+    ///     <c>NoIdentity</c> = no wallet is signed in, so there is nothing to know and nothing to do;
+    ///     <c>Identified</c> = the address plus what is known about its profile and what is in flight.
     /// </summary>
     [REnum(EnumUnderlyingType.Byte)]
     [REnumFieldEmpty("NoIdentity")]
     [REnumField(typeof(Identified))]
+    public readonly partial struct SelfProfileSession { }
+
+    /// <summary>
+    ///     Immutable model of the self-profile FSM: the session plus the answered requests, each kept until its
+    ///     requester closes it.
+    /// </summary>
     public readonly partial struct SelfProfileModel
     {
+        public readonly SelfProfileSession Session;
+        public readonly RequestResults<ProfileReadResult> ReadResults;
+        public readonly RequestResults<ProfileDeployResult> DeployResults;
+
+        public SelfProfileModel(SelfProfileSession session)
+            : this(session, default, default) { }
+
+        public SelfProfileModel(SelfProfileSession session, RequestResults<ProfileReadResult> readResults, RequestResults<ProfileDeployResult> deployResults)
+        {
+            Session = session;
+            ReadResults = readResults;
+            DeployResults = deployResults;
+        }
+
         /// <summary>The trusted profile of the current identity, when there is one.</summary>
         public Option<Profile> KnownProfile =>
-            IsIdentified(out Identified identified) && identified.Knowledge.IsKnown(out Profile known)
+            Session.IsIdentified(out Identified identified) && identified.Knowledge.IsKnown(out Profile known)
                 ? Option<Profile>.Some(known)
                 : Option<Profile>.None;
+
+        public static SelfProfileModel NoIdentity() =>
+            new (SelfProfileSession.NoIdentity());
+
+        public static SelfProfileModel FromIdentified(in Identified identified) =>
+            new (SelfProfileSession.FromIdentified(identified));
+
+        public bool IsIdentified(out Identified identified) =>
+            Session.IsIdentified(out identified);
+
+        public SelfProfileModel WithSession(in SelfProfileSession session) =>
+            new (session, ReadResults, DeployResults);
+
+        public SelfProfileModel WithReadResult(RequestId id, ProfileReadResult result) =>
+            new (Session, ReadResults.With(id, result), DeployResults);
+
+        public SelfProfileModel WithReadResults(RequestIds ids, ProfileReadResult result)
+        {
+            RequestResults<ProfileReadResult> results = ReadResults;
+
+            for (var i = 0; i < ids.Count; i++)
+                results = results.With(ids[i], result);
+
+            return new SelfProfileModel(Session, results, DeployResults);
+        }
+
+        public SelfProfileModel WithDeployResult(RequestId id, ProfileDeployResult result) =>
+            new (Session, ReadResults, DeployResults.With(id, result));
+
+        public SelfProfileModel WithDeployResults(RequestIds ids, ProfileDeployResult result)
+        {
+            RequestResults<ProfileDeployResult> results = DeployResults;
+
+            for (var i = 0; i < ids.Count; i++)
+                results = results.With(ids[i], result);
+
+            return new SelfProfileModel(Session, ReadResults, results);
+        }
+
+        /// <summary>The model without any trace of the request: its result, or its place among the waiting requests.</summary>
+        public SelfProfileModel WithoutRequest(RequestId id)
+        {
+            SelfProfileSession session = Session.Match(
+                id,
+                onNoIdentity: static _ => SelfProfileSession.NoIdentity(),
+                onIdentified: static (id, current) => SelfProfileSession.FromIdentified(current.WithoutRequest(id))
+            );
+
+            return new SelfProfileModel(session, ReadResults.Without(id), DeployResults.Without(id));
+        }
+
+        public override string ToString() =>
+            $"{Session} read results {ReadResults} deploy results {DeployResults}";
     }
 }

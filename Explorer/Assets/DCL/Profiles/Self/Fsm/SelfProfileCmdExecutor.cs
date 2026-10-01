@@ -35,7 +35,6 @@ namespace DCL.Profiles.Self
         private readonly IReadOnlyList<URN>? forcedEmotes;
         private readonly World world;
         private readonly Entity playerEntity;
-
         private CancellationTokenSource? activity;
 
         public SelfProfileCmdExecutor(

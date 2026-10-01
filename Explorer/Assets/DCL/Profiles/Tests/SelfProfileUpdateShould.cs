@@ -1,5 +1,4 @@
 using DCL.Profiles.Self;
-using DCL.Utility.Types;
 using ECS.TestSuite;
 using NUnit.Framework;
 using System;
@@ -13,11 +12,12 @@ namespace DCL.Profiles.Tests
 
         private static readonly ProfileFailure TRANSIENT_FAILURE = new (FailureKind.Transient, new TimeoutException("catalyst timed out"));
         private static readonly Exception DEPLOY_ERROR = new InvalidOperationException("deploy rejected");
+        private static readonly RequestId READ = new (7);
+        private static readonly RequestId DEPLOY = new (8);
 
         [SetUp]
         public void SetUp()
         {
-            // Constructing a Profile validates its name against the feature flags.
             EcsTestsUtils.SetUpFeaturesRegistry();
         }
 
@@ -84,7 +84,7 @@ namespace DCL.Profiles.Tests
             (SelfProfileModel next, SelfProfileCmd cmd) = SelfProfileModel.Update(model, SelfProfileMsg.IdentityCleared());
 
             // Assert
-            Assert.That(next.GetKind(), Is.EqualTo(SelfProfileModel.Kind.NoIdentity));
+            Assert.That(next.Session.GetKind(), Is.EqualTo(SelfProfileSession.Kind.NoIdentity));
             Assert.That(cmd.GetKind(), Is.EqualTo(SelfProfileCmd.Kind.ResetLocalState));
         }
 
@@ -194,7 +194,7 @@ namespace DCL.Profiles.Tests
             Profile edited = NewProfile(4);
 
             // Act
-            (SelfProfileModel next, SelfProfileCmd cmd) = SelfProfileModel.Update(Known(trusted), SelfProfileMsg.FromDeployProfileEditRequested(edited));
+            (SelfProfileModel next, SelfProfileCmd cmd) = SelfProfileModel.Update(Known(trusted), SelfProfileMsg.FromDeployProfileOnEditRequested(new DeployRequest(DEPLOY, edited)));
 
             // Assert
             Identified identified = AssertIdentified(next);
@@ -228,7 +228,7 @@ namespace DCL.Profiles.Tests
             Profile edited = NewProfile(1);
 
             // Act
-            (SelfProfileModel afterEdit, SelfProfileCmd cmd) = SelfProfileModel.Update(Fetching(), SelfProfileMsg.FromDeployProfileEditRequested(edited));
+            (SelfProfileModel afterEdit, SelfProfileCmd cmd) = SelfProfileModel.Update(Fetching(), SelfProfileMsg.FromDeployProfileOnEditRequested(new DeployRequest(DEPLOY, edited)));
 
             // Assert
             Identified identified = AssertIdentified(afterEdit);
@@ -236,7 +236,6 @@ namespace DCL.Profiles.Tests
             AssertDeploying(identified.Activity, edited);
             AssertDeploy(cmd, edited);
 
-            // The late fetch result is stale now.
             AssertUnchanged(afterEdit, SelfProfileMsg.FromFetchSucceeded(new FetchSucceeded(ALICE, NewProfile(0))));
         }
 
@@ -247,10 +246,10 @@ namespace DCL.Profiles.Tests
             Profile trusted = NewProfile(3);
             Profile firstEdit = NewProfile(4);
             Profile secondEdit = NewProfile(5);
-            (SelfProfileModel afterFirst, SelfProfileCmd _) = SelfProfileModel.Update(Known(trusted), SelfProfileMsg.FromDeployProfileEditRequested(firstEdit));
+            (SelfProfileModel afterFirst, SelfProfileCmd _) = SelfProfileModel.Update(Known(trusted), SelfProfileMsg.FromDeployProfileOnEditRequested(new DeployRequest(DEPLOY, firstEdit)));
 
             // Act
-            (SelfProfileModel afterSecond, SelfProfileCmd cmd) = SelfProfileModel.Update(afterFirst, SelfProfileMsg.FromDeployProfileEditRequested(secondEdit));
+            (SelfProfileModel afterSecond, SelfProfileCmd cmd) = SelfProfileModel.Update(afterFirst, SelfProfileMsg.FromDeployProfileOnEditRequested(new DeployRequest(DEPLOY, secondEdit)));
 
             // Assert
             Identified identified = AssertIdentified(afterSecond);
@@ -264,10 +263,115 @@ namespace DCL.Profiles.Tests
         }
 
         [Test]
-        public void IgnoreEditsWithoutIdentity()
+        public void AnswerADeployWithNoIdentityWithoutIdentity()
         {
-            // Act & Assert
-            AssertUnchanged(SelfProfileModel.NoIdentity(), SelfProfileMsg.FromDeployProfileEditRequested(NewProfile(1)));
+            // Arrange
+            SelfProfileModel model = SelfProfileModel.NoIdentity();
+
+            // Act
+            (SelfProfileModel next, SelfProfileCmd cmd) = SelfProfileModel.Update(model, SelfProfileMsg.FromDeployProfileOnEditRequested(new DeployRequest(DEPLOY, NewProfile(1))));
+
+            // Assert
+            Assert.That(next.Session.GetKind(), Is.EqualTo(SelfProfileSession.Kind.NoIdentity));
+            Assert.That(cmd.GetKind(), Is.EqualTo(SelfProfileCmd.Kind.None));
+            AssertDeployError(next, DEPLOY, ProfileDeployError.NoIdentity);
+        }
+
+        [Test]
+        public void AnswerADeployWithNothingChangedWhenTheEditIsIdentical()
+        {
+            // Arrange
+            SelfProfileModel model = Known(NewProfile(3));
+
+            // Act
+            (SelfProfileModel next, SelfProfileCmd cmd) = SelfProfileModel.Update(model, SelfProfileMsg.FromDeployProfileOnEditRequested(new DeployRequest(DEPLOY, NewProfile(3))));
+
+            // Assert
+            Assert.That(next.Session, Is.EqualTo(model.Session));
+            Assert.That(cmd.GetKind(), Is.EqualTo(SelfProfileCmd.Kind.None));
+            AssertDeployError(next, DEPLOY, ProfileDeployError.NothingChanged);
+        }
+
+        [Test]
+        public void AnswerDeployRequestsWhenTheDeploySucceeds()
+        {
+            // Arrange
+            Profile sent = NewProfile(4);
+            Profile saved = NewProfile(4);
+            SelfProfileModel model = Deploying(sent, ProfileKnowledge.FromKnown(NewProfile(3)), DEPLOY);
+
+            // Act
+            (SelfProfileModel next, SelfProfileCmd cmd) = SelfProfileModel.Update(model, SelfProfileMsg.FromDeploySucceeded(new DeploySucceeded(ALICE, sent, saved)));
+
+            // Assert
+            Assert.That(AssertIdentified(next).Activity.GetKind(), Is.EqualTo(ProfileActivity.Kind.Idle));
+            AssertPublish(cmd, saved);
+            Assert.That(AssertDeployResult(next, DEPLOY).IsOk(out Profile actual), Is.True);
+            Assert.That(actual, Is.SameAs(saved));
+        }
+
+        [Test]
+        public void AnswerDeployRequestsWithDeployFailedWhenTheDeployFails()
+        {
+            // Arrange
+            Profile sent = NewProfile(4);
+            SelfProfileModel model = Deploying(sent, ProfileKnowledge.Missing(), DEPLOY);
+
+            // Act
+            (SelfProfileModel next, SelfProfileCmd cmd) = SelfProfileModel.Update(model, SelfProfileMsg.FromDeployFailed(new DeployFailed(ALICE, sent, DEPLOY_ERROR)));
+
+            // Assert
+            Assert.That(AssertIdentified(next).Knowledge.GetKind(), Is.EqualTo(ProfileKnowledge.Kind.Missing));
+            Assert.That(cmd.GetKind(), Is.EqualTo(SelfProfileCmd.Kind.None));
+            AssertDeployError(next, DEPLOY, ProfileDeployError.DeployFailed);
+        }
+
+        [Test]
+        public void CarryDeployRequestsOverToTheSupersedingDeploy()
+        {
+            // Arrange
+            var later = new RequestId(9);
+            SelfProfileModel model = Deploying(NewProfile(4), ProfileKnowledge.FromKnown(NewProfile(3)), DEPLOY);
+
+            // Act
+            (SelfProfileModel next, _) = SelfProfileModel.Update(model, SelfProfileMsg.FromDeployProfileOnEditRequested(new DeployRequest(later, NewProfile(5))));
+
+            // Assert
+            Deploying deploying = AssertDeploying(AssertIdentified(next).Activity, out _);
+            Assert.That(deploying.Requests.Count, Is.EqualTo(2));
+            Assert.That(deploying.Requests[0], Is.EqualTo(DEPLOY));
+            Assert.That(deploying.Requests[1], Is.EqualTo(later));
+        }
+
+        [Test]
+        public void AnswerDeployRequestsWithNoIdentityWhenIdentityIsCleared()
+        {
+            // Arrange
+            SelfProfileModel model = Deploying(NewProfile(4), ProfileKnowledge.FromKnown(NewProfile(3)), DEPLOY);
+
+            // Act
+            (SelfProfileModel next, SelfProfileCmd cmd) = SelfProfileModel.Update(model, SelfProfileMsg.IdentityCleared());
+
+            // Assert
+            Assert.That(next.Session.GetKind(), Is.EqualTo(SelfProfileSession.Kind.NoIdentity));
+            Assert.That(cmd.GetKind(), Is.EqualTo(SelfProfileCmd.Kind.ResetLocalState));
+            AssertDeployError(next, DEPLOY, ProfileDeployError.NoIdentity);
+        }
+
+        [Test]
+        public void KeepTheDeployWhenItsRequestIsClosed()
+        {
+            // Arrange
+            Profile sent = NewProfile(4);
+            SelfProfileModel model = Deploying(sent, ProfileKnowledge.FromKnown(NewProfile(3)), DEPLOY);
+
+            // Act
+            (SelfProfileModel next, SelfProfileCmd cmd) = SelfProfileModel.Update(model, SelfProfileMsg.FromRequestClosed(DEPLOY));
+
+            // Assert
+            Deploying deploying = AssertDeploying(AssertIdentified(next).Activity, sent);
+            Assert.That(deploying.Requests.Count, Is.EqualTo(0));
+            Assert.That(cmd.GetKind(), Is.EqualTo(SelfProfileCmd.Kind.None));
         }
 
         [Test]
@@ -366,7 +470,7 @@ namespace DCL.Profiles.Tests
             SelfProfileModel model = Model(before, ProfileActivity.Idle());
 
             // Act
-            (SelfProfileModel next, SelfProfileCmd cmd) = SelfProfileModel.Update(model, SelfProfileMsg.FromDeployProfileEditRequested(edited));
+            (SelfProfileModel next, SelfProfileCmd cmd) = SelfProfileModel.Update(model, SelfProfileMsg.FromDeployProfileOnEditRequested(new DeployRequest(DEPLOY, edited)));
 
             // Assert
             Identified identified = AssertIdentified(next);
@@ -377,51 +481,195 @@ namespace DCL.Profiles.Tests
         }
 
         [Test]
-        public void RefetchWhenRequestedAfterAFailedFetch()
+        public void AnswerAReadAtOnceWhenTheProfileIsKnown()
+        {
+            // Arrange
+            Profile known = NewProfile(3);
+            SelfProfileModel model = Known(known);
+
+            // Act
+            (SelfProfileModel next, SelfProfileCmd cmd) = SelfProfileModel.Update(model, SelfProfileMsg.FromProfileReadRequested(READ));
+
+            // Assert
+            Assert.That(next.Session, Is.EqualTo(model.Session));
+            Assert.That(cmd.GetKind(), Is.EqualTo(SelfProfileCmd.Kind.None));
+            Assert.That(AssertReadResult(next, READ).IsOk(out Profile actual), Is.True);
+            Assert.That(actual, Is.SameAs(known));
+        }
+
+        [Test]
+        public void AnswerAReadWithNotFoundWhenTheProfileIsMissing()
+        {
+            // Arrange
+            SelfProfileModel model = Model(ProfileKnowledge.Missing(), ProfileActivity.Idle());
+
+            // Act
+            (SelfProfileModel next, SelfProfileCmd cmd) = SelfProfileModel.Update(model, SelfProfileMsg.FromProfileReadRequested(READ));
+
+            // Assert
+            Assert.That(next.Session, Is.EqualTo(model.Session));
+            Assert.That(cmd.GetKind(), Is.EqualTo(SelfProfileCmd.Kind.None));
+            AssertReadError(next, READ, ProfileReadError.NotFound);
+        }
+
+        [Test]
+        public void AnswerAReadWithNoIdentityWithoutIdentity()
+        {
+            // Arrange
+            SelfProfileModel model = SelfProfileModel.NoIdentity();
+
+            // Act
+            (SelfProfileModel next, SelfProfileCmd cmd) = SelfProfileModel.Update(model, SelfProfileMsg.FromProfileReadRequested(READ));
+
+            // Assert
+            Assert.That(next.Session.GetKind(), Is.EqualTo(SelfProfileSession.Kind.NoIdentity));
+            Assert.That(cmd.GetKind(), Is.EqualTo(SelfProfileCmd.Kind.None));
+            AssertReadError(next, READ, ProfileReadError.NoIdentity);
+        }
+
+        [Test]
+        public void QueueAReadWhileAFetchIsInFlight()
+        {
+            // Arrange
+            SelfProfileModel model = Fetching();
+
+            // Act
+            (SelfProfileModel next, SelfProfileCmd cmd) = SelfProfileModel.Update(model, SelfProfileMsg.FromProfileReadRequested(READ));
+
+            // Assert
+            Identified identified = AssertIdentified(next);
+            Assert.That(identified.PendingReads.Count, Is.EqualTo(1));
+            Assert.That(identified.PendingReads[0], Is.EqualTo(READ));
+            Assert.That(identified.Activity.GetKind(), Is.EqualTo(ProfileActivity.Kind.Fetching));
+            Assert.That(next.ReadResults.Count, Is.EqualTo(0));
+            Assert.That(cmd.GetKind(), Is.EqualTo(SelfProfileCmd.Kind.None));
+        }
+
+        [Test]
+        public void RefetchForAReadAfterAFailedFetch()
         {
             // Arrange
             SelfProfileModel model = Model(ProfileKnowledge.FromFailed(TRANSIENT_FAILURE), ProfileActivity.Idle());
 
             // Act
-            (SelfProfileModel next, SelfProfileCmd cmd) = SelfProfileModel.Update(model, SelfProfileMsg.ProfileRefetchRequested());
+            (SelfProfileModel next, SelfProfileCmd cmd) = SelfProfileModel.Update(model, SelfProfileMsg.FromProfileReadRequested(READ));
 
             // Assert
             Identified identified = AssertIdentified(next);
             Assert.That(identified.Knowledge.GetKind(), Is.EqualTo(ProfileKnowledge.Kind.Failed));
             Assert.That(identified.Activity.GetKind(), Is.EqualTo(ProfileActivity.Kind.Fetching));
+            Assert.That(identified.PendingReads.Count, Is.EqualTo(1));
             AssertFetch(cmd, ALICE);
         }
 
         [Test]
-        public void IgnoreARefetchWhenTheLastFetchDidNotFail()
+        public void AnswerQueuedReadsWhenTheFetchSucceeds()
         {
             // Arrange
-            SelfProfileModel known = Known(NewProfile(3));
-            SelfProfileModel missing = Model(ProfileKnowledge.Missing(), ProfileActivity.Idle());
+            Profile fetched = NewProfile(3);
+            SelfProfileModel model = WithPendingRead(Fetching());
 
-            // Act & Assert
-            AssertUnchanged(known, SelfProfileMsg.ProfileRefetchRequested());
-            AssertUnchanged(missing, SelfProfileMsg.ProfileRefetchRequested());
+            // Act
+            (SelfProfileModel next, SelfProfileCmd cmd) = SelfProfileModel.Update(model, SelfProfileMsg.FromFetchSucceeded(new FetchSucceeded(ALICE, fetched)));
+
+            // Assert
+            Assert.That(AssertIdentified(next).PendingReads.Count, Is.EqualTo(0));
+            AssertPublish(cmd, fetched);
+            Assert.That(AssertReadResult(next, READ).IsOk(out Profile actual), Is.True);
+            Assert.That(actual, Is.SameAs(fetched));
         }
 
         [Test]
-        public void IgnoreARefetchWhileAnActivityIsInFlight()
+        public void AnswerQueuedReadsWithFetchFailedWhenTheFetchFails()
         {
             // Arrange
-            SelfProfileModel model = Fetching();
+            SelfProfileModel model = WithPendingRead(Fetching());
 
-            // Act & Assert
-            AssertUnchanged(model, SelfProfileMsg.ProfileRefetchRequested());
+            // Act
+            (SelfProfileModel next, SelfProfileCmd cmd) = SelfProfileModel.Update(model, SelfProfileMsg.FromFetchFailed(new FetchFailed(ALICE, TRANSIENT_FAILURE)));
+
+            // Assert
+            Assert.That(AssertIdentified(next).PendingReads.Count, Is.EqualTo(0));
+            Assert.That(cmd.GetKind(), Is.EqualTo(SelfProfileCmd.Kind.None));
+            AssertReadError(next, READ, ProfileReadError.FetchFailed);
         }
 
         [Test]
-        public void IgnoreARefetchWithoutIdentity()
+        public void AnswerQueuedReadsWithNoIdentityWhenIdentityIsCleared()
         {
             // Arrange
-            SelfProfileModel model = SelfProfileModel.NoIdentity();
+            SelfProfileModel model = WithPendingRead(Fetching());
 
-            // Act & Assert
-            AssertUnchanged(model, SelfProfileMsg.ProfileRefetchRequested());
+            // Act
+            (SelfProfileModel next, SelfProfileCmd cmd) = SelfProfileModel.Update(model, SelfProfileMsg.IdentityCleared());
+
+            // Assert
+            Assert.That(next.Session.GetKind(), Is.EqualTo(SelfProfileSession.Kind.NoIdentity));
+            Assert.That(cmd.GetKind(), Is.EqualTo(SelfProfileCmd.Kind.ResetLocalState));
+            AssertReadError(next, READ, ProfileReadError.NoIdentity);
+        }
+
+        [Test]
+        public void CarryQueuedReadsOverWhenIdentitySwitches()
+        {
+            // Arrange
+            SelfProfileModel model = WithPendingRead(Fetching());
+
+            // Act
+            (SelfProfileModel next, _) = SelfProfileModel.Update(model, SelfProfileMsg.FromIdentityChanged(BOB));
+
+            // Assert
+            Identified identified = AssertIdentified(next);
+            Assert.That(identified.Address, Is.EqualTo(BOB));
+            Assert.That(identified.PendingReads.Count, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void AnswerQueuedReadsWhenASupersedingDeploySucceeds()
+        {
+            // Arrange
+            Profile edited = NewProfile(1);
+            Profile saved = NewProfile(2);
+            (SelfProfileModel deploying, _) = SelfProfileModel.Update(WithPendingRead(Fetching()), SelfProfileMsg.FromDeployProfileOnEditRequested(new DeployRequest(DEPLOY, edited)));
+
+            // Act
+            (SelfProfileModel next, SelfProfileCmd cmd) = SelfProfileModel.Update(deploying, SelfProfileMsg.FromDeploySucceeded(new DeploySucceeded(ALICE, edited, saved)));
+
+            // Assert
+            Assert.That(AssertIdentified(next).PendingReads.Count, Is.EqualTo(0));
+            AssertPublish(cmd, saved);
+            Assert.That(AssertReadResult(next, READ).IsOk(out Profile actual), Is.True);
+            Assert.That(actual, Is.SameAs(saved));
+        }
+
+        [Test]
+        public void DropAReadResultWhenTheRequestIsClosed()
+        {
+            // Arrange
+            (SelfProfileModel answered, _) = SelfProfileModel.Update(Known(NewProfile(3)), SelfProfileMsg.FromProfileReadRequested(READ));
+
+            // Act
+            (SelfProfileModel next, SelfProfileCmd cmd) = SelfProfileModel.Update(answered, SelfProfileMsg.FromRequestClosed(READ));
+
+            // Assert
+            Assert.That(next.ReadResults.Count, Is.EqualTo(0));
+            Assert.That(next.Session, Is.EqualTo(answered.Session));
+            Assert.That(cmd.GetKind(), Is.EqualTo(SelfProfileCmd.Kind.None));
+        }
+
+        [Test]
+        public void DropAQueuedReadWhenTheRequestIsClosed()
+        {
+            // Arrange
+            SelfProfileModel model = WithPendingRead(Fetching());
+
+            // Act
+            (SelfProfileModel next, _) = SelfProfileModel.Update(model, SelfProfileMsg.FromRequestClosed(READ));
+
+            // Assert
+            Identified identified = AssertIdentified(next);
+            Assert.That(identified.PendingReads.Count, Is.EqualTo(0));
+            Assert.That(identified.Activity.GetKind(), Is.EqualTo(ProfileActivity.Kind.Fetching));
         }
 
         [Test]
@@ -429,10 +677,11 @@ namespace DCL.Profiles.Tests
         {
             // Arrange
             Profile edited = NewProfile(3);
+            edited.Description = "edited";
             SelfProfileModel model = Known(NewProfile(3));
 
             // Act
-            (_, SelfProfileCmd cmd) = SelfProfileModel.Update(model, SelfProfileMsg.FromDeployProfileEditRequested(edited));
+            (_, SelfProfileCmd cmd) = SelfProfileModel.Update(model, SelfProfileMsg.FromDeployProfileOnEditRequested(new DeployRequest(DEPLOY, edited)));
 
             // Assert
             SelfProfileCmd[] batch = AssertBatch(cmd, 2);
@@ -447,64 +696,19 @@ namespace DCL.Profiles.Tests
             SelfProfileModel model = Model(ProfileKnowledge.Missing(), ProfileActivity.Idle());
 
             // Act
-            (_, SelfProfileCmd cmd) = SelfProfileModel.Update(model, SelfProfileMsg.FromDeployProfileEditRequested(edited));
+            (_, SelfProfileCmd cmd) = SelfProfileModel.Update(model, SelfProfileMsg.FromDeployProfileOnEditRequested(new DeployRequest(DEPLOY, edited)));
 
             // Assert
             Assert.That(AssertDeploy(cmd, edited).Version, Is.EqualTo(1));
         }
 
-        [Test]
-        public void RecordTheFailureWhenADeployFails()
-        {
-            // Arrange
-            Profile pending = NewProfile(4);
-            SelfProfileModel model = Deploying(pending, ProfileKnowledge.FromKnown(NewProfile(3)));
-
-            // Act
-            (SelfProfileModel next, _) = SelfProfileModel.Update(model, SelfProfileMsg.FromDeployFailed(new DeployFailed(ALICE, pending, DEPLOY_ERROR)));
-
-            // Assert
-            Identified identified = AssertIdentified(next);
-            Assert.That(identified.LastDeployFailure.Has, Is.True);
-            Assert.That(identified.LastDeployFailure.Value.Sent, Is.SameAs(pending));
-            Assert.That(identified.LastDeployFailure.Value.Exception, Is.SameAs(DEPLOY_ERROR));
-        }
-
-        [Test]
-        public void ForgetTheLastDeployFailureOnANewEdit()
-        {
-            // Arrange
-            SelfProfileModel model = WithDeployFailure(Known(NewProfile(3)));
-
-            // Act
-            (SelfProfileModel next, _) = SelfProfileModel.Update(model, SelfProfileMsg.FromDeployProfileEditRequested(NewProfile(3)));
-
-            // Assert
-            Assert.That(AssertIdentified(next).LastDeployFailure.Has, Is.False);
-        }
-
-        [Test]
-        public void ForgetTheLastDeployFailureWhenADeploySucceeds()
-        {
-            // Arrange
-            Profile pending = NewProfile(4);
-            SelfProfileModel model = WithDeployFailure(Deploying(pending, ProfileKnowledge.FromKnown(NewProfile(3))));
-
-            // Act
-            (SelfProfileModel next, _) = SelfProfileModel.Update(model, SelfProfileMsg.FromDeploySucceeded(new DeploySucceeded(ALICE, pending, NewProfile(4))));
-
-            // Assert
-            Assert.That(AssertIdentified(next).LastDeployFailure.Has, Is.False);
-        }
-
         private static Profile NewProfile(int version) =>
             new (ALICE, "alice", new Avatar()) { Version = version };
 
-        private static SelfProfileModel WithDeployFailure(in SelfProfileModel model)
+        private static SelfProfileModel WithPendingRead(in SelfProfileModel model)
         {
             Identified identified = AssertIdentified(model);
-            var failure = Option<DeployFailure>.Some(new DeployFailure(NewProfile(9), DEPLOY_ERROR));
-            return SelfProfileModel.FromIdentified(identified.With(identified.Knowledge, identified.Activity, failure));
+            return SelfProfileModel.FromIdentified(identified.WithPendingReads(identified.PendingReads.Add(READ)));
         }
 
         private static SelfProfileModel Model(ProfileKnowledge knowledge, ProfileActivity activity) =>
@@ -517,11 +721,17 @@ namespace DCL.Profiles.Tests
             Model(ProfileKnowledge.FromKnown(profile), ProfileActivity.Idle());
 
         /// <summary>A deploy in flight, published optimistically when the knowledge before it was known.</summary>
-        private static SelfProfileModel Deploying(Profile pending, ProfileKnowledge before)
+        private static SelfProfileModel Deploying(Profile pending, ProfileKnowledge before) =>
+            Deploying(pending, before, default);
+
+        private static SelfProfileModel Deploying(Profile pending, ProfileKnowledge before, RequestIds requests)
         {
             ProfileKnowledge knowledge = before.IsKnown(out _) ? ProfileKnowledge.FromKnown(pending) : before;
-            return Model(knowledge, ProfileActivity.FromDeploying(new Deploying(pending, before)));
+            return Model(knowledge, ProfileActivity.FromDeploying(new Deploying(pending, before, requests)));
         }
+
+        private static SelfProfileModel Deploying(Profile pending, ProfileKnowledge before, RequestId request) =>
+            Deploying(pending, before, default(RequestIds).Add(request));
 
         private static void AssertUnchanged(in SelfProfileModel model, in SelfProfileMsg msg)
         {
@@ -546,8 +756,15 @@ namespace DCL.Profiles.Tests
 
         private static Deploying AssertDeploying(in ProfileActivity activity, Profile pending)
         {
-            Assert.That(activity.IsDeploying(out Deploying deploying), Is.True, $"expected Deploying, got {activity}");
+            Deploying deploying = AssertDeploying(activity, out _);
             Assert.That(deploying.Pending, Is.SameAs(pending));
+            return deploying;
+        }
+
+        private static Deploying AssertDeploying(in ProfileActivity activity, out Profile pending)
+        {
+            Assert.That(activity.IsDeploying(out Deploying deploying), Is.True, $"expected Deploying, got {activity}");
+            pending = deploying.Pending;
             return deploying;
         }
 
@@ -561,6 +778,30 @@ namespace DCL.Profiles.Tests
         {
             Assert.That(cmd.IsPublish(out Profile? actual), Is.True, $"expected Publish, got {cmd}");
             Assert.That(actual, Is.SameAs(expected));
+        }
+
+        private static ProfileReadResult AssertReadResult(in SelfProfileModel model, RequestId id)
+        {
+            Assert.That(model.ReadResults.TryGet(id, out ProfileReadResult result), Is.True, $"expected a read result for {id}, got {model}");
+            return result;
+        }
+
+        private static void AssertReadError(in SelfProfileModel model, RequestId id, ProfileReadError expected)
+        {
+            Assert.That(AssertReadResult(model, id).IsError(out ProfileReadError actual), Is.True, $"expected a read error for {id}, got {model}");
+            Assert.That(actual, Is.EqualTo(expected));
+        }
+
+        private static ProfileDeployResult AssertDeployResult(in SelfProfileModel model, RequestId id)
+        {
+            Assert.That(model.DeployResults.TryGet(id, out ProfileDeployResult result), Is.True, $"expected a deploy result for {id}, got {model}");
+            return result;
+        }
+
+        private static void AssertDeployError(in SelfProfileModel model, RequestId id, ProfileDeployError expected)
+        {
+            Assert.That(AssertDeployResult(model, id).IsError(out ProfileDeployError actual), Is.True, $"expected a deploy error for {id}, got {model}");
+            Assert.That(actual, Is.EqualTo(expected));
         }
 
         private static DeployCmd AssertDeploy(in SelfProfileCmd cmd, Profile expected)

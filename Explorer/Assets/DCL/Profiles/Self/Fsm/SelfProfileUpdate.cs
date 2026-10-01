@@ -8,7 +8,6 @@ namespace DCL.Profiles.Self
         // which is enough to reconstruct the case without allocating.
         private const string IDENTITY_ALREADY_CURRENT = "the identity is already current";
         private const string NO_IDENTITY_TO_CLEAR = "there is no identity to clear";
-        private const string NO_IDENTITY_TO_DEPLOY_FOR = "there is no identity to deploy the edited profile for";
         private const string FETCH_HAS_NO_IDENTITY = "there is no identity, the fetch was started for a previous one";
         private const string FETCH_FOR_ANOTHER_IDENTITY = "the fetch was started for another identity";
         private const string NO_FETCH_IN_FLIGHT = "no fetch is in flight";
@@ -16,9 +15,6 @@ namespace DCL.Profiles.Self
         private const string DEPLOY_FOR_ANOTHER_IDENTITY = "the deploy was started for another identity";
         private const string NO_DEPLOY_IN_FLIGHT = "no deploy is in flight";
         private const string DEPLOY_SUPERSEDED = "the deploy was superseded by a later edit";
-        private const string NO_IDENTITY_TO_REFETCH_FOR = "there is no identity to read the profile of";
-        private const string LAST_FETCH_DID_NOT_FAIL = "the last fetch did not fail, there is nothing to refetch";
-        private const string ACTIVITY_ALREADY_IN_FLIGHT = "an activity is already in flight";
 
         /// <summary>
         ///     Pure transition of the self-profile FSM. No IO, no time, no shared state.
@@ -31,25 +27,32 @@ namespace DCL.Profiles.Self
                 onFetchSucceeded: static (model, fetched) => OnFetchSucceeded(model, fetched),
                 onFetchNotFound: static (model, address) => OnFetchNotFound(model, address),
                 onFetchFailed: static (model, failed) => OnFetchFailed(model, failed),
-                onDeployProfileEditRequested: static (model, edited) => OnDeployProfileEditRequested(model, edited),
+                onDeployProfileOnEditRequested: static (model, request) => OnDeployProfileOnEditRequested(model, request),
                 onDeploySucceeded: static (model, deployed) => OnDeploySucceeded(model, deployed),
                 onDeployFailed: static (model, failed) => OnDeployFailed(model, failed),
-                onProfileRefetchRequested: static model => OnProfileRefetchRequested(model)
+                onProfileReadRequested: static (model, id) => OnProfileReadRequested(model, id),
+                onRequestClosed: static (model, id) => (model.WithoutRequest(id), SelfProfileCmd.None())
             );
 
         private static (SelfProfileModel, SelfProfileCmd) OnIdentityChanged(in SelfProfileModel model, UserId address) =>
-            model.Match(
-                address,
-                onNoIdentity: static address => (StartFetching(address), SelfProfileCmd.FromFetch(address)),
-                onIdentified: static (address, current) => current.Address.Equals(address)
-                    ? Ignored(FromIdentified(current), IDENTITY_ALREADY_CURRENT)
-                    : (StartFetching(address), SelfProfileCmd.FromBatch(new[] { SelfProfileCmd.ResetLocalState(), SelfProfileCmd.FromFetch(address) }))
+            model.Session.Match(
+                (model, address),
+                onNoIdentity: static ctx => (ctx.model.WithSession(StartFetching(ctx.address, default)), SelfProfileCmd.FromFetch(ctx.address)),
+                onIdentified: static (ctx, current) => current.Address.Equals(ctx.address)
+                    ? Ignored(ctx.model, IDENTITY_ALREADY_CURRENT)
+                    : (ctx.model.WithSession(StartFetching(ctx.address, current.PendingReads))
+                          .WithDeployResults(PendingDeploys(current), ProfileDeployResult.FromError(ProfileDeployError.NoIdentity)),
+                        SelfProfileCmd.FromBatch(new[] { SelfProfileCmd.ResetLocalState(), SelfProfileCmd.FromFetch(ctx.address) }))
             );
 
         private static (SelfProfileModel, SelfProfileCmd) OnIdentityCleared(in SelfProfileModel model) =>
-            model.Match(
-                onNoIdentity: static () => Ignored(NoIdentity(), NO_IDENTITY_TO_CLEAR),
-                onIdentified: static _ => (NoIdentity(), SelfProfileCmd.ResetLocalState())
+            model.Session.Match(
+                model,
+                onNoIdentity: static model => Ignored(model, NO_IDENTITY_TO_CLEAR),
+                onIdentified: static (model, current) => (model.WithSession(SelfProfileSession.NoIdentity())
+                                                               .WithReadResults(current.PendingReads, ProfileReadResult.FromError(ProfileReadError.NoIdentity))
+                                                               .WithDeployResults(PendingDeploys(current), ProfileDeployResult.FromError(ProfileDeployError.NoIdentity)),
+                    SelfProfileCmd.ResetLocalState())
             );
 
         private static (SelfProfileModel, SelfProfileCmd) OnFetchSucceeded(in SelfProfileModel model, in FetchSucceeded msg)
@@ -57,7 +60,7 @@ namespace DCL.Profiles.Self
             if (StaleFetchReason(model, msg.Address, out Identified current) is { } reason)
                 return Ignored(model, reason);
 
-            return (FromIdentified(current.With(ProfileKnowledge.FromKnown(msg.Profile), ProfileActivity.Idle())), SelfProfileCmd.FromPublish(msg.Profile));
+            return SettleReads(model, current.With(ProfileKnowledge.FromKnown(msg.Profile), ProfileActivity.Idle()), SelfProfileCmd.FromPublish(msg.Profile));
         }
 
         private static (SelfProfileModel, SelfProfileCmd) OnFetchNotFound(in SelfProfileModel model, UserId address)
@@ -65,7 +68,7 @@ namespace DCL.Profiles.Self
             if (StaleFetchReason(model, address, out Identified current) is { } reason)
                 return Ignored(model, reason);
 
-            return (FromIdentified(current.With(ProfileKnowledge.Missing(), ProfileActivity.Idle())), SelfProfileCmd.None());
+            return SettleReads(model, current.With(ProfileKnowledge.Missing(), ProfileActivity.Idle()), SelfProfileCmd.None());
         }
 
         private static (SelfProfileModel, SelfProfileCmd) OnFetchFailed(in SelfProfileModel model, in FetchFailed msg)
@@ -82,19 +85,51 @@ namespace DCL.Profiles.Self
                 onFailed: static (failure, _) => ProfileKnowledge.FromFailed(failure)
             );
 
-            return (FromIdentified(current.With(knowledge, ProfileActivity.Idle())), SelfProfileCmd.None());
+            return SettleReads(model, current.With(knowledge, ProfileActivity.Idle()), SelfProfileCmd.None());
         }
 
-        private static (SelfProfileModel, SelfProfileCmd) OnDeployProfileEditRequested(in SelfProfileModel model, Profile edited) =>
-            model.Match(
-                edited,
-                onNoIdentity: static _ => Ignored(NoIdentity(), NO_IDENTITY_TO_DEPLOY_FOR),
-                onIdentified: static (edited, current) => StartDeploying(current, edited)
+        private static (SelfProfileModel, SelfProfileCmd) OnProfileReadRequested(in SelfProfileModel model, RequestId id) =>
+            model.Session.Match(
+                (model, id),
+                onNoIdentity: static ctx => (ctx.model.WithReadResult(ctx.id, ProfileReadResult.FromError(ProfileReadError.NoIdentity)), SelfProfileCmd.None()),
+                onIdentified: static (ctx, current) => Read(ctx.model, current, ctx.id)
             );
 
-        private static (SelfProfileModel, SelfProfileCmd) StartDeploying(in Identified current, Profile edited)
+        /// <summary>
+        ///     A read is answered at once from settled knowledge. Otherwise it waits on the fetch in flight, or on a new
+        ///     fetch when nothing is in flight, which is how a read after a failed fetch gets its one refetch.
+        /// </summary>
+        private static (SelfProfileModel, SelfProfileCmd) Read(in SelfProfileModel model, in Identified current, RequestId id)
         {
-            // A deploy already in flight is superseded; the revert point stays the knowledge from before the first edit.
+            if (current.Knowledge.IsKnown(out Profile known))
+                return (model.WithReadResult(id, ProfileReadResult.FromOk(known)), SelfProfileCmd.None());
+
+            if (current.Knowledge.IsMissing())
+                return (model.WithReadResult(id, ProfileReadResult.FromError(ProfileReadError.NotFound)), SelfProfileCmd.None());
+
+            Identified queued = current.WithPendingReads(current.PendingReads.Add(id));
+
+            if (!current.Activity.IsIdle())
+                return (model.WithSession(SelfProfileSession.FromIdentified(queued)), SelfProfileCmd.None());
+
+            return (model.WithSession(SelfProfileSession.FromIdentified(queued.WithActivity(ProfileActivity.Fetching()))), SelfProfileCmd.FromFetch(current.Address));
+        }
+
+        private static (SelfProfileModel, SelfProfileCmd) OnDeployProfileOnEditRequested(in SelfProfileModel model, in DeployRequest request) =>
+            model.Session.Match(
+                (model, request),
+                onNoIdentity: static ctx => (ctx.model.WithDeployResult(ctx.request.Id, ProfileDeployResult.FromError(ProfileDeployError.NoIdentity)), SelfProfileCmd.None()),
+                onIdentified: static (ctx, current) => current.Knowledge.IsKnown(out Profile known) && ctx.request.Edited.IsSameProfile(known)
+                    ? (ctx.model.WithDeployResult(ctx.request.Id, ProfileDeployResult.FromError(ProfileDeployError.NothingChanged)), SelfProfileCmd.None())
+                    : StartDeploying(ctx.model, current, ctx.request)
+            );
+
+        private static (SelfProfileModel, SelfProfileCmd) StartDeploying(in SelfProfileModel model, in Identified current, in DeployRequest request)
+        {
+            Profile edited = request.Edited;
+
+            // A deploy already in flight is superseded: its requests move to the new deploy and the revert point stays
+            // the knowledge from before the first edit.
             ProfileKnowledge before = current.Activity.Match(
                 current.Knowledge,
                 onIdle: static knowledge => knowledge,
@@ -102,26 +137,29 @@ namespace DCL.Profiles.Self
                 onDeploying: static (_, inFlight) => inFlight.Before
             );
 
+            RequestIds requests = PendingDeploys(current).Add(request.Id);
+
             // The next version follows the trusted profile, which during a deploy is the pending edit.
             int version = current.Knowledge.IsKnown(out Profile known) ? known.Version + 1 : edited.Version + 1;
 
-            ProfileActivity deploying = ProfileActivity.FromDeploying(new Deploying(edited, before));
+            ProfileActivity deploying = ProfileActivity.FromDeploying(new Deploying(edited, before, requests));
             SelfProfileCmd deploy = SelfProfileCmd.FromDeploy(new DeployCmd(current.Address, edited, version));
 
             // Only a known profile is trusted locally before the catalyst confirms the edit.
             if (!before.IsKnown(out _))
-                return (FromIdentified(current.With(before, deploying, Option<DeployFailure>.None)), deploy);
+                return (model.WithSession(SelfProfileSession.FromIdentified(current.With(before, deploying))), deploy);
 
-            return (FromIdentified(current.With(ProfileKnowledge.FromKnown(edited), deploying, Option<DeployFailure>.None)),
+            return (model.WithSession(SelfProfileSession.FromIdentified(current.With(ProfileKnowledge.FromKnown(edited), deploying))),
                 SelfProfileCmd.FromBatch(new[] { SelfProfileCmd.FromPublish(edited), deploy }));
         }
 
         private static (SelfProfileModel, SelfProfileCmd) OnDeploySucceeded(in SelfProfileModel model, in DeploySucceeded msg)
         {
-            if (StaleDeployReason(model, msg.Address, msg.Sent, out Identified current, out _) is { } reason)
+            if (StaleDeployReason(model, msg.Address, msg.Sent, out Identified current, out Deploying deploying) is { } reason)
                 return Ignored(model, reason);
 
-            return (FromIdentified(current.With(ProfileKnowledge.FromKnown(msg.Saved), ProfileActivity.Idle(), Option<DeployFailure>.None)), SelfProfileCmd.FromPublish(msg.Saved));
+            SelfProfileModel answered = model.WithDeployResults(deploying.Requests, ProfileDeployResult.FromOk(msg.Saved));
+            return SettleReads(answered, current.With(ProfileKnowledge.FromKnown(msg.Saved), ProfileActivity.Idle()), SelfProfileCmd.FromPublish(msg.Saved));
         }
 
         private static (SelfProfileModel, SelfProfileCmd) OnDeployFailed(in SelfProfileModel model, in DeployFailed msg)
@@ -129,49 +167,68 @@ namespace DCL.Profiles.Self
             if (StaleDeployReason(model, msg.Address, msg.Sent, out Identified current, out Deploying deploying) is { } reason)
                 return Ignored(model, reason);
 
-            var failure = Option<DeployFailure>.Some(new DeployFailure(msg.Sent, msg.Exception));
-            SelfProfileModel reverted = FromIdentified(current.With(deploying.Before, ProfileActivity.Idle(), failure));
-
             // Only a known profile was published before the deploy, so only then is there something to republish.
-            SelfProfileCmd cmd = deploying.Before.Match(
+            SelfProfileCmd republish = deploying.Before.Match(
                 onUnknown: static () => SelfProfileCmd.None(),
                 onKnown: static previous => SelfProfileCmd.FromPublish(previous),
                 onMissing: static () => SelfProfileCmd.None(),
                 onFailed: static _ => SelfProfileCmd.None()
             );
 
-            return (reverted, cmd);
+            SelfProfileModel answered = model.WithDeployResults(deploying.Requests, ProfileDeployResult.FromError(ProfileDeployError.DeployFailed));
+            return SettleReads(answered, current.With(deploying.Before, ProfileActivity.Idle()), republish);
         }
 
-        private static (SelfProfileModel, SelfProfileCmd) OnProfileRefetchRequested(in SelfProfileModel model) =>
-            model.Match(
-                onNoIdentity: static () => Ignored(NoIdentity(), NO_IDENTITY_TO_REFETCH_FOR),
-                onIdentified: static current => Refetch(current)
+        /// <summary>
+        ///     Answers the pending reads when the knowledge is settled. Unknown knowledge with nothing in flight starts a fetch for them.
+        /// </summary>
+        private static (SelfProfileModel, SelfProfileCmd) SettleReads(in SelfProfileModel model, in Identified current, in SelfProfileCmd cmd)
+        {
+            if (current.PendingReads.Count == 0)
+                return (model.WithSession(SelfProfileSession.FromIdentified(current)), cmd);
+
+            Option<ProfileReadResult> answer = current.Knowledge.Match(
+                onUnknown: static () => Option<ProfileReadResult>.None,
+                onKnown: static known => Option<ProfileReadResult>.Some(ProfileReadResult.FromOk(known)),
+                onMissing: static () => Option<ProfileReadResult>.Some(ProfileReadResult.FromError(ProfileReadError.NotFound)),
+                onFailed: static _ => Option<ProfileReadResult>.Some(ProfileReadResult.FromError(ProfileReadError.FetchFailed))
             );
 
-        /// <summary>A refetch starts only after a failed fetch; the failed knowledge stays until the new fetch answers.</summary>
-        private static (SelfProfileModel, SelfProfileCmd) Refetch(in Identified current)
-        {
-            if (!current.Activity.IsIdle())
-                return Ignored(FromIdentified(current), ACTIVITY_ALREADY_IN_FLIGHT);
+            if (answer.Has)
+                return (model.WithSession(SelfProfileSession.FromIdentified(current.WithPendingReads(default))).WithReadResults(current.PendingReads, answer.Value), cmd);
 
-            if (!current.Knowledge.IsFailed(out _))
-                return Ignored(FromIdentified(current), LAST_FETCH_DID_NOT_FAIL);
+            if (current.Activity.IsIdle())
+                return (model.WithSession(SelfProfileSession.FromIdentified(current.WithActivity(ProfileActivity.Fetching()))), Then(cmd, SelfProfileCmd.FromFetch(current.Address)));
 
-            return (FromIdentified(current.WithActivity(ProfileActivity.Fetching())), SelfProfileCmd.FromFetch(current.Address));
+            return (model.WithSession(SelfProfileSession.FromIdentified(current)), cmd);
         }
 
-        private static SelfProfileModel StartFetching(UserId address) =>
-            FromIdentified(Identified.New(address).WithActivity(ProfileActivity.Fetching()));
+        private static SelfProfileSession StartFetching(UserId address, RequestIds pendingReads) =>
+            SelfProfileSession.FromIdentified(Identified.New(address).WithActivity(ProfileActivity.Fetching()).WithPendingReads(pendingReads));
+
+        private static RequestIds PendingDeploys(in Identified current) =>
+            current.Activity.IsDeploying(out Deploying deploying) ? deploying.Requests : default;
 
         /// <summary>The model untouched, with the reason the message did not apply to it.</summary>
         private static (SelfProfileModel, SelfProfileCmd) Ignored(in SelfProfileModel model, string reason) =>
             (model, SelfProfileCmd.FromIgnore(reason));
 
+        /// <summary>Both commands in order, without wrapping a <c>None</c>.</summary>
+        private static SelfProfileCmd Then(in SelfProfileCmd first, in SelfProfileCmd second)
+        {
+            if (second.IsNone())
+                return first;
+
+            if (first.IsNone())
+                return second;
+
+            return SelfProfileCmd.FromBatch(new[] { first, second });
+        }
+
         /// <summary>Null when a fetch result for the address belongs to the fetch in flight; otherwise why it does not.</summary>
         private static string? StaleFetchReason(in SelfProfileModel model, UserId address, out Identified current)
         {
-            if (!model.IsIdentified(out current))
+            if (!model.Session.IsIdentified(out current))
                 return FETCH_HAS_NO_IDENTITY;
 
             if (!current.Address.Equals(address))
@@ -188,7 +245,7 @@ namespace DCL.Profiles.Self
         {
             deploying = default;
 
-            if (!model.IsIdentified(out current))
+            if (!model.Session.IsIdentified(out current))
                 return DEPLOY_HAS_NO_IDENTITY;
 
             if (!current.Address.Equals(address))

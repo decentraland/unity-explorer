@@ -9,14 +9,21 @@ namespace DCL.Profiles.Self
         /// <summary>Knowledge at the moment the deploy started; the model reverts to it when the deploy fails.</summary>
         public readonly ProfileKnowledge Before;
 
+        /// <summary>Deploy requests waiting on this deploy, including those of the deploys it superseded.</summary>
+        public readonly RequestIds Requests;
+
         public Deploying(Profile pending, ProfileKnowledge before)
+            : this(pending, before, default) { }
+
+        public Deploying(Profile pending, ProfileKnowledge before, RequestIds requests)
         {
             Pending = pending;
             Before = before;
+            Requests = requests;
         }
 
         public override string ToString() =>
-            $"pending v{Pending.Version} before {Before}";
+            $"pending v{Pending.Version} before {Before} {Requests}";
     }
 
     /// <summary>
