@@ -9,13 +9,13 @@ import re
 
 TIMESTAMP = re.compile(r'^\[(\d{4}-\d\d-\d\dT[\d:.]+(?:Z|[+-]\d\d:\d\d))')
 SHADER = re.compile(r'Compiling shader "([^"]+)"')
-PASS = re.compile(r'\b[Pp]ass "?(.*?)"? \(([^)]+)\)')
+PASS = re.compile(r'\b[Pp]ass "?(.*?)"? \(([^()]+)\)(?= finished|\s*$)')
 COMPILATION = re.compile(
     r'finished in (-?\d+(?:\.\d+)?) seconds\. Local cache hits (\d+(?:,\d{3})*)\b.*?'
     r'remote cache hits (\d+(?:,\d{3})*)\b.*?compiled (\d+(?:,\d{3})*) variants\b')
-FETCH = re.compile(r'Fetching Cached ((?:library|workspace)[\w.-]*)', re.IGNORECASE)
-RESTORED = re.compile(r'((?:library|workspace)[\w.-]*) successfully fetched and unpacked from remote cache', re.IGNORECASE)
-MISSING_CACHE = re.compile(r'No (?:Library|Workspace) cache found', re.IGNORECASE)
+FETCH = re.compile(r'Fetching Cached ((library|workspace)[\w.-]*)', re.IGNORECASE)
+RESTORED = re.compile(r'((library|workspace)[\w.-]*) successfully fetched and unpacked from remote cache', re.IGNORECASE)
+MISSING_CACHE = re.compile(r'No (Library|Workspace) cache found', re.IGNORECASE)
 ARCHIVE = re.compile(r'Zipping cache files from (\w+) using compression level (\w+)')
 SLOWEST_PASSES_SHOWN = 5
 
@@ -37,11 +37,17 @@ def elapsed(start, end):
     return round(seconds, 3) if seconds >= 0 else None
 
 
+def new_restore(kind, key=None, started_at=None):
+    return {'kind': kind, 'key': key, 'status': 'unknown', 'started_at': started_at,
+            'extraction_started_at': None, 'finished_at': None}
+
+
 def parse_log(lines):
     passes, restores, archives = [], [], []
     shader = legacy_pass = None
     shader_markers = unparsed_summaries = 0
-    restore = archive = None
+    latest_by_kind = {}
+    archive = None
     for line in lines:
         at = timestamp(line)
         match = SHADER.search(line)
@@ -66,28 +72,36 @@ def parse_log(lines):
             })
         match = FETCH.search(line)
         if match:
-            restore = {'key': match[1], 'status': 'unknown', 'started_at': at,
-                       'extraction_started_at': None, 'finished_at': None}
+            kind = match[2].casefold()
+            restore = new_restore(kind, match[1], at)
             restores.append(restore)
+            latest_by_kind[kind] = restore
         match = MISSING_CACHE.search(line)
         if match:
-            # Unity can repeat the missing-cache warning during postbuild.
-            kind = match[0].split()[1].casefold()
-            if restore is None or not (restore['key'] or kind).casefold().startswith(kind):
-                restore = {'key': None, 'status': 'unknown', 'started_at': None,
-                           'extraction_started_at': None, 'finished_at': None}
+            # Repeated postbuild warnings belong to the latest attempt of that kind.
+            kind = match[1].casefold()
+            restore = latest_by_kind.get(kind)
+            if restore is None:
+                restore = new_restore(kind)
                 restores.append(restore)
+                latest_by_kind[kind] = restore
             if restore['status'] == 'unknown':
                 restore['status'] = 'miss'
-        if 'Extracting cache files to' in line and restore and restore['status'] == 'unknown':
-            restore['extraction_started_at'] = at
+        if 'Extracting cache files to' in line:
+            # Extraction lines have no cache key; only a single pending attempt is unambiguous.
+            pending = [item for item in latest_by_kind.values() if item['status'] == 'unknown']
+            if len(pending) == 1 and pending[0]['extraction_started_at'] is None:
+                pending[0]['extraction_started_at'] = at
         match = RESTORED.search(line)
         if match:
+            kind = match[2].casefold()
+            restore = latest_by_kind.get(kind)
             same_key = restore is not None and (restore['key'] or '').casefold() == match[1].casefold()
             if not same_key or restore['status'] == 'miss':
-                restore = {'key': match[1], 'started_at': None, 'extraction_started_at': None}
+                restore = new_restore(kind, match[1])
                 restores.append(restore)
-            if restore.get('status') != 'hit':
+                latest_by_kind[kind] = restore
+            if restore['status'] != 'hit':
                 restore.update(status='hit', finished_at=at)
         match = ARCHIVE.search(line)
         if match:
@@ -180,7 +194,7 @@ def render_summary(report):
              'Local shader hits can come from a restored Library cache. Remote hits are a separate shader cache metric.', '',
              '| Cache restore | Result | Total | Before extraction | Extraction |', '|---|---|---:|---:|---:|']
     for item in report['cache']['restores']:
-        lines.append(f"| {item['key'] or 'unknown'} | {item['status']} | {duration(item['restore_seconds'])} | "
+        lines.append(f"| {item['key'] or item['kind']} | {item['status']} | {duration(item['restore_seconds'])} | "
                      f"{duration(item['fetch_to_extraction_seconds'])} | {duration(item['extraction_seconds'])} |")
     if not report['cache']['restores']:
         lines.append('| No recognized restore markers | unknown | unknown | unknown | unknown |')

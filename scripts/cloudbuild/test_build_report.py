@@ -18,7 +18,7 @@ def parse(text):
 
 
 class ShaderReportTest(unittest.TestCase):
-    def test_multiline_cold_shader_counts_compilation_not_stripping(self):
+    def test_multiline_cold_shader_attributes_passes_and_records_miss(self):
         report = parse((FIXTURES / 'shader-cache-cold.txt').read_text())
         shaders = report['shaders']
         self.assertEqual(shaders['status'], 'observed')
@@ -65,6 +65,17 @@ finished in 1.25 seconds. Local cache hits 1,000 (0s), remote cache hits 20 (0s)
         self.assertEqual(report['shaders']['passes'][0]['pass'], '')
         self.assertEqual(report['shaders']['summed_pass_seconds'], 0)
 
+    def test_pass_names_with_parentheses(self):
+        for header, completion, expected_type in (
+            ('Compiling shader "A"', 'Pass Forward (Lit) (fp, metal) ', 'fp, metal'),
+            ('Compiling shader "A" pass "Forward (Lit)" (vp)', '', 'vp'),
+        ):
+            with self.subTest(header=header):
+                report = parse(header + '\n' + completion + 'finished in 1 seconds. Local cache hits 0 (0s), remote cache hits 0 (0s), compiled 1 variants (0s).')
+                item = report['shaders']['passes'][0]
+                self.assertEqual(item['pass'], 'Forward (Lit)')
+                self.assertEqual(item['type'], expected_type)
+
     def test_unavailable_is_not_zero(self):
         for text in ('', 'Build failed before shader compilation'):
             with self.subTest(text=text):
@@ -72,7 +83,7 @@ finished in 1.25 seconds. Local cache hits 1,000 (0s), remote cache hits 20 (0s)
                 self.assertEqual(report['shaders']['status'], 'unavailable')
                 self.assertIsNone(report['shaders']['compiled_variants'])
                 self.assertIsNone(report['shaders']['local_cache_hits'])
-                self.assertIn('unknown', render_summary(report))
+                self.assertIn('| Variants actually compiled | unknown |', render_summary(report))
 
     def test_changed_log_format_is_visible_instead_of_false_zero(self):
         report = parse('Compiling shader "Example"\nLocal cache hits: NEW FORMAT')
@@ -90,6 +101,75 @@ finished in 1.25 seconds. Local cache hits 1,000 (0s), remote cache hits 20 (0s)
 
 
 class CacheReportTest(unittest.TestCase):
+    def test_keyless_misses_keep_both_cache_kinds(self):
+        for first, second in (('Library', 'Workspace'), ('Workspace', 'Library')):
+            with self.subTest(first=first):
+                report = parse(f'No {first} cache found\nNo {second} cache found\nNo {first} cache found')
+                restores = report['cache']['restores']
+                self.assertEqual([(r['kind'], r['status']) for r in restores],
+                                 [(first.lower(), 'miss'), (second.lower(), 'miss')])
+                self.assertIn('| library | miss |', render_summary(report))
+                self.assertIn('| workspace | miss |', render_summary(report))
+
+    def test_workspace_miss_after_library_hit_is_recorded(self):
+        report = parse('''[2026-01-01T00:00:00Z] Fetching Cached library_a
+[2026-01-01T00:00:05Z] library_a successfully fetched and unpacked from remote cache
+No Workspace cache found
+No Workspace cache found''')
+        self.assertEqual([(r['key'], r['status']) for r in report['cache']['restores']],
+                         [('library_a', 'hit'), (None, 'miss')])
+
+    def test_repeated_postbuild_miss_reuses_its_cache_restore(self):
+        report = parse('''Fetching Cached library_a
+No Library cache found
+Fetching Cached workspace_b
+No Workspace cache found
+No Library cache found''')
+        self.assertEqual([(r['key'], r['status']) for r in report['cache']['restores']],
+                         [('library_a', 'miss'), ('workspace_b', 'miss')])
+
+    def test_other_cache_miss_does_not_interrupt_extraction_or_completion(self):
+        report = parse('''[2026-01-01T00:00:00Z] Fetching Cached workspace_a
+No Library cache found
+[2026-01-01T00:00:10Z] Extracting cache files to /example
+No Library cache found
+[2026-01-01T00:00:30Z] workspace_a successfully fetched and unpacked from remote cache
+No Library cache found
+[2026-01-01T00:00:40Z] workspace_a successfully fetched and unpacked from remote cache''')
+        restores = report['cache']['restores']
+        self.assertEqual([(r['key'], r['status']) for r in restores],
+                         [('workspace_a', 'hit'), (None, 'miss')])
+        self.assertEqual(restores[0]['restore_seconds'], 30)
+        self.assertEqual(restores[0]['fetch_to_extraction_seconds'], 10)
+        self.assertEqual(restores[0]['extraction_seconds'], 20)
+
+    def test_ambiguous_extraction_is_not_attributed_to_either_cache(self):
+        report = parse('''[2026-01-01T00:00:00Z] Fetching Cached workspace_a
+[2026-01-01T00:00:05Z] Fetching Cached library_b
+[2026-01-01T00:00:10Z] Extracting cache files to /example
+[2026-01-01T00:00:30Z] workspace_a successfully fetched and unpacked from remote cache
+[2026-01-01T00:00:40Z] library_b successfully fetched and unpacked from remote cache''')
+        restores = report['cache']['restores']
+        self.assertEqual([r['restore_seconds'] for r in restores], [30, 35])
+        self.assertEqual([r['extraction_seconds'] for r in restores], [None, None])
+
+    def test_repeated_extraction_marker_preserves_first_timestamp(self):
+        report = parse('''[2026-01-01T00:00:00Z] Fetching Cached library_a
+[2026-01-01T00:00:10Z] Extracting cache files to /example
+[2026-01-01T00:00:15Z] Extracting cache files to /example
+[2026-01-01T00:00:30Z] library_a successfully fetched and unpacked from remote cache''')
+        self.assertEqual(report['cache']['restores'][0]['extraction_seconds'], 20)
+
+    def test_postbuild_end_applies_to_every_archive_once(self):
+        report = parse('''[2026-01-01T00:00:00Z] Zipping cache files from Library using compression level none
+[2026-01-01T00:00:10Z] Created the archive file in 10s
+[2026-01-01T00:00:20Z] Zipping cache files from Workspace using compression level none
+[2026-01-01T00:00:30Z] Created the archive file in 10s
+[2026-01-01T00:01:00Z] postbuildsteps finished successfully
+[2026-01-01T00:02:00Z] postbuildsteps finished successfully''')
+        self.assertEqual([r['archive_to_postbuild_end_seconds'] for r in report['cache']['archives']], [50, 30])
+        self.assertNotIn('Cache archive or postbuild completion was not observed; missing durations are unknown.', report['warnings'])
+
     def test_incomplete_restore_and_archive_do_not_invent_timings(self):
         report = parse('''[2026-09-30T10:00:00Z] INFO: Fetching Cached library_example
 [2026-09-30T10:05:00Z] INFO: Zipping cache files from Library using compression level low''')
@@ -151,6 +231,10 @@ NO WORKSPACE CACHE FOUND''')
 
 
 class ReportSummaryTest(unittest.TestCase):
+    def test_durations_over_a_day_stay_hms(self):
+        report = parse('Pass Forward (vp) finished in 90061 seconds. Local cache hits 0 (0s), remote cache hits 0 (0s), compiled 1 variants (0s).')
+        self.assertIn('| Forward / vp | 1 | 25:01:01 |', render_summary(report))
+
     def test_short_and_negative_durations_use_nonnegative_hms(self):
         for seconds, expected in ((27.773, '0:00:28'), (-0.01, '0:00:00'), (-0.0, '0:00:00')):
             with self.subTest(seconds=seconds):

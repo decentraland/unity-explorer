@@ -162,9 +162,14 @@ errors are non-blocking diagnostics. The parser is
   run/attempt, commit, platform, install source and requested clean/cache settings.
   `requested_clean_build: false` does **not** prove that a cache was available.
 - **Library/workspace restore:** `cache.restores` records explicit `hit`, `miss`, or
-  `unknown` outcomes, the cache key (including Unity version/architecture when
+  `unknown` outcomes, the cache kind, the cache key (including Unity version/architecture when
   present), timestamps, restore duration, time before extraction, and extraction
   duration. A missing marker is unknown, not a miss or a zero-duration operation.
+  Library and workspace attempts are tracked independently, including misses
+  without a key. Repeated outcome messages preserve the original observation;
+  a new fetch starts a separate attempt. Extraction lines have no cache identity,
+  so their timing is attributed only when one attempt is pending. When multiple
+  attempts are pending, extraction timing remains unknown.
 - **Shader work:** `shaders.compiled_variants` counts `compiled N variants` from
   completed pass summaries, not variants remaining after stripping. Local and
   remote shader cache hits are separate counters. Restoring a Library can produce
