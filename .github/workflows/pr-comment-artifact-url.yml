@@ -602,8 +602,8 @@ jobs:
   # "Building on dev" into the comment, and the PR raises no events of its own.
   # `force-build` builds a PR regardless, so add it — with the org token, since
   # a label added by GITHUB_TOKEN builds nothing either. Back-filled dev runs
-  # only: a release branch's own failed build is for a human to look at, and
-  # re-labelling would not even re-trigger (the label is already on the PR).
+  # only: a release branch's own failed build is for a human to look at, not
+  # something to re-label and rebuild automatically.
   # Ordered after the failed/cancelled writers so this text is what stays up
   # until the new build's own writers reset the section.
   release-force-build:
