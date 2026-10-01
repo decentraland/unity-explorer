@@ -16,8 +16,8 @@ namespace DCL.Profiles.Self
         private const string DEPLOY_FOR_ANOTHER_IDENTITY = "the deploy was started for another identity";
         private const string NO_DEPLOY_IN_FLIGHT = "no deploy is in flight";
         private const string DEPLOY_SUPERSEDED = "the deploy was superseded by a later edit";
-        private const string NO_IDENTITY_TO_RETRY_FOR = "there is no identity to read the profile of";
-        private const string LAST_READ_DID_NOT_FAIL = "the last read did not fail, there is nothing to retry";
+        private const string NO_IDENTITY_TO_REFETCH_FOR = "there is no identity to read the profile of";
+        private const string LAST_FETCH_DID_NOT_FAIL = "the last fetch did not fail, there is nothing to refetch";
         private const string ACTIVITY_ALREADY_IN_FLIGHT = "an activity is already in flight";
 
         /// <summary>
@@ -31,10 +31,10 @@ namespace DCL.Profiles.Self
                 onFetchSucceeded: static (model, fetched) => OnFetchSucceeded(model, fetched),
                 onFetchNotFound: static (model, address) => OnFetchNotFound(model, address),
                 onFetchFailed: static (model, failed) => OnFetchFailed(model, failed),
-                onProfileEdited: static (model, edited) => OnProfileEdited(model, edited),
+                onDeployProfileEditRequested: static (model, edited) => OnDeployProfileEditRequested(model, edited),
                 onDeploySucceeded: static (model, deployed) => OnDeploySucceeded(model, deployed),
                 onDeployFailed: static (model, failed) => OnDeployFailed(model, failed),
-                onRetryRequested: static model => OnRetryRequested(model)
+                onProfileRefetchRequested: static model => OnProfileRefetchRequested(model)
             );
 
         private static (SelfProfileModel, SelfProfileCmd) OnIdentityChanged(in SelfProfileModel model, UserId address) =>
@@ -85,7 +85,7 @@ namespace DCL.Profiles.Self
             return (FromIdentified(current.With(knowledge, ProfileActivity.Idle())), SelfProfileCmd.None());
         }
 
-        private static (SelfProfileModel, SelfProfileCmd) OnProfileEdited(in SelfProfileModel model, Profile edited) =>
+        private static (SelfProfileModel, SelfProfileCmd) OnDeployProfileEditRequested(in SelfProfileModel model, Profile edited) =>
             model.Match(
                 edited,
                 onNoIdentity: static _ => Ignored(NoIdentity(), NO_IDENTITY_TO_DEPLOY_FOR),
@@ -143,20 +143,20 @@ namespace DCL.Profiles.Self
             return (reverted, cmd);
         }
 
-        private static (SelfProfileModel, SelfProfileCmd) OnRetryRequested(in SelfProfileModel model) =>
+        private static (SelfProfileModel, SelfProfileCmd) OnProfileRefetchRequested(in SelfProfileModel model) =>
             model.Match(
-                onNoIdentity: static () => Ignored(NoIdentity(), NO_IDENTITY_TO_RETRY_FOR),
-                onIdentified: static current => Retry(current)
+                onNoIdentity: static () => Ignored(NoIdentity(), NO_IDENTITY_TO_REFETCH_FOR),
+                onIdentified: static current => Refetch(current)
             );
 
-        /// <summary>A retry re-reads only after a failed read; the failed knowledge stays until the new read answers.</summary>
-        private static (SelfProfileModel, SelfProfileCmd) Retry(in Identified current)
+        /// <summary>A refetch starts only after a failed fetch; the failed knowledge stays until the new fetch answers.</summary>
+        private static (SelfProfileModel, SelfProfileCmd) Refetch(in Identified current)
         {
             if (!current.Activity.IsIdle())
                 return Ignored(FromIdentified(current), ACTIVITY_ALREADY_IN_FLIGHT);
 
             if (!current.Knowledge.IsFailed(out _))
-                return Ignored(FromIdentified(current), LAST_READ_DID_NOT_FAIL);
+                return Ignored(FromIdentified(current), LAST_FETCH_DID_NOT_FAIL);
 
             return (FromIdentified(current.WithActivity(ProfileActivity.Fetching())), SelfProfileCmd.FromFetch(current.Address));
         }

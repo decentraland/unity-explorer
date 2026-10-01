@@ -194,7 +194,7 @@ namespace DCL.Profiles.Tests
             Profile edited = NewProfile(4);
 
             // Act
-            (SelfProfileModel next, SelfProfileCmd cmd) = SelfProfileModel.Update(Known(trusted), SelfProfileMsg.FromProfileEdited(edited));
+            (SelfProfileModel next, SelfProfileCmd cmd) = SelfProfileModel.Update(Known(trusted), SelfProfileMsg.FromDeployProfileEditRequested(edited));
 
             // Assert
             Identified identified = AssertIdentified(next);
@@ -228,7 +228,7 @@ namespace DCL.Profiles.Tests
             Profile edited = NewProfile(1);
 
             // Act
-            (SelfProfileModel afterEdit, SelfProfileCmd cmd) = SelfProfileModel.Update(Fetching(), SelfProfileMsg.FromProfileEdited(edited));
+            (SelfProfileModel afterEdit, SelfProfileCmd cmd) = SelfProfileModel.Update(Fetching(), SelfProfileMsg.FromDeployProfileEditRequested(edited));
 
             // Assert
             Identified identified = AssertIdentified(afterEdit);
@@ -247,10 +247,10 @@ namespace DCL.Profiles.Tests
             Profile trusted = NewProfile(3);
             Profile firstEdit = NewProfile(4);
             Profile secondEdit = NewProfile(5);
-            (SelfProfileModel afterFirst, SelfProfileCmd _) = SelfProfileModel.Update(Known(trusted), SelfProfileMsg.FromProfileEdited(firstEdit));
+            (SelfProfileModel afterFirst, SelfProfileCmd _) = SelfProfileModel.Update(Known(trusted), SelfProfileMsg.FromDeployProfileEditRequested(firstEdit));
 
             // Act
-            (SelfProfileModel afterSecond, SelfProfileCmd cmd) = SelfProfileModel.Update(afterFirst, SelfProfileMsg.FromProfileEdited(secondEdit));
+            (SelfProfileModel afterSecond, SelfProfileCmd cmd) = SelfProfileModel.Update(afterFirst, SelfProfileMsg.FromDeployProfileEditRequested(secondEdit));
 
             // Assert
             Identified identified = AssertIdentified(afterSecond);
@@ -267,7 +267,7 @@ namespace DCL.Profiles.Tests
         public void IgnoreEditsWithoutIdentity()
         {
             // Act & Assert
-            AssertUnchanged(SelfProfileModel.NoIdentity(), SelfProfileMsg.FromProfileEdited(NewProfile(1)));
+            AssertUnchanged(SelfProfileModel.NoIdentity(), SelfProfileMsg.FromDeployProfileEditRequested(NewProfile(1)));
         }
 
         [Test]
@@ -366,7 +366,7 @@ namespace DCL.Profiles.Tests
             SelfProfileModel model = Model(before, ProfileActivity.Idle());
 
             // Act
-            (SelfProfileModel next, SelfProfileCmd cmd) = SelfProfileModel.Update(model, SelfProfileMsg.FromProfileEdited(edited));
+            (SelfProfileModel next, SelfProfileCmd cmd) = SelfProfileModel.Update(model, SelfProfileMsg.FromDeployProfileEditRequested(edited));
 
             // Assert
             Identified identified = AssertIdentified(next);
@@ -377,13 +377,13 @@ namespace DCL.Profiles.Tests
         }
 
         [Test]
-        public void RefetchWhenARetryIsRequestedAfterAFailedRead()
+        public void RefetchWhenRequestedAfterAFailedFetch()
         {
             // Arrange
             SelfProfileModel model = Model(ProfileKnowledge.FromFailed(TRANSIENT_FAILURE), ProfileActivity.Idle());
 
             // Act
-            (SelfProfileModel next, SelfProfileCmd cmd) = SelfProfileModel.Update(model, SelfProfileMsg.RetryRequested());
+            (SelfProfileModel next, SelfProfileCmd cmd) = SelfProfileModel.Update(model, SelfProfileMsg.ProfileRefetchRequested());
 
             // Assert
             Identified identified = AssertIdentified(next);
@@ -393,35 +393,35 @@ namespace DCL.Profiles.Tests
         }
 
         [Test]
-        public void IgnoreARetryWhenTheLastReadDidNotFail()
+        public void IgnoreARefetchWhenTheLastFetchDidNotFail()
         {
             // Arrange
             SelfProfileModel known = Known(NewProfile(3));
             SelfProfileModel missing = Model(ProfileKnowledge.Missing(), ProfileActivity.Idle());
 
             // Act & Assert
-            AssertUnchanged(known, SelfProfileMsg.RetryRequested());
-            AssertUnchanged(missing, SelfProfileMsg.RetryRequested());
+            AssertUnchanged(known, SelfProfileMsg.ProfileRefetchRequested());
+            AssertUnchanged(missing, SelfProfileMsg.ProfileRefetchRequested());
         }
 
         [Test]
-        public void IgnoreARetryWhileAnActivityIsInFlight()
+        public void IgnoreARefetchWhileAnActivityIsInFlight()
         {
             // Arrange
             SelfProfileModel model = Fetching();
 
             // Act & Assert
-            AssertUnchanged(model, SelfProfileMsg.RetryRequested());
+            AssertUnchanged(model, SelfProfileMsg.ProfileRefetchRequested());
         }
 
         [Test]
-        public void IgnoreARetryWithoutIdentity()
+        public void IgnoreARefetchWithoutIdentity()
         {
             // Arrange
             SelfProfileModel model = SelfProfileModel.NoIdentity();
 
             // Act & Assert
-            AssertUnchanged(model, SelfProfileMsg.RetryRequested());
+            AssertUnchanged(model, SelfProfileMsg.ProfileRefetchRequested());
         }
 
         [Test]
@@ -432,7 +432,7 @@ namespace DCL.Profiles.Tests
             SelfProfileModel model = Known(NewProfile(3));
 
             // Act
-            (_, SelfProfileCmd cmd) = SelfProfileModel.Update(model, SelfProfileMsg.FromProfileEdited(edited));
+            (_, SelfProfileCmd cmd) = SelfProfileModel.Update(model, SelfProfileMsg.FromDeployProfileEditRequested(edited));
 
             // Assert
             SelfProfileCmd[] batch = AssertBatch(cmd, 2);
@@ -447,7 +447,7 @@ namespace DCL.Profiles.Tests
             SelfProfileModel model = Model(ProfileKnowledge.Missing(), ProfileActivity.Idle());
 
             // Act
-            (_, SelfProfileCmd cmd) = SelfProfileModel.Update(model, SelfProfileMsg.FromProfileEdited(edited));
+            (_, SelfProfileCmd cmd) = SelfProfileModel.Update(model, SelfProfileMsg.FromDeployProfileEditRequested(edited));
 
             // Assert
             Assert.That(AssertDeploy(cmd, edited).Version, Is.EqualTo(1));
@@ -477,7 +477,7 @@ namespace DCL.Profiles.Tests
             SelfProfileModel model = WithDeployFailure(Known(NewProfile(3)));
 
             // Act
-            (SelfProfileModel next, _) = SelfProfileModel.Update(model, SelfProfileMsg.FromProfileEdited(NewProfile(3)));
+            (SelfProfileModel next, _) = SelfProfileModel.Update(model, SelfProfileMsg.FromDeployProfileEditRequested(NewProfile(3)));
 
             // Assert
             Assert.That(AssertIdentified(next).LastDeployFailure.Has, Is.False);

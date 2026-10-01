@@ -10,8 +10,8 @@ namespace DCL.Profiles.Self
         /// <summary>The catalyst holds no profile for the identity.</summary>
         NotFound,
 
-        /// <summary>The read and its retry both failed. The cause is the <c>Failed</c> case of <see cref="ProfileKnowledge" />.</summary>
-        ReadFailed,
+        /// <summary>The fetch and its refetch both failed. The cause is the <c>Failed</c> case of <see cref="ProfileKnowledge" />.</summary>
+        FetchFailed,
 
         Cancelled,
     }

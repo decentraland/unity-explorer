@@ -64,7 +64,7 @@ namespace DCL.Profiles.Self
         // and looses FSM
         public async UniTask<ProfileReadResult> ProfileAsync(CancellationToken ct)
         {
-            Option<ProfileFailure> retriedAfter = Option<ProfileFailure>.None;
+            Option<ProfileFailure> refetchRequestedAfter = Option<ProfileFailure>.None;
 
             while (!ct.IsCancellationRequested)
             {
@@ -79,14 +79,14 @@ namespace DCL.Profiles.Self
 
                 if (identified.Knowledge.IsFailed(out ProfileFailure failure) && identified.Activity.IsIdle())
                 {
-                    // One retry per call: a retried read ends in a new failure instance.
-                    if (!retriedAfter.Has)
+                    // One refetch per call: a refetch ends in a new failure instance.
+                    if (!refetchRequestedAfter.Has)
                     {
-                        retriedAfter = Option<ProfileFailure>.Some(failure);
-                        runtime.Send(SelfProfileMsg.RetryRequested());
+                        refetchRequestedAfter = Option<ProfileFailure>.Some(failure);
+                        runtime.Send(SelfProfileMsg.ProfileRefetchRequested());
                     }
-                    else if (!ReferenceEquals(retriedAfter.Value.Exception, failure.Exception))
-                        return ProfileReadResult.FromError(ProfileReadError.ReadFailed);
+                    else if (!ReferenceEquals(refetchRequestedAfter.Value.Exception, failure.Exception))
+                        return ProfileReadResult.FromError(ProfileReadError.FetchFailed);
                 }
 
                 await UniTask.Yield(PlayerLoopTiming.Update);
@@ -113,7 +113,7 @@ namespace DCL.Profiles.Self
                 baseVersion = known.Version;
             }
 
-            runtime.Send(SelfProfileMsg.FromProfileEdited(edited));
+            runtime.Send(SelfProfileMsg.FromDeployProfileEditRequested(edited));
             return await DeployOutcomeAsync(identified.Address, edited, baseVersion, ct);
         }
 
