@@ -91,7 +91,7 @@ namespace Utility.Tests
             runtime.Drain();
 
             // Assert
-            Assert.That(runtime.Model, Is.EqualTo(6));
+            Assert.That(runtime.ModelSnapshot, Is.EqualTo(6));
             Assert.That(APPLIED.Count, Is.EqualTo(3));
             Assert.That(APPLIED[0].Amount, Is.EqualTo(1));
             Assert.That(APPLIED[1].Amount, Is.EqualTo(2));
@@ -123,7 +123,7 @@ namespace Utility.Tests
             runtime.Drain();
 
             // Assert
-            Assert.That(runtime.Model, Is.EqualTo(11));
+            Assert.That(runtime.ModelSnapshot, Is.EqualTo(11));
             Assert.That(APPLIED.Count, Is.EqualTo(3));
             Assert.That(APPLIED[0].Kind, Is.EqualTo(MsgKind.AddThenEcho));
             Assert.That(APPLIED[1].Amount, Is.EqualTo(1));
@@ -159,7 +159,7 @@ namespace Utility.Tests
             runtime.Drain();
 
             // Assert
-            Assert.That(runtime.Model, Is.EqualTo(THREADS * SENDS_PER_THREAD));
+            Assert.That(runtime.ModelSnapshot, Is.EqualTo(THREADS * SENDS_PER_THREAD));
         }
 
         [Test]
@@ -169,7 +169,7 @@ namespace Utility.Tests
             runtime.Drain();
 
             // Assert
-            Assert.That(runtime.Model, Is.EqualTo(0));
+            Assert.That(runtime.ModelSnapshot, Is.EqualTo(0));
             Assert.That(executor.Executed.Count, Is.EqualTo(0));
         }
 
@@ -185,7 +185,7 @@ namespace Utility.Tests
             runtime.Drain();
 
             // Assert
-            Assert.That(runtime.Model, Is.EqualTo(7));
+            Assert.That(runtime.ModelSnapshot, Is.EqualTo(7));
         }
 
         [Test]
@@ -201,7 +201,7 @@ namespace Utility.Tests
             runtime.Drain();
 
             // Assert
-            Assert.That(runtime.Model, Is.EqualTo(3));
+            Assert.That(runtime.ModelSnapshot, Is.EqualTo(3));
             Assert.That(executor.Executed.Count, Is.EqualTo(2));
         }
 

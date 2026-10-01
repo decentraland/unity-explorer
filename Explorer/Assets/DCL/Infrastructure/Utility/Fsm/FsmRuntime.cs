@@ -21,20 +21,29 @@ namespace Utility.Fsm
         private readonly UpdateFn update;
         private readonly ICmdExecutor<TCmd, TMsg> executor;
         private readonly string tag;
+        private readonly Mutex<TModel> model;
 
         private bool isDraining;
 
         /// <summary>
-        ///     Current model. Written only by <see cref="Drain"/>, so read it on the draining thread.
+        ///     Snapshot of the current model, readable from any thread. It is read-only: even when <typeparamref name="TModel"/>
+        ///     is a reference type, the instance must not be modified.
         /// </summary>
-        public TModel Model { get; private set; }
+        public TModel ModelSnapshot
+        {
+            get
+            {
+                using Mutex<TModel>.Guard guard = model.Lock(); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
+                return guard.Value;
+            }
+        }
 
         public FsmRuntime(string tag, TModel initialModel, UpdateFn update, ICmdExecutor<TCmd, TMsg> executor)
         {
             this.tag = tag;
             this.update = update;
             this.executor = executor;
-            Model = initialModel;
+            model = new Mutex<TModel>(initialModel); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
         }
 
         public void Send(in TMsg msg) =>
@@ -65,8 +74,10 @@ namespace Utility.Fsm
 
             try
             {
-                (TModel next, TCmd cmd) = update(Model, msg);
-                Model = next;
+                (TModel next, TCmd cmd) = update(ModelSnapshot, msg);
+
+                using (Mutex<TModel>.Guard guard = model.Lock()) // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
+                    guard.Value = next;
 
                 ReportHub.LogProductionInfo($"[{tag}] model: {next} cmd: {cmd}");
 
