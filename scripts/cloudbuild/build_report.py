@@ -164,7 +164,8 @@ def render_summary(report):
     def duration(value):
         if value is None:
             return 'unknown'
-        return str(datetime.timedelta(seconds=round(max(value, 0))))
+        hours, remainder = divmod(round(max(value, 0)), 3600)
+        return f'{hours}:{remainder // 60:02}:{remainder % 60:02}'
 
     shaders = report['shaders']
     lines = ['### Unity shader and cache report', '',
