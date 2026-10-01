@@ -194,7 +194,6 @@ concurrency:
       github.event_name == 'merge_group' ||
       (
         github.event_name == 'pull_request' &&
-        github.actor != 'github-actions[bot]' &&
         (
           github.event.action == 'opened' ||
           github.event.action == 'reopened' ||
@@ -227,11 +226,9 @@ jobs:
       pull-requests: read
     timeout-minutes: 20
     # Skip when PR has 'perf_test' label (only performance tests should run).
-    # Skip pull_request events raised by GITHUB_TOKEN (the release PR's open,
-    # labels and re-cut force-push): the commit was already built on dev, and
-    # a run whose actor is the bot fires no workflow_run events, so its result
-    # would never reach the PR comment while its live rows replace the links.
-    # github.actor stays the bot after a manual approval of the run.
+    # Skip pull_request events raised by GITHUB_TOKEN (release and sync PRs):
+    # their runs fire no workflow_run, so no result would reach the PR comment.
+    # github.actor keeps the bot across manual approval and re-run.
     if: |
       !contains(github.event.pull_request.labels.*.name, 'perf_test') && (
         (github.ref == 'refs/heads/dev') ||
@@ -1084,7 +1081,8 @@ jobs:
           prebuild_result='${{ needs.prebuild.result }}'
 
           # Legit no-op: prebuild was skipped entirely (its 'if' was false — e.g. a labeled/unlabeled
-          # event, a draft without 'force-build', or the 'perf_test' label). That's a deliberate
+          # event, a draft without 'force-build', the 'perf_test' label, or a pull_request event
+          # raised by github-actions[bot]). That's a deliberate
           # "don't build this event" decision, not a failure, so there is nothing to gate.
           if [ "$prebuild_result" = "skipped" ]; then
             echo "Gate not applicable (prebuild skipped — no build for this event). Passing."
