@@ -4,12 +4,16 @@ using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
 using System;
+using Unity.Profiling;
 using FontPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Fonts.FontData, ECS.StreamableLoading.Fonts.GetFontIntention>;
 
 namespace ECS.StreamableLoading.Fonts
 {
     public struct SceneFontRequest
     {
+        private static readonly ProfilerMarker REQUEST_MARKER = new ($"{nameof(SceneFontRequest)}.Request");
+        private static readonly ProfilerMarker RECEIVE_MARKER = new ($"{nameof(SceneFontRequest)}.Receive");
+
         public string? Src { get; private set; }
 
         public FontPromise? Promise { get; private set; }
@@ -24,7 +28,12 @@ namespace ECS.StreamableLoading.Fonts
             Release(world);
             Src = fontSrc;
 
-            if (fontSrc != null && FontSrcResolver.TryCreateIntention(fontSrc, sceneData, out GetFontIntention intention))
+            if (fontSrc == null)
+                return true;
+
+            using ProfilerMarker.AutoScope _ = REQUEST_MARKER.Auto();
+
+            if (FontSrcResolver.TryCreateIntention(fontSrc, sceneData, out GetFontIntention intention))
                 Promise = FontPromise.Create(world, intention, partition);
 
             return true;
@@ -43,6 +52,7 @@ namespace ECS.StreamableLoading.Fonts
                 return false;
 
             Promise = promise;
+            using ProfilerMarker.AutoScope _ = RECEIVE_MARKER.Auto();
 
             if (result.Succeeded)
                 assets = result.Asset!.Asset;
