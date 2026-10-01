@@ -186,7 +186,8 @@ concurrency:
   # Only cancel an in-flight build when the new event will actually produce a new useful build.
   # Otherwise an incidental pull_request event (e.g. converted_to_draft race, non-override label change)
   # would cancel a real in-progress build and let the new run skip prebuild/build, leaving the
-  # Build Gate falsely green.
+  # Build Gate falsely green. Events raised by github-actions[bot] never build (see prebuild.if),
+  # so they never cancel either.
   cancel-in-progress: >-
     ${{
       github.event_name == 'push' ||
@@ -194,6 +195,7 @@ concurrency:
       github.event_name == 'merge_group' ||
       (
         github.event_name == 'pull_request' &&
+        github.actor != 'github-actions[bot]' &&
         (
           github.event.action == 'opened' ||
           github.event.action == 'reopened' ||
@@ -225,7 +227,10 @@ jobs:
       statuses: write
       pull-requests: read
     timeout-minutes: 20
-    # Skip when PR has 'perf_test' label (only performance tests should run)
+    # Skip when PR has 'perf_test' label (only performance tests should run).
+    # Skip pull_request events raised by GITHUB_TOKEN (release and sync PRs):
+    # their runs fire no workflow_run, so no result would reach the PR comment.
+    # github.actor keeps the bot across manual approval and re-run.
     if: |
       !contains(github.event.pull_request.labels.*.name, 'perf_test') && (
         (github.ref == 'refs/heads/dev') ||
@@ -233,6 +238,7 @@ jobs:
         (github.event_name == 'workflow_dispatch') ||
         (
           github.event_name == 'pull_request' &&
+          github.actor != 'github-actions[bot]' &&
           (
             (
               (github.event.action == 'opened' ||
@@ -1077,7 +1083,8 @@ jobs:
           prebuild_result='${{ needs.prebuild.result }}'
 
           # Legit no-op: prebuild was skipped entirely (its 'if' was false — e.g. a labeled/unlabeled
-          # event, a draft without 'force-build', or the 'perf_test' label). That's a deliberate
+          # event, a draft without 'force-build', the 'perf_test' label, or a pull_request event
+          # raised by github-actions[bot]). That's a deliberate
           # "don't build this event" decision, not a failure, so there is nothing to gate.
           if [ "$prebuild_result" = "skipped" ]; then
             echo "Gate not applicable (prebuild skipped — no build for this event). Passing."

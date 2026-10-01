@@ -326,6 +326,7 @@ namespace Global.Dynamic
                 realmContainer.ReloadSceneController,
                 realmContainer.TeleportController,
                 realmNavigator,
+                dynamicWorldParams.StartParcel,
                 debugBuilder,
                 dclVersion,
                 appArgs,
@@ -484,7 +485,7 @@ namespace Global.Dynamic
 
             // Deep link listening stays alive in every mode so browser sign-in can complete; local scene
             // development only opts out of navigation routing (teleports would break the scene under test).
-            var deepLinkHandleImplementation = new DeepLinkHandle(dynamicWorldParams.StartParcel, chatContainer.ChatTeleporter, ct, communitiesDataService, uiShellContainer.MvcManager, staticContainer.LoadingStatus, bootstrapContainer.DeeplinkSigninIdentityId,
+            var deepLinkHandleImplementation = new DeepLinkHandle(chatContainer.ChatTeleporter, ct, communitiesDataService, uiShellContainer.MvcManager, staticContainer.LoadingStatus, bootstrapContainer.DeeplinkSigninIdentityId,
                 bootstrapContainer.DeeplinkLoginAwaitingSigninRequestId, routeNavigationDeepLinks: !appArgs.HasFlag(AppArgsFlags.LOCAL_SCENE));
 
             deepLinkHandleImplementation.StartListenForDeepLinksAsync(ct).Forget();
@@ -705,7 +706,7 @@ namespace Global.Dynamic
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 staticContainer.WebRequestsContainer.CreatePlugin(localSceneDevelopment),
                 new Web3AuthenticationPlugin(assetsProvisioner, dynamicWorldDependencies.CompositeWeb3Provider, debugBuilder, uiShellContainer.MvcManager, profileContainer.SelfProfile, webBrowser, staticContainer.RealmData, identityCache, characterPreviewFactory, dynamicWorldDependencies.SplashScreen, audioMixerVolumesController, staticContainer.InputBlock, characterPreviewEventBus, backgroundMusic, globalWorld, bootstrapContainer.AppArgs, staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, profileContainer.ProfileChangesBus, profilesRepository, donationsService),
-                new SkyboxPlugin(assetsProvisioner, dynamicSettings.DirectionalLight, staticContainer.ScenesCache, staticContainer.SceneRestrictionBusController, staticContainer.RealmData, staticContainer.QualityContainer.RendererFeaturesCache, !appArgs.HasFlagWithValueFalse(AppArgsFlags.SKYBOX_TIME_ENABLED)),
+                new SkyboxPlugin(assetsProvisioner, dynamicSettings.DirectionalLight, staticContainer.ScenesCache, staticContainer.SceneRestrictionBusController, staticContainer.RealmData, staticContainer.QualityContainer.RendererFeaturesCache, debugBuilder, !appArgs.HasFlagWithValueFalse(AppArgsFlags.SKYBOX_TIME_ENABLED)),
                 new LoadingScreenPlugin(assetsProvisioner, uiShellContainer.MvcManager, audioMixerVolumesController,
                     staticContainer.InputBlock, debugBuilder, staticContainer.LoadingStatus),
                 new ExternalUrlPromptPlugin(assetsProvisioner, webBrowser, uiShellContainer.MvcManager, uiShellContainer.Cursor),
@@ -723,12 +724,12 @@ namespace Global.Dynamic
                     uiShellContainer.Cursor,
                     (realmUrl, position) =>
                     {
-                        // With a target parcel: teleport with the typed position (works for URL realms too).
-                        // Without one: keep the existing chat-command route so the switch surfaces in nearby chat.
+                        // In-world without a parcel the switch goes through the chat command so its result surfaces in nearby chat
+                        // TODO: surface the teleporter result (chat bus / notification) on the direct paths too.
                         if (position.HasValue)
-                            // TODO: surface the teleport result (chat bus / notification) like the no-position path below,
-                            // and plumb a real cancellation token instead of None (composition-root fire-and-forget for now).
-                            chatContainer.ChatTeleporter.TeleportToRealmAsync(realmUrl, position.Value, CancellationToken.None).Forget();
+                            chatContainer.ChatTeleporter.TeleportToRealmAsync(realmUrl, position.Value, ct).Forget();
+                        else if (!dynamicWorldParams.StartParcel.HasLanded)
+                            chatContainer.ChatTeleporter.TeleportToRealmAsync(realmUrl, ct).Forget();
                         else
                             chatContainer.ChatMessagesBus.SendWithUtcNowTimestamp(ChatChannel.NEARBY_CHANNEL, $"/{ChatCommandsUtils.COMMAND_GOTO} {realmUrl}", ChatMessageOrigin.RestrictedActionApi);
                     }),
@@ -794,7 +795,8 @@ namespace Global.Dynamic
                     profileContainer.ProfileRepositoryWrapper,
                     globalWorld,
                     wearableContainer.WearableCatalog),
-                uiShellContainer.CreateGenericPopupsPlugin(assetsProvisioner, dynamicWorldDependencies.CompositeWeb3Provider, profileContainer.SelfProfile, staticContainer.InputBlock),
+                uiShellContainer.CreateGenericPopupsPlugin(assetsProvisioner, dynamicWorldDependencies.CompositeWeb3Provider, profileContainer.SelfProfile, staticContainer.InputBlock,
+                    identityCache, profileCache, initializationFlowContainer.InitializationFlow, globalWorld, playerEntity),
                 uiShellContainer.CreateColorPickerPlugin(assetsProvisioner),
                 uiShellContainer.CreateGenericContextMenuPlugin(assetsProvisioner, profileContainer.ProfileRepositoryWrapper),
                 realmNavigatorContainer.CreatePlugin(),
@@ -828,7 +830,7 @@ namespace Global.Dynamic
                     webBrowser,
                     bootstrapContainer.DecentralandUrlsSource,
                     staticContainer.InputBlock,
-                    dynamicWorldDependencies.CompositeWeb3Provider));
+                    identityCache));
 
             // ReSharper disable once MethodHasAsyncOverloadWithCancellation
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.StopOnDuplicateIdentity))
@@ -844,6 +846,14 @@ namespace Global.Dynamic
                     bootstrapContainer.DecentralandUrlsSource));
 
             globalPlugins.Add(new AnalyticsDiskFullPopupPlugin(bootstrapContainer.Analytics.EventBus, uiShellContainer.MvcManager));
+
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.Lobby))
+                globalPlugins.Add(new LobbyPlugin(assetsProvisioner, uiShellContainer.MvcManager, staticContainer.InputBlock, staticContainer.LoadingStatus, debugBuilder,
+                    profileContainer.SelfProfile, profileContainer.ProfileChangesBus, characterPreviewFactory, characterPreviewEventBus, globalWorld,
+                    placesAndEventsContainer.PlacesAPIService, staticContainer.RealmData, placesAndEventsContainer.HomePlaceEventBus, placesAndEventsContainer.EventsApiService, realmNavigator, bootstrapContainer.DecentralandUrlsSource, uiShellContainer.Clipboard, dynamicWorldParams.StartParcel, staticContainer.WebRequestsContainer.WebRequestController,
+                    identityCache, profilesRepository, profileCache, profileContainer.ProfileRepositoryWrapper, uiShellContainer.PassportBridge, playerEntity, webBrowser,
+                    dynamicWorldDependencies.CompositeWeb3Provider, initializationFlowContainer.InitializationFlow, marketplaceCreditsApiClient, notificationsRequestController,
+                    FeaturesRegistry.Instance.IsEnabled(FeatureId.FriendsConnectivityStatus) ? friendsServices?.ConnectivityStatusTracker : null, placesAndEventsContainer.OnlineUsersProvider));
 
             // ReSharper disable once MethodHasAsyncOverloadWithCancellation
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.VoiceChat))

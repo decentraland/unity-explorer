@@ -281,7 +281,8 @@ namespace Global.Dynamic
                 identityExpirationDuration
             );
 
-            ICompositeWeb3Provider result = new CompositeWeb3Provider(thirdWebAuth, dappAuth, dappDeepLinkAuth, identityCache, container.Controller);
+            ICompositeWeb3Provider result = new CompositeWeb3Provider(thirdWebAuth, dappAuth, dappDeepLinkAuth, identityCache, container.Controller,
+                new EphemeralWeb3Authenticator(web3AccountFactory));
 
             return result;
         }

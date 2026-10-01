@@ -11,7 +11,8 @@ namespace DCL.SkyBox
 {
     /// <summary>
     ///     Pushes the environment overrides requested by the current scene to the time-of-day controller, the visible sky,
-    ///     the cloud layer and the reflection cubemap.
+    ///     the cloud layer and the reflection cubemap. While a scene owns the skybox the controller runs the scene look
+    ///     (the legacy preset with the scene's environment written over it); without one the base look returns.
     /// </summary>
     [UpdateInGroup(typeof(SimulationSystemGroup))]
     [LogCategory(ReportCategory.SKYBOX)]
@@ -35,9 +36,12 @@ namespace DCL.SkyBox
         {
             ref SceneSkyboxOverrides overrides = ref World.Get<SceneSkyboxOverrides>(skyboxEntity);
 
-            if (!ReferenceEquals(overrides.Environment, overrides.AppliedEnvironment))
+            bool sceneControlled = overrides.SceneControlled;
+
+            if (sceneControlled != overrides.AppliedSceneControlled || !ReferenceEquals(overrides.Environment, overrides.AppliedEnvironment))
             {
-                skyboxRenderController.SetEnvironmentOverride(overrides.Environment);
+                skyboxRenderController.SetSceneLook(sceneControlled, overrides.Environment);
+                overrides.AppliedSceneControlled = sceneControlled;
                 overrides.AppliedEnvironment = overrides.Environment;
             }
 

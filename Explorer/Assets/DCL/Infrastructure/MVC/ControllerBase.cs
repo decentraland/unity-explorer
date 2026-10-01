@@ -42,7 +42,10 @@ namespace MVC
         public static ShowCommand<TView, TInputData> IssueCommand(TInputData inputData) =>
             new (inputData);
 
-        private List<IMVCControllerModule> modules;
+        private List<IMVCControllerModule>? modules;
+
+        // Pending while the view plays its show animation; completed once OnViewShow has run or the show failed
+        private UniTaskCompletionSource? showInProgress;
 
         protected ControllerBase(ViewFactoryMethod viewFactory)
         {
@@ -52,11 +55,14 @@ namespace MVC
 
         protected TView? viewInstance { get; private set; }
 
-        protected TInputData inputData { get; private set; }
+        // Assigned by LaunchViewLifeCycleAsync before any callback that reads it runs
+        protected TInputData inputData { get; private set; } = default!;
 
         public ControllerState State { get; private set; }
 
         public abstract CanvasOrdering.SortingLayer Layer { get; }
+
+        public virtual bool CanBeClosedByEscape => Layer is not CanvasOrdering.SortingLayer.Persistent and not CanvasOrdering.SortingLayer.Overlay;
 
         /// <summary>
         ///     Add a module to the controller
@@ -83,21 +89,36 @@ namespace MVC
             OnBeforeViewShow();
 
             State = ControllerState.ViewShowing;
+            UniTaskCompletionSource showCompletion = showInProgress = new UniTaskCompletionSource();
 
-            await viewInstance.ShowAsync(ct);
+            try
+            {
+                await viewInstance.ShowAsync(ct);
 
-            State = ControllerState.ViewFocused;
+                State = ControllerState.ViewFocused;
 
-            OnViewShow();
+                OnViewShow();
 
-            for (var i = 0; i < modules?.Count; i++)
-                modules[i].OnViewShow();
+                for (var i = 0; i < modules?.Count; i++)
+                    modules[i].OnViewShow();
+            }
+            finally
+            {
+                // Released only after OnViewShow has run, so OnViewClose can never precede it
+                showInProgress = null;
+                showCompletion.TrySetResult();
+            }
 
             await WaitForCloseIntentAsync(ct);
         }
 
         public async UniTask HideViewAsync(CancellationToken ct)
         {
+            UniTaskCompletionSource? pendingShow = showInProgress;
+
+            if (pendingShow != null)
+                await pendingShow.Task;
+
             State = ControllerState.ViewHiding;
 
             for (var i = 0; i < modules?.Count; i++)

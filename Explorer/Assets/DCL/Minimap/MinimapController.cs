@@ -250,13 +250,7 @@ namespace DCL.Minimap
         {
             bool isHome;
             if (realmData.ScenesAreFixed)
-            {
-                string? homeWorldName = homePlaceEventBus.CurrentHomeWorldName;
-                if (string.IsNullOrEmpty(homeWorldName))
-                    homeWorldName = HomeMarkerController.DeserializeWorldName();
-
-                isHome = string.Equals(homeWorldName, realmData.RealmName, StringComparison.OrdinalIgnoreCase);
-            }
+                isHome = string.Equals(homePlaceEventBus.CurrentHomeWorldName, realmData.RealmName, StringComparison.OrdinalIgnoreCase);
             else
             {
                 PlacesData.PlaceInfo? place = GetPlaceCoveringHome();

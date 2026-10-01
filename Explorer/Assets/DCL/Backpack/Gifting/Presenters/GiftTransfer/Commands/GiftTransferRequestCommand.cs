@@ -6,7 +6,6 @@ using DCL.Backpack.Gifting.Services;
 using DCL.Backpack.Gifting.Services.GiftingInventory;
 using DCL.Backpack.Gifting.Services.PendingTransfers;
 using DCL.Backpack.Gifting.Views;
-using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using Utility;
 
@@ -22,23 +21,20 @@ namespace DCL.Backpack.Gifting.Presenters.GiftTransfer.Commands
         private readonly IGiftTransferService giftTransferService;
         private readonly IWeb3IdentityCache  web3IdentityCache;
         private readonly IPendingTransferService pendingTransferService;
-        private readonly ICompositeWeb3Provider web3Provider;
 
         public GiftTransferRequestCommand(IEventBus eventBus,
             IWeb3IdentityCache web3IdentityCache,
             IGiftTransferService giftTransferService,
-            IPendingTransferService pendingTransferService,
-            ICompositeWeb3Provider web3Provider)
+            IPendingTransferService pendingTransferService)
         {
             this.eventBus = eventBus;
             this.web3IdentityCache = web3IdentityCache;
             this.giftTransferService = giftTransferService;
             this.pendingTransferService = pendingTransferService;
-            this.web3Provider = web3Provider;
         }
 
         public string GetWaitingMessage() =>
-            web3Provider.IsThirdWebAccount
+            web3IdentityCache.IsThirdWebAccount()
                 ? GiftingTextIds.WAITING_FOR_WALLET_MESSAGE_THIRD_WEB
                 : GiftingTextIds.WAITING_FOR_WALLET_MESSAGE;
 

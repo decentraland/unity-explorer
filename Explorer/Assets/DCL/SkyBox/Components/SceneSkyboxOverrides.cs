@@ -17,10 +17,16 @@ namespace DCL.SkyBox.Components
         // Full scene identity: base parcels are not unique, portable experiences usually share (0,0) with world scenes
         public SceneShortInfo? Owner;
 
+        public bool AppliedSceneControlled;
         public Texture? AppliedSkyboxTexture;
         public Texture? AppliedReflectionSource;
         public Texture? AppliedCloudsTexture;
         public SceneEnvironmentProfile? AppliedEnvironment;
+
+        /// <summary>
+        ///     A scene owns the skybox while it is current and has a PBSkybox, whatever fields it sets.
+        /// </summary>
+        public bool SceneControlled => Owner != null;
 
         /// <summary>
         ///     An explicit reflection map wins, otherwise reflections are derived from the scene skybox.
