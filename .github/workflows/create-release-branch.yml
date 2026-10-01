@@ -175,8 +175,9 @@ jobs:
             } > build.md
             upsert build build.md
             # Removed first: on a re-cut the label may already be on the PR, and
-            # re-adding it raises no event, so nothing would build.
-            GH_TOKEN="$ORG_TOKEN" gh pr edit "$BRANCH_NAME" --remove-label force-build >/dev/null 2>&1 || true
+            # re-adding it raises no event, so nothing would build. Removed with
+            # GITHUB_TOKEN so the unlabeled event raises no build of its own.
+            gh pr edit "$BRANCH_NAME" --remove-label force-build >/dev/null 2>&1 || true
             if GH_TOKEN="$ORG_TOKEN" gh pr edit "$BRANCH_NAME" --add-label force-build; then
               BUILD_STATE=forced
             else
