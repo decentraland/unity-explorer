@@ -26,7 +26,6 @@ namespace DCL.InWorldCamera
         // Aspect ratio of the saved screenshot, which the cropped frame keeps whatever the screen's own is.
         public const float TARGET_ASPECT_RATIO = (float)TARGET_FRAME_WIDTH / TARGET_FRAME_HEIGHT;
 
-        private readonly float targetAspectRatio;
         private readonly RectTransform canvasRectTransform;
 
         private readonly Texture2D screenshot = new (TARGET_FRAME_WIDTH, TARGET_FRAME_HEIGHT, TextureFormat.RGB24, false);
@@ -39,9 +38,6 @@ namespace DCL.InWorldCamera
 
         public ScreenRecorder(RectTransform canvasRectTransform)
         {
-            targetAspectRatio = TARGET_ASPECT_RATIO;
-            Debug.Assert(targetAspectRatio != 0, "Target aspect ratio cannot be zero");
-
             this.canvasRectTransform = canvasRectTransform;
         }
 
@@ -146,17 +142,9 @@ namespace DCL.InWorldCamera
                 ScreenHeight = canvasRectTransform.rect.height * canvasRectTransform.lossyScale.y,
             };
 
-            // Adjust current by smallest side
-            if (screenFrameData.ScreenAspectRatio > targetAspectRatio) // Height is the limiting dimension, so scaling width based on it
-            {
-                screenFrameData.FrameHeight = screenFrameData.ScreenHeight * FRAME_SCALE;
-                screenFrameData.FrameWidth = screenFrameData.FrameHeight * targetAspectRatio;
-            }
-            else // Width is the limiting dimension, so scaling height based on it
-            {
-                screenFrameData.FrameWidth = screenFrameData.ScreenWidth * FRAME_SCALE;
-                screenFrameData.FrameHeight = screenFrameData.FrameWidth / targetAspectRatio;
-            }
+            Vector2 frameSize = CalculateNormalizedFrameSize(screenFrameData.ScreenAspectRatio);
+            screenFrameData.FrameWidth = screenFrameData.ScreenWidth * frameSize.x;
+            screenFrameData.FrameHeight = screenFrameData.ScreenHeight * frameSize.y;
 
             return screenFrameData;
         }

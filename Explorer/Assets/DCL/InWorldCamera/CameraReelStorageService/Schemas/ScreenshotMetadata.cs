@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace DCL.InWorldCamera.CameraReelStorageService.Schemas
 {
-    // Server schema: decentraland/camera-reel-service/src/api.rs#/Metadata
+    // Server schema: https://github.com/decentraland/camera-reel-service/blob/main/src/api.rs (struct Metadata)
     [Serializable]
     public class ScreenshotMetadata
     {
@@ -18,7 +18,7 @@ namespace DCL.InWorldCamera.CameraReelStorageService.Schemas
         public VisiblePerson[] visiblePeople = null!;
     }
 
-    // Server schema: decentraland/camera-reel-service/src/api.rs#/Scene
+    // Server schema: https://github.com/decentraland/camera-reel-service/blob/main/src/api.rs (struct Scene)
     [Serializable]
     public class Scene
     {
@@ -26,7 +26,7 @@ namespace DCL.InWorldCamera.CameraReelStorageService.Schemas
         public Location location = null!;
     }
 
-    // Server schema: decentraland/camera-reel-service/src/api.rs#/Location
+    // Server schema: https://github.com/decentraland/camera-reel-service/blob/main/src/api.rs (struct Location)
     [Serializable]
     public class Location
     {
@@ -40,7 +40,7 @@ namespace DCL.InWorldCamera.CameraReelStorageService.Schemas
         }
     }
 
-    // Server schema: decentraland/camera-reel-service/src/api.rs#/User
+    // Server schema: https://github.com/decentraland/camera-reel-service/blob/main/src/api.rs (struct User)
     [Serializable]
     public class VisiblePerson
     {
@@ -51,7 +51,7 @@ namespace DCL.InWorldCamera.CameraReelStorageService.Schemas
 
         /// <summary>
         /// Where this person stands in the saved photo: normalized to the image, with the origin at its
-        /// top-left corner. Zero when the person is in frame but their bounds could not be projected.
+        /// top-left corner. Zero when their bounds do not cover any area of the image.
         /// </summary>
         public Rect screenRect;
 

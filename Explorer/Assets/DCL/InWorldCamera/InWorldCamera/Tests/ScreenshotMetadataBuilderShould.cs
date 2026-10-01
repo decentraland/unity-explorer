@@ -69,14 +69,15 @@ namespace DCL.InWorldCamera.Tests
         [Test]
         public void ReturnZeroForBoundsOutsideTheCroppedFrame()
         {
-            // Arrange — far enough to the side that the photo's crop leaves it out.
+            // Arrange — on screen, but in the side band the photo's crop leaves out.
             Camera camera = CreateCamera();
-            var bounds = new Bounds(new Vector3(20f, 0f, 5f), Vector3.one);
+            var bounds = new Bounds(new Vector3(4.8f, 0f, 5f), new Vector3(0.1f, 0.1f, 0.1f));
 
             // Act
             Rect rect = ScreenshotMetadataBuilder.CalculateScreenRect(camera, bounds);
 
             // Assert
+            Assert.Less(camera.WorldToViewportPoint(bounds.max).x, 1f);
             Assert.AreEqual(Rect.zero, rect);
         }
 
@@ -97,12 +98,14 @@ namespace DCL.InWorldCamera.Tests
             Assert.AreEqual(1f, rect.yMax, TOLERANCE);
         }
 
-        [Test]
-        public void KeepTheSameFrameWhateverTheScreenAspectRatioIs()
+        [TestCase(1f)]
+        [TestCase(1.5f)]
+        public void KeepTheSameFrameWhateverTheScreenAspectRatioIs(float screenToTargetAspectRatio)
         {
-            // Arrange — the photo is always 16:9, so a wider screen crops the sides, not the subject.
-            Camera camera = CreateCamera(ScreenRecorder.TARGET_ASPECT_RATIO * 1.5f);
+            // Arrange — the near face of a unit cube centred 5 away sits 4.5 from the camera.
+            Camera camera = CreateCamera(ScreenRecorder.TARGET_ASPECT_RATIO * screenToTargetAspectRatio);
             var bounds = new Bounds(new Vector3(0f, 0f, 5f), Vector3.one);
+            float viewportHeight = 1f / (2f * Mathf.Tan(camera.fieldOfView / 2f * Mathf.Deg2Rad) * 4.5f);
 
             // Act
             Rect rect = ScreenshotMetadataBuilder.CalculateScreenRect(camera, bounds);
@@ -110,6 +113,28 @@ namespace DCL.InWorldCamera.Tests
             // Assert
             Assert.AreEqual(0.5f, rect.center.x, TOLERANCE);
             Assert.AreEqual(0.5f, rect.center.y, TOLERANCE);
+            Assert.AreEqual(viewportHeight / ScreenRecorder.FRAME_SCALE, rect.height, TOLERANCE);
+            Assert.AreEqual(viewportHeight / ScreenRecorder.FRAME_SCALE / ScreenRecorder.TARGET_ASPECT_RATIO, rect.width, TOLERANCE);
+        }
+
+        [Test]
+        public void HandleNarrowerThanTargetScreenAspectRatio()
+        {
+            // Arrange — a screen narrower than 16:9 exercises the width-limited scaling path, where the crop
+            // keeps the full width share and trims the top and bottom instead.
+            Camera camera = CreateCamera(ScreenRecorder.TARGET_ASPECT_RATIO * 0.5f);
+            var bounds = new Bounds(new Vector3(0f, 0f, 5f), Vector3.one);
+            float viewportHeight = 1f / (2f * Mathf.Tan(camera.fieldOfView / 2f * Mathf.Deg2Rad) * 4.5f);
+            float frameHeightShare = ScreenRecorder.FRAME_SCALE * camera.aspect / ScreenRecorder.TARGET_ASPECT_RATIO;
+
+            // Act
+            Rect rect = ScreenshotMetadataBuilder.CalculateScreenRect(camera, bounds);
+
+            // Assert
+            Assert.AreEqual(0.5f, rect.center.x, TOLERANCE);
+            Assert.AreEqual(0.5f, rect.center.y, TOLERANCE);
+            Assert.AreEqual(viewportHeight / frameHeightShare, rect.height, TOLERANCE);
+            Assert.AreEqual(viewportHeight / camera.aspect / ScreenRecorder.FRAME_SCALE, rect.width, TOLERANCE);
         }
 
         [Test]

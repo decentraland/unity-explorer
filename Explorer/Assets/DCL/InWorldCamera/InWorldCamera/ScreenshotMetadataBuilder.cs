@@ -18,6 +18,9 @@ namespace DCL.InWorldCamera
         private const string UNKNOWN_USER_WALLET = "0x000000000000000000000000000000000000000";
         private const string UNKNOWN_PLACE = "Unknown place";
 
+        /// <summary>Corners of an axis-aligned box; also one past the highest axis bit of a corner index.</summary>
+        private const int BOX_CORNER_COUNT = 8;
+
         private readonly SelfProfile selfProfile;
         private readonly CharacterController characterObjectController;
         private readonly RealmData realmData;
@@ -70,7 +73,7 @@ namespace DCL.InWorldCamera
                     userAddress = string.IsNullOrEmpty(profile?.UserId) ? UNKNOWN_USER_WALLET : profile!.UserId,
                     isGuest = profile is { HasConnectedWeb3: false },
                     isEmoting = isEmoting,
-                    screenRect = camera is null ? Rect.zero : CalculateScreenRect(camera, avatarCollider.bounds),
+                    screenRect = camera == null ? Rect.zero : CalculateScreenRect(camera, avatarCollider.bounds),
                     wearables = FilterNonBaseWearables(profile?.Avatar.Wearables ?? Array.Empty<URN>()),
                 });
             }
@@ -125,7 +128,7 @@ namespace DCL.InWorldCamera
 
             // Each bit of a corner index picks the low or the high side of an axis. The visible part of the box is
             // its corners in front of the near plane plus the points where its edges cross that plane.
-            for (var corner = 0; corner < 8; corner++)
+            for (var corner = 0; corner < BOX_CORNER_COUNT; corner++)
             {
                 Vector3 from = GetCorner(bounds, corner);
                 float fromDepth = Vector3.Dot(from - cameraPosition, cameraForward);
@@ -133,7 +136,7 @@ namespace DCL.InWorldCamera
                 if (fromDepth >= nearPlane)
                     Include(from);
 
-                for (var axisBit = 1; axisBit < 8; axisBit <<= 1)
+                for (var axisBit = 1; axisBit < BOX_CORNER_COUNT; axisBit <<= 1)
                 {
                     if ((corner & axisBit) != 0) continue;
 
@@ -175,29 +178,16 @@ namespace DCL.InWorldCamera
         }
 
         /// <summary>
-        /// Re-bases a point of the camera's viewport on the frame the photo is cropped to: a centred box of
-        /// the saved image's aspect ratio, scaled by <see cref="ScreenRecorder.FRAME_SCALE" /> on the
-        /// limiting side, and measured from the top down rather than from the bottom up.
+        /// Re-bases a point of the camera's viewport on the frame the photo is cropped to, measured from the
+        /// top down rather than from the bottom up.
         /// </summary>
         private static Vector2 ViewportToFrame(Vector3 viewportPoint, float screenAspectRatio)
         {
-            float frameWidth;
-            float frameHeight;
-
-            if (screenAspectRatio > ScreenRecorder.TARGET_ASPECT_RATIO)
-            {
-                frameHeight = ScreenRecorder.FRAME_SCALE;
-                frameWidth = frameHeight * ScreenRecorder.TARGET_ASPECT_RATIO / screenAspectRatio;
-            }
-            else
-            {
-                frameWidth = ScreenRecorder.FRAME_SCALE;
-                frameHeight = frameWidth * screenAspectRatio / ScreenRecorder.TARGET_ASPECT_RATIO;
-            }
+            Vector2 frameSize = ScreenRecorder.CalculateNormalizedFrameSize(screenAspectRatio);
 
             return new Vector2(
-                (viewportPoint.x - (0.5f - (frameWidth / 2f))) / frameWidth,
-                1f - ((viewportPoint.y - (0.5f - (frameHeight / 2f))) / frameHeight));
+                (viewportPoint.x - (0.5f - (frameSize.x / 2f))) / frameSize.x,
+                1f - ((viewportPoint.y - (0.5f - (frameSize.y / 2f))) / frameSize.y));
         }
 
         internal void FillMetadata(Profile? profile, RealmData realm, Vector2Int playerPosition,

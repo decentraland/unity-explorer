@@ -163,7 +163,7 @@ namespace DCL.InWorldCamera.Systems
         private void CollectMetadata()
         {
             Camera captureCamera = camera.GetCameraComponent(World).Camera;
-            GetPhotoFrustumPlanes(captureCamera, out Plane[] frustumPlanes);
+            Plane[] frustumPlanes = CalculatePhotoFrustumPlanes(captureCamera);
 
             metadataBuilder.Init(sceneParcel: World.Get<CharacterTransform>(playerEntity).Position.ToParcel(), frustumPlanes, captureCamera);
 
@@ -181,13 +181,13 @@ namespace DCL.InWorldCamera.Systems
         private bool UserIsEmoting(Entity entity) =>
             World.TryGet(entity, out CharacterEmoteComponent emoteComponent) && emoteComponent.IsPlayingEmote;
 
-        private static void GetPhotoFrustumPlanes(Camera camera, out Plane[] frustumPlanes)
+        internal static Plane[] CalculatePhotoFrustumPlanes(Camera camera)
         {
             Vector2 frameSize = ScreenRecorder.CalculateNormalizedFrameSize(camera.aspect);
             float photoFieldOfView = Mathf.Atan(Mathf.Tan(camera.fieldOfView * Mathf.Deg2Rad / 2f) * frameSize.y) * 2f * Mathf.Rad2Deg;
 
             Matrix4x4 photoProjection = Matrix4x4.Perspective(photoFieldOfView, ScreenRecorder.TARGET_ASPECT_RATIO, camera.nearClipPlane, camera.farClipPlane);
-            frustumPlanes = GeometryUtility.CalculateFrustumPlanes(photoProjection * camera.worldToCameraMatrix);
+            return GeometryUtility.CalculateFrustumPlanes(photoProjection * camera.worldToCameraMatrix);
         }
     }
 }
