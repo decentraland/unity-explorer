@@ -28,6 +28,7 @@ namespace DCL.FeatureFlags
         private readonly Dictionary<FeatureId, Lazy<bool>> deferredFeatureStates = new ();
 
         private readonly bool lobbyDefault;
+        private readonly bool lobbyFlagEnabled;
 
         public FeaturesRegistry(
             IAppArgs appArgs,
@@ -66,6 +67,7 @@ namespace DCL.FeatureFlags
                 [FeatureId.CommunitiesMembersCounter] = featureFlags.IsEnabled(FeatureFlagsStrings.COMMUNITIES_MEMBERS_COUNTER),
                 [FeatureId.EmailOTPAuth] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.EMAIL_OTP_AUTH, featureFlags.IsEnabled(FeatureFlagsStrings.EMAIL_OTP_AUTH)),
                 [FeatureId.GuestLogin] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.GUEST_LOGIN, featureFlags.IsEnabled(FeatureFlagsStrings.GUEST_LOGIN)),
+                [FeatureId.EphemeralGuestAccount] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.EPHEMERAL_GUEST_ACCOUNT, featureFlags.IsEnabled(FeatureFlagsStrings.EPHEMERAL_GUEST_ACCOUNT)),
                 [FeatureId.CheckDiskSpace] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.CHECK_DISK_SPACE, featureFlags.IsEnabled(FeatureFlagsStrings.CHECK_DISK_SPACE)),
                 [FeatureId.AvatarHighlight] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.AVATAR_HIGHLIGHT, featureFlags.IsEnabled(FeatureFlagsStrings.AVATAR_HIGHLIGHT) || isEditor, requireDebug: false),
                 [FeatureId.DoubleJump] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.DOUBLE_JUMP, featureFlags.IsEnabled(FeatureFlagsStrings.DOUBLE_JUMP) || Application.isEditor),
@@ -98,7 +100,8 @@ namespace DCL.FeatureFlags
             SetFeatureState(FeatureId.NearbyVoiceChatTip, IsEnabled(FeatureId.NearbyVoiceChat) && featureFlags.IsEnabled(FeatureFlagsStrings.NEARBY_VOICE_CHAT_TIP));
 
             // The Settings toggle lives in player prefs, which only exist in a running player while the registry is also built outside one, so the state resolves on first query
-            lobbyDefault = appArgs.ResolveFeatureFlagArg(AppArgsFlags.LOBBY, featureFlags.IsEnabled(FeatureFlagsStrings.LOBBY), requireDebug: false);
+            lobbyFlagEnabled = featureFlags.IsEnabled(FeatureFlagsStrings.LOBBY);
+            lobbyDefault = appArgs.ResolveFeatureFlagArg(AppArgsFlags.LOBBY, lobbyFlagEnabled, requireDebug: false);
             deferredFeatureStates[FeatureId.Lobby] = new Lazy<bool>(() => LobbyEnabledSetting && !localSceneDevelopment);
         }
 
@@ -107,9 +110,17 @@ namespace DCL.FeatureFlags
         /// </summary>
         public bool LobbyEnabledSetting
         {
-            get => DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_LOBBY_ENABLED)
-                ? DCLPlayerPrefs.GetBool(DCLPrefKeys.SETTINGS_LOBBY_ENABLED)
-                : lobbyDefault;
+            get
+            {
+                if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_LOBBY_ENABLED))
+                    return DCLPlayerPrefs.GetBool(DCLPrefKeys.SETTINGS_LOBBY_ENABLED);
+
+                // Persisted as the user's own choice so the lobby survives the flag being withdrawn; skipped when `--lobby false` overrides it
+                if (lobbyFlagEnabled && lobbyDefault)
+                    LobbyEnabledSetting = true;
+
+                return lobbyDefault;
+            }
 
             set => DCLPlayerPrefs.SetBool(DCLPrefKeys.SETTINGS_LOBBY_ENABLED, value, true);
         }
@@ -258,5 +269,6 @@ namespace DCL.FeatureFlags
         InGameShop = 76,
         GuestLogin = 77,
         Lobby = 78,
+        EphemeralGuestAccount = 79,
     }
 }

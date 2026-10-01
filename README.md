@@ -103,7 +103,7 @@ Please follow our [Branch & PR Standards](docs/branch-and-pr-standards.md) and [
 
 ## 🤝 Community and Support
 
-- [Discord Server](https://discord.gg/decentraland)
+- [Discord Server](https://discord.gg/n4kzQvgux7)
 - [Forum](https://forum.decentraland.org/)
 - [Twitter](https://twitter.com/decentraland)
 

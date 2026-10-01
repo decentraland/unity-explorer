@@ -47,7 +47,7 @@ namespace DCL.Communities.CommunitiesCard.Events
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly string createEventFormat;
 
-        private CommunityData? communityData = null;
+        private CommunityData? communityData;
         private CancellationTokenSource eventCardOperationsCts = new ();
 
         protected override SectionFetchData<PlaceAndEventDTO> currentSectionFetchData => eventsFetchData;

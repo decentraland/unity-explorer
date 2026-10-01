@@ -40,6 +40,7 @@ namespace DCL.CharacterPreview
         private readonly Func<bool> isPlayingEmoteDelegate;
 
         private bool initialized;
+        private bool containerActive;
         private CancellationTokenSource? updateModelCancellationToken;
         private Color profileColor;
         private Vector3 avatarPosition;
@@ -93,7 +94,7 @@ namespace DCL.CharacterPreview
             cursorController = new CharacterPreviewCursorController(view.CharacterPreviewCursorContainer, inputEventBus, view.CharacterPreviewSettingsSo.cursorSettings);
 
             characterPreviewEventBus.OnAnyCharacterPreviewShowEvent += OnAnyCharacterPreviewShow;
-            characterPreviewEventBus.OnAnyCharacterPreviewHideEvent += OnAnyCharacterPreviewHide;
+            characterPreviewEventBus.OnCharacterPreviewRestoredEvent += OnCharacterPreviewRestored;
 
             isPlayingEmoteDelegate = () => previewController?.IsPlayingEmote() ?? false;
 
@@ -128,6 +129,7 @@ namespace DCL.CharacterPreview
             previewController = previewFactory.Create(world, view.RawImage.rectTransform, currentRenderTexture,
                 inputEventBus, view.CharacterPreviewSettingsSo.cameraSettings, avatarPosition);
             initialized = true;
+            containerActive = true;
 
             lastScreenSize = new Vector2Int(Screen.width, Screen.height);
             renderTargetSizeDirty = false;
@@ -150,7 +152,8 @@ namespace DCL.CharacterPreview
             view.RectDimensionsChanged -= OnViewRectDimensionsChanged;
             Canvas.willRenderCanvases -= FitRenderTargetToView;
             characterPreviewEventBus.OnAnyCharacterPreviewShowEvent -= OnAnyCharacterPreviewShow;
-            characterPreviewEventBus.OnAnyCharacterPreviewHideEvent -= OnAnyCharacterPreviewHide;
+            characterPreviewEventBus.OnCharacterPreviewRestoredEvent -= OnCharacterPreviewRestored;
+            characterPreviewEventBus.Forget(this);
             cursorController.Dispose();
             updateModelCancellationToken.SafeCancelAndDispose();
         }
@@ -223,6 +226,9 @@ namespace DCL.CharacterPreview
             }
 
             if (!renderTargetSizeDirty) return;
+
+            // Resizing wipes the texture and only the camera refills it, so it waits until the container is back on.
+            if (!containerActive) return;
 
             renderTargetSizeDirty = false;
 
@@ -354,15 +360,16 @@ namespace DCL.CharacterPreview
             if (characterPreviewController == this)
                 return;
 
+            containerActive = false;
             previewController?.SetCharacterPreviewAvatarContainerActive(false);
         }
 
-        // Once any other character preview is closed, we activate back the current one.
-        private void OnAnyCharacterPreviewHide(CharacterPreviewControllerBase characterPreviewController)
+        private void OnCharacterPreviewRestored(CharacterPreviewControllerBase characterPreviewController)
         {
-            if (characterPreviewController == this)
+            if (characterPreviewController != this)
                 return;
 
+            containerActive = true;
             previewController?.SetCharacterPreviewAvatarContainerActive(true);
         }
 

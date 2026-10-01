@@ -191,11 +191,13 @@ namespace SceneRunner
 
         public void Dispose()
         {
-            // The order can make a difference here
+            // The order can make a difference here.
+            // The synchronizer goes first: it flags itself disposed, so a buffer the scene thread is still about to apply
+            // is discarded instead of reaching the world that is torn down right after
+            CRDTWorldSynchronizer.Dispose();
             ECSWorldFacade.Dispose();
             CRDTProtocol.Dispose();
             OutgoingCRDTMessagesProvider.Dispose();
-            CRDTWorldSynchronizer.Dispose();
             PoolsProvider.Dispose();
             CRDTMemoryAllocator.Dispose();
 

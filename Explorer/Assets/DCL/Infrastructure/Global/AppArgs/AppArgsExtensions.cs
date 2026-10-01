@@ -13,6 +13,9 @@ namespace Global.AppArgs
         public static bool HasFlagWithValueFalse(this IAppArgs args, string flagName) =>
             args.TryGetValue(flagName, out var flagValue) && flagValue == "false";
 
+        public static bool HasLaunchDestination(this IAppArgs args) =>
+            args.HasFlag(AppArgsFlags.REALM) || args.HasFlag(AppArgsFlags.POSITION);
+
         //This method resolves a feature flag considering an eventual app argument override, allowing to set
         //the value to both true or false
         public static bool ResolveFeatureFlagArg(this IAppArgs args, string appArgFlag, bool fallback, bool requireDebug = true) =>
