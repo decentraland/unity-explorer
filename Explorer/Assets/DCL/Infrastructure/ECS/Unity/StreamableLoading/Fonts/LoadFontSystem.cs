@@ -16,6 +16,7 @@ using System;
 using System.Text;
 using System.Threading;
 using TMPro;
+using Unity.Profiling;
 using UnityEngine.TextCore.Text;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 
@@ -30,6 +31,8 @@ namespace ECS.StreamableLoading.Fonts
         // The names the converter gives a font bundle's two font assets (abgen builder::font).
         private const string BUNDLE_TEXT_MESH_PRO_ASSET = "tmp";
         private const string BUNDLE_UI_TOOLKIT_ASSET = "uitk";
+
+        private static readonly ProfilerMarker READ_BUNDLED_FONT_MARKER = new ($"{nameof(LoadFontSystem)}.ReadBundledFont");
 
         private readonly IWebRequestController webRequestController;
         private readonly RuntimeFontAssetFactory fontAssetFactory;
@@ -120,6 +123,8 @@ namespace ECS.StreamableLoading.Fonts
                 ReportHub.LogWarning(GetReportData(), $"\"{intention.Src}\": its converted font bundle did not load, the font file is loaded instead: {result.Exception?.Message}");
                 return null;
             }
+
+            using ProfilerMarker.AutoScope _ = READ_BUNDLED_FONT_MARKER.Auto();
 
             if (!bundle.TryGetAsset(out TMP_FontAsset textMeshPro, BUNDLE_TEXT_MESH_PRO_ASSET)
                 || !bundle.TryGetAsset(out FontAsset uiToolkit, BUNDLE_UI_TOOLKIT_ASSET))

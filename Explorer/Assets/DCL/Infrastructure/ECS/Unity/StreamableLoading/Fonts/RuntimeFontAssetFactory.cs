@@ -26,6 +26,7 @@ namespace ECS.StreamableLoading.Fonts
         private static readonly ProfilerMarker CREATE_FAMILY_MARKER = new ($"{nameof(RuntimeFontAssetFactory)}.{nameof(Create)}");
         private static readonly ProfilerMarker CREATE_TEXT_MESH_PRO_MARKER = new ($"{nameof(RuntimeFontAssetFactory)}.{nameof(CreateTextMeshProAsset)}");
         private static readonly ProfilerMarker CREATE_UI_TOOLKIT_MARKER = new ($"{nameof(RuntimeFontAssetFactory)}.{nameof(CreateUIToolkitAsset)}");
+        private static readonly ProfilerMarker ADOPT_BUNDLED_MARKER = new ($"{nameof(RuntimeFontAssetFactory)}.{nameof(AdoptBundled)}");
 
         private readonly TMP_FontAsset referenceFont;
 
@@ -72,6 +73,8 @@ namespace ECS.StreamableLoading.Fonts
         /// </summary>
         public FontFamilyAssets AdoptBundled(string assetName, TMP_FontAsset textMeshPro, FontAsset uiToolkit)
         {
+            using ProfilerMarker.AutoScope _ = ADOPT_BUNDLED_MARKER.Auto();
+
             Material material = CreateMaterial(assetName, textMeshPro);
             textMeshPro.material = material;
             textMeshPro.fallbackFontAssetTable = new List<TMP_FontAsset> { referenceFont };
