@@ -136,7 +136,13 @@ namespace DCL.AvatarRendering.AvatarShape
 
         [Query]
         [None(typeof(PlayerComponent), typeof(AvatarTransformMatrixComponent), typeof(AvatarCustomSkinningComponent), typeof(DeleteEntityIntention))]
-        private bool InstantiateNewAvatar(in Entity entity, ref AvatarShapeComponent avatarShapeComponent, ref AvatarBase avatarBase)
+        private void InstantiateNewAvatar(in Entity entity, ref AvatarShapeComponent avatarShapeComponent, ref AvatarBase avatarBase)
+        {
+            if (TryInstantiateNewAvatar(entity, ref avatarShapeComponent, ref avatarBase))
+                PoseForFirstSkinning(avatarBase);
+        }
+
+        private bool TryInstantiateNewAvatar(Entity entity, ref AvatarShapeComponent avatarShapeComponent, ref AvatarBase avatarBase)
         {
             if (!ReadyToInstantiateNewAvatar(ref avatarShapeComponent)) return false;
 
@@ -175,12 +181,22 @@ namespace DCL.AvatarRendering.AvatarShape
             avatarBase.AdditiveBreathRig.enabled = pointAtFeatureEnabled;
         }
 
+        // This group runs after Unity's animation update, so the first skinning pass of a freshly activated AvatarBase would
+        // read its rest pose and render one T-posed frame. Evaluating the controller once writes the idle pose first.
+        // It runs after the rigs are set up because the constraints bake their offsets from the pose they are built with.
+        private static void PoseForFirstSkinning(AvatarBase avatarBase)
+        {
+            Animator animator = avatarBase.AvatarAnimator;
+            animator.enabled = true;
+            animator.Update(0f);
+        }
+
         [Query]
         [All(typeof(PlayerComponent))]
         [None(typeof(AvatarTransformMatrixComponent), typeof(AvatarCustomSkinningComponent))]
         private void InstantiateMainPlayerAvatar(in Entity entity, ref AvatarShapeComponent avatarShapeComponent, ref AvatarBase avatarBase)
         {
-            if (!InstantiateNewAvatar(entity, ref avatarShapeComponent, ref avatarBase)) return;
+            if (!TryInstantiateNewAvatar(entity, ref avatarShapeComponent, ref avatarBase)) return;
 
             if (avatarBase != null)
             {
@@ -191,6 +207,7 @@ namespace DCL.AvatarRendering.AvatarShape
                 avatarBase.FeetIKRig.enabled = true;
 
                 mainPlayerAvatarBaseProxy.SetObject(avatarBase);
+                PoseForFirstSkinning(avatarBase);
             }
         }
 
