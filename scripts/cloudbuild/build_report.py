@@ -96,8 +96,10 @@ def parse_log(lines):
             archives.append(archive)
         if 'Created the archive file in' in line and archive and archive['finished_at'] is None:
             archive['finished_at'] = at
-        if 'postbuildsteps finished successfully' in line and archive:
-            archive['postbuild_finished_at'] = at
+        if 'postbuildsteps finished successfully' in line:
+            for item in archives:
+                if item['postbuild_finished_at'] is None:
+                    item['postbuild_finished_at'] = at
 
     for item in restores:
         item['restore_seconds'] = elapsed(item['started_at'], item['finished_at']) if item['status'] == 'hit' else None
