@@ -15,12 +15,12 @@ namespace DCL.PluginSystem.World
     public class SceneSkyboxPlugin : IDCLWorldPluginWithoutSettings
     {
         private readonly Arch.Core.World globalWorld;
-        private readonly MediaFactoryBuilder mediaFactory;
+        private readonly MediaFactoryBuilder mediaFactoryBuilder;
 
-        public SceneSkyboxPlugin(Arch.Core.World globalWorld, MediaFactoryBuilder mediaFactory)
+        public SceneSkyboxPlugin(Arch.Core.World globalWorld, MediaFactoryBuilder mediaFactoryBuilder)
         {
             this.globalWorld = globalWorld;
-            this.mediaFactory = mediaFactory;
+            this.mediaFactoryBuilder = mediaFactoryBuilder;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder,
@@ -38,7 +38,7 @@ namespace DCL.PluginSystem.World
                 sharedDependencies.SceneData,
                 sharedDependencies.ScenePartition,
                 sharedDependencies.SceneStateProvider,
-                mediaFactory.CreateForScene(builder.World, sharedDependencies, systemsDependencies.RoomHub, placeholderSource: null));
+                mediaFactoryBuilder.CreateForScene(builder.World, sharedDependencies, systemsDependencies.RoomHub, placeholderSource: null));
 
             finalizeWorldSystems.Add(handler);
             sceneIsCurrentListeners.Add(handler);

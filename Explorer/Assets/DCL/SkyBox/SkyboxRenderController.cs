@@ -339,7 +339,7 @@ public class SkyboxRenderController : MonoBehaviour
     /// </summary>
     private void UpdateDirectionalLight(float timeOfDay)
     {
-        if (!directionalLight || skyboxMaterial == null) return;
+        if (!directionalLight) return;
 
         //change the color of the light based on the color ramp
         directionalLight.color = Sample(environmentOverride?.SunColor, directionalColorRamp, timeOfDay);
@@ -353,10 +353,13 @@ public class SkyboxRenderController : MonoBehaviour
             lightAnimator.Stop();
         }
 
-        // The animation drives the sun disc size and opacity through the light's scale
-        Vector3 directionalLightLocalScale = directionalLight.gameObject.transform.localScale;
-        skyboxMaterial.SetFloat(SUN_SIZE, directionalLightLocalScale.x);
-        UpdateSunAndMoon(skyboxMaterial, timeOfDay, directionalLightLocalScale.y);
+        if (skyboxMaterial != null)
+        {
+            // The animation drives the sun disc size and opacity through the light's scale
+            Vector3 directionalLightLocalScale = directionalLight.gameObject.transform.localScale;
+            skyboxMaterial.SetFloat(SUN_SIZE, directionalLightLocalScale.x);
+            UpdateSunAndMoon(skyboxMaterial, timeOfDay, directionalLightLocalScale.y);
+        }
 
         UpdateLensFlare(timeOfDay);
     }
