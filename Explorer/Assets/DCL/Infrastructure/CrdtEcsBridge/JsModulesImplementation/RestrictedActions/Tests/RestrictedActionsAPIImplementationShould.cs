@@ -9,6 +9,7 @@ using DCL.ExternalUrlPrompt;
 using DCL.NftPrompt;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
+using DCL.SceneRuntime.Apis.RestrictedActionsApi;
 using DCL.TeleportPrompt;
 using DCL.UI;
 using Decentraland.Kernel.Apis;
@@ -18,7 +19,6 @@ using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
 using SceneRuntime.ScenePermissions;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -138,7 +138,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             Vector2Int testCoords = new Vector2Int(10, 20);
 
             // Act
-            restrictedActionsAPIImplementation.TryTeleportTo(testCoords, null);
+            restrictedActionsAPIImplementation.TryTeleportTo(TeleportDestination.FromParcel(testCoords));
 
             // Assert
             mvcManager.Received(1).ShowAsync(TeleportPromptController.IssueCommand(new TeleportPromptController.Params(testCoords)));
@@ -152,7 +152,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             const string TEST_REALM = "TestRealm";
 
             // Act
-            restrictedActionsAPIImplementation.TryTeleportTo(testCoords, TEST_REALM);
+            restrictedActionsAPIImplementation.TryTeleportTo(TeleportDestination.FromRealm(new RealmDestination(TEST_REALM, testCoords)));
 
             // Assert
             mvcManager.Received(1).ShowAsync(ChangeRealmPromptController.IssueCommand(new ChangeRealmPromptController.Params(string.Empty, TEST_REALM, testCoords)));
@@ -166,22 +166,11 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             const string TEST_REALM = "TestRealm";
 
             // Act
-            restrictedActionsAPIImplementation.TryTeleportTo(null, TEST_REALM);
+            restrictedActionsAPIImplementation.TryTeleportTo(TeleportDestination.FromRealm(new RealmDestination(TEST_REALM, null)));
 
             // Assert
             mvcManager.Received(1).ShowAsync(ChangeRealmPromptController.IssueCommand(new ChangeRealmPromptController.Params(string.Empty, TEST_REALM)));
             mvcManager.DidNotReceive().ShowAsync(Arg.Any<ShowCommand<TeleportPromptView, TeleportPromptController.Params>>());
-        }
-
-        [Test]
-        public void IgnoreTeleportWithNeitherCoordinatesNorRealm()
-        {
-            // Act
-            LogAssert.Expect(LogType.Warning, new Regex("TeleportTo"));
-            restrictedActionsAPIImplementation.TryTeleportTo(null, null);
-
-            // Assert
-            Assert.That(mvcManager.ReceivedCalls(), Is.Empty);
         }
 
         [Test]
@@ -215,10 +204,10 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
         public async Task OpenExplorerUi_MapOpensNavmap()
         {
             // Act
-            int result = await restrictedActionsAPIImplementation.TryOpenExplorerUiAsync((int)ExplorerUi.EuMap, 0, CancellationToken.None);
+            OpenExplorerUiResult result = await restrictedActionsAPIImplementation.TryOpenExplorerUiAsync(ExplorerUi.EuMap, 0, CancellationToken.None);
 
             // Assert
-            Assert.AreEqual((int)OpenExplorerUiResult.Opened, result);
+            Assert.AreEqual(OpenExplorerUiResult.Opened, result);
             _ = explorerUiActions.Received(1).OpenSectionAsync(ExplorerUi.EuMap, ExploreSections.Navmap, Arg.Any<uint>(), Arg.Any<CancellationToken>());
         }
 
@@ -226,7 +215,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
         public async Task OpenExplorerUi_ForwardsTheRequestId()
         {
             // Act
-            await restrictedActionsAPIImplementation.TryOpenExplorerUiAsync((int)ExplorerUi.EuMap, 77, CancellationToken.None);
+            await restrictedActionsAPIImplementation.TryOpenExplorerUiAsync(ExplorerUi.EuMap, 77, CancellationToken.None);
 
             // Assert
             _ = explorerUiActions.Received(1).OpenSectionAsync(ExplorerUi.EuMap, ExploreSections.Navmap, 77, Arg.Any<CancellationToken>());
@@ -239,10 +228,10 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             sceneStateProvider.IsCurrent.Returns(false);
 
             // Act
-            int result = AnsweredWithoutAFrame(restrictedActionsAPIImplementation.TryOpenExplorerUiAsync((int)ExplorerUi.EuMap, 0, CancellationToken.None));
+            OpenExplorerUiResult result = AnsweredWithoutAFrame(restrictedActionsAPIImplementation.TryOpenExplorerUiAsync(ExplorerUi.EuMap, 0, CancellationToken.None));
 
             // Assert
-            Assert.AreEqual((int)OpenExplorerUiResult.RejectedNotCurrentScene, result);
+            Assert.AreEqual(OpenExplorerUiResult.RejectedNotCurrentScene, result);
             explorerUiActions.DidNotReceive().OpenSectionAsync(Arg.Any<ExplorerUi>(), Arg.Any<ExploreSections>(), Arg.Any<uint>(), Arg.Any<CancellationToken>());
         }
 
@@ -256,10 +245,10 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             sceneStateProvider.LastUserInputTick.Returns((uint)lastUserInputTick);
 
             // Act
-            int result = AnsweredWithoutAFrame(restrictedActionsAPIImplementation.TryOpenExplorerUiAsync((int)ExplorerUi.EuMap, 0, CancellationToken.None));
+            OpenExplorerUiResult result = AnsweredWithoutAFrame(restrictedActionsAPIImplementation.TryOpenExplorerUiAsync(ExplorerUi.EuMap, 0, CancellationToken.None));
 
             // Assert
-            Assert.AreEqual((int)OpenExplorerUiResult.RejectedNoUserGesture, result);
+            Assert.AreEqual(OpenExplorerUiResult.RejectedNoUserGesture, result);
             explorerUiActions.DidNotReceive().OpenSectionAsync(Arg.Any<ExplorerUi>(), Arg.Any<ExploreSections>(), Arg.Any<uint>(), Arg.Any<CancellationToken>());
         }
 
@@ -270,20 +259,20 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             explorerUiActions.OpenSectionAsync(Arg.Any<ExplorerUi>(), Arg.Any<ExploreSections>(), Arg.Any<uint>(), Arg.Any<CancellationToken>()).Returns(UniTask.FromResult(OpenExplorerUiResult.WasAlreadyOpen));
 
             // Act
-            int result = await restrictedActionsAPIImplementation.TryOpenExplorerUiAsync((int)ExplorerUi.EuMap, 0, CancellationToken.None);
+            OpenExplorerUiResult result = await restrictedActionsAPIImplementation.TryOpenExplorerUiAsync(ExplorerUi.EuMap, 0, CancellationToken.None);
 
             // Assert
-            Assert.AreEqual((int)OpenExplorerUiResult.WasAlreadyOpen, result);
+            Assert.AreEqual(OpenExplorerUiResult.WasAlreadyOpen, result);
         }
 
         [Test]
         public void OpenExplorerUi_UnknownUiValue_Rejects()
         {
             // Act: 99 is not a member of the ExplorerUi enum, so the section mapping must fail.
-            int result = AnsweredWithoutAFrame(restrictedActionsAPIImplementation.TryOpenExplorerUiAsync(99, 0, CancellationToken.None));
+            OpenExplorerUiResult result = AnsweredWithoutAFrame(restrictedActionsAPIImplementation.TryOpenExplorerUiAsync((ExplorerUi)99, 0, CancellationToken.None));
 
             // Assert
-            Assert.AreEqual((int)OpenExplorerUiResult.RejectedFeatureDisabled, result);
+            Assert.AreEqual(OpenExplorerUiResult.RejectedFeatureDisabled, result);
             explorerUiActions.DidNotReceive().OpenSectionAsync(Arg.Any<ExplorerUi>(), Arg.Any<ExploreSections>(), Arg.Any<uint>(), Arg.Any<CancellationToken>());
         }
 
@@ -297,10 +286,10 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             EcsTestsUtils.SetUpFeaturesRegistryWithAppArgs(new[] { "--camera-reel", "false" });
 
             // Act
-            int result = AnsweredWithoutAFrame(restrictedActionsAPIImplementation.TryOpenExplorerUiAsync((int)ExplorerUi.EuCameraReel, 0, CancellationToken.None));
+            OpenExplorerUiResult result = AnsweredWithoutAFrame(restrictedActionsAPIImplementation.TryOpenExplorerUiAsync(ExplorerUi.EuCameraReel, 0, CancellationToken.None));
 
             // Assert
-            Assert.AreEqual((int)OpenExplorerUiResult.RejectedFeatureDisabled, result);
+            Assert.AreEqual(OpenExplorerUiResult.RejectedFeatureDisabled, result);
             explorerUiActions.DidNotReceive().OpenSectionAsync(Arg.Any<ExplorerUi>(), Arg.Any<ExploreSections>(), Arg.Any<uint>(), Arg.Any<CancellationToken>());
         }
 
@@ -313,10 +302,10 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             explorerUiActions.OpenSectionAsync(ExplorerUi.EuCommunities, ExploreSections.Communities, Arg.Any<uint>(), Arg.Any<CancellationToken>()).Returns(UniTask.FromResult(OpenExplorerUiResult.RejectedFeatureDisabled));
 
             // Act
-            int result = await restrictedActionsAPIImplementation.TryOpenExplorerUiAsync((int)ExplorerUi.EuCommunities, 0, CancellationToken.None);
+            OpenExplorerUiResult result = await restrictedActionsAPIImplementation.TryOpenExplorerUiAsync(ExplorerUi.EuCommunities, 0, CancellationToken.None);
 
             // Assert
-            Assert.AreEqual((int)OpenExplorerUiResult.RejectedFeatureDisabled, result);
+            Assert.AreEqual(OpenExplorerUiResult.RejectedFeatureDisabled, result);
         }
 
         [Test]
@@ -553,7 +542,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             globalWorldActions.Received(1).TriggerSceneEmoteAsync(sceneData, SRC, HASH, false, AvatarEmoteMask.AemUpperBody, Arg.Any<CancellationToken>());
         }
 
-        private static int AnsweredWithoutAFrame(UniTask<int> call)
+        private static OpenExplorerUiResult AnsweredWithoutAFrame(UniTask<OpenExplorerUiResult> call)
         {
             Assert.That(call.Status, Is.EqualTo(UniTaskStatus.Succeeded));
             return call.GetAwaiter().GetResult();
