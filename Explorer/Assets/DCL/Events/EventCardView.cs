@@ -263,6 +263,17 @@ namespace DCL.Events
 
             lastLoadedThumbnailUrl = eventInfo.image;
             loadingThumbnailCts = loadingThumbnailCts.SafeRestart();
+
+            // A picture already cached goes up at once, so the card does not pass through its loading look for an image it can show right away
+            Sprite? cached = string.IsNullOrEmpty(eventInfo.image) ? null : thumbnailLoader.Cache?.GetCachedSprite(eventInfo.image);
+
+            if (cached != null)
+            {
+                eventThumbnail.SetImage(cached, true);
+                eventThumbnail.ImageColor = Color.white;
+                return;
+            }
+
             thumbnailLoader.LoadCommunityThumbnailFromUrlAsync(
                 eventInfo.image,
                 eventThumbnail, null, loadingThumbnailCts.Token, true).Forget();

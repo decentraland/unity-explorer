@@ -96,6 +96,9 @@ namespace DCL.Lobby
 
         // Null while the landing place loads; the card itself knows whether it has details to open
         private PlacesData.PlaceInfo? landingPlace;
+
+        // The destination the shown landing place describes, meaningful only while that place is set
+        private LandingDestination landingDestination;
         private LandingDestination? startupDestination;
 
         // One menu serves every Share button; the event it acts on is the one whose button opened it
@@ -244,8 +247,13 @@ namespace DCL.Lobby
             upcomingEventsRail.Show(viewInstance.UpcomingEvents);
 
             placesCts = placesCts.SafeRestart();
-            ShowLandingCardLoading(landingCard);
-            ShowLandingPlaceAsync(placesCts.Token).Forget();
+            LandingDestination destination = ResolveLandingDestination();
+
+            // A card already showing the destination keeps it up while its details are fetched again, instead of going dark for the round trip
+            if (landingPlace == null || !landingDestination.Equals(destination))
+                ShowLandingCardLoading(landingCard);
+
+            ShowLandingPlaceAsync(destination, placesCts.Token).Forget();
             ShowPlacesAsync(recentPlacesRail, recentPlaces, placesAPIService.GetRecentlyVisitedDestinationsAsync(placesCts.Token), MAX_RECENT_PLACES, placesCts.Token).Forget();
             ShowPlacesAsync(featuredPlacesRail, featuredPlaces, placesAPIService.GetHighlightedDestinationsAsync(placesCts.Token), int.MaxValue, placesCts.Token).Forget();
 
@@ -370,10 +378,8 @@ namespace DCL.Lobby
         /// <summary>
         ///     At startup the hero card's Jump in is the only way out, so an offline stand-in fills it when the Places API cannot describe the destination.
         /// </summary>
-        private async UniTaskVoid ShowLandingPlaceAsync(CancellationToken ct)
+        private async UniTaskVoid ShowLandingPlaceAsync(LandingDestination destination, CancellationToken ct)
         {
-            LandingDestination destination = ResolveLandingDestination();
-
             Result<PlacesData.PlaceInfo?> result = await (destination.WorldName != null
                     ? placesAPIService.GetWorldByNameAsync(destination.WorldName, ct)
                     : placesAPIService.GetPlaceAsync(destination.Parcel, ct))
@@ -382,7 +388,7 @@ namespace DCL.Lobby
             if (ct.IsCancellationRequested) return;
 
             PlacesData.PlaceInfo? place = result.Success ? result.Value : null;
-            ShowLandingCard(place ?? destination.ToOfflinePlace(), hasDetails: place != null, ct);
+            ShowLandingCard(destination, place ?? destination.ToOfflinePlace(), hasDetails: place != null, ct);
         }
 
         /// <summary>
@@ -406,9 +412,10 @@ namespace DCL.Lobby
         }
 
         // An offline stand-in carries nothing but the destination itself, so that card only offers Jump in
-        private void ShowLandingCard(PlacesData.PlaceInfo place, bool hasDetails, CancellationToken ct)
+        private void ShowLandingCard(LandingDestination destination, PlacesData.PlaceInfo place, bool hasDetails, CancellationToken ct)
         {
             landingPlace = place;
+            landingDestination = destination;
 
             LobbyLandingCardElement card = viewInstance!.LandingCard;
             card.Title = place.title;
@@ -462,7 +469,7 @@ namespace DCL.Lobby
 
         /// <summary>
         ///     Fills a row with the first <paramref name="maxCount" /> places <paramref name="fetch" /> resolves to, one card per place;
-        ///     a failed fetch leaves the row hidden.
+        ///     a failed fetch keeps the places of the last one that succeeded, so the row is only hidden while none have ever arrived.
         /// </summary>
         private async UniTaskVoid ShowPlacesAsync(LobbyPlacesRail rail, List<PlacesData.PlaceInfo> places, UniTask<PlacesData.IPlacesAPIResponse> fetch, int maxCount, CancellationToken ct)
         {
@@ -470,10 +477,9 @@ namespace DCL.Lobby
 
             if (ct.IsCancellationRequested) return;
 
-            places.Clear();
-
             if (result.Success)
             {
+                places.Clear();
                 IReadOnlyList<PlacesData.PlaceInfo> data = result.Value.Data;
 
                 for (var i = 0; i < data.Count && i < maxCount; i++)
@@ -497,16 +503,28 @@ namespace DCL.Lobby
             LoadThumbnailAsync(card, place.image, ReportCategory.PLACES, ct).Forget();
         }
 
+        /// <summary>
+        ///     A picture already cached goes up at once, so a card does not pass through its loading look for an image it can show right away.
+        /// </summary>
         private async UniTaskVoid LoadThumbnailAsync(ILobbyThumbnailCard card, string? url, string reportCategory, CancellationToken ct)
         {
-            card.Thumbnail = null;
-
             if (string.IsNullOrEmpty(url))
             {
                 card.IsLoading = false;
+                card.Thumbnail = null;
                 return;
             }
 
+            Sprite? cached = spriteCache.GetCachedSprite(url);
+
+            if (cached != null)
+            {
+                card.IsLoading = false;
+                card.Thumbnail = cached;
+                return;
+            }
+
+            card.Thumbnail = null;
             card.IsLoading = true;
             Sprite? sprite = null;
 
@@ -528,7 +546,8 @@ namespace DCL.Lobby
             };
 
         /// <summary>
-        ///     A single schedule fetch feeds both event rows; a failed fetch leaves them hidden.
+        ///     A single schedule fetch feeds both event rows; a failed fetch keeps the events of the last one that succeeded, so the
+        ///     rows are only hidden while none have ever arrived.
         /// </summary>
         private async UniTaskVoid ShowEventsAsync(CancellationToken ct)
         {
@@ -537,22 +556,21 @@ namespace DCL.Lobby
 
             if (ct.IsCancellationRequested) return;
 
-            liveEvents.Clear();
-            upcomingEvents.Clear();
-
             if (result.Success)
             {
+                liveEvents.Clear();
+                upcomingEvents.Clear();
                 IReadOnlyList<EventDTO> events = result.Value;
 
                 for (var i = 0; i < events.Count; i++)
                     (events[i].live ? liveEvents : upcomingEvents).Add(events[i]);
+
+                // The schedule is not guaranteed to come sorted and can be long: keep only the next few
+                upcomingEvents.Sort(BY_START_TIME);
+
+                if (upcomingEvents.Count > MAX_UPCOMING_EVENTS)
+                    upcomingEvents.RemoveRange(MAX_UPCOMING_EVENTS, upcomingEvents.Count - MAX_UPCOMING_EVENTS);
             }
-
-            // The schedule is not guaranteed to come sorted and can be long: keep only the next few
-            upcomingEvents.Sort(BY_START_TIME);
-
-            if (upcomingEvents.Count > MAX_UPCOMING_EVENTS)
-                upcomingEvents.RemoveRange(MAX_UPCOMING_EVENTS, upcomingEvents.Count - MAX_UPCOMING_EVENTS);
 
             liveEventsRail!.SetCount(liveEvents.Count);
 
