@@ -1,0 +1,23 @@
+using REnum;
+
+namespace DCL.Profiles.Self
+{
+    public enum ProfileReadError : byte
+    {
+        /// <summary>No wallet is signed in.</summary>
+        NoIdentity,
+
+        /// <summary>The catalyst holds no profile for the identity.</summary>
+        NotFound,
+
+        /// <summary>The read and its retry both failed. The cause is the <c>Failed</c> case of <see cref="ProfileKnowledge" />.</summary>
+        ReadFailed,
+
+        Cancelled,
+    }
+
+    [REnum(EnumUnderlyingType.Byte)]
+    [REnumField(typeof(Profile), "Ok")]
+    [REnumField(typeof(ProfileReadError), "Error")]
+    public readonly partial struct ProfileReadResult { }
+}

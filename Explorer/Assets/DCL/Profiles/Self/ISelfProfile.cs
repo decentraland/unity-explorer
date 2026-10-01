@@ -4,17 +4,19 @@ using System.Threading;
 
 namespace DCL.Profiles.Self
 {
+    /// <summary>Thread-safe</summary>
     public interface ISelfProfile : IDisposable
     {
-        public event Action<Profile>? ProfilePropagated;
+        SelfProfileModel CurrentProfileSnapshot { get; }
 
         /// <summary>
-        ///     The own profile resolved from the cache. Can be null if the profile hasn't been fetched yet.
+        ///     Waits until the current identity's profile is resolved. A failed read is retried once per call.
         /// </summary>
-        Profile? OwnProfile { get; }
+        UniTask<ProfileReadResult> ProfileAsync(CancellationToken ct);
 
-        UniTask<Profile?> ProfileAsync(CancellationToken ct);
-        UniTask<Profile?> UpdateProfileAsync(CancellationToken ct, bool updateAvatarInWorld = true);
-        UniTask<Profile?> UpdateProfileAsync(Profile profile, CancellationToken ct, bool updateAvatarInWorld = true);
+        /// <summary>
+        ///     Cancelling the token stops waiting; the deploy itself runs to its end. // TODO can we cancel the deploy itself?
+        /// </summary>
+        UniTask<ProfileDeployResult> DeployProfileAsync(Profile edited, CancellationToken ct);
     }
 }

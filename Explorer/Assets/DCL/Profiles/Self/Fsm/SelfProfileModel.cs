@@ -1,3 +1,4 @@
+using DCL.Utility.Types;
 using REnum;
 
 namespace DCL.Profiles.Self
@@ -43,5 +44,12 @@ namespace DCL.Profiles.Self
     [REnum(EnumUnderlyingType.Byte)]
     [REnumFieldEmpty("NoIdentity")]
     [REnumField(typeof(Identified))]
-    public readonly partial struct SelfProfileModel { }
+    public readonly partial struct SelfProfileModel
+    {
+        /// <summary>The trusted profile of the current identity, when there is one.</summary>
+        public Option<Profile> KnownProfile =>
+            IsIdentified(out Identified identified) && identified.Knowledge.IsKnown(out Profile known)
+                ? Option<Profile>.Some(known)
+                : Option<Profile>.None;
+    }
 }
