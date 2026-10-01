@@ -75,7 +75,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIDropdown
         {
             if (!sdkModel.IsDirty) return;
 
-            UiElementUtils.SetupUIDropdownComponent(ref uiDropdownComponent, in sdkModel, in styleFontDefinitions);
+            UiElementUtils.SetupUiDropdownComponent(ref uiDropdownComponent, in sdkModel, in styleFontDefinitions);
             sdkModel.IsDirty = false;
         }
 

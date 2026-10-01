@@ -15,6 +15,9 @@ namespace DCL.AuthenticationScreenFlow
         [field: SerializeField]
         public Button CancelLoginButton { get; private set; } = null!;
 
+        [field: SerializeField]
+        public Button BackButton { get; private set; } = null!;
+
         [field: Header("PRIMARY LOGIN")]
         [field: SerializeField]
         public GameObject EmailOTPContainer { get; private set; } = null!;

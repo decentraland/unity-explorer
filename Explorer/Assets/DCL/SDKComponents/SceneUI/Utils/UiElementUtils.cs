@@ -35,6 +35,8 @@ namespace DCL.SDKComponents.SceneUI.Utils
             transformVisualElement.style.flexDirection = GetFlexDirection(model.FlexDirection);
             if (model.FlexBasisUnit != YGUnit.YguUndefined)
                 transformVisualElement.style.flexBasis = model.FlexBasisUnit == YGUnit.YguAuto ? new StyleLength(StyleKeyword.Auto) : new Length(model.FlexBasis, GetUnit(model.FlexBasisUnit));
+            else
+                transformVisualElement.style.flexBasis = StyleKeyword.Null;
 
             transformVisualElement.style.flexGrow = model.FlexGrow;
             transformVisualElement.style.flexShrink = model.GetFlexShrink();
@@ -265,7 +267,7 @@ namespace DCL.SDKComponents.SceneUI.Utils
             imageToSetup.Texture = texture;
         }
 
-        public static void SetupUIInputComponent(ref UIInputComponent inputToSetup, in PBUiInput model, in StyleFontDefinition[] styleFontDefinitions)
+        public static void SetupUiInputComponent(ref UIInputComponent inputToSetup, in PBUiInput model, in StyleFontDefinition[] styleFontDefinitions)
         {
             bool isReadonly = !model.IsInteractive();
 
@@ -289,7 +291,7 @@ namespace DCL.SDKComponents.SceneUI.Utils
             inputToSetup.TextElement.style.unityTextAlign = model.GetTextAlign();
         }
 
-        public static void SetupUIDropdownComponent(ref UIDropdownComponent dropdownToSetup, in PBUiDropdown model, in StyleFontDefinition[] styleFontDefinitions)
+        public static void SetupUiDropdownComponent(ref UIDropdownComponent dropdownToSetup, in PBUiDropdown model, in StyleFontDefinition[] styleFontDefinitions)
         {
             var dropdownField = dropdownToSetup.DropdownField;
             dropdownField.style.fontSize = model.GetFontSize();
@@ -339,10 +341,10 @@ namespace DCL.SDKComponents.SceneUI.Utils
             elementStyle.whiteSpace = new StyleEnum<WhiteSpace>(WhiteSpace.Normal);
         }
 
-        public static void ReleaseUIElement(VisualElement visualElement) =>
+        public static void ReleaseUiElement(VisualElement visualElement) =>
             visualElement.RemoveFromHierarchy();
 
-        public static void ReleaseUITransformComponent(UITransformComponent transform)
+        public static void ReleaseUiTransformComponent(UITransformComponent transform)
         {
             transform.Dispose();
         }
@@ -350,16 +352,16 @@ namespace DCL.SDKComponents.SceneUI.Utils
         public static void ReleaseDCLImage(DCLImage image) =>
             image.Dispose();
 
-        public static void ReleaseUIInputComponent(UIInputComponent input)
+        public static void ReleaseUiInputComponent(UIInputComponent input)
         {
             input.Dispose();
-            ReleaseUIElement(input.TextField);
+            ReleaseUiElement(input.TextField);
         }
 
-        public static void ReleaseUIDropdownComponent(UIDropdownComponent dropdown)
+        public static void ReleaseUiDropdownComponent(UIDropdownComponent dropdown)
         {
             dropdown.Dispose();
-            ReleaseUIElement(dropdown.DropdownField);
+            ReleaseUiElement(dropdown.DropdownField);
         }
 
         private static LengthUnit GetUnit(YGUnit unit)

@@ -29,7 +29,7 @@ namespace ECS.Unity.SceneBoundsChecker
 
         private readonly IPartitionComponent scenePartition;
         private readonly ParcelMathHelper.SceneGeometry sceneGeometry;
-        private Bounds auxiliaryBounds = new Bounds();
+        private Bounds auxiliaryBounds;
 
         /// <summary>
         ///     Throttle scheduling between fixed updates

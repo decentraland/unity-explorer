@@ -136,6 +136,8 @@ namespace DCL.SDKComponents.MediaStream
                 if (mediaPlayer.MediaPlayer.IsPlaying)
                 {
                     videoStateByPriority.WantsToPlay = true;
+
+                    // CurrentTime reads 0 while the media is still opening, so the start time then assumes the video began at 0 right now
                     videoStateByPriority.MediaPlayStartTime = UnityEngine.Time.realtimeSinceStartup - mediaPlayer.MediaPlayer.CurrentTime;
 
 #if DEBUG_VIDEO_PRIORITIES
@@ -249,13 +251,15 @@ namespace DCL.SDKComponents.MediaStream
             if (mustPlay && !videoStateByPriority.IsPlaying)
             {
                 double pauseDuration = UnityEngine.Time.realtimeSinceStartup - videoStateByPriority.MediaPlayStartTime;
-                double seekTime = pauseDuration % mediaPlayer.Duration;
+                bool hasResumeTime = TryGetResumeTime(pauseDuration, mediaPlayer.Duration, out double seekTime);
 
                 if (!mediaPlayer.MediaPlayer.IsPlaying)
                 {
                     // Videos are resumed at the current time, not at the time it was paused
                     mediaPlayer.MediaPlayer.Play();
-                    mediaPlayer.MediaPlayer.TrySeek(seekTime);
+
+                    if (hasResumeTime)
+                        mediaPlayer.MediaPlayer.TrySeek(seekTime);
                 }
 
                 videoStateByPriority.IsPlaying = true;
@@ -280,6 +284,23 @@ namespace DCL.SDKComponents.MediaStream
             if (videoStateByPriority.IsPlaying)
                 debugPlayingVideoCount++;
 #endif
+        }
+
+        /// <summary>
+        /// Where a video culled for <paramref name="pauseDuration"/> seconds would be now if it had kept playing.
+        /// Fails while the duration is unknown (0 while the media is still opening, and for streams without one):
+        /// the modulo would then yield NaN, which the player clamps to the start of the media.
+        /// </summary>
+        internal static bool TryGetResumeTime(double pauseDuration, float duration, out double resumeTime)
+        {
+            if (duration <= 0f)
+            {
+                resumeTime = 0d;
+                return false;
+            }
+
+            resumeTime = pauseDuration % duration;
+            return double.IsFinite(resumeTime);
         }
 
         /// <summary>

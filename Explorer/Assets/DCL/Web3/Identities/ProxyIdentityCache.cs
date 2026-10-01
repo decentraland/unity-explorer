@@ -70,8 +70,9 @@ namespace DCL.Web3.Identities
 
         public void Clear()
         {
-            memory.Clear();
+            // Cleared handlers read Identity back synchronously and the getter would restore the disk copy, so storage goes first
             storage.Clear();
+            memory.Clear();
         }
     }
 }
