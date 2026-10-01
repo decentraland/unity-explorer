@@ -296,9 +296,15 @@ namespace DCL.Backpack
             Profile? inWorldProfile = world.Has<Profile>(playerEntity) ? world.Get<Profile>(playerEntity) : null;
 
             // Before the world loads the player entity has no profile, and after a logout it still carries the ended session's, so only the current identity's is trusted
-            Avatar? avatar = inWorldProfile != null && inWorldProfile.UserId == web3IdentityCache.Identity?.Address
-                ? inWorldProfile.Avatar
-                : (await selfProfile.ProfileAsync(ct))?.Avatar;
+            Avatar? avatar;
+
+            if (inWorldProfile != null && inWorldProfile.UserId == web3IdentityCache.Identity?.Address)
+                avatar = inWorldProfile.Avatar;
+            else
+            {
+                ProfileReadResult readResult = await selfProfile.ProfileAsync(ct);
+                avatar = readResult.IsOk(out Profile? ownProfile) ? ownProfile.Avatar : null;
+            }
 
             if (ct.IsCancellationRequested) return;
 
