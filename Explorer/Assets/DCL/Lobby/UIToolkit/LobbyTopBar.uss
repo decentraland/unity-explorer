@@ -47,6 +47,22 @@
     background-image: url('/Assets/Textures/Common/NotificationIcn.png');
 }
 
+/* Red pill over the top-right corner of the button, the sidebar's badge colour; it widens with the count */
+.lobby__notifications-badge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 9px;
+    background-color: rgb(255, 45, 85);
+    font-size: 11px;
+    -unity-font-definition: var(--dcl-font-inter-bold);
+    -unity-text-align: middle-center;
+    color: var(--dcl-color-snow);
+}
+
 .lobby__close-icon {
     width: 12px;
     height: 12px;

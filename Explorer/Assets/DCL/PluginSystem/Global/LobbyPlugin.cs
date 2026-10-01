@@ -203,7 +203,7 @@ namespace DCL.PluginSystem.Global
                 profileRepositoryWrapper);
 
             // The lobby has its own panel instance: the sidebar's one lives inside the sidebar view, which is inactive until the world is loaded
-            notificationsPanelController = new NotificationsPanelController<LobbyPopupParameter>(() => popups.NotificationsMenuView,
+            var notificationsPanel = new NotificationsPanelController<LobbyPopupParameter>(() => popups.NotificationsMenuView,
                 notificationsRequestController,
                 notificationIconTypes,
                 notificationDefaultThumbnails,
@@ -212,6 +212,8 @@ namespace DCL.PluginSystem.Global
                 identityCache,
                 profileRepositoryWrapper,
                 mvcManager);
+
+            notificationsPanelController = notificationsPanel;
 
             // Without connectivity statuses there is nothing to list: the section stays hidden
             friendsPresenter = friendsConnectivity != null
@@ -225,7 +227,7 @@ namespace DCL.PluginSystem.Global
                 inputBlock, loadingStatus, mvcManager,
                 selfProfile, profileChangesBus, characterPreviewFactory, characterPreviewEventBus, settings.AvatarSettings, lobbyStage, world,
                 placesAPIService, realmData, homePlace, eventsApiService, eventCardActions, realmNavigator, decentralandUrlsSource, startParcel, new SpriteCache(webRequestController), profileButtonPresenter,
-                friendsPresenter);
+                notificationsPanel, friendsPresenter);
 
             mvcManager.RegisterController(lobbyController);
             mvcManager.RegisterController(profileMenuController);

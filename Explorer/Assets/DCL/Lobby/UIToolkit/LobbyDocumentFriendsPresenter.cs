@@ -157,8 +157,8 @@ namespace DCL.Lobby
             card.IsVerified = profile.HasClaimedName;
             card.OnlineStatus = tracker.GetFriendStatus(userId);
 
-            // Rebinding the same friend keeps the picture: rebuilds happen on every status change in the list
-            if (!string.Equals(binding.UserId, userId, StringComparison.OrdinalIgnoreCase))
+            // Rebinding the same friend keeps the picture, unless its fetch never finished (a hide cancels the fetches under way)
+            if (!string.Equals(binding.UserId, userId, StringComparison.OrdinalIgnoreCase) || binding.IsPictureLoading)
                 binding.LoadPicture(profile, showCt);
 
             if (locations.TryGetValue(userId, out FriendLocation location))
@@ -322,6 +322,11 @@ namespace DCL.Lobby
             ///     Wallet of the friend shown; a late asynchronous result checks it before touching the card.
             /// </summary>
             public string UserId { get; private set; } = string.Empty;
+
+            /// <summary>
+            ///     True until the last picture fetch delivered a result, so also when it was cancelled midway.
+            /// </summary>
+            public bool IsPictureLoading => thumbnail.Value.ThumbnailState is ProfileThumbnailViewModel.State.Loading or ProfileThumbnailViewModel.State.NotBound;
 
             public CardBinding(LobbyFriendCardElement card)
             {

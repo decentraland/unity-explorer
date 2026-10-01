@@ -4,6 +4,7 @@ using UnityEngine.UIElements;
 
 namespace DCL.Lobby.Tests
 {
+    [TestFixture]
     public class LobbyRailElementShould
     {
         private static readonly int MOUSE = PointerId.mousePointerId;
@@ -63,14 +64,21 @@ namespace DCL.Lobby.Tests
         }
 
         [Test]
-        public void HideTheArrowThatHasNoPageLeftToGoTo()
+        public void HideThePreviousArrowOnTheFirstPage()
         {
-            // Arrange
+            // Act
             ShowCards(7);
 
             // Assert
             Assert.AreEqual(DisplayStyle.None, Arrow("Previous").style.display.value);
             Assert.AreEqual(DisplayStyle.Flex, Arrow("Next").style.display.value);
+        }
+
+        [Test]
+        public void HideTheNextArrowOnTheLastPage()
+        {
+            // Arrange
+            ShowCards(7);
 
             // Act
             rail.SnapTo(2);
@@ -79,6 +87,50 @@ namespace DCL.Lobby.Tests
             Assert.AreEqual(2, rail.CurrentPage);
             Assert.AreEqual(DisplayStyle.Flex, Arrow("Previous").style.display.value);
             Assert.AreEqual(DisplayStyle.None, Arrow("Next").style.display.value);
+        }
+
+        [Test]
+        public void PageOnWhenTheWheelScrollsDown()
+        {
+            // Arrange
+            AttachToPanel();
+            ShowCards(7);
+
+            // Act
+            Wheel(new Vector2(0f, 1f));
+
+            // Assert
+            Assert.AreEqual(1, rail.CurrentPage);
+        }
+
+        [Test]
+        public void PageBackWhenTheWheelScrollsUp()
+        {
+            // Arrange
+            AttachToPanel();
+            ShowCards(7);
+            rail.SnapTo(1);
+
+            // Act
+            Wheel(new Vector2(0f, -1f));
+
+            // Assert
+            Assert.AreEqual(0, rail.CurrentPage);
+        }
+
+        [Test]
+        public void IgnoreAHorizontalWheelScroll()
+        {
+            // Arrange
+            AttachToPanel();
+            ShowCards(7);
+            rail.SnapTo(1);
+
+            // Act
+            Wheel(new Vector2(1f, 0f));
+
+            // Assert
+            Assert.AreEqual(1, rail.CurrentPage);
         }
 
         [Test]
@@ -267,6 +319,13 @@ namespace DCL.Lobby.Tests
         {
             using PointerUpEvent evt = PointerUpEvent.GetPooled(new Event { type = EventType.MouseUp, button = 0, mousePosition = new Vector2(x, 10f) });
             target.SendEvent(evt);
+        }
+
+        private void Wheel(Vector2 delta)
+        {
+            using WheelEvent evt = WheelEvent.GetPooled(new Event { type = EventType.ScrollWheel, delta = delta, mousePosition = new Vector2(100f, 10f) });
+            evt.target = rail;
+            rail.SendEvent(evt);
         }
 
         private void ShowCards(int count)

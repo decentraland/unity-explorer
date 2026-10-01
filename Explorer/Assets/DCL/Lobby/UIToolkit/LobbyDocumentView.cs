@@ -28,6 +28,7 @@ namespace DCL.Lobby
         private const string CREDITS_SLOT_NAME = "CreditsSlot";
         private const string PROFILE_SLOT_NAME = "ProfileSlot";
         private const string NOTIFICATIONS_NAME = "Notifications";
+        private const string UNREAD_BADGE_NAME = "UnreadBadge";
         private const string CLOSE_NAME = "Close";
 
         [SerializeField] private VisualTreeAsset placeCardTemplate = null!;
@@ -72,7 +73,7 @@ namespace DCL.Lobby
 
         /// <summary>
         ///     Transparent element over the figure that catches its hover and click; the preview canvas itself takes no input.
-        ///     Exists only while the view is shown.
+        ///     Exists only while the view is shown; whether it is displayed is up to the controller.
         /// </summary>
         public VisualElement AvatarHitArea => Element<VisualElement>(AVATAR_HIT_AREA_NAME);
 
@@ -91,6 +92,11 @@ namespace DCL.Lobby
         ///     Button of the top bar that opens the notifications. Exists only while the view is shown.
         /// </summary>
         public Button NotificationsButton => Element<Button>(NOTIFICATIONS_NAME);
+
+        /// <summary>
+        ///     Unread count over the corner of <see cref="NotificationsButton" />. Exists only while the view is shown.
+        /// </summary>
+        public Label UnreadBadge => Element<Label>(UNREAD_BADGE_NAME);
 
         /// <summary>
         ///     Button of the top bar that closes the lobby. Exists only while the view is shown.

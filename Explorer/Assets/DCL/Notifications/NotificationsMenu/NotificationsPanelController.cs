@@ -91,6 +91,16 @@ namespace DCL.Notifications.NotificationsMenu
         private int unreadNotifications;
         private bool needsInitialRequest = true;
 
+        /// <summary>
+        ///     Raised with <see cref="UnreadCount" /> whenever it is recomputed, for a host whose button draws its own badge.
+        /// </summary>
+        public event Action<int>? UnreadCountChanged;
+
+        /// <summary>
+        ///     Unread notifications among the fetched ones; zero until the panel has fetched them.
+        /// </summary>
+        public int UnreadCount => unreadNotifications;
+
         public NotificationsPanelController(
             ViewFactoryMethod viewFactory,
             NotificationsRequestController notificationsRequestController,
@@ -214,6 +224,8 @@ namespace DCL.Notifications.NotificationsMenu
 
         private void UpdateUnreadNotificationRender()
         {
+            UnreadCountChanged?.Invoke(unreadNotifications);
+
             if (viewInstance == null) return;
 
             if (viewInstance.unreadNotificationCounterText != null)

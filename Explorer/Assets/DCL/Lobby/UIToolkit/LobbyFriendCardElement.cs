@@ -39,7 +39,6 @@ namespace DCL.Lobby
         private Label? locationLabel;
         private Button? joinButton;
 
-        // Attribute values and the picture can arrive before the template children do; they are applied once those attach
         private string userName = string.Empty;
         private Color userNameColor = Color.white;
         private string walletTag = string.Empty;
@@ -146,7 +145,7 @@ namespace DCL.Lobby
                 pictureSprite = value;
 
                 if (picture != null)
-                    ApplyPicture();
+                    ApplyPicture(picture);
             }
         }
 
@@ -162,7 +161,7 @@ namespace DCL.Lobby
                 pictureColor = value;
 
                 if (picture != null)
-                    ApplyPicture();
+                    ApplyPicture(picture);
             }
         }
 
@@ -181,7 +180,6 @@ namespace DCL.Lobby
 
         private void OnAttachToPanel(AttachToPanelEvent _)
         {
-            // The same element can be detached and attached again; its children are resolved only the first time
             if (nameLabel != null)
                 return;
 
@@ -197,13 +195,13 @@ namespace DCL.Lobby
             nameLabel.style.color = userNameColor;
             walletTagLabel.text = walletTag;
             locationLabel.text = location;
-            ApplyPicture();
+            ApplyPicture(picture);
         }
 
-        private void ApplyPicture()
+        private void ApplyPicture(VisualElement target)
         {
-            picture!.style.backgroundColor = pictureColor;
-            picture.style.backgroundImage = LobbyCardBackground.From(pictureSprite);
+            target.style.backgroundColor = pictureColor;
+            target.style.backgroundImage = LobbyCardBackground.From(pictureSprite);
         }
 
         private void OnClicked() =>

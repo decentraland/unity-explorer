@@ -6,30 +6,22 @@ using Utility.UIToolkit;
 namespace DCL.Lobby
 {
     /// <summary>
-    ///     Upcoming event card modelled on the small Explore event card: name, host and how long
-    ///     until the event starts on the left, the thumbnail on the right, plus the Add to calendar and Share buttons. Its hierarchy comes
-    ///     from LobbyUpcomingEventCard.uxml, so the children only exist once that template is instantiated; LobbyUpcomingEventCard.uss
+    ///     Upcoming event card: name, host and how long until the event starts on the left, the thumbnail on the right, plus the
+    ///     Interested, Add to calendar and Share buttons. Its hierarchy comes from LobbyUpcomingEventCard.uxml; LobbyUpcomingEventCard.uss
     ///     lays it out and tints the events the user is interested in, whose Interested button shows as toggled on.
     /// </summary>
     [UxmlElement]
-    public partial class LobbyUpcomingEventCardElement : VisualElement, ILobbyThumbnailCard
+    public partial class LobbyUpcomingEventCardElement : LobbyThumbnailCardElement
     {
         private const string USS_BLOCK = "lobby-upcoming-event-card";
-        private const string USS_LOADING = USS_BLOCK + "--loading";
         private const string USS_INTERESTED = USS_BLOCK + "--interested";
 
         private const string TITLE_NAME = "Title";
         private const string HOST_NAME = "Host";
         private const string STARTS_IN_NAME = "StartsIn";
-        private const string THUMBNAIL_NAME = "Thumbnail";
         private const string INTERESTED_NAME = "Interested";
         private const string ADD_TO_CALENDAR_NAME = "AddToCalendar";
         private const string SHARE_NAME = "Share";
-
-        /// <summary>
-        ///     Raised on a click anywhere on the card except its buttons.
-        /// </summary>
-        public Action? Clicked;
 
         public Action? InterestedClicked;
         public Action? AddToCalendarClicked;
@@ -38,16 +30,13 @@ namespace DCL.Lobby
         private Label? titleLabel;
         private Label? hostLabel;
         private Label? startsInLabel;
-        private VisualElement? thumbnail;
         private Button? interestedButton;
         private Button? addToCalendarButton;
         private Button? shareButton;
 
-        // Attribute values and the thumbnail can arrive before the template children do; they are applied once those attach
         private string title = string.Empty;
         private string host = string.Empty;
         private string startsIn = string.Empty;
-        private Sprite? thumbnailSprite;
 
         [UxmlAttribute]
         public string Title
@@ -64,7 +53,7 @@ namespace DCL.Lobby
         }
 
         /// <summary>
-        ///     Shown as given, under the title.
+        ///     Name of the host, shown in bold after the fixed "By" under the title.
         /// </summary>
         [UxmlAttribute]
         public string Host
@@ -97,25 +86,6 @@ namespace DCL.Lobby
             }
         }
 
-        public Sprite? Thumbnail
-        {
-            get => thumbnailSprite;
-
-            set
-            {
-                thumbnailSprite = value;
-
-                if (thumbnail != null)
-                    ApplyThumbnail();
-            }
-        }
-
-        public bool IsLoading
-        {
-            get => ClassListContains(USS_LOADING);
-            set => EnableInClassList(USS_LOADING, value);
-        }
-
         /// <summary>
         ///     The user marked the event as one they are interested in, which tints the card.
         /// </summary>
@@ -130,23 +100,13 @@ namespace DCL.Lobby
         /// </summary>
         public Vector2 ShareButtonScreenPosition => shareButton!.ScreenCenter();
 
-        public LobbyUpcomingEventCardElement()
-        {
-            AddToClassList(USS_BLOCK);
-            this.AddManipulator(new Clickable(OnClicked));
-            RegisterCallback<AttachToPanelEvent>(OnAttachToPanel);
-        }
+        public LobbyUpcomingEventCardElement() : base(USS_BLOCK) { }
 
-        private void OnAttachToPanel(AttachToPanelEvent _)
+        protected override void ResolveChildren()
         {
-            // The same element can be detached and attached again; its children are resolved only the first time
-            if (titleLabel != null)
-                return;
-
             titleLabel = this.Q<Label>(TITLE_NAME);
             hostLabel = this.Q<Label>(HOST_NAME);
             startsInLabel = this.Q<Label>(STARTS_IN_NAME);
-            thumbnail = this.Q<VisualElement>(THUMBNAIL_NAME);
             interestedButton = this.Q<Button>(INTERESTED_NAME);
             addToCalendarButton = this.Q<Button>(ADD_TO_CALENDAR_NAME);
             shareButton = this.Q<Button>(SHARE_NAME);
@@ -158,16 +118,7 @@ namespace DCL.Lobby
             titleLabel.text = title;
             hostLabel.text = host;
             startsInLabel.text = startsIn;
-            ApplyThumbnail();
         }
-
-        private void ApplyThumbnail()
-        {
-            thumbnail!.style.backgroundImage = LobbyCardBackground.From(thumbnailSprite);
-        }
-
-        private void OnClicked() =>
-            Clicked?.Invoke();
 
         private void OnInterestedClicked() =>
             InterestedClicked?.Invoke();

@@ -1,5 +1,6 @@
 using NUnit.Framework;
 using UnityEditor;
+using UnityEngine;
 using UnityEngine.UIElements;
 using Utility.UIToolkit;
 
@@ -11,6 +12,8 @@ namespace DCL.Lobby.Tests
         private const string TEMPLATE_PATH = "Assets/DCL/Lobby/UIToolkit/LobbyLandingCard.uxml";
 
         private LobbyLandingCardElement card = null!;
+        private GameObject? documentGameObject;
+        private PanelSettings? panelSettings;
 
         [SetUp]
         public void SetUp()
@@ -18,20 +21,48 @@ namespace DCL.Lobby.Tests
             card = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(TEMPLATE_PATH).InstantiateForElement<LobbyLandingCardElement>();
         }
 
-        [Test]
-        public void KeepWhatItIsGivenUntilItsChildrenAttach()
+        [TearDown]
+        public void TearDown()
         {
-            //Act
+            if (documentGameObject != null)
+                Object.DestroyImmediate(documentGameObject);
+
+            if (panelSettings != null)
+                Object.DestroyImmediate(panelSettings);
+        }
+
+        [Test]
+        public void ApplyWhatItWasGivenOnceItsChildrenAttach()
+        {
+            //Arrange
             card.Title = "Genesis Plaza";
             card.Creator = "creator";
             card.OnlineCount = 7;
             card.CanJumpIn = false;
 
+            //Act
+            AttachToPanel();
+
             //Assert
-            Assert.AreEqual("Genesis Plaza", card.Title);
-            Assert.AreEqual("creator", card.Creator);
-            Assert.AreEqual(7, card.OnlineCount);
-            Assert.IsFalse(card.CanJumpIn);
+            Assert.AreEqual("Genesis Plaza", card.Q<Label>("Title").text);
+            Assert.AreEqual("creator", card.Q<Label>("Creator").text);
+            Assert.AreEqual("7", card.Q<Label>("OnlineCount").text);
+            Assert.IsFalse(card.Q<Button>("JumpIn").enabledSelf);
+        }
+
+        [Test]
+        public void ApplyWhatItIsGivenWhileAttached()
+        {
+            //Arrange
+            AttachToPanel();
+
+            //Act
+            card.Title = "Genesis Plaza";
+            card.CanJumpIn = true;
+
+            //Assert
+            Assert.AreEqual("Genesis Plaza", card.Q<Label>("Title").text);
+            Assert.IsTrue(card.Q<Button>("JumpIn").enabledSelf);
         }
 
         [Test]
@@ -83,22 +114,38 @@ namespace DCL.Lobby.Tests
         }
 
         [Test]
-        public void ReportTheCardAndTheJumpInClicksApart()
+        public void ReportTheJumpInClickThroughItsButton()
         {
             //Arrange
+            AttachToPanel();
             var clicked = 0;
             var jumpedIn = 0;
             card.Clicked = () => clicked++;
             card.JumpInClicked = () => jumpedIn++;
 
             //Act
-            card.Clicked.Invoke();
-            card.JumpInClicked.Invoke();
-            card.JumpInClicked.Invoke();
+            Submit(card.Q<Button>("JumpIn"));
 
             //Assert
-            Assert.AreEqual(1, clicked);
-            Assert.AreEqual(2, jumpedIn);
+            Assert.AreEqual(1, jumpedIn);
+            Assert.AreEqual(0, clicked, "The Jump in button is not a click on the card");
+        }
+
+        private void AttachToPanel()
+        {
+            documentGameObject = new GameObject(nameof(LobbyLandingCardElementShould));
+            var document = documentGameObject.AddComponent<UIDocument>();
+            panelSettings = ScriptableObject.CreateInstance<PanelSettings>();
+            document.panelSettings = panelSettings;
+            document.rootVisualElement.Add(card);
+        }
+
+        // A submit reaches a button like the keyboard does, which it reports as a click; unlike a pointer click it needs no laid-out panel to pick the element under the pointer
+        private static void Submit(Button button)
+        {
+            using NavigationSubmitEvent evt = NavigationSubmitEvent.GetPooled();
+            evt.target = button;
+            button.SendEvent(evt);
         }
     }
 }

@@ -22,6 +22,8 @@
             <ui:VisualElement name="CreditsSlot" class="lobby__top-bar-slot" picking-mode="Ignore" />
             <ui:Button name="Notifications" class="lobby__top-bar-button">
                 <ui:VisualElement name="Icon" class="lobby__notifications-icon" picking-mode="Ignore" />
+                <!-- Hidden while nothing is unread -->
+                <ui:Label name="UnreadBadge" text="0" class="lobby__notifications-badge" picking-mode="Ignore" style="display: none;" />
             </ui:Button>
             <ui:VisualElement name="ProfileSlot" class="lobby__top-bar-slot" picking-mode="Ignore" />
             <!-- Hidden at startup, when jumping in is the only way out -->
@@ -31,7 +33,7 @@
         </ui:VisualElement>
         <!-- The greeting and the hero card of the place the session lands in; the card only offers Jump in until the place is known -->
         <ui:VisualElement name="Welcome" class="lobby__welcome" picking-mode="Ignore">
-            <ui:Label name="WelcomeText" text="Welcome!" class="lobby__welcome-title" picking-mode="Ignore" />
+            <ui:Label name="WelcomeText" text="Welcome!" enable-rich-text="false" class="lobby__welcome-title" picking-mode="Ignore" />
             <ui:Instance template="LobbyLandingCard" />
         </ui:VisualElement>
         <!-- Hidden until the schedule has something to list; each row hides itself while its share of it is empty, so the upcoming one moves up when nothing is live -->

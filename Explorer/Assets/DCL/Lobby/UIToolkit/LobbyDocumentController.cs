@@ -51,7 +51,6 @@ namespace DCL.Lobby
     public class LobbyDocumentController : ControllerBase<LobbyDocumentView, LobbyParameter>, ILobbyController
     {
         private const string LIVE_EVENT_HOST_FORMAT = "By {0}";
-        private const string UPCOMING_EVENT_HOST_FORMAT = "By <b>{0}</b>";
         private const string WELCOME_FALLBACK = "Welcome!";
         private const string WELCOME_FORMAT = "Welcome {0}!";
         private const int MAX_UPCOMING_EVENTS = 10;
@@ -81,6 +80,7 @@ namespace DCL.Lobby
         private readonly StartParcel startParcel;
         private readonly ISpriteCache spriteCache;
         private readonly SidebarProfileButtonPresenter profileButtonPresenter;
+        private readonly NotificationsPanelController<LobbyPopupParameter> notificationsPanel;
         private readonly List<PlacesData.PlaceInfo> recentPlaces = new ();
         private readonly List<PlacesData.PlaceInfo> featuredPlaces = new ();
         private readonly List<EventDTO> liveEvents = new ();
@@ -97,13 +97,16 @@ namespace DCL.Lobby
         // Null while the landing place loads; the card itself knows whether it has details to open
         private PlacesData.PlaceInfo? landingPlace;
 
-        // The destination the shown landing place describes, meaningful only while that place is set
-        private LandingDestination landingDestination;
+        // The destination the shown landing place describes; null together with the place
+        private LandingDestination? landingDestination;
         private LandingDestination? startupDestination;
 
         // One menu serves every Share button; the event it acts on is the one whose button opened it
         private GenericContextMenu? shareMenu;
         private EventDTO sharedEvent;
+
+        // One manipulator for the avatar hit area, added again on every show without stacking
+        private Clickable? avatarClick;
         private CancellationTokenSource? avatarCts;
         private CancellationTokenSource? placesCts;
         private CancellationTokenSource? eventsCts;
@@ -146,6 +149,7 @@ namespace DCL.Lobby
             StartParcel startParcel,
             ISpriteCache spriteCache,
             SidebarProfileButtonPresenter profileButtonPresenter,
+            NotificationsPanelController<LobbyPopupParameter> notificationsPanel,
             LobbyDocumentFriendsPresenter? friends) : base(viewFactory)
         {
             this.inputBlock = inputBlock;
@@ -168,6 +172,7 @@ namespace DCL.Lobby
             this.startParcel = startParcel;
             this.spriteCache = spriteCache;
             this.profileButtonPresenter = profileButtonPresenter;
+            this.notificationsPanel = notificationsPanel;
             this.friends = friends;
 
             if (friends != null)
@@ -184,6 +189,8 @@ namespace DCL.Lobby
             mvcManager.OnViewClosed -= ShowAgainWhenTheScreenIsFree;
             startParcel.JumpInRequestRaised -= RequestClose;
             eventCardActions.EventSetAsInterested -= OnEventInterestChanged;
+            profileChangesBus.UnsubscribeToUpdate(OnProfileUpdated);
+            notificationsPanel.UnreadCountChanged -= ShowUnreadCount;
 
             if (friends != null)
                 friends.JoinRequested = null;
@@ -211,21 +218,28 @@ namespace DCL.Lobby
             leaving = false;
         }
 
-        // The hierarchy is rebuilt on every show, so the rows are handed their section here rather than once at instantiation
+        // The hierarchy is only reachable while the view is shown, so the rows are handed their section here rather than once at instantiation
         protected override void OnViewShow()
         {
             inputBlock.Disable(InputMapComponent.BLOCK_USER_INPUT);
 
-            // The widgets outlive the hierarchy, so their presenters stay bound; the buttons are rebuilt with it and rewired here
+            // The renderer keeps the hierarchy across hides, so every handler is removed before it is added and stays registered once
             viewInstance!.AttachTopBarWidgets();
             viewInstance.Profile.Clicked = ShowProfileMenu;
+            viewInstance.NotificationsButton.clicked -= ShowNotifications;
             viewInstance.NotificationsButton.clicked += ShowNotifications;
+            viewInstance.CloseButton.clicked -= RequestClose;
             viewInstance.CloseButton.clicked += RequestClose;
             viewInstance.CloseButton.SetDisplayed(!inputData.IsStartup);
             profileButtonPresenter.LoadProfile();
 
+            notificationsPanel.UnreadCountChanged += ShowUnreadCount;
+            ShowUnreadCount(notificationsPanel.UnreadCount);
+
+            // Hidden until the avatar is up again: the area kept from the last show must not take clicks over an empty stage
             VisualElement avatarHitArea = viewInstance.AvatarHitArea;
-            avatarHitArea.AddManipulator(new Clickable(OnAvatarClicked));
+            avatarHitArea.SetDisplayed(false);
+            avatarHitArea.AddManipulator(avatarClick ??= new Clickable(OnAvatarClicked));
             avatarHitArea.RegisterCallback<PointerEnterEvent>(OnAvatarPointerEnter);
             avatarHitArea.RegisterCallback<PointerLeaveEvent>(OnAvatarPointerLeave);
 
@@ -251,7 +265,7 @@ namespace DCL.Lobby
             LandingDestination destination = ResolveLandingDestination();
 
             // A card already showing the destination keeps it up while its details are fetched again, instead of going dark for the round trip
-            if (landingPlace == null || !landingDestination.Equals(destination))
+            if (landingDestination is not { } shown || !shown.Equals(destination))
                 ShowLandingCardLoading(landingCard);
 
             ShowLandingPlaceAsync(destination, placesCts.Token).Forget();
@@ -278,6 +292,7 @@ namespace DCL.Lobby
 
             profileChangesBus.UnsubscribeToUpdate(OnProfileUpdated);
             eventCardActions.EventSetAsInterested -= OnEventInterestChanged;
+            notificationsPanel.UnreadCountChanged -= ShowUnreadCount;
 
             // Nulled so a late callback finds no source instead of reading the token of a disposed one, which throws
             avatarCts.SafeCancelAndDispose();
@@ -290,7 +305,7 @@ namespace DCL.Lobby
             friendsCts.SafeCancelAndDispose();
             friendsCts = null;
 
-            // The hit area goes down with the hierarchy; the preview and its stage are released here since they outlive it
+            // The hit area is hidden again on the next show; the preview and its stage are released here
             avatarPreview!.OnHide();
 
             recentPlacesRail?.Hide();
@@ -361,7 +376,7 @@ namespace DCL.Lobby
                 avatarPreview.OnBeforeShow();
                 avatarPreview.OnShow();
 
-                // The hit area only makes sense over a figure, so it comes up with the avatar and goes down with the hierarchy
+                // The hit area only makes sense over a figure, so it comes up with the avatar
                 viewInstance!.AvatarHitArea.SetDisplayed(true);
             }
             catch (OperationCanceledException) { }
@@ -380,9 +395,17 @@ namespace DCL.Lobby
             viewInstance!.WelcomeText.text = string.IsNullOrEmpty(name) ? WELCOME_FALLBACK : string.Format(WELCOME_FORMAT, name);
         }
 
+        private void ShowUnreadCount(int count)
+        {
+            Label badge = viewInstance!.UnreadBadge;
+            badge.text = count.ToString();
+            badge.SetDisplayed(count > 0);
+        }
+
         private void ShowLandingCardLoading(LobbyLandingCardElement card)
         {
             landingPlace = null;
+            landingDestination = null;
             card.Title = string.Empty;
             card.Creator = string.Empty;
             card.HasOnlineCount = false;
@@ -393,7 +416,8 @@ namespace DCL.Lobby
         }
 
         /// <summary>
-        ///     At startup the hero card's Jump in is the only way out, so an offline stand-in fills it when the Places API cannot describe the destination.
+        ///     At startup the hero card's Jump in is the only way out, so an offline stand-in fills it when the Places API cannot describe
+        ///     the destination. A card already showing that destination is kept instead when the refetch fails.
         /// </summary>
         private async UniTaskVoid ShowLandingPlaceAsync(LandingDestination destination, CancellationToken ct)
         {
@@ -403,6 +427,8 @@ namespace DCL.Lobby
                .SuppressToResultAsync(ReportCategory.PLACES);
 
             if (ct.IsCancellationRequested) return;
+
+            if (!result.Success && landingDestination is { } shown && shown.Equals(destination)) return;
 
             PlacesData.PlaceInfo? place = result.Success ? result.Value : null;
             ShowLandingCard(destination, place ?? destination.ToOfflinePlace(), hasDetails: place != null, ct);
@@ -520,34 +546,26 @@ namespace DCL.Lobby
             LoadThumbnailAsync(card, place.image, ReportCategory.PLACES, ct).Forget();
         }
 
-        /// <summary>
-        ///     A picture already cached goes up at once, so a card does not pass through its loading look for an image it can show right away.
-        /// </summary>
-        private async UniTaskVoid LoadThumbnailAsync(ILobbyThumbnailCard card, string? url, string reportCategory, CancellationToken ct)
+        // A cached sprite comes back synchronously, so the loading look is never drawn for it
+        private async UniTaskVoid LoadThumbnailAsync(LobbyThumbnailCardElement card, string? url, string reportCategory, CancellationToken ct)
         {
+            card.Thumbnail = null;
+
             if (string.IsNullOrEmpty(url))
             {
                 card.IsLoading = false;
-                card.Thumbnail = null;
                 return;
             }
 
-            Sprite? cached = spriteCache.GetCachedSprite(url);
-
-            if (cached != null)
-            {
-                card.IsLoading = false;
-                card.Thumbnail = cached;
-                return;
-            }
-
-            card.Thumbnail = null;
             card.IsLoading = true;
             Sprite? sprite = null;
 
             try { sprite = await spriteCache.GetSpriteAsync(url, useKtx: true, ct: ct); }
             catch (OperationCanceledException) { return; }
             catch (Exception e) { ReportHub.LogException(e, reportCategory); }
+
+            // The cache returns rather than throws on a cancellation, and the card may already be showing something else
+            if (ct.IsCancellationRequested) return;
 
             card.IsLoading = false;
             card.Thumbnail = sprite;
@@ -611,18 +629,16 @@ namespace DCL.Lobby
             LoadThumbnailAsync(card, @event.image, ReportCategory.EVENTS, ct).Forget();
         }
 
-        // The Explore card would print the start time of day; here how long until it starts reads better next to the live ones
         private void ShowUpcomingEventCard(LobbyUpcomingEventCardElement card, EventDTO @event, CancellationToken ct)
         {
             card.Title = @event.name;
-            card.Host = string.Format(UPCOMING_EVENT_HOST_FORMAT, @event.user_name);
+            card.Host = @event.user_name;
             card.StartsIn = EventUtilities.GetEventStartsInText(@event);
             card.IsInterested = @event.attending;
 
             LoadThumbnailAsync(card, @event.image, ReportCategory.EVENTS, ct).Forget();
         }
 
-        // The details open in the same modal the Explore menu uses; jumping in from there comes back through OnPlaceJumpIn
         private void OnPlaceClicked(PlacesData.PlaceInfo place, LobbySection section)
         {
             PlaceOpened?.Invoke(place, section);
@@ -668,7 +684,7 @@ namespace DCL.Lobby
         private void OnUpcomingEventAddToCalendar(int index) =>
             eventCardActions.AddEventToCalendar(upcomingEvents[index]);
 
-        // The menu is the uGUI one the Explore cards open: it stacks on the panel as a popup, anchored to the button in screen pixels
+        // The menu is uGUI, so it is anchored to the button in screen pixels
         private void OnUpcomingEventShare(int index)
         {
             sharedEvent = upcomingEvents[index];
@@ -696,7 +712,6 @@ namespace DCL.Lobby
         private void CopyEventLink() =>
             eventCardActions.CopyEventLink(sharedEvent);
 
-        // The details open in the same modal the Explore menu uses; jumping in from there comes back through OnEventJumpIn
         private void OpenEventDetails(EventDTO @event, LobbySection section)
         {
             EventOpened?.Invoke(@event, section);
@@ -748,7 +763,6 @@ namespace DCL.Lobby
         private URLDomain WorldUrl(string worldName) =>
             URLDomain.FromString(new ENS(worldName).ConvertEnsToWorldUrl(decentralandUrlsSource.Url(DecentralandUrl.WorldServer)));
 
-        // Popups stack on top of this fullscreen panel; the MVC manager owns their closer, escape handling and teardown
         private void ShowProfileMenu() =>
             mvcManager.ShowAndForget(ProfileMenuController<LobbyPopupParameter>.IssueCommand(new LobbyPopupParameter()));
 
@@ -757,7 +771,7 @@ namespace DCL.Lobby
 
         private void RequestClose()
         {
-            // At startup there is no close button: leaving means the user is on their way in, which releases the flow
+            // Leaving rather than being covered: the startup lobby must not show itself again
             leaving = true;
             inputData.JumpedIn?.Invoke();
 

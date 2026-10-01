@@ -47,6 +47,12 @@ namespace DCL.Lobby
         // Matches the snap duration of the stylesheet: wheel events arriving faster than that are dropped
         private const float WHEEL_COOLDOWN = 0.25f;
 
+        // Converts the millisecond pointer timestamps into a per-second drag velocity
+        private const float MS_PER_SECOND = 1000f;
+
+        // Slack under which the strip counts as having reached its end
+        private const float END_TOLERANCE = 0.5f;
+
         private readonly VisualElement viewport;
         private readonly VisualElement content;
         private readonly Button previous;
@@ -155,7 +161,7 @@ namespace DCL.Lobby
         {
             shownCount = count;
 
-            // The stylesheet spaces the cards through this class: a wildcard child selector on the strip left them touching
+            // The stylesheet spaces the cards through this class
             for (var i = 0; i < content.childCount; i++)
                 content[i].AddToClassList(USS_CARD);
 
@@ -271,7 +277,7 @@ namespace DCL.Lobby
 
             if (elapsed > 0)
             {
-                velocity = (evt.position.x - lastMoveX) * 1000f / elapsed;
+                velocity = (evt.position.x - lastMoveX) * MS_PER_SECOND / elapsed;
                 lastMoveX = evt.position.x;
                 lastMoveTime = evt.timestamp;
             }
@@ -345,7 +351,8 @@ namespace DCL.Lobby
         {
             evt.StopPropagation();
 
-            if (UnityEngine.Time.unscaledTime - lastWheelTime < WHEEL_COOLDOWN) return;
+            // A horizontal-only scroll has no page to go to; it must not fall through as a page back
+            if (Mathf.Approximately(evt.delta.y, 0f) || UnityEngine.Time.unscaledTime - lastWheelTime < WHEEL_COOLDOWN) return;
 
             lastWheelTime = UnityEngine.Time.unscaledTime;
             SnapTo(evt.delta.y > 0f ? PageAfter() : PageBefore());
@@ -386,9 +393,6 @@ namespace DCL.Lobby
         // The content cannot slide past its end, so the last cards start wherever the content ends rather than a full stride further in
         private float CardOffset(int card) =>
             Mathf.Min(card * CardStride(), MaxOffset());
-
-        private float PageOffset(int page) =>
-            CardOffset(page * cardsPerPage);
 
         // Among the cards sharing the offset of the end, the first is the one the strip is on there
         private int CardAt(float at) =>
@@ -441,7 +445,7 @@ namespace DCL.Lobby
             previous.SetDisplayed(currentCard > 0);
 
             // A drag can settle nearest to the last page while the strip has not reached its end: the arrow stays until it has
-            next.SetDisplayed(page < PageCount - 1 || CardOffset(currentCard) < MaxOffset() - 0.5f);
+            next.SetDisplayed(page < PageCount - 1 || CardOffset(currentCard) < MaxOffset() - END_TOLERANCE);
 
             for (var i = 0; i < dots.childCount; i++)
                 dots[i].EnableInClassList(USS_DOT_SELECTED, i == page);

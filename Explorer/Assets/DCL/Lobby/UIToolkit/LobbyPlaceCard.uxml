@@ -8,8 +8,8 @@
             <ui:Label name="OnlineCount" text="0" class="lobby-place-card__online-count" picking-mode="Ignore" />
         </ui:VisualElement>
         <ui:VisualElement name="Footer" class="lobby-place-card__footer" picking-mode="Ignore">
-            <ui:Label name="Title" text="Place Name" class="lobby-place-card__title" picking-mode="Ignore" />
-            <ui:Label name="Creator" text="Creator" class="lobby-place-card__creator" picking-mode="Ignore" />
+            <ui:Label name="Title" text="Place Name" enable-rich-text="false" class="lobby-place-card__title" picking-mode="Ignore" />
+            <ui:Label name="Creator" text="Creator" enable-rich-text="false" class="lobby-place-card__creator" picking-mode="Ignore" />
         </ui:VisualElement>
         <ui:Button name="JumpIn" class="lobby-place-card__jump-in">
             <ui:Label name="JumpInText" text="JUMP IN" class="lobby-place-card__jump-in-text" picking-mode="Ignore" />

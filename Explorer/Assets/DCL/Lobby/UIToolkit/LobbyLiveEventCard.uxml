@@ -15,7 +15,7 @@
                 <ui:Label name="Attendees" text="0" class="lobby-live-event-card__attendees-count" picking-mode="Ignore" />
             </ui:VisualElement>
         </ui:VisualElement>
-        <ui:Label name="Title" text="Event Name" class="lobby-live-event-card__title" picking-mode="Ignore" />
-        <ui:Label name="Host" text="By Host" class="lobby-live-event-card__host" picking-mode="Ignore" />
+        <ui:Label name="Title" text="Event Name" enable-rich-text="false" class="lobby-live-event-card__title" picking-mode="Ignore" />
+        <ui:Label name="Host" text="By Host" enable-rich-text="false" class="lobby-live-event-card__host" picking-mode="Ignore" />
     </DCL.Lobby.LobbyLiveEventCardElement>
 </ui:UXML>

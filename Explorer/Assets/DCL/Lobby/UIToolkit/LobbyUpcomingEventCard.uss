@@ -50,13 +50,29 @@
     text-overflow: ellipsis;
 }
 
-.lobby-upcoming-event-card__host {
+.lobby-upcoming-event-card__host-row {
     height: 16px;
+    flex-direction: row;
+    align-items: center;
+}
+
+.lobby-upcoming-event-card__host-prefix,
+.lobby-upcoming-event-card__host {
     font-size: 13px;
-    -unity-font-definition: var(--dcl-font-inter-regular);
     -unity-text-align: middle-left;
     color: rgba(255, 255, 255, 0.5);
     white-space: nowrap;
+}
+
+.lobby-upcoming-event-card__host-prefix {
+    margin-right: 3px;
+    -unity-font-definition: var(--dcl-font-inter-regular);
+}
+
+/* The name takes what is left of the row and is cut short rather than pushing the row wider */
+.lobby-upcoming-event-card__host {
+    flex-shrink: 1;
+    -unity-font-definition: var(--dcl-font-inter-bold);
     overflow: hidden;
     text-overflow: ellipsis;
 }
