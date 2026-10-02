@@ -253,7 +253,7 @@ namespace DCL.MapRenderer.ComponentsFactory
 
             SatelliteDetailTiles? detailTiles = null;
 
-            if (!string.IsNullOrEmpty(satelliteDetailTilesUrl))
+            if (!string.IsNullOrEmpty(satelliteDetailTilesUrl) && KtxNativeSupport.IsSupported)
             {
                 SpriteRenderer template = await GetAtlasChunkPrefabAsync(configuration.SatelliteAtlasRoot, cancellationToken);
                 detailTiles = new SatelliteDetailTiles(satelliteDetailTilesUrl, webRequestController, cullingController, template, MapRendererDrawOrder.SATELLITE_DETAIL_MIN_LEVEL);
