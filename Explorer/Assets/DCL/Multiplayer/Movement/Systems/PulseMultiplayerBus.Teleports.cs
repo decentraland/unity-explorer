@@ -16,8 +16,6 @@ namespace DCL.Multiplayer.Movement
             if (lastBroadcastRealm != null && lastBroadcastRealm != pulseRealm.Value)
                 PurgeDifferentRealmPeers();
 
-            lastBroadcastRealm = pulseRealm.Value;
-
             var outgoing = OutgoingMessage.Create(PacketMode.RELIABLE, ClientMessage.MessageOneofCase.Teleport);
 
             Vector2Int parcelIndex = worldPosition.ToParcel();
@@ -36,6 +34,8 @@ namespace DCL.Multiplayer.Movement
             teleport.Realm = pulseRealm.Value;
 
             pulseService.Send(outgoing);
+
+            lastBroadcastRealm = pulseRealm.Value;
         }
 
         private void HandleTeleport(IncomingMessage message)
@@ -61,20 +61,25 @@ namespace DCL.Multiplayer.Movement
                 return;
             }
 
-            // A same-tick-range realm change is not re-announced with PlayerLeft, so the removal happens here
-            if (teleport.Realm != pulseRealm.Value)
-            {
-                peerIdCache.Remove(teleport.SubjectId);
-                removeIntentions.Enqueue(wallet);
-                PurgeQueues(teleport.SubjectId);
-                return;
-            }
+            string realm = pulseRealm.Value;
+            bool hidden = peerIdCache.GetWalletInRealm(teleport.SubjectId, realm, out _) == PeerIdCache.LookupResult.RealmMismatch;
 
-            // Refreshing the realm is what keeps a co-teleporting peer (no PlayerJoined re-announcement) out of the purge
+            // The server keeps its view across a realm change and won't announce it again, so the peer is hidden, not forgotten
             peerIdCache.Set(wallet, teleport.SubjectId, teleport.Realm);
 
             NetworkMovementMessage movementMessage = ToNetworkMovementMessage(teleport.State, teleport.SubjectId, teleport.ServerTick, isInstant: true);
             TryUpdateLastMovementAndCompleteResync(teleport.ServerTick, teleport.SubjectId, teleport.Sequence, movementMessage);
+
+            if (teleport.Realm != realm)
+            {
+                removeIntentions.Enqueue(wallet);
+                emotingSubjects.Remove(teleport.SubjectId);
+                return;
+            }
+
+            if (hidden)
+                Reannounce(teleport.SubjectId, wallet);
+
             Inbox(movementMessage, wallet);
         }
     }
