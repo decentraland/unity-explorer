@@ -31,6 +31,9 @@ namespace DCL.SkyBox
         public Material SkyboxMaterial = null!;
         public AssetReferenceT<AnimationClip> SkyboxAnimationCycle = null!;
 
+        [Tooltip("Alternative looks for the debug panel dropdown, loaded only when picked. The shipped look is the prefab's own preset and is not listed here.")]
+        public LookPresetEntry[] DebugLookPresets = Array.Empty<LookPresetEntry>();
+
         public float FullDayCycleInSeconds
         {
             get => fullDayCycleInSeconds;
@@ -119,6 +122,13 @@ namespace DCL.SkyBox
         public class SkyboxRenderControllerRef : ComponentReference<SkyboxRenderController>
         {
             public SkyboxRenderControllerRef(string guid) : base(guid) { }
+        }
+
+        [Serializable]
+        public class LookPresetEntry
+        {
+            public string Name = string.Empty;
+            public AssetReferenceT<SkyboxLookPreset> Preset = null!;
         }
     }
 }
