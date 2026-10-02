@@ -102,6 +102,7 @@ namespace DCL.FeatureFlags
         public const string USE_CUSTOM_MEDIA_PLAYER_MAC_INTEL = "use-custom-media-player-mac-intel";
         public const string BUG_REPORT = "alfa-bug-report";
         public const string IN_GAME_SHOP = "alfa-in-game-shop";
+        public const string SINGLE_SCENE_MODE = "alfa-single-scene-mode";
 
         public static class Endpoints
         {

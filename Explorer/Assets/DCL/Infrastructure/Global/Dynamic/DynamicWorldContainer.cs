@@ -676,6 +676,7 @@ namespace Global.Dynamic
                     userBlockingCache,
                     profileContainer.ProfileChangesBus,
                     staticContainer.SceneLoadingLimit,
+                    staticContainer.SingleSceneMode,
                     uiShellContainer.MainUIView.WarningNotification,
                     profileContainer.ProfileRepositoryWrapper,
                     upscaleController,
