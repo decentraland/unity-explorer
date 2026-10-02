@@ -122,6 +122,18 @@ each chunk in sixteen 10-parcel parts instead of four 20-parcel ones if the mach
 GPU memory; `40` loads a whole chunk at once on a machine with plenty. The log is the player log; the
 output folder and manifest are the same as in the editor.
 
+## High-resolution source for a zoom pyramid
+
+Without `--map-capture-client-map` the tool renders a region in square blocks of
+`--map-capture-block` parcels at `--map-capture-ppp` pixels per parcel (block × ppp is capped at
+8192), named `{minX}_{minY}` after the block's minimum parcel. Blocks are PNG unless
+`--map-capture-jpeg [quality]` is given (default quality 95). A full city at 512 px per parcel is
+about 28 GB as PNG and several times smaller as JPEG 95. `-logFile` still goes first:
+
+```
+Explorer.exe -logFile <LOG> --map-capture-region -152,-167,167,152 --map-capture-block 8 --map-capture-ppp 512 --map-capture-chunk 16 --map-capture-jpeg --map-capture-out <OUTPUT_DIR> --map-capture-cache <CACHE_DIR> --map-capture-hour 10 --map-capture-timeout 600
+```
+
 ## Do not commit editor noise
 
 Unity creates files when the project opens that must not be committed: anything under

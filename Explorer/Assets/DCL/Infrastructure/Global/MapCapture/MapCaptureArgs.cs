@@ -22,6 +22,7 @@ namespace Global.MapCapture
         private const float MIN_LOAD_TIMEOUT_SEC = 10f;
         private const float MAX_LOAD_TIMEOUT_SEC = 3600f;
         private const string DEFAULT_OUTPUT_FOLDER = "map-capture";
+        private const int DEFAULT_JPEG_QUALITY = 95;
 
         // The minimap's satellite layer: an 8x8 grid of 40-parcel chunks at 512 px, whose first chunk starts at parcel
         // (-152, 113) and whose rows count southward. Measured against the chunks the client downloads today.
@@ -30,6 +31,7 @@ namespace Global.MapCapture
         private const int CLIENT_RENDER_PIXELS_PER_PARCEL = 16;
         private const int CLIENT_GRID_CHUNKS = 8;
         private const int CLIENT_DEFAULT_LOAD_PARCELS = 20;
+        private const int CLIENT_JPEG_QUALITY = 90;
         private static readonly Vector2Int CLIENT_GRID_MIN = new (-152, 113 - (CLIENT_CHUNK_PARCELS * (CLIENT_GRID_CHUNKS - 1)));
         private static readonly Vector2Int CLIENT_GRID_MAX = CLIENT_GRID_MIN + (Vector2Int.one * ((CLIENT_CHUNK_PARCELS * CLIENT_GRID_CHUNKS) - 1));
 
@@ -50,7 +52,9 @@ namespace Global.MapCapture
 
         /// <summary>Side of the written image; the render is downscaled to it when smaller than the native size.</summary>
         public readonly int OutputPixels;
-        public readonly bool Jpeg;
+
+        /// <summary>JPEG quality of the written images, or null for PNG.</summary>
+        public readonly int? JpegQuality;
         public readonly bool ClientMap;
         public readonly bool KeepBloom;
 
@@ -65,7 +69,7 @@ namespace Global.MapCapture
 
         public int RenderPixels => BlockSize * PixelsPerParcel;
 
-        private MapCaptureArgs(Vector2Int min, Vector2Int max, Vector2Int gridOrigin, string outputDir, string? cacheDir, int blockSize, int pixelsPerParcel, int outputPixels, bool jpeg,
+        private MapCaptureArgs(Vector2Int min, Vector2Int max, Vector2Int gridOrigin, string outputDir, string? cacheDir, int blockSize, int pixelsPerParcel, int outputPixels, int? jpegQuality,
             bool clientMap, bool keepBloom, int chunkSize, float hour, float cameraHeight, float loadTimeoutSec)
         {
             KeepBloom = keepBloom;
@@ -77,7 +81,7 @@ namespace Global.MapCapture
             BlockSize = blockSize;
             PixelsPerParcel = pixelsPerParcel;
             OutputPixels = outputPixels;
-            Jpeg = jpeg;
+            JpegQuality = jpegQuality;
             ClientMap = clientMap;
             ChunkSize = chunkSize;
             Hour = hour;
@@ -134,7 +138,7 @@ namespace Global.MapCapture
                 if (loadSize <= 0 || CLIENT_CHUNK_PARCELS % loadSize != 0)
                     loadSize = CLIENT_DEFAULT_LOAD_PARCELS;
 
-                result = new MapCaptureArgs(min, max, CLIENT_GRID_MIN, outputDir, cacheDir, CLIENT_CHUNK_PARCELS, CLIENT_RENDER_PIXELS_PER_PARCEL, CLIENT_CHUNK_PIXELS, true,
+                result = new MapCaptureArgs(min, max, CLIENT_GRID_MIN, outputDir, cacheDir, CLIENT_CHUNK_PARCELS, CLIENT_RENDER_PIXELS_PER_PARCEL, CLIENT_CHUNK_PIXELS, CLIENT_JPEG_QUALITY,
                     true, keepBloom, loadSize, hour, cameraHeight, loadTimeoutSec);
 
                 return true;
@@ -156,7 +160,11 @@ namespace Global.MapCapture
             else if (blockSize % chunkSize != 0)
                 chunkSize = blockSize;
 
-            result = new MapCaptureArgs(min, max, min, outputDir, cacheDir, blockSize, pixelsPerParcel, blockSize * pixelsPerParcel, false,
+            int? jpegQuality = args.HasFlag(AppArgsFlags.MapCapture.JPEG)
+                ? Mathf.Clamp(ReadInt(args, AppArgsFlags.MapCapture.JPEG, DEFAULT_JPEG_QUALITY), 1, 100)
+                : null;
+
+            result = new MapCaptureArgs(min, max, min, outputDir, cacheDir, blockSize, pixelsPerParcel, blockSize * pixelsPerParcel, jpegQuality,
                 false, keepBloom, chunkSize, hour, cameraHeight, loadTimeoutSec);
 
             return true;

@@ -113,7 +113,7 @@ namespace Global.MapCapture
                     var failed = new JArray();
                     CollectStatus(blockMin, args.BlockSize, pending, failed);
 
-                    byte[] image = await runtime.Camera.RenderBlockAsync(blockMin, args.BlockSize, args.RenderPixels, args.OutputPixels, args.Jpeg, args.CameraHeight, ct);
+                    byte[] image = await runtime.Camera.RenderBlockAsync(blockMin, args.BlockSize, args.RenderPixels, args.OutputPixels, args.JpegQuality, args.CameraHeight, ct);
                     WriteBlock(blockMin, image, pending, failed, blocks, onBlock, onComplete);
                 }
 
@@ -146,7 +146,7 @@ namespace Global.MapCapture
                     await UnloadAsync(ct);
                 }
 
-                byte[] bytes = await runtime.Camera.EndBlockAsync(image, args.OutputPixels, args.Jpeg, ct);
+                byte[] bytes = await runtime.Camera.EndBlockAsync(image, args.OutputPixels, args.JpegQuality, ct);
                 WriteBlock(blockMin, bytes, pending, failed, blocks, onBlock, onComplete);
             }
         }
@@ -169,7 +169,7 @@ namespace Global.MapCapture
 
         private void WriteBlock(Vector2Int blockMin, byte[] image, JArray pending, JArray failed, JArray blocks, Action onBlock, Action onComplete)
         {
-            string file = args.ClientMap ? args.ClientChunkName(blockMin) : $"{blockMin.x}_{blockMin.y}.png";
+            string file = args.ClientMap ? args.ClientChunkName(blockMin) : $"{blockMin.x}_{blockMin.y}.{(args.JpegQuality.HasValue ? "jpg" : "png")}";
             File.WriteAllBytes(Path.Combine(args.OutputDir, file), image);
 
             onBlock();

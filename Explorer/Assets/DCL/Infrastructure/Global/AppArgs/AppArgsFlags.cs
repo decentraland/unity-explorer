@@ -239,6 +239,12 @@ namespace Global.AppArgs
             /// </summary>
             public const string CACHE_DIR = "map-capture-cache";
 
+            /// <summary>
+            ///     Presence writes region blocks as JPEG instead of PNG, at the given quality (1-100, default 95). Client-map
+            ///     chunks are always JPEG.
+            /// </summary>
+            public const string JPEG = "map-capture-jpeg";
+
             /// <summary>Presence keeps bloom on. Off by default: from above, a bright emissive haloes over its neighbours.</summary>
             public const string KEEP_BLOOM = "map-capture-keep-bloom";
         }

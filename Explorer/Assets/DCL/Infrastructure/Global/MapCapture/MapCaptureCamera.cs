@@ -32,7 +32,6 @@ namespace Global.MapCapture
         private const float SHADOW_DISTANCE_MARGIN = 50f;
         private const int POSE_APPLY_DELAY_FRAMES = 2;
         private const int LIVE_TIMEOUT_FRAMES = 60;
-        private const int JPEG_QUALITY = 90;
         private const string VIRTUAL_CAMERA_NAME = "MapCaptureVirtualCamera";
         private const string NO_BLOOM_VOLUME_NAME = "MapCaptureNoBloom";
         private const float NO_BLOOM_VOLUME_PRIORITY = 1000f;
@@ -181,7 +180,7 @@ namespace Global.MapCapture
         }
 
         /// <summary>Writes the assembled image at <paramref name="outputPixels" />; the downscale rides on the sRGB blit.</summary>
-        public async UniTask<byte[]> EndBlockAsync(BlockImage image, int outputPixels, bool jpeg, CancellationToken ct)
+        public async UniTask<byte[]> EndBlockAsync(BlockImage image, int outputPixels, int? jpegQuality, CancellationToken ct)
         {
             RenderTexture output = RenderTexture.GetTemporary(new RenderTextureDescriptor(outputPixels, outputPixels)
             {
@@ -195,10 +194,10 @@ namespace Global.MapCapture
                 AsyncGPUReadbackRequest readback = await AsyncGPUReadback.Request(output).WithCancellation(ct);
 
                 if (readback.hasError)
-                    return EncodeViaReadPixels(output, outputPixels, jpeg);
+                    return EncodeViaReadPixels(output, outputPixels, jpegQuality);
 
-                using NativeArray<byte> encoded = jpeg
-                    ? ImageConversion.EncodeNativeArrayToJPG(readback.GetData<byte>(), output.graphicsFormat, (uint)outputPixels, (uint)outputPixels, quality: JPEG_QUALITY)
+                using NativeArray<byte> encoded = jpegQuality.HasValue
+                    ? ImageConversion.EncodeNativeArrayToJPG(readback.GetData<byte>(), output.graphicsFormat, (uint)outputPixels, (uint)outputPixels, quality: jpegQuality.Value)
                     : ImageConversion.EncodeNativeArrayToPNG(readback.GetData<byte>(), output.graphicsFormat, (uint)outputPixels, (uint)outputPixels);
 
                 return encoded.ToArray();
@@ -211,11 +210,11 @@ namespace Global.MapCapture
         }
 
         /// <summary>One load, one image: the whole block rendered and written in a single pass.</summary>
-        public async UniTask<byte[]> RenderBlockAsync(Vector2Int minParcel, int blockSize, int renderPixels, int outputPixels, bool jpeg, float height, CancellationToken ct)
+        public async UniTask<byte[]> RenderBlockAsync(Vector2Int minParcel, int blockSize, int renderPixels, int outputPixels, int? jpegQuality, float height, CancellationToken ct)
         {
             BlockImage image = BeginBlock(renderPixels);
             await RenderIntoAsync(image, minParcel, blockSize, Vector2Int.zero, renderPixels, height, ct);
-            return await EndBlockAsync(image, outputPixels, jpeg, ct);
+            return await EndBlockAsync(image, outputPixels, jpegQuality, ct);
         }
 
         /// <summary>
@@ -230,7 +229,7 @@ namespace Global.MapCapture
                 pipeline.shadowDistance = height + SHADOW_DISTANCE_MARGIN;
         }
 
-        private static byte[] EncodeViaReadPixels(RenderTexture source, int pixels, bool jpeg)
+        private static byte[] EncodeViaReadPixels(RenderTexture source, int pixels, int? jpegQuality)
         {
             var buffer = new Texture2D(pixels, pixels, TextureFormat.RGBA32, false);
             RenderTexture? previousActive = RenderTexture.active;
@@ -240,7 +239,7 @@ namespace Global.MapCapture
                 RenderTexture.active = source;
                 buffer.ReadPixels(new Rect(0, 0, pixels, pixels), 0, 0);
                 buffer.Apply();
-                return jpeg ? buffer.EncodeToJPG(JPEG_QUALITY) : buffer.EncodeToPNG();
+                return jpegQuality.HasValue ? buffer.EncodeToJPG(jpegQuality.Value) : buffer.EncodeToPNG();
             }
             finally
             {
