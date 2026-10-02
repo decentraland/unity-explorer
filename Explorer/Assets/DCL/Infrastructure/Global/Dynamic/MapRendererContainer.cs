@@ -52,6 +52,7 @@ namespace Global.Dynamic
             IWeb3IdentityCache web3IdentityCache,
             HomePlaceEventBus homePlaceEventBus,
             IEventBus eventBus,
+            string? satelliteDetailTilesUrl,
             CancellationToken ct)
         {
             var mapRendererContainer = new MapRendererContainer(assetsProvisioner, new MapRendererTextureContainer());
@@ -73,7 +74,9 @@ namespace Global.Dynamic
                     onlineUsersProvider,
                     web3IdentityCache,
                     homePlaceEventBus,
-                    eventBus));
+                    eventBus,
+                    satelliteDetailTilesUrl,
+                    staticContainer.BytesDiskCache));
 
                 await mapRenderer.InitializeAsync(ct);
                 c.MapRenderer = mapRenderer;

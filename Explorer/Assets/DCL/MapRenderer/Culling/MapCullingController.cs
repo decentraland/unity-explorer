@@ -1,4 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.MapRenderer.MapCameraController;
 using System;
 using System.Collections.Generic;
@@ -19,6 +20,8 @@ namespace DCL.MapRenderer.Culling
         private readonly Dictionary<IMapPositionProvider, TrackedState> trackedObjs = new ();
 
         private int dirtyCamerasFlag = 0;
+
+        public event Action? CamerasChanged;
         private CancellationTokenSource disposingCts = new ();
 
         internal MapCullingController(IMapCullingVisibilityChecker cullingVisibilityChecker)
@@ -148,7 +151,15 @@ namespace DCL.MapRenderer.Culling
                 }
             }
 
+            bool anyCameraChanged = dirtyCamerasFlag != 0;
             dirtyCamerasFlag = 0;
+
+            // A throwing subscriber must not end the culling routine that calls this every frame.
+            if (anyCameraChanged)
+            {
+                try { CamerasChanged?.Invoke(); }
+                catch (Exception e) { ReportHub.LogException(e, ReportCategory.UI); }
+            }
 
             Profiler.EndSample();
         }

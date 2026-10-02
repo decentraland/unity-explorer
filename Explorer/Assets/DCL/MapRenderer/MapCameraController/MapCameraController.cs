@@ -178,7 +178,11 @@ namespace DCL.MapRenderer.MapCameraController
         private void SetCameraSize(float zoomCameraValue, int zoomStepLevel)
         {
             zoomCameraValue = Mathf.Clamp01(zoomCameraValue);
-            mapCameraObject.mapCamera.orthographicSize = Mathf.Lerp(zoomValues.y, zoomValues.x, zoomCameraValue);
+
+            // Experiment: a zoomable camera's closest step reaches 2 parcels so the finest satellite level (8) shows.
+            // Markers and clusters keep scaling against the configured closest zoom (zoomValues.x).
+            float closestZoom = zoomValues.x < zoomValues.y ? 2 * coordsUtils.ParcelSize : zoomValues.x;
+            mapCameraObject.mapCamera.orthographicSize = Mathf.Lerp(zoomValues.y, closestZoom, zoomCameraValue);
 
             interactivityBehavior.ApplyCameraZoom(zoomValues.x, mapCameraObject.mapCamera.orthographicSize);
             ZoomChanged?.Invoke(zoomValues.x, mapCameraObject.mapCamera.orthographicSize, zoomStepLevel);

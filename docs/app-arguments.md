@@ -226,6 +226,17 @@ On a `base-domain` deployment, where the value *is* read, anything that does not
 
 ---
 
+### `satellite-map-url`
+**Type:** String (URL)
+**Description:** Base URL of the satellite map's zoom levels 4 to 8, which the map and minimap stream for whatever is in view once a camera zooms in past the bundled level-3 chunks. Tiles are read from `<url>/<level>/<i>,<j>.ktx2` (512 px KTX2, level L splitting the city into 2^L × 2^L tiles, `i` eastward and `j` southward), the layout the map capture tool's pyramid scripts write. The host must serve them with `Content-Type: image/ktx2`, which is what selects the KTX2 decoder. Without the flag, or on a machine where the KTX2 native decoder can't load, the map shows only the bundled chunks. Only `http`/`https` URLs are accepted. Denied for deep links by `DeepLinkAllowlist`: a link carrying it only takes effect if the user accepts the startup deep-link warning, whose line for it says the server can see where you are on the map, since the minimap requests the tiles around the player.
+
+**Usage:**
+```bash
+--satellite-map-url https://cdn.example.com/satellite/2026-10/day
+```
+
+---
+
 ## Authentication Flags
 
 ### `skip-auth-screen`

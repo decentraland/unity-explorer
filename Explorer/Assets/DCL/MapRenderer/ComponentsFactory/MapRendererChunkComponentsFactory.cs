@@ -21,6 +21,7 @@ using DCL.PlacesAPIService;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS.SceneLifeCycle.Realm;
+using ECS.StreamableLoading.Cache.Disk;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -48,6 +49,8 @@ namespace DCL.MapRenderer.ComponentsFactory
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly HomePlaceEventBus homePlaceEventBus;
         private readonly IEventBus eventBus;
+        private readonly string? satelliteDetailTilesUrl;
+        private readonly IDiskCache<byte[]> bytesDiskCache;
         private PlayerMarkerInstaller playerMarkerInstaller { get; }
         private HomeMarkerInstaller homeMarkerInstaller { get; }
         private SceneOfInterestsMarkersInstaller sceneOfInterestMarkerInstaller { get; }
@@ -73,7 +76,9 @@ namespace DCL.MapRenderer.ComponentsFactory
             IOnlineUsersProvider onlineUsersProvider,
             IWeb3IdentityCache web3IdentityCache,
             HomePlaceEventBus homePlaceEventBus,
-            IEventBus eventBus)
+            IEventBus eventBus,
+            string? satelliteDetailTilesUrl,
+            IDiskCache<byte[]> bytesDiskCache)
         {
             this.assetsProvisioner = assetsProvisioner;
             mapSettings = settings;
@@ -90,6 +95,8 @@ namespace DCL.MapRenderer.ComponentsFactory
             this.web3IdentityCache = web3IdentityCache;
             this.homePlaceEventBus = homePlaceEventBus;
             this.eventBus = eventBus;
+            this.satelliteDetailTilesUrl = satelliteDetailTilesUrl;
+            this.bytesDiskCache = bytesDiskCache;
         }
 
         async UniTask<MapRendererComponents> IMapRendererComponentsFactory.CreateAsync(CancellationToken cancellationToken)
@@ -243,17 +250,24 @@ namespace DCL.MapRenderer.ComponentsFactory
             }
         }
 
-        private UniTask CreateSatelliteAtlasAsync(Dictionary<MapLayer, IMapLayerController> layers, MapRendererConfiguration configuration, ICoordsUtils coordsUtils, IMapCullingController cullingController, CancellationToken cancellationToken)
+        private async UniTask CreateSatelliteAtlasAsync(Dictionary<MapLayer, IMapLayerController> layers, MapRendererConfiguration configuration, ICoordsUtils coordsUtils, IMapCullingController cullingController, CancellationToken cancellationToken)
         {
             const int GRID_SIZE = 8; // satellite images are provided by 8x8 grid.
             const int PARCELS_INSIDE_CHUNK = 40; // One satellite image contains 40 parcels.
 
-            var chunkAtlas = new SatelliteChunkAtlasController(configuration.SatelliteAtlasRoot, GRID_SIZE, PARCELS_INSIDE_CHUNK, coordsUtils, cullingController, chunkBuilder: CreateSatelliteChunkAsync);
+            SatelliteDetailTiles? detailTiles = null;
+
+            if (!string.IsNullOrEmpty(satelliteDetailTilesUrl) && KtxNativeSupport.IsSupported)
+            {
+                SpriteRenderer template = await GetAtlasChunkPrefabAsync(configuration.SatelliteAtlasRoot, cancellationToken);
+                detailTiles = new SatelliteDetailTiles(satelliteDetailTilesUrl, webRequestController, bytesDiskCache, cullingController, template, MapRendererDrawOrder.SATELLITE_DETAIL_MIN_LEVEL);
+            }
+
+            var chunkAtlas = new SatelliteChunkAtlasController(configuration.SatelliteAtlasRoot, GRID_SIZE, PARCELS_INSIDE_CHUNK, coordsUtils, cullingController, chunkBuilder: CreateSatelliteChunkAsync, detailTiles);
 
             chunkAtlas.InitializeAsync(cancellationToken).SuppressCancellationThrow().Forget();
 
             layers.Add(MapLayer.SatelliteAtlas, chunkAtlas);
-            return UniTask.CompletedTask;
 
             async UniTask<IChunkController> CreateSatelliteChunkAsync(Vector3 chunkLocalPosition, Vector2Int chunkId, Transform parent, CancellationToken ct)
             {
