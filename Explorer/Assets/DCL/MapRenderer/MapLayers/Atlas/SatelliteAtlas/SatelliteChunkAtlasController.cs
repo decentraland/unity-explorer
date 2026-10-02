@@ -2,6 +2,7 @@
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapLayers.Atlas;
+using DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -20,13 +21,16 @@ namespace DCL.MapRenderer.MapLayers.SatelliteAtlas
 
         private readonly ChunkBuilder chunkBuilder;
         private readonly List<IChunkController> chunks;
+        private readonly SatelliteDetailTiles? detailTiles;
 
-        public SatelliteChunkAtlasController(Transform parent, int gridSize, int parcelsInsideChunk, ICoordsUtils coordsUtils, IMapCullingController cullingController, ChunkBuilder chunkBuilder)
+        public SatelliteChunkAtlasController(Transform parent, int gridSize, int parcelsInsideChunk, ICoordsUtils coordsUtils, IMapCullingController cullingController, ChunkBuilder chunkBuilder,
+            SatelliteDetailTiles? detailTiles)
             : base(parent, coordsUtils, cullingController)
         {
             this.gridSize = gridSize;
             this.parcelsInsideChunk = parcelsInsideChunk;
             this.chunkBuilder = chunkBuilder;
+            this.detailTiles = detailTiles;
 
             var chunkAmounts = new Vector2Int(gridSize, gridSize);
             chunks = new List<IChunkController>(chunkAmounts.x * chunkAmounts.y);
@@ -36,6 +40,8 @@ namespace DCL.MapRenderer.MapLayers.SatelliteAtlas
         {
             int chunkSpriteSize = parcelsInsideChunk * coordsUtils.ParcelSize;
             Vector3 offset = SatelliteMapOffset();
+
+            detailTiles?.Initialize(new Vector2(offset.x - (chunkSpriteSize / 2f), offset.y + (chunkSpriteSize / 2f)), chunkSpriteSize);
 
             CancellationToken linkedCt = CancellationTokenSource.CreateLinkedTokenSource(ctsDisposing.Token, ct).Token;
 
@@ -93,6 +99,8 @@ namespace DCL.MapRenderer.MapLayers.SatelliteAtlas
 
         protected override void DisposeImpl()
         {
+            detailTiles?.Dispose();
+
             foreach (IChunkController chunk in chunks)
                 chunk.Dispose();
 
