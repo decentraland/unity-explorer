@@ -55,6 +55,9 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             internalCts?.Dispose();
             internalCts = null;
 
+            if (atlasChunk && atlasChunk.MainSpriteRenderer.sprite)
+                UnityObjectUtils.SafeDestroy(atlasChunk.MainSpriteRenderer.sprite);
+
             if (bundledTextureHandle.IsValid())
                 Addressables.Release(bundledTextureHandle);
 
@@ -75,17 +78,21 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             atlasChunk.MainSpriteRenderer.color = AtlasChunkConstants.INITIAL_COLOR;
 
             AsyncOperationHandle<Texture2D> handle = Addressables.LoadAssetAsync<Texture2D>($"{chunkId.x},{chunkId.y}");
-            await handle.Task;
 
-            if (loadCt.IsCancellationRequested)
+            // ToUniTask rethrows handle.OperationException when the load fails
+            try
             {
+                await handle.ToUniTask();
+            }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, ReportCategory.UI);
                 Addressables.Release(handle);
                 return;
             }
 
-            if (handle.Status != AsyncOperationStatus.Succeeded)
+            if (loadCt.IsCancellationRequested)
             {
-                ReportHub.LogException(handle.OperationException ?? new Exception($"Satellite chunk {chunkId} failed to load from Addressables"), ReportCategory.UI);
                 Addressables.Release(handle);
                 return;
             }
@@ -107,11 +114,10 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
 
                 atlasChunk.MainSpriteRenderer.sprite.name = chunkId.ToString();
             }
-            catch (OperationCanceledException) { return; }
             catch (Exception e)
             {
                 ReportHub.LogException(e, ReportCategory.UI);
-                throw;
+                return;
             }
 
             textureContainer.AddChunk(chunkId, texture);
