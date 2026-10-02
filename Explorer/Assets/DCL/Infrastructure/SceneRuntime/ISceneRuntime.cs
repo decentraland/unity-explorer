@@ -4,6 +4,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Poses;
+using DCL.NotificationsBus;
 using DCL.Profiles;
 using DCL.Profiling;
 using DCL.SceneRuntime.Apis.RestrictedActionsApi;
@@ -17,6 +18,7 @@ using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis.Modules;
 using SceneRuntime.Apis.Modules.AdaptationLayerHelper;
+using SceneRuntime.Apis.Modules.BadgesApi;
 using SceneRuntime.Apis.Modules.CommsApi;
 using SceneRuntime.Apis.Modules.CommunicationsControllerApi;
 using SceneRuntime.Apis.Modules.CommunicationsControllerApi.SDKMessageBus;
@@ -238,6 +240,11 @@ namespace SceneRuntime
         public static void RegisterSDKMessageBusCommsApi(this ISceneRuntime sceneRuntime, ISDKMessageBusCommsControllerAPI api)
         {
             sceneRuntime.Register("UnitySDKMessageBusCommsControllerApi", new SDKMessageBusCommsControllerAPIWrapper(api, sceneRuntime.isDisposingTokenSource));
+        }
+
+        public static void RegisterBadgesApi(this ISceneRuntime sceneRuntime, ISceneBadgesAwardCheck awardCheck, ISceneStateProvider sceneStateProvider)
+        {
+            sceneRuntime.Register("UnityBadgesApi", new BadgesApiWrapper(awardCheck, sceneStateProvider, sceneRuntime.isDisposingTokenSource));
         }
 
         private static void RegisterPortableExperiencesApi(this ISceneRuntime sceneRuntime, IPortableExperiencesController portableExperiencesController, ISceneExceptionsHandler sceneExceptionsHandler)

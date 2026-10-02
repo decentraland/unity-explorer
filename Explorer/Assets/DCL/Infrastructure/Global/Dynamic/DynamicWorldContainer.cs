@@ -115,6 +115,8 @@ namespace Global.Dynamic
 
         public ISystemClipboard SystemClipboard => uiShellContainer.Clipboard;
 
+        public SceneBadgesAwardChecker? SceneBadgesAwardChecker { get; private set; }
+
         private DynamicWorldContainer(
             UIShellContainer uiShellContainer,
             IGlobalRealmController realmController,
@@ -154,6 +156,7 @@ namespace Global.Dynamic
         public override void Dispose()
         {
             // Reverse creation order
+            SceneBadgesAwardChecker?.Dispose();
             voiceChatContainer.Dispose(); // disposes JoinedCommunitiesVoiceLiveTracker, which unsubscribes from CommunityDataService
             socialServicesContainer.Dispose();
             bannedNotificationHandler.Dispose();
@@ -1134,7 +1137,10 @@ namespace Global.Dynamic
                 multiplayerContainer,
                 communitiesContainer,
                 voiceChatContainer
-            );
+            )
+            {
+                SceneBadgesAwardChecker = new SceneBadgesAwardChecker(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, identityCache),
+            };
 
             // Init itself
             await dynamicWorldDependencies.SettingsContainer.InitializePluginAsync(container, ct)!.ThrowOnFail();

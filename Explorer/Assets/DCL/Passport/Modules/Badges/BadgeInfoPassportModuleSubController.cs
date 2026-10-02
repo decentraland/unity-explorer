@@ -38,10 +38,12 @@ namespace DCL.Passport.Modules.Badges
 
         private readonly Animator badge3DImageAnimator;
         private readonly Material badge3DMaterial;
+        private readonly Texture badge3DRenderTexture;
 
         private Texture2DRef? baseColorRef;
         private Texture2DRef? normalRef;
         private Texture2DRef? hrmRef;
+        private Texture2DRef? texture2DRef;
 
         public BadgeInfoPassportModuleSubController(
             BadgeInfoPassportModuleView badgeInfoModuleView,
@@ -57,7 +59,8 @@ namespace DCL.Passport.Modules.Badges
 
             badge3DImageAnimator = badge3DPreviewCamera.badge3DAnimator;
             badge3DMaterial = badge3DPreviewCamera.badge3DRenderer.sharedMaterial;
-            badgeInfoModuleView.Badge3DImage.texture = badge3DPreviewCamera.badge3DCamera.targetTexture;
+            badge3DRenderTexture = badge3DPreviewCamera.badge3DCamera.targetTexture;
+            badgeInfoModuleView.Badge3DImage.texture = badge3DRenderTexture;
 
             badgeTierButtonsPool = new ObjectPool<BadgeTierButton_PassportFieldView>(
                 InstantiateBadgeTierButtonPrefab,
@@ -280,9 +283,21 @@ namespace DCL.Passport.Modules.Badges
             try
             {
                 SetBadgeInfoViewAsLoading(true);
+                badgeInfoModuleView.Badge3DImage.texture = badge3DRenderTexture;
 
                 if (assets?.textures3d == null)
+                {
+                    if (assets?.textures2d?.normal is { Length: > 0 } url)
+                    {
+                        texture2DRef = await imageControllerProvider.LoadTextureAsync(url, ct);
+
+                        if (texture2DRef.HasValue)
+                            badgeInfoModuleView.Badge3DImage.texture = texture2DRef.Value.Texture;
+                    }
+
+                    SetBadgeInfoViewAsLoading(false);
                     return;
+                }
 
                 string baseColorUrl = assets.textures3d.baseColor;
                 string normalUrl = assets.textures3d.normal;
@@ -329,6 +344,9 @@ namespace DCL.Passport.Modules.Badges
 
             hrmRef?.Dispose();
             hrmRef = null;
+
+            texture2DRef?.Dispose();
+            texture2DRef = null;
         }
 
         private void SetBadgeInfoViewAsLoading(bool isLoading)
