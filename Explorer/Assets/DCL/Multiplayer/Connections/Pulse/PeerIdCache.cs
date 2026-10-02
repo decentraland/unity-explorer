@@ -22,6 +22,10 @@ namespace DCL.Multiplayer.Connections.Pulse
         {
             lock (sync)
             {
+                // A reconnect announces the new subject before the server's stale-view sweep retires the old one
+                if (walletsByPeerId.TryGetValue(wallet, out uint previousPeerId) && previousPeerId != peerId)
+                    peersByWallet.Remove(previousPeerId);
+
                 peersByWallet[peerId] = (wallet, realm);
                 walletsByPeerId[wallet] = peerId;
             }
