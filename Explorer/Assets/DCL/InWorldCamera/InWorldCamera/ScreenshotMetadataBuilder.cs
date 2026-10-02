@@ -4,6 +4,7 @@ using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
 using DCL.Profiles.Self;
+using DCL.Utility.Types;
 using ECS;
 using System;
 using System.Collections.Generic;
@@ -55,8 +56,11 @@ namespace DCL.InWorldCamera
             this.sceneParcel = sceneParcel;
         }
 
-        public void AddSelfProfile(bool isEmoting) =>
-            AddProfile(selfProfile.OwnProfile, characterObjectController, isEmoting);
+        public void AddSelfProfile(bool isEmoting)
+        {
+            Option<Profile> known = selfProfile.CurrentProfileSnapshot.KnownProfile;
+            AddProfile(known.Has ? known.Value : null, characterObjectController, isEmoting);
+        }
 
         public void AddProfile(Profile? profile, Collider avatarCollider, bool isEmoting)
         {
@@ -77,7 +81,8 @@ namespace DCL.InWorldCamera
         {
             (string sceneName, string placeId) = await GetSceneInfoAsync(sceneParcel, ct);
 
-            FillMetadata(selfProfile.OwnProfile, realmData, sceneParcel, sceneName, placeId, visiblePeople.ToArray());
+            Option<Profile> known = selfProfile.CurrentProfileSnapshot.KnownProfile;
+            FillMetadata(known.Has ? known.Value : null, realmData, sceneParcel, sceneName, placeId, visiblePeople.ToArray());
 
             MetadataIsReady = true;
         }
@@ -105,7 +110,7 @@ namespace DCL.InWorldCamera
             return wearables.ToArray();
         }
 
-        internal void FillMetadata(Profile? profile, RealmData realm, Vector2Int playerPosition,
+        internal void FillMetadata(Profile? profile, RealmData? realm, Vector2Int playerPosition,
             string sceneName, string placeId, VisiblePerson[] visiblePeople)
         {
             if (metadata == null)

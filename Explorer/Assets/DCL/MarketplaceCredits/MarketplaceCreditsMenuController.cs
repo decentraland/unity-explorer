@@ -7,6 +7,7 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.Prefs;
+using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.RealmNavigation;
 using DCL.UI.Buttons;
@@ -45,7 +46,7 @@ namespace DCL.MarketplaceCredits
 
         private readonly HoverableAndSelectableButtonWithAnimator sidebarButton;
         private readonly MarketplaceCreditsAPIClient marketplaceCreditsAPIClient;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly IWebRequestController webRequestController;
         private readonly UnityAppWebBrowser webBrowser;
         private readonly IInputBlock inputBlock;
@@ -77,7 +78,7 @@ namespace DCL.MarketplaceCredits
             UnityAppWebBrowser webBrowser,
             IInputBlock inputBlock,
             MarketplaceCreditsAPIClient marketplaceCreditsAPIClient,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             IWebRequestController webRequestController,
             IMVCManager mvcManager,
             Animator sidebarCreditsButtonAnimator,
@@ -331,8 +332,7 @@ namespace DCL.MarketplaceCredits
                 if (web3IdentityCache.IsGuest())
                     return;
 
-                var ownProfile = await selfProfile.ProfileAsync(ct);
-                if (ownProfile == null)
+                if (!(await selfProfile.ProfileAsync(ct)).IsOk(out Profile? ownProfile))
                     return;
 
                 isFeatureActivated = MarketplaceCreditsUtils.IsUserAllowedToUseTheFeatureAsync(ownProfile.UserId, ct);

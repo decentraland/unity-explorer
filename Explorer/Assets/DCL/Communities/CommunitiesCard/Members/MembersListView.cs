@@ -107,7 +107,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
         private CommunityInvitationContextMenuButtonHandler? invitationButtonHandler;
         private CommunitiesDataProvider.CommunitiesDataProvider? communitiesDataProvider;
-        private ISelfProfile? selfProfile;
+        private SelfProfile? selfProfile;
 
         private void Awake()
         {
@@ -216,7 +216,10 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             async UniTaskVoid ShowTransferOwnershipConfirmationDialogAsync(CancellationToken ct)
             {
-                var ownProfile = selfProfile != null ? await selfProfile.ProfileAsync(ct) : null;
+                Profile.CompactInfo fromUserInfo = default(Profile.CompactInfo);
+
+                if (selfProfile != null && (await selfProfile.ProfileAsync(ct)).IsOk(out Profile? ownProfile))
+                    fromUserInfo = ownProfile.Compact;
 
                 Result<ConfirmationResult> dialogResult = await ViewDependencies.ConfirmationDialogOpener.OpenConfirmationDialogAsync(new ConfirmationDialogParameter(
                              string.Format(TRANSFER_OWNERSHIP_TEXT_FORMAT, profile.Name),
@@ -226,7 +229,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                              false, false,
                              subText: TRANSFER_OWNERSHIP_SUB_TEXT_FORMAT,
                              userInfo: profile.Profile,
-                             fromUserInfo: ownProfile?.Compact ?? default(Profile.CompactInfo)), ct)
+                             fromUserInfo: fromUserInfo), ct)
                     .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
                 if (ct.IsCancellationRequested || !dialogResult.Success || dialogResult.Value == ConfirmationResult.Cancel) return;
@@ -321,7 +324,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             this.communitiesDataProvider = dataProvider;
         }
 
-        public void SetSelfProfile(ISelfProfile selfProfileData) =>
+        public void SetSelfProfile(SelfProfile selfProfileData) =>
             selfProfile = selfProfileData;
 
         public void SetCommunityData(GetCommunityResponse.CommunityData community, UniTask panelTask)

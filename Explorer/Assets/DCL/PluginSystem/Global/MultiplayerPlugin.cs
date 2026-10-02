@@ -7,6 +7,7 @@ using DCL.DebugUtilities;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
 using DCL.Multiplayer.Movement;
 using DCL.Multiplayer.Connections.FfiClients;
+using DCL.Multiplayer.Connections.Pulse;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Connections.Rooms.Connective;
@@ -25,6 +26,7 @@ using DCL.Multiplayer.SDK.Components;
 using DCL.Multiplayer.SDK.Systems.GlobalWorld;
 using DCL.Optimization.Pools;
 using DCL.Profiles;
+using DCL.Profiles.Self;
 using DCL.RealmNavigation;
 using DCL.UserInAppInitializationFlow;
 using DCL.Utility;
@@ -67,6 +69,9 @@ namespace DCL.PluginSystem.Global
         private readonly IRemoteAnnouncements remoteAnnouncements;
         private readonly IRemoveIntentions removeIntentions;
         private readonly MovementInbox movementInbox;
+        private readonly SelfProfile selfProfile;
+        private readonly IProfilePropagation profilePropagation;
+        private readonly PulseActivation pulseActivation;
 
         public MultiplayerPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -92,7 +97,10 @@ namespace DCL.PluginSystem.Global
             IActivatableConnectiveRoom voiceChatRoom,
             IRemoteAnnouncements remoteAnnouncements,
             IRemoveIntentions removeIntentions,
-            MovementInbox movementInbox)
+            MovementInbox movementInbox,
+            SelfProfile selfProfile,
+            IProfilePropagation profilePropagation,
+            PulseActivation pulseActivation)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.archipelagoIslandRoom = archipelagoIslandRoom;
@@ -118,6 +126,9 @@ namespace DCL.PluginSystem.Global
             this.remoteAnnouncements = remoteAnnouncements;
             this.removeIntentions = removeIntentions;
             this.movementInbox = movementInbox;
+            this.selfProfile = selfProfile;
+            this.profilePropagation = profilePropagation;
+            this.pulseActivation = pulseActivation;
         }
 
         public void Dispose()
@@ -149,6 +160,7 @@ namespace DCL.PluginSystem.Global
 
             DebugRoomsSystem.InjectToWorld(ref builder, roomsStatus, archipelagoIslandRoom, gateKeeperSceneRoom, chatRoom, voiceChatRoom, roomHub, entityParticipantTable, remoteMetadata, debugContainerBuilder);
             DebugThroughputRoomsSystem.InjectToWorld(ref builder, roomHub, debugContainerBuilder, islandThroughputBufferBunch, sceneThroughputBufferBunch);
+            PropagateSelfProfileSystem.InjectToWorld(ref builder, selfProfile, profilePropagation, pulseActivation);
 
             MultiplayerProfilesSystem.InjectToWorld(ref builder,
                 remoteAnnouncements,

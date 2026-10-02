@@ -18,14 +18,14 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
 {
     public class SaveOutfitCommand
     {
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly OutfitsRepository outfitsRepository;
         private readonly IWearableStorage wearableStorage;
         private readonly IEventBus eventBus;
         private readonly OutfitsLogger outfitsLogger;
         private readonly IOwnedNftFilter ownedNftFilter;
 
-        public SaveOutfitCommand(ISelfProfile selfProfile,
+        public SaveOutfitCommand(SelfProfile selfProfile,
             OutfitsRepository outfitsRepository,
             IWearableStorage wearableStorage,
             IEventBus eventBus,
@@ -44,9 +44,12 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
             IEquippedWearables equippedWearables,
             CancellationToken ct)
         {
-            var profile = await selfProfile.ProfileAsync(ct);
+            ProfileReadResult read = await selfProfile.ProfileAsync(ct);
 
-            if (profile == null)
+            if (read.IsCancelled)
+                throw new OperationCanceledException(ct);
+
+            if (!read.IsOk(out Profile? profile))
                 throw new InvalidOperationException("Cannot save outfit, self profile is not loaded.");
 
             outfitsLogger.LogEquippedState("[SaveOutfitCommand - outfit state]", profile.UserId, equippedWearables);

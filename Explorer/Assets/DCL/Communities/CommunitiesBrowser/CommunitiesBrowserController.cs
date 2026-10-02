@@ -57,7 +57,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private readonly IInputBlock inputBlock;
         private readonly IMVCManager mvcManager;
         private readonly IWeb3IdentityCache web3IdentityCache;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly ISpriteCache spriteCache;
         private readonly CommunitiesBrowserEventBus browserEventBus;
         private readonly EventSubscriptionScope scope = new ();
@@ -98,7 +98,7 @@ namespace DCL.Communities.CommunitiesBrowser
             IInputBlock inputBlock,
             IMVCManager mvcManager,
             ProfileRepositoryWrapper profileRepositoryWrapper,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             INftNamesProvider nftNamesProvider,
             ICommunityCallOrchestrator orchestrator,
             IAnalyticsController analytics,
@@ -568,9 +568,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
             async UniTaskVoid RequestToJoinCommunityAsync(CancellationToken ct)
             {
-                Profile? ownProfile = await selfProfile.ProfileAsync(ct);
-
-                if (ownProfile == null)
+                if (!(await selfProfile.ProfileAsync(ct)).IsOk(out Profile? ownProfile))
                     return;
 
                 Result<string> result = await dataProvider.SendInviteOrRequestToJoinAsync(evt.CommunityId, ownProfile.UserId, InviteRequestAction.request_to_join, ct);

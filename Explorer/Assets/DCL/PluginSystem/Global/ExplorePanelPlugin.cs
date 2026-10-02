@@ -108,7 +108,7 @@ namespace DCL.PluginSystem.Global
         private readonly IPlacesAPIService placesAPIService;
         private readonly IProfileRepository profileRepository;
         private readonly IUserInAppInitializationFlow userInAppInitializationFlow;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly IEquippedWearables equippedWearables;
         private readonly IEquippedEmotes equippedEmotes;
         private readonly ICompositeWeb3Provider web3Authenticator;
@@ -212,7 +212,7 @@ namespace DCL.PluginSystem.Global
             IProfileRepository profileRepository,
             ICompositeWeb3Provider web3Authenticator,
             IUserInAppInitializationFlow userInAppInitializationFlow,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             IEquippedWearables equippedWearables,
             IEquippedEmotes equippedEmotes,
             UnityAppWebBrowser webBrowser,

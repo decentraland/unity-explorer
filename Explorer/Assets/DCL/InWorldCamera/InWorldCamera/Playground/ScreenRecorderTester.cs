@@ -5,7 +5,6 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Equipped;
-using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Browser.DecentralandUrls;
@@ -60,10 +59,10 @@ namespace DCL.InWorldCamera.Playground
         [ContextMenu(nameof(CaptureMetadata))]
         public async UniTask CaptureMetadata()
         {
-            Profile? profile = await CreateProfile().ProfileAsync(CancellationToken.None);
+            ProfileReadResult read = await CreateProfile().ProfileAsync(CancellationToken.None);
 
             var builder = new ScreenshotMetadataBuilder(null, null, null, null);
-            builder.FillMetadata(profile, null, Vector2Int.one, "Test Playground", "Test place id", Array.Empty<VisiblePerson>());
+            builder.FillMetadata(read.IsOk(out Profile? profile) ? profile : null, null, Vector2Int.one, "Test Playground", "Test place id", Array.Empty<VisiblePerson>());
             metadata = builder.GetMetadataAndReset();
             hud.Metadata = metadata;
         }
@@ -103,14 +102,8 @@ namespace DCL.InWorldCamera.Playground
                 new DefaultProfileCache(),
                 world,
                 playerEntity,
-                new PassThroughOwnedNftFilter(),
                 new ForcedWearables()
             );
-        }
-
-        private sealed class PassThroughOwnedNftFilter : IOwnedNftFilter
-        {
-            public bool ShouldExclude(URN fullUrn) => false;
         }
     }
 }

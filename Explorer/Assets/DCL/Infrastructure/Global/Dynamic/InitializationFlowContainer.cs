@@ -33,7 +33,7 @@ namespace DCL.UserInAppInitializationFlow
             ILoadingScreen loadingScreen,
             IHealthCheck liveKitHealthCheck,
             IMVCManager mvcManager,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             DynamicWorldParams dynamicWorldParams,
             IAppArgs appArgs,
             AudioClipConfig backgroundMusic,

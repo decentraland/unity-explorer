@@ -18,7 +18,7 @@ namespace DCL.UI.ConfirmationDialog
             Sprite? reportSprite,
             string reportCategory,
             string reportedUserId,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             UnityAppWebBrowser webBrowser,
             IDecentralandUrlsSource decentralandUrlsSource,
             CancellationToken ct)
@@ -34,10 +34,13 @@ namespace DCL.UI.ConfirmationDialog
                 if (!confirmed)
                     return;
 
-                Profile? ownProfile = await selfProfile.ProfileAsync(ct);
+                ProfileReadResult ownProfileResult = await selfProfile.ProfileAsync(ct);
+
+                if (ownProfileResult.IsCancelled)
+                    return;
 
                 webBrowser.OpenUrlMainThreadOnly(string.Format(decentralandUrlsSource.Url(DecentralandUrl.ReportUserForm),
-                    ownProfile != null ? ownProfile.UserId : string.Empty,
+                    ownProfileResult.IsOk(out Profile? ownProfile) ? ownProfile.UserId : string.Empty,
                     reportedUserId));
             }
             catch (OperationCanceledException) { }

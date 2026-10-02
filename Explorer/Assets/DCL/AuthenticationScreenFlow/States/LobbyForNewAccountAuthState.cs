@@ -26,7 +26,7 @@ namespace DCL.AuthenticationScreenFlow
         private readonly AuthenticationScreenController controller;
         private readonly ReactiveProperty<AuthStatus> currentState;
         private readonly AuthenticationScreenCharacterPreviewController characterPreviewController;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly LobbyForNewAccountAuthView view;
 
         private readonly UnityAppWebBrowser webBrowser;
@@ -48,7 +48,7 @@ namespace DCL.AuthenticationScreenFlow
             AuthenticationScreenController controller,
             ReactiveProperty<AuthStatus> currentState,
             AuthenticationScreenCharacterPreviewController characterPreviewController,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             UnityAppWebBrowser webBrowser,
             IWebRequestController webRequestController,
             IDecentralandUrlsSource decentralandUrlsSource,
@@ -196,8 +196,17 @@ namespace DCL.AuthenticationScreenFlow
                 {
                     newUserProfile.Name = view.ProfileNameInputField.Text;
 
-                    Profile? publishedProfile = await selfProfile.UpdateProfileAsync(newUserProfile, ct, updateAvatarInWorld: false);
-                    newUserProfile = publishedProfile ?? throw new ProfileNotFoundException();
+                    ProfileDeployResult deploy = await selfProfile.DeployProfileAsync(newUserProfile, ct);
+
+                    if (!deploy.IsOk(out Profile? publishedProfile))
+                    {
+                        if (deploy.IsCancelled && ct.IsCancellationRequested)
+                            return;
+
+                        throw new InvalidOperationException($"The new profile could not be deployed: {deploy}");
+                    }
+
+                    newUserProfile = publishedProfile;
 
                     // Notify profile-bus subscribers (sidebar thumbnail, explore panel, chat) that the
                     // freshly created profile is live

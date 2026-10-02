@@ -4,6 +4,7 @@ using DCL.Diagnostics;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.MarketplaceCredits.Fields;
+using DCL.Profiles;
 using DCL.Profiles.Self;
 using System;
 using System.Threading;
@@ -23,7 +24,7 @@ namespace DCL.MarketplaceCredits.Sections
         private readonly MarketplaceCreditsProgramEndedSubController marketplaceCreditsProgramEndedSubController;
         private readonly UnityAppWebBrowser webBrowser;
         private readonly MarketplaceCreditsAPIClient marketplaceCreditsAPIClient;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly IInputBlock inputBlock;
 
         private CreditsProgramProgressResponse currentCreditsProgramProgress;
@@ -40,7 +41,7 @@ namespace DCL.MarketplaceCredits.Sections
             MarketplaceCreditsProgramEndedSubController marketplaceCreditsProgramEndedSubController,
             UnityAppWebBrowser webBrowser,
             MarketplaceCreditsAPIClient marketplaceCreditsAPIClient,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             IInputBlock inputBlock)
         {
             this.subView = subView;
@@ -94,8 +95,7 @@ namespace DCL.MarketplaceCredits.Sections
             {
                 subView.SetAsLoading(true);
 
-                var ownProfile = await selfProfile.ProfileAsync(ct);
-                if (ownProfile != null)
+                if ((await selfProfile.ProfileAsync(ct)).IsOk(out Profile? ownProfile))
                 {
                     currentCreditsProgramProgress = await marketplaceCreditsAPIClient.GetProgramProgressAsync(ownProfile.UserId, ct);
                     RedirectToSection();

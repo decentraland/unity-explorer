@@ -445,6 +445,13 @@ namespace DCL.UserInAppInitializationFlow
             if (result.Error is { Exception: UserBlockedException })
                 return mvcManager.ShowAsync(BlockedScreenController.IssueCommand(new BlockedScreenParameters(((UserBlockedException)result.Error.Value.Exception).BanStatusData.ban)), ct);
 
+            if (result.Error is { Exception: ProfileNotFoundException })
+                return mvcManager.ShowAsync(ErrorPopupWithRetryController.IssueCommand(new ErrorPopupWithRetryController.Input(
+                    title: "Profile Not Found",
+                    description: "We could not find a profile for this account. Did you create your profile? Sign in and complete the account setup, or check that you are using the right wallet.",
+                    iconType: ErrorPopupWithRetryController.IconType.Warning,
+                    retryText: "Continue")), ct);
+
             if (result.Error is { State: TaskError.Timeout })
                 return mvcManager.ShowAsync(ErrorPopupWithRetryController.IssueCommand(new ErrorPopupWithRetryController.Input(
                     title: "Connection Error",

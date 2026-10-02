@@ -12,6 +12,7 @@ using DCL.Input.Component;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI;
+using DCL.Utility.Types;
 using MVC;
 using System;
 using System.Threading;
@@ -103,9 +104,12 @@ namespace DCL.EmotesWheel
 
             async UniTaskVoid InitializeEverythingAsync(CancellationToken ct)
             {
-                Profile? profile = selfProfile.OwnProfile ?? await selfProfile.ProfileAsync(ct);
+                Option<Profile> known = selfProfile.CurrentProfileSnapshot.KnownProfile;
+                Profile? profile;
 
-                if (profile == null)
+                if (known.Has)
+                    profile = known.Value;
+                else if (!(await selfProfile.ProfileAsync(ct)).IsOk(out profile))
                 {
                     ReportHub.LogError(new ReportData(ReportCategory.EMOTE), "Could not initialize emote wheel slots, profile is null");
                     return;

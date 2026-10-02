@@ -24,7 +24,7 @@ namespace DCL.AuthenticationScreenFlow
         private readonly MVCStateMachine<AuthStateBase> machine;
         private readonly AuthenticationScreenController controller;
         private readonly ReactiveProperty<AuthStatus> currentState;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly IWeb3IdentityCache identityCache;
         private readonly ProfileFetchingAuthView view;
         private Exception? profileFetchException;
@@ -34,7 +34,7 @@ namespace DCL.AuthenticationScreenFlow
             AuthenticationScreenView viewInstance,
             AuthenticationScreenController controller,
             ReactiveProperty<AuthStatus> currentState,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             IWeb3IdentityCache identityCache) : base(viewInstance)
         {
             view = viewInstance.ProfileFetchingAuthView;
@@ -110,7 +110,9 @@ namespace DCL.AuthenticationScreenFlow
                     });
 
                     // Timeout surfaces catalyst stalls as CONNECTION_ERROR instead of a frozen spinner.
-                    if (await FetchProfileWithTimeoutAsync(selfProfile, PROFILE_FETCH_TIMEOUT, ct) is { } profile)
+                    ProfileReadResult read = await FetchProfileWithTimeoutAsync(selfProfile, PROFILE_FETCH_TIMEOUT, ct);
+
+                    if (read.IsOk(out Profile? profile))
                     {
                         // When the profile was already in cache, for example your previous account after logout, we need to ensure that all systems related to the profile will update
                         profile.IsDirty = true;
@@ -122,33 +124,34 @@ namespace DCL.AuthenticationScreenFlow
                         else
                             machine.Enter<LobbyForExistingAccountAuthState, (Profile, bool, CancellationToken)>((profile, isRestoredSession, ct));
                     }
-                    else if (isRestoredSession)
+                    else if (read.IsError(out ProfileReadError error) && error == ProfileReadError.NotFound)
                     {
-                        // Auto-login restored an identity that has no deployed profile (abandoned onboarding). Clear it and start over.
-                        identityCache.Clear();
-                        profileFetchException = new ProfileNotFoundException();
+                        if (isRestoredSession)
+                        {
+                            // Auto-login restored an identity that has no deployed profile (abandoned onboarding). Clear it and start over.
+                            identityCache.Clear();
+                            profileFetchException = new ProfileNotFoundException();
+                            controller.ReturnToOrigin(SLIDE);
+                        }
+                        else
+                        {
+                            profile = CreateRandomProfile(identity);
+                            machine.Enter<SelectAvatarForNewAccountAuthState, (Profile, string, bool, CancellationToken)>((profile, email, false, ct)); // email is only used for optional newsletter subscription
+                        }
+                    }
+                    else if (error == ProfileReadError.Cancelled && ct.IsCancellationRequested)
+                    {
+                        profileFetchException = new OperationCanceledException(ct);
                         controller.ReturnToOrigin(SLIDE);
                     }
                     else
                     {
-                        profile = CreateRandomProfile(identity);
-                        machine.Enter<SelectAvatarForNewAccountAuthState, (Profile, string, bool, CancellationToken)>((profile, email, false, ct)); // email is only used for optional newsletter subscription
+                        profileFetchException = error == ProfileReadError.Cancelled
+                            ? new TimeoutException($"Profile fetch timed out after {PROFILE_FETCH_TIMEOUT.TotalSeconds:F0}s")
+                            : new InvalidOperationException($"Profile fetch failed: {error}");
+
+                        controller.ReturnToOrigin(ErrorType.ConnectionError);
                     }
-                }
-                catch (OperationCanceledException e)
-                {
-                    profileFetchException = e;
-                    controller.ReturnToOrigin(SLIDE);
-                }
-                catch (ProfileNotFoundException e)
-                {
-                    profileFetchException = e;
-                    controller.ReturnToOrigin(SLIDE);
-                }
-                catch (TimeoutException e)
-                {
-                    profileFetchException = e;
-                    controller.ReturnToOrigin(ErrorType.ConnectionError);
                 }
                 catch (Exception e)
                 {
@@ -158,26 +161,13 @@ namespace DCL.AuthenticationScreenFlow
             }
         }
 
-        /// <summary>
-        ///     Runs the fetch under a linked token so a timeout cancels the underlying request. Timeout throws
-        ///     <see cref="TimeoutException" />; cancellation of <paramref name="ct" /> throws <see cref="OperationCanceledException" />.
-        /// </summary>
-        internal static async UniTask<Profile?> FetchProfileWithTimeoutAsync(ISelfProfile selfProfile, TimeSpan timeout, CancellationToken ct)
+        /// <summary>Reads under a linked token that cancels after <paramref name="timeout" />; a timeout surfaces as <c>Cancelled</c> with <paramref name="ct" /> not cancelled.</summary>
+        internal static async UniTask<ProfileReadResult> FetchProfileWithTimeoutAsync(SelfProfile selfProfile, TimeSpan timeout, CancellationToken ct)
         {
             using CancellationTokenSource timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
             using IDisposable timeoutTimer = timeoutCts.CancelAfterSlim(timeout);
 
-            if (await selfProfile.ProfileAsync(timeoutCts.Token) is { } profile)
-                return profile;
-
-            // The repository suppresses cancellation into a null profile; rethrow external cancellation as OCE
-            // so it is not misread as "no deployed profile"
-            ct.ThrowIfCancellationRequested();
-
-            if (timeoutCts.IsCancellationRequested)
-                throw new TimeoutException($"Profile fetch timed out after {timeout.TotalSeconds:F0}s");
-
-            return null; // genuine "no deployed profile"
+            return await selfProfile.ProfileAsync(timeoutCts.Token);
         }
 
         private Profile CreateRandomProfile(IWeb3Identity identity)

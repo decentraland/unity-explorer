@@ -11,7 +11,6 @@ using NUnit.Framework;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using UnityEngine.TestTools;
 
 namespace DCL.BugReporting.Tests
 {
@@ -22,7 +21,7 @@ namespace DCL.BugReporting.Tests
         private const string DESCRIPTION = "The avatar falls through the floor.";
 
         private BugReportService bugReportService = null!;
-        private ISelfProfile selfProfile = null!;
+        private SelfProfile selfProfile = null!;
         private World world = null!;
         private BugReportController controller = null!;
 
@@ -39,8 +38,8 @@ namespace DCL.BugReporting.Tests
             bugReportService.SubmitAsync(Arg.Do<BugReportInput>(input => captured = input), Arg.Any<CancellationToken>())
                             .Returns(UniTask.FromResult(Result<string>.SuccessResult("ticket-1")));
 
-            selfProfile = Substitute.For<ISelfProfile>();
-            selfProfile.ProfileAsync(Arg.Any<CancellationToken>()).Returns(UniTask.FromResult<Profile?>(null));
+            selfProfile = Substitute.For<SelfProfile>();
+            selfProfile.ProfileAsync(Arg.Any<CancellationToken>()).Returns(UniTask.FromResult(ProfileReadResult.FromError(ProfileReadError.NotFound)));
 
             world = World.Create();
             controller = new BugReportController(() => null!, bugReportService, selfProfile, Substitute.For<IInputBlock>(), world, world.Create());
@@ -122,7 +121,7 @@ namespace DCL.BugReporting.Tests
         {
             // Arrange
             var profile = new Profile(UserId.New("0x1").Unwrap(), "Tester", new Avatar());
-            selfProfile.ProfileAsync(Arg.Any<CancellationToken>()).Returns(UniTask.FromResult<Profile?>(profile));
+            selfProfile.ProfileAsync(Arg.Any<CancellationToken>()).Returns(UniTask.FromResult(ProfileReadResult.FromOk(profile)));
 
             // Act
             await controller.SubmitDraftAsync(Draft(), CancellationToken.None);
@@ -135,8 +134,7 @@ namespace DCL.BugReporting.Tests
         public async Task ProceedWithoutUserNameWhenProfileLookupFails()
         {
             // Arrange
-            LogAssert.ignoreFailingMessages = true;
-            selfProfile.ProfileAsync(Arg.Any<CancellationToken>()).Returns(_ => throw new Exception("profile backend down"));
+            selfProfile.ProfileAsync(Arg.Any<CancellationToken>()).Returns(UniTask.FromResult(ProfileReadResult.FromError(ProfileReadError.FetchFailed)));
 
             // Act
             Result<string> result = await controller.SubmitDraftAsync(Draft(), CancellationToken.None);

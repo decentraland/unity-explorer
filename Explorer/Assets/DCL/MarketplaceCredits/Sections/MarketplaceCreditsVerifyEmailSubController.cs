@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Profiles;
 using DCL.Profiles.Self;
 using System;
 using System.Threading;
@@ -12,7 +13,7 @@ namespace DCL.MarketplaceCredits.Sections
         private const int CHECKING_EMAIL_VERIFICATION_TIME_INTERVAL_MS = 5000;
 
         private readonly MarketplaceCreditsVerifyEmailSubView subView;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly MarketplaceCreditsAPIClient marketplaceCreditsAPIClient;
         private readonly MarketplaceCreditsMenuController marketplaceCreditsMenuController;
 
@@ -23,7 +24,7 @@ namespace DCL.MarketplaceCredits.Sections
 
         public MarketplaceCreditsVerifyEmailSubController(
             MarketplaceCreditsVerifyEmailSubView subView,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             MarketplaceCreditsAPIClient marketplaceCreditsAPIClient,
             MarketplaceCreditsMenuController marketplaceCreditsMenuController)
         {
@@ -76,8 +77,7 @@ namespace DCL.MarketplaceCredits.Sections
 
                 try
                 {
-                    var ownProfile = await selfProfile.ProfileAsync(ct);
-                    if (ownProfile != null)
+                    if ((await selfProfile.ProfileAsync(ct)).IsOk(out Profile? ownProfile))
                     {
                         var creditsProgramProgressResponse = await marketplaceCreditsAPIClient.GetProgramProgressAsync(ownProfile.UserId, ct);
                         if (!creditsProgramProgressResponse.IsUserEmailVerified())
@@ -110,8 +110,7 @@ namespace DCL.MarketplaceCredits.Sections
             {
                 subView.SetAsLoading(true);
 
-                var ownProfile = await selfProfile.ProfileAsync(ct);
-                if (ownProfile != null)
+                if ((await selfProfile.ProfileAsync(ct)).IsOk(out _))
                 {
                     // Removes email subscription
                     await marketplaceCreditsAPIClient.SubscribeEmailAsync(string.Empty, ct);
@@ -143,8 +142,7 @@ namespace DCL.MarketplaceCredits.Sections
             {
                 subView.SetAsLoading(true);
 
-                var ownProfile = await selfProfile.ProfileAsync(ct);
-                if (ownProfile != null)
+                if ((await selfProfile.ProfileAsync(ct)).IsOk(out _))
                     // Reset the email subscription
                     await marketplaceCreditsAPIClient.SubscribeEmailAsync(currentEmail, ct);
             }

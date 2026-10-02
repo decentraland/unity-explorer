@@ -1,7 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Profiles;
-using DCL.Profiles.Self;
 using MVC;
 using System;
 using System.Threading;
@@ -16,7 +15,6 @@ namespace DCL.UI
         public event Action OnColorPickerClosed;
 
         private readonly IMVCManager mvcManager;
-        private readonly ISelfProfile selfProfile;
         private readonly ProfileChangesBus profileChangesBus;
         private readonly NameColorPickerView view;
         private readonly ColorPresetsSO colorPresets;
@@ -27,13 +25,11 @@ namespace DCL.UI
 
         public NameColorPickerController(
             IMVCManager mvcManager,
-            ISelfProfile selfProfile,
             ProfileChangesBus profileChangesBus,
             NameColorPickerView view,
             ColorPresetsSO colorPresets)
         {
             this.mvcManager = mvcManager;
-            this.selfProfile = selfProfile;
             this.profileChangesBus = profileChangesBus;
             this.view = view;
             this.colorPresets = colorPresets;

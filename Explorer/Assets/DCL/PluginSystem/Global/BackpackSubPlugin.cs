@@ -40,7 +40,7 @@ namespace DCL.PluginSystem.Global
     {
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IWearableStorage wearableStorage;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly IProfileCache profileCache;
         private readonly IEquippedWearables equippedWearables;
         private readonly IEquippedEmotes equippedEmotes;
@@ -82,7 +82,7 @@ namespace DCL.PluginSystem.Global
             IWeb3IdentityCache web3Identity,
             ICharacterPreviewFactory characterPreviewFactory,
             IWearableStorage wearableStorage,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             IProfileCache profileCache,
             IEquippedWearables equippedWearables,
             IEquippedEmotes equippedEmotes,

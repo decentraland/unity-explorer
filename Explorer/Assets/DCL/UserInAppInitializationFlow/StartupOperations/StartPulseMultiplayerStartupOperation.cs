@@ -14,13 +14,13 @@ namespace DCL.UserInAppInitializationFlow
 
         private readonly IPulseMultiplayerService service;
         private readonly IProfilePropagation profilePropagation;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly PulseActivation pulseActivation;
         private readonly PulseRealm pulseRealm;
 
         public StartPulseMultiplayerStartupOperation(IPulseMultiplayerService service,
             IProfilePropagation profilePropagation,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             PulseActivation pulseActivation,
             PulseRealm pulseRealm)
         {
@@ -59,13 +59,13 @@ namespace DCL.UserInAppInitializationFlow
                 return;
             }
 
-            Profile? profile = await selfProfile.ProfileAsync(ct);
+            ProfileReadResult read = await selfProfile.ProfileAsync(ct);
 
-            if (profile == null)
-                throw new InvalidOperationException("Own profile could not be resolved, nothing to propagate to Pulse");
+            if (!read.IsOk(out Profile? profile))
+                throw new InvalidOperationException($"Own profile could not be resolved ({read}), nothing to propagate to Pulse");
 
-            profilePropagation.Propagate(profile);
             await UniTask.SwitchToMainThread();
+            profilePropagation.PropagateIfNewVersion(profile);
         }
     }
 }

@@ -19,7 +19,7 @@ namespace DCL.UI.ProfileNames
     public class ProfileNameEditorController : ControllerBase<ProfileNameEditorView>
     {
         private readonly UnityAppWebBrowser webBrowser;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly INftNamesProvider nftNamesProvider;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly ProfileChangesBus profileChangesBus;
@@ -37,7 +37,7 @@ namespace DCL.UI.ProfileNames
 
         public ProfileNameEditorController(ViewFactoryMethod viewFactory,
             UnityAppWebBrowser webBrowser,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             INftNamesProvider nftNamesProvider,
             IDecentralandUrlsSource decentralandUrlsSource,
             ProfileChangesBus profileChangesBus,
@@ -132,9 +132,19 @@ namespace DCL.UI.ProfileNames
                 nonClaimedConfig.saveButtonInteractable = false;
                 nonClaimedConfig.saveLoading.SetActive(false);
 
-                Profile? profile = await selfProfile.ProfileAsync(ct);
+                ProfileReadResult read = await selfProfile.ProfileAsync(ct);
 
-                using INftNamesProvider.PaginatedNamesResponse names = await nftNamesProvider.GetAsync(new Web3Address(profile!.UserId), 1, 100, ct);
+                if (!read.IsOk(out Profile? profile))
+                {
+                    claimedConfig.dropdownLoadingSpinner.SetActive(false);
+
+                    if (!read.IsCancelled)
+                        ReportHub.LogError(ReportCategory.PROFILE, $"Name editor cannot open: own profile read failed ({read})");
+
+                    return;
+                }
+
+                using INftNamesProvider.PaginatedNamesResponse names = await nftNamesProvider.GetAsync(new Web3Address(profile.UserId), 1, 100, ct);
 
                 nonClaimedConfig.root.SetActive(names.TotalAmount <= 0);
                 claimedConfig.NonClaimedNameTabConfig.root.SetActive(names.TotalAmount > 0);
@@ -215,27 +225,15 @@ namespace DCL.UI.ProfileNames
                 config.saveButtonInteractable = false;
                 config.saveLoading.SetActive(true);
 
-                Profile? profile = await selfProfile.ProfileAsync(ct);
-
-                if (profile != null)
+                if ((await selfProfile.ProfileAsync(ct)).IsOk(out Profile? profile))
                 {
-                    // Create a copy to avoid mutating the cached profile directly,
-                    // which would cause UpdateProfileAsync to see an identical "previous" snapshot
+                    // Copy so the cached profile is not mutated in place
                     Profile newProfile = new ProfileBuilder().From(profile).Build();
                     newProfile.Name = config.nameInputField.Text;
                     newProfile.ClaimedNameColor = null;
                     newProfile.HasClaimedName = false;
 
-                    try
-                    {
-                        Profile? updatedProfile = await selfProfile.UpdateProfileAsync(newProfile, ct);
-                        NameChanged?.Invoke();
-
-                        if (updatedProfile != null)
-                            profileChangesBus.PushUpdate(updatedProfile);
-                    }
-                    catch (IdenticalProfileUpdateException) { }
-                    catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, ReportCategory.PROFILE); }
+                    await DeployNameAsync(newProfile, ct);
                 }
 
                 config.saveButtonInteractable = true;
@@ -256,26 +254,14 @@ namespace DCL.UI.ProfileNames
                 config.saveButtonInteractable = false;
                 config.saveLoading.SetActive(true);
 
-                Profile? profile = await selfProfile.ProfileAsync(ct);
-
-                if (profile != null)
+                if ((await selfProfile.ProfileAsync(ct)).IsOk(out Profile? profile))
                 {
-                    // Create a copy to avoid mutating the cached profile directly,
-                    // which would cause UpdateProfileAsync to see an identical "previous" snapshot
+                    // Copy so the cached profile is not mutated in place
                     Profile newProfile = new ProfileBuilder().From(profile).Build();
                     newProfile.Name = config.claimedNameDropdown.options[config.claimedNameDropdown.value].text;
                     newProfile.HasClaimedName = true;
 
-                    try
-                    {
-                        Profile? updatedProfile = await selfProfile.UpdateProfileAsync(newProfile, ct);
-                        NameChanged?.Invoke();
-
-                        if (updatedProfile != null)
-                            profileChangesBus.PushUpdate(updatedProfile);
-                    }
-                    catch (IdenticalProfileUpdateException) { }
-                    catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, ReportCategory.PROFILE); }
+                    await DeployNameAsync(newProfile, ct);
                 }
 
                 config.saveButtonInteractable = true;
@@ -283,6 +269,19 @@ namespace DCL.UI.ProfileNames
 
                 Close();
             }
+        }
+
+        private async UniTask DeployNameAsync(Profile newProfile, CancellationToken ct)
+        {
+            ProfileDeployResult deploy = await selfProfile.DeployProfileAsync(newProfile, ct);
+
+            if (deploy.IsOk(out Profile? updatedProfile))
+            {
+                NameChanged?.Invoke();
+                profileChangesBus.PushUpdate(updatedProfile);
+            }
+            else if (deploy.IsError(out ProfileDeployError error) && error is ProfileDeployError.DeployFailed or ProfileDeployError.NoIdentity)
+                ReportHub.LogError(ReportCategory.PROFILE, $"Name deploy failed: {error}");
         }
 
         private void Close() =>
