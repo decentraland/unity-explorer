@@ -19,6 +19,8 @@ namespace DCL.MapRenderer.Culling
         private readonly Dictionary<IMapPositionProvider, TrackedState> trackedObjs = new ();
 
         private int dirtyCamerasFlag = 0;
+
+        public event Action? CamerasChanged;
         private CancellationTokenSource disposingCts = new ();
 
         internal MapCullingController(IMapCullingVisibilityChecker cullingVisibilityChecker)
@@ -148,7 +150,11 @@ namespace DCL.MapRenderer.Culling
                 }
             }
 
+            bool anyCameraChanged = dirtyCamerasFlag != 0;
             dirtyCamerasFlag = 0;
+
+            if (anyCameraChanged)
+                CamerasChanged?.Invoke();
 
             Profiler.EndSample();
         }

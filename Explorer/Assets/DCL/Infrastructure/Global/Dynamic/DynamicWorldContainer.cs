@@ -377,6 +377,8 @@ namespace Global.Dynamic
                 realmNavigatorContainer.WorldPermissionsService,
                 chatContainer.ChatHistory);
 
+            appArgs.TryGetValue(AppArgsFlags.SATELLITE_MAP_URL, out string? satelliteMapUrl);
+
             MapRendererContainer mapRendererContainer =
                 await MapRendererContainer
                    .CreateAsync(
@@ -395,6 +397,7 @@ namespace Global.Dynamic
                         identityCache,
                         placesAndEventsContainer.HomePlaceEventBus,
                         chatContainer.ChatEventBus,
+                        satelliteMapUrl,
                         ct
                     );
 

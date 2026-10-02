@@ -226,6 +226,17 @@ On a `base-domain` deployment, where the value *is* read, anything that does not
 
 ---
 
+### `satellite-map-url`
+**Type:** String (URL)
+**Description:** Base URL of the satellite map's zoom levels 4 to 8, which the map and minimap stream for whatever is in view once a camera zooms in past the bundled level-3 chunks. Tiles are read from `<url>/<level>/<i>,<j>.jpg` (512 px, level L splitting the city into 2^L × 2^L tiles, `i` eastward and `j` southward), the layout the map capture tool's pyramid script writes. Without it the map shows only the bundled chunks. Command line only: never accepted from a deep link.
+
+**Usage:**
+```bash
+--satellite-map-url https://cdn.example.com/satellite/2026-10/day
+```
+
+---
+
 ## Authentication Flags
 
 ### `skip-auth-screen`
