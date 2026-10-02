@@ -17,6 +17,8 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
     ///     Streams the satellite zoom levels finer than the bundled 8x8 chunks from <c>{baseUrl}/{level}/{i},{j}.ktx2</c>.
     ///     Level L splits the bundled grid into 2^L x 2^L tiles (i eastward, j southward), so level 3 is the bundled chunks.
     ///     Each map camera gets the coarsest level that is at least as sharp as its render texture; finer levels draw on top.
+    ///     Tiles are requested once the cameras have been still for <see cref="SETTLE_SECONDS" />, so a zoom tween or a pan
+    ///     doesn't fetch levels and tiles that only pass through the view; a download whose tile leaves the view is cancelled.
     /// </summary>
     internal class SatelliteDetailTiles : IDisposable
     {
@@ -26,6 +28,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
         internal const int MAX_TILES_PER_CAMERA = 64;
         private const int TILE_PIXELS = 512;
         private const int MAX_CACHED_TILES = 64;
+        private const float SETTLE_SECONDS = 0.1f;
         private const float FADE_IN_SECONDS = 0.25f;
         private const float RETRY_FAILED_TILE_AFTER_SECONDS = 30f;
         private const float SATURATION_VALUE = 1f;
@@ -39,14 +42,18 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
         private readonly IMapCullingController cullingController;
         private readonly AtlasChunk template;
         private readonly int drawOrderOfMinLevel;
+        private readonly CancellationTokenSource lifetimeCts = new ();
 
         private readonly Dictionary<Vector3Int, Tile> tiles = new ();
         private readonly Stack<AtlasChunk> pooledViews = new ();
+        private readonly List<Vector3Int> unusedLoads = new ();
         private readonly List<KeyValuePair<int, Vector3Int>> evictions = new ();
 
         private Vector2 gridTopLeft;
         private float baseChunkSize;
         private int refreshStamp;
+        private float lastCameraChangeTime;
+        private bool settlePending;
         private bool tileFailureReported;
 
         public SatelliteDetailTiles(string baseUrl, IWebRequestController webRequestController, IMapCullingController cullingController, SpriteRenderer template, int drawOrderOfMinLevel)
@@ -74,6 +81,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
         public void Dispose()
         {
             cullingController.CamerasChanged -= Refresh;
+            lifetimeCts.SafeCancelAndDispose();
 
             foreach (Tile tile in tiles.Values)
                 DestroyTile(tile);
@@ -86,42 +94,35 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             UnityObjectUtils.SafeDestroy(template.gameObject);
         }
 
-        /// <summary>Loads the tiles every active camera shows. Does nothing while the satellite layer is hidden.</summary>
+        /// <summary>
+        ///     Marks the tiles every active camera shows, drops the downloads of tiles that left the view, evicts the oldest
+        ///     loaded tiles over the cache cap, and schedules the missing tiles' requests for when the cameras settle.
+        ///     Does nothing while the satellite layer is hidden.
+        /// </summary>
         internal void Refresh()
         {
             if (!template.transform.parent.gameObject.activeInHierarchy)
                 return;
 
             refreshStamp++;
-            float bundledPixelsPerUnit = TILE_PIXELS / baseChunkSize;
+            lastCameraChangeTime = UnityEngine.Time.realtimeSinceStartup;
 
-            IReadOnlyList<CameraState> cameras = cullingController.CameraStates;
+            VisitVisibleTiles(request: false);
 
-            for (var c = 0; c < cameras.Count; c++)
-            {
-                CameraState camera = cameras[c];
+            CollectUnusedLoads(tiles, refreshStamp, unusedLoads);
 
-                if (!camera.CameraController.Camera.isActiveAndEnabled)
-                    continue;
-
-                float screenPixelsPerUnit = camera.CameraController.GetRenderTexture().height / camera.Rect.height;
-                int level = LevelFor(screenPixelsPerUnit, bundledPixelsPerUnit);
-
-                if (level < MIN_LEVEL)
-                    continue;
-
-                level = LevelWithinTileBudget(camera.Rect, level, gridTopLeft, baseChunkSize, out RectInt range);
-
-                for (int j = range.yMin; j < range.yMax; j++)
-                for (int i = range.xMin; i < range.xMax; i++)
-                    Use(new Vector3Int(i, j, level));
-            }
+            for (var k = 0; k < unusedLoads.Count; k++)
+                if (tiles.Remove(unusedLoads[k], out Tile? dropped))
+                    DestroyTile(dropped);
 
             CollectEvictions(tiles, refreshStamp, MAX_CACHED_TILES, evictions);
 
             for (var k = 0; k < evictions.Count; k++)
                 if (tiles.Remove(evictions[k].Value, out Tile? evicted))
                     DestroyTile(evicted);
+
+            if (!settlePending)
+                RequestWhenSettledAsync(lifetimeCts.Token).Forget();
         }
 
         /// <summary>The coarsest level whose tiles have at least <paramref name="screenPixelsPerUnit" />, or a level below <see cref="MIN_LEVEL" /> when the bundled chunks suffice.</summary>
@@ -166,6 +167,19 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
         }
 
         /// <summary>
+        ///     Fills <paramref name="result" /> with the tiles that have no texture yet and were not used in the refresh
+        ///     <paramref name="refreshStamp" />: downloads for tiles that left the view, and failed tiles out of view.
+        /// </summary>
+        internal static void CollectUnusedLoads(Dictionary<Vector3Int, Tile> tiles, int refreshStamp, List<Vector3Int> result)
+        {
+            result.Clear();
+
+            foreach ((Vector3Int id, Tile tile) in tiles)
+                if (tile.Texture == null && tile.LastUsed != refreshStamp)
+                    result.Add(id);
+        }
+
+        /// <summary>
         ///     Fills <paramref name="result" /> with the tiles to evict to get back to <paramref name="maxCachedTiles" />, oldest first.
         ///     Tiles used in the refresh <paramref name="refreshStamp" /> are never evicted.
         /// </summary>
@@ -188,21 +202,78 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
                 result.RemoveRange(excess, result.Count - excess);
         }
 
-        private void Use(Vector3Int id)
+        /// <summary>Waits until no camera has changed for <see cref="SETTLE_SECONDS" />, then requests the visible tiles that are missing.</summary>
+        private async UniTaskVoid RequestWhenSettledAsync(CancellationToken ct)
         {
-            if (!tiles.TryGetValue(id, out Tile? tile))
+            settlePending = true;
+
+            try
             {
-                tile = new Tile(RentView());
-                tiles.Add(id, tile);
-                LoadAsync(id, tile).Forget();
+                while (true)
+                {
+                    float remaining = SETTLE_SECONDS - (UnityEngine.Time.realtimeSinceStartup - lastCameraChangeTime);
+
+                    if (remaining <= 0f)
+                        break;
+
+                    await UniTask.Delay(TimeSpan.FromSeconds(remaining), ignoreTimeScale: true, cancellationToken: ct);
+                }
+
+                if (template.transform.parent.gameObject.activeInHierarchy)
+                    VisitVisibleTiles(request: true);
             }
-            else if (tile.FailedAt is { } failedAt && UnityEngine.Time.realtimeSinceStartup - failedAt >= RETRY_FAILED_TILE_AFTER_SECONDS)
+            catch (OperationCanceledException) { }
+            finally { settlePending = false; }
+        }
+
+        /// <summary>Marks every tile inside an active camera as used in the current refresh and, when <paramref name="request" />, loads the missing ones.</summary>
+        private void VisitVisibleTiles(bool request)
+        {
+            float bundledPixelsPerUnit = TILE_PIXELS / baseChunkSize;
+            IReadOnlyList<CameraState> cameras = cullingController.CameraStates;
+
+            for (var c = 0; c < cameras.Count; c++)
             {
-                tile.FailedAt = null;
-                LoadAsync(id, tile).Forget();
+                CameraState camera = cameras[c];
+
+                if (!camera.CameraController.Camera.isActiveAndEnabled)
+                    continue;
+
+                float screenPixelsPerUnit = camera.CameraController.GetRenderTexture().height / camera.Rect.height;
+                int level = LevelFor(screenPixelsPerUnit, bundledPixelsPerUnit);
+
+                if (level < MIN_LEVEL)
+                    continue;
+
+                level = LevelWithinTileBudget(camera.Rect, level, gridTopLeft, baseChunkSize, out RectInt range);
+
+                for (int j = range.yMin; j < range.yMax; j++)
+                for (int i = range.xMin; i < range.xMax; i++)
+                    Use(new Vector3Int(i, j, level), request);
+            }
+        }
+
+        private void Use(Vector3Int id, bool request)
+        {
+            if (tiles.TryGetValue(id, out Tile? tile))
+            {
+                tile.LastUsed = refreshStamp;
+
+                if (request && tile.FailedAt is { } failedAt && UnityEngine.Time.realtimeSinceStartup - failedAt >= RETRY_FAILED_TILE_AFTER_SECONDS)
+                {
+                    tile.FailedAt = null;
+                    LoadAsync(id, tile).Forget();
+                }
+
+                return;
             }
 
-            tile.LastUsed = refreshStamp;
+            if (!request)
+                return;
+
+            tile = new Tile(RentView()) { LastUsed = refreshStamp };
+            tiles.Add(id, tile);
+            LoadAsync(id, tile).Forget();
         }
 
         private async UniTaskVoid LoadAsync(Vector3Int id, Tile tile)
@@ -239,7 +310,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
                 return;
             }
 
-            // The tile was evicted while downloading: it no longer owns anything, so the texture is dropped here.
+            // The tile was dropped while downloading: it no longer owns anything, so the texture is destroyed here.
             if (ct.IsCancellationRequested)
             {
                 UnityObjectUtils.SafeDestroy(texture);

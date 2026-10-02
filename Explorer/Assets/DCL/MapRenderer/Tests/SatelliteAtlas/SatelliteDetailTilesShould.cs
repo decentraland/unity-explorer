@@ -15,14 +15,17 @@ namespace DCL.MapRenderer.Tests.SatelliteAtlas
 
         private readonly Dictionary<Vector3Int, SatelliteDetailTiles.Tile> tiles = new ();
         private readonly List<KeyValuePair<int, Vector3Int>> evictions = new ();
+        private readonly List<Vector3Int> unusedLoads = new ();
         private GameObject viewObject;
         private AtlasChunk view;
+        private Texture2D loadedTexture;
 
         [SetUp]
         public void SetUp()
         {
             viewObject = new GameObject(nameof(SatelliteDetailTilesShould));
             view = viewObject.AddComponent<AtlasChunk>();
+            loadedTexture = new Texture2D(1, 1);
         }
 
         [TearDown]
@@ -30,6 +33,7 @@ namespace DCL.MapRenderer.Tests.SatelliteAtlas
         {
             tiles.Clear();
             Object.DestroyImmediate(viewObject);
+            Object.DestroyImmediate(loadedTexture);
         }
 
         [TestCase(0.5f, 3)]
@@ -117,6 +121,22 @@ namespace DCL.MapRenderer.Tests.SatelliteAtlas
         }
 
         [Test]
+        public void DropOnlyTheUnfinishedLoadsOfTilesOutOfView()
+        {
+            // Arrange
+            AddTile(0, lastUsed: 1); // loading, out of view
+            AddTile(1, lastUsed: CURRENT_REFRESH); // loading, in view
+            AddTile(2, lastUsed: 1, loaded: true); // loaded, out of view: kept for the cache
+
+            // Act
+            SatelliteDetailTiles.CollectUnusedLoads(tiles, CURRENT_REFRESH, unusedLoads);
+
+            // Assert
+            Assert.AreEqual(1, unusedLoads.Count);
+            Assert.AreEqual(TileId(0), unusedLoads[0]);
+        }
+
+        [Test]
         public void EvictNothingWithinTheCap()
         {
             // Arrange
@@ -169,9 +189,9 @@ namespace DCL.MapRenderer.Tests.SatelliteAtlas
         private static Vector3Int TileId(int i) =>
             new (i, 0, SatelliteDetailTiles.MIN_LEVEL);
 
-        private void AddTile(int i, int lastUsed)
+        private void AddTile(int i, int lastUsed, bool loaded = false)
         {
-            tiles.Add(TileId(i), new SatelliteDetailTiles.Tile(view) { LastUsed = lastUsed });
+            tiles.Add(TileId(i), new SatelliteDetailTiles.Tile(view) { LastUsed = lastUsed, Texture = loaded ? loadedTexture : null });
         }
     }
 }
