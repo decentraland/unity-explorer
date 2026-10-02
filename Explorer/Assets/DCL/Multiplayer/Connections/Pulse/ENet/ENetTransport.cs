@@ -134,24 +134,37 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
                 return literal.ToString();
 
             IPAddress[] candidates;
+            Exception? lookupError;
 
             try
             {
-                candidates = await Dns.GetHostAddressesAsync(hostName)
-                                      .AsUniTask()
-                                      .AttachExternalCancellation(ct)
-                                      .Timeout(TimeSpan.FromMilliseconds(options.ConnectTimeoutMs));
+                (candidates, lookupError) = await LookupAddressesAsync(hostName)
+                                                 .AsUniTask()
+                                                 .AttachExternalCancellation(ct)
+                                                 .Timeout(TimeSpan.FromMilliseconds(options.ConnectTimeoutMs));
             }
             catch (Exception e) when (e is not OperationCanceledException)
             {
                 throw new PulseHostResolutionException(hostName, e);
             }
 
+            if (lookupError != null)
+                throw new PulseHostResolutionException(hostName, lookupError);
+
             foreach (IPAddress candidate in candidates)
                 if (candidate.AddressFamily == AddressFamily.InterNetwork)
                     return candidate.ToString();
 
             throw new PulseHostResolutionException(hostName);
+        }
+
+        private static async Task<(IPAddress[] addresses, Exception? error)> LookupAddressesAsync(string hostName)
+        {
+            try { return (await Dns.GetHostAddressesAsync(hostName), null); }
+            // Fixes: https://github.com/decentraland/unity-explorer/issues/10043
+            // We cannot propagate exception directly.
+            // task.Timeout() on called side, orphans any exception handling that occurs after the timeout
+            catch (Exception e) { return (Array.Empty<IPAddress>(), e); }
         }
 
         internal async UniTask ForceDisconnectAsync()
