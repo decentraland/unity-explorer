@@ -162,6 +162,16 @@ No Library cache found
         self.assertEqual([(r['key'], r['status']) for r in restores], [('library_a', 'unknown'), ('workspace_b', 'hit')])
         self.assertEqual(restores[1]['extraction_seconds'], 20)
 
+    def test_earlier_ambiguous_extraction_wins_over_later_single_pending_marker(self):
+        report = parse('''[2026-01-01T00:00:00Z] Fetching Cached library_a
+[2026-01-01T00:00:00Z] Fetching Cached workspace_b
+[2026-01-01T00:00:10Z] Extracting cache files to /example
+No Library cache found
+[2026-01-01T00:00:15Z] Extracting cache files to /example
+[2026-01-01T00:00:30Z] workspace_b successfully fetched and unpacked from remote cache''')
+        workspace = report['cache']['restores'][1]
+        self.assertEqual((workspace['fetch_to_extraction_seconds'], workspace['extraction_seconds']), (10, 20))
+
     def test_trailing_punctuation_is_not_part_of_cache_key(self):
         report = parse('''[2026-01-01T00:00:00Z] Fetching Cached library_a.
 [2026-01-01T00:00:30Z] library_a successfully fetched and unpacked from remote cache.''')

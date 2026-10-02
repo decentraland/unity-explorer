@@ -37,21 +37,17 @@ def elapsed(start, end):
     return round(seconds, 3) if seconds >= 0 else None
 
 
-def new_restore(kind, key=None, started_at=None):
-    return {'kind': kind, 'key': key, 'status': 'unknown', 'started_at': started_at,
-            'extraction_started_at': None, 'finished_at': None}
-
-
 def parse_log(lines):
     passes, restores, archives = [], [], []
     shader = legacy_pass = None
     shader_markers = unparsed_summaries = 0
     latest_by_kind = {}
-    ambiguous_extractions = []
+    extractions = []
     archive = None
 
     def start_restore(kind, key=None, started_at=None):
-        restore = new_restore(kind, key, started_at)
+        restore = {'kind': kind, 'key': key, 'status': 'unknown', 'started_at': started_at,
+                   'extraction_started_at': None, 'finished_at': None}
         restores.append(restore)
         latest_by_kind[kind] = restore
         return restore
@@ -91,13 +87,10 @@ def parse_log(lines):
             if restore['status'] == 'unknown':
                 restore['status'] = 'miss'
         if 'Extracting cache files to' in line:
-            # Extraction lines have no cache key; only a single pending attempt is unambiguous.
+            # Extraction lines have no cache key; resolved in log order once every outcome is known.
             pending = [item for item in latest_by_kind.values() if item['status'] == 'unknown']
-            if len(pending) == 1 and pending[0]['extraction_started_at'] is None:
-                pending[0]['extraction_started_at'] = at
-            elif len(pending) > 1:
-                # Resolved after parsing, once every pending attempt's outcome is known.
-                ambiguous_extractions.append((at, pending))
+            if pending:
+                extractions.append((at, pending))
         match = RESTORED.search(line)
         if match:
             kind = match[2].casefold()
@@ -119,10 +112,11 @@ def parse_log(lines):
                 if item['postbuild_finished_at'] is None:
                     item['postbuild_finished_at'] = at
 
-    for at, candidates in ambiguous_extractions:
-        hits = [item for item in candidates if item['status'] == 'hit']
-        if len(hits) == 1 and hits[0]['extraction_started_at'] is None:
-            hits[0]['extraction_started_at'] = at
+    for at, candidates in extractions:
+        # A single pending attempt is unambiguous; otherwise only one that ended as a hit.
+        owners = candidates if len(candidates) == 1 else [item for item in candidates if item['status'] == 'hit']
+        if len(owners) == 1 and owners[0]['extraction_started_at'] is None:
+            owners[0]['extraction_started_at'] = at
     for item in restores:
         item['restore_seconds'] = elapsed(item['started_at'], item['finished_at']) if item['status'] == 'hit' else None
         item['fetch_to_extraction_seconds'] = elapsed(item['started_at'], item['extraction_started_at'])
