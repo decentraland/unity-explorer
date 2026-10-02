@@ -27,7 +27,9 @@ namespace DCL.SDKComponents.MediaStream.Tests
     public class LivekitPlayerShould
     {
         private const string BOT = "presentation-bot:room:1";
+        private const string OTHER_BOT = "presentation-bot:other:1";
         private const string PRESENTER = "stream:place:1";
+        private const string SECOND_PRESENTER = "stream:place:2";
         private const string OTHER = "0xOTHER";
         private const string STREAMER = "0xSTREAMER";
         private const string CAMERA_SID = "TR_camera";
@@ -39,6 +41,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
         private const string SLIDE_VIDEO = "{\"geometry\":{\"x\":480,\"y\":270,\"width\":960,\"height\":540}}";
 
         private static readonly Vector2 FLIPPED = new (1f, -1f);
+        private static readonly FieldInfo PARTICIPANT_INFO = typeof(LKParticipant).GetField("info", BindingFlags.Instance | BindingFlags.NonPublic)!;
 
         private IRoom room = null!;
         private IParticipantsHub participantsHub = null!;
@@ -270,6 +273,69 @@ namespace DCL.SDKComponents.MediaStream.Tests
         }
 
         [Test]
+        public void NotComposeOtherBot_WhenAddressIsPinnedToLegacyBot()
+        {
+            AddParticipant(OTHER_BOT, V2_METADATA);
+            LKParticipant bot = AddParticipant(BOT, LEGACY_METADATA);
+            Subscribe(bot, AddTrack(bot, SCREEN_SID, TrackKind.KindVideo, TrackSource.SourceScreenshare));
+            LivekitPlayer p = NewV2Player();
+
+            p.OpenMedia(LivekitAddress.FromUserStream(new UserStream(BOT, SCREEN_SID)));
+            p.EnsureVideoIsPlaying();
+
+            Assert.AreEqual(FLIPPED, p.CurrentTextureScale);
+            videoStreams.Received().ActiveStream(new StreamKey(BOT, SCREEN_SID));
+        }
+
+        [Test]
+        public void ComposePinnedBot_WhenAnotherBotEnumeratesFirst()
+        {
+            AddParticipant(OTHER_BOT, V2("null", "idle", width: 1280, height: 720));
+            LKParticipant bot = AddParticipant(BOT, V2_METADATA);
+            Subscribe(bot, AddTrack(bot, "TR_pv", TrackKind.KindVideo, TrackSource.SourceScreenshare, LiveKitMediaExtensions.PRESENTATION_VIDEO_TRACK_NAME));
+            LivekitPlayer p = NewV2Player();
+
+            p.OpenMedia(LivekitAddress.FromUserStream(new UserStream(BOT, "TR_pv")));
+            p.EnsureVideoIsPlaying();
+
+            AssertComposite(p.LastTexture());
+            videoStreams.Received().ActiveStream(new StreamKey(BOT, "TR_pv"));
+        }
+
+        [Test]
+        public void NotComposeOtherBot_WhenPinnedBotLeaves()
+        {
+            LKParticipant otherBot = AddParticipant(OTHER_BOT, LEGACY_METADATA);
+            LKParticipant bot = AddParticipant(BOT, V2_METADATA);
+            LivekitPlayer p = NewV2Player();
+            p.OpenMedia(LivekitAddress.FromUserStream(new UserStream(BOT, "TR_old")));
+            p.EnsureVideoIsPlaying();
+            AssertComposite(p.LastTexture());
+
+            RemoveParticipant(bot);
+            p.EnsureVideoIsPlaying();
+            SetMetadata(otherBot, V2_METADATA);
+            p.EnsureVideoIsPlaying();
+
+            Assert.AreNotEqual(Vector2.one, p.CurrentTextureScale);
+            Assert.IsNotInstanceOf<RenderTexture>(p.LastTexture());
+        }
+
+        [Test]
+        public void NotReadParticipantMetadata_WhenPinnedToNonBot()
+        {
+            LKParticipant other = AddParticipant(OTHER, "{");
+            Subscribe(other, AddTrack(other, "TR_other", TrackKind.KindVideo, TrackSource.SourceCamera));
+            LivekitPlayer p = NewV2Player();
+
+            p.OpenMedia(LivekitAddress.FromUserStream(new UserStream(OTHER, "TR_other")));
+            p.EnsureVideoIsPlaying();
+
+            LogAssert.NoUnexpectedReceived();
+            videoStreams.Received().ActiveStream(new StreamKey(OTHER, "TR_other"));
+        }
+
+        [Test]
         public void OpenPreSubscribedTracks_WhenPlayerCreatedAfterSubscription()
         {
             LKParticipant bot = AddParticipant(BOT, V2_METADATA);
@@ -318,6 +384,40 @@ namespace DCL.SDKComponents.MediaStream.Tests
         }
 
         [Test]
+        public void DrawVideo_WhenSameTextureIsUpdated()
+        {
+            (LivekitPlayer p, LKParticipant bot, _, Texture2D frame) = StartVideo();
+
+            frame.IncrementUpdateCount();
+            SetMetadata(bot, V2("0", "playing", 1));
+            p.EnsureVideoIsPlaying();
+            p.LastTexture();
+
+            Assert.IsTrue(p.lastComposeDrewVideo);
+        }
+
+        [Test]
+        public void NotDrawCachedFrame_WhenVideoStreamRebinds()
+        {
+            LKParticipant bot = AddParticipant(BOT, V2("0", "playing"));
+            Texture2D stale = SubscribeWithFrame(bot, AddTrack(bot, "TR_pv", TrackKind.KindVideo, TrackSource.SourceScreenshare, LiveKitMediaExtensions.PRESENTATION_VIDEO_TRACK_NAME));
+            LivekitPlayer p = NewV2Player();
+            p.OpenMedia(LivekitAddress.CurrentStream());
+            p.LastTexture();
+
+            p.EnsureVideoIsPlaying();
+            p.LastTexture();
+            Assert.IsFalse(p.lastComposeDrewVideo);
+
+            stale.IncrementUpdateCount();
+            SetMetadata(bot, V2("0", "playing", 1));
+            p.EnsureVideoIsPlaying();
+            p.LastTexture();
+
+            Assert.IsTrue(p.lastComposeDrewVideo);
+        }
+
+        [Test]
         public void HideCamera_WhenPresenterCameraIsMuted()
         {
             AddParticipant(BOT, V2_METADATA);
@@ -331,6 +431,72 @@ namespace DCL.SDKComponents.MediaStream.Tests
 
             videoStreams.Received().ActiveStream(new StreamKey(PRESENTER, "TR_cam"));
             camera.DidNotReceive().DecodeLastFrame();
+        }
+
+        [Test]
+        public void DecodePresenterCamera_WhenCameraIsLive()
+        {
+            AddParticipant(BOT, V2_METADATA);
+            LKParticipant presenter = AddParticipant(PRESENTER);
+            IVideoStream camera = Subscribe(presenter, AddTrack(presenter, "TR_cam", TrackKind.KindVideo, TrackSource.SourceCamera));
+            LivekitPlayer p = NewV2Player();
+
+            p.OpenMedia(LivekitAddress.CurrentStream());
+            p.EnsureVideoIsPlaying();
+            AssertComposite(p.LastTexture());
+
+            camera.Received().DecodeLastFrame();
+        }
+
+        [Test]
+        public void RebindPresenterCamera_WhenPresenterIdentityChanges()
+        {
+            LKParticipant bot = AddParticipant(BOT, V2_METADATA);
+            LKParticipant secondPresenter = AddParticipant(SECOND_PRESENTER);
+            Subscribe(secondPresenter, AddTrack(secondPresenter, "TR_cam2", TrackKind.KindVideo, TrackSource.SourceCamera));
+            LivekitPlayer p = NewV2Player();
+            p.OpenMedia(LivekitAddress.CurrentStream());
+            p.EnsureVideoIsPlaying();
+            videoStreams.DidNotReceive().ActiveStream(new StreamKey(SECOND_PRESENTER, "TR_cam2"));
+
+            SetMetadata(bot, V2("null", "idle", presenter: SECOND_PRESENTER));
+            p.EnsureVideoIsPlaying();
+
+            videoStreams.Received().ActiveStream(new StreamKey(SECOND_PRESENTER, "TR_cam2"));
+        }
+
+        [Test]
+        public void ReleaseComposite_WhenFallingBackToLegacy()
+        {
+            LKParticipant bot = AddParticipant(BOT, V2_METADATA);
+            LivekitPlayer p = NewV2Player();
+            p.OpenMedia(LivekitAddress.CurrentStream());
+            p.EnsureVideoIsPlaying();
+            Texture? composite = p.LastTexture();
+            AssertComposite(composite);
+
+            SetMetadata(bot, LEGACY_METADATA);
+            p.EnsureVideoIsPlaying();
+
+            Assert.IsTrue(composite == null);
+        }
+
+        [Test]
+        public void FallBackToLegacy_WhenBotLeaves()
+        {
+            LKParticipant bot = AddParticipant(BOT, V2_METADATA);
+            LKParticipant streamer = AddParticipant(STREAMER);
+            Subscribe(streamer, AddTrack(streamer, CAMERA_SID, TrackKind.KindVideo, TrackSource.SourceCamera));
+            LivekitPlayer p = NewV2Player();
+            p.OpenMedia(LivekitAddress.CurrentStream());
+            p.EnsureVideoIsPlaying();
+            AssertComposite(p.LastTexture());
+
+            RemoveParticipant(bot);
+            p.EnsureVideoIsPlaying();
+
+            Assert.AreEqual(FLIPPED, p.CurrentTextureScale);
+            videoStreams.Received().ActiveStream(new StreamKey(STREAMER, CAMERA_SID));
         }
 
         [Test]
@@ -353,19 +519,37 @@ namespace DCL.SDKComponents.MediaStream.Tests
         [Test]
         public void ReleasePresentationStreams_OnReconnect()
         {
-            LKParticipant bot = AddParticipant(BOT, V2_METADATA);
-            Subscribe(bot, AddTrack(bot, "TR_pv", TrackKind.KindVideo, TrackSource.SourceScreenshare, LiveKitMediaExtensions.PRESENTATION_VIDEO_TRACK_NAME));
-            LKParticipant presenter = AddParticipant(PRESENTER);
-            Subscribe(presenter, AddTrack(presenter, "TR_cam", TrackKind.KindVideo, TrackSource.SourceCamera));
-            LivekitPlayer p = NewV2Player();
-            p.OpenMedia(LivekitAddress.CurrentStream());
-            p.EnsureVideoIsPlaying();
-
-            room.ConnectionUpdated += Raise.Event<ConnectionDelegate>(room, ConnectionUpdate.Reconnected, null);
-            p.EnsureVideoIsPlaying();
+            ComposeThenReconnect();
 
             videoStreams.Received().Release(new StreamKey(BOT, "TR_pv"));
             videoStreams.Received().Release(new StreamKey(PRESENTER, "TR_cam"));
+        }
+
+        [Test]
+        public void ReopenPresentationStreams_AfterReconnect()
+        {
+            ComposeThenReconnect();
+
+            videoStreams.Received(2).ActiveStream(new StreamKey(BOT, "TR_pv"));
+            videoStreams.Received(2).ActiveStream(new StreamKey(PRESENTER, "TR_cam"));
+        }
+
+        [Test]
+        public void NotThrow_WhenOpeningMediaDuringReconnect()
+        {
+            LKParticipant bot = AddParticipant(BOT, V2_METADATA);
+            LivekitPlayer p = NewV2Player();
+            object? connectedInfo = PARTICIPANT_INFO.GetValue(bot);
+            room.Info.ConnectionState.Returns(LKConnectionState.ConnReconnecting);
+            PARTICIPANT_INFO.SetValue(bot, null);
+
+            Assert.DoesNotThrow(() => p.OpenMedia(LivekitAddress.CurrentStream()));
+
+            PARTICIPANT_INFO.SetValue(bot, connectedInfo);
+            room.Info.ConnectionState.Returns(LKConnectionState.ConnConnected);
+            p.EnsureVideoIsPlaying();
+
+            AssertComposite(p.LastTexture());
         }
 
         [Test]
@@ -438,6 +622,19 @@ namespace DCL.SDKComponents.MediaStream.Tests
 
         private (LivekitPlayer player, LKParticipant bot) DrawSecondFrame()
         {
+            (LivekitPlayer p, LKParticipant bot, IVideoStream video, _) = StartVideo();
+
+            Texture2D second = NewFrame();
+            video.DecodeLastFrame().Returns(second);
+            SetMetadata(bot, V2("0", "playing", 1));
+            p.EnsureVideoIsPlaying();
+            p.LastTexture();
+
+            return (p, bot);
+        }
+
+        private (LivekitPlayer player, LKParticipant bot, IVideoStream video, Texture2D first) StartVideo()
+        {
             LKParticipant bot = AddParticipant(BOT, V2("null", "idle"));
             IVideoStream video = Subscribe(bot, AddTrack(bot, "TR_pv", TrackKind.KindVideo, TrackSource.SourceScreenshare, LiveKitMediaExtensions.PRESENTATION_VIDEO_TRACK_NAME));
             Texture2D first = NewFrame();
@@ -452,17 +649,25 @@ namespace DCL.SDKComponents.MediaStream.Tests
             p.LastTexture();
             Assert.IsFalse(p.lastComposeDrewVideo);
 
-            Texture2D second = NewFrame();
-            video.DecodeLastFrame().Returns(second);
-            SetMetadata(bot, V2("0", "playing", 1));
-            p.EnsureVideoIsPlaying();
-            p.LastTexture();
-
-            return (p, bot);
+            return (p, bot, video, first);
         }
 
-        private static string V2(string playingVideoIndex, string videoState, int currentSlide = 0) =>
-            $"{{\"role\":\"presentation\",\"currentSlide\":{currentSlide},\"slide\":{{\"url\":\"{SLIDE_URL}\",\"width\":1920,\"height\":1080}},\"presenterIdentity\":\"{PRESENTER}\","
+        private void ComposeThenReconnect()
+        {
+            LKParticipant bot = AddParticipant(BOT, V2_METADATA);
+            Subscribe(bot, AddTrack(bot, "TR_pv", TrackKind.KindVideo, TrackSource.SourceScreenshare, LiveKitMediaExtensions.PRESENTATION_VIDEO_TRACK_NAME));
+            LKParticipant presenter = AddParticipant(PRESENTER);
+            Subscribe(presenter, AddTrack(presenter, "TR_cam", TrackKind.KindVideo, TrackSource.SourceCamera));
+            LivekitPlayer p = NewV2Player();
+            p.OpenMedia(LivekitAddress.CurrentStream());
+            p.EnsureVideoIsPlaying();
+
+            room.ConnectionUpdated += Raise.Event<ConnectionDelegate>(room, ConnectionUpdate.Reconnected, null);
+            p.EnsureVideoIsPlaying();
+        }
+
+        private static string V2(string playingVideoIndex, string videoState, int currentSlide = 0, string presenter = PRESENTER, int width = 1920, int height = 1080) =>
+            $"{{\"role\":\"presentation\",\"currentSlide\":{currentSlide},\"slide\":{{\"url\":\"{SLIDE_URL}\",\"width\":{width},\"height\":{height}}},\"presenterIdentity\":\"{presenter}\","
             + $"\"playingVideoIndex\":{playingVideoIndex},\"videoState\":\"{videoState}\",\"slideVideos\":[{SLIDE_VIDEO},{SLIDE_VIDEO}],"
             + "\"overlay\":{\"x\":0,\"y\":1,\"size\":\"small\"}}";
 
@@ -476,13 +681,19 @@ namespace DCL.SDKComponents.MediaStream.Tests
         private LKParticipant AddParticipant(string identity, string metadata = "")
         {
             var participant = new LKParticipant();
-
-            typeof(LKParticipant).GetField("info", BindingFlags.Instance | BindingFlags.NonPublic)!
-                                 .SetValue(participant, new ParticipantInfo { Identity = identity, Metadata = metadata });
+            PARTICIPANT_INFO.SetValue(participant, new ParticipantInfo { Identity = identity, Metadata = metadata });
 
             remoteParticipants[identity] = participant;
             participantsHub.RemoteParticipant(identity).Returns(participant);
             return participant;
+        }
+
+        private void RemoveParticipant(LKParticipant participant)
+        {
+            string identity = participant.Identity;
+            remoteParticipants.Remove(identity);
+            participantsHub.RemoteParticipant(identity).Returns((LKParticipant?)null);
+            participantsHub.UpdatesFromParticipant += Raise.Event<ParticipantDelegate>(participant, UpdateFromParticipant.Disconnected);
         }
 
         private void SetMetadata(LKParticipant participant, string metadata)
