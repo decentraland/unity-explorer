@@ -52,6 +52,9 @@ newly added url with a hand-written domain is caught.
 - **The startup trusted-realm gate** (`MainSceneLoader.IsTrustedRealmAsync`): every host
   under the custom base domain is trusted, so a `--realm` on that deployment — catalyst or
   world — connects without the untrusted-realm confirmation. See below for why.
+- **Cast slide origin** (`SlideTextureCache`): presentation slides are fetched only from
+  `cast-presenter-service.<base-domain>`, so a custom deployment serves its own and
+  decentraland's are rejected. See [`cast.md`](cast.md#presentation-composition-cast-v2).
 - **The main-realm comms hostname** (`RealmController`): a custom deployment groups under
   its own `realm-provider.<base-domain>` rather than decentraland's main-realm island.
 - **comms-gatekeeper** stays independently overridable through `--gatekeeper-url`, which
