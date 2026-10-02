@@ -631,6 +631,7 @@ namespace DCL.Passport
 
         public override void Dispose()
         {
+            upscalingController.ReleaseFullRenderScale(badge3DPreviewCamera);
             passportErrorsController?.Hide(true);
             openPassportFromNotificationCts.SafeCancelAndDispose();
             characterPreviewLoadingCts.SafeCancelAndDispose();
@@ -677,7 +678,7 @@ namespace DCL.Passport
                 Profile? profile = await profileRepository.GetAsync(userId, 0, remoteMetadata.GetLambdaDomainOrNull(userId), ct,
                     batchBehaviour: IProfileRepository.FetchBehaviour.EnforceSingleGet | IProfileRepository.FetchBehaviour.DelayUntilResolved);
 
-                if (profile == null)
+                if (ct.IsCancellationRequested || profile == null)
                     return;
 
                 UpdateBackgroundColor(profile.UserNameColor);
