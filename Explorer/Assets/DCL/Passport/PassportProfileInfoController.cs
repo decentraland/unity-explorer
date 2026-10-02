@@ -10,7 +10,7 @@ namespace DCL.Passport
     public class PassportProfileInfoController
     {
         public event Action<Profile>? OnProfilePublished;
-        public event Action PublishError;
+        public event Action? PublishError;
 
         private readonly SelfProfile selfProfile;
 

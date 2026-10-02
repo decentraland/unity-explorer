@@ -1,9 +1,10 @@
 using REnum;
 using System;
+using System.Runtime.CompilerServices;
 
 namespace DCL.Profiles.Self
 {
-    public readonly struct FetchSucceeded
+    public readonly struct FetchSucceeded : IEquatable<FetchSucceeded>
     {
         public readonly UserId Address;
         public readonly Profile Profile;
@@ -14,11 +15,20 @@ namespace DCL.Profiles.Self
             Profile = profile;
         }
 
+        public bool Equals(FetchSucceeded other) =>
+            Address.Equals(other.Address) && ReferenceEquals(Profile, other.Profile);
+
+        public override bool Equals(object? obj) =>
+            obj is FetchSucceeded other && Equals(other);
+
+        public override int GetHashCode() =>
+            HashCode.Combine(Address, RuntimeHelpers.GetHashCode(Profile));
+
         public override string ToString() =>
             $"{Address.Value} v{Profile.Version}";
     }
 
-    public readonly struct FetchFailed
+    public readonly struct FetchFailed : IEquatable<FetchFailed>
     {
         public readonly UserId Address;
         public readonly ProfileFailure Failure;
@@ -29,11 +39,20 @@ namespace DCL.Profiles.Self
             Failure = failure;
         }
 
+        public bool Equals(FetchFailed other) =>
+            Address.Equals(other.Address) && Failure.Equals(other.Failure);
+
+        public override bool Equals(object? obj) =>
+            obj is FetchFailed other && Equals(other);
+
+        public override int GetHashCode() =>
+            HashCode.Combine(Address, Failure);
+
         public override string ToString() =>
             $"{Address.Value} {Failure}";
     }
 
-    public readonly struct DeploySucceeded
+    public readonly struct DeploySucceeded : IEquatable<DeploySucceeded>
     {
         public readonly UserId Address;
 
@@ -50,11 +69,20 @@ namespace DCL.Profiles.Self
             Saved = saved;
         }
 
+        public bool Equals(DeploySucceeded other) =>
+            Address.Equals(other.Address) && ReferenceEquals(Sent, other.Sent) && ReferenceEquals(Saved, other.Saved);
+
+        public override bool Equals(object? obj) =>
+            obj is DeploySucceeded other && Equals(other);
+
+        public override int GetHashCode() =>
+            HashCode.Combine(Address, RuntimeHelpers.GetHashCode(Sent), RuntimeHelpers.GetHashCode(Saved));
+
         public override string ToString() =>
             $"{Address.Value} sent v{Sent.Version} saved v{Saved.Version}";
     }
 
-    public readonly struct DeployFailed
+    public readonly struct DeployFailed : IEquatable<DeployFailed>
     {
         public readonly UserId Address;
 
@@ -70,11 +98,20 @@ namespace DCL.Profiles.Self
             Exception = exception;
         }
 
+        public bool Equals(DeployFailed other) =>
+            Address.Equals(other.Address) && ReferenceEquals(Sent, other.Sent) && ReferenceEquals(Exception, other.Exception);
+
+        public override bool Equals(object? obj) =>
+            obj is DeployFailed other && Equals(other);
+
+        public override int GetHashCode() =>
+            HashCode.Combine(Address, RuntimeHelpers.GetHashCode(Sent), RuntimeHelpers.GetHashCode(Exception));
+
         public override string ToString() =>
             $"{Address.Value} sent v{Sent.Version} {Exception.GetType().Name}: {Exception.Message}";
     }
 
-    public readonly struct DeployRequest
+    public readonly struct DeployRequest : IEquatable<DeployRequest>
     {
         public readonly RequestId Id;
         public readonly Profile Edited;
@@ -84,6 +121,15 @@ namespace DCL.Profiles.Self
             Id = id;
             Edited = edited;
         }
+
+        public bool Equals(DeployRequest other) =>
+            Id.Equals(other.Id) && ReferenceEquals(Edited, other.Edited);
+
+        public override bool Equals(object? obj) =>
+            obj is DeployRequest other && Equals(other);
+
+        public override int GetHashCode() =>
+            HashCode.Combine(Id, RuntimeHelpers.GetHashCode(Edited));
 
         public override string ToString() =>
             $"{Id} v{Edited.Version}";

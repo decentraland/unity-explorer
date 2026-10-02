@@ -1,8 +1,10 @@
 using REnum;
+using System;
+using System.Runtime.CompilerServices;
 
 namespace DCL.Profiles.Self
 {
-    public readonly struct DeployCmd
+    public readonly struct DeployCmd : IEquatable<DeployCmd>
     {
         public readonly UserId Address;
         public readonly Profile Profile;
@@ -16,6 +18,15 @@ namespace DCL.Profiles.Self
             Profile = profile;
             Version = version;
         }
+
+        public bool Equals(DeployCmd other) =>
+            Address.Equals(other.Address) && ReferenceEquals(Profile, other.Profile) && Version == other.Version;
+
+        public override bool Equals(object? obj) =>
+            obj is DeployCmd other && Equals(other);
+
+        public override int GetHashCode() =>
+            HashCode.Combine(Address, RuntimeHelpers.GetHashCode(Profile), Version);
 
         public override string ToString() =>
             $"{Address.Value} v{Version}";

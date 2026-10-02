@@ -136,7 +136,7 @@ namespace DCL.Profiles.Self
             runtime.Send(SelfProfileMsg.IdentityCleared());
 
         private RequestId NextRequestId() =>
-            new (Interlocked.Increment(ref lastRequestId));
+            new (Interlocked.Increment(ref lastRequestId)); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
 
         /// <summary>Applies the queued messages once per frame, in the Initialization phase, until disposed.</summary>
         private async UniTaskVoid DrainLoopAsync(CancellationToken ct)

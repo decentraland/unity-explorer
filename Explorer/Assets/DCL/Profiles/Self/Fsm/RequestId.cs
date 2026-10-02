@@ -27,7 +27,7 @@ namespace DCL.Profiles.Self
     }
 
     /// <summary>Immutable list of requests waiting on the same activity. The default value is empty.</summary>
-    public readonly struct RequestIds
+    public readonly struct RequestIds : IEquatable<RequestIds>
     {
         private readonly RequestId[]? ids;
 
@@ -38,14 +38,14 @@ namespace DCL.Profiles.Self
 
         public int Count => ids?.Length ?? 0;
 
-        public RequestId this[int index] => Ids[index];
+        public RequestId this[int index] => idsOrEmpty[index];
 
-        private RequestId[] Ids => ids ?? Array.Empty<RequestId>();
+        private RequestId[] idsOrEmpty => ids ?? Array.Empty<RequestId>();
 
         public RequestIds Add(RequestId id)
         {
             var next = new RequestId[Count + 1];
-            Array.Copy(Ids, next, Count);
+            Array.Copy(idsOrEmpty, next, Count);
             next[Count] = id;
             return new RequestIds(next);
         }
@@ -53,15 +53,40 @@ namespace DCL.Profiles.Self
         /// <summary>The same list when the id is not in it.</summary>
         public RequestIds Remove(RequestId id)
         {
-            int index = Array.IndexOf(Ids, id);
+            int index = Array.IndexOf(idsOrEmpty, id);
 
             if (index < 0)
                 return this;
 
             var next = new RequestId[Count - 1];
-            Array.Copy(Ids, 0, next, 0, index);
-            Array.Copy(Ids, index + 1, next, index, Count - index - 1);
+            Array.Copy(idsOrEmpty, 0, next, 0, index);
+            Array.Copy(idsOrEmpty, index + 1, next, index, Count - index - 1);
             return new RequestIds(next);
+        }
+
+        public bool Equals(RequestIds other)
+        {
+            if (Count != other.Count)
+                return false;
+
+            for (var i = 0; i < Count; i++)
+                if (!idsOrEmpty[i].Equals(other.idsOrEmpty[i]))
+                    return false;
+
+            return true;
+        }
+
+        public override bool Equals(object? obj) =>
+            obj is RequestIds other && Equals(other);
+
+        public override int GetHashCode()
+        {
+            var hash = new HashCode();
+
+            for (var i = 0; i < Count; i++)
+                hash.Add(idsOrEmpty[i]);
+
+            return hash.ToHashCode();
         }
 
         public override string ToString() =>
@@ -80,11 +105,11 @@ namespace DCL.Profiles.Self
 
         public int Count => entries?.Length ?? 0;
 
-        private (RequestId Id, T Result)[] Entries => entries ?? Array.Empty<(RequestId Id, T Result)>();
+        private (RequestId Id, T Result)[] entriesOrEmpty => entries ?? Array.Empty<(RequestId Id, T Result)>();
 
         public bool TryGet(RequestId id, out T result)
         {
-            foreach ((RequestId Id, T Result) entry in Entries)
+            foreach ((RequestId Id, T Result) entry in entriesOrEmpty)
             {
                 if (!entry.Id.Equals(id))
                     continue;
@@ -100,7 +125,7 @@ namespace DCL.Profiles.Self
         public RequestResults<T> With(RequestId id, T result)
         {
             var next = new (RequestId Id, T Result)[Count + 1];
-            Array.Copy(Entries, next, Count);
+            Array.Copy(entriesOrEmpty, next, Count);
             next[Count] = (id, result);
             return new RequestResults<T>(next);
         }
@@ -111,7 +136,7 @@ namespace DCL.Profiles.Self
             int index = -1;
 
             for (var i = 0; i < Count; i++)
-                if (Entries[i].Id.Equals(id))
+                if (entriesOrEmpty[i].Id.Equals(id))
                 {
                     index = i;
                     break;
@@ -121,8 +146,8 @@ namespace DCL.Profiles.Self
                 return this;
 
             var next = new (RequestId Id, T Result)[Count - 1];
-            Array.Copy(Entries, 0, next, 0, index);
-            Array.Copy(Entries, index + 1, next, index, Count - index - 1);
+            Array.Copy(entriesOrEmpty, 0, next, 0, index);
+            Array.Copy(entriesOrEmpty, index + 1, next, index, Count - index - 1);
             return new RequestResults<T>(next);
         }
 

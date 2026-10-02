@@ -337,7 +337,7 @@ namespace DCL.Profiles.Tests
             (SelfProfileModel next, _) = SelfProfileModel.Update(model, SelfProfileMsg.FromDeployProfileOnEditRequested(new DeployRequest(later, NewProfile(5))));
 
             // Assert
-            Deploying deploying = AssertDeploying(AssertIdentified(next).Activity, out _);
+            Deploying deploying = AssertDeploying(AssertIdentified(next).Activity);
             Assert.That(deploying.Requests.Count, Is.EqualTo(2));
             Assert.That(deploying.Requests[0], Is.EqualTo(DEPLOY));
             Assert.That(deploying.Requests[1], Is.EqualTo(later));
@@ -756,15 +756,14 @@ namespace DCL.Profiles.Tests
 
         private static Deploying AssertDeploying(in ProfileActivity activity, Profile pending)
         {
-            Deploying deploying = AssertDeploying(activity, out _);
+            Deploying deploying = AssertDeploying(activity);
             Assert.That(deploying.Pending, Is.SameAs(pending));
             return deploying;
         }
 
-        private static Deploying AssertDeploying(in ProfileActivity activity, out Profile pending)
+        private static Deploying AssertDeploying(in ProfileActivity activity)
         {
             Assert.That(activity.IsDeploying(out Deploying deploying), Is.True, $"expected Deploying, got {activity}");
-            pending = deploying.Pending;
             return deploying;
         }
 

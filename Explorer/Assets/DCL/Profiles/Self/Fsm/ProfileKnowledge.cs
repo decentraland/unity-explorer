@@ -1,5 +1,6 @@
 using REnum;
 using System;
+using System.Runtime.CompilerServices;
 
 namespace DCL.Profiles.Self
 {
@@ -12,7 +13,7 @@ namespace DCL.Profiles.Self
         Malformed,
     }
 
-    public readonly struct ProfileFailure
+    public readonly struct ProfileFailure : IEquatable<ProfileFailure>
     {
         public readonly FailureKind Kind;
         public readonly Exception Exception;
@@ -22,6 +23,15 @@ namespace DCL.Profiles.Self
             Kind = kind;
             Exception = exception;
         }
+
+        public bool Equals(ProfileFailure other) =>
+            Kind == other.Kind && ReferenceEquals(Exception, other.Exception);
+
+        public override bool Equals(object? obj) =>
+            obj is ProfileFailure other && Equals(other);
+
+        public override int GetHashCode() =>
+            HashCode.Combine((int)Kind, RuntimeHelpers.GetHashCode(Exception));
 
         public override string ToString() =>
             $"{Kind} {Exception.GetType().Name}: {Exception.Message}";

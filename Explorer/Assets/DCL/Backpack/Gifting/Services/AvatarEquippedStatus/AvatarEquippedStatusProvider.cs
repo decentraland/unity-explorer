@@ -22,7 +22,7 @@ namespace DCL.Backpack.Gifting.Services.SnapshotEquipped
         {
             equippedUrns.Clear();
 
-            if (!(await selfProfile.ProfileAsync(ct)).IsOk(out Profile profile) || ct.IsCancellationRequested) return;
+            if (!(await selfProfile.ProfileAsync(ct)).IsOk(out Profile? profile) || ct.IsCancellationRequested) return;
 
             foreach (var w in profile.Avatar.Wearables)
                 if (!string.IsNullOrEmpty(w))

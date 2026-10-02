@@ -101,7 +101,7 @@ namespace DCL.Profiles.Self
         /// </summary>
         private static (SelfProfileModel, SelfProfileCmd) Read(in SelfProfileModel model, in Identified current, RequestId id)
         {
-            if (current.Knowledge.IsKnown(out Profile known))
+            if (current.Knowledge.IsKnown(out Profile? known))
                 return (model.WithReadResult(id, ProfileReadResult.FromOk(known)), SelfProfileCmd.None());
 
             if (current.Knowledge.IsMissing())
@@ -119,7 +119,7 @@ namespace DCL.Profiles.Self
             model.Session.Match(
                 (model, request),
                 onNoIdentity: static ctx => (ctx.model.WithDeployResult(ctx.request.Id, ProfileDeployResult.FromError(ProfileDeployError.NoIdentity)), SelfProfileCmd.None()),
-                onIdentified: static (ctx, current) => current.Knowledge.IsKnown(out Profile known) && ctx.request.Edited.IsSameProfile(known)
+                onIdentified: static (ctx, current) => current.Knowledge.IsKnown(out Profile? known) && ctx.request.Edited.IsSameProfile(known)
                     ? (ctx.model.WithDeployResult(ctx.request.Id, ProfileDeployResult.FromError(ProfileDeployError.NothingChanged)), SelfProfileCmd.None())
                     : StartDeploying(ctx.model, current, ctx.request)
             );
@@ -140,7 +140,7 @@ namespace DCL.Profiles.Self
             RequestIds requests = PendingDeploys(current).Add(request.Id);
 
             // The next version follows the trusted profile, which during a deploy is the pending edit.
-            int version = current.Knowledge.IsKnown(out Profile known) ? known.Version + 1 : edited.Version + 1;
+            int version = current.Knowledge.IsKnown(out Profile? known) ? known.Version + 1 : edited.Version + 1;
 
             ProfileActivity deploying = ProfileActivity.FromDeploying(new Deploying(edited, before, requests));
             SelfProfileCmd deploy = SelfProfileCmd.FromDeploy(new DeployCmd(current.Address, edited, version));

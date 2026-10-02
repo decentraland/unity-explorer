@@ -1,8 +1,10 @@
 using REnum;
+using System;
+using System.Runtime.CompilerServices;
 
 namespace DCL.Profiles.Self
 {
-    public readonly struct Deploying
+    public readonly struct Deploying : IEquatable<Deploying>
     {
         public readonly Profile Pending;
 
@@ -21,6 +23,15 @@ namespace DCL.Profiles.Self
             Before = before;
             Requests = requests;
         }
+
+        public bool Equals(Deploying other) =>
+            ReferenceEquals(Pending, other.Pending) && Before.Equals(other.Before) && Requests.Equals(other.Requests);
+
+        public override bool Equals(object? obj) =>
+            obj is Deploying other && Equals(other);
+
+        public override int GetHashCode() =>
+            HashCode.Combine(RuntimeHelpers.GetHashCode(Pending), Before, Requests);
 
         public override string ToString() =>
             $"pending v{Pending.Version} before {Before} {Requests}";

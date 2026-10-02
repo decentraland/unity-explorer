@@ -288,7 +288,6 @@ namespace DCL.Passport
 
             colorPickerController = new NameColorPickerController(
                 mvcManager,
-                selfProfile,
                 profileChangesBus,
                 viewInstance!.UserBasicInfoModuleView.NameColorPickerView,
                 colorPresets);

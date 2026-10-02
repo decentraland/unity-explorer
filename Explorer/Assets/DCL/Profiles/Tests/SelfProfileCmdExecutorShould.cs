@@ -329,7 +329,7 @@ namespace DCL.Profiles.Tests
             Assert.That(msg.Address, Is.EqualTo(ALICE));
             Assert.That(msg.Sent, Is.SameAs(sent));
             Assert.That(msg.Exception, Is.SameAs(error));
-            profileRepository.DidNotReceiveWithAnyArgs().GetAsync(default!, default, default, default, default, default, default, default);
+            profileRepository.DidNotReceiveWithAnyArgs().GetAsync(default!, default, default, default, default, default, default);
         }
 
         [Test]
@@ -394,7 +394,7 @@ namespace DCL.Profiles.Tests
 
             // Assert
             Assert.That(inbox.Sent, Is.Empty);
-            profileRepository.DidNotReceiveWithAnyArgs().GetAsync(default!, default, default, default, default, default, default, default);
+            profileRepository.DidNotReceiveWithAnyArgs().GetAsync(default!, default, default, default, default, default, default);
         }
 
         private SelfProfileCmdExecutor NewExecutor(ForcedWearables forcedWearables) =>

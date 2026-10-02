@@ -22,7 +22,6 @@ namespace Utility.Tests
             None,
             Echo,
             Observe,
-            Throw,
         }
 
         private readonly struct CounterMsg

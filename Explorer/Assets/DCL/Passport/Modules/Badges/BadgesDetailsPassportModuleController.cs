@@ -101,7 +101,7 @@ namespace DCL.Passport.Modules.Badges
         {
             ProfileReadResult read = await selfProfile.ProfileAsync(ct);
             // TODO (Nick): that check looks weird.. and it also looks like it would be better to have the single sourfe of truth as the selfProfile. Current profile snapshot won't make a sense
-            isOwnProfile = read.IsOk(out Profile ownProfile) && ownProfile.UserId == currentProfile.UserId;
+            isOwnProfile = read.IsOk(out Profile? ownProfile) && ownProfile.UserId == currentProfile.UserId;
             LoadBadgeDetailCards();
         }
 

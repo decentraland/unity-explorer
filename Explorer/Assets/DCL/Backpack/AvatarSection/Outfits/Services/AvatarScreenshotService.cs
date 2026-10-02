@@ -202,7 +202,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Services
         private async UniTask<string?> GetCurrentUserIdAsync(CancellationToken ct)
         {
             // TODO (Nick) same here, maybe the async call is redundant and the snapshow from the SelfProfile may work well
-            return (await selfProfile.ProfileAsync(ct)).IsOk(out Profile profile) ? profile.UserId : null;
+            return (await selfProfile.ProfileAsync(ct)).IsOk(out Profile? profile) ? profile.UserId : null;
         }
 
         private GraphicsFormat GetOutputGraphicsFormat()

@@ -23,7 +23,7 @@ namespace DCL.Profiles.Self
     ///     <c>ResetLocalState</c>. A cancelled IO reports nothing; a completed one always reports, tagged with the
     ///     address and profile it was started for, and the update decides whether it still applies.
     /// </summary>
-    public class SelfProfileCmdExecutor : ICmdExecutor<SelfProfileCmd, SelfProfileMsg>, IDisposable
+    public class SelfProfileCmdExecutor : ICmdExecutor<SelfProfileCmd, SelfProfileMsg>
     {
         private readonly IProfileRepository profileRepository;
         private readonly IProfileCache profileCache;

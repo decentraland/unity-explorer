@@ -82,7 +82,7 @@ namespace DCL.Profiles.Self.Playground
             ProfileReadResult read = await selfProfile.ProfileAsync(ct);
             ReportHub.Log(ReportData.UNSPECIFIED, $"Profile read: {read}");
 
-            if (!read.IsOk(out Profile profile))
+            if (!read.IsOk(out Profile? profile))
                 return;
 
             Profile edited = profile.CreateNewProfileForUpdate(equippedEmotes, equippedWearables, new List<string>(equippedWearables.ForceRenderCategories),

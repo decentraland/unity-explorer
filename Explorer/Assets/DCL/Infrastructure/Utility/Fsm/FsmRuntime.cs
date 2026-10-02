@@ -21,7 +21,7 @@ namespace Utility.Fsm
         private readonly UpdateFn update;
         private readonly ICmdExecutor<TCmd, TMsg> executor;
         private readonly string tag;
-        private readonly Mutex<TModel> model;
+        private readonly Mutex<TModel> model; // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
 
         private bool isDraining;
 

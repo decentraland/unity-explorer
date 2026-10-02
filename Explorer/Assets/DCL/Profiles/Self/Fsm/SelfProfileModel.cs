@@ -1,5 +1,6 @@
 using DCL.Utility.Types;
 using REnum;
+using System;
 
 namespace DCL.Profiles.Self
 {
@@ -7,7 +8,7 @@ namespace DCL.Profiles.Self
     ///     Session of the self-profile FSM while an identity is present. Knowledge and activity exist only together
     ///     with the address they belong to.
     /// </summary>
-    public readonly struct Identified
+    public readonly struct Identified : IEquatable<Identified>
     {
         public readonly UserId Address;
         public readonly ProfileKnowledge Knowledge;
@@ -53,6 +54,15 @@ namespace DCL.Profiles.Self
             return new Identified(Address, Knowledge, activity, PendingReads.Remove(id));
         }
 
+        public bool Equals(Identified other) =>
+            Address.Equals(other.Address) && Knowledge.Equals(other.Knowledge) && Activity.Equals(other.Activity) && PendingReads.Equals(other.PendingReads);
+
+        public override bool Equals(object? obj) =>
+            obj is Identified other && Equals(other);
+
+        public override int GetHashCode() =>
+            HashCode.Combine(Address, Knowledge, Activity, PendingReads);
+
         public override string ToString() =>
             PendingReads.Count == 0
                 ? $"{Address.Value} knowledge {Knowledge} activity {Activity}"
@@ -90,7 +100,7 @@ namespace DCL.Profiles.Self
 
         /// <summary>The trusted profile of the current identity, when there is one.</summary>
         public Option<Profile> KnownProfile =>
-            Session.IsIdentified(out Identified identified) && identified.Knowledge.IsKnown(out Profile known)
+            Session.IsIdentified(out Identified identified) && identified.Knowledge.IsKnown(out Profile? known)
                 ? Option<Profile>.Some(known)
                 : Option<Profile>.None;
 
