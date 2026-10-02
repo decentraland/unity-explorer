@@ -168,8 +168,8 @@ errors are non-blocking diagnostics. The parser is
   Library and workspace attempts are tracked independently, including misses
   without a key. Repeated outcome messages preserve the original observation;
   a new fetch starts a separate attempt. Extraction lines have no cache identity,
-  so their timing is attributed only when one attempt is pending. When multiple
-  attempts are pending, extraction timing remains unknown.
+  so their timing is attributed only when one attempt is pending, or when exactly one
+  of several pending attempts later completes with a hit. Otherwise extraction timing remains unknown.
 - **Shader work:** `shaders.compiled_variants` counts `compiled N variants` from
   completed pass summaries, not variants remaining after stripping. Local and
   remote shader cache hits are separate counters. Restoring a Library can produce

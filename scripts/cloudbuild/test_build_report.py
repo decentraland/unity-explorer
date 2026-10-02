@@ -153,6 +153,21 @@ No Library cache found
         self.assertEqual([r['restore_seconds'] for r in restores], [30, 35])
         self.assertEqual([r['extraction_seconds'] for r in restores], [None, None])
 
+    def test_stale_pending_fetch_does_not_hide_other_kind_extraction(self):
+        report = parse('''[2026-01-01T00:00:00Z] Fetching Cached library_a
+[2026-01-01T00:01:00Z] Fetching Cached workspace_b
+[2026-01-01T00:01:10Z] Extracting cache files to /example
+[2026-01-01T00:01:30Z] workspace_b successfully fetched and unpacked from remote cache''')
+        restores = report['cache']['restores']
+        self.assertEqual([(r['key'], r['status']) for r in restores], [('library_a', 'unknown'), ('workspace_b', 'hit')])
+        self.assertEqual(restores[1]['extraction_seconds'], 20)
+
+    def test_trailing_punctuation_is_not_part_of_cache_key(self):
+        report = parse('''[2026-01-01T00:00:00Z] Fetching Cached library_a.
+[2026-01-01T00:00:30Z] library_a successfully fetched and unpacked from remote cache.''')
+        self.assertEqual([(r['key'], r['status'], r['restore_seconds']) for r in report['cache']['restores']],
+                         [('library_a', 'hit', 30)])
+
     def test_repeated_extraction_marker_preserves_first_timestamp(self):
         report = parse('''[2026-01-01T00:00:00Z] Fetching Cached library_a
 [2026-01-01T00:00:10Z] Extracting cache files to /example

@@ -13,8 +13,8 @@ PASS = re.compile(r'\b[Pp]ass "?(.*?)"? \(([^()]+)\)(?= finished|\s*$)')
 COMPILATION = re.compile(
     r'finished in (-?\d+(?:\.\d+)?) seconds\. Local cache hits (\d+(?:,\d{3})*)\b.*?'
     r'remote cache hits (\d+(?:,\d{3})*)\b.*?compiled (\d+(?:,\d{3})*) variants\b')
-FETCH = re.compile(r'Fetching Cached ((library|workspace)[\w.-]*)', re.IGNORECASE)
-RESTORED = re.compile(r'((library|workspace)[\w.-]*) successfully fetched and unpacked from remote cache', re.IGNORECASE)
+FETCH = re.compile(r'Fetching Cached ((library|workspace)(?:[\w.-]*\w)?)', re.IGNORECASE)
+RESTORED = re.compile(r'((library|workspace)(?:[\w.-]*\w)?) successfully fetched and unpacked from remote cache', re.IGNORECASE)
 MISSING_CACHE = re.compile(r'No (Library|Workspace) cache found', re.IGNORECASE)
 ARCHIVE = re.compile(r'Zipping cache files from (\w+) using compression level (\w+)')
 SLOWEST_PASSES_SHOWN = 5
@@ -47,7 +47,15 @@ def parse_log(lines):
     shader = legacy_pass = None
     shader_markers = unparsed_summaries = 0
     latest_by_kind = {}
+    ambiguous_extractions = []
     archive = None
+
+    def start_restore(kind, key=None, started_at=None):
+        restore = new_restore(kind, key, started_at)
+        restores.append(restore)
+        latest_by_kind[kind] = restore
+        return restore
+
     for line in lines:
         at = timestamp(line)
         match = SHADER.search(line)
@@ -72,19 +80,14 @@ def parse_log(lines):
             })
         match = FETCH.search(line)
         if match:
-            kind = match[2].casefold()
-            restore = new_restore(kind, match[1], at)
-            restores.append(restore)
-            latest_by_kind[kind] = restore
+            start_restore(match[2].casefold(), match[1], at)
         match = MISSING_CACHE.search(line)
         if match:
             # Repeated postbuild warnings belong to the latest attempt of that kind.
             kind = match[1].casefold()
             restore = latest_by_kind.get(kind)
             if restore is None:
-                restore = new_restore(kind)
-                restores.append(restore)
-                latest_by_kind[kind] = restore
+                restore = start_restore(kind)
             if restore['status'] == 'unknown':
                 restore['status'] = 'miss'
         if 'Extracting cache files to' in line:
@@ -92,15 +95,16 @@ def parse_log(lines):
             pending = [item for item in latest_by_kind.values() if item['status'] == 'unknown']
             if len(pending) == 1 and pending[0]['extraction_started_at'] is None:
                 pending[0]['extraction_started_at'] = at
+            elif len(pending) > 1:
+                # Resolved after parsing, once every pending attempt's outcome is known.
+                ambiguous_extractions.append((at, pending))
         match = RESTORED.search(line)
         if match:
             kind = match[2].casefold()
             restore = latest_by_kind.get(kind)
             same_key = restore is not None and (restore['key'] or '').casefold() == match[1].casefold()
             if not same_key or restore['status'] == 'miss':
-                restore = new_restore(kind, match[1])
-                restores.append(restore)
-                latest_by_kind[kind] = restore
+                restore = start_restore(kind, match[1])
             if restore['status'] != 'hit':
                 restore.update(status='hit', finished_at=at)
         match = ARCHIVE.search(line)
@@ -115,6 +119,10 @@ def parse_log(lines):
                 if item['postbuild_finished_at'] is None:
                     item['postbuild_finished_at'] = at
 
+    for at, candidates in ambiguous_extractions:
+        hits = [item for item in candidates if item['status'] == 'hit']
+        if len(hits) == 1 and hits[0]['extraction_started_at'] is None:
+            hits[0]['extraction_started_at'] = at
     for item in restores:
         item['restore_seconds'] = elapsed(item['started_at'], item['finished_at']) if item['status'] == 'hit' else None
         item['fetch_to_extraction_seconds'] = elapsed(item['started_at'], item['extraction_started_at'])
