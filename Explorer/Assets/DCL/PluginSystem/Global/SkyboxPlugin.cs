@@ -10,7 +10,6 @@ using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Prefs;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
-using DCL.SkyBox.Components;
 using ECS;
 using ECS.SceneLifeCycle;
 using Newtonsoft.Json;
@@ -99,7 +98,10 @@ namespace DCL.SkyBox
                 lookEntries = skyboxSettings.LookPresets;
                 lookPresets = new ProvidedAsset<SkyboxLookPreset>?[lookEntries.Length];
                 SkyboxLookPreset defaultPreset = skyboxRenderController.Preset;
-                SkyboxLookPreset? flaggedPreset = await LoadFlaggedLookPresetAsync(skyboxSettings, ct);
+
+                // Before Initialize, so fog, statics and lens flare are set up from the flagged look.
+                if (await LoadFlaggedLookPresetAsync(skyboxSettings, ct) is { } flaggedPreset)
+                    skyboxRenderController.ApplyPreset(flaggedPreset);
 
                 AnimationClip skyboxAnimation = (await assetsProvisioner.ProvideMainAssetAsync(skyboxSettings.SkyboxAnimationCycle, ct: ct)).Value;
 
@@ -115,10 +117,6 @@ namespace DCL.SkyBox
                     skyboxSettings.TimeOfDayNormalized,
                     lensFlareEnabled
                 );
-
-                // Applied with no await after Initialize, so no frame renders the default look first.
-                if (flaggedPreset != null)
-                    skyboxRenderController.ApplyPreset(flaggedPreset);
 
                 if (!skyboxTimeEnabled)
                     skyboxRenderController.DisableSkyboxTime();
@@ -205,7 +203,7 @@ namespace DCL.SkyBox
             try { return await LoadLookPresetAsync(index, ct); }
             catch (Exception e) when (e is not OperationCanceledException)
             {
-                ReportHub.LogException(e, ReportCategory.SKYBOX);
+                ReportHub.LogException(new Exception($"Skybox look preset \"{presetName}\" from the feature flag failed to load, keeping the default look", e), ReportCategory.SKYBOX);
                 return null;
             }
         }

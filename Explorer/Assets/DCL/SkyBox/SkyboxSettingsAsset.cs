@@ -111,9 +111,9 @@ namespace DCL.SkyBox
         /// <summary>
         ///     Index of the <see cref="LookPresets" /> entry with this name, ignoring case and surrounding whitespace; -1 when none matches.
         /// </summary>
-        public int IndexOfLookPreset(string name)
+        public int IndexOfLookPreset(string presetName)
         {
-            string trimmed = name.Trim();
+            string trimmed = presetName.Trim();
 
             for (var i = 0; i < LookPresets.Length; i++)
                 if (string.Equals(LookPresets[i].Name, trimmed, StringComparison.OrdinalIgnoreCase))

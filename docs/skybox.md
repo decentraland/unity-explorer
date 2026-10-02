@@ -8,7 +8,7 @@ The sky is rendered by one Shader Graph material (`GenesisSkybox.mat`) driven by
 |---|---|---|
 | `StylizedV1.asset` | **The look that ships.** Stylized sky with a baked colour lookup, layered cloud strips, computed sun and moon arcs and procedural stars. Sun haze is available but ships off. | `Prefab/SkyboxRenderController.prefab` → `preset` |
 | `Legacy.asset` | The previous sky, a 1:1 migration of the values that used to be hard-coded. **Do not delete it.** | `SkyboxSettings.asset` → `LookPresets`, Addressable `SkyboxLookPreset_Legacy` in the `Essentials` group |
-| `Halloween2026.asset` | Seasonal night look for Halloween 2026: toxic-green horizon under a violet sky, a large orange moon, murky green fog. Day phases match StylizedV1. Turned on remotely (see *Feature flag* below). | `SkyboxSettings.asset` → `LookPresets`, Addressable `SkyboxLookPreset_Halloween2026` in the `Essentials` group |
+| `Halloween2026.asset` | Seasonal night look for Halloween 2026 on top of StylizedV1: more purple clouds, a bigger purple moon and more moonlight (plus brighter stars with more shooting stars). Sky gradients, and so the baked LUT, match StylizedV1, as do the sunrise, day and sunset colours. Turned on remotely (see *Feature flag* below). | `SkyboxSettings.asset` → `LookPresets`, Addressable `SkyboxLookPreset_Halloween2026` in the `Essentials` group |
 
 Legacy stays for two reasons:
 

@@ -43,6 +43,7 @@ namespace DCL.Tests
 
         [TestCase("Christmas2026")]
         [TestCase("")]
+        [TestCase("   ")]
         public void NotFindUnknownLookPreset(string name)
         {
             // Act
