@@ -123,6 +123,19 @@ namespace DCL.MapRenderer.Tests.SatelliteAtlas
         }
 
         [Test]
+        public void PlaceTheTileCentreOnTheGrid()
+        {
+            // Arrange: level-4 tile (1, 2) spans x 400..800 and y -800..-1200 below a top-left corner at the origin
+            var id = new Vector3Int(1, 2, 4);
+
+            // Act
+            Vector2 center = SatelliteDetailTiles.TileCenter(id, Vector2.zero, BUNDLED_CHUNK_SIZE);
+
+            // Assert
+            Assert.AreEqual(new Vector2(600f, -1000f), center);
+        }
+
+        [Test]
         public void DropOnlyTheUnfinishedLoadsOfTilesOutOfView()
         {
             // Arrange
