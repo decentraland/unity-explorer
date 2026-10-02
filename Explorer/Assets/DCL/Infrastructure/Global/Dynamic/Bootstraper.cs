@@ -257,7 +257,8 @@ namespace Global.Dynamic
                 webJsSources,
                 bootstrapContainer.Environment,
                 dynamicWorldContainer.SystemClipboard,
-                dynamicWorldContainer.WorldPlugins
+                dynamicWorldContainer.WorldPlugins,
+                dynamicWorldContainer.SceneBadgesAwardChecker
             );
 
             GlobalWorld globalWorld = dynamicWorldContainer.GlobalWorldFactory.Create(

@@ -14,6 +14,7 @@ using DCL.Ipfs;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Poses;
+using DCL.NotificationsBus;
 using DCL.Profiles;
 using DCL.SkyBox;
 using DCL.Utility.Exceptions;
@@ -68,6 +69,7 @@ namespace SceneRunner
         private readonly DecentralandEnvironment dclEnvironment;
         private readonly ISystemClipboard systemClipboard;
         private readonly string installSource;
+        private readonly ISceneBadgesAwardCheck? badgesAwardCheck;
 
         private IGlobalWorldActions globalWorldActions = null!;
 
@@ -93,7 +95,8 @@ namespace SceneRunner
             IRemoteMetadata remoteMetadata,
             DecentralandEnvironment dclEnvironment,
             ISystemClipboard systemClipboard,
-            string installSource)
+            string installSource,
+            ISceneBadgesAwardCheck? badgesAwardCheck = null)
         {
             Assert.IsNotNull(realmData, $"{nameof(realmData)} must not be null");
             this.ecsWorldFactory = ecsWorldFactory;
@@ -118,6 +121,7 @@ namespace SceneRunner
             this.remoteMetadata = remoteMetadata;
             this.dclEnvironment = dclEnvironment;
             this.installSource = installSource;
+            this.badgesAwardCheck = badgesAwardCheck;
         }
 
         public async UniTask<ISceneFacade> CreateSceneFromFileAsync(string jsCodeUrl, IPartitionComponent partitionProvider, CancellationToken ct, string id = "")
@@ -266,6 +270,9 @@ namespace SceneRunner
                     deps.RuntimeMetrics
                 );
             }
+
+            if (badgesAwardCheck != null)
+                sceneRuntime.RegisterBadgesApi(badgesAwardCheck, deps.SceneStateProvider);
 
             try
             {
