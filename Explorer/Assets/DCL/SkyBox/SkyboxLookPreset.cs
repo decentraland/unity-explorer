@@ -64,7 +64,7 @@ namespace DCL.SkyBox
 
         [Header("Lens Flare")]
         [SerializeField] private AnimationCurve lensFlareIntensity = new ();
-        [SerializeField] private List<LensFlareTimeEntry> lensFlareEntries = new ();
+        [SerializeField] private LensFlareTimeEntry[] lensFlareEntries = Array.Empty<LensFlareTimeEntry>();
 
         [Header("Celestial path (computed sun and moon rotation)")]
         [Tooltip("Places the directional light on a computed sun arc by day and a separate moon arc by night instead of sampling the rotation clip. Sun Opacity and Moon Mask Size curves are ignored: the disc hides itself while the light crosses from one body to the other.")]
@@ -319,7 +319,7 @@ namespace DCL.SkyBox
 
         public bool Fog => fog;
         public Gradient FogColorRamp { get => fogColorRamp; internal set => fogColorRamp = value; }
-        public Vector4 FogDensityByPhase => fogDensityByPhase;
+        public Vector4 FogDensityByPhase { get => fogDensityByPhase; internal set => fogDensityByPhase = value; }
 
         public float ZenitSpread => zenitSpread;
         public float ZenitBlend => zenitBlend;

@@ -297,7 +297,9 @@ namespace Decentraland.Common {
   /// <summary>
   /// Piecewise-linear color gradient. Keys are interpolated in ascending order of `time`; positions before
   /// the first key or after the last one return that key's color. A single key is a constant color.
-  /// No keys means the gradient is unset.
+  /// No keys means the gradient is unset. Two keys at the same `time` keep the later one.
+  /// Renderers may cap the number of keys they evaluate: the reference client keeps up to 8 and resamples
+  /// longer gradients at 8 evenly spaced positions, so prefer 8 keys or fewer for exact results.
   /// </summary>
   [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
   public sealed partial class ColorGradient : pb::IMessage<ColorGradient>

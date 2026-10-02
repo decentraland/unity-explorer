@@ -5,15 +5,15 @@ namespace DCL.SkyBox
 {
     /// <summary>
     ///     Immutable snapshot of the environment overrides of a PBSkybox: gradients keyed by normalized time of day
-    ///     for the sun, the sky bands, the horizon rim, the fog and the cloud tint, constant floats for the cloud layer
-    ///     and the star field, and the sun visibility. A null member keeps the value of the scene look preset.
+    ///     for the sun, the sky bands, the horizon rim, the fog and the cloud tint, constant floats for the fog density,
+    ///     the cloud layer and the star field, and the sun visibility. A null member keeps the value of the scene look preset.
     /// </summary>
     public sealed class SceneEnvironmentProfile
     {
         /// <summary>
         ///     Nothing overridden: applying it writes the scene look preset values back.
         /// </summary>
-        public static readonly SceneEnvironmentProfile EMPTY = new (null, null, null, null, null, null, null, null, null, null, null);
+        public static readonly SceneEnvironmentProfile EMPTY = new (null, null, null, null, null, null, null, null, null, null, null, null);
 
         // SDK gradient time is the time of day itself, so the scene copy never remaps it through a phase curve.
         private static readonly AnimationCurve IDENTITY_PHASE = AnimationCurve.Linear(0f, 0f, 1f, 1f);
@@ -31,6 +31,11 @@ namespace DCL.SkyBox
         /// </summary>
         public readonly Gradient? Rim;
         public readonly Gradient? FogColor;
+
+        /// <summary>
+        ///     Constant exponential fog density per meter, written to every phase anchor. Null keeps the preset value.
+        /// </summary>
+        public readonly float? FogDensity;
         public readonly Gradient? CloudsColor;
         public readonly float? CloudsOpacity;
         public readonly float? CloudsSpeed;
@@ -42,7 +47,7 @@ namespace DCL.SkyBox
         public readonly bool? SunVisible;
 
         private SceneEnvironmentProfile(Gradient? sunColor, Gradient? zenith, Gradient? horizon, Gradient? nadir, Gradient? rim,
-            Gradient? fogColor, Gradient? cloudsColor, float? cloudsOpacity, float? cloudsSpeed, float? starsBrightness, bool? sunVisible)
+            Gradient? fogColor, float? fogDensity, Gradient? cloudsColor, float? cloudsOpacity, float? cloudsSpeed, float? starsBrightness, bool? sunVisible)
         {
             SunColor = sunColor;
             Zenith = zenith;
@@ -50,6 +55,7 @@ namespace DCL.SkyBox
             Nadir = nadir;
             Rim = rim;
             FogColor = fogColor;
+            FogDensity = fogDensity;
             CloudsColor = cloudsColor;
             CloudsOpacity = cloudsOpacity;
             CloudsSpeed = cloudsSpeed;
@@ -73,7 +79,9 @@ namespace DCL.SkyBox
             Gradient? nadir = ColorGradientConverter.ToGradient(skyColors?.Nadir);
             Gradient? rim = ColorGradientConverter.ToGradient(skyColors?.Rim);
 
-            Gradient? fogColor = ColorGradientConverter.ToGradient(pbSkybox.Fog?.Color);
+            PBSkybox.Types.Fog? fog = pbSkybox.Fog;
+            Gradient? fogColor = ColorGradientConverter.ToGradient(fog?.Color);
+            float? fogDensity = fog is { HasDensity: true } ? Mathf.Max(0f, fog.Density) : null;
 
             PBSkybox.Types.Clouds? clouds = pbSkybox.Clouds;
             Gradient? cloudsColor = ColorGradientConverter.ToGradient(clouds?.Color);
@@ -84,10 +92,11 @@ namespace DCL.SkyBox
             float? starsBrightness = stars is { HasBrightness: true } ? Mathf.Max(0f, stars.Brightness) : null;
 
             bool anySet = sunColor != null || zenith != null || horizon != null || nadir != null || rim != null || fogColor != null
-                          || cloudsColor != null || cloudsOpacity != null || cloudsSpeed != null || starsBrightness != null || sunVisible != null;
+                          || fogDensity != null || cloudsColor != null || cloudsOpacity != null || cloudsSpeed != null || starsBrightness != null
+                          || sunVisible != null;
 
             return anySet
-                ? new SceneEnvironmentProfile(sunColor, zenith, horizon, nadir, rim, fogColor, cloudsColor, cloudsOpacity, cloudsSpeed, starsBrightness, sunVisible)
+                ? new SceneEnvironmentProfile(sunColor, zenith, horizon, nadir, rim, fogColor, fogDensity, cloudsColor, cloudsOpacity, cloudsSpeed, starsBrightness, sunVisible)
                 : null;
         }
 
@@ -95,8 +104,8 @@ namespace DCL.SkyBox
         ///     Writes the SDK-controlled values of <paramref name="target" />: each override of this profile, or the value
         ///     of <paramref name="defaults" /> where the profile has none. The sky bands also drive the ambient trilight
         ///     (zenith → sky, horizon → equator, nadir → ground), the rim follows an overridden horizon, the sun color tints
-        ///     both the light and the disc, and a hidden sun zeroes the disc, its halo, the moon and the lens flare. The cloud
-        ///     cubemap is not touched: the clouds texture override owns it.
+        ///     both the light and the disc, a hidden sun zeroes the disc, its halo, the moon and the lens flare, and the constant
+        ///     fog density is written to all four phase anchors. The cloud cubemap is not touched: the clouds texture override owns it.
         /// </summary>
         public void ApplyTo(SkyboxLookPreset target, SkyboxLookPreset defaults)
         {
@@ -115,6 +124,7 @@ namespace DCL.SkyBox
             target.GroundEquatorRamp = Nadir ?? defaults.GroundEquatorRamp;
 
             target.FogColorRamp = FogColor ?? defaults.FogColorRamp;
+            target.FogDensityByPhase = FogDensity is { } fogDensity ? new Vector4(fogDensity, fogDensity, fogDensity, fogDensity) : defaults.FogDensityByPhase;
 
             target.CloudsColorRamp = CloudsColor ?? defaults.CloudsColorRamp;
             target.CloudOpacity = CloudsOpacity ?? defaults.CloudOpacity;

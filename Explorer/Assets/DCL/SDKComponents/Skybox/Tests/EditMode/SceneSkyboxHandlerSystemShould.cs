@@ -615,6 +615,23 @@ namespace DCL.SDKComponents.Skybox.Tests
         }
 
         [Test]
+        public void PushFogDensityWhenDirty()
+        {
+            // Arrange
+            AddPbSkybox(Fog(0.02f));
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            SceneEnvironmentProfile? environment = Overrides().Environment;
+            Assert.That(environment, Is.Not.Null);
+            Assert.That(environment!.FogDensity, Is.EqualTo(0.02f));
+            Assert.That(environment.FogColor, Is.Null);
+            Assert.That(Overrides().Owner, Is.EqualTo(OWN_SCENE));
+        }
+
+        [Test]
         public void PushSunVisibilityWhenDirty()
         {
             // Arrange
@@ -804,6 +821,9 @@ namespace DCL.SDKComponents.Skybox.Tests
 
         private static TextureUnion VideoTexture(int videoPlayerEntity) =>
             new () { VideoTexture = new VideoTexture { VideoPlayerEntity = (uint)videoPlayerEntity } };
+
+        private static PBSkybox.Types.Fog Fog(float density) =>
+            new () { Density = density };
 
         private static PBSkybox.Types.Fog Fog(Color color) =>
             new ()

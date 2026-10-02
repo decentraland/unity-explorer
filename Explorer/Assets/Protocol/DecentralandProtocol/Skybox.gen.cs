@@ -27,7 +27,7 @@ namespace DCL.ECSComponents {
             "CihkZWNlbnRyYWxhbmQvc2RrL2NvbXBvbmVudHMvc2t5Ym94LnByb3RvEhtk",
             "ZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMaIWRlY2VudHJhbGFuZC9jb21t",
             "b24vdGV4dHVyZS5wcm90bxoiZGVjZW50cmFsYW5kL2NvbW1vbi9ncmFkaWVu",
-            "dC5wcm90byL7CQoIUEJTa3lib3gSPgoOcmVmbGVjdGlvbl9tYXAYASABKAsy",
+            "dC5wcm90byL6CgoIUEJTa3lib3gSPgoOcmVmbGVjdGlvbl9tYXAYASABKAsy",
             "IS5kZWNlbnRyYWxhbmQuY29tbW9uLlRleHR1cmVVbmlvbkgAiAEBEj4KDnNr",
             "eWJveF90ZXh0dXJlGAIgASgLMiEuZGVjZW50cmFsYW5kLmNvbW1vbi5UZXh0",
             "dXJlVW5pb25IAYgBARI7CgNzdW4YAyABKAsyKS5kZWNlbnRyYWxhbmQuc2Rr",
@@ -46,23 +46,26 @@ namespace DCL.ECSComponents {
             "chgDIAEoCzIiLmRlY2VudHJhbGFuZC5jb21tb24uQ29sb3JHcmFkaWVudEgC",
             "iAEBEjQKA3JpbRgEIAEoCzIiLmRlY2VudHJhbGFuZC5jb21tb24uQ29sb3JH",
             "cmFkaWVudEgDiAEBQgkKB196ZW5pdGhCCgoIX2hvcml6b25CCAoGX25hZGly",
-            "QgYKBF9yaW0aRwoDRm9nEjYKBWNvbG9yGAEgASgLMiIuZGVjZW50cmFsYW5k",
-            "LmNvbW1vbi5Db2xvckdyYWRpZW50SACIAQFCCAoGX2NvbG9yGs8BCgZDbG91",
-            "ZHMSFAoHb3BhY2l0eRgBIAEoAkgAiAEBEhIKBXNwZWVkGAIgASgCSAGIAQES",
-            "NgoFY29sb3IYAyABKAsyIi5kZWNlbnRyYWxhbmQuY29tbW9uLkNvbG9yR3Jh",
-            "ZGllbnRIAogBARI3Cgd0ZXh0dXJlGAQgASgLMiEuZGVjZW50cmFsYW5kLmNv",
-            "bW1vbi5UZXh0dXJlVW5pb25IA4gBAUIKCghfb3BhY2l0eUIICgZfc3BlZWRC",
-            "CAoGX2NvbG9yQgoKCF90ZXh0dXJlGi8KBVN0YXJzEhcKCmJyaWdodG5lc3MY",
-            "ASABKAJIAIgBAUINCgtfYnJpZ2h0bmVzc0IRCg9fcmVmbGVjdGlvbl9tYXBC",
-            "EQoPX3NreWJveF90ZXh0dXJlQgYKBF9zdW5CDQoLX3NreV9jb2xvcnNCBgoE",
-            "X2ZvZ0IJCgdfY2xvdWRzQggKBl9zdGFyc0IUqgIRRENMLkVDU0NvbXBvbmVu",
-            "dHNiBnByb3RvMw=="));
+            "QgYKBF9yaW0axQEKA0ZvZxI2CgVjb2xvchgBIAEoCzIiLmRlY2VudHJhbGFu",
+            "ZC5jb21tb24uQ29sb3JHcmFkaWVudEgAiAEBEhQKB2RlbnNpdHkYAiABKAJI",
+            "AYgBARIbCg5zdGFydF9kaXN0YW5jZRgDIAEoAkgCiAEBEhkKDGVuZF9kaXN0",
+            "YW5jZRgEIAEoAkgDiAEBQggKBl9jb2xvckIKCghfZGVuc2l0eUIRCg9fc3Rh",
+            "cnRfZGlzdGFuY2VCDwoNX2VuZF9kaXN0YW5jZRrPAQoGQ2xvdWRzEhQKB29w",
+            "YWNpdHkYASABKAJIAIgBARISCgVzcGVlZBgCIAEoAkgBiAEBEjYKBWNvbG9y",
+            "GAMgASgLMiIuZGVjZW50cmFsYW5kLmNvbW1vbi5Db2xvckdyYWRpZW50SAKI",
+            "AQESNwoHdGV4dHVyZRgEIAEoCzIhLmRlY2VudHJhbGFuZC5jb21tb24uVGV4",
+            "dHVyZVVuaW9uSAOIAQFCCgoIX29wYWNpdHlCCAoGX3NwZWVkQggKBl9jb2xv",
+            "ckIKCghfdGV4dHVyZRovCgVTdGFycxIXCgpicmlnaHRuZXNzGAEgASgCSACI",
+            "AQFCDQoLX2JyaWdodG5lc3NCEQoPX3JlZmxlY3Rpb25fbWFwQhEKD19za3li",
+            "b3hfdGV4dHVyZUIGCgRfc3VuQg0KC19za3lfY29sb3JzQgYKBF9mb2dCCQoH",
+            "X2Nsb3Vkc0IICgZfc3RhcnNCFKoCEURDTC5FQ1NDb21wb25lbnRzYgZwcm90",
+            "bzM="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::Decentraland.Common.TextureReflection.Descriptor, global::Decentraland.Common.GradientReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
             new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBSkybox), global::DCL.ECSComponents.PBSkybox.Parser, new[]{ "ReflectionMap", "SkyboxTexture", "Sun", "SkyColors", "Fog", "Clouds", "Stars" }, new[]{ "ReflectionMap", "SkyboxTexture", "Sun", "SkyColors", "Fog", "Clouds", "Stars" }, null, null, new pbr::GeneratedClrTypeInfo[] { new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBSkybox.Types.Sun), global::DCL.ECSComponents.PBSkybox.Types.Sun.Parser, new[]{ "Color", "Visible" }, new[]{ "Color", "Visible" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBSkybox.Types.SkyColors), global::DCL.ECSComponents.PBSkybox.Types.SkyColors.Parser, new[]{ "Zenith", "Horizon", "Nadir", "Rim" }, new[]{ "Zenith", "Horizon", "Nadir", "Rim" }, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBSkybox.Types.Fog), global::DCL.ECSComponents.PBSkybox.Types.Fog.Parser, new[]{ "Color" }, new[]{ "Color" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBSkybox.Types.Fog), global::DCL.ECSComponents.PBSkybox.Types.Fog.Parser, new[]{ "Color", "Density", "StartDistance", "EndDistance" }, new[]{ "Color", "Density", "StartDistance", "EndDistance" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBSkybox.Types.Clouds), global::DCL.ECSComponents.PBSkybox.Types.Clouds.Parser, new[]{ "Opacity", "Speed", "Color", "Texture" }, new[]{ "Opacity", "Speed", "Color", "Texture" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBSkybox.Types.Stars), global::DCL.ECSComponents.PBSkybox.Types.Stars.Parser, new[]{ "Brightness" }, new[]{ "Brightness" }, null, null, null)})
           }));
@@ -205,7 +208,7 @@ namespace DCL.ECSComponents {
     public const int FogFieldNumber = 5;
     private global::DCL.ECSComponents.PBSkybox.Types.Fog fog_;
     /// <summary>
-    /// Fog color override. Whether fog renders at all remains a user quality setting; a scene cannot force it on or off.
+    /// Fog color and distance override (exponential `density`, or linear `start_distance`/`end_distance`, whichever the renderer supports). Whether fog renders at all remains a user quality setting; a scene cannot force it on or off.
     /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
@@ -1229,6 +1232,7 @@ namespace DCL.ECSComponents {
       {
         private static readonly pb::MessageParser<Fog> _parser = new pb::MessageParser<Fog>(() => new Fog());
         private pb::UnknownFieldSet _unknownFields;
+        private int _hasBits0;
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
         public static pb::MessageParser<Fog> Parser { get { return _parser; } }
@@ -1256,7 +1260,11 @@ namespace DCL.ECSComponents {
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
         public Fog(Fog other) : this() {
+          _hasBits0 = other._hasBits0;
           color_ = other.color_ != null ? other.color_.Clone() : null;
+          density_ = other.density_;
+          startDistance_ = other.startDistance_;
+          endDistance_ = other.endDistance_;
           _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
         }
 
@@ -1281,6 +1289,96 @@ namespace DCL.ECSComponents {
           }
         }
 
+        /// <summary>Field number for the "density" field.</summary>
+        public const int DensityFieldNumber = 2;
+        private readonly static float DensityDefaultValue = 0F;
+
+        private float density_;
+        /// <summary>
+        /// default = 0.0005. Exponential fog density per meter: fog = 1 - e^(-density * distance), so 1/density is the
+        /// distance at which ~63% of the view is fogged (0.0005 ≈ 2 km, 0.02 ≈ 50 m). Negative values clamp to 0 and
+        /// 0 = no visible fog. Whether fog renders at all remains a user quality setting.
+        /// </summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public float Density {
+          get { if ((_hasBits0 & 1) != 0) { return density_; } else { return DensityDefaultValue; } }
+          set {
+            _hasBits0 |= 1;
+            density_ = value;
+          }
+        }
+        /// <summary>Gets whether the "density" field is set</summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public bool HasDensity {
+          get { return (_hasBits0 & 1) != 0; }
+        }
+        /// <summary>Clears the value of the "density" field</summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void ClearDensity() {
+          _hasBits0 &= ~1;
+        }
+
+        /// <summary>Field number for the "start_distance" field.</summary>
+        public const int StartDistanceFieldNumber = 3;
+        private readonly static float StartDistanceDefaultValue = 0F;
+
+        private float startDistance_;
+        /// <summary>
+        /// Linear fog range in meters: fog starts at `start_distance` and is fully opaque from `end_distance` on.
+        /// Unset = renderer default.
+        /// </summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public float StartDistance {
+          get { if ((_hasBits0 & 2) != 0) { return startDistance_; } else { return StartDistanceDefaultValue; } }
+          set {
+            _hasBits0 |= 2;
+            startDistance_ = value;
+          }
+        }
+        /// <summary>Gets whether the "start_distance" field is set</summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public bool HasStartDistance {
+          get { return (_hasBits0 & 2) != 0; }
+        }
+        /// <summary>Clears the value of the "start_distance" field</summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void ClearStartDistance() {
+          _hasBits0 &= ~2;
+        }
+
+        /// <summary>Field number for the "end_distance" field.</summary>
+        public const int EndDistanceFieldNumber = 4;
+        private readonly static float EndDistanceDefaultValue = 0F;
+
+        private float endDistance_;
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public float EndDistance {
+          get { if ((_hasBits0 & 4) != 0) { return endDistance_; } else { return EndDistanceDefaultValue; } }
+          set {
+            _hasBits0 |= 4;
+            endDistance_ = value;
+          }
+        }
+        /// <summary>Gets whether the "end_distance" field is set</summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public bool HasEndDistance {
+          get { return (_hasBits0 & 4) != 0; }
+        }
+        /// <summary>Clears the value of the "end_distance" field</summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void ClearEndDistance() {
+          _hasBits0 &= ~4;
+        }
+
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
         public override bool Equals(object other) {
@@ -1297,6 +1395,9 @@ namespace DCL.ECSComponents {
             return true;
           }
           if (!object.Equals(Color, other.Color)) return false;
+          if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(Density, other.Density)) return false;
+          if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(StartDistance, other.StartDistance)) return false;
+          if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(EndDistance, other.EndDistance)) return false;
           return Equals(_unknownFields, other._unknownFields);
         }
 
@@ -1305,6 +1406,9 @@ namespace DCL.ECSComponents {
         public override int GetHashCode() {
           int hash = 1;
           if (color_ != null) hash ^= Color.GetHashCode();
+          if (HasDensity) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(Density);
+          if (HasStartDistance) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(StartDistance);
+          if (HasEndDistance) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(EndDistance);
           if (_unknownFields != null) {
             hash ^= _unknownFields.GetHashCode();
           }
@@ -1327,6 +1431,18 @@ namespace DCL.ECSComponents {
             output.WriteRawTag(10);
             output.WriteMessage(Color);
           }
+          if (HasDensity) {
+            output.WriteRawTag(21);
+            output.WriteFloat(Density);
+          }
+          if (HasStartDistance) {
+            output.WriteRawTag(29);
+            output.WriteFloat(StartDistance);
+          }
+          if (HasEndDistance) {
+            output.WriteRawTag(37);
+            output.WriteFloat(EndDistance);
+          }
           if (_unknownFields != null) {
             _unknownFields.WriteTo(output);
           }
@@ -1341,6 +1457,18 @@ namespace DCL.ECSComponents {
             output.WriteRawTag(10);
             output.WriteMessage(Color);
           }
+          if (HasDensity) {
+            output.WriteRawTag(21);
+            output.WriteFloat(Density);
+          }
+          if (HasStartDistance) {
+            output.WriteRawTag(29);
+            output.WriteFloat(StartDistance);
+          }
+          if (HasEndDistance) {
+            output.WriteRawTag(37);
+            output.WriteFloat(EndDistance);
+          }
           if (_unknownFields != null) {
             _unknownFields.WriteTo(ref output);
           }
@@ -1353,6 +1481,15 @@ namespace DCL.ECSComponents {
           int size = 0;
           if (color_ != null) {
             size += 1 + pb::CodedOutputStream.ComputeMessageSize(Color);
+          }
+          if (HasDensity) {
+            size += 1 + 4;
+          }
+          if (HasStartDistance) {
+            size += 1 + 4;
+          }
+          if (HasEndDistance) {
+            size += 1 + 4;
           }
           if (_unknownFields != null) {
             size += _unknownFields.CalculateSize();
@@ -1371,6 +1508,15 @@ namespace DCL.ECSComponents {
               Color = new global::Decentraland.Common.ColorGradient();
             }
             Color.MergeFrom(other.Color);
+          }
+          if (other.HasDensity) {
+            Density = other.Density;
+          }
+          if (other.HasStartDistance) {
+            StartDistance = other.StartDistance;
+          }
+          if (other.HasEndDistance) {
+            EndDistance = other.EndDistance;
           }
           _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
         }
@@ -1398,6 +1544,18 @@ namespace DCL.ECSComponents {
                 input.ReadMessage(Color);
                 break;
               }
+              case 21: {
+                Density = input.ReadFloat();
+                break;
+              }
+              case 29: {
+                StartDistance = input.ReadFloat();
+                break;
+              }
+              case 37: {
+                EndDistance = input.ReadFloat();
+                break;
+              }
             }
           }
         #endif
@@ -1422,6 +1580,18 @@ namespace DCL.ECSComponents {
                   Color = new global::Decentraland.Common.ColorGradient();
                 }
                 input.ReadMessage(Color);
+                break;
+              }
+              case 21: {
+                Density = input.ReadFloat();
+                break;
+              }
+              case 29: {
+                StartDistance = input.ReadFloat();
+                break;
+              }
+              case 37: {
+                EndDistance = input.ReadFloat();
                 break;
               }
             }

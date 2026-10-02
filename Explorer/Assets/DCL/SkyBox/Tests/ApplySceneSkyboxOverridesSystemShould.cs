@@ -511,6 +511,40 @@ namespace DCL.SkyBox.Tests
         }
 
         [Test]
+        public void ApplyFogDensity()
+        {
+            // Arrange
+            Control();
+            Overrides().Environment = Profile(new PBSkybox { Fog = new PBSkybox.Types.Fog { Density = 0.02f } });
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            Assert.That(RenderSettings.fogDensity, Is.EqualTo(0.02f).Within(1e-5f));
+            Assert.That(Overrides().AppliedEnvironment, Is.SameAs(Overrides().Environment));
+        }
+
+        [Test]
+        public void RestoreLegacyFogDensityWhenEnvironmentCleared()
+        {
+            // Arrange
+            Control();
+            system.Update(0);
+            float legacyFogDensity = RenderSettings.fogDensity;
+            Overrides().Environment = Profile(new PBSkybox { Fog = new PBSkybox.Types.Fog { Density = legacyFogDensity + 0.5f } });
+            system.Update(0);
+
+            // Act
+            Overrides().Environment = null;
+            system.Update(0);
+
+            // Assert
+            Assert.That(RenderSettings.fogDensity, Is.EqualTo(legacyFogDensity).Within(1e-5f));
+            Assert.That(Overrides().AppliedEnvironment, Is.Null);
+        }
+
+        [Test]
         public void EvaluateGradientAtCurrentTimeOfDay()
         {
             // Arrange

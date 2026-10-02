@@ -16,7 +16,7 @@
     "typescript": "^4.2.3"
   },
   "dependencies": {
-    "@dcl/protocol": "https://sdk-team-cdn.decentraland.org/@dcl/protocol/branch//dcl-protocol-1.0.0-36721751108.commit-d952a24.tgz",
+    "@dcl/protocol": "https://sdk-team-cdn.decentraland.org/@dcl/protocol/branch//dcl-protocol-1.0.0-37030203711.commit-a67eb99.tgz",
     "@protobuf-ts/protoc": "^2.11.0",
     "@types/fs-extra": "^11.0.1",
     "@types/glob": "^8.0.1",

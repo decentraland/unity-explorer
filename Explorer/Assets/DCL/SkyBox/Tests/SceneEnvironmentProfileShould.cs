@@ -52,7 +52,52 @@ namespace DCL.SkyBox.Tests
             Assert.That(profile.StarsBrightness, Is.Null);
             Assert.That(profile.SunColor, Is.Null);
             Assert.That(profile.FogColor, Is.Null);
+            Assert.That(profile.FogDensity, Is.Null);
             Assert.That(profile.SunVisible, Is.Null);
+        }
+
+        [Test]
+        public void BuildProfileFromFogDensityAlone()
+        {
+            // Arrange
+            var pbSkybox = new PBSkybox { Fog = new PBSkybox.Types.Fog { Density = 0.02f } };
+
+            // Act
+            SceneEnvironmentProfile? profile = SceneEnvironmentProfile.FromProto(pbSkybox);
+
+            // Assert
+            Assert.That(profile, Is.Not.Null);
+            Assert.That(profile!.FogDensity, Is.EqualTo(0.02f));
+            Assert.That(profile.FogColor, Is.Null);
+        }
+
+        [Test]
+        public void KeepUnsetFogDensityNull()
+        {
+            // Arrange
+            var pbSkybox = new PBSkybox { Fog = new PBSkybox.Types.Fog { Color = ColorGradientConverterShould.Gradient((0f, Color.gray)) } };
+
+            // Act
+            SceneEnvironmentProfile? profile = SceneEnvironmentProfile.FromProto(pbSkybox);
+
+            // Assert
+            Assert.That(profile, Is.Not.Null);
+            Assert.That(profile!.FogColor, Is.Not.Null);
+            Assert.That(profile.FogDensity, Is.Null);
+        }
+
+        [Test]
+        public void ClampNegativeFogDensityToZero()
+        {
+            // Arrange
+            var pbSkybox = new PBSkybox { Fog = new PBSkybox.Types.Fog { Density = -0.5f } };
+
+            // Act
+            SceneEnvironmentProfile? profile = SceneEnvironmentProfile.FromProto(pbSkybox);
+
+            // Assert
+            Assert.That(profile, Is.Not.Null);
+            Assert.That(profile!.FogDensity, Is.EqualTo(0f));
         }
 
         [Test]
@@ -183,6 +228,7 @@ namespace DCL.SkyBox.Tests
             Assert.That(presets.Target.IndirectEquatorRamp, Is.SameAs(presets.Defaults.IndirectEquatorRamp));
             Assert.That(presets.Target.GroundEquatorRamp, Is.SameAs(presets.Defaults.GroundEquatorRamp));
             Assert.That(presets.Target.FogColorRamp, Is.SameAs(presets.Defaults.FogColorRamp));
+            Assert.That(presets.Target.FogDensityByPhase, Is.EqualTo(presets.Defaults.FogDensityByPhase));
             Assert.That(presets.Target.CloudsColorRamp, Is.SameAs(presets.Defaults.CloudsColorRamp));
             Assert.That(presets.Target.CloudOpacity, Is.EqualTo(presets.Defaults.CloudOpacity));
             Assert.That(presets.Target.StarsBrightness, Is.EqualTo(presets.Defaults.StarsBrightness));
@@ -191,6 +237,21 @@ namespace DCL.SkyBox.Tests
             Assert.That(presets.Target.SunRadianceIntensity, Is.SameAs(presets.Defaults.SunRadianceIntensity));
             Assert.That(presets.Target.LensFlareIntensity, Is.SameAs(presets.Defaults.LensFlareIntensity));
             Assert.That(presets.Target.SecondSunSizeFactor, Is.EqualTo(presets.Defaults.SecondSunSizeFactor));
+        }
+
+        [Test]
+        public void WriteConstantFogDensityToEveryPhaseOnApply()
+        {
+            // Arrange
+            using var presets = new Presets();
+            SceneEnvironmentProfile profile = Profile(new PBSkybox { Fog = new PBSkybox.Types.Fog { Density = 0.02f } });
+
+            // Act
+            profile.ApplyTo(presets.Target, presets.Defaults);
+
+            // Assert
+            Assert.That(presets.Target.FogDensityByPhase, Is.EqualTo(new Vector4(0.02f, 0.02f, 0.02f, 0.02f)));
+            Assert.That(presets.Target.FogColorRamp, Is.SameAs(presets.Defaults.FogColorRamp));
         }
 
         [Test]
@@ -335,6 +396,7 @@ namespace DCL.SkyBox.Tests
                 Defaults.CloudsRotationSpeed = 0.02f;
                 Defaults.StarsBrightness = 3f;
                 Defaults.SecondSunSizeFactor = 0.15f;
+                Defaults.FogDensityByPhase = new Vector4(0.001f, 0.002f, 0.003f, 0.004f);
                 Defaults.SunOpacity = AnimationCurve.Constant(0f, 1f, 0.9f);
                 Defaults.TimeToPhase = AnimationCurve.Linear(0f, 0f, 1f, 0.5f);
                 Target.TimeToPhase = AnimationCurve.Linear(0f, 0f, 1f, 0.5f);

@@ -6,7 +6,8 @@ namespace DCL.SkyBox.Tests
 {
     public class ColorGradientConverterShould
     {
-        private const float TOLERANCE = 1e-5f;
+        // Unity stores gradient key times with 16-bit precision, so a key evaluated at its own time is off by up to 1/65536.
+        private const float TOLERANCE = 1e-4f;
 
         [Test]
         public void ReturnConstantColorForSingleKey()
@@ -16,8 +17,7 @@ namespace DCL.SkyBox.Tests
 
             // Act & Assert
             Assert.That(ramp, Is.Not.Null);
-            Assert.That(ramp!.colorKeys.Length, Is.EqualTo(1));
-            AssertColor(ramp.Evaluate(0f), Color.red);
+            AssertColor(ramp!.Evaluate(0f), Color.red);
             AssertColor(ramp.Evaluate(0.3f), Color.red);
             AssertColor(ramp.Evaluate(1f), Color.red);
         }
@@ -171,7 +171,7 @@ namespace DCL.SkyBox.Tests
 
             // Assert
             Assert.That(ramp, Is.Not.Null);
-            Assert.That(ramp!.colorKeys.Length, Is.EqualTo(1));
+            AssertColor(ramp!.Evaluate(0f), Color.red);
             AssertColor(ramp.Evaluate(1f), Color.red);
         }
 
