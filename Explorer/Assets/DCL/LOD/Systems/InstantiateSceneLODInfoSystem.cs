@@ -17,6 +17,7 @@ using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
 using UnityEngine;
+using Utility;
 using Object = UnityEngine.Object;
 
 namespace DCL.LOD.Systems
@@ -99,7 +100,7 @@ namespace DCL.LOD.Systems
                 if (result.Succeeded && result.Asset.TryGetAsset(out GameObject go))
                 {
                     GameObject? instantiatedLOD = Object.Instantiate(go,
-                        sceneDefinitionComponent.SceneGeometry.BaseParcelPosition,
+                        sceneDefinitionComponent.SceneGeometry.BaseParcelPosition + new Vector3(0, ParcelMathHelper.SCENE_CONTAINER_Y_OFFSET, 0),
                         Quaternion.identity);
 
                     var newLod = new LODAsset(instantiatedLOD, result.Asset,

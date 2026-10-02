@@ -33,7 +33,7 @@ namespace DCL.McpServer.Tools
 
         private const int DEFAULT_MAX_WIDTH = 1280;
         private const int MIN_WIDTH = 64;
-        private const int MAX_WIDTH = 1920;
+        private const int MAX_WIDTH = 8192;
         private const int JPG_QUALITY = 75;
 
         private const string MIME_TYPE_PNG = "image/png";
