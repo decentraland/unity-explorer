@@ -13,6 +13,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
         [TestCase("{")]
         [TestCase("")]
         [TestCase(null)]
+        [TestCase("{\"slide\":\"x\"}")]
         public void ReturnNull_WhenJsonIsMalformed(string? json)
         {
             PresentationBotMetadata? metadata = PresentationLayout.Parse(json);
@@ -54,10 +55,11 @@ namespace DCL.SDKComponents.MediaStream.Tests
             Assert.IsFalse(metadata!.playingVideoIndex.HasValue);
         }
 
-        [Test]
-        public void ReturnNull_WhenSlideHasNoSize()
+        [TestCase("{\"slide\":{\"url\":\"https://a/b.png\",\"width\":0,\"height\":1080}}")]
+        [TestCase("{\"slide\":{\"width\":1920,\"height\":1080}}")]
+        public void ReturnNull_WhenSlideHasNoSizeOrUrl(string json)
         {
-            PresentationBotMetadata? metadata = PresentationLayout.Parse("{\"slide\":{\"url\":\"https://a/b.png\",\"width\":0,\"height\":1080}}");
+            PresentationBotMetadata? metadata = PresentationLayout.Parse(json);
 
             Assert.IsNull(metadata);
         }
@@ -70,14 +72,6 @@ namespace DCL.SDKComponents.MediaStream.Tests
 
             Assert.IsNull(tooLarge);
             Assert.IsNotNull(atLimit);
-        }
-
-        [Test]
-        public void ReturnNull_WhenSlideUrlIsMissing()
-        {
-            PresentationBotMetadata? metadata = PresentationLayout.Parse("{\"slide\":{\"width\":1920,\"height\":1080}}");
-
-            Assert.IsNull(metadata);
         }
 
         [Test]
@@ -134,19 +128,12 @@ namespace DCL.SDKComponents.MediaStream.Tests
             Assert.IsNull(metadata.overlay);
         }
 
-        [Test]
-        public void ReturnNull_WhenJsonHasWrongTypes()
+        [TestCase("playing")]
+        [TestCase("loading")]
+        [TestCase("paused")]
+        public void ReturnVideoRect_RegardlessOfVideoState(string state)
         {
-            PresentationBotMetadata? metadata = null;
-            Assert.DoesNotThrow(() => metadata = PresentationLayout.Parse("{\"slide\":\"x\"}"));
-
-            Assert.IsNull(metadata);
-        }
-
-        [Test]
-        public void ReturnVideoRect_WhenPlaying()
-        {
-            PresentationBotMetadata metadata = ParseOrFail($"{{{SLIDE_1080},\"videoState\":\"playing\",\"playingVideoIndex\":0,{CENTERED_VIDEO}}}");
+            PresentationBotMetadata metadata = ParseOrFail($"{{{SLIDE_1080},\"videoState\":\"{state}\",\"playingVideoIndex\":0,{CENTERED_VIDEO}}}");
 
             bool found = PresentationLayout.TryVideoRect(metadata, out Vector4 rect);
 
@@ -154,84 +141,28 @@ namespace DCL.SDKComponents.MediaStream.Tests
             Assert.AreEqual(new Vector4(0.25f, 0.25f, 0.5f, 0.5f), rect);
         }
 
-        [Test]
-        public void ReturnVideoRect_WhenLoading()
+        [TestCase("\"playingVideoIndex\":null," + CENTERED_VIDEO)]
+        [TestCase("\"playingVideoIndex\":1," + CENTERED_VIDEO)]
+        [TestCase("\"playingVideoIndex\":-1," + CENTERED_VIDEO)]
+        [TestCase("\"playingVideoIndex\":0,\"slideVideos\":[null]")]
+        [TestCase("\"playingVideoIndex\":0,\"slideVideos\":[{}]")]
+        [TestCase("\"playingVideoIndex\":0,\"slideVideos\":[{\"geometry\":{\"x\":480,\"y\":270,\"width\":\"NaN\",\"height\":540}}]")]
+        [TestCase("\"playingVideoIndex\":0,\"slideVideos\":[{\"geometry\":{\"x\":\"Infinity\",\"y\":270,\"width\":960,\"height\":540}}]")]
+        public void ReturnNoVideoRect_WhenPlayingVideoIsInvalid(string fields)
         {
-            PresentationBotMetadata metadata = ParseOrFail($"{{{SLIDE_1080},\"videoState\":\"loading\",\"playingVideoIndex\":0,{CENTERED_VIDEO}}}");
-
-            bool found = PresentationLayout.TryVideoRect(metadata, out _);
-
-            Assert.IsTrue(found);
-        }
-
-        [Test]
-        public void ReturnNoVideoRect_WhenIndexIsNull()
-        {
-            PresentationBotMetadata metadata = ParseOrFail($"{{{SLIDE_1080},\"playingVideoIndex\":null,{CENTERED_VIDEO}}}");
+            PresentationBotMetadata metadata = ParseOrFail($"{{{SLIDE_1080},{fields}}}");
 
             bool found = PresentationLayout.TryVideoRect(metadata, out _);
 
             Assert.IsFalse(found);
         }
 
-        [TestCase(1)]
-        [TestCase(-1)]
-        public void ReturnNoVideoRect_WhenIndexOutOfRange(int index)
+        [TestCase(null)]
+        [TestCase("small")]
+        [TestCase("bogus")]
+        public void ComputeCameraRect_ForDefaultOverlay(string? size)
         {
-            PresentationBotMetadata metadata = ParseOrFail($"{{{SLIDE_1080},\"playingVideoIndex\":{index},{CENTERED_VIDEO}}}");
-
-            bool found = PresentationLayout.TryVideoRect(metadata, out _);
-
-            Assert.IsFalse(found);
-        }
-
-        [Test]
-        public void ReturnNoVideoRect_WhenEntryIsNull()
-        {
-            PresentationBotMetadata metadata = ParseOrFail($"{{{SLIDE_1080},\"playingVideoIndex\":0,\"slideVideos\":[null]}}");
-
-            var found = true;
-            Assert.DoesNotThrow(() => found = PresentationLayout.TryVideoRect(metadata, out _));
-
-            Assert.IsFalse(found);
-        }
-
-        [Test]
-        public void ReturnNoVideoRect_WhenGeometryIsMissing()
-        {
-            PresentationBotMetadata metadata = ParseOrFail($"{{{SLIDE_1080},\"playingVideoIndex\":0,\"slideVideos\":[{{}}]}}");
-
-            var found = true;
-            Assert.DoesNotThrow(() => found = PresentationLayout.TryVideoRect(metadata, out _));
-
-            Assert.IsFalse(found);
-        }
-
-        [TestCase("\"x\":480,\"y\":270,\"width\":\"NaN\",\"height\":540")]
-        [TestCase("\"x\":\"Infinity\",\"y\":270,\"width\":960,\"height\":540")]
-        public void ReturnNoVideoRect_WhenGeometryIsNotFinite(string geometry)
-        {
-            PresentationBotMetadata metadata = ParseOrFail($"{{{SLIDE_1080},\"playingVideoIndex\":0,\"slideVideos\":[{{\"geometry\":{{{geometry}}}}}]}}");
-
-            bool found = PresentationLayout.TryVideoRect(metadata, out _);
-
-            Assert.IsFalse(found);
-        }
-
-        [Test]
-        public void TreatMissingSizeAsSmall()
-        {
-            var overlay = new PresentationOverlay { x = 0, y = 1 };
-
-            Vector4 rect = PresentationLayout.CameraRect(overlay, 1920, 1080);
-
-            Assert.AreEqual(PresentationLayout.CameraRect(null, 1920, 1080), rect);
-        }
-
-        [Test]
-        public void ComputeCameraRect_ForDefaultOverlay()
-        {
-            Vector4 rect = PresentationLayout.CameraRect(new PresentationOverlay { x = 0, y = 1, size = "small" }, 1920, 1080);
+            Vector4 rect = PresentationLayout.CameraRect(new PresentationOverlay { x = 0, y = 1, size = size }, 1920, 1080);
 
             AssertPixelRect(rect, 1920, 1080, 38, 754, 288);
         }

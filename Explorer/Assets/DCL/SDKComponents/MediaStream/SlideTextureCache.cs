@@ -5,24 +5,26 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Text.RegularExpressions;
 using System.Threading;
 using UnityEngine;
 using Utility;
 using Utility.Networking;
-using Object = UnityEngine.Object;
 
 namespace DCL.SDKComponents.MediaStream
 {
     /// <summary>
     ///     App-wide cache of presentation slide textures keyed by url, holding at most <see cref="CAPACITY" /> and
-    ///     destroying the oldest first. Fetches only allowlisted urls, once per url while in flight, and backs off
-    ///     after a failure. Starts at most one fetch per <see cref="MIN_FETCH_INTERVAL_SECONDS" /> per throttle key,
-    ///     tracking at most <see cref="MAX_TRACKED_BOTS" /> keys, tracks at most <see cref="MAX_TRACKED_URLS" />
-    ///     rejected and <see cref="MAX_TRACKED_URLS" /> failed urls, logs at most <see cref="MAX_REJECTION_REPORTS" />
-    ///     rejections and <see cref="MAX_FAILURE_REPORTS" /> failures in its lifetime, and drops slides decoded larger
-    ///     than <see cref="PresentationLayout.MAX_SLIDE_SIZE" /> on either side. Main-thread only.
+    ///     destroying the oldest first. Fetches only contract-shaped slide urls in canonical form (equal to their own
+    ///     <see cref="Uri.AbsoluteUri" />): https on the default port, the host <c>cast-presenter-service.{BaseDomain}</c>,
+    ///     no userinfo, query, fragment or backslash, and a path made of an optional prefix of <c>[A-Za-z0-9_-]</c>
+    ///     segments followed by <c>/presentations/{uuid}/slides/{16 lowercase hex}.png</c>; in the Editor, loopback http
+    ///     urls on any port with the same path too. Fetches once per url while in flight, and backs off after a failure.
+    ///     Starts at most one fetch per <see cref="MIN_FETCH_INTERVAL_SECONDS" /> per throttle key, tracking at most
+    ///     <see cref="MAX_TRACKED_BOTS" /> keys, tracks at most <see cref="MAX_TRACKED_URLS" /> rejected and
+    ///     <see cref="MAX_TRACKED_URLS" /> failed urls, logs at most <see cref="MAX_REJECTION_REPORTS" /> rejections and
+    ///     <see cref="MAX_FAILURE_REPORTS" /> failures in its lifetime, and drops slides decoded larger than
+    ///     <see cref="PresentationLayout.MAX_SLIDE_SIZE" /> on either side. Main-thread only.
     /// </summary>
     public sealed class SlideTextureCache : IDisposable
     {
@@ -35,12 +37,10 @@ namespace DCL.SDKComponents.MediaStream
         internal const int MAX_REJECTION_REPORTS = 8;
         internal const int MAX_FAILURE_REPORTS = 32;
 
-        private const string CAST_PRESENTER_HOST_PREFIX = "cast-presenter-service.";
-
         private static readonly Regex SLIDE_PATH = new (@"^(/[A-Za-z0-9_-]+)*/presentations/[0-9a-f-]{36}/slides/[0-9a-f]{16}\.png\z", RegexOptions.Compiled);
 
         private readonly IWebRequestController webRequestController;
-        private readonly IDecentralandUrlsSource decentralandUrlsSource;
+        private readonly string castPresenterHost;
         private readonly Func<float> getRealtimeSinceStartup;
         private readonly Dictionary<string, Texture2D> textures = new ();
         private readonly List<string> order = new ();
@@ -62,7 +62,7 @@ namespace DCL.SDKComponents.MediaStream
         internal SlideTextureCache(IWebRequestController webRequestController, IDecentralandUrlsSource decentralandUrlsSource, Func<float> getRealtimeSinceStartup)
         {
             this.webRequestController = webRequestController;
-            this.decentralandUrlsSource = decentralandUrlsSource;
+            castPresenterHost = $"cast-presenter-service.{decentralandUrlsSource.BaseDomain}".ToLowerInvariant();
             this.getRealtimeSinceStartup = getRealtimeSinceStartup;
         }
 
@@ -84,17 +84,6 @@ namespace DCL.SDKComponents.MediaStream
             failed.Clear();
             nextFetchAt.Clear();
         }
-
-        /// <summary>
-        ///     Whether <paramref name="url" /> is a contract-shaped slide url in canonical form (equal to its own
-        ///     <see cref="Uri.AbsoluteUri" />): https on the default port, an ASCII host equal to the cast presenter
-        ///     service host of a Decentraland domain, no userinfo, query, fragment or backslash, and a path made of an
-        ///     optional prefix of <c>[A-Za-z0-9_-]</c> segments followed by
-        ///     <c>/presentations/{uuid}/slides/{16 lowercase hex}.png</c>. In the Editor, loopback http urls on any port
-        ///     with the same path are allowed too.
-        /// </summary>
-        internal bool IsAllowedUrl(string url) =>
-            TryParseAllowedUrl(url, out _);
 
         /// <summary>
         ///     The cached texture for <paramref name="url" />, or <c>null</c> while it loads, cools down after a
@@ -119,7 +108,7 @@ namespace DCL.SDKComponents.MediaStream
                 || (failed.TryGetValue(url, out (int attempts, float retryAt) failure) && now < failure.retryAt))
                 return null;
 
-            if (!TryParseAllowedUrl(url, out Uri? uri))
+            if (!IsAllowedUrl(url))
             {
                 if (rejected.Count >= MAX_TRACKED_URLS)
                     rejected.Clear();
@@ -137,64 +126,39 @@ namespace DCL.SDKComponents.MediaStream
 
             nextFetchAt[throttleKey] = now + MIN_FETCH_INTERVAL_SECONDS;
             inFlight.Add(url);
-            LoadAsync(url, uri.AbsoluteUri).Forget();
+            LoadAsync(url).Forget();
             return null;
         }
 
-        private static bool TryParseAllowedUrl(string url, [NotNullWhen(true)] out Uri? uri)
+        internal bool IsAllowedUrl(string url)
         {
-            uri = null;
-
-            if (url.Contains('\\') || !Uri.TryCreate(url, UriKind.Absolute, out Uri? parsed))
+            if (url.Contains('\\') || !Uri.TryCreate(url, UriKind.Absolute, out Uri? uri))
                 return false;
 
-            if (parsed.UserInfo.Length > 0 || parsed.Query.Length > 0 || parsed.Fragment.Length > 0 || !SLIDE_PATH.IsMatch(parsed.AbsolutePath))
-                return false;
-
-            if (!IsCastPresenterOrigin(parsed))
-                return false;
-
-            if (!string.Equals(parsed.AbsoluteUri, url, StringComparison.Ordinal))
-                return false;
-
-            uri = parsed;
-            return true;
+            return uri.UserInfo.Length == 0
+                   && uri.Query.Length == 0
+                   && uri.Fragment.Length == 0
+                   && SLIDE_PATH.IsMatch(uri.AbsolutePath)
+                   && IsCastPresenterOrigin(uri)
+                   && string.Equals(uri.AbsoluteUri, url, StringComparison.Ordinal);
         }
 
-        private static bool IsCastPresenterOrigin(Uri uri)
+        private bool IsCastPresenterOrigin(Uri uri)
         {
 #if UNITY_EDITOR
             if (uri.Scheme == Uri.UriSchemeHttp && LoopbackUrls.IsLoopbackHost(uri.Host))
                 return true;
 #endif
 
-            if (uri.Scheme != Uri.UriSchemeHttps || !uri.IsDefaultPort || !IsAscii(uri.Host))
-                return false;
-
-            IReadOnlyList<string> domains = IDecentralandUrlsSource.ALL_DOMAINS;
-
-            for (var i = 0; i < domains.Count; i++)
-                if (string.Equals(uri.Host, $"{CAST_PRESENTER_HOST_PREFIX}{domains[i]}", StringComparison.OrdinalIgnoreCase))
-                    return true;
-
-            return false;
+            return uri.Scheme == Uri.UriSchemeHttps && uri.IsDefaultPort && string.Equals(uri.Host, castPresenterHost, StringComparison.Ordinal);
         }
 
-        private static bool IsAscii(string value)
-        {
-            foreach (char c in value)
-                if (c >= 0x80)
-                    return false;
-
-            return true;
-        }
-
-        private async UniTaskVoid LoadAsync(string url, string fetchUrl)
+        private async UniTaskVoid LoadAsync(string url)
         {
             try
             {
-                Texture2D? texture = await webRequestController.GetTextureAsync(
-                    new CommonArguments(URLAddress.FromString(fetchUrl), RetryPolicy.DEFAULT),
+                Texture2D texture = await webRequestController.GetTextureAsync(
+                    new CommonArguments(URLAddress.FromString(url), RetryPolicy.DEFAULT),
                     new GetTextureArguments(TextureType.Albedo, useKtx: false, disableRedirects: true),
                     GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp, FilterMode.Bilinear),
                     cts.Token,
@@ -203,15 +167,7 @@ namespace DCL.SDKComponents.MediaStream
 
                 if (cts.IsCancellationRequested)
                 {
-                    Object.Destroy(texture);
-                    return;
-                }
-
-                if (texture == null)
-                {
-                    if (RecordFailure(url) == 1 && TryConsumeReport(ref failureReportsLeft))
-                        ReportHub.LogWarning(ReportCategory.MEDIA_STREAM, $"Slide request returned no texture: {OriginOf(url)}");
-
+                    UnityObjectUtils.SafeDestroy(texture);
                     return;
                 }
 
@@ -271,7 +227,7 @@ namespace DCL.SDKComponents.MediaStream
                 order.RemoveAt(0);
 
                 if (textures.Remove(oldest, out Texture2D evicted))
-                    Object.Destroy(evicted);
+                    UnityObjectUtils.SafeDestroy(evicted);
             }
         }
 

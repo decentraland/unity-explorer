@@ -51,9 +51,8 @@ namespace DCL.SDKComponents.MediaStream
         ///     camera circle (skipped when <paramref name="camera" /> is null) into a BGRA32 render texture of
         ///     <paramref name="width" /> × <paramref name="height" />, scaled down with its aspect preserved to at most
         ///     <see cref="MAX_COMPOSITE_SIZE" /> on each side. Rects are normalized with a top-left origin. Blits on every
-        ///     call while <paramref name="video" /> or <paramref name="camera" /> is given, because LiveKit updates those
-        ///     textures in place without changing <see cref="Texture.updateCount" />; otherwise skips the blit when the
-        ///     slide and rects are unchanged since the last call.
+        ///     call while <paramref name="video" /> or <paramref name="camera" /> is given; otherwise only when the slide
+        ///     or rects changed since the last call.
         /// </summary>
         /// <returns>The same render texture instance while the size is unchanged.</returns>
         public Texture Compose(int width, int height, Texture slide, bool showVideoRect, Vector4 videoRect, Texture? video, Texture? camera, Vector4 cameraRect)

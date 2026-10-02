@@ -40,7 +40,7 @@ namespace DCL.SDKComponents.MediaStream
         private readonly Func<bool> isRoomRunning;
         private readonly IRoom room;
         private readonly AvatarPlaceHolderTextureSource? placeholderSource;
-        private readonly SlideTextureCache? slideCache;
+        private readonly SlideTextureCache slideCache;
         private readonly PresentationCompositor? compositor;
         private PlayerState playerState;
         private PresentationBotMetadata? presentation;
@@ -48,8 +48,6 @@ namespace DCL.SDKComponents.MediaStream
         private string? composingBot;
         private CurrentVideoStreamInfo? presentationVideo;
         private CurrentVideoStreamInfo? presenterCamera;
-        private int composedFrame = -1;
-        private Texture? composedTexture;
         private bool loggedBadMetadata;
 
         private LivekitAddress? requestedAddress;
@@ -71,7 +69,7 @@ namespace DCL.SDKComponents.MediaStream
         private volatile bool pendingAudioRediscovery;
 
         private volatile bool pendingVideoReset;
-        private volatile bool pendingPresentationRefresh = true;
+        private volatile bool pendingPresentationRefresh;
 
         public bool MediaOpened =>
             // TODO: this is not precise and might introduce inconsistencies depending on the kind of stream needed
@@ -88,16 +86,10 @@ namespace DCL.SDKComponents.MediaStream
                 ? Vector2.one
                 : new Vector2(1f, -1f);
 
-        internal bool lastComposeDrewVideo { get; private set; }
-
         private bool isAudioOpened => audioSources.Count > 0;
 
         private bool isComposing =>
-            compositor != null
-            && slideCache != null
-            && presentation?.slide != null
-            && playingAddress.HasValue
-            && (!playingAddress.Value.IsUserStream(out UserStream userStream) || userStream.Identity.IsPresentationBotIdentity());
+            compositor != null && presentation?.slide != null;
 
         // Both checks needed: connective state catches synchronous teardown start,
         // FFI connection state catches the async disconnect completion.
@@ -107,7 +99,7 @@ namespace DCL.SDKComponents.MediaStream
             && room.Info.ConnectionState == LKConnectionState.ConnConnected;
 
         public LivekitPlayer(IRoom streamingRoom, Func<bool> isRoomRunning, AvatarPlaceHolderTextureSource? placeholderSource,
-            SlideTextureCache? slideCache, Material? compositorMaterial)
+            SlideTextureCache slideCache, Material? compositorMaterial)
         {
             this.isRoomRunning = isRoomRunning;
             room = streamingRoom;
@@ -160,7 +152,6 @@ namespace DCL.SDKComponents.MediaStream
             presentationVideo = null;
             presenterCamera = null;
             compositor?.Release();
-            composedTexture = null;
 
             if (IsVideoOpened)
             {
@@ -434,7 +425,6 @@ namespace DCL.SDKComponents.MediaStream
 
             presentationRawMetadata = raw;
             presentation = PresentationLayout.Parse(raw);
-            composedFrame = -1;
 
             if (presentation == null && !string.IsNullOrEmpty(raw) && !loggedBadMetadata)
             {
@@ -449,7 +439,7 @@ namespace DCL.SDKComponents.MediaStream
         {
             if (rescan || IsUnresolved(presentationVideo))
             {
-                string? bot = ComposingBotIdentity();
+                string? bot = composingBot;
                 presentationVideo = RebindVideoStream(presentationVideo, bot == null ? null : FindVideoTrack(bot, static track => IsPresentationVideo(track)));
             }
 
@@ -481,15 +471,11 @@ namespace DCL.SDKComponents.MediaStream
         private CurrentVideoStreamInfo? RebindVideoStream(CurrentVideoStreamInfo? held, StreamKey? key)
         {
             if (!key.HasValue)
-            {
-                if (held.HasValue) composedFrame = -1;
                 return null;
-            }
 
             if (held.HasValue && held.Value.key.Equals(key.Value) && held.Value.videoStream.Resource.Has)
                 return held;
 
-            composedFrame = -1;
             return CurrentVideoStreamInfo.New(key.Value, room.VideoStreams.ActiveStream(key.Value));
         }
 
@@ -523,7 +509,6 @@ namespace DCL.SDKComponents.MediaStream
             presentationRawMetadata = null;
             composingBot = null;
             compositor?.Release();
-            composedTexture = null;
             pendingPresentationRefresh = true;
             playerState = PlayerState.Stopped;
             ReleaseAllAudioSources();
@@ -546,13 +531,10 @@ namespace DCL.SDKComponents.MediaStream
 
         private Texture? ComposePresentation()
         {
-            if (composedFrame == UnityEngine.Time.frameCount && composedTexture != null)
-                return composedTexture;
-
             PresentationBotMetadata? metadata = presentation;
             PresentationSlide? slide = metadata?.slide;
 
-            if (metadata == null || slide?.url == null || compositor == null || slideCache == null || composingBot == null)
+            if (metadata == null || slide?.url == null || compositor == null || composingBot == null)
                 return null;
 
             Texture2D? cachedSlide = slideCache.GetOrRequest(slide.url, composingBot);
@@ -560,14 +542,11 @@ namespace DCL.SDKComponents.MediaStream
             Texture2D? latest = DecodeLastFrame(presentationVideo);
             bool showRect = PresentationLayout.TryVideoRect(metadata, out Vector4 videoRect);
             Texture? video = showRect ? latest : null;
-            lastComposeDrewVideo = video != null;
 
             Vector4 cameraRect = PresentationLayout.CameraRect(metadata.overlay, slide.width, slide.height);
             Texture? camera = cameraRect.z > 0f && IsPresenterCameraLive() ? DecodeLastFrame(presenterCamera) : null;
 
-            composedTexture = compositor.Compose(slide.width, slide.height, slideTexture, showRect, videoRect, video, camera, cameraRect);
-            composedFrame = UnityEngine.Time.frameCount;
-            return composedTexture;
+            return compositor.Compose(slide.width, slide.height, slideTexture, showRect, videoRect, video, camera, cameraRect);
         }
 
         private static Texture2D? DecodeLastFrame(CurrentVideoStreamInfo? stream) =>

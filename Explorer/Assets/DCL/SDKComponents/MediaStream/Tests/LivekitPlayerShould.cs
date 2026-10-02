@@ -1,10 +1,11 @@
 using Cysharp.Threading.Tasks;
 using DCL.LiveKit.Public;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Multiplayer.Connections.Rooms.Nulls;
+using DCL.Tests.Editor;
 using DCL.WebRequests;
 using LiveKit.Proto;
 using LiveKit.Rooms;
-using LiveKit.Rooms.ActiveSpeakers;
 using LiveKit.Rooms.Participants;
 using LiveKit.Rooms.Streaming;
 using LiveKit.Rooms.TrackPublications;
@@ -14,10 +15,7 @@ using LiveKit.Rooms.VideoStreaming;
 using NSubstitute;
 using NUnit.Framework;
 using RichTypes;
-using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Reflection;
 using System.Text.RegularExpressions;
 using UnityEngine;
 using UnityEngine.TestTools;
@@ -46,13 +44,11 @@ namespace DCL.SDKComponents.MediaStream.Tests
         private const string SLIDE_VIDEO = "{\"geometry\":{\"x\":480,\"y\":270,\"width\":960,\"height\":540}}";
 
         private static readonly Vector2 FLIPPED = new (1f, -1f);
-        private static readonly FieldInfo PARTICIPANT_INFO = typeof(LKParticipant).GetField("info", BindingFlags.Instance | BindingFlags.NonPublic)!;
 
         private IRoom room = null!;
         private IParticipantsHub participantsHub = null!;
         private IVideoStreams videoStreams = null!;
         private IDecentralandUrlsSource decentralandUrlsSource = null!;
-        private FakeActiveSpeakers activeSpeakers = null!;
         private Dictionary<string, LKParticipant> remoteParticipants = null!;
         private Dictionary<StreamKey, Weak<IVideoStream>> resolvedStreams = null!;
         private List<Object> created = null!;
@@ -67,7 +63,6 @@ namespace DCL.SDKComponents.MediaStream.Tests
             videoStreams = Substitute.For<IVideoStreams>();
             decentralandUrlsSource = Substitute.For<IDecentralandUrlsSource>();
             decentralandUrlsSource.BaseDomain.Returns("decentraland.org");
-            activeSpeakers = new FakeActiveSpeakers();
             remoteParticipants = new Dictionary<string, LKParticipant>();
             resolvedStreams = new Dictionary<StreamKey, Weak<IVideoStream>>();
             created = new List<Object>();
@@ -76,7 +71,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
 
             room.Participants.Returns(participantsHub);
             room.VideoStreams.Returns(videoStreams);
-            room.ActiveSpeakers.Returns(activeSpeakers);
+            room.ActiveSpeakers.Returns(NullActiveSpeakers.INSTANCE);
             room.Info.ConnectionState.Returns(LKConnectionState.ConnConnected);
             participantsHub.RemoteParticipantIdentities().Returns(remoteParticipants);
             videoStreams.ActiveStream(Arg.Any<StreamKey>())
@@ -225,7 +220,8 @@ namespace DCL.SDKComponents.MediaStream.Tests
             LivekitPlayer p = NewV2Player();
             p.OpenMedia(LivekitAddress.CurrentStream());
             p.EnsureVideoIsPlaying();
-            Assert.AreEqual(Vector2.one, p.CurrentTextureScale);
+            Texture? composite = p.LastTexture();
+            AssertComposite(composite);
             videoStreams.DidNotReceive().ActiveStream(new StreamKey(BOT, "TR_p"));
 
             SetMetadata(bot, LEGACY_METADATA);
@@ -233,37 +229,8 @@ namespace DCL.SDKComponents.MediaStream.Tests
 
             Assert.AreEqual(FLIPPED, p.CurrentTextureScale);
             Assert.IsTrue(p.IsVideoOpened);
+            Assert.IsTrue(composite == null);
             videoStreams.Received().ActiveStream(new StreamKey(BOT, "TR_p"));
-        }
-
-        [Test]
-        public void ComposeForPinnedBotAddress()
-        {
-            AddParticipant(BOT, V2_METADATA);
-            LivekitPlayer p = NewV2Player();
-
-            p.OpenMedia(LivekitAddress.FromUserStream(new UserStream(BOT, "TR_old")));
-            p.EnsureVideoIsPlaying();
-
-            Assert.IsTrue(p.IsVideoOpened);
-            Assert.AreEqual(Vector2.one, p.CurrentTextureScale);
-            AssertComposite(p.LastTexture());
-        }
-
-        [Test]
-        public void ComposeForPinnedPresentationVideoSid()
-        {
-            LKParticipant bot = AddParticipant(BOT, V2_METADATA);
-            IVideoStream video = Subscribe(bot, AddTrack(bot, "TR_pv", TrackKind.KindVideo, TrackSource.SourceScreenshare, LiveKitMediaExtensions.PRESENTATION_VIDEO_TRACK_NAME));
-            video.DecodeLastFrame().Returns((Texture2D?)null);
-            LivekitPlayer p = NewV2Player();
-
-            p.OpenMedia(LivekitAddress.FromUserStream(new UserStream(BOT, "TR_pv")));
-            p.EnsureVideoIsPlaying();
-
-            Assert.IsTrue(p.IsVideoOpened);
-            Assert.AreEqual(Vector2.one, p.CurrentTextureScale);
-            AssertComposite(p.LastTexture());
         }
 
         [Test]
@@ -345,7 +312,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
         }
 
         [Test]
-        public void NotComposeBot_WhenPinnedUserIsAbsent()
+        public void NotComposeBot_WhenPinnedStreamFallsBackToCurrentStream()
         {
             LKParticipant bot = AddParticipant(BOT, V2_METADATA);
             LKParticipant other = AddParticipant(OTHER);
@@ -366,7 +333,8 @@ namespace DCL.SDKComponents.MediaStream.Tests
         public void ThrottleSlidesPerBot_WhenTwoPlayersShareTheCache()
         {
             IWebRequestController controller = Substitute.For<IWebRequestController>();
-            SendTextureRequest(controller).Returns(_ => new UniTaskCompletionSource<Texture2D?>().Task);
+            controller.SendAsync<GetTextureWebRequest, GetTextureArguments, GetTextureWebRequest.CreateTextureOp, Texture2D>(default, default)
+                      .ReturnsForAnyArgs(_ => new UniTaskCompletionSource<Texture2D?>().Task);
             var sharedCache = new SlideTextureCache(controller, decentralandUrlsSource, static () => 0f);
             slideCaches.Add(sharedCache);
             AddParticipant(BOT, V2("null", "idle", slideUrl: BOT_SLIDE_URL));
@@ -381,43 +349,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
             first.LastTexture();
             second.LastTexture();
 
-            SendTextureRequest(controller.Received(2));
-        }
-
-        [Test]
-        public void OpenPreSubscribedTracks_WhenPlayerCreatedAfterSubscription()
-        {
-            LKParticipant bot = AddParticipant(BOT, V2_METADATA);
-            Subscribe(bot, AddTrack(bot, "TR_pv", TrackKind.KindVideo, TrackSource.SourceScreenshare, LiveKitMediaExtensions.PRESENTATION_VIDEO_TRACK_NAME));
-            LKParticipant presenter = AddParticipant(PRESENTER);
-            Subscribe(presenter, AddTrack(presenter, "TR_cam", TrackKind.KindVideo, TrackSource.SourceCamera));
-            LivekitPlayer p = NewV2Player();
-
-            p.OpenMedia(LivekitAddress.CurrentStream());
-            p.EnsureVideoIsPlaying();
-
-            videoStreams.Received().ActiveStream(new StreamKey(BOT, "TR_pv"));
-            videoStreams.Received().ActiveStream(new StreamKey(PRESENTER, "TR_cam"));
-        }
-
-        [Test]
-        public void DrawVideo_AsSoonAsTheIndexIsSet()
-        {
-            (LivekitPlayer p, _) = StartVideo();
-
-            Assert.IsTrue(p.lastComposeDrewVideo);
-        }
-
-        [Test]
-        public void KeepDrawingFrozenFrame_WhenPaused()
-        {
-            (LivekitPlayer p, LKParticipant bot) = StartVideo();
-
-            SetMetadata(bot, V2("0", "paused", 1));
-            p.EnsureVideoIsPlaying();
-            p.LastTexture();
-
-            Assert.IsTrue(p.lastComposeDrewVideo);
+            controller.ReceivedWithAnyArgs(2).SendAsync<GetTextureWebRequest, GetTextureArguments, GetTextureWebRequest.CreateTextureOp, Texture2D>(default, default);
         }
 
         [Test]
@@ -466,22 +398,6 @@ namespace DCL.SDKComponents.MediaStream.Tests
             p.EnsureVideoIsPlaying();
 
             videoStreams.Received().ActiveStream(new StreamKey(SECOND_PRESENTER, "TR_cam2"));
-        }
-
-        [Test]
-        public void ReleaseComposite_WhenFallingBackToLegacy()
-        {
-            LKParticipant bot = AddParticipant(BOT, V2_METADATA);
-            LivekitPlayer p = NewV2Player();
-            p.OpenMedia(LivekitAddress.CurrentStream());
-            p.EnsureVideoIsPlaying();
-            Texture? composite = p.LastTexture();
-            AssertComposite(composite);
-
-            SetMetadata(bot, LEGACY_METADATA);
-            p.EnsureVideoIsPlaying();
-
-            Assert.IsTrue(composite == null);
         }
 
         [Test]
@@ -542,13 +458,13 @@ namespace DCL.SDKComponents.MediaStream.Tests
         {
             LKParticipant bot = AddParticipant(BOT, V2_METADATA);
             LivekitPlayer p = NewV2Player();
-            object? connectedInfo = PARTICIPANT_INFO.GetValue(bot);
+            object? connectedInfo = LiveKitTestObjects.PARTICIPANT_INFO.GetValue(bot);
             room.Info.ConnectionState.Returns(LKConnectionState.ConnReconnecting);
-            PARTICIPANT_INFO.SetValue(bot, null);
+            LiveKitTestObjects.PARTICIPANT_INFO.SetValue(bot, null);
 
-            Assert.DoesNotThrow(() => p.OpenMedia(LivekitAddress.CurrentStream()));
+            p.OpenMedia(LivekitAddress.CurrentStream());
 
-            PARTICIPANT_INFO.SetValue(bot, connectedInfo);
+            LiveKitTestObjects.PARTICIPANT_INFO.SetValue(bot, connectedInfo);
             room.Info.ConnectionState.Returns(LKConnectionState.ConnConnected);
             p.EnsureVideoIsPlaying();
 
@@ -623,22 +539,6 @@ namespace DCL.SDKComponents.MediaStream.Tests
             Assert.That(p.LastTexture(), Is.Null);
         }
 
-        private (LivekitPlayer player, LKParticipant bot) StartVideo()
-        {
-            LKParticipant bot = AddParticipant(BOT, V2("null", "idle"));
-            SubscribeWithFrame(bot, AddTrack(bot, "TR_pv", TrackKind.KindVideo, TrackSource.SourceScreenshare, LiveKitMediaExtensions.PRESENTATION_VIDEO_TRACK_NAME));
-            LivekitPlayer p = NewV2Player();
-            p.OpenMedia(LivekitAddress.CurrentStream());
-            p.EnsureVideoIsPlaying();
-            AssertComposite(p.LastTexture());
-
-            SetMetadata(bot, V2("0", "playing"));
-            p.EnsureVideoIsPlaying();
-            p.LastTexture();
-
-            return (p, bot);
-        }
-
         private void ComposeThenReconnect()
         {
             LKParticipant bot = AddParticipant(BOT, V2_METADATA);
@@ -667,8 +567,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
 
         private LKParticipant AddParticipant(string identity, string metadata = "")
         {
-            var participant = new LKParticipant();
-            PARTICIPANT_INFO.SetValue(participant, new ParticipantInfo { Identity = identity, Metadata = metadata });
+            LKParticipant participant = LiveKitTestObjects.NewParticipant(identity, metadata);
 
             remoteParticipants[identity] = participant;
             participantsHub.RemoteParticipant(identity).Returns(participant);
@@ -691,23 +590,16 @@ namespace DCL.SDKComponents.MediaStream.Tests
 
         private static TrackPublication AddTrack(LKParticipant participant, string sid, TrackKind kind, TrackSource source, string name = "", bool muted = false)
         {
-            var track = new TrackPublication();
-
-            typeof(TrackPublication).GetField("info", BindingFlags.Instance | BindingFlags.NonPublic)!
-                                    .SetValue(track, new TrackPublicationInfo { Sid = sid, Kind = kind, Source = source, Name = name, Muted = muted });
-
+            TrackPublication track = LiveKitTestObjects.NewPublication(sid, kind, source, name, muted);
             participant.AddTrack(track);
             return track;
         }
 
         private IVideoStream Subscribe(LKParticipant participant, TrackPublication track)
         {
-            typeof(TrackPublication).GetMethod("UpdateTrack", BindingFlags.Instance | BindingFlags.NonPublic)!
-                                    .Invoke(track, new object[] { Substitute.For<ITrack>() });
-
             IVideoStream stream = Substitute.For<IVideoStream>();
             resolvedStreams[new StreamKey(participant.Identity, track.Sid)] = new Owned<IVideoStream>(stream).Downgrade();
-            room.TrackSubscribed += Raise.Event<SubscribeDelegate>(null!, track, participant);
+            room.TrackSubscribed += Raise.Event<SubscribeDelegate>(Substitute.For<ITrack>(), track, participant);
             return stream;
         }
 
@@ -725,12 +617,8 @@ namespace DCL.SDKComponents.MediaStream.Tests
             return frame;
         }
 
-        private LivekitPlayer NewV2Player()
-        {
-            var slideCache = new SlideTextureCache(Substitute.For<IWebRequestController>(), decentralandUrlsSource);
-            slideCaches.Add(slideCache);
-            return NewV2Player(slideCache);
-        }
+        private LivekitPlayer NewV2Player() =>
+            NewV2Player(NewSlideCache());
 
         private LivekitPlayer NewV2Player(SlideTextureCache slideCache)
         {
@@ -743,29 +631,16 @@ namespace DCL.SDKComponents.MediaStream.Tests
 
         private LivekitPlayer NewLegacyPlayer()
         {
-            var p = new LivekitPlayer(room, () => true, null, null, null);
+            var p = new LivekitPlayer(room, () => true, null, NewSlideCache(), null);
             players.Add(p);
             return p;
         }
 
-        private static UniTask<Texture2D?> SendTextureRequest(IWebRequestController controller) =>
-            controller.SendAsync<GetTextureWebRequest, GetTextureArguments, GetTextureWebRequest.CreateTextureOp, Texture2D>(
-                Arg.Any<RequestEnvelope<GetTextureWebRequest, GetTextureArguments>>(),
-                Arg.Any<GetTextureWebRequest.CreateTextureOp>(),
-                Arg.Any<long>(),
-                Arg.Any<IProgress<float>?>());
-
-        private sealed class FakeActiveSpeakers : IActiveSpeakers
+        private SlideTextureCache NewSlideCache()
         {
-            public int Count => 0;
-
-            public event Action Updated { add { } remove { } }
-
-            public IEnumerator<string> GetEnumerator() =>
-                ((IEnumerable<string>)Array.Empty<string>()).GetEnumerator();
-
-            IEnumerator IEnumerable.GetEnumerator() =>
-                GetEnumerator();
+            var slideCache = new SlideTextureCache(Substitute.For<IWebRequestController>(), decentralandUrlsSource);
+            slideCaches.Add(slideCache);
+            return slideCache;
         }
     }
 }

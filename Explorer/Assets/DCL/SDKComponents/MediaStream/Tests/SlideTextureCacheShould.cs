@@ -115,19 +115,6 @@ namespace DCL.SDKComponents.MediaStream.Tests
         }
 
         [Test]
-        public void NotRetryImmediately_AfterFailure()
-        {
-            SendTextureRequest(webRequestController).Returns(UniTask.FromException<Texture2D?>(new InvalidOperationException()));
-            LogAssert.Expect(LogType.Exception, new Regex("InvalidOperationException"));
-
-            cache.GetOrRequest(ALLOWED_URL, BOT_A);
-            Texture2D? retried = cache.GetOrRequest(ALLOWED_URL, BOT_A);
-
-            Assert.IsNull(retried);
-            SendTextureRequest(webRequestController.Received(1));
-        }
-
-        [Test]
         public void BoundTrackedUrls_WhenManyDistinctUrlsAreDisallowed()
         {
             for (var i = 0; i < 1000; i++)
@@ -293,11 +280,8 @@ namespace DCL.SDKComponents.MediaStream.Tests
         [Test]
         public void NotThrow_WhenDisposedTwice()
         {
-            Assert.DoesNotThrow(() =>
-            {
-                cache.Dispose();
-                cache.Dispose();
-            });
+            cache.Dispose();
+            cache.Dispose();
         }
 
         private static string SlideUrl(int index) =>

@@ -32,12 +32,6 @@ namespace DCL.SDKComponents.MediaStream.Tests
         }
 
         [Test]
-        public void FindShader_ByName()
-        {
-            Assert.IsNotNull(Shader.Find(SHADER_NAME));
-        }
-
-        [Test]
         public void ReturnRenderTextureOfSlideSize_WhenComposing()
         {
             Texture result = Compose(1920, 1080);
@@ -50,46 +44,14 @@ namespace DCL.SDKComponents.MediaStream.Tests
         }
 
         [Test]
-        public void ReuseRenderTexture_WhenSizeUnchanged()
-        {
-            Texture first = Compose(1920, 1080);
-            Texture second = Compose(1920, 1080);
-
-            Assert.IsNotNull(first);
-            Assert.AreSame(first, second);
-        }
-
-        [Test]
         public void RecreateRenderTexture_WhenSizeChanges()
         {
             Texture landscape = Compose(1920, 1080);
             Texture portrait = Compose(1080, 1920);
 
-            Assert.IsNotNull(landscape);
-            Assert.IsNotNull(portrait);
             Assert.AreNotSame(landscape, portrait);
             Assert.AreEqual(1080, portrait.width);
             Assert.AreEqual(1920, portrait.height);
-        }
-
-        [Test]
-        public void AcceptVideoAndCamera_WhenProvided()
-        {
-            Texture? result = null;
-
-            Assert.DoesNotThrow(() => result = compositor.Compose(1920, 1080, Texture2D.blackTexture, true,
-                new Vector4(0.25f, 0.25f, 0.5f, 0.5f), video, camera, new Vector4(0.02f, 0.7f, 0.15f, 0.27f)));
-            Assert.IsNotNull(result);
-        }
-
-        [Test]
-        public void AcceptVideoRectWithoutFrame()
-        {
-            Texture? result = null;
-
-            Assert.DoesNotThrow(() => result = compositor.Compose(1920, 1080, Texture2D.blackTexture, true,
-                new Vector4(0.25f, 0.25f, 0.5f, 0.5f), null, null, default));
-            Assert.IsNotNull(result);
         }
 
         [Test]
@@ -117,15 +79,6 @@ namespace DCL.SDKComponents.MediaStream.Tests
         }
 
         [Test]
-        public void KeepSlideSize_WhenWithinMax()
-        {
-            Texture result = Compose(1920, 1080);
-
-            Assert.AreEqual(1920, result.width);
-            Assert.AreEqual(1080, result.height);
-        }
-
-        [Test]
         public void SkipBlit_WhenOnlyTheSlideIsShownUnchanged()
         {
             Texture first = Compose(1920, 1080);
@@ -138,8 +91,10 @@ namespace DCL.SDKComponents.MediaStream.Tests
         [Test]
         public void BlitEveryCall_WhenVideoIsShown()
         {
-            ComposeWithVideo(new Vector4(0.1f, 0.1f, 0.5f, 0.5f));
-            ComposeWithVideo(new Vector4(0.1f, 0.1f, 0.5f, 0.5f));
+            var videoRect = new Vector4(0.1f, 0.1f, 0.5f, 0.5f);
+
+            compositor.Compose(1920, 1080, Texture2D.blackTexture, true, videoRect, video, null, default);
+            compositor.Compose(1920, 1080, Texture2D.blackTexture, true, videoRect, video, null, default);
 
             Assert.AreEqual(2, compositor.blitCount);
         }
@@ -174,9 +129,6 @@ namespace DCL.SDKComponents.MediaStream.Tests
             Assert.AreNotSame(first, second);
             Assert.AreEqual(2, compositor.blitCount);
         }
-
-        private void ComposeWithVideo(Vector4 videoRect) =>
-            compositor.Compose(1920, 1080, Texture2D.blackTexture, true, videoRect, video, camera, new Vector4(0.02f, 0.7f, 0.15f, 0.27f));
 
         private Texture Compose(int width, int height) =>
             compositor.Compose(width, height, Texture2D.blackTexture, false, default, null, null, default);

@@ -1,3 +1,4 @@
+using DCL.Tests.Editor;
 using DCL.VoiceChat.Nearby.Audio;
 using LiveKit.Proto;
 using LiveKit.Rooms;
@@ -125,7 +126,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
         {
             RaiseTrackSubscribed(WALLET_A, SID_1, TrackKind.KindAudio);
 
-            LKParticipant participant = NewParticipant(WALLET_A);
+            LKParticipant participant = LiveKitTestObjects.NewParticipant(WALLET_A);
             Assert.DoesNotThrow(() =>
                 room.TrackUnpublished += Raise.Event<PublishDelegate>(null!, participant));
 
@@ -481,22 +482,22 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
 
         private void RaiseTrackSubscribed(string identity, string sid, TrackKind kind, TrackSource source = TrackSource.SourceMicrophone)
         {
-            LKParticipant participant = NewParticipant(identity);
-            TrackPublication publication = NewPublication(sid, kind, source);
+            LKParticipant participant = LiveKitTestObjects.NewParticipant(identity);
+            TrackPublication publication = LiveKitTestObjects.NewPublication(sid, kind, source);
             room.TrackSubscribed += Raise.Event<SubscribeDelegate>(null!, publication, participant);
         }
 
         private void RaiseTrackUnsubscribed(string identity, string sid)
         {
-            LKParticipant participant = NewParticipant(identity);
-            TrackPublication publication = NewPublication(sid, TrackKind.KindAudio);
+            LKParticipant participant = LiveKitTestObjects.NewParticipant(identity);
+            TrackPublication publication = LiveKitTestObjects.NewPublication(sid, TrackKind.KindAudio, TrackSource.SourceMicrophone);
             room.TrackUnsubscribed += Raise.Event<SubscribeDelegate>(null!, publication, participant);
         }
 
         private void RaiseTrackUnpublished(string identity, string sid, TrackKind kind)
         {
-            LKParticipant participant = NewParticipant(identity);
-            TrackPublication publication = NewPublication(sid, kind);
+            LKParticipant participant = LiveKitTestObjects.NewParticipant(identity);
+            TrackPublication publication = LiveKitTestObjects.NewPublication(sid, kind, TrackSource.SourceMicrophone);
             room.TrackUnpublished += Raise.Event<PublishDelegate>(publication, participant);
         }
 
@@ -507,7 +508,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
 
         private void RaiseParticipantUpdated(string identity, UpdateFromParticipant update)
         {
-            LKParticipant participant = NewParticipant(identity);
+            LKParticipant participant = LiveKitTestObjects.NewParticipant(identity);
             participantsHub.UpdatesFromParticipant += Raise.Event<ParticipantDelegate>(participant, update);
         }
 
@@ -536,32 +537,14 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
 
         private static LKParticipant NewParticipantWithTracks(string identity, (string sid, TrackKind kind, TrackSource source)[] tracks)
         {
-            LKParticipant participant = NewParticipant(identity);
+            LKParticipant participant = LiveKitTestObjects.NewParticipant(identity);
 
             FieldInfo tracksField = typeof(LKParticipant).GetField("tracks", BindingFlags.Instance | BindingFlags.NonPublic)!;
             var tracksDict = (IDictionary<string, TrackPublication>)tracksField.GetValue(participant)!;
             foreach ((string sid, TrackKind kind, TrackSource source) in tracks)
-                tracksDict[sid] = NewPublication(sid, kind, source);
+                tracksDict[sid] = LiveKitTestObjects.NewPublication(sid, kind, source);
 
             return participant;
-        }
-
-        private static LKParticipant NewParticipant(string identity)
-        {
-            var info = new ParticipantInfo { Identity = identity };
-            var participant = new LKParticipant();
-            typeof(LKParticipant).GetField("info", BindingFlags.Instance | BindingFlags.NonPublic)!
-                                 .SetValue(participant, info);
-            return participant;
-        }
-
-        private static TrackPublication NewPublication(string sid, TrackKind kind, TrackSource source = TrackSource.SourceMicrophone)
-        {
-            var info = new TrackPublicationInfo { Sid = sid, Kind = kind, Source = source };
-            var publication = new TrackPublication();
-            typeof(TrackPublication).GetField("info", BindingFlags.Instance | BindingFlags.NonPublic)!
-                                    .SetValue(publication, info);
-            return publication;
         }
 
         private sealed class FakeActiveSpeakers : IActiveSpeakers
