@@ -55,6 +55,9 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             internalCts?.Dispose();
             internalCts = null;
 
+            if (atlasChunk && atlasChunk.MainSpriteRenderer.sprite)
+                UnityObjectUtils.SafeDestroy(atlasChunk.MainSpriteRenderer.sprite);
+
             if (bundledTextureHandle.IsValid())
                 Addressables.Release(bundledTextureHandle);
 
@@ -75,7 +78,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             atlasChunk.MainSpriteRenderer.color = AtlasChunkConstants.INITIAL_COLOR;
 
             AsyncOperationHandle<Texture2D> handle = Addressables.LoadAssetAsync<Texture2D>($"{chunkId.x},{chunkId.y}");
-            await handle.Task;
+            await handle.ToUniTask();
 
             if (loadCt.IsCancellationRequested)
             {
