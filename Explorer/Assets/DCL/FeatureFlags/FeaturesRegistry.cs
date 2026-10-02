@@ -30,6 +30,8 @@ namespace DCL.FeatureFlags
         private readonly bool lobbyDefault;
         private readonly bool lobbyFlagEnabled;
 
+        private bool? lobbyGrandfathered;
+
         public FeaturesRegistry(
             IAppArgs appArgs,
             bool localSceneDevelopment)
@@ -112,6 +114,9 @@ namespace DCL.FeatureFlags
         {
             get
             {
+                // Captured before the toggle is persisted below, so this session's own flag roll does not count as a stored choice
+                lobbyGrandfathered ??= DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_LOBBY_ENABLED);
+
                 if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_LOBBY_ENABLED))
                     return DCLPlayerPrefs.GetBool(DCLPrefKeys.SETTINGS_LOBBY_ENABLED);
 
@@ -124,6 +129,17 @@ namespace DCL.FeatureFlags
 
             set => DCLPlayerPrefs.SetBool(DCLPrefKeys.SETTINGS_LOBBY_ENABLED, value, true);
         }
+
+        /// <summary>
+        ///     The remote lobby flag as resolved for this session, before the Settings toggle and the <c>--lobby</c> app arg are applied.
+        /// </summary>
+        public bool LobbyFlagEnabled => lobbyFlagEnabled;
+
+        /// <summary>
+        ///     Whether a stored Settings toggle already decided the lobby when this session first resolved it, as opposed to this session's flag roll.
+        ///     False until <see cref="LobbyEnabledSetting" /> is read for the first time.
+        /// </summary>
+        public bool LobbyGrandfathered => lobbyGrandfathered ?? false;
 
         /// <summary>
         ///     Checks if a feature is enabled.
