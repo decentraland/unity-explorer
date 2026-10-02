@@ -147,7 +147,12 @@ namespace DCL.Backpack.AvatarSection.Outfits.Repository
 
         private async UniTask PublishAsync(Dictionary<int, OutfitItem> snapshot, CancellationToken ct)
         {
-            if (!(await selfProfile.ProfileAsync(ct)).IsOk(out Profile? profile))
+            ProfileReadResult read = await selfProfile.ProfileAsync(ct);
+
+            if (read.IsCancelled)
+                throw new OperationCanceledException(ct);
+
+            if (!read.IsOk(out Profile? profile))
                 throw new InvalidOperationException("Cannot publish outfits, self profile is not loaded.");
 
             if (string.IsNullOrEmpty(profile.UserId))

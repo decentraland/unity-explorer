@@ -13,7 +13,10 @@ using NSubstitute;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using System.Threading;
+using UnityEngine;
+using UnityEngine.TestTools;
 using Utility.Fsm;
 
 namespace DCL.Profiles.Tests
@@ -121,6 +124,7 @@ namespace DCL.Profiles.Tests
             // Arrange
             var error = new TimeoutException("catalyst timed out");
             AnyGet().Returns(UniTask.FromException<ProfileTier?>(error));
+            ExpectReportedException(error);
 
             // Act
             executor.Execute(SelfProfileCmd.FromFetch(ALICE), inbox);
@@ -136,7 +140,9 @@ namespace DCL.Profiles.Tests
         public void ReportAMalformedFailureWhenTheFetchThrowsAJsonError()
         {
             // Arrange
-            AnyGet().Returns(UniTask.FromException<ProfileTier?>(new JsonReaderException("unexpected token")));
+            var error = new JsonReaderException("unexpected token");
+            AnyGet().Returns(UniTask.FromException<ProfileTier?>(error));
+            ExpectReportedException(error);
 
             // Act
             executor.Execute(SelfProfileCmd.FromFetch(ALICE), inbox);
@@ -175,6 +181,40 @@ namespace DCL.Profiles.Tests
             // Assert
             // Has.Member, not Does.Contain: URN converts to string implicitly and would be compared as a substring.
             Assert.That(fetched.Avatar.Wearables, Has.Member(FORCED_WEARABLE));
+        }
+
+        [Test]
+        public void ReportAFetchFailureWhenACancellationFromElsewhereSurfaces()
+        {
+            // Arrange
+            // UniTask surfaces a faulted cancellation as its own OperationCanceledException, so only the type is observable.
+            AnyGet().Returns(UniTask.FromException<ProfileTier?>(new OperationCanceledException("another token")));
+            LogAssert.Expect(LogType.Exception, new Regex(nameof(OperationCanceledException)));
+
+            // Act
+            executor.Execute(SelfProfileCmd.FromFetch(ALICE), inbox);
+
+            // Assert
+            Assert.That(SingleSent().IsFetchFailed(out FetchFailed msg), Is.True, "a cancellation the executor did not request is a failure, or the model stays Fetching");
+            Assert.That(msg.Failure.Kind, Is.EqualTo(FailureKind.Transient));
+            Assert.That(msg.Failure.Exception, Is.TypeOf<OperationCanceledException>());
+        }
+
+        [Test]
+        public void ReportAFetchFailureWhenApplyingTheSessionOverridesThrows()
+        {
+            // Arrange
+            var error = new InvalidOperationException("emote storage is not ready");
+            AnyGet().Returns(UniTask.FromResult<ProfileTier?>(NewProfile(ALICE, 3)));
+            emoteStorage.BaseEmotesUrns.Returns(_ => throw error);
+            ExpectReportedException(error);
+
+            // Act
+            executor.Execute(SelfProfileCmd.FromFetch(ALICE), inbox);
+
+            // Assert
+            Assert.That(SingleSent().IsFetchFailed(out FetchFailed msg), Is.True);
+            Assert.That(msg.Failure.Exception, Is.SameAs(error));
         }
 
         [Test]
@@ -320,6 +360,7 @@ namespace DCL.Profiles.Tests
             Profile sent = NewProfile(ALICE, 4);
             var error = new InvalidOperationException("deploy rejected");
             profileRepository.SetAsync(Arg.Any<Profile>(), Arg.Any<CancellationToken>()).Returns(UniTask.FromException(error));
+            ExpectReportedException(error);
 
             // Act
             executor.Execute(SelfProfileCmd.FromDeploy(new DeployCmd(ALICE, sent, sent.Version)), inbox);
@@ -333,11 +374,29 @@ namespace DCL.Profiles.Tests
         }
 
         [Test]
+        public void ReportADeployFailureWhenACancellationFromElsewhereSurfaces()
+        {
+            // Arrange
+            Profile sent = NewProfile(ALICE, 4);
+            profileRepository.SetAsync(Arg.Any<Profile>(), Arg.Any<CancellationToken>()).Returns(UniTask.FromException(new OperationCanceledException("a superseded deploy")));
+            LogAssert.Expect(LogType.Exception, new Regex(nameof(OperationCanceledException)));
+
+            // Act
+            executor.Execute(SelfProfileCmd.FromDeploy(new DeployCmd(ALICE, sent, sent.Version)), inbox);
+
+            // Assert
+            Assert.That(SingleSent().IsDeployFailed(out DeployFailed msg), Is.True, "a cancellation the executor did not request is a failure, or the model stays Deploying");
+            Assert.That(msg.Sent, Is.SameAs(sent));
+            Assert.That(msg.Exception, Is.TypeOf<OperationCanceledException>());
+        }
+
+        [Test]
         public void ReportADeployFailureWhenTheSavedProfileIsMissing()
         {
             // Arrange
             Profile sent = NewProfile(ALICE, 4);
             AnyGet().Returns(UniTask.FromResult<ProfileTier?>(null));
+            LogAssert.Expect(LogType.Exception, new Regex(nameof(ProfileNotFoundAfterDeployException)));
 
             // Act
             executor.Execute(SelfProfileCmd.FromDeploy(new DeployCmd(ALICE, sent, sent.Version)), inbox);
@@ -384,6 +443,22 @@ namespace DCL.Profiles.Tests
             });
 
             Assert.That(SingleSent().IsFetchSucceeded(out _), Is.True);
+        }
+
+        [Test]
+        public void KeepExecutingABatchWhenACommandThrows()
+        {
+            // Arrange
+            var error = new InvalidOperationException("cache is closed");
+            profileCache.When(cache => cache.Set(Arg.Any<string>(), Arg.Any<ProfileTier>())).Do(_ => throw error);
+            AnyGet().Returns(UniTask.FromResult<ProfileTier?>(NewProfile(ALICE, 3)));
+            ExpectReportedException(error);
+
+            // Act
+            executor.Execute(SelfProfileCmd.FromBatch(new[] { SelfProfileCmd.FromPublish(NewProfile(ALICE, 2)), SelfProfileCmd.FromFetch(ALICE) }), inbox);
+
+            // Assert
+            Assert.That(SingleSent().IsFetchSucceeded(out _), Is.True, "the fetch after the failing publish must still run");
         }
 
         [Test]
@@ -438,5 +513,9 @@ namespace DCL.Profiles.Tests
             Assert.That(inbox.Sent, Has.Count.EqualTo(1), "exactly one message should reach the inbox");
             return inbox.Sent[0];
         }
+
+        /// <summary>The executor reports every failure to Sentry through <c>ReportHub</c>, which the test runner sees as a logged exception.</summary>
+        private static void ExpectReportedException(Exception exception) =>
+            LogAssert.Expect(LogType.Exception, new Regex(Regex.Escape($"{exception.GetType().Name}: {exception.Message}")));
     }
 }

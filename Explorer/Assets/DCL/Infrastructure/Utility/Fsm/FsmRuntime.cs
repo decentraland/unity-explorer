@@ -17,6 +17,7 @@ namespace Utility.Fsm
         private readonly UpdateFn update;
         private readonly ICmdExecutor<TCmd, TMsg> executor;
         private readonly string tag;
+        private readonly string category;
         private readonly Mutex<TModel> model; // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
 
         private bool isDraining;
@@ -31,9 +32,11 @@ namespace Utility.Fsm
             }
         }
 
-        public FsmRuntime(string tag, TModel initialModel, UpdateFn update, ICmdExecutor<TCmd, TMsg> executor)
+        /// <param name="category">The <see cref="ReportCategory"/> every message, model and failure is logged under.</param>
+        public FsmRuntime(string tag, string category, TModel initialModel, UpdateFn update, ICmdExecutor<TCmd, TMsg> executor)
         {
             this.tag = tag;
+            this.category = category;
             this.update = update;
             this.executor = executor;
             model = new Mutex<TModel>(initialModel); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
@@ -63,7 +66,7 @@ namespace Utility.Fsm
 
         private void Step(in TMsg msg)
         {
-            ReportHub.LogProductionInfo($"[{tag}] msg: {msg}");
+            ReportHub.Log(category, $"[{tag}] msg: {msg}");
 
             try
             {
@@ -72,11 +75,11 @@ namespace Utility.Fsm
                 using (Mutex<TModel>.Guard guard = model.Lock()) // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
                     guard.Value = next;
 
-                ReportHub.LogProductionInfo($"[{tag}] model: {next} cmd: {cmd}");
+                ReportHub.Log(category, $"[{tag}] model: {next} cmd: {cmd}");
 
                 executor.Execute(cmd, this);
             }
-            catch (Exception e) { ReportHub.LogException(e, ReportCategory.ALWAYS); }
+            catch (Exception e) { ReportHub.LogException(e, category); }
         }
     }
 }

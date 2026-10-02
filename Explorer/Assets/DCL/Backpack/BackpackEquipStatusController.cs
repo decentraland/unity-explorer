@@ -198,9 +198,13 @@ namespace DCL.Backpack
 
             try
             {
-                if (!(await selfProfile.ProfileAsync(ct)).IsOk(out Profile? oldProfile))
+                ProfileReadResult read = await selfProfile.ProfileAsync(ct);
+
+                if (!read.IsOk(out Profile? oldProfile))
                 {
-                    ShowErrorNotificationAsync(ct).Forget();
+                    if (!read.IsCancelled)
+                        ShowErrorNotificationAsync(ct).Forget();
+
                     return;
                 }
 

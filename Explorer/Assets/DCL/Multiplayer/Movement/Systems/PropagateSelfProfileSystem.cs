@@ -10,7 +10,7 @@ using ECS.Abstract;
 
 namespace DCL.Multiplayer.Movement
 {
-    /// <summary>Announces the trusted self profile to Pulse while Pulse is active.</summary>
+    /// <summary>Announces the self profile the catalyst confirmed to Pulse while Pulse is active; an edit still deploying is not announced.</summary>
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [LogCategory(ReportCategory.MULTIPLAYER)]
     public partial class PropagateSelfProfileSystem : BaseUnityLoopSystem
@@ -31,10 +31,10 @@ namespace DCL.Multiplayer.Movement
             if (!pulseActivation.IsActive)
                 return;
 
-            Option<Profile> known = selfProfile.CurrentProfileSnapshot.KnownProfile;
+            Option<Profile> confirmed = selfProfile.CurrentProfileSnapshot.ConfirmedProfile;
 
-            if (known.Has)
-                profilePropagation.PropagateIfNewVersion(known.Value);
+            if (confirmed.Has)
+                profilePropagation.PropagateIfNewVersion(confirmed.Value);
         }
     }
 }

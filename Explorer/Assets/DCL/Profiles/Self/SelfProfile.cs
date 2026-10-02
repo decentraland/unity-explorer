@@ -5,6 +5,7 @@ using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Equipped;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.Diagnostics;
 using DCL.Utility.Types;
 using DCL.Web3.Identities;
 using System;
@@ -51,7 +52,7 @@ namespace DCL.Profiles.Self
             var executor = new SelfProfileCmdExecutor(profileRepository, profileCache, wearableStorage, emoteStorage, equippedWearables, equippedEmotes,
                 forcedWearables, forcedEmotes, world, playerEntity);
 
-            runtime = new FsmRuntime<SelfProfileModel, SelfProfileMsg, SelfProfileCmd>(FSM_TAG, SelfProfileModel.NoIdentity(), SelfProfileModel.Update, executor);
+            runtime = new FsmRuntime<SelfProfileModel, SelfProfileMsg, SelfProfileCmd>(FSM_TAG, ReportCategory.PROFILE, SelfProfileModel.NoIdentity(), SelfProfileModel.Update, executor);
 
             web3IdentityCache.OnIdentityChanged += SendCurrentIdentity;
             web3IdentityCache.OnIdentityCleared += SendIdentityCleared;
@@ -66,7 +67,7 @@ namespace DCL.Profiles.Self
         {
             web3IdentityCache = new MemoryWeb3IdentityCache();
             drainToken = drainCts.Token;
-            runtime = new FsmRuntime<SelfProfileModel, SelfProfileMsg, SelfProfileCmd>(FSM_TAG, SelfProfileModel.NoIdentity(), SelfProfileModel.Update, new InertCmdExecutor());
+            runtime = new FsmRuntime<SelfProfileModel, SelfProfileMsg, SelfProfileCmd>(FSM_TAG, ReportCategory.PROFILE, SelfProfileModel.NoIdentity(), SelfProfileModel.Update, new InertCmdExecutor());
         }
 #endif
 
@@ -78,19 +79,29 @@ namespace DCL.Profiles.Self
             runtime.Dispose();
         }
 
-        /// <summary>Waits until the current identity's profile is resolved. A failed read is retried once per call.</summary>
-        public virtual UniTask<ProfileReadResult> ProfileAsync(CancellationToken ct)
+        /// <summary>
+        ///     Waits until the current identity's profile is resolved. A failed read is retried once per call. A read dropped from a
+        ///     full request list is issued again, so only the token or <see cref="Dispose"/> ends it as <c>Cancelled</c>.
+        /// </summary>
+        public virtual async UniTask<ProfileReadResult> ProfileAsync(CancellationToken ct)
         {
             IMsgInbox<SelfProfileMsg> inbox = runtime;
-            RequestId id;
 
-            lock (requestGate) // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
+            while (true)
             {
-                id = NextRequestId();
-                inbox.Send(SelfProfileMsg.FromProfileReadRequested(id));
-            }
+                RequestId id;
 
-            return AwaitResultAsync(id, static model => model.ReadResults, ProfileReadResult.FromError(ProfileReadError.Cancelled), ct);
+                lock (requestGate) // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
+                {
+                    id = NextRequestId();
+                    inbox.Send(SelfProfileMsg.FromProfileReadRequested(id));
+                }
+
+                ProfileReadResult result = await AwaitResultAsync(id, static model => model.ReadResults, ProfileReadResult.FromError(ProfileReadError.Cancelled), ct);
+
+                if (!result.IsCancelled || ct.IsCancellationRequested || drainToken.IsCancellationRequested)
+                    return result;
+            }
         }
 
         /// <summary>Cancelling the token stops waiting; the deploy itself always runs to its end.</summary>

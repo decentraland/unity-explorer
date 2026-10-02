@@ -1,4 +1,5 @@
 using DCL.Profiles.Self;
+using DCL.Utility.Types;
 using ECS.TestSuite;
 using NUnit.Framework;
 using System;
@@ -290,6 +291,25 @@ namespace DCL.Profiles.Tests
             Assert.That(next.Session, Is.EqualTo(model.Session));
             Assert.That(cmd.GetKind(), Is.EqualTo(SelfProfileCmd.Kind.None));
             AssertDeployError(next, DEPLOY, ProfileDeployError.NothingChanged);
+        }
+
+        [Test]
+        public void JoinAnIdenticalEditToTheDeployInFlight()
+        {
+            // Arrange
+            var later = new RequestId(9);
+            Profile pending = NewProfile(4);
+            SelfProfileModel model = Deploying(pending, ProfileKnowledge.FromKnown(NewProfile(3)), DEPLOY);
+
+            // Act
+            (SelfProfileModel next, SelfProfileCmd cmd) = SelfProfileModel.Update(model, SelfProfileMsg.FromDeployProfileOnEditRequested(new DeployRequest(later, NewProfile(4))));
+
+            // Assert
+            Deploying deploying = AssertDeploying(AssertIdentified(next).Activity, pending);
+            Assert.That(deploying.Requests.Count, Is.EqualTo(2));
+            Assert.That(deploying.Requests[1], Is.EqualTo(later));
+            Assert.That(cmd.GetKind(), Is.EqualTo(SelfProfileCmd.Kind.None));
+            Assert.That(next.DeployResults.Contains(later), Is.False, "an edit that is still deploying is not answered NothingChanged");
         }
 
         [Test]
@@ -734,6 +754,47 @@ namespace DCL.Profiles.Tests
             Identified identified = AssertIdentified(next);
             Assert.That(identified.PendingReads.Count, Is.EqualTo(0));
             Assert.That(identified.Activity.GetKind(), Is.EqualTo(ProfileActivity.Kind.Fetching));
+        }
+
+        [Test]
+        public void ConfirmTheKnownProfileWhenNothingIsDeploying()
+        {
+            // Arrange
+            Profile known = NewProfile(3);
+
+            // Act
+            Option<Profile> confirmed = Known(known).ConfirmedProfile;
+
+            // Assert
+            Assert.That(confirmed.Has, Is.True);
+            Assert.That(confirmed.Value, Is.SameAs(known));
+        }
+
+        [Test]
+        public void ConfirmTheProfileFromBeforeTheEditWhileDeploying()
+        {
+            // Arrange
+            Profile trusted = NewProfile(3);
+            SelfProfileModel model = Deploying(NewProfile(4), ProfileKnowledge.FromKnown(trusted));
+
+            // Act
+            Option<Profile> confirmed = model.ConfirmedProfile;
+
+            // Assert
+            Assert.That(model.KnownProfile.Value, Is.Not.SameAs(trusted), "the pending edit is trusted locally");
+            Assert.That(confirmed.Has, Is.True);
+            Assert.That(confirmed.Value, Is.SameAs(trusted));
+        }
+
+        [Test]
+        public void ConfirmNothingWhileDeployingOverAMissingProfile()
+        {
+            // Arrange
+            SelfProfileModel model = Deploying(NewProfile(1), ProfileKnowledge.Missing());
+
+            // Act & Assert
+            Assert.That(model.ConfirmedProfile.Has, Is.False);
+            Assert.That(SelfProfileModel.NoIdentity().ConfirmedProfile.Has, Is.False);
         }
 
         [Test]

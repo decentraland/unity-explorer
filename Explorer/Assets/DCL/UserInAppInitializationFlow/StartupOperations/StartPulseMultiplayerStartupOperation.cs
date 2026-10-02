@@ -64,8 +64,8 @@ namespace DCL.UserInAppInitializationFlow
             if (!read.IsOk(out Profile? profile))
                 throw new InvalidOperationException($"Own profile could not be resolved ({read}), nothing to propagate to Pulse");
 
-            profilePropagation.PropagateIfNewVersion(profile);
             await UniTask.SwitchToMainThread();
+            profilePropagation.PropagateIfNewVersion(profile);
         }
     }
 }

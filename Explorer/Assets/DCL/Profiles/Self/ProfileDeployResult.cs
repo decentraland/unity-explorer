@@ -19,5 +19,9 @@ namespace DCL.Profiles.Self
     [REnum(EnumUnderlyingType.Byte)]
     [REnumField(typeof(Profile), "Ok")]
     [REnumField(typeof(ProfileDeployError), "Error")]
-    public readonly partial struct ProfileDeployResult { }
+    public readonly partial struct ProfileDeployResult
+    {
+        /// <summary>True when the wait for the deploy was cancelled instead of answered.</summary>
+        public bool IsCancelled => IsError(out ProfileDeployError error) && error == ProfileDeployError.Cancelled;
+    }
 }

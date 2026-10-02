@@ -112,7 +112,12 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
 
         private async UniTask<Outfit> CreateOutfitFromEquippedAsync(CancellationToken ct)
         {
-            if (!(await selfProfile.ProfileAsync(ct)).IsOk(out Profile? profile))
+            ProfileReadResult read = await selfProfile.ProfileAsync(ct);
+
+            if (read.IsCancelled)
+                throw new OperationCanceledException(ct);
+
+            if (!read.IsOk(out Profile? profile))
                 throw new InvalidOperationException("Cannot preview outfit, self profile is not loaded.");
 
             var (hair, eyes, skin) = equippedWearables.GetColors();

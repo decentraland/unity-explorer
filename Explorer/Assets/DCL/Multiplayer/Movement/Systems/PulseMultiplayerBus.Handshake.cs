@@ -35,6 +35,10 @@ namespace DCL.Multiplayer.Movement
             var handshakePacket = OutgoingMessage.Create(PacketMode.RELIABLE, ClientMessage.MessageOneofCase.Handshake);
             handshakePacket.Message.Handshake.AuthChain = ByteString.CopyFromUtf8(BuildAuthChain());
             ProfileReadResult profileRead = await selfProfile.ProfileAsync(ct);
+
+            if (profileRead.IsCancelled)
+                throw new OperationCanceledException(ct);
+
             handshakePacket.Message.Handshake.ProfileVersion = profileRead.IsOk(out Profile? profile) ? profile.Version : 0;
 
             WriteInitialState(handshakePacket.Message.Handshake);

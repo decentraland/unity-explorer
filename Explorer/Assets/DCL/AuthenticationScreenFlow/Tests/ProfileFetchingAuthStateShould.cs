@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.Utilities;
+using DCL.Web3;
 using DCL.Web3.Identities;
 using ECS.TestSuite;
 using MVC;
@@ -140,6 +141,73 @@ namespace DCL.AuthenticationScreenFlow.Tests
                 Assert.That(selfProfile.Calls, Is.EqualTo(1), "a genuine \"no deployed profile\" must resolve on the single fetch");
             });
 
+        [UnityTest]
+        public IEnumerator ClearARestoredIdentityWhoseProfileIsNotDeployed() =>
+            UniTask.ToCoroutine(async () =>
+            {
+                EcsTestsUtils.SetUpFeaturesRegistry();
+
+                using var cts = new CancellationTokenSource();
+                var root = new GameObject(nameof(ProfileFetchingAuthStateShould));
+
+                try
+                {
+                    IWeb3IdentityCache identityCache = Substitute.For<IWeb3IdentityCache>();
+                    var selfProfile = new MissingProfileSelfProfile();
+
+                    ProfileFetchingAuthState state = NewState(root, new MVCStateMachine<AuthStateBase>(), AuthenticationScreenControllerShould.NewNeverShownController(),
+                        new ReactiveProperty<AuthStatus>(AuthStatus.None), selfProfile, skipExistingAccountLobby: false, identityCache);
+
+                    state.Enter(new ProfileFetchingPayload(NewIdentity(), isRestoredSession: true, cts.Token));
+                    await SettleAsync();
+
+                    Assert.That(selfProfile.Calls, Is.EqualTo(1));
+                    identityCache.Received(1).Clear();
+                }
+                finally
+                {
+                    UnityEngine.Object.DestroyImmediate(root);
+                    EcsTestsUtils.TearDownFeaturesRegistry();
+                }
+            });
+
+        [UnityTest]
+        public IEnumerator StartAvatarSelectionWhenAFreshLoginHasNoDeployedProfile() =>
+            UniTask.ToCoroutine(async () =>
+            {
+                EcsTestsUtils.SetUpFeaturesRegistry();
+
+                // The avatar-selection state is an uninitialized stand-in: entering it throws into the logged connection-error path, but the machine has already moved to it
+                LogAssert.ignoreFailingMessages = true;
+
+                using var cts = new CancellationTokenSource();
+                var root = new GameObject(nameof(ProfileFetchingAuthStateShould));
+
+                try
+                {
+                    IWeb3IdentityCache identityCache = Substitute.For<IWeb3IdentityCache>();
+                    var selfProfile = new MissingProfileSelfProfile();
+                    var machine = new MVCStateMachine<AuthStateBase>();
+                    var avatarSelection = (SelectAvatarForNewAccountAuthState)FormatterServices.GetUninitializedObject(typeof(SelectAvatarForNewAccountAuthState));
+                    machine.AddStates(avatarSelection);
+
+                    ProfileFetchingAuthState state = NewState(root, machine, AuthenticationScreenControllerShould.NewNeverShownController(),
+                        new ReactiveProperty<AuthStatus>(AuthStatus.None), selfProfile, skipExistingAccountLobby: false, identityCache);
+
+                    state.Enter(new ProfileFetchingPayload(NewIdentity(), isRestoredSession: false, cts.Token));
+                    await SettleAsync();
+
+                    Assert.That(machine.CurrentState, Is.SameAs(avatarSelection), "a fresh login without a deployed profile goes on to create one");
+                    identityCache.DidNotReceive().Clear();
+                }
+                finally
+                {
+                    LogAssert.ignoreFailingMessages = false;
+                    UnityEngine.Object.DestroyImmediate(root);
+                    EcsTestsUtils.TearDownFeaturesRegistry();
+                }
+            });
+
         // Entering the missing lobby state throws into the connection-error path, so reaching LoggedIn proves the login completed without the lobby
         private static IEnumerator CompleteExistingAccountLoginWhenLobbyIsSkippedAsync(bool isRestoredSession, AuthStatus expectedStatus) =>
             UniTask.ToCoroutine(async () =>
@@ -178,7 +246,7 @@ namespace DCL.AuthenticationScreenFlow.Tests
             });
 
         private static ProfileFetchingAuthState NewState(GameObject root, MVCStateMachine<AuthStateBase> machine, AuthenticationScreenController controller,
-            ReactiveProperty<AuthStatus> currentState, SelfProfile selfProfile, bool skipExistingAccountLobby)
+            ReactiveProperty<AuthStatus> currentState, SelfProfile selfProfile, bool skipExistingAccountLobby, IWeb3IdentityCache? identityCache = null)
         {
             AuthenticationScreenView screenView = root.AddComponent<AuthenticationScreenView>();
 
@@ -201,7 +269,21 @@ namespace DCL.AuthenticationScreenFlow.Tests
                 controller,
                 currentState,
                 selfProfile,
-                Substitute.For<IWeb3IdentityCache>());
+                identityCache ?? Substitute.For<IWeb3IdentityCache>());
+        }
+
+        private static IWeb3Identity NewIdentity()
+        {
+            IWeb3Identity identity = Substitute.For<IWeb3Identity>();
+            identity.Address.Returns(new Web3Address(FAKE_WALLET));
+            return identity;
+        }
+
+        /// <summary>The fetch flow is fire-and-forget; a few frames let its continuations run.</summary>
+        private static async UniTask SettleAsync()
+        {
+            for (var i = 0; i < 4; i++)
+                await UniTask.Yield();
         }
 
         private static void SetBackingField(object target, Type declaringType, string propertyName, object value)

@@ -651,7 +651,12 @@ namespace DCL.Friends
             if (!friendProfile.Has)
                 throw new InvalidOperationException("Cannot create friend request: server returned a friend profile without an address");
 
-            if (!(await selfProfile.ProfileAsync(ct)).IsOk(out Profile? myProfile))
+            ProfileReadResult ownRead = await selfProfile.ProfileAsync(ct);
+
+            if (ownRead.IsCancelled)
+                throw new OperationCanceledException(ct);
+
+            if (!ownRead.IsOk(out Profile? myProfile))
                 throw new InvalidOperationException("Cannot create friend request: server accepted the upsert but own profile is not resolved");
 
             var fr = new FriendRequest(response.Id,

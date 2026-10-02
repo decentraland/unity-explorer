@@ -5,6 +5,7 @@ using Pulse.Transport;
 
 namespace DCL.Multiplayer.Connections.Pulse
 {
+    /// <summary>Main thread only: the last announcement is kept without synchronization.</summary>
     public class PulseProfilePropagationBus : IProfilePropagation
     {
         private readonly IPulseMultiplayerService service;

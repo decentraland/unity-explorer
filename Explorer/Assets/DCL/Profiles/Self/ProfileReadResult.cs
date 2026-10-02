@@ -19,5 +19,9 @@ namespace DCL.Profiles.Self
     [REnum(EnumUnderlyingType.Byte)]
     [REnumField(typeof(Profile), "Ok")]
     [REnumField(typeof(ProfileReadError), "Error")]
-    public readonly partial struct ProfileReadResult { }
+    public readonly partial struct ProfileReadResult
+    {
+        /// <summary>True when the read was cancelled instead of answered.</summary>
+        public bool IsCancelled => IsError(out ProfileReadError error) && error == ProfileReadError.Cancelled;
+    }
 }

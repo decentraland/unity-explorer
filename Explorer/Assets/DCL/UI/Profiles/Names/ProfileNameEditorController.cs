@@ -132,8 +132,17 @@ namespace DCL.UI.ProfileNames
                 nonClaimedConfig.saveButtonInteractable = false;
                 nonClaimedConfig.saveLoading.SetActive(false);
 
-                if (!(await selfProfile.ProfileAsync(ct)).IsOk(out Profile? profile))
+                ProfileReadResult read = await selfProfile.ProfileAsync(ct);
+
+                if (!read.IsOk(out Profile? profile))
+                {
+                    claimedConfig.dropdownLoadingSpinner.SetActive(false);
+
+                    if (!read.IsCancelled)
+                        ReportHub.LogError(ReportCategory.PROFILE, $"Name editor cannot open: own profile read failed ({read})");
+
                     return;
+                }
 
                 using INftNamesProvider.PaginatedNamesResponse names = await nftNamesProvider.GetAsync(new Web3Address(profile.UserId), 1, 100, ct);
 

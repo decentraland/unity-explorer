@@ -44,7 +44,12 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
 
             var empty = new Dictionary<int, OutfitItem>();
 
-            if (!(await selfProfile.ProfileAsync(ct)).IsOk(out Profile? profile))
+            ProfileReadResult read = await selfProfile.ProfileAsync(ct);
+
+            if (read.IsCancelled)
+                return empty;
+
+            if (!read.IsOk(out Profile? profile))
             {
                 outfitsLogger.LogError("Cannot get outfits, self profile is not loaded.");
                 return empty;

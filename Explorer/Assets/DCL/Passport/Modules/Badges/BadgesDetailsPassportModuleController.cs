@@ -49,7 +49,7 @@ namespace DCL.Passport.Modules.Badges
             this.selfProfile = selfProfile;
 
             badgesCategoriesController = new BadgesCategoriesPassportModuleSubController(view);
-            
+
             badgeInfoController = new BadgeInfoPassportModuleSubController(badgeInfoModuleView,
                 badgesAPIClient,
                 passportErrorsController,
@@ -100,6 +100,10 @@ namespace DCL.Passport.Modules.Badges
         private async UniTaskVoid CheckProfileAndLoadBadgesAsync(CancellationToken ct)
         {
             ProfileReadResult read = await selfProfile.ProfileAsync(ct);
+
+            if (read.IsCancelled)
+                return;
+
             // TODO (Nick): that check looks weird.. and it also looks like it would be better to have the single sourfe of truth as the selfProfile. Current profile snapshot won't make a sense
             isOwnProfile = read.IsOk(out Profile? ownProfile) && ownProfile.UserId == currentProfile.UserId;
             LoadBadgeDetailCards();

@@ -36,6 +36,9 @@ namespace DCL.UI.ConfirmationDialog
 
                 ProfileReadResult ownProfileResult = await selfProfile.ProfileAsync(ct);
 
+                if (ownProfileResult.IsCancelled)
+                    return;
+
                 webBrowser.OpenUrlMainThreadOnly(string.Format(decentralandUrlsSource.Url(DecentralandUrl.ReportUserForm),
                     ownProfileResult.IsOk(out Profile? ownProfile) ? ownProfile.UserId : string.Empty,
                     reportedUserId));

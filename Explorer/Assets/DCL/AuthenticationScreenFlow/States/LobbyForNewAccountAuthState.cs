@@ -200,7 +200,7 @@ namespace DCL.AuthenticationScreenFlow
 
                     if (!deploy.IsOk(out Profile? publishedProfile))
                     {
-                        if (deploy.IsError(out ProfileDeployError error) && error == ProfileDeployError.Cancelled)
+                        if (deploy.IsCancelled && ct.IsCancellationRequested)
                             return;
 
                         throw new InvalidOperationException($"The new profile could not be deployed: {deploy}");

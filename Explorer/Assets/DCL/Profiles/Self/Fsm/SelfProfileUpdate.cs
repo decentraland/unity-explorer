@@ -116,10 +116,29 @@ namespace DCL.Profiles.Self
             model.Session.Match(
                 (model: model.WithLastRequest(request.Id), request),
                 onNoIdentity: static ctx => (ctx.model.WithDeployResult(ctx.request.Id, ProfileDeployResult.FromError(ProfileDeployError.NoIdentity)), SelfProfileCmd.None()),
-                onIdentified: static (ctx, current) => current.Knowledge.IsKnown(out Profile? known) && ctx.request.Edited.IsSameProfile(known)
-                    ? (ctx.model.WithDeployResult(ctx.request.Id, ProfileDeployResult.FromError(ProfileDeployError.NothingChanged)), SelfProfileCmd.None())
-                    : StartDeploying(ctx.model, current, ctx.request)
+                onIdentified: static (ctx, current) => Deploy(ctx.model, current, ctx.request)
             );
+
+        /// <summary>
+        ///     An edit identical to the deploy in flight joins that deploy and shares its outcome; one identical to the confirmed
+        ///     profile is answered <c>NothingChanged</c>; any other edit starts a deploy.
+        /// </summary>
+        private static (SelfProfileModel, SelfProfileCmd) Deploy(in SelfProfileModel model, in Identified current, in DeployRequest request)
+        {
+            if (current.Activity.IsDeploying(out Deploying inFlight))
+            {
+                if (!request.Edited.IsSameProfile(inFlight.Pending))
+                    return StartDeploying(model, current, request);
+
+                var joined = new Deploying(inFlight.Pending, inFlight.Before, inFlight.Requests.Add(request.Id));
+                return (model.WithSession(SelfProfileSession.FromIdentified(current.WithActivity(ProfileActivity.FromDeploying(joined)))), SelfProfileCmd.None());
+            }
+
+            if (current.Knowledge.IsKnown(out Profile? known) && request.Edited.IsSameProfile(known))
+                return (model.WithDeployResult(request.Id, ProfileDeployResult.FromError(ProfileDeployError.NothingChanged)), SelfProfileCmd.None());
+
+            return StartDeploying(model, current, request);
+        }
 
         private static (SelfProfileModel, SelfProfileCmd) StartDeploying(in SelfProfileModel model, in Identified current, in DeployRequest request)
         {

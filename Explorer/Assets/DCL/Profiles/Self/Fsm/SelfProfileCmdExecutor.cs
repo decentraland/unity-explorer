@@ -19,7 +19,8 @@ namespace DCL.Profiles.Self
 {
     /// <summary>
     ///     Performs the commands of the self-profile FSM and reports their outcomes as messages. At most one fetch or deploy
-    ///     is in flight; starting another, or <c>ResetLocalState</c>, cancels it. A cancelled IO reports nothing.
+    ///     is in flight; starting another, or <c>ResetLocalState</c>, cancels it. A cancelled IO reports nothing; any other
+    ///     failure, cancellations raised elsewhere included, is reported to Sentry and to the model.
     /// </summary>
     public class SelfProfileCmdExecutor : ICmdExecutor<SelfProfileCmd, SelfProfileMsg>
     {
@@ -69,7 +70,7 @@ namespace DCL.Profiles.Self
             cmd.Match(
                 (executor: this, inbox),
                 onNone: static _ => { },
-                onIgnore: static (_, reason) => ReportHub.LogWarning(ReportCategory.PROFILE, $"Self profile message ignored: {reason}"),
+                onIgnore: static (_, reason) => ReportHub.Log(ReportCategory.PROFILE, $"Self profile message ignored: {reason}"),
                 onResetLocalState: static ctx => ctx.executor.ResetLocalState(),
                 onFetch: static (ctx, address) => ctx.executor.StartFetch(address, ctx.inbox),
                 onPublish: static (ctx, profile) => ctx.executor.Publish(profile),
@@ -77,10 +78,14 @@ namespace DCL.Profiles.Self
                 onBatch: static (ctx, batch) => ctx.executor.ExecuteBatch(batch, ctx.inbox)
             );
 
+        /// <summary>A command that throws is reported and does not stop the commands after it.</summary>
         private void ExecuteBatch(SelfProfileCmd[] batch, IMsgInbox<SelfProfileMsg> inbox)
         {
             foreach (SelfProfileCmd cmd in batch)
-                Execute(cmd, inbox);
+            {
+                try { Execute(cmd, inbox); }
+                catch (Exception e) { ReportHub.LogException(e, ReportCategory.PROFILE); }
+            }
         }
 
         private void ResetLocalState()
@@ -101,31 +106,30 @@ namespace DCL.Profiles.Self
 
         private async UniTaskVoid FetchAsync(UserId address, IMsgInbox<SelfProfileMsg> inbox, CancellationToken ct)
         {
-            Profile? profile;
-
             try
             {
                 // Not the suppressing overload: a failure must reach the model as a failure, not as an absent profile.
-                profile = await profileRepository.GetAsync(address.Value, 0, null, ct,
+                Profile? profile = await profileRepository.GetAsync(address.Value, 0, null, ct,
                     batchBehaviour: IProfileRepository.FetchBehaviour.EnforceSingleGet);
+
+                if (profile == null)
+                {
+                    inbox.Send(SelfProfileMsg.FromFetchNotFound(address));
+                    return;
+                }
+
+                ApplySessionOverrides(profile);
+                inbox.Send(SelfProfileMsg.FromFetchSucceeded(new FetchSucceeded(address, profile)));
             }
-            catch (OperationCanceledException) { return; }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested) { }
             catch (Exception e)
             {
-                if (!ct.IsCancellationRequested)
-                    inbox.Send(SelfProfileMsg.FromFetchFailed(new FetchFailed(address, new ProfileFailure(ClassifyFetchFailure(e), e))));
+                if (ct.IsCancellationRequested)
+                    return;
 
-                return;
+                ReportHub.LogException(e, ReportCategory.PROFILE);
+                inbox.Send(SelfProfileMsg.FromFetchFailed(new FetchFailed(address, new ProfileFailure(ClassifyFetchFailure(e), e))));
             }
-
-            if (profile == null)
-            {
-                inbox.Send(SelfProfileMsg.FromFetchNotFound(address));
-                return;
-            }
-
-            ApplySessionOverrides(profile);
-            inbox.Send(SelfProfileMsg.FromFetchSucceeded(new FetchSucceeded(address, profile)));
         }
 
         private static FailureKind ClassifyFetchFailure(Exception e) =>
@@ -184,29 +188,29 @@ namespace DCL.Profiles.Self
 
         private async UniTaskVoid DeployAsync(UserId address, Profile sent, IMsgInbox<SelfProfileMsg> inbox, CancellationToken ct)
         {
-            Profile? saved;
-
             try
             {
                 await profileRepository.SetAsync(sent, ct);
 
                 // The catalyst rewrites some fields on deploy, such as the profile picture url, so the saved profile is re-read.
-                saved = await profileRepository.GetAsync(address.Value, sent.Version, null, ct,
+                Profile? saved = await profileRepository.GetAsync(address.Value, sent.Version, null, ct,
                     getFromCacheIfPossible: false,
                     batchBehaviour: IProfileRepository.FetchBehaviour.ForceFetchFromCatalyst | IProfileRepository.FetchBehaviour.DelayUntilResolved);
+
+                if (saved == null)
+                    throw new ProfileNotFoundAfterDeployException(address, sent.Version);
+
+                inbox.Send(SelfProfileMsg.FromDeploySucceeded(new DeploySucceeded(address, sent, saved)));
             }
-            catch (OperationCanceledException) { return; }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested) { }
             catch (Exception e)
             {
-                if (!ct.IsCancellationRequested)
-                    inbox.Send(SelfProfileMsg.FromDeployFailed(new DeployFailed(address, sent, e)));
+                if (ct.IsCancellationRequested)
+                    return;
 
-                return;
+                ReportHub.LogException(e, ReportCategory.PROFILE);
+                inbox.Send(SelfProfileMsg.FromDeployFailed(new DeployFailed(address, sent, e)));
             }
-
-            inbox.Send(saved != null
-                ? SelfProfileMsg.FromDeploySucceeded(new DeploySucceeded(address, sent, saved))
-                : SelfProfileMsg.FromDeployFailed(new DeployFailed(address, sent, new ProfileNotFoundAfterDeployException(address, sent.Version))));
         }
 
         private CancellationToken StartActivity()
@@ -214,11 +218,5 @@ namespace DCL.Profiles.Self
             activity = activity.SafeRestart();
             return activity.Token;
         }
-    }
-
-    public class ProfileNotFoundAfterDeployException : Exception
-    {
-        public ProfileNotFoundAfterDeployException(UserId address, int version)
-            : base($"Profile v{version} of {address.Value} was not found on the catalyst after the deploy") { }
     }
 }

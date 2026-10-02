@@ -55,6 +55,7 @@ namespace Utility.Tests
         }
 
         private const string TAG = "CounterFsm";
+        private const string CATEGORY = "COUNTER";
         private const int THREADS = 8;
         private const int SENDS_PER_THREAD = 1000;
 
@@ -68,7 +69,7 @@ namespace Utility.Tests
         {
             APPLIED.Clear();
             executor = new RecordingExecutor();
-            runtime = new FsmRuntime<int, CounterMsg, CounterCmd>(TAG, 0, Update, executor);
+            runtime = new FsmRuntime<int, CounterMsg, CounterCmd>(TAG, CATEGORY, 0, Update, executor);
             executor.Runtime = runtime;
         }
 

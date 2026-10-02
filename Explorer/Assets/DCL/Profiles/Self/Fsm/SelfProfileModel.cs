@@ -103,11 +103,24 @@ namespace DCL.Profiles.Self
             LastRequest = lastRequest;
         }
 
-        /// <summary>The trusted profile of the current identity, when there is one.</summary>
+        /// <summary>The trusted profile of the current identity, when there is one; during a deploy this is the pending edit.</summary>
         public Option<Profile> KnownProfile =>
             Session.IsIdentified(out Identified identified) && identified.Knowledge.IsKnown(out Profile? known)
                 ? Option<Profile>.Some(known)
                 : Option<Profile>.None;
+
+        /// <summary>The profile the catalyst holds, when known: during a deploy this is the knowledge from before the edit.</summary>
+        public Option<Profile> ConfirmedProfile
+        {
+            get
+            {
+                if (!Session.IsIdentified(out Identified identified))
+                    return Option<Profile>.None;
+
+                ProfileKnowledge confirmed = identified.Activity.IsDeploying(out Deploying deploying) ? deploying.Before : identified.Knowledge;
+                return confirmed.IsKnown(out Profile? known) ? Option<Profile>.Some(known) : Option<Profile>.None;
+            }
+        }
 
         public static SelfProfileModel NoIdentity() =>
             new (SelfProfileSession.NoIdentity());
