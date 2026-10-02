@@ -37,6 +37,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
             cameraReelGalleryController.ScreenshotDownloaded += TrackScreenshotDownloaded;
             cameraReelGalleryController.ScreenshotShared += TrackScreenshotShared;
             settingsController.ChatBubblesVisibilityChanged += OnChatBubblesVisibilityChanged;
+            settingsController.LobbyEnabledChanged += OnLobbyEnabledChanged;
         }
 
         public void Dispose()
@@ -46,6 +47,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
             cameraReelGalleryController.ScreenshotDownloaded -= TrackScreenshotDownloaded;
             cameraReelGalleryController.ScreenshotShared -= TrackScreenshotShared;
             settingsController.ChatBubblesVisibilityChanged -= OnChatBubblesVisibilityChanged;
+            settingsController.LobbyEnabledChanged -= OnLobbyEnabledChanged;
             eventsAnalytics.Dispose();
             placesAnalytics.Dispose();
         }
@@ -69,6 +71,15 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
 
         private void TrackScreenshotDeleted() =>
             analytics.Track(AnalyticsEvents.CameraReel.DELETE_PHOTO);
+
+        private void OnLobbyEnabledChanged(bool previousValue, bool newValue)
+        {
+            analytics.Track(AnalyticsEvents.Settings.LOBBY_SETTING_CHANGED, new JObject
+            {
+                { "old_value", previousValue },
+                { "new_value", newValue },
+            });
+        }
 
         private void OnChatBubblesVisibilityChanged(ChatBubbleVisibilitySettings visibility)
         {

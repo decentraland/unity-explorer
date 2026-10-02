@@ -28,6 +28,9 @@ namespace DCL.FeatureFlags
         private readonly Dictionary<FeatureId, Lazy<bool>> deferredFeatureStates = new ();
 
         private readonly bool lobbyDefault;
+        private readonly bool lobbyFlagEnabled;
+
+        private bool? lobbyGrandfathered;
 
         public FeaturesRegistry(
             IAppArgs appArgs,
@@ -99,7 +102,8 @@ namespace DCL.FeatureFlags
             SetFeatureState(FeatureId.NearbyVoiceChatTip, IsEnabled(FeatureId.NearbyVoiceChat) && featureFlags.IsEnabled(FeatureFlagsStrings.NEARBY_VOICE_CHAT_TIP));
 
             // The Settings toggle lives in player prefs, which only exist in a running player while the registry is also built outside one, so the state resolves on first query
-            lobbyDefault = appArgs.ResolveFeatureFlagArg(AppArgsFlags.LOBBY, featureFlags.IsEnabled(FeatureFlagsStrings.LOBBY), requireDebug: false);
+            lobbyFlagEnabled = featureFlags.IsEnabled(FeatureFlagsStrings.LOBBY);
+            lobbyDefault = appArgs.ResolveFeatureFlagArg(AppArgsFlags.LOBBY, lobbyFlagEnabled, requireDebug: false);
             deferredFeatureStates[FeatureId.Lobby] = new Lazy<bool>(() => LobbyEnabledSetting && !localSceneDevelopment);
         }
 
@@ -108,12 +112,28 @@ namespace DCL.FeatureFlags
         /// </summary>
         public bool LobbyEnabledSetting
         {
-            get => DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_LOBBY_ENABLED)
-                ? DCLPlayerPrefs.GetBool(DCLPrefKeys.SETTINGS_LOBBY_ENABLED)
-                : lobbyDefault;
+            get
+            {
+                lobbyGrandfathered ??= DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_LOBBY_ENABLED);
+
+                return DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_LOBBY_ENABLED)
+                    ? DCLPlayerPrefs.GetBool(DCLPrefKeys.SETTINGS_LOBBY_ENABLED)
+                    : lobbyDefault;
+            }
 
             set => DCLPlayerPrefs.SetBool(DCLPrefKeys.SETTINGS_LOBBY_ENABLED, value, true);
         }
+
+        /// <summary>
+        ///     The remote lobby flag as resolved for this session, before the Settings toggle and the <c>--lobby</c> app arg are applied.
+        /// </summary>
+        public bool LobbyFlagEnabled => lobbyFlagEnabled;
+
+        /// <summary>
+        ///     Whether a stored Settings toggle already decided the lobby when this session first resolved it, as opposed to this session's flag roll.
+        ///     False until <see cref="LobbyEnabledSetting" /> is read for the first time.
+        /// </summary>
+        public bool LobbyGrandfathered => lobbyGrandfathered ?? false;
 
         /// <summary>
         ///     Checks if a feature is enabled.

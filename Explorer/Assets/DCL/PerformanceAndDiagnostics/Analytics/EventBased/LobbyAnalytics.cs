@@ -1,4 +1,5 @@
 using DCL.EventsApi;
+using DCL.FeatureFlags;
 using DCL.Lobby;
 using DCL.PlacesAPIService;
 using Newtonsoft.Json.Linq;
@@ -107,12 +108,19 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
                 { "is_startup", isStartupVisit },
             };
 
-        private JObject VisitPayload() =>
-            new ()
+        private JObject VisitPayload()
+        {
+            FeaturesRegistry features = FeaturesRegistry.Instance;
+
+            return new JObject
             {
                 { "source", SOURCE },
                 { "is_startup", isStartupVisit },
+                { "lobby_enabled", features.IsEnabled(FeatureId.Lobby) },
+                { "lobby_flag_enabled", features.LobbyFlagEnabled },
+                { "lobby_grandfathered", features.LobbyGrandfathered },
             };
+        }
 
         private static string SectionName(LobbySection section) =>
             section switch

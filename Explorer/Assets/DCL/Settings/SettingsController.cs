@@ -51,6 +51,7 @@ namespace DCL.Settings
         private readonly IReadOnlyDictionary<SettingsSection, (Transform container, ButtonWithSelectableStateView button, Sprite background, SettingsSectionConfig config)> sections;
 
         public event Action<ChatBubbleVisibilitySettings>? ChatBubblesVisibilityChanged;
+        public event Action<bool, bool>? LobbyEnabledChanged;
 
         public SettingsController(
             SettingsView view,
@@ -136,6 +137,11 @@ namespace DCL.Settings
         public void NotifyChatBubblesVisibilityChanged(ChatBubbleVisibilitySettings newVisibility)
         {
             ChatBubblesVisibilityChanged?.Invoke(newVisibility);
+        }
+
+        public void NotifyLobbyEnabledChanged(bool previousValue, bool newValue)
+        {
+            LobbyEnabledChanged?.Invoke(previousValue, newValue);
         }
 
         private async UniTask GenerateSettingsAsync()

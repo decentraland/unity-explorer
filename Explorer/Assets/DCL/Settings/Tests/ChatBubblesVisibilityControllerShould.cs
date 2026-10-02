@@ -79,8 +79,13 @@ namespace DCL.Settings.Tests
         {
             public event Action<ChatBubbleVisibilitySettings> ChatBubblesVisibilityChanged = delegate { };
 
+            public event Action<bool, bool> LobbyEnabledChanged = delegate { };
+
             public void NotifyChatBubblesVisibilityChanged(ChatBubbleVisibilitySettings newVisibility) =>
                 ChatBubblesVisibilityChanged.Invoke(newVisibility);
+
+            public void NotifyLobbyEnabledChanged(bool previousValue, bool newValue) =>
+                LobbyEnabledChanged.Invoke(previousValue, newValue);
         }
     }
 }
