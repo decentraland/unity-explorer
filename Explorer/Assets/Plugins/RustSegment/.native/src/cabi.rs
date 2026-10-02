@@ -15,6 +15,7 @@ pub unsafe extern "C" fn segment_server_initialize(
     queue_file_path: *const c_char,
     queue_count_limit: u32,
     segment_write_key: *const c_char,
+    segment_api_host: *const c_char,
     callback_fn: FfiCallbackFn,
     error_fn: Option<FfiErrorCallbackFn>,
 ) -> bool {
@@ -27,11 +28,13 @@ pub unsafe extern "C" fn segment_server_initialize(
         // SAFETY: caller must guarantee valid pointers
         let queue_file_path = as_str(queue_file_path).to_string();
         let write_key = as_str(segment_write_key).to_string();
+        let api_host = as_str(segment_api_host).to_string();
 
         SEGMENT_SERVER.initialize(
             queue_file_path,
             queue_count_limit,
             write_key,
+            api_host,
             callback_fn,
             error_fn,
         )

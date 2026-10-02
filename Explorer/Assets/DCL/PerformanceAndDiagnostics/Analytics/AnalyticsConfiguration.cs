@@ -14,6 +14,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
     [CreateAssetMenu(fileName = "AnalyticsConfiguration", menuName = "DCL/Diagnostics/Analytics Configuration")]
     public class AnalyticsConfiguration : ScriptableObject
     {
+        public const string DEFAULT_SEGMENT_API_HOST = "https://api.e.decentraland.org";
+
         private const string SEGMENT_WRITE_KEY = "SEGMENT_WRITE_KEY";
 
         [SerializeField]
@@ -32,6 +34,10 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         [SerializeField] [HideInInspector]
         private string segmentWriteKey;
+
+        [SerializeField]
+        [Tooltip("Segment Tracking API host the native client posts to. Must carry no /v1 suffix - the client appends the endpoint path itself.")]
+        private string segmentApiHost = DEFAULT_SEGMENT_API_HOST;
 
         [field: SerializeField]
         [Tooltip("This parameter sets the interval (in seconds) at which the performance report is tracked to the analytics.")]
@@ -80,7 +86,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         private bool TryCreateSegmentConfiguration(out Configuration configuration)
         {
-            try { segmentConfiguration = new Configuration(segmentWriteKey, flushSize, flushInterval); }
+            try { segmentConfiguration = new Configuration(segmentWriteKey, segmentApiHost, flushSize, flushInterval); }
             catch (Exception e)
             {
                 ReportHub.LogWarning(ReportCategory.ANALYTICS, $"Cannot create Segment configuration with provided write key (incorrect key?). Exception {e.Message}.");
@@ -101,17 +107,21 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
     {
         public string WriteKey { get; }
 
+        public string ApiHost { get; }
+
         public int FlushAt { get; }
 
         public int FlushInterval { get; }
 
         public Configuration(
             string writeKey,
+            string apiHost,
             int flushAt = 20,
             int flushInterval = 30
         )
         {
             WriteKey = writeKey;
+            ApiHost = apiHost;
             FlushAt = flushAt;
             FlushInterval = flushInterval;
         }

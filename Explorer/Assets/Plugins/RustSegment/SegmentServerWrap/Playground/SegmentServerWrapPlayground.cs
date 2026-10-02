@@ -1,4 +1,5 @@
 using DCL.Diagnostics;
+using DCL.PerformanceAndDiagnostics.Analytics;
 using Newtonsoft.Json.Linq;
 using System;
 using UnityEngine;
@@ -31,7 +32,7 @@ namespace Plugins.RustSegment.SegmentServerWrap.Playground
             if (string.IsNullOrWhiteSpace(key))
                 throw new Exception("Segment Write Key is not set.");
 
-            service = new RustSegmentAnalyticsService(key, null);
+            service = new RustSegmentAnalyticsService(key, AnalyticsConfiguration.DEFAULT_SEGMENT_API_HOST, null);
         }
 
         [ContextMenu(nameof(Identify))]

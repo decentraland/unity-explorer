@@ -28,7 +28,7 @@ namespace Plugins.RustSegment.SegmentServerWrap.Playground
 
         private void SetUp(string key)
         {
-                rust = new RustSegmentAnalyticsService(key, null);
+                rust = new RustSegmentAnalyticsService(key, AnalyticsConfiguration.DEFAULT_SEGMENT_API_HOST, null);
         }
 
         private async UniTaskVoid TrackAsync(CancellationToken token)
