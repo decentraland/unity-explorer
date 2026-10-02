@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.LiveKit.Public;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests;
 using LiveKit.Proto;
 using LiveKit.Rooms;
@@ -50,6 +51,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
         private IRoom room = null!;
         private IParticipantsHub participantsHub = null!;
         private IVideoStreams videoStreams = null!;
+        private IDecentralandUrlsSource decentralandUrlsSource = null!;
         private FakeActiveSpeakers activeSpeakers = null!;
         private Dictionary<string, LKParticipant> remoteParticipants = null!;
         private Dictionary<StreamKey, Weak<IVideoStream>> resolvedStreams = null!;
@@ -63,6 +65,8 @@ namespace DCL.SDKComponents.MediaStream.Tests
             room = Substitute.For<IRoom>();
             participantsHub = Substitute.For<IParticipantsHub>();
             videoStreams = Substitute.For<IVideoStreams>();
+            decentralandUrlsSource = Substitute.For<IDecentralandUrlsSource>();
+            decentralandUrlsSource.BaseDomain.Returns("decentraland.org");
             activeSpeakers = new FakeActiveSpeakers();
             remoteParticipants = new Dictionary<string, LKParticipant>();
             resolvedStreams = new Dictionary<StreamKey, Weak<IVideoStream>>();
@@ -363,7 +367,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
         {
             IWebRequestController controller = Substitute.For<IWebRequestController>();
             SendTextureRequest(controller).Returns(_ => new UniTaskCompletionSource<Texture2D?>().Task);
-            var sharedCache = new SlideTextureCache(controller, static () => 0f);
+            var sharedCache = new SlideTextureCache(controller, decentralandUrlsSource, static () => 0f);
             slideCaches.Add(sharedCache);
             AddParticipant(BOT, V2("null", "idle", slideUrl: BOT_SLIDE_URL));
             AddParticipant(OTHER_BOT, V2("null", "idle", slideUrl: OTHER_BOT_SLIDE_URL));
@@ -723,7 +727,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
 
         private LivekitPlayer NewV2Player()
         {
-            var slideCache = new SlideTextureCache(Substitute.For<IWebRequestController>());
+            var slideCache = new SlideTextureCache(Substitute.For<IWebRequestController>(), decentralandUrlsSource);
             slideCaches.Add(slideCache);
             return NewV2Player(slideCache);
         }

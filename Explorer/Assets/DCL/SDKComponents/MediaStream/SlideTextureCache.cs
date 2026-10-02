@@ -40,6 +40,7 @@ namespace DCL.SDKComponents.MediaStream
         private static readonly Regex SLIDE_PATH = new (@"^(/[A-Za-z0-9_-]+)*/presentations/[0-9a-f-]{36}/slides/[0-9a-f]{16}\.png\z", RegexOptions.Compiled);
 
         private readonly IWebRequestController webRequestController;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly Func<float> getRealtimeSinceStartup;
         private readonly Dictionary<string, Texture2D> textures = new ();
         private readonly List<string> order = new ();
@@ -55,12 +56,13 @@ namespace DCL.SDKComponents.MediaStream
 
         internal int trackedUrlCount => rejected.Count + failed.Count;
 
-        public SlideTextureCache(IWebRequestController webRequestController)
-            : this(webRequestController, static () => UnityEngine.Time.realtimeSinceStartup) { }
+        public SlideTextureCache(IWebRequestController webRequestController, IDecentralandUrlsSource decentralandUrlsSource)
+            : this(webRequestController, decentralandUrlsSource, static () => UnityEngine.Time.realtimeSinceStartup) { }
 
-        internal SlideTextureCache(IWebRequestController webRequestController, Func<float> getRealtimeSinceStartup)
+        internal SlideTextureCache(IWebRequestController webRequestController, IDecentralandUrlsSource decentralandUrlsSource, Func<float> getRealtimeSinceStartup)
         {
             this.webRequestController = webRequestController;
+            this.decentralandUrlsSource = decentralandUrlsSource;
             this.getRealtimeSinceStartup = getRealtimeSinceStartup;
         }
 
@@ -91,7 +93,7 @@ namespace DCL.SDKComponents.MediaStream
         ///     <c>/presentations/{uuid}/slides/{16 lowercase hex}.png</c>. In the Editor, loopback http urls on any port
         ///     with the same path are allowed too.
         /// </summary>
-        public static bool IsAllowedUrl(string url) =>
+        internal bool IsAllowedUrl(string url) =>
             TryParseAllowedUrl(url, out _);
 
         /// <summary>

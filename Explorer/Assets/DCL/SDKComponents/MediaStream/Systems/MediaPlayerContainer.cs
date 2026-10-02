@@ -4,6 +4,7 @@ using DCL.Audio;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.CharacterCamera;
 using DCL.Optimization.PerformanceBudgeting;
@@ -35,7 +36,7 @@ namespace DCL.SDKComponents.MediaStream
         private readonly SlideTextureCache? slideCache;
 
         public MediaPlayerContainer(IAssetsProvisioner assetsProvisioner, IWebRequestController webRequestController, VolumeBus volumeBus, IPerformanceBudget frameBudget,
-            CacheCleaner cacheCleaner, AssetPreLoadCache assetPreLoadCache, IAnalyticsController analyticsController)
+            CacheCleaner cacheCleaner, AssetPreLoadCache assetPreLoadCache, IAnalyticsController analyticsController, IDecentralandUrlsSource decentralandUrlsSource)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.webRequestController = webRequestController;
@@ -46,7 +47,7 @@ namespace DCL.SDKComponents.MediaStream
 
             mediaVolume = new MediaVolume(volumeBus);
 #if !UNITY_EDITOR_LINUX && !UNITY_STANDALONE_LINUX
-            slideCache = new SlideTextureCache(webRequestController);
+            slideCache = new SlideTextureCache(webRequestController, decentralandUrlsSource);
 #else
             slideCache = null;
 #endif

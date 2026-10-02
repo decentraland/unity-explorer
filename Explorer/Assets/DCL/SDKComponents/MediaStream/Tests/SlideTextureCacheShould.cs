@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests;
 using NSubstitute;
 using NUnit.Framework;
@@ -20,6 +21,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
         private const string BOT_B = "presentation-bot:b:1";
 
         private IWebRequestController webRequestController = null!;
+        private IDecentralandUrlsSource decentralandUrlsSource = null!;
         private SlideTextureCache cache = null!;
         private float now;
 
@@ -28,7 +30,9 @@ namespace DCL.SDKComponents.MediaStream.Tests
         {
             now = 0f;
             webRequestController = Substitute.For<IWebRequestController>();
-            cache = new SlideTextureCache(webRequestController, () => now);
+            decentralandUrlsSource = Substitute.For<IDecentralandUrlsSource>();
+            decentralandUrlsSource.BaseDomain.Returns("decentraland.org");
+            cache = new SlideTextureCache(webRequestController, decentralandUrlsSource, () => now);
         }
 
         [TearDown]
@@ -38,15 +42,29 @@ namespace DCL.SDKComponents.MediaStream.Tests
         }
 
         [TestCase(ALLOWED_URL)]
-        [TestCase("https://cast-presenter-service.decentraland.zone" + SLIDE_PATH)]
         [TestCase(ORG_ORIGIN + "/cast" + SLIDE_PATH)]
         [TestCase("http://localhost:3002" + SLIDE_PATH)]
-        public void AllowUrl_WhenHostIsCastPresenterOnOrgOrZone(string url)
+        public void AllowUrl_WhenCanonicalCastPresenterSlideUrl(string url)
         {
-            Assert.IsTrue(SlideTextureCache.IsAllowedUrl(url));
+            Assert.IsTrue(cache.IsAllowedUrl(url));
+        }
+
+        [Test]
+        public void AllowOnlyBaseDomainHost_WhenBaseDomainIsCustom()
+        {
+            decentralandUrlsSource.BaseDomain.Returns("example.org");
+            var customCache = new SlideTextureCache(webRequestController, decentralandUrlsSource, () => now);
+
+            bool customAllowed = customCache.IsAllowedUrl("https://cast-presenter-service.example.org" + SLIDE_PATH);
+            bool orgAllowed = customCache.IsAllowedUrl(ALLOWED_URL);
+            customCache.Dispose();
+
+            Assert.IsTrue(customAllowed);
+            Assert.IsFalse(orgAllowed);
         }
 
         [TestCase("http://cast-presenter-service.decentraland.org" + SLIDE_PATH)]
+        [TestCase("https://cast-presenter-service.decentraland.zone" + SLIDE_PATH)]
         [TestCase("https://cast-presenter-service.decentraland.org.evil.com" + SLIDE_PATH)]
         [TestCase("https://evil-cast-presenter-service.decentraland.org" + SLIDE_PATH)]
         [TestCase("https://example.com" + SLIDE_PATH)]
@@ -67,9 +85,9 @@ namespace DCL.SDKComponents.MediaStream.Tests
         [TestCase(ORG_ORIGIN + "/x%2F" + SLIDE_PATH)]
         [TestCase(ORG_ORIGIN + "/" + SLIDE_PATH)]
         [TestCase(ORG_ORIGIN + SLIDE_PATH + "/")]
-        public void RejectUrl_WhenHostOrSchemeIsForeign(string url)
+        public void RejectUrl_WhenNotCanonicalCastPresenterSlideUrl(string url)
         {
-            Assert.IsFalse(SlideTextureCache.IsAllowedUrl(url));
+            Assert.IsFalse(cache.IsAllowedUrl(url));
         }
 
         [Test]
