@@ -7,10 +7,9 @@ using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
-using System.Collections.Generic;
 using System.Threading;
 using TMPro;
-using UnityEngine.TextCore.Text;
+using Object = UnityEngine.Object;
 
 namespace ECS.StreamableLoading.Fonts.Tests
 {
@@ -23,7 +22,8 @@ namespace ECS.StreamableLoading.Fonts.Tests
         private World world = null!;
         private ISceneData sceneData = null!;
         private SceneFontRequest request;
-        private FontFamilyAssets? family;
+        private TMP_FontAsset? referenceFont;
+        private FontData? fontData;
 
         [SetUp]
         public void SetUp()
@@ -52,7 +52,12 @@ namespace ECS.StreamableLoading.Fonts.Tests
         public void TearDown()
         {
             world.Dispose();
-            family?.Destroy();
+
+            if (fontData != null)
+                TestFonts.DestroyBundledFont(fontData);
+
+            if (referenceFont != null)
+                Object.DestroyImmediate(referenceFont);
         }
 
         [Test]
@@ -152,16 +157,16 @@ namespace ECS.StreamableLoading.Fonts.Tests
         public void ConsumeTheLoadedFamilyOnce()
         {
             Update(OTHER_FILE_SRC);
-            family = CreateFamily();
-            var data = new FontData(family);
-            ((IStreamableRefCountData)data).AddReference();
-            world.Add(request.Promise!.Value.Entity, new StreamableLoadingResult<FontData>(data));
+            referenceFont = TestFonts.CreateTextMeshProFont();
+            fontData = TestFonts.CreateBundledFont(referenceFont);
+            ((IStreamableRefCountData)fontData).AddReference();
+            world.Add(request.Promise!.Value.Entity, new StreamableLoadingResult<FontData>(fontData));
 
             bool consumed = request.TryConsume(world, out FontFamilyAssets? assets);
             bool consumedAgain = request.TryConsume(world, out FontFamilyAssets? _);
 
             Assert.That(consumed, Is.True);
-            Assert.That(assets, Is.SameAs(family));
+            Assert.That(assets, Is.SameAs(fontData.Asset));
             Assert.That(request.Promise!.Value.IsConsumed, Is.True);
             Assert.That(consumedAgain, Is.False);
         }
@@ -207,13 +212,5 @@ namespace ECS.StreamableLoading.Fonts.Tests
 
         private bool Update(string? fontSrc) =>
             request.Update(world, sceneData, fontSrc, PartitionComponent.TOP_PRIORITY);
-
-        private static FontFamilyAssets CreateFamily()
-        {
-            TMP_FontAsset textMeshProFont = TestFonts.CreateTextMeshProFont();
-            FontAsset uiToolkitFont = TestFonts.CreateUIToolkitFont();
-
-            return new FontFamilyAssets(textMeshProFont, uiToolkitFont, new List<TMP_FontAsset> { textMeshProFont }, new List<FontAsset> { uiToolkitFont });
-        }
     }
 }

@@ -43,7 +43,7 @@ namespace ECS.StreamableLoading.Fonts.Tests
         [TestCase("//example.com/font.ttf")]
         [TestCase("file:///tmp/font.ttf")]
         [TestCase("data:font/ttf;base64,AAAA")]
-        [TestCase("https://cdn.jsdelivr.net/fontsource/fonts/roboto@5.3.0/latin-400-normal.ttf")]
+        [TestCase("https://cdn.example.com/fonts/roboto/latin-400-normal.ttf")]
         public void RejectExternalSourcesEvenWhenMediaUrlsAreAllowed(string fontSrc)
         {
             sceneData.TryGetMediaUrl(fontSrc, out Arg.Any<URLAddress>()).Returns(true);
@@ -59,7 +59,9 @@ namespace ECS.StreamableLoading.Fonts.Tests
         [TestCase("missing.ttf")]
         [TestCase("fonts\\missing.otf")]
         [TestCase("Font$Name")]
-        public void RejectMissingFilesAndInvalidFamilyNames(string fontSrc)
+        [TestCase("Roboto")]
+        [TestCase("Playfair Display")]
+        public void RejectSourcesThatAreNotSceneContentFiles(string fontSrc)
         {
             bool resolved = FontSrcResolver.TryCreateIntention(fontSrc, sceneData, out _);
 
@@ -67,20 +69,8 @@ namespace ECS.StreamableLoading.Fonts.Tests
             sceneData.DidNotReceive().TryGetMediaUrl(fontSrc, out Arg.Any<URLAddress>());
         }
 
-        [TestCase("Roboto", "roboto")]
-        [TestCase("Playfair Display", "playfair-display")]
-        public void ResolveAFamilyThroughFontsource(string fontSrc, string familyId)
-        {
-            bool resolved = FontSrcResolver.TryCreateIntention(fontSrc, sceneData, out GetFontIntention intention);
-
-            Assert.That(resolved, Is.True);
-            Assert.That(intention.Kind, Is.EqualTo(FontSourceKind.FontsourceFamily));
-            Assert.That(intention.CommonArguments.URL.Value, Is.EqualTo(FontsourceCatalog.ApiUrl(familyId)));
-            sceneData.DidNotReceive().TryGetMediaUrl(fontSrc, out Arg.Any<URLAddress>());
-        }
-
         [Test]
-        public void PreferSceneContentOverAFamilyName()
+        public void ResolveAContentFileNamedLikeAFamily()
         {
             sceneData.TryGetContentUrl("Roboto", out Arg.Any<URLAddress>())
                      .Returns(x =>
@@ -89,9 +79,9 @@ namespace ECS.StreamableLoading.Fonts.Tests
                           return true;
                       });
 
-            FontSrcResolver.TryCreateIntention("Roboto", sceneData, out GetFontIntention intention);
+            bool resolved = FontSrcResolver.TryCreateIntention("Roboto", sceneData, out GetFontIntention intention);
 
-            Assert.That(intention.Kind, Is.EqualTo(FontSourceKind.File));
+            Assert.That(resolved, Is.True);
             Assert.That(intention.CommonArguments.URL.Value, Is.EqualTo(CONTENT_URL));
         }
 
@@ -106,11 +96,11 @@ namespace ECS.StreamableLoading.Fonts.Tests
             Assert.That(intention.AssetBundleListed, Is.True);
             Assert.That(intention.AssetBundleManifest, Is.SameAs(manifest));
             Assert.That(intention.SceneId, Is.EqualTo("scene"));
-            Assert.That(intention.CommonArguments.URL.Value, Is.EqualTo(CONTENT_URL), "the raw file stays the fallback");
+            Assert.That(intention.CommonArguments.URL.Value, Is.EqualTo(CONTENT_URL), "the content URL identifies the request");
         }
 
         [Test]
-        public void LoadTheFileWhenTheManifestListsNoBundleForIt()
+        public void MarkTheBundleUnlistedWhenTheManifestListsNoBundleForIt()
         {
             WithSceneManifest("bafyotherfile_0123456789abcdef0123456789abcdef_windows");
 
@@ -138,16 +128,6 @@ namespace ECS.StreamableLoading.Fonts.Tests
         {
             FontSrcResolver.TryCreateIntention(CONTENT_FILE, sceneData, out GetFontIntention first);
             var alias = new GetFontIntention { Src = "fonts/alias.ttf", CommonArguments = new CommonLoadingArguments(CONTENT_URL) };
-
-            Assert.That(first.Equals(alias), Is.True);
-            Assert.That(first.GetHashCode(), Is.EqualTo(alias.GetHashCode()));
-        }
-
-        [Test]
-        public void ShareRequestsForTheSameFamily()
-        {
-            FontSrcResolver.TryCreateIntention("Playfair Display", sceneData, out GetFontIntention first);
-            FontSrcResolver.TryCreateIntention("playfair-display", sceneData, out GetFontIntention alias);
 
             Assert.That(first.Equals(alias), Is.True);
             Assert.That(first.GetHashCode(), Is.EqualTo(alias.GetHashCode()));

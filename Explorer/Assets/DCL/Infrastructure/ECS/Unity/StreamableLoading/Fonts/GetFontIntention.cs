@@ -7,11 +7,9 @@ namespace ECS.StreamableLoading.Fonts
 {
     public struct GetFontIntention : ILoadingIntention, IEquatable<GetFontIntention>
     {
-        public FontSourceKind Kind;
-
         public string Src;
 
-        // Set for a scene font file with a usable asset bundle manifest; when a bundle is tried, the raw file is the fallback.
+        // Set for a scene font file with a usable asset bundle manifest; the font loads only from its converted bundle.
         public string? AssetBundleHash;
 
         // The manifest's files[] name a bundle for AssetBundleHash. Local scene development never reads files[], so there a bundle is tried unlisted.
@@ -28,7 +26,7 @@ namespace ECS.StreamableLoading.Fonts
         public CancellationTokenSource CancellationTokenSource => CommonArguments.CancellationTokenSource;
 
         public bool Equals(GetFontIntention other) =>
-            Kind == other.Kind && this.AreUrlEquals(other);
+            this.AreUrlEquals(other);
 
         public override bool Equals(object? obj) =>
             obj is GetFontIntention other && Equals(other);
@@ -38,11 +36,11 @@ namespace ECS.StreamableLoading.Fonts
             if (hashCode != null)
                 return hashCode.Value;
 
-            hashCode = HashCode.Combine(Kind, CommonArguments.URL);
+            hashCode = CommonArguments.URL.GetHashCode();
             return hashCode.Value;
         }
 
         public override string ToString() =>
-            $"Get Font Intention: {Src} ({Kind}) {CommonArguments.URL}";
+            $"Get Font Intention: {Src} {CommonArguments.URL}";
     }
 }

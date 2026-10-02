@@ -1,31 +1,17 @@
-using DCL.Diagnostics;
 using System.Collections.Generic;
 using TMPro;
 using Unity.Profiling;
 using UnityEngine;
-using UnityEngine.TextCore.LowLevel;
 using UnityEngine.TextCore.Text;
-using Utility;
 
 namespace ECS.StreamableLoading.Fonts
 {
     public class RuntimeFontAssetFactory
     {
-        private const int SAMPLING_POINT_SIZE = 90;
-
         private const int ATLAS_PADDING = 9;
-
-        private const int ATLAS_SIZE = 1024;
-        private const GlyphRenderMode RENDER_MODE = GlyphRenderMode.SDFAA;
 
         private const int SDF_PACKING_MODIFIER = 1;
 
-        private const int REGULAR_WEIGHT_INDEX = 4;
-        private const int BOLD_WEIGHT_INDEX = 7;
-
-        private static readonly ProfilerMarker CREATE_FAMILY_MARKER = new ($"{nameof(RuntimeFontAssetFactory)}.{nameof(Create)}");
-        private static readonly ProfilerMarker CREATE_TEXT_MESH_PRO_MARKER = new ($"{nameof(RuntimeFontAssetFactory)}.{nameof(CreateTextMeshProAsset)}");
-        private static readonly ProfilerMarker CREATE_UI_TOOLKIT_MARKER = new ($"{nameof(RuntimeFontAssetFactory)}.{nameof(CreateUIToolkitAsset)}");
         private static readonly ProfilerMarker ADOPT_BUNDLED_MARKER = new ($"{nameof(RuntimeFontAssetFactory)}.{nameof(AdoptBundled)}");
 
         private readonly TMP_FontAsset referenceFont;
@@ -33,37 +19,6 @@ namespace ECS.StreamableLoading.Fonts
         public RuntimeFontAssetFactory(TMP_FontAsset referenceFont)
         {
             this.referenceFont = referenceFont;
-        }
-
-        public FontFamilyAssets? Create(string assetName, string regularFilePath, string? boldFilePath = null, string? italicFilePath = null, string? boldItalicFilePath = null)
-        {
-            using ProfilerMarker.AutoScope _ = CREATE_FAMILY_MARKER.Auto();
-
-            var textMeshProAssets = new List<TMP_FontAsset>(4);
-            var uiToolkitAssets = new List<FontAsset>(4);
-
-            try
-            {
-                TMP_FontAsset? textMeshProRegular = CreateTextMeshProAsset(assetName, regularFilePath, textMeshProAssets);
-                FontAsset? uiToolkitRegular = CreateUIToolkitAsset(assetName, regularFilePath, uiToolkitAssets);
-
-                if (textMeshProRegular == null || uiToolkitRegular == null)
-                {
-                    FontFamilyAssets.Destroy(textMeshProAssets, uiToolkitAssets);
-                    return null;
-                }
-
-                WireVariant(assetName, boldFilePath, FontVariant.Bold, textMeshProRegular, uiToolkitRegular, textMeshProAssets, uiToolkitAssets);
-                WireVariant(assetName, italicFilePath, FontVariant.Italic, textMeshProRegular, uiToolkitRegular, textMeshProAssets, uiToolkitAssets);
-                WireVariant(assetName, boldItalicFilePath, FontVariant.BoldItalic, textMeshProRegular, uiToolkitRegular, textMeshProAssets, uiToolkitAssets);
-
-                return new FontFamilyAssets(textMeshProRegular, uiToolkitRegular, textMeshProAssets, uiToolkitAssets);
-            }
-            catch
-            {
-                FontFamilyAssets.Destroy(textMeshProAssets, uiToolkitAssets);
-                throw;
-            }
         }
 
         /// <summary>
@@ -78,65 +33,7 @@ namespace ECS.StreamableLoading.Fonts
             Material material = CreateMaterial(assetName, textMeshPro);
             textMeshPro.material = material;
             textMeshPro.fallbackFontAssetTable = new List<TMP_FontAsset> { referenceFont };
-            return FontFamilyAssets.FromBundle(textMeshPro, uiToolkit, material);
-        }
-
-        private void WireVariant(string assetName, string? filePath, FontVariant variant, TMP_FontAsset textMeshProRegular, FontAsset uiToolkitRegular,
-            List<TMP_FontAsset> textMeshProAssets, List<FontAsset> uiToolkitAssets)
-        {
-            if (filePath == null)
-                return;
-
-            string variantName = $"{assetName} {variant}";
-            TMP_FontAsset? textMeshProVariant = CreateTextMeshProAsset(variantName, filePath, textMeshProAssets);
-            FontAsset? uiToolkitVariant = CreateUIToolkitAsset(variantName, filePath, uiToolkitAssets);
-
-            if (textMeshProVariant == null || uiToolkitVariant == null)
-            {
-                ReportHub.LogWarning(ReportCategory.SDK_FONTS, $"The {variant} face of the scene font \"{assetName}\" could not be read, the regular face stands in");
-                return;
-            }
-
-            TMP_FontWeightPair[] textMeshProTable = textMeshProRegular.fontWeightTable;
-            FontWeightPair[] uiToolkitTable = uiToolkitRegular.fontWeightTable;
-
-            switch (variant)
-            {
-                case FontVariant.Bold:
-                    textMeshProTable[BOLD_WEIGHT_INDEX].regularTypeface = textMeshProVariant;
-                    uiToolkitTable[BOLD_WEIGHT_INDEX].regularTypeface = uiToolkitVariant;
-                    break;
-                case FontVariant.Italic:
-                    textMeshProTable[REGULAR_WEIGHT_INDEX].italicTypeface = textMeshProVariant;
-                    uiToolkitTable[REGULAR_WEIGHT_INDEX].italicTypeface = uiToolkitVariant;
-                    break;
-                case FontVariant.BoldItalic:
-                    textMeshProTable[BOLD_WEIGHT_INDEX].italicTypeface = textMeshProVariant;
-                    uiToolkitTable[BOLD_WEIGHT_INDEX].italicTypeface = uiToolkitVariant;
-                    break;
-            }
-        }
-
-        private TMP_FontAsset? CreateTextMeshProAsset(string name, string filePath, List<TMP_FontAsset> owned)
-        {
-            using ProfilerMarker.AutoScope _ = CREATE_TEXT_MESH_PRO_MARKER.Auto();
-
-            TMP_FontAsset? asset = TMP_FontAsset.CreateFontAsset(filePath, 0, SAMPLING_POINT_SIZE, ATLAS_PADDING, RENDER_MODE, ATLAS_SIZE, ATLAS_SIZE);
-
-            if (asset == null)
-                return null;
-
-            asset.name = name;
-            owned.Add(asset);
-
-            // CreateFontAsset looks up "TextMeshPro/Mobile/Distance Field" by name: that shader is in the always-included list
-            Material generated = asset.material;
-            asset.material = CreateMaterial(name, asset);
-            UnityObjectUtils.SafeDestroy(generated);
-
-            asset.fallbackFontAssetTable = new List<TMP_FontAsset> { referenceFont };
-
-            return asset;
+            return new FontFamilyAssets(textMeshPro, uiToolkit, material);
         }
 
         private Material CreateMaterial(string name, TMP_FontAsset asset)
@@ -146,26 +43,12 @@ namespace ECS.StreamableLoading.Fonts
             var material = new Material(referenceFont.material);
             material.name = $"{name} Material";
             material.SetTexture(ShaderUtilities.ID_MainTex, asset.atlasTexture);
-            material.SetFloat(ShaderUtilities.ID_TextureWidth, ATLAS_SIZE);
-            material.SetFloat(ShaderUtilities.ID_TextureHeight, ATLAS_SIZE);
+            material.SetFloat(ShaderUtilities.ID_TextureWidth, asset.atlasWidth);
+            material.SetFloat(ShaderUtilities.ID_TextureHeight, asset.atlasHeight);
             material.SetFloat(ShaderUtilities.ID_GradientScale, ATLAS_PADDING + SDF_PACKING_MODIFIER);
             material.SetFloat(ShaderUtilities.ID_WeightNormal, asset.normalStyle);
             material.SetFloat(ShaderUtilities.ID_WeightBold, asset.boldStyle);
             return material;
-        }
-
-        private static FontAsset? CreateUIToolkitAsset(string name, string filePath, List<FontAsset> owned)
-        {
-            using ProfilerMarker.AutoScope _ = CREATE_UI_TOOLKIT_MARKER.Auto();
-
-            FontAsset? asset = FontAsset.CreateFontAsset(filePath, 0, SAMPLING_POINT_SIZE, ATLAS_PADDING, RENDER_MODE, ATLAS_SIZE, ATLAS_SIZE);
-
-            if (asset == null)
-                return null;
-
-            asset.name = name;
-            owned.Add(asset);
-            return asset;
         }
     }
 }

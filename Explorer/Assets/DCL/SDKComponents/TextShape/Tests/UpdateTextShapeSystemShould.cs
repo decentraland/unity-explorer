@@ -25,7 +25,6 @@ namespace DCL.SDKComponents.TextShape.Tests
         private const string FONT_SRC = "fonts/Roboto.ttf";
 
         private TMP_FontAsset builtInFont = null!;
-        private FontFamilyAssets family = null!;
         private FontData fontData = null!;
         private TextMeshPro textMeshPro = null!;
         private Entity entity;
@@ -34,7 +33,7 @@ namespace DCL.SDKComponents.TextShape.Tests
         public void SetUp()
         {
             builtInFont = TestFonts.CreateTextMeshProFont();
-            family = new RuntimeFontAssetFactory(builtInFont).Create("Custom", TestFonts.PATH)!;
+            fontData = TestFonts.CreateBundledFont(builtInFont);
             textMeshPro = new GameObject(nameof(UpdateTextShapeSystemShould)).AddComponent<TextMeshPro>();
             textMeshPro.font = builtInFont;
 
@@ -54,7 +53,6 @@ namespace DCL.SDKComponents.TextShape.Tests
 
             var component = new TextShapeComponent(textMeshPro) { NeedsBoundsRecalculation = false };
             component.FontRequest.Update(world, sceneData, FONT_SRC, PartitionComponent.TOP_PRIORITY);
-            fontData = new FontData(family);
             world.Add(component.FontRequest.Promise!.Value.Entity, new StreamableLoadingResult<FontData>(fontData));
             entity = world.Create(new PBTextShape { FontSrc = FONT_SRC, Text = "Font bounds" }, component);
             textMeshPro.transform.hasChanged = false;
@@ -63,7 +61,7 @@ namespace DCL.SDKComponents.TextShape.Tests
         protected override void OnTearDown()
         {
             Object.DestroyImmediate(textMeshPro.gameObject);
-            fontData.Dispose();
+            TestFonts.DestroyBundledFont(fontData);
             Object.DestroyImmediate(builtInFont);
         }
 
@@ -74,7 +72,7 @@ namespace DCL.SDKComponents.TextShape.Tests
             system.Update(0);
 
             // Assert
-            Assert.That(textMeshPro.font, Is.SameAs(family.TextMeshProFont));
+            Assert.That(textMeshPro.font, Is.SameAs(fontData.Asset.TextMeshProFont));
             Assert.That(world.Get<TextShapeComponent>(entity).NeedsBoundsRecalculation, Is.True);
 
             // Act

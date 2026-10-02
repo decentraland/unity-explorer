@@ -1,91 +1,91 @@
-using Cysharp.Threading.Tasks;
+using DCL.Diagnostics.Tests;
+using DCL.Ipfs;
+using DCL.Optimization.PerformanceBudgeting;
+using ECS.Prioritization.Components;
+using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
-using ECS.StreamableLoading.Tests;
 using ECS.TestSuite;
+using NSubstitute;
 using NUnit.Framework;
-using System;
-using System.Collections;
-using System.IO;
-using System.Threading;
+using System.Threading.Tasks;
 using TMPro;
-using UnityEngine;
-using UnityEngine.TestTools;
 using Object = UnityEngine.Object;
 
 namespace ECS.StreamableLoading.Fonts.Tests
 {
     [TestFixture]
-    public class LoadFontSystemShould : LoadSystemBaseShould<LoadFontSystem, FontData, GetFontIntention>
+    public class LoadFontSystemShould : UnitySystemTestBase<LoadFontSystem>
     {
-        private TMP_FontAsset? referenceFont;
+        private const string FONT_SRC = "fonts/Lobster-Regular.ttf";
+        private const string CONTENT_URL = "https://peer.decentraland.org/content/contents/bafyfont";
 
-        private string successPath => $"file://{TestFonts.PATH}";
-        private string failPath => $"file://{Application.dataPath + "/DCL/SDKComponents/Fonts/non_existing.ttf"}";
-        private string wrongTypePath => $"file://{Application.dataPath + "/../TestResources/CRDT/arraybuffer.test"}";
+        private TMP_FontAsset referenceFont = null!;
+        private FontsCache cache = null!;
+        private MockedReportScope mockedReportScope = null!;
 
-        [UnityTest]
-        public IEnumerator KeepTheSourceFileUntilNativeAssetsAreDestroyed() => UniTask.ToCoroutine(async () =>
+        [SetUp]
+        public void SetUp()
         {
-            var store = new FontFileStore(Path.Combine(Application.temporaryCachePath, "SceneFontsTests", Guid.NewGuid().ToString("N")));
-            using FontFileStore.Lease file = await store.StoreAsync(File.ReadAllBytes(TestFonts.PATH), CancellationToken.None);
-            await UniTask.SwitchToMainThread();
-            FontFamilyAssets assets = new RuntimeFontAssetFactory(referenceFont!).Create("File lifetime", file.Path)!;
-            var data = new FontData(assets, file);
-
-            data.Dispose();
-
-            Assert.That(File.Exists(file.Path), Is.True);
-            using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-            await UniTask.WaitUntil(() => !File.Exists(file.Path), cancellationToken: timeout.Token);
-            Assert.That(assets.TextMeshProFont == null, Is.True);
-            Assert.That(assets.UIToolkitFont == null, Is.True);
-        });
-
-        [TearDown]
-        public void DestroyReferenceFont()
-        {
-            if (referenceFont != null)
-                Object.DestroyImmediate(referenceFont);
+            mockedReportScope = new MockedReportScope();
+            referenceFont = TestFonts.CreateTextMeshProFont();
+            cache = new FontsCache();
+            system = new LoadFontSystem(world, cache, new RuntimeFontAssetFactory(referenceFont), tryUnlistedBundles: false);
+            system.Initialize();
         }
 
-        protected override GetFontIntention CreateSuccessIntention() =>
-            new ()
-            {
-                Src = "LiberationSans-Regular.ttf",
-                CommonArguments = new CommonLoadingArguments(successPath),
-            };
-
-        protected override GetFontIntention CreateNotFoundIntention() =>
-            new ()
-            {
-                Src = "non_existing.ttf",
-                CommonArguments = new CommonLoadingArguments(failPath),
-            };
-
-        protected override GetFontIntention CreateWrongTypeIntention() =>
-            new ()
-            {
-                Src = "arraybuffer.test",
-                CommonArguments = new CommonLoadingArguments(wrongTypePath),
-            };
-
-        protected override LoadFontSystem CreateSystem()
+        protected override void OnTearDown()
         {
-            TMP_FontAsset font = TestFonts.CreateTextMeshProFont();
-            referenceFont = font;
-
-            return new LoadFontSystem(world, cache, TestWebRequestController.INSTANCE, new RuntimeFontAssetFactory(font),
-                new FontFileStore(Path.Combine(Application.temporaryCachePath, "SceneFontsTests")), tryUnlistedBundles: false);
+            cache.Dispose();
+            Object.DestroyImmediate(referenceFont);
+            mockedReportScope.Dispose();
         }
 
-        protected override void AssertSuccess(FontData data)
+        [Test]
+        public async Task FailWhenTheSceneHasNoConvertedBundles()
         {
-            FontFamilyAssets assets = data.Asset;
+            // Arrange
+            var intention = new GetFontIntention { Src = FONT_SRC, CommonArguments = new CommonLoadingArguments(CONTENT_URL) };
 
-            Assert.That(assets.TextMeshProFont, Is.Not.Null);
-            Assert.That(assets.TextMeshProFont.faceInfo.familyName, Is.EqualTo("Liberation Sans"));
-            Assert.That(assets.UIToolkitFont, Is.Not.Null);
-            Assert.That(assets.UIToolkitFont.faceInfo.familyName, Is.EqualTo("Liberation Sans"));
+            // Act
+            StreamableLoadingResult<FontData> result = await LoadAsync(intention);
+
+            // Assert
+            Assert.That(result.Succeeded, Is.False);
+            Assert.That(result.Exception, Is.TypeOf<FontLoadException>());
+        }
+
+        [Test]
+        public async Task FailWhenTheManifestListsNoBundleForTheFont()
+        {
+            // Arrange
+            var intention = new GetFontIntention
+            {
+                Src = FONT_SRC,
+                CommonArguments = new CommonLoadingArguments(CONTENT_URL),
+                AssetBundleHash = "bafyfont",
+                AssetBundleListed = false,
+                AssetBundleManifest = AssetBundleManifestVersion.CreateFromFallback("v49", "2026-05-01"),
+                SceneId = "scene",
+            };
+
+            // Act
+            StreamableLoadingResult<FontData> result = await LoadAsync(intention);
+
+            // Assert
+            Assert.That(result.Succeeded, Is.False);
+            Assert.That(result.Exception, Is.TypeOf<FontLoadException>());
+        }
+
+        private async Task<StreamableLoadingResult<FontData>> LoadAsync(GetFontIntention intention)
+        {
+            var promise = AssetPromise<FontData, GetFontIntention>.Create(world, intention, PartitionComponent.TOP_PRIORITY);
+            world.Get<StreamableLoadingState>(promise.Entity).SetAllowed(Substitute.For<IAcquiredBudget>());
+
+            system.Update(0);
+
+            promise = await promise.ToUniTaskAsync(world, cancellationToken: intention.CommonArguments.CancellationToken);
+            Assert.That(promise.TryGetResult(world, out StreamableLoadingResult<FontData> result), Is.True);
+            return result;
         }
     }
 }

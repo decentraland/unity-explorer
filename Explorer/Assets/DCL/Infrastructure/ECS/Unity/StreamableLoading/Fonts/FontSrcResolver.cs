@@ -9,8 +9,6 @@ namespace ECS.StreamableLoading.Fonts
 {
     public static class FontSrcResolver
     {
-        private const int ATTEMPTS_COUNT = 2;
-
         public static bool TryCreateIntention(string fontSrc, ISceneData sceneData, out GetFontIntention intention)
         {
             intention = default(GetFontIntention);
@@ -22,36 +20,23 @@ namespace ECS.StreamableLoading.Fonts
                 return false;
             }
 
-            FontSourceKind kind = FontSourceKind.File;
-
             if (!sceneData.TryGetContentUrl(fontSrc, out URLAddress url))
             {
-                string? familyId = FontsourceCatalog.ToFamilyId(fontSrc);
-
-                if (familyId == null)
-                {
-                    ReportHub.LogWarning(ReportCategory.SDK_FONTS, $"font_src \"{fontSrc}\" is neither a content file of the scene {sceneData.SceneShortInfo} nor a font family name");
-                    return false;
-                }
-
-                kind = FontSourceKind.FontsourceFamily;
-                url = URLAddress.FromString(FontsourceCatalog.ApiUrl(familyId));
+                ReportHub.LogWarning(ReportCategory.SDK_FONTS, $"font_src \"{fontSrc}\" is not a content file of the scene {sceneData.SceneShortInfo}");
+                return false;
             }
 
             intention = new GetFontIntention
             {
-                Kind = kind,
                 Src = fontSrc,
-                CommonArguments = new CommonLoadingArguments(url, attempts: ATTEMPTS_COUNT),
+                CommonArguments = new CommonLoadingArguments(url),
             };
 
-            if (kind == FontSourceKind.File)
-                PreferAssetBundle(fontSrc, sceneData, ref intention);
-
+            AssignAssetBundle(fontSrc, sceneData, ref intention);
             return true;
         }
 
-        private static void PreferAssetBundle(string fontSrc, ISceneData sceneData, ref GetFontIntention intention)
+        private static void AssignAssetBundle(string fontSrc, ISceneData sceneData, ref GetFontIntention intention)
         {
             if (sceneData.SceneEntityDefinition is not { } definition
                 || !sceneData.TryGetHash(fontSrc, out string hash))
