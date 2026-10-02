@@ -338,6 +338,7 @@ namespace Global.Dynamic
             var realmData = new RealmData();
 
             applicationParametersParser.TryGetValue(AppArgsFlags.GATEKEEPER_URL, out string? cliGatekeeperUrl);
+            applicationParametersParser.TryGetValue(AppArgsFlags.BADGES_URL, out string? badgesUrl);
 
             bool cliAbgenPipeline = applicationParametersParser.HasFlag(AppArgsFlags.ABGEN_PIPELINE);
             bool cliAbgenLods = applicationParametersParser.HasFlag(AppArgsFlags.ABGEN_LODS);
@@ -374,7 +375,8 @@ namespace Global.Dynamic
                 customBaseDomain,
                 cliAbgenPipeline,
                 cliGatewayPrefix,
-                cliAbgenLods);
+                cliAbgenLods,
+                badgesUrl);
             DiagnosticInfoUtils.LogEnvironment(decentralandUrlsSource);
 
             var web3AccountFactory = new Web3AccountFactory();

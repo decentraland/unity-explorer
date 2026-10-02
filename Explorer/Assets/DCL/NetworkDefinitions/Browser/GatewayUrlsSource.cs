@@ -120,8 +120,9 @@ namespace DCL.Browser
             string? customBaseDomain = null,
             bool abgenPipelineForced = false,
             string? cliGatewayPrefix = null,
-            bool abgenLodsForced = false)
-            : base(environment, realmData, launchMode, gatekeeperMode, customGatekeeperUrl, cliGatekeeperUrl, localAbBaseUrl, customBaseDomain, abgenPipelineForced, abgenLodsForced)
+            bool abgenLodsForced = false,
+            string? badgesUrl = null)
+            : base(environment, realmData, launchMode, gatekeeperMode, customGatekeeperUrl, cliGatekeeperUrl, localAbBaseUrl, customBaseDomain, abgenPipelineForced, abgenLodsForced, badgesUrl)
         {
             this.cliGatewayPrefix = cliGatewayPrefix;
 

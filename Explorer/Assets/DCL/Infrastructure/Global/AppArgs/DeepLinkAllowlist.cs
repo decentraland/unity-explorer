@@ -158,6 +158,15 @@ namespace Global.AppArgs
             // cached the client quits instead (RealUserInAppInitializationFlow). Whitelisted-realm-gated because
             // it's a CI based action used internally on a specific realm.
             AppArgsFlags.MEASURE_LOADING_TIME,
+
+            // Local-preview only: point badges at a local server. Infrastructure-pointing like
+            // gatekeeper-url, so the value is further restricted to a loopback http(s) url (see IsValuePermitted).
+            AppArgsFlags.BADGES_URL,
+        };
+
+        private static readonly HashSet<string> LOOPBACK_URL_KEYS = new()
+        {
+            AppArgsFlags.BADGES_URL,
         };
 
         // Canonical (lowercased world-name) whitelist, set from the deeplink-whitelisted-worlds feature flag. Empty
@@ -186,6 +195,15 @@ namespace Global.AppArgs
 
         public static bool IsPermittedForWhitelistedRealm(string key) =>
             WHITELISTED_REALM_PERMITTED_KEYS.Contains(key);
+
+        public static bool IsLoopbackUrlKey(string key) =>
+            LOOPBACK_URL_KEYS.Contains(key);
+
+        public static bool IsValuePermitted(string key, string? value) =>
+            !IsLoopbackUrlKey(key)
+            || (Uri.TryCreate(value, UriKind.Absolute, out Uri? uri)
+                && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps)
+                && uri.IsLoopback);
 
         /// <summary>
         ///     Sets the trusted worlds from the <c>deeplink-whitelisted-worlds</c> feature flag. Entries are accepted

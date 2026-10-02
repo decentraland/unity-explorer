@@ -206,8 +206,7 @@ namespace Global.AppArgs
                 if (realmParamValue.EndsWith('/'))
                     realmParamValue = realmParamValue.Remove(realmParamValue.Length - 1);
 
-                // Patch for MacOS removing the ':' from the realm parameter protocol
-                realmParamValue = Regex.Replace(realmParamValue, @"(https?)//(.*?)$", @"$1://$2");
+                realmParamValue = RestoreSchemeColon(realmParamValue);
 
                 output[AppArgsFlags.REALM] = realmParamValue;
             }
@@ -225,14 +224,19 @@ namespace Global.AppArgs
             {
                 if (uriQueryKey == null || output.ContainsKey(uriQueryKey)) continue;
 
-                if (realmIsWhitelisted && DeepLinkAllowlist.IsPermittedForWhitelistedRealm(uriQueryKey))
-                    output[uriQueryKey] = uriQuery.Get(uriQueryKey);
+                string? value = uriQuery.Get(uriQueryKey);
+
+                if (value != null && DeepLinkAllowlist.IsLoopbackUrlKey(uriQueryKey))
+                    value = RestoreSchemeColon(value.TrimEnd('/'));
+
+                if (realmIsWhitelisted && DeepLinkAllowlist.IsPermittedForWhitelistedRealm(uriQueryKey) && DeepLinkAllowlist.IsValuePermitted(uriQueryKey, value))
+                    output[uriQueryKey] = value!;
                 else
                 {
                     droppedKeys.Add(uriQueryKey);
 
                     if (deniedParams != null)
-                        deniedParams[uriQueryKey] = uriQuery.Get(uriQueryKey);
+                        deniedParams[uriQueryKey] = value!;
                 }
             }
 
@@ -241,6 +245,10 @@ namespace Global.AppArgs
 
             return output;
         }
+
+        // Patch for MacOS removing the ':' from a url param's protocol
+        private static string RestoreSchemeColon(string url) =>
+            Regex.Replace(url, @"(https?)//(.*?)$", @"$1://$2");
 
         private void LogArguments()
         {

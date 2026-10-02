@@ -54,6 +54,7 @@ namespace DCL.Browser.DecentralandUrls
         private readonly DecentralandEnvironment environment;
         private readonly string? gatekeeperBaseOverride;
         private readonly string? localAbBaseOverride;
+        private readonly string? badgesBaseOverride;
         private readonly bool abgenPipelineForced;
         private readonly bool abgenLodsForced;
 
@@ -72,7 +73,8 @@ namespace DCL.Browser.DecentralandUrls
             string? localAbBaseUrl = null,
             string? customBaseDomain = null,
             bool abgenPipelineForced = false,
-            bool abgenLodsForced = false)
+            bool abgenLodsForced = false,
+            string? badgesUrl = null)
         {
             this.environment = environment;
             BaseDomain = ResolveBaseDomain(environment, customBaseDomain);
@@ -83,6 +85,8 @@ namespace DCL.Browser.DecentralandUrls
             localAbBaseOverride = localAbBaseUrl?.TrimEnd('/');
             this.abgenPipelineForced = abgenPipelineForced;
             this.abgenLodsForced = abgenLodsForced;
+            badgesBaseOverride = NormalizeServiceOverride(badgesUrl);
+            ReportHub.Log(ReportCategory.STARTUP, $"Badges base override: {badgesBaseOverride ?? "(default)"}");
 
             realmData.RealmType.OnUpdate += ResetRealmDependentUrls;
         }
@@ -120,6 +124,9 @@ namespace DCL.Browser.DecentralandUrls
 
             return domain;
         }
+
+        private static string? NormalizeServiceOverride(string? url) =>
+            url?.Trim().TrimEnd('/') is { Length: > 0 } normalized ? normalized : null;
 
         private static string? ResolveGatekeeperOverride(GatekeeperMode mode, string customUrl, string? cliOverride, out string source)
         {
@@ -386,7 +393,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.ArchipelagoHotScenes => $"https://archipelago-ea-stats.{BaseDomain}/hot-scenes",
                 DecentralandUrl.GatekeeperStatus => $"{RawUrl(DecentralandUrl.Gatekeeper).Url!}/status",
                 DecentralandUrl.Genesis => $"https://realm-provider-ea.{BaseDomain}/main",
-                DecentralandUrl.Badges => $"https://badges.{BaseDomain}",
+                DecentralandUrl.Badges => badgesBaseOverride ?? $"https://badges.{BaseDomain}",
                 DecentralandUrl.CameraReelUsers => $"https://camera-reel-service.{BaseDomain}/api/users",
                 DecentralandUrl.CameraReelImages => $"https://camera-reel-service.{BaseDomain}/api/images",
                 DecentralandUrl.CameraReelPlaces => $"https://camera-reel-service.{BaseDomain}/api/places",

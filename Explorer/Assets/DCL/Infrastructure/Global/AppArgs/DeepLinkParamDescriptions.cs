@@ -28,6 +28,7 @@ namespace Global.AppArgs
             [AppArgsFlags.LSD_REMOTE_AB_SERVER] = "Changes the server scene asset bundles are downloaded from.",
             [AppArgsFlags.LSD_REMOTE_AB_WORLD] = "Loads scene content from a world chosen by the link.",
             [AppArgsFlags.PULSE_MULTIPLAYER] = "Changes how this session connects to other players.",
+            [AppArgsFlags.BADGES_URL] = "Changes the server your badges are loaded from.",
             [AppArgsFlags.GATEWAY] = "Routes all Decentraland traffic through a server chosen by the link.",
 
             // Skips a protective screen.

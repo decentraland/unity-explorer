@@ -22,6 +22,7 @@ namespace Global.AppArgs
         public const string REALM = "realm";
         public const string COMMS_ADAPTER = "comms-adapter";
         public const string GATEKEEPER_URL = "gatekeeper-url";
+        public const string BADGES_URL = "badges-url";
 
         /// <summary>
         ///     Lets a realm's comms adapter be served over cleartext http, as an e2e fixture's is, provided it
