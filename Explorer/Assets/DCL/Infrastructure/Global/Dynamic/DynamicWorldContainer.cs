@@ -16,6 +16,7 @@ using DCL.Communities;
 using DCL.SpringBones;
 using DCL.Communities.CommunitiesCard.Members;
 using DCL.DebugUtilities;
+using DCL.Diagnostics;
 using DCL.Donations;
 using DCL.EventsApi;
 using DCL.FeatureFlags;
@@ -382,6 +383,12 @@ namespace Global.Dynamic
                 chatContainer.ChatHistory);
 
             appArgs.TryGetValue(AppArgsFlags.SATELLITE_MAP_URL, out string? satelliteMapUrl);
+
+            if (satelliteMapUrl != null && !IsHttpUrl(satelliteMapUrl))
+            {
+                ReportHub.LogWarning(ReportCategory.UI, $"Ignoring --{AppArgsFlags.SATELLITE_MAP_URL}: only http and https URLs are accepted");
+                satelliteMapUrl = null;
+            }
 
             MapRendererContainer mapRendererContainer =
                 await MapRendererContainer
@@ -1150,5 +1157,8 @@ namespace Global.Dynamic
 
             return (container, true);
         }
+
+        private static bool IsHttpUrl(string url) =>
+            Uri.TryCreate(url, UriKind.Absolute, out Uri? uri) && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
     }
 }

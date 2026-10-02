@@ -88,6 +88,9 @@ namespace DCL.MapRenderer.MapLayers.SatelliteAtlas
         UniTask IMapLayerController.EnableAsync(CancellationToken cancellationToken)
         {
             instantiationParent.gameObject.SetActive(true);
+
+            // Refreshes skipped while the layer was hidden would otherwise wait for the next camera change.
+            detailTiles?.Refresh();
             return UniTask.CompletedTask;
         }
 
