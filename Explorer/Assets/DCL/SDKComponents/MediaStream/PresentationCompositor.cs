@@ -11,6 +11,8 @@ namespace DCL.SDKComponents.MediaStream
     /// </summary>
     public sealed class PresentationCompositor : IDisposable
     {
+        public const int MAX_COMPOSITE_SIZE = 2048;
+
         private const float CAMERA_EDGE_PX = 1.5f;
 
         private static readonly int VIDEO_TEX = Shader.PropertyToID("_VideoTex");
@@ -26,6 +28,8 @@ namespace DCL.SDKComponents.MediaStream
         private readonly Material material;
 
         private RenderTexture? composite;
+
+        internal int blitCount => throw new NotImplementedException();
 
         public PresentationCompositor(Material material)
         {
@@ -68,6 +72,14 @@ namespace DCL.SDKComponents.MediaStream
             Graphics.Blit(slide, composite, material);
             RenderTexture.active = previous;
             return composite;
+        }
+
+        /// <summary>
+        ///     Frees the composite render texture; the next <see cref="Compose" /> recreates it.
+        /// </summary>
+        public void Release()
+        {
+            throw new NotImplementedException();
         }
 
         private void ReleaseComposite()
