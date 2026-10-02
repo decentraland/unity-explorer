@@ -503,6 +503,10 @@ namespace DCL.MarketplaceCredits.Purchase.UI
             {
                 CreditsPurchaseResult result = await purchaseService.PurchaseAsync(confirmedQuote, ct);
 
+                // A Cancelled result after the modal closed would reopen the try-on preview on the hidden view.
+                if (ct.IsCancellationRequested)
+                    return;
+
                 if (result.Success)
                 {
                     purchaseSucceeded = true;

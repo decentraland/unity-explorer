@@ -14,7 +14,8 @@ name: Comment Artifact URL on PR
 # Both resolve their PR through resolve-comment-pr.sh: the run's own PR, or —
 # for a push run on dev — the open release/hotfix PR whose head is the run's
 # SHA. create-release-branch.yml cuts release/* from dev's tip and opens the PR
-# with GITHUB_TOKEN, whose events start no runs, so when the cut lands while
+# with GITHUB_TOKEN, whose events build nothing (build-unitycloud.yml skips
+# bot-actor pull_request events), so when the cut lands while
 # dev is still building that commit, this dev run is the one whose result the
 # release PR's comment has to carry (release-gate and release-force-build below
 # finish that job: start the InWorld gate on success, label the PR
@@ -552,7 +553,8 @@ jobs:
             ${{ steps.ucb.outputs.section }}
 
   # A release PR cannot start its own InWorld gate on the two paths that reach
-  # here. The PR was opened with GITHUB_TOKEN, whose events start no runs, so a
+  # here. The PR was opened with GITHUB_TOKEN, whose events start runs only as
+  # action_required, owned by the bot even once approved, so a
   # dev build that finished after the cut (a back-filled run) has no gate; and
   # in-world-tests.yml does not listen to label events, so neither does a build
   # the `force-build` label started. Dispatch it against the release branch —
@@ -599,9 +601,9 @@ jobs:
   # release with no build and no event that would start one: the cut seeded
   # "Building on dev" into the comment, and the PR raises no events of its own.
   # `force-build` builds a PR regardless, so add it — with the org token, since
-  # a label added by GITHUB_TOKEN starts no run either. Back-filled dev runs
-  # only: a release branch's own failed build is for a human to look at, and
-  # re-labelling would not even re-trigger (the label is already on the PR).
+  # a label added by GITHUB_TOKEN builds nothing either. Back-filled dev runs
+  # only: a release branch's own failed build is for a human to look at, not
+  # something to re-label and rebuild automatically.
   # Ordered after the failed/cancelled writers so this text is what stays up
   # until the new build's own writers reset the section.
   release-force-build:

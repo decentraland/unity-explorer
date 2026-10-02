@@ -203,6 +203,7 @@ namespace DCL.Lobby
             }
 
             mvcManager.OnViewClosed -= ShowAgainWhenTheScreenIsFree;
+            startParcel.JumpInRequestRaised -= RequestClose;
 
             if (friends != null)
                 friends.JoinRequested = null;
@@ -284,12 +285,18 @@ namespace DCL.Lobby
             friendsCts = friendsCts.SafeRestart();
             friends?.Show(friendsCts.Token);
 
+            if (inputData.IsStartup)
+                startParcel.JumpInRequestRaised += RequestClose;
+
             Opened?.Invoke(inputData.IsStartup);
         }
 
         protected override void OnViewClose()
         {
             base.OnViewClose();
+
+            if (inputData.IsStartup)
+                startParcel.JumpInRequestRaised -= RequestClose;
 
             profileChangesBus.UnsubscribeToUpdate(OnProfileUpdated);
 
@@ -325,16 +332,26 @@ namespace DCL.Lobby
 
             mvcManager.OnViewClosed -= ShowAgainWhenTheScreenIsFree;
 
-            if (!inputData.StartupToken.IsCancellationRequested)
+            if (inputData.StartupToken.IsCancellationRequested) return;
+
+            // A destination requested while the lobby was covered releases the flow without showing it again
+            if (startParcel.JumpInRequested)
+                RequestClose();
+            else
                 mvcManager.ShowAndForget(LobbyController.IssueCommand(inputData));
         }
 
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
         {
             closeIntent?.TrySetCanceled(ct);
-            closeIntent = new UniTaskCompletionSource();
+            var intent = new UniTaskCompletionSource();
+            closeIntent = intent;
 
-            await closeIntent.Task.AttachExternalCancellation(ct);
+            // A request made while the view was loading or covered by another panel had no listener
+            if (inputData.IsStartup && startParcel.JumpInRequested)
+                RequestClose();
+
+            await intent.Task.AttachExternalCancellation(ct);
         }
 
         private async UniTaskVoid ShowAvatarAsync(CancellationToken ct)
