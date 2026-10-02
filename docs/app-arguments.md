@@ -147,7 +147,7 @@ On a `base-domain` deployment, where the value *is* read, anything that does not
 
 ### `realm`
 **Type:** String (URL)
-**Description:** Specifies a custom realm server URL to connect to. Used for connecting to local or custom Decentraland servers. The URL should include the protocol (http:// or https://).
+**Description:** Specifies a custom realm server URL to connect to. Used for connecting to local or custom Decentraland servers. The URL should include the protocol (http:// or https://). A launch that names a destination (this flag or [`position`](#position)) skips the startup lobby and loads straight into it once authentication, if any is needed, completes; a `decentraland://` link and the command line behave the same. An unreachable realm keeps the current one.
 
 **Usage:**
 ```bash
@@ -217,7 +217,7 @@ On a `base-domain` deployment, where the value *is* read, anything that does not
 
 ### `position`
 **Type:** String (coordinates)
-**Description:** Sets the initial spawn position in the world. Format is typically `x,y` coordinates.
+**Description:** Sets the initial spawn position in the world. Format is typically `x,y` coordinates. Like [`realm`](#realm), naming it skips the startup lobby: the client lands on the parcel right after authentication, whether the flag came from a `decentraland://` link or the command line.
 
 **Usage:**
 ```bash
@@ -246,6 +246,20 @@ Only affects player builds — the Editor always behaves as if the flag were set
 **Usage:**
 ```bash
 --login-bridge-only
+```
+
+---
+
+### `ephemeral-guest-account`
+**Type:** Boolean (`true` / `false`)
+**Description:** Overrides the `alfa-ephemeral-guest-account` feature flag: enabled, "play as guest" generates the account on the device; disabled, it uses the ThirdWeb guest wallet.
+
+Enabling it requires [`--debug`](#debug); `--ephemeral-guest-account false` disables it in any build.
+
+**Usage:**
+```bash
+--debug --ephemeral-guest-account true
+--ephemeral-guest-account false
 ```
 
 ---
@@ -597,6 +611,7 @@ Visual regression tests need a deterministic scene: a fixed window, no time-of-d
 - Some flags accept string values that can be boolean-like (`"true"` or `"false"`).
 - Flags can be combined in a single command line invocation.
 - Deep links can embed multiple flags: `decentraland://?realm=http://127.0.0.1:8000&local-scene=true&skip-auth-screen=true`
+- A launch naming a destination through `realm` or `position` skips the startup lobby and lands directly in it. A link reaching a running client that is still on the startup lobby or the auth screen replaces the startup destination (a realm outside the allowlist first asks for consent); the lobby closes once no other panel covers it. An unreachable realm keeps the current one, and a world you cannot enter falls back to Genesis. With the lobby feature off, a link opened on the "Welcome back" step is applied when you click "Jump into World".
 - The `debug` flag is automatically added when running in Unity Editor.
 - Some flags are only effective when combined with the `debug` flag or when running in Unity Editor.
 

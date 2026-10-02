@@ -87,7 +87,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIDropdown
             if (uiDropdownComponent.FontRequest.Update(World, sceneData, sdkModel.FontSrc, scenePartition))
                 uiDropdownComponent.CustomFont = null;
 
-            UiElementUtils.SetupUIDropdownComponent(ref uiDropdownComponent, in sdkModel, in styleFontDefinitions);
+            UiElementUtils.SetupUiDropdownComponent(ref uiDropdownComponent, in sdkModel, in styleFontDefinitions);
             sdkModel.IsDirty = false;
         }
 

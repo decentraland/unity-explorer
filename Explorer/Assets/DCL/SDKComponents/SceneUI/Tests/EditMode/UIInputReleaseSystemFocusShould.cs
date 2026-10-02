@@ -43,7 +43,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
             var poolsRegistry = new ComponentPoolsRegistry(
                 new Dictionary<Type, IComponentPool>
                 {
-                    { typeof(UIInputComponent), new ComponentPool.WithDefaultCtor<UIInputComponent>(onRelease: UiElementUtils.ReleaseUIInputComponent) },
+                    { typeof(UIInputComponent), new ComponentPool.WithDefaultCtor<UIInputComponent>(onRelease: UiElementUtils.ReleaseUiInputComponent) },
                 }, canvasGameObject.transform);
 
             inputBlock = Substitute.For<IInputBlock>();

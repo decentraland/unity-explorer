@@ -97,7 +97,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
             if (uiInputComponent.FontRequest.Update(World!, sceneData, sdkModel.FontSrc, scenePartition))
                 uiInputComponent.CustomFont = null;
 
-            UiElementUtils.SetupUIInputComponent(ref uiInputComponent, in sdkModel, in styleFontDefinitions);
+            UiElementUtils.SetupUiInputComponent(ref uiInputComponent, in sdkModel, in styleFontDefinitions);
             sdkModel.IsDirty = false;
         }
 

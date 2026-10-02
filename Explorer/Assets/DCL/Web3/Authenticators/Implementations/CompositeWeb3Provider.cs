@@ -19,10 +19,9 @@ namespace DCL.Web3.Authenticators
         private readonly ThirdWebAuthenticator thirdWebAuth;
         private readonly DappWeb3EthereumApi dappEthereumApi;
         private readonly IWeb3Authenticator dappLogin;
+        private readonly EphemeralWeb3Authenticator ephemeralGuestLogin;
         private readonly IWeb3IdentityCache identityCache;
         private readonly IAnalyticsController analytics;
-
-        public AuthProvider CurrentProvider { private get; set; } = AuthProvider.Dapp;
 
         public event Action<string>? OTPSendSucceeded
         {
@@ -30,21 +29,20 @@ namespace DCL.Web3.Authenticators
             remove => thirdWebAuth.OTPSendSucceeded -= value;
         }
 
-        public bool IsThirdWebAccount => CurrentProvider == AuthProvider.ThirdWeb;
-
-        private IWeb3Authenticator currentAuthenticator => IsThirdWebAccount ? thirdWebAuth : dappLogin;
-        private IEthereumApi currentEthereumApi => IsThirdWebAccount ? thirdWebAuth : dappEthereumApi;
+        private IEthereumApi currentEthereumApi => identityCache.IsThirdWebAccount() ? thirdWebAuth : dappEthereumApi;
 
         public CompositeWeb3Provider(
             ThirdWebAuthenticator thirdWebAuth,
             DappWeb3EthereumApi dappEthereumApi,
             DappDeepLinkAuthenticator dappLogin,
             IWeb3IdentityCache identityCache,
-            IAnalyticsController analytics)
+            IAnalyticsController analytics,
+            EphemeralWeb3Authenticator ephemeralGuestLogin)
         {
             this.thirdWebAuth = thirdWebAuth ?? throw new ArgumentNullException(nameof(thirdWebAuth));
             this.dappEthereumApi = dappEthereumApi ?? throw new ArgumentNullException(nameof(dappEthereumApi));
             this.dappLogin = dappLogin ?? throw new ArgumentNullException(nameof(dappLogin));
+            this.ephemeralGuestLogin = ephemeralGuestLogin ?? throw new ArgumentNullException(nameof(ephemeralGuestLogin));
             this.identityCache = identityCache ?? throw new ArgumentNullException(nameof(identityCache));
             this.analytics = analytics ?? throw new ArgumentNullException(nameof(analytics));
         }
@@ -54,6 +52,7 @@ namespace DCL.Web3.Authenticators
             thirdWebAuth.Dispose();
             dappEthereumApi.Dispose();
             dappLogin.Dispose();
+            ephemeralGuestLogin.Dispose();
             identityCache.Dispose();
         }
 
@@ -62,7 +61,15 @@ namespace DCL.Web3.Authenticators
         {
             IWeb3Identity identity;
 
-            try { identity = await currentAuthenticator.LoginAsync(payload, ct); }
+            // The requested method decides who serves the login: the identity it returns says the same
+            IWeb3Authenticator authenticator = payload.Method switch
+                                               {
+                                                   LoginMethod.EMAIL_OTP or LoginMethod.GUEST => thirdWebAuth,
+                                                   LoginMethod.EPHEMERAL_GUEST => ephemeralGuestLogin,
+                                                   _ => dappLogin,
+                                               };
+
+            try { identity = await authenticator.LoginAsync(payload, ct); }
             catch (GuestAccountUpgradedException)
             {
                 DiscardUpgradedGuestSession();
@@ -85,13 +92,20 @@ namespace DCL.Web3.Authenticators
         {
             analytics.Identify(null);
 
-            // ThirdWeb is the only provider holding a login session of its own.
-            if (IsThirdWebAccount)
-                await thirdWebAuth.LogoutAsync(ct);
-            else
-                // Abort any in-flight browser signature confirmation so an approval arriving
-                // after logout cannot complete under the logged-out session.
-                await dappEthereumApi.DisconnectFromAuthApiAsync();
+            switch (identityCache.Identity?.Method)
+            {
+                case LoginMethod.EMAIL_OTP:
+                case LoginMethod.GUEST:
+                    await thirdWebAuth.LogoutAsync(ct);
+                    break;
+
+                // The account only ever lived in the identity that is cleared below
+                case LoginMethod.EPHEMERAL_GUEST: break;
+
+                default:
+                    await dappEthereumApi.DisconnectFromAuthApiAsync();
+                    break;
+            }
 
             identityCache.Clear();
         }
@@ -113,48 +127,48 @@ namespace DCL.Web3.Authenticators
         {
             IWeb3Identity identity = await thirdWebAuth.LinkEmailAsync(otp, ct);
 
-            CurrentProvider = AuthProvider.ThirdWeb;
             identityCache.Identity = identity;
             analytics.Identify(identity);
 
             return identity;
         }
 
-        public async UniTask<bool> TryAutoLoginAsync(CancellationToken ct)
+        public async UniTask<IOtpAuthenticator.AutoLoginResult> TryAutoLoginAsync(CancellationToken ct)
         {
             if (OtpIsDisabled())
                 DCLPlayerPrefs.DeleteKey(DCLPrefKeys.LOGGEDIN_EMAIL, save: true);
 
-            if (GuestLoginIsDisabled())
+            if (!GuestLoginIsEnabled())
                 DCLPlayerPrefs.DeleteKey(DCLPrefKeys.GUEST_SESSION_ACTIVE, save: true);
 
+            if (!identityCache.IsThirdWebAccount())
+
+                // Auto-login only works for thirdweb accounts
+                return IOtpAuthenticator.AutoLoginResult.Unnecessary;
+
+            // Only the ThirdWeb guest flow stores this flag, so it is the one that has a session to restore
             if (DCLPlayerPrefs.GetBool(DCLPrefKeys.GUEST_SESSION_ACTIVE))
             {
-                CurrentProvider = AuthProvider.ThirdWeb;
-
                 try { return await thirdWebAuth.TryAutoLoginAsync(ct); }
                 catch (GuestAccountUpgradedException)
                 {
                     DiscardUpgradedGuestSession();
-                    return false;
+                    return IOtpAuthenticator.AutoLoginResult.Failed;
                 }
             }
 
             string storedEmail = DCLPlayerPrefs.GetString(DCLPrefKeys.LOGGEDIN_EMAIL, string.Empty);
 
-            // Heuristic: if we have a stored email, assume ThirdWeb OTP flow; otherwise default to Dapp Wallet.
-            if (string.IsNullOrEmpty(storedEmail))
-            {
-                CurrentProvider = AuthProvider.Dapp;
-                return true;
-            }
+            if (!string.IsNullOrEmpty(storedEmail))
+                return await thirdWebAuth.TryAutoLoginAsync(ct);
 
-            CurrentProvider = AuthProvider.ThirdWeb;
-            return await thirdWebAuth.TryAutoLoginAsync(ct);
+            return IOtpAuthenticator.AutoLoginResult.Success;
 
-            bool OtpIsDisabled() => !FeaturesRegistry.Instance.IsEnabled(FeatureId.EmailOTPAuth);
+            bool OtpIsDisabled() =>
+                !FeaturesRegistry.Instance.IsEnabled(FeatureId.EmailOTPAuth);
 
-            bool GuestLoginIsDisabled() => !FeaturesRegistry.Instance.IsEnabled(FeatureId.GuestLogin);
+            bool GuestLoginIsEnabled() =>
+                FeaturesRegistry.Instance.IsEnabled(FeatureId.GuestLogin);
         }
 
         public UniTask<EthApiResponse> SendAsync(EthApiRequest request, Web3RequestSource source, CancellationToken ct) =>

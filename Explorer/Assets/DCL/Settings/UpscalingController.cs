@@ -66,8 +66,13 @@ namespace DCL.Utilities
             // Only trigger upscaler change for certain types of controllers
             if (ShouldTriggerUpscalerChange(controller))
             {
-                savedUpscalingDuringUIOpen = ((UniversalRenderPipelineAsset)GraphicsSettings.currentRenderPipeline).renderScale;
-                SetUpscaling(STP_VALUE_FOR_UI_OPEN, UpscalingFilterSelection.Auto);
+                // Only the first UI captures the user's scale; later ones would capture the forced value
+                if (currentUIOpened == 0)
+                {
+                    savedUpscalingDuringUIOpen = ((UniversalRenderPipelineAsset)GraphicsSettings.currentRenderPipeline).renderScale;
+                    SetUpscaling(STP_VALUE_FOR_UI_OPEN, UpscalingFilterSelection.Auto);
+                }
+
                 currentUIOpened++;
             }
         }
@@ -83,7 +88,9 @@ namespace DCL.Utilities
             string controllerTypeName = controller.GetType().Name;
             return controllerTypeName.Contains("AuthenticationScreenController") ||
                    controllerTypeName.Contains("ExplorePanelController") ||
-                   controllerTypeName.Contains("PassportController");
+                   controllerTypeName.Contains("PassportController") ||
+                   controllerTypeName.Contains("LobbyController") ||
+                   controllerTypeName.Contains("BackpackModalController");
         }
 
         public void Dispose()

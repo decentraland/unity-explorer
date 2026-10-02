@@ -5,7 +5,7 @@ using Utility;
 
 namespace DCL.MapRenderer.MapLayers.HomeMarker
 {
-    public class HomePlaceEventBus
+    public class HomePlaceEventBus : IHomePlaceSource
     {
         public Vector2Int? CurrentHomeCoordinates => controller?.CurrentCoordinates;
         public string? CurrentHomeWorldName => controller?.CurrentWorldName;
@@ -22,16 +22,8 @@ namespace DCL.MapRenderer.MapLayers.HomeMarker
         public void SetAsHome(string worldName) =>
             controller?.SetWorldMarker(worldName);
 
-        public void UnsetHome()
-        {
-            if (controller == null)
-                return;
-
-            if (controller.IsWorldHome)
-                controller.SetWorldMarker(null);
-            else
-                controller.SetMarker(null);
-        }
+        public void UnsetHome() =>
+            controller?.SetMarker(null);
 
         public bool IsHome(PlacesData.PlaceInfo placeInfo)
         {

@@ -33,7 +33,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
                 ? NOT_CONFIGURED
                 : identityCache.Identity.Method switch
                 {
-                    LoginMethod.GUEST => GUEST_IDENTITY,
+                    LoginMethod.GUEST or LoginMethod.EPHEMERAL_GUEST => GUEST_IDENTITY,
                     LoginMethod.EMAIL_OTP or LoginMethod.GOOGLE or LoginMethod.DISCORD or LoginMethod.APPLE or LoginMethod.X => WEB2_IDENTITY,
                     LoginMethod.METAMASK or LoginMethod.WALLETCONNECT or LoginMethod.COINBASE or LoginMethod.FORTMATIC => WEB3_IDENTITY,
                     _ => NOT_CONFIGURED,

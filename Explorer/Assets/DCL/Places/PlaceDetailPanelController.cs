@@ -31,6 +31,7 @@ namespace DCL.Places
         private string currentNavigationPlaceId = string.Empty;
 
         private CancellationTokenSource? panelCts;
+        private UniTaskCompletionSource? handedOverCloseIntent;
 
         public PlaceDetailPanelController(
             ViewFactoryMethod viewFactory,
@@ -88,8 +89,11 @@ namespace DCL.Places
                 CheckWorldAccessAsync(inputData.PlaceData.world_name, panelCts.Token).Forget();
         }
 
-        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
-            UniTask.WhenAny(viewInstance!.GetCloseTasks());
+        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct)
+        {
+            handedOverCloseIntent = new UniTaskCompletionSource();
+            return UniTask.WhenAny(UniTask.WhenAny(viewInstance!.GetCloseTasks()), handedOverCloseIntent.Task);
+        }
 
         public override void Dispose()
         {
@@ -112,8 +116,11 @@ namespace DCL.Places
             mapPathEventBus.OnRemovedDestination -= OnMapPathEventBusRemovedDestination;
         }
 
-        protected override void OnViewClose() =>
+        protected override void OnViewClose()
+        {
             panelCts.SafeCancelAndDispose();
+            handedOverCloseIntent = null;
+        }
 
         private async UniTaskVoid SetCreatorAsync(CancellationToken ct)
         {
@@ -173,8 +180,18 @@ namespace DCL.Places
             placesCardSocialActionsController.CopyPlaceLink(placeInfo);
         }
 
-        private void OnJumpInButtonClicked(PlacesData.PlaceInfo placeInfo) =>
+        private void OnJumpInButtonClicked(PlacesData.PlaceInfo placeInfo)
+        {
+            if (inputData.JumpInHandler != null)
+            {
+                // The summoner takes it from here, the panel has nothing left to show
+                inputData.JumpInHandler(placeInfo);
+                handedOverCloseIntent?.TrySetResult();
+                return;
+            }
+
             placesCardSocialActionsController.JumpInPlace(placeInfo, CancellationToken.None);
+        }
 
         private void OnStartNavigationButtonClicked(PlacesData.PlaceInfo placeInfo)
         {

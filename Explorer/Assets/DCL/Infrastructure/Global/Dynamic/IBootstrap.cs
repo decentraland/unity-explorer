@@ -6,6 +6,7 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
+using DCL.Web3.Identities;
 using Global.AppArgs;
 using SceneRunner.Debugging;
 using System.Threading;
@@ -63,7 +64,7 @@ namespace Global.Dynamic
 
         UniTask LoadStartingRealmAsync(DynamicWorldContainer dynamicWorldContainer, CancellationToken ct);
 
-        void ApplyFeatureFlagConfigs(FeatureFlagsConfiguration featureFlagsConfigurationCache);
+        void ApplyFeatureFlagConfigs(FeatureFlagsConfiguration featureFlagsConfigurationCache, IWeb3IdentityCache identityCache);
 
         void InitializeFeaturesRegistry();
     }
