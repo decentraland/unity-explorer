@@ -284,6 +284,44 @@ namespace MVC.Tests
         }
 
         [Test]
+        public async Task CloseAFullscreenViewWhoseEscapeArrivedWhileItWasShowing()
+        {
+            // Arrange
+            var escape = new UniTaskCompletionSource();
+            windowsStackManager.PushFullscreen(Arg.Any<IController>()).Returns(new FullscreenPushInfo(new List<(IController, int)>(), new CanvasOrdering(), escape));
+
+            var showAnimation = new UniTaskCompletionSource();
+            ITestView view = Substitute.For<ITestView>();
+            view.ShowAsync(Arg.Any<CancellationToken>()).Returns(showAnimation.Task);
+
+            var controller = new LifeCycleController(() => view);
+            mvcManager.RegisterController(controller);
+
+            UniTask show = mvcManager.ShowAsync(new ShowCommand<ITestView, TestInputData>());
+
+            // Act
+            // Escape lands while the view is still fading in, then the fade finishes
+            escape.TrySetResult();
+            Assert.That(show.Status, Is.EqualTo(UniTaskStatus.Pending));
+            showAnimation.TrySetResult();
+            await show;
+
+            // Assert
+            // Reproduces the soft lock: closing mid-show used to run OnViewClose first and OnViewShow afterwards, which left
+            // the controller focused on a hidden view and its input blocks held forever
+            Assert.That(controller.Callbacks, Is.EqualTo(new[] { "Show", "Close" }));
+            Assert.That(controller.State, Is.EqualTo(ControllerState.ViewHidden));
+            Assert.That(mvcManager.IsShowing<ITestView, TestInputData>(), Is.False);
+            windowsStackManager.Received(1).PopFullscreen(controller);
+            Assert.That(closed, Is.EqualTo(new[] { controller }));
+
+            // The controller is reusable afterwards
+            controller.CloseIntent.TrySetResult();
+            await mvcManager.ShowAsync(new ShowCommand<ITestView, TestInputData>());
+            await view.Received(2).ShowAsync(Arg.Any<CancellationToken>());
+        }
+
+        [Test]
         public async Task RaiseNoViewEventsForAControllerThatIsNotHidden()
         {
             IController<ITestView, TestInputData> controller = Substitute.For<IController<ITestView, TestInputData>>();
@@ -298,6 +336,26 @@ namespace MVC.Tests
             // either end of.
             Assert.That(showed, Is.Empty);
             Assert.That(closed, Is.Empty);
+        }
+
+        private class LifeCycleController : ControllerBase<ITestView, TestInputData>
+        {
+            public readonly UniTaskCompletionSource CloseIntent = new ();
+
+            public readonly List<string> Callbacks = new ();
+
+            public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
+
+            public LifeCycleController(ViewFactoryMethod viewFactory) : base(viewFactory) { }
+
+            protected override void OnViewShow() =>
+                Callbacks.Add("Show");
+
+            protected override void OnViewClose() =>
+                Callbacks.Add("Close");
+
+            protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
+                CloseIntent.Task;
         }
     }
 
