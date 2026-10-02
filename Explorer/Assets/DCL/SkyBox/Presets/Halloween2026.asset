@@ -464,11 +464,11 @@ MonoBehaviour:
     m_NumAlphaKeys: 2
   sunColorRamp:
     serializedVersion: 2
-    key0: {r: 2.8, g: 1.2, b: 0.4, a: 1}
+    key0: {r: 1.7477998, g: 1.4129999, b: 2.25, a: 1}
     key1: {r: 6, g: 3.2, b: 1.6, a: 1}
     key2: {r: 10, g: 10, b: 9.5, a: 1}
     key3: {r: 4.8671436, g: 1.7698704, b: 0.6194546, a: 1}
-    key4: {r: 2.8, g: 1.2, b: 0.4, a: 1}
+    key4: {r: 1.7477998, g: 1.4129999, b: 2.25, a: 1}
     key5: {r: 0, g: 0, b: 0, a: 0}
     key6: {r: 0, g: 0, b: 0, a: 0}
     key7: {r: 0, g: 0, b: 0, a: 0}
@@ -840,7 +840,7 @@ MonoBehaviour:
     atime6: 0
     atime7: 0
     m_Mode: 0
-    m_ColorSpace: 0
+    m_ColorSpace: -1
     m_NumColorKeys: 4
     m_NumAlphaKeys: 2
   sunHaze: 0
@@ -1369,7 +1369,7 @@ MonoBehaviour:
     ctime1: 16384
     ctime2: 32768
     ctime3: 49151
-    ctime4: 65150
+    ctime4: 65535
     ctime5: 0
     ctime6: 0
     ctime7: 0
@@ -1382,7 +1382,7 @@ MonoBehaviour:
     atime6: 0
     atime7: 0
     m_Mode: 0
-    m_ColorSpace: 0
+    m_ColorSpace: -1
     m_NumColorKeys: 5
     m_NumAlphaKeys: 2
   fogDensityByPhase: {x: 0.0005, y: 0.0005, z: 0.0005, w: 0.0005}

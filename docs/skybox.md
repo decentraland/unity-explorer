@@ -69,7 +69,7 @@ The stylized logic lives in HLSL Custom Function files under `Assets/DCL/Stylize
 
 `explorer-alfa-skybox-look-preset` picks the production look without a build. Variant `preset`, string payload holding the name of a `SkyboxSettings.asset → LookPresets` entry, for example `Halloween2026` (case and surrounding whitespace are ignored).
 
-- `SkyboxPlugin` reads it once at start-up, loads the entry's Addressable and applies it right after the controller initialises, so the first rendered frame already has the look. A change on the server reaches players on their next launch.
+- `SkyboxPlugin` reads it once at start-up, loads the entry's Addressable and applies it before the controller initialises, so the controller sets up fog, statics and lens flare from that look and the first rendered frame already has it. A change on the server reaches players on their next launch.
 - Flag off, no payload or an empty payload keep the prefab's default look. A name missing from the list logs a warning and a failed load logs the exception; both keep the default look, and the skybox always starts.
 - Only listed presets can be selected, and only ones shipped in the build: a new look needs a release before the flag can point at it.
 
