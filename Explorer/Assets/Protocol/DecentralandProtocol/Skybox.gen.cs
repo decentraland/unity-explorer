@@ -75,17 +75,15 @@ namespace DCL.ECSComponents {
   }
   #region Messages
   /// <summary>
-  /// PBSkybox lets a scene customize the environment rendering while the player is inside it.
-  /// It is only read on the scene root entity (engine.RootEntity). Textures are equirectangular 2:1
-  /// and accept `Texture` (file) and `VideoTexture` sources; `AvatarTexture` is ignored. A video
-  /// source is sampled live; reflections derived from a video follow it with a few frames of delay.
-  /// Every override is active ONLY while the player is inside the scene; when the player leaves,
-  /// the component is removed, or a group/field is unset, the environment returns to the default
-  /// time-of-day skybox. Gradients use `time` as normalized time of day (0 = 00:00, 0.5 = 12:00,
-  /// 1 = 24:00); single-key gradients are constant colors, and both ends clamp (no midnight wrap).
-  /// Overrides are global render state while active, affecting how neighbouring parcels look from
-  /// inside the scene, with instant application. Time-of-day lighting continues underneath; ambient
-  /// lighting is derived from `sky_colors`.
+  /// PBSkybox overrides the environment rendering while the player is inside the scene.
+  /// Valid only on the scene root entity (`engine.RootEntity`).
+  ///
+  /// An unset field keeps the time-of-day default.
+  /// Gradient `time` is the normalized time of day: 0 = 00:00, 0.5 = 12:00, 1 = 24:00.
+  /// Gradients do not wrap around midnight.
+  /// Textures are equirectangular 2:1 images from a `Texture` or a `VideoTexture`. `AvatarTexture` is ignored.
+  ///
+  /// While active, the overrides are global: they also change how neighbouring parcels look from inside the scene.
   /// </summary>
   [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
   public sealed partial class PBSkybox : pb::IMessage<PBSkybox>
@@ -142,10 +140,8 @@ namespace DCL.ECSComponents {
     public const int ReflectionMapFieldNumber = 1;
     private global::Decentraland.Common.TextureUnion reflectionMap_;
     /// <summary>
-    /// Replaces the reflection cubemap used by every reflective material. Equirectangular 2:1 image;
-    /// accepts `Texture` (file) and `VideoTexture` sources; `AvatarTexture` is ignored. A video source
-    /// is sampled live; reflections follow it with a few frames of delay.
-    /// Unset: reflections are derived from `skybox_texture` when set, otherwise default.
+    /// Replaces the reflection cubemap of every reflective material.
+    /// Unset = derived from `skybox_texture` when that is set, otherwise the default.
     /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
@@ -160,9 +156,7 @@ namespace DCL.ECSComponents {
     public const int SkyboxTextureFieldNumber = 2;
     private global::Decentraland.Common.TextureUnion skyboxTexture_;
     /// <summary>
-    /// Replaces the visible sky. Equirectangular 2:1 image; accepts `Texture` (file) and `VideoTexture`
-    /// sources; `AvatarTexture` is ignored. A video source is sampled live.
-    /// Time-of-day lighting (ambient, sun, fog) is unaffected. Unset = default procedural skybox.
+    /// Replaces the visible sky. The lighting (ambient, sun, fog) does not change.
     /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
@@ -177,7 +171,7 @@ namespace DCL.ECSComponents {
     public const int SunFieldNumber = 3;
     private global::DCL.ECSComponents.PBSkybox.Types.Sun sun_;
     /// <summary>
-    /// Directional light (sun/moon) override. Unset = time-of-day default.
+    /// Directional light of the sun and the moon.
     /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
@@ -192,8 +186,7 @@ namespace DCL.ECSComponents {
     public const int SkyColorsFieldNumber = 4;
     private global::DCL.ECSComponents.PBSkybox.Types.SkyColors skyColors_;
     /// <summary>
-    /// Procedural sky colors. They also drive the ambient lighting: zenith sets the sky ambient, horizon the equator ambient and nadir the ground ambient.
-    /// Inert while `skybox_texture` is set (the panorama replaces the procedural sky).
+    /// Procedural sky colors. They also drive the ambient lighting. Ignored while `skybox_texture` is set.
     /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
@@ -208,7 +201,8 @@ namespace DCL.ECSComponents {
     public const int FogFieldNumber = 5;
     private global::DCL.ECSComponents.PBSkybox.Types.Fog fog_;
     /// <summary>
-    /// Fog color and distance override (exponential `density`, or linear `start_distance`/`end_distance`, whichever the renderer supports). Whether fog renders at all remains a user quality setting; a scene cannot force it on or off.
+    /// Renderers use either the exponential `density` or the linear `start_distance`/`end_distance` range.
+    /// A scene cannot turn fog on or off. That is a user quality setting.
     /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
@@ -223,7 +217,7 @@ namespace DCL.ECSComponents {
     public const int CloudsFieldNumber = 6;
     private global::DCL.ECSComponents.PBSkybox.Types.Clouds clouds_;
     /// <summary>
-    /// Cloud layer of the procedural sky. Inert while `skybox_texture` is set.
+    /// Ignored while `skybox_texture` is set.
     /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
@@ -238,7 +232,7 @@ namespace DCL.ECSComponents {
     public const int StarsFieldNumber = 7;
     private global::DCL.ECSComponents.PBSkybox.Types.Stars stars_;
     /// <summary>
-    /// Star field of the procedural sky. Inert while `skybox_texture` is set.
+    /// Ignored while `skybox_texture` is set.
     /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
@@ -652,7 +646,7 @@ namespace DCL.ECSComponents {
         public const int ColorFieldNumber = 1;
         private global::Decentraland.Common.ColorGradient color_;
         /// <summary>
-        /// tints the directional light and the sun disc. Gradient time is the normalized time of day. Unset = time-of-day default
+        /// tints the directional light and the sun disc
         /// </summary>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
@@ -669,7 +663,7 @@ namespace DCL.ECSComponents {
 
         private bool visible_;
         /// <summary>
-        /// default = true. false hides the sun and moon discs and the lens flare; the lighting they cast is unaffected
+        /// default = true. false hides the sun and moon discs and the lens flare, but not their light
         /// </summary>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
@@ -918,9 +912,6 @@ namespace DCL.ECSComponents {
         /// <summary>Field number for the "zenith" field.</summary>
         public const int ZenithFieldNumber = 1;
         private global::Decentraland.Common.ColorGradient zenith_;
-        /// <summary>
-        /// color at the top of the sky. Unset = time-of-day default
-        /// </summary>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
         public global::Decentraland.Common.ColorGradient Zenith {
@@ -933,9 +924,6 @@ namespace DCL.ECSComponents {
         /// <summary>Field number for the "horizon" field.</summary>
         public const int HorizonFieldNumber = 2;
         private global::Decentraland.Common.ColorGradient horizon_;
-        /// <summary>
-        /// color at the horizon line. Unset = time-of-day default
-        /// </summary>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
         public global::Decentraland.Common.ColorGradient Horizon {
@@ -948,9 +936,6 @@ namespace DCL.ECSComponents {
         /// <summary>Field number for the "nadir" field.</summary>
         public const int NadirFieldNumber = 3;
         private global::Decentraland.Common.ColorGradient nadir_;
-        /// <summary>
-        /// color below the horizon. Unset = time-of-day default
-        /// </summary>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
         public global::Decentraland.Common.ColorGradient Nadir {
@@ -964,7 +949,7 @@ namespace DCL.ECSComponents {
         public const int RimFieldNumber = 4;
         private global::Decentraland.Common.ColorGradient rim_;
         /// <summary>
-        /// glow along the horizon line. Unset = follows `horizon` when that is set, otherwise the time-of-day default
+        /// glow along the horizon line. Unset = follows `horizon` when that is set
         /// </summary>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
@@ -1277,9 +1262,6 @@ namespace DCL.ECSComponents {
         /// <summary>Field number for the "color" field.</summary>
         public const int ColorFieldNumber = 1;
         private global::Decentraland.Common.ColorGradient color_;
-        /// <summary>
-        /// Unset = time-of-day default
-        /// </summary>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
         public global::Decentraland.Common.ColorGradient Color {
@@ -1295,9 +1277,7 @@ namespace DCL.ECSComponents {
 
         private float density_;
         /// <summary>
-        /// default = 0.0005. Exponential fog density per meter: fog = 1 - e^(-density * distance), so 1/density is the
-        /// distance at which ~63% of the view is fogged (0.0005 ≈ 2 km, 0.02 ≈ 50 m). Negative values clamp to 0 and
-        /// 0 = no visible fog. Whether fog renders at all remains a user quality setting.
+        /// default = 0.0005, per meter: fog = 1 - e^(-density * distance). Negative values clamp to 0
         /// </summary>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
@@ -1327,7 +1307,7 @@ namespace DCL.ECSComponents {
 
         private float startDistance_;
         /// <summary>
-        /// Linear fog range in meters: fog starts at `start_distance` and is fully opaque from `end_distance` on.
+        /// Linear fog range in meters: no fog at `start_distance`, full fog from `end_distance` on.
         /// Unset = renderer default.
         /// </summary>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -1657,7 +1637,7 @@ namespace DCL.ECSComponents {
 
         private float opacity_;
         /// <summary>
-        /// default = 1, in the 0..1 range. 0 hides the clouds
+        /// default = 1, from 0 to 1
         /// </summary>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
@@ -1687,7 +1667,7 @@ namespace DCL.ECSComponents {
 
         private float speed_;
         /// <summary>
-        /// default = 0.01, rotation speed of the cloud layer. 0 = static clouds
+        /// default = 0.01, in radians per second around the sky axis (0.01 is one turn every ~10 minutes). 0 = static, negative reverses the direction
         /// </summary>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
@@ -1714,9 +1694,6 @@ namespace DCL.ECSComponents {
         /// <summary>Field number for the "color" field.</summary>
         public const int ColorFieldNumber = 3;
         private global::Decentraland.Common.ColorGradient color_;
-        /// <summary>
-        /// tint of the cloud layer. Unset = time-of-day default
-        /// </summary>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
         public global::Decentraland.Common.ColorGradient Color {
@@ -1730,10 +1707,11 @@ namespace DCL.ECSComponents {
         public const int TextureFieldNumber = 4;
         private global::Decentraland.Common.TextureUnion texture_;
         /// <summary>
-        /// Equirectangular 2:1 cloud layer image replacing the default clouds. Channels: R = cloud tint
-        /// intensity (multiplied by `color`), G = opacity/coverage, B = sun-highlight mask; a grayscale
-        /// image works as a plain cloud mask. `Texture` and `VideoTexture` sources are supported.
-        /// Unset = default clouds. Inert while `skybox_texture` is set.
+        /// Replaces the default clouds. The channels of the image:
+        /// - R: cloud tint intensity, multiplied by `color`
+        /// - G: opacity and coverage
+        /// - B: sun-highlight mask
+        /// A grayscale image works as a plain cloud mask.
         /// </summary>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
@@ -2028,7 +2006,7 @@ namespace DCL.ECSComponents {
 
         private float brightness_;
         /// <summary>
-        /// default = 4.62. Stars are only visible during the night part of the day cycle
+        /// default = 4.62, multiplier on the star texture (1 = as authored, values above 1 are HDR). 0 hides the stars, negative values clamp to 0. Stars are visible only at night
         /// </summary>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]

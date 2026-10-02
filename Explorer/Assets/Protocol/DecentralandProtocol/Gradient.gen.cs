@@ -41,9 +41,6 @@ namespace Decentraland.Common {
 
   }
   #region Messages
-  /// <summary>
-  /// A color sampled at a normalized position along a gradient.
-  /// </summary>
   [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
   public sealed partial class ColorKey : pb::IMessage<ColorKey>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
@@ -94,7 +91,7 @@ namespace Decentraland.Common {
     public const int TimeFieldNumber = 1;
     private float time_;
     /// <summary>
-    /// position along the gradient, in the 0..1 range
+    /// position along the gradient, from 0 to 1. Values outside that range clamp to it
     /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
@@ -109,7 +106,7 @@ namespace Decentraland.Common {
     public const int ColorFieldNumber = 2;
     private global::Decentraland.Common.Color4 color_;
     /// <summary>
-    /// unclamped linear floats: values above 1 are allowed (HDR). Consumers that have no alpha ignore `a`
+    /// linear color. Values above 1 are allowed (HDR)
     /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
@@ -295,11 +292,9 @@ namespace Decentraland.Common {
   }
 
   /// <summary>
-  /// Piecewise-linear color gradient. Keys are interpolated in ascending order of `time`; positions before
-  /// the first key or after the last one return that key's color. A single key is a constant color.
-  /// No keys means the gradient is unset. Two keys at the same `time` keep the later one.
-  /// Renderers may cap the number of keys they evaluate: the reference client keeps up to 8 and resamples
-  /// longer gradients at 8 evenly spaced positions, so prefer 8 keys or fewer for exact results.
+  /// Piecewise-linear, with keys interpolated in ascending order of `time`. Positions before the first key
+  /// or after the last key take that key's color. No keys means the gradient is unset.
+  /// If two keys have the same `time`, then the gradient keeps the key that comes later in `keys`.
   /// </summary>
   [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
   public sealed partial class ColorGradient : pb::IMessage<ColorGradient>
