@@ -64,8 +64,8 @@ namespace Global.AppArgs
         public const string LANDSCAPE_TERRAIN_ENABLED = "landscape-terrain-enabled";
 
         /// <summary>
-        ///     Base URL of the satellite map's zoom levels 4 to 8, laid out as <c>{url}/{level}/{i},{j}.jpg</c>. Without it the
-        ///     map shows only the bundled level-3 chunks.
+        ///     Base URL of the satellite map's zoom levels 4 to 8, laid out as <c>{url}/{level}/{i},{j}.ktx2</c>. Without it, or
+        ///     without KTX2 support on the machine, the map shows only the bundled level-3 chunks.
         /// </summary>
         public const string SATELLITE_MAP_URL = "satellite-map-url";
         public const string SKYBOX_TIME_ENABLED = "skybox-time-enabled";

@@ -14,7 +14,7 @@ using Object = UnityEngine.Object;
 namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
 {
     /// <summary>
-    ///     Streams the satellite zoom levels finer than the bundled 8x8 chunks from <c>{baseUrl}/{level}/{i},{j}.jpg</c>.
+    ///     Streams the satellite zoom levels finer than the bundled 8x8 chunks from <c>{baseUrl}/{level}/{i},{j}.ktx2</c>.
     ///     Level L splits the bundled grid into 2^L x 2^L tiles (i eastward, j southward), so level 3 is the bundled chunks.
     ///     Each map camera gets the coarsest level that is at least as sharp as its render texture; finer levels draw on top.
     /// </summary>
@@ -178,14 +178,15 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
         {
             CancellationToken ct = tile.Cts.Token;
             int level = id.z;
-            var url = $"{baseUrl}/{level}/{id.x}%2C{id.y}.jpg";
+            var url = $"{baseUrl}/{level}/{id.x}%2C{id.y}.ktx2";
             Texture2D texture;
 
             try
             {
                 texture = await webRequestController.GetTextureAsync(
                     new CommonArguments(URLAddress.FromString(url), RetryPolicy.WithRetries(1)),
-                    new GetTextureArguments(TextureType.Albedo),
+                    // The tiles are already KTX2, so the request skips the media converter.
+                    new GetTextureArguments(TextureType.Albedo, useKtx: false),
                     GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp, FilterMode.Bilinear),
                     ct,
                     ReportCategory.UI);
