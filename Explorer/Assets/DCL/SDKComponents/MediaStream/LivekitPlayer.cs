@@ -45,6 +45,7 @@ namespace DCL.SDKComponents.MediaStream
         private PlayerState playerState;
         private PresentationBotMetadata? presentation;
         private string? presentationRawMetadata;
+        private string? composingBot;
         private CurrentVideoStreamInfo? presentationVideo;
         private CurrentVideoStreamInfo? presenterCamera;
         private string? videoGateUrl;
@@ -217,10 +218,6 @@ namespace DCL.SDKComponents.MediaStream
             {
                 pendingPresentationRefresh = false;
                 RefreshPresentation();
-            }
-            else
-            {
-                pendingPresentationRefresh = true;
             }
 
             if (isComposing)
@@ -433,6 +430,7 @@ namespace DCL.SDKComponents.MediaStream
         private bool RefreshPresentation()
         {
             string? identity = ComposingBotIdentity();
+            composingBot = identity;
             string? raw = identity == null ? null : room.Participants.RemoteParticipant(identity)?.Metadata;
 
             if (string.Equals(raw, presentationRawMetadata, StringComparison.Ordinal))
@@ -532,6 +530,7 @@ namespace DCL.SDKComponents.MediaStream
             presenterCamera = null;
             presentation = null;
             presentationRawMetadata = null;
+            composingBot = null;
             videoGateUrl = null;
             videoGateIndex = null;
             videoGateTexture = null;
@@ -565,10 +564,10 @@ namespace DCL.SDKComponents.MediaStream
             PresentationBotMetadata? metadata = presentation;
             PresentationSlide? slide = metadata?.slide;
 
-            if (metadata == null || slide?.url == null || compositor == null || slideCache == null)
+            if (metadata == null || slide?.url == null || compositor == null || slideCache == null || composingBot == null)
                 return null;
 
-            Texture2D? cachedSlide = slideCache.GetOrRequest(slide.url);
+            Texture2D? cachedSlide = slideCache.GetOrRequest(slide.url, composingBot);
             Texture slideTexture = cachedSlide != null ? cachedSlide : Texture2D.blackTexture;
             Texture2D? latest = DecodeLastFrame(presentationVideo);
             bool showRect = PresentationLayout.TryVideoRect(metadata, out Vector4 videoRect);

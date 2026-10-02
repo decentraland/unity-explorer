@@ -19,7 +19,7 @@ namespace DCL.SDKComponents.MediaStream
         private const double LARGE_CAMERA_RATIO = 0.25;
         private const string LARGE_CAMERA_SIZE = "large";
 
-        private static readonly Regex PRESENTER_IDENTITY = new (@"^(stream:\S{1,121}|0x[0-9a-fA-F]{40})$", RegexOptions.Compiled);
+        private static readonly Regex PRESENTER_IDENTITY = new (@"^(stream:\S{1,121}|0x[0-9a-fA-F]{40})\z", RegexOptions.Compiled);
 
         /// <summary>
         ///     Deserializes bot metadata. Never throws and never logs.
