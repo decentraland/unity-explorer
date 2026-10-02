@@ -11,6 +11,12 @@ namespace DCL.Input.Utils
 {
     public class InteractionCache
     {
+        /// <summary>
+        ///     USS class that marks a UI Toolkit element as clickable, so the cursor turns into the interaction one over it
+        ///     the way it does over a <see cref="Button" /> or a <see cref="Toggle" />.
+        /// </summary>
+        public const string INTERACTABLE_CLASS = "interactable";
+
         private readonly Dictionary<GameObject, Selectable?> interactionCache = new ();
         private readonly Dictionary<GameObject, PanelEventHandler> uiToolkitPanel = new ();
 
@@ -31,7 +37,7 @@ namespace DCL.Input.Utils
                 {
                     VisualElement? visualElement = visualElements[i];
 
-                    canBeInteracted = visualElement is Button or Toggle;
+                    canBeInteracted = visualElement is Button or Toggle || visualElement.ClassListContains(INTERACTABLE_CLASS);
 
                     if (canBeInteracted)
                         break;

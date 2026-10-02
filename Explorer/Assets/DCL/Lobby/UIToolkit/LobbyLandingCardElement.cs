@@ -1,3 +1,4 @@
+using DCL.Input.Utils;
 using UnityEngine.UIElements;
 
 namespace DCL.Lobby
@@ -42,14 +43,19 @@ namespace DCL.Lobby
         }
 
         /// <summary>
-        ///     The card takes no click and is marked static, which the stylesheet dims, while false: while the place is still unknown,
-        ///     or when it has no details to open.
+        ///     The card takes no click, shows the plain cursor and is marked static, which the stylesheet dims, while false: while the
+        ///     place is still unknown, or when it has no details to open.
         /// </summary>
         [UxmlAttribute]
         public bool CanOpen
         {
             get => !ClassListContains(USS_STATIC);
-            set => EnableInClassList(USS_STATIC, !value);
+
+            set
+            {
+                EnableInClassList(USS_STATIC, !value);
+                EnableInClassList(InteractionCache.INTERACTABLE_CLASS, value);
+            }
         }
 
         protected override bool canClick => CanOpen;

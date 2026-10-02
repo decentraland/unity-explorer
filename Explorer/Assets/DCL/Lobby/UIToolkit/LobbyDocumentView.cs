@@ -17,6 +17,7 @@ namespace DCL.Lobby
     public class LobbyDocumentView : PanelRendererViewBase
     {
         private const string AVATAR_HIT_AREA_NAME = "AvatarHitArea";
+        private const string AVATAR_TOOLTIP_NAME = "AvatarTooltip";
         private const string WELCOME_TEXT_NAME = "WelcomeText";
         private const string LANDING_CARD_NAME = "LandingCard";
         private const string RECENT_PLACES_NAME = "RecentPlaces";
@@ -76,6 +77,12 @@ namespace DCL.Lobby
         ///     Exists only while the view is shown; whether it is displayed is up to the controller.
         /// </summary>
         public VisualElement AvatarHitArea => Element<VisualElement>(AVATAR_HIT_AREA_NAME);
+
+        /// <summary>
+        ///     Hint that follows the pointer while it is over <see cref="AvatarHitArea" />; the controller places and displays it.
+        ///     Exists only while the view is shown.
+        /// </summary>
+        public VisualElement AvatarTooltip => Element<VisualElement>(AVATAR_TOOLTIP_NAME);
 
         /// <summary>
         ///     Credits widget of the top bar. It outlives the hierarchy, so what is bound to it stays bound;

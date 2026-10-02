@@ -16,7 +16,7 @@
         <ui:VisualElement name="TopGradient" class="lobby__gradient lobby__gradient--top" picking-mode="Ignore" />
         <ui:VisualElement name="BottomGradient" class="lobby__gradient lobby__gradient--bottom" picking-mode="Ignore" />
         <!-- The uGUI preview canvas of the prefab draws under the panel: the stage it renders is the background, this only catches the hover and the click over the figure. Hidden until the avatar is shown -->
-        <ui:VisualElement name="AvatarHitArea" class="lobby__avatar-hit-area" style="display: none;" />
+        <ui:VisualElement name="AvatarHitArea" class="lobby__avatar-hit-area interactable" style="display: none;" />
         <ui:VisualElement name="Logo" class="lobby__logo" picking-mode="Ignore" />
         <ui:VisualElement name="TopBar" class="lobby__top-bar" picking-mode="Ignore">
             <ui:VisualElement name="CreditsSlot" class="lobby__top-bar-slot" picking-mode="Ignore" />
@@ -62,6 +62,11 @@
         <ui:VisualElement name="FeaturedPlaces" class="lobby__places lobby__places--featured">
             <ui:Label name="Title" text="Recommended Places" class="lobby__places-title" picking-mode="Ignore" />
             <DCL.Lobby.LobbyRailElement name="Rail" class="lobby__places-rail" cards-per-page="3" arrows-move-one-card="true" />
+        </ui:VisualElement>
+        <!-- Hint shown next to the pointer while it is over the hit area; it is placed by the controller and drawn over everything else -->
+        <ui:VisualElement name="AvatarTooltip" class="lobby__avatar-tooltip" picking-mode="Ignore" style="display: none;">
+            <ui:VisualElement name="Icon" class="lobby__avatar-tooltip-icon" picking-mode="Ignore" />
+            <ui:Label name="Label" text="CUSTOMIZE" class="lobby__avatar-tooltip-label" picking-mode="Ignore" />
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

@@ -53,6 +53,9 @@ namespace DCL.Lobby
 
         private static readonly Comparison<EventDTO> BY_START_TIME = static (a, b) => a.NextStartAtProcessed.CompareTo(b.NextStartAtProcessed);
 
+        // Panel pixels from the pointer to the left edge of the avatar tooltip, the same gap the uGUI lobby left
+        private static readonly Vector2 AVATAR_TOOLTIP_OFFSET = new (100f, 0f);
+
         private readonly IInputBlock inputBlock;
         private readonly IReadOnlyLoadingStatus loadingStatus;
         private readonly IMVCManager mvcManager;
@@ -265,7 +268,9 @@ namespace DCL.Lobby
             avatarHitArea.SetDisplayed(false);
             avatarHitArea.AddManipulator(avatarClick ??= new Clickable(OnAvatarClicked));
             avatarHitArea.RegisterCallback<PointerEnterEvent>(OnAvatarPointerEnter);
+            avatarHitArea.RegisterCallback<PointerMoveEvent>(OnAvatarPointerMove);
             avatarHitArea.RegisterCallback<PointerLeaveEvent>(OnAvatarPointerLeave);
+            viewInstance.AvatarTooltip.SetDisplayed(false);
 
             profileChangesBus.SubscribeToUpdate(OnProfileUpdated);
             avatarCts = avatarCts.SafeRestart();
@@ -519,11 +524,30 @@ namespace DCL.Lobby
         private void OnAvatarClicked() =>
             mvcManager.ShowAndForget(BackpackModalController.IssueCommand(new BackpackModalParameter(BackpackSections.Avatar)));
 
-        private void OnAvatarPointerEnter(PointerEnterEvent evt) =>
+        private void OnAvatarPointerEnter(PointerEnterEvent evt)
+        {
             avatarPreview!.SetHovered(true);
+            MoveAvatarTooltip(evt.position);
+            viewInstance!.AvatarTooltip.SetDisplayed(true);
+        }
 
-        private void OnAvatarPointerLeave(PointerLeaveEvent evt) =>
+        private void OnAvatarPointerMove(PointerMoveEvent evt) =>
+            MoveAvatarTooltip(evt.position);
+
+        private void OnAvatarPointerLeave(PointerLeaveEvent evt)
+        {
             avatarPreview!.SetHovered(false);
+            viewInstance!.AvatarTooltip.SetDisplayed(false);
+        }
+
+        // The pointer position comes in panel space, the tooltip is laid out in the space of its parent
+        private void MoveAvatarTooltip(Vector2 panelPosition)
+        {
+            VisualElement tooltip = viewInstance!.AvatarTooltip;
+            Vector2 local = tooltip.parent.WorldToLocal(panelPosition) + AVATAR_TOOLTIP_OFFSET;
+            tooltip.style.left = local.x;
+            tooltip.style.top = local.y;
+        }
 
         // The section travels with the handlers so a Jump in from the details is attributed to the row the card sits in
         private LobbyPlacesRail CreatePlacesRail(List<PlacesData.PlaceInfo> places, LobbySection section) =>

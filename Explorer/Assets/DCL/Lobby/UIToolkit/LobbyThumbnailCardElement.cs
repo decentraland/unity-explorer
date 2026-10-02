@@ -1,3 +1,4 @@
+using DCL.Input.Utils;
 using System;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -55,6 +56,7 @@ namespace DCL.Lobby
         {
             ussLoading = ussBlock + LOADING_MODIFIER;
             AddToClassList(ussBlock);
+            AddToClassList(InteractionCache.INTERACTABLE_CLASS);
             this.AddManipulator(new Clickable(OnClicked));
             RegisterCallback<AttachToPanelEvent>(OnAttachToPanel);
         }

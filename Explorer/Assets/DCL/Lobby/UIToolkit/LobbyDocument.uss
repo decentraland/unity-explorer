@@ -57,6 +57,34 @@
     margin-top: -350px;
 }
 
+/* Same look as the in-world hover banner: a 40px dark pill with the mouse icon and the hint. Its left and top follow the pointer,
+   the translate centres it on the pointer vertically */
+.lobby__avatar-tooltip {
+    position: absolute;
+    height: 40px;
+    flex-direction: row;
+    align-items: center;
+    padding-left: 12px;
+    padding-right: 12px;
+    border-radius: 12px;
+    background-color: rgba(0, 0, 0, 0.95);
+    translate: 0 -50%;
+}
+
+.lobby__avatar-tooltip-icon {
+    width: 22px;
+    height: 22px;
+    margin-right: 12px;
+    background-image: url('/Assets/Textures/UI/Interaction/icon-mouse-left.png');
+}
+
+.lobby__avatar-tooltip-label {
+    font-size: 16px;
+    -unity-font-definition: var(--dcl-font-inter-semibold);
+    -unity-text-align: middle-center;
+    color: var(--lobby-title-color);
+}
+
 /* 874x120 texture at 256x35, centred in the 100px header band */
 .lobby__logo {
     position: absolute;

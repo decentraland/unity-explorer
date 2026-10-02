@@ -7,8 +7,9 @@ namespace DCL.Lobby
 {
     /// <summary>
     ///     Upcoming event card: name, host and how long until the event starts on the left, the thumbnail on the right, plus the
-    ///     Interested, Add to calendar and Share buttons. Its hierarchy comes from LobbyUpcomingEventCard.uxml; LobbyUpcomingEventCard.uss
-    ///     lays it out and tints the events the user is interested in, whose Interested button shows as toggled on.
+    ///     Interested, Add to calendar and Share buttons that hovering brings in. Its hierarchy comes from LobbyUpcomingEventCard.uxml;
+    ///     LobbyUpcomingEventCard.uss lays it out, animates the hover and darkens the events the user is interested in, whose Interested
+    ///     bell shows as toggled on.
     /// </summary>
     [UxmlElement]
     public partial class LobbyUpcomingEventCardElement : LobbyThumbnailCardElement

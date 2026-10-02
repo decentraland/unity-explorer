@@ -1,24 +1,31 @@
-/* The upcoming event card of the uGUI lobby (EventCard_Small): 358x135 with 24px corners, the thumbnail along its right edge */
+/* The upcoming event card of the uGUI lobby (EventCard_Small as the lobby overrode it): 358x135 with 24px corners, the thumbnail
+   along its right edge. Hovering lifts the texts, fades the host out and brings the action buttons in where the schedule sat,
+   the way the uGUI card animated */
+:root {
+    --upcoming-event-card-hover-duration: 0.2s;
+}
+
 .lobby-upcoming-event-card {
     width: 358px;
     height: 135px;
     border-radius: 24px;
-    background-color: var(--dcl-color-black-70);
+    background-color: var(--lobby-card-color);
     overflow: hidden;
 }
 
-/* An event the user is interested in is tinted like the Remind me state of the Explore card */
+/* An event the user is interested in goes near black, the Remind me background of the uGUI lobby */
 .lobby-upcoming-event-card--interested {
-    background-color: rgb(152, 36, 226);
+    background-color: rgba(8, 8, 10, 0.95);
 }
 
-/* The texts and the buttons take the rest */
+/* 135px along the right edge with 8px corners; the card's own corners cut its outer ones. The texts and the buttons take the rest */
 .lobby-upcoming-event-card__thumbnail {
     position: absolute;
     top: 0;
     right: 0;
     bottom: 0;
-    width: 140px;
+    width: 135px;
+    border-radius: 8px;
     background-image: url('/Assets/Textures/ExplorePanel/DefaultImagePlace.png');
     background-size: cover;
     background-position: center;
@@ -30,13 +37,21 @@
     background-color: rgb(207, 205, 212);
 }
 
-/* 18px in from the left edge, 28px down, up to the thumbnail */
+/* 18px in from the left edge, 28px down and 170px wide: the title over the host, then the schedule 12px under them */
 .lobby-upcoming-event-card__info {
     position: absolute;
     left: 18px;
     top: 28px;
-    right: 158px;
-    bottom: 0;
+    width: 170px;
+}
+
+/* Hovering lifts the title and the host by 8px */
+.lobby-upcoming-event-card__texts {
+    transition: translate var(--upcoming-event-card-hover-duration) ease-out;
+}
+
+.lobby-upcoming-event-card:hover .lobby-upcoming-event-card__texts {
+    translate: 0 -8px;
 }
 
 .lobby-upcoming-event-card__title {
@@ -50,10 +65,16 @@
     text-overflow: ellipsis;
 }
 
+/* Fades out while the card is hovered */
 .lobby-upcoming-event-card__host-row {
     height: 16px;
     flex-direction: row;
     align-items: center;
+    transition: opacity var(--upcoming-event-card-hover-duration) ease-out;
+}
+
+.lobby-upcoming-event-card:hover .lobby-upcoming-event-card__host-row {
+    opacity: 0;
 }
 
 .lobby-upcoming-event-card__host-prefix,
@@ -77,16 +98,22 @@
     text-overflow: ellipsis;
 }
 
-/* A pill only as wide as its text, so the tint does not stretch across the column */
+/* A pill only as wide as its text, so the tint does not stretch across the column. Hovering lifts it by 30px, clear of the
+   buttons that come in where it sat */
 .lobby-upcoming-event-card__schedule {
     margin-top: 12px;
     height: 24px;
     align-self: flex-start;
     flex-direction: row;
     align-items: center;
-    padding: 0 4px;
-    border-radius: 12px;
-    background-color: var(--dcl-color-white-10);
+    padding: 2px 4px;
+    border-radius: 7px;
+    background-color: rgba(255, 255, 255, 0.03);
+    transition: translate var(--upcoming-event-card-hover-duration) ease-out;
+}
+
+.lobby-upcoming-event-card:hover .lobby-upcoming-event-card__schedule {
+    translate: 0 -30px;
 }
 
 .lobby-upcoming-event-card__schedule-icon {
@@ -103,14 +130,15 @@
     color: var(--dcl-color-snow);
 }
 
-/* Beside the thumbnail, only reachable while the card is hovered, so their invisible state never takes a click meant for the card itself */
+/* Along the bottom-left, 18px in and 19px up: 36px buttons 8px apart. Invisible until the card is hovered, which any pointer over
+   them is, so their invisible state never takes a click meant for the card itself */
 .lobby-upcoming-event-card__actions {
     position: absolute;
-    right: 150px;
-    bottom: 10px;
+    left: 18px;
+    bottom: 19px;
     flex-direction: row;
     opacity: 0;
-    transition: opacity 0.15s ease-out;
+    transition: opacity var(--upcoming-event-card-hover-duration) ease-out;
 }
 
 .lobby-upcoming-event-card:hover .lobby-upcoming-event-card__actions {
@@ -118,32 +146,32 @@
 }
 
 .lobby-upcoming-event-card__action {
-    width: 28px;
-    height: 28px;
-    margin-left: 6px;
+    width: 36px;
+    height: 36px;
+    margin-right: 8px;
     align-items: center;
     justify-content: center;
-    border-radius: 8px;
-    background-color: var(--dcl-color-white-10);
+    border-radius: 10px;
+    background-color: rgba(255, 255, 255, 0.03);
     transition: background-color 0.1s;
 }
 
 .lobby-upcoming-event-card__action:hover {
-    background-color: rgba(255, 255, 255, 0.2);
+    background-color: rgba(255, 255, 255, 0.05);
 }
 
 .lobby-upcoming-event-card__action-icon {
-    width: 18px;
-    height: 18px;
+    width: 24px;
+    height: 24px;
 }
 
-/* The star fills in once the user is interested, like the Explore card's toggle */
+/* The bell fills in once the user is interested, like the Remind me toggle of the Explore card */
 .lobby-upcoming-event-card__action-icon--interested {
-    background-image: url('/Assets/Textures/ExplorePanel/InterestedOff.png');
+    background-image: url('/Assets/Textures/ExplorePanel/ReminderOff.png');
 }
 
 .lobby-upcoming-event-card--interested .lobby-upcoming-event-card__action-icon--interested {
-    background-image: url('/Assets/Textures/ExplorePanel/InterestedOn.png');
+    background-image: url('/Assets/Textures/ExplorePanel/ReminderOn.png');
 }
 
 .lobby-upcoming-event-card__action-icon--calendar {

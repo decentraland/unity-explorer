@@ -1,3 +1,4 @@
+using DCL.Input.Utils;
 using DCL.UI;
 using System;
 using UnityEngine;
@@ -174,6 +175,7 @@ namespace DCL.Lobby
         public LobbyFriendCardElement()
         {
             AddToClassList(USS_BLOCK);
+            AddToClassList(InteractionCache.INTERACTABLE_CLASS);
             this.AddManipulator(new Clickable(OnClicked));
             RegisterCallback<AttachToPanelEvent>(OnAttachToPanel);
         }
