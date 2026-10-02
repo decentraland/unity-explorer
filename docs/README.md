@@ -46,6 +46,7 @@ Welcome to the official documentation for Unity Explorer — the Decentraland cl
 - **[Pulse](pulse.md)** — Pulse transport: ENet peer transport, peer identity, protocol, feature-flag gating
 - **[Diagnostics](diagnostics.md)** — ReportHub logging system and Sentry integration
 - **[Performance Analytics](performance-analytics.md)** — `performance_report` telemetry: hiccup/frame-time metrics, measurement window, and target-relative threshold
+- **[Skybox](skybox.md)** — Look presets (StylizedV1 ships, Legacy kept for SDK control), controller data flow, shader variants, debug switching, authoring
 
 ## Avatar System
 - **[Avatar Rendering](avatar-rendering.md)** — GPU skinning, compute shaders, and cel-shading
