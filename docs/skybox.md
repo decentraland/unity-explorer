@@ -2,25 +2,27 @@
 
 The sky is rendered by one Shader Graph material (`GenesisSkybox.mat`) driven by `SkyboxRenderController`, and everything that defines how it *looks* over a day lives in **look presets**: `SkyboxLookPreset` ScriptableObjects under `Assets/DCL/SkyBox/Presets/`. The *time* of day is a separate concern, owned by the skybox state machine, and is unchanged by the look.
 
-## The two looks
+## The looks
 
 | Preset | Role | Where it is referenced |
 |---|---|---|
 | `StylizedV1.asset` | **The look that ships.** Stylized sky with a baked colour lookup, layered cloud strips, computed sun and moon arcs and procedural stars. Sun haze is available but ships off. | `Prefab/SkyboxRenderController.prefab` → `preset` |
-| `Legacy.asset` | The previous sky, a 1:1 migration of the values that used to be hard-coded. **Do not delete it.** | `SkyboxSettings.asset` → `DebugLookPresets`, Addressable `SkyboxLookPreset_Legacy` in the `Essentials` group |
+| `Legacy.asset` | The previous sky, a 1:1 migration of the values that used to be hard-coded. **Do not delete it.** | `SkyboxSettings.asset` → `LookPresets`, Addressable `SkyboxLookPreset_Legacy` in the `Essentials` group |
+| `Halloween2026.asset` | Seasonal night look for Halloween 2026 on top of StylizedV1: more purple clouds, a bigger purple moon and more moonlight (plus brighter stars with more shooting stars). Sky gradients, and so the baked LUT, match StylizedV1, as do the sunrise, day and sunset colours. Turned on remotely (see *Feature flag* below). | `SkyboxSettings.asset` → `LookPresets`, Addressable `SkyboxLookPreset_Halloween2026` in the `Essentials` group |
 
 Legacy stays for two reasons:
 
 - It is the reference look, and it can be selected at runtime for comparison (see *Debug panel* below).
 - **Planned SDK control.** Creators will be able to tweak the skybox from a scene through the SDK. When that lands, the parameters exposed to scenes drive the **Legacy** look: its colour bands and curves map directly onto what the SDK will expose. Nothing switches looks automatically yet; that switch is part of the SDK work, not of the presets.
 
-Both presets are plain data. Changing the shipped look is changing one reference on the controller prefab.
+Presets are plain data. Changing the default look is changing one reference on the controller prefab; switching to another listed look in production needs no build, only the feature flag.
 
 ## Data flow
 
 ```
-SkyboxPlugin ──loads──> SkyboxSettingsAsset (settings, time, debug look list)
-             ──instantiates──> SkyboxRenderController prefab (+ its preset)
+SkyboxPlugin ──loads──> SkyboxSettingsAsset (settings, time, look preset list)
+             ──instantiates──> SkyboxRenderController prefab (+ its default preset)
+             ──applies──> the look named by alfa-skybox-look-preset, when set
              ──injects──> SkyboxTimeUpdateSystem
 
 SkyboxTimeUpdateSystem (every frame)
@@ -63,9 +65,17 @@ Two variants of the same graphs, selected by the global **`_DCL_SKY_STYLIZED`** 
 
 The stylized logic lives in HLSL Custom Function files under `Assets/DCL/StylizedSkybox/Shaders/HLSL/` (`SkyLut`, `CloudsV2`, `SunDisc`, `SunComposite`, `SkyboxGlobals`). All their parameters are **global shader values** (`_Dcl*`) written by the controller, so the reflection cubemap bake (`SkyboxToCubemapRendererFeature`, which renders the fullscreen twin of the graph) sees the same data without extra material properties. Both main graphs (`GenesisSky`, `GenesisSkyBoxFullScreen`) use the same `GenesisSkyCelestial` sub-graph, whose disc is one `SunDisc` node.
 
+## Feature flag
+
+`explorer-alfa-skybox-look-preset` picks the production look without a build. Variant `preset`, string payload holding the name of a `SkyboxSettings.asset → LookPresets` entry, for example `Halloween2026` (case and surrounding whitespace are ignored).
+
+- `SkyboxPlugin` reads it once at start-up, loads the entry's Addressable and applies it before the controller initialises, so the controller sets up fog, statics and lens flare from that look and the first rendered frame already has it. A change on the server reaches players on their next launch.
+- Flag off, no payload or an empty payload keep the prefab's default look. A name missing from the list logs a warning and a failed load logs the exception; both keep the default look, and the skybox always starts.
+- Only listed presets can be selected, and only ones shipped in the build: a new look needs a release before the flag can point at it.
+
 ## Debug panel
 
-**Debug panel → Skybox → Look preset** switches looks at runtime. The dropdown lists the shipped preset plus the entries of `SkyboxSettings.asset → DebugLookPresets`, which are Addressable references loaded the first time they are picked. Today the only entry is Legacy. Switching re-applies the statics and the current time, so the change is immediate.
+**Debug panel → Skybox → Look preset** switches looks at runtime. The dropdown lists the default preset plus the entries of `SkyboxSettings.asset → LookPresets`, which are Addressable references loaded the first time they are needed. It opens on the active look, so it shows the flagged one when the flag is set, and reuses its loaded asset. Switching re-applies the statics and the current time, so the change is immediate.
 
 ## Authoring
 
@@ -82,5 +92,5 @@ The stylized logic lives in HLSL Custom Function files under `Assets/DCL/Stylize
 ## Known caveats
 
 - The stylized path takes authored colours **as-is** (no sRGB→linear conversion), consistently across the lookup, clouds and haze; `StylizedV1` was tuned against that behaviour. Changing it means re-tuning.
-- Legacy sits in the `Essentials` Addressables group so QA can compare both looks in builds. It is only loaded when picked in the debug dropdown, but it adds to the shipped bundle. Drop the entry once Legacy is only needed for SDK-controlled scenes.
+- The listed presets sit in the `Essentials` Addressables group so the flag and QA can reach them in builds. Each is only loaded when flagged or picked in the debug dropdown, but each adds to the shipped bundle. Drop an entry once its look is no longer needed (Legacy once it only serves SDK-controlled scenes, a seasonal look after its season).
 - Fog on/off is also written by the quality settings. A preset with fog enabled turns fog on once when the controller initialises, then drives fog colour and density every frame.
