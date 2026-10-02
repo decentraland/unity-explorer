@@ -75,7 +75,8 @@ namespace Global.Dynamic
                     web3IdentityCache,
                     homePlaceEventBus,
                     eventBus,
-                    satelliteDetailTilesUrl));
+                    satelliteDetailTilesUrl,
+                    staticContainer.BytesDiskCache));
 
                 await mapRenderer.InitializeAsync(ct);
                 c.MapRenderer = mapRenderer;
