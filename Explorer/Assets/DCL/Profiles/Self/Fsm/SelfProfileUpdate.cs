@@ -90,7 +90,7 @@ namespace DCL.Profiles.Self
 
         private static (SelfProfileModel, SelfProfileCmd) OnProfileReadRequested(in SelfProfileModel model, RequestId id) =>
             model.Session.Match(
-                (model, id),
+                (model: model.WithLastRequest(id), id),
                 onNoIdentity: static ctx => (ctx.model.WithReadResult(ctx.id, ProfileReadResult.FromError(ProfileReadError.NoIdentity)), SelfProfileCmd.None()),
                 onIdentified: static (ctx, current) => Read(ctx.model, current, ctx.id)
             );
@@ -117,7 +117,7 @@ namespace DCL.Profiles.Self
 
         private static (SelfProfileModel, SelfProfileCmd) OnDeployProfileOnEditRequested(in SelfProfileModel model, in DeployRequest request) =>
             model.Session.Match(
-                (model, request),
+                (model: model.WithLastRequest(request.Id), request),
                 onNoIdentity: static ctx => (ctx.model.WithDeployResult(ctx.request.Id, ProfileDeployResult.FromError(ProfileDeployError.NoIdentity)), SelfProfileCmd.None()),
                 onIdentified: static (ctx, current) => current.Knowledge.IsKnown(out Profile? known) && ctx.request.Edited.IsSameProfile(known)
                     ? (ctx.model.WithDeployResult(ctx.request.Id, ProfileDeployResult.FromError(ProfileDeployError.NothingChanged)), SelfProfileCmd.None())

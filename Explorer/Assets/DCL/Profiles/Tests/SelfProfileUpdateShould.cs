@@ -546,6 +546,70 @@ namespace DCL.Profiles.Tests
         }
 
         [Test]
+        public void StampTheLastRequestAndHoldAQueuedRead()
+        {
+            // Arrange
+            SelfProfileModel model = Fetching();
+
+            // Act
+            (SelfProfileModel next, _) = SelfProfileModel.Update(model, SelfProfileMsg.FromProfileReadRequested(READ));
+
+            // Assert
+            Assert.That(next.LastRequest, Is.EqualTo(READ));
+            Assert.That(next.Holds(READ), Is.True);
+        }
+
+        [Test]
+        public void DropTheOldestPendingReadWhenTheListIsFull()
+        {
+            // Arrange
+            SelfProfileModel model = Fetching();
+
+            for (var i = 1; i <= RequestIds.CAPACITY; i++)
+                (model, _) = SelfProfileModel.Update(model, SelfProfileMsg.FromProfileReadRequested(new RequestId(i)));
+
+            var oldest = new RequestId(1);
+            var newest = new RequestId(RequestIds.CAPACITY + 1);
+
+            // Act
+            (SelfProfileModel next, SelfProfileCmd cmd) = SelfProfileModel.Update(model, SelfProfileMsg.FromProfileReadRequested(newest));
+
+            // Assert
+            Identified identified = AssertIdentified(next);
+            Assert.That(identified.PendingReads.Count, Is.EqualTo(RequestIds.CAPACITY));
+            Assert.That(identified.PendingReads[0], Is.EqualTo(new RequestId(2)));
+            Assert.That(identified.PendingReads[RequestIds.CAPACITY - 1], Is.EqualTo(newest));
+            Assert.That(next.Holds(oldest), Is.False);
+            Assert.That(next.LastRequest, Is.EqualTo(newest));
+            Assert.That(cmd.GetKind(), Is.EqualTo(SelfProfileCmd.Kind.None));
+        }
+
+        [Test]
+        public void DropTheOldestDeployRequestWhenTheListIsFull()
+        {
+            // Arrange
+            RequestIds full = default;
+
+            for (var i = 1; i <= RequestIds.CAPACITY; i++)
+                full = full.Add(new RequestId(i));
+
+            SelfProfileModel model = Deploying(NewProfile(2), ProfileKnowledge.FromKnown(NewProfile(1)), full);
+            var oldest = new RequestId(1);
+            var newest = new RequestId(RequestIds.CAPACITY + 1);
+
+            // Act
+            (SelfProfileModel next, _) = SelfProfileModel.Update(model, SelfProfileMsg.FromDeployProfileOnEditRequested(new DeployRequest(newest, NewProfile(3))));
+
+            // Assert
+            Deploying deploying = AssertDeploying(AssertIdentified(next).Activity);
+            Assert.That(deploying.Requests.Count, Is.EqualTo(RequestIds.CAPACITY));
+            Assert.That(deploying.Requests[0], Is.EqualTo(new RequestId(2)));
+            Assert.That(deploying.Requests[RequestIds.CAPACITY - 1], Is.EqualTo(newest));
+            Assert.That(next.Holds(oldest), Is.False);
+            Assert.That(next.LastRequest, Is.EqualTo(newest));
+        }
+
+        [Test]
         public void RefetchForAReadAfterAFailedFetch()
         {
             // Arrange

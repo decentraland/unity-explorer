@@ -44,6 +44,10 @@ namespace DCL.Profiles.Self
         public Identified With(ProfileKnowledge knowledge, ProfileActivity activity) =>
             new (Address, knowledge, activity, PendingReads);
 
+        /// <summary>True while the request waits among the pending reads or on the deploy in flight.</summary>
+        public bool Holds(RequestId id) =>
+            PendingReads.Contains(id) || (Activity.IsDeploying(out Deploying deploying) && deploying.Requests.Contains(id));
+
         /// <summary>The same session without the request among the pending reads or the requests of the deploy in flight.</summary>
         public Identified WithoutRequest(RequestId id)
         {
@@ -80,7 +84,8 @@ namespace DCL.Profiles.Self
 
     /// <summary>
     ///     Immutable model of the self-profile FSM: the session plus the answered requests, each kept until its
-    ///     requester closes it.
+    ///     requester closes it. Requests are applied in id order; the lists are bounded and drop their oldest entry
+    ///     when full, so a request the model has applied but no longer <see cref="Holds"/> was dropped.
     /// </summary>
     public readonly partial struct SelfProfileModel
     {
@@ -88,14 +93,18 @@ namespace DCL.Profiles.Self
         public readonly RequestResults<ProfileReadResult> ReadResults;
         public readonly RequestResults<ProfileDeployResult> DeployResults;
 
-        public SelfProfileModel(SelfProfileSession session)
-            : this(session, default, default) { }
+        /// <summary>The id of the last request applied.</summary>
+        public readonly RequestId LastRequest;
 
-        public SelfProfileModel(SelfProfileSession session, RequestResults<ProfileReadResult> readResults, RequestResults<ProfileDeployResult> deployResults)
+        public SelfProfileModel(SelfProfileSession session)
+            : this(session, default, default, default) { }
+
+        public SelfProfileModel(SelfProfileSession session, RequestResults<ProfileReadResult> readResults, RequestResults<ProfileDeployResult> deployResults, RequestId lastRequest)
         {
             Session = session;
             ReadResults = readResults;
             DeployResults = deployResults;
+            LastRequest = lastRequest;
         }
 
         /// <summary>The trusted profile of the current identity, when there is one.</summary>
@@ -113,11 +122,20 @@ namespace DCL.Profiles.Self
         public bool IsIdentified(out Identified identified) =>
             Session.IsIdentified(out identified);
 
+        /// <summary>True while the request waits for an answer or its answer waits to be taken.</summary>
+        public bool Holds(RequestId id) =>
+            ReadResults.Contains(id)
+            || DeployResults.Contains(id)
+            || Session.Match(id, onNoIdentity: static _ => false, onIdentified: static (id, current) => current.Holds(id));
+
         public SelfProfileModel WithSession(in SelfProfileSession session) =>
-            new (session, ReadResults, DeployResults);
+            new (session, ReadResults, DeployResults, LastRequest);
+
+        public SelfProfileModel WithLastRequest(RequestId id) =>
+            new (Session, ReadResults, DeployResults, id);
 
         public SelfProfileModel WithReadResult(RequestId id, ProfileReadResult result) =>
-            new (Session, ReadResults.With(id, result), DeployResults);
+            new (Session, ReadResults.With(id, result), DeployResults, LastRequest);
 
         public SelfProfileModel WithReadResults(RequestIds ids, ProfileReadResult result)
         {
@@ -126,11 +144,11 @@ namespace DCL.Profiles.Self
             for (var i = 0; i < ids.Count; i++)
                 results = results.With(ids[i], result);
 
-            return new SelfProfileModel(Session, results, DeployResults);
+            return new SelfProfileModel(Session, results, DeployResults, LastRequest);
         }
 
         public SelfProfileModel WithDeployResult(RequestId id, ProfileDeployResult result) =>
-            new (Session, ReadResults, DeployResults.With(id, result));
+            new (Session, ReadResults, DeployResults.With(id, result), LastRequest);
 
         public SelfProfileModel WithDeployResults(RequestIds ids, ProfileDeployResult result)
         {
@@ -139,7 +157,7 @@ namespace DCL.Profiles.Self
             for (var i = 0; i < ids.Count; i++)
                 results = results.With(ids[i], result);
 
-            return new SelfProfileModel(Session, ReadResults, results);
+            return new SelfProfileModel(Session, ReadResults, results, LastRequest);
         }
 
         /// <summary>The model without any trace of the request: its result, or its place among the waiting requests.</summary>
@@ -151,10 +169,10 @@ namespace DCL.Profiles.Self
                 onIdentified: static (id, current) => SelfProfileSession.FromIdentified(current.WithoutRequest(id))
             );
 
-            return new SelfProfileModel(session, ReadResults.Without(id), DeployResults.Without(id));
+            return new SelfProfileModel(session, ReadResults.Without(id), DeployResults.Without(id), LastRequest);
         }
 
         public override string ToString() =>
-            $"{Session} read results {ReadResults} deploy results {DeployResults}";
+            $"{Session} read results {ReadResults} deploy results {DeployResults} last request {LastRequest}";
     }
 }

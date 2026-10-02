@@ -1,8 +1,8 @@
+using DCL.Utility.Types;
 using System;
 
 namespace DCL.Profiles.Self
 {
-    // TODO no allocs, just buffer for 32 elements max, fixed buffers and counter, stack friendly
     /// <summary>Identifies one call waiting on the self-profile FSM.</summary>
     public readonly struct RequestId : IEquatable<RequestId>
     {
@@ -26,51 +26,75 @@ namespace DCL.Profiles.Self
             $"#{Value}";
     }
 
-    /// <summary>Immutable list of requests waiting on the same activity. The default value is empty.</summary>
+    /// <summary>
+    ///     Inline list of up to <see cref="CAPACITY"/> requests waiting on the same activity; it never allocates and its
+    ///     default value is empty. Adding to a full list drops the oldest request.
+    /// </summary>
     public readonly struct RequestIds : IEquatable<RequestIds>
     {
-        private readonly RequestId[]? ids;
+        public const int CAPACITY = Block8<RequestId>.CAPACITY;
 
-        private RequestIds(RequestId[] ids)
+        private readonly Block8<RequestId> items;
+        private readonly byte count;
+
+        private RequestIds(in Block8<RequestId> items, int count)
         {
-            this.ids = ids;
+            this.items = items;
+            this.count = (byte)count;
         }
 
-        public int Count => ids?.Length ?? 0;
+        public int Count => count;
 
-        public RequestId this[int index] => idsOrEmpty[index];
+        public RequestId this[int index] =>
+            index >= 0 && index < count
+                ? items[index]
+                : throw new ArgumentOutOfRangeException(nameof(index), index, $"The list holds {count} requests");
 
-        private RequestId[] idsOrEmpty => ids ?? Array.Empty<RequestId>();
+        public bool Contains(RequestId id) =>
+            IndexOf(id) >= 0;
 
+        /// <summary>The list with the id appended. When the list is full, the oldest id is dropped to make room.</summary>
         public RequestIds Add(RequestId id)
         {
-            var next = new RequestId[Count + 1];
-            Array.Copy(idsOrEmpty, next, Count);
-            next[Count] = id;
-            return new RequestIds(next);
+            Block8<RequestId> next = items;
+            int kept = count;
+
+            if (kept == CAPACITY)
+            {
+                for (var i = 1; i < CAPACITY; i++)
+                    next[i - 1] = items[i];
+
+                kept = CAPACITY - 1;
+            }
+
+            next[kept] = id;
+            return new RequestIds(next, kept + 1);
         }
 
         /// <summary>The same list when the id is not in it.</summary>
         public RequestIds Remove(RequestId id)
         {
-            int index = Array.IndexOf(idsOrEmpty, id);
+            int index = IndexOf(id);
 
             if (index < 0)
                 return this;
 
-            var next = new RequestId[Count - 1];
-            Array.Copy(idsOrEmpty, 0, next, 0, index);
-            Array.Copy(idsOrEmpty, index + 1, next, index, Count - index - 1);
-            return new RequestIds(next);
+            Block8<RequestId> next = items;
+
+            for (int i = index + 1; i < count; i++)
+                next[i - 1] = items[i];
+
+            next[count - 1] = default;
+            return new RequestIds(next, count - 1);
         }
 
         public bool Equals(RequestIds other)
         {
-            if (Count != other.Count)
+            if (count != other.count)
                 return false;
 
-            for (var i = 0; i < Count; i++)
-                if (!idsOrEmpty[i].Equals(other.idsOrEmpty[i]))
+            for (var i = 0; i < count; i++)
+                if (!items[i].Equals(other.items[i]))
                     return false;
 
             return true;
@@ -83,75 +107,118 @@ namespace DCL.Profiles.Self
         {
             var hash = new HashCode();
 
-            for (var i = 0; i < Count; i++)
-                hash.Add(idsOrEmpty[i]);
+            for (var i = 0; i < count; i++)
+                hash.Add(items[i]);
 
             return hash.ToHashCode();
         }
 
         public override string ToString() =>
-            Count == 0 ? "no requests" : $"{Count} requests";
+            count == 0 ? "no requests" : $"{count} requests";
+
+        private int IndexOf(RequestId id)
+        {
+            for (var i = 0; i < count; i++)
+                if (items[i].Equals(id))
+                    return i;
+
+            return -1;
+        }
     }
 
-    /// <summary>Immutable list of answered requests, kept until each requester takes its result. The default value is empty.</summary>
+    /// <summary>
+    ///     Inline list of up to <see cref="CAPACITY"/> answered requests, each kept until its requester takes it; it never
+    ///     allocates and its default value is empty. Storing into a full list drops the oldest answer.
+    /// </summary>
     public readonly struct RequestResults<T> where T: struct
     {
-        private readonly (RequestId Id, T Result)[]? entries;
+        public const int CAPACITY = Block8<Entry>.CAPACITY;
 
-        private RequestResults((RequestId Id, T Result)[] entries)
+        private readonly Block8<Entry> entries;
+        private readonly byte count;
+
+        private RequestResults(in Block8<Entry> entries, int count)
         {
             this.entries = entries;
+            this.count = (byte)count;
         }
 
-        public int Count => entries?.Length ?? 0;
+        public int Count => count;
 
-        private (RequestId Id, T Result)[] entriesOrEmpty => entries ?? Array.Empty<(RequestId Id, T Result)>();
+        public bool Contains(RequestId id) =>
+            IndexOf(id) >= 0;
 
         public bool TryGet(RequestId id, out T result)
         {
-            foreach ((RequestId Id, T Result) entry in entriesOrEmpty)
-            {
-                if (!entry.Id.Equals(id))
-                    continue;
+            int index = IndexOf(id);
 
-                result = entry.Result;
-                return true;
+            if (index < 0)
+            {
+                result = default;
+                return false;
             }
 
-            result = default;
-            return false;
+            result = entries[index].Result;
+            return true;
         }
 
+        /// <summary>The list with the answer appended. When the list is full, the oldest answer is dropped to make room.</summary>
         public RequestResults<T> With(RequestId id, T result)
         {
-            var next = new (RequestId Id, T Result)[Count + 1];
-            Array.Copy(entriesOrEmpty, next, Count);
-            next[Count] = (id, result);
-            return new RequestResults<T>(next);
+            Block8<Entry> next = entries;
+            int kept = count;
+
+            if (kept == CAPACITY)
+            {
+                for (var i = 1; i < CAPACITY; i++)
+                    next[i - 1] = entries[i];
+
+                kept = CAPACITY - 1;
+            }
+
+            next[kept] = new Entry(id, result);
+            return new RequestResults<T>(next, kept + 1);
         }
 
         /// <summary>The same list when the id is not in it.</summary>
         public RequestResults<T> Without(RequestId id)
         {
-            int index = -1;
-
-            for (var i = 0; i < Count; i++)
-                if (entriesOrEmpty[i].Id.Equals(id))
-                {
-                    index = i;
-                    break;
-                }
+            int index = IndexOf(id);
 
             if (index < 0)
                 return this;
 
-            var next = new (RequestId Id, T Result)[Count - 1];
-            Array.Copy(entriesOrEmpty, 0, next, 0, index);
-            Array.Copy(entriesOrEmpty, index + 1, next, index, Count - index - 1);
-            return new RequestResults<T>(next);
+            Block8<Entry> next = entries;
+
+            for (int i = index + 1; i < count; i++)
+                next[i - 1] = entries[i];
+
+            next[count - 1] = default;
+            return new RequestResults<T>(next, count - 1);
         }
 
         public override string ToString() =>
-            Count == 0 ? "no results" : $"{Count} results";
+            count == 0 ? "no results" : $"{count} results";
+
+        private int IndexOf(RequestId id)
+        {
+            for (var i = 0; i < count; i++)
+                if (entries[i].Id.Equals(id))
+                    return i;
+
+            return -1;
+        }
+
+        private readonly struct Entry
+        {
+            public readonly RequestId Id;
+            public readonly T Result;
+
+            public Entry(RequestId id, T result)
+            {
+                Id = id;
+                Result = result;
+            }
+        }
     }
 }

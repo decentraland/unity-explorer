@@ -25,6 +25,9 @@ namespace DCL.Profiles.Self
         private readonly CancellationTokenSource drainCts = new ();
         private readonly CancellationToken drainToken;
 
+        /// <summary>Taking an id and enqueueing its request happen under this gate, so requests enter the inbox in id order.</summary>
+        private readonly object requestGate = new ();
+
         private long lastRequestId;
 
         public virtual SelfProfileModel CurrentProfileSnapshot => runtime.ModelSnapshot;
@@ -83,8 +86,15 @@ namespace DCL.Profiles.Self
         /// </summary>
         public virtual UniTask<ProfileReadResult> ProfileAsync(CancellationToken ct)
         {
-            RequestId id = NextRequestId();
-            runtime.Send(SelfProfileMsg.FromProfileReadRequested(id));
+            IMsgInbox<SelfProfileMsg> inbox = runtime;
+            RequestId id;
+
+            lock (requestGate) // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
+            {
+                id = NextRequestId();
+                inbox.Send(SelfProfileMsg.FromProfileReadRequested(id));
+            }
+
             return AwaitResultAsync(id, static model => model.ReadResults, ProfileReadResult.FromError(ProfileReadError.Cancelled), ct);
         }
 
@@ -93,20 +103,35 @@ namespace DCL.Profiles.Self
         /// </summary>
         public virtual UniTask<ProfileDeployResult> DeployProfileAsync(Profile edited, CancellationToken ct)
         {
-            RequestId id = NextRequestId();
-            runtime.Send(SelfProfileMsg.FromDeployProfileOnEditRequested(new DeployRequest(id, edited)));
+            IMsgInbox<SelfProfileMsg> inbox = runtime;
+            RequestId id;
+
+            lock (requestGate) // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
+            {
+                id = NextRequestId();
+                inbox.Send(SelfProfileMsg.FromDeployProfileOnEditRequested(new DeployRequest(id, edited)));
+            }
+
             return AwaitResultAsync(id, static model => model.DeployResults, ProfileDeployResult.FromError(ProfileDeployError.Cancelled), ct);
         }
 
-        /// <summary>Waits until the model holds the result of the request, then closes the request so the model drops it.</summary>
+        /// <summary>
+        ///     Waits until the model holds the result of the request, then closes the request so the model drops it.
+        ///     A request the model has applied but no longer holds was dropped from a full list; it resolves as cancelled.
+        /// </summary>
         private async UniTask<T> AwaitResultAsync<T>(RequestId id, Func<SelfProfileModel, RequestResults<T>> resultsOf, T cancelled, CancellationToken ct) where T: struct
         {
             try
             {
                 while (!ct.IsCancellationRequested && !drainToken.IsCancellationRequested)
                 {
-                    if (resultsOf(CurrentProfileSnapshot).TryGet(id, out T result))
+                    SelfProfileModel model = CurrentProfileSnapshot;
+
+                    if (resultsOf(model).TryGet(id, out T result))
                         return result;
+
+                    if (model.LastRequest.Value >= id.Value && !model.Holds(id))
+                        return cancelled;
 
                     await UniTask.Yield(PlayerLoopTiming.Update);
                 }
@@ -136,7 +161,7 @@ namespace DCL.Profiles.Self
             runtime.Send(SelfProfileMsg.IdentityCleared());
 
         private RequestId NextRequestId() =>
-            new (Interlocked.Increment(ref lastRequestId)); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
+            new (++lastRequestId);
 
         /// <summary>Applies the queued messages once per frame, in the Initialization phase, until disposed.</summary>
         private async UniTaskVoid DrainLoopAsync(CancellationToken ct)
