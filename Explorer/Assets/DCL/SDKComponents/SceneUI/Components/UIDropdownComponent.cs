@@ -1,27 +1,39 @@
-using System;
 using DCL.SDKComponents.SceneUI.Utils;
+using ECS.StreamableLoading.Fonts;
+using System;
 using UnityEngine.UIElements;
+using FontAsset = UnityEngine.TextCore.Text.FontAsset;
 
 namespace DCL.SDKComponents.SceneUI.Components
 {
     public class UIDropdownComponent
     {
         public readonly DropdownField DropdownField = new ();
-        public TextElement TextElement { get; private set; }
+        public TextElement TextElement { get; }
         public bool IsOnValueChangedTriggered;
         public int LastIndexSetByScene;
 
+        public SceneFontRequest FontRequest;
+
+        public FontAsset? CustomFont;
+
         internal Action? cachedScheduledAction;
+
+        public UIDropdownComponent()
+        {
+            TextElement = DropdownField.Q<TextElement>(className: "unity-base-popup-field__text");
+        }
 
         public void Initialize(string dropdownName)
         {
             DropdownField.name = dropdownName;
             DropdownField.AddToClassList("dcl-dropdown");
             DropdownField.pickingMode = PickingMode.Position;
-            TextElement = DropdownField.Q<TextElement>(className: "unity-base-popup-field__text");
 
             IsOnValueChangedTriggered = false;
             LastIndexSetByScene = int.MinValue; // -1 is used for the case of 'accept Empty value'
+            FontRequest = default(SceneFontRequest);
+            CustomFont = null;
 
             this.RegisterDropdownCallbacks();
         }

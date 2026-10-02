@@ -133,6 +133,11 @@
         public const string TEXTURES = nameof(TEXTURES);
 
         /// <summary>
+        ///     The fonts scenes load through `font_src`
+        /// </summary>
+        public const string SDK_FONTS = nameof(SDK_FONTS);
+
+        /// <summary>
         ///     Everything related to GLTF
         /// </summary>
         public const string GLTF_CONTAINER = nameof(GLTF_CONTAINER);

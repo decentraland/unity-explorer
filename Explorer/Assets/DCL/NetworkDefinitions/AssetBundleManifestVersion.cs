@@ -42,6 +42,9 @@ public class AssetBundleManifestVersion
         //Bare hash → CDN file name; fed by InjectDepsDigests (digest-bearing names) and InjectContent (Qm casing fixes).
         private Dictionary<string, string>? cdnFiles;
 
+        //Bare hashes the manifest's files[] name; unlike cdnFiles, never fed by InjectContent, so it records what was actually converted.
+        private HashSet<string>? convertedHashes;
+
         //Set when the manifest's files[] were injected — only scenes fetch them. Reusable bundles live under the shared assets/ prefix and cache-key on version+hash; wearables/emotes stay entity-scoped and keep buildDate keying.
         private bool hasReusableAssets;
 
@@ -103,8 +106,17 @@ public class AssetBundleManifestVersion
 
                 cdnFiles ??= new Dictionary<string, string>(new UrlHashComparer());
                 cdnFiles[parts[0]] = file;
+                convertedHashes ??= new HashSet<string>(new UrlHashComparer());
+                convertedHashes.Add(parts[0]);
             }
         }
+
+        /// <summary>
+        ///     True when the manifest's <c>files[]</c> name a converted bundle for this bare hash. Entries without a
+        ///     digest suffix (raw <c>Qm</c> content, build logs) do not count.
+        /// </summary>
+        public bool ListsConvertedFile(string bareHash) =>
+            convertedHashes != null && convertedHashes.Contains(bareHash);
 
         /// <summary>Stores the manifest's <c>lods</c> block: the digest-bearing names the scene's LOD objects are published under.</summary>
         public void InjectLods(SceneAbLodsDto? lods)

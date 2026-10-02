@@ -1,4 +1,5 @@
 using DCL.Optimization.Pools;
+using ECS.StreamableLoading.Fonts;
 using System;
 using TMPro;
 using UnityEngine;
@@ -40,6 +41,10 @@ namespace DCL.SDKComponents.TextShape.Component
         /// </summary>
         public bool UnderlayKeywordEnabled;
 
+        public SceneFontRequest FontRequest;
+
+        public TMP_FontAsset? CustomFont;
+
         public TextShapeComponent(TextMeshPro textShape)
         {
             TextMeshPro = textShape;
@@ -48,6 +53,8 @@ namespace DCL.SDKComponents.TextShape.Component
             NeedsBoundsRecalculation = true;
             OutlineKeywordEnabled = false;
             UnderlayKeywordEnabled = false;
+            FontRequest = default(SceneFontRequest);
+            CustomFont = null;
         }
 
         public void Dispose() { }
