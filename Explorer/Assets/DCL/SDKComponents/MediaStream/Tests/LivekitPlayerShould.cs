@@ -1,3 +1,4 @@
+using Cysharp.Threading.Tasks;
 using DCL.LiveKit.Public;
 using DCL.WebRequests;
 using LiveKit.Proto;
@@ -35,6 +36,9 @@ namespace DCL.SDKComponents.MediaStream.Tests
         private const string CAMERA_SID = "TR_camera";
         private const string SCREEN_SID = "TR_screen";
         private const string SLIDE_URL = "https://example.com/slide.png";
+        private const string ALLOWED_SLIDES = "https://cast-presenter-service.decentraland.org/presentations/0f8fad5b-d9cb-469f-a165-70867728950e/slides/";
+        private const string BOT_SLIDE_URL = ALLOWED_SLIDES + "0123456789abcdef.png";
+        private const string OTHER_BOT_SLIDE_URL = ALLOWED_SLIDES + "fedcba9876543210.png";
         private const string LEGACY_METADATA = "{\"role\":\"presentation\",\"presentationId\":\"p1\"}";
         private const string V2_METADATA = "{\"role\":\"presentation\",\"slide\":{\"url\":\"" + SLIDE_URL + "\",\"width\":1920,\"height\":1080},\"presenterIdentity\":\"" + PRESENTER
                                            + "\",\"playingVideoIndex\":null,\"videoState\":\"idle\",\"slideVideos\":[],\"overlay\":{\"x\":0,\"y\":1,\"size\":\"small\"}}";
@@ -51,7 +55,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
         private Dictionary<StreamKey, Weak<IVideoStream>> resolvedStreams = null!;
         private List<Object> created = null!;
         private List<SlideTextureCache> slideCaches = null!;
-        private LivekitPlayer? player;
+        private List<LivekitPlayer> players = null!;
 
         [SetUp]
         public void SetUp()
@@ -64,7 +68,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
             resolvedStreams = new Dictionary<StreamKey, Weak<IVideoStream>>();
             created = new List<Object>();
             slideCaches = new List<SlideTextureCache>();
-            player = null;
+            players = new List<LivekitPlayer>();
 
             room.Participants.Returns(participantsHub);
             room.VideoStreams.Returns(videoStreams);
@@ -78,7 +82,8 @@ namespace DCL.SDKComponents.MediaStream.Tests
         [TearDown]
         public void TearDown()
         {
-            player?.Dispose();
+            foreach (LivekitPlayer p in players)
+                p.Dispose();
 
             foreach (SlideTextureCache cache in slideCaches)
                 cache.Dispose();
@@ -333,6 +338,46 @@ namespace DCL.SDKComponents.MediaStream.Tests
 
             LogAssert.NoUnexpectedReceived();
             videoStreams.Received().ActiveStream(new StreamKey(OTHER, "TR_other"));
+        }
+
+        [Test]
+        public void NotComposeBot_WhenPinnedUserIsAbsent()
+        {
+            LKParticipant bot = AddParticipant(BOT, V2_METADATA);
+            LKParticipant other = AddParticipant(OTHER);
+            AddTrack(other, "TR_other", TrackKind.KindVideo, TrackSource.SourceCamera);
+            LivekitPlayer p = NewV2Player();
+            p.OpenMedia(LivekitAddress.FromUserStream(new UserStream(OTHER, "TR_other")));
+            p.EnsureVideoIsPlaying();
+            p.EnsureVideoIsPlaying();
+
+            SetMetadata(bot, V2("null", "idle", 1));
+            p.EnsureVideoIsPlaying();
+
+            Assert.AreNotEqual(Vector2.one, p.CurrentTextureScale);
+            Assert.IsNotInstanceOf<RenderTexture>(p.LastTexture());
+        }
+
+        [Test]
+        public void ThrottleSlidesPerBot_WhenTwoPlayersShareTheCache()
+        {
+            IWebRequestController controller = Substitute.For<IWebRequestController>();
+            SendTextureRequest(controller).Returns(_ => new UniTaskCompletionSource<Texture2D?>().Task);
+            var sharedCache = new SlideTextureCache(controller, static () => 0f);
+            slideCaches.Add(sharedCache);
+            AddParticipant(BOT, V2("null", "idle", slideUrl: BOT_SLIDE_URL));
+            AddParticipant(OTHER_BOT, V2("null", "idle", slideUrl: OTHER_BOT_SLIDE_URL));
+            LivekitPlayer first = NewV2Player(sharedCache);
+            LivekitPlayer second = NewV2Player(sharedCache);
+            first.OpenMedia(LivekitAddress.FromUserStream(new UserStream(BOT, "TR_old")));
+            second.OpenMedia(LivekitAddress.FromUserStream(new UserStream(OTHER_BOT, "TR_old")));
+            first.EnsureVideoIsPlaying();
+            second.EnsureVideoIsPlaying();
+
+            first.LastTexture();
+            second.LastTexture();
+
+            SendTextureRequest(controller.Received(2));
         }
 
         [Test]
@@ -666,8 +711,8 @@ namespace DCL.SDKComponents.MediaStream.Tests
             p.EnsureVideoIsPlaying();
         }
 
-        private static string V2(string playingVideoIndex, string videoState, int currentSlide = 0, string presenter = PRESENTER, int width = 1920, int height = 1080) =>
-            $"{{\"role\":\"presentation\",\"currentSlide\":{currentSlide},\"slide\":{{\"url\":\"{SLIDE_URL}\",\"width\":{width},\"height\":{height}}},\"presenterIdentity\":\"{presenter}\","
+        private static string V2(string playingVideoIndex, string videoState, int currentSlide = 0, string presenter = PRESENTER, int width = 1920, int height = 1080, string slideUrl = SLIDE_URL) =>
+            $"{{\"role\":\"presentation\",\"currentSlide\":{currentSlide},\"slide\":{{\"url\":\"{slideUrl}\",\"width\":{width},\"height\":{height}}},\"presenterIdentity\":\"{presenter}\","
             + $"\"playingVideoIndex\":{playingVideoIndex},\"videoState\":\"{videoState}\",\"slideVideos\":[{SLIDE_VIDEO},{SLIDE_VIDEO}],"
             + "\"overlay\":{\"x\":0,\"y\":1,\"size\":\"small\"}}";
 
@@ -740,19 +785,33 @@ namespace DCL.SDKComponents.MediaStream.Tests
 
         private LivekitPlayer NewV2Player()
         {
-            var material = new Material(Shader.Find("DCL/PresentationCompositor"));
-            created.Add(material);
             var slideCache = new SlideTextureCache(Substitute.For<IWebRequestController>());
             slideCaches.Add(slideCache);
-            player = new LivekitPlayer(room, () => true, null, slideCache, material);
-            return player;
+            return NewV2Player(slideCache);
+        }
+
+        private LivekitPlayer NewV2Player(SlideTextureCache slideCache)
+        {
+            var material = new Material(Shader.Find("DCL/PresentationCompositor"));
+            created.Add(material);
+            var p = new LivekitPlayer(room, () => true, null, slideCache, material);
+            players.Add(p);
+            return p;
         }
 
         private LivekitPlayer NewLegacyPlayer()
         {
-            player = new LivekitPlayer(room, () => true, null, null, null);
-            return player;
+            var p = new LivekitPlayer(room, () => true, null, null, null);
+            players.Add(p);
+            return p;
         }
+
+        private static UniTask<Texture2D?> SendTextureRequest(IWebRequestController controller) =>
+            controller.SendAsync<GetTextureWebRequest, GetTextureArguments, GetTextureWebRequest.CreateTextureOp, Texture2D>(
+                Arg.Any<RequestEnvelope<GetTextureWebRequest, GetTextureArguments>>(),
+                Arg.Any<GetTextureWebRequest.CreateTextureOp>(),
+                Arg.Any<long>(),
+                Arg.Any<IProgress<float>?>());
 
         private sealed class FakeActiveSpeakers : IActiveSpeakers
         {

@@ -31,6 +31,9 @@ namespace DCL.SDKComponents.MediaStream
         internal const float MIN_FETCH_INTERVAL_SECONDS = 0.25f;
         internal const int MAX_TRACKED_URLS = 32;
         internal const int MAX_REPORTS = 32;
+        internal const int MAX_REJECTION_REPORTS = 8;
+        internal const int MAX_FAILURE_REPORTS = 32;
+        internal const int MAX_TRACKED_BOTS = 32;
 
         private const string CAST_PRESENTER_HOST_PREFIX = "cast-presenter-service.";
 
@@ -123,6 +126,9 @@ namespace DCL.SDKComponents.MediaStream
             LoadAsync(url, uri.AbsoluteUri).Forget();
             return null;
         }
+
+        public Texture2D? GetOrRequest(string url, string throttleKey) =>
+            throw new NotImplementedException();
 
         private static bool TryParseAllowedUrl(string url, [NotNullWhen(true)] out Uri? uri)
         {

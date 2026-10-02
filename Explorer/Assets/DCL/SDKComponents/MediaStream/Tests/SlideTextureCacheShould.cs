@@ -16,6 +16,8 @@ namespace DCL.SDKComponents.MediaStream.Tests
         private const string SLIDE_PATH = "/presentations/" + UUID + "/slides/" + HASH + ".png";
         private const string ORG_ORIGIN = "https://cast-presenter-service.decentraland.org";
         private const string ALLOWED_URL = ORG_ORIGIN + SLIDE_PATH;
+        private const string BOT_A = "presentation-bot:a:1";
+        private const string BOT_B = "presentation-bot:b:1";
 
         private IWebRequestController webRequestController = null!;
         private SlideTextureCache cache = null!;
@@ -38,7 +40,6 @@ namespace DCL.SDKComponents.MediaStream.Tests
         [TestCase(ALLOWED_URL)]
         [TestCase("https://cast-presenter-service.decentraland.zone" + SLIDE_PATH)]
         [TestCase(ORG_ORIGIN + "/cast" + SLIDE_PATH)]
-        [TestCase("https://CAST-PRESENTER-SERVICE.DECENTRALAND.ORG" + SLIDE_PATH)]
         [TestCase("http://localhost:3002" + SLIDE_PATH)]
         public void AllowUrl_WhenHostIsCastPresenterOnOrgOrZone(string url)
         {
@@ -60,6 +61,12 @@ namespace DCL.SDKComponents.MediaStream.Tests
         [TestCase(ORG_ORIGIN + "/redirect?to=x")]
         [TestCase(ORG_ORIGIN + "/presentations/a/slides/h.png")]
         [TestCase(ORG_ORIGIN + "/presentations/" + UUID + "/slides/0123456789ABCDEF.png")]
+        [TestCase("https://CAST-PRESENTER-SERVICE.DECENTRALAND.ORG" + SLIDE_PATH)]
+        [TestCase(ORG_ORIGIN + ":443" + SLIDE_PATH)]
+        [TestCase(ORG_ORIGIN + "/a.b" + SLIDE_PATH)]
+        [TestCase(ORG_ORIGIN + "/x%2F" + SLIDE_PATH)]
+        [TestCase(ORG_ORIGIN + "/" + SLIDE_PATH)]
+        [TestCase(ORG_ORIGIN + SLIDE_PATH + "/")]
         public void RejectUrl_WhenHostOrSchemeIsForeign(string url)
         {
             Assert.IsFalse(SlideTextureCache.IsAllowedUrl(url));
@@ -68,8 +75,8 @@ namespace DCL.SDKComponents.MediaStream.Tests
         [Test]
         public void ReturnNullAndNeverFetch_WhenUrlIsDisallowed()
         {
-            Texture2D? first = cache.GetOrRequest("https://example.com/x.png");
-            Texture2D? second = cache.GetOrRequest("https://example.com/x.png");
+            Texture2D? first = cache.GetOrRequest("https://example.com/x.png", BOT_A);
+            Texture2D? second = cache.GetOrRequest("https://example.com/x.png", BOT_A);
 
             Assert.IsNull(first);
             Assert.IsNull(second);
@@ -81,9 +88,9 @@ namespace DCL.SDKComponents.MediaStream.Tests
         {
             SendTextureRequest(webRequestController).Returns(new UniTaskCompletionSource<Texture2D?>().Task);
 
-            cache.GetOrRequest(ALLOWED_URL);
-            cache.GetOrRequest(ALLOWED_URL);
-            Texture2D? texture = cache.GetOrRequest(ALLOWED_URL);
+            cache.GetOrRequest(ALLOWED_URL, BOT_A);
+            cache.GetOrRequest(ALLOWED_URL, BOT_A);
+            Texture2D? texture = cache.GetOrRequest(ALLOWED_URL, BOT_A);
 
             Assert.IsNull(texture);
             SendTextureRequest(webRequestController.Received(1));
@@ -95,8 +102,8 @@ namespace DCL.SDKComponents.MediaStream.Tests
             SendTextureRequest(webRequestController).Returns(UniTask.FromException<Texture2D?>(new InvalidOperationException()));
             LogAssert.Expect(LogType.Exception, new Regex("InvalidOperationException"));
 
-            cache.GetOrRequest(ALLOWED_URL);
-            Texture2D? retried = cache.GetOrRequest(ALLOWED_URL);
+            cache.GetOrRequest(ALLOWED_URL, BOT_A);
+            Texture2D? retried = cache.GetOrRequest(ALLOWED_URL, BOT_A);
 
             Assert.IsNull(retried);
             SendTextureRequest(webRequestController.Received(1));
@@ -106,7 +113,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
         public void BoundTrackedUrls_WhenManyDistinctUrlsAreDisallowed()
         {
             for (var i = 0; i < 1000; i++)
-                cache.GetOrRequest($"https://example.com/{i}.png");
+                cache.GetOrRequest($"https://example.com/{i}.png", BOT_A);
 
             Assert.LessOrEqual(cache.trackedUrlCount, SlideTextureCache.MAX_TRACKED_URLS);
         }
@@ -117,14 +124,75 @@ namespace DCL.SDKComponents.MediaStream.Tests
             SendTextureRequest(webRequestController).Returns(new UniTaskCompletionSource<Texture2D?>().Task);
 
             for (var i = 0; i < 10; i++)
-                cache.GetOrRequest(SlideUrl(i));
+                cache.GetOrRequest(SlideUrl(i), BOT_A);
 
             SendTextureRequest(webRequestController.Received(1));
 
             now += SlideTextureCache.MIN_FETCH_INTERVAL_SECONDS;
-            cache.GetOrRequest(SlideUrl(10));
+            cache.GetOrRequest(SlideUrl(10), BOT_A);
 
             SendTextureRequest(webRequestController.Received(2));
+        }
+
+        [Test]
+        public void NotDelayOtherBot_WhenOneBotChurns()
+        {
+            SendTextureRequest(webRequestController).Returns(_ => new UniTaskCompletionSource<Texture2D?>().Task);
+
+            cache.GetOrRequest(SlideUrl(0), BOT_A);
+            cache.GetOrRequest(SlideUrl(1), BOT_B);
+            cache.GetOrRequest(SlideUrl(2), BOT_A);
+
+            SendTextureRequest(webRequestController.Received(2));
+        }
+
+        [Test]
+        public void ForgetThrottleKeys_WhenMoreThanMaxBotsAreTracked()
+        {
+            SendTextureRequest(webRequestController).Returns(_ => new UniTaskCompletionSource<Texture2D?>().Task);
+
+            for (var i = 0; i <= SlideTextureCache.MAX_TRACKED_BOTS; i++)
+                cache.GetOrRequest(SlideUrl(i), $"presentation-bot:{i}:1");
+
+            cache.GetOrRequest(SlideUrl(SlideTextureCache.MAX_TRACKED_BOTS + 1), "presentation-bot:0:1");
+
+            SendTextureRequest(webRequestController.Received(SlideTextureCache.MAX_TRACKED_BOTS + 2));
+        }
+
+        [Test]
+        public void ReportFailure_AfterRejectionBudgetIsSpent()
+        {
+            SendTextureRequest(webRequestController).Returns(_ => UniTask.FromException<Texture2D?>(new InvalidOperationException()));
+
+            for (var i = 0; i < SlideTextureCache.MAX_REJECTION_REPORTS; i++)
+                LogAssert.Expect(LogType.Warning, new Regex("Slide url rejected"));
+
+            LogAssert.Expect(LogType.Exception, new Regex("InvalidOperationException"));
+
+            for (var i = 0; i < 40; i++)
+                cache.GetOrRequest($"https://example.com/{i}.png", BOT_A);
+
+            cache.GetOrRequest(ALLOWED_URL, BOT_A);
+
+            LogAssert.NoUnexpectedReceived();
+        }
+
+        [Test]
+        public void BoundFailedUrls_WhenManyDistinctUrlsFail()
+        {
+            SendTextureRequest(webRequestController).Returns(_ => UniTask.FromException<Texture2D?>(new InvalidOperationException()));
+
+            for (var i = 0; i < SlideTextureCache.MAX_FAILURE_REPORTS; i++)
+                LogAssert.Expect(LogType.Exception, new Regex("InvalidOperationException"));
+
+            for (var i = 0; i < 40; i++)
+            {
+                now += SlideTextureCache.MIN_FETCH_INTERVAL_SECONDS;
+                cache.GetOrRequest(SlideUrl(i), BOT_A);
+            }
+
+            Assert.LessOrEqual(cache.trackedUrlCount, SlideTextureCache.MAX_TRACKED_URLS);
+            LogAssert.NoUnexpectedReceived();
         }
 
         [Test]
@@ -133,9 +201,9 @@ namespace DCL.SDKComponents.MediaStream.Tests
             SendTextureRequest(webRequestController).Returns(_ => UniTask.FromException<Texture2D?>(new InvalidOperationException()));
             LogAssert.Expect(LogType.Exception, new Regex("InvalidOperationException"));
 
-            cache.GetOrRequest(ALLOWED_URL);
+            cache.GetOrRequest(ALLOWED_URL, BOT_A);
             now += 61f;
-            cache.GetOrRequest(ALLOWED_URL);
+            cache.GetOrRequest(ALLOWED_URL, BOT_A);
 
             SendTextureRequest(webRequestController.Received(2));
             LogAssert.NoUnexpectedReceived();
@@ -146,14 +214,14 @@ namespace DCL.SDKComponents.MediaStream.Tests
         {
             SendTextureRequest(webRequestController).Returns(_ => UniTask.FromException<Texture2D?>(new InvalidOperationException()));
             LogAssert.Expect(LogType.Exception, new Regex("InvalidOperationException"));
-            cache.GetOrRequest(ALLOWED_URL);
+            cache.GetOrRequest(ALLOWED_URL, BOT_A);
 
             now = 9f;
-            cache.GetOrRequest(ALLOWED_URL);
+            cache.GetOrRequest(ALLOWED_URL, BOT_A);
             SendTextureRequest(webRequestController.Received(1));
 
             now = 11f;
-            cache.GetOrRequest(ALLOWED_URL);
+            cache.GetOrRequest(ALLOWED_URL, BOT_A);
             SendTextureRequest(webRequestController.Received(2));
         }
 
@@ -164,9 +232,9 @@ namespace DCL.SDKComponents.MediaStream.Tests
             SendTextureRequest(webRequestController).Returns(UniTask.FromResult<Texture2D?>(oversized));
             LogAssert.Expect(LogType.Warning, new Regex($"{PresentationLayout.MAX_SLIDE_SIZE + 1}x1"));
 
-            cache.GetOrRequest(ALLOWED_URL);
+            cache.GetOrRequest(ALLOWED_URL, BOT_A);
             now = 1f;
-            Texture2D? afterCompletion = cache.GetOrRequest(ALLOWED_URL);
+            Texture2D? afterCompletion = cache.GetOrRequest(ALLOWED_URL, BOT_A);
 
             Assert.IsNull(afterCompletion);
             Assert.IsTrue(oversized == null);
@@ -179,15 +247,15 @@ namespace DCL.SDKComponents.MediaStream.Tests
             var texture = new Texture2D(2, 2);
             SendTextureRequest(webRequestController).Returns(UniTask.FromResult<Texture2D?>(texture));
 
-            cache.GetOrRequest(ALLOWED_URL);
-            Texture2D? loaded = cache.GetOrRequest(ALLOWED_URL);
+            cache.GetOrRequest(ALLOWED_URL, BOT_A);
+            Texture2D? loaded = cache.GetOrRequest(ALLOWED_URL, BOT_A);
 
             Assert.AreSame(texture, loaded);
             Assert.IsFalse(texture.isReadable);
         }
 
         [Test]
-        public void FetchCanonicalUrlWithoutRedirects()
+        public void FetchWithoutRedirects()
         {
             RequestEnvelope<GetTextureWebRequest, GetTextureArguments> envelope = default;
 
@@ -198,7 +266,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
                                      Arg.Any<IProgress<float>?>())
                                 .Returns(new UniTaskCompletionSource<Texture2D?>().Task);
 
-            cache.GetOrRequest("https://CAST-PRESENTER-SERVICE.decentraland.org:443" + SLIDE_PATH);
+            cache.GetOrRequest(ALLOWED_URL, BOT_A);
 
             Assert.IsTrue(envelope.args.DisableRedirects);
             Assert.AreEqual(ALLOWED_URL, envelope.CommonArguments.URL.Value);

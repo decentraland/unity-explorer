@@ -92,6 +92,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
 
         [TestCase("0xOTHER", 0)]
         [TestCase("stream:", 193)]
+        [TestCase("0x0123456789abcdef0123456789abcdef01234567\\n", 0)]
         public void DropPresenterIdentity_WhenFormatIsInvalid(string prefix, int padding)
         {
             PresentationBotMetadata metadata = ParseOrFail(WithPresenterIdentity(prefix + new string('a', padding)));
