@@ -1,4 +1,5 @@
 using DCL.AuthenticationScreenFlow;
+using DCL.AvatarRendering.Loading.Components;
 using DCL.UI.UpgradeGuestAccountPopup;
 using Newtonsoft.Json.Linq;
 using System;
@@ -122,10 +123,10 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
             }
         }
 
-        private void OnAvatarSelected(string bodyType, int presetSlot) =>
+        private void OnAvatarSelected(BodyShape bodyType, int presetSlot) =>
             analytics.Track(Authentication.AVATAR_COMPLETE, new JObject
             {
-                { "body_type", bodyType },
+                { "body_type", bodyType == BodyShape.MALE.Index ? "male" : "female" },
                 { "preset_slot", presetSlot },
             }, isInstant: true);
 
