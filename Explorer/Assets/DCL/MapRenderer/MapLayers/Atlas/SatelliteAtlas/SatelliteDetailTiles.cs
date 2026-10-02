@@ -22,6 +22,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
     ///     Each map camera gets the level whose sharpness is nearest to its render texture's; finer levels draw on top.
     ///     Tiles are requested once the cameras have been still for <see cref="SETTLE_SECONDS" />, so a zoom tween or a pan
     ///     doesn't fetch levels and tiles that only pass through the view; a download whose tile leaves the view is cancelled.
+    ///     At most <see cref="MAX_CONCURRENT_LOADS" /> tiles load at a time, nearest to their camera's centre first.
     ///     Downloaded tiles are kept in the disk cache, so a later session reads them from disk.
     /// </summary>
     internal class SatelliteDetailTiles : IDisposable
@@ -30,6 +31,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
         internal const int MIN_LEVEL = 4;
         internal const int MAX_LEVEL = 8;
         internal const int MAX_TILES_PER_CAMERA = 64;
+        internal const int MAX_CONCURRENT_LOADS = 8;
         private const int TILE_PIXELS = 512;
         private const string CACHE_EXTENSION = "ktx2";
         private const int CACHE_ITERATION = 1;
@@ -53,6 +55,8 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
 
         private readonly Dictionary<Vector3Int, Tile> tiles = new ();
         private readonly Stack<AtlasChunk> pooledViews = new ();
+        private readonly List<Vector3Int> pending = new ();
+        private readonly NearestFirstComparer nearestFirst;
         private readonly List<Vector3Int> unusedLoads = new ();
         private readonly List<KeyValuePair<int, Vector3Int>> evictions = new ();
 
@@ -60,6 +64,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
         private float baseChunkSize;
         private int refreshStamp;
         private float lastCameraChangeTime;
+        private int activeLoads;
         private bool settlePending;
         private bool tileFailureReported;
         private bool diskCacheFailureReported;
@@ -71,6 +76,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             this.diskCache = diskCache;
             this.cullingController = cullingController;
             this.drawOrderOfMinLevel = drawOrderOfMinLevel;
+            nearestFirst = new NearestFirstComparer(tiles);
 
             template.material.SetFloat(SATURATION, SATURATION_VALUE);
             this.template = template.GetComponent<AtlasChunk>();
@@ -91,6 +97,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
         {
             cullingController.CamerasChanged -= Refresh;
             lifetimeCts.SafeCancelAndDispose();
+            pending.Clear();
 
             foreach (Tile tile in tiles.Values)
                 DestroyTile(tile);
@@ -104,7 +111,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
         }
 
         /// <summary>
-        ///     Marks the tiles every active camera shows, drops the downloads of tiles that left the view, evicts the oldest
+        ///     Marks the tiles every active camera shows, drops the loads of tiles that left the view, evicts the oldest
         ///     loaded tiles over the cache cap, and schedules the missing tiles' requests for when the cameras settle.
         ///     Does nothing while the satellite layer is hidden.
         /// </summary>
@@ -152,7 +159,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
         internal static RectInt TileRange(Rect rect, int level, Vector2 gridTopLeft, float bundledChunkSize)
         {
             int side = 1 << level;
-            float tileSize = bundledChunkSize * (1 << BASE_LEVEL) / side;
+            float tileSize = TileSize(level, bundledChunkSize);
 
             int minI = Mathf.Clamp(Mathf.FloorToInt((rect.xMin - gridTopLeft.x) / tileSize), 0, side - 1);
             int maxI = Mathf.Clamp(Mathf.FloorToInt((rect.xMax - gridTopLeft.x) / tileSize), 0, side - 1);
@@ -179,9 +186,16 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             return level;
         }
 
+        /// <summary>Centre of the tile <paramref name="id" /> (x, y, level) in local units.</summary>
+        internal static Vector2 TileCenter(Vector3Int id, Vector2 gridTopLeft, float bundledChunkSize)
+        {
+            float tileSize = TileSize(id.z, bundledChunkSize);
+            return new Vector2(gridTopLeft.x + ((id.x + 0.5f) * tileSize), gridTopLeft.y - ((id.y + 0.5f) * tileSize));
+        }
+
         /// <summary>
-        ///     Fills <paramref name="result" /> with the tiles that have no texture yet and were not used in the refresh
-        ///     <paramref name="refreshStamp" />: downloads for tiles that left the view, and failed tiles out of view.
+        ///     Fills <paramref name="result" /> with the tiles that have no texture and were not used in the refresh
+        ///     <paramref name="refreshStamp" />: pending or downloading tiles that left the view, and failed or empty tiles out of view.
         /// </summary>
         internal static void CollectUnusedLoads(Dictionary<Vector3Int, Tile> tiles, int refreshStamp, List<Vector3Int> result)
         {
@@ -215,7 +229,10 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
                 result.RemoveRange(excess, result.Count - excess);
         }
 
-        /// <summary>Waits until no camera has changed for <see cref="SETTLE_SECONDS" />, then requests the visible tiles that are missing.</summary>
+        private static float TileSize(int level, float bundledChunkSize) =>
+            bundledChunkSize * (1 << BASE_LEVEL) / (1 << level);
+
+        /// <summary>Waits until no camera has changed for <see cref="SETTLE_SECONDS" />, then queues the visible tiles that are missing.</summary>
         private async UniTaskVoid RequestWhenSettledAsync(CancellationToken ct)
         {
             settlePending = true;
@@ -233,13 +250,16 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
                 }
 
                 if (template.transform.parent.gameObject.activeInHierarchy)
+                {
                     VisitVisibleTiles(request: true);
+                    PumpLoads();
+                }
             }
             catch (OperationCanceledException) { }
             finally { settlePending = false; }
         }
 
-        /// <summary>Marks every tile inside an active camera as used in the current refresh and, when <paramref name="request" />, loads the missing ones.</summary>
+        /// <summary>Marks every tile inside an active camera as used in the current refresh and, when <paramref name="request" />, queues the missing ones.</summary>
         private void VisitVisibleTiles(bool request)
         {
             float bundledPixelsPerUnit = TILE_PIXELS / baseChunkSize;
@@ -262,11 +282,11 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
 
                 for (int j = range.yMin; j < range.yMax; j++)
                 for (int i = range.xMin; i < range.xMax; i++)
-                    Use(new Vector3Int(i, j, level), request);
+                    Use(new Vector3Int(i, j, level), request, camera.Rect.center);
             }
         }
 
-        private void Use(Vector3Int id, bool request)
+        private void Use(Vector3Int id, bool request, Vector2 cameraCenter)
         {
             if (tiles.TryGetValue(id, out Tile? tile))
             {
@@ -275,7 +295,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
                 if (request && tile.FailedAt is { } failedAt && UnityEngine.Time.realtimeSinceStartup - failedAt >= RETRY_FAILED_TILE_AFTER_SECONDS)
                 {
                     tile.FailedAt = null;
-                    LoadAsync(id, tile).Forget();
+                    Enqueue(id, tile, cameraCenter);
                 }
 
                 return;
@@ -286,15 +306,45 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
 
             tile = new Tile(RentView()) { LastUsed = refreshStamp };
             tiles.Add(id, tile);
-            LoadAsync(id, tile).Forget();
+            Enqueue(id, tile, cameraCenter);
+        }
+
+        private void Enqueue(Vector3Int id, Tile tile, Vector2 cameraCenter)
+        {
+            tile.Pending = true;
+            tile.DistanceSqToCamera = (TileCenter(id, gridTopLeft, baseChunkSize) - cameraCenter).sqrMagnitude;
+            pending.Add(id);
+        }
+
+        /// <summary>Starts the pending loads nearest to their camera's centre, keeping at most <see cref="MAX_CONCURRENT_LOADS" /> in flight.</summary>
+        private void PumpLoads()
+        {
+            if (pending.Count == 0)
+                return;
+
+            pending.Sort(nearestFirst);
+            var consumed = 0;
+
+            for (; consumed < pending.Count && activeLoads < MAX_CONCURRENT_LOADS; consumed++)
+            {
+                // A queued tile may have been dropped, or started through a duplicate entry, since it was queued.
+                if (tiles.TryGetValue(pending[consumed], out Tile? tile) && tile.Pending)
+                {
+                    tile.Pending = false;
+                    activeLoads++;
+                    LoadAsync(pending[consumed], tile).Forget();
+                }
+            }
+
+            pending.RemoveRange(0, consumed);
         }
 
         private async UniTaskVoid LoadAsync(Vector3Int id, Tile tile)
         {
             CancellationToken ct = tile.Cts.Token;
-            int level = id.z;
-            var url = $"{baseUrl}/{level}/{id.x}%2C{id.y}.ktx2";
-            Texture2D texture;
+            var url = $"{baseUrl}/{id.z}/{id.x}%2C{id.y}.ktx2";
+            Texture2D? texture = null;
+            Exception? failure = null;
 
             try
             {
@@ -303,41 +353,22 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
                 await UniTask.SwitchToMainThread(ct);
                 texture = await KtxTextureDecoder.DecodeAsync(bytes, linear: false, TextureWrapMode.Clamp, FilterMode.Bilinear, readable: false, url);
             }
-            catch (OperationCanceledException) { return; }
-            catch (Exception e)
-            {
-                // One report per session: a wrong or offline URL fails every tile in view.
-                if (!tileFailureReported)
-                {
-                    tileFailureReported = true;
-                    ReportHub.LogException(e, ReportCategory.UI);
-                }
+            catch (OperationCanceledException) { }
+            catch (Exception e) { failure = e; }
 
-                tile.FailedAt = UnityEngine.Time.realtimeSinceStartup;
-                return;
-            }
+            // A request can fail on another thread; the tiles and their views are only touched on the main one.
+            await UniTask.SwitchToMainThread();
+            activeLoads--;
 
             // The tile was dropped while loading: it no longer owns anything, so the texture is destroyed here.
             if (ct.IsCancellationRequested)
-            {
                 UnityObjectUtils.SafeDestroy(texture);
-                return;
-            }
+            else if (failure != null)
+                Fail(tile, failure);
+            else if (texture != null)
+                Show(id, tile, texture);
 
-            tile.Texture = texture;
-            float tileSize = baseChunkSize * (1 << BASE_LEVEL) / (1 << level);
-
-            tile.Sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), VectorUtilities.OneHalf, texture.width / tileSize, 0, SpriteMeshType.FullRect, Vector4.one, false);
-
-            SpriteRenderer renderer = tile.View.MainSpriteRenderer;
-            renderer.sprite = tile.Sprite;
-            renderer.sortingOrder = drawOrderOfMinLevel + level - MIN_LEVEL;
-            renderer.color = AtlasChunkConstants.INITIAL_COLOR;
-            renderer.enabled = true;
-
-            tile.View.transform.localPosition = new Vector3(gridTopLeft.x + ((id.x + 0.5f) * tileSize), gridTopLeft.y - ((id.y + 0.5f) * tileSize), 0);
-            tile.View.gameObject.SetActive(true);
-            renderer.DOColor(AtlasChunkConstants.FINAL_COLOR, FADE_IN_SECONDS);
+            PumpLoads();
         }
 
         /// <summary>The tile's KTX2 file from the disk cache, or downloaded and stored there for the next session.</summary>
@@ -394,6 +425,43 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             ReportHub.Log(ReportCategory.UI, $"Satellite tiles are not using the disk cache: {message}");
         }
 
+        private void Fail(Tile tile, Exception failure)
+        {
+            // A tile the server doesn't have stays empty: there is nothing to retry or report.
+            if (failure is UnityWebRequestException { ResponseCode: WebRequestUtils.NOT_FOUND })
+            {
+                tile.Empty = true;
+                return;
+            }
+
+            // One report per session: a wrong or offline URL fails every tile in view.
+            if (!tileFailureReported)
+            {
+                tileFailureReported = true;
+                ReportHub.LogException(failure, ReportCategory.UI);
+            }
+
+            tile.FailedAt = UnityEngine.Time.realtimeSinceStartup;
+        }
+
+        private void Show(Vector3Int id, Tile tile, Texture2D texture)
+        {
+            tile.Texture = texture;
+            float tileSize = TileSize(id.z, baseChunkSize);
+
+            tile.Sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), VectorUtilities.OneHalf, texture.width / tileSize, 0, SpriteMeshType.FullRect, Vector4.one, false);
+
+            SpriteRenderer renderer = tile.View.MainSpriteRenderer;
+            renderer.sprite = tile.Sprite;
+            renderer.sortingOrder = drawOrderOfMinLevel + id.z - MIN_LEVEL;
+            renderer.color = AtlasChunkConstants.INITIAL_COLOR;
+            renderer.enabled = true;
+
+            tile.View.transform.localPosition = TileCenter(id, gridTopLeft, baseChunkSize);
+            tile.View.gameObject.SetActive(true);
+            renderer.DOColor(AtlasChunkConstants.FINAL_COLOR, FADE_IN_SECONDS);
+        }
+
         private AtlasChunk RentView()
         {
             if (pooledViews.Count > 0)
@@ -433,12 +501,32 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             public Texture2D? Texture;
             public Sprite? Sprite;
             public float? FailedAt;
+            public float DistanceSqToCamera;
             public int LastUsed;
+            public bool Pending;
+            public bool Empty;
 
             public Tile(AtlasChunk view)
             {
                 View = view;
             }
+        }
+
+        private class NearestFirstComparer : IComparer<Vector3Int>
+        {
+            private readonly Dictionary<Vector3Int, Tile> tiles;
+
+            public NearestFirstComparer(Dictionary<Vector3Int, Tile> tiles)
+            {
+                this.tiles = tiles;
+            }
+
+            public int Compare(Vector3Int a, Vector3Int b) =>
+                DistanceSq(a).CompareTo(DistanceSq(b));
+
+            // A tile dropped since it was queued sorts last, where the pump skips it.
+            private float DistanceSq(Vector3Int id) =>
+                tiles.TryGetValue(id, out Tile? tile) ? tile.DistanceSqToCamera : float.MaxValue;
         }
     }
 }
