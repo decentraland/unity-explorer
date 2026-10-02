@@ -14,7 +14,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
     [CreateAssetMenu(fileName = "AnalyticsConfiguration", menuName = "DCL/Diagnostics/Analytics Configuration")]
     public class AnalyticsConfiguration : ScriptableObject
     {
-        public const string DEFAULT_SEGMENT_API_HOST = "https://api.e.decentraland.org/v1";
+        public const string DEFAULT_SEGMENT_API_HOST = "https://api.e.decentraland.org";
 
         private const string SEGMENT_WRITE_KEY = "SEGMENT_WRITE_KEY";
 
