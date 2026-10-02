@@ -196,7 +196,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
                 tiles.Add(id, tile);
                 LoadAsync(id, tile).Forget();
             }
-            else if (tile.FailedAt is { } failedAt && Time.realtimeSinceStartup - failedAt >= RETRY_FAILED_TILE_AFTER_SECONDS)
+            else if (tile.FailedAt is { } failedAt && UnityEngine.Time.realtimeSinceStartup - failedAt >= RETRY_FAILED_TILE_AFTER_SECONDS)
             {
                 tile.FailedAt = null;
                 LoadAsync(id, tile).Forget();
@@ -235,7 +235,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
                     ReportHub.LogException(e, ReportCategory.UI);
                 }
 
-                tile.FailedAt = Time.realtimeSinceStartup;
+                tile.FailedAt = UnityEngine.Time.realtimeSinceStartup;
                 return;
             }
 
