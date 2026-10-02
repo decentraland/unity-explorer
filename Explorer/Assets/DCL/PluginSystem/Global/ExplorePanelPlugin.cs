@@ -86,7 +86,6 @@ using ECS.SceneLifeCycle.Realm;
 using Global.AppArgs;
 using Runtime.Wearables;
 using UnityEngine;
-using UnityEngine.Serialization;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Audio;
 using UnityEngine.InputSystem;
@@ -785,7 +784,7 @@ namespace DCL.PluginSystem.Global
             [field: SerializeField] public ChatSettingsAsset ChatSettingsAsset { get; private set; } = null!;
             [field: SerializeField] public AssetReferenceT<CategoryMappingSO> CategoryMappingSO { get; private set; } = null!;
 
-            [field: SerializeField] [field: FormerlySerializedAs("<pointAtMarkerVisibilitySettings>k__BackingField")]
+            [field: SerializeField]
             public PointAtMarkerVisibilitySettings PointAtMarkerVisibilitySettings { get; private set; } = null!;
 
             [field: Header("Camera Reel")]
