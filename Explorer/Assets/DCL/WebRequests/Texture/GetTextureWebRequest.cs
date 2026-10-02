@@ -42,6 +42,9 @@ namespace DCL.WebRequests
             string requestUrl = useKtx ? string.Format(urlsSource.Url(DecentralandUrl.MediaConverter), Uri.EscapeDataString(url)) : url;
             UnityWebRequest webRequest = UnityWebRequest.Get(requestUrl);
 
+            if (textureArguments.DisableRedirects)
+                webRequest.redirectLimit = 0;
+
             return new GetTextureWebRequest(webRequest, requestUrl, textureArguments.TextureType);
         }
 

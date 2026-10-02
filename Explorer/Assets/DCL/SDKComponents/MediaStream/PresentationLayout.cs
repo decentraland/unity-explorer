@@ -1,5 +1,6 @@
 using Newtonsoft.Json;
 using System;
+using System.Text.RegularExpressions;
 using UnityEngine;
 
 namespace DCL.SDKComponents.MediaStream
@@ -18,10 +19,16 @@ namespace DCL.SDKComponents.MediaStream
         private const double LARGE_CAMERA_RATIO = 0.25;
         private const string LARGE_CAMERA_SIZE = "large";
 
+        private static readonly Regex PRESENTER_IDENTITY = new (@"^(stream:\S{1,121}|0x[0-9a-fA-F]{40})$", RegexOptions.Compiled);
+
         /// <summary>
         ///     Deserializes bot metadata. Never throws and never logs.
         /// </summary>
-        /// <returns><c>null</c> for empty or malformed input, or for a <c>slide</c> without a url or with a size outside <c>[1, MAX_SLIDE_SIZE]</c>.</returns>
+        /// <returns>
+        ///     <c>null</c> for empty or malformed input, or for a <c>slide</c> without a url, with a url longer than
+        ///     <c>MAX_SLIDE_URL_LENGTH</c> or with a size outside <c>[1, MAX_SLIDE_SIZE]</c>. An invalid
+        ///     <c>presenterIdentity</c> and an <c>overlay</c> with non-finite coordinates are dropped to <c>null</c>.
+        /// </returns>
         public static PresentationBotMetadata? Parse(string? json)
         {
             if (string.IsNullOrEmpty(json))
@@ -32,12 +39,21 @@ namespace DCL.SDKComponents.MediaStream
             try { metadata = JsonConvert.DeserializeObject<PresentationBotMetadata>(json); }
             catch (Exception) { return null; }
 
-            PresentationSlide? slide = metadata?.slide;
+            if (metadata == null)
+                return null;
+
+            if (metadata.presenterIdentity != null && !PRESENTER_IDENTITY.IsMatch(metadata.presenterIdentity))
+                metadata.presenterIdentity = null;
+
+            if (metadata.overlay != null && (!double.IsFinite(metadata.overlay.x) || !double.IsFinite(metadata.overlay.y)))
+                metadata.overlay = null;
+
+            PresentationSlide? slide = metadata.slide;
 
             if (slide == null)
                 return metadata;
 
-            return string.IsNullOrEmpty(slide.url) || !IsValidSlideSize(slide.width) || !IsValidSlideSize(slide.height) ? null : metadata;
+            return string.IsNullOrEmpty(slide.url) || slide.url.Length > MAX_SLIDE_URL_LENGTH || !IsValidSlideSize(slide.width) || !IsValidSlideSize(slide.height) ? null : metadata;
         }
 
         /// <summary>
@@ -55,7 +71,8 @@ namespace DCL.SDKComponents.MediaStream
 
             PresentationRect? geometry = videos[index]?.geometry;
 
-            if (geometry == null || geometry.width <= 0 || geometry.height <= 0)
+            if (geometry == null || !float.IsFinite(geometry.x) || !float.IsFinite(geometry.y) || !float.IsFinite(geometry.width) || !float.IsFinite(geometry.height)
+                || !(geometry.width > 0) || !(geometry.height > 0))
                 return false;
 
             rect = new Vector4(geometry.x / slide.width, geometry.y / slide.height, geometry.width / slide.width, geometry.height / slide.height);

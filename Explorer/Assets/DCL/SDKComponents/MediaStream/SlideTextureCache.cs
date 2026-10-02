@@ -5,8 +5,11 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
+using System.Text.RegularExpressions;
 using System.Threading;
 using UnityEngine;
+using Utility;
 using Utility.Networking;
 using Object = UnityEngine.Object;
 
@@ -15,7 +18,10 @@ namespace DCL.SDKComponents.MediaStream
     /// <summary>
     ///     App-wide cache of presentation slide textures keyed by url, holding at most <see cref="CAPACITY" /> and
     ///     destroying the oldest first. Fetches only allowlisted urls, once per url while in flight, and backs off
-    ///     after a failure. Main-thread only.
+    ///     after a failure. Starts at most one fetch per <see cref="MIN_FETCH_INTERVAL_SECONDS" />, tracks at most
+    ///     <see cref="MAX_TRACKED_URLS" /> rejected and <see cref="MAX_TRACKED_URLS" /> failed urls, logs at most
+    ///     <see cref="MAX_REPORTS" /> times in its lifetime, and drops slides decoded larger than
+    ///     <see cref="PresentationLayout.MAX_SLIDE_SIZE" /> on either side. Main-thread only.
     /// </summary>
     public sealed class SlideTextureCache : IDisposable
     {
@@ -28,7 +34,10 @@ namespace DCL.SDKComponents.MediaStream
 
         private const string CAST_PRESENTER_HOST_PREFIX = "cast-presenter-service.";
 
+        private static readonly Regex SLIDE_PATH = new (@"/presentations/[0-9a-f-]{36}/slides/[0-9a-f]{16}\.png$", RegexOptions.Compiled);
+
         private readonly IWebRequestController webRequestController;
+        private readonly Func<float> getRealtimeSinceStartup;
         private readonly Dictionary<string, Texture2D> textures = new ();
         private readonly List<string> order = new ();
         private readonly HashSet<string> inFlight = new ();
@@ -36,25 +45,31 @@ namespace DCL.SDKComponents.MediaStream
         private readonly Dictionary<string, (int attempts, float retryAt)> failed = new ();
         private readonly CancellationTokenSource cts = new ();
 
+        private float nextFetchAt;
+        private int reportsLeft = MAX_REPORTS;
+        private bool disposed;
+
+        internal int trackedUrlCount => rejected.Count + failed.Count;
+
         public SlideTextureCache(IWebRequestController webRequestController)
-        {
-            this.webRequestController = webRequestController;
-        }
+            : this(webRequestController, static () => UnityEngine.Time.realtimeSinceStartup) { }
 
         internal SlideTextureCache(IWebRequestController webRequestController, Func<float> getRealtimeSinceStartup)
         {
             this.webRequestController = webRequestController;
+            this.getRealtimeSinceStartup = getRealtimeSinceStartup;
         }
-
-        internal int trackedUrlCount => throw new NotImplementedException();
 
         public void Dispose()
         {
+            if (disposed) return;
+            disposed = true;
+
             cts.Cancel();
             cts.Dispose();
 
             foreach (Texture2D texture in textures.Values)
-                Object.Destroy(texture);
+                UnityObjectUtils.SafeDestroy(texture);
 
             textures.Clear();
             order.Clear();
@@ -64,17 +79,76 @@ namespace DCL.SDKComponents.MediaStream
         }
 
         /// <summary>
-        ///     Whether <paramref name="url" /> is an https url on the cast presenter service host of a Decentraland
-        ///     domain. In the Editor, loopback http urls are allowed too.
+        ///     Whether <paramref name="url" /> is a contract-shaped slide url: https on the default port, an ASCII host
+        ///     equal to the cast presenter service host of a Decentraland domain, no userinfo, query, fragment or
+        ///     backslash, and a path ending in <c>/presentations/{uuid}/slides/{16 lowercase hex}.png</c>. In the
+        ///     Editor, loopback http urls on any port with the same path are allowed too.
         /// </summary>
-        public static bool IsAllowedUrl(string url)
+        public static bool IsAllowedUrl(string url) =>
+            TryParseAllowedUrl(url, out _);
+
+        /// <summary>
+        ///     The cached texture for <paramref name="url" />, or <c>null</c> while it loads, cools down after a
+        ///     failure, waits for the fetch interval, or is disallowed. The first call for a fetchable url starts the
+        ///     download of its canonical form.
+        /// </summary>
+        public Texture2D? GetOrRequest(string url)
+        {
+            if (textures.TryGetValue(url, out Texture2D texture))
+                return texture;
+
+            if (inFlight.Contains(url) || rejected.Contains(url))
+                return null;
+
+            float now = getRealtimeSinceStartup();
+
+            if (now < nextFetchAt || (failed.TryGetValue(url, out (int attempts, float retryAt) failure) && now < failure.retryAt))
+                return null;
+
+            if (!TryParseAllowedUrl(url, out Uri? uri))
+            {
+                if (rejected.Count >= MAX_TRACKED_URLS)
+                    rejected.Clear();
+
+                rejected.Add(url);
+
+                if (TryConsumeReport())
+                    ReportHub.LogWarning(ReportCategory.MEDIA_STREAM, $"Slide url rejected, origin not allowed: {OriginOf(url)}");
+
+                return null;
+            }
+
+            nextFetchAt = now + MIN_FETCH_INTERVAL_SECONDS;
+            inFlight.Add(url);
+            LoadAsync(url, uri.AbsoluteUri).Forget();
+            return null;
+        }
+
+        private static bool TryParseAllowedUrl(string url, [NotNullWhen(true)] out Uri? uri)
+        {
+            uri = null;
+
+            if (url.Contains('\\') || !Uri.TryCreate(url, UriKind.Absolute, out Uri? parsed))
+                return false;
+
+            if (parsed.UserInfo.Length > 0 || parsed.Query.Length > 0 || parsed.Fragment.Length > 0 || !SLIDE_PATH.IsMatch(parsed.AbsolutePath))
+                return false;
+
+            if (!IsCastPresenterOrigin(parsed))
+                return false;
+
+            uri = parsed;
+            return true;
+        }
+
+        private static bool IsCastPresenterOrigin(Uri uri)
         {
 #if UNITY_EDITOR
-            if (LoopbackUrls.IsLoopbackHttpUrl(url))
+            if (uri.Scheme == Uri.UriSchemeHttp && LoopbackUrls.IsLoopbackHost(uri.Host))
                 return true;
 #endif
 
-            if (!Uri.TryCreate(url, UriKind.Absolute, out Uri? uri) || uri.Scheme != Uri.UriSchemeHttps)
+            if (uri.Scheme != Uri.UriSchemeHttps || !uri.IsDefaultPort || !IsAscii(uri.Host))
                 return false;
 
             IReadOnlyList<string> domains = IDecentralandUrlsSource.ALL_DOMAINS;
@@ -86,40 +160,22 @@ namespace DCL.SDKComponents.MediaStream
             return false;
         }
 
-        /// <summary>
-        ///     The cached texture for <paramref name="url" />, or <c>null</c> while it loads, cools down after a
-        ///     failure, or is disallowed. The first call for a fetchable url starts the download.
-        /// </summary>
-        public Texture2D? GetOrRequest(string url)
+        private static bool IsAscii(string value)
         {
-            if (textures.TryGetValue(url, out Texture2D texture))
-                return texture;
+            foreach (char c in value)
+                if (c >= 0x80)
+                    return false;
 
-            if (inFlight.Contains(url) || rejected.Contains(url))
-                return null;
-
-            if (failed.TryGetValue(url, out (int attempts, float retryAt) failure) && UnityEngine.Time.realtimeSinceStartup < failure.retryAt)
-                return null;
-
-            if (!IsAllowedUrl(url))
-            {
-                rejected.Add(url);
-                ReportHub.LogWarning(ReportCategory.MEDIA_STREAM, $"Slide url rejected, origin not allowed: {OriginOf(url)}");
-                return null;
-            }
-
-            inFlight.Add(url);
-            LoadAsync(url).Forget();
-            return null;
+            return true;
         }
 
-        private async UniTaskVoid LoadAsync(string url)
+        private async UniTaskVoid LoadAsync(string url, string fetchUrl)
         {
             try
             {
-                Texture2D texture = await webRequestController.GetTextureAsync(
-                    new CommonArguments(URLAddress.FromString(url), RetryPolicy.DEFAULT),
-                    new GetTextureArguments(TextureType.Albedo, useKtx: false),
+                Texture2D? texture = await webRequestController.GetTextureAsync(
+                    new CommonArguments(URLAddress.FromString(fetchUrl), RetryPolicy.DEFAULT),
+                    new GetTextureArguments(TextureType.Albedo, useKtx: false, disableRedirects: true),
                     GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp, FilterMode.Bilinear),
                     cts.Token,
                     ReportCategory.MEDIA_STREAM,
@@ -131,17 +187,57 @@ namespace DCL.SDKComponents.MediaStream
                     return;
                 }
 
+                if (texture == null)
+                {
+                    if (RecordFailure(url) == 1 && TryConsumeReport())
+                        ReportHub.LogWarning(ReportCategory.MEDIA_STREAM, $"Slide request returned no texture: {OriginOf(url)}");
+
+                    return;
+                }
+
+                if (texture.width > PresentationLayout.MAX_SLIDE_SIZE || texture.height > PresentationLayout.MAX_SLIDE_SIZE)
+                {
+                    if (RecordFailure(url) == 1 && TryConsumeReport())
+                        ReportHub.LogWarning(ReportCategory.MEDIA_STREAM,
+                            $"Slide rejected, decoded size {texture.width}x{texture.height} exceeds {PresentationLayout.MAX_SLIDE_SIZE}: {OriginOf(url)}");
+
+                    UnityObjectUtils.SafeDestroy(texture);
+                    return;
+                }
+
+                if (texture.isReadable)
+                    texture.Apply(false, true);
+
                 failed.Remove(url);
                 Insert(url, texture);
             }
             catch (OperationCanceledException) { }
             catch (Exception e)
             {
-                int attempts = failed.TryGetValue(url, out (int attempts, float retryAt) failure) ? failure.attempts + 1 : 1;
-                failed[url] = (attempts, UnityEngine.Time.realtimeSinceStartup +Mathf.Min(BASE_RETRY_COOLDOWN_SECONDS * attempts, MAX_RETRY_COOLDOWN_SECONDS));
-                ReportHub.LogException(e, ReportCategory.MEDIA_STREAM);
+                if (RecordFailure(url) == 1 && TryConsumeReport())
+                    ReportHub.LogException(e, ReportCategory.MEDIA_STREAM);
             }
             finally { inFlight.Remove(url); }
+        }
+
+        private int RecordFailure(string url)
+        {
+            int attempts = failed.TryGetValue(url, out (int attempts, float retryAt) failure) ? failure.attempts + 1 : 1;
+
+            if (attempts == 1 && failed.Count >= MAX_TRACKED_URLS)
+                failed.Clear();
+
+            failed[url] = (attempts, getRealtimeSinceStartup() + Mathf.Min(BASE_RETRY_COOLDOWN_SECONDS * attempts, MAX_RETRY_COOLDOWN_SECONDS));
+            return attempts;
+        }
+
+        private bool TryConsumeReport()
+        {
+            if (reportsLeft <= 0)
+                return false;
+
+            reportsLeft--;
+            return true;
         }
 
         private void Insert(string url, Texture2D texture)

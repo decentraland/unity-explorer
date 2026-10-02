@@ -13,7 +13,7 @@ namespace DCL.WebRequests
         {
             this.TextureType = textureType;
             this.UseKtx = useKtx;
-            DisableRedirects = false;
+            this.DisableRedirects = disableRedirects;
         }
     }
 }
