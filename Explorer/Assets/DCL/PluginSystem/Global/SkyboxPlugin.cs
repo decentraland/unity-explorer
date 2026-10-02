@@ -37,9 +37,9 @@ namespace DCL.SkyBox
 
         private SkyboxSettings settingsJson;
 
-        // One slot per debug entry, filled the first time that look is picked.
-        private SkyboxSettingsAsset.LookPresetEntry[] debugLookEntries = Array.Empty<SkyboxSettingsAsset.LookPresetEntry>();
-        private ProvidedAsset<SkyboxLookPreset>?[] debugLookPresets = Array.Empty<ProvidedAsset<SkyboxLookPreset>?>();
+        // One slot per settings entry, filled the first time that look is needed (feature flag or debug pick).
+        private SkyboxSettingsAsset.LookPresetEntry[] lookEntries = Array.Empty<SkyboxSettingsAsset.LookPresetEntry>();
+        private ProvidedAsset<SkyboxLookPreset>?[] lookPresets = Array.Empty<ProvidedAsset<SkyboxLookPreset>?>();
 
         private SkyboxSettingsAsset? skyboxSettings;
         private SkyboxRenderController? skyboxRenderController;
@@ -65,13 +65,13 @@ namespace DCL.SkyBox
         {
             debugLookCancellation.SafeCancelAndDispose();
 
-            for (var i = 0; i < debugLookPresets.Length; i++)
+            for (var i = 0; i < lookPresets.Length; i++)
             {
                 // A load cancelled before it reached its slot still holds the reference's handle.
-                if (debugLookPresets[i] is { } provided)
+                if (lookPresets[i] is { } provided)
                     provided.Dispose();
-                else if (debugLookEntries[i].Preset.OperationHandle.IsValid())
-                    debugLookEntries[i].Preset.ReleaseAsset();
+                else if (lookEntries[i].Preset.OperationHandle.IsValid())
+                    lookEntries[i].Preset.ReleaseAsset();
             }
         }
 
@@ -96,6 +96,11 @@ namespace DCL.SkyBox
 
                 skyboxRenderController = Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(skyboxSettings.SkyboxRenderControllerPrefab, ct: ct)).Value);
 
+                lookEntries = skyboxSettings.LookPresets;
+                lookPresets = new ProvidedAsset<SkyboxLookPreset>?[lookEntries.Length];
+                SkyboxLookPreset defaultPreset = skyboxRenderController.Preset;
+                SkyboxLookPreset? flaggedPreset = await LoadFlaggedLookPresetAsync(skyboxSettings, ct);
+
                 AnimationClip skyboxAnimation = (await assetsProvisioner.ProvideMainAssetAsync(skyboxSettings.SkyboxAnimationCycle, ct: ct)).Value;
 
                 // Read the persisted quality setting. On first launch or when running concurrently with
@@ -111,10 +116,14 @@ namespace DCL.SkyBox
                     lensFlareEnabled
                 );
 
+                // Applied with no await after Initialize, so no frame renders the default look first.
+                if (flaggedPreset != null)
+                    skyboxRenderController.ApplyPreset(flaggedPreset);
+
                 if (!skyboxTimeEnabled)
                     skyboxRenderController.DisableSkyboxTime();
 
-                AddLookPresetDebugWidget(skyboxRenderController, skyboxSettings);
+                AddLookPresetDebugWidget(skyboxRenderController, defaultPreset);
             }
             catch (OperationCanceledException)
             {
@@ -176,67 +185,92 @@ namespace DCL.SkyBox
         }
 
         /// <summary>
-        ///     Debug dropdown to compare looks at runtime. Index 0 is the look the prefab ships with, already loaded;
-        ///     the others come from the settings entries and are loaded the first time they are picked, so nothing
-        ///     but the shipped look is resident until then.
+        ///     The look named by the feature flag payload, or null to keep the prefab's default look: no flag, no payload,
+        ///     a name missing from the settings entries, or a failed load.
         /// </summary>
-        private void AddLookPresetDebugWidget(SkyboxRenderController controller, SkyboxSettingsAsset settings)
+        private async UniTask<SkyboxLookPreset?> LoadFlaggedLookPresetAsync(SkyboxSettingsAsset settings, CancellationToken ct)
         {
-            SkyboxSettingsAsset.LookPresetEntry[] entries = settings.DebugLookPresets;
+            if (!FeatureFlagsConfiguration.Instance.TryGetTextPayload(FeatureFlagsStrings.SKYBOX_LOOK_PRESET, FeatureFlagsStrings.SKYBOX_LOOK_PRESET_VARIANT, out string? presetName)
+                || string.IsNullOrWhiteSpace(presetName))
+                return null;
 
-            if (entries.Length == 0)
+            int index = settings.IndexOfLookPreset(presetName);
+
+            if (index < 0)
+            {
+                ReportHub.LogWarning(ReportCategory.SKYBOX, $"Skybox look preset \"{presetName}\" from the feature flag is not in the settings look presets, keeping the default look");
+                return null;
+            }
+
+            try { return await LoadLookPresetAsync(index, ct); }
+            catch (Exception e) when (e is not OperationCanceledException)
+            {
+                ReportHub.LogException(e, ReportCategory.SKYBOX);
+                return null;
+            }
+        }
+
+        /// <summary>
+        ///     Debug dropdown to compare looks at runtime. Index 0 is the prefab's default look, already loaded; the others
+        ///     come from the settings entries and are loaded the first time they are needed, so only the active look is
+        ///     resident until then. The current selection is the active look, which the feature flag may have changed.
+        /// </summary>
+        private void AddLookPresetDebugWidget(SkyboxRenderController controller, SkyboxLookPreset defaultPreset)
+        {
+            if (lookEntries.Length == 0)
                 return;
 
-            SkyboxLookPreset shippedPreset = controller.Preset;
-            debugLookEntries = entries;
-            debugLookPresets = new ProvidedAsset<SkyboxLookPreset>?[entries.Length];
+            var names = new List<string>(lookEntries.Length + 1) { defaultPreset.name };
 
-            var names = new List<string>(entries.Length + 1) { shippedPreset.name };
+            for (var i = 0; i < lookEntries.Length; i++)
+                names.Add(lookEntries[i].Name);
 
-            for (var i = 0; i < entries.Length; i++)
-                names.Add(entries[i].Name);
+            string activeName = names[0];
 
-            var binding = new IndexedElementBinding(names, shippedPreset.name, evt =>
+            for (var i = 0; i < lookPresets.Length; i++)
+                if (lookPresets[i] is { } provided && provided.Value == controller.Preset)
+                    activeName = names[i + 1];
+
+            var binding = new IndexedElementBinding(names, activeName, evt =>
             {
                 // A newer pick cancels the previous load so a late one cannot apply over it.
                 debugLookCancellation = debugLookCancellation.SafeRestart();
-                SwitchLookAsync(controller, shippedPreset, entries, evt.index, debugLookCancellation.Token).Forget();
+                SwitchLookAsync(controller, defaultPreset, evt.index, debugLookCancellation.Token).Forget();
             });
 
             debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.SKYBOX)
                        ?.AddControl(new DebugDropdownDef(binding, "Look preset"), null);
         }
 
-        private async UniTaskVoid SwitchLookAsync(SkyboxRenderController controller, SkyboxLookPreset shippedPreset, SkyboxSettingsAsset.LookPresetEntry[] entries, int index, CancellationToken ct)
+        private async UniTaskVoid SwitchLookAsync(SkyboxRenderController controller, SkyboxLookPreset defaultPreset, int index, CancellationToken ct)
         {
             try
             {
-                SkyboxLookPreset preset = shippedPreset;
-
-                if (index > 0)
-                {
-                    ProvidedAsset<SkyboxLookPreset>? loaded = debugLookPresets[index - 1];
-
-                    if (loaded == null)
-                    {
-                        AssetReferenceT<SkyboxLookPreset> reference = entries[index - 1].Preset;
-
-                        // A load cancelled by an earlier pick keeps running on the reference, and the provisioner hands that
-                        // handle back unfinished; waiting on it first means the provided asset is always complete.
-                        if (reference.OperationHandle.IsValid())
-                            await reference.OperationHandle.WithCancellation(ct);
-
-                        loaded = await assetsProvisioner.ProvideMainAssetAsync(reference, ct);
-                        debugLookPresets[index - 1] = loaded;
-                    }
-
-                    preset = loaded.Value.Value;
-                }
-
+                SkyboxLookPreset preset = index > 0 ? await LoadLookPresetAsync(index - 1, ct) : defaultPreset;
                 controller.ApplyPreset(preset);
             }
             catch (OperationCanceledException) { }
             catch (Exception e) { ReportHub.LogException(e, ReportCategory.SKYBOX); }
+        }
+
+        private async UniTask<SkyboxLookPreset> LoadLookPresetAsync(int entryIndex, CancellationToken ct)
+        {
+            ProvidedAsset<SkyboxLookPreset>? loaded = lookPresets[entryIndex];
+
+            if (loaded == null)
+            {
+                AssetReferenceT<SkyboxLookPreset> reference = lookEntries[entryIndex].Preset;
+
+                // A load cancelled by an earlier pick keeps running on the reference, and the provisioner hands that
+                // handle back unfinished; waiting on it first means the provided asset is always complete.
+                if (reference.OperationHandle.IsValid())
+                    await reference.OperationHandle.WithCancellation(ct);
+
+                loaded = await assetsProvisioner.ProvideMainAssetAsync(reference, ct);
+                lookPresets[entryIndex] = loaded;
+            }
+
+            return loaded.Value.Value;
         }
 
         [Serializable]

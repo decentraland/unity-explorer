@@ -31,8 +31,8 @@ namespace DCL.SkyBox
         public Material SkyboxMaterial = null!;
         public AssetReferenceT<AnimationClip> SkyboxAnimationCycle = null!;
 
-        [Tooltip("Alternative looks for the debug panel dropdown, loaded only when picked. The shipped look is the prefab's own preset and is not listed here.")]
-        public LookPresetEntry[] DebugLookPresets = Array.Empty<LookPresetEntry>();
+        [Tooltip("Alternative looks, loaded only when needed: picked by name through the skybox look preset feature flag, or from the debug panel dropdown. The default look is the prefab's own preset and is not listed here.")]
+        public LookPresetEntry[] LookPresets = Array.Empty<LookPresetEntry>();
 
         public float FullDayCycleInSeconds
         {
@@ -107,6 +107,20 @@ namespace DCL.SkyBox
         // Compares the full scene identity: base parcels are not unique, portable experiences usually share (0,0) with world scenes
         public bool IsSDKControlledBy(SceneShortInfo scene) =>
             CurrentSDKControlledScene is { } owner && owner.Equals(scene);
+
+        /// <summary>
+        ///     Index of the <see cref="LookPresets" /> entry with this name, ignoring case and surrounding whitespace; -1 when none matches.
+        /// </summary>
+        public int IndexOfLookPreset(string name)
+        {
+            string trimmed = name.Trim();
+
+            for (var i = 0; i < LookPresets.Length; i++)
+                if (string.Equals(LookPresets[i].Name, trimmed, StringComparison.OrdinalIgnoreCase))
+                    return i;
+
+            return -1;
+        }
 
         public void Reset()
         {
