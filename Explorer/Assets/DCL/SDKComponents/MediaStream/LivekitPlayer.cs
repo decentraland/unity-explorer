@@ -55,6 +55,7 @@ namespace DCL.SDKComponents.MediaStream
         private Texture? composedTexture;
         private bool loggedBadMetadata;
 
+        private LivekitAddress? requestedAddress;
         private LivekitAddress? playingAddress;
 
         private CurrentVideoStreamInfo? cvs;
@@ -72,9 +73,6 @@ namespace DCL.SDKComponents.MediaStream
         private volatile bool pendingVideoRediscovery;
         private volatile bool pendingAudioRediscovery;
 
-        // Set on Connected/Reconnected (FFI thread), consumed on the main thread: any video stream held
-        // across a connection change belongs to the torn-down connection and must be dropped AND evicted
-        // from the room's stream cache (see EnsureVideoIsPlaying).
         private volatile bool pendingVideoReset;
         private volatile bool pendingPresentationRefresh = true;
 
@@ -131,11 +129,9 @@ namespace DCL.SDKComponents.MediaStream
             if (State != PlayerState.Playing) return;
             if (playingAddress == null) return;
 
-            // Room is tearing down — skip to avoid opening streams with invalid FFI handles,
-            // which would poison the reusable stream cache. Pending flags stay set for reconnect.
             if (!canOpenStreams)
             {
-                EnsureAudioIsPlaying(); // still releases audio sources whose streams died with the room
+                EnsureAudioIsPlaying();
                 return;
             }
 
@@ -148,6 +144,7 @@ namespace DCL.SDKComponents.MediaStream
             }
 
             bool rescan = pendingVideoRediscovery;
+            pendingVideoRediscovery = false;
 
             if (pendingPresentationRefresh)
             {
@@ -158,7 +155,6 @@ namespace DCL.SDKComponents.MediaStream
             if (isComposing)
             {
                 cvs = null;
-                pendingVideoRediscovery = false;
                 EnsurePresentationStreams(rescan);
                 EnsureAudioIsPlaying();
                 return;
@@ -166,8 +162,8 @@ namespace DCL.SDKComponents.MediaStream
 
             presentationVideo = null;
             presenterCamera = null;
-
-            pendingVideoRediscovery = false;
+            compositor?.Release();
+            composedTexture = null;
 
             if (IsVideoOpened)
             {
@@ -175,14 +171,9 @@ namespace DCL.SDKComponents.MediaStream
             }
             else
             {
-                // target was a specific user that went offline or a current-stream that had no tracks,
-                // the recovery is: fall back to first-available.
                 OpenVideoStream(LivekitAddress.CurrentStream());
             }
 
-            // UpdateMediaPlayerSystem has two separate queries: UpdateAudioStream (for PBAudioStream)
-            // and UpdateVideoTexture (for PBVideoPlayer). Entities with only PBVideoPlayer never enter
-            // the audio query, so we drive audio discovery here to keep LiveKit rooms audible.
             EnsureAudioIsPlaying();
         }
 
@@ -219,9 +210,18 @@ namespace DCL.SDKComponents.MediaStream
             CloseCurrentStream();
             lastAudioScanTime = 0f;
 
+            requestedAddress = livekitAddress;
             playingAddress = livekitAddress;
-            pendingPresentationRefresh = false;
-            RefreshPresentation();
+
+            if (canOpenStreams)
+            {
+                pendingPresentationRefresh = false;
+                RefreshPresentation();
+            }
+            else
+            {
+                pendingPresentationRefresh = true;
+            }
 
             if (isComposing)
                 pendingVideoRediscovery = true;
@@ -417,12 +417,22 @@ namespace DCL.SDKComponents.MediaStream
             return null;
         }
 
+        private string? ComposingBotIdentity()
+        {
+            if (!requestedAddress.HasValue) return null;
+
+            if (requestedAddress.Value.IsUserStream(out UserStream userStream))
+                return userStream.Identity.IsPresentationBotIdentity() ? userStream.Identity : null;
+
+            return PresentationBotIdentity();
+        }
+
         private static bool IsPresentationVideo(TrackPublication track) =>
             track.Name == LiveKitMediaExtensions.PRESENTATION_VIDEO_TRACK_NAME;
 
         private bool RefreshPresentation()
         {
-            string? identity = PresentationBotIdentity();
+            string? identity = ComposingBotIdentity();
             string? raw = identity == null ? null : room.Participants.RemoteParticipant(identity)?.Metadata;
 
             if (string.Equals(raw, presentationRawMetadata, StringComparison.Ordinal))
@@ -445,8 +455,13 @@ namespace DCL.SDKComponents.MediaStream
         {
             if (rescan || IsUnresolved(presentationVideo))
             {
-                string? bot = PresentationBotIdentity();
+                string? bot = ComposingBotIdentity();
+                bool heldResolved = presentationVideo.HasValue && presentationVideo.Value.videoStream.Resource.Has;
+                StreamKey heldKey = presentationVideo.HasValue ? presentationVideo.Value.key : default;
                 presentationVideo = RebindVideoStream(presentationVideo, bot == null ? null : FindVideoTrack(bot, static track => IsPresentationVideo(track)));
+
+                if (presentationVideo.HasValue && (!heldResolved || !heldKey.Equals(presentationVideo.Value.key)))
+                    videoGateUrl = null;
             }
 
             if (rescan || IsUnresolved(presenterCamera))
@@ -511,6 +526,7 @@ namespace DCL.SDKComponents.MediaStream
 
         public void CloseCurrentStream()
         {
+            requestedAddress = null;
             cvs = null;
             presentationVideo = null;
             presenterCamera = null;
@@ -519,6 +535,7 @@ namespace DCL.SDKComponents.MediaStream
             videoGateUrl = null;
             videoGateIndex = null;
             videoGateTexture = null;
+            compositor?.Release();
             composedTexture = null;
             pendingPresentationRefresh = true;
             playerState = PlayerState.Stopped;
