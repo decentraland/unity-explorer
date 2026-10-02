@@ -22,6 +22,9 @@ namespace DCL.SDKComponents.MediaStream
         internal const int CAPACITY = 4;
         internal const float BASE_RETRY_COOLDOWN_SECONDS = 10f;
         internal const float MAX_RETRY_COOLDOWN_SECONDS = 60f;
+        internal const float MIN_FETCH_INTERVAL_SECONDS = 0.25f;
+        internal const int MAX_TRACKED_URLS = 32;
+        internal const int MAX_REPORTS = 32;
 
         private const string CAST_PRESENTER_HOST_PREFIX = "cast-presenter-service.";
 
@@ -37,6 +40,13 @@ namespace DCL.SDKComponents.MediaStream
         {
             this.webRequestController = webRequestController;
         }
+
+        internal SlideTextureCache(IWebRequestController webRequestController, Func<float> getRealtimeSinceStartup)
+        {
+            this.webRequestController = webRequestController;
+        }
+
+        internal int trackedUrlCount => throw new NotImplementedException();
 
         public void Dispose()
         {

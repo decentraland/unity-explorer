@@ -11,16 +11,22 @@ namespace DCL.SDKComponents.MediaStream.Tests
 {
     public class SlideTextureCacheShould
     {
-        private const string ALLOWED_URL = "https://cast-presenter-service.decentraland.org/presentations/a/slides/h.png";
+        private const string UUID = "0f8fad5b-d9cb-469f-a165-70867728950e";
+        private const string HASH = "0123456789abcdef";
+        private const string SLIDE_PATH = "/presentations/" + UUID + "/slides/" + HASH + ".png";
+        private const string ORG_ORIGIN = "https://cast-presenter-service.decentraland.org";
+        private const string ALLOWED_URL = ORG_ORIGIN + SLIDE_PATH;
 
         private IWebRequestController webRequestController = null!;
         private SlideTextureCache cache = null!;
+        private float now;
 
         [SetUp]
         public void SetUp()
         {
+            now = 0f;
             webRequestController = Substitute.For<IWebRequestController>();
-            cache = new SlideTextureCache(webRequestController);
+            cache = new SlideTextureCache(webRequestController, () => now);
         }
 
         [TearDown]
@@ -30,17 +36,30 @@ namespace DCL.SDKComponents.MediaStream.Tests
         }
 
         [TestCase(ALLOWED_URL)]
-        [TestCase("https://cast-presenter-service.decentraland.zone/presentations/a/slides/h.png")]
+        [TestCase("https://cast-presenter-service.decentraland.zone" + SLIDE_PATH)]
+        [TestCase(ORG_ORIGIN + "/cast" + SLIDE_PATH)]
+        [TestCase("https://CAST-PRESENTER-SERVICE.DECENTRALAND.ORG" + SLIDE_PATH)]
+        [TestCase("http://localhost:3002" + SLIDE_PATH)]
         public void AllowUrl_WhenHostIsCastPresenterOnOrgOrZone(string url)
         {
             Assert.IsTrue(SlideTextureCache.IsAllowedUrl(url));
         }
 
-        [TestCase("http://cast-presenter-service.decentraland.org/presentations/a/slides/h.png")]
-        [TestCase("https://cast-presenter-service.decentraland.org.evil.com/presentations/a/slides/h.png")]
-        [TestCase("https://evil-cast-presenter-service.decentraland.org/presentations/a/slides/h.png")]
-        [TestCase("https://example.com/presentations/a/slides/h.png")]
+        [TestCase("http://cast-presenter-service.decentraland.org" + SLIDE_PATH)]
+        [TestCase("https://cast-presenter-service.decentraland.org.evil.com" + SLIDE_PATH)]
+        [TestCase("https://evil-cast-presenter-service.decentraland.org" + SLIDE_PATH)]
+        [TestCase("https://example.com" + SLIDE_PATH)]
         [TestCase("not a url")]
+        [TestCase(ORG_ORIGIN + ":8443" + SLIDE_PATH)]
+        [TestCase("https://a@cast-presenter-service.decentraland.org" + SLIDE_PATH)]
+        [TestCase(ALLOWED_URL + "?x=1")]
+        [TestCase(ALLOWED_URL + "#f")]
+        [TestCase("http://evil.example\\@localhost" + SLIDE_PATH)]
+        [TestCase("https://cast-presenter-service.decentraland.org\\@example.com" + SLIDE_PATH)]
+        [TestCase("https://cast-presenter-servıce.decentraland.org" + SLIDE_PATH)]
+        [TestCase(ORG_ORIGIN + "/redirect?to=x")]
+        [TestCase(ORG_ORIGIN + "/presentations/a/slides/h.png")]
+        [TestCase(ORG_ORIGIN + "/presentations/" + UUID + "/slides/0123456789ABCDEF.png")]
         public void RejectUrl_WhenHostOrSchemeIsForeign(string url)
         {
             Assert.IsFalse(SlideTextureCache.IsAllowedUrl(url));
@@ -82,6 +101,121 @@ namespace DCL.SDKComponents.MediaStream.Tests
             Assert.IsNull(retried);
             SendTextureRequest(webRequestController.Received(1));
         }
+
+        [Test]
+        public void BoundTrackedUrls_WhenManyDistinctUrlsAreDisallowed()
+        {
+            for (var i = 0; i < 1000; i++)
+                cache.GetOrRequest($"https://example.com/{i}.png");
+
+            Assert.LessOrEqual(cache.trackedUrlCount, SlideTextureCache.MAX_TRACKED_URLS);
+        }
+
+        [Test]
+        public void StartOneFetchPerInterval_WhenUrlsChurn()
+        {
+            SendTextureRequest(webRequestController).Returns(new UniTaskCompletionSource<Texture2D?>().Task);
+
+            for (var i = 0; i < 10; i++)
+                cache.GetOrRequest(SlideUrl(i));
+
+            SendTextureRequest(webRequestController.Received(1));
+
+            now += SlideTextureCache.MIN_FETCH_INTERVAL_SECONDS;
+            cache.GetOrRequest(SlideUrl(10));
+
+            SendTextureRequest(webRequestController.Received(2));
+        }
+
+        [Test]
+        public void ReportFailureOnce_WhenUrlKeepsFailing()
+        {
+            SendTextureRequest(webRequestController).Returns(_ => UniTask.FromException<Texture2D?>(new InvalidOperationException()));
+            LogAssert.Expect(LogType.Exception, new Regex("InvalidOperationException"));
+
+            cache.GetOrRequest(ALLOWED_URL);
+            now += 61f;
+            cache.GetOrRequest(ALLOWED_URL);
+
+            SendTextureRequest(webRequestController.Received(2));
+            LogAssert.NoUnexpectedReceived();
+        }
+
+        [Test]
+        public void RetryAfterCooldown_WhenClockAdvances()
+        {
+            SendTextureRequest(webRequestController).Returns(_ => UniTask.FromException<Texture2D?>(new InvalidOperationException()));
+            LogAssert.Expect(LogType.Exception, new Regex("InvalidOperationException"));
+            cache.GetOrRequest(ALLOWED_URL);
+
+            now = 9f;
+            cache.GetOrRequest(ALLOWED_URL);
+            SendTextureRequest(webRequestController.Received(1));
+
+            now = 11f;
+            cache.GetOrRequest(ALLOWED_URL);
+            SendTextureRequest(webRequestController.Received(2));
+        }
+
+        [Test]
+        public void RejectDecodedSlide_WhenLargerThanMaxSize()
+        {
+            var oversized = new Texture2D(PresentationLayout.MAX_SLIDE_SIZE + 1, 1);
+            SendTextureRequest(webRequestController).Returns(UniTask.FromResult<Texture2D?>(oversized));
+            LogAssert.Expect(LogType.Warning, new Regex($"{PresentationLayout.MAX_SLIDE_SIZE + 1}x1"));
+
+            cache.GetOrRequest(ALLOWED_URL);
+            now = 1f;
+            Texture2D? afterCompletion = cache.GetOrRequest(ALLOWED_URL);
+
+            Assert.IsNull(afterCompletion);
+            Assert.IsTrue(oversized == null);
+            SendTextureRequest(webRequestController.Received(1));
+        }
+
+        [Test]
+        public void DropCpuCopy_WhenSlideLoads()
+        {
+            var texture = new Texture2D(2, 2);
+            SendTextureRequest(webRequestController).Returns(UniTask.FromResult<Texture2D?>(texture));
+
+            cache.GetOrRequest(ALLOWED_URL);
+            Texture2D? loaded = cache.GetOrRequest(ALLOWED_URL);
+
+            Assert.AreSame(texture, loaded);
+            Assert.IsFalse(texture.isReadable);
+        }
+
+        [Test]
+        public void FetchCanonicalUrlWithoutRedirects()
+        {
+            RequestEnvelope<GetTextureWebRequest, GetTextureArguments> envelope = default;
+
+            webRequestController.SendAsync<GetTextureWebRequest, GetTextureArguments, GetTextureWebRequest.CreateTextureOp, Texture2D>(
+                                     Arg.Do<RequestEnvelope<GetTextureWebRequest, GetTextureArguments>>(e => envelope = e),
+                                     Arg.Any<GetTextureWebRequest.CreateTextureOp>(),
+                                     Arg.Any<long>(),
+                                     Arg.Any<IProgress<float>?>())
+                                .Returns(new UniTaskCompletionSource<Texture2D?>().Task);
+
+            cache.GetOrRequest("https://CAST-PRESENTER-SERVICE.decentraland.org:443" + SLIDE_PATH);
+
+            Assert.IsTrue(envelope.args.DisableRedirects);
+            Assert.AreEqual(ALLOWED_URL, envelope.CommonArguments.URL.Value);
+        }
+
+        [Test]
+        public void NotThrow_WhenDisposedTwice()
+        {
+            Assert.DoesNotThrow(() =>
+            {
+                cache.Dispose();
+                cache.Dispose();
+            });
+        }
+
+        private static string SlideUrl(int index) =>
+            $"{ORG_ORIGIN}/presentations/{index:x8}-d9cb-469f-a165-70867728950e/slides/{HASH}.png";
 
         private static UniTask<Texture2D?> SendTextureRequest(IWebRequestController controller) =>
             controller.SendAsync<GetTextureWebRequest, GetTextureArguments, GetTextureWebRequest.CreateTextureOp, Texture2D>(

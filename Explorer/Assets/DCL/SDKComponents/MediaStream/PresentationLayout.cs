@@ -11,6 +11,7 @@ namespace DCL.SDKComponents.MediaStream
     public static class PresentationLayout
     {
         public const int MAX_SLIDE_SIZE = 4096;
+        public const int MAX_SLIDE_URL_LENGTH = 2048;
 
         private const double MARGIN_RATIO = 0.02;
         private const double SMALL_CAMERA_RATIO = 0.15;

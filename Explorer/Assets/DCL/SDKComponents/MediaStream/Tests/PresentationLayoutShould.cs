@@ -8,6 +8,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
         private const string LEGACY_METADATA = "{\"role\":\"presentation\",\"presentationId\":\"p\",\"currentSlide\":2,\"overlay\":{\"x\":0,\"y\":1,\"size\":\"small\"}}";
         private const string SLIDE_1080 = "\"slide\":{\"url\":\"https://cast-presenter-service.decentraland.org/presentations/p/slides/ab12.png\",\"width\":1920,\"height\":1080}";
         private const string CENTERED_VIDEO = "\"slideVideos\":[{\"url\":\"v.mp4\",\"geometry\":{\"x\":480,\"y\":270,\"width\":960,\"height\":540}}]";
+        private const string PRESENTER_ADDRESS = "0x0123456789abcdefABCDEF0123456789abcdef01";
 
         [TestCase("{")]
         [TestCase("")]
@@ -32,7 +33,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
         [Test]
         public void ParseV2Fields_WhenPresent()
         {
-            var json = $"{{{SLIDE_1080},\"presenterIdentity\":\"0xabc\",\"playingVideoIndex\":0,{CENTERED_VIDEO}}}";
+            var json = $"{{{SLIDE_1080},\"presenterIdentity\":\"{PRESENTER_ADDRESS}\",\"playingVideoIndex\":0,{CENTERED_VIDEO}}}";
 
             PresentationBotMetadata? metadata = PresentationLayout.Parse(json);
 
@@ -40,7 +41,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
             Assert.AreEqual("https://cast-presenter-service.decentraland.org/presentations/p/slides/ab12.png", metadata!.slide!.url);
             Assert.AreEqual(1920, metadata.slide.width);
             Assert.AreEqual(1080, metadata.slide.height);
-            Assert.AreEqual("0xabc", metadata.presenterIdentity);
+            Assert.AreEqual(PRESENTER_ADDRESS, metadata.presenterIdentity);
             Assert.AreEqual(0, metadata.playingVideoIndex);
         }
 
@@ -77,6 +78,45 @@ namespace DCL.SDKComponents.MediaStream.Tests
             PresentationBotMetadata? metadata = PresentationLayout.Parse("{\"slide\":{\"width\":1920,\"height\":1080}}");
 
             Assert.IsNull(metadata);
+        }
+
+        [Test]
+        public void ReturnNull_WhenSlideUrlIsTooLong()
+        {
+            string url = "https://a/" + new string('a', PresentationLayout.MAX_SLIDE_URL_LENGTH + 1 - "https://a/".Length);
+
+            PresentationBotMetadata? metadata = PresentationLayout.Parse($"{{\"slide\":{{\"url\":\"{url}\",\"width\":1920,\"height\":1080}}}}");
+
+            Assert.IsNull(metadata);
+        }
+
+        [TestCase("0xOTHER", 0)]
+        [TestCase("stream:", 193)]
+        public void DropPresenterIdentity_WhenFormatIsInvalid(string prefix, int padding)
+        {
+            PresentationBotMetadata metadata = ParseOrFail(WithPresenterIdentity(prefix + new string('a', padding)));
+
+            Assert.IsNull(metadata.presenterIdentity);
+        }
+
+        [TestCase("stream:place:1", 0)]
+        [TestCase("0x", 40)]
+        public void KeepPresenterIdentity_WhenFormatIsValid(string prefix, int padding)
+        {
+            string identity = prefix + new string('a', padding);
+
+            PresentationBotMetadata metadata = ParseOrFail(WithPresenterIdentity(identity));
+
+            Assert.AreEqual(identity, metadata.presenterIdentity);
+        }
+
+        [TestCase("\"x\":\"NaN\",\"y\":1")]
+        [TestCase("\"x\":0,\"y\":\"Infinity\"")]
+        public void DropOverlay_WhenCoordinatesAreNotFinite(string coordinates)
+        {
+            PresentationBotMetadata metadata = ParseOrFail($"{{{SLIDE_1080},\"overlay\":{{{coordinates},\"size\":\"small\"}}}}");
+
+            Assert.IsNull(metadata.overlay);
         }
 
         [Test]
@@ -166,6 +206,17 @@ namespace DCL.SDKComponents.MediaStream.Tests
             Assert.IsFalse(found);
         }
 
+        [TestCase("\"x\":480,\"y\":270,\"width\":\"NaN\",\"height\":540")]
+        [TestCase("\"x\":\"Infinity\",\"y\":270,\"width\":960,\"height\":540")]
+        public void ReturnNoVideoRect_WhenGeometryIsNotFinite(string geometry)
+        {
+            PresentationBotMetadata metadata = ParseOrFail($"{{{SLIDE_1080},\"playingVideoIndex\":0,\"slideVideos\":[{{\"geometry\":{{{geometry}}}}}]}}");
+
+            bool found = PresentationLayout.TryVideoRect(metadata, out _);
+
+            Assert.IsFalse(found);
+        }
+
         [Test]
         public void TreatMissingSizeAsSmall()
         {
@@ -222,6 +273,9 @@ namespace DCL.SDKComponents.MediaStream.Tests
             Assert.IsNotNull(metadata, json);
             return metadata!;
         }
+
+        private static string WithPresenterIdentity(string identity) =>
+            $"{{{SLIDE_1080},\"presenterIdentity\":\"{identity}\"}}";
 
         private static void AssertPixelRect(Vector4 rect, int width, int height, int left, int top, int diameter)
         {
