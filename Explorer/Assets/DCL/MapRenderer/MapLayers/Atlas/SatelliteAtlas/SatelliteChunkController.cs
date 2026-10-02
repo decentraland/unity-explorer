@@ -55,7 +55,10 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             internalCts?.Dispose();
             internalCts = null;
 
-            ReleaseTexture();
+            if (bundledTextureHandle.IsValid())
+                Addressables.Release(bundledTextureHandle);
+
+            bundledTextureHandle = default;
 
             if (atlasChunk)
                 UnityObjectUtils.SafeDestroy(atlasChunk.gameObject);
@@ -70,8 +73,6 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             CancellationToken loadCt = linkedCts.Token;
             atlasChunk.MainSpriteRenderer.enabled = false;
             atlasChunk.MainSpriteRenderer.color = AtlasChunkConstants.INITIAL_COLOR;
-
-            ReleaseTexture();
 
             AsyncOperationHandle<Texture2D> handle = Addressables.LoadAssetAsync<Texture2D>($"{chunkId.x},{chunkId.y}");
             await handle.Task;
@@ -114,14 +115,6 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             }
 
             textureContainer.AddChunk(chunkId, texture);
-        }
-
-        private void ReleaseTexture()
-        {
-            if (bundledTextureHandle.IsValid())
-                Addressables.Release(bundledTextureHandle);
-
-            bundledTextureHandle = default;
         }
     }
 }
