@@ -16,5 +16,6 @@ MonoBehaviour:
   flushSize: 20
   flushInterval: 60
   segmentWriteKey: 
+  segmentApiHost: https://api.e.decentraland.org
   <PerformanceReportInterval>k__BackingField: 15
   <Mode>k__BackingField: 0

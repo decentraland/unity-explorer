@@ -74,6 +74,7 @@ bool segment_server_initialize(
     const char* queue_file_path,
     uint32_t queue_count_limit,
     const char* segment_write_key,
+    const char* segment_api_host,
     FfiCallbackFn callback_fn,
     FfiErrorCallbackFn error_fn
 );
@@ -83,6 +84,7 @@ Notes:
 
 * Must be called exactly once before any operations.
 * All pointer arguments must remain valid for the duration of the call.
+* `segment_api_host` is the Tracking API origin with no path: the client appends `/v1/batch`, `/v1/track` and the other endpoint paths itself.
 * Callbacks must be thread-safe and non-blocking.
 
 ---
@@ -119,10 +121,10 @@ During application shutdown or disposal:
 
 ## Testing
 
-`cargo test` runs the unit tests (disk-full response mapping, operation construction). The integration test is `#[ignore]`d because it needs a Segment write key and the network; run it explicitly with:
+`cargo test` runs the unit tests (disk-full response mapping, operation construction). The integration test is `#[ignore]`d because it needs a Segment write key and the network; run it explicitly with (`SEGMENT_API_HOST` defaults to the shipped Custom Domain):
 
 ```sh
-SEGMENT_WRITE_KEY=... SEGMENT_QUEUE_PATH=... cargo test -- --ignored
+SEGMENT_WRITE_KEY=... SEGMENT_QUEUE_PATH=... [SEGMENT_API_HOST=...] cargo test -- --ignored
 ```
 
 `rust-segment-verify.yml` runs `cargo check`, `cargo test` and `cargo clippy -- -D warnings` on every PR touching this plugin.
