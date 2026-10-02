@@ -63,6 +63,9 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
 
         public async UniTask LoadImageAsync(Vector2Int chunkId, float chunkWorldSize, CancellationToken ct)
         {
+            if (internalCts == null)
+                return;
+
             linkedCts = CancellationTokenSource.CreateLinkedTokenSource(internalCts.Token, ct);
             CancellationToken loadCt = linkedCts.Token;
             atlasChunk.MainSpriteRenderer.enabled = false;
@@ -70,23 +73,24 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
 
             ReleaseTexture();
 
-            bundledTextureHandle = Addressables.LoadAssetAsync<Texture2D>($"{chunkId.x},{chunkId.y}");
-            await bundledTextureHandle.Task;
+            AsyncOperationHandle<Texture2D> handle = Addressables.LoadAssetAsync<Texture2D>($"{chunkId.x},{chunkId.y}");
+            await handle.Task;
 
             if (loadCt.IsCancellationRequested)
             {
-                ReleaseTexture();
+                Addressables.Release(handle);
                 return;
             }
 
-            if (bundledTextureHandle.Status != AsyncOperationStatus.Succeeded)
+            if (handle.Status != AsyncOperationStatus.Succeeded)
             {
-                ReportHub.LogError(ReportCategory.UI, $"Satellite chunk {chunkId} failed to load from Addressables");
-                ReleaseTexture();
+                ReportHub.LogException(handle.OperationException ?? new Exception($"Satellite chunk {chunkId} failed to load from Addressables"), ReportCategory.UI);
+                Addressables.Release(handle);
                 return;
             }
 
-            Texture2D texture = bundledTextureHandle.Result;
+            bundledTextureHandle = handle;
+            Texture2D texture = handle.Result;
 
             // Closing this in try catch, because SpriteRenderer on application closing is being disposed before this code executes.
             try
