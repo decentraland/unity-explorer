@@ -17,7 +17,7 @@ namespace ECS.StreamableLoading.Fonts.Tests
         private FontAsset bundledUIToolkit = null!;
         private Material generatedMaterial = null!;
         private RuntimeFontAssetFactory factory = null!;
-        private FontFamilyAssets? assets;
+        private SceneFontAssets? assets;
 
         [SetUp]
         public void SetUp()

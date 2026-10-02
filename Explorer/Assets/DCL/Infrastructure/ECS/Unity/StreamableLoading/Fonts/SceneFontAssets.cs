@@ -9,7 +9,7 @@ namespace ECS.StreamableLoading.Fonts
     ///     The font assets of a converted font bundle and the TMP material made for them. Only the material is
     ///     destroyed here; the font assets belong to their bundle.
     /// </summary>
-    public class FontFamilyAssets
+    public class SceneFontAssets
     {
         private readonly Material textMeshProMaterial;
 
@@ -17,7 +17,7 @@ namespace ECS.StreamableLoading.Fonts
 
         public FontAsset UIToolkitFont { get; }
 
-        public FontFamilyAssets(TMP_FontAsset textMeshProFont, FontAsset uiToolkitFont, Material textMeshProMaterial)
+        public SceneFontAssets(TMP_FontAsset textMeshProFont, FontAsset uiToolkitFont, Material textMeshProMaterial)
         {
             TextMeshProFont = textMeshProFont;
             UIToolkitFont = uiToolkitFont;

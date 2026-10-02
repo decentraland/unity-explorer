@@ -5,12 +5,12 @@ using Unity.Profiling;
 
 namespace ECS.StreamableLoading.Fonts
 {
-    public class FontData : StreamableRefCountData<FontFamilyAssets>
+    public class FontData : StreamableRefCountData<SceneFontAssets>
     {
         private readonly AssetBundleData bundle;
 
         /// <param name="bundle">The converted font bundle the assets were loaded from; this font holds one reference to it.</param>
-        public FontData(FontFamilyAssets assets, AssetBundleData bundle) : base(assets, ReportCategory.SDK_FONTS)
+        public FontData(SceneFontAssets assets, AssetBundleData bundle) : base(assets, ReportCategory.SDK_FONTS)
         {
             this.bundle = bundle;
             ProfilingCounters.FontsAmount.Value++;

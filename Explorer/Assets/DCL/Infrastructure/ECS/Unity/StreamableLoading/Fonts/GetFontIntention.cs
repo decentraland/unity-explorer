@@ -9,10 +9,10 @@ namespace ECS.StreamableLoading.Fonts
     {
         public string Src;
 
-        // Set for a scene font file with a usable asset bundle manifest; the font loads only from its converted bundle.
+        // The content hash of the font file; its converted bundle is requested by this hash.
         public string? AssetBundleHash;
 
-        // The manifest's files[] name a bundle for AssetBundleHash. Local scene development never reads files[], so there a bundle is tried unlisted.
+        // Whether the scene's asset bundle manifest files[] name a bundle for AssetBundleHash.
         public bool AssetBundleListed;
 
         public AssetBundleManifestVersion? AssetBundleManifest;

@@ -112,8 +112,8 @@ public class AssetBundleManifestVersion
         }
 
         /// <summary>
-        ///     True when the manifest's <c>files[]</c> list a bundle for this bare hash. Assets that only some converters
-        ///     produce (scene fonts) check this before requesting a bundle, and load the raw content otherwise.
+        ///     True when the manifest's <c>files[]</c> name a converted bundle for this bare hash. Entries without a
+        ///     digest suffix (raw <c>Qm</c> content, build logs) do not count.
         /// </summary>
         public bool ListsConvertedFile(string bareHash) =>
             convertedHashes != null && convertedHashes.Contains(bareHash);

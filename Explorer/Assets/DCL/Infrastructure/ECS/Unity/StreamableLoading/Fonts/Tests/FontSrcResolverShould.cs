@@ -31,8 +31,10 @@ namespace ECS.StreamableLoading.Fonts.Tests
         [Test]
         public void ResolveAContentFile()
         {
+            // Act
             bool resolved = FontSrcResolver.TryCreateIntention(CONTENT_FILE, sceneData, out GetFontIntention intention);
 
+            // Assert
             Assert.That(resolved, Is.True);
             Assert.That(intention.Src, Is.EqualTo(CONTENT_FILE));
             Assert.That(intention.CommonArguments.URL.Value, Is.EqualTo(CONTENT_URL));
@@ -46,10 +48,13 @@ namespace ECS.StreamableLoading.Fonts.Tests
         [TestCase("https://cdn.example.com/fonts/roboto/latin-400-normal.ttf")]
         public void RejectExternalSourcesEvenWhenMediaUrlsAreAllowed(string fontSrc)
         {
+            // Arrange
             sceneData.TryGetMediaUrl(fontSrc, out Arg.Any<URLAddress>()).Returns(true);
 
+            // Act
             bool resolved = FontSrcResolver.TryCreateIntention(fontSrc, sceneData, out _);
 
+            // Assert
             Assert.That(resolved, Is.False);
             sceneData.DidNotReceive().TryGetContentUrl(fontSrc, out Arg.Any<URLAddress>());
             sceneData.DidNotReceive().TryGetMediaUrl(fontSrc, out Arg.Any<URLAddress>());
@@ -63,15 +68,18 @@ namespace ECS.StreamableLoading.Fonts.Tests
         [TestCase("Playfair Display")]
         public void RejectSourcesThatAreNotSceneContentFiles(string fontSrc)
         {
+            // Act
             bool resolved = FontSrcResolver.TryCreateIntention(fontSrc, sceneData, out _);
 
+            // Assert
             Assert.That(resolved, Is.False);
             sceneData.DidNotReceive().TryGetMediaUrl(fontSrc, out Arg.Any<URLAddress>());
         }
 
         [Test]
-        public void ResolveAContentFileNamedLikeAFamily()
+        public void ResolveAContentFileNamedWithoutExtension()
         {
+            // Arrange
             sceneData.TryGetContentUrl("Roboto", out Arg.Any<URLAddress>())
                      .Returns(x =>
                       {
@@ -79,8 +87,10 @@ namespace ECS.StreamableLoading.Fonts.Tests
                           return true;
                       });
 
+            // Act
             bool resolved = FontSrcResolver.TryCreateIntention("Roboto", sceneData, out GetFontIntention intention);
 
+            // Assert
             Assert.That(resolved, Is.True);
             Assert.That(intention.CommonArguments.URL.Value, Is.EqualTo(CONTENT_URL));
         }
@@ -88,10 +98,13 @@ namespace ECS.StreamableLoading.Fonts.Tests
         [Test]
         public void PreferTheConvertedBundleWhenTheManifestListsTheFont()
         {
+            // Arrange
             AssetBundleManifestVersion manifest = WithSceneManifest($"{CONTENT_HASH}_0123456789abcdef0123456789abcdef_windows");
 
+            // Act
             FontSrcResolver.TryCreateIntention(CONTENT_FILE, sceneData, out GetFontIntention intention);
 
+            // Assert
             Assert.That(intention.AssetBundleHash, Is.EqualTo(CONTENT_HASH));
             Assert.That(intention.AssetBundleListed, Is.True);
             Assert.That(intention.AssetBundleManifest, Is.SameAs(manifest));
@@ -102,11 +115,37 @@ namespace ECS.StreamableLoading.Fonts.Tests
         [Test]
         public void MarkTheBundleUnlistedWhenTheManifestListsNoBundleForIt()
         {
+            // Arrange
             WithSceneManifest("bafyotherfile_0123456789abcdef0123456789abcdef_windows");
 
+            // Act
             FontSrcResolver.TryCreateIntention(CONTENT_FILE, sceneData, out GetFontIntention intention);
 
+            // Assert
             Assert.That(intention.AssetBundleListed, Is.False);
+        }
+
+        [Test]
+        public void ShareRequestsForTheSameResolvedContent()
+        {
+            // Arrange
+            FontSrcResolver.TryCreateIntention(CONTENT_FILE, sceneData, out GetFontIntention first);
+            var alias = new GetFontIntention { Src = "fonts/alias.ttf", CommonArguments = new CommonLoadingArguments(CONTENT_URL) };
+
+            // Assert
+            Assert.That(first.Equals(alias), Is.True);
+            Assert.That(first.GetHashCode(), Is.EqualTo(alias.GetHashCode()));
+        }
+
+        [Test]
+        public void KeepDifferentContentApart()
+        {
+            // Arrange
+            FontSrcResolver.TryCreateIntention(CONTENT_FILE, sceneData, out GetFontIntention first);
+            var other = new GetFontIntention { Src = CONTENT_FILE, CommonArguments = new CommonLoadingArguments("https://peer.decentraland.org/content/contents/otherfont") };
+
+            // Assert
+            Assert.That(first.Equals(other), Is.False);
         }
 
         private AssetBundleManifestVersion WithSceneManifest(params string[] files)
@@ -121,25 +160,6 @@ namespace ECS.StreamableLoading.Fonts.Tests
                           return true;
                       });
             return manifest;
-        }
-
-        [Test]
-        public void ShareRequestsForTheSameResolvedContent()
-        {
-            FontSrcResolver.TryCreateIntention(CONTENT_FILE, sceneData, out GetFontIntention first);
-            var alias = new GetFontIntention { Src = "fonts/alias.ttf", CommonArguments = new CommonLoadingArguments(CONTENT_URL) };
-
-            Assert.That(first.Equals(alias), Is.True);
-            Assert.That(first.GetHashCode(), Is.EqualTo(alias.GetHashCode()));
-        }
-
-        [Test]
-        public void KeepDifferentContentApart()
-        {
-            FontSrcResolver.TryCreateIntention(CONTENT_FILE, sceneData, out GetFontIntention first);
-            var other = new GetFontIntention { Src = CONTENT_FILE, CommonArguments = new CommonLoadingArguments("https://peer.decentraland.org/content/contents/otherfont") };
-
-            Assert.That(first.Equals(other), Is.False);
         }
     }
 }

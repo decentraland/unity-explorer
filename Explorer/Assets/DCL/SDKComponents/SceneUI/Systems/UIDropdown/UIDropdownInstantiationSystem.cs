@@ -80,7 +80,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIDropdown
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void UpdateUIDropdown(ref UIDropdownComponent uiDropdownComponent, ref PBUiDropdown sdkModel)
+        private void UpdateUIDropdown(ref UIDropdownComponent uiDropdownComponent, in PBUiDropdown sdkModel)
         {
             if (!sdkModel.IsDirty) return;
 
@@ -93,9 +93,9 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIDropdown
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void ApplyLoadedFont(ref UIDropdownComponent uiDropdownComponent, ref PBUiDropdown sdkModel)
+        private void ApplyLoadedFont(ref UIDropdownComponent uiDropdownComponent, in PBUiDropdown sdkModel)
         {
-            if (!uiDropdownComponent.FontRequest.TryConsume(World, out FontFamilyAssets? assets))
+            if (!uiDropdownComponent.FontRequest.TryConsume(World, out SceneFontAssets? assets))
                 return;
 
             uiDropdownComponent.CustomFont = assets?.UIToolkitFont;

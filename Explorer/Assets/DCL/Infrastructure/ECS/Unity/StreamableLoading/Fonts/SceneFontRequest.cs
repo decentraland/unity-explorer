@@ -39,7 +39,7 @@ namespace ECS.StreamableLoading.Fonts
             return true;
         }
 
-        public bool TryConsume(World world, out FontFamilyAssets? assets)
+        public bool TryConsume(World world, out SceneFontAssets? assets)
         {
             assets = null;
 

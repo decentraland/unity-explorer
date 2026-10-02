@@ -75,9 +75,9 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIText
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void ApplyLoadedFont(ref UITextComponent uiTextComponent, ref PBUiText sdkModel)
+        private void ApplyLoadedFont(ref UITextComponent uiTextComponent, in PBUiText sdkModel)
         {
-            if (!uiTextComponent.FontRequest.TryConsume(World, out FontFamilyAssets? assets))
+            if (!uiTextComponent.FontRequest.TryConsume(World, out SceneFontAssets? assets))
                 return;
 
             uiTextComponent.CustomFont = assets?.UIToolkitFont;

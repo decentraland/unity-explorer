@@ -89,7 +89,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void UpdateUIInput(ref UIInputComponent uiInputComponent, ref PBUiInput sdkModel)
+        private void UpdateUIInput(ref UIInputComponent uiInputComponent, in PBUiInput sdkModel)
         {
             if (!sdkModel.IsDirty)
                 return;
@@ -103,9 +103,9 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void ApplyLoadedFont(ref UIInputComponent uiInputComponent, ref PBUiInput sdkModel)
+        private void ApplyLoadedFont(ref UIInputComponent uiInputComponent, in PBUiInput sdkModel)
         {
-            if (!uiInputComponent.FontRequest.TryConsume(World!, out FontFamilyAssets? assets))
+            if (!uiInputComponent.FontRequest.TryConsume(World!, out SceneFontAssets? assets))
                 return;
 
             uiInputComponent.CustomFont = assets?.UIToolkitFont;

@@ -46,7 +46,7 @@ namespace ECS.TestSuite
         /// </summary>
         public static void DestroyBundledFont(FontData font)
         {
-            FontFamilyAssets assets = font.Asset;
+            SceneFontAssets assets = font.Asset;
             font.Dispose(force: true);
             Object.DestroyImmediate(assets.TextMeshProFont);
             Object.DestroyImmediate(assets.UIToolkitFont);

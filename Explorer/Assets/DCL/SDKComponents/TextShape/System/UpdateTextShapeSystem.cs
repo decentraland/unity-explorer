@@ -72,7 +72,7 @@ namespace DCL.SDKComponents.TextShape.System
         [None(typeof(DeleteEntityIntention))]
         private void ApplyLoadedFonts(Entity entity, ref TextShapeComponent textShapeComponent, in PBTextShape textShape)
         {
-            if (!textShapeComponent.FontRequest.TryConsume(World, out FontFamilyAssets? assets))
+            if (!textShapeComponent.FontRequest.TryConsume(World, out SceneFontAssets? assets))
                 return;
 
             textShapeComponent.CustomFont = assets?.TextMeshProFont;

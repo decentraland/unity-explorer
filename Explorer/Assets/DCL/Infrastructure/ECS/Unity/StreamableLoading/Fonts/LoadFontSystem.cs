@@ -50,13 +50,13 @@ namespace ECS.StreamableLoading.Fonts
 
         protected override async UniTask<StreamableLoadingResult<FontData>> FlowInternalAsync(GetFontIntention intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
         {
-            if (intention.AssetBundleHash == null)
+            if (intention.AssetBundleHash is not { } assetBundleHash || intention.AssetBundleManifest is not { } manifest)
                 throw new FontLoadException($"\"{intention.Src}\": the scene has no converted asset bundles to load the font from, the built-in font stays");
 
             if (!intention.AssetBundleListed && !tryUnlistedBundles)
                 throw new FontLoadException($"\"{intention.Src}\": the scene's asset bundle manifest lists no converted font bundle for it, the built-in font stays");
 
-            return new StreamableLoadingResult<FontData>(await LoadConvertedAsync(intention, partition, ct));
+            return new StreamableLoadingResult<FontData>(await LoadConvertedAsync(intention, assetBundleHash, manifest, partition, ct));
         }
 
         /// <summary>
@@ -64,13 +64,12 @@ namespace ECS.StreamableLoading.Fonts
         ///     pre-filled with the common characters, and the source font inside for the rest. Throws a
         ///     <see cref="FontLoadException" /> when the bundle cannot be used.
         /// </summary>
-        private async UniTask<FontData> LoadConvertedAsync(GetFontIntention intention, IPartitionComponent partition, CancellationToken ct)
+        private async UniTask<FontData> LoadConvertedAsync(GetFontIntention intention, string assetBundleHash, AssetBundleManifestVersion manifest, IPartitionComponent partition, CancellationToken ct)
         {
             await UniTask.SwitchToMainThread(ct);
 
-            AssetBundleManifestVersion manifest = intention.AssetBundleManifest!;
             var promise = AssetBundlePromise.Create(World,
-                GetAssetBundleIntention.FromHash(manifest.GetCdnRequestHash(intention.AssetBundleHash!), manifest, parentEntityID: intention.SceneId),
+                GetAssetBundleIntention.FromHash(manifest.GetCdnRequestHash(assetBundleHash), manifest, parentEntityID: intention.SceneId),
                 partition);
 
             try { promise = await promise.ToUniTaskAsync(World, cancellationToken: ct); }
@@ -85,23 +84,25 @@ namespace ECS.StreamableLoading.Fonts
 
             using ProfilerMarker.AutoScope _ = READ_BUNDLED_FONT_MARKER.Auto();
 
-            if (!bundle.TryGetAsset(out TMP_FontAsset textMeshPro, BUNDLE_TEXT_MESH_PRO_ASSET)
-                || !bundle.TryGetAsset(out FontAsset uiToolkit, BUNDLE_UI_TOOLKIT_ASSET))
+            try
+            {
+                if (!bundle.TryGetAsset(out TMP_FontAsset textMeshPro, BUNDLE_TEXT_MESH_PRO_ASSET)
+                    || !bundle.TryGetAsset(out FontAsset uiToolkit, BUNDLE_UI_TOOLKIT_ASSET))
+                    throw new FontLoadException($"\"{intention.Src}\": its converted font bundle holds no font assets, the built-in font stays");
+
+                string? defect = FindDefect(textMeshPro.atlasTextures, textMeshPro.atlasWidth, textMeshPro.atlasHeight, textMeshPro.sourceFontFile)
+                                  ?? FindDefect(uiToolkit.atlasTextures, uiToolkit.atlasWidth, uiToolkit.atlasHeight, uiToolkit.sourceFontFile);
+
+                if (defect != null)
+                    throw new FontLoadException($"\"{intention.Src}\": its converted font bundle holds an unusable font ({defect}), the built-in font stays");
+
+                return new FontData(fontAssetFactory.AdoptBundled(intention.Src, textMeshPro, uiToolkit), bundle);
+            }
+            catch
             {
                 bundle.Dereference();
-                throw new FontLoadException($"\"{intention.Src}\": its converted font bundle holds no font assets, the built-in font stays");
+                throw;
             }
-
-            string? defect = FindDefect(textMeshPro.atlasTextures, textMeshPro.atlasWidth, textMeshPro.atlasHeight, textMeshPro.sourceFontFile)
-                              ?? FindDefect(uiToolkit.atlasTextures, uiToolkit.atlasWidth, uiToolkit.atlasHeight, uiToolkit.sourceFontFile);
-
-            if (defect != null)
-            {
-                bundle.Dereference();
-                throw new FontLoadException($"\"{intention.Src}\": its converted font bundle holds an unusable font ({defect}), the built-in font stays");
-            }
-
-            return new FontData(fontAssetFactory.AdoptBundled(intention.Src, textMeshPro, uiToolkit), bundle);
         }
 
         private static string? FindDefect(Texture2D[]? atlasTextures, int atlasWidth, int atlasHeight, Font? sourceFontFile)

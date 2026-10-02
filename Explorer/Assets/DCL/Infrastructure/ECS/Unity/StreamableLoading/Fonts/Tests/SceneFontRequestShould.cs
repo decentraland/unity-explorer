@@ -63,8 +63,10 @@ namespace ECS.StreamableLoading.Fonts.Tests
         [Test]
         public void CreateAPromiseWhenTheSourceResolves()
         {
+            // Act
             bool updated = Update(OTHER_FILE_SRC);
 
+            // Assert
             Assert.That(updated, Is.True);
             Assert.That(request.Src, Is.EqualTo(OTHER_FILE_SRC));
             Assert.That(request.Promise, Is.Not.Null);
@@ -78,8 +80,10 @@ namespace ECS.StreamableLoading.Fonts.Tests
         [TestCase("   ")]
         public void HoldNothingForAnEmptySource(string? fontSrc)
         {
+            // Act
             bool updated = Update(fontSrc);
 
+            // Assert
             Assert.That(updated, Is.False);
             Assert.That(request.Src, Is.Null);
             Assert.That(request.Promise, Is.Null);
@@ -88,8 +92,10 @@ namespace ECS.StreamableLoading.Fonts.Tests
         [Test]
         public void TrimTheSource()
         {
+            // Act
             bool updated = Update($"  {FILE_SRC} ");
 
+            // Assert
             Assert.That(updated, Is.True);
             Assert.That(request.Src, Is.EqualTo(FILE_SRC));
             Assert.That(request.Promise, Is.Not.Null);
@@ -98,11 +104,14 @@ namespace ECS.StreamableLoading.Fonts.Tests
         [Test]
         public void KeepThePromiseForTheSamePaddedSource()
         {
+            // Arrange
             Update(FILE_SRC);
             Entity promiseEntity = request.Promise!.Value.Entity;
 
+            // Act
             bool updated = Update($" {FILE_SRC}  ");
 
+            // Assert
             Assert.That(updated, Is.False);
             Assert.That(request.Promise!.Value.Entity, Is.EqualTo(promiseEntity));
         }
@@ -110,8 +119,10 @@ namespace ECS.StreamableLoading.Fonts.Tests
         [Test]
         public void HoldNoPromiseWhenTheSourceDoesNotResolve()
         {
+            // Act
             bool updated = Update("no such/file.ttf");
 
+            // Assert
             Assert.That(updated, Is.True);
             Assert.That(request.Src, Is.EqualTo("no such/file.ttf"));
             Assert.That(request.Promise, Is.Null);
@@ -120,11 +131,14 @@ namespace ECS.StreamableLoading.Fonts.Tests
         [Test]
         public void KeepThePromiseForTheSameSource()
         {
+            // Arrange
             Update(OTHER_FILE_SRC);
             Entity promiseEntity = request.Promise!.Value.Entity;
 
+            // Act
             bool updated = Update(OTHER_FILE_SRC);
 
+            // Assert
             Assert.That(updated, Is.False);
             Assert.That(request.Promise!.Value.Entity, Is.EqualTo(promiseEntity));
         }
@@ -132,11 +146,14 @@ namespace ECS.StreamableLoading.Fonts.Tests
         [Test]
         public void ReplaceThePromiseWhenTheSourceChanges()
         {
+            // Arrange
             Update(OTHER_FILE_SRC);
             Entity firstPromiseEntity = request.Promise!.Value.Entity;
 
+            // Act
             bool updated = Update(FILE_SRC);
 
+            // Assert
             Assert.That(updated, Is.True);
             Assert.That(world.IsAlive(firstPromiseEntity), Is.False);
             Assert.That(request.Src, Is.EqualTo(FILE_SRC));
@@ -146,25 +163,31 @@ namespace ECS.StreamableLoading.Fonts.Tests
         [Test]
         public void ConsumeNothingWhileTheLoadIsPending()
         {
+            // Arrange
             Update(OTHER_FILE_SRC);
 
-            bool consumed = request.TryConsume(world, out FontFamilyAssets? _);
+            // Act
+            bool consumed = request.TryConsume(world, out SceneFontAssets? _);
 
+            // Assert
             Assert.That(consumed, Is.False);
         }
 
         [Test]
-        public void ConsumeTheLoadedFamilyOnce()
+        public void ConsumeTheLoadedFontOnce()
         {
+            // Arrange
             Update(OTHER_FILE_SRC);
             referenceFont = TestFonts.CreateTextMeshProFont();
             fontData = TestFonts.CreateBundledFont(referenceFont);
             ((IStreamableRefCountData)fontData).AddReference();
             world.Add(request.Promise!.Value.Entity, new StreamableLoadingResult<FontData>(fontData));
 
-            bool consumed = request.TryConsume(world, out FontFamilyAssets? assets);
-            bool consumedAgain = request.TryConsume(world, out FontFamilyAssets? _);
+            // Act
+            bool consumed = request.TryConsume(world, out SceneFontAssets? assets);
+            bool consumedAgain = request.TryConsume(world, out SceneFontAssets? _);
 
+            // Assert
             Assert.That(consumed, Is.True);
             Assert.That(assets, Is.SameAs(fontData.Asset));
             Assert.That(request.Promise!.Value.IsConsumed, Is.True);
@@ -172,13 +195,16 @@ namespace ECS.StreamableLoading.Fonts.Tests
         }
 
         [Test]
-        public void ConsumeAFailedLoadAsNoFamily()
+        public void ConsumeAFailedLoadAsNoFont()
         {
+            // Arrange
             Update(OTHER_FILE_SRC);
             world.Add(request.Promise!.Value.Entity, new StreamableLoadingResult<FontData>(ReportData.UNSPECIFIED, new FontLoadException("test")));
 
-            bool consumed = request.TryConsume(world, out FontFamilyAssets? assets);
+            // Act
+            bool consumed = request.TryConsume(world, out SceneFontAssets? assets);
 
+            // Assert
             Assert.That(consumed, Is.True);
             Assert.That(assets, Is.Null);
         }
@@ -186,12 +212,15 @@ namespace ECS.StreamableLoading.Fonts.Tests
         [Test]
         public void CancelThePendingLoadOnRelease()
         {
+            // Arrange
             Update(OTHER_FILE_SRC);
             Entity promiseEntity = request.Promise!.Value.Entity;
             CancellationToken ct = world.Get<GetFontIntention>(promiseEntity).CommonArguments.CancellationToken;
 
+            // Act
             request.Release(world);
 
+            // Assert
             Assert.That(request.Src, Is.Null);
             Assert.That(request.Promise, Is.Null);
             Assert.That(world.IsAlive(promiseEntity), Is.False);
@@ -201,11 +230,14 @@ namespace ECS.StreamableLoading.Fonts.Tests
         [Test]
         public void StartOverAfterRelease()
         {
+            // Arrange
             Update(OTHER_FILE_SRC);
             request.Release(world);
 
+            // Act
             bool updated = Update(OTHER_FILE_SRC);
 
+            // Assert
             Assert.That(updated, Is.True);
             Assert.That(request.Promise, Is.Not.Null);
         }
