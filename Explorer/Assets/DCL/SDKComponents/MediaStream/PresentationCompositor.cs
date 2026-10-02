@@ -6,8 +6,8 @@ namespace DCL.SDKComponents.MediaStream
 {
     /// <summary>
     ///     Composites a presentation slide, its playing video and the presenter camera circle into one reusable
-    ///     upright <see cref="RenderTexture" /> with a single blit of the <c>DCL/PresentationCompositor</c> shader.
-    ///     Not thread-safe — main-thread only.
+    ///     upright <see cref="RenderTexture" /> with a single blit of the <c>DCL/PresentationCompositor</c> shader,
+    ///     through its own instance of the given material. Not thread-safe — main-thread only.
     /// </summary>
     public sealed class PresentationCompositor : IDisposable
     {
@@ -28,33 +28,70 @@ namespace DCL.SDKComponents.MediaStream
         private readonly Material material;
 
         private RenderTexture? composite;
+        private Texture? lastSlide;
+        private Texture? lastVideo;
+        private Texture? lastCamera;
+        private uint lastSlideUpdateCount;
+        private uint lastVideoUpdateCount;
+        private uint lastCameraUpdateCount;
+        private bool lastShowVideoRect;
+        private Vector4 lastVideoRect;
+        private Vector4 lastCameraRect;
 
-        internal int blitCount => throw new NotImplementedException();
+        internal int blitCount { get; private set; }
 
         public PresentationCompositor(Material material)
         {
-            this.material = material;
+            this.material = new Material(material);
         }
 
         public void Dispose()
         {
-            ReleaseComposite();
+            Release();
+            UnityObjectUtils.SafeDestroy(material);
         }
 
         /// <summary>
         ///     Draws <paramref name="slide" />, then the video rect (black until <paramref name="video" /> is given) and the
-        ///     camera circle (skipped when <paramref name="camera" /> is null) into a <paramref name="width" /> ×
-        ///     <paramref name="height" /> BGRA32 render texture. Rects are normalized with a top-left origin.
+        ///     camera circle (skipped when <paramref name="camera" /> is null) into a BGRA32 render texture of
+        ///     <paramref name="width" /> × <paramref name="height" />, scaled down with its aspect preserved to at most
+        ///     <see cref="MAX_COMPOSITE_SIZE" /> on each side. Rects are normalized with a top-left origin. Skips the blit
+        ///     when no input changed since the last call.
         /// </summary>
         /// <returns>The same render texture instance while the size is unchanged.</returns>
         public Texture Compose(int width, int height, Texture slide, bool showVideoRect, Vector4 videoRect, Texture? video, Texture? camera, Vector4 cameraRect)
         {
-            if (composite == null || composite.width != width || composite.height != height)
+            float scale = Mathf.Min(1f, Mathf.Min((float)MAX_COMPOSITE_SIZE / width, (float)MAX_COMPOSITE_SIZE / height));
+            int targetWidth = Mathf.Max(1, Mathf.RoundToInt(width * scale));
+            int targetHeight = Mathf.Max(1, Mathf.RoundToInt(height * scale));
+
+            if (composite == null || composite.width != targetWidth || composite.height != targetHeight)
             {
-                ReleaseComposite();
-                composite = new RenderTexture(width, height, 0, RenderTextureFormat.BGRA32) { name = "PresentationComposite" };
+                Release();
+                composite = new RenderTexture(targetWidth, targetHeight, 0, RenderTextureFormat.BGRA32) { name = "PresentationComposite" };
                 composite.Create();
             }
+
+            uint slideUpdateCount = slide.updateCount;
+            uint videoUpdateCount = video != null ? video.updateCount : 0u;
+            uint cameraUpdateCount = camera != null ? camera.updateCount : 0u;
+
+            if (composite.IsCreated()
+                && ReferenceEquals(slide, lastSlide) && slideUpdateCount == lastSlideUpdateCount
+                && ReferenceEquals(video, lastVideo) && videoUpdateCount == lastVideoUpdateCount
+                && ReferenceEquals(camera, lastCamera) && cameraUpdateCount == lastCameraUpdateCount
+                && showVideoRect == lastShowVideoRect && videoRect.Equals(lastVideoRect) && cameraRect.Equals(lastCameraRect))
+                return composite;
+
+            lastSlide = slide;
+            lastVideo = video;
+            lastCamera = camera;
+            lastSlideUpdateCount = slideUpdateCount;
+            lastVideoUpdateCount = videoUpdateCount;
+            lastCameraUpdateCount = cameraUpdateCount;
+            lastShowVideoRect = showVideoRect;
+            lastVideoRect = videoRect;
+            lastCameraRect = cameraRect;
 
             material.SetVector(VIDEO_RECT, videoRect);
             material.SetFloat(VIDEO_ENABLED, showVideoRect ? 1f : 0f);
@@ -64,13 +101,14 @@ namespace DCL.SDKComponents.MediaStream
             material.SetVector(CAMERA_RECT, cameraRect);
             material.SetFloat(CAMERA_ENABLED, camera != null ? 1f : 0f);
             material.SetTexture(CAMERA_TEX, camera != null ? camera : Texture2D.blackTexture);
-            material.SetFloat(CAMERA_EDGE, CAMERA_EDGE_PX / Mathf.Max(1f, cameraRect.z * width));
+            material.SetFloat(CAMERA_EDGE, CAMERA_EDGE_PX / Mathf.Max(1f, cameraRect.z * targetWidth));
 
-            material.SetVector(SLIDE_SIZE, new Vector4(width, height, 0f, 0f));
+            material.SetVector(SLIDE_SIZE, new Vector4(targetWidth, targetHeight, 0f, 0f));
 
             RenderTexture previous = RenderTexture.active;
             Graphics.Blit(slide, composite, material);
             RenderTexture.active = previous;
+            blitCount++;
             return composite;
         }
 
@@ -79,11 +117,10 @@ namespace DCL.SDKComponents.MediaStream
         /// </summary>
         public void Release()
         {
-            throw new NotImplementedException();
-        }
+            lastSlide = null;
+            lastVideo = null;
+            lastCamera = null;
 
-        private void ReleaseComposite()
-        {
             if (composite == null) return;
 
             composite.Release();
