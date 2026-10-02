@@ -1,4 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.MapRenderer.MapCameraController;
 using System;
 using System.Collections.Generic;
@@ -153,8 +154,12 @@ namespace DCL.MapRenderer.Culling
             bool anyCameraChanged = dirtyCamerasFlag != 0;
             dirtyCamerasFlag = 0;
 
+            // A throwing subscriber must not end the culling routine that calls this every frame.
             if (anyCameraChanged)
-                CamerasChanged?.Invoke();
+            {
+                try { CamerasChanged?.Invoke(); }
+                catch (Exception e) { ReportHub.LogException(e, ReportCategory.UI); }
+            }
 
             Profiler.EndSample();
         }

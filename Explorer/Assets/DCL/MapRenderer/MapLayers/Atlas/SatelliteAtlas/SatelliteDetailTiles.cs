@@ -23,13 +23,16 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
         internal const int BASE_LEVEL = 3;
         internal const int MIN_LEVEL = 4;
         internal const int MAX_LEVEL = 8;
+        internal const int MAX_TILES_PER_CAMERA = 64;
         private const int TILE_PIXELS = 512;
         private const int MAX_CACHED_TILES = 64;
         private const float FADE_IN_SECONDS = 0.25f;
+        private const float RETRY_FAILED_TILE_AFTER_SECONDS = 30f;
         private const float SATURATION_VALUE = 1f;
         private static readonly int SATURATION = Shader.PropertyToID("_Saturation");
 
-        private static readonly Comparison<KeyValuePair<int, Vector3Int>> OLDEST_FIRST = (a, b) => a.Key.CompareTo(b.Key);
+        private static readonly IComparer<KeyValuePair<int, Vector3Int>> OLDEST_FIRST =
+            Comparer<KeyValuePair<int, Vector3Int>>.Create(static (a, b) => a.Key.CompareTo(b.Key));
 
         private readonly string baseUrl;
         private readonly IWebRequestController webRequestController;
@@ -39,12 +42,12 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
 
         private readonly Dictionary<Vector3Int, Tile> tiles = new ();
         private readonly Stack<AtlasChunk> pooledViews = new ();
-        private readonly List<KeyValuePair<int, Vector3Int>> evictionCandidates = new ();
+        private readonly List<KeyValuePair<int, Vector3Int>> evictions = new ();
 
         private Vector2 gridTopLeft;
         private float baseChunkSize;
         private int refreshStamp;
-        private bool initialized;
+        private bool tileFailureReported;
 
         public SatelliteDetailTiles(string baseUrl, IWebRequestController webRequestController, IMapCullingController cullingController, SpriteRenderer template, int drawOrderOfMinLevel)
         {
@@ -63,7 +66,6 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
         {
             gridTopLeft = bundledGridTopLeft;
             baseChunkSize = bundledChunkSize;
-            initialized = true;
 
             cullingController.CamerasChanged += Refresh;
             Refresh();
@@ -84,33 +86,10 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             UnityObjectUtils.SafeDestroy(template.gameObject);
         }
 
-        /// <summary>The coarsest level whose tiles have at least <paramref name="screenPixelsPerUnit" />, or a level below <see cref="MIN_LEVEL" /> when the bundled chunks suffice.</summary>
-        internal static int LevelFor(float screenPixelsPerUnit, float bundledPixelsPerUnit)
+        /// <summary>Loads the tiles every active camera shows. Does nothing while the satellite layer is hidden.</summary>
+        internal void Refresh()
         {
-            if (screenPixelsPerUnit <= bundledPixelsPerUnit)
-                return BASE_LEVEL;
-
-            int level = BASE_LEVEL + Mathf.CeilToInt(Mathf.Log(screenPixelsPerUnit / bundledPixelsPerUnit, 2f));
-            return Mathf.Min(level, MAX_LEVEL);
-        }
-
-        /// <summary>Inclusive tile index range of <paramref name="level" /> that <paramref name="rect" /> overlaps, clamped to the grid.</summary>
-        internal static RectInt TileRange(Rect rect, int level, Vector2 gridTopLeft, float bundledChunkSize)
-        {
-            int side = 1 << level;
-            float tileSize = bundledChunkSize * (1 << BASE_LEVEL) / side;
-
-            int minI = Mathf.Clamp(Mathf.FloorToInt((rect.xMin - gridTopLeft.x) / tileSize), 0, side - 1);
-            int maxI = Mathf.Clamp(Mathf.FloorToInt((rect.xMax - gridTopLeft.x) / tileSize), 0, side - 1);
-            int minJ = Mathf.Clamp(Mathf.FloorToInt((gridTopLeft.y - rect.yMax) / tileSize), 0, side - 1);
-            int maxJ = Mathf.Clamp(Mathf.FloorToInt((gridTopLeft.y - rect.yMin) / tileSize), 0, side - 1);
-
-            return new RectInt(minI, minJ, maxI - minI, maxJ - minJ);
-        }
-
-        private void Refresh()
-        {
-            if (!initialized || !template.transform.parent.gameObject.activeInHierarchy)
+            if (!template.transform.parent.gameObject.activeInHierarchy)
                 return;
 
             refreshStamp++;
@@ -131,14 +110,82 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
                 if (level < MIN_LEVEL)
                     continue;
 
-                RectInt range = TileRange(camera.Rect, level, gridTopLeft, baseChunkSize);
+                level = LevelWithinTileBudget(camera.Rect, level, gridTopLeft, baseChunkSize, out RectInt range);
 
-                for (int j = range.yMin; j <= range.yMax; j++)
-                for (int i = range.xMin; i <= range.xMax; i++)
+                for (int j = range.yMin; j < range.yMax; j++)
+                for (int i = range.xMin; i < range.xMax; i++)
                     Use(new Vector3Int(i, j, level));
             }
 
-            EvictUnused();
+            CollectEvictions(tiles, refreshStamp, MAX_CACHED_TILES, evictions);
+
+            for (var k = 0; k < evictions.Count; k++)
+                if (tiles.Remove(evictions[k].Value, out Tile? evicted))
+                    DestroyTile(evicted);
+        }
+
+        /// <summary>The coarsest level whose tiles have at least <paramref name="screenPixelsPerUnit" />, or a level below <see cref="MIN_LEVEL" /> when the bundled chunks suffice.</summary>
+        internal static int LevelFor(float screenPixelsPerUnit, float bundledPixelsPerUnit)
+        {
+            if (screenPixelsPerUnit <= bundledPixelsPerUnit)
+                return BASE_LEVEL;
+
+            int level = BASE_LEVEL + Mathf.CeilToInt(Mathf.Log(screenPixelsPerUnit / bundledPixelsPerUnit, 2f));
+            return Mathf.Min(level, MAX_LEVEL);
+        }
+
+        /// <summary>Half-open tile index range of <paramref name="level" /> that <paramref name="rect" /> overlaps, clamped to the grid.</summary>
+        internal static RectInt TileRange(Rect rect, int level, Vector2 gridTopLeft, float bundledChunkSize)
+        {
+            int side = 1 << level;
+            float tileSize = bundledChunkSize * (1 << BASE_LEVEL) / side;
+
+            int minI = Mathf.Clamp(Mathf.FloorToInt((rect.xMin - gridTopLeft.x) / tileSize), 0, side - 1);
+            int maxI = Mathf.Clamp(Mathf.FloorToInt((rect.xMax - gridTopLeft.x) / tileSize), 0, side - 1);
+            int minJ = Mathf.Clamp(Mathf.FloorToInt((gridTopLeft.y - rect.yMax) / tileSize), 0, side - 1);
+            int maxJ = Mathf.Clamp(Mathf.FloorToInt((gridTopLeft.y - rect.yMin) / tileSize), 0, side - 1);
+
+            return new RectInt(minI, minJ, maxI - minI + 1, maxJ - minJ + 1);
+        }
+
+        /// <summary>
+        ///     Steps <paramref name="level" /> down until <paramref name="rect" /> needs at most <see cref="MAX_TILES_PER_CAMERA" /> tiles,
+        ///     stopping at <see cref="MIN_LEVEL" />. Outputs the tile range of the returned level.
+        /// </summary>
+        internal static int LevelWithinTileBudget(Rect rect, int level, Vector2 gridTopLeft, float bundledChunkSize, out RectInt range)
+        {
+            range = TileRange(rect, level, gridTopLeft, bundledChunkSize);
+
+            while (level > MIN_LEVEL && range.width * range.height > MAX_TILES_PER_CAMERA)
+            {
+                level--;
+                range = TileRange(rect, level, gridTopLeft, bundledChunkSize);
+            }
+
+            return level;
+        }
+
+        /// <summary>
+        ///     Fills <paramref name="result" /> with the tiles to evict to get back to <paramref name="maxCachedTiles" />, oldest first.
+        ///     Tiles used in the refresh <paramref name="refreshStamp" /> are never evicted.
+        /// </summary>
+        internal static void CollectEvictions(Dictionary<Vector3Int, Tile> tiles, int refreshStamp, int maxCachedTiles, List<KeyValuePair<int, Vector3Int>> result)
+        {
+            result.Clear();
+
+            int excess = tiles.Count - maxCachedTiles;
+
+            if (excess <= 0)
+                return;
+
+            foreach ((Vector3Int id, Tile tile) in tiles)
+                if (tile.LastUsed != refreshStamp)
+                    result.Add(new KeyValuePair<int, Vector3Int>(tile.LastUsed, id));
+
+            result.Sort(OLDEST_FIRST);
+
+            if (result.Count > excess)
+                result.RemoveRange(excess, result.Count - excess);
         }
 
         private void Use(Vector3Int id)
@@ -149,29 +196,13 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
                 tiles.Add(id, tile);
                 LoadAsync(id, tile).Forget();
             }
+            else if (tile.FailedAt is { } failedAt && Time.realtimeSinceStartup - failedAt >= RETRY_FAILED_TILE_AFTER_SECONDS)
+            {
+                tile.FailedAt = null;
+                LoadAsync(id, tile).Forget();
+            }
 
             tile.LastUsed = refreshStamp;
-        }
-
-        private void EvictUnused()
-        {
-            if (tiles.Count <= MAX_CACHED_TILES)
-                return;
-
-            evictionCandidates.Clear();
-
-            foreach ((Vector3Int id, Tile tile) in tiles)
-                if (tile.LastUsed != refreshStamp)
-                    evictionCandidates.Add(new KeyValuePair<int, Vector3Int>(tile.LastUsed, id));
-
-            evictionCandidates.Sort(OLDEST_FIRST);
-
-            for (var k = 0; k < evictionCandidates.Count && tiles.Count > MAX_CACHED_TILES; k++)
-            {
-                Vector3Int id = evictionCandidates[k].Value;
-                DestroyTile(tiles[id]);
-                tiles.Remove(id);
-            }
         }
 
         private async UniTaskVoid LoadAsync(Vector3Int id, Tile tile)
@@ -189,14 +220,22 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
                     new GetTextureArguments(TextureType.Albedo, useKtx: false),
                     GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp, FilterMode.Bilinear),
                     ct,
-                    ReportCategory.UI);
+                    ReportCategory.UI,
+                    suppressErrors: true);
 
                 await UniTask.SwitchToMainThread();
             }
             catch (OperationCanceledException) { return; }
             catch (Exception e)
             {
-                ReportHub.LogException(e, ReportCategory.UI);
+                // One report per session: a wrong or offline URL fails every tile in view.
+                if (!tileFailureReported)
+                {
+                    tileFailureReported = true;
+                    ReportHub.LogException(e, ReportCategory.UI);
+                }
+
+                tile.FailedAt = Time.realtimeSinceStartup;
                 return;
             }
 
@@ -206,6 +245,9 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
                 UnityObjectUtils.SafeDestroy(texture);
                 return;
             }
+
+            // The texture is only drawn from now on, so its CPU copy is released.
+            texture.Apply(false, true);
 
             tile.Texture = texture;
             float tileSize = baseChunkSize * (1 << BASE_LEVEL) / (1 << level);
@@ -241,27 +283,27 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
         private void DestroyTile(Tile tile)
         {
             tile.Cts.SafeCancelAndDispose();
+            UnityObjectUtils.SafeDestroy(tile.Sprite);
+            UnityObjectUtils.SafeDestroy(tile.Texture);
+
+            // On application quit the view can already be destroyed.
+            if (!tile.View)
+                return;
 
             SpriteRenderer renderer = tile.View.MainSpriteRenderer;
             renderer.DOKill();
             renderer.sprite = null;
-
-            UnityObjectUtils.SafeDestroy(tile.Sprite);
-            UnityObjectUtils.SafeDestroy(tile.Texture);
-
-            if (tile.View)
-            {
-                tile.View.gameObject.SetActive(false);
-                pooledViews.Push(tile.View);
-            }
+            tile.View.gameObject.SetActive(false);
+            pooledViews.Push(tile.View);
         }
 
-        private class Tile
+        internal class Tile
         {
             public readonly AtlasChunk View;
             public readonly CancellationTokenSource Cts = new ();
             public Texture2D? Texture;
             public Sprite? Sprite;
+            public float? FailedAt;
             public int LastUsed;
 
             public Tile(AtlasChunk view)
