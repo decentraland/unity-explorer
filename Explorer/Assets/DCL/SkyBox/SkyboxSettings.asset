@@ -32,3 +32,11 @@ MonoBehaviour:
     m_SubObjectType: 
     m_SubObjectGUID: 
     m_EditorAssetChanged: 0
+  DebugLookPresets:
+  - Name: Legacy
+    Preset:
+      m_AssetGUID: 32976ee587c04db88e083b6775e5ee5f
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
