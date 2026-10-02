@@ -6,7 +6,7 @@ using Font = DCL.ECSComponents.Font;
 
 namespace DCL.SDKComponents.SceneUI.Defaults
 {
-    public static class PBUiInput_Defaults
+    public static class PBUiInputDefaults
     {
         public static Color GetColor(this PBUiInput self) =>
             self.Color?.ToUnityColor() ?? ColorDefaults.COLOR_BLACK;
@@ -18,7 +18,7 @@ namespace DCL.SDKComponents.SceneUI.Defaults
             !self.Disabled;
 
         public static TextAnchor GetTextAlign(this PBUiInput self) =>
-            (self.HasTextAlign ? self.TextAlign : TextAlignMode.TamMiddleCenter).ToUnityTextAlign();
+            (self.HasTextAlign ? self.TextAlign : TextAlignMode.TamMiddleLeft).ToUnityTextAlign();
 
         public static Font GetFont(this PBUiInput self) =>
             self.HasFont ? self.Font : Font.FSansSerif;
