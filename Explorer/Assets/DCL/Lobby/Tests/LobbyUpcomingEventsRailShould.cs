@@ -101,7 +101,6 @@ namespace DCL.Lobby.Tests
         private LobbyUpcomingEventCardElement Card(int index) =>
             (LobbyUpcomingEventCardElement)Rail()[index];
 
-        // The upcoming events section of the document, without its stylesheet
         private static VisualElement CreateSection()
         {
             var upcomingEvents = new VisualElement { name = "UpcomingEvents" };

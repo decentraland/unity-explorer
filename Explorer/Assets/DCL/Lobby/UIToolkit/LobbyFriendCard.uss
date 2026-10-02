@@ -38,7 +38,6 @@
     background-image: none;
 }
 
-/* Over the bottom-right of the picture */
 .lobby-friend-card__online {
     position: absolute;
     top: 43px;
@@ -109,7 +108,6 @@
     display: flex;
 }
 
-/* Centred along the bottom edge */
 .lobby-friend-card__location {
     position: absolute;
     left: 6px;

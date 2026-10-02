@@ -24,7 +24,7 @@ namespace DCL.Lobby.Tests
     [TestFixture]
     public class LobbyDocumentFriendsPresenterShould
     {
-        // The tracker debounces status changes for 2000ms; the margin absorbs editor loop jitter
+        // Covers the tracker's 2000ms debounce plus editor loop jitter
         private const int DEBOUNCE_WAIT_MS = 2500;
         private const string CARD_TEMPLATE_PATH = "Assets/DCL/Lobby/UIToolkit/LobbyFriendCard.uxml";
         private const string AMY_ID = "0x0000000000000000000000000000000000000a11";
@@ -58,7 +58,6 @@ namespace DCL.Lobby.Tests
         [SetUp]
         public void SetUp()
         {
-            // The editor domain may still hold a command initialized by a play-mode session
             GetProfileThumbnailCommand.Reset();
 
             GetProfileThumbnailCommand.Initialize(new GetProfileThumbnailCommand(new ProfileRepositoryWrapper(Substitute.For<IProfileRepository>(),
@@ -280,7 +279,6 @@ namespace DCL.Lobby.Tests
                 base_position_processed = basePosition,
             };
 
-        // The header and the rail of the document's friends section, without its stylesheet
         private static VisualElement CreateSection()
         {
             var friendsSection = new VisualElement { name = "Friends" };

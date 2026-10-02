@@ -48,12 +48,11 @@ namespace DCL.Lobby
         private const string WELCOME_FORMAT = "Welcome {0}!";
         private const int MAX_UPCOMING_EVENTS = 10;
 
-        // The recent row holds the latest few in a plain row; the featured rail pages through them all
         private const int MAX_RECENT_PLACES = 3;
 
         private static readonly Comparison<EventDTO> BY_START_TIME = static (a, b) => a.NextStartAtProcessed.CompareTo(b.NextStartAtProcessed);
 
-        // Panel pixels from the pointer to the left edge of the avatar tooltip, the same gap the uGUI lobby left
+        /// <summary>Panel pixels from the pointer to the left edge of the avatar tooltip.</summary>
         private static readonly Vector2 AVATAR_TOOLTIP_OFFSET = new (100f, 0f);
 
         private readonly IInputBlock inputBlock;
@@ -83,14 +82,13 @@ namespace DCL.Lobby
         private readonly List<EventDTO> upcomingEvents = new ();
         private readonly LobbyDocumentFriendsPresenter? friends;
 
-        // The rails need the card template of the view, which exists only from the first show on
         private LobbyPlacesRail? recentPlacesRail;
         private LobbyPlacesRail? featuredPlacesRail;
         private LobbyLiveEventsRail? liveEventsRail;
         private LobbyUpcomingEventsRail? upcomingEventsRail;
         private LobbyCharacterPreviewController? avatarPreview;
 
-        // Null while the landing place loads; the card itself knows whether it has details to open
+        // Null while the landing place loads
         private PlacesData.PlaceInfo? landingPlace;
 
         // The destination the shown landing place describes; null together with the place
@@ -101,7 +99,6 @@ namespace DCL.Lobby
         private GenericContextMenu? shareMenu;
         private EventDTO sharedEvent;
 
-        // One manipulator for the avatar hit area, added again on every show without stacking
         private Clickable? avatarClick;
         private CancellationTokenSource? avatarCts;
         private CancellationTokenSource? placesCts;
@@ -116,39 +113,25 @@ namespace DCL.Lobby
         // At startup the lobby is the only way into the world, so it cannot be dismissed before a destination is picked
         public override bool CanBeClosedByEscape => loadingStatus.CurrentStage.Value == LoadingStatus.LoadingStage.Completed;
 
-        /// <summary>
-        ///     The panel is on screen. True at the startup show, false when the user opened it from the world.
-        /// </summary>
+        /// <summary>The panel is on screen; true at the startup show, false when opened from the world.</summary>
         public event Action<bool>? Opened;
 
-        /// <summary>
-        ///     The panel left the screen, once per <see cref="Opened" />.
-        /// </summary>
+        /// <summary>The panel left the screen, once per <see cref="Opened" />.</summary>
         public event Action? Closed;
 
-        /// <summary>
-        ///     A place card was picked, which opens its details rather than jumping in.
-        /// </summary>
-        public event Action<PlacesData.PlaceInfo, LobbySection>? PlaceOpened;
+        /// <summary>A place card was picked, which opens its details.</summary>
+        public event Action<PlacesData.PlaceInfo, LobbyCardOrigin>? PlaceOpened;
 
-        /// <summary>
-        ///     The user is on their way to a place, from a card's Jump in or from the details that card opened.
-        /// </summary>
-        public event Action<PlacesData.PlaceInfo, LobbySection>? PlaceJumpedIn;
+        /// <summary>The user is on their way to a place, from a card or from the details it opened.</summary>
+        public event Action<PlacesData.PlaceInfo, LobbyCardOrigin>? PlaceJumpedIn;
 
-        /// <summary>
-        ///     An event card was picked, which opens its details rather than jumping in.
-        /// </summary>
-        public event Action<IEventDTO, LobbySection>? EventOpened;
+        /// <summary>An event card was picked, which opens its details.</summary>
+        public event Action<IEventDTO, LobbyCardOrigin>? EventOpened;
 
-        /// <summary>
-        ///     The user is on their way to an event, from the details its card opened.
-        /// </summary>
-        public event Action<IEventDTO, LobbySection>? EventJumpedIn;
+        /// <summary>The user is on their way to an event, from the details its card opened.</summary>
+        public event Action<IEventDTO, LobbyCardOrigin>? EventJumpedIn;
 
-        /// <summary>
-        ///     The user is on their way to where a friend is, with the parcel the friend was at.
-        /// </summary>
+        /// <summary>The user is on their way to a friend, with the parcel the friend was at.</summary>
         public event Action<string, Vector2Int>? FriendJoined;
 
         public LobbyDocumentController(ViewFactoryMethod viewFactory,
@@ -207,10 +190,7 @@ namespace DCL.Lobby
             base.Dispose();
 
             if (viewInstance != null)
-            {
                 viewInstance.Profile.Clicked = null;
-                viewInstance.Profile.Dispose();
-            }
 
             mvcManager.OnViewClosed -= ShowAgainWhenTheScreenIsFree;
             startParcel.JumpInRequestRaised -= RequestClose;
@@ -230,7 +210,7 @@ namespace DCL.Lobby
             closeIntent?.TrySetCanceled();
         }
 
-        // The preview is a uGUI view nested in the prefab, so unlike the hierarchy it is there from the instantiation on
+        // The uGUI preview is nested in the prefab, so unlike the hierarchy it exists from the instantiation on
         protected override void OnViewInstantiated()
         {
             base.OnViewInstantiated();
@@ -249,8 +229,7 @@ namespace DCL.Lobby
         {
             inputBlock.Disable(InputMapComponent.BLOCK_USER_INPUT);
 
-            // The renderer keeps the hierarchy across hides, so every handler is removed before it is added and stays registered once;
-            // the top-bar widgets outlive the show cycle as well, so their presenters stay bound
+            // The renderer keeps the hierarchy across hides, so every handler is removed before it is added again
             viewInstance!.AttachTopBarWidgets();
             viewInstance.Profile.Clicked = ShowProfileMenu;
             viewInstance.NotificationsButton.clicked -= ShowNotifications;
@@ -263,14 +242,16 @@ namespace DCL.Lobby
             notificationsPanel.UnreadCountChanged += ShowUnreadCount;
             ShowUnreadCount(notificationsPanel.UnreadCount);
 
-            // Hidden until the avatar is up again: the area kept from the last show must not take clicks over an empty stage
+            // Hidden until the avatar is up again, so the empty stage takes no clicks
             VisualElement avatarHitArea = viewInstance.AvatarHitArea;
             avatarHitArea.SetDisplayed(false);
+            avatarHitArea.AddToClassList(VisualElementsExtensions.INTERACTABLE_CLASS);
             avatarHitArea.AddManipulator(avatarClick ??= new Clickable(OnAvatarClicked));
-            avatarHitArea.RegisterCallback<PointerEnterEvent>(OnAvatarPointerEnter);
-            avatarHitArea.RegisterCallback<PointerMoveEvent>(OnAvatarPointerMove);
-            avatarHitArea.RegisterCallback<PointerLeaveEvent>(OnAvatarPointerLeave);
-            viewInstance.AvatarTooltip.SetDisplayed(false);
+            VisualElement avatarTooltip = viewInstance.AvatarTooltip;
+            avatarTooltip.SetDisplayed(false);
+            avatarHitArea.RegisterCallback<PointerEnterEvent, VisualElement>(OnAvatarPointerEnter, avatarTooltip);
+            avatarHitArea.RegisterCallback<PointerMoveEvent, VisualElement>(OnAvatarPointerMove, avatarTooltip);
+            avatarHitArea.RegisterCallback<PointerLeaveEvent, VisualElement>(OnAvatarPointerLeave, avatarTooltip);
 
             profileChangesBus.SubscribeToUpdate(OnProfileUpdated);
             avatarCts = avatarCts.SafeRestart();
@@ -280,8 +261,8 @@ namespace DCL.Lobby
             landingCard.Clicked = OnLandingCardClicked;
             landingCard.JumpInClicked = OnLandingJumpInClicked;
 
-            recentPlacesRail ??= CreatePlacesRail(recentPlaces, LobbySection.Recent);
-            featuredPlacesRail ??= CreatePlacesRail(featuredPlaces, LobbySection.Recommended);
+            recentPlacesRail ??= CreatePlacesRail(recentPlaces, LobbyCardOrigin.Recent);
+            featuredPlacesRail ??= CreatePlacesRail(featuredPlaces, LobbyCardOrigin.Recommended);
             recentPlacesRail.Show(viewInstance.RecentPlaces);
             featuredPlacesRail.Show(viewInstance.FeaturedPlaces);
 
@@ -293,7 +274,7 @@ namespace DCL.Lobby
             placesCts = placesCts.SafeRestart();
             LandingDestination destination = ResolveLandingDestination();
 
-            // A card already showing the destination keeps it up while its details are fetched again, instead of going dark for the round trip
+            // A card already showing the destination keeps it up during the refetch
             if (landingDestination is not { } shown || !shown.Equals(destination))
                 ShowLandingCardLoading(landingCard);
 
@@ -323,7 +304,7 @@ namespace DCL.Lobby
             eventCardActions.EventSetAsInterested -= OnEventInterestChanged;
             notificationsPanel.UnreadCountChanged -= ShowUnreadCount;
 
-            // Nulled so a late callback finds no source instead of reading the token of a disposed one, which throws
+            // Nulled so a late callback finds no source rather than a disposed one, whose token throws
             avatarCts.SafeCancelAndDispose();
             avatarCts = null;
             placesCts.SafeCancelAndDispose();
@@ -334,7 +315,6 @@ namespace DCL.Lobby
             friendsCts.SafeCancelAndDispose();
             friendsCts = null;
 
-            // The hit area is hidden again on the next show; the preview and its stage are released here
             avatarPreview!.OnHide();
 
             recentPlacesRail?.Hide();
@@ -344,18 +324,14 @@ namespace DCL.Lobby
 
             inputBlock.Enable(InputMapComponent.BLOCK_USER_INPUT);
 
-            // At startup the lobby is the only way into the world, and a fullscreen panel opened from it replaces
-            // it instead of closing it: the lobby has to come back, otherwise nothing is left on screen and the flow never resumes
+            // At startup a fullscreen panel opened from the lobby replaces it, so the lobby has to come back or the flow never resumes
             if (inputData.IsStartup && !leaving)
                 mvcManager.OnViewClosed += ShowAgainWhenTheScreenIsFree;
 
             Closed?.Invoke();
         }
 
-        /// <summary>
-        ///     Shows the startup lobby again as soon as the panel that replaced it is gone. A Logout is not a replacement: the
-        ///     authentication screen owns the screen from then on, which the cancelled startup token reports.
-        /// </summary>
+        // Shows the startup lobby again once the panel that replaced it is gone. A Logout is not a replacement: the cancelled startup token reports it
         private void ShowAgainWhenTheScreenIsFree(IController closed)
         {
             // This handler is added while the lobby is hiding, so its own closure is reported to it first
@@ -405,7 +381,6 @@ namespace DCL.Lobby
                 avatarPreview.OnBeforeShow();
                 avatarPreview.OnShow();
 
-                // The hit area only makes sense over a figure, so it comes up with the avatar
                 viewInstance!.AvatarHitArea.SetDisplayed(true);
             }
             catch (OperationCanceledException) { }
@@ -444,10 +419,7 @@ namespace DCL.Lobby
             card.IsLoading = true;
         }
 
-        /// <summary>
-        ///     At startup the hero card's Jump in is the only way out, so an offline stand-in fills it when the Places API cannot describe
-        ///     the destination. A card already showing that destination is kept instead when the refetch fails.
-        /// </summary>
+        // At startup the hero card's Jump in is the only way out, so an offline stand-in fills it when the Places API cannot describe the destination
         private async UniTaskVoid ShowLandingPlaceAsync(LandingDestination destination, CancellationToken ct)
         {
             Result<PlacesData.PlaceInfo?> result = await (destination.WorldName != null
@@ -457,7 +429,7 @@ namespace DCL.Lobby
 
             if (ct.IsCancellationRequested) return;
 
-            // A hide while the picture was loading left the kept card on its loading look, so the picture is loaded again
+            // A hide mid-load left the kept card on its loading look, so its picture is loaded again
             if (!result.Success && landingDestination is { } shown && shown.Equals(destination) && landingPlace is { } kept)
             {
                 LoadThumbnailAsync(viewInstance!.LandingCard, kept.image, ReportCategory.PLACES, ct).Forget();
@@ -468,9 +440,7 @@ namespace DCL.Lobby
             ShowLandingCard(destination, place ?? destination.ToOfflinePlace(), hasDetails: place != null, ct);
         }
 
-        /// <summary>
-        ///     The launch pick is frozen on first show so the card reads the same all session; only a home destination keeps following the home, which the user may move.
-        /// </summary>
+        // The launch pick is frozen on the first show; only a home destination keeps following the home, which the user may move
         private LandingDestination ResolveLandingDestination()
         {
             startupDestination ??= new LandingDestination(startParcel.Peek(), realmData.IsWorld() ? realmData.RealmName : null);
@@ -484,11 +454,10 @@ namespace DCL.Lobby
             if (homePlace.CurrentHomeCoordinates is { } homeParcel)
                 return new LandingDestination(homeParcel, null);
 
-            // Home was unset during the session: the place the session actually landed in is the closest truth left
+            // Home was unset during the session
             return startupDestination.Value;
         }
 
-        // An offline stand-in carries nothing but the destination itself, so that card only offers Jump in
         private void ShowLandingCard(LandingDestination destination, PlacesData.PlaceInfo place, bool hasDetails, CancellationToken ct)
         {
             landingPlace = place;
@@ -504,19 +473,19 @@ namespace DCL.Lobby
         private void OnLandingCardClicked()
         {
             if (landingPlace != null)
-                OnPlaceClicked(landingPlace, LobbySection.Landing);
+                OnPlaceClicked(landingPlace, LobbyCardOrigin.Landing);
         }
 
         private void OnLandingJumpInClicked()
         {
             if (landingPlace == null) return;
 
-            // Before the world loads the card mirrors the destination the launch settings already picked, so there is nothing to reassign
+            // Before the world loads the card mirrors the destination already picked, so there is nothing to reassign
             if (startParcel.IsConsumed())
-                OnPlaceJumpIn(landingPlace, LobbySection.Landing);
+                OnPlaceJumpIn(landingPlace, LobbyCardOrigin.Landing);
             else
             {
-                PlaceJumpedIn?.Invoke(landingPlace, LobbySection.Landing);
+                PlaceJumpedIn?.Invoke(landingPlace, LobbyCardOrigin.Landing);
                 RequestClose();
             }
         }
@@ -524,43 +493,39 @@ namespace DCL.Lobby
         private void OnAvatarClicked() =>
             mvcManager.ShowAndForget(BackpackModalController.IssueCommand(new BackpackModalParameter(BackpackSections.Avatar)));
 
-        private void OnAvatarPointerEnter(PointerEnterEvent evt)
+        private void OnAvatarPointerEnter(PointerEnterEvent evt, VisualElement tooltip)
         {
             avatarPreview!.SetHovered(true);
-            MoveAvatarTooltip(evt.position);
-            viewInstance!.AvatarTooltip.SetDisplayed(true);
+            MoveAvatarTooltip(tooltip, evt.position);
+            tooltip.SetDisplayed(true);
         }
 
-        private void OnAvatarPointerMove(PointerMoveEvent evt) =>
-            MoveAvatarTooltip(evt.position);
+        private void OnAvatarPointerMove(PointerMoveEvent evt, VisualElement tooltip) =>
+            MoveAvatarTooltip(tooltip, evt.position);
 
-        private void OnAvatarPointerLeave(PointerLeaveEvent evt)
+        private void OnAvatarPointerLeave(PointerLeaveEvent evt, VisualElement tooltip)
         {
             avatarPreview!.SetHovered(false);
-            viewInstance!.AvatarTooltip.SetDisplayed(false);
+            tooltip.SetDisplayed(false);
         }
 
         // The pointer position comes in panel space, the tooltip is laid out in the space of its parent
-        private void MoveAvatarTooltip(Vector2 panelPosition)
+        private static void MoveAvatarTooltip(VisualElement tooltip, Vector2 panelPosition)
         {
-            VisualElement tooltip = viewInstance!.AvatarTooltip;
             Vector2 local = tooltip.parent.WorldToLocal(panelPosition) + AVATAR_TOOLTIP_OFFSET;
             tooltip.style.left = local.x;
             tooltip.style.top = local.y;
         }
 
-        // The section travels with the handlers so a Jump in from the details is attributed to the row the card sits in
-        private LobbyPlacesRail CreatePlacesRail(List<PlacesData.PlaceInfo> places, LobbySection section) =>
+        // The origin travels with the handlers so a Jump in from the details is attributed to the card's row
+        private LobbyPlacesRail CreatePlacesRail(List<PlacesData.PlaceInfo> places, LobbyCardOrigin origin) =>
             new (viewInstance!.PlaceCardTemplate)
             {
-                CardClicked = index => OnPlaceClicked(places[index], section),
-                CardJumpInClicked = index => OnPlaceJumpIn(places[index], section),
+                CardClicked = index => OnPlaceClicked(places[index], origin),
+                CardJumpInClicked = index => OnPlaceJumpIn(places[index], origin),
             };
 
-        /// <summary>
-        ///     Fills a row with the first <paramref name="maxCount" /> places <paramref name="fetch" /> resolves to, one card per place;
-        ///     a failed fetch keeps the places of the last one that succeeded, so the row is only hidden while none have ever arrived.
-        /// </summary>
+        // A failed fetch keeps the places of the last one that succeeded, so the row is only hidden while none have ever arrived
         private async UniTaskVoid ShowPlacesAsync(LobbyPlacesRail rail, List<PlacesData.PlaceInfo> places, UniTask<PlacesData.IPlacesAPIResponse> fetch, int maxCount, CancellationToken ct)
         {
             Result<PlacesData.IPlacesAPIResponse> result = await fetch.SuppressToResultAsync(ReportCategory.PLACES);
@@ -593,7 +558,6 @@ namespace DCL.Lobby
             LoadThumbnailAsync(card, place.image, ReportCategory.PLACES, ct).Forget();
         }
 
-        // A cached sprite comes back synchronously, so the loading look is never drawn for it
         private async UniTaskVoid LoadThumbnailAsync(LobbyThumbnailCardElement card, string? url, string reportCategory, CancellationToken ct)
         {
             card.Thumbnail = null;
@@ -611,7 +575,7 @@ namespace DCL.Lobby
             catch (OperationCanceledException) { return; }
             catch (Exception e) { ReportHub.LogException(e, reportCategory); }
 
-            // The cache returns rather than throws on a cancellation, and the card may already be showing something else
+            // The cache returns rather than throws on a cancellation
             if (ct.IsCancellationRequested) return;
 
             card.IsLoading = false;
@@ -627,10 +591,7 @@ namespace DCL.Lobby
                 CardShareClicked = OnUpcomingEventShare,
             };
 
-        /// <summary>
-        ///     A single schedule fetch feeds both event rows. A failed fetch keeps the upcoming events of the last one that succeeded,
-        ///     so that row is only hidden while none have ever arrived, but drops the live ones: a stale LIVE badge is a false claim.
-        /// </summary>
+        // A failed fetch keeps the last upcoming events but drops the live ones: a stale LIVE badge is a false claim
         private async UniTaskVoid ShowEventsAsync(CancellationToken ct)
         {
             Result<IReadOnlyList<EventDTO>> result = await eventsApiService.GetEventsAsync(ct, withConnectedUsers: true)
@@ -647,7 +608,7 @@ namespace DCL.Lobby
                 for (var i = 0; i < events.Count; i++)
                     (events[i].live ? liveEvents : upcomingEvents).Add(events[i]);
 
-                // The schedule is not guaranteed to come sorted and can be long: keep only the next few
+                // The schedule is not guaranteed to come sorted
                 upcomingEvents.Sort(BY_START_TIME);
 
                 if (upcomingEvents.Count > MAX_UPCOMING_EVENTS)
@@ -688,23 +649,23 @@ namespace DCL.Lobby
             LoadThumbnailAsync(card, @event.image, ReportCategory.EVENTS, ct).Forget();
         }
 
-        private void OnPlaceClicked(PlacesData.PlaceInfo place, LobbySection section)
+        private void OnPlaceClicked(PlacesData.PlaceInfo place, LobbyCardOrigin origin)
         {
-            PlaceOpened?.Invoke(place, section);
-            mvcManager.ShowAndForget(PlaceDetailPanelController.IssueCommand(new PlaceDetailPanelParameter(place, jumpInHandler: jumped => OnPlaceJumpIn(jumped, section))));
+            PlaceOpened?.Invoke(place, origin);
+            mvcManager.ShowAndForget(PlaceDetailPanelController.IssueCommand(new PlaceDetailPanelParameter(place, jumpInHandler: jumped => OnPlaceJumpIn(jumped, origin))));
         }
 
-        private void OnPlaceJumpIn(PlacesData.PlaceInfo place, LobbySection section)
+        private void OnPlaceJumpIn(PlacesData.PlaceInfo place, LobbyCardOrigin origin)
         {
-            PlaceJumpedIn?.Invoke(place, section);
+            PlaceJumpedIn?.Invoke(place, origin);
             PickDestination(place.IsWorld ? WorldUrl(place.world_name) : null, place.base_position_processed, landOnParcel: false);
         }
 
         private void OnLiveEventClicked(int index) =>
-            OpenEventDetails(liveEvents[index], LobbySection.LiveEvents);
+            OpenEventDetails(liveEvents[index], LobbyCardOrigin.LiveEvents);
 
         private void OnUpcomingEventClicked(int index) =>
-            OpenEventDetails(upcomingEvents[index], LobbySection.UpcomingEvents);
+            OpenEventDetails(upcomingEvents[index], LobbyCardOrigin.UpcomingEvents);
 
         private void OnUpcomingEventInterested(int index)
         {
@@ -713,10 +674,7 @@ namespace DCL.Lobby
             eventCardActions.SetEventAsInterestedAsync(upcomingEvents[index], null, null, eventsCts.Token).Forget();
         }
 
-        /// <summary>
-        ///     Interest is toggled on a boxed copy of the event, from the card's button or from the details it opened, so the listed
-        ///     event and its card are brought in line by id.
-        /// </summary>
+        // Interest is toggled on a boxed copy of the event, so the listed event and its card are brought in line by id
         private void OnEventInterestChanged(IEventDTO @event)
         {
             for (var i = 0; i < upcomingEvents.Count; i++)
@@ -761,16 +719,30 @@ namespace DCL.Lobby
         private void CopyEventLink() =>
             eventCardActions.CopyEventLink(sharedEvent);
 
-        private void OpenEventDetails(EventDTO @event, LobbySection section)
+        private void OpenEventDetails(EventDTO @event, LobbyCardOrigin origin)
         {
-            EventOpened?.Invoke(@event, section);
-            mvcManager.ShowAndForget(EventDetailPanelController.IssueCommand(new EventDetailPanelParameter(@event, placeData: null, jumpInHandler: jumped => OnEventJumpIn(jumped, section))));
+            if (eventsCts == null) return;
+
+            EventOpened?.Invoke(@event, origin);
+            ShowEventDetailsAsync(@event, origin, eventsCts.Token).Forget();
         }
 
-        // Land on the exact parcel of the event rather than on the scene spawn point: the event may be held in a corner of a big scene
-        private void OnEventJumpIn(IEventDTO @event, LobbySection section)
+        // The details toggle interest on the boxed copy they are handed, so the listed event is synced from it once they close
+        private async UniTaskVoid ShowEventDetailsAsync(IEventDTO @event, LobbyCardOrigin origin, CancellationToken ct)
         {
-            EventJumpedIn?.Invoke(@event, section);
+            try { await mvcManager.ShowAsync(EventDetailPanelController.IssueCommand(new EventDetailPanelParameter(@event, placeData: null, jumpInHandler: jumped => OnEventJumpIn(jumped, origin)))); }
+            catch (OperationCanceledException) { return; }
+            catch (Exception e) { ReportHub.LogException(e, ReportCategory.EVENTS); return; }
+
+            if (ct.IsCancellationRequested) return;
+
+            OnEventInterestChanged(@event);
+        }
+
+        // Land on the event's parcel rather than on the scene spawn point
+        private void OnEventJumpIn(IEventDTO @event, LobbyCardOrigin origin)
+        {
+            EventJumpedIn?.Invoke(@event, origin);
             PickDestination(@event.World ? WorldUrl(@event.Server) : null, new Vector2Int(@event.X, @event.Y), landOnParcel: true);
         }
 
@@ -783,10 +755,7 @@ namespace DCL.Lobby
             PickDestination(friend.worldName is { Length: > 0 } worldName ? WorldUrl(worldName) : null, parcel, landOnParcel: true);
         }
 
-        /// <summary>
-        ///     Before the world is loaded the startup teleport lands directly in the picked destination; once in-world it teleports right away.
-        ///     Either way the lobby closes.
-        /// </summary>
+        // Before the world is loaded the startup teleport lands in the picked destination; once in-world it teleports right away
         private void PickDestination(URLDomain? worldUrl, Vector2Int parcel, bool landOnParcel)
         {
             if (startParcel.IsConsumed())

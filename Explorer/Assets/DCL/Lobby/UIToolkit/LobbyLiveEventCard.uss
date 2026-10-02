@@ -1,5 +1,4 @@
-/* The live event card of the uGUI lobby: 358x214 with 24px corners, the thumbnail filling it. The card casts a shadow past its
-   edges, so it does not clip: each layer rounds its own corners instead */
+/* The live event card of the uGUI lobby; it casts a shadow past its edges, so it does not clip and each layer rounds its own corners instead */
 .lobby-live-event-card {
     width: 358px;
     height: 214px;
@@ -7,8 +6,7 @@
     background-color: var(--lobby-card-color);
 }
 
-/* Drawn under everything with the 24px container sprite that carries its drop shadow (see LobbyDocument.uss), hanging the shadow's
-   6px past the sides and 10px under the card; its body is tinted like the card, as the thumbnail covers it only once loaded */
+/* The 24px shadow sprite (see LobbyDocument.uss) hangs 6px past the sides and 10px under the card; tinted like the card, as the thumbnail covers it only once loaded */
 .lobby-live-event-card__shadow {
     position: absolute;
     left: -6px;
@@ -24,7 +22,6 @@
     -unity-background-image-tint-color: var(--lobby-card-color);
 }
 
-/* The badges and the texts sit over it */
 .lobby-live-event-card__thumbnail {
     position: absolute;
     left: 0;
@@ -45,7 +42,6 @@
     transition: opacity 0s;
 }
 
-/* Darkens the bottom of the thumbnail under the title and the host */
 .lobby-live-event-card__gradient {
     position: absolute;
     left: 0;

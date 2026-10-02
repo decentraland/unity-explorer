@@ -1,4 +1,4 @@
-/* Layout of the uGUI lobby (LobbyUI.prefab) at 1920x1080: 50px margins, a 100px header band, the side columns at 180px and the place rows along the bottom. */
+/* Layout of the uGUI lobby (LobbyUI.prefab) at 1920x1080: 50px margins, a 100px header band and the side columns at 180px */
 :root {
     --lobby-margin: 50px;
     --lobby-columns-top: 180px;
@@ -10,8 +10,7 @@
     --lobby-jump-in-hover-color: rgb(255, 77, 111);
     --lobby-jump-in-pressed-color: rgb(200, 35, 67);
     --lobby-thumbnail-fade-duration: 0.3s;
-    /* The uGUI drop shadows: 9-sliced container sprites authored at twice the size, a 12px-corner one with a 4px shadow for the
-       buttons and a 24px-corner one with a 10px shadow for the cards, drawn at half scale with the slices of their import settings */
+    /* The uGUI drop shadows: 9-sliced sprites authored at twice the size, drawn at half scale with the slices of their import settings */
     --lobby-button-shadow-image: url('/Assets/Textures/Common/Container12Shadow4.png');
     --lobby-card-shadow-image: url('/Assets/Textures/Common/Container24Shadow10.png');
 }
@@ -45,7 +44,6 @@
     height: 338px;
 }
 
-/* Backdrop of the active stage preset (GameWorld_01), covering the panel; the fill only shows through transparent pixels. */
 /* Same footprint as the hit area button of the uGUI lobby: 440x820, centred and 60px down */
 .lobby__avatar-hit-area {
     position: absolute;
@@ -57,8 +55,7 @@
     margin-top: -350px;
 }
 
-/* Same look as the in-world hover banner: a 40px dark pill with the mouse icon and the hint. Its left and top follow the pointer,
-   the translate centres it on the pointer vertically */
+/* Left and top follow the pointer; the translate centres it on the pointer vertically */
 .lobby__avatar-tooltip {
     position: absolute;
     height: 40px;
@@ -85,7 +82,6 @@
     color: var(--lobby-title-color);
 }
 
-/* 874x120 texture at 256x35, centred in the 100px header band */
 .lobby__logo {
     position: absolute;
     left: var(--lobby-margin);
@@ -95,7 +91,6 @@
     background-image: url('/Assets/Textures/ExplorePanel/DecentralandLogo.png');
 }
 
-/* The greeting and the landing card hang under the header along the left edge, the mirror of the events on the right. */
 .lobby__welcome {
     position: absolute;
     left: var(--lobby-margin);
@@ -103,7 +98,6 @@
     width: 524px;
 }
 
-/* The section titles share one look: 24px Inter Bold, white, sentence case */
 .lobby__welcome-title,
 .lobby__events-title,
 .lobby__friends-title,
@@ -113,14 +107,12 @@
     color: var(--lobby-title-color);
 }
 
-/* The friends and place titles are 30px tall with the text centred in them */
 .lobby__friends-title,
 .lobby__places-title {
     height: 30px;
     -unity-text-align: middle-left;
 }
 
-/* The welcome and events titles hang their text from the top of a 29px row */
 .lobby__welcome-title,
 .lobby__events-title {
     height: 29px;
@@ -130,12 +122,11 @@
     text-overflow: ellipsis;
 }
 
-/* 10px between the greeting and the landing card */
 .lobby__welcome-title {
     margin-bottom: 10px;
 }
 
-/* The friends row sits under the landing card, its header centred 25.8px under the middle of the screen: 180px tall in all */
+/* The header is centred 25.8px under the middle of the screen, as in the uGUI lobby */
 .lobby__friends {
     position: absolute;
     left: var(--lobby-margin);
@@ -157,13 +148,12 @@
     color: var(--lobby-subtitle-color);
 }
 
-/* The cards are 132px tall, 2px under the header; the rest is the dots row under the viewport */
+/* 132px cards plus the dots row under the viewport */
 .lobby__friends-rail {
     margin-top: 2px;
     height: 148px;
 }
 
-/* The events hang under the header along the right edge, one card wide: the live card on top, the upcoming card under it. */
 .lobby__events {
     position: absolute;
     right: var(--lobby-margin);
@@ -171,12 +161,11 @@
     width: 358px;
 }
 
-/* The title is 29px tall with 9px under it, so the first card starts 38px under the section */
 .lobby__events-title {
     margin-bottom: 9px;
 }
 
-/* The cards are 214px tall; the rest is the dots row under the viewport, and the row keeps 16px more under the dots */
+/* 214px cards plus the dots row under the viewport, and 16px more under the dots */
 .lobby__live-events {
     margin-bottom: 16px;
 }
@@ -185,9 +174,8 @@
     height: 230px;
 }
 
-/* The live cards cast a shadow 6px past their sides and 10px under them: the viewport bleeds that far into the gutters and over
-   the dots, clipping at the shadow's edge instead of the card's. Its padding keeps the cards where they were, and tells the rail
-   how much of it the cards have (see LobbyRailElement) */
+/* The viewport bleeds as far as the live cards' shadow (6px sideways, 10px down) so it clips at the shadow's edge instead of the
+   card's; the padding keeps the cards in place and tells the rail how much of the viewport the cards have (see LobbyRailElement) */
 .lobby__live-events-rail .lobby-rail__viewport {
     margin: 0 -6px -10px;
     padding: 0 6px 10px;
@@ -201,7 +189,7 @@
     margin-top: 4px;
 }
 
-/* The cards are 135px tall, 12px over the dots; the rest is the dots row under the viewport */
+/* 135px cards plus the dots row under the viewport */
 .lobby__upcoming-events-rail {
     height: 155px;
 }
@@ -210,7 +198,6 @@
     margin-top: 12px;
 }
 
-/* The place rows sit along the bottom edge, one on each side of the avatar; three cards and their spacing fill a row. */
 .lobby__places {
     position: absolute;
     bottom: 13px;
@@ -229,7 +216,7 @@
     margin-bottom: 5px;
 }
 
-/* The cards are 165px tall; the rest is the dots row under the viewport */
+/* 165px cards plus the dots row under the viewport */
 .lobby__places-rail {
     height: 181px;
 }

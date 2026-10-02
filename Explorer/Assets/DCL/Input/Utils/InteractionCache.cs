@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.Pool;
 using UnityEngine.UI;
 using UnityEngine.UIElements;
+using Utility.UIToolkit;
 using Button = UnityEngine.UIElements.Button;
 using Toggle = UnityEngine.UIElements.Toggle;
 
@@ -11,12 +12,6 @@ namespace DCL.Input.Utils
 {
     public class InteractionCache
     {
-        /// <summary>
-        ///     USS class that marks a UI Toolkit element as clickable, so the cursor turns into the interaction one over it
-        ///     the way it does over a <see cref="Button" /> or a <see cref="Toggle" />.
-        /// </summary>
-        public const string INTERACTABLE_CLASS = "interactable";
-
         private readonly Dictionary<GameObject, Selectable?> interactionCache = new ();
         private readonly Dictionary<GameObject, PanelEventHandler> uiToolkitPanel = new ();
 
@@ -35,9 +30,9 @@ namespace DCL.Input.Utils
 
                 for (var i = 0; i < visualElements.Count; i++)
                 {
-                    VisualElement? visualElement = visualElements[i];
+                    VisualElement visualElement = visualElements[i];
 
-                    canBeInteracted = visualElement is Button or Toggle || visualElement.ClassListContains(INTERACTABLE_CLASS);
+                    canBeInteracted = visualElement.enabledInHierarchy && (visualElement is Button or Toggle || visualElement.ClassListContains(VisualElementsExtensions.INTERACTABLE_CLASS));
 
                     if (canBeInteracted)
                         break;

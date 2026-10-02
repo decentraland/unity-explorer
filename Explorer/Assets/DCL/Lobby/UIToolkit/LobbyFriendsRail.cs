@@ -4,8 +4,7 @@ using UnityEngine.UIElements;
 namespace DCL.Lobby
 {
     /// <summary>
-    ///     The online friends row of the lobby, one <see cref="LobbyFriendCardElement" /> per friend, with the online count of the
-    ///     section header. It only reports which card, or which card's Join, was clicked.
+    ///     The online friends row of the lobby, one <see cref="LobbyFriendCardElement" /> per friend; it only reports which card, or which card's Join, was clicked.
     /// </summary>
     public class LobbyFriendsRail : LobbyCardRail<LobbyFriendCardElement>
     {

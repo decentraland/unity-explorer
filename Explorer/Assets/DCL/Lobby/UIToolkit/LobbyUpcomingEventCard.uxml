@@ -3,10 +3,9 @@
     <DCL.Lobby.LobbyUpcomingEventCardElement name="UpcomingEventCard" title="Event Name" host="Host" starts-in="In 2 hours">
         <ui:VisualElement name="Thumbnail" class="lobby-upcoming-event-card__thumbnail" picking-mode="Ignore" />
         <ui:VisualElement name="Info" class="lobby-upcoming-event-card__info" picking-mode="Ignore">
-            <!-- Grouped so hovering can lift the title and the host together -->
             <ui:VisualElement name="Texts" class="lobby-upcoming-event-card__texts" picking-mode="Ignore">
                 <ui:Label name="Title" text="Event Name" enable-rich-text="false" class="lobby-upcoming-event-card__title" picking-mode="Ignore" />
-                <!-- The host name is a label of its own so it can be bold without parsing rich text out of a name other users choose -->
+                <!-- Own label so the host can be bold without rich text in a name other users choose -->
                 <ui:VisualElement name="HostRow" class="lobby-upcoming-event-card__host-row" picking-mode="Ignore">
                     <ui:Label name="HostPrefix" text="By" class="lobby-upcoming-event-card__host-prefix" picking-mode="Ignore" />
                     <ui:Label name="Host" text="Host" enable-rich-text="false" class="lobby-upcoming-event-card__host" picking-mode="Ignore" />

@@ -157,7 +157,6 @@ namespace DCL.PluginSystem.Global
 
         public void Dispose()
         {
-            // The lobby, profile menu and notifications controllers are registered in the MVC manager, which disposes them itself
             if (lobbyStage != null)
                 Object.Destroy(lobbyStage.gameObject);
 
@@ -165,7 +164,10 @@ namespace DCL.PluginSystem.Global
                 Object.Destroy(lobbyPopups.gameObject);
 
             if (lobbyDocumentView != null)
+            {
+                lobbyDocumentView.Profile.Dispose();
                 Object.Destroy(lobbyDocumentView.gameObject);
+            }
 
             friendsPresenter?.Dispose();
             profileButtonPresenter?.Dispose();
@@ -183,17 +185,15 @@ namespace DCL.PluginSystem.Global
             NotificationDefaultThumbnails notificationDefaultThumbnails = (await assetsProvisioner.ProvideMainAssetAsync(settings.NotificationDefaultThumbnails, ct)).Value;
             NftTypeIconSO rarityBackgroundMapping = await assetsProvisioner.ProvideMainAssetValueAsync(settings.RarityColorMappings, ct);
 
-            // One stage for the whole session: it is parked at the preview position and only active while the lobby is shown
             lobbyStage = Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(settings.StagePrefab, ct: ct)).Value);
             lobbyStage.gameObject.SetActive(false);
 
-            // The top-bar presenters bind to the live view, so it is instantiated up front instead of lazily on first show
+            // The top-bar presenters bind to the view, so it is instantiated up front
             ControllerBase<LobbyDocumentView, LobbyParameter>.ViewFactoryMethod viewFactory = LobbyDocumentController.Preallocate(documentPrefab, null, out LobbyDocumentView lobbyView);
             lobbyDocumentView = lobbyView;
 
             profileButtonPresenter = new SidebarProfileButtonPresenter(lobbyView.Profile, identityCache, profileRepository, profileChangesBus);
 
-            // The popups the lobby opens from its top bar are uGUI views, so they hang from a canvas of their own
             LobbyPopupsView popups = Object.Instantiate(popupsPrefab);
             lobbyPopups = popups;
 
@@ -208,7 +208,7 @@ namespace DCL.PluginSystem.Global
                 passportBridge,
                 profileRepositoryWrapper);
 
-            // The lobby has its own panel instance: the sidebar's one lives inside the sidebar view, which is inactive until the world is loaded
+            // The sidebar's notifications panel lives in the sidebar view, inactive until the world is loaded
             var notificationsPanel = new NotificationsPanelController<LobbyPopupParameter>(() => popups.NotificationsMenuView,
                 notificationsRequestController,
                 notificationIconTypes,
@@ -219,12 +219,10 @@ namespace DCL.PluginSystem.Global
                 profileRepositoryWrapper,
                 mvcManager);
 
-            // Without connectivity statuses there is nothing to list: the section stays hidden
             friendsPresenter = friendsConnectivity != null
                 ? new LobbyDocumentFriendsPresenter(new LobbyFriendsRail(lobbyView.FriendCardTemplate), friendsConnectivity, onlineUsersProvider, placesAPIService, passportBridge)
                 : null;
 
-            // The upcoming event cards mirror the Explore panel's, so their Interested, calendar and share actions run through the same controller
             var eventCardActions = new EventCardActionsController(eventsApiService, webBrowser, realmNavigator, clipboard, decentralandUrlsSource);
 
             var lobbyController = new LobbyDocumentController(viewFactory,

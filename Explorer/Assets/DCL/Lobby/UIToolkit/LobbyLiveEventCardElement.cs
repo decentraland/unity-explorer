@@ -3,9 +3,7 @@ using UnityEngine.UIElements;
 namespace DCL.Lobby
 {
     /// <summary>
-    ///     Full-bleed thumbnail with the Live badge and how many people
-    ///     are attending on top, plus the name and the host over the gradient at the bottom. Its hierarchy comes from LobbyLiveEventCard.uxml;
-    ///     the badges and the gradient are laid out by LobbyLiveEventCard.uss.
+    ///     Live event card; its hierarchy comes from LobbyLiveEventCard.uxml and LobbyLiveEventCard.uss lays it out.
     /// </summary>
     [UxmlElement]
     public partial class LobbyLiveEventCardElement : LobbyThumbnailCardElement
@@ -38,9 +36,6 @@ namespace DCL.Lobby
             }
         }
 
-        /// <summary>
-        ///     Shown as given, under the title.
-        /// </summary>
         [UxmlAttribute]
         public string Host
         {
@@ -55,9 +50,6 @@ namespace DCL.Lobby
             }
         }
 
-        /// <summary>
-        ///     How many people are attending the event right now.
-        /// </summary>
         [UxmlAttribute]
         public int Attendees
         {

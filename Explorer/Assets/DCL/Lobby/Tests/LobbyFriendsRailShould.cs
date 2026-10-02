@@ -91,7 +91,6 @@ namespace DCL.Lobby.Tests
         private LobbyFriendCardElement Card(int index) =>
             (LobbyFriendCardElement)Rail()[index];
 
-        // The header and the rail of the document's friends section, without its stylesheet
         private static VisualElement CreateSection()
         {
             var friendsSection = new VisualElement { name = "Friends" };

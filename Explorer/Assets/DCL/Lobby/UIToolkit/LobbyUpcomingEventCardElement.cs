@@ -6,10 +6,7 @@ using Utility.UIToolkit;
 namespace DCL.Lobby
 {
     /// <summary>
-    ///     Upcoming event card: name, host and how long until the event starts on the left, the thumbnail on the right, plus the
-    ///     Interested, Add to calendar and Share buttons that hovering brings in. Its hierarchy comes from LobbyUpcomingEventCard.uxml;
-    ///     LobbyUpcomingEventCard.uss lays it out, animates the hover and darkens the events the user is interested in, whose Interested
-    ///     bell shows as toggled on.
+    ///     Upcoming event card; its hierarchy comes from LobbyUpcomingEventCard.uxml and LobbyUpcomingEventCard.uss lays it out and animates the hover.
     /// </summary>
     [UxmlElement]
     public partial class LobbyUpcomingEventCardElement : LobbyThumbnailCardElement
@@ -53,9 +50,6 @@ namespace DCL.Lobby
             }
         }
 
-        /// <summary>
-        ///     Name of the host, shown in bold after the fixed "By" under the title.
-        /// </summary>
         [UxmlAttribute]
         public string Host
         {
@@ -70,9 +64,6 @@ namespace DCL.Lobby
             }
         }
 
-        /// <summary>
-        ///     How long until the event starts, shown as given next to the clock.
-        /// </summary>
         [UxmlAttribute]
         public string StartsIn
         {
@@ -87,9 +78,6 @@ namespace DCL.Lobby
             }
         }
 
-        /// <summary>
-        ///     The user marked the event as one they are interested in, which tints the card.
-        /// </summary>
         public bool IsInterested
         {
             get => ClassListContains(USS_INTERESTED);
@@ -97,7 +85,7 @@ namespace DCL.Lobby
         }
 
         /// <summary>
-        ///     Centre of the Share button in screen pixels, where a uGUI context menu is anchored. Only meaningful while the card is on a panel.
+        ///     Centre of the Share button in screen pixels; only meaningful while the card is on a panel.
         /// </summary>
         public Vector2 ShareButtonScreenPosition => shareButton!.ScreenCenter();
 

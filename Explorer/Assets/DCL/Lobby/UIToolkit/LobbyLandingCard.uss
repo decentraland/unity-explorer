@@ -7,7 +7,6 @@
     overflow: hidden;
 }
 
-/* A card with nothing to open is dimmed, visible while the thumbnail is missing */
 .lobby-landing-card--static {
     background-color: rgba(16, 16, 20, 0.45);
 }
@@ -31,7 +30,6 @@
     transition: opacity 0s;
 }
 
-/* Darkens the bottom of the thumbnail under the texts and the button */
 .lobby-landing-card__gradient {
     position: absolute;
     left: 0;
@@ -81,7 +79,6 @@
     color: var(--dcl-color-snow);
 }
 
-/* The texts keep clear of the Jump in button on the right */
 .lobby-landing-card__footer {
     position: absolute;
     left: 16px;
@@ -113,8 +110,7 @@
     text-overflow: ellipsis;
 }
 
-/* Drawn with the 12px container sprite that carries its drop shadow (see LobbyDocument.uss), so the box runs the shadow's
-   6px under the 153x40 button it shows, 16px in from the card's corner, and the label is padded off that strip */
+/* The box runs 6px under the visible button for the shadow of its sprite (see LobbyDocument.uss); the label is padded off that strip */
 .lobby-landing-card__jump-in {
     position: absolute;
     right: 15px;

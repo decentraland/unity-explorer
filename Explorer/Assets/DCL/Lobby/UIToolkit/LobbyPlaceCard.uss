@@ -11,8 +11,7 @@
     overflow: hidden;
 }
 
-/* Hovering raises the footer over the thumbnail, so the thumbnail gives up as much as the footer grows. Its 16px corners make
-   the dark strip under it curve into it; the top ones end up under the 24px ones of the card */
+/* Gives up as much height as the hovered footer grows; its 16px corners make the dark strip under it curve into it */
 .lobby-place-card__thumbnail {
     position: absolute;
     left: 0;
@@ -70,7 +69,6 @@
     color: var(--dcl-color-snow);
 }
 
-/* The texts hang from its top, so they rise with it while hovered */
 .lobby-place-card__footer {
     position: absolute;
     left: 0;
@@ -98,7 +96,6 @@
     text-overflow: ellipsis;
 }
 
-/* Fades out while hovered, giving its place to the Jump in button */
 .lobby-place-card__creator {
     height: 16px;
     font-size: 11px;
@@ -115,9 +112,7 @@
     opacity: 0;
 }
 
-/* Only reachable while the card is hovered, so its invisible state never takes a click meant for the card itself.
-   Drawn with the 12px container sprite that carries its drop shadow (see LobbyDocument.uss), so the box runs the shadow's
-   6px under the 32px button it shows, 8px in from the card's edges, and the label is padded off that strip */
+/* Only reachable while hovered, so its invisible state never takes a click meant for the card; the box runs 6px under the visible button for the shadow of its sprite (see LobbyDocument.uss) */
 .lobby-place-card__jump-in {
     position: absolute;
     left: 7px;

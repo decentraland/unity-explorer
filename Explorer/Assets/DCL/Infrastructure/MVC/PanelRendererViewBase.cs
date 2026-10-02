@@ -7,10 +7,7 @@ using Utility.UIToolkit;
 namespace MVC
 {
     /// <summary>
-    ///     UI Toolkit counterpart of <see cref="ViewBase" />: a view drawn by a <see cref="PanelRenderer" /> instead of a Canvas.
-    ///     A panel sorts against uGUI canvases as a whole, so the layer offset of <see cref="CanvasOrdering" /> is authored on the
-    ///     renderer's PanelSettings asset (one asset per <see cref="CanvasOrdering.SortingLayer" />); <see cref="SetDrawOrder" />
-    ///     only orders renderers that share that panel.
+    ///     UI Toolkit counterpart of <see cref="ViewBase" />: the layer offset is authored on the renderer's PanelSettings asset, so <see cref="SetDrawOrder" /> only orders renderers that share that panel.
     /// </summary>
     public abstract class PanelRendererViewBase : MonoBehaviour, IView
     {
@@ -18,10 +15,7 @@ namespace MVC
 
         [field: SerializeField] protected PanelRenderer panelRenderer { get; private set; } = null!;
 
-        /// <summary>
-        ///     Exposed only while the object is active. The renderer keeps the hierarchy across hides, detached from its panel, and
-        ///     hands it over through its reload callback once it is attached again; <see cref="ShowAsync" /> waits for that.
-        /// </summary>
+        // Null while the object is inactive; the renderer hands the hierarchy over through its reload callback once it is attached
         protected VisualElement? Root { get; private set; }
 
         public void SetDrawOrder(CanvasOrdering order)
@@ -74,8 +68,7 @@ namespace MVC
             rootLoaded = null;
         }
 
-        // The callback runs while the runtime iterates its panel renderers, so the show flow resumes later in the frame:
-        // continuing inline would mutate that collection as soon as the flow enables or disables another panel
+        // The reload callback runs while the runtime iterates its panel renderers, so the flow resumes later in the frame: continuing inline would mutate that collection
         private async UniTask WaitForRootAsync(CancellationToken ct)
         {
             if (Root != null)

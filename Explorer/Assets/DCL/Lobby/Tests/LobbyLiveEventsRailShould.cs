@@ -69,7 +69,6 @@ namespace DCL.Lobby.Tests
         private LobbyLiveEventCardElement Card(int index) =>
             (LobbyLiveEventCardElement)Rail()[index];
 
-        // The live events section of the document, without its stylesheet
         private static VisualElement CreateSection()
         {
             var liveEvents = new VisualElement { name = "LiveEvents" };

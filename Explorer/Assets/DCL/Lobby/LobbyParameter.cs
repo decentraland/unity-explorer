@@ -5,18 +5,15 @@ namespace DCL.Lobby
 {
     public readonly struct LobbyParameter
     {
-        /// <summary>
-        ///     True when the lobby gates the startup flow, where Jump in is the only way out and no close button is offered.
-        /// </summary>
         public readonly bool IsStartup;
 
         /// <summary>
-        ///     Releases the startup flow; leaving the screen is not enough, as a fullscreen panel opened from the lobby replaces it and it comes back.
+        ///     Releases the startup flow, which hiding the lobby alone does not.
         /// </summary>
         public readonly Action? JumpedIn;
 
         /// <summary>
-        ///     Cancelled when a Logout takes the startup flow over, so the lobby must not show itself again.
+        ///     Cancelled when a Logout takes the startup flow over.
         /// </summary>
         public readonly CancellationToken StartupToken;
 

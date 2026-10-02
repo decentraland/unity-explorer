@@ -4,8 +4,7 @@ using UnityEngine.UIElements;
 namespace DCL.Lobby
 {
     /// <summary>
-    ///     The upcoming events carousel of the lobby, one <see cref="LobbyUpcomingEventCardElement" /> per event. It only reports which
-    ///     card, or which card's Interested, Add to calendar or Share, was clicked.
+    ///     The upcoming events carousel of the lobby, one <see cref="LobbyUpcomingEventCardElement" /> per event; it only reports which card, or which card's button, was clicked.
     /// </summary>
     public class LobbyUpcomingEventsRail : LobbyCardRail<LobbyUpcomingEventCardElement>
     {

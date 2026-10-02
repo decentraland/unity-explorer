@@ -148,7 +148,6 @@ namespace DCL.Lobby.Tests
             return visible;
         }
 
-        // The title and the rail of a places section of the document, without its stylesheet
         private static VisualElement CreateSection()
         {
             var placesSection = new VisualElement { name = "RecentPlaces" };

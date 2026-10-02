@@ -105,14 +105,14 @@ namespace DCL.Lobby.Tests
 
             //Assert
             Assert.IsTrue(card.ClassListContains("lobby-landing-card--static"));
-            Assert.IsFalse(card.ClassListContains("interactable"));
+            Assert.IsFalse(card.ClassListContains(VisualElementsExtensions.INTERACTABLE_CLASS));
 
             //Act
             card.CanOpen = true;
 
             //Assert
             Assert.IsFalse(card.ClassListContains("lobby-landing-card--static"));
-            Assert.IsTrue(card.ClassListContains("interactable"));
+            Assert.IsTrue(card.ClassListContains(VisualElementsExtensions.INTERACTABLE_CLASS));
         }
 
         [Test]

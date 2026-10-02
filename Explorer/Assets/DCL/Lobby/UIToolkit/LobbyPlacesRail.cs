@@ -4,8 +4,7 @@ using UnityEngine.UIElements;
 namespace DCL.Lobby
 {
     /// <summary>
-    ///     A row of the lobby listing places, one <see cref="LobbyPlaceCardElement" /> per place. It only reports which card, or which
-    ///     card's Jump in, was clicked.
+    ///     A row of the lobby listing places, one <see cref="LobbyPlaceCardElement" /> per place; it only reports which card, or which card's Jump in, was clicked.
     /// </summary>
     public class LobbyPlacesRail : LobbyCardRail<LobbyPlaceCardElement>
     {

@@ -1,15 +1,13 @@
-using DCL.Input.Utils;
 using DCL.UI;
 using System;
 using UnityEngine;
 using UnityEngine.UIElements;
+using Utility.UIToolkit;
 
 namespace DCL.Lobby
 {
     /// <summary>
-    ///     Picture with the online dot, name, and a location row that
-    ///     hovering swaps for a Join button while the friend can be joined. Its hierarchy comes from LobbyFriendCard.uxml, so the
-    ///     children only exist once that template is instantiated; the hover swap and the status colors are driven by LobbyFriendCard.uss.
+    ///     Friend card of the lobby. Its children come from LobbyFriendCard.uxml, so values set before the template is instantiated are applied on the first attach.
     /// </summary>
     [UxmlElement]
     public partial class LobbyFriendCardElement : VisualElement
@@ -27,9 +25,6 @@ namespace DCL.Lobby
         private const string LOCATION_TEXT_NAME = "LocationText";
         private const string JOIN_NAME = "Join";
 
-        /// <summary>
-        ///     Raised on a click anywhere on the card except the Join button.
-        /// </summary>
         public Action? Clicked;
 
         public Action? JoinClicked;
@@ -76,9 +71,6 @@ namespace DCL.Lobby
             }
         }
 
-        /// <summary>
-        ///     Shown after the name while the friend has no claimed name.
-        /// </summary>
         [UxmlAttribute]
         public string WalletTag
         {
@@ -134,9 +126,6 @@ namespace DCL.Lobby
             set => EnableInClassList(USS_JOINABLE, value);
         }
 
-        /// <summary>
-        ///     Null falls back to the default profile picture of the stylesheet.
-        /// </summary>
         public Sprite? Picture
         {
             get => pictureSprite;
@@ -150,9 +139,6 @@ namespace DCL.Lobby
             }
         }
 
-        /// <summary>
-        ///     Shown behind the picture, and instead of it while there is none.
-        /// </summary>
         public Color PictureColor
         {
             get => pictureColor;
@@ -175,7 +161,7 @@ namespace DCL.Lobby
         public LobbyFriendCardElement()
         {
             AddToClassList(USS_BLOCK);
-            AddToClassList(InteractionCache.INTERACTABLE_CLASS);
+            AddToClassList(VisualElementsExtensions.INTERACTABLE_CLASS);
             this.AddManipulator(new Clickable(OnClicked));
             RegisterCallback<AttachToPanelEvent>(OnAttachToPanel);
         }

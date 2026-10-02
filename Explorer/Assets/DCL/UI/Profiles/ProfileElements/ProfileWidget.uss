@@ -15,7 +15,7 @@
     background-color: rgb(31, 31, 31);
 }
 
-/* 42px circle 2px in from the left edge, ringed by the 6px outline of the 256px ellipse of ProfilePictureView at this size. The profile color fills it while the picture is missing; the picture itself is set inline by the element */
+/* Ringed by the 6px outline of the 256px ellipse of ProfilePictureView at this size; the profile color fills it while the picture is missing, the picture itself is set inline by the element */
 .profile-widget__picture {
     position: absolute;
     left: 0;
@@ -34,7 +34,6 @@
     background-image: none;
 }
 
-/* The name and the wallet tag sit on one line, centred between 50px and 153px of the pill */
 .profile-widget__texts {
     flex-grow: 1;
     flex-shrink: 1;

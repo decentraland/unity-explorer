@@ -1,4 +1,4 @@
-/* The row along the top edge, right-aligned and centred in the 100px header band: credits, notifications, profile and close, 10px apart, 50px from the edge */
+/* Right-aligned and centred in the 100px header band */
 .lobby__top-bar {
     position: absolute;
     top: 27px;
@@ -19,7 +19,6 @@
     display: none;
 }
 
-/* Solid black circle with a 3% white outline, like the widgets; the fill lightens on hover */
 .lobby__top-bar-button {
     width: 40px;
     height: 40px;
@@ -47,7 +46,6 @@
     background-image: url('/Assets/Textures/Common/NotificationIcn.png');
 }
 
-/* Red pill over the top-right corner of the button, the sidebar's badge colour; it widens with the count */
 .lobby__notifications-badge {
     position: absolute;
     top: -6px;

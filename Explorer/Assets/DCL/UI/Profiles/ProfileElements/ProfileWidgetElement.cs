@@ -1,13 +1,12 @@
 using DCL.Utilities;
 using System;
 using UnityEngine.UIElements;
+using Utility.UIToolkit;
 
 namespace DCL.UI.ProfileElements
 {
     /// <summary>
-    ///     UI Toolkit counterpart of <see cref="ProfileWidgetView" />: the picture of the current user next to the name, with the wallet
-    ///     tag beside it while there is one; a click anywhere on it is reported through <see cref="Clicked" />. It builds its own children,
-    ///     so it is complete wherever it is created; ProfileWidget.uss styles them, so the document that hosts it imports that stylesheet.
+    ///     UI Toolkit counterpart of <see cref="ProfileWidgetView" />. It builds its own children; the hosting document imports ProfileWidget.uss.
     /// </summary>
     [UxmlElement]
     public partial class ProfileWidgetElement : VisualElement, IProfileWidgetView, IDisposable
@@ -40,9 +39,6 @@ namespace DCL.UI.ProfileElements
             set => nameLabel.text = value;
         }
 
-        /// <summary>
-        ///     Marked empty, which the stylesheet hides, while there is nothing to show.
-        /// </summary>
         [UxmlAttribute]
         public string Address
         {
@@ -63,6 +59,7 @@ namespace DCL.UI.ProfileElements
         public ProfileWidgetElement()
         {
             AddToClassList(USS_BLOCK);
+            AddToClassList(VisualElementsExtensions.INTERACTABLE_CLASS);
 
             picture = new VisualElement { name = PICTURE_NAME, pickingMode = PickingMode.Ignore };
             picture.AddToClassList(USS_PICTURE);
@@ -84,9 +81,6 @@ namespace DCL.UI.ProfileElements
             this.AddManipulator(new Clickable(OnClicked));
         }
 
-        /// <summary>
-        ///     Draws the picture <paramref name="thumbnail" /> resolves to from now on, letting go of the one it followed before.
-        /// </summary>
         public void BindThumbnail(IReactiveProperty<ProfileThumbnailViewModel> thumbnail)
         {
             thumbnailSubscription?.Dispose();
@@ -102,7 +96,6 @@ namespace DCL.UI.ProfileElements
             thumbnailSubscription = null;
         }
 
-        // The profile color fills the circle without a picture, and a fetch keeps the previous picture up while there is one
         private void OnThumbnailUpdated(ProfileThumbnailViewModel model)
         {
             picture.style.backgroundColor = model.ProfileColor;

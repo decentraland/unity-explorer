@@ -1,6 +1,4 @@
-/* The upcoming event card of the uGUI lobby (EventCard_Small as the lobby overrode it): 358x135 with 24px corners, the thumbnail
-   along its right edge. Hovering lifts the texts, fades the host out and brings the action buttons in where the schedule sat,
-   the way the uGUI card animated */
+/* EventCard_Small of the uGUI lobby as the lobby overrode it: hovering lifts the texts, fades the host out and brings the buttons in where the schedule sat */
 :root {
     --upcoming-event-card-hover-duration: 0.2s;
 }
@@ -13,12 +11,12 @@
     overflow: hidden;
 }
 
-/* An event the user is interested in goes near black, the Remind me background of the uGUI lobby */
+/* The Remind me background of the uGUI lobby */
 .lobby-upcoming-event-card--interested {
     background-color: rgba(8, 8, 10, 0.95);
 }
 
-/* 135px along the right edge with 8px corners; the card's own corners cut its outer ones. The texts and the buttons take the rest */
+/* The card's own 24px corners cut its outer ones */
 .lobby-upcoming-event-card__thumbnail {
     position: absolute;
     top: 0;
@@ -37,7 +35,6 @@
     background-color: rgb(207, 205, 212);
 }
 
-/* 18px in from the left edge, 28px down and 170px wide: the title over the host, then the schedule 12px under them */
 .lobby-upcoming-event-card__info {
     position: absolute;
     left: 18px;
@@ -45,7 +42,6 @@
     width: 170px;
 }
 
-/* Hovering lifts the title and the host by 8px */
 .lobby-upcoming-event-card__texts {
     transition: translate var(--upcoming-event-card-hover-duration) ease-out;
 }
@@ -65,7 +61,6 @@
     text-overflow: ellipsis;
 }
 
-/* Fades out while the card is hovered */
 .lobby-upcoming-event-card__host-row {
     height: 16px;
     flex-direction: row;
@@ -90,7 +85,6 @@
     -unity-font-definition: var(--dcl-font-inter-regular);
 }
 
-/* The name takes what is left of the row and is cut short rather than pushing the row wider */
 .lobby-upcoming-event-card__host {
     flex-shrink: 1;
     -unity-font-definition: var(--dcl-font-inter-bold);
@@ -98,8 +92,7 @@
     text-overflow: ellipsis;
 }
 
-/* A pill only as wide as its text, so the tint does not stretch across the column. Hovering lifts it by 30px, clear of the
-   buttons that come in where it sat */
+/* Only as wide as its text, so the tint does not stretch across the column */
 .lobby-upcoming-event-card__schedule {
     margin-top: 12px;
     height: 24px;
@@ -130,8 +123,7 @@
     color: var(--dcl-color-snow);
 }
 
-/* Along the bottom-left, 18px in and 19px up: 36px buttons 8px apart. Invisible until the card is hovered, which any pointer over
-   them is, so their invisible state never takes a click meant for the card itself */
+/* Invisible until the card is hovered, which any pointer over them is, so their invisible state never takes a click meant for the card */
 .lobby-upcoming-event-card__actions {
     position: absolute;
     left: 18px;
@@ -165,7 +157,6 @@
     height: 24px;
 }
 
-/* The bell fills in once the user is interested, like the Remind me toggle of the Explore card */
 .lobby-upcoming-event-card__action-icon--interested {
     background-image: url('/Assets/Textures/ExplorePanel/ReminderOff.png');
 }

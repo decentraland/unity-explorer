@@ -205,7 +205,7 @@ namespace DCL.Lobby.Tests
             ShowCapturingCards(7, () => presses++);
             VisualElement viewport = rail.Q("Viewport");
 
-            // Act: the pressed card captures the pointer, so the panel hands the moves to it alone until the rail takes the pointer over
+            // Act
             Press(rail[0], 100f);
             Move(rail[0], 130f);
 
@@ -237,7 +237,7 @@ namespace DCL.Lobby.Tests
             ShowCapturingCards(7, () => presses++);
             VisualElement viewport = rail.Q("Viewport");
 
-            // Act: the panel delivers the release to the capturing card alone, then the pointer moves on over the rail with no button held
+            // Act
             Press(rail[0], 100f);
             Release(rail[0], 100f);
             Move(viewport, 150f);
@@ -262,7 +262,7 @@ namespace DCL.Lobby.Tests
             ShowCapturingCards(7, () => presses++);
             VisualElement viewport = rail.Q("Viewport");
 
-            // Act: the release lands outside the rail altogether, then the pointer moves on over the rail with no button held
+            // Act
             Press(rail[0], 100f);
             rail[0].ReleasePointer(MOUSE);
             Release(root, 100f);
@@ -289,7 +289,7 @@ namespace DCL.Lobby.Tests
             return document.rootVisualElement;
         }
 
-        // Like the lobby cards, each card captures the pointer while pressed; the press counter is registered first so the capture cannot cut it off
+        // The press counter is registered before the Clickable so its pointer capture cannot cut it off
         private void ShowCapturingCards(int count, System.Action onPress)
         {
             for (var i = 0; i < count; i++)

@@ -15,7 +15,7 @@ namespace DCL.Notifications.NotificationsMenu
         public LoopListView2 LoopList { get; private set; }
 
         /// <summary>
-        ///     Unread badge of the button that opens the panel; a host whose button has no badge leaves it unset.
+        ///     Unread badge of the button that opens the panel; optional.
         /// </summary>
         [field: SerializeField]
         public TMP_Text? unreadNotificationCounterText { get; private set; }

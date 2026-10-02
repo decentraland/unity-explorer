@@ -1,9 +1,9 @@
 namespace DCL.Lobby
 {
     /// <summary>
-    ///     The row of the lobby a card was picked from, reported along the card's own events.
+    ///     Where in the lobby a card was picked from, reported along the card's own events.
     /// </summary>
-    public enum LobbySection
+    public enum LobbyCardOrigin
     {
         Landing,
         Recent,

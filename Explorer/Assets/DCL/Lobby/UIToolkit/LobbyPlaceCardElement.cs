@@ -4,9 +4,7 @@ using UnityEngine.UIElements;
 namespace DCL.Lobby
 {
     /// <summary>
-    ///     Thumbnail with the online users on top, title and creator.
-    ///     Its hierarchy comes from LobbyPlaceCard.uxml; hovering raises the footer over the thumbnail and swaps the creator for
-    ///     the Jump in button, all driven by LobbyPlaceCard.uss.
+    ///     Place card; its hierarchy comes from LobbyPlaceCard.uxml and LobbyPlaceCard.uss lays it out and animates the hover.
     /// </summary>
     [UxmlElement]
     public partial class LobbyPlaceCardElement : LobbyThumbnailCardElement

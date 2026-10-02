@@ -21,9 +21,7 @@ using Utility;
 namespace DCL.Lobby
 {
     /// <summary>
-    ///     Fills the online friends row of the document from the
-    ///     connectivity tracker and resolves where each shown friend is. The row shows every online friend at once, so every card is
-    ///     bound on each rebuild; a card keeps its picture while it shows the same friend.
+    ///     Fills the online friends row of the document from the connectivity tracker and resolves where each shown friend is.
     /// </summary>
     public class LobbyDocumentFriendsPresenter : IDisposable
     {
@@ -42,7 +40,7 @@ namespace DCL.Lobby
         private readonly IPassportBridge passport;
         private readonly List<Profile.CompactInfo> onlineFriends = new ();
 
-        // One per card of the rail, in the same order: what the card shows that the card itself does not keep
+        // One per card of the rail, in the same order
         private readonly List<CardBinding> bindings = new ();
         private readonly Dictionary<string, FriendLocation> locations = new (StringComparer.OrdinalIgnoreCase);
         private readonly HashSet<string> resolving = new (StringComparer.OrdinalIgnoreCase);
@@ -81,8 +79,7 @@ namespace DCL.Lobby
         }
 
         /// <summary>
-        ///     Takes the friends section of the current hierarchy over. Locations are resolved again on every show, as the previous
-        ///     ones may be minutes old.
+        ///     Takes the friends section of the current hierarchy over; locations are resolved again, as the previous ones may be minutes old.
         /// </summary>
         public void Show(VisualElement section, CancellationToken ct)
         {
@@ -125,9 +122,6 @@ namespace DCL.Lobby
             Rebuild(rewind: false);
         }
 
-        /// <summary>
-        ///     The tracker is the single source of truth: the list is re-read from it in full on every change, sorted like the friends panel.
-        /// </summary>
         private void Rebuild(bool rewind)
         {
             onlineFriends.Clear();
@@ -188,9 +182,7 @@ namespace DCL.Lobby
             FlushLocationsAsync(showCt).Forget();
         }
 
-        /// <summary>
-        ///     Waits a frame so every card bound in the same pass shares one positions request.
-        /// </summary>
+        // Waits a frame so every card bound in the same pass shares one positions request
         private async UniTaskVoid FlushLocationsAsync(CancellationToken ct)
         {
             await UniTask.Yield(PlayerLoopTiming.Update, ct).SuppressCancellationThrow();
@@ -262,9 +254,7 @@ namespace DCL.Lobby
             JoinAsync(bindings[index].UserId, jumpCts.Token).Forget();
         }
 
-        /// <summary>
-        ///     The shown location may be stale, so the live position is fetched again before jumping.
-        /// </summary>
+        // The shown location may be stale, so the live position is fetched again before jumping
         private async UniTaskVoid JoinAsync(string userId, CancellationToken ct)
         {
             joinIdBuffer[0] = userId;
@@ -308,9 +298,6 @@ namespace DCL.Lobby
             }
         }
 
-        /// <summary>
-        ///     The friend a card shows and the picture fetch that draws into it, the card being a pure view that keeps neither.
-        /// </summary>
         private class CardBinding : IDisposable
         {
             private readonly LobbyFriendCardElement card;
@@ -318,14 +305,9 @@ namespace DCL.Lobby
 
             private CancellationTokenSource? thumbnailCts;
 
-            /// <summary>
-            ///     Wallet of the friend shown; a late asynchronous result checks it before touching the card.
-            /// </summary>
             public string UserId { get; private set; } = string.Empty;
 
-            /// <summary>
-            ///     True until the last picture fetch delivered a result, so also when it was cancelled midway.
-            /// </summary>
+            // Also true when the fetch was cancelled midway
             public bool IsPictureLoading => thumbnail.Value.ThumbnailState is ProfileThumbnailViewModel.State.Loading or ProfileThumbnailViewModel.State.NotBound;
 
             public CardBinding(LobbyFriendCardElement card)

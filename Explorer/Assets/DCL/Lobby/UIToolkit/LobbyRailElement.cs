@@ -6,11 +6,9 @@ using Utility.UIToolkit;
 namespace DCL.Lobby
 {
     /// <summary>
-    ///     A horizontal strip of cards that pages by the mouse wheel or by
-    ///     the arrows shown while it is hovered, and scrolls freely by dragging. Releasing a drag lets the strip run on with the fling and
-    ///     settles it on the nearest card; the arrows page on from that card and one dot per page tracks the nearest page.
-    ///     The cards are its children, added by the owner; the chrome (viewport, arrows and dots) is built here and styled by LobbyRail.uss,
-    ///     which also owns the snap: the content slides through a USS transition of its translate.
+    ///     A horizontal strip of cards that pages by the mouse wheel or the arrows, and scrolls freely by dragging; a released drag
+    ///     settles on the nearest card. The cards are its children; the chrome is built here and styled by LobbyRail.uss, which also
+    ///     owns the snap through a USS transition of the translate.
     /// </summary>
     [UxmlElement]
     public partial class LobbyRailElement : VisualElement
@@ -41,17 +39,19 @@ namespace DCL.Lobby
         // A pointer that rested longer than this before its release was not flung
         private const long FLING_STALE_MS = 100;
 
-        // Bit of PointerEventBase.pressedButtons that stands for the left mouse button
+        // Bit of PointerEventBase.pressedButtons for the left mouse button
         private const int LEFT_BUTTON_MASK = 1;
 
-        // Matches the snap duration of the stylesheet: wheel events arriving faster than that are dropped
+        // Matches the snap duration of the stylesheet
         private const float WHEEL_COOLDOWN = 0.25f;
 
-        // Converts the millisecond pointer timestamps into a per-second drag velocity
         private const float MS_PER_SECOND = 1000f;
 
         // Slack under which the strip counts as having reached its end
         private const float END_TOLERANCE = 0.5f;
+
+        /// <summary>Cards per page until the UXML sets cards-per-page.</summary>
+        private const int DEFAULT_CARDS_PER_PAGE = 3;
 
         private readonly VisualElement viewport;
         private readonly VisualElement content;
@@ -60,12 +60,12 @@ namespace DCL.Lobby
         private readonly VisualElement dots;
         private readonly Action endInstantMove;
 
-        private int cardsPerPage = 3;
+        private int cardsPerPage = DEFAULT_CARDS_PER_PAGE;
         private int shownCount;
         private float offset;
         private float lastWheelTime;
 
-        // The card at the left edge of the viewport since the last snap; the arrows page on from it
+        // The card at the left edge of the viewport since the last snap
         private int currentCard;
 
         private int pressedPointerId = PointerId.invalidPointerId;
@@ -73,17 +73,15 @@ namespace DCL.Lobby
         private float pressOffset;
         private bool dragging;
 
-        // Speed of the pointer along the drag in panel units per second, from its last two moves
+        // Panel units per second, from the last two moves of the drag
         private float velocity;
         private float lastMoveX;
         private long lastMoveTime;
 
-        // The descendant holding the pointer capture of the press, hearing the moves and the release on the rail's behalf
+        // The descendant holding the pointer capture of the press
         private VisualElement? pressedCaptor;
 
-        /// <summary>
-        ///     Cards a page advances by; a page is this many card strides wide, whatever the viewport shows.
-        /// </summary>
+        /// <summary>Cards a page advances by, whatever the viewport shows.</summary>
         [UxmlAttribute]
         public int CardsPerPage
         {
@@ -91,9 +89,7 @@ namespace DCL.Lobby
             set => cardsPerPage = Mathf.Max(1, value);
         }
 
-        /// <summary>
-        ///     Makes the arrows slide a single card instead of a whole page; the wheel and the dots keep going by pages.
-        /// </summary>
+        /// <summary>The arrows slide a single card instead of a page; the wheel and the dots keep going by pages.</summary>
         [UxmlAttribute]
         public bool ArrowsMoveOneCard { get; set; }
 
@@ -101,16 +97,13 @@ namespace DCL.Lobby
 
         public int PageCount => (shownCount + cardsPerPage - 1) / cardsPerPage;
 
-        /// <summary>
-        ///     Cards added to the rail land in the content strip, not next to the chrome.
-        /// </summary>
         public override VisualElement contentContainer => content;
 
         public LobbyRailElement()
         {
             AddToClassList(USS_BLOCK);
 
-            // The track holds the viewport and, outside it, the arrows: the viewport clips its cards, the track lets the arrows hang beside them
+            // The viewport clips the cards; the track lets the arrows hang beside them
             var track = new VisualElement { name = "Track" };
             track.AddToClassList(USS_TRACK);
             hierarchy.Add(track);
@@ -140,9 +133,8 @@ namespace DCL.Lobby
             // Trickle down: the press is seen before the pressed card captures the pointer and stops the event
             RegisterCallback<PointerDownEvent>(OnPointerDown, TrickleDown.TrickleDown);
 
-            // Once a descendant captures the pointer, the panel delivers the pointer events to that element alone and skips every
-            // ancestor: the moves and the release are heard through the captor itself (see OnPointerCapture) and through the viewport,
-            // which is the target while nothing captures and once the rail takes the pointer over
+            // A capturing descendant receives the pointer events alone, so the moves and the release are heard through it (see OnPointerCapture)
+            // and through the viewport, the target while nothing captures and once the rail takes the pointer over
             RegisterCallback<PointerCaptureEvent>(OnPointerCapture);
             viewport.RegisterCallback<PointerMoveEvent>(OnPointerMove);
             viewport.RegisterCallback<PointerUpEvent>(OnPointerUp);
@@ -161,7 +153,6 @@ namespace DCL.Lobby
         {
             shownCount = count;
 
-            // The stylesheet spaces the cards through this class
             for (var i = 0; i < content.childCount; i++)
                 content[i].AddToClassList(USS_CARD);
 
@@ -177,9 +168,7 @@ namespace DCL.Lobby
                 SnapTo(CurrentPage);
         }
 
-        /// <summary>
-        ///     Slides to the first card of <paramref name="page" />, clamped to the pages the shown cards fill.
-        /// </summary>
+        /// <summary>Slides to the first card of <paramref name="page" />, clamped to the pages the shown cards fill.</summary>
         public void SnapTo(int page)
         {
             page = Mathf.Clamp(page, 0, Mathf.Max(0, PageCount - 1));
@@ -215,7 +204,7 @@ namespace DCL.Lobby
                 SnapTo(PageAfter());
         }
 
-        // The last cards share the offset of the end: stepping into them lands on the first of those, so one step back leaves the end
+        // The last cards share the offset of the end, so stepping into them lands on the first of those
         private void StepToCard(int card)
         {
             card = CardAt(CardOffset(Mathf.Clamp(card, 0, Mathf.Max(0, shownCount - 1))));
@@ -236,7 +225,6 @@ namespace DCL.Lobby
             pressOffset = offset;
         }
 
-        // The capture event bubbles up from the captor, the only element the pressed pointer's events reach from now on
         private void OnPointerCapture(PointerCaptureEvent evt)
         {
             if (evt.pointerId != pressedPointerId || evt.target is not VisualElement captor || captor == viewport || captor == pressedCaptor) return;
@@ -249,7 +237,7 @@ namespace DCL.Lobby
         {
             if (evt.pointerId != pressedPointerId) return;
 
-            // The button is up: the release was delivered to an element outside the rail's hearing, so the press is over
+            // The button is up: the release went to an element outside the rail's hearing
             if ((evt.pressedButtons & LEFT_BUTTON_MASK) == 0)
             {
                 EndPress(0f);
@@ -264,8 +252,7 @@ namespace DCL.Lobby
                 AddToClassList(USS_INSTANT);
                 viewport.CapturePointer(evt.pointerId);
 
-                // Re-based on the pointer and on where the strip is drawn (mid-snap included), so the strip follows from there
-                // rather than jumping by the threshold or to the end of a snap still under way
+                // Re-based on where the strip is drawn, mid-snap included, so it follows from there rather than jumping
                 pressX = evt.position.x;
                 pressOffset = -content.resolvedStyle.translate.x;
                 velocity = 0f;
@@ -289,12 +276,10 @@ namespace DCL.Lobby
         {
             if (evt.pointerId != pressedPointerId) return;
 
-            // A pointer that rested before letting go was not flung
             EndPress(evt.timestamp - lastMoveTime > FLING_STALE_MS ? 0f : velocity);
         }
 
-        // The capture can be taken away mid-drag (by the system or another element); the rail must not stay stuck between cards.
-        // The capture-out of a card the rail takes the pointer from bubbles through here too: only the viewport's own counts
+        // The capture can be taken away mid-drag; the capture-out of a card the rail takes the pointer from bubbles through here too
         private void OnPointerCaptureOut(PointerCaptureOutEvent evt)
         {
             if (evt.target != viewport || !dragging) return;
@@ -319,10 +304,7 @@ namespace DCL.Lobby
             pressedCaptor = null;
         }
 
-        /// <summary>
-        ///     Forgets the tracked press and, when it had turned into a drag, gives the pointer back and settles the strip on a card:
-        ///     the nearest one to where it was dropped, carried on by <paramref name="flingVelocity" /> for up to a page.
-        /// </summary>
+        // Forgets the tracked press and, when it had turned into a drag, settles the strip on the nearest card carried on by the fling
         private void EndPress(float flingVelocity)
         {
             int pointerId = pressedPointerId;
@@ -331,7 +313,6 @@ namespace DCL.Lobby
 
             if (!dragging) return;
 
-            // Only releases while the viewport still holds the pointer, so a capture already taken away is left alone
             viewport.ReleasePointer(pointerId);
             EndDrag(flingVelocity);
         }
@@ -351,19 +332,20 @@ namespace DCL.Lobby
         {
             evt.StopPropagation();
 
-            // A horizontal-only scroll has no page to go to; it must not fall through as a page back
+            // A horizontal-only scroll must not fall through as a page back
             if (Mathf.Approximately(evt.delta.y, 0f) || UnityEngine.Time.unscaledTime - lastWheelTime < WHEEL_COOLDOWN) return;
 
             lastWheelTime = UnityEngine.Time.unscaledTime;
             SnapTo(evt.delta.y > 0f ? PageAfter() : PageBefore());
         }
 
-        // The strides are only known once the cards are laid out, so the card the rail is on is re-placed then
+        // The strides are only known once the cards are laid out, so the current card and the arrows are re-placed then
         private void OnContentGeometryChanged(GeometryChangedEvent _)
         {
             if (dragging) return;
 
             ApplyOffset(CardOffset(currentCard));
+            SelectPage(CurrentPage);
         }
 
         private void SnapToCard(int card, int page)
@@ -373,28 +355,24 @@ namespace DCL.Lobby
             SelectPage(page);
         }
 
-        // From a card inside a page, the arrows go to the pages starting after and before it
         private int PageAfter() =>
             currentCard / cardsPerPage + 1;
 
         private int PageBefore() =>
             Mathf.Max(0, currentCard - 1) / cardsPerPage;
 
-        /// <summary>
-        ///     Distance from one card's left edge to the next one's, spacing included. A single card cannot page, so its stride does not matter.
-        /// </summary>
+        // Distance from one card's left edge to the next one's, spacing included
         private float CardStride() =>
             content.childCount > 1 ? content[1].layout.x - content[0].layout.x : 0f;
 
-        // Measured against the content box of the viewport: its padding, when it has any, is room for the shadows of the cards at its edges
+        // Measured against the content box of the viewport: its padding is room for the shadows of the cards at its edges
         private float MaxOffset() =>
             Mathf.Max(0f, content.layout.width - viewport.contentRect.width);
 
-        // The content cannot slide past its end, so the last cards start wherever the content ends rather than a full stride further in
+        // The content cannot slide past its end, so the last cards share the offset of the end
         private float CardOffset(int card) =>
             Mathf.Min(card * CardStride(), MaxOffset());
 
-        // Among the cards sharing the offset of the end, the first is the one the strip is on there
         private int CardAt(float at) =>
             Nearest(at, shownCount, CardStride());
 
@@ -425,7 +403,7 @@ namespace DCL.Lobby
             content.style.translate = new Translate(new Length(-value), new Length(0f));
         }
 
-        // The transition is switched off for the frame the translate changes in, and back on once that change has been resolved
+        // The transition is switched off for the frame the translate changes in
         private void MoveInstantly(float value)
         {
             AddToClassList(USS_INSTANT);
@@ -444,14 +422,13 @@ namespace DCL.Lobby
             CurrentPage = page;
             previous.SetDisplayed(currentCard > 0);
 
-            // A drag can settle nearest to the last page while the strip has not reached its end: the arrow stays until it has
+            // A drag can settle nearest to the last page while the strip has not reached its end
             next.SetDisplayed(page < PageCount - 1 || CardOffset(currentCard) < MaxOffset() - END_TOLERANCE);
 
             for (var i = 0; i < dots.childCount; i++)
                 dots[i].EnableInClassList(USS_DOT_SELECTED, i == page);
         }
 
-        // A single page needs no navigation hint
         private void ShowDots(int pageCount)
         {
             int visibleDots = pageCount > 1 ? pageCount : 0;

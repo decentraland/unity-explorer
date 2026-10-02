@@ -5,9 +5,7 @@ using Utility.UIToolkit;
 namespace DCL.UI.Credits
 {
     /// <summary>
-    ///     UI Toolkit counterpart of <see cref="CreditsPanelView" />: the credits logo next to the amount, the whole of it clickable to get
-    ///     more credits while top-up is enabled. It builds its own children, so it is complete wherever it is created; CreditsPanel.uss
-    ///     styles them, so the document that hosts it imports that stylesheet.
+    ///     UI Toolkit counterpart of <see cref="CreditsPanelView" />. It builds its own children; the hosting document imports CreditsPanel.uss.
     /// </summary>
     [UxmlElement]
     public partial class CreditsPanelElement : VisualElement, ICreditsPanelView
@@ -50,6 +48,7 @@ namespace DCL.UI.Credits
         public CreditsPanelElement()
         {
             AddToClassList(USS_BLOCK);
+            AddToClassList(VisualElementsExtensions.INTERACTABLE_CLASS);
 
             var icon = new VisualElement { name = ICON_NAME, pickingMode = PickingMode.Ignore };
             icon.AddToClassList(USS_ICON);
