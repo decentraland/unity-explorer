@@ -165,6 +165,12 @@ namespace Global.MapCapture
         {
             runtime.Feeder.UnloadAll(runtime.World);
             await UniTask.DelayFrame(UNLOAD_SETTLE_FRAMES, cancellationToken: ct);
+
+            // The capture has no ReleaseMemorySystem, so nothing evicts the asset bundle, LOD, road and texture
+            // caches; across a full-city run they filled GPU memory and crashed the player. Flush them, unbudgeted,
+            // once the chunk's scenes have released their references.
+            runtime.StaticContainer.CacheCleaner.UnloadCache(false);
+            await Resources.UnloadUnusedAssets().ToUniTask(cancellationToken: ct);
         }
 
         private void WriteBlock(Vector2Int blockMin, byte[] image, JArray pending, JArray failed, JArray blocks, Action onBlock, Action onComplete)
@@ -186,7 +192,8 @@ namespace Global.MapCapture
                 ["failedParcels"] = failed,
             });
 
-            ReportHub.Log(ReportCategory.ENGINE, $"[MapCapture] block ({blockMin.x},{blockMin.y}) written to {file}; pending {pending.Count}, failed {failed.Count}");
+            // Production info: the production log matrix drops ENGINE, and a build run is followed through this line.
+            ReportHub.LogProductionInfo($"[MapCapture] block ({blockMin.x},{blockMin.y}) written to {file}; pending {pending.Count}, failed {failed.Count}");
         }
 
         private async UniTask FixSkyboxAsync(CancellationToken ct)
@@ -235,7 +242,7 @@ namespace Global.MapCapture
                 if (!runtime.Feeder.IsParcelReady(runtime.World, parcel, out _))
                     pending.Add($"({parcel.x},{parcel.y}) {runtime.Feeder.DescribeParcel(runtime.World, parcel)}");
 
-            Debug.LogWarning($"[JUANI] Load at ({parcels[0].x},{parcels[0].y}) TIMED OUT after {args.LoadTimeoutSec:0}s with {pending.Count} parcels pending:\n{string.Join("\n", pending.GetRange(0, Mathf.Min(pending.Count, TIMEOUT_REPORT_LIMIT)))}");
+            ReportHub.LogProductionInfo($"[MapCapture] Load at ({parcels[0].x},{parcels[0].y}) TIMED OUT after {args.LoadTimeoutSec:0}s with {pending.Count} parcels pending:\n{string.Join("\n", pending.GetRange(0, Mathf.Min(pending.Count, TIMEOUT_REPORT_LIMIT)))}");
         }
 
         private bool AllReady(List<Vector2Int> parcels)

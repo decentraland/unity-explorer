@@ -83,6 +83,14 @@ Client-map grid, measured against the live client: chunk `i,j` covers X from `-1
 - Scenes are lifted by `ParcelMathHelper.SCENE_CONTAINER_Y_OFFSET` (0.1) to stop z-fighting with
   the terrain. This is done in `InitialSceneStateLOD` and `InstantiateSceneLODInfoSystem`, so it
   also affects the client; review that before the PR merges.
+- Flat ground is drawn at `FLAT_GROUND_HEIGHT` (-0.05) instead of Y=0, in `GenerateGroundJob` (the
+  instances, used by the depth and shadow passes) and `MountainLit_VertexFunctions.hlsl` (the forward
+  pass). The instanced ground and the GPU-instanced roads were both exactly at Y=0 and the ground's
+  `Offset 1, 1` did not reliably lose, so a few arbitrary road parcels showed red ground. This is a
+  client change too (the client's own baked map has the same red road parcels); review it with the
+  scene lift. The old GameObject terrain already had a -0.1 root shift for the same reason. The shader
+  side is a literal `-0.05`: a `static const float` in that include compiled without errors but the red
+  came back, and the literal fixed it again. Cause not understood; keep the literal.
 - `LODGroup.ForceLOD(0)` on every assembled scene, because the scene LODGroups' thresholds assume
   a perspective camera and cull everything under a wide orthographic view.
 - Unity's asset bundle cache is redirected to `--map-capture-cache` with no size cap so a full-city
@@ -107,6 +115,28 @@ Client-map grid, measured against the live client: chunk `i,j` covers X from `-1
   not referenced from `DCL.Plugins` (found by name via `GetComponent(string)`); the bloom volume
   needed a reference to the SRP core runtime assembly in `DCL.Plugins.asmdef`.
 - Cloudflare returns 403 to Python's default user agent; the coverage script sets one.
+- Red ground patches on a few road parcels (first Windows capture, e.g. `-26,7`, `-11,7`): depth
+  fighting between the Y=0 instanced ground and the Y=0 instanced roads, fixed by the flat ground
+  height above. Dead ends, do not retry: lifting the road GameObjects (roads are drawn by GPU
+  instancing, and the pooled GameObjects do not show in the capture), a near-zero camera FOV to force
+  instanced LOD 0 (no change), and ground rising through (occupancy keeps road parcels flat). Grass,
+  missing baked road data and overlapping scenes were also ruled out.
+- First full build run crashed after 21 blocks with `d3d11: failed to create 2D texture ... 8007000e`
+  (out of memory). The capture has no `ReleaseMemorySystem`, so caches were never evicted.
+  `MapCaptureJob.UnloadAsync` now calls `CacheCleaner.UnloadCache(false)` and
+  `Resources.UnloadUnusedAssets()` after every chunk, and `CacheCleaner.UnloadCache` skips caches
+  that were never registered (`?.` instead of `!`; the capture has no avatar, emote or profile caches).
+- Builds without the `GPUIRuntimeSettingsOverwrite` component had no trees: GPUI's shaders and
+  resources are in Addressables (`loadShadersFromAddressables`), which only the project's GPUI runtime
+  settings enable. `MapCapture.unity` now carries the same component as `Main.unity`.
+- Build log visibility: the production log matrix drops ENGINE, LANDSCAPE and `Debug.Log`, so the
+  lines needed from a build run use `ReportHub.LogProductionInfo` with a `[MapCapture]` prefix (block
+  written, descriptor failures per load, timeouts, abort, summary). Put `-logFile` before any `--` flag:
+  the app's parser assigns every non-`--` token to the preceding flag.
+- Still open: during play (not in the captured image) road corners flicker. Likely the pooled
+  road GameObject and its instanced copy fighting at Y=0 with different meshes, since the road bake
+  folds every `RoadTile*` variant into the `RoadTileL` mesh (`RoadSettingsAsset.HandleRoadTileCase`).
+  Unconfirmed; check with the Frame Debugger if it ever shows in a capture.
 
 ## abgen coverage findings (2026-09-29)
 
@@ -135,7 +165,7 @@ Client-map grid, measured against the live client: chunk `i,j` covers X from `-1
 3. Full run from the build without a region flag. Hours, dominated by download and assembly.
    Optionally split with two region flags across two runs.
 4. Night pass: same with `--map-capture-hour 23` and another output dir; nothing to download.
-5. Before the PR is opened: remove the `[JUANI]` logs, decide whether the 0.1 scene lift stays in
+5. Before the PR is opened: remove the `[JUANI]` logs, decide whether the 0.1 scene lift and the -0.05 flat ground stay in
    the client, review the `WorldManifest`, `InitialSceneStateLOD`, `InstantiateSceneLODInfoSystem`
    and `CinemachineExtensions` changes as client-facing, and do not commit editor noise (see the
    last section of `docs/map-capture-handover.md`).

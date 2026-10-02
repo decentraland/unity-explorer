@@ -31,7 +31,9 @@ VertexPositionInputs GetVertexPositionInputs_Mountain(float3 positionOS, float4 
     if (fOccupancy <= minValue)
     {
         // Flat surface (occupied parcels and above minValue threshold)
-        input.positionWS.y = 0.0;
+        // Just below Y=0 so roads and scene floors at Y=0 draw over it instead of depth-fighting it.
+        // Must match GenerateGroundJob.FLAT_GROUND_HEIGHT.
+        input.positionWS.y = -0.05;
     }
     else
     {

@@ -48,6 +48,9 @@ namespace Global.MapCapture
             catch (Exception e)
             {
                 ReportHub.LogException(e, ReportCategory.ENGINE);
+
+                // The production log matrix drops ENGINE exceptions; without this a build run aborts silently.
+                ReportHub.LogProductionInfo($"[MapCapture] Aborted: {e}");
                 exitCode = EXIT_INCOMPLETE;
             }
 
@@ -66,13 +69,14 @@ namespace Global.MapCapture
             if (!MapCaptureArgs.TryParse(appArgs, out MapCaptureArgs args, out string error))
             {
                 ReportHub.LogError(ReportCategory.ENGINE, $"[MapCapture] {error}");
+                ReportHub.LogProductionInfo($"[MapCapture] Bad arguments: {error}");
                 return EXIT_BAD_ARGUMENTS;
             }
 
             runtime = await MapCaptureBootstrap.CreateAsync(appArgs, args.CacheDir, args.KeepBloom, pluginSettingsContainer, directionalLight, environment, this, ct);
 
             MapCaptureJob.Summary summary = await new MapCaptureJob(runtime, args).RunAsync(ct);
-            ReportHub.Log(ReportCategory.ENGINE, $"[MapCapture] {summary}");
+            ReportHub.LogProductionInfo($"[MapCapture] {summary}");
 
             return summary.AllComplete ? EXIT_OK : EXIT_INCOMPLETE;
         }

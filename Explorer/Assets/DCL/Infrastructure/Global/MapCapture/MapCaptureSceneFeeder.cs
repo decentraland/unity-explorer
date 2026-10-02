@@ -47,6 +47,7 @@ namespace Global.MapCapture
         private readonly List<Entity> awaitingLod = new ();
         private readonly HashSet<Entity> withoutDescriptor = new ();
         private readonly HashSet<Entity> partiallyAssembled = new ();
+        private readonly List<string> failedDescriptors = new ();
         private int requestCounter;
 
         private AssetPromise<SceneDefinitions, GetSceneDefinitionList>? activePromise;
@@ -163,6 +164,11 @@ namespace Global.MapCapture
             awaitingLod.Clear();
             withoutDescriptor.Clear();
             partiallyAssembled.Clear();
+
+            if (failedDescriptors.Count > 0)
+                ReportHub.LogProductionInfo($"[MapCapture] {failedDescriptors.Count} ISS descriptors failed in this load:\n{string.Join("\n", failedDescriptors)}");
+
+            failedDescriptors.Clear();
 
             Debug.Log($"[JUANI] Unloading {sceneIds.Count} scene entities");
 
@@ -291,7 +297,9 @@ namespace Global.MapCapture
                 // publishes; that is a failed scene, and the reason is in the "ISSDescriptor is unavailable" log line.
                 if (descriptor.CurrentState != ISSDescriptorState.Descriptor)
                 {
-                    Debug.LogWarning($"[JUANI] Descriptor for {id}: NONE -> scene marked failed, no ISS LOD_0 to assemble");
+                    string failure = DescribeDescriptorFailure(world.Get<SceneDefinitionComponent>(entity));
+                    Debug.LogWarning($"[JUANI] Descriptor FAILED {failure} -> scene marked failed, no ISS LOD_0 to assemble");
+                    failedDescriptors.Add(failure);
                     withoutDescriptor.Add(entity);
                     continue;
                 }
@@ -300,6 +308,33 @@ namespace Global.MapCapture
                 world.Add(entity, SceneLODInfo.Create());
                 awaitingLod.Add(entity);
             }
+        }
+
+        /// <summary>
+        ///     The loader collapses every failure into "no descriptor"; this tells apart a manifest that predates ISS
+        ///     (nothing is fetched) from a fetch of the expected file that failed (404, network or parse).
+        /// </summary>
+        private static string DescribeDescriptorFailure(SceneDefinitionComponent scene)
+        {
+            SceneEntityDefinition definition = scene.Definition;
+            Vector2Int basePosition = definition.metadata.scene.DecodedBase;
+            AssetBundleManifestVersion? version = definition.assetBundleManifestVersion;
+            string abVersion = version?.GetAssetBundleManifestVersion() ?? "none";
+
+            string reason;
+
+            if (version == null || !version.SupportsISS())
+                reason = "manifest predates ISS, nothing fetched";
+            else
+            {
+                string file = version.TryGetLodDescriptorFile(out string digestNamed)
+                    ? digestNamed
+                    : $"{definition.id.ToLower()}_InitialSceneState.json";
+
+                reason = $"fetch of {file} failed (404, network or parse)";
+            }
+
+            return $"{definition.id} base ({basePosition.x},{basePosition.y}) {scene.Parcels.Count} parcels ab={abVersion}: {reason}";
         }
 
         private void LogLodOutcomes(World world)

@@ -13,6 +13,12 @@ namespace DCL.Landscape.Jobs
     [BurstCompile]
     public struct GenerateGroundJob : IJob
     {
+        /// <summary>
+        ///     Flat ground sits just below Y=0 so roads and scene floors placed at Y=0 always draw over it instead
+        ///     of depth-fighting it. Must match the flat height in MountainLit_VertexFunctions.hlsl.
+        /// </summary>
+        private const float FLAT_GROUND_HEIGHT = -0.05f;
+
         public int ParcelSize;
         public MinMaxAABB TerrainBounds;
         public float3 CameraPosition;
@@ -75,7 +81,7 @@ namespace DCL.Landscape.Jobs
                 instanceCount++;
 
                 Transforms.AddNoResize(Matrix4x4.TRS(
-                    new Vector3(instance.PositionXZ.x, 0f, instance.PositionXZ.y),
+                    new Vector3(instance.PositionXZ.x, FLAT_GROUND_HEIGHT, instance.PositionXZ.y),
                     Quaternion.Euler(0f, instance.RotationY, 0f),
                     new Vector3(instance.Scale, instance.Scale, instance.Scale)));
             }
