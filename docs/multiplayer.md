@@ -80,7 +80,7 @@ Pulse is gated by `FeatureId.Pulse`, read once in `MultiplayerContainer.CreateAs
 
 1. `MultiplayerContainer.CreateAsync` awaits `PulseContainer.CreateAsync` (creates `ENetTransport`, `MessagePipe`, `PeerIdCache`, `ParcelEncoder` from landscape data, and the Pulse buses).
 2. In parallel the `LiveKitMultiplayerContainer` constructor runs synchronously once a `IRoomHub` and `IMessagePipesHub` are available — it creates a single `LiveKitMessagesBroadcaster` shared by the movement / emotes / announcements / profile-broadcast buses.
-3. The returned `MultiplayerContainer` exposes the `SelfProfile` and the Pulse `IProfilePropagation`; `MultiplayerPlugin` injects `PropagateSelfProfileSystem`, which reads `SelfProfile.CurrentProfileSnapshot.KnownProfile` every frame while Pulse is active and hands it to `IProfilePropagation.PropagateIfNewVersion` (the bus skips a profile it already announced at that version).
+3. The returned `MultiplayerContainer` exposes the `SelfProfile` and the Pulse `IProfilePropagation`; `MultiplayerPlugin` injects `PropagateSelfProfileSystem`, which reads `SelfProfile.CurrentProfileSnapshot.ConfirmedProfile` (the profile the catalyst holds, not an edit still deploying) every frame while Pulse is active and hands it to `IProfilePropagation.PropagateIfNewVersion` (the bus skips a profile it already announced at that version).
 
 Disposal flows symmetrically: `MultiplayerContainer.Dispose()` disposes both sub-containers.
 

@@ -948,14 +948,14 @@ protected override async UniTask InternalExecuteAsync(IStartupOperation.Params a
     if (!read.IsOk(out Profile? profile))
         throw new InvalidOperationException($"Own profile could not be resolved ({read}), nothing to propagate to Pulse");
 
-    profilePropagation.PropagateIfNewVersion(profile);
     await UniTask.SwitchToMainThread();
+    profilePropagation.PropagateIfNewVersion(profile);
 }
 ```
 
 On startup, connect to Pulse, read the host's profile, and announce its version. The connect is bounded to 5 attempts; if the server is unreachable the operation deactivates Pulse (full fallback to LiveKit) and lets login continue — see [Start-up fallback](#start-up-fallback). `SelfProfile.ProfileAsync` never throws: the read resolves to `Ok(profile)` or to a `ProfileReadError`, and by this point the avatar start-up operation has already resolved the profile, so a non-`Ok` read only means the identity was lost mid-flow.
 
-Later versions reach Pulse through `PropagateSelfProfileSystem` (`Movement/Systems/PropagateSelfProfileSystem.cs`): every frame while `PulseActivation.IsActive` it reads `SelfProfile.CurrentProfileSnapshot.KnownProfile` and calls `PropagateIfNewVersion`. `PulseProfilePropagationBus` sends only when the profile instance or its version differs from the last announcement, so the per-frame poll costs one comparison and no throttle is needed.
+Later versions reach Pulse through `PropagateSelfProfileSystem` (`Movement/Systems/PropagateSelfProfileSystem.cs`): every frame while `PulseActivation.IsActive` it reads `SelfProfile.CurrentProfileSnapshot.ConfirmedProfile` and calls `PropagateIfNewVersion`. The confirmed profile is the one the catalyst holds: while an edit is deploying it stays at the previous version, so peers are never told about a version they cannot fetch yet, and a failed deploy needs no retraction. `PulseProfilePropagationBus` sends only when the profile instance or its version differs from the last announcement, so the per-frame poll costs one comparison and no throttle is needed.
 
 ---
 
@@ -1102,7 +1102,7 @@ Note: `pulseMultiplayerService.Dispose()` disposes the underlying `ENetTransport
 | Movement encoding | `NetworkMessageEncoder` bit-packing (160 bits per frame) when `UseCompression` is on | `PlayerStateInput` proto with quantized fields + delta encoding (`PlayerStateDeltaTier0`) |
 | Identity | Per-room participants keyed by wallet (`LKParticipant.Identity`) | Server-assigned `PeerId uint` mapped to wallets via `PeerIdCache` |
 | Movement loss handling | Periodic full-state via send system's adaptive rate | Sequence-baselined deltas with on-demand `ResyncRequest` when a gap is detected |
-| Profile announcement trigger | `MultiplayerProfilesSystem` calls `IProfileBroadcast.NotifyRemotes()` each update, throttled by `DebounceLiveKitProfileBroadcast`; the broadcast reads `SelfProfile.ProfileAsync` | `StartPulseMultiplayerStartupOperation` at connect, then `PropagateSelfProfileSystem` polling `SelfProfile.CurrentProfileSnapshot.KnownProfile` with version dedupe in the bus |
+| Profile announcement trigger | `MultiplayerProfilesSystem` calls `IProfileBroadcast.NotifyRemotes()` each update, throttled by `DebounceLiveKitProfileBroadcast`; the broadcast reads `SelfProfile.ProfileAsync` | `StartPulseMultiplayerStartupOperation` at connect, then `PropagateSelfProfileSystem` polling `SelfProfile.CurrentProfileSnapshot.ConfirmedProfile` with version dedupe in the bus |
 | Profile wire payload | Version only (`AnnounceProfileVersion`) | Version only (`ProfileVersionAnnouncement`) |
 | Disconnect semantics | `IConnectiveRoom` state machine with per-room reconnection; `DuplicateIdentity` stops the loop | Single-connection; reconnect only on `NONE` (timeout) or `GRACEFUL` disconnect reasons |
 | Voice chat | `VoiceChatActivatableConnectiveRoom` (on-demand room) | ❌ Not supported — no voice track plumbing on Pulse |

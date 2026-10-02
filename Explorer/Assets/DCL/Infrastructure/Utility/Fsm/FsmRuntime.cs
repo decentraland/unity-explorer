@@ -32,7 +32,7 @@ namespace Utility.Fsm
             }
         }
 
-        /// <param name="category">The <see cref="ReportCategory"/> every message, model and failure is logged under.</param>
+        /// <summary>Every message, model and failure is logged under <paramref name="category"/>, a <see cref="ReportCategory"/>.</summary>
         public FsmRuntime(string tag, string category, TModel initialModel, UpdateFn update, ICmdExecutor<TCmd, TMsg> executor)
         {
             this.tag = tag;
