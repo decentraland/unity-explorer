@@ -22,11 +22,14 @@ namespace DCL.MapRenderer.Tests.PlayMode
                 AsyncOperationHandle<Texture2D> handle = Addressables.LoadAssetAsync<Texture2D>($"{i},{j}");
                 yield return handle;
 
-                // Assert
-                Assert.AreEqual(AsyncOperationStatus.Succeeded, handle.Status, $"chunk {i},{j}");
-                Assert.AreEqual(CHUNK_PIXELS, handle.Result.width, $"chunk {i},{j}");
-                Assert.AreEqual(CHUNK_PIXELS, handle.Result.height, $"chunk {i},{j}");
-                Addressables.Release(handle);
+                try
+                {
+                    // Assert
+                    Assert.AreEqual(AsyncOperationStatus.Succeeded, handle.Status, $"chunk {i},{j}");
+                    Assert.AreEqual(CHUNK_PIXELS, handle.Result.width, $"chunk {i},{j}");
+                    Assert.AreEqual(CHUNK_PIXELS, handle.Result.height, $"chunk {i},{j}");
+                }
+                finally { Addressables.Release(handle); }
             }
         }
     }
