@@ -38,12 +38,14 @@ namespace DCL.MapRenderer.Tests.SatelliteAtlas
 
         [TestCase(0.5f, 3)]
         [TestCase(BUNDLED_PIXELS_PER_UNIT, 3)]
-        [TestCase(0.65f, 4)]
+        [TestCase(BUNDLED_PIXELS_PER_UNIT * 1.4f, 3)] // below sqrt(2): the bundled chunks are nearer
+        [TestCase(BUNDLED_PIXELS_PER_UNIT * 1.5f, 4)] // above sqrt(2): level 4 is nearer
         [TestCase(BUNDLED_PIXELS_PER_UNIT * 2f, 4)]
-        [TestCase(1.3f, 5)]
+        [TestCase(BUNDLED_PIXELS_PER_UNIT * 2.8f, 4)]
+        [TestCase(BUNDLED_PIXELS_PER_UNIT * 2.9f, 5)]
         [TestCase(BUNDLED_PIXELS_PER_UNIT * 32f, 8)]
         [TestCase(100f, 8)]
-        public void PickCoarsestLevelAtLeastAsSharpAsTheScreen(float screenPixelsPerUnit, int expectedLevel)
+        public void PickTheLevelNearestToTheScreenSharpness(float screenPixelsPerUnit, int expectedLevel)
         {
             // Act
             int level = SatelliteDetailTiles.LevelFor(screenPixelsPerUnit, BUNDLED_PIXELS_PER_UNIT);

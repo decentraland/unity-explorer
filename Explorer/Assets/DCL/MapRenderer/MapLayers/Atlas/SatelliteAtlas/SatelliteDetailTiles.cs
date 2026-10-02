@@ -16,7 +16,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
     /// <summary>
     ///     Streams the satellite zoom levels finer than the bundled 8x8 chunks from <c>{baseUrl}/{level}/{i},{j}.ktx2</c>.
     ///     Level L splits the bundled grid into 2^L x 2^L tiles (i eastward, j southward), so level 3 is the bundled chunks.
-    ///     Each map camera gets the coarsest level that is at least as sharp as its render texture; finer levels draw on top.
+    ///     Each map camera gets the level whose sharpness is nearest to its render texture's; finer levels draw on top.
     ///     Tiles are requested once the cameras have been still for <see cref="SETTLE_SECONDS" />, so a zoom tween or a pan
     ///     doesn't fetch levels and tiles that only pass through the view; a download whose tile leaves the view is cancelled.
     /// </summary>
@@ -125,13 +125,17 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
                 RequestWhenSettledAsync(lifetimeCts.Token).Forget();
         }
 
-        /// <summary>The coarsest level whose tiles have at least <paramref name="screenPixelsPerUnit" />, or a level below <see cref="MIN_LEVEL" /> when the bundled chunks suffice.</summary>
+        /// <summary>
+        ///     The level whose pixel density is nearest to <paramref name="screenPixelsPerUnit" /> on a log scale, so a tile is shown
+        ///     between 0.71x and 1.41x its size: the next sharper level would cost four times the bytes for the same view.
+        ///     Returns a level below <see cref="MIN_LEVEL" /> when the bundled chunks suffice.
+        /// </summary>
         internal static int LevelFor(float screenPixelsPerUnit, float bundledPixelsPerUnit)
         {
             if (screenPixelsPerUnit <= bundledPixelsPerUnit)
                 return BASE_LEVEL;
 
-            int level = BASE_LEVEL + Mathf.CeilToInt(Mathf.Log(screenPixelsPerUnit / bundledPixelsPerUnit, 2f));
+            int level = BASE_LEVEL + Mathf.RoundToInt(Mathf.Log(screenPixelsPerUnit / bundledPixelsPerUnit, 2f));
             return Mathf.Min(level, MAX_LEVEL);
         }
 
