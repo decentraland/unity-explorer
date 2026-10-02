@@ -29,11 +29,6 @@ namespace DCL.SDKComponents.MediaStream
 
         private RenderTexture? composite;
         private Texture? lastSlide;
-        private Texture? lastVideo;
-        private Texture? lastCamera;
-        private uint lastSlideUpdateCount;
-        private uint lastVideoUpdateCount;
-        private uint lastCameraUpdateCount;
         private bool lastShowVideoRect;
         private Vector4 lastVideoRect;
         private Vector4 lastCameraRect;
@@ -55,8 +50,10 @@ namespace DCL.SDKComponents.MediaStream
         ///     Draws <paramref name="slide" />, then the video rect (black until <paramref name="video" /> is given) and the
         ///     camera circle (skipped when <paramref name="camera" /> is null) into a BGRA32 render texture of
         ///     <paramref name="width" /> × <paramref name="height" />, scaled down with its aspect preserved to at most
-        ///     <see cref="MAX_COMPOSITE_SIZE" /> on each side. Rects are normalized with a top-left origin. Skips the blit
-        ///     when no input changed since the last call.
+        ///     <see cref="MAX_COMPOSITE_SIZE" /> on each side. Rects are normalized with a top-left origin. Blits on every
+        ///     call while <paramref name="video" /> or <paramref name="camera" /> is given, because LiveKit updates those
+        ///     textures in place without changing <see cref="Texture.updateCount" />; otherwise skips the blit when the
+        ///     slide and rects are unchanged since the last call.
         /// </summary>
         /// <returns>The same render texture instance while the size is unchanged.</returns>
         public Texture Compose(int width, int height, Texture slide, bool showVideoRect, Vector4 videoRect, Texture? video, Texture? camera, Vector4 cameraRect)
@@ -72,23 +69,12 @@ namespace DCL.SDKComponents.MediaStream
                 composite.Create();
             }
 
-            uint slideUpdateCount = slide.updateCount;
-            uint videoUpdateCount = video != null ? video.updateCount : 0u;
-            uint cameraUpdateCount = camera != null ? camera.updateCount : 0u;
-
-            if (composite.IsCreated()
-                && ReferenceEquals(slide, lastSlide) && slideUpdateCount == lastSlideUpdateCount
-                && ReferenceEquals(video, lastVideo) && videoUpdateCount == lastVideoUpdateCount
-                && ReferenceEquals(camera, lastCamera) && cameraUpdateCount == lastCameraUpdateCount
+            if (video == null && camera == null && composite.IsCreated()
+                && ReferenceEquals(slide, lastSlide)
                 && showVideoRect == lastShowVideoRect && videoRect.Equals(lastVideoRect) && cameraRect.Equals(lastCameraRect))
                 return composite;
 
             lastSlide = slide;
-            lastVideo = video;
-            lastCamera = camera;
-            lastSlideUpdateCount = slideUpdateCount;
-            lastVideoUpdateCount = videoUpdateCount;
-            lastCameraUpdateCount = cameraUpdateCount;
             lastShowVideoRect = showVideoRect;
             lastVideoRect = videoRect;
             lastCameraRect = cameraRect;
@@ -118,8 +104,6 @@ namespace DCL.SDKComponents.MediaStream
         public void Release()
         {
             lastSlide = null;
-            lastVideo = null;
-            lastCamera = null;
 
             if (composite == null) return;
 

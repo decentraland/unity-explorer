@@ -48,10 +48,6 @@ namespace DCL.SDKComponents.MediaStream
         private string? composingBot;
         private CurrentVideoStreamInfo? presentationVideo;
         private CurrentVideoStreamInfo? presenterCamera;
-        private string? videoGateUrl;
-        private int? videoGateIndex;
-        private Texture? videoGateTexture;
-        private uint videoGateUpdateCount;
         private int composedFrame = -1;
         private Texture? composedTexture;
         private bool loggedBadMetadata;
@@ -454,12 +450,7 @@ namespace DCL.SDKComponents.MediaStream
             if (rescan || IsUnresolved(presentationVideo))
             {
                 string? bot = ComposingBotIdentity();
-                bool heldResolved = presentationVideo.HasValue && presentationVideo.Value.videoStream.Resource.Has;
-                StreamKey heldKey = presentationVideo.HasValue ? presentationVideo.Value.key : default;
                 presentationVideo = RebindVideoStream(presentationVideo, bot == null ? null : FindVideoTrack(bot, static track => IsPresentationVideo(track)));
-
-                if (presentationVideo.HasValue && (!heldResolved || !heldKey.Equals(presentationVideo.Value.key)))
-                    videoGateUrl = null;
             }
 
             if (rescan || IsUnresolved(presenterCamera))
@@ -531,9 +522,6 @@ namespace DCL.SDKComponents.MediaStream
             presentation = null;
             presentationRawMetadata = null;
             composingBot = null;
-            videoGateUrl = null;
-            videoGateIndex = null;
-            videoGateTexture = null;
             compositor?.Release();
             composedTexture = null;
             pendingPresentationRefresh = true;
@@ -571,17 +559,7 @@ namespace DCL.SDKComponents.MediaStream
             Texture slideTexture = cachedSlide != null ? cachedSlide : Texture2D.blackTexture;
             Texture2D? latest = DecodeLastFrame(presentationVideo);
             bool showRect = PresentationLayout.TryVideoRect(metadata, out Vector4 videoRect);
-            int? index = showRect ? metadata.playingVideoIndex : null;
-
-            if (index != videoGateIndex || !string.Equals(slide.url, videoGateUrl, StringComparison.Ordinal))
-            {
-                videoGateIndex = index;
-                videoGateUrl = slide.url;
-                videoGateTexture = latest;
-                videoGateUpdateCount = latest != null ? latest.updateCount : 0u;
-            }
-
-            Texture? video = showRect && latest != null && (latest != videoGateTexture || latest.updateCount != videoGateUpdateCount) ? latest : null;
+            Texture? video = showRect ? latest : null;
             lastComposeDrewVideo = video != null;
 
             Vector4 cameraRect = PresentationLayout.CameraRect(metadata.overlay, slide.width, slide.height);

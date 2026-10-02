@@ -397,9 +397,9 @@ namespace DCL.SDKComponents.MediaStream.Tests
         }
 
         [Test]
-        public void DrawVideo_WhenFreshFrameArrivesAfterIndexChange()
+        public void DrawVideo_AsSoonAsTheIndexIsSet()
         {
-            (LivekitPlayer p, _) = DrawSecondFrame();
+            (LivekitPlayer p, _) = StartVideo();
 
             Assert.IsTrue(p.lastComposeDrewVideo);
         }
@@ -407,55 +407,9 @@ namespace DCL.SDKComponents.MediaStream.Tests
         [Test]
         public void KeepDrawingFrozenFrame_WhenPaused()
         {
-            (LivekitPlayer p, LKParticipant bot) = DrawSecondFrame();
+            (LivekitPlayer p, LKParticipant bot) = StartVideo();
 
             SetMetadata(bot, V2("0", "paused", 1));
-            p.EnsureVideoIsPlaying();
-            p.LastTexture();
-
-            Assert.IsTrue(p.lastComposeDrewVideo);
-        }
-
-        [Test]
-        public void NotDrawPreviousVideoFrame_WhenNewVideoStarts()
-        {
-            (LivekitPlayer p, LKParticipant bot) = DrawSecondFrame();
-
-            SetMetadata(bot, V2("1", "playing", 1));
-            p.EnsureVideoIsPlaying();
-            p.LastTexture();
-
-            Assert.IsFalse(p.lastComposeDrewVideo);
-        }
-
-        [Test]
-        public void DrawVideo_WhenSameTextureIsUpdated()
-        {
-            (LivekitPlayer p, LKParticipant bot, _, Texture2D frame) = StartVideo();
-
-            frame.IncrementUpdateCount();
-            SetMetadata(bot, V2("0", "playing", 1));
-            p.EnsureVideoIsPlaying();
-            p.LastTexture();
-
-            Assert.IsTrue(p.lastComposeDrewVideo);
-        }
-
-        [Test]
-        public void NotDrawCachedFrame_WhenVideoStreamRebinds()
-        {
-            LKParticipant bot = AddParticipant(BOT, V2("0", "playing"));
-            Texture2D stale = SubscribeWithFrame(bot, AddTrack(bot, "TR_pv", TrackKind.KindVideo, TrackSource.SourceScreenshare, LiveKitMediaExtensions.PRESENTATION_VIDEO_TRACK_NAME));
-            LivekitPlayer p = NewV2Player();
-            p.OpenMedia(LivekitAddress.CurrentStream());
-            p.LastTexture();
-
-            p.EnsureVideoIsPlaying();
-            p.LastTexture();
-            Assert.IsFalse(p.lastComposeDrewVideo);
-
-            stale.IncrementUpdateCount();
-            SetMetadata(bot, V2("0", "playing", 1));
             p.EnsureVideoIsPlaying();
             p.LastTexture();
 
@@ -665,25 +619,10 @@ namespace DCL.SDKComponents.MediaStream.Tests
             Assert.That(p.LastTexture(), Is.Null);
         }
 
-        private (LivekitPlayer player, LKParticipant bot) DrawSecondFrame()
-        {
-            (LivekitPlayer p, LKParticipant bot, IVideoStream video, _) = StartVideo();
-
-            Texture2D second = NewFrame();
-            video.DecodeLastFrame().Returns(second);
-            SetMetadata(bot, V2("0", "playing", 1));
-            p.EnsureVideoIsPlaying();
-            p.LastTexture();
-
-            return (p, bot);
-        }
-
-        private (LivekitPlayer player, LKParticipant bot, IVideoStream video, Texture2D first) StartVideo()
+        private (LivekitPlayer player, LKParticipant bot) StartVideo()
         {
             LKParticipant bot = AddParticipant(BOT, V2("null", "idle"));
-            IVideoStream video = Subscribe(bot, AddTrack(bot, "TR_pv", TrackKind.KindVideo, TrackSource.SourceScreenshare, LiveKitMediaExtensions.PRESENTATION_VIDEO_TRACK_NAME));
-            Texture2D first = NewFrame();
-            video.DecodeLastFrame().Returns(first);
+            SubscribeWithFrame(bot, AddTrack(bot, "TR_pv", TrackKind.KindVideo, TrackSource.SourceScreenshare, LiveKitMediaExtensions.PRESENTATION_VIDEO_TRACK_NAME));
             LivekitPlayer p = NewV2Player();
             p.OpenMedia(LivekitAddress.CurrentStream());
             p.EnsureVideoIsPlaying();
@@ -692,9 +631,8 @@ namespace DCL.SDKComponents.MediaStream.Tests
             SetMetadata(bot, V2("0", "playing"));
             p.EnsureVideoIsPlaying();
             p.LastTexture();
-            Assert.IsFalse(p.lastComposeDrewVideo);
 
-            return (p, bot, video, first);
+            return (p, bot);
         }
 
         private void ComposeThenReconnect()

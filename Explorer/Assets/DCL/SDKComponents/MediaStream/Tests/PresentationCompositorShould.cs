@@ -126,21 +126,31 @@ namespace DCL.SDKComponents.MediaStream.Tests
         }
 
         [Test]
-        public void SkipBlit_WhenInputsUnchanged()
+        public void SkipBlit_WhenOnlyTheSlideIsShownUnchanged()
         {
-            Texture first = ComposeWithVideo(new Vector4(0.1f, 0.1f, 0.5f, 0.5f));
-            Texture second = ComposeWithVideo(new Vector4(0.1f, 0.1f, 0.5f, 0.5f));
+            Texture first = Compose(1920, 1080);
+            Texture second = Compose(1920, 1080);
 
             Assert.AreSame(first, second);
             Assert.AreEqual(1, compositor.blitCount);
         }
 
         [Test]
-        public void Blit_WhenVideoUpdateCountChanges()
+        public void BlitEveryCall_WhenVideoIsShown()
         {
             ComposeWithVideo(new Vector4(0.1f, 0.1f, 0.5f, 0.5f));
-            video.IncrementUpdateCount();
             ComposeWithVideo(new Vector4(0.1f, 0.1f, 0.5f, 0.5f));
+
+            Assert.AreEqual(2, compositor.blitCount);
+        }
+
+        [Test]
+        public void BlitEveryCall_WhenCameraIsShown()
+        {
+            Vector4 cameraRect = new Vector4(0.02f, 0.7f, 0.15f, 0.27f);
+
+            compositor.Compose(1920, 1080, Texture2D.blackTexture, false, default, null, camera, cameraRect);
+            compositor.Compose(1920, 1080, Texture2D.blackTexture, false, default, null, camera, cameraRect);
 
             Assert.AreEqual(2, compositor.blitCount);
         }
@@ -148,8 +158,8 @@ namespace DCL.SDKComponents.MediaStream.Tests
         [Test]
         public void Blit_WhenRectChanges()
         {
-            ComposeWithVideo(new Vector4(0.1f, 0.1f, 0.5f, 0.5f));
-            ComposeWithVideo(new Vector4(0.2f, 0.1f, 0.5f, 0.5f));
+            compositor.Compose(1920, 1080, Texture2D.blackTexture, true, new Vector4(0.1f, 0.1f, 0.5f, 0.5f), null, null, default);
+            compositor.Compose(1920, 1080, Texture2D.blackTexture, true, new Vector4(0.2f, 0.1f, 0.5f, 0.5f), null, null, default);
 
             Assert.AreEqual(2, compositor.blitCount);
         }
@@ -165,7 +175,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
             Assert.AreEqual(2, compositor.blitCount);
         }
 
-        private Texture ComposeWithVideo(Vector4 videoRect) =>
+        private void ComposeWithVideo(Vector4 videoRect) =>
             compositor.Compose(1920, 1080, Texture2D.blackTexture, true, videoRect, video, camera, new Vector4(0.02f, 0.7f, 0.15f, 0.27f));
 
         private Texture Compose(int width, int height) =>
