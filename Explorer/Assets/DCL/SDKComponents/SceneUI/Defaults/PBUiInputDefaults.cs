@@ -6,7 +6,7 @@ using Font = DCL.ECSComponents.Font;
 
 namespace DCL.SDKComponents.SceneUI.Defaults
 {
-    public static class PBUiInput_Defaults
+    public static class PBUiInputDefaults
     {
         public static Color GetColor(this PBUiInput self) =>
             self.Color?.ToUnityColor() ?? ColorDefaults.COLOR_BLACK;

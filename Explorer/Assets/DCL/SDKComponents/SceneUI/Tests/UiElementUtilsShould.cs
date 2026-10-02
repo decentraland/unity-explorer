@@ -494,13 +494,13 @@ namespace DCL.SDKComponents.SceneUI.Tests
         }
 
         [Test]
-        public void AlignUIInputTextMiddleLeftWhenUnset()
+        public void AlignUiInputTextMiddleLeftWhenUnset()
         {
             Assert.AreEqual(TextAnchor.MiddleLeft, new PBUiInput().GetTextAlign());
         }
 
         [Test]
-        public void KeepExplicitUIInputTextAlign()
+        public void KeepExplicitUiInputTextAlign()
         {
             Assert.AreEqual(TextAnchor.UpperRight, new PBUiInput { TextAlign = TextAlignMode.TamTopRight }.GetTextAlign());
         }
