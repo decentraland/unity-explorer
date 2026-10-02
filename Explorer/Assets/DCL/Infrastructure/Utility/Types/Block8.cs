@@ -2,10 +2,7 @@ using System;
 
 namespace DCL.Utility.Types
 {
-    /// <summary>
-    ///     Eight inline slots of <typeparamref name="T"/>. It is a value type, so it lives inside its owner, copies with it
-    ///     and never allocates; any <typeparamref name="T"/> fits, references included.
-    /// </summary>
+    /// <summary>Eight inline slots of any <typeparamref name="T"/>: a value type that copies with its owner and never allocates.</summary>
     public struct Block8<T>
     {
         public const int CAPACITY = 8;

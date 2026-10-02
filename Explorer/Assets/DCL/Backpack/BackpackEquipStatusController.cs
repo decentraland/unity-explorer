@@ -248,7 +248,6 @@ namespace DCL.Backpack
                     profileChangesBus.PushUpdate(updatedProfile);
                     backpackEventBus.SendAvatarChanged();
                 }
-                // A cancelled deploy is superseded; nothing to revert
                 else if (deploy.IsError(out ProfileDeployError error) && error != ProfileDeployError.Cancelled)
                 {
                     profileChangesBus.PushUpdate(oldProfile);

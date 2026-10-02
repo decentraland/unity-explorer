@@ -4,8 +4,7 @@ namespace DCL.Profiles.Self
 {
     public readonly partial struct SelfProfileModel
     {
-        // Reasons a message is ignored. Constants only: the runtime logs the message and the model next to them,
-        // which is enough to reconstruct the case without allocating.
+        // Reasons a message is ignored; constants, so ignoring allocates nothing.
         private const string IDENTITY_ALREADY_CURRENT = "the identity is already current";
         private const string NO_IDENTITY_TO_CLEAR = "there is no identity to clear";
         private const string FETCH_HAS_NO_IDENTITY = "there is no identity, the fetch was started for a previous one";
@@ -16,9 +15,7 @@ namespace DCL.Profiles.Self
         private const string NO_DEPLOY_IN_FLIGHT = "no deploy is in flight";
         private const string DEPLOY_SUPERSEDED = "the deploy was superseded by a later edit";
 
-        /// <summary>
-        ///     Pure transition of the self-profile FSM. No IO, no time, no shared state.
-        /// </summary>
+        /// <summary>Pure transition of the self-profile FSM.</summary>
         public static (SelfProfileModel model, SelfProfileCmd cmd) Update(in SelfProfileModel model, in SelfProfileMsg msg) =>
             msg.Match(
                 model,
@@ -96,8 +93,8 @@ namespace DCL.Profiles.Self
             );
 
         /// <summary>
-        ///     A read is answered at once from settled knowledge. Otherwise it waits on the fetch in flight, or on a new
-        ///     fetch when nothing is in flight, which is how a read after a failed fetch gets its one refetch.
+        ///     A read is answered at once from settled knowledge; otherwise it waits on the fetch in flight, or starts one
+        ///     when nothing is in flight, which is the one refetch after a failed fetch.
         /// </summary>
         private static (SelfProfileModel, SelfProfileCmd) Read(in SelfProfileModel model, in Identified current, RequestId id)
         {

@@ -5,16 +5,12 @@ using Utility.Multithreading;
 namespace Utility.Fsm
 {
     /// <summary>
-    ///     Elm-style runtime. Owns the model, accepts messages from any thread through <see cref="Send"/>, and applies them
-    ///     one at a time on the single thread that calls <see cref="Drain"/>. Every message is logged before it is applied.
-    ///     The pure <see cref="UpdateFn"/> produces the next model and one command; the executor performs the command.
-    ///     Messages the executor sends while executing are queued and applied later in the same drain, never nested.
+    ///     Elm-style runtime: messages from any thread are queued by <see cref="Send"/> and applied one at a time, in order and logged,
+    ///     by the thread that calls <see cref="Drain"/>. Messages sent while a command executes are queued, never applied nested.
     /// </summary>
     public class FsmRuntime<TModel, TMsg, TCmd> : IMsgInbox<TMsg>, IDisposable
     {
-        /// <summary>
-        ///     Pure transition. No IO, no time, no shared state: the same model and message always yield the same result.
-        /// </summary>
+        /// <summary>Pure transition: the same model and message always yield the same result.</summary>
         public delegate (TModel model, TCmd cmd) UpdateFn(in TModel model, in TMsg msg);
 
         private readonly DCLConcurrentQueue<TMsg> inbox = new ();
@@ -25,10 +21,7 @@ namespace Utility.Fsm
 
         private bool isDraining;
 
-        /// <summary>
-        ///     Snapshot of the current model, readable from any thread. It is read-only: even when <typeparamref name="TModel"/>
-        ///     is a reference type, the instance must not be modified.
-        /// </summary>
+        /// <summary>Snapshot of the current model, readable from any thread; read-only even when <typeparamref name="TModel"/> is a reference type.</summary>
         public TModel ModelSnapshot
         {
             get
@@ -52,10 +45,7 @@ namespace Utility.Fsm
         public void Send(in TMsg msg) =>
             inbox.Enqueue(msg);
 
-        /// <summary>
-        ///     Applies every queued message in arrival order, including the ones enqueued while draining.
-        ///     Call it from one thread only. A call made while a drain is already running returns immediately.
-        /// </summary>
+        /// <summary>Applies every queued message in arrival order, including those enqueued meanwhile. Single-threaded; a nested call returns at once.</summary>
         public void Drain()
         {
             if (isDraining)

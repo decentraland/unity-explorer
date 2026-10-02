@@ -61,10 +61,7 @@ namespace DCL.Profiles.Self
         }
 
 #if UNITY_INCLUDE_TESTS
-        /// <summary>
-        ///     Test seam: no identity events and no drain loop, the model stays at <c>NoIdentity</c>.
-        ///     Substitutes and fakes override the virtual members.
-        /// </summary>
+        /// <summary>Test seam: no identity events and no drain loop; doubles override the virtual members.</summary>
         protected SelfProfile()
         {
             web3IdentityCache = new MemoryWeb3IdentityCache();
@@ -81,9 +78,7 @@ namespace DCL.Profiles.Self
             runtime.Dispose();
         }
 
-        /// <summary>
-        ///     Waits until the current identity's profile is resolved. A failed read is retried once per call.
-        /// </summary>
+        /// <summary>Waits until the current identity's profile is resolved. A failed read is retried once per call.</summary>
         public virtual UniTask<ProfileReadResult> ProfileAsync(CancellationToken ct)
         {
             IMsgInbox<SelfProfileMsg> inbox = runtime;
@@ -98,9 +93,7 @@ namespace DCL.Profiles.Self
             return AwaitResultAsync(id, static model => model.ReadResults, ProfileReadResult.FromError(ProfileReadError.Cancelled), ct);
         }
 
-        /// <summary>
-        ///     Cancelling the token stops waiting; the deploy itself always runs to its end.
-        /// </summary>
+        /// <summary>Cancelling the token stops waiting; the deploy itself always runs to its end.</summary>
         public virtual UniTask<ProfileDeployResult> DeployProfileAsync(Profile edited, CancellationToken ct)
         {
             IMsgInbox<SelfProfileMsg> inbox = runtime;
@@ -115,10 +108,7 @@ namespace DCL.Profiles.Self
             return AwaitResultAsync(id, static model => model.DeployResults, ProfileDeployResult.FromError(ProfileDeployError.Cancelled), ct);
         }
 
-        /// <summary>
-        ///     Waits until the model holds the result of the request, then closes the request so the model drops it.
-        ///     A request the model has applied but no longer holds was dropped from a full list; it resolves as cancelled.
-        /// </summary>
+        /// <summary>Waits for the result, then closes the request. A request the model applied but no longer holds resolves as cancelled.</summary>
         private async UniTask<T> AwaitResultAsync<T>(RequestId id, Func<SelfProfileModel, RequestResults<T>> resultsOf, T cancelled, CancellationToken ct) where T: struct
         {
             try

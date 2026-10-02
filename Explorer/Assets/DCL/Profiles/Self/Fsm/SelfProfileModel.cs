@@ -4,10 +4,7 @@ using System;
 
 namespace DCL.Profiles.Self
 {
-    /// <summary>
-    ///     Session of the self-profile FSM while an identity is present. Knowledge and activity exist only together
-    ///     with the address they belong to.
-    /// </summary>
+    /// <summary>Session of the self-profile FSM while an identity is present: the address with its knowledge and activity.</summary>
     public readonly struct Identified : IEquatable<Identified>
     {
         public readonly UserId Address;
@@ -83,9 +80,8 @@ namespace DCL.Profiles.Self
     public readonly partial struct SelfProfileSession { }
 
     /// <summary>
-    ///     Immutable model of the self-profile FSM: the session plus the answered requests, each kept until its
-    ///     requester closes it. Requests are applied in id order; the lists are bounded and drop their oldest entry
-    ///     when full, so a request the model has applied but no longer <see cref="Holds"/> was dropped.
+    ///     Immutable model of the self-profile FSM: the session plus the answered requests, kept until closed. Requests apply
+    ///     in id order and the bounded lists drop their oldest entry, so an applied request it no longer <see cref="Holds"/> was dropped.
     /// </summary>
     public readonly partial struct SelfProfileModel
     {

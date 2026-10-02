@@ -38,8 +38,7 @@ namespace DCL.Profiles.Self
     }
 
     /// <summary>
-    ///     What is known about the self profile of the current address. It is independent of any activity in flight:
-    ///     a fetch or a deploy never clears it, so the last trusted profile stays readable throughout.
+    ///     What is known about the self profile of the current address, independent of any activity in flight.
     ///     <c>Unknown</c> = nothing fetched yet; <c>Known</c> = last trusted profile; <c>Missing</c> = the catalyst answered 404;
     ///     <c>Failed</c> = the last read did not produce a profile.
     /// </summary>

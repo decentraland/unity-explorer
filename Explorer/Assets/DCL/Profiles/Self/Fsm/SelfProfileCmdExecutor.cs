@@ -18,10 +18,8 @@ using Utility.Fsm;
 namespace DCL.Profiles.Self
 {
     /// <summary>
-    ///     Performs the commands of the self-profile FSM and reports their outcomes back as messages.
-    ///     At most one fetch or deploy is in flight: starting either one cancels the previous one, and so does
-    ///     <c>ResetLocalState</c>. A cancelled IO reports nothing; a completed one always reports, tagged with the
-    ///     address and profile it was started for, and the update decides whether it still applies.
+    ///     Performs the commands of the self-profile FSM and reports their outcomes as messages. At most one fetch or deploy
+    ///     is in flight; starting another, or <c>ResetLocalState</c>, cancels it. A cancelled IO reports nothing.
     /// </summary>
     public class SelfProfileCmdExecutor : ICmdExecutor<SelfProfileCmd, SelfProfileMsg>
     {
@@ -133,10 +131,7 @@ namespace DCL.Profiles.Self
         private static FailureKind ClassifyFetchFailure(Exception e) =>
             e is JsonException ? FailureKind.Malformed : FailureKind.Transient;
 
-        /// <summary>
-        ///     Forced wearables and emotes are session-wide overrides used by tooling; an empty emote wheel is filled
-        ///     with the base emotes so the wheel is never blank.
-        /// </summary>
+        /// <summary>Applies the session-wide tooling overrides; an empty emote wheel is filled with the base emotes.</summary>
         private void ApplySessionOverrides(Profile profile)
         {
             forcedWearables.ApplyTo(profile);
@@ -158,7 +153,7 @@ namespace DCL.Profiles.Self
 
         private void UpdateAvatarInWorld(Profile profile)
         {
-            // The entity only carries a profile once the startup flow put one there, and setting a missing component throws.
+            // Set throws on an entity without the component.
             if (!world.Has<Profile>(playerEntity))
                 return;
 
@@ -173,7 +168,7 @@ namespace DCL.Profiles.Self
             sent.UserId = deploy.Address;
             sent.Version = deploy.Version;
 
-            // A faking session never deploys what it fakes; the edit is confirmed as sent so the model settles.
+            // A faking session never deploys what it fakes; the edit is reported as sent.
             if (forcedWearables.Any || forcedEmotes?.Count > 0)
             {
                 activity.SafeCancelAndDispose();

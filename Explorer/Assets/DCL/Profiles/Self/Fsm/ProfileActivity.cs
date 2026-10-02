@@ -8,7 +8,7 @@ namespace DCL.Profiles.Self
     {
         public readonly Profile Pending;
 
-        /// <summary>Knowledge at the moment the deploy started; the model reverts to it when the deploy fails.</summary>
+        /// <summary>Knowledge at the moment the deploy started.</summary>
         public readonly ProfileKnowledge Before;
 
         /// <summary>Deploy requests waiting on this deploy, including those of the deploys it superseded.</summary>
@@ -37,9 +37,7 @@ namespace DCL.Profiles.Self
             $"pending v{Pending.Version} before {Before} {Requests}";
     }
 
-    /// <summary>
-    ///     What the self-profile runtime is doing right now. At most one activity is in flight at a time.
-    /// </summary>
+    /// <summary>What the self-profile runtime is doing right now; at most one activity is in flight.</summary>
     [REnum(EnumUnderlyingType.Byte)]
     [REnumFieldEmpty("Idle")]
     [REnumFieldEmpty("Fetching")]
