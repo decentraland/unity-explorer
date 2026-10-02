@@ -17,7 +17,11 @@ public class SkyboxToCubemapRendererFeature : ScriptableRendererFeature
     private Material instancedSkyboxMaterial;
     private Material cubeCopyMaterial;
     private Material cubeBlurMaterial;
-    
+    private Material equirectToCubeMaterial;
+
+    private Texture reflectionOverride;
+    private bool reflectionOverrideDirty;
+
     private RTHandle skyBoxCubeMapRTHandle;
     private RTHandle skyBoxCubeMapRTHandle_Generation;
     private RTHandle skyBoxCubeMapRTHandle_Scratch;
@@ -33,6 +37,23 @@ public class SkyboxToCubemapRendererFeature : ScriptableRendererFeature
         SkyboxToCubemapRenderPass.Slice.RemapDraw,
     };
     private int sliceIndex;
+
+    /// <summary>
+    ///     Equirectangular texture the reflection cubemap is generated from; null means it is generated from the skybox material.
+    /// </summary>
+    public Texture ReflectionOverride => reflectionOverride;
+
+    /// <summary>
+    ///     Generates the reflection cubemap from an equirectangular texture instead of the skybox material until cleared with null.
+    /// </summary>
+    public void SetReflectionOverride(Texture equirect)
+    {
+        if (ReferenceEquals(reflectionOverride, equirect))
+            return;
+
+        reflectionOverride = equirect;
+        reflectionOverrideDirty = true;
+    }
 
     /// <inheritdoc/>
     public override void Create()
@@ -58,8 +79,11 @@ public class SkyboxToCubemapRendererFeature : ScriptableRendererFeature
 
         CoreUtils.Destroy(cubeBlurMaterial); // destroy previously created material
         cubeBlurMaterial = new Material(Shader.Find("DCL/CubeBlur"));
-        
-        
+
+        CoreUtils.Destroy(equirectToCubeMaterial); // destroy previously created material
+        equirectToCubeMaterial = new Material(Shader.Find("DCL/EquirectToCube"));
+
+
         // If render texture was created but no longer should be executed in the editor release it
         if (SkipInEditorMode())
         {
@@ -114,7 +138,7 @@ public class SkyboxToCubemapRendererFeature : ScriptableRendererFeature
         RenderingUtils.ReAllocateHandleIfNeeded (ref skyBoxCubeMapRTHandle_Generation, desc, FilterMode.Trilinear, TextureWrapMode.Clamp, anisoLevel: 1, mipMapBias: 0F, name: "_SkyBoxCubeMapTex_generation");
         RenderingUtils.ReAllocateHandleIfNeeded (ref skyBoxCubeMapRTHandle_Scratch, descScratch, FilterMode.Trilinear, TextureWrapMode.Clamp, anisoLevel: 1, mipMapBias: 0F, name: "_SkyBoxCubeMapTex_scratch");
         
-        skyboxToCubemapRenderPass = new SkyboxToCubemapRenderPass(instancedSkyboxMaterial, cubeCopyMaterial, cubeBlurMaterial)
+        skyboxToCubemapRenderPass = new SkyboxToCubemapRenderPass(instancedSkyboxMaterial, cubeCopyMaterial, cubeBlurMaterial, equirectToCubeMaterial)
         {
             skyBoxCubeMapRTHandle = skyBoxCubeMapRTHandle_Generation,
             skyBoxCubeMapRTHandle_Scratch = skyBoxCubeMapRTHandle_Scratch,
@@ -165,13 +189,26 @@ public class SkyboxToCubemapRendererFeature : ScriptableRendererFeature
         if (skyboxToCubemapRenderPass == null)
             return;
 
-        if (skyboxChanged)
+        // A destroyed override texture reads as a cleared override
+        if (!ReferenceEquals(reflectionOverride, null) && !reflectionOverride)
+            SetReflectionOverride(null);
+
+        bool overrideActive = !ReferenceEquals(reflectionOverride, null);
+        skyboxToCubemapRenderPass.SetOverrideSource(reflectionOverride);
+
+        if (skyboxChanged || reflectionOverrideDirty)
         {
+            reflectionOverrideDirty = false;
             skyboxToCubemapRenderPass.slice = SkyboxToCubemapRenderPass.Slice.Full;
             renderer.EnqueuePass(skyboxToCubemapRenderPass);
             sliceIndex = 0;
             return;
         }
+
+        // A static override image only changes when it is set, so the cubemap generated then stays valid;
+        // a RenderTexture override (live video) is regenerated on the regular cadence like the skybox material
+        if (overrideActive && reflectionOverride is not RenderTexture)
+            return;
 
         if (!due)
         {
@@ -203,7 +240,10 @@ public class SkyboxToCubemapRendererFeature : ScriptableRendererFeature
 
         CoreUtils.Destroy(cubeBlurMaterial);
         cubeBlurMaterial = null;
-        
+
+        CoreUtils.Destroy(equirectToCubeMaterial);
+        equirectToCubeMaterial = null;
+
         skyboxToCubemapRenderPass = null;
     }
 

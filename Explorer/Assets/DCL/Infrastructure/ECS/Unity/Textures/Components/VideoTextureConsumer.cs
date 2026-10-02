@@ -12,7 +12,39 @@ namespace ECS.Unity.Textures.Components
         // All the renderers that use the video texture
         private readonly List<Renderer> renderers;
 
+        /// <summary>
+        ///     The single copy kept for the single Entity with VideoPlayer,
+        ///     we don't use the original texture from AVPro
+        /// </summary>
         public RenderTexture Texture { get; }
+
+        /// <summary>
+        ///     Consumers without a renderer that draw the texture over the whole screen (the scene skybox).
+        ///     Mutate it through <see cref="AddScreenSpaceConsumer" /> / <see cref="RemoveScreenSpaceConsumer" />
+        ///     on a reference to the component stored in the world, never on a copy.
+        /// </summary>
+        public int ScreenSpaceConsumers { get; private set; }
+
+        public VideoTextureConsumer(IObjectPool<RenderTexture> videoTexturesPool)
+        {
+            this.videoTexturesPool = videoTexturesPool;
+            Texture = videoTexturesPool.Get();
+            ScreenSpaceConsumers = 0;
+
+            // TODO should be pooled
+            renderers = new List<Renderer>();
+        }
+
+        public void Dispose()
+        {
+            // On application exit Unity destroys the render texture before the world is finalized;
+            // a destroyed texture must not go back to the pool where the release callback would touch its native side
+            if (Texture != null)
+                videoTexturesPool.Release(Texture);
+
+            renderers.Clear();
+            ScreenSpaceConsumers = 0;
+        }
 
         public (Vector3 min, Vector3 max) GetBounds()
         {
@@ -40,33 +72,6 @@ namespace ECS.Unity.Textures.Components
         }
 
         /// <summary>
-        ///     The single copy kept for the single Entity with VideoPlayer,
-        ///     we don't use the original texture from AVPro
-        /// </summary>
-
-        // public Texture2DData Texture { get; private set; }
-
-        // public bool IsDirty;
-        public VideoTextureConsumer(IObjectPool<RenderTexture> videoTexturesPool)
-        {
-            this.videoTexturesPool = videoTexturesPool;
-            Texture = videoTexturesPool.Get();
-
-            // TODO should be pooled
-            renderers = new List<Renderer>();
-        }
-
-        public void Dispose()
-        {
-            // On application exit Unity destroys the render texture before the world is finalized;
-            // a destroyed texture must not go back to the pool where the release callback would touch its native side
-            if (Texture != null)
-                videoTexturesPool.Release(Texture);
-
-            renderers.Clear();
-        }
-
-        /// <summary>
         /// Stores a reference to a renderer that consumes the same texture.
         /// </summary>
         /// <param name="renderer">The renderer using the video texture.</param>
@@ -82,6 +87,22 @@ namespace ECS.Unity.Textures.Components
         public void RemoveConsumer(Renderer renderer)
         {
             renderers.Remove(renderer);
+        }
+
+        /// <summary>
+        /// Counts one more consumer that draws the texture over the whole screen without a renderer.
+        /// </summary>
+        public void AddScreenSpaceConsumer()
+        {
+            ScreenSpaceConsumers++;
+        }
+
+        /// <summary>
+        /// Counts one screen-space consumer less; the counter never goes below zero.
+        /// </summary>
+        public void RemoveScreenSpaceConsumer()
+        {
+            ScreenSpaceConsumers = Mathf.Max(0, ScreenSpaceConsumers - 1);
         }
 
         public void Resize(int width, int height)

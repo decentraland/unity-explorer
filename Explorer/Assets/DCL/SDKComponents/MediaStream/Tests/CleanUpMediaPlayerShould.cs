@@ -1,61 +1,78 @@
-#if false // Stale: targets the pre-MediaFactory API (MediaPlayerComponent.URL, pool-based system ctors); rewrite against MediaFactory/MultiMediaPlayer before re-enabling.
 using Arch.Core;
-using DCL.ECSComponents;
-using DCL.Optimization.Pools;
+using ECS.StreamableLoading.Textures;
 using ECS.TestSuite;
 using ECS.Unity.Textures.Components;
 using NSubstitute;
 using NUnit.Framework;
-using DCL.AvProSwitch;
-using SceneRunner.Scene;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Pool;
 using Utility;
 
 namespace DCL.SDKComponents.MediaStream.Tests
 {
     public class CleanUpMediaPlayerShould : UnitySystemTestBase<CleanUpMediaPlayerSystem>
     {
-        private MediaPlayer mediaPlayerGameObject;
+        private readonly List<Object> createdObjects = new ();
 
-        private IComponentPool<MediaPlayer> mediaPlayerPool;
-        private IComponentPool<Texture2D> videoTexturePool;
+        private IObjectPool<RenderTexture> videoTexturesPool = null!;
 
         [SetUp]
         public void SetUp()
         {
-            ISceneStateProvider sceneStateProvider = Substitute.For<ISceneStateProvider>();
-            sceneStateProvider.IsCurrent.Returns(true);
+            videoTexturesPool = Substitute.For<IObjectPool<RenderTexture>>();
 
-            mediaPlayerGameObject = new GameObject().AddComponent<MediaPlayer>();
+            videoTexturesPool.Get().Returns(_ =>
+            {
+                var renderTexture = new RenderTexture(2, 2, 0);
+                createdObjects.Add(renderTexture);
+                return renderTexture;
+            });
 
-            mediaPlayerPool = Substitute.For<IComponentPool<MediaPlayer>>();
-            videoTexturePool = Substitute.For<IComponentPool<Texture2D>>();
+            system = new CleanUpMediaPlayerSystem(world);
+        }
 
-            system = new CleanUpMediaPlayerSystem(world, mediaPlayerPool, videoTexturePool);
+        protected override void OnTearDown()
+        {
+            foreach (Object createdObject in createdObjects)
+                UnityObjectUtils.SafeDestroy(createdObject);
+
+            createdObjects.Clear();
         }
 
         [Test]
-        public void CleanAbandonedMediaPlayer()
+        public void ReleaseConsumerAndItsTextureDataWhenNothingReferencesIt()
         {
-            var videoPlayer = new PBVideoPlayer();
-            var videoTexConsumer = new VideoTextureConsumer(Texture2D.blackTexture);
-            var mediaPlayer = new MediaPlayerComponent { MediaPlayer = mediaPlayerGameObject };
+            // Arrange
+            var consumer = new VideoTextureConsumer(videoTexturesPool);
+            var textureData = new TextureData(AnyTexture.FromVideoTextureData(new VideoTextureData(consumer, default(MediaPlayerComponent))));
+            Entity entity = world.Create(consumer, textureData);
 
-            Entity entity = world.Create(videoPlayer, videoTexConsumer, mediaPlayer);
-
+            // Act
             system.Update(0);
 
-            mediaPlayerPool.Received(1).Release(mediaPlayer.MediaPlayer);
-            videoTexturePool.Received(1).Release(videoTexConsumer.Texture);
-            Assert.That(world.Has<MediaPlayerComponent>(entity), Is.False);
+            // Assert
+            videoTexturesPool.Received(1).Release(consumer.Texture);
             Assert.That(world.Has<VideoTextureConsumer>(entity), Is.False);
+            Assert.That(world.Has<TextureData>(entity), Is.False, "a stale TextureData would hand the released render texture to the next consumer");
         }
 
-        [TearDown]
-        public void DisposeMediaPlayer()
+        [Test]
+        public void KeepConsumerAndTextureDataWhileReferenced()
         {
-            UnityObjectUtils.SafeDestroy(mediaPlayerGameObject.gameObject);
+            // Arrange
+            var consumer = new VideoTextureConsumer(videoTexturesPool);
+            var textureData = new TextureData(AnyTexture.FromVideoTextureData(new VideoTextureData(consumer, default(MediaPlayerComponent))));
+            textureData.AddReference();
+            Entity entity = world.Create(consumer, textureData);
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            videoTexturesPool.DidNotReceive().Release(Arg.Any<RenderTexture>());
+            Assert.That(world.Has<VideoTextureConsumer>(entity), Is.True);
+            Assert.That(world.Get<TextureData>(entity), Is.SameAs(textureData));
         }
     }
 }
-#endif
