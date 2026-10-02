@@ -131,6 +131,9 @@ namespace Global
         public CharacterDataPropagationUtility CharacterDataPropagationUtility { get; private set; } = null!;
         public DiskCache<ISSDescriptorMetadata, SerializeMemoryIterator<StringDiskSerializer.State>> ISSDescriptorDiskCache { get; private set; } = null!;
 
+        /// <summary>Caches files their consumer decodes itself; shares the directory, lock and size budget of the other disk caches.</summary>
+        public IDiskCache<byte[]> BytesDiskCache { get; private set; } = null!;
+
         public void Dispose()
         {
             QualityContainer.Dispose();
@@ -246,6 +249,7 @@ namespace Global
             var textureResolvePlugin = new TexturesLoadingPlugin(container.WebRequestsContainer.WebRequestController, container.CacheCleaner, textureDiskCache, launchMode, container.ProfilesContainer.Repository);
 
             container.ISSDescriptorDiskCache = new DiskCache<ISSDescriptorMetadata, SerializeMemoryIterator<StringDiskSerializer.State>>(diskCache, new ISSDescriptorDiskSerializer());
+            container.BytesDiskCache = new DiskCache<byte[], SerializeMemoryIterator<BytesDiskSerializer.State>>(diskCache, new BytesDiskSerializer());
 
             diagnosticsContainer.AddSentryScopeConfigurator(scope =>
             {

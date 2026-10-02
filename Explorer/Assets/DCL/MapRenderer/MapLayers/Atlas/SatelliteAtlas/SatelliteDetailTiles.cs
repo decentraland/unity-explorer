@@ -2,8 +2,11 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.MapRenderer.Culling;
+using DCL.Optimization.Hashing;
+using DCL.Utility.Types;
 using DCL.WebRequests;
 using DG.Tweening;
+using ECS.StreamableLoading.Cache.Disk;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -19,6 +22,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
     ///     Each map camera gets the level whose sharpness is nearest to its render texture's; finer levels draw on top.
     ///     Tiles are requested once the cameras have been still for <see cref="SETTLE_SECONDS" />, so a zoom tween or a pan
     ///     doesn't fetch levels and tiles that only pass through the view; a download whose tile leaves the view is cancelled.
+    ///     Downloaded tiles are kept in the disk cache, so a later session reads them from disk.
     /// </summary>
     internal class SatelliteDetailTiles : IDisposable
     {
@@ -27,6 +31,8 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
         internal const int MAX_LEVEL = 8;
         internal const int MAX_TILES_PER_CAMERA = 64;
         private const int TILE_PIXELS = 512;
+        private const string CACHE_EXTENSION = "ktx2";
+        private const int CACHE_ITERATION = 1;
         private const int MAX_CACHED_TILES = 64;
         private const float SETTLE_SECONDS = 0.1f;
         private const float FADE_IN_SECONDS = 0.25f;
@@ -39,6 +45,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
 
         private readonly string baseUrl;
         private readonly IWebRequestController webRequestController;
+        private readonly IDiskCache<byte[]> diskCache;
         private readonly IMapCullingController cullingController;
         private readonly AtlasChunk template;
         private readonly int drawOrderOfMinLevel;
@@ -55,11 +62,13 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
         private float lastCameraChangeTime;
         private bool settlePending;
         private bool tileFailureReported;
+        private bool diskCacheFailureReported;
 
-        public SatelliteDetailTiles(string baseUrl, IWebRequestController webRequestController, IMapCullingController cullingController, SpriteRenderer template, int drawOrderOfMinLevel)
+        public SatelliteDetailTiles(string baseUrl, IWebRequestController webRequestController, IDiskCache<byte[]> diskCache, IMapCullingController cullingController, SpriteRenderer template, int drawOrderOfMinLevel)
         {
             this.baseUrl = baseUrl.TrimEnd('/');
             this.webRequestController = webRequestController;
+            this.diskCache = diskCache;
             this.cullingController = cullingController;
             this.drawOrderOfMinLevel = drawOrderOfMinLevel;
 
@@ -289,16 +298,10 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
 
             try
             {
-                texture = await webRequestController.GetTextureAsync(
-                    new CommonArguments(URLAddress.FromString(url), RetryPolicy.WithRetries(1)),
-                    // The tiles are already KTX2, so the request skips the media converter.
-                    new GetTextureArguments(TextureType.Albedo, useKtx: false),
-                    GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp, FilterMode.Bilinear),
-                    ct,
-                    ReportCategory.UI,
-                    suppressErrors: true);
+                byte[] bytes = await FetchAsync(url, ct);
 
-                await UniTask.SwitchToMainThread();
+                await UniTask.SwitchToMainThread(ct);
+                texture = await KtxTextureDecoder.DecodeAsync(bytes, linear: false, TextureWrapMode.Clamp, FilterMode.Bilinear, readable: false, url);
             }
             catch (OperationCanceledException) { return; }
             catch (Exception e)
@@ -314,15 +317,12 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
                 return;
             }
 
-            // The tile was dropped while downloading: it no longer owns anything, so the texture is destroyed here.
+            // The tile was dropped while loading: it no longer owns anything, so the texture is destroyed here.
             if (ct.IsCancellationRequested)
             {
                 UnityObjectUtils.SafeDestroy(texture);
                 return;
             }
-
-            // The texture is only drawn from now on, so its CPU copy is released.
-            texture.Apply(false, true);
 
             tile.Texture = texture;
             float tileSize = baseChunkSize * (1 << BASE_LEVEL) / (1 << level);
@@ -338,6 +338,60 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             tile.View.transform.localPosition = new Vector3(gridTopLeft.x + ((id.x + 0.5f) * tileSize), gridTopLeft.y - ((id.y + 0.5f) * tileSize), 0);
             tile.View.gameObject.SetActive(true);
             renderer.DOColor(AtlasChunkConstants.FINAL_COLOR, FADE_IN_SECONDS);
+        }
+
+        /// <summary>The tile's KTX2 file from the disk cache, or downloaded and stored there for the next session.</summary>
+        private async UniTask<byte[]> FetchAsync(string url, CancellationToken ct)
+        {
+            EnumResult<Option<byte[]>, TaskError> cached;
+
+            using (HashKey key = NewCacheKey(url))
+                cached = await diskCache.ContentAsync(key, CACHE_EXTENSION, ct);
+
+            ct.ThrowIfCancellationRequested();
+
+            if (cached.Success)
+            {
+                if (cached.Value.Has)
+                    return cached.Value.Value;
+            }
+            else
+                ReportDiskCacheFailure(cached.Error!.Value.Message);
+
+            byte[] bytes = await webRequestController
+                                .GetAsync(new CommonArguments(URLAddress.FromString(url), RetryPolicy.WithRetries(1)), ct, ReportCategory.UI, suppressErrors: true)
+                                .GetDataCopyAsync();
+
+            // The write runs on the streamer's lifetime: the tile can be dropped before it ends, and the bytes are already in memory.
+            StoreAsync(url, bytes, lifetimeCts.Token).Forget();
+            return bytes;
+        }
+
+        private async UniTaskVoid StoreAsync(string url, byte[] bytes, CancellationToken ct)
+        {
+            try
+            {
+                using HashKey key = NewCacheKey(url);
+                EnumResult<TaskError> result = await diskCache.PutAsync(key, CACHE_EXTENSION, bytes, ct);
+
+                if (!result.Success)
+                    ReportDiskCacheFailure(result.Error!.Value.Message);
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e) { ReportHub.LogException(e, ReportCategory.UI); }
+        }
+
+        private static HashKey NewCacheKey(string url) =>
+            HashKey.FromString($"{CACHE_ITERATION}:{url}");
+
+        /// <summary>Once per session: a disabled or failing disk cache affects every tile the same way.</summary>
+        private void ReportDiskCacheFailure(string? message)
+        {
+            if (diskCacheFailureReported)
+                return;
+
+            diskCacheFailureReported = true;
+            ReportHub.Log(ReportCategory.UI, $"Satellite tiles are not using the disk cache: {message}");
         }
 
         private AtlasChunk RentView()
