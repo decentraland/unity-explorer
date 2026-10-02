@@ -523,7 +523,8 @@ namespace DCL.PluginSystem.Global
                 zoomController,
                 satelliteController,
                 placesAPIService,
-                homePlaceEventBus);
+                homePlaceEventBus,
+                upscalingController);
 
             await backpackSubPlugin.InitializeAsync(settings.BackpackSettings, explorePanelView.GetComponentInChildren<BackpackView>(), ct);
 

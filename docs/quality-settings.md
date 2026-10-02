@@ -94,6 +94,7 @@ with `renderScale = 1` and the `Auto` filter while anyone requires it:
   acquires the override and the last one to hide or dispose releases it. Every `CharacterPreviewControllerBase`
   is covered without registration.
 - Explicit requesters via `RequireFullRenderScale(owner)` / `ReleaseFullRenderScale(owner)`, keyed by owner so an
-  unbalanced call cannot leave the scale stuck. The Passport badge camera uses this while the Passport is open.
+  unbalanced call cannot leave the scale stuck. The Passport badge camera uses this while the Passport is open, and
+  the Navmap section while it is active.
 
 A Resolution Scale change made while the override is held is stored and applied on release.
