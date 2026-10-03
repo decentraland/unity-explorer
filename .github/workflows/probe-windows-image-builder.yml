@@ -1,0 +1,128 @@
+name: Probe Unity Explorer Windows image
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - chore/probe-windows-image-builder
+    paths:
+      - .github/workflows/probe-windows-image-builder.yml
+
+permissions: {}
+
+concurrency:
+  group: probe-unity-explorer-windows-image
+  cancel-in-progress: true
+
+jobs:
+  probe:
+    name: Probe custom Windows GPU runner
+    runs-on: win-gpu-t4-explorer
+    timeout-minutes: 10
+
+    steps:
+      - name: Record runner allocation
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+          $startedAt = [DateTime]::UtcNow
+
+          "## Custom image probe" >> $env:GITHUB_STEP_SUMMARY
+          "" >> $env:GITHUB_STEP_SUMMARY
+          "- Runner: ``$env:RUNNER_NAME``" >> $env:GITHUB_STEP_SUMMARY
+          "- OS: ``$env:RUNNER_OS``" >> $env:GITHUB_STEP_SUMMARY
+          "- Architecture: ``$env:RUNNER_ARCH``" >> $env:GITHUB_STEP_SUMMARY
+          "- Probe started: ``$($startedAt.ToString('o'))``" >> $env:GITHUB_STEP_SUMMARY
+
+      - name: Validate Windows GPU
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+
+          Get-ComputerInfo |
+            Select-Object WindowsProductName, WindowsVersion, OsBuildNumber, OsArchitecture |
+            Format-List
+
+          $nvidiaSmi = Get-Command nvidia-smi -ErrorAction SilentlyContinue
+          if (-not $nvidiaSmi) { throw "nvidia-smi is not available" }
+
+          $nvidiaOutput = (& nvidia-smi 2>&1 | Out-String)
+          if ($LASTEXITCODE -ne 0) { throw "nvidia-smi failed with exit code $LASTEXITCODE" }
+          Write-Host $nvidiaOutput
+
+          $gpuName = (nvidia-smi --query-gpu=name --format=csv,noheader | Select-Object -First 1).Trim()
+          if ($LASTEXITCODE -ne 0) { throw "Failed to query the GPU name" }
+          if ($gpuName -notmatch "Tesla T4") { throw "Expected Tesla T4, received '$gpuName'" }
+          if ($nvidiaOutput -notmatch '\bWDDM\b') { throw "nvidia-smi did not report WDDM" }
+
+          "- GPU: ``$gpuName``" >> $env:GITHUB_STEP_SUMMARY
+          "- Driver model: ``WDDM``" >> $env:GITHUB_STEP_SUMMARY
+          $global:LASTEXITCODE = 0
+
+      - name: Validate persistent toolchain
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+
+          $expectedTools = @{
+            git = "C:\Tools\MinGit\cmd\git.exe"
+            dotnet = "C:\Program Files\dotnet\dotnet.exe"
+            node = "C:\Program Files\nodejs\node.exe"
+            npm = "C:\Program Files\nodejs\npm.cmd"
+            allure = "C:\Tools\npm-global\allure.cmd"
+            aws = "C:\Program Files\Amazon\AWSCLIV2\aws.exe"
+            mf = "C:\Tools\MetaForge\mf.exe"
+          }
+
+          "" >> $env:GITHUB_STEP_SUMMARY
+          "### Persistent toolchain" >> $env:GITHUB_STEP_SUMMARY
+          "" >> $env:GITHUB_STEP_SUMMARY
+          "| Tool | Location |" >> $env:GITHUB_STEP_SUMMARY
+          "|---|---|" >> $env:GITHUB_STEP_SUMMARY
+
+          foreach ($entry in $expectedTools.GetEnumerator()) {
+            if (-not (Test-Path $entry.Value)) {
+              throw "$($entry.Key) is missing from $($entry.Value)"
+            }
+            "| $($entry.Key) | ``$($entry.Value)`` |" >> $env:GITHUB_STEP_SUMMARY
+          }
+
+          $gh = Get-ChildItem "C:\Tools\gh" -Recurse -Filter "gh.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
+          if (-not $gh) { throw "gh.exe is missing from C:\Tools\gh" }
+          if (-not (Test-Path "C:\Program Files\AltTesterDesktop\AltTesterDesktop.exe")) {
+            throw "AltTester Desktop is missing"
+          }
+
+          & $expectedTools.git --version
+          & $gh.FullName --version | Select-Object -First 1
+          & $expectedTools.dotnet --version
+          & $expectedTools.node --version
+          & $expectedTools.npm --version
+          & $expectedTools.allure --version
+          & $expectedTools.aws --version
+          & $expectedTools.mf --version
+
+      - name: Validate warm dependency caches
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+          $expectedCaches = @{
+            NUGET_PACKAGES = "C:\Tools\Caches\nuget"
+            NPM_CONFIG_CACHE = "C:\Tools\Caches\npm"
+          }
+
+          foreach ($entry in $expectedCaches.GetEnumerator()) {
+            $configured = [Environment]::GetEnvironmentVariable($entry.Key, "Machine")
+            if ($configured -ne $entry.Value) {
+              throw "$($entry.Key) is '$configured'; expected '$($entry.Value)'"
+            }
+            if (-not (Get-ChildItem $entry.Value -Force -ErrorAction SilentlyContinue | Select-Object -First 1)) {
+              throw "$($entry.Key) cache is empty at $($entry.Value)"
+            }
+          }
+
+          "" >> $env:GITHUB_STEP_SUMMARY
+          "### Warm caches" >> $env:GITHUB_STEP_SUMMARY
+          "" >> $env:GITHUB_STEP_SUMMARY
+          "- NuGet: ``$($expectedCaches.NUGET_PACKAGES)``" >> $env:GITHUB_STEP_SUMMARY
+          "- npm: ``$($expectedCaches.NPM_CONFIG_CACHE)``" >> $env:GITHUB_STEP_SUMMARY
