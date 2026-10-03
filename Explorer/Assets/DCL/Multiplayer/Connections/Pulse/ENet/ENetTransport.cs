@@ -165,8 +165,9 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
             FinalizeHost();
         }
 
+        // Completes on an ENet worker thread, which has no SynchronizationContext to marshal back to.
         public UniTask DisconnectAsync(DisconnectReason reason) =>
-            DisconnectAsync(reason, false).AsUniTask();
+            DisconnectAsync(reason, false).AsUniTask(useCurrentSynchronizationContext: false);
 
         /// <param name="reason">Reported to the peer as the disconnection cause</param>
         /// <param name="spinThread">If true: Wait on the same thread; if false - async Yield</param>

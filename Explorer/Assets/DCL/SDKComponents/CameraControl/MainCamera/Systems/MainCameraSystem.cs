@@ -84,13 +84,13 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
             bool hasPreviousVirtualCamera = previousVirtualCamera != null && previousVirtualCamera.enabled;
             if (virtualCameraCRDTEntity.HasValue)
             {
-                Vector3 cinemachineCurrentActiveCamPos = cameraData.CinemachineBrain!.ActiveVirtualCamera.VirtualCameraGameObject.transform.position;
+                ICinemachineCamera? activeVirtualCamera = cameraData.CinemachineBrain!.ActiveVirtualCamera;
 
                 // It may take more than 1 run to detect the VirtualCamera component on the crdt entity
                 if (!TryApplyVirtualCamera(
                         ref mainCameraComponent,
                         virtualCameraCRDTEntity.Value,
-                        hasPreviousVirtualCamera ? previousVirtualCamera!.transform.position : cinemachineCurrentActiveCamPos))
+                        hasPreviousVirtualCamera ? previousVirtualCamera!.transform.position : activeVirtualCamera?.VirtualCameraGameObject.transform.position))
                     return;
 
                 // virtualCameraCRDTEntity assigned only after successfully applying it, so that
@@ -116,7 +116,8 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
         [None(typeof(DeleteEntityIntention))]
         private void HandleActiveVirtualCameraLookAtChange(CRDTEntity crdtEntity, in PBVirtualCamera pbVirtualCamera, ref VirtualCameraComponent virtualCameraComponent)
         {
-            if (cameraData.CinemachineBrain!.ActiveVirtualCamera.VirtualCameraGameObject != virtualCameraComponent.virtualCameraInstance.gameObject) return;
+            ICinemachineCamera? activeVirtualCamera = cameraData.CinemachineBrain!.ActiveVirtualCamera;
+            if (activeVirtualCamera == null || activeVirtualCamera.VirtualCameraGameObject != virtualCameraComponent.virtualCameraInstance.gameObject) return;
 
             CRDTEntity? pbVirtualCameraLookAtEntity = VirtualCameraUtils.GetPBVirtualCameraLookAtCRDTEntity(pbVirtualCamera, crdtEntity);
 
