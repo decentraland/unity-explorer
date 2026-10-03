@@ -15,8 +15,16 @@ Explorer/Assets/StreamingAssets/AssetBundles/**/*.meta -filter=lfs -diff=lfs -me
 *.png filter=lfs diff=lfs merge=lfs -text
 *.dll filter=lfs diff=lfs merge=lfs -text
 *.dylib filter=lfs diff=lfs merge=lfs -text
+# Linux native libraries; versioned sonames (libavcodec.so.62) are binaries, their Unity .meta sidecars are text.
+*.so filter=lfs diff=lfs merge=lfs -text
+*.so.[0-9]* filter=lfs diff=lfs merge=lfs -text
+*.so.[0-9]*.meta !filter !diff !merge !text
+# Plain blobs that predate the *.so rule; they join LFS when they are next rebuilt.
+Explorer/Assets/Plugins/ENet/runtimes/linux-x64/native/libenet.so !filter !diff !merge !text
+Explorer/Assets/Plugins/RustSegment/SegmentServerWrap/Libraries/Linux/segment-server.so !filter !diff !merge !text
 Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/x86_64/uuav-helper.exe filter=lfs diff=lfs merge=lfs -text
 Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/macOS/uuav-helper filter=lfs diff=lfs merge=lfs -text
+Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/linux-x86_64/uuav-helper filter=lfs diff=lfs merge=lfs -text
 
 ##############################################################################
 # UUAV native - hashed bytes, so the line endings are part of the content
