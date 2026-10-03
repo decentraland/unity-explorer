@@ -25,9 +25,9 @@
   },
   {
    "number": 10276,
-   "status": "pending",
-   "commit": null,
-   "note": ""
+   "status": "fixed",
+   "commit": "420746bf69d35af56a20f26ba3bcdd0042b97461",
+   "note": "duplicates of the same defect: GET reachability probe threw on cleartext http instead of answering unreachable"
   },
   {
    "number": 10274,
@@ -49,9 +49,9 @@
   },
   {
    "number": 10267,
-   "status": "pending",
-   "commit": null,
-   "note": ""
+   "status": "fixed",
+   "commit": "420746bf69d35af56a20f26ba3bcdd0042b97461",
+   "note": "duplicates of the same defect: GET reachability probe threw on cleartext http instead of answering unreachable"
   },
   {
    "number": 10266,
@@ -205,9 +205,9 @@
   },
   {
    "number": 10204,
-   "status": "pending",
-   "commit": null,
-   "note": ""
+   "status": "fixed",
+   "commit": "420746bf69d35af56a20f26ba3bcdd0042b97461",
+   "note": "duplicates of the same defect: GET reachability probe threw on cleartext http instead of answering unreachable"
   },
   {
    "number": 10200,
