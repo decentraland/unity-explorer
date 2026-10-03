@@ -61,9 +61,9 @@
   },
   {
    "number": 10264,
-   "status": "pending",
-   "commit": null,
-   "note": ""
+   "status": "fixed",
+   "commit": "6fd460e71face4b9d24a689a8a9544ca005079a9",
+   "note": "empty-state links point to the Shop; grid deactivation hides empty-state panels that sit outside CategoriesView"
   },
   {
    "number": 10260,
