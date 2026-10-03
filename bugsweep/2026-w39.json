@@ -259,9 +259,9 @@
   },
   {
    "number": 10185,
-   "status": "pending",
-   "commit": null,
-   "note": ""
+   "status": "fixed",
+   "commit": "c01a5522ae9afe3bc51351974904cff8ca1549d9",
+   "note": "outfit and creations thumbnails built as FullRect sprites from non-readable textures"
   },
   {
    "number": 10184,
