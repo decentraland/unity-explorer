@@ -1,0 +1,273 @@
+{
+ "status": "active",
+ "prUrl": null,
+ "requester": "U0ADNDHL1T7",
+ "originChannel": "C0BB9H2CS5D",
+ "groups": [
+  [
+   10276,
+   10267,
+   10204
+  ]
+ ],
+ "issues": [
+  {
+   "number": 10279,
+   "status": "pending",
+   "commit": null,
+   "note": ""
+  },
+  {
+   "number": 10278,
+   "status": "skipped",
+   "commit": null,
+   "note": "Sentry WebSocketException duplicate of #10103 (anonymous exception message); fixed in w38 sweep, merged PR #10275 on 2026-09-30, already on dev; verify there before treating as a regression"
+  },
+  {
+   "number": 10276,
+   "status": "pending",
+   "commit": null,
+   "note": ""
+  },
+  {
+   "number": 10274,
+   "status": "skipped",
+   "commit": null,
+   "note": "Sentry duplicate of #9951: LiveKit room connection failure (network/server-side); no repro steps or client-side root cause"
+  },
+  {
+   "number": 10272,
+   "status": "skipped",
+   "commit": null,
+   "note": "Sentry WebSocketException duplicate of #10103 (anonymous exception message); fixed in w38 sweep, merged PR #10275 on 2026-09-30, already on dev; verify there before treating as a regression"
+  },
+  {
+   "number": 10270,
+   "status": "skipped",
+   "commit": null,
+   "note": "Sentry WebSocketException duplicate of #10103 (anonymous exception message); fixed in w38 sweep, merged PR #10275 on 2026-09-30, already on dev; verify there before treating as a regression"
+  },
+  {
+   "number": 10267,
+   "status": "pending",
+   "commit": null,
+   "note": ""
+  },
+  {
+   "number": 10266,
+   "status": "skipped",
+   "commit": null,
+   "note": "Sentry WebSocketException duplicate of #10103 (anonymous exception message); fixed in w38 sweep, merged PR #10275 on 2026-09-30, already on dev; verify there before treating as a regression"
+  },
+  {
+   "number": 10264,
+   "status": "pending",
+   "commit": null,
+   "note": ""
+  },
+  {
+   "number": 10260,
+   "status": "skipped",
+   "commit": null,
+   "note": "fix already in flight: PR #10261 is open; also CI workflow files, which the sweep never modifies"
+  },
+  {
+   "number": 10258,
+   "status": "skipped",
+   "commit": null,
+   "note": "Sentry WebSocketException duplicate of #10103 (anonymous exception message); fixed in w38 sweep, merged PR #10275 on 2026-09-30, already on dev; verify there before treating as a regression"
+  },
+  {
+   "number": 10255,
+   "status": "skipped",
+   "commit": null,
+   "note": "Sentry WebSocketException duplicate of #10103 (anonymous exception message); fixed in w38 sweep, merged PR #10275 on 2026-09-30, already on dev; verify there before treating as a regression"
+  },
+  {
+   "number": 10254,
+   "status": "skipped",
+   "commit": null,
+   "note": "Sentry WebSocketException duplicate of #10103 (anonymous exception message); fixed in w38 sweep, merged PR #10275 on 2026-09-30, already on dev; verify there before treating as a regression"
+  },
+  {
+   "number": 10253,
+   "status": "skipped",
+   "commit": null,
+   "note": "Sentry WebSocketException duplicate of #10103 (anonymous exception message); fixed in w38 sweep, merged PR #10275 on 2026-09-30, already on dev; verify there before treating as a regression"
+  },
+  {
+   "number": 10247,
+   "status": "skipped",
+   "commit": null,
+   "note": "UUAV native helper process killed by SIGKILL (OS/OOM); native, no C# root cause or repro"
+  },
+  {
+   "number": 10246,
+   "status": "skipped",
+   "commit": null,
+   "note": "the member list shows Add Friend only for friendshipStatus 'none', which the client takes verbatim from the server's join-request payload; the wrong status appears to come from the server, needs a captured response to confirm"
+  },
+  {
+   "number": 10245,
+   "status": "skipped",
+   "commit": null,
+   "note": "voice chat promotion stuck for one specific wallet only; needs LiveKit/server-side investigation with that account, no client-side root cause found from the logs"
+  },
+  {
+   "number": 10241,
+   "status": "skipped",
+   "commit": null,
+   "note": "Sentry WebSocketException duplicate of #10103 (anonymous exception message); fixed in w38 sweep, merged PR #10275 on 2026-09-30, already on dev; verify there before treating as a regression"
+  },
+  {
+   "number": 10237,
+   "status": "skipped",
+   "commit": null,
+   "note": "Sentry WebSocketException duplicate of #10103 (anonymous exception message); fixed in w38 sweep, merged PR #10275 on 2026-09-30, already on dev; verify there before treating as a regression"
+  },
+  {
+   "number": 10232,
+   "status": "skipped",
+   "commit": null,
+   "note": "Sentry WebSocketException duplicate of #10103 (anonymous exception message); fixed in w38 sweep, merged PR #10275 on 2026-09-30, already on dev; verify there before treating as a regression"
+  },
+  {
+   "number": 10231,
+   "status": "skipped",
+   "commit": null,
+   "note": "Sentry WebSocketException duplicate of #10103 (anonymous exception message); fixed in w38 sweep, merged PR #10275 on 2026-09-30, already on dev; verify there before treating as a regression"
+  },
+  {
+   "number": 10229,
+   "status": "skipped",
+   "commit": null,
+   "note": "Sentry WebSocketException duplicate of #10103 (anonymous exception message); fixed in w38 sweep, merged PR #10275 on 2026-09-30, already on dev; verify there before treating as a regression"
+  },
+  {
+   "number": 10228,
+   "status": "skipped",
+   "commit": null,
+   "note": "Sentry SDK internal (SerializeAsync TaskCompletionSource double-set), duplicate of #10048; not client code (same as w38 #10153)"
+  },
+  {
+   "number": 10226,
+   "status": "skipped",
+   "commit": null,
+   "note": "Sentry WebSocketException duplicate of #10103 (anonymous exception message); fixed in w38 sweep, merged PR #10275 on 2026-09-30, already on dev; verify there before treating as a regression"
+  },
+  {
+   "number": 10223,
+   "status": "skipped",
+   "commit": null,
+   "note": "Sentry WebSocketException duplicate of #10103 (anonymous exception message); fixed in w38 sweep, merged PR #10275 on 2026-09-30, already on dev; verify there before treating as a regression"
+  },
+  {
+   "number": 10220,
+   "status": "skipped",
+   "commit": null,
+   "note": "Sentry WebSocketException duplicate of #10103 (anonymous exception message); fixed in w38 sweep, merged PR #10275 on 2026-09-30, already on dev; verify there before treating as a regression"
+  },
+  {
+   "number": 10219,
+   "status": "skipped",
+   "commit": null,
+   "note": "Sentry WebSocketException duplicate of #10103 (anonymous exception message); fixed in w38 sweep, merged PR #10275 on 2026-09-30, already on dev; verify there before treating as a regression"
+  },
+  {
+   "number": 10216,
+   "status": "skipped",
+   "commit": null,
+   "note": "Sentry WebSocketException duplicate of #10103 (anonymous exception message); fixed in w38 sweep, merged PR #10275 on 2026-09-30, already on dev; verify there before treating as a regression"
+  },
+  {
+   "number": 10213,
+   "status": "skipped",
+   "commit": null,
+   "note": "Sentry WebSocketException duplicate of #10103 (anonymous exception message); fixed in w38 sweep, merged PR #10275 on 2026-09-30, already on dev; verify there before treating as a regression"
+  },
+  {
+   "number": 10211,
+   "status": "skipped",
+   "commit": null,
+   "note": "UUAV native core seek/HLS defects identified in PR #10157; native core changes spanning subsystems, too complex for a sweep fix"
+  },
+  {
+   "number": 10210,
+   "status": "skipped",
+   "commit": null,
+   "note": "Sentry ArgumentException with no managed stack frames (il2cpp generic Execute only); cannot locate the call site"
+  },
+  {
+   "number": 10209,
+   "status": "skipped",
+   "commit": null,
+   "note": "SocketIO timeout connecting to auth-api; network-level connectivity failure, not a client defect"
+  },
+  {
+   "number": 10204,
+   "status": "pending",
+   "commit": null,
+   "note": ""
+  },
+  {
+   "number": 10200,
+   "status": "skipped",
+   "commit": null,
+   "note": "nearby counter 3x: every counting path (NearbyUserStateService, ChatMemberListService) dedupes by wallet in HashSets; could not find the root cause by code reading, needs a runtime repro"
+  },
+  {
+   "number": 10197,
+   "status": "skipped",
+   "commit": null,
+   "note": "cannot reproduce from client: the card shows Places API contact_name, which the live API now returns as 'zCayel' for Killer House; looks data-side"
+  },
+  {
+   "number": 10195,
+   "status": "skipped",
+   "commit": null,
+   "note": "Sentry WebSocketException duplicate of #10103 (anonymous exception message); fixed in w38 sweep, merged PR #10275 on 2026-09-30, already on dev; verify there before treating as a regression"
+  },
+  {
+   "number": 10194,
+   "status": "skipped",
+   "commit": null,
+   "note": "ClearScript ScriptInterruptedException surfaced as unobserved task on scene teardown; no repro, and the managed frames do not identify the dropped task"
+  },
+  {
+   "number": 10193,
+   "status": "skipped",
+   "commit": null,
+   "note": "duplicate/regression of #9932; NFT artwork load depends on external NFT APIs and the failing frame's logs are suppressed; no root cause identifiable"
+  },
+  {
+   "number": 10192,
+   "status": "skipped",
+   "commit": null,
+   "note": "duplicate of #8532 (avatar parenting to scene parcels after teleport); unknown reproduction rate, root cause spans teleport/scene loading; too complex for a sweep fix"
+  },
+  {
+   "number": 10191,
+   "status": "skipped",
+   "commit": null,
+   "note": "Sentry WebSocketException duplicate of #10103 (anonymous exception message); fixed in w38 sweep, merged PR #10275 on 2026-09-30, already on dev; verify there before treating as a regression"
+  },
+  {
+   "number": 10189,
+   "status": "skipped",
+   "commit": null,
+   "note": "Sentry WebSocketException duplicate of #10103 (anonymous exception message); fixed in w38 sweep, merged PR #10275 on 2026-09-30, already on dev; verify there before treating as a regression"
+  },
+  {
+   "number": 10185,
+   "status": "pending",
+   "commit": null,
+   "note": ""
+  },
+  {
+   "number": 10184,
+   "status": "skipped",
+   "commit": null,
+   "note": "Sentry WebSocketException duplicate of #10103 (anonymous exception message); fixed in w38 sweep, merged PR #10275 on 2026-09-30, already on dev; verify there before treating as a regression"
+  }
+ ]
+}
