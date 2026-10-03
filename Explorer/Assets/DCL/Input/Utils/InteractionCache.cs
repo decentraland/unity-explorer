@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.Pool;
 using UnityEngine.UI;
 using UnityEngine.UIElements;
+using Utility.UIToolkit;
 using Button = UnityEngine.UIElements.Button;
 using Toggle = UnityEngine.UIElements.Toggle;
 
@@ -29,9 +30,9 @@ namespace DCL.Input.Utils
 
                 for (var i = 0; i < visualElements.Count; i++)
                 {
-                    VisualElement? visualElement = visualElements[i];
+                    VisualElement visualElement = visualElements[i];
 
-                    canBeInteracted = visualElement is Button or Toggle;
+                    canBeInteracted = visualElement.enabledInHierarchy && (visualElement is Button or Toggle || visualElement.ClassListContains(VisualElementsExtensions.INTERACTABLE_CLASS));
 
                     if (canBeInteracted)
                         break;

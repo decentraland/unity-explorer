@@ -91,6 +91,13 @@ namespace DCL.Notifications.NotificationsMenu
         private int unreadNotifications;
         private bool needsInitialRequest = true;
 
+        /// <summary>
+        ///     Raised with <see cref="UnreadCount" /> whenever it is recomputed.
+        /// </summary>
+        public event Action<int>? UnreadCountChanged;
+
+        public int UnreadCount => unreadNotifications;
+
         public NotificationsPanelController(
             ViewFactoryMethod viewFactory,
             NotificationsRequestController notificationsRequestController,
@@ -214,8 +221,15 @@ namespace DCL.Notifications.NotificationsMenu
 
         private void UpdateUnreadNotificationRender()
         {
-            viewInstance?.unreadNotificationCounterText.SetText("{0}", unreadNotifications);
-            viewInstance?.notificationIndicator.SetActive(unreadNotifications > 0);
+            UnreadCountChanged?.Invoke(unreadNotifications);
+
+            if (viewInstance == null) return;
+
+            if (viewInstance.unreadNotificationCounterText != null)
+                viewInstance.unreadNotificationCounterText.SetText("{0}", unreadNotifications);
+
+            if (viewInstance.notificationIndicator != null)
+                viewInstance.notificationIndicator.SetActive(unreadNotifications > 0);
         }
 
         private void ManageNotificationReadStatus(INotification notificationData, bool isViewOpen)

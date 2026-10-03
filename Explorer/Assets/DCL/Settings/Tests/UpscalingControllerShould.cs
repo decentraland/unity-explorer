@@ -47,7 +47,7 @@ namespace DCL.Settings.Tests
         [TestCase(typeof(FakeAuthenticationScreenController))]
         [TestCase(typeof(FakeExplorePanelController))]
         [TestCase(typeof(FakePassportController))]
-        [TestCase(typeof(FakeLobbyController))]
+        [TestCase(typeof(FakeLobbyDocumentController))]
         [TestCase(typeof(FakeBackpackModalController))]
         public void ForceFullRenderScaleWhilePreviewUIIsOpen(Type controllerType)
         {
@@ -69,7 +69,7 @@ namespace DCL.Settings.Tests
         public void RestoreUserScaleWhenOverlappingPreviewUIsClose()
         {
             // Arrange
-            IController lobby = new FakeLobbyController();
+            IController lobby = new FakeLobbyDocumentController();
             IController backpack = new FakeBackpackModalController();
             urpAsset.renderScale = 0.5f;
 
@@ -108,7 +108,7 @@ namespace DCL.Settings.Tests
 
         public class FakePassportController : FakeController { }
 
-        public class FakeLobbyController : FakeController { }
+        public class FakeLobbyDocumentController : FakeController { }
 
         public class FakeBackpackModalController : FakeController { }
     }

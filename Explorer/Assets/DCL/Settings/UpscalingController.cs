@@ -89,7 +89,7 @@ namespace DCL.Utilities
             return controllerTypeName.Contains("AuthenticationScreenController") ||
                    controllerTypeName.Contains("ExplorePanelController") ||
                    controllerTypeName.Contains("PassportController") ||
-                   controllerTypeName.Contains("LobbyController") ||
+                   controllerTypeName.Contains("LobbyDocumentController") ||
                    controllerTypeName.Contains("BackpackModalController");
         }
 

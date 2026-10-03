@@ -2,7 +2,6 @@ using Cysharp.Threading.Tasks;
 using DCL.Profiles;
 using DCL.Utilities;
 using DCL.Web3.Identities;
-using MVC;
 using System.Threading;
 using Utility;
 
@@ -18,14 +17,14 @@ namespace DCL.UI.ProfileElements
         private readonly IWeb3IdentityCache identityCache;
         private readonly IProfileRepository profileRepository;
         private readonly ProfileChangesBus profileChangesBus;
-        private readonly ProfileWidgetView view;
+        private readonly IProfileWidgetView view;
 
         private readonly ReactiveProperty<ProfileThumbnailViewModel> thumbnail = new (ProfileThumbnailViewModel.Default());
 
         private CancellationTokenSource? loadProfileCts;
 
         public SidebarProfileButtonPresenter(
-            ProfileWidgetView view,
+            IProfileWidgetView view,
             IWeb3IdentityCache identityCache,
             IProfileRepository profileRepository,
             ProfileChangesBus profileChangesBus
@@ -41,7 +40,7 @@ namespace DCL.UI.ProfileElements
             identityCache.OnIdentityChanged += OnIdentityChanged;
             identityCache.OnIdentityCleared += OnIdentityCleared;
 
-            view.ProfilePictureView.Bind(thumbnail);
+            view.BindThumbnail(thumbnail);
         }
 
         public void Dispose()
@@ -83,12 +82,8 @@ namespace DCL.UI.ProfileElements
             Profile.CompactInfo profile = compactInfo.Value;
             thumbnail.SetLoading(profile.UserNameColor);
 
-            if (view.NameLabel != null)
-                view.NameLabel.text = string.IsNullOrEmpty(profile.ValidatedName) ? GUEST_NAME : profile.ValidatedName;
-
-            if (view.AddressLabel != null)
-                if (profile.HasClaimedName == false)
-                    view.AddressLabel.text = profile.WalletId;
+            view.Name = string.IsNullOrEmpty(profile.ValidatedName) ? GUEST_NAME : profile.ValidatedName;
+            view.Address = profile.HasClaimedName ? string.Empty : profile.WalletId;
 
             await GetProfileThumbnailCommand.Instance.ExecuteAsync(thumbnail, null, profile, ct);
         }

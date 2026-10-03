@@ -1,10 +1,16 @@
 ﻿using System.Linq;
+using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace Utility.UIToolkit
 {
     public static class VisualElementsExtensions
     {
+        /// <summary>
+        ///     USS class that marks an element as clickable, so the cursor turns into the interaction one over it as it does over a Button.
+        /// </summary>
+        public const string INTERACTABLE_CLASS = "dcl-interactable";
+
         public static void SetDisplayed(this VisualElement ve, bool displayed) =>
             ve.style.display = displayed ? DisplayStyle.Flex : DisplayStyle.None;
 
@@ -17,6 +23,22 @@ namespace Utility.UIToolkit
         public static T InstantiateForElement<T>(this VisualTreeAsset asset) where T: VisualElement =>
             asset.Instantiate().Q<T>();
 
+        /// <summary>
+        ///     Centre of the element in Unity screen pixels (bottom-left origin). RuntimePanelUtils offers no panel-to-screen conversion,
+        ///     so the inverse is recovered from two probe conversions. The element must be attached to a panel.
+        /// </summary>
+        public static Vector2 ScreenCenter(this VisualElement element)
+        {
+            IPanel panel = element.panel;
+            Vector2 origin = RuntimePanelUtils.ScreenToPanel(panel, Vector2.zero);
+            Vector2 perPixel = RuntimePanelUtils.ScreenToPanel(panel, Vector2.one) - origin;
+            Vector2 center = element.worldBound.center;
+
+            float x = Mathf.Approximately(perPixel.x, 0f) ? 0f : (center.x - origin.x) / perPixel.x;
+            float y = Mathf.Approximately(perPixel.y, 0f) ? 0f : (center.y - origin.y) / perPixel.y;
+
+            return new Vector2(x, Screen.height - y);
+        }
 
         /// <summary>
         /// Removes all modifiers (any classes that contain --) from the element.

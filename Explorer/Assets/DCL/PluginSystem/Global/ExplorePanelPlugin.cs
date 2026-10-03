@@ -700,7 +700,7 @@ namespace DCL.PluginSystem.Global
         }
 
         private void OpenLobby() =>
-            mvcManager.ShowAndForget(LobbyController.IssueCommand(new LobbyParameter(isStartup: false)));
+            mvcManager.ShowAndForget(LobbyDocumentController.IssueCommand(new LobbyParameter(isStartup: false)));
 
         private void OnInputShortcutsBackpackPerformedAsync(InputAction.CallbackContext _)
         {
