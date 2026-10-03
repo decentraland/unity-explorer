@@ -13,9 +13,9 @@
  "issues": [
   {
    "number": 10279,
-   "status": "pending",
-   "commit": null,
-   "note": ""
+   "status": "fixed",
+   "commit": "56a5ebf888e8e2d356434bf170c657dce8fa0a69",
+   "note": "emote wheel waits for the emote definition and shows an empty slot when it failed to load"
   },
   {
    "number": 10278,
