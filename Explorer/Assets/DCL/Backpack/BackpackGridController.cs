@@ -142,6 +142,10 @@ namespace DCL.Backpack
             backpackSortController.OnSortChanged -= OnSortChanged;
             backpackSortController.OnCollectiblesOnlyChanged -= OnCollectiblesOnlyChanged;
             backpackSortController.OnSmartWearablesOnlyChanged -= OnSmartWearablesOnlyChanged;
+
+            // The empty-state panels sit outside the categories view, so they would stay on top of the next tab
+            view.NoSearchResults.SetActive(false);
+            view.NoCategoryResults.SetActive(false);
         }
 
         public static async UniTask<ObjectPool<BackpackItemView>> InitialiseAssetsAsync(IAssetsProvisioner assetsProvisioner, BackpackGridView view, CancellationToken ct)

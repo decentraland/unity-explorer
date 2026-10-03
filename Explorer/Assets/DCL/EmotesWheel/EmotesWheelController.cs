@@ -160,6 +160,17 @@ namespace DCL.EmotesWheel
                 return;
             }
 
+            // Storage hands out the entry before its definition is fetched
+            if (emote.IsLoading && await UniTask.WaitWhile(() => emote.IsLoading, cancellationToken: ct).SuppressCancellationThrow())
+                return;
+
+            if (!IsDefinitionResolved(emote))
+            {
+                ReportHub.LogWarning(new ReportData(ReportCategory.EMOTE), $"Could not setup emote wheel slot {slot} for {emoteUrn}, emote definition failed to load");
+                SetUpEmptySlot(slot);
+                return;
+            }
+
             EmoteWheelSlotView view = viewInstance!.Slots[slot];
 
             view.BackgroundRarity.sprite = rarityBackgrounds.GetTypeImage(emote.GetRarity());
@@ -205,11 +216,14 @@ namespace DCL.EmotesWheel
 
         private void UpdateCurrentEmote(int slot)
         {
-            if (!emoteStorage.TryGetElement(currentEmotes[slot], out IEmote emote))
+            if (!emoteStorage.TryGetElement(currentEmotes[slot], out IEmote emote) || !IsDefinitionResolved(emote))
                 ClearCurrentEmote(slot);
             else
                 viewInstance!.CurrentEmoteName.text = emote.GetName();
         }
+
+        private static bool IsDefinitionResolved(IEmote emote) =>
+            emote.DTO?.Metadata != null;
 
         private void ClearCurrentEmote(int slot)
         {

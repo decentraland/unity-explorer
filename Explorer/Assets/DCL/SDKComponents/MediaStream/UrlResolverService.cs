@@ -2,6 +2,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.WebRequests;
+using System;
 using System.Threading;
 using UnityEngine.Networking;
 
@@ -94,7 +95,13 @@ namespace DCL.SDKComponents.MediaStream
 
             try
             {
-                request.SendWebRequest();
+                // Throws synchronously for cleartext http when the player disallows insecure connections
+                try { request.SendWebRequest(); }
+                catch (InvalidOperationException e)
+                {
+                    ReportHub.LogWarning(ReportCategory.MEDIA_STREAM, $"Resource <{url}> is not reachable: {e.Message}");
+                    return false;
+                }
 
                 while (request.downloadedBytes == 0)
                 {

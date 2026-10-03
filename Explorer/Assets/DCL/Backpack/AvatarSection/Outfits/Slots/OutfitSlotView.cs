@@ -14,6 +14,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Slots
     {
         private readonly Vector3 hoveredScale = new (1.02f, 1.02f, 1.02f);
         private const float ANIMATION_TIME = 0.1f;
+        private const float THUMBNAIL_PIXELS_PER_UNIT = 100f;
         private CancellationTokenSource cts;
 
         public event Action? OnSaveClicked;
@@ -179,7 +180,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Slots
             outfitThumbnailEmpty.gameObject.SetActive(thumbnail == null);
 
             if (thumbnail != null)
-                outfitThumbnail.sprite = Sprite.Create(thumbnail, new Rect(0, 0, thumbnail.width, thumbnail.height), new Vector2(0.5f, 0.5f));
+                outfitThumbnail.sprite = Sprite.Create(thumbnail, new Rect(0, 0, thumbnail.width, thumbnail.height), VectorUtilities.OneHalf, THUMBNAIL_PIXELS_PER_UNIT, 0, SpriteMeshType.FullRect);
 
             outfitHoverOutline?.gameObject.SetActive(isHovered);
             unEquipButton?.gameObject.SetActive(false);
