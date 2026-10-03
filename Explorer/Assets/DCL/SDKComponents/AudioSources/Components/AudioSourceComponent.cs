@@ -23,6 +23,13 @@ namespace DCL.SDKComponents.AudioSources
         public float LastAppliedCurrentTime;
 
         /// <summary>
+        ///     Clip position carried by the last AudioEvent written for this source; a report goes out whenever it
+        ///     moves. Starts at zero, like MediaPlayerComponent.LastPropagatedVideoTime: a fresh source sits at the
+        ///     start of its clip, so treating zero as unreported would emit a position event before anything played.
+        /// </summary>
+        public float LastPropagatedOffset;
+
+        /// <summary>
         ///     The final audio source ready for consumption
         /// </summary>
         public AudioSource? AudioSource { get; private set; }
@@ -47,6 +54,7 @@ namespace DCL.SDKComponents.AudioSources
             AudioSourceAssigned = false;
             LastPropagatedAudioState = MediaState.MsNone;
             LastAppliedCurrentTime = float.NaN;
+            LastPropagatedOffset = 0f;
 
             lastAudioFrameReadFilter = new ();
         }
