@@ -148,18 +148,5 @@ namespace DCL.Profiles.Self
     [REnumField(typeof(RequestId), "RequestClosed")]
     public readonly partial struct SelfProfileMsg
     {
-        /// <summary>The address the message was produced for; null for the messages about whatever identity is current.</summary>
-        public UserId? Address => Match<UserId?>(
-            onIdentityChanged: static address => address,
-            onIdentityCleared: static () => null,
-            onFetchSucceeded: static m => m.Address,
-            onFetchNotFound: static address => address,
-            onFetchFailed: static m => m.Address,
-            onDeployProfileOnEditRequested: static _ => null,
-            onDeploySucceeded: static m => m.Address,
-            onDeployFailed: static m => m.Address,
-            onProfileReadRequested: static _ => null,
-            onRequestClosed: static _ => null
-        );
     }
 }
