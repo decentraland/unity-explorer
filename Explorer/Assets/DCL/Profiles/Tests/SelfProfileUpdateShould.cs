@@ -201,7 +201,7 @@ namespace DCL.Profiles.Tests
             Identified identified = AssertIdentified(next);
             AssertKnown(identified.Knowledge, edited);
             Deploying deploying = AssertDeploying(identified.Activity, edited);
-            AssertKnown(deploying.Before, trusted);
+            AssertCopyOf(deploying.Before, trusted);
 
             SelfProfileCmd[] batch = AssertBatch(cmd, 2);
             AssertPublish(batch[0], edited);
@@ -256,7 +256,7 @@ namespace DCL.Profiles.Tests
             Identified identified = AssertIdentified(afterSecond);
             AssertKnown(identified.Knowledge, secondEdit);
             Deploying deploying = AssertDeploying(identified.Activity, secondEdit);
-            AssertKnown(deploying.Before, trusted);
+            AssertCopyOf(deploying.Before, trusted);
 
             SelfProfileCmd[] batch = AssertBatch(cmd, 2);
             AssertPublish(batch[0], secondEdit);
@@ -877,6 +877,14 @@ namespace DCL.Profiles.Tests
         {
             Assert.That(knowledge.IsKnown(out Profile? actual), Is.True, $"expected Known, got {knowledge}");
             Assert.That(actual, Is.SameAs(expected));
+        }
+
+        private static void AssertCopyOf(in ProfileKnowledge knowledge, Profile original)
+        {
+            Assert.That(knowledge.IsKnown(out Profile? actual), Is.True, $"expected Known, got {knowledge}");
+            Assert.That(actual, Is.Not.SameAs(original), "the cache disposes the original once the edit replaces it");
+            Assert.That(actual!.UserId, Is.EqualTo(original.UserId));
+            Assert.That(actual.Version, Is.EqualTo(original.Version));
         }
 
         private static Deploying AssertDeploying(in ProfileActivity activity, Profile pending)

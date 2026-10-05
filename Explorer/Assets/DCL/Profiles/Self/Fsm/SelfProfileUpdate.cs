@@ -145,11 +145,11 @@ namespace DCL.Profiles.Self
             Profile edited = request.Edited;
 
             // A deploy already in flight is superseded: its requests move to the new deploy and the revert point stays
-            // the knowledge from before the first edit.
+            // the knowledge from before the first edit, copied so it stays intact when the published instance is disposed.
             ProfileKnowledge before = current.Activity.Match(
                 current.Knowledge,
-                onIdle: static knowledge => knowledge,
-                onFetching: static knowledge => knowledge,
+                onIdle: static knowledge => CopyOf(knowledge),
+                onFetching: static knowledge => CopyOf(knowledge),
                 onDeploying: static (_, inFlight) => inFlight.Before
             );
 
@@ -221,6 +221,9 @@ namespace DCL.Profiles.Self
 
         private static SelfProfileSession StartFetching(UserId address, RequestIds pendingReads) =>
             SelfProfileSession.FromIdentified(Identified.New(address).WithActivity(ProfileActivity.Fetching()).WithPendingReads(pendingReads));
+
+        private static ProfileKnowledge CopyOf(in ProfileKnowledge knowledge) =>
+            knowledge.IsKnown(out Profile? known) ? ProfileKnowledge.FromKnown(new ProfileBuilder().From(known).Build()) : knowledge;
 
         private static RequestIds PendingDeploys(in Identified current) =>
             current.Activity.IsDeploying(out Deploying deploying) ? deploying.Requests : default;
