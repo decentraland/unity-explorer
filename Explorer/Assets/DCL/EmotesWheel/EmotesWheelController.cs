@@ -109,10 +109,18 @@ namespace DCL.EmotesWheel
 
                 if (known.Has)
                     profile = known.Value;
-                else if (!(await selfProfile.ProfileAsync(ct)).IsOk(out profile))
+                else
                 {
-                    ReportHub.LogError(new ReportData(ReportCategory.EMOTE), "Could not initialize emote wheel slots, profile is null");
-                    return;
+                    ProfileReadResult read = await selfProfile.ProfileAsync(ct);
+
+                    if (read.IsCancelled)
+                        return;
+
+                    if (!read.IsOk(out profile))
+                    {
+                        ReportHub.LogError(new ReportData(ReportCategory.EMOTE), $"Could not initialize emote wheel slots, the profile could not be read ({read})");
+                        return;
+                    }
                 }
 
                 SetUpSlots(profile);
