@@ -40,7 +40,7 @@ namespace DCL.SDKComponents.MediaStream
         private readonly Func<bool> streamingRoomRunning;
         private readonly AvatarPlaceHolderTextureSource? placeholderSource;
         private readonly SlideTextureCache slideCache;
-        private readonly Material? compositorMaterial;
+        private readonly Material compositorMaterial;
         private readonly MediaPlayerCustomPool mediaPlayerPool;
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly MediaVolume mediaVolume;
@@ -55,7 +55,7 @@ namespace DCL.SDKComponents.MediaStream
         public MediaFactory(ISceneData sceneData, IRoom streamingRoom, Func<bool> streamingRoomRunning, MediaPlayerCustomPool mediaPlayerPool, ISceneStateProvider sceneStateProvider, MediaVolume mediaVolume,
             IObjectPool<RenderTexture> videoTexturesPool, IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap, World world, IWebRequestController webRequestController, IPerformanceBudget frameBudget,
             AssetPreLoadCache assetPreLoadCache, IAnalyticsController analyticsController, AvatarPlaceHolderTextureSource? placeholderSource,
-            SlideTextureCache slideCache, Material? compositorMaterial)
+            SlideTextureCache slideCache, Material compositorMaterial)
         {
             this.sceneData = sceneData;
             this.streamingRoom = streamingRoom;

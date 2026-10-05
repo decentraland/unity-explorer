@@ -22,7 +22,6 @@ namespace DCL.SDKComponents.MediaStream
         private readonly VideoPrioritizationSettings videoPrioritizationSettings;
         private readonly MediaFactoryBuilder mediaFactory;
         private readonly Material flipMaterial;
-        private readonly Material? compositorMaterial;
         private readonly MediaPlayerDebugRegistry debugRegistry;
         // ReSharper restore NotAccessedField.Local
 
@@ -35,7 +34,6 @@ namespace DCL.SDKComponents.MediaStream
             VideoPrioritizationSettings videoPrioritizationSettings,
             MediaFactoryBuilder mediaFactory,
             Material flipMaterial,
-            Material? compositorMaterial,
             AvatarPlaceHolderTextureSource? placeholderSource,
             MediaPlayerDebugRegistry debugRegistry)
         {
@@ -45,7 +43,6 @@ namespace DCL.SDKComponents.MediaStream
             this.videoPrioritizationSettings = videoPrioritizationSettings;
             this.mediaFactory = mediaFactory;
             this.flipMaterial = flipMaterial;
-            this.compositorMaterial = compositorMaterial;
             this.placeholderSource = placeholderSource;
             this.debugRegistry = debugRegistry;
         }
@@ -54,7 +51,7 @@ namespace DCL.SDKComponents.MediaStream
             List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
 #if !UNITY_EDITOR_LINUX && !UNITY_STANDALONE_LINUX
-            MediaFactory sceneMediaFactory = mediaFactory.CreateForScene(builder.World, sceneDeps, roomHub, placeholderSource, compositorMaterial);
+            MediaFactory sceneMediaFactory = mediaFactory.CreateForScene(builder.World, sceneDeps, roomHub, placeholderSource);
 
             CreateMediaPlayerSystem.InjectToWorld(ref builder, sceneDeps.SceneStateProvider, sceneMediaFactory);
             sceneIsCurrentListeners.Add(UpdateMediaPlayerSystem.InjectToWorld(ref builder, sceneDeps.SceneData, sceneDeps.SceneStateProvider, frameTimeBudget, sceneMediaFactory, audioFadeSpeed, flipMaterial, videoPrioritizationSettings));

@@ -47,6 +47,7 @@ namespace DCL.SDKComponents.MediaStream
 
             mediaVolume = new MediaVolume(volumeBus);
             slideCache = new SlideTextureCache(webRequestController, decentralandUrlsSource);
+            cacheCleaner.Register(slideCache);
         }
 
         internal MediaFactoryBuilder mediaFactoryBuilder { get; private set; } = null!;
@@ -78,7 +79,8 @@ namespace DCL.SDKComponents.MediaStream
 
             cacheCleaner.Register(videoTexturesPool);
 
-            mediaFactoryBuilder = new MediaFactoryBuilder(webRequestController, mediaVolume, frameBudget, mediaPlayerPrefab, videoTexturesPool, assetPreLoadCache, analyticsController, slideCache);
+            mediaFactoryBuilder = new MediaFactoryBuilder(webRequestController, mediaVolume, frameBudget, mediaPlayerPrefab, videoTexturesPool, assetPreLoadCache, analyticsController, slideCache,
+                containerSettings.CompositorMaterial);
         }
 
         public override void Dispose()
@@ -108,6 +110,9 @@ namespace DCL.SDKComponents.MediaStream
         {
             [field: SerializeField]
             public MediaPlayerReference MediaPlayerPrefab { get; private set; } = null!;
+
+            [field: SerializeField]
+            public Material CompositorMaterial { get; private set; } = null!;
         }
     }
 }

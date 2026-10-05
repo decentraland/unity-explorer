@@ -25,10 +25,11 @@ namespace DCL.SDKComponents.MediaStream
         private readonly AssetPreLoadCache assetPreLoadCache;
         private readonly IAnalyticsController analyticsController;
         private readonly SlideTextureCache slideCache;
+        private readonly Material compositorMaterial;
 
         public MediaFactoryBuilder(IWebRequestController webRequestController, MediaVolume volumeBus,
             IPerformanceBudget performanceBudget, MediaPlayer mediaPlayerPrefab, IObjectPool<RenderTexture> videoTexturesPool,
-            AssetPreLoadCache assetPreLoadCache, IAnalyticsController analyticsController, SlideTextureCache slideCache)
+            AssetPreLoadCache assetPreLoadCache, IAnalyticsController analyticsController, SlideTextureCache slideCache, Material compositorMaterial)
         {
             this.webRequestController = webRequestController;
             this.performanceBudget = performanceBudget;
@@ -37,12 +38,12 @@ namespace DCL.SDKComponents.MediaStream
             this.assetPreLoadCache = assetPreLoadCache;
             this.analyticsController = analyticsController;
             this.slideCache = slideCache;
+            this.compositorMaterial = compositorMaterial;
 
             mediaPlayerCustomPool = new MediaPlayerCustomPool(mediaPlayerPrefab);
         }
 
-        public MediaFactory CreateForScene(World world, in ECSWorldInstanceSharedDependencies sceneDeps, IRoomHub roomHub, AvatarPlaceHolderTextureSource? placeholderSource,
-            Material? compositorMaterial) =>
+        public MediaFactory CreateForScene(World world, in ECSWorldInstanceSharedDependencies sceneDeps, IRoomHub roomHub, AvatarPlaceHolderTextureSource? placeholderSource) =>
             new (sceneDeps.SceneData, roomHub.StreamingRoom(),
                 () => roomHub.SceneRoom().CurrentState() == IConnectiveRoom.State.Running,
                 mediaPlayerCustomPool, sceneDeps.SceneStateProvider,
