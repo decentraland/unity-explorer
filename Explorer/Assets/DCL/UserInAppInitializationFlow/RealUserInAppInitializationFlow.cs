@@ -236,12 +236,6 @@ namespace DCL.UserInAppInitializationFlow
                                     // A failed startup sequence keeps its own error, such as a missing profile; the LiveKit result decides only a sequence that succeeded
                                     if (operationResult.Success)
                                         operationResult = livekitOperationResult;
-                                    else if (operationResult.Error is { Exception: ProfileNotFoundException })
-                                    {
-                                        // TODO: redesign. Clearing the identity cache as a side effect of an error, only to steer the auth decision at the top of the loop, is implicit control flow;
-                                        // the retry should decide whether to show the auth screen from the result itself
-                                        identityCache.Clear(); // Forces the auth screen on the retry, even under skip-auth-screen
-                                    }
 
                                     if (operationResult.Success)
                                     {
@@ -251,6 +245,11 @@ namespace DCL.UserInAppInitializationFlow
                                         startParcel.MarkLanded();
                                     }
                                 }
+
+                                // TODO: redesign. Clearing the identity cache as a side effect of an error, only to steer the auth decision at the top of the loop, is implicit control flow;
+                                // the retry should decide whether to show the auth screen from the result itself
+                                if (RequiresReauthentication(operationResult))
+                                    identityCache.Clear();
                             }
 
                             return operationResult;
@@ -282,6 +281,10 @@ namespace DCL.UserInAppInitializationFlow
             && !appArgs.HasFlag(AppArgsFlags.AUTOPILOT)
             && !appArgs.HasFlag(AppArgsFlags.MEASURE_LOADING_TIME)
             && !appArgs.HasFlag(AppArgsFlags.DISABLE_HUD);
+
+        /// <summary>A missing profile is resolved only by signing in again, so the cached identity cannot be retried as is.</summary>
+        internal static bool RequiresReauthentication(EnumResult<TaskError> result) =>
+            result.Error is { Exception: ProfileNotFoundException };
 
         internal static bool LandsAtLaunchDestination(IAppArgs appArgs, IUserInAppInitializationFlow.LoadSource loadSource) =>
             loadSource == IUserInAppInitializationFlow.LoadSource.StartUp && appArgs.HasLaunchDestination();
