@@ -35,6 +35,7 @@ namespace DCL.Profiles.Self
         private readonly IReadOnlyList<URN>? forcedEmotes;
         private readonly World world;
         private readonly Entity playerEntity;
+        private readonly bool skipCatalystDeploy;
         private CancellationTokenSource? activity;
 
         public SelfProfileCmdExecutor(
@@ -47,7 +48,8 @@ namespace DCL.Profiles.Self
             ForcedWearables forcedWearables,
             IReadOnlyList<URN>? forcedEmotes,
             World world,
-            Entity playerEntity)
+            Entity playerEntity,
+            bool skipCatalystDeploy)
         {
             this.profileRepository = profileRepository;
             this.profileCache = profileCache;
@@ -59,6 +61,7 @@ namespace DCL.Profiles.Self
             this.forcedEmotes = forcedEmotes;
             this.world = world;
             this.playerEntity = playerEntity;
+            this.skipCatalystDeploy = skipCatalystDeploy;
         }
 
         public void Dispose()
@@ -173,13 +176,13 @@ namespace DCL.Profiles.Self
             sent.UserId = deploy.Address;
             sent.Version = deploy.Version;
 
-            // A faking session never deploys what it fakes; the edit is reported as sent.
-            if (forcedWearables.Any || forcedEmotes?.Count > 0)
+            // A faking or previewing session never deploys what it fakes; the edit is reported as sent.
+            if (forcedWearables.Any || forcedEmotes?.Count > 0 || skipCatalystDeploy)
             {
                 activity.SafeCancelAndDispose();
                 activity = null;
 
-                ReportHub.LogWarning(ReportCategory.PROFILE, "Profile deploy skipped: forced wearables or emotes are active for this session");
+                ReportHub.LogWarning(ReportCategory.PROFILE, "Profile deploy skipped: forced wearables or emotes, or a self preview, are active for this session");
                 inbox.Send(SelfProfileMsg.FromDeploySucceeded(new DeploySucceeded(deploy.Address, sent, sent)));
                 return;
             }

@@ -451,6 +451,24 @@ namespace DCL.Profiles.Tests
         }
 
         [Test]
+        public void SkipTheDeployInAPreviewSession()
+        {
+            // Arrange
+            executor.Dispose();
+            executor = NewExecutor(new ForcedWearables(), skipCatalystDeploy: true);
+            Profile sent = NewProfile(ALICE, 4);
+
+            // Act
+            executor.Execute(SelfProfileCmd.FromDeploy(new DeployCmd(ALICE, sent, sent.Version)), inbox);
+
+            // Assert
+            profileRepository.DidNotReceiveWithAnyArgs().SetAsync(default!, default);
+            Assert.That(SingleSent().IsDeploySucceeded(out DeploySucceeded msg), Is.True);
+            Assert.That(msg.Sent, Is.SameAs(sent));
+            Assert.That(msg.Saved, Is.SameAs(sent));
+        }
+
+        [Test]
         public void ExecuteABatchInOrder()
         {
             // Arrange
@@ -497,9 +515,9 @@ namespace DCL.Profiles.Tests
             profileRepository.DidNotReceiveWithAnyArgs().GetAsync(default!, default, default, default, default, default, default);
         }
 
-        private SelfProfileCmdExecutor NewExecutor(ForcedWearables forcedWearables) =>
+        private SelfProfileCmdExecutor NewExecutor(ForcedWearables forcedWearables, bool skipCatalystDeploy = false) =>
             new (profileRepository, profileCache, wearableStorage, emoteStorage, equippedWearables, equippedEmotes,
-                forcedWearables, forcedEmotes: null, world, playerEntity);
+                forcedWearables, forcedEmotes: null, world, playerEntity, skipCatalystDeploy);
 
         private static Profile NewProfile(UserId userId, int version) =>
             new (userId, "self", new Avatar()) { Version = version };

@@ -44,13 +44,14 @@ namespace DCL.Profiles.Self
             IProfileCache profileCache,
             World world,
             Entity playerEntity,
-            ForcedWearables forcedWearables)
+            ForcedWearables forcedWearables,
+            bool skipCatalystDeploy)
         {
             this.web3IdentityCache = web3IdentityCache;
             drainToken = drainCts.Token;
 
             var executor = new SelfProfileCmdExecutor(profileRepository, profileCache, wearableStorage, emoteStorage, equippedWearables, equippedEmotes,
-                forcedWearables, forcedEmotes, world, playerEntity);
+                forcedWearables, forcedEmotes, world, playerEntity, skipCatalystDeploy);
 
             runtime = new FsmRuntime<SelfProfileModel, SelfProfileMsg, SelfProfileCmd>(FSM_TAG, ReportCategory.PROFILE, SelfProfileModel.NoIdentity(), SelfProfileModel.Update, executor);
 

@@ -145,7 +145,7 @@ namespace DCL.Profiles.Tests
 
             return new SelfProfile(profileRepository, new MemoryWeb3IdentityCache { Identity = identity }, Substitute.For<IEquippedWearables>(),
                 Substitute.For<IWearableStorage>(), emoteStorage, Substitute.For<IEquippedEmotes>(), forcedEmotes: null, profileCache ?? Substitute.For<IProfileCache>(),
-                world, world.Create(), new ForcedWearables());
+                world, world.Create(), new ForcedWearables(), skipCatalystDeploy: false);
         }
 
         private UniTask<ProfileReadResult>[] ReadBurst()

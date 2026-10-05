@@ -285,7 +285,7 @@ Only works for PUBLISHED elements (thus having a URN that identifies them).
 **Type:** String
 **Description:** Renders specific wearables on your own avatar without owning them. Accepts a comma-separated list of wearable URNs (i.e. `urn:decentraland:matic:collections-v2:0x9251f5c79923bc80e5dd8fc6d0c9fa02953aa622:0`).
 
-The wearables are visible only to you, and are **never deployed**. While the flag is set the client does not persist your profile at all — backpack saves, name changes and passport edits all take effect locally for the session and are discarded on relaunch, the same way `self-preview-wearables` already suppresses backpack publishing. Relaunch without the flag to go back to your real avatar.
+The wearables are visible only to you, and are **never deployed**. While the flag is set the client does not persist your profile at all — backpack saves, name changes and passport edits all take effect locally for the session and are discarded on relaunch, as with `self-preview-wearables` and `self-preview-builder-collections`. Relaunch without the flag to go back to your real avatar.
 
 Do not use it on a brand-new account: a first profile has to be deployed to exist, and the flag blocks that.
 
@@ -321,6 +321,8 @@ Only works for PUBLISHED elements (thus having a URN that identifies them).
 
 The elements previewed are not visible for others, only for the tester.
 
+While the flag is set the client does not deploy your profile — backpack saves, name changes and passport edits take effect locally for the session and are discarded on relaunch.
+
 Only works for PUBLISHED elements (thus having a URN that identifies them).
 
 **Usage:**
@@ -335,6 +337,8 @@ Only works for PUBLISHED elements (thus having a URN that identifies them).
 **Description:** Enables preview mode for builder collections. Accepts a comma-separated list of collection IDs (e.g. `3062136a-065d-4d94-b28c-f57d6ef04860`).
 
 The elements previewed are not visible for others, only for the tester.
+
+While the flag is set the client does not deploy your profile — backpack saves, name changes and passport edits take effect locally for the session and are discarded on relaunch.
 
 Only works for UNRELEASED elements, the tester has to either be the owner of the collection or be whitelisted to test it (e.g. Curators).
 

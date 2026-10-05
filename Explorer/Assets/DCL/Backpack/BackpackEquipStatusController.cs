@@ -1,4 +1,3 @@
-using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Equipped;
@@ -12,7 +11,6 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.Web3.Identities;
-using Global.AppArgs;
 using Runtime.Wearables;
 using System;
 using System.Collections.Generic;
@@ -30,15 +28,11 @@ namespace DCL.Backpack
         private readonly IEquippedEmotes equippedEmotes;
         private readonly IEquippedWearables equippedWearables;
         private readonly SelfProfile selfProfile;
-        private readonly IProfileCache profileCache;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IEmoteStorage emoteStorage;
         private readonly IWearableStorage wearableStorage;
-        private readonly IAppArgs appArgs;
         private readonly WarningNotificationView inWorldWarningNotificationView;
         private readonly ProfileChangesBus profileChangesBus;
-        private readonly World world;
-        private readonly Entity playerEntity;
         private readonly IOwnedNftFilter ownedNftFilter;
         private CancellationTokenSource? publishProfileCts;
 
@@ -47,13 +41,9 @@ namespace DCL.Backpack
             IEquippedEmotes equippedEmotes,
             IEquippedWearables equippedWearables,
             SelfProfile selfProfile,
-            IProfileCache profileCache,
             IEmoteStorage emoteStorage,
             IWearableStorage wearableStorage,
             IWeb3IdentityCache web3IdentityCache,
-            World world,
-            Entity playerEntity,
-            IAppArgs appArgs,
             WarningNotificationView inWorldWarningNotificationView,
             ProfileChangesBus profileChangesBus,
             IOwnedNftFilter ownedNftFilter)
@@ -63,7 +53,6 @@ namespace DCL.Backpack
             this.equippedWearables = equippedWearables;
             this.web3IdentityCache = web3IdentityCache;
             this.selfProfile = selfProfile;
-            this.profileCache = profileCache;
             this.emoteStorage = emoteStorage;
             this.wearableStorage = wearableStorage;
 
@@ -83,9 +72,6 @@ namespace DCL.Backpack
             web3IdentityCache.OnIdentityCleared += CancelUpdateOperation;
             web3IdentityCache.OnIdentityChanged += CancelUpdateOperation;
 
-            this.world = world;
-            this.playerEntity = playerEntity;
-            this.appArgs = appArgs;
             this.inWorldWarningNotificationView = inWorldWarningNotificationView;
             this.profileChangesBus = profileChangesBus;
             this.ownedNftFilter = ownedNftFilter;
@@ -226,20 +212,6 @@ namespace DCL.Backpack
                     return;
                 }
 
-                bool publishProfileChange = !appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS)
-                                            && !appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_WEARABLES);
-
-                if (!publishProfileChange)
-                {
-                    newProfile.Version++;
-                    profileCache.Set(newProfile.UserId, newProfile);
-                    UpdateAvatarInWorld(newProfile);
-                    profileChangesBus.PushUpdate(newProfile);
-                    backpackEventBus.SendAvatarChanged();
-
-                    return;
-                }
-
                 // The equipped look is final here, so it is announced ahead of the slow deployment; a copy is pushed because the commit mutates newProfile
                 profileChangesBus.PushUpdate(new ProfileBuilder().From(newProfile).WithVersion(newProfile.Version + 1).Build());
                 profileToRevertTo = oldProfile;
@@ -274,18 +246,6 @@ namespace DCL.Backpack
                 ReportHub.LogException(e, ReportCategory.PROFILE);
                 ShowErrorNotificationAsync(ct).Forget();
             }
-        }
-
-        private void UpdateAvatarInWorld(Profile profile)
-        {
-            profile.IsDirty = true;
-
-            bool found = world.Has<Profile>(playerEntity);
-
-            if (found)
-                world.Set(playerEntity, profile);
-            else
-                world.Add(playerEntity, profile);
         }
 
         private async UniTask ShowErrorNotificationAsync(CancellationToken ct)

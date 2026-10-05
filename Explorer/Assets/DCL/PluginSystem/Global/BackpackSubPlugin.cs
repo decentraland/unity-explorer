@@ -26,7 +26,6 @@ using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
-using Global.AppArgs;
 using MVC;
 using Runtime.Wearables;
 using System;
@@ -41,7 +40,6 @@ namespace DCL.PluginSystem.Global
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IWearableStorage wearableStorage;
         private readonly SelfProfile selfProfile;
-        private readonly IProfileCache profileCache;
         private readonly IEquippedWearables equippedWearables;
         private readonly IEquippedEmotes equippedEmotes;
         private readonly IEmoteStorage emoteStorage;
@@ -57,7 +55,6 @@ namespace DCL.PluginSystem.Global
         private readonly ICharacterPreviewFactory characterPreviewFactory;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
         private readonly IInputBlock inputBlock;
-        private readonly IAppArgs appArgs;
         private readonly UnityAppWebBrowser webBrowser;
         private readonly WarningNotificationView inWorldWarningNotificationView;
         private readonly IThumbnailProvider thumbnailProvider;
@@ -83,7 +80,6 @@ namespace DCL.PluginSystem.Global
             ICharacterPreviewFactory characterPreviewFactory,
             IWearableStorage wearableStorage,
             SelfProfile selfProfile,
-            IProfileCache profileCache,
             IEquippedWearables equippedWearables,
             IEquippedEmotes equippedEmotes,
             IEmoteStorage emoteStorage,
@@ -96,7 +92,6 @@ namespace DCL.PluginSystem.Global
             IEmoteProvider emoteProvider,
             Arch.Core.World world,
             Entity playerEntity,
-            IAppArgs appArgs,
             UnityAppWebBrowser webBrowser,
             WarningNotificationView inWorldWarningNotificationView,
             IThumbnailProvider thumbnailProvider,
@@ -116,7 +111,6 @@ namespace DCL.PluginSystem.Global
             this.characterPreviewFactory = characterPreviewFactory;
             this.wearableStorage = wearableStorage;
             this.selfProfile = selfProfile;
-            this.profileCache = profileCache;
             this.equippedWearables = equippedWearables;
             this.equippedEmotes = equippedEmotes;
             this.emoteStorage = emoteStorage;
@@ -129,7 +123,6 @@ namespace DCL.PluginSystem.Global
             this.emoteProvider = emoteProvider;
             this.world = world;
             this.playerEntity = playerEntity;
-            this.appArgs = appArgs;
             this.webBrowser = webBrowser;
             this.inWorldWarningNotificationView = inWorldWarningNotificationView;
             this.thumbnailProvider = thumbnailProvider;
@@ -256,13 +249,9 @@ namespace DCL.PluginSystem.Global
                 equippedEmotes,
                 equippedWearables,
                 selfProfile,
-                profileCache,
                 emoteStorage,
                 wearableStorage,
                 web3Identity,
-                world,
-                playerEntity,
-                appArgs,
                 inWorldWarningNotificationView,
                 profileChangesBus,
                 ownedNftFilter
