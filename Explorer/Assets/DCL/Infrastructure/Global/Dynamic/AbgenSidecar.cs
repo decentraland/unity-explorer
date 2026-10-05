@@ -452,13 +452,17 @@ namespace Global.Dynamic
             }
         }
 
-        /// <summary>The extensions abgen's corpus build converts: models and the standalone images they reference.</summary>
+        /// <summary>
+        ///     The extensions abgen's corpus build converts: models, the standalone images they reference,
+        ///     and the scene's TrueType fonts (the font lane only takes <c>.ttf</c>; an <c>.otf</c> loads raw).
+        /// </summary>
         private static bool IsConvertible(string file) =>
             file.EndsWith(".glb", StringComparison.OrdinalIgnoreCase)
             || file.EndsWith(".gltf", StringComparison.OrdinalIgnoreCase)
             || file.EndsWith(".png", StringComparison.OrdinalIgnoreCase)
             || file.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase)
-            || file.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase);
+            || file.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase)
+            || file.EndsWith(".ttf", StringComparison.OrdinalIgnoreCase);
 
         /// <summary>Null when no build for the entity is in flight (the route 404s before the build registers and after it finishes).</summary>
         private async UniTask<BuildProgress?> TryGetBuildProgressAsync(string entityId, CancellationToken ct)
