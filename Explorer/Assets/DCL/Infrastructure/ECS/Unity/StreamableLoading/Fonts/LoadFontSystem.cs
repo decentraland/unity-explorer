@@ -2,7 +2,6 @@ using Arch.Core;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.Ipfs;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Cache;
@@ -23,7 +22,7 @@ namespace ECS.StreamableLoading.Fonts
     [LogCategory(ReportCategory.SDK_FONTS)]
     public partial class LoadFontSystem : LoadSystemBase<FontData, GetFontIntention>
     {
-        // The names the converter gives a font bundle's two font assets (abgen builder::font).
+        // The names of the two font assets in a converted font bundle.
         private const string BUNDLE_TEXT_MESH_PRO_ASSET = "tmp";
         private const string BUNDLE_UI_TOOLKIT_ASSET = "uitk";
 
@@ -50,37 +49,42 @@ namespace ECS.StreamableLoading.Fonts
 
         protected override async UniTask<StreamableLoadingResult<FontData>> FlowInternalAsync(GetFontIntention intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
         {
-            if (intention.AssetBundleHash is not { } assetBundleHash || intention.AssetBundleManifest is not { } manifest)
-                throw new FontLoadException($"\"{intention.Src}\": the scene has no converted asset bundles to load the font from, the built-in font stays");
+            if (intention.Bundle is not { } bundle)
+                throw new FontLoadException($"\"{intention.Src}\": the scene has no converted asset bundles to load the font from, the built-in font stays", LogType.Log);
 
-            if (!intention.AssetBundleListed && !tryUnlistedBundles)
-                throw new FontLoadException($"\"{intention.Src}\": the scene's asset bundle manifest lists no converted font bundle for it, the built-in font stays");
+            if (!bundle.Listed && !tryUnlistedBundles)
+                throw new FontLoadException($"\"{intention.Src}\": the scene's asset bundle manifest lists no converted font bundle for it, the built-in font stays", LogType.Log);
 
-            return new StreamableLoadingResult<FontData>(await LoadConvertedAsync(intention, assetBundleHash, manifest, partition, ct));
+            return new StreamableLoadingResult<FontData>(await LoadConvertedAsync(intention, bundle, state, partition, ct));
         }
 
         /// <summary>
-        ///     Loads the font from the bundle the converter built for it: both font assets already built, their atlases
-        ///     pre-filled with the common characters, and the source font inside for the rest. Throws a
+        ///     Loads the font assets from the font's converted bundle and validates them. Throws a
         ///     <see cref="FontLoadException" /> when the bundle cannot be used.
         /// </summary>
-        private async UniTask<FontData> LoadConvertedAsync(GetFontIntention intention, string assetBundleHash, AssetBundleManifestVersion manifest, IPartitionComponent partition, CancellationToken ct)
+        private async UniTask<FontData> LoadConvertedAsync(GetFontIntention intention, ConvertedFontBundle converted, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
         {
             await UniTask.SwitchToMainThread(ct);
 
             var promise = AssetBundlePromise.Create(World,
-                GetAssetBundleIntention.FromHash(manifest.GetCdnRequestHash(assetBundleHash), manifest, parentEntityID: intention.SceneId),
+                GetAssetBundleIntention.FromHash(converted.Manifest.GetCdnRequestHash(converted.Hash), converted.Manifest, parentEntityID: converted.SceneId),
                 partition);
+
+            // The bundle promise needs a slot from the same loading budget; keeping this one while waiting for it can deadlock
+            state.AcquiredBudget?.Release();
 
             try { promise = await promise.ToUniTaskAsync(World, cancellationToken: ct); }
             catch (OperationCanceledException)
             {
+                // The bundle may have resolved, and taken a reference, before the cancellation was observed
+                promise.TryDereference(World);
                 promise.ForgetLoading(World);
                 throw;
             }
 
             if (!promise.TryGetResult(World, out StreamableLoadingResult<AssetBundleData> result) || result is not { Succeeded: true, Asset: { } bundle })
-                throw new FontLoadException($"\"{intention.Src}\": its converted font bundle did not load, the built-in font stays: {result.Exception?.Message}");
+                throw new FontLoadException($"\"{intention.Src}\": its converted font bundle did not load, the built-in font stays: {result.Exception?.Message}",
+                    converted.Listed ? LogType.Warning : LogType.Log);
 
             using ProfilerMarker.AutoScope _ = READ_BUNDLED_FONT_MARKER.Auto();
 
@@ -105,7 +109,7 @@ namespace ECS.StreamableLoading.Fonts
             }
         }
 
-        private static string? FindDefect(Texture2D[]? atlasTextures, int atlasWidth, int atlasHeight, Font? sourceFontFile)
+        internal static string? FindDefect(Texture2D[]? atlasTextures, int atlasWidth, int atlasHeight, Font? sourceFontFile)
         {
             if (atlasTextures is not { Length: > 0 } || atlasTextures[0] == null)
                 return "no atlas texture";

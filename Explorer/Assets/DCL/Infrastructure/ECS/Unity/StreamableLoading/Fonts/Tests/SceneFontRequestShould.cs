@@ -242,6 +242,41 @@ namespace ECS.StreamableLoading.Fonts.Tests
             Assert.That(request.Promise, Is.Not.Null);
         }
 
+        [Test]
+        public void DereferenceTheConsumedFontOnRelease()
+        {
+            // Arrange
+            Update(OTHER_FILE_SRC);
+            referenceFont = TestFonts.CreateTextMeshProFont();
+            fontData = TestFonts.CreateBundledFont(referenceFont);
+            ((IStreamableRefCountData)fontData).AddReference();
+            world.Add(request.Promise!.Value.Entity, new StreamableLoadingResult<FontData>(fontData));
+            request.TryConsume(world, out SceneFontAssets? _);
+
+            // Act
+            request.Release(world);
+
+            // Assert
+            Assert.That(fontData.CanBeDisposed(), Is.True);
+        }
+
+        [Test]
+        public void DereferenceALoadedButUnconsumedFontOnRelease()
+        {
+            // Arrange
+            Update(OTHER_FILE_SRC);
+            referenceFont = TestFonts.CreateTextMeshProFont();
+            fontData = TestFonts.CreateBundledFont(referenceFont);
+            ((IStreamableRefCountData)fontData).AddReference();
+            world.Add(request.Promise!.Value.Entity, new StreamableLoadingResult<FontData>(fontData));
+
+            // Act
+            request.Release(world);
+
+            // Assert
+            Assert.That(fontData.CanBeDisposed(), Is.True);
+        }
+
         private bool Update(string? fontSrc) =>
             request.Update(world, sceneData, fontSrc, PartitionComponent.TOP_PRIORITY);
     }

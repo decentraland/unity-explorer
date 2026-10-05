@@ -22,40 +22,36 @@ namespace DCL.Optimization.Pools.Tests
         }
 
         [Test]
-        public void ReleaseOnlyEntitiesWhoseDeletionIsNotDeferred()
+        public void ReleaseOnlyEntitiesMarkedForDeletion()
         {
-            var deferred = new TestComponent();
-            var ready = new TestComponent();
+            // Arrange
+            var deleted = new TestComponent();
             var alive = new TestComponent();
-            Entity deferredEntity = world.Create(deferred, new DeleteEntityIntention { DeferDeletion = true });
-            Entity readyEntity = world.Create(ready, new DeleteEntityIntention());
+            world.Create(deleted, new DeleteEntityIntention());
             world.Create(alive);
 
+            // Act
             system.Update(0);
 
-            pool.Received(1).Release(ready);
-            pool.DidNotReceive().Release(deferred);
-            pool.DidNotReceive().Release(alive);
-
-            world.Destroy(readyEntity);
-            world.Set(deferredEntity, new DeleteEntityIntention());
-            system.Update(0);
-
-            pool.Received(1).Release(deferred);
+            // Assert
+            pool.Received(1).Release(deleted);
             pool.DidNotReceive().Release(alive);
         }
 
         [Test]
-        public void ReleaseAllComponentsOnWorldFinalizationIncludingDeferredEntities()
+        public void ReleaseAllComponentsOnWorldFinalization()
         {
-            var deferred = new TestComponent();
+            // Arrange
+            var deleted = new TestComponent();
             var alive = new TestComponent();
-            world.Create(deferred, new DeleteEntityIntention { DeferDeletion = true });
+            world.Create(deleted, new DeleteEntityIntention());
             world.Create(alive);
 
+            // Act
             system.FinalizeComponents(world.Query(QueryDescription.Null));
 
-            pool.Received(1).Release(deferred);
+            // Assert
+            pool.Received(1).Release(deleted);
             pool.Received(1).Release(alive);
         }
 

@@ -20,9 +20,7 @@ namespace ECS.StreamableLoading.Fonts
         }
 
         /// <summary>
-        ///     Readies the font assets a converted font bundle ships. They arrive built and pre-filled, so the only
-        ///     work left is what a bundle cannot carry: the TMP material, whose shader lives in the build, and the
-        ///     fallback to the built-in font.
+        ///     Creates the TMP material for a bundled font asset and sets the built-in font as its fallback.
         /// </summary>
         public SceneFontAssets AdoptBundled(string assetName, TMP_FontAsset textMeshPro, FontAsset uiToolkit)
         {

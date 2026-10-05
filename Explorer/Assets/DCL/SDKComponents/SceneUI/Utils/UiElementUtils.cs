@@ -334,8 +334,9 @@ namespace DCL.SDKComponents.SceneUI.Utils
 
             var fontIndex = (int)font;
 
-            if (fontIndex < styleFontDefinitions.Length)
-                element.style.unityFontDefinition = styleFontDefinitions[fontIndex];
+            element.style.unityFontDefinition = fontIndex >= 0 && fontIndex < styleFontDefinitions.Length
+                ? styleFontDefinitions[fontIndex]
+                : new StyleFontDefinition(StyleKeyword.Null);
         }
 
         public static void ClearCustomFont(VisualElement element) =>

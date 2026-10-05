@@ -29,18 +29,20 @@ namespace ECS.ComponentsPooling.Systems
         protected override void Update(float _)
         {
             Query query = World.Query(in queryDescription);
-            ReleaseComponentsToPool(in query, componentPoolsRegistry, respectDeferredDeletion: true);
+            ReleaseComponentsToPool(in query);
         }
 
         public void FinalizeComponents(in Query query)
         {
-            ReleaseComponentsToPool(in query, componentPoolsRegistry);
+            ReleaseComponentsToPool(in query);
         }
 
-        public static void ReleaseComponentsToPool(in Query query, IComponentPoolsRegistry componentPoolsRegistry) =>
-            ReleaseComponentsToPool(in query, componentPoolsRegistry, respectDeferredDeletion: false);
+        private void ReleaseComponentsToPool(in Query query)
+        {
+            ReleaseComponentsToPool(query, componentPoolsRegistry);
+        }
 
-        private static void ReleaseComponentsToPool(in Query query, IComponentPoolsRegistry componentPoolsRegistry, bool respectDeferredDeletion)
+        public static void ReleaseComponentsToPool(in Query query, IComponentPoolsRegistry componentPoolsRegistry)
         {
             // Profiling required, O(N^4)
             foreach (ref Chunk chunk in query.GetChunkIterator())
@@ -50,9 +52,6 @@ namespace ECS.ComponentsPooling.Systems
 
                 foreach (int entityIndex in chunk)
                 {
-                    if (respectDeferredDeletion && chunk.Get<DeleteEntityIntention>(entityIndex).DeferDeletion)
-                        continue;
-
                     for (var i = 0; i < array2D.Length; i++)
                     {
                         // if it is called on a value type it will cause an allocation

@@ -42,7 +42,7 @@ public class AssetBundleManifestVersion
         //Bare hash → CDN file name; fed by InjectDepsDigests (digest-bearing names) and InjectContent (Qm casing fixes).
         private Dictionary<string, string>? cdnFiles;
 
-        //Bare hashes the manifest's files[] name; unlike cdnFiles, never fed by InjectContent, so it records what was actually converted.
+        //Bare hashes the manifest's files[] name: the files that were converted.
         private HashSet<string>? convertedHashes;
 
         //Set when the manifest's files[] were injected — only scenes fetch them. Reusable bundles live under the shared assets/ prefix and cache-key on version+hash; wearables/emotes stay entity-scoped and keep buildDate keying.

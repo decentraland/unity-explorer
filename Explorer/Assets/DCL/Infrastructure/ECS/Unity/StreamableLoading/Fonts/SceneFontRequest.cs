@@ -54,8 +54,8 @@ namespace ECS.StreamableLoading.Fonts
             Promise = promise;
             using ProfilerMarker.AutoScope _ = RECEIVE_MARKER.Auto();
 
-            if (result.Succeeded)
-                assets = result.Asset!.Asset;
+            if (result is { Succeeded: true, Asset: { } font })
+                assets = font.Asset;
             else
                 result.TryLogException();
 

@@ -44,13 +44,10 @@ namespace ECS.StreamableLoading.Fonts
 
             AssetBundleManifestVersion manifest = definition.AssetBundleManifestVersionOrFailed;
 
-            if (manifest.assetBundleManifestRequestFailed || manifest.IsLSDAsset)
+            if (manifest.assetBundleManifestRequestFailed)
                 return;
 
-            intention.AssetBundleHash = hash;
-            intention.AssetBundleListed = manifest.ListsConvertedFile(hash);
-            intention.AssetBundleManifest = manifest;
-            intention.SceneId = definition.id ?? string.Empty;
+            intention.Bundle = new ConvertedFontBundle(hash, manifest.ListsConvertedFile(hash), manifest, definition.id ?? string.Empty);
         }
     }
 }

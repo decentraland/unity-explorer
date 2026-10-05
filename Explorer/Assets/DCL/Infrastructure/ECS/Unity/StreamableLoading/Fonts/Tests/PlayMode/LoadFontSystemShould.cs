@@ -62,10 +62,7 @@ namespace ECS.StreamableLoading.Fonts.Tests
             {
                 Src = FONT_SRC,
                 CommonArguments = new CommonLoadingArguments(CONTENT_URL),
-                AssetBundleHash = "bafyfont",
-                AssetBundleListed = false,
-                AssetBundleManifest = AssetBundleManifestVersion.CreateFromFallback("v49", "2026-05-01"),
-                SceneId = "scene",
+                Bundle = new ConvertedFontBundle("bafyfont", listed: false, AssetBundleManifestVersion.CreateFromFallback("v49", "2026-05-01"), "scene"),
             };
 
             // Act

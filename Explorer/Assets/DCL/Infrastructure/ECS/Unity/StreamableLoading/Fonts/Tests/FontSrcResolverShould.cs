@@ -105,11 +105,13 @@ namespace ECS.StreamableLoading.Fonts.Tests
             FontSrcResolver.TryCreateIntention(CONTENT_FILE, sceneData, out GetFontIntention intention);
 
             // Assert
-            Assert.That(intention.AssetBundleHash, Is.EqualTo(CONTENT_HASH));
-            Assert.That(intention.AssetBundleListed, Is.True);
-            Assert.That(intention.AssetBundleManifest, Is.SameAs(manifest));
-            Assert.That(intention.SceneId, Is.EqualTo("scene"));
-            Assert.That(intention.CommonArguments.URL.Value, Is.EqualTo(CONTENT_URL), "the content URL identifies the request");
+            Assert.That(intention.Bundle, Is.Not.Null);
+            ConvertedFontBundle bundle = intention.Bundle.GetValueOrDefault();
+            Assert.That(bundle.Hash, Is.EqualTo(CONTENT_HASH));
+            Assert.That(bundle.Listed, Is.True);
+            Assert.That(bundle.Manifest, Is.SameAs(manifest));
+            Assert.That(bundle.SceneId, Is.EqualTo("scene"));
+            Assert.That(intention.CommonArguments.URL.Value, Is.EqualTo(CONTENT_URL));
         }
 
         [Test]
@@ -122,11 +124,24 @@ namespace ECS.StreamableLoading.Fonts.Tests
             FontSrcResolver.TryCreateIntention(CONTENT_FILE, sceneData, out GetFontIntention intention);
 
             // Assert
-            Assert.That(intention.AssetBundleListed, Is.False);
+            Assert.That(intention.Bundle?.Listed, Is.False);
         }
 
         [Test]
-        public void ShareRequestsForTheSameResolvedContent()
+        public void AssignNoBundleWhenTheManifestRequestFailed()
+        {
+            // Arrange
+            WithSceneManifest(AssetBundleManifestVersion.FAILED);
+
+            // Act
+            FontSrcResolver.TryCreateIntention(CONTENT_FILE, sceneData, out GetFontIntention intention);
+
+            // Assert
+            Assert.That(intention.Bundle, Is.Null);
+        }
+
+        [Test]
+        public void ShareRequestsForTheSameUrlWithoutABundle()
         {
             // Arrange
             FontSrcResolver.TryCreateIntention(CONTENT_FILE, sceneData, out GetFontIntention first);
@@ -148,10 +163,52 @@ namespace ECS.StreamableLoading.Fonts.Tests
             Assert.That(first.Equals(other), Is.False);
         }
 
+        [Test]
+        public void ShareRequestsForTheSameBundleFromDifferentContentBases()
+        {
+            // Arrange
+            AssetBundleManifestVersion manifest = WithSceneManifest($"{CONTENT_HASH}_0123456789abcdef0123456789abcdef_windows");
+            FontSrcResolver.TryCreateIntention(CONTENT_FILE, sceneData, out GetFontIntention first);
+
+            var other = new GetFontIntention
+            {
+                Src = "fonts/alias.ttf",
+                CommonArguments = new CommonLoadingArguments("https://worlds-content-server.decentraland.org/contents/bafyfont"),
+                Bundle = new ConvertedFontBundle(CONTENT_HASH.ToUpperInvariant(), listed: true, manifest, "other-scene"),
+            };
+
+            // Assert
+            Assert.That(first.Equals(other), Is.True);
+            Assert.That(first.GetHashCode(), Is.EqualTo(other.GetHashCode()));
+        }
+
+        [Test]
+        public void KeepDifferentBundlesApart()
+        {
+            // Arrange
+            AssetBundleManifestVersion manifest = WithSceneManifest($"{CONTENT_HASH}_0123456789abcdef0123456789abcdef_windows");
+            FontSrcResolver.TryCreateIntention(CONTENT_FILE, sceneData, out GetFontIntention first);
+
+            var other = new GetFontIntention
+            {
+                Src = CONTENT_FILE,
+                CommonArguments = new CommonLoadingArguments(CONTENT_URL),
+                Bundle = new ConvertedFontBundle("bafyotherfont", listed: true, manifest, "scene"),
+            };
+
+            // Assert
+            Assert.That(first.Equals(other), Is.False);
+        }
+
         private AssetBundleManifestVersion WithSceneManifest(params string[] files)
         {
             var manifest = AssetBundleManifestVersion.CreateFromFallback("v49", "2026-05-01");
             manifest.InjectDepsDigests(files);
+            return WithSceneManifest(manifest);
+        }
+
+        private AssetBundleManifestVersion WithSceneManifest(AssetBundleManifestVersion manifest)
+        {
             sceneData.SceneEntityDefinition.Returns(new SceneEntityDefinition("scene", new SceneMetadata()) { assetBundleManifestVersion = manifest });
             sceneData.TryGetHash(CONTENT_FILE, out Arg.Any<string>())
                      .Returns(x =>
