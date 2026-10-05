@@ -13,7 +13,6 @@ namespace DCL.SDKComponents.MediaStream
 #pragma warning disable UAC1001
         public int? playingVideoIndex;
 #pragma warning restore UAC1001
-        public string? videoState;
         public PresentationSlideVideo?[]? slideVideos;
         public PresentationOverlay? overlay;
     }

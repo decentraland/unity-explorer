@@ -123,7 +123,6 @@ namespace DCL.SDKComponents.MediaStream.Tests
             Assert.IsNull(metadata!.slide);
             Assert.IsNull(metadata.presenterIdentity);
             Assert.IsFalse(metadata.playingVideoIndex.HasValue);
-            Assert.IsNull(metadata.videoState);
             Assert.IsNull(metadata.slideVideos);
             Assert.IsNull(metadata.overlay);
         }

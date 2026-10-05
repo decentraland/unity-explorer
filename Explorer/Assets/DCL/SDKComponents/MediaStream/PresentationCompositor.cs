@@ -11,8 +11,6 @@ namespace DCL.SDKComponents.MediaStream
     /// </summary>
     public sealed class PresentationCompositor : IDisposable
     {
-        public const int MAX_COMPOSITE_SIZE = LiveKitMediaExtensions.MAX_LIVEKIT_TEXTURE_SIZE;
-
         private const float CAMERA_EDGE_PX = 1.5f;
 
         private static readonly int VIDEO_TEX = Shader.PropertyToID("_VideoTex");
@@ -55,14 +53,14 @@ namespace DCL.SDKComponents.MediaStream
         ///     Draws <paramref name="slide" />, then the video rect (black until <paramref name="video" /> is given) and the
         ///     camera circle (skipped when <paramref name="camera" /> is null) into a BGRA32 render texture of
         ///     <paramref name="width" /> × <paramref name="height" />, scaled down with its aspect preserved to at most
-        ///     <see cref="MAX_COMPOSITE_SIZE" /> on each side. Rects are normalized with a top-left origin. Blits on every
-        ///     call while <paramref name="video" /> or <paramref name="camera" /> is given; otherwise only when the slide
-        ///     or rects changed, or the last call drew a video or camera frame.
+        ///     <see cref="LiveKitMediaExtensions.MAX_LIVEKIT_TEXTURE_SIZE" /> on each side. Rects are normalized with a
+        ///     top-left origin. Blits on every call while <paramref name="video" /> or <paramref name="camera" /> is given;
+        ///     otherwise only when the slide or rects changed, or the last call drew a video or camera frame.
         /// </summary>
         /// <returns>The same render texture instance while the size is unchanged.</returns>
         public Texture Compose(int width, int height, Texture slide, bool showVideoRect, Vector4 videoRect, Texture? video, Texture? camera, Vector4 cameraRect)
         {
-            float scale = Mathf.Min(1f, Mathf.Min((float)MAX_COMPOSITE_SIZE / width, (float)MAX_COMPOSITE_SIZE / height));
+            float scale = Mathf.Min(1f, (float)LiveKitMediaExtensions.MAX_LIVEKIT_TEXTURE_SIZE / Mathf.Max(width, height));
             int targetWidth = Mathf.Max(1, Mathf.RoundToInt(width * scale));
             int targetHeight = Mathf.Max(1, Mathf.RoundToInt(height * scale));
 
