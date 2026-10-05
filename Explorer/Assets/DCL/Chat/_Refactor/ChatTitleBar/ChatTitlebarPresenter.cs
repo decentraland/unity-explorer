@@ -101,7 +101,9 @@ namespace DCL.Chat
             view.OnCommunityContextMenuRequested += OnCommunityContextMenuRequested;
 
             communityDataService.CommunityMetadataUpdated += CommunityMetadataUpdated;
-            chatMemberListService.OnMemberCountUpdated += OnMemberCountUpdated;
+            chatMemberListService.MemberCountUpdated += OnMemberCountUpdated;
+            chatMemberListService.MemberCountInvalidated += OnMemberCountInvalidated;
+            SetMemberCountVisible(false);
 
             callButtonPresenter = new CallButtonPresenter(view.CallButton, voiceChatOrchestrator, chatEventBus, currentChannelService.CurrentChannelProperty, identityCache, mvcManager, profileCache);
 
@@ -196,10 +198,7 @@ namespace DCL.Chat
             view.membersTitlebarView.SetChannelName(ChatTitlebarViewModel.CreateLoading(TitlebarViewMode.Nearby));
         }
 
-        private void OnDeleteChatHistoryButtonClicked()
-        {
-            deleteChatHistoryCommand.Execute();
-        }
+        private void OnDeleteChatHistoryButtonClicked() => deleteChatHistoryCommand.Execute();
 
         private void OnAutoTranslateToggled()
         {
@@ -222,7 +221,8 @@ namespace DCL.Chat
             view.OnProfileContextMenuRequested -= OnProfileContextMenuRequested;
             view.OnCommunityContextMenuRequested -= OnCommunityContextMenuRequested;
             view.OnContextMenuRequested -= OnChatContextMenuRequested;
-            chatMemberListService.OnMemberCountUpdated -= OnMemberCountUpdated;
+            chatMemberListService.MemberCountUpdated -= OnMemberCountUpdated;
+            chatMemberListService.MemberCountInvalidated -= OnMemberCountInvalidated;
 
             callStatusCts.SafeCancelAndDispose();
             callButtonPresenter.Dispose();
@@ -286,7 +286,7 @@ namespace DCL.Chat
 
         private void OnCommunityContextMenuRequested(ShowContextMenuRequest request)
         {
-            if (currentViewModel.ViewMode != TitlebarViewMode.Community) return;
+            if (currentViewModel is not { ViewMode: TitlebarViewMode.Community }) return;
 
             request.MenuConfiguration = contextMenuConfiguration;
             chatContextMenuService
@@ -321,17 +321,23 @@ namespace DCL.Chat
 
             view.defaultTitlebarView.SetMemberCount(memberCountText);
             view.membersTitlebarView.SetMemberCount(memberCountText);
+            SetMemberCountVisible(true);
         }
 
-        private void OnCloseRequested()
+        private void OnMemberCountInvalidated() =>
+            SetMemberCountVisible(false);
+
+        private void SetMemberCountVisible(bool visible)
         {
+            view.defaultTitlebarView.SetMemberCountVisible(visible);
+            view.membersTitlebarView.SetMemberCountVisible(visible);
+        }
+
+        private void OnCloseRequested() =>
             eventBus.RaiseCloseChatEvent();
-        }
 
-        private void OnMembersToggleRequested()
-        {
+        private void OnMembersToggleRequested() =>
             eventBus.RaiseToggleMembersEvent();
-        }
 
 
         private async UniTaskVoid RefreshTitlebarCommunityThumbnailAsync(string? imageUrl)
@@ -389,7 +395,7 @@ namespace DCL.Chat
 
                 var finalViewModel = await getTitlebarViewModel.ExecuteAsync(channel, ct);
 
-                if (ct.IsCancellationRequested) return;
+                if (ct.IsCancellationRequested || finalViewModel == null) return;
 
                 currentViewModel = finalViewModel;
                 view.defaultTitlebarView.Setup(finalViewModel);
@@ -414,33 +420,21 @@ namespace DCL.Chat
             }
         }
 
-        public void ShowMembersView(bool isMemberListVisible)
-        {
+        public void ShowMembersView(bool isMemberListVisible) =>
             view.SetMemberListMode(isMemberListVisible);
-        }
 
-        public void Show()
-        {
+        public void Show() =>
             view.Show();
-        }
 
-        public void Hide()
-        {
+        public void Hide() =>
             view.Hide();
-        }
 
-        public void SetFocusState(bool isFocused, bool animate, float duration, Ease easing)
-        {
+        public void SetFocusState(bool isFocused, bool animate, float duration, Ease easing) =>
             view.SetFocusedState(isFocused, animate, duration, easing);
-        }
 
-        private void OnNotificationPingOptionSelected(ChatAudioSettings selectedMode)
-        {
-            if (currentChannelService.CurrentChannel == null) return;
-
+        private void OnNotificationPingOptionSelected(ChatAudioSettings selectedMode) =>
             ChatUserSettings.SetNotificationPintValuePerChannel(selectedMode,
                 currentChannelService.CurrentChannel.Id);
-        }
 
         private void InitializeChannelContextMenu()
         {
@@ -483,14 +477,12 @@ namespace DCL.Chat
 
             autoTranslateToggle = new ToggleWithIconAndCheckContextMenuControlSettings(
                 chatConfig.chatContextMenuSettings.AutoTranslateText,
-                isToggled => OnAutoTranslateToggled(),
+                _ => OnAutoTranslateToggled(),
                 icon: chatConfig.chatContextMenuSettings.AutoTranslateSprite
             );
 
             if (translationSettings.IsTranslationFeatureActive())
-            {
                 contextMenuInstance.AddControl(autoTranslateToggle);
-            }
 
             contextMenuInstance
                 .AddControl(new SeparatorContextMenuControlSettings())

@@ -59,7 +59,12 @@ namespace DCL.Chat.ChatServices
         ///     Fires when the total number of members in the current channel changes.
         ///     This is a lightweight event designed for the title bar's member counter.
         /// </summary>
-        public event Action<int>? OnMemberCountUpdated;
+        public event Action<int>? MemberCountUpdated;
+
+        /// <summary>
+        ///     Fires when the count stops being valid; the next <see cref="MemberCountUpdated" /> carries the new one.
+        /// </summary>
+        public event Action? MemberCountInvalidated;
 
         /// <summary>
         ///     Fires with a detailed list of members after an update is triggered.
@@ -114,7 +119,7 @@ namespace DCL.Chat.ChatServices
         public void Stop()
         {
             subscriptions.Dispose();
-            CancelRefresh();
+            ResetAllMemberState();
             lifetimeCts.SafeCancelAndDispose();
             lifetimeCts = null;
             onMemberListUpdated = null;
@@ -163,6 +168,8 @@ namespace DCL.Chat.ChatServices
             lastKnownMemberIds.Clear();
             unresolvedMemberIds.Clear();
             lastKnownTitleBarCount = -1;
+
+            MultithreadingUtility.InvokeOnMainThread(() => MemberCountInvalidated?.Invoke());
         }
 
         private void CancelRefresh()
@@ -278,7 +285,7 @@ namespace DCL.Chat.ChatServices
             if (newCount == lastKnownTitleBarCount) return;
             lastKnownTitleBarCount = newCount;
 
-            MultithreadingUtility.InvokeOnMainThread(() => OnMemberCountUpdated?.Invoke(lastKnownTitleBarCount));
+            MultithreadingUtility.InvokeOnMainThread(() => MemberCountUpdated?.Invoke(lastKnownTitleBarCount));
         }
     }
 }

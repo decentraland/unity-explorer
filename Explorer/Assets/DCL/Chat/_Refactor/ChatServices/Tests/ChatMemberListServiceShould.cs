@@ -81,7 +81,7 @@ namespace DCL.Chat.ChatServices.Tests
             lastCounter = -1;
 
             service = new ChatMemberListService(wrapper, Substitute.For<IFriendsService>(), currentChannelService, eventBus, RETRY_DELAY_MS);
-            service.OnMemberCountUpdated += count => lastCounter = count;
+            service.MemberCountUpdated += count => lastCounter = count;
             service.Start();
 
             service.StartLiveMemberUpdates(members =>
@@ -211,6 +211,69 @@ namespace DCL.Chat.ChatServices.Tests
                                      .GetAsync(CAROL, 0, Arg.Any<URLDomain?>(), Arg.Any<CancellationToken>(), true,
                                           IProfileRepository.FetchBehaviour.Default, ProfileTier.Kind.Compact, Arg.Any<IPartitionComponent?>());
             });
+
+        [UnityTest]
+        public IEnumerator InvalidateCounterOnChannelSwitchUntilFirstPublish() =>
+            UniTask.ToCoroutine(async () =>
+            {
+                // Arrange
+                SetOnline(ALICE);
+                var gate = new UniTaskCompletionSource<ProfileTier?>();
+
+                profileRepository.GetAsync(ALICE, 0, Arg.Any<URLDomain?>(), Arg.Any<CancellationToken>(), true,
+                                  IProfileRepository.FetchBehaviour.Default, ProfileTier.Kind.Compact, Arg.Any<IPartitionComponent?>())
+                                 .Returns(gate.Task.Preserve());
+
+                var invalidations = 0;
+                var counts = new List<int>();
+                service.MemberCountInvalidated += () => invalidations++;
+                service.MemberCountUpdated += counts.Add;
+
+                var community = new ChatChannel(ChatChannel.ChatChannelType.COMMUNITY, Guid.NewGuid().ToString());
+                currentChannelService.SetCurrentChannel(community, userState);
+
+                // Act
+                eventBus.RaiseChannelSelectedEvent(community);
+
+                // Assert
+                Assert.That(invalidations, Is.EqualTo(1));
+                Assert.That(counts, Is.Empty, "no number is broadcast while the new channel's profiles are still resolving");
+
+                gate.TrySetResult(Compact(ALICE, "alice"));
+                await UniTask.Yield();
+
+                Assert.That(counts, Is.EqualTo(new[] { 1 }));
+            });
+
+        [Test]
+        public void InvalidateCounterBeforeFirstCountOnStart()
+        {
+            // Arrange
+            service.Stop();
+            var order = new List<string>();
+            service.MemberCountInvalidated += () => order.Add("invalidated");
+            service.MemberCountUpdated += _ => order.Add("count");
+
+            // Act
+            service.Start();
+
+            // Assert
+            Assert.That(order, Is.EqualTo(new[] { "invalidated", "count" }));
+        }
+
+        [Test]
+        public void InvalidateCounterOnStop()
+        {
+            // Arrange
+            var invalidations = 0;
+            service.MemberCountInvalidated += () => invalidations++;
+
+            // Act
+            service.Stop();
+
+            // Assert
+            Assert.That(invalidations, Is.EqualTo(1));
+        }
 
         private void SetOnline(params string[] ids)
         {
