@@ -91,6 +91,13 @@ namespace DCL.Notifications.NotificationsMenu
         private int unreadNotifications;
         private bool needsInitialRequest = true;
 
+        /// <summary>
+        ///     Raised with <see cref="UnreadCount" /> whenever it is recomputed.
+        /// </summary>
+        public event Action<int>? UnreadCountChanged;
+
+        public int UnreadCount => unreadNotifications;
+
         public NotificationsPanelController(
             ViewFactoryMethod viewFactory,
             NotificationsRequestController notificationsRequestController,
@@ -214,8 +221,15 @@ namespace DCL.Notifications.NotificationsMenu
 
         private void UpdateUnreadNotificationRender()
         {
-            viewInstance?.unreadNotificationCounterText.SetText("{0}", unreadNotifications);
-            viewInstance?.notificationIndicator.SetActive(unreadNotifications > 0);
+            UnreadCountChanged?.Invoke(unreadNotifications);
+
+            if (viewInstance == null) return;
+
+            if (viewInstance.unreadNotificationCounterText != null)
+                viewInstance.unreadNotificationCounterText.SetText("{0}", unreadNotifications);
+
+            if (viewInstance.notificationIndicator != null)
+                viewInstance.notificationIndicator.SetActive(unreadNotifications > 0);
         }
 
         private void ManageNotificationReadStatus(INotification notificationData, bool isViewOpen)
@@ -265,13 +279,13 @@ namespace DCL.Notifications.NotificationsMenu
             {
                 notificationView.NotificationImage.SetImage(defaultThumbnail.Thumbnail, defaultThumbnail.FitAndCenter);
             }
-            else if (notificationData.Id != null && notificationThumbnailCache.TryGetValue(notificationData.Id, out var thumbnailSprite))
+            else if (notificationThumbnailCache.TryGetValue(notificationData.Id, out var thumbnailSprite))
             {
                 notificationView.NotificationImage.SetImage(thumbnailSprite, true);
             }
             else if(!string.IsNullOrEmpty(notificationData.GetThumbnail()))
             {
-                LoadNotificationThumbnailAsync(notificationView, notificationData, defaultThumbnail, notificationThumbnailCts!.Token).Forget();
+                LoadNotificationThumbnailAsync(notificationView, notificationData, defaultThumbnail, notificationThumbnailCts.Token).Forget();
             }
             else
             {
@@ -290,7 +304,7 @@ namespace DCL.Notifications.NotificationsMenu
             notificationView.Notification = notificationData;
             notificationView.CloseButton.gameObject.SetActive(false);
             notificationView.UnreadImage.SetActive(!notificationData.Read);
-            notificationView.TimeText.text = notificationData.Timestamp != null ? TimestampUtilities.GetRelativeTime(notificationData.Timestamp) : string.Empty;
+            notificationView.TimeText.text = TimestampUtilities.GetRelativeTime(notificationData.Timestamp);
             notificationView.NotificationTypeImage.sprite = notificationIconTypes.GetNotificationIcon(notificationData.Type);
             var iconBackground = notificationIconTypes.GetNotificationIconBackground(notificationData.Type);
 
