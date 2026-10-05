@@ -72,6 +72,8 @@ bash build.sh
 
 Builds `x86_64-unknown-linux-gnu` and copies the shared object to `SegmentServerWrap/Libraries/Linux/segment-server.so`. This is a native build — no cross-compilation is required on a Linux x86_64 host.
 
+The shipped `.so` is built by CI on `ubuntu-22.04`, so it links against glibc 2.35 and needs glibc 2.35 or newer at runtime. `scripts/rust-segment/build-canonical.sh` builds under `/tmp/rust-segment-build` on Linux (override with `RUST_SEGMENT_CANONICAL_ROOT`). The `.so` is stored in Git LFS like the `.dll` and `.dylib`.
+
 ---
 
 ## Public C API

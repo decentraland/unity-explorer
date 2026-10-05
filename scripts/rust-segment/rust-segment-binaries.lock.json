@@ -112,20 +112,20 @@
       ]
     },
     "linux-x86_64": {
-      "comment": "Toolchain not yet pinned — Gate B skips until the first relock. After a successful CI run, commit the artifact from the CI artifacts and relock with: scripts/native-lock/verify-binaries.py --lock scripts/rust-segment/rust-segment-binaries.lock.json --update --only linux-x86_64 --toolchain toolchain-linux.txt",
       "runtime_dir": "Explorer/Assets/Plugins/RustSegment/SegmentServerWrap/Libraries/Linux",
       "rust": {
         "target": "x86_64-unknown-linux-gnu",
         "profile": "release",
-        "crate_version": "0.1.0"
+        "crate_version": "0.1.0",
+        "source_digest": "pending",
+        "source_files": 0
       },
       "artifacts": [
         {
           "path": "Explorer/Assets/Plugins/RustSegment/SegmentServerWrap/Libraries/Linux/segment-server.so",
           "sha256": "pending",
           "bytes": 0,
-          "produced_by": "cargo",
-          "comment": "pending: updated by the first relock (verify-binaries.py --update --only linux-x86_64)"
+          "produced_by": "cargo"
         }
       ]
     }

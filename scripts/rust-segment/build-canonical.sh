@@ -9,7 +9,7 @@ set -euo pipefail
 
 case "$(uname -s)" in
 Darwin) CANONICAL_ROOT="${RUST_SEGMENT_CANONICAL_ROOT:-/Users/Shared/build}" ;;
-Linux)  CANONICAL_ROOT="${RUST_SEGMENT_CANONICAL_ROOT:-/build}" ;;
+Linux)  CANONICAL_ROOT="${RUST_SEGMENT_CANONICAL_ROOT:-/tmp/rust-segment-build}" ;;
 *)      CANONICAL_ROOT="${RUST_SEGMENT_CANONICAL_ROOT:-/c/build}" ;;
 esac
 
