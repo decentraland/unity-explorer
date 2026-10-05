@@ -130,7 +130,6 @@ namespace DCL.Passport
         private readonly ColorPresetsSO colorPresets;
 
         private CameraReelGalleryController? cameraReelGalleryController;
-        private Profile? ownProfile;
         private Profile? targetProfile;
         private bool isOwnProfile;
         private string? currentUserId;
@@ -816,7 +815,7 @@ namespace DCL.Passport
 
             SetCharacterPreviewVisible(false, false);
 
-            bool isOwnPassport = ownProfile?.UserId == currentUserId;
+            bool isOwnPassport = OwnUserId() == currentUserId;
             BadgesSectionOpened?.Invoke(currentUserId!, isOwnPassport, BADGES_SECTION_ORIGIN_BUTTON);
         }
 
@@ -849,7 +848,7 @@ namespace DCL.Passport
                 badgeIdToOpen = badgeNotification.Metadata.Id;
 
             openPassportFromNotificationCts = openPassportFromNotificationCts.SafeRestart();
-            OpenPassportFromBadgeNotificationAsync(badgeIdToOpen, openPassportFromNotificationCts.Token).Forget();
+            OpenPassportFromBadgeNotification(badgeIdToOpen, openPassportFromNotificationCts.Token);
         }
 
         private void OnReferralUserAcceptedNotificationClicked(object[] parameters)
@@ -868,31 +867,23 @@ namespace DCL.Passport
             }
         }
 
-        private async UniTaskVoid OpenPassportFromBadgeNotificationAsync(string badgeIdToOpen, CancellationToken ct)
+        private void OpenPassportFromBadgeNotification(string badgeIdToOpen, CancellationToken ct)
         {
-            try
-            {
-                if (ownProfile == null && (await selfProfile.ProfileAsync(ct)).IsOk(out Profile? readProfile))
-                    ownProfile = readProfile;
+            string? ownUserId = OwnUserId();
 
-                if (ownProfile != null)
-                {
-                    BadgesSectionOpened?.Invoke(ownProfile.UserId!, true, BADGES_SECTION_ORIGIN_NOTIFICATION);
-                    mvcManager.ShowAsync(IssueCommand(new PassportParams(ownProfile.UserId!, badgeIdToOpen, isOwnProfile: true)), ct).Forget();
-                }
-            }
-            catch (OperationCanceledException) { }
-            catch (Exception e)
-            {
-                const string ERROR_MESSAGE = "There was an error while opening the Badges section into the Passport. Please try again!";
-                passportErrorsController!.Show(ERROR_MESSAGE);
-                ReportHub.LogException(e, ReportCategory.PROFILE);
-            }
+            if (ownUserId == null)
+                return;
+
+            BadgesSectionOpened?.Invoke(ownUserId, true, BADGES_SECTION_ORIGIN_NOTIFICATION);
+            mvcManager.ShowAsync(IssueCommand(new PassportParams(ownUserId, badgeIdToOpen, isOwnProfile: true)), ct).Forget();
         }
+
+        private string? OwnUserId() =>
+            selfProfile.CurrentProfileSnapshot.IsIdentified(out Identified own) ? own.Address.Value : null;
 
         private void OnBadgeSelected(string badgeId)
         {
-            bool isOwnPassport = ownProfile?.UserId == currentUserId;
+            bool isOwnPassport = OwnUserId() == currentUserId;
             BadgeSelected?.Invoke(badgeId, isOwnPassport);
         }
 
