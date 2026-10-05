@@ -40,7 +40,7 @@ namespace DCL.Chat.ChatServices.Tests
         private HashSet<string> online = null!;
         private List<string> publishedIds = null!;
         private List<int> publishedCounts = null!;
-        private int lastCounter;
+        private int? lastCounter;
 
         [SetUp]
         public void SetUp()
@@ -78,7 +78,7 @@ namespace DCL.Chat.ChatServices.Tests
             eventBus = new ChatEventBus();
             publishedIds = new List<string>();
             publishedCounts = new List<int>();
-            lastCounter = -1;
+            lastCounter = null;
 
             service = new ChatMemberListService(wrapper, Substitute.For<IFriendsService>(), currentChannelService, eventBus, RETRY_DELAY_MS);
             service.MemberCountUpdated += count => lastCounter = count;
@@ -224,9 +224,7 @@ namespace DCL.Chat.ChatServices.Tests
                                   IProfileRepository.FetchBehaviour.Default, ProfileTier.Kind.Compact, Arg.Any<IPartitionComponent?>())
                                  .Returns(gate.Task.Preserve());
 
-                var invalidations = 0;
-                var counts = new List<int>();
-                service.MemberCountInvalidated += () => invalidations++;
+                var counts = new List<int?>();
                 service.MemberCountUpdated += counts.Add;
 
                 var community = new ChatChannel(ChatChannel.ChatChannelType.COMMUNITY, Guid.NewGuid().ToString());
@@ -236,13 +234,12 @@ namespace DCL.Chat.ChatServices.Tests
                 eventBus.RaiseChannelSelectedEvent(community);
 
                 // Assert
-                Assert.That(invalidations, Is.EqualTo(1));
-                Assert.That(counts, Is.Empty, "no number is broadcast while the new channel's profiles are still resolving");
+                Assert.That(counts, Is.EqualTo(new int?[] { null }), "no number is broadcast while the new channel's profiles are still resolving");
 
                 gate.TrySetResult(Compact(ALICE, "alice"));
                 await UniTask.Yield();
 
-                Assert.That(counts, Is.EqualTo(new[] { 1 }));
+                Assert.That(counts, Is.EqualTo(new int?[] { null, 1 }));
             });
 
         [Test]
@@ -250,29 +247,28 @@ namespace DCL.Chat.ChatServices.Tests
         {
             // Arrange
             service.Stop();
-            var order = new List<string>();
-            service.MemberCountInvalidated += () => order.Add("invalidated");
-            service.MemberCountUpdated += _ => order.Add("count");
+            var counts = new List<int?>();
+            service.MemberCountUpdated += counts.Add;
 
             // Act
             service.Start();
 
             // Assert
-            Assert.That(order, Is.EqualTo(new[] { "invalidated", "count" }));
+            Assert.That(counts, Is.EqualTo(new int?[] { null, 0 }));
         }
 
         [Test]
         public void InvalidateCounterOnStop()
         {
             // Arrange
-            var invalidations = 0;
-            service.MemberCountInvalidated += () => invalidations++;
+            var counts = new List<int?>();
+            service.MemberCountUpdated += counts.Add;
 
             // Act
             service.Stop();
 
             // Assert
-            Assert.That(invalidations, Is.EqualTo(1));
+            Assert.That(counts, Is.EqualTo(new int?[] { null }));
         }
 
         private void SetOnline(params string[] ids)

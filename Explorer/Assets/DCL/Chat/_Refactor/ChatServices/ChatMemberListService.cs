@@ -58,13 +58,9 @@ namespace DCL.Chat.ChatServices
         /// <summary>
         ///     Fires when the total number of members in the current channel changes.
         ///     This is a lightweight event designed for the title bar's member counter.
+        ///     Null means the count is not valid for the current channel yet; the next non-null value is.
         /// </summary>
-        public event Action<int>? MemberCountUpdated;
-
-        /// <summary>
-        ///     Fires when the count stops being valid; the next <see cref="MemberCountUpdated" /> carries the new one.
-        /// </summary>
-        public event Action? MemberCountInvalidated;
+        public event Action<int?>? MemberCountUpdated;
 
         /// <summary>
         ///     Fires with a detailed list of members after an update is triggered.
@@ -169,7 +165,7 @@ namespace DCL.Chat.ChatServices
             unresolvedMemberIds.Clear();
             lastKnownTitleBarCount = -1;
 
-            MultithreadingUtility.InvokeOnMainThread(() => MemberCountInvalidated?.Invoke());
+            MemberCountUpdated?.Invoke(null);
         }
 
         private void CancelRefresh()

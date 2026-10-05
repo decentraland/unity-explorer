@@ -102,8 +102,7 @@ namespace DCL.Chat
 
             communityDataService.CommunityMetadataUpdated += CommunityMetadataUpdated;
             chatMemberListService.MemberCountUpdated += OnMemberCountUpdated;
-            chatMemberListService.MemberCountInvalidated += OnMemberCountInvalidated;
-            SetMemberCountVisible(false);
+            OnMemberCountUpdated(null);
 
             callButtonPresenter = new CallButtonPresenter(view.CallButton, voiceChatOrchestrator, chatEventBus, currentChannelService.CurrentChannelProperty, identityCache, mvcManager, profileCache);
 
@@ -222,7 +221,6 @@ namespace DCL.Chat
             view.OnCommunityContextMenuRequested -= OnCommunityContextMenuRequested;
             view.OnContextMenuRequested -= OnChatContextMenuRequested;
             chatMemberListService.MemberCountUpdated -= OnMemberCountUpdated;
-            chatMemberListService.MemberCountInvalidated -= OnMemberCountInvalidated;
 
             callStatusCts.SafeCancelAndDispose();
             callButtonPresenter.Dispose();
@@ -315,22 +313,18 @@ namespace DCL.Chat
             chatContextMenuService.ShowChannelContextMenuAsync(request).Forget();
         }
 
-        private void OnMemberCountUpdated(int memberCount)
+        private void OnMemberCountUpdated(int? memberCount)
         {
-            string memberCountText = memberCount.ToString();
+            if (memberCount.HasValue)
+            {
+                string memberCountText = memberCount.Value.ToString();
 
-            view.defaultTitlebarView.SetMemberCount(memberCountText);
-            view.membersTitlebarView.SetMemberCount(memberCountText);
-            SetMemberCountVisible(true);
-        }
+                view.defaultTitlebarView.SetMemberCount(memberCountText);
+                view.membersTitlebarView.SetMemberCount(memberCountText);
+            }
 
-        private void OnMemberCountInvalidated() =>
-            SetMemberCountVisible(false);
-
-        private void SetMemberCountVisible(bool visible)
-        {
-            view.defaultTitlebarView.SetMemberCountVisible(visible);
-            view.membersTitlebarView.SetMemberCountVisible(visible);
+            view.defaultTitlebarView.SetMemberCountVisible(memberCount.HasValue);
+            view.membersTitlebarView.SetMemberCountVisible(memberCount.HasValue);
         }
 
         private void OnCloseRequested() =>
