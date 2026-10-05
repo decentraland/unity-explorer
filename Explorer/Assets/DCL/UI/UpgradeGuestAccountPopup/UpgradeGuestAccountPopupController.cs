@@ -291,7 +291,12 @@ namespace DCL.UI.UpgradeGuestAccountPopup
 
         private async UniTask PromoteProfileAsync(CancellationToken ct)
         {
-            if (!(await selfProfile.ProfileAsync(ct)).IsOk(out Profile? profile) || profile.HasConnectedWeb3) return;
+            ProfileReadResult read = await selfProfile.ProfileAsync(ct);
+
+            if (read.IsError(out ProfileReadError readError) && readError is ProfileReadError.FetchFailed or ProfileReadError.NoIdentity)
+                throw new InvalidOperationException($"The profile to promote could not be read: {readError}");
+
+            if (!read.IsOk(out Profile? profile) || profile.HasConnectedWeb3) return;
 
             Profile promotedProfile = new ProfileBuilder().From(profile)
                                                           .WithGuestMode(false)
