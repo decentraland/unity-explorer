@@ -146,7 +146,9 @@ namespace DCL.SDKComponents.MediaStream
             }
 
             bool rescan = pendingVideoRediscovery;
-            pendingVideoRediscovery = false;
+
+            if (rescan)
+                pendingVideoRediscovery = false;
 
             if (pendingPresentationRefresh)
             {

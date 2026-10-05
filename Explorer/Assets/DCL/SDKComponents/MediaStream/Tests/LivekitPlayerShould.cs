@@ -675,6 +675,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
             p.OpenMedia(LivekitAddress.CurrentStream());
             p.EnsureVideoIsPlaying();
             p.LastTexture();
+            slideCache.EndComposing();
 
             SetMetadata(bot, LEGACY_METADATA);
             p.EnsureVideoIsPlaying();
@@ -693,6 +694,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
             LivekitPlayer second = NewPlayer(slideCache);
             first.OpenMedia(LivekitAddress.CurrentStream());
             second.OpenMedia(LivekitAddress.CurrentStream());
+            slideCache.EndComposing();
 
             first.CloseCurrentStream();
 
@@ -794,6 +796,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
             var slideCache = new SlideTextureCache(controller, decentralandUrlsSource, getRealtimeSinceStartup);
             slideCaches.Add(slideCache);
             SlideRequest(controller).ReturnsForAnyArgs(UniTask.FromResult<Texture2D?>(new Texture2D(2, 2)), new UniTaskCompletionSource<Texture2D?>().Task);
+            slideCache.BeginComposing();
             slideCache.GetOrRequest(url, BOT);
             return slideCache;
         }

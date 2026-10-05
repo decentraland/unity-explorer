@@ -136,6 +136,9 @@ namespace DCL.SDKComponents.MediaStream
         /// <summary>
         ///     Create media player with budgeting
         /// </summary>
+        /// <remarks>
+        ///     Creates a fresh player per call: a shared <c>MediaPlayer</c> caused a use-after-destroy crash (UNITY-EXPLORER-MV2).
+        /// </remarks>
         public bool TryCreateMediaPlayer(string url, bool hasVolume, float volume, bool isSpatialAudio, float? spatialMinDistance, float? spatialMaxDistance, out MediaPlayerComponent component)
         {
             if (!frameBudget.TrySpendBudget())

@@ -52,22 +52,17 @@ namespace DCL.SDKComponents.MediaStream
         /// <summary>
         ///     Draws <paramref name="slide" />, then the video rect (black until <paramref name="video" /> is given) and the
         ///     camera circle (skipped when <paramref name="camera" /> is null) into a BGRA32 render texture of
-        ///     <paramref name="width" /> × <paramref name="height" />, scaled down with its aspect preserved to at most
-        ///     <see cref="LiveKitMediaExtensions.MAX_LIVEKIT_TEXTURE_SIZE" /> on each side. Rects are normalized with a
-        ///     top-left origin. Blits on every call while <paramref name="video" /> or <paramref name="camera" /> is given;
-        ///     otherwise only when the slide or rects changed, or the last call drew a video or camera frame.
+        ///     <paramref name="width" /> × <paramref name="height" />. Rects are normalized with a top-left origin. Blits on
+        ///     every call while <paramref name="video" /> or <paramref name="camera" /> is given; otherwise only when the
+        ///     slide or rects changed, or the last call drew a video or camera frame.
         /// </summary>
         /// <returns>The same render texture instance while the size is unchanged.</returns>
         public Texture Compose(int width, int height, Texture slide, bool showVideoRect, Vector4 videoRect, Texture? video, Texture? camera, Vector4 cameraRect)
         {
-            float scale = Mathf.Min(1f, (float)LiveKitMediaExtensions.MAX_LIVEKIT_TEXTURE_SIZE / Mathf.Max(width, height));
-            int targetWidth = Mathf.Max(1, Mathf.RoundToInt(width * scale));
-            int targetHeight = Mathf.Max(1, Mathf.RoundToInt(height * scale));
-
-            if (composite == null || composite.width != targetWidth || composite.height != targetHeight)
+            if (composite == null || composite.width != width || composite.height != height)
             {
                 Release();
-                composite = new RenderTexture(targetWidth, targetHeight, 0, RenderTextureFormat.BGRA32) { name = "PresentationComposite" };
+                composite = new RenderTexture(width, height, 0, RenderTextureFormat.BGRA32) { name = "PresentationComposite" };
                 composite.Create();
             }
 
@@ -94,9 +89,9 @@ namespace DCL.SDKComponents.MediaStream
             material.SetFloat(CAMERA_ENABLED, camera != null ? 1f : 0f);
             material.SetTexture(CAMERA_TEX, camera != null ? camera : Texture2D.blackTexture);
             material.SetFloat(CAMERA_TEX_LINEAR_DATA, camera != null && !camera.isDataSRGB ? 1f : 0f);
-            material.SetFloat(CAMERA_EDGE, CAMERA_EDGE_PX / Mathf.Max(1f, cameraRect.z * targetWidth));
+            material.SetFloat(CAMERA_EDGE, CAMERA_EDGE_PX / Mathf.Max(1f, cameraRect.z * width));
 
-            material.SetVector(SLIDE_SIZE, new Vector4(targetWidth, targetHeight, 0f, 0f));
+            material.SetVector(SLIDE_SIZE, new Vector4(width, height, 0f, 0f));
 
             RenderTexture previous = RenderTexture.active;
             Graphics.Blit(slide, composite, material);

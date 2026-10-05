@@ -36,6 +36,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
             decentralandUrlsSource = Substitute.For<IDecentralandUrlsSource>();
             decentralandUrlsSource.Url(DecentralandUrl.CastPresenterService).Returns(ORG_ORIGIN);
             cache = new SlideTextureCache(webRequestController, decentralandUrlsSource, () => now);
+            cache.BeginComposing();
             decoded = new List<Texture2D>();
         }
 
@@ -354,7 +355,6 @@ namespace DCL.SDKComponents.MediaStream.Tests
             var slides = new[] { new Texture2D(2, 2), new Texture2D(2, 2) };
             var loaded = 0;
             SendTextureRequest(webRequestController).Returns(_ => UniTask.FromResult<Texture2D?>(slides[loaded++]));
-            cache.BeginComposing();
             LoadSlide(0);
             LoadSlide(1);
 
@@ -370,7 +370,6 @@ namespace DCL.SDKComponents.MediaStream.Tests
             var slide = new Texture2D(2, 2);
             var response = new UniTaskCompletionSource<Texture2D?>();
             SendTextureRequest(webRequestController).Returns(response.Task);
-            cache.BeginComposing();
             cache.GetOrRequest(ALLOWED_URL, BOT_A);
 
             cache.EndComposing();

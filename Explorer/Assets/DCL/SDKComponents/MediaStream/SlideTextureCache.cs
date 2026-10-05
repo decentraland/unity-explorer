@@ -45,6 +45,8 @@ namespace DCL.SDKComponents.MediaStream
         internal const int REQUEST_TIMEOUT_SECONDS = 15;
 
         private const int PNG_HEADER_LENGTH = 24;
+        private const int PNG_WIDTH_OFFSET = 16;
+        private const int PNG_HEIGHT_OFFSET = 20;
 
         private static readonly Regex SLIDE_PATH = new (@"^(/[A-Za-z0-9_-]+)*/presentations/[0-9a-f-]{36}/slides/[0-9a-f]{16}\.png\z", RegexOptions.Compiled);
         private static readonly byte[] PNG_SIGNATURE = { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0, 0, 0, 13, 0x49, 0x48, 0x44, 0x52 };
@@ -113,10 +115,11 @@ namespace DCL.SDKComponents.MediaStream
             textures.RemoveOldest(textures.Count);
 
         /// <summary>
-        ///     Destroys up to <paramref name="maxUnloadAmount" /> of the least recently used slides.
+        ///     Destroys up to <paramref name="maxUnloadAmount" /> of the least recently used slides, keeping one most
+        ///     recently used slide per composing player.
         /// </summary>
         public void ClearThrottled(int maxUnloadAmount) =>
-            textures.RemoveOldest(maxUnloadAmount);
+            textures.RemoveOldest(Math.Min(maxUnloadAmount, Math.Max(0, textures.Count - composers)));
 
         /// <summary>
         ///     The cached texture for <paramref name="url" />, or <c>null</c> while it loads, cools down after a
@@ -203,8 +206,8 @@ namespace DCL.SDKComponents.MediaStream
                 if (data[i] != PNG_SIGNATURE[i])
                     return false;
 
-            width = ReadBigEndianInt(data, 16);
-            height = ReadBigEndianInt(data, 20);
+            width = ReadBigEndianInt(data, PNG_WIDTH_OFFSET);
+            height = ReadBigEndianInt(data, PNG_HEIGHT_OFFSET);
             return true;
         }
 
@@ -226,14 +229,14 @@ namespace DCL.SDKComponents.MediaStream
             try
             {
                 Texture2D? texture = await webRequestController.GetTextureAsync(
-                    new CommonArguments(URLAddress.FromString(url), RetryPolicy.DEFAULT),
+                    new CommonArguments(URLAddress.FromString(url), RetryPolicy.DEFAULT, REQUEST_TIMEOUT_SECONDS),
                     new GetTextureArguments(TextureType.Albedo, useKtx: false, disableRedirects: true),
                     new SlideTextureOp(),
                     cts.Token,
                     ReportCategory.MEDIA_STREAM,
                     suppressErrors: true);
 
-                if (cts.IsCancellationRequested)
+                if (cts.IsCancellationRequested || composers == 0)
                 {
                     UnityObjectUtils.SafeDestroy(texture);
                     return;

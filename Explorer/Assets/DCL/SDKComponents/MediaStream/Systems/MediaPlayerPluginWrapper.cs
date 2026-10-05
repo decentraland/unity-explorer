@@ -13,6 +13,10 @@ using UnityEngine;
 
 namespace DCL.SDKComponents.MediaStream
 {
+    /// <remarks>
+    ///     <see cref="InjectToWorld" /> compiles its body out on Linux, the defines InspectCode runs with, so the fields
+    ///     it consumes look unused there.
+    /// </remarks>
     public class MediaPlayerPluginWrapper : IDisposable
     {
         // ReSharper disable NotAccessedField.Local
@@ -25,6 +29,9 @@ namespace DCL.SDKComponents.MediaStream
         private readonly MediaPlayerDebugRegistry debugRegistry;
         // ReSharper restore NotAccessedField.Local
 
+        /// <summary>
+        ///     Null on platforms where the LiveKit media feature is compiled out.
+        /// </summary>
         private readonly AvatarPlaceHolderTextureSource? placeholderSource;
 
         public MediaPlayerPluginWrapper(

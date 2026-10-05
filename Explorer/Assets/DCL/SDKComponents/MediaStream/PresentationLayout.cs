@@ -11,7 +11,7 @@ namespace DCL.SDKComponents.MediaStream
     /// </summary>
     public static class PresentationLayout
     {
-        public const int MAX_SLIDE_SIZE = 2048;
+        public const int MAX_SLIDE_SIZE = LiveKitMediaExtensions.MAX_LIVEKIT_TEXTURE_SIZE;
         public const int MAX_SLIDE_URL_LENGTH = 2048;
 
         private const double MARGIN_RATIO = 0.02;

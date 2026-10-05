@@ -73,20 +73,6 @@ namespace DCL.SDKComponents.MediaStream.Tests
         }
 
         [Test]
-        public void CapCompositeSize_WhenSlideExceedsMax()
-        {
-            Texture landscape = Compose(4096, 2304);
-
-            Assert.AreEqual(2048, landscape.width);
-            Assert.AreEqual(1152, landscape.height);
-
-            Texture portrait = Compose(1080, 4096);
-
-            Assert.AreEqual(540, portrait.width);
-            Assert.AreEqual(2048, portrait.height);
-        }
-
-        [Test]
         public void SkipBlit_WhenOnlyTheSlideIsShownUnchanged()
         {
             Texture first = Compose(1920, 1080);
