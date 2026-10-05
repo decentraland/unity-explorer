@@ -317,6 +317,31 @@ namespace DCL.SDKComponents.MediaStream.Tests
         }
 
         [Test]
+        public void ReopenPinnedLegacyTrack_WhenCompositionEndsAfterAnEarlierFallback()
+        {
+            LKParticipant otherBot = AddParticipant(OTHER_BOT, LEGACY_METADATA);
+            Subscribe(otherBot, AddTrack(otherBot, "TR_other_bot", TrackKind.KindVideo, TrackSource.SourceScreenshare));
+            LivekitPlayer p = NewV2Player();
+            p.OpenMedia(LivekitAddress.FromUserStream(new UserStream(BOT, SCREEN_SID)));
+            p.EnsureVideoIsPlaying();
+
+            LKParticipant bot = LiveKitTestObjects.NewParticipant(BOT, V2_METADATA);
+            remoteParticipants[BOT] = bot;
+            participantsHub.RemoteParticipant(BOT).Returns(bot);
+            Subscribe(bot, AddTrack(bot, SCREEN_SID, TrackKind.KindVideo, TrackSource.SourceScreenshare));
+            participantsHub.UpdatesFromParticipant += Raise.Event<ParticipantDelegate>(bot, UpdateFromParticipant.Connected);
+            p.EnsureVideoIsPlaying();
+            AssertComposite(p.LastTexture());
+            videoStreams.ClearReceivedCalls();
+
+            SetMetadata(bot, LEGACY_METADATA);
+            p.EnsureVideoIsPlaying();
+
+            videoStreams.Received().ActiveStream(new StreamKey(BOT, SCREEN_SID));
+            videoStreams.DidNotReceive().ActiveStream(new StreamKey(OTHER_BOT, "TR_other_bot"));
+        }
+
+        [Test]
         public void RebindPresentationVideo_WhenComposingBotChangesWithSameMetadata()
         {
             LKParticipant bot = AddParticipant(BOT, V2_METADATA);
