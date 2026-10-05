@@ -58,6 +58,9 @@ namespace ECS.StreamableLoading.Fonts.Tests
 
             if (referenceFont != null)
                 Object.DestroyImmediate(referenceFont);
+
+            fontData = null;
+            referenceFont = null;
         }
 
         [Test]
