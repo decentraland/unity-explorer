@@ -41,7 +41,8 @@ namespace DCL.SDKComponents.MediaStream
         private readonly IRoom room;
         private readonly AvatarPlaceHolderTextureSource? placeholderSource;
         private readonly SlideTextureCache slideCache;
-        private readonly PresentationCompositor? compositor;
+        private readonly Material? compositorMaterial;
+        private PresentationCompositor? compositor;
         private PlayerState playerState;
         private PresentationBotMetadata? presentation;
         private string? presentationRawMetadata;
@@ -89,7 +90,7 @@ namespace DCL.SDKComponents.MediaStream
         private bool isAudioOpened => audioSources.Count > 0;
 
         private bool isComposing =>
-            compositor != null && presentation?.slide != null;
+            compositorMaterial != null && presentation?.slide != null;
 
         // Both checks needed: connective state catches synchronous teardown start,
         // FFI connection state catches the async disconnect completion.
@@ -105,7 +106,7 @@ namespace DCL.SDKComponents.MediaStream
             room = streamingRoom;
             this.placeholderSource = placeholderSource;
             this.slideCache = slideCache;
-            compositor = compositorMaterial != null ? new PresentationCompositor(compositorMaterial) : null;
+            this.compositorMaterial = compositorMaterial;
 
             room.ConnectionUpdated += OnRoomConnectionUpdated;
             room.TrackSubscribed += OnRoomTrackSubscribed;
@@ -159,7 +160,7 @@ namespace DCL.SDKComponents.MediaStream
             }
             else
             {
-                OpenVideoStream(LivekitAddress.CurrentStream());
+                OpenVideoStream(cvs.HasValue ? LivekitAddress.CurrentStream() : playingAddress.Value);
             }
 
             EnsureAudioIsPlaying();
@@ -417,12 +418,12 @@ namespace DCL.SDKComponents.MediaStream
         private bool RefreshPresentation()
         {
             string? identity = ComposingBotIdentity();
-            composingBot = identity;
             string? raw = identity == null ? null : room.Participants.RemoteParticipant(identity)?.Metadata;
 
-            if (string.Equals(raw, presentationRawMetadata, StringComparison.Ordinal))
+            if (string.Equals(identity, composingBot, StringComparison.Ordinal) && string.Equals(raw, presentationRawMetadata, StringComparison.Ordinal))
                 return false;
 
+            composingBot = identity;
             presentationRawMetadata = raw;
             presentation = PresentationLayout.Parse(raw);
 
@@ -534,8 +535,10 @@ namespace DCL.SDKComponents.MediaStream
             PresentationBotMetadata? metadata = presentation;
             PresentationSlide? slide = metadata?.slide;
 
-            if (metadata == null || slide?.url == null || compositor == null || composingBot == null)
+            if (metadata == null || slide?.url == null || compositorMaterial == null || composingBot == null)
                 return null;
+
+            compositor ??= new PresentationCompositor(compositorMaterial);
 
             Texture2D? cachedSlide = slideCache.GetOrRequest(slide.url, composingBot);
             Texture slideTexture = cachedSlide != null ? cachedSlide : Texture2D.blackTexture;
