@@ -425,8 +425,13 @@ namespace DCL.Friends
                                                                                  .AttachExternalCancellation(ct)
                                                                                  .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
 
-            if (!(await selfProfile.ProfileAsync(ct)).IsOk(out Profile? myProfile))
-                return new PaginatedFriendRequestsResult(receivedFriendRequestsBuffer, 0);
+            ProfileReadResult ownRead = await selfProfile.ProfileAsync(ct);
+
+            if (ownRead.IsCancelled)
+                throw new OperationCanceledException(ct);
+
+            if (!ownRead.IsOk(out Profile? myProfile))
+                throw new InvalidOperationException($"Cannot list received friend requests: own profile is not resolved ({ownRead})");
 
             switch (response.ResponseCase)
             {
@@ -488,8 +493,13 @@ namespace DCL.Friends
                                                                                  .AttachExternalCancellation(ct)
                                                                                  .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
 
-            if (!(await selfProfile.ProfileAsync(ct)).IsOk(out Profile? myProfile))
-                return new PaginatedFriendRequestsResult(sentFriendRequestsBuffer, 0);
+            ProfileReadResult ownRead = await selfProfile.ProfileAsync(ct);
+
+            if (ownRead.IsCancelled)
+                throw new OperationCanceledException(ct);
+
+            if (!ownRead.IsOk(out Profile? myProfile))
+                throw new InvalidOperationException($"Cannot list sent friend requests: own profile is not resolved ({ownRead})");
 
             switch (response.ResponseCase)
             {
