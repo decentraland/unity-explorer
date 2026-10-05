@@ -124,7 +124,6 @@ namespace DCL.Multiplayer.Connections.Pulse
                     await ConnectInternalAsync(ct);
                     return true;
                 }
-                catch (OperationCanceledException) { return false; }
                 catch (PulseHandshakeDisconnectedException e) when (!e.IsRetriable)
                 {
                     ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Pulse connection failed terminally, no retry: {e.Message}");
