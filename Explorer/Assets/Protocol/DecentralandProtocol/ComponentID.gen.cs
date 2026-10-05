@@ -68,5 +68,6 @@ namespace DCL.ECS7
         public const int EXPLORER_UI_EVENTS_RESULT = 1220;
         public const int AVATAR_NAMETAG = 1221;
         public const int EXPLORER_ITEM_PURCHASE_RESULT = 1222;
+        public const int SKYBOX = 1223;
     }
 }

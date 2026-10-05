@@ -1,8 +1,11 @@
 using DCL.Diagnostics;
 using DCL.SkyBox;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.Serialization;
+using Utility;
 
 public class SkyboxRenderController : MonoBehaviour
 {
@@ -83,17 +86,31 @@ public class SkyboxRenderController : MonoBehaviour
     [Tooltip("The look that ships; alternatives for the debug dropdown live on the skybox settings asset.")]
     [SerializeField] private SkyboxLookPreset preset = null!;
 
+    [Tooltip("The look a scene that controls the skybox (PBSkybox) starts from. The SDK fields are written over a runtime copy of it, never over the asset.")]
+    [SerializeField] private SkyboxLookPreset sceneLookPreset = null!;
+
     [Header("Directional Light")]
-    [SerializeField] private Light directionalLight;
-    [SerializeField] private AnimationClip lightAnimation;
-    private Animation lightAnimator;
+    [SerializeField] private Light directionalLight = null!;
+    [SerializeField] private AnimationClip lightAnimation = null!;
+    private Animation? lightAnimator;
     private string lightClipName = string.Empty;
 
     private LensFlareComponentSRP? lensFlare;
     private LensFlareDataSRP? activeLensFlareData;
 
-    private Material skyboxMaterial;
+    private Material? skyboxMaterial;
+    private Material? panoramicSkyboxMaterial;
     private bool shaderTimeDisabled;
+
+    // The look to return to when no scene controls the skybox: the shipped preset, or the last one picked from the debug panel.
+    private SkyboxLookPreset? basePreset;
+
+    // Runtime copy of the scene look preset the SDK fields are written to; created the first time a scene controls the skybox.
+    private SkyboxLookPreset? scenePreset;
+
+    private Texture? cloudsOverride;
+    private EquirectCubemapConverter? cloudsConverter;
+    private bool cloudsConverterUnavailable;
 
     // x is a preset static, y the per-frame backlight weight; see SkyboxGlobals.hlsl.
     private Vector4 celestialParams = new (0f, 1f, 0f, 0f);
@@ -109,7 +126,9 @@ public class SkyboxRenderController : MonoBehaviour
 
     public SkyboxLookPreset Preset => preset;
 
-    public void Initialize(Material skyboxMat, Light dirLight, AnimationClip skyboxAnimationClip, float initialTimeOfDay, bool lensFlareEnabled = true)
+    public SkyboxLookPreset SceneLookPreset => sceneLookPreset;
+
+    public void Initialize(Material skyboxMat, Material? panoramicSkyboxMat, Light dirLight, AnimationClip skyboxAnimationClip, float initialTimeOfDay, bool lensFlareEnabled = true)
     {
         if (skyboxMat)
         {
@@ -122,6 +141,14 @@ public class SkyboxRenderController : MonoBehaviour
             skyboxMaterial = skyboxMat;
         }
 
+        if (panoramicSkyboxMat)
+        {
+#if UNITY_EDITOR
+            panoramicSkyboxMat = new Material(panoramicSkyboxMat);
+#endif
+            panoramicSkyboxMaterial = panoramicSkyboxMat;
+        }
+
         if (dirLight)
             directionalLight = dirLight;
 
@@ -129,7 +156,7 @@ public class SkyboxRenderController : MonoBehaviour
             lightAnimation = skyboxAnimationClip;
 
         //setup skybox material
-        if (!skyboxMaterial)
+        if (skyboxMaterial == null)
             ReportHub.LogWarning(ReportCategory.LANDSCAPE, "Skybox Controller: No skybox material assigned");
         else
             RenderSettings.skybox = skyboxMaterial; //assign skybox to render settings
@@ -143,23 +170,27 @@ public class SkyboxRenderController : MonoBehaviour
             RenderSettings.sun = directionalLight;
 
             //create animation component in runtime and assign animation clip
-            lightAnimator = directionalLight.gameObject.GetComponent<Animation>();
+            // Unity-aware null check: in the Editor a missing component comes back as a placeholder object
+            Animation? animator = directionalLight.gameObject.GetComponent<Animation>();
 
-            if (!lightAnimator)
-                lightAnimator = directionalLight.gameObject.AddComponent<Animation>();
+            if (animator == null)
+                animator = directionalLight.gameObject.AddComponent<Animation>();
+
+            lightAnimator = animator;
 
             if (!lightAnimation)
                 ReportHub.LogWarning(ReportCategory.LANDSCAPE, "Skybox Controller: Directional Light animation has not been assigned");
             else
             {
                 lightClipName = lightAnimation.name;
-                lightAnimator.AddClip(lightAnimation, lightClipName);
+                animator.AddClip(lightAnimation, lightClipName);
             }
 
             lightIntensityBeforeDip = directionalLight.intensity;
             InitializeLensFlare(lensFlareEnabled);
         }
 
+        basePreset = preset;
         ReportPresetIssues();
         ApplyPresetStatics();
 
@@ -184,11 +215,15 @@ public class SkyboxRenderController : MonoBehaviour
 
     /// <summary>
     ///     Switches the look: writes the preset's static material values once and re-evaluates the current
-    ///     time of day so the change is visible immediately.
+    ///     time of day so the change is visible immediately. Any preset but the scene copy becomes the look
+    ///     a scene hands back to when it stops controlling the skybox.
     /// </summary>
     public void ApplyPreset(SkyboxLookPreset newPreset)
     {
         preset = newPreset;
+
+        if (newPreset != scenePreset)
+            basePreset = newPreset;
 
         // Drop the current flare so the new preset's entries decide it, including no flare at all.
         activeLensFlareData = null;
@@ -201,22 +236,90 @@ public class SkyboxRenderController : MonoBehaviour
     }
 
     /// <summary>
+    ///     Puts the scene-controlled look on or takes it off. On: the scene look preset is copied once, the environment
+    ///     fields of the profile (null = none set) are written over that copy and it becomes the current look, so the
+    ///     time-of-day evaluation needs no override branches. Off: the base look returns.
+    /// </summary>
+    public void SetSceneLook(bool sceneControlled, SceneEnvironmentProfile? environment)
+    {
+        if (!sceneControlled)
+        {
+            if (basePreset != null && preset != basePreset)
+                ApplyPreset(basePreset);
+
+            return;
+        }
+
+        SkyboxLookPreset target = scenePreset ??= CreateScenePreset();
+        (environment ?? SceneEnvironmentProfile.EMPTY).ApplyTo(target, sceneLookPreset);
+        ApplyPreset(target);
+    }
+
+    /// <summary>
+    ///     Shows the equirectangular texture as the visible sky through the panoramic material; null restores the time-of-day skybox material.
+    ///     Time-of-day keeps updating the skybox material while it is swapped out, so restoring it is seamless.
+    /// </summary>
+    public void SetSkyboxOverride(Texture? equirect)
+    {
+        if (equirect != null && panoramicSkyboxMaterial != null)
+        {
+            panoramicSkyboxMaterial.mainTexture = equirect;
+            RenderSettings.skybox = panoramicSkyboxMaterial;
+        }
+        else
+            RenderSettings.skybox = skyboxMaterial;
+    }
+
+    /// <summary>
+    ///     Projects the equirectangular texture into a cubemap and makes it the cloud cubemap of the scene look; null
+    ///     restores the cloud cubemap of the scene look preset and releases the projected one. A render texture source
+    ///     (live video) is projected again on every <see cref="ProjectLiveClouds" /> call.
+    /// </summary>
+    public void SetCloudsOverride(Texture? equirect)
+    {
+        cloudsOverride = equirect;
+
+        if (equirect == null)
+        {
+            cloudsConverter?.ReleaseCubemap();
+            BindSceneClouds(sceneLookPreset.CloudsCubemap);
+            return;
+        }
+
+        if (TryGetCloudsConverter(out EquirectCubemapConverter? converter))
+            BindSceneClouds(converter.Convert(equirect));
+    }
+
+    /// <summary>
+    ///     Re-projects a render texture clouds override (live video) into the cloud cubemap; a static override or none is a no-op.
+    ///     Independent of <see cref="UpdateSkybox" /> so the layer keeps moving while skybox time is paused or frozen.
+    /// </summary>
+    public void ProjectLiveClouds()
+    {
+        if (cloudsOverride is RenderTexture liveClouds && TryGetCloudsConverter(out EquirectCubemapConverter? converter))
+            BindSceneClouds(converter.Convert(liveClouds));
+    }
+
+    /// <summary>
     ///     Evaluates the light and the palette at the time of day. The light goes first so the disc colour can
     ///     read which body it belongs to. A repeated time (paused clock) is skipped.
     /// </summary>
     public void UpdateSkybox(float timeOfDay)
     {
-        if (currentTimeOfDay == timeOfDay) return;
+        if (Mathf.Approximately(currentTimeOfDay, timeOfDay) || skyboxMaterial == null) return;
 
         currentTimeOfDay = timeOfDay;
         float phase = preset.EvaluatePhase(timeOfDay);
-        UpdateDirectionalLight(timeOfDay, phase);
-        UpdatePalette(timeOfDay, phase);
+        UpdateDirectionalLight(skyboxMaterial, timeOfDay, phase);
+        UpdatePalette(skyboxMaterial, timeOfDay, phase);
     }
 
     public void DisableSkyboxTime()
     {
         shaderTimeDisabled = true;
+
+        if (skyboxMaterial == null) return;
+
         skyboxMaterial.SetFloat(CLOUDS_ROTATION_SPEED, 0f);
         skyboxMaterial.SetFloat(SECOND_SUN_ROTATION_SPEED, 0f);
 
@@ -225,17 +328,24 @@ public class SkyboxRenderController : MonoBehaviour
         skyboxMaterial.SetVector(TIME_PARAMETERS, Vector4.one);
     }
 
+    [JetBrains.Annotations.UsedImplicitly] // Unity event function
     private void OnDestroy()
     {
         ResetGlobals();
+        cloudsConverter?.Dispose();
+
+        if (scenePreset != null)
+            UnityObjectUtils.SafeDestroy(scenePreset);
     }
 
+    [JetBrains.Annotations.UsedImplicitly] // Unity event function
     private void OnDisable()
     {
         ResetGlobals();
     }
 
     // Restores what OnDisable cleared; before Initialize RefreshLook has no material and returns.
+    [JetBrains.Annotations.UsedImplicitly] // Unity event function
     private void OnEnable() =>
         RefreshLook();
 
@@ -255,9 +365,48 @@ public class SkyboxRenderController : MonoBehaviour
             Shader.SetGlobalTexture(CLOUD_STRIPS[i], null);
     }
 
+    private SkyboxLookPreset CreateScenePreset()
+    {
+        SkyboxLookPreset copy = Instantiate(sceneLookPreset);
+        copy.name = $"{sceneLookPreset.name} (scene)";
+        return copy;
+    }
+
+    /// <summary>
+    ///     Writes the cubemap to the scene copy, so a later look refresh keeps it, and to the material when that copy is the current look.
+    /// </summary>
+    private void BindSceneClouds(Texture? cubemap)
+    {
+        if (scenePreset == null) return;
+
+        scenePreset.CloudsCubemap = cubemap;
+
+        if (preset == scenePreset && skyboxMaterial != null)
+            skyboxMaterial.SetTexture(CLOUDS_CUBEMAP, cubemap);
+    }
+
+    /// <summary>
+    ///     Creates the converter on first use; when the shader cannot be created the failure is logged once and the
+    ///     default clouds are kept.
+    /// </summary>
+    private bool TryGetCloudsConverter([NotNullWhen(true)] out EquirectCubemapConverter? converter)
+    {
+        if (cloudsConverter == null && !cloudsConverterUnavailable)
+        {
+            cloudsConverter = EquirectCubemapConverter.TryCreate();
+            cloudsConverterUnavailable = cloudsConverter == null;
+
+            if (cloudsConverterUnavailable)
+                ReportHub.LogWarning(ReportCategory.SKYBOX, "Skybox Controller: clouds texture override unavailable, the equirect-to-cube shader could not be created");
+        }
+
+        converter = cloudsConverter;
+        return converter != null;
+    }
+
     private void ApplyPresetStatics()
     {
-        if (!skyboxMaterial)
+        if (skyboxMaterial == null)
             return;
 
         skyboxMaterial.SetFloat(ZENIT_SPREAD, preset.ZenitSpread);
@@ -332,7 +481,7 @@ public class SkyboxRenderController : MonoBehaviour
     /// </summary>
     private void RefreshLook()
     {
-        if (!skyboxMaterial)
+        if (skyboxMaterial == null)
             return;
 
         ApplyPresetStatics();
@@ -340,8 +489,8 @@ public class SkyboxRenderController : MonoBehaviour
         if (currentTimeOfDay > float.MinValue)
         {
             float phase = preset.EvaluatePhase(currentTimeOfDay);
-            UpdateDirectionalLight(currentTimeOfDay, phase);
-            UpdatePalette(currentTimeOfDay, phase);
+            UpdateDirectionalLight(skyboxMaterial, currentTimeOfDay, phase);
+            UpdatePalette(skyboxMaterial, currentTimeOfDay, phase);
         }
     }
 
@@ -405,10 +554,10 @@ public class SkyboxRenderController : MonoBehaviour
     ///     Everything colour-like is sampled at the preset's phase, so the palette timing is authored once on the
     ///     time-to-phase curve. Sun position, disc size and halo stay on time (see <see cref="UpdateDirectionalLight" />).
     /// </summary>
-    private void UpdatePalette(float timeOfDay, float phase)
+    private void UpdatePalette(Material material, float timeOfDay, float phase)
     {
         UpdateIndirectLight(phase);
-        UpdateSkyboxColor(phase, timeOfDay);
+        UpdateSkyboxColor(material, phase, timeOfDay);
         UpdateFog(phase);
     }
 
@@ -428,9 +577,10 @@ public class SkyboxRenderController : MonoBehaviour
     /// <summary>
     ///     Samples the light colour at the phase and everything tied to the physical position of the sun (rotation,
     ///     disc size and opacity, halo, moon mask, lens flare) at the time of day. The rotation comes from the clip,
-    ///     or from the computed sun and moon arcs when the preset asks for them.
+    ///     or from the computed sun and moon arcs when the preset asks for them. The disc values go to the time-of-day
+    ///     material, which keeps updating while a panoramic sky is shown in its place.
     /// </summary>
-    private void UpdateDirectionalLight(float timeOfDay, float phase)
+    private void UpdateDirectionalLight(Material material, float timeOfDay, float phase)
     {
         if (!directionalLight) return;
 
@@ -440,11 +590,11 @@ public class SkyboxRenderController : MonoBehaviour
         moonActive = false;
 
         if (preset.ComputeCelestialPath)
-            swapDip = UpdateCelestialPath(timeOfDay, out moonActive);
+            swapDip = UpdateCelestialPath(material, timeOfDay, out moonActive);
         else
         {
             //sample the right frame of the animation
-            if (lightAnimation)
+            if (lightAnimation && lightAnimator != null)
             {
                 AnimationState lightState = lightAnimator[lightClipName];
                 lightState.time = timeOfDay * lightState.length;
@@ -457,8 +607,8 @@ public class SkyboxRenderController : MonoBehaviour
             Shader.SetGlobalVector(SUN_DIRECTION, -directionalLight.transform.forward);
 
             // The clip carries the disc opacity as localScale.y; a preset curve overrides it when authored.
-            RenderSettings.skybox.SetFloat(SUN_OPACITY, EvaluateOrFallback(preset.SunOpacity, timeOfDay, directionalLight.gameObject.transform.localScale.y));
-            RenderSettings.skybox.SetFloat(MOON_MASK_SIZE, preset.MoonMaskSize.Evaluate(timeOfDay));
+            material.SetFloat(SUN_OPACITY, EvaluateOrFallback(preset.SunOpacity, timeOfDay, directionalLight.gameObject.transform.localScale.y));
+            material.SetFloat(MOON_MASK_SIZE, preset.MoonMaskSize.Evaluate(timeOfDay));
         }
 
         // The cloud backlight fades with the same dip that hides the disc, so its direction can switch bodies unseen.
@@ -471,13 +621,13 @@ public class SkyboxRenderController : MonoBehaviour
         Vector3 directionalLightLocalScale = directionalLight.gameObject.transform.localScale;
         float intensityFallback = preset.ComputeCelestialPath ? lightIntensityBeforeDip : directionalLight.intensity;
         lightIntensityBeforeDip = EvaluateOrFallback(preset.LightIntensity, timeOfDay, intensityFallback);
-        directionalLight.intensity = lightIntensityBeforeDip * (1f - swapDip * CELESTIAL_SWAP_INTENSITY_DIP);
+        directionalLight.intensity = lightIntensityBeforeDip * (1f - (swapDip * CELESTIAL_SWAP_INTENSITY_DIP));
         float discSize = moonActive ? preset.ComputedMoonDiscSize : EvaluateOrFallback(preset.SunSize, timeOfDay, directionalLightLocalScale.x);
-        RenderSettings.skybox.SetFloat(SUN_SIZE, discSize);
+        material.SetFloat(SUN_SIZE, discSize);
 
         //sampling sun radiance and intensity curves
-        RenderSettings.skybox.SetFloat(SUN_RADIANCE, preset.SunRadiance.Evaluate(timeOfDay));
-        RenderSettings.skybox.SetFloat(SUN_RADIANCE_INTENSITY, preset.SunRadianceIntensity.Evaluate(timeOfDay));
+        material.SetFloat(SUN_RADIANCE, preset.SunRadiance.Evaluate(timeOfDay));
+        material.SetFloat(SUN_RADIANCE_INTENSITY, preset.SunRadianceIntensity.Evaluate(timeOfDay));
 
         UpdateLensFlare(timeOfDay, swapDip);
     }
@@ -488,25 +638,25 @@ public class SkyboxRenderController : MonoBehaviour
     ///     Returns how deep into the crossover dip the time is (0 = none, 1 = mid-swap) and whether the moon is the body
     ///     the disc currently shows.
     /// </summary>
-    private float UpdateCelestialPath(float timeOfDay, out bool moonActive)
+    private float UpdateCelestialPath(Material material, float timeOfDay, out bool moonIsActive)
     {
         Vector3 sunDirection = SkyboxCelestialMath.ArcDirection(SkyboxCelestialMath.CelestialProgress(timeOfDay, preset.SunriseTime, preset.SunsetTime), preset.SunPathAzimuth, preset.SunPathTilt);
         Vector3 moonDirection = SkyboxCelestialMath.ArcDirection(SkyboxCelestialMath.CelestialProgress(timeOfDay, preset.MoonriseTime, preset.MoonsetTime), preset.MoonPathAzimuth, preset.MoonPathTilt);
 
         SkyboxCelestialMath.EvaluateSwap(timeOfDay, preset.MoonriseTime, preset.MoonsetTime, preset.CelestialSwapDuration, out float moonWeight, out float dip);
-        moonActive = moonWeight > SkyboxCelestialMath.MOON_ACTIVE_WEIGHT;
+        moonIsActive = moonWeight > SkyboxCelestialMath.MOON_ACTIVE_WEIGHT;
 
         Vector3 lightDirection = Vector3.Slerp(sunDirection, moonDirection, moonWeight);
         Vector3 upHint = Mathf.Abs(lightDirection.y) > LOOK_ROTATION_POLE_THRESHOLD ? Vector3.forward : Vector3.up;
         directionalLight.transform.rotation = Quaternion.LookRotation(-lightDirection, upHint);
 
-        Shader.SetGlobalVector(SUN_DIRECTION, moonActive ? moonDirection : sunDirection);
+        Shader.SetGlobalVector(SUN_DIRECTION, moonIsActive ? moonDirection : sunDirection);
 
         // The haze dresses the sun only: nothing at the top of its window, full at the horizon and below.
-        float hazeFactor = preset.SunHaze && preset.UseSkyLut && !moonActive ? 1f - SkyboxCelestialMath.Smooth01(0f, preset.SunHazeHeight, sunDirection.y) : 0f;
+        float hazeFactor = preset.SunHaze && preset.UseSkyLut && !moonIsActive ? 1f - SkyboxCelestialMath.Smooth01(0f, preset.SunHazeHeight, sunDirection.y) : 0f;
         Shader.SetGlobalVector(SUN_HAZE_PARAMS, new Vector4(hazeFactor, preset.SunHazeSizeBoost, preset.SunHazeSquash, preset.SunHazeEdgeSoftness));
-        RenderSettings.skybox.SetFloat(SUN_OPACITY, 1f - dip);
-        RenderSettings.skybox.SetFloat(MOON_MASK_SIZE, moonActive ? preset.ComputedMoonMaskSize : 0f);
+        material.SetFloat(SUN_OPACITY, 1f - dip);
+        material.SetFloat(MOON_MASK_SIZE, moonIsActive ? preset.ComputedMoonMaskSize : 0f);
 
         return dip;
     }
@@ -536,11 +686,15 @@ public class SkyboxRenderController : MonoBehaviour
 
     private void InitializeLensFlare(bool lensFlareEnabled)
     {
-        lensFlare = directionalLight.gameObject.GetComponent<LensFlareComponentSRP>()
-                    ?? directionalLight.gameObject.AddComponent<LensFlareComponentSRP>();
+        // Unity-aware null check: in the Editor a missing component comes back as a placeholder object
+        LensFlareComponentSRP? flare = directionalLight.gameObject.GetComponent<LensFlareComponentSRP>();
 
-        lensFlare.useOcclusion = true;
-        lensFlare.enabled = lensFlareEnabled;
+        if (flare == null)
+            flare = directionalLight.gameObject.AddComponent<LensFlareComponentSRP>();
+
+        flare.useOcclusion = true;
+        flare.enabled = lensFlareEnabled;
+        lensFlare = flare;
     }
 
     private void UpdateLensFlare(float timeOfDay, float swapDip)
@@ -562,16 +716,16 @@ public class SkyboxRenderController : MonoBehaviour
     ///     Updates the exposed colour parameters of the material at the given phase. The time of day only picks which
     ///     body the disc colour belongs to.
     /// </summary>
-    private void UpdateSkyboxColor(float phase, float timeOfDay)
+    private void UpdateSkyboxColor(Material material, float phase, float timeOfDay)
     {
-        RenderSettings.skybox.SetColor(ZENIT_COLOR, preset.SkyZenitColorRamp.Evaluate(phase));
-        RenderSettings.skybox.SetColor(HORIZON_COLOR, preset.SkyHorizonColorRamp.Evaluate(phase));
-        RenderSettings.skybox.SetColor(NADIR_COLOR, preset.SkyNadirColorRamp.Evaluate(phase));
-        RenderSettings.skybox.SetColor(SUN_COLOR, DiscColor(phase, timeOfDay));
-        RenderSettings.skybox.SetColor(RIM_COLOR, preset.RimColorRamp.Evaluate(phase));
-        RenderSettings.skybox.SetColor(CLOUDS_COLOR, preset.CloudsColorRamp.Evaluate(phase));
-        RenderSettings.skybox.SetFloat(CLOUD_HIGHLIGHTS, preset.CloudsHighlightsIntensity.Evaluate(phase));
-        RenderSettings.skybox.SetFloat(SKY_PHASE, phase);
+        material.SetColor(ZENIT_COLOR, preset.SkyZenitColorRamp.Evaluate(phase));
+        material.SetColor(HORIZON_COLOR, preset.SkyHorizonColorRamp.Evaluate(phase));
+        material.SetColor(NADIR_COLOR, preset.SkyNadirColorRamp.Evaluate(phase));
+        material.SetColor(SUN_COLOR, DiscColor(phase, timeOfDay));
+        material.SetColor(RIM_COLOR, preset.RimColorRamp.Evaluate(phase));
+        material.SetColor(CLOUDS_COLOR, preset.CloudsColorRamp.Evaluate(phase));
+        material.SetFloat(CLOUD_HIGHLIGHTS, preset.CloudsHighlightsIntensity.Evaluate(phase));
+        material.SetFloat(SKY_PHASE, phase);
 
         UpdateCloudsV2(phase);
         UpdateStarsV2(phase);
@@ -589,24 +743,27 @@ public class SkyboxRenderController : MonoBehaviour
     }
 
 #if UNITY_EDITOR
-    public bool editMode;
+    [FormerlySerializedAs("editMode")]
+    public bool EditMode;
 
     public void Awake()
     {
         //Added the flag to allow editing of the prefab in a separate scene
         //that doesn't have the regular plugin init flow
-        if (editMode)
-            Initialize(RenderSettings.skybox, null!, null!, 0.5f);
+        if (EditMode)
+            Initialize(RenderSettings.skybox, null, null!, null!, 0.5f);
     }
 
     // Re-applies the preset every frame in edit mode so inspector changes show immediately.
+    [JetBrains.Annotations.UsedImplicitly] // Unity event function
     private void Update()
     {
-        if (editMode && preset)
+        if (EditMode && preset)
             RefreshLook();
     }
 
     // Lets the preset reference be swapped from the inspector while the authoring scene is playing.
+    [JetBrains.Annotations.UsedImplicitly] // Unity event function
     private void OnValidate()
     {
         if (Application.isPlaying && skyboxMaterial && preset)

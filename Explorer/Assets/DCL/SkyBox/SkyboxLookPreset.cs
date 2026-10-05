@@ -8,7 +8,8 @@ namespace DCL.SkyBox
     /// <summary>
     ///     Everything that defines how the sky looks over a day: the colour ramps and curves that
     ///     <see cref="SkyboxRenderController" /> evaluates every frame, plus the material values and textures it
-    ///     applies once when the preset is selected. Read-only at runtime; switching looks means switching presets.
+    ///     applies once when the preset is selected. Read-only at runtime, switching looks means switching presets; the
+    ///     one exception is the runtime copy a scene that controls the skybox writes its SDK fields to (internal setters).
     /// </summary>
     [CreateAssetMenu(fileName = "SkyboxLookPreset", menuName = "DCL/Skybox/Look Preset")]
     public class SkyboxLookPreset : ScriptableObject
@@ -63,7 +64,7 @@ namespace DCL.SkyBox
 
         [Header("Lens Flare")]
         [SerializeField] private AnimationCurve lensFlareIntensity = new ();
-        [SerializeField] private List<LensFlareTimeEntry> lensFlareEntries = new ();
+        [SerializeField] private LensFlareTimeEntry[] lensFlareEntries = Array.Empty<LensFlareTimeEntry>();
 
         [Header("Celestial path (computed sun and moon rotation)")]
         [Tooltip("Places the directional light on a computed sun arc by day and a separate moon arc by night instead of sampling the rotation clip. Sun Opacity and Moon Mask Size curves are ignored: the disc hides itself while the light crosses from one body to the other.")]
@@ -216,7 +217,7 @@ namespace DCL.SkyBox
         [SerializeField] private float rimOpacity = 0.94f;
         [SerializeField] private float starsBrightness = 4.62f;
         [SerializeField] private Texture2D? starsTexture;
-        [SerializeField] private Cubemap? cloudsCubemap;
+        [SerializeField] private Texture? cloudsCubemap;
         [SerializeField] private float cloudOpacity = 1f;
         [SerializeField] private float cloudsRotationSpeed = 0.01f;
         [SerializeField] private Vector2 moonMaskPosition = new (0.01f, -0.01f);
@@ -224,19 +225,19 @@ namespace DCL.SkyBox
         [SerializeField] private float secondSunRotationSpeed = 0.1f;
         [SerializeField] private float secondSunOrbitSize = 0.1f;
 
-        public AnimationCurve TimeToPhase => timeToPhase;
+        public AnimationCurve TimeToPhase { get => timeToPhase; internal set => timeToPhase = value; }
 
         public AnimationCurve LightIntensity => lightIntensity;
         public AnimationCurve SunSize => sunSize;
-        public AnimationCurve SunOpacity => sunOpacity;
+        public AnimationCurve SunOpacity { get => sunOpacity; internal set => sunOpacity = value; }
 
-        public Gradient DirectionalColorRamp => directionalColorRamp;
-        public Gradient SunColorRamp => sunColorRamp;
-        public AnimationCurve SunRadiance => sunRadiance;
-        public AnimationCurve SunRadianceIntensity => sunRadianceIntensity;
+        public Gradient DirectionalColorRamp { get => directionalColorRamp; internal set => directionalColorRamp = value; }
+        public Gradient SunColorRamp { get => sunColorRamp; internal set => sunColorRamp = value; }
+        public AnimationCurve SunRadiance { get => sunRadiance; internal set => sunRadiance = value; }
+        public AnimationCurve SunRadianceIntensity { get => sunRadianceIntensity; internal set => sunRadianceIntensity = value; }
         public AnimationCurve MoonMaskSize => moonMaskSize;
 
-        public AnimationCurve LensFlareIntensity => lensFlareIntensity;
+        public AnimationCurve LensFlareIntensity { get => lensFlareIntensity; internal set => lensFlareIntensity = value; }
         public IReadOnlyList<LensFlareTimeEntry> LensFlareEntries => lensFlareEntries;
 
         public bool ComputeCelestialPath => computeCelestialPath;
@@ -265,10 +266,10 @@ namespace DCL.SkyBox
         public Color SunHazeTopColor => sunHazeTopColor;
         public Color SunHazeBottomColor => sunHazeBottomColor;
 
-        public Gradient SkyZenitColorRamp => skyZenitColorRamp;
-        public Gradient SkyHorizonColorRamp => skyHorizonColorRamp;
-        public Gradient SkyNadirColorRamp => skyNadirColorRamp;
-        public Gradient RimColorRamp => rimColorRamp;
+        public Gradient SkyZenitColorRamp { get => skyZenitColorRamp; internal set => skyZenitColorRamp = value; }
+        public Gradient SkyHorizonColorRamp { get => skyHorizonColorRamp; internal set => skyHorizonColorRamp = value; }
+        public Gradient SkyNadirColorRamp { get => skyNadirColorRamp; internal set => skyNadirColorRamp = value; }
+        public Gradient RimColorRamp { get => rimColorRamp; internal set => rimColorRamp = value; }
 
         public bool UseSkyLut => useSkyLut;
         public Gradient SkyNight => skyNight;
@@ -294,11 +295,11 @@ namespace DCL.SkyBox
 
         public bool IndirectLight => indirectLight;
         public float ReflectionIntensity => reflectionIntensity;
-        public Gradient IndirectSkyRamp => indirectSkyRamp;
-        public Gradient IndirectEquatorRamp => indirectEquatorRamp;
-        public Gradient GroundEquatorRamp => groundEquatorRamp;
+        public Gradient IndirectSkyRamp { get => indirectSkyRamp; internal set => indirectSkyRamp = value; }
+        public Gradient IndirectEquatorRamp { get => indirectEquatorRamp; internal set => indirectEquatorRamp = value; }
+        public Gradient GroundEquatorRamp { get => groundEquatorRamp; internal set => groundEquatorRamp = value; }
 
-        public Gradient CloudsColorRamp => cloudsColorRamp;
+        public Gradient CloudsColorRamp { get => cloudsColorRamp; internal set => cloudsColorRamp = value; }
         public AnimationCurve CloudsHighlightsIntensity => cloudsHighlightsIntensity;
 
         public bool UseCloudsV2 => useCloudsV2;
@@ -317,8 +318,8 @@ namespace DCL.SkyBox
         public float CloudsOcclusionEnd => cloudsOcclusionEnd;
 
         public bool Fog => fog;
-        public Gradient FogColorRamp => fogColorRamp;
-        public Vector4 FogDensityByPhase => fogDensityByPhase;
+        public Gradient FogColorRamp { get => fogColorRamp; internal set => fogColorRamp = value; }
+        public Vector4 FogDensityByPhase { get => fogDensityByPhase; internal set => fogDensityByPhase = value; }
 
         public float ZenitSpread => zenitSpread;
         public float ZenitBlend => zenitBlend;
@@ -327,13 +328,13 @@ namespace DCL.SkyBox
         public float BlendTwist => blendTwist;
         public float RimSpread => rimSpread;
         public float RimOpacity => rimOpacity;
-        public float StarsBrightness => starsBrightness;
+        public float StarsBrightness { get => starsBrightness; internal set => starsBrightness = value; }
         public Texture2D? StarsTexture => starsTexture;
-        public Cubemap? CloudsCubemap => cloudsCubemap;
-        public float CloudOpacity => cloudOpacity;
-        public float CloudsRotationSpeed => cloudsRotationSpeed;
+        public Texture? CloudsCubemap { get => cloudsCubemap; internal set => cloudsCubemap = value; }
+        public float CloudOpacity { get => cloudOpacity; internal set => cloudOpacity = value; }
+        public float CloudsRotationSpeed { get => cloudsRotationSpeed; internal set => cloudsRotationSpeed = value; }
         public Vector2 MoonMaskPosition => moonMaskPosition;
-        public float SecondSunSizeFactor => secondSunSizeFactor;
+        public float SecondSunSizeFactor { get => secondSunSizeFactor; internal set => secondSunSizeFactor = value; }
         public float SecondSunRotationSpeed => secondSunRotationSpeed;
         public float SecondSunOrbitSize => secondSunOrbitSize;
 

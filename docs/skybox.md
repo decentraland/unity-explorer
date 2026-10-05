@@ -7,12 +7,12 @@ The sky is rendered by one Shader Graph material (`GenesisSkybox.mat`) driven by
 | Preset | Role | Where it is referenced |
 |---|---|---|
 | `StylizedV1.asset` | **The look that ships.** Stylized sky with a baked colour lookup, layered cloud strips, computed sun and moon arcs and procedural stars. Sun haze is available but ships off. | `Prefab/SkyboxRenderController.prefab` → `preset` |
-| `Legacy.asset` | The previous sky, a 1:1 migration of the values that used to be hard-coded. **Do not delete it.** | `SkyboxSettings.asset` → `DebugLookPresets`, Addressable `SkyboxLookPreset_Legacy` in the `Essentials` group |
+| `Legacy.asset` | The previous sky, a 1:1 migration of the values that used to be hard-coded, and the base of every SDK-controlled sky. **Do not delete it.** | `Prefab/SkyboxRenderController.prefab` → `sceneLookPreset`; `SkyboxSettings.asset` → `DebugLookPresets`, Addressable `SkyboxLookPreset_Legacy` in the `Essentials` group |
 
 Legacy stays for two reasons:
 
 - It is the reference look, and it can be selected at runtime for comparison (see *Debug panel* below).
-- **Planned SDK control.** Creators will be able to tweak the skybox from a scene through the SDK. When that lands, the parameters exposed to scenes drive the **Legacy** look: its colour bands and curves map directly onto what the SDK will expose. Nothing switches looks automatically yet; that switch is part of the SDK work, not of the presets.
+- **SDK control.** A scene that controls the skybox through the `PBSkybox` component runs on the **Legacy** look: its colour bands and curves map directly onto what the SDK exposes. The controller prefab references it as `sceneLookPreset`, so it is always resident (see *SDK control* below).
 
 Both presets are plain data. Changing the shipped look is changing one reference on the controller prefab.
 
@@ -63,6 +63,28 @@ Two variants of the same graphs, selected by the global **`_DCL_SKY_STYLIZED`** 
 
 The stylized logic lives in HLSL Custom Function files under `Assets/DCL/StylizedSkybox/Shaders/HLSL/` (`SkyLut`, `CloudsV2`, `SunDisc`, `SunComposite`, `SkyboxGlobals`). All their parameters are **global shader values** (`_Dcl*`) written by the controller, so the reflection cubemap bake (`SkyboxToCubemapRendererFeature`, which renders the fullscreen twin of the graph) sees the same data without extra material properties. Both main graphs (`GenesisSky`, `GenesisSkyBoxFullScreen`) use the same `GenesisSkyCelestial` sub-graph, whose disc is one `SunDisc` node.
 
+## SDK control (`PBSkybox`)
+
+A scene can override the environment through the `PBSkybox` component on its root entity (textures for the sky, the reflections and the clouds; gradients for the sun, the sky bands, the rim, the fog and the cloud tint; a constant fog density; cloud opacity/speed, star brightness, sun visibility). While the player is inside such a scene the controller runs the **scene look**: a runtime copy of `sceneLookPreset` (Legacy) with the scene's values written over it. Leaving the scene, or removing the component, applies the base look again (the shipped preset, or whatever the debug dropdown picked last).
+
+```
+SceneSkyboxHandlerSystem (scene world)   PBSkybox → textures + SceneEnvironmentProfile → SceneSkyboxOverrides (global skybox entity)
+ApplySceneSkyboxOverridesSystem (global)  owner present?  → SkyboxRenderController.SetSceneLook(true, profile)
+                                          owner gone?     → SkyboxRenderController.SetSceneLook(false, null)
+SkyboxRenderController.SetSceneLook       profile.ApplyTo(sceneCopy, Legacy) → ApplyPreset(sceneCopy)
+```
+
+- `SceneEnvironmentProfile.ApplyTo` writes **every** SDK-controlled preset value: the scene's gradient where it has one, the Legacy value where it does not. Unsetting a field in the scene therefore restores the Legacy value on the next apply. Derived rules live there too: the sky bands drive the ambient trilight, the rim follows an overridden horizon, `sun.color` tints both the light and the disc, `sun.visible = false` swaps the disc, halo, moon and lens-flare curves for constant zero, `fog.density` is written to all four phase anchors of `fogDensityByPhase` (the protocol's linear `fog.start_distance`/`fog.end_distance` are ignored: the project renders exponential fog only). `timeToPhase` is pinned to identity, since SDK gradient `time` is the time of day itself.
+- `SkyboxLookPreset` exposes `internal` setters for exactly those values; the asset is never written, only the runtime copy.
+- SDK gradients are protocol `ColorGradient`s converted by `ColorGradientConverter`. `UnityEngine.Gradient` holds at most 8 colour keys, so a gradient with more keys is resampled at 8 evenly spaced times.
+- The per-frame code has no override branches: it evaluates `preset.*` as for any other look. The only SDK paths outside the preset are the texture overrides: `SetSkyboxOverride` swaps `RenderSettings.skybox` to the `DCL/PanoramicSkybox` material while the time-of-day values keep going to the Genesis material (which is why those writes target the cached material, not `RenderSettings.skybox`), `SetCloudsOverride` projects an equirect image into a cube render texture that becomes the scene copy's `cloudsCubemap`, and the reflection override goes to `SkyboxToCubemapRendererFeature`.
+- **Video sources.** The three texture fields also accept a `VideoTexture`, which reaches the controller as the video player's live `RenderTexture`:
+  - live clouds are re-projected every frame by `ProjectLiveClouds`, which `ApplySceneSkyboxOverridesSystem` calls independently of `UpdateSkybox` (that one stops while skybox time is paused or frozen);
+  - `SkyboxToCubemapRendererFeature` keeps regenerating on its sliced cadence while the reflection override is a `RenderTexture` (a static override stops regeneration);
+  - the handler registers a *screen-space consumer* (`IMediaFactory.TryAddScreenSpaceConsumer`); `UpdateMediaPlayerPrioritizationSystem` never culls a video with one, though it still counts against the simultaneous-video limit. Leaving the scene releases the consumer, re-entering re-adds it;
+  - if the video player entity is deleted, the slot drops the texture (its `RenderTexture` returns to the shared pool, where another video may reuse it) and retries until the entity exists again.
+- `SceneSkyboxOverrides.Owner` is the scene identity that owns the overrides: a `SceneShortInfo`, not a base parcel, since portable experiences share `0,0`. Any `PBSkybox` on the current scene makes it the owner, whatever fields it sets, so a scene with only a `skybox_texture` also runs on the Legacy base.
+
 ## Debug panel
 
 **Debug panel → Skybox → Look preset** switches looks at runtime. The dropdown lists the shipped preset plus the entries of `SkyboxSettings.asset → DebugLookPresets`, which are Addressable references loaded the first time they are picked. Today the only entry is Legacy. Switching re-applies the statics and the current time, so the change is immediate.
@@ -82,5 +104,7 @@ The stylized logic lives in HLSL Custom Function files under `Assets/DCL/Stylize
 ## Known caveats
 
 - The stylized path takes authored colours **as-is** (no sRGB→linear conversion), consistently across the lookup, clouds and haze; `StylizedV1` was tuned against that behaviour. Changing it means re-tuning.
-- Legacy sits in the `Essentials` Addressables group so QA can compare both looks in builds. It is only loaded when picked in the debug dropdown, but it adds to the shipped bundle. Drop the entry once Legacy is only needed for SDK-controlled scenes.
+- Legacy is referenced by the controller prefab (SDK-controlled scenes start from it) and listed in the `Essentials` Addressables group for the debug dropdown, so it is always resident.
+- `DCL/PanoramicSkybox` (visible sky) and `DCL/EquirectToCube` (reflection and cloud cubemaps) share one lat-long mapping, `uv = (atan2(d.x, d.z) / 2π + 0.5, asin(d.y) / π + 0.5)`. Change both together, or the reflections stop matching the sky.
+- `DCL/EquirectToCube` is created through `Shader.Find`, so it must stay in *Always Included Shaders* (`ProjectSettings/GraphicsSettings.asset`), otherwise player builds strip it. It builds a fullscreen triangle from `SV_VertexID`, so `EquirectCubemapConverter` draws each face with `CoreUtils.DrawFullScreen`; `Graphics.Blit` would feed it quad vertices.
 - Fog on/off is also written by the quality settings. A preset with fog enabled turns fog on once when the controller initialises, then drives fog colour and density every frame.

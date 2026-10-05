@@ -98,23 +98,10 @@ namespace DCL.SDKComponents.MediaStream
 
         public bool TryAddConsumer(Entity consumerEntity, CRDTEntity videoPlayerCrdtEntity, [NotNullWhen(true)] out TextureData? resultData)
         {
-            resultData = null;
-
-            if (!entitiesMap.TryGetValue(videoPlayerCrdtEntity, out Entity videoPlayerEntity) || !world.IsAlive(videoPlayerEntity))
+            if (!TryGetOrCreateTextureData(videoPlayerCrdtEntity, out Entity videoPlayerEntity, out resultData))
                 return false;
 
-            // Wait until Player is created on the video player entity
-
-            if (!world.TryGet(videoPlayerEntity, out VideoTextureConsumer consumer) || !world.TryGet(videoPlayerEntity, out MediaPlayerComponent mediaPlayer))
-                return false;
-
-            // Only TextureData contains referencing mechanism
-            // Create or get it from the entity
-            if (!world.TryGet(videoPlayerEntity, out TextureData? textureData))
-            {
-                textureData = new TextureData(AnyTexture.FromVideoTextureData(new VideoTextureData(consumer, mediaPlayer)));
-                world.Add(videoPlayerEntity, textureData);
-            }
+            ref VideoTextureConsumer consumer = ref world.Get<VideoTextureConsumer>(videoPlayerEntity);
 
             if (world.TryGet(consumerEntity, out PrimitiveMeshRendererComponent primitiveMeshComponent))
                 consumer.AddConsumer(primitiveMeshComponent.MeshRenderer);
@@ -122,11 +109,35 @@ namespace DCL.SDKComponents.MediaStream
                 foreach (Renderer? renderer in gltfNode.Renderers)
                     consumer.AddConsumer(renderer);
 
-            textureData!.AddReference();
-
-            resultData = textureData;
+            resultData.AddReference();
             return true;
         }
+
+        public bool TryAddScreenSpaceConsumer(CRDTEntity videoPlayerCrdtEntity, [NotNullWhen(true)] out TextureData? resultData)
+        {
+            if (!TryGetOrCreateTextureData(videoPlayerCrdtEntity, out Entity videoPlayerEntity, out resultData))
+                return false;
+
+            ref VideoTextureConsumer consumer = ref world.Get<VideoTextureConsumer>(videoPlayerEntity);
+            consumer.AddScreenSpaceConsumer();
+
+            resultData.AddReference();
+            return true;
+        }
+
+        public void RemoveScreenSpaceConsumer(CRDTEntity videoPlayerCrdtEntity)
+        {
+            if (!TryGetVideoPlayerEntity(videoPlayerCrdtEntity, out Entity videoPlayerEntity))
+                return;
+
+            ref VideoTextureConsumer consumer = ref world.TryGetRef<VideoTextureConsumer>(videoPlayerEntity, out bool hasConsumer);
+
+            if (hasConsumer)
+                consumer.RemoveScreenSpaceConsumer();
+        }
+
+        public bool HasVideoTexture(CRDTEntity videoPlayerCrdtEntity) =>
+            TryGetVideoPlayerEntity(videoPlayerCrdtEntity, out Entity videoPlayerEntity) && world.Has<VideoTextureConsumer>(videoPlayerEntity);
 
         /// <summary>
         ///     Create media player with budgeting
@@ -140,6 +151,36 @@ namespace DCL.SDKComponents.MediaStream
             }
 
             component = CreateMediaPlayerComponent(url, hasVolume, volume, isSpatialAudio, spatialMinDistance, spatialMaxDistance);
+            return true;
+        }
+
+        private bool TryGetVideoPlayerEntity(CRDTEntity videoPlayerCrdtEntity, out Entity videoPlayerEntity) =>
+            entitiesMap.TryGetValue(videoPlayerCrdtEntity, out videoPlayerEntity) && world.IsAlive(videoPlayerEntity);
+
+        /// <summary>
+        ///     Resolves the video player entity and the <see cref="TextureData" /> wrapping its texture, creating the latter on first use.
+        ///     Fails while the entity does not exist or its player and consumer are not created yet.
+        /// </summary>
+        private bool TryGetOrCreateTextureData(CRDTEntity videoPlayerCrdtEntity, out Entity videoPlayerEntity, [NotNullWhen(true)] out TextureData? textureData)
+        {
+            textureData = null;
+
+            if (!TryGetVideoPlayerEntity(videoPlayerCrdtEntity, out videoPlayerEntity))
+                return false;
+
+            // Wait until Player is created on the video player entity
+            if (!world.TryGet(videoPlayerEntity, out VideoTextureConsumer consumer) || !world.TryGet(videoPlayerEntity, out MediaPlayerComponent mediaPlayer))
+                return false;
+
+            // Only TextureData contains referencing mechanism
+            if (world.Has<TextureData>(videoPlayerEntity))
+                textureData = world.Get<TextureData>(videoPlayerEntity);
+            else
+            {
+                textureData = new TextureData(AnyTexture.FromVideoTextureData(new VideoTextureData(consumer, mediaPlayer)));
+                world.Add(videoPlayerEntity, textureData);
+            }
+
             return true;
         }
 
