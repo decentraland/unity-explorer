@@ -137,8 +137,12 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
 
             try
             {
+                // Fixes: https://github.com/decentraland/unity-explorer/issues/10043
+                // AsUniTask() defaults to TaskScheduler.FromCurrentSynchronizationContext(), which throws on a thread
+                // without a SynchronizationContext before the continuation observing the lookup is attached, leaving
+                // the already-started Dns task unobserved.
                 candidates = await Dns.GetHostAddressesAsync(hostName)
-                                      .AsUniTask()
+                                      .AsUniTask(useCurrentSynchronizationContext: SynchronizationContext.Current != null)
                                       .AttachExternalCancellation(ct)
                                       .Timeout(TimeSpan.FromMilliseconds(options.ConnectTimeoutMs));
             }
