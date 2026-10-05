@@ -15,6 +15,7 @@ using LiveKit.Rooms.VideoStreaming;
 using NSubstitute;
 using NUnit.Framework;
 using RichTypes;
+using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using UnityEngine;
@@ -54,6 +55,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
         private List<Object> created = null!;
         private List<SlideTextureCache> slideCaches = null!;
         private List<LivekitPlayer> players = null!;
+        private float now;
 
         [SetUp]
         public void SetUp()
@@ -68,6 +70,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
             created = new List<Object>();
             slideCaches = new List<SlideTextureCache>();
             players = new List<LivekitPlayer>();
+            now = 0f;
 
             room.Participants.Returns(participantsHub);
             room.VideoStreams.Returns(videoStreams);
@@ -604,6 +607,112 @@ namespace DCL.SDKComponents.MediaStream.Tests
             Assert.That(p.LastTexture(), Is.Null);
         }
 
+        [Test]
+        public void StopComposingUntilReconnect_WhenRoomDisconnects()
+        {
+            AddParticipant(BOT, V2_METADATA);
+            LivekitPlayer p = NewV2Player();
+            p.OpenMedia(LivekitAddress.CurrentStream());
+            p.EnsureVideoIsPlaying();
+
+            room.Info.ConnectionState.Returns(LKConnectionState.ConnDisconnected);
+            p.EnsureVideoIsPlaying();
+            bool openedWhileDisconnected = p.IsVideoOpened;
+            Texture? textureWhileDisconnected = p.LastTexture();
+            room.Info.ConnectionState.Returns(LKConnectionState.ConnConnected);
+            p.EnsureVideoIsPlaying();
+
+            Assert.IsFalse(openedWhileDisconnected);
+            Assert.IsNull(textureWhileDisconnected);
+            Assert.IsTrue(p.IsVideoOpened);
+            AssertComposite(p.LastTexture());
+        }
+
+        [Test]
+        public void ComposeOnce_WhenLastTextureIsReadTwiceInAFrame()
+        {
+            LKParticipant bot = AddParticipant(BOT, V2("0", "playing"));
+            SubscribeWithFrame(bot, AddTrack(bot, "TR_pv", TrackKind.KindVideo, TrackSource.SourceScreenshare, LiveKitMediaExtensions.PRESENTATION_VIDEO_TRACK_NAME));
+            LivekitPlayer p = NewV2Player();
+            p.OpenMedia(LivekitAddress.CurrentStream());
+            p.EnsureVideoIsPlaying();
+
+            Texture? first = p.LastTexture();
+            Texture? second = p.LastTexture();
+
+            Assert.AreSame(first, second);
+            Assert.AreEqual(1, p.compositorBlitCount);
+        }
+
+        [Test]
+        public void NotDecodePresentationVideo_WhenRectIsHidden()
+        {
+            LKParticipant bot = AddParticipant(BOT, V2_METADATA);
+            IVideoStream video = Subscribe(bot, AddTrack(bot, "TR_pv", TrackKind.KindVideo, TrackSource.SourceScreenshare, LiveKitMediaExtensions.PRESENTATION_VIDEO_TRACK_NAME));
+            LivekitPlayer p = NewV2Player();
+            p.OpenMedia(LivekitAddress.CurrentStream());
+            p.EnsureVideoIsPlaying();
+
+            AssertComposite(p.LastTexture());
+
+            video.DidNotReceive().DecodeLastFrame();
+        }
+
+        [Test]
+        public void KeepLastSlide_WhileNextSlideLoads()
+        {
+            IWebRequestController controller = Substitute.For<IWebRequestController>();
+            SlideTextureCache slideCache = NewSlideCacheHolding(controller, BOT_SLIDE_URL, () => now);
+            LKParticipant bot = AddParticipant(BOT, V2("null", "idle", slideUrl: BOT_SLIDE_URL));
+            LivekitPlayer p = NewV2Player(slideCache);
+            p.OpenMedia(LivekitAddress.CurrentStream());
+            p.EnsureVideoIsPlaying();
+            p.LastTexture();
+
+            now = 1f;
+            SetMetadata(bot, V2("null", "idle", currentSlide: 1, slideUrl: OTHER_BOT_SLIDE_URL));
+            p.EnsureVideoIsPlaying();
+            p.LastTexture();
+
+            SlideRequest(controller.ReceivedWithAnyArgs(2));
+            Assert.AreEqual(1, p.compositorBlitCount);
+        }
+
+        [Test]
+        public void DestroySlides_WhenLastComposingPlayerStops()
+        {
+            IWebRequestController controller = Substitute.For<IWebRequestController>();
+            SlideTextureCache slideCache = NewSlideCacheHolding(controller, BOT_SLIDE_URL, static () => 0f);
+            Texture2D? slide = slideCache.GetOrRequest(BOT_SLIDE_URL, BOT);
+            LKParticipant bot = AddParticipant(BOT, V2("null", "idle", slideUrl: BOT_SLIDE_URL));
+            LivekitPlayer p = NewV2Player(slideCache);
+            p.OpenMedia(LivekitAddress.CurrentStream());
+            p.EnsureVideoIsPlaying();
+            p.LastTexture();
+
+            SetMetadata(bot, LEGACY_METADATA);
+            p.EnsureVideoIsPlaying();
+
+            Assert.IsTrue(slide == null);
+        }
+
+        [Test]
+        public void KeepSlides_WhileAnotherPlayerComposes()
+        {
+            IWebRequestController controller = Substitute.For<IWebRequestController>();
+            SlideTextureCache slideCache = NewSlideCacheHolding(controller, BOT_SLIDE_URL, static () => 0f);
+            Texture2D? slide = slideCache.GetOrRequest(BOT_SLIDE_URL, BOT);
+            AddParticipant(BOT, V2("null", "idle", slideUrl: BOT_SLIDE_URL));
+            LivekitPlayer first = NewV2Player(slideCache);
+            LivekitPlayer second = NewV2Player(slideCache);
+            first.OpenMedia(LivekitAddress.CurrentStream());
+            second.OpenMedia(LivekitAddress.CurrentStream());
+
+            first.CloseCurrentStream();
+
+            Assert.IsTrue(slide != null);
+        }
+
         private void ComposeThenReconnect()
         {
             LKParticipant bot = AddParticipant(BOT, V2_METADATA);
@@ -700,6 +809,18 @@ namespace DCL.SDKComponents.MediaStream.Tests
             players.Add(p);
             return p;
         }
+
+        private SlideTextureCache NewSlideCacheHolding(IWebRequestController controller, string url, Func<float> getRealtimeSinceStartup)
+        {
+            var slideCache = new SlideTextureCache(controller, decentralandUrlsSource, getRealtimeSinceStartup);
+            slideCaches.Add(slideCache);
+            SlideRequest(controller).ReturnsForAnyArgs(UniTask.FromResult<Texture2D?>(new Texture2D(2, 2)), new UniTaskCompletionSource<Texture2D?>().Task);
+            slideCache.GetOrRequest(url, BOT);
+            return slideCache;
+        }
+
+        private static UniTask<Texture2D?> SlideRequest(IWebRequestController controller) =>
+            controller.SendAsync<GetTextureWebRequest, GetTextureArguments, GetTextureWebRequest.CreateTextureOp, Texture2D>(default, default);
 
         private SlideTextureCache NewSlideCache()
         {

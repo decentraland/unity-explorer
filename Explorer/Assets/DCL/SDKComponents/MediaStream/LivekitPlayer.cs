@@ -85,6 +85,10 @@ namespace DCL.SDKComponents.MediaStream
                 ? Vector2.one
                 : new Vector2(1f, -1f);
 
+#if UNITY_INCLUDE_TESTS
+        internal int compositorBlitCount => compositor?.blitCount ?? 0;
+#endif
+
         private bool isAudioOpened => audioSources.Count > 0;
 
         private bool isComposing =>

@@ -4,9 +4,11 @@ using DCL.WebRequests;
 using NSubstitute;
 using NUnit.Framework;
 using System;
+using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using UnityEngine;
 using UnityEngine.TestTools;
+using Utility;
 
 namespace DCL.SDKComponents.MediaStream.Tests
 {
@@ -23,6 +25,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
         private IWebRequestController webRequestController = null!;
         private IDecentralandUrlsSource decentralandUrlsSource = null!;
         private SlideTextureCache cache = null!;
+        private List<Texture2D> decoded = null!;
         private float now;
 
         [SetUp]
@@ -33,12 +36,16 @@ namespace DCL.SDKComponents.MediaStream.Tests
             decentralandUrlsSource = Substitute.For<IDecentralandUrlsSource>();
             decentralandUrlsSource.BaseDomain.Returns("decentraland.org");
             cache = new SlideTextureCache(webRequestController, decentralandUrlsSource, () => now);
+            decoded = new List<Texture2D>();
         }
 
         [TearDown]
         public void TearDown()
         {
             cache.Dispose();
+
+            foreach (Texture2D texture in decoded)
+                UnityObjectUtils.SafeDestroy(texture);
         }
 
         [TestCase(ALLOWED_URL)]
@@ -50,9 +57,9 @@ namespace DCL.SDKComponents.MediaStream.Tests
         }
 
         [Test]
-        public void AllowOnlyBaseDomainHost_WhenBaseDomainIsCustom()
+        public void AllowOnlyCastPresenterServiceHost_WhenItIsCustom()
         {
-            decentralandUrlsSource.BaseDomain.Returns("example.org");
+            decentralandUrlsSource.Url(DecentralandUrl.CastPresenterService).Returns("https://cast-presenter-service.example.org");
             var customCache = new SlideTextureCache(webRequestController, decentralandUrlsSource, () => now);
 
             bool customAllowed = customCache.IsAllowedUrl("https://cast-presenter-service.example.org" + SLIDE_PATH);
@@ -281,6 +288,96 @@ namespace DCL.SDKComponents.MediaStream.Tests
         }
 
         [Test]
+        public void ForgetOnlyOldestRejectedUrl_WhenRejectedSetOverflows()
+        {
+            for (var i = 0; i <= SlideTextureCache.MAX_TRACKED_URLS; i++)
+                cache.GetOrRequest($"https://example.com/{i}.png", BOT_A);
+
+            Assert.AreEqual(SlideTextureCache.MAX_TRACKED_URLS, cache.trackedUrlCount);
+        }
+
+        [Test]
+        public void RejectAndNeverFetchAgain_WhenSlideIsRejectedBeforeDecoding()
+        {
+            SendTextureRequest(webRequestController).Returns(UniTask.FromResult<Texture2D?>(null));
+            LogAssert.Expect(LogType.Warning, new Regex("Slide rejected"));
+
+            cache.GetOrRequest(ALLOWED_URL, BOT_A);
+            now = SlideTextureCache.MAX_RETRY_COOLDOWN_SECONDS + 1f;
+            Texture2D? afterCooldown = cache.GetOrRequest(ALLOWED_URL, BOT_A);
+
+            Assert.IsNull(afterCooldown);
+            SendTextureRequest(webRequestController.Received(1));
+            LogAssert.NoUnexpectedReceived();
+        }
+
+        [Test]
+        public void DecodeWithoutCpuCopy_WhenPngIsWithinLimits()
+        {
+            Texture2D? slide = Decode(Png(4, 2));
+
+            Assert.IsNotNull(slide);
+            Assert.AreEqual(4, slide!.width);
+            Assert.AreEqual(2, slide.height);
+            Assert.IsFalse(slide.isReadable);
+        }
+
+        [Test]
+        public void RejectBeforeDecoding_WhenPngIsLargerThanMaxSize()
+        {
+            Assert.IsNull(Decode(Png(PresentationLayout.MAX_SLIDE_SIZE + 1, 1)));
+        }
+
+        [Test]
+        public void RejectBeforeDecoding_WhenBodyIsKtx2()
+        {
+            var ktx2 = new byte[64];
+            new byte[] { 0xAB, 0x4B, 0x54, 0x58, 0x20, 0x32, 0x30, 0xBB, 0x0D, 0x0A, 0x1A, 0x0A }.CopyTo(ktx2, 0);
+
+            Assert.IsNull(Decode(ktx2));
+        }
+
+        [Test]
+        public void RejectBeforeDecoding_WhenBodyExceedsMaxBytes()
+        {
+            byte[] png = Png(2, 2);
+            var oversized = new byte[SlideTextureCache.MAX_SLIDE_BYTES + 1];
+            png.CopyTo(oversized, 0);
+
+            Assert.IsNull(Decode(oversized));
+        }
+
+        [Test]
+        public void DestroySlidesAndFetchAgain_WhenUnloaded()
+        {
+            var slide = new Texture2D(2, 2);
+            SendTextureRequest(webRequestController).Returns(UniTask.FromResult<Texture2D?>(slide), UniTask.FromResult<Texture2D?>(new Texture2D(2, 2)));
+            cache.GetOrRequest(ALLOWED_URL, BOT_A);
+
+            cache.Unload();
+            now += SlideTextureCache.MIN_FETCH_INTERVAL_SECONDS;
+            cache.GetOrRequest(ALLOWED_URL, BOT_A);
+
+            Assert.IsTrue(slide == null);
+            SendTextureRequest(webRequestController.Received(2));
+        }
+
+        [Test]
+        public void EvictOldestSlide_WhenClearedThrottled()
+        {
+            var slides = new[] { new Texture2D(2, 2), new Texture2D(2, 2) };
+            var loaded = 0;
+            SendTextureRequest(webRequestController).Returns(_ => UniTask.FromResult<Texture2D?>(slides[loaded++]));
+            LoadSlide(0);
+            LoadSlide(1);
+
+            cache.ClearThrottled(1);
+
+            Assert.IsTrue(slides[0] == null);
+            Assert.IsTrue(slides[1] != null);
+        }
+
+        [Test]
         public void FetchWithoutRedirects()
         {
             RequestEnvelope<GetTextureWebRequest, GetTextureArguments> envelope = default;
@@ -321,6 +418,24 @@ namespace DCL.SDKComponents.MediaStream.Tests
         {
             now += SlideTextureCache.MIN_FETCH_INTERVAL_SECONDS;
             cache.GetOrRequest(SlideUrl(index), BOT_A);
+        }
+
+        private Texture2D? Decode(byte[] data)
+        {
+            Texture2D? slide = SlideTextureCache.DecodeSlide(data);
+
+            if (slide != null)
+                decoded.Add(slide);
+
+            return slide;
+        }
+
+        private static byte[] Png(int width, int height)
+        {
+            var source = new Texture2D(width, height);
+            byte[] png = source.EncodeToPNG();
+            UnityObjectUtils.SafeDestroy(source);
+            return png;
         }
 
         private static string SlideUrl(int index) =>

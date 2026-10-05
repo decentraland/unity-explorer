@@ -5,6 +5,7 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text.RegularExpressions;
 using System.Threading;
 using UnityEngine;
@@ -36,6 +37,7 @@ namespace DCL.SDKComponents.MediaStream
         internal const int MAX_TRACKED_BOTS = 32;
         internal const int MAX_REJECTION_REPORTS = 8;
         internal const int MAX_FAILURE_REPORTS = 32;
+        internal const int MAX_SLIDE_BYTES = 32 * 1024 * 1024;
 
         private static readonly Regex SLIDE_PATH = new (@"^(/[A-Za-z0-9_-]+)*/presentations/[0-9a-f-]{36}/slides/[0-9a-f]{16}\.png\z", RegexOptions.Compiled);
 
@@ -83,6 +85,24 @@ namespace DCL.SDKComponents.MediaStream
             rejected.Clear();
             failed.Clear();
             nextFetchAt.Clear();
+        }
+
+        public void Unload() { }
+
+        public void ClearThrottled(int maxUnloadAmount) { }
+
+        internal static Texture2D? DecodeSlide(byte[]? data)
+        {
+            if (data == null)
+                return null;
+
+            var texture = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+
+            if (texture.LoadImage(data))
+                return texture;
+
+            UnityObjectUtils.SafeDestroy(texture);
+            throw new InvalidDataException("Failed to decode slide");
         }
 
         /// <summary>

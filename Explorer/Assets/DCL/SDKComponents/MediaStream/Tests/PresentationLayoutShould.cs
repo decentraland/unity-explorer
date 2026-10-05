@@ -67,8 +67,8 @@ namespace DCL.SDKComponents.MediaStream.Tests
         [Test]
         public void ReturnNull_WhenSlideIsTooLarge()
         {
-            PresentationBotMetadata? tooLarge = PresentationLayout.Parse("{\"slide\":{\"url\":\"https://a/b.png\",\"width\":4097,\"height\":1080}}");
-            PresentationBotMetadata? atLimit = PresentationLayout.Parse("{\"slide\":{\"url\":\"https://a/b.png\",\"width\":4096,\"height\":1080}}");
+            PresentationBotMetadata? tooLarge = PresentationLayout.Parse("{\"slide\":{\"url\":\"https://a/b.png\",\"width\":2049,\"height\":1080}}");
+            PresentationBotMetadata? atLimit = PresentationLayout.Parse("{\"slide\":{\"url\":\"https://a/b.png\",\"width\":2048,\"height\":1080}}");
 
             Assert.IsNull(tooLarge);
             Assert.IsNotNull(atLimit);
