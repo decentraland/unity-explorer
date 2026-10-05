@@ -23,5 +23,9 @@ namespace DCL.Profiles.Self
     {
         /// <summary>True when the wait for the deploy was cancelled instead of answered.</summary>
         public bool IsCancelled => IsError(out ProfileDeployError error) && error == ProfileDeployError.Cancelled;
+
+        /// <summary>True when the catalyst did not take the edit or the identity was lost; <c>NothingChanged</c> and <c>Cancelled</c> are not failures.</summary>
+        public bool IsFailure(out ProfileDeployError error) =>
+            IsError(out error) && error is ProfileDeployError.DeployFailed or ProfileDeployError.NoIdentity;
     }
 }

@@ -280,7 +280,7 @@ namespace DCL.UI.ProfileNames
                 NameChanged?.Invoke();
                 profileChangesBus.PushUpdate(updatedProfile);
             }
-            else if (deploy.IsError(out ProfileDeployError error) && error is ProfileDeployError.DeployFailed or ProfileDeployError.NoIdentity)
+            else if (deploy.IsFailure(out ProfileDeployError error))
                 ReportHub.LogError(ReportCategory.PROFILE, $"Name deploy failed: {error}");
         }
 

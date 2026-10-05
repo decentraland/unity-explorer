@@ -304,7 +304,7 @@ namespace DCL.UI.UpgradeGuestAccountPopup
 
             ProfileDeployResult deploy = await selfProfile.DeployProfileAsync(promotedProfile, ct);
 
-            if (deploy.IsError(out ProfileDeployError error) && error is ProfileDeployError.DeployFailed or ProfileDeployError.NoIdentity)
+            if (deploy.IsFailure(out ProfileDeployError error))
                 throw new InvalidOperationException($"The promoted profile could not be deployed: {error}");
         }
 

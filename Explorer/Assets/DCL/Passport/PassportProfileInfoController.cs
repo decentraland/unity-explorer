@@ -29,7 +29,7 @@ namespace DCL.Passport
                 return;
             }
 
-            if (deploy.IsError(out ProfileDeployError error) && error is ProfileDeployError.DeployFailed or ProfileDeployError.NoIdentity)
+            if (deploy.IsFailure(out ProfileDeployError error))
             {
                 const string ERROR_MESSAGE = "There was an error while trying to update your profile info. Please try again!";
                 PublishError?.Invoke();
