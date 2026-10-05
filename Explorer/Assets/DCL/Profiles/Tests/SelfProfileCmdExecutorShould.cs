@@ -8,7 +8,6 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Profiles.Self;
 using ECS.Prioritization.Components;
 using ECS.TestSuite;
-using Newtonsoft.Json;
 using NSubstitute;
 using NUnit.Framework;
 using System;
@@ -119,7 +118,7 @@ namespace DCL.Profiles.Tests
         }
 
         [Test]
-        public void ReportATransientFailureWhenTheFetchThrows()
+        public void ReportAFailureWhenTheFetchThrows()
         {
             // Arrange
             var error = new TimeoutException("catalyst timed out");
@@ -132,24 +131,7 @@ namespace DCL.Profiles.Tests
             // Assert
             Assert.That(SingleSent().IsFetchFailed(out FetchFailed msg), Is.True);
             Assert.That(msg.Address, Is.EqualTo(ALICE));
-            Assert.That(msg.Failure.Kind, Is.EqualTo(FailureKind.Transient));
             Assert.That(msg.Failure.Exception, Is.SameAs(error));
-        }
-
-        [Test]
-        public void ReportAMalformedFailureWhenTheFetchThrowsAJsonError()
-        {
-            // Arrange
-            var error = new JsonReaderException("unexpected token");
-            AnyGet().Returns(UniTask.FromException<ProfileTier?>(error));
-            ExpectReportedException(error);
-
-            // Act
-            executor.Execute(SelfProfileCmd.FromFetch(ALICE), inbox);
-
-            // Assert
-            Assert.That(SingleSent().IsFetchFailed(out FetchFailed msg), Is.True);
-            Assert.That(msg.Failure.Kind, Is.EqualTo(FailureKind.Malformed));
         }
 
         [Test]
@@ -196,7 +178,6 @@ namespace DCL.Profiles.Tests
 
             // Assert
             Assert.That(SingleSent().IsFetchFailed(out FetchFailed msg), Is.True, "a cancellation the executor did not request is a failure, or the model stays Fetching");
-            Assert.That(msg.Failure.Kind, Is.EqualTo(FailureKind.Transient));
             Assert.That(msg.Failure.Exception, Is.TypeOf<OperationCanceledException>());
         }
 

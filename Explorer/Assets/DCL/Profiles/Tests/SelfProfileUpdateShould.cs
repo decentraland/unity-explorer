@@ -11,7 +11,7 @@ namespace DCL.Profiles.Tests
         private static readonly UserId ALICE = UserId.New("0xAlice").Unwrap();
         private static readonly UserId BOB = UserId.New("0xBob").Unwrap();
 
-        private static readonly ProfileFailure TRANSIENT_FAILURE = new (FailureKind.Transient, new TimeoutException("catalyst timed out"));
+        private static readonly ProfileFailure FETCH_FAILURE = new (new TimeoutException("catalyst timed out"));
         private static readonly Exception DEPLOY_ERROR = new InvalidOperationException("deploy rejected");
         private static readonly RequestId READ = new (7);
         private static readonly RequestId DEPLOY = new (8);
@@ -129,12 +129,12 @@ namespace DCL.Profiles.Tests
         public void RecordAFailedFetchWithoutRetrying()
         {
             // Act
-            (SelfProfileModel next, SelfProfileCmd cmd) = SelfProfileModel.Update(Fetching(), SelfProfileMsg.FromFetchFailed(new FetchFailed(ALICE, TRANSIENT_FAILURE)));
+            (SelfProfileModel next, SelfProfileCmd cmd) = SelfProfileModel.Update(Fetching(), SelfProfileMsg.FromFetchFailed(new FetchFailed(ALICE, FETCH_FAILURE)));
 
             // Assert
             Identified identified = AssertIdentified(next);
             Assert.That(identified.Knowledge.IsFailed(out ProfileFailure failure), Is.True);
-            Assert.That(failure.Kind, Is.EqualTo(FailureKind.Transient));
+            Assert.That(failure, Is.EqualTo(FETCH_FAILURE));
             Assert.That(identified.Activity.GetKind(), Is.EqualTo(ProfileActivity.Kind.Idle));
             Assert.That(cmd.GetKind(), Is.EqualTo(SelfProfileCmd.Kind.None));
         }
@@ -147,7 +147,7 @@ namespace DCL.Profiles.Tests
             SelfProfileModel model = Model(ProfileKnowledge.FromKnown(trusted), ProfileActivity.Fetching());
 
             // Act
-            (SelfProfileModel next, SelfProfileCmd cmd) = SelfProfileModel.Update(model, SelfProfileMsg.FromFetchFailed(new FetchFailed(ALICE, TRANSIENT_FAILURE)));
+            (SelfProfileModel next, SelfProfileCmd cmd) = SelfProfileModel.Update(model, SelfProfileMsg.FromFetchFailed(new FetchFailed(ALICE, FETCH_FAILURE)));
 
             // Assert
             Identified identified = AssertIdentified(next);
@@ -165,7 +165,7 @@ namespace DCL.Profiles.Tests
             // Act & Assert
             AssertUnchanged(model, SelfProfileMsg.FromFetchSucceeded(new FetchSucceeded(BOB, NewProfile(1))));
             AssertUnchanged(model, SelfProfileMsg.FromFetchNotFound(BOB));
-            AssertUnchanged(model, SelfProfileMsg.FromFetchFailed(new FetchFailed(BOB, TRANSIENT_FAILURE)));
+            AssertUnchanged(model, SelfProfileMsg.FromFetchFailed(new FetchFailed(BOB, FETCH_FAILURE)));
         }
 
         [Test]
@@ -177,7 +177,7 @@ namespace DCL.Profiles.Tests
             // Act & Assert
             AssertUnchanged(model, SelfProfileMsg.FromFetchSucceeded(new FetchSucceeded(ALICE, NewProfile(1))));
             AssertUnchanged(model, SelfProfileMsg.FromFetchNotFound(ALICE));
-            AssertUnchanged(model, SelfProfileMsg.FromFetchFailed(new FetchFailed(ALICE, TRANSIENT_FAILURE)));
+            AssertUnchanged(model, SelfProfileMsg.FromFetchFailed(new FetchFailed(ALICE, FETCH_FAILURE)));
         }
 
         [Test]
@@ -219,7 +219,7 @@ namespace DCL.Profiles.Tests
         public void DeployWithoutPublishingWhenTheLastFetchFailed()
         {
             // Act & Assert
-            AssertDeploysWithoutPublishing(ProfileKnowledge.FromFailed(TRANSIENT_FAILURE));
+            AssertDeploysWithoutPublishing(ProfileKnowledge.FromFailed(FETCH_FAILURE));
         }
 
         [Test]
@@ -633,7 +633,7 @@ namespace DCL.Profiles.Tests
         public void RefetchForAReadAfterAFailedFetch()
         {
             // Arrange
-            SelfProfileModel model = Model(ProfileKnowledge.FromFailed(TRANSIENT_FAILURE), ProfileActivity.Idle());
+            SelfProfileModel model = Model(ProfileKnowledge.FromFailed(FETCH_FAILURE), ProfileActivity.Idle());
 
             // Act
             (SelfProfileModel next, SelfProfileCmd cmd) = SelfProfileModel.Update(model, SelfProfileMsg.FromProfileReadRequested(READ));
@@ -670,7 +670,7 @@ namespace DCL.Profiles.Tests
             SelfProfileModel model = WithPendingRead(Fetching());
 
             // Act
-            (SelfProfileModel next, SelfProfileCmd cmd) = SelfProfileModel.Update(model, SelfProfileMsg.FromFetchFailed(new FetchFailed(ALICE, TRANSIENT_FAILURE)));
+            (SelfProfileModel next, SelfProfileCmd cmd) = SelfProfileModel.Update(model, SelfProfileMsg.FromFetchFailed(new FetchFailed(ALICE, FETCH_FAILURE)));
 
             // Assert
             Assert.That(AssertIdentified(next).PendingReads.Count, Is.EqualTo(0));

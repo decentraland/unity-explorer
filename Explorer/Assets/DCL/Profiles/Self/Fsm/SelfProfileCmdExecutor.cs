@@ -8,7 +8,6 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
 using DCL.Profiles.Helpers;
 using ECS.Prioritization.Components;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -132,12 +131,9 @@ namespace DCL.Profiles.Self
                     return;
 
                 ReportHub.LogException(e, ReportCategory.PROFILE);
-                inbox.Send(SelfProfileMsg.FromFetchFailed(new FetchFailed(address, new ProfileFailure(ClassifyFetchFailure(e), e))));
+                inbox.Send(SelfProfileMsg.FromFetchFailed(new FetchFailed(address, new ProfileFailure(e))));
             }
         }
-
-        private static FailureKind ClassifyFetchFailure(Exception e) =>
-            e is JsonException ? FailureKind.Malformed : FailureKind.Transient;
 
         /// <summary>Applies the session-wide tooling overrides; an empty emote wheel is filled with the base emotes.</summary>
         private void ApplySessionOverrides(Profile profile)
