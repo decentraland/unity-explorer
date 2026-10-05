@@ -408,6 +408,31 @@ namespace DCL.Profiles.Tests
         }
 
         [Test]
+        public void KeepTheDeployInFlightWhenANewerEditDeploys()
+        {
+            // Arrange
+            CancellationToken firstToken = default;
+            profileRepository.SetAsync(Arg.Any<Profile>(), Arg.Any<CancellationToken>()).Returns(call =>
+            {
+                if (!firstToken.CanBeCanceled)
+                    firstToken = call.Arg<CancellationToken>();
+
+                return new UniTaskCompletionSource().Task;
+            });
+
+            Profile first = NewProfile(ALICE, 4);
+            Profile second = NewProfile(ALICE, 5);
+            executor.Execute(SelfProfileCmd.FromDeploy(new DeployCmd(ALICE, first, first.Version)), inbox);
+
+            // Act
+            executor.Execute(SelfProfileCmd.FromDeploy(new DeployCmd(ALICE, second, second.Version)), inbox);
+
+            // Assert
+            Assert.That(firstToken.CanBeCanceled, Is.True, "the executor should pass a cancellable token to the repository");
+            Assert.That(firstToken.IsCancellationRequested, Is.False);
+        }
+
+        [Test]
         public void SkipTheDeployInAFakingSession()
         {
             // Arrange

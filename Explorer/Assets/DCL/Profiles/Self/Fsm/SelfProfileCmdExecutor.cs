@@ -18,8 +18,9 @@ using Utility.Fsm;
 namespace DCL.Profiles.Self
 {
     /// <summary>
-    ///     Performs the commands of the self-profile FSM and reports their outcomes as messages. At most one fetch or deploy
-    ///     is in flight; starting another, or <c>ResetLocalState</c>, cancels it. A cancelled IO reports nothing; any other
+    ///     Performs the commands of the self-profile FSM and reports their outcomes as messages. A new fetch cancels the
+    ///     activity in flight; a new deploy shares its token and never cancels a deploy in flight.
+    ///     <c>ResetLocalState</c> and <c>Dispose</c> cancel any activity. A cancelled IO reports nothing; any other
     ///     failure, cancellations raised elsewhere included, is reported to Sentry and to the model.
     /// </summary>
     public class SelfProfileCmdExecutor : ICmdExecutor<SelfProfileCmd, SelfProfileMsg>
@@ -183,7 +184,8 @@ namespace DCL.Profiles.Self
                 return;
             }
 
-            DeployAsync(deploy.Address, sent, inbox, StartActivity()).Forget();
+            activity ??= new CancellationTokenSource();
+            DeployAsync(deploy.Address, sent, inbox, activity.Token).Forget();
         }
 
         private async UniTaskVoid DeployAsync(UserId address, Profile sent, IMsgInbox<SelfProfileMsg> inbox, CancellationToken ct)
