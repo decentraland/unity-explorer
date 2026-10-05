@@ -15,7 +15,7 @@ namespace DCL.SDKComponents.MediaStream
 {
     /// <summary>
     ///     App-wide cache of presentation slide textures keyed by url, holding at most <see cref="CAPACITY" /> and
-    ///     destroying the oldest first. Fetches only contract-shaped slide urls in canonical form (equal to their own
+    ///     destroying the least recently used first. Fetches only contract-shaped slide urls in canonical form (equal to their own
     ///     <see cref="Uri.AbsoluteUri" />): https on the default port, the host <c>cast-presenter-service.{BaseDomain}</c>,
     ///     no userinfo, query, fragment or backslash, and a path made of an optional prefix of <c>[A-Za-z0-9_-]</c>
     ///     segments followed by <c>/presentations/{uuid}/slides/{16 lowercase hex}.png</c>; in the Editor, loopback http
@@ -23,8 +23,8 @@ namespace DCL.SDKComponents.MediaStream
     ///     Starts at most one fetch per <see cref="MIN_FETCH_INTERVAL_SECONDS" /> per throttle key, tracking at most
     ///     <see cref="MAX_TRACKED_BOTS" /> keys, tracks at most <see cref="MAX_TRACKED_URLS" /> rejected and
     ///     <see cref="MAX_TRACKED_URLS" /> failed urls, logs at most <see cref="MAX_REJECTION_REPORTS" /> rejections and
-    ///     <see cref="MAX_FAILURE_REPORTS" /> failures in its lifetime, and drops slides decoded larger than
-    ///     <see cref="PresentationLayout.MAX_SLIDE_SIZE" /> on either side. Main-thread only.
+    ///     <see cref="MAX_FAILURE_REPORTS" /> failures in its lifetime, and rejects slides decoded larger than
+    ///     <see cref="PresentationLayout.MAX_SLIDE_SIZE" /> on either side. Does nothing once disposed. Main-thread only.
     /// </summary>
     public sealed class SlideTextureCache : IDisposable
     {
@@ -96,8 +96,15 @@ namespace DCL.SDKComponents.MediaStream
         /// </param>
         public Texture2D? GetOrRequest(string url, string throttleKey)
         {
+            if (disposed)
+                return null;
+
             if (textures.TryGetValue(url, out Texture2D texture))
+            {
+                order.Remove(url);
+                order.Add(url);
                 return texture;
+            }
 
             if (inFlight.Contains(url) || rejected.Contains(url))
                 return null;
@@ -110,10 +117,7 @@ namespace DCL.SDKComponents.MediaStream
 
             if (!IsAllowedUrl(url))
             {
-                if (rejected.Count >= MAX_TRACKED_URLS)
-                    rejected.Clear();
-
-                rejected.Add(url);
+                Reject(url);
 
                 if (TryConsumeReport(ref rejectionReportsLeft))
                     ReportHub.LogWarning(ReportCategory.MEDIA_STREAM, $"Slide url rejected, origin not allowed: {OriginOf(url)}");
@@ -173,7 +177,9 @@ namespace DCL.SDKComponents.MediaStream
 
                 if (texture.width > PresentationLayout.MAX_SLIDE_SIZE || texture.height > PresentationLayout.MAX_SLIDE_SIZE)
                 {
-                    if (RecordFailure(url) == 1 && TryConsumeReport(ref failureReportsLeft))
+                    Reject(url);
+
+                    if (TryConsumeReport(ref rejectionReportsLeft))
                         ReportHub.LogWarning(ReportCategory.MEDIA_STREAM,
                             $"Slide rejected, decoded size {texture.width}x{texture.height} exceeds {PresentationLayout.MAX_SLIDE_SIZE}: {OriginOf(url)}");
 
@@ -194,6 +200,14 @@ namespace DCL.SDKComponents.MediaStream
                     ReportHub.LogException(e, ReportCategory.MEDIA_STREAM);
             }
             finally { inFlight.Remove(url); }
+        }
+
+        private void Reject(string url)
+        {
+            if (rejected.Count >= MAX_TRACKED_URLS)
+                rejected.Clear();
+
+            rejected.Add(url);
         }
 
         private int RecordFailure(string url)
