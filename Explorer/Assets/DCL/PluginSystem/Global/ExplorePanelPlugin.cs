@@ -85,7 +85,6 @@ using Utility;
 using DCL.VoiceChat;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.Realm;
-using Global;
 using Global.AppArgs;
 using Runtime.Wearables;
 using UnityEngine;
@@ -478,7 +477,7 @@ namespace DCL.PluginSystem.Global
             SatelliteController satelliteController = new (navmapView.GetComponentInChildren<SatelliteView>(),
                 navmapView.MapCameraDragBehaviorData, mapRenderer, webBrowser);
 
-            PlaceInfoToastController placeToastController = new (navmapView.PlaceToastView,
+            _ = new PlaceInfoToastController(navmapView.PlaceToastView,
                 new PlaceInfoPanelController(navmapView.PlaceToastView.PlacePanelView,
                     imageControllerProvider, placesAPIService, mapPathEventBus, navmapBus, chatMessagesBus, eventsApiService,
                     eventElementsPool, shareContextMenu, webBrowser, mvcManager, homePlaceEventBus, donationsService, galleryEventBus: galleryEventBus),
@@ -700,7 +699,7 @@ namespace DCL.PluginSystem.Global
         }
 
         private void OpenLobby() =>
-            mvcManager.ShowAndForget(LobbyController.IssueCommand(new LobbyParameter(isStartup: false)));
+            mvcManager.ShowAndForget(LobbyDocumentController.IssueCommand(new LobbyParameter(isStartup: false)));
 
         private void OnInputShortcutsBackpackPerformedAsync(InputAction.CallbackContext _)
         {
