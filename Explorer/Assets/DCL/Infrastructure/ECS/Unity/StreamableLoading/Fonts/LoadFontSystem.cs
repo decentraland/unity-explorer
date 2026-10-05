@@ -22,6 +22,7 @@ namespace ECS.StreamableLoading.Fonts
     [LogCategory(ReportCategory.SDK_FONTS)]
     public partial class LoadFontSystem : LoadSystemBase<FontData, GetFontIntention>
     {
+        // Must match the asset names that the converter gives the two fonts in a font bundle
         private const string CONVERTER_TEXT_MESH_PRO_ASSET_NAME = "tmp";
         private const string CONVERTER_UI_TOOLKIT_ASSET_NAME = "uitk";
 
