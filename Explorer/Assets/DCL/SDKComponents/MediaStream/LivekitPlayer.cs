@@ -145,6 +145,7 @@ namespace DCL.SDKComponents.MediaStream
             if (isComposing)
             {
                 cvs = null;
+                playingAddress = requestedAddress;
                 EnsurePresentationStreams(rescan);
                 EnsureAudioIsPlaying();
                 return;
