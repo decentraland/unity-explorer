@@ -128,7 +128,7 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
             }
         }
 
-        private async UniTask<string> ResolveIPv4Async(string hostName, CancellationToken ct)
+        internal async UniTask<string> ResolveIPv4Async(string hostName, CancellationToken ct)
         {
             if (IPAddress.TryParse(hostName, out IPAddress? literal))
                 return literal.ToString();
