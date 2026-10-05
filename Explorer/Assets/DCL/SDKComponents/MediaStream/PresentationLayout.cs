@@ -11,7 +11,7 @@ namespace DCL.SDKComponents.MediaStream
     /// </summary>
     public static class PresentationLayout
     {
-        public const int MAX_SLIDE_SIZE = 4096;
+        public const int MAX_SLIDE_SIZE = 2048;
         public const int MAX_SLIDE_URL_LENGTH = 2048;
 
         private const double MARGIN_RATIO = 0.02;
@@ -37,7 +37,7 @@ namespace DCL.SDKComponents.MediaStream
             PresentationBotMetadata? metadata;
 
             try { metadata = JsonConvert.DeserializeObject<PresentationBotMetadata>(json); }
-            catch (Exception) { return null; }
+            catch (JsonException) { return null; }
 
             if (metadata == null)
                 return null;

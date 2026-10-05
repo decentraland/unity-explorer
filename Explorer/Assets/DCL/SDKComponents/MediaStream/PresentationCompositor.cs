@@ -11,7 +11,7 @@ namespace DCL.SDKComponents.MediaStream
     /// </summary>
     public sealed class PresentationCompositor : IDisposable
     {
-        public const int MAX_COMPOSITE_SIZE = 2048;
+        public const int MAX_COMPOSITE_SIZE = LiveKitMediaExtensions.MAX_LIVEKIT_TEXTURE_SIZE;
 
         private const float CAMERA_EDGE_PX = 1.5f;
 
@@ -24,6 +24,8 @@ namespace DCL.SDKComponents.MediaStream
         private static readonly int CAMERA_ENABLED = Shader.PropertyToID("_CameraEnabled");
         private static readonly int CAMERA_EDGE = Shader.PropertyToID("_CameraEdge");
         private static readonly int SLIDE_SIZE = Shader.PropertyToID("_SlideSize");
+        private static readonly int VIDEO_TEX_LINEAR_DATA = Shader.PropertyToID("_VideoTexLinearData");
+        private static readonly int CAMERA_TEX_LINEAR_DATA = Shader.PropertyToID("_CameraTexLinearData");
 
         private readonly Material material;
 
@@ -34,7 +36,9 @@ namespace DCL.SDKComponents.MediaStream
         private Vector4 lastCameraRect;
         private bool lastDrewFrame;
 
+#if UNITY_INCLUDE_TESTS
         internal int blitCount { get; private set; }
+#endif
 
         public PresentationCompositor(Material material)
         {
@@ -86,10 +90,12 @@ namespace DCL.SDKComponents.MediaStream
             material.SetFloat(VIDEO_ENABLED, showVideoRect ? 1f : 0f);
             material.SetFloat(VIDEO_TEX_ENABLED, showVideoRect && video != null ? 1f : 0f);
             material.SetTexture(VIDEO_TEX, video != null ? video : Texture2D.blackTexture);
+            material.SetFloat(VIDEO_TEX_LINEAR_DATA, video != null && !video.isDataSRGB ? 1f : 0f);
 
             material.SetVector(CAMERA_RECT, cameraRect);
             material.SetFloat(CAMERA_ENABLED, camera != null ? 1f : 0f);
             material.SetTexture(CAMERA_TEX, camera != null ? camera : Texture2D.blackTexture);
+            material.SetFloat(CAMERA_TEX_LINEAR_DATA, camera != null && !camera.isDataSRGB ? 1f : 0f);
             material.SetFloat(CAMERA_EDGE, CAMERA_EDGE_PX / Mathf.Max(1f, cameraRect.z * targetWidth));
 
             material.SetVector(SLIDE_SIZE, new Vector4(targetWidth, targetHeight, 0f, 0f));
@@ -97,7 +103,9 @@ namespace DCL.SDKComponents.MediaStream
             RenderTexture previous = RenderTexture.active;
             Graphics.Blit(slide, composite, material);
             RenderTexture.active = previous;
+#if UNITY_INCLUDE_TESTS
             blitCount++;
+#endif
             return composite;
         }
 

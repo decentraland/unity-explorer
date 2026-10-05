@@ -27,8 +27,8 @@ namespace DCL.SDKComponents.MediaStream
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IPerformanceBudget frameTimeBudget;
         private readonly MediaFactory mediaFactory;
-        private const int MAX_LIVEKIT_VIDEO_WIDTH = 2048;
-        private const int MAX_LIVEKIT_VIDEO_HEIGHT = 2048;
+        private const int MAX_LIVEKIT_VIDEO_WIDTH = LiveKitMediaExtensions.MAX_LIVEKIT_TEXTURE_SIZE;
+        private const int MAX_LIVEKIT_VIDEO_HEIGHT = LiveKitMediaExtensions.MAX_LIVEKIT_TEXTURE_SIZE;
 
         private readonly float audioFadeSpeed;
         private readonly Material flipMaterial;

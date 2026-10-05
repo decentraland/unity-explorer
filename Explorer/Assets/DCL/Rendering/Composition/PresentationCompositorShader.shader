@@ -12,6 +12,8 @@ Shader "DCL/PresentationCompositor"
         _CameraEnabled ("Camera enabled", Float) = 0
         _CameraEdge ("Circle edge softness in circle-local units", Float) = 0.01
         _SlideSize ("Slide size in px (x, y)", Vector) = (1, 1, 0, 0)
+        _VideoTexLinearData ("Video holds sRGB data in a linear texture", Float) = 0
+        _CameraTexLinearData ("Camera holds sRGB data in a linear texture", Float) = 0
     }
 
     SubShader
@@ -37,6 +39,8 @@ Shader "DCL/PresentationCompositor"
             float _CameraEnabled;
             float _CameraEdge;
             float4 _SlideSize;
+            float _VideoTexLinearData;
+            float _CameraTexLinearData;
 
             bool Inside(float2 p, float2 origin, float2 size)
             {
@@ -81,7 +85,12 @@ Shader "DCL/PresentationCompositor"
                         float4 content = ContainRect(_VideoRect);
 
                         if (Inside(p, content.xy, content.zw))
+                        {
                             color = tex2Dlod(_VideoTex, float4((p - content.xy) / content.zw, 0, 0));
+
+                            if (_VideoTexLinearData > 0.5)
+                                color.rgb = GammaToLinearSpace(color.rgb);
+                        }
                     }
                 }
 
@@ -92,7 +101,14 @@ Shader "DCL/PresentationCompositor"
                     float mask = 1.0 - smoothstep(0.5 - _CameraEdge, 0.5, dist);
 
                     if (mask > 0)
-                        color.rgb = lerp(color.rgb, tex2Dlod(_CameraTex, float4(CoverSquareUv(q), 0, 0)).rgb, mask);
+                    {
+                        float3 cam = tex2Dlod(_CameraTex, float4(CoverSquareUv(q), 0, 0)).rgb;
+
+                        if (_CameraTexLinearData > 0.5)
+                            cam = GammaToLinearSpace(cam);
+
+                        color.rgb = lerp(color.rgb, cam, mask);
+                    }
                 }
 
                 return fixed4(color.rgb, 1);
