@@ -23,25 +23,15 @@
     bottom: 0;
 }
 
-/* The banner texture fades from transparent at its top to opaque at its bottom; flipping it darkens the top edge instead */
+/* Drawn with the sprite's 9-slice border: a 140px soft fade, a stretched middle and a 42px opaque strip along the bottom edge */
 .lobby__gradient {
     position: absolute;
     left: 0;
     right: 0;
-    background-image: url('/Assets/Textures/ExplorePanel/GradientBanner.png');
-    background-size: 100% 100%;
-    -unity-background-image-tint-color: rgba(0, 0, 0, 0.6);
-}
-
-.lobby__gradient--top {
-    top: 0;
-    height: 120px;
-    scale: 1 -1;
-}
-
-.lobby__gradient--bottom {
     bottom: 0;
     height: 338px;
+    background-image: url('/Assets/Textures/ExplorePanel/GradientBanner.png');
+    -unity-background-image-tint-color: rgba(0, 0, 0, 0.6);
 }
 
 /* Same footprint as the hit area button of the uGUI lobby: 440x820, centred and 60px down */

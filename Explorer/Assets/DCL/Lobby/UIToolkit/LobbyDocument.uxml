@@ -11,8 +11,7 @@
     <Style src="project://database/Assets/DCL/Lobby/UIToolkit/LobbyUpcomingEventCard.uss" />
     <ui:Template name="LobbyLandingCard" src="project://database/Assets/DCL/Lobby/UIToolkit/LobbyLandingCard.uxml?fileID=9197481963319205126&amp;guid=f260689364e4454c8f4a329cd3e46b06&amp;type=3#LobbyLandingCard" />
     <ui:VisualElement name="Lobby" class="lobby">
-        <ui:VisualElement name="TopGradient" class="lobby__gradient lobby__gradient--top" picking-mode="Ignore" />
-        <ui:VisualElement name="BottomGradient" class="lobby__gradient lobby__gradient--bottom" picking-mode="Ignore" />
+        <ui:VisualElement name="BottomGradient" class="lobby__gradient" picking-mode="Ignore" />
         <!-- The uGUI preview canvas draws under the panel; this only catches the hover and the click over the figure -->
         <ui:VisualElement name="AvatarHitArea" class="lobby__avatar-hit-area" style="display: none;" />
         <ui:VisualElement name="Logo" class="lobby__logo" picking-mode="Ignore" />
