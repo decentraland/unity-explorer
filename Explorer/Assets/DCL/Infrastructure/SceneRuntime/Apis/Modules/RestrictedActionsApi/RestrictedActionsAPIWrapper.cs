@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.ECSComponents;
 using JetBrains.Annotations;
 using SceneRuntime;
@@ -30,8 +31,8 @@ namespace DCL.SceneRuntime.Apis.RestrictedActionsApi
         [UsedImplicitly]
         public object MovePlayerTo(
             double newRelativePositionX, double newRelativePositionY, double newRelativePositionZ,
-            double? cameraTargetX, double? cameraTargetY, double? cameraTargetZ,
-            double? avatarTargetX, double? avatarTargetY, double? avatarTargetZ,
+            bool hasCameraTarget, double cameraTargetX, double cameraTargetY, double cameraTargetZ,
+            bool hasAvatarTarget, double avatarTargetX, double avatarTargetY, double avatarTargetZ,
             double? duration)
         {
             movePlayerToCancellationToken = movePlayerToCancellationToken.SafeRestart();
@@ -40,15 +41,23 @@ namespace DCL.SceneRuntime.Apis.RestrictedActionsApi
             async UniTask<bool> MovePlayerToAsync(CancellationToken ct) =>
                 await api.TryMovePlayerToAsync(
                     new Vector3((float)newRelativePositionX, (float)newRelativePositionY, (float)newRelativePositionZ),
-                    cameraTargetX.HasValue && cameraTargetY.HasValue && cameraTargetZ.HasValue ? new Vector3((float)cameraTargetX, (float)cameraTargetY, (float)cameraTargetZ) : null,
-                    avatarTargetX.HasValue && avatarTargetY.HasValue && avatarTargetZ.HasValue ? new Vector3((float)avatarTargetX, (float)avatarTargetY, (float)avatarTargetZ) : null,
+                    hasCameraTarget ? new Vector3((float)cameraTargetX, (float)cameraTargetY, (float)cameraTargetZ) : null,
+                    hasAvatarTarget ? new Vector3((float)avatarTargetX, (float)avatarTargetY, (float)avatarTargetZ) : null,
                     duration.HasValue ? (float)duration.Value : 0f,
                     ct);
         }
 
         [UsedImplicitly]
-        public void TeleportTo(int? x, int? y, string? realm) =>
-            api.TryTeleportTo(x.HasValue && y.HasValue ? new Vector2Int(x.Value, y.Value) : null, realm);
+        public void TeleportTo(bool hasCoordinates, int x, int y, string? realm)
+        {
+            if (!TeleportDestination.TryCreate(hasCoordinates ? new Vector2Int(x, y) : null, realm, out TeleportDestination destination))
+            {
+                ReportHub.LogWarning(ReportCategory.RESTRICTED_ACTIONS, "TeleportTo: request carries neither worldCoordinates nor realm");
+                return;
+            }
+
+            api.TryTeleportTo(destination);
+        }
 
         [UsedImplicitly]
         public bool ChangeRealm(string message, string realm) =>
@@ -96,10 +105,15 @@ namespace DCL.SceneRuntime.Apis.RestrictedActionsApi
             api.TryOpenNftDialog(urn);
 
         [UsedImplicitly]
-        public object OpenExplorerUi(int ui, uint requestId) =>
+        public object OpenExplorerUi(int ui, uint requestId)
+        {
             // No SafeRestart token here, unlike the siblings: it would cancel the first of two overlapping
             // calls, which is the call that owes the second one a WasAlreadyOpen answer.
-            api.TryOpenExplorerUiAsync(ui, requestId, disposeCts.Token).ToDisconnectedPromise(this);
+            return OpenExplorerUiAsync(disposeCts.Token).ToDisconnectedPromise(this);
+
+            async UniTask<int> OpenExplorerUiAsync(CancellationToken ct) =>
+                (int)await api.TryOpenExplorerUiAsync((ExplorerUi)ui, requestId, ct);
+        }
 
         [UsedImplicitly]
         public object StopEmote()

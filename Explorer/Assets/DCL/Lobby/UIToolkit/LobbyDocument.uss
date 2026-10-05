@@ -1,0 +1,223 @@
+/* Layout of the uGUI lobby (LobbyUI.prefab) at 1920x1080: 50px margins, a 100px header band and the side columns at 180px */
+:root {
+    --lobby-margin: 50px;
+    --lobby-columns-top: 180px;
+    --lobby-card-color: rgba(20, 20, 26, 0.9);
+    --lobby-card-border-color: rgba(255, 255, 255, 0.1);
+    --lobby-title-color: white;
+    --lobby-subtitle-color: rgb(191, 191, 199);
+    --lobby-jump-in-color: rgb(255, 45, 85);
+    --lobby-jump-in-hover-color: rgb(255, 77, 111);
+    --lobby-jump-in-pressed-color: rgb(200, 35, 67);
+    --lobby-thumbnail-fade-duration: 0.3s;
+    /* The uGUI drop shadows: 9-sliced sprites authored at twice the size, drawn at half scale with the slices of their import settings */
+    --lobby-button-shadow-image: url('/Assets/Textures/Common/Container12Shadow4.png');
+    --lobby-card-shadow-image: url('/Assets/Textures/Common/Container24Shadow10.png');
+}
+
+.lobby {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+/* Drawn with the sprite's 9-slice border: a 140px soft fade, a stretched middle and a 42px opaque strip along the bottom edge */
+.lobby__gradient {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 338px;
+    background-image: url('/Assets/Textures/ExplorePanel/GradientBanner.png');
+    -unity-background-image-tint-color: rgba(0, 0, 0, 0.6);
+}
+
+/* Same footprint as the hit area button of the uGUI lobby: 440x820, centred and 60px down */
+.lobby__avatar-hit-area {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 440px;
+    height: 820px;
+    margin-left: -220px;
+    margin-top: -350px;
+}
+
+/* Left and top follow the pointer; the translate centres it on the pointer vertically */
+.lobby__avatar-tooltip {
+    position: absolute;
+    height: 40px;
+    flex-direction: row;
+    align-items: center;
+    padding-left: 12px;
+    padding-right: 12px;
+    border-radius: 12px;
+    background-color: rgba(0, 0, 0, 0.95);
+    translate: 0 -50%;
+}
+
+.lobby__avatar-tooltip-icon {
+    width: 22px;
+    height: 22px;
+    margin-right: 12px;
+    background-image: url('/Assets/Textures/UI/Interaction/icon-mouse-left.png');
+}
+
+.lobby__avatar-tooltip-label {
+    font-size: 16px;
+    -unity-font-definition: var(--dcl-font-inter-semibold);
+    -unity-text-align: middle-center;
+    color: var(--lobby-title-color);
+}
+
+.lobby__logo {
+    position: absolute;
+    left: var(--lobby-margin);
+    top: 32px;
+    width: 256px;
+    height: 35px;
+    background-image: url('/Assets/Textures/ExplorePanel/DecentralandLogo.png');
+}
+
+.lobby__welcome {
+    position: absolute;
+    left: var(--lobby-margin);
+    top: var(--lobby-columns-top);
+    width: 524px;
+}
+
+.lobby__welcome-title,
+.lobby__events-title,
+.lobby__friends-title,
+.lobby__places-title {
+    font-size: 24px;
+    -unity-font-definition: var(--dcl-font-inter-bold);
+    color: var(--lobby-title-color);
+}
+
+.lobby__friends-title,
+.lobby__places-title {
+    height: 30px;
+    -unity-text-align: middle-left;
+}
+
+.lobby__welcome-title,
+.lobby__events-title {
+    height: 29px;
+    -unity-text-align: upper-left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.lobby__welcome-title {
+    margin-bottom: 10px;
+}
+
+/* The header is centred 25.8px under the middle of the screen, as in the uGUI lobby */
+.lobby__friends {
+    position: absolute;
+    left: var(--lobby-margin);
+    top: 566px;
+    width: 524px;
+}
+
+.lobby__friends-header {
+    height: 30px;
+    flex-direction: row;
+    align-items: center;
+}
+
+.lobby__friends-online-count {
+    margin-left: 15px;
+    font-size: 12px;
+    -unity-font-definition: var(--dcl-font-inter-regular);
+    -unity-text-align: middle-left;
+    color: var(--lobby-subtitle-color);
+}
+
+/* 132px cards plus the dots row under the viewport */
+.lobby__friends-rail {
+    margin-top: 2px;
+    height: 148px;
+}
+
+.lobby__events {
+    position: absolute;
+    right: var(--lobby-margin);
+    top: var(--lobby-columns-top);
+    width: 358px;
+}
+
+.lobby__events-title {
+    margin-bottom: 9px;
+}
+
+/* 214px cards plus the dots row under the viewport, and 16px more under the dots */
+.lobby__live-events {
+    margin-bottom: 16px;
+}
+
+.lobby__live-events-rail {
+    height: 230px;
+}
+
+/* The viewport bleeds as far as the live cards' shadow (6px sideways, 10px down) so it clips at the shadow's edge instead of the
+   card's; the padding keeps the cards in place and tells the rail how much of the viewport the cards have (see LobbyRailElement) */
+.lobby__live-events-rail .lobby-rail__viewport {
+    margin: 0 -6px -10px;
+    padding: 0 6px 10px;
+}
+
+.lobby__live-events-rail .lobby-rail__content {
+    left: 6px;
+}
+
+.lobby__upcoming-events {
+    margin-top: 4px;
+}
+
+/* 135px cards plus the dots row under the viewport */
+.lobby__upcoming-events-rail {
+    height: 155px;
+}
+
+.lobby__upcoming-events-rail .lobby-rail__dots {
+    margin-top: 12px;
+}
+
+.lobby__places {
+    position: absolute;
+    bottom: 13px;
+    width: 864px;
+}
+
+.lobby__places--recent {
+    left: var(--lobby-margin);
+}
+
+.lobby__places--featured {
+    right: var(--lobby-margin);
+}
+
+.lobby__places-title {
+    margin-bottom: 5px;
+}
+
+/* 165px cards plus the dots row under the viewport */
+.lobby__places-rail {
+    height: 181px;
+}
+
+/* The recent row has no dots: its cards are padded to the height of the rail so both rows line up along the bottom */
+.lobby__places-row {
+    flex-direction: row;
+    height: 165px;
+    margin-bottom: 16px;
+}
+
+.lobby__places-row > .lobby-place-card {
+    margin-right: 8px;
+}

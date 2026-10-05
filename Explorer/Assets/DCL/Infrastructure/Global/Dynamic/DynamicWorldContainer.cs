@@ -88,6 +88,7 @@ namespace Global.Dynamic
         private readonly ProfileContainer profileContainer;
         private readonly UIShellContainer uiShellContainer;
         private readonly ChatContainer chatContainer;
+        private readonly UpscalingController upscalingController;
 
         public IMVCManager MvcManager => uiShellContainer.MvcManager;
 
@@ -131,7 +132,8 @@ namespace Global.Dynamic
             BannedNotificationHandler bannedNotificationHandler,
             MultiplayerContainer multiplayerContainer,
             CommunitiesContainer communitiesContainer,
-            VoiceChatContainer voiceChatContainer)
+            VoiceChatContainer voiceChatContainer,
+            UpscalingController upscalingController)
         {
             this.uiShellContainer = uiShellContainer;
             RealmController = realmController;
@@ -149,11 +151,13 @@ namespace Global.Dynamic
             this.multiplayerContainer = multiplayerContainer;
             this.communitiesContainer = communitiesContainer;
             this.voiceChatContainer = voiceChatContainer;
+            this.upscalingController = upscalingController;
         }
 
         public override void Dispose()
         {
             // Reverse creation order
+            upscalingController.Dispose();
             voiceChatContainer.Dispose(); // disposes JoinedCommunitiesVoiceLiveTracker, which unsubscribes from CommunityDataService
             socialServicesContainer.Dispose();
             bannedNotificationHandler.Dispose();
@@ -442,7 +446,7 @@ namespace Global.Dynamic
             };
 
             var characterPreviewEventBus = new CharacterPreviewEventBus();
-            var upscaleController = new UpscalingController(uiShellContainer.MvcManager);
+            var upscaleController = new UpscalingController(characterPreviewEventBus);
             AudioMixer generalAudioMixer = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.GeneralAudioMixer, ct)).Value;
             var audioMixerVolumesController = new AudioMixerVolumesController(generalAudioMixer);
 
@@ -706,7 +710,7 @@ namespace Global.Dynamic
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 staticContainer.WebRequestsContainer.CreatePlugin(localSceneDevelopment),
                 new Web3AuthenticationPlugin(assetsProvisioner, dynamicWorldDependencies.CompositeWeb3Provider, debugBuilder, uiShellContainer.MvcManager, profileContainer.SelfProfile, webBrowser, staticContainer.RealmData, identityCache, characterPreviewFactory, dynamicWorldDependencies.SplashScreen, audioMixerVolumesController, staticContainer.InputBlock, characterPreviewEventBus, backgroundMusic, globalWorld, bootstrapContainer.AppArgs, staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, profileContainer.ProfileChangesBus, profilesRepository, donationsService),
-                new SkyboxPlugin(assetsProvisioner, dynamicSettings.DirectionalLight, staticContainer.ScenesCache, staticContainer.SceneRestrictionBusController, staticContainer.RealmData, !appArgs.HasFlagWithValueFalse(AppArgsFlags.SKYBOX_TIME_ENABLED)),
+                new SkyboxPlugin(assetsProvisioner, dynamicSettings.DirectionalLight, staticContainer.ScenesCache, staticContainer.SceneRestrictionBusController, staticContainer.RealmData, debugBuilder, !appArgs.HasFlagWithValueFalse(AppArgsFlags.SKYBOX_TIME_ENABLED)),
                 new LoadingScreenPlugin(assetsProvisioner, uiShellContainer.MvcManager, audioMixerVolumesController,
                     staticContainer.InputBlock, debugBuilder, staticContainer.LoadingStatus),
                 new ExternalUrlPromptPlugin(assetsProvisioner, webBrowser, uiShellContainer.MvcManager, uiShellContainer.Cursor),
@@ -779,7 +783,8 @@ namespace Global.Dynamic
                     wearableContainer.ThumbnailProvider,
                     staticContainer.ImageControllerProvider,
                     staticContainer.WebRequestsContainer.WebRequestController,
-                    marketplaceShopApiClient
+                    marketplaceShopApiClient,
+                    upscaleController
                 ),
                 new CreditPurchasePlugin(
                     assetsProvisioner,
@@ -1133,7 +1138,8 @@ namespace Global.Dynamic
                 bannedNotificationHandler,
                 multiplayerContainer,
                 communitiesContainer,
-                voiceChatContainer
+                voiceChatContainer,
+                upscaleController
             );
 
             // Init itself
