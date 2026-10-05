@@ -16,6 +16,7 @@ using DCL.Profiles.Self;
 using DCL.UI;
 using MVC;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -27,7 +28,7 @@ namespace DCL.EmotesWheel
     public class EmotesWheelController : ControllerBase<EmotesWheelView>
     {
         private const string? EMPTY_IMAGE_TYPE = "empty";
-        private const string EMOTE_LOADING_ERROR_MESSAGE = "Something went wrong loading Emote {0}";
+        private const string EMOTE_LOADING_ERROR_MESSAGE = "Something went wrong loading one of your Emotes";
         private readonly SelfProfile selfProfile;
         private readonly IEmoteStorage emoteStorage;
         private readonly NftTypeIconSO rarityBackgrounds;
@@ -38,6 +39,7 @@ namespace DCL.EmotesWheel
         private readonly DCLInput.EmoteWheelActions emoteWheelInput;
         private readonly ICursor cursor;
         private readonly URN[] currentEmotes = new URN[Avatar.MAX_EQUIPPED_EMOTES];
+        private readonly HashSet<URN> notifiedFailedEmotes = new ();
         private readonly IMVCManager mvcManager;
         private UniTaskCompletionSource? closeViewTask;
         private CancellationTokenSource? fetchProfileCts;
@@ -163,19 +165,29 @@ namespace DCL.EmotesWheel
                 return;
             }
 
+            EmoteWheelSlotView view = viewInstance!.Slots[slot];
+
             // Storage hands out the entry before its definition is fetched
-            if (emote.IsLoading && await UniTask.WaitWhile(() => emote.IsLoading, cancellationToken: ct).SuppressCancellationThrow())
-                return;
+            if (ShouldWaitForDefinition(emote))
+            {
+                view.Thumbnail.gameObject.SetActive(false);
+                view.LoadingSpinner.SetActive(true);
+
+                if (await UniTask.WaitWhile(() => ShouldWaitForDefinition(emote), cancellationToken: ct).SuppressCancellationThrow())
+                    return;
+            }
 
             if (!IsDefinitionResolved(emote))
             {
                 ReportHub.LogWarning(new ReportData(ReportCategory.EMOTE), $"Could not setup emote wheel slot {slot} for {emoteUrn}, emote definition failed to load");
-                NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(string.Format(EMOTE_LOADING_ERROR_MESSAGE, emoteUrn)));
+
+                // The slot is rebuilt on every wheel open; a broken emote is announced only once per session
+                if (notifiedFailedEmotes.Add(emoteUrn))
+                    NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(EMOTE_LOADING_ERROR_MESSAGE));
+
                 SetUpEmptySlot(slot);
                 return;
             }
-
-            EmoteWheelSlotView view = viewInstance!.Slots[slot];
 
             view.BackgroundRarity.sprite = rarityBackgrounds.GetTypeImage(emote.GetRarity());
             view.EmptyContainer.SetActive(false);
@@ -190,6 +202,7 @@ namespace DCL.EmotesWheel
             view.BackgroundRarity.sprite = rarityBackgrounds.GetTypeImage(EMPTY_IMAGE_TYPE);
             view.EmptyContainer.SetActive(true);
             view.Thumbnail.gameObject.SetActive(false);
+            view.LoadingSpinner.SetActive(false);
         }
 
         private async UniTask WaitForThumbnailAsync(IEmote emote, EmoteWheelSlotView view, CancellationToken ct)
@@ -225,6 +238,10 @@ namespace DCL.EmotesWheel
             else
                 viewInstance!.CurrentEmoteName.text = emote.GetName();
         }
+
+        // IsLoading also covers the asset downloads that follow the definition; the slot only needs the definition
+        internal static bool ShouldWaitForDefinition(IEmote emote) =>
+            emote.IsLoading && !IsDefinitionResolved(emote);
 
         private static bool IsDefinitionResolved(IEmote emote) =>
             emote.DTO?.Metadata != null;
