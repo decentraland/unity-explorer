@@ -35,6 +35,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
         private CRDTPooledMemoryAllocator crdtPooledMemoryAllocator;
 
         private EngineAPIImplementation engineAPIImplementation;
+        private SceneRuntimeMetrics metrics;
 
         private List<CRDTMessage> crdtMessages;
         private List<ProcessedCRDTMessage> outgoingMessages;
@@ -80,7 +81,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
                 Substitute.For<ISystemGroupsUpdateGate>(),
                 new RethrowSceneExceptionsHandler(),
                 new MultiThreadSync(new SceneShortInfo()), new MultiThreadSync.Owner("TEST"),
-                new SceneRuntimeMetrics());
+                metrics = new SceneRuntimeMetrics());
 
             crdtDeserializer.When(d => d.DeserializeBatch(ref Arg.Any<ReadOnlyMemory<byte>>(), Arg.Any<IList<CRDTMessage>>()))
                             .Do(c =>
@@ -117,6 +118,54 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
                                              mutex.WaitOne();
                                              return new OutgoingCRDTMessagesSyncBlock(outgoingMessages.ToList());
                                          });
+        }
+
+        [Test]
+        public void RecordTrafficInBothDirectionsWhileCapturing()
+        {
+            // Arrange
+            metrics.Traffic.TryStartCapture();
+
+            // Act
+            engineAPIImplementation.CrdtSendToRenderer(INPUT);
+            var entries = new List<CrdtTrafficProbe.EntrySnapshot>();
+            CrdtTrafficProbe.Snapshot snapshot = metrics.Traffic.StopCapture(entries);
+
+            // Assert
+            Assert.That(snapshot.Batches, Is.EqualTo(1));
+            Assert.That(snapshot.FromScene.Total, Is.EqualTo(crdtMessages.Count));
+            Assert.That(snapshot.FromScene[CrdtTrafficOutcome.Applied], Is.EqualTo(crdtMessages.Count));
+            Assert.That(snapshot.ToScene.Total, Is.EqualTo(outgoingMessages.Count));
+            Assert.That(snapshot.ToScene[CrdtTrafficOutcome.Applied], Is.EqualTo(outgoingMessages.Count));
+            Assert.That(snapshot.ToSceneBytes, Is.EqualTo(100));
+        }
+
+        [Test]
+        public void ClassifyIdenticalRewritesAsRedundant()
+        {
+            // Arrange
+            crdtProtocol.IsIdenticalToLWWState(Arg.Any<CRDTMessage>()).Returns(true);
+            crdtProtocol.ProcessMessage(Arg.Any<CRDTMessage>()).Returns(_ => new CRDTReconciliationResult(CRDTStateReconciliationResult.StateUpdatedTimestamp, CRDTReconciliationEffect.ComponentModified));
+            metrics.Traffic.TryStartCapture();
+
+            // Act
+            engineAPIImplementation.CrdtSendToRenderer(INPUT);
+            CrdtTrafficProbe.Snapshot snapshot = metrics.Traffic.StopCapture(new List<CrdtTrafficProbe.EntrySnapshot>());
+
+            // Assert
+            Assert.That(snapshot.FromScene[CrdtTrafficOutcome.RedundantIdenticalData], Is.EqualTo(crdtMessages.Count));
+            Assert.That(snapshot.ToScene[CrdtTrafficOutcome.RedundantIdenticalData], Is.EqualTo(outgoingMessages.Count));
+            Assert.That(snapshot.FromScene[CrdtTrafficOutcome.Applied], Is.EqualTo(0));
+        }
+
+        [Test]
+        public void NotTouchTheProtocolForIdenticalChecksWhileIdle()
+        {
+            // Act
+            engineAPIImplementation.CrdtSendToRenderer(INPUT);
+
+            // Assert
+            crdtProtocol.DidNotReceive().IsIdenticalToLWWState(Arg.Any<CRDTMessage>());
         }
 
         [Test]
