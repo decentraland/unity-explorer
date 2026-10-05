@@ -62,6 +62,9 @@ namespace DCL.UserInAppInitializationFlow
 
             ProfileReadResult read = await selfProfile.ProfileAsync(ct);
 
+            if (read.IsCancelled)
+                throw new OperationCanceledException(ct);
+
             if (!read.IsOk(out _))
                 throw new InvalidOperationException($"Own profile could not be resolved ({read}), nothing to propagate to Pulse");
 
