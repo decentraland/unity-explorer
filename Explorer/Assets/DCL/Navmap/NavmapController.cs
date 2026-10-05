@@ -12,6 +12,7 @@ using DCL.MapRenderer.MapLayers.PlayerMarker;
 using DCL.Navmap.FilterPanel;
 using DCL.PlacesAPIService;
 using DCL.UI;
+using DCL.Utilities;
 using ECS;
 using System;
 using System.Collections.Generic;
@@ -36,6 +37,7 @@ namespace DCL.Navmap
         private readonly RectTransform rectTransform;
         private readonly SatelliteController satelliteController;
         private readonly IPlacesAPIService placesAPIService;
+        private readonly UpscalingController upscalingController;
         private readonly IRealmData realmData;
         private readonly IMapPathEventBus mapPathEventBus;
         private readonly UIAudioEventsBus audioEventsBus;
@@ -70,7 +72,8 @@ namespace DCL.Navmap
             NavmapZoomController navmapZoomController,
             SatelliteController satelliteController,
             IPlacesAPIService placesAPIService,
-            HomePlaceEventBus homePlaceEventBus)
+            HomePlaceEventBus homePlaceEventBus,
+            UpscalingController upscalingController)
         {
             this.navmapView = navmapView;
             this.mapRenderer = mapRenderer;
@@ -88,6 +91,7 @@ namespace DCL.Navmap
             this.navmapView.DestinationInfoElement.QuitButton.onClick.AddListener(OnRemoveDestinationButtonClicked);
             this.satelliteController = satelliteController;
             this.placesAPIService = placesAPIService;
+            this.upscalingController = upscalingController;
             mapPathEventBus.OnRemovedDestination += RemoveDestination;
 
             this.navmapView.SatelliteRenderImage.ParcelClicked += OnParcelClicked;
@@ -112,6 +116,7 @@ namespace DCL.Navmap
             animationCts?.Dispose();
             zoomController.Dispose();
             searchBarController.Dispose();
+            upscalingController.ReleaseFullRenderScale(this);
         }
 
         private void OnRemoveDestinationButtonClicked()
@@ -211,6 +216,9 @@ namespace DCL.Navmap
             }
 
             placesAndEventsPanelController.Show();
+
+            // The map renders into a RenderTexture, so the user's render scale would pixelate it.
+            upscalingController.RequireFullRenderScale(this);
         }
 
         public void Deactivate()
@@ -224,6 +232,7 @@ namespace DCL.Navmap
             navmapBus.ClearHistory();
             searchBarController.ClearInput();
             navmapView.gameObject.SetActive(false);
+            upscalingController.ReleaseFullRenderScale(this);
         }
 
         public void Animate(int triggerId)
