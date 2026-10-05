@@ -61,5 +61,7 @@
             <ui:VisualElement name="Icon" class="lobby__avatar-tooltip-icon" picking-mode="Ignore" />
             <ui:Label name="Label" text="CUSTOMIZE" class="lobby__avatar-tooltip-label" picking-mode="Ignore" />
         </ui:VisualElement>
+        <!-- Stands in for the hardware cursor, hidden while the figure is dragged -->
+        <ui:VisualElement name="AvatarDragCursor" class="lobby__avatar-drag-cursor" picking-mode="Ignore" style="display: none;" />
     </ui:VisualElement>
 </ui:UXML>

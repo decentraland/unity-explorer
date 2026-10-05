@@ -48,6 +48,7 @@ namespace DCL.PluginSystem.Global
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IMVCManager mvcManager;
         private readonly IInputBlock inputBlock;
+        private readonly ICursor cursor;
         private readonly IReadOnlyLoadingStatus loadingStatus;
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly ISelfProfile selfProfile;
@@ -91,6 +92,7 @@ namespace DCL.PluginSystem.Global
             IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
             IInputBlock inputBlock,
+            ICursor cursor,
             IReadOnlyLoadingStatus loadingStatus,
             IDebugContainerBuilder debugContainerBuilder,
             ISelfProfile selfProfile,
@@ -124,6 +126,7 @@ namespace DCL.PluginSystem.Global
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
             this.inputBlock = inputBlock;
+            this.cursor = cursor;
             this.loadingStatus = loadingStatus;
             this.debugContainerBuilder = debugContainerBuilder;
             this.selfProfile = selfProfile;
@@ -226,7 +229,7 @@ namespace DCL.PluginSystem.Global
             var eventCardActions = new EventCardActionsController(eventsApiService, webBrowser, realmNavigator, clipboard, decentralandUrlsSource);
 
             var lobbyController = new LobbyDocumentController(viewFactory,
-                inputBlock, loadingStatus, mvcManager,
+                inputBlock, cursor, loadingStatus, mvcManager,
                 selfProfile, profileChangesBus, characterPreviewFactory, characterPreviewEventBus, settings.AvatarSettings, lobbyStage, world,
                 placesAPIService, realmData, homePlace, eventsApiService, eventCardActions, realmNavigator, decentralandUrlsSource, startParcel, new SpriteCache(webRequestController), profileButtonPresenter,
                 notificationsPanel, friendsPresenter);

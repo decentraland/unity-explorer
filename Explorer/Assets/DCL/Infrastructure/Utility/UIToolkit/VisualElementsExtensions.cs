@@ -23,19 +23,22 @@ namespace Utility.UIToolkit
         public static T InstantiateForElement<T>(this VisualTreeAsset asset) where T: VisualElement =>
             asset.Instantiate().Q<T>();
 
+        /// <summary>Centre of the element in Unity screen pixels (bottom-left origin). The element must be in a panel.</summary>
+        public static Vector2 ScreenCenter(this VisualElement element) =>
+            element.ScreenPosition(element.worldBound.center);
+
         /// <summary>
-        ///     Centre of the element in Unity screen pixels (bottom-left origin). RuntimePanelUtils only converts
+        ///     A panel-space position in Unity screen pixels (bottom-left origin). RuntimePanelUtils only converts
         ///     screen to panel, so the inverse comes from two probe conversions. The element must be in a panel.
         /// </summary>
-        public static Vector2 ScreenCenter(this VisualElement element)
+        public static Vector2 ScreenPosition(this VisualElement element, Vector2 panelPosition)
         {
             IPanel panel = element.panel;
             Vector2 origin = RuntimePanelUtils.ScreenToPanel(panel, Vector2.zero);
             Vector2 perPixel = RuntimePanelUtils.ScreenToPanel(panel, Vector2.one) - origin;
-            Vector2 center = element.worldBound.center;
 
-            float x = Mathf.Approximately(perPixel.x, 0f) ? 0f : (center.x - origin.x) / perPixel.x;
-            float y = Mathf.Approximately(perPixel.y, 0f) ? 0f : (center.y - origin.y) / perPixel.y;
+            float x = Mathf.Approximately(perPixel.x, 0f) ? 0f : (panelPosition.x - origin.x) / perPixel.x;
+            float y = Mathf.Approximately(perPixel.y, 0f) ? 0f : (panelPosition.y - origin.y) / perPixel.y;
 
             return new Vector2(x, Screen.height - y);
         }

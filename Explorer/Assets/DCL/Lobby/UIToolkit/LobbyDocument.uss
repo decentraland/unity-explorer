@@ -72,6 +72,15 @@
     color: var(--lobby-title-color);
 }
 
+/* Left and top follow the pointer; the translate centres the sprite on it */
+.lobby__avatar-drag-cursor {
+    position: absolute;
+    width: 52px;
+    height: 52px;
+    translate: -50% -50%;
+    background-image: url('/Assets/DCL/Backpack/Textures/CursorRotate.png');
+}
+
 .lobby__logo {
     position: absolute;
     left: var(--lobby-margin);

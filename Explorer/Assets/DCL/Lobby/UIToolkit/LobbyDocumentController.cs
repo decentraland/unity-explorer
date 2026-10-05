@@ -32,6 +32,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UIElements;
 using Utility;
 using Utility.UIToolkit;
@@ -56,6 +57,7 @@ namespace DCL.Lobby
         private static readonly Vector2 AVATAR_TOOLTIP_OFFSET = new (100f, 0f);
 
         private readonly IInputBlock inputBlock;
+        private readonly ICursor cursor;
         private readonly IReadOnlyLoadingStatus loadingStatus;
         private readonly IMVCManager mvcManager;
         private readonly ISelfProfile selfProfile;
@@ -99,7 +101,7 @@ namespace DCL.Lobby
         private GenericContextMenu? shareMenu;
         private EventDTO sharedEvent;
 
-        private Clickable? avatarClick;
+        private ClickOrDragManipulator? avatarGesture;
         private CancellationTokenSource? avatarCts;
         private CancellationTokenSource? placesCts;
         private CancellationTokenSource? eventsCts;
@@ -136,6 +138,7 @@ namespace DCL.Lobby
 
         public LobbyDocumentController(ViewFactoryMethod viewFactory,
             IInputBlock inputBlock,
+            ICursor cursor,
             IReadOnlyLoadingStatus loadingStatus,
             IMVCManager mvcManager,
             ISelfProfile selfProfile,
@@ -159,6 +162,7 @@ namespace DCL.Lobby
             LobbyDocumentFriendsPresenter? friends) : base(viewFactory)
         {
             this.inputBlock = inputBlock;
+            this.cursor = cursor;
             this.loadingStatus = loadingStatus;
             this.mvcManager = mvcManager;
             this.selfProfile = selfProfile;
@@ -246,7 +250,13 @@ namespace DCL.Lobby
             VisualElement avatarHitArea = viewInstance.AvatarHitArea;
             avatarHitArea.SetDisplayed(false);
             avatarHitArea.AddToClassList(VisualElementsExtensions.INTERACTABLE_CLASS);
-            avatarHitArea.AddManipulator(avatarClick ??= new Clickable(OnAvatarClicked));
+            avatarHitArea.AddManipulator(avatarGesture ??= new ClickOrDragManipulator
+            {
+                Clicked = OnAvatarClicked,
+                DragStarted = OnAvatarDragStarted,
+                Dragged = OnAvatarDragged,
+                DragEnded = OnAvatarDragEnded,
+            });
             VisualElement avatarTooltip = viewInstance.AvatarTooltip;
             avatarTooltip.SetDisplayed(false);
             avatarHitArea.RegisterCallback<PointerEnterEvent, VisualElement>(OnAvatarPointerEnter, avatarTooltip);
@@ -315,6 +325,8 @@ namespace DCL.Lobby
             friendsCts.SafeCancelAndDispose();
             friendsCts = null;
 
+            // A drag cut short by the close leaves the hardware cursor hidden otherwise
+            avatarGesture?.Cancel();
             avatarPreview!.OnHide();
 
             recentPlacesRail?.Hide();
@@ -496,12 +508,12 @@ namespace DCL.Lobby
         private void OnAvatarPointerEnter(PointerEnterEvent evt, VisualElement tooltip)
         {
             avatarPreview!.SetHovered(true);
-            MoveAvatarTooltip(tooltip, evt.position);
+            MoveToPointer(tooltip, evt.position, AVATAR_TOOLTIP_OFFSET);
             tooltip.SetDisplayed(true);
         }
 
-        private void OnAvatarPointerMove(PointerMoveEvent evt, VisualElement tooltip) =>
-            MoveAvatarTooltip(tooltip, evt.position);
+        private static void OnAvatarPointerMove(PointerMoveEvent evt, VisualElement tooltip) =>
+            MoveToPointer(tooltip, evt.position, AVATAR_TOOLTIP_OFFSET);
 
         private void OnAvatarPointerLeave(PointerLeaveEvent evt, VisualElement tooltip)
         {
@@ -509,12 +521,47 @@ namespace DCL.Lobby
             tooltip.SetDisplayed(false);
         }
 
-        // The pointer position comes in panel space, the tooltip is laid out in the space of its parent
-        private static void MoveAvatarTooltip(VisualElement tooltip, Vector2 panelPosition)
+        private void OnAvatarDragStarted(Vector2 panelPosition)
         {
-            Vector2 local = tooltip.parent.WorldToLocal(panelPosition) + AVATAR_TOOLTIP_OFFSET;
-            tooltip.style.left = local.x;
-            tooltip.style.top = local.y;
+            viewInstance!.AvatarTooltip.SetDisplayed(false);
+
+            VisualElement dragCursor = viewInstance.AvatarDragCursor;
+            MoveToPointer(dragCursor, panelPosition, Vector2.zero);
+            dragCursor.SetDisplayed(true);
+            cursor.SetVisibility(false);
+        }
+
+        // The figure turns by screen pixels per second as in the other previews, so the panel-space travel is converted
+        private void OnAvatarDragged(Vector2 panelPosition, Vector2 panelDelta)
+        {
+            MoveToPointer(viewInstance!.AvatarDragCursor, panelPosition, Vector2.zero);
+
+            VisualElement hitArea = viewInstance.AvatarHitArea;
+            Vector2 screenPosition = hitArea.ScreenPosition(panelPosition);
+            Vector2 screenDelta = screenPosition - hitArea.ScreenPosition(panelPosition - panelDelta);
+            avatarPreview!.Drag(new CharacterPreviewPointerInput(PointerEventData.InputButton.Left, screenPosition, screenDelta));
+        }
+
+        private void OnAvatarDragEnded(Vector2 panelPosition)
+        {
+            viewInstance!.AvatarDragCursor.SetDisplayed(false);
+            cursor.SetVisibility(true);
+
+            // No enter event follows a captured drag, so a release over the figure brings the hint back here
+            VisualElement hitArea = viewInstance.AvatarHitArea;
+            if (!hitArea.ContainsPoint(hitArea.WorldToLocal(panelPosition))) return;
+
+            VisualElement tooltip = viewInstance.AvatarTooltip;
+            MoveToPointer(tooltip, panelPosition, AVATAR_TOOLTIP_OFFSET);
+            tooltip.SetDisplayed(true);
+        }
+
+        // The pointer position comes in panel space, the element is laid out in the space of its parent
+        private static void MoveToPointer(VisualElement element, Vector2 panelPosition, Vector2 offset)
+        {
+            Vector2 local = element.parent.WorldToLocal(panelPosition) + offset;
+            element.style.left = local.x;
+            element.style.top = local.y;
         }
 
         // The origin travels with the handlers so a Jump in from the details is attributed to the card's row
