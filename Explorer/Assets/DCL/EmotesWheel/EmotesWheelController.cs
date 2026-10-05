@@ -9,6 +9,8 @@ using DCL.Diagnostics;
 using DCL.ExplorePanel;
 using DCL.Input;
 using DCL.Input.Component;
+using DCL.NotificationsBus;
+using DCL.NotificationsBus.NotificationTypes;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI;
@@ -25,6 +27,7 @@ namespace DCL.EmotesWheel
     public class EmotesWheelController : ControllerBase<EmotesWheelView>
     {
         private const string? EMPTY_IMAGE_TYPE = "empty";
+        private const string EMOTE_LOADING_ERROR_MESSAGE = "Something went wrong loading Emote {0}";
         private readonly SelfProfile selfProfile;
         private readonly IEmoteStorage emoteStorage;
         private readonly NftTypeIconSO rarityBackgrounds;
@@ -167,6 +170,7 @@ namespace DCL.EmotesWheel
             if (!IsDefinitionResolved(emote))
             {
                 ReportHub.LogWarning(new ReportData(ReportCategory.EMOTE), $"Could not setup emote wheel slot {slot} for {emoteUrn}, emote definition failed to load");
+                NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(string.Format(EMOTE_LOADING_ERROR_MESSAGE, emoteUrn)));
                 SetUpEmptySlot(slot);
                 return;
             }
