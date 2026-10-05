@@ -96,7 +96,7 @@ namespace ECS.StreamableLoading.Fonts.Tests
         }
 
         [Test]
-        public void PreferTheConvertedBundleWhenTheManifestListsTheFont()
+        public void AssignAListedBundleWhenTheManifestListsTheFont()
         {
             // Arrange
             AssetBundleManifestVersion manifest = WithSceneManifest($"{CONTENT_HASH}_0123456789abcdef0123456789abcdef_windows");

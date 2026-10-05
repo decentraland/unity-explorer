@@ -22,9 +22,8 @@ namespace ECS.StreamableLoading.Fonts
     [LogCategory(ReportCategory.SDK_FONTS)]
     public partial class LoadFontSystem : LoadSystemBase<FontData, GetFontIntention>
     {
-        // Must match the asset names that the converter gives the two fonts in a font bundle
-        private const string BUNDLE_TEXT_MESH_PRO_ASSET = "tmp";
-        private const string BUNDLE_UI_TOOLKIT_ASSET = "uitk";
+        private const string CONVERTER_TEXT_MESH_PRO_ASSET_NAME = "tmp";
+        private const string CONVERTER_UI_TOOLKIT_ASSET_NAME = "uitk";
 
         private const int MAX_ATLAS_SIZE = 4096;
 
@@ -86,8 +85,8 @@ namespace ECS.StreamableLoading.Fonts
 
             try
             {
-                if (!bundle.TryGetAsset(out TMP_FontAsset textMeshPro, BUNDLE_TEXT_MESH_PRO_ASSET)
-                    || !bundle.TryGetAsset(out FontAsset uiToolkit, BUNDLE_UI_TOOLKIT_ASSET))
+                if (!bundle.TryGetAsset(out TMP_FontAsset textMeshPro, CONVERTER_TEXT_MESH_PRO_ASSET_NAME)
+                    || !bundle.TryGetAsset(out FontAsset uiToolkit, CONVERTER_UI_TOOLKIT_ASSET_NAME))
                     throw new FontLoadException($"\"{intention.Src}\": its converted font bundle holds no font assets, the built-in font stays");
 
                 string? defect = FindDefect(textMeshPro.atlasTextures, textMeshPro.atlasWidth, textMeshPro.atlasHeight, textMeshPro.sourceFontFile)
