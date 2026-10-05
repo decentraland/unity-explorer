@@ -111,6 +111,18 @@ namespace DCL.SDKComponents.MediaStream.Tests
         }
 
         [Test]
+        public void BlitOnce_WhenCameraStopsBeingShown()
+        {
+            var cameraRect = new Vector4(0.02f, 0.7f, 0.15f, 0.27f);
+
+            compositor.Compose(1920, 1080, Texture2D.blackTexture, false, default, null, camera, cameraRect);
+            compositor.Compose(1920, 1080, Texture2D.blackTexture, false, default, null, null, cameraRect);
+            compositor.Compose(1920, 1080, Texture2D.blackTexture, false, default, null, null, cameraRect);
+
+            Assert.AreEqual(2, compositor.blitCount);
+        }
+
+        [Test]
         public void Blit_WhenRectChanges()
         {
             compositor.Compose(1920, 1080, Texture2D.blackTexture, true, new Vector4(0.1f, 0.1f, 0.5f, 0.5f), null, null, default);

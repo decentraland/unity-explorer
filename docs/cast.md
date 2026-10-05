@@ -110,7 +110,7 @@ The composing bot is the pinned identity when the requested address is a `UserSt
 
 The bot's metadata is read from `LKParticipant.Metadata` on the main thread, only while the room is connected, and re-parsed only when the raw string changes. The FFI-thread handlers only raise `pendingPresentationRefresh` on connect, reconnect, participant connect/disconnect and metadata changes. Unparseable or out-of-bounds metadata is warned about once per player and falls back to the legacy path.
 
-**Layers.** `PresentationCompositor` blits one upright `RenderTexture` the size of the slide, scaled down with its aspect preserved to at most 2048 px per side (`MAX_COMPOSITE_SIZE`). It blits on every compose while a video or camera frame is drawn; with only the slide shown, it blits again only when the slide or a rect changed. The composite has three layers:
+**Layers.** `PresentationCompositor` blits one upright `RenderTexture` the size of the slide, scaled down with its aspect preserved to at most 2048 px per side (`MAX_COMPOSITE_SIZE`). It blits on every compose while a video or camera frame is drawn; with only the slide shown, it blits again only when the slide or a rect changed, or right after a video or camera frame stops being drawn, so the circle or rect never keeps a stale frame. The composite has three layers:
 
 | Layer | Source | Shown |
 |-------|--------|-------|

@@ -32,6 +32,7 @@ namespace DCL.SDKComponents.MediaStream
         private bool lastShowVideoRect;
         private Vector4 lastVideoRect;
         private Vector4 lastCameraRect;
+        private bool lastDrewFrame;
 
         internal int blitCount { get; private set; }
 
@@ -52,7 +53,7 @@ namespace DCL.SDKComponents.MediaStream
         ///     <paramref name="width" /> × <paramref name="height" />, scaled down with its aspect preserved to at most
         ///     <see cref="MAX_COMPOSITE_SIZE" /> on each side. Rects are normalized with a top-left origin. Blits on every
         ///     call while <paramref name="video" /> or <paramref name="camera" /> is given; otherwise only when the slide
-        ///     or rects changed since the last call.
+        ///     or rects changed, or the last call drew a video or camera frame.
         /// </summary>
         /// <returns>The same render texture instance while the size is unchanged.</returns>
         public Texture Compose(int width, int height, Texture slide, bool showVideoRect, Vector4 videoRect, Texture? video, Texture? camera, Vector4 cameraRect)
@@ -68,11 +69,14 @@ namespace DCL.SDKComponents.MediaStream
                 composite.Create();
             }
 
-            if (video == null && camera == null && composite.IsCreated()
+            bool drawsFrame = video != null || camera != null;
+
+            if (!drawsFrame && !lastDrewFrame && composite.IsCreated()
                 && ReferenceEquals(slide, lastSlide)
                 && showVideoRect == lastShowVideoRect && videoRect.Equals(lastVideoRect) && cameraRect.Equals(lastCameraRect))
                 return composite;
 
+            lastDrewFrame = drawsFrame;
             lastSlide = slide;
             lastShowVideoRect = showVideoRect;
             lastVideoRect = videoRect;
