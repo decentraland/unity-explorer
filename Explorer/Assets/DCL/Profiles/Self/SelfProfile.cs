@@ -105,7 +105,6 @@ namespace DCL.Profiles.Self
             }
         }
 
-        /// <summary>Cancelling the token stops waiting; the deploy itself always runs to its end.</summary>
         public virtual UniTask<ProfileDeployResult> DeployProfileAsync(Profile edited, CancellationToken ct)
         {
             IMsgInbox<SelfProfileMsg> inbox = runtime;
