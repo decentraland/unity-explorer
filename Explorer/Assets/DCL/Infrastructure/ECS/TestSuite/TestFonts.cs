@@ -12,11 +12,11 @@ namespace ECS.TestSuite
 {
     public static class TestFonts
     {
-        public static readonly string PATH = Path.Combine(Application.dataPath, "DCL/SDKComponents/Fonts/LiberationSans-Regular.ttf");
-
         private const int SAMPLING_POINT_SIZE = 90;
         private const int ATLAS_PADDING = 9;
         private const int ATLAS_SIZE = 1024;
+
+        public static readonly string PATH = Path.Combine(Application.dataPath, "DCL/SDKComponents/Fonts/LiberationSans-Regular.ttf");
 
         public static TMP_FontAsset CreateTextMeshProFont(int atlasSize = ATLAS_SIZE) =>
             TMP_FontAsset.CreateFontAsset(PATH, 0, SAMPLING_POINT_SIZE, ATLAS_PADDING, GlyphRenderMode.SDFAA, atlasSize, atlasSize);

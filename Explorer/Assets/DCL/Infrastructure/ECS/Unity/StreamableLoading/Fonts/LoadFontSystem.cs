@@ -49,13 +49,13 @@ namespace ECS.StreamableLoading.Fonts
 
         protected override async UniTask<StreamableLoadingResult<FontData>> FlowInternalAsync(GetFontIntention intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
         {
-            if (intention.Bundle is not { } bundle)
+            if (intention.Bundle is not { } converted)
                 throw new FontLoadException($"\"{intention.Src}\": the scene has no converted asset bundles to load the font from, the built-in font stays", LogType.Log);
 
-            if (!bundle.Listed && !tryUnlistedBundles)
+            if (!converted.Listed && !tryUnlistedBundles)
                 throw new FontLoadException($"\"{intention.Src}\": the scene's asset bundle manifest lists no converted font bundle for it, the built-in font stays", LogType.Log);
 
-            return new StreamableLoadingResult<FontData>(await LoadConvertedAsync(intention, bundle, state, partition, ct));
+            return new StreamableLoadingResult<FontData>(await LoadConvertedAsync(intention, converted, state, partition, ct));
         }
 
         private async UniTask<FontData> LoadConvertedAsync(GetFontIntention intention, ConvertedFontBundle converted, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
@@ -79,8 +79,11 @@ namespace ECS.StreamableLoading.Fonts
             }
 
             if (!promise.TryGetResult(World, out StreamableLoadingResult<AssetBundleData> result) || result is not { Succeeded: true, Asset: { } bundle })
-                throw new FontLoadException($"\"{intention.Src}\": its converted font bundle did not load, the built-in font stays: {result.Exception?.Message}",
-                    converted.Listed ? LogType.Warning : LogType.Log);
+            {
+                var message = $"\"{intention.Src}\": its converted font bundle did not load, the built-in font stays";
+                LogType severity = converted.Listed ? LogType.Warning : LogType.Log;
+                throw result.Exception is { } cause ? new FontLoadException(message, severity, cause) : new FontLoadException(message, severity);
+            }
 
             using ProfilerMarker.AutoScope _ = READ_BUNDLED_FONT_MARKER.Auto();
 

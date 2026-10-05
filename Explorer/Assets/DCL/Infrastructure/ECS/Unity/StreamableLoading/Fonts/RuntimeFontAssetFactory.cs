@@ -8,6 +8,7 @@ namespace ECS.StreamableLoading.Fonts
 {
     public class RuntimeFontAssetFactory
     {
+        /// <summary>Added to the atlas padding to get the SDF gradient scale, as TMP does for its own materials.</summary>
         private const int SDF_PACKING_MODIFIER = 1;
 
         private static readonly ProfilerMarker ADOPT_BUNDLED_MARKER = new ($"{nameof(RuntimeFontAssetFactory)}.{nameof(AdoptBundled)}");

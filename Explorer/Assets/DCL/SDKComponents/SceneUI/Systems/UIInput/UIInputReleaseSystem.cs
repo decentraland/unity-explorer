@@ -44,13 +44,8 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
-        private void HandleEntityDestruction(in Entity entity, ref UIInputComponent uiInputComponent, in DeleteEntityIntention deleteEntityIntention)
-        {
-            if (deleteEntityIntention.DeferDeletion)
-                return;
-
+        private void HandleEntityDestruction(in Entity entity, ref UIInputComponent uiInputComponent) =>
             RemoveTextField(entity, uiInputComponent);
-        }
 
         [Query]
         private void ReleaseFonts(ref UIInputComponent uiInputComponent) =>

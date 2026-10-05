@@ -339,7 +339,7 @@ namespace DCL.SDKComponents.SceneUI.Utils
                 : new StyleFontDefinition(StyleKeyword.Null);
         }
 
-        public static void ClearCustomFont(VisualElement element) =>
+        private static void ClearCustomFont(VisualElement element) =>
             element.style.unityFontDefinition = new StyleFontDefinition(StyleKeyword.Null);
 
         public static void ReleaseCustomFont(World world, ref SceneFontRequest request, ref FontAsset? customFont, VisualElement element)

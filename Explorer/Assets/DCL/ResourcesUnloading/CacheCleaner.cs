@@ -173,7 +173,7 @@ namespace DCL.ResourcesUnloading
         public void UpdateProfilingCounters()
         {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-            ProfilingCounters.WearablesAssetsInCatalogAmount.Value = wearableStorage is WearableStorage storage ? storage.WearableAssetsInCatalog : 0;
+            ProfilingCounters.WearablesAssetsInCatalogAmount.Value = ((WearableStorage)wearableStorage!).WearableAssetsInCatalog;
             ProfilingCounters.WearablesAssetsInCacheAmount.Value = wearableAssetsCache?.AssetsCount ?? 0;
 #endif
         }

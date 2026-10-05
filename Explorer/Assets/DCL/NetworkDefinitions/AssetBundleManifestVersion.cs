@@ -111,6 +111,7 @@ public class AssetBundleManifestVersion
             }
         }
 
+        /// <summary>True when the manifest's <c>files[]</c> name a converted bundle for this bare hash; Qm casing entries do not count.</summary>
         public bool ListsConvertedFile(string bareHash) =>
             convertedHashes != null && convertedHashes.Contains(bareHash);
 

@@ -4,7 +4,6 @@ using DCL.Optimization.Pools;
 using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Systems.UIDropdown;
 using DCL.SDKComponents.SceneUI.Utils;
-using ECS.ComponentsPooling.Systems;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.TestSuite;
@@ -26,7 +25,6 @@ namespace DCL.SDKComponents.SceneUI.Tests
         private const string FONT_SRC = "fonts/Roboto.ttf";
 
         private IComponentPool<UIDropdownComponent> componentPool = null!;
-        private IComponentPoolsRegistry poolsRegistry = null!;
         private FontAsset customFont = null!;
         private UIDropdownComponent component = null!;
         private Entity entity;
@@ -36,7 +34,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
         public void SetUp()
         {
             componentPool = Substitute.For<IComponentPool<UIDropdownComponent>>();
-            poolsRegistry = new ComponentPoolsRegistry(new Dictionary<Type, IComponentPool> { { typeof(UIDropdownComponent), componentPool } }, null);
+            var poolsRegistry = new ComponentPoolsRegistry(new Dictionary<Type, IComponentPool> { { typeof(UIDropdownComponent), componentPool } }, null);
             system = new UIDropdownReleaseSystem(world, poolsRegistry);
 
             customFont = TestFonts.CreateUIToolkitFont();
@@ -88,35 +86,8 @@ namespace DCL.SDKComponents.SceneUI.Tests
         }
 
         [Test]
-        public void KeepTheComponentAndFontUntilDeferredDeletionIsReleased()
+        public void ReleaseEveryFontWhenTheWorldIsFinalized()
         {
-            world.Add(entity, new DeleteEntityIntention { DeferDeletion = true });
-            using var referenceReleaseSystem = new ReleaseReferenceComponentsSystem(world, poolsRegistry);
-
-            system.Update(0);
-            referenceReleaseSystem.Update(0);
-            system.Update(0);
-            referenceReleaseSystem.Update(0);
-
-            Assert.That(world.Has<UIDropdownComponent>(entity), Is.True);
-            Assert.That(component.CustomFont, Is.SameAs(customFont));
-            Assert.That(world.IsAlive(promiseEntity), Is.True);
-            componentPool.DidNotReceiveWithAnyArgs().Release(default!);
-
-            world.Set(entity, new DeleteEntityIntention { DeferDeletion = false });
-            system.Update(0);
-            referenceReleaseSystem.Update(0);
-
-            Assert.That(world.Has<UIDropdownComponent>(entity), Is.False);
-            componentPool.Received(1).Release(component);
-            AssertFontReleased();
-        }
-
-        [TestCase(false)]
-        [TestCase(true)]
-        public void ReleaseEveryFontWhenTheWorldIsFinalized(bool deferDeletion)
-        {
-            world.Add(entity, new DeleteEntityIntention { DeferDeletion = deferDeletion });
             system.FinalizeComponents(world.Query(QueryDescription.Null));
 
             componentPool.DidNotReceiveWithAnyArgs().Release(default!);

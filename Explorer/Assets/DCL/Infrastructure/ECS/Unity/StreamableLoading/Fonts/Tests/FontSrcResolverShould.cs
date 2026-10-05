@@ -183,6 +183,24 @@ namespace ECS.StreamableLoading.Fonts.Tests
         }
 
         [Test]
+        public void KeepListedAndUnlistedBundlesApart()
+        {
+            // Arrange
+            AssetBundleManifestVersion manifest = WithSceneManifest($"{CONTENT_HASH}_0123456789abcdef0123456789abcdef_windows");
+            FontSrcResolver.TryCreateIntention(CONTENT_FILE, sceneData, out GetFontIntention listed);
+
+            var unlisted = new GetFontIntention
+            {
+                Src = CONTENT_FILE,
+                CommonArguments = new CommonLoadingArguments(CONTENT_URL),
+                Bundle = new ConvertedFontBundle(CONTENT_HASH, listed: false, manifest, "other-scene"),
+            };
+
+            // Assert
+            Assert.That(listed.Equals(unlisted), Is.False);
+        }
+
+        [Test]
         public void KeepDifferentBundlesApart()
         {
             // Arrange
