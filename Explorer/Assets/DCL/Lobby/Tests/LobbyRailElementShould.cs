@@ -289,7 +289,9 @@ namespace DCL.Lobby.Tests
             return document.rootVisualElement;
         }
 
-        // The press counter is registered before the Clickable so its pointer capture cannot cut it off
+        // The press counter is registered before the Clickable so its pointer capture cannot cut it off. The cards are
+        // shown without a rewind: a rewind leaves the instant class on until the next panel update, which a synchronous
+        // test never reaches, and these tests read that class as the sign of a drag
         private void ShowCapturingCards(int count, System.Action onPress)
         {
             for (var i = 0; i < count; i++)
@@ -300,7 +302,7 @@ namespace DCL.Lobby.Tests
                 rail.Add(card);
             }
 
-            rail.SetCardCount(count);
+            rail.SetCardCount(count, rewind: false);
         }
 
         private static void Press(VisualElement target, float x)
