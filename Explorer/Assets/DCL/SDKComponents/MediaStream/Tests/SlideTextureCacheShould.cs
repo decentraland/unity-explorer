@@ -349,6 +349,54 @@ namespace DCL.SDKComponents.MediaStream.Tests
         }
 
         [Test]
+        public void KeepComposedSlide_WhenClearedThrottled()
+        {
+            var slides = new[] { new Texture2D(2, 2), new Texture2D(2, 2) };
+            var loaded = 0;
+            SendTextureRequest(webRequestController).Returns(_ => UniTask.FromResult<Texture2D?>(slides[loaded++]));
+            cache.BeginComposing();
+            LoadSlide(0);
+            LoadSlide(1);
+
+            cache.ClearThrottled(10);
+
+            Assert.IsTrue(slides[0] == null);
+            Assert.IsTrue(slides[1] != null);
+        }
+
+        [Test]
+        public void DestroyFetchedSlide_WhenLastComposerStoppedDuringFetch()
+        {
+            var slide = new Texture2D(2, 2);
+            var response = new UniTaskCompletionSource<Texture2D?>();
+            SendTextureRequest(webRequestController).Returns(response.Task);
+            cache.BeginComposing();
+            cache.GetOrRequest(ALLOWED_URL, BOT_A);
+
+            cache.EndComposing();
+            response.TrySetResult(slide);
+
+            Assert.IsTrue(slide == null);
+        }
+
+        [Test]
+        public void FetchWithTimeout()
+        {
+            RequestEnvelope<GetTextureWebRequest, GetTextureArguments> envelope = default;
+
+            webRequestController.SendAsync<GetTextureWebRequest, GetTextureArguments, SlideTextureCache.SlideTextureOp, Texture2D>(
+                                     Arg.Do<RequestEnvelope<GetTextureWebRequest, GetTextureArguments>>(e => envelope = e),
+                                     Arg.Any<SlideTextureCache.SlideTextureOp>(),
+                                     Arg.Any<long>(),
+                                     Arg.Any<IProgress<float>?>())
+                                .Returns(new UniTaskCompletionSource<Texture2D?>().Task);
+
+            cache.GetOrRequest(ALLOWED_URL, BOT_A);
+
+            Assert.AreEqual(SlideTextureCache.REQUEST_TIMEOUT_SECONDS, envelope.CommonArguments.Timeout);
+        }
+
+        [Test]
         public void FetchWithoutRedirects()
         {
             RequestEnvelope<GetTextureWebRequest, GetTextureArguments> envelope = default;

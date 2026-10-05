@@ -42,6 +42,7 @@ namespace DCL.SDKComponents.MediaStream
         internal const int MAX_REJECTION_REPORTS = 8;
         internal const int MAX_FAILURE_REPORTS = 32;
         internal const int MAX_SLIDE_BYTES = 32 * 1024 * 1024;
+        internal const int REQUEST_TIMEOUT_SECONDS = 15;
 
         private const int PNG_HEADER_LENGTH = 24;
 
