@@ -137,7 +137,9 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
 
             try
             {
-                // Thread-pool callers (the reconnect loop) have no SynchronizationContext; FromCurrentSynchronizationContext would throw there and orphan the started lookup.
+                // Fixes: https://github.com/decentraland/unity-explorer/issues/10043
+                // Thread-pool callers (the reconnect loop) have no SynchronizationContext;
+                // FromCurrentSynchronizationContext would throw there and orphan the started lookup.
                 candidates = await Dns.GetHostAddressesAsync(hostName)
                                       .AsUniTask(useCurrentSynchronizationContext: SynchronizationContext.Current != null)
                                       .AttachExternalCancellation(ct)
