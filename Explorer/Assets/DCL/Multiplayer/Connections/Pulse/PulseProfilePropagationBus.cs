@@ -21,7 +21,7 @@ namespace DCL.Multiplayer.Connections.Pulse
         /// <summary>Announces the profile version once; the same instance at the same version is not sent again.</summary>
         public void PropagateIfNewVersion(Profile profile)
         {
-            if (ReferenceEquals(profile, lastAnnounced) && profile.Version == lastAnnouncedVersion)
+            if (!service.IsAuthenticated || (ReferenceEquals(profile, lastAnnounced) && profile.Version == lastAnnouncedVersion))
                 return;
 
             lastAnnounced = profile;
