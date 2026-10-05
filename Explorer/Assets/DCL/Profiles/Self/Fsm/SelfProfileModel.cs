@@ -29,9 +29,6 @@ namespace DCL.Profiles.Self
         public static Identified New(UserId address) =>
             new (address, ProfileKnowledge.Unknown(), ProfileActivity.Idle());
 
-        public Identified WithKnowledge(ProfileKnowledge knowledge) =>
-            new (Address, knowledge, Activity, PendingReads);
-
         public Identified WithActivity(ProfileActivity activity) =>
             new (Address, Knowledge, activity, PendingReads);
 
