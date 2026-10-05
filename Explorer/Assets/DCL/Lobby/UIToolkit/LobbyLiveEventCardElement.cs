@@ -4,11 +4,13 @@ namespace DCL.Lobby
 {
     /// <summary>
     ///     Live event card; its hierarchy comes from LobbyLiveEventCard.uxml and LobbyLiveEventCard.uss lays it out.
+    ///     The attendees counter is only shown while somebody is there.
     /// </summary>
     [UxmlElement]
     public partial class LobbyLiveEventCardElement : LobbyThumbnailCardElement
     {
         private const string USS_BLOCK = "lobby-live-event-card";
+        private const string USS_WITH_ATTENDEES = USS_BLOCK + "--with-attendees";
 
         private const string TITLE_NAME = "Title";
         private const string HOST_NAME = "Host";
@@ -58,6 +60,7 @@ namespace DCL.Lobby
             set
             {
                 attendees = value;
+                EnableInClassList(USS_WITH_ATTENDEES, value > 0);
 
                 if (attendeesLabel != null)
                     attendeesLabel.text = value.ToString();

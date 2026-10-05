@@ -96,6 +96,11 @@
     padding: 0 6px;
     border-radius: 12px;
     background-color: var(--dcl-color-shadow);
+    display: none;
+}
+
+.lobby-live-event-card--with-attendees .lobby-live-event-card__attendees {
+    display: flex;
 }
 
 .lobby-live-event-card__attendees-dot {

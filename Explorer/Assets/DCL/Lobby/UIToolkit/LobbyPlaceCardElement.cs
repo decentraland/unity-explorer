@@ -5,11 +5,13 @@ namespace DCL.Lobby
 {
     /// <summary>
     ///     Place card; its hierarchy comes from LobbyPlaceCard.uxml, laid out and hover-animated by LobbyPlaceCard.uss.
+    ///     The online counter is only shown while somebody is there.
     /// </summary>
     [UxmlElement]
     public partial class LobbyPlaceCardElement : LobbyThumbnailCardElement
     {
         private const string USS_BLOCK = "lobby-place-card";
+        private const string WITH_ONLINE_MODIFIER = "--with-online";
 
         private const string TITLE_NAME = "Title";
         private const string CREATOR_NAME = "Creator";
@@ -19,6 +21,8 @@ namespace DCL.Lobby
         public Action? JumpInClicked;
 
         protected Button? jumpInButton;
+
+        private readonly string ussWithOnline;
 
         private Label? titleLabel;
         private Label? creatorLabel;
@@ -64,6 +68,7 @@ namespace DCL.Lobby
             set
             {
                 onlineCount = value;
+                EnableInClassList(ussWithOnline, value > 0);
 
                 if (onlineCountLabel != null)
                     onlineCountLabel.text = value.ToString();
@@ -72,7 +77,10 @@ namespace DCL.Lobby
 
         public LobbyPlaceCardElement() : this(USS_BLOCK) { }
 
-        protected LobbyPlaceCardElement(string ussBlock) : base(ussBlock) { }
+        protected LobbyPlaceCardElement(string ussBlock) : base(ussBlock)
+        {
+            ussWithOnline = ussBlock + WITH_ONLINE_MODIFIER;
+        }
 
         protected override void ResolveChildren()
         {

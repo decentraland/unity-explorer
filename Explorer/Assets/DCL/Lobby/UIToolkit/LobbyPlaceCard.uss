@@ -46,6 +46,11 @@
     padding: 0 6px;
     border-radius: 12px;
     background-color: var(--dcl-color-shadow);
+    display: none;
+}
+
+.lobby-place-card--with-online .lobby-place-card__online {
+    display: flex;
 }
 
 .lobby-place-card__online-dot {

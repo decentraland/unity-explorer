@@ -424,7 +424,7 @@ namespace DCL.Lobby
             landingDestination = null;
             card.Title = string.Empty;
             card.Creator = string.Empty;
-            card.HasOnlineCount = false;
+            card.OnlineCount = 0;
             card.CanJumpIn = false;
             card.CanOpen = false;
             card.Thumbnail = null;
@@ -476,7 +476,6 @@ namespace DCL.Lobby
             landingDestination = destination;
 
             LobbyLandingCardElement card = viewInstance!.LandingCard;
-            card.HasOnlineCount = true;
             card.CanJumpIn = true;
             card.CanOpen = hasDetails;
             ShowPlaceCard(card, place, ct);
