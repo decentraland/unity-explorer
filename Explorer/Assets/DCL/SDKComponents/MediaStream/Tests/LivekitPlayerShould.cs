@@ -298,6 +298,46 @@ namespace DCL.SDKComponents.MediaStream.Tests
         }
 
         [Test]
+        public void ReopenPinnedLegacyTrack_WhenCompositionEnds()
+        {
+            LKParticipant otherBot = AddParticipant(OTHER_BOT, LEGACY_METADATA);
+            Subscribe(otherBot, AddTrack(otherBot, "TR_other_bot", TrackKind.KindVideo, TrackSource.SourceScreenshare));
+            LKParticipant bot = AddParticipant(BOT, V2_METADATA);
+            Subscribe(bot, AddTrack(bot, SCREEN_SID, TrackKind.KindVideo, TrackSource.SourceScreenshare));
+            LivekitPlayer p = NewV2Player();
+            p.OpenMedia(LivekitAddress.FromUserStream(new UserStream(BOT, SCREEN_SID)));
+            p.EnsureVideoIsPlaying();
+            AssertComposite(p.LastTexture());
+
+            SetMetadata(bot, LEGACY_METADATA);
+            p.EnsureVideoIsPlaying();
+
+            videoStreams.Received().ActiveStream(new StreamKey(BOT, SCREEN_SID));
+            videoStreams.DidNotReceive().ActiveStream(new StreamKey(OTHER_BOT, "TR_other_bot"));
+        }
+
+        [Test]
+        public void RebindPresentationVideo_WhenComposingBotChangesWithSameMetadata()
+        {
+            LKParticipant bot = AddParticipant(BOT, V2_METADATA);
+            Subscribe(bot, AddTrack(bot, "TR_pv", TrackKind.KindVideo, TrackSource.SourceScreenshare, LiveKitMediaExtensions.PRESENTATION_VIDEO_TRACK_NAME));
+            LKParticipant otherBot = LiveKitTestObjects.NewParticipant(OTHER_BOT, V2_METADATA);
+            AddTrack(otherBot, "TR_pv", TrackKind.KindVideo, TrackSource.SourceScreenshare, LiveKitMediaExtensions.PRESENTATION_VIDEO_TRACK_NAME);
+            LivekitPlayer p = NewV2Player();
+            p.OpenMedia(LivekitAddress.CurrentStream());
+            p.EnsureVideoIsPlaying();
+
+            remoteParticipants.Clear();
+            remoteParticipants[OTHER_BOT] = otherBot;
+            remoteParticipants[BOT] = bot;
+            participantsHub.RemoteParticipant(OTHER_BOT).Returns(otherBot);
+            participantsHub.UpdatesFromParticipant += Raise.Event<ParticipantDelegate>(otherBot, UpdateFromParticipant.Connected);
+            p.EnsureVideoIsPlaying();
+
+            videoStreams.Received().ActiveStream(new StreamKey(OTHER_BOT, "TR_pv"));
+        }
+
+        [Test]
         public void NotReadParticipantMetadata_WhenPinnedToNonBot()
         {
             LKParticipant other = AddParticipant(OTHER, "{");

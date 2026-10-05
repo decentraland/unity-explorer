@@ -238,12 +238,33 @@ namespace DCL.SDKComponents.MediaStream.Tests
             LogAssert.Expect(LogType.Warning, new Regex($"{PresentationLayout.MAX_SLIDE_SIZE + 1}x1"));
 
             cache.GetOrRequest(ALLOWED_URL, BOT_A);
-            now = 1f;
-            Texture2D? afterCompletion = cache.GetOrRequest(ALLOWED_URL, BOT_A);
+            now = SlideTextureCache.MAX_RETRY_COOLDOWN_SECONDS + 1f;
+            Texture2D? afterCooldown = cache.GetOrRequest(ALLOWED_URL, BOT_A);
 
-            Assert.IsNull(afterCompletion);
+            Assert.IsNull(afterCooldown);
             Assert.IsTrue(oversized == null);
             SendTextureRequest(webRequestController.Received(1));
+        }
+
+        [Test]
+        public void KeepRecentlyUsedSlide_WhenCacheEvicts()
+        {
+            var slides = new Texture2D[SlideTextureCache.CAPACITY + 1];
+
+            for (var i = 0; i < slides.Length; i++)
+                slides[i] = new Texture2D(2, 2);
+
+            var loaded = 0;
+            SendTextureRequest(webRequestController).Returns(_ => UniTask.FromResult<Texture2D?>(slides[loaded++]));
+
+            for (var i = 0; i < SlideTextureCache.CAPACITY; i++)
+                LoadSlide(i);
+
+            cache.GetOrRequest(SlideUrl(0), BOT_A);
+            LoadSlide(SlideTextureCache.CAPACITY);
+
+            Assert.AreSame(slides[0], cache.GetOrRequest(SlideUrl(0), BOT_A));
+            Assert.IsTrue(slides[1] == null);
         }
 
         [Test]
@@ -282,6 +303,24 @@ namespace DCL.SDKComponents.MediaStream.Tests
         {
             cache.Dispose();
             cache.Dispose();
+        }
+
+        [Test]
+        public void NotFetch_WhenRequestedAfterDispose()
+        {
+            cache.Dispose();
+
+            Texture2D? texture = cache.GetOrRequest(ALLOWED_URL, BOT_A);
+
+            Assert.IsNull(texture);
+            SendTextureRequest(webRequestController.DidNotReceive());
+            LogAssert.NoUnexpectedReceived();
+        }
+
+        private void LoadSlide(int index)
+        {
+            now += SlideTextureCache.MIN_FETCH_INTERVAL_SECONDS;
+            cache.GetOrRequest(SlideUrl(index), BOT_A);
         }
 
         private static string SlideUrl(int index) =>
