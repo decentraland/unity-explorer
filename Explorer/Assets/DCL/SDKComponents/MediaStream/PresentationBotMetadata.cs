@@ -3,7 +3,8 @@ using System;
 // ReSharper disable InconsistentNaming
 namespace DCL.SDKComponents.MediaStream
 {
-    // Wire source: decentraland/cast-presenter-server src/adapters/livekit-publisher/component.ts updateMetadataState ({ role, presentationId, ...PresentationState } + client-composition fields); all optional because the bot's initial metadata is only { role, presentationId } and the explorer treats it as untrusted input
+    // Server schema: decentraland/cast-presenter-server src/logic/presentation-manager/component.ts#/v2Fields (published as bot participant metadata { role, presentationId, ...state })
+    // (every field is optional: the bot's initial metadata is only { role, presentationId }, and the explorer treats it as untrusted input)
     [Serializable]
     public class PresentationBotMetadata
     {

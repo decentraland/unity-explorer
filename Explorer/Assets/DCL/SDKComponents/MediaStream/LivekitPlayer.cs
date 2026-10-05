@@ -1,7 +1,6 @@
 using DCL.Diagnostics;
 using DCL.LiveKit.Public;
 using DCL.Optimization.ThreadSafePool;
-using DCL.SDKComponents.MediaStream;
 using LiveKit.Proto;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
@@ -15,7 +14,6 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
-using REnum;
 
 namespace DCL.SDKComponents.MediaStream
 {
@@ -230,7 +228,7 @@ namespace DCL.SDKComponents.MediaStream
 
             StreamKey? streamKey = livekitAddress.Match(
                 this,
-                onUserStream: static (self, userStream) => new StreamKey(userStream.Identity, userStream.Sid),
+                onUserStream: static (_, userStream) => new StreamKey(userStream.Identity, userStream.Sid),
                 onCurrentStream: static self => self.BestInitialVideoKey()
             );
 

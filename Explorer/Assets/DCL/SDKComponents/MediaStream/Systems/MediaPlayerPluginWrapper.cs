@@ -1,7 +1,6 @@
 using Arch.Core;
 using Arch.SystemGroups;
 using DCL.CharacterCamera;
-using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Optimization.PerformanceBudgeting;
@@ -23,7 +22,7 @@ namespace DCL.SDKComponents.MediaStream
         private readonly VideoPrioritizationSettings videoPrioritizationSettings;
         private readonly MediaFactoryBuilder mediaFactory;
         private readonly Material flipMaterial;
-        private readonly Material compositorMaterial;
+        private readonly Material? compositorMaterial;
         private readonly MediaPlayerDebugRegistry debugRegistry;
         // ReSharper restore NotAccessedField.Local
 
@@ -36,7 +35,7 @@ namespace DCL.SDKComponents.MediaStream
             VideoPrioritizationSettings videoPrioritizationSettings,
             MediaFactoryBuilder mediaFactory,
             Material flipMaterial,
-            Material compositorMaterial,
+            Material? compositorMaterial,
             AvatarPlaceHolderTextureSource? placeholderSource,
             MediaPlayerDebugRegistry debugRegistry)
         {
