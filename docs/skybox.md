@@ -86,7 +86,7 @@ The stylized logic lives in HLSL Custom Function files under `Assets/DCL/Stylize
 ## Textures
 
 - **Cloud strips** (`Textures/Clouds/SkyboxClouds{Cumulus,Low,Overhead}_V2.png`): 4096×512, RGBA as data, linear, repeat U / clamp V, BC7 with mips. R shading, G backlit look, B growth order, A mask; RGB premultiplied by A. Artist-authored.
-- **Sky LUT** (`Presets/StylizedV1_SkyLut.asset`): 256×5 RGBAHalf, baked from the four sky gradients.
+- **Sky LUT** (`Presets/<Preset>_SkyLut.asset`, one per preset, e.g. `StylizedV1_SkyLut.asset`): 256×5 RGBAHalf, baked from that preset's four sky gradients.
 - **Horizon noise** (`Textures/Noise4.png`): tiling noise for the horizon silhouettes and the star dim patches.
 
 ## Known caveats
