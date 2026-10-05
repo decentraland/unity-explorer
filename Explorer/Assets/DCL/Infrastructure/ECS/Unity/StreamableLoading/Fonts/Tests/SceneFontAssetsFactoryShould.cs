@@ -7,7 +7,7 @@ using UnityEngine.TextCore.Text;
 namespace ECS.StreamableLoading.Fonts.Tests
 {
     [TestFixture]
-    public class RuntimeFontAssetFactoryShould
+    public class SceneFontAssetsFactoryShould
     {
         private const string ASSET_NAME = "Liberation";
         private const int BUNDLED_ATLAS_SIZE = 512;
@@ -16,7 +16,7 @@ namespace ECS.StreamableLoading.Fonts.Tests
         private TMP_FontAsset bundledTextMeshPro = null!;
         private FontAsset bundledUIToolkit = null!;
         private Material generatedMaterial = null!;
-        private RuntimeFontAssetFactory factory = null!;
+        private SceneFontAssetsFactory factory = null!;
         private SceneFontAssets? assets;
 
         [SetUp]
@@ -26,7 +26,7 @@ namespace ECS.StreamableLoading.Fonts.Tests
             bundledTextMeshPro = TestFonts.CreateTextMeshProFont(BUNDLED_ATLAS_SIZE);
             bundledUIToolkit = TestFonts.CreateUIToolkitFont();
             generatedMaterial = bundledTextMeshPro.material;
-            factory = new RuntimeFontAssetFactory(referenceFont);
+            factory = new SceneFontAssetsFactory(referenceFont);
         }
 
         [TearDown]

@@ -35,7 +35,7 @@ namespace ECS.TestSuite
             var bundle = new AssetBundleData(null!, new Object[] { textMeshPro, uiToolkit }, null, Array.Empty<AssetBundleData>());
             bundle.AcquireRef();
 
-            var font = new FontData(new RuntimeFontAssetFactory(referenceFont).AdoptBundled("Custom", textMeshPro, uiToolkit), bundle);
+            var font = new FontData(new SceneFontAssetsFactory(referenceFont).AdoptBundled("Custom", textMeshPro, uiToolkit), bundle);
             Object.DestroyImmediate(generatedMaterial);
             return font;
         }

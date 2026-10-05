@@ -29,7 +29,7 @@ namespace ECS.StreamableLoading.Fonts.Tests
             mockedReportScope = new MockedReportScope();
             referenceFont = TestFonts.CreateTextMeshProFont();
             cache = new FontsCache();
-            system = new LoadFontSystem(world, cache, new RuntimeFontAssetFactory(referenceFont), tryUnlistedBundles: false);
+            system = new LoadFontSystem(world, cache, new SceneFontAssetsFactory(referenceFont), tryUnlistedBundles: false);
             system.Initialize();
         }
 

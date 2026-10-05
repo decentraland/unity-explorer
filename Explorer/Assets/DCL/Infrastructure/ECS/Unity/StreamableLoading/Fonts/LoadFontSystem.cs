@@ -30,14 +30,14 @@ namespace ECS.StreamableLoading.Fonts
 
         private static readonly ProfilerMarker READ_BUNDLED_FONT_MARKER = new ($"{nameof(LoadFontSystem)}.ReadBundledFont");
 
-        private readonly RuntimeFontAssetFactory fontAssetFactory;
+        private readonly SceneFontAssetsFactory fontAssetFactory;
         private readonly bool tryUnlistedBundles;
 
         /// <param name="tryUnlistedBundles">
         ///     Set for local scene development with local asset bundles. The files[] of the scene manifest are not loaded there,
         ///     so every font file is tried as a bundle.
         /// </param>
-        internal LoadFontSystem(World world, IStreamableCache<FontData, GetFontIntention> cache, RuntimeFontAssetFactory fontAssetFactory,
+        internal LoadFontSystem(World world, IStreamableCache<FontData, GetFontIntention> cache, SceneFontAssetsFactory fontAssetFactory,
             bool tryUnlistedBundles) : base(world, cache)
         {
             this.fontAssetFactory = fontAssetFactory;

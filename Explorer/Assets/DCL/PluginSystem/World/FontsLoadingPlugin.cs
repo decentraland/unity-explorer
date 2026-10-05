@@ -21,7 +21,7 @@ namespace DCL.PluginSystem.World
         private readonly bool tryUnlistedBundles;
 
         private ProvidedAsset<SoFontList> fontList;
-        private RuntimeFontAssetFactory fontAssetFactory = null!;
+        private SceneFontAssetsFactory fontAssetFactory = null!;
 
         public FontsLoadingPlugin(CacheCleaner cacheCleaner, IAssetsProvisioner assetsProvisioner, bool tryUnlistedBundles)
         {
@@ -42,7 +42,7 @@ namespace DCL.PluginSystem.World
         {
             fontList = await assetsProvisioner.ProvideMainAssetAsync(settings.FontList, ct);
 
-            fontAssetFactory = new RuntimeFontAssetFactory(fontList.Value.Font(DCL.ECSComponents.Font.FSansSerif)
+            fontAssetFactory = new SceneFontAssetsFactory(fontList.Value.Font(DCL.ECSComponents.Font.FSansSerif)
                                                            ?? throw new InvalidOperationException("The font list has no FSansSerif font"));
         }
 

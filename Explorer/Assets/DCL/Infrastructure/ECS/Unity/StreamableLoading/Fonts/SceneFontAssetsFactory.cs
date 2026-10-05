@@ -6,16 +6,16 @@ using UnityEngine.TextCore.Text;
 
 namespace ECS.StreamableLoading.Fonts
 {
-    public class RuntimeFontAssetFactory
+    public class SceneFontAssetsFactory
     {
         /// <summary>Added to the atlas padding to get the SDF gradient scale, as TMP does for its own materials.</summary>
         private const int SDF_PACKING_MODIFIER = 1;
 
-        private static readonly ProfilerMarker ADOPT_BUNDLED_MARKER = new ($"{nameof(RuntimeFontAssetFactory)}.{nameof(AdoptBundled)}");
+        private static readonly ProfilerMarker ADOPT_BUNDLED_MARKER = new ($"{nameof(SceneFontAssetsFactory)}.{nameof(AdoptBundled)}");
 
         private readonly TMP_FontAsset referenceFont;
 
-        public RuntimeFontAssetFactory(TMP_FontAsset referenceFont)
+        public SceneFontAssetsFactory(TMP_FontAsset referenceFont)
         {
             this.referenceFont = referenceFont;
         }
