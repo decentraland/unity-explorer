@@ -454,7 +454,7 @@ namespace Global.Dynamic
 
         /// <summary>
         ///     The extensions abgen's corpus build converts: models, the standalone images they reference,
-        ///     and the scene's TrueType fonts (the font lane only takes <c>.ttf</c>; an <c>.otf</c> loads raw).
+        ///     and the scene's TrueType fonts (only <c>.ttf</c>; other font files keep the built-in font).
         /// </summary>
         private static bool IsConvertible(string file) =>
             file.EndsWith(".glb", StringComparison.OrdinalIgnoreCase)

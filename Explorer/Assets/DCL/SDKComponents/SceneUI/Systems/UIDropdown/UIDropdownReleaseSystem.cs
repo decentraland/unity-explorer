@@ -62,6 +62,6 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIDropdown
         }
 
         private void ReleaseFont(UIDropdownComponent uiDropdownComponent) =>
-            UiElementUtils.ReleaseCustomFont(World, ref uiDropdownComponent.FontRequest, ref uiDropdownComponent.CustomFont, uiDropdownComponent.DropdownField);
+            UiElementUtils.ReleaseCustomFont(World, ref uiDropdownComponent.FontRequest, uiDropdownComponent.DropdownField);
     }
 }

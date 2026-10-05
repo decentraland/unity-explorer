@@ -22,7 +22,7 @@ namespace ECS.StreamableLoading.Fonts
 
             if (!sceneData.TryGetContentUrl(fontSrc, out URLAddress url))
             {
-                ReportHub.LogWarning(ReportCategory.SDK_FONTS, $"font_src \"{fontSrc}\" is not a content file of the scene {sceneData.SceneShortInfo}");
+                ReportHub.Log(ReportCategory.SDK_FONTS, $"font_src \"{fontSrc}\" is not a content file of the scene {sceneData.SceneShortInfo}");
                 return false;
             }
 
@@ -38,10 +38,10 @@ namespace ECS.StreamableLoading.Fonts
 
         private static void AssignAssetBundle(string fontSrc, ISceneData sceneData, ref GetFontIntention intention)
         {
-            if (sceneData.SceneEntityDefinition is not { } definition
-                || !sceneData.TryGetHash(fontSrc, out string hash))
+            if (!sceneData.TryGetHash(fontSrc, out string hash))
                 return;
 
+            SceneEntityDefinition definition = sceneData.SceneEntityDefinition;
             AssetBundleManifestVersion manifest = definition.AssetBundleManifestVersionOrFailed;
 
             if (manifest.assetBundleManifestRequestFailed)

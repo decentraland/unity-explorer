@@ -65,12 +65,12 @@ namespace DCL.SDKComponents.TextShape.System
 
         private void ReleaseFont(ref TextShapeComponent textShapeComponent)
         {
+            bool hadCustomFont = textShapeComponent.FontRequest.Assets != null;
             textShapeComponent.FontRequest.Release(World);
 
-            if (textShapeComponent.CustomFont == null)
+            if (!hadCustomFont)
                 return;
 
-            textShapeComponent.CustomFont = null;
             TMP_FontAsset? builtInFont = fontsStorage.Font(Font.FSansSerif);
 
             if (builtInFont != null)

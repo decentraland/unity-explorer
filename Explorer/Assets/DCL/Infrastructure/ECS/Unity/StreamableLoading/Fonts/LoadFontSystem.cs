@@ -113,6 +113,9 @@ namespace ECS.StreamableLoading.Fonts
             if (atlasTextures is not { Length: > 0 } || atlasTextures[0] == null)
                 return "no atlas texture";
 
+            if (atlasTextures.Length > 1)
+                return "more than one atlas texture";
+
             if (atlasWidth is <= 0 or > MAX_ATLAS_SIZE || atlasHeight is <= 0 or > MAX_ATLAS_SIZE)
                 return $"atlas size {atlasWidth}x{atlasHeight}";
 

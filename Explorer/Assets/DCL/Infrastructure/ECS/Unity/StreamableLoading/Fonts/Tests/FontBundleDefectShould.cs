@@ -43,6 +43,16 @@ namespace ECS.StreamableLoading.Fonts.Tests
             Assert.That(LoadFontSystem.FindDefect(new Texture2D[1], ATLAS_SIZE, ATLAS_SIZE, sourceFont), Is.EqualTo("no atlas texture"));
         }
 
+        [Test]
+        public void ReportMoreThanOneAtlas()
+        {
+            // Act
+            string? defect = LoadFontSystem.FindDefect(new[] { atlas, atlas }, ATLAS_SIZE, ATLAS_SIZE, sourceFont);
+
+            // Assert
+            Assert.That(defect, Is.EqualTo("more than one atlas texture"));
+        }
+
         [TestCase(0, ATLAS_SIZE)]
         [TestCase(ATLAS_SIZE, 0)]
         [TestCase(8192, ATLAS_SIZE)]

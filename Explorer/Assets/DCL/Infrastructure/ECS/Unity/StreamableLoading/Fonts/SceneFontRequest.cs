@@ -14,9 +14,11 @@ namespace ECS.StreamableLoading.Fonts
         private static readonly ProfilerMarker REQUEST_MARKER = new ($"{nameof(SceneFontRequest)}.Request");
         private static readonly ProfilerMarker RECEIVE_MARKER = new ($"{nameof(SceneFontRequest)}.Receive");
 
-        public string? Src { get; private set; }
+        internal string? Src { get; private set; }
 
-        public FontPromise? Promise { get; private set; }
+        internal FontPromise? Promise { get; private set; }
+
+        public SceneFontAssets? Assets { get; private set; }
 
         public bool Update(World world, ISceneData sceneData, string? fontSrc, IPartitionComponent partition)
         {
@@ -39,10 +41,8 @@ namespace ECS.StreamableLoading.Fonts
             return true;
         }
 
-        public bool TryConsume(World world, out SceneFontAssets? assets)
+        public bool TryConsume(World world)
         {
-            assets = null;
-
             if (Promise == null || Promise.Value.IsConsumed)
                 return false;
 
@@ -55,7 +55,7 @@ namespace ECS.StreamableLoading.Fonts
             using ProfilerMarker.AutoScope _ = RECEIVE_MARKER.Auto();
 
             if (result is { Succeeded: true, Asset: { } font })
-                assets = font.Asset;
+                Assets = font.Asset;
             else
                 result.TryLogException();
 
@@ -65,6 +65,7 @@ namespace ECS.StreamableLoading.Fonts
         public void Release(World world)
         {
             Src = null;
+            Assets = null;
 
             if (Promise == null)
                 return;

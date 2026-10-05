@@ -7,6 +7,9 @@ using DCL.SDKComponents.TextShape.Fonts;
 using DCL.SDKComponents.TextShape.System;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
+using ECS.StreamableLoading;
+using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.Fonts;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
@@ -22,6 +25,7 @@ namespace DCL.SDKComponents.TextShape.Tests
 
         private IComponentPool<TextMeshPro> textMeshProPool = null!;
         private TMP_FontAsset builtInFont = null!;
+        private FontData fontData = null!;
         private TMP_FontAsset customFont = null!;
         private TextMeshPro textMeshPro = null!;
         private Entity entity;
@@ -32,13 +36,14 @@ namespace DCL.SDKComponents.TextShape.Tests
         {
             textMeshProPool = Substitute.For<IComponentPool<TextMeshPro>>();
             builtInFont = TestFonts.CreateTextMeshProFont();
-            customFont = TestFonts.CreateTextMeshProFont();
+            fontData = TestFonts.CreateBundledFont(builtInFont);
+            customFont = fontData.Asset.TextMeshProFont;
             textMeshPro = new GameObject(nameof(ReleaseTextShapeSystemShould)).AddComponent<TextMeshPro>();
             textMeshPro.font = customFont;
 
             system = new ReleaseTextShapeSystem(world, new IFontsStorage.Fake(builtInFont), textMeshProPool);
 
-            var component = new TextShapeComponent(textMeshPro) { CustomFont = customFont };
+            var component = new TextShapeComponent(textMeshPro);
             var sceneData = Substitute.For<ISceneData>();
             sceneData.TryGetContentUrl(FONT_SRC, out Arg.Any<URLAddress>())
                      .Returns(x =>
@@ -48,6 +53,9 @@ namespace DCL.SDKComponents.TextShape.Tests
                       });
             component.FontRequest.Update(world, sceneData, FONT_SRC, PartitionComponent.TOP_PRIORITY);
             promiseEntity = component.FontRequest.Promise!.Value.Entity;
+            ((IStreamableRefCountData)fontData).AddReference();
+            world.Add(promiseEntity, new StreamableLoadingResult<FontData>(fontData));
+            component.FontRequest.TryConsume(world);
 
             entity = world.Create(new PBTextShape { FontSrc = FONT_SRC }, component);
         }
@@ -55,7 +63,7 @@ namespace DCL.SDKComponents.TextShape.Tests
         protected override void OnTearDown()
         {
             Object.DestroyImmediate(textMeshPro.gameObject);
-            Object.DestroyImmediate(customFont);
+            TestFonts.DestroyBundledFont(fontData);
             Object.DestroyImmediate(builtInFont);
         }
 
@@ -90,7 +98,7 @@ namespace DCL.SDKComponents.TextShape.Tests
             system.Update(0);
 
             ref TextShapeComponent component = ref world.Get<TextShapeComponent>(entity);
-            Assert.That(component.CustomFont, Is.SameAs(customFont));
+            Assert.That(component.FontRequest.Assets?.TextMeshProFont, Is.SameAs(customFont));
             Assert.That(component.FontRequest.Src, Is.EqualTo(FONT_SRC));
             Assert.That(world.IsAlive(promiseEntity), Is.True);
             Assert.That(textMeshPro.font, Is.SameAs(customFont));
@@ -107,7 +115,7 @@ namespace DCL.SDKComponents.TextShape.Tests
         private void AssertComponentReleased()
         {
             ref TextShapeComponent component = ref world.Get<TextShapeComponent>(entity);
-            Assert.That(component.CustomFont, Is.Null);
+            Assert.That(component.FontRequest.Assets, Is.Null);
             Assert.That(component.FontRequest.Src, Is.Null);
             Assert.That(component.FontRequest.Promise, Is.Null);
             AssertFontReleased();

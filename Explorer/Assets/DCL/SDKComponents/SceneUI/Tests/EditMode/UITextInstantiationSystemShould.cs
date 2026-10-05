@@ -157,7 +157,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
             ref UITextComponent uiTextComponent = ref world.Get<UITextComponent>(entity);
             Assert.That(uiTextComponent.FontRequest.Src, Is.Null);
             Assert.That(uiTextComponent.FontRequest.Promise, Is.Null);
-            Assert.That(uiTextComponent.CustomFont, Is.Null);
+            Assert.That(uiTextComponent.FontRequest.Assets, Is.Null);
         }
 
         [Test]

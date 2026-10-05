@@ -15,7 +15,6 @@ using DCL.Utilities.Extensions;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
-using ECS.StreamableLoading.Fonts;
 using SceneRunner.Scene;
 using UnityEngine.UIElements;
 
@@ -94,25 +93,17 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
             if (!sdkModel.IsDirty)
                 return;
 
-            if (uiInputComponent.FontRequest.Update(World!, sceneData, sdkModel.FontSrc, scenePartition))
-                uiInputComponent.CustomFont = null;
+            uiInputComponent.FontRequest.Update(World!, sceneData, sdkModel.FontSrc, scenePartition);
 
             UiElementUtils.SetupUiInputComponent(ref uiInputComponent, in sdkModel, in styleFontDefinitions);
             sdkModel.IsDirty = false;
         }
 
         [Query]
+        [All(typeof(PBUiInput))]
         [None(typeof(DeleteEntityIntention))]
-        private void ApplyLoadedFont(ref UIInputComponent uiInputComponent, in PBUiInput sdkModel)
-        {
-            if (!uiInputComponent.FontRequest.TryConsume(World!, out SceneFontAssets? assets))
-                return;
-
-            uiInputComponent.CustomFont = assets?.UIToolkitFont;
-
-            if (uiInputComponent.CustomFont != null)
-                UiElementUtils.SetFont(uiInputComponent.TextField, sdkModel.GetFont(), in styleFontDefinitions, uiInputComponent.CustomFont);
-        }
+        private void ApplyLoadedFont(ref UIInputComponent uiInputComponent) =>
+            UiElementUtils.ApplyLoadedCustomFont(World!, ref uiInputComponent.FontRequest, uiInputComponent.TextField);
 
         [Query]
         [All(typeof(UIInputComponent))]

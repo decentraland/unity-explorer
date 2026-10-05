@@ -280,7 +280,7 @@ namespace DCL.SDKComponents.SceneUI.Utils
             inputToSetup.TextField.isReadOnly = isReadonly;
             inputToSetup.TextField.style.fontSize = model.GetFontSize();
 
-            SetFont(inputToSetup.TextField, model.GetFont(), in styleFontDefinitions, inputToSetup.CustomFont);
+            SetFont(inputToSetup.TextField, model.GetFont(), in styleFontDefinitions, inputToSetup.FontRequest.Assets?.UIToolkitFont);
 
             inputToSetup.TextField.SetValueWithoutNotify(model.HasValue ? model.Value : string.Empty);
             inputToSetup.Placeholder.Refresh();
@@ -296,7 +296,7 @@ namespace DCL.SDKComponents.SceneUI.Utils
             dropdownField.style.fontSize = model.GetFontSize();
             dropdownField.style.color = model.GetColor();
 
-            SetFont(dropdownField, model.GetFont(), in styleFontDefinitions, dropdownToSetup.CustomFont);
+            SetFont(dropdownField, model.GetFont(), in styleFontDefinitions, dropdownToSetup.FontRequest.Assets?.UIToolkitFont);
 
             dropdownField.choices.Clear();
             dropdownField.choices.AddRange(model.Options);
@@ -342,15 +342,19 @@ namespace DCL.SDKComponents.SceneUI.Utils
         private static void ClearCustomFont(VisualElement element) =>
             element.style.unityFontDefinition = new StyleFontDefinition(StyleKeyword.Null);
 
-        public static void ReleaseCustomFont(World world, ref SceneFontRequest request, ref FontAsset? customFont, VisualElement element)
+        public static void ApplyLoadedCustomFont(World world, ref SceneFontRequest request, VisualElement element)
         {
+            if (request.TryConsume(world) && request.Assets != null)
+                element.style.unityFontDefinition = new StyleFontDefinition(request.Assets.UIToolkitFont);
+        }
+
+        public static void ReleaseCustomFont(World world, ref SceneFontRequest request, VisualElement element)
+        {
+            bool hadCustomFont = request.Assets != null;
             request.Release(world);
 
-            if (customFont == null)
-                return;
-
-            customFont = null;
-            ClearCustomFont(element);
+            if (hadCustomFont)
+                ClearCustomFont(element);
         }
 
         public static void SetElementDefaultStyle(IStyle elementStyle)

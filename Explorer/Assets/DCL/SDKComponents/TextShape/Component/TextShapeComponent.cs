@@ -43,8 +43,6 @@ namespace DCL.SDKComponents.TextShape.Component
 
         public SceneFontRequest FontRequest;
 
-        public TMP_FontAsset? CustomFont;
-
         public TextShapeComponent(TextMeshPro textShape)
         {
             TextMeshPro = textShape;
@@ -54,7 +52,6 @@ namespace DCL.SDKComponents.TextShape.Component
             OutlineKeywordEnabled = false;
             UnderlayKeywordEnabled = false;
             FontRequest = default(SceneFontRequest);
-            CustomFont = null;
         }
 
         public void Dispose() { }

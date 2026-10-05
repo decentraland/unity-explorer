@@ -13,7 +13,6 @@ using DCL.SDKComponents.SceneUI.Utils;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
-using ECS.StreamableLoading.Fonts;
 using SceneRunner.Scene;
 using UnityEngine.UIElements;
 
@@ -84,25 +83,17 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIDropdown
         {
             if (!sdkModel.IsDirty) return;
 
-            if (uiDropdownComponent.FontRequest.Update(World, sceneData, sdkModel.FontSrc, scenePartition))
-                uiDropdownComponent.CustomFont = null;
+            uiDropdownComponent.FontRequest.Update(World, sceneData, sdkModel.FontSrc, scenePartition);
 
             UiElementUtils.SetupUiDropdownComponent(ref uiDropdownComponent, in sdkModel, in styleFontDefinitions);
             sdkModel.IsDirty = false;
         }
 
         [Query]
+        [All(typeof(PBUiDropdown))]
         [None(typeof(DeleteEntityIntention))]
-        private void ApplyLoadedFont(ref UIDropdownComponent uiDropdownComponent, in PBUiDropdown sdkModel)
-        {
-            if (!uiDropdownComponent.FontRequest.TryConsume(World, out SceneFontAssets? assets))
-                return;
-
-            uiDropdownComponent.CustomFont = assets?.UIToolkitFont;
-
-            if (uiDropdownComponent.CustomFont != null)
-                UiElementUtils.SetFont(uiDropdownComponent.DropdownField, sdkModel.GetFont(), in styleFontDefinitions, uiDropdownComponent.CustomFont);
-        }
+        private void ApplyLoadedFont(ref UIDropdownComponent uiDropdownComponent) =>
+            UiElementUtils.ApplyLoadedCustomFont(World, ref uiDropdownComponent.FontRequest, uiDropdownComponent.DropdownField);
 
         [Query]
         [All(typeof(UIDropdownComponent))]

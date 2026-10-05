@@ -7,12 +7,16 @@ using DCL.SDKComponents.SceneUI.Systems.UIInput;
 using DCL.SDKComponents.SceneUI.Utils;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
+using ECS.StreamableLoading;
+using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.Fonts;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.TextCore.Text;
 using UnityEngine.UIElements;
@@ -27,6 +31,8 @@ namespace DCL.SDKComponents.SceneUI.Tests
         private const string FONT_SRC = "fonts/Roboto.ttf";
 
         private IComponentPool componentPool = null!;
+        private TMP_FontAsset referenceFont = null!;
+        private FontData fontData = null!;
         private FontAsset customFont = null!;
         private UIInputComponent component = null!;
         private Entity entity;
@@ -39,11 +45,12 @@ namespace DCL.SDKComponents.SceneUI.Tests
             var poolsRegistry = new ComponentPoolsRegistry(new Dictionary<Type, IComponentPool> { { typeof(UIInputComponent), componentPool } }, null);
             system = new UIInputReleaseSystem(world, poolsRegistry);
 
-            customFont = TestFonts.CreateUIToolkitFont();
+            referenceFont = TestFonts.CreateTextMeshProFont();
+            fontData = TestFonts.CreateBundledFont(referenceFont);
+            customFont = fontData.Asset.UIToolkitFont;
 
             component = new UIInputComponent();
             component.Initialize(Substitute.For<IInputBlock>(), "input", string.Empty, string.Empty, Color.white);
-            component.CustomFont = customFont;
             UiElementUtils.SetFont(component.TextField, Font.FSansSerif, new[] { new StyleFontDefinition() }, customFont);
             var sceneData = Substitute.For<ISceneData>();
             sceneData.TryGetContentUrl(FONT_SRC, out Arg.Any<URLAddress>())
@@ -54,13 +61,17 @@ namespace DCL.SDKComponents.SceneUI.Tests
                       });
             component.FontRequest.Update(world, sceneData, FONT_SRC, PartitionComponent.TOP_PRIORITY);
             promiseEntity = component.FontRequest.Promise!.Value.Entity;
+            ((IStreamableRefCountData)fontData).AddReference();
+            world.Add(promiseEntity, new StreamableLoadingResult<FontData>(fontData));
+            component.FontRequest.TryConsume(world);
 
             entity = world.Create(new PBUiInput { FontSrc = FONT_SRC }, component);
         }
 
         protected override void OnTearDown()
         {
-            UnityEngine.Object.DestroyImmediate(customFont);
+            TestFonts.DestroyBundledFont(fontData);
+            UnityEngine.Object.DestroyImmediate(referenceFont);
         }
 
         [Test]
@@ -98,7 +109,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
 
         private void AssertFontReleased()
         {
-            Assert.That(component.CustomFont, Is.Null);
+            Assert.That(component.FontRequest.Assets, Is.Null);
             Assert.That(component.FontRequest.Promise, Is.Null);
             Assert.That(world.IsAlive(promiseEntity), Is.False);
             Assert.That(component.TextField.style.unityFontDefinition.keyword, Is.EqualTo(StyleKeyword.Null));

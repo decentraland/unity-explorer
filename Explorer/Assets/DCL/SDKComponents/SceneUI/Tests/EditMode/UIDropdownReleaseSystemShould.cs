@@ -6,12 +6,16 @@ using DCL.SDKComponents.SceneUI.Systems.UIDropdown;
 using DCL.SDKComponents.SceneUI.Utils;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
+using ECS.StreamableLoading;
+using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.Fonts;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine.TextCore.Text;
 using UnityEngine.UIElements;
 using Entity = Arch.Core.Entity;
@@ -25,6 +29,8 @@ namespace DCL.SDKComponents.SceneUI.Tests
         private const string FONT_SRC = "fonts/Roboto.ttf";
 
         private IComponentPool<UIDropdownComponent> componentPool = null!;
+        private TMP_FontAsset referenceFont = null!;
+        private FontData fontData = null!;
         private FontAsset customFont = null!;
         private UIDropdownComponent component = null!;
         private Entity entity;
@@ -37,11 +43,12 @@ namespace DCL.SDKComponents.SceneUI.Tests
             var poolsRegistry = new ComponentPoolsRegistry(new Dictionary<Type, IComponentPool> { { typeof(UIDropdownComponent), componentPool } }, null);
             system = new UIDropdownReleaseSystem(world, poolsRegistry);
 
-            customFont = TestFonts.CreateUIToolkitFont();
+            referenceFont = TestFonts.CreateTextMeshProFont();
+            fontData = TestFonts.CreateBundledFont(referenceFont);
+            customFont = fontData.Asset.UIToolkitFont;
 
             component = new UIDropdownComponent();
             component.Initialize("dropdown");
-            component.CustomFont = customFont;
             UiElementUtils.SetFont(component.DropdownField, Font.FSansSerif, new[] { new StyleFontDefinition() }, customFont);
             var sceneData = Substitute.For<ISceneData>();
             sceneData.TryGetContentUrl(FONT_SRC, out Arg.Any<URLAddress>())
@@ -52,13 +59,17 @@ namespace DCL.SDKComponents.SceneUI.Tests
                       });
             component.FontRequest.Update(world, sceneData, FONT_SRC, PartitionComponent.TOP_PRIORITY);
             promiseEntity = component.FontRequest.Promise!.Value.Entity;
+            ((IStreamableRefCountData)fontData).AddReference();
+            world.Add(promiseEntity, new StreamableLoadingResult<FontData>(fontData));
+            component.FontRequest.TryConsume(world);
 
             entity = world.Create(new PBUiDropdown { FontSrc = FONT_SRC }, component);
         }
 
         protected override void OnTearDown()
         {
-            UnityEngine.Object.DestroyImmediate(customFont);
+            TestFonts.DestroyBundledFont(fontData);
+            UnityEngine.Object.DestroyImmediate(referenceFont);
         }
 
         [Test]
@@ -96,7 +107,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
 
         private void AssertFontReleased()
         {
-            Assert.That(component.CustomFont, Is.Null);
+            Assert.That(component.FontRequest.Assets, Is.Null);
             Assert.That(component.FontRequest.Promise, Is.Null);
             Assert.That(world.IsAlive(promiseEntity), Is.False);
             Assert.That(component.DropdownField.style.unityFontDefinition.keyword, Is.EqualTo(StyleKeyword.Null));

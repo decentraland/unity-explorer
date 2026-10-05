@@ -9,7 +9,6 @@ using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
-using ECS.StreamableLoading.Fonts;
 using SceneRunner.Scene;
 using UnityEngine;
 using Utility;
@@ -59,8 +58,7 @@ namespace DCL.SDKComponents.TextShape.System
         {
             if (textShape.IsDirty)
             {
-                if (textShapeComponent.FontRequest.Update(World, sceneData, textShape.FontSrc, scenePartition))
-                    textShapeComponent.CustomFont = null;
+                textShapeComponent.FontRequest.Update(World, sceneData, textShape.FontSrc, scenePartition);
 
                 TMPProSdkExtensions.Apply(ref textShapeComponent, textShape, fontsStorage, materialPropertyBlock);
                 textShapeComponent.NeedsBoundsRecalculation = true; // Mark for deferred bounds calculation next frame
@@ -72,12 +70,7 @@ namespace DCL.SDKComponents.TextShape.System
         [None(typeof(DeleteEntityIntention))]
         private void ApplyLoadedFonts(Entity entity, ref TextShapeComponent textShapeComponent, in PBTextShape textShape)
         {
-            if (!textShapeComponent.FontRequest.TryConsume(World, out SceneFontAssets? assets))
-                return;
-
-            textShapeComponent.CustomFont = assets?.TextMeshProFont;
-
-            if (textShapeComponent.CustomFont == null)
+            if (!textShapeComponent.FontRequest.TryConsume(World) || textShapeComponent.FontRequest.Assets == null)
                 return;
 
             TMPProSdkExtensions.Apply(ref textShapeComponent, textShape, fontsStorage, materialPropertyBlock);

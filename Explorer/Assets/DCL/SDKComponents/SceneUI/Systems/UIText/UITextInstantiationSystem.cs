@@ -11,7 +11,6 @@ using DCL.SDKComponents.SceneUI.Utils;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
-using ECS.StreamableLoading.Fonts;
 using SceneRunner.Scene;
 using UnityEngine.UIElements;
 using Entity = Arch.Core.Entity;
@@ -66,24 +65,16 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIText
             if (!sdkModel.IsDirty)
                 return;
 
-            if (uiTextComponent.FontRequest.Update(World, sceneData, sdkModel.FontSrc, scenePartition))
-                uiTextComponent.CustomFont = null;
+            uiTextComponent.FontRequest.Update(World, sceneData, sdkModel.FontSrc, scenePartition);
 
-            UiElementUtils.SetupLabel(ref uiTextComponent.Label, ref sdkModel, ref uiTransformComponent, in styleFontDefinitions, uiTextComponent.CustomFont);
+            UiElementUtils.SetupLabel(ref uiTextComponent.Label, ref sdkModel, ref uiTransformComponent, in styleFontDefinitions, uiTextComponent.FontRequest.Assets?.UIToolkitFont);
             sdkModel.IsDirty = false;
         }
 
         [Query]
+        [All(typeof(PBUiText))]
         [None(typeof(DeleteEntityIntention))]
-        private void ApplyLoadedFont(ref UITextComponent uiTextComponent, in PBUiText sdkModel)
-        {
-            if (!uiTextComponent.FontRequest.TryConsume(World, out SceneFontAssets? assets))
-                return;
-
-            uiTextComponent.CustomFont = assets?.UIToolkitFont;
-
-            if (uiTextComponent.CustomFont != null)
-                UiElementUtils.SetFont(uiTextComponent.Label, sdkModel.GetFont(), in styleFontDefinitions, uiTextComponent.CustomFont);
-        }
+        private void ApplyLoadedFont(ref UITextComponent uiTextComponent) =>
+            UiElementUtils.ApplyLoadedCustomFont(World, ref uiTextComponent.FontRequest, uiTextComponent.Label);
     }
 }

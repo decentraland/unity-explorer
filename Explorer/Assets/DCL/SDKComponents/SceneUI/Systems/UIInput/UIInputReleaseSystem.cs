@@ -61,6 +61,6 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
         }
 
         private void ReleaseFont(UIInputComponent uiInputComponent) =>
-            UiElementUtils.ReleaseCustomFont(World, ref uiInputComponent.FontRequest, ref uiInputComponent.CustomFont, uiInputComponent.TextField);
+            UiElementUtils.ReleaseCustomFont(World, ref uiInputComponent.FontRequest, uiInputComponent.TextField);
     }
 }

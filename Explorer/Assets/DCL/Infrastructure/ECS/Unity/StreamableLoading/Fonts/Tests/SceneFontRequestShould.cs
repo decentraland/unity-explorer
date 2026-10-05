@@ -170,7 +170,7 @@ namespace ECS.StreamableLoading.Fonts.Tests
             Update(OTHER_FILE_SRC);
 
             // Act
-            bool consumed = request.TryConsume(world, out SceneFontAssets? _);
+            bool consumed = request.TryConsume(world);
 
             // Assert
             Assert.That(consumed, Is.False);
@@ -187,12 +187,12 @@ namespace ECS.StreamableLoading.Fonts.Tests
             world.Add(request.Promise!.Value.Entity, new StreamableLoadingResult<FontData>(fontData));
 
             // Act
-            bool consumed = request.TryConsume(world, out SceneFontAssets? assets);
-            bool consumedAgain = request.TryConsume(world, out SceneFontAssets? _);
+            bool consumed = request.TryConsume(world);
+            bool consumedAgain = request.TryConsume(world);
 
             // Assert
             Assert.That(consumed, Is.True);
-            Assert.That(assets, Is.SameAs(fontData.Asset));
+            Assert.That(request.Assets, Is.SameAs(fontData.Asset));
             Assert.That(request.Promise!.Value.IsConsumed, Is.True);
             Assert.That(consumedAgain, Is.False);
         }
@@ -205,11 +205,11 @@ namespace ECS.StreamableLoading.Fonts.Tests
             world.Add(request.Promise!.Value.Entity, new StreamableLoadingResult<FontData>(ReportData.UNSPECIFIED, new FontLoadException("test")));
 
             // Act
-            bool consumed = request.TryConsume(world, out SceneFontAssets? assets);
+            bool consumed = request.TryConsume(world);
 
             // Assert
             Assert.That(consumed, Is.True);
-            Assert.That(assets, Is.Null);
+            Assert.That(request.Assets, Is.Null);
         }
 
         [Test]
@@ -254,7 +254,7 @@ namespace ECS.StreamableLoading.Fonts.Tests
             fontData = TestFonts.CreateBundledFont(referenceFont);
             ((IStreamableRefCountData)fontData).AddReference();
             world.Add(request.Promise!.Value.Entity, new StreamableLoadingResult<FontData>(fontData));
-            request.TryConsume(world, out SceneFontAssets? _);
+            request.TryConsume(world);
 
             // Act
             request.Release(world);

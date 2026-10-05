@@ -24,7 +24,7 @@ namespace DCL.SDKComponents.TextShape
         {
             TextMeshPro tmpText = textShapeComponent.TextMeshPro;
 
-            SetFont(ref textShapeComponent, textShapeComponent.CustomFont ?? fontsStorage.Font(textShape.Font) ?? fontsStorage.Font(DCL.ECSComponents.Font.FSansSerif) ?? tmpText.font);
+            SetFont(ref textShapeComponent, textShapeComponent.FontRequest.Assets?.TextMeshProFont ?? fontsStorage.Font(textShape.Font) ?? fontsStorage.Font(DCL.ECSComponents.Font.FSansSerif) ?? tmpText.font);
 
             // NOTE: previously width and height weren't working (setting sizeDelta before anchors and offset result in sizeDelta being reset to 0,0)
             tmpText.rectTransform.anchorMin = Vector2.zero;
