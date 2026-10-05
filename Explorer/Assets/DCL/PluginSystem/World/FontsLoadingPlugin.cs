@@ -23,7 +23,6 @@ namespace DCL.PluginSystem.World
         private ProvidedAsset<TMP_FontAsset> referenceFont;
         private RuntimeFontAssetFactory fontAssetFactory = null!;
 
-        /// <param name="localSceneAssetBundles">Local scene development converting the scene through the local abgen (<c>--local-ab</c>).</param>
         public FontsLoadingPlugin(CacheCleaner cacheCleaner, IAssetsProvisioner assetsProvisioner, bool localSceneAssetBundles)
         {
             tryUnlistedBundles = localSceneAssetBundles;

@@ -22,7 +22,7 @@ namespace ECS.StreamableLoading.Fonts
     [LogCategory(ReportCategory.SDK_FONTS)]
     public partial class LoadFontSystem : LoadSystemBase<FontData, GetFontIntention>
     {
-        // The names of the two font assets in a converted font bundle.
+        // Must match the asset names that the converter gives the two fonts in a font bundle
         private const string BUNDLE_TEXT_MESH_PRO_ASSET = "tmp";
         private const string BUNDLE_UI_TOOLKIT_ASSET = "uitk";
 
@@ -34,8 +34,8 @@ namespace ECS.StreamableLoading.Fonts
         private readonly bool tryUnlistedBundles;
 
         /// <param name="tryUnlistedBundles">
-        ///     Local scene development with local asset bundles: the scene's manifest files[] are never read there, so
-        ///     every scene font file is tried as a bundle, and the fonts the converter skipped keep the built-in font.
+        ///     Set for local scene development with local asset bundles. The files[] of the scene manifest are not loaded there,
+        ///     so every font file is tried as a bundle.
         /// </param>
         internal LoadFontSystem(World world, IStreamableCache<FontData, GetFontIntention> cache, RuntimeFontAssetFactory fontAssetFactory,
             bool tryUnlistedBundles) : base(world, cache)
@@ -58,10 +58,6 @@ namespace ECS.StreamableLoading.Fonts
             return new StreamableLoadingResult<FontData>(await LoadConvertedAsync(intention, bundle, state, partition, ct));
         }
 
-        /// <summary>
-        ///     Loads the font assets from the font's converted bundle and validates them. Throws a
-        ///     <see cref="FontLoadException" /> when the bundle cannot be used.
-        /// </summary>
         private async UniTask<FontData> LoadConvertedAsync(GetFontIntention intention, ConvertedFontBundle converted, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
         {
             await UniTask.SwitchToMainThread(ct);
@@ -70,13 +66,13 @@ namespace ECS.StreamableLoading.Fonts
                 GetAssetBundleIntention.FromHash(converted.Manifest.GetCdnRequestHash(converted.Hash), converted.Manifest, parentEntityID: converted.SceneId),
                 partition);
 
-            // The bundle promise needs a slot from the same loading budget; keeping this one while waiting for it can deadlock
+            // The bundle promise needs a slot from the same loading budget, so holding this slot while waiting for it can deadlock
             state.AcquiredBudget?.Release();
 
             try { promise = await promise.ToUniTaskAsync(World, cancellationToken: ct); }
             catch (OperationCanceledException)
             {
-                // The bundle may have resolved, and taken a reference, before the cancellation was observed
+                // The bundle can resolve and take a reference before the cancellation is observed
                 promise.TryDereference(World);
                 promise.ForgetLoading(World);
                 throw;

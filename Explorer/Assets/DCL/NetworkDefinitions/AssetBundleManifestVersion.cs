@@ -42,7 +42,7 @@ public class AssetBundleManifestVersion
         //Bare hash → CDN file name; fed by InjectDepsDigests (digest-bearing names) and InjectContent (Qm casing fixes).
         private Dictionary<string, string>? cdnFiles;
 
-        //Bare hashes the manifest's files[] name: the files that were converted.
+        //Bare hashes of the converted files, as the manifest's files[] name them.
         private HashSet<string>? convertedHashes;
 
         //Set when the manifest's files[] were injected — only scenes fetch them. Reusable bundles live under the shared assets/ prefix and cache-key on version+hash; wearables/emotes stay entity-scoped and keep buildDate keying.
@@ -111,10 +111,6 @@ public class AssetBundleManifestVersion
             }
         }
 
-        /// <summary>
-        ///     True when the manifest's <c>files[]</c> name a converted bundle for this bare hash. Entries without a
-        ///     digest suffix (raw <c>Qm</c> content, build logs) do not count.
-        /// </summary>
         public bool ListsConvertedFile(string bareHash) =>
             convertedHashes != null && convertedHashes.Contains(bareHash);
 

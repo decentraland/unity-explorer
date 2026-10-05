@@ -19,9 +19,6 @@ namespace ECS.StreamableLoading.Fonts
             this.referenceFont = referenceFont;
         }
 
-        /// <summary>
-        ///     Creates the TMP material for a bundled font asset and sets the built-in font as its fallback.
-        /// </summary>
         public SceneFontAssets AdoptBundled(string assetName, TMP_FontAsset textMeshPro, FontAsset uiToolkit)
         {
             using ProfilerMarker.AutoScope _ = ADOPT_BUNDLED_MARKER.Auto();

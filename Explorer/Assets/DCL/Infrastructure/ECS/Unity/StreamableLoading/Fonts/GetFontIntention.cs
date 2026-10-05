@@ -17,7 +17,7 @@ namespace ECS.StreamableLoading.Fonts
 
         public CancellationTokenSource CancellationTokenSource => CommonArguments.CancellationTokenSource;
 
-        // A bundle's font assets are shared by every request for it, so requests for the same bundle resolve to one FontData
+        // Requests for the same bundle must resolve to one FontData, because they share the font assets of that bundle
         public bool Equals(GetFontIntention other) =>
             Bundle != null || other.Bundle != null
                 ? StringComparer.OrdinalIgnoreCase.Equals(Bundle?.Hash, other.Bundle?.Hash)
@@ -39,15 +39,12 @@ namespace ECS.StreamableLoading.Fonts
             $"Get Font Intention: {Src} {CommonArguments.URL}";
     }
 
-    /// <summary>
-    ///     The converted bundle of a scene font file.
-    /// </summary>
     public readonly struct ConvertedFontBundle
     {
-        /// <summary>The content hash of the font file, which the bundle is requested by.</summary>
+        /// <summary>The content hash of the font file, not of the bundle. The bundle is requested by this hash.</summary>
         public readonly string Hash;
 
-        /// <summary>Whether the scene manifest's files[] name a bundle for <see cref="Hash" />.</summary>
+        /// <summary>True when the files[] of the scene manifest name a bundle for <see cref="Hash" />.</summary>
         public readonly bool Listed;
 
         public readonly AssetBundleManifestVersion Manifest;

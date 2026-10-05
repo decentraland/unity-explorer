@@ -5,10 +5,6 @@ using Utility;
 
 namespace ECS.StreamableLoading.Fonts
 {
-    /// <summary>
-    ///     The font assets of a converted font bundle and the TMP material made for them. Only the material is
-    ///     destroyed here; the font assets belong to their bundle.
-    /// </summary>
     public class SceneFontAssets
     {
         private readonly Material textMeshProMaterial;
@@ -26,6 +22,7 @@ namespace ECS.StreamableLoading.Fonts
 
         public void Destroy()
         {
+            // The font assets belong to their bundle, so only the material is destroyed here
             TMP_ResourceManager.RemoveFontAsset(TextMeshProFont);
             UnityObjectUtils.SafeDestroy(textMeshProMaterial);
         }

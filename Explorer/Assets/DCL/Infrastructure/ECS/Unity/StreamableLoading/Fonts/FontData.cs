@@ -9,7 +9,7 @@ namespace ECS.StreamableLoading.Fonts
     {
         private readonly AssetBundleData bundle;
 
-        /// <param name="bundle">The converted font bundle the assets were loaded from; this font holds one reference to it.</param>
+        // Owns one reference to the bundle the assets come from.
         public FontData(SceneFontAssets assets, AssetBundleData bundle) : base(assets, ReportCategory.SDK_FONTS)
         {
             this.bundle = bundle;

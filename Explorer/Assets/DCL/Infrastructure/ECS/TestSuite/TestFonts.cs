@@ -25,8 +25,7 @@ namespace ECS.TestSuite
             FontAsset.CreateFontAsset(PATH, 0, SAMPLING_POINT_SIZE, ATLAS_PADDING, GlyphRenderMode.SDFAA, ATLAS_SIZE, ATLAS_SIZE);
 
         /// <summary>
-        ///     Creates a font the way <see cref="LoadFontSystem" /> loads it from a converted font bundle, with a stand-in
-        ///     bundle holding both font assets. Destroy it with <see cref="DestroyBundledFont" />.
+        ///     Release the font with <see cref="DestroyBundledFont" />, because disposing the font does not destroy its font assets.
         /// </summary>
         public static FontData CreateBundledFont(TMP_FontAsset referenceFont)
         {
@@ -41,9 +40,6 @@ namespace ECS.TestSuite
             return font;
         }
 
-        /// <summary>
-        ///     Disposes the font and destroys the font assets its stand-in bundle holds.
-        /// </summary>
         public static void DestroyBundledFont(FontData font)
         {
             SceneFontAssets assets = font.Asset;

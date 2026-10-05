@@ -133,7 +133,7 @@
         public const string TEXTURES = nameof(TEXTURES);
 
         /// <summary>
-        ///     The fonts scenes load through `font_src`
+        ///     Fonts that scenes load through `font_src`
         /// </summary>
         public const string SDK_FONTS = nameof(SDK_FONTS);
 
