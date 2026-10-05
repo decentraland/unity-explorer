@@ -236,6 +236,12 @@ namespace DCL.UserInAppInitializationFlow
                                     // A failed startup sequence keeps its own error, such as a missing profile; the LiveKit result decides only a sequence that succeeded
                                     if (operationResult.Success)
                                         operationResult = livekitOperationResult;
+                                    else if (operationResult.Error is { Exception: ProfileNotFoundException })
+                                    {
+                                        // TODO: redesign. Clearing the identity cache as a side effect of an error, only to steer the auth decision at the top of the loop, is implicit control flow;
+                                        // the retry should decide whether to show the auth screen from the result itself
+                                        identityCache.Clear(); // Forces the auth screen on the retry, even under skip-auth-screen
+                                    }
 
                                     if (operationResult.Success)
                                     {
