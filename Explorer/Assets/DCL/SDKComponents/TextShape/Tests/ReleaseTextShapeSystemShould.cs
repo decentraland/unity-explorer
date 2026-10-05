@@ -29,7 +29,6 @@ namespace DCL.SDKComponents.TextShape.Tests
         private TMP_FontAsset customFont = null!;
         private TextMeshPro textMeshPro = null!;
         private Entity entity;
-        private Entity promiseEntity;
 
         [SetUp]
         public void SetUp()
@@ -52,7 +51,7 @@ namespace DCL.SDKComponents.TextShape.Tests
                           return true;
                       });
             component.FontRequest.Update(world, sceneData, FONT_SRC, PartitionComponent.TOP_PRIORITY);
-            promiseEntity = component.FontRequest.Promise!.Value.Entity;
+            Entity promiseEntity = component.FontRequest.Promise!.Value.Entity;
             ((IStreamableRefCountData)fontData).AddReference();
             world.Add(promiseEntity, new StreamableLoadingResult<FontData>(fontData));
             component.FontRequest.TryConsume(world);
@@ -100,7 +99,7 @@ namespace DCL.SDKComponents.TextShape.Tests
             ref TextShapeComponent component = ref world.Get<TextShapeComponent>(entity);
             Assert.That(component.FontRequest.Assets?.TextMeshProFont, Is.SameAs(customFont));
             Assert.That(component.FontRequest.Src, Is.EqualTo(FONT_SRC));
-            Assert.That(world.IsAlive(promiseEntity), Is.True);
+            Assert.That(fontData.CanBeDisposed(), Is.False);
             Assert.That(textMeshPro.font, Is.SameAs(customFont));
         }
 
@@ -123,7 +122,7 @@ namespace DCL.SDKComponents.TextShape.Tests
 
         private void AssertFontReleased()
         {
-            Assert.That(world.IsAlive(promiseEntity), Is.False);
+            Assert.That(fontData.CanBeDisposed(), Is.True);
             Assert.That(textMeshPro.font, Is.SameAs(builtInFont));
         }
     }

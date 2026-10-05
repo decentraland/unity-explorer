@@ -34,7 +34,6 @@ namespace DCL.SDKComponents.SceneUI.Tests
         private FontAsset customFont = null!;
         private Label label = null!;
         private Entity entity;
-        private Entity promiseEntity;
 
         [SetUp]
         public void SetUp()
@@ -58,7 +57,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
                           return true;
                       });
             component.FontRequest.Update(world, sceneData, FONT_SRC, PartitionComponent.TOP_PRIORITY);
-            promiseEntity = component.FontRequest.Promise!.Value.Entity;
+            Entity promiseEntity = component.FontRequest.Promise!.Value.Entity;
             ((IStreamableRefCountData)fontData).AddReference();
             world.Add(promiseEntity, new StreamableLoadingResult<FontData>(fontData));
             component.FontRequest.TryConsume(world);
@@ -104,7 +103,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
             system.Update(0);
 
             Assert.That(world.Get<UITextComponent>(entity).FontRequest.Assets?.UIToolkitFont, Is.SameAs(customFont));
-            Assert.That(world.IsAlive(promiseEntity), Is.True);
+            Assert.That(fontData.CanBeDisposed(), Is.False);
             Assert.That(label.style.unityFontDefinition.value.fontAsset, Is.SameAs(customFont));
         }
 
@@ -119,7 +118,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
 
         private void AssertFontReleased()
         {
-            Assert.That(world.IsAlive(promiseEntity), Is.False);
+            Assert.That(fontData.CanBeDisposed(), Is.True);
             Assert.That(label.style.unityFontDefinition.keyword, Is.EqualTo(StyleKeyword.Null));
         }
     }

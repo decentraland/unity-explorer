@@ -34,7 +34,6 @@ namespace DCL.SDKComponents.SceneUI.Tests
         private FontAsset customFont = null!;
         private UIDropdownComponent component = null!;
         private Entity entity;
-        private Entity promiseEntity;
 
         [SetUp]
         public void SetUp()
@@ -58,7 +57,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
                           return true;
                       });
             component.FontRequest.Update(world, sceneData, FONT_SRC, PartitionComponent.TOP_PRIORITY);
-            promiseEntity = component.FontRequest.Promise!.Value.Entity;
+            Entity promiseEntity = component.FontRequest.Promise!.Value.Entity;
             ((IStreamableRefCountData)fontData).AddReference();
             world.Add(promiseEntity, new StreamableLoadingResult<FontData>(fontData));
             component.FontRequest.TryConsume(world);
@@ -109,7 +108,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
         {
             Assert.That(component.FontRequest.Assets, Is.Null);
             Assert.That(component.FontRequest.Promise, Is.Null);
-            Assert.That(world.IsAlive(promiseEntity), Is.False);
+            Assert.That(fontData.CanBeDisposed(), Is.True);
             Assert.That(component.DropdownField.style.unityFontDefinition.keyword, Is.EqualTo(StyleKeyword.Null));
         }
     }
