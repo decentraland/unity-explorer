@@ -15,13 +15,12 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
         private const string SOURCE = "lobby";
 
         private readonly IAnalyticsController analytics;
-        private readonly LobbyController lobby;
+        private readonly LobbyDocumentController lobby;
 
-        // The startup lobby is the only way into the world, so a visit there is not the choice an in-world visit is
         private bool isStartupVisit;
         private float openedAt;
 
-        public LobbyAnalytics(IAnalyticsController analytics, LobbyController lobby)
+        public LobbyAnalytics(IAnalyticsController analytics, LobbyDocumentController lobby)
         {
             this.analytics = analytics;
             this.lobby = lobby;
@@ -62,17 +61,17 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
             analytics.Track(AnalyticsEvents.Lobby.LOBBY_CLOSED, payload);
         }
 
-        private void OnPlaceOpened(PlacesData.PlaceInfo place, LobbySection section) =>
-            analytics.Track(AnalyticsEvents.Places.PLACE_CARD_CLICKED, PlacePayload(place, section));
+        private void OnPlaceOpened(PlacesData.PlaceInfo place, LobbyCardOrigin origin) =>
+            analytics.Track(AnalyticsEvents.Places.PLACE_CARD_CLICKED, PlacePayload(place, origin));
 
-        private void OnPlaceJumpedIn(PlacesData.PlaceInfo place, LobbySection section) =>
-            analytics.Track(AnalyticsEvents.Places.PLACE_JUMPED_IN, PlacePayload(place, section));
+        private void OnPlaceJumpedIn(PlacesData.PlaceInfo place, LobbyCardOrigin origin) =>
+            analytics.Track(AnalyticsEvents.Places.PLACE_JUMPED_IN, PlacePayload(place, origin));
 
-        private void OnEventOpened(IEventDTO @event, LobbySection section) =>
-            analytics.Track(AnalyticsEvents.Events.EVENT_CARD_CLICKED, EventPayload(@event, section));
+        private void OnEventOpened(IEventDTO @event, LobbyCardOrigin origin) =>
+            analytics.Track(AnalyticsEvents.Events.EVENT_CARD_CLICKED, EventPayload(@event, origin));
 
-        private void OnEventJumpedIn(IEventDTO @event, LobbySection section) =>
-            analytics.Track(AnalyticsEvents.Events.EVENT_JUMPED_IN, EventPayload(@event, section));
+        private void OnEventJumpedIn(IEventDTO @event, LobbyCardOrigin origin) =>
+            analytics.Track(AnalyticsEvents.Events.EVENT_JUMPED_IN, EventPayload(@event, origin));
 
         private void OnFriendJoined(string friendAddress, Vector2Int parcel) =>
             analytics.Track(AnalyticsEvents.Friends.JUMP_TO_FRIEND_CLICKED, new JObject
@@ -83,26 +82,26 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
                 { "is_startup", isStartupVisit },
             });
 
-        private JObject PlacePayload(PlacesData.PlaceInfo place, LobbySection section) =>
+        private JObject PlacePayload(PlacesData.PlaceInfo place, LobbyCardOrigin origin) =>
             new ()
             {
                 { "place_id", place.id },
                 { "place_name", place.title },
                 { "place_coords", string.IsNullOrWhiteSpace(place.world_name) ? place.base_position : place.world_name },
                 { "highlighted", place.highlighted },
-                { "from_section", SectionName(section) },
+                { "from_section", OriginName(origin) },
                 { "source", SOURCE },
                 { "is_startup", isStartupVisit },
             };
 
-        private JObject EventPayload(IEventDTO @event, LobbySection section) =>
+        private JObject EventPayload(IEventDTO @event, LobbyCardOrigin origin) =>
             new ()
             {
                 { "event_id", @event.Id },
                 { "event_name", @event.Name },
                 { "event_coords", $"({@event.X}, {@event.Y})" },
                 { "highlighted", @event.Highlighted },
-                { "from_section", SectionName(section) },
+                { "from_section", OriginName(origin) },
                 { "source", SOURCE },
                 { "is_startup", isStartupVisit },
             };
@@ -114,15 +113,15 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
                 { "is_startup", isStartupVisit },
             };
 
-        private static string SectionName(LobbySection section) =>
-            section switch
+        private static string OriginName(LobbyCardOrigin origin) =>
+            origin switch
             {
-                LobbySection.Landing => "landing",
-                LobbySection.Recent => "recent",
-                LobbySection.Recommended => "recommended",
-                LobbySection.LiveEvents => "live_events",
-                LobbySection.UpcomingEvents => "upcoming_events",
-                _ => section.ToString(),
+                LobbyCardOrigin.Landing => "landing",
+                LobbyCardOrigin.Recent => "recent",
+                LobbyCardOrigin.Recommended => "recommended",
+                LobbyCardOrigin.LiveEvents => "live_events",
+                LobbyCardOrigin.UpcomingEvents => "upcoming_events",
+                _ => origin.ToString(),
             };
     }
 }

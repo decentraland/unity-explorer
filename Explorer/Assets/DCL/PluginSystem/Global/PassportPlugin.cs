@@ -29,6 +29,7 @@ using System.Threading;
 using DCL.InWorldCamera;
 using DCL.InWorldCamera.CameraReelGallery.Components;
 using DCL.UI;
+using DCL.Utilities;
 using System;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -69,6 +70,7 @@ namespace DCL.PluginSystem.Global
         private readonly ImageControllerProvider imageControllerProvider;
         private readonly IWebRequestController webRequestController;
         private readonly MarketplaceShopAPIClient marketplaceShopAPIClient;
+        private readonly UpscalingController upscalingController;
         private PassportController? passportController;
 
         public PassportPlugin(
@@ -103,7 +105,8 @@ namespace DCL.PluginSystem.Global
             IThumbnailProvider thumbnailProvider,
             ImageControllerProvider imageControllerProvider,
             IWebRequestController webRequestController,
-            MarketplaceShopAPIClient marketplaceShopAPIClient)
+            MarketplaceShopAPIClient marketplaceShopAPIClient,
+            UpscalingController upscalingController)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -137,6 +140,7 @@ namespace DCL.PluginSystem.Global
             this.imageControllerProvider = imageControllerProvider;
             this.webRequestController = webRequestController;
             this.marketplaceShopAPIClient = marketplaceShopAPIClient;
+            this.upscalingController = upscalingController;
         }
 
         public void Dispose()
@@ -191,6 +195,7 @@ namespace DCL.PluginSystem.Global
                 isCommunitiesFeatureEnabled,
                 voiceChatOrchestrator,
                 passport3DPreviewCamera,
+                upscalingController,
                 galleryEventBus,
                 systemClipboard,
                 passportSettings.CameraReelGalleryMessages,
