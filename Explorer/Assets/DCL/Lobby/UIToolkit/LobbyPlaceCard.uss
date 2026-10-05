@@ -1,0 +1,159 @@
+:root {
+    --place-card-hover-duration: 0.3s;
+}
+
+/* 280x165 with 24px corners: the thumbnail over a 55px footer that holds the texts */
+.lobby-place-card {
+    width: 280px;
+    height: 165px;
+    border-radius: 24px;
+    background-color: var(--lobby-card-color);
+    overflow: hidden;
+}
+
+/* Gives up as much height as the hovered footer grows; its 16px corners make the dark strip under it curve into it */
+.lobby-place-card__thumbnail {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    height: 110px;
+    border-radius: 16px;
+    background-image: url('/Assets/Textures/ExplorePanel/DefaultImagePlace.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    transition: height var(--place-card-hover-duration) ease-out, opacity var(--lobby-thumbnail-fade-duration) ease-out;
+}
+
+.lobby-place-card:hover .lobby-place-card__thumbnail {
+    height: 86px;
+}
+
+/* While the picture is on its way the dark fill of the card shows; the picture then fades in over it rather than popping up */
+.lobby-place-card--loading .lobby-place-card__thumbnail {
+    opacity: 0;
+    transition: height var(--place-card-hover-duration) ease-out, opacity 0s;
+}
+
+.lobby-place-card__online {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    height: 28px;
+    flex-direction: row;
+    align-items: center;
+    padding: 0 6px;
+    border-radius: 12px;
+    background-color: var(--dcl-color-shadow);
+}
+
+.lobby-place-card__online-dot {
+    width: 8px;
+    height: 8px;
+    margin-right: 4px;
+    border-radius: 4px;
+    background-color: rgb(48, 205, 0);
+}
+
+.lobby-place-card__online-icon {
+    width: 16px;
+    height: 16px;
+    margin-right: 4px;
+    background-image: url('/Assets/Textures/Common/PlayersIcn.png');
+}
+
+.lobby-place-card__online-count {
+    font-size: 14px;
+    -unity-font-definition: var(--dcl-font-inter-semibold);
+    color: var(--dcl-color-snow);
+}
+
+.lobby-place-card__footer {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 55px;
+    padding: 8px 10px 0;
+    transition: height var(--place-card-hover-duration) ease-out;
+}
+
+.lobby-place-card:hover .lobby-place-card__footer {
+    height: 79px;
+}
+
+.lobby-place-card__title {
+    height: 20px;
+    margin-bottom: 2px;
+    font-size: 14px;
+    -unity-font-definition: var(--dcl-font-inter-semibold);
+    -unity-font-style: bold;
+    -unity-text-align: middle-left;
+    color: white;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.lobby-place-card__creator {
+    height: 16px;
+    font-size: 11px;
+    -unity-font-definition: var(--dcl-font-inter-regular);
+    -unity-text-align: middle-left;
+    color: var(--lobby-subtitle-color);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: opacity var(--place-card-hover-duration) ease-out;
+}
+
+.lobby-place-card:hover .lobby-place-card__creator {
+    opacity: 0;
+}
+
+/* Only reachable while hovered, so its invisible state never takes a click meant for the card; the box runs 6px under the visible button for the shadow of its sprite (see LobbyDocument.uss) */
+.lobby-place-card__jump-in {
+    position: absolute;
+    left: 7px;
+    right: 7px;
+    bottom: 2px;
+    height: 38px;
+    padding: 0 0 6px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    background-color: transparent;
+    background-image: var(--lobby-button-shadow-image);
+    -unity-slice-left: 26;
+    -unity-slice-top: 24;
+    -unity-slice-right: 25;
+    -unity-slice-bottom: 36;
+    -unity-slice-scale: 0.5px;
+    -unity-background-image-tint-color: var(--lobby-jump-in-color);
+    opacity: 0;
+    transition: opacity var(--place-card-hover-duration) ease-out, -unity-background-image-tint-color 0.1s;
+}
+
+.lobby-place-card:hover .lobby-place-card__jump-in {
+    opacity: 1;
+}
+
+.lobby-place-card__jump-in:active {
+    -unity-background-image-tint-color: var(--lobby-jump-in-pressed-color);
+}
+
+.lobby-place-card__jump-in-text {
+    margin-right: 4px;
+    font-size: 12px;
+    -unity-font-definition: var(--dcl-font-inter-semibold);
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    color: var(--dcl-color-snow);
+}
+
+.lobby-place-card__jump-in-icon {
+    width: 20px;
+    height: 20px;
+    background-image: url('/Assets/Textures/Common/JumpInOutline.png');
+}
