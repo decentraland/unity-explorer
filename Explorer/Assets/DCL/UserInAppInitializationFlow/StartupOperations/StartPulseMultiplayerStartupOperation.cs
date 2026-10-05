@@ -3,6 +3,7 @@ using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Pulse;
 using DCL.Profiles;
 using DCL.Profiles.Self;
+using DCL.Utility.Types;
 using System;
 using System.Threading;
 
@@ -61,11 +62,17 @@ namespace DCL.UserInAppInitializationFlow
 
             ProfileReadResult read = await selfProfile.ProfileAsync(ct);
 
-            if (!read.IsOk(out Profile? profile))
+            if (!read.IsOk(out _))
                 throw new InvalidOperationException($"Own profile could not be resolved ({read}), nothing to propagate to Pulse");
 
+            // Only the version the catalyst confirmed is propagated, never a pending edit's.
+            Option<Profile> confirmed = selfProfile.CurrentProfileSnapshot.ConfirmedProfile;
+
+            if (!confirmed.Has)
+                return;
+
             await UniTask.SwitchToMainThread();
-            profilePropagation.PropagateIfNewVersion(profile);
+            profilePropagation.PropagateIfNewVersion(confirmed.Value);
         }
     }
 }

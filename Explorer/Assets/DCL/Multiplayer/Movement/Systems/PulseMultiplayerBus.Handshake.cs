@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.Pulse;
 using DCL.Profiles;
 using DCL.Profiles.Self;
+using DCL.Utility.Types;
 using DCL.Web3.Chains;
 using DCL.Web3.Identities;
 using Decentraland.Pulse;
@@ -39,7 +40,9 @@ namespace DCL.Multiplayer.Movement
             if (profileRead.IsCancelled)
                 throw new OperationCanceledException(ct);
 
-            handshakePacket.Message.Handshake.ProfileVersion = profileRead.IsOk(out Profile? profile) ? profile.Version : 0;
+            // The read settles the profile; only the version the catalyst confirmed is announced, never a pending edit's.
+            Option<Profile> confirmed = selfProfile.CurrentProfileSnapshot.ConfirmedProfile;
+            handshakePacket.Message.Handshake.ProfileVersion = confirmed.Has ? confirmed.Value.Version : 0;
 
             WriteInitialState(handshakePacket.Message.Handshake);
 

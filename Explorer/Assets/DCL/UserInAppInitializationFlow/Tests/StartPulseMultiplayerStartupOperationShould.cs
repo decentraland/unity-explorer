@@ -100,6 +100,8 @@ namespace DCL.UserInAppInitializationFlow.Tests
 
             var profile = Profile.NewRandomProfile("0x8a5b1234567890abcdef1234567890abcdef1234");
             selfProfile.ProfileAsync(Arg.Any<CancellationToken>()).Returns(UniTask.FromResult(ProfileReadResult.FromOk(profile)));
+            selfProfile.CurrentProfileSnapshot.Returns(SelfProfileModel.FromIdentified(
+                new Identified(profile.UserId, ProfileKnowledge.FromKnown(profile), ProfileActivity.Idle())));
 
             var pulseRealm = new PulseRealm(realmData, entityIdSource);
             StartPulseMultiplayerStartupOperation operation = Operation(activation, pulseRealm);
@@ -113,6 +115,29 @@ namespace DCL.UserInAppInitializationFlow.Tests
             _ = service.Received(1).ConnectAsync(Arg.Any<CancellationToken>(), Arg.Any<int>());
             Assert.IsTrue(activation.IsActive);
             profilePropagation.Received(1).PropagateIfNewVersion(profile);
+        }
+
+        [Test]
+        public async Task PropagateTheConfirmedProfileWhileADeployIsInFlight()
+        {
+            // Arrange
+            var activation = new PulseActivation(true);
+            service.ConnectAsync(Arg.Any<CancellationToken>(), Arg.Any<int>()).Returns(UniTask.FromResult(true));
+
+            var confirmed = Profile.NewRandomProfile("0x8a5b1234567890abcdef1234567890abcdef1234");
+            Profile pending = new ProfileBuilder().From(confirmed).WithVersion(confirmed.Version + 1).Build();
+            selfProfile.ProfileAsync(Arg.Any<CancellationToken>()).Returns(UniTask.FromResult(ProfileReadResult.FromOk(pending)));
+            selfProfile.CurrentProfileSnapshot.Returns(SelfProfileModel.FromIdentified(new Identified(confirmed.UserId, ProfileKnowledge.FromKnown(pending),
+                ProfileActivity.FromDeploying(new Deploying(pending, ProfileKnowledge.FromKnown(confirmed))))));
+
+            StartPulseMultiplayerStartupOperation operation = Operation(activation, new PulseRealm(realmData));
+
+            // Act
+            await operation.ExecuteAsync(MakeParams(), cts.Token);
+
+            // Assert
+            profilePropagation.Received(1).PropagateIfNewVersion(confirmed);
+            profilePropagation.DidNotReceive().PropagateIfNewVersion(pending);
         }
 
         [Test]
