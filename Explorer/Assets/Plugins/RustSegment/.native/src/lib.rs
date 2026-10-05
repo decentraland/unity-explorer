@@ -44,8 +44,7 @@ mod tests {
     fn test_integration() {
         let write_key = std::env::var("SEGMENT_WRITE_KEY").unwrap();
         let persistent_path = std::env::var("SEGMENT_QUEUE_PATH").unwrap();
-        let api_host = std::env::var("SEGMENT_API_HOST")
-            .unwrap_or_else(|_| "https://api.e.decentraland.org".to_owned());
+        let api_host = std::env::var("SEGMENT_API_HOST").unwrap();
 
         SEGMENT_SERVER.initialize(persistent_path, 100, write_key, api_host, test_callback, None);
         SEGMENT_SERVER.try_execute(|segment, id| {
