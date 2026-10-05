@@ -105,6 +105,24 @@ namespace DCL.Profiles.Tests
             });
 
         [UnityTest]
+        public IEnumerator EndAPendingReadAsCancelledOnDispose() =>
+            UniTask.ToCoroutine(async () =>
+            {
+                // Arrange
+                AnyGet().Returns(new UniTaskCompletionSource<ProfileTier?>().Task);
+                selfProfile = NewSelfProfile();
+                UniTask<ProfileReadResult> read = selfProfile.ProfileAsync(CancellationToken.None);
+                await UniTask.Yield();
+
+                // Act
+                selfProfile.Dispose();
+                ProfileReadResult result = await read;
+
+                // Assert
+                Assert.That(result.IsCancelled, Is.True, $"expected Cancelled, got {result}");
+            });
+
+        [UnityTest]
         public IEnumerator RevertToAnIntactProfileWhenADeployFails() =>
             UniTask.ToCoroutine(async () =>
             {
