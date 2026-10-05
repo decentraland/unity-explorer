@@ -188,7 +188,7 @@ namespace DCL.SkyBox
         /// </summary>
         private async UniTask<SkyboxLookPreset?> LoadFlaggedLookPresetAsync(SkyboxSettingsAsset settings, CancellationToken ct)
         {
-            if (!FeatureFlagsConfiguration.Instance.TryGetTextPayload(FeatureFlagsStrings.SKYBOX_LOOK_PRESET, FeatureFlagsStrings.SKYBOX_LOOK_PRESET_VARIANT, out string? presetName)
+            if (!FeatureFlagsConfiguration.Instance.TryGetTextPayload(FeatureFlagsStrings.SKYBOX_LOOK_PRESET, out string? presetName)
                 || string.IsNullOrWhiteSpace(presetName))
                 return null;
 
