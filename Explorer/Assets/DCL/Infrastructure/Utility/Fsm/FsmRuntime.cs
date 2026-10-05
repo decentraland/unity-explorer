@@ -66,10 +66,10 @@ namespace Utility.Fsm
 
         private void Step(in TMsg msg)
         {
-            ReportHub.Log(category, $"[{tag}] msg: {msg}");
-
             try
             {
+                ReportHub.Log(category, $"[{tag}] msg: {msg}");
+
                 (TModel next, TCmd cmd) = update(ModelSnapshot, msg);
 
                 using (Mutex<TModel>.Guard guard = model.Lock()) // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
