@@ -156,6 +156,9 @@ namespace DCL.ResourcesUnloading
         public void Register<T>(IExtendedObjectPool<T> extendedObjectPool) where T: class =>
             extendedObjectPools.Add(extendedObjectPool);
 
+        public void Register(IThrottledClearable clearable) =>
+            extendedObjectPools.Add(clearable);
+
         public void Register(IProfileCache profileCache) =>
             this.profileCache = profileCache;
 

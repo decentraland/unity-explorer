@@ -351,6 +351,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.Map => $"https://places.{BaseDomain}/api/map",
                 DecentralandUrl.ContentModerationReport => $"https://places.{BaseDomain}/api/report",
                 DecentralandUrl.Gatekeeper => ResolveGatekeeperBaseUrl($"https://comms-gatekeeper.{BaseDomain}"),
+                DecentralandUrl.CastPresenterService => $"https://cast-presenter-service.{BaseDomain}",
                 DecentralandUrl.GateKeeperSceneAdapter => $"{RawUrl(DecentralandUrl.Gatekeeper).Url!}{SCENE_ADAPTER_PATH}",
                 // The local gatekeeper is pinned to org for the decentraland environments (that is where it runs);
                 // a custom deployment runs its own, so it resolves against the base domain instead of reaching for org.

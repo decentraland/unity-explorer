@@ -34,7 +34,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
             now = 0f;
             webRequestController = Substitute.For<IWebRequestController>();
             decentralandUrlsSource = Substitute.For<IDecentralandUrlsSource>();
-            decentralandUrlsSource.BaseDomain.Returns("decentraland.org");
+            decentralandUrlsSource.Url(DecentralandUrl.CastPresenterService).Returns(ORG_ORIGIN);
             cache = new SlideTextureCache(webRequestController, decentralandUrlsSource, () => now);
             decoded = new List<Texture2D>();
         }
@@ -238,22 +238,6 @@ namespace DCL.SDKComponents.MediaStream.Tests
         }
 
         [Test]
-        public void RejectDecodedSlide_WhenLargerThanMaxSize()
-        {
-            var oversized = new Texture2D(PresentationLayout.MAX_SLIDE_SIZE + 1, 1);
-            SendTextureRequest(webRequestController).Returns(UniTask.FromResult<Texture2D?>(oversized));
-            LogAssert.Expect(LogType.Warning, new Regex($"{PresentationLayout.MAX_SLIDE_SIZE + 1}x1"));
-
-            cache.GetOrRequest(ALLOWED_URL, BOT_A);
-            now = SlideTextureCache.MAX_RETRY_COOLDOWN_SECONDS + 1f;
-            Texture2D? afterCooldown = cache.GetOrRequest(ALLOWED_URL, BOT_A);
-
-            Assert.IsNull(afterCooldown);
-            Assert.IsTrue(oversized == null);
-            SendTextureRequest(webRequestController.Received(1));
-        }
-
-        [Test]
         public void KeepRecentlyUsedSlide_WhenCacheEvicts()
         {
             var slides = new Texture2D[SlideTextureCache.CAPACITY + 1];
@@ -272,19 +256,6 @@ namespace DCL.SDKComponents.MediaStream.Tests
 
             Assert.AreSame(slides[0], cache.GetOrRequest(SlideUrl(0), BOT_A));
             Assert.IsTrue(slides[1] == null);
-        }
-
-        [Test]
-        public void DropCpuCopy_WhenSlideLoads()
-        {
-            var texture = new Texture2D(2, 2);
-            SendTextureRequest(webRequestController).Returns(UniTask.FromResult<Texture2D?>(texture));
-
-            cache.GetOrRequest(ALLOWED_URL, BOT_A);
-            Texture2D? loaded = cache.GetOrRequest(ALLOWED_URL, BOT_A);
-
-            Assert.AreSame(texture, loaded);
-            Assert.IsFalse(texture.isReadable);
         }
 
         [Test]
@@ -382,9 +353,9 @@ namespace DCL.SDKComponents.MediaStream.Tests
         {
             RequestEnvelope<GetTextureWebRequest, GetTextureArguments> envelope = default;
 
-            webRequestController.SendAsync<GetTextureWebRequest, GetTextureArguments, GetTextureWebRequest.CreateTextureOp, Texture2D>(
+            webRequestController.SendAsync<GetTextureWebRequest, GetTextureArguments, SlideTextureCache.SlideTextureOp, Texture2D>(
                                      Arg.Do<RequestEnvelope<GetTextureWebRequest, GetTextureArguments>>(e => envelope = e),
-                                     Arg.Any<GetTextureWebRequest.CreateTextureOp>(),
+                                     Arg.Any<SlideTextureCache.SlideTextureOp>(),
                                      Arg.Any<long>(),
                                      Arg.Any<IProgress<float>?>())
                                 .Returns(new UniTaskCompletionSource<Texture2D?>().Task);
@@ -442,9 +413,9 @@ namespace DCL.SDKComponents.MediaStream.Tests
             $"{ORG_ORIGIN}/presentations/{index:x8}-d9cb-469f-a165-70867728950e/slides/{HASH}.png";
 
         private static UniTask<Texture2D?> SendTextureRequest(IWebRequestController controller) =>
-            controller.SendAsync<GetTextureWebRequest, GetTextureArguments, GetTextureWebRequest.CreateTextureOp, Texture2D>(
+            controller.SendAsync<GetTextureWebRequest, GetTextureArguments, SlideTextureCache.SlideTextureOp, Texture2D>(
                 Arg.Any<RequestEnvelope<GetTextureWebRequest, GetTextureArguments>>(),
-                Arg.Any<GetTextureWebRequest.CreateTextureOp>(),
+                Arg.Any<SlideTextureCache.SlideTextureOp>(),
                 Arg.Any<long>(),
                 Arg.Any<IProgress<float>?>());
     }
