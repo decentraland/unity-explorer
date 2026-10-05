@@ -11,7 +11,6 @@ using NSubstitute;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -539,10 +538,8 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
         {
             LKParticipant participant = LiveKitTestObjects.NewParticipant(identity);
 
-            FieldInfo tracksField = typeof(LKParticipant).GetField("tracks", BindingFlags.Instance | BindingFlags.NonPublic)!;
-            var tracksDict = (IDictionary<string, TrackPublication>)tracksField.GetValue(participant)!;
             foreach ((string sid, TrackKind kind, TrackSource source) in tracks)
-                tracksDict[sid] = LiveKitTestObjects.NewPublication(sid, kind, source);
+                participant.AddTrack(LiveKitTestObjects.NewPublication(sid, kind, source));
 
             return participant;
         }
