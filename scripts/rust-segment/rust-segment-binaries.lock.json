@@ -6,9 +6,7 @@
     "Hash lock for the prebuilt RustSegment native binaries committed under",
     "Explorer/Assets/Plugins/RustSegment/SegmentServerWrap/Libraries/.",
     "Verified by scripts/native-lock/verify-binaries.py --lock <this file>; regenerate with --update.",
-    "See Explorer/Assets/Plugins/RustSegment/README.md.",
-    "Libraries/Linux/segment-server.so is outside this lock: Linux is not a",
-    "release target and the file predates the crate's current source."
+    "See Explorer/Assets/Plugins/RustSegment/README.md."
   ],
   "rust_source": {
     "comment": "The crate has no upstream repository - it is built from this repo's own .native/ tree. source_digest below is what ties each target's shipped binary to the exact .native/src state that produced it.",
@@ -57,7 +55,7 @@
       ],
       "kind": "file",
       "path": "Explorer/Assets/Plugins/RustSegment/.native/build.sh",
-      "sha256": "85f560ff93ae5cdd2b1b57b50b27efad3d4f03b99f4903cee18fcc1f889f842a"
+      "sha256": "888f050a384e3f5de358aa3167be9641424813904e88824dd26d6736aea10a71"
     }
   },
   "targets": {
@@ -110,6 +108,24 @@
           "sha256": "0cacb28d4ceeb216d2c1328117b2cba3a2aadf44aa356fa39e3ffea2b1f82420",
           "bytes": 4562432,
           "produced_by": "cargo"
+        }
+      ]
+    },
+    "linux-x86_64": {
+      "comment": "Toolchain not yet pinned — Gate B skips until the first relock. After a successful CI run, commit the artifact from the CI artifacts and relock with: scripts/native-lock/verify-binaries.py --lock scripts/rust-segment/rust-segment-binaries.lock.json --update --only linux-x86_64 --toolchain toolchain-linux.txt",
+      "runtime_dir": "Explorer/Assets/Plugins/RustSegment/SegmentServerWrap/Libraries/Linux",
+      "rust": {
+        "target": "x86_64-unknown-linux-gnu",
+        "profile": "release",
+        "crate_version": "0.1.0"
+      },
+      "artifacts": [
+        {
+          "path": "Explorer/Assets/Plugins/RustSegment/SegmentServerWrap/Libraries/Linux/segment-server.so",
+          "sha256": "pending",
+          "bytes": 0,
+          "produced_by": "cargo",
+          "comment": "pending: updated by the first relock (verify-binaries.py --update --only linux-x86_64)"
         }
       ]
     }
