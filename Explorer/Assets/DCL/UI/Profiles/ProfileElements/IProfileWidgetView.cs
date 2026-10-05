@@ -3,7 +3,8 @@ using DCL.Utilities;
 namespace DCL.UI.ProfileElements
 {
     /// <summary>
-    ///     The widget of the current user a panel embeds in its top bar: <see cref="ProfileWidgetView" /> for uGUI, <see cref="ProfileWidgetElement" /> for UI Toolkit.
+    ///     The widget of the current user a panel embeds in its top bar: <see cref="ProfileWidgetView" /> for uGUI,
+    ///     <see cref="ProfileWidgetElement" /> for UI Toolkit.
     /// </summary>
     public interface IProfileWidgetView
     {

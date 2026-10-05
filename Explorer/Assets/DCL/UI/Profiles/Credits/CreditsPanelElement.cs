@@ -5,7 +5,8 @@ using Utility.UIToolkit;
 namespace DCL.UI.Credits
 {
     /// <summary>
-    ///     UI Toolkit counterpart of <see cref="CreditsPanelView" />. It builds its own children; the hosting document imports CreditsPanel.uss.
+    ///     UI Toolkit counterpart of <see cref="CreditsPanelView" />. It builds its own children; the hosting document
+    ///     imports CreditsPanel.uss.
     /// </summary>
     [UxmlElement]
     public partial class CreditsPanelElement : VisualElement, ICreditsPanelView

@@ -4,7 +4,7 @@ using UnityEngine.UIElements;
 namespace DCL.Lobby
 {
     /// <summary>
-    ///     The live events carousel of the lobby, one <see cref="LobbyLiveEventCardElement" /> per event. It only reports which card was clicked.
+    ///     Live events carousel, one <see cref="LobbyLiveEventCardElement" /> per event; it reports the clicked card.
     /// </summary>
     public class LobbyLiveEventsRail : LobbyCardRail<LobbyLiveEventCardElement>
     {

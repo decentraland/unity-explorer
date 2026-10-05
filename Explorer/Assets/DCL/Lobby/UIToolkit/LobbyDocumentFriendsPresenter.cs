@@ -21,7 +21,7 @@ using Utility;
 namespace DCL.Lobby
 {
     /// <summary>
-    ///     Fills the online friends row of the document from the connectivity tracker and resolves where each shown friend is.
+    ///     Fills the document's online friends row from the connectivity tracker and resolves where each friend is.
     /// </summary>
     public class LobbyDocumentFriendsPresenter : IDisposable
     {
@@ -79,7 +79,7 @@ namespace DCL.Lobby
         }
 
         /// <summary>
-        ///     Takes the friends section of the current hierarchy over; locations are resolved again, as the previous ones may be minutes old.
+        ///     Takes over the friends section of the current hierarchy and resolves the stale locations again.
         /// </summary>
         public void Show(VisualElement section, CancellationToken ct)
         {
@@ -151,7 +151,7 @@ namespace DCL.Lobby
             card.IsVerified = profile.HasClaimedName;
             card.OnlineStatus = tracker.GetFriendStatus(userId);
 
-            // Rebinding the same friend keeps the picture, unless its fetch never finished (a hide cancels the fetches under way)
+            // Rebinding the same friend keeps the picture unless its fetch was cancelled by a hide before finishing
             if (!string.Equals(binding.UserId, userId, StringComparison.OrdinalIgnoreCase) || binding.IsPictureLoading)
                 binding.LoadPicture(profile, showCt);
 
@@ -330,7 +330,7 @@ namespace DCL.Lobby
                 GetProfileThumbnailCommand.Instance.ExecuteAsync(thumbnail, null, profile, thumbnailCts.Token).SuppressToResultAsync(ReportCategory.UI).Forget();
             }
 
-            // The profile color fills the circle without a picture, and a fetch keeps the previous picture up while there is one
+            // The profile color fills the circle without a picture; a fetch keeps any previous picture up
             private void OnThumbnailUpdated(ProfileThumbnailViewModel model)
             {
                 card.PictureColor = model.ProfileColor;

@@ -4,7 +4,7 @@ using Utility.UIToolkit;
 namespace DCL.Lobby
 {
     /// <summary>
-    ///     Hero card of the place the session lands in. Unlike a row card it can stand for a place that is still unknown or has no details.
+    ///     Hero card of the landing place. Unlike a row card it can stand for a place still unknown or without details.
     /// </summary>
     [UxmlElement]
     public partial class LobbyLandingCardElement : LobbyPlaceCardElement
@@ -35,7 +35,7 @@ namespace DCL.Lobby
         }
 
         /// <summary>
-        ///     While false the card takes no click, shows the plain cursor and is marked static, which the stylesheet dims.
+        ///     While false the card takes no click, shows the plain cursor and is marked static, dimmed by USS.
         /// </summary>
         [UxmlAttribute]
         public bool CanOpen

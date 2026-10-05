@@ -26,7 +26,7 @@ namespace DCL.Lobby
     }
 
     /// <summary>
-    ///     The MVC manager keys controllers by view and input type, so this distinct type registers the lobby's popups next to the sidebar's.
+    ///     Distinct input type, so the MVC manager (keyed by view and input type) registers the lobby's popups too.
     /// </summary>
     public readonly struct LobbyPopupParameter { }
 }

@@ -6,7 +6,8 @@ using Utility.UIToolkit;
 namespace DCL.Lobby
 {
     /// <summary>
-    ///     Base of the lobby cards built around a thumbnail. The children come from the UXML template, so values set before it is instantiated are applied on the first attach.
+    ///     Base of the lobby cards built around a thumbnail. The children come from the UXML template, so values set
+    ///     before it is instantiated are applied on the first attach.
     /// </summary>
     public abstract class LobbyThumbnailCardElement : VisualElement
     {

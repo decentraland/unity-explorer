@@ -6,7 +6,8 @@ using Utility.UIToolkit;
 namespace DCL.UI.ProfileElements
 {
     /// <summary>
-    ///     UI Toolkit counterpart of <see cref="ProfileWidgetView" />. It builds its own children; the hosting document imports ProfileWidget.uss.
+    ///     UI Toolkit counterpart of <see cref="ProfileWidgetView" />. It builds its own children; the hosting document
+    ///     imports ProfileWidget.uss.
     /// </summary>
     [UxmlElement]
     public partial class ProfileWidgetElement : VisualElement, IProfileWidgetView, IDisposable

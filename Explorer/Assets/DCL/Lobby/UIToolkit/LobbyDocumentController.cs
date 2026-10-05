@@ -39,7 +39,7 @@ using Utility.UIToolkit;
 namespace DCL.Lobby
 {
     /// <summary>
-    ///     Fullscreen panel shown before the world loads and on demand in-world. It only reports the close intent; what follows is up to the caller.
+    ///     Fullscreen panel shown before the world loads and on demand in-world. It only reports the close intent.
     /// </summary>
     public class LobbyDocumentController : ControllerBase<LobbyDocumentView, LobbyParameter>
     {
@@ -224,7 +224,7 @@ namespace DCL.Lobby
             leaving = false;
         }
 
-        // The hierarchy exists from the first show on, so the rows are handed their section here rather than at instantiation
+        // The hierarchy exists from the first show on, so the rows get their section here, not at instantiation
         protected override void OnViewShow()
         {
             inputBlock.Disable(InputMapComponent.BLOCK_USER_INPUT);
@@ -324,14 +324,14 @@ namespace DCL.Lobby
 
             inputBlock.Enable(InputMapComponent.BLOCK_USER_INPUT);
 
-            // At startup a fullscreen panel opened from the lobby replaces it, so the lobby has to come back or the flow never resumes
+            // At startup a panel opened from the lobby replaces it; without coming back the flow never resumes
             if (inputData.IsStartup && !leaving)
                 mvcManager.OnViewClosed += ShowAgainWhenTheScreenIsFree;
 
             Closed?.Invoke();
         }
 
-        // Shows the startup lobby again once the panel that replaced it is gone. A Logout is not a replacement: the cancelled startup token reports it
+        // Shows the startup lobby again once the replacing panel is gone; a Logout cancels the startup token instead
         private void ShowAgainWhenTheScreenIsFree(IController closed)
         {
             // This handler is added while the lobby is hiding, so its own closure is reported to it first
@@ -419,7 +419,7 @@ namespace DCL.Lobby
             card.IsLoading = true;
         }
 
-        // At startup the hero card's Jump in is the only way out, so an offline stand-in fills it when the Places API cannot describe the destination
+        // At startup the hero card is the only way out, so an offline stand-in fills it when the Places API fails
         private async UniTaskVoid ShowLandingPlaceAsync(LandingDestination destination, CancellationToken ct)
         {
             Result<PlacesData.PlaceInfo?> result = await (destination.WorldName != null
@@ -440,7 +440,7 @@ namespace DCL.Lobby
             ShowLandingCard(destination, place ?? destination.ToOfflinePlace(), hasDetails: place != null, ct);
         }
 
-        // The launch pick is frozen on the first show; only a home destination keeps following the home, which the user may move
+        // The launch pick is frozen on the first show; only a home destination keeps following the movable home
         private LandingDestination ResolveLandingDestination()
         {
             startupDestination ??= new LandingDestination(startParcel.Peek(), realmData.IsWorld() ? realmData.RealmName : null);
@@ -525,7 +525,7 @@ namespace DCL.Lobby
                 CardJumpInClicked = index => OnPlaceJumpIn(places[index], origin),
             };
 
-        // A failed fetch keeps the places of the last one that succeeded, so the row is only hidden while none have ever arrived
+        // A failed fetch keeps the last successful places, so the row only hides while none have ever arrived
         private async UniTaskVoid ShowPlacesAsync(LobbyPlacesRail rail, List<PlacesData.PlaceInfo> places, UniTask<PlacesData.IPlacesAPIResponse> fetch, int maxCount, CancellationToken ct)
         {
             Result<PlacesData.IPlacesAPIResponse> result = await fetch.SuppressToResultAsync(ReportCategory.PLACES);
@@ -552,7 +552,7 @@ namespace DCL.Lobby
             card.Title = place.title;
             card.Creator = place.contact_name;
 
-            // The addresses come only from the endpoints that resolve connected users; the aggregated count is the fallback
+            // Only the endpoints resolving connected users return addresses; the aggregated count is the fallback
             card.OnlineCount = place.connected_addresses?.Length ?? place.user_count;
 
             LoadThumbnailAsync(card, place.image, ReportCategory.PLACES, ct).Forget();
@@ -727,7 +727,7 @@ namespace DCL.Lobby
             ShowEventDetailsAsync(@event, origin, eventsCts.Token).Forget();
         }
 
-        // The details toggle interest on the boxed copy they are handed, so the listed event is synced from it once they close
+        // The details toggle interest on their boxed copy, so the listed event is synced from it once they close
         private async UniTaskVoid ShowEventDetailsAsync(IEventDTO @event, LobbyCardOrigin origin, CancellationToken ct)
         {
             try { await mvcManager.ShowAsync(EventDetailPanelController.IssueCommand(new EventDetailPanelParameter(@event, placeData: null, jumpInHandler: jumped => OnEventJumpIn(jumped, origin)))); }
@@ -755,7 +755,7 @@ namespace DCL.Lobby
             PickDestination(friend.worldName is { Length: > 0 } worldName ? WorldUrl(worldName) : null, parcel, landOnParcel: true);
         }
 
-        // Before the world is loaded the startup teleport lands in the picked destination; once in-world it teleports right away
+        // Before the world loads the startup teleport lands in the pick; in-world it teleports right away
         private void PickDestination(URLDomain? worldUrl, Vector2Int parcel, bool landOnParcel)
         {
             if (startParcel.IsConsumed())

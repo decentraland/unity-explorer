@@ -4,7 +4,7 @@ using UnityEngine.UIElements;
 namespace DCL.Lobby
 {
     /// <summary>
-    ///     Place card; its hierarchy comes from LobbyPlaceCard.uxml and LobbyPlaceCard.uss lays it out and animates the hover.
+    ///     Place card; its hierarchy comes from LobbyPlaceCard.uxml, laid out and hover-animated by LobbyPlaceCard.uss.
     /// </summary>
     [UxmlElement]
     public partial class LobbyPlaceCardElement : LobbyThumbnailCardElement

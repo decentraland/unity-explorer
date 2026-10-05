@@ -7,7 +7,7 @@ namespace Utility.UIToolkit
     public static class VisualElementsExtensions
     {
         /// <summary>
-        ///     USS class that marks an element as clickable, so the cursor turns into the interaction one over it as it does over a Button.
+        ///     USS class of a clickable element: over it the cursor turns into the interaction one, as over a Button.
         /// </summary>
         public const string INTERACTABLE_CLASS = "dcl-interactable";
 
@@ -24,8 +24,8 @@ namespace Utility.UIToolkit
             asset.Instantiate().Q<T>();
 
         /// <summary>
-        ///     Centre of the element in Unity screen pixels (bottom-left origin). RuntimePanelUtils offers no panel-to-screen conversion,
-        ///     so the inverse is recovered from two probe conversions. The element must be attached to a panel.
+        ///     Centre of the element in Unity screen pixels (bottom-left origin). RuntimePanelUtils only converts
+        ///     screen to panel, so the inverse comes from two probe conversions. The element must be in a panel.
         /// </summary>
         public static Vector2 ScreenCenter(this VisualElement element)
         {

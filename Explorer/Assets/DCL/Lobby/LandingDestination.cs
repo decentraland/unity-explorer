@@ -5,7 +5,7 @@ using UnityEngine;
 namespace DCL.Lobby
 {
     /// <summary>
-    ///     Where the session lands: a parcel of Genesis City, or a world (the parcel is then only a stand-in for offline display).
+    ///     Where the session lands: a Genesis City parcel, or a world whose parcel is a stand-in for offline display.
     /// </summary>
     internal readonly struct LandingDestination : IEquatable<LandingDestination>
     {

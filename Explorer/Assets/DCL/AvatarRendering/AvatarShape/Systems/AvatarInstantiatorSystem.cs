@@ -138,7 +138,7 @@ namespace DCL.AvatarRendering.AvatarShape
         [None(typeof(PlayerComponent), typeof(AvatarTransformMatrixComponent), typeof(AvatarCustomSkinningComponent), typeof(DeleteEntityIntention))]
         private void InstantiateNewAvatar(in Entity entity, ref AvatarShapeComponent avatarShapeComponent, ref AvatarBase avatarBase)
         {
-            // TryInstantiateNewAvatar moves the entity to another archetype, after which the ref points at another entity's slot
+            // TryInstantiateNewAvatar moves the entity to another archetype; the ref then points at another slot
             AvatarBase instantiated = avatarBase;
 
             if (TryInstantiateNewAvatar(entity, ref avatarShapeComponent, ref avatarBase))
@@ -184,8 +184,8 @@ namespace DCL.AvatarRendering.AvatarShape
             avatarBase.AdditiveBreathRig.enabled = pointAtFeatureEnabled;
         }
 
-        // This group runs after Unity's animation update, so the first skinning pass of a freshly activated AvatarBase would read
-        // its rest pose and render one T-posed frame; after the rigs, since the constraints bake their offsets from the pose they are built with
+        // Runs after Unity's animation update, so a freshly activated AvatarBase would otherwise skin its rest pose
+        // for one frame. Posed after the rigs: their constraints bake offsets from the pose they are built with.
         private static void PoseForFirstSkinning(AvatarBase avatarBase)
         {
             Animator animator = avatarBase.AvatarAnimator;

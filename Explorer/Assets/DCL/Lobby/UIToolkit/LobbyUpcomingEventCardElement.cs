@@ -6,7 +6,8 @@ using Utility.UIToolkit;
 namespace DCL.Lobby
 {
     /// <summary>
-    ///     Upcoming event card; its hierarchy comes from LobbyUpcomingEventCard.uxml and LobbyUpcomingEventCard.uss lays it out and animates the hover.
+    ///     Upcoming event card; its hierarchy comes from LobbyUpcomingEventCard.uxml, laid out and hover-animated by
+    ///     LobbyUpcomingEventCard.uss.
     /// </summary>
     [UxmlElement]
     public partial class LobbyUpcomingEventCardElement : LobbyThumbnailCardElement

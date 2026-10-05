@@ -19,9 +19,9 @@ namespace DCL.Utilities
         private readonly float midResolutionPreset;
         private readonly IMVCManager mvcManager;
 
-        private float savedUpscalingDuringUIOpen;
+        private float savedUpscalingDuringUiOpen;
         private bool ignoreFirstResolutionChange;
-        private int currentUIOpened;
+        private int currentUiOpened;
 
         public UpscalingController(IMVCManager mvcManager)
         {
@@ -45,8 +45,8 @@ namespace DCL.Utilities
         //Should always get in decimal form
         public void UpdateUpscaling(float newValue)
         {
-            if (currentUIOpened > 0)
-                savedUpscalingDuringUIOpen = newValue;
+            if (currentUiOpened > 0)
+                savedUpscalingDuringUiOpen = newValue;
             else { SetUpscaling(newValue, UpscalingFilterSelection.FSR); }
         }
 
@@ -54,10 +54,10 @@ namespace DCL.Utilities
         {
             if (ShouldTriggerUpscalerChange(controller))
             {
-                currentUIOpened--;
+                currentUiOpened--;
 
-                if (currentUIOpened == 0)
-                    UpdateUpscaling(savedUpscalingDuringUIOpen);
+                if (currentUiOpened == 0)
+                    UpdateUpscaling(savedUpscalingDuringUiOpen);
             }
         }
 
@@ -67,13 +67,13 @@ namespace DCL.Utilities
             if (ShouldTriggerUpscalerChange(controller))
             {
                 // Only the first UI captures the user's scale; later ones would capture the forced value
-                if (currentUIOpened == 0)
+                if (currentUiOpened == 0)
                 {
-                    savedUpscalingDuringUIOpen = ((UniversalRenderPipelineAsset)GraphicsSettings.currentRenderPipeline).renderScale;
+                    savedUpscalingDuringUiOpen = ((UniversalRenderPipelineAsset)GraphicsSettings.currentRenderPipeline).renderScale;
                     SetUpscaling(STP_VALUE_FOR_UI_OPEN, UpscalingFilterSelection.Auto);
                 }
 
-                currentUIOpened++;
+                currentUiOpened++;
             }
         }
 
@@ -95,11 +95,8 @@ namespace DCL.Utilities
 
         public void Dispose()
         {
-            if (mvcManager != null)
-            {
-                mvcManager.OnViewShowed -= OnUIOpened;
-                mvcManager.OnViewClosed -= OnUIClosed;
-            }
+            mvcManager.OnViewShowed -= OnUIOpened;
+            mvcManager.OnViewClosed -= OnUIClosed;
         }
     }
 }

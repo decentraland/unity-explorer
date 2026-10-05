@@ -6,9 +6,9 @@ using Utility.UIToolkit;
 namespace DCL.Lobby
 {
     /// <summary>
-    ///     A horizontal strip of cards that pages by the mouse wheel or the arrows, and scrolls freely by dragging; a released drag
-    ///     settles on the nearest card. The cards are its children; the chrome is built here and styled by LobbyRail.uss, which also
-    ///     owns the snap through a USS transition of the translate.
+    ///     A horizontal strip of cards that pages by the mouse wheel or the arrows, and scrolls freely by dragging; a
+    ///     released drag settles on the nearest card. The cards are its children; the chrome is built here and styled
+    ///     by LobbyRail.uss, which also owns the snap through a USS transition of the translate.
     /// </summary>
     [UxmlElement]
     public partial class LobbyRailElement : VisualElement
@@ -89,7 +89,7 @@ namespace DCL.Lobby
             set => cardsPerPage = Mathf.Max(1, value);
         }
 
-        /// <summary>The arrows slide a single card instead of a page; the wheel and the dots keep going by pages.</summary>
+        /// <summary>The arrows slide one card instead of a page; the wheel and the dots keep paging.</summary>
         [UxmlAttribute]
         public bool ArrowsMoveOneCard { get; set; }
 
@@ -133,8 +133,8 @@ namespace DCL.Lobby
             // Trickle down: the press is seen before the pressed card captures the pointer and stops the event
             RegisterCallback<PointerDownEvent>(OnPointerDown, TrickleDown.TrickleDown);
 
-            // A capturing descendant receives the pointer events alone, so the moves and the release are heard through it (see OnPointerCapture)
-            // and through the viewport, the target while nothing captures and once the rail takes the pointer over
+            // A capturing descendant alone receives the pointer events, so moves and releases are heard through it
+            // (see OnPointerCapture) and through the viewport, the target without a capture or once the rail takes over
             RegisterCallback<PointerCaptureEvent>(OnPointerCapture);
             viewport.RegisterCallback<PointerMoveEvent>(OnPointerMove);
             viewport.RegisterCallback<PointerUpEvent>(OnPointerUp);
@@ -146,8 +146,8 @@ namespace DCL.Lobby
         }
 
         /// <summary>
-        ///     Rebuilds the dots for <paramref name="count" /> shown cards. Rewinding jumps to the first page without sliding; otherwise
-        ///     the rail slides back to the start of its page, or to the last one the cards still fill.
+        ///     Rebuilds the dots for <paramref name="count" /> shown cards. Rewinding jumps to the first page without
+        ///     sliding; otherwise the rail slides back to the start of its page, or to the last one the cards fill.
         /// </summary>
         public void SetCardCount(int count, bool rewind = true)
         {
@@ -168,7 +168,7 @@ namespace DCL.Lobby
                 SnapTo(CurrentPage);
         }
 
-        /// <summary>Slides to the first card of <paramref name="page" />, clamped to the pages the shown cards fill.</summary>
+        /// <summary>Slides to the first card of <paramref name="page" />, clamped to the filled pages.</summary>
         public void SnapTo(int page)
         {
             page = Mathf.Clamp(page, 0, Mathf.Max(0, PageCount - 1));
@@ -232,7 +232,7 @@ namespace DCL.Lobby
             ListenToCaptor(captor);
         }
 
-        // Past the threshold the rail takes the pointer over: the pressed card loses its capture and never reports the click
+        // Past the threshold the rail takes the pointer over: the pressed card loses its capture and its click
         private void OnPointerMove(PointerMoveEvent evt)
         {
             if (evt.pointerId != pressedPointerId) return;
@@ -279,7 +279,7 @@ namespace DCL.Lobby
             EndPress(evt.timestamp - lastMoveTime > FLING_STALE_MS ? 0f : velocity);
         }
 
-        // The capture can be taken away mid-drag; the capture-out of a card the rail takes the pointer from bubbles through here too
+        // The capture can be taken away mid-drag; a card's capture-out after the rail took the pointer bubbles here too
         private void OnPointerCaptureOut(PointerCaptureOutEvent evt)
         {
             if (evt.target != viewport || !dragging) return;
@@ -304,7 +304,7 @@ namespace DCL.Lobby
             pressedCaptor = null;
         }
 
-        // Forgets the tracked press and, when it had turned into a drag, settles the strip on the nearest card carried on by the fling
+        // Forgets the tracked press; a drag settles the strip on the nearest card the fling carries it to
         private void EndPress(float flingVelocity)
         {
             int pointerId = pressedPointerId;
@@ -356,7 +356,7 @@ namespace DCL.Lobby
         }
 
         private int PageAfter() =>
-            currentCard / cardsPerPage + 1;
+            (currentCard / cardsPerPage) + 1;
 
         private int PageBefore() =>
             Mathf.Max(0, currentCard - 1) / cardsPerPage;
@@ -365,7 +365,7 @@ namespace DCL.Lobby
         private float CardStride() =>
             content.childCount > 1 ? content[1].layout.x - content[0].layout.x : 0f;
 
-        // Measured against the content box of the viewport: its padding is room for the shadows of the cards at its edges
+        // Measured against the viewport's content box: its padding is room for the shadows of the edge cards
         private float MaxOffset() =>
             Mathf.Max(0f, content.layout.width - viewport.contentRect.width);
 

@@ -7,7 +7,8 @@ using Utility.UIToolkit;
 namespace DCL.Lobby
 {
     /// <summary>
-    ///     Friend card of the lobby. Its children come from LobbyFriendCard.uxml, so values set before the template is instantiated are applied on the first attach.
+    ///     Friend card of the lobby. Its children come from LobbyFriendCard.uxml, so values set before the template is
+    ///     instantiated are applied on the first attach.
     /// </summary>
     [UxmlElement]
     public partial class LobbyFriendCardElement : VisualElement

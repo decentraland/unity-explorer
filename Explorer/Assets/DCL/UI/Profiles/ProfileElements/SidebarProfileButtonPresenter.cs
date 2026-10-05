@@ -83,7 +83,7 @@ namespace DCL.UI.ProfileElements
             thumbnail.SetLoading(profile.UserNameColor);
 
             view.Name = string.IsNullOrEmpty(profile.ValidatedName) ? GUEST_NAME : profile.ValidatedName;
-            view.Address = profile.HasClaimedName ? string.Empty : profile.WalletId;
+            view.Address = profile.HasClaimedName ? string.Empty : profile.WalletId ?? string.Empty;
 
             await GetProfileThumbnailCommand.Instance.ExecuteAsync(thumbnail, null, profile, ct);
         }

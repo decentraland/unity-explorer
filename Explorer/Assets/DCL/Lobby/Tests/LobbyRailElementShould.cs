@@ -306,18 +306,21 @@ namespace DCL.Lobby.Tests
         private static void Press(VisualElement target, float x)
         {
             using PointerDownEvent evt = PointerDownEvent.GetPooled(new Event { type = EventType.MouseDown, button = 0, mousePosition = new Vector2(x, 10f) });
+            evt.target = target;
             target.SendEvent(evt);
         }
 
         private static void Move(VisualElement target, float x)
         {
             using PointerMoveEvent evt = PointerMoveEvent.GetPooled(new Event { type = EventType.MouseMove, mousePosition = new Vector2(x, 10f) });
+            evt.target = target;
             target.SendEvent(evt);
         }
 
         private static void Release(VisualElement target, float x)
         {
             using PointerUpEvent evt = PointerUpEvent.GetPooled(new Event { type = EventType.MouseUp, button = 0, mousePosition = new Vector2(x, 10f) });
+            evt.target = target;
             target.SendEvent(evt);
         }
 

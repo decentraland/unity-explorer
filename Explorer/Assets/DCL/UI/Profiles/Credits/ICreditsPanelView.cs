@@ -3,7 +3,8 @@ using System;
 namespace DCL.UI.Credits
 {
     /// <summary>
-    ///     The credits widget a fullscreen panel embeds in its top bar: <see cref="CreditsPanelView" /> for uGUI, <see cref="CreditsPanelElement" /> for UI Toolkit.
+    ///     The credits widget a fullscreen panel embeds in its top bar: <see cref="CreditsPanelView" /> for uGUI,
+    ///     <see cref="CreditsPanelElement" /> for UI Toolkit.
     /// </summary>
     public interface ICreditsPanelView
     {

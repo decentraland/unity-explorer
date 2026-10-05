@@ -4,12 +4,12 @@ using UnityEngine.UIElements;
 namespace DCL.Lobby
 {
     /// <summary>
-    ///     Backgrounds of the card thumbnails and pictures, cropped by the cover of the stylesheets rather than stretched.
+    ///     Backgrounds of the card thumbnails and pictures, cropped by the stylesheets' cover rather than stretched.
     /// </summary>
     public static class LobbyCardBackground
     {
         /// <summary>
-        ///     Null clears the inline image; a full-rect sprite is handed over as its texture, one cut out of an atlas keeps its own rect.
+        ///     Null clears the inline image; a full-rect sprite is set as its texture, an atlas sprite keeps its rect.
         /// </summary>
         public static StyleBackground From(Sprite? sprite)
         {

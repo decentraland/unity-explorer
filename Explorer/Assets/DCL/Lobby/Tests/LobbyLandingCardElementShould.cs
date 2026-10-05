@@ -142,7 +142,7 @@ namespace DCL.Lobby.Tests
             document.rootVisualElement.Add(card);
         }
 
-        // A submit reaches a button like the keyboard does, which it reports as a click; unlike a pointer click it needs no laid-out panel to pick the element under the pointer
+        // A submit is reported as a click like a keyboard press; unlike a pointer click it needs no laid-out panel
         private static void Submit(Button button)
         {
             using NavigationSubmitEvent evt = NavigationSubmitEvent.GetPooled();

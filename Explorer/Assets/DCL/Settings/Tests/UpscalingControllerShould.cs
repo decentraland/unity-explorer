@@ -49,7 +49,7 @@ namespace DCL.Settings.Tests
         [TestCase(typeof(FakePassportController))]
         [TestCase(typeof(FakeLobbyDocumentController))]
         [TestCase(typeof(FakeBackpackModalController))]
-        public void ForceFullRenderScaleWhilePreviewUIIsOpen(Type controllerType)
+        public void ForceFullRenderScaleWhilePreviewUiIsOpen(Type controllerType)
         {
             // Arrange
             var controller = (IController)Activator.CreateInstance(controllerType);

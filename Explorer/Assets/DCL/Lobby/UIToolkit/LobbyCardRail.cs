@@ -5,7 +5,8 @@ using Utility.UIToolkit;
 namespace DCL.Lobby
 {
     /// <summary>
-    ///     The card strip of a lobby section, filled with clones of a card template; the section is handed over on every <see cref="Show" /> and the cards outlive it.
+    ///     The card strip of a lobby section, filled with clones of a card template. The section is handed over on
+    ///     every <see cref="Show" /> and the cards outlive it.
     /// </summary>
     public abstract class LobbyCardRail<TCard> where TCard: VisualElement
     {
@@ -25,7 +26,7 @@ namespace DCL.Lobby
         // How many of Cards are shown, counting from the first
         public int Count { get; private set; }
 
-        protected VisualElement? Section { get; private set; }
+        protected VisualElement? section { get; private set; }
 
         protected LobbyCardRail(VisualTreeAsset cardTemplate)
         {
@@ -33,11 +34,12 @@ namespace DCL.Lobby
         }
 
         /// <summary>
-        ///     Takes <paramref name="newSection" /> over and moves the cards into its strip; the first <see cref="Count" /> stay shown with what they last displayed.
+        ///     Takes <paramref name="newSection" /> over and moves the cards into its strip; the first
+        ///     <see cref="Count" /> stay shown with what they last displayed.
         /// </summary>
         public void Show(VisualElement newSection)
         {
-            Section = newSection;
+            section = newSection;
             rail = newSection.Q<LobbyRailElement>();
             strip = rail ?? newSection.Q(CARDS_NAME);
 
@@ -51,11 +53,12 @@ namespace DCL.Lobby
 
             // A section of a rebuilt hierarchy starts in the state its template authored
             if (Count > 0)
-                Section.SetDisplayed(true);
+                section.SetDisplayed(true);
         }
 
         /// <summary>
-        ///     Shows the first <paramref name="count" /> cards, cloning the missing ones, and hides the rest and the section when there is nothing to list.
+        ///     Shows the first <paramref name="count" /> cards, cloning the missing ones, and hides the rest.
+        ///     The section hides when there is nothing to list.
         /// </summary>
         public void SetCount(int count, bool rewind = true)
         {
@@ -73,13 +76,13 @@ namespace DCL.Lobby
                 cards[i].SetDisplayed(false);
 
             rail?.SetCardCount(count, rewind);
-            Section!.SetDisplayed(count > 0);
+            section!.SetDisplayed(count > 0);
             OnCountChanged(count);
         }
 
         public void Hide()
         {
-            Section = null;
+            section = null;
             strip = null;
             rail = null;
         }
@@ -88,7 +91,7 @@ namespace DCL.Lobby
 
         protected virtual void OnCountChanged(int count) { }
 
-        // The card's stylesheet is imported by the document, so the card can leave the container the template was cloned into
+        // The document imports the card's stylesheet, so the card can leave the template's container
         private TCard CreateCard(int index)
         {
             TCard card = cardTemplate.InstantiateForElement<TCard>();

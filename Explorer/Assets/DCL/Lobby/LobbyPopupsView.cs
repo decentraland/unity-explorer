@@ -5,7 +5,7 @@ using UnityEngine;
 namespace DCL.Lobby
 {
     /// <summary>
-    ///     Canvas of the uGUI popups the lobby opens from its top bar; the lobby is a UI Toolkit panel, so they cannot hang from it.
+    ///     Canvas of the uGUI popups the lobby opens from its top bar; they cannot hang from a UI Toolkit panel.
     /// </summary>
     public class LobbyPopupsView : MonoBehaviour
     {

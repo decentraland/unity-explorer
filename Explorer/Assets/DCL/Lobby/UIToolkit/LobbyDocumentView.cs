@@ -10,7 +10,7 @@ using UnityEngine.UIElements;
 namespace DCL.Lobby
 {
     /// <summary>
-    ///     Lobby screen built with UI Toolkit. Its hierarchy lives in LobbyDocument.uxml and is reachable only while the view is shown.
+    ///     Lobby screen built with UI Toolkit. Its LobbyDocument.uxml hierarchy is reachable only while shown.
     ///     The avatar preview stays uGUI, in a canvas of the prefab that sorts just under the panel.
     /// </summary>
     public class LobbyDocumentView : PanelRendererViewBase
@@ -55,13 +55,13 @@ namespace DCL.Lobby
         /// <summary>The uGUI avatar preview nested in the prefab, so it exists from the instantiation on.</summary>
         public CharacterPreviewView CharacterPreviewView => characterPreviewView;
 
-        /// <summary>Transparent element over the figure that catches its hover and click. Exists only while the view is shown.</summary>
+        /// <summary>Transparent element over the figure taking its hover and click. Exists only while shown.</summary>
         public VisualElement AvatarHitArea => Element<VisualElement>(AVATAR_HIT_AREA_NAME);
 
-        /// <summary>Hint shown next to the pointer while it is over <see cref="AvatarHitArea" />. Exists only while the view is shown.</summary>
+        /// <summary>Hint beside the pointer over <see cref="AvatarHitArea" />. Exists only while shown.</summary>
         public VisualElement AvatarTooltip => Element<VisualElement>(AVATAR_TOOLTIP_NAME);
 
-        /// <summary>Credits widget of the top bar. It outlives the hierarchy, so what is bound to it stays bound.</summary>
+        /// <summary>Credits widget of the top bar. It outlives the hierarchy, so its bindings stay.</summary>
         public CreditsPanelElement Credits => credits ??= new CreditsPanelElement();
 
         /// <summary>Profile widget of the top bar. It outlives the hierarchy like <see cref="Credits" />.</summary>
@@ -70,7 +70,7 @@ namespace DCL.Lobby
         /// <summary>Exists only while the view is shown.</summary>
         public Button NotificationsButton => Element<Button>(NOTIFICATIONS_NAME);
 
-        /// <summary>Unread count over <see cref="NotificationsButton" />. Exists only while the view is shown.</summary>
+        /// <summary>Unread count over <see cref="NotificationsButton" />. Exists only while shown.</summary>
         public Label UnreadBadge => Element<Label>(UNREAD_BADGE_NAME);
 
         /// <summary>Exists only while the view is shown.</summary>
@@ -82,7 +82,7 @@ namespace DCL.Lobby
         /// <summary>Hero card of the place the session lands in. Exists only while the view is shown.</summary>
         public LobbyLandingCardElement LandingCard => Element<LobbyLandingCardElement>(LANDING_CARD_NAME);
 
-        /// <summary>Section of the recently visited places, title and row of cards. Exists only while the view is shown.</summary>
+        /// <summary>Section of the recently visited places: title and row of cards. Exists only while shown.</summary>
         public VisualElement RecentPlaces => Section(RECENT_PLACES_NAME);
 
         /// <summary>Section of the featured places, title and rail. Exists only while the view is shown.</summary>
@@ -97,12 +97,12 @@ namespace DCL.Lobby
         /// <summary>Row of the live events inside <see cref="Events" />. Exists only while the view is shown.</summary>
         public VisualElement LiveEvents => Section(LIVE_EVENTS_NAME);
 
-        /// <summary>Row of the upcoming events inside <see cref="Events" />. Exists only while the view is shown.</summary>
+        /// <summary>Row of the upcoming events inside <see cref="Events" />. Exists only while shown.</summary>
         public VisualElement UpcomingEvents => Section(UPCOMING_EVENTS_NAME);
 
         /// <summary>
-        ///     Moves <see cref="Credits" /> and <see cref="Profile" /> into their slots. A no-op while the renderer keeps the hierarchy,
-        ///     which it rebuilds only for a changed LobbyDocument.uxml.
+        ///     Moves <see cref="Credits" /> and <see cref="Profile" /> into their slots. A no-op while the renderer
+        ///     keeps the hierarchy, which it rebuilds only for a changed LobbyDocument.uxml.
         /// </summary>
         public void AttachTopBarWidgets()
         {
@@ -110,10 +110,10 @@ namespace DCL.Lobby
             Section(PROFILE_SLOT_NAME).Add(Profile);
         }
 
-        private VisualElement Section(string name) =>
-            Element<VisualElement>(name);
+        private VisualElement Section(string elementName) =>
+            Element<VisualElement>(elementName);
 
-        private T Element<T>(string name) where T: VisualElement =>
-            Root?.Q<T>(name) ?? throw new InvalidOperationException($"The lobby hierarchy exists only while the view is shown, {name} is not available");
+        private T Element<T>(string elementName) where T: VisualElement =>
+            root?.Q<T>(elementName) ?? throw new InvalidOperationException($"The lobby hierarchy exists only while the view is shown, {elementName} is not available");
     }
 }
