@@ -12,6 +12,7 @@ namespace Plugins.RustSegment.SegmentServerWrap.Playground
         [SerializeField] private float delayBetweenRequests = 0.1f;
         [SerializeField] private float delayBetweenFlushes = 5f;
         [SerializeField] private int brakesMilliseconds = 100;
+        [SerializeField] private string apiHost;
 
         private RustSegmentAnalyticsService rust = null!;
 
@@ -28,7 +29,7 @@ namespace Plugins.RustSegment.SegmentServerWrap.Playground
 
         private void SetUp(string key)
         {
-                rust = new RustSegmentAnalyticsService(key, AnalyticsConfiguration.DEFAULT_SEGMENT_API_HOST, null);
+                rust = new RustSegmentAnalyticsService(key, apiHost, null);
         }
 
         private async UniTaskVoid TrackAsync(CancellationToken token)

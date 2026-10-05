@@ -14,8 +14,6 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
     [CreateAssetMenu(fileName = "AnalyticsConfiguration", menuName = "DCL/Diagnostics/Analytics Configuration")]
     public class AnalyticsConfiguration : ScriptableObject
     {
-        public const string DEFAULT_SEGMENT_API_HOST = "https://api.e.decentraland.org";
-
         private const string SEGMENT_WRITE_KEY = "SEGMENT_WRITE_KEY";
 
         [SerializeField]
@@ -37,7 +35,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         [SerializeField]
         [Tooltip("Segment Tracking API host the native client posts to. Must carry no /v1 suffix - the client appends the endpoint path itself.")]
-        private string segmentApiHost = DEFAULT_SEGMENT_API_HOST;
+        private string segmentApiHost;
 
         [field: SerializeField]
         [Tooltip("This parameter sets the interval (in seconds) at which the performance report is tracked to the analytics.")]
