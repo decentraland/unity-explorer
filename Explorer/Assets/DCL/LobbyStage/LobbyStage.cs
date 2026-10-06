@@ -148,9 +148,15 @@ namespace DCL.Lobby
         }
 
 #if UNITY_EDITOR
+        // Objects cannot be activated or deactivated inside a validation callback, so the refresh runs on the next editor tick
         private void OnValidate()
         {
-            ApplyPresetValues();
+            UnityEditor.EditorApplication.delayCall += () =>
+            {
+                if (this == null || !isActiveAndEnabled) return;
+
+                ApplyPresetValues();
+            };
         }
 
         // Objects cannot be created or destroyed inside a validation callback, so the refresh runs on the next editor tick
@@ -251,7 +257,14 @@ namespace DCL.Lobby
             if (preset.DustEnabled)
             {
                 ParticleSystem.MainModule dustMain = dust.main;
-                dustMain.startColor = preset.DustColor;
+
+                // Motes already alive keep their colour, so the system restarts to refill in the new one
+                if (dustMain.startColor.color != preset.DustColor)
+                {
+                    dustMain.startColor = preset.DustColor;
+                    dust.Clear();
+                    dust.Play();
+                }
             }
 
             // A fully transparent vignette still costs a full screen of blending, so it is switched off outright

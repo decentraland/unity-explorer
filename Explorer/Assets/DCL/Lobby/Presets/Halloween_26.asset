@@ -62,7 +62,3 @@ MonoBehaviour:
     <Position>k__BackingField: {x: 1.33, y: 0, z: -1.32}
     <Rotation>k__BackingField: {x: 0, y: -11.35, z: 0}
     <Scale>k__BackingField: {x: 0.4, y: 0.4, z: 0.4}
-  - <Prefab>k__BackingField: {fileID: 13403923226279403, guid: 833135e9fc0514074be1c7c0acd1a685, type: 3}
-    <Position>k__BackingField: {x: 2.59, y: 0, z: -1.63}
-    <Rotation>k__BackingField: {x: 0, y: -46.1, z: 0}
-    <Scale>k__BackingField: {x: 0.5, y: 0.5, z: 0.5}
