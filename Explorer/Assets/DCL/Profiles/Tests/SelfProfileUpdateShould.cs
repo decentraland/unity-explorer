@@ -188,7 +188,7 @@ namespace DCL.Profiles.Tests
         }
 
         [Test]
-        public void PublishBeforeDeployingWhenTheProfileIsKnown()
+        public void DeployThenPublishWhenTheProfileIsKnown()
         {
             // Arrange
             Profile trusted = NewProfile(3);
@@ -204,8 +204,8 @@ namespace DCL.Profiles.Tests
             AssertCopyOf(deploying.Before, trusted);
 
             SelfProfileCmd[] batch = AssertBatch(cmd, 2);
-            AssertPublish(batch[0], edited);
-            AssertDeploy(batch[1], edited);
+            AssertDeploy(batch[0], edited);
+            AssertPublish(batch[1], edited);
         }
 
         [Test]
@@ -259,8 +259,8 @@ namespace DCL.Profiles.Tests
             AssertCopyOf(deploying.Before, trusted);
 
             SelfProfileCmd[] batch = AssertBatch(cmd, 2);
-            AssertPublish(batch[0], secondEdit);
-            AssertDeploy(batch[1], secondEdit);
+            AssertDeploy(batch[0], secondEdit);
+            AssertPublish(batch[1], secondEdit);
         }
 
         [Test]
@@ -943,7 +943,7 @@ namespace DCL.Profiles.Tests
 
             // Assert
             SelfProfileCmd[] batch = AssertBatch(cmd, 2);
-            Assert.That(AssertDeploy(batch[1], edited).Version, Is.EqualTo(4));
+            Assert.That(AssertDeploy(batch[0], edited).Version, Is.EqualTo(4));
         }
 
         [Test]

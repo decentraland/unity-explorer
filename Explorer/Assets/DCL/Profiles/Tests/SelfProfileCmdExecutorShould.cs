@@ -335,6 +335,22 @@ namespace DCL.Profiles.Tests
         }
 
         [Test]
+        public void PublishTheVersionTheDeployStamps()
+        {
+            // Arrange
+            world.Add(playerEntity, NewProfile(ALICE, 3));
+            Profile edited = NewProfile(ALICE, 3);
+            AnyGet().Returns(UniTask.FromResult<ProfileTier?>(NewProfile(ALICE, 4)));
+
+            // Act
+            executor.Execute(SelfProfileCmd.FromBatch(new[] { SelfProfileCmd.FromDeploy(new DeployCmd(ALICE, edited, 4)), SelfProfileCmd.FromPublish(edited) }), inbox);
+
+            // Assert
+            Assert.That(world.Get<Profile>(playerEntity).Version, Is.EqualTo(4));
+            profileCache.Received(1).Set(ALICE.Value, Arg.Is<ProfileTier>(cached => cached.IsFull(out Profile? full) && full.Version == 4));
+        }
+
+        [Test]
         public void ReplaceTheProfileOnThePlayerEntityWhenItCarriesOne()
         {
             // Arrange

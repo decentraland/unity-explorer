@@ -167,8 +167,9 @@ namespace DCL.Profiles.Self
             if (!before.IsKnown(out _))
                 return (model.WithSession(SelfProfileSession.FromIdentified(current.With(before, deploying))), deploy);
 
+            // The deploy runs first: it stamps the new version on the edit, so the published copies carry it.
             return (model.WithSession(SelfProfileSession.FromIdentified(current.With(ProfileKnowledge.FromKnown(edited), deploying))),
-                SelfProfileCmd.FromBatch(new[] { SelfProfileCmd.FromPublish(edited), deploy }));
+                SelfProfileCmd.FromBatch(new[] { deploy, SelfProfileCmd.FromPublish(edited) }));
         }
 
         private static (SelfProfileModel, SelfProfileCmd) OnDeploySucceeded(in SelfProfileModel model, in DeploySucceeded msg)
@@ -212,7 +213,6 @@ namespace DCL.Profiles.Self
             if (StaleDeployReason(model, msg.Address, msg.Sent, out Identified current, out Deploying deploying) is { } reason)
                 return Ignored(model, reason);
 
-            // Only a known profile was published before the deploy, so only then is there something to republish.
             SelfProfileCmd republish = deploying.Before.Match(
                 onUnknown: static () => SelfProfileCmd.None(),
                 onKnown: static previous => SelfProfileCmd.FromPublish(previous),
