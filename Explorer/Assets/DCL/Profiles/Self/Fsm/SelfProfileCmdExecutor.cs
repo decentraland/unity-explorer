@@ -112,7 +112,9 @@ namespace DCL.Profiles.Self
             try
             {
                 // Not the suppressing overload: a failure must reach the model as a failure, not as an absent profile.
+                // Bypasses the cache, which can hold a published edit the catalyst never confirmed.
                 Profile? profile = await profileRepository.GetAsync(address.Value, 0, null, ct,
+                    getFromCacheIfPossible: false,
                     batchBehaviour: IProfileRepository.FetchBehaviour.EnforceSingleGet);
 
                 if (profile == null)

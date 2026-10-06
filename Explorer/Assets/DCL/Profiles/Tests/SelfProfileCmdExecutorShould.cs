@@ -94,7 +94,7 @@ namespace DCL.Profiles.Tests
         }
 
         [Test]
-        public void FetchWithASingleImmediateRequest()
+        public void FetchFromTheCatalystWithASingleImmediateRequest()
         {
             // Arrange
             AnyGet().Returns(UniTask.FromResult<ProfileTier?>(NewProfile(ALICE, 3)));
@@ -103,7 +103,7 @@ namespace DCL.Profiles.Tests
             executor.Execute(SelfProfileCmd.FromFetch(ALICE), inbox);
 
             // Assert
-            profileRepository.Received(1).GetAsync(ALICE.Value, 0, null, Arg.Any<CancellationToken>(), true,
+            profileRepository.Received(1).GetAsync(ALICE.Value, 0, null, Arg.Any<CancellationToken>(), false,
                 IProfileRepository.FetchBehaviour.EnforceSingleGet, ProfileTier.Kind.Full, Arg.Any<IPartitionComponent?>());
         }
 
@@ -564,7 +564,7 @@ namespace DCL.Profiles.Tests
             Received.InOrder(() =>
             {
                 equippedWearables.Clear();
-                profileRepository.GetAsync(ALICE.Value, 0, null, Arg.Any<CancellationToken>(), true,
+                profileRepository.GetAsync(ALICE.Value, 0, null, Arg.Any<CancellationToken>(), false,
                     IProfileRepository.FetchBehaviour.EnforceSingleGet, ProfileTier.Kind.Full, Arg.Any<IPartitionComponent?>());
             });
 
