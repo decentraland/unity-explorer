@@ -82,6 +82,15 @@ namespace DCL.Profiling
         public static ProfilerCounterValue<int> AudioClipsReferenced =
             new (MEMORY, "AudioClips Referenced", ProfilerMarkerDataUnit.Count);
 
+        public static ProfilerCounterValue<int> FontsAmount =
+            new (MEMORY, "Scene Fonts", ProfilerMarkerDataUnit.Count);
+
+        public static ProfilerCounterValue<int> FontsInCache =
+            new (MEMORY, "Scene Fonts In Cache", ProfilerMarkerDataUnit.Count);
+
+        public static ProfilerCounterValue<int> FontsReferenced =
+            new (MEMORY, "Scene Fonts Referenced", ProfilerMarkerDataUnit.Count);
+
         public static ProfilerCounterValue<int> ProfilesInCache =
             new (MEMORY, "Profiles In Cache", ProfilerMarkerDataUnit.Count);
 
@@ -119,6 +128,10 @@ namespace DCL.Profiling
             AudioClipsAmount.Value = 0;
             AudioClipsInCache.Value = 0;
             AudioClipsReferenced.Value = 0;
+
+            FontsAmount.Value = 0;
+            FontsInCache.Value = 0;
+            FontsReferenced.Value = 0;
 
             ProfilesInCache.Value = 0;
         }
