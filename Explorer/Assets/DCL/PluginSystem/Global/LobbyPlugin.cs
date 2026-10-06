@@ -6,7 +6,6 @@ using DCL.Backpack;
 using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Clipboard;
-using DCL.Communities;
 using DCL.Credits;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
@@ -79,13 +78,14 @@ namespace DCL.PluginSystem.Global
         private readonly FriendsConnectivityStatusTracker? friendsConnectivity;
         private readonly IOnlineUsersProvider onlineUsersProvider;
 
-        private LobbyController? lobbyController;
         private LobbyStage? lobbyStage;
-        private LobbyFriendsPresenter? friendsPresenter;
+        private LobbyDocumentFriendsPresenter? friendsPresenter;
         private SidebarProfileButtonPresenter? profileButtonPresenter;
         private ProfileMenuController<LobbyPopupParameter>? profileMenuController;
-        private NotificationsPanelController<LobbyPopupParameter>? notificationsPanelController;
         private ICreditsPanelController creditsPanelController = new NullCreditsPanelController();
+        private LobbyPopupsView? lobbyPopups;
+        private LobbyDocumentView? lobbyDocumentView;
+        private bool disposed;
 
         public LobbyPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -157,34 +157,47 @@ namespace DCL.PluginSystem.Global
 
         public void Dispose()
         {
-            // The lobby, profile menu and notifications controllers are registered in the MVC manager, which disposes them itself
             if (lobbyStage != null)
                 Object.Destroy(lobbyStage.gameObject);
+
+            if (lobbyPopups != null)
+                Object.Destroy(lobbyPopups.gameObject);
+
+            if (lobbyDocumentView != null)
+            {
+                lobbyDocumentView.Profile.Dispose();
+                Object.Destroy(lobbyDocumentView.gameObject);
+            }
 
             friendsPresenter?.Dispose();
             profileButtonPresenter?.Dispose();
             creditsPanelController.Dispose();
+            disposed = true;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
 
         public async UniTask InitializeAsync(LobbyPluginSettings settings, CancellationToken ct)
         {
-            LobbyView prefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.LobbyPrefab, ct: ct)).Value;
+            LobbyDocumentView documentPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.DocumentPrefab, ct: ct)).Value;
+            LobbyPopupsView popupsPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.PopupsPrefab, ct: ct)).Value;
             NotificationIconTypes notificationIconTypes = (await assetsProvisioner.ProvideMainAssetAsync(settings.NotificationIconTypes, ct)).Value;
             NotificationDefaultThumbnails notificationDefaultThumbnails = (await assetsProvisioner.ProvideMainAssetAsync(settings.NotificationDefaultThumbnails, ct)).Value;
             NftTypeIconSO rarityBackgroundMapping = await assetsProvisioner.ProvideMainAssetValueAsync(settings.RarityColorMappings, ct);
 
-            // One stage for the whole session: it is parked at the preview position and only active while the lobby is shown
             lobbyStage = Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(settings.StagePrefab, ct: ct)).Value);
             lobbyStage.gameObject.SetActive(false);
 
-            // The top-bar presenters bind to the live view, so it is instantiated up front instead of lazily on first show
-            ControllerBase<LobbyView, LobbyParameter>.ViewFactoryMethod viewFactory = LobbyController.Preallocate(prefab, null, out LobbyView lobbyView);
+            // The top-bar presenters bind to the view, so it is instantiated up front
+            ControllerBase<LobbyDocumentView, LobbyParameter>.ViewFactoryMethod viewFactory = LobbyDocumentController.Preallocate(documentPrefab, null, out LobbyDocumentView lobbyView);
+            lobbyDocumentView = lobbyView;
 
-            profileButtonPresenter = new SidebarProfileButtonPresenter(lobbyView.ProfileWidgetView, identityCache, profileRepository, profileChangesBus);
+            profileButtonPresenter = new SidebarProfileButtonPresenter(lobbyView.Profile, identityCache, profileRepository, profileChangesBus);
 
-            profileMenuController = new ProfileMenuController<LobbyPopupParameter>(() => lobbyView.ProfileMenuView,
+            LobbyPopupsView popups = Object.Instantiate(popupsPrefab);
+            lobbyPopups = popups;
+
+            profileMenuController = new ProfileMenuController<LobbyPopupParameter>(() => popups.ProfileMenuView,
                 identityCache,
                 world,
                 playerEntity,
@@ -195,8 +208,8 @@ namespace DCL.PluginSystem.Global
                 passportBridge,
                 profileRepositoryWrapper);
 
-            // The lobby has its own panel instance: the sidebar's one lives inside the sidebar view, which is inactive until the world is loaded
-            notificationsPanelController = new NotificationsPanelController<LobbyPopupParameter>(() => lobbyView.NotificationsMenuView,
+            // The sidebar's notifications panel lives in the sidebar view, inactive until the world is loaded
+            var notificationsPanel = new NotificationsPanelController<LobbyPopupParameter>(() => popups.NotificationsMenuView,
                 notificationsRequestController,
                 notificationIconTypes,
                 notificationDefaultThumbnails,
@@ -206,35 +219,40 @@ namespace DCL.PluginSystem.Global
                 profileRepositoryWrapper,
                 mvcManager);
 
-            // Without connectivity statuses there is nothing to list: the section stays hidden
             friendsPresenter = friendsConnectivity != null
-                ? new LobbyFriendsPresenter(lobbyView.FriendsSection, friendsConnectivity, onlineUsersProvider, placesAPIService, passportBridge)
+                ? new LobbyDocumentFriendsPresenter(new LobbyFriendsRail(lobbyView.FriendCardTemplate), friendsConnectivity, onlineUsersProvider, placesAPIService, passportBridge)
                 : null;
 
-            // The upcoming event cards are the Explore panel's, so their Interested, calendar and share actions run through the same controller
             var eventCardActions = new EventCardActionsController(eventsApiService, webBrowser, realmNavigator, clipboard, decentralandUrlsSource);
 
-            lobbyController = new LobbyController(viewFactory, inputBlock, loadingStatus, mvcManager,
+            var lobbyController = new LobbyDocumentController(viewFactory,
+                inputBlock, loadingStatus, mvcManager,
                 selfProfile, profileChangesBus, characterPreviewFactory, characterPreviewEventBus, settings.AvatarSettings, lobbyStage, world,
-                placesAPIService, realmData, homePlace, eventsApiService, eventCardActions, realmNavigator, decentralandUrlsSource, startParcel, new ThumbnailLoader(new SpriteCache(webRequestController)),
-                profileButtonPresenter, friendsPresenter);
+                placesAPIService, realmData, homePlace, eventsApiService, eventCardActions, realmNavigator, decentralandUrlsSource, startParcel, new SpriteCache(webRequestController), profileButtonPresenter,
+                notificationsPanel, friendsPresenter);
 
             mvcManager.RegisterController(lobbyController);
             mvcManager.RegisterController(profileMenuController);
-            mvcManager.RegisterController(notificationsPanelController);
+            mvcManager.RegisterController(notificationsPanel);
 
-            EnableCreditsPanelAsync(lobbyView.CreditsPanelView, ct)
+            EnableCreditsPanelAsync(lobbyView.Credits, ct)
                .SuppressToResultAsync(ReportCategory.CREDITS_PURCHASE)
                .Forget();
 
             debugContainerBuilder
                .TryAddWidget("Lobby")?
-               .AddSingleButton("Open", () => mvcManager.ShowAndForget(LobbyController.IssueCommand(new LobbyParameter(isStartup: false))));
+               .AddSingleButton("Open", () => mvcManager.ShowAndForget(LobbyDocumentController.IssueCommand(new LobbyParameter(isStartup: false))));
         }
 
-        private async UniTask EnableCreditsPanelAsync(CreditsPanelView view, CancellationToken ct)
+        // The panel can resolve after Dispose has run, in which case nothing else will release it
+        private async UniTask EnableCreditsPanelAsync(CreditsPanelElement element, CancellationToken ct)
         {
-            creditsPanelController = await CreditsPanelSetup.EnableIfUserAllowedAsync(view, marketplaceCreditsAPIClient, profileChangesBus, identityCache, mvcManager, ct);
+            ICreditsPanelController panel = await CreditsPanelSetup.EnableIfUserAllowedAsync(element, marketplaceCreditsAPIClient, profileChangesBus, identityCache, mvcManager, ct);
+
+            if (disposed)
+                panel.Dispose();
+            else
+                creditsPanelController = panel;
         }
     }
 }

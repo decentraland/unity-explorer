@@ -70,6 +70,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6fdeef5a54c14a44b8c8fd9b140de6c6
+    m_Address: SkyboxLookPreset_Halloween2026
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 23318cb20f4dbe9429dd8be585ef75d6
     m_Address: CharacterPreviewContainer
     m_ReadOnly: 0
@@ -240,8 +245,13 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 8a935b6a6ff72445ab1c4a9bbba48cd1
-    m_Address: Assets/DCL/Lobby/Prefabs/LobbyUI.prefab
+  - m_GUID: 8ae3fb61048040438ec8a0347e048766
+    m_Address: Assets/DCL/Lobby/UIToolkit/LobbyDocument.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c85615cb88b54cc9a85e397318aff22f
+    m_Address: Assets/DCL/Lobby/Prefabs/LobbyPopups.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
