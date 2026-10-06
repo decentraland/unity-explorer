@@ -22,11 +22,14 @@ namespace DCL.MapRenderer.MapLayers.SatelliteAtlas
         private readonly ChunkBuilder chunkBuilder;
         private readonly List<IChunkController> chunks;
         private readonly SatelliteDetailTiles? detailTiles;
+        private readonly Transform edgePatchesRoot;
+        private readonly Transform bundledChunksRoot;
 
-        public SatelliteChunkAtlasController(Transform parent, int gridSize, int parcelsInsideChunk, ICoordsUtils coordsUtils, IMapCullingController cullingController, ChunkBuilder chunkBuilder,
-            SatelliteDetailTiles? detailTiles)
+        public SatelliteChunkAtlasController(Transform parent, Transform edgePatchesRoot, int gridSize, int parcelsInsideChunk, ICoordsUtils coordsUtils, IMapCullingController cullingController,
+            ChunkBuilder chunkBuilder, SatelliteDetailTiles? detailTiles)
             : base(parent, coordsUtils, cullingController)
         {
+            this.edgePatchesRoot = edgePatchesRoot;
             this.gridSize = gridSize;
             this.parcelsInsideChunk = parcelsInsideChunk;
             this.chunkBuilder = chunkBuilder;
@@ -34,6 +37,38 @@ namespace DCL.MapRenderer.MapLayers.SatelliteAtlas
 
             var chunkAmounts = new Vector2Int(gridSize, gridSize);
             chunks = new List<IChunkController>(chunkAmounts.x * chunkAmounts.y);
+
+            // The bundled chunks are Genesis City's: they get their own root to hide them in worlds.
+            bundledChunksRoot = new GameObject("Bundled chunks") { layer = parent.gameObject.layer }.transform;
+            bundledChunksRoot.SetParent(parent, false);
+        }
+
+        /// <summary>Shows the satellite map of the world <paramref name="worldName" />, whose parcels lie within <paramref name="parcelBounds" /> when known.</summary>
+        public void ShowWorld(string worldName, RectInt? parcelBounds)
+        {
+            SetGenesisCityVisible(false);
+            detailTiles?.ShowWorld(worldName, parcelBounds is { } bounds ? ParcelsToLocalRect(bounds) : null);
+        }
+
+        public void ShowGenesisCity()
+        {
+            SetGenesisCityVisible(true);
+            detailTiles?.ShowGenesisCity();
+        }
+
+        private void SetGenesisCityVisible(bool visible)
+        {
+            bundledChunksRoot.gameObject.SetActive(visible);
+            edgePatchesRoot.gameObject.SetActive(visible);
+        }
+
+        /// <summary>The local rect covered by the parcels of <paramref name="parcels" />, whose max is exclusive.</summary>
+        private Rect ParcelsToLocalRect(RectInt parcels)
+        {
+            // A parcel's area ends at its own coordinates and starts one parcel before them.
+            Vector3 min = coordsUtils.CoordsToPosition(parcels.min - Vector2Int.one);
+            Vector3 max = coordsUtils.CoordsToPosition(parcels.max - Vector2Int.one);
+            return Rect.MinMaxRect(min.x, min.y, max.x, max.y);
         }
 
         public async UniTask InitializeAsync(CancellationToken ct)
@@ -63,7 +98,7 @@ namespace DCL.MapRenderer.MapLayers.SatelliteAtlas
 
                     var localPosition = new Vector3(x, y, 0);
 
-                    UniTask<IChunkController> instance = chunkBuilder.Invoke(chunkLocalPosition: localPosition, new Vector2Int(i, j), instantiationParent, linkedCt);
+                    UniTask<IChunkController> instance = chunkBuilder.Invoke(chunkLocalPosition: localPosition, new Vector2Int(i, j), bundledChunksRoot, linkedCt);
                     chunksCreating.Add(instance);
                 }
             }

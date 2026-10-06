@@ -123,6 +123,35 @@ namespace DCL.MapRenderer.Tests.MapCameraController
             new object[] { new Vector2(4000, -8000), new Vector2(720, -720), new Vector2Int(30, 50), 0.5f},
         };
 
+        [Test]
+        public void ClampThePositionToNewWorldBounds()
+        {
+            ((IMapCameraControllerInternal)mapCamera).Initialize(new Vector2Int(20, 20), new Vector2Int(10, 20), MapLayer.SatelliteAtlas);
+            mapCamera.SetZoom(0, 0);
+            mapCamera.SetLocalPosition(new Vector2(800, 800));
+
+            coordsUtils.VisibleWorldBounds.Returns(Rect.MinMaxRect(0, 0, 600, 600));
+            coordsUtils.VisibleWorldBoundsChanged += Raise.Event<Action>();
+
+            // A 200-unit half-height camera with 30% of extra movement fits up to 600 - 200 + 60
+            Assert.AreEqual(new Vector3(460, 460, mapCamera.CAMERA_HEIGHT_EXPOSED), mapCameraObject.transform.localPosition);
+        }
+
+        [Test]
+        public void CentreOnAWorldSmallerThanTheView()
+        {
+            ((IMapCameraControllerInternal)mapCamera).Initialize(new Vector2Int(20, 20), new Vector2Int(10, 20), MapLayer.SatelliteAtlas);
+            mapCamera.SetZoom(0, 0);
+            mapCamera.SetLocalPosition(new Vector2(800, 800));
+
+            coordsUtils.VisibleWorldBounds.Returns(Rect.MinMaxRect(0, 0, 300, 300));
+            coordsUtils.VisibleWorldCenter.Returns(new Vector2(150, 150));
+            coordsUtils.VisibleWorldBoundsChanged += Raise.Event<Action>();
+
+            // The camera moves at most 30% of its 200-unit half-height around the world's centre
+            Assert.AreEqual(new Vector3(210, 210, mapCamera.CAMERA_HEIGHT_EXPOSED), mapCameraObject.transform.localPosition);
+        }
+
         [TestCase(true)]
         [TestCase(false)]
         public void SetActive(bool value)

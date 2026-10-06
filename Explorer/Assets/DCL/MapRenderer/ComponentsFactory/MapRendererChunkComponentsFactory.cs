@@ -177,7 +177,8 @@ namespace DCL.MapRenderer.ComponentsFactory
                 x => x.Dispose()
             );
 
-            return new MapRendererComponents(configuration, layers, zoomScalingLayers, cullingController, cameraControllersPool);
+            return new MapRendererComponents(configuration, layers, zoomScalingLayers, cullingController, cameraControllersPool, coordsUtils,
+                (SatelliteChunkAtlasController)layers[MapLayer.SatelliteAtlas]);
 
             IMapCameraControllerInternal CameraControllerBuilder(List<IMapLayerController> interactableLayers)
             {
@@ -263,7 +264,8 @@ namespace DCL.MapRenderer.ComponentsFactory
                 detailTiles = new SatelliteDetailTiles(satelliteDetailTilesUrl, webRequestController, bytesDiskCache, cullingController, template, MapRendererDrawOrder.SATELLITE_DETAIL_MIN_LEVEL);
             }
 
-            var chunkAtlas = new SatelliteChunkAtlasController(configuration.SatelliteAtlasRoot, GRID_SIZE, PARCELS_INSIDE_CHUNK, coordsUtils, cullingController, chunkBuilder: CreateSatelliteChunkAsync, detailTiles);
+            var chunkAtlas = new SatelliteChunkAtlasController(configuration.SatelliteAtlasRoot, configuration.SatelliteEdgePatchesRoot, GRID_SIZE, PARCELS_INSIDE_CHUNK, coordsUtils, cullingController,
+                chunkBuilder: CreateSatelliteChunkAsync, detailTiles);
 
             chunkAtlas.InitializeAsync(cancellationToken).SuppressCancellationThrow().Forget();
 

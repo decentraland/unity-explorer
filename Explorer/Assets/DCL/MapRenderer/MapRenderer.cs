@@ -4,8 +4,10 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.MapRenderer.CommonBehavior;
 using DCL.MapRenderer.ComponentsFactory;
+using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.MapCameraController;
 using DCL.MapRenderer.MapLayers;
+using DCL.MapRenderer.MapLayers.SatelliteAtlas;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -17,6 +19,10 @@ namespace DCL.MapRenderer
 {
     public partial class MapRenderer : IMapRenderer
     {
+        // Layers fed by Genesis City's parcels, places, events and users, hidden while the map shows a world.
+        private const MapLayer GENESIS_CITY_LAYERS = MapLayer.ParcelsAtlas | MapLayer.ScenesOfInterest | MapLayer.Favorites | MapLayer.HotUsersMarkers | MapLayer.Category
+                                                     | MapLayer.SearchResults | MapLayer.LiveEvents | MapLayer.HomeMarker;
+
         private static readonly MapLayer[] ALL_LAYERS = EnumUtils.Values<MapLayer>();
 
         private readonly IMapRendererComponentsFactory componentsFactory;
@@ -26,6 +32,8 @@ namespace DCL.MapRenderer
         private Dictionary<MapLayer, MapLayerStatus>? layers;
         private List<IZoomScalingLayer>? zoomScalingLayers;
         private IObjectPool<IMapCameraControllerInternal>? mapCameraPool;
+        private ICoordsUtils? coordsUtils;
+        private SatelliteChunkAtlasController? satelliteAtlas;
 
         public MapRenderer(IMapRendererComponentsFactory componentsFactory)
         {
@@ -42,6 +50,8 @@ namespace DCL.MapRenderer
             {
                 MapRendererComponents components = await componentsFactory.CreateAsync(ct);
                 mapCameraPool = components.MapCameraControllers;
+                coordsUtils = components.CoordsUtils;
+                satelliteAtlas = components.SatelliteAtlas;
 
                 foreach (IZoomScalingLayer zoomScalingLayer in components.ZoomScalingLayers)
                     zoomScalingLayers.Add(zoomScalingLayer);
@@ -122,6 +132,10 @@ namespace DCL.MapRenderer
 
                 mapLayerStatus.SharedActive = active;
 
+                // Applied when the layer stops being suppressed
+                if (mapLayerStatus.Suppressed)
+                    continue;
+
                 // Cancel activation/deactivation flow
                 ResetCancellationSource(mapLayerStatus);
 
@@ -129,6 +143,49 @@ namespace DCL.MapRenderer
                     mapLayerStatus.MapLayerController.EnableAsync(mapLayerStatus.CTS!.Token).SuppressCancellationThrow().Forget();
                 else
                     mapLayerStatus.MapLayerController.Disable(mapLayerStatus.CTS!.Token).SuppressCancellationThrow().Forget();
+            }
+        }
+
+        public void ShowWorld(string worldName, RectInt? parcelBounds)
+        {
+            coordsUtils?.SetWorldBounds(parcelBounds);
+            satelliteAtlas?.ShowWorld(worldName, parcelBounds);
+            SetSuppressedLayers(GENESIS_CITY_LAYERS);
+        }
+
+        public void ShowGenesisCity()
+        {
+            coordsUtils?.SetWorldBounds(null);
+            satelliteAtlas?.ShowGenesisCity();
+            SetSuppressedLayers(MapLayer.None);
+        }
+
+        /// <summary>
+        ///     Hides the layers of <paramref name="mask" /> whatever their owners and shared state ask for, and restores the others.
+        /// </summary>
+        private void SetSuppressedLayers(MapLayer mask)
+        {
+            foreach (MapLayer mapLayer in ALL_LAYERS)
+            {
+                if (!layers!.TryGetValue(mapLayer, out MapLayerStatus mapLayerStatus))
+                    continue;
+
+                bool suppressed = EnumUtils.HasFlag(mask, mapLayer);
+
+                if (mapLayerStatus.Suppressed == suppressed)
+                    continue;
+
+                mapLayerStatus.Suppressed = suppressed;
+
+                if (mapLayerStatus.ActivityOwners.Count == 0 || mapLayerStatus.SharedActive == false)
+                    continue;
+
+                ResetCancellationSource(mapLayerStatus);
+
+                if (suppressed)
+                    mapLayerStatus.MapLayerController.Disable(mapLayerStatus.CTS!.Token).SuppressCancellationThrow().Forget();
+                else
+                    mapLayerStatus.MapLayerController.EnableAsync(mapLayerStatus.CTS!.Token).SuppressCancellationThrow().Forget();
             }
         }
 
@@ -146,7 +203,7 @@ namespace DCL.MapRenderer
                 if (owner.LayersParameters.TryGetValue(mapLayer, out IMapLayerParameter parameter))
                     mapLayerStatus.MapLayerController.SetParameter(parameter);
 
-                if (mapLayerStatus.ActivityOwners.Count == 0 && mapLayerStatus.SharedActive != false)
+                if (mapLayerStatus.ActivityOwners.Count == 0 && mapLayerStatus.SharedActive != false && !mapLayerStatus.Suppressed)
                 {
                     // Cancel deactivation flow
                     ResetCancellationSource(mapLayerStatus);
@@ -200,6 +257,7 @@ namespace DCL.MapRenderer
             public readonly List<IMapActivityOwner> ActivityOwners = new ();
 
             public bool? SharedActive;
+            public bool Suppressed;
             public CancellationTokenSource? CTS;
 
             public MapLayerStatus(IMapLayerController mapLayerController)

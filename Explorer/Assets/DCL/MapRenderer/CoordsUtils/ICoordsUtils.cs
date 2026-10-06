@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace DCL.MapRenderer.CoordsUtils
@@ -13,12 +14,27 @@ namespace DCL.MapRenderer.CoordsUtils
         /// </summary>
         Rect VisibleWorldBounds { get; }
 
+        /// <summary>
+        /// Where the map centres when it is narrower or shorter than a camera's view
+        /// </summary>
+        Vector2 VisibleWorldCenter { get; }
+
+        /// <summary>
+        /// Raised when <see cref="VisibleWorldBounds" /> changes
+        /// </summary>
+        event Action? VisibleWorldBoundsChanged;
+
         int ParcelSize { get; }
 
         /// <summary>
         /// Clamps position within interactable bounds
         /// </summary>
         bool TryGetCoordsWithinInteractableBounds(Vector3 pos, out Vector2Int coords);
+
+        /// <summary>
+        /// Bounds the map to a world's parcels, whose max is exclusive, or back to Genesis City when null
+        /// </summary>
+        void SetWorldBounds(RectInt? worldParcels);
 
         Vector2Int PositionToCoords(Vector3 pos);
 

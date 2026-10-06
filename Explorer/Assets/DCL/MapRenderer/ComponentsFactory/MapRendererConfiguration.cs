@@ -13,6 +13,12 @@ namespace DCL.MapRenderer.ComponentsFactory
         [field: SerializeField]
         public Transform SatelliteAtlasRoot { get; private set; }
 
+        /// <summary>
+        ///     Patches over the black stripes at the edges of Genesis City's bundled satellite chunks
+        /// </summary>
+        [field: SerializeField]
+        public Transform SatelliteEdgePatchesRoot { get; private set; }
+
         [field: SerializeField]
         public Transform ColdUserMarkersRoot { get; private set; }
 

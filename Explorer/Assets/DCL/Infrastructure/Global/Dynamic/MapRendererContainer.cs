@@ -17,6 +17,7 @@ using ECS;
 using ECS.SceneLifeCycle.Realm;
 using System;
 using System.Threading;
+using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using Utility;
@@ -82,10 +83,37 @@ namespace Global.Dynamic
                 c.MapRenderer = mapRenderer;
             });
 
-            realmData.RealmType.OnUpdate += kind => mapRendererContainer.MapRenderer.SetSharedLayer(MapLayer.PlayerMarker, kind is RealmKind.GenesisCity);
+            realmData.RealmType.OnUpdate += kind => ShowRealmMap(mapRendererContainer.MapRenderer, realmData, kind);
+            ShowRealmMap(mapRendererContainer.MapRenderer, realmData, realmData.RealmType.Value);
 
             return mapRendererContainer;
         }
+
+        /// <summary>
+        ///     A world shows its own map, Genesis City and local scenes show Genesis City's. Local scenes keep the player marker hidden.
+        /// </summary>
+        private static void ShowRealmMap(IMapRenderer mapRenderer, IRealmData realmData, RealmKind kind)
+        {
+            switch (kind)
+            {
+                case RealmKind.World:
+                    mapRenderer.ShowWorld(realmData.RealmName, WorldParcelBounds(realmData.WorldManifest));
+                    break;
+                case RealmKind.GenesisCity or RealmKind.LocalScene:
+                    mapRenderer.ShowGenesisCity();
+                    break;
+
+                // Between realms: the map stays as it is until the next one is configured.
+                default: return;
+            }
+
+            mapRenderer.SetSharedLayer(MapLayer.PlayerMarker, kind is not RealmKind.LocalScene);
+        }
+
+        private static RectInt? WorldParcelBounds(WorldManifest manifest) =>
+            manifest.TryGetOccupiedBounds(out int2 min, out int2 max)
+                ? new RectInt(min.x, min.y, max.x - min.x + 1, max.y - min.y + 1)
+                : null;
 
         public MapRendererPlugin CreatePlugin() =>
             new (MapRenderer);

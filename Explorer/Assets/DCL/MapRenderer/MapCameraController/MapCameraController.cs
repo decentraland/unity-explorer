@@ -41,6 +41,7 @@ namespace DCL.MapRenderer.MapCameraController
 
         private Rect cameraPositionBounds;
         private Sequence? translationSequence;
+        private bool rented;
 
         public MapCameraController(
             IMapInteractivityControllerInternal interactivityBehavior,
@@ -56,6 +57,8 @@ namespace DCL.MapRenderer.MapCameraController
 
             mapCameraObject.transform.localPosition = Vector3.up * CAMERA_HEIGHT;
             mapCameraObject.mapCamera.orthographic = true;
+
+            coordsUtils.VisibleWorldBoundsChanged += OnVisibleWorldBoundsChanged;
         }
 
         void IMapCameraControllerInternal.Initialize(Vector2Int textureResolution, Vector2Int zoomValues, MapLayer layers)
@@ -74,8 +77,17 @@ namespace DCL.MapRenderer.MapCameraController
             mapCameraObject.mapCamera.targetTexture = renderTexture;
 
             cullingController.OnCameraAdded(this);
+            rented = true;
 
             interactivityBehavior.Initialize(layers);
+        }
+
+        private void OnVisibleWorldBoundsChanged()
+        {
+            CalculateCameraPositionBounds();
+
+            if (rented)
+                SetLocalPosition(mapCameraObject.transform.localPosition);
         }
 
         public void ResizeTexture(Vector2Int textureResolution)
@@ -201,6 +213,7 @@ namespace DCL.MapRenderer.MapCameraController
         private void CalculateCameraPositionBounds()
         {
             var worldBounds = coordsUtils.VisibleWorldBounds;
+            var worldCenter = coordsUtils.VisibleWorldCenter;
 
             var cameraYSize = mapCameraObject.mapCamera.orthographicSize;
             var cameraXSize = cameraYSize * mapCameraObject.mapCamera.aspect;
@@ -216,15 +229,15 @@ namespace DCL.MapRenderer.MapCameraController
 
             if (worldBounds.xMax - worldBounds.xMin < 2 * cameraXSize)
             {
-                xMin = extraPaddingX;
-                xMax = -extraPaddingX;
+                xMin = worldCenter.x + extraPaddingX;
+                xMax = worldCenter.x - extraPaddingX;
             }
 
             // If the map's height is smaller than the camera's height, add extra padding
             if (worldBounds.yMax - worldBounds.yMin < 2 * cameraYSize)
             {
-                yMin = extraPaddingY;
-                yMax = -extraPaddingY;
+                yMin = worldCenter.y + extraPaddingY;
+                yMax = worldCenter.y - extraPaddingY;
             }
 
             cameraPositionBounds = Rect.MinMaxRect(xMin, yMin, xMax, yMax);
@@ -258,6 +271,7 @@ namespace DCL.MapRenderer.MapCameraController
         public void Release(IMapActivityOwner owner)
         {
             cullingController.OnCameraRemoved(this);
+            rented = false;
             if (renderTexture != null)
                 renderTexture.Release();
             interactivityBehavior.Release();
@@ -266,6 +280,7 @@ namespace DCL.MapRenderer.MapCameraController
 
         public void Dispose()
         {
+            coordsUtils.VisibleWorldBoundsChanged -= OnVisibleWorldBoundsChanged;
             translationSequence?.Kill();
             translationSequence = null;
 
