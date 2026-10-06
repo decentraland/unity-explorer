@@ -1,0 +1,107 @@
+:root {
+    --rail-snap-duration: 0.25s;
+    --rail-arrow-fade-duration: 0.15s;
+    --rail-dot-duration: 0.2s;
+    --rail-dot-selected-color: rgb(255, 51, 153);
+    --rail-dot-color: rgba(255, 255, 255, 0.4);
+}
+
+.lobby-rail {
+    flex-direction: column;
+}
+
+/* Wider than the rail by an arrow and its gap on each side; the padding keeps the gaps inside the rail, so crossing one to reach an arrow does not drop the hover that shows it */
+.lobby-rail__track {
+    flex-grow: 1;
+    margin-left: -39px;
+    margin-right: -39px;
+    padding-left: 39px;
+    padding-right: 39px;
+}
+
+.lobby-rail__viewport {
+    flex-grow: 1;
+    overflow: hidden;
+}
+
+/* Absolute so it keeps the width of its cards and overflows the viewport; the pages slide it through its translate. */
+.lobby-rail__content {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    flex-direction: row;
+    transition: translate var(--rail-snap-duration) ease-out;
+}
+
+.lobby-rail--instant .lobby-rail__content {
+    transition-duration: 0s;
+}
+
+/* The strip is measured against the viewport, which would shrink the cards to fit it rather than let them overflow into pages */
+.lobby-rail__card {
+    flex-shrink: 0;
+    margin-right: 8px;
+}
+
+.lobby-rail__arrow {
+    position: absolute;
+    top: 50%;
+    width: 31px;
+    height: 40px;
+    translate: 0 -50%;
+    border-radius: 8px;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--dcl-color-black-70);
+    opacity: 0;
+    transition: opacity var(--rail-arrow-fade-duration) ease-out, background-color 0.1s;
+}
+
+.lobby-rail:hover .lobby-rail__arrow {
+    opacity: 1;
+}
+
+.lobby-rail__arrow:active {
+    background-color: var(--dcl-color-black-80);
+}
+
+.lobby-rail__arrow--previous {
+    left: 0;
+}
+
+.lobby-rail__arrow--next {
+    right: 0;
+}
+
+.lobby-rail__arrow-icon {
+    width: 15px;
+    height: 24px;
+    background-image: url('/Assets/Textures/Common/ArrowLeft.png');
+}
+
+.lobby-rail__arrow--next .lobby-rail__arrow-icon {
+    background-image: url('/Assets/Textures/Common/ArrowRight.png');
+}
+
+.lobby-rail__dots {
+    height: 8px;
+    margin-top: 8px;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+}
+
+.lobby-rail__dot {
+    width: 8px;
+    height: 8px;
+    margin: 0 2px;
+    border-radius: 4px;
+    background-color: var(--rail-dot-color);
+    transition: width var(--rail-dot-duration) ease-out, background-color var(--rail-dot-duration) ease-out;
+}
+
+.lobby-rail__dot--selected {
+    width: 24px;
+    background-color: var(--rail-dot-selected-color);
+}

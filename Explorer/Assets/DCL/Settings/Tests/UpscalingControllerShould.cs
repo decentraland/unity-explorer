@@ -1,115 +1,174 @@
-using Cysharp.Threading.Tasks;
+using Arch.Core;
+using DCL.CharacterPreview;
+using DCL.CharacterPreview.Tests;
 using DCL.Utilities;
-using MVC;
 using NSubstitute;
 using NUnit.Framework;
-using System;
-using System.Threading;
+using System.Collections.Generic;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
+using Object = UnityEngine.Object;
 
 namespace DCL.Settings.Tests
 {
     [TestFixture]
     public class UpscalingControllerShould
     {
-        private UniversalRenderPipelineAsset urpAsset;
+        private const float USER_SCALE = 0.5f;
+
+        private readonly List<Object> created = new ();
+
+        private UniversalRenderPipelineAsset urpAsset = null!;
         private float originalRenderScale;
         private UpscalingFilterSelection originalUpscalingFilter;
-        private IMVCManager mvcManager;
-        private UpscalingController upscalingController;
+        private CharacterPreviewEventBus bus = null!;
+        private World world = null!;
+        private UpscalingController upscalingController = null!;
 
         [SetUp]
         public void SetUp()
         {
-            urpAsset = GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset;
-            Assert.IsNotNull(urpAsset, "The project's active render pipeline is not URP");
+            urpAsset = (UniversalRenderPipelineAsset)GraphicsSettings.currentRenderPipeline;
 
             // UpscalingController writes to the project's URP asset, so both touched fields are restored in TearDown
             originalRenderScale = urpAsset.renderScale;
             originalUpscalingFilter = urpAsset.upscalingFilter;
 
-            mvcManager = Substitute.For<IMVCManager>();
-            upscalingController = new UpscalingController(mvcManager);
+            bus = new CharacterPreviewEventBus();
+            world = World.Create();
+            upscalingController = new UpscalingController(bus);
+            upscalingController.UpdateUpscaling(USER_SCALE);
         }
 
         [TearDown]
         public void TearDown()
         {
-            upscalingController?.Dispose();
+            upscalingController.Dispose();
+            World.Destroy(world);
 
-            if (urpAsset == null) return;
+            foreach (Object obj in created)
+                Object.DestroyImmediate(obj);
+
+            created.Clear();
 
             urpAsset.renderScale = originalRenderScale;
             urpAsset.upscalingFilter = originalUpscalingFilter;
         }
 
-        [TestCase(typeof(FakeAuthenticationScreenController))]
-        [TestCase(typeof(FakeExplorePanelController))]
-        [TestCase(typeof(FakePassportController))]
-        [TestCase(typeof(FakeLobbyController))]
-        [TestCase(typeof(FakeBackpackModalController))]
-        public void ForceFullRenderScaleWhilePreviewUIIsOpen(Type controllerType)
+        [Test]
+        public void ForceFullRenderScaleWhileAPreviewIsShown()
         {
             // Arrange
-            var controller = (IController)Activator.CreateInstance(controllerType);
-            urpAsset.renderScale = 0.5f;
+            CharacterPreviewControllerBase preview = CreatePreview();
 
             // Act
-            mvcManager.OnViewShowed += Raise.Event<Action<IController>>(controller);
-            float scaleWhileOpen = urpAsset.renderScale;
-            mvcManager.OnViewClosed += Raise.Event<Action<IController>>(controller);
+            preview.OnShow();
+            float scaleWhileShown = urpAsset.renderScale;
+            UpscalingFilterSelection filterWhileShown = urpAsset.upscalingFilter;
+            preview.OnHide();
 
             // Assert
-            Assert.AreEqual(1f, scaleWhileOpen);
-            Assert.AreEqual(0.5f, urpAsset.renderScale);
+            Assert.AreEqual(1f, scaleWhileShown);
+            Assert.AreEqual(UpscalingFilterSelection.Auto, filterWhileShown);
+            Assert.AreEqual(USER_SCALE, urpAsset.renderScale);
+            Assert.AreEqual(UpscalingFilterSelection.FSR, urpAsset.upscalingFilter);
         }
 
         [Test]
-        public void RestoreUserScaleWhenOverlappingPreviewUIsClose()
+        public void RestoreTheUserScaleOnlyWhenTheLastPreviewHides()
         {
             // Arrange
-            IController lobby = new FakeLobbyController();
-            IController backpack = new FakeBackpackModalController();
-            urpAsset.renderScale = 0.5f;
+            CharacterPreviewControllerBase first = CreatePreview();
+            CharacterPreviewControllerBase second = CreatePreview();
+            first.OnShow();
+            second.OnShow();
+
+            // Act & Assert
+            first.OnHide();
+            Assert.AreEqual(1f, urpAsset.renderScale);
+
+            second.OnHide();
+            Assert.AreEqual(USER_SCALE, urpAsset.renderScale);
+        }
+
+        [Test]
+        public void KeepFullRenderScaleWhileAnotherRequesterHoldsIt()
+        {
+            // Arrange
+            var badgeCamera = new object();
+            CharacterPreviewControllerBase preview = CreatePreview();
+            preview.OnShow();
+            upscalingController.RequireFullRenderScale(badgeCamera);
+
+            // Act & Assert
+            preview.OnHide();
+            Assert.AreEqual(1f, urpAsset.renderScale);
+
+            upscalingController.ReleaseFullRenderScale(badgeCamera);
+            Assert.AreEqual(USER_SCALE, urpAsset.renderScale);
+        }
+
+        [Test]
+        public void IgnoreAReleaseWithoutARequire()
+        {
+            // Arrange
+            CharacterPreviewControllerBase preview = CreatePreview();
+            preview.OnShow();
 
             // Act
-            mvcManager.OnViewShowed += Raise.Event<Action<IController>>(lobby);
-            mvcManager.OnViewShowed += Raise.Event<Action<IController>>(backpack);
-            float scaleWhileOpen = urpAsset.renderScale;
-            mvcManager.OnViewClosed += Raise.Event<Action<IController>>(backpack);
-            mvcManager.OnViewClosed += Raise.Event<Action<IController>>(lobby);
+            upscalingController.ReleaseFullRenderScale(new object());
 
             // Assert
-            Assert.AreEqual(1f, scaleWhileOpen);
-            Assert.AreEqual(0.5f, urpAsset.renderScale);
+            Assert.AreEqual(1f, urpAsset.renderScale);
         }
 
-        public class FakeController : IController
+        [Test]
+        public void CountARepeatedRequireOnce()
         {
-            public ControllerState State => default;
-            public CanvasOrdering.SortingLayer Layer => default;
+            // Arrange
+            var requester = new object();
 
-            public void Focus() { }
+            // Act
+            upscalingController.RequireFullRenderScale(requester);
+            upscalingController.RequireFullRenderScale(requester);
+            upscalingController.ReleaseFullRenderScale(requester);
 
-            public void Blur() { }
-
-            public UniTask HideViewAsync(CancellationToken ct) =>
-                UniTask.CompletedTask;
-
-            public void SetViewCanvasActive(bool isActive) { }
-
-            public void Dispose() { }
+            // Assert
+            Assert.AreEqual(USER_SCALE, urpAsset.renderScale);
         }
 
-        public class FakeAuthenticationScreenController : FakeController { }
+        [Test]
+        public void ApplyAScaleChangedWhileHeldOnRelease()
+        {
+            // Arrange
+            CharacterPreviewControllerBase preview = CreatePreview();
+            preview.OnShow();
 
-        public class FakeExplorePanelController : FakeController { }
+            // Act
+            upscalingController.UpdateUpscaling(0.7f);
+            float scaleWhileShown = urpAsset.renderScale;
+            preview.OnHide();
 
-        public class FakePassportController : FakeController { }
+            // Assert
+            Assert.AreEqual(1f, scaleWhileShown);
+            Assert.AreEqual(0.7f, urpAsset.renderScale);
+        }
 
-        public class FakeLobbyController : FakeController { }
+        [Test]
+        public void RestoreTheUserScaleWhenTheLastShownPreviewIsDisposed()
+        {
+            // Arrange
+            CharacterPreviewControllerBase preview = CreatePreview();
+            preview.OnShow();
 
-        public class FakeBackpackModalController : FakeController { }
+            // Act
+            preview.Dispose();
+
+            // Assert
+            Assert.AreEqual(USER_SCALE, urpAsset.renderScale);
+        }
+
+        private CharacterPreviewControllerBase CreatePreview() =>
+            new CharacterPreviewTestViews.TestPreview(CharacterPreviewTestViews.Create(created), Substitute.For<ICharacterPreviewFactory>(), world, bus);
     }
 }

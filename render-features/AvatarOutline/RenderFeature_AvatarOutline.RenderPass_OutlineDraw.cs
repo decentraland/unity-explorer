@@ -72,7 +72,7 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.AvatarOutline
                 // Make sure we also read from the active stencil buffer,
                 // which was written to in the Draw objects-to-outline pass
                 // and is used here to cut out the inside of the outline.
-                builder.SetRenderAttachmentDepth(screenDepthStencilHandle, AccessFlags.ReadWrite);
+                builder.SetRenderAttachmentDepth(screenDepthStencilHandle);
 
                 builder.SetRenderFunc((RenderObjectsPassData data, RasterGraphContext context) =>
                     ExecuteDrawOutlineObjects(data, context));
