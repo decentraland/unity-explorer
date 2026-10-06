@@ -91,22 +91,27 @@ namespace DCL.MarketplaceCredits.Sections
 
         private async UniTask LoadProgramRegistrationInfoAsync(CancellationToken ct)
         {
+            const string ERROR_MESSAGE = "There was an error loading the Credits Program. Please try again!";
+
             try
             {
                 subView.SetAsLoading(true);
 
-                if ((await selfProfile.ProfileAsync(ct)).IsOk(out Profile? ownProfile))
+                ProfileReadResult read = await selfProfile.ProfileAsync(ct);
+
+                if (read.IsOk(out Profile? ownProfile))
                 {
                     currentCreditsProgramProgress = await marketplaceCreditsAPIClient.GetProgramProgressAsync(ownProfile.UserId, ct);
                     RedirectToSection();
                 }
+                else if (!read.IsCancelled)
+                    marketplaceCreditsMenuController.ShowErrorNotification(ERROR_MESSAGE);
 
                 subView.SetAsLoading(false);
             }
             catch (OperationCanceledException) { }
             catch (Exception e)
             {
-                const string ERROR_MESSAGE = "There was an error loading the Credits Program. Please try again!";
                 marketplaceCreditsMenuController.ShowErrorNotification(ERROR_MESSAGE);
                 ReportHub.LogError(ReportCategory.MARKETPLACE_CREDITS, $"{ERROR_MESSAGE} ERROR: {e.Message}");
             }

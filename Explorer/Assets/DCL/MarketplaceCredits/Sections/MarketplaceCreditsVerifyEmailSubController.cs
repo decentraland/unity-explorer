@@ -106,21 +106,26 @@ namespace DCL.MarketplaceCredits.Sections
 
         private async UniTaskVoid UpdateEmailAsync(CancellationToken ct)
         {
+            const string ERROR_MESSAGE = "There was an error removing your registration. Please try again!";
+
             try
             {
                 subView.SetAsLoading(true);
 
-                if ((await selfProfile.ProfileAsync(ct)).IsOk(out _))
+                ProfileReadResult read = await selfProfile.ProfileAsync(ct);
+
+                if (read.IsOk(out _))
                 {
                     // Removes email subscription
                     await marketplaceCreditsAPIClient.SubscribeEmailAsync(string.Empty, ct);
                     marketplaceCreditsMenuController.OpenSection(MarketplaceCreditsSection.Welcome);
                 }
+                else if (!read.IsCancelled)
+                    marketplaceCreditsMenuController.ShowErrorNotification(ERROR_MESSAGE);
             }
             catch (OperationCanceledException) { }
             catch (Exception e)
             {
-                const string ERROR_MESSAGE = "There was an error removing your registration. Please try again!";
                 marketplaceCreditsMenuController.ShowErrorNotification(ERROR_MESSAGE);
                 ReportHub.LogError(ReportCategory.MARKETPLACE_CREDITS, $"{ERROR_MESSAGE} ERROR: {e.Message}");
             }
@@ -138,18 +143,23 @@ namespace DCL.MarketplaceCredits.Sections
 
         private async UniTaskVoid ResendVerificationEmailAsync(CancellationToken ct)
         {
+            const string ERROR_MESSAGE = "There was an error sending the verification email. Please try again!";
+
             try
             {
                 subView.SetAsLoading(true);
 
-                if ((await selfProfile.ProfileAsync(ct)).IsOk(out _))
+                ProfileReadResult read = await selfProfile.ProfileAsync(ct);
+
+                if (read.IsOk(out _))
                     // Reset the email subscription
                     await marketplaceCreditsAPIClient.SubscribeEmailAsync(currentEmail, ct);
+                else if (!read.IsCancelled)
+                    marketplaceCreditsMenuController.ShowErrorNotification(ERROR_MESSAGE);
             }
             catch (OperationCanceledException) { }
             catch (Exception e)
             {
-                const string ERROR_MESSAGE = "There was an error sending the verification email. Please try again!";
                 marketplaceCreditsMenuController.ShowErrorNotification(ERROR_MESSAGE);
                 ReportHub.LogError(ReportCategory.MARKETPLACE_CREDITS, $"{ERROR_MESSAGE} ERROR: {e.Message}");
             }
