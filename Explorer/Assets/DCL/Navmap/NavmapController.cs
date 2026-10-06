@@ -27,6 +27,7 @@ namespace DCL.Navmap
     {
         private const string EMPTY_PARCEL_NAME = "Empty parcel";
         private const string WORLDS_WARNING_MESSAGE = "This is the Genesis City map. If you jump into any of this places you will leave the world you are currently visiting.";
+        private const string WORLD_MAP_WARNING_MESSAGE = "This is the map of {0}. The places and events listed here are in Genesis City: jumping into them will take you out of this world.";
         private const MapLayer ACTIVE_MAP_LAYERS =
             MapLayer.SatelliteAtlas | MapLayer.ParcelsAtlas | MapLayer.PlayerMarker | MapLayer.ParcelHoverHighlight | MapLayer.ScenesOfInterest | MapLayer.Favorites | MapLayer.HotUsersMarkers | MapLayer.Pins | MapLayer.SearchResults | MapLayer.LiveEvents | MapLayer.Category | MapLayer.HomeMarker;
 
@@ -165,6 +166,10 @@ namespace DCL.Navmap
             lastParcelClicked = clickedParcel;
             audioEventsBus.SendPlayAudioEvent(navmapView.ClickAudio);
 
+            // A world's parcels are not Genesis City places.
+            if (realmData.IsWorld())
+                return;
+
             fetchPlaceAndShowCancellationToken = fetchPlaceAndShowCancellationToken.SafeRestart();
             FetchPlaceAndShowAsync(fetchPlaceAndShowCancellationToken.Token).Forget();
             return;
@@ -197,8 +202,12 @@ namespace DCL.Navmap
             mapRenderer.SetSharedLayer(MapLayer.ScenesOfInterest, navmapFilterPanelController.IsFilterActivated(MapLayer.ScenesOfInterest));
             mapRenderer.SetSharedLayer(MapLayer.Pins, navmapFilterPanelController.IsFilterActivated(MapLayer.Pins));
             mapRenderer.SetSharedLayer(MapLayer.HotUsersMarkers, navmapFilterPanelController.IsFilterActivated(MapLayer.HotUsersMarkers));
-            mapRenderer.SetSharedLayer(MapLayer.SatelliteAtlas, navmapFilterPanelController.IsFilterActivated(MapLayer.SatelliteAtlas));
+            // A world only has a satellite map.
+            bool isWorld = realmData.IsWorld();
+            mapRenderer.SetSharedLayer(MapLayer.SatelliteAtlas, isWorld || navmapFilterPanelController.IsFilterActivated(MapLayer.SatelliteAtlas));
             mapRenderer.SetSharedLayer(MapLayer.ParcelsAtlas, navmapFilterPanelController.IsFilterActivated(MapLayer.ParcelsAtlas));
+            navmapFilterPanelController.SetMapTypeSelectable(!isWorld);
+            satelliteController.SetGenesisCityCreditsVisible(!isWorld);
 
             satelliteController.InjectCameraController(cameraController);
             navmapLocationController.InjectCameraController(cameraController);
@@ -210,7 +219,10 @@ namespace DCL.Navmap
             if (!navmapView.WorldsWarningNotificationView.WasEverClosed)
             {
                 if (realmData is {Configured: true, ScenesAreFixed: true })
+                {
+                    navmapView.WorldsWarningNotificationView.SetText(isWorld ? string.Format(WORLD_MAP_WARNING_MESSAGE, realmData.RealmName) : WORLDS_WARNING_MESSAGE);
                     navmapView.WorldsWarningNotificationView.Show();
+                }
                 else
                     navmapView.WorldsWarningNotificationView.Hide();
             }
