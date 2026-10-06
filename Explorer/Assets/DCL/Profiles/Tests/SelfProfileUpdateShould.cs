@@ -541,6 +541,36 @@ namespace DCL.Profiles.Tests
             AssertUnchanged(SelfProfileModel.NoIdentity(), SelfProfileMsg.FromDeploySucceeded(new DeploySucceeded(ALICE, sent, NewProfile(4))));
         }
 
+        [Test]
+        public void DropALateSaveThatIsNotNewerThanTheKnownProfile()
+        {
+            // Arrange
+            Profile late = NewProfile(5);
+
+            // Act & Assert
+            AssertUnchanged(Known(NewProfile(6)), SelfProfileMsg.FromDeploySucceeded(new DeploySucceeded(ALICE, late, NewProfile(5))));
+        }
+
+        [Test]
+        public void AdoptASupersededDeployTheCatalystSavedAfterTheNewerDeployFailed()
+        {
+            // Arrange
+            Profile superseded = NewProfile(5);
+            Profile saved = NewProfile(5);
+            Profile pending = NewProfile(6);
+            SelfProfileModel model = Deploying(pending, ProfileKnowledge.FromKnown(NewProfile(4)));
+            (SelfProfileModel reverted, _) = SelfProfileModel.Update(model, SelfProfileMsg.FromDeployFailed(new DeployFailed(ALICE, pending, DEPLOY_ERROR)));
+
+            // Act
+            (SelfProfileModel next, SelfProfileCmd cmd) = SelfProfileModel.Update(reverted, SelfProfileMsg.FromDeploySucceeded(new DeploySucceeded(ALICE, superseded, saved)));
+
+            // Assert
+            Identified identified = AssertIdentified(next);
+            AssertKnown(identified.Knowledge, saved);
+            Assert.That(identified.Activity.GetKind(), Is.EqualTo(ProfileActivity.Kind.Idle));
+            AssertPublish(cmd, saved);
+        }
+
         private static void AssertDeploysWithoutPublishing(ProfileKnowledge before)
         {
             // Arrange

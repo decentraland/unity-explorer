@@ -945,17 +945,26 @@ protected override async UniTask InternalExecuteAsync(IStartupOperation.Params a
 
     ProfileReadResult read = await selfProfile.ProfileAsync(ct);
 
-    if (!read.IsOk(out Profile? profile))
+    if (read.IsCancelled)
+        throw new OperationCanceledException(ct);
+
+    if (!read.IsOk(out _))
         throw new InvalidOperationException($"Own profile could not be resolved ({read}), nothing to propagate to Pulse");
 
+    // Only the version the catalyst confirmed is propagated, never a pending edit's.
+    Option<Profile> confirmed = selfProfile.CurrentProfileSnapshot.ConfirmedProfile;
+
+    if (!confirmed.Has)
+        return;
+
     await UniTask.SwitchToMainThread();
-    profilePropagation.PropagateIfNewVersion(profile);
+    profilePropagation.PropagateIfNewVersion(confirmed.Value);
 }
 ```
 
-On startup, connect to Pulse, read the host's profile, and announce its version. The connect is bounded to 5 attempts; if the server is unreachable the operation deactivates Pulse (full fallback to LiveKit) and lets login continue — see [Start-up fallback](#start-up-fallback). `SelfProfile.ProfileAsync` never throws: the read resolves to `Ok(profile)` or to a `ProfileReadError`, and by this point the avatar start-up operation has already resolved the profile, so a non-`Ok` read only means the identity was lost mid-flow.
+On startup, connect to Pulse, read the host's profile, and announce the version the catalyst confirmed; while the first deploy is still in flight nothing is confirmed yet and the announcement is left to `PropagateSelfProfileSystem`. The connect is bounded to 5 attempts; if the server is unreachable the operation deactivates Pulse (full fallback to LiveKit) and lets login continue — see [Start-up fallback](#start-up-fallback). `SelfProfile.ProfileAsync` never throws: the read resolves to `Ok(profile)` or to a `ProfileReadError`, and by this point the avatar start-up operation has already resolved the profile, so a non-`Ok` read only means the identity was lost mid-flow.
 
-Later versions reach Pulse through `PropagateSelfProfileSystem` (`Movement/Systems/PropagateSelfProfileSystem.cs`): every frame while `PulseActivation.IsActive` it reads `SelfProfile.CurrentProfileSnapshot.ConfirmedProfile` and calls `PropagateIfNewVersion`. The confirmed profile is the one the catalyst holds: while an edit is deploying it stays at the previous version, so peers are never told about a version they cannot fetch yet, and a failed deploy needs no retraction. `PulseProfilePropagationBus` sends only when the profile instance or its version differs from the last announcement, so the per-frame poll costs one comparison and no throttle is needed.
+Later versions reach Pulse through `PropagateSelfProfileSystem` (`Movement/Systems/PropagateSelfProfileSystem.cs`): every frame while `PulseActivation.IsActive` it reads `SelfProfile.CurrentProfileSnapshot.ConfirmedProfile` and calls `PropagateIfNewVersion`. The confirmed profile is the one the catalyst holds: while an edit is deploying it stays at the previous version, so peers are never told about a version they cannot fetch yet, and a failed deploy needs no retraction. `PulseProfilePropagationBus` sends only when the user or the version differs from the last announcement (and records nothing while unauthenticated), so the per-frame poll costs one comparison and no throttle is needed.
 
 ---
 

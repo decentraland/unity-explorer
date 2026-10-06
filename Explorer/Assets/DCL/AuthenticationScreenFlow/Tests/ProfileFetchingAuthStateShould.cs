@@ -172,6 +172,36 @@ namespace DCL.AuthenticationScreenFlow.Tests
             });
 
         [UnityTest]
+        public IEnumerator KeepARestoredIdentityWhenTheFetchFails() =>
+            UniTask.ToCoroutine(async () =>
+            {
+                EcsTestsUtils.SetUpFeaturesRegistry();
+
+                using var cts = new CancellationTokenSource();
+                var root = new GameObject(nameof(ProfileFetchingAuthStateShould));
+
+                try
+                {
+                    IWeb3IdentityCache identityCache = Substitute.For<IWeb3IdentityCache>();
+                    var selfProfile = new FailingProfileSelfProfile();
+
+                    ProfileFetchingAuthState state = NewState(root, new MVCStateMachine<AuthStateBase>(), AuthenticationScreenControllerShould.NewNeverShownController(),
+                        new ReactiveProperty<AuthStatus>(AuthStatus.None), selfProfile, skipExistingAccountLobby: false, identityCache);
+
+                    state.Enter(new ProfileFetchingPayload(NewIdentity(), isRestoredSession: true, cts.Token));
+                    await SettleAsync();
+
+                    Assert.That(selfProfile.Calls, Is.EqualTo(1));
+                    identityCache.DidNotReceive().Clear();
+                }
+                finally
+                {
+                    UnityEngine.Object.DestroyImmediate(root);
+                    EcsTestsUtils.TearDownFeaturesRegistry();
+                }
+            });
+
+        [UnityTest]
         public IEnumerator StartAvatarSelectionWhenAFreshLoginHasNoDeployedProfile() =>
             UniTask.ToCoroutine(async () =>
             {
@@ -357,6 +387,28 @@ namespace DCL.AuthenticationScreenFlow.Tests
             {
                 Calls++;
                 return UniTask.FromResult(ProfileReadResult.FromError(ProfileReadError.NotFound));
+            }
+
+            public override UniTask<ProfileDeployResult> DeployProfileAsync(Profile edited, CancellationToken ct) =>
+                UniTask.FromResult(ProfileDeployResult.FromError(ProfileDeployError.NoIdentity));
+        }
+
+        /// <summary>
+        ///     Responsive catalyst whose read fails: resolves to <c>FetchFailed</c> immediately, no cancellation involved.
+        /// </summary>
+        private class FailingProfileSelfProfile : SelfProfile
+        {
+            private readonly UserId address = UserId.NewRandom();
+
+            public int Calls { get; private set; }
+
+            public override SelfProfileModel CurrentProfileSnapshot =>
+                SelfProfileModel.FromIdentified(new Identified(address, ProfileKnowledge.FromFailed(new ProfileFailure(new Exception("fetch failed"))), ProfileActivity.Idle()));
+
+            public override UniTask<ProfileReadResult> ProfileAsync(CancellationToken ct)
+            {
+                Calls++;
+                return UniTask.FromResult(ProfileReadResult.FromError(ProfileReadError.FetchFailed));
             }
 
             public override UniTask<ProfileDeployResult> DeployProfileAsync(Profile edited, CancellationToken ct) =>

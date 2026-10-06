@@ -203,7 +203,11 @@ namespace DCL.AuthenticationScreenFlow
                         if (deploy.IsCancelled && ct.IsCancellationRequested)
                             return;
 
-                        throw new InvalidOperationException($"The new profile could not be deployed: {deploy}");
+                        // Recorded in the span only, not reported as an exception
+                        spanErrorInfo = new SpanErrorInfo($"New profile could not be deployed: {deploy}");
+                        view.Hide(UIAnimationHashes.SLIDE);
+                        fsm.Enter<LoginSelectionAuthState, ErrorType>(ErrorType.ConnectionError);
+                        return;
                     }
 
                     newUserProfile = publishedProfile;

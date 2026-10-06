@@ -178,6 +178,9 @@ namespace DCL.Profiles.Self
             if (ReferenceEquals(reason, DEPLOY_SUPERSEDED))
                 return SaveSupersededDeploy(model, current, deploying, msg.Saved);
 
+            if (ReferenceEquals(reason, NO_DEPLOY_IN_FLIGHT) && IsNewerSaveWhileIdle(current, msg.Saved))
+                return SettleReads(model, current.With(ProfileKnowledge.FromKnown(msg.Saved), ProfileActivity.Idle()), SelfProfileCmd.FromPublish(msg.Saved));
+
             if (reason != null)
                 return Ignored(model, reason);
 
@@ -197,6 +200,12 @@ namespace DCL.Profiles.Self
             var advanced = new Deploying(deploying.Pending, deploying.Version, CopyOf(ProfileKnowledge.FromKnown(saved)), deploying.Requests);
             return (model.WithSession(SelfProfileSession.FromIdentified(current.WithActivity(ProfileActivity.FromDeploying(advanced)))), SelfProfileCmd.None());
         }
+
+        /// <summary>
+        ///     A superseded deploy that the catalyst saved after the deploy superseding it failed is adopted when it is newer than what is known.
+        /// </summary>
+        private static bool IsNewerSaveWhileIdle(in Identified current, Profile saved) =>
+            current.Activity.IsIdle() && !(current.Knowledge.IsKnown(out Profile? known) && known.Version >= saved.Version);
 
         private static (SelfProfileModel, SelfProfileCmd) OnDeployFailed(in SelfProfileModel model, in DeployFailed msg)
         {
