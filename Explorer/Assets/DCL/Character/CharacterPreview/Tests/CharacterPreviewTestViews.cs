@@ -1,3 +1,4 @@
+using Arch.Core;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -58,6 +59,12 @@ namespace DCL.CharacterPreview.Tests
             }
 
             throw new MissingFieldException(target.GetType().Name, fieldName);
+        }
+
+        public class TestPreview : CharacterPreviewControllerBase
+        {
+            public TestPreview(CharacterPreviewView view, ICharacterPreviewFactory previewFactory, World world, CharacterPreviewEventBus characterPreviewEventBus)
+                : base(view, previewFactory, world, false, characterPreviewEventBus) { }
         }
     }
 }
