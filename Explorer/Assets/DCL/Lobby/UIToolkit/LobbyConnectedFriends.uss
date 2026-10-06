@@ -13,14 +13,14 @@
     display: flex;
 }
 
-/* The profile color and the picture are set inline by the element */
+/* The profile color, its lighter border and the picture are set inline by the element */
 .lobby-connected-friends__picture {
     width: 24px;
     height: 24px;
     margin-left: -6px;
     border-radius: 12px;
     border-width: 2px;
-    border-color: rgba(255, 255, 255, 0.7);
+    border-color: rgba(255, 255, 255, 0.2);
     background-color: white;
     background-image: url('/Assets/DCL/Chat/Textures/DefaultProfileThumbnail.png');
     background-size: cover;

@@ -8,6 +8,22 @@ namespace DCL.Lobby
     /// </summary>
     public static class LobbyCardBackground
     {
+        // Opacity of the white frame the uGUI ProfilePictureView lays over the profile color
+        private const float FRAME_WHITE_BLEND = 0.2f;
+
+        /// <summary>
+        ///     The border is not backed by the background, so its lighter shade is computed rather than left translucent.
+        /// </summary>
+        public static void ApplyPictureColor(VisualElement picture, Color profileColor)
+        {
+            Color frame = Color.Lerp(profileColor, Color.white, FRAME_WHITE_BLEND);
+            picture.style.backgroundColor = profileColor;
+            picture.style.borderTopColor = frame;
+            picture.style.borderRightColor = frame;
+            picture.style.borderBottomColor = frame;
+            picture.style.borderLeftColor = frame;
+        }
+
         /// <summary>
         ///     Null clears the inline image; a full-rect sprite is set as its texture, an atlas sprite keeps its rect.
         /// </summary>

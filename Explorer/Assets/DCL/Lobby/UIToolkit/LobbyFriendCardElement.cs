@@ -189,7 +189,7 @@ namespace DCL.Lobby
 
         private void ApplyPicture(VisualElement target)
         {
-            target.style.backgroundColor = pictureColor;
+            LobbyCardBackground.ApplyPictureColor(target, pictureColor);
             target.style.backgroundImage = LobbyCardBackground.From(pictureSprite);
         }
 

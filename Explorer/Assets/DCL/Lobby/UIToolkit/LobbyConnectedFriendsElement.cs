@@ -67,7 +67,7 @@ namespace DCL.Lobby
         public void SetPicture(int index, Sprite? sprite, Color color, bool loading)
         {
             VisualElement slot = slots[index];
-            slot.style.backgroundColor = color;
+            LobbyCardBackground.ApplyPictureColor(slot, color);
             slot.style.backgroundImage = LobbyCardBackground.From(sprite);
             slot.EnableInClassList(USS_PICTURE_LOADING, loading);
         }
