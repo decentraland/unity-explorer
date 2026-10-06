@@ -701,6 +701,42 @@ namespace DCL.SDKComponents.MediaStream.Tests
             Assert.IsTrue(slide != null);
         }
 
+        [Test]
+        public void KeepShownSlide_WhenClearedThrottledWhileNextSlideLoads()
+        {
+            var shown = new Texture2D(2, 2);
+            IWebRequestController controller = Substitute.For<IWebRequestController>();
+            SlideRequest(controller).ReturnsForAnyArgs(UniTask.FromResult<Texture2D?>(shown), UniTask.FromResult<Texture2D?>(new Texture2D(2, 2)),
+                UniTask.FromResult<Texture2D?>(new Texture2D(2, 2)), new UniTaskCompletionSource<Texture2D?>().Task);
+            var slideCache = new SlideTextureCache(controller, decentralandUrlsSource, () => now);
+            slideCaches.Add(slideCache);
+            slideCache.BeginComposing();
+            slideCache.GetOrRequest(SlideUrl(1), BOT);
+            LKParticipant bot = AddParticipant(BOT, V2("null", "idle", slideUrl: SlideUrl(1)));
+            LKParticipant otherBot = AddParticipant(OTHER_BOT, V2("null", "idle", slideUrl: SlideUrl(2)));
+            LivekitPlayer first = NewPlayer(slideCache);
+            LivekitPlayer second = NewPlayer(slideCache);
+            first.OpenMedia(LivekitAddress.FromUserStream(new UserStream(BOT, "TR_pv")));
+            second.OpenMedia(LivekitAddress.FromUserStream(new UserStream(OTHER_BOT, "TR_pv")));
+            slideCache.EndComposing();
+            first.LastTexture();
+            second.LastTexture();
+            now += SlideTextureCache.MIN_FETCH_INTERVAL_SECONDS;
+            SetMetadata(otherBot, V2("null", "idle", currentSlide: 1, slideUrl: SlideUrl(3)));
+            second.EnsureVideoIsPlaying();
+            second.LastTexture();
+            SetMetadata(bot, V2("null", "idle", currentSlide: 1, slideUrl: SlideUrl(4)));
+            first.EnsureVideoIsPlaying();
+            first.LastTexture();
+
+            slideCache.ClearThrottled(10);
+
+            Assert.IsTrue(shown != null);
+        }
+
+        private static string SlideUrl(int index) =>
+            $"{ALLOWED_SLIDES}{index:x16}.png";
+
         private void ComposeThenReconnect()
         {
             LKParticipant bot = AddParticipant(BOT, V2_METADATA);
