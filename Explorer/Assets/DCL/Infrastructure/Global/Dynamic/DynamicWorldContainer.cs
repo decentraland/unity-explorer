@@ -79,6 +79,8 @@ namespace Global.Dynamic
 {
     public class DynamicWorldContainer : DCLWorldContainer<DynamicWorldSettings>
     {
+        private const string DEFAULT_SATELLITE_MAP_URL = "https://pub-9c4ed7e357dc4b63a15998d40112eb96.r2.dev/v1/day";
+
         private readonly IProfileBroadcast profileBroadcast;
         private readonly SocialServicesContainer socialServicesContainer;
         private readonly MultiplayerContainer multiplayerContainer;
@@ -382,12 +384,14 @@ namespace Global.Dynamic
                 realmNavigatorContainer.WorldPermissionsService,
                 chatContainer.ChatHistory);
 
-            appArgs.TryGetValue(AppArgsFlags.SATELLITE_MAP_URL, out string? satelliteMapUrl);
+            string satelliteMapUrl = DEFAULT_SATELLITE_MAP_URL;
 
-            if (satelliteMapUrl != null && !IsHttpUrl(satelliteMapUrl))
+            if (appArgs.TryGetValue(AppArgsFlags.SATELLITE_MAP_URL, out string? satelliteMapUrlArg) && satelliteMapUrlArg != null)
             {
-                ReportHub.LogWarning(ReportCategory.UI, $"Ignoring --{AppArgsFlags.SATELLITE_MAP_URL}: only http and https URLs are accepted");
-                satelliteMapUrl = null;
+                if (IsHttpUrl(satelliteMapUrlArg))
+                    satelliteMapUrl = satelliteMapUrlArg;
+                else
+                    ReportHub.LogWarning(ReportCategory.UI, $"Ignoring --{AppArgsFlags.SATELLITE_MAP_URL}: only http and https URLs are accepted");
             }
 
             MapRendererContainer mapRendererContainer =
