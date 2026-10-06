@@ -61,6 +61,9 @@ namespace Global.MapCapture
             if (args.SceneParcel.HasValue && runtime.LiveScenes != null)
                 return await RunLiveSceneAsync(runtime.LiveScenes, args.SceneParcel.Value, ct);
 
+            if (args.CapturesWorlds)
+                return await new MapCaptureWorldsJob(runtime, args, this).RunAsync(ct);
+
             // Blocks tile the grid from its origin; the region is widened to whole blocks so every image is a full
             // block. A load is either several whole blocks or a whole fraction of one, never straddling an image.
             var blocksMin = new Vector2Int(
@@ -201,20 +204,33 @@ namespace Global.MapCapture
         /// <summary>A block needs several loads: load a part, render it into the image, unload, repeat, then write.</summary>
         private async UniTask RenderLoadsPerBlockAsync(Vector2Int blocksMin, Vector2Int blocksMax, JArray blocks, CancellationToken ct, Action onBlock, Action onComplete)
         {
-            int partPixels = args.RenderPixels / (args.BlockSize / args.ChunkSize);
-
             for (int by = blocksMin.y; by <= blocksMax.y; by += args.BlockSize)
             for (int bx = blocksMin.x; bx <= blocksMax.x; bx += args.BlockSize)
             {
                 var blockMin = new Vector2Int(bx, by);
                 var pending = new JArray();
                 var failed = new JArray();
-                MapCaptureCamera.BlockImage image = runtime.Camera.BeginBlock(args.RenderPixels);
+                byte[] bytes = await RenderBlockInPartsAsync(blockMin, pending, failed, ct);
+                WriteBlock(blockMin, bytes, pending, failed, blocks, onBlock, onComplete);
+            }
+        }
 
-                for (int py = 0; py < args.BlockSize; py += args.ChunkSize)
-                for (int px = 0; px < args.BlockSize; px += args.ChunkSize)
+        /// <summary>
+        ///     One block assembled from loads of <see cref="MapCaptureArgs.ChunkSize" /> parcels, each rendered into its
+        ///     part of the image and unloaded before the next. Returns the encoded image; parcels that never finished
+        ///     loading or failed are added to <paramref name="pending" /> and <paramref name="failed" />.
+        /// </summary>
+        internal async UniTask<byte[]> RenderBlockInPartsAsync(Vector2Int blockMin, JArray pending, JArray failed, CancellationToken ct)
+        {
+            int partPixels = args.RenderPixels / (args.BlockSize / args.ChunkSize);
+            MapCaptureCamera.BlockImage image = runtime.Camera.BeginBlock(args.RenderPixels);
+
+            try
+            {
+                for (var py = 0; py < args.BlockSize; py += args.ChunkSize)
+                for (var px = 0; px < args.BlockSize; px += args.ChunkSize)
                 {
-                    var partMin = new Vector2Int(bx + px, by + py);
+                    var partMin = new Vector2Int(blockMin.x + px, blockMin.y + py);
                     await LoadAsync(partMin, partMin + (Vector2Int.one * (args.ChunkSize - 1)), ct);
                     CollectStatus(partMin, args.ChunkSize, pending, failed);
 
@@ -222,10 +238,14 @@ namespace Global.MapCapture
                     await runtime.Camera.RenderIntoAsync(image, partMin, args.ChunkSize, pixelOffset, partPixels, args.CameraHeight, ct);
                     await UnloadAsync(ct);
                 }
-
-                byte[] bytes = await runtime.Camera.EndBlockAsync(image, args.OutputPixels, args.JpegQuality, ct);
-                WriteBlock(blockMin, bytes, pending, failed, blocks, onBlock, onComplete);
             }
+            catch
+            {
+                image.Dispose();
+                throw;
+            }
+
+            return await runtime.Camera.EndBlockAsync(image, args.OutputPixels, args.JpegQuality, ct);
         }
 
         private async UniTask LoadAsync(Vector2Int min, Vector2Int max, CancellationToken ct)
@@ -238,9 +258,14 @@ namespace Global.MapCapture
             Debug.Log($"[JUANI] Load ({min.x},{min.y})-({max.x},{max.y}) finished in {UnityEngine.Time.realtimeSinceStartup - started:0.0}s");
         }
 
-        private async UniTask UnloadAsync(CancellationToken ct)
+        internal async UniTask UnloadAsync(CancellationToken ct)
         {
+            bool hadScenes = runtime.Feeder.HasSceneEntities;
             runtime.Feeder.UnloadAll(runtime.World);
+
+            // A load of nothing but empty parcels (most of a world's tiles) left nothing to release.
+            if (!hadScenes) return;
+
             await UniTask.DelayFrame(UNLOAD_SETTLE_FRAMES, cancellationToken: ct);
 
             // The capture has no ReleaseMemorySystem, so nothing evicts the asset bundle, LOD, road and texture
@@ -252,7 +277,7 @@ namespace Global.MapCapture
 
         private void WriteBlock(Vector2Int blockMin, byte[] image, JArray pending, JArray failed, JArray blocks, Action onBlock, Action onComplete)
         {
-            string file = args.ClientMap ? args.ClientChunkName(blockMin) : $"{blockMin.x}_{blockMin.y}.{(args.JpegQuality.HasValue ? "jpg" : "png")}";
+            string file = args.ClientMap ? args.TileName(blockMin) : $"{blockMin.x}_{blockMin.y}.{(args.JpegQuality.HasValue ? "jpg" : "png")}";
             File.WriteAllBytes(Path.Combine(args.OutputDir, file), image);
 
             onBlock();

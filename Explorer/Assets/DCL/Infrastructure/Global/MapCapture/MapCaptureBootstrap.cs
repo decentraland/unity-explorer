@@ -30,12 +30,14 @@ using DCL.SkyBox;
 using DCL.Time;
 using DCL.Utilities;
 using DCL.Utility;
+using DCL.Utility.Types;
 using DCL.Web3;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using DCL.WebRequests.Analytics;
 using DCL.WebRequests.ChromeDevtool;
 using ECS;
+using ECS.SceneLifeCycle.Realm;
 using ECS.SceneLifeCycle.Systems;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
@@ -117,9 +119,10 @@ namespace Global.MapCapture
             if (!lodCreated || lodContainer == null)
                 throw new InvalidOperationException("Cannot create the LOD container");
 
+            var feeder = new MapCaptureSceneFeeder(urls, staticContainer.ScenesCache, realmData, lodContainer.RoadCoordinates, staticContainer.RealmPartitionSettings.ScenesDefinitionsRequestBatchSize);
             var genesisTerrain = new TerrainGenerator(staticContainer.Profiler);
             var worldsTerrain = new WorldTerrainGenerator();
-            var landscape = new Landscape(new MapCaptureRealmController(realmData), genesisTerrain, worldsTerrain, true);
+            var landscape = new Landscape(new MapCaptureRealmController(realmData, feeder), genesisTerrain, worldsTerrain, true);
             var landscapePlugin = new LandscapePlugin(realmData, genesisTerrain, worldsTerrain, assetsProvisioner, debugBuilder, new MapRendererTextureContainer(), true, landscape);
             // A straight-down camera never faces the sun, but the sun's lens flare still draws; the skybox reads this
             // preference when it sets the flare up, and the component is disabled again below in case anything re-enables it.
@@ -155,21 +158,29 @@ namespace Global.MapCapture
                 lensFlare.enabled = false;
 
             MapCaptureCamera camera = await MapCaptureCamera.CreateAsync(settingsContainer, assetsProvisioner, world, coroutineRunner, args.KeepBloom, ct);
-            var feeder = new MapCaptureSceneFeeder(urls, staticContainer.ScenesCache, realmData, lodContainer.RoadCoordinates, staticContainer.RealmPartitionSettings.ScenesDefinitionsRequestBatchSize);
             SystemGroupWorld systems = MapCaptureWorldFactory.Create(world, staticContainer, urls, realmData, analytics.EntitiesAnalytics, lodContainer, plugins, playerEntity, feeder, camera.Camera);
 
-            await MapCaptureRealm.ConfigureGenesisAsync(realmData, staticContainer.WebRequestsContainer.WebRequestController, urls, staticContainer.WorldManifestProvider, environment, ct);
-
-            var terrain = await landscape.LoadTerrainAsync(AsyncLoadProcessReport.Create(ct), ct);
-
-            if (!terrain.Success)
-                throw new InvalidOperationException($"Terrain generation failed: {terrain.Error?.Message}");
+            // Worlds configure the realm and generate their terrain one world at a time; Genesis City is never loaded.
+            if (!args.CapturesWorlds)
+            {
+                await MapCaptureRealm.ConfigureGenesisAsync(realmData, staticContainer.WebRequestsContainer.WebRequestController, urls, staticContainer.WorldManifestProvider, environment, ct);
+                await LoadTerrainAsync(landscape, ct);
+            }
 
             MapCaptureLiveSceneLoader? liveScenes = args.SceneParcel.HasValue
                 ? await CreateLiveSceneLoaderAsync(staticContainer, settingsContainer, urls, realmData, identityCache, environment, world, camera.CameraEntity, ct)
                 : null;
 
-            return new MapCaptureRuntime(world, systems, staticContainer, realmData, feeder, camera, staticContainer.StaticSettings.SkyboxSettings, liveScenes);
+            return new MapCaptureRuntime(world, systems, staticContainer, realmData, urls, environment, landscape, feeder, camera, staticContainer.StaticSettings.SkyboxSettings, liveScenes);
+        }
+
+        /// <summary>The client's terrain for the configured realm: Genesis City's, or the current world's around its parcels.</summary>
+        public static async UniTask LoadTerrainAsync(Landscape landscape, CancellationToken ct)
+        {
+            EnumResult<LandscapeError> terrain = await landscape.LoadTerrainAsync(AsyncLoadProcessReport.Create(ct), ct);
+
+            if (!terrain.Success)
+                throw new InvalidOperationException($"Terrain generation failed: {terrain.Error?.Message}");
         }
 
         /// <summary>
@@ -255,6 +266,9 @@ namespace Global.MapCapture
         public readonly World World;
         public readonly StaticContainer StaticContainer;
         public readonly RealmData RealmData;
+        public readonly IDecentralandUrlsSource Urls;
+        public readonly DecentralandEnvironment Environment;
+        public readonly Landscape Landscape;
         public readonly MapCaptureSceneFeeder Feeder;
         public readonly MapCaptureCamera Camera;
         public readonly SkyboxSettingsAsset SkyboxSettings;
@@ -264,13 +278,17 @@ namespace Global.MapCapture
 
         private readonly SystemGroupWorld systems;
 
-        public MapCaptureRuntime(World world, SystemGroupWorld systems, StaticContainer staticContainer, RealmData realmData, MapCaptureSceneFeeder feeder,
-            MapCaptureCamera camera, SkyboxSettingsAsset skyboxSettings, MapCaptureLiveSceneLoader? liveScenes)
+        public MapCaptureRuntime(World world, SystemGroupWorld systems, StaticContainer staticContainer, RealmData realmData, IDecentralandUrlsSource urls,
+            DecentralandEnvironment environment, Landscape landscape, MapCaptureSceneFeeder feeder, MapCaptureCamera camera, SkyboxSettingsAsset skyboxSettings,
+            MapCaptureLiveSceneLoader? liveScenes)
         {
             World = world;
             this.systems = systems;
             StaticContainer = staticContainer;
             RealmData = realmData;
+            Urls = urls;
+            Environment = environment;
+            Landscape = landscape;
             Feeder = feeder;
             Camera = camera;
             SkyboxSettings = skyboxSettings;
@@ -295,28 +313,37 @@ namespace Global.MapCapture
         public void Dispose() { }
     }
 
-    /// <summary>The landscape only reads the realm data through its controller.</summary>
+    /// <summary>
+    ///     The landscape reads the realm data and, in a world, the world's scene definitions through its controller. The
+    ///     realm itself is configured by <see cref="MapCaptureRealm" />, not through this controller.
+    /// </summary>
     internal class MapCaptureRealmController : IGlobalRealmController
     {
+        private readonly MapCaptureSceneFeeder feeder;
+
         public IRealmData RealmData { get; }
         public URLDomain? CurrentDomain => null;
         public GlobalWorld GlobalWorld { get; set; } = null!;
 
-        public MapCaptureRealmController(IRealmData realmData)
+        public MapCaptureRealmController(IRealmData realmData, MapCaptureSceneFeeder feeder)
         {
             RealmData = realmData;
+            this.feeder = feeder;
         }
 
         public UniTask SetRealmAsync(URLDomain realm, CancellationToken ct) =>
-            throw new NotSupportedException("The map capture realm is fixed to Genesis City");
+            throw new NotSupportedException("The map capture configures its realm through MapCaptureRealm");
 
         public UniTask<bool> IsReachableAsync(URLDomain realm, CancellationToken ct) =>
             UniTask.FromResult(false);
 
         public void DisposeGlobalWorld() { }
 
-        public UniTask<List<SceneEntityDefinition>> WaitForFixedScenePromisesAsync(CancellationToken ct) =>
-            UniTask.FromResult(new List<SceneEntityDefinition>());
+        public async UniTask<List<SceneEntityDefinition>> WaitForFixedScenePromisesAsync(CancellationToken ct)
+        {
+            await UniTask.WaitUntil(() => feeder.WorldDefinitionsResolved, cancellationToken: ct);
+            return new List<SceneEntityDefinition>(feeder.WorldDefinitions);
+        }
 
         public UniTask<SceneDefinitions?> WaitForStaticScenesEntityDefinitionsAsync(CancellationToken ct) =>
             UniTask.FromResult<SceneDefinitions?>(null);

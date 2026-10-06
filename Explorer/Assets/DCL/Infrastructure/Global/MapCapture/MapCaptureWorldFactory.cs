@@ -62,6 +62,9 @@ namespace Global.MapCapture
 
             LoadSceneDefinitionListSystem.InjectToWorld(ref builder, webRequests, false, false, NoCache<SceneDefinitions, GetSceneDefinitionList>.INSTANCE, entitiesAnalytics);
 
+            // A world the registry has no manifest for resolves its scenes one URN at a time, as the client's fixed pointer loader does.
+            LoadSceneDefinitionSystem.InjectToWorld(ref builder, webRequests, false, false, NoCache<SceneEntityDefinition, GetSceneDefinition>.INSTANCE);
+
             LoadISSDescriptorSystem.InjectToWorld(ref builder, webRequests, URLDomain.FromString(urls.Url(DecentralandUrl.LodGeneratorCDN)),
                 new NoCache<ISSDescriptorMetadata, GetISSDescriptorIntention>(false, false),
                 new DiskCacheOptions<ISSDescriptorMetadata, GetISSDescriptorIntention>(staticContainer.ISSDescriptorDiskCache, new GetISSDescriptorIntention.DiskHashCompute(urls), ISS_DISK_CACHE_EXTENSION));

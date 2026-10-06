@@ -253,6 +253,22 @@ namespace Global.AppArgs
             ///     that scene alone into a single image; the region flag is not used.
             /// </summary>
             public const string SCENE = "map-capture-scene";
+
+            /// <summary>
+            ///     Worlds to capture on the satellite grid, one after another in this process: "all" (the worlds content
+            ///     server's index) or the path of a file with one world name per line. Tiles go to
+            ///     out/worlds/{name}/{level}/{i},{j}.jpg; a world whose manifest says complete is skipped on a rerun.
+            /// </summary>
+            public const string WORLDS = "map-capture-worlds";
+
+            /// <summary>
+            ///     Satellite grid level: the 320x320-parcel grid split into 2^L x 2^L tiles (0-6). Defaults to 3 (the
+            ///     minimap's 40-parcel chunks) in client-map mode and 4 (20-parcel tiles) in worlds mode.
+            /// </summary>
+            public const string LEVEL = "map-capture-level";
+
+            /// <summary>Side in pixels of each grid tile image (client-map and worlds modes). Default 512.</summary>
+            public const string TILE_PIXELS = "map-capture-tile-px";
         }
 
         public static class Multiplayer

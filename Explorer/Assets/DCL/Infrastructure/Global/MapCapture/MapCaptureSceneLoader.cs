@@ -24,7 +24,12 @@ namespace Global.MapCapture
         [SerializeField] private Light directionalLight = null!;
         [SerializeField] private DecentralandEnvironment environment = DecentralandEnvironment.Org;
 
-        [Header("Editor run (used when the command line carries no map-capture-region or map-capture-scene)")]
+        [Header("Editor run (used when the command line carries no map-capture-region, map-capture-scene or map-capture-worlds)")]
+        [Tooltip("\"all\" or the path of a file with one world name per line; empty captures Genesis City instead")]
+        [SerializeField] private string editorWorlds = string.Empty;
+        [Tooltip("Satellite grid level of world and client-map tiles; 0 keeps the mode's default (3 for client map, 4 for worlds)")]
+        [SerializeField] private int editorLevel;
+        [SerializeField] private int editorTilePixels = 512;
         [SerializeField] private bool editorLiveScene;
         [SerializeField] private Vector2Int editorSceneParcel = new (0, 0);
         [SerializeField] private bool editorClientMap;
@@ -87,7 +92,8 @@ namespace Global.MapCapture
         {
             var fromCommandLine = new ApplicationParametersParser();
 
-            if (!Application.isEditor || fromCommandLine.HasFlag(AppArgsFlags.MapCapture.REGION) || fromCommandLine.HasFlag(AppArgsFlags.MapCapture.SCENE))
+            if (!Application.isEditor || fromCommandLine.HasFlag(AppArgsFlags.MapCapture.REGION) || fromCommandLine.HasFlag(AppArgsFlags.MapCapture.SCENE)
+                || fromCommandLine.HasFlag(AppArgsFlags.MapCapture.WORLDS))
                 return fromCommandLine;
 
             var arguments = new List<string>
@@ -98,9 +104,21 @@ namespace Global.MapCapture
                 $"--{AppArgsFlags.MapCapture.HOUR}", editorHour.ToString(System.Globalization.CultureInfo.InvariantCulture),
                 $"--{AppArgsFlags.MapCapture.CAMERA_HEIGHT}", editorCameraHeight.ToString(System.Globalization.CultureInfo.InvariantCulture),
                 $"--{AppArgsFlags.MapCapture.LOAD_TIMEOUT_SEC}", editorLoadTimeoutSec.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                $"--{AppArgsFlags.MapCapture.TILE_PIXELS}", editorTilePixels.ToString(),
             };
 
-            if (editorLiveScene)
+            if (editorLevel > 0)
+            {
+                arguments.Add($"--{AppArgsFlags.MapCapture.LEVEL}");
+                arguments.Add(editorLevel.ToString());
+            }
+
+            if (!string.IsNullOrWhiteSpace(editorWorlds))
+            {
+                arguments.Add($"--{AppArgsFlags.MapCapture.WORLDS}");
+                arguments.Add(editorWorlds);
+            }
+            else if (editorLiveScene)
             {
                 arguments.Add($"--{AppArgsFlags.MapCapture.SCENE}");
                 arguments.Add($"{editorSceneParcel.x},{editorSceneParcel.y}");
