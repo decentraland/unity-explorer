@@ -115,6 +115,12 @@ namespace DCL.SDKComponents.MediaStream
             textures.RemoveOldest(textures.Count);
 
         /// <summary>
+        ///     Marks <paramref name="url" /> as most recently used, so <see cref="ClearThrottled" /> keeps it.
+        /// </summary>
+        public void KeepAlive(string url) =>
+            textures.TryGetValue(url, out _);
+
+        /// <summary>
         ///     Destroys up to <paramref name="maxUnloadAmount" /> of the least recently used slides, keeping one most
         ///     recently used slide per composing player.
         /// </summary>

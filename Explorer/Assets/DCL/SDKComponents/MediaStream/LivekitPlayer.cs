@@ -47,6 +47,7 @@ namespace DCL.SDKComponents.MediaStream
         private CurrentVideoStreamInfo? presentationVideo;
         private CurrentVideoStreamInfo? presenterCamera;
         private Texture2D? shownSlide;
+        private string? shownSlideUrl;
         private Texture? composedTexture;
         private int composedFrame = -1;
         private bool loggedBadMetadata;
@@ -484,6 +485,7 @@ namespace DCL.SDKComponents.MediaStream
             }
 
             shownSlide = null;
+            shownSlideUrl = null;
             compositor.Release();
             slideCache.EndComposing();
         }
@@ -608,7 +610,12 @@ namespace DCL.SDKComponents.MediaStream
             Texture2D? cachedSlide = slideCache.GetOrRequest(slide.url, composingBot);
 
             if (cachedSlide != null)
+            {
                 shownSlide = cachedSlide;
+                shownSlideUrl = slide.url;
+            }
+            else if (shownSlideUrl != null)
+                slideCache.KeepAlive(shownSlideUrl);
 
             Texture slideTexture = shownSlide != null ? shownSlide : Texture2D.blackTexture;
             bool showRect = PresentationLayout.TryVideoRect(metadata, out Vector4 videoRect);
