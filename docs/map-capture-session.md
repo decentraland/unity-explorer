@@ -66,6 +66,33 @@ Client-map grid, measured against the live client: chunk `i,j` covers X from `-1
 `-113 + 40i` and Y from `113 - 40j` to `152 - 40j`; j counts southward. Whole grid is
 `-152,-167` to `167,152`. Verified against the client's `3,2` and `4,4` images.
 
+## Live scene mode (experiment, 2026-10-02)
+
+`--map-capture-scene x,y` runs the scene occupying that parcel the way the client does, JavaScript and
+full-resolution assets, and renders it alone into `scene_x_y.{png,jpg}` plus a manifest. No ISS, no LOD,
+no region. It exists to compare a live render against the LOD render of the same parcel; the editor
+inspector has an `Editor Live Scene` toggle and parcel for it.
+
+How it works (`MapCaptureLiveScene.cs`, `MapCaptureBootstrap.CreateLiveSceneLoaderAsync`): the bootstrap
+additionally initializes the per-scene world plugins (`StaticContainer.ECSWorldPlugins`) and builds the
+client's `SceneSharedContainer` with the same null comms, profiles and MVC the play mode integration test
+suite uses (`IntegrationTestsSuite.CreateStaticContainer`), plus no-op restricted actions
+(`MapCaptureNullObjects.cs`). The loader fetches the definition through the capture world's registry
+loader, enqueues a readiness report in `SceneReadinessReportQueue` so the scene's GLTF gathering waits for
+its models, calls `LoadSceneSystemLogic.FlowAsync` (hashed content, `scene.json` override, `main.crdt`,
+facade creation) and starts `StartUpdateLoopAsync` on the thread pool. None of the client's scene life
+cycle systems (`ResolveSceneStateByIncreasingRadiusSystem`, `LoadSceneSystem`,
+`ControlSceneUpdateLoopSystem`, `UnloadSceneSystem`) are involved. The camera entity is set on
+`ExposedCameraData.CameraEntityProxy` because scene systems read the camera through it.
+
+Readiness is the report reaching 1 (all GLTFs loaded, 60 s internal cap), the scene failing, or
+`--map-capture-timeout`. The image is the scene's footprint plus a one-parcel margin, squared and centred,
+at `--map-capture-ppp` capped to the 8192 px render target. Not verified in the editor yet; the first run
+will tell whether a scene can be created while the character camera plugin is not booted.
+
+Known gaps: no neighbouring scenes or roads are loaded around the live scene (the feeder is idle in this
+mode), the wallet API throws into the scene, and billboards face the default camera data.
+
 ## Decisions taken (do not relitigate)
 
 - Parity is non-negotiable: reuse the client's rendering, LOD assembly, terrain, roads and skybox

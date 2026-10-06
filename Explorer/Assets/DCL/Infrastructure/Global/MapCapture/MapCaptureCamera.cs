@@ -44,6 +44,9 @@ namespace Global.MapCapture
 
         public Camera Camera { get; }
 
+        /// <summary>The entity carrying the camera component, for whatever reads the camera through the world.</summary>
+        public Entity CameraEntity { get; }
+
         private MapCaptureCamera(ProvidedInstance<CinemachinePreset> rig, World world, MonoBehaviour coroutineRunner)
         {
             this.rig = rig;
@@ -62,7 +65,7 @@ namespace Global.MapCapture
             virtualCamera.m_Lens.NearClipPlane = NEAR_CLIP;
 
             // The landscape systems find the camera through these two components on the camera entity.
-            world.Create(new CameraComponent(Camera), preset);
+            CameraEntity = world.Create(new CameraComponent(Camera), preset);
         }
 
         public static async UniTask<MapCaptureCamera> CreateAsync(IPluginSettingsContainer settingsContainer, IAssetsProvisioner assetsProvisioner, World world,

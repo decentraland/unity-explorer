@@ -3,8 +3,11 @@ using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.AssetsProvision.CodeResolver;
 using DCL.Audio;
 using DCL.Browser.DecentralandUrls;
+using DCL.CharacterMotion.Components;
+using DCL.Clipboard;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
@@ -13,11 +16,15 @@ using DCL.Landscape;
 using DCL.LOD.Systems;
 using DCL.MapRenderer.ComponentsFactory;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Multiplayer.Connections.Messaging.Hubs;
+using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PluginSystem;
 using DCL.Prefs;
 using DCL.PluginSystem.Global;
+using DCL.PluginSystem.World;
+using DCL.Profiles;
 using DCL.RealmNavigation;
 using DCL.SkyBox;
 using DCL.Time;
@@ -25,15 +32,19 @@ using DCL.Utilities;
 using DCL.Utility;
 using DCL.Web3;
 using DCL.Web3.Identities;
+using DCL.WebRequests;
 using DCL.WebRequests.Analytics;
 using DCL.WebRequests.ChromeDevtool;
 using ECS;
+using ECS.SceneLifeCycle.Systems;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
 using Global.AppArgs;
 using Global.Dynamic;
 using Global.Dynamic.Landscapes;
 using Global.Versioning;
+using MVC;
+using SceneRuntime.Factory.WebSceneSource;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -44,7 +55,8 @@ namespace Global.MapCapture
 {
     /// <summary>
     ///     Boots only what a map capture renders with: asset bundle loading, ISS LOD_0 assembly, roads, terrain,
-    ///     skybox and the client's camera rig. No login, comms, UI, avatar or scene runtime.
+    ///     skybox and the client's camera rig. No login, comms, UI or avatar. The scene runtime is created only for
+    ///     a live scene capture.
     /// </summary>
     public static class MapCaptureBootstrap
     {
@@ -52,11 +64,11 @@ namespace Global.MapCapture
         private const string GENESIS_INSTALL_SOURCE = "";
         private const string LENS_FLARE_COMPONENT = "LensFlareComponentSRP";
 
-        public static async UniTask<MapCaptureRuntime> CreateAsync(IAppArgs appArgs, string? bundleCacheDir, bool keepBloom, PluginSettingsContainer settingsContainer, Light directionalLight,
+        public static async UniTask<MapCaptureRuntime> CreateAsync(IAppArgs appArgs, MapCaptureArgs args, PluginSettingsContainer settingsContainer, Light directionalLight,
             DecentralandEnvironment environment, MonoBehaviour coroutineRunner, CancellationToken ct)
         {
-            if (bundleCacheDir != null)
-                RedirectBundleCache(bundleCacheDir);
+            if (args.CacheDir != null)
+                RedirectBundleCache(args.CacheDir);
 
             // Offline flags: only the switches the capture depends on, so a run never depends on the flags service.
             FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(CaptureFlags()));
@@ -88,6 +100,9 @@ namespace Global.MapCapture
             // Scenes stream by budget relative to the player; the feeder pins every request to top priority, but the
             // deferred loader still reads the player's transform.
             staticContainer.CharacterContainer.InitializePlayerEntity(world, playerEntity);
+
+            // Scene physics systems read and clear this on the player even when the scene is not current.
+            world.Add(playerEntity, new CharacterRigidTransform());
             staticContainer.LoadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Completed);
             ApplyQualityLevel(staticContainer);
 
@@ -123,6 +138,10 @@ namespace Global.MapCapture
                 staticContainer.QualityContainer.CreatePlugin(),
             };
 
+            // In debug builds the scene world's light source debug system reads the state entity this plugin creates.
+            if (args.SceneParcel.HasValue)
+                plugins.Add(new LightSourceDebugPlugin(debugBuilder, world));
+
             foreach (IDCLGlobalPlugin plugin in plugins)
             {
                 (_, bool initialized) = await settingsContainer.InitializePluginAsync(plugin, ct);
@@ -135,7 +154,7 @@ namespace Global.MapCapture
             if (directionalLight.GetComponent(LENS_FLARE_COMPONENT) is Behaviour lensFlare)
                 lensFlare.enabled = false;
 
-            MapCaptureCamera camera = await MapCaptureCamera.CreateAsync(settingsContainer, assetsProvisioner, world, coroutineRunner, keepBloom, ct);
+            MapCaptureCamera camera = await MapCaptureCamera.CreateAsync(settingsContainer, assetsProvisioner, world, coroutineRunner, args.KeepBloom, ct);
             var feeder = new MapCaptureSceneFeeder(urls, staticContainer.ScenesCache, realmData, lodContainer.RoadCoordinates, staticContainer.RealmPartitionSettings.ScenesDefinitionsRequestBatchSize);
             SystemGroupWorld systems = MapCaptureWorldFactory.Create(world, staticContainer, urls, realmData, analytics.EntitiesAnalytics, lodContainer, plugins, playerEntity, feeder, camera.Camera);
 
@@ -146,7 +165,42 @@ namespace Global.MapCapture
             if (!terrain.Success)
                 throw new InvalidOperationException($"Terrain generation failed: {terrain.Error?.Message}");
 
-            return new MapCaptureRuntime(world, systems, staticContainer, realmData, feeder, camera, staticContainer.StaticSettings.SkyboxSettings);
+            MapCaptureLiveSceneLoader? liveScenes = args.SceneParcel.HasValue
+                ? await CreateLiveSceneLoaderAsync(staticContainer, settingsContainer, urls, realmData, identityCache, environment, world, camera.CameraEntity, ct)
+                : null;
+
+            return new MapCaptureRuntime(world, systems, staticContainer, realmData, feeder, camera, staticContainer.StaticSettings.SkyboxSettings, liveScenes);
+        }
+
+        /// <summary>
+        ///     The scene half of the client: the per-scene world plugins and the scene factory, with no comms, profiles
+        ///     or UI behind the APIs a scene can call. Mirrors the play mode integration test suite.
+        /// </summary>
+        private static async UniTask<MapCaptureLiveSceneLoader> CreateLiveSceneLoaderAsync(StaticContainer staticContainer, PluginSettingsContainer settingsContainer,
+            IDecentralandUrlsSource urls, RealmData realmData, IWeb3IdentityCache identityCache, DecentralandEnvironment environment, World world, Entity cameraEntity, CancellationToken ct)
+        {
+            foreach (IDCLWorldPlugin plugin in staticContainer.ECSWorldPlugins)
+            {
+                (_, bool initialized) = await settingsContainer.InitializePluginAsync(plugin, ct);
+
+                if (!initialized)
+                    throw new InvalidOperationException($"Cannot initialize {plugin.GetType().Name}");
+            }
+
+            // Scene systems reach the camera through this proxy; the character camera plugin that normally sets it is not booted.
+            staticContainer.ExposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy.SetObject(cameraEntity);
+
+            IWebRequestController webRequests = staticContainer.WebRequestsContainer.WebRequestController;
+            var mvcManager = new MVCManager(new WindowStackManager(), new CancellationTokenSource(), new MapCapturePopupCloserView());
+
+            SceneSharedContainer sceneShared = SceneSharedContainer.Create(in staticContainer, urls, identityCache, webRequests, realmData,
+                new MemoryProfileRepository(new DefaultProfileCache()), NullRoomHub.INSTANCE, mvcManager, new IMessagePipesHub.Fake(), new MapCaptureRemoteMetadata(),
+                new WebJsSources(new JsCodeResolver(webRequests)), environment, new UnityClipboard(), Array.Empty<IDCLWorldPlugin>());
+
+            sceneShared.SceneFactory.SetGlobalWorldActions(new MapCaptureWorldActions());
+
+            var loadLogic = new LoadSceneSystemLogic(webRequests, URLDomain.FromString(urls.Url(DecentralandUrl.AssetBundlesCDN)));
+            return new MapCaptureLiveSceneLoader(world, urls, sceneShared.SceneFactory, loadLogic, staticContainer.SceneReadinessReportQueue);
         }
 
         /// <summary>
@@ -205,10 +259,13 @@ namespace Global.MapCapture
         public readonly MapCaptureCamera Camera;
         public readonly SkyboxSettingsAsset SkyboxSettings;
 
+        /// <summary>Present only when the run captures a live scene.</summary>
+        public readonly MapCaptureLiveSceneLoader? LiveScenes;
+
         private readonly SystemGroupWorld systems;
 
         public MapCaptureRuntime(World world, SystemGroupWorld systems, StaticContainer staticContainer, RealmData realmData, MapCaptureSceneFeeder feeder,
-            MapCaptureCamera camera, SkyboxSettingsAsset skyboxSettings)
+            MapCaptureCamera camera, SkyboxSettingsAsset skyboxSettings, MapCaptureLiveSceneLoader? liveScenes)
         {
             World = world;
             this.systems = systems;
@@ -217,17 +274,19 @@ namespace Global.MapCapture
             Feeder = feeder;
             Camera = camera;
             SkyboxSettings = skyboxSettings;
+            LiveScenes = liveScenes;
         }
 
         public void Dispose()
         {
+            LiveScenes?.Dispose();
             systems.Dispose();
             Camera.Dispose();
             StaticContainer.Dispose();
         }
     }
 
-    /// <summary>The capture has no wallet; nothing in its boot path sends Ethereum requests.</summary>
+    /// <summary>The capture has no wallet; a scene's wallet call is rejected rather than answered.</summary>
     internal class NoopEthereumApi : IEthereumApi
     {
         public UniTask<EthApiResponse> SendAsync(EthApiRequest request, Web3RequestSource source, CancellationToken ct) =>

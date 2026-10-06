@@ -247,6 +247,12 @@ namespace Global.AppArgs
 
             /// <summary>Presence keeps bloom on. Off by default: from above, a bright emissive haloes over its neighbours.</summary>
             public const string KEEP_BLOOM = "map-capture-keep-bloom";
+
+            /// <summary>
+            ///     Parcel "x,y" of one scene to run live, JavaScript and full assets, instead of assembling LODs. Renders
+            ///     that scene alone into a single image; the region flag is not used.
+            /// </summary>
+            public const string SCENE = "map-capture-scene";
         }
 
         public static class Multiplayer

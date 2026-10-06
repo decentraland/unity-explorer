@@ -14,6 +14,7 @@ namespace Global.MapCapture
     /// <summary>
     ///     Walks the region chunk by chunk: loads a chunk's scenes, renders every block inside it to a PNG, unloads
     ///     the chunk and moves on. Writes a manifest listing each block and the parcels that never finished loading.
+    ///     With a scene parcel instead of a region, runs that one scene live and renders it alone.
     /// </summary>
     public class MapCaptureJob
     {
@@ -57,6 +58,9 @@ namespace Global.MapCapture
             Directory.CreateDirectory(args.OutputDir);
             await FixSkyboxAsync(ct);
 
+            if (args.SceneParcel.HasValue && runtime.LiveScenes != null)
+                return await RunLiveSceneAsync(runtime.LiveScenes, args.SceneParcel.Value, ct);
+
             // Blocks tile the grid from its origin; the region is widened to whole blocks so every image is a full
             // block. A load is either several whole blocks or a whole fraction of one, never straddling an image.
             var blocksMin = new Vector2Int(
@@ -92,6 +96,79 @@ namespace Global.MapCapture
 
             File.WriteAllText(Path.Combine(args.OutputDir, MANIFEST_FILE), manifest.ToString(Formatting.Indented));
             return new Summary(total, complete);
+        }
+
+        /// <summary>
+        ///     One scene run live: its footprint plus a margin, centred, is the single image. Complete when the scene
+        ///     reported its models loaded before the timeout and did not fail.
+        /// </summary>
+        private async UniTask<Summary> RunLiveSceneAsync(MapCaptureLiveSceneLoader liveScenes, Vector2Int parcel, CancellationToken ct)
+        {
+            float started = UnityEngine.Time.realtimeSinceStartup;
+            MapCaptureLiveScene? scene = await liveScenes.LoadAsync(parcel, ct);
+
+            if (scene == null)
+            {
+                ReportHub.LogProductionInfo($"[MapCapture] No scene occupies ({parcel.x},{parcel.y})");
+                return new Summary(1, 0);
+            }
+
+            string id = scene.Definition.Definition.id;
+            bool ready = await scene.WaitUntilReadyAsync(args.LoadTimeoutSec, ct);
+            ReportHub.LogProductionInfo($"[MapCapture] Scene {id} {(ready ? "ready" : scene.Failed ? "FAILED" : "TIMED OUT")} after {UnityEngine.Time.realtimeSinceStartup - started:0.0}s");
+            await UniTask.DelayFrame(READY_SETTLE_FRAMES, cancellationToken: ct);
+
+            Footprint(scene.Definition.Parcels, args.SceneMarginParcels, out Vector2Int blockMin, out int blockSize);
+            int pixelsPerParcel = Mathf.Min(args.PixelsPerParcel, MapCaptureArgs.MAX_RENDER_PIXELS / blockSize);
+            int renderPixels = blockSize * pixelsPerParcel;
+            int outputPixels = Mathf.Min(renderPixels, args.SceneOutputPixels);
+
+            byte[] image = await runtime.Camera.RenderBlockAsync(blockMin, blockSize, renderPixels, outputPixels, args.JpegQuality, args.CameraHeight, ct);
+            string file = $"scene_{parcel.x}_{parcel.y}.{(args.JpegQuality.HasValue ? "jpg" : "png")}";
+            File.WriteAllBytes(Path.Combine(args.OutputDir, file), image);
+
+            var parcels = new JArray();
+
+            foreach (Vector2Int sceneParcel in scene.Definition.Parcels)
+                parcels.Add(ParcelJson(sceneParcel));
+
+            var manifest = new JObject
+            {
+                ["scene"] = new JObject { ["id"] = id, ["parcels"] = parcels },
+                ["file"] = file,
+                ["ready"] = ready,
+                ["failed"] = scene.Failed,
+                ["block"] = new JObject { ["x"] = blockMin.x, ["y"] = blockMin.y, ["size"] = blockSize },
+                ["pixelsPerParcel"] = pixelsPerParcel,
+                ["outputPixels"] = outputPixels,
+                ["hour"] = args.Hour,
+                ["cameraHeight"] = args.CameraHeight,
+            };
+
+            File.WriteAllText(Path.Combine(args.OutputDir, MANIFEST_FILE), manifest.ToString(Formatting.Indented));
+            ReportHub.LogProductionInfo($"[MapCapture] Scene {id} written to {file}");
+
+            await scene.DisposeAsync();
+            await UnloadAsync(ct);
+
+            return new Summary(1, ready ? 1 : 0);
+        }
+
+        /// <summary>The smallest square of parcels holding every parcel plus the margin, centred on the footprint.</summary>
+        private static void Footprint(IReadOnlyList<Vector2Int> parcels, int margin, out Vector2Int min, out int size)
+        {
+            Vector2Int footprintMin = parcels[0];
+            Vector2Int footprintMax = parcels[0];
+
+            foreach (Vector2Int parcel in parcels)
+            {
+                footprintMin = Vector2Int.Min(footprintMin, parcel);
+                footprintMax = Vector2Int.Max(footprintMax, parcel);
+            }
+
+            Vector2Int extent = footprintMax - footprintMin + Vector2Int.one;
+            size = Mathf.Max(extent.x, extent.y) + (margin * 2);
+            min = footprintMin - new Vector2Int((size - extent.x) / 2, (size - extent.y) / 2);
         }
 
         /// <summary>A load covers several blocks: load once, render each block, unload.</summary>

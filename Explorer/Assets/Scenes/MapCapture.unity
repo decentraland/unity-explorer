@@ -167,17 +167,19 @@ MonoBehaviour:
   pluginSettingsContainer: {fileID: 11400000, guid: 7575a56449e4af444b9c13267319c95d, type: 2}
   directionalLight: {fileID: 203}
   environment: 0
+  editorLiveScene: 1
+  editorSceneParcel: {x: 0, y: -81}
   editorClientMap: 1
   editorKeepBloom: 0
   editorRegionMin: {x: -72, y: -47}
   editorRegionMax: {x: 127, y: 32}
-  editorOutputDir: D:\MapCapture\MapImages
+  editorOutputDir: C:\MapCapture
   editorBundleCacheDir: D:\MapCapture\ABCache
   editorBlockSize: 8
-  editorPixelsPerParcel: 128
+  editorPixelsPerParcel: 512
   editorHour: 10
   editorCameraHeight: 200
-  editorLoadTimeoutSec: 180
+  editorLoadTimeoutSec: 300
 --- !u!114 &103
 MonoBehaviour:
   m_ObjectHideFlags: 0

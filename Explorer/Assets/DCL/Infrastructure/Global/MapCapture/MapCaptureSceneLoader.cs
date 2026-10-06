@@ -24,7 +24,9 @@ namespace Global.MapCapture
         [SerializeField] private Light directionalLight = null!;
         [SerializeField] private DecentralandEnvironment environment = DecentralandEnvironment.Org;
 
-        [Header("Editor run (used when the command line carries no map-capture-region)")]
+        [Header("Editor run (used when the command line carries no map-capture-region or map-capture-scene)")]
+        [SerializeField] private bool editorLiveScene;
+        [SerializeField] private Vector2Int editorSceneParcel = new (0, 0);
         [SerializeField] private bool editorClientMap;
         [SerializeField] private bool editorKeepBloom;
         [SerializeField] private Vector2Int editorRegionMin = new (-2, 72);
@@ -73,7 +75,7 @@ namespace Global.MapCapture
                 return EXIT_BAD_ARGUMENTS;
             }
 
-            runtime = await MapCaptureBootstrap.CreateAsync(appArgs, args.CacheDir, args.KeepBloom, pluginSettingsContainer, directionalLight, environment, this, ct);
+            runtime = await MapCaptureBootstrap.CreateAsync(appArgs, args, pluginSettingsContainer, directionalLight, environment, this, ct);
 
             MapCaptureJob.Summary summary = await new MapCaptureJob(runtime, args).RunAsync(ct);
             ReportHub.LogProductionInfo($"[MapCapture] {summary}");
@@ -85,12 +87,11 @@ namespace Global.MapCapture
         {
             var fromCommandLine = new ApplicationParametersParser();
 
-            if (!Application.isEditor || fromCommandLine.HasFlag(AppArgsFlags.MapCapture.REGION))
+            if (!Application.isEditor || fromCommandLine.HasFlag(AppArgsFlags.MapCapture.REGION) || fromCommandLine.HasFlag(AppArgsFlags.MapCapture.SCENE))
                 return fromCommandLine;
 
             var arguments = new List<string>
             {
-                $"--{AppArgsFlags.MapCapture.REGION}", $"{editorRegionMin.x},{editorRegionMin.y},{editorRegionMax.x},{editorRegionMax.y}",
                 $"--{AppArgsFlags.MapCapture.OUTPUT_DIR}", editorOutputDir,
                 $"--{AppArgsFlags.MapCapture.BLOCK_SIZE}", editorBlockSize.ToString(),
                 $"--{AppArgsFlags.MapCapture.PIXELS_PER_PARCEL}", editorPixelsPerParcel.ToString(),
@@ -98,6 +99,17 @@ namespace Global.MapCapture
                 $"--{AppArgsFlags.MapCapture.CAMERA_HEIGHT}", editorCameraHeight.ToString(System.Globalization.CultureInfo.InvariantCulture),
                 $"--{AppArgsFlags.MapCapture.LOAD_TIMEOUT_SEC}", editorLoadTimeoutSec.ToString(System.Globalization.CultureInfo.InvariantCulture),
             };
+
+            if (editorLiveScene)
+            {
+                arguments.Add($"--{AppArgsFlags.MapCapture.SCENE}");
+                arguments.Add($"{editorSceneParcel.x},{editorSceneParcel.y}");
+            }
+            else
+            {
+                arguments.Add($"--{AppArgsFlags.MapCapture.REGION}");
+                arguments.Add($"{editorRegionMin.x},{editorRegionMin.y},{editorRegionMax.x},{editorRegionMax.y}");
+            }
 
             if (editorClientMap)
                 arguments.Add($"--{AppArgsFlags.MapCapture.CLIENT_MAP}");
