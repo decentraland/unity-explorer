@@ -403,6 +403,7 @@ namespace Global.Dynamic
                         staticContainer.MapPinsEventBus,
                         realmNavigator,
                         staticContainer.RealmData,
+                        realmContainer.RealmController,
                         placesAndEventsContainer.NavmapBus,
                         placesAndEventsContainer.OnlineUsersProvider,
                         identityCache,

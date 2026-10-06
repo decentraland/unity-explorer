@@ -149,7 +149,9 @@ namespace DCL.MapRenderer
         public void ShowWorld(string worldName, RectInt? parcelBounds)
         {
             coordsUtils?.SetWorldBounds(parcelBounds);
-            satelliteAtlas?.ShowWorld(worldName, parcelBounds);
+
+            // The tiles of the world's whole map, over its terrain past its parcels.
+            satelliteAtlas?.ShowWorld(worldName, parcelBounds.HasValue ? coordsUtils?.VisibleWorldBounds : null);
             SetSuppressedLayers(GENESIS_CITY_LAYERS);
         }
 

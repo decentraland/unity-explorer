@@ -43,11 +43,11 @@ namespace DCL.MapRenderer.MapLayers.SatelliteAtlas
             bundledChunksRoot.SetParent(parent, false);
         }
 
-        /// <summary>Shows the satellite map of the world <paramref name="worldName" />, whose parcels lie within <paramref name="parcelBounds" /> when known.</summary>
-        public void ShowWorld(string worldName, RectInt? parcelBounds)
+        /// <summary>Shows the satellite map of the world <paramref name="worldName" />, only inside <paramref name="localBounds" /> when they are known.</summary>
+        public void ShowWorld(string worldName, Rect? localBounds)
         {
             SetGenesisCityVisible(false);
-            detailTiles?.ShowWorld(worldName, parcelBounds is { } bounds ? ParcelsToLocalRect(bounds) : null);
+            detailTiles?.ShowWorld(worldName, localBounds);
         }
 
         public void ShowGenesisCity()
@@ -60,15 +60,6 @@ namespace DCL.MapRenderer.MapLayers.SatelliteAtlas
         {
             bundledChunksRoot.gameObject.SetActive(visible);
             edgePatchesRoot.gameObject.SetActive(visible);
-        }
-
-        /// <summary>The local rect covered by the parcels of <paramref name="parcels" />, whose max is exclusive.</summary>
-        private Rect ParcelsToLocalRect(RectInt parcels)
-        {
-            // A parcel's area ends at its own coordinates and starts one parcel before them.
-            Vector3 min = coordsUtils.CoordsToPosition(parcels.min - Vector2Int.one);
-            Vector3 max = coordsUtils.CoordsToPosition(parcels.max - Vector2Int.one);
-            return Rect.MinMaxRect(min.x, min.y, max.x, max.y);
         }
 
         public async UniTask InitializeAsync(CancellationToken ct)

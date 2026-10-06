@@ -10,8 +10,12 @@ namespace DCL.MapRenderer.CoordsUtils
     {
         private const int PADDING = 25;
 
-        // Parcels of open map around a world's parcels.
-        private const int WORLD_PADDING = 10;
+        // Parcels of map around a world's parcels: a world's terrain and cliffs reach past them, and the satellite
+        // capture of a world has one level-4 tile, 20 parcels, around them.
+        private const int WORLD_PADDING = 20;
+
+        // A world's terrain pads its parcels by a share of the world's size on top of a fixed border.
+        private const float WORLD_PADDING_PER_SIZE = 0.1f;
 
         private static readonly Vector2Int WORLD_MIN_COORDS = GenesisCityData.MIN_PARCEL;
         private static readonly Vector2Int WORLD_MAX_COORDS = GenesisCityData.MAX_SQUARE_CITY_PARCEL + (PADDING * Vector2Int.one); // DCL map is not squared, there are some extra parcels in the top right
@@ -55,7 +59,7 @@ namespace DCL.MapRenderer.CoordsUtils
             {
                 // A parcel's area ends at its own coordinates and starts one parcel before them.
                 Rect parcelsRect = Rect.MinMaxRect((parcels.xMin - 1) * ParcelSize, (parcels.yMin - 1) * ParcelSize, (parcels.xMax - 1) * ParcelSize, (parcels.yMax - 1) * ParcelSize);
-                float padding = WORLD_PADDING * ParcelSize;
+                float padding = WorldPaddingInParcels(parcels) * ParcelSize;
 
                 VisibleWorldBounds = Rect.MinMaxRect(parcelsRect.xMin - padding, parcelsRect.yMin - padding, parcelsRect.xMax + padding, parcelsRect.yMax + padding);
                 VisibleWorldCenter = parcelsRect.center;
@@ -73,6 +77,13 @@ namespace DCL.MapRenderer.CoordsUtils
 
             VisibleWorldBoundsChanged?.Invoke();
         }
+
+        /// <summary>
+        ///     Covers a world's terrain, which grows with the world (<c>TerrainModel</c> adds 10% of its average side to a border of
+        ///     a few parcels), and the cliffs past it.
+        /// </summary>
+        private static int WorldPaddingInParcels(RectInt parcels) =>
+            WORLD_PADDING + Mathf.RoundToInt(WORLD_PADDING_PER_SIZE * (parcels.width + parcels.height) / 2f);
 
         public bool TryGetCoordsWithinInteractableBounds(Vector3 pos, out Vector2Int coords)
         {

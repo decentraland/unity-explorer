@@ -25,9 +25,19 @@ namespace DCL.MapRenderer.Tests.CoordsUtils
             // Act
             coordsUtils.SetWorldBounds(WORLD_PARCELS);
 
-            // Assert: the parcels span x -20..60 and y -20..20, plus 10 parcels on each side
-            Assert.AreEqual(Rect.MinMaxRect(-220, -220, 260, 220), coordsUtils.VisibleWorldBounds);
+            // Assert: the parcels span x -20..60 and y -20..20, plus a level-4 satellite tile, 20 parcels, on each side
+            Assert.AreEqual(Rect.MinMaxRect(-420, -420, 460, 420), coordsUtils.VisibleWorldBounds);
             Assert.AreEqual(new Vector2(20, 0), coordsUtils.VisibleWorldCenter);
+        }
+
+        [Test]
+        public void PadALargeWorldAsMuchAsItsTerrain()
+        {
+            // Act: 300 x 100 parcels, whose terrain grows by 10% of their average side
+            coordsUtils.SetWorldBounds(new RectInt(1, 1, 300, 100));
+
+            // Assert: 20 + 20 parcels on each side of x 0..6000 and y 0..2000
+            Assert.AreEqual(Rect.MinMaxRect(-800, -800, 6800, 2800), coordsUtils.VisibleWorldBounds);
         }
 
         [Test]

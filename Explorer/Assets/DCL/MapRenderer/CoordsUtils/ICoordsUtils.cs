@@ -32,7 +32,7 @@ namespace DCL.MapRenderer.CoordsUtils
         bool TryGetCoordsWithinInteractableBounds(Vector3 pos, out Vector2Int coords);
 
         /// <summary>
-        /// Bounds the map to a world's parcels, whose max is exclusive, or back to Genesis City when null
+        /// Bounds the map to a world's parcels, whose max is exclusive, padded to cover the world's terrain, or back to Genesis City when null
         /// </summary>
         void SetWorldBounds(RectInt? worldParcels);
 
