@@ -59,7 +59,8 @@ namespace DCL.InWorldCamera.Playground
         [ContextMenu(nameof(CaptureMetadata))]
         public async UniTask CaptureMetadata()
         {
-            ProfileReadResult read = await CreateProfile().ProfileAsync(CancellationToken.None);
+            using SelfProfile selfProfile = CreateProfile();
+            ProfileReadResult read = await selfProfile.ProfileAsync(CancellationToken.None);
 
             var builder = new ScreenshotMetadataBuilder(null, null, null, null);
             builder.FillMetadata(read.IsOk(out Profile? profile) ? profile : null, null, Vector2Int.one, "Test Playground", "Test place id", Array.Empty<VisiblePerson>());
