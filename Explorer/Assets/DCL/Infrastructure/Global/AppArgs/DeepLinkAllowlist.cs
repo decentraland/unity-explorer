@@ -160,7 +160,7 @@ namespace Global.AppArgs
             AppArgsFlags.MEASURE_LOADING_TIME,
 
             // Local-preview only: point badges at a local server. Infrastructure-pointing like
-            // gatekeeper-url, so the value is further restricted to a loopback http(s) url (see IsValuePermitted).
+            // gatekeeper-url, so the value is further restricted to a loopback http(s) url (see TryCanonicalizeValue).
             AppArgsFlags.BADGES_URL,
         };
 
@@ -199,11 +199,31 @@ namespace Global.AppArgs
         public static bool IsLoopbackUrlKey(string key) =>
             LOOPBACK_URL_KEYS.Contains(key);
 
-        public static bool IsValuePermitted(string key, string? value) =>
-            !IsLoopbackUrlKey(key)
-            || (Uri.TryCreate(value, UriKind.Absolute, out Uri? uri)
-                && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps)
-                && uri.IsLoopback);
+        /// <summary>
+        ///     Whether <paramref name="value" /> may be stored for <paramref name="key" />, and in which form. Keys that
+        ///     are not loopback URLs pass through unchanged. A loopback URL key accepts only an http(s) URL whose host
+        ///     is an IP literal or <c>localhost</c> (a single-label name such as <c>loopback</c> is resolved by the OS,
+        ///     which on Windows can go out over LLMNR/NBT-NS), with no userinfo, query or fragment, and
+        ///     <paramref name="canonical" /> is the normalized origin plus path: what is stored and requested, so the raw
+        ///     string's parsing quirks never reach a request.
+        /// </summary>
+        public static bool TryCanonicalizeValue(string key, string? value, out string canonical)
+        {
+            canonical = value ?? string.Empty;
+
+            if (!IsLoopbackUrlKey(key))
+                return value != null;
+
+            if (!Uri.TryCreate(value, UriKind.Absolute, out Uri? uri)
+                || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps)
+                || !string.IsNullOrEmpty(uri.UserInfo) || !string.IsNullOrEmpty(uri.Query) || !string.IsNullOrEmpty(uri.Fragment)
+                || !(uri.HostNameType is UriHostNameType.IPv4 or UriHostNameType.IPv6 || uri.Host == "localhost")
+                || !uri.IsLoopback)
+                return false;
+
+            canonical = uri.GetLeftPart(UriPartial.Path).TrimEnd('/');
+            return true;
+        }
 
         /// <summary>
         ///     Sets the trusted worlds from the <c>deeplink-whitelisted-worlds</c> feature flag. Entries are accepted

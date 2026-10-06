@@ -1,41 +1,49 @@
 using Cysharp.Threading.Tasks;
+using DCL.BadgesAPIService;
 using DCL.Diagnostics;
-using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.Web3.Identities;
-using DCL.WebRequests;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using System.Threading;
 using Utility;
 using Utility.Times;
 
 namespace DCL.Notifications
 {
-    public class SceneBadgesAwardChecker : ISceneBadgesAwardCheck, IDisposable
+    /// <summary>
+    ///     Toasts the player's scene badge awards once each. A check runs after login and on every
+    ///     <see cref="RequestCheck" /> hint from the current scene; hints that arrive during a check or
+    ///     within the throttle merge into one follow-up check, none is dropped.
+    /// </summary>
+    public class SceneBadgesAwardChecker : ISceneBadgesAwardChecker, IDisposable
     {
         private const string NOTIFICATION_TITLE = "New Badge Unlocked!";
         private const string VISIBLE_STATE = "visible";
-        private const string CELEBRATED_BODY = "{\"celebrated\":true}";
 
+        /// <summary>Keeps scene-award toast ids apart from notifications-service ids.</summary>
+        private const string NOTIFICATION_ID_PREFIX = "scene-badge-";
+
+        /// <summary>Award ids are UUIDs (badges service). Any other id is refused before it goes into a signed request path.</summary>
+        private static readonly Regex AWARD_ID_FORMAT = new ("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$", RegexOptions.Compiled);
+
+        /// <summary>Minimum time between two award checks.</summary>
         private static readonly TimeSpan REQUEST_THROTTLE = TimeSpan.FromSeconds(3);
+
+        /// <summary>Delay before the post-login check.</summary>
         private static readonly TimeSpan LOGIN_CHECK_DELAY = TimeSpan.FromSeconds(5);
 
-        private readonly IWebRequestController webRequestController;
-        private readonly IDecentralandUrlsSource urlsSource;
+        private readonly BadgesAPIClient badgesApiClient;
         private readonly IWeb3IdentityCache web3IdentityCache;
-        private readonly object requestLock = new ();
+        private readonly Channel<bool> checkHints = Channel.CreateSingleConsumerUnbounded<bool>();
 
-        private DateTime lastRequestTime = DateTime.MinValue;
-        private int checkRequested;
         private CancellationTokenSource? checkLoopCts;
 
-        public SceneBadgesAwardChecker(IWebRequestController webRequestController, IDecentralandUrlsSource urlsSource, IWeb3IdentityCache web3IdentityCache)
+        public SceneBadgesAwardChecker(BadgesAPIClient badgesApiClient, IWeb3IdentityCache web3IdentityCache)
         {
-            this.webRequestController = webRequestController;
-            this.urlsSource = urlsSource;
+            this.badgesApiClient = badgesApiClient;
             this.web3IdentityCache = web3IdentityCache;
 
             web3IdentityCache.OnIdentityChanged += StartCheckLoop;
@@ -49,22 +57,11 @@ namespace DCL.Notifications
             web3IdentityCache.OnIdentityChanged -= StartCheckLoop;
             web3IdentityCache.OnIdentityCleared -= StopCheckLoop;
             StopCheckLoop();
+            checkHints.Writer.TryComplete();
         }
 
-        public void RequestCheck()
-        {
-            lock (requestLock)
-            {
-                DateTime now = DateTime.UtcNow;
-
-                if (now - lastRequestTime < REQUEST_THROTTLE)
-                    return;
-
-                lastRequestTime = now;
-            }
-
-            Interlocked.Exchange(ref checkRequested, 1);
-        }
+        public void RequestCheck() =>
+            checkHints.Writer.TryWrite(true);
 
         private void StartCheckLoop()
         {
@@ -75,19 +72,20 @@ namespace DCL.Notifications
         private void StopCheckLoop() =>
             checkLoopCts.SafeCancelAndDispose();
 
-        // Single loop per identity: checks never overlap, and hints arriving mid-check coalesce into one follow-up
         private async UniTask RunCheckLoopAsync(CancellationToken ct)
         {
             await UniTask.Delay(LOGIN_CHECK_DELAY, DelayType.Realtime, cancellationToken: ct);
-            Interlocked.Exchange(ref checkRequested, 0);
 
             while (!ct.IsCancellationRequested)
             {
+                while (checkHints.Reader.TryRead(out _)) { }
+
                 try { await CheckAwardsAsync(ct); }
                 catch (OperationCanceledException) { return; }
                 catch (Exception e) { ReportHub.LogException(e, ReportCategory.BADGES); }
 
-                await UniTask.WaitUntil(() => Interlocked.Exchange(ref checkRequested, 0) == 1, cancellationToken: ct);
+                await UniTask.Delay(REQUEST_THROTTLE, DelayType.Realtime, cancellationToken: ct);
+                await checkHints.Reader.WaitToReadAsync(ct);
             }
         }
 
@@ -99,18 +97,7 @@ namespace DCL.Notifications
                 return;
 
             string address = identity.Address.ToString();
-            string baseUrl = $"{urlsSource.Url(DecentralandUrl.Badges)}/users/{address}/scene-badges";
-            string mineUrl = $"{baseUrl}/mine";
-            ulong unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
-
-            SceneBadgesResponse? response = await webRequestController.GetAsync(
-                                                                           mineUrl,
-                                                                           ct,
-                                                                           ReportCategory.BADGES,
-                                                                           signInfo: WebRequestSignInfo.NewFromUrl(urlsSource.GetOriginalUrl(mineUrl), unixTimestamp, "get"),
-                                                                           headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, unixTimestamp))
-                                                                      .CreateFromNewtonsoftJsonAsync<SceneBadgesResponse>();
-
+            SceneBadgesResponse? response = await badgesApiClient.FetchOwnSceneBadgesAsync(address, ct);
             List<SceneBadgeData>? badges = response?.data?.badges;
 
             if (badges == null)
@@ -120,12 +107,22 @@ namespace DCL.Notifications
             {
                 SceneBadgeAwardData? award = badge.award;
 
-                if (award == null || award.state != VISIBLE_STATE || !string.IsNullOrEmpty(award.celebratedAt))
+                if (award == null || award.state != VISIBLE_STATE || award.celebratedAt != null || !AWARD_ID_FORMAT.IsMatch(award.id))
                     continue;
+
+                // Mark first: if the PATCH fails the award stays uncelebrated and the next check retries,
+                // instead of toasting the same award on every check.
+                try { await badgesApiClient.MarkSceneBadgeCelebratedAsync(address, award.id, ct); }
+                catch (OperationCanceledException) { throw; }
+                catch (Exception e)
+                {
+                    ReportHub.LogException(e, ReportCategory.BADGES);
+                    continue;
+                }
 
                 NotificationsBusController.Instance.AddNotification(new BadgeGrantedNotification
                 {
-                    Id = $"scene-badge-{award.id}",
+                    Id = NOTIFICATION_ID_PREFIX + award.id,
                     Type = NotificationType.BADGE_GRANTED,
                     Address = address,
                     Timestamp = string.IsNullOrEmpty(badge.completedAt) ? DateTime.UtcNow.UnixTimeAsMilliseconds().ToString() : badge.completedAt,
@@ -135,64 +132,10 @@ namespace DCL.Notifications
                         Id = badge.id,
                         Title = NOTIFICATION_TITLE,
                         Description = badge.name,
-                        Image = badge.assets?.image2d?.normal ?? string.Empty,
+                        Image = badge.assets?.textures2d?.normal ?? string.Empty,
                     },
                 });
-
-                string awardUrl = $"{baseUrl}/{award.id}";
-                unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
-
-                try
-                {
-                    await webRequestController.PatchAsync(
-                                                   awardUrl,
-                                                   GenericPostArguments.CreateJson(CELEBRATED_BODY),
-                                                   ct,
-                                                   ReportCategory.BADGES,
-                                                   signInfo: WebRequestSignInfo.NewFromUrl(urlsSource.GetOriginalUrl(awardUrl), unixTimestamp, "patch"),
-                                                   headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, unixTimestamp))
-                                              .WithNoOpAsync();
-                }
-                catch (OperationCanceledException) { throw; }
-                catch (Exception e) { ReportHub.LogException(e, ReportCategory.BADGES); }
             }
-        }
-
-        private class SceneBadgesResponse
-        {
-            public SceneBadgesResponseData? data;
-        }
-
-        private class SceneBadgesResponseData
-        {
-            public List<SceneBadgeData>? badges;
-        }
-
-        private class SceneBadgeData
-        {
-            public string id = string.Empty;
-            public string name = string.Empty;
-            public string? completedAt;
-            public SceneBadgeAssetsData? assets;
-            public SceneBadgeAwardData? award;
-        }
-
-        private class SceneBadgeAssetsData
-        {
-            [JsonProperty("2d")]
-            public SceneBadgeImageData? image2d;
-        }
-
-        private class SceneBadgeImageData
-        {
-            public string? normal;
-        }
-
-        private class SceneBadgeAwardData
-        {
-            public string id = string.Empty;
-            public string? state;
-            public string? celebratedAt;
         }
     }
 }

@@ -242,9 +242,9 @@ namespace SceneRuntime
             sceneRuntime.Register("UnitySDKMessageBusCommsControllerApi", new SDKMessageBusCommsControllerAPIWrapper(api, sceneRuntime.isDisposingTokenSource));
         }
 
-        public static void RegisterBadgesApi(this ISceneRuntime sceneRuntime, ISceneBadgesAwardCheck awardCheck, ISceneStateProvider sceneStateProvider)
+        public static void RegisterBadgesApi(this ISceneRuntime sceneRuntime, ISceneBadgesAwardChecker awardChecker, ISceneStateProvider sceneStateProvider, ISceneData sceneData)
         {
-            sceneRuntime.Register("UnityBadgesApi", new BadgesApiWrapper(awardCheck, sceneStateProvider, sceneRuntime.isDisposingTokenSource));
+            sceneRuntime.Register("UnityBadgesApi", new BadgesApiWrapper(awardChecker, sceneStateProvider, sceneData, sceneRuntime.isDisposingTokenSource));
         }
 
         private static void RegisterPortableExperiencesApi(this ISceneRuntime sceneRuntime, IPortableExperiencesController portableExperiencesController, ISceneExceptionsHandler sceneExceptionsHandler)

@@ -23,6 +23,7 @@ using DCL.Clipboard;
 using ECS;
 using MVC;
 using MVC.PopupsController.PopupCloser;
+using DCL.NotificationsBus;
 using NSubstitute;
 using System;
 using System.Threading;
@@ -140,7 +141,8 @@ namespace Global.Tests.PlayMode
                 webJsSources,
                 DecentralandEnvironment.Org,
                 Substitute.For<ISystemClipboard>(),
-                Array.Empty<IDCLWorldPlugin>()
+                Array.Empty<IDCLWorldPlugin>(),
+                Substitute.For<ISceneBadgesAwardChecker>()
             );
 
             return (staticContainer, sceneSharedContainer);

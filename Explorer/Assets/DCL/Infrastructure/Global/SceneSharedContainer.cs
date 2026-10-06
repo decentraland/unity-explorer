@@ -51,7 +51,7 @@ namespace Global
             DecentralandEnvironment dclEnvironment,
             ISystemClipboard systemClipboard,
             IReadOnlyList<IDCLWorldPlugin> additionalWorldPlugins,
-            ISceneBadgesAwardCheck? badgesAwardCheck = null)
+            ISceneBadgesAwardChecker badgesAwardCheck)
         {
             ECSWorldSingletonSharedDependencies sharedDependencies = staticContainer.SingletonSharedDependencies;
             ExposedGlobalDataContainer exposedGlobalDataContainer = staticContainer.ExposedGlobalDataContainer;

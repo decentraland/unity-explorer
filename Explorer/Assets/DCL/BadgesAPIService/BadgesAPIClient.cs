@@ -11,6 +11,8 @@ namespace DCL.BadgesAPIService
 {
     public class BadgesAPIClient
     {
+        private const string CELEBRATED_BODY = "{\"celebrated\":true}";
+
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
 
@@ -72,6 +74,24 @@ namespace DCL.BadgesAPIService
                                                                     .CreateFromJson<TiersResponse>(WRJsonParser.Newtonsoft);
 
             return (IReadOnlyList<TierData>)tiersResponse.data.tiers ?? Array.Empty<TierData>();
+        }
+
+        /// <summary>The signed-in player's own scene badge awards, every state, with award ids.</summary>
+        public async UniTask<SceneBadgesResponse> FetchOwnSceneBadgesAsync(string walletId, CancellationToken ct)
+        {
+            var url = $"{badgesBaseUrl}/users/{walletId}/scene-badges/mine";
+
+            return await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
+                                             .CreateFromJson<SceneBadgesResponse>(WRJsonParser.Newtonsoft);
+        }
+
+        /// <summary>Records that the award's toast was shown, so no later check toasts it again.</summary>
+        public async UniTask MarkSceneBadgeCelebratedAsync(string walletId, string awardId, CancellationToken ct)
+        {
+            var url = $"{badgesBaseUrl}/users/{walletId}/scene-badges/{awardId}";
+
+            await webRequestController.SignedFetchPatchAsync(url, GenericPostArguments.CreateJson(CELEBRATED_BODY), string.Empty, ct)
+                                      .WithNoOpAsync();
         }
 
         private void ClearDetailedBadges()

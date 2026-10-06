@@ -103,7 +103,7 @@ namespace DCL.Passport.Modules.Badges
         public void Clear()
         {
             loadBadge3DImageCts.SafeCancelAndDispose();
-            Dispose3DTextures();
+            DisposeBadgeTextures();
             ClearTiers();
         }
 
@@ -278,7 +278,7 @@ namespace DCL.Passport.Modules.Badges
 
         private async UniTask LoadBadge3DImageAsync(BadgeAssetsData? assets, CancellationToken ct)
         {
-            Dispose3DTextures();
+            DisposeBadgeTextures();
 
             try
             {
@@ -287,12 +287,24 @@ namespace DCL.Passport.Modules.Badges
 
                 if (assets?.textures3d == null)
                 {
+                    // No 3D textures (scene badges): the 2D image takes the slot. The previous badge's
+                    // render is cleared first so a miss shows nothing rather than stale textures, and the
+                    // field is assigned only while this call is the live one, so a cancelled earlier load
+                    // can never dispose the newer texture.
+                    badgeInfoModuleView.Badge3DImage.texture = null;
+
                     if (assets?.textures2d?.normal is { Length: > 0 } url)
                     {
-                        texture2DRef = await imageControllerProvider.LoadTextureAsync(url, ct);
+                        var loaded = await imageControllerProvider.LoadTextureAsync(url, ct);
 
-                        if (texture2DRef.HasValue)
-                            badgeInfoModuleView.Badge3DImage.texture = texture2DRef.Value.Texture;
+                        if (ct.IsCancellationRequested)
+                        {
+                            loaded?.Dispose();
+                            return;
+                        }
+
+                        texture2DRef = loaded;
+                        badgeInfoModuleView.Badge3DImage.texture = loaded.HasValue ? loaded.Value.Texture : null;
                     }
 
                     SetBadgeInfoViewAsLoading(false);
@@ -323,18 +335,18 @@ namespace DCL.Passport.Modules.Badges
             }
             catch (OperationCanceledException)
             {
-                Dispose3DTextures();
+                DisposeBadgeTextures();
             }
             catch (Exception e)
             {
-                Dispose3DTextures();
+                DisposeBadgeTextures();
 
                 passportErrorsController.Show(ERROR_MESSAGE);
                 ReportHub.LogError(ReportCategory.BADGES, $"{ERROR_MESSAGE} ERROR: {e.Message}");
             }
         }
 
-        private void Dispose3DTextures()
+        private void DisposeBadgeTextures()
         {
             baseColorRef?.Dispose();
             baseColorRef = null;

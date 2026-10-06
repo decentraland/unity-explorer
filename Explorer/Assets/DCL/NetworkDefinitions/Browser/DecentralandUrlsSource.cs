@@ -86,7 +86,6 @@ namespace DCL.Browser.DecentralandUrls
             this.abgenPipelineForced = abgenPipelineForced;
             this.abgenLodsForced = abgenLodsForced;
             badgesBaseOverride = NormalizeServiceOverride(badgesUrl);
-            ReportHub.Log(ReportCategory.STARTUP, $"Badges base override: {badgesBaseOverride ?? "(default)"}");
 
             realmData.RealmType.OnUpdate += ResetRealmDependentUrls;
         }

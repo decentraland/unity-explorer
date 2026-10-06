@@ -69,7 +69,7 @@ namespace SceneRunner
         private readonly DecentralandEnvironment dclEnvironment;
         private readonly ISystemClipboard systemClipboard;
         private readonly string installSource;
-        private readonly ISceneBadgesAwardCheck? badgesAwardCheck;
+        private readonly ISceneBadgesAwardChecker badgesAwardCheck;
 
         private IGlobalWorldActions globalWorldActions = null!;
 
@@ -96,7 +96,7 @@ namespace SceneRunner
             DecentralandEnvironment dclEnvironment,
             ISystemClipboard systemClipboard,
             string installSource,
-            ISceneBadgesAwardCheck? badgesAwardCheck = null)
+            ISceneBadgesAwardChecker badgesAwardCheck)
         {
             Assert.IsNotNull(realmData, $"{nameof(realmData)} must not be null");
             this.ecsWorldFactory = ecsWorldFactory;
@@ -271,8 +271,7 @@ namespace SceneRunner
                 );
             }
 
-            if (badgesAwardCheck != null)
-                sceneRuntime.RegisterBadgesApi(badgesAwardCheck, deps.SceneStateProvider);
+            sceneRuntime.RegisterBadgesApi(badgesAwardCheck, deps.SceneStateProvider, sceneData);
 
             try
             {

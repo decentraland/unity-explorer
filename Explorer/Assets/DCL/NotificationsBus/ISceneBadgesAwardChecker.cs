@@ -1,6 +1,6 @@
 namespace DCL.NotificationsBus
 {
-    public interface ISceneBadgesAwardCheck
+    public interface ISceneBadgesAwardChecker
     {
         void RequestCheck();
     }

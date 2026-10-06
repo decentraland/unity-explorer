@@ -224,19 +224,20 @@ namespace Global.AppArgs
             {
                 if (uriQueryKey == null || output.ContainsKey(uriQueryKey)) continue;
 
-                string? value = uriQuery.Get(uriQueryKey);
+                string value = uriQuery.Get(uriQueryKey) ?? string.Empty;
 
-                if (value != null && DeepLinkAllowlist.IsLoopbackUrlKey(uriQueryKey))
+                if (DeepLinkAllowlist.IsLoopbackUrlKey(uriQueryKey))
                     value = RestoreSchemeColon(value.TrimEnd('/'));
 
-                if (realmIsWhitelisted && DeepLinkAllowlist.IsPermittedForWhitelistedRealm(uriQueryKey) && DeepLinkAllowlist.IsValuePermitted(uriQueryKey, value))
-                    output[uriQueryKey] = value!;
+                // The canonical form is stored, never the raw string
+                if (realmIsWhitelisted && DeepLinkAllowlist.IsPermittedForWhitelistedRealm(uriQueryKey) && DeepLinkAllowlist.TryCanonicalizeValue(uriQueryKey, value, out string canonical))
+                    output[uriQueryKey] = canonical;
                 else
                 {
                     droppedKeys.Add(uriQueryKey);
 
                     if (deniedParams != null)
-                        deniedParams[uriQueryKey] = value!;
+                        deniedParams[uriQueryKey] = value;
                 }
             }
 

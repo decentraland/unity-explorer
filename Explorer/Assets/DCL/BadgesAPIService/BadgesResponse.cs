@@ -71,4 +71,38 @@ namespace DCL.BadgesAPIService
         public string hrm;
         public string baseColor;
     }
+
+    /// <summary>
+    ///     <c>GET /users/{address}/scene-badges/mine</c>: the player's own scene badge awards, every state,
+    ///     in the platform badge shape plus the award record.
+    /// </summary>
+    [Serializable]
+    public class SceneBadgesResponse
+    {
+        public SceneBadgesResponseData data = null!;
+    }
+
+    [Serializable]
+    public class SceneBadgesResponseData
+    {
+        public List<SceneBadgeData> badges = null!;
+    }
+
+    [Serializable]
+    public class SceneBadgeData
+    {
+        public string id = null!;
+        public string name = null!;
+        public string? completedAt;
+        public BadgeAssetsData? assets;
+        public SceneBadgeAwardData? award;
+    }
+
+    [Serializable]
+    public class SceneBadgeAwardData
+    {
+        public string id = null!;
+        public string state = null!;
+        public long? celebratedAt;
+    }
 }

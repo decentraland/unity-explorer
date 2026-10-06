@@ -33,6 +33,7 @@ using ECS.LifeCycle;
 using ECS.Prioritization.Components;
 using ECS.TestSuite;
 using MVC;
+using DCL.NotificationsBus;
 using NSubstitute;
 using NUnit.Framework;
 using PortableExperiences.Controller;
@@ -117,7 +118,8 @@ namespace SceneRunner.Tests
                 Substitute.For<IRemoteMetadata>(),
                 DecentralandEnvironment.Org,
                 Substitute.For<ISystemClipboard>(),
-                string.Empty);
+                string.Empty,
+                Substitute.For<ISceneBadgesAwardChecker>());
         }
 
         [OneTimeTearDown]

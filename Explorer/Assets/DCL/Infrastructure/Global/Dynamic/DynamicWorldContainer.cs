@@ -115,7 +115,7 @@ namespace Global.Dynamic
 
         public ISystemClipboard SystemClipboard => uiShellContainer.Clipboard;
 
-        public SceneBadgesAwardChecker? SceneBadgesAwardChecker { get; private set; }
+        public SceneBadgesAwardChecker SceneBadgesAwardChecker { get; private init; } = null!;
 
         private DynamicWorldContainer(
             UIShellContainer uiShellContainer,
@@ -156,7 +156,7 @@ namespace Global.Dynamic
         public override void Dispose()
         {
             // Reverse creation order
-            SceneBadgesAwardChecker?.Dispose();
+            SceneBadgesAwardChecker.Dispose();
             voiceChatContainer.Dispose(); // disposes JoinedCommunitiesVoiceLiveTracker, which unsubscribes from CommunityDataService
             socialServicesContainer.Dispose();
             bannedNotificationHandler.Dispose();
@@ -1139,7 +1139,7 @@ namespace Global.Dynamic
                 voiceChatContainer
             )
             {
-                SceneBadgesAwardChecker = new SceneBadgesAwardChecker(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, identityCache),
+                SceneBadgesAwardChecker = new SceneBadgesAwardChecker(badgesApiClient, identityCache),
             };
 
             // Init itself

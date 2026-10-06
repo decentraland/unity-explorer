@@ -156,6 +156,28 @@ namespace Global.AppArgs.Tests
         }
 
         [Test]
+        public void DeepLinkKeepsCanonicalLoopbackBadgesUrlForLoopbackRealm()
+        {
+            Dictionary<string, string> output = ApplicationParametersParser.ProcessDeepLinkParameters(
+                "decentraland://?realm=http://127.0.0.1:8000&position=100,100&badges-url=http://localhost:4000/");
+
+            Assert.AreEqual("http://localhost:4000", output.GetValueOrDefault(AppArgsFlags.BADGES_URL),
+                "badges-url must survive for a loopback realm, stored in its canonical form");
+        }
+
+        [TestCase("http://loopback:4000", "a single-label host is resolved by the OS and is not guaranteed loopback")]
+        [TestCase("http://127.0.0.1@evil.com/", "userinfo must be rejected")]
+        [TestCase("http://localhost.attacker.com:4000", "a non-loopback host must be rejected")]
+        [TestCase("https://badges.decentraland.org", "a remote badges service must be rejected")]
+        public void DeepLinkDropsNonLoopbackBadgesUrl(string badgesUrl, string because)
+        {
+            Dictionary<string, string> output = ApplicationParametersParser.ProcessDeepLinkParameters(
+                $"decentraland://?realm=http://127.0.0.1:8000&position=100,100&badges-url={badgesUrl}");
+
+            Assert.IsFalse(output.ContainsKey(AppArgsFlags.BADGES_URL), because);
+        }
+
+        [Test]
         public void DeepLinkKeepsSdkAndCreatorHubDevParamsForLoopbackRealm()
         {
             Dictionary<string, string> output = ApplicationParametersParser.ProcessDeepLinkParameters(
