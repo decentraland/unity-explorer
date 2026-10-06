@@ -161,8 +161,7 @@ namespace DCL.Profiles.Self
 
             RequestIds requests = PendingDeploys(current).Add(request.Id);
 
-            // The next version follows the deploy in flight, otherwise the known profile, and every version already issued for this
-            // identity, so no deploy reuses a version, not even one issued after a superseding deploy failed.
+            // The next version follows the deploy in flight, otherwise the known profile, and is never one already issued for this identity.
             int baseVersion = current.Activity.IsDeploying(out Deploying superseded) ? superseded.Version
                 : current.Knowledge.IsKnown(out Profile? known) ? known.Version
                 : edited.Version;

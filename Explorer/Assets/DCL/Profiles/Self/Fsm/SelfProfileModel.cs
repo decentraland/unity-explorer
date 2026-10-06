@@ -71,8 +71,8 @@ namespace DCL.Profiles.Self
 
         public override string ToString() =>
             PendingReads.Count == 0
-                ? $"{Address.Value} knowledge {Knowledge} activity {Activity}"
-                : $"{Address.Value} knowledge {Knowledge} activity {Activity} pending reads {PendingReads}";
+                ? $"{Address.Value} knowledge {Knowledge} activity {Activity} last issued v{LastIssuedVersion}"
+                : $"{Address.Value} knowledge {Knowledge} activity {Activity} last issued v{LastIssuedVersion} pending reads {PendingReads}";
     }
 
     /// <summary>

@@ -330,9 +330,7 @@ namespace DCL.Places
                     if (!ownRead.IsOk(out Profile? ownProfile))
                     {
                         NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(GET_PLACES_ERROR_MESSAGE));
-                        view.SetPlacesGridAsLoading(false);
-                        view.SetPlacesGridLoadingMoreActive(false);
-                        isPlacesGridLoadingItems = false;
+                        EndPlacesGridLoading(pageNumber);
                         return;
                     }
 
@@ -362,6 +360,7 @@ namespace DCL.Places
             if (!placesResult.Success)
             {
                 NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(GET_PLACES_ERROR_MESSAGE));
+                EndPlacesGridLoading(pageNumber);
                 return;
             }
 
@@ -398,11 +397,15 @@ namespace DCL.Places
 
             currentPlacesTotalAmount = placesResult.Value.Total;
 
+            EndPlacesGridLoading(pageNumber);
+        }
+
+        private void EndPlacesGridLoading(int pageNumber)
+        {
             if (pageNumber == 0)
                 view.SetPlacesGridAsLoading(false);
 
             view.SetPlacesGridLoadingMoreActive(false);
-
             isPlacesGridLoadingItems = false;
         }
 
