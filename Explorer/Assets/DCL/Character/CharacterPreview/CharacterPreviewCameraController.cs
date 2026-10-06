@@ -56,7 +56,7 @@ namespace DCL.CharacterPreview
         {
             if (!cameraSettings.scrollEnabled) return;
 
-            CalculateFOV(input);
+            CalculateFov(input);
         }
 
         private void OnDrag(CharacterPreviewPointerInput input)
@@ -84,7 +84,7 @@ namespace DCL.CharacterPreview
             }
         }
 
-        private void CalculateFOV(in CharacterPreviewPointerInput input)
+        private void CalculateFov(in CharacterPreviewPointerInput input)
         {
             float currentFieldOfView = characterPreviewAvatarContainer.freeLookCamera.m_Lens.FieldOfView;
             float originalFieldOfView = currentFieldOfView;

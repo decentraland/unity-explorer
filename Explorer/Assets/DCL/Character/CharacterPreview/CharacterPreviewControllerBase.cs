@@ -47,7 +47,7 @@ namespace DCL.CharacterPreview
         private RenderTexture? currentRenderTexture;
         private bool renderTargetSizeDirty;
         private Vector2Int lastScreenSize;
-        public RenderTexture CurrentRenderTexture => currentRenderTexture;
+        public RenderTexture? CurrentRenderTexture => currentRenderTexture;
 
         /// <summary>
         ///     Raised when the render texture is created; a resize keeps the same texture and camera, so it does not raise this.
