@@ -251,6 +251,10 @@ namespace DCL.MapRenderer.MapCameraController
         public void ResumeRendering()
         {
             mapCameraObject.mapCamera.enabled = true;
+
+            // What the camera shows was skipped while it was suspended; it resumes in place, so nothing else marks it changed.
+            if (rented)
+                cullingController.SetCameraDirty(this);
         }
 
         public void SetActive(bool active)

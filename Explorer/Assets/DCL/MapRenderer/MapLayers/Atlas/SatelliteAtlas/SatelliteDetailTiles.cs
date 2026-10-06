@@ -23,6 +23,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
     ///     Tiles are requested once the cameras have been still for <see cref="SETTLE_SECONDS" />, so a zoom tween or a pan
     ///     doesn't fetch levels and tiles that only pass through the view; a download whose tile leaves the view is cancelled.
     ///     At most <see cref="MAX_CONCURRENT_LOADS" /> tiles load at a time, nearest to their camera's centre first.
+    ///     A tile that fails is requested again after <see cref="RETRY_FAILED_TILE_AFTER_SECONDS" />, even if no camera moves.
     ///     Downloaded tiles are kept in the disk cache, so a later session reads them from disk.
     ///     A world streams its own tiles from <c>{baseUrl}/worlds/{name}</c> on the same grid. It has no bundled chunks, so its
     ///     coarsest level is shown at every zoom, and only the tiles over its parcels are requested.
@@ -67,8 +68,10 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
         private float baseChunkSize;
         private int refreshStamp;
         private float lastCameraChangeTime;
+        private float lastFailureTime;
         private int activeLoads;
         private bool settlePending;
+        private bool retryPending;
         private bool tileFailureReported;
         private bool diskCacheFailureReported;
 
@@ -133,6 +136,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             lifetimeCts.SafeCancelAndDispose();
             lifetimeCts = new CancellationTokenSource();
             settlePending = false;
+            retryPending = false;
             pending.Clear();
 
             foreach (Tile tile in tiles.Values)
@@ -526,7 +530,34 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
                 ReportHub.LogException(failure, ReportCategory.UI);
             }
 
-            tile.FailedAt = UnityEngine.Time.realtimeSinceStartup;
+            tile.FailedAt = lastFailureTime = UnityEngine.Time.realtimeSinceStartup;
+
+            if (!retryPending)
+                RefreshWhenFailedTilesCanRetryAsync(lifetimeCts.Token).Forget();
+        }
+
+        /// <summary>
+        ///     Refreshes once every failed tile can be retried: refreshes otherwise only follow camera changes, so a tile under a
+        ///     camera that stays still would never be requested again.
+        /// </summary>
+        private async UniTaskVoid RefreshWhenFailedTilesCanRetryAsync(CancellationToken ct)
+        {
+            retryPending = true;
+
+            while (true)
+            {
+                float remaining = RETRY_FAILED_TILE_AFTER_SECONDS - (UnityEngine.Time.realtimeSinceStartup - lastFailureTime);
+
+                if (remaining <= 0f)
+                    break;
+
+                // A source change resets the flag for the new source's failures.
+                if (await UniTask.Delay(TimeSpan.FromSeconds(remaining), ignoreTimeScale: true, cancellationToken: ct).SuppressCancellationThrow())
+                    return;
+            }
+
+            retryPending = false;
+            Refresh();
         }
 
         private void Show(Vector3Int id, Tile tile, Texture2D texture)

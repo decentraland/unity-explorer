@@ -1,4 +1,5 @@
-﻿using DCL.MapRenderer.CoordsUtils;
+﻿using DCL.MapRenderer.CommonBehavior;
+using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapCameraController;
 using DCL.MapRenderer.MapLayers;
@@ -150,6 +151,36 @@ namespace DCL.MapRenderer.Tests.MapCameraController
 
             // The camera moves at most 30% of its 200-unit half-height around the world's centre
             Assert.AreEqual(new Vector3(210, 210, mapCamera.CAMERA_HEIGHT_EXPOSED), mapCameraObject.transform.localPosition);
+        }
+
+        [Test]
+        public void MarkTheCameraChangedWhenItResumesRendering()
+        {
+            // Arrange: a minimap camera suspended while a popup covers it, standing still meanwhile
+            ((IMapCameraControllerInternal)mapCamera).Initialize(new Vector2Int(20, 20), new Vector2Int(10, 20), MapLayer.SatelliteAtlas);
+            mapCamera.SuspendRendering();
+            culling.ClearReceivedCalls();
+
+            // Act
+            mapCamera.ResumeRendering();
+
+            // Assert: the satellite tiles it skipped while suspended are requested again
+            culling.Received(1).SetCameraDirty(mapCamera);
+        }
+
+        [Test]
+        public void NotMarkAReleasedCameraChangedWhenItResumesRendering()
+        {
+            // Arrange
+            ((IMapCameraControllerInternal)mapCamera).Initialize(new Vector2Int(20, 20), new Vector2Int(10, 20), MapLayer.SatelliteAtlas);
+            mapCamera.Release(Substitute.For<IMapActivityOwner>());
+            culling.ClearReceivedCalls();
+
+            // Act
+            mapCamera.ResumeRendering();
+
+            // Assert
+            culling.DidNotReceive().SetCameraDirty(mapCamera);
         }
 
         [TestCase(true)]

@@ -220,6 +220,24 @@ namespace DCL.MapRenderer.Tests.SatelliteAtlas
         }
 
         [Test]
+        public void RequestEveryTileUnderAMinimapAtTheCornerOfAWorld()
+        {
+            // Arrange: Genesis City's grid with 10-unit parcels, a world over parcels (-9,-9)..(10,9), which straddles the corner
+            // of level-4 tiles (7,7), (8,7), (7,8) and (8,8), and a 16-parcel minimap centred on its south-east parcel (10,-9)
+            const float PARCEL = 10f;
+            var gridTopLeft = new Vector2(-153 * PARCEL, 152 * PARCEL);
+            Rect world = Rect.MinMaxRect(-10 * PARCEL, -10 * PARCEL, 10 * PARCEL, 9 * PARCEL);
+            var minimap = new Rect(new Vector2(9.5f * PARCEL, -9.5f * PARCEL) - (8 * PARCEL * Vector2.one), 16 * PARCEL * Vector2.one);
+            SatelliteDetailTiles.TryClip(minimap, world, out Rect clipped);
+
+            // Act
+            RectInt range = SatelliteDetailTiles.TileRange(clipped, SatelliteDetailTiles.MIN_LEVEL, gridTopLeft, 40 * PARCEL);
+
+            // Assert
+            Assert.AreEqual(new RectInt(7, 7, 2, 2), range);
+        }
+
+        [Test]
         public void FindTheTileUnderAPosition()
         {
             // Arrange: inside level-4 tile (1, 2), which spans x 400..800 and y -800..-1200
