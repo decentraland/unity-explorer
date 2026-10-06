@@ -147,9 +147,12 @@ namespace DCL.AuthenticationScreenFlow
                     }
                     else
                     {
-                        profileFetchException = error == ProfileReadError.Cancelled
-                            ? new TimeoutException($"Profile fetch timed out after {PROFILE_FETCH_TIMEOUT.TotalSeconds:F0}s")
-                            : new ProfileFetchFailedException(error);
+                        profileFetchException = error switch
+                                                {
+                                                    ProfileReadError.Cancelled => new TimeoutException($"Profile fetch timed out after {PROFILE_FETCH_TIMEOUT.TotalSeconds:F0}s"),
+                                                    ProfileReadError.FetchFailed => new ProfileFetchFailedException(),
+                                                    _ => new InvalidOperationException($"Own profile read failed: {error}"),
+                                                };
 
                         controller.ReturnToOrigin(ErrorType.ConnectionError);
                     }

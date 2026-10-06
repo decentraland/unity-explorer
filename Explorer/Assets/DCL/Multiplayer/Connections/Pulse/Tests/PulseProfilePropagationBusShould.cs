@@ -45,6 +45,7 @@ namespace DCL.Multiplayer.Connections.Pulse.Tests
 
             // Assert
             service.ReceivedWithAnyArgs(2).Send(default);
+            service.Received(1).Send(Arg.Is<OutgoingMessage>(m => m.Message.ProfileAnnouncement.Version == 4));
         }
 
         [Test]
