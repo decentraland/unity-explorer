@@ -112,8 +112,6 @@ Each operation completes through `FfiCallbackFn` with one of:
 | 1 | `Error` | Generic failure; details arrive via the error callback. |
 | 2 | `ErrorDiskFull` | The persistent queue cannot write because the disk is full (SQLITE_FULL). |
 
-`Libraries/Linux/segment-server.so` predates `ErrorDiskFull` — the lock entry is pending an initial CI build and relock. Once the first Linux CI run completes and the artifact is committed and relocked, this note should be removed.
-
 ---
 
 ## Shutdown / Disposal Contract
