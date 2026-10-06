@@ -25,33 +25,32 @@ namespace DCL.Chat.ChatViews
         public Button ButtonOpenProfileContextMenu => buttonOpenProfileContextMenu;
         public CallButtonView ButtonStartCall => buttonStartCall;
 
+        private Image profileCtxMenuButtonImage => (Image)buttonOpenProfileContextMenu.targetGraphic;
 
-        [SerializeField] private Button buttonClose;
-        [SerializeField] private Button buttonOpenMembers;
-        [SerializeField] private Button buttonOpenContextMenu;
-        [SerializeField] private Button buttonOpenProfileContextMenu;
+        [SerializeField] private Button buttonClose = null!;
+        [SerializeField] private Button buttonOpenMembers = null!;
+        [SerializeField] private Button buttonOpenContextMenu = null!;
+        [SerializeField] private Button buttonOpenProfileContextMenu = null!;
 
-        [SerializeField] private CallButtonView buttonStartCall;
+        [SerializeField] private CallButtonView buttonStartCall = null!;
 
-        [SerializeField] private TMP_Text textChannelName;
-        [SerializeField] private TMP_Text textMembersCount;
-        [SerializeField] private ChatProfileView chatProfileView;
-        [SerializeField] private GameObject nearbyElementsContainer;
-        [SerializeField] private GameObject nearbyAutoTranslateIndicator;
-        [SerializeField] private SkeletonLoadingView loadingView;
+        [SerializeField] private TMP_Text textChannelName = null!;
+        [SerializeField] private TMP_Text textMembersCount = null!;
+        [SerializeField] private ChatProfileView chatProfileView = null!;
+        [SerializeField] private GameObject nearbyElementsContainer = null!;
+        [SerializeField] private GameObject nearbyAutoTranslateIndicator = null!;
+        [SerializeField] private SkeletonLoadingView loadingView = null!;
 
         [Space(10)]
         [SerializeField] private float communityGraphicsPixelMultiplier = 3.0f;
         [SerializeField] private float dmGraphicsPixelMultiplier = 1.5f;
 
         private TitlebarViewMode currentViewMode;
-        private ChatTitlebarViewModel currentTitlebarViewModel;
         private ColorBlock profileCtxMenuButtonNormalColors;
         private ColorBlock profileCtxMenuButtonOpenColors;
-        private Image profileCtxMenuButtonImage;
 
         [SerializeField]
-        private Image connectionStatusIndicator;
+        private Image connectionStatusIndicator = null!;
 
         private void Awake()
         {
@@ -63,7 +62,6 @@ namespace DCL.Chat.ChatViews
             profileCtxMenuButtonNormalColors = buttonOpenProfileContextMenu.colors;
             profileCtxMenuButtonOpenColors = buttonOpenProfileContextMenu.colors;
             profileCtxMenuButtonOpenColors.normalColor = profileCtxMenuButtonOpenColors.highlightedColor;
-            profileCtxMenuButtonImage = (Image) buttonOpenProfileContextMenu.targetGraphic;
         }
 
         public void StartLoading() =>
@@ -80,7 +78,6 @@ namespace DCL.Chat.ChatViews
 
         public void Setup(ChatTitlebarViewModel model)
         {
-            currentTitlebarViewModel = model;
             currentViewMode = model.ViewMode;
             textChannelName.text = model.Username;
 
@@ -88,7 +85,7 @@ namespace DCL.Chat.ChatViews
                                            model.ViewMode == TitlebarViewMode.Community;
 
             buttonOpenMembers.gameObject.SetActive(shouldShowMembersButton);
-            
+
             bool isUnresolvedPlaceholder = string.IsNullOrEmpty(model.Id)
                                            && model.Thumbnail.Value.ThumbnailState is ProfileThumbnailViewModel.State.Loading
                                                                                        or ProfileThumbnailViewModel.State.NotBound;
@@ -140,6 +137,10 @@ namespace DCL.Chat.ChatViews
         }
 
         public void SetMemberCount(string count) => textMembersCount.text = count;
+
+        public void SetMemberCountVisible(bool visible) =>
+            textMembersCount.gameObject.SetActive(visible);
+
         public void Activate(bool activate) => gameObject.SetActive(activate);
 
         public void SetAutoTranslateIndicatorForUserAndCommunities(bool isVisible) =>
