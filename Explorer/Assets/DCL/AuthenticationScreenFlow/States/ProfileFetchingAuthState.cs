@@ -115,11 +115,6 @@ namespace DCL.AuthenticationScreenFlow
 
                     if (read.IsOk(out Profile? profile))
                     {
-                        // When the profile was already in cache, for example your previous account after logout, we need to ensure that all systems related to the profile will update
-                        profile.IsDirty = true;
-                        // Convert into guest account, only if was not upgraded before
-                        profile.HasConnectedWeb3 |= !identity.IsGuest();
-
                         if (controller.SkipExistingAccountLobby)
                             controller.CompleteExistingAccountLogin(profile, isRestoredSession);
                         else

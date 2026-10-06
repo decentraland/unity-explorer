@@ -7,6 +7,8 @@ using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Profiles.Helpers;
 using DCL.Profiles.Self;
+using DCL.Web3.Authenticators;
+using DCL.Web3.Identities;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
@@ -40,6 +42,7 @@ namespace DCL.Profiles.Tests
 
         private IProfileRepository profileRepository = null!;
         private IProfileCache profileCache = null!;
+        private MemoryWeb3IdentityCache identityCache = null!;
         private IWearableStorage wearableStorage = null!;
         private IEmoteStorage emoteStorage = null!;
         private IEquippedWearables equippedWearables = null!;
@@ -57,6 +60,7 @@ namespace DCL.Profiles.Tests
 
             profileRepository = Substitute.For<IProfileRepository>();
             profileCache = Substitute.For<IProfileCache>();
+            identityCache = new MemoryWeb3IdentityCache();
             wearableStorage = Substitute.For<IWearableStorage>();
             emoteStorage = Substitute.For<IEmoteStorage>();
             emoteStorage.BaseEmotesUrns.Returns(new List<URN> { BASE_EMOTE });
@@ -151,6 +155,37 @@ namespace DCL.Profiles.Tests
             // Assert
             Assert.That(SingleSent().IsFetchSucceeded(out FetchSucceeded msg), Is.True);
             Assert.That(msg.Profile.Avatar.Emotes[0], Is.EqualTo(BASE_EMOTE));
+        }
+        [Test]
+        public void MarkTheFetchedProfileAsConnectedWhenTheIdentityIsNotAGuest()
+        {
+            // Arrange
+            identityCache.Identity = NewIdentity(LoginMethod.METAMASK);
+            Profile fetched = NewProfile(ALICE, 3);
+            AnyGet().Returns(UniTask.FromResult<ProfileTier?>(fetched));
+
+            // Act
+            executor.Execute(SelfProfileCmd.FromFetch(ALICE), inbox);
+
+            // Assert
+            Assert.That(SingleSent().IsFetchSucceeded(out FetchSucceeded msg), Is.True);
+            Assert.That(msg.Profile.HasConnectedWeb3, Is.True);
+            Assert.That(fetched.HasConnectedWeb3, Is.False, "the cached instance is left as fetched");
+        }
+
+        [Test]
+        public void KeepTheFetchedProfileUnconnectedWhenTheIdentityIsAGuest()
+        {
+            // Arrange
+            identityCache.Identity = NewIdentity(LoginMethod.GUEST);
+            AnyGet().Returns(UniTask.FromResult<ProfileTier?>(NewProfile(ALICE, 3)));
+
+            // Act
+            executor.Execute(SelfProfileCmd.FromFetch(ALICE), inbox);
+
+            // Assert
+            Assert.That(SingleSent().IsFetchSucceeded(out FetchSucceeded msg), Is.True);
+            Assert.That(msg.Profile.HasConnectedWeb3, Is.False);
         }
 
         [Test]
@@ -599,8 +634,15 @@ namespace DCL.Profiles.Tests
         }
 
         private SelfProfileCmdExecutor NewExecutor(ForcedWearables forcedWearables, bool skipCatalystDeploy = false) =>
-            new (profileRepository, profileCache, wearableStorage, emoteStorage, equippedWearables, equippedEmotes,
+            new (profileRepository, profileCache, identityCache, wearableStorage, emoteStorage, equippedWearables, equippedEmotes,
                 forcedWearables, forcedEmotes: null, world, playerEntity, skipCatalystDeploy);
+
+        private static IWeb3Identity NewIdentity(LoginMethod method)
+        {
+            IWeb3Identity identity = Substitute.For<IWeb3Identity>();
+            identity.Method.Returns(method);
+            return identity;
+        }
 
         private static Profile NewProfile(UserId userId, int version) =>
             new (userId, "self", new Avatar()) { Version = version };

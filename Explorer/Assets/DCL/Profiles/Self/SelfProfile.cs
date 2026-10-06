@@ -50,7 +50,7 @@ namespace DCL.Profiles.Self
             this.web3IdentityCache = web3IdentityCache;
             drainToken = drainCts.Token;
 
-            var executor = new SelfProfileCmdExecutor(profileRepository, profileCache, wearableStorage, emoteStorage, equippedWearables, equippedEmotes,
+            var executor = new SelfProfileCmdExecutor(profileRepository, profileCache, web3IdentityCache, wearableStorage, emoteStorage, equippedWearables, equippedEmotes,
                 forcedWearables, forcedEmotes, world, playerEntity, skipCatalystDeploy);
 
             runtime = new FsmRuntime<SelfProfileModel, SelfProfileMsg, SelfProfileCmd>(FSM_TAG, ReportCategory.PROFILE, SelfProfileModel.NoIdentity(), SelfProfileModel.Update, executor);

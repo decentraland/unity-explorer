@@ -7,6 +7,7 @@ using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
 using DCL.Profiles.Helpers;
+using DCL.Web3.Identities;
 using ECS.Prioritization.Components;
 using System;
 using System.Collections.Generic;
@@ -26,6 +27,7 @@ namespace DCL.Profiles.Self
     {
         private readonly IProfileRepository profileRepository;
         private readonly IProfileCache profileCache;
+        private readonly IWeb3IdentityCache identityCache;
         private readonly IWearableStorage wearableStorage;
         private readonly IEmoteStorage emoteStorage;
         private readonly IEquippedWearables equippedWearables;
@@ -40,6 +42,7 @@ namespace DCL.Profiles.Self
         public SelfProfileCmdExecutor(
             IProfileRepository profileRepository,
             IProfileCache profileCache,
+            IWeb3IdentityCache identityCache,
             IWearableStorage wearableStorage,
             IEmoteStorage emoteStorage,
             IEquippedWearables equippedWearables,
@@ -52,6 +55,7 @@ namespace DCL.Profiles.Self
         {
             this.profileRepository = profileRepository;
             this.profileCache = profileCache;
+            this.identityCache = identityCache;
             this.wearableStorage = wearableStorage;
             this.emoteStorage = emoteStorage;
             this.equippedWearables = equippedWearables;
@@ -125,6 +129,11 @@ namespace DCL.Profiles.Self
 
                 Profile fetched = Copy(profile);
                 ApplySessionOverrides(fetched);
+
+                // A non-guest identity has connected web3, even when the deployed profile was made by a guest.
+                if (identityCache.Identity is { } identity && !identity.IsGuest())
+                    fetched.HasConnectedWeb3 = true;
+
                 inbox.Send(SelfProfileMsg.FromFetchSucceeded(new FetchSucceeded(address, fetched)));
             }
             catch (OperationCanceledException) when (ct.IsCancellationRequested) { }
