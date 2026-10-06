@@ -224,6 +224,29 @@ namespace DCL.Profiles.Tests
         }
 
         [Test]
+        public void PublishALocalOnlyEditWithoutSupersedingTheDeployInFlight()
+        {
+            // Arrange
+            Profile pending = NewProfile(4);
+            SelfProfileModel model = Deploying(pending, ProfileKnowledge.FromKnown(NewProfile(3)), DEPLOY);
+            Profile preview = NewProfile(4);
+            var local = new RequestId(100);
+
+            // Act
+            (SelfProfileModel next, SelfProfileCmd cmd) = SelfProfileModel.Update(model, SelfProfileMsg.FromDeployProfileOnEditRequested(new DeployRequest(local, preview, localOnly: true)));
+
+            // Assert
+            Assert.That(AssertDeployResult(next, local).IsOk(out Profile? saved), Is.True);
+            Assert.That(saved, Is.SameAs(preview));
+            AssertPublish(cmd, preview);
+            Identified identified = AssertIdentified(next);
+            Deploying deploying = AssertDeploying(identified.Activity, pending);
+            Assert.That(deploying.Requests.Contains(DEPLOY), Is.True, "the deploy in flight keeps its requests");
+            Assert.That(deploying.Requests.Contains(local), Is.False);
+            AssertKnown(identified.Knowledge, pending);
+        }
+
+        [Test]
         public void DeployWithoutPublishingWhenTheProfileIsMissing()
         {
             // Act & Assert

@@ -121,11 +121,16 @@ namespace DCL.Profiles.Self
             );
 
         /// <summary>
-        ///     An edit identical to the deploy in flight joins that deploy and shares its outcome; one identical to the confirmed
-        ///     profile is answered <c>NothingChanged</c>; any other edit starts a deploy.
+        ///     A local-only edit during a deploy is published and answered on its own; an edit identical to the deploy in flight joins
+        ///     that deploy and shares its outcome; one identical to the confirmed profile is answered <c>NothingChanged</c>; any other
+        ///     edit starts a deploy.
         /// </summary>
         private static (SelfProfileModel, SelfProfileCmd) Deploy(in SelfProfileModel model, in Identified current, in DeployRequest request)
         {
+            // A local-only edit never supersedes a catalyst deploy, which keeps its requests and settles on its own.
+            if (request.LocalOnly && current.Activity.IsDeploying(out _))
+                return (model.WithDeployResult(request.Id, ProfileDeployResult.FromOk(request.Edited)), SelfProfileCmd.FromPublish(request.Edited));
+
             if (current.Activity.IsDeploying(out Deploying inFlight))
             {
                 if (!request.Edited.IsSameProfile(inFlight.Pending))
