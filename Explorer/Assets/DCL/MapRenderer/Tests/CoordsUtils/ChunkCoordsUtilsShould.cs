@@ -28,6 +28,7 @@ namespace DCL.MapRenderer.Tests.CoordsUtils
             // Assert: the parcels span x -20..60 and y -20..20, plus a level-4 satellite tile, 20 parcels, on each side
             Assert.AreEqual(Rect.MinMaxRect(-420, -420, 460, 420), coordsUtils.VisibleWorldBounds);
             Assert.AreEqual(new Vector2(20, 0), coordsUtils.VisibleWorldCenter);
+            Assert.IsTrue(coordsUtils.BoundsAWorld);
         }
 
         [Test]
@@ -53,6 +54,7 @@ namespace DCL.MapRenderer.Tests.CoordsUtils
             // Assert
             Assert.AreEqual(genesisBounds, coordsUtils.VisibleWorldBounds);
             Assert.AreEqual(Vector2.zero, coordsUtils.VisibleWorldCenter);
+            Assert.IsFalse(coordsUtils.BoundsAWorld);
         }
 
         [Test]

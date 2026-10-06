@@ -19,6 +19,12 @@ namespace DCL.MapRenderer.ComponentsFactory
         [field: SerializeField]
         public Transform SatelliteEdgePatchesRoot { get; private set; }
 
+        /// <summary>
+        ///     The ocean and coast drawn around Genesis City under its satellite map
+        /// </summary>
+        [field: SerializeField]
+        public Transform GenesisCityOcean { get; private set; }
+
         [field: SerializeField]
         public Transform ColdUserMarkersRoot { get; private set; }
 

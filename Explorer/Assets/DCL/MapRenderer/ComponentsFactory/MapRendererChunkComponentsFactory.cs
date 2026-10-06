@@ -264,7 +264,7 @@ namespace DCL.MapRenderer.ComponentsFactory
                 detailTiles = new SatelliteDetailTiles(satelliteDetailTilesUrl, webRequestController, bytesDiskCache, cullingController, template, MapRendererDrawOrder.SATELLITE_DETAIL_MIN_LEVEL);
             }
 
-            var chunkAtlas = new SatelliteChunkAtlasController(configuration.SatelliteAtlasRoot, configuration.SatelliteEdgePatchesRoot, GRID_SIZE, PARCELS_INSIDE_CHUNK, coordsUtils, cullingController,
+            var chunkAtlas = new SatelliteChunkAtlasController(configuration.SatelliteAtlasRoot, configuration.SatelliteEdgePatchesRoot, configuration.GenesisCityOcean, GRID_SIZE, PARCELS_INSIDE_CHUNK, coordsUtils, cullingController,
                 chunkBuilder: CreateSatelliteChunkAsync, detailTiles);
 
             chunkAtlas.InitializeAsync(cancellationToken).SuppressCancellationThrow().Forget();

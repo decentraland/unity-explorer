@@ -94,6 +94,12 @@ namespace DCL.Navmap
             return targetNormalizedZoom;
         }
 
+        public float ResetZoomToFarthestValue()
+        {
+            SetZoomLevel(0);
+            return targetNormalizedZoom;
+        }
+
         public void Activate(IMapCameraController mapCameraController)
         {
             if (active)

@@ -50,6 +50,11 @@ namespace DCL.MapRenderer.MapCameraController
 
         void SetPositionAndZoom(Vector2 coordinates, float zoom);
 
+        /// <summary>
+        /// Moves the camera to the centre of the map: the middle of a world's parcels, or Genesis City's origin
+        /// </summary>
+        void CenterOnMap();
+
         void TranslateTo(Vector2 coordinates, float duration, Action? onComplete = null);
 
         /// <summary>

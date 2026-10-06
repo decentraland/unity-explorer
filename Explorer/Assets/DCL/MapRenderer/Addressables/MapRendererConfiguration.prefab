@@ -341,6 +341,7 @@ MonoBehaviour:
   <AtlasRoot>k__BackingField: {fileID: 1705380967094917977}
   <SatelliteAtlasRoot>k__BackingField: {fileID: 1137272574085786475}
   <SatelliteEdgePatchesRoot>k__BackingField: {fileID: 2250194547252334322}
+  <GenesisCityOcean>k__BackingField: {fileID: 6713474635221251542}
   <ColdUserMarkersRoot>k__BackingField: {fileID: 5609044988966314515}
   <HotUserMarkersRoot>k__BackingField: {fileID: 3920442518738607191}
   <LiveEventsMarkersRoot>k__BackingField: {fileID: 8846438800571672071}

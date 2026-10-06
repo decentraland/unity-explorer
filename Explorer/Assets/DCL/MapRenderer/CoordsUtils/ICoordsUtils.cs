@@ -20,6 +20,11 @@ namespace DCL.MapRenderer.CoordsUtils
         Vector2 VisibleWorldCenter { get; }
 
         /// <summary>
+        /// Whether <see cref="VisibleWorldBounds" /> are a world's, set by <see cref="SetWorldBounds" />, rather than Genesis City's
+        /// </summary>
+        bool BoundsAWorld { get; }
+
+        /// <summary>
         /// Raised when <see cref="VisibleWorldBounds" /> changes
         /// </summary>
         event Action? VisibleWorldBoundsChanged;

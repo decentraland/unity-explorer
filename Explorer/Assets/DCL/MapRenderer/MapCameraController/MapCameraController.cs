@@ -23,7 +23,7 @@ namespace DCL.MapRenderer.MapCameraController
 
         public Camera Camera => mapCameraObject.mapCamera;
 
-        public float Zoom => Mathf.InverseLerp(zoomValues.y, zoomValues.x, mapCameraObject.mapCamera.orthographicSize);
+        public float Zoom => Mathf.InverseLerp(FarthestZoom(), ClosestZoom(), mapCameraObject.mapCamera.orthographicSize);
 
         public Vector2 LocalPosition => mapCameraObject.mapCamera.transform.localPosition;
 
@@ -33,11 +33,15 @@ namespace DCL.MapRenderer.MapCameraController
         private readonly ICoordsUtils coordsUtils;
         private readonly IMapCullingController cullingController;
         private readonly MapCameraObject mapCameraObject;
+        private readonly Color defaultBackgroundColor;
 
         private RenderTexture? renderTexture;
 
         // Zoom Thresholds in Parcels
         private Vector2Int zoomValues;
+
+        private float normalizedZoom;
+        private int zoomLevel;
 
         private Rect cameraPositionBounds;
         private Sequence? translationSequence;
@@ -57,6 +61,7 @@ namespace DCL.MapRenderer.MapCameraController
 
             mapCameraObject.transform.localPosition = Vector3.up * CAMERA_HEIGHT;
             mapCameraObject.mapCamera.orthographic = true;
+            defaultBackgroundColor = mapCameraObject.mapCamera.backgroundColor;
 
             coordsUtils.VisibleWorldBoundsChanged += OnVisibleWorldBoundsChanged;
         }
@@ -84,10 +89,15 @@ namespace DCL.MapRenderer.MapCameraController
 
         private void OnVisibleWorldBoundsChanged()
         {
-            CalculateCameraPositionBounds();
+            if (!rented)
+            {
+                CalculateCameraPositionBounds();
+                return;
+            }
 
-            if (rented)
-                SetLocalPosition(mapCameraObject.transform.localPosition);
+            // A world's farthest zoom depends on its bounds
+            SetCameraSize(normalizedZoom, zoomLevel);
+            SetLocalPosition(mapCameraObject.transform.localPosition);
         }
 
         public void ResizeTexture(Vector2Int textureResolution)
@@ -103,6 +113,10 @@ namespace DCL.MapRenderer.MapCameraController
             renderTexture.Create();
 
             Camera.ResetAspect();
+
+            // A world's farthest zoom depends on the view's aspect
+            if (coordsUtils.BoundsAWorld)
+                SetCameraSize(normalizedZoom, zoomLevel);
 
             SetLocalPosition(mapCameraObject.transform.localPosition);
         }
@@ -159,6 +173,12 @@ namespace DCL.MapRenderer.MapCameraController
             mapCameraObject.transform.localPosition = ClampLocalPosition(localCameraPosition);
         }
 
+        public void CenterOnMap() =>
+            SetLocalPosition(coordsUtils.VisibleWorldCenter);
+
+        public void SetBackgroundColor(Color? color) =>
+            mapCameraObject.mapCamera.backgroundColor = color ?? defaultBackgroundColor;
+
         public void SetPositionAndZoom(Vector2 coordinates, float zoom)
         {
             translationSequence?.Kill();
@@ -190,16 +210,37 @@ namespace DCL.MapRenderer.MapCameraController
         private void SetCameraSize(float zoomCameraValue, int zoomStepLevel)
         {
             zoomCameraValue = Mathf.Clamp01(zoomCameraValue);
+            normalizedZoom = zoomCameraValue;
+            zoomLevel = zoomStepLevel;
 
-            // Experiment: a zoomable camera's closest step reaches 2 parcels so the finest satellite level (8) shows.
-            // Markers and clusters keep scaling against the configured closest zoom (zoomValues.x).
-            float closestZoom = zoomValues.x < zoomValues.y ? 2 * coordsUtils.ParcelSize : zoomValues.x;
-            mapCameraObject.mapCamera.orthographicSize = Mathf.Lerp(zoomValues.y, closestZoom, zoomCameraValue);
+            mapCameraObject.mapCamera.orthographicSize = Mathf.Lerp(FarthestZoom(), ClosestZoom(), zoomCameraValue);
 
             interactivityBehavior.ApplyCameraZoom(zoomValues.x, mapCameraObject.mapCamera.orthographicSize);
             ZoomChanged?.Invoke(zoomValues.x, mapCameraObject.mapCamera.orthographicSize, zoomStepLevel);
 
             CalculateCameraPositionBounds();
+        }
+
+        private bool IsZoomable() =>
+            zoomValues.x < zoomValues.y;
+
+        // Experiment: a zoomable camera's closest step reaches 2 parcels so the finest satellite level (8) shows.
+        // Markers and clusters keep scaling against the configured closest zoom (zoomValues.x).
+        private float ClosestZoom() =>
+            IsZoomable() ? 2 * coordsUtils.ParcelSize : zoomValues.x;
+
+        /// <summary>
+        ///     The configured farthest zoom; a zoomable camera over a world's map stops where the whole world fits the view.
+        /// </summary>
+        private float FarthestZoom()
+        {
+            if (!IsZoomable() || !coordsUtils.BoundsAWorld)
+                return zoomValues.y;
+
+            Rect bounds = coordsUtils.VisibleWorldBounds;
+            float halfHeightToFit = Mathf.Max(bounds.height, bounds.width / mapCameraObject.mapCamera.aspect) / 2f;
+
+            return Mathf.Clamp(halfHeightToFit, ClosestZoom(), zoomValues.y);
         }
 
         private Vector3 ClampLocalPosition(Vector3 localPos)

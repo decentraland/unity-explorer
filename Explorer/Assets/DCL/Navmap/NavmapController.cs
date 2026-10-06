@@ -191,12 +191,15 @@ namespace DCL.Navmap
         {
             cameraController?.Release(this);
 
+            // A world's map opens zoomed out to the whole world, which its farthest zoom fits.
+            bool isWorld = realmData.IsWorld();
+
             cameraController = mapRenderer.RentCamera(
                 new MapCameraInput(
                     this,
                     ACTIVE_MAP_LAYERS,
                     Vector3.zero.ToParcel(),
-                    zoomController.ResetZoomToMidValue(),
+                    isWorld ? zoomController.ResetZoomToFarthestValue() : zoomController.ResetZoomToMidValue(),
                     navmapView.SatellitePixelPerfectMapRendererTextureProvider.GetPixelPerfectTextureResolution(),
                     navmapView.zoomView.zoomVerticalRange
                 ));
@@ -206,7 +209,6 @@ namespace DCL.Navmap
             mapRenderer.SetSharedLayer(MapLayer.Pins, navmapFilterPanelController.IsFilterActivated(MapLayer.Pins));
             mapRenderer.SetSharedLayer(MapLayer.HotUsersMarkers, navmapFilterPanelController.IsFilterActivated(MapLayer.HotUsersMarkers));
             // A world only has a satellite map.
-            bool isWorld = realmData.IsWorld();
             mapRenderer.SetSharedLayer(MapLayer.SatelliteAtlas, isWorld || navmapFilterPanelController.IsFilterActivated(MapLayer.SatelliteAtlas));
             mapRenderer.SetSharedLayer(MapLayer.ParcelsAtlas, navmapFilterPanelController.IsFilterActivated(MapLayer.ParcelsAtlas));
             navmapFilterPanelController.SetMapTypeSelectable(!isWorld);
@@ -214,6 +216,10 @@ namespace DCL.Navmap
 
             satelliteController.InjectCameraController(cameraController);
             navmapLocationController.InjectCameraController(cameraController);
+
+            if (isWorld)
+                cameraController.CenterOnMap();
+
             satelliteController.Activate();
             zoomController.Activate(cameraController);
             lastParcelHovered = Vector2.zero;

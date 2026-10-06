@@ -22,5 +22,10 @@ namespace DCL.MapRenderer.MapCameraController
         void SetActive(bool active);
 
         Rect GetCameraRect();
+
+        /// <summary>
+        /// Clears the view to <paramref name="color" /> where nothing is drawn, or to the camera's own background when null
+        /// </summary>
+        void SetBackgroundColor(Color? color);
     }
 }

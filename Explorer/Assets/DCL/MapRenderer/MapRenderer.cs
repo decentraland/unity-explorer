@@ -25,7 +25,11 @@ namespace DCL.MapRenderer
 
         private static readonly MapLayer[] ALL_LAYERS = EnumUtils.Values<MapLayer>();
 
+        // The sea around a world's terrain in its satellite capture, shown past the world's tiles in place of Genesis City's ocean
+        private static readonly Color WORLD_OCEAN_COLOR = new Color32(96, 98, 158, 255);
+
         private readonly IMapRendererComponentsFactory componentsFactory;
+        private readonly List<IMapCameraControllerInternal> rentedCameras = new ();
 
         private CancellationToken cancellationToken;
 
@@ -34,6 +38,7 @@ namespace DCL.MapRenderer
         private IObjectPool<IMapCameraControllerInternal>? mapCameraPool;
         private ICoordsUtils? coordsUtils;
         private SatelliteChunkAtlasController? satelliteAtlas;
+        private Color? backgroundColor;
 
         public MapRenderer(IMapRendererComponentsFactory componentsFactory)
         {
@@ -89,6 +94,8 @@ namespace DCL.MapRenderer
             EnableLayers(cameraInput.ActivityOwner, cameraInput.EnabledLayers);
             IMapCameraControllerInternal mapCameraController = mapCameraPool!.Get();
             mapCameraController.Initialize(cameraInput.TextureResolution, zoomValues, cameraInput.EnabledLayers);
+            mapCameraController.SetBackgroundColor(backgroundColor);
+            rentedCameras.Add(mapCameraController);
             mapCameraController.OnReleasing += ReleaseCamera;
 
             mapCameraController.ZoomChanged += OnCameraZoomChanged;
@@ -102,6 +109,7 @@ namespace DCL.MapRenderer
         {
             mapCameraController.OnReleasing -= ReleaseCamera;
             mapCameraController.ZoomChanged -= OnCameraZoomChanged;
+            rentedCameras.Remove(mapCameraController);
 
             // Each time we close the fullscreen map, we reset the scale for all layers and block its zoom
             foreach (IZoomScalingLayer layer in zoomScalingLayers!)
@@ -152,6 +160,7 @@ namespace DCL.MapRenderer
 
             // The tiles of the world's whole map, over its terrain past its parcels.
             satelliteAtlas?.ShowWorld(worldName, parcelBounds.HasValue ? coordsUtils?.VisibleWorldBounds : null);
+            SetBackgroundColor(WORLD_OCEAN_COLOR);
             SetSuppressedLayers(GENESIS_CITY_LAYERS);
         }
 
@@ -159,7 +168,16 @@ namespace DCL.MapRenderer
         {
             coordsUtils?.SetWorldBounds(null);
             satelliteAtlas?.ShowGenesisCity();
+            SetBackgroundColor(null);
             SetSuppressedLayers(MapLayer.None);
+        }
+
+        private void SetBackgroundColor(Color? color)
+        {
+            backgroundColor = color;
+
+            foreach (IMapCameraControllerInternal camera in rentedCameras)
+                camera.SetBackgroundColor(color);
         }
 
         /// <summary>

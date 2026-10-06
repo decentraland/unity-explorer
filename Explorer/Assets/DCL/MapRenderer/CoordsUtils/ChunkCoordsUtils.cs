@@ -40,6 +40,8 @@ namespace DCL.MapRenderer.CoordsUtils
         // Genesis City is centred on the origin, not on its padded bounds.
         public Vector2 VisibleWorldCenter { get; private set; }
 
+        public bool BoundsAWorld { get; private set; }
+
         public ChunkCoordsUtils(int parcelSize)
         {
             ParcelSize = parcelSize;
@@ -63,6 +65,7 @@ namespace DCL.MapRenderer.CoordsUtils
 
                 VisibleWorldBounds = Rect.MinMaxRect(parcelsRect.xMin - padding, parcelsRect.yMin - padding, parcelsRect.xMax + padding, parcelsRect.yMax + padding);
                 VisibleWorldCenter = parcelsRect.center;
+                BoundsAWorld = true;
 
                 worldInteractableBounds.Clear();
                 worldInteractableBounds.Add(parcelsRect);
@@ -72,6 +75,7 @@ namespace DCL.MapRenderer.CoordsUtils
             {
                 VisibleWorldBounds = genesisVisibleWorldBounds;
                 VisibleWorldCenter = Vector2.zero;
+                BoundsAWorld = false;
                 interactableWorldBoundsInLocalCoordinates = genesisInteractableBounds;
             }
 
