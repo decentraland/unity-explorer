@@ -134,8 +134,8 @@ namespace Global.Dynamic
 
             await bootstrapContainer.InitializeContainerAsync<BootstrapContainer, BootstrapSettings>(settingsContainer, ct, async container =>
             {
-                // The launcher passes --session_id; it is absent on editor and manual runs. Resolved up front
-                // so Sentry tags every event with it from the moment it is initialized.
+                // The launcher passes --session_id; it is absent on editor and manual runs. Resolved before
+                // the diagnostics container is created, which needs it.
                 bool hasSessionId = applicationParametersParser.TryGetValue(AppArgsFlags.Analytics.SESSION_ID, out string? sessionId) && !string.IsNullOrEmpty(sessionId);
 
                 container.reportHandlingSettings = ProvideReportHandlingSettingsAsync(container.settings, applicationParametersParser);
