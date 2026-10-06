@@ -128,7 +128,7 @@ namespace DCL.UserInAppInitializationFlow.Tests
             Profile pending = new ProfileBuilder().From(confirmed).WithVersion(confirmed.Version + 1).Build();
             selfProfile.ProfileAsync(Arg.Any<CancellationToken>()).Returns(UniTask.FromResult(ProfileReadResult.FromOk(pending)));
             selfProfile.CurrentProfileSnapshot.Returns(SelfProfileModel.FromIdentified(new Identified(confirmed.UserId, ProfileKnowledge.FromKnown(pending),
-                ProfileActivity.FromDeploying(new Deploying(pending, ProfileKnowledge.FromKnown(confirmed))))));
+                ProfileActivity.FromDeploying(new Deploying(pending, pending.Version, ProfileKnowledge.FromKnown(confirmed))))));
 
             StartPulseMultiplayerStartupOperation operation = Operation(activation, new PulseRealm(realmData));
 

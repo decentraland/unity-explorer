@@ -46,7 +46,7 @@ namespace DCL.Profiles.Self
         public Identified WithoutRequest(RequestId id)
         {
             ProfileActivity activity = Activity.IsDeploying(out Deploying deploying)
-                ? ProfileActivity.FromDeploying(new Deploying(deploying.Pending, deploying.Before, deploying.Requests.Remove(id)))
+                ? ProfileActivity.FromDeploying(new Deploying(deploying.Pending, deploying.Version, deploying.Before, deploying.Requests.Remove(id)))
                 : Activity;
 
             return new Identified(Address, Knowledge, activity, PendingReads.Remove(id));

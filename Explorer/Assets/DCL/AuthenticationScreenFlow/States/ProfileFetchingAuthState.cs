@@ -69,11 +69,12 @@ namespace DCL.AuthenticationScreenFlow
                                     OperationCanceledException => new SpanErrorInfo("Login process was cancelled by user"),
                                     ProfileNotFoundException ex => new SpanErrorInfo($"Profile not found during {nameof(ProfileFetchingAuthState)}", ex),
                                     NotAllowedUserException ex => new SpanErrorInfo(ex.Message, ex),
+                                    ProfileFetchFailedException ex => new SpanErrorInfo($"Profile fetch failed during {nameof(ProfileFetchingAuthState)}", ex),
                                     TimeoutException ex => new SpanErrorInfo($"Profile fetch timed out during {nameof(ProfileFetchingAuthState)}", ex),
                                     { } ex => new SpanErrorInfo($"Unexpected error during {nameof(ProfileFetchingAuthState)}", ex),
                                 };
 
-                if (profileFetchException is not OperationCanceledException and not ProfileNotFoundException and not NotAllowedUserException)
+                if (profileFetchException is not OperationCanceledException and not ProfileNotFoundException and not NotAllowedUserException and not ProfileFetchFailedException)
                     ReportHub.LogException(profileFetchException, new ReportData(ReportCategory.AUTHENTICATION));
             }
 
@@ -148,7 +149,7 @@ namespace DCL.AuthenticationScreenFlow
                     {
                         profileFetchException = error == ProfileReadError.Cancelled
                             ? new TimeoutException($"Profile fetch timed out after {PROFILE_FETCH_TIMEOUT.TotalSeconds:F0}s")
-                            : new InvalidOperationException($"Profile fetch failed: {error}");
+                            : new ProfileFetchFailedException(error);
 
                         controller.ReturnToOrigin(ErrorType.ConnectionError);
                     }

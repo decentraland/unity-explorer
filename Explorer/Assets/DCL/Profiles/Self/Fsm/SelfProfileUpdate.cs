@@ -130,7 +130,7 @@ namespace DCL.Profiles.Self
                 if (!request.Edited.IsSameProfile(inFlight.Pending))
                     return StartDeploying(model, current, request);
 
-                var joined = new Deploying(inFlight.Pending, inFlight.Before, inFlight.Requests.Add(request.Id));
+                var joined = new Deploying(inFlight.Pending, inFlight.Version, inFlight.Before, inFlight.Requests.Add(request.Id));
                 return (model.WithSession(SelfProfileSession.FromIdentified(current.WithActivity(ProfileActivity.FromDeploying(joined)))), SelfProfileCmd.None());
             }
 
@@ -155,10 +155,12 @@ namespace DCL.Profiles.Self
 
             RequestIds requests = PendingDeploys(current).Add(request.Id);
 
-            // The next version follows the trusted profile, which during a deploy is the pending edit.
-            int version = current.Knowledge.IsKnown(out Profile? known) ? known.Version + 1 : edited.Version + 1;
+            // The next version follows the deploy in flight, otherwise the known profile; a superseding deploy never reuses a version.
+            int version = current.Activity.IsDeploying(out Deploying superseded) ? superseded.Version + 1
+                : current.Knowledge.IsKnown(out Profile? known) ? known.Version + 1
+                : edited.Version + 1;
 
-            ProfileActivity deploying = ProfileActivity.FromDeploying(new Deploying(edited, before, requests));
+            ProfileActivity deploying = ProfileActivity.FromDeploying(new Deploying(edited, version, before, requests));
             SelfProfileCmd deploy = SelfProfileCmd.FromDeploy(new DeployCmd(current.Address, edited, version));
 
             // Only a known profile is trusted locally before the catalyst confirms the edit.
@@ -192,7 +194,7 @@ namespace DCL.Profiles.Self
             if (deploying.Before.IsKnown(out Profile? before) && before.Version >= saved.Version)
                 return Ignored(model, DEPLOY_SUPERSEDED);
 
-            var advanced = new Deploying(deploying.Pending, CopyOf(ProfileKnowledge.FromKnown(saved)), deploying.Requests);
+            var advanced = new Deploying(deploying.Pending, deploying.Version, CopyOf(ProfileKnowledge.FromKnown(saved)), deploying.Requests);
             return (model.WithSession(SelfProfileSession.FromIdentified(current.WithActivity(ProfileActivity.FromDeploying(advanced)))), SelfProfileCmd.None());
         }
 

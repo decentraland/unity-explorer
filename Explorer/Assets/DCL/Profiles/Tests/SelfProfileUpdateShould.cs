@@ -903,6 +903,24 @@ namespace DCL.Profiles.Tests
             Assert.That(AssertDeploy(cmd, edited).Version, Is.EqualTo(1));
         }
 
+        [Test]
+        public void DeployASupersedingEditAsTheVersionAfterTheDeployInFlightWhenNothingIsKnown()
+        {
+            // Arrange
+            Profile first = NewProfile(0);
+            Profile second = NewProfile(0);
+            second.Description = "edited again";
+            SelfProfileModel model = Model(ProfileKnowledge.Missing(), ProfileActivity.Idle());
+            (SelfProfileModel deploying, SelfProfileCmd firstCmd) = SelfProfileModel.Update(model, SelfProfileMsg.FromDeployProfileOnEditRequested(new DeployRequest(DEPLOY, first)));
+
+            // Act
+            (_, SelfProfileCmd cmd) = SelfProfileModel.Update(deploying, SelfProfileMsg.FromDeployProfileOnEditRequested(new DeployRequest(new RequestId(9), second)));
+
+            // Assert
+            Assert.That(AssertDeploy(firstCmd, first).Version, Is.EqualTo(1));
+            Assert.That(AssertDeploy(cmd, second).Version, Is.EqualTo(2), "a superseding deploy must not reuse the version of the one in flight");
+        }
+
         private static Profile NewProfile(int version) =>
             new (ALICE, "alice", new Avatar()) { Version = version };
 
@@ -928,7 +946,7 @@ namespace DCL.Profiles.Tests
         private static SelfProfileModel Deploying(Profile pending, ProfileKnowledge before, RequestIds requests)
         {
             ProfileKnowledge knowledge = before.IsKnown(out _) ? ProfileKnowledge.FromKnown(pending) : before;
-            return Model(knowledge, ProfileActivity.FromDeploying(new Deploying(pending, before, requests)));
+            return Model(knowledge, ProfileActivity.FromDeploying(new Deploying(pending, pending.Version, before, requests)));
         }
 
         private static SelfProfileModel Deploying(Profile pending, ProfileKnowledge before, RequestId request) =>

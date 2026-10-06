@@ -323,6 +323,8 @@ The elements previewed are not visible for others, only for the tester.
 
 While the flag is set the client does not deploy your profile — backpack saves, name changes and passport edits take effect locally for the session and are discarded on relaunch.
 
+Do not use it on a brand-new account: a first profile has to be deployed to exist, and the flag blocks that.
+
 Only works for PUBLISHED elements (thus having a URN that identifies them).
 
 **Usage:**
@@ -339,6 +341,8 @@ Only works for PUBLISHED elements (thus having a URN that identifies them).
 The elements previewed are not visible for others, only for the tester.
 
 While the flag is set the client does not deploy your profile — backpack saves, name changes and passport edits take effect locally for the session and are discarded on relaunch.
+
+Do not use it on a brand-new account: a first profile has to be deployed to exist, and the flag blocks that.
 
 Only works for UNRELEASED elements, the tester has to either be the owner of the collection or be whitelisted to test it (e.g. Curators).
 
