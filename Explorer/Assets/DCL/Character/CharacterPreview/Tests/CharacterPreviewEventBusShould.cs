@@ -189,13 +189,60 @@ namespace DCL.CharacterPreview.Tests
             CollectionAssert.IsEmpty(restored);
         }
 
-        private CharacterPreviewControllerBase CreatePreview() =>
-            new TestPreview(CharacterPreviewTestViews.Create(created), Substitute.For<ICharacterPreviewFactory>(), world, bus);
-
-        private class TestPreview : CharacterPreviewControllerBase
+        [Test]
+        public void RaiseAnyShownOnlyOnEmptyTransitions()
         {
-            public TestPreview(CharacterPreviewView view, ICharacterPreviewFactory previewFactory, World world, CharacterPreviewEventBus characterPreviewEventBus)
-                : base(view, previewFactory, world, false, characterPreviewEventBus) { }
+            // Arrange
+            CharacterPreviewControllerBase first = CreatePreview();
+            CharacterPreviewControllerBase second = CreatePreview();
+            var changes = new List<bool>();
+            bus.OnAnyShownChangedEvent += changes.Add;
+
+            // Act & Assert
+            first.OnShow();
+            second.OnShow();
+            first.OnShow();
+            second.OnHide();
+            CollectionAssert.AreEqual(new[] { true }, changes);
+
+            first.OnHide();
+            CollectionAssert.AreEqual(new[] { true, false }, changes);
         }
+
+        [Test]
+        public void RaiseAnyShownFalseWhenTheLastOneIsDisposed()
+        {
+            // Arrange
+            CharacterPreviewControllerBase preview = CreatePreview();
+            preview.OnShow();
+            var changes = new List<bool>();
+            bus.OnAnyShownChangedEvent += changes.Add;
+
+            // Act
+            preview.Dispose();
+
+            // Assert
+            CollectionAssert.AreEqual(new[] { false }, changes);
+            Assert.IsFalse(bus.AnyShown);
+        }
+
+        [Test]
+        public void RaiseNothingForAHideWithoutShow()
+        {
+            // Arrange
+            CharacterPreviewControllerBase preview = CreatePreview();
+            var changes = new List<bool>();
+            bus.OnAnyShownChangedEvent += changes.Add;
+
+            // Act
+            preview.OnHide();
+            preview.OnHide();
+
+            // Assert
+            CollectionAssert.IsEmpty(changes);
+        }
+
+        private CharacterPreviewControllerBase CreatePreview() =>
+            new CharacterPreviewTestViews.TestPreview(CharacterPreviewTestViews.Create(created), Substitute.For<ICharacterPreviewFactory>(), world, bus);
     }
 }

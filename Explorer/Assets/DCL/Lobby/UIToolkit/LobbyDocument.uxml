@@ -1,0 +1,65 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/DCL/Lobby/UIToolkit/LobbyDocument.uss" />
+    <Style src="project://database/Assets/DCL/Lobby/UIToolkit/LobbyRail.uss" />
+    <Style src="project://database/Assets/DCL/Lobby/UIToolkit/LobbyTopBar.uss" />
+    <!-- The widgets and the cards are created in code at runtime, so their stylesheets have to reach them from the document -->
+    <Style src="project://database/Assets/DCL/UI/Profiles/Credits/CreditsPanel.uss" />
+    <Style src="project://database/Assets/DCL/UI/Profiles/ProfileElements/ProfileWidget.uss" />
+    <Style src="project://database/Assets/DCL/Lobby/UIToolkit/LobbyPlaceCard.uss" />
+    <Style src="project://database/Assets/DCL/Lobby/UIToolkit/LobbyFriendCard.uss" />
+    <Style src="project://database/Assets/DCL/Lobby/UIToolkit/LobbyLiveEventCard.uss" />
+    <Style src="project://database/Assets/DCL/Lobby/UIToolkit/LobbyUpcomingEventCard.uss" />
+    <ui:Template name="LobbyLandingCard" src="project://database/Assets/DCL/Lobby/UIToolkit/LobbyLandingCard.uxml?fileID=9197481963319205126&amp;guid=f260689364e4454c8f4a329cd3e46b06&amp;type=3#LobbyLandingCard" />
+    <ui:VisualElement name="Lobby" class="lobby">
+        <ui:VisualElement name="BottomGradient" class="lobby__gradient" picking-mode="Ignore" />
+        <!-- The uGUI preview canvas draws under the panel; this only catches the hover and the click over the figure -->
+        <ui:VisualElement name="AvatarHitArea" class="lobby__avatar-hit-area" style="display: none;" />
+        <ui:VisualElement name="Logo" class="lobby__logo" picking-mode="Ignore" />
+        <ui:VisualElement name="TopBar" class="lobby__top-bar" picking-mode="Ignore">
+            <ui:VisualElement name="CreditsSlot" class="lobby__top-bar-slot" picking-mode="Ignore" />
+            <ui:Button name="Notifications" class="lobby__top-bar-button">
+                <ui:VisualElement name="Icon" class="lobby__notifications-icon" picking-mode="Ignore" />
+                <ui:Label name="UnreadBadge" text="0" class="lobby__notifications-badge" picking-mode="Ignore" style="display: none;" />
+            </ui:Button>
+            <ui:VisualElement name="ProfileSlot" class="lobby__top-bar-slot" picking-mode="Ignore" />
+            <ui:Button name="Close" class="lobby__top-bar-button">
+                <ui:VisualElement name="Icon" class="lobby__close-icon" picking-mode="Ignore" />
+            </ui:Button>
+        </ui:VisualElement>
+        <ui:VisualElement name="Welcome" class="lobby__welcome" picking-mode="Ignore">
+            <ui:Label name="WelcomeText" text="Welcome!" enable-rich-text="false" class="lobby__welcome-title" picking-mode="Ignore" />
+            <ui:Instance template="LobbyLandingCard" />
+        </ui:VisualElement>
+        <!-- Each row hides itself while empty, so the upcoming one moves up when nothing is live -->
+        <ui:VisualElement name="Events" class="lobby__events" style="display: none;">
+            <ui:Label name="Title" text="Events" class="lobby__events-title" picking-mode="Ignore" />
+            <ui:VisualElement name="LiveEvents" class="lobby__live-events" style="display: none;">
+                <DCL.Lobby.LobbyRailElement name="Rail" class="lobby__live-events-rail" cards-per-page="1" />
+            </ui:VisualElement>
+            <ui:VisualElement name="UpcomingEvents" class="lobby__upcoming-events" style="display: none;">
+                <DCL.Lobby.LobbyRailElement name="Rail" class="lobby__upcoming-events-rail" cards-per-page="1" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="Friends" class="lobby__friends" style="display: none;">
+            <ui:VisualElement name="Header" class="lobby__friends-header" picking-mode="Ignore">
+                <ui:Label name="Title" text="Friends" class="lobby__friends-title" picking-mode="Ignore" />
+                <ui:Label name="OnlineCount" text="0 Online" class="lobby__friends-online-count" picking-mode="Ignore" />
+            </ui:VisualElement>
+            <DCL.Lobby.LobbyRailElement name="Rail" class="lobby__friends-rail" cards-per-page="4" />
+        </ui:VisualElement>
+        <!-- The sections start hidden and come up once they have cards -->
+        <ui:VisualElement name="RecentPlaces" class="lobby__places lobby__places--recent" style="display: none;">
+            <ui:Label name="Title" text="Jump Back In" class="lobby__places-title" picking-mode="Ignore" />
+            <ui:VisualElement name="Cards" class="lobby__places-row" />
+        </ui:VisualElement>
+        <ui:VisualElement name="FeaturedPlaces" class="lobby__places lobby__places--featured" style="display: none;">
+            <ui:Label name="Title" text="Recommended Places" class="lobby__places-title" picking-mode="Ignore" />
+            <DCL.Lobby.LobbyRailElement name="Rail" class="lobby__places-rail" cards-per-page="3" arrows-move-one-card="true" />
+        </ui:VisualElement>
+        <!-- Last so it draws over everything else -->
+        <ui:VisualElement name="AvatarTooltip" class="lobby__avatar-tooltip" picking-mode="Ignore" style="display: none;">
+            <ui:VisualElement name="Icon" class="lobby__avatar-tooltip-icon" picking-mode="Ignore" />
+            <ui:Label name="Label" text="CUSTOMIZE" class="lobby__avatar-tooltip-label" picking-mode="Ignore" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

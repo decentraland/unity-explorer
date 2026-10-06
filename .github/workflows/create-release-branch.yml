@@ -44,15 +44,17 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # For the force-build label only: a label added by GITHUB_TOKEN raises
-          # an event that starts no run, which would defeat its purpose.
+          # an event that builds nothing (build-unitycloud.yml skips bot-actor
+          # pull_request events), which would defeat its purpose.
           ORG_TOKEN: ${{ secrets.ORG_ACCESS_TOKEN }}
           PUBLIC_URL_PREFIX: ${{ vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL }}
         run: |
           set -euo pipefail
 
-          # The PR above was opened with GITHUB_TOKEN, whose events start no
-          # workflow runs: nothing builds, lints or tests the release branch on
-          # its own, and every section would sit on the skeleton's "Waiting…"
+          # The PR above was opened with GITHUB_TOKEN. Its events start runs only
+          # as action_required, owned by the bot even once approved, so none of
+          # them reports into this comment (build-unitycloud.yml does not build
+          # for them at all): every section would sit on the skeleton's "Waiting…"
           # placeholder for good. The branch is cut from dev's tip, whose SHA
           # dev builds, lints and tests on push — seed the sections from those
           # runs. Where dev is done, its links are the release's. Where dev is
@@ -172,6 +174,10 @@ jobs:
               echo "The \`${RUN_BRANCH}\` build of \`${SHORT_SHA}\`, the commit this release was cut from, ended \`${RUN_CONCLUSION}\` ([logs](${ACTIONS_URL}/runs/${RUN_ID})), so there is nothing to reuse. This PR was labeled \`force-build\`; the release branch is building itself and its links land here."
             } > build.md
             upsert build build.md
+            # Removed first: on a re-cut the label may already be on the PR, and
+            # re-adding it raises no event, so nothing would build. Removed with
+            # GITHUB_TOKEN so the unlabeled event raises no build of its own.
+            gh pr edit "$BRANCH_NAME" --remove-label force-build >/dev/null 2>&1 || true
             if GH_TOKEN="$ORG_TOKEN" gh pr edit "$BRANCH_NAME" --add-label force-build; then
               BUILD_STATE=forced
             else
@@ -237,7 +243,8 @@ jobs:
 
           # dev's "Unity Test" run for the same SHA carries the only lint and
           # test evidence this release has at the cut: the PR's own events
-          # start nothing, and only a push to the branch or a force-build label
+          # start runs only as action_required, owned by the bot even once
+          # approved, and only a push to the branch or a force-build label
           # changes that.
           #
           # Four outcomes, kept apart for the same reason the InWorld gate
@@ -368,7 +375,8 @@ jobs:
           upsert performance performance.md
 
       # The PR above was opened with GITHUB_TOKEN, whose events start no workflow
-      # runs — the same suppression the CI-status step above exists to work around.
+      # run without manual approval — the same suppression the CI-status step above
+      # exists to work around.
       # So the InWorld gate has to be started explicitly, by a token that can.
       #
       # Dispatching against the release branch is what puts the gate on the PR:
