@@ -135,11 +135,11 @@ namespace Global.Dynamic
             await bootstrapContainer.InitializeContainerAsync<BootstrapContainer, BootstrapSettings>(settingsContainer, ct, async container =>
             {
                 // The launcher passes --session_id; it is absent on editor and manual runs. Resolved up front
-                // so the Sentry scope configurator below can capture it.
+                // so Sentry tags every event with it from the moment it is initialized.
                 bool hasSessionId = applicationParametersParser.TryGetValue(AppArgsFlags.Analytics.SESSION_ID, out string? sessionId) && !string.IsNullOrEmpty(sessionId);
 
                 container.reportHandlingSettings = ProvideReportHandlingSettingsAsync(container.settings, applicationParametersParser);
-                container.DiagnosticsContainer = DiagnosticsContainer.Create(container.ReportHandlingSettings, realmLaunchSettings.CurrentMode is DCL.Utility.LaunchMode.LocalSceneDevelopment);
+                container.DiagnosticsContainer = DiagnosticsContainer.Create(container.ReportHandlingSettings, realmLaunchSettings.CurrentMode is DCL.Utility.LaunchMode.LocalSceneDevelopment, hasSessionId ? sessionId : null);
                 container.DiagnosticsContainer.AddSentryScopeConfigurator(AddIdentityToSentryScope);
 
                 if (container.IdentityCache != null)
@@ -180,10 +180,6 @@ namespace Global.Dynamic
                 {
                     if (container.IdentityCache?.Identity != null)
                         container.DiagnosticsContainer.Sentry!.AddIdentityToScope(scope, container.IdentityCache.Identity.Address);
-
-                    // Lets the launcher's crash report and the Explorer's crash event be joined by session id.
-                    if (hasSessionId)
-                        container.DiagnosticsContainer.Sentry!.AddSessionIdToScope(scope, sessionId!);
                 }
             });
 
