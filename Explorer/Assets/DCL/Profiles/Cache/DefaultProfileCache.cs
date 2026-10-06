@@ -1,4 +1,5 @@
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.Profiles.Helpers;
 using DCL.Profiling;
 using System;
 using System.Collections.Generic;
@@ -40,7 +41,7 @@ namespace DCL.Profiles
 
                 if (existingProfile != profile)
                 {
-                    InheritDynamicState(existingProfile, profile);
+                    ProfileUtils.InheritDynamicState(existingProfile, profile);
                     existingProfile.Dispose();
                 }
             }
@@ -49,24 +50,6 @@ namespace DCL.Profiles
             userNameToIdMap[profile.DisplayName] = id;
 
             UpdateProfilingCounter();
-        }
-
-        /// <summary>Moves the loaded picture and its in-flight download to the replacement when the snapshot URL is unchanged.</summary>
-        internal static void InheritDynamicState(ProfileTier from, ProfileTier to)
-        {
-            // Only inherit if the snapshot URL hasn't changed — otherwise the old picture/promise is stale.
-            if (from.FaceSnapshotUrl != to.FaceSnapshotUrl)
-                return;
-
-            // Detach on the source after transfer so Dispose doesn't cancel or dereference work we just moved.
-            to.ProfilePicture = from.ProfilePicture;
-            from.ProfilePicture = null;
-
-            if (from.IsFull(out Profile? fromFull) && to.IsFull(out Profile? toFull))
-            {
-                toFull.PicturePromise = fromFull.PicturePromise;
-                fromFull.PicturePromise = null;
-            }
         }
 
         public void Unload(IPerformanceBudget concurrentBudgetProvider, int maxAmount)

@@ -389,7 +389,9 @@ namespace DCL.Profiles.Tests
             executor.Execute(SelfProfileCmd.FromPublish(published), inbox);
 
             // Assert
-            Assert.That(world.Get<Profile>(playerEntity).ProfilePicture, Is.Not.Null, "the entity's new instance keeps the loaded picture");
+            Profile onEntity = world.Get<Profile>(playerEntity);
+            Assert.That(onEntity.ProfilePicture, Is.Not.Null, "the entity's new instance keeps the loaded picture");
+            Assert.That(onEntity.PicturePromise, Is.Null, "a kept picture is not downloaded again");
         }
 
         [Test]

@@ -54,12 +54,33 @@ namespace DCL.Profiles.Helpers
             Profile onEntity = new ProfileBuilder().From(profile).Build();
 
             if (replaced != null)
-                DefaultProfileCache.InheritDynamicState(replaced, onEntity);
+                InheritDynamicState(replaced, onEntity);
 
             onEntity.IsDirty = true;
             world.Set(entity, onEntity);
-            CreateProfilePicturePromise(onEntity, world, PartitionComponent.TOP_PRIORITY);
+
+            // An inherited picture is kept; a download would replace it without releasing it.
+            if (onEntity.ProfilePicture == null)
+                CreateProfilePicturePromise(onEntity, world, PartitionComponent.TOP_PRIORITY);
             replaced?.Dispose();
+        }
+
+        /// <summary>Moves the loaded picture and its in-flight download to the replacement when the snapshot URL is unchanged.</summary>
+        public static void InheritDynamicState(ProfileTier from, ProfileTier to)
+        {
+            // Only inherit if the snapshot URL hasn't changed — otherwise the old picture/promise is stale.
+            if (from.FaceSnapshotUrl != to.FaceSnapshotUrl)
+                return;
+
+            // Detach on the source after transfer so Dispose doesn't cancel or dereference work we just moved.
+            to.ProfilePicture = from.ProfilePicture;
+            from.ProfilePicture = null;
+
+            if (from.IsFull(out Profile? fromFull) && to.IsFull(out Profile? toFull))
+            {
+                toFull.PicturePromise = fromFull.PicturePromise;
+                fromFull.PicturePromise = null;
+            }
         }
 
         // Consume-first handles the late-completion race: finished downloads must dispose of the asset manually; otherwise ForgetLoading cancels cleanly.

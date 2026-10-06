@@ -236,6 +236,9 @@ namespace DCL.UI.ProfileNames
                     await DeployNameAsync(newProfile, ct);
                 }
 
+                if (ct.IsCancellationRequested)
+                    return;
+
                 config.saveButtonInteractable = true;
                 config.saveLoading.SetActive(false);
 
@@ -263,6 +266,9 @@ namespace DCL.UI.ProfileNames
 
                     await DeployNameAsync(newProfile, ct);
                 }
+
+                if (ct.IsCancellationRequested)
+                    return;
 
                 config.saveButtonInteractable = true;
                 config.saveLoading.SetActive(false);
