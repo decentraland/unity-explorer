@@ -20,11 +20,6 @@ namespace DCL.SDKComponents.MediaStream
     /// <summary>
     /// Main-thread only. Not thread-safe.
     /// </summary>
-    /// <remarks>
-    /// The four room event handlers run on LiveKit's FFI thread. They touch nothing but the volatile
-    /// <c>pending*</c> flags, which <see cref="EnsureVideoIsPlaying" /> and <see cref="EnsureAudioIsPlaying" />
-    /// consume on the main thread.
-    /// </remarks>
     public class LivekitPlayer : IDisposable
     {
         private static readonly IObjectPool<LivekitAudioSource> OBJECT_POOL = new ThreadSafeObjectPool<LivekitAudioSource>(
@@ -74,6 +69,9 @@ namespace DCL.SDKComponents.MediaStream
         private volatile bool pendingVideoRediscovery;
         private volatile bool pendingAudioRediscovery;
 
+        // Set on Connected/Reconnected (FFI thread), consumed on the main thread: any video stream held
+        // across a connection change belongs to the torn-down connection and must be dropped AND evicted
+        // from the room's stream cache (see EnsureVideoIsPlaying).
         private volatile bool pendingVideoReset;
         private volatile bool pendingPresentationRefresh;
 
@@ -87,6 +85,7 @@ namespace DCL.SDKComponents.MediaStream
 
         public bool IsVideoOpened => isComposing || (cvs.HasValue && cvs.Value.videoStream.Resource.Has);
 
+        // Live LiveKit frames are vertically flipped; the camera-off placeholder and the presentation composite are upright.
         public Vector2 CurrentTextureScale =>
             isComposing || (placeholderSource != null && cvs.HasValue && IsCameraVideoMuted(cvs.Value))
                 ? Vector2.one
@@ -128,23 +127,31 @@ namespace DCL.SDKComponents.MediaStream
             if (State != PlayerState.Playing) return;
             if (playingAddress == null) return;
 
+            // Room is tearing down — skip to avoid opening streams with invalid FFI handles,
+            // which would poison the reusable stream cache. Pending flags stay set for reconnect.
             if (!canOpenStreams)
             {
                 if (presentation != null)
                     DropPresentation();
 
-                EnsureAudioIsPlaying();
+                EnsureAudioIsPlaying(); // still releases audio sources whose streams died with the room
                 return;
             }
 
             if (pendingVideoReset)
             {
                 pendingVideoReset = false;
+
+                // Evict the stale streams from the room's cache so re-open gets a fresh instance.
                 ReleaseVideoStream(ref cvs);
                 ReleaseVideoStream(ref presentationVideo);
                 ReleaseVideoStream(ref presenterCamera);
             }
 
+            // Consume the flag even when IsVideoOpened: prevents stale-flag pile-up while the stream is healthy.
+            // We deliberately do NOT re-open an established stream here — TryFollowVideoStreamToActiveSpeaker
+            // already handles "look for a better source" safely, and re-allocating cvs while a subscription
+            // is mid-flight can stomp the in-flight Weak<IVideoStream> and stall playback (observed on Windows).
             bool rescan = pendingVideoRediscovery;
 
             if (rescan)
@@ -171,9 +178,15 @@ namespace DCL.SDKComponents.MediaStream
             }
             else
             {
+                // target was a specific user that went offline or a current-stream that had no tracks,
+                // the recovery is: fall back to first-available. With no stream held (composition just ended),
+                // reopen the playing address first.
                 OpenVideoStream(cvs.HasValue ? LivekitAddress.CurrentStream() : playingAddress.Value);
             }
 
+            // UpdateMediaPlayerSystem has two separate queries: UpdateAudioStream (for PBAudioStream)
+            // and UpdateVideoTexture (for PBVideoPlayer). Entities with only PBVideoPlayer never enter
+            // the audio query, so we drive audio discovery here to keep LiveKit rooms audible.
             EnsureAudioIsPlaying();
         }
 
@@ -361,6 +374,7 @@ namespace DCL.SDKComponents.MediaStream
 
                 foreach ((string sid, TrackPublication track) in participant.Tracks)
                 {
+                    // Skip a paused (muted) share so video falls through to the active speaker until it resumes.
                     if (track.Kind == TrackKind.KindVideo && track.Source == TrackSource.SourceScreenshare && !track.Muted && !IsPresentationVideo(track))
                         return new StreamKey(identity, sid);
                 }
@@ -384,6 +398,7 @@ namespace DCL.SDKComponents.MediaStream
                 {
                     if (value.Kind == kind && !IsPresentationVideo(value))
                     {
+                        // Presentation bot always has priority.
                         if (remoteParticipantIdentity.IsPresentationBotIdentity())
                             return new StreamKey(remoteParticipantIdentity, sid);
 
@@ -501,6 +516,8 @@ namespace DCL.SDKComponents.MediaStream
 
         private StreamKey? FindVideoTrack(string identity, Func<TrackPublication, bool> match)
         {
+            // See: solved https://github.com/decentraland/unity-explorer/issues/3796
+            // room.Participants is thread-safe
             var participant = room.Participants.RemoteParticipant(identity);
 
             if (participant == null) return null;
@@ -547,6 +564,7 @@ namespace DCL.SDKComponents.MediaStream
 
         public void CloseCurrentStream()
         {
+            // Doesn't need to dispose the stream, because it's responsibility of the owning room.
             requestedAddress = null;
             cvs = null;
             presentationVideo = null;
@@ -613,6 +631,7 @@ namespace DCL.SDKComponents.MediaStream
                 ? placeholderSource.TextureFor(StreamerName(videoInfo))
                 : null;
 
+        // Screen-shares are not cameras, so they keep their live frame and never show the placeholder.
         private bool IsCameraVideoMuted(CurrentVideoStreamInfo videoInfo) =>
             PublicationOf(videoInfo) is { Muted: true } track && track.Source != TrackSource.SourceScreenshare;
 
@@ -647,6 +666,9 @@ namespace DCL.SDKComponents.MediaStream
             compositor.Dispose();
         }
 
+        // The four handlers below are invoked from LiveKit's FFI thread. The class is otherwise
+        // main-thread only, so the handlers MUST NOT touch any field other than the volatile
+        // pending* flags. Consumption happens on the main thread inside EnsureVideoIsPlaying / EnsureAudioIsPlaying.
         private void OnRoomConnectionUpdated(IRoom _, ConnectionUpdate update, LKDisconnectReason? __)
         {
             if (update is ConnectionUpdate.Connected or ConnectionUpdate.Reconnected)

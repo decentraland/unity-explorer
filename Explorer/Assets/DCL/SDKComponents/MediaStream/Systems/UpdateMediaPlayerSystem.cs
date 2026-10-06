@@ -170,6 +170,9 @@ namespace DCL.SDKComponents.MediaStream
                 }
 
                 if (component.IsPlaying)
+
+                    // Covers cases like leaving and re-entering the scene
+                    // or the stream not being available for some time, like OBS not started while the stream is active
                     if (component.MediaPlayer.IsLivekitPlayer(out LivekitPlayer? livekitPlayer))
                         livekitPlayer.EnsureVideoIsPlaying();
 
@@ -248,6 +251,7 @@ namespace DCL.SDKComponents.MediaStream
             int targetWidth = avText.width;
             int targetHeight = avText.height;
 
+            // Cap LiveKit video resolution to prevent GPU stalls from 4K+ streams.
             if (livekitPlayer != null && Mathf.Max(avText.width, avText.height) > LiveKitMediaExtensions.MAX_LIVEKIT_TEXTURE_SIZE)
             {
                 float scale = (float)LiveKitMediaExtensions.MAX_LIVEKIT_TEXTURE_SIZE / Mathf.Max(avText.width, avText.height);

@@ -13,13 +13,9 @@ using UnityEngine;
 
 namespace DCL.SDKComponents.MediaStream
 {
-    /// <remarks>
-    ///     <see cref="InjectToWorld" /> compiles its body out on Linux, the defines InspectCode runs with, so the fields
-    ///     it consumes look unused there.
-    /// </remarks>
     public class MediaPlayerPluginWrapper : IDisposable
     {
-        // ReSharper disable NotAccessedField.Local
+        // ReSharper disable NotAccessedField.Local -- consumed by InjectToWorld, whose body is compiled out under the Linux defines InspectCode runs with.
         private readonly IPerformanceBudget frameTimeBudget;
         private readonly IExposedCameraData exposedCameraData;
         private readonly float audioFadeSpeed;
@@ -29,9 +25,7 @@ namespace DCL.SDKComponents.MediaStream
         private readonly MediaPlayerDebugRegistry debugRegistry;
         // ReSharper restore NotAccessedField.Local
 
-        /// <summary>
-        ///     Null on platforms where the LiveKit media feature is compiled out.
-        /// </summary>
+        // Null on platforms where the LiveKit media feature is compiled out (see InjectToWorld guard).
         private readonly AvatarPlaceHolderTextureSource? placeholderSource;
 
         public MediaPlayerPluginWrapper(
