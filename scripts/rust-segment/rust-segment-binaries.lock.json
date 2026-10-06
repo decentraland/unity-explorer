@@ -121,7 +121,8 @@
         "source_files": 4,
         "toolchain": {
           "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
-          "cargo": "cargo 1.97.1 (c980f4866 2026-06-30)"
+          "cargo": "cargo 1.97.1 (c980f4866 2026-06-30)",
+          "gcc": "gcc (Ubuntu 11.4.0-1ubuntu1~22.04.3) 11.4.0"
         },
         "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
         "repo_commit": "ad75ed2b3b14d08a91b6acdf4f737375a5ae4cfe"
