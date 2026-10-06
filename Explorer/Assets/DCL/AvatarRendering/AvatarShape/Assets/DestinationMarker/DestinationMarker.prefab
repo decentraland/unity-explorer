@@ -98,7 +98,8 @@ MonoBehaviour:
   m_GameObject: {fileID: 5359736345899209765}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 81dc589d86f21784c8568883bd01920c, type: 3}
+  m_Script: {fileID: 11500000, guid: e77b93b4bfb0de546a954dc71cd59c35, type: 3}
   m_Name: 
   m_EditorClassIdentifier: AvatarShape::DCL.AvatarRendering.AvatarShape.DestinationMarkerView
-  rainbowSpeed: 2
+  <RainbowSpeed>k__BackingField: 1
+  <EmissionIntensity>k__BackingField: 2

@@ -1,6 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Chat.History;
 using DCL.Diagnostics;
+using DCL.FeatureFlags;
 using DCL.Friends;
 using DCL.Friends.UserBlocking;
 using DCL.Multiplayer.Connections.RoomHubs;
@@ -112,6 +113,10 @@ namespace DCL.Chat.ChatServices
             try
             {
                 await rpcChatPrivacyService.GetOwnSocialSettingsAsync(cts.Token);
+
+                // The chat room is never connected in local scene development (see CommsContainer); waiting would just burn the timeout.
+                if (FeaturesRegistry.Instance.IsEnabled(FeatureId.LocalSceneDevelopment))
+                    return;
 
                 await UniTask.WaitUntil(() =>
                     chatRoom.Info.ConnectionState == LKConnectionState.ConnConnected, cancellationToken: cts.Token)
@@ -363,6 +368,8 @@ namespace DCL.Chat.ChatServices
         {
         }
 
+        // Wire format serialized with JsonUtility: field names must match the JSON keys.
+        // ReSharper disable InconsistentNaming
         [Serializable]
         public struct ParticipantPrivacyMetadata
         {

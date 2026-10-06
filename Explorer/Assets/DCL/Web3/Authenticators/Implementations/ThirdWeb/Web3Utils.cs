@@ -11,12 +11,12 @@ namespace DCL.Web3
         {
             Dictionary<string, object>? txParams = JsonConvert.DeserializeObject<Dictionary<string, object>>(request.@params[0].ToString());
             string? to = txParams?.TryGetValue("to", out object? toValue) == true ? toValue?.ToString() : null;
-            string? value = txParams?.TryGetValue("value", out object? valueValue) == true ? valueValue?.ToString() ?? "0x0" : "0x0";
-            string? data = txParams?.TryGetValue("data", out object? dataValue) == true ? dataValue?.ToString() ?? "0x" : "0x";
+            string value = txParams?.TryGetValue("value", out object? valueValue) == true ? valueValue?.ToString() ?? "0x0" : "0x0";
+            string data = txParams?.TryGetValue("data", out object? dataValue) == true ? dataValue?.ToString() ?? "0x" : "0x";
             return (to, value, data);
         }
 
-        public static BigInteger ParseHexToBigInteger(string hexValue)
+        public static BigInteger ParseHexToBigInteger(string? hexValue)
         {
             if (string.IsNullOrEmpty(hexValue) || hexValue == "0x" || hexValue == "0x0")
                 return BigInteger.Zero;

@@ -1,4 +1,3 @@
-using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -28,19 +27,19 @@ namespace SceneRuntime.Apis.Modules.SignedFetch.Tests
         /// </summary>
         private const int MAX_CONTINUATION_TICKS = 10;
 
-        private IWebRequestController webController;
-        private ISceneData sceneData;
-        private IRealmData realmData;
-        private IWeb3IdentityCache identityCache;
-        private CancellationTokenSource disposeCts;
-        private SignedFetchWrap signedFetchWrap;
+        private IWebRequestController webController = null!;
+        private ISceneData sceneData = null!;
+        private IRealmData realmData = null!;
+        private IWeb3IdentityCache identityCache = null!;
+        private CancellationTokenSource disposeCts = null!;
+        private SignedFetchWrap signedFetchWrap = null!;
 
         private Vector2Int sceneBase;
-        private string sceneID;
+        private string sceneID = null!;
 
-        private string realmName;
-        private string realmHostname;
-        private string realmProtocol;
+        private string realmName = null!;
+        private string realmHostname = null!;
+        private string realmProtocol = null!;
 
 
         [SetUp]
@@ -78,7 +77,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch.Tests
             // Setup identity cache with a mock identity
             var mockIdentity = Substitute.For<IWeb3Identity>();
             // Return a new AuthChain with a signer link each time Sign is called
-            mockIdentity.Sign(Arg.Any<string>()).Returns(callInfo =>
+            mockIdentity.Sign(Arg.Any<string>()).Returns(_ =>
             {
                 var authChain = AuthChain.Create();
                 authChain.SetSigner("0x1234567890123456789012345678901234567890");
@@ -99,7 +98,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch.Tests
         [TearDown]
         public void TearDown()
         {
-            disposeCts?.Dispose();
+            disposeCts.Dispose();
         }
 
         [Test]
@@ -112,17 +111,17 @@ namespace SceneRuntime.Apis.Modules.SignedFetch.Tests
             string method = "GET";
 
             // Act
-            string result = signedFetchWrap.GetSignedHeaders(url, body, headers, method) as string;
+            string? result = signedFetchWrap.GetSignedHeaders(url, body, headers, method) as string;
 
             // Assert
             Assert.IsNotNull(result, "GetSignedHeaders should return a non-null result");
 
             // Parse the returned headers JSON
-            Dictionary<string, string>? headersDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(result);
+            Dictionary<string, string>? headersDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(result!);
             Assert.IsNotNull(headersDict, "Headers should be deserializable");
 
             // Extract the signature metadata from headers
-            Assert.IsTrue(headersDict.ContainsKey("x-identity-metadata"), "Headers should contain x-identity-metadata");
+            Assert.IsTrue(headersDict!.ContainsKey("x-identity-metadata"), "Headers should contain x-identity-metadata");
             string signatureMetadataJson = headersDict["x-identity-metadata"];
 
             // Parse the signature metadata JSON

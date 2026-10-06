@@ -34,7 +34,12 @@ namespace DCL.BadgesAPIService
     public class BadgeProgressData
     {
         public int stepsDone;
+
+        // Newtonsoft-deserialized wire DTO (CreateFromJson with WRJsonParser.Newtonsoft); Unity serialization never sees this field.
+#pragma warning disable UAC1001
         public int? nextStepsTarget;
+#pragma warning restore UAC1001
+
         public int totalStepsTarget;
         public string lastCompletedTierAt;
         public string lastCompletedTierName;

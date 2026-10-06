@@ -26,7 +26,9 @@ using DCL.LOD.Systems;
 using DCL.MarketplaceCredits;
 using DCL.MarketplaceCredits.Purchase;
 using DCL.McpServer.Systems;
+using DCL.Multiplayer.Connections.GateKeeper.Meta;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
+using DCL.Multiplayer.Connections.Pulse;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Emotes;
 using DCL.Multiplayer.Movement;
@@ -45,7 +47,11 @@ using DCL.RealmNavigation;
 using DCL.Rendering.GPUInstancing.Systems;
 using DCL.RuntimeDeepLink;
 using DCL.SDKComponents.AvatarLocomotion;
+using DCL.SDKComponents.AvatarNametag;
 using DCL.SkyBox;
+using DCL.SyntheticInput;
+using DCL.SyntheticInput.Systems;
+using DCL.SyntheticInput.UiSimulation;
 using DCL.UI;
 using DCL.UI.ConfirmationDialog;
 using DCL.UI.InputFieldFormatting;
@@ -82,8 +88,7 @@ namespace Global.Dynamic
         private readonly ProfileContainer profileContainer;
         private readonly UIShellContainer uiShellContainer;
         private readonly ChatContainer chatContainer;
-
-        private AbgenSidecarPlugin? abgenSidecarPlugin;
+        private readonly UpscalingController upscalingController;
 
         public IMVCManager MvcManager => uiShellContainer.MvcManager;
 
@@ -111,13 +116,6 @@ namespace Global.Dynamic
 
         public ISystemClipboard SystemClipboard => uiShellContainer.Clipboard;
 
-        /// <summary>
-        ///     Completed once the abgen sidecar reaches a terminal state — warm and serving, or given up
-        ///     (see <see cref="AbgenSidecarPlugin.ReadyAsync" />). Already completed when the sidecar is
-        ///     not mounted, so awaiting it costs nothing outside local scene development with local ABs.
-        /// </summary>
-        public UniTask AbgenSidecarReadyAsync => abgenSidecarPlugin?.ReadyAsync ?? UniTask.CompletedTask;
-
         private DynamicWorldContainer(
             UIShellContainer uiShellContainer,
             IGlobalRealmController realmController,
@@ -134,7 +132,8 @@ namespace Global.Dynamic
             BannedNotificationHandler bannedNotificationHandler,
             MultiplayerContainer multiplayerContainer,
             CommunitiesContainer communitiesContainer,
-            VoiceChatContainer voiceChatContainer)
+            VoiceChatContainer voiceChatContainer,
+            UpscalingController upscalingController)
         {
             this.uiShellContainer = uiShellContainer;
             RealmController = realmController;
@@ -152,11 +151,13 @@ namespace Global.Dynamic
             this.multiplayerContainer = multiplayerContainer;
             this.communitiesContainer = communitiesContainer;
             this.voiceChatContainer = voiceChatContainer;
+            this.upscalingController = upscalingController;
         }
 
         public override void Dispose()
         {
             // Reverse creation order
+            upscalingController.Dispose();
             voiceChatContainer.Dispose(); // disposes JoinedCommunitiesVoiceLiveTracker, which unsubscribes from CommunityDataService
             socialServicesContainer.Dispose();
             bannedNotificationHandler.Dispose();
@@ -235,6 +236,10 @@ namespace Global.Dynamic
 
             var terrainContainer = TerrainContainer.Create(staticContainer, realmContainer, dynamicWorldParams.EnableLandscape, localSceneDevelopment);
 
+            // One fetch of the dev server’s entity id, shared by both transports: the gatekeeper scene room
+            // keys its room on it and Pulse derives its realm from it, so two instances would double the start-up requests.
+            var localSceneEntityIdSource = new LocalSceneEntityIdSource(staticContainer.WebRequestsContainer.WebRequestController, dynamicWorldParams.LocalSceneDevelopmentRealm);
+
             var commsContainer = CommsContainer.Create(
                 staticContainer,
                 bootstrapContainer,
@@ -244,7 +249,12 @@ namespace Global.Dynamic
                 dynamicWorldParams.IsolateScenesCommunication,
                 dynamicWorldParams.EnableAnalytics,
                 localSceneDevelopment,
-                dynamicWorldParams.LocalSceneDevelopmentRealm);
+                localSceneEntityIdSource);
+
+            // Pulse partitions visibility by exact realm string. Local scene development has no realm of its own,
+            // so each dev process derives one from the entity id its dev server serves, keeping concurrent previews apart.
+            var pulseRealm = new PulseRealm(staticContainer.RealmData,
+                localSceneDevelopment ? localSceneEntityIdSource : null);
 
             IFriendsEventBus friendsEventBus = new DefaultFriendsEventBus();
 
@@ -276,13 +286,14 @@ namespace Global.Dynamic
                               debugBuilder,
                               dynamicWorldParams.EnableLOD,
                               staticContainer.GPUInstancingService,
+                              bootstrapContainer.DecentralandUrlsSource,
                               cancellationToken
                           )
                          .ThrowOnFail();
 
                 multiplayerContainer = await MultiplayerContainer.CreateAsync(
                     settingsContainer,
-                    staticContainer.RealmData,
+                    pulseRealm,
                     identityCache,
                     commsContainer.MovementInbox,
                     staticContainer.QualityContainer.LandscapeData,
@@ -319,6 +330,7 @@ namespace Global.Dynamic
                 realmContainer.ReloadSceneController,
                 realmContainer.TeleportController,
                 realmNavigator,
+                dynamicWorldParams.StartParcel,
                 debugBuilder,
                 dclVersion,
                 appArgs,
@@ -365,6 +377,7 @@ namespace Global.Dynamic
                 multiplayerContainer.PulseMultiplayerService,
                 multiplayerContainer.ProfilePropagation,
                 multiplayerContainer.PulseActivation,
+                multiplayerContainer.PulseRealm,
                 realmNavigatorContainer.WorldPermissionsService,
                 chatContainer.ChatHistory);
 
@@ -429,10 +442,11 @@ namespace Global.Dynamic
                 new AvatarAttachPlugin(globalWorld, staticContainer.MainPlayerAvatarBaseProxy, staticContainer.ComponentsContainer.ComponentPoolsRegistry, commsContainer.EntityParticipantTable, staticContainer.CharacterContainer.Transform),
                 new SceneMaskedEmotePlugin(globalWorld, playerEntity, staticContainer.MainPlayerAvatarBaseProxy, staticContainer.EmotesContainer.EmotePlayer, staticContainer.EmoteStorage, multiplayerEmotesMessageBus),
                 new RealmInfoPlugin(staticContainer.RealmData, commsContainer.RoomHub),
+                new AvatarNametagWorldPlugin(globalWorld, playerEntity, commsContainer.EntityParticipantTable),
             };
 
             var characterPreviewEventBus = new CharacterPreviewEventBus();
-            var upscaleController = new UpscalingController(uiShellContainer.MvcManager);
+            var upscaleController = new UpscalingController(characterPreviewEventBus);
             AudioMixer generalAudioMixer = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.GeneralAudioMixer, ct)).Value;
             var audioMixerVolumesController = new AudioMixerVolumesController(generalAudioMixer);
 
@@ -475,7 +489,7 @@ namespace Global.Dynamic
 
             // Deep link listening stays alive in every mode so browser sign-in can complete; local scene
             // development only opts out of navigation routing (teleports would break the scene under test).
-            var deepLinkHandleImplementation = new DeepLinkHandle(dynamicWorldParams.StartParcel, chatContainer.ChatTeleporter, ct, communitiesDataService, uiShellContainer.MvcManager, staticContainer.LoadingStatus, bootstrapContainer.DeeplinkSigninIdentityId,
+            var deepLinkHandleImplementation = new DeepLinkHandle(chatContainer.ChatTeleporter, ct, communitiesDataService, uiShellContainer.MvcManager, staticContainer.LoadingStatus, bootstrapContainer.DeeplinkSigninIdentityId,
                 bootstrapContainer.DeeplinkLoginAwaitingSigninRequestId, routeNavigationDeepLinks: !appArgs.HasFlag(AppArgsFlags.LOCAL_SCENE));
 
             deepLinkHandleImplementation.StartListenForDeepLinksAsync(ct).Forget();
@@ -498,6 +512,7 @@ namespace Global.Dynamic
                 bootstrapContainer.WebBrowser,
                 bootstrapContainer.DecentralandUrlsSource,
                 profileContainer.SelfProfile,
+                identityCache,
                 voiceChatContainer.NearbyMuteService);
 
             ViewDependencies.Initialize(new ViewDependencies(
@@ -516,8 +531,6 @@ namespace Global.Dynamic
 
             var springBoneSimulationSettings = new SpringBoneSimulationSettings();
 
-            AbgenSidecarPlugin? abgenSidecarPlugin = null;
-
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
                 new ResourceUnloadingPlugin(staticContainer.SingletonSharedDependencies.MemoryBudget, staticContainer.CacheCleaner, staticContainer.SceneLoadingLimit),
@@ -532,7 +545,7 @@ namespace Global.Dynamic
                 new GlobalInteractionPlugin(assetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents, uiShellContainer.EventSystem, staticContainer.ScenesCache, uiShellContainer.MvcManager, menusAccessFacade, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy),
                 new CharacterCameraPlugin(assetsProvisioner, realmSamplingData, exposedGlobalDataContainer.ExposedCameraData, debugBuilder, dynamicWorldDependencies.CommandLineArgs),
                 wearableContainer.CreateWearablePlugin(staticContainer, bootstrapContainer),
-                wearableContainer.CreateEmotePlugin(staticContainer, bootstrapContainer, assetsProvisioner, debugBuilder, uiShellContainer, profileContainer, commsContainer,
+                wearableContainer.CreateEmotePlugin(staticContainer, bootstrapContainer, assetsProvisioner, uiShellContainer, profileContainer, commsContainer,
                     multiplayerEmotesMessageBus, globalWorld, playerEntity),
                 new ProfilingPlugin(staticContainer.Profiler, staticContainer.RealmData,
                     staticContainer.SingletonSharedDependencies.MemoryBudget, debugBuilder,
@@ -696,8 +709,8 @@ namespace Global.Dynamic
                 profileContainer.CreateGiftingPlugin(staticContainer, bootstrapContainer, assetsProvisioner, uiShellContainer, wearableContainer, chatContainer.ChatEventBus, identityCache),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 staticContainer.WebRequestsContainer.CreatePlugin(localSceneDevelopment),
-                new Web3AuthenticationPlugin(assetsProvisioner, dynamicWorldDependencies.CompositeWeb3Provider, debugBuilder, uiShellContainer.MvcManager, profileContainer.SelfProfile, webBrowser, staticContainer.RealmData, identityCache, characterPreviewFactory, dynamicWorldDependencies.SplashScreen, audioMixerVolumesController, staticContainer.InputBlock, characterPreviewEventBus, backgroundMusic, globalWorld, bootstrapContainer.AppArgs, wearableContainer.WearablesProvider, staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, profileContainer.ProfileChangesBus, profilesRepository, donationsService),
-                new SkyboxPlugin(assetsProvisioner, dynamicSettings.DirectionalLight, staticContainer.ScenesCache, staticContainer.SceneRestrictionBusController, staticContainer.RealmData, !appArgs.HasFlagWithValueFalse(AppArgsFlags.SKYBOX_TIME_ENABLED)),
+                new Web3AuthenticationPlugin(assetsProvisioner, dynamicWorldDependencies.CompositeWeb3Provider, debugBuilder, uiShellContainer.MvcManager, profileContainer.SelfProfile, webBrowser, staticContainer.RealmData, identityCache, characterPreviewFactory, dynamicWorldDependencies.SplashScreen, audioMixerVolumesController, staticContainer.InputBlock, characterPreviewEventBus, backgroundMusic, globalWorld, bootstrapContainer.AppArgs, staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, profileContainer.ProfileChangesBus, profilesRepository, donationsService),
+                new SkyboxPlugin(assetsProvisioner, dynamicSettings.DirectionalLight, staticContainer.ScenesCache, staticContainer.SceneRestrictionBusController, staticContainer.RealmData, debugBuilder, !appArgs.HasFlagWithValueFalse(AppArgsFlags.SKYBOX_TIME_ENABLED)),
                 new LoadingScreenPlugin(assetsProvisioner, uiShellContainer.MvcManager, audioMixerVolumesController,
                     staticContainer.InputBlock, debugBuilder, staticContainer.LoadingStatus),
                 new ExternalUrlPromptPlugin(assetsProvisioner, webBrowser, uiShellContainer.MvcManager, uiShellContainer.Cursor),
@@ -715,12 +728,12 @@ namespace Global.Dynamic
                     uiShellContainer.Cursor,
                     (realmUrl, position) =>
                     {
-                        // With a target parcel: teleport with the typed position (works for URL realms too).
-                        // Without one: keep the existing chat-command route so the switch surfaces in nearby chat.
+                        // In-world without a parcel the switch goes through the chat command so its result surfaces in nearby chat
+                        // TODO: surface the teleporter result (chat bus / notification) on the direct paths too.
                         if (position.HasValue)
-                            // TODO: surface the teleport result (chat bus / notification) like the no-position path below,
-                            // and plumb a real cancellation token instead of None (composition-root fire-and-forget for now).
-                            chatContainer.ChatTeleporter.TeleportToRealmAsync(realmUrl, position.Value, CancellationToken.None).Forget();
+                            chatContainer.ChatTeleporter.TeleportToRealmAsync(realmUrl, position.Value, ct).Forget();
+                        else if (!dynamicWorldParams.StartParcel.HasLanded)
+                            chatContainer.ChatTeleporter.TeleportToRealmAsync(realmUrl, ct).Forget();
                         else
                             chatContainer.ChatMessagesBus.SendWithUtcNowTimestamp(ChatChannel.NEARBY_CHANNEL, $"/{ChatCommandsUtils.COMMAND_GOTO} {realmUrl}", ChatMessageOrigin.RestrictedActionApi);
                     }),
@@ -763,7 +776,6 @@ namespace Global.Dynamic
                     realmNftNamesProvider,
                     profileContainer.ProfileChangesBus,
                     communitiesContainer.IncludeCommunities,
-                    profileContainer.ProfileRepositoryWrapper,
                     voiceChatContainer.VoiceChatOrchestrator,
                     cameraReelContainer.GalleryEventBus,
                     uiShellContainer.Clipboard,
@@ -771,7 +783,8 @@ namespace Global.Dynamic
                     wearableContainer.ThumbnailProvider,
                     staticContainer.ImageControllerProvider,
                     staticContainer.WebRequestsContainer.WebRequestController,
-                    marketplaceShopApiClient
+                    marketplaceShopApiClient,
+                    upscaleController
                 ),
                 new CreditPurchasePlugin(
                     assetsProvisioner,
@@ -780,8 +793,15 @@ namespace Global.Dynamic
                     marketplaceCreditsApiClient,
                     identityCache,
                     webBrowser,
-                    staticContainer.ImageControllerProvider),
-                uiShellContainer.CreateGenericPopupsPlugin(assetsProvisioner),
+                    staticContainer.ImageControllerProvider,
+                    characterPreviewFactory,
+                    characterPreviewEventBus,
+                    profileContainer.SelfProfile,
+                    profileContainer.ProfileRepositoryWrapper,
+                    globalWorld,
+                    wearableContainer.WearableCatalog),
+                uiShellContainer.CreateGenericPopupsPlugin(assetsProvisioner, dynamicWorldDependencies.CompositeWeb3Provider, profileContainer.SelfProfile, staticContainer.InputBlock,
+                    identityCache, profileCache, initializationFlowContainer.InitializationFlow, globalWorld, playerEntity),
                 uiShellContainer.CreateColorPickerPlugin(assetsProvisioner),
                 uiShellContainer.CreateGenericContextMenuPlugin(assetsProvisioner, profileContainer.ProfileRepositoryWrapper),
                 realmNavigatorContainer.CreatePlugin(),
@@ -815,7 +835,7 @@ namespace Global.Dynamic
                     webBrowser,
                     bootstrapContainer.DecentralandUrlsSource,
                     staticContainer.InputBlock,
-                    dynamicWorldDependencies.CompositeWeb3Provider));
+                    identityCache));
 
             // ReSharper disable once MethodHasAsyncOverloadWithCancellation
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.StopOnDuplicateIdentity))
@@ -829,6 +849,16 @@ namespace Global.Dynamic
                     staticContainer.WebRequestsContainer.WebRequestController,
                     uiShellContainer.MvcManager,
                     bootstrapContainer.DecentralandUrlsSource));
+
+            globalPlugins.Add(new AnalyticsDiskFullPopupPlugin(bootstrapContainer.Analytics.EventBus, uiShellContainer.MvcManager));
+
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.Lobby))
+                globalPlugins.Add(new LobbyPlugin(assetsProvisioner, uiShellContainer.MvcManager, staticContainer.InputBlock, staticContainer.LoadingStatus, debugBuilder,
+                    profileContainer.SelfProfile, profileContainer.ProfileChangesBus, characterPreviewFactory, characterPreviewEventBus, globalWorld,
+                    placesAndEventsContainer.PlacesAPIService, staticContainer.RealmData, placesAndEventsContainer.HomePlaceEventBus, placesAndEventsContainer.EventsApiService, realmNavigator, bootstrapContainer.DecentralandUrlsSource, uiShellContainer.Clipboard, dynamicWorldParams.StartParcel, staticContainer.WebRequestsContainer.WebRequestController,
+                    identityCache, profilesRepository, profileCache, profileContainer.ProfileRepositoryWrapper, uiShellContainer.PassportBridge, playerEntity, webBrowser,
+                    dynamicWorldDependencies.CompositeWeb3Provider, initializationFlowContainer.InitializationFlow, marketplaceCreditsApiClient, notificationsRequestController,
+                    FeaturesRegistry.Instance.IsEnabled(FeatureId.FriendsConnectivityStatus) ? friendsServices?.ConnectivityStatusTracker : null, placesAndEventsContainer.OnlineUsersProvider));
 
             // ReSharper disable once MethodHasAsyncOverloadWithCancellation
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.VoiceChat))
@@ -864,11 +894,6 @@ namespace Global.Dynamic
             if (localSceneDevelopment)
             {
                 globalPlugins.Add(new LocalSceneDevelopmentPlugin(realmContainer.ReloadSceneController, realmUrls));
-
-                // local-ab only (the endpoint is reserved exclusively under that flag); the plugin owns
-                // the abgen server's whole lifecycle: creation, launch, warm-up, dispose.
-                if (bootstrapContainer.LocalAbBaseUrl != null)
-                    globalPlugins.Add(abgenSidecarPlugin = new AbgenSidecarPlugin(bootstrapContainer.LocalAbBaseUrl, realmUrls, bootstrapContainer.Environment));
             }
             else
             {
@@ -876,25 +901,49 @@ namespace Global.Dynamic
                 globalPlugins.Add(lodContainer.RoadPlugin);
             }
 
-            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.McpServer))
-                globalPlugins.Add(new McpServerPlugin(
-                    appArgs,
-                    new GlobalWorldActions(globalWorld, playerEntity, localSceneDevelopment, bootstrapContainer.UseRemoteAssetBundles, FeaturesRegistry.Instance.IsEnabled(FeatureId.SelfPreviewBuilderCollections)),
-                    chatContainer.ChatMessagesBus,
-                    staticContainer.ScenesCache,
-                    commsContainer.CurrentSceneInfo,
-                    staticContainer.LoadingStatus,
-                    realmNavigatorContainer.WorldInfoHub,
-                    realmContainer.ReloadSceneController,
-                    bootstrapContainer.DiagnosticsContainer,
-                    exposedGlobalDataContainer.ExposedCameraData,
-                    staticContainer.EntityCollidersGlobalCache,
-                    coroutineRunner,
-                    globalWorld,
-                    localSceneDevelopment));
+            bool syntheticInputEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.McpServer);
+
+#if ALTTESTER
+            syntheticInputEnabled = syntheticInputEnabled || appArgs.HasFlag(AppArgsFlags.ALTTESTER);
+#endif
+
+            if (syntheticInputEnabled)
+            {
+                var syntheticInputAgent = new SyntheticInputAgent(globalWorld, playerEntity);
+
+                var uiAutomation = new UiAutomationServices(globalWorld, playerEntity,
+                    UnityEngine.EventSystems.EventSystem.current.EnsureNotNull(), staticContainer.ScenesCache);
+
+#if ALTTESTER
+                DCL.SyntheticInput.AltTester.WorldAutomationProbe.Install(syntheticInputAgent, globalWorld, playerEntity);
+                DCL.SyntheticInput.AltTester.UiAutomationProbe.Install(uiAutomation);
+                DCL.SyntheticInput.AltTester.NavigationAutomationProbe.Install(realmNavigator, staticContainer.RealmData, bootstrapContainer.DecentralandUrlsSource,
+                    staticContainer.ScenesCache, staticContainer.LoadingStatus, bootstrapContainer.Environment);
+#endif
+
+                globalPlugins.Add(new SyntheticInputPlugin(staticContainer.ScenesCache, staticContainer.EntityCollidersGlobalCache, uiAutomation));
+
+                if (FeaturesRegistry.Instance.IsEnabled(FeatureId.McpServer))
+                    globalPlugins.Add(new McpServerPlugin(
+                        appArgs,
+                        new GlobalWorldActions(globalWorld, playerEntity, localSceneDevelopment, bootstrapContainer.UseRemoteAssetBundles, FeaturesRegistry.Instance.IsEnabled(FeatureId.SelfPreviewBuilderCollections)),
+                        chatContainer.ChatMessagesBus,
+                        staticContainer.ScenesCache,
+                        commsContainer.CurrentSceneInfo,
+                        staticContainer.LoadingStatus,
+                        realmNavigatorContainer.WorldInfoHub,
+                        realmContainer.ReloadSceneController,
+                        bootstrapContainer.DiagnosticsContainer,
+                        exposedGlobalDataContainer.ExposedCameraData,
+                        syntheticInputAgent,
+                        uiAutomation,
+                        coroutineRunner,
+                        globalWorld,
+                        localSceneDevelopment));
+            }
 
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.LocalSceneDevelopment) || FeaturesRegistry.Instance.IsEnabled(FeatureId.SelfPreviewBuilderCollections))
-                globalPlugins.Add(new GlobalGLTFLoadingPlugin(staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, wearableContainer.BuilderContentURL.Value, localSceneDevelopment, staticContainer.ComponentsContainer.ComponentPoolsRegistry.RootContainerTransform()));
+                globalPlugins.Add(new GlobalGLTFLoadingPlugin(staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, wearableContainer.BuilderContentUrl.Value, localSceneDevelopment, staticContainer.ComponentsContainer.ComponentPoolsRegistry.RootContainerTransform()));
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);
 
@@ -1089,10 +1138,9 @@ namespace Global.Dynamic
                 bannedNotificationHandler,
                 multiplayerContainer,
                 communitiesContainer,
-                voiceChatContainer
+                voiceChatContainer,
+                upscaleController
             );
-
-            container.abgenSidecarPlugin = abgenSidecarPlugin;
 
             // Init itself
             await dynamicWorldDependencies.SettingsContainer.InitializePluginAsync(container, ct)!.ThrowOnFail();

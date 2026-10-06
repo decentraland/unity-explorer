@@ -12,15 +12,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f114f251a87571a4a8acdc699b3c6eb4, type: 3}
   m_Name: GPUIEditorSettings
   m_EditorClassIdentifier: 
-  _version: 0.9.19
-  _buildNo: 25
+  _version: 0.12.18
+  _buildNo: 57
   _subModuleVersions:
   - packageName: com.gurbu.gpui-pro.terrain
-    version: 0.9.19
-    processedVersion: 0.9.19
+    version: 0.12.18
+    processedVersion: 0.12.18
   isGenerateShaderVariantCollection: 0
   isAutoShaderConversion: 0
   _requirePackageReload: 0
   stripDOTSInstancingVariants: 1
+  stripObjectMotionVectorVariants: 0
+  stripPerInstanceLightProbeVariants: 0
+  stripNonProceduralGPUIGeneratedVariants: 0
   _customEditorSettings: []
   packageImportList: []

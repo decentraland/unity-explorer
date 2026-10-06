@@ -36,8 +36,10 @@ namespace DCL.Ipfs
         public string? thumbnail;
 
         // Asset bundle manifest properties
+#pragma warning disable UAC1001 // Newtonsoft-only wire field: the JSON key is "versions" (a JsonProperty rename Unity serialization cannot express), and every other producer assigns this runtime object from C#.
         [JsonProperty("versions")]
         public AssetBundleManifestVersion? assetBundleManifestVersion;
+#pragma warning restore UAC1001
 
         /// <summary>The manifest version, or the failed sentinel when none was resolved — AB intentions require a manifest, and the sentinel is the same dead end the pipeline already handles.</summary>
         [JsonIgnore]

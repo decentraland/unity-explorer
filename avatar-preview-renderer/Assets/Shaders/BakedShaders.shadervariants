@@ -26,3 +26,10 @@ ShaderVariantCollection:
         passType: 13
       - keywords: _IS_OUTLINE_CLIPPING_NO _OUTLINE_NML
         passType: 13
+  - first: {fileID: 4800000, guid: 3f1c7a92b48d4c6ea1e5d0f27c93b5a4, type: 3}
+    second:
+      variants:
+      - keywords: _MAIN_LIGHT_SHADOWS _SHADOWS_SOFT
+        passType: 13
+      - keywords: _MAIN_LIGHT_SHADOWS
+        passType: 13

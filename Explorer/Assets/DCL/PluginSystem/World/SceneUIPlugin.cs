@@ -46,11 +46,11 @@ namespace DCL.PluginSystem.World
             this.assetsProvisioner = assetsProvisioner;
             this.inputBlock = inputBlock;
             componentPoolsRegistry = singletonSharedDependencies.ComponentPoolsRegistry;
-            transformsPool = componentPoolsRegistry.AddComponentPool<UITransformComponent>(onRelease: UiElementUtils.ReleaseUITransformComponent, maxSize: 200);
-            componentPoolsRegistry.AddComponentPool<Label>(onRelease: UiElementUtils.ReleaseUIElement, maxSize: 100);
+            transformsPool = componentPoolsRegistry.AddComponentPool<UITransformComponent>(onRelease: UiElementUtils.ReleaseUiTransformComponent, maxSize: 200);
+            componentPoolsRegistry.AddComponentPool<Label>(onRelease: UiElementUtils.ReleaseUiElement, maxSize: 100);
             componentPoolsRegistry.AddComponentPool<DCLImage>(onRelease: UiElementUtils.ReleaseDCLImage, maxSize: 100);
-            componentPoolsRegistry.AddComponentPool<UIInputComponent>(onRelease: UiElementUtils.ReleaseUIInputComponent, maxSize: 50);
-            componentPoolsRegistry.AddComponentPool<UIDropdownComponent>(onRelease: UiElementUtils.ReleaseUIDropdownComponent, maxSize: 50);
+            componentPoolsRegistry.AddComponentPool<UIInputComponent>(onRelease: UiElementUtils.ReleaseUiInputComponent, maxSize: 50);
+            componentPoolsRegistry.AddComponentPool<UIDropdownComponent>(onRelease: UiElementUtils.ReleaseUiDropdownComponent, maxSize: 50);
 
             frameTimeBudgetProvider = singletonSharedDependencies.FrameTimeBudget;
             memoryBudgetProvider = singletonSharedDependencies.MemoryBudget;
@@ -89,14 +89,14 @@ namespace DCL.PluginSystem.World
             UITransformSortingSystem.InjectToWorld(ref builder, sharedDependencies.EntitiesMap);
             sceneIsCurrentListeners.Add(UITransformUpdateSystem.InjectToWorld(ref builder, uiDocument, sharedDependencies.SceneStateProvider, persistentEntities.SceneRoot));
             UITransformReleaseSystem.InjectToWorld(ref builder, componentPoolsRegistry);
-            UITextInstantiationSystem.InjectToWorld(ref builder, componentPoolsRegistry, styleFontDefinitions);
-            UITextReleaseSystem.InjectToWorld(ref builder, componentPoolsRegistry);
+            UITextInstantiationSystem.InjectToWorld(ref builder, componentPoolsRegistry, styleFontDefinitions, sharedDependencies.SceneData, sharedDependencies.ScenePartition);
+            finalizeWorldSystems.Add(UITextReleaseSystem.InjectToWorld(ref builder, componentPoolsRegistry));
             UIBackgroundInstantiationSystem.InjectToWorld(ref builder, componentPoolsRegistry, sharedDependencies.SceneData, frameTimeBudgetProvider, memoryBudgetProvider);
             finalizeWorldSystems.Add(UIBackgroundReleaseSystem.InjectToWorld(ref builder, componentPoolsRegistry));
-            UIInputInstantiationSystem.InjectToWorld(ref builder, componentPoolsRegistry, sharedDependencies.EcsToCRDTWriter, inputBlock, styleFontDefinitions);
-            UIInputReleaseSystem.InjectToWorld(ref builder, componentPoolsRegistry);
-            UIDropdownInstantiationSystem.InjectToWorld(ref builder, componentPoolsRegistry, sharedDependencies.EcsToCRDTWriter, styleFontDefinitions);
-            UIDropdownReleaseSystem.InjectToWorld(ref builder, componentPoolsRegistry);
+            UIInputInstantiationSystem.InjectToWorld(ref builder, componentPoolsRegistry, sharedDependencies.EcsToCRDTWriter, inputBlock, styleFontDefinitions, sharedDependencies.SceneData, sharedDependencies.ScenePartition);
+            finalizeWorldSystems.Add(UIInputReleaseSystem.InjectToWorld(ref builder, componentPoolsRegistry));
+            UIDropdownInstantiationSystem.InjectToWorld(ref builder, componentPoolsRegistry, sharedDependencies.EcsToCRDTWriter, styleFontDefinitions, sharedDependencies.SceneData, sharedDependencies.ScenePartition);
+            finalizeWorldSystems.Add(UIDropdownReleaseSystem.InjectToWorld(ref builder, componentPoolsRegistry));
             UIPointerEventsSystem.InjectToWorld(ref builder, sharedDependencies.SceneStateProvider, sharedDependencies.EcsToCRDTWriter);
             UICanvasInformationSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, uiDocument);
             UIFixPbPointerEventsSystem.InjectToWorld(ref builder);

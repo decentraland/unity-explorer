@@ -53,7 +53,7 @@ namespace Global.Dynamic
             PluginSettingsContainer pluginSettingsContainer, IAnalyticsController analyticsController,
             CancellationToken ct);
 
-        public UniTask InitializeFeatureFlagsAsync(IWeb3Identity? identity, IDecentralandUrlsSource decentralandUrlsSource, CancellationToken ct);
+        public UniTask InitializeFeatureFlagsAsync(IDecentralandUrlsSource decentralandUrlsSource, CancellationToken ct);
 
         void InitializePlayerEntity(StaticContainer staticContainer, Entity playerEntity);
 
@@ -64,7 +64,7 @@ namespace Global.Dynamic
 
         UniTask LoadStartingRealmAsync(DynamicWorldContainer dynamicWorldContainer, CancellationToken ct);
 
-        void ApplyFeatureFlagConfigs(FeatureFlagsConfiguration featureFlagsConfigurationCache);
+        void ApplyFeatureFlagConfigs(FeatureFlagsConfiguration featureFlagsConfigurationCache, IWeb3IdentityCache identityCache);
 
         void InitializeFeaturesRegistry();
     }

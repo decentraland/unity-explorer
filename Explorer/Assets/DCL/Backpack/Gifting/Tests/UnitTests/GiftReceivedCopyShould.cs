@@ -1,4 +1,3 @@
-using DCL.Backpack.Gifting;
 using DCL.Notifications.NotificationEntry;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
@@ -61,12 +60,12 @@ namespace DCL.Backpack.Gifting.Tests.UnitTests
         [Test]
         public void StateGiftOpenedPopupSubtitleIsOnItsWay()
         {
-            const string newGiftOpenedTitle = "ON ITS WAY TO YOUR BACKPACK";
+            const string NEW_GIFT_OPENED_TITLE = "ON ITS WAY TO YOUR BACKPACK";
 
-            Assert.That(GiftingTextIds.GiftOpenedTitle, Is.EqualTo(newGiftOpenedTitle),
-                "GiftingTextIds.GiftOpenedTitle (the received-gift popup subtitle) must say the gift is on its way, not that it has already arrived.");
-            Assert.That(GiftingTextIds.GiftOpenedTitle, Is.Not.EqualTo(OLD_GIFT_OPENED_TITLE),
-                "GiftingTextIds.GiftOpenedTitle regressed to the old \"ITEM OPENED\" copy, which - combined with the popup's Open Backpack CTA - implied immediate availability.");
+            Assert.That(GiftingTextIds.GIFT_OPENED_TITLE, Is.EqualTo(NEW_GIFT_OPENED_TITLE),
+                "GiftingTextIds.GIFT_OPENED_TITLE (the received-gift popup subtitle) must say the gift is on its way, not that it has already arrived.");
+            Assert.That(GiftingTextIds.GIFT_OPENED_TITLE, Is.Not.EqualTo(OLD_GIFT_OPENED_TITLE),
+                "GiftingTextIds.GIFT_OPENED_TITLE regressed to the old \"ITEM OPENED\" copy, which - combined with the popup's Open Backpack CTA - implied immediate availability.");
         }
 
         [Test]
@@ -81,11 +80,11 @@ namespace DCL.Backpack.Gifting.Tests.UnitTests
             view.Configure(notification);
 
             string title = view.TitleText.text;
-            const string oldTitle = "0x123456 sent you something!";
+            const string OLD_TITLE = "0x123456 sent you something!";
 
             Assert.That(title, Does.Contain(ON_ITS_WAY_SENTENCE),
                 "GiftToastView.Configure (short-address variant) must tell the recipient the gift is still on its way.");
-            Assert.That(title, Is.Not.EqualTo(oldTitle),
+            Assert.That(title, Is.Not.EqualTo(OLD_TITLE),
                 "GiftToastView.Configure (short-address variant) regressed to the old copy, which implied the gift already arrived.");
         }
 
@@ -97,11 +96,11 @@ namespace DCL.Backpack.Gifting.Tests.UnitTests
             view.UpdateSenderName("Alice", Color.white);
 
             string title = view.TitleText.text;
-            const string oldTitle = "<color=#FFFFFF><b>Alice</b></color> sent you something!";
+            const string OLD_TITLE = "<color=#FFFFFF><b>Alice</b></color> sent you something!";
 
             Assert.That(title, Does.Contain(ON_ITS_WAY_SENTENCE),
                 "GiftToastView.UpdateSenderName (resolved-name variant) must tell the recipient the gift is still on its way.");
-            Assert.That(title, Is.Not.EqualTo(oldTitle),
+            Assert.That(title, Is.Not.EqualTo(OLD_TITLE),
                 "GiftToastView.UpdateSenderName (resolved-name variant) regressed to the old copy, which implied the gift already arrived.");
         }
 
@@ -118,11 +117,11 @@ namespace DCL.Backpack.Gifting.Tests.UnitTests
             view.Configure(notification);
 
             string header = view.HeaderText.text;
-            const string oldHeader = "0x123456 sent you a something!";
+            const string OLD_HEADER = "0x123456 sent you a something!";
 
             Assert.That(header, Does.Contain(ON_ITS_WAY_SENTENCE),
                 "GiftNotificationView.Configure (short-address variant) must tell the recipient the gift is still on its way.");
-            Assert.That(header, Is.Not.EqualTo(oldHeader),
+            Assert.That(header, Is.Not.EqualTo(OLD_HEADER),
                 "GiftNotificationView.Configure (short-address variant) regressed to the old copy, which implied the gift already arrived.");
         }
 
@@ -134,11 +133,11 @@ namespace DCL.Backpack.Gifting.Tests.UnitTests
             view.UpdateSenderName("Alice", Color.white);
 
             string header = view.HeaderText.text;
-            const string oldHeader = "<color=#FFFFFF>Alice</color> sent you something!";
+            const string OLD_HEADER = "<color=#FFFFFF>Alice</color> sent you something!";
 
             Assert.That(header, Does.Contain(ON_ITS_WAY_SENTENCE),
-                "GiftNotificationView.UpdateSenderName (resolved-name variant, GiftingTextIds.GiftReceivedTitleFormat) must tell the recipient the gift is still on its way.");
-            Assert.That(header, Is.Not.EqualTo(oldHeader),
+                "GiftNotificationView.UpdateSenderName (resolved-name variant, GiftingTextIds.GIFT_RECEIVED_TITLE_FORMAT) must tell the recipient the gift is still on its way.");
+            Assert.That(header, Is.Not.EqualTo(OLD_HEADER),
                 "GiftNotificationView.UpdateSenderName (resolved-name variant) regressed to the old copy, which implied the gift already arrived.");
         }
 

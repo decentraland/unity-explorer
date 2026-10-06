@@ -12,6 +12,9 @@ namespace DCL.Rendering.GPUInstancing.InstancingData
         public Material SharedMaterial;
 
         public RenderParamsSerialized RenderParamsSerialized;
+        // Runtime-only projection of RenderParamsSerialized, rebuilt by InitializeRenderParams; holds a live
+        // Camera and MaterialPropertyBlock, so it must never round-trip through the asset.
+        [NonSerialized]
         public RenderParams RenderParamsArray;
 
         public CombinedLodsRenderer(Material material, Mesh combinedMesh, int subMeshId, RenderParamsSerialized renderParams)

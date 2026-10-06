@@ -67,7 +67,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Fixed
         }
 
         private string BuildMetadata() =>
-            CommsHandshakeMetadata.BuildWorldJson(realmData.WorldCommsSecret);
+            CommsHandshakeMetadata.BuildWorldJson(realmData.WorldCommsSecret, identityCache.IsGuest());
 
         [Serializable]
         private struct AdapterResponse

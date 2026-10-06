@@ -12,6 +12,8 @@ namespace DCL.SDKComponents.SceneUI.Components
         public Promise? TexturePromise;
         public LifeCycle Status;
 
+        public bool StylesApplied;
+
         DCLImage IPoolableComponentProvider<DCLImage>.PoolableComponent => Image;
         Type IPoolableComponentProvider<DCLImage>.PoolableComponentType => typeof(DCLImage);
 
@@ -20,7 +22,6 @@ namespace DCL.SDKComponents.SceneUI.Components
         public void Dispose()
         {
             IsDisposed = true;
-            Image = null;
             Status = 0;
         }
     }

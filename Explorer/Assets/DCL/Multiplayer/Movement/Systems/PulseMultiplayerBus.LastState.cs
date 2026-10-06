@@ -80,7 +80,7 @@ namespace DCL.Multiplayer.Movement
 
             // Subsequent reconnection messages will reuse the allocated state
             PlayerInitialState initialState = handshakeRequest.InitialState ??= new PlayerInitialState();
-            initialState.Realm = realmData.RealmName;
+            initialState.Realm = pulseRealm.Value;
             PlayerState state = handshakeRequest.InitialState.State ??= new PlayerState();
             WritePlayerState(message, state, parcelEncoder);
 

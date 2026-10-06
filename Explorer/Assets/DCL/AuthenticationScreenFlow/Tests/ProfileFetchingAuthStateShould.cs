@@ -3,6 +3,7 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.Utilities;
 using DCL.Web3.Identities;
+using ECS.TestSuite;
 using MVC;
 using NSubstitute;
 using NUnit.Framework;
@@ -28,6 +29,8 @@ namespace DCL.AuthenticationScreenFlow.Tests
         // Long enough for the fetch timeout to fire and be observed
         private const float OBSERVATION_SECONDS = 16.5f;
 
+        private const string FAKE_WALLET = "0x0000000000000000000000000000000000000001";
+
         [UnityTest]
         public IEnumerator CancelStalledFetchOnTimeout() =>
             UniTask.ToCoroutine(async () =>
@@ -40,32 +43,13 @@ namespace DCL.AuthenticationScreenFlow.Tests
 
                 try
                 {
-                    AuthenticationScreenView screenView = root.AddComponent<AuthenticationScreenView>();
-
-                    var viewGo = new GameObject(nameof(ProfileFetchingAuthView));
-                    viewGo.transform.SetParent(root.transform);
-                    StubProfileFetchingAuthView fetchingView = viewGo.AddComponent<StubProfileFetchingAuthView>();
-
-                    var buttonGo = new GameObject("CancelButton");
-                    buttonGo.transform.SetParent(viewGo.transform);
-                    Button cancelButton = buttonGo.AddComponent<Button>();
-
-                    SetBackingField(fetchingView, typeof(ProfileFetchingAuthView), nameof(ProfileFetchingAuthView.CancelButton), cancelButton);
-                    SetBackingField(screenView, typeof(AuthenticationScreenView), nameof(AuthenticationScreenView.ProfileFetchingAuthView), fetchingView);
-
-                    var machine = new MVCStateMachine<AuthStateBase>();
                     var selfProfile = new StalledSelfProfile();
 
                     // The controller is only captured for the Cancel button listener, which is never invoked here
                     var controller = (AuthenticationScreenController)FormatterServices.GetUninitializedObject(typeof(AuthenticationScreenController));
 
-                    var state = new ProfileFetchingAuthState(
-                        machine,
-                        screenView,
-                        controller,
-                        new ReactiveProperty<AuthStatus>(AuthStatus.None),
-                        selfProfile,
-                        Substitute.For<IWeb3IdentityCache>());
+                    ProfileFetchingAuthState state = NewState(root, new MVCStateMachine<AuthStateBase>(), controller,
+                        new ReactiveProperty<AuthStatus>(AuthStatus.None), selfProfile, skipExistingAccountLobby: false);
 
                     state.Enter(new ProfileFetchingPayload(Substitute.For<IWeb3Identity>(), true, cts.Token));
 
@@ -91,6 +75,14 @@ namespace DCL.AuthenticationScreenFlow.Tests
                     UnityEngine.Object.DestroyImmediate(root);
                 }
             });
+
+        [UnityTest]
+        public IEnumerator CompleteExistingAccountLoginWhenLobbyIsSkipped() =>
+            CompleteExistingAccountLoginWhenLobbyIsSkippedAsync(isRestoredSession: false, AuthStatus.LoggedIn);
+
+        [UnityTest]
+        public IEnumerator CompleteExistingAccountLoginWhenLobbyIsSkippedOnRestoredSession() =>
+            CompleteExistingAccountLoginWhenLobbyIsSkippedAsync(isRestoredSession: true, AuthStatus.LoggedInCached);
 
         [UnityTest]
         public IEnumerator SurfaceExternalCancellationInsteadOfMissingProfile() =>
@@ -156,6 +148,70 @@ namespace DCL.AuthenticationScreenFlow.Tests
                 Assert.That(selfProfile.Calls, Is.EqualTo(1), "a genuine \"no deployed profile\" must resolve on the single fetch");
             });
 
+        // Entering the missing lobby state throws into the connection-error path, so reaching LoggedIn proves the login completed without the lobby
+        private static IEnumerator CompleteExistingAccountLoginWhenLobbyIsSkippedAsync(bool isRestoredSession, AuthStatus expectedStatus) =>
+            UniTask.ToCoroutine(async () =>
+            {
+                EcsTestsUtils.SetUpFeaturesRegistry();
+
+                using var cts = new CancellationTokenSource();
+                var root = new GameObject(nameof(ProfileFetchingAuthStateShould));
+
+                try
+                {
+                    AuthenticationScreenController controller = AuthenticationScreenControllerShould.NewNeverShownController();
+                    var selfProfile = new ExistingProfileSelfProfile(Profile.NewRandomProfile(FAKE_WALLET));
+
+                    ProfileFetchingAuthState state = NewState(root, new MVCStateMachine<AuthStateBase>(), controller,
+                        controller.CurrentState, selfProfile, skipExistingAccountLobby: true);
+
+                    state.Enter(new ProfileFetchingPayload(Substitute.For<IWeb3Identity>(), isRestoredSession, cts.Token));
+
+                    float deadline = UnityEngine.Time.realtimeSinceStartup + 5f;
+
+                    while (controller.CurrentState.Value != expectedStatus && UnityEngine.Time.realtimeSinceStartup < deadline)
+                        await UniTask.Yield();
+
+                    Assert.That(selfProfile.Calls, Is.EqualTo(1), "the profile fetch must run exactly once");
+
+                    Assert.That(controller.CurrentState.Value, Is.EqualTo(expectedStatus),
+                        $"an existing profile must complete the login through {nameof(AuthenticationScreenController.CompleteExistingAccountLogin)} " +
+                        $"instead of entering {nameof(LobbyForExistingAccountAuthState)}");
+                }
+                finally
+                {
+                    UnityEngine.Object.DestroyImmediate(root);
+                    EcsTestsUtils.TearDownFeaturesRegistry();
+                }
+            });
+
+        private static ProfileFetchingAuthState NewState(GameObject root, MVCStateMachine<AuthStateBase> machine, AuthenticationScreenController controller,
+            ReactiveProperty<AuthStatus> currentState, ISelfProfile selfProfile, bool skipExistingAccountLobby)
+        {
+            AuthenticationScreenView screenView = root.AddComponent<AuthenticationScreenView>();
+
+            var viewGo = new GameObject(nameof(ProfileFetchingAuthView));
+            viewGo.transform.SetParent(root.transform);
+            StubProfileFetchingAuthView fetchingView = viewGo.AddComponent<StubProfileFetchingAuthView>();
+
+            var buttonGo = new GameObject("CancelButton");
+            buttonGo.transform.SetParent(viewGo.transform);
+            Button cancelButton = buttonGo.AddComponent<Button>();
+
+            SetBackingField(fetchingView, typeof(ProfileFetchingAuthView), nameof(ProfileFetchingAuthView.CancelButton), cancelButton);
+            SetBackingField(screenView, typeof(AuthenticationScreenView), nameof(AuthenticationScreenView.ProfileFetchingAuthView), fetchingView);
+
+            controller.SkipExistingAccountLobby = skipExistingAccountLobby;
+
+            return new ProfileFetchingAuthState(
+                machine,
+                screenView,
+                controller,
+                currentState,
+                selfProfile,
+                Substitute.For<IWeb3IdentityCache>());
+        }
+
         private static void SetBackingField(object target, Type declaringType, string propertyName, object value)
         {
             FieldInfo? field = declaringType.GetField($"<{propertyName}>k__BackingField", BindingFlags.Instance | BindingFlags.NonPublic);
@@ -172,6 +228,8 @@ namespace DCL.AuthenticationScreenFlow.Tests
             public readonly List<CancellationToken> CapturedTokens = new ();
 
             public event Action<Profile>? ProfilePropagated;
+
+            public Profile? OwnProfile => null;
 
             public async UniTask<Profile?> ProfileAsync(CancellationToken ct)
             {
@@ -191,6 +249,37 @@ namespace DCL.AuthenticationScreenFlow.Tests
         }
 
         /// <summary>
+        ///     Responsive catalyst with a deployed profile: resolves to it immediately.
+        /// </summary>
+        private class ExistingProfileSelfProfile : ISelfProfile
+        {
+            public int Calls { get; private set; }
+
+            public Profile OwnProfile { get; }
+
+            public event Action<Profile>? ProfilePropagated;
+
+            public ExistingProfileSelfProfile(Profile profile)
+            {
+                OwnProfile = profile;
+            }
+
+            public UniTask<Profile?> ProfileAsync(CancellationToken ct)
+            {
+                Calls++;
+                return UniTask.FromResult<Profile?>(OwnProfile);
+            }
+
+            public UniTask<Profile?> UpdateProfileAsync(CancellationToken ct, bool updateAvatarInWorld = true) =>
+                UniTask.FromResult<Profile?>(OwnProfile);
+
+            public UniTask<Profile?> UpdateProfileAsync(Profile updatedProfile, CancellationToken ct, bool updateAvatarInWorld = true) =>
+                UniTask.FromResult<Profile?>(updatedProfile);
+
+            public void Dispose() { }
+        }
+
+        /// <summary>
         ///     Responsive catalyst with no deployed profile: resolves to null immediately, no cancellation involved.
         /// </summary>
         private class MissingProfileSelfProfile : ISelfProfile
@@ -198,6 +287,8 @@ namespace DCL.AuthenticationScreenFlow.Tests
             public int Calls { get; private set; }
 
             public event Action<Profile>? ProfilePropagated;
+
+            public Profile? OwnProfile => null;
 
             public UniTask<Profile?> ProfileAsync(CancellationToken ct)
             {

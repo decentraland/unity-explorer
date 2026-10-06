@@ -1,4 +1,4 @@
-﻿using CommunicationData.URLHelpers;
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Components;
@@ -32,7 +32,10 @@ namespace Runtime.Wearables
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
 
+        // Readers arrive from load-system flows and main-thread UI concurrently
+        private readonly object gate = new ();
         private readonly Dictionary<string, CacheItem> cache = new ();
+        private readonly Dictionary<string, UniTaskCompletionSource<CacheItem>> inFlight = new ();
 
         public SmartWearableCache(IWebRequestController webRequestController, IDecentralandUrlsSource decentralandUrlsSource)
         {
@@ -73,20 +76,20 @@ namespace Runtime.Wearables
         /// </summary>
         public async UniTask<bool> IsSmartAsync(IWearable wearable, CancellationToken ct)
         {
-            CacheItem item = await CacheWearableInternalAsync(wearable, ct);
-            return !ct.IsCancellationRequested && item.IsSmart;
+            CacheItem? item = await CacheWearableInternalAsync(wearable, ct);
+            return item is { IsSmart: true };
         }
 
         public async UniTask<bool> RequiresAuthorizationAsync(IWearable wearable, CancellationToken ct)
         {
-            CacheItem item = await CacheWearableInternalAsync(wearable, ct);
-            return !ct.IsCancellationRequested && item.RequiresAuthorization;
+            CacheItem? item = await CacheWearableInternalAsync(wearable, ct);
+            return item is { RequiresAuthorization: true };
         }
 
         public async UniTask<bool> RequiresWeb3APIAsync(IWearable wearable, CancellationToken ct)
         {
-            CacheItem item = await CacheWearableInternalAsync(wearable, ct);
-            return !ct.IsCancellationRequested && item.RequiresWeb3API;
+            CacheItem? item = await CacheWearableInternalAsync(wearable, ct);
+            return item is { RequiresWeb3API: true };
         }
 
         /// <summary>
@@ -98,30 +101,97 @@ namespace Runtime.Wearables
             await CacheWearableInternalAsync(wearable, ct);
         }
 
-        public bool IsCached(IWearable wearable) =>
-            cache.ContainsKey(GetCacheId(wearable));
-
-        public async UniTask<(ISceneContent, SceneMetadata)> GetCachedSceneInfoAsync(IWearable wearable, CancellationToken ct)
+        public bool IsCached(IWearable wearable)
         {
-            CacheItem item = await CacheWearableInternalAsync(wearable, ct);
-            return ct.IsCancellationRequested ? (null, null) : (item.SceneContent, item.SceneMetadata);
+            lock (gate) { return cache.ContainsKey(GetCacheId(wearable)); }
+        }
+
+        public async UniTask<(ISceneContent?, SceneMetadata?)> GetCachedSceneInfoAsync(IWearable wearable, CancellationToken ct)
+        {
+            CacheItem? item = await CacheWearableInternalAsync(wearable, ct);
+            return item == null ? (null, null) : (item.SceneContent, item.SceneMetadata);
         }
 
         public void Clear()
         {
-            cache.Clear();
+            lock (gate)
+            {
+                cache.Clear();
+
+                // Fetches still running are no longer registered, so they discard their result instead of refilling the cleared cache
+                inFlight.Clear();
+            }
+
             AuthorizedSmartWearables.Clear();
             RunningSmartWearables.Clear();
             KilledPortableExperiences.Clear();
         }
 
-        private async UniTask<CacheItem> CacheWearableInternalAsync(IWearable wearable, CancellationToken ct)
+        /// <summary>
+        ///     Returns null only when <paramref name="ct" /> was cancelled. Concurrent callers for the same wearable share one fetch,
+        ///     and an entry becomes visible only once fully built. A failed fetch throws to every awaiting caller.
+        /// </summary>
+        private async UniTask<CacheItem?> CacheWearableInternalAsync(IWearable wearable, CancellationToken ct)
         {
             string id = GetCacheId(wearable);
-            if (cache.TryGetValue(id, out CacheItem item)) return item;
+            UniTaskCompletionSource<CacheItem> completion;
+            var startFetch = false;
 
-            item = new CacheItem();
-            cache.Add(id, item);
+            lock (gate)
+            {
+                if (cache.TryGetValue(id, out CacheItem item)) return item;
+
+                if (!inFlight.TryGetValue(id, out completion))
+                {
+                    completion = new UniTaskCompletionSource<CacheItem>();
+                    inFlight[id] = completion;
+                    startFetch = true;
+                }
+            }
+
+            if (startFetch)
+                FetchIntoAsync(id, wearable, completion).Forget();
+
+            (bool cancelled, CacheItem result) = await completion.Task.AttachExternalCancellation(ct).SuppressCancellationThrow();
+            return cancelled ? null : result;
+        }
+
+        private async UniTaskVoid FetchIntoAsync(string id, IWearable wearable, UniTaskCompletionSource<CacheItem> completion)
+        {
+            try
+            {
+                CacheItem item = await BuildCacheItemAsync(id, wearable);
+
+                lock (gate)
+                {
+                    if (RemoveInFlight(id, completion))
+                        cache[id] = item;
+                }
+
+                // Completed outside the lock so awaiters' continuations never run while it is held
+                completion.TrySetResult(item);
+            }
+            catch (Exception e)
+            {
+                lock (gate) { RemoveInFlight(id, completion); }
+
+                completion.TrySetException(e);
+            }
+        }
+
+        // A fetch that outlived Clear() is no longer the registered one and must not repopulate the cache
+        private bool RemoveInFlight(string id, UniTaskCompletionSource<CacheItem> completion)
+        {
+            if (!inFlight.TryGetValue(id, out UniTaskCompletionSource<CacheItem> current) || current != completion)
+                return false;
+
+            inFlight.Remove(id);
+            return true;
+        }
+
+        private async UniTask<CacheItem> BuildCacheItemAsync(string id, IWearable wearable)
+        {
+            var item = new CacheItem();
 
             // Null DTO wearable, just consider it non-smart
             if (wearable.DTO == null) return item;
@@ -130,24 +200,28 @@ namespace Runtime.Wearables
             if (!item.IsSmart) return item;
 
             string contentUrl = GetContentUrl(wearable);
-            item.SceneContent = SmartWearableSceneContent.Create(URLDomain.FromString(contentUrl), wearable, BodyShape.MALE);
+            SmartWearableSceneContent sceneContent = SmartWearableSceneContent.Create(URLDomain.FromString(contentUrl), wearable, BodyShape.MALE);
+            item.SceneContent = sceneContent;
 
-            if (!item.SceneContent.TryGetContentUrl("scene.json", out URLAddress url))
+            if (!sceneContent.TryGetContentUrl("scene.json", out URLAddress url))
             {
-                ReportHub.LogError(ReportCategory.WEARABLE, "Could not find 'scene.json'");
+                // Deterministic for this wearable: cached as smart-without-metadata so it is reported once, not on every retry
+                ReportHub.LogError(ReportCategory.WEARABLE, $"Could not find 'scene.json' for smart wearable '{id}'");
                 return item;
             }
 
             var args = new CommonLoadingArguments(URLAddress.FromString(url));
-            item.SceneMetadata = await webRequestController.GetAsync(args, ct, ReportCategory.WEARABLE)
-                                                           .CreateFromJson<SceneMetadata>(WRJsonParser.Newtonsoft);
-            if (ct.IsCancellationRequested) return null;
 
-            item.IsSmart &= int.TryParse(item.SceneMetadata.runtimeVersion, out int version) && version >= MIN_SDK_VERSION;
+            // Owned by the cache rather than by the first caller: a caller cancelling must not leave a half-built entry behind
+            SceneMetadata sceneMetadata = await webRequestController.GetAsync(args, CancellationToken.None, ReportCategory.WEARABLE)
+                                                                    .CreateFromJson<SceneMetadata>(WRJsonParser.Newtonsoft);
+
+            item.SceneMetadata = sceneMetadata;
+            item.IsSmart &= int.TryParse(sceneMetadata.runtimeVersion, out int version) && version >= MIN_SDK_VERSION;
 
             if (item.IsSmart)
             {
-                List<string> permissions = item.SceneMetadata.requiredPermissions;
+                List<string> permissions = sceneMetadata.requiredPermissions;
 
                 item.RequiresWeb3API = permissions.Contains(ScenePermissionNames.USE_WEB3_API);
                 item.RequiresAuthorization = item.RequiresWeb3API ||
@@ -161,6 +235,8 @@ namespace Runtime.Wearables
 
         private bool IsSmart(IWearable wearable)
         {
+            if (wearable.DTO == null) return false;
+
             foreach (var content in wearable.DTO.content)
             {
                 if (content.file.EndsWith("scene.json", StringComparison.OrdinalIgnoreCase))
@@ -171,7 +247,7 @@ namespace Runtime.Wearables
 
         private string GetContentUrl(IWearable smartWearable)
         {
-            string? dtoContentUrl = smartWearable.DTO.ContentDownloadUrl;
+            string? dtoContentUrl = smartWearable.DTO?.ContentDownloadUrl;
             return string.IsNullOrEmpty(dtoContentUrl) ? $"{decentralandUrlsSource.Url(DecentralandUrl.PeerContent)}/" : dtoContentUrl;
         }
 
@@ -179,9 +255,9 @@ namespace Runtime.Wearables
         {
             public bool IsSmart;
 
-            public ISceneContent SceneContent;
+            public ISceneContent? SceneContent;
 
-            public SceneMetadata SceneMetadata;
+            public SceneMetadata? SceneMetadata;
 
             public bool RequiresAuthorization;
 

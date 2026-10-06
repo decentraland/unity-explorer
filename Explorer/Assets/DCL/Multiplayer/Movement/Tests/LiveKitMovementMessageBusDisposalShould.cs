@@ -17,8 +17,8 @@ namespace DCL.Multiplayer.Movement.Tests
     [TestFixture]
     public class LiveKitMovementMessageBusDisposalShould
     {
-        private World world;
-        private LiveKitMovementMessageBus bus;
+        private World world = null!;
+        private LiveKitMovementMessageBus bus = null!;
 
         [SetUp]
         public void SetUp()

@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DCL.Backpack.Gifting.Presenters.GiftTransfer.Commands;
@@ -8,11 +7,8 @@ using DCL.Browser;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.UI.ConfirmationDialog.Opener;
-using DCL.Utility;
-using Global.AppArgs;
 using MVC;
 using Plugins.NativeWindowManager;
-using UnityEngine;
 using Utility;
 using static DCL.Backpack.Gifting.Events.GiftingEvents;
 
@@ -65,7 +61,7 @@ namespace DCL.Backpack.Gifting.Presenters
                 viewInstance.MarketplaceLink.OnLinkClicked += OnMarketplaceActivityLinkClicked;
 
                 viewInstance.RecipientName.text = string.Format(
-                    GiftingTextIds.ColoredTextFormat,
+                    GiftingTextIds.COLORED_TEXT_FORMAT,
                     inputData.userNameColorHex,
                     inputData.recipientName
                 );
@@ -228,7 +224,7 @@ namespace DCL.Backpack.Gifting.Presenters
             switch (newState)
             {
                 case State.Waiting:
-                    viewInstance.TitleLabel.text = GiftingTextIds.PreparingGiftTitle;
+                    viewInstance.TitleLabel.text = GiftingTextIds.PREPARING_GIFT_TITLE;
                     viewInstance.StatusContainer.SetActive(true);
 
                     if (viewInstance.LongRunningHint != null)
@@ -241,7 +237,7 @@ namespace DCL.Backpack.Gifting.Presenters
         private void SetPhase(GiftTransferPhase phase, string? msg)
         {
             if (viewInstance == null || currentState != State.Waiting) return;
-            viewInstance.StatusText.text = msg ?? GiftingTextIds.DefaultStatusMessage;
+            viewInstance.StatusText.text = msg ?? GiftingTextIds.DEFAULT_STATUS_MESSAGE;
         }
 
         private void RequestClose()
@@ -254,17 +250,17 @@ namespace DCL.Backpack.Gifting.Presenters
             try
             {
                 string supportUrl = decentralandUrlsSource.Url(DecentralandUrl.Support);
-                string supportLink = string.Format(GiftingTextIds.ErrorDialogSupportLinkFormat, supportUrl);
+                string supportLink = string.Format(GiftingTextIds.ERROR_DIALOG_SUPPORT_LINK_FORMAT, supportUrl);
 
                 var dialogParams = new ConfirmationDialogParameter(
-                    GiftingTextIds.ErrorDialogTitle,
-                    GiftingTextIds.ErrorDialogCancelText,
-                    GiftingTextIds.ErrorDialogConfirmText,
+                    GiftingTextIds.ERROR_DIALOG_TITLE,
+                    GiftingTextIds.ERROR_DIALOG_CANCEL_TEXT,
+                    GiftingTextIds.ERROR_DIALOG_CONFIRM_TEXT,
                     viewInstance?.WarningIcon,
                     false,
                     false,
                     null,
-                    GiftingTextIds.ErrorDialogDescription,
+                    GiftingTextIds.ERROR_DIALOG_DESCRIPTION,
                     linkText: supportLink,
                     onLinkClickCallback: LinkCallback,
                     preserveAspect: true
@@ -276,7 +272,7 @@ namespace DCL.Backpack.Gifting.Presenters
 
                 if (result == ConfirmationResult.Confirm)
                 {
-                    ReportHub.Log(ReportCategory.GIFTING, GiftingTextIds.RetryLogMessage);
+                    ReportHub.Log(ReportCategory.GIFTING, GiftingTextIds.RETRY_LOG_MESSAGE);
                     await mvcManager.ShowAsync(IssueCommand(inputData), ct);
                 }
             }

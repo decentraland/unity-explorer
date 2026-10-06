@@ -1,0 +1,145 @@
+name: RustSegment Binary Verification
+
+
+on:
+  workflow_dispatch:
+  # Weekly: advisories against the pinned Cargo.lock land without any PR touching the crate.
+  schedule:
+    - cron: '0 6 * * 1'
+  pull_request:
+    paths:
+      - 'Explorer/Assets/Plugins/RustSegment/**'
+      - 'scripts/rust-segment/**'
+      - 'scripts/native-lock/**'
+      - '.gitattributes'
+      - '.github/workflows/rust-segment-verify.yml'
+  merge_group: {}
+  push:
+    branches: [dev]
+    paths:
+      - 'Explorer/Assets/Plugins/RustSegment/**'
+      - 'scripts/rust-segment/**'
+      - 'scripts/native-lock/**'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  PLUGIN_LFS_GLOB: 'Explorer/Assets/Plugins/RustSegment/SegmentServerWrap/Libraries/**'
+  LOCK: scripts/rust-segment/rust-segment-binaries.lock.json
+
+jobs:
+  verify:
+    name: Verify committed binaries against the lock
+    # The weekly tick exists for the advisory scan only.
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          lfs: false
+
+      - name: Fetch the plugin binaries from LFS
+        run: git lfs pull --include "$PLUGIN_LFS_GLOB"
+
+      - name: Test the verifier itself
+        run: python3 scripts/native-lock/test-verify-binaries.py
+
+      - name: Verify hashes and build inputs
+        run: python3 scripts/native-lock/verify-binaries.py --lock "$LOCK"
+
+      - name: Require new native binaries to be stored in LFS
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          base=$(git merge-base "origin/$BASE_REF" "$HEAD_SHA")
+          changed=$(git diff --name-only --diff-filter=AM "$base" "$HEAD_SHA" \
+            -- '*.dll' '*.dylib' '*.so' || true)
+
+          if [ -z "$changed" ]; then
+            echo "No native binaries added or modified."
+            exit 0
+          fi
+
+          status=0
+          while IFS= read -r path; do
+            [ -n "$path" ] || continue
+            # An LFS blob is a pointer whose first line is the spec URL; a whole-line match cannot pass on a truncated prefix.
+            if git cat-file blob "$HEAD_SHA:$path" 2>/dev/null \
+                 | head -n1 | grep -q '^version https://git-lfs.github.com/spec/v1'; then
+              echo "  ok (lfs)    $path"
+            else
+              echo "::error file=$path::$path was committed as a plain git blob, not Git LFS. Re-add it with an LFS rule in .gitattributes in effect: *.dll and *.dylib are covered by globs; anything else needs an explicit entry. See Explorer/Assets/Plugins/RustSegment/README.md."
+              status=1
+            fi
+          done <<< "$changed"
+          exit $status
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "### RustSegment binary verification"
+            echo
+            echo "Lock: \`scripts/rust-segment/rust-segment-binaries.lock.json\`"
+            echo
+            echo '```'
+            python3 scripts/native-lock/verify-binaries.py --lock "$LOCK" 2>&1 || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  rust:
+    name: Check, test and lint the crate
+    if: github.event_name != 'schedule'
+    # The only hosted platform the crate is proven to compile on; Linux is unexercised since 2024.
+    runs-on: macos-15
+    defaults:
+      run:
+        working-directory: Explorer/Assets/Plugins/RustSegment/.native
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          lfs: false
+
+      # rustup honours rust-toolchain.toml only from inside .native/.
+      - name: Record the toolchain
+        run: |
+          rustc --version
+          cargo --version
+          cargo clippy --version
+
+      - name: Check
+        run: cargo check --all-targets --locked
+
+      # test_integration is #[ignore]d: it needs a Segment write key and the network.
+      - name: Test
+        run: cargo test --locked
+
+      - name: Clippy
+        run: cargo clippy --all-targets --locked -- -D warnings
+
+  audit:
+    name: RUSTSEC advisories against Cargo.lock
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          lfs: false
+
+      # Pinned: --locked fixes cargo-audit's dependency graph, not cargo-audit itself.
+      - name: Install cargo-audit
+        run: cargo install cargo-audit --version 0.22.2 --locked
+
+      - name: Audit the pinned dependencies
+        run: cargo audit --file Explorer/Assets/Plugins/RustSegment/.native/Cargo.lock

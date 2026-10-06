@@ -25,10 +25,6 @@ namespace DCL.LOD
             if (scenesAreFixed && (!sceneDefinitionComponent.IsSDK7 || !issDescriptor.SupportsDescriptor()))
                 return VisualSceneState.ShowingScene;
 
-            //For SDK6 scenes, we just show lod0
-            if (!sceneDefinitionComponent.IsSDK7)
-                return VisualSceneState.ShowingLod;
-
             int isSceneLoaded = currentVisualSceneState == VisualSceneState.ShowingScene
                 ? unloadTolerance
                 : 0;

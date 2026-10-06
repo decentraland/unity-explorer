@@ -6,9 +6,6 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connectivity;
 using DCL.Passport;
 using DCL.Profiles;
-using DCL.UI;
-using DCL.UI.Controls.Configs;
-using DCL.VoiceChat;
 using DCL.Web3;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
@@ -57,7 +54,6 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
                     realmNavigator.TryChangeRealmAsync(
                         URLDomain.FromString(worldUrl),
                         ct,
-                        default,
                         isWorld: true,
                         allowsSpawnPointerOverride: true).Forget();
                 }

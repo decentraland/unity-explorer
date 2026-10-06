@@ -17,6 +17,12 @@ namespace CRDT
     [StructLayout(LayoutKind.Explicit, Size = 4)]
     public readonly struct CRDTEntity : IComparable<CRDTEntity>, IEquatable<CRDTEntity>
     {
+        /// <summary>
+        ///     The version occupies the upper 16 bits of the id, so it can't grow past this value
+        ///     without spilling into the entity number.
+        /// </summary>
+        public const int MAX_VERSION = 0xffff;
+
         [FieldOffset(0)]
         public readonly int Id;
 

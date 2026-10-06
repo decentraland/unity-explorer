@@ -1,17 +1,22 @@
 #!/usr/bin/env bash
 # Create or update the single unified CI status comment on a PR, replacing only
-# one section (build | lint | tests). All three CI comment workflows call this
-# through the ci-status-comment composite action, so the three separate bot
-# comments collapse into one.
+# one section (build | lint | tests | performance | automation | inworld). CI
+# comment workflows call this through the ci-status-comment composite action;
+# build.py (live build rows), decentraland/performance-testing (benchmark
+# report) and decentraland/explorer-automation (InWorld suite) run it directly.
+# Either way the separate bot comments collapse into one.
 #
-# The comment is keyed by the hidden <!-- ci-status --> marker and holds three
-# sections, each fenced by its own start/end markers:
+# The comment is keyed by the hidden <!-- ci-status --> marker and holds the
+# $HEADER heading plus one fenced block per section:
 #
 #   <!-- ci-status -->
 #   ### 🚦 CI Status
-#   <!-- ci:build:start -->  …build…  <!-- ci:build:end -->
-#   <!-- ci:lint:start -->   …lint…   <!-- ci:lint:end -->
-#   <!-- ci:tests:start -->  …tests…  <!-- ci:tests:end -->
+#   <!-- ci:build:start -->       …build…       <!-- ci:build:end -->
+#   <!-- ci:lint:start -->        …lint…        <!-- ci:lint:end -->
+#   <!-- ci:tests:start -->       …tests…       <!-- ci:tests:end -->
+#   <!-- ci:performance:start --> …performance… <!-- ci:performance:end -->
+#   <!-- ci:automation:start -->  …automation…  <!-- ci:automation:end -->
+#   <!-- ci:inworld:start -->     …inworld…     <!-- ci:inworld:end -->
 #
 # Build and Unity Test run as independent workflows whose comment writers can
 # fire at the same time, so a plain read-modify-write would drop a section or
@@ -20,8 +25,83 @@
 # confirm the section landed and no duplicate slipped in — retrying otherwise.
 set -euo pipefail
 
+# Optional caller knobs for direct invocations (build.py, and
+# decentraland/performance-testing writing against unity-explorer's comment):
+#   SECTION_BODY_FILE — read the body from a file instead of $SECTION_BODY,
+#                       for bodies too large to pass comfortably via env.
+#   NO_CREATE=1       — never create the unified comment; exit 3 when it does
+#                       not exist so the caller can fall back to a standalone
+#                       comment (a foreign-token creation would not be authored
+#                       by github-actions[bot] and later writers would not
+#                       find it, spawning duplicates).
+if [ -n "${SECTION_BODY_FILE:-}" ]; then
+  SECTION_BODY="$(cat "$SECTION_BODY_FILE")"
+fi
+
+# Everything below matches markers as whole lines, which CRLF endings defeat —
+# and GitHub's web editor resubmits an edited comment with \r\n. Normalize the
+# body here and every API read below, so one manual edit cannot make each
+# writer append a duplicate fence beneath a stale, still-rendering one.
+SECTION_BODY="${SECTION_BODY//$'\r'/}"
+
+# GitHub caps an issue comment at 65536 chars across every section; keep one
+# writer — whichever path its body arrived by — from consuming the whole budget
+# and failing an unrelated section's PATCH with an opaque 422. Truncation is
+# fine for a status section that already links out to the full report.
+#
+# The cap is per-section and blind to the others, so it only bounds the total
+# if (section count × CAP) stays under 65536 with headroom for the header and
+# the fences. There are 6 allowlisted sections (see below): 6 × 10000 = 60000,
+# leaving ~5.5k. Re-derive this if a section is added, or the ${#NEW_BODY}
+# guard below is the only thing left standing between a big comment and a 422.
+CAP=10000
+if [ "${#SECTION_BODY}" -gt "$CAP" ]; then
+  echo "::warning::Section body is ${#SECTION_BODY} chars; truncating to $CAP."
+  NOTE=$'\n\n'"_…truncated; see the linked run for the full report._"
+  # Cut with headroom for the note, then close constructs the cut may have
+  # severed — an unterminated code fence or <details> makes GitHub render
+  # everything after it in this comment inside the open block, visually eating
+  # the neighbouring sections. The appended closers count against the cap too,
+  # so re-cut and re-balance until the finished body fits inside it.
+  CUT=$((CAP - ${#NOTE}))
+  while :; do
+    TRUNCATED="${SECTION_BODY:0:CUT}"
+    if [ $(( $(grep -c '^```' <<< "$TRUNCATED") % 2 )) -ne 0 ]; then
+      TRUNCATED="$TRUNCATED"$'\n''```'
+    fi
+    opens=$(grep -oi '<details' <<< "$TRUNCATED" | wc -l || true)
+    closes=$(grep -oi '</details' <<< "$TRUNCATED" | wc -l || true)
+    while [ "${opens:-0}" -gt "${closes:-0}" ]; do
+      TRUNCATED="$TRUNCATED"$'\n</details>'
+      closes=$((closes + 1))
+    done
+    TRUNCATED="$TRUNCATED$NOTE"
+    if [ "${#TRUNCATED}" -le "$CAP" ]; then
+      break
+    fi
+    CUT=$((CUT - (${#TRUNCATED} - CAP)))
+    if [ "$CUT" -lt 0 ]; then
+      CUT=0
+    fi
+  done
+  SECTION_BODY="$TRUNCATED"
+fi
+
+# Fail fast on a section name outside the fence set — an unknown name would
+# append a dead fence to the shared comment and then wedge the survive check
+# for 5 attempts, burning ~15 API calls per write from then on.
+case "${SECTION:-}" in
+  build|lint|tests|performance|automation|inworld) ;;
+  *) echo "::error::Unknown section '${SECTION:-}'."; exit 2 ;;
+esac
+
 MARKER="<!-- ci-status -->"
-HEADER="### 🚦 CI Status"
+HEADER='### 🚦 CI Status'
+# Retired header spellings, migrated to $HEADER whenever a section write runs.
+OLD_HEADERS=(
+  '### <picture><img src="https://ui.decentraland.org/decentraland_256x256.png" width="30" alt="Decentraland"></picture> CI Status'
+  '### <picture><img src="https://ui.decentraland.org/decentraland_256x256.png" width="30"></picture> CI Status'
+)
 BOT="github-actions[bot]"
 START="<!-- ci:${SECTION}:start -->"
 END="<!-- ci:${SECTION}:end -->"
@@ -33,19 +113,27 @@ section_default() {
     build) printf '![Build](https://img.shields.io/badge/Build-Waiting-lightgrey?logo=unity&logoColor=white&style=for-the-badge)\n\n_Waiting for the build to start…_' ;;
     lint)  printf '![Lint](https://img.shields.io/badge/Lint-Waiting-lightgrey?logo=jetbrains&logoColor=white&style=for-the-badge)\n\n_Waiting for lint to start…_' ;;
     tests) printf '![Tests](https://img.shields.io/badge/Tests-Waiting-lightgrey?logo=codecov&logoColor=white&style=for-the-badge)\n\n_Waiting for tests to start…_' ;;
+    automation) printf '![Automation](https://img.shields.io/badge/Automation-On%%20demand-lightgrey?logo=github&logoColor=white&style=for-the-badge)\n\n_On demand — comment `/visual-tests` on this PR to run the visual regression suite against its build._' ;;
+    performance) printf '![Performance](https://img.shields.io/badge/Performance-Waiting-lightgrey?logo=speedtest&logoColor=white&style=for-the-badge)\n\n_Bare-metal benchmarks run automatically after each successful build; results land in this section. Add the `perf_test` label to run the in-repo Unity performance suite instead (skips normal CI and blocks merge while set)._' ;;
+    inworld) printf '![InWorld](https://img.shields.io/badge/InWorld-Waiting-lightgrey?logo=unity&logoColor=white&style=for-the-badge)\n\n_Waiting for the InWorld suite…_' ;;
   esac
 }
 
 # One section, fenced by its start/end markers.
 wrap_section() { printf '<!-- ci:%s:start -->\n%s\n<!-- ci:%s:end -->' "$1" "$2" "$1"; }
 
-# A fresh comment with every section defaulted to "waiting".
+# A fresh comment with every always-present section defaulted to "waiting".
+# inworld is deliberately absent: the suite only runs on release/hotfix PRs
+# into main, and a permanent "waiting" row on every other PR would be noise —
+# the append-missing-fence path below adds it the first time it reports.
 skeleton() {
-  printf '%s\n%s\n\n%s\n\n%s\n\n%s\n' \
+  printf '%s\n%s\n\n%s\n\n%s\n\n%s\n\n%s\n\n%s\n' \
     "$MARKER" "$HEADER" \
     "$(wrap_section build "$(section_default build)")" \
     "$(wrap_section lint  "$(section_default lint)")" \
-    "$(wrap_section tests "$(section_default tests)")"
+    "$(wrap_section tests "$(section_default tests)")" \
+    "$(wrap_section performance "$(section_default performance)")" \
+    "$(wrap_section automation "$(section_default automation)")"
 }
 
 # Emit the section body for this run to a file so awk can splice it verbatim,
@@ -94,8 +182,24 @@ for attempt in 1 2 3 4 5; do
   while IFS= read -r line; do [ -n "$line" ] && IDS+=("$line"); done <<< "$(marker_ids "$COMMENTS")"
   COMMENT_ID="${IDS[0]:-}"
 
-  # Collapse accidental duplicates from a create race: keep the oldest, drop the rest.
-  if [ "${#IDS[@]}" -gt 1 ]; then
+  if [ -z "$COMMENT_ID" ] && [ -n "${NO_CREATE:-}" ]; then
+    # Lose one round before falling back: an external caller often lands here
+    # seconds before the build workflow seeds the comment, and the standalone
+    # fallback it would post instead is noise that never collapses.
+    if [ "$attempt" -ge 2 ]; then
+      echo "No unified CI status comment exists and NO_CREATE is set; leaving creation to the repo's own workflows."
+      exit 3
+    fi
+    echo "No unified CI status comment yet (attempt $attempt); waiting for the repo's own workflows to seed it."
+    sleep $((attempt * 2))
+    continue
+  fi
+
+  # Collapse accidental duplicates from a create race: keep the oldest, drop the
+  # rest. Skipped for external callers — comment GC belongs to this repo's own
+  # workflows, which run often enough to clean up within minutes, and a misfire
+  # under a foreign token would delete evidence with nothing logged.
+  if [ "${#IDS[@]}" -gt 1 ] && [ -z "${NO_CREATE:-}" ]; then
     for extra in "${IDS[@]:1}"; do
       echo "Deleting duplicate CI status comment $extra."
       gh api -X DELETE "/repos/$REPO/issues/comments/$extra" >/dev/null || true
@@ -104,25 +208,60 @@ for attempt in 1 2 3 4 5; do
 
   if [ -n "$COMMENT_ID" ]; then
     CURRENT_BODY=$(jq -r --arg id "$COMMENT_ID" '.[] | select(.id==($id|tonumber)) | .body' <<< "$(flatten_pages "$COMMENTS")")
+    CURRENT_BODY="${CURRENT_BODY//$'\r'/}"
   else
     CURRENT_BODY=""
   fi
 
-  # No unified comment yet, or one missing our section markers: start clean so
-  # all three sections are always present.
-  if [ -z "$CURRENT_BODY" ] || ! grep -qF "$START" <<< "$CURRENT_BODY"; then
+  # No unified comment yet: start from the full skeleton. A comment that lacks
+  # our markers predates this section (e.g. it was written before the automation
+  # section existed) or the section is not part of the skeleton (inworld) —
+  # append an empty fence for just our section instead of resetting the whole
+  # comment and wiping the other sections' state. Two independent checks, not
+  # if/elif: a fresh skeleton needs the fence appended too when the section is
+  # a non-skeleton one, or replace_section would find no fence and the survive
+  # check would burn all 5 attempts.
+  if [ -z "$CURRENT_BODY" ]; then
     CURRENT_BODY="$(skeleton)"
   fi
+  # -x: whole-line, matching replace_section/extract_section's $0==s exactly. A
+  # substring hit on a marker embedded in a body line (which the strip filter
+  # deliberately lets through) would skip fence creation here while the awk
+  # matchers see nothing — leaving the section permanently unwritable.
+  if ! grep -qxF "$START" <<< "$CURRENT_BODY"; then
+    CURRENT_BODY="$CURRENT_BODY"$'\n\n'"$(wrap_section "$SECTION" "$(section_default "$SECTION")")"
+  fi
+
+  # Migrate comments created under a retired header spelling.
+  for OLD_HEADER in "${OLD_HEADERS[@]}"; do
+    CURRENT_BODY="${CURRENT_BODY/"$OLD_HEADER"/$HEADER}"
+  done
 
   NEW_BODY="$(replace_section "$CURRENT_BODY")"
 
+  # Near GitHub's 65536-char comment cap the write starts 422ing; the per-
+  # section CAP cannot see the other sections, so at least say why.
+  if [ "${#NEW_BODY}" -gt 65000 ]; then
+    echo "::warning::Unified comment is ${#NEW_BODY} chars — at/over GitHub's 65536 cap; a section needs a tighter cap."
+  fi
+
+  # A failed write must land in the retry loop, not kill the script under
+  # set -e — that would fail this section's job and strand the section stale.
   if [ -z "$COMMENT_ID" ]; then
-    RESULT=$(jq -n --arg b "$NEW_BODY" '{body:$b}' \
-      | gh api -X POST "/repos/$REPO/issues/$PR_NUMBER/comments" --input -)
+    if ! RESULT=$(jq -n --arg b "$NEW_BODY" '{body:$b}' \
+      | gh api -X POST "/repos/$REPO/issues/$PR_NUMBER/comments" --input -); then
+      echo "Create failed (attempt $attempt); retrying."
+      sleep $((attempt * 2))
+      continue
+    fi
     COMMENT_ID=$(jq -r '.id' <<< "$RESULT")
   else
-    jq -n --arg b "$NEW_BODY" '{body:$b}' \
-      | gh api -X PATCH "/repos/$REPO/issues/comments/$COMMENT_ID" --input - >/dev/null
+    if ! jq -n --arg b "$NEW_BODY" '{body:$b}' \
+      | gh api -X PATCH "/repos/$REPO/issues/comments/$COMMENT_ID" --input - >/dev/null; then
+      echo "Update failed (attempt $attempt); retrying."
+      sleep $((attempt * 2))
+      continue
+    fi
   fi
 
   # Re-read and confirm our section landed on the surviving comment, and that no
@@ -132,6 +271,16 @@ for attempt in 1 2 3 4 5; do
   RIDS=()
   while IFS= read -r line; do [ -n "$line" ] && RIDS+=("$line"); done <<< "$(marker_ids "$RECHECK")"
   LIVE_BODY=$(jq -r --arg id "$COMMENT_ID" '.[] | select(.id==($id|tonumber)) | .body' <<< "$(flatten_pages "$RECHECK")")
+  LIVE_BODY="${LIVE_BODY//$'\r'/}"
+
+  # A write that landed on a younger duplicate is doomed: GC keeps the oldest,
+  # so this section's content would vanish with the duplicate. Retry on the
+  # survivor instead of declaring success on a comment about to be deleted.
+  if [ -n "${RIDS[0]:-}" ] && [ "$COMMENT_ID" != "${RIDS[0]}" ]; then
+    echo "Comment $COMMENT_ID lost the create race to ${RIDS[0]}; retrying on the survivor."
+    sleep $attempt
+    continue
+  fi
 
   # Success means our section landed on the comment we wrote — nothing more.
   # Duplicate collapsing is best-effort cleanup (the DELETE above may lack

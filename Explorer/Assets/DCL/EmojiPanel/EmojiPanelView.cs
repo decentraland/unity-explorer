@@ -20,22 +20,22 @@ namespace DCL.Emoji
         public event Action? SearchInputBlurred;
 
         [field: SerializeField]
-        public List<EmojiSectionToggle> EmojiSections { get; private set; }
+        public List<EmojiSectionToggle> EmojiSections { get; private set; } = null!;
 
         [field: SerializeField]
-        public LoopListView2 EmojiLoopList { get; private set; }
+        public LoopListView2 EmojiLoopList { get; private set; } = null!;
 
         [field: SerializeField]
-        public SearchBarView SearchPanelView { get; private set; }
+        public SearchBarView SearchPanelView { get; private set; } = null!;
 
         [field: SerializeField]
-        public EmojiTooltipView TooltipView { get; private set; }
+        public EmojiTooltipView TooltipView { get; private set; } = null!;
 
         [field: SerializeField]
-        public RectMask2D ViewportMask { get; private set; }
+        public RectMask2D ViewportMask { get; private set; } = null!;
 
-        private CanvasGroup canvasGroup;
-        private RectTransform rectTransform;
+        private CanvasGroup canvasGroup = null!;
+        private RectTransform rectTransform = null!;
         private bool isInitialized;
 
         private readonly Vector3[] anchorCorners = new Vector3[4];

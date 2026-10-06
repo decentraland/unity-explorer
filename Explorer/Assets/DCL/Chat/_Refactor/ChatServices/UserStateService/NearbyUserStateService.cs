@@ -3,7 +3,7 @@ using DCL.Friends.UserBlocking;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Optimization.Pools;
 using DCL.LiveKit.Public;
-using LiveKit.Proto;
+using DCL.Web3;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
 using System.Collections.Generic;
@@ -102,10 +102,15 @@ namespace DCL.Chat.ChatServices
                 blockedOnlineParticipants.Clear();
 
                 foreach (string participantIdentity in participantIdentities)
+                {
+                    if (!Web3Address.IsValidWalletAddress(participantIdentity))
+                        continue;
+
                     if (userBlockingCache.UserIsBlocked(participantIdentity))
                         blockedOnlineParticipants.Add(participantIdentity);
                     else
                         onlineParticipants.Add(participantIdentity);
+                }
             }
         }
 
@@ -121,6 +126,9 @@ namespace DCL.Chat.ChatServices
 
         private void OnRoomUpdatesFromParticipant(LKParticipant participant, UpdateFromParticipant update, IRoom otherRoom)
         {
+            if (!Web3Address.IsValidWalletAddress(participant.Identity))
+                return;
+
             lock (onlineParticipants)
             {
                 bool participantIsBlocked = userBlockingCache.UserIsBlocked(participant.Identity);

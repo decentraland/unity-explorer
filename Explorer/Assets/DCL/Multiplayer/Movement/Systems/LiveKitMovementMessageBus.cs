@@ -57,9 +57,9 @@ namespace DCL.Multiplayer.Movement
         }
 
         // TODO move to the ctor (dependencies refactoring required)
-        public void InitializeEncoder(MessageEncodingSettings messageEncodingSettings, IMultiplayerMovementSettings settingsValue, ParcelEncoder parcelEncoder)
+        public void InitializeEncoder(MessageEncodingSettings messageEncodingSettings, IMultiplayerMovementSettings settings, ParcelEncoder parcelEncoder)
         {
-            this.settingsValue = settingsValue;
+            settingsValue = settings;
             messageEncoder = new NetworkMessageEncoder(messageEncodingSettings, parcelEncoder);
             compressMessage = (message, compressed) => WriteToProto(messageEncoder.Compress(message), compressed);
         }

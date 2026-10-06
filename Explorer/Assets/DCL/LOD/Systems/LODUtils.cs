@@ -1,17 +1,13 @@
 ﻿using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.Diagnostics;
-using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.Pools;
 using ECS.SceneLifeCycle.Reporting;
 using ECS.SceneLifeCycle.SceneDefinition;
-using SceneRunner.Scene;
 using System.Collections.Generic;
-using System.Linq;
 using DCL.LOD.Components;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
-using System;
 using UnityEngine;
 using Utility;
 

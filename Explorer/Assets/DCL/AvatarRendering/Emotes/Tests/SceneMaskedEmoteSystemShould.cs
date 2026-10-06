@@ -8,12 +8,15 @@ using DCL.AvatarRendering.Loading.Components;
 using DCL.ECSComponents;
 using DCL.Multiplayer.Emotes;
 using DCL.Utilities;
+using ECS.StreamableLoading;
 using ECS.StreamableLoading.Common.Components;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
+using System.Text.RegularExpressions;
 using UnityEngine;
+using UnityEngine.TestTools;
 using Object = UnityEngine.Object;
 
 namespace DCL.AvatarRendering.Emotes.Tests
@@ -73,7 +76,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
         {
             Entity entity = CreateSuspendedMaskedEmote(loop: false);
 
-            system!.Update(0);
+            system.Update(0);
 
             CharacterMaskedEmoteComponent masked = world.Get<CharacterMaskedEmoteComponent>(entity);
 
@@ -89,12 +92,36 @@ namespace DCL.AvatarRendering.Emotes.Tests
         {
             Entity entity = CreateSuspendedMaskedEmote(loop: true);
 
-            system!.Update(0);
+            system.Update(0);
 
             CharacterMaskedEmoteComponent masked = world.Get<CharacterMaskedEmoteComponent>(entity);
 
             Assert.IsFalse(masked.EmoteUrn.IsNullOrEmpty(),
                 "A looping masked emote is resumed once the play conditions are met again, so its urn must survive being suspended.");
+        }
+
+        /// <summary>
+        /// The masked counterpart of the https://github.com/decentraland/unity-explorer/issues/9485 class of
+        /// bug: an emote that never lands in storage must not park its intent forever.
+        /// </summary>
+        [Test]
+        public void RemoveMaskedIntentAfterTimeoutWhenEmoteNeverArrivesInStorage()
+        {
+            LogAssert.Expect(LogType.Error, new Regex("Cant play masked emote .* timeout reached"));
+
+            Entity strandedEntity = world.Create(
+                new CharacterMaskedEmoteComponent { Mask = AvatarEmoteMask.AemUpperBody },
+                new CharacterEmoteIntent
+                {
+                    EmoteId = new URN(string.Format(EMOTE_URN_FORMAT, "false")),
+                    Mask = AvatarEmoteMask.AemUpperBody,
+                });
+
+            for (var second = 0; second < StreamableLoadingDefaults.TIMEOUT + 1; second++)
+                system.Update(1f);
+
+            Assert.IsFalse(world.Has<CharacterEmoteIntent>(strandedEntity),
+                "A masked CharacterEmoteIntent whose emote never arrives in storage must expire after StreamableLoadingDefaults.TIMEOUT seconds.");
         }
 
         /// <summary>

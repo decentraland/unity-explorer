@@ -1,0 +1,140 @@
+{
+  "schema": 1,
+  "name": "rust-segment",
+  "docs": "Explorer/Assets/Plugins/RustSegment/README.md",
+  "comment": [
+    "Hash lock for the prebuilt RustSegment native binaries committed under",
+    "Explorer/Assets/Plugins/RustSegment/SegmentServerWrap/Libraries/.",
+    "Verified by scripts/native-lock/verify-binaries.py --lock <this file>; regenerate with --update.",
+    "See Explorer/Assets/Plugins/RustSegment/README.md."
+  ],
+  "rust_source": {
+    "comment": "The crate has no upstream repository - it is built from this repo's own .native/ tree. source_digest below is what ties each target's shipped binary to the exact .native/src state that produced it.",
+    "path": "Explorer/Assets/Plugins/RustSegment/.native/src",
+    "suffix": ".rs"
+  },
+  "build_inputs": {
+    "cargo_manifest": {
+      "kind": "file",
+      "path": "Explorer/Assets/Plugins/RustSegment/.native/Cargo.toml",
+      "sha256": "1e129e80a4f40f1d460877e724e82e9ca674e4208b7fcda584b17be434435da8"
+    },
+    "cargo_lock": {
+      "comment": [
+        "A single crate ships, so every package Cargo.lock resolves reaches",
+        "the shipped binary; the whole file is the input. build.sh passes",
+        "--locked so a build can never quietly move away from it."
+      ],
+      "kind": "file",
+      "path": "Explorer/Assets/Plugins/RustSegment/.native/Cargo.lock",
+      "sha256": "c9b4b308861e5fcc14971c32f5bdcbf8746b2e3c983ab4e3705ff5f42d627ced"
+    },
+    "cargo_config": {
+      "comment": [
+        "-Dwarnings and the deterministic MSVC link flags live here; each",
+        "one changes the shipped bytes."
+      ],
+      "kind": "file",
+      "path": "Explorer/Assets/Plugins/RustSegment/.native/.cargo/config.toml",
+      "sha256": "6386e46ba201c3ecf67904a4d98e048e17b402a82f5815fcad0daeb351b92cab"
+    },
+    "rust_toolchain": {
+      "comment": [
+        "The pinned compiler is an input to the shipped bytes. Bumping the",
+        "channel is a rebuild-and-relock event for both targets, not a",
+        "routine edit."
+      ],
+      "kind": "file",
+      "path": "Explorer/Assets/Plugins/RustSegment/.native/rust-toolchain.toml",
+      "sha256": "ae01c53492badb30bf0421d631f2a6e8092a059b8654d30207d0bcc637893b70"
+    },
+    "build_script": {
+      "comment": [
+        "The targets it compiles and how it assembles the universal dylib",
+        "decide what ships."
+      ],
+      "kind": "file",
+      "path": "Explorer/Assets/Plugins/RustSegment/.native/build.sh",
+      "sha256": "888f050a384e3f5de358aa3167be9641424813904e88824dd26d6736aea10a71"
+    }
+  },
+  "targets": {
+    "macos-universal": {
+      "runtime_dir": "Explorer/Assets/Plugins/RustSegment/SegmentServerWrap/Libraries/Mac",
+      "rust": {
+        "target": "universal (aarch64-apple-darwin + x86_64-apple-darwin)",
+        "profile": "release",
+        "crate_version": "0.1.0",
+        "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+        "source_digest": "07c6eccaba3b88ed8e54c5192fcaf18bb03f256b7fa73ae7ac4fb788c90cae88",
+        "source_files": 4,
+        "repo_commit": "61f9f3c835952b512fbd3b9163f3b6ef2ff6978c",
+        "toolchain": {
+          "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+          "cargo": "cargo 1.97.1 (c980f4866 2026-06-30)",
+          "clang": "Apple clang version 17.0.0 (clang-1700.0.13.5)",
+          "xcode": "Xcode 16.4 Build version 16F6",
+          "sdk": "macosx15.5 (24F74)"
+        }
+      },
+      "artifacts": [
+        {
+          "path": "Explorer/Assets/Plugins/RustSegment/SegmentServerWrap/Libraries/Mac/segment-server.dylib",
+          "sha256": "c8e36d077d6d0f132ecd140c42556297734e46e2fb97fa4c672c1460a8d44988",
+          "bytes": 6253968,
+          "produced_by": "cargo"
+        }
+      ]
+    },
+    "windows-x86_64": {
+      "runtime_dir": "Explorer/Assets/Plugins/RustSegment/SegmentServerWrap/Libraries/Windows",
+      "rust": {
+        "target": "x86_64-pc-windows-msvc",
+        "profile": "release",
+        "crate_version": "0.1.0",
+        "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+        "source_digest": "07c6eccaba3b88ed8e54c5192fcaf18bb03f256b7fa73ae7ac4fb788c90cae88",
+        "source_files": 4,
+        "repo_commit": "ad75ed2b3b14d08a91b6acdf4f737375a5ae4cfe",
+        "toolchain": {
+          "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+          "cargo": "cargo 1.97.1 (c980f4866 2026-06-30)",
+          "msvc": "14.51.36231"
+        }
+      },
+      "artifacts": [
+        {
+          "path": "Explorer/Assets/Plugins/RustSegment/SegmentServerWrap/Libraries/Windows/segment-server.dll",
+          "sha256": "b9f5191277532fa5807c35358a2d3a57e1c694f53e7f883acbf051e8475e0729",
+          "bytes": 4562432,
+          "produced_by": "cargo"
+        }
+      ]
+    },
+    "linux-x86_64": {
+      "runtime_dir": "Explorer/Assets/Plugins/RustSegment/SegmentServerWrap/Libraries/Linux",
+      "rust": {
+        "target": "x86_64-unknown-linux-gnu",
+        "profile": "release",
+        "crate_version": "0.1.0",
+        "source_digest": "07c6eccaba3b88ed8e54c5192fcaf18bb03f256b7fa73ae7ac4fb788c90cae88",
+        "source_files": 4,
+        "toolchain": {
+          "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+          "cargo": "cargo 1.97.1 (c980f4866 2026-06-30)",
+          "gcc": "gcc (Ubuntu 11.4.0-1ubuntu1~22.04.3) 11.4.0"
+        },
+        "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+        "repo_commit": "ad75ed2b3b14d08a91b6acdf4f737375a5ae4cfe"
+      },
+      "artifacts": [
+        {
+          "path": "Explorer/Assets/Plugins/RustSegment/SegmentServerWrap/Libraries/Linux/segment-server.so",
+          "sha256": "8c4507541d3e33214683bf3fb63bc75d7f590cb183ee9b7b652b0098cb148794",
+          "bytes": 5712352,
+          "produced_by": "cargo"
+        }
+      ]
+    }
+  }
+}

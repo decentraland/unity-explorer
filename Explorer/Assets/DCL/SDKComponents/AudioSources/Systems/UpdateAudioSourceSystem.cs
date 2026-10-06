@@ -23,6 +23,11 @@ namespace DCL.SDKComponents.AudioSources
     [LogCategory(ReportCategory.SDK_AUDIO_SOURCES)]
     public partial class UpdateAudioSourceSystem : BaseUnityLoopSystem
     {
+        /// <summary>
+        ///     Seeking to the very end of a clip is an invalid FMOD position; keep the cursor this far before it.
+        /// </summary>
+        private const float CLIP_END_SEEK_MARGIN = 0.01f;
+
         private readonly IPerformanceBudget frameTimeBudgetProvider;
         private readonly IPerformanceBudget memoryBudgetProvider;
         private readonly IComponentPool<AudioSource> audioSourcesPool;
@@ -82,7 +87,17 @@ namespace DCL.SDKComponents.AudioSources
 
                 if (audioSource.clip != null)
                     if (sdkAudioSource is {HasPlaying: true, Playing: true })
+                    {
+                        // Record the seek so a later re-sent CurrentTime does not restart the clip (#9903)
+                        if (sdkAudioSource.HasCurrentTime)
+                        {
+                            float seekTarget = ComputeSeekTarget(sdkAudioSource.CurrentTime, audioSource.clip);
+                            audioSource.time = seekTarget;
+                            audioSourceComponent.LastAppliedCurrentTime = seekTarget;
+                        }
+
                         audioSource.Play();
+                    }
             }
 
             // Reset isDirty as we just applied the PBAudioSource to the AudioSource
@@ -135,6 +150,7 @@ namespace DCL.SDKComponents.AudioSources
             {
                 component.CleanUp(world);
                 component.AudioClipUrl = sdkComponent.AudioClipUrl!;
+                component.LastAppliedCurrentTime = float.NaN;
 
                 if (AudioUtils.TryCreateAudioClipPromise(world, sceneData, sdkComponent.AudioClipUrl!, partitionComponent, out Promise? clipPromise))
                     component.ClipPromise = clipPromise!.Value;
@@ -147,11 +163,22 @@ namespace DCL.SDKComponents.AudioSources
                 {
                     if (sdkComponent is {HasPlaying: true, Playing: true })
                     {
-                        // LWW PUT with playing:true is an explicit retrigger — seek first so the cursor is correct.
+                        // CurrentTime is re-sent on every PUT: while playing only a changed target is a seek, while stopped always seek (#9903)
                         if (sdkComponent.HasCurrentTime)
-                            audioSource.time = sdkComponent.CurrentTime;
+                        {
+                            float seekTarget = ComputeSeekTarget(sdkComponent.CurrentTime, audioSource.clip);
 
-                        audioSource.Play();
+                            if (!audioSource.isPlaying || !Mathf.Approximately(seekTarget, component.LastAppliedCurrentTime))
+                            {
+                                audioSource.time = seekTarget;
+                                component.LastAppliedCurrentTime = seekTarget;
+                                audioSource.Play();
+                            }
+                        }
+                        else if (!audioSource.isPlaying)
+                        {
+                            audioSource.Play();
+                        }
                     }
                     else
                         audioSource.Stop();
@@ -160,5 +187,11 @@ namespace DCL.SDKComponents.AudioSources
 
             sdkComponent.IsDirty = false;
         }
+
+        // Clamp into the seekable range, otherwise FMOD rejects the seek
+        private static float ComputeSeekTarget(float currentTime, AudioClip clip) =>
+            float.IsNaN(currentTime)
+                ? 0f
+                : Mathf.Clamp(currentTime, 0f, Mathf.Max(0f, clip.length - CLIP_END_SEEK_MARGIN));
     }
 }

@@ -24,7 +24,6 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.Utilities;
 using DCL.Web3.Identities;
-using ECS;
 using Global;
 using Global.AppArgs;
 using Global.Dynamic;
@@ -193,6 +192,7 @@ namespace DCL.Multiplayer.Movement
         public readonly IEmotesMessageBus EmotesMessageBus;
         public readonly IRemoveIntentions RemoveIntentions;
         public readonly PulseActivation PulseActivation;
+        public readonly PulseRealm PulseRealm;
 
         public IProfileBroadcast ProfileBroadcast => liveKitContainer.ProfileBroadcast;
         public IProfilePropagation ProfilePropagation => pulseContainer.pulseProfilePropagationBus!;
@@ -202,12 +202,13 @@ namespace DCL.Multiplayer.Movement
         public PulseMultiplayerBus PulseMultiplayerBus => pulseContainer.pulseMultiplayerBus!;
         public ITransport PulseTransport => pulseContainer.transport!;
 
-        private MultiplayerContainer(PulseContainer pulseContainer, LiveKitMultiplayerContainer liveKitContainer, ISelfProfile selfProfile, PulseActivation pulseActivation)
+        private MultiplayerContainer(PulseContainer pulseContainer, LiveKitMultiplayerContainer liveKitContainer, ISelfProfile selfProfile, PulseActivation pulseActivation, PulseRealm pulseRealm)
         {
             this.pulseContainer = pulseContainer;
             this.liveKitContainer = liveKitContainer;
             this.selfProfile = selfProfile;
             PulseActivation = pulseActivation;
+            PulseRealm = pulseRealm;
 
             // Create Proxies to expose them to consumers
             MovementMessageBus = new MovementMessageBusProxy(pulseContainer.pulseMultiplayerBus!, liveKitContainer.MovementMessageBus);
@@ -220,7 +221,7 @@ namespace DCL.Multiplayer.Movement
 
         public static async UniTask<MultiplayerContainer> CreateAsync(
             IPluginSettingsContainer pluginSettingsContainer,
-            IRealmData realmData,
+            PulseRealm pulseRealm,
             IWeb3IdentityCache identityCache,
             MovementInbox movementInbox,
             LandscapeData landscapeData,
@@ -236,10 +237,10 @@ namespace DCL.Multiplayer.Movement
             // Shared with the Pulse container, the LiveKit broadcaster, and the start-up operation that may deactivate it on fallback.
             var pulseActivation = new PulseActivation(FeaturesRegistry.Instance.IsEnabled(FeatureId.Pulse));
 
-            PulseContainer pulseContainer = await PulseContainer.CreateAsync(pluginSettingsContainer, identityCache, movementInbox, landscapeData, urlsSource, selfProfile, realmData, pulseActivation, ct);
+            PulseContainer pulseContainer = await PulseContainer.CreateAsync(pluginSettingsContainer, identityCache, movementInbox, landscapeData, urlsSource, selfProfile, pulseRealm, pulseActivation, ct);
             var liveKitContainer = new LiveKitMultiplayerContainer(roomHub, messagePipesHub, movementInbox, selfProfile, userBlockingCache, multiplayerDebugSettings, pulseActivation);
 
-            return new MultiplayerContainer(pulseContainer, liveKitContainer, selfProfile, pulseActivation);
+            return new MultiplayerContainer(pulseContainer, liveKitContainer, selfProfile, pulseActivation, pulseRealm);
         }
 
         public MultiplayerMovementPlugin CreatePlugin(

@@ -4,5 +4,14 @@
 @import url("Styles/Sprites-Interaction.uss");
 @import url("Styles/CommonStyles.uss");
 
+:root {
+    /* Advanced builds its native fallback chain from every OS font family the first time any
+       label lays out, whatever the text says, opening and parsing each file on the main thread —
+       the largest single cause of pre-in-world ANRs. Standard only consults OS fonts when a
+       glyph is missing from the font asset and the fallbacks below it, so that cost is no longer
+       paid at startup. Standard is also the only generator that renders sprite-asset emoji. */
+    -unity-text-generator: standard;
+}
+
 
 

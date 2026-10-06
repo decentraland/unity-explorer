@@ -50,12 +50,12 @@ namespace DCL.Web3.Authenticators
             metaTxService = new ThirdWebMetaTxService(client, URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.MetaTransactionServer)), (request, targetChainId) => SendRpcRequestAsync(request, targetChainId, CancellationToken.None));
         }
 
-        private string GetRpcUrl(int chainId)
+        private string GetRpcUrl(int targetChainId)
         {
-            if (rpcOverrides.TryGetValue(chainId, out string? rpcUrl))
+            if (rpcOverrides.TryGetValue(targetChainId, out string? rpcUrl))
                 return rpcUrl;
 
-            throw new Web3Exception($"No RPC endpoint configured for chain {chainId}. Add it to ChainRpcOverrides in ThirdWebAuthenticator.");
+            throw new Web3Exception($"No RPC endpoint configured for chain {targetChainId}. Add it to ChainRpcOverrides in ThirdWebAuthenticator.");
         }
 
         public async UniTask<EthApiResponse> SendAsync(IThirdwebWallet? wallet, EthApiRequest request, Web3RequestSource source, CancellationToken ct)
@@ -77,18 +77,13 @@ namespace DCL.Web3.Authenticators
 
                 if (!whitelistMethods.Contains(request.method))
                 {
-                    ReportHub.LogError(ReportCategory.AUTHENTICATION, $"ThirdWeb web3 operation: Method not allowed : {request.method}");
-                    throw new Web3Exception($"The method is not allowed: {request.method}");
+                    // Scene input rejected by the allow-list, not a fault: warn instead of error
+                    ReportHub.LogWarning(ReportCategory.AUTHENTICATION, $"ThirdWeb web3 operation: Method not allowed : {request.method}");
+                    throw new Web3MethodNotAllowedException($"The method is not allowed: {request.method}");
                 }
 
                 if (IsReadOnly(request))
                     return await SendWithoutConfirmationAsync(wallet, request, ct);
-
-                if (wallet == null)
-                {
-                    ReportHub.LogError(ReportCategory.AUTHENTICATION, $"ThirdWeb web3 operation: Method not allowed : {request.method}");
-                    throw new Web3Exception("No active wallet connected");
-                }
 
                 return await SendWithConfirmationAsync(wallet, request, source, ct);
             }
@@ -127,11 +122,11 @@ namespace DCL.Web3.Authenticators
             if (string.Equals(request.method, "eth_getBalance") && targetChainId == (int)chainId)
             {
                 var address = request.@params[0].ToString();
-                string walletAddress = await wallet!.GetAddress();
+                string walletAddress = await wallet.GetAddress();
 
                 if (string.Equals(address, walletAddress, StringComparison.OrdinalIgnoreCase))
                 {
-                    BigInteger balance = await wallet!.GetBalance(chainId);
+                    BigInteger balance = await wallet.GetBalance(chainId);
 
                     return new EthApiResponse
                     {
@@ -221,7 +216,7 @@ namespace DCL.Web3.Authenticators
             {
                 // personal_sign params: [message, address]
                 var message = request.@params[0].ToString();
-                string signature = await wallet!.PersonalSign(message);
+                string signature = await wallet.PersonalSign(message);
 
                 return new EthApiResponse
                 {
@@ -235,7 +230,7 @@ namespace DCL.Web3.Authenticators
             {
                 // eth_signTypedData_v4 params: [address, typedData]
                 var typedDataJson = request.@params[1].ToString();
-                string signature = await wallet!.SignTypedDataV4(typedDataJson);
+                string signature = await wallet.SignTypedDataV4(typedDataJson);
 
                 return new EthApiResponse
                 {
@@ -269,11 +264,11 @@ namespace DCL.Web3.Authenticators
             };
 
             // eth_signTypedData_v4 params: [address, typedData]
-            if (string.Equals(request.method, "eth_signTypedData_v4") && request.@params?.Length > 1)
-                confirmationRequest.TypedData = request.@params[1]?.ToString();
+            if (string.Equals(request.method, "eth_signTypedData_v4") && request.@params.Length > 1)
+                confirmationRequest.TypedData = request.@params[1].ToString();
 
             // Extract additional details for eth_sendTransaction
-            if (string.Equals(request.method, "eth_sendTransaction") && request.@params?.Length > 0)
+            if (string.Equals(request.method, "eth_sendTransaction") && request.@params.Length > 0)
             {
                 (string? to, string? value, string? data) = Web3Utils.ParseSendTxRequestParams(request);
 
@@ -283,7 +278,7 @@ namespace DCL.Web3.Authenticators
 
                 try
                 {
-                    BigInteger balanceWei = await wallet!.GetBalance(chainId);
+                    BigInteger balanceWei = await wallet.GetBalance(chainId);
                     confirmationRequest.BalanceEth = balanceWei.ToString().ToEth(decimalsToDisplay: 6, addCommas: false);
                 }
                 catch (Exception e)
@@ -295,7 +290,7 @@ namespace DCL.Web3.Authenticators
                 try
                 {
                     // Re-parse to build txObject for estimateGas
-                    string from = await wallet!.GetAddress();
+                    string from = await wallet.GetAddress();
                     var txObject = new { from, to, value, data };
 
                     var estimateGasRequest = new EthApiRequest
@@ -360,7 +355,7 @@ namespace DCL.Web3.Authenticators
             // For simple ETH transfers (no data), use Transfer method
             if (string.IsNullOrEmpty(data) || data == "0x")
             {
-                ThirdwebTransactionReceipt? txReceipt = await wallet!.Transfer(
+                ThirdwebTransactionReceipt? txReceipt = await wallet.Transfer(
                     chainId,
                     to,
                     weiValue

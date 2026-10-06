@@ -1,9 +1,5 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.AvatarRendering.Loading.Components;
-using DCL.AvatarRendering.Wearables;
-using DCL.AvatarRendering.Wearables.Components;
-using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Diagnostics;
@@ -13,10 +9,10 @@ using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.Utilities;
 using DCL.Web3;
+using DCL.Web3.Identities;
 using DCL.WebRequests;
 using MVC;
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using static DCL.AuthenticationScreenFlow.AuthenticationScreenController;
@@ -24,7 +20,7 @@ using Avatar = DCL.Profiles.Avatar;
 
 namespace DCL.AuthenticationScreenFlow
 {
-    public class LobbyForNewAccountAuthState : AuthStateBase, IPayloadedState<(Profile profile, string email, bool isCached, CancellationToken ct)>
+    public class LobbyForNewAccountAuthState : AuthStateBase, IPayloadedState<(Profile profile, string email, bool isRestoredSession, CancellationToken ct)>
     {
         private readonly MVCStateMachine<AuthStateBase> fsm;
         private readonly AuthenticationScreenController controller;
@@ -33,16 +29,12 @@ namespace DCL.AuthenticationScreenFlow
         private readonly ISelfProfile selfProfile;
         private readonly LobbyForNewAccountAuthView view;
 
-        private readonly IWearablesProvider wearablesProvider;
         private readonly UnityAppWebBrowser webBrowser;
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly ProfileChangesBus profileChangesBus;
+        private readonly IWeb3IdentityCache identityCache;
         private readonly Web3Address? referrer;
-
-        private readonly AvatarRandomizer avatarRandomizer = new ();
-
-        private BodyShape selectedBodyType = BodyShape.MALE;
 
         private Profile newUserProfile;
         private string userEmail;
@@ -50,7 +42,6 @@ namespace DCL.AuthenticationScreenFlow
 
         private readonly CharacterPreviewView characterPreviewView;
         private readonly Vector3 characterPreviewOrigPosition;
-        private IReadOnlyList<ITrimmedWearable>? loadedWearables;
 
         public LobbyForNewAccountAuthState(MVCStateMachine<AuthStateBase> fsm,
             AuthenticationScreenView viewInstance,
@@ -58,11 +49,11 @@ namespace DCL.AuthenticationScreenFlow
             ReactiveProperty<AuthStatus> currentState,
             AuthenticationScreenCharacterPreviewController characterPreviewController,
             ISelfProfile selfProfile,
-            IWearablesProvider wearablesProvider,
             UnityAppWebBrowser webBrowser,
             IWebRequestController webRequestController,
             IDecentralandUrlsSource decentralandUrlsSource,
             ProfileChangesBus profileChangesBus,
+            IWeb3IdentityCache identityCache,
             string? referrer = null) : base(viewInstance)
         {
             view = viewInstance.LobbyForNewAccountAuthView;
@@ -72,11 +63,11 @@ namespace DCL.AuthenticationScreenFlow
             this.currentState = currentState;
             this.characterPreviewController = characterPreviewController;
             this.selfProfile = selfProfile;
-            this.wearablesProvider = wearablesProvider;
             this.webBrowser = webBrowser;
             this.webRequestController = webRequestController;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.profileChangesBus = profileChangesBus;
+            this.identityCache = identityCache;
             // Normalized/validated once at construction so the field is always canonical;
             // an invalid launch-argument value degrades to "no referral tracking".
             this.referrer = Web3Address.FromUntrusted(referrer);
@@ -87,19 +78,19 @@ namespace DCL.AuthenticationScreenFlow
             view.OnViewHidden += ReparentCharacterPreview;
         }
 
-        public void Enter((Profile profile, string email, bool isCached, CancellationToken ct) payload)
+        public void Enter((Profile profile, string email, bool isRestoredSession, CancellationToken ct) payload)
         {
             base.Enter();
 
             loginCt = payload.ct;
             userEmail = payload.email;
-            selectedBodyType = BodyShape.MALE;
             newUserProfile = payload.profile;
 
-            InitializeAvatarAsync().Forget();
+            // The avatar was already picked in SelectAvatarForNewAccountAuthState
+            UpdateCharacterPreview(payload.profile.Avatar);
 
             controller.IsCurrentlyNewAccount = true;
-            currentState.Value = payload.isCached ? AuthStatus.LoggedInCached : AuthStatus.LoggedIn;
+            currentState.Value = payload.isRestoredSession ? AuthStatus.LoggedInCached : AuthStatus.LoggedIn;
 
             view.Show();
             characterPreviewView.transform.SetParent(view.transform);
@@ -111,14 +102,8 @@ namespace DCL.AuthenticationScreenFlow
             view.FinalizeNewUserButton.onClick.AddListener(FinalizeNewUser);
             view.BackButton.onClick.AddListener(OnBackButtonClicked);
 
-            view.RandomizeButton.onClick.AddListener(OnRandomizeButtonPressed);
-
-            // Body type selector
-            view.BodyTypeDropdownButton.onClick.AddListener(ToggleBodyTypeDropdown);
-            view.BodyTypeOptionA.onClick.AddListener(() => SelectBodyType(BodyShape.MALE));
-            view.BodyTypeOptionB.onClick.AddListener(() => SelectBodyType(BodyShape.FEMALE));
-            view.SetBodyTypeDropdownOpen(false);
-            view.UpdateBodyTypeUI(selectedBodyType.Equals(BodyShape.MALE));
+            // A guest has no email to subscribe with
+            view.SubscribeRoot.SetActive(!identityCache.IsGuest());
 
             // Toggle listeners for terms agreement
             view.SubscribeToggle.SetIsOnWithoutNotify(false);
@@ -139,18 +124,12 @@ namespace DCL.AuthenticationScreenFlow
         {
             characterPreviewController.OnHide();
 
-            avatarRandomizer.ClearCatalogs();
 
             // Listeners
             view.ProfileNameInputField.InputValueChanged -= OnProfileNameChanged;
 
             view.FinalizeNewUserButton.onClick.RemoveAllListeners();
             view.BackButton.onClick.RemoveAllListeners();
-
-            view.RandomizeButton.onClick.RemoveAllListeners();
-            view.BodyTypeDropdownButton.onClick.RemoveAllListeners();
-            view.BodyTypeOptionA.onClick.RemoveAllListeners();
-            view.BodyTypeOptionB.onClick.RemoveAllListeners();
 
             // Toggle listeners for terms agreement
             view.SubscribeToggle.onValueChanged.RemoveAllListeners();
@@ -172,48 +151,6 @@ namespace DCL.AuthenticationScreenFlow
         private void OpenClickableURL(string url) =>
             webBrowser.OpenUrlMainThreadOnly(url);
 
-        private async UniTask InitializeAvatarAsync()
-        {
-            try
-            {
-                loadedWearables ??= await LoadBaseWearablesAsync(loginCt);
-
-                if (loadedWearables != null)
-                    avatarRandomizer.PopulateCatalogs(loadedWearables);
-                UpdateCharacterPreview(CreateRandomAvatar());
-            }
-            catch (OperationCanceledException)
-            { /* Expected on cancellation */
-            }
-        }
-
-        private async UniTask<IReadOnlyList<ITrimmedWearable>?> LoadBaseWearablesAsync(CancellationToken ct)
-        {
-            try
-            {
-                // Load base wearables catalog from backend (pageSize 300 to get all)
-                (IReadOnlyList<ITrimmedWearable> wearables, _) = await wearablesProvider.GetTrimmedByParamsAsync(
-                    new IWearablesProvider.Params(300, 1)
-                    {
-                        CollectionType = IWearablesProvider.CollectionType.Base
-                    },
-                    ct);
-
-                ReportHub.Log(ReportCategory.AUTHENTICATION, $"Base wearables catalog loaded: {wearables.Count} items");
-                return wearables;
-            }
-            catch (OperationCanceledException)
-            {
-                throw; // Re-throw to be handled by caller
-            }
-            catch (Exception e)
-            {
-                ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-            }
-
-            return null;
-        }
-
         private void OnBackButtonClicked()
         {
             view.Hide(UIAnimationHashes.SLIDE);
@@ -228,26 +165,6 @@ namespace DCL.AuthenticationScreenFlow
             characterPreviewController.OnShow();
         }
 
-        private void OnRandomizeButtonPressed()
-        {
-            UpdateCharacterPreview(CreateRandomAvatar());
-        }
-
-        private void ToggleBodyTypeDropdown()
-        {
-            bool isOpen = !view.BodyTypeDropdownPanel.activeSelf;
-            view.SetBodyTypeDropdownOpen(isOpen);
-        }
-
-        private void SelectBodyType(BodyShape bodyShape)
-        {
-            selectedBodyType = bodyShape;
-            view.SetBodyTypeDropdownOpen(false);
-            view.UpdateBodyTypeUI(bodyShape.Equals(BodyShape.MALE));
-            // Regenerate avatar with the new body type
-            UpdateCharacterPreview(CreateRandomAvatar());
-        }
-
         private void OnToggleChanged(bool _) =>
             UpdateFinalizeButtonState();
 
@@ -258,28 +175,6 @@ namespace DCL.AuthenticationScreenFlow
             view.FinalizeNewUserButton.interactable =
                 view.ProfileNameInputField.IsValidName &&
                 view.TermsOfUse.isOn;
-
-        private Avatar CreateRandomAvatar()
-        {
-            BodyShape bodyShape = selectedBodyType;
-
-            if (avatarRandomizer.HasCatalogs)
-            {
-                return new Avatar(
-                    bodyShape,
-                    avatarRandomizer.SelectRandomWearables(bodyShape),
-                    WearablesConstants.DefaultColors.GetRandomEyesColor(),
-                    WearablesConstants.DefaultColors.GetRandomHairColor(),
-                    WearablesConstants.DefaultColors.GetRandomSkinColor());
-            }
-
-            return new Avatar(
-                bodyShape,
-                WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(bodyShape),
-                WearablesConstants.DefaultColors.GetRandomEyesColor(),
-                WearablesConstants.DefaultColors.GetRandomHairColor(),
-                WearablesConstants.DefaultColors.GetRandomSkinColor());
-        }
 
         private void FinalizeNewUser()
         {

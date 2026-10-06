@@ -5,6 +5,9 @@
 }
 
 .nametag {
+    /* The default Advanced (HarfBuzz) generator has no sprite-asset emoji support, so emoji
+       render as tofu; only the Standard one resolves them through the PanelTextSettings fallback. */
+    -unity-text-generator: standard;
     position: absolute;
     flex-direction: column;
     border-top-left-radius: 15px;
@@ -301,6 +304,61 @@
 
 .safe-easing {
     transition-timing-function: ease-out-cubic;
+}
+
+.nametag__scene-tag-container {
+    display: none;
+    position: absolute;
+    bottom: 100%;
+    align-self: center;
+    translate: 0 -2px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    max-width: 300px;
+    /* The plate's own height, so a label-less plate comes out a circle, not an ellipse. */
+    min-width: 22px;
+    padding-top: 1px;
+    padding-bottom: 1px;
+    padding-right: 6px;
+    padding-left: 6px;
+    background-color: var(--dcl-color-shadow);
+    border-width: 1.5px;
+    border-color: var(--dcl-color-shadow);
+    /* Half the plate's height. UITK does not clamp oversized radii the CSS way - anything
+       larger deforms the plate into an ellipse. */
+    border-top-left-radius: 11px;
+    border-top-right-radius: 11px;
+    border-bottom-right-radius: 11px;
+    border-bottom-left-radius: 11px;
+}
+
+.nametag--scene-tag > .nametag__scene-tag-container {
+    display: flex;
+}
+
+.nametag__scene-tag-label {
+    font-size: 14px;
+    /* pre, not nowrap: nowrap would collapse a spaces-only label into the min-width circle. */
+    white-space: pre;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.nametag--name-hidden > .nametag__pointer-container,
+.nametag--name-hidden > .nametag__background,
+.nametag--name-hidden > .nametag__community-name-container,
+.nametag--name-hidden > .nametag__header,
+.nametag--name-hidden > .nametag__message-container {
+    display: none;
+}
+
+/* Top-anchored so the plate sits on the name's line and stays put while the chat bubble
+   animates the root's padding (insets resolve against the padding box). */
+.nametag--name-hidden > .nametag__scene-tag-container {
+    top: 0;
+    bottom: auto;
+    translate: 0 0;
 }
 
 .nametag__debug-label {

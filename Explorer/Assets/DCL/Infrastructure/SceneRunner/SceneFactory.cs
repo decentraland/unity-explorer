@@ -17,13 +17,11 @@ using DCL.Multiplayer.Profiles.Poses;
 using DCL.Profiles;
 using DCL.SkyBox;
 using DCL.Utility.Exceptions;
-using DCL.Utility.Types;
 using DCL.Web3;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
 using ECS.Prioritization.Components;
-using ECS.StreamableLoading.AssetBundles.InitialSceneState;
 using Microsoft.ClearScript;
 using MVC;
 using PortableExperiences.Controller;
@@ -41,7 +39,6 @@ using UnityEngine.Assertions;
 using UnityEngine.Networking;
 using Utility;
 using Utility.Multithreading;
-using RichTypes;
 
 namespace SceneRunner
 {

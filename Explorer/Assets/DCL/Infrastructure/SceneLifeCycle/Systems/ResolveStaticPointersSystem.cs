@@ -2,7 +2,6 @@
 using Arch.System;
 using DCL.SceneRunner.Scene;
 using Arch.SystemGroups;
-using CommunicationData.URLHelpers;
 using DCL.CharacterCamera;
 using DCL.Ipfs;
 using ECS.Abstract;
@@ -10,12 +9,10 @@ using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.SceneFacade;
-using ECS.StreamableLoading.AssetBundles.InitialSceneState;
 using ECS.StreamableLoading.Common;
 using SceneRunner.Scene;
 using System.Linq;
 using DCL.LOD.Components;
-using DCL.Multiplayer.Connections.DecentralandUrls;
 using UnityEngine;
 using Utility;
 

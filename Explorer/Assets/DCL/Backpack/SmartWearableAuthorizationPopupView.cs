@@ -53,7 +53,7 @@ namespace Runtime.Wearables
             await UniTask.WhenAny(AuthorizeButton.OnClickAsync(), DenyButton.OnClickAsync());
         }
 
-        public void Setup(string wearableName, Sprite thumbnail, Sprite rarityBackground, Color rarityColor, Sprite categoryIcon)
+        public void Setup(string wearableName, Sprite? thumbnail, Sprite rarityBackground, Color rarityColor, Sprite categoryIcon)
         {
             PromptText.text = string.Format(PromptFormat, wearableName);
             WearableThumbnail.sprite = thumbnail;

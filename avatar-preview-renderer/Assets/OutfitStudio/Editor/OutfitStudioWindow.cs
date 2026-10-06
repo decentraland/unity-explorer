@@ -28,6 +28,10 @@ namespace OutfitStudio.Editor
         private const int PAGE_SIZE = 36;
         private const int THUMB_SIZE = 90;
 
+        // Wheel delta fed to PreviewCameraController.ZoomByWheelDelta by the Zoom In/Out buttons;
+        // 10 units at the default 0.5 sensitivity is the 5-degree FOV step the buttons always had.
+        private const float ZOOM_BUTTON_WHEEL_DELTA = 10f;
+
         // Cap on tag-matched items collected from the catalyst lambdas endpoint per search (see
         // RunSearch) - a discovery-only pass, not the full result set, so this can stay well below
         // FETCH_CAP without losing practical recall.
@@ -1305,8 +1309,9 @@ namespace OutfitStudio.Editor
                 SetStatus("Loading random profile...");
             }) { text = "Random Profile" });
 
-            actionsRow.Add(new Button(() => WithCamera(c => c.ZoomIn())) { text = "Zoom In" });
-            actionsRow.Add(new Button(() => WithCamera(c => c.ZoomOut())) { text = "Zoom Out" });
+            // ZoomByWheelDelta scales by the wheel sensitivity, so this is one wheel notch per click.
+            actionsRow.Add(new Button(() => WithCamera(c => c.ZoomByWheelDelta(-ZOOM_BUTTON_WHEEL_DELTA))) { text = "Zoom In" });
+            actionsRow.Add(new Button(() => WithCamera(c => c.ZoomByWheelDelta(ZOOM_BUTTON_WHEEL_DELTA))) { text = "Zoom Out" });
 
             var stressToggle = new Toggle("Stress Mode")
             {

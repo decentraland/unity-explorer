@@ -26,6 +26,15 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             public const string USED_EMOTE = "used_emote";
         }
 
+        public static class Backpack
+        {
+            // 'source' tells which surface showed it: the explore panel or the lobby's modal.
+            public const string BACKPACK_OPENED = "backpack_opened";
+
+            // A profile published from the backpack with a different avatar; 'source' is the surface the backpack was shown in.
+            public const string AVATAR_CHANGED = "avatar_changed";
+        }
+
         public static class Ui
         {
             public const string MESSAGE_SENT = "chat_message_sent";
@@ -96,6 +105,9 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             public const string AUTOLOGIN_SUCCESS = "autologin_success";
             public const string AUTOLOGIN_FAILURE = "autologin_failure";
 
+            // 0. ENTRY SCREEN
+            public const string ENTRY_SCREEN = "entry_screen";
+
             // 1. LOGIN SELECTION SCREEN
             public const string LOGIN_SELECTION_SCREEN = "login_selection_screen";
             public const string LOGIN_REQUESTED = "login_requested";
@@ -125,6 +137,25 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             // Fires when a new-account user successfully publishes their profile (FinalizeNewUser succeeds).
             // Marks the end of the onboarding step that today is invisible to analytics.
             public const string PROFILE_FINALIZED = "profile_finalized";
+
+            // Fires when the avatar preset screen is shown to a new account
+            public const string AVATAR_SELECTION_SCREEN = "avatar_selection_screen";
+            public const string AVATAR_COMPLETE = "avatar_complete";
+
+            // 5. GUEST UPGRADE
+            // A guest hit a gated feature and was offered the upgrade. Carries the trigger, so the funnel
+            // can be split by what motivated the upgrade.
+            public const string GUEST_UPGRADE_PROMPT = "guest_upgrade_prompt";
+
+            // The guest submitted an email address to link.
+            public const string GUEST_UPGRADE_STARTED = "guest_upgrade_started";
+
+            // The email was linked and the profile is no longer a guest one.
+            public const string GUEST_UPGRADE_COMPLETED = "guest_upgrade_completed";
+
+            // The upgrade could not be completed. 'reason' separates a recoverable step failure
+            // (invalid_email, invalid_code) from a terminal one (email_already_linked, link_error).
+            public const string GUEST_UPGRADE_FAILED = "guest_upgrade_failed";
         }
 
         public static class Friends
@@ -293,6 +324,17 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             public const string EVENT_JUMPED_IN = "event_jumped_in";
             public const string EVENT_SHARED = "event_shared";
             public const string EVENT_LINK_COPIED = "event_link_copied";
+        }
+
+        /// <summary>
+        ///     Lifecycle of the lobby panel; what the user does inside it is reported through the mirrored surface's events with 'source' set to lobby.
+        /// </summary>
+        public static class Lobby
+        {
+            public const string LOBBY_OPENED = "lobby_opened";
+
+            // Carries how long the panel stayed on screen, in seconds.
+            public const string LOBBY_CLOSED = "lobby_closed";
         }
 
         public static class Places

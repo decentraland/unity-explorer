@@ -1,5 +1,6 @@
 using CodeLess.Attributes;
 using Cysharp.Threading.Tasks;
+using DCL.Prefs;
 using Global.AppArgs;
 using System;
 using System.Collections.Generic;
@@ -22,6 +23,12 @@ namespace DCL.FeatureFlags
     {
         private readonly Dictionary<FeatureId, bool> featureStates = new ();
         private readonly Dictionary<FeatureId, IFeatureProvider> featureProviders = new ();
+
+        // Filled only in the constructor and never mutated afterwards, so reads stay thread-safe; Lazy<T> resolves each value once under its own lock
+        private readonly Dictionary<FeatureId, Lazy<bool>> deferredFeatureStates = new ();
+
+        private readonly bool lobbyDefault;
+        private readonly bool lobbyFlagEnabled;
 
         public FeaturesRegistry(
             IAppArgs appArgs,
@@ -59,6 +66,8 @@ namespace DCL.FeatureFlags
                 [FeatureId.CommunitiesAnnouncements] = featureFlags.IsEnabled(FeatureFlagsStrings.COMMUNITIES_ANNOUNCEMENTS) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.COMMUNITIES_ANNOUNCEMENTS)) || isEditor,
                 [FeatureId.CommunitiesMembersCounter] = featureFlags.IsEnabled(FeatureFlagsStrings.COMMUNITIES_MEMBERS_COUNTER),
                 [FeatureId.EmailOTPAuth] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.EMAIL_OTP_AUTH, featureFlags.IsEnabled(FeatureFlagsStrings.EMAIL_OTP_AUTH)),
+                [FeatureId.GuestLogin] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.GUEST_LOGIN, featureFlags.IsEnabled(FeatureFlagsStrings.GUEST_LOGIN)),
+                [FeatureId.EphemeralGuestAccount] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.EPHEMERAL_GUEST_ACCOUNT, featureFlags.IsEnabled(FeatureFlagsStrings.EPHEMERAL_GUEST_ACCOUNT)),
                 [FeatureId.CheckDiskSpace] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.CHECK_DISK_SPACE, featureFlags.IsEnabled(FeatureFlagsStrings.CHECK_DISK_SPACE)),
                 [FeatureId.AvatarHighlight] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.AVATAR_HIGHLIGHT, featureFlags.IsEnabled(FeatureFlagsStrings.AVATAR_HIGHLIGHT) || isEditor, requireDebug: false),
                 [FeatureId.DoubleJump] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.DOUBLE_JUMP, featureFlags.IsEnabled(FeatureFlagsStrings.DOUBLE_JUMP) || Application.isEditor),
@@ -69,7 +78,8 @@ namespace DCL.FeatureFlags
                 [FeatureId.PointAt] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.POINT_AT, featureFlags.IsEnabled(FeatureFlagsStrings.POINT_AT) || Application.isEditor),
                 [FeatureId.AvatarContextMenu] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.AVATAR_CONTEXT_MENU, featureFlags.IsEnabled(FeatureFlagsStrings.AVATAR_CONTEXT_MENU) || Application.isEditor),
                 [FeatureId.DoubleClickWalk] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.DOUBLE_CLICK_WALK, featureFlags.IsEnabled(FeatureFlagsStrings.DOUBLE_CLICK_WALK)),
-                [FeatureId.Pulse] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.PULSE_MULTIPLAYER, featureFlags.IsEnabled(FeatureFlagsStrings.PULSE), requireDebug: false) && !localSceneDevelopment,
+                // Local scene development resolves no remote feature flags, so Pulse is deterministically on there; --pulse false opts back into LiveKit-only.
+                [FeatureId.Pulse] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.PULSE_MULTIPLAYER, localSceneDevelopment || featureFlags.IsEnabled(FeatureFlagsStrings.PULSE), requireDebug: false),
                 [FeatureId.ByteWeightedLoadingProgress] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.BYTE_WEIGHTED_LOADING_PROGRESS, featureFlags.IsEnabled(FeatureFlagsStrings.BYTE_WEIGHTED_LOADING_PROGRESS) || isEditor),
                 [FeatureId.HardwareFingerprint] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.HARDWARE_FINGERPRINT, featureFlags.IsEnabled(FeatureFlagsStrings.HARDWARE_FINGERPRINT)),
                 [FeatureId.McpServer] = appArgs.HasFlag(AppArgsFlags.MCP) || appArgs.HasFlag(AppArgsFlags.MCP_PORT),
@@ -77,6 +87,7 @@ namespace DCL.FeatureFlags
                 [FeatureId.UseCustomMediaPlayerMacSilicon] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.USE_CUSTOM_MEDIA_PLAYER, featureFlags.IsEnabled(FeatureFlagsStrings.USE_CUSTOM_MEDIA_PLAYER_MAC_SILICON), requireDebug: false),
                 [FeatureId.UseCustomMediaPlayerMacIntel] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.USE_CUSTOM_MEDIA_PLAYER, featureFlags.IsEnabled(FeatureFlagsStrings.USE_CUSTOM_MEDIA_PLAYER_MAC_INTEL), requireDebug: false),
                 [FeatureId.BugReport] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.BUG_REPORT, featureFlags.IsEnabled(FeatureFlagsStrings.BUG_REPORT) || isEditor),
+                [FeatureId.InGameShop] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.IN_GAME_SHOP, featureFlags.IsEnabled(FeatureFlagsStrings.IN_GAME_SHOP) || isEditor),
                 // Note: COMMUNITIES feature is not cached here because it depends on user identity
             });
 
@@ -87,13 +98,44 @@ namespace DCL.FeatureFlags
 
             // The intro tip is a kill switch: unlike the feature itself it stays off until the flag is explicitly enabled.
             SetFeatureState(FeatureId.NearbyVoiceChatTip, IsEnabled(FeatureId.NearbyVoiceChat) && featureFlags.IsEnabled(FeatureFlagsStrings.NEARBY_VOICE_CHAT_TIP));
+
+            // The Settings toggle lives in player prefs, which only exist in a running player while the registry is also built outside one, so the state resolves on first query
+            lobbyFlagEnabled = featureFlags.IsEnabled(FeatureFlagsStrings.LOBBY);
+            lobbyDefault = appArgs.ResolveFeatureFlagArg(AppArgsFlags.LOBBY, lobbyFlagEnabled, requireDebug: false);
+            deferredFeatureStates[FeatureId.Lobby] = new Lazy<bool>(() => LobbyEnabledSetting && !localSceneDevelopment);
+        }
+
+        /// <summary>
+        ///     Settings toggle, else the <c>--lobby</c> app arg, else the remote flag; resolved once per session, so a change applies after a restart.
+        /// </summary>
+        public bool LobbyEnabledSetting
+        {
+            get
+            {
+                if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_LOBBY_ENABLED))
+                    return DCLPlayerPrefs.GetBool(DCLPrefKeys.SETTINGS_LOBBY_ENABLED);
+
+                // Persisted as the user's own choice so the lobby survives the flag being withdrawn; skipped when `--lobby false` overrides it
+                if (lobbyFlagEnabled && lobbyDefault)
+                    LobbyEnabledSetting = true;
+
+                return lobbyDefault;
+            }
+
+            set => DCLPlayerPrefs.SetBool(DCLPrefKeys.SETTINGS_LOBBY_ENABLED, value, true);
         }
 
         /// <summary>
         ///     Checks if a feature is enabled.
         /// </summary>
-        public bool IsEnabled(FeatureId featureId) =>
-            featureStates.GetValueOrDefault(featureId, false);
+        public bool IsEnabled(FeatureId featureId)
+        {
+            if (featureStates.TryGetValue(featureId, out bool isEnabled))
+                return isEnabled;
+
+            // Cached as any other state: a feature cannot change while the session runs.
+            return deferredFeatureStates.TryGetValue(featureId, out Lazy<bool> deferredState) && deferredState.Value;
+        }
 
         /// <summary>
         ///     Checks if a feature is enabled in an async way using FeatureProviders that can contain more complex logic.
@@ -224,5 +266,9 @@ namespace DCL.FeatureFlags
         UseCustomMediaPlayerMacIntel = 73,
         NearbyVoiceChatTip = 74,
         BugReport = 75,
+        InGameShop = 76,
+        GuestLogin = 77,
+        Lobby = 78,
+        EphemeralGuestAccount = 79,
     }
 }

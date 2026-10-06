@@ -21,13 +21,16 @@ namespace DCL.Multiplayer.HealthChecks
             try
             {
                 bool result = await roomHub.StartAsync();
-                return result ? Result.SuccessResult() : Result.ErrorResult("Cannot connect to livekit rooms");
+                return result ? Result.SuccessResult() : CannotConnectResult();
             }
             catch (Exception e)
             {
                 ReportHub.LogException(e, ReportCategory.LIVEKIT);
-                return Result.ErrorResult("Cannot connect to livekit rooms");
+                return CannotConnectResult();
             }
         }
+
+        private Result CannotConnectResult() =>
+            Result.ErrorResult($"Cannot connect to livekit rooms: {roomHub.RoomsStateInfo()}");
     }
 }

@@ -11,16 +11,15 @@ namespace DCL.Credits
 {
     public class CreditsPanelController : ICreditsPanelController
     {
-        private readonly CreditsPanelView view;
+        private readonly ICreditsPanelView view;
         private readonly MarketplaceCreditsAPIClient creditsAPIClient;
         private readonly ProfileChangesBus profileChangesBus;
         private readonly IWeb3IdentityCache identityCache;
-        private readonly Action openTopUpPanel;
 
         private CancellationTokenSource? loadCreditsCts;
 
         public CreditsPanelController(
-            CreditsPanelView view,
+            ICreditsPanelView view,
             MarketplaceCreditsAPIClient creditsAPIClient,
             ProfileChangesBus profileChangesBus,
             IWeb3IdentityCache identityCache,
@@ -31,7 +30,6 @@ namespace DCL.Credits
             this.creditsAPIClient = creditsAPIClient;
             this.profileChangesBus = profileChangesBus;
             this.identityCache = identityCache;
-            this.openTopUpPanel = openTopUpPanel;
 
             profileChangesBus.SubscribeToUpdate(OnProfileUpdated);
 
@@ -39,12 +37,10 @@ namespace DCL.Credits
             identityCache.OnIdentityChanged += OnIdentityChanged;
             identityCache.OnIdentityCleared += OnIdentityCleared;
 
-            view.GetCreditsButton.gameObject.SetActive(topUpEnabled);
+            view.IsTopUpEnabled = topUpEnabled;
 
             if (topUpEnabled)
-            {
-                view.GetCreditsButton.onClick.AddListener(OnGetCreditsClicked);
-            }
+                view.GetCreditsClicked = openTopUpPanel;
 
             if (identityCache.Identity != null)
                 LoadCreditsWithRestart();
@@ -57,17 +53,14 @@ namespace DCL.Credits
             creditsAPIClient.OnUserCreditsFetched -= OnUserCreditsFetched;
             identityCache.OnIdentityChanged -= OnIdentityChanged;
             identityCache.OnIdentityCleared -= OnIdentityCleared;
-            view.GetCreditsButton.onClick.RemoveListener(OnGetCreditsClicked);
+            view.GetCreditsClicked = null;
         }
-
-        private void OnGetCreditsClicked() =>
-            openTopUpPanel();
 
         private void OnProfileUpdated(Profile profile) =>
             LoadCreditsWithRestart();
 
         private void OnUserCreditsFetched(UserCreditsResponse userCreditsResponse) =>
-            view.CurrentCredits.text = userCreditsResponse.usd.credits.ToString();
+            view.Credits = userCreditsResponse.usd.credits.ToString();
 
         private void OnIdentityChanged() =>
             LoadCreditsWithRestart();
@@ -89,10 +82,11 @@ namespace DCL.Credits
 
             if (ct.IsCancellationRequested)
             {
-                view.CurrentCredits.text = "0";
+                view.Credits = "0";
                 return;
             }
-            view.CurrentCredits.text = userCreditsResponse.usd.credits.ToString();
+
+            view.Credits = userCreditsResponse.usd.credits.ToString();
         }
     }
 }

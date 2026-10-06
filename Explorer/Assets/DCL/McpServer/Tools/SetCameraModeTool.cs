@@ -27,7 +27,7 @@ namespace DCL.McpServer.Tools
         public override string Description =>
             "Switch the player camera mode (first_person, third_person, drone_view, or the free-fly camera), like a user pressing the camera key. "
             + "Refuses with an explanation when the scene locks the mode (CameraModeArea, scene virtual camera, photo camera). "
-            + "Any player movement drops free back to third_person.";
+            + "The user's camera-switch key (V) drops free back to third_person.";
 
         protected override McpJsonSchema DescribeInput(McpJsonSchema schema) =>
             schema.Enum("mode", "Target camera mode.", ALLOWED_MODES, isRequired: true);
@@ -43,7 +43,7 @@ namespace DCL.McpServer.Tools
         public override async UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
         {
             if (!arguments.TryGetEnum("mode", out CameraMode targetMode, ALLOWED_MODES))
-                return McpToolResult.Error("mode must be one of: first_person, third_person, drone_view, free.");
+                return McpToolResult.Error(arguments.EnumArgumentError("mode", ALLOWED_MODES));
 
             string? blockReason = TrySwitchMode(world, targetMode, out CameraMode previousMode);
 

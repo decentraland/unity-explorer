@@ -6,13 +6,14 @@ namespace DCL.SDKEntityTriggerArea
 {
     public class SDKEntityTriggerArea : MonoBehaviour, IDisposable
     {
-        [field: SerializeField] public BoxCollider BoxCollider { get; internal set; }
-        [field: SerializeField] public SphereCollider SphereCollider { get; internal set; }
+        [field: SerializeField] public BoxCollider BoxCollider { get; internal set; } = null!;
+        [field: SerializeField] public SphereCollider SphereCollider { get; internal set; } = null!;
 
         private readonly HashSet<Collider> currentEntitiesInside = new ();
         private readonly HashSet<Collider> enteredEntitiesToBeProcessed = new ();
         private readonly HashSet<Collider> exitedEntitiesToBeProcessed = new ();
-        [NonSerialized] public Transform? TargetTransform;
+
+        public Transform? TargetTransform { get; private set; }
 
         public IReadOnlyCollection<Collider> EnteredEntitiesToBeProcessed => enteredEntitiesToBeProcessed;
         public IReadOnlyCollection<Collider> ExitedEntitiesToBeProcessed => exitedEntitiesToBeProcessed;
@@ -31,9 +32,12 @@ namespace DCL.SDKEntityTriggerArea
         {
             if (TargetTransform != null && TargetTransform != other.transform) return;
 
-            exitedEntitiesToBeProcessed.Add(other);
             enteredEntitiesToBeProcessed.Remove(other);
-            currentEntitiesInside.Remove(other);
+
+            // Untracked colliders (filtered on enter) have no ENTER to balance.
+            if (!currentEntitiesInside.Remove(other)) return;
+
+            exitedEntitiesToBeProcessed.Add(other);
         }
 
         public void Dispose()
@@ -58,5 +62,24 @@ namespace DCL.SDKEntityTriggerArea
 
         public void ClearExitedEntitiesToBeProcessed() =>
             exitedEntitiesToBeProcessed.Clear();
+
+        public bool IsEnterPending(Collider entityCollider) =>
+            enteredEntitiesToBeProcessed.Contains(entityCollider);
+
+        public void SetTargetTransform(Transform? targetTransform)
+        {
+            TargetTransform = targetTransform;
+
+            if (targetTransform == null) return;
+
+            // Evict colliders the filter will swallow callbacks for; they could never be removed otherwise.
+            currentEntitiesInside.RemoveWhere(IsNotTargetEntity);
+            enteredEntitiesToBeProcessed.RemoveWhere(IsNotTargetEntity);
+            exitedEntitiesToBeProcessed.RemoveWhere(IsNotTargetEntity);
+            return;
+
+            bool IsNotTargetEntity(Collider entityCollider) =>
+                entityCollider == null || entityCollider.transform != TargetTransform;
+        }
     }
 }

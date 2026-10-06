@@ -84,7 +84,8 @@ namespace DCL.InWorldCamera.CameraReelStorageService
 
         public async UniTask<CameraReelStorageStatus> UploadScreenshotAsync(Texture2D image, ScreenshotMetadata metadata, string source, CancellationToken ct = default)
         {
-            if (!StorageStatus.HasFreeSpace) return StorageStatus;
+            if (!StorageStatus.HasFreeSpace)
+                throw new ScreenshotLimitReachedException();
 
             CameraReelUploadResponse response = await imagesMetadataDatabase.UploadScreenshotAsync(image.EncodeToJPG(), metadata, ct);
 

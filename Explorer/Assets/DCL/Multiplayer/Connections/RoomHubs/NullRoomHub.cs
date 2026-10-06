@@ -32,11 +32,17 @@ namespace DCL.Multiplayer.Connections.RoomHubs
             return false;
         }
 
+        public RoomSource RoomsOf(string walletId) =>
+            RoomSource.None;
+
         public UniTask StopLocalRoomsAsync() =>
             UniTask.CompletedTask;
 
         public IReadOnlyCollection<string> AllLocalRoomsRemoteParticipantIdentities() =>
             new List<string>();
+
+        public string RoomsStateInfo() =>
+            "No rooms, livekit is disabled";
 
         public UniTask<bool> StartAsync() => UniTask.FromResult(true);
 

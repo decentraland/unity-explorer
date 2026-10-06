@@ -38,6 +38,11 @@ namespace DCL.Profiles
 
             Profile? profile = null;
 
+            // GET is idempotent, so transient failures are retried by the web request itself (#9878);
+            // the outer re-issue loop stays one-shot unless retryUntilResolved
+            RetryPolicy requestRetryPolicy = retryUntilResolved ? CatalystRetryPolicy.VALUE : RetryPolicy.DEFAULT;
+            RetryPolicy repeatPolicy = retryUntilResolved ? CatalystRetryPolicy.VALUE : RetryPolicy.NONE;
+
             while (repeatValues.shouldRepeat)
             {
                 attemptNumber++;
@@ -45,17 +50,15 @@ namespace DCL.Profiles
                 if (repeatValues.delay > TimeSpan.Zero)
                     await UniTask.Delay(repeatValues.delay, DelayType.Realtime, cancellationToken: ct);
 
-                RetryPolicy retryPolicy = retryUntilResolved ? CatalystRetryPolicy.VALUE : RetryPolicy.NONE;
-
                 // Suppress logging errors here as we have very custom errors handling below
-                GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> response = webRequestController.GetAsync(new CommonArguments(url, retryPolicy), ct, ReportCategory.PROFILE, suppressErrors: true);
+                GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> response = webRequestController.GetAsync(new CommonArguments(url, requestRetryPolicy), ct, ReportCategory.PROFILE, suppressErrors: true);
 
                 profile = await response.CreateFromNewtonsoftJsonAsync<Profile>(
                     createCustomExceptionOnFailure: (exception, text) => new ProfileParseException(id, text, exception),
                     serializerSettings: RealmProfileRepository.SERIALIZER_SETTINGS);
 
                 repeatValues = profile == null || profile.Version < version
-                    ? WebRequestUtils.CanBeRepeated(attemptNumber, retryPolicy, true, null)
+                    ? WebRequestUtils.CanBeRepeated(attemptNumber, repeatPolicy, true, null)
                     : (false, TimeSpan.Zero);
             }
 

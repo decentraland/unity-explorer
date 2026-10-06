@@ -78,7 +78,7 @@ namespace DCL.Web3.Authenticators
 
         /// <summary>
         ///     The network an environment is fixed to, or null where the environment does not decide. Decentraland's
-        ///     own environments each answer for exactly one chain - org and today for mainnet, zone for sepolia -
+        ///     own environments each answer for exactly one chain - org for mainnet, zone for sepolia -
         ///     and that is not negotiable: their contracts, identities and backends are all on that chain, so a
         ///     client pointed at one of them signing against the other is simply wrong. A <c>--base-domain</c>
         ///     deployment is the only case the client knows nothing about, which is why it is the only one
@@ -88,7 +88,6 @@ namespace DCL.Web3.Authenticators
             environment switch
             {
                 DecentralandEnvironment.Org => EthereumNetwork.Mainnet,
-                DecentralandEnvironment.Today => EthereumNetwork.Mainnet,
                 DecentralandEnvironment.Zone => EthereumNetwork.Sepolia,
                 DecentralandEnvironment.Custom => null,
                 _ => throw new ArgumentOutOfRangeException(nameof(environment), environment, null),

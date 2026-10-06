@@ -19,6 +19,8 @@ namespace DCL.AvatarRendering.Emotes
         public TriggerSource TriggerSource;
         public AvatarEmoteMask Mask;
 
+        public bool AssetReloadRequested;
+
         private LoadTimeout? playTimeout;
 
         public void UpdateRemoteId(URN emoteId)

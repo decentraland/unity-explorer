@@ -11,7 +11,6 @@ using DCL.Friends.UserBlocking;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Settings.Settings;
-using DCL.Utilities;
 using DCL.Web3.Identities;
 using UnityEngine;
 using Utility;
@@ -168,7 +167,6 @@ namespace DCL.Chat.ChatReactions.Core
             string serverEnv = environment switch
             {
                 DecentralandEnvironment.Org => "prd",
-                DecentralandEnvironment.Today => "prd",
                 DecentralandEnvironment.Zone => "dev",
 
                 // A --base-domain deployment is treated as a non-production stack, like zone: its

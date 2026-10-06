@@ -12,15 +12,15 @@ namespace DCL.Notifications.NotificationEntry
 {
     public class GiftToastView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
-        public event Action<NotificationType, INotification> NotificationClicked;
+        public event Action<NotificationType, INotification>? NotificationClicked;
         public NotificationType NotificationType { get; set; }
-        public INotification Notification { get; set; }
+        public INotification Notification { get; set; } = null!;
 
-        [field: SerializeField] public Image Background { get; private set; }
-        [field: SerializeField] public Button MainButton { get; private set; }
-        [field: SerializeField] public TMP_Text TitleText { get; set; }
-        [field: SerializeField] public ImageView NotificationImage { get; private set; }
-        [field: SerializeField] public AudioClipConfig NotificationAudio { get; private set; }
+        [field: SerializeField] public Image Background { get; private set; } = null!;
+        [field: SerializeField] public Button MainButton { get; private set; } = null!;
+        [field: SerializeField] public TMP_Text TitleText { get; set; } = null!;
+        [field: SerializeField] public ImageView NotificationImage { get; private set; } = null!;
+        [field: SerializeField] public AudioClipConfig NotificationAudio { get; private set; } = null!;
 
         [field: SerializeField] public Color NormalColor { get; private set; } = Color.white;
         [field: SerializeField] public Color HoveredColor { get; private set; } = new (0.9f, 0.9f, 0.9f);
@@ -60,13 +60,13 @@ namespace DCL.Notifications.NotificationEntry
                 ? notification.Metadata.SenderAddress.Substring(0, 6) + "..."
                 : notification.Metadata.SenderAddress;
 
-            TitleText.text = string.Format(GiftingTextIds.GiftReceivedSenderTitleFormat, shortAddr);
+            TitleText.text = string.Format(GiftingTextIds.GIFT_RECEIVED_SENDER_TITLE_FORMAT, shortAddr);
         }
 
-        public void UpdateSenderName(string name, Color nameColor)
+        public void UpdateSenderName(string senderName, Color nameColor)
         {
             string hexColor = ColorUtility.ToHtmlStringRGB(nameColor);
-            TitleText.text = string.Format(GiftingTextIds.GiftReceivedSenderTitleFormat, $"<color=#{hexColor}><b>{name}</b></color>");
+            TitleText.text = string.Format(GiftingTextIds.GIFT_RECEIVED_SENDER_TITLE_FORMAT, $"<color=#{hexColor}><b>{senderName}</b></color>");
         }
     }
 }

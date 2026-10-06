@@ -52,6 +52,12 @@ public class JSBridge : MonoBehaviour
     public void SetBackground(string value) => PreviewConfiguration.Instance.SetBackground(value);
 
     [UsedImplicitly]
+    public void SetShadow(string value) => PreviewConfiguration.Instance.SetShadow(value);
+
+    [UsedImplicitly]
+    public void SetGlow(string value) => PreviewConfiguration.Instance.SetGlow(value);
+
+    [UsedImplicitly]
     public void SetSkinColor(string value) => PreviewConfiguration.Instance.SetSkinColor(value);
 
     [UsedImplicitly]

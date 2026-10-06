@@ -5,7 +5,6 @@ using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
 using DCL.Profiles;
 using DCL.Settings.Settings;
-using DCL.Utilities;
 using System;
 using UnityEngine;
 using UnityEngine.InputSystem;

@@ -30,7 +30,7 @@ namespace DCL.Tests.PlayMode.PerformanceTests
         protected SampleGroup? iterationDownloadedData;
 
         protected IWebRequestController? controller;
-        protected PerformanceTestWebRequestsAnalytics analytics;
+        protected PerformanceTestWebRequestsAnalytics analytics = null!;
 
         private MockedReportScope? reportScope;
 
@@ -48,7 +48,7 @@ namespace DCL.Tests.PlayMode.PerformanceTests
         }
 
         [OneTimeSetUp]
-        public void SetupFF()
+        public void SetupFeatureFlags()
         {
             FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(new FeatureFlagsResultDto
             {
@@ -58,7 +58,7 @@ namespace DCL.Tests.PlayMode.PerformanceTests
         }
 
         [OneTimeTearDown]
-        public void ResetFF()
+        public void ResetFeatureFlags()
         {
             FeatureFlagsConfiguration.Reset();
         }

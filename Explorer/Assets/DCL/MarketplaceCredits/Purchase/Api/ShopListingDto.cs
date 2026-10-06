@@ -26,8 +26,12 @@ namespace DCL.MarketplaceCredits.Purchase
         public int available;
         public string network = null!;
         public int chainId;
+
+        // Newtonsoft-deserialized wire DTO (CreateFromJson with WRJsonParser.Newtonsoft); Unity serialization never sees these fields.
+#pragma warning disable UAC1001
         public int? compareAtCredits;
         public long? saleEndsAt;
+#pragma warning restore UAC1001
     }
 
     // Server schema: marketplace-server GET /v3/catalog/unified response envelope.

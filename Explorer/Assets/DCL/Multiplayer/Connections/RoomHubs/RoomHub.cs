@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.Archipelago.Rooms.Chat;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
+using DCL.Multiplayer.Connections.Rooms;
 using DCL.Multiplayer.Connections.Rooms.Connective;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
@@ -74,6 +75,19 @@ namespace DCL.Multiplayer.Connections.RoomHubs
             return false;
         }
 
+        public RoomSource RoomsOf(string walletId)
+        {
+            var rooms = RoomSource.None;
+
+            if (islandParticipantsHub.RemoteParticipantIdentities().ContainsKey(walletId))
+                rooms |= RoomSource.Island;
+
+            if (sceneParticipantsHub.RemoteParticipantIdentities().ContainsKey(walletId))
+                rooms |= RoomSource.Gatekeeper;
+
+            return rooms;
+        }
+
         /// <summary>
         ///     Starts all rooms except the Voice Chat, as this one only starts when there is a live voice chat going
         /// </summary>
@@ -130,5 +144,11 @@ namespace DCL.Multiplayer.Connections.RoomHubs
 
             return identityHashCache;
         }
+
+        public string RoomsStateInfo() =>
+            $"Island{StateInfo(archipelagoIslandRoom)} Scene{StateInfo(gateKeeperSceneRoom)} Chat{StateInfo(chatRoom)}";
+
+        private static string StateInfo(IConnectiveRoom room) =>
+            $"[{room.CurrentState().ToStringNonAlloc()}, {room.AttemptToConnectState.ToStringNonAlloc()}, {room.CurrentConnectionLoopHealth.ToStringNonAlloc()}]";
     }
 }

@@ -1,13 +1,10 @@
 ﻿using Arch.Core;
 using AssetManagement;
 using CommunicationData.URLHelpers;
-using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using DCL.Optimization.Pools;
-using ECS;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;

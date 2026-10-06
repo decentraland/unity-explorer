@@ -83,7 +83,7 @@ namespace DCL.Web3.Authenticators
         public async UniTask<EthApiResponse> SendAsync(EthApiRequest request, Web3RequestSource source, CancellationToken ct)
         {
             if (!whitelistMethods.Contains(request.method))
-                throw new Web3Exception($"The method is not allowed: {request.method}");
+                throw new Web3MethodNotAllowedException($"The method is not allowed: {request.method}");
 
             if (string.Equals(request.method, "eth_accounts")
                 || string.Equals(request.method, "eth_requestAccounts"))
@@ -190,7 +190,7 @@ namespace DCL.Web3.Authenticators
 
                 // To keep cohesiveness between the platform, convert the user address to lower case
                 return new DecentralandIdentity(new Web3Address(response.sender),
-                    ephemeralAccount, sessionExpiration, authChain, IWeb3Identity.Web3IdentitySource.Dapp);
+                    ephemeralAccount, sessionExpiration, authChain, payload.Method);
             }
             catch (Exception)
             {

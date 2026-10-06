@@ -1,6 +1,7 @@
 using Arch.Core;
 using DCL.ECSComponents;
 using SceneRunner.Scene;
+using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 
 namespace DCL.Interaction.Utility
@@ -20,12 +21,18 @@ namespace DCL.Interaction.Utility
         }
 
         [Pure]
-        public bool TryGetPointerEvents(out PBPointerEvents? pbPointerEvents)
+        public bool TryGetPointerEvents([NotNullWhen(true)] out PBPointerEvents? pbPointerEvents)
         {
             World world = EcsExecutor.World;
             Entity entityRef = ColliderSceneEntityInfo.EntityReference;
-            pbPointerEvents = null;
-            return world.IsAlive(entityRef) && world.TryGet(entityRef, out pbPointerEvents);
+
+            if (!world.IsAlive(entityRef))
+            {
+                pbPointerEvents = null;
+                return false;
+            }
+
+            return world.TryGet(entityRef, out pbPointerEvents);
         }
 
         public bool IsSameEntity(in GlobalColliderSceneEntityInfo other) =>

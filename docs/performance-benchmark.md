@@ -326,7 +326,7 @@ The script determines baseline from TestFixture arguments:
 
 Labels are extracted from TestFixture URL arguments:
 - `https://peer-ap1.decentraland.org/...` -> `peer-ap1`
-- `https://asset-bundle-registry.decentraland.today/...` -> `asset-bundle-registry`
+- `https://asset-bundle-registry.decentraland.org/...` -> `asset-bundle-registry`
 - `https://gateway.decentraland.zone/...` -> `gateway.zone` (includes TLD for distinction)
 
 ## Output

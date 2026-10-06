@@ -67,6 +67,8 @@ private readonly Atomic<IConnectiveRoom.ConnectionLoopHealth> connectionLoopHeal
 
 When a `DuplicateIdentity` disconnect reason is detected (same wallet connected from another client), the reconnection loop stops entirely rather than entering an infinite reconnect cycle.
 
+For that reason `ArchipelagoIslandRoom` refuses to re-join an island it already holds. The server re-announces a player's current island on any reconnect it cannot distinguish from a second session, and joining the held room again would put two participants under one wallet identity in it — LiveKit would evict the older, which is this client's own room, and the loop above would then terminate the client. The re-announced string is still cached, so a later genuine reconnect uses its fresher token.
+
 ### Why Two Entity Rooms
 
 - The **Scene room** connects only to the scene the host is standing in, so only co-located players exchange scene-specific CRDT state. This keeps bandwidth manageable.
@@ -171,7 +173,7 @@ public void Send(NetworkMovementMessage message)
 
 Both compressed (`MovementCompressed` via `NetworkMessageEncoder`) and uncompressed (`Decentraland.Kernel.Comms.Rfc4.Movement`) schemas are supported. The `UseCompression` setting on `MultiplayerMovementSettings` controls which schema is used for outgoing messages; incoming messages of either type are accepted.
 
-> **Note:** `LiveKitMessagesBroadcaster` reads the shared `PulseActivation` live on every send. When Pulse is active it sends movement / emotes / profile announcements only to the peers that announced over LiveKit (the rest receive them over Pulse, avoiding double-delivery); when Pulse is absent (disabled or fallen back) it broadcasts to every peer in the rooms.
+> **Note:** `LiveKitMessagesBroadcaster` reads the shared `PulseActivation` live on every send. When Pulse is active it sends movement / emotes / profile announcements only to the peers that announced over LiveKit (the rest receive them over Pulse, avoiding double-delivery); when Pulse is absent (disabled or fallen back) it broadcasts to every peer in the rooms. This holds in local scene development too, where Pulse is on by default: the local gatekeeper room stays connected and keeps carrying Scene Messages, and the same de-duplication keeps player state from being applied twice.
 
 ---
 

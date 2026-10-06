@@ -6,30 +6,39 @@ namespace DCL.Chat.Commands
 {
     public class ChatEnvironmentValidator
     {
-        private readonly DecentralandEnvironment dclEnvironment;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
 
-        public ChatEnvironmentValidator(DecentralandEnvironment dclEnvironment, IDecentralandUrlsSource decentralandUrlsSource)
+        public ChatEnvironmentValidator(IDecentralandUrlsSource decentralandUrlsSource)
         {
-            this.dclEnvironment = dclEnvironment;
             this.decentralandUrlsSource = decentralandUrlsSource;
         }
 
         public Result ValidateTeleport(string realmToTeleportTo)
         {
-            // Today serves part of its hosts from .today and the rest from .org, a split pinned when the url source
-            // is built, so no realm it could move to would be served consistently.
-            if (dclEnvironment == DecentralandEnvironment.Today)
-                return Result.ErrorResult(
-                    "🔴 Error. You cannot change realms in the Today environment. Please restart DCL with the desired environment");
+            // A --gateway session serves every supported service from one origin, realms included, and that origin
+            // is allowed to sit outside the base domain — a local e2e fixture's is loopback. It is this session's
+            // own infrastructure, named on the command line (DeepLinkAllowlist denies --gateway), so accept it
+            // before the domain check rather than rejecting the realms the client is itself routing.
+            if (IsOnGatewayOrigin(realmToTeleportTo))
+                return Result.SuccessResult();
 
-            // Every other environment — the decentraland ones and a --base-domain deployment alike — accepts exactly
+            // Every environment — the decentraland ones and a --base-domain deployment alike — accepts exactly
             // the realms under its own base domain, so one check covers them all.
             return HostHasSuffix(realmToTeleportTo, decentralandUrlsSource.BaseDomain)
                 ? Result.SuccessResult()
                 : Result.ErrorResult(
                     $"🔴 Error. You cannot teleport to realms outside {decentralandUrlsSource.BaseDomain}. Please restart DCL with the desired environment");
         }
+
+        /// <summary>
+        ///     True when <paramref name="url" /> is served by this session's gateway origin. The origin carries its
+        ///     trailing '/', so the comparison stops at the authority boundary: "http://127.0.0.1:8080.attacker.com/"
+        ///     does not start with "http://127.0.0.1:8080/". Anything after that boundary is path, which cannot move
+        ///     the request off the origin, so no userinfo check is needed here.
+        /// </summary>
+        private bool IsOnGatewayOrigin(string url) =>
+            decentralandUrlsSource.GatewayOrigin is { } gatewayOrigin
+            && url.StartsWith(gatewayOrigin, StringComparison.OrdinalIgnoreCase);
 
         /// <summary>
         /// True if the URL's host equals <paramref name="suffix"/> or ends with "." + suffix at a domain

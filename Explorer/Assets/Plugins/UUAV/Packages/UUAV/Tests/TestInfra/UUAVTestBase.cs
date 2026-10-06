@@ -122,6 +122,17 @@ namespace UUAV.Tests
             return server.UrlFor(fixtureName);
         }
 
+        /// <summary>Requests the fixture server saw for names starting with <paramref name="fixtureNamePrefix"/>.</summary>
+        protected int RequestCount(string fixtureNamePrefix)
+        {
+            if (server == null)
+            {
+                throw new System.InvalidOperationException("fixture server is not running");
+            }
+
+            return server.RequestCount(fixtureNamePrefix);
+        }
+
         protected UUAVPlayer CreatePlayer(out AudioTapBehaviour audio)
         {
             // assembled inactive so everything is in place before

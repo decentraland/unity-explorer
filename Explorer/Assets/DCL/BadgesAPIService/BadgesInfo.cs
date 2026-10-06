@@ -6,8 +6,11 @@ namespace DCL.BadgesAPIService
     [Serializable]
     public class BadgesInfo
     {
+        // Runtime-only container built by BadgesAPIClient; no serializer (Unity or Newtonsoft) ever reads these fields.
+#pragma warning disable UAC1001
         public List<BadgeInfo> achieved;
         public List<BadgeInfo> notAchieved;
+#pragma warning restore UAC1001
     }
 
     public struct BadgeInfo

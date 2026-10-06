@@ -260,8 +260,8 @@ namespace DCL.PrivateWorlds
             public string? Error { get; set; }
         }
 
-        private static string BuildValidatePasswordMetadataJson(string password) =>
-            CommsHandshakeMetadata.BuildWorldJson(password);
+        private string BuildValidatePasswordMetadataJson(string password) =>
+            CommsHandshakeMetadata.BuildWorldJson(password, web3IdentityCache.IsGuest());
 
         private async UniTask<bool> CheckAllowListAccessAsync(WorldAccessInfo accessInfo, CancellationToken ct)
         {

@@ -24,8 +24,23 @@ namespace Global.AppArgs
         public const string GATEKEEPER_URL = "gatekeeper-url";
 
         /// <summary>
+        ///     Lets a realm's comms adapter be served over cleartext http, as an e2e fixture's is, provided it
+        ///     resolves to loopback. Command line only, and deliberately absent from the deep-link allowlist:
+        ///     it lowers a transport guarantee, which is never a link's call to make.
+        /// </summary>
+        public const string ACCEPT_UNTRUSTED_REALM = "accept-untrusted-realm";
+
+        /// <summary>
+        ///     Routes every supported service through this gateway origin instead of <c>gateway.{base-domain}</c>,
+        ///     and forces routing on: naming a gateway is the opt-in the <c>use-gateway</c> feature flag would
+        ///     otherwise carry, so the flag is ignored. Command line only — it aims the session's whole
+        ///     supported-service traffic at the named host, so a deep link must never set it.
+        /// </summary>
+        public const string GATEWAY = "gateway";
+
+        /// <summary>
         ///     Points every backend host at a deployment served under this base domain instead of
-        ///     decentraland.{org,zone,today}, selecting <c>DecentralandEnvironment.Custom</c>. Applied from the
+        ///     decentraland.{org,zone}, selecting <c>DecentralandEnvironment.Custom</c>. Applied from the
         ///     command line only: it gates which realm hosts are trusted, so it has to be read before a pending deep
         ///     link is processed. It is denied by <c>DeepLinkAllowlist</c> like the other infrastructure-pointing
         ///     params, and accepting it in the denied-params dialog has no effect.
@@ -35,7 +50,7 @@ namespace Global.AppArgs
         /// <summary>
         ///     The chain a <c>--base-domain</c> deployment signs and transacts against: "mainnet" or "sepolia", each
         ///     carrying the polygon network that pairs with it. Defaults to mainnet. Every decentraland environment
-        ///     answers for one chain of its own - org and today mainnet, zone sepolia - and this cannot move them:
+        ///     answers for one chain of its own - org mainnet, zone sepolia - and this cannot move them:
         ///     paired with one of those it is reported and dropped (<c>ChainUtils.ResolveNetwork</c>). Where the value
         ///     is read, anything not naming a known network ends the launch instead of falling back to the default
         ///     (<c>MainSceneLoader.CaptureEthNetworkArg</c>). Command line only, like <see cref="BASE_DOMAIN" />.
@@ -72,6 +87,9 @@ namespace Global.AppArgs
         public const string AUTH_BRIDGE_ONLY = "login-bridge-only";
 
         public const string FORCED_EMOTES = "self-force-emotes";
+
+        /// <summary>Comma-separated wearable URNs rendered on the own avatar without owning them. Suppresses profile deploys for the session.</summary>
+        public const string FORCED_WEARABLES = "self-force-wearables";
         public const string SELF_PREVIEW_EMOTES = "self-preview-emotes";
         public const string SELF_PREVIEW_WEARABLES = "self-preview-wearables";
         public const string SELF_PREVIEW_BUILDER_COLLECTIONS = "self-preview-builder-collections";
@@ -112,11 +130,19 @@ namespace Global.AppArgs
 
         public const string DISCOVER = "discover";
 
+        public const string IN_GAME_SHOP = "in-game-shop";
+
         public const string FORCE_BACKFACE_CULLING = "force-backface-culling";
 
         public const string NAME_COLOR_CHANGE = "name-color-change";
 
         public const string EMAIL_OTP_AUTH = "email-otp-auth";
+
+        public const string GUEST_LOGIN = "guest-login";
+
+        public const string LOBBY = "lobby";
+
+        public const string EPHEMERAL_GUEST_ACCOUNT = "ephemeral-guest-account";
 
         public const string AVATAR_HIGHLIGHT = "avatar-highlight";
 
@@ -170,10 +196,16 @@ namespace Global.AppArgs
         /// </summary>
         public const string LOCAL_AB = "local-ab";
 
-        public const string OPTIMIZED_ASSETS_URL = "optimized-assets-url";
-
         /// <summary>Presence forces the abgen pipeline on without waiting for the abgen-pipeline feature flag.</summary>
         public const string ABGEN_PIPELINE = "abgen-pipeline";
+
+        /// <summary>
+        ///     Presence forces LOD bundles and ISS descriptors onto the abgen LOD source (abgen-cdn) without waiting
+        ///     for the abgen-lods feature flag. Pair it with <see cref="ABGEN_PIPELINE" />: abgen publishes no LOD_0,
+        ///     level 0 comes from the ISS path instead, and both the descriptor's assets and the manifest that gates
+        ///     it on v49+ are resolved by the pipeline flip.
+        /// </summary>
+        public const string ABGEN_LODS = "abgen-lods";
 
         public const string NO_LIVEKIT_MODE = "no-livekit-mode";
 
@@ -193,6 +225,7 @@ namespace Global.AppArgs
         {
             public const string URL = "feature-flags-url";
             public const string HOSTNAME = "feature-flags-hostname";
+            public const string USER_ID = "feature-flags-user-id";
         }
 
         public static class Analytics

@@ -84,6 +84,10 @@ namespace DCL.AvatarRendering.Emotes
                     if (!emotes.TryGetValue(urn, out IEmote emote))
                         continue;
 
+                    // Evicting mid-load orphans the pending promise and strands any play intent waiting on it (#9485).
+                    if (emote.IsLoading)
+                        continue;
+
                     if (!TryUnloadAllWearableAssets(emote)) continue;
 
                     DisposeThumbnail(emote);

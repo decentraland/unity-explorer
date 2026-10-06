@@ -5,7 +5,9 @@ using UnityEngine;
 
 public class EmoteAnimationController : MonoBehaviour
 {
-    private const string IDLE_CLIP_NAME = "Idle";
+    // Public because AvatarLoader samples the same clip to build the item view's blended pose, and a
+    // second literal would let the two drift apart silently.
+    public const string IDLE_CLIP_NAME = "Idle";
 
     [SerializeField] private AudioSource audioSource;
     [SerializeField] private Animation avatarAnimation;

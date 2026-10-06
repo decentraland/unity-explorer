@@ -492,6 +492,8 @@ Beware that environment scenes are currently not being converted to Asset Bundle
 
 Regardless of being on Windows or macOS, when opening a Decentraland deep link the launcher will be opened and so the latest released build will be used.
 
+A link (or command line) that names a destination through `realm` or `position` skips the startup lobby: after authentication, if any is needed, the client loads straight into it. An unreachable realm keeps the current one.
+
 Any relevant parameter can be used through the deep link, some examples:
 * For connecting to a locally running scene: `decentraland://?realm=http://127.0.0.1:8000/&position=-139,-28&local-scene=true&debug`
 * For connecting to genesis city directly on the specified position: `decentraland://?position=66,66`
@@ -538,19 +540,14 @@ For guidance on detached flows, cancellation, `SuppressToResultAsync`, and the e
 
 To update the protocol to the last version of the protocol, open a terminal like CMD and navigate to your working copy of the repository, there you will see a folder named 'scripts'; execute the following commands:
 
-**[RECOMMENDED]** For using the protocol [experimental branch](https://github.com/decentraland/protocol/tree/experimental) package (the experimental features depend on this otherwise Unity project won't compile due to missing protobuf message for the experimental components):
-```bash
-cd scripts
-npm install @dcl/protocol@experimental
-npm run build-protocol
-```
-
-For using the protocol [main branch](https://github.com/decentraland/protocol) package:
+unity-explorer uses the `@next` package, which is published from the protocol [main branch](https://github.com/decentraland/protocol):
 ```bash
 cd scripts
 npm install @dcl/protocol@next
 npm run build-protocol
 ```
+
+> **NOTE:** always install `@dcl/protocol@next`. Any other tag will be missing component definitions and the Unity project won't compile.
 
 ## How to test scenes
 

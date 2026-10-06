@@ -1,8 +1,5 @@
 using Arch.Core;
-using DCL.Utilities.Extensions;
-using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using UnityEngine;
 
 namespace DCL.Interaction.Raycast.Components
 {

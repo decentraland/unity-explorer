@@ -1,15 +1,14 @@
 ﻿using CrdtEcsBridge.PoolsProviders;
 using Cysharp.Threading.Tasks;
-using SceneRuntime.ScenePermissions;
+using Microsoft.ClearScript.JavaScript;
 using SceneRuntime;
 using SceneRuntime.Apis.Modules;
+using SceneRuntime.ScenePermissions;
 using System;
 using System.Text;
 using System.Threading;
-using Microsoft.ClearScript.JavaScript;
 using Utility.Multithreading;
 using Utility.Networking;
-using Utility;
 
 namespace CrdtEcsBridge.JsModulesImplementation
 {
@@ -97,7 +96,14 @@ namespace CrdtEcsBridge.JsModulesImplementation
             if (!webSockets.TryGetValue(websocketId, out WebSocketRental webSocket))
                 throw new ArgumentException($"WebSocket with id {websocketId} does not exist.");
 
-            await webSocket.WebSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, ct);
+            try
+            {
+                await webSocket.WebSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, ct);
+            }
+            catch (OperationCanceledException)
+            {
+                // Expected during scene teardown when the close is cancelled mid-flight.
+            }
         }
 
         public async UniTask<IWebSocketApi.ReceiveResponse> ReceiveAsync(int websocketId, CancellationToken ct)
@@ -272,7 +278,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
 
         private class WebSocketRental : IDisposable
         {
-            public readonly DCLSemaphoreSlim SendLock = new (1, 1);
+            public readonly DCLSemaphoreSlim SendLock = new ();
             public readonly DCLWebSocket WebSocket = new ();
 
             public void Dispose()

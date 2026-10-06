@@ -30,6 +30,9 @@ namespace Preview
 
         [SerializeField] private GameObject animationReference;
         [SerializeField] private GameObject platform;
+        [SerializeField] private GameObject shadowCatcher;
+        [SerializeField] private GameObject glowCatcher;
+        [SerializeField] private GameObject wearableGlowCatcher;
 
         [SerializeField] private float wearablePadding = 0.15f;
 
@@ -53,10 +56,13 @@ namespace Preview
             previewUIPresenter.EmoteToggleClicked += OnEmoteToggleClicked;
             previewUIPresenter.ContainerDrag += avatarRotator.OnDrag;
             previewUIPresenter.ContainerDrag += wearableRotator.OnDrag;
+            previewUIPresenter.ContainerPan += previewCameraController.Pan;
             emoteAnimationController.EmoteAnimationEnded += OnEmoteAnimationEnded;
 
+            // The avatar stays on a turntable - tipping a standing figure just looks like falling over.
+            // A solo item is being inspected, and yaw alone cannot reach a hood's inside or a shoe's sole.
             avatarRotator.AllowVertical = false;
-            wearableRotator.AllowVertical = false;
+            wearableRotator.AllowVertical = true;
 
             StartCoroutine(Reload());
         }
@@ -78,11 +84,23 @@ namespace Preview
             }
         }
 
+        // The item view floats the item, so it carries its own glow at the wearable position rather
+        // than the one under the avatar's feet.
+        private void ShowWearableView(bool showWearable)
+        {
+            previewCameraController.ShowMarketplaceWearable(showWearable);
+
+            // One 20-unit plane spans both subjects, which sit 5 apart, so the avatar's shadow drifts
+            // into the item view once zoomed out. Nothing there casts, so the plane goes with the view.
+            shadowCatcher.SetActive(!showWearable && PreviewConfiguration.Instance.Shadow);
+            wearableGlowCatcher.SetActive(showWearable && PreviewConfiguration.Instance.Glow);
+        }
+
         private void OnShowWearableClicked()
         {
             PlayerPrefs.SetInt(PREF_AVATAR_SHOWN, 0);
 
-            previewCameraController.ShowMarketplaceWearable(true);
+            ShowWearableView(true);
             wearableRotator.ResetRotation();
         }
 
@@ -90,7 +108,7 @@ namespace Preview
         {
             PlayerPrefs.SetInt(PREF_AVATAR_SHOWN, 1);
 
-            previewCameraController.ShowMarketplaceWearable(false);
+            ShowWearableView(false);
             avatarRotator.ResetRotation();
         }
 
@@ -166,6 +184,9 @@ namespace Preview
 
                     animationReference.SetActive(config.ShowAnimationReference);
                     platform.SetActive(config.Mode is PreviewMode.Authentication);
+                    shadowCatcher.SetActive(config.Shadow);
+                    glowCatcher.SetActive(config.Glow);
+                    wearableGlowCatcher.SetActive(false);
                     mainCamera.backgroundColor = config.Background;
                     mainCamera.orthographic = config.Projection == "orthographic";
                     previewUIPresenter.EnableLoader(!config.DisableLoader);
@@ -240,22 +261,28 @@ namespace Preview
                         throw;
                     }
 
-                    // Wait for 1 frame for animation to kick in before re-centering the object on screen
+                    // Wait for 1 frame for animation to kick in before measuring bounds for the framing below
                     await Awaitable.NextFrameAsync();
 
+                    // The item view only: the avatar is never moved or scaled. Its feet have to stay on the
+                    // shadow and glow catchers, which sit at a fixed floor height, so an emote is framed by
+                    // the camera fit below instead.
                     if (hasWearableOverride)
                     {
                         GameObjectUtils.CenterAndFit(wearableLoader.transform, mainCamera, wearablePadding);
                         wearableLoader.transform.position += wearableOffset;
                     }
-                    else if (hasEmoteOverride)
-                    {
-                        GameObjectUtils.CenterAndFit(avatarLoader.transform, mainCamera, wearablePadding);
-                    }
 
                     if (config.Mode is PreviewMode.Marketplace)
                     {
-                        previewCameraController.ShowMarketplaceWearable(!showingAvatar);
+                        // Here rather than earlier: the CenterAndFit above and the frame of animation before
+                        // it are what settle the bounds these are measured from.
+                        previewCameraController.FitAvatarView(avatarLoader.transform);
+
+                        if (hasWearableOverride)
+                            previewCameraController.FitWearableView(wearableLoader.transform);
+
+                        ShowWearableView(!showingAvatar);
                     }
                     else if (config.Mode is PreviewMode.Builder)
                     {
@@ -268,6 +295,7 @@ namespace Preview
 
                     previewUIPresenter.EnableEmoteControls(hasEmoteOverride);
                     previewUIPresenter.EnableZoom(config.Mode is PreviewMode.Marketplace or PreviewMode.Builder);
+                    previewUIPresenter.EnablePan(config.Mode is PreviewMode.Marketplace or PreviewMode.Builder);
                     previewUIPresenter.EnableSwitcher(hasWearableOverride && !config.DisableSwitcher);
                     previewUIPresenter.EnableAudioControls(hasEmoteAudio);
                 } while (_shouldReload);
@@ -349,7 +377,8 @@ namespace Preview
         }
 
         /// <summary>
-        /// Resolves the builder-mode emote: null for idle, an active entity for emote URNs
+        /// Resolves the builder-mode emote: null for idle (the scene rig already carries an Idle clip,
+        /// so an empty slot plays it with nothing to download), an active entity for emote URNs
         /// (e.g. picked from the marketplace) or an embedded StreamingAssets emote otherwise.
         /// </summary>
         private static async Awaitable<EntityDefinition> ResolveBuilderEmote(string emoteName)
@@ -433,6 +462,7 @@ namespace Preview
                 hasValidRepresentation = true;
             }
 
+            // Same "idle" short-circuit as LoadForBuilder.
             var emoteDefinition = emoteOverride ??
                                   (defaultEmote == "idle"
                                       ? null
@@ -465,7 +495,9 @@ namespace Preview
 
             if (showsItemAlone)
             {
-                await wearableLoader.LoadWearable(wearableOverrides[0], avatarBodyShape, avatarColors);
+                // From the avatar rig because that is where the Idle clip lives - the item view has none.
+                await wearableLoader.LoadWearable(wearableOverrides[0], avatarBodyShape, avatarColors,
+                    avatarLoader.GetIdlePose());
             }
             else
             {
@@ -489,6 +521,11 @@ namespace Preview
                 _ => PlayerPrefs.GetInt(PREF_AVATAR_SHOWN, 0) == 1
             };
 
+        /// <summary>
+        /// Unlike LoadForBuilder and LoadForMarketplace, this does NOT special-case "idle" — the default
+        /// emote value — so Profile and Authentication fetch StreamingAssets/idle.glb (132KB) to play it
+        /// once before crossfading to the scene rig's own Idle clip. The fetch buys the first 3s only.
+        /// </summary>
         private async Awaitable LoadForProfile(string profileID, string defaultEmote, bool loop = false)
         {
             Assert.IsNotNull(profileID);

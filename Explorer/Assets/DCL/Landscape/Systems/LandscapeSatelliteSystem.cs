@@ -2,14 +2,8 @@
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.Diagnostics;
-using DCL.Landscape.Settings;
 using DCL.MapRenderer.ComponentsFactory;
 using ECS.Abstract;
-using System.Collections.Generic;
-using UnityEngine;
-using Utility;
-using Object = UnityEngine.Object;
-using Vector3 = UnityEngine.Vector3;
 
 namespace DCL.Landscape.Systems
 {

@@ -1,11 +1,11 @@
 # Custom base domain
 
 The client can target a deployment served under a base domain other than
-`decentraland.{org,zone,today}` — an independent catalyst stack, for example
+`decentraland.{org,zone}` — an independent catalyst stack, for example
 `interconnected.online` — by passing the [`--base-domain`](app-arguments.md#base-domain)
 app arg.
 
-`--base-domain` selects a fourth environment, `DecentralandEnvironment.Custom`. Modelling
+`--base-domain` selects a third environment, `DecentralandEnvironment.Custom`. Modelling
 it as an environment rather than as a silent override is deliberate: the domain is only
 one of the things an environment decides, and every other decision gets an explicit arm
 for `Custom` instead of falling into a `default` branch whose value nobody chose. Where
@@ -24,10 +24,7 @@ The domain is **composed into** each url rather than substituted afterwards: eve
 `decentraland.` literal repeated across the table, no placeholder token, and no replace pass on
 resolution. `Url()` only caches what `RawUrl` produced.
 
-`BaseDomain` is written only by the constructor, and the today environment is the reason it is
-writable at all: it resolves the handful of hosts it serves from `.today` while being built and
-then moves to org for everything resolved afterwards, so it reports org and urls must stay lazily
-resolved.
+`BaseDomain` is settled by the constructor and never changes afterwards.
 
 `ResolveBaseDomain` rejects a `Custom` environment without a domain, a domain paired with
 any other environment, and anything that is not a bare domain (scheme, userinfo, port or
@@ -84,7 +81,7 @@ neither: an identity signed for mainnet has no business spending against test cr
 contracts, and a test identity has no business against the real ones.
 
 **Decentraland's own environments cannot be moved.** `ChainUtils.PinnedNetworkOf` fixes org
-and today to mainnet and zone to sepolia; `--eth-network` paired with one of them is reported
+to mainnet and zone to sepolia; `--eth-network` paired with one of them is reported
 in the log and dropped. Their contracts, identities and backends are all on that one chain, so
 a client pointed at zone signing against mainnet is simply wrong — there is no deployment for
 which that combination is what the operator meant. A custom base domain is the only stack the

@@ -5,7 +5,6 @@ using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.ECSComponents;
 using ECS.Abstract;
 using ECS.Groups;
-using SceneRunner.Scene;
 using System.Collections.Generic;
 
 namespace ECS.Unity.ExplorerUiEvents
@@ -20,27 +19,24 @@ namespace ECS.Unity.ExplorerUiEvents
     {
         private readonly Queue<ExplorerUiEvent> events;
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
-        private readonly ISceneStateProvider sceneStateProvider;
 
-        internal WriteExplorerUiEventsSystem(World world, Queue<ExplorerUiEvent> events, IECSToCRDTWriter ecsToCRDTWriter, ISceneStateProvider sceneStateProvider) : base(world)
+        internal WriteExplorerUiEventsSystem(World world, Queue<ExplorerUiEvent> events, IECSToCRDTWriter ecsToCRDTWriter) : base(world)
         {
             this.events = events;
             this.ecsToCRDTWriter = ecsToCRDTWriter;
-            this.sceneStateProvider = sceneStateProvider;
         }
 
         protected override void Update(float t)
         {
-            var tickNumber = (int)sceneStateProvider.TickNumber;
-
             while (events.TryDequeue(out ExplorerUiEvent uiEvent))
             {
-                ecsToCRDTWriter.AppendMessage<PBExplorerUiEventsResult, (ExplorerUiEvent uiEvent, uint timestamp)>(static (result, data) =>
+                ecsToCRDTWriter.AppendMessage<PBExplorerUiEventsResult, ExplorerUiEvent>(static (result, data) =>
                 {
-                    result.Ui = data.uiEvent.Ui;
-                    result.Timestamp = data.timestamp;
+                    result.Ui = data.Ui;
+                    result.Timestamp = data.Tick;
+                    result.RequestId = data.RequestId;
 
-                    switch (data.uiEvent.Kind)
+                    switch (data.Kind)
                     {
                         case ExplorerUiEventKind.Opened:
                             result.Opened = new PBExplorerUiEventsResult.Types.UiOpened();
@@ -49,7 +45,7 @@ namespace ECS.Unity.ExplorerUiEvents
                             result.Closed = new PBExplorerUiEventsResult.Types.UiClosed();
                             break;
                     }
-                }, SpecialEntitiesID.SCENE_ROOT_ENTITY, tickNumber, (uiEvent, (uint)tickNumber));
+                }, SpecialEntitiesID.SCENE_ROOT_ENTITY, (int)uiEvent.Tick, uiEvent);
             }
         }
     }

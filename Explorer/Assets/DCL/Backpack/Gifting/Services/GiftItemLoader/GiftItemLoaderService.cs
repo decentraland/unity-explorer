@@ -6,7 +6,7 @@ using DCL.Backpack.Gifting.Models;
 using DCL.Backpack.Gifting.Services.GiftItemLoader;
 using DCL.Diagnostics;
 using DCL.WebRequests;
-using UnityEngine;
+using Runtime.Wearables;
 
 namespace DCL.Backpack.Gifting.Services.GiftItemLoaderService
 {
@@ -28,17 +28,16 @@ namespace DCL.Backpack.Gifting.Services.GiftItemLoaderService
                 URLAddress url = URLAddress.FromString(tokenUri);
 
                 GiftItemResponseDTO dto = await webRequestController
-                    .GetAsync(url, ct, ReportCategory.GIFTING)
-                    .CreateFromJson<GiftItemResponseDTO>(WRJsonParser.Unity);
+                                               .GetAsync(url, ct, ReportCategory.GIFTING)
+                                               .CreateFromJson<GiftItemResponseDTO>(WRJsonParser.Unity);
 
                 if (dto == null) return null;
 
                 // NOTE: what are the defaults?
-                string rarity = "common";
-                string category = "wearable";
+                var rarity = "common";
+                var category = "wearable";
 
                 if (dto.attributes != null)
-                {
                     foreach (var attr in dto.attributes)
                     {
                         string trait = attr.trait_type?.ToLower() ?? "";
@@ -54,10 +53,10 @@ namespace DCL.Backpack.Gifting.Services.GiftItemLoaderService
                                 break;
                         }
                     }
-                }
 
                 string name = dto.name ?? string.Empty;
                 string description = dto.description ?? string.Empty;
+
                 string imageUrl =
                     !string.IsNullOrEmpty(dto.thumbnail) ? dto.thumbnail :
                     !string.IsNullOrEmpty(dto.image) ? dto.image :
@@ -67,7 +66,8 @@ namespace DCL.Backpack.Gifting.Services.GiftItemLoaderService
                 {
                     Name = name, Description = description, ImageUrl = imageUrl,
                     Rarity = rarity,
-                    Category = category
+                    Category = category,
+                    Type = EmoteCategories.IsEmoteCategory(category) ? GiftableType.Emote : GiftableType.Wearable,
                 };
             }
             catch (Exception e)

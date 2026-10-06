@@ -65,6 +65,10 @@ namespace DCL.Friends
                 {
                     try
                     {
+                        // Stream updates arrive on the transport's background thread, while the broadcasts
+                        // below reach UI subscribers that require the main thread
+                        await UniTask.SwitchToMainThread(ct);
+
                         switch (response.UpdateCase)
                         {
                             case FriendshipUpdate.UpdateOneofCase.Accept:
@@ -102,13 +106,30 @@ namespace DCL.Friends
                                     break;
                                 }
 
-                                Profile? myProfile = await selfProfile.ProfileAsync(ct);
+                                // This stream is ack-driven: the server sends the next update only after this one
+                                // is consumed, so a hung await here silently starves every subsequent update.
+                                // Prefer the cached profile and bound the fallback fetch
+                                Profile? myProfile = selfProfile.OwnProfile;
+
+                                if (myProfile == null)
+                                {
+                                    myProfile = await selfProfile.ProfileAsync(ct).Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
+
+                                    // The fetch may resume on a background thread; the broadcast below requires the main thread
+                                    await UniTask.SwitchToMainThread(ct);
+                                }
+
+                                if (myProfile == null)
+                                {
+                                    ReportHub.LogWarning(ReportCategory.FRIENDS, "Ignoring incoming friend request: own profile is not resolved");
+                                    break;
+                                }
 
                                 var fr = new FriendRequest(
                                     request.Id,
                                     DateTimeOffset.FromUnixTimeMilliseconds(request.CreatedAt).DateTime,
                                     requesterProfile.Value,
-                                    myProfile!.Compact,
+                                    myProfile.Compact,
                                     request.HasMessage ? request.Message : string.Empty);
 
                                 eventBus.BroadcastFriendRequestReceived(fr);

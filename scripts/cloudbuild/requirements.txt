@@ -1,1 +1,3 @@
 requests==2.32.2
+# retry_after_max= landed in urllib3 2.6.3; build.py Retry() TypeErrors below it.
+urllib3>=2.6.3,<3

@@ -25,8 +25,8 @@ namespace SceneRuntime.Tests
 {
     public class SceneRuntimeShould
     {
-        private IInstancePoolsProvider poolsProvider;
-        private ISceneExceptionsHandler sceneExceptionsHandler;
+        private IInstancePoolsProvider poolsProvider = null!;
+        private ISceneExceptionsHandler sceneExceptionsHandler = null!;
 
         [SetUp]
         public void SetUp()

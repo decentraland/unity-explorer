@@ -50,7 +50,6 @@ namespace DCL.Communities.CommunitiesCard.Announcements
             announcementInput.onValueChanged.AddListener(OnAnnouncementInputValueChanged);
             announcementInput.PasteShortcutPerformed += OnAnnouncementInputPasteShortcut;
             createAnnouncementButton.onClick.AddListener(OnCreateAnnouncementButton);
-            ViewDependencies.ClipboardManager.OnPaste += OnPasteClipboardText;
         }
 
         private void OnDestroy()
@@ -60,7 +59,6 @@ namespace DCL.Communities.CommunitiesCard.Announcements
             announcementInput.onValueChanged.RemoveListener(OnAnnouncementInputValueChanged);
             announcementInput.PasteShortcutPerformed -= OnAnnouncementInputPasteShortcut;
             createAnnouncementButton.onClick.RemoveListener(OnCreateAnnouncementButton);
-            ViewDependencies.ClipboardManager.OnPaste -= OnPasteClipboardText;
 
             announcementEmojiController?.Dispose();
         }
@@ -124,7 +122,7 @@ namespace DCL.Communities.CommunitiesCard.Announcements
         }
 
         private void OnAnnouncementInputPasteShortcut() =>
-            ViewDependencies.ClipboardManager.Paste(this);
+            announcementInput.InsertTextAtCaretPosition(ViewDependencies.ClipboardManager.GetText());
 
         private void OnCreateAnnouncementButton() =>
             CreateAnnouncementButtonClicked?.Invoke(announcementInput.text);
@@ -138,8 +136,5 @@ namespace DCL.Communities.CommunitiesCard.Announcements
 
         private void UpdateCreateButtonState() =>
             createAnnouncementButton.interactable = !string.IsNullOrEmpty(announcementInput.text);
-
-        private void OnPasteClipboardText(object sender, string pastedText) =>
-            announcementInput.InsertTextAtCaretPosition(pastedText);
     }
 }

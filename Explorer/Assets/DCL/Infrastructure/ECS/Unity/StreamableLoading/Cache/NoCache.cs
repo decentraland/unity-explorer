@@ -65,6 +65,14 @@ namespace ECS.StreamableLoading.Cache
 
         public void Add(in TLoadingIntention key, TAsset asset) { }
 
+        // Nothing is retained, but consumers still Dereference on release — count the reference
+        // anyway so their decrement lands on 0 instead of tripping the negative-count guard.
+        public void AddReference(in TLoadingIntention key, TAsset asset)
+        {
+            if (asset is IStreamableRefCountData refCountData)
+                refCountData.AddReference();
+        }
+
         public void Unload(IPerformanceBudget frameTimeBudget, int maxUnloadAmount) { }
     }
 }

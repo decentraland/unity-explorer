@@ -33,6 +33,7 @@ namespace DCL.PluginSystem.Global
 
         private RealmPartitionSettingsAsset realmPartitionSettings;
         private ProvidedAsset<LandscapeData> landscapeData;
+        private ProvidedAsset<GPUIShaderBindings> gpuiShaderBindings;
         private NativeParallelHashSet<int2> emptyParcels;
         private NativeParallelHashSet<int2> ownedParcels;
         private SatelliteFloor? floor;
@@ -78,6 +79,12 @@ namespace DCL.PluginSystem.Global
             if (!enableLandscape) return;
 
             realmPartitionSettings = settings.realmPartitionSettings;
+
+            // Fix ANR: creating the GPUI rendering system loads the shader bindings with Addressables
+            // WaitForCompletion(), which blocks the main thread until Unity's PreloadManager has finished
+            // every async load already in flight, not just this one.
+            gpuiShaderBindings = await assetsProvisioner.ProvideMainAssetAsync(settings.gpuiShaderBindings, ct);
+            GPUIShaderBindings.Instance = gpuiShaderBindings.Value;
 
             GPUIProfile treesProfile = landscapeData.Value.TreesProfile;
             LandscapeAsset[] treePrototypes = landscapeData.Value.terrainData.treeAssets;

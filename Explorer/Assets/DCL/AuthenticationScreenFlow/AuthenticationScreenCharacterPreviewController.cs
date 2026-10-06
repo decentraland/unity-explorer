@@ -87,7 +87,7 @@ namespace DCL.AuthenticationScreenFlow
     [Serializable]
     public class AuthScreenEmotesSettings
     {
-        [field: SerializeField] public string IntroEmoteURN { get; private set; }
-        [field: SerializeField] public string JumpInEmoteURN { get; private set; }
+        [field: SerializeField] public string IntroEmoteURN { get; private set; } = null!;
+        [field: SerializeField] public string JumpInEmoteURN { get; private set; } = null!;
     }
 }

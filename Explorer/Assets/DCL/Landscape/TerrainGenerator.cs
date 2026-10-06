@@ -71,14 +71,14 @@ namespace DCL.Landscape
             timeProfiler = new TimeProfiler(measureTime);
         }
 
-        public void Initialize(TerrainGenerationData terrainGenData, int[] treeRendererKeys,
-            LandscapeData landscapeData)
+        public void Initialize(TerrainGenerationData generationData, int[] treeRendererKeys,
+            LandscapeData landscape)
         {
-            this.terrainGenData = terrainGenData;
-            Trees = new TreeData(treeRendererKeys, terrainGenData);
-            this.landscapeData = landscapeData;
-            ParcelSize = terrainGenData.parcelSize;
-            factory = new TerrainFactory(terrainGenData);
+            terrainGenData = generationData;
+            Trees = new TreeData(treeRendererKeys, generationData);
+            landscapeData = landscape;
+            ParcelSize = generationData.parcelSize;
+            factory = new TerrainFactory(generationData);
 
             boundariesGenerator = new TerrainBoundariesGenerator(factory, ParcelSize);
 
@@ -152,7 +152,7 @@ namespace DCL.Landscape
 
             TerrainModel = new TerrainModel(ParcelSize, worldManifest.GetOccupiedParcels(), terrainGenData.borderPadding);
 
-            float startMemory = profilingProvider.SystemUsedMemoryInBytes / (1024 * 1024);
+            float startMemory = (float)profilingProvider.SystemUsedMemoryInBytes / (1024 * 1024);
 
             try
             {
@@ -221,7 +221,7 @@ namespace DCL.Landscape
                 DestroyPartialTerrain();
             }
 
-            float endMemory = profilingProvider.SystemUsedMemoryInBytes / (1024 * 1024);
+            float endMemory = (float)profilingProvider.SystemUsedMemoryInBytes / (1024 * 1024);
             ReportHub.Log(ReportCategory.LANDSCAPE, $"The landscape generation took {endMemory - startMemory}MB of memory");
         }
 
@@ -358,8 +358,6 @@ namespace DCL.Landscape
         private static int ComputeChamferDistanceField(NativeArray<byte> src, NativeArray<int> dist,
             int width, RectInt workingArea)
         {
-            int n = src.Length;
-
             // Initialize working area pixels
             for (int y = workingArea.yMin; y <= workingArea.yMax; y++)
             for (int x = workingArea.xMin; x <= workingArea.xMax; x++)
@@ -450,8 +448,6 @@ namespace DCL.Landscape
             int minValue = 255 - (stepSize * maxPixelDistance);
 
             ReportHub.Log(ReportCategory.LANDSCAPE, $"Distance field: max chamfer={maxChamferDistance}, max pixels={maxPixelDistance}, stepSize={stepSize}, range=[{minValue}, 255]");
-
-            int n = src.Length;
 
             // Write back mapped values
             for (int y = area.yMin; y <= area.yMax; y++)

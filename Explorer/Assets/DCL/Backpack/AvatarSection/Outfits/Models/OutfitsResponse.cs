@@ -21,8 +21,11 @@ namespace DCL.Backpack.AvatarSection.Outfits.Models
         [JsonProperty("pointers")]
         public string[] Pointers;
 
+        // Newtonsoft-deserialized wire DTO (CreateFromJson with WRJsonParser.Newtonsoft); Unity serialization never sees this field.
+#pragma warning disable UAC1001
         [JsonProperty("content")]
         public object[] Content;
+#pragma warning restore UAC1001
 
         [JsonProperty("metadata")]
         public OutfitsMetadata? Metadata;

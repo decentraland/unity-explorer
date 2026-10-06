@@ -2,6 +2,8 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
 using DCL.WebRequests;
 using ECS;
 using Newtonsoft.Json;
@@ -53,25 +55,32 @@ namespace Global.Dynamic
             }
         }
 
+        /// <summary>
+        ///     A world the registry has not indexed answers 404, and that is an ordinary outcome: the caller treats an
+        ///     absent manifest as <see cref="WorldManifest.Empty" /> and resolves the world's scenes from its
+        ///     <c>scenesUrn</c> instead. Retrying cannot turn that 404 into a manifest, so the request takes neither
+        ///     the default three attempts — which delay every such realm change by the full backoff — nor the error
+        ///     report they raise on the way.
+        /// </summary>
         private async UniTask<WorldManifest> FetchNonGenesisManifestAsync(URLDomain assetBundleRegistry, string worldURL, CancellationToken ct)
         {
+            Result<string> result = await webRequestController
+                                         .GetAsync(new CommonArguments(assetBundleRegistry.Append(URLPath.FromString($"worlds/{worldURL}/manifest")), RetryPolicy.NONE), ct,
+                                              ReportCategory.REALM)
+                                         .StoreTextAsync()
+                                         .SuppressToResultAsync();
+
+            if (!result.Success)
+                return WorldManifest.Empty;
+
             try
             {
-                var result = await webRequestController
-                                  .GetAsync(new CommonArguments(assetBundleRegistry.Append(URLPath.FromString($"worlds/{worldURL}/manifest"))), ct,
-                                       ReportCategory.REALM)
-                                  .StoreTextAsync();
-
-                WorldManifestDto dto = JsonConvert.DeserializeObject<WorldManifestDto>(result);
+                WorldManifestDto dto = JsonConvert.DeserializeObject<WorldManifestDto>(result.Value);
                 return WorldManifest.Create(dto);
-            }
-            catch (OperationCanceledException)
-            {
-                return WorldManifest.Empty;
             }
             catch (Exception e)
             {
-                ReportHub.LogWarning(ReportCategory.REALM, $"World manifest fetch failed for '{worldURL}': {e.Message}");
+                ReportHub.LogWarning(ReportCategory.REALM, $"World manifest for '{worldURL}' could not be parsed: {e.Message}");
                 return WorldManifest.Empty;
             }
         }
@@ -86,7 +95,6 @@ namespace Global.Dynamic
             environment switch
             {
                 DecentralandEnvironment.Org => ORG_MANIFEST_URL,
-                DecentralandEnvironment.Today => ORG_MANIFEST_URL,
                 DecentralandEnvironment.Zone => ZONE_MANIFEST_URL,
                 DecentralandEnvironment.Custom => null,
                 _ => throw new ArgumentOutOfRangeException(nameof(environment), environment, null),

@@ -15,31 +15,12 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Security.Cryptography;
 using UnityEngine;
-using Utility;
 using Utility.Times;
 
 namespace SceneRuntime.Apis.Modules.SignedFetch
 {
     public class SignedFetchWrap : JsApiWrapper
     {
-        private static readonly string[] AUTH_CHAIN_HEADER_NAMES =
-        {
-            // AuthLinkType.SIGNER
-            "x-identity-auth-chain-0",
-
-            // AuthLinkType.ECDSA_EPHEMERAL
-            "x-identity-auth-chain-1",
-
-            // AuthLinkType.ECDSA_SIGNED_ENTITY
-            "x-identity-auth-chain-2",
-
-            // AuthLinkType.ECDSA_EIP_1654_EPHEMERAL
-            "x-identity-auth-chain-3",
-
-            // AuthLinkType.ECDSA_EIP_1654_SIGNED_ENTITY
-            "x-identity-auth-chain-4",
-        };
-
         private readonly IWebRequestController webController;
         private readonly string decentralandEnvironment;
         private readonly ISceneData sceneData;
@@ -109,7 +90,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
 
             foreach (AuthLink link in authChain)
             {
-                headers[AUTH_CHAIN_HEADER_NAMES[authChainIndex]] = link.ToJson();
+                headers[$"x-identity-auth-chain-{authChainIndex}"] = link.ToJson();
                 authChainIndex++;
             }
 
@@ -266,6 +247,13 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                     // Code on JS is likely to be stopped execution either way.
                     return FlatFetchResponse.Cancelled;
                 }
+                catch (InvalidOperationException e)
+                {
+                    // The request was refused before it was sent (e.g. a plain http URL): the scene asked for something
+                    // the player build does not allow, so it is reported as the scene's problem, not as a client exception
+                    ReportHub.LogWarning(GetReportData(), $"Signed fetch to '{request.url}' rejected: {e.Message}");
+                    throw;
+                }
                 catch (Exception e)
                 {
                     ReportHub.LogException(e, new ReportData(ReportCategory.SCENE_FETCH_REQUEST));
@@ -289,9 +277,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                 parcel = $"{parcel.x},{parcel.y}",
                 tld = decentralandEnvironment,
                 network = "mainnet",
-
-                // TODO: support guest if required in the future
-                isGuest = false,
+                isGuest = identityCache.IsGuest(),
                 signer = "decentraland-kernel-scene",
 
                 // It is used for external servers to verify that the user is currently valid for that realm
@@ -308,6 +294,8 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
             return JsonUtility.ToJson(metadata);
         }
 
+        // Wire format serialized with JsonUtility: field names must match the JSON keys.
+        // ReSharper disable InconsistentNaming
         [Serializable]
         internal struct SignatureMetadata
         {
@@ -330,5 +318,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                 public string serverName;
             }
         }
+
+        // ReSharper restore InconsistentNaming
     }
 }

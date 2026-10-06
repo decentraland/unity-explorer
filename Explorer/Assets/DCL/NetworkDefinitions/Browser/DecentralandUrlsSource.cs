@@ -6,6 +6,7 @@ using ECS;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using UnityEngine.Pool;
 
 // ReSharper disable once CheckNamespace
@@ -37,6 +38,12 @@ namespace DCL.Browser.DecentralandUrls
         // (see GetFeatureFlagsUrl), so the subdomain is shared rather than the whole url.
         private const string FEATURE_FLAGS_SUBDOMAIN = "feature-flags";
 
+        // An abgen source keeps its LOD generation under a single "LOD/" prefix, beside the asset bundles on the
+        // same CDN: LOD/{level}/{sceneId}_{level}_{platform} for the bundles, whose "LOD/{level}" comes from the
+        // manifest version, and LOD/lods-unity/manifests/{sceneId}_InitialSceneState.json for the descriptors,
+        // whose path carries no such segment — so the descriptor base is the one that takes the prefix.
+        private const string ABGEN_LODS_DESCRIPTOR_SUBPATH = "/LOD";
+
         // A base domain feeds host-trust checks, so anything that could turn it into a different authority
         // (scheme, userinfo, port, path) is rejected rather than silently accepted.
         private static readonly char[] BASE_DOMAIN_FORBIDDEN_CHARS = { '/', ':', '@', '?', '#', ' ', '\t' };
@@ -46,17 +53,14 @@ namespace DCL.Browser.DecentralandUrls
         private readonly ILaunchMode launchMode;
         private readonly DecentralandEnvironment environment;
         private readonly string? gatekeeperBaseOverride;
-        private readonly string? optimizedAssetsBaseOverride;
+        private readonly string? localAbBaseOverride;
         private readonly bool abgenPipelineForced;
-        private readonly bool isTodayEnvironment;
+        private readonly bool abgenLodsForced;
 
         /// <summary>
-        ///     The domain <see cref="RawUrl" /> composes every host from. Written only by the constructor — the today
-        ///     environment resolves the handful of hosts it serves from <c>.today</c> and then moves to org for
-        ///     everything resolved afterwards, which is why urls must stay lazily resolved — so it is settled by the
-        ///     time the instance is handed out.
+        ///     The domain <see cref="RawUrl" /> composes every host from.
         /// </summary>
-        public string BaseDomain { get; private set; }
+        public string BaseDomain { get; }
 
         public DecentralandUrlsSource(
             DecentralandEnvironment environment,
@@ -65,50 +69,20 @@ namespace DCL.Browser.DecentralandUrls
             GatekeeperMode gatekeeperMode = GatekeeperMode.Org,
             string customGatekeeperUrl = "",
             string? cliGatekeeperUrl = null,
-            string? cliOptimizedAssetsUrl = null,
+            string? localAbBaseUrl = null,
             string? customBaseDomain = null,
-            bool abgenPipelineForced = false)
+            bool abgenPipelineForced = false,
+            bool abgenLodsForced = false)
         {
             this.environment = environment;
             BaseDomain = ResolveBaseDomain(environment, customBaseDomain);
-            isTodayEnvironment = environment == DecentralandEnvironment.Today;
             this.realmData = realmData;
             this.launchMode = launchMode;
             gatekeeperBaseOverride = ResolveGatekeeperOverride(gatekeeperMode, customGatekeeperUrl, cliGatekeeperUrl, out string source);
             ReportHub.Log(ReportCategory.STARTUP, $"Gatekeeper base override: {gatekeeperBaseOverride ?? "(default)"} (source: {source})");
-            optimizedAssetsBaseOverride = cliOptimizedAssetsUrl?.TrimEnd('/');
+            localAbBaseOverride = localAbBaseUrl?.TrimEnd('/');
             this.abgenPipelineForced = abgenPipelineForced;
-
-            if (isTodayEnvironment)
-            {
-                // The today environment is a mixture of the org and today environments.
-                // Asset delivery (registry and S3) are used with the `.today` extension
-                // Adapter info (both scene and room) also have to responde to the `.today` environment
-                // Archipelago status as well, to have a clear minimap
-                // All the remaining urls should use the `Org` domain, that's why we change the domain to forcefully `.org`
-                // It's a catalyst that replicates the org environment and eth network, but doesn't propagate back to the production catalysts
-                Url(DecentralandUrl.AssetBundleRegistry);
-                Url(DecentralandUrl.AssetBundleRegistryVersion);
-                Url(DecentralandUrl.AssetBundlesCDN);
-                Url(DecentralandUrl.LodAssetBundlesCDN);
-                Url(DecentralandUrl.Profiles);
-                Url(DecentralandUrl.ProfilesMetadata);
-                Url(DecentralandUrl.EntitiesActive);
-                Url(DecentralandUrl.EntitiesActiveElements);
-                Url(DecentralandUrl.WorldEntitiesActive);
-                Url(DecentralandUrl.ArchipelagoStatus);
-                Url(DecentralandUrl.ArchipelagoHotScenes);
-                Url(DecentralandUrl.Genesis);
-                Url(DecentralandUrl.Gatekeeper);
-                Url(DecentralandUrl.GateKeeperSceneAdapter);
-                Url(DecentralandUrl.LocalGateKeeperSceneAdapter);
-                Url(DecentralandUrl.ChatAdapter);
-                Url(DecentralandUrl.GatekeeperStatus);
-                Url(DecentralandUrl.BannedUsers);
-                Url(DecentralandUrl.SceneAdmins);
-                Url(DecentralandUrl.RemotePeers);
-                BaseDomain = IDecentralandUrlsSource.ORG_DOMAIN;
-            }
+            this.abgenLodsForced = abgenLodsForced;
 
             realmData.RealmType.OnUpdate += ResetRealmDependentUrls;
         }
@@ -161,7 +135,6 @@ namespace DCL.Browser.DecentralandUrls
                    {
                        GatekeeperMode.Org => null,
                        GatekeeperMode.Zone => "https://comms-gatekeeper." + IDecentralandUrlsSource.ZONE_DOMAIN,
-                       GatekeeperMode.Today => "https://comms-gatekeeper." + IDecentralandUrlsSource.TODAY_DOMAIN,
                        GatekeeperMode.Localhost => "http://localhost:3000",
                        GatekeeperMode.Custom => string.IsNullOrEmpty(customUrl) ? null : customUrl,
                        _ => throw new ArgumentOutOfRangeException(nameof(mode), mode, null),
@@ -215,6 +188,9 @@ namespace DCL.Browser.DecentralandUrls
             return urlData.Url!;
         }
 
+        /// <summary>This source routes nothing through a gateway; <see cref="GatewayUrlsSource" /> overrides it.</summary>
+        public virtual string? GatewayOrigin => null;
+
         public virtual string TransformUrl(string originalUrl) =>
             originalUrl;
 
@@ -243,20 +219,18 @@ namespace DCL.Browser.DecentralandUrls
             gatekeeperBaseOverride ?? defaultBaseUrl;
 
         /// <summary>
-        ///     The "--optimized-assets-url" arg or the flag variant payload override the base url, otherwise
+        ///     The local-ab abgen sidecar's base url or the flag variant payload override the base url, otherwise
         ///     https://abcdn.{BaseDomain}. FeatureFlagsDependent means it is re-resolved (not cached) until flags load.
         /// </summary>
         private UrlData ResolveOptimizedAssetsUrl(UrlData dedicatedHost)
         {
-            if (optimizedAssetsBaseOverride is { Length: > 0 })
-                return new UrlData(CacheBehaviour.FeatureFlagsDependent, optimizedAssetsBaseOverride);
+            if (localAbBaseOverride is { Length: > 0 })
+                return new UrlData(CacheBehaviour.FeatureFlagsDependent, localAbBaseOverride);
 
             FeatureFlagsConfiguration featureFlags = FeatureFlagsConfiguration.Instance;
 
             if (featureFlags.IsEmpty)
-                return isTodayEnvironment
-                    ? dedicatedHost // Static — pinned on construction, before the host domain switches to org
-                    : new UrlData(CacheBehaviour.FeatureFlagsDependent, dedicatedHost.Url!);
+                return new UrlData(CacheBehaviour.FeatureFlagsDependent, dedicatedHost.Url!);
 
             if (!featureFlags.IsEnabled(FeatureFlagsStrings.OPTIMIZED_ASSETS))
                 return dedicatedHost;
@@ -274,8 +248,8 @@ namespace DCL.Browser.DecentralandUrls
         /// <summary>
         ///     The abgen parallel pipeline: registry and CDN must flip together — the abgen registry's versions and
         ///     statuses describe abgen-cdn's content. The "--abgen-pipeline" arg forces it on without the flag.
-        ///     FeatureFlagsDependent both defers caching until flags load and keeps the abgen hosts off the gateway
-        ///     (they resolve to their own origins).
+        ///     FeatureFlagsDependent defers caching until flags load; the hosts themselves are subdomains of this
+        ///     deployment, so <see cref="GatewayUrlsSource" /> routes them like the regular ones.
         /// </summary>
         private UrlData ResolveAbgenPipelineUrl(string regularHost, string abgenHost)
         {
@@ -285,13 +259,59 @@ namespace DCL.Browser.DecentralandUrls
             FeatureFlagsConfiguration featureFlags = FeatureFlagsConfiguration.Instance;
 
             if (featureFlags.IsEmpty)
-                return isTodayEnvironment
-                    ? regularHost // Static — pinned on construction, before the host domain switches to org
-                    : new UrlData(CacheBehaviour.FeatureFlagsDependent, regularHost);
+                return new UrlData(CacheBehaviour.FeatureFlagsDependent, regularHost);
 
             return featureFlags.IsEnabled(FeatureFlagsStrings.ABGEN_PIPELINE)
                 ? new UrlData(CacheBehaviour.FeatureFlagsDependent, abgenHost)
                 : regularHost;
+        }
+
+        /// <summary>
+        ///     The abgen LOD source. LOD bundles and ISS descriptors flip together: the descriptors and the bundles
+        ///     describe one generation, as the abgen registry and abgen-cdn do for asset bundles. The "--abgen-lods"
+        ///     arg forces it on without the flag, exactly as "--abgen-pipeline" does for the asset bundles.
+        ///     <paramref name="abgenSubPath" /> is appended to the abgen host and left off the regular one, which
+        ///     lays its LOD generation out differently (see <see cref="ABGEN_LODS_DESCRIPTOR_SUBPATH" />).
+        ///     FeatureFlagsDependent for the same reasons as <see cref="ResolveAbgenPipelineUrl" />.
+        /// </summary>
+        private UrlData ResolveAbgenLodsUrl(UrlData regularHost, string abgenSubPath)
+        {
+            string abgenHost = $"https://abgen-cdn.{BaseDomain}{abgenSubPath}";
+
+            if (abgenLodsForced)
+                return new UrlData(CacheBehaviour.FeatureFlagsDependent, abgenHost);
+
+            FeatureFlagsConfiguration featureFlags = FeatureFlagsConfiguration.Instance;
+
+            if (featureFlags.IsEmpty)
+                return new UrlData(CacheBehaviour.FeatureFlagsDependent, regularHost.Url!);
+
+            return featureFlags.IsEnabled(FeatureFlagsStrings.ABGEN_LODS)
+                ? new UrlData(CacheBehaviour.FeatureFlagsDependent, abgenHost)
+                : regularHost;
+        }
+
+        private bool AbgenLodsActive =>
+            abgenLodsForced
+            || (!FeatureFlagsConfiguration.Instance.IsEmpty && FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.ABGEN_LODS));
+
+        /// <inheritdoc />
+        public string? AbgenLodsCacheKey
+        {
+            get
+            {
+                if (!AbgenLodsActive)
+                    return null;
+
+                // The resolved base identifies the source; sanitised so it can travel in file names and hash payloads.
+                string baseUrl = Url(DecentralandUrl.LodAssetBundlesCDN);
+                var key = new StringBuilder("abgen-lods-", baseUrl.Length + 11);
+
+                foreach (char c in baseUrl)
+                    key.Append(char.IsLetterOrDigit(c) ? c : '-');
+
+                return key.ToString();
+            }
         }
 
         /// <summary>
@@ -356,9 +376,12 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.Market => $"https://market.{BaseDomain}",
                 DecentralandUrl.AssetBundlesCDN => ResolveOptimizedAssetsUrl(ResolveAbgenPipelineUrl($"https://ab-cdn.{BaseDomain}", $"https://abgen-cdn.{BaseDomain}")),
 
-                // LOD bundles are only produced by the regular pipeline, so they never follow the abgen flip
-                DecentralandUrl.LodAssetBundlesCDN => ResolveOptimizedAssetsUrl($"https://ab-cdn.{BaseDomain}"),
-                DecentralandUrl.LodGeneratorCDN => ResolveOptimizedAssetsUrl($"https://lod-generator-unity-cdn.{BaseDomain}"),
+                // LOD bundles ({base}/LOD/{level}/{sceneId}_{level}_{platform}) and ISS descriptors
+                // ({base}/lods-unity/manifests/{sceneId}_InitialSceneState.json) come from the regular pipeline unless the
+                // abgen-lods flip moves both onto an abgen source, which nests them under ABGEN_LODS_DESCRIPTOR_SUBPATH;
+                // they never follow the asset-bundle abgen flip on their own.
+                DecentralandUrl.LodAssetBundlesCDN => ResolveAbgenLodsUrl(ResolveOptimizedAssetsUrl($"https://ab-cdn.{BaseDomain}"), string.Empty),
+                DecentralandUrl.LodGeneratorCDN => ResolveAbgenLodsUrl(ResolveOptimizedAssetsUrl($"https://lod-generator-unity-cdn.{BaseDomain}"), ABGEN_LODS_DESCRIPTOR_SUBPATH),
                 DecentralandUrl.ArchipelagoStatus => $"https://archipelago-ea-stats.{BaseDomain}/status",
                 DecentralandUrl.ArchipelagoHotScenes => $"https://archipelago-ea-stats.{BaseDomain}/hot-scenes",
                 DecentralandUrl.GatekeeperStatus => $"{RawUrl(DecentralandUrl.Gatekeeper).Url!}/status",
@@ -417,8 +440,14 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.WorldEntitiesActive => UrlData.RealmDependent(FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.ASSET_BUNDLE_FALLBACK) && launchMode.CurrentMode != LaunchMode.LocalSceneDevelopment ? $"{Url(DecentralandUrl.AssetBundleRegistry)}/entities/active?world_name={{0}}" :
                     realmData.Configured ? realmData.Ipfs.EntitiesActiveEndpoint.Value : null),
 
-                DecentralandUrl.EntitiesDeployment => UrlData.RealmDependent(realmData.Configured ? realmData.Ipfs.EntitiesBaseUrl.Value : null),
-                DecentralandUrl.Lambdas => UrlData.RealmDependent(realmData.Configured ? realmData.Ipfs.LambdasBaseUrl.Value : null),
+                // A local scene dev server stubs the catalyst endpoints it advertises - deployments are rejected
+                // and profile / outfit reads answer "not found" - so identity data, which is environment-global
+                // rather than realm-scoped, resolves against the environment's catalyst instead of the realm's.
+                DecentralandUrl.EntitiesDeployment => UrlData.RealmDependent(realmData.IsLocalScene() ? $"https://peer.{BaseDomain}/content/entities/" :
+                    realmData.Configured ? realmData.Ipfs.EntitiesBaseUrl.Value : null),
+
+                DecentralandUrl.Lambdas => UrlData.RealmDependent(realmData.IsLocalScene() ? $"https://peer.{BaseDomain}/lambdas" :
+                    realmData.Configured ? realmData.Ipfs.LambdasBaseUrl.Value : null),
                 DecentralandUrl.Content => UrlData.RealmDependent(realmData.Configured ? realmData.Ipfs.ContentBaseUrl.Value : null),
 
                 DecentralandUrl.SocialServiceMutes => $"https://social-api.{BaseDomain}/v1/mutes",

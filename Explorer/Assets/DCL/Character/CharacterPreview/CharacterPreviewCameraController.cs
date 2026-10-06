@@ -1,7 +1,4 @@
-﻿using Cysharp.Threading.Tasks;
-using DG.Tweening;
-using System;
-using System.Threading;
+﻿using System;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -27,6 +24,7 @@ namespace DCL.CharacterPreview
             characterPreviewInputEventBus.OnChangePreviewFocusEvent += OnChangePreviewCategory;
 
             OnChangePreviewCategory(AvatarWearableCategoryEnum.Body);
+            characterPreviewAvatarContainer.SetCameraFarClipPlane(cameraSettings.cameraFarClipPlane);
         }
 
         public void Dispose()

@@ -18,7 +18,6 @@ using DCL.Multiplayer.Connectivity;
 using DCL.Multiplayer.Profiles.Poses;
 using DCL.Passport;
 using DCL.Profiles;
-using DCL.UI.Profiles.Helpers;
 using DCL.Profiles.Self;
 using DCL.UI.ProfileNames;
 using DCL.VoiceChat;
@@ -30,6 +29,7 @@ using System.Threading;
 using DCL.InWorldCamera;
 using DCL.InWorldCamera.CameraReelGallery.Components;
 using DCL.UI;
+using DCL.Utilities;
 using System;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -61,7 +61,6 @@ namespace DCL.PluginSystem.Global
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly INftNamesProvider nftNamesProvider;
         private readonly ProfileChangesBus profileChangesBus;
-        private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
         private readonly IThumbnailProvider thumbnailProvider;
         private readonly GalleryEventBus galleryEventBus;
@@ -71,6 +70,7 @@ namespace DCL.PluginSystem.Global
         private readonly ImageControllerProvider imageControllerProvider;
         private readonly IWebRequestController webRequestController;
         private readonly MarketplaceShopAPIClient marketplaceShopAPIClient;
+        private readonly UpscalingController upscalingController;
         private PassportController? passportController;
 
         public PassportPlugin(
@@ -98,7 +98,6 @@ namespace DCL.PluginSystem.Global
             INftNamesProvider nftNamesProvider,
             ProfileChangesBus profileChangesBus,
             bool isCommunitiesFeatureEnabled,
-            ProfileRepositoryWrapper profileDataProvider,
             IVoiceChatOrchestrator voiceChatOrchestrator,
             GalleryEventBus galleryEventBus,
             ISystemClipboard systemClipboard,
@@ -106,7 +105,8 @@ namespace DCL.PluginSystem.Global
             IThumbnailProvider thumbnailProvider,
             ImageControllerProvider imageControllerProvider,
             IWebRequestController webRequestController,
-            MarketplaceShopAPIClient marketplaceShopAPIClient)
+            MarketplaceShopAPIClient marketplaceShopAPIClient,
+            UpscalingController upscalingController)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -131,7 +131,6 @@ namespace DCL.PluginSystem.Global
             this.web3IdentityCache = web3IdentityCache;
             this.nftNamesProvider = nftNamesProvider;
             this.profileChangesBus = profileChangesBus;
-            this.profileRepositoryWrapper = profileDataProvider;
             this.voiceChatOrchestrator = voiceChatOrchestrator;
             this.thumbnailProvider = thumbnailProvider;
             this.galleryEventBus = galleryEventBus;
@@ -141,6 +140,7 @@ namespace DCL.PluginSystem.Global
             this.imageControllerProvider = imageControllerProvider;
             this.webRequestController = webRequestController;
             this.marketplaceShopAPIClient = marketplaceShopAPIClient;
+            this.upscalingController = upscalingController;
         }
 
         public void Dispose()
@@ -193,9 +193,9 @@ namespace DCL.PluginSystem.Global
                 passportSettings.ThumbnailHeight,
                 passportSettings.ThumbnailWidth,
                 isCommunitiesFeatureEnabled,
-                profileRepositoryWrapper,
                 voiceChatOrchestrator,
                 passport3DPreviewCamera,
+                upscalingController,
                 galleryEventBus,
                 systemClipboard,
                 passportSettings.CameraReelGalleryMessages,
@@ -212,7 +212,7 @@ namespace DCL.PluginSystem.Global
 
             mvcManager.RegisterController(new ProfileNameEditorController(
                 ProfileNameEditorController.CreateLazily(profileNameEditorView, null),
-                webBrowser, selfProfile, nftNamesProvider, decentralandUrlsSource, profileChangesBus));
+                webBrowser, selfProfile, nftNamesProvider, decentralandUrlsSource, profileChangesBus, mvcManager, web3IdentityCache));
         }
 
         [Serializable]

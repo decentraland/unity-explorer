@@ -37,6 +37,9 @@ namespace DCL.CharacterPreview
         private readonly World globalWorld;
         private readonly bool builderEmotesPreview;
 
+        // A default instance has no container and therefore no camera
+        public Camera? Camera => characterPreviewAvatarContainer != null ? characterPreviewAvatarContainer.camera : null;
+
         public CharacterPreviewController(World world, RectTransform renderImage, CharacterPreviewAvatarContainer avatarContainer,
             CharacterPreviewInputEventBus inputEventBus, IComponentPool<CharacterPreviewAvatarContainer> characterPreviewContainerPool,
             CharacterPreviewCameraSettings cameraSettings, IComponentPool<Transform> transformPool, IAppArgs appArgs)
@@ -56,6 +59,7 @@ namespace DCL.CharacterPreview
             characterPreviewEntity = world.Create(
                 new CharacterTransform(parent),
                 new AvatarShapeComponent(CHARACTER_PREVIEW_NAME, CHARACTER_PREVIEW_NAME) { IsPreview = true },
+                new AvatarHighlightComponent(),
                 new CharacterPreviewComponent { Camera = avatarContainer.camera, RenderImageRect = renderImage, Settings = avatarContainer.headIKSettings },
                 new CharacterEmoteComponent(),
                 new HeadIKComponent());
@@ -157,6 +161,12 @@ namespace DCL.CharacterPreview
                 globalWorld.Add(characterPreviewEntity, intent);
         }
 
+        public void SetHovered(bool hovered)
+        {
+            ref CharacterPreviewComponent preview = ref globalWorld.Get<CharacterPreviewComponent>(characterPreviewEntity);
+            preview.IsHovered = hovered;
+        }
+
         public void ResetEmote()
         {
             ref var emoteComponent = ref globalWorld.Get<CharacterEmoteComponent>(characterPreviewEntity);
@@ -178,8 +188,21 @@ namespace DCL.CharacterPreview
         public void SetPreviewPlatformActive(bool isActive) =>
             characterPreviewAvatarContainer.SetPreviewPlatformActive(isActive);
 
-        public void SetCharacterPreviewAvatarContainerActive(bool isActive) =>
+        public void SetLightActive(bool isActive) =>
+            characterPreviewAvatarContainer.SetLightActive(isActive);
+
+        public void SetPostProcessingEnabled(bool enabled) =>
+            characterPreviewAvatarContainer.SetPostProcessingEnabled(enabled);
+
+        public void SetCharacterPreviewAvatarContainerActive(bool isActive)
+        {
+            // Activation rebinds the Animator, which captures the current pose as its defaults: the Armature must hold its
+            // prefab transform at that moment rather than the frame an interrupted emote froze on.
+            if (isActive && globalWorld.TryGet(characterPreviewEntity, out AvatarBase avatarBase) && avatarBase != null)
+                avatarBase.ResetArmatureTransform();
+
             characterPreviewAvatarContainer.gameObject.SetActive(isActive);
+        }
 
         public void ResetAvatarMovement() =>
             cameraController.ResetAvatarMovement();

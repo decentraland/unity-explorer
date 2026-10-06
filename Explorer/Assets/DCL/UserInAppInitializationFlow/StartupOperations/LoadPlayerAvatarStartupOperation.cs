@@ -7,6 +7,7 @@ using DCL.Profiles.Self;
 using DCL.RealmNavigation;
 using DCL.Utilities;
 using ECS.Prioritization.Components;
+using System;
 using System.Threading;
 
 namespace DCL.UserInAppInitializationFlow
@@ -31,6 +32,11 @@ namespace DCL.UserInAppInitializationFlow
         {
             float finalizationProgress = loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.ProfileLoading);
             Profile? profile = await selfProfile.ProfileAsync(ct);
+
+            // Fetch failures surface as null; a null Profile component would make every profile system throw each frame.
+            if (profile == null)
+                throw new InvalidOperationException("Own profile could not be resolved, the player entity cannot be initialized");
+
             args.Report.SetProgress(finalizationProgress);
 
             // Add the profile into the player entity so it will create the avatar in world
@@ -41,14 +47,14 @@ namespace DCL.UserInAppInitializationFlow
             if (world.Has<Profile>(playerEntity))
             {
                 // Make all systems update again since the previous profile was already stored and processed, but we now updated it
-                profile!.IsDirty = true;
+                profile.IsDirty = true;
                 world.Set(playerEntity, profile);
             }
             else
-                world.Add(playerEntity, profile!);
+                world.Add(playerEntity, profile);
 
             // Trigger the local player picture download
-            ProfileUtils.CreateProfilePicturePromise(profile!, world, PartitionComponent.TOP_PRIORITY);
+            ProfileUtils.CreateProfilePicturePromise(profile, world, PartitionComponent.TOP_PRIORITY);
 
             // Eventually it will lead to the Avatar Resolution or the entity destruction
             // if the avatar is already downloaded by the authentication screen it will be resolved immediately

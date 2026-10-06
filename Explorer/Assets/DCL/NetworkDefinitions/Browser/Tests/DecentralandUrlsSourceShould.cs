@@ -1,5 +1,8 @@
+using CommunicationData.URLHelpers;
 using DCL.FeatureFlags;
+using DCL.Ipfs;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Utilities;
 using DCL.Utility;
 using ECS;
 using NSubstitute;
@@ -21,7 +24,8 @@ namespace DCL.Browser.DecentralandUrls.Tests
         [TearDown]
         public void TearDown() => FeatureFlagsConfiguration.Reset();
 
-        private static void InitializeFeatureFlags(bool optimizedAssets, string? customBaseUrl = null, bool useGateway = false, bool assetBundleFallback = false, bool abgenPipeline = false)
+        private static void InitializeFeatureFlags(bool optimizedAssets, string? customBaseUrl = null, bool useGateway = false, bool assetBundleFallback = false, bool abgenPipeline = false,
+            bool abgenLods = false)
         {
             var dto = new FeatureFlagsResultDto
             {
@@ -31,6 +35,7 @@ namespace DCL.Browser.DecentralandUrls.Tests
                     [FeatureFlagsStrings.USE_GATEWAY] = useGateway,
                     [FeatureFlagsStrings.ASSET_BUNDLE_FALLBACK] = assetBundleFallback,
                     [FeatureFlagsStrings.ABGEN_PIPELINE] = abgenPipeline,
+                    [FeatureFlagsStrings.ABGEN_LODS] = abgenLods,
                 },
                 variants = new Dictionary<string, FeatureFlagVariantDto>(),
             };
@@ -85,11 +90,11 @@ namespace DCL.Browser.DecentralandUrls.Tests
         }
 
         [Test]
-        public void ApplyCliOverrideForLocalPreviewSidecar()
+        public void ApplyLocalAbOverrideForLocalPreviewSidecar()
         {
-            // The flag variant is fleet-scoped, so a per-machine preview sidecar needs the CLI arg (forces on + overrides verbatim)
+            // The flag variant is fleet-scoped, so a per-machine preview sidecar needs the local-ab override (forces on + overrides verbatim)
             InitializeFeatureFlags(optimizedAssets: false);
-            var urlsSource = new DecentralandUrlsSource(DecentralandEnvironment.Org, new IRealmData.Fake(), ILaunchMode.LOCAL_SCENE_DEVELOPMENT, cliOptimizedAssetsUrl: "http://127.0.0.1:5147");
+            var urlsSource = new DecentralandUrlsSource(DecentralandEnvironment.Org, new IRealmData.Fake(), ILaunchMode.LOCAL_SCENE_DEVELOPMENT, localAbBaseUrl: "http://127.0.0.1:5147");
 
             Assert.AreEqual("http://127.0.0.1:5147", urlsSource.Url(DecentralandUrl.AssetBundlesCDN));
             Assert.AreEqual("http://127.0.0.1:5147", urlsSource.Url(DecentralandUrl.LodGeneratorCDN));
@@ -186,19 +191,6 @@ namespace DCL.Browser.DecentralandUrls.Tests
             Assert.AreEqual("https://abcdn.decentraland.org/entities/active", urlsSource.Url(DecentralandUrl.EntitiesActiveElements));
         }
 
-        [Test]
-        public void KeepTodayConstructionPinsWhenFlagsArriveLater()
-        {
-            FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(FeatureFlagsResultDto.Empty));
-            DecentralandUrlsSource urlsSource = DecentralandUrlsSource.CreateForTest(DecentralandEnvironment.Today, ILaunchMode.PLAY);
-
-            InitializeFeatureFlags(optimizedAssets: true);
-
-            Assert.AreEqual("https://ab-cdn.decentraland.today", urlsSource.Url(DecentralandUrl.AssetBundlesCDN));
-            Assert.AreEqual("https://asset-bundle-registry.decentraland.today", urlsSource.Url(DecentralandUrl.AssetBundleRegistry));
-            Assert.AreEqual("https://asset-bundle-registry.decentraland.today/profiles", urlsSource.Url(DecentralandUrl.Profiles));
-        }
-
         [TestCase(DecentralandEnvironment.Org)]
         [TestCase(DecentralandEnvironment.Zone)]
         public void FlipCdnAndRegistryTogetherWhenAbgenPipelineEnabled(DecentralandEnvironment environment)
@@ -225,17 +217,76 @@ namespace DCL.Browser.DecentralandUrls.Tests
             Assert.AreEqual("https://asset-bundle-registry-abgen.decentraland.org", forcedOn.Url(DecentralandUrl.AssetBundleRegistry));
         }
 
+        [TestCase(DecentralandEnvironment.Org)]
+        [TestCase(DecentralandEnvironment.Zone)]
+        public void FlipLodBundlesAndDescriptorsTogetherWhenAbgenLodsEnabled(DecentralandEnvironment environment)
+        {
+            InitializeFeatureFlags(optimizedAssets: false, abgenLods: true);
+            DecentralandUrlsSource urlsSource = DecentralandUrlsSource.CreateForTest(environment, ILaunchMode.PLAY);
+            string env = environment.ToString().ToLower();
+
+            Assert.AreEqual($"https://abgen-cdn.decentraland.{env}", urlsSource.Url(DecentralandUrl.LodAssetBundlesCDN));
+
+            // The descriptors sit under the same "LOD/" prefix the bundles' manifest version supplies
+            Assert.AreEqual($"https://abgen-cdn.decentraland.{env}/LOD", urlsSource.Url(DecentralandUrl.LodGeneratorCDN));
+            Assert.AreEqual($"abgen-lods-https---abgen-cdn-decentraland-{env}", urlsSource.AbgenLodsCacheKey);
+
+            // Asset bundles and the registry do not follow the LOD flip
+            Assert.AreEqual($"https://ab-cdn.decentraland.{env}", urlsSource.Url(DecentralandUrl.AssetBundlesCDN));
+            Assert.AreEqual($"https://asset-bundle-registry.decentraland.{env}", urlsSource.Url(DecentralandUrl.AssetBundleRegistry));
+        }
+
         [Test]
-        public void KeepAbgenHostsOffTheGatewayButLodsAndProfilesOnIt()
+        public void ForceAbgenLodsOnWithTheLaunchArg()
+        {
+            InitializeFeatureFlags(optimizedAssets: false, abgenLods: false);
+
+            var forcedOn = new DecentralandUrlsSource(DecentralandEnvironment.Org, new IRealmData.Fake(), ILaunchMode.PLAY, abgenLodsForced: true);
+
+            Assert.AreEqual("https://abgen-cdn.decentraland.org", forcedOn.Url(DecentralandUrl.LodAssetBundlesCDN));
+            Assert.AreEqual("https://abgen-cdn.decentraland.org/LOD", forcedOn.Url(DecentralandUrl.LodGeneratorCDN));
+        }
+
+        [Test]
+        public void KeepTheRegularLodHostsAndCacheKeyWhenAbgenLodsIsOff()
+        {
+            InitializeFeatureFlags(optimizedAssets: false, abgenPipeline: true);
+            DecentralandUrlsSource urlsSource = DecentralandUrlsSource.CreateForTest(DecentralandEnvironment.Org, ILaunchMode.PLAY);
+
+            Assert.AreEqual("https://ab-cdn.decentraland.org", urlsSource.Url(DecentralandUrl.LodAssetBundlesCDN));
+            Assert.AreEqual("https://lod-generator-unity-cdn.decentraland.org", urlsSource.Url(DecentralandUrl.LodGeneratorCDN));
+            Assert.IsNull(urlsSource.AbgenLodsCacheKey);
+        }
+
+        // The abgen hosts are subdomains of this deployment like the regular ones, so the flip changes which
+        // service the gateway fronts, not whether it is fronted at all.
+        [Test]
+        public void RouteAbgenHostsThroughTheGatewayAlongsideLodsAndProfiles()
         {
             InitializeFeatureFlags(optimizedAssets: false, useGateway: true, abgenPipeline: true);
             GatewayUrlsSource urlsSource = GatewayUrlsSource.CreateForTest(DecentralandEnvironment.Org, ILaunchMode.PLAY);
 
-            Assert.AreEqual("https://abgen-cdn.decentraland.org", urlsSource.Url(DecentralandUrl.AssetBundlesCDN));
-            Assert.AreEqual("https://asset-bundle-registry-abgen.decentraland.org", urlsSource.Url(DecentralandUrl.AssetBundleRegistry));
+            Assert.AreEqual("https://gateway.decentraland.org/abgen-cdn", urlsSource.Url(DecentralandUrl.AssetBundlesCDN));
+            Assert.AreEqual("https://gateway.decentraland.org/asset-bundle-registry-abgen", urlsSource.Url(DecentralandUrl.AssetBundleRegistry));
+
+            // Composed off the gatewayed registry base, and routed once - not re-prefixed with the gateway subdomain
+            Assert.AreEqual("https://gateway.decentraland.org/asset-bundle-registry-abgen/entities/versions", urlsSource.Url(DecentralandUrl.AssetBundleRegistryVersion));
+            Assert.AreEqual("https://gateway.decentraland.org/asset-bundle-registry-abgen/entities/active", urlsSource.Url(DecentralandUrl.EntitiesActiveElements));
 
             Assert.AreEqual("https://gateway.decentraland.org/ab-cdn", urlsSource.Url(DecentralandUrl.LodAssetBundlesCDN));
             Assert.AreEqual("https://gateway.decentraland.org/asset-bundle-registry/profiles", urlsSource.Url(DecentralandUrl.Profiles));
+        }
+
+        // Consolidation outranks the abgen flip, and the consolidated host is its own origin - never the gateway's.
+        [Test]
+        public void KeepTheConsolidatedHostOffTheGatewayThroughTheAbgenFlip()
+        {
+            InitializeFeatureFlags(optimizedAssets: true, useGateway: true, abgenPipeline: true);
+            GatewayUrlsSource urlsSource = GatewayUrlsSource.CreateForTest(DecentralandEnvironment.Org, ILaunchMode.PLAY);
+
+            Assert.AreEqual("https://abcdn.decentraland.org", urlsSource.Url(DecentralandUrl.AssetBundlesCDN));
+            Assert.AreEqual("https://abcdn.decentraland.org", urlsSource.Url(DecentralandUrl.AssetBundleRegistry));
+            Assert.AreEqual("https://abcdn.decentraland.org/entities/versions", urlsSource.Url(DecentralandUrl.AssetBundleRegistryVersion));
         }
 
         [Test]
@@ -248,6 +299,74 @@ namespace DCL.Browser.DecentralandUrls.Tests
             Assert.AreEqual("https://abcdn.decentraland.org", urlsSource.Url(DecentralandUrl.AssetBundleRegistry));
             Assert.AreEqual("https://abcdn.decentraland.org/entities/versions", urlsSource.Url(DecentralandUrl.AssetBundleRegistryVersion));
             Assert.AreEqual("https://gateway.decentraland.org/auth-api", urlsSource.Url(DecentralandUrl.ApiAuth));
+        }
+
+        // Naming a gateway forces routing on, so the flag has no say either way.
+        [TestCase(true, "https://gateway.localhost/", "https://gateway.localhost/places/api/places")]
+        [TestCase(false, "https://gateway.localhost/", "https://gateway.localhost/places/api/places")]
+        [TestCase(false, "https://edge.localhost/gw/", "https://edge.localhost/gw/places/api/places")]
+        public void RouteThroughTheGatewayOriginTheArgNames(bool useGateway, string gatewayPrefix, string expected)
+        {
+            InitializeFeatureFlags(optimizedAssets: false, useGateway: useGateway);
+            var urlsSource = new GatewayUrlsSource(DecentralandEnvironment.Org, new IRealmData.Fake(), ILaunchMode.PLAY, cliGatewayPrefix: gatewayPrefix);
+
+            Assert.AreEqual(expected, urlsSource.Url(DecentralandUrl.ApiPlaces));
+        }
+
+        [Test]
+        public void RoutePlacesPoisAndEventsThroughTheGateway()
+        {
+            InitializeFeatureFlags(optimizedAssets: false, useGateway: true);
+            GatewayUrlsSource urlsSource = GatewayUrlsSource.CreateForTest(DecentralandEnvironment.Org, ILaunchMode.PLAY);
+
+            Assert.AreEqual("https://gateway.decentraland.org/places/api/places", urlsSource.Url(DecentralandUrl.ApiPlaces));
+            Assert.AreEqual("https://gateway.decentraland.org/dcl-lists/pois", urlsSource.Url(DecentralandUrl.POI));
+            Assert.AreEqual("https://gateway.decentraland.org/events/api/events", urlsSource.Url(DecentralandUrl.ApiEvents));
+        }
+
+        [TestCase("https://gateway.localhost", "https://gateway.localhost/")]
+        [TestCase("https://gateway.localhost/", "https://gateway.localhost/")]
+        [TestCase("  https://gateway.localhost  ", "https://gateway.localhost/")]
+        [TestCase("http://127.0.0.1:8080", "http://127.0.0.1:8080/")]
+        [TestCase("https://edge.localhost/gw", "https://edge.localhost/gw/")]
+        public void NormalizeAGatewayOrigin(string gatewayUrl, string expected)
+        {
+            Assert.IsTrue(GatewayUrlsSource.TryNormalizeGatewayPrefix(gatewayUrl, out string prefix), gatewayUrl);
+            Assert.AreEqual(expected, prefix);
+        }
+
+        // A mistyped gateway would send every supported service somewhere unintended, so MainSceneLoader reports and
+        // ends the launch instead of coercing it into something plausible.
+        [TestCase("not-a-url")]
+        [TestCase("gateway.localhost")]
+        [TestCase("ftp://gateway.localhost")]
+        [TestCase("https://gateway.localhost?x=1")]
+        [TestCase("https://gateway.localhost#fragment")]
+        public void RejectAGatewayUrlThatIsNotAnOrigin(string gatewayUrl)
+        {
+            Assert.IsFalse(GatewayUrlsSource.TryNormalizeGatewayPrefix(gatewayUrl, out _), gatewayUrl);
+        }
+
+        // Signed fetch signs the un-gatewayed url, so the custom base has to reverse as cleanly as the default one.
+        [Test]
+        public void ReverseTheGatewayBaseForSignedFetch()
+        {
+            InitializeFeatureFlags(optimizedAssets: false, useGateway: false);
+            var urlsSource = new GatewayUrlsSource(DecentralandEnvironment.Org, new IRealmData.Fake(), ILaunchMode.PLAY, cliGatewayPrefix: "https://gateway.localhost/");
+
+            Assert.AreEqual("https://places.decentraland.org/api/places", urlsSource.GetOriginalUrl(urlsSource.Url(DecentralandUrl.ApiPlaces)));
+        }
+
+        // A world's scene room is reached through the worlds content server, so it has to be gatewayed like the
+        // rest of that host. Left out, a gatewayed session opens its comms handshake against the public deployment.
+        [Test]
+        public void RouteTheWorldSceneCommsAdapterThroughTheGateway()
+        {
+            InitializeFeatureFlags(optimizedAssets: false, useGateway: true);
+            GatewayUrlsSource urlsSource = GatewayUrlsSource.CreateForTest(DecentralandEnvironment.Org, ILaunchMode.PLAY);
+
+            Assert.AreEqual("https://gateway.decentraland.org/worlds-content-server/worlds/{0}/scenes/{1}/comms",
+                urlsSource.Url(DecentralandUrl.WorldCommsAdapter));
         }
 
         [Test]
@@ -287,20 +406,13 @@ namespace DCL.Browser.DecentralandUrls.Tests
 
         [TestCase(DecentralandEnvironment.Org, IDecentralandUrlsSource.ORG_DOMAIN)]
         [TestCase(DecentralandEnvironment.Zone, IDecentralandUrlsSource.ZONE_DOMAIN)]
-        [TestCase(DecentralandEnvironment.Today, IDecentralandUrlsSource.TODAY_DOMAIN)]
         public void SelectTheEnvironmentsOwnDomain(DecentralandEnvironment environment, string expectedBaseDomain)
         {
             Assert.AreEqual(expectedBaseDomain, DecentralandUrlsSource.ResolveBaseDomain(environment, null));
         }
 
-        /// <summary>
-        ///     What a constructed source reports is the domain it resolves urls against, which is not always the
-        ///     domain the environment selects: today pins the handful of hosts it serves from .today while it is being
-        ///     built and serves everything afterwards from org, so org is what it settles on.
-        /// </summary>
         [TestCase(DecentralandEnvironment.Org, IDecentralandUrlsSource.ORG_DOMAIN)]
         [TestCase(DecentralandEnvironment.Zone, IDecentralandUrlsSource.ZONE_DOMAIN)]
-        [TestCase(DecentralandEnvironment.Today, IDecentralandUrlsSource.ORG_DOMAIN)]
         public void ReportTheDomainUrlsResolveAgainst(DecentralandEnvironment environment, string expectedBaseDomain)
         {
             InitializeFeatureFlags(optimizedAssets: false);
@@ -426,6 +538,39 @@ namespace DCL.Browser.DecentralandUrls.Tests
 
             Assert.AreEqual("https://gk.example.com/get-scene-adapter", urlsSource.Url(DecentralandUrl.GateKeeperSceneAdapter));
             Assert.AreEqual("https://gk.example.com/get-scene-adapter", urlsSource.Url(DecentralandUrl.LocalGateKeeperSceneAdapter));
+        }
+
+        [Test]
+        public void ResolveIdentityUrlsFromTheEnvironmentWhenTheRealmIsALocalScene()
+        {
+            var urlsSource = new DecentralandUrlsSource(DecentralandEnvironment.Zone, RealmOfKind(RealmKind.LocalScene), ILaunchMode.LOCAL_SCENE_DEVELOPMENT);
+
+            Assert.AreEqual("https://peer.decentraland.zone/content/entities/", urlsSource.Url(DecentralandUrl.EntitiesDeployment));
+            Assert.AreEqual("https://peer.decentraland.zone/lambdas", urlsSource.Url(DecentralandUrl.Lambdas));
+        }
+
+        [TestCase(RealmKind.GenesisCity)]
+        [TestCase(RealmKind.World)]
+        public void ResolveIdentityUrlsFromTheRealmWhenItServesThem(RealmKind kind)
+        {
+            var urlsSource = new DecentralandUrlsSource(DecentralandEnvironment.Zone, RealmOfKind(kind), ILaunchMode.PLAY);
+
+            Assert.AreEqual("http://127.0.0.1:8000/content/entities/", urlsSource.Url(DecentralandUrl.EntitiesDeployment));
+            Assert.AreEqual("http://127.0.0.1:8000/lambdas", urlsSource.Url(DecentralandUrl.Lambdas));
+        }
+
+        private static IRealmData RealmOfKind(RealmKind kind)
+        {
+            var ipfs = Substitute.For<IIpfsRealm>();
+            ipfs.EntitiesBaseUrl.Returns(URLDomain.FromString("http://127.0.0.1:8000/content/entities/"));
+            ipfs.LambdasBaseUrl.Returns(URLDomain.FromString("http://127.0.0.1:8000/lambdas"));
+
+            var realmData = Substitute.For<IRealmData>();
+            realmData.Configured.Returns(true);
+            realmData.Ipfs.Returns(ipfs);
+            realmData.RealmType.Returns(new ReactiveProperty<RealmKind>(kind));
+
+            return realmData;
         }
     }
 }

@@ -116,7 +116,7 @@ namespace DCL.WebRequests.Tests
         // The standard converter shape: allocates a fresh result instead of filling existingValue
         private class FreshInstanceListConverter : JsonConverter<List<INotification>>
         {
-            public override List<INotification>? ReadJson(JsonReader reader, Type objectType, List<INotification>? existingValue, bool hasExistingValue, JsonSerializer serializer)
+            public override List<INotification> ReadJson(JsonReader reader, Type objectType, List<INotification>? existingValue, bool hasExistingValue, JsonSerializer serializer)
             {
                 JObject.Load(reader);
                 return new List<INotification>();

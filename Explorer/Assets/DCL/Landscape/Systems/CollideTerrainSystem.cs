@@ -137,11 +137,11 @@ namespace DCL.Landscape.Systems
 
             vertices.Dispose();
 
-            var meshes = new NativeArray<int>(dirtyParcels.Count, Allocator.TempJob,
+            var meshes = new NativeArray<EntityId>(dirtyParcels.Count, Allocator.TempJob,
                 NativeArrayOptions.UninitializedMemory);
 
             for (int i = 0; i < dirtyParcels.Count; i++)
-                meshes[i] = dirtyParcels[i].Mesh.GetInstanceID();
+                meshes[i] = dirtyParcels[i].Mesh.GetEntityId();
 
             var bakeColliderMeshesJob = new BakeColliderMeshes() { Meshes = meshes };
             bakeColliderMeshesJob.Schedule(meshes.Length, 1).Complete();

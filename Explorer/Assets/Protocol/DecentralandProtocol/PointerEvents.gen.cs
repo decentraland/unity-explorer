@@ -27,27 +27,28 @@ namespace DCL.ECSComponents {
             "CjBkZWNlbnRyYWxhbmQvc2RrL2NvbXBvbmVudHMvcG9pbnRlcl9ldmVudHMu",
             "cHJvdG8SG2RlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50cxo1ZGVjZW50cmFs",
             "YW5kL3Nkay9jb21wb25lbnRzL2NvbW1vbi9pbnB1dF9hY3Rpb24ucHJvdG8i",
-            "ywUKD1BCUG9pbnRlckV2ZW50cxJKCg5wb2ludGVyX2V2ZW50cxgBIAMoCzIy",
+            "hQYKD1BCUG9pbnRlckV2ZW50cxJKCg5wb2ludGVyX2V2ZW50cxgBIAMoCzIy",
             "LmRlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50cy5QQlBvaW50ZXJFdmVudHMu",
-            "RW50cnka5wIKBEluZm8SRAoGYnV0dG9uGAEgASgOMi8uZGVjZW50cmFsYW5k",
+            "RW50cnkaoQMKBEluZm8SRAoGYnV0dG9uGAEgASgOMi8uZGVjZW50cmFsYW5k",
             "LnNkay5jb21wb25lbnRzLmNvbW1vbi5JbnB1dEFjdGlvbkgAiAEBEhcKCmhv",
             "dmVyX3RleHQYAiABKAlIAYgBARIZCgxtYXhfZGlzdGFuY2UYAyABKAJIAogB",
             "ARIaCg1zaG93X2ZlZWRiYWNrGAQgASgISAOIAQESGwoOc2hvd19oaWdobGln",
             "aHQYBSABKAhIBIgBARIgChNtYXhfcGxheWVyX2Rpc3RhbmNlGAYgASgCSAWI",
-            "AQESFQoIcHJpb3JpdHkYByABKA1IBogBAUIJCgdfYnV0dG9uQg0KC19ob3Zl",
-            "cl90ZXh0Qg8KDV9tYXhfZGlzdGFuY2VCEAoOX3Nob3dfZmVlZGJhY2tCEQoP",
-            "X3Nob3dfaGlnaGxpZ2h0QhYKFF9tYXhfcGxheWVyX2Rpc3RhbmNlQgsKCV9w",
-            "cmlvcml0eRqBAgoFRW50cnkSSAoKZXZlbnRfdHlwZRgBIAEoDjI0LmRlY2Vu",
-            "dHJhbGFuZC5zZGsuY29tcG9uZW50cy5jb21tb24uUG9pbnRlckV2ZW50VHlw",
-            "ZRJFCgpldmVudF9pbmZvGAIgASgLMjEuZGVjZW50cmFsYW5kLnNkay5jb21w",
-            "b25lbnRzLlBCUG9pbnRlckV2ZW50cy5JbmZvElIKEGludGVyYWN0aW9uX3R5",
-            "cGUYAyABKA4yMy5kZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMuY29tbW9u",
-            "LkludGVyYWN0aW9uVHlwZUgAiAEBQhMKEV9pbnRlcmFjdGlvbl90eXBlQhSq",
-            "AhFEQ0wuRUNTQ29tcG9uZW50c2IGcHJvdG8z"));
+            "AQESFQoIcHJpb3JpdHkYByABKA1IBogBARIgChNtYXhfY2FtZXJhX2Rpc3Rh",
+            "bmNlGAggASgCSAeIAQFCCQoHX2J1dHRvbkINCgtfaG92ZXJfdGV4dEIPCg1f",
+            "bWF4X2Rpc3RhbmNlQhAKDl9zaG93X2ZlZWRiYWNrQhEKD19zaG93X2hpZ2hs",
+            "aWdodEIWChRfbWF4X3BsYXllcl9kaXN0YW5jZUILCglfcHJpb3JpdHlCFgoU",
+            "X21heF9jYW1lcmFfZGlzdGFuY2UagQIKBUVudHJ5EkgKCmV2ZW50X3R5cGUY",
+            "ASABKA4yNC5kZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMuY29tbW9uLlBv",
+            "aW50ZXJFdmVudFR5cGUSRQoKZXZlbnRfaW5mbxgCIAEoCzIxLmRlY2VudHJh",
+            "bGFuZC5zZGsuY29tcG9uZW50cy5QQlBvaW50ZXJFdmVudHMuSW5mbxJSChBp",
+            "bnRlcmFjdGlvbl90eXBlGAMgASgOMjMuZGVjZW50cmFsYW5kLnNkay5jb21w",
+            "b25lbnRzLmNvbW1vbi5JbnRlcmFjdGlvblR5cGVIAIgBAUITChFfaW50ZXJh",
+            "Y3Rpb25fdHlwZUIUqgIRRENMLkVDU0NvbXBvbmVudHNiBnByb3RvMw=="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::DCL.ECSComponents.InputActionReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBPointerEvents), global::DCL.ECSComponents.PBPointerEvents.Parser, new[]{ "PointerEvents" }, null, null, null, new pbr::GeneratedClrTypeInfo[] { new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBPointerEvents.Types.Info), global::DCL.ECSComponents.PBPointerEvents.Types.Info.Parser, new[]{ "Button", "HoverText", "MaxDistance", "ShowFeedback", "ShowHighlight", "MaxPlayerDistance", "Priority" }, new[]{ "Button", "HoverText", "MaxDistance", "ShowFeedback", "ShowHighlight", "MaxPlayerDistance", "Priority" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBPointerEvents), global::DCL.ECSComponents.PBPointerEvents.Parser, new[]{ "PointerEvents" }, null, null, null, new pbr::GeneratedClrTypeInfo[] { new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBPointerEvents.Types.Info), global::DCL.ECSComponents.PBPointerEvents.Types.Info.Parser, new[]{ "Button", "HoverText", "MaxDistance", "ShowFeedback", "ShowHighlight", "MaxPlayerDistance", "Priority", "MaxCameraDistance" }, new[]{ "Button", "HoverText", "MaxDistance", "ShowFeedback", "ShowHighlight", "MaxPlayerDistance", "Priority", "MaxCameraDistance" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBPointerEvents.Types.Entry), global::DCL.ECSComponents.PBPointerEvents.Types.Entry.Parser, new[]{ "EventType", "EventInfo", "InteractionType" }, new[]{ "InteractionType" }, null, null, null)})
           }));
     }
@@ -74,24 +75,27 @@ namespace DCL.ECSComponents {
   /// --------------
   /// PointerEvents can enforce interaction range using two independent distance checks:
   ///
-  /// - Camera distance (`max_distance`): distance from the active camera to the target entity.
-  /// - Player distance (`max_player_distance`): distance from the avatar/player position to the target entity.
+  /// - Player distance (`max_distance`): distance from the avatar/player position to the target entity.
+  /// - Camera distance (`max_camera_distance`): distance from the active camera to the target entity.
+  ///
+  /// `max_player_distance` is deprecated: it is an alias for `max_distance` (both are player distance).
+  /// If both are present, the larger of the two is used as the player distance threshold.
   ///
   /// How the interaction checks are combined:
   ///
   /// 1) Only `max_distance` is present
-  ///    - The interaction is allowed only if the camera distance is &lt;= `max_distance`.
+  ///    - The interaction is allowed only if the player distance is &lt;= `max_distance`.
   ///
-  /// 2) Only `max_player_distance` is present
-  ///    - The interaction is allowed only if the player distance is &lt;= `max_player_distance`.
+  /// 2) Only `max_camera_distance` is present
+  ///    - The interaction is allowed only if the camera distance is &lt;= `max_camera_distance`.
   ///
-  /// 3) Both `max_distance` and `max_player_distance` are present
+  /// 3) Both `max_distance` and `max_camera_distance` are present
   ///    - The interaction is allowed if ANY of the checks passes (OR logic):
-  ///      (camera distance &lt;= `max_distance`) OR (player distance &lt;= `max_player_distance`).
+  ///      (player distance &lt;= `max_distance`) OR (camera distance &lt;= `max_camera_distance`).
   ///
-  /// 4) Neither `max_distance` nor `max_player_distance` is present
+  /// 4) Neither `max_distance` nor `max_camera_distance` is present
   ///    - The system behaves as if `max_distance` were set to its default value (10),
-  ///      i.e., it uses the camera distance check with a threshold of 10.
+  ///      i.e., it uses the player distance check with a threshold of 10.
   /// </summary>
   [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
   public sealed partial class PBPointerEvents : pb::IMessage<PBPointerEvents>
@@ -330,6 +334,7 @@ namespace DCL.ECSComponents {
           showHighlight_ = other.showHighlight_;
           maxPlayerDistance_ = other.maxPlayerDistance_;
           priority_ = other.priority_;
+          maxCameraDistance_ = other.maxCameraDistance_;
           _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
         }
 
@@ -404,7 +409,7 @@ namespace DCL.ECSComponents {
 
         private float maxDistance_;
         /// <summary>
-        /// range of interaction (default 10)
+        /// range of interaction from the avatar's position (default 10)
         /// </summary>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
@@ -494,7 +499,7 @@ namespace DCL.ECSComponents {
 
         private float maxPlayerDistance_;
         /// <summary>
-        /// range of interaction from the avatar's position (default 0)
+        /// @deprecated use `max_distance` instead (same semantics)
         /// </summary>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
@@ -548,6 +553,36 @@ namespace DCL.ECSComponents {
           _hasBits0 &= ~32;
         }
 
+        /// <summary>Field number for the "max_camera_distance" field.</summary>
+        public const int MaxCameraDistanceFieldNumber = 8;
+        private readonly static float MaxCameraDistanceDefaultValue = 0F;
+
+        private float maxCameraDistance_;
+        /// <summary>
+        /// range of interaction from the active camera's position (default none)
+        /// </summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public float MaxCameraDistance {
+          get { if ((_hasBits0 & 64) != 0) { return maxCameraDistance_; } else { return MaxCameraDistanceDefaultValue; } }
+          set {
+            _hasBits0 |= 64;
+            maxCameraDistance_ = value;
+          }
+        }
+        /// <summary>Gets whether the "max_camera_distance" field is set</summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public bool HasMaxCameraDistance {
+          get { return (_hasBits0 & 64) != 0; }
+        }
+        /// <summary>Clears the value of the "max_camera_distance" field</summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void ClearMaxCameraDistance() {
+          _hasBits0 &= ~64;
+        }
+
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
         public override bool Equals(object other) {
@@ -570,6 +605,7 @@ namespace DCL.ECSComponents {
           if (ShowHighlight != other.ShowHighlight) return false;
           if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(MaxPlayerDistance, other.MaxPlayerDistance)) return false;
           if (Priority != other.Priority) return false;
+          if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(MaxCameraDistance, other.MaxCameraDistance)) return false;
           return Equals(_unknownFields, other._unknownFields);
         }
 
@@ -584,6 +620,7 @@ namespace DCL.ECSComponents {
           if (HasShowHighlight) hash ^= ShowHighlight.GetHashCode();
           if (HasMaxPlayerDistance) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(MaxPlayerDistance);
           if (HasPriority) hash ^= Priority.GetHashCode();
+          if (HasMaxCameraDistance) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(MaxCameraDistance);
           if (_unknownFields != null) {
             hash ^= _unknownFields.GetHashCode();
           }
@@ -630,6 +667,10 @@ namespace DCL.ECSComponents {
             output.WriteRawTag(56);
             output.WriteUInt32(Priority);
           }
+          if (HasMaxCameraDistance) {
+            output.WriteRawTag(69);
+            output.WriteFloat(MaxCameraDistance);
+          }
           if (_unknownFields != null) {
             _unknownFields.WriteTo(output);
           }
@@ -668,6 +709,10 @@ namespace DCL.ECSComponents {
             output.WriteRawTag(56);
             output.WriteUInt32(Priority);
           }
+          if (HasMaxCameraDistance) {
+            output.WriteRawTag(69);
+            output.WriteFloat(MaxCameraDistance);
+          }
           if (_unknownFields != null) {
             _unknownFields.WriteTo(ref output);
           }
@@ -698,6 +743,9 @@ namespace DCL.ECSComponents {
           }
           if (HasPriority) {
             size += 1 + pb::CodedOutputStream.ComputeUInt32Size(Priority);
+          }
+          if (HasMaxCameraDistance) {
+            size += 1 + 4;
           }
           if (_unknownFields != null) {
             size += _unknownFields.CalculateSize();
@@ -731,6 +779,9 @@ namespace DCL.ECSComponents {
           }
           if (other.HasPriority) {
             Priority = other.Priority;
+          }
+          if (other.HasMaxCameraDistance) {
+            MaxCameraDistance = other.MaxCameraDistance;
           }
           _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
         }
@@ -779,6 +830,10 @@ namespace DCL.ECSComponents {
                 Priority = input.ReadUInt32();
                 break;
               }
+              case 69: {
+                MaxCameraDistance = input.ReadFloat();
+                break;
+              }
             }
           }
         #endif
@@ -824,6 +879,10 @@ namespace DCL.ECSComponents {
               }
               case 56: {
                 Priority = input.ReadUInt32();
+                break;
+              }
+              case 69: {
+                MaxCameraDistance = input.ReadFloat();
                 break;
               }
             }

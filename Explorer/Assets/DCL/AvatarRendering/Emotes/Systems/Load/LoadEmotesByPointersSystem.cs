@@ -106,6 +106,11 @@ namespace DCL.AvatarRendering.Emotes.Load
             GetEmotesByPointersIntention intention,
             RepoolableList<IEmote> resolvedEmotesTmp)
         {
+            // A kept IsLoading makes an abandoned emote permanently unloadable: requests skip loading emotes (#9485).
+            foreach (URN pointer in intention.Pointers)
+                if (emoteStorage.TryGetElement(pointer.Shorten(), out IEmote emote) && emote.IsLoading && !emote.Model.IsInitialized)
+                    emote.UpdateLoadingStatus(false);
+
             HashSet<URN> successfulPointers = intention.SuccessfulPointers;
             // Keep only successful emotes in the result list (also remove emotes with unresolved DTO)
             resolvedEmotesTmp.List.RemoveAll(emote => emote.DTO?.Metadata == null || !successfulPointers.Contains(emote.GetUrn()));

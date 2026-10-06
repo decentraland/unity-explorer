@@ -1,8 +1,10 @@
-﻿using Cysharp.Threading.Tasks;
+﻿using CommunicationData.URLHelpers;
+using Cysharp.Threading.Tasks;
 using DCL.Ipfs;
 using DCL.Utilities;
 using DCL.Utility.Types;
 using ECS.SceneLifeCycle.Reporting;
+using System;
 using System.Threading;
 using UnityEngine;
 
@@ -31,18 +33,53 @@ namespace DCL.RealmNavigation
         }
     }
 
+    /// <summary>
+    ///     Which rule of the launch settings picked the startup destination.
+    /// </summary>
+    public enum StartParcelSource
+    {
+        Default,
+        LaunchArgument,
+        EditorOverride,
+        Home,
+        FeatureFlag,
+    }
+
     public class StartParcel
     {
+        private readonly Vector2Int launchValue;
+        private readonly string? launchSpawnPointName;
+
         private Vector2Int value;
         private bool consumed;
 
-        public StartParcel(Vector2Int value, string? spawnPointName = null)
+        public StartParcel(Vector2Int value, string? spawnPointName = null, StartParcelSource source = StartParcelSource.Default)
         {
+            launchValue = value;
+            launchSpawnPointName = spawnPointName;
             this.value = value;
             SpawnPointName = spawnPointName;
+            Source = source;
         }
 
         public string? SpawnPointName { get; private set; }
+
+        public StartParcelSource Source { get; }
+
+        /// <summary>
+        ///     Realm the startup teleport lands in. Unset keeps the realm chosen at bootstrap.
+        /// </summary>
+        public URLDomain? Realm { get; private set; }
+
+        public bool IsParcelAssigned { get; private set; }
+
+        public bool JumpInRequested { get; private set; }
+
+        public bool IsRealmApplied { get; private set; }
+
+        public bool HasLanded { get; private set; }
+
+        public event Action? JumpInRequestRaised;
 
         public bool IsConsumed() =>
             consumed;
@@ -52,13 +89,60 @@ namespace DCL.RealmNavigation
             if (consumed) return AssignResult.ParcelAlreadyConsumed;
             value = newParcel;
             SpawnPointName = newSpawnPointName;
+            IsParcelAssigned = true;
             return AssignResult.Ok;
+        }
+
+        public AssignResult AssignRealm(URLDomain realm, string? spawnPointName = null)
+        {
+            if (consumed) return AssignResult.ParcelAlreadyConsumed;
+            Realm = realm;
+            SpawnPointName = spawnPointName;
+            value = launchValue;
+            IsParcelAssigned = false;
+            return AssignResult.Ok;
+        }
+
+        public void RequestJumpIn()
+        {
+            if (consumed) return;
+            JumpInRequested = true;
+            JumpInRequestRaised?.Invoke();
+        }
+
+        public void MarkRealmApplied() =>
+            IsRealmApplied = true;
+
+        public void ClearRealmApplied()
+        {
+            if (consumed) return;
+            IsRealmApplied = false;
+        }
+
+        public void MarkLanded()
+        {
+            if (consumed) HasLanded = true;
         }
 
         public Vector2Int ConsumeByTeleportOperation()
         {
             consumed = true;
             return value;
+        }
+
+        /// <summary>
+        ///     Puts the launch destination back and lets it be assigned and consumed again, as if the session had just started.
+        /// </summary>
+        public void Reset()
+        {
+            value = launchValue;
+            SpawnPointName = launchSpawnPointName;
+            Realm = null;
+            IsParcelAssigned = false;
+            IsRealmApplied = false;
+            HasLanded = false;
+            JumpInRequested = false;
+            consumed = false;
         }
 
         public Vector2Int Peek() =>

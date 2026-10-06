@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
+﻿using System.IO;
 using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -56,7 +53,7 @@ namespace DCL.LOD.Data.Editor
 
                     if (child.name.Contains("_collider")) {
                         MeshFilter meshFilter = child.GetComponent<MeshFilter>();
-                        Physics.BakeMesh(meshFilter.sharedMesh.GetInstanceID(), false);
+                        Physics.BakeMesh(meshFilter.sharedMesh.GetEntityId(), false);
                         meshFilter.gameObject.AddComponent<MeshCollider>();
 
                         if (meshFilter != null)

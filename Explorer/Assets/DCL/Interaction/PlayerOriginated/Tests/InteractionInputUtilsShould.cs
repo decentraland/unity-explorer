@@ -60,7 +60,51 @@ namespace DCL.Interaction.PlayerOriginated.Tests
         [Test]
         public void QualifyByDistance()
         {
-            Assert.IsTrue(InteractionInputUtils.IsQualifiedByDistance(new PlayerOriginRaycastResultForSceneEntities(new RaycastHit { distance = 100 }), new PBPointerEvents.Types.Info { MaxDistance = 110 }));
+            // camera 100 m along the ray, player 5 m from the hit point
+            var result = new PlayerOriginRaycastResultForSceneEntities();
+            result.SetupHit(new RaycastHit { distance = 100 }, default, 100, 5);
+
+            // neither → player distance ≤ 10
+            Assert.IsTrue(InteractionInputUtils.IsQualifiedByDistance(result, new PBPointerEvents.Types.Info()));
+
+            // max_distance is player distance; max_player_distance is a same-meaning alias (larger wins)
+            Assert.IsTrue(InteractionInputUtils.IsQualifiedByDistance(result, new PBPointerEvents.Types.Info { MaxDistance = 6 }));
+            Assert.IsFalse(InteractionInputUtils.IsQualifiedByDistance(result, new PBPointerEvents.Types.Info { MaxDistance = 4 }));
+            Assert.IsTrue(InteractionInputUtils.IsQualifiedByDistance(result, new PBPointerEvents.Types.Info { MaxPlayerDistance = 6 }));
+            Assert.IsFalse(InteractionInputUtils.IsQualifiedByDistance(result, new PBPointerEvents.Types.Info { MaxPlayerDistance = 4 }));
+            Assert.IsTrue(InteractionInputUtils.IsQualifiedByDistance(result, new PBPointerEvents.Types.Info { MaxDistance = 4, MaxPlayerDistance = 6 }));
+            Assert.IsTrue(InteractionInputUtils.IsQualifiedByDistance(result, new PBPointerEvents.Types.Info { MaxDistance = 6, MaxPlayerDistance = 4 }));
+            Assert.IsFalse(InteractionInputUtils.IsQualifiedByDistance(result, new PBPointerEvents.Types.Info { MaxDistance = 3, MaxPlayerDistance = 4 }));
+
+            // only max_camera_distance → camera distance
+            Assert.IsTrue(InteractionInputUtils.IsQualifiedByDistance(result, new PBPointerEvents.Types.Info { MaxCameraDistance = 110 }));
+            Assert.IsFalse(InteractionInputUtils.IsQualifiedByDistance(result, new PBPointerEvents.Types.Info { MaxCameraDistance = 90 }));
+
+            // both → either check passes
+            Assert.IsTrue(InteractionInputUtils.IsQualifiedByDistance(result, new PBPointerEvents.Types.Info { MaxDistance = 4, MaxCameraDistance = 110 }));
+            Assert.IsTrue(InteractionInputUtils.IsQualifiedByDistance(result, new PBPointerEvents.Types.Info { MaxDistance = 6, MaxCameraDistance = 90 }));
+            Assert.IsFalse(InteractionInputUtils.IsQualifiedByDistance(result, new PBPointerEvents.Types.Info { MaxDistance = 4, MaxCameraDistance = 90 }));
+        }
+
+        [Test]
+        public void QualifyProximityByDistance()
+        {
+            var result = new ProximityResultForSceneEntities();
+            result.Set(default, null!, 5);
+
+            // neither → default player distance
+            Assert.IsTrue(InteractionInputUtils.IsQualifiedByDistance(result, new PBPointerEvents.Types.Info()));
+
+            // max_distance and its alias both drive the proximity threshold (larger wins)
+            Assert.IsTrue(InteractionInputUtils.IsQualifiedByDistance(result, new PBPointerEvents.Types.Info { MaxDistance = 6 }));
+            Assert.IsFalse(InteractionInputUtils.IsQualifiedByDistance(result, new PBPointerEvents.Types.Info { MaxDistance = 4 }));
+            Assert.IsTrue(InteractionInputUtils.IsQualifiedByDistance(result, new PBPointerEvents.Types.Info { MaxPlayerDistance = 6 }));
+            Assert.IsFalse(InteractionInputUtils.IsQualifiedByDistance(result, new PBPointerEvents.Types.Info { MaxPlayerDistance = 4 }));
+            Assert.IsTrue(InteractionInputUtils.IsQualifiedByDistance(result, new PBPointerEvents.Types.Info { MaxDistance = 4, MaxPlayerDistance = 6 }));
+            Assert.IsTrue(InteractionInputUtils.IsQualifiedByDistance(result, new PBPointerEvents.Types.Info { MaxDistance = 6, MaxPlayerDistance = 4 }));
+
+            // camera distance plays no part in proximity
+            Assert.IsFalse(InteractionInputUtils.IsQualifiedByDistance(result, new PBPointerEvents.Types.Info { MaxDistance = 4, MaxCameraDistance = 100 }));
         }
 
         [Test]

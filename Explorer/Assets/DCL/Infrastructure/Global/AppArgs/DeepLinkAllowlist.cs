@@ -41,9 +41,9 @@ namespace Global.AppArgs
     ///             <b>Never permitted</b> — everything else, in particular params that launch code
     ///             (<c>creator-hub-bin-path</c>, <c>launch-cdp-monitor-on-start</c> — SEC-005); point the client at
     ///             attacker infrastructure (<c>comms-adapter</c>, <c>gatekeeper-url</c>, <c>friends-api-url</c> —
-    ///             SEC-052, <c>feature-flags-url</c>/<c>-hostname</c>, <c>optimized-assets-url</c>,
-    ///             <c>lsd-remote-ab-server</c>/<c>-world</c>, <c>pulse</c>); move the client onto another chain
-    ///             (<c>base-domain</c>, <c>eth-network</c>); bypass a version/specs screen
+    ///             SEC-052, <c>feature-flags-url</c>/<c>-hostname</c>/<c>-user-id</c>,
+    ///             <c>lsd-remote-ab-server</c>/<c>-world</c>, <c>pulse</c>, <c>gateway</c>); move the client
+    ///             onto another chain (<c>base-domain</c>, <c>eth-network</c>); bypass a version/specs screen
     ///             (<c>skip-version-check</c>, <c>skip-minimum-specs-screen</c>); or enable the remaining dev/test
     ///             modes (<c>debug</c>, <c>autopilot</c>, <c>alttester</c>, <c>simulate*</c>). A whitelisted realm
     ///             does not unlock these: unlike the tier above, a key that is in neither set is dropped for every
@@ -90,7 +90,7 @@ namespace Global.AppArgs
             // publish a profile change.
             AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS,
 
-            // Target environment (org|zone|today). Not realm-gated: the login callbacks and jump-in links that carry
+            // Target environment (org|zone). Not realm-gated: the login callbacks and jump-in links that carry
             // it have no realm at all, so the loopback-realm condition below could never pass for them and the session
             // would silently fall back to the default environment. Safe on its own — a closed Decentraland-owned enum,
             // parsed with Enum.TryParse where it is consumed and ignored when it does not match, never a URL, so it
@@ -150,9 +150,7 @@ namespace Global.AppArgs
             // embedded abgen sidecar instead of raw GLTFs. A pure boolean — the sidecar reads the scene through
             // the realm's own /content endpoints (RealmUrls.LocalSceneDevelopmentRealmAsync), the same value this
             // gate already requires to be loopback, so the flag adds no attacker-controllable input: it can only
-            // point asset conversion at the realm the link already targets. The full-URL variant
-            // (optimized-assets-url) points AB/LOD/registry endpoints at arbitrary infrastructure and stays
-            // never-permitted.
+            // point asset conversion at the realm the link already targets.
             AppArgsFlags.LOCAL_AB,
 
             // Runs the loading-time benchmark (LoadingTimeBenchmark reports stage timings to analytics) and, like

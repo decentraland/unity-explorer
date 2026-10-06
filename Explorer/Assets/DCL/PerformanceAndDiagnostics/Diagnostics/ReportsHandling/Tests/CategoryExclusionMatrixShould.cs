@@ -6,8 +6,8 @@ namespace DCL.Diagnostics.Tests
 {
     public class CategoryExclusionMatrixShould
     {
-        private ICategorySeverityMatrix baseMatrix;
-        private CategoryExclusionMatrix matrix;
+        private ICategorySeverityMatrix baseMatrix = null!;
+        private CategoryExclusionMatrix matrix = null!;
 
         [SetUp]
         public void SetUp()
