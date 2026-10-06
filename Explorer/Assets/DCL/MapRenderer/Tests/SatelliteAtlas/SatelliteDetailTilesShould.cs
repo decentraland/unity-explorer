@@ -87,7 +87,7 @@ namespace DCL.MapRenderer.Tests.SatelliteAtlas
             var rect = new Rect(1, -(4 * LEVEL_8_TILE_SIZE) + 1, (4 * LEVEL_8_TILE_SIZE) - 2, (4 * LEVEL_8_TILE_SIZE) - 2);
 
             // Act
-            int level = SatelliteDetailTiles.LevelWithinTileBudget(rect, 8, Vector2.zero, BUNDLED_CHUNK_SIZE, out RectInt range);
+            int level = SatelliteDetailTiles.LevelWithinTileBudget(rect, 8, SatelliteDetailTiles.MIN_LEVEL, Vector2.zero, BUNDLED_CHUNK_SIZE, out RectInt range);
 
             // Assert
             Assert.AreEqual(8, level);
@@ -101,7 +101,7 @@ namespace DCL.MapRenderer.Tests.SatelliteAtlas
             var rect = new Rect(1, -(12 * LEVEL_8_TILE_SIZE) + 1, (12 * LEVEL_8_TILE_SIZE) - 2, (12 * LEVEL_8_TILE_SIZE) - 2);
 
             // Act
-            int level = SatelliteDetailTiles.LevelWithinTileBudget(rect, 8, Vector2.zero, BUNDLED_CHUNK_SIZE, out RectInt range);
+            int level = SatelliteDetailTiles.LevelWithinTileBudget(rect, 8, SatelliteDetailTiles.MIN_LEVEL, Vector2.zero, BUNDLED_CHUNK_SIZE, out RectInt range);
 
             // Assert
             Assert.AreEqual(7, level);
@@ -115,11 +115,121 @@ namespace DCL.MapRenderer.Tests.SatelliteAtlas
             var rect = new Rect(-10000, -10000, 20000, 20000);
 
             // Act
-            int level = SatelliteDetailTiles.LevelWithinTileBudget(rect, 6, Vector2.zero, BUNDLED_CHUNK_SIZE, out RectInt range);
+            int level = SatelliteDetailTiles.LevelWithinTileBudget(rect, 6, SatelliteDetailTiles.MIN_LEVEL, Vector2.zero, BUNDLED_CHUNK_SIZE, out RectInt range);
 
             // Assert
             Assert.AreEqual(SatelliteDetailTiles.MIN_LEVEL, level);
             Assert.AreEqual(new RectInt(0, 0, 16, 16), range);
+        }
+
+        [Test]
+        public void NotStepBelowAHigherMinimumLevel()
+        {
+            // Arrange: 12x12 level-8 tiles is over the budget, but level 8 is the minimum
+            var rect = new Rect(1, -(12 * LEVEL_8_TILE_SIZE) + 1, (12 * LEVEL_8_TILE_SIZE) - 2, (12 * LEVEL_8_TILE_SIZE) - 2);
+
+            // Act
+            int level = SatelliteDetailTiles.LevelWithinTileBudget(rect, 8, 8, Vector2.zero, BUNDLED_CHUNK_SIZE, out RectInt range);
+
+            // Assert
+            Assert.AreEqual(8, level);
+            Assert.AreEqual(new RectInt(0, 0, 12, 12), range);
+        }
+
+        [Test]
+        public void KeepARangeWithinTheTileBudget()
+        {
+            // Arrange
+            var range = new RectInt(2, 3, 16, 4);
+
+            // Act
+            RectInt capped = SatelliteDetailTiles.CapRange(range, new Vector2Int(5, 5), SatelliteDetailTiles.MAX_TILES_PER_CAMERA);
+
+            // Assert
+            Assert.AreEqual(range, capped);
+        }
+
+        [Test]
+        public void CapARangeOverTheBudgetAroundTheCameraTile()
+        {
+            // Arrange: the whole level-4 grid, with the camera over tile (10, 6)
+            var range = new RectInt(0, 0, 16, 16);
+
+            // Act
+            RectInt capped = SatelliteDetailTiles.CapRange(range, new Vector2Int(10, 6), SatelliteDetailTiles.MAX_TILES_PER_CAMERA);
+
+            // Assert
+            Assert.AreEqual(new RectInt(6, 2, 8, 8), capped);
+        }
+
+        [Test]
+        public void CutTheLongerSideFirstWhenCapping()
+        {
+            // Arrange: a tall, narrow world 3 tiles wide
+            var range = new RectInt(4, 0, 3, 40);
+
+            // Act
+            RectInt capped = SatelliteDetailTiles.CapRange(range, new Vector2Int(5, 0), SatelliteDetailTiles.MAX_TILES_PER_CAMERA);
+
+            // Assert: all 3 columns kept, the rows start at the range's edge nearest to the camera
+            Assert.AreEqual(new RectInt(4, 0, 3, 21), capped);
+        }
+
+        [Test]
+        public void ClipTheCameraRectToTheWorldBounds()
+        {
+            // Arrange
+            var rect = new Rect(-100, -100, 400, 400);
+            var bounds = new Rect(0, 0, 100, 50);
+
+            // Act
+            bool overlaps = SatelliteDetailTiles.TryClip(rect, bounds, out Rect clipped);
+
+            // Assert
+            Assert.IsTrue(overlaps);
+            Assert.AreEqual(bounds, clipped);
+        }
+
+        [Test]
+        public void ReportNoOverlapWhenTheCameraIsOutsideTheWorld()
+        {
+            // Arrange
+            var rect = new Rect(500, 500, 100, 100);
+            var bounds = new Rect(0, 0, 100, 50);
+
+            // Act
+            bool overlaps = SatelliteDetailTiles.TryClip(rect, bounds, out _);
+
+            // Assert
+            Assert.IsFalse(overlaps);
+        }
+
+        [Test]
+        public void RequestOnlyTheTilesOverASmallWorld()
+        {
+            // Arrange: a zoomed-out camera over the whole grid, and a world inside level-4 tile (2, 3)
+            var cameraRect = new Rect(-10000, -10000, 20000, 20000);
+            var world = new Rect((2 * LEVEL_4_TILE_SIZE) + 10, -(4 * LEVEL_4_TILE_SIZE) + 10, 100, 100);
+            SatelliteDetailTiles.TryClip(cameraRect, world, out Rect clipped);
+
+            // Act
+            RectInt range = SatelliteDetailTiles.TileRange(clipped, SatelliteDetailTiles.MIN_LEVEL, Vector2.zero, BUNDLED_CHUNK_SIZE);
+
+            // Assert
+            Assert.AreEqual(new RectInt(2, 3, 1, 1), range);
+        }
+
+        [Test]
+        public void FindTheTileUnderAPosition()
+        {
+            // Arrange: inside level-4 tile (1, 2), which spans x 400..800 and y -800..-1200
+            var position = new Vector2(500f, -900f);
+
+            // Act
+            Vector2Int tile = SatelliteDetailTiles.TileIndex(position, 4, Vector2.zero, BUNDLED_CHUNK_SIZE);
+
+            // Assert
+            Assert.AreEqual(new Vector2Int(1, 2), tile);
         }
 
         [Test]

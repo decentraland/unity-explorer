@@ -24,6 +24,8 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
     ///     doesn't fetch levels and tiles that only pass through the view; a download whose tile leaves the view is cancelled.
     ///     At most <see cref="MAX_CONCURRENT_LOADS" /> tiles load at a time, nearest to their camera's centre first.
     ///     Downloaded tiles are kept in the disk cache, so a later session reads them from disk.
+    ///     A world streams its own tiles from <c>{baseUrl}/worlds/{name}</c> on the same grid. It has no bundled chunks, so its
+    ///     coarsest level is shown at every zoom, and only the tiles over its parcels are requested.
     /// </summary>
     internal class SatelliteDetailTiles : IDisposable
     {
@@ -45,13 +47,12 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
         private static readonly IComparer<KeyValuePair<int, Vector3Int>> OLDEST_FIRST =
             Comparer<KeyValuePair<int, Vector3Int>>.Create(static (a, b) => a.Key.CompareTo(b.Key));
 
-        private readonly string baseUrl;
+        private readonly string genesisBaseUrl;
         private readonly IWebRequestController webRequestController;
         private readonly IDiskCache<byte[]> diskCache;
         private readonly IMapCullingController cullingController;
         private readonly AtlasChunk template;
         private readonly int drawOrderOfMinLevel;
-        private readonly CancellationTokenSource lifetimeCts = new ();
 
         private readonly Dictionary<Vector3Int, Tile> tiles = new ();
         private readonly Stack<AtlasChunk> pooledViews = new ();
@@ -60,6 +61,8 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
         private readonly List<Vector3Int> unusedLoads = new ();
         private readonly List<KeyValuePair<int, Vector3Int>> evictions = new ();
 
+        private CancellationTokenSource lifetimeCts = new ();
+        private Source source;
         private Vector2 gridTopLeft;
         private float baseChunkSize;
         private int refreshStamp;
@@ -71,7 +74,8 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
 
         public SatelliteDetailTiles(string baseUrl, IWebRequestController webRequestController, IDiskCache<byte[]> diskCache, IMapCullingController cullingController, SpriteRenderer template, int drawOrderOfMinLevel)
         {
-            this.baseUrl = baseUrl.TrimEnd('/');
+            genesisBaseUrl = baseUrl.TrimEnd('/');
+            source = Source.GenesisCity(genesisBaseUrl);
             this.webRequestController = webRequestController;
             this.diskCache = diskCache;
             this.cullingController = cullingController;
@@ -93,6 +97,13 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             Refresh();
         }
 
+        /// <summary>Streams the tiles of the world <paramref name="worldName" />, only inside <paramref name="localBounds" /> when they are known.</summary>
+        public void ShowWorld(string worldName, Rect? localBounds) =>
+            SetSource(Source.World($"{genesisBaseUrl}/worlds/{Uri.EscapeDataString(worldName.ToLowerInvariant())}", localBounds));
+
+        public void ShowGenesisCity() =>
+            SetSource(Source.GenesisCity(genesisBaseUrl));
+
         public void Dispose()
         {
             cullingController.CamerasChanged -= Refresh;
@@ -108,6 +119,27 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
                 UnityObjectUtils.SafeDestroy(pooledViews.Pop().gameObject);
 
             UnityObjectUtils.SafeDestroy(template.gameObject);
+        }
+
+        /// <summary>Drops every tile and in-flight load of the previous source, then requests the new source's tiles in view.</summary>
+        private void SetSource(Source newSource)
+        {
+            if (newSource.Equals(source))
+                return;
+
+            source = newSource;
+
+            // Cancelling the lifetime also ends the pending settle wait, so the refresh below schedules a new one.
+            lifetimeCts.SafeCancelAndDispose();
+            lifetimeCts = new CancellationTokenSource();
+            settlePending = false;
+            pending.Clear();
+
+            foreach (Tile tile in tiles.Values)
+                DestroyTile(tile);
+
+            tiles.Clear();
+            Refresh();
         }
 
         /// <summary>
@@ -171,19 +203,54 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
 
         /// <summary>
         ///     Steps <paramref name="level" /> down until <paramref name="rect" /> needs at most <see cref="MAX_TILES_PER_CAMERA" /> tiles,
-        ///     stopping at <see cref="MIN_LEVEL" />. Outputs the tile range of the returned level.
+        ///     stopping at <paramref name="minLevel" />. Outputs the tile range of the returned level.
         /// </summary>
-        internal static int LevelWithinTileBudget(Rect rect, int level, Vector2 gridTopLeft, float bundledChunkSize, out RectInt range)
+        internal static int LevelWithinTileBudget(Rect rect, int level, int minLevel, Vector2 gridTopLeft, float bundledChunkSize, out RectInt range)
         {
             range = TileRange(rect, level, gridTopLeft, bundledChunkSize);
 
-            while (level > MIN_LEVEL && range.width * range.height > MAX_TILES_PER_CAMERA)
+            while (level > minLevel && range.width * range.height > MAX_TILES_PER_CAMERA)
             {
                 level--;
                 range = TileRange(rect, level, gridTopLeft, bundledChunkSize);
             }
 
             return level;
+        }
+
+        /// <summary>
+        ///     Shrinks <paramref name="range" /> to at most <paramref name="maxTiles" /> tiles around <paramref name="centerTile" />,
+        ///     cutting the longer side first. Used at a minimum level that has no coarser level to step down to.
+        /// </summary>
+        internal static RectInt CapRange(RectInt range, Vector2Int centerTile, int maxTiles)
+        {
+            if (range.width * range.height <= maxTiles)
+                return range;
+
+            int side = Mathf.FloorToInt(Mathf.Sqrt(maxTiles));
+            int width = Mathf.Min(range.width, Mathf.Max(side, maxTiles / range.height));
+            int height = Mathf.Min(range.height, maxTiles / width);
+
+            int x = Mathf.Clamp(centerTile.x - (width / 2), range.xMin, range.xMax - width);
+            int y = Mathf.Clamp(centerTile.y - (height / 2), range.yMin, range.yMax - height);
+
+            return new RectInt(x, y, width, height);
+        }
+
+        /// <summary>The part of <paramref name="rect" /> inside <paramref name="bounds" />; false when they don't overlap.</summary>
+        internal static bool TryClip(Rect rect, Rect bounds, out Rect clipped)
+        {
+            clipped = Rect.MinMaxRect(Mathf.Max(rect.xMin, bounds.xMin), Mathf.Max(rect.yMin, bounds.yMin),
+                Mathf.Min(rect.xMax, bounds.xMax), Mathf.Min(rect.yMax, bounds.yMax));
+
+            return clipped.width > 0 && clipped.height > 0;
+        }
+
+        /// <summary>Index (x, y) of the tile of <paramref name="level" /> under <paramref name="position" />, unclamped.</summary>
+        internal static Vector2Int TileIndex(Vector2 position, int level, Vector2 gridTopLeft, float bundledChunkSize)
+        {
+            float tileSize = TileSize(level, bundledChunkSize);
+            return new Vector2Int(Mathf.FloorToInt((position.x - gridTopLeft.x) / tileSize), Mathf.FloorToInt((gridTopLeft.y - position.y) / tileSize));
         }
 
         /// <summary>Centre of the tile <paramref name="id" /> (x, y, level) in local units.</summary>
@@ -256,7 +323,12 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
                 }
             }
             catch (OperationCanceledException) { }
-            finally { settlePending = false; }
+            finally
+            {
+                // A wait cancelled by a source change may already have been replaced by the new source's.
+                if (!ct.IsCancellationRequested)
+                    settlePending = false;
+            }
         }
 
         /// <summary>Marks every tile inside an active camera as used in the current refresh and, when <paramref name="request" />, queues the missing ones.</summary>
@@ -272,13 +344,26 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
                 if (!camera.CameraController.Camera.isActiveAndEnabled)
                     continue;
 
-                float screenPixelsPerUnit = camera.CameraController.GetRenderTexture().height / camera.Rect.height;
-                int level = LevelFor(screenPixelsPerUnit, bundledPixelsPerUnit);
+                Rect rect = camera.Rect;
 
-                if (level < MIN_LEVEL)
+                if (source.Bounds is { } bounds && !TryClip(rect, bounds, out rect))
                     continue;
 
-                level = LevelWithinTileBudget(camera.Rect, level, gridTopLeft, baseChunkSize, out RectInt range);
+                float screenPixelsPerUnit = camera.CameraController.GetRenderTexture().height / camera.Rect.height;
+                int level = Mathf.Min(LevelFor(screenPixelsPerUnit, bundledPixelsPerUnit), source.MaxLevel);
+
+                if (level < source.MinLevel)
+                {
+                    if (source.HasBundledChunks)
+                        continue;
+
+                    level = source.MinLevel;
+                }
+
+                level = LevelWithinTileBudget(rect, level, source.MinLevel, gridTopLeft, baseChunkSize, out RectInt range);
+
+                if (!source.HasBundledChunks)
+                    range = CapRange(range, TileIndex(camera.Rect.center, level, gridTopLeft, baseChunkSize), MAX_TILES_PER_CAMERA);
 
                 for (int j = range.yMin; j < range.yMax; j++)
                 for (int i = range.xMin; i < range.xMax; i++)
@@ -342,7 +427,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
         private async UniTaskVoid LoadAsync(Vector3Int id, Tile tile)
         {
             CancellationToken ct = tile.Cts.Token;
-            var url = $"{baseUrl}/{id.z}/{id.x}%2C{id.y}.ktx2";
+            var url = $"{source.BaseUrl}/{id.z}/{id.x}%2C{id.y}.ktx2";
             Texture2D? texture = null;
             Exception? failure = null;
 
@@ -492,6 +577,44 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             renderer.sprite = null;
             tile.View.gameObject.SetActive(false);
             pooledViews.Push(tile.View);
+        }
+
+        /// <summary>Where the tiles come from, which levels exist there and which part of the grid they cover.</summary>
+        private readonly struct Source : IEquatable<Source>
+        {
+            public readonly string BaseUrl;
+            public readonly int MinLevel;
+            public readonly int MaxLevel;
+            public readonly Rect? Bounds;
+
+            /// <summary>Genesis City's bundled chunks show the zooms coarser than <see cref="MinLevel" />; a world has none.</summary>
+            public readonly bool HasBundledChunks;
+
+            private Source(string baseUrl, int minLevel, int maxLevel, Rect? bounds, bool hasBundledChunks)
+            {
+                BaseUrl = baseUrl;
+                MinLevel = minLevel;
+                MaxLevel = maxLevel;
+                Bounds = bounds;
+                HasBundledChunks = hasBundledChunks;
+            }
+
+            public static Source GenesisCity(string baseUrl) =>
+                new (baseUrl, MIN_LEVEL, MAX_LEVEL, null, true);
+
+            // Worlds are captured at the coarsest streamed level only.
+            public static Source World(string baseUrl, Rect? bounds) =>
+                new (baseUrl, MIN_LEVEL, MIN_LEVEL, bounds, false);
+
+            public bool Equals(Source other) =>
+                BaseUrl == other.BaseUrl && MinLevel == other.MinLevel && MaxLevel == other.MaxLevel && Nullable.Equals(Bounds, other.Bounds)
+                && HasBundledChunks == other.HasBundledChunks;
+
+            public override bool Equals(object? obj) =>
+                obj is Source other && Equals(other);
+
+            public override int GetHashCode() =>
+                HashCode.Combine(BaseUrl, MinLevel, MaxLevel, Bounds, HasBundledChunks);
         }
 
         internal class Tile
