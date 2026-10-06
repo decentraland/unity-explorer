@@ -89,6 +89,7 @@ namespace DCL.Minimap
         private ToggleContextMenuControlSettings? homeToggleSettings;
         private PlacesData.PlaceInfo? currentPlaceInfo;
         private string previousRealmName = string.Empty;
+        private Transform? contextualButtonParentForWorlds;
 
         public IReadOnlyDictionary<MapLayer, IMapLayerParameter> LayersParameters { get; } = new Dictionary<MapLayer, IMapLayerParameter>
             { { MapLayer.PlayerMarker, new PlayerMarkerParameter { BackgroundIsActive = false } } };
@@ -181,7 +182,7 @@ namespace DCL.Minimap
 
         private void OnRealmChanged(RealmKind realmKind)
         {
-            SetGenesisMode(realmKind is RealmKind.GenesisCity);
+            SetRealmMode(realmKind);
             previousParcelPosition = new Vector2Int(int.MaxValue, int.MaxValue);
             previousRealmName = string.Empty;
         }
@@ -213,7 +214,7 @@ namespace DCL.Minimap
             viewInstance.sideMenuCanvasGroup.gameObject.SetActive(false);
             sideMenuPresenter = new SideMenuPresenter(viewInstance.sideMenuView);
             sceneRestrictionsController = new SceneRestrictionsController(viewInstance.sceneRestrictionsView, sceneRestrictionBusController);
-            SetGenesisMode(realmData.IsGenesis());
+            SetRealmMode(realmData.RealmType.Value);
             realmData.RealmType.OnUpdate += OnRealmChanged;
             realmNavigator.NavigationExecuted += OnNavigationExecuted;
             mapPathEventBus.OnShowPinInMinimapEdge += ShowPinInMinimapEdge;
@@ -553,23 +554,54 @@ namespace DCL.Minimap
             return null;
         }
 
-        private void SetGenesisMode(bool isGenesisModeActivated)
+        private void SetRealmMode(RealmKind realmKind)
         {
             if (viewInstance == null)
                 return;
 
-            ToggleObjects(isGenesisModeActivated);
+            bool isGenesisModeActivated = realmKind is RealmKind.GenesisCity;
+
+            // A world shows its own map in Genesis City's layout, with the contextual button over the map.
+            bool showMap = isGenesisModeActivated || realmKind is RealmKind.World;
+
+            PlaceContextualButton(overMap: showMap && !isGenesisModeActivated);
+            ToggleObjects(showMap);
             ConfigureContextualButton(isGenesisModeActivated);
-            SetAnimatorController(isGenesisModeActivated);
+            SetAnimatorController(showMap);
         }
 
-        private void ToggleObjects(bool isGenesisModeActivated)
+        private void ToggleObjects(bool showMap)
         {
             foreach (GameObject go in viewInstance!.objectsToActivateForGenesis)
-                go.SetActive(isGenesisModeActivated);
+                go.SetActive(showMap);
 
             foreach (GameObject go in viewInstance.objectsToActivateForWorlds)
-                go.SetActive(!isGenesisModeActivated);
+                go.SetActive(!showMap);
+        }
+
+        private void PlaceContextualButton(bool overMap)
+        {
+            Transform button = viewInstance!.minimapContextualButtonView.transform;
+            contextualButtonParentForWorlds ??= button.parent;
+
+            Transform parent = overMap ? viewInstance.worldMapContextualButtonParent : contextualButtonParentForWorlds;
+
+            if (button.parent == parent)
+                return;
+
+            button.SetParent(parent, false);
+
+            if (!overMap)
+                return;
+
+            button.SetAsLastSibling();
+
+            // Only the worlds animator fades the button in and out, and it may have left it hidden.
+            if (button.TryGetComponent(out CanvasGroup canvasGroup))
+            {
+                canvasGroup.alpha = 1;
+                canvasGroup.interactable = true;
+            }
         }
 
         private void ConfigureContextualButton(bool isGenesisModeActivated)
@@ -622,10 +654,10 @@ namespace DCL.Minimap
                 ChatChannel.NEARBY_CHANNEL, $"/{reloadSceneCommand.Command}", ChatMessageOrigin.Minimap
             );
 
-        private void SetAnimatorController(bool isGenesisModeActivated)
+        private void SetAnimatorController(bool showMap)
         {
             viewInstance!.minimapAnimator.runtimeAnimatorController =
-                isGenesisModeActivated
+                showMap
                     ? viewInstance.genesisCityAnimatorController
                     : viewInstance.worldsAnimatorController;
         }
