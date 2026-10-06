@@ -398,6 +398,7 @@ namespace DCL.PluginSystem.Global
                 emoteProvider,
                 world,
                 playerEntity,
+                appArgs,
                 webBrowser,
                 inWorldWarningNotificationView,
                 thumbnailProvider,

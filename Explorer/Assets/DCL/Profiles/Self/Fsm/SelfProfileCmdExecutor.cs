@@ -34,7 +34,6 @@ namespace DCL.Profiles.Self
         private readonly IReadOnlyList<URN>? forcedEmotes;
         private readonly World world;
         private readonly Entity playerEntity;
-        private readonly bool skipCatalystDeploy;
         private CancellationTokenSource? activity;
 
         public SelfProfileCmdExecutor(
@@ -48,8 +47,7 @@ namespace DCL.Profiles.Self
             ForcedWearables forcedWearables,
             IReadOnlyList<URN>? forcedEmotes,
             World world,
-            Entity playerEntity,
-            bool skipCatalystDeploy)
+            Entity playerEntity)
         {
             this.profileRepository = profileRepository;
             this.profileCache = profileCache;
@@ -62,7 +60,6 @@ namespace DCL.Profiles.Self
             this.forcedEmotes = forcedEmotes;
             this.world = world;
             this.playerEntity = playerEntity;
-            this.skipCatalystDeploy = skipCatalystDeploy;
         }
 
         public void Dispose()
@@ -176,13 +173,13 @@ namespace DCL.Profiles.Self
             Profile sent = deploy.Profile;
             sent.UserId = deploy.Address;
 
-            // A faking or previewing session never deploys what it fakes: the edit is reported as saved, without a new version.
-            if (forcedWearables.Any || forcedEmotes?.Count > 0 || skipCatalystDeploy)
+            // A local-only edit, or any edit of a faking session, is never deployed: it is reported as saved, without a new version.
+            if (deploy.LocalOnly || forcedWearables.Any || forcedEmotes?.Count > 0)
             {
                 activity.SafeCancelAndDispose();
                 activity = null;
 
-                ReportHub.LogWarning(ReportCategory.PROFILE, "Profile deploy skipped: forced wearables or emotes, or a self preview, are active for this session");
+                ReportHub.LogWarning(ReportCategory.PROFILE, "Profile deploy skipped: the edit is local only, or forced wearables or emotes are active for this session");
                 inbox.Send(SelfProfileMsg.FromDeploySucceeded(new DeploySucceeded(deploy.Address, sent, sent)));
                 return;
             }

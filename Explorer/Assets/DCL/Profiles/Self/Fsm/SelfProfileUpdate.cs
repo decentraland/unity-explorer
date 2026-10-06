@@ -161,7 +161,7 @@ namespace DCL.Profiles.Self
                 : edited.Version + 1;
 
             ProfileActivity deploying = ProfileActivity.FromDeploying(new Deploying(edited, version, before, requests));
-            SelfProfileCmd deploy = SelfProfileCmd.FromDeploy(new DeployCmd(current.Address, edited, version));
+            SelfProfileCmd deploy = SelfProfileCmd.FromDeploy(new DeployCmd(current.Address, edited, version, request.LocalOnly));
 
             // Only a known profile is trusted locally before the catalyst confirms the edit.
             if (!before.IsKnown(out _))

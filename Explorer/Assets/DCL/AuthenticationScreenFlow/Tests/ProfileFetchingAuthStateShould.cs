@@ -340,7 +340,7 @@ namespace DCL.AuthenticationScreenFlow.Tests
                 catch (OperationCanceledException) { return ProfileReadResult.FromError(ProfileReadError.Cancelled); }
             }
 
-            public override UniTask<ProfileDeployResult> DeployProfileAsync(Profile edited, CancellationToken ct) =>
+            public override UniTask<ProfileDeployResult> DeployProfileAsync(Profile edited, CancellationToken ct, bool localOnly = false) =>
                 UniTask.FromResult(ProfileDeployResult.FromError(ProfileDeployError.NoIdentity));
         }
 
@@ -367,7 +367,7 @@ namespace DCL.AuthenticationScreenFlow.Tests
                 return UniTask.FromResult(ProfileReadResult.FromOk(profile));
             }
 
-            public override UniTask<ProfileDeployResult> DeployProfileAsync(Profile edited, CancellationToken ct) =>
+            public override UniTask<ProfileDeployResult> DeployProfileAsync(Profile edited, CancellationToken ct, bool localOnly = false) =>
                 UniTask.FromResult(ProfileDeployResult.FromOk(edited));
         }
 
@@ -389,7 +389,7 @@ namespace DCL.AuthenticationScreenFlow.Tests
                 return UniTask.FromResult(ProfileReadResult.FromError(ProfileReadError.NotFound));
             }
 
-            public override UniTask<ProfileDeployResult> DeployProfileAsync(Profile edited, CancellationToken ct) =>
+            public override UniTask<ProfileDeployResult> DeployProfileAsync(Profile edited, CancellationToken ct, bool localOnly = false) =>
                 UniTask.FromResult(ProfileDeployResult.FromError(ProfileDeployError.NoIdentity));
         }
 
@@ -409,7 +409,7 @@ namespace DCL.AuthenticationScreenFlow.Tests
                 return UniTask.FromResult(ProfileReadResult.FromError(ProfileReadError.FetchFailed));
             }
 
-            public override UniTask<ProfileDeployResult> DeployProfileAsync(Profile edited, CancellationToken ct) =>
+            public override UniTask<ProfileDeployResult> DeployProfileAsync(Profile edited, CancellationToken ct, bool localOnly = false) =>
                 UniTask.FromResult(ProfileDeployResult.FromError(ProfileDeployError.NoIdentity));
         }
     }

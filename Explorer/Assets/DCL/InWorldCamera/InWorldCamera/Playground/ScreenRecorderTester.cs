@@ -103,8 +103,7 @@ namespace DCL.InWorldCamera.Playground
                 new DefaultProfileCache(),
                 world,
                 playerEntity,
-                new ForcedWearables(),
-                skipCatalystDeploy: false
+                new ForcedWearables()
             );
         }
     }

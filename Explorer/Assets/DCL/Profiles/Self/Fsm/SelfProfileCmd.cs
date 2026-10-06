@@ -12,24 +12,28 @@ namespace DCL.Profiles.Self
         /// <summary>The version the profile is deployed as.</summary>
         public readonly int Version;
 
-        public DeployCmd(UserId address, Profile profile, int version)
+        /// <summary>The profile is reported as saved without being sent to the catalyst.</summary>
+        public readonly bool LocalOnly;
+
+        public DeployCmd(UserId address, Profile profile, int version, bool localOnly = false)
         {
             Address = address;
             Profile = profile;
             Version = version;
+            LocalOnly = localOnly;
         }
 
         public bool Equals(DeployCmd other) =>
-            Address.Equals(other.Address) && ReferenceEquals(Profile, other.Profile) && Version == other.Version;
+            Address.Equals(other.Address) && ReferenceEquals(Profile, other.Profile) && Version == other.Version && LocalOnly == other.LocalOnly;
 
         public override bool Equals(object? obj) =>
             obj is DeployCmd other && Equals(other);
 
         public override int GetHashCode() =>
-            HashCode.Combine(Address, RuntimeHelpers.GetHashCode(Profile), Version);
+            HashCode.Combine(Address, RuntimeHelpers.GetHashCode(Profile), Version, LocalOnly);
 
         public override string ToString() =>
-            $"{Address.Value} v{Version}";
+            LocalOnly ? $"{Address.Value} v{Version} local only" : $"{Address.Value} v{Version}";
     }
 
     /// <summary>

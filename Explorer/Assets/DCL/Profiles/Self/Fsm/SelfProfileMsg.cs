@@ -116,23 +116,27 @@ namespace DCL.Profiles.Self
         public readonly RequestId Id;
         public readonly Profile Edited;
 
-        public DeployRequest(RequestId id, Profile edited)
+        /// <summary>The edit is published locally and never sent to the catalyst.</summary>
+        public readonly bool LocalOnly;
+
+        public DeployRequest(RequestId id, Profile edited, bool localOnly = false)
         {
             Id = id;
             Edited = edited;
+            LocalOnly = localOnly;
         }
 
         public bool Equals(DeployRequest other) =>
-            Id.Equals(other.Id) && ReferenceEquals(Edited, other.Edited);
+            Id.Equals(other.Id) && ReferenceEquals(Edited, other.Edited) && LocalOnly == other.LocalOnly;
 
         public override bool Equals(object? obj) =>
             obj is DeployRequest other && Equals(other);
 
         public override int GetHashCode() =>
-            HashCode.Combine(Id, RuntimeHelpers.GetHashCode(Edited));
+            HashCode.Combine(Id, RuntimeHelpers.GetHashCode(Edited), LocalOnly);
 
         public override string ToString() =>
-            $"{Id} v{Edited.Version}";
+            LocalOnly ? $"{Id} v{Edited.Version} local only" : $"{Id} v{Edited.Version}";
     }
 
     [REnum(EnumUnderlyingType.Byte)]

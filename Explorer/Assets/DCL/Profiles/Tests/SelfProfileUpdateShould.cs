@@ -208,6 +208,21 @@ namespace DCL.Profiles.Tests
             AssertPublish(batch[1], edited);
         }
 
+        [TestCase(true)]
+        [TestCase(false)]
+        public void CarryLocalOnlyFromTheRequestToTheDeploy(bool localOnly)
+        {
+            // Arrange
+            Profile edited = NewProfile(4);
+
+            // Act
+            (_, SelfProfileCmd cmd) = SelfProfileModel.Update(Known(NewProfile(3)), SelfProfileMsg.FromDeployProfileOnEditRequested(new DeployRequest(DEPLOY, edited, localOnly)));
+
+            // Assert
+            DeployCmd deploy = AssertDeploy(AssertBatch(cmd, 2)[0], edited);
+            Assert.That(deploy.LocalOnly, Is.EqualTo(localOnly));
+        }
+
         [Test]
         public void DeployWithoutPublishingWhenTheProfileIsMissing()
         {

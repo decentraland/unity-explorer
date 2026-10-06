@@ -26,6 +26,7 @@ using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
+using Global.AppArgs;
 using MVC;
 using Runtime.Wearables;
 using System;
@@ -52,6 +53,7 @@ namespace DCL.PluginSystem.Global
         private readonly IEmoteProvider emoteProvider;
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
+        private readonly IAppArgs appArgs;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
         private readonly IInputBlock inputBlock;
@@ -92,6 +94,7 @@ namespace DCL.PluginSystem.Global
             IEmoteProvider emoteProvider,
             Arch.Core.World world,
             Entity playerEntity,
+            IAppArgs appArgs,
             UnityAppWebBrowser webBrowser,
             WarningNotificationView inWorldWarningNotificationView,
             IThumbnailProvider thumbnailProvider,
@@ -123,6 +126,7 @@ namespace DCL.PluginSystem.Global
             this.emoteProvider = emoteProvider;
             this.world = world;
             this.playerEntity = playerEntity;
+            this.appArgs = appArgs;
             this.webBrowser = webBrowser;
             this.inWorldWarningNotificationView = inWorldWarningNotificationView;
             this.thumbnailProvider = thumbnailProvider;
@@ -252,6 +256,7 @@ namespace DCL.PluginSystem.Global
                 emoteStorage,
                 wearableStorage,
                 web3Identity,
+                appArgs,
                 inWorldWarningNotificationView,
                 profileChangesBus,
                 ownedNftFilter

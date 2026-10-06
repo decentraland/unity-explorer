@@ -44,14 +44,13 @@ namespace DCL.Profiles.Self
             IProfileCache profileCache,
             World world,
             Entity playerEntity,
-            ForcedWearables forcedWearables,
-            bool skipCatalystDeploy)
+            ForcedWearables forcedWearables)
         {
             this.web3IdentityCache = web3IdentityCache;
             drainToken = drainCts.Token;
 
             var executor = new SelfProfileCmdExecutor(profileRepository, profileCache, web3IdentityCache, wearableStorage, emoteStorage, equippedWearables, equippedEmotes,
-                forcedWearables, forcedEmotes, world, playerEntity, skipCatalystDeploy);
+                forcedWearables, forcedEmotes, world, playerEntity);
 
             runtime = new FsmRuntime<SelfProfileModel, SelfProfileMsg, SelfProfileCmd>(FSM_TAG, ReportCategory.PROFILE, SelfProfileModel.NoIdentity(), SelfProfileModel.Update, executor);
 
@@ -105,7 +104,8 @@ namespace DCL.Profiles.Self
             }
         }
 
-        public virtual UniTask<ProfileDeployResult> DeployProfileAsync(Profile edited, CancellationToken ct)
+        /// <param name="localOnly">Publishes the edit locally and reports it as saved without sending it to the catalyst.</param>
+        public virtual UniTask<ProfileDeployResult> DeployProfileAsync(Profile edited, CancellationToken ct, bool localOnly = false)
         {
             IMsgInbox<SelfProfileMsg> inbox = runtime;
             RequestId id;
@@ -113,7 +113,7 @@ namespace DCL.Profiles.Self
             lock (requestGate) // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
             {
                 id = NextRequestId();
-                inbox.Send(SelfProfileMsg.FromDeployProfileOnEditRequested(new DeployRequest(id, edited)));
+                inbox.Send(SelfProfileMsg.FromDeployProfileOnEditRequested(new DeployRequest(id, edited, localOnly)));
             }
 
             return AwaitResultAsync(id, static model => model.DeployResults, ProfileDeployResult.FromError(ProfileDeployError.Cancelled), ct);

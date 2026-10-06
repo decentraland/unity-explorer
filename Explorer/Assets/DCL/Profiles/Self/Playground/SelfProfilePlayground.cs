@@ -76,8 +76,7 @@ namespace DCL.Profiles.Self.Playground
                 new DefaultProfileCache(),
                 world,
                 playerEntity,
-                new ForcedWearables(),
-                skipCatalystDeploy: false
+                new ForcedWearables()
             );
 
             ProfileReadResult read = await selfProfile.ProfileAsync(ct);

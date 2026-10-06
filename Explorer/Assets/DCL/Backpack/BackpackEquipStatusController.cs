@@ -11,6 +11,7 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.Web3.Identities;
+using Global.AppArgs;
 using Runtime.Wearables;
 using System;
 using System.Collections.Generic;
@@ -31,6 +32,7 @@ namespace DCL.Backpack
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IEmoteStorage emoteStorage;
         private readonly IWearableStorage wearableStorage;
+        private readonly IAppArgs appArgs;
         private readonly WarningNotificationView inWorldWarningNotificationView;
         private readonly ProfileChangesBus profileChangesBus;
         private readonly IOwnedNftFilter ownedNftFilter;
@@ -44,6 +46,7 @@ namespace DCL.Backpack
             IEmoteStorage emoteStorage,
             IWearableStorage wearableStorage,
             IWeb3IdentityCache web3IdentityCache,
+            IAppArgs appArgs,
             WarningNotificationView inWorldWarningNotificationView,
             ProfileChangesBus profileChangesBus,
             IOwnedNftFilter ownedNftFilter)
@@ -72,6 +75,7 @@ namespace DCL.Backpack
             web3IdentityCache.OnIdentityCleared += CancelUpdateOperation;
             web3IdentityCache.OnIdentityChanged += CancelUpdateOperation;
 
+            this.appArgs = appArgs;
             this.inWorldWarningNotificationView = inWorldWarningNotificationView;
             this.profileChangesBus = profileChangesBus;
             this.ownedNftFilter = ownedNftFilter;
@@ -216,7 +220,9 @@ namespace DCL.Backpack
                 profileChangesBus.PushUpdate(new ProfileBuilder().From(newProfile).WithVersion(newProfile.Version + 1).Build());
                 profileToRevertTo = oldProfile;
 
-                ProfileDeployResult deploy = await selfProfile.DeployProfileAsync(newProfile, ct);
+                // A previewed look is local only: it may hold wearables or emotes the user does not own.
+                bool localOnly = appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS) || appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_WEARABLES);
+                ProfileDeployResult deploy = await selfProfile.DeployProfileAsync(newProfile, ct, localOnly);
                 MultithreadingUtility.AssertMainThread(nameof(UpdateProfileAsync), true);
 
                 if (deploy.IsOk(out Profile? updatedProfile))
