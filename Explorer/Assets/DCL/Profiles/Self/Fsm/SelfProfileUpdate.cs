@@ -218,8 +218,11 @@ namespace DCL.Profiles.Self
                 onFailed: static _ => SelfProfileCmd.None()
             );
 
+            // The failed deploy may still have reached the catalyst, so a missing profile is no longer trusted and the next read fetches.
+            ProfileKnowledge reverted = deploying.Before.IsMissing() ? ProfileKnowledge.Unknown() : deploying.Before;
+
             SelfProfileModel answered = model.WithDeployResults(deploying.Requests, ProfileDeployResult.FromError(ProfileDeployError.DeployFailed));
-            return SettleReads(answered, current.With(deploying.Before, ProfileActivity.Idle()), republish);
+            return SettleReads(answered, current.With(reverted, ProfileActivity.Idle()), republish);
         }
 
         /// <summary>Answers the pending reads when the knowledge is settled; unknown knowledge with nothing in flight starts a fetch.</summary>

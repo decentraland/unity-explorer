@@ -57,7 +57,7 @@ namespace DCL.Profiles.Self.Playground
             var emoteStorage = new MemoryEmotesStorage();
             var equippedEmotes = new EquippedEmotes();
 
-            SelfProfile selfProfile = new SelfProfile(
+            using SelfProfile selfProfile = new SelfProfile(
                 new LogProfileRepository(
                     new RealmProfileRepository(
                         IWebRequestController.TEST,

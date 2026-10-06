@@ -341,7 +341,7 @@ namespace DCL.Profiles.Tests
             (SelfProfileModel next, SelfProfileCmd cmd) = SelfProfileModel.Update(model, SelfProfileMsg.FromDeployFailed(new DeployFailed(ALICE, sent, DEPLOY_ERROR)));
 
             // Assert
-            Assert.That(AssertIdentified(next).Knowledge.GetKind(), Is.EqualTo(ProfileKnowledge.Kind.Missing));
+            Assert.That(AssertIdentified(next).Knowledge.GetKind(), Is.EqualTo(ProfileKnowledge.Kind.Unknown));
             Assert.That(cmd.GetKind(), Is.EqualTo(SelfProfileCmd.Kind.None));
             AssertDeployError(next, DEPLOY, ProfileDeployError.DeployFailed);
         }
@@ -442,9 +442,25 @@ namespace DCL.Profiles.Tests
 
             // Assert
             Identified identified = AssertIdentified(next);
-            Assert.That(identified.Knowledge.GetKind(), Is.EqualTo(ProfileKnowledge.Kind.Missing));
+            Assert.That(identified.Knowledge.GetKind(), Is.EqualTo(ProfileKnowledge.Kind.Unknown), "the deploy may have reached the catalyst");
             Assert.That(identified.Activity.GetKind(), Is.EqualTo(ProfileActivity.Kind.Idle));
             Assert.That(cmd.GetKind(), Is.EqualTo(SelfProfileCmd.Kind.None));
+        }
+
+        [Test]
+        public void FetchForAReadAfterTheFirstDeployFailed()
+        {
+            // Arrange
+            Profile sent = NewProfile(1);
+            SelfProfileModel model = Deploying(sent, ProfileKnowledge.Missing());
+            (SelfProfileModel reverted, _) = SelfProfileModel.Update(model, SelfProfileMsg.FromDeployFailed(new DeployFailed(ALICE, sent, DEPLOY_ERROR)));
+
+            // Act
+            (SelfProfileModel next, SelfProfileCmd cmd) = SelfProfileModel.Update(reverted, SelfProfileMsg.FromProfileReadRequested(READ));
+
+            // Assert
+            Assert.That(AssertIdentified(next).Activity.GetKind(), Is.EqualTo(ProfileActivity.Kind.Fetching));
+            AssertFetch(cmd, ALICE);
         }
 
         [Test]
