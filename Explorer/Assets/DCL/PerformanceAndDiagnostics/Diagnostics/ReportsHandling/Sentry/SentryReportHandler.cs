@@ -110,15 +110,9 @@ namespace DCL.Diagnostics.Sentry
 
             SentrySdk.Init(options);
 
-            // The session id joins this client's crash and ANR events to the launcher session that started it, which is
-            // how crash-free and flawless-session rates are computed. It must be on the scope as early as possible:
-            // Init above already starts the ANR watchdog and the native crash handler, and the riskiest window is
-            // startup itself, where freezes and crashes happen before the rest of the app wires its scope configurators.
-            // An event captured without the tag can never be attributed to a session afterwards.
-            // Set on the SDK's global scope rather than through a scope configurator, so every event carries it:
-            // the SDK's own integrations, the ANR watchdog and native crashes included.
-            if (!string.IsNullOrEmpty(sessionId))
-                SentrySdk.ConfigureScope(scope => AddSessionIdToScope(scope, sessionId!));
+            // On the SDK's own scope so every event carries it, including those captured by the SDK's integrations and native crashes
+            if (sessionId is { Length: > 0 } launcherSessionId)
+                SentrySdk.ConfigureScope(scope => scope.SetTag("session_id", launcherSessionId));
 
             ExitUtils.RegisterCleanUpCandidate(new OnQuittingCleanUpCandidate(nameof(SentryReportHandler), EndSessionAndFlush));
         }
@@ -137,11 +131,6 @@ namespace DCL.Diagnostics.Sentry
         public void AddIdentityToScope(Scope scope, string wallet)
         {
             scope.SetTag("wallet", wallet);
-        }
-
-        private static void AddSessionIdToScope(Scope scope, string sessionId)
-        {
-            scope.SetTag("session_id", sessionId);
         }
 
         public void AddCurrentSceneToScope(Scope scope, SceneShortInfo sceneInfo)
