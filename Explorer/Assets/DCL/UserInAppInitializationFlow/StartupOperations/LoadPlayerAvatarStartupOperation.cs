@@ -78,7 +78,7 @@ namespace DCL.UserInAppInitializationFlow
             error switch
             {
                 ProfileReadError.NotFound => EnumResult<TaskError>.ErrorResult(TaskError.MessageError, "Own profile is not deployed at the catalyst", new ProfileNotFoundException()),
-                ProfileReadError.FetchFailed => EnumResult<TaskError>.ErrorResult(TaskError.Timeout, "Own profile could not be fetched from the catalyst"),
+                ProfileReadError.FetchFailed => EnumResult<TaskError>.ErrorResult(TaskError.Timeout, "Own profile could not be fetched from the catalyst", new ProfileFetchFailedException()),
                 ProfileReadError.NoIdentity => EnumResult<TaskError>.ErrorResult(TaskError.MessageError, "Own profile cannot be loaded without an identity"),
                 ProfileReadError.Cancelled => EnumResult<TaskError>.CancelledResult(TaskError.Cancelled),
                 _ => throw new ArgumentOutOfRangeException(nameof(error), error, null),

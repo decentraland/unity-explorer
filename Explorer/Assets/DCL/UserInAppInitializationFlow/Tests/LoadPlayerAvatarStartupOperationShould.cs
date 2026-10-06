@@ -132,6 +132,7 @@ namespace DCL.UserInAppInitializationFlow.Tests
             // Assert
             Assert.IsFalse(result.Success);
             Assert.AreEqual(TaskError.Timeout, result.Error!.Value.State);
+            Assert.IsInstanceOf<ProfileFetchFailedException>(result.Error.Value.Exception, "The flow keeps a failed own-profile step over the LiveKit result by its exception");
         }
 
         [Test]

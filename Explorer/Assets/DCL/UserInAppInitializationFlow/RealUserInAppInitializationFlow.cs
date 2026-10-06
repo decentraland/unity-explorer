@@ -233,8 +233,8 @@ namespace DCL.UserInAppInitializationFlow
                                 }
                                 else
                                 {
-                                    // A missing profile keeps its own error; any other outcome is decided by the LiveKit result
-                                    if (!RequiresReauthentication(operationResult))
+                                    // A failed own-profile step keeps its own error; any other outcome is decided by the LiveKit result
+                                    if (!IsOwnProfileFailure(operationResult))
                                         operationResult = livekitOperationResult;
 
                                     if (operationResult.Success)
@@ -285,6 +285,10 @@ namespace DCL.UserInAppInitializationFlow
         /// <summary>A missing profile is resolved only by signing in again, so the cached identity cannot be retried as is.</summary>
         internal static bool RequiresReauthentication(EnumResult<TaskError> result) =>
             result.Error is { Exception: ProfileNotFoundException };
+
+        /// <summary>The sequence stops at the own-profile step when it fails, so nothing after it ran and the player entity has no profile.</summary>
+        internal static bool IsOwnProfileFailure(EnumResult<TaskError> result) =>
+            result.Error is { Exception: ProfileNotFoundException or ProfileFetchFailedException };
 
         internal static bool LandsAtLaunchDestination(IAppArgs appArgs, IUserInAppInitializationFlow.LoadSource loadSource) =>
             loadSource == IUserInAppInitializationFlow.LoadSource.StartUp && appArgs.HasLaunchDestination();

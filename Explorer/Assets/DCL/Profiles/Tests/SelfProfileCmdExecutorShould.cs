@@ -156,6 +156,7 @@ namespace DCL.Profiles.Tests
             Assert.That(SingleSent().IsFetchSucceeded(out FetchSucceeded msg), Is.True);
             Assert.That(msg.Profile.Avatar.Emotes[0], Is.EqualTo(BASE_EMOTE));
         }
+
         [Test]
         public void MarkTheFetchedProfileAsConnectedWhenTheIdentityIsNotAGuest()
         {

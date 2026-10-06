@@ -47,6 +47,48 @@ namespace DCL.UserInAppInitializationFlow.Tests
             Assert.That(requires, Is.False);
         }
 
+        [TestCase(true)]
+        [TestCase(false)]
+        public void TreatAFailedOwnProfileStepAsAnOwnProfileFailure(bool notFound)
+        {
+            // Arrange
+            EnumResult<TaskError> result = notFound
+                ? EnumResult<TaskError>.ErrorResult(TaskError.MessageError, "Own profile is not deployed at the catalyst", new ProfileNotFoundException())
+                : EnumResult<TaskError>.ErrorResult(TaskError.Timeout, "Own profile could not be fetched from the catalyst", new ProfileFetchFailedException());
+
+            // Act
+            bool failed = RealUserInAppInitializationFlow.IsOwnProfileFailure(result);
+
+            // Assert
+            Assert.That(failed, Is.True);
+        }
+
+        [Test]
+        public void NotTreatAnotherTimeoutAsAnOwnProfileFailure()
+        {
+            // Arrange
+            var result = EnumResult<TaskError>.ErrorResult(TaskError.Timeout, "Teleport timed out");
+
+            // Act
+            bool failed = RealUserInAppInitializationFlow.IsOwnProfileFailure(result);
+
+            // Assert
+            Assert.That(failed, Is.False);
+        }
+
+        [Test]
+        public void KeepTheIdentityWhenTheProfileFetchFailedWithItsException()
+        {
+            // Arrange
+            var result = EnumResult<TaskError>.ErrorResult(TaskError.Timeout, "Own profile could not be fetched from the catalyst", new ProfileFetchFailedException());
+
+            // Act
+            bool requires = RealUserInAppInitializationFlow.RequiresReauthentication(result);
+
+            // Assert
+            Assert.That(requires, Is.False);
+        }
+
         [Test]
         public void KeepTheIdentityOnSuccess()
         {
