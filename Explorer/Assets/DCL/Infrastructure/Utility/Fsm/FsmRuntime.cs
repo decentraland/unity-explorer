@@ -19,7 +19,7 @@ namespace Utility.Fsm
 
         private bool isDraining;
 
-        /// <summary>Snapshot of the current model, readable from any thread; read-only even when <typeparamref name="TModel"/> is a reference type.</summary>
+        /// <summary>The current model, read under the lock from any thread.</summary>
         public TModel ModelSnapshot
         {
             get
