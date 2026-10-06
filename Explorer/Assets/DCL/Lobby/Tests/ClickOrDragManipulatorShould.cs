@@ -195,6 +195,9 @@ namespace DCL.Lobby.Tests
             // Act
             target.ReleasePointer(MOUSE);
 
+            // The panel reports the lost capture to the target while dispatching the next pointer event
+            Move(root, 120f);
+
             // Assert
             Assert.AreEqual(1, dragEnds);
             Assert.AreEqual(0, clicks);
