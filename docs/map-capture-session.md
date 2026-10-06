@@ -93,6 +93,70 @@ will tell whether a scene can be created while the character camera plugin is no
 Known gaps: no neighbouring scenes or roads are loaded around the live scene (the feeder is idle in this
 mode), the wallet API throws into the scene, and billboards face the default camera data.
 
+## Worlds mode (2026-10-06)
+
+`--map-capture-worlds all|<listFile>` captures Decentraland worlds (worlds-content-server realms such as
+`name.dcl.eth`) as satellite tiles on the same grid as Genesis City, so the client can load them from
+`{satelliteUrl}/worlds/{worldName}/{level}/{i},{j}.ktx2`. Not run yet; written without a build.
+
+Grid, generalized from client-map mode (`MapCaptureArgs.TryParseGrid`, `TileOf`, `TileMin`, `TileName`): level L
+splits the 320x320-parcel square whose north-west parcel is `-152,152` into 2^L x 2^L tiles, i eastward, j southward.
+At `--map-capture-level 4` (the worlds default) tile `i,j` covers X `-152+20i..-133+20i`, Y `133-20j..152-20j`; level 3
+is the client-map chunk grid (client-map mode still defaults to it and accepts `--map-capture-level` too). Tiles are
+`--map-capture-tile-px` (default 512) JPEG q95 (`--map-capture-jpeg` changes the quality), rendered 25% larger and
+downscaled like client-map chunks (32 px/parcel at level 4). `--map-capture-chunk` loads each tile in parts (default 20,
+so one load per level-4 tile; must divide the tile); the 300x300 worlds therefore never have more than 400 parcels
+resident.
+
+One process captures every world (`MapCaptureWorldsJob`): boot once without Genesis City (no Genesis realm or terrain),
+then per world:
+
+1. `MapCaptureRealm.ConfigureWorldAsync`: GET `{WorldServer}/{name}/about`, world manifest from
+   `{AssetBundleRegistry}/worlds/{name}/manifest` through the client's `WorldManifestProvider` (404 or a non-`dcl.eth`
+   name gives `WorldManifest.Empty`), `RealmData.Reconfigure` exactly like `RealmController.SetRealmExclusiveAsync`, so
+   the realm kind becomes World. The previous world's manifest is disposed. The world's `skybox.fixedHour` is not applied;
+   `--map-capture-hour` holds for every world.
+2. `MapCaptureSceneFeeder.RequestWorldDefinitions`: the client's `LoadFixedPointersSystem` logic. With a manifest, the
+   occupied parcels are posted to `WorldEntitiesActive` (`{AssetBundleRegistry}/entities/active?world_name={name}`) in
+   batches of 1000 (the client posts them all at once); without one, one `GetSceneDefinition` per `scenesUrn` against
+   `WorldContentServer` (`LoadSceneDefinitionSystem` is now in the capture world for this). Both loaders apply the AB
+   manifest fallback, so the ISS gate sees a manifest version. Any failed definition request fails the world.
+3. Terrain: `Landscape.LoadTerrainAsync` unchanged. `MapCaptureRealmController.WaitForFixedScenePromisesAsync` now
+   returns the feeder's resolved definitions, so the client's `GenerateFixedScenesTerrainAsync` builds the world terrain
+   from the manifest's occupied parcels (or the union of scene parcels) and hides Genesis's. A single scene with
+   `landscapeTerrain: false` gets no terrain, as in the client.
+4. Tiles: every level-L tile any world parcel touches, rendered with `MapCaptureJob.RenderBlockInPartsAsync` (the
+   client-map loads-per-block path factored out). Requests are answered from the resolved definitions; parcels no scene
+   claims are empty and ready at once. Outside the world's parcels the image shows what the client would: world terrain,
+   ocean, cliffs, trees. A load of only empty parcels skips the cache flush.
+5. Cleanup: definitions cleared, scenes unloaded, `CacheCleaner` + `Resources.UnloadUnusedAssets` as per chunk.
+
+Gated on `realmData.IsGenesis()` like the client: roads, `limitHeightByParcels`, and the IpfsPath base (`Content` vs
+`WorldContentServer`). ISS LOD_0 works unchanged: descriptor and bundle URLs depend only on the scene id. The ISS
+requirement holds: a world scene without a descriptor (SDK6 scenes, which the client only runs live) fails fast and is
+listed in `failedParcels`.
+
+Output: `<out>/worlds/<name>/<level>/<i>,<j>.jpg`, `<out>/worlds/<name>/manifest.json` (status
+`inProgress|complete|skipped|failed`, scenes, parcels, `parcelsWithoutScene`, tiles with `pendingParcels`/`failedParcels`
+and seconds, totals, `allScenesLoaded`, timings for realm/definitions/terrain/tiles), and `<out>/worlds/run-summary.json`
+rewritten after every world. Resumable: a world whose manifest says `complete` or `skipped` is skipped; an `inProgress`
+or `failed` world is redone, keeping tiles its manifest already lists. Delete a world's folder to force it. A world with
+any parcel outside the grid (one today, `neverlandranch.dcl.eth`) is `skipped` with a reason. A failure (realm,
+definitions, terrain, timeout, exception) marks the world `failed` with the error and the run continues; the exit code
+is 1 if any world failed or any tile has pending or failed parcels.
+
+Index facts checked 2026-10-06 (`GET https://worlds-content-server.decentraland.org/index` with a browser user agent):
+1671 worlds, 115 of them not `*.dcl.eth` (no registry manifest by construction, so the URN path), 4266 level-4 tiles in
+the grid, the largest worlds 90,000 parcels (bitfiend, excitedhamsters, ontherise) and 12,855 (worldtrack). The abgen
+registry answers both `/worlds/{name}/manifest` and `/entities/active?world_name=` with Windows versions.
+
+`scripts/map_worlds_ktx2.py` converts `<out>/worlds/*/<level>/*.jpg` into a mirrored KTX2 tree with the same toktx
+arguments and bottom-row-first orientation as `map_pyramid_ktx2.py` (it imports them), only for worlds whose manifest is
+`complete` unless `--include-incomplete`, resumable.
+
+Fallback not needed so far: if switching realms in one process turns out unsafe, a PowerShell loop running the build
+once per world with a one-line list file gives the same layout, since every world is resumable on its own.
+
 ## Decisions taken (do not relitigate)
 
 - Parity is non-negotiable: reuse the client's rendering, LOD assembly, terrain, roads and skybox
@@ -192,7 +256,10 @@ mode), the wallet API throws into the scene, and billboards face the default cam
 3. Full run from the build without a region flag. Hours, dominated by download and assembly.
    Optionally split with two region flags across two runs.
 4. Night pass: same with `--map-capture-hour 23` and another output dir; nothing to download.
-5. Before the PR is opened: remove the `[JUANI]` logs, decide whether the 0.1 scene lift and the -0.05 flat ground stay in
+5. Worlds at level 4: build, then run the worlds command in `docs/map-capture-handover.md` ("Worlds from a build"),
+   first with a two-line list file (a small `dcl.eth` world with a manifest and a non-`dcl.eth` one) to check the realm
+   switch, terrain and tiles, then `all`. Convert with `scripts/map_worlds_ktx2.py`.
+6. Before the PR is opened: remove the `[JUANI]` logs, decide whether the 0.1 scene lift and the -0.05 flat ground stay in
    the client, review the `WorldManifest`, `InitialSceneStateLOD`, `InstantiateSceneLODInfoSystem`
    and `CinemachineExtensions` changes as client-facing, and do not commit editor noise (see the
    last section of `docs/map-capture-handover.md`).

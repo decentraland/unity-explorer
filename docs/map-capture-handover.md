@@ -134,6 +134,43 @@ about 28 GB as PNG and several times smaller as JPEG 95. `-logFile` still goes f
 Explorer.exe -logFile <LOG> --map-capture-region -152,-167,167,152 --map-capture-block 8 --map-capture-ppp 512 --map-capture-chunk 16 --map-capture-jpeg --map-capture-out <OUTPUT_DIR> --map-capture-cache <CACHE_DIR> --map-capture-hour 10 --map-capture-timeout 600
 ```
 
+## Worlds from a build
+
+`--map-capture-worlds` captures Decentraland worlds on the same satellite grid as Genesis City, one world after another
+in a single process, at level 4 by default (20x20-parcel tiles, 512 px JPEG q95). Details and design are in
+`docs/map-capture-session.md` ("Worlds mode").
+
+Build (PowerShell; also builds addressables; the exe lands in `Explorer\Builds\MapCapture\`):
+
+```
+& "C:\Program Files\Unity\Hub\Editor\6000.5.9f1\Editor\Unity.exe" -batchmode -quit -projectPath C:\Users\juani\Documents\Decentraland\unity-explorer\Explorer -executeMethod Editor.MapCaptureBuild.Build -logFile C:\MapCapture\build.log
+```
+
+Run every world in the worlds content server's index (`-logFile` first; its folder must exist):
+
+```
+New-Item -ItemType Directory -Force C:\MapCapture\Worlds-L4-Day
+C:\Users\juani\Documents\Decentraland\unity-explorer\Explorer\Builds\MapCapture\MapCapture.exe -logFile C:\MapCapture\Worlds-L4-Day\capture.log --map-capture-worlds all --map-capture-level 4 --map-capture-tile-px 512 --map-capture-out C:\MapCapture\Worlds-L4-Day --map-capture-cache D:\MapCapture\ABCache --map-capture-hour 10 --map-capture-timeout 600
+```
+
+Replace `all` with the path of a text file holding one world name per line (`#` starts a comment) to capture only
+those, e.g. for a first check. Follow the run with `Select-String '\[MapCapture\]' C:\MapCapture\Worlds-L4-Day\capture.log`:
+one line per world started and finished, one per tile written.
+
+Output is `C:\MapCapture\Worlds-L4-Day\worlds\<name>\4\<i>,<j>.jpg`, a `manifest.json` per world and
+`worlds\run-summary.json`. If the run crashes, run the same command again: worlds whose manifest says `complete` or
+`skipped` are not redone, and tiles a half-done world already wrote are kept. Delete a world's folder to redo it.
+`--map-capture-chunk 10` loads each tile in four parts if the GPU runs out of memory.
+
+Convert to KTX2 for the client (`{satelliteUrl}/worlds/{worldName}/{level}/{i},{j}.ktx2`):
+
+```
+python scripts\map_worlds_ktx2.py C:\MapCapture\Worlds-L4-Day C:\MapCapture\Worlds-L4-Day-KTX2 --toktx C:\MapCapture\tools\ktx\bin\toktx.exe
+```
+
+In the editor, set "Editor Worlds" on the `MapCapture` object to `all` or a list file (and optionally "Editor Level" and
+"Editor Tile Pixels"); the other editor fields apply as for Genesis City.
+
 ## Do not commit editor noise
 
 Unity creates files when the project opens that must not be committed: anything under
