@@ -86,7 +86,8 @@ namespace DCL.Profiles.Tests
             // Assert
             Assert.That(SingleSent().IsFetchSucceeded(out FetchSucceeded msg), Is.True);
             Assert.That(msg.Address, Is.EqualTo(ALICE));
-            Assert.That(msg.Profile, Is.SameAs(fetched));
+            Assert.That(msg.Profile, Is.Not.SameAs(fetched), "the cache owns the fetched instance");
+            Assert.That(msg.Profile.IsSameProfile(fetched), Is.True);
         }
 
         [Test]
@@ -145,7 +146,8 @@ namespace DCL.Profiles.Tests
             executor.Execute(SelfProfileCmd.FromFetch(ALICE), inbox);
 
             // Assert
-            Assert.That(fetched.Avatar.Emotes[0], Is.EqualTo(BASE_EMOTE));
+            Assert.That(SingleSent().IsFetchSucceeded(out FetchSucceeded msg), Is.True);
+            Assert.That(msg.Profile.Avatar.Emotes[0], Is.EqualTo(BASE_EMOTE));
         }
 
         [Test]
@@ -162,7 +164,9 @@ namespace DCL.Profiles.Tests
 
             // Assert
             // Has.Member, not Does.Contain: URN converts to string implicitly and would be compared as a substring.
-            Assert.That(fetched.Avatar.Wearables, Has.Member(FORCED_WEARABLE));
+            Assert.That(SingleSent().IsFetchSucceeded(out FetchSucceeded msg), Is.True);
+            Assert.That(msg.Profile.Avatar.Wearables, Has.Member(FORCED_WEARABLE));
+            Assert.That(fetched.Avatar.Wearables, Has.No.Member(FORCED_WEARABLE), "the cached instance is left as fetched");
         }
 
         [Test]
@@ -269,8 +273,29 @@ namespace DCL.Profiles.Tests
             // Assert
             profileCache.Received(1).Set(ALICE.Value, Arg.Any<ProfileTier>());
             Assert.That(cached.IsFull(out Profile? full), Is.True);
-            Assert.That(full, Is.SameAs(published));
+            Assert.That(full, Is.Not.SameAs(published), "the cache disposes what it replaces, so it gets a copy");
+            Assert.That(full!.IsSameProfile(published), Is.True);
             Assert.That(inbox.Sent, Is.Empty);
+        }
+
+        [Test]
+        public void KeepThePublishedProfileIntactWhenTheCacheReplacesIt()
+        {
+            // Arrange
+            // The real cache disposes the instance a later write replaces, as the repository does on every catalyst read.
+            var cache = new DefaultProfileCache();
+            executor.Dispose();
+            profileCache = cache;
+            executor = NewExecutor(new ForcedWearables());
+            Profile published = Profile.NewRandomProfile(ALICE.Value);
+            published.ClearLinks();
+
+            // Act
+            executor.Execute(SelfProfileCmd.FromPublish(published), inbox);
+            cache.Set(ALICE.Value, Profile.NewRandomProfile(ALICE.Value));
+
+            // Assert
+            Assert.That(published.Links, Is.Not.Null, "the profile the model keeps must not be the instance the cache disposed");
         }
 
         [Test]
@@ -284,8 +309,9 @@ namespace DCL.Profiles.Tests
             executor.Execute(SelfProfileCmd.FromPublish(published), inbox);
 
             // Assert
-            Assert.That(world.Get<Profile>(playerEntity), Is.SameAs(published));
-            Assert.That(published.IsDirty, Is.True);
+            Profile onEntity = world.Get<Profile>(playerEntity);
+            Assert.That(onEntity.IsSameProfile(published), Is.True);
+            Assert.That(onEntity.IsDirty, Is.True);
         }
 
         [Test]
@@ -310,12 +336,13 @@ namespace DCL.Profiles.Tests
             executor.Execute(SelfProfileCmd.FromDeploy(new DeployCmd(ALICE, sent, sent.Version)), inbox);
 
             // Assert
-            profileRepository.Received(1).SetAsync(sent, Arg.Any<CancellationToken>());
+            profileRepository.Received(1).SetAsync(Arg.Is<Profile>(deployed => !ReferenceEquals(deployed, sent) && deployed.IsSameProfile(sent)), Arg.Any<CancellationToken>());
             Assert.That(sent.UserId, Is.EqualTo(ALICE), "the deployed profile is stamped with the address");
             Assert.That(SingleSent().IsDeploySucceeded(out DeploySucceeded msg), Is.True);
             Assert.That(msg.Address, Is.EqualTo(ALICE));
             Assert.That(msg.Sent, Is.SameAs(sent));
-            Assert.That(msg.Saved, Is.SameAs(saved));
+            Assert.That(msg.Saved, Is.Not.SameAs(saved), "the cache owns the re-read instance");
+            Assert.That(msg.Saved.IsSameProfile(saved), Is.True);
         }
 
         [Test]

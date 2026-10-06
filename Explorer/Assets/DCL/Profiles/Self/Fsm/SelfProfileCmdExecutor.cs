@@ -121,8 +121,9 @@ namespace DCL.Profiles.Self
                     return;
                 }
 
-                ApplySessionOverrides(profile);
-                inbox.Send(SelfProfileMsg.FromFetchSucceeded(new FetchSucceeded(address, profile)));
+                Profile fetched = Copy(profile);
+                ApplySessionOverrides(fetched);
+                inbox.Send(SelfProfileMsg.FromFetchSucceeded(new FetchSucceeded(address, fetched)));
             }
             catch (OperationCanceledException) when (ct.IsCancellationRequested) { }
             catch (Exception e)
@@ -149,11 +150,17 @@ namespace DCL.Profiles.Self
                     profile.Avatar.emotes[slot] = emoteStorage.BaseEmotesUrns[slot];
         }
 
+        /// <summary>Publishes a copy, so the instance the model keeps is never the one the cache disposes when it is replaced.</summary>
         private void Publish(Profile profile)
         {
-            profileCache.Set(profile.UserId.Value, profile);
-            UpdateAvatarInWorld(profile);
+            Profile published = Copy(profile);
+            profileCache.Set(published.UserId.Value, published);
+            UpdateAvatarInWorld(published);
         }
+
+        /// <summary>The cache and the repository own the instances they are given or return; the model keeps a copy of its own.</summary>
+        private static Profile Copy(Profile profile) =>
+            new ProfileBuilder().From(profile).Build();
 
         private void UpdateAvatarInWorld(Profile profile)
         {
@@ -191,7 +198,7 @@ namespace DCL.Profiles.Self
         {
             try
             {
-                await profileRepository.SetAsync(sent, ct);
+                await profileRepository.SetAsync(Copy(sent), ct);
 
                 // The catalyst rewrites some fields on deploy, such as the profile picture url, so the saved profile is re-read.
                 Profile? saved = await profileRepository.GetAsync(address.Value, sent.Version, null, ct,
@@ -201,7 +208,7 @@ namespace DCL.Profiles.Self
                 if (saved == null)
                     throw new ProfileNotFoundAfterDeployException(address, sent.Version);
 
-                inbox.Send(SelfProfileMsg.FromDeploySucceeded(new DeploySucceeded(address, sent, saved)));
+                inbox.Send(SelfProfileMsg.FromDeploySucceeded(new DeploySucceeded(address, sent, Copy(saved))));
             }
             catch (OperationCanceledException) when (ct.IsCancellationRequested) { }
             catch (Exception e)
