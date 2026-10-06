@@ -93,15 +93,15 @@ namespace DCL.Profiles.Self
             );
 
         /// <summary>
-        ///     A read is answered at once from settled knowledge; otherwise it waits on the fetch in flight, or starts one
-        ///     when nothing is in flight, which is the one refetch after a failed fetch.
+        ///     A read is answered at once from settled knowledge, which a missing profile is not while its first deploy is in flight;
+        ///     otherwise it waits on the fetch or deploy in flight, or starts a fetch when nothing is in flight, which is the one refetch after a failed fetch.
         /// </summary>
         private static (SelfProfileModel, SelfProfileCmd) Read(in SelfProfileModel model, in Identified current, RequestId id)
         {
             if (current.Knowledge.IsKnown(out Profile? known))
                 return (model.WithReadResult(id, ProfileReadResult.FromOk(known)), SelfProfileCmd.None());
 
-            if (current.Knowledge.IsMissing())
+            if (current.Knowledge.IsMissing() && !current.Activity.IsDeploying(out _))
                 return (model.WithReadResult(id, ProfileReadResult.FromError(ProfileReadError.NotFound)), SelfProfileCmd.None());
 
             Identified queued = current.WithPendingReads(current.PendingReads.Add(id));
@@ -171,11 +171,29 @@ namespace DCL.Profiles.Self
 
         private static (SelfProfileModel, SelfProfileCmd) OnDeploySucceeded(in SelfProfileModel model, in DeploySucceeded msg)
         {
-            if (StaleDeployReason(model, msg.Address, msg.Sent, out Identified current, out Deploying deploying) is { } reason)
+            string? reason = StaleDeployReason(model, msg.Address, msg.Sent, out Identified current, out Deploying deploying);
+
+            if (ReferenceEquals(reason, DEPLOY_SUPERSEDED))
+                return SaveSupersededDeploy(model, current, deploying, msg.Saved);
+
+            if (reason != null)
                 return Ignored(model, reason);
 
             SelfProfileModel answered = model.WithDeployResults(deploying.Requests, ProfileDeployResult.FromOk(msg.Saved));
             return SettleReads(answered, current.With(ProfileKnowledge.FromKnown(msg.Saved), ProfileActivity.Idle()), SelfProfileCmd.FromPublish(msg.Saved));
+        }
+
+        /// <summary>
+        ///     A superseded deploy the catalyst saved becomes the revert point when it is newer than the current one,
+        ///     so a failure of the deploy in flight does not roll back past it.
+        /// </summary>
+        private static (SelfProfileModel, SelfProfileCmd) SaveSupersededDeploy(in SelfProfileModel model, in Identified current, in Deploying deploying, Profile saved)
+        {
+            if (deploying.Before.IsKnown(out Profile? before) && before.Version >= saved.Version)
+                return Ignored(model, DEPLOY_SUPERSEDED);
+
+            var advanced = new Deploying(deploying.Pending, CopyOf(ProfileKnowledge.FromKnown(saved)), deploying.Requests);
+            return (model.WithSession(SelfProfileSession.FromIdentified(current.WithActivity(ProfileActivity.FromDeploying(advanced)))), SelfProfileCmd.None());
         }
 
         private static (SelfProfileModel, SelfProfileCmd) OnDeployFailed(in SelfProfileModel model, in DeployFailed msg)

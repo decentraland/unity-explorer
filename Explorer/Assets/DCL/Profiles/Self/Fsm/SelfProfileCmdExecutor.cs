@@ -170,9 +170,8 @@ namespace DCL.Profiles.Self
         {
             Profile sent = deploy.Profile;
             sent.UserId = deploy.Address;
-            sent.Version = deploy.Version;
 
-            // A faking or previewing session never deploys what it fakes; the edit is reported as sent.
+            // A faking or previewing session never deploys what it fakes; the edit is reported as sent and keeps the deployed version.
             if (forcedWearables.Any || forcedEmotes?.Count > 0 || skipCatalystDeploy)
             {
                 activity.SafeCancelAndDispose();
@@ -183,6 +182,7 @@ namespace DCL.Profiles.Self
                 return;
             }
 
+            sent.Version = deploy.Version;
             activity ??= new CancellationTokenSource();
             DeployAsync(deploy.Address, sent, inbox, activity.Token).Forget();
         }

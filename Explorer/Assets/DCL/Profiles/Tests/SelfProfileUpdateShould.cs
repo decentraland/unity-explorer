@@ -457,7 +457,65 @@ namespace DCL.Profiles.Tests
 
             // Act & Assert
             AssertUnchanged(model, SelfProfileMsg.FromDeployFailed(new DeployFailed(ALICE, superseded, DEPLOY_ERROR)));
+        }
+
+        [Test]
+        public void DropASupersededDeployOlderThanTheRevertPoint()
+        {
+            // Arrange
+            Profile superseded = NewProfile(4);
+            Profile pending = NewProfile(6);
+            SelfProfileModel model = Deploying(pending, ProfileKnowledge.FromKnown(NewProfile(5)));
+
+            // Act & Assert
             AssertUnchanged(model, SelfProfileMsg.FromDeploySucceeded(new DeploySucceeded(ALICE, superseded, NewProfile(4))));
+        }
+
+        [Test]
+        public void RevertToASupersededDeployTheCatalystSavedWhenTheNewerDeployFails()
+        {
+            // Arrange
+            Profile superseded = NewProfile(6);
+            Profile saved = NewProfile(6);
+            Profile pending = NewProfile(7);
+            SelfProfileModel model = Deploying(pending, ProfileKnowledge.FromKnown(NewProfile(5)), DEPLOY);
+
+            // Act
+            (SelfProfileModel advanced, SelfProfileCmd advanceCmd) = SelfProfileModel.Update(model, SelfProfileMsg.FromDeploySucceeded(new DeploySucceeded(ALICE, superseded, saved)));
+            (SelfProfileModel next, SelfProfileCmd cmd) = SelfProfileModel.Update(advanced, SelfProfileMsg.FromDeployFailed(new DeployFailed(ALICE, pending, DEPLOY_ERROR)));
+
+            // Assert
+            Assert.That(advanceCmd.GetKind(), Is.EqualTo(SelfProfileCmd.Kind.None));
+            Deploying deploying = AssertDeploying(AssertIdentified(advanced).Activity, pending);
+            AssertCopyOf(deploying.Before, saved);
+            Assert.That(deploying.Requests.Count, Is.EqualTo(1), "the requests stay with the deploy in flight");
+
+            Identified identified = AssertIdentified(next);
+            AssertCopyOf(identified.Knowledge, saved);
+            Assert.That(identified.Activity.GetKind(), Is.EqualTo(ProfileActivity.Kind.Idle));
+            Assert.That(cmd.IsPublish(out Profile? republished), Is.True, $"expected Publish, got {cmd}");
+            Assert.That(republished!.Version, Is.EqualTo(saved.Version));
+            AssertDeployError(next, DEPLOY, ProfileDeployError.DeployFailed);
+        }
+
+        [Test]
+        public void AnswerPendingDeploysWithNoIdentityWhenIdentitySwitches()
+        {
+            // Arrange
+            SelfProfileModel model = Deploying(NewProfile(4), ProfileKnowledge.FromKnown(NewProfile(3)), DEPLOY);
+
+            // Act
+            (SelfProfileModel next, SelfProfileCmd cmd) = SelfProfileModel.Update(model, SelfProfileMsg.FromIdentityChanged(BOB));
+
+            // Assert
+            Identified identified = AssertIdentified(next);
+            Assert.That(identified.Address, Is.EqualTo(BOB));
+            Assert.That(identified.Activity.GetKind(), Is.EqualTo(ProfileActivity.Kind.Fetching));
+            AssertDeployError(next, DEPLOY, ProfileDeployError.NoIdentity);
+
+            SelfProfileCmd[] batch = AssertBatch(cmd, 2);
+            Assert.That(batch[0].GetKind(), Is.EqualTo(SelfProfileCmd.Kind.ResetLocalState));
+            AssertFetch(batch[1], BOB);
         }
 
         [Test]
@@ -530,6 +588,24 @@ namespace DCL.Profiles.Tests
             Assert.That(next.Session, Is.EqualTo(model.Session));
             Assert.That(cmd.GetKind(), Is.EqualTo(SelfProfileCmd.Kind.None));
             AssertReadError(next, READ, ProfileReadError.NotFound);
+        }
+
+        [Test]
+        public void QueueAReadWhileTheFirstProfileIsDeploying()
+        {
+            // Arrange
+            Profile created = NewProfile(1);
+            SelfProfileModel model = Deploying(created, ProfileKnowledge.Missing());
+
+            // Act
+            (SelfProfileModel queued, SelfProfileCmd cmd) = SelfProfileModel.Update(model, SelfProfileMsg.FromProfileReadRequested(READ));
+            (SelfProfileModel next, _) = SelfProfileModel.Update(queued, SelfProfileMsg.FromDeploySucceeded(new DeploySucceeded(ALICE, created, created)));
+
+            // Assert
+            Assert.That(cmd.GetKind(), Is.EqualTo(SelfProfileCmd.Kind.None));
+            Assert.That(AssertIdentified(queued).PendingReads.Count, Is.EqualTo(1));
+            Assert.That(AssertReadResult(next, READ).IsOk(out Profile? actual), Is.True);
+            Assert.That(actual, Is.SameAs(created));
         }
 
         [Test]

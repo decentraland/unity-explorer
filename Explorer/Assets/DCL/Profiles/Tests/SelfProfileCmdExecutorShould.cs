@@ -440,13 +440,14 @@ namespace DCL.Profiles.Tests
             Profile sent = NewProfile(ALICE, 4);
 
             // Act
-            executor.Execute(SelfProfileCmd.FromDeploy(new DeployCmd(ALICE, sent, sent.Version)), inbox);
+            executor.Execute(SelfProfileCmd.FromDeploy(new DeployCmd(ALICE, sent, sent.Version + 1)), inbox);
 
             // Assert
             profileRepository.DidNotReceiveWithAnyArgs().SetAsync(default!, default);
             Assert.That(SingleSent().IsDeploySucceeded(out DeploySucceeded msg), Is.True);
             Assert.That(msg.Sent, Is.SameAs(sent));
             Assert.That(msg.Saved, Is.SameAs(sent));
+            Assert.That(sent.Version, Is.EqualTo(4), "a version the catalyst never received must not be announced");
         }
 
         [Test]

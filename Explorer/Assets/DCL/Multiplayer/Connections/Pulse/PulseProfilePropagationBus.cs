@@ -10,7 +10,7 @@ namespace DCL.Multiplayer.Connections.Pulse
     {
         private readonly IPulseMultiplayerService service;
 
-        private Profile? lastAnnounced;
+        private UserId? lastAnnouncedUserId;
         private int lastAnnouncedVersion;
 
         public PulseProfilePropagationBus(IPulseMultiplayerService service)
@@ -18,13 +18,13 @@ namespace DCL.Multiplayer.Connections.Pulse
             this.service = service;
         }
 
-        /// <summary>Announces the profile version once; the same instance at the same version is not sent again.</summary>
+        /// <summary>Announces each user's profile version once; a copy at an announced version is not sent again.</summary>
         public void PropagateIfNewVersion(Profile profile)
         {
-            if (!service.IsAuthenticated || (ReferenceEquals(profile, lastAnnounced) && profile.Version == lastAnnouncedVersion))
+            if (!service.IsAuthenticated || (profile.Version == lastAnnouncedVersion && profile.UserId.Equals(lastAnnouncedUserId)))
                 return;
 
-            lastAnnounced = profile;
+            lastAnnouncedUserId = profile.UserId;
             lastAnnouncedVersion = profile.Version;
 
             var message = OutgoingMessage.Create(PacketMode.RELIABLE, ClientMessage.MessageOneofCase.ProfileAnnouncement);

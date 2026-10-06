@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DCL.Diagnostics;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using System;
@@ -29,12 +28,8 @@ namespace DCL.Passport
                 return;
             }
 
-            if (deploy.IsFailure(out ProfileDeployError error))
-            {
-                const string ERROR_MESSAGE = "There was an error while trying to update your profile info. Please try again!";
+            if (deploy.IsFailure(out _))
                 PublishError?.Invoke();
-                ReportHub.LogError(ReportCategory.PROFILE, $"{ERROR_MESSAGE} ERROR: {error}");
-            }
         }
     }
 }

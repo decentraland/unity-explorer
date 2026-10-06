@@ -230,11 +230,8 @@ namespace DCL.Backpack
 
                     if (error == ProfileDeployError.NothingChanged)
                         ReportHub.LogWarning(ReportCategory.PROFILE, "Profile update skipped - no changes detected");
-                    else
-                    {
-                        ReportHub.LogError(ReportCategory.PROFILE, $"Profile deploy failed: {error}");
+                    else if (error == ProfileDeployError.DeployFailed)
                         ShowErrorNotificationAsync(ct).Forget();
-                    }
                 }
             }
             catch (OperationCanceledException) { }

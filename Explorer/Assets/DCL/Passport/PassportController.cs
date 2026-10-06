@@ -610,8 +610,6 @@ namespace DCL.Passport
 
                 if (deploy.IsOk(out Profile? updatedProfile))
                     profileChangesBus.PushUpdate(updatedProfile);
-                else if (deploy.IsFailure(out ProfileDeployError error))
-                    ReportHub.LogError(ReportCategory.PROFILE, $"Claimed name color deploy failed: {error}");
             }
         }
 
