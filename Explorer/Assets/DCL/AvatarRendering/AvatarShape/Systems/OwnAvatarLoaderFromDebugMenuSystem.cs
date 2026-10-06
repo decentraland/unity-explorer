@@ -6,6 +6,7 @@ using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Diagnostics;
 using DCL.Profiles;
+using DCL.Profiles.Helpers;
 using ECS;
 using ECS.Abstract;
 using System.Threading;
@@ -21,9 +22,6 @@ namespace DCL.AvatarRendering.AvatarShape
         private readonly DebugWidgetVisibilityBinding? widgetVisibility;
         private readonly IProfileRepository profileRepository;
 
-
-        private CancellationTokenSource? fetchProfileCancellationToken;
-
         public OwnAvatarLoaderFromDebugMenuSystem(
             World world,
             Entity ownPlayerEntity,
@@ -38,7 +36,7 @@ namespace DCL.AvatarRendering.AvatarShape
 
             debugContainerBuilder.TryAddWidget("Profile: Avatar Shape")
                                  ?.SetVisibilityBinding(widgetVisibility = new DebugWidgetVisibilityBinding(false))
-                                 .AddStringFieldWithConfirmation("0x..", "Set Address", profileId => UpdateProfileForOwnAvatarAsync(profileId).Forget());
+                                 .AddStringFieldWithConfirmation("0x..", "Set Address", profileId => UpdateProfileForOwnAvatarAsync(profileId).Forget(static e => ReportHub.LogException(e, ReportCategory.AVATAR)));
         }
 
         protected override void Update(float t)
@@ -52,14 +50,8 @@ namespace DCL.AvatarRendering.AvatarShape
 
             Profile? fetched = await profileRepository.GetAsync(profileId, VERSION, CancellationToken.None);
 
-            if (fetched == null || !World.TryGet(ownPlayerEntity, out Profile? replaced))
-                return;
-
-            // The entity owns its instance: the fetched one belongs to the cache, and the one replaced is released.
-            Profile onEntity = new ProfileBuilder().From(fetched).Build();
-            onEntity.IsDirty = true;
-            World.Set(ownPlayerEntity, onEntity);
-            replaced?.Dispose();
+            if (fetched != null)
+                ProfileUtils.ReplaceOnEntity(World, ownPlayerEntity, fetched);
         }
     }
 }

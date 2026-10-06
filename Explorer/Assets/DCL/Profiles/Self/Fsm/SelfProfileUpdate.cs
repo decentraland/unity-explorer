@@ -167,7 +167,7 @@ namespace DCL.Profiles.Self
             if (!before.IsKnown(out _))
                 return (model.WithSession(SelfProfileSession.FromIdentified(current.With(before, deploying))), deploy);
 
-            // The deploy runs first: it stamps the new version on the edit, so the published copies carry it.
+            // The deploy precedes the publish, so a version stamped on the edit by the deploy reaches the published copies.
             return (model.WithSession(SelfProfileSession.FromIdentified(current.With(ProfileKnowledge.FromKnown(edited), deploying))),
                 SelfProfileCmd.FromBatch(new[] { deploy, SelfProfileCmd.FromPublish(edited) }));
         }

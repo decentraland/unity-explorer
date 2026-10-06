@@ -44,6 +44,27 @@ namespace DCL.Profiles.Helpers
                 partitionComponent);
         }
 
+        /// <summary>
+        ///     The entity owns its instance: a copy of <paramref name="profile"/> replaces the current one, takes over its picture and
+        ///     starts its own download, and the replaced one is disposed. An entity without a profile is left untouched.
+        /// </summary>
+        public static void ReplaceOnEntity(World world, Entity entity, Profile profile)
+        {
+            // Set throws on an entity without the component.
+            if (!world.TryGet(entity, out Profile? replaced))
+                return;
+
+            Profile onEntity = new ProfileBuilder().From(profile).Build();
+
+            if (replaced != null)
+                DefaultProfileCache.InheritDynamicState(replaced, onEntity);
+
+            onEntity.IsDirty = true;
+            world.Set(entity, onEntity);
+            CreateProfilePicturePromise(onEntity, world, PartitionComponent.TOP_PRIORITY);
+            replaced?.Dispose();
+        }
+
         // Consume-first handles the late-completion race: finished downloads must dispose of the asset manually; otherwise ForgetLoading cancels cleanly.
         private static void CancelPromise(World world, Promise promise)
         {

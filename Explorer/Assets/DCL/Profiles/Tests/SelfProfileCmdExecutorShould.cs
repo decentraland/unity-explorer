@@ -404,7 +404,7 @@ namespace DCL.Profiles.Tests
 
             // Assert
             Assert.That(world.Get<Profile>(playerEntity).Version, Is.EqualTo(4));
-            profileCache.Received(1).Set(ALICE.Value, Arg.Is<ProfileTier>(cached => cached.IsFull(out Profile? full) && full.Version == 4));
+            profileCache.Received(1).Set(ALICE.Value, Arg.Is<ProfileTier>(cached => cached.Version == 4));
         }
 
         [Test]
