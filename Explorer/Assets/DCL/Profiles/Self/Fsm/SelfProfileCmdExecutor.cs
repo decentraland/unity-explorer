@@ -17,10 +17,9 @@ using Utility.Fsm;
 namespace DCL.Profiles.Self
 {
     /// <summary>
-    ///     Performs the commands of the self-profile FSM and reports their outcomes as messages. A new fetch cancels the
-    ///     activity in flight; a new deploy shares its token and never cancels a deploy in flight.
-    ///     <c>ResetLocalState</c> and <c>Dispose</c> cancel any activity. A cancelled IO reports nothing; any other
-    ///     failure, cancellations raised elsewhere included, is reported to Sentry and to the model.
+    ///     Performs the self-profile FSM commands and reports outcomes as messages. A fetch cancels the activity in flight; a deploy
+    ///     never cancels a deploy in flight; <c>ResetLocalState</c> and <c>Dispose</c> cancel any. A cancelled IO reports nothing;
+    ///     any other failure is logged and sent as a failure message.
     /// </summary>
     public class SelfProfileCmdExecutor : ICmdExecutor<SelfProfileCmd, SelfProfileMsg>
     {
@@ -114,7 +113,7 @@ namespace DCL.Profiles.Self
         {
             try
             {
-                // Not the suppressing overload: a failure must reach the model as a failure, not as an absent profile.
+                // Not the suppressing overload, so a failure is sent as FetchFailed rather than FetchNotFound.
                 // Bypasses the cache, which can hold a published edit the catalyst never confirmed.
                 Profile? profile = await profileRepository.GetAsync(address.Value, 0, null, ct,
                     getFromCacheIfPossible: false,
@@ -160,7 +159,7 @@ namespace DCL.Profiles.Self
                     profile.Avatar.emotes[slot] = emoteStorage.BaseEmotesUrns[slot];
         }
 
-        /// <summary>The cache and the player entity each get their own copy, so neither disposes the other's instance or the one the model keeps.</summary>
+        /// <summary>The cache and the player entity each get their own copy, so neither shares an instance with the other or with the given profile.</summary>
         private void Publish(Profile profile)
         {
             Profile cached = Copy(profile);
@@ -168,7 +167,7 @@ namespace DCL.Profiles.Self
             ProfileUtils.ReplaceOnEntity(world, playerEntity, profile);
         }
 
-        /// <summary>The cache and the repository own the instances they are given or return; the model keeps a copy of its own.</summary>
+        /// <summary>An independent instance, since the cache and the repository own the instances they are given or return.</summary>
         private static Profile Copy(Profile profile) =>
             new ProfileBuilder().From(profile).Build();
 
@@ -177,7 +176,7 @@ namespace DCL.Profiles.Self
             Profile sent = deploy.Profile;
             sent.UserId = deploy.Address;
 
-            // A faking or previewing session never deploys what it fakes; the edit is reported as sent and keeps the deployed version.
+            // A faking or previewing session never deploys what it fakes: the edit is reported as saved, without a new version.
             if (forcedWearables.Any || forcedEmotes?.Count > 0 || skipCatalystDeploy)
             {
                 activity.SafeCancelAndDispose();

@@ -26,10 +26,7 @@ namespace DCL.Profiles.Self
             $"#{Value}";
     }
 
-    /// <summary>
-    ///     Inline list of up to <see cref="CAPACITY"/> requests waiting on the same activity; it never allocates and its
-    ///     default value is empty. Adding to a full list drops the oldest request.
-    /// </summary>
+    /// <summary>Non-allocating inline list of up to <see cref="CAPACITY"/> waiting requests; a full list drops the oldest.</summary>
     public readonly struct RequestIds : IEquatable<RequestIds>
     {
         public const int CAPACITY = Block8<RequestId>.CAPACITY;
@@ -126,10 +123,7 @@ namespace DCL.Profiles.Self
         }
     }
 
-    /// <summary>
-    ///     Inline list of up to <see cref="CAPACITY"/> answered requests, each kept until its requester takes it; it never
-    ///     allocates and its default value is empty. Storing into a full list drops the oldest answer.
-    /// </summary>
+    /// <summary>Non-allocating inline list of up to <see cref="CAPACITY"/> answers kept until taken; a full list drops the oldest.</summary>
     public readonly struct RequestResults<T> where T: struct
     {
         public const int CAPACITY = Block8<Entry>.CAPACITY;

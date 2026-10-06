@@ -4,10 +4,7 @@ using Utility.Multithreading;
 
 namespace Utility.Fsm
 {
-    /// <summary>
-    ///     Elm-style runtime: messages from any thread are queued by <see cref="Send"/> and applied one at a time, in order and logged,
-    ///     by the thread that calls <see cref="Drain"/>. Messages sent while a command executes are queued, never applied nested.
-    /// </summary>
+    /// <summary>Elm-style runtime: messages queued from any thread by <see cref="Send"/> are applied in order by <see cref="Drain"/>, never nested.</summary>
     public class FsmRuntime<TModel, TMsg, TCmd> : IMsgInbox<TMsg>, IDisposable
     {
         /// <summary>Pure transition: the same model and message always yield the same result.</summary>

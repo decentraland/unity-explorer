@@ -321,7 +321,7 @@ namespace DCL.Profiles.Tests
         public void KeepThePublishedProfileIntactWhenTheCacheReplacesIt()
         {
             // Arrange
-            // The real cache disposes the instance a later write replaces, as the repository does on every catalyst read.
+            // The real cache disposes the instance a later write replaces.
             var cache = new DefaultProfileCache();
             executor.Dispose();
             profileCache = cache;
@@ -341,7 +341,7 @@ namespace DCL.Profiles.Tests
         public void KeepThePlayerEntityProfileIntactWhenTheCacheReplacesIt()
         {
             // Arrange
-            // The real cache disposes the instance a later write replaces, as the repository does when a deploy completes.
+            // The real cache disposes the instance a later write replaces.
             var cache = new DefaultProfileCache();
             executor.Dispose();
             profileCache = cache;

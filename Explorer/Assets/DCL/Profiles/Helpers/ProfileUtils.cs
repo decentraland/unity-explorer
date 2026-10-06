@@ -44,10 +44,7 @@ namespace DCL.Profiles.Helpers
                 partitionComponent);
         }
 
-        /// <summary>
-        ///     The entity owns its instance: a copy of <paramref name="profile"/> replaces the current one, takes over its picture and
-        ///     starts its own download, and the replaced one is disposed. An entity without a profile is left untouched.
-        /// </summary>
+        /// <summary>Replaces the entity's profile with a copy of <paramref name="profile"/> that takes over its picture, and disposes the replaced one; no-op without a profile.</summary>
         public static void ReplaceOnEntity(World world, Entity entity, Profile profile)
         {
             // Set throws on an entity without the component.

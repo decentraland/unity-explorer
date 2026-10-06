@@ -202,9 +202,7 @@ namespace DCL.Profiles.Self
             return (model.WithSession(SelfProfileSession.FromIdentified(current.WithActivity(ProfileActivity.FromDeploying(advanced)))), SelfProfileCmd.None());
         }
 
-        /// <summary>
-        ///     A superseded deploy that the catalyst saved after the deploy superseding it failed is adopted when it is newer than what is known.
-        /// </summary>
+        /// <summary>A superseded deploy saved after its superseding deploy failed is adopted when newer than what is known.</summary>
         private static bool IsNewerSaveWhileIdle(in Identified current, Profile saved) =>
             current.Activity.IsIdle() && !(current.Knowledge.IsKnown(out Profile? known) && known.Version >= saved.Version);
 
@@ -224,9 +222,7 @@ namespace DCL.Profiles.Self
             return SettleReads(answered, current.With(deploying.Before, ProfileActivity.Idle()), republish);
         }
 
-        /// <summary>
-        ///     Answers the pending reads when the knowledge is settled. Unknown knowledge with nothing in flight starts a fetch for them.
-        /// </summary>
+        /// <summary>Answers the pending reads when the knowledge is settled; unknown knowledge with nothing in flight starts a fetch.</summary>
         private static (SelfProfileModel, SelfProfileCmd) SettleReads(in SelfProfileModel model, in Identified current, in SelfProfileCmd cmd)
         {
             if (current.PendingReads.Count == 0)

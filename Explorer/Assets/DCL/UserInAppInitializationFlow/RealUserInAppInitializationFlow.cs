@@ -286,7 +286,7 @@ namespace DCL.UserInAppInitializationFlow
         internal static bool RequiresReauthentication(EnumResult<TaskError> result) =>
             result.Error is { Exception: ProfileNotFoundException };
 
-        /// <summary>The sequence stops at the own-profile step when it fails, so nothing after it ran and the player entity has no profile.</summary>
+        /// <summary>True when the own-profile step failed: the profile is missing or could not be fetched.</summary>
         internal static bool IsOwnProfileFailure(EnumResult<TaskError> result) =>
             result.Error is { Exception: ProfileNotFoundException or ProfileFetchFailedException };
 

@@ -393,9 +393,7 @@ namespace DCL.AuthenticationScreenFlow.Tests
                 UniTask.FromResult(ProfileDeployResult.FromError(ProfileDeployError.NoIdentity));
         }
 
-        /// <summary>
-        ///     Responsive catalyst whose read fails: resolves to <c>FetchFailed</c> immediately, no cancellation involved.
-        /// </summary>
+        /// <summary>Responsive catalyst whose read fails: resolves to <c>FetchFailed</c> immediately, no cancellation involved.</summary>
         private class FailingProfileSelfProfile : SelfProfile
         {
             private readonly UserId address = UserId.NewRandom();
