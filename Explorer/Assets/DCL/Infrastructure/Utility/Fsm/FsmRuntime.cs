@@ -19,7 +19,7 @@ namespace Utility.Fsm
 
         private bool isDraining;
 
-        /// <summary>The current model, read under the lock from any thread.</summary>
+        /// <summary>The current model, read under the lock from any thread. Must not be modified from outer scope.</summary>
         public TModel ModelSnapshot
         {
             get
