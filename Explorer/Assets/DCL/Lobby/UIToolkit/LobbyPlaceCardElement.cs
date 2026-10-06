@@ -17,6 +17,7 @@ namespace DCL.Lobby
         private const string CREATOR_NAME = "Creator";
         private const string ONLINE_COUNT_NAME = "OnlineCount";
         private const string JUMP_IN_NAME = "JumpIn";
+        private const string CONNECTED_FRIENDS_NAME = "ConnectedFriends";
 
         public Action? JumpInClicked;
 
@@ -27,6 +28,7 @@ namespace DCL.Lobby
         private Label? titleLabel;
         private Label? creatorLabel;
         private Label? onlineCountLabel;
+        private LobbyConnectedFriendsElement? connectedFriends;
 
         private string title = string.Empty;
         private string creator = string.Empty;
@@ -75,6 +77,9 @@ namespace DCL.Lobby
             }
         }
 
+        /// <summary>Row of the friends at the place; null until the first attach.</summary>
+        public LobbyConnectedFriendsElement? ConnectedFriends => connectedFriends;
+
         public LobbyPlaceCardElement() : this(USS_BLOCK) { }
 
         protected LobbyPlaceCardElement(string ussBlock) : base(ussBlock)
@@ -88,6 +93,7 @@ namespace DCL.Lobby
             creatorLabel = this.Q<Label>(CREATOR_NAME);
             onlineCountLabel = this.Q<Label>(ONLINE_COUNT_NAME);
             jumpInButton = this.Q<Button>(JUMP_IN_NAME);
+            connectedFriends = this.Q<LobbyConnectedFriendsElement>(CONNECTED_FRIENDS_NAME);
 
             jumpInButton.clicked += OnJumpInClicked;
 

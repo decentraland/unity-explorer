@@ -82,6 +82,19 @@ namespace DCL.Lobby.Tests
         }
 
         [Test]
+        public void ExposeTheConnectedFriendsRowOnceAttached()
+        {
+            //Assert
+            Assert.IsNull(card.ConnectedFriends);
+
+            //Act
+            AttachToPanel();
+
+            //Assert
+            Assert.AreSame(card.Q<LobbyConnectedFriendsElement>("ConnectedFriends"), card.ConnectedFriends);
+        }
+
+        [Test]
         public void MarkTheThumbnailAsLoading()
         {
             //Act

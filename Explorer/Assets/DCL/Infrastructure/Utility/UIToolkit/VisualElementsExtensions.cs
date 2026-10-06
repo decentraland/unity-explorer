@@ -44,6 +44,16 @@ namespace Utility.UIToolkit
         }
 
         /// <summary>
+        ///     Places the element at a pointer position given in panel space, laid out in the space of its parent.
+        /// </summary>
+        public static void MoveToPointer(this VisualElement element, Vector2 panelPosition, Vector2 offset)
+        {
+            Vector2 local = element.parent.WorldToLocal(panelPosition) + offset;
+            element.style.left = local.x;
+            element.style.top = local.y;
+        }
+
+        /// <summary>
         /// Removes all modifiers (any classes that contain --) from the element.
         /// </summary>
         public static void RemoveModifiers(this VisualElement element)

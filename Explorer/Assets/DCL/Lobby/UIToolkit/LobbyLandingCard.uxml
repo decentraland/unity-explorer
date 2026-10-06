@@ -1,12 +1,16 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
     <Style src="project://database/Assets/DCL/Lobby/UIToolkit/LobbyLandingCard.uss" />
+    <Style src="project://database/Assets/DCL/Lobby/UIToolkit/LobbyConnectedFriends.uss" />
     <DCL.Lobby.LobbyLandingCardElement name="LandingCard" title="Place Name" creator="Creator" online-count="0" can-jump-in="true" can-open="true">
         <ui:VisualElement name="Thumbnail" class="lobby-landing-card__thumbnail" picking-mode="Ignore" />
         <ui:VisualElement name="Gradient" class="lobby-landing-card__gradient" picking-mode="Ignore" />
-        <ui:VisualElement name="OnlineCounter" class="lobby-landing-card__online" picking-mode="Ignore">
-            <ui:VisualElement name="OnlineStatus" class="lobby-landing-card__online-dot" picking-mode="Ignore" />
-            <ui:VisualElement name="PlayerIcon" class="lobby-landing-card__online-icon" picking-mode="Ignore" />
-            <ui:Label name="OnlineCount" text="0" class="lobby-landing-card__online-count" picking-mode="Ignore" />
+        <ui:VisualElement name="Badges" class="lobby-landing-card__badges" picking-mode="Ignore">
+            <ui:VisualElement name="OnlineCounter" class="lobby-landing-card__online" picking-mode="Ignore">
+                <ui:VisualElement name="OnlineStatus" class="lobby-landing-card__online-dot" picking-mode="Ignore" />
+                <ui:VisualElement name="PlayerIcon" class="lobby-landing-card__online-icon" picking-mode="Ignore" />
+                <ui:Label name="OnlineCount" text="0" class="lobby-landing-card__online-count" picking-mode="Ignore" />
+            </ui:VisualElement>
+            <DCL.Lobby.LobbyConnectedFriendsElement name="ConnectedFriends" />
         </ui:VisualElement>
         <ui:VisualElement name="Footer" class="lobby-landing-card__footer" picking-mode="Ignore">
             <ui:Label name="Title" text="Place Name" enable-rich-text="false" class="lobby-landing-card__title" picking-mode="Ignore" />

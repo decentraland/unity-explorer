@@ -83,6 +83,8 @@ namespace DCL.Lobby
         private readonly List<EventDTO> liveEvents = new ();
         private readonly List<EventDTO> upcomingEvents = new ();
         private readonly LobbyDocumentFriendsPresenter? friends;
+        private readonly LobbyConnectedFriendsPresenter? connectedFriends;
+        private readonly string[] landingIdBuffer = new string[1];
 
         private LobbyPlacesRail? recentPlacesRail;
         private LobbyPlacesRail? featuredPlacesRail;
@@ -159,7 +161,8 @@ namespace DCL.Lobby
             ISpriteCache spriteCache,
             SidebarProfileButtonPresenter profileButtonPresenter,
             NotificationsPanelController<LobbyPopupParameter> notificationsPanel,
-            LobbyDocumentFriendsPresenter? friends) : base(viewFactory)
+            LobbyDocumentFriendsPresenter? friends,
+            LobbyConnectedFriendsPresenter? connectedFriends) : base(viewFactory)
         {
             this.inputBlock = inputBlock;
             this.cursor = cursor;
@@ -184,6 +187,7 @@ namespace DCL.Lobby
             this.profileButtonPresenter = profileButtonPresenter;
             this.notificationsPanel = notificationsPanel;
             this.friends = friends;
+            this.connectedFriends = connectedFriends;
 
             if (friends != null)
                 friends.JoinRequested = OnFriendJoin;
@@ -281,6 +285,11 @@ namespace DCL.Lobby
             liveEventsRail.Show(viewInstance.LiveEvents);
             upcomingEventsRail.Show(viewInstance.UpcomingEvents);
 
+            // Before the places: a cached landing place binds its card synchronously
+            friendsCts = friendsCts.SafeRestart();
+            friends?.Show(viewInstance.Friends, friendsCts.Token);
+            connectedFriends?.Show(viewInstance.FriendTooltip, friendsCts.Token);
+
             placesCts = placesCts.SafeRestart();
             LandingDestination destination = ResolveLandingDestination();
 
@@ -289,15 +298,12 @@ namespace DCL.Lobby
                 ShowLandingCardLoading(landingCard);
 
             ShowLandingPlaceAsync(destination, placesCts.Token).Forget();
-            ShowPlacesAsync(recentPlacesRail, recentPlaces, placesAPIService.GetRecentlyVisitedDestinationsAsync(placesCts.Token), MAX_RECENT_PLACES, placesCts.Token).Forget();
-            ShowPlacesAsync(featuredPlacesRail, featuredPlaces, placesAPIService.GetHighlightedDestinationsAsync(placesCts.Token), int.MaxValue, placesCts.Token).Forget();
+            ShowPlacesAsync(recentPlacesRail, recentPlaces, placesAPIService.GetRecentlyVisitedDestinationsAsync(placesCts.Token, withConnectedUsers: true), MAX_RECENT_PLACES, placesCts.Token).Forget();
+            ShowPlacesAsync(featuredPlacesRail, featuredPlaces, placesAPIService.GetHighlightedDestinationsAsync(placesCts.Token, withConnectedUsers: true), int.MaxValue, placesCts.Token).Forget();
 
             eventsCts = eventsCts.SafeRestart();
             eventCardActions.EventSetAsInterested += OnEventInterestChanged;
             ShowEventsAsync(eventsCts.Token).Forget();
-
-            friendsCts = friendsCts.SafeRestart();
-            friends?.Show(viewInstance.Friends, friendsCts.Token);
 
             if (inputData.IsStartup)
                 startParcel.JumpInRequestRaised += RequestClose;
@@ -322,6 +328,7 @@ namespace DCL.Lobby
             eventsCts.SafeCancelAndDispose();
             eventsCts = null;
             friends?.Hide();
+            connectedFriends?.Hide();
             friendsCts.SafeCancelAndDispose();
             friendsCts = null;
 
@@ -429,6 +436,7 @@ namespace DCL.Lobby
             card.CanOpen = false;
             card.Thumbnail = null;
             card.IsLoading = true;
+            BindConnectedFriends(card.ConnectedFriends, null);
         }
 
         // At startup the hero card is the only way out, so an offline stand-in fills it when the Places API fails
@@ -450,6 +458,26 @@ namespace DCL.Lobby
 
             PlacesData.PlaceInfo? place = result.Success ? result.Value : null;
             ShowLandingCard(destination, place ?? destination.ToOfflinePlace(), hasDetails: place != null, ct);
+
+            if (place != null)
+                RefreshLandingConnectedUsersAsync(place, ct).Forget();
+        }
+
+        // The coords and name lookups never carry the connected users, so they are fetched again by id
+        private async UniTaskVoid RefreshLandingConnectedUsersAsync(PlacesData.PlaceInfo place, CancellationToken ct)
+        {
+            landingIdBuffer[0] = place.id;
+
+            Result<PlacesData.IPlacesAPIResponse> result = await placesAPIService.GetDestinationsByIdsAsync(landingIdBuffer, ct, withConnectedUsers: true)
+                                                                                 .SuppressToResultAsync(ReportCategory.PLACES);
+
+            if (ct.IsCancellationRequested || !result.Success || result.Value.Data.Count == 0 || !ReferenceEquals(landingPlace, place)) return;
+
+            place.connected_addresses = result.Value.Data[0].connected_addresses;
+
+            LobbyLandingCardElement card = viewInstance!.LandingCard;
+            card.OnlineCount = place.connected_addresses?.Length ?? place.user_count;
+            BindConnectedFriends(card.ConnectedFriends, place.connected_addresses);
         }
 
         // The launch pick is frozen on the first show; only a home destination keeps following the movable home
@@ -507,12 +535,12 @@ namespace DCL.Lobby
         private void OnAvatarPointerEnter(PointerEnterEvent evt, VisualElement tooltip)
         {
             avatarPreview!.SetHovered(true);
-            MoveToPointer(tooltip, evt.position, AVATAR_TOOLTIP_OFFSET);
+            tooltip.MoveToPointer(evt.position, AVATAR_TOOLTIP_OFFSET);
             tooltip.SetDisplayed(true);
         }
 
         private static void OnAvatarPointerMove(PointerMoveEvent evt, VisualElement tooltip) =>
-            MoveToPointer(tooltip, evt.position, AVATAR_TOOLTIP_OFFSET);
+            tooltip.MoveToPointer(evt.position, AVATAR_TOOLTIP_OFFSET);
 
         private void OnAvatarPointerLeave(PointerLeaveEvent evt, VisualElement tooltip)
         {
@@ -525,7 +553,7 @@ namespace DCL.Lobby
             viewInstance!.AvatarTooltip.SetDisplayed(false);
 
             VisualElement dragCursor = viewInstance.AvatarDragCursor;
-            MoveToPointer(dragCursor, panelPosition, Vector2.zero);
+            dragCursor.MoveToPointer(panelPosition, Vector2.zero);
             dragCursor.SetDisplayed(true);
             cursor.SetVisibility(false);
         }
@@ -533,7 +561,7 @@ namespace DCL.Lobby
         // The figure turns by screen pixels per second as in the other previews, so the panel-space travel is converted
         private void OnAvatarDragged(Vector2 panelPosition, Vector2 panelDelta)
         {
-            MoveToPointer(viewInstance!.AvatarDragCursor, panelPosition, Vector2.zero);
+            viewInstance!.AvatarDragCursor.MoveToPointer(panelPosition, Vector2.zero);
 
             VisualElement hitArea = viewInstance.AvatarHitArea;
             Vector2 screenPosition = hitArea.ScreenPosition(panelPosition);
@@ -551,16 +579,8 @@ namespace DCL.Lobby
             if (!hitArea.ContainsPoint(hitArea.WorldToLocal(panelPosition))) return;
 
             VisualElement tooltip = viewInstance.AvatarTooltip;
-            MoveToPointer(tooltip, panelPosition, AVATAR_TOOLTIP_OFFSET);
+            tooltip.MoveToPointer(panelPosition, AVATAR_TOOLTIP_OFFSET);
             tooltip.SetDisplayed(true);
-        }
-
-        // The pointer position comes in panel space, the element is laid out in the space of its parent
-        private static void MoveToPointer(VisualElement element, Vector2 panelPosition, Vector2 offset)
-        {
-            Vector2 local = element.parent.WorldToLocal(panelPosition) + offset;
-            element.style.left = local.x;
-            element.style.top = local.y;
         }
 
         // The origin travels with the handlers so a Jump in from the details is attributed to the card's row
@@ -600,8 +620,15 @@ namespace DCL.Lobby
 
             // Only the endpoints resolving connected users return addresses; the aggregated count is the fallback
             card.OnlineCount = place.connected_addresses?.Length ?? place.user_count;
+            BindConnectedFriends(card.ConnectedFriends, place.connected_addresses);
 
             LoadThumbnailAsync(card, place.image, ReportCategory.PLACES, ct).Forget();
+        }
+
+        private void BindConnectedFriends(LobbyConnectedFriendsElement? friendsRow, string[]? addresses)
+        {
+            if (connectedFriends != null && friendsRow != null)
+                connectedFriends.Bind(friendsRow, addresses);
         }
 
         private async UniTaskVoid LoadThumbnailAsync(LobbyThumbnailCardElement card, string? url, string reportCategory, CancellationToken ct)
@@ -681,6 +708,7 @@ namespace DCL.Lobby
             card.Title = @event.name;
             card.Host = string.Format(LIVE_EVENT_HOST_FORMAT, @event.user_name);
             card.Attendees = @event.connected_addresses?.Length ?? 0;
+            BindConnectedFriends(card.ConnectedFriends, @event.connected_addresses);
 
             LoadThumbnailAsync(card, @event.image, ReportCategory.EVENTS, ct).Forget();
         }

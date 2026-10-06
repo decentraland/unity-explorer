@@ -36,11 +36,19 @@
     transition: height var(--place-card-hover-duration) ease-out, opacity 0s;
 }
 
-.lobby-place-card__online {
+/* The counter's margin spaces the friends row that follows it */
+.lobby-place-card__badges {
     position: absolute;
     top: 12px;
     left: 12px;
     height: 28px;
+    flex-direction: row;
+    align-items: center;
+}
+
+.lobby-place-card__online {
+    height: 28px;
+    margin-right: 8px;
     flex-direction: row;
     align-items: center;
     padding: 0 6px;

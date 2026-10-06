@@ -64,6 +64,19 @@ namespace DCL.Lobby.Tests
         }
 
         [Test]
+        public void CloneACardWithAConnectedFriendsRow()
+        {
+            //Arrange
+            events.Show(section);
+
+            //Act
+            events.SetCount(1);
+
+            //Assert
+            Assert.IsNotNull(Card(0).Q<LobbyConnectedFriendsElement>("ConnectedFriends"));
+        }
+
+        [Test]
         public void ShowTheAttendeesOnlyWhileSomebodyIsThere()
         {
             //Arrange

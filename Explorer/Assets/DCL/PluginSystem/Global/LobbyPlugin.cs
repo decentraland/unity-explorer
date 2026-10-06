@@ -81,6 +81,7 @@ namespace DCL.PluginSystem.Global
 
         private LobbyStage? lobbyStage;
         private LobbyDocumentFriendsPresenter? friendsPresenter;
+        private LobbyConnectedFriendsPresenter? connectedFriendsPresenter;
         private SidebarProfileButtonPresenter? profileButtonPresenter;
         private ProfileMenuController<LobbyPopupParameter>? profileMenuController;
         private ICreditsPanelController creditsPanelController = new NullCreditsPanelController();
@@ -173,6 +174,7 @@ namespace DCL.PluginSystem.Global
             }
 
             friendsPresenter?.Dispose();
+            connectedFriendsPresenter?.Dispose();
             profileButtonPresenter?.Dispose();
             creditsPanelController.Dispose();
             disposed = true;
@@ -226,13 +228,15 @@ namespace DCL.PluginSystem.Global
                 ? new LobbyDocumentFriendsPresenter(new LobbyFriendsRail(lobbyView.FriendCardTemplate), friendsConnectivity, onlineUsersProvider, placesAPIService, passportBridge)
                 : null;
 
+            connectedFriendsPresenter = friendsConnectivity != null ? new LobbyConnectedFriendsPresenter(friendsConnectivity) : null;
+
             var eventCardActions = new EventCardActionsController(eventsApiService, webBrowser, realmNavigator, clipboard, decentralandUrlsSource);
 
             var lobbyController = new LobbyDocumentController(viewFactory,
                 inputBlock, cursor, loadingStatus, mvcManager,
                 selfProfile, profileChangesBus, characterPreviewFactory, characterPreviewEventBus, settings.AvatarSettings, lobbyStage, world,
                 placesAPIService, realmData, homePlace, eventsApiService, eventCardActions, realmNavigator, decentralandUrlsSource, startParcel, new SpriteCache(webRequestController), profileButtonPresenter,
-                notificationsPanel, friendsPresenter);
+                notificationsPanel, friendsPresenter, connectedFriendsPresenter);
 
             mvcManager.RegisterController(lobbyController);
             mvcManager.RegisterController(profileMenuController);

@@ -9,6 +9,7 @@
     <Style src="project://database/Assets/DCL/Lobby/UIToolkit/LobbyFriendCard.uss" />
     <Style src="project://database/Assets/DCL/Lobby/UIToolkit/LobbyLiveEventCard.uss" />
     <Style src="project://database/Assets/DCL/Lobby/UIToolkit/LobbyUpcomingEventCard.uss" />
+    <Style src="project://database/Assets/DCL/Lobby/UIToolkit/LobbyConnectedFriends.uss" />
     <ui:Template name="LobbyLandingCard" src="project://database/Assets/DCL/Lobby/UIToolkit/LobbyLandingCard.uxml?fileID=9197481963319205126&amp;guid=f260689364e4454c8f4a329cd3e46b06&amp;type=3#LobbyLandingCard" />
     <ui:VisualElement name="Lobby" class="lobby">
         <ui:VisualElement name="BottomGradient" class="lobby__gradient" picking-mode="Ignore" />
@@ -60,6 +61,9 @@
         <ui:VisualElement name="AvatarTooltip" class="lobby__avatar-tooltip" picking-mode="Ignore" style="display: none;">
             <ui:VisualElement name="Icon" class="lobby__avatar-tooltip-icon" picking-mode="Ignore" />
             <ui:Label name="Label" text="CUSTOMIZE" class="lobby__avatar-tooltip-label" picking-mode="Ignore" />
+        </ui:VisualElement>
+        <ui:VisualElement name="FriendTooltip" class="lobby__friend-tooltip" picking-mode="Ignore" style="display: none;">
+            <ui:Label name="Label" text="Friend" enable-rich-text="false" class="lobby__friend-tooltip-label" picking-mode="Ignore" />
         </ui:VisualElement>
         <!-- Stands in for the hardware cursor, hidden while the figure is dragged -->
         <ui:VisualElement name="AvatarDragCursor" class="lobby__avatar-drag-cursor" picking-mode="Ignore" style="display: none;" />
