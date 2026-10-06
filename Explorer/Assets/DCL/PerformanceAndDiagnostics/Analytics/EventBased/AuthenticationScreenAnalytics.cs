@@ -126,7 +126,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
         private void OnAvatarSelected(BodyShape bodyType, int presetSlot) =>
             analytics.Track(Authentication.AVATAR_COMPLETE, new JObject
             {
-                { "body_type", bodyType == BodyShape.MALE.Index ? "male" : "female" },
+                { "body_type", bodyType.Equals(BodyShape.MALE) ? "male" : "female" },
                 { "preset_slot", presetSlot },
             }, isInstant: true);
 
