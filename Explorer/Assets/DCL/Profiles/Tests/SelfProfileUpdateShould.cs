@@ -247,6 +247,33 @@ namespace DCL.Profiles.Tests
         }
 
         [Test]
+        public void NeverReuseAVersionAfterASupersedingDeployFails()
+        {
+            // Arrange
+            // Every edit starts from the known v5 and differs in content, so each one deploys.
+            Profile editA = NewProfile(5);
+            editA.Description = "a";
+            Profile editB = NewProfile(5);
+            editB.Description = "b";
+            Profile editC = NewProfile(5);
+            editC.Description = "c";
+            (SelfProfileModel afterA, SelfProfileCmd cmdA) = SelfProfileModel.Update(Known(NewProfile(5)), SelfProfileMsg.FromDeployProfileOnEditRequested(new DeployRequest(new RequestId(1), editA)));
+            (SelfProfileModel afterB, SelfProfileCmd cmdB) = SelfProfileModel.Update(afterA, SelfProfileMsg.FromDeployProfileOnEditRequested(new DeployRequest(new RequestId(2), editB)));
+            (SelfProfileModel reverted, _) = SelfProfileModel.Update(afterB, SelfProfileMsg.FromDeployFailed(new DeployFailed(ALICE, editB, DEPLOY_ERROR)));
+
+            // Act
+            (_, SelfProfileCmd cmdC) = SelfProfileModel.Update(reverted, SelfProfileMsg.FromDeployProfileOnEditRequested(new DeployRequest(new RequestId(3), editC)));
+
+            // Assert
+            int versionA = AssertDeploy(AssertBatch(cmdA, 2)[0], editA).Version;
+            int versionB = AssertDeploy(AssertBatch(cmdB, 2)[0], editB).Version;
+            int versionC = AssertDeploy(AssertBatch(cmdC, 2)[0], editC).Version;
+            Assert.That(versionA, Is.EqualTo(6));
+            Assert.That(versionB, Is.EqualTo(7));
+            Assert.That(versionC, Is.EqualTo(8), "the superseded deploy may still save v6, so v6 and v7 are never issued again");
+        }
+
+        [Test]
         public void DeployWithoutPublishingWhenTheProfileIsMissing()
         {
             // Act & Assert

@@ -179,7 +179,11 @@ namespace DCL.Profiles.Self
                 activity.SafeCancelAndDispose();
                 activity = null;
 
-                ReportHub.LogWarning(ReportCategory.PROFILE, "Profile deploy skipped: the edit is local only, or forced wearables or emotes are active for this session");
+                if (deploy.LocalOnly)
+                    ReportHub.Log(ReportCategory.PROFILE, "Profile deploy skipped: the edit is local only");
+                else
+                    ReportHub.LogWarning(ReportCategory.PROFILE, "Profile deploy skipped: forced wearables or emotes are active for this session");
+
                 inbox.Send(SelfProfileMsg.FromDeploySucceeded(new DeploySucceeded(deploy.Address, sent, sent)));
                 return;
             }

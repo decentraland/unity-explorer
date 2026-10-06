@@ -161,20 +161,24 @@ namespace DCL.Profiles.Self
 
             RequestIds requests = PendingDeploys(current).Add(request.Id);
 
-            // The next version follows the deploy in flight, otherwise the known profile; a superseding deploy never reuses a version.
-            int version = current.Activity.IsDeploying(out Deploying superseded) ? superseded.Version + 1
-                : current.Knowledge.IsKnown(out Profile? known) ? known.Version + 1
-                : edited.Version + 1;
+            // The next version follows the deploy in flight, otherwise the known profile, and every version already issued for this
+            // identity, so no deploy reuses a version, not even one issued after a superseding deploy failed.
+            int baseVersion = current.Activity.IsDeploying(out Deploying superseded) ? superseded.Version
+                : current.Knowledge.IsKnown(out Profile? known) ? known.Version
+                : edited.Version;
+
+            int version = Math.Max(baseVersion, current.LastIssuedVersion) + 1;
 
             ProfileActivity deploying = ProfileActivity.FromDeploying(new Deploying(edited, version, before, requests));
             SelfProfileCmd deploy = SelfProfileCmd.FromDeploy(new DeployCmd(current.Address, edited, version, request.LocalOnly));
+            Identified issued = current.WithLastIssuedVersion(version);
 
             // Only a known profile is trusted locally before the catalyst confirms the edit.
             if (!before.IsKnown(out _))
-                return (model.WithSession(SelfProfileSession.FromIdentified(current.With(before, deploying))), deploy);
+                return (model.WithSession(SelfProfileSession.FromIdentified(issued.With(before, deploying))), deploy);
 
             // The deploy precedes the publish, so a version stamped on the edit by the deploy reaches the published copies.
-            return (model.WithSession(SelfProfileSession.FromIdentified(current.With(ProfileKnowledge.FromKnown(edited), deploying))),
+            return (model.WithSession(SelfProfileSession.FromIdentified(issued.With(ProfileKnowledge.FromKnown(edited), deploying))),
                 SelfProfileCmd.FromBatch(new[] { deploy, SelfProfileCmd.FromPublish(edited) }));
         }
 

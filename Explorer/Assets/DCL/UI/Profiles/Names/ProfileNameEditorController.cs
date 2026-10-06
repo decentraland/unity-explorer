@@ -141,6 +141,10 @@ namespace DCL.UI.ProfileNames
                     if (read.IsError(out ProfileReadError error) && error is not (ProfileReadError.Cancelled or ProfileReadError.FetchFailed))
                         ReportHub.LogError(ReportCategory.PROFILE, $"Name editor cannot open: own profile read failed ({error})");
 
+                    // Nothing in the editor works without the profile.
+                    if (!read.IsCancelled)
+                        Close();
+
                     return;
                 }
 

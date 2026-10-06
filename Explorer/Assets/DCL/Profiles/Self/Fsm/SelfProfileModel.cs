@@ -14,15 +14,19 @@ namespace DCL.Profiles.Self
         /// <summary>Reads waiting for the knowledge to settle.</summary>
         public readonly RequestIds PendingReads;
 
+        /// <summary>The highest version a deploy was issued as for this identity; a deploy it superseded may still be in flight with it.</summary>
+        public readonly int LastIssuedVersion;
+
         public Identified(UserId address, ProfileKnowledge knowledge, ProfileActivity activity)
             : this(address, knowledge, activity, default) { }
 
-        public Identified(UserId address, ProfileKnowledge knowledge, ProfileActivity activity, RequestIds pendingReads)
+        public Identified(UserId address, ProfileKnowledge knowledge, ProfileActivity activity, RequestIds pendingReads, int lastIssuedVersion = 0)
         {
             Address = address;
             Knowledge = knowledge;
             Activity = activity;
             PendingReads = pendingReads;
+            LastIssuedVersion = lastIssuedVersion;
         }
 
         /// <summary>A fresh identity: nothing known, nothing in flight.</summary>
@@ -30,13 +34,16 @@ namespace DCL.Profiles.Self
             new (address, ProfileKnowledge.Unknown(), ProfileActivity.Idle());
 
         public Identified WithActivity(ProfileActivity activity) =>
-            new (Address, Knowledge, activity, PendingReads);
+            new (Address, Knowledge, activity, PendingReads, LastIssuedVersion);
 
         public Identified WithPendingReads(RequestIds pendingReads) =>
-            new (Address, Knowledge, Activity, pendingReads);
+            new (Address, Knowledge, Activity, pendingReads, LastIssuedVersion);
 
         public Identified With(ProfileKnowledge knowledge, ProfileActivity activity) =>
-            new (Address, knowledge, activity, PendingReads);
+            new (Address, knowledge, activity, PendingReads, LastIssuedVersion);
+
+        public Identified WithLastIssuedVersion(int lastIssuedVersion) =>
+            new (Address, Knowledge, Activity, PendingReads, lastIssuedVersion);
 
         /// <summary>True while the request waits among the pending reads or on the deploy in flight.</summary>
         public bool Holds(RequestId id) =>
@@ -49,17 +56,18 @@ namespace DCL.Profiles.Self
                 ? ProfileActivity.FromDeploying(new Deploying(deploying.Pending, deploying.Version, deploying.Before, deploying.Requests.Remove(id)))
                 : Activity;
 
-            return new Identified(Address, Knowledge, activity, PendingReads.Remove(id));
+            return new Identified(Address, Knowledge, activity, PendingReads.Remove(id), LastIssuedVersion);
         }
 
         public bool Equals(Identified other) =>
-            Address.Equals(other.Address) && Knowledge.Equals(other.Knowledge) && Activity.Equals(other.Activity) && PendingReads.Equals(other.PendingReads);
+            Address.Equals(other.Address) && Knowledge.Equals(other.Knowledge) && Activity.Equals(other.Activity) && PendingReads.Equals(other.PendingReads)
+            && LastIssuedVersion == other.LastIssuedVersion;
 
         public override bool Equals(object? obj) =>
             obj is Identified other && Equals(other);
 
         public override int GetHashCode() =>
-            HashCode.Combine(Address, Knowledge, Activity, PendingReads);
+            HashCode.Combine(Address, Knowledge, Activity, PendingReads, LastIssuedVersion);
 
         public override string ToString() =>
             PendingReads.Count == 0

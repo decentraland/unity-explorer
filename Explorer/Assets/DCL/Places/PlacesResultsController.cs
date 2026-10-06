@@ -322,7 +322,20 @@ namespace DCL.Places
                                                          .SuppressToResultAsync(ReportCategory.PLACES);
                     break;
                 case PlacesSection.MyPlaces:
-                    if (!(await selfProfile.ProfileAsync(ct)).IsOk(out Profile? ownProfile)) return;
+                    ProfileReadResult ownRead = await selfProfile.ProfileAsync(ct);
+
+                    if (ownRead.IsCancelled)
+                        return;
+
+                    if (!ownRead.IsOk(out Profile? ownProfile))
+                    {
+                        NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(GET_PLACES_ERROR_MESSAGE));
+                        view.SetPlacesGridAsLoading(false);
+                        view.SetPlacesGridLoadingMoreActive(false);
+                        isPlacesGridLoadingItems = false;
+                        return;
+                    }
+
                     placesResult = await placesAPIService.GetDestinationsByOwnerAsync(
                                                               ownerAddress: ownProfile.UserId,
                                                               ct: ct,
