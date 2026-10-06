@@ -13,6 +13,12 @@ namespace Utility
         private const float BOUNDS_OFFSET_EPSILON = 0.3f;
 
         /// <summary>
+        ///     Lifts a scene's root container slightly off the base parcel plane so its own ground/floor content
+        ///     doesn't Y-fight with the client's landscape terrain and road meshes sitting at the same height.
+        /// </summary>
+        public const float SCENE_CONTAINER_Y_OFFSET = 0.1f;
+
+        /// <summary>
         ///     Height (in meters) of scenes whose vertical limit does not depend on the amount of parcels: Worlds and portable experiences.
         ///     It is the parcel-based height of the largest scene allowed, a 300x300 World: log2(90000 + 1) x 20 = 329.15 m, rounded up.
         ///     https://docs.decentraland.org/creator/scenes-sdk7/optimizing/scene-limitations

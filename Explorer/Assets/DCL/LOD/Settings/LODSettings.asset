@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3b0b2609fd084bb696d6821c99c000c1, type: 3}
   m_Name: LODSettings
   m_EditorClassIdentifier: 
-  <LodPartitionBucketThresholds>k__BackingField: 05000000
-  <SDK7LodThreshold>k__BackingField: 2
+  <LodPartitionBucketThresholds>k__BackingField: ff000000
+  <SDK7LodThreshold>k__BackingField: 999
   <UnloadTolerance>k__BackingField: 1
   <DefaultTextureArrayResolutionDescriptors>k__BackingField:
   - Resolution: 512

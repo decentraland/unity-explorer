@@ -16,6 +16,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
+using Utility;
 
 namespace ECS.SceneLifeCycle.Systems
 {
@@ -188,7 +189,7 @@ namespace ECS.SceneLifeCycle.Systems
                 sceneData.SceneLoadingConcluded = true;
 
                 World.Get<TransformComponent>(sceneContainerEntity).Transform.position =
-                    sceneData.Geometry.BaseParcelPosition;
+                    sceneData.Geometry.BaseParcelPosition + new Vector3(0, ParcelMathHelper.SCENE_CONTAINER_Y_OFFSET, 0);
             }
         }
 
