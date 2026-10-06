@@ -36,6 +36,19 @@ namespace ECS.Tests
         }
 
         [Test]
+        public void TellOccupiedParcelsFromTheRestOfTheirBounds()
+        {
+            // Arrange
+            WorldManifest manifest = WorldManifest.Create(new WorldManifestDto { occupied = new[] { "0,0", "2,2" } });
+
+            // Act & Assert: (1,1) is inside the bounds but not occupied
+            Assert.IsTrue(manifest.IsParcelOccupied(2, 2));
+            Assert.IsFalse(manifest.IsParcelOccupied(1, 1));
+            Assert.IsFalse(WorldManifest.Empty.IsParcelOccupied(0, 0));
+            manifest.Dispose();
+        }
+
+        [Test]
         public void HaveNoBoundsWhenEmpty()
         {
             Assert.IsFalse(WorldManifest.Empty.TryGetOccupiedBounds(out _, out _));

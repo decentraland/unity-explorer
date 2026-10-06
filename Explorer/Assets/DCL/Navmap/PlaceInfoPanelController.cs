@@ -235,6 +235,14 @@ namespace DCL.Navmap
 
             if (parcel == null) return;
             if (place == null) return;
+
+            // The parcel picked on a world's map, where the jump lands.
+            if (place.IsWorld)
+            {
+                view.CoordinatesLabel.text = $"{place.world_name} {parcel.Value.x},{parcel.Value.y}";
+                return;
+            }
+
             if (!TeleportUtils.IsRoad(place.title)) return;
 
             view.CoordinatesLabel.text = $"{parcel.Value.x},{parcel.Value.y}";
@@ -371,12 +379,15 @@ namespace DCL.Navmap
 
             navmapBus.JumpIn(place!);
 
-            // Worlds live on a separate realm; the goto command teleports there by world name.
+            // Worlds live on a separate realm; the goto command teleports there by world name. A place picked on the world's map
+            // lands on the picked parcel, staying in the world when already in it.
             if (place!.IsWorld)
             {
+                string target = originParcel is { } parcel ? $"{place.world_name}/{parcel.x},{parcel.y}" : place.world_name;
+
                 chatMessagesBus
                    .SendWithUtcNowTimestamp(ChatChannel.NEARBY_CHANNEL,
-                        $"/{ChatCommandsUtils.COMMAND_GOTO} {place.world_name}",
+                        $"/{ChatCommandsUtils.COMMAND_GOTO} {target}",
                         ChatMessageOrigin.JumpIn);
 
                 return;

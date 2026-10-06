@@ -74,6 +74,9 @@ namespace ECS
         public bool IsParcelInsideBoundaries(int x, int y) =>
             !IsEmpty && x >= minX && x <= maxX && y >= minY && y <= maxY;
 
+        public bool IsParcelOccupied(int x, int y) =>
+            !IsEmpty && occupiedParcels.Contains(new int2(x, y));
+
         /// <summary>
         ///     The bounding box of the occupied parcels, min and max inclusive. False when the manifest has no occupied parcel.
         /// </summary>

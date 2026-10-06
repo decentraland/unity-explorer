@@ -189,7 +189,7 @@ namespace Global.Dynamic
             IWeb3IdentityCache identityCache = dynamicWorldDependencies.Web3IdentityCache;
             IAssetsProvisioner assetsProvisioner = dynamicWorldDependencies.AssetsProvisioner;
             IDebugContainerBuilder debugBuilder = dynamicWorldDependencies.DebugContainerBuilder;
-            var placesAndEventsContainer = PlacesAndEventsContainer.Create(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
+            var placesAndEventsContainer = PlacesAndEventsContainer.Create(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, staticContainer.RealmData);
 
             var wearableContainer = WearableContainer.Create(staticContainer, bootstrapContainer, identityCache, globalWorld, appArgs, dynamicWorldParams.EnableAnalytics);
 

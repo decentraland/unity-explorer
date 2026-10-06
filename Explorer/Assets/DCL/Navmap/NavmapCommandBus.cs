@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.EventsApi;
 using DCL.PlacesAPIService;
+using ECS;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -23,6 +24,7 @@ namespace DCL.Navmap
         private readonly ShowPlaceInfoFactory showPlaceInfoFactory;
         private readonly ShowEventInfoFactory showEventInfoFactory;
         private readonly IPlacesAPIService placesAPIService;
+        private readonly IRealmData realmData;
 
         public event Action<PlacesData.PlaceInfo>? OnJumpIn;
         public event Action<PlacesData.PlaceInfo>? OnDestinationSelected;
@@ -38,12 +40,14 @@ namespace DCL.Navmap
         public NavmapCommandBus(SearchPlaceFactory searchPlaceFactory,
             ShowPlaceInfoFactory showPlaceInfoFactory,
             ShowEventInfoFactory showEventInfoFactory,
-            IPlacesAPIService placesAPIService)
+            IPlacesAPIService placesAPIService,
+            IRealmData realmData)
         {
             this.searchPlaceFactory = searchPlaceFactory;
             this.showPlaceInfoFactory = showPlaceInfoFactory;
             this.showEventInfoFactory = showEventInfoFactory;
             this.placesAPIService = placesAPIService;
+            this.realmData = realmData;
         }
 
         public async UniTask SelectPlaceAsync(PlacesData.PlaceInfo place, CancellationToken ct,
@@ -64,12 +68,22 @@ namespace DCL.Navmap
 
         public async UniTask SelectPlaceAsync(Vector2Int parcel, CancellationToken ct, bool isFromSearchResults = false)
         {
-            PlacesData.PlaceInfo? place = await placesAPIService.GetPlaceAsync(parcel, ct, true);
-
-            // TODO: show empty parcel
-            if (place == null) place = new PlacesData.PlaceInfo(parcel);
+            PlacesData.PlaceInfo place = realmData.IsWorld()
+                ? await GetWorldPlaceAsync(parcel, realmData.RealmName, ct)
+                : await placesAPIService.GetPlaceAsync(parcel, ct, true) ?? new PlacesData.PlaceInfo(parcel); // TODO: show empty parcel
 
             await SelectPlaceAsync(place, ct, isFromSearchResults, parcel);
+        }
+
+        /// <summary>The scene of the world <paramref name="worldName" /> on <paramref name="parcel" />, or a bare place of the world when it is not listed.</summary>
+        private async UniTask<PlacesData.PlaceInfo> GetWorldPlaceAsync(Vector2Int parcel, string worldName, CancellationToken ct)
+        {
+            PlacesData.PlaceInfo? place = null;
+
+            try { place = await placesAPIService.GetWorldAsync(parcel, worldName, ct); }
+            catch (NotAPlaceException) { }
+
+            return place ?? new PlacesData.PlaceInfo(parcel) { title = worldName, world_name = worldName };
         }
 
         public async UniTask SelectEventAsync(EventDTO @event, CancellationToken ct, PlacesData.PlaceInfo? place = null)

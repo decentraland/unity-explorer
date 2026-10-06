@@ -7,6 +7,7 @@ using DCL.Multiplayer.Connectivity;
 using DCL.Navmap;
 using DCL.PlacesAPIService;
 using DCL.WebRequests;
+using ECS;
 
 namespace Global.Dynamic
 {
@@ -51,7 +52,7 @@ namespace Global.Dynamic
             HomePlaceEventBus = homePlaceEventBus;
         }
 
-        public static PlacesAndEventsContainer Create(IWebRequestController webRequestController, IDecentralandUrlsSource urlsSource)
+        public static PlacesAndEventsContainer Create(IWebRequestController webRequestController, IDecentralandUrlsSource urlsSource, IRealmData realmData)
         {
             IOnlineUsersProvider baseUserProvider = new ArchipelagoHttpOnlineUsersProvider(webRequestController,
                 URLAddress.FromString(urlsSource.Url(DecentralandUrl.RemotePeers)));
@@ -67,7 +68,7 @@ namespace Global.Dynamic
             var navmapCommandFactory = new NavmapCommandFactory(placesAPIService, eventsApiService);
 
             var navmapBus = new NavmapCommandBus(navmapCommandFactory.CreateSearchPlaceCommand,
-                navmapCommandFactory.CreateShowPlaceCommand, navmapCommandFactory.CreateShowEventCommand, placesAPIService);
+                navmapCommandFactory.CreateShowPlaceCommand, navmapCommandFactory.CreateShowEventCommand, placesAPIService, realmData);
 
             return new PlacesAndEventsContainer(
                 placesAPIService,
