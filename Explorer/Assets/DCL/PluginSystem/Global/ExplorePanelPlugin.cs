@@ -1,13 +1,11 @@
 using System;
 using Arch.Core;
 using Arch.SystemGroups;
-using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Audio;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Equipped;
-using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
@@ -86,7 +84,6 @@ using DCL.VoiceChat;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.SingleScene;
 using ECS.SceneLifeCycle.Realm;
-using Global;
 using Global.AppArgs;
 using Runtime.Wearables;
 using UnityEngine;
@@ -136,7 +133,6 @@ namespace DCL.PluginSystem.Global
         private readonly PublishIpfsEntityCommand publishIpfsEntityCommand;
         private readonly IRendererFeaturesCache rendererFeaturesCache;
         private readonly IProfileCache profileCache;
-        private readonly URLDomain assetBundleURL;
         private readonly IInputBlock inputBlock;
         private readonly IChatMessagesBus chatMessagesBus;
         private readonly ISystemMemoryCap systemMemoryCap;
@@ -347,7 +343,6 @@ namespace DCL.PluginSystem.Global
 
         public void Dispose()
         {
-            upscalingController.Dispose();
             categoryFilterController?.Dispose();
             navmapController?.Dispose();
             settingsController?.Dispose();
@@ -482,7 +477,8 @@ namespace DCL.PluginSystem.Global
             SatelliteController satelliteController = new (navmapView.GetComponentInChildren<SatelliteView>(),
                 navmapView.MapCameraDragBehaviorData, mapRenderer, webBrowser);
 
-            PlaceInfoToastController placeToastController = new (navmapView.PlaceToastView,
+            // Kept alive by its navmap bus subscription.
+            _ = new PlaceInfoToastController(navmapView.PlaceToastView,
                 new PlaceInfoPanelController(navmapView.PlaceToastView.PlacePanelView,
                     imageControllerProvider, placesAPIService, mapPathEventBus, navmapBus, chatMessagesBus, eventsApiService,
                     eventElementsPool, shareContextMenu, webBrowser, mvcManager, homePlaceEventBus, donationsService, galleryEventBus: galleryEventBus),
@@ -513,7 +509,7 @@ namespace DCL.PluginSystem.Global
                 volumeBus,
                 assetsProvisioner,
                 eventBus,
-                settings.pointAtMarkerVisibilitySettings);
+                settings.PointAtMarkerVisibilitySettings);
 
             await settingsController.InitializeAsync();
 
@@ -531,7 +527,8 @@ namespace DCL.PluginSystem.Global
                 zoomController,
                 satelliteController,
                 placesAPIService,
-                homePlaceEventBus);
+                homePlaceEventBus,
+                upscalingController);
 
             await backpackSubPlugin.InitializeAsync(settings.BackpackSettings, explorePanelView.GetComponentInChildren<BackpackView>(), ct);
 
@@ -705,7 +702,7 @@ namespace DCL.PluginSystem.Global
         }
 
         private void OpenLobby() =>
-            mvcManager.ShowAndForget(LobbyController.IssueCommand(new LobbyParameter(isStartup: false)));
+            mvcManager.ShowAndForget(LobbyDocumentController.IssueCommand(new LobbyParameter(isStartup: false)));
 
         private void OnInputShortcutsBackpackPerformedAsync(InputAction.CallbackContext _)
         {
@@ -793,7 +790,7 @@ namespace DCL.PluginSystem.Global
             [field: SerializeField] public AssetReferenceT<CategoryMappingSO> CategoryMappingSO { get; private set; } = null!;
 
             [field: SerializeField]
-            public PointAtMarkerVisibilitySettings pointAtMarkerVisibilitySettings { get; private set; }
+            public PointAtMarkerVisibilitySettings PointAtMarkerVisibilitySettings { get; private set; } = null!;
 
             [field: Header("Camera Reel")]
             [field: Tooltip("Spaces will be HTTP sanitized, care for special characters")]
@@ -805,10 +802,10 @@ namespace DCL.PluginSystem.Global
             [field: Header("Place Reel")] [field: SerializeField] public int PlaceGridLayoutFixedColumnCount { get; private set; }
             [field: SerializeField] public int PlaceThumbnailHeight { get; private set; }
             [field: SerializeField] public int PlaceThumbnailWidth { get; private set; }
-            [field: SerializeField] public AssetReferenceT<PlaceCategoriesSO> PlaceCategoriesSO { get; private set; }
-            [field: Header("Place Detail Panel")] [field: SerializeField] internal AssetReferenceGameObject PlaceDetailPanelPrefab { get; private set; }
-            [field: Header("Event Detail Panel")] [field: SerializeField] internal AssetReferenceGameObject EventInfoPrefab { get; private set; }
-            [field: Header("Quality Settings")] [field: SerializeField] internal QualityPresetsAsset QualityPresets { get; private set; }
+            [field: SerializeField] public AssetReferenceT<PlaceCategoriesSO> PlaceCategoriesSO { get; private set; } = null!;
+            [field: Header("Place Detail Panel")] [field: SerializeField] public AssetReferenceGameObject PlaceDetailPanelPrefab { get; private set; } = null!;
+            [field: Header("Event Detail Panel")] [field: SerializeField] public AssetReferenceGameObject EventInfoPrefab { get; private set; } = null!;
+            [field: Header("Quality Settings")] [field: SerializeField] public QualityPresetsAsset QualityPresets { get; private set; } = null!;
         }
     }
 }
