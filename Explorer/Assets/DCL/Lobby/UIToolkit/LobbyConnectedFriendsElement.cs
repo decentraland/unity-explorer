@@ -1,3 +1,4 @@
+using DCL.UI.ProfileElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 using Utility.UIToolkit;
@@ -67,8 +68,8 @@ namespace DCL.Lobby
         public void SetPicture(int index, Sprite? sprite, Color color, bool loading)
         {
             VisualElement slot = slots[index];
-            LobbyCardBackground.ApplyPictureColor(slot, color);
-            slot.style.backgroundImage = LobbyCardBackground.From(sprite);
+            slot.SetProfileColor(color);
+            slot.style.backgroundImage = VisualElementsExtensions.CoverBackground(sprite);
             slot.EnableInClassList(USS_PICTURE_LOADING, loading);
         }
     }

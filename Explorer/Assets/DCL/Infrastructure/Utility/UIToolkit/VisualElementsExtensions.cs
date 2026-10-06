@@ -44,6 +44,21 @@ namespace Utility.UIToolkit
         }
 
         /// <summary>
+        ///     A full-rect sprite is set as its texture because a sprite background ignores the stylesheet's cover; an atlas sprite keeps its rect.
+        /// </summary>
+        public static StyleBackground CoverBackground(Sprite? sprite)
+        {
+            if (sprite == null)
+                return StyleKeyword.Null;
+
+            Texture2D texture = sprite.texture;
+            Rect rect = sprite.rect;
+
+            bool coversTexture = rect.x == 0 && rect.y == 0 && Mathf.Approximately(rect.width, texture.width) && Mathf.Approximately(rect.height, texture.height);
+            return coversTexture ? new StyleBackground(texture) : new StyleBackground(sprite);
+        }
+
+        /// <summary>
         ///     Places the element at a pointer position given in panel space, laid out in the space of its parent.
         /// </summary>
         public static void MoveToPointer(this VisualElement element, Vector2 panelPosition, Vector2 offset)
