@@ -1,4 +1,5 @@
 using DCL.Utility.Types;
+using System;
 
 namespace DCL.Profiles.Self
 {
@@ -174,16 +175,16 @@ namespace DCL.Profiles.Self
 
         private static (SelfProfileModel, SelfProfileCmd) OnDeploySucceeded(in SelfProfileModel model, in DeploySucceeded msg)
         {
-            string? reason = StaleDeployReason(model, msg.Address, msg.Sent, out Identified current, out Deploying deploying);
+            DeployStaleness staleness = DeployStalenessOf(model, msg.Address, msg.Sent, out Identified current, out Deploying deploying);
 
-            if (ReferenceEquals(reason, DEPLOY_SUPERSEDED))
+            if (staleness == DeployStaleness.Superseded)
                 return SaveSupersededDeploy(model, current, deploying, msg.Saved);
 
-            if (ReferenceEquals(reason, NO_DEPLOY_IN_FLIGHT) && IsNewerSaveWhileIdle(current, msg.Saved))
+            if (staleness == DeployStaleness.NoDeployInFlight && IsNewerSaveWhileIdle(current, msg.Saved))
                 return SettleReads(model, current.With(ProfileKnowledge.FromKnown(msg.Saved), ProfileActivity.Idle()), SelfProfileCmd.FromPublish(msg.Saved));
 
-            if (reason != null)
-                return Ignored(model, reason);
+            if (staleness != DeployStaleness.Current)
+                return Ignored(model, ReasonOf(staleness));
 
             SelfProfileModel answered = model.WithDeployResults(deploying.Requests, ProfileDeployResult.FromOk(msg.Saved));
             return SettleReads(answered, current.With(ProfileKnowledge.FromKnown(msg.Saved), ProfileActivity.Idle()), SelfProfileCmd.FromPublish(msg.Saved));
@@ -208,8 +209,10 @@ namespace DCL.Profiles.Self
 
         private static (SelfProfileModel, SelfProfileCmd) OnDeployFailed(in SelfProfileModel model, in DeployFailed msg)
         {
-            if (StaleDeployReason(model, msg.Address, msg.Sent, out Identified current, out Deploying deploying) is { } reason)
-                return Ignored(model, reason);
+            DeployStaleness staleness = DeployStalenessOf(model, msg.Address, msg.Sent, out Identified current, out Deploying deploying);
+
+            if (staleness != DeployStaleness.Current)
+                return Ignored(model, ReasonOf(staleness));
 
             SelfProfileCmd republish = deploying.Before.Match(
                 onUnknown: static () => SelfProfileCmd.None(),
@@ -287,24 +290,44 @@ namespace DCL.Profiles.Self
             return null;
         }
 
-        /// <summary>Null when a deploy result for the sent profile belongs to the deploy in flight; otherwise why it does not.</summary>
-        private static string? StaleDeployReason(in SelfProfileModel model, UserId address, Profile sent, out Identified current, out Deploying deploying)
+        /// <summary><c>Current</c> when a deploy result for the sent profile belongs to the deploy in flight; otherwise why it does not.</summary>
+        private static DeployStaleness DeployStalenessOf(in SelfProfileModel model, UserId address, Profile sent, out Identified current, out Deploying deploying)
         {
             deploying = default;
 
             if (!model.Session.IsIdentified(out current))
-                return DEPLOY_HAS_NO_IDENTITY;
+                return DeployStaleness.NoIdentity;
 
             if (!current.Address.Equals(address))
-                return DEPLOY_FOR_ANOTHER_IDENTITY;
+                return DeployStaleness.OtherIdentity;
 
             if (!current.Activity.IsDeploying(out deploying))
-                return NO_DEPLOY_IN_FLIGHT;
+                return DeployStaleness.NoDeployInFlight;
 
             if (!ReferenceEquals(deploying.Pending, sent))
-                return DEPLOY_SUPERSEDED;
+                return DeployStaleness.Superseded;
 
-            return null;
+            return DeployStaleness.Current;
+        }
+
+        private static string ReasonOf(DeployStaleness staleness) =>
+            staleness switch
+            {
+                DeployStaleness.NoIdentity => DEPLOY_HAS_NO_IDENTITY,
+                DeployStaleness.OtherIdentity => DEPLOY_FOR_ANOTHER_IDENTITY,
+                DeployStaleness.NoDeployInFlight => NO_DEPLOY_IN_FLIGHT,
+                DeployStaleness.Superseded => DEPLOY_SUPERSEDED,
+                _ => throw new ArgumentOutOfRangeException(nameof(staleness), staleness, null),
+            };
+
+        /// <summary>How a deploy result relates to the deploy in flight.</summary>
+        private enum DeployStaleness : byte
+        {
+            Current,
+            NoIdentity,
+            OtherIdentity,
+            NoDeployInFlight,
+            Superseded,
         }
     }
 }
