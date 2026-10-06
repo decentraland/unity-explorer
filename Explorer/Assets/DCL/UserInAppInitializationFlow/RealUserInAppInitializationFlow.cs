@@ -233,8 +233,8 @@ namespace DCL.UserInAppInitializationFlow
                                 }
                                 else
                                 {
-                                    // A failed startup sequence keeps its own error, such as a missing profile; the LiveKit result decides only a sequence that succeeded
-                                    if (operationResult.Success)
+                                    // A missing profile keeps its own error; any other outcome is decided by the LiveKit result
+                                    if (!RequiresReauthentication(operationResult))
                                         operationResult = livekitOperationResult;
 
                                     if (operationResult.Success)
