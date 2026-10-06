@@ -5,8 +5,11 @@ using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Equipped;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.Profiles.Helpers;
 using DCL.Profiles.Self;
 using ECS.Prioritization.Components;
+using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.Textures;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
@@ -332,6 +335,25 @@ namespace DCL.Profiles.Tests
 
             // Assert
             Assert.That(replaced.Links, Is.Null, "the entity owns its instance, so the one it replaces is released");
+        }
+
+        [Test]
+        public void HandThePictureOfTheReplacedProfileToTheNewEntityProfile()
+        {
+            // Arrange
+            URLAddress faceUrl = URLAddress.FromString("https://example.com/face.png");
+            Profile replaced = NewProfile(ALICE, 2);
+            replaced.GetCompact().FaceSnapshotUrl = faceUrl;
+            replaced.ProfilePicture = new StreamableLoadingResult<SpriteData>.WithFallback(ProfileUtils.DEFAULT_PROFILE_PIC);
+            world.Add(playerEntity, replaced);
+            Profile published = NewProfile(ALICE, 3);
+            published.GetCompact().FaceSnapshotUrl = faceUrl;
+
+            // Act
+            executor.Execute(SelfProfileCmd.FromPublish(published), inbox);
+
+            // Assert
+            Assert.That(world.Get<Profile>(playerEntity).ProfilePicture, Is.Not.Null, "the entity's new instance keeps the loaded picture");
         }
 
         [Test]
