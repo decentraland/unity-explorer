@@ -552,6 +552,33 @@ namespace DCL.Profiles.Tests
         }
 
         [Test]
+        public void AdoptALateSaveWhenNoProfileWasKnownBeforeTheFailedDeploy()
+        {
+            // Arrange
+            Profile superseded = NewProfile(1);
+            Profile saved = NewProfile(1);
+            Profile pending = NewProfile(2);
+            SelfProfileModel model = Deploying(pending, ProfileKnowledge.Missing());
+            (SelfProfileModel reverted, _) = SelfProfileModel.Update(model, SelfProfileMsg.FromDeployFailed(new DeployFailed(ALICE, pending, DEPLOY_ERROR)));
+
+            // Act
+            (SelfProfileModel next, SelfProfileCmd cmd) = SelfProfileModel.Update(reverted, SelfProfileMsg.FromDeploySucceeded(new DeploySucceeded(ALICE, superseded, saved)));
+
+            // Assert
+            Identified identified = AssertIdentified(next);
+            AssertKnown(identified.Knowledge, saved);
+            Assert.That(identified.Activity.GetKind(), Is.EqualTo(ProfileActivity.Kind.Idle));
+            AssertPublish(cmd, saved);
+        }
+
+        [Test]
+        public void DropALateSaveWhileFetching()
+        {
+            // Act & Assert
+            AssertUnchanged(Fetching(), SelfProfileMsg.FromDeploySucceeded(new DeploySucceeded(ALICE, NewProfile(5), NewProfile(5))));
+        }
+
+        [Test]
         public void AdoptASupersededDeployTheCatalystSavedAfterTheNewerDeployFailed()
         {
             // Arrange

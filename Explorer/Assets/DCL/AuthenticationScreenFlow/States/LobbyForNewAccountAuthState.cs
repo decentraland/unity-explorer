@@ -118,6 +118,7 @@ namespace DCL.AuthenticationScreenFlow
 
             view.JumpInIcon.SetActive(true);
             view.FinalizeLoading.SetActive(false);
+            view.BackButton.interactable = true;
         }
 
         public override void Exit()
