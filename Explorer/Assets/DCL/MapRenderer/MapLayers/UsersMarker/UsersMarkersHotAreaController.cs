@@ -73,6 +73,10 @@ namespace DCL.MapRenderer.MapLayers.Users
 
         private void OnTeleport(Vector2Int destinationCoordinates)
         {
+            // A disabled layer shows no markers: it fetches the remote users again once enabled.
+            if (!isEnabled)
+                return;
+
             cancellationToken = cancellationToken.SafeRestart();
             ProcessRemoteUsersAsync(cancellationToken.Token).Forget();
         }
@@ -128,6 +132,10 @@ namespace DCL.MapRenderer.MapLayers.Users
         {
             var remotePlayersData = await onlineUsersProvider.GetAsync(ct);
 
+            // Disabled while the users were fetched
+            if (!isEnabled)
+                return;
+
             //Reset the markers bound to remote users by releasing them
             foreach (string remoteUser in remoteUsers)
             {
@@ -170,6 +178,7 @@ namespace DCL.MapRenderer.MapLayers.Users
         public UniTask Disable(CancellationToken cancellationToken)
         {
             isEnabled = false;
+            this.cancellationToken = this.cancellationToken.SafeRestart();
 
             foreach (IHotUserMarker marker in markers.Values)
             {
@@ -179,6 +188,7 @@ namespace DCL.MapRenderer.MapLayers.Users
 
             wrapsPool.Clear();
             markers.Clear();
+            remoteUsers.Clear();
             return UniTask.CompletedTask;
         }
     }
