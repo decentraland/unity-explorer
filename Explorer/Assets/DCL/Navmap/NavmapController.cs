@@ -26,8 +26,6 @@ namespace DCL.Navmap
     public class NavmapController : IMapActivityOwner, ISection, IDisposable
     {
         private const string EMPTY_PARCEL_NAME = "Empty parcel";
-        private const string WORLDS_WARNING_MESSAGE = "This is the Genesis City map. If you jump into any of this places you will leave the world you are currently visiting.";
-        private const string WORLD_MAP_WARNING_MESSAGE = "This is the map of {0}. The places and events listed here are in Genesis City: jumping into them will take you out of this world.";
         private const MapLayer ACTIVE_MAP_LAYERS =
             MapLayer.SatelliteAtlas | MapLayer.ParcelsAtlas | MapLayer.PlayerMarker | MapLayer.ParcelHoverHighlight | MapLayer.ScenesOfInterest | MapLayer.Favorites | MapLayer.HotUsersMarkers | MapLayer.Pins | MapLayer.SearchResults | MapLayer.LiveEvents | MapLayer.Category | MapLayer.HomeMarker;
 
@@ -103,7 +101,6 @@ namespace DCL.Navmap
 
             navmapView.DestinationInfoElement.gameObject.SetActive(false);
 
-            navmapView.WorldsWarningNotificationView.Text.text = WORLDS_WARNING_MESSAGE;
             navmapView.WorldsWarningNotificationView.Hide();
             navmapFilterPanelController = new (mapRenderer, navmapView.LocationView.FiltersPanel);
             navmapLocationController = new NavmapLocationController(navmapView.LocationView, world, playerEntity, navmapFilterPanelController, navmapBus, homePlaceEventBus);
@@ -166,11 +163,17 @@ namespace DCL.Navmap
             lastParcelClicked = clickedParcel;
             audioEventsBus.SendPlayAudioEvent(navmapView.ClickAudio);
 
-            // A world's parcels are not Genesis City places.
-            if (realmData.IsWorld())
-                return;
-
             fetchPlaceAndShowCancellationToken = fetchPlaceAndShowCancellationToken.SafeRestart();
+
+            if (realmData.IsWorld())
+            {
+                // Only the world's own parcels can be jumped into; without a manifest the map only reacts over its scenes.
+                if (realmData.IsParcelOfWorld(clickedParcel.Parcel.x, clickedParcel.Parcel.y))
+                    navmapBus.SelectPlaceAsync(clickedParcel.Parcel, fetchPlaceAndShowCancellationToken.Token, true).Forget();
+
+                return;
+            }
+
             FetchPlaceAndShowAsync(fetchPlaceAndShowCancellationToken.Token).Forget();
             return;
 
@@ -216,18 +219,13 @@ namespace DCL.Navmap
             lastParcelHovered = Vector2.zero;
             navmapView.gameObject.SetActive(true);
 
-            if (!navmapView.WorldsWarningNotificationView.WasEverClosed)
-            {
-                if (realmData is {Configured: true, ScenesAreFixed: true })
-                {
-                    navmapView.WorldsWarningNotificationView.SetText(isWorld ? string.Format(WORLD_MAP_WARNING_MESSAGE, realmData.RealmName) : WORLDS_WARNING_MESSAGE);
-                    navmapView.WorldsWarningNotificationView.Show();
-                }
-                else
-                    navmapView.WorldsWarningNotificationView.Hide();
-            }
-
+            // A world's map only lists its own parcels: Genesis City's categories and search don't apply there.
+            navmapView.SetPlacesSearchVisible(!isWorld);
             placesAndEventsPanelController.Show();
+
+            // A parcel clicked in a world opens its card; until then the panel of Genesis City's places stays closed.
+            if (isWorld)
+                placesAndEventsPanelController.Close();
 
             // The map renders into a RenderTexture, so the user's render scale would pixelate it.
             upscalingController.RequireFullRenderScale(this);
