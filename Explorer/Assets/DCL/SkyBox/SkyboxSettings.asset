@@ -32,10 +32,17 @@ MonoBehaviour:
     m_SubObjectType: 
     m_SubObjectGUID: 
     m_EditorAssetChanged: 0
-  DebugLookPresets:
+  LookPresets:
   - Name: Legacy
     Preset:
       m_AssetGUID: 32976ee587c04db88e083b6775e5ee5f
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+  - Name: Halloween2026
+    Preset:
+      m_AssetGUID: 6fdeef5a54c14a44b8c8fd9b140de6c6
       m_SubObjectName: 
       m_SubObjectType: 
       m_SubObjectGUID: 

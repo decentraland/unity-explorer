@@ -75,6 +75,13 @@ namespace DCL.FeatureFlags
             return true;
         }
 
+        public bool TryGetTextPayload(string id, out string? text)
+        {
+            text = null;
+
+            return TryGetVariant(id, out FeatureFlagVariantDto variant) && TryGetTextPayload(id, variant.name, out text);
+        }
+
         public bool TryGetPayload(string id, out FeatureFlagPayload payload)
         {
             payload = default(FeatureFlagPayload);

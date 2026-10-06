@@ -86,6 +86,7 @@ MonoBehaviour:
   - rid: 6784895264912310272
   - rid: 7162477752737071106
   - rid: 857448815798779906
+  - rid: 857448815798779907
   - rid: 7493825610294857301
   - rid: 3511243270148325472
   - rid: 1709771649487732831
@@ -278,6 +279,15 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
     - rid: 857448815798779906
       type: {class: TextShapePlugin/FontsSettings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
+      data:
+        <FontList>k__BackingField:
+          m_AssetGUID: 353f2294734a94b57b061c9b83eb275d
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+    - rid: 857448815798779907
+      type: {class: FontsLoadingPlugin/Settings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
       data:
         <FontList>k__BackingField:
           m_AssetGUID: 353f2294734a94b57b061c9b83eb275d
@@ -574,7 +584,7 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
-        <pointAtMarkerVisibilitySettings>k__BackingField: {fileID: 11400000, guid: 9049db00bfb254bb786af9004420da39, type: 2}
+        <PointAtMarkerVisibilitySettings>k__BackingField: {fileID: 11400000, guid: 9049db00bfb254bb786af9004420da39, type: 2}
         <CameraReelGalleryMessages>k__BackingField: {fileID: 11400000, guid: 12a528a6e96c1445fa6cfb612027de92, type: 2}
         <StorageProgressBarText>k__BackingField: Storage {0}/{1} photos taken
         <GridLayoutFixedColumnCount>k__BackingField: 6
@@ -1124,8 +1134,14 @@ MonoBehaviour:
     - rid: 4933664074294100087
       type: {class: LobbyPlugin/LobbyPluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
-        <LobbyPrefab>k__BackingField:
-          m_AssetGUID: 8a935b6a6ff72445ab1c4a9bbba48cd1
+        <DocumentPrefab>k__BackingField:
+          m_AssetGUID: 8ae3fb61048040438ec8a0347e048766
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <PopupsPrefab>k__BackingField:
+          m_AssetGUID: c85615cb88b54cc9a85e397318aff22f
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 

@@ -331,7 +331,7 @@ namespace DCL.UserInAppInitializationFlow
             var jumpIn = new UniTaskCompletionSource();
 
             // The lobby steps aside for the panels it opens and comes back, so the flow waits for the pick rather than for the lobby leaving the screen
-            mvcManager.ShowAndForget(LobbyController.IssueCommand(new LobbyParameter(isStartup: true, () => jumpIn.TrySetResult(), gateToken)), ct);
+            mvcManager.ShowAndForget(LobbyDocumentController.IssueCommand(new LobbyParameter(isStartup: true, () => jumpIn.TrySetResult(), gateToken)), ct);
 
             using (CancellationTokenSource lobbyUp = CancellationTokenSource.CreateLinkedTokenSource(ct, gateToken))
                 await jumpIn.Task.AttachExternalCancellation(lobbyUp.Token).SuppressCancellationThrow();
