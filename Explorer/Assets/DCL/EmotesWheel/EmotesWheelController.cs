@@ -118,7 +118,9 @@ namespace DCL.EmotesWheel
 
                     if (!read.IsOk(out profile))
                     {
-                        ReportHub.LogError(new ReportData(ReportCategory.EMOTE), $"Could not initialize emote wheel slots, the profile could not be read ({read})");
+                        if (read.IsError(out ProfileReadError error) && error != ProfileReadError.FetchFailed)
+                            ReportHub.LogError(new ReportData(ReportCategory.EMOTE), $"Could not initialize emote wheel slots, the profile could not be read ({error})");
+
                         return;
                     }
                 }

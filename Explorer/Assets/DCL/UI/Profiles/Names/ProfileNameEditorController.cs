@@ -138,8 +138,8 @@ namespace DCL.UI.ProfileNames
                 {
                     claimedConfig.dropdownLoadingSpinner.SetActive(false);
 
-                    if (!read.IsCancelled)
-                        ReportHub.LogError(ReportCategory.PROFILE, $"Name editor cannot open: own profile read failed ({read})");
+                    if (read.IsError(out ProfileReadError error) && error is not (ProfileReadError.Cancelled or ProfileReadError.FetchFailed))
+                        ReportHub.LogError(ReportCategory.PROFILE, $"Name editor cannot open: own profile read failed ({error})");
 
                     return;
                 }

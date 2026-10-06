@@ -51,7 +51,8 @@ namespace DCL.Profiles
             UpdateProfilingCounter();
         }
 
-        private static void InheritDynamicState(ProfileTier from, ProfileTier to)
+        /// <summary>Moves the loaded picture and its in-flight download to the replacement when the snapshot URL is unchanged.</summary>
+        internal static void InheritDynamicState(ProfileTier from, ProfileTier to)
         {
             // Only inherit if the snapshot URL hasn't changed — otherwise the old picture/promise is stale.
             if (from.FaceSnapshotUrl != to.FaceSnapshotUrl)

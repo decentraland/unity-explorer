@@ -150,27 +150,34 @@ namespace DCL.Profiles.Self
                     profile.Avatar.emotes[slot] = emoteStorage.BaseEmotesUrns[slot];
         }
 
-        /// <summary>Publishes a copy, so the instance the model keeps is never the one the cache disposes when it is replaced.</summary>
+        /// <summary>The cache and the player entity each get their own copy, so neither disposes the other's instance or the one the model keeps.</summary>
         private void Publish(Profile profile)
         {
-            Profile published = Copy(profile);
-            profileCache.Set(published.UserId.Value, published);
-            UpdateAvatarInWorld(published);
+            Profile cached = Copy(profile);
+            profileCache.Set(cached.UserId.Value, cached);
+            UpdateAvatarInWorld(profile);
         }
 
         /// <summary>The cache and the repository own the instances they are given or return; the model keeps a copy of its own.</summary>
         private static Profile Copy(Profile profile) =>
             new ProfileBuilder().From(profile).Build();
 
+        /// <summary>The player entity owns its instance: the one it replaces hands its picture over and is disposed here.</summary>
         private void UpdateAvatarInWorld(Profile profile)
         {
             // Set throws on an entity without the component.
-            if (!world.Has<Profile>(playerEntity))
+            if (!world.TryGet(playerEntity, out Profile? replaced))
                 return;
 
-            profile.IsDirty = true;
-            world.Set(playerEntity, profile);
-            ProfileUtils.CreateProfilePicturePromise(profile, world, PartitionComponent.TOP_PRIORITY);
+            Profile onEntity = Copy(profile);
+
+            if (replaced != null)
+                DefaultProfileCache.InheritDynamicState(replaced, onEntity);
+
+            onEntity.IsDirty = true;
+            world.Set(playerEntity, onEntity);
+            ProfileUtils.CreateProfilePicturePromise(onEntity, world, PartitionComponent.TOP_PRIORITY);
+            replaced?.Dispose();
         }
 
         private void StartDeploy(in DeployCmd deploy, IMsgInbox<SelfProfileMsg> inbox)

@@ -39,7 +39,7 @@ namespace DCL.UserInAppInitializationFlow
 
             return await read.Match(
                 (self: this, args, finalizationProgress, ct),
-                onOk: static (ctx, profile) => ctx.self.LoadAvatarAsync(profile, ctx.args, ctx.finalizationProgress, ctx.ct).SuppressToResultAsync(ReportCategory.STARTUP),
+                onOk: static (ctx, profile) => ctx.self.LoadAvatarAsync(new ProfileBuilder().From(profile).Build(), ctx.args, ctx.finalizationProgress, ctx.ct).SuppressToResultAsync(ReportCategory.STARTUP),
                 onError: static (_, error) => UniTask.FromResult(ToStartupError(error)));
         }
 
@@ -52,11 +52,13 @@ namespace DCL.UserInAppInitializationFlow
             World world = args.FlowParameters.World;
             Entity playerEntity = args.FlowParameters.PlayerEntity;
 
-            if (world.Has<Profile>(playerEntity))
+            // The entity owns its instance: the one it replaces is disposed
+            if (world.TryGet(playerEntity, out Profile? replaced))
             {
                 // Make all systems update again since the previous profile was already stored and processed, but we now updated it
                 profile.IsDirty = true;
                 world.Set(playerEntity, profile);
+                replaced?.Dispose();
             }
             else
                 world.Add(playerEntity, profile);

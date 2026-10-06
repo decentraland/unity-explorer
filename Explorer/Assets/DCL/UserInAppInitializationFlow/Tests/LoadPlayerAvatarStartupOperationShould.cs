@@ -73,7 +73,9 @@ namespace DCL.UserInAppInitializationFlow.Tests
             operation.ExecuteAsync(MakeParams(playerEntity), cts.Token).GetAwaiter().GetResult();
 
             Assert.IsTrue(world.Has<Profile>(playerEntity));
-            Assert.AreSame(profile, world.Get<Profile>(playerEntity));
+            Profile onEntity = world.Get<Profile>(playerEntity);
+            Assert.AreNotSame(profile, onEntity, "the entity owns a copy, not the model's instance");
+            Assert.IsTrue(onEntity.IsSameProfile(profile));
         }
 
         [Test]
@@ -84,13 +86,15 @@ namespace DCL.UserInAppInitializationFlow.Tests
             selfProfile.ProfileAsync(Arg.Any<CancellationToken>())
                 .Returns(UniTask.FromResult(ProfileReadResult.FromOk(newProfile)));
 
+            oldProfile.ClearLinks();
             Entity playerEntity = world.Create();
             world.Add(playerEntity, oldProfile);
 
             var operation = new LoadPlayerAvatarStartupOperation(loadingStatus, selfProfile, avatarBaseProxy);
             operation.ExecuteAsync(MakeParams(playerEntity), cts.Token).GetAwaiter().GetResult();
 
-            Assert.AreSame(newProfile, world.Get<Profile>(playerEntity));
+            Assert.IsTrue(world.Get<Profile>(playerEntity).IsSameProfile(newProfile));
+            Assert.IsNull(oldProfile.Links, "the replaced instance is disposed");
         }
 
         [Test]

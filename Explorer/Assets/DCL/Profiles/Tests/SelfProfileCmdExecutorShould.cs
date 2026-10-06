@@ -299,6 +299,42 @@ namespace DCL.Profiles.Tests
         }
 
         [Test]
+        public void KeepThePlayerEntityProfileIntactWhenTheCacheReplacesIt()
+        {
+            // Arrange
+            // The real cache disposes the instance a later write replaces, as the repository does when a deploy completes.
+            var cache = new DefaultProfileCache();
+            executor.Dispose();
+            profileCache = cache;
+            executor = NewExecutor(new ForcedWearables());
+            world.Add(playerEntity, NewProfile(ALICE, 2));
+            Profile published = Profile.NewRandomProfile(ALICE.Value);
+            published.ClearLinks();
+
+            // Act
+            executor.Execute(SelfProfileCmd.FromPublish(published), inbox);
+            cache.Set(ALICE.Value, Profile.NewRandomProfile(ALICE.Value));
+
+            // Assert
+            Assert.That(world.Get<Profile>(playerEntity).Links, Is.Not.Null, "the player entity must not hold the instance the cache disposed");
+        }
+
+        [Test]
+        public void DisposeTheProfileThePlayerEntityReplaces()
+        {
+            // Arrange
+            Profile replaced = NewProfile(ALICE, 2);
+            replaced.ClearLinks();
+            world.Add(playerEntity, replaced);
+
+            // Act
+            executor.Execute(SelfProfileCmd.FromPublish(NewProfile(ALICE, 3)), inbox);
+
+            // Assert
+            Assert.That(replaced.Links, Is.Null, "the entity owns its instance, so the one it replaces is released");
+        }
+
+        [Test]
         public void ReplaceTheProfileOnThePlayerEntityWhenItCarriesOne()
         {
             // Arrange
