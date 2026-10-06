@@ -55,6 +55,10 @@ namespace DCL.Minimap
         private const float ANIMATION_TIME = 0.2f;
         private const int SHOW_BANNED_TOOLTIP_DELAY_SEC = 10;
 
+        // The row of the contextual button below the map in worlds: the button's height plus its margins, and the gap to the map's frame.
+        private const float CONTEXTUAL_BUTTON_ROW_HEIGHT = 48;
+        private const float CONTEXTUAL_BUTTON_ROW_GAP = 4;
+
         private readonly IMapRenderer mapRenderer;
         private readonly IMVCManager mvcManager;
         private readonly IPlacesAPIService placesAPIService;
@@ -89,7 +93,9 @@ namespace DCL.Minimap
         private ToggleContextMenuControlSettings? homeToggleSettings;
         private PlacesData.PlaceInfo? currentPlaceInfo;
         private string previousRealmName = string.Empty;
-        private Transform? contextualButtonParentForWorlds;
+        private (Vector2 Position, Vector2 Size)? worldsBackgroundLayout;
+        private bool isContextualButtonBelowMap;
+        private bool isCollapsed;
 
         public IReadOnlyDictionary<MapLayer, IMapLayerParameter> LayersParameters { get; } = new Dictionary<MapLayer, IMapLayerParameter>
             { { MapLayer.PlayerMarker, new PlayerMarkerParameter { BackgroundIsActive = false } } };
@@ -349,6 +355,8 @@ namespace DCL.Minimap
 
         private void ExpandMinimap()
         {
+            isCollapsed = false;
+            ShowContextualButtonRowBelowMap();
             viewInstance!.collapseMinimapButton.gameObject.SetActive(true);
             viewInstance.expandMinimapButton.gameObject.SetActive(false);
             viewInstance.minimapRendererButton.gameObject.SetActive(true);
@@ -358,6 +366,8 @@ namespace DCL.Minimap
 
         private void CollapseMinimap()
         {
+            isCollapsed = true;
+            ShowContextualButtonRowBelowMap();
             viewInstance!.collapseMinimapButton.gameObject.SetActive(false);
             viewInstance.expandMinimapButton.gameObject.SetActive(true);
             viewInstance.minimapRendererButton.gameObject.SetActive(false);
@@ -561,13 +571,16 @@ namespace DCL.Minimap
 
             bool isGenesisModeActivated = realmKind is RealmKind.GenesisCity;
 
-            // A world shows its own map in Genesis City's layout, with the contextual button over the map.
+            // A world shows its own map in Genesis City's layout, with the contextual button in a row below the map.
             bool showMap = isGenesisModeActivated || realmKind is RealmKind.World;
+            isContextualButtonBelowMap = showMap && !isGenesisModeActivated;
 
-            PlaceContextualButton(overMap: showMap && !isGenesisModeActivated);
             ToggleObjects(showMap);
-            ConfigureContextualButton(isGenesisModeActivated);
+
+            // Before laying out the worlds background: a change of animator can restore what the previous one animated.
             SetAnimatorController(showMap);
+            PlaceWorldsBackground();
+            ConfigureContextualButton(isGenesisModeActivated);
         }
 
         private void ToggleObjects(bool showMap)
@@ -579,29 +592,40 @@ namespace DCL.Minimap
                 go.SetActive(!showMap);
         }
 
-        private void PlaceContextualButton(bool overMap)
+        /// <summary>
+        ///     The worlds layout's background holds the contextual button: under the map's frame, as a row of its own, when a world
+        ///     shows its map; otherwise where the worlds layout and its animator place it.
+        /// </summary>
+        private void PlaceWorldsBackground()
         {
-            Transform button = viewInstance!.minimapContextualButtonView.transform;
-            contextualButtonParentForWorlds ??= button.parent;
+            RectTransform background = viewInstance!.worldsBackground;
+            worldsBackgroundLayout ??= (background.anchoredPosition, background.sizeDelta);
+            (Vector2 position, Vector2 size) = worldsBackgroundLayout.Value;
 
-            Transform parent = overMap ? viewInstance.worldMapContextualButtonParent : contextualButtonParentForWorlds;
-
-            if (button.parent == parent)
-                return;
-
-            button.SetParent(parent, false);
-
-            if (!overMap)
-                return;
-
-            button.SetAsLastSibling();
-
-            // Only the worlds animator fades the button in and out, and it may have left it hidden.
-            if (button.TryGetComponent(out CanvasGroup canvasGroup))
+            if (isContextualButtonBelowMap)
             {
-                canvasGroup.alpha = 1;
-                canvasGroup.interactable = true;
+                var mapFrame = (RectTransform)viewInstance.minimapContainer.parent;
+                position.y = -(mapFrame.rect.height + CONTEXTUAL_BUTTON_ROW_GAP);
+                size.y = CONTEXTUAL_BUTTON_ROW_HEIGHT;
+
+                // Only the worlds animator fades the button in and out, and it may have left it hidden.
+                if (viewInstance.minimapContextualButtonView.TryGetComponent(out CanvasGroup canvasGroup))
+                {
+                    canvasGroup.alpha = 1;
+                    canvasGroup.interactable = true;
+                }
             }
+
+            background.anchoredPosition = position;
+            background.sizeDelta = size;
+            ShowContextualButtonRowBelowMap();
+        }
+
+        /// <summary>The row below the map collapses with the map, which Genesis City's animator doesn't know about.</summary>
+        private void ShowContextualButtonRowBelowMap()
+        {
+            if (isContextualButtonBelowMap)
+                viewInstance!.worldsBackground.gameObject.SetActive(!isCollapsed);
         }
 
         private void ConfigureContextualButton(bool isGenesisModeActivated)

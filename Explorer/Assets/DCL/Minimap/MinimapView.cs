@@ -82,10 +82,10 @@ namespace DCL.Minimap
         internal List<GameObject> objectsToActivateForWorlds { get; private set; } = null!;
 
         /// <summary>
-        ///     Holds the contextual button over the map in worlds, which show the map with Genesis City's layout.
+        ///     The background of the worlds layout, which holds the contextual button
         /// </summary>
         [field: SerializeField]
-        internal RectTransform worldMapContextualButtonParent { get; private set; } = null!;
+        internal RectTransform worldsBackground { get; private set; } = null!;
 
         [field: SerializeField]
         internal MinimapPinMarkerObject destinationPinMarker { get; private set; } = null!;
