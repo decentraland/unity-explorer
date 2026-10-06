@@ -21,7 +21,8 @@ namespace DCL.PlacesAPIService
 
         private readonly Dictionary<string, PlacesData.PlaceInfo> placesById = new ();
         private readonly Dictionary<Vector2Int, PlacesData.PlaceInfo> placesByCoords = new ();
-        private readonly Dictionary<Vector2Int, PlacesData.PlaceInfo?> worldsByCoords = new ();
+        // Worlds share coordinates, so a world's place is cached under its world's name too
+        private readonly Dictionary<(string World, Vector2Int Coords), PlacesData.PlaceInfo?> worldsByCoords = new ();
         private readonly IPlacesAPIClient client;
         private readonly CancellationTokenSource disposeCts = new ();
         private readonly string[] singlePositionBuffer = new string[1];
@@ -125,7 +126,7 @@ namespace DCL.PlacesAPIService
             if (!AreCoordinatesWithinBounds(coords))
                 return null;
 
-            if (worldsByCoords.TryGetValue(coords, out PlacesData.PlaceInfo? cachedPlace))
+            if (worldsByCoords.TryGetValue((realmName, coords), out PlacesData.PlaceInfo? cachedPlace))
                 return cachedPlace;
 
             PlacesData.PlacesAPIResponse response;
@@ -133,7 +134,7 @@ namespace DCL.PlacesAPIService
             try { response = await client.GetWorldAsync($"{coords.x},{coords.y}", realmName, ct); }
             catch (NotAPlaceException)
             {
-                worldsByCoords[coords] = null;
+                worldsByCoords[(realmName, coords)] = null;
                 return null;
             }
 
@@ -142,12 +143,12 @@ namespace DCL.PlacesAPIService
 
             if (response.data.Count == 0)
             {
-                worldsByCoords[coords] = null;
+                worldsByCoords[(realmName, coords)] = null;
                 return null;
             }
 
             PlacesData.PlaceInfo place = response.data[0];
-            worldsByCoords[coords] = place;
+            worldsByCoords[(realmName, coords)] = place;
 
             response.Dispose();
 
