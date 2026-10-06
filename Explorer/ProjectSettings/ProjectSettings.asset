@@ -564,7 +564,7 @@ PlayerSettings:
   - m_BuildTarget: BJMSupport
     m_GraphicsJobs: 1
   - m_BuildTarget: LinuxStandaloneSupport
-    m_GraphicsJobs: 1
+    m_GraphicsJobs: 0
   - m_BuildTarget: PS4Player
     m_GraphicsJobs: 1
   - m_BuildTarget: iOSSupport
@@ -599,6 +599,9 @@ PlayerSettings:
     m_Automatic: 1
   - m_BuildTarget: WindowsStandaloneSupport
     m_APIs: 02000000
+    m_Automatic: 0
+  - m_BuildTarget: LinuxStandaloneSupport
+    m_APIs: 1500000011000000
     m_Automatic: 0
   m_BuildTargetVRSettings:
   - m_BuildTarget: Standalone
