@@ -125,11 +125,21 @@ then per world:
    returns the feeder's resolved definitions, so the client's `GenerateFixedScenesTerrainAsync` builds the world terrain
    from the manifest's occupied parcels (or the union of scene parcels) and hides Genesis's. A single scene with
    `landscapeTerrain: false` gets no terrain, as in the client.
-4. Tiles: every level-L tile any world parcel touches, rendered with `MapCaptureJob.RenderBlockInPartsAsync` (the
-   client-map loads-per-block path factored out). Requests are answered from the resolved definitions; parcels no scene
-   claims are empty and ready at once. Outside the world's parcels the image shows what the client would: world terrain,
-   ocean, cliffs, trees. A load of only empty parcels skips the cache flush.
-5. Cleanup: definitions cleared, scenes unloaded, `CacheCleaner` + `Resources.UnloadUnusedAssets` as per chunk.
+4. Extent: the terrain as generated, not just the parcels. `WorldTerrainGenerator` builds one box over the bounding box
+   of the occupied parcels plus `borderPadding` (2) plus 10% of the mean side (`TerrainModel` with `addExtraPadding`),
+   so two far-apart clusters get one terrain spanning both (`palkia.dcl.eth`: parcels -3,-4..101,101, terrain
+   -16,-17..114,114). The extent is `TerrainModel.MinParcel..MaxParcel` widened to the cliff meshes' bounds
+   (`ITerrain.Cliffs`, mesh bounds so culled cliffs count), source `terrain`. When the world has no terrain
+   (`landscapeTerrain: false`, terrain hidden) or the model does not hold the parcels, it is the parcels' bounds, source
+   `parcels`. `MapCaptureWorldsJob.TerrainExtent`.
+5. Tiles: every level-L tile the extent intersects, clipped to the grid (X -152..167, Y -167..152), rendered with
+   `MapCaptureJob.RenderBlockInPartsAsync` (the client-map loads-per-block path factored out) given the world's scene
+   parcels: a part (`--map-capture-chunk`) holding none is rendered straight away with no load, wait or unload, so
+   terrain-only tiles cost a few frames per part; parts with scenes load, wait and unload as before. Requests are
+   answered from the resolved definitions; parcels no scene claims are empty and ready at once. Outside the world's
+   parcels the image shows what the client would: world terrain, ocean, cliffs, trees. A load of only empty parcels
+   skips the cache flush.
+6. Cleanup: definitions cleared, scenes unloaded, `CacheCleaner` + `Resources.UnloadUnusedAssets` as per chunk.
 
 Gated on `realmData.IsGenesis()` like the client: roads, `limitHeightByParcels`, and the IpfsPath base (`Content` vs
 `WorldContentServer`). ISS LOD_0 works unchanged: descriptor and bundle URLs depend only on the scene id. The ISS
@@ -137,17 +147,20 @@ requirement holds: a world scene without a descriptor (SDK6 scenes, which the cl
 listed in `failedParcels`.
 
 Output: `<out>/worlds/<name>/<level>/<i>,<j>.jpg`, `<out>/worlds/<name>/manifest.json` (status
-`inProgress|complete|skipped|failed`, scenes, parcels, `parcelsWithoutScene`, tiles with `pendingParcels`/`failedParcels`
+`inProgress|complete|skipped|failed`, scenes, parcels, `parcelsWithoutScene`, `extent` (`minX`/`minY`/`maxX`/`maxY`
+inclusive parcels before clipping, and `source` `terrain|parcels`), `tileCount`, tiles with `pendingParcels`/`failedParcels`
 and seconds, totals, `allScenesLoaded`, timings for realm/definitions/terrain/tiles), and `<out>/worlds/run-summary.json`
-rewritten after every world. Resumable: a world whose manifest says `complete` or `skipped` is skipped; an `inProgress`
-or `failed` world is redone, keeping tiles its manifest already lists. Delete a world's folder to force it. A world with
+rewritten after every world. Resumable: a world whose manifest says `skipped`, or `complete` with an `extent`, is
+skipped; an `inProgress` or `failed` world, or a `complete` one without `extent` (captured before the terrain-wide
+extent, parcel-touching tiles only), is redone, keeping tiles its manifest already lists and adding the terrain-only
+ones. Delete a world's `manifest.json` to redo it keeping nothing listed, or its folder to start it from scratch. A world with
 any parcel outside the grid (one today, `neverlandranch.dcl.eth`) is `skipped` with a reason. A failure (realm,
 definitions, terrain, timeout, exception) marks the world `failed` with the error and the run continues; the exit code
 is 1 if any world failed or any tile has pending or failed parcels.
 
 Index facts checked 2026-10-06 (`GET https://worlds-content-server.decentraland.org/index` with a browser user agent):
-1671 worlds, 115 of them not `*.dcl.eth` (no registry manifest by construction, so the URN path), 4266 level-4 tiles in
-the grid, the largest worlds 90,000 parcels (bitfiend, excitedhamsters, ontherise) and 12,855 (worldtrack). The abgen
+1671 worlds, 115 of them not `*.dcl.eth` (no registry manifest by construction, so the URN path), 4266 level-4 tiles
+touched by world parcels in the grid (more now that the whole terrain extent is captured; not recounted), the largest worlds 90,000 parcels (bitfiend, excitedhamsters, ontherise) and 12,855 (worldtrack). The abgen
 registry answers both `/worlds/{name}/manifest` and `/entities/active?world_name=` with Windows versions.
 
 `scripts/map_worlds_ktx2.py` converts `<out>/worlds/*/<level>/*.jpg` into a mirrored KTX2 tree with the same toktx

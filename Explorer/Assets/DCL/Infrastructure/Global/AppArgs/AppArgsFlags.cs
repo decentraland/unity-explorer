@@ -257,7 +257,8 @@ namespace Global.AppArgs
             /// <summary>
             ///     Worlds to capture on the satellite grid, one after another in this process: "all" (the worlds content
             ///     server's index) or the path of a file with one world name per line. Tiles go to
-            ///     out/worlds/{name}/{level}/{i},{j}.jpg; a world whose manifest says complete is skipped on a rerun.
+            ///     out/worlds/{name}/{level}/{i},{j}.jpg, covering its terrain; a world whose manifest says complete and
+            ///     records its extent is skipped on a rerun.
             /// </summary>
             public const string WORLDS = "map-capture-worlds";
 

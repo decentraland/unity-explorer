@@ -218,9 +218,11 @@ namespace Global.MapCapture
         /// <summary>
         ///     One block assembled from loads of <see cref="MapCaptureArgs.ChunkSize" /> parcels, each rendered into its
         ///     part of the image and unloaded before the next. Returns the encoded image; parcels that never finished
-        ///     loading or failed are added to <paramref name="pending" /> and <paramref name="failed" />.
+        ///     loading or failed are added to <paramref name="pending" /> and <paramref name="failed" />. With
+        ///     <paramref name="sceneParcels" />, a part holding none of them is rendered as it stands, without a load.
         /// </summary>
-        internal async UniTask<byte[]> RenderBlockInPartsAsync(Vector2Int blockMin, JArray pending, JArray failed, CancellationToken ct)
+        internal async UniTask<byte[]> RenderBlockInPartsAsync(Vector2Int blockMin, JArray pending, JArray failed, CancellationToken ct,
+            HashSet<Vector2Int>? sceneParcels = null)
         {
             int partPixels = args.RenderPixels / (args.BlockSize / args.ChunkSize);
             MapCaptureCamera.BlockImage image = runtime.Camera.BeginBlock(args.RenderPixels);
@@ -231,12 +233,20 @@ namespace Global.MapCapture
                 for (var px = 0; px < args.BlockSize; px += args.ChunkSize)
                 {
                     var partMin = new Vector2Int(blockMin.x + px, blockMin.y + py);
-                    await LoadAsync(partMin, partMin + (Vector2Int.one * (args.ChunkSize - 1)), ct);
-                    CollectStatus(partMin, args.ChunkSize, pending, failed);
+                    Vector2Int partMax = partMin + (Vector2Int.one * (args.ChunkSize - 1));
+                    bool loads = sceneParcels == null || AnyIn(sceneParcels, partMin, partMax);
+
+                    if (loads)
+                    {
+                        await LoadAsync(partMin, partMax, ct);
+                        CollectStatus(partMin, args.ChunkSize, pending, failed);
+                    }
 
                     var pixelOffset = new Vector2Int(px / args.ChunkSize * partPixels, py / args.ChunkSize * partPixels);
                     await runtime.Camera.RenderIntoAsync(image, partMin, args.ChunkSize, pixelOffset, partPixels, args.CameraHeight, ct);
-                    await UnloadAsync(ct);
+
+                    if (loads)
+                        await UnloadAsync(ct);
                 }
             }
             catch
@@ -368,6 +378,16 @@ namespace Global.MapCapture
                 else if (parcelFailed)
                     failed.Add(ParcelJson(parcel));
             }
+        }
+
+        private static bool AnyIn(HashSet<Vector2Int> parcels, Vector2Int min, Vector2Int max)
+        {
+            for (int y = min.y; y <= max.y; y++)
+            for (int x = min.x; x <= max.x; x++)
+                if (parcels.Contains(new Vector2Int(x, y)))
+                    return true;
+
+            return false;
         }
 
         private static List<Vector2Int> ParcelsIn(Vector2Int min, Vector2Int max)

@@ -2,6 +2,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Ipfs;
+using DCL.Landscape;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests;
 using Newtonsoft.Json;
@@ -19,8 +20,9 @@ namespace Global.MapCapture
     /// <summary>
     ///     Captures worlds one after another in one process, each on the client's satellite grid: points the realm at the
     ///     world, resolves its scenes and generates its terrain as the client does on entering it, then renders every grid
-    ///     tile its parcels touch, loaded in parts, into out/worlds/{name}/{level}/{i},{j}.jpg. A world that fails is
-    ///     recorded and the run moves on; a world whose manifest is final is skipped, so a crashed run can be restarted.
+    ///     tile the generated terrain and its cliffs cover into out/worlds/{name}/{level}/{i},{j}.jpg, loading scenes in
+    ///     parts where they are. A world that fails is recorded and the run moves on; a world whose manifest is final is
+    ///     skipped, so a crashed run can be restarted.
     /// </summary>
     public class MapCaptureWorldsJob
     {
@@ -39,6 +41,10 @@ namespace Global.MapCapture
         private const string STATUS_IN_PROGRESS = "inProgress";
         private const int POLL_INTERVAL_MS = 250;
         private const char LIST_COMMENT = '#';
+        private const string EXTENT_FIELD = "extent";
+        private const string EXTENT_FROM_TERRAIN = "terrain";
+        private const string EXTENT_FROM_PARCELS = "parcels";
+        private const float BORDER_EPSILON = 0.01f;
 
         private readonly MapCaptureRuntime runtime;
         private readonly MapCaptureArgs args;
@@ -73,7 +79,10 @@ namespace Global.MapCapture
                 JObject? previous = ReadManifest(directory);
                 string? previousStatus = previous?.Value<string>("status");
 
-                if (previousStatus is STATUS_COMPLETE or STATUS_SKIPPED)
+                // A complete manifest without an extent predates terrain-wide capture: the world is redone, keeping its tiles.
+                bool upToDate = previousStatus == STATUS_SKIPPED || (previousStatus == STATUS_COMPLETE && previous![EXTENT_FIELD] != null);
+
+                if (upToDate)
                 {
                     ReportHub.LogProductionInfo($"[MapCapture] World {index + 1}/{names.Count} {name}: already {previousStatus}");
                     worlds.Add(WorldEntry(name, previous!, true));
@@ -148,7 +157,7 @@ namespace Global.MapCapture
             await MapCaptureBootstrap.LoadTerrainAsync(runtime.Landscape, ct);
             float terrainReady = UnityEngine.Time.realtimeSinceStartup;
 
-            HashSet<Vector2Int> parcels = WorldParcels(out int parcelsWithoutScene);
+            HashSet<Vector2Int> parcels = WorldParcels(out HashSet<Vector2Int> sceneParcels, out int parcelsWithoutScene);
             manifest["hasWorldManifest"] = hasWorldManifest;
             manifest["scenes"] = runtime.Feeder.WorldDefinitions.Count;
             manifest["parcels"] = parcels.Count;
@@ -157,21 +166,41 @@ namespace Global.MapCapture
             if (parcels.Count == 0)
                 return Skipped(directory, manifest, "the world has no parcels");
 
-            var tileSet = new SortedSet<(int j, int i)>();
             var outside = 0;
+            Vector2Int parcelsMin = Vector2Int.one * int.MaxValue;
+            Vector2Int parcelsMax = Vector2Int.one * int.MinValue;
 
             foreach (Vector2Int parcel in parcels)
             {
-                Vector2Int? tile = args.TileOf(parcel);
+                parcelsMin = Vector2Int.Min(parcelsMin, parcel);
+                parcelsMax = Vector2Int.Max(parcelsMax, parcel);
 
-                if (tile.HasValue)
-                    tileSet.Add((tile.Value.y, tile.Value.x));
-                else
+                if (!args.TileOf(parcel).HasValue)
                     outside++;
             }
 
             if (outside > 0)
                 return Skipped(directory, manifest, $"{outside} of its {parcels.Count} parcels lie outside the satellite grid");
+
+            string extentSource = TerrainExtent(parcelsMin, parcelsMax, out Vector2Int extentMin, out Vector2Int extentMax);
+
+            manifest[EXTENT_FIELD] = new JObject
+            {
+                ["minX"] = extentMin.x,
+                ["minY"] = extentMin.y,
+                ["maxX"] = extentMax.x,
+                ["maxY"] = extentMax.y,
+                ["source"] = extentSource,
+            };
+
+            // The extent holds every parcel, so clipped to the grid it is never empty. Tile rows count southward.
+            Vector2Int northWestTile = args.TileOf(new Vector2Int(Mathf.Max(extentMin.x, args.Min.x), Mathf.Min(extentMax.y, args.Max.y)))!.Value;
+            Vector2Int southEastTile = args.TileOf(new Vector2Int(Mathf.Min(extentMax.x, args.Max.x), Mathf.Max(extentMin.y, args.Min.y)))!.Value;
+            var tileSet = new List<(int j, int i)>();
+
+            for (int tileJ = northWestTile.y; tileJ <= southEastTile.y; tileJ++)
+            for (int tileI = northWestTile.x; tileI <= southEastTile.x; tileI++)
+                tileSet.Add((tileJ, tileI));
 
             // Tiles an interrupted run already wrote are kept.
             var doneTiles = new Dictionary<string, JObject>();
@@ -200,7 +229,7 @@ namespace Global.MapCapture
                     float tileStarted = UnityEngine.Time.realtimeSinceStartup;
                     var pending = new JArray();
                     var failed = new JArray();
-                    byte[] image = await job.RenderBlockInPartsAsync(args.TileMin(new Vector2Int(i, j)), pending, failed, ct);
+                    byte[] image = await job.RenderBlockInPartsAsync(args.TileMin(new Vector2Int(i, j)), pending, failed, ct, sceneParcels);
                     File.WriteAllBytes(Path.Combine(directory, file), image);
 
                     entry = new JObject
@@ -241,10 +270,74 @@ namespace Global.MapCapture
             return manifest;
         }
 
-        /// <summary>The world's parcels as the client's terrain sees them: its manifest's occupied parcels, else every scene's parcels.</summary>
-        private HashSet<Vector2Int> WorldParcels(out int parcelsWithoutScene)
+        /// <summary>
+        ///     Inclusive parcel bounds of the world as generated: the terrain model's padded box widened by its cliff
+        ///     meshes, or the parcels' bounds when no terrain was generated for this world. Returns which one it is.
+        /// </summary>
+        private string TerrainExtent(Vector2Int parcelsMin, Vector2Int parcelsMax, out Vector2Int min, out Vector2Int max)
         {
-            var sceneParcels = new HashSet<Vector2Int>();
+            min = parcelsMin;
+            max = parcelsMax;
+
+            ITerrain terrain = runtime.Landscape.CurrentTerrain;
+            TerrainModel? model = terrain.TerrainModel;
+
+            // A world whose scene opts out of the terrain hides it and leaves the previous world's model in place.
+            if (!terrain.IsTerrainShown || model == null)
+                return EXTENT_FROM_PARCELS;
+
+            var terrainMin = new Vector2Int(model.MinParcel.x, model.MinParcel.y);
+            var terrainMax = new Vector2Int(model.MaxParcel.x, model.MaxParcel.y);
+
+            if (terrainMin.x > parcelsMin.x || terrainMin.y > parcelsMin.y || terrainMax.x < parcelsMax.x || terrainMax.y < parcelsMax.y)
+            {
+                ReportHub.LogProductionInfo($"[MapCapture] Terrain ({terrainMin.x},{terrainMin.y})-({terrainMax.x},{terrainMax.y}) does not hold the world's parcels ({parcelsMin.x},{parcelsMin.y})-({parcelsMax.x},{parcelsMax.y}); using the parcels' bounds");
+                return EXTENT_FROM_PARCELS;
+            }
+
+            min = terrainMin;
+            max = terrainMax;
+
+            var worldMin = new Vector2(float.MaxValue, float.MaxValue);
+            var worldMax = new Vector2(float.MinValue, float.MinValue);
+
+            // Mesh bounds rather than renderer bounds: a culled or inactive cliff still counts.
+            foreach (Transform cliff in terrain.Cliffs)
+            foreach (MeshFilter filter in cliff.GetComponentsInChildren<MeshFilter>(true))
+            {
+                Mesh? mesh = filter.sharedMesh;
+
+                if (mesh == null) continue;
+
+                Bounds bounds = mesh.bounds;
+                Matrix4x4 toWorld = filter.transform.localToWorldMatrix;
+
+                for (var corner = 0; corner < 8; corner++)
+                {
+                    var sign = new Vector3((corner & 1) == 0 ? -1f : 1f, (corner & 2) == 0 ? -1f : 1f, (corner & 4) == 0 ? -1f : 1f);
+                    Vector3 point = toWorld.MultiplyPoint3x4(bounds.center + Vector3.Scale(bounds.extents, sign));
+                    worldMin = Vector2.Min(worldMin, new Vector2(point.x, point.z));
+                    worldMax = Vector2.Max(worldMax, new Vector2(point.x, point.z));
+                }
+            }
+
+            if (worldMin.x > worldMax.x)
+                return EXTENT_FROM_TERRAIN;
+
+            // A mesh edge lying exactly on a parcel border does not reach into the next parcel.
+            float parcelSize = terrain.ParcelSize;
+            min = Vector2Int.Min(min, new Vector2Int(Mathf.FloorToInt((worldMin.x + BORDER_EPSILON) / parcelSize), Mathf.FloorToInt((worldMin.y + BORDER_EPSILON) / parcelSize)));
+            max = Vector2Int.Max(max, new Vector2Int(Mathf.FloorToInt((worldMax.x - BORDER_EPSILON) / parcelSize), Mathf.FloorToInt((worldMax.y - BORDER_EPSILON) / parcelSize)));
+            return EXTENT_FROM_TERRAIN;
+        }
+
+        /// <summary>
+        ///     The world's parcels as the client's terrain sees them: its manifest's occupied parcels, else every scene's
+        ///     parcels. <paramref name="sceneParcels" /> are the parcels a scene claims, the only ones with anything to load.
+        /// </summary>
+        private HashSet<Vector2Int> WorldParcels(out HashSet<Vector2Int> sceneParcels, out int parcelsWithoutScene)
+        {
+            sceneParcels = new HashSet<Vector2Int>();
 
             foreach (SceneEntityDefinition definition in runtime.Feeder.WorldDefinitions)
             foreach (Vector2Int parcel in definition.metadata.scene.DecodedParcels)

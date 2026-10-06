@@ -158,8 +158,11 @@ those, e.g. for a first check. Follow the run with `Select-String '\[MapCapture\
 one line per world started and finished, one per tile written.
 
 Output is `C:\MapCapture\Worlds-L4-Day\worlds\<name>\4\<i>,<j>.jpg`, a `manifest.json` per world and
-`worlds\run-summary.json`. If the run crashes, run the same command again: worlds whose manifest says `complete` or
-`skipped` are not redone, and tiles a half-done world already wrote are kept. Delete a world's folder to redo it.
+`worlds\run-summary.json`. Each world gets every tile its generated terrain and cliffs cover (manifest `extent`), not
+only the tiles its scenes touch; terrain-only parts render without loading. If the run crashes, run the same command
+again: worlds whose manifest says `skipped`, or `complete` with an `extent`, are not redone, and tiles a half-done world
+already wrote are kept. Worlds completed before the extent existed (no `extent` in the manifest) are redone the same
+way, keeping their tiles and adding the missing terrain ones. Delete a world's folder to redo it from scratch.
 `--map-capture-chunk 10` loads each tile in four parts if the GPU runs out of memory.
 
 Convert to KTX2 for the client (`{satelliteUrl}/worlds/{worldName}/{level}/{i},{j}.ktx2`):
