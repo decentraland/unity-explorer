@@ -8,15 +8,15 @@ namespace DCL.Chat.ChatViews
 {
     public class ChatMemberTitlebarView : MonoBehaviour
     {
-        public event Action OnCloseRequested;
-        public event Action OnBackRequested;
+        public event Action? OnCloseRequested;
+        public event Action? OnBackRequested;
         public Button ButtonClose => closeButton;
         public Button ButtonBack => backButton;
 
-        [SerializeField] private Button closeButton;
-        [SerializeField] private Button backButton;
-        [SerializeField] private TMP_Text membersCountText;
-        [SerializeField] private TMP_Text channelNameText;
+        [SerializeField] private Button closeButton = null!;
+        [SerializeField] private Button backButton = null!;
+        [SerializeField] private TMP_Text membersCountText = null!;
+        [SerializeField] private TMP_Text channelNameText = null!;
 
         private void Awake()
         {
@@ -27,12 +27,16 @@ namespace DCL.Chat.ChatViews
         public void SetMemberCount(string count) =>
             membersCountText.text = count;
 
+        public void SetMemberCountVisible(bool visible) =>
+            membersCountText.gameObject.SetActive(visible);
+
         public void Activate(bool activate) =>
             gameObject.SetActive(activate);
 
         public void SetChannelName(ChatTitlebarViewModel model)
         {
-            if (channelNameText != null) { channelNameText.SetText(model.ViewMode == TitlebarViewMode.Nearby ? "Nearby  -" : $"{model.Username}  -"); }
+            if (channelNameText != null)
+                channelNameText.SetText(model.ViewMode == TitlebarViewMode.Nearby ? "Nearby  -" : $"{model.Username}  -");
         }
     }
 }
