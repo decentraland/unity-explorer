@@ -28,8 +28,7 @@ namespace DCL.UI.MainUI
         private readonly WarningNotificationView endOfSceneToast;
         private readonly Button openPlacesButton;
 
-        private readonly CancellationTokenSource onToastCancellationTokenSource = new ();
-
+        private CancellationTokenSource onToastCancellationTokenSource = new ();
         private bool endOfSceneToastShown;
 
         public SingleSceneModeHudController(
@@ -53,7 +52,7 @@ namespace DCL.UI.MainUI
             if (!singleSceneMode.IsActive)
                 return;
 
-            ShowOnToastAsync(onToastCancellationTokenSource.Token).Forget();
+            ShowOnToastAsync(onToast, onToastCancellationTokenSource.Token).Forget();
 
             openPlacesButton.onClick.AddListener(OpenPlaces);
 
@@ -95,16 +94,17 @@ namespace DCL.UI.MainUI
                 return;
 
             endOfSceneToastShown = outside;
+            onToastCancellationTokenSource = onToastCancellationTokenSource.SafeRestart();
 
             if (outside)
-                endOfSceneToast.Show(toggleGameObject: true);
+                ShowOnToastAsync(endOfSceneToast, onToastCancellationTokenSource.Token).Forget();
             else
-                endOfSceneToast.Hide();
+                endOfSceneToast.Hide(ct: onToastCancellationTokenSource.Token);
         }
 
-        private async UniTaskVoid ShowOnToastAsync(CancellationToken ct)
+        private async UniTaskVoid ShowOnToastAsync(WarningNotificationView toast, CancellationToken ct)
         {
-            try { await onToast.AnimatedShowAsync(ON_TOAST_DURATION_MS, ct, toggleGameObject: true); }
+            try { await toast.AnimatedShowAsync(ON_TOAST_DURATION_MS, ct, toggleGameObject: true); }
             catch (OperationCanceledException) { }
             catch (Exception e) { ReportHub.LogException(e, new ReportData(ReportCategory.UI)); }
         }
