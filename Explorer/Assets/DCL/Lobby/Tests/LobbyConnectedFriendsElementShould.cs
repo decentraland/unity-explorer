@@ -10,6 +10,7 @@ namespace DCL.Lobby.Tests
         private const string SHOWN = "lobby-connected-friends--shown";
         private const string WITH_OVERFLOW = "lobby-connected-friends--with-overflow";
         private const string PICTURE_LOADING = "lobby-connected-friends__picture--loading";
+        private const string PICTURE_OVERLAPPING = "lobby-connected-friends__picture--overlapping";
 
         private LobbyConnectedFriendsElement friends = null!;
 
@@ -81,6 +82,15 @@ namespace DCL.Lobby.Tests
             //Assert
             Assert.AreEqual(Color.blue, friends.Slot(1).style.backgroundColor.value);
             Assert.IsFalse(friends.Slot(1).ClassListContains(PICTURE_LOADING));
+        }
+
+        [Test]
+        public void OverlapEverySlotButTheFirst()
+        {
+            //Assert
+            Assert.IsFalse(friends.Slot(0).ClassListContains(PICTURE_OVERLAPPING));
+            Assert.IsTrue(friends.Slot(1).ClassListContains(PICTURE_OVERLAPPING));
+            Assert.IsTrue(friends.Slot(2).ClassListContains(PICTURE_OVERLAPPING));
         }
 
         [Test]

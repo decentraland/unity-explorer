@@ -6,7 +6,7 @@ using Utility.UIToolkit;
 namespace DCL.Lobby
 {
     /// <summary>
-    ///     Pill of the friends at a place: up to <see cref="MAX_SLOTS" /> pictures and a "+N" label for the rest, styled by LobbyConnectedFriends.uss.
+    ///     Row of the friends at a place: up to <see cref="MAX_SLOTS" /> pictures and a "+N" disc for the rest, styled by LobbyConnectedFriends.uss.
     /// </summary>
     [UxmlElement]
     public partial class LobbyConnectedFriendsElement : VisualElement
@@ -18,6 +18,7 @@ namespace DCL.Lobby
         private const string USS_WITH_OVERFLOW = USS_BLOCK + "--with-overflow";
         private const string USS_PICTURE = USS_BLOCK + "__picture";
         private const string USS_PICTURE_LOADING = USS_PICTURE + "--loading";
+        private const string USS_PICTURE_OVERLAPPING = USS_PICTURE + "--overlapping";
         private const string USS_OVERFLOW = USS_BLOCK + "__overflow";
 
         private readonly VisualElement[] slots = new VisualElement[MAX_SLOTS];
@@ -52,6 +53,10 @@ namespace DCL.Lobby
             {
                 var slot = new VisualElement { pickingMode = PickingMode.Position };
                 slot.AddToClassList(USS_PICTURE);
+
+                // USS has no :first-child, so the overlap is a class the first slot never gets
+                if (i > 0)
+                    slot.AddToClassList(USS_PICTURE_OVERLAPPING);
                 slot.SetDisplayed(false);
                 slots[i] = slot;
                 Add(slot);
