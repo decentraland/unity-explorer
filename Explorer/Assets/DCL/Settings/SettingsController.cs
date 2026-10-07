@@ -53,6 +53,7 @@ namespace DCL.Settings
         private readonly IReadOnlyDictionary<SettingsSection, (Transform container, ButtonWithSelectableStateView button, Sprite background, SettingsSectionConfig config)> sections;
 
         public event Action<ChatBubbleVisibilitySettings>? ChatBubblesVisibilityChanged;
+        public event Action<bool>? SingleSceneModeChanged;
 
         public SettingsController(
             SettingsView view,
@@ -136,6 +137,11 @@ namespace DCL.Settings
 
         public RectTransform GetRectTransform() =>
             rectTransform;
+
+        public void NotifySingleSceneModeChanged(bool isEnabled)
+        {
+            SingleSceneModeChanged?.Invoke(isEnabled);
+        }
 
         public void NotifyChatBubblesVisibilityChanged(ChatBubbleVisibilitySettings newVisibility)
         {

@@ -19,5 +19,9 @@ namespace DCL.Settings
         /// </summary>
         /// <param name="newVisibility">The new value for the visibility of the chat bubbles.</param>
         void NotifyChatBubblesVisibilityChanged(ChatBubbleVisibilitySettings newVisibility);
+
+        event Action<bool> SingleSceneModeChanged;
+
+        void NotifySingleSceneModeChanged(bool isEnabled);
     }
 }

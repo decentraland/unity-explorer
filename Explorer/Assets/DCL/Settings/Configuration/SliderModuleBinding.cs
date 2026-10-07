@@ -63,7 +63,7 @@ namespace DCL.Settings.Configuration
 
             SettingsFeatureController controller = Feature switch
             {
-                SliderFeatures.SceneDistanceFeature => CreateSimpleSlider(viewInstance, qualitySettingsController, v => qualitySettingsController.SetSceneDistance((int)v), x => x.SceneDistance),
+                SliderFeatures.SceneDistanceFeature => CreateSceneDistanceSlider(viewInstance, qualitySettingsController, singleSceneMode, settingsEventListener),
                 SliderFeatures.EnvironmentDistanceFeature => CreateSimpleSlider(viewInstance, qualitySettingsController, qualitySettingsController.SetLandscapeDistance, x => x.LandscapeDistance),
                 SliderFeatures.MouseVerticalSensitivityFeature => new MouseVerticalSensitivitySettingsController(viewInstance, controlsSettingsAsset),
                 SliderFeatures.MouseHorizontalSensitivityFeature => new MouseHorizontalSensitivitySettingsController(viewInstance, controlsSettingsAsset),
@@ -81,10 +81,37 @@ namespace DCL.Settings.Configuration
                 _ => throw new ArgumentOutOfRangeException(),
             };
 
-            if (Feature == SliderFeatures.SceneDistanceFeature && singleSceneMode.IsActive)
-                viewInstance.SetInteractable(false);
-
             return controller;
+        }
+
+        /// <summary>
+        ///     The scene distance drives nothing once a single scene is all that loads, so this slider follows the
+        ///     single scene mode setting. It starts from the state this session resolved and the toggle corrects it.
+        /// </summary>
+        private static SimpleQualitySettingFeatureController CreateSceneDistanceSlider(
+            SettingsSliderModuleView view,
+            QualitySettingsController qualitySettingsController,
+            SingleSceneMode singleSceneMode,
+            ISettingsModuleEventListener settingsEventListener)
+        {
+            void Setter(float value) => qualitySettingsController.SetSceneDistance((int)value);
+            void OnSingleSceneModeChanged(bool isEnabled) => view.SetInteractable(!isEnabled);
+
+            return new SimpleQualitySettingFeatureController(qualitySettingsController,
+                () =>
+                {
+                    view.SliderView.Slider.onValueChanged.AddListener(Setter);
+                    view.ConfigureWithoutNotify(qualitySettingsController.SceneDistance);
+                    view.SetInteractable(!singleSceneMode.IsActive);
+                    settingsEventListener.SingleSceneModeChanged += OnSingleSceneModeChanged;
+                },
+                x => view.ConfigureWithoutNotify(x.SceneDistance),
+                () =>
+                {
+                    settingsEventListener.SingleSceneModeChanged -= OnSingleSceneModeChanged;
+                    view.SliderView.Slider.onValueChanged.RemoveAllListeners();
+                }
+            );
         }
 
         private static SimpleQualitySettingFeatureController CreateSimpleSlider(
