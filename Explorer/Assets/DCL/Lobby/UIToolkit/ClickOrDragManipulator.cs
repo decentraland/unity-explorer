@@ -10,11 +10,13 @@ namespace DCL.Lobby
     /// </summary>
     public class ClickOrDragManipulator : PointerManipulator
     {
-        // Pointer travel before a press turns into a drag, as in LobbyRailElement
-        private const float DRAG_THRESHOLD_SQR = 8f * 8f;
+        // Pointer travel before a press turns into a drag
+        internal const float DRAG_THRESHOLD = 8f;
 
         // Bit of PointerEventBase.pressedButtons for the left mouse button
-        private const int LEFT_BUTTON_MASK = 1;
+        internal const int LEFT_BUTTON_MASK = 1;
+
+        private const float DRAG_THRESHOLD_SQR = DRAG_THRESHOLD * DRAG_THRESHOLD;
 
         public Action? Clicked;
         public Action<Vector2>? DragStarted;

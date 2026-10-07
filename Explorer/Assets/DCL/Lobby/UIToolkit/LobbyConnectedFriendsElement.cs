@@ -33,6 +33,8 @@ namespace DCL.Lobby
 
             set
             {
+                if (count == value) return;
+
                 count = value;
                 EnableInClassList(USS_SHOWN, value > 0);
                 EnableInClassList(USS_WITH_OVERFLOW, value > MAX_SLOTS);

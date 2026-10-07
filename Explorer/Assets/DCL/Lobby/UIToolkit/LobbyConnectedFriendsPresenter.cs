@@ -1,16 +1,11 @@
-using Cysharp.Threading.Tasks;
-using DCL.Diagnostics;
 using DCL.Friends;
 using DCL.Profiles;
 using DCL.UI.ProfileElements;
-using DCL.Utilities;
-using DCL.Utilities.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UIElements;
-using Utility;
 using Utility.UIToolkit;
 
 namespace DCL.Lobby
@@ -204,11 +199,8 @@ namespace DCL.Lobby
         private class SlotBinding : IDisposable
         {
             private readonly LobbyConnectedFriendsPresenter presenter;
-            private readonly VisualElement picture;
-            private readonly ReactiveProperty<ProfileThumbnailViewModel> thumbnail = new (ProfileThumbnailViewModel.Default());
-
-            private CancellationTokenSource? thumbnailCts;
-            private string userId = string.Empty;
+            private readonly VisualElement slot;
+            private readonly LobbyProfilePictureBinding picture;
 
             public CardBinding Owner { get; }
 
@@ -216,52 +208,37 @@ namespace DCL.Lobby
 
             public string Name { get; private set; } = string.Empty;
 
-            // Also true when the fetch was cancelled midway
-            private bool isPictureLoading => thumbnail.Value.ThumbnailState is ProfileThumbnailViewModel.State.Loading or ProfileThumbnailViewModel.State.NotBound;
-
             public SlotBinding(CardBinding owner, int index, LobbyConnectedFriendsPresenter presenter)
             {
                 Owner = owner;
                 Index = index;
                 this.presenter = presenter;
-                picture = owner.Element.Slot(index);
+                slot = owner.Element.Slot(index);
+                picture = new LobbyProfilePictureBinding(OnThumbnailUpdated);
 
-                thumbnail.Subscribe(OnThumbnailUpdated);
-                picture.RegisterCallback<PointerEnterEvent>(OnPointerEnter);
-                picture.RegisterCallback<PointerMoveEvent>(OnPointerMove);
-                picture.RegisterCallback<PointerLeaveEvent>(OnPointerLeave);
+                slot.RegisterCallback<PointerEnterEvent>(OnPointerEnter);
+                slot.RegisterCallback<PointerMoveEvent>(OnPointerMove);
+                slot.RegisterCallback<PointerLeaveEvent>(OnPointerLeave);
             }
 
             public void Dispose()
             {
-                thumbnailCts.SafeCancelAndDispose();
-                thumbnail.Unsubscribe(OnThumbnailUpdated);
-                picture.UnregisterCallback<PointerEnterEvent>(OnPointerEnter);
-                picture.UnregisterCallback<PointerMoveEvent>(OnPointerMove);
-                picture.UnregisterCallback<PointerLeaveEvent>(OnPointerLeave);
+                picture.Dispose();
+                slot.UnregisterCallback<PointerEnterEvent>(OnPointerEnter);
+                slot.UnregisterCallback<PointerMoveEvent>(OnPointerMove);
+                slot.UnregisterCallback<PointerLeaveEvent>(OnPointerLeave);
             }
 
             public void Show(in Profile.CompactInfo profile, CancellationToken ct)
             {
                 Name = profile.Name;
-
-                // Showing the same friend again keeps the picture unless its fetch was cancelled by a hide before finishing
-                if (string.Equals(userId, profile.UserId.Value, StringComparison.OrdinalIgnoreCase) && !isPictureLoading)
-                    return;
-
-                userId = profile.UserId.Value;
-                thumbnailCts = thumbnailCts.SafeRestartLinked(ct);
-                thumbnail.SetLoading(profile.UserNameColor);
-                GetProfileThumbnailCommand.Instance.ExecuteAsync(thumbnail, null, profile, thumbnailCts.Token).SuppressToResultAsync(ReportCategory.UI).Forget();
+                picture.Load(profile, ct);
             }
 
             public void Clear()
             {
-                thumbnailCts.SafeCancelAndDispose();
-                thumbnailCts = null;
-                userId = string.Empty;
                 Name = string.Empty;
-                thumbnail.UpdateValue(ProfileThumbnailViewModel.Default());
+                picture.Clear();
             }
 
             private void OnThumbnailUpdated(ProfileThumbnailViewModel model) =>

@@ -23,7 +23,6 @@ namespace DCL.Chat
             this.chatHistory = chatHistory;
         }
 
-        // Before the first world load there is no chat to focus, and closing the other views would strip the startup lobby away.
         public bool IsChatOnScreen => mvcManager.IsShowing<ChatMainSharedAreaView, ControllerNoData>();
 
         /// <summary>
@@ -48,12 +47,13 @@ namespace DCL.Chat
         /// <summary>
         /// Closes all not PERSISTENT views and sends an event to focus the chat.
         /// </summary>
-        public void CloseAllViewsAndFocusChat()
+        public bool CloseAllViewsAndFocusChat()
         {
-            if (!IsChatOnScreen) return;
+            if (!IsChatOnScreen) return false;
 
             mvcManager.CloseAllNonPersistentViews();
             chatEventBus.RaiseFocusRequestedEvent();
+            return true;
         }
 
         /// <summary>
@@ -62,9 +62,8 @@ namespace DCL.Chat
         /// <param name="communityId"> The id of the community to open a conversation with</param>
         public void OpenCommunityConversationWithId(string communityId)
         {
-            if (!IsChatOnScreen) return;
+            if (!CloseAllViewsAndFocusChat()) return;
 
-            CloseAllViewsAndFocusChat();
             chatEventBus.RaiseOpenCommunityConversationRequestedEvent(communityId);
         }
     }

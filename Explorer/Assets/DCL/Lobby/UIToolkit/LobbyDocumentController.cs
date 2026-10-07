@@ -95,6 +95,9 @@ namespace DCL.Lobby
         // Null while the landing place loads
         private PlacesData.PlaceInfo? landingPlace;
 
+        // Kept out of the place: the lookups return the cached instance other panels read
+        private string[]? landingConnectedAddresses;
+
         // The destination the shown landing place describes; null together with the place
         private LandingDestination? landingDestination;
         private LandingDestination? startupDestination;
@@ -429,6 +432,7 @@ namespace DCL.Lobby
         {
             landingPlace = null;
             landingDestination = null;
+            landingConnectedAddresses = null;
             card.Title = string.Empty;
             card.Creator = string.Empty;
             card.OnlineCount = 0;
@@ -473,11 +477,11 @@ namespace DCL.Lobby
 
             if (ct.IsCancellationRequested || !result.Success || result.Value.Data.Count == 0 || !ReferenceEquals(landingPlace, place)) return;
 
-            place.connected_addresses = result.Value.Data[0].connected_addresses;
+            landingConnectedAddresses = result.Value.Data[0].connected_addresses;
 
             LobbyLandingCardElement card = viewInstance!.LandingCard;
-            card.OnlineCount = place.connected_addresses?.Length ?? place.user_count;
-            BindConnectedFriends(card.ConnectedFriends, place.connected_addresses);
+            card.OnlineCount = landingConnectedAddresses?.Length ?? place.user_count;
+            BindConnectedFriends(card.ConnectedFriends, landingConnectedAddresses);
         }
 
         // The launch pick is frozen on the first show; only a home destination keeps following the movable home
@@ -500,13 +504,17 @@ namespace DCL.Lobby
 
         private void ShowLandingCard(LandingDestination destination, PlacesData.PlaceInfo place, bool hasDetails, CancellationToken ct)
         {
+            // A refetch of the shown place keeps its connected users until they are resolved again
+            if (landingPlace?.id != place.id)
+                landingConnectedAddresses = null;
+
             landingPlace = place;
             landingDestination = destination;
 
             LobbyLandingCardElement card = viewInstance!.LandingCard;
             card.CanJumpIn = true;
             card.CanOpen = hasDetails;
-            ShowPlaceCard(card, place, ct);
+            ShowPlaceCard(card, place, landingConnectedAddresses ?? place.connected_addresses, ct);
         }
 
         private void OnLandingCardClicked()
@@ -610,17 +618,17 @@ namespace DCL.Lobby
             rail.SetCount(places.Count);
 
             for (var i = 0; i < places.Count; i++)
-                ShowPlaceCard(rail.Cards[i], places[i], ct);
+                ShowPlaceCard(rail.Cards[i], places[i], places[i].connected_addresses, ct);
         }
 
-        private void ShowPlaceCard(LobbyPlaceCardElement card, PlacesData.PlaceInfo place, CancellationToken ct)
+        private void ShowPlaceCard(LobbyPlaceCardElement card, PlacesData.PlaceInfo place, string[]? connectedAddresses, CancellationToken ct)
         {
             card.Title = place.title;
             card.Creator = place.contact_name;
 
             // Only the endpoints resolving connected users return addresses; the aggregated count is the fallback
-            card.OnlineCount = place.connected_addresses?.Length ?? place.user_count;
-            BindConnectedFriends(card.ConnectedFriends, place.connected_addresses);
+            card.OnlineCount = connectedAddresses?.Length ?? place.user_count;
+            BindConnectedFriends(card.ConnectedFriends, connectedAddresses);
 
             LoadThumbnailAsync(card, place.image, ReportCategory.PLACES, ct).Forget();
         }
