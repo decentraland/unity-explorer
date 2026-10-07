@@ -70,7 +70,7 @@ namespace DCL.InWorldCamera
                 visiblePeople.Add(new VisiblePerson
                 {
                     userName = profile?.Name ?? UNKNOWN_USER,
-                    userAddress = string.IsNullOrEmpty(profile?.UserId) ? UNKNOWN_USER_WALLET : profile!.UserId,
+                    userAddress = AddressOf(profile),
                     isGuest = profile is { HasConnectedWeb3: false },
                     isEmoting = isEmoting,
                     screenRect = camera == null ? Rect.zero : CalculateScreenRect(camera, avatarBounds),
@@ -99,6 +99,9 @@ namespace DCL.InWorldCamera
 
             return placeInfo == null ? (UNKNOWN_PLACE, UNKNOWN_PLACE) : (placeInfo.title, placeInfo.id);
         }
+
+        private static string AddressOf(Profile? profile) =>
+            profile?.UserId?.Value is { Length: > 0 } userId ? userId : UNKNOWN_USER_WALLET;
 
         private static string[] FilterNonBaseWearables(IReadOnlyCollection<URN> avatarWearables)
         {
@@ -211,7 +214,7 @@ namespace DCL.InWorldCamera
                 metadata = new ScreenshotMetadata
                 {
                     userName = profile?.Name ?? UNKNOWN_USER,
-                    userAddress = string.IsNullOrEmpty(profile?.UserId) ? UNKNOWN_USER_WALLET : profile!.UserId,
+                    userAddress = AddressOf(profile),
                     dateTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(),
                     realm = realm?.RealmName,
                     placeId = placeId,
@@ -225,7 +228,7 @@ namespace DCL.InWorldCamera
             else
             {
                 metadata.userName = profile?.Name ?? UNKNOWN_USER;
-                metadata.userAddress = string.IsNullOrEmpty(profile?.UserId) ? UNKNOWN_USER_WALLET : profile!.UserId;
+                metadata.userAddress = AddressOf(profile);
                 metadata.dateTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString();
                 metadata.realm = realm?.RealmName;
                 metadata.placeId = placeId;
