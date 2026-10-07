@@ -81,7 +81,7 @@ namespace DCL.Communities.CommunitiesCard
             currentCommunityId = communityId;
 
             // The call controls live in the chat area
-            view.VoiceChatPanel.SetActive(ChatOpener.Instance.IsChatOnScreen && (isStreamRunning || isModOrAdmin));
+            view.VoiceChatPanel.SetActive(ChatOpener.Instance.IsUserInWorld && (isStreamRunning || isModOrAdmin));
             view.ModeratorControlPanel.SetActive(!isStreamRunning && isModOrAdmin);
             view.LiveStreamPanel.SetActive(isStreamRunning);
 

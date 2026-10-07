@@ -84,6 +84,7 @@ namespace DCL.Lobby
         private readonly List<EventDTO> upcomingEvents = new ();
         private readonly LobbyDocumentFriendsPresenter? friends;
         private readonly LobbyConnectedFriendsPresenter? connectedFriends;
+        private readonly ClickOrDragManipulator avatarGesture;
 
         private LobbyPlacesRail? recentPlacesRail;
         private LobbyPlacesRail? featuredPlacesRail;
@@ -105,7 +106,6 @@ namespace DCL.Lobby
         private GenericContextMenu? shareMenu;
         private EventDTO sharedEvent;
 
-        private ClickOrDragManipulator? avatarGesture;
         private CancellationTokenSource? avatarCts;
         private CancellationTokenSource? placesCts;
         private CancellationTokenSource? eventsCts;
@@ -191,6 +191,14 @@ namespace DCL.Lobby
             this.friends = friends;
             this.connectedFriends = connectedFriends;
 
+            avatarGesture = new ClickOrDragManipulator
+            {
+                Clicked = OnAvatarClicked,
+                DragStarted = OnAvatarDragStarted,
+                Dragged = OnAvatarDragged,
+                DragEnded = OnAvatarDragEnded,
+            };
+
             if (friends != null)
                 friends.JoinRequested = OnFriendJoin;
         }
@@ -256,13 +264,7 @@ namespace DCL.Lobby
             VisualElement avatarHitArea = viewInstance.AvatarHitArea;
             avatarHitArea.SetDisplayed(false);
             avatarHitArea.AddToClassList(VisualElementsExtensions.INTERACTABLE_CLASS);
-            avatarHitArea.AddManipulator(avatarGesture ??= new ClickOrDragManipulator
-            {
-                Clicked = OnAvatarClicked,
-                DragStarted = OnAvatarDragStarted,
-                Dragged = OnAvatarDragged,
-                DragEnded = OnAvatarDragEnded,
-            });
+            avatarHitArea.AddManipulator(avatarGesture);
             VisualElement avatarTooltip = viewInstance.AvatarTooltip;
             avatarTooltip.SetDisplayed(false);
             avatarHitArea.RegisterCallback<PointerEnterEvent, VisualElement>(OnAvatarPointerEnter, avatarTooltip);
@@ -335,7 +337,7 @@ namespace DCL.Lobby
             friendsCts = null;
 
             // A drag cut short by the close leaves the hardware cursor hidden otherwise
-            avatarGesture?.Cancel();
+            avatarGesture.Cancel();
             avatarPreview!.OnHide();
 
             recentPlacesRail?.Hide();

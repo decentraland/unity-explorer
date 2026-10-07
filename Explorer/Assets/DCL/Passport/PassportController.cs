@@ -923,8 +923,8 @@ namespace DCL.Passport
                     // Dont show any interaction for our own user
                     if (myOwnProfile == null || myOwnProfile.UserId == inputData.UserId) return;
 
-                    bool chatOnScreen = ChatOpener.Instance.IsChatOnScreen;
-                    viewInstance!.CallButton.gameObject.SetActive(isVoiceCallFeatureEnabled && chatOnScreen);
+                    bool userInWorld = ChatOpener.Instance.IsUserInWorld;
+                    viewInstance!.CallButton.gameObject.SetActive(isVoiceCallFeatureEnabled && userInWorld);
 
                     FriendshipStatus friendshipStatus = await friendService.GetFriendshipStatusAsync(inputData.UserId, ct);
 
@@ -951,7 +951,7 @@ namespace DCL.Passport
                     viewInstance!.JumpInButton.gameObject.SetActive(friendOnlineStatus);
 
                     //For now this button will not appear if the user is blocked
-                    viewInstance.ChatButton.gameObject.SetActive(chatOnScreen && friendshipStatus != FriendshipStatus.Blocked && friendshipStatus != FriendshipStatus.BlockedBy);
+                    viewInstance.ChatButton.gameObject.SetActive(userInWorld && friendshipStatus != FriendshipStatus.Blocked && friendshipStatus != FriendshipStatus.BlockedBy);
 
                     await SetupContextMenuAsync(friendshipStatus, ct);
                 }

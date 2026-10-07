@@ -349,9 +349,9 @@ namespace DCL.Communities.CommunitiesCard
 
         public void ConfigureInteractionButtons(GetCommunityResponse.CommunityData communityData)
         {
-            bool chatOnScreen = ChatOpener.Instance.IsChatOnScreen;
+            bool userInWorld = ChatOpener.Instance.IsUserInWorld;
 
-            openChatButton.gameObject.SetActive(chatOnScreen && communityData.role is CommunityMemberRole.owner or CommunityMemberRole.moderator or CommunityMemberRole.member && communityData.IsAccessAllowed() && communityData.pendingActionType != InviteRequestAction.invite);
+            openChatButton.gameObject.SetActive(userInWorld && communityData.role is CommunityMemberRole.owner or CommunityMemberRole.moderator or CommunityMemberRole.member && communityData.IsAccessAllowed() && communityData.pendingActionType != InviteRequestAction.invite);
             openWizardButton.gameObject.SetActive(communityData.role is CommunityMemberRole.owner or CommunityMemberRole.moderator && communityData.IsAccessAllowed() && communityData.pendingActionType != InviteRequestAction.invite);
             joinedButton.gameObject.SetActive(communityData.role is CommunityMemberRole.member && communityData.IsAccessAllowed() && communityData.pendingActionType != InviteRequestAction.invite);
             joinButton.gameObject.SetActive(communityData.role == CommunityMemberRole.none && communityData.IsAccessAllowed() && communityData.pendingActionType != InviteRequestAction.invite);

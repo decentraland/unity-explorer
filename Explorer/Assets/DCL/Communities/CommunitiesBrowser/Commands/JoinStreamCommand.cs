@@ -31,7 +31,7 @@ namespace DCL.Communities.CommunitiesBrowser.Commands
                 return;
 
             // The call controls live in the chat area
-            if (!ChatOpener.Instance.IsChatOnScreen)
+            if (!ChatOpener.Instance.IsUserInWorld)
                 return;
 
             JoinStreamAsync().Forget();

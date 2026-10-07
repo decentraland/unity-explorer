@@ -23,7 +23,10 @@ namespace DCL.Chat
             this.chatHistory = chatHistory;
         }
 
-        public bool IsChatOnScreen => mvcManager.IsShowing<ChatMainSharedAreaView, ControllerNoData>();
+        /// <summary>
+        ///     True while the chat area is up: from the first world load until a logout.
+        /// </summary>
+        public bool IsUserInWorld => mvcManager.IsShowing<ChatMainSharedAreaView, ControllerNoData>();
 
         /// <summary>
         /// Closes all Views, focuses the Chat and then sends an event to Open a Private Conversation with the user with the defined <paramref name="id"/>
@@ -31,7 +34,7 @@ namespace DCL.Chat
         /// <param name="id"> The id or walletId of the user to open a conversation with</param>
         public void OpenPrivateConversationWithUserId(string id)
         {
-            if (!IsChatOnScreen) return;
+            if (!IsUserInWorld) return;
 
             // A guest can answer a conversation someone else started, but cannot start one
             if (identityCache.IsGuest() && !chatHistory.Channels.ContainsKey(new ChatChannel.ChannelId(id)))
@@ -49,7 +52,7 @@ namespace DCL.Chat
         /// </summary>
         public bool CloseAllViewsAndFocusChat()
         {
-            if (!IsChatOnScreen) return false;
+            if (!IsUserInWorld) return false;
 
             mvcManager.CloseAllNonPersistentViews();
             chatEventBus.RaiseFocusRequestedEvent();

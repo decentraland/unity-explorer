@@ -168,9 +168,9 @@ namespace DCL.Communities.CommunitiesCard.Members
             elementView.CanUnHover = false;
 
             // The call controls live in the chat area too
-            bool chatOnScreen = ChatOpener.Instance.IsChatOnScreen;
-            openChatContextMenuElement!.Enabled = chatOnScreen;
-            callUserContextMenuElement!.Enabled = chatOnScreen;
+            bool userInWorld = ChatOpener.Instance.IsUserInWorld;
+            openChatContextMenuElement!.Enabled = userInWorld;
+            callUserContextMenuElement!.Enabled = userInWorld;
 
             removeModeratorContextMenuElement!.Enabled = profile.Role == CommunityMemberRole.moderator && communityData?.role is CommunityMemberRole.owner;
             addModeratorContextMenuElement!.Enabled = profile.Role == CommunityMemberRole.member && communityData?.role is CommunityMemberRole.owner;

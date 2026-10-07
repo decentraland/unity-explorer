@@ -33,7 +33,7 @@ namespace DCL.Chat.ChatServices.Tests
             focusSubscription.Dispose();
 
         [Test]
-        public void DoNothingWhileTheChatIsNotOnScreen()
+        public void DoNothingBeforeTheUserIsInWorld()
         {
             // Arrange
             mvcManager.IsShowing<ChatMainSharedAreaView, ControllerNoData>().Returns(false);
@@ -48,7 +48,7 @@ namespace DCL.Chat.ChatServices.Tests
         }
 
         [Test]
-        public void CloseTheViewsAndFocusTheChatOnScreen()
+        public void CloseTheViewsAndFocusTheChatInWorld()
         {
             // Arrange
             mvcManager.IsShowing<ChatMainSharedAreaView, ControllerNoData>().Returns(true);
