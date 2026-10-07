@@ -24,6 +24,8 @@ namespace Loading
 
         private IDisposable _wearableDisposable;
         private GameObject _wearableGO;
+        private string _loadedUrn;
+        private ModelMetrics _loadedMetrics;
 
         private readonly Dictionary<string, (Texture2D main, Texture2D mask)> _defaultBodyFacialFeatures = new();
 
@@ -43,6 +45,7 @@ namespace Loading
                     _wearableDisposable = loadResult.Disposable;
                     _wearableGO = loadResult.Root;
                     _wearableGO.SetActive(true);
+                    _loadedMetrics = loadResult.Metrics;
                     break;
                 }
                 case EntityType.FacialFeature:
@@ -53,6 +56,10 @@ namespace Loading
                     // Load the body
                     var bodyLoadResult = await GLTFLoader.LoadModel(bodyShapeToLoad, bodyEntity, transform);
                     var ffLoadResult = await GLTFLoader.LoadFacialFeature(bodyShapeToLoad, entityDefinition);
+
+                    // The item is the textures; the body they are shown on is not part of what was asked for.
+                    _loadedMetrics = new ModelMetrics(0, 0,
+                        (ffLoadResult.Main != null ? 1 : 0) + (ffLoadResult.Mask != null ? 1 : 0), 0);
 
                     _wearableDisposable = bodyLoadResult.Disposable;
                     _wearableGO = bodyLoadResult.Root;
@@ -87,6 +94,8 @@ namespace Loading
                 default:
                     throw new NotSupportedException($"Trying to load unsupported wearable type: {entityDefinition.Type}");
             }
+
+            _loadedUrn = entityDefinition.URN;
 
             _outlineRenderers.Clear();
             AvatarUtils.SetupWearable(_wearableGO, colors, _outlineRenderers);
@@ -123,11 +132,39 @@ namespace Loading
             }
         }
 
+        /// <summary>
+        /// Metrics of the item shown on its own, when <paramref name="urn"/> is the one loaded.
+        /// </summary>
+        public bool TryGetMetrics(string urn, out ModelMetrics metrics)
+        {
+            if (_wearableGO != null && _loadedUrn == urn)
+            {
+                metrics = _loadedMetrics;
+                return true;
+            }
+
+            metrics = default;
+            return false;
+        }
+
+        /// <summary>
+        /// Adds this view's renderers to the outline feature's list for a second camera render in the
+        /// same frame. See <see cref="AvatarLoader.RefreshOutlineRenderers"/>, which clears the list first.
+        /// </summary>
+        public void RefreshOutlineRenderers()
+        {
+            if (gameObject.activeInHierarchy)
+            {
+                RendererFeature_AvatarOutline.m_AvatarOutlineRenderers.AddRange(_outlineRenderers);
+            }
+        }
+
         public void Cleanup()
         {
             Destroy(_wearableGO);
             _wearableDisposable?.Dispose();
             _wearableDisposable = null;
+            _loadedUrn = null;
 
             _defaultBodyFacialFeatures.Clear();
         }

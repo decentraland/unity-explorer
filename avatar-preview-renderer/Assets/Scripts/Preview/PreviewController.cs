@@ -43,12 +43,25 @@ namespace Preview
         // #cc9b76, the skin the JS wrapper used to send whenever a builder caller left it out.
         private static readonly Color DEFAULT_SKIN_COLOR = new(204f / 255f, 155f / 255f, 118f / 255f);
 
+        // The entities the caller asked to preview, as resolved on the last reload: the urns and base64
+        // definitions, never the profile's own wearables or the body. Metrics are reported for these.
+        private readonly List<string> _requestedItemUrns = new();
+
+        private ScreenshotCapture _screenshotCapture;
+
         private bool _loading;
         private bool _shouldReload;
         private bool _shouldCleanup;
 
+        /// <summary>
+        /// True while a reload is rebuilding the avatar, during which nothing is rendered.
+        /// </summary>
+        public bool IsLoading => _loading;
+
         private void Start()
         {
+            _screenshotCapture = new ScreenshotCapture(mainCamera, avatarLoader, wearableLoader);
+
             previewUIPresenter.ShowAvatarClicked += OnShowAvatarClicked;
             previewUIPresenter.ShowWearableClicked += OnShowWearableClicked;
             previewUIPresenter.EmoteToggleClicked += OnEmoteToggleClicked;
@@ -113,6 +126,42 @@ namespace Preview
         public void SetSpringBonesParams(SpringBones.SpringBonesParamsPayload payload) =>
             avatarLoader.SetSpringBonesParams(payload);
 
+        /// <summary>
+        /// Captures the current view at the given size. See <see cref="ScreenshotCapture.CaptureAsync"/>.
+        /// </summary>
+        public Awaitable<string> CaptureScreenshotAsync(int width, int height) =>
+            _screenshotCapture.CaptureAsync(width, height);
+
+        /// <summary>
+        /// Sums the metrics of the entities the caller asked to preview. <paramref name="found"/> is how
+        /// many of them are loaded; zero means there is nothing to report.
+        /// </summary>
+        public ModelMetrics GetRequestedItemsMetrics(out int found)
+        {
+            var total = new ModelMetrics(0, 0, 0, 0);
+            found = 0;
+
+            foreach (var urn in _requestedItemUrns)
+            {
+                // The avatar wears the item in every mode; the item-alone view loads it a second time
+                // with the same geometry, so it only matters when the avatar could not wear it.
+                if (avatarLoader.TryGetMetrics(urn, out var metrics)
+                    || wearableLoader.TryGetMetrics(urn, out metrics))
+                {
+                    total += metrics;
+                    found++;
+                }
+            }
+
+            return total;
+        }
+
+        /// <summary>
+        /// Hides or shows every in-canvas control without a reload. The configuration keeps the value,
+        /// so a later reload applies it again.
+        /// </summary>
+        public void SetControlsHidden(bool hidden) => previewUIPresenter.SetControlsHidden(hidden);
+
         public float GetEmoteLength() => emoteAnimationController.GetEmoteLength();
 
         public bool IsEmotePlaying() => emoteAnimationController.IsEmotePlaying();
@@ -164,6 +213,9 @@ namespace Preview
 
                 // We store the instance in case it gets recreated by a call to PreviewConfiguration.RecreateFrom
                 var config = PreviewConfiguration.Instance;
+
+                _requestedItemUrns.Clear();
+                previewUIPresenter.SetControlsHidden(config.HideControls);
 
                 avatarRotator.enabled = false;
                 wearableRotator.enabled = false;
@@ -321,6 +373,16 @@ namespace Preview
 
             var urnEntities = await EntityService.GetEntities(urns);
 
+            foreach (var entity in urnEntities)
+            {
+                if (entity.Type != EntityType.Body) _requestedItemUrns.Add(entity.URN);
+            }
+
+            foreach (var entity in base64Entities)
+            {
+                _requestedItemUrns.Add(entity.URN);
+            }
+
             // Slot-based deduplication: one wearable per category, base64 items take priority
             var slots = new Dictionary<string, EntityDefinition>();
             foreach (var entity in urnEntities.Where(e => e.Type != EntityType.Emote))
@@ -385,6 +447,11 @@ namespace Preview
                     throw new NotSupportedException($"Trying to override type: {definition.Type}");
 
                 if (!overrides.Contains(definition)) overrides.Add(definition);
+            }
+
+            foreach (var definition in overrides)
+            {
+                _requestedItemUrns.Add(definition.URN);
             }
 
             // Only one emote can play at a time, so the first one wins and the rest is worn.

@@ -174,6 +174,48 @@ mergeInto(LibraryManager.library, {
       '*'
     )
   },
+  OnMetrics: function (jsonPtr) {
+    // Parsed here so the page receives the metrics as an object, the shape its promise resolves with.
+    const metrics = JSON.parse(UTF8ToString(jsonPtr))
+    const targetWindow = (() => {
+      try {
+        return window.self !== window.top ? window : window.parent
+      } catch (e) {
+        return window.parent
+      }
+    })()
+    targetWindow.postMessage(
+      {
+        type: 'unity-renderer',
+        payload: {
+          type: 'metrics',
+          payload: metrics,
+        },
+      },
+      '*'
+    )
+  },
+  OnRequestFailed: function (requestPtr, reasonPtr) {
+    const request = UTF8ToString(requestPtr)
+    const reason = UTF8ToString(reasonPtr)
+    const targetWindow = (() => {
+      try {
+        return window.self !== window.top ? window : window.parent
+      } catch (e) {
+        return window.parent
+      }
+    })()
+    targetWindow.postMessage(
+      {
+        type: 'unity-renderer',
+        payload: {
+          type: 'request-failed',
+          payload: { request: request, reason: reason },
+        },
+      },
+      '*'
+    )
+  },
   PreloadURLs: function(strPtr) {
     const csv = UTF8ToString(strPtr);
     const urls = csv.split(',');

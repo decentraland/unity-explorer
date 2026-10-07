@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using Configurator;
+using Data;
 using JetBrains.Annotations;
 using Preview;
 using UnityEngine;
@@ -17,6 +18,10 @@ using Utils;
 /// </summary>
 public class JSBridge : MonoBehaviour
 {
+    // The request names a failure reply carries, so the page can match it to the call it made.
+    private const string REQUEST_SCREENSHOT = "screenshot";
+    private const string REQUEST_METRICS = "metrics";
+
     [SerializeField] private PreviewController previewController;
     [SerializeField] private ConfiguratorUIPresenter configuratorUIPresenter;
 
@@ -144,7 +149,95 @@ public class JSBridge : MonoBehaviour
     public void Cleanup() => previewController.Cleanup();
 
     [UsedImplicitly]
-    public void TakeScreenshot() => StartCoroutine(TakeScreenshotCoroutine());
+    public void SetHideControls(string value)
+    {
+        PreviewConfiguration.Instance.HideControls = bool.Parse(value);
+        previewController.SetControlsHidden(PreviewConfiguration.Instance.HideControls);
+    }
+
+    /// <summary>
+    /// Replies with the metrics of the items the caller asked to preview, or a request failure while a
+    /// reload is in flight or nothing of theirs is loaded.
+    /// </summary>
+    [UsedImplicitly]
+    public void GetMetrics()
+    {
+        if (previewController.IsLoading)
+        {
+            NativeCalls.OnRequestFailed(REQUEST_METRICS, "The preview is reloading");
+            return;
+        }
+
+        var metrics = previewController.GetRequestedItemsMetrics(out var found);
+
+        if (found == 0)
+        {
+            NativeCalls.OnRequestFailed(REQUEST_METRICS, "No requested item is loaded");
+            return;
+        }
+
+        var payload = new MetricsPayload
+        {
+            triangles = metrics.Triangles,
+            materials = metrics.Materials,
+            textures = metrics.Textures,
+            meshes = metrics.Meshes,
+            bodies = metrics.Meshes,
+            entities = found,
+        };
+
+        NativeCalls.OnMetrics(JsonUtility.ToJson(payload));
+    }
+
+    /// <summary>
+    /// With no size, captures the canvas as it is on screen. With <c>width,height</c> in pixels, renders
+    /// the view offscreen at exactly that size with no controls in it.
+    /// </summary>
+    [UsedImplicitly]
+    public void TakeScreenshot(string size)
+    {
+        if (string.IsNullOrWhiteSpace(size))
+        {
+            StartCoroutine(TakeScreenshotCoroutine());
+            return;
+        }
+
+        var parts = size.Split(',');
+
+        if (parts.Length != 2
+            || !int.TryParse(parts[0], out var width) || width <= 0
+            || !int.TryParse(parts[1], out var height) || height <= 0)
+        {
+            NativeCalls.OnRequestFailed(REQUEST_SCREENSHOT, $"Invalid screenshot size [{size}], expected width,height");
+            return;
+        }
+
+        if (previewController.IsLoading)
+        {
+            NativeCalls.OnRequestFailed(REQUEST_SCREENSHOT, "The preview is reloading");
+            return;
+        }
+
+        StartCoroutine(TakeSizedScreenshotAsync(width, height));
+    }
+
+    private async Awaitable TakeSizedScreenshotAsync(int width, int height)
+    {
+        string base64Png;
+
+        try
+        {
+            base64Png = await previewController.CaptureScreenshotAsync(width, height);
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"Failed to capture a {width}x{height} screenshot: {e.Message}");
+            NativeCalls.OnRequestFailed(REQUEST_SCREENSHOT, e.Message);
+            return;
+        }
+
+        NativeCalls.OnScreenshotTaken(base64Png);
+    }
 
     private static async Awaitable TakeScreenshotCoroutine()
     {
@@ -162,7 +255,7 @@ public class JSBridge : MonoBehaviour
         if (gpuReadbackRequest.hasError)
         {
             Debug.LogError("Failed to capture screenshot");
-            NativeCalls.OnScreenshotTaken(null);
+            NativeCalls.OnRequestFailed(REQUEST_SCREENSHOT, "The GPU readback failed");
             return;
         }
 
@@ -186,6 +279,8 @@ public class JSBridge : MonoBehaviour
             destinationData[i + 3] = sourceData[flippedIndex * 4 + 3];
         }
 
+        ScreenshotCapture.RecoverStraightAlpha(destinationData);
+
         var pngBytes = texture.EncodeToPNG();
         var base64Png = Convert.ToBase64String(pngBytes);
 
@@ -197,8 +292,17 @@ public class JSBridge : MonoBehaviour
     public static class NativeCalls
     {
 #if UNITY_EDITOR
-        public static void OnScreenshotTaken(string base64Str) =>
-            Debug.Log($"NativeCall OnScreenshotTaken({base64Str.Length} bytes)");
+        // Saved under Recordings/ (gitignored) so the capture can be opened: the page that would
+        // receive it does not exist in the Editor.
+        public static void OnScreenshotTaken(string base64Str)
+        {
+            var folder = System.IO.Path.Combine(Application.dataPath, "..", "Recordings");
+            System.IO.Directory.CreateDirectory(folder);
+            var path = System.IO.Path.GetFullPath(System.IO.Path.Combine(folder,
+                $"screenshot_{DateTime.Now:yyyyMMdd_HHmmss}.png"));
+            System.IO.File.WriteAllBytes(path, Convert.FromBase64String(base64Str));
+            Debug.Log($"NativeCall OnScreenshotTaken({base64Str.Length} bytes) saved to {path}");
+        }
 
         public static void OnLoadComplete() => Debug.Log("NativeCall OnLoadComplete");
 
@@ -215,6 +319,11 @@ public class JSBridge : MonoBehaviour
         public static void OnIsEmotePlaying(bool playing) => Debug.Log($"NativeCall OnIsEmotePlaying({playing})");
 
         public static void OnHasSound(bool hasSound) => Debug.Log($"NativeCall OnHasSound({hasSound})");
+
+        public static void OnMetrics(string json) => Debug.Log($"NativeCall OnMetrics({json})");
+
+        public static void OnRequestFailed(string request, string reason) =>
+            Debug.LogWarning($"NativeCall OnRequestFailed({request}, {reason})");
 
         // ReSharper disable once InconsistentNaming
         public static void PreloadURLs(string urlsCSV) => Debug.Log($"NativeCall PreloadURLs({urlsCSV})");
@@ -247,7 +356,13 @@ public class JSBridge : MonoBehaviour
         public static extern void OnHasSound(bool hasSound);
 
         [System.Runtime.InteropServices.DllImport("__Internal")]
+        public static extern void OnMetrics(string json);
+
+        [System.Runtime.InteropServices.DllImport("__Internal")]
+        public static extern void OnRequestFailed(string request, string reason);
+
+        [System.Runtime.InteropServices.DllImport("__Internal")]
         public static extern void PreloadURLs(string urlsCSV);
 #endif
     }
-}
+}

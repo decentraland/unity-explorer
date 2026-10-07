@@ -262,6 +262,13 @@ public class PreviewConfiguration
     public bool DisableSwitcher { get; set; }
 
     /// <summary>
+    /// Hides every in-canvas control (switcher, emote and sound buttons). Opt-in, for embedders that
+    /// draw their own controls around the canvas or capture it for thumbnails. The loader is separate:
+    /// see <see cref="DisableLoader"/>.
+    /// </summary>
+    public bool HideControls { get; set; }
+
+    /// <summary>
     /// If we should instruct the browser to pre-fetch certain files. On by default.
     /// </summary>
     public bool UseBrowserPreload { get; set; } = true;
@@ -381,6 +388,9 @@ public class PreviewConfiguration
                 case "disableSwitcher":
                     Instance.DisableSwitcher = bool.Parse(value);
                     break;
+                case "hideControls":
+                    Instance.HideControls = bool.Parse(value);
+                    break;
                 case "useBrowserPreload":
                     Instance.UseBrowserPreload = bool.Parse(value);
                     break;
@@ -444,6 +454,7 @@ public class PreviewConfiguration
         sb.AppendFormat("&env={0}", APIService.Environment == "zone" ? "dev" : "prod");
         sb.AppendFormat("&disableLoader={0}", DisableLoader);
         sb.AppendFormat("&disableSwitcher={0}", DisableSwitcher);
+        sb.AppendFormat("&hideControls={0}", HideControls);
         sb.AppendFormat("&useBrowserPreload={0}", UseBrowserPreload);
         sb.AppendFormat("&username={0}", Username);
         sb.AppendFormat("&showFPS={0}", ShowFPS);

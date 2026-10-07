@@ -40,6 +40,7 @@ The renderer can run in five different modes, depending on its usage: Marketplac
   * `wearable` - the item on its own
   * `avatar` - the item worn by the avatar
 * `disableSwitcher`: Hides the avatar / item switcher, so the view stays as it was requested. Only used in `marketplace` mode. Default is `false`.
+* `hideControls`: Hides every in-canvas control: the switcher and the emote play / mute buttons. For embedders that draw their own controls around the canvas or capture it for thumbnails. The loader is separate (`disableLoader`), and mouse rotation, wheel zoom and right-drag pan keep working. Can be toggled at runtime with `SetHideControls` without a reload. Default is `false`.
 * `background`: The background color to use for the renderer. It must be in hex and not include the leading # (e.g. `ff00ff`). It may include alpha for a transparent background. Default is transparent.
 * `shadow`: Whether the avatar casts a shadow on the floor. The shadow is drawn into the canvas alpha, so over a transparent background it composites onto whatever sits behind the renderer. Default is `on`; pass `shadow=off` to remove it. Not used in `configurator` mode, and the item-alone view of `marketplace` mode has no shadow either way.
 * `glow`: Whether a soft pool of light is drawn on the floor under the avatar, so it reads as standing on a lit surface rather than floating. Brightens the canvas the same way `shadow` darkens it, so over a transparent background it lifts whatever sits behind the renderer. Default is `on`; pass `glow=off` to remove it. Same modes as `shadow`, and unlike `shadow` it also appears in the item-alone view of `marketplace` mode, where it sits under the floating item.
@@ -143,31 +144,61 @@ For a full list of available functions check [JSBridge](Assets/Scripts/JSBridge.
   * The input should be either a single URN or a list of urns separated by commas.
   * Example: `unityInstance.SendMessage('JSBridge', 'SetUrns', 'urn:decentraland:off-chain:base-avatars:kilt,urn:decentraland:off-chain:base-avatars:full_beard,urn:decentraland:off-chain:base-avatars:blue_bandana');`
 
+## Replies from the renderer
+
+Every reply is posted to the window parent (or the window itself when not embedded) as:
+
+```javascript
+{ type: 'unity-renderer', payload: { type: '<reply type>', payload: <value> } }
+```
+
+The reply types are `loaded`, `error`, `screenshot`, `metrics`, `request-failed`, `emoteLength`, `isEmotePlaying`, `hasSound`, `element-bounds`, `customization-done` and `avatar-customization-step`.
+
+A request the renderer cannot serve answers with `request-failed` instead of its normal reply, so a caller never waits forever:
+
+```javascript
+{ type: 'request-failed', payload: { request: 'screenshot' | 'metrics', reason: '<why>' } }
+```
+
+Today that happens for a screenshot or metrics request made while a reload is in flight (nothing is rendered during a reload), for metrics when none of the requested items is loaded, and for a screenshot whose readback failed.
+
 ## Taking screenshots
 
 The renderer has the ability to take a screenshot and provide the png as a base64 encoded string.
 
-To take a screenshot you call:
 ```javascript
-unityInstance.SendMessage('JSBridge', 'TakeScreenshot');
+unityInstance.SendMessage('JSBridge', 'TakeScreenshot', '');          // the canvas as it is on screen
+unityInstance.SendMessage('JSBridge', 'TakeScreenshot', '1024,1024'); // rendered at exactly this size
 ```
 
-This will not return any value. When the screenshot is taken a message is sent to the window parent which can be listened to, to retrieve the screenshot:
+With no size, the capture is the canvas at its on-screen pixel size, controls included. With `width,height`, the view is rendered offscreen at exactly that size: the vertical framing is the live one and the horizontal extent follows the requested aspect, so a square capture of a wide canvas is its centre. Nothing drawn by the in-canvas UI is part of it. The alpha channel follows the `background` parameter either way.
 
-```javascript
-window.parent.postMessage(
-{
-  type: 'unity-screenshot',
-  data: base64str
-}
-```
+The reply is a `screenshot` with the PNG as base64:
 
-Example:
 ```javascript
 window.addEventListener('message', (event) => {
-  if (event.data?.type === 'unity-screenshot') {
-    const base64 = event.data.data;
-    console.log('Received screenshot:', base64);
-  }
+  if (event.data?.type !== 'unity-renderer') return;
+  const { type, payload } = event.data.payload;
+  if (type === 'screenshot') console.log('Received screenshot:', payload);
+  if (type === 'request-failed' && payload.request === 'screenshot') console.warn(payload.reason);
 });
 ```
+
+## Reading metrics
+
+`GetMetrics` reports the geometry of the items the caller asked for (the `urn`, `base64`, `contract` + `item` / `token` ones), never the profile's own wearables or the body:
+
+```javascript
+unityInstance.SendMessage('JSBridge', 'GetMetrics');
+```
+
+The reply is a `metrics` object:
+
+```javascript
+{ triangles, materials, textures, meshes, bodies, entities }
+```
+
+* `triangles`: the sum over every renderer of the items, colliders (nodes with `collider` in their name) excluded.
+* `materials` and `textures`: as declared in the items' glTF files, so the renderer's own material conversion never changes them.
+* `meshes` and `bodies`: one per glTF primitive (a Unity sub-mesh), the same unit the Babylon preview counts.
+* `entities`: how many of the requested items are loaded. An emote contributes its prop's geometry, if it has one; a facial feature contributes its textures.

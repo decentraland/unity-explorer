@@ -21,6 +21,15 @@ namespace Preview
         private const float LOADER_SPEED = 360f;
         private const string DEBUG_PASSPHRASE = "debugmesilly";
 
+        // Bridge methods that act on the live scene or only query it; everything else edits the
+        // configuration and needs a reload to show.
+        private static readonly HashSet<string> DEBUG_METHODS_WITHOUT_RELOAD = new()
+        {
+            "Reload", "TakeScreenshot", "Cleanup", "GetMetrics", "SetHideControls", "GetEmoteLength",
+            "IsEmotePlaying", "PlayEmote", "PauseEmote", "GoToEmote", "StopEmote", "EnableSound",
+            "DisableSound", "HasSound",
+        };
+
         [SerializeField] private AudioSource audioSource;
         [SerializeField] private PreviewCameraController previewCameraController;
 
@@ -47,6 +56,9 @@ namespace Preview
         private bool _debugLoaded;
         private bool _zoomEnabled;
         private bool _panEnabled;
+        private bool _controlsHidden;
+        private bool _switcherEnabled;
+        private bool _emoteControlsEnabled;
         private bool _animationPlaying = true;
         private SwitcherState _switcherState = SwitcherState.Wearable;
         private float _lastPlayPauseClickTime;
@@ -94,7 +106,20 @@ namespace Preview
 
         public void EnableSwitcher(bool enable)
         {
-            _switcher.style.display = enable ? DisplayStyle.Flex : DisplayStyle.None;
+            _switcherEnabled = enable;
+            ApplyControlsVisibility();
+        }
+
+        /// <summary>
+        /// Hides every in-canvas control the embedder may not want: the switcher and the emote buttons.
+        /// What each reload enables is remembered, so showing them again restores the right set. The
+        /// loader is governed by <see cref="EnableLoader"/> alone, and the drag surface stays so the
+        /// embedder's own camera controls keep working.
+        /// </summary>
+        public void SetControlsHidden(bool hidden)
+        {
+            _controlsHidden = hidden;
+            ApplyControlsVisibility();
         }
 
         public void EnableZoom(bool enable)
@@ -109,7 +134,15 @@ namespace Preview
 
         public void EnableEmoteControls(bool enable)
         {
-            _emoteControls.style.display = enable ? DisplayStyle.Flex : DisplayStyle.None;
+            _emoteControlsEnabled = enable;
+            ApplyControlsVisibility();
+        }
+
+        private void ApplyControlsVisibility()
+        {
+            _switcher.style.display = _switcherEnabled && !_controlsHidden ? DisplayStyle.Flex : DisplayStyle.None;
+            _emoteControls.style.display =
+                _emoteControlsEnabled && !_controlsHidden ? DisplayStyle.Flex : DisplayStyle.None;
         }
 
         public void EnableAudioControls(bool enable)
@@ -304,7 +337,7 @@ namespace Preview
                     GameObject.Find("JSBridge").SendMessage(methodName, parameter);
                 }
 
-                if (methodName != "Reload" && methodName != "TakeScreenshot" && methodName != "Cleanup")
+                if (!DEBUG_METHODS_WITHOUT_RELOAD.Contains(methodName))
                 {
                     GameObject.Find("JSBridge").SendMessage("Reload");
                 }
