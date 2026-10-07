@@ -5,7 +5,6 @@ using DCL.Profiling;
 using System;
 using System.Threading;
 using UnityEngine;
-using RichTypes;
 
 namespace SceneRunner.Scene
 {
@@ -21,14 +20,14 @@ namespace SceneRunner.Scene
 
         void Initialize();
 
-        UniTask StartUpdateLoopAsync(int targetFPS, CancellationToken ct);
+        UniTask StartUpdateLoopAsync(int targetFps, CancellationToken ct);
 
         /// <summary>
         ///     Change the target fps while the scene is running.
         ///     It will take effect right after the next update
         /// </summary>
         /// <param name="fps">Target FPS</param>
-        void SetTargetFPS(int fps);
+        void SetTargetFps(int fps);
 
         void SetIsCurrent(bool isCurrent);
 

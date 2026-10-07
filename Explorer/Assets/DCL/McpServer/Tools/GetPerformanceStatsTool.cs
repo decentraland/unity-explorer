@@ -34,7 +34,7 @@ namespace DCL.McpServer.Tools
         public override string Description =>
             "Sample the client's real frame rate over a short window and report render FPS (average, min, max, hiccup frames — frames above "
             + "the client's hiccup threshold, the max of 50 ms and 2x the target frame time) plus "
-            + "the current scene's tick FPS vs its target, both measured over the same window. The call holds for sampleSeconds while it measures. Use together with "
+            + "the current scene's JS tick FPS (at most one tick per rendered frame, so render FPS is its ceiling), both measured over the same window. The call holds for sampleSeconds while it measures. Use together with "
             + "get_scene_content_breakdown (sortBy=visibleTriangles) to correlate a viewpoint's content cost with the frame rate it actually "
             + "produces — position the camera first, then sample.";
 
@@ -52,9 +52,8 @@ namespace DCL.McpServer.Tools
                           .Object("sceneTick", McpJsonSchema.Object()
                                                              .Number("averageFps")
                                                              .Number("minFps")
-                                                             .Number("maxFps")
-                                                             .Integer("targetFps"),
-                              "The current scene's JS tick rate over the sampling window, or null when no scene is loaded, the scene changed mid-window, or it did not tick during the window (e.g. paused).", nullable: true)
+                                                             .Number("maxFps"),
+                              "The current scene's JS tick rate over the sampling window, capped at one tick per rendered frame, or null when no scene is loaded, the scene changed mid-window, or it did not tick during the window (e.g. paused).", nullable: true)
                           .Build();
 
         public override McpToolAnnotations Annotations => McpToolAnnotations.ReadOnly();
@@ -119,7 +118,6 @@ namespace DCL.McpServer.Tools
                             ["averageFps"] = Round1(1e9f / ((float)totalNs / validSamples)),
                             ["minFps"] = Round1(1e9f / maxNs),
                             ["maxFps"] = Round1(1e9f / minNs),
-                            ["targetFps"] = metrics.TargetFps,
                         };
                 }
             }
@@ -147,7 +145,7 @@ namespace DCL.McpServer.Tools
 
             if (sceneTick != null)
                 text.Append("Scene tick: ").Append(sceneTick["averageFps"]!.Value<float>().ToString("F1", CultureInfo.InvariantCulture))
-                    .Append(" fps avg (target ").Append(sceneTick["targetFps"]!.Value<int>()).Append(").");
+                    .Append(" fps avg (one tick per rendered frame at most, so render fps is the ceiling).");
             else
                 text.Append("Scene tick: no data (no scene loaded, scene changed mid-sample, or no ticks during the window).");
 
