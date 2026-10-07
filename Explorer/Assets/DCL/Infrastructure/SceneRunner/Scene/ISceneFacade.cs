@@ -24,7 +24,8 @@ namespace SceneRunner.Scene
 
         /// <summary>
         ///     Change the target fps while the scene is running.
-        ///     It will take effect right after the next update
+        ///     It will take effect right after the next update.
+        ///     Ignored while a non-portable-experience scene is current: it ticks at most once per rendered frame instead
         /// </summary>
         /// <param name="fps">Target FPS</param>
         void SetTargetFps(int fps);

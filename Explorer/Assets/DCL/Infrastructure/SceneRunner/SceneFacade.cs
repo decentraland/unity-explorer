@@ -54,6 +54,9 @@ namespace SceneRunner
         // Set while this is the scene the player stands in: it ticks once per rendered frame instead of by intervalMs
         private readonly InterlockedFlag tickEveryFrame = new ();
 
+        // Minimum time between frame-bound ticks in TimeSpan ticks, 0 when uncapped; refreshed on the main thread by WaitForTickFrameAsync
+        private long minFrameTickIntervalTicks;
+
         // Hot-path watchdog state: set to Stopwatch.GetTimestamp() at the start of each UpdateScene
         // tick, reset to 0 when the tick completes.
         // Read from a separate watchdog continuation to detect hangs
@@ -265,9 +268,9 @@ namespace SceneRunner
 
                     if (tickEveryFrame)
                     {
-                        // A tick that outlasted its frame starts the next one right away
-                        if (MultithreadingUtility.FrameCount == tickFrame)
-                            await WaitForNextFrameAsync(ct);
+                        // A tick that outlasted its frame starts the next one right away, unless that would exceed the refresh-rate cap
+                        if (MultithreadingUtility.FrameCount == tickFrame || stopWatch.Elapsed.Ticks < minFrameTickIntervalTicks)
+                            await WaitForTickFrameAsync(stopWatch, ct);
                     }
                     else
                     {
@@ -285,7 +288,7 @@ namespace SceneRunner
                     // Some scenes fail when delta time is large, locking the JS thread
                     // See: https://github.com/decentraland/unity-explorer/issues/8654
                     // https://github.com/decentraland/unity-explorer/issues/8493
-                    deltaTime = Math.Min(stopWatch.ElapsedMilliseconds / 1000f, MAX_DELTA_TIME);
+                    deltaTime = Math.Min(elapsedTicks / (float)TimeSpan.TicksPerSecond, MAX_DELTA_TIME);
 
                     RuntimeMetrics.TickTimesNs.Add(elapsedTicks * 100);
                 }
@@ -295,13 +298,33 @@ namespace SceneRunner
         }
 
         /// <summary>
-        ///     Resumes on a thread pool thread at the EarlyUpdate of the next frame, after the frame counter has advanced
+        ///     Resumes on a thread pool thread at the next EarlyUpdate at which <paramref name="tickStopwatch" /> has reached the refresh-rate cap
         /// </summary>
-        private static async UniTask WaitForNextFrameAsync(CancellationToken ct)
+        private async UniTask WaitForTickFrameAsync(Stopwatch tickStopwatch, CancellationToken ct)
         {
-            // cancelImmediately: the player loop stops pumping when the Editor leaves Play Mode
-            await UniTask.Yield(PlayerLoopTiming.EarlyUpdate, ct, cancelImmediately: true);
+            do
+            {
+                // cancelImmediately: the player loop stops pumping when the Editor leaves Play Mode
+                await UniTask.Yield(PlayerLoopTiming.EarlyUpdate, ct, cancelImmediately: true);
+                minFrameTickIntervalTicks = GetUncappedFrameRateTickInterval();
+            }
+            while (tickStopwatch.Elapsed.Ticks < minFrameTickIntervalTicks);
+
             await DCLTask.SwitchToThreadPool();
+        }
+
+        /// <summary>
+        ///     With VSync off and no FPS limit the app renders as fast as it can: frame-bound ticks are capped at the monitor refresh rate.
+        ///     Must be called on the main thread
+        /// </summary>
+        /// <returns>The minimum interval between frame-bound ticks in TimeSpan ticks, or 0 when the frame rate is already limited</returns>
+        private static long GetUncappedFrameRateTickInterval()
+        {
+            if (QualitySettings.vSyncCount > 0 || Application.targetFrameRate > 0)
+                return 0;
+
+            double refreshRate = Screen.currentResolution.refreshRateRatio.value;
+            return refreshRate > 0 ? (long)(TimeSpan.TicksPerSecond / refreshRate) : 0;
         }
 
         private async UniTaskVoid RunHangWatchdogAsync(int thresholdMs, CancellationToken ct)
