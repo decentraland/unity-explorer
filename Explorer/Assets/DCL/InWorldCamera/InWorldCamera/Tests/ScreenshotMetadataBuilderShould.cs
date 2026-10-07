@@ -182,6 +182,8 @@ namespace DCL.InWorldCamera.Tests
                     Assert.AreEqual(controller.bounds.size.y, bounds.size.y, skinTolerance);
                     Assert.AreEqual(controller.bounds.size.z, bounds.size.z, skinTolerance);
                 }
+                else
+                    AssertApproximately(Vector3.zero, controller.bounds.size);
 
                 AssertApproximately(new Vector3(10f, 3f, 30f), bounds.center);
                 AssertApproximately(new Vector3(0.6f, 2f, 0.6f), bounds.size);

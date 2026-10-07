@@ -101,7 +101,7 @@ namespace DCL.InWorldCamera
         }
 
         private static string AddressOf(Profile? profile) =>
-            profile?.UserId?.Value is { Length: > 0 } userId ? userId : UNKNOWN_USER_WALLET;
+            profile?.UserId.Value ?? UNKNOWN_USER_WALLET;
 
         private static string[] FilterNonBaseWearables(IReadOnlyCollection<URN> avatarWearables)
         {
