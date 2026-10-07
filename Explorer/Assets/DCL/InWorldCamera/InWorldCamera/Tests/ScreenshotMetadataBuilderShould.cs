@@ -167,11 +167,22 @@ namespace DCL.InWorldCamera.Tests
                 controller.radius = 0.3f;
                 controller.height = 2f;
                 controller.enabled = controllerEnabled;
+                Physics.SyncTransforms();
 
                 // Act
                 Bounds bounds = ScreenshotMetadataBuilder.CalculateCharacterBounds(controller);
 
-                // Assert
+                // Assert — enabled, Unity measures the same capsule itself; disabled is what the shape adds.
+                if (controllerEnabled)
+                {
+                    // Unity may pad the collider's box by the skin width, which the shape leaves out.
+                    float skinTolerance = (controller.skinWidth * 2f) + TOLERANCE;
+                    AssertApproximately(controller.bounds.center, bounds.center);
+                    Assert.AreEqual(controller.bounds.size.x, bounds.size.x, skinTolerance);
+                    Assert.AreEqual(controller.bounds.size.y, bounds.size.y, skinTolerance);
+                    Assert.AreEqual(controller.bounds.size.z, bounds.size.z, skinTolerance);
+                }
+
                 AssertApproximately(new Vector3(10f, 3f, 30f), bounds.center);
                 AssertApproximately(new Vector3(0.6f, 2f, 0.6f), bounds.size);
             }

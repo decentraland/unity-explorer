@@ -63,10 +63,7 @@ namespace DCL.InWorldCamera
         public void AddSelfProfile(bool isEmoting) =>
             AddProfile(selfProfile.OwnProfile, CalculateCharacterBounds(characterObjectController), isEmoting);
 
-        public void AddProfile(Profile? profile, Collider avatarCollider, bool isEmoting) =>
-            AddProfile(profile, avatarCollider.bounds, isEmoting);
-
-        private void AddProfile(Profile? profile, Bounds avatarBounds, bool isEmoting)
+        public void AddProfile(Profile? profile, Bounds avatarBounds, bool isEmoting)
         {
             if (GeometryUtility.TestPlanesAABB(frustumPlanes, avatarBounds))
             {
@@ -115,9 +112,8 @@ namespace DCL.InWorldCamera
         }
 
         /// <summary>
-        /// World bounds of the character's capsule, read from its shape rather than from <see cref="Collider.bounds" />:
-        /// emotes switch the controller off, and a disabled collider reports empty bounds at the world origin.
-        /// The capsule stays upright, so its box only needs the transform's position and scale.
+        /// World bounds of the character's capsule, built from its shape so they stay valid while the controller is disabled
+        /// (a disabled collider reports empty <see cref="Collider.bounds" />). The capsule is upright, so only position and scale apply.
         /// </summary>
         internal static Bounds CalculateCharacterBounds(CharacterController characterController)
         {

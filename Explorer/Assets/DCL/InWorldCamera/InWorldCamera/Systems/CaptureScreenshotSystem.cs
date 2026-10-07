@@ -175,7 +175,7 @@ namespace DCL.InWorldCamera.Systems
         [Query]
         private void AddPeopleInFrameToMetadata(in Entity entity, Profile profile, RemoteAvatarCollider avatarCollider)
         {
-            metadataBuilder.AddProfile(profile, avatarCollider.Collider, UserIsEmoting(entity));
+            metadataBuilder.AddProfile(profile, avatarCollider.Collider.bounds, UserIsEmoting(entity));
         }
 
         private bool UserIsEmoting(Entity entity) =>
