@@ -85,6 +85,9 @@ namespace DCL.Profiles.Tests
         {
             // Arrange
             Profile fetched = NewProfile(ALICE, 3);
+
+            // A non-empty emote wheel, so no session override changes the reported profile.
+            fetched.Avatar.emotes[0] = BASE_EMOTE;
             AnyGet().Returns(UniTask.FromResult<ProfileTier?>(fetched));
 
             // Act

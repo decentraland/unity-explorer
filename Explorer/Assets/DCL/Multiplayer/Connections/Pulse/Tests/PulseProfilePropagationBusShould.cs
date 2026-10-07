@@ -1,4 +1,5 @@
 using DCL.Profiles;
+using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
 
@@ -16,9 +17,18 @@ namespace DCL.Multiplayer.Connections.Pulse.Tests
         [SetUp]
         public void SetUp()
         {
+            // Constructing a Profile validates its name against the feature flags.
+            EcsTestsUtils.SetUpFeaturesRegistry();
+
             service = Substitute.For<IPulseMultiplayerService>();
             service.IsAuthenticated.Returns(true);
             bus = new PulseProfilePropagationBus(service);
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            EcsTestsUtils.TearDownFeaturesRegistry();
         }
 
         [Test]
