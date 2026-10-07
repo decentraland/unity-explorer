@@ -1,4 +1,6 @@
 using Arch.Core;
+using CRDT;
+using CrdtEcsBridge.Components;
 using DCL.ECSComponents;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
@@ -35,12 +37,28 @@ namespace ECS.Unity.AvatarShape.Tests
             sceneData.SceneLoadingConcluded.Returns(true);
             system = new AvatarShapeHandlerSystem(world, globalWorld, pool, sceneData, false);
 
-            entity = world.Create(PartitionComponent.TOP_PRIORITY);
+            entity = world.Create(PartitionComponent.TOP_PRIORITY, new CRDTEntity(512));
             AddTransformToEntity(entity);
         }
 
         private Entity entity;
         private World globalWorld;
+
+        [Test]
+        public void NotSpawnGlobalAvatarForScenePlayerEntity()
+        {
+            // Arrange
+            Entity playerEntity = world.Create(PartitionComponent.TOP_PRIORITY, new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY));
+            AddTransformToEntity(playerEntity);
+            world.Add(playerEntity, new PBAvatarShape { Name = "Self" });
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            Assert.IsFalse(world.Has<SDKAvatarShapeComponent>(playerEntity));
+            Assert.AreEqual(0, globalWorld.CountEntities(new QueryDescription().WithAll<PBAvatarShape>()));
+        }
 
         [Test]
         public void ForwardSDKAvatarShapeInstantiationToGlobalWorldSystems()

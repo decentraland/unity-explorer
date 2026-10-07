@@ -3,6 +3,8 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
 using CommunicationData.URLHelpers;
+using CRDT;
+using CrdtEcsBridge.Components;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.Character.CharacterMotion.Components;
@@ -65,8 +67,11 @@ namespace ECS.Unity.AvatarShape.Systems
 
         [Query]
         [None(typeof(SDKAvatarShapeComponent), typeof(DeleteEntityIntention))]
-        private void LoadAvatarShape(Entity entity, ref PBAvatarShape pbAvatarShape, ref PartitionComponent partitionComponent, ref TransformComponent transformComponent)
+        private void LoadAvatarShape(Entity entity, in CRDTEntity crdtEntity, ref PBAvatarShape pbAvatarShape, ref PartitionComponent partitionComponent, ref TransformComponent transformComponent)
         {
+            // The scene's player entity is the local player, not an NPC
+            if (crdtEntity.Id == SpecialEntitiesID.PLAYER_ENTITY) return;
+
             // We have to create a global transform to hold the CharacterTransform. Using the Transform from the TransformComponent
             // may lead to unexpected consequences, since that one is disposed by the scene, while the avatar lives in the global world
             Transform globalTransform = globalTransformPool.Get();
