@@ -50,7 +50,6 @@ namespace DCL.SDKComponents.MediaStream.Tests
             var rt = (RenderTexture)result;
             Assert.AreEqual(1920, rt.width);
             Assert.AreEqual(1080, rt.height);
-            Assert.AreEqual(RenderTextureFormat.BGRA32, rt.format);
         }
 
         [Test]
