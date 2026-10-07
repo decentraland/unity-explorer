@@ -122,6 +122,10 @@ namespace DCL.VoiceChat
             if (parameters.Length == 0 || parameters[0] is not CommunityVoiceChatStartedNotification)
                 return;
 
+            // The call controls live in the chat area
+            if (!ChatOpener.Instance.IsChatOnScreen)
+                return;
+
             var notification = (CommunityVoiceChatStartedNotification)parameters[0];
 
             JoinCommunityVoiceChat(notification.Metadata.CommunityId, true);

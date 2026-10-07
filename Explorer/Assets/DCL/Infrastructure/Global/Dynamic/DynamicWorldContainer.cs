@@ -312,7 +312,7 @@ namespace Global.Dynamic
             CommunitiesContainer communitiesContainer = CommunitiesContainer.Create(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, identityCache, staticContainer.ProfilesContainer.Repository, appArgs, ct);
 
             var realmNavigatorContainer = RealmNavigationContainer.Create
-                (staticContainer, bootstrapContainer, lodContainer, realmContainer, commsContainer.RemoteEntities, globalWorld, commsContainer.RoomHub, terrainContainer.Landscape, exposedGlobalDataContainer, realmContainer.LoadingScreen, placesAndEventsContainer.PlacesAPIService, identityCache, communitiesContainer.DataProvider, uiShellContainer.MvcManager);
+                (staticContainer, bootstrapContainer, lodContainer, realmContainer, commsContainer.RemoteEntities, globalWorld, commsContainer.RoomHub, terrainContainer.Landscape, exposedGlobalDataContainer, realmContainer.LoadingScreen, placesAndEventsContainer.PlacesAPIService, identityCache, communitiesContainer.DataProvider, uiShellContainer.MvcManager, dynamicWorldParams.StartParcel);
 
             IRealmNavigator realmNavigator = realmNavigatorContainer.RealmNavigator;
 

@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Chat;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Diagnostics;
 using DCL.Friends.UI.FriendPanel;
@@ -93,6 +94,8 @@ namespace DCL.Communities.CommunitiesCard.Members
         private ICommunityMemberData lastClickedProfileCtx = null!;
         private GenericContextMenu? contextMenu;
         private UserProfileContextMenuControlSettings? userProfileContextMenuControlSettings;
+        private GenericContextMenuElement? openChatContextMenuElement;
+        private GenericContextMenuElement? callUserContextMenuElement;
         private GenericContextMenuElement? removeModeratorContextMenuElement;
         private GenericContextMenuElement? addModeratorContextMenuElement;
         private GenericContextMenuElement? blockUserContextMenuElement;
@@ -121,8 +124,8 @@ namespace DCL.Communities.CommunitiesCard.Members
                 .AddControl(userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings((user, friendshipStatus) => ContextMenuUserProfileButtonClicked?.Invoke(user, friendshipStatus), showProfilePicture: false))
                 .AddControl(new SeparatorContextMenuControlSettings(contextMenuSettings.SeparatorHeight, -contextMenuSettings.VerticalPadding.left, -contextMenuSettings.VerticalPadding.right))
                 .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.ViewProfileText, contextMenuSettings.ViewProfileSprite, () => OpenProfilePassportRequested?.Invoke(lastClickedProfileCtx!)))
-                .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.ChatText, contextMenuSettings.ChatSprite, () => OpenUserChatRequested?.Invoke(lastClickedProfileCtx!)))
-                .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.CallText, contextMenuSettings.CallSprite, () => CallUserRequested?.Invoke(lastClickedProfileCtx!)));
+                .AddControl(openChatContextMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(contextMenuSettings.ChatText, contextMenuSettings.ChatSprite, () => OpenUserChatRequested?.Invoke(lastClickedProfileCtx!))))
+                .AddControl(callUserContextMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(contextMenuSettings.CallText, contextMenuSettings.CallSprite, () => CallUserRequested?.Invoke(lastClickedProfileCtx!))));
 
             if (FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.GIFTING_ENABLED))
                 contextMenu.AddControl(contextMenuGiftButton =
@@ -163,6 +166,11 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             userProfileContextMenuControlSettings!.SetInitialData(profile.Profile, status == UserProfileContextMenuControlSettings.FriendshipStatus.Friend ? status : UserProfileContextMenuControlSettings.FriendshipStatus.Disabled);
             elementView.CanUnHover = false;
+
+            // The call controls live in the chat area too
+            bool chatOnScreen = ChatOpener.Instance.IsChatOnScreen;
+            openChatContextMenuElement!.Enabled = chatOnScreen;
+            callUserContextMenuElement!.Enabled = chatOnScreen;
 
             removeModeratorContextMenuElement!.Enabled = profile.Role == CommunityMemberRole.moderator && communityData?.role is CommunityMemberRole.owner;
             addModeratorContextMenuElement!.Enabled = profile.Role == CommunityMemberRole.member && communityData?.role is CommunityMemberRole.owner;

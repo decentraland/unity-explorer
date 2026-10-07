@@ -84,7 +84,6 @@ namespace DCL.Lobby
         private readonly List<EventDTO> upcomingEvents = new ();
         private readonly LobbyDocumentFriendsPresenter? friends;
         private readonly LobbyConnectedFriendsPresenter? connectedFriends;
-        private readonly string[] landingIdBuffer = new string[1];
 
         private LobbyPlacesRail? recentPlacesRail;
         private LobbyPlacesRail? featuredPlacesRail;
@@ -470,9 +469,7 @@ namespace DCL.Lobby
         // The coords and name lookups never carry the connected users, so they are fetched again by id
         private async UniTaskVoid RefreshLandingConnectedUsersAsync(PlacesData.PlaceInfo place, CancellationToken ct)
         {
-            landingIdBuffer[0] = place.id;
-
-            Result<PlacesData.IPlacesAPIResponse> result = await placesAPIService.GetDestinationsByIdsAsync(landingIdBuffer, ct, withConnectedUsers: true)
+            Result<PlacesData.IPlacesAPIResponse> result = await placesAPIService.GetDestinationsByIdsAsync(new[] { place.id }, ct, withConnectedUsers: true)
                                                                                  .SuppressToResultAsync(ReportCategory.PLACES);
 
             if (ct.IsCancellationRequested || !result.Success || result.Value.Data.Count == 0 || !ReferenceEquals(landingPlace, place)) return;

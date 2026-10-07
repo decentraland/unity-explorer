@@ -30,6 +30,10 @@ namespace DCL.Communities.CommunitiesBrowser.Commands
             if (orchestrator.CurrentCommunityId.Value == communityId)
                 return;
 
+            // The call controls live in the chat area
+            if (!ChatOpener.Instance.IsChatOnScreen)
+                return;
+
             JoinStreamAsync().Forget();
             return;
 
