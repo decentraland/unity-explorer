@@ -1,7 +1,6 @@
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.PerformanceAndDiagnostics.Analytics;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -36,7 +35,7 @@ namespace DCL.SceneLoadingScreens
         {
             if (!featureFlagChecked)
             {
-                audienceTipsParseSuccess = TryParseFlag(FeatureFlagsStrings.AUDIENCE_LOADING_SCREEN_TIPS, "tips", out audienceTipsJson);
+                audienceTipsParseSuccess = featureFlags.TryGetJsonPayload(FeatureFlagsStrings.AUDIENCE_LOADING_SCREEN_TIPS, "tips", out audienceTipsJson);
 
                 if (audienceTipsParseSuccess)
                 {
@@ -46,8 +45,8 @@ namespace DCL.SceneLoadingScreens
                 }
 
                 //TODO: remove all processing related to LOADING_SCREEN_TIPS feature flag when TEMPORAL_LOADING_SCREEN_TIPS is fully live
-                tipsParseSuccess = TryParseFlag(FeatureFlagsStrings.LOADING_SCREEN_TIPS, "tips", out tipsJson);
-                temporalTipsParseSuccess = TryParseFlag(FeatureFlagsStrings.TEMPORAL_LOADING_SCREEN_TIPS, "main", out temporalTipsJson);
+                tipsParseSuccess = featureFlags.TryGetJsonPayload(FeatureFlagsStrings.LOADING_SCREEN_TIPS, "tips", out tipsJson);
+                temporalTipsParseSuccess = featureFlags.TryGetJsonPayload(FeatureFlagsStrings.TEMPORAL_LOADING_SCREEN_TIPS, "main", out temporalTipsJson);
                 featureFlagChecked = true;
             }
 
@@ -79,17 +78,6 @@ namespace DCL.SceneLoadingScreens
             filteredTipList.AddRange(temporalTipsParseSuccess ? originTips.Tips.Where(t => Contains(temporalTipsJson, t)) : originTips.Tips.Where(t => Contains(tipsJson, t)));
 
             return newTips;
-        }
-
-        private bool TryParseFlag<T>(string flagId, string variantId, out T? json)
-        {
-            try { return featureFlags.TryGetJsonPayload(flagId, variantId, out json); }
-            catch (JsonException e)
-            {
-                ReportHub.LogException(e, ReportCategory.UI);
-                json = default(T);
-                return false;
-            }
         }
 
         private string[] KeepKnownTips(string[]? keys)
