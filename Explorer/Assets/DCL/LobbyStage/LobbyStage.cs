@@ -151,12 +151,14 @@ namespace DCL.Lobby
         // Objects cannot be activated or deactivated inside a validation callback, so the refresh runs on the next editor tick
         private void OnValidate()
         {
-            UnityEditor.EditorApplication.delayCall += () =>
-            {
-                if (this == null || !isActiveAndEnabled) return;
+            UnityEditor.EditorApplication.delayCall += ApplyPresetValuesIfAlive;
+        }
 
-                ApplyPresetValues();
-            };
+        private void ApplyPresetValuesIfAlive()
+        {
+            if (this == null || !isActiveAndEnabled) return;
+
+            ApplyPresetValues();
         }
 
         // Objects cannot be created or destroyed inside a validation callback, so the refresh runs on the next editor tick
@@ -258,12 +260,12 @@ namespace DCL.Lobby
             {
                 ParticleSystem.MainModule dustMain = dust.main;
 
-                // Motes already alive keep their colour, so the system restarts to refill in the new one
+                // Stopping resets the system, so the next Play prewarms a full set of motes in the new colour
                 if (dustMain.startColor.color != preset.DustColor)
                 {
                     dustMain.startColor = preset.DustColor;
-                    dust.Clear();
-                    dust.Play();
+                    dust.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+                    dust.Play(true);
                 }
             }
 
