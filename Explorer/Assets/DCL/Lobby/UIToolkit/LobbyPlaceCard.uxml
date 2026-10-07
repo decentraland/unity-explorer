@@ -1,11 +1,15 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
     <Style src="project://database/Assets/DCL/Lobby/UIToolkit/LobbyPlaceCard.uss" />
+    <Style src="project://database/Assets/DCL/Lobby/UIToolkit/LobbyConnectedFriends.uss" />
     <DCL.Lobby.LobbyPlaceCardElement name="PlaceCard" title="Place Name" creator="Creator" online-count="0">
         <ui:VisualElement name="Thumbnail" class="lobby-place-card__thumbnail" picking-mode="Ignore" />
-        <ui:VisualElement name="OnlineCounter" class="lobby-place-card__online" picking-mode="Ignore">
-            <ui:VisualElement name="OnlineStatus" class="lobby-place-card__online-dot" picking-mode="Ignore" />
-            <ui:VisualElement name="PlayerIcon" class="lobby-place-card__online-icon" picking-mode="Ignore" />
-            <ui:Label name="OnlineCount" text="0" class="lobby-place-card__online-count" picking-mode="Ignore" />
+        <ui:VisualElement name="Badges" class="lobby-place-card__badges" picking-mode="Ignore">
+            <ui:VisualElement name="OnlineCounter" class="lobby-place-card__online" picking-mode="Ignore">
+                <ui:VisualElement name="OnlineStatus" class="lobby-place-card__online-dot" picking-mode="Ignore" />
+                <ui:VisualElement name="PlayerIcon" class="lobby-place-card__online-icon" picking-mode="Ignore" />
+                <ui:Label name="OnlineCount" text="0" class="lobby-place-card__online-count" picking-mode="Ignore" />
+            </ui:VisualElement>
+            <DCL.Lobby.LobbyConnectedFriendsElement name="ConnectedFriends" />
         </ui:VisualElement>
         <ui:VisualElement name="Footer" class="lobby-place-card__footer" picking-mode="Ignore">
             <ui:Label name="Title" text="Place Name" enable-rich-text="false" class="lobby-place-card__title" picking-mode="Ignore" />

@@ -41,11 +41,19 @@
     -unity-background-image-tint-color: var(--dcl-color-black-80);
 }
 
-.lobby-landing-card__online {
+/* The counter's margin spaces the friends row that follows it */
+.lobby-landing-card__badges {
     position: absolute;
     top: 12px;
     left: 12px;
     height: 28px;
+    flex-direction: row;
+    align-items: center;
+}
+
+.lobby-landing-card__online {
+    height: 28px;
+    margin-right: 8px;
     flex-direction: row;
     align-items: center;
     padding: 0 6px;
