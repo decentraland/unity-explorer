@@ -53,9 +53,10 @@ MonoBehaviour:
       <FeatureFlagName>k__BackingField: 0
       <FeatureId>k__BackingField: 0
       <Modules>k__BackingField:
+      - rid: 5237124558551253121
+      - rid: 5237124558551253133
       - rid: 2404945524685013102
       - rid: 2404945524685013105
-      - rid: 5237124558551253121
     - <GroupTitle>k__BackingField: Sun
       <FeatureFlagName>k__BackingField: 0
       <FeatureId>k__BackingField: 0
@@ -723,6 +724,16 @@ MonoBehaviour:
           <IsEnabled>k__BackingField: 1
           defaultIsOn: 0
         <Feature>k__BackingField: 18
+    - rid: 5237124558551253133
+      type: {class: SpacerModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
+      data:
+        <FeatureId>k__BackingField: 0
+        <View>k__BackingField:
+          m_AssetGUID: dfe79687037014506aefcf889c9b7a4d
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
     - rid: 5242998342527483906
       type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
