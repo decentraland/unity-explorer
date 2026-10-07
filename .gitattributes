@@ -15,6 +15,7 @@ Explorer/Assets/StreamingAssets/AssetBundles/**/*.meta -filter=lfs -diff=lfs -me
 *.png filter=lfs diff=lfs merge=lfs -text
 *.dll filter=lfs diff=lfs merge=lfs -text
 *.dylib filter=lfs diff=lfs merge=lfs -text
+Explorer/Assets/Plugins/RustSegment/SegmentServerWrap/Libraries/Linux/segment-server.so filter=lfs diff=lfs merge=lfs -text
 Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/x86_64/uuav-helper.exe filter=lfs diff=lfs merge=lfs -text
 Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/macOS/uuav-helper filter=lfs diff=lfs merge=lfs -text
 
@@ -36,6 +37,16 @@ Explorer/Assets/Plugins/UUAV/**/*.sh text eol=lf
 scripts/uuav/*.sh text eol=lf
 # --update rewrites the lock, so its own newlines must not depend on the host
 scripts/uuav/uuav-binaries.lock.json text eol=lf
+
+##############################################################################
+# RustSegment native - the lock digests these as raw bytes, so line endings are content.
+##############################################################################
+Explorer/Assets/Plugins/RustSegment/.native/**/*.rs text eol=lf
+Explorer/Assets/Plugins/RustSegment/.native/**/*.toml text eol=lf
+Explorer/Assets/Plugins/RustSegment/.native/**/*.lock text eol=lf
+Explorer/Assets/Plugins/RustSegment/.native/*.sh text eol=lf
+scripts/rust-segment/*.sh text eol=lf
+scripts/rust-segment/rust-segment-binaries.lock.json text eol=lf
 
 
 ##############################################################################
@@ -61,3 +72,5 @@ Explorer/Assets/*.rsp text eol=lf
 # fail them with "$'\r': command not found" (seen on every Windows cloud build
 # running the UBA preBuildScript).
 *.sh text eol=lf
+
+Explorer/Assets/StreamingAssets/Js/sdk6-adapter.min.js -text

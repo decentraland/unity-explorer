@@ -1,5 +1,6 @@
 using DCL.EventsApi;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.UI;
 using System;
 using System.Globalization;
 using System.Text;
@@ -9,6 +10,8 @@ namespace DCL.Communities.EventInfo
     public static class EventUtilities
     {
         private const string STARTED_EVENT_TIME_FORMAT = "Started {0} {1} ago";
+        private const string STARTING_NOW = "Starting now";
+        private const string STARTS_IN_FORMAT = "In {0} {1}";
         private const string EVENT_TIME_FORMAT = "ddd, MMM dd @ h:mmtt";
         private const string EVENT_TIME_FORMAT_ONLY_HOURS = "h:mmtt";
         private const string EVENT_DAY_FORMAT = "ddd, MMM dd";
@@ -44,6 +47,28 @@ namespace DCL.Communities.EventInfo
 
             return schedule;
         }
+
+        /// <summary>
+        ///     How long until the event starts, in the coarsest unit that fits: "In 20 min", "In 2 hours", "In 3 days".
+        /// </summary>
+        public static string GetEventStartsInText(IEventDTO eventDTO)
+        {
+            TimeSpan remaining = eventDTO.NextStartAtProcessed - DateTime.UtcNow;
+
+            if (remaining <= TimeSpan.Zero) return STARTING_NOW;
+
+            // Rounded before picking the unit, so 59.6 minutes reads "In 1 hour" rather than "In 60 min"
+            int minutes = Math.Max(1, (int)Math.Round(remaining.TotalMinutes));
+            if (minutes < 60) return string.Format(STARTS_IN_FORMAT, minutes, MINUTES_STRING);
+
+            var hours = (int)Math.Round(remaining.TotalHours);
+            if (hours < 24) return StartsInUnits(hours, HOUR_STRING);
+
+            return StartsInUnits((int)Math.Round(remaining.TotalDays), DAY_STRING);
+        }
+
+        private static string StartsInUnits(int amount, string unit) =>
+            string.Format(STARTS_IN_FORMAT, amount, amount == 1 ? unit : unit + "s");
 
         public static string GetEventDayText(IEventDTO eventDTO)
         {
@@ -99,25 +124,25 @@ namespace DCL.Communities.EventInfo
 
         private static string GetPlaceJumpInLink(IEventDTO eventData, IDecentralandUrlsSource urls) =>
             eventData.World
-                ? string.Format(urls.Url(DecentralandUrl.JumpInWorldLink), eventData.Server)
-                : string.Format(urls.Url(DecentralandUrl.JumpInGenesisCityLink), eventData.X, eventData.Y);
+                ? ShareLinkUtilities.WithReferrer(string.Format(urls.Url(DecentralandUrl.JumpInWorldLink), eventData.Server))
+                : ShareLinkUtilities.WithReferrer(string.Format(urls.Url(DecentralandUrl.JumpInGenesisCityLink), eventData.X, eventData.Y));
 
         private static string GetEventWebsiteLink(IEventDTO eventData, IDecentralandUrlsSource urls) =>
             string.Format(urls.Url(DecentralandUrl.WhatsOnEventLink), eventData.Id);
 
         public static string GetEventShareLink(IEventDTO eventData, IDecentralandUrlsSource urls) =>
-            string.Format(TWITTER_NEW_POST_LINK, eventData.Name, TWITTER_HASHTAG, GetEventCopyLink(eventData, urls));
+            string.Format(TWITTER_NEW_POST_LINK, eventData.Name, TWITTER_HASHTAG, ShareLinkUtilities.AsQueryParameterValue(GetEventCopyLink(eventData, urls)));
 
         public static string GetEventAddToCalendarLink(IEventDTO eventData, IDecentralandUrlsSource urls)
         {
             DateTime nextStartAtDate = DateTime.Parse(
-                eventData.Next_start_at,
+                eventData.NextStartAt,
                 CultureInfo.InvariantCulture,
                 DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal
             );
 
             DateTime nextFinishAtDate = DateTime.Parse(
-                eventData.Next_finish_at,
+                eventData.NextFinishAt,
                 CultureInfo.InvariantCulture,
                 DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal
             );
@@ -125,7 +150,7 @@ namespace DCL.Communities.EventInfo
             return string.Format(ADD_TO_CALENDAR_LINK,
                 eventData.Name,
                 eventData.Description,
-                $"jump in: {GetPlaceJumpInLink(eventData, urls)}",
+                $"jump in: {ShareLinkUtilities.AsQueryParameterValue(GetPlaceJumpInLink(eventData, urls))}",
                 nextStartAtDate.ToString("yyyyMMdd'T'HHmmss'Z'"),
                 nextFinishAtDate.ToString("yyyyMMdd'T'HHmmss'Z'"));
         }
@@ -135,14 +160,10 @@ namespace DCL.Communities.EventInfo
             TimeSpan duration = TimeSpan.FromMilliseconds(eventData.Duration);
             DateTime utcEnd = utcStart.Add(duration);
 
-            TimeZoneInfo localZone = TimeZoneInfo.Local;
-            DateTime localStart = TimeZoneInfo.ConvertTimeFromUtc(utcStart, localZone);
-            DateTime localEnd = TimeZoneInfo.ConvertTimeFromUtc(utcEnd, localZone);
-
             return string.Format(ADD_TO_CALENDAR_LINK,
                 eventData.Name,
                 eventData.Description,
-                $"jump in: {GetPlaceJumpInLink(eventData, urls)}",
+                $"jump in: {ShareLinkUtilities.AsQueryParameterValue(GetPlaceJumpInLink(eventData, urls))}",
                 utcStart.ToString("yyyyMMdd'T'HHmmss'Z'"),
                 utcEnd.ToString("yyyyMMdd'T'HHmmss'Z'"));
         }

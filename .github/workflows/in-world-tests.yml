@@ -22,7 +22,8 @@ name: In-World Tests
 # and it passes for PRs into main that are not release or hotfix.
 #
 # Release PRs are opened by create-release-branch.yml with GITHUB_TOKEN, and
-# events that token raises start no workflow runs — so that workflow dispatches
+# events that token raises start runs only as action_required, owned by the
+# bot even once approved — so that workflow dispatches
 # this one itself. A dispatch attaches its checks to the dispatched ref's tip,
 # which is the PR head, so the gate still lands on the PR.
 #

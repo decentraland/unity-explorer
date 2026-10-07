@@ -1,4 +1,5 @@
 ﻿using DCL.AssetsProvision;
+using DCL.Diagnostics;
 using System;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -15,7 +16,7 @@ namespace DCL.SkyBox
 
         [SerializeField] private float fullDayCycleInSeconds = 120 * 60;
         [SerializeField] private float transitionSpeed = 1f;
-        [SerializeField] private float[] refreshIntervalByQuality;
+        [SerializeField] private float[] refreshIntervalByQuality = null!;
 
         public float RefreshInterval => refreshIntervalByQuality[refreshIntervalId];
 
@@ -30,6 +31,9 @@ namespace DCL.SkyBox
         public Material SkyboxMaterial = null!;
         public AssetReferenceT<AnimationClip> SkyboxAnimationCycle = null!;
 
+        [Tooltip("Alternative looks, loaded only when needed: picked by name through the skybox look preset feature flag, or from the debug panel dropdown. The default look is the prefab's own preset and is not listed here.")]
+        public LookPresetEntry[] LookPresets = Array.Empty<LookPresetEntry>();
+
         public float FullDayCycleInSeconds
         {
             get => fullDayCycleInSeconds;
@@ -38,7 +42,7 @@ namespace DCL.SkyBox
 
         public bool IsUIControlled { get; set; }
         public float UIOverrideTimeOfDayNormalized { get; set; }
-        public Vector2Int? CurrentSDKControlledScene { get; set; }
+        public SceneShortInfo? CurrentSDKControlledScene { get; set; }
         public bool IsDayCycleEnabled
         {
             get => isDayCycleEnabled;
@@ -100,6 +104,24 @@ namespace DCL.SkyBox
             refreshIntervalId = (uint)Math.Min(qualityPresetId, refreshIntervalByQuality.Length - 1);
         }
 
+        // Compares the full scene identity: base parcels are not unique, portable experiences usually share (0,0) with world scenes
+        public bool IsSDKControlledBy(SceneShortInfo scene) =>
+            CurrentSDKControlledScene is { } owner && owner.Equals(scene);
+
+        /// <summary>
+        ///     Index of the <see cref="LookPresets" /> entry with this name, ignoring case and surrounding whitespace; -1 when none matches.
+        /// </summary>
+        public int IndexOfLookPreset(string presetName)
+        {
+            string trimmed = presetName.Trim();
+
+            for (var i = 0; i < LookPresets.Length; i++)
+                if (string.Equals(LookPresets[i].Name, trimmed, StringComparison.OrdinalIgnoreCase))
+                    return i;
+
+            return -1;
+        }
+
         public void Reset()
         {
             TimeOfDayNormalized = GlobalTimeOfDayNormalized;
@@ -114,6 +136,13 @@ namespace DCL.SkyBox
         public class SkyboxRenderControllerRef : ComponentReference<SkyboxRenderController>
         {
             public SkyboxRenderControllerRef(string guid) : base(guid) { }
+        }
+
+        [Serializable]
+        public class LookPresetEntry
+        {
+            public string Name = string.Empty;
+            public AssetReferenceT<SkyboxLookPreset> Preset = null!;
         }
     }
 }

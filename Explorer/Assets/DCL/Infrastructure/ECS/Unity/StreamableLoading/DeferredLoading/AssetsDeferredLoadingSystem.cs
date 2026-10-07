@@ -4,6 +4,7 @@ using DCL.Optimization.PerformanceBudgeting;
 using ECS.Groups;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.AudioClips;
+using ECS.StreamableLoading.Fonts;
 using ECS.StreamableLoading.GLTF;
 using ECS.StreamableLoading.NFTShapes;
 using ECS.StreamableLoading.Textures;
@@ -29,6 +30,7 @@ namespace ECS.StreamableLoading.DeferredLoading
                 CreateQuery<GetTextureIntention, TextureData>(),
                 CreateQuery<GetNFTTypeIntention, NftTypeResult>(),
                 CreateQuery<GetAudioClipIntention, AudioClipData>(),
+                CreateQuery<GetFontIntention, FontData>(),
             };
         }
 

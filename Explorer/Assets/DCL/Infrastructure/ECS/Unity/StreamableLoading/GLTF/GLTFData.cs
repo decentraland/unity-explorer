@@ -10,6 +10,9 @@ namespace ECS.StreamableLoading.GLTF
 {
     public class GLTFData : StreamableRefCountData<GltfImport>
     {
+        /// <summary>Every raw-GLTF root is named with this prefix (see <see cref="LoadGLTFSystem" />), so instantiated hierarchies are recognizable as raw-sourced by name.</summary>
+        public const string NAME_PREFIX = "Scene:";
+
         public readonly GameObject Root;
         public readonly IReadOnlyList<string>? HierarchyPaths;
 

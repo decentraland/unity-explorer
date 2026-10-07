@@ -395,37 +395,28 @@ def poll_build(id):
             print(f'Build status is not known!: "{status}"')
             sys.exit(1)
             
-def download_artifact(id):
+def retry_session(statuses=(403, 408, 429, 500, 502, 503, 504)):
+    # 403 is in the retry set because Unity's build API returns it transiently under load.
     session = requests.Session()
     retries = Retry(
-        total=5,              # Retry up to 5 times
-        backoff_factor=2,     # Exponential backoff: 2s, 4s, 8s, etc.
-        status_forcelist=[502, 503, 504],  # Retry on these HTTP errors
-        allowed_methods=["GET"]
+        total=5,
+        backoff_factor=2,
+        backoff_jitter=1.0,
+        status_forcelist=list(statuses),
+        respect_retry_after_header=True,
+        # Default cap is 6h; the whole job is capped at 450 min.
+        retry_after_max=60,
+        raise_on_status=False,
     )
     session.mount('https://', HTTPAdapter(max_retries=retries))
-    try:
-        response = session.get(
-            f'{URL}/buildtargets/{os.getenv("TARGET")}/builds/{id}',
-            headers=HEADERS, timeout=60
-        )
-        response.raise_for_status()  # Raise an HTTPError for bad status codes (4xx/5xx)
-    except requests.exceptions.RequestException as e:
-        print(f'Error: Failed to get build artifacts with ID {id}. Exception: {e}')
-        sys.exit(1)
+    return session
 
-    if response.status_code != 200:
-        print(f'Error: Failed to get build artifacts with ID {id} with status code: {response.status_code}')
-        print("Response body:", response.text[:500])
-        sys.exit(1)
-    print('Build artifacts successfully retrieved!')
-
-    response_json = response.json()
+def download_artifact(id, build_json):
     try:
-        artifact_url = response_json['links']['download_primary']['href']
-    except KeyError:
-        print(f'Failed to locate any build artifacts - Nothing to download')
-        return
+        artifact_url = build_json['links']['download_primary']['href']
+    except (KeyError, TypeError):
+        print('Failed to locate any build artifacts - Nothing to download')
+        return False
 
     download_dir = 'build'
     filepath = os.path.join(download_dir, 'artifact.zip')
@@ -437,9 +428,16 @@ def download_artifact(id):
     os.makedirs(download_dir, exist_ok=True)
 
     print(f'Started downloading artifacts from Unity Cloud to {download_dir}...')
-    response = requests.get(artifact_url)
-    with open(filepath, 'wb') as f:
-        f.write(response.content)
+    try:
+        with retry_session().get(artifact_url, timeout=300, stream=True) as response:
+            response.raise_for_status()
+            with open(filepath, 'wb') as f:
+                for chunk in response.iter_content(chunk_size=1024 * 1024):
+                    if chunk:
+                        f.write(chunk)
+    except requests.exceptions.RequestException as e:
+        print(f'Error: Failed to download build artifact for build {id}. Exception: {e}')
+        sys.exit(1)
 
     print(f'Started extracting artifacts from Unity Cloud to {download_dir}...')
     try:
@@ -473,6 +471,8 @@ def download_artifact(id):
         print(f"Build folder confirmed at: {os.path.join(os.getcwd(), download_dir)}")
     else:
         print(f"ERROR: Build folder not found at expected location: {os.path.join(os.getcwd(), download_dir)}")
+
+    return True
 
 def download_log(id):
     with open('unity_cloud_log.log', 'w') as f:
@@ -552,14 +552,21 @@ get_log_byte_count._non_2xx_logged = False
 
 
 def delete_build(id):
-    response = requests.delete(f'{URL}/buildtargets/{os.getenv('TARGET')}/builds/{id}/artifacts', headers=HEADERS)
+    # Cleanup only: artifacts are already on disk, so a failure here must not fail the job.
+    try:
+        response = retry_session(statuses=(408, 429, 500, 502, 503, 504)).delete(
+            f'{URL}/buildtargets/{os.getenv("TARGET")}/builds/{id}/artifacts',
+            headers=HEADERS, timeout=30
+        )
+    except requests.exceptions.RequestException as e:
+        print(f'Warning: build (on cloud) failed to be deleted: {e}')
+        return
 
     if response.status_code == 200:
         print('Build (on cloud) deleted successfully')
     else:
-        print('Build (on cloud) failed to be deleted with status code:', response.status_code)
+        print('Warning: build (on cloud) failed to be deleted with status code:', response.status_code)
         print('Response body:', response.text)
-        sys.exit(1)
 
 def get_any_running_builds(target, trueOnError = True):
     response = requests.get(f'{URL}/buildtargets/{target}/builds?buildStatus=created,queued,sentToBuilder,started,restarted', headers=HEADERS)
@@ -950,7 +957,9 @@ def run_poll_loop(id, build_already_active=False, resumed_build_elapsed=0):
     builder VM (exit 99).  This catches deadlocked builders that keep reporting
     status=started while producing no output.
 
-    Returns (final_outcome, phase_durations, queue_reasons, queue_elapsed, build_elapsed).
+    Returns (final_outcome, phase_durations, queue_reasons, queue_elapsed, build_elapsed,
+    build_json).  build_json is the final poll response, or None when the loop exits
+    through a timeout/stall path.
     """
     phase_durations = collections.defaultdict(float)
     queue_reasons = set()
@@ -981,14 +990,14 @@ def run_poll_loop(id, build_already_active=False, resumed_build_elapsed=0):
                     f'> {datetime.timedelta(seconds=QUEUE_TIMEOUT)}). '
                     f'Yielding runner; build stays queued for the next attempt to reattach.'
                 )
-                return 'queue_timeout', phase_durations, queue_reasons, queue_elapsed, 0.0
+                return 'queue_timeout', phase_durations, queue_reasons, queue_elapsed, 0.0, None
         else:
             build_elapsed = now - build_start
             if build_elapsed > BUILD_TIMEOUT:
                 print(f'Build timeout exceeded ({datetime.timedelta(seconds=int(build_elapsed))} > {datetime.timedelta(seconds=BUILD_TIMEOUT)}). Cancelling build...')
                 cancel_build(id)
                 queue_elapsed = build_start - queue_start
-                return 'build_timeout', phase_durations, queue_reasons, queue_elapsed, build_elapsed
+                return 'build_timeout', phase_durations, queue_reasons, queue_elapsed, build_elapsed, None
 
         keep_polling, status, response_json = poll_build(id)
 
@@ -1042,7 +1051,7 @@ def run_poll_loop(id, build_already_active=False, resumed_build_elapsed=0):
                     cancel_build(id)
                     queue_elapsed = (build_start or now) - queue_start
                     build_elapsed = now - (build_start or now)
-                    return 'log_stall', phase_durations, queue_reasons, queue_elapsed, build_elapsed
+                    return 'log_stall', phase_durations, queue_reasons, queue_elapsed, build_elapsed, None
 
         if status != last_status:
             queue_elapsed = (build_start or now) - queue_start
@@ -1057,7 +1066,7 @@ def run_poll_loop(id, build_already_active=False, resumed_build_elapsed=0):
         if not keep_polling:
             queue_elapsed = (build_start or now) - queue_start
             build_elapsed = (now - build_start) if build_start else 0
-            return status, phase_durations, queue_reasons, queue_elapsed, build_elapsed
+            return status, phase_durations, queue_reasons, queue_elapsed, build_elapsed, response_json
 
         if status in QUEUE_STATUSES and (now - last_status_change) > STALE_THRESHOLD:
             poll_interval = QUEUE_POLL_TIME
@@ -1148,7 +1157,7 @@ if __name__ == '__main__':
             record_build_link_info(id, {})
             print(f'For more info and live logs, go to https://cloud.unity.com/ and search for target "{os.getenv('TARGET')}" and build ID "{id}"')
 
-    final_outcome, phase_durations, queue_reasons, queue_elapsed, build_elapsed = run_poll_loop(
+    final_outcome, phase_durations, queue_reasons, queue_elapsed, build_elapsed, build_json = run_poll_loop(
         id,
         build_already_active=build_already_active,
         resumed_build_elapsed=resumed_build_elapsed,
@@ -1211,7 +1220,7 @@ if __name__ == '__main__':
     print(f'Runner FINAL elapsed: queue {datetime.timedelta(seconds=int(queue_elapsed))} / build {datetime.timedelta(seconds=int(build_elapsed))}')
     record_final_elapsed(id, queue_elapsed, build_elapsed)
 
-    download_artifact(id)
+    got_artifacts = download_artifact(id, build_json)
     download_log(id)
 
     if not build_healthy:
@@ -1219,6 +1228,10 @@ if __name__ == '__main__':
         # runner logs — the PR status comment carries the clickable link.
         print(f'Build unhealthy - check the downloaded logs or the Unity Cloud build page '
               f'linked from the PR status comment (target "{os.getenv("TARGET")}", build {id}).')
+        sys.exit(1)
+
+    if not got_artifacts:
+        print(f'Error: build {id} reported success but exposed no download_primary link.')
         sys.exit(1)
 
     # Cleanup (only if build is healthy and not release)

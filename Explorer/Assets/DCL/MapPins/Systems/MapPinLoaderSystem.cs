@@ -95,7 +95,9 @@ namespace DCL.SDKComponents.MapPins.Systems
             if (mapPinComponent.TexturePromise.Value.TryConsume(World, out StreamableLoadingResult<TextureData> texture))
             {
                 mapPinComponent.TexturePromise = null;
-                mapPinsEventBus.UpdateMapPinThumbnail(entity, texture.Asset!.EnsureTexture2D());
+
+                if (texture.Succeeded)
+                    mapPinsEventBus.UpdateMapPinThumbnail(entity, texture.Asset!.EnsureTexture2D());
             }
         }
 

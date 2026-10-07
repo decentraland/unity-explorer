@@ -48,13 +48,16 @@ namespace ECS.Unity.Materials.Systems
         [None(typeof(PBMaterial))]
         private void ResetGltfNode(Entity entity, ref GltfNode gltfNode, ref MaterialComponent materialComponent)
         {
-            if (!World.TryGet<ECS.Unity.GltfNodeModifiers.Components.GltfNodeModifiers>(gltfNode.ContainerEntity, out var gltfNodeModifiers)) return;
-
-            // Reset all renderers to their original state
-            foreach (var renderer in gltfNode.Renderers)
+            // Restore only while the container still tracks the original materials; the release and the node teardown below run regardless
+            if (World.IsAlive(gltfNode.ContainerEntity)
+                && World.TryGet(gltfNode.ContainerEntity, out ECS.Unity.GltfNodeModifiers.Components.GltfNodeModifiers gltfNodeModifiers))
             {
-                if (gltfNodeModifiers.OriginalMaterials.TryGetValue(renderer, out var originalMaterial))
-                    renderer.sharedMaterial = originalMaterial;
+                // Reset all renderers to their original state
+                foreach (var renderer in gltfNode.Renderers)
+                {
+                    if (gltfNodeModifiers.OriginalMaterials.TryGetValue(renderer, out var originalMaterial))
+                        renderer.sharedMaterial = originalMaterial;
+                }
             }
 
             // Clean up the material

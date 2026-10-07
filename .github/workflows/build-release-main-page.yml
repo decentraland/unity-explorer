@@ -33,7 +33,7 @@ jobs:
     name: Generate release info
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 30
     needs: get-info
     steps:
       - name: Checkout code
@@ -41,16 +41,6 @@ jobs:
         with:
           fetch-depth: 0
           ref: 'main'
-
-      - name: Apply tag to branch
-        run: |
-          TAG=${{ needs.get-info.outputs.tag_version }}
-          if git rev-parse "$TAG" >/dev/null 2>&1; then
-            echo "Tag $TAG already exists. Skipping tag creation."
-          else
-            git tag "$TAG"
-            git push origin "$TAG"
-          fi
 
       - name: Download artifacts
         uses: dawidd6/action-download-artifact@v6
@@ -75,3 +65,13 @@ jobs:
             ./Decentraland_windows64_epic.zip
             ./Decentraland_macos_epic.zip
           fail_on_unmatched_files: true
+
+      - name: Apply tag to branch
+        run: |
+          TAG=${{ needs.get-info.outputs.tag_version }}
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "Tag $TAG already exists. Skipping tag creation."
+          else
+            git tag "$TAG"
+            git push origin "$TAG"
+          fi

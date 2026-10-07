@@ -25,16 +25,12 @@ using Utility;
 
 namespace DCL.Notifications.NotificationsMenu
 {
-    public class NotificationsPanelController : ControllerBase<NotificationsMenuView>,IDisposable
+    /// <summary>
+    ///     Lives outside the generic controller so every closed type shares the one set.
+    /// </summary>
+    internal static class NotificationsPanelIgnoredTypes
     {
-        private const int PIXELS_PER_UNIT = 50;
-        private const int DEFAULT_NOTIFICATION_INDEX = 0;
-        private const int FRIENDS_NOTIFICATION_INDEX = 1;
-        private const int GIFT_NOTIFICATION_INDEX = 2;
-        private const string GET_NOTIFICATIONS_ERROR_MESSAGE = "There was an error loading notifications. Please try again.";
-        private const string FOUNDATION_COMMUNITY_ID_FALLBACK = "e99471aa-31c4-4952-abf6-99905445f43b";
-
-        private static readonly List<NotificationType> NOTIFICATION_TYPES_TO_IGNORE = new ()
+        private static readonly HashSet<NotificationType> VALUES = new ()
         {
             NotificationType.INTERNAL_ARRIVED_TO_DESTINATION,
             NotificationType.COMMUNITY_VOICE_CHAT_STARTED,
@@ -43,6 +39,39 @@ namespace DCL.Notifications.NotificationsMenu
             NotificationType.INTERNAL_SERVER_ERROR,
             NotificationType.INTERNAL_SCENE_CLIPBOARD_WRITE,
         };
+
+        public static bool ShouldBeIgnored(NotificationType type) =>
+            VALUES.Contains(type);
+    }
+
+    public class NotificationsPanelController : NotificationsPanelController<ControllerNoData>
+    {
+        public NotificationsPanelController(
+            ViewFactoryMethod viewFactory,
+            NotificationsRequestController notificationsRequestController,
+            NotificationIconTypes notificationIconTypes,
+            NotificationDefaultThumbnails notificationDefaultThumbnails,
+            IWebRequestController webRequestController,
+            NftTypeIconSO rarityBackgroundMapping,
+            IWeb3IdentityCache web3IdentityCache,
+            ProfileRepositoryWrapper profileRepository,
+            IMVCManager mvcManager) : base(viewFactory, notificationsRequestController, notificationIconTypes, notificationDefaultThumbnails, webRequestController, rarityBackgroundMapping, web3IdentityCache, profileRepository, mvcManager) { }
+
+        public static ShowCommand<NotificationsMenuView, ControllerNoData> IssueCommand() =>
+            IssueCommand(default(ControllerNoData));
+    }
+
+    /// <summary>
+    ///     The MVC manager keys controllers by view and input type, so a host needing its own instance registers a distinct <typeparamref name="TInputData" />.
+    /// </summary>
+    public class NotificationsPanelController<TInputData> : ControllerBase<NotificationsMenuView, TInputData>
+    {
+        private const int PIXELS_PER_UNIT = 50;
+        private const int DEFAULT_NOTIFICATION_INDEX = 0;
+        private const int FRIENDS_NOTIFICATION_INDEX = 1;
+        private const int GIFT_NOTIFICATION_INDEX = 2;
+        private const string GET_NOTIFICATIONS_ERROR_MESSAGE = "There was an error loading notifications. Please try again.";
+        private const string FOUNDATION_COMMUNITY_ID_FALLBACK = "e99471aa-31c4-4952-abf6-99905445f43b";
 
         private readonly NotificationsRequestController notificationsRequestController;
         private readonly NotificationIconTypes notificationIconTypes;
@@ -61,6 +90,13 @@ namespace DCL.Notifications.NotificationsMenu
         private UniTaskCompletionSource? closeViewTask;
         private int unreadNotifications;
         private bool needsInitialRequest = true;
+
+        /// <summary>
+        ///     Raised with <see cref="UnreadCount" /> whenever it is recomputed.
+        /// </summary>
+        public event Action<int>? UnreadCountChanged;
+
+        public int UnreadCount => unreadNotifications;
 
         public NotificationsPanelController(
             ViewFactoryMethod viewFactory,
@@ -114,8 +150,9 @@ namespace DCL.Notifications.NotificationsMenu
             await closeViewTask.Task.AttachExternalCancellation(ct).SuppressCancellationThrow();
         }
 
-        public new void Dispose()
+        public override void Dispose()
         {
+            base.Dispose();
             notificationThumbnailCts.SafeCancelAndDispose();
             lifeCycleCts.SafeCancelAndDispose();
             web3IdentityCache.OnIdentityChanged -= OnIdentityChanged;
@@ -158,7 +195,7 @@ namespace DCL.Notifications.NotificationsMenu
             try
             {
                 List<INotification> requestNotifications = await notificationsRequestController.GetMostRecentNotificationsAsync(ct);
-                requestNotifications.RemoveAll(notification => NOTIFICATION_TYPES_TO_IGNORE.Contains(notification.Type));
+                requestNotifications.RemoveAll(notification => NotificationsPanelIgnoredTypes.ShouldBeIgnored(notification.Type));
 
                 foreach (INotification requestNotification in requestNotifications)
                     notifications.Add(requestNotification);
@@ -184,8 +221,15 @@ namespace DCL.Notifications.NotificationsMenu
 
         private void UpdateUnreadNotificationRender()
         {
-            viewInstance?.unreadNotificationCounterText.SetText("{0}", unreadNotifications);
-            viewInstance?.notificationIndicator.SetActive(unreadNotifications > 0);
+            UnreadCountChanged?.Invoke(unreadNotifications);
+
+            if (viewInstance == null) return;
+
+            if (viewInstance.unreadNotificationCounterText != null)
+                viewInstance.unreadNotificationCounterText.SetText("{0}", unreadNotifications);
+
+            if (viewInstance.notificationIndicator != null)
+                viewInstance.notificationIndicator.SetActive(unreadNotifications > 0);
         }
 
         private void ManageNotificationReadStatus(INotification notificationData, bool isViewOpen)
@@ -235,13 +279,13 @@ namespace DCL.Notifications.NotificationsMenu
             {
                 notificationView.NotificationImage.SetImage(defaultThumbnail.Thumbnail, defaultThumbnail.FitAndCenter);
             }
-            else if (notificationData.Id != null && notificationThumbnailCache.TryGetValue(notificationData.Id, out var thumbnailSprite))
+            else if (notificationThumbnailCache.TryGetValue(notificationData.Id, out var thumbnailSprite))
             {
                 notificationView.NotificationImage.SetImage(thumbnailSprite, true);
             }
             else if(!string.IsNullOrEmpty(notificationData.GetThumbnail()))
             {
-                LoadNotificationThumbnailAsync(notificationView, notificationData, defaultThumbnail, notificationThumbnailCts!.Token).Forget();
+                LoadNotificationThumbnailAsync(notificationView, notificationData, defaultThumbnail, notificationThumbnailCts.Token).Forget();
             }
             else
             {
@@ -260,7 +304,7 @@ namespace DCL.Notifications.NotificationsMenu
             notificationView.Notification = notificationData;
             notificationView.CloseButton.gameObject.SetActive(false);
             notificationView.UnreadImage.SetActive(!notificationData.Read);
-            notificationView.TimeText.text = notificationData.Timestamp != null ? TimestampUtilities.GetRelativeTime(notificationData.Timestamp) : string.Empty;
+            notificationView.TimeText.text = TimestampUtilities.GetRelativeTime(notificationData.Timestamp);
             notificationView.NotificationTypeImage.sprite = notificationIconTypes.GetNotificationIcon(notificationData.Type);
             var iconBackground = notificationIconTypes.GetNotificationIconBackground(notificationData.Type);
 
@@ -414,7 +458,7 @@ namespace DCL.Notifications.NotificationsMenu
 
         private void OnNotificationReceived(INotification notification)
         {
-            if (NOTIFICATION_TYPES_TO_IGNORE.Contains(notification.Type))
+            if (NotificationsPanelIgnoredTypes.ShouldBeIgnored(notification.Type))
                 return;
 
             viewInstance?.ShowEmptyState(false);

@@ -7,6 +7,7 @@ using DCL.FeatureFlags;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.Utilities;
 using DCL.VoiceChat.Services;
+using DCL.Web3.Identities;
 using Decentraland.SocialService.V2;
 using System;
 using System.Threading;
@@ -24,6 +25,7 @@ namespace DCL.VoiceChat
         private readonly ICommunityVoiceChatCallStatusService communityVoiceChatCallStatusService;
         private readonly SceneVoiceChatTrackerService sceneVoiceChatTrackerService;
         private readonly ChatEventBus chatEventBus;
+        private readonly IWeb3IdentityCache identityCache;
         private readonly CurrentChannelService currentChannelService;
 
         private readonly IDisposable? privateStatusSubscription;
@@ -63,13 +65,15 @@ namespace DCL.VoiceChat
             VoiceChatParticipantsStateService participantsStateService,
             SceneVoiceChatTrackerService sceneVoiceChatTrackerService,
             ChatEventBus chatEventBus,
-            CurrentChannelService currentChannelService)
+            CurrentChannelService currentChannelService,
+            IWeb3IdentityCache identityCache)
         {
             this.privateVoiceChatCallStatusService = privateVoiceChatCallStatusService;
             this.communityVoiceChatCallStatusService = communityVoiceChatCallStatusService;
             this.sceneVoiceChatTrackerService = sceneVoiceChatTrackerService;
             this.chatEventBus = chatEventBus;
             this.currentChannelService = currentChannelService;
+            this.identityCache = identityCache;
             ParticipantsStateService = participantsStateService;
 
             if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.VoiceChat)) return;
@@ -112,6 +116,9 @@ namespace DCL.VoiceChat
 
         private void OnClickedNotification(object[] parameters)
         {
+            if (identityCache.IsGuest())
+                return;
+
             if (parameters.Length == 0 || parameters[0] is not CommunityVoiceChatStartedNotification)
                 return;
 

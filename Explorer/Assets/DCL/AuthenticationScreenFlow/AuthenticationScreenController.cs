@@ -1,7 +1,7 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
-using DCL.AvatarRendering.Wearables;
+using DCL.AvatarRendering.Loading.Components;
 using DCL.Browser;
 using DCL.BugReporting.UI;
 using DCL.CharacterPreview;
@@ -26,14 +26,28 @@ using Utility;
 
 namespace DCL.AuthenticationScreenFlow
 {
-    public class AuthenticationScreenController : ControllerBase<AuthenticationScreenView>
+    public class AuthenticationScreenController : ControllerBase<AuthenticationScreenView, AuthenticationScreenController.Params>
     {
+        public readonly struct Params
+        {
+            public readonly bool StartAtLoginSelection;
+            public readonly bool LandAtLaunchDestination;
+
+            public Params(bool startAtLoginSelection, bool landAtLaunchDestination = false)
+            {
+                StartAtLoginSelection = startAtLoginSelection;
+                LandAtLaunchDestination = landAtLaunchDestination;
+            }
+        }
+
         public enum AuthStatus
         {
             None = 0,
 
             LoginSelectionScreen = 1,
             LoginRequested = 2,
+
+            GuestOrSignUpScreen = 8,
 
             VerificationRequested = 3,
 
@@ -42,6 +56,8 @@ namespace DCL.AuthenticationScreenFlow
 
             ProfileFetchingCached = 6,
             LoggedInCached = 7,
+
+            AvatarSelection = 9,
         }
 
         internal const int ANIMATION_DELAY = 300;
@@ -60,7 +76,6 @@ namespace DCL.AuthenticationScreenFlow
         private readonly World world;
         private readonly AuthScreenEmotesSettings emotesSettings;
         private readonly AudioClipConfig backgroundMusic;
-        private readonly IWearablesProvider wearablesProvider;
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly ProfileChangesBus profileChangesBus;
@@ -78,19 +93,16 @@ namespace DCL.AuthenticationScreenFlow
         public string CurrentRequestId { get; internal set; } = string.Empty;
         public LoginMethod CurrentLoginMethod { get; internal set; }
 
-        // Set by the Lobby states on Enter so analytics can tag LOGGED_IN / LOGGED_IN_CACHED with
-        // whether the session created a new account or restored an existing one. Without this flag
-        // the LOGGED_IN vs LOGGED_IN_CACHED split conflates "fresh auth" with "new account",
-        // misclassifying returning users whose cached identity expired.
+        // A cached-vs-fresh login alone cannot tell a new account from a returning user whose cached identity expired
         public bool IsCurrentlyNewAccount { get; internal set; }
+
+        public bool SkipExistingAccountLobby { get; internal set; }
 
         public event Action? DiscordButtonClicked;
         public event Action<string, bool>? OTPVerified;
         public event Action? OTPResend;
         public event Action? ProfileFinalized;
-
-        internal void RaiseProfileFinalized() =>
-            ProfileFinalized?.Invoke();
+        public event Action<BodyShape, int>? AvatarSelected;
 
         // Null until OnViewInstantiated: the view is created lazily on first Show and may never be instantiated.
         private MVCStateMachine<AuthStateBase>? fsm;
@@ -111,7 +123,6 @@ namespace DCL.AuthenticationScreenFlow
             AuthScreenEmotesSettings emotesSettings,
             IInputBlock inputBlock,
             AudioClipConfig backgroundMusic,
-            IWearablesProvider wearablesProvider,
             IWebRequestController webRequestController,
             IDecentralandUrlsSource decentralandUrlsSource,
             ProfileChangesBus profileChangesBus,
@@ -132,7 +143,6 @@ namespace DCL.AuthenticationScreenFlow
             this.emotesSettings = emotesSettings;
             this.inputBlock = inputBlock;
             this.backgroundMusic = backgroundMusic;
-            this.wearablesProvider = wearablesProvider;
             this.webRequestController = webRequestController;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.profileChangesBus = profileChangesBus;
@@ -151,6 +161,9 @@ namespace DCL.AuthenticationScreenFlow
             fsm?.Dispose();
         }
 
+        internal static bool ShouldSkipExistingAccountLobby(bool lobbyEnabled, in Params inputData) =>
+            lobbyEnabled || inputData.LandAtLaunchDestination;
+
         protected override void OnViewInstantiated()
         {
             base.OnViewInstantiated();
@@ -159,6 +172,7 @@ namespace DCL.AuthenticationScreenFlow
             characterPreviewController = new AuthenticationScreenCharacterPreviewController(viewInstance!.CharacterPreviewView, emotesSettings, characterPreviewFactory, world, characterPreviewEventBus);
 
             bool isEpicBuild = string.Equals(installSource, EPIC_STORE_INSTALL_SOURCE, StringComparison.OrdinalIgnoreCase);
+
             // Epic builds only support emailOTP due to deeplink limitations
             // See: https://github.com/decentraland/unity-explorer/issues/9554
             bool enableEmailOTP = FeaturesRegistry.Instance.IsEnabled(FeatureId.EmailOTPAuth) || isEpicBuild;
@@ -181,10 +195,12 @@ namespace DCL.AuthenticationScreenFlow
                 new InitAuthState(viewInstance, installSource),
                 new LoginSelectionAuthState(fsm, viewInstance, this, CurrentState, splashScreen, web3Authenticator, webBrowser,
                     enableEmailOTP, otherLoginMethodsEnabled, isEpicBuild),
+                new GuestOrSignUpAuthState(fsm, viewInstance, this, CurrentState, web3Authenticator, splashScreen),
                 new ProfileFetchingAuthState(fsm, viewInstance, this, CurrentState, selfProfile, storedIdentityProvider),
                 new IdentityVerificationDappDeepLinkAuthState(fsm, viewInstance, this, CurrentState, web3Authenticator),
                 new LobbyForExistingAccountAuthState(fsm, viewInstance, this, splashScreen, CurrentState, characterPreviewController),
-                new LobbyForNewAccountAuthState(fsm, viewInstance, this, CurrentState, characterPreviewController, selfProfile, wearablesProvider, webBrowser, webRequestController, decentralandUrlsSource, profileChangesBus, referrer)
+                new LobbyForNewAccountAuthState(fsm, viewInstance, this, CurrentState, characterPreviewController, selfProfile, webBrowser, webRequestController, decentralandUrlsSource, profileChangesBus, storedIdentityProvider, referrer),
+                new SelectAvatarForNewAccountAuthState(fsm, viewInstance, this, CurrentState, characterPreviewController)
             );
 
             if (enableEmailOTP)
@@ -206,43 +222,79 @@ namespace DCL.AuthenticationScreenFlow
         protected override void OnBeforeViewShow()
         {
             base.OnBeforeViewShow();
-            // Force to re-login if the identity will expire in 24hs or less, so we mitigate the chances on
-            // getting the identity expired while in-world, provoking signed-fetch requests to fail
+
+            SkipExistingAccountLobby = ShouldSkipExistingAccountLobby(FeaturesRegistry.Instance.IsEnabled(FeatureId.Lobby), inputData);
+
+            if (inputData.StartAtLoginSelection)
+            {
+                fsm?.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.IN, true);
+                return;
+            }
+
             IWeb3Identity? storedIdentity = storedIdentityProvider.Identity;
-            if (storedIdentity is { IsExpired: false } && storedIdentity.Expiration - DateTime.UtcNow > TimeSpan.FromDays(1))
+
+            if (storedIdentity == null
+                || storedIdentity.IsExpired
+                // Force to re-login if the identity will expire in 24hs or less, so we mitigate the chances on
+                // getting the identity expired while in-world, provoking signed-fetch requests to fail
+                || storedIdentity.Expiration - DateTime.UtcNow <= TimeSpan.FromDays(1))
+                ReturnToOrigin(UIAnimationHashes.IN);
+            else
             {
                 CancelLoginProcess();
                 loginCancellationTokenSource = new CancellationTokenSource();
 
                 TryAutoLoginAndProceedAsync(storedIdentity, loginCancellationTokenSource.Token).Forget();
             }
-            else
+
+            return;
+
+            async UniTaskVoid TryAutoLoginAndProceedAsync(IWeb3Identity identity, CancellationToken ct)
             {
-                fsm?.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.IN, true);
+                try
+                {
+                    IOtpAuthenticator.AutoLoginResult autoLoginSuccess = await web3Authenticator.TryAutoLoginAsync(ct);
+
+                    if (autoLoginSuccess is IOtpAuthenticator.AutoLoginResult.Success
+                        or IOtpAuthenticator.AutoLoginResult.Unnecessary)
+                        fsm?.Enter<ProfileFetchingAuthState, ProfileFetchingPayload>(
+                            new ProfileFetchingPayload(identity,
+                                identity.Method != LoginMethod.TOKEN_FILE,
+                                ct));
+                    else
+                        ReturnToOrigin(UIAnimationHashes.IN);
+                }
+                catch (OperationCanceledException)
+                { /* Expected on cancellation */
+                }
+                catch (Exception e)
+                {
+                    ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
+                    ReturnToOrigin(UIAnimationHashes.IN);
+                }
             }
         }
 
-        private async UniTaskVoid TryAutoLoginAndProceedAsync(IWeb3Identity storedIdentity, CancellationToken ct)
-        {
-            try
-            {
-                bool autoLoginSuccess = await web3Authenticator.TryAutoLoginAsync(ct);
+        internal void RaiseProfileFinalized() =>
+            ProfileFinalized?.Invoke();
 
-                if (autoLoginSuccess)
-                    fsm?.Enter<ProfileFetchingAuthState, ProfileFetchingPayload>(new (storedIdentity, storedIdentity.Source != IWeb3Identity.Web3IdentitySource.TokenFile, ct));
-                else
-                {
-                    fsm?.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.IN, true);
-                }
-            }
-            catch (OperationCanceledException)
-            { /* Expected on cancellation */
-            }
-            catch (Exception e)
-            {
-                ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-                fsm?.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.IN, true);
-            }
+        internal void RaiseAvatarSelected(BodyShape bodyType, int presetSlot) =>
+            AvatarSelected?.Invoke(bodyType, presetSlot);
+
+        internal void ReturnToOrigin(int animHash)
+        {
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.GuestLogin))
+                fsm?.Enter<GuestOrSignUpAuthState>(true);
+            else
+                fsm?.Enter<LoginSelectionAuthState, int>(animHash, true);
+        }
+
+        internal void ReturnToOrigin(ErrorType errorType)
+        {
+            if (CurrentLoginMethod == LoginMethod.GUEST && FeaturesRegistry.Instance.IsEnabled(FeatureId.GuestLogin))
+                fsm?.Enter<GuestOrSignUpAuthState, ErrorType>(errorType, true);
+            else
+                fsm?.Enter<LoginSelectionAuthState, ErrorType>(errorType);
         }
 
         protected override void OnViewShow()
@@ -277,6 +329,24 @@ namespace DCL.AuthenticationScreenFlow
             lifeCycleTask = null;
         }
 
+        /// <summary>
+        ///     Ends the auth flow right after the profile fetch, skipping the in-screen welcome step.
+        /// </summary>
+        internal void CompleteExistingAccountLogin(Profile profile, bool isRestoredSession)
+        {
+            // splashScreen is destroyed after the first login
+            if (splashScreen != null)
+                splashScreen.FadeOutAndHide();
+
+            IsCurrentlyNewAccount = false;
+            CurrentState.Value = isRestoredSession ? AuthStatus.LoggedInCached : AuthStatus.LoggedIn;
+
+            ReportHub.LogProductionInfo($"Existing account logged in: {profile.WalletId}");
+
+            fsm?.Enter<InitAuthState>();
+            TrySetLifeCycle();
+        }
+
         internal void CancelLoginProcess()
         {
             loginCancellationTokenSource?.SafeCancelAndDispose();
@@ -300,7 +370,7 @@ namespace DCL.AuthenticationScreenFlow
 
                 await web3Authenticator.LogoutAsync(ct);
 
-                fsm?.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.SLIDE, true);
+                ReturnToOrigin(UIAnimationHashes.SLIDE);
             }
         }
 

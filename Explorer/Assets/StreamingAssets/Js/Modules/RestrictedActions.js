@@ -34,17 +34,26 @@ module.exports.movePlayerTo = async function(message) {
     const cameraTarget = message.cameraTarget != undefined
     const avatarTarget = message.avatarTarget != undefined
     const duration = message.duration != undefined
-    
+
+    // A present target must carry all three components: the host method takes plain doubles, so a
+    // null or undefined component cannot be bound and is rejected here instead of failing inside interop.
+    const isCompleteVector3 = v => v.x != undefined && v.y != undefined && v.z != undefined
+    if ((cameraTarget && !isCompleteVector3(message.cameraTarget)) || (avatarTarget && !isCompleteVector3(message.avatarTarget)))
+        return { success: false }
+
+    // Each optional target is sent as a presence flag followed by its coordinates (0 when absent).
     const isSuccess = await UnityRestrictedActionsApi.MovePlayerTo(
         message.newRelativePosition.x,
         message.newRelativePosition.y,
         message.newRelativePosition.z,
-        cameraTarget ? message.cameraTarget.x : null,
-        cameraTarget ? message.cameraTarget.y : null,
-        cameraTarget ? message.cameraTarget.z : null,
-        avatarTarget ? message.avatarTarget.x : null,
-        avatarTarget ? message.avatarTarget.y : null,
-        avatarTarget ? message.avatarTarget.z : null,
+        cameraTarget,
+        cameraTarget ? message.cameraTarget.x : 0,
+        cameraTarget ? message.cameraTarget.y : 0,
+        cameraTarget ? message.cameraTarget.z : 0,
+        avatarTarget,
+        avatarTarget ? message.avatarTarget.x : 0,
+        avatarTarget ? message.avatarTarget.y : 0,
+        avatarTarget ? message.avatarTarget.z : 0,
         duration ? message.duration : null)
     
     return {
@@ -53,9 +62,19 @@ module.exports.movePlayerTo = async function(message) {
 }
 
 module.exports.teleportTo = async function(message) {
-    const x = Number(message.worldCoordinates.x);
-    const y = Number(message.worldCoordinates.y);
-    UnityRestrictedActionsApi.TeleportTo(x, y);
+    // Coordinates are sent as a presence flag followed by x and y (0 when absent); realm is nullable.
+    const coords = message.worldCoordinates
+    const hasCoords = coords != undefined
+
+    // Present coordinates must carry both components; an incomplete pair never reaches the host call.
+    if (hasCoords && (coords.x == undefined || coords.y == undefined))
+        return {}
+
+    UnityRestrictedActionsApi.TeleportTo(
+        hasCoords,
+        hasCoords ? Number(coords.x) : 0,
+        hasCoords ? Number(coords.y) : 0,
+        message.realm != undefined ? message.realm : null);
     return {};
 }
 
@@ -92,7 +111,10 @@ module.exports.openNftDialog = async function(message) {
 }
 
 module.exports.openExplorerUi = async function(message) {
-    const openResult = UnityRestrictedActionsApi.OpenExplorerUi(message.ui)
+    // requestId is optional, and 0 is the protocol's value for "no correlation"
+    const openResult = await UnityRestrictedActionsApi.OpenExplorerUi(
+        message.ui,
+        message.requestId != undefined ? message.requestId : 0)
     return { openResult };
 }
 
@@ -118,7 +140,7 @@ module.exports.triggerSceneEmote = async function(message) {
 }
 
 module.exports.stopEmote = async function(message) {
-    const isSuccess = UnityRestrictedActionsApi.StopEmote()
+    const isSuccess = await UnityRestrictedActionsApi.StopEmote()
     return {
         success: isSuccess
     };

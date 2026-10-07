@@ -7,6 +7,7 @@ using DCL.ECSComponents;
 using DCL.SDKComponents.ParticleSystem.Components;
 using DCL.SDKComponents.Utils;
 using ECS.Abstract;
+using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
@@ -52,6 +53,7 @@ namespace DCL.SDKComponents.ParticleSystem.Systems
         }
 
         [Query]
+        [None(typeof(DeleteEntityIntention))]
         private void ApplyParticleSystemProperties(ref PBParticleSystem particleSystemData, ref ParticleSystemComponent component)
         {
             if (!particleSystemData.IsDirty) return;
@@ -66,7 +68,7 @@ namespace DCL.SDKComponents.ParticleSystem.Systems
             ApplyColorOverLifetime(particleSystemData, particleSystem, ref component);
             ApplyForceOverLifetime(particleSystemData, particleSystem);
             ApplyLimitVelocityOverLifetime(particleSystemData, particleSystem);
-            ApplySpriteSheet(particleSystemData, particleSystem, ref component);
+            ApplySpriteSheet(particleSystemData, particleSystem);
             ApplyRenderer(particleSystemData, ref component);
         }
 
@@ -257,7 +259,7 @@ namespace DCL.SDKComponents.ParticleSystem.Systems
             limitVelocityModule.dampen = particleSystemData.LimitVelocity.GetDampen();
         }
 
-        private static void ApplySpriteSheet(PBParticleSystem particleSystemData, UnityEngine.ParticleSystem particleSystem, ref ParticleSystemComponent component)
+        private static void ApplySpriteSheet(PBParticleSystem particleSystemData, UnityEngine.ParticleSystem particleSystem)
         {
             var textureSheetAnimationModule = particleSystem.textureSheetAnimation;
 
@@ -381,6 +383,7 @@ namespace DCL.SDKComponents.ParticleSystem.Systems
         }
 
         [Query]
+        [None(typeof(DeleteEntityIntention))]
         private void ResolveTexturePromise(ref ParticleSystemComponent component)
         {
             var promise = component.TexturePromise;
