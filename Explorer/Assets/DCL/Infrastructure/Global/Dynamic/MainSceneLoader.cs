@@ -784,12 +784,11 @@ namespace Global.Dynamic
             if (!hasMinimumSpecs && !skipScreen)
                 SavedQualitySettingsApplier.EnforceLowPresetOnce();
 
-            bool singleSceneMode = applicationParametersParser.ResolveFeatureFlagArg(AppArgsFlags.FORCE_SINGLE_SCENE_MODE,
-                                          !hasMinimumSpecs && FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.SINGLE_SCENE_MODE),
-                                          requireDebug: false)
-                                      && launchSettings.CurrentMode is not LaunchMode.LocalSceneDevelopment;
+            bool singleSceneModeEnabled = DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_SINGLE_SCENE_MODE)
+                ? DCLPlayerPrefs.GetBool(DCLPrefKeys.SETTINGS_SINGLE_SCENE_MODE)
+                : !hasMinimumSpecs;
 
-            staticContainer!.SingleSceneMode.SetActive(singleSceneMode);
+            staticContainer!.SingleSceneMode.SetActive(singleSceneModeEnabled);
 
             bool userWantsToSkip = DCLPlayerPrefs.GetBool(DCLPrefKeys.DONT_SHOW_MIN_SPECS_SCREEN);
 

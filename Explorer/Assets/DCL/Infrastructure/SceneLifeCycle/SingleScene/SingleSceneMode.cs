@@ -10,8 +10,8 @@ namespace ECS.SceneLifeCycle.SingleScene
         public Vector2Int AnchorParcel { get; private set; }
         public bool IsRestricting => IsActive && HasAnchor;
 
-        public void SetActive(bool isActive) =>
-            IsActive = isActive;
+        public void SetActive(bool enabled) =>
+            IsActive = enabled;
 
         public void SetAnchor(Vector2Int parcel)
         {
