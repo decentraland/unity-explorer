@@ -7,6 +7,7 @@ using ECS.SceneLifeCycle.SingleScene;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
+using Unity.Mathematics;
 using UnityEngine;
 using Utility;
 
@@ -39,13 +40,18 @@ namespace DCL.SceneLifeCycle.Tests
         [Test]
         public void SplitAroundTheAnchorWhenTheCameraIsDirty()
         {
+            // Distinct from the anchor, so the centre ring tells the two apart
+            cameraSamplingData.Parcel = new Vector2Int(1, 2);
             singleSceneMode.SetAnchor(new Vector2Int(10, 11));
             cameraSamplingData.IsDirty = true;
 
             system.Update(0f);
 
             Assert.That(parcelMathJobifiedHelper.JobStarted, Is.True);
-            parcelMathJobifiedHelper.Complete();
+
+            parcelMathJobifiedHelper.FinishParcelsRingSplit();
+
+            Assert.That(parcelMathJobifiedHelper.GetRing(0)[0].Parcel, Is.EqualTo(new int2(10, 11)));
         }
 
         [Test]
@@ -72,12 +78,17 @@ namespace DCL.SceneLifeCycle.Tests
         public void SplitAroundTheCameraWhenSingleSceneModeIsInactive()
         {
             singleSceneMode.SetActive(false);
+            singleSceneMode.SetAnchor(new Vector2Int(10, 11));
+            cameraSamplingData.Parcel = new Vector2Int(1, 2);
             cameraSamplingData.IsDirty = true;
 
             system.Update(0f);
 
             Assert.That(parcelMathJobifiedHelper.JobStarted, Is.True);
-            parcelMathJobifiedHelper.Complete();
+
+            parcelMathJobifiedHelper.FinishParcelsRingSplit();
+
+            Assert.That(parcelMathJobifiedHelper.GetRing(0)[0].Parcel, Is.EqualTo(new int2(1, 2)));
         }
     }
 }
