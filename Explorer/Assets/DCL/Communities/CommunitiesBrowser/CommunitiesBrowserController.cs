@@ -918,7 +918,8 @@ namespace DCL.Communities.CommunitiesBrowser
                 return;
             }
 
-            ChatOpener.Instance.CloseAllViewsAndFocusChat();
+            if (!ChatOpener.Instance.CloseAllViewsAndFocusChat()) return;
+
             orchestrator.StartPrivateCallWithUserId(profile.Address);
         }
 

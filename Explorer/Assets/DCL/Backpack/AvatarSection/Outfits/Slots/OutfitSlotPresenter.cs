@@ -65,7 +65,7 @@ namespace DCL.Backpack.Slots
             view.OnEquipClicked += HandleEquipClicked;
             view.OnPreviewClicked += HandlePreviewClicked;
 
-            hoverHandler = view.hoverHandler;
+            hoverHandler = view.HoverHandler;
             hoverHandler.OnHoverEntered += OnHoverEntered;
             hoverHandler.OnHoverExited += OnHoverExited;
         }

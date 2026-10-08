@@ -29,3 +29,5 @@ MonoBehaviour:
     Prefab: {fileID: 4400946940171711142, guid: 525c9e896226d4676a4a00a4b92963d2, type: 3}
   - Key: your_people
     Prefab: {fileID: 4400946940171711142, guid: 779a0a65c61fa4d6496090668344bf6f, type: 3}
+  - Key: halloweeks
+    Prefab: {fileID: 4400946940171711142, guid: 18b6c76c2b84f4558bcccb45af1b5b69, type: 3}
