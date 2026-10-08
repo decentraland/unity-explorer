@@ -211,8 +211,6 @@ namespace DCL.UI
             ContextMenuOpenDirection anchorPoint = ContextMenuOpenDirection.BottomRight, Action? onContextMenuShow = null,
             bool isOpenedOnWorldAvatar = false)
         {
-            if (profile.UserId == null) return;
-
             closeContextMenuTask.TrySetResult();
             closeContextMenuTask = new UniTaskCompletionSource();
             UniTask closeTask = UniTask.WhenAny(closeContextMenuTask.Task, closeMenuTask);
@@ -375,10 +373,10 @@ namespace DCL.UI
         private void SendFriendRequest(string userAddress)
         {
             cancellationTokenSource = cancellationTokenSource.SafeRestart();
-            ShowFriendRequestUIAsync(cancellationTokenSource.Token).Forget();
+            ShowFriendRequestUiAsync(cancellationTokenSource.Token).Forget();
             return;
 
-            async UniTaskVoid ShowFriendRequestUIAsync(CancellationToken ct)
+            async UniTaskVoid ShowFriendRequestUiAsync(CancellationToken ct)
             {
                 await mvcManager.ShowAsync(FriendRequestController.IssueCommand(new FriendRequestParams
                 {
@@ -411,7 +409,9 @@ namespace DCL.UI
         private void OnMentionUserClicked(string userName)
         {
             closeContextMenuTask.TrySetResult();
-            ChatOpener.Instance.CloseAllViewsAndFocusChat();
+
+            if (!ChatOpener.Instance.CloseAllViewsAndFocusChat()) return;
+
             chatEventBus.RaiseInsertTextInChatRequestedEvent(userName + " ");
         }
 
@@ -424,7 +424,9 @@ namespace DCL.UI
         private void OnStartCallButtonClicked(string userId)
         {
             closeContextMenuTask.TrySetResult();
-            ChatOpener.Instance.CloseAllViewsAndFocusChat();
+
+            if (!ChatOpener.Instance.CloseAllViewsAndFocusChat()) return;
+
             voiceChatOrchestrator.StartPrivateCallWithUserId(userId);
         }
 

@@ -15,7 +15,7 @@
     background-color: rgb(31, 31, 31);
 }
 
-/* Ringed by the 6px outline of the 256px ellipse of ProfilePictureView at this size; the profile color fills it while the picture is missing, the picture itself is set inline by the element */
+/* Ringed by the 6px outline of the 256px ellipse of ProfilePictureView at this size; the profile color, its lighter border and the picture are set inline by the element */
 .profile-widget__picture {
     position: absolute;
     left: 0;
@@ -27,7 +27,9 @@
     border-color: rgba(255, 255, 255, 0.2);
     background-color: white;
     background-image: url('/Assets/DCL/Chat/Textures/DefaultProfileThumbnail.png');
-    -unity-background-scale-mode: scale-and-crop;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
 }
 
 .profile-widget--loading .profile-widget__picture {

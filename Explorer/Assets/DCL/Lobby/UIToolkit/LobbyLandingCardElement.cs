@@ -10,17 +10,9 @@ namespace DCL.Lobby
     public partial class LobbyLandingCardElement : LobbyPlaceCardElement
     {
         private const string USS_BLOCK = "lobby-landing-card";
-        private const string USS_WITH_ONLINE = USS_BLOCK + "--with-online";
         private const string USS_STATIC = USS_BLOCK + "--static";
 
         private bool canJumpIn = true;
-
-        [UxmlAttribute]
-        public bool HasOnlineCount
-        {
-            get => ClassListContains(USS_WITH_ONLINE);
-            set => EnableInClassList(USS_WITH_ONLINE, value);
-        }
 
         [UxmlAttribute]
         public bool CanJumpIn
