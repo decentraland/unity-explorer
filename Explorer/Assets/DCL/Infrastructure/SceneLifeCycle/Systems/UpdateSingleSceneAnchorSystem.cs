@@ -25,8 +25,6 @@ namespace ECS.SceneLifeCycle.Systems
             if (!singleSceneMode.IsActive)
                 return;
 
-            // Every entry into a realm teleports, so an absent intent means the destination is not settled yet.
-            // Leaving the anchor unset keeps the restriction off rather than pinning it to a stale position.
             if (World.TryGet(playerEntity, out PlayerTeleportIntent intent))
                 singleSceneMode.SetAnchor(intent.DestinationParcel);
         }
