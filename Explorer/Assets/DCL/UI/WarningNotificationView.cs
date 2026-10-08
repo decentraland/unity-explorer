@@ -19,8 +19,6 @@ namespace DCL.UI
 
         public bool WasEverClosed { get; private set; }
 
-        // Toasts that live in an always-loaded canvas are kept inactive until shown, so the close button has to put
-        // the object back the way it found it
         private bool togglesGameObject;
 
         private void Awake() =>
