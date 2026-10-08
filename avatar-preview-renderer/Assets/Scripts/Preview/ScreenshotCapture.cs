@@ -73,6 +73,12 @@ namespace Preview
                 captureCamera.CopyFrom(_mainCamera);
                 captureCamera.transform.SetPositionAndRotation(_mainCamera.transform.position,
                     _mainCamera.transform.rotation);
+
+                // The target holds premultiplied colour, so the clear colour has to be premultiplied too,
+                // or the straight-alpha recovery turns a transparent white background opaque.
+                var background = _mainCamera.backgroundColor;
+                captureCamera.backgroundColor = new Color(background.r * background.a,
+                    background.g * background.a, background.b * background.a, background.a);
                 captureCamera.targetTexture = hdrTarget;
                 captureCamera.ResetAspect();
 
@@ -216,7 +222,7 @@ namespace Preview
         /// falls short and the colour divided back out. Composited over black, the result is exactly
         /// what the live view shows. Any 4-byte channel order works, as long as alpha comes last.
         /// </summary>
-        private static void RecoverStraightAlpha(NativeArray<byte> pixels)
+        internal static void RecoverStraightAlpha(NativeArray<byte> pixels)
         {
             for (var i = 0; i < pixels.Length; i += BYTES_PER_PIXEL)
             {

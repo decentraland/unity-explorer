@@ -175,7 +175,6 @@ mergeInto(LibraryManager.library, {
     )
   },
   OnMetrics: function (jsonPtr) {
-    // Parsed here so the page receives the metrics as an object, the shape its promise resolves with.
     const metrics = JSON.parse(UTF8ToString(jsonPtr))
     const targetWindow = (() => {
       try {

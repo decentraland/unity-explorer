@@ -58,6 +58,12 @@ namespace Preview
         /// </summary>
         public bool IsLoading => _loading;
 
+        /// <summary>
+        /// Counts the reloads started so far, so a caller spanning several frames can tell a reload ran
+        /// under it even when it has already finished.
+        /// </summary>
+        public int ReloadGeneration { get; private set; }
+
         private void Awake()
         {
             _screenshotCapture = new ScreenshotCapture(mainCamera, avatarLoader, wearableLoader);
@@ -211,6 +217,7 @@ namespace Preview
             Cleanup();
             previewUIPresenter.ShowLoader(true);
             _loading = true;
+            ReloadGeneration++;
             mainCamera.cullingMask = 0; // Render nothing
             avatarLoader.enabled = false; // Disables Update for Outline
             wearableLoader.enabled = false; // Disables Update for Outline
@@ -306,6 +313,10 @@ namespace Preview
                 catch (Exception e)
                 {
                     JSBridge.NativeCalls.OnError(e.Message);
+
+                    // Otherwise the view stays blank behind the loader and every later request is
+                    // answered as still reloading.
+                    EndReload();
                     throw;
                 }
 
@@ -348,6 +359,12 @@ namespace Preview
                 previewUIPresenter.EnableAudioControls(hasEmoteAudio);
             } while (_shouldReload);
 
+            EndReload();
+            JSBridge.NativeCalls.OnLoadComplete();
+        }
+
+        private void EndReload()
+        {
             previewUIPresenter.ShowLoader(false);
 
             _loading = false;
@@ -359,8 +376,6 @@ namespace Preview
             {
                 Cleanup();
             }
-
-            JSBridge.NativeCalls.OnLoadComplete();
         }
 
         private async Awaitable LoadForBuilder(string bodyShapeName,

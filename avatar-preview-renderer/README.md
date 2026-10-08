@@ -202,5 +202,5 @@ The reply is a `metrics` object:
 
 * `triangles`: the sum over every renderer of the items, colliders (nodes with `collider` in their name) excluded.
 * `materials` and `textures`: as declared in the items' glTF files, so the renderer's own material conversion never changes them.
-* `meshes` and `bodies`: one per glTF primitive (a Unity sub-mesh), the same unit the Babylon preview counts.
+* `meshes` and `bodies`: one per glTF primitive (a Unity sub-mesh), colliders left out as the Babylon preview drops them before counting. Babylon also counts its container nodes, so its number can be a little higher for the same file.
 * `entities`: how many of the requested items are loaded. An emote contributes its prop's geometry, if it has one; a facial feature contributes its textures.

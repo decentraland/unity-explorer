@@ -204,11 +204,7 @@ public class JSBridge : MonoBehaviour
             return;
         }
 
-        var parts = size.Split(',');
-
-        if (parts.Length != 2
-            || !int.TryParse(parts[0], out var width) || width <= 0 || width > MAX_SCREENSHOT_SIDE
-            || !int.TryParse(parts[1], out var height) || height <= 0 || height > MAX_SCREENSHOT_SIDE)
+        if (!TryParseScreenshotSize(size, out var width, out var height))
         {
             NativeCalls.OnRequestFailed(REQUEST_SCREENSHOT,
                 $"Invalid screenshot size [{size}], expected width,height up to {MAX_SCREENSHOT_SIDE}");
@@ -224,8 +220,24 @@ public class JSBridge : MonoBehaviour
         StartCoroutine(TakeSizedScreenshotAsync(width, height));
     }
 
+    /// <summary>
+    /// Reads a <c>width,height</c> pair, both from 1 to <see cref="MAX_SCREENSHOT_SIDE"/>.
+    /// </summary>
+    internal static bool TryParseScreenshotSize(string size, out int width, out int height)
+    {
+        width = 0;
+        height = 0;
+
+        var parts = size.Split(',');
+
+        return parts.Length == 2
+               && int.TryParse(parts[0], out width) && width > 0 && width <= MAX_SCREENSHOT_SIDE
+               && int.TryParse(parts[1], out height) && height > 0 && height <= MAX_SCREENSHOT_SIDE;
+    }
+
     private async Awaitable TakeSizedScreenshotAsync(int width, int height)
     {
+        var reloadGeneration = previewController.ReloadGeneration;
         string base64Png;
 
         try
@@ -239,8 +251,9 @@ public class JSBridge : MonoBehaviour
             return;
         }
 
-        // The capture spans frames, so a reload may have started under it and left it a half-built scene.
-        if (previewController.IsLoading)
+        // The capture spans frames, so a reload may have started under it, and even finished, leaving
+        // it a half-built scene.
+        if (previewController.IsLoading || previewController.ReloadGeneration != reloadGeneration)
         {
             NativeCalls.OnRequestFailed(REQUEST_SCREENSHOT, "The preview reloaded during the capture");
             return;
