@@ -80,7 +80,6 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         {
             //On realm change, reset the ordered data array
             ResetUtilsArrays();
-            singleSceneMode.ClearAnchor();
         }
 
         private void ResetUtilsArrays()

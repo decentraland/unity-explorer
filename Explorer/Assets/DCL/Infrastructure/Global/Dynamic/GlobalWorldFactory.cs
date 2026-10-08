@@ -225,7 +225,7 @@ namespace Global.Dynamic
             UnloadPortableExperiencesSystem.InjectToWorld(ref builder);
 
             UpdateCurrentSceneSystem.InjectToWorld(ref builder, realmData, scenesCache, currentSceneInfo, playerEntity, debugContainerBuilder);
-            UpdateSingleSceneAnchorSystem.InjectToWorld(ref builder, staticContainer.SingleSceneMode, playerEntity);
+            UpdateSingleSceneAnchorSystem updateSingleSceneAnchorSystem = UpdateSingleSceneAnchorSystem.InjectToWorld(ref builder, staticContainer.SingleSceneMode, playerEntity);
 
             LoadSmartWearableSceneSystem.InjectToWorld(ref builder, NoCache<GetSmartWearableSceneIntention.Result, GetSmartWearableSceneIntention>.INSTANCE, webRequestController, sceneFactory, staticContainer.SmartWearableCache, urlsSource);
             LoadSmartWearablePreviewSceneSystem.InjectToWorld(ref builder, webRequestController, urlsSource);
@@ -241,6 +241,7 @@ namespace Global.Dynamic
                 UnloadSceneLODSystem.InjectToWorld(ref builder, scenesCache, lodCache, staticContainer.RealmPartitionSettings),
                 UnloadRoadSystem.InjectToWorld(ref builder, roadAssetPool, scenesCache),
                 new ReleaseRealmPooledComponentSystem(componentPoolsRegistry),
+                updateSingleSceneAnchorSystem,
                 ResolveSceneStateByIncreasingRadiusSystem.InjectToWorld(ref builder, realmPartitionSettings, playerEntity, new VisualSceneStateResolver(lodSettingsAsset), sceneLoadingLimit,
                     staticContainer.SingleSceneMode),
             };
