@@ -23,21 +23,49 @@ namespace Utility.UIToolkit
         public static T InstantiateForElement<T>(this VisualTreeAsset asset) where T: VisualElement =>
             asset.Instantiate().Q<T>();
 
+        /// <summary>Centre of the element in Unity screen pixels (bottom-left origin). The element must be in a panel.</summary>
+        public static Vector2 ScreenCenter(this VisualElement element) =>
+            element.ScreenPosition(element.worldBound.center);
+
         /// <summary>
-        ///     Centre of the element in Unity screen pixels (bottom-left origin). RuntimePanelUtils only converts
+        ///     A panel-space position in Unity screen pixels (bottom-left origin). RuntimePanelUtils only converts
         ///     screen to panel, so the inverse comes from two probe conversions. The element must be in a panel.
         /// </summary>
-        public static Vector2 ScreenCenter(this VisualElement element)
+        public static Vector2 ScreenPosition(this VisualElement element, Vector2 panelPosition)
         {
             IPanel panel = element.panel;
             Vector2 origin = RuntimePanelUtils.ScreenToPanel(panel, Vector2.zero);
             Vector2 perPixel = RuntimePanelUtils.ScreenToPanel(panel, Vector2.one) - origin;
-            Vector2 center = element.worldBound.center;
 
-            float x = Mathf.Approximately(perPixel.x, 0f) ? 0f : (center.x - origin.x) / perPixel.x;
-            float y = Mathf.Approximately(perPixel.y, 0f) ? 0f : (center.y - origin.y) / perPixel.y;
+            float x = Mathf.Approximately(perPixel.x, 0f) ? 0f : (panelPosition.x - origin.x) / perPixel.x;
+            float y = Mathf.Approximately(perPixel.y, 0f) ? 0f : (panelPosition.y - origin.y) / perPixel.y;
 
             return new Vector2(x, Screen.height - y);
+        }
+
+        /// <summary>
+        ///     A full-rect sprite is set as its texture because a sprite background ignores the stylesheet's cover; an atlas sprite keeps its rect.
+        /// </summary>
+        public static StyleBackground CoverBackground(Sprite? sprite)
+        {
+            if (sprite == null)
+                return StyleKeyword.Null;
+
+            Texture2D texture = sprite.texture;
+            Rect rect = sprite.rect;
+
+            bool coversTexture = rect.x == 0 && rect.y == 0 && Mathf.Approximately(rect.width, texture.width) && Mathf.Approximately(rect.height, texture.height);
+            return coversTexture ? new StyleBackground(texture) : new StyleBackground(sprite);
+        }
+
+        /// <summary>
+        ///     Places the element at a pointer position given in panel space, laid out in the space of its parent.
+        /// </summary>
+        public static void MoveToPointer(this VisualElement element, Vector2 panelPosition, Vector2 offset)
+        {
+            Vector2 local = element.parent.WorldToLocal(panelPosition) + offset;
+            element.style.left = local.x;
+            element.style.top = local.y;
         }
 
         /// <summary>

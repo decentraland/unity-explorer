@@ -63,6 +63,39 @@ namespace DCL.Lobby.Tests
             Assert.AreEqual(1, clicked);
         }
 
+        [Test]
+        public void CloneACardWithAConnectedFriendsRow()
+        {
+            //Arrange
+            events.Show(section);
+
+            //Act
+            events.SetCount(1);
+
+            //Assert
+            Assert.IsNotNull(Card(0).Q<LobbyConnectedFriendsElement>("ConnectedFriends"));
+        }
+
+        [Test]
+        public void ShowTheAttendeesOnlyWhileSomebodyIsThere()
+        {
+            //Arrange
+            events.Show(section);
+            events.SetCount(1);
+
+            //Act
+            Card(0).Attendees = 0;
+
+            //Assert
+            Assert.IsFalse(Card(0).ClassListContains("lobby-live-event-card--with-attendees"));
+
+            //Act
+            Card(0).Attendees = 5;
+
+            //Assert
+            Assert.IsTrue(Card(0).ClassListContains("lobby-live-event-card--with-attendees"));
+        }
+
         private LobbyRailElement Rail() =>
             section.Q<LobbyRailElement>();
 

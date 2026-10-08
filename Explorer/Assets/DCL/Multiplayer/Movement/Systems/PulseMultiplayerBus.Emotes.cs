@@ -160,15 +160,14 @@ namespace DCL.Multiplayer.Movement
             using (emoteSync.GetScope())
                 emoteStopIntentions.Add(new RemoteEmoteStopIntention(walletId, timestamp));
 
-            // It carries a new snapshot with the refreshed sequence
             if (emoteStopped.PlayerState != null)
             {
                 NetworkMovementMessage movementMessage = ToNetworkMovementMessage(emoteStopped.PlayerState, emoteStopped.SubjectId, emoteStopped.ServerTick, false);
-                TryUpdateLastMovementAndCompleteResync(emoteStopped.ServerTick, emoteStopped.SubjectId, emoteStopped.Sequence, movementMessage);
+                TryUpdateLastMovementAndCompleteResync(emoteStopped.ServerTick, emoteStopped.SubjectId, emoteStopped.Sequence, movementMessage, allowOverrides: true);
             }
 
-            // Update the stored state so it will be applied with the next delta
-            else if (lastMovementMessages.TryGetValue(emoteStopped.SubjectId, out (uint sequence, NetworkMovementMessage message) lastMessage))
+            // A stop can follow a newer pose. Clear its emote flag without replacing the pose or baseline sequence.
+            if (lastMovementMessages.TryGetValue(emoteStopped.SubjectId, out (uint sequence, NetworkMovementMessage message) lastMessage))
             {
                 lastMessage.message.isEmoting = false;
                 lastMovementMessages[emoteStopped.SubjectId] = (lastMessage.sequence, lastMessage.message);

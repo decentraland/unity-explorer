@@ -52,7 +52,8 @@ namespace DCL.RealmNavigation
             IPlacesAPIService placesApiService,
             IWeb3IdentityCache identityCache,
             ICommunityMembershipChecker communityMembershipChecker,
-            IMVCManager mvcManager)
+            IMVCManager mvcManager,
+            StartParcel startParcel)
         {
             const string ANALYTICS_OP_NAME = "teleportation";
 
@@ -114,7 +115,8 @@ namespace DCL.RealmNavigation
                     realmChangeOperations,
                     teleportInSameRealmOperation,
                     worldAccessGate,
-                    staticContainer.ScenesCache),
+                    staticContainer.ScenesCache,
+                    startParcel),
                 WorldPermissionsService = worldPermissionsService,
                 WorldInfoHub = worldInfoHub,
                 widgetBuilder = realmContainer.DebugView.DebugWidgetBuilder

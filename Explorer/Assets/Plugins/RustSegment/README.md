@@ -61,7 +61,18 @@ Builds `x86_64-pc-windows-msvc` and copies the DLL to `SegmentServerWrap/Librari
 
 `build.sh` passes `--locked`, so a manifest change that would rewrite `Cargo.lock` fails the build instead of silently resolving different crates than the lock records. `.cargo/config.toml` carries the flags that make the MSVC link deterministic (`/Brepro`, `/PDBALTPATH`).
 
-`Libraries/Linux/segment-server.so` is not produced by `build.sh` and is outside the lock: Linux is not a release target and the file predates the crate's current source.
+### Linux
+
+Prerequisites: Rust via `rustup`. A C linker (`cc`) must be available (`build-essential` on Debian/Ubuntu).
+
+```sh
+cd .native
+bash build.sh
+```
+
+Builds `x86_64-unknown-linux-gnu` and copies the shared object to `SegmentServerWrap/Libraries/Linux/segment-server.so`. This is a native build — no cross-compilation is required on a Linux x86_64 host.
+
+The shipped `.so` is built by CI on `ubuntu-22.04` and needs glibc 2.34 or newer at runtime (its newest versioned glibc symbol is `GLIBC_2.34`). `scripts/rust-segment/build-canonical.sh` builds under `/tmp/rust-segment-build` on Linux (override with `RUST_SEGMENT_CANONICAL_ROOT`). The `.so` is stored in Git LFS like the `.dll` and `.dylib`.
 
 ---
 
@@ -100,8 +111,6 @@ Each operation completes through `FfiCallbackFn` with one of:
 | 0 | `Success` | Operation completed. |
 | 1 | `Error` | Generic failure; details arrive via the error callback. |
 | 2 | `ErrorDiskFull` | The persistent queue cannot write because the disk is full (SQLITE_FULL). |
-
-`Libraries/Linux/segment-server.so` predates `ErrorDiskFull` and has not been rebuilt (Linux is not a release target), so on Linux a full disk still completes with `Error`.
 
 ---
 

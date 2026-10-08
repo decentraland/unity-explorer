@@ -33,9 +33,9 @@ namespace DCL.Multiplayer.Movement.Tests
         private const string WALLET_1 = "0x0000000000000000000000000000000000000001";
         private const string WALLET_2 = "0x0000000000000000000000000000000000000002";
 
-        private static LandscapeData landscapeData;
+        private static LandscapeData? landscapeData;
 
-        private static LandscapeData LandscapeData
+        private static LandscapeData cachedLandscapeData
         {
             get
             {
@@ -49,18 +49,18 @@ namespace DCL.Multiplayer.Movement.Tests
             }
         }
 
-        private IPulseMultiplayerService pulseService;
-        private PeerIdCache peerIdCache;
-        private IReadOnlyEntityParticipantTable participantTable;
-        private MovementInbox movementInbox;
-        private PulseIncomingProfileAnnouncements incomingProfiles;
-        private PulseRemoveIntentions removeIntentions;
-        private IRealmData realmData;
-        private PulseMultiplayerBus bus;
-        private Dictionary<ServerMessage.MessageOneofCase, IPulseMultiplayerService.IncomingMessageHandler> handlers;
-        private Action beforeMessage;
-        private string currentRealm;
-        private World world;
+        private IPulseMultiplayerService pulseService = null!;
+        private PeerIdCache peerIdCache = null!;
+        private IReadOnlyEntityParticipantTable participantTable = null!;
+        private MovementInbox movementInbox = null!;
+        private PulseIncomingProfileAnnouncements incomingProfiles = null!;
+        private PulseRemoveIntentions removeIntentions = null!;
+        private IRealmData realmData = null!;
+        private PulseMultiplayerBus bus = null!;
+        private Dictionary<ServerMessage.MessageOneofCase, IPulseMultiplayerService.IncomingMessageHandler> handlers = null!;
+        private Action beforeMessage = null!;
+        private string currentRealm = null!;
+        private World world = null!;
 
         [SetUp]
         public void SetUp()
@@ -91,7 +91,7 @@ namespace DCL.Multiplayer.Movement.Tests
             realmData.RealmName.Returns(_ => currentRealm);
 
             bus = new PulseMultiplayerBus(pulseService, peerIdCache, movementInbox,
-                new ParcelEncoder(LandscapeData.terrainData), incomingProfiles, removeIntentions,
+                new ParcelEncoder(cachedLandscapeData.terrainData), incomingProfiles, removeIntentions,
                 Substitute.For<IWeb3IdentityCache>(), new PulseMultiplayerBus.ReconnectionSettings(),
                 Substitute.For<ISelfProfile>(), new PulseRealm(realmData));
 
@@ -290,6 +290,66 @@ namespace DCL.Multiplayer.Movement.Tests
                 CollectionAssert.AreEquivalent(new[] { new RemoveIntention(WALLET_1, RoomSource.Pulse) }, bunch.Collection());
 
             Assert.IsFalse(peerIdCache.TryGetWallet(7, out _));
+        }
+
+        [TestCase(3u, true)]
+        [TestCase(4u, true)]
+        [TestCase(5u, true)]
+        [TestCase(3u, false)]
+        [TestCase(4u, false)]
+        [TestCase(5u, false)]
+        public void ApplyEmoteStopToNextDeltaWithoutRollingBackMovement(uint stopSequence, bool includePlayerState)
+        {
+            (Entity _, RemotePlayerMovementComponent component) = RegisterEntity(WALLET_1);
+            Handle(PlayerJoinedMessage(7, WALLET_1, REALM_A));
+            Handle(EmoteStartedMessage(7));
+
+            ServerMessage teleport = TeleportMessage(7, REALM_A);
+            teleport.Teleported.Sequence = 4;
+            teleport.Teleported.ServerTick = 4;
+            teleport.Teleported.State.PositionYQuantized = 10;
+            Handle(teleport);
+
+            movementInbox.DrainToEntities();
+            component.Queue!.Clear();
+            Assert.IsTrue(bus.IsPeerEmoting(new Web3Address(WALLET_1)));
+
+            Handle(new ServerMessage
+            {
+                EmoteStopped = new EmoteStopped
+                {
+                    SubjectId = 7,
+                    Sequence = stopSequence,
+                    ServerTick = stopSequence,
+                    PlayerState = includePlayerState ? new PlayerState { PositionYQuantized = 2 } : null,
+                },
+            });
+
+            uint baselineSequence = includePlayerState && stopSequence > 4 ? stopSequence : 4;
+            Handle(new ServerMessage
+            {
+                PlayerStateDelta = new PlayerStateDeltaTier0
+                {
+                    SubjectId = 7,
+                    BaselineSeq = baselineSequence,
+                    NewSeq = baselineSequence + 1,
+                    ServerTick = 6,
+                    RotationYQuantized = 90,
+                },
+            });
+
+            movementInbox.DrainToEntities();
+            Assert.AreEqual(1, component.Queue.Count, "The next delta must still match the movement baseline");
+
+            NetworkMovementMessage movement = component.Queue.Dequeue();
+            Assert.IsFalse(movement.isEmoting, "A stop must clear the emote flag even when its pose is older");
+            Assert.That(movement.position.y, Is.EqualTo(includePlayerState && stopSequence >= 4 ? 2 : 10).Within(PlayerState.PositionYQuantizedStep),
+                "An older stop must preserve the newer pose; an equal or newer full state may replace it");
+            Assert.That(movement.rotationY, Is.EqualTo(90).Within(PlayerState.RotationYQuantizedStep));
+            Assert.IsFalse(bus.IsPeerEmoting(new Web3Address(WALLET_1)));
+
+            using (OwnedBunch<RemoteEmoteStopIntention> bunch = bus.EmoteStopIntentions())
+                Assert.AreEqual(1, bunch.Collection().Count);
         }
 
         private void Handle(ServerMessage serverMessage)

@@ -1,4 +1,5 @@
 using DCL.UI;
+using DCL.UI.ProfileElements;
 using System;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -189,8 +190,8 @@ namespace DCL.Lobby
 
         private void ApplyPicture(VisualElement target)
         {
-            target.style.backgroundColor = pictureColor;
-            target.style.backgroundImage = LobbyCardBackground.From(pictureSprite);
+            target.SetProfileColor(pictureColor);
+            target.style.backgroundImage = VisualElementsExtensions.CoverBackground(pictureSprite);
         }
 
         private void OnClicked() =>
