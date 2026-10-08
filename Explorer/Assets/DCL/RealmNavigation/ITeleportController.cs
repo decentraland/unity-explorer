@@ -110,6 +110,24 @@ namespace DCL.RealmNavigation
             JumpInRequestRaised?.Invoke();
         }
 
+        /// <summary>
+        ///     Makes the destination the startup one and raises the jump-in request. An unset realm keeps the bootstrap one; an unset parcel lands on the realm's spawn.
+        /// </summary>
+        /// <returns>False once the startup teleport consumed the parcel.</returns>
+        public bool TryTakeAsStartupDestination(URLDomain? realm, Vector2Int? parcel, string? spawnPointName = null)
+        {
+            if (consumed) return false;
+
+            if (realm is { } startRealm)
+                AssignRealm(startRealm, spawnPointName);
+
+            if (parcel is { } startParcel)
+                Assign(startParcel, spawnPointName);
+
+            RequestJumpIn();
+            return true;
+        }
+
         public void MarkRealmApplied() =>
             IsRealmApplied = true;
 

@@ -1,3 +1,4 @@
+using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using System;
@@ -13,6 +14,7 @@ namespace DCL.SceneLoadingScreens
 
         private readonly FeatureFlagsConfiguration featureFlags;
         private readonly ISceneTipsProvider legacyTips;
+        private readonly LoadingTipCatalogSO tipCatalog;
         private readonly List<SceneTips.Tip> filteredTipList = new ();
         private Tips tipsJson;
         private AudienceTips audienceTipsJson;
@@ -22,10 +24,11 @@ namespace DCL.SceneLoadingScreens
         private bool temporalTipsParseSuccess;
         private bool audienceTipsParseSuccess;
 
-        public TipsFromFeatureFlagDecorator(ISceneTipsProvider legacyTips)
+        public TipsFromFeatureFlagDecorator(ISceneTipsProvider legacyTips, LoadingTipCatalogSO tipCatalog)
         {
             this.featureFlags = FeatureFlagsConfiguration.Instance;
             this.legacyTips = legacyTips;
+            this.tipCatalog = tipCatalog;
         }
 
         public SceneTips Get()
@@ -33,6 +36,13 @@ namespace DCL.SceneLoadingScreens
             if (!featureFlagChecked)
             {
                 audienceTipsParseSuccess = featureFlags.TryGetJsonPayload(FeatureFlagsStrings.AUDIENCE_LOADING_SCREEN_TIPS, "tips", out audienceTipsJson);
+
+                if (audienceTipsParseSuccess)
+                {
+                    // The flag may list tips added in newer builds; keep only the ones this build can render
+                    audienceTipsJson.newUsers.displayed = KeepKnownTips(audienceTipsJson.newUsers.displayed);
+                    audienceTipsJson.returningUsers.displayed = KeepKnownTips(audienceTipsJson.returningUsers.displayed);
+                }
 
                 //TODO: remove all processing related to LOADING_SCREEN_TIPS feature flag when TEMPORAL_LOADING_SCREEN_TIPS is fully live
                 tipsParseSuccess = featureFlags.TryGetJsonPayload(FeatureFlagsStrings.LOADING_SCREEN_TIPS, "tips", out tipsJson);
@@ -44,18 +54,20 @@ namespace DCL.SceneLoadingScreens
 
             if (audienceTipsParseSuccess)
             {
-                filteredTipList.Clear();
-
-                SceneTips audienceTips = new (originTips.Duration, originTips.Random, filteredTipList);
-
                 Tips tips = LaunchCounter.Count >= RETURNING_USER_THRESHOLD
                     ? audienceTipsJson.returningUsers
                     : audienceTipsJson.newUsers;
 
-                foreach (string key in tips.displayed)
-                    filteredTipList.Add(new SceneTips.Tip(key));
+                // With no renderable tips left, fall through to the other sources instead of showing an empty screen
+                if (tips.displayed.Length > 0)
+                {
+                    filteredTipList.Clear();
 
-                return audienceTips;
+                    foreach (string key in tips.displayed)
+                        filteredTipList.Add(new SceneTips.Tip(key));
+
+                    return new SceneTips(originTips.Duration, originTips.Random, filteredTipList);
+                }
             }
 
             if (!tipsParseSuccess && !temporalTipsParseSuccess) return originTips;
@@ -66,6 +78,23 @@ namespace DCL.SceneLoadingScreens
             filteredTipList.AddRange(temporalTipsParseSuccess ? originTips.Tips.Where(t => Contains(temporalTipsJson, t)) : originTips.Tips.Where(t => Contains(tipsJson, t)));
 
             return newTips;
+        }
+
+        private string[] KeepKnownTips(string[]? keys)
+        {
+            if (keys == null) return Array.Empty<string>();
+
+            var known = new List<string>(keys.Length);
+
+            foreach (string key in keys)
+            {
+                if (tipCatalog.TryGet(key, out _))
+                    known.Add(key);
+                else
+                    ReportHub.LogWarning(ReportCategory.UI, $"Loading screen tip '{key}' from feature flag {FeatureFlagsStrings.AUDIENCE_LOADING_SCREEN_TIPS} is not in this build's catalog, skipping it");
+            }
+
+            return known.ToArray();
         }
 
         private bool Contains(Tips tips, SceneTips.Tip tip) =>

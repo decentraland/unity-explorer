@@ -18,7 +18,7 @@ namespace ECS.Unity.Materials.Tests
 {
     public class CreateBasicMaterialSystemShould : UnitySystemTestBase<CreateBasicMaterialSystem>
     {
-        private Material basicMat;
+        private Material basicMat = null!;
 
         [SetUp]
         public void SetUp()
@@ -51,7 +51,7 @@ namespace ECS.Unity.Materials.Tests
             Assert.That(afterUpdate.Status, Is.EqualTo(StreamableLoading.LifeCycle.LoadingFinished));
 
             Assert.That(afterUpdate.Result, Is.Not.Null);
-            Assert.That(afterUpdate.Result.shader, Is.EqualTo(basicMat.shader));
+            Assert.That(afterUpdate.Result!.shader, Is.EqualTo(basicMat.shader));
         }
 
         [Test]
