@@ -1,12 +1,9 @@
 using Arch.Core;
 using Arch.SystemGroups;
-using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
 using ECS.Abstract;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.SingleScene;
-using UnityEngine;
-using Utility;
 
 namespace ECS.SceneLifeCycle.Systems
 {
@@ -16,13 +13,11 @@ namespace ECS.SceneLifeCycle.Systems
     {
         private readonly SingleSceneMode singleSceneMode;
         private readonly Entity playerEntity;
-        private readonly Transform playerTransform;
 
         internal UpdateSingleSceneAnchorSystem(World world, SingleSceneMode singleSceneMode, Entity playerEntity) : base(world)
         {
             this.singleSceneMode = singleSceneMode;
             this.playerEntity = playerEntity;
-            playerTransform = World.Get<CharacterTransform>(playerEntity).Transform;
         }
 
         protected override void Update(float t)
@@ -30,14 +25,10 @@ namespace ECS.SceneLifeCycle.Systems
             if (!singleSceneMode.IsActive)
                 return;
 
+            // Every entry into a realm teleports, so an absent intent means the destination is not settled yet.
+            // Leaving the anchor unset keeps the restriction off rather than pinning it to a stale position.
             if (World.TryGet(playerEntity, out PlayerTeleportIntent intent))
-            {
-                singleSceneMode.SetAnchor(intent.IsPositionSet ? intent.Position.ToParcel() : intent.Parcel);
-                return;
-            }
-
-            if (!singleSceneMode.HasAnchor)
-                singleSceneMode.SetAnchor(playerTransform.position.ToParcel());
+                singleSceneMode.SetAnchor(intent.DestinationParcel);
         }
     }
 }
