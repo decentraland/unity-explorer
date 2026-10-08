@@ -14,12 +14,6 @@ namespace DCL.MapRenderer.ComponentsFactory
         public Transform SatelliteAtlasRoot { get; private set; }
 
         /// <summary>
-        ///     Patches over the black stripes at the edges of Genesis City's bundled satellite chunks
-        /// </summary>
-        [field: SerializeField]
-        public Transform SatelliteEdgePatchesRoot { get; private set; }
-
-        /// <summary>
         ///     The ocean and coast drawn around Genesis City under its satellite map
         /// </summary>
         [field: SerializeField]

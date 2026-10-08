@@ -22,15 +22,13 @@ namespace DCL.MapRenderer.MapLayers.SatelliteAtlas
         private readonly ChunkBuilder chunkBuilder;
         private readonly List<IChunkController> chunks;
         private readonly SatelliteDetailTiles? detailTiles;
-        private readonly Transform edgePatchesRoot;
         private readonly Transform genesisCityOcean;
         private readonly Transform bundledChunksRoot;
 
-        public SatelliteChunkAtlasController(Transform parent, Transform edgePatchesRoot, Transform genesisCityOcean, int gridSize, int parcelsInsideChunk, ICoordsUtils coordsUtils, IMapCullingController cullingController,
+        public SatelliteChunkAtlasController(Transform parent, Transform genesisCityOcean, int gridSize, int parcelsInsideChunk, ICoordsUtils coordsUtils, IMapCullingController cullingController,
             ChunkBuilder chunkBuilder, SatelliteDetailTiles? detailTiles)
             : base(parent, coordsUtils, cullingController)
         {
-            this.edgePatchesRoot = edgePatchesRoot;
             this.genesisCityOcean = genesisCityOcean;
             this.gridSize = gridSize;
             this.parcelsInsideChunk = parcelsInsideChunk;
@@ -61,7 +59,6 @@ namespace DCL.MapRenderer.MapLayers.SatelliteAtlas
         private void SetGenesisCityVisible(bool visible)
         {
             bundledChunksRoot.gameObject.SetActive(visible);
-            edgePatchesRoot.gameObject.SetActive(visible);
             genesisCityOcean.gameObject.SetActive(visible);
         }
 

@@ -16,6 +16,9 @@ namespace DCL.MapRenderer.MapCameraController
         private const int MAX_TEXTURE_SIZE = 4096;
         private const float EXTRA_MAP_MOVEMENT_PADDING = -0.3f;
 
+        // How much farther than a fit a zoomable camera zooms out over a world's map, so the sea surrounds the world.
+        private const float WORLD_SEA_ZOOM_FACTOR = 1.25f;
+
         public event Action<IMapActivityOwner, IMapCameraControllerInternal>? OnReleasing;
         public event Action<float, float, int>? ZoomChanged;
 
@@ -230,7 +233,8 @@ namespace DCL.MapRenderer.MapCameraController
             IsZoomable() ? 2 * coordsUtils.ParcelSize : zoomValues.x;
 
         /// <summary>
-        ///     The configured farthest zoom; a zoomable camera over a world's map stops where the whole world fits the view.
+        ///     The configured farthest zoom; a zoomable camera over a world's map stops where the whole world fits the view with sea
+        ///     around it.
         /// </summary>
         private float FarthestZoom()
         {
@@ -240,7 +244,7 @@ namespace DCL.MapRenderer.MapCameraController
             Rect bounds = coordsUtils.VisibleWorldBounds;
             float halfHeightToFit = Mathf.Max(bounds.height, bounds.width / mapCameraObject.mapCamera.aspect) / 2f;
 
-            return Mathf.Clamp(halfHeightToFit, ClosestZoom(), zoomValues.y);
+            return Mathf.Clamp(halfHeightToFit * WORLD_SEA_ZOOM_FACTOR, ClosestZoom(), zoomValues.y);
         }
 
         private Vector3 ClampLocalPosition(Vector3 localPos)
@@ -255,6 +259,14 @@ namespace DCL.MapRenderer.MapCameraController
         {
             var worldBounds = coordsUtils.VisibleWorldBounds;
             var worldCenter = coordsUtils.VisibleWorldCenter;
+
+            // A fixed-zoom camera, which follows a target, and any camera over a world's map may centre up to the map's edge,
+            // showing the sea past it.
+            if (coordsUtils.BoundsAWorld || !IsZoomable())
+            {
+                cameraPositionBounds = worldBounds;
+                return;
+            }
 
             var cameraYSize = mapCameraObject.mapCamera.orthographicSize;
             var cameraXSize = cameraYSize * mapCameraObject.mapCamera.aspect;

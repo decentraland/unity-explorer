@@ -20,8 +20,9 @@ namespace DCL.MapRenderer.CoordsUtils
         private static readonly Vector2Int WORLD_MIN_COORDS = GenesisCityData.MIN_PARCEL;
         private static readonly Vector2Int WORLD_MAX_COORDS = GenesisCityData.MAX_SQUARE_CITY_PARCEL + (PADDING * Vector2Int.one); // DCL map is not squared, there are some extra parcels in the top right
 
-        private static readonly Vector2Int VISIBLE_WORLD_MIN_COORDS = WORLD_MIN_COORDS - (PADDING * Vector2Int.one);
-        private static readonly Vector2Int VISIBLE_WORLD_MAX_COORDS = WORLD_MAX_COORDS; // DCL map is not squared, there are some extra parcels in the top right
+        // The map stops at Genesis City's own parcels, including the extra ones in the top right.
+        private static readonly Vector2Int VISIBLE_WORLD_MIN_COORDS = GenesisCityData.MIN_PARCEL;
+        private static readonly Vector2Int VISIBLE_WORLD_MAX_COORDS = GenesisCityData.MAX_PARCEL;
 
         private readonly Rect genesisVisibleWorldBounds;
         private readonly List<Rect> genesisInteractableBounds;

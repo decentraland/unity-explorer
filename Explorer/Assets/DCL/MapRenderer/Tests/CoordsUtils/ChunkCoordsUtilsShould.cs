@@ -42,6 +42,13 @@ namespace DCL.MapRenderer.Tests.CoordsUtils
         }
 
         [Test]
+        public void BoundGenesisCityToItsParcels()
+        {
+            // Assert: parcels -150..163 x -150..158, each spanning one parcel before its coordinates
+            Assert.AreEqual(Rect.MinMaxRect(-151 * PARCEL_SIZE, -151 * PARCEL_SIZE, 163 * PARCEL_SIZE, 158 * PARCEL_SIZE), coordsUtils.VisibleWorldBounds);
+        }
+
+        [Test]
         public void RestoreGenesisCityBounds()
         {
             // Arrange
