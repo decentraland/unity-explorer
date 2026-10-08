@@ -78,13 +78,9 @@ namespace DCL.Settings.Tests
         private sealed class FakeSettingsModuleEventListener : ISettingsModuleEventListener
         {
             public event Action<ChatBubbleVisibilitySettings> ChatBubblesVisibilityChanged = delegate { };
-            public event Action<bool> SingleSceneModeChanged = delegate { };
 
             public void NotifyChatBubblesVisibilityChanged(ChatBubbleVisibilitySettings newVisibility) =>
                 ChatBubblesVisibilityChanged.Invoke(newVisibility);
-
-            public void NotifySingleSceneModeChanged(bool isEnabled) =>
-                SingleSceneModeChanged.Invoke(isEnabled);
         }
     }
 }
