@@ -328,13 +328,17 @@ namespace Preview
                 var methodName = methodNameDropdown.value;
                 var parameter = parameterField.value;
 
-                if (string.IsNullOrEmpty(parameter))
+                // The page always sends a value, so a method with a parameter gets the field as is, empty
+                // included; SendMessage refuses an empty call to such a method.
+                var takesParameter = typeof(JSBridge).GetMethod(methodName)?.GetParameters().Length > 0;
+
+                if (takesParameter)
                 {
-                    GameObject.Find("JSBridge").SendMessage(methodName);
+                    GameObject.Find("JSBridge").SendMessage(methodName, parameter);
                 }
                 else
                 {
-                    GameObject.Find("JSBridge").SendMessage(methodName, parameter);
+                    GameObject.Find("JSBridge").SendMessage(methodName);
                 }
 
                 if (!DEBUG_METHODS_WITHOUT_RELOAD.Contains(methodName))
@@ -363,4 +367,4 @@ namespace Preview
             WearableLocked
         }
     }
-}
+}
