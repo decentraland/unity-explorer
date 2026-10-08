@@ -14,12 +14,12 @@ using Utility;
 namespace DCL.UI.MainUI
 {
     /// <summary>
-    ///     A toast on entering the world, and one
-    ///     that stays up while the player stands outside the scene the restriction is anchored to.
+    ///     A toast on entering the world, and one on stepping outside the scene the restriction is anchored to.
+    ///     Both dismiss themselves; walking back in hides the second one early.
     /// </summary>
     public class SingleSceneModeHudController : IDisposable
     {
-        private const int ON_TOAST_DURATION_MS = 10000;
+        private const int TOAST_DURATION_MS = 10000;
 
         private readonly SingleSceneMode singleSceneMode;
         private readonly IScenesCache scenesCache;
@@ -27,8 +27,9 @@ namespace DCL.UI.MainUI
         private readonly WarningNotificationView onToast;
         private readonly WarningNotificationView endOfSceneToast;
         private readonly Button openPlacesButton;
+        private readonly CancellationTokenSource onToastCancellationTokenSource = new ();
 
-        private CancellationTokenSource onToastCancellationTokenSource = new ();
+        private CancellationTokenSource endOfSceneToastCancellationTokenSource = new ();
         private bool endOfSceneToastShown;
 
         public SingleSceneModeHudController(
@@ -52,7 +53,7 @@ namespace DCL.UI.MainUI
             if (!singleSceneMode.IsActive)
                 return;
 
-            ShowOnToastAsync(onToast, onToastCancellationTokenSource.Token).Forget();
+            ShowTimedToastAsync(onToast, onToastCancellationTokenSource.Token).Forget();
 
             openPlacesButton.onClick.AddListener(OpenPlaces);
 
@@ -65,6 +66,7 @@ namespace DCL.UI.MainUI
         public void Dispose()
         {
             onToastCancellationTokenSource.SafeCancelAndDispose();
+            endOfSceneToastCancellationTokenSource.SafeCancelAndDispose();
 
             if (!singleSceneMode.IsActive)
                 return;
@@ -94,17 +96,18 @@ namespace DCL.UI.MainUI
                 return;
 
             endOfSceneToastShown = outside;
-            onToastCancellationTokenSource = onToastCancellationTokenSource.SafeRestart();
+
+            endOfSceneToastCancellationTokenSource = endOfSceneToastCancellationTokenSource.SafeRestart();
 
             if (outside)
-                ShowOnToastAsync(endOfSceneToast, onToastCancellationTokenSource.Token).Forget();
+                ShowTimedToastAsync(endOfSceneToast, endOfSceneToastCancellationTokenSource.Token).Forget();
             else
-                endOfSceneToast.Hide(ct: onToastCancellationTokenSource.Token);
+                endOfSceneToast.Hide(ct: endOfSceneToastCancellationTokenSource.Token);
         }
 
-        private async UniTaskVoid ShowOnToastAsync(WarningNotificationView toast, CancellationToken ct)
+        private async UniTaskVoid ShowTimedToastAsync(WarningNotificationView toast, CancellationToken ct)
         {
-            try { await toast.AnimatedShowAsync(ON_TOAST_DURATION_MS, ct, toggleGameObject: true); }
+            try { await toast.AnimatedShowAsync(TOAST_DURATION_MS, ct, toggleGameObject: true); }
             catch (OperationCanceledException) { }
             catch (Exception e) { ReportHub.LogException(e, new ReportData(ReportCategory.UI)); }
         }
