@@ -105,7 +105,7 @@ namespace DCL.Backpack
             this.ownedNftFilter = ownedNftFilter;
 
             pageSelectorController = new PageSelectorController(view.PageSelectorView, pageButtonView);
-            pageSelectorController.OnSetPage += (int page) => RequestPage(page, false);
+            pageSelectorController.OnSetPage += page => RequestPage(page, false);
             breadcrumbController = new BackpackBreadCrumbController(mvcManager, view.BreadCrumbView, eventBus, commandBus, categoryIcons, hairColors, eyesColors, bodyshapeColors);
 
             eventBus.EquipWearableEvent += OnEquip;
@@ -142,6 +142,10 @@ namespace DCL.Backpack
             backpackSortController.OnSortChanged -= OnSortChanged;
             backpackSortController.OnCollectiblesOnlyChanged -= OnCollectiblesOnlyChanged;
             backpackSortController.OnSmartWearablesOnlyChanged -= OnSmartWearablesOnlyChanged;
+
+            // The empty-state panels sit outside the categories view, so they would stay on top of the next tab
+            view.NoSearchResults.SetActive(false);
+            view.NoCategoryResults.SetActive(false);
         }
 
         public static async UniTask<ObjectPool<BackpackItemView>> InitialiseAssetsAsync(IAssetsProvisioner assetsProvisioner, BackpackGridView view, CancellationToken ct)
@@ -158,9 +162,9 @@ namespace DCL.Backpack
                 defaultCapacity: CURRENT_PAGE_SIZE
             );
 
-            BackpackItemView CreateBackpackItem(BackpackItemView backpackItem)
+            BackpackItemView CreateBackpackItem(BackpackItemView prefab)
             {
-                BackpackItemView backpackItemView = Object.Instantiate(backpackItem, view.gameObject.transform);
+                BackpackItemView backpackItemView = Object.Instantiate(prefab, view.gameObject.transform);
                 return backpackItemView;
             }
         }
