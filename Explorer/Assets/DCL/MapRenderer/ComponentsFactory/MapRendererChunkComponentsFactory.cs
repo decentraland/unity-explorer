@@ -144,7 +144,7 @@ namespace DCL.MapRenderer.ComponentsFactory
                 CreateParcelAtlasAsync(layers, configuration, coordsUtils, cullingController, cancellationToken),
                 CreateSatelliteAtlasAsync(layers, configuration, coordsUtils, cullingController, cancellationToken),
                 playerMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, assetsProvisioner, mapPathEventBus, cancellationToken),
-                hotUsersMarkersInstaller.InstallAsync(layers, configuration, coordsUtils, cullingController, assetsProvisioner, mapSettings, onlineUsersProvider, realmNavigator, web3IdentityCache, cancellationToken),
+                hotUsersMarkersInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, assetsProvisioner, mapSettings, onlineUsersProvider, realmNavigator, web3IdentityCache, cancellationToken),
                 mapPathInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, assetsProvisioner, mapPathEventBus, cancellationToken)
                 /* List of other creators that can be executed in parallel */);
 

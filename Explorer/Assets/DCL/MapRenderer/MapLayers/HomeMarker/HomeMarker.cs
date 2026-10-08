@@ -1,4 +1,3 @@
-using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DCL.PlacesAPIService;
@@ -51,7 +50,8 @@ namespace DCL.MapRenderer.MapLayers.HomeMarker
 		public void SetZoom(float baseScale, float baseZoom, float zoom)
 		{
 			currentBaseScale = baseScale;
-			currentNewScale = Math.Max(zoom / baseZoom * baseScale, baseScale);
+			// Keeps its on-screen size at any zoom closer than the base one
+			currentNewScale = zoom / baseZoom * baseScale;
 			markerObject.SetScale(currentNewScale);
 		}
 

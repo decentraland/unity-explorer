@@ -10,5 +10,7 @@ namespace DCL.MapRenderer.MapLayers.Users
     internal interface IHotUserMarker : IMapPositionProvider, IMapRendererMarker, IMapCullingListener<IHotUserMarker>, IDisposable
     {
         void UpdateMarkerPosition(string playerId, Vector3 position);
+
+        void SetScale(float scale);
     }
 }
