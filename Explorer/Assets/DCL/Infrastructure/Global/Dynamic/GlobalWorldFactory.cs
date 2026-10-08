@@ -196,7 +196,7 @@ namespace Global.Dynamic
 
             // are replace by increasing radius
             var jobsMathHelper = new ParcelMathJobifiedHelper();
-            StartSplittingByRingsSystem startSplittingByRingsSystem = StartSplittingByRingsSystem.InjectToWorld(ref builder, realmPartitionSettings, jobsMathHelper, staticContainer.SingleSceneMode);
+            StartSplittingByRingsSystem.InjectToWorld(ref builder, realmPartitionSettings, jobsMathHelper, staticContainer.SingleSceneMode);
 
             LoadPointersByIncreasingRadiusSystem.InjectToWorld(ref builder, jobsMathHelper, realmPartitionSettings,
                 partitionSettings, roadCoordinates, realmData, urlsSource);
@@ -241,7 +241,6 @@ namespace Global.Dynamic
                 UnloadSceneLODSystem.InjectToWorld(ref builder, scenesCache, lodCache, staticContainer.RealmPartitionSettings),
                 UnloadRoadSystem.InjectToWorld(ref builder, roadAssetPool, scenesCache),
                 new ReleaseRealmPooledComponentSystem(componentPoolsRegistry),
-                startSplittingByRingsSystem,
                 ResolveSceneStateByIncreasingRadiusSystem.InjectToWorld(ref builder, realmPartitionSettings, playerEntity, new VisualSceneStateResolver(lodSettingsAsset), sceneLoadingLimit,
                     staticContainer.SingleSceneMode),
             };

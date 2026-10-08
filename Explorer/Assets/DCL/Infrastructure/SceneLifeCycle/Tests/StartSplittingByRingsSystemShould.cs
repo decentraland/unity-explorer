@@ -1,4 +1,3 @@
-using Arch.Core;
 using ECS;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
@@ -17,6 +16,7 @@ namespace DCL.SceneLifeCycle.Tests
     {
         private ParcelMathJobifiedHelper parcelMathJobifiedHelper = null!;
         private SingleSceneMode singleSceneMode = null!;
+        private CameraSamplingData cameraSamplingData = null!;
 
         [SetUp]
         public void SetUp()
@@ -30,34 +30,17 @@ namespace DCL.SceneLifeCycle.Tests
 
             system = new StartSplittingByRingsSystem(world, realmPartitionSettings, parcelMathJobifiedHelper, singleSceneMode);
 
+            cameraSamplingData = new CameraSamplingData();
+
             world.Create(new RealmComponent(new RealmData(new TestIpfsRealm())), ProcessedScenePointers.Create());
-            world.Create(new CameraSamplingData());
+            world.Create(cameraSamplingData);
         }
 
         [Test]
-        public void SplitOnlyOnceWhileTheAnchorDoesNotMove()
+        public void SplitAroundTheAnchorWhenTheCameraIsDirty()
         {
             singleSceneMode.SetAnchor(new Vector2Int(10, 11));
-
-            system.Update(0f);
-
-            Assert.That(parcelMathJobifiedHelper.JobStarted, Is.True);
-            parcelMathJobifiedHelper.Complete();
-
-            system.Update(0f);
-
-            Assert.That(parcelMathJobifiedHelper.JobStarted, Is.False);
-        }
-
-        [Test]
-        public void SplitAgainOnRealmChangeWhenTheAnchorIsUnchanged()
-        {
-            singleSceneMode.SetAnchor(new Vector2Int(10, 11));
-
-            system.Update(0f);
-            parcelMathJobifiedHelper.Complete();
-
-            system.FinalizeComponents(world.Query(new QueryDescription()));
+            cameraSamplingData.IsDirty = true;
 
             system.Update(0f);
 
@@ -68,10 +51,33 @@ namespace DCL.SceneLifeCycle.Tests
         [Test]
         public void NotSplitWhileThereIsNoAnchor()
         {
+            cameraSamplingData.IsDirty = true;
 
             system.Update(0f);
 
             Assert.That(parcelMathJobifiedHelper.JobStarted, Is.False);
+        }
+
+        [Test]
+        public void NotSplitWhileTheCameraIsNotDirty()
+        {
+            singleSceneMode.SetAnchor(new Vector2Int(10, 11));
+
+            system.Update(0f);
+
+            Assert.That(parcelMathJobifiedHelper.JobStarted, Is.False);
+        }
+
+        [Test]
+        public void SplitAroundTheCameraWhenSingleSceneModeIsInactive()
+        {
+            singleSceneMode.SetActive(false);
+            cameraSamplingData.IsDirty = true;
+
+            system.Update(0f);
+
+            Assert.That(parcelMathJobifiedHelper.JobStarted, Is.True);
+            parcelMathJobifiedHelper.Complete();
         }
     }
 }
