@@ -5,7 +5,6 @@ using ECS.Abstract;
 using ECS.LifeCycle;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.SingleScene;
-using Utility;
 
 namespace ECS.SceneLifeCycle.Systems
 {
@@ -33,8 +32,6 @@ namespace ECS.SceneLifeCycle.Systems
 
             if (World.TryGet(playerEntity, out PlayerTeleportIntent intent))
                 singleSceneMode.SetAnchor(intent.DestinationParcel);
-            else if (World.TryGet(playerEntity, out PlayerMoveToWithDurationIntent moveIntent))
-                singleSceneMode.SetAnchor(moveIntent.TargetPosition.ToParcel());
         }
     }
 }
