@@ -31,6 +31,7 @@ namespace DCL.UI.MainUI
 
         private CancellationTokenSource endOfSceneToastCancellationTokenSource = new ();
         private bool endOfSceneToastShown;
+        private bool subscribed;
 
         public SingleSceneModeHudController(
             SingleSceneMode singleSceneMode,
@@ -51,7 +52,10 @@ namespace DCL.UI.MainUI
         public void Activate()
         {
             if (!singleSceneMode.IsActive)
+            {
+                subscribed = false;
                 return;
+            }
 
             ShowTimedToastAsync(onToast, onToastCancellationTokenSource.Token).Forget();
 
@@ -59,6 +63,8 @@ namespace DCL.UI.MainUI
 
             scenesCache.CurrentParcel.OnUpdate += OnCurrentParcelChanged;
             scenesCache.CurrentScene.OnUpdate += OnCurrentSceneChanged;
+
+            subscribed = true;
 
             RefreshEndOfSceneToast();
         }
@@ -68,7 +74,7 @@ namespace DCL.UI.MainUI
             onToastCancellationTokenSource.SafeCancelAndDispose();
             endOfSceneToastCancellationTokenSource.SafeCancelAndDispose();
 
-            if (!singleSceneMode.IsActive)
+            if (!subscribed)
                 return;
 
             openPlacesButton.onClick.RemoveListener(OpenPlaces);
