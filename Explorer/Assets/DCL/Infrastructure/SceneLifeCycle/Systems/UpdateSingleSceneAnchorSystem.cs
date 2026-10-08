@@ -27,6 +27,8 @@ namespace ECS.SceneLifeCycle.Systems
 
             if (World.TryGet(playerEntity, out PlayerTeleportIntent intent))
                 singleSceneMode.SetAnchor(intent.DestinationParcel);
+            else if (World.TryGet(playerEntity, out PlayerMoveToWithDurationIntent moveIntent))
+                singleSceneMode.SetAnchor(moveIntent.TargetPosition.ToParcel());
         }
     }
 }
