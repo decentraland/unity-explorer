@@ -12,6 +12,9 @@ namespace Loading
     public readonly struct ModelMetrics
     {
         private const string COLLIDER_NAME_PART = "collider";
+        private const int INDICES_PER_TRIANGLE = 3;
+
+        public static readonly ModelMetrics Empty = default;
 
         public readonly int Triangles;
         public readonly int Materials;
@@ -53,7 +56,7 @@ namespace Loading
 
                 for (var i = 0; i < mesh.subMeshCount; i++)
                 {
-                    triangles += (int)(mesh.GetIndexCount(i) / 3);
+                    triangles += (int)(mesh.GetIndexCount(i) / INDICES_PER_TRIANGLE);
                     meshes++;
                 }
             }
@@ -63,6 +66,12 @@ namespace Loading
             return new ModelMetrics(triangles, source?.materials?.Length ?? 0, source?.textures?.Length ?? 0,
                 meshes);
         }
+
+        /// <summary>
+        /// A facial feature is only its textures: no geometry, no materials.
+        /// </summary>
+        public static ModelMetrics FromTextures(Texture2D main, Texture2D mask) =>
+            new(0, 0, (main != null ? 1 : 0) + (mask != null ? 1 : 0), 0);
 
         public static ModelMetrics operator +(ModelMetrics a, ModelMetrics b) =>
             new(a.Triangles + b.Triangles, a.Materials + b.Materials, a.Textures + b.Textures,

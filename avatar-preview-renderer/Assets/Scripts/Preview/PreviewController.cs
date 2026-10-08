@@ -45,7 +45,7 @@ namespace Preview
 
         // The entities the caller asked to preview, as resolved on the last reload: the urns and base64
         // definitions, never the profile's own wearables or the body. Metrics are reported for these.
-        private readonly List<string> _requestedItemUrns = new();
+        private readonly HashSet<string> _requestedItemUrns = new();
 
         private ScreenshotCapture _screenshotCapture;
 
@@ -58,10 +58,18 @@ namespace Preview
         /// </summary>
         public bool IsLoading => _loading;
 
-        private void Start()
+        private void Awake()
         {
             _screenshotCapture = new ScreenshotCapture(mainCamera, avatarLoader, wearableLoader);
+        }
 
+        private void OnDestroy()
+        {
+            _screenshotCapture.Dispose();
+        }
+
+        private void Start()
+        {
             previewUIPresenter.ShowAvatarClicked += OnShowAvatarClicked;
             previewUIPresenter.ShowWearableClicked += OnShowWearableClicked;
             previewUIPresenter.EmoteToggleClicked += OnEmoteToggleClicked;
@@ -133,13 +141,13 @@ namespace Preview
             _screenshotCapture.CaptureAsync(width, height);
 
         /// <summary>
-        /// Sums the metrics of the entities the caller asked to preview. <paramref name="found"/> is how
-        /// many of them are loaded; zero means there is nothing to report.
+        /// Sums the metrics of the entities the caller asked to preview, with how many of them are loaded;
+        /// zero means there is nothing to report.
         /// </summary>
-        public ModelMetrics GetRequestedItemsMetrics(out int found)
+        public (ModelMetrics total, int entities) GetRequestedItemsMetrics()
         {
-            var total = new ModelMetrics(0, 0, 0, 0);
-            found = 0;
+            var total = ModelMetrics.Empty;
+            var entities = 0;
 
             foreach (var urn in _requestedItemUrns)
             {
@@ -149,11 +157,11 @@ namespace Preview
                     || wearableLoader.TryGetMetrics(urn, out metrics))
                 {
                     total += metrics;
-                    found++;
+                    entities++;
                 }
             }
 
-            return total;
+            return (total, entities);
         }
 
         /// <summary>

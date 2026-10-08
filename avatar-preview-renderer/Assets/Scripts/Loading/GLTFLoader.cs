@@ -177,10 +177,9 @@ namespace Loading
                     Sanitize(prop.transform);
                 }
 
-                // An emote's own geometry is its prop, if it has one; the clip carries none.
                 var metrics = prop != null
                     ? ModelMetrics.Measure(prop, importer)
-                    : new ModelMetrics(0, 0, 0, 0);
+                    : ModelMetrics.Empty;
 
                 return new LoadedEmote(entityDefinition, avatarClip, audioClip, prop, propAnim, importer, metrics);
             }

@@ -356,8 +356,7 @@ namespace Loading
 
             if (_loadedFacialFeatures.TryGetValue(urn, out var facialFeature))
             {
-                var textures = (facialFeature.Main != null ? 1 : 0) + (facialFeature.Mask != null ? 1 : 0);
-                metrics = new ModelMetrics(0, 0, textures, 0);
+                metrics = ModelMetrics.FromTextures(facialFeature.Main, facialFeature.Mask);
                 return true;
             }
 
@@ -372,21 +371,16 @@ namespace Loading
         }
 
         /// <summary>
-        /// Re-populates the outline feature's renderer list for a second camera render in the same frame.
-        /// <see cref="Update"/> fills the list once per frame and the outline pass clears it after every
-        /// camera render, so a capture camera that renders after the main one would otherwise draw no
-        /// outline. Clears first, so it is safe to call whatever the list currently holds.
+        /// Appends the renderers of every active model to <paramref name="target"/>, the outline
+        /// feature's list for the next camera render.
         /// </summary>
-        public void RefreshOutlineRenderers()
+        public void AddOutlineRenderers(List<Renderer> target)
         {
-            var list = RendererFeature_AvatarOutline.m_AvatarOutlineRenderers;
-            list.Clear();
-
             foreach (var (_, root, _, outlineRenderers) in _loadedModels.Values)
             {
                 if (root.activeInHierarchy)
                 {
-                    list.AddRange(outlineRenderers);
+                    target.AddRange(outlineRenderers);
                 }
             }
         }
@@ -427,13 +421,7 @@ namespace Loading
 
         private void Update()
         {
-            foreach (var (_, root, _, outlineRenderers) in _loadedModels.Values)
-            {
-                if (root.activeInHierarchy)
-                {
-                    RendererFeature_AvatarOutline.m_AvatarOutlineRenderers.AddRange(outlineRenderers);
-                }
-            }
+            AddOutlineRenderers(RendererFeature_AvatarOutline.m_AvatarOutlineRenderers);
 
             // Update character bounds every frame for dynamic positioning
             if (setsHighlight && _loadedModels.Count > 0)

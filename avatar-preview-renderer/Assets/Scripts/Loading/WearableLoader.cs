@@ -58,8 +58,7 @@ namespace Loading
                     var ffLoadResult = await GLTFLoader.LoadFacialFeature(bodyShapeToLoad, entityDefinition);
 
                     // The item is the textures; the body they are shown on is not part of what was asked for.
-                    _loadedMetrics = new ModelMetrics(0, 0,
-                        (ffLoadResult.Main != null ? 1 : 0) + (ffLoadResult.Mask != null ? 1 : 0), 0);
+                    _loadedMetrics = ModelMetrics.FromTextures(ffLoadResult.Main, ffLoadResult.Mask);
 
                     _wearableDisposable = bodyLoadResult.Disposable;
                     _wearableGO = bodyLoadResult.Root;
@@ -126,10 +125,7 @@ namespace Loading
 
         private void Update()
         {
-            if (gameObject.activeInHierarchy)
-            {
-                RendererFeature_AvatarOutline.m_AvatarOutlineRenderers.AddRange(_outlineRenderers);
-            }
+            AddOutlineRenderers(RendererFeature_AvatarOutline.m_AvatarOutlineRenderers);
         }
 
         /// <summary>
@@ -148,14 +144,14 @@ namespace Loading
         }
 
         /// <summary>
-        /// Adds this view's renderers to the outline feature's list for a second camera render in the
-        /// same frame. See <see cref="AvatarLoader.RefreshOutlineRenderers"/>, which clears the list first.
+        /// Appends this view's renderers, when it is shown, to <paramref name="target"/>, the outline
+        /// feature's list for the next camera render.
         /// </summary>
-        public void RefreshOutlineRenderers()
+        public void AddOutlineRenderers(List<Renderer> target)
         {
             if (gameObject.activeInHierarchy)
             {
-                RendererFeature_AvatarOutline.m_AvatarOutlineRenderers.AddRange(_outlineRenderers);
+                target.AddRange(_outlineRenderers);
             }
         }
 

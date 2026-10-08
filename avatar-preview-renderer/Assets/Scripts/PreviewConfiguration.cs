@@ -142,6 +142,8 @@ public class PreviewConfiguration
 
     public void SetGlow(string value) => Glow = ParseToggle(value, "glow", Glow);
 
+    public void SetHideControls(string value) => HideControls = ParseToggle(value, "hideControls", HideControls);
+
     // Accepts both the documented `off` spelling and the bool spelling the other parameters use. An
     // unrecognised value keeps `current` rather than throwing: bool.Parse would abort RecreateFrom
     // mid-loop on a typo and drop every parameter after it.
@@ -266,7 +268,7 @@ public class PreviewConfiguration
     /// draw their own controls around the canvas or capture it for thumbnails. The loader is separate:
     /// see <see cref="DisableLoader"/>.
     /// </summary>
-    public bool HideControls { get; set; }
+    public bool HideControls { get; private set; }
 
     /// <summary>
     /// If we should instruct the browser to pre-fetch certain files. On by default.
@@ -389,7 +391,7 @@ public class PreviewConfiguration
                     Instance.DisableSwitcher = bool.Parse(value);
                     break;
                 case "hideControls":
-                    Instance.HideControls = bool.Parse(value);
+                    Instance.SetHideControls(value);
                     break;
                 case "useBrowserPreload":
                     Instance.UseBrowserPreload = bool.Parse(value);

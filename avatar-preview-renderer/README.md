@@ -146,7 +146,7 @@ For a full list of available functions check [JSBridge](Assets/Scripts/JSBridge.
 
 ## Replies from the renderer
 
-Every reply is posted to the window parent (or the window itself when not embedded) as:
+Every reply is posted to the renderer's own window when it is embedded in an iframe (or to `window.parent` otherwise) as:
 
 ```javascript
 { type: 'unity-renderer', payload: { type: '<reply type>', payload: <value> } }
@@ -160,7 +160,7 @@ A request the renderer cannot serve answers with `request-failed` instead of its
 { type: 'request-failed', payload: { request: 'screenshot' | 'metrics', reason: '<why>' } }
 ```
 
-Today that happens for a screenshot or metrics request made while a reload is in flight (nothing is rendered during a reload), for metrics when none of the requested items is loaded, and for a screenshot whose readback failed.
+Today that happens for a sized screenshot or a metrics request made while a reload is in flight (nothing is rendered during a reload), for metrics when none of the requested items is loaded, for a sized screenshot whose size is not `width,height` within 1 to 4096 per side, and for a screenshot whose readback failed. An unsized screenshot during a reload still captures the canvas as it is.
 
 ## Taking screenshots
 
@@ -171,7 +171,9 @@ unityInstance.SendMessage('JSBridge', 'TakeScreenshot', '');          // the can
 unityInstance.SendMessage('JSBridge', 'TakeScreenshot', '1024,1024'); // rendered at exactly this size
 ```
 
-With no size, the capture is the canvas at its on-screen pixel size, controls included. With `width,height`, the view is rendered offscreen at exactly that size: the vertical framing is the live one and the horizontal extent follows the requested aspect, so a square capture of a wide canvas is its centre. Nothing drawn by the in-canvas UI is part of it. The alpha channel follows the `background` parameter either way.
+With no size, the capture is the canvas at its on-screen pixel size, controls included. With `width,height` (each from 1 to 4096), the view is rendered offscreen at exactly that size: the vertical framing is the live one and the horizontal extent follows the requested aspect, so a square capture of a wide canvas is its centre. Nothing drawn by the in-canvas UI is part of it. The alpha channel follows the `background` parameter either way.
+
+The method takes one parameter, so always pass a value: a `SendMessage` with no value at all gets no reply.
 
 The reply is a `screenshot` with the PNG as base64:
 

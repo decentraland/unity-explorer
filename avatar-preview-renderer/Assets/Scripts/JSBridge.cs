@@ -5,8 +5,6 @@ using Data;
 using JetBrains.Annotations;
 using Preview;
 using UnityEngine;
-using UnityEngine.Experimental.Rendering;
-using UnityEngine.Rendering;
 using Utils;
 
 /// <summary>
@@ -21,6 +19,10 @@ public class JSBridge : MonoBehaviour
     // The request names a failure reply carries, so the page can match it to the call it made.
     private const string REQUEST_SCREENSHOT = "screenshot";
     private const string REQUEST_METRICS = "metrics";
+
+    // A sized capture allocates three textures of the requested size, so an embedding page could
+    // exhaust the WebGL heap with one request without a bound.
+    private const int MAX_SCREENSHOT_SIDE = 4096;
 
     [SerializeField] private PreviewController previewController;
     [SerializeField] private ConfiguratorUIPresenter configuratorUIPresenter;
@@ -151,7 +153,7 @@ public class JSBridge : MonoBehaviour
     [UsedImplicitly]
     public void SetHideControls(string value)
     {
-        PreviewConfiguration.Instance.HideControls = bool.Parse(value);
+        PreviewConfiguration.Instance.SetHideControls(value);
         previewController.SetControlsHidden(PreviewConfiguration.Instance.HideControls);
     }
 
@@ -168,7 +170,7 @@ public class JSBridge : MonoBehaviour
             return;
         }
 
-        var metrics = previewController.GetRequestedItemsMetrics(out var found);
+        var (metrics, found) = previewController.GetRequestedItemsMetrics();
 
         if (found == 0)
         {
@@ -198,17 +200,18 @@ public class JSBridge : MonoBehaviour
     {
         if (string.IsNullOrWhiteSpace(size))
         {
-            StartCoroutine(TakeScreenshotCoroutine());
+            StartCoroutine(TakeCanvasScreenshotAsync());
             return;
         }
 
         var parts = size.Split(',');
 
         if (parts.Length != 2
-            || !int.TryParse(parts[0], out var width) || width <= 0
-            || !int.TryParse(parts[1], out var height) || height <= 0)
+            || !int.TryParse(parts[0], out var width) || width <= 0 || width > MAX_SCREENSHOT_SIDE
+            || !int.TryParse(parts[1], out var height) || height <= 0 || height > MAX_SCREENSHOT_SIDE)
         {
-            NativeCalls.OnRequestFailed(REQUEST_SCREENSHOT, $"Invalid screenshot size [{size}], expected width,height");
+            NativeCalls.OnRequestFailed(REQUEST_SCREENSHOT,
+                $"Invalid screenshot size [{size}], expected width,height up to {MAX_SCREENSHOT_SIDE}");
             return;
         }
 
@@ -231,62 +234,37 @@ public class JSBridge : MonoBehaviour
         }
         catch (Exception e)
         {
-            Debug.LogError($"Failed to capture a {width}x{height} screenshot: {e.Message}");
+            Debug.LogException(e);
             NativeCalls.OnRequestFailed(REQUEST_SCREENSHOT, e.Message);
+            return;
+        }
+
+        // The capture spans frames, so a reload may have started under it and left it a half-built scene.
+        if (previewController.IsLoading)
+        {
+            NativeCalls.OnRequestFailed(REQUEST_SCREENSHOT, "The preview reloaded during the capture");
             return;
         }
 
         NativeCalls.OnScreenshotTaken(base64Png);
     }
 
-    private static async Awaitable TakeScreenshotCoroutine()
+    private static async Awaitable TakeCanvasScreenshotAsync()
     {
-        await Awaitable.EndOfFrameAsync();
+        string base64Png;
 
-        var width = Screen.width;
-        var height = Screen.height;
-
-        var rt = RenderTexture.GetTemporary(width, height, 0, GraphicsFormat.B8G8R8A8_UNorm);
-
-        ScreenCapture.CaptureScreenshotIntoRenderTexture(rt);
-
-        var gpuReadbackRequest = await AsyncGPUReadback.RequestAsync(rt);
-
-        if (gpuReadbackRequest.hasError)
+        try
         {
-            Debug.LogError("Failed to capture screenshot");
-            NativeCalls.OnRequestFailed(REQUEST_SCREENSHOT, "The GPU readback failed");
+            base64Png = await ScreenshotCapture.CaptureCanvasAsync();
+        }
+        catch (Exception e)
+        {
+            Debug.LogException(e);
+            NativeCalls.OnRequestFailed(REQUEST_SCREENSHOT, e.Message);
             return;
         }
 
-        var sourceData = gpuReadbackRequest.GetData<byte>();
-
-        var texture = new Texture2D(width, height, TextureFormat.BGRA32, false);
-        var destinationData = texture.GetRawTextureData<byte>();
-
-        // We have to flip the pixels vertically because OpenGL reasons
-        for (var i = 0; i < sourceData.Length; i += 4)
-        {
-            var arrayIndex = i / 4;
-            var x = arrayIndex % width;
-            var y = arrayIndex / width;
-            var flippedY = (height - 1 - y);
-            var flippedIndex = x + flippedY * width;
-
-            destinationData[i] = sourceData[flippedIndex * 4];
-            destinationData[i + 1] = sourceData[flippedIndex * 4 + 1];
-            destinationData[i + 2] = sourceData[flippedIndex * 4 + 2];
-            destinationData[i + 3] = sourceData[flippedIndex * 4 + 3];
-        }
-
-        ScreenshotCapture.RecoverStraightAlpha(destinationData);
-
-        var pngBytes = texture.EncodeToPNG();
-        var base64Png = Convert.ToBase64String(pngBytes);
-
         NativeCalls.OnScreenshotTaken(base64Png);
-
-        RenderTexture.ReleaseTemporary(rt);
     }
 
     public static class NativeCalls

@@ -25,9 +25,11 @@ namespace Preview
         // configuration and needs a reload to show.
         private static readonly HashSet<string> DEBUG_METHODS_WITHOUT_RELOAD = new()
         {
-            "Reload", "TakeScreenshot", "Cleanup", "GetMetrics", "SetHideControls", "GetEmoteLength",
-            "IsEmotePlaying", "PlayEmote", "PauseEmote", "GoToEmote", "StopEmote", "EnableSound",
-            "DisableSound", "HasSound",
+            nameof(JSBridge.Reload), nameof(JSBridge.TakeScreenshot), nameof(JSBridge.Cleanup),
+            nameof(JSBridge.GetMetrics), nameof(JSBridge.SetHideControls), nameof(JSBridge.GetEmoteLength),
+            nameof(JSBridge.IsEmotePlaying), nameof(JSBridge.PlayEmote), nameof(JSBridge.PauseEmote),
+            nameof(JSBridge.GoToEmote), nameof(JSBridge.StopEmote), nameof(JSBridge.EnableSound),
+            nameof(JSBridge.DisableSound), nameof(JSBridge.HasSound),
         };
 
         [SerializeField] private AudioSource audioSource;
@@ -328,8 +330,7 @@ namespace Preview
                 var methodName = methodNameDropdown.value;
                 var parameter = parameterField.value;
 
-                // The page always sends a value, so a method with a parameter gets the field as is, empty
-                // included; SendMessage refuses an empty call to such a method.
+                // SendMessage refuses a parameterless call to a method that takes one, so pass the field as is.
                 var takesParameter = typeof(JSBridge).GetMethod(methodName)?.GetParameters().Length > 0;
 
                 if (takesParameter)
