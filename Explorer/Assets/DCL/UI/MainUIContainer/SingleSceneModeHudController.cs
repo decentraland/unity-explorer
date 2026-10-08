@@ -89,8 +89,7 @@ namespace DCL.UI.MainUI
         {
             bool outside = singleSceneMode.IsRestricting
                            && scenesCache.TryGetByParcel(singleSceneMode.AnchorParcel, out ISceneFacade anchorScene)
-                           && (!scenesCache.TryGetByParcel(scenesCache.CurrentParcel.Value, out ISceneFacade currentScene)
-                               || !ReferenceEquals(anchorScene, currentScene));
+                           && !ReferenceEquals(anchorScene, scenesCache.CurrentScene.Value);
 
             if (outside == endOfSceneToastShown)
                 return;
