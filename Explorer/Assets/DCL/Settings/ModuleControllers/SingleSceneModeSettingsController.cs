@@ -13,9 +13,7 @@ namespace DCL.Settings.ModuleControllers
             this.view = view;
 
             // The choice applies on the next launch, so show what was stored rather than what this session resolved
-            view.ConfigureWithoutNotify(DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_SINGLE_SCENE_MODE)
-                ? DCLPlayerPrefs.GetBool(DCLPrefKeys.SETTINGS_SINGLE_SCENE_MODE)
-                : singleSceneMode.IsActive);
+            view.ConfigureWithoutNotify(singleSceneMode.IsActive);
 
             view.ToggleView.Toggle.onValueChanged.AddListener(OnToggleValueChanged);
         }
