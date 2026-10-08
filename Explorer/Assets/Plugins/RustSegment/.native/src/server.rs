@@ -262,7 +262,7 @@ impl SegmentServer {
 
         let queue_batcher = QueuedBatcher::new(event_queue.clone(), None);
 
-        let client = HttpClient::with_host(api_host.clone());
+        let client = HttpClient::new_with_host(api_host.clone());
         let send_daemon =
             AnalyticsEventSendDaemon::new(event_queue.clone(), None, writer_key.clone(), client);
         let send_daemon = Arc::new(parking_lot::Mutex::new(send_daemon));
@@ -281,7 +281,7 @@ impl SegmentServer {
             .catch_unwind(),
         );
 
-        let direct_client = HttpClient::with_host(api_host);
+        let direct_client = HttpClient::new_with_host(api_host);
 
         let context = AppContext {
             batcher: queue_batcher,

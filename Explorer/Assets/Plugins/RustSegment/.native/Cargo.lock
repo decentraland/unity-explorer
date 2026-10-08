@@ -1023,7 +1023,7 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 [[package]]
 name = "segment"
 version = "0.2.6"
-source = "git+https://github.com/decentraland/segment?rev=9be48af81babda13c1950f3e9fb9375bfefcbb74#9be48af81babda13c1950f3e9fb9375bfefcbb74"
+source = "git+https://github.com/decentraland/segment?rev=c9d3a81bf377dc921f59bf45c0603dcfdd814e6e#c9d3a81bf377dc921f59bf45c0603dcfdd814e6e"
 dependencies = [
  "async-trait",
  "reqwest",
