@@ -308,8 +308,9 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             if (singleSceneMode.IsActive && !singleSceneMode.IsAnchorScene(sceneDefinitionComponent))
                 return;
 
-            VisualSceneState candidateBy
-                = visualSceneStateResolver.ResolveVisualSceneState(partitionComponent, sceneDefinitionComponent, sceneState.VisualSceneState, ipfsRealm.SceneUrns.Count > 0, issDescriptor);
+            VisualSceneState candidateBy = singleSceneMode.IsActive
+                ? VisualSceneState.ShowingScene
+                : visualSceneStateResolver.ResolveVisualSceneState(partitionComponent, sceneDefinitionComponent, sceneState.VisualSceneState, ipfsRealm.SceneUrns.Count > 0, issDescriptor);
 
             //If we are over the amount of scenes that can be loaded, we downgrade quality to LOD
             if (candidateBy == VisualSceneState.ShowingScene && !sceneLoadingLimit.CanLoadScene(sceneDefinitionComponent))
