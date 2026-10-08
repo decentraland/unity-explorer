@@ -17,7 +17,8 @@ using Object = UnityEngine.Object;
 namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
 {
     /// <summary>
-    ///     Streams the satellite zoom levels finer than the bundled 8x8 chunks from <c>{baseUrl}/{level}/{i},{j}.ktx2</c>.
+    ///     Streams the satellite zoom levels finer than the bundled 8x8 chunks from under <c>{baseUrl}</c>, at the paths its
+    ///     <see cref="SatelliteManifest" /> gives, which the streamer fetches before requesting any tile of a source.
     ///     Level L splits the bundled grid into 2^L x 2^L tiles (i eastward, j southward), so level 3 is the bundled chunks.
     ///     Each map camera gets the level whose sharpness is nearest to its render texture's; finer levels draw on top.
     ///     Tiles are requested once the cameras have been still for <see cref="SETTLE_SECONDS" />, so a zoom tween or a pan
@@ -37,6 +38,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
         internal const int MAX_CONCURRENT_LOADS = 8;
         private const int TILE_PIXELS = 512;
         private const string CACHE_EXTENSION = "ktx2";
+        private const string MANIFEST_FILE = "manifest.json";
         private const int CACHE_ITERATION = 1;
         private const int MAX_CACHED_TILES = 64;
         private const float SETTLE_SECONDS = 0.1f;
@@ -63,6 +65,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
         private readonly List<KeyValuePair<int, Vector3Int>> evictions = new ();
 
         private CancellationTokenSource lifetimeCts = new ();
+        private UniTask<SatelliteManifest> manifestLoad;
         private Source source;
         private Vector2 gridTopLeft;
         private float baseChunkSize;
@@ -73,6 +76,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
         private bool settlePending;
         private bool retryPending;
         private bool tileFailureReported;
+        private bool manifestFailureReported;
         private bool diskCacheFailureReported;
 
         public SatelliteDetailTiles(string baseUrl, IWebRequestController webRequestController, IDiskCache<byte[]> diskCache, IMapCullingController cullingController, SpriteRenderer template, int drawOrderOfMinLevel)
@@ -96,6 +100,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             gridTopLeft = bundledGridTopLeft;
             baseChunkSize = bundledChunkSize;
 
+            StartManifestLoad();
             cullingController.CamerasChanged += Refresh;
             Refresh();
         }
@@ -143,8 +148,13 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
                 DestroyTile(tile);
 
             tiles.Clear();
+            StartManifestLoad();
             Refresh();
         }
+
+        // Preserved so every settle wait of the source can await the same load.
+        private void StartManifestLoad() =>
+            manifestLoad = LoadManifestAsync(source.BaseUrl, lifetimeCts.Token).Preserve();
 
         /// <summary>
         ///     Marks the tiles every active camera shows, drops the loads of tiles that left the view, evicts the oldest
@@ -159,7 +169,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             refreshStamp++;
             lastCameraChangeTime = UnityEngine.Time.realtimeSinceStartup;
 
-            VisitVisibleTiles(request: false);
+            VisitVisibleTiles(requestWith: null);
 
             CollectUnusedLoads(tiles, refreshStamp, unusedLoads);
 
@@ -303,13 +313,18 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
         private static float TileSize(int level, float bundledChunkSize) =>
             bundledChunkSize * (1 << BASE_LEVEL) / (1 << level);
 
-        /// <summary>Waits until no camera has changed for <see cref="SETTLE_SECONDS" />, then queues the visible tiles that are missing.</summary>
+        /// <summary>
+        ///     Waits for the source's manifest and until no camera has changed for <see cref="SETTLE_SECONDS" />, then queues the
+        ///     visible tiles that are missing. The manifest decides which tiles exist and at which paths, so none is requested before it.
+        /// </summary>
         private async UniTaskVoid RequestWhenSettledAsync(CancellationToken ct)
         {
             settlePending = true;
 
             try
             {
+                SatelliteManifest manifest = await manifestLoad;
+
                 while (true)
                 {
                     float remaining = SETTLE_SECONDS - (UnityEngine.Time.realtimeSinceStartup - lastCameraChangeTime);
@@ -322,7 +337,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
 
                 if (template.transform.parent.gameObject.activeInHierarchy)
                 {
-                    VisitVisibleTiles(request: true);
+                    VisitVisibleTiles(manifest);
                     PumpLoads();
                 }
             }
@@ -335,8 +350,11 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             }
         }
 
-        /// <summary>Marks every tile inside an active camera as used in the current refresh and, when <paramref name="request" />, queues the missing ones.</summary>
-        private void VisitVisibleTiles(bool request)
+        /// <summary>
+        ///     Marks every tile inside an active camera as used in the current refresh and, given <paramref name="requestWith" />,
+        ///     queues the missing ones at the paths it lists.
+        /// </summary>
+        private void VisitVisibleTiles(SatelliteManifest? requestWith)
         {
             float bundledPixelsPerUnit = TILE_PIXELS / baseChunkSize;
             IReadOnlyList<CameraState> cameras = cullingController.CameraStates;
@@ -371,17 +389,17 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
 
                 for (int j = range.yMin; j < range.yMax; j++)
                 for (int i = range.xMin; i < range.xMax; i++)
-                    Use(new Vector3Int(i, j, level), request, camera.Rect.center);
+                    Use(new Vector3Int(i, j, level), requestWith, camera.Rect.center);
             }
         }
 
-        private void Use(Vector3Int id, bool request, Vector2 cameraCenter)
+        private void Use(Vector3Int id, SatelliteManifest? requestWith, Vector2 cameraCenter)
         {
             if (tiles.TryGetValue(id, out Tile? tile))
             {
                 tile.LastUsed = refreshStamp;
 
-                if (request && tile.FailedAt is { } failedAt && UnityEngine.Time.realtimeSinceStartup - failedAt >= RETRY_FAILED_TILE_AFTER_SECONDS)
+                if (requestWith != null && tile.FailedAt is { } failedAt && UnityEngine.Time.realtimeSinceStartup - failedAt >= RETRY_FAILED_TILE_AFTER_SECONDS)
                 {
                     tile.FailedAt = null;
                     Enqueue(id, tile, cameraCenter);
@@ -390,12 +408,20 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
                 return;
             }
 
-            if (!request)
+            if (requestWith == null)
                 return;
 
             tile = new Tile(RentView()) { LastUsed = refreshStamp };
             tiles.Add(id, tile);
-            Enqueue(id, tile, cameraCenter);
+
+            // A tile of a section the manifest doesn't list is not published: there is nothing to request.
+            if (requestWith.TryGetTilePath(id, out string path))
+            {
+                tile.Url = $"{source.BaseUrl}/{path}";
+                Enqueue(id, tile, cameraCenter);
+            }
+            else
+                tile.Empty = true;
         }
 
         private void Enqueue(Vector3Int id, Tile tile, Vector2 cameraCenter)
@@ -431,7 +457,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
         private async UniTaskVoid LoadAsync(Vector3Int id, Tile tile)
         {
             CancellationToken ct = tile.Cts.Token;
-            var url = $"{source.BaseUrl}/{id.z}/{id.x}%2C{id.y}.ktx2";
+            string url = tile.Url;
             Texture2D? texture = null;
             Exception? failure = null;
 
@@ -503,6 +529,41 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
 
         private static HashKey NewCacheKey(string url) =>
             HashKey.FromString($"{CACHE_ITERATION}:{url}");
+
+        /// <summary>
+        ///     The source's manifest. A source that answers 404 publishes none, so its tiles are at the unversioned paths.
+        ///     Any other failure is retried every <see cref="RETRY_FAILED_TILE_AFTER_SECONDS" /> for as long as the source
+        ///     is shown: requesting tiles without the manifest would show stale ones, or mark published ones empty.
+        /// </summary>
+        private async UniTask<SatelliteManifest> LoadManifestAsync(string baseUrl, CancellationToken ct)
+        {
+            var url = $"{baseUrl}/{MANIFEST_FILE}";
+
+            while (true)
+            {
+                try
+                {
+                    SatelliteManifest.Dto dto = await webRequestController
+                                                     .GetAsync(new CommonArguments(URLAddress.FromString(url), RetryPolicy.NONE), ct, ReportCategory.UI, suppressErrors: true)
+                                                     .CreateFromJson<SatelliteManifest.Dto>(WRJsonParser.Newtonsoft);
+
+                    return SatelliteManifest.From(dto);
+                }
+                catch (OperationCanceledException) { throw; }
+                catch (UnityWebRequestException e) when (e.ResponseCode == WebRequestUtils.NOT_FOUND) { return SatelliteManifest.UNVERSIONED; }
+                catch (Exception e)
+                {
+                    // One report per session: an offline or wrong URL fails every attempt the same way.
+                    if (!manifestFailureReported)
+                    {
+                        manifestFailureReported = true;
+                        ReportHub.LogException(e, ReportCategory.UI);
+                    }
+                }
+
+                await UniTask.Delay(TimeSpan.FromSeconds(RETRY_FAILED_TILE_AFTER_SECONDS), ignoreTimeScale: true, cancellationToken: ct);
+            }
+        }
 
         /// <summary>Once per session: a disabled or failing disk cache affects every tile the same way.</summary>
         private void ReportDiskCacheFailure(string? message)
@@ -652,6 +713,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
         {
             public readonly AtlasChunk View;
             public readonly CancellationTokenSource Cts = new ();
+            public string Url = string.Empty;
             public Texture2D? Texture;
             public Sprite? Sprite;
             public float? FailedAt;
