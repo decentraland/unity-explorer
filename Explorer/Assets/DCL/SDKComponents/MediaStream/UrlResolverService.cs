@@ -59,7 +59,7 @@ namespace DCL.SDKComponents.MediaStream
 
         private async UniTask<ResolvedMediaUrl> ResolveGoogleDriveAsync(string url, CancellationToken ct)
         {
-            string directUrl = url.ResolveGoogleDriveDirectUrl();
+            string? directUrl = url.ResolveGoogleDriveDirectUrl();
 
             if (directUrl == null)
             {

@@ -15,7 +15,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Slots
         private readonly Vector3 hoveredScale = new (1.02f, 1.02f, 1.02f);
         private const float ANIMATION_TIME = 0.1f;
         private const float THUMBNAIL_PIXELS_PER_UNIT = 100f;
-        private CancellationTokenSource cts;
+        private CancellationTokenSource? cts;
 
         public event Action? OnSaveClicked;
         public event Action? OnEquipClicked;
@@ -64,7 +64,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Slots
         private Image outfitHoverOutline;
 
         [field: SerializeField]
-        public HoverHandler hoverHandler { get; private set; }
+        public HoverHandler HoverHandler { get; private set; }
 
         [field: SerializeField]
         private SkeletonLoadingView loadingView { get; set; }
@@ -182,7 +182,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Slots
             if (thumbnail != null)
                 outfitThumbnail.sprite = Sprite.Create(thumbnail, new Rect(0, 0, thumbnail.width, thumbnail.height), VectorUtilities.OneHalf, THUMBNAIL_PIXELS_PER_UNIT, 0, SpriteMeshType.FullRect);
 
-            outfitHoverOutline?.gameObject.SetActive(isHovered);
+            outfitHoverOutline.gameObject.SetActive(isHovered);
             unEquipButton?.gameObject.SetActive(false);
 
             // Equip stays available on hover even during a save/delete: it's safe because
@@ -253,15 +253,15 @@ namespace DCL.Backpack.AvatarSection.Outfits.Slots
 
         private void ApplyHoverEnabled()
         {
-            if (hoverHandler == null) return;
+            if (HoverHandler == null) return;
 
             bool isEnabled = hoverRequested && !isPending;
 
             // Snap back if we're disabling while hovered — disabled HoverHandler won't fire OnPointerExit.
-            if (!isEnabled && hoverHandler.enabled)
+            if (!isEnabled && HoverHandler.enabled)
                 AnimateExit();
 
-            hoverHandler.enabled = isEnabled;
+            HoverHandler.enabled = isEnabled;
         }
 
         // Equip deliberately stays interactable during operations — see ShowFullState for why.
