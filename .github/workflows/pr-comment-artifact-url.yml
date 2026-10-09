@@ -590,20 +590,34 @@ jobs:
             echo "::notice::PR #${PR_NUMBER} moved from ${HEAD_SHA:0:7} to ${LIVE_SHA:0:7}; the newer build's completion dispatches the suites."
             exit 0
           fi
-          if ! RUNS=$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/in-world-tests.yml/runs?head_sha=${HEAD_SHA}&per_page=20" \
+          # Same retry policy as create-release-branch.yml; shell functions cannot
+          # be exported between workflow steps. Preserve the last API error.
+          gh_api_retry() {
+            local out attempt
+            for attempt in 1 2 3; do
+              if [ "$attempt" -lt 3 ]; then
+                if out=$(gh api "$@" 2>/dev/null); then printf '%s' "$out"; return 0; fi
+                sleep 5
+              else
+                if out=$(gh api "$@"); then printf '%s' "$out"; return 0; fi
+              fi
+            done
+            return 1
+          }
+          if ! RUNS=$(gh_api_retry "repos/${GITHUB_REPOSITORY}/actions/workflows/in-world-tests.yml/runs?head_sha=${HEAD_SHA}&per_page=20" \
             --jq '.workflow_runs[] | "\(.id) \(.status)"'); then
-            echo "::error::Could not list In-World Tests runs for ${HEAD_SHA:0:7}, so existing validation is unknown and the automation suites were not dispatched. Start \`In-World Tests\` by hand from the Actions tab against ${HEAD_REF}."
+            echo "::error::Could not list In-World Tests runs for ${HEAD_SHA:0:7}, so existing validation is unknown and the automation suites were not dispatched. Re-run this job, or start \`In-World Tests\` by hand from the Actions tab against ${HEAD_REF}."
             exit 1
           fi
           COVERED=0
           while read -r RUN_ID STATUS; do
             [ -z "$RUN_ID" ] && continue
             if [ "$STATUS" != "completed" ]; then COVERED=1; break; fi
-            # Visual is advisory. A skipped resolver also makes the gate green,
-            # so completed coverage needs successful resolution and gate jobs.
-            if ! GATE=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${RUN_ID}/jobs?per_page=100" \
-              --jq '[.jobs[] | select(.name == "Wait for the build" or .name == "InWorld suite result") | .conclusion] | if length == 2 and all(. == "success") then "success" else "" end'); then
-              echo "::error::Could not read the jobs of In-World Tests run ${RUN_ID}, so whether ${HEAD_SHA:0:7} is already validated is unknown and the automation suites were not dispatched. Start \`In-World Tests\` by hand from the Actions tab against ${HEAD_REF}."
+            # Visual is advisory, but full validation must have invoked it.
+            # Filtered runs skip it; draft/non-release runs skip resolution.
+            if ! GATE=$(gh_api_retry "repos/${GITHUB_REPOSITORY}/actions/runs/${RUN_ID}/jobs?per_page=100" \
+              --jq '.jobs as $jobs | if ([$jobs[] | select(.name == "Wait for the build" or .name == "InWorld suite result") | .conclusion] | length == 2 and all(. == "success")) and any($jobs[]; (.name | startswith("Visual suite / ")) and .conclusion != "skipped") then "success" else "" end'); then
+              echo "::error::Could not read the jobs of In-World Tests run ${RUN_ID}, so whether ${HEAD_SHA:0:7} is already validated is unknown and the automation suites were not dispatched. Re-run this job, or start \`In-World Tests\` by hand from the Actions tab against ${HEAD_REF}."
               exit 1
             fi
             if [ "$GATE" = "success" ]; then COVERED=1; break; fi

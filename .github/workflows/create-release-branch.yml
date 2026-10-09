@@ -492,7 +492,7 @@ jobs:
             exit 0
           fi
           if [ "$LEGS_GREEN" != "true" ]; then
-            echo "::error::No build of ${HEAD_SHA:0:7} has both Build (macos) and Build (windows64) green, so the automation suites were not started — it would fail on its first poll. Build the commit: label the release PR \`force-build\` if build-unitycloud.yml built nothing, or remove a \`windows-only\`/\`macos-only\` label that narrowed its targets. Then start \`In-World Tests\` by hand against ${BRANCH_NAME}. Do not re-run this workflow — it force-pushes ${BRANCH_NAME} and would re-cut the release from a newer dev tip."
+            echo "::error::No build of ${HEAD_SHA:0:7} has both Build (macos) and Build (windows64) green, so the automation suites were not started — they would fail on their first poll. Build the commit: label the release PR \`force-build\` if build-unitycloud.yml built nothing, or remove a \`windows-only\`/\`macos-only\` label that narrowed its targets. Then start \`In-World Tests\` by hand against ${BRANCH_NAME}. Do not re-run this workflow — it force-pushes ${BRANCH_NAME} and would re-cut the release from a newer dev tip."
             exit 0
           fi
 
