@@ -166,7 +166,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           automation-token: ${{ secrets.REPOS_READ_ONLY_TOKEN }}
 
-      # A dispatched run carries no PR, and the release gate is started that way
+      # A dispatched run carries no PR, and release validation is started that way
       # — create-release-branch.yml dispatches it, because the PR it opens with
       # GITHUB_TOKEN raises no events. Without this the result reaches only the
       # job summary rather than the PR's status comment.

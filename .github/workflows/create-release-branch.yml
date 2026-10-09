@@ -484,15 +484,15 @@ jobs:
           # `In-World Tests` by hand is the remedy in every case, and it is the
           # same instruction the dispatch failure below gives.
           if [ "$LISTED" = "0" ]; then
-            echo "::error::Could not list build-unitycloud.yml runs for ${HEAD_SHA:0:7} — the GitHub Actions API did not answer, so no build was ever looked at and the InWorld gate was not started. This says nothing about whether a build exists. The release branch and its PR are fine: start \`In-World Tests\` by hand from the Actions tab against ${BRANCH_NAME}. Do not re-run this workflow — it force-pushes ${BRANCH_NAME} and would re-cut the release from a newer dev tip."
+            echo "::error::Could not list build-unitycloud.yml runs for ${HEAD_SHA:0:7} — the GitHub Actions API did not answer, so no build was ever looked at and the automation suites were not started. This says nothing about whether a build exists. The release branch and its PR are fine: start \`In-World Tests\` by hand from the Actions tab against ${BRANCH_NAME}. Do not re-run this workflow — it force-pushes ${BRANCH_NAME} and would re-cut the release from a newer dev tip."
             exit 0
           fi
           if [ "$LEGS_GREEN" != "true" ] && [ "$UNEXAMINED" = "1" ]; then
-            echo "::error::The GitHub Actions API did not answer for at least one build run of ${HEAD_SHA:0:7}, so whether its legs are green is unknown and the InWorld gate was not started. This is not evidence that no build exists. The release branch and its PR are fine: start \`In-World Tests\` by hand from the Actions tab against ${BRANCH_NAME}. Do not re-run this workflow — it force-pushes ${BRANCH_NAME} and would re-cut the release from a newer dev tip."
+            echo "::error::The GitHub Actions API did not answer for at least one build run of ${HEAD_SHA:0:7}, so whether its legs are green is unknown and the automation suites were not started. This is not evidence that no build exists. The release branch and its PR are fine: start \`In-World Tests\` by hand from the Actions tab against ${BRANCH_NAME}. Do not re-run this workflow — it force-pushes ${BRANCH_NAME} and would re-cut the release from a newer dev tip."
             exit 0
           fi
           if [ "$LEGS_GREEN" != "true" ]; then
-            echo "::error::No build of ${HEAD_SHA:0:7} has both Build (macos) and Build (windows64) green, so the InWorld gate was not started — it would fail on its first poll. Build the commit: label the release PR \`force-build\` if build-unitycloud.yml built nothing, or remove a \`windows-only\`/\`macos-only\` label that narrowed its targets. Then start \`In-World Tests\` by hand against ${BRANCH_NAME}. Do not re-run this workflow — it force-pushes ${BRANCH_NAME} and would re-cut the release from a newer dev tip."
+            echo "::error::No build of ${HEAD_SHA:0:7} has both Build (macos) and Build (windows64) green, so the automation suites were not started — it would fail on its first poll. Build the commit: label the release PR \`force-build\` if build-unitycloud.yml built nothing, or remove a \`windows-only\`/\`macos-only\` label that narrowed its targets. Then start \`In-World Tests\` by hand against ${BRANCH_NAME}. Do not re-run this workflow — it force-pushes ${BRANCH_NAME} and would re-cut the release from a newer dev tip."
             exit 0
           fi
 

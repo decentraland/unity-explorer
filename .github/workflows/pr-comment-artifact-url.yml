@@ -552,17 +552,20 @@ jobs:
 
             ${{ steps.ucb.outputs.section }}
 
-  # A release PR cannot start its own InWorld gate on the two paths that reach
+  # A release PR cannot start its own automation suites on the two paths that reach
   # here. The PR was opened with GITHUB_TOKEN, whose events start runs only as
   # action_required, owned by the bot even once approved, so a
-  # dev build that finished after the cut (a back-filled run) has no gate; and
+  # dev build that finished after the cut (a back-filled run) has no suite run; and
   # in-world-tests.yml does not listen to label events, so neither does a build
   # the `force-build` label started. Dispatch it against the release branch —
   # the dispatch path resolves the build with no wait, and both zips are up by
-  # the time this run fires. A push to the branch starts the gate through its
-  # own pull_request trigger, so a gate already in flight or green for this SHA
-  # is left alone rather than cancelled by a second run in its concurrency group.
+  # the time this run fires. A push to the branch starts validation through its
+  # own pull_request trigger. Leave validation alone when it is in flight or
+  # this SHA already has a successful InWorld result.
+  # Dispatches report suite results but cannot satisfy required PR checks; those
+  # need an eligible PR-triggered InWorld suite result.
   release-gate:
+    name: Run release automation suites
     needs: [pre-validation, check-build-ran]
     if: github.event.workflow_run.conclusion == 'success' && needs.pre-validation.outputs.release-pr == 'true' && needs.check-build-ran.outputs.player-artifacts == 'true' && needs.check-build-ran.outputs.build-attempted == 'true'
     runs-on: ubuntu-latest
@@ -572,7 +575,7 @@ jobs:
       actions: write
       pull-requests: read
     steps:
-      - name: Dispatch the InWorld gate
+      - name: Dispatch the automation suites
         env:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ needs.pre-validation.outputs.pr-number }}
@@ -580,22 +583,30 @@ jobs:
           HEAD_SHA: ${{ needs.pre-validation.outputs.head-sha }}
         run: |
           set -euo pipefail
-          # A dispatch attaches its checks to the branch tip. A tip that moved
-          # since this build belongs to a newer build, whose own completion
-          # dispatches for it.
+          # A dispatch tests the branch tip. A tip that moved since this build
+          # belongs to a newer build, whose own completion dispatches for it.
           LIVE_SHA=$(gh pr view "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --json headRefOid --jq '.headRefOid')
           if [ "$LIVE_SHA" != "$HEAD_SHA" ]; then
-            echo "::notice::PR #${PR_NUMBER} moved from ${HEAD_SHA:0:7} to ${LIVE_SHA:0:7}; the newer build's completion dispatches the gate."
+            echo "::notice::PR #${PR_NUMBER} moved from ${HEAD_SHA:0:7} to ${LIVE_SHA:0:7}; the newer build's completion dispatches the suites."
             exit 0
           fi
-          COVERED=$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/in-world-tests.yml/runs?head_sha=${HEAD_SHA}&per_page=20" \
-            --jq '[.workflow_runs[] | select(.status != "completed" or .conclusion == "success")] | length')
+          RUNS=$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/in-world-tests.yml/runs?head_sha=${HEAD_SHA}&per_page=20" \
+            --jq '.workflow_runs[] | "\(.id) \(.status)"')
+          COVERED=0
+          while read -r RUN_ID STATUS; do
+            [ -z "$RUN_ID" ] && continue
+            if [ "$STATUS" != "completed" ]; then COVERED=1; break; fi
+            # Visual is advisory; the InWorld gate determines completed coverage.
+            GATE=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${RUN_ID}/jobs?per_page=100" \
+              --jq '[.jobs[] | select(.name == "InWorld suite result") | .conclusion] | first // ""')
+            if [ "$GATE" = "success" ]; then COVERED=1; break; fi
+          done <<< "$RUNS"
           if [ "$COVERED" != "0" ]; then
-            echo "::notice::An InWorld gate run for ${HEAD_SHA:0:7} is in flight or green; not dispatching another."
+            echo "::notice::An automation suite run for ${HEAD_SHA:0:7} is in flight or has a successful InWorld result; not dispatching another."
             exit 0
           fi
           gh workflow run in-world-tests.yml --repo "$GITHUB_REPOSITORY" --ref "$HEAD_REF"
-          echo "::notice::InWorld gate dispatched against ${HEAD_REF} for ${HEAD_SHA:0:7}."
+          echo "::notice::Automation suites dispatched against ${HEAD_REF} for ${HEAD_SHA:0:7}."
 
   # A dev build of the cut commit that ends in anything but success leaves the
   # release with no build and no event that would start one: the cut seeded
