@@ -29,6 +29,10 @@ Lint and tests follow the same pattern: `dev`'s `Unity Test` results are reused 
 
 Never re-run *Create Release Branch and PR* to fix any of this: it force-pushes the release branch from `dev`'s current tip, re-cutting the release from newer commits. Pushing to the release branch is the normal path — a push starts the build, lint, tests and the InWorld gate through their regular `pull_request` triggers and replaces every reused section.
 
+### Issue deduplication
+
+Automated issue labelling was dropped on 2026-10-09 (the team did not use it) and both former issue workflows, `AI Label Issues` and `Issue Deduplication`, were removed; only the duplicate check remains, run by Jarvis. New issues are checked for duplicates by Jarvis (agent-server), not by a workflow in this repository. The org GitHub webhook delivers `issues.opened` to agent-server, which runs a no-tools model over the new issue and the recent issues (plus older issues with the same title), and when it finds an older original from Sentry or a repository member it comments, adds `duplicate`, and closes the issue if it was reported by Sentry. Issue labelling is no longer automated. Maintainers can re-run the check from Slack with `@jarvis dedup <issue url>`. Flow and host checks: [agent-server `skills/issue-dedup/SKILL.md`](https://github.com/decentraland/agent-server/blob/main/skills/issue-dedup/SKILL.md) (internal repository).
+
 ## Native plugin binaries (UUAV, RustSegment)
 
 Two Rust plugins ship prebuilt native binaries committed to Git LFS: UUAV (`Explorer/Assets/Plugins/UUAV/`) and the Segment analytics client (`Explorer/Assets/Plugins/RustSegment/`). Each is pinned to its inputs by a hash lock and guarded by the same pair of workflows:
