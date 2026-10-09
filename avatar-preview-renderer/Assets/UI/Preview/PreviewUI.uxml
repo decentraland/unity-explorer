@@ -13,6 +13,7 @@
             <engine:Button name="MuteButton" class="emote-controls__button emote-controls__button-mute dcl-clickable" />
         </engine:VisualElement>
     </engine:VisualElement>
+    <engine:VisualElement name="ThumbnailBoundaries" picking-mode="Ignore" class="thumbnail-boundaries" style="display: none;" />
     <engine:VisualElement name="Loader" class="loader" style="display: flex;">
         <engine:VisualElement name="Icon" class="loader__icon" />
     </engine:VisualElement>

@@ -160,6 +160,136 @@ public class JSBridge : MonoBehaviour
     }
 
     /// <summary>
+    /// The camera options of the Babylon preview, applied without a reload. The zoom and wheel ones
+    /// restart the zoom at the new range's start, as a Babylon reload would.
+    /// </summary>
+    [UsedImplicitly]
+    public void SetZoomLevel(string value)
+    {
+        PreviewConfiguration.Instance.SetZoomLevel(value);
+        previewController.ApplyCameraSettings();
+        previewController.RestartZoom();
+    }
+
+    [UsedImplicitly]
+    public void SetWheelZoom(string value)
+    {
+        PreviewConfiguration.Instance.SetWheelZoom(value);
+        previewController.ApplyCameraSettings();
+        previewController.RestartZoom();
+    }
+
+    [UsedImplicitly]
+    public void SetWheelStart(string value)
+    {
+        PreviewConfiguration.Instance.SetWheelStart(value);
+        previewController.ApplyCameraSettings();
+        previewController.RestartZoom();
+    }
+
+    [UsedImplicitly]
+    public void SetCamera(string value)
+    {
+        PreviewConfiguration.Instance.SetCamera(value);
+        previewController.ApplyCameraSettings();
+    }
+
+    [UsedImplicitly]
+    public void SetLockAlpha(string value)
+    {
+        PreviewConfiguration.Instance.SetLockAlpha(value);
+        previewController.ApplyCameraSettings();
+    }
+
+    [UsedImplicitly]
+    public void SetLockBeta(string value)
+    {
+        PreviewConfiguration.Instance.SetLockBeta(value);
+        previewController.ApplyCameraSettings();
+    }
+
+    [UsedImplicitly]
+    public void SetLockRadius(string value)
+    {
+        PreviewConfiguration.Instance.SetLockRadius(value);
+        previewController.ApplyCameraSettings();
+    }
+
+    [UsedImplicitly]
+    public void SetPanning(string value)
+    {
+        PreviewConfiguration.Instance.SetPanning(value);
+        previewController.ApplyCameraSettings();
+    }
+
+    [UsedImplicitly]
+    public void SetDisableAutoRotate(string value)
+    {
+        PreviewConfiguration.Instance.SetDisableAutoRotate(value);
+        previewController.ApplyCameraSettings();
+    }
+
+    [UsedImplicitly]
+    public void SetAutoRotateSpeed(string value)
+    {
+        PreviewConfiguration.Instance.SetAutoRotateSpeed(value);
+        previewController.ApplyCameraSettings();
+    }
+
+    [UsedImplicitly]
+    public void SetShowThumbnailBoundaries(string value)
+    {
+        PreviewConfiguration.Instance.SetShowThumbnailBoundaries(value);
+        previewController.ApplyCameraSettings();
+    }
+
+    /// <summary>
+    /// Babylon's <c>changeZoom</c>: a delta that pulls closer when positive.
+    /// </summary>
+    [UsedImplicitly]
+    public void SetZoom(string value)
+    {
+        if (PreviewConfiguration.TryParseNumber(value, out var delta))
+            previewController.ZoomBy(delta);
+        else
+            Debug.LogWarning($"Invalid zoom delta [{value}], expected a number");
+    }
+
+    /// <summary>
+    /// Babylon's <c>panCamera</c>: <c>x,y,z</c> in metres, across and up the screen. The depth is
+    /// ignored, since the view has nothing to offset along it.
+    /// </summary>
+    [UsedImplicitly]
+    public void SetOffset(string value)
+    {
+        if (!TryParseVector(value, out var offset))
+        {
+            Debug.LogWarning($"Invalid offset [{value}], expected x,y,z");
+            return;
+        }
+
+        var planar = new Vector2(offset.x, offset.y);
+        PreviewConfiguration.Instance.SetOffset(planar);
+        previewController.SetCameraOffset(planar);
+    }
+
+    /// <summary>
+    /// Babylon's <c>changeCameraPosition</c>: <c>alpha,beta,radius</c> deltas, the angles in radians
+    /// and the radius in metres.
+    /// </summary>
+    [UsedImplicitly]
+    public void SetCameraPosition(string value)
+    {
+        if (!TryParseVector(value, out var delta))
+        {
+            Debug.LogWarning($"Invalid camera position [{value}], expected alpha,beta,radius");
+            return;
+        }
+
+        previewController.MoveCamera(delta.x, delta.y, delta.z);
+    }
+
+    /// <summary>
     /// Replies with the metrics of the items the caller asked to preview, or a request failure while a
     /// reload is in flight or nothing of theirs is loaded.
     /// </summary>
@@ -244,6 +374,25 @@ public class JSBridge : MonoBehaviour
         return parts.Length == 2
                && int.TryParse(parts[0], out width) && width > 0 && width <= MAX_SCREENSHOT_SIDE
                && int.TryParse(parts[1], out height) && height > 0 && height <= MAX_SCREENSHOT_SIDE;
+    }
+
+    /// <summary>
+    /// Reads three comma-separated numbers, as the page writes a vector.
+    /// </summary>
+    internal static bool TryParseVector(string value, out Vector3 vector)
+    {
+        vector = default;
+
+        var parts = value.Split(',');
+
+        if (parts.Length != 3
+            || !PreviewConfiguration.TryParseNumber(parts[0], out var x)
+            || !PreviewConfiguration.TryParseNumber(parts[1], out var y)
+            || !PreviewConfiguration.TryParseNumber(parts[2], out var z))
+            return false;
+
+        vector = new Vector3(x, y, z);
+        return true;
     }
 
     private static float CurrentRenderScale() =>

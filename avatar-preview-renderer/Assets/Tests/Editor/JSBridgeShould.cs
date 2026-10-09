@@ -1,4 +1,5 @@
 using NUnit.Framework;
+using UnityEngine;
 
 namespace Tests
 {
@@ -33,6 +34,33 @@ namespace Tests
         {
             // Act
             var parsed = JSBridge.TryParseScreenshotSize(size, out _, out _);
+
+            // Assert
+            Assert.IsFalse(parsed);
+        }
+
+        [TestCase("0,0,0", 0f, 0f, 0f)]
+        [TestCase("1.5,-2,3e-1", 1.5f, -2f, 0.3f)]
+        [TestCase(" 0.25 , 0.5 , 1 ", 0.25f, 0.5f, 1f)]
+        public void ParseAVector(string value, float x, float y, float z)
+        {
+            // Act
+            var parsed = JSBridge.TryParseVector(value, out var vector);
+
+            // Assert
+            Assert.IsTrue(parsed);
+            Assert.AreEqual(new Vector3(x, y, z), vector);
+        }
+
+        [TestCase("")]
+        [TestCase("1,2")]
+        [TestCase("1,2,3,4")]
+        [TestCase("a,b,c")]
+        [TestCase("1;2;3")]
+        public void RejectAnInvalidVector(string value)
+        {
+            // Act
+            var parsed = JSBridge.TryParseVector(value, out _);
 
             // Assert
             Assert.IsFalse(parsed);

@@ -52,6 +52,11 @@ namespace Preview
         private bool _loading;
         private bool _shouldReload;
         private bool _shouldCleanup;
+        private bool _showingWearable;
+
+        // What the mode and the loaded content allow; the camera options narrow it further.
+        private bool _cameraInputByMode;
+        private bool _autoRotateByMode;
 
         /// <summary>
         /// True while a reload is rebuilding the avatar, during which nothing is rendered.
@@ -84,11 +89,6 @@ namespace Preview
             previewUIPresenter.ContainerPan += previewCameraController.Pan;
             emoteAnimationController.EmoteAnimationEnded += OnEmoteAnimationEnded;
 
-            // The avatar stays on a turntable - tipping a standing figure just looks like falling over.
-            // A solo item is being inspected, and yaw alone cannot reach a hood's inside or a shoe's sole.
-            avatarRotator.AllowVertical = false;
-            wearableRotator.AllowVertical = true;
-
             StartCoroutine(Reload());
         }
 
@@ -113,6 +113,7 @@ namespace Preview
         // than the one under the avatar's feet.
         private void ShowWearableView(bool showWearable)
         {
+            _showingWearable = showWearable;
             previewCameraController.ShowMarketplaceWearable(showWearable);
 
             // One 20-unit plane spans both subjects, which sit 5 apart, so the avatar's shadow drifts
@@ -175,6 +176,76 @@ namespace Preview
         /// so a later reload applies it again.
         /// </summary>
         public void SetControlsHidden(bool hidden) => previewUIPresenter.SetControlsHidden(hidden);
+
+        /// <summary>
+        /// Applies the configuration's camera options to the live scene: input gates, locks,
+        /// auto-rotate, the zoom range, the offset and the thumbnail frame. The current zoom and pan are
+        /// left alone, so a reload within a mode keeps the creator's framing.
+        /// </summary>
+        public void ApplyCameraSettings()
+        {
+            var config = PreviewConfiguration.Instance;
+            var interactive = config.Camera == PreviewCameraKind.Interactive;
+
+            previewCameraController.Configure(config);
+            previewUIPresenter.EnableZoom(_cameraInputByMode && interactive && !config.LockRadius);
+            previewUIPresenter.EnablePan(_cameraInputByMode && interactive && config.Panning);
+            previewUIPresenter.ShowThumbnailBoundaries(config.ShowThumbnailBoundaries);
+
+            ConfigureRotator(avatarRotator, config, interactive);
+            ConfigureRotator(wearableRotator, config, interactive);
+
+            // The avatar stays on a turntable - tipping a standing figure just looks like falling over.
+            // A solo item is being inspected, and yaw alone cannot reach a hood's inside or a shoe's sole.
+            avatarRotator.AllowVertical = false;
+            wearableRotator.AllowVertical = !config.LockBeta;
+            avatarRotator.EnableAutoRotate = _autoRotateByMode && !config.DisableAutoRotate && interactive;
+            wearableRotator.EnableAutoRotate = !config.DisableAutoRotate && interactive;
+
+            // A static camera is a still: the emote is held on its first frame, so the view shows the
+            // pose rather than a moment of the motion.
+            if (!interactive)
+            {
+                emoteAnimationController.PauseEmote();
+                emoteAnimationController.GoToEmote(0f);
+            }
+        }
+
+        /// <summary>
+        /// Back to the start of the zoom range, after the zoom options changed.
+        /// </summary>
+        public void RestartZoom() => previewCameraController.RestartZoom();
+
+        /// <summary>
+        /// A zoom button press from the page: positive pulls closer.
+        /// </summary>
+        public void ZoomBy(float delta) => previewCameraController.ZoomByDelta(delta);
+
+        /// <summary>
+        /// Puts the view at an absolute offset, across and up the screen in metres.
+        /// </summary>
+        public void SetCameraOffset(Vector2 offset) => previewCameraController.SetOffset(offset);
+
+        /// <summary>
+        /// Moves the view by Babylon's orbit deltas: alpha turns the subject, beta tilts it, both in
+        /// radians, and radius pulls the orbit back by metres.
+        /// </summary>
+        public void MoveCamera(float alpha, float beta, float radius)
+        {
+            var rotator = _showingWearable ? wearableRotator : avatarRotator;
+
+            // Babylon's beta lowers its camera, which reads as the subject's top tilting towards the
+            // viewer; the rotator's pitch runs the other way.
+            rotator.Rotate(alpha * Mathf.Rad2Deg, -beta * Mathf.Rad2Deg);
+            previewCameraController.OrbitBy(radius);
+        }
+
+        private static void ConfigureRotator(DragRotator rotator, PreviewConfiguration config, bool interactive)
+        {
+            rotator.InputEnabled = interactive;
+            rotator.AllowHorizontal = !config.LockAlpha;
+            rotator.AutoRotateSpeed = config.AutoRotateSpeed * Mathf.Rad2Deg;
+        }
 
         public float GetEmoteLength() => emoteAnimationController.GetEmoteLength();
 
@@ -245,6 +316,9 @@ namespace Preview
                 mainCamera.backgroundColor = config.Background;
                 mainCamera.orthographic = config.Projection == "orthographic";
                 previewUIPresenter.EnableLoader(!config.DisableLoader);
+
+                // Before the mode, whose change starts the framing from these options.
+                previewCameraController.Configure(config);
                 previewCameraController.SetMode(config.Mode);
                 confirmationVFX.gameObject.SetActive(config.Mode is PreviewMode.Jesus);
 
@@ -355,11 +429,11 @@ namespace Preview
 
                 avatarRotator.enabled = true;
                 wearableRotator.enabled = true;
-                avatarRotator.EnableAutoRotate = config.Mode is PreviewMode.Marketplace && !hasEmoteOverride;
+                _autoRotateByMode = config.Mode is PreviewMode.Marketplace && !hasEmoteOverride;
+                _cameraInputByMode = config.Mode is PreviewMode.Marketplace or PreviewMode.Builder;
+                ApplyCameraSettings();
 
                 previewUIPresenter.EnableEmoteControls(hasEmoteOverride);
-                previewUIPresenter.EnableZoom(config.Mode is PreviewMode.Marketplace or PreviewMode.Builder);
-                previewUIPresenter.EnablePan(config.Mode is PreviewMode.Marketplace or PreviewMode.Builder);
                 previewUIPresenter.EnableSwitcher(hasWearableOverride && !config.DisableSwitcher);
                 previewUIPresenter.EnableAudioControls(hasEmoteAudio);
             } while (_shouldReload);

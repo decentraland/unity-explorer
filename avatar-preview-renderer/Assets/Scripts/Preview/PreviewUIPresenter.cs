@@ -29,7 +29,12 @@ namespace Preview
             nameof(JSBridge.GetMetrics), nameof(JSBridge.SetHideControls), nameof(JSBridge.GetEmoteLength),
             nameof(JSBridge.IsEmotePlaying), nameof(JSBridge.PlayEmote), nameof(JSBridge.PauseEmote),
             nameof(JSBridge.GoToEmote), nameof(JSBridge.StopEmote), nameof(JSBridge.EnableSound),
-            nameof(JSBridge.DisableSound), nameof(JSBridge.HasSound),
+            nameof(JSBridge.DisableSound), nameof(JSBridge.HasSound), nameof(JSBridge.SetZoom),
+            nameof(JSBridge.SetZoomLevel), nameof(JSBridge.SetWheelZoom), nameof(JSBridge.SetWheelStart),
+            nameof(JSBridge.SetOffset), nameof(JSBridge.SetCameraPosition), nameof(JSBridge.SetCamera),
+            nameof(JSBridge.SetLockAlpha), nameof(JSBridge.SetLockBeta), nameof(JSBridge.SetLockRadius),
+            nameof(JSBridge.SetPanning), nameof(JSBridge.SetDisableAutoRotate),
+            nameof(JSBridge.SetAutoRotateSpeed), nameof(JSBridge.SetShowThumbnailBoundaries),
         };
 
         [SerializeField] private AudioSource audioSource;
@@ -53,6 +58,7 @@ namespace Preview
         private VisualElement _controls;
         private VisualElement _loader;
         private VisualElement _loaderIcon;
+        private VisualElement _thumbnailBoundaries;
 
         private string _currentDebugInput = "";
         private bool _debugLoaded;
@@ -82,6 +88,7 @@ namespace Preview
             _controls = root.Q("Controls");
             _loader = root.Q("Loader");
             _loaderIcon = _loader.Q("Icon");
+            _thumbnailBoundaries = root.Q("ThumbnailBoundaries");
 
             _controls.AddManipulator(new DragManipulator((d, dt) => ContainerDrag!(d, dt)));
             _controls.AddManipulator(new DragManipulator(OnPanDrag, MouseButton.RightMouse, accumulateDelta: true,
@@ -132,6 +139,15 @@ namespace Preview
         public void EnablePan(bool enable)
         {
             _panEnabled = enable;
+        }
+
+        /// <summary>
+        /// Outlines the centred half of the canvas that a square thumbnail keeps. Not a control, so
+        /// <see cref="SetControlsHidden"/> leaves it alone.
+        /// </summary>
+        public void ShowThumbnailBoundaries(bool show)
+        {
+            _thumbnailBoundaries.style.display = show ? DisplayStyle.Flex : DisplayStyle.None;
         }
 
         public void EnableEmoteControls(bool enable)

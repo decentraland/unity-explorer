@@ -10,9 +10,17 @@ namespace Preview
         // Floor for the fit's view-axis depth, so a subject sitting on the lens cannot divide by zero.
         private const float MIN_FRUSTUM_DEPTH = 0.01f;
 
-        [SerializeField] private float minFOV = 10f;
-        [SerializeField] private float maxFOV = 30f;
-        [SerializeField] private float wheelZoomSensitivity = 0.5f;
+        // The zoomed lens stays inside these whatever the fit and the zoom factor ask for.
+        [SerializeField] private float minFieldOfView = 2f;
+        [SerializeField] private float maxFieldOfView = 60f;
+
+        // Zoom factor per unit of wheel delta; UI Toolkit reports about three units per notch.
+        [SerializeField] private float wheelZoomStep = 1.03f;
+
+        // The renderer's own wheel range around the fitted view, used when the page passes no zoom
+        // option: in up to twice the fit, out to two thirds of it.
+        [SerializeField] private float defaultZoomIn = 2f;
+        [SerializeField] private float defaultZoomOut = 1.5f;
 
         // Converts a drag into world units so the subject tracks the cursor exactly.
         [SerializeField] private float panSubjectDistance = 7f;
@@ -31,6 +39,7 @@ namespace Preview
         [SerializeField] private CinemachineCamera jesusCamera;
 
         private float _initialFOV;
+        private float _initialOrthoSize;
 
         // One per zoomable camera - the avatar and item views frame different subjects.
         private CameraFraming _avatarFraming;
@@ -40,6 +49,12 @@ namespace Preview
         private CameraFraming _active;
 
         private float _lastAspect;
+        private PreviewMode? _lastMode;
+
+        private ZoomRange _zoomRange;
+        private Vector2 _startOffset;
+        private bool _zoomLocked;
+        private bool _orthographic;
 
 #if UNITY_EDITOR
         private float _lastAvatarFitMargin;
@@ -52,11 +67,13 @@ namespace Preview
         private void Awake()
         {
             _initialFOV = marketplaceAvatarCamera.Lens.FieldOfView;
+            _initialOrthoSize = marketplaceAvatarCamera.Lens.OrthographicSize;
+            _zoomRange = ZoomRange.FromOptions(null, null, 50f, defaultZoomIn, defaultZoomOut);
 
-            // Same three cameras the FOV zoom drives - authProfile and jesus are deliberately left alone
-            _avatarFraming = new CameraFraming(marketplaceAvatarCamera, _initialFOV);
-            _wearableFraming = new CameraFraming(marketplaceWearableCamera, _initialFOV);
-            _builderFraming = new CameraFraming(builderCamera, _initialFOV);
+            // Same three cameras the zoom drives - authProfile and jesus are deliberately left alone
+            _avatarFraming = new CameraFraming(marketplaceAvatarCamera, _initialFOV, _initialOrthoSize);
+            _wearableFraming = new CameraFraming(marketplaceWearableCamera, _initialFOV, _initialOrthoSize);
+            _builderFraming = new CameraFraming(builderCamera, _initialFOV, _initialOrthoSize);
             _active = _avatarFraming;
 
             _lastAspect = Aspect;
@@ -70,14 +87,51 @@ namespace Preview
             authProfileCamera.Prioritize();
         }
 
+        /// <summary>
+        /// Takes the camera options: the zoom range, its lock, the starting offset and the projection.
+        /// The current zoom and pan are only clamped, never replaced, so a reload within a mode keeps
+        /// the creator's framing; <see cref="RestartZoom"/> is the explicit way back to the start.
+        /// </summary>
+        public void Configure(PreviewConfiguration config)
+        {
+            _zoomRange = ZoomRange.FromOptions(config.ZoomLevel, config.WheelZoom, config.WheelStart,
+                defaultZoomIn, defaultZoomOut);
+            _startOffset = config.Offset;
+            _zoomLocked = config.LockRadius;
+            _orthographic = config.Projection == "orthographic";
+
+            _avatarFraming.Zoom = _zoomRange.Clamp(_avatarFraming.Zoom);
+            _wearableFraming.Zoom = _zoomRange.Clamp(_wearableFraming.Zoom);
+            _builderFraming.Zoom = _zoomRange.Clamp(_builderFraming.Zoom);
+        }
+
+        /// <summary>
+        /// Puts every view back at the start of the zoom range, after the zoom options changed.
+        /// </summary>
+        public void RestartZoom()
+        {
+            _avatarFraming.Zoom = _zoomRange.Start;
+            _wearableFraming.Zoom = _zoomRange.Start;
+            _builderFraming.Zoom = _zoomRange.Start;
+        }
+
         public void SetMode(PreviewMode mode)
         {
-            // Reset zoom, pan and any fit when switching modes
-            ResetFraming(_avatarFraming);
-            ResetFraming(_wearableFraming);
-            ResetFraming(_builderFraming);
+            // Only a change of mode starts over from the fit: a reload within a mode, which the editors
+            // trigger on every item update, keeps the zoom and pan the creator set.
+            if (_lastMode != mode)
+            {
+                _lastMode = mode;
 
-            _active = mode == PreviewMode.Builder ? _builderFraming : _avatarFraming;
+                ResetFraming(_avatarFraming);
+                ResetFraming(_wearableFraming);
+                ResetFraming(_builderFraming);
+                ResetZoomAndPan(_avatarFraming);
+                ResetZoomAndPan(_wearableFraming);
+                ResetZoomAndPan(_builderFraming);
+
+                _active = mode == PreviewMode.Builder ? _builderFraming : _avatarFraming;
+            }
 
             switch (mode)
             {
@@ -108,8 +162,90 @@ namespace Preview
         /// </summary>
         public void FitWearableView(Transform subject) => Fit(_wearableFraming, subject);
 
-        // Writes only zoom and pan - the two things the wheel and right-drag write - so the user can
-        // leave the framing the same way they could have reached it.
+        public void ShowMarketplaceWearable(bool showWearable)
+        {
+            var next = showWearable ? _wearableFraming : _avatarFraming;
+
+            // A different subject starts from the fit's framing, not the other view's zoom and pan.
+            // The same view again, as on a reload, keeps them.
+            if (next != _active)
+            {
+                _active = next;
+                ResetZoomAndPan(_active);
+            }
+
+            Refit(_active);
+            _active.Camera.Prioritize();
+        }
+
+        public void ZoomByWheelDelta(float delta)
+        {
+            if (_zoomLocked) return;
+
+            _active.Zoom = _zoomRange.Clamp(_active.Zoom * Mathf.Pow(wheelZoomStep, -delta));
+        }
+
+        /// <summary>
+        /// A zoom button press from the page, in Babylon's unit: positive pulls closer.
+        /// </summary>
+        public void ZoomByDelta(float delta)
+        {
+            if (_zoomLocked) return;
+
+            _active.Zoom = _zoomRange.StepByZoomDelta(_active.Zoom, delta);
+        }
+
+        /// <summary>
+        /// Moves the orbit by <paramref name="radiusDelta"/> metres, Babylon's radius: positive pulls back.
+        /// </summary>
+        public void OrbitBy(float radiusDelta)
+        {
+            if (_zoomLocked) return;
+
+            _active.Zoom = _zoomRange.StepByRadius(_active.Zoom, radiusDelta);
+        }
+
+        /// <summary>
+        /// Puts the view at an absolute offset, across and up the screen in metres, replacing any
+        /// right-drag pan. Unclamped: the page asked for exactly this.
+        /// </summary>
+        public void SetOffset(Vector2 offset)
+        {
+            _active.UserPan = offset;
+            ApplyPan(_active);
+        }
+
+        /// <summary>
+        /// Pans the camera by a drag, as a fraction of the panel height (see
+        /// <see cref="PreviewUIPresenter"/>). Unsmoothed, so the subject stays glued to the cursor.
+        /// <paramref name="deltaTime"/> is unused: the offset tracks distance dragged, not time.
+        /// </summary>
+        public void Pan(Vector2 normalizedDelta, float deltaTime)
+        {
+            // World height at the subject makes the drag 1:1, and inverts because moving the camera left
+            // slides the subject right. The LIVE lens, not the target - mid-zoom they differ, and 1:1 has
+            // to match what is on screen.
+            var lens = _active.Camera.Lens;
+            var worldHeightAtSubject = _orthographic
+                ? 2f * lens.OrthographicSize
+                : 2f * panSubjectDistance * Mathf.Tan(lens.FieldOfView * 0.5f * Mathf.Deg2Rad);
+
+            _active.UserPan += new Vector2(-normalizedDelta.x, normalizedDelta.y) * worldHeightAtSubject;
+            _active.UserPan = Vector2.ClampMagnitude(_active.UserPan, maxPanOffset);
+
+            ApplyPan(_active);
+        }
+
+        private void Update()
+        {
+            RefitIfFramingInputsChanged();
+
+            LerpLens(_avatarFraming);
+            LerpLens(_wearableFraming);
+            LerpLens(_builderFraming);
+        }
+
+        // Writes only the fit - the user's zoom and pan sit on top of it, so they survive a refit.
         private void Fit(CameraFraming framing, Transform subject)
         {
             framing.HasSubject = GameObjectUtils.TryMeasureYawInvariant(subject, out var center,
@@ -148,14 +284,19 @@ namespace Preview
             // The larger of "contains the height" and "contains the width" is the only one containing both.
             var forHeight = 2f * Mathf.Atan(framing.SubjectHeight * 0.5f / distance) * Mathf.Rad2Deg;
             var forWidth = 2f * Mathf.Atan(framing.SubjectRadius / distance / Aspect) * Mathf.Rad2Deg;
+            var margin = MarginFor(framing);
 
-            var fittedFOV = Mathf.Max(forHeight, forWidth);
-            framing.TargetFOV = Mathf.Clamp(fittedFOV * MarginFor(framing), minFOV, maxFOV);
+            framing.FittedFOV = Mathf.Max(forHeight, forWidth) * margin;
+
+            // An orthographic frame is half its height tall, and the width is brought in through the
+            // aspect, the same choice as above.
+            framing.FittedOrthoSize =
+                Mathf.Max(framing.SubjectHeight * 0.5f, framing.SubjectRadius / Aspect) * margin;
 
             // Zooming tightens around the view axis, so the subject has to be brought onto it too.
             var inCameraSpace = Quaternion.Inverse(rotation) * toSubject;
 
-            framing.PanOffset = Vector2.ClampMagnitude(
+            framing.FitOffset = Vector2.ClampMagnitude(
                 new Vector2(inCameraSpace.x, inCameraSpace.y), maxPanOffset);
 
             ApplyPan(framing);
@@ -164,24 +305,26 @@ namespace Preview
         private void ResetFraming(CameraFraming framing)
         {
             framing.HasSubject = false;
-            framing.TargetFOV = _initialFOV;
-            framing.Camera.Lens.FieldOfView = _initialFOV;
-            framing.PanOffset = Vector2.zero;
+            framing.FittedFOV = _initialFOV;
+            framing.FittedOrthoSize = _initialOrthoSize;
+            framing.FitOffset = Vector2.zero;
+
+            framing.Camera.Lens.FieldOfView = TargetFieldOfView(framing);
+            framing.Camera.Lens.OrthographicSize = TargetOrthoSize(framing);
+
+            ApplyPan(framing);
+        }
+
+        private void ResetZoomAndPan(CameraFraming framing)
+        {
+            framing.Zoom = _zoomRange.Start;
+            framing.UserPan = _startOffset;
 
             ApplyPan(framing);
         }
 
         private float MarginFor(CameraFraming framing) =>
             framing == _wearableFraming ? wearableFitMargin : avatarFitMargin;
-
-        private void Update()
-        {
-            RefitIfFramingInputsChanged();
-
-            LerpToTargetFOV(_avatarFraming);
-            LerpToTargetFOV(_wearableFraming);
-            LerpToTargetFOV(_builderFraming);
-        }
 
         // Re-runs the fit when the viewport aspect moves underneath it, which the Shop does on resize.
         // Margins are watched in the Editor only - Inspector dials cannot move in a player build.
@@ -208,77 +351,56 @@ namespace Preview
             if (_wearableFraming.HasSubject) Refit(_wearableFraming);
         }
 
-        private void LerpToTargetFOV(CameraFraming framing)
+        private void LerpLens(CameraFraming framing)
         {
-            framing.Camera.Lens.FieldOfView = Mathf.Lerp(framing.Camera.Lens.FieldOfView,
-                framing.TargetFOV, Time.deltaTime * lerpSpeed);
+            var t = Time.deltaTime * lerpSpeed;
+            var lens = framing.Camera.Lens;
+
+            framing.Camera.Lens.FieldOfView = Mathf.Lerp(lens.FieldOfView, TargetFieldOfView(framing), t);
+            framing.Camera.Lens.OrthographicSize = Mathf.Lerp(lens.OrthographicSize, TargetOrthoSize(framing), t);
         }
+
+        private float TargetFieldOfView(CameraFraming framing) =>
+            Mathf.Clamp(framing.FittedFOV / framing.Zoom, minFieldOfView, maxFieldOfView);
+
+        private static float TargetOrthoSize(CameraFraming framing) => framing.FittedOrthoSize / framing.Zoom;
 
         private static void ApplyPan(CameraFraming framing)
         {
             var camTransform = framing.Camera.transform;
+            var offset = framing.FitOffset + framing.UserPan;
 
             // localRotation keeps the offset screen-aligned however the camera is oriented.
             camTransform.localPosition = framing.InitialLocalPosition +
-                                         camTransform.localRotation *
-                                         new Vector3(framing.PanOffset.x, framing.PanOffset.y, 0f);
-        }
-
-        public void ShowMarketplaceWearable(bool showWearable)
-        {
-            _active = showWearable ? _wearableFraming : _avatarFraming;
-
-            // A different subject starts from the fit's framing, not last time's zoom and pan.
-            Refit(_active);
-
-            _active.Camera.Prioritize();
-        }
-
-        public void ZoomByWheelDelta(float delta)
-        {
-            _active.TargetFOV = Mathf.Clamp(_active.TargetFOV + delta * wheelZoomSensitivity,
-                minFOV, maxFOV);
-        }
-
-        /// <summary>
-        /// Pans the camera by a drag, as a fraction of the panel height (see
-        /// <see cref="PreviewUIPresenter"/>). Unsmoothed, so the subject stays glued to the cursor.
-        /// <paramref name="deltaTime"/> is unused: the offset tracks distance dragged, not time.
-        /// </summary>
-        public void Pan(Vector2 normalizedDelta, float deltaTime)
-        {
-            // World height at the subject makes the drag 1:1, and inverts because moving the camera left
-            // slides the subject right. The LIVE FOV, not TargetFOV - mid-zoom they differ, and 1:1 has
-            // to match what is on screen. Perspective only.
-            var fov = _active.Camera.Lens.FieldOfView;
-            var worldHeightAtSubject = 2f * panSubjectDistance * Mathf.Tan(fov * 0.5f * Mathf.Deg2Rad);
-
-            _active.PanOffset += new Vector2(-normalizedDelta.x, normalizedDelta.y) * worldHeightAtSubject;
-            _active.PanOffset = Vector2.ClampMagnitude(_active.PanOffset, maxPanOffset);
-
-            ApplyPan(_active);
+                                         camTransform.localRotation * new Vector3(offset.x, offset.y, 0f);
         }
 
         // The fitted subject is kept so the fit can re-run on an aspect change without the caller
-        // handing the bounds back in.
+        // handing the bounds back in. The fit and the user's framing are separate, so one survives
+        // a change of the other.
         private class CameraFraming
         {
             public readonly CinemachineCamera Camera;
             public readonly Vector3 InitialLocalPosition;
 
-            public float TargetFOV;
-            public Vector2 PanOffset;
+            public float FittedFOV;
+            public float FittedOrthoSize;
+            public Vector2 FitOffset;
+
+            public float Zoom = 1f;
+            public Vector2 UserPan;
 
             public bool HasSubject;
             public Vector3 SubjectCenter;
             public float SubjectRadius;
             public float SubjectHeight;
 
-            public CameraFraming(CinemachineCamera camera, float initialFOV)
+            public CameraFraming(CinemachineCamera camera, float initialFOV, float initialOrthoSize)
             {
                 Camera = camera;
                 InitialLocalPosition = camera.transform.localPosition;
-                TargetFOV = initialFOV;
+                FittedFOV = initialFOV;
+                FittedOrthoSize = initialOrthoSize;
             }
         }
     }

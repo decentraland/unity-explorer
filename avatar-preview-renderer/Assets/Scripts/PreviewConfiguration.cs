@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Text;
 using System.Web;
 using Services;
@@ -271,6 +272,114 @@ public class PreviewConfiguration
     public bool HideControls { get; private set; }
 
     /// <summary>
+    /// The camera options of the Babylon preview, kept by name so an app frames both renderers with
+    /// the same values. <see cref="ZoomLevel"/> is 0 to 100 (closest view), <see cref="WheelZoom"/>
+    /// how far the wheel pulls back from it (1 = not at all), <see cref="WheelStart"/> where the
+    /// view begins in that range (100 = closest). Unset zoom and wheel options leave the renderer's
+    /// own wheel range around the fitted view.
+    /// </summary>
+    public float? ZoomLevel { get; private set; }
+
+    public float? WheelZoom { get; private set; }
+
+    public float WheelStart { get; private set; } = 50f;
+
+    /// <summary>
+    /// Static freezes the view: no rotation, zoom or pan, no auto-rotate, and the emote held on its
+    /// first frame.
+    /// </summary>
+    public PreviewCameraKind Camera { get; private set; } = PreviewCameraKind.Interactive;
+
+    /// <summary>
+    /// Per-axis input locks, Babylon's names: alpha is the turntable, beta the tilt, radius the zoom.
+    /// </summary>
+    public bool LockAlpha { get; private set; }
+
+    public bool LockBeta { get; private set; }
+
+    public bool LockRadius { get; private set; }
+
+    /// <summary>
+    /// Whether right-drag pans the view. On by default, as the wrapper defaults it.
+    /// </summary>
+    public bool Panning { get; private set; } = true;
+
+    public bool DisableAutoRotate { get; private set; }
+
+    /// <summary>
+    /// Idle turntable speed in radians per second, Babylon's unit and default.
+    /// </summary>
+    public float AutoRotateSpeed { get; private set; } = 0.2f;
+
+    /// <summary>
+    /// Where the view starts, in metres across and up the screen: the thumbnail editor's slider drives
+    /// the vertical one. Replaces any right-drag pan.
+    /// </summary>
+    public Vector2 Offset { get; private set; }
+
+    /// <summary>
+    /// Draws the centred half of the canvas a square thumbnail keeps, for the Builder's thumbnail editor.
+    /// </summary>
+    public bool ShowThumbnailBoundaries { get; private set; }
+
+    public void SetZoomLevel(string value) => ZoomLevel = ParseOptionalNumber(value, "zoom", ZoomLevel);
+
+    public void SetWheelZoom(string value) => WheelZoom = ParseOptionalNumber(value, "wheelZoom", WheelZoom);
+
+    public void SetWheelStart(string value) => WheelStart = ParseNumber(value, "wheelStart", WheelStart);
+
+    public void SetCamera(string value) =>
+        Camera = value.Trim().ToLowerInvariant() == "static" ? PreviewCameraKind.Static : PreviewCameraKind.Interactive;
+
+    public void SetLockAlpha(string value) => LockAlpha = ParseToggle(value, "lockAlpha", LockAlpha);
+
+    public void SetLockBeta(string value) => LockBeta = ParseToggle(value, "lockBeta", LockBeta);
+
+    public void SetLockRadius(string value) => LockRadius = ParseToggle(value, "lockRadius", LockRadius);
+
+    public void SetPanning(string value) => Panning = ParseToggle(value, "panning", Panning);
+
+    public void SetDisableAutoRotate(string value) =>
+        DisableAutoRotate = ParseToggle(value, "disableAutoRotate", DisableAutoRotate);
+
+    public void SetAutoRotateSpeed(string value) =>
+        AutoRotateSpeed = ParseNumber(value, "autoRotateSpeed", AutoRotateSpeed);
+
+    public void SetOffsetX(string value) => Offset = new Vector2(ParseNumber(value, "offsetX", Offset.x), Offset.y);
+
+    public void SetOffsetY(string value) => Offset = new Vector2(Offset.x, ParseNumber(value, "offsetY", Offset.y));
+
+    public void SetOffset(Vector2 offset) => Offset = offset;
+
+    public void SetShowThumbnailBoundaries(string value) =>
+        ShowThumbnailBoundaries = ParseToggle(value, "showThumbnailBoundaries", ShowThumbnailBoundaries);
+
+    /// <summary>
+    /// Parses a number the way the page wrote it, with a dot decimal separator whatever the locale.
+    /// </summary>
+    public static bool TryParseNumber(string value, out float number) =>
+        float.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out number);
+
+    // An unparsable value keeps `current`, for the same reason ParseToggle does.
+    private static float ParseNumber(string value, string name, float current)
+    {
+        if (TryParseNumber(value, out var number)) return number;
+
+        Debug.LogWarning($"Unknown {name} value [{value}], keeping {name} {current}");
+        return current;
+    }
+
+    // An empty value unsets the option, so a page can go back to the renderer's own range.
+    private static float? ParseOptionalNumber(string value, string name, float? current)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return null;
+        if (TryParseNumber(value, out var number)) return number;
+
+        Debug.LogWarning($"Unknown {name} value [{value}], keeping {name} {current}");
+        return current;
+    }
+
+    /// <summary>
     /// If we should instruct the browser to pre-fetch certain files. On by default.
     /// </summary>
     public bool UseBrowserPreload { get; set; } = true;
@@ -393,6 +502,45 @@ public class PreviewConfiguration
                 case "hideControls":
                     Instance.SetHideControls(value);
                     break;
+                case "zoom":
+                    Instance.SetZoomLevel(value);
+                    break;
+                case "wheelZoom":
+                    Instance.SetWheelZoom(value);
+                    break;
+                case "wheelStart":
+                    Instance.SetWheelStart(value);
+                    break;
+                case "camera":
+                    Instance.SetCamera(value);
+                    break;
+                case "lockAlpha":
+                    Instance.SetLockAlpha(value);
+                    break;
+                case "lockBeta":
+                    Instance.SetLockBeta(value);
+                    break;
+                case "lockRadius":
+                    Instance.SetLockRadius(value);
+                    break;
+                case "panning":
+                    Instance.SetPanning(value);
+                    break;
+                case "disableAutoRotate":
+                    Instance.SetDisableAutoRotate(value);
+                    break;
+                case "autoRotateSpeed":
+                    Instance.SetAutoRotateSpeed(value);
+                    break;
+                case "offsetX":
+                    Instance.SetOffsetX(value);
+                    break;
+                case "offsetY":
+                    Instance.SetOffsetY(value);
+                    break;
+                case "showThumbnailBoundaries":
+                    Instance.SetShowThumbnailBoundaries(value);
+                    break;
                 case "useBrowserPreload":
                     Instance.UseBrowserPreload = bool.Parse(value);
                     break;
@@ -457,6 +605,20 @@ public class PreviewConfiguration
         sb.AppendFormat("&disableLoader={0}", DisableLoader);
         sb.AppendFormat("&disableSwitcher={0}", DisableSwitcher);
         sb.AppendFormat("&hideControls={0}", HideControls);
+        if (ZoomLevel.HasValue)
+            sb.AppendFormat(CultureInfo.InvariantCulture, "&zoom={0}", ZoomLevel.Value);
+        if (WheelZoom.HasValue)
+            sb.AppendFormat(CultureInfo.InvariantCulture, "&wheelZoom={0}", WheelZoom.Value);
+        sb.AppendFormat(CultureInfo.InvariantCulture, "&wheelStart={0}", WheelStart);
+        sb.AppendFormat("&camera={0}", Camera.ToString().ToLowerInvariant());
+        sb.AppendFormat("&lockAlpha={0}", LockAlpha);
+        sb.AppendFormat("&lockBeta={0}", LockBeta);
+        sb.AppendFormat("&lockRadius={0}", LockRadius);
+        sb.AppendFormat("&panning={0}", Panning);
+        sb.AppendFormat("&disableAutoRotate={0}", DisableAutoRotate);
+        sb.AppendFormat(CultureInfo.InvariantCulture, "&autoRotateSpeed={0}", AutoRotateSpeed);
+        sb.AppendFormat(CultureInfo.InvariantCulture, "&offsetX={0}&offsetY={1}", Offset.x, Offset.y);
+        sb.AppendFormat("&showThumbnailBoundaries={0}", ShowThumbnailBoundaries);
         sb.AppendFormat("&useBrowserPreload={0}", UseBrowserPreload);
         sb.AppendFormat("&username={0}", Username);
         sb.AppendFormat("&showFPS={0}", ShowFPS);
@@ -486,4 +648,13 @@ public enum PreviewViewType
 {
     Wearable,
     Avatar,
+}
+
+/// <summary>
+/// Mirrors PreviewCamera in @dcl/schemas.
+/// </summary>
+public enum PreviewCameraKind
+{
+    Interactive,
+    Static,
 }
