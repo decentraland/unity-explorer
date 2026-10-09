@@ -18,7 +18,7 @@ name: Comment Artifact URL on PR
 # bot-actor pull_request events), so when the cut lands while
 # dev is still building that commit, this dev run is the one whose result the
 # release PR's comment has to carry (release-gate and release-force-build below
-# finish that job: start the InWorld gate on success, label the PR
+# finish that job: start the automation suites on success, label the PR
 # `force-build` on anything else).
 #
 # Both are gated on build-run-attempted.sh. build-unitycloud.yml also runs for
@@ -590,15 +590,21 @@ jobs:
             echo "::notice::PR #${PR_NUMBER} moved from ${HEAD_SHA:0:7} to ${LIVE_SHA:0:7}; the newer build's completion dispatches the suites."
             exit 0
           fi
-          RUNS=$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/in-world-tests.yml/runs?head_sha=${HEAD_SHA}&per_page=20" \
-            --jq '.workflow_runs[] | "\(.id) \(.status)"')
+          if ! RUNS=$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/in-world-tests.yml/runs?head_sha=${HEAD_SHA}&per_page=20" \
+            --jq '.workflow_runs[] | "\(.id) \(.status)"'); then
+            echo "::error::Could not list In-World Tests runs for ${HEAD_SHA:0:7}, so existing validation is unknown and the automation suites were not dispatched. Start \`In-World Tests\` by hand from the Actions tab against ${HEAD_REF}."
+            exit 1
+          fi
           COVERED=0
           while read -r RUN_ID STATUS; do
             [ -z "$RUN_ID" ] && continue
             if [ "$STATUS" != "completed" ]; then COVERED=1; break; fi
             # Visual is advisory; the InWorld gate determines completed coverage.
-            GATE=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${RUN_ID}/jobs?per_page=100" \
-              --jq '[.jobs[] | select(.name == "InWorld suite result") | .conclusion] | first // ""')
+            if ! GATE=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${RUN_ID}/jobs?per_page=100" \
+              --jq '[.jobs[] | select(.name == "InWorld suite result") | .conclusion] | first // ""'); then
+              echo "::error::Could not read the jobs of In-World Tests run ${RUN_ID}, so whether ${HEAD_SHA:0:7} is already validated is unknown and the automation suites were not dispatched. Start \`In-World Tests\` by hand from the Actions tab against ${HEAD_REF}."
+              exit 1
+            fi
             if [ "$GATE" = "success" ]; then COVERED=1; break; fi
           done <<< "$RUNS"
           if [ "$COVERED" != "0" ]; then

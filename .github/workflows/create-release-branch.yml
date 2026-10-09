@@ -79,11 +79,11 @@ jobs:
               bash .github/actions/ci-status-comment/upsert-ci-status.sh
           }
 
-          # The helper the InWorld gate step below also defines, written twice
+          # The helper the automation dispatch step below also defines, written twice
           # for the reason stated there: a step cannot export a shell function
           # to the next one. What it buys here is the distinction between "the
           # API says there is no run" and "the API did not answer" — the latter
-          # left to set -e would kill this step and take the gate with it, and
+          # left to set -e would kill this step and prevent dispatch, and
           # reported as the former it would send the release manager off to
           # rebuild a commit that is already built.
           gh_api_retry() {
@@ -112,12 +112,12 @@ jobs:
           # moment the PR opens, already "completed", with no jobs — newer than
           # dev's real run and saying nothing about the commit.
           #
-          # BUILD_STATE is read by the gate step below:
-          #   reused    a green run's links were written; the gate is dispatched
+          # BUILD_STATE is read by the automation dispatch step below:
+          #   reused    a green run's links were written; the suites are dispatched
           #   building  dev is still building; its completion reports into this
-          #             PR (resolve-comment-pr.sh) and dispatches the gate
+          #             PR (resolve-comment-pr.sh) and dispatches the suites
           #   forced    dev's build failed; the PR was labeled force-build and
-          #             the release branch's own build dispatches the gate
+          #             the release branch's own build dispatches the suites
           #   notfound  no run exists; the operator has to label force-build
           #   unknown   the API did not answer
           BUILD_LISTED=1
@@ -247,7 +247,7 @@ jobs:
           # approved, and only a push to the branch or a force-build label
           # changes that.
           #
-          # Four outcomes, kept apart for the same reason the InWorld gate
+          # Four outcomes, kept apart for the same reason the automation dispatch
           # below keeps LISTED apart from UNEXAMINED: "the suite did not run",
           # "the suite is still running" and "the API would not say" are three
           # different instructions to whoever reads the section, and only the
@@ -388,31 +388,31 @@ jobs:
         run: |
           set -euo pipefail
 
-          # On the dispatch path the gate resolves this commit's build with
+          # On the dispatch path the workflow resolves this commit's build with
           # wait-minutes 0, so it fails within seconds unless both zips are
           # already up. Ask it the same question — did both build legs conclude
           # success — rather than whether a run went green: build-unitycloud.yml
           # also concludes green having built nothing, when the commit touches
           # no Explorer/** file and the matrix never expands, and green having
           # built one platform, when a windows-only/macos-only label narrows it.
-          # Either would dispatch a gate that immediately reds a brand-new
+          # Either would dispatch a suite run that immediately reds a brand-new
           # release PR with nothing wrong in it.
           #
           # Runs come back newest first, and only the newest few are worth
           # asking about — the same candidate cap resolve-explorer-build uses.
           HEAD_SHA=$(git rev-parse HEAD)
 
-          # Set by the seed step. In these two states the build that will carry
-          # the gate has not finished yet, and pr-comment-artifact-url.yml
+          # Set by the seed step. In these two states the build needed by the
+          # suites has not finished yet, and pr-comment-artifact-url.yml
           # (release-gate) dispatches it when that build succeeds; listing runs
           # here would only end in an error telling the operator to do what the
           # workflow has already arranged.
           case "${BUILD_STATE:-}" in
             building)
-              echo "::notice::dev is still building ${HEAD_SHA:0:7}. When that build succeeds its links are written into the release PR and the InWorld gate is dispatched against ${BRANCH_NAME}; if it does not, the PR is labeled force-build and the release branch's own build does the same."
+              echo "::notice::dev is still building ${HEAD_SHA:0:7}. When that build succeeds its links are written into the release PR and the automation suites are dispatched against ${BRANCH_NAME}; if it does not, the PR is labeled force-build and the release branch's own build does the same."
               exit 0 ;;
             forced)
-              echo "::notice::dev's build of ${HEAD_SHA:0:7} failed; the PR was labeled force-build and the InWorld gate is dispatched against ${BRANCH_NAME} when the release branch's build succeeds."
+              echo "::notice::dev's build of ${HEAD_SHA:0:7} failed; the PR was labeled force-build and the automation suites are dispatched against ${BRANCH_NAME} when the release branch's build succeeds."
               exit 0 ;;
           esac
 
