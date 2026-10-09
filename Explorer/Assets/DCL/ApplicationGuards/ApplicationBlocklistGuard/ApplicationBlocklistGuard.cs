@@ -26,7 +26,7 @@ namespace DCL.ApplicationGuards
                     return new GetBanStatusData { isBanned = false };
                 }
 
-                return result.Value.data;
+                return result.Value.data ?? new GetBanStatusData { isBanned = false };
             }
 
             try
