@@ -4,6 +4,7 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using DCL.CharacterPreview;
 using DCL.Diagnostics;
+using DCL.Profiles;
 using DCL.Profiles.Self;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
@@ -15,10 +16,10 @@ namespace DCL.Backpack.AvatarSection.Outfits.Services
 {
     public class AvatarScreenshotService : IAvatarScreenshotService
     {
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly string baseOutfitsDirectory;
 
-        public AvatarScreenshotService(ISelfProfile selfProfile)
+        public AvatarScreenshotService(SelfProfile selfProfile)
         {
             this.selfProfile = selfProfile;
             baseOutfitsDirectory = Path.Combine(Application.persistentDataPath, "outfits");
@@ -200,8 +201,8 @@ namespace DCL.Backpack.AvatarSection.Outfits.Services
 
         private async UniTask<string?> GetCurrentUserIdAsync(CancellationToken ct)
         {
-            var profile = await selfProfile.ProfileAsync(ct);
-            return profile?.UserId;
+            // TODO (Nick) same here, maybe the async call is redundant and the snapshow from the SelfProfile may work well
+            return (await selfProfile.ProfileAsync(ct)).IsOk(out Profile? profile) ? profile.UserId : null;
         }
 
         private GraphicsFormat GetOutputGraphicsFormat()

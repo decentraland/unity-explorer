@@ -14,6 +14,7 @@ using DCL.NotificationsBus.NotificationTypes;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI;
+using DCL.Utility.Types;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -108,12 +109,25 @@ namespace DCL.EmotesWheel
 
             async UniTaskVoid InitializeEverythingAsync(CancellationToken ct)
             {
-                Profile? profile = selfProfile.OwnProfile ?? await selfProfile.ProfileAsync(ct);
+                Option<Profile> known = selfProfile.CurrentProfileSnapshot.KnownProfile;
+                Profile? profile;
 
-                if (profile == null)
+                if (known.Has)
+                    profile = known.Value;
+                else
                 {
-                    ReportHub.LogError(new ReportData(ReportCategory.EMOTE), "Could not initialize emote wheel slots, profile is null");
-                    return;
+                    ProfileReadResult read = await selfProfile.ProfileAsync(ct);
+
+                    if (read.IsCancelled)
+                        return;
+
+                    if (!read.IsOk(out profile))
+                    {
+                        if (read.IsError(out ProfileReadError error) && error != ProfileReadError.FetchFailed)
+                            ReportHub.LogError(new ReportData(ReportCategory.EMOTE), $"Could not initialize emote wheel slots, the profile could not be read ({error})");
+
+                        return;
+                    }
                 }
 
                 SetUpSlots(profile);

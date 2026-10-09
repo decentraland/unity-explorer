@@ -37,7 +37,7 @@ namespace DCL.Friends
 
         private readonly IFriendsEventBus eventBus;
         private readonly FriendsCache friendsCache;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
 
         private readonly List<FriendRequest> receivedFriendRequestsBuffer = new ();
         private readonly List<FriendRequest> sentFriendRequestsBuffer = new ();
@@ -47,7 +47,7 @@ namespace DCL.Friends
         public RPCFriendsService(
             IFriendsEventBus eventBus,
             FriendsCache friendsCache,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             IRPCSocialServices socialServiceRPC) : base(socialServiceRPC, ReportCategory.FRIENDS)
         {
             this.eventBus = eventBus;
@@ -109,20 +109,23 @@ namespace DCL.Friends
                                 // This stream is ack-driven: the server sends the next update only after this one
                                 // is consumed, so a hung await here silently starves every subsequent update.
                                 // Prefer the cached profile and bound the fallback fetch
-                                Profile? myProfile = selfProfile.OwnProfile;
+                                Option<Profile> known = selfProfile.CurrentProfileSnapshot.KnownProfile;
+                                Profile? myProfile;
 
-                                if (myProfile == null)
+                                if (known.Has)
+                                    myProfile = known.Value;
+                                else
                                 {
-                                    myProfile = await selfProfile.ProfileAsync(ct).Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
+                                    ProfileReadResult read = await selfProfile.ProfileAsync(ct).Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
 
                                     // The fetch may resume on a background thread; the broadcast below requires the main thread
                                     await UniTask.SwitchToMainThread(ct);
-                                }
 
-                                if (myProfile == null)
-                                {
-                                    ReportHub.LogWarning(ReportCategory.FRIENDS, "Ignoring incoming friend request: own profile is not resolved");
-                                    break;
+                                    if (!read.IsOk(out myProfile))
+                                    {
+                                        ReportHub.LogWarning(ReportCategory.FRIENDS, "Ignoring incoming friend request: own profile is not resolved");
+                                        break;
+                                    }
                                 }
 
                                 var fr = new FriendRequest(
@@ -422,7 +425,13 @@ namespace DCL.Friends
                                                                                  .AttachExternalCancellation(ct)
                                                                                  .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
 
-            Profile? myProfile = await selfProfile.ProfileAsync(ct);
+            ProfileReadResult ownRead = await selfProfile.ProfileAsync(ct);
+
+            if (ownRead.IsCancelled)
+                throw new OperationCanceledException(ct);
+
+            if (!ownRead.IsOk(out Profile? myProfile))
+                throw new InvalidOperationException($"Cannot list received friend requests: own profile is not resolved ({ownRead})");
 
             switch (response.ResponseCase)
             {
@@ -447,7 +456,7 @@ namespace DCL.Friends
                             rr.Id,
                             DateTimeOffset.FromUnixTimeMilliseconds(rr.CreatedAt).DateTime,
                             requesterProfile.Value,
-                            myProfile!.Compact,
+                            myProfile.Compact,
                             rr.Message);
 
                         receivedFriendRequestsBuffer.Add(fr);
@@ -484,7 +493,13 @@ namespace DCL.Friends
                                                                                  .AttachExternalCancellation(ct)
                                                                                  .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
 
-            Profile? myProfile = await selfProfile.ProfileAsync(ct);
+            ProfileReadResult ownRead = await selfProfile.ProfileAsync(ct);
+
+            if (ownRead.IsCancelled)
+                throw new OperationCanceledException(ct);
+
+            if (!ownRead.IsOk(out Profile? myProfile))
+                throw new InvalidOperationException($"Cannot list sent friend requests: own profile is not resolved ({ownRead})");
 
             switch (response.ResponseCase)
             {
@@ -508,7 +523,7 @@ namespace DCL.Friends
                         var fr = new FriendRequest(
                             rr.Id,
                             DateTimeOffset.FromUnixTimeMilliseconds(rr.CreatedAt).DateTime,
-                            myProfile!.Compact,
+                            myProfile.Compact,
                             recipientProfile.Value,
                             rr.Message);
 
@@ -646,11 +661,17 @@ namespace DCL.Friends
             if (!friendProfile.Has)
                 throw new InvalidOperationException("Cannot create friend request: server returned a friend profile without an address");
 
-            Profile? myProfile = await selfProfile.ProfileAsync(ct);
+            ProfileReadResult ownRead = await selfProfile.ProfileAsync(ct);
+
+            if (ownRead.IsCancelled)
+                throw new OperationCanceledException(ct);
+
+            if (!ownRead.IsOk(out Profile? myProfile))
+                throw new InvalidOperationException("Cannot create friend request: server accepted the upsert but own profile is not resolved");
 
             var fr = new FriendRequest(response.Id,
                 DateTimeOffset.FromUnixTimeMilliseconds(response.CreatedAt).DateTime,
-                myProfile!.Compact,
+                myProfile.Compact,
                 friendProfile.Value,
                 messageBody);
 

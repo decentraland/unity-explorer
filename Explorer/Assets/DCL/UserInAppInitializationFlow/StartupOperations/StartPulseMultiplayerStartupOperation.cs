@@ -3,6 +3,7 @@ using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Pulse;
 using DCL.Profiles;
 using DCL.Profiles.Self;
+using DCL.Utility.Types;
 using System;
 using System.Threading;
 
@@ -14,13 +15,13 @@ namespace DCL.UserInAppInitializationFlow
 
         private readonly IPulseMultiplayerService service;
         private readonly IProfilePropagation profilePropagation;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly PulseActivation pulseActivation;
         private readonly PulseRealm pulseRealm;
 
         public StartPulseMultiplayerStartupOperation(IPulseMultiplayerService service,
             IProfilePropagation profilePropagation,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             PulseActivation pulseActivation,
             PulseRealm pulseRealm)
         {
@@ -59,13 +60,22 @@ namespace DCL.UserInAppInitializationFlow
                 return;
             }
 
-            Profile? profile = await selfProfile.ProfileAsync(ct);
+            ProfileReadResult read = await selfProfile.ProfileAsync(ct);
 
-            if (profile == null)
-                throw new InvalidOperationException("Own profile could not be resolved, nothing to propagate to Pulse");
+            if (read.IsCancelled)
+                throw new OperationCanceledException(ct);
 
-            profilePropagation.Propagate(profile);
+            if (!read.IsOk(out _))
+                throw new InvalidOperationException($"Own profile could not be resolved ({read}), nothing to propagate to Pulse");
+
+            // Only the version the catalyst confirmed is propagated, never a pending edit's.
+            Option<Profile> confirmed = selfProfile.CurrentProfileSnapshot.ConfirmedProfile;
+
+            if (!confirmed.Has)
+                return;
+
             await UniTask.SwitchToMainThread();
+            profilePropagation.PropagateIfNewVersion(confirmed.Value);
         }
     }
 }

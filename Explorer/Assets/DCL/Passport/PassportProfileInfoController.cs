@@ -1,6 +1,4 @@
-using Arch.Core;
 using Cysharp.Threading.Tasks;
-using DCL.Diagnostics;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using System;
@@ -11,51 +9,27 @@ namespace DCL.Passport
     public class PassportProfileInfoController
     {
         public event Action<Profile>? OnProfilePublished;
-        public event Action PublishError;
+        public event Action? PublishError;
 
-        private readonly ISelfProfile selfProfile;
-        private readonly World world;
-        private readonly Entity playerEntity;
+        private readonly SelfProfile selfProfile;
 
-        public PassportProfileInfoController(
-            ISelfProfile selfProfile,
-            World world,
-            Entity playerEntity)
+        public PassportProfileInfoController(SelfProfile selfProfile)
         {
             this.selfProfile = selfProfile;
-            this.world = world;
-            this.playerEntity = playerEntity;
         }
 
         public async UniTask UpdateProfileAsync(Profile profile, CancellationToken ct)
         {
-            try
+            ProfileDeployResult deploy = await selfProfile.DeployProfileAsync(profile, ct);
+
+            if (deploy.IsOk(out Profile? updatedProfile))
             {
-                // Update profile data
-                var updatedProfile = await selfProfile.UpdateProfileAsync(profile, ct,
-                    // No need to update avatar, since the only thing you can update from the passport is the profile description, not wearables nor emotes
-                    updateAvatarInWorld: false);
-
-                if (updatedProfile != null)
-                {
-                    // The entity only carries a profile once the startup flow put one there, and setting a missing component corrupts memory
-                    if (world.Has<Profile>(playerEntity))
-                    {
-                        updatedProfile.IsDirty = true;
-                        world.Set(playerEntity, updatedProfile);
-                    }
-
-                    OnProfilePublished?.Invoke(updatedProfile);
-                }
+                OnProfilePublished?.Invoke(updatedProfile);
+                return;
             }
-            catch (OperationCanceledException) { }
-            catch (IdenticalProfileUpdateException) { }
-            catch (Exception e)
-            {
-                const string ERROR_MESSAGE = "There was an error while trying to update your profile info. Please try again!";
+
+            if (deploy.IsFailure(out _))
                 PublishError?.Invoke();
-                ReportHub.LogError(ReportCategory.PROFILE, $"{ERROR_MESSAGE} ERROR: {e.Message}");
-            }
         }
     }
 }

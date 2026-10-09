@@ -81,7 +81,7 @@ namespace DCL.PluginSystem.Global
             IProfileRepository profileRepository,
             ILoadingStatus loadingStatus,
             IInputBlock inputBlock,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             IPassportBridge passportBridge,
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,

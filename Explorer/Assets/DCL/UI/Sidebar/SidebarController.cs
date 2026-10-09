@@ -54,7 +54,7 @@ namespace DCL.UI.Sidebar
         private readonly SmartWearablesSideBarTooltipController smartWearablesTooltipController;
         private readonly UnityAppWebBrowser webBrowser;
         private readonly IChatHistory chatHistory;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly IRealmData realmData;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly URLBuilder urlBuilder = new ();
@@ -94,7 +94,7 @@ namespace DCL.UI.Sidebar
             SmartWearablesSideBarTooltipController smartWearablesTooltipController,
             UnityAppWebBrowser webBrowser,
             IChatHistory chatHistory,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             IRealmData realmData,
             IDecentralandUrlsSource decentralandUrlsSource,
             World globalWorld,
@@ -304,8 +304,8 @@ namespace DCL.UI.Sidebar
             {
                 try
                 {
-                    Profile? myProfile = await selfProfile.ProfileAsync(ct);
-                    if (myProfile == null) return;
+                    if (!(await selfProfile.ProfileAsync(ct)).IsOk(out Profile? myProfile)) return;
+                    // TODO (Nick): do we really need it to be async? Maybe just take the snapshot?
 
                     urlBuilder.Clear();
 
@@ -362,9 +362,7 @@ namespace DCL.UI.Sidebar
             viewInstance?.MarketplaceCreditsButton.gameObject.SetActive(false);
 
             await UniTask.WaitUntil(() => realmData.Configured, cancellationToken: ct);
-            Profile? ownProfile = await selfProfile.ProfileAsync(ct);
-
-            if (ownProfile == null)
+            if (!(await selfProfile.ProfileAsync(ct)).IsOk(out Profile? ownProfile))
                 return;
 
             isMarketplaceCreditsFeatureEnabled = MarketplaceCreditsUtils.IsUserAllowedToUseTheFeatureAsync(ownProfile.UserId.Value, ct);

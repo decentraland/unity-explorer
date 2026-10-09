@@ -53,7 +53,7 @@ namespace DCL.Communities.CommunityCreation
         private readonly IInputBlock inputBlock;
         private readonly CommunitiesDataProvider.CommunitiesDataProvider dataProvider;
         private readonly IPlacesAPIService placesAPIService;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly IMVCManager mvcManager;
         private readonly IProfileRepository profileRepository;
         private readonly IWeb3IdentityCache identityCache;
@@ -105,7 +105,7 @@ namespace DCL.Communities.CommunityCreation
             IInputBlock inputBlock,
             CommunitiesDataProvider.CommunitiesDataProvider dataProvider,
             IPlacesAPIService placesAPIService,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             IMVCManager mvcManager,
             IProfileRepository profileRepository,
             IWeb3IdentityCache identityCache) : base(viewFactory)
@@ -278,9 +278,7 @@ namespace DCL.Communities.CommunityCreation
             addedCommunityPlaces.Clear();
             List<string> placesToAdd = new ();
 
-            var ownProfile = await selfProfile.ProfileAsync(ct);
-
-            if (ownProfile != null)
+            if ((await selfProfile.ProfileAsync(ct)).IsOk(out Profile? ownProfile))
             {
                 // Lands owned or managed by the user
                 var placesResult = await placesAPIService.GetDestinationsByOwnerAsync(ownProfile.UserId, ct)

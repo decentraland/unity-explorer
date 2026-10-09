@@ -25,7 +25,7 @@ namespace DCL.Multiplayer.Movement
             IRoomHub roomHub,
             IMessagePipesHub messagePipesHub,
             MovementInbox movementInbox,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             IUserBlockingCache userBlockingCache,
             MultiplayerDebugSettings multiplayerDebugSettings,
             PulseActivation pulseActivation)

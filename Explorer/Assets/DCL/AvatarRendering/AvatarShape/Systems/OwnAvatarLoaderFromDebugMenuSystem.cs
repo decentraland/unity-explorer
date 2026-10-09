@@ -1,10 +1,12 @@
 using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using Cysharp.Threading.Tasks;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Diagnostics;
 using DCL.Profiles;
+using DCL.Profiles.Helpers;
 using ECS;
 using ECS.Abstract;
 using System.Threading;
@@ -20,9 +22,6 @@ namespace DCL.AvatarRendering.AvatarShape
         private readonly DebugWidgetVisibilityBinding? widgetVisibility;
         private readonly IProfileRepository profileRepository;
 
-        
-        private CancellationTokenSource? fetchProfileCancellationToken;
-
         public OwnAvatarLoaderFromDebugMenuSystem(
             World world,
             Entity ownPlayerEntity,
@@ -37,7 +36,7 @@ namespace DCL.AvatarRendering.AvatarShape
 
             debugContainerBuilder.TryAddWidget("Profile: Avatar Shape")
                                  ?.SetVisibilityBinding(widgetVisibility = new DebugWidgetVisibilityBinding(false))
-                                 .AddStringFieldWithConfirmation("0x..", "Set Address", UpdateProfileForOwnAvatarAsync);
+                                 .AddStringFieldWithConfirmation("0x..", "Set Address", profileId => UpdateProfileForOwnAvatarAsync(profileId).Forget(static e => ReportHub.LogException(e, ReportCategory.AVATAR)));
         }
 
         protected override void Update(float t)
@@ -45,12 +44,14 @@ namespace DCL.AvatarRendering.AvatarShape
             widgetVisibility?.SetVisible(realmData.Configured);
         }
 
-        private async void UpdateProfileForOwnAvatarAsync(string profileId)
+        private async UniTask UpdateProfileForOwnAvatarAsync(string profileId)
         {
             const int VERSION = 0;
 
-            var newProfile = await profileRepository.GetAsync(profileId, VERSION, CancellationToken.None);
-            World.Set(ownPlayerEntity, newProfile);
+            Profile? fetched = await profileRepository.GetAsync(profileId, VERSION, CancellationToken.None);
+
+            if (fetched != null)
+                ProfileUtils.ReplaceOnEntity(World, ownPlayerEntity, fetched);
         }
     }
 }

@@ -4,6 +4,7 @@ using DCL.Diagnostics;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.MarketplaceCredits.Fields;
+using DCL.Profiles;
 using DCL.Profiles.Self;
 using System;
 using System.Threading;
@@ -23,7 +24,7 @@ namespace DCL.MarketplaceCredits.Sections
         private readonly MarketplaceCreditsProgramEndedSubController marketplaceCreditsProgramEndedSubController;
         private readonly UnityAppWebBrowser webBrowser;
         private readonly MarketplaceCreditsAPIClient marketplaceCreditsAPIClient;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly IInputBlock inputBlock;
 
         private CreditsProgramProgressResponse currentCreditsProgramProgress;
@@ -40,7 +41,7 @@ namespace DCL.MarketplaceCredits.Sections
             MarketplaceCreditsProgramEndedSubController marketplaceCreditsProgramEndedSubController,
             UnityAppWebBrowser webBrowser,
             MarketplaceCreditsAPIClient marketplaceCreditsAPIClient,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             IInputBlock inputBlock)
         {
             this.subView = subView;
@@ -90,23 +91,27 @@ namespace DCL.MarketplaceCredits.Sections
 
         private async UniTask LoadProgramRegistrationInfoAsync(CancellationToken ct)
         {
+            const string ERROR_MESSAGE = "There was an error loading the Credits Program. Please try again!";
+
             try
             {
                 subView.SetAsLoading(true);
 
-                var ownProfile = await selfProfile.ProfileAsync(ct);
-                if (ownProfile != null)
+                ProfileReadResult read = await selfProfile.ProfileAsync(ct);
+
+                if (read.IsOk(out Profile? ownProfile))
                 {
                     currentCreditsProgramProgress = await marketplaceCreditsAPIClient.GetProgramProgressAsync(ownProfile.UserId, ct);
                     RedirectToSection();
                 }
+                else if (!read.IsCancelled)
+                    marketplaceCreditsMenuController.ShowErrorNotification(ERROR_MESSAGE);
 
                 subView.SetAsLoading(false);
             }
             catch (OperationCanceledException) { }
             catch (Exception e)
             {
-                const string ERROR_MESSAGE = "There was an error loading the Credits Program. Please try again!";
                 marketplaceCreditsMenuController.ShowErrorNotification(ERROR_MESSAGE);
                 ReportHub.LogError(ReportCategory.MARKETPLACE_CREDITS, $"{ERROR_MESSAGE} ERROR: {e.Message}");
             }

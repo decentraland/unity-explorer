@@ -59,7 +59,7 @@ namespace DCL.PluginSystem.Global
         private readonly IChatHistory chatHistory;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly ProfileChangesBus profileChangesBus;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly IRealmData realmData;
         private readonly ISceneRestrictionBusController sceneRestrictionBusController;
         private readonly IDecentralandUrlsSource decentralandUrls;
@@ -100,7 +100,7 @@ namespace DCL.PluginSystem.Global
             IChatHistory chatHistory,
             ProfileRepositoryWrapper profileDataProvider,
             ProfileChangesBus profileChangesBus,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             IRealmData realmData,
             ISceneRestrictionBusController sceneRestrictionBusController,
             IDecentralandUrlsSource decentralandUrls,

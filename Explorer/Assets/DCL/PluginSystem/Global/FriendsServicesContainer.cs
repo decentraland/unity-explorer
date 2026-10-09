@@ -20,7 +20,7 @@ namespace DCL.PluginSystem.Global
         public FriendsConnectivityStatusTracker ConnectivityStatusTracker { get; }
 
         public FriendsServicesContainer(
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             IRPCSocialServices socialServicesRPC,
             IFriendsEventBus friendsEventBus,
             bool useAnalytics,
