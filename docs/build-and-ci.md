@@ -18,7 +18,7 @@ Release, hotfix, and `main` builds share a single stable cache target per platfo
 
 `create-release-branch.yml` (manual dispatch) cuts `release/<date>` from `dev`'s tip and opens the PR into `main` with `GITHUB_TOKEN`. Events raised by that token start runs only as `action_required`, and they stay bot-owned even after approval. Bot-owned runs fire no `workflow_run`, so nothing they produce reaches the CI status comment, and `build-unitycloud.yml` skips building them. In practice the release PR does not build, lint or test itself when it opens. Instead the workflow seeds the PR's unified CI status comment from `dev`'s runs of the cut commit, and the outcome depends on where `dev` was at the cut:
 
-| `dev`'s build of the cut commit | Build section | InWorld gate |
+| `dev`'s build of the cut commit | Build section | Automation suites (InWorld + Visual) |
 | --- | --- | --- |
 | Finished green | Its links, marked as reused from `dev` | Dispatched by the cut workflow |
 | Still running | "Building on dev"; the run's completion writes its links into the release PR | Dispatched by `pr-comment-artifact-url.yml` when that build succeeds |
@@ -27,7 +27,9 @@ Release, hotfix, and `main` builds share a single stable cache target per platfo
 
 Lint and tests follow the same pattern: `dev`'s `Unity Test` results are reused when it finished, "Running on dev" is shown and back-filled when it had not, and a `force-build` label runs both on the release branch. The back-fill works because the `pr-comment-*` writers resolve a `push` run on `dev` to the open release/hotfix PR whose head is the run's SHA (`.github/actions/ci-status-comment/resolve-comment-pr.sh`). For that, `test.yml` uploads the `failed-tests-<mode>` summaries on pushes to `dev` as well as on PRs, and a suite whose job left no summary is reported from that job's conclusion. The lint back-fill reports the `Lint` job's conclusion, because the `warning-result` ratchet artifact only exists for PR runs. The `force-build` label is always added with `ORG_ACCESS_TOKEN`, because a label added by `GITHUB_TOKEN` would build nothing either. At the cut it is first removed with `GITHUB_TOKEN`: on a re-cut the label may already be on the PR, re-adding it would raise no event, and a removal by the bot builds nothing.
 
-Never re-run *Create Release Branch and PR* to fix any of this: it force-pushes the release branch from `dev`'s current tip, re-cutting the release from newer commits. Pushing to the release branch is the normal path — a push starts the build, lint, tests and the InWorld gate through their regular `pull_request` triggers and replaces every reused section.
+Dispatched automation runs report InWorld and Visual results, but [cannot satisfy a required PR check](https://docs.github.com/en/pull-requests/how-tos/merge-and-close-pull-requests/troubleshooting-required-status-checks#checks-from-some-workflow-jobs-are-not-evaluated). If `InWorld suite result` is required, it also needs an eligible PR-triggered run.
+
+Never re-run *Create Release Branch and PR* to fix any of this: it force-pushes the release branch from `dev`'s current tip, re-cutting the release from newer commits. Pushing to the release branch is the normal path — a push starts the build, lint, tests and automation suites through their regular `pull_request` triggers and replaces every reused section.
 
 ## Native plugin binaries (UUAV, RustSegment)
 
