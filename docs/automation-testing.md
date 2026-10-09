@@ -103,7 +103,7 @@ The visual regression suite can be triggered on any PR by leaving the following 
 
 Release and hotfix PRs already have an automatic run. Wait for it to finish before requesting a manual rerun, since both runs update the PR's visual report.
 
-The dispatcher lives in [`.github/workflows/visual-regression.yml`](../.github/workflows/visual-regression.yml) and hands off to the `run-visual-suite.yml` reusable workflow in [decentraland/explorer-automation](https://github.com/decentraland/explorer-automation).
+The dispatcher lives in [`.github/workflows/visual-regression.yml`](../.github/workflows/visual-regression.yml) and hands off to the `run-visual-suite.yml` reusable workflow in [decentraland/explorer-automation](https://github.com/decentraland/explorer-automation). The dispatcher marks the automation section as running; the reusable writes the final verdict and Allure report link into that section.
 
 **Requirements:**
 - The commenter must have `OWNER`, `MEMBER`, or `COLLABORATOR` association on the repo. Comments from anyone else are silently ignored.
