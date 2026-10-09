@@ -91,7 +91,7 @@ Non-release builds created by CI (for PRs and the dev branch) include AltTester 
 
 ## Visual Regression on PRs
 
-Release and hotfix PRs into `main` automatically run Visual alongside InWorld against the same build. A manual `In-World Tests` dispatch with a `filter` runs InWorld only. When configured as a required check, `InWorld suite result` gates build resolution and InWorld; Visual failures remain visible in the suite's report and job summary but are advisory until baselines are versioned per release. The default explorer-automation baselines follow `dev`, which can be newer than a release cut or a hotfix from `main`.
+Release and hotfix PRs into `main` automatically run Visual alongside InWorld against the same build. A manual `In-World Tests` dispatch with a `filter` runs InWorld only. When configured as a required check, `InWorld suite result` gates build resolution and InWorld; Visual failures remain visible in the PR's CI status comment and Visual Allure report but are advisory until baselines are versioned per release. The gate finishes independently of Visual. The default explorer-automation baselines follow `dev`, which can be newer than a release cut or a hotfix from `main`.
 
 [Manually dispatched jobs cannot satisfy required PR checks](https://docs.github.com/en/pull-requests/how-tos/merge-and-close-pull-requests/troubleshooting-required-status-checks#checks-from-some-workflow-jobs-are-not-evaluated). They still run the suites and report results, but requiring `InWorld suite result` also needs an eligible PR-triggered run for bot-created release PRs.
 

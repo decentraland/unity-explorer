@@ -84,7 +84,7 @@ on:
 # Keyed on the head repo as well, because a branch name is not ours to reserve:
 # a fork PR into main may name its branch `release/2026-08-10` too, and
 # `cancel-in-progress` is applied when the run is created — before any job's
-# `if:` is evaluated, so the fork exclusion in `resolve`'s own `if:` (:113)
+# `if:` is evaluated, so the fork exclusion in `resolve`'s own `if:`
 # only skips the jobs of a run that has already cancelled the real gate.
 # Without this segment an outsider could red a release's required check at
 # will, by guessing a name that release cuts make predictable.
@@ -159,7 +159,7 @@ jobs:
           # A PR opens before its build exists, so wait one out. Manual runs
           # pick a ref whose build is already there — or say which to use.
           wait-minutes: ${{ github.event_name == 'pull_request' && 90 || 0 }}
-          # Both suites run, so both zips have to exist before either starts.
+          # InWorld runs on macOS and Windows, so both zips must exist.
           build-legs: macos,windows64
           build-url-override: ${{ inputs.build_url }}
           public-url-prefix: ${{ vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL }}
@@ -257,7 +257,7 @@ jobs:
 
   result:
     name: InWorld suite result
-    needs: [resolve, run-suite, visual-suite]
+    needs: [resolve, run-suite]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -270,20 +270,11 @@ jobs:
         env:
           RESOLVE: ${{ needs.resolve.result }}
           SUITE: ${{ needs.run-suite.result }}
-          VISUAL: ${{ needs.visual-suite.result }}
-          FILTERED: ${{ (inputs.filter || '') != '' }}
         run: |
           set -euo pipefail
           if [ "$RESOLVE" = "skipped" ]; then
             echo "::notice::Not a release or hotfix PR — the suites do not run on this one."
             exit 0
-          fi
-          # Default baselines follow dev and may differ from a release or hotfix.
-          # Keep the Visual verdict visible without blocking on those differences.
-          if [ "$RESOLVE" = "success" ] && [ "$FILTERED" = "true" ] && [ "$VISUAL" = "skipped" ]; then
-            echo "::notice::Visual suite skipped for the filtered InWorld run."
-          elif [ "$RESOLVE" = "success" ] && [ "$VISUAL" != "success" ]; then
-            echo "::warning::Visual suite: ${VISUAL} (advisory). See its Allure report or job summary."
           fi
           if [ "$RESOLVE" = "success" ] && [ "$SUITE" = "success" ]; then
             echo "::notice::InWorld suite passed."
