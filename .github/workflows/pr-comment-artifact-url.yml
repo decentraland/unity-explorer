@@ -560,7 +560,8 @@ jobs:
   # the `force-build` label started. Dispatch it against the release branch —
   # the dispatch path resolves the build with no wait, and both zips are up by
   # the time this run fires. A push to the branch starts validation through its
-  # own pull_request trigger. In-flight coverage needs a same-repository PR run
+  # own pull_request trigger. Coverage must match this PR's head branch and repo.
+  # In-flight coverage needs a PR run
   # or an explicitly full manual run, without skipped resolution or Visual.
   # Partial/custom manual runs never count. Completed legacy coverage still
   # needs build and InWorld green plus an invoked, non-skipped Visual job.
@@ -607,6 +608,7 @@ jobs:
           if ! RUNS=$(gh_api_retry "repos/${GITHUB_REPOSITORY}/actions/workflows/in-world-tests.yml/runs?head_sha=${HEAD_SHA}&per_page=20" \
             --jq '.workflow_runs[]
               | select(.head_repository.full_name == env.GITHUB_REPOSITORY)
+              | select(.head_branch == env.HEAD_REF)
               | select(.event != "workflow_dispatch" or .display_title != "In-World Tests (partial/custom)")
               | select(.status == "completed" or .event == "pull_request" or (.event == "workflow_dispatch" and .display_title == "In-World Tests (full)"))
               | "\(.id) \(.status)"'); then
