@@ -1,7 +1,7 @@
 {
   "dependencies": {
     "arch.systemgroups.visualiser": "https://github.com/m3taphysics/Arch.SystemGroups.Visualiser.git?path=/Packages/arch.systemgroups.visualiser",
-    "com.alttester.sdk": "https://github.com/mikhail-dcl/AltTester-Unity-SDK.git?path=/Assets/AltTester#1983-unity-6000-5-getinstanceid-obsolete",
+    "com.alttester.sdk": "https://github.com/mikhail-dcl/AltTester-Unity-SDK.git?path=/Assets/AltTester#3b2540f507264eeb675bc7787400af485f7e6986",
     "com.arch.systemgroups": "https://github.com/mikhail-dcl/Arch.SystemGroups.git?path=/Arch.SystemGroups",
     "com.atteneder.draco": "4.0.2",
     "com.atteneder.gltfast": "https://github.com/decentraland/unity-gltf.git",
