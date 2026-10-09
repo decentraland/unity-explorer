@@ -9,11 +9,14 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
 {
     public class PlacesAnalytics : IDisposable
     {
-        // Where the click happened, which tells the explore panel's places list apart from the lobby's rows
-        private const string SOURCE = "explore";
+        private const string EXPLORE_SOURCE = "explore";
+        private const string LOBBY_SOURCE = "lobby";
 
         private readonly IAnalyticsController analytics;
         private readonly ExplorePanelController explorePanelController;
+
+        // The same list serves the explore panel and, borrowed by its modal, the lobby
+        private string source => explorePanelController.PlacesController.IsAtHome ? EXPLORE_SOURCE : LOBBY_SOURCE;
 
         public PlacesAnalytics(IAnalyticsController analytics, ExplorePanelController explorePanelController)
         {
@@ -90,7 +93,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
                 { "search_query", filtersApplied.SearchText },
                 { "results_count", resultsCount },
                 { "result_position", cardView.transform.GetSiblingIndex() + 1 },
-                { "source", SOURCE },
+                { "source", source },
             });
         }
 

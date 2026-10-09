@@ -668,7 +668,7 @@ namespace Global.Dynamic
                     wearableContainer.EmoteProvider,
                     globalWorld,
                     playerEntity,
-                    chatContainer.ChatMessagesBus,
+                    chatContainer.ChatTeleporter,
                     staticContainer.MemoryCap,
                     bootstrapContainer.VolumeBus,
                     placesAndEventsContainer.EventsApiService,

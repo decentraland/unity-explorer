@@ -16,6 +16,10 @@ namespace DCL.Events
 {
     public class EventsByDayView : MonoBehaviour
     {
+        // Authored for the full-width explore panel; a modal host fits one card fewer per row
+        private const int GRID_COLUMNS = 5;
+        private const int COMPACT_GRID_COLUMNS = 4;
+
         public event Action? BackButtonClicked;
         public event Action? GoToNextDayButtonClicked;
         public event Action<EventDTO, PlacesData.PlaceInfo?, EventCardView>? EventCardClicked;
@@ -28,6 +32,7 @@ namespace DCL.Events
         [SerializeField] private LoopGridView eventsLoopGrid = null!;
         [SerializeField] private GameObject emptyContainer = null!;
         [SerializeField] private SkeletonLoadingView skeletonLoading = null!;
+        [SerializeField] private GameObject[] loadingCardsBeyondCompactColumns = null!;
         [SerializeField] private Button goToNextDayButton = null!;
 
         private EventsStateService eventsStateService = null!;
@@ -64,6 +69,14 @@ namespace DCL.Events
         {
             eventsLoopGrid.InitGridView(0, SetupEventCardByIndex);
             eventsLoopGrid.gameObject.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
+        }
+
+        public void SetCompactLayout(bool compact)
+        {
+            eventsLoopGrid.SetGridFixedGroupCount(GridFixedType.ColumnCountFixed, compact ? COMPACT_GRID_COLUMNS : GRID_COLUMNS);
+
+            foreach (GameObject card in loadingCardsBeyondCompactColumns)
+                card.SetActive(!compact);
         }
 
         public void SetEventsItems(IReadOnlyList<EventDTO> events, bool resetPos)

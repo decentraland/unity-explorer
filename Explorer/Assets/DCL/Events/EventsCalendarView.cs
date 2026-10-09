@@ -42,7 +42,6 @@ namespace DCL.Events
         [SerializeField] private List<EventListConfiguration> eventsLists = null!;
 
         [Header("Highlighted Carousel")]
-        [SerializeField] private List<GameObject> objectsToHideWhenBanner = null!;
         [SerializeField] private EventsHighlightedCarousel highlightedCarousel = null!;
 
         [Serializable]
@@ -63,7 +62,11 @@ namespace DCL.Events
         private readonly Dictionary<int, Tweener> activeScrollTweens = new ();
         private DateTime currentFromDate;
         private int currentNumberOfDaysShowed;
+        private int hiddenDayColumns;
         private EventsStateService eventsStateService = null!;
+
+        /// <summary>Day columns the current host has room for; the highlighted banner takes one of them when shown.</summary>
+        public int MaxDays => daySelectorButtons.Count - hiddenDayColumns;
         private ThumbnailLoader? eventCardsThumbnailLoader;
         private ProfileRepositoryWrapper? profileRepositoryWrapper;
 
@@ -118,6 +121,9 @@ namespace DCL.Events
             highlightedCarousel.SetDependencies(thumbnailLoader, profileRepoWrapper);
         }
 
+        public void SetCompactLayout(bool compact) =>
+            hiddenDayColumns = compact ? 1 : 0;
+
         public void SetupDaysSelector(DateTime fromDate, int numberOfDaysToShow, bool triggerEvent = true, bool deactivateArrows = false)
         {
             bool isToday = fromDate.Date == DateTime.Today;
@@ -141,10 +147,9 @@ namespace DCL.Events
 
         public void SetHighlightedCarousel(IReadOnlyList<EventDTO>? eventsInfo)
         {
-            foreach (GameObject go in objectsToHideWhenBanner)
-                go.SetActive(eventsInfo == null || eventsInfo.Count == 0);
-
-            highlightedCarousel.gameObject.SetActive(eventsInfo is { Count: > 0 });
+            bool hasBanner = eventsInfo is { Count: > 0 };
+            ShowDayColumns(hasBanner ? MaxDays - 1 : MaxDays);
+            highlightedCarousel.gameObject.SetActive(hasBanner);
 
             if (eventsInfo != null)
             {
@@ -175,6 +180,17 @@ namespace DCL.Events
                 highlightedCarousel.EventShareButtonClicked += OnEventShareButtonClicked;
                 highlightedCarousel.EventCopyLinkButtonClicked -= OnEventCopyLinkButtonClicked;
                 highlightedCarousel.EventCopyLinkButtonClicked += OnEventCopyLinkButtonClicked;
+            }
+        }
+
+        // The columns sit at fixed offsets from the left, so the trailing ones are the ones a narrower host or the banner leaves no room for
+        private void ShowDayColumns(int count)
+        {
+            for (var i = 0; i < daySelectorButtons.Count; i++)
+            {
+                bool shown = i < count;
+                daySelectorButtons[i].gameObject.SetActive(shown);
+                eventsLists[i].scrollRect.gameObject.SetActive(shown);
             }
         }
 

@@ -17,6 +17,18 @@
         <ui:VisualElement name="AvatarHitArea" class="lobby__avatar-hit-area" style="display: none;" />
         <ui:VisualElement name="Logo" class="lobby__logo" picking-mode="Ignore" />
         <ui:VisualElement name="TopBar" class="lobby__top-bar" picking-mode="Ignore">
+            <ui:Button name="MapButton" class="lobby__top-bar-pill">
+                <ui:VisualElement name="Icon" class="lobby__top-bar-pill-icon lobby__map-icon" picking-mode="Ignore" />
+                <ui:Label name="Label" text="Map" class="lobby__top-bar-pill-label" picking-mode="Ignore" />
+            </ui:Button>
+            <ui:Button name="PlacesButton" class="lobby__top-bar-pill">
+                <ui:VisualElement name="Icon" class="lobby__top-bar-pill-icon lobby__places-icon" picking-mode="Ignore" />
+                <ui:Label name="Label" text="Places" class="lobby__top-bar-pill-label" picking-mode="Ignore" />
+            </ui:Button>
+            <ui:Button name="EventsButton" class="lobby__top-bar-pill">
+                <ui:VisualElement name="Icon" class="lobby__top-bar-pill-icon lobby__events-icon" picking-mode="Ignore" />
+                <ui:Label name="Label" text="Events" class="lobby__top-bar-pill-label" picking-mode="Ignore" />
+            </ui:Button>
             <ui:VisualElement name="CreditsSlot" class="lobby__top-bar-slot" picking-mode="Ignore" />
             <ui:Button name="Notifications" class="lobby__top-bar-button">
                 <ui:VisualElement name="Icon" class="lobby__notifications-icon" picking-mode="Ignore" />

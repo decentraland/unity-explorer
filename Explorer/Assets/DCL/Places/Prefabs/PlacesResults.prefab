@@ -6640,6 +6640,9 @@ MonoBehaviour:
   clickOnLinksAudio: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
   placesResultsLoadingSpinner: {fileID: 2809767823012180613}
   placesResultsLoadingMoreSpinner: {fileID: 7821965102610289186}
+  loadingCardsBeyondCompactColumns:
+  - {fileID: 3371989488922583955}
+  - {fileID: 290172997273087661}
   explorePlacesFromEmptySearchButton: {fileID: 4146764177952171168}
   explorePlacesFromEmptyFavoritesButton: {fileID: 8036651002216097181}
   getANameButton: {fileID: 5490458282908751191}

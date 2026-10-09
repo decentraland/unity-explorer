@@ -1,17 +1,18 @@
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Chat.Commands;
-using DCL.Chat.History;
-using DCL.Chat.MessageBus;
+using DCL.Diagnostics;
 using DCL.EventsApi;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PlacesAPIService;
 using DCL.UI;
 using DCL.UI.Utilities;
+using DCL.Utilities.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Threading;
+using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
 
@@ -21,7 +22,7 @@ namespace DCL.Navmap
     {
         private readonly EventInfoPanelView view;
         private readonly INavmapBus navmapBus;
-        private readonly IChatMessagesBus chatMessagesBus;
+        private readonly ChatTeleporter chatTeleporter;
         private readonly HttpEventsApiService eventsApiService;
         private readonly ObjectPool<EventScheduleElementView> scheduleElementPool;
         private readonly GoogleUserCalendar userCalendar;
@@ -35,10 +36,11 @@ namespace DCL.Navmap
         private EventDTO? @event;
         private CancellationTokenSource? interestedCancellationToken;
         private CancellationTokenSource? updateLayoutCancellationToken;
+        private CancellationTokenSource? jumpInCancellationToken;
 
         public EventInfoPanelController(EventInfoPanelView view,
             INavmapBus navmapBus,
-            IChatMessagesBus chatMessagesBus,
+            ChatTeleporter chatTeleporter,
             HttpEventsApiService eventsApiService,
             ObjectPool<EventScheduleElementView> scheduleElementPool,
             GoogleUserCalendar userCalendar,
@@ -49,7 +51,7 @@ namespace DCL.Navmap
         {
             this.view = view;
             this.navmapBus = navmapBus;
-            this.chatMessagesBus = chatMessagesBus;
+            this.chatTeleporter = chatTeleporter;
             this.eventsApiService = eventsApiService;
             this.scheduleElementPool = scheduleElementPool;
             this.userCalendar = userCalendar;
@@ -199,8 +201,11 @@ namespace DCL.Navmap
 
         private void JumpIn()
         {
+            if (!@event.HasValue) return;
+
             navmapBus.JumpIn(place!);
-            chatMessagesBus.SendWithUtcNowTimestamp(ChatChannel.NEARBY_CHANNEL, $"/{ChatCommandsUtils.COMMAND_GOTO} {@event?.x},{@event?.y}", ChatMessageOrigin.JumpIn);
+            jumpInCancellationToken = jumpInCancellationToken.SafeRestart();
+            chatTeleporter.TeleportToParcelAsync(new Vector2Int(@event.Value.x, @event.Value.y), false, jumpInCancellationToken.Token).SuppressToResultAsync(ReportCategory.EVENTS).Forget();
         }
     }
 }

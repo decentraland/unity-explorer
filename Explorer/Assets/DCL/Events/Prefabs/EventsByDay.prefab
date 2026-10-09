@@ -3765,6 +3765,9 @@ MonoBehaviour:
   eventsLoopGrid: {fileID: 2628796755526054031}
   emptyContainer: {fileID: 3931084461851346803}
   skeletonLoading: {fileID: 4588402156108321629}
+  loadingCardsBeyondCompactColumns:
+  - {fileID: 6026561812318735311}
+  - {fileID: 1638561538369648225}
   goToNextDayButton: {fileID: 4856696796424426123}
 --- !u!114 &4588402156108321629
 MonoBehaviour:

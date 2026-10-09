@@ -23,6 +23,10 @@ namespace DCL.Places
 {
     public class PlacesResultsView : MonoBehaviour
     {
+        // Authored for the full-width explore panel; a modal host fits one card fewer per row
+        private const int GRID_COLUMNS = 5;
+        private const int COMPACT_GRID_COLUMNS = 4;
+
         public event Action? BackButtonClicked;
         public event Action? ExplorePlacesClicked;
         public event Action? GetANameClicked;
@@ -57,6 +61,7 @@ namespace DCL.Places
         [SerializeField] private AudioClipConfig clickOnLinksAudio = null!;
         [SerializeField] private SkeletonLoadingView placesResultsLoadingSpinner = null!;
         [SerializeField] private GameObject placesResultsLoadingMoreSpinner = null!;
+        [SerializeField] private GameObject[] loadingCardsBeyondCompactColumns = null!;
         [SerializeField] private Button explorePlacesFromEmptySearchButton = null!;
         [SerializeField] private Button explorePlacesFromEmptyFavoritesButton = null!;
         [SerializeField] private Button getANameButton = null!;
@@ -109,6 +114,14 @@ namespace DCL.Places
         {
             placesResultsLoopGrid.InitGridView(0, SetupPlaceResultCardByIndex);
             placesResultsLoopGrid.gameObject.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
+        }
+
+        public void SetCompactLayout(bool compact)
+        {
+            placesResultsLoopGrid.SetGridFixedGroupCount(GridFixedType.ColumnCountFixed, compact ? COMPACT_GRID_COLUMNS : GRID_COLUMNS);
+
+            foreach (GameObject card in loadingCardsBeyondCompactColumns)
+                card.SetActive(!compact);
         }
 
         public void AddPlacesResultsItems(IReadOnlyList<PlacesData.PlaceInfo> places, bool resetPos, PlacesSection? section)

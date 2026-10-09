@@ -9,11 +9,14 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
 {
     public class EventsAnalytics : IDisposable
     {
-        // Where the click happened, which tells the explore panel's calendar apart from the lobby's rows
-        private const string SOURCE = "explore";
+        private const string EXPLORE_SOURCE = "explore";
+        private const string LOBBY_SOURCE = "lobby";
 
         private readonly IAnalyticsController analytics;
         private readonly ExplorePanelController explorePanelController;
+
+        // The same calendar serves the explore panel and, borrowed by its modal, the lobby
+        private string source => explorePanelController.EventsController.IsAtHome ? EXPLORE_SOURCE : LOBBY_SOURCE;
 
         public EventsAnalytics(IAnalyticsController analytics, ExplorePanelController explorePanelController)
         {
@@ -66,7 +69,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
         private void OnEventCardClicked(EventDTO eventInfo)
         {
             JObject payload = GetEventJObject(eventInfo);
-            payload.Add("source", SOURCE);
+            payload.Add("source", source);
 
             analytics.Track(AnalyticsEvents.Events.EVENT_CARD_CLICKED, payload);
         }

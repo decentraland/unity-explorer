@@ -37,9 +37,10 @@ using ECS;
 using ECS.Prioritization;
 using Global.Dynamic;
 using MVC;
+using System.Collections.Generic;
 using System.Threading;
 using DCL.Backpack.AvatarSection.Outfits.Repository;
-using DCL.Chat.MessageBus;
+using DCL.Chat.Commands;
 using DCL.Clipboard;
 using DCL.Communities;
 using DCL.Communities.CommunitiesBrowser;
@@ -133,7 +134,7 @@ namespace DCL.PluginSystem.Global
         private readonly IRendererFeaturesCache rendererFeaturesCache;
         private readonly IProfileCache profileCache;
         private readonly IInputBlock inputBlock;
-        private readonly IChatMessagesBus chatMessagesBus;
+        private readonly ChatTeleporter chatTeleporter;
         private readonly ISystemMemoryCap systemMemoryCap;
         private readonly VolumeBus volumeBus;
         private readonly HttpEventsApiService eventsApiService;
@@ -190,6 +191,7 @@ namespace DCL.PluginSystem.Global
         private EventsController? eventsController;
         private EventDetailPanelController? eventDetailPanelController;
         private BackpackModalController? backpackModalController;
+        private ExploreSectionModalController? exploreSectionModalController;
         private readonly SpringBoneSimulationSettings springBoneSimulationSettings;
 
         public ExplorePanelPlugin(IEventBus eventBus,
@@ -225,7 +227,7 @@ namespace DCL.PluginSystem.Global
             IEmoteProvider emoteProvider,
             Arch.Core.World world,
             Entity playerEntity,
-            IChatMessagesBus chatMessagesBus,
+            ChatTeleporter chatTeleporter,
             ISystemMemoryCap systemMemoryCap,
             VolumeBus volumeBus,
             HttpEventsApiService eventsApiService,
@@ -297,7 +299,7 @@ namespace DCL.PluginSystem.Global
             this.emoteProvider = emoteProvider;
             this.world = world;
             this.playerEntity = playerEntity;
-            this.chatMessagesBus = chatMessagesBus;
+            this.chatTeleporter = chatTeleporter;
             this.systemMemoryCap = systemMemoryCap;
             this.volumeBus = volumeBus;
             this.eventsApiService = eventsApiService;
@@ -352,6 +354,7 @@ namespace DCL.PluginSystem.Global
             eventDetailPanelController?.Dispose();
             placeDetailPanelController?.Dispose();
             backpackModalController?.Dispose();
+            exploreSectionModalController?.Dispose();
             creditsPanelController.Dispose();
 
             dclInput.Shortcuts.MainMenu.canceled -= OnInputShortcutsMainMenuCanceledAsync;
@@ -446,7 +449,7 @@ namespace DCL.PluginSystem.Global
                 navmapView.WorldsWarningNotificationView, clipboard, webBrowser, decentralandUrlsSource);
 
             placeInfoPanelController = new PlaceInfoPanelController(navmapView.PlacesAndEventsPanelView.PlaceInfoPanelView,
-                imageControllerProvider, placesAPIService, mapPathEventBus, navmapBus, chatMessagesBus, eventsApiService,
+                imageControllerProvider, placesAPIService, mapPathEventBus, navmapBus, chatTeleporter, eventsApiService,
                 eventElementsPool, shareContextMenu, webBrowser, mvcManager, homePlaceEventBus, donationsService, cameraReelStorageService, cameraReelScreenshotsStorage,
                 new ReelGalleryConfigParams(
                     settings.PlaceGridLayoutFixedColumnCount,
@@ -458,7 +461,7 @@ namespace DCL.PluginSystem.Global
                 galleryEventBus: galleryEventBus);
 
             eventInfoPanelController = new EventInfoPanelController(navmapView.PlacesAndEventsPanelView.EventInfoPanelView,
-                navmapBus, chatMessagesBus, eventsApiService, eventScheduleElementsPool,
+                navmapBus, chatTeleporter, eventsApiService, eventScheduleElementsPool,
                 userCalendar, shareContextMenu, webBrowser, decentralandUrlsSource, imageControllerProvider);
 
             placesAndEventsPanelController = new PlacesAndEventsPanelController(navmapView.PlacesAndEventsPanelView,
@@ -476,7 +479,7 @@ namespace DCL.PluginSystem.Global
             // Kept alive by its navmap bus subscription.
             _ = new PlaceInfoToastController(navmapView.PlaceToastView,
                 new PlaceInfoPanelController(navmapView.PlaceToastView.PlacePanelView,
-                    imageControllerProvider, placesAPIService, mapPathEventBus, navmapBus, chatMessagesBus, eventsApiService,
+                    imageControllerProvider, placesAPIService, mapPathEventBus, navmapBus, chatTeleporter, eventsApiService,
                     eventElementsPool, shareContextMenu, webBrowser, mvcManager, homePlaceEventBus, donationsService, galleryEventBus: galleryEventBus),
                 placesAPIService, eventsApiService, navmapBus);
 
@@ -609,6 +612,18 @@ namespace DCL.PluginSystem.Global
                 BackpackModalView backpackModalViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.BackpackSettings.BackpackModalPrefab, ct: ct)).GetComponent<BackpackModalView>();
                 backpackModalController = new BackpackModalController(BackpackModalController.CreateLazily(backpackModalViewAsset, null), backpackSubPlugin.backpackController!);
                 mvcManager.RegisterController(backpackModalController);
+
+                ExploreSectionModalView sectionModalViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ExploreSectionModalPrefab, ct: ct)).GetComponent<ExploreSectionModalView>();
+
+                exploreSectionModalController = new ExploreSectionModalController(ExploreSectionModalController.CreateLazily(sectionModalViewAsset, null),
+                    new Dictionary<ExploreSections, IHostableSection>
+                    {
+                        { ExploreSections.Navmap, navmapController },
+                        { ExploreSections.Places, placesController },
+                        { ExploreSections.Events, eventsController },
+                    });
+
+                mvcManager.RegisterController(exploreSectionModalController);
             }
 
             EnableCreditsPanelAsync(explorePanelView.CreditsPanelView, ct)
@@ -801,6 +816,7 @@ namespace DCL.PluginSystem.Global
             [field: Header("Place Detail Panel")] [field: SerializeField] public AssetReferenceGameObject PlaceDetailPanelPrefab { get; private set; } = null!;
             [field: Header("Event Detail Panel")] [field: SerializeField] public AssetReferenceGameObject EventInfoPrefab { get; private set; } = null!;
             [field: Header("Quality Settings")] [field: SerializeField] public QualityPresetsAsset QualityPresets { get; private set; } = null!;
+            [field: Header("Lobby modal")] [field: SerializeField] public AssetReferenceGameObject ExploreSectionModalPrefab { get; private set; } = null!;
         }
     }
 }

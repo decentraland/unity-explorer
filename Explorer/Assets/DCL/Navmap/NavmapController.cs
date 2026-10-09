@@ -23,7 +23,7 @@ using Utility;
 
 namespace DCL.Navmap
 {
-    public class NavmapController : IMapActivityOwner, ISection, IDisposable
+    public class NavmapController : IMapActivityOwner, IHostableSection, IDisposable
     {
         private const string EMPTY_PARCEL_NAME = "Empty parcel";
         private const string WORLDS_WARNING_MESSAGE = "This is the Genesis City map. If you jump into any of this places you will leave the world you are currently visiting.";
@@ -34,7 +34,7 @@ namespace DCL.Navmap
         private readonly IMapRenderer mapRenderer;
         private readonly NavmapZoomController zoomController;
         private readonly NavmapSearchBarController searchBarController;
-        private readonly RectTransform rectTransform;
+        private readonly RectTransform homeHost;
         private readonly SatelliteController satelliteController;
         private readonly IPlacesAPIService placesAPIService;
         private readonly UpscalingController upscalingController;
@@ -54,9 +54,14 @@ namespace DCL.Navmap
         private NavmapSections lastShownSection;
         private MapRenderImage.ParcelClickData lastParcelClicked;
         private NavmapFilterPanelController navmapFilterPanelController;
+        private bool isActive;
 
         public IReadOnlyDictionary<MapLayer, IMapLayerParameter> LayersParameters { get; } = new Dictionary<MapLayer, IMapLayerParameter>
             { { MapLayer.PlayerMarker, new PlayerMarkerParameter { BackgroundIsActive = true } } };
+
+        public RectTransform? CurrentHost => navmapView.transform.parent as RectTransform;
+
+        public bool IsAtHome => CurrentHost == homeHost;
 
         public NavmapController(
             NavmapView navmapView,
@@ -83,7 +88,7 @@ namespace DCL.Navmap
             this.placesAndEventsPanelController = placesAndEventsPanelController;
             this.navmapBus = navmapBus;
 
-            rectTransform = this.navmapView.transform.parent.GetComponent<RectTransform>();
+            homeHost = this.navmapView.transform.parent.GetComponent<RectTransform>();
 
             zoomController = navmapZoomController;
             searchBarController = navmapSearchBarController;
@@ -219,6 +224,7 @@ namespace DCL.Navmap
 
             // The map renders into a RenderTexture, so the user's render scale would pixelate it.
             upscalingController.RequireFullRenderScale(this);
+            isActive = true;
         }
 
         public void Deactivate()
@@ -233,6 +239,7 @@ namespace DCL.Navmap
             searchBarController.ClearInput();
             navmapView.gameObject.SetActive(false);
             upscalingController.ReleaseFullRenderScale(this);
+            isActive = false;
         }
 
         public void Animate(int triggerId)
@@ -246,7 +253,28 @@ namespace DCL.Navmap
             navmapView.PanelAnimator.Update(0);
         }
 
+        // The explore panel positions this slot itself, so it stays behind when the view is borrowed
         public RectTransform GetRectTransform() =>
-            rectTransform;
+            homeHost;
+
+        public void AttachTo(RectTransform host)
+        {
+            var viewRect = (RectTransform)navmapView.transform;
+
+            // A fullscreen panel closes popups without awaiting them, so another host can claim a view a modal still shows
+            if (isActive && viewRect.parent != host)
+                Deactivate();
+
+            if (viewRect.parent == host) return;
+
+            viewRect.SetParent(host, false);
+            viewRect.anchorMin = Vector2.zero;
+            viewRect.anchorMax = Vector2.one;
+            viewRect.offsetMin = Vector2.zero;
+            viewRect.offsetMax = Vector2.zero;
+        }
+
+        public void AttachToHome() =>
+            AttachTo(homeHost);
     }
 }

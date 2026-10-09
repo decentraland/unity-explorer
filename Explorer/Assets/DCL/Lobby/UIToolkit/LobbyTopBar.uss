@@ -19,6 +19,52 @@
     display: none;
 }
 
+/* Pill opening an explore section over the lobby: the shape and the fill of the profile widget beside it */
+.lobby__top-bar-pill {
+    height: 46px;
+    margin-left: 10px;
+    padding: 0 18px 0 14px;
+    flex-direction: row;
+    align-items: center;
+    border-width: 2px;
+    border-radius: 23px;
+    border-color: rgba(255, 255, 255, 0.03);
+    background-color: black;
+    transition: background-color 0.1s;
+}
+
+.lobby__top-bar-pill:hover {
+    background-color: rgb(31, 31, 31);
+}
+
+.lobby__top-bar-pill:active {
+    background-color: black;
+}
+
+.lobby__top-bar-pill-icon {
+    width: 22px;
+    height: 22px;
+}
+
+.lobby__top-bar-pill-label {
+    margin-left: 8px;
+    font-size: 16px;
+    -unity-font-definition: var(--dcl-font-inter-semibold);
+    color: var(--dcl-color-snow);
+}
+
+.lobby__map-icon {
+    background-image: url('/Assets/Textures/ExplorePanel/MapOff.png');
+}
+
+.lobby__places-icon {
+    background-image: url('/Assets/Textures/ExplorePanel/PlacesOff.png');
+}
+
+.lobby__events-icon {
+    background-image: url('/Assets/Textures/ExplorePanel/EventsOff.png');
+}
+
 .lobby__top-bar-button {
     width: 40px;
     height: 40px;

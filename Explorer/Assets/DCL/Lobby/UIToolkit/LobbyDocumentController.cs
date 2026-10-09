@@ -8,6 +8,8 @@ using DCL.Communities.EventInfo;
 using DCL.Diagnostics;
 using DCL.Events;
 using DCL.EventsApi;
+using DCL.ExplorePanel;
+using DCL.FeatureFlags;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.MapRenderer.MapLayers.HomeMarker;
@@ -85,6 +87,7 @@ namespace DCL.Lobby
         private readonly LobbyDocumentFriendsPresenter? friends;
         private readonly LobbyConnectedFriendsPresenter? connectedFriends;
         private readonly ClickOrDragManipulator avatarGesture;
+        private readonly bool includeDiscover;
 
         private LobbyPlacesRail? recentPlacesRail;
         private LobbyPlacesRail? featuredPlacesRail;
@@ -140,6 +143,9 @@ namespace DCL.Lobby
         /// <summary>The user is on their way to a friend, with the parcel the friend was at.</summary>
         public event Action<string, Vector2Int>? FriendJoined;
 
+        /// <summary>A top bar button opened an explore section over the panel.</summary>
+        public event Action<ExploreSections>? ExploreSectionOpened;
+
         public LobbyDocumentController(ViewFactoryMethod viewFactory,
             IInputBlock inputBlock,
             ICursor cursor,
@@ -190,6 +196,7 @@ namespace DCL.Lobby
             this.notificationsPanel = notificationsPanel;
             this.friends = friends;
             this.connectedFriends = connectedFriends;
+            includeDiscover = FeaturesRegistry.Instance.IsEnabled(FeatureId.Discover);
 
             avatarGesture = new ClickOrDragManipulator
             {
@@ -252,6 +259,14 @@ namespace DCL.Lobby
             viewInstance.Profile.Clicked = ShowProfileMenu;
             viewInstance.NotificationsButton.clicked -= ShowNotifications;
             viewInstance.NotificationsButton.clicked += ShowNotifications;
+            viewInstance.MapButton.clicked -= ShowMap;
+            viewInstance.MapButton.clicked += ShowMap;
+            viewInstance.PlacesButton.clicked -= ShowPlaces;
+            viewInstance.PlacesButton.clicked += ShowPlaces;
+            viewInstance.PlacesButton.SetDisplayed(includeDiscover);
+            viewInstance.EventsButton.clicked -= ShowEvents;
+            viewInstance.EventsButton.clicked += ShowEvents;
+            viewInstance.EventsButton.SetDisplayed(includeDiscover);
             viewInstance.CloseButton.clicked -= RequestClose;
             viewInstance.CloseButton.clicked += RequestClose;
             viewInstance.CloseButton.SetDisplayed(!inputData.IsStartup);
@@ -867,6 +882,21 @@ namespace DCL.Lobby
 
         private void ShowNotifications() =>
             mvcManager.ShowAndForget(NotificationsPanelController<LobbyPopupParameter>.IssueCommand(new LobbyPopupParameter()));
+
+        private void ShowMap() =>
+            ShowExploreSection(ExploreSections.Navmap);
+
+        private void ShowPlaces() =>
+            ShowExploreSection(ExploreSections.Places);
+
+        private void ShowEvents() =>
+            ShowExploreSection(ExploreSections.Events);
+
+        private void ShowExploreSection(ExploreSections section)
+        {
+            ExploreSectionOpened?.Invoke(section);
+            mvcManager.ShowAndForget(ExploreSectionModalController.IssueCommand(new ExploreSectionModalParameter(section)));
+        }
 
         private void RequestClose()
         {

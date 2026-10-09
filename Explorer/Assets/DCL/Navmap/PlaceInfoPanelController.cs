@@ -1,8 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Chat.Commands;
-using DCL.Chat.History;
-using DCL.Chat.MessageBus;
+using DCL.Diagnostics;
 using DCL.Donations;
 using DCL.Donations.UI;
 using DCL.EventsApi;
@@ -17,6 +16,7 @@ using DCL.MapRenderer.MapLayers.Pins;
 using DCL.PlacesAPIService;
 using DCL.UI;
 using DCL.UI.Utilities;
+using DCL.Utilities.Extensions;
 using ECS.SceneLifeCycle;
 using MVC;
 using System;
@@ -37,7 +37,7 @@ namespace DCL.Navmap
         private readonly IPlacesAPIService placesApiService;
         private readonly IMapPathEventBus mapPathEventBus;
         private readonly INavmapBus navmapBus;
-        private readonly IChatMessagesBus chatMessagesBus;
+        private readonly ChatTeleporter chatTeleporter;
         private readonly HttpEventsApiService eventsApiService;
         private readonly ObjectPool<EventElementView> eventElementPool ;
         private readonly SharePlacesAndEventsContextMenuController shareContextMenu;
@@ -60,6 +60,7 @@ namespace DCL.Navmap
         private CancellationTokenSource? attendEventCancellationToken;
         private CancellationTokenSource? openEventDetailsCancellationToken;
         private CancellationTokenSource? showPlaceGalleryCancellationToken;
+        private CancellationTokenSource? jumpInCancellationToken;
         private Vector2Int? currentBaseParcel;
         private Vector2Int? destination;
         private Section? currentSection;
@@ -70,7 +71,7 @@ namespace DCL.Navmap
             IPlacesAPIService placesApiService,
             IMapPathEventBus mapPathEventBus,
             INavmapBus navmapBus,
-            IChatMessagesBus chatMessagesBus,
+            ChatTeleporter chatTeleporter,
             HttpEventsApiService eventsApiService,
             ObjectPool<EventElementView> eventElementPool,
             SharePlacesAndEventsContextMenuController shareContextMenu,
@@ -89,7 +90,7 @@ namespace DCL.Navmap
             this.placesApiService = placesApiService;
             this.mapPathEventBus = mapPathEventBus;
             this.navmapBus = navmapBus;
-            this.chatMessagesBus = chatMessagesBus;
+            this.chatTeleporter = chatTeleporter;
             this.eventsApiService = eventsApiService;
             this.eventElementPool = eventElementPool;
             this.shareContextMenu = shareContextMenu;
@@ -162,6 +163,7 @@ namespace DCL.Navmap
         public void Dispose()
         {
             thumbnailImage?.Dispose();
+            jumpInCancellationToken.SafeCancelAndDispose();
 
             if (cameraReelGalleryController != null)
             {
@@ -370,24 +372,19 @@ namespace DCL.Navmap
                 mapPathEventBus.ArrivedToDestination();
 
             navmapBus.JumpIn(place!);
+            jumpInCancellationToken = jumpInCancellationToken.SafeRestart();
 
-            // Worlds live on a separate realm; the goto command teleports there by world name.
             if (place!.IsWorld)
             {
-                chatMessagesBus
-                   .SendWithUtcNowTimestamp(ChatChannel.NEARBY_CHANNEL,
-                        $"/{ChatCommandsUtils.COMMAND_GOTO} {place.world_name}",
-                        ChatMessageOrigin.JumpIn);
-
+                chatTeleporter.TeleportToRealmAsync(place.world_name, jumpInCancellationToken.Token).SuppressToResultAsync(ReportCategory.PLACES).Forget();
                 return;
             }
 
             Vector2Int? destinationParcel = TeleportUtils.IsRoad(place.title) && originParcel != null ? originParcel : currentBaseParcel;
 
-            chatMessagesBus
-               .SendWithUtcNowTimestamp(ChatChannel.NEARBY_CHANNEL,
-                    $"/{ChatCommandsUtils.COMMAND_GOTO} {destinationParcel?.x},{destinationParcel?.y}",
-                    ChatMessageOrigin.JumpIn);
+            if (destinationParcel == null) return;
+
+            chatTeleporter.TeleportToParcelAsync(destinationParcel.Value, false, jumpInCancellationToken.Token).SuppressToResultAsync(ReportCategory.PLACES).Forget();
         }
 
         private void Share()

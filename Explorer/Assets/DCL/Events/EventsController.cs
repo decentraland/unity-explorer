@@ -22,7 +22,7 @@ using UnityEngine;
 
 namespace DCL.Events
 {
-    public class EventsController : ISection, IDisposable
+    public class EventsController : IHostableSection, IDisposable
     {
         public event Action<bool>? CreateEventButtonClicked;
 
@@ -37,8 +37,12 @@ namespace DCL.Events
         public EventsCalendarController EventsCalendarController { get; }
         public EventCardActionsController EventCardActionsController { get; }
 
+        public RectTransform? CurrentHost => view.transform.parent as RectTransform;
+
+        public bool IsAtHome => CurrentHost == homeHost;
+
         private readonly EventsView view;
-        private readonly RectTransform rectTransform;
+        private readonly RectTransform homeHost;
         private readonly ICursor cursor;
         private readonly UnityAppWebBrowser webBrowser;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
@@ -66,7 +70,7 @@ namespace DCL.Events
             CommunitiesDataProvider communitiesDataProvider)
         {
             this.view = view;
-            rectTransform = view.transform.parent.GetComponent<RectTransform>();
+            homeHost = view.transform.parent.GetComponent<RectTransform>();
             this.cursor = cursor;
             this.webBrowser = webBrowser;
             this.decentralandUrlsSource = decentralandUrlsSource;
@@ -119,8 +123,32 @@ namespace DCL.Events
         public void ResetAnimator() =>
             view.ResetAnimator();
 
+        // The explore panel positions this slot itself, so it stays behind when the view is borrowed
         public RectTransform GetRectTransform() =>
-            rectTransform;
+            homeHost;
+
+        public void AttachTo(RectTransform host)
+        {
+            var viewRect = (RectTransform)view.transform;
+
+            // A fullscreen panel closes popups without awaiting them, so another host can claim a view a modal still shows
+            if (isSectionActivated && viewRect.parent != host)
+                Deactivate();
+
+            if (viewRect.parent == host) return;
+
+            viewRect.SetParent(host, false);
+            viewRect.anchorMin = Vector2.zero;
+            viewRect.anchorMax = Vector2.one;
+            viewRect.offsetMin = Vector2.zero;
+            viewRect.offsetMax = Vector2.zero;
+            bool compact = host != homeHost;
+            view.EventsCalendarView.SetCompactLayout(compact);
+            view.EventsByDayView.SetCompactLayout(compact);
+        }
+
+        public void AttachToHome() =>
+            AttachTo(homeHost);
 
         public void OpenSection(EventsSection section, DateTime? fromDate = null)
         {

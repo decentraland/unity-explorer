@@ -227,9 +227,14 @@ namespace DCL.ExplorePanel
             viewInstance?.ProfileWidget?.OpenProfileButton?.Button?.onClick.AddListener(ShowProfileMenuAsync);
         }
 
-        // The backpack view is shared with the lobby modal, which does not put it back: whoever shows it claims it
-        protected override void OnBeforeViewShow() =>
+        // The section views are shared with the lobby modals, which do not put them back: whoever shows them claims them
+        protected override void OnBeforeViewShow()
+        {
             backpackController.AttachToHome();
+            NavmapController.AttachToHome();
+            PlacesController.AttachToHome();
+            EventsController.AttachToHome();
+        }
 
         protected override void OnViewShow()
         {

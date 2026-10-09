@@ -775,6 +775,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2f632a9f636549a2b1d4b833b1a6b5df
+    m_Address: ExploreSectionModal
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: f2df2b2c3721c5840b06c8fe73d5d665
     m_Address: VersionUpdateScreen
     m_ReadOnly: 0

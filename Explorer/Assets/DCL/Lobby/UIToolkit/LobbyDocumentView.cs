@@ -27,6 +27,9 @@ namespace DCL.Lobby
         private const string EVENTS_NAME = "Events";
         private const string LIVE_EVENTS_NAME = "LiveEvents";
         private const string UPCOMING_EVENTS_NAME = "UpcomingEvents";
+        private const string MAP_BUTTON_NAME = "MapButton";
+        private const string PLACES_BUTTON_NAME = "PlacesButton";
+        private const string EVENTS_BUTTON_NAME = "EventsButton";
         private const string CREDITS_SLOT_NAME = "CreditsSlot";
         private const string PROFILE_SLOT_NAME = "ProfileSlot";
         private const string NOTIFICATIONS_NAME = "Notifications";
@@ -74,6 +77,15 @@ namespace DCL.Lobby
 
         /// <summary>Profile widget of the top bar. It outlives the hierarchy like <see cref="Credits" />.</summary>
         public ProfileWidgetElement Profile => profile ??= new ProfileWidgetElement();
+
+        /// <summary>Opens the map over the lobby. Exists only while the view is shown.</summary>
+        public Button MapButton => Element<Button>(MAP_BUTTON_NAME);
+
+        /// <summary>Opens the places over the lobby. Exists only while the view is shown.</summary>
+        public Button PlacesButton => Element<Button>(PLACES_BUTTON_NAME);
+
+        /// <summary>Opens the events over the lobby. Exists only while the view is shown.</summary>
+        public Button EventsButton => Element<Button>(EVENTS_BUTTON_NAME);
 
         /// <summary>Exists only while the view is shown.</summary>
         public Button NotificationsButton => Element<Button>(NOTIFICATIONS_NAME);

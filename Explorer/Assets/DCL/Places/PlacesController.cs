@@ -18,7 +18,7 @@ using UnityEngine;
 
 namespace DCL.Places
 {
-    public class PlacesController : ISection, IDisposable
+    public class PlacesController : IHostableSection, IDisposable
     {
         public event Action<PlacesFilters>? FiltersChanged;
         public event Action? PlacesClosed;
@@ -26,8 +26,12 @@ namespace DCL.Places
         public PlacesResultsController PlacesResultsController { get; }
         public PlacesCardSocialActionsController PlaceCardActionsController { get; }
 
+        public RectTransform? CurrentHost => view.transform.parent as RectTransform;
+
+        public bool IsAtHome => CurrentHost == homeHost;
+
         private readonly PlacesView view;
-        private readonly RectTransform rectTransform;
+        private readonly RectTransform homeHost;
         private readonly ICursor cursor;
 
         private bool isSectionActivated;
@@ -54,7 +58,7 @@ namespace DCL.Places
             IWeb3IdentityCache identityCache)
         {
             this.view = view;
-            rectTransform = view.transform.parent.GetComponent<RectTransform>();
+            homeHost = view.transform.parent.GetComponent<RectTransform>();
             this.cursor = cursor;
             this.placesCategories = placesCategories;
             this.inputBlock = inputBlock;
@@ -112,8 +116,30 @@ namespace DCL.Places
         public void ResetAnimator() =>
             view.ResetAnimator();
 
+        // The explore panel positions this slot itself, so it stays behind when the view is borrowed
         public RectTransform GetRectTransform() =>
-            rectTransform;
+            homeHost;
+
+        public void AttachTo(RectTransform host)
+        {
+            var viewRect = (RectTransform)view.transform;
+
+            // A fullscreen panel closes popups without awaiting them, so another host can claim a view a modal still shows
+            if (isSectionActivated && viewRect.parent != host)
+                Deactivate();
+
+            if (viewRect.parent == host) return;
+
+            viewRect.SetParent(host, false);
+            viewRect.anchorMin = Vector2.zero;
+            viewRect.anchorMax = Vector2.one;
+            viewRect.offsetMin = Vector2.zero;
+            viewRect.offsetMax = Vector2.zero;
+            view.PlacesResultsView.SetCompactLayout(host != homeHost);
+        }
+
+        public void AttachToHome() =>
+            AttachTo(homeHost);
 
         public void OpenSection(PlacesSection section, bool force = false, bool invokeEvent = true, bool cleanSearch = true, bool resetCategory = false)
         {
