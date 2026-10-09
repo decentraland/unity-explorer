@@ -75,9 +75,9 @@ on:
 # Keyed on the branch, not the PR number, because both triggers have to land in
 # one group: create-release-branch.yml dispatches this workflow against the same
 # release branch a `pull_request` run also covers, and a PR-number key would put
-# the two in groups that can never cancel each other — two gates on one commit,
-# four shards on the self-hosted GPU pool, and whichever finishes last owning the
-# required check. `github.head_ref` is the source branch on `pull_request` (where
+# the two in groups that can never cancel each other — two suite runs on one
+# commit and four shards on the self-hosted GPU pool. `github.head_ref` is the
+# source branch on `pull_request` (where
 # `ref_name` is the merge ref) and empty everywhere else, so the fallback is what
 # a dispatch and a manual run against any ref key on.
 #
