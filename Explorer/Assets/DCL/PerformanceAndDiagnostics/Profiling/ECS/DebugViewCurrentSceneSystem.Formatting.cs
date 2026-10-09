@@ -201,13 +201,9 @@ namespace DCL.Profiling.ECS
             float currentFpsValue, float minFpsValue, float maxFpsValue, int hiccupCount,
             long deltaBytesFrom, long deltaBytesTo, long deltaMessagesFrom, long deltaMessagesTo, float dt)
         {
-            int target = metrics.TargetFps;
-            string color = target > 0 && currentFpsValue + 1f < target ? "yellow" : "green";
-            if (currentFpsValue is > 0f and < 15f) color = "red";
-
-            bindings.RealFps.Value = target > 0
-                ? $"<color={color}>{currentFpsValue:F1} fps (target {target})</color>"
-                : $"{currentFpsValue:F1} fps";
+            // The current scene ticks at most once per rendered frame, so there is no fixed tick target to compare against
+            string color = currentFpsValue is > 0f and < 15f ? "red" : "green";
+            bindings.RealFps.Value = $"<color={color}>{currentFpsValue:F1} fps (frame-bound)</color>";
 
             bindings.MinFps.Value = minFpsValue > 0 ? $"{minFpsValue:F1} fps" : "—";
             bindings.MaxFps.Value = maxFpsValue > 0 ? $"{maxFpsValue:F1} fps" : "—";
