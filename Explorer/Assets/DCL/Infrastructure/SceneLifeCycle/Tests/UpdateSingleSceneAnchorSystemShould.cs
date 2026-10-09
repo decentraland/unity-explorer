@@ -21,7 +21,7 @@ namespace DCL.SceneLifeCycle.Tests
             playerEntity = world.Create();
 
             singleSceneMode = new SingleSceneMode();
-            singleSceneMode.SetActive(true);
+            singleSceneMode.Init(true);
 
             system = new UpdateSingleSceneAnchorSystem(world, singleSceneMode, playerEntity);
         }
@@ -53,7 +53,7 @@ namespace DCL.SceneLifeCycle.Tests
         [Test]
         public void DoNothingWhenModeIsInactive()
         {
-            singleSceneMode.SetActive(false);
+            singleSceneMode.Init(false);
 
             world.Add(playerEntity, new PlayerTeleportIntent(null, new Vector2Int(5, 5), Vector3.zero, CancellationToken.None));
 

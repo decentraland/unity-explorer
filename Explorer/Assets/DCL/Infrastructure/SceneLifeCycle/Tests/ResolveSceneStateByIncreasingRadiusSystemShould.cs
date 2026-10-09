@@ -207,7 +207,7 @@ namespace DCL.SceneLifeCycle.Tests
             realmPartitionSettings.ScenesRequestBatchSize.Returns(30);
             realmPartitionSettings.MaxLoadingDistanceInParcels.Returns(3000);
 
-            singleSceneMode.SetActive(true);
+            singleSceneMode.Init(true);
             singleSceneMode.SetAnchor(new Vector2Int(10, 11));
 
             CreateSceneAtParcels(new Vector2Int[] { new (10, 10), new (10, 11) }, 0);
@@ -230,7 +230,7 @@ namespace DCL.SceneLifeCycle.Tests
             realmPartitionSettings.UnloadingDistanceToleranceInParcels.Returns(1);
             realmPartitionSettings.MaxLoadingDistanceInParcels.Returns(1);
 
-            singleSceneMode.SetActive(true);
+            singleSceneMode.Init(true);
             singleSceneMode.SetAnchor(new Vector2Int(10, 11));
 
             CreateLoadedSceneAtParcels(new Vector2Int[] { new (10, 10), new (10, 11) }, outOfRange: true);
@@ -247,7 +247,7 @@ namespace DCL.SceneLifeCycle.Tests
             realmPartitionSettings.UnloadingDistanceToleranceInParcels.Returns(1);
             realmPartitionSettings.MaxLoadingDistanceInParcels.Returns(1);
 
-            singleSceneMode.SetActive(true);
+            singleSceneMode.Init(true);
             singleSceneMode.SetAnchor(new Vector2Int(10, 11));
 
             world.Create(SceneDefinitionComponentFactory.CreateFromDefinition(

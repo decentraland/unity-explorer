@@ -14,7 +14,7 @@ namespace DCL.SceneLifeCycle.Tests
         public void SetUp()
         {
             singleSceneMode = new SingleSceneMode();
-            singleSceneMode.SetActive(true);
+            singleSceneMode.Init(true);
         }
 
         [Test]

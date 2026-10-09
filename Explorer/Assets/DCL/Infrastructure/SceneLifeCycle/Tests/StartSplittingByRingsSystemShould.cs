@@ -27,7 +27,7 @@ namespace DCL.SceneLifeCycle.Tests
 
             parcelMathJobifiedHelper = new ParcelMathJobifiedHelper();
             singleSceneMode = new SingleSceneMode();
-            singleSceneMode.SetActive(true);
+            singleSceneMode.Init(true);
 
             system = new StartSplittingByRingsSystem(world, realmPartitionSettings, parcelMathJobifiedHelper, singleSceneMode);
 
@@ -77,7 +77,7 @@ namespace DCL.SceneLifeCycle.Tests
         [Test]
         public void SplitAroundTheCameraWhenSingleSceneModeIsInactive()
         {
-            singleSceneMode.SetActive(false);
+            singleSceneMode.Init(false);
             singleSceneMode.SetAnchor(new Vector2Int(10, 11));
             cameraSamplingData.Parcel = new Vector2Int(1, 2);
             cameraSamplingData.IsDirty = true;

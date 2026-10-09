@@ -790,7 +790,7 @@ namespace Global.Dynamic
                     ? DCLPlayerPrefs.GetBool(DCLPrefKeys.SETTINGS_SINGLE_SCENE_MODE)
                     : !hasMinimumSpecs);
 
-            staticContainer!.SingleSceneMode.SetActive(singleSceneModeEnabled);
+            staticContainer!.SingleSceneMode.Init(singleSceneModeEnabled);
 
             bool userWantsToSkip = DCLPlayerPrefs.GetBool(DCLPrefKeys.DONT_SHOW_MIN_SPECS_SCREEN);
 
