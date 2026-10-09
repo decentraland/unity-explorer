@@ -7,7 +7,7 @@ This document is the source of truth for two decisions:
 
 **The rule:** Primary category bugs that meet SEV-2 criteria get `1-high` and require a hotfix. Secondary category bugs get `2-medium` and are handled in the normal release cycle.
 
-> **If the auto-labeler assigns the wrong priority:** check whether the affected feature is in the right section below and move it if needed. The bot reads this file directly.
+> **Labels are applied by people.** Automated issue labelling (the `AI Label Issues` workflow) was removed on 2026-10-09 because the team did not use its output; this document guides the person who sets the severity label. The only automated step on new issues is the duplicate check run by Jarvis, see [Build & CI § Issue deduplication](build-and-ci.md#issue-deduplication).
 
 ---
 
