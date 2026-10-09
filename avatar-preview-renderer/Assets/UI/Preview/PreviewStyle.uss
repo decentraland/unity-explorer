@@ -118,6 +118,25 @@
     background-image: url("project://database/Assets/UI/Sprites/SoundOff.png?fileID=2800000&guid=c0b3991a86c5d476fba7cdcc52b2e782&type=3#SoundOff");
 }
 
+/* The Builder's thumbnail editor shows a 2:1 canvas and keeps its centred square, so the frame
+   spans the full height and the middle half of the width. Colour and thickness match the Babylon
+   preview's frame. */
+.thumbnail-boundaries {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 25%;
+    width: 50%;
+    border-top-width: 2px;
+    border-right-width: 2px;
+    border-bottom-width: 2px;
+    border-left-width: 2px;
+    border-top-color: rgb(115, 110, 125);
+    border-right-color: rgb(115, 110, 125);
+    border-bottom-color: rgb(115, 110, 125);
+    border-left-color: rgb(115, 110, 125);
+}
+
 .loader {
     position: absolute;
     top: 0;

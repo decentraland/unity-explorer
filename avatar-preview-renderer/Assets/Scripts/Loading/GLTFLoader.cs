@@ -49,7 +49,7 @@ namespace Loading
 
                 Debug.Log($"GLB loaded: {representation.MainFile}");
 
-                return new LoadedModel(entityDefinition, root, importer);
+                return new LoadedModel(entityDefinition, root, importer, ModelMetrics.Measure(root, importer));
             }
 
             throw new Exception($"Failed to load GLB: {representation.MainFile}");
@@ -177,7 +177,11 @@ namespace Loading
                     Sanitize(prop.transform);
                 }
 
-                return new LoadedEmote(entityDefinition, avatarClip, audioClip, prop, propAnim, importer);
+                var metrics = prop != null
+                    ? ModelMetrics.Measure(prop, importer)
+                    : ModelMetrics.Empty;
+
+                return new LoadedEmote(entityDefinition, avatarClip, audioClip, prop, propAnim, importer, metrics);
             }
 
             throw new NotSupportedException($"Failed to load emote: {rep.MainFile}");

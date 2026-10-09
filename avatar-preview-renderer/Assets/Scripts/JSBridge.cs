@@ -1,11 +1,12 @@
 using System;
 using System.Linq;
 using Configurator;
+using Data;
 using JetBrains.Annotations;
 using Preview;
 using UnityEngine;
-using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 using Utils;
 
 /// <summary>
@@ -17,6 +18,14 @@ using Utils;
 /// </summary>
 public class JSBridge : MonoBehaviour
 {
+    // The request names a failure reply carries, so the page can match it to the call it made.
+    private const string REQUEST_SCREENSHOT = "screenshot";
+    private const string REQUEST_METRICS = "metrics";
+
+    // A sized capture allocates three textures of the requested size, so an embedding page could
+    // exhaust the WebGL heap with one request without a bound.
+    private const int MAX_SCREENSHOT_SIDE = 4096;
+
     [SerializeField] private PreviewController previewController;
     [SerializeField] private ConfiguratorUIPresenter configuratorUIPresenter;
 
@@ -144,61 +153,312 @@ public class JSBridge : MonoBehaviour
     public void Cleanup() => previewController.Cleanup();
 
     [UsedImplicitly]
-    public void TakeScreenshot() => StartCoroutine(TakeScreenshotCoroutine());
-
-    private static async Awaitable TakeScreenshotCoroutine()
+    public void SetHideControls(string value)
     {
-        await Awaitable.EndOfFrameAsync();
+        PreviewConfiguration.Instance.SetHideControls(value);
+        previewController.SetControlsHidden(PreviewConfiguration.Instance.HideControls);
+    }
 
-        var width = Screen.width;
-        var height = Screen.height;
+    /// <summary>
+    /// The camera options of the Babylon preview, applied without a reload. The zoom and wheel ones
+    /// restart the zoom at the new range's start, as a Babylon reload would.
+    /// </summary>
+    [UsedImplicitly]
+    public void SetZoomLevel(string value)
+    {
+        PreviewConfiguration.Instance.SetZoomLevel(value);
+        previewController.ApplyCameraSettings();
+        previewController.RestartZoom();
+    }
 
-        var rt = RenderTexture.GetTemporary(width, height, 0, GraphicsFormat.B8G8R8A8_UNorm);
+    [UsedImplicitly]
+    public void SetWheelZoom(string value)
+    {
+        PreviewConfiguration.Instance.SetWheelZoom(value);
+        previewController.ApplyCameraSettings();
+        previewController.RestartZoom();
+    }
 
-        ScreenCapture.CaptureScreenshotIntoRenderTexture(rt);
+    [UsedImplicitly]
+    public void SetWheelStart(string value)
+    {
+        PreviewConfiguration.Instance.SetWheelStart(value);
+        previewController.ApplyCameraSettings();
+        previewController.RestartZoom();
+    }
 
-        var gpuReadbackRequest = await AsyncGPUReadback.RequestAsync(rt);
+    [UsedImplicitly]
+    public void SetCamera(string value)
+    {
+        PreviewConfiguration.Instance.SetCamera(value);
+        previewController.ApplyCameraSettings();
+    }
 
-        if (gpuReadbackRequest.hasError)
+    [UsedImplicitly]
+    public void SetLockAlpha(string value)
+    {
+        PreviewConfiguration.Instance.SetLockAlpha(value);
+        previewController.ApplyCameraSettings();
+    }
+
+    [UsedImplicitly]
+    public void SetLockBeta(string value)
+    {
+        PreviewConfiguration.Instance.SetLockBeta(value);
+        previewController.ApplyCameraSettings();
+    }
+
+    [UsedImplicitly]
+    public void SetLockRadius(string value)
+    {
+        PreviewConfiguration.Instance.SetLockRadius(value);
+        previewController.ApplyCameraSettings();
+    }
+
+    [UsedImplicitly]
+    public void SetPanning(string value)
+    {
+        PreviewConfiguration.Instance.SetPanning(value);
+        previewController.ApplyCameraSettings();
+    }
+
+    [UsedImplicitly]
+    public void SetDisableAutoRotate(string value)
+    {
+        PreviewConfiguration.Instance.SetDisableAutoRotate(value);
+        previewController.ApplyCameraSettings();
+    }
+
+    [UsedImplicitly]
+    public void SetAutoRotateSpeed(string value)
+    {
+        PreviewConfiguration.Instance.SetAutoRotateSpeed(value);
+        previewController.ApplyCameraSettings();
+    }
+
+    [UsedImplicitly]
+    public void SetShowThumbnailBoundaries(string value)
+    {
+        PreviewConfiguration.Instance.SetShowThumbnailBoundaries(value);
+        previewController.ApplyCameraSettings();
+    }
+
+    /// <summary>
+    /// Babylon's <c>changeZoom</c>: a delta that pulls closer when positive.
+    /// </summary>
+    [UsedImplicitly]
+    public void SetZoom(string value)
+    {
+        if (PreviewConfiguration.TryParseNumber(value, out var delta))
+            previewController.ZoomBy(delta);
+        else
+            Debug.LogWarning($"Invalid zoom delta [{value}], expected a number");
+    }
+
+    /// <summary>
+    /// Babylon's <c>panCamera</c>: <c>x,y,z</c> in metres, across and up the screen. The depth is
+    /// ignored, since the view has nothing to offset along it.
+    /// </summary>
+    [UsedImplicitly]
+    public void SetOffset(string value)
+    {
+        if (!TryParseVector(value, out var offset))
         {
-            Debug.LogError("Failed to capture screenshot");
-            NativeCalls.OnScreenshotTaken(null);
+            Debug.LogWarning($"Invalid offset [{value}], expected x,y,z");
             return;
         }
 
-        var sourceData = gpuReadbackRequest.GetData<byte>();
+        var planar = new Vector2(offset.x, offset.y);
+        PreviewConfiguration.Instance.SetOffset(planar);
+        previewController.SetCameraOffset(planar);
+    }
 
-        var texture = new Texture2D(width, height, TextureFormat.BGRA32, false);
-        var destinationData = texture.GetRawTextureData<byte>();
-
-        // We have to flip the pixels vertically because OpenGL reasons
-        for (var i = 0; i < sourceData.Length; i += 4)
+    /// <summary>
+    /// Babylon's <c>changeCameraPosition</c>: <c>alpha,beta,radius</c> deltas, the angles in radians
+    /// and the radius in metres.
+    /// </summary>
+    [UsedImplicitly]
+    public void SetCameraPosition(string value)
+    {
+        if (!TryParseVector(value, out var delta))
         {
-            var arrayIndex = i / 4;
-            var x = arrayIndex % width;
-            var y = arrayIndex / width;
-            var flippedY = (height - 1 - y);
-            var flippedIndex = x + flippedY * width;
-
-            destinationData[i] = sourceData[flippedIndex * 4];
-            destinationData[i + 1] = sourceData[flippedIndex * 4 + 1];
-            destinationData[i + 2] = sourceData[flippedIndex * 4 + 2];
-            destinationData[i + 3] = sourceData[flippedIndex * 4 + 3];
+            Debug.LogWarning($"Invalid camera position [{value}], expected alpha,beta,radius");
+            return;
         }
 
-        var pngBytes = texture.EncodeToPNG();
-        var base64Png = Convert.ToBase64String(pngBytes);
+        previewController.MoveCamera(delta.x, delta.y, delta.z);
+    }
+
+    /// <summary>
+    /// Replies with the metrics of the items the caller asked to preview, or a request failure while a
+    /// reload is in flight or nothing of theirs is loaded.
+    /// </summary>
+    [UsedImplicitly]
+    public void GetMetrics()
+    {
+        if (previewController.IsLoading)
+        {
+            NativeCalls.OnRequestFailed(REQUEST_METRICS, "The preview is reloading");
+            return;
+        }
+
+        var (metrics, found) = previewController.GetRequestedItemsMetrics();
+
+        if (found == 0)
+        {
+            NativeCalls.OnRequestFailed(REQUEST_METRICS, "No requested item is loaded");
+            return;
+        }
+
+        var payload = new MetricsPayload
+        {
+            triangles = metrics.Triangles,
+            materials = metrics.Materials,
+            textures = metrics.Textures,
+            meshes = metrics.Meshes,
+            bodies = metrics.Meshes,
+            entities = found,
+        };
+
+        NativeCalls.OnMetrics(JsonUtility.ToJson(payload));
+    }
+
+    /// <summary>
+    /// With no size, captures the canvas as it is on screen. With <c>width,height</c> in pixels, renders
+    /// the view offscreen at exactly that size with no controls in it.
+    /// </summary>
+    [UsedImplicitly]
+    public void TakeScreenshot(string size)
+    {
+        if (string.IsNullOrWhiteSpace(size))
+        {
+            StartCoroutine(TakeCanvasScreenshotAsync());
+            return;
+        }
+
+        if (!TryParseScreenshotSize(size, out var width, out var height))
+        {
+            NativeCalls.OnRequestFailed(REQUEST_SCREENSHOT,
+                $"Invalid screenshot size [{size}], expected width,height up to {MAX_SCREENSHOT_SIDE}");
+            return;
+        }
+
+        // URP renders the capture at the pipeline's render scale, doubled on small canvases, before
+        // downsampling to the requested size, so the intermediate buffer is what the GPU limit bounds.
+        if (Mathf.Max(width, height) * CurrentRenderScale() > SystemInfo.maxTextureSize)
+        {
+            NativeCalls.OnRequestFailed(REQUEST_SCREENSHOT,
+                $"Screenshot size [{size}] exceeds the GPU texture limit at the current render scale");
+            return;
+        }
+
+        if (previewController.IsLoading)
+        {
+            NativeCalls.OnRequestFailed(REQUEST_SCREENSHOT, "The preview is reloading");
+            return;
+        }
+
+        StartCoroutine(TakeSizedScreenshotAsync(width, height));
+    }
+
+    /// <summary>
+    /// Reads a <c>width,height</c> pair, both from 1 to <see cref="MAX_SCREENSHOT_SIDE"/>.
+    /// </summary>
+    internal static bool TryParseScreenshotSize(string size, out int width, out int height)
+    {
+        width = 0;
+        height = 0;
+
+        var parts = size.Split(',');
+
+        return parts.Length == 2
+               && int.TryParse(parts[0], out width) && width > 0 && width <= MAX_SCREENSHOT_SIDE
+               && int.TryParse(parts[1], out height) && height > 0 && height <= MAX_SCREENSHOT_SIDE;
+    }
+
+    /// <summary>
+    /// Reads three comma-separated numbers, as the page writes a vector.
+    /// </summary>
+    internal static bool TryParseVector(string value, out Vector3 vector)
+    {
+        vector = default;
+
+        var parts = value.Split(',');
+
+        if (parts.Length != 3
+            || !PreviewConfiguration.TryParseNumber(parts[0], out var x)
+            || !PreviewConfiguration.TryParseNumber(parts[1], out var y)
+            || !PreviewConfiguration.TryParseNumber(parts[2], out var z))
+            return false;
+
+        vector = new Vector3(x, y, z);
+        return true;
+    }
+
+    private static float CurrentRenderScale() =>
+        GraphicsSettings.currentRenderPipeline is UniversalRenderPipelineAsset urpAsset
+            ? Mathf.Max(1f, urpAsset.renderScale)
+            : 1f;
+
+    private async Awaitable TakeSizedScreenshotAsync(int width, int height)
+    {
+        var reloadGeneration = previewController.ReloadGeneration;
+        string base64Png;
+
+        try
+        {
+            base64Png = await previewController.CaptureScreenshotAsync(width, height);
+        }
+        catch (Exception e)
+        {
+            Debug.LogException(e);
+            NativeCalls.OnRequestFailed(REQUEST_SCREENSHOT, e.Message);
+            return;
+        }
+
+        // The capture spans frames, so a reload may have started under it, and even finished, leaving
+        // it a half-built scene. Either way the generation moved.
+        if (previewController.ReloadGeneration != reloadGeneration)
+        {
+            NativeCalls.OnRequestFailed(REQUEST_SCREENSHOT, "The preview reloaded during the capture");
+            return;
+        }
 
         NativeCalls.OnScreenshotTaken(base64Png);
+    }
 
-        RenderTexture.ReleaseTemporary(rt);
+    private static async Awaitable TakeCanvasScreenshotAsync()
+    {
+        string base64Png;
+
+        try
+        {
+            base64Png = await ScreenshotCapture.CaptureCanvasAsync();
+        }
+        catch (Exception e)
+        {
+            Debug.LogException(e);
+            NativeCalls.OnRequestFailed(REQUEST_SCREENSHOT, e.Message);
+            return;
+        }
+
+        NativeCalls.OnScreenshotTaken(base64Png);
     }
 
     public static class NativeCalls
     {
 #if UNITY_EDITOR
-        public static void OnScreenshotTaken(string base64Str) =>
-            Debug.Log($"NativeCall OnScreenshotTaken({base64Str.Length} bytes)");
+        // Saved under Recordings/ (gitignored) so the capture can be opened: the page that would
+        // receive it does not exist in the Editor.
+        public static void OnScreenshotTaken(string base64Str)
+        {
+            var folder = System.IO.Path.Combine(Application.dataPath, "..", "Recordings");
+            System.IO.Directory.CreateDirectory(folder);
+            var path = System.IO.Path.GetFullPath(System.IO.Path.Combine(folder,
+                $"screenshot_{DateTime.Now:yyyyMMdd_HHmmss}.png"));
+            System.IO.File.WriteAllBytes(path, Convert.FromBase64String(base64Str));
+            Debug.Log($"NativeCall OnScreenshotTaken({base64Str.Length} bytes) saved to {path}");
+        }
 
         public static void OnLoadComplete() => Debug.Log("NativeCall OnLoadComplete");
 
@@ -215,6 +475,11 @@ public class JSBridge : MonoBehaviour
         public static void OnIsEmotePlaying(bool playing) => Debug.Log($"NativeCall OnIsEmotePlaying({playing})");
 
         public static void OnHasSound(bool hasSound) => Debug.Log($"NativeCall OnHasSound({hasSound})");
+
+        public static void OnMetrics(string json) => Debug.Log($"NativeCall OnMetrics({json})");
+
+        public static void OnRequestFailed(string request, string reason) =>
+            Debug.LogWarning($"NativeCall OnRequestFailed({request}, {reason})");
 
         // ReSharper disable once InconsistentNaming
         public static void PreloadURLs(string urlsCSV) => Debug.Log($"NativeCall PreloadURLs({urlsCSV})");
@@ -247,7 +512,13 @@ public class JSBridge : MonoBehaviour
         public static extern void OnHasSound(bool hasSound);
 
         [System.Runtime.InteropServices.DllImport("__Internal")]
+        public static extern void OnMetrics(string json);
+
+        [System.Runtime.InteropServices.DllImport("__Internal")]
+        public static extern void OnRequestFailed(string request, string reason);
+
+        [System.Runtime.InteropServices.DllImport("__Internal")]
         public static extern void PreloadURLs(string urlsCSV);
 #endif
     }
-}
+}

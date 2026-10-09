@@ -21,6 +21,22 @@ namespace Preview
         private const float LOADER_SPEED = 360f;
         private const string DEBUG_PASSPHRASE = "debugmesilly";
 
+        // Bridge methods that act on the live scene or only query it; everything else edits the
+        // configuration and needs a reload to show.
+        private static readonly HashSet<string> DEBUG_METHODS_WITHOUT_RELOAD = new()
+        {
+            nameof(JSBridge.Reload), nameof(JSBridge.TakeScreenshot), nameof(JSBridge.Cleanup),
+            nameof(JSBridge.GetMetrics), nameof(JSBridge.SetHideControls), nameof(JSBridge.GetEmoteLength),
+            nameof(JSBridge.IsEmotePlaying), nameof(JSBridge.PlayEmote), nameof(JSBridge.PauseEmote),
+            nameof(JSBridge.GoToEmote), nameof(JSBridge.StopEmote), nameof(JSBridge.EnableSound),
+            nameof(JSBridge.DisableSound), nameof(JSBridge.HasSound), nameof(JSBridge.SetZoom),
+            nameof(JSBridge.SetZoomLevel), nameof(JSBridge.SetWheelZoom), nameof(JSBridge.SetWheelStart),
+            nameof(JSBridge.SetOffset), nameof(JSBridge.SetCameraPosition), nameof(JSBridge.SetCamera),
+            nameof(JSBridge.SetLockAlpha), nameof(JSBridge.SetLockBeta), nameof(JSBridge.SetLockRadius),
+            nameof(JSBridge.SetPanning), nameof(JSBridge.SetDisableAutoRotate),
+            nameof(JSBridge.SetAutoRotateSpeed), nameof(JSBridge.SetShowThumbnailBoundaries),
+        };
+
         [SerializeField] private AudioSource audioSource;
         [SerializeField] private PreviewCameraController previewCameraController;
 
@@ -42,11 +58,15 @@ namespace Preview
         private VisualElement _controls;
         private VisualElement _loader;
         private VisualElement _loaderIcon;
+        private VisualElement _thumbnailBoundaries;
 
         private string _currentDebugInput = "";
         private bool _debugLoaded;
         private bool _zoomEnabled;
         private bool _panEnabled;
+        private bool _controlsHidden;
+        private bool _switcherEnabled;
+        private bool _emoteControlsEnabled;
         private bool _animationPlaying = true;
         private SwitcherState _switcherState = SwitcherState.Wearable;
         private float _lastPlayPauseClickTime;
@@ -68,6 +88,7 @@ namespace Preview
             _controls = root.Q("Controls");
             _loader = root.Q("Loader");
             _loaderIcon = _loader.Q("Icon");
+            _thumbnailBoundaries = root.Q("ThumbnailBoundaries");
 
             _controls.AddManipulator(new DragManipulator((d, dt) => ContainerDrag!(d, dt)));
             _controls.AddManipulator(new DragManipulator(OnPanDrag, MouseButton.RightMouse, accumulateDelta: true,
@@ -94,7 +115,20 @@ namespace Preview
 
         public void EnableSwitcher(bool enable)
         {
-            _switcher.style.display = enable ? DisplayStyle.Flex : DisplayStyle.None;
+            _switcherEnabled = enable;
+            ApplyControlsVisibility();
+        }
+
+        /// <summary>
+        /// Hides every in-canvas control the embedder may not want: the switcher and the emote buttons.
+        /// What each reload enables is remembered, so showing them again restores the right set. The
+        /// loader is governed by <see cref="EnableLoader"/> alone, and the drag surface stays so the
+        /// embedder's own camera controls keep working.
+        /// </summary>
+        public void SetControlsHidden(bool hidden)
+        {
+            _controlsHidden = hidden;
+            ApplyControlsVisibility();
         }
 
         public void EnableZoom(bool enable)
@@ -107,9 +141,26 @@ namespace Preview
             _panEnabled = enable;
         }
 
+        /// <summary>
+        /// Outlines the centred half of the canvas that a square thumbnail keeps. Not a control, so
+        /// <see cref="SetControlsHidden"/> leaves it alone.
+        /// </summary>
+        public void ShowThumbnailBoundaries(bool show)
+        {
+            _thumbnailBoundaries.style.display = show ? DisplayStyle.Flex : DisplayStyle.None;
+        }
+
         public void EnableEmoteControls(bool enable)
         {
-            _emoteControls.style.display = enable ? DisplayStyle.Flex : DisplayStyle.None;
+            _emoteControlsEnabled = enable;
+            ApplyControlsVisibility();
+        }
+
+        private void ApplyControlsVisibility()
+        {
+            _switcher.style.display = _switcherEnabled && !_controlsHidden ? DisplayStyle.Flex : DisplayStyle.None;
+            _emoteControls.style.display =
+                _emoteControlsEnabled && !_controlsHidden ? DisplayStyle.Flex : DisplayStyle.None;
         }
 
         public void EnableAudioControls(bool enable)
@@ -295,16 +346,19 @@ namespace Preview
                 var methodName = methodNameDropdown.value;
                 var parameter = parameterField.value;
 
-                if (string.IsNullOrEmpty(parameter))
-                {
-                    GameObject.Find("JSBridge").SendMessage(methodName);
-                }
-                else
+                // SendMessage refuses a parameterless call to a method that takes one, so pass the field as is.
+                var takesParameter = typeof(JSBridge).GetMethod(methodName)?.GetParameters().Length > 0;
+
+                if (takesParameter)
                 {
                     GameObject.Find("JSBridge").SendMessage(methodName, parameter);
                 }
+                else
+                {
+                    GameObject.Find("JSBridge").SendMessage(methodName);
+                }
 
-                if (methodName != "Reload" && methodName != "TakeScreenshot" && methodName != "Cleanup")
+                if (!DEBUG_METHODS_WITHOUT_RELOAD.Contains(methodName))
                 {
                     GameObject.Find("JSBridge").SendMessage("Reload");
                 }
@@ -330,4 +384,4 @@ namespace Preview
             WearableLocked
         }
     }
-}
+}

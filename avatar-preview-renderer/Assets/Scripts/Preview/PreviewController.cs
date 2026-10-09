@@ -43,9 +43,41 @@ namespace Preview
         // #cc9b76, the skin the JS wrapper used to send whenever a builder caller left it out.
         private static readonly Color DEFAULT_SKIN_COLOR = new(204f / 255f, 155f / 255f, 118f / 255f);
 
+        // The entities the caller asked to preview, as resolved on the last reload: the urns and base64
+        // definitions, never the profile's own wearables or the body. Metrics are reported for these.
+        private readonly HashSet<string> _requestedItemUrns = new();
+
+        private ScreenshotCapture _screenshotCapture;
+
         private bool _loading;
         private bool _shouldReload;
         private bool _shouldCleanup;
+        private bool _showingWearable;
+
+        // What the mode and the loaded content allow; the camera options narrow it further.
+        private bool _cameraInputByMode;
+        private bool _autoRotateByMode;
+
+        /// <summary>
+        /// True while a reload is rebuilding the avatar, during which nothing is rendered.
+        /// </summary>
+        public bool IsLoading => _loading;
+
+        /// <summary>
+        /// Counts the reloads started so far, so a caller spanning several frames can tell a reload ran
+        /// under it even when it has already finished.
+        /// </summary>
+        public int ReloadGeneration { get; private set; }
+
+        private void Awake()
+        {
+            _screenshotCapture = new ScreenshotCapture(mainCamera, avatarLoader, wearableLoader);
+        }
+
+        private void OnDestroy()
+        {
+            _screenshotCapture.Dispose();
+        }
 
         private void Start()
         {
@@ -56,11 +88,6 @@ namespace Preview
             previewUIPresenter.ContainerDrag += wearableRotator.OnDrag;
             previewUIPresenter.ContainerPan += previewCameraController.Pan;
             emoteAnimationController.EmoteAnimationEnded += OnEmoteAnimationEnded;
-
-            // The avatar stays on a turntable - tipping a standing figure just looks like falling over.
-            // A solo item is being inspected, and yaw alone cannot reach a hood's inside or a shoe's sole.
-            avatarRotator.AllowVertical = false;
-            wearableRotator.AllowVertical = true;
 
             StartCoroutine(Reload());
         }
@@ -86,6 +113,7 @@ namespace Preview
         // than the one under the avatar's feet.
         private void ShowWearableView(bool showWearable)
         {
+            _showingWearable = showWearable;
             previewCameraController.ShowMarketplaceWearable(showWearable);
 
             // One 20-unit plane spans both subjects, which sit 5 apart, so the avatar's shadow drifts
@@ -112,6 +140,112 @@ namespace Preview
 
         public void SetSpringBonesParams(SpringBones.SpringBonesParamsPayload payload) =>
             avatarLoader.SetSpringBonesParams(payload);
+
+        /// <summary>
+        /// Captures the current view at the given size. See <see cref="ScreenshotCapture.CaptureAsync"/>.
+        /// </summary>
+        public Awaitable<string> CaptureScreenshotAsync(int width, int height) =>
+            _screenshotCapture.CaptureAsync(width, height);
+
+        /// <summary>
+        /// Sums the metrics of the entities the caller asked to preview, with how many of them are loaded;
+        /// zero means there is nothing to report.
+        /// </summary>
+        public (ModelMetrics total, int entities) GetRequestedItemsMetrics()
+        {
+            var total = ModelMetrics.Empty;
+            var entities = 0;
+
+            foreach (var urn in _requestedItemUrns)
+            {
+                // The avatar wears the item in every mode; the item-alone view loads it a second time
+                // with the same geometry, so it only matters when the avatar could not wear it.
+                if (avatarLoader.TryGetMetrics(urn, out var metrics)
+                    || wearableLoader.TryGetMetrics(urn, out metrics))
+                {
+                    total += metrics;
+                    entities++;
+                }
+            }
+
+            return (total, entities);
+        }
+
+        /// <summary>
+        /// Hides or shows every in-canvas control without a reload. The configuration keeps the value,
+        /// so a later reload applies it again.
+        /// </summary>
+        public void SetControlsHidden(bool hidden) => previewUIPresenter.SetControlsHidden(hidden);
+
+        /// <summary>
+        /// Applies the configuration's camera options to the live scene: input gates, locks,
+        /// auto-rotate, the zoom range, the offset and the thumbnail frame. The current zoom and pan are
+        /// left alone, so a reload within a mode keeps the creator's framing.
+        /// </summary>
+        public void ApplyCameraSettings()
+        {
+            var config = PreviewConfiguration.Instance;
+            var interactive = config.Camera == PreviewCameraKind.Interactive;
+
+            previewCameraController.Configure(config);
+            previewUIPresenter.EnableZoom(_cameraInputByMode && interactive && !config.LockRadius);
+            previewUIPresenter.EnablePan(_cameraInputByMode && interactive && config.Panning);
+            previewUIPresenter.ShowThumbnailBoundaries(config.ShowThumbnailBoundaries);
+
+            ConfigureRotator(avatarRotator, config, interactive);
+            ConfigureRotator(wearableRotator, config, interactive);
+
+            // The avatar stays on a turntable - tipping a standing figure just looks like falling over.
+            // A solo item is being inspected, and yaw alone cannot reach a hood's inside or a shoe's sole.
+            avatarRotator.AllowVertical = false;
+            wearableRotator.AllowVertical = !config.LockBeta;
+            avatarRotator.EnableAutoRotate = _autoRotateByMode && !config.DisableAutoRotate && interactive;
+            wearableRotator.EnableAutoRotate = !config.DisableAutoRotate && interactive;
+
+            // A static camera is a still: the emote is held on its first frame, so the view shows the
+            // pose rather than a moment of the motion.
+            if (!interactive)
+            {
+                emoteAnimationController.PauseEmote();
+                emoteAnimationController.GoToEmote(0f);
+            }
+        }
+
+        /// <summary>
+        /// Back to the start of the zoom range, after the zoom options changed.
+        /// </summary>
+        public void RestartZoom() => previewCameraController.RestartZoom();
+
+        /// <summary>
+        /// A zoom button press from the page: positive pulls closer.
+        /// </summary>
+        public void ZoomBy(float delta) => previewCameraController.ZoomByDelta(delta);
+
+        /// <summary>
+        /// Puts the view at an absolute offset, across and up the screen in metres.
+        /// </summary>
+        public void SetCameraOffset(Vector2 offset) => previewCameraController.SetOffset(offset);
+
+        /// <summary>
+        /// Moves the view by Babylon's orbit deltas: alpha turns the subject, beta tilts it, both in
+        /// radians, and radius pulls the orbit back by metres.
+        /// </summary>
+        public void MoveCamera(float alpha, float beta, float radius)
+        {
+            var rotator = _showingWearable ? wearableRotator : avatarRotator;
+
+            // Babylon's beta lowers its camera, which reads as the subject's top tilting towards the
+            // viewer; the rotator's pitch runs the other way.
+            rotator.Rotate(alpha * Mathf.Rad2Deg, -beta * Mathf.Rad2Deg);
+            previewCameraController.OrbitBy(radius);
+        }
+
+        private static void ConfigureRotator(DragRotator rotator, PreviewConfiguration config, bool interactive)
+        {
+            rotator.InputEnabled = interactive;
+            rotator.AllowHorizontal = !config.LockAlpha;
+            rotator.AutoRotateSpeed = config.AutoRotateSpeed * Mathf.Rad2Deg;
+        }
 
         public float GetEmoteLength() => emoteAnimationController.GetEmoteLength();
 
@@ -154,6 +288,7 @@ namespace Preview
             Cleanup();
             previewUIPresenter.ShowLoader(true);
             _loading = true;
+            ReloadGeneration++;
             mainCamera.cullingMask = 0; // Render nothing
             avatarLoader.enabled = false; // Disables Update for Outline
             wearableLoader.enabled = false; // Disables Update for Outline
@@ -164,6 +299,9 @@ namespace Preview
 
                 // We store the instance in case it gets recreated by a call to PreviewConfiguration.RecreateFrom
                 var config = PreviewConfiguration.Instance;
+
+                _requestedItemUrns.Clear();
+                previewUIPresenter.SetControlsHidden(config.HideControls);
 
                 avatarRotator.enabled = false;
                 wearableRotator.enabled = false;
@@ -178,6 +316,9 @@ namespace Preview
                 mainCamera.backgroundColor = config.Background;
                 mainCamera.orthographic = config.Projection == "orthographic";
                 previewUIPresenter.EnableLoader(!config.DisableLoader);
+
+                // Before the mode, whose change starts the framing from these options.
+                previewCameraController.Configure(config);
                 previewCameraController.SetMode(config.Mode);
                 confirmationVFX.gameObject.SetActive(config.Mode is PreviewMode.Jesus);
 
@@ -246,6 +387,15 @@ namespace Preview
                 catch (Exception e)
                 {
                     JSBridge.NativeCalls.OnError(e.Message);
+
+                    // Otherwise the view stays blank behind the loader and every later request is
+                    // answered as still reloading. A reload queued meanwhile would be lost with the
+                    // loop, so it is started again.
+                    var reloadQueued = _shouldReload;
+                    EndReload();
+
+                    if (reloadQueued) StartCoroutine(Reload());
+
                     throw;
                 }
 
@@ -279,15 +429,21 @@ namespace Preview
 
                 avatarRotator.enabled = true;
                 wearableRotator.enabled = true;
-                avatarRotator.EnableAutoRotate = config.Mode is PreviewMode.Marketplace && !hasEmoteOverride;
+                _autoRotateByMode = config.Mode is PreviewMode.Marketplace && !hasEmoteOverride;
+                _cameraInputByMode = config.Mode is PreviewMode.Marketplace or PreviewMode.Builder;
+                ApplyCameraSettings();
 
                 previewUIPresenter.EnableEmoteControls(hasEmoteOverride);
-                previewUIPresenter.EnableZoom(config.Mode is PreviewMode.Marketplace or PreviewMode.Builder);
-                previewUIPresenter.EnablePan(config.Mode is PreviewMode.Marketplace or PreviewMode.Builder);
                 previewUIPresenter.EnableSwitcher(hasWearableOverride && !config.DisableSwitcher);
                 previewUIPresenter.EnableAudioControls(hasEmoteAudio);
             } while (_shouldReload);
 
+            EndReload();
+            JSBridge.NativeCalls.OnLoadComplete();
+        }
+
+        private void EndReload()
+        {
             previewUIPresenter.ShowLoader(false);
 
             _loading = false;
@@ -299,8 +455,6 @@ namespace Preview
             {
                 Cleanup();
             }
-
-            JSBridge.NativeCalls.OnLoadComplete();
         }
 
         private async Awaitable LoadForBuilder(string bodyShapeName,
@@ -320,6 +474,16 @@ namespace Preview
             var base64WearableEntities = base64Entities.Where(e => e.Type != EntityType.Emote);
 
             var urnEntities = await EntityService.GetEntities(urns);
+
+            foreach (var entity in urnEntities)
+            {
+                if (entity.Type != EntityType.Body) _requestedItemUrns.Add(entity.URN);
+            }
+
+            foreach (var entity in base64Entities)
+            {
+                _requestedItemUrns.Add(entity.URN);
+            }
 
             // Slot-based deduplication: one wearable per category, base64 items take priority
             var slots = new Dictionary<string, EntityDefinition>();
@@ -385,6 +549,11 @@ namespace Preview
                     throw new NotSupportedException($"Trying to override type: {definition.Type}");
 
                 if (!overrides.Contains(definition)) overrides.Add(definition);
+            }
+
+            foreach (var definition in overrides)
+            {
+                _requestedItemUrns.Add(definition.URN);
             }
 
             // Only one emote can play at a time, so the first one wins and the rest is worn.

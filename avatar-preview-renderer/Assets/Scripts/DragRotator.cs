@@ -32,9 +32,21 @@ public class DragRotator : MonoBehaviour
     private float _yaw;
     private float _pitch;
 
+    public bool AllowHorizontal { get; set; } = true;
     public bool AllowVertical { get; set; } = true;
     public bool EnableAutoRotate { get; set; } = true;
+
+    /// <summary>
+    /// False ignores drags altogether, for a static camera. Auto-rotate is gated separately.
+    /// </summary>
+    public bool InputEnabled { get; set; } = true;
+
     public float DragSpeed { get => dragSpeed; set => dragSpeed = value; }
+
+    /// <summary>
+    /// Idle turntable speed in degrees per second.
+    /// </summary>
+    public float AutoRotateSpeed { get => autoRotateSpeed; set => autoRotateSpeed = value; }
 
     private Quaternion? _targetRotation;
 
@@ -45,9 +57,25 @@ public class DragRotator : MonoBehaviour
 
     public void OnDrag(Vector2 drag, float deltaTime)
     {
-        _horizontalVel += -drag.x * dragSpeed * deltaTime;
-        _verticalVel += -drag.y * dragSpeed * deltaTime;
+        if (!InputEnabled) return;
+
+        if (AllowHorizontal) _horizontalVel += -drag.x * dragSpeed * deltaTime;
+        if (AllowVertical) _verticalVel += -drag.y * dragSpeed * deltaTime;
         _lastDragTime = Time.time;
+    }
+
+    /// <summary>
+    /// Turns the subject by the given angles at once, as an app's camera call does. Counts as a drag,
+    /// so auto-rotate waits before taking over again.
+    /// </summary>
+    public void Rotate(float yawDegrees, float pitchDegrees)
+    {
+        _yaw += yawDegrees;
+        if (AllowVertical) _pitch = Mathf.Clamp(_pitch + pitchDegrees, -maxPitch, maxPitch);
+        _lastDragTime = Time.time;
+        _targetRotation = null;
+
+        ApplyRotation();
     }
 
     private void Update()

@@ -24,6 +24,8 @@ namespace Loading
 
         private IDisposable _wearableDisposable;
         private GameObject _wearableGO;
+        private string _loadedUrn;
+        private ModelMetrics _loadedMetrics;
 
         private readonly Dictionary<string, (Texture2D main, Texture2D mask)> _defaultBodyFacialFeatures = new();
 
@@ -43,6 +45,7 @@ namespace Loading
                     _wearableDisposable = loadResult.Disposable;
                     _wearableGO = loadResult.Root;
                     _wearableGO.SetActive(true);
+                    _loadedMetrics = loadResult.Metrics;
                     break;
                 }
                 case EntityType.FacialFeature:
@@ -53,6 +56,9 @@ namespace Loading
                     // Load the body
                     var bodyLoadResult = await GLTFLoader.LoadModel(bodyShapeToLoad, bodyEntity, transform);
                     var ffLoadResult = await GLTFLoader.LoadFacialFeature(bodyShapeToLoad, entityDefinition);
+
+                    // The item is the textures; the body they are shown on is not part of what was asked for.
+                    _loadedMetrics = ModelMetrics.FromTextures(ffLoadResult.Main, ffLoadResult.Mask);
 
                     _wearableDisposable = bodyLoadResult.Disposable;
                     _wearableGO = bodyLoadResult.Root;
@@ -88,6 +94,8 @@ namespace Loading
                     throw new NotSupportedException($"Trying to load unsupported wearable type: {entityDefinition.Type}");
             }
 
+            _loadedUrn = entityDefinition.URN;
+
             _outlineRenderers.Clear();
             AvatarUtils.SetupWearable(_wearableGO, colors, _outlineRenderers);
 
@@ -117,9 +125,33 @@ namespace Loading
 
         private void Update()
         {
+            AddOutlineRenderers(RendererFeature_AvatarOutline.m_AvatarOutlineRenderers);
+        }
+
+        /// <summary>
+        /// Metrics of the item shown on its own, when <paramref name="urn"/> is the one loaded.
+        /// </summary>
+        public bool TryGetMetrics(string urn, out ModelMetrics metrics)
+        {
+            if (_wearableGO != null && _loadedUrn == urn)
+            {
+                metrics = _loadedMetrics;
+                return true;
+            }
+
+            metrics = default;
+            return false;
+        }
+
+        /// <summary>
+        /// Appends this view's renderers, when it is shown, to <paramref name="target"/>, the outline
+        /// feature's list for the next camera render.
+        /// </summary>
+        public void AddOutlineRenderers(List<Renderer> target)
+        {
             if (gameObject.activeInHierarchy)
             {
-                RendererFeature_AvatarOutline.m_AvatarOutlineRenderers.AddRange(_outlineRenderers);
+                target.AddRange(_outlineRenderers);
             }
         }
 
@@ -128,6 +160,7 @@ namespace Loading
             Destroy(_wearableGO);
             _wearableDisposable?.Dispose();
             _wearableDisposable = null;
+            _loadedUrn = null;
 
             _defaultBodyFacialFeatures.Clear();
         }

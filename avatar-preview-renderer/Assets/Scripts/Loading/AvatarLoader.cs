@@ -342,6 +342,49 @@ namespace Loading
             return false;
         }
 
+        /// <summary>
+        /// Metrics of one loaded entity by its URN: a worn model, a facial feature (its textures only) or
+        /// the emote (its prop, if any).
+        /// </summary>
+        public bool TryGetMetrics(string urn, out ModelMetrics metrics)
+        {
+            if (_loadedModels.TryGetValue(urn, out var model))
+            {
+                metrics = model.Metrics;
+                return true;
+            }
+
+            if (_loadedFacialFeatures.TryGetValue(urn, out var facialFeature))
+            {
+                metrics = ModelMetrics.FromTextures(facialFeature.Main, facialFeature.Mask);
+                return true;
+            }
+
+            if (_loadedEmote.HasValue && _loadedEmote.Value.Entity.URN == urn)
+            {
+                metrics = _loadedEmote.Value.Metrics;
+                return true;
+            }
+
+            metrics = default;
+            return false;
+        }
+
+        /// <summary>
+        /// Appends the renderers of every active model to <paramref name="target"/>, the outline
+        /// feature's list for the next camera render.
+        /// </summary>
+        public void AddOutlineRenderers(List<Renderer> target)
+        {
+            foreach (var (_, root, _, outlineRenderers) in _loadedModels.Values)
+            {
+                if (root.activeInHierarchy)
+                {
+                    target.AddRange(outlineRenderers);
+                }
+            }
+        }
+
         public void HideFacialFeatures()
         {
             var bodyGO = _loadedModels.Values.FirstOrDefault(er => er.Entity.Type == EntityType.Body).Root;
@@ -378,13 +421,7 @@ namespace Loading
 
         private void Update()
         {
-            foreach (var (_, root, _, outlineRenderers) in _loadedModels.Values)
-            {
-                if (root.activeInHierarchy)
-                {
-                    RendererFeature_AvatarOutline.m_AvatarOutlineRenderers.AddRange(outlineRenderers);
-                }
-            }
+            AddOutlineRenderers(RendererFeature_AvatarOutline.m_AvatarOutlineRenderers);
 
             // Update character bounds every frame for dynamic positioning
             if (setsHighlight && _loadedModels.Count > 0)
@@ -459,13 +496,15 @@ namespace Loading
         public readonly GameObject Root;
         public readonly IDisposable Disposable;
         public readonly List<Renderer> OutlineRenderers;
+        public readonly ModelMetrics Metrics;
 
-        public LoadedModel(EntityDefinition entity, GameObject root, IDisposable disposable)
+        public LoadedModel(EntityDefinition entity, GameObject root, IDisposable disposable, ModelMetrics metrics)
         {
             Entity = entity;
             Root = root;
             Disposable = disposable;
             OutlineRenderers = new List<Renderer>();
+            Metrics = metrics;
         }
 
         public void Deconstruct(out EntityDefinition entity, out GameObject root, out IDisposable disposable,
@@ -500,8 +539,10 @@ namespace Loading
         [CanBeNull] public readonly GameObject Prop;
         [CanBeNull] public readonly Animation PropAnim;
         public readonly IDisposable Disposable;
+        public readonly ModelMetrics Metrics;
 
-        public LoadedEmote(EntityDefinition entity, AnimationClip clip, AudioClip audio, GameObject prop, Animation propAnim, IDisposable disposable)
+        public LoadedEmote(EntityDefinition entity, AnimationClip clip, AudioClip audio, GameObject prop,
+            Animation propAnim, IDisposable disposable, ModelMetrics metrics)
         {
             Entity = entity;
             Clip = clip;
@@ -509,6 +550,7 @@ namespace Loading
             Prop = prop;
             PropAnim = propAnim;
             Disposable = disposable;
+            Metrics = metrics;
         }
     }
 }
