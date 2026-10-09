@@ -14,6 +14,9 @@ namespace DCL.ExplorePanel
     {
         private const float ANIMATION_SPEED = 0.2f;
 
+        /// <summary>Header width the close button takes at the section's right edge, button plus margin.</summary>
+        public const float CLOSE_BUTTON_SLOT_WIDTH = 62f;
+
         [field: SerializeField]
         public CanvasGroup CanvasGroup { get; private set; } = null!;
 

@@ -135,7 +135,7 @@ namespace DCL.Places
             viewRect.anchorMax = Vector2.one;
             viewRect.offsetMin = Vector2.zero;
             viewRect.offsetMax = Vector2.zero;
-            view.PlacesResultsView.SetCompactLayout(host != homeHost);
+            view.SetCompactLayout(host != homeHost);
         }
 
         public void AttachToHome() =>

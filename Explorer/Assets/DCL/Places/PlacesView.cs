@@ -1,4 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.ExplorePanel;
 using DCL.PlacesAPIService;
 using DCL.UI;
 using System;
@@ -53,6 +54,7 @@ namespace DCL.Places
         [SerializeField] private Animator headerAnimator = null!;
 
         private CancellationTokenSource? searchCancellationCts;
+        private bool isCompact;
 
         private void Awake()
         {
@@ -121,6 +123,19 @@ namespace DCL.Places
             headerAnimator.Rebind();
             panelAnimator.Update(0);
             headerAnimator.Update(0);
+        }
+
+        public void SetCompactLayout(bool compact)
+        {
+            placesResultsView.SetCompactLayout(compact);
+
+            if (isCompact == compact) return;
+
+            isCompact = compact;
+
+            // The search bar and the filters dropdown share one right-anchored strip
+            var filtersStrip = (RectTransform)searchBar.transform.parent;
+            filtersStrip.anchoredPosition += new Vector2(compact ? -ExploreSectionModalView.CLOSE_BUTTON_SLOT_WIDTH : ExploreSectionModalView.CLOSE_BUTTON_SLOT_WIDTH, 0f);
         }
 
         public void OpenSection(PlacesSection section, bool force = false, bool invokeEvent = true, bool cleanSearch = true, bool resetCategory = false)

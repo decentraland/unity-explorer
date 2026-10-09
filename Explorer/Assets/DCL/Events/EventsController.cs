@@ -142,9 +142,7 @@ namespace DCL.Events
             viewRect.anchorMax = Vector2.one;
             viewRect.offsetMin = Vector2.zero;
             viewRect.offsetMax = Vector2.zero;
-            bool compact = host != homeHost;
-            view.EventsCalendarView.SetCompactLayout(compact);
-            view.EventsByDayView.SetCompactLayout(compact);
+            view.SetCompactLayout(host != homeHost);
         }
 
         public void AttachToHome() =>
