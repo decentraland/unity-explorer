@@ -599,9 +599,10 @@ jobs:
           while read -r RUN_ID STATUS; do
             [ -z "$RUN_ID" ] && continue
             if [ "$STATUS" != "completed" ]; then COVERED=1; break; fi
-            # Visual is advisory; the InWorld gate determines completed coverage.
+            # Visual is advisory. A skipped resolver also makes the gate green,
+            # so completed coverage needs successful resolution and gate jobs.
             if ! GATE=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${RUN_ID}/jobs?per_page=100" \
-              --jq '[.jobs[] | select(.name == "InWorld suite result") | .conclusion] | first // ""'); then
+              --jq '[.jobs[] | select(.name == "Wait for the build" or .name == "InWorld suite result") | .conclusion] | if length == 2 and all(. == "success") then "success" else "" end'); then
               echo "::error::Could not read the jobs of In-World Tests run ${RUN_ID}, so whether ${HEAD_SHA:0:7} is already validated is unknown and the automation suites were not dispatched. Start \`In-World Tests\` by hand from the Actions tab against ${HEAD_REF}."
               exit 1
             fi
