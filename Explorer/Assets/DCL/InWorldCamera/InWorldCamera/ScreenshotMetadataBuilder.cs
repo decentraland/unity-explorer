@@ -61,19 +61,19 @@ namespace DCL.InWorldCamera
         }
 
         public void AddSelfProfile(bool isEmoting) =>
-            AddProfile(selfProfile.OwnProfile, characterObjectController, isEmoting);
+            AddProfile(selfProfile.OwnProfile, CalculateCharacterBounds(characterObjectController), isEmoting);
 
-        public void AddProfile(Profile? profile, Collider avatarCollider, bool isEmoting)
+        public void AddProfile(Profile? profile, Bounds avatarBounds, bool isEmoting)
         {
-            if (GeometryUtility.TestPlanesAABB(frustumPlanes, avatarCollider.bounds))
+            if (GeometryUtility.TestPlanesAABB(frustumPlanes, avatarBounds))
             {
                 visiblePeople.Add(new VisiblePerson
                 {
                     userName = profile?.Name ?? UNKNOWN_USER,
-                    userAddress = string.IsNullOrEmpty(profile?.UserId) ? UNKNOWN_USER_WALLET : profile!.UserId,
+                    userAddress = AddressOf(profile),
                     isGuest = profile is { HasConnectedWeb3: false },
                     isEmoting = isEmoting,
-                    screenRect = camera == null ? Rect.zero : CalculateScreenRect(camera, avatarCollider.bounds),
+                    screenRect = camera == null ? Rect.zero : CalculateScreenRect(camera, avatarBounds),
                     wearables = FilterNonBaseWearables(profile?.Avatar.Wearables ?? Array.Empty<URN>()),
                 });
             }
@@ -100,6 +100,9 @@ namespace DCL.InWorldCamera
             return placeInfo == null ? (UNKNOWN_PLACE, UNKNOWN_PLACE) : (placeInfo.title, placeInfo.id);
         }
 
+        private static string AddressOf(Profile? profile) =>
+            profile?.UserId.Value ?? UNKNOWN_USER_WALLET;
+
         private static string[] FilterNonBaseWearables(IReadOnlyCollection<URN> avatarWearables)
         {
             var wearables = new List<string>();
@@ -109,6 +112,20 @@ namespace DCL.InWorldCamera
                     wearables.Add(w.ToString());
 
             return wearables.ToArray();
+        }
+
+        /// <summary>
+        /// World bounds of the character's capsule, built from its shape so they stay valid while the controller is disabled
+        /// (a disabled collider reports empty <see cref="Collider.bounds" />). The capsule is upright, so only position and scale apply.
+        /// </summary>
+        internal static Bounds CalculateCharacterBounds(CharacterController characterController)
+        {
+            Transform transform = characterController.transform;
+            Vector3 scale = transform.lossyScale;
+            float radius = characterController.radius * Mathf.Max(Mathf.Abs(scale.x), Mathf.Abs(scale.z));
+            float height = Mathf.Max(characterController.height * Mathf.Abs(scale.y), radius * 2f);
+
+            return new Bounds(transform.TransformPoint(characterController.center), new Vector3(radius * 2f, height, radius * 2f));
         }
 
         /// <summary>
@@ -197,7 +214,7 @@ namespace DCL.InWorldCamera
                 metadata = new ScreenshotMetadata
                 {
                     userName = profile?.Name ?? UNKNOWN_USER,
-                    userAddress = string.IsNullOrEmpty(profile?.UserId) ? UNKNOWN_USER_WALLET : profile!.UserId,
+                    userAddress = AddressOf(profile),
                     dateTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(),
                     realm = realm?.RealmName,
                     placeId = placeId,
@@ -211,7 +228,7 @@ namespace DCL.InWorldCamera
             else
             {
                 metadata.userName = profile?.Name ?? UNKNOWN_USER;
-                metadata.userAddress = string.IsNullOrEmpty(profile?.UserId) ? UNKNOWN_USER_WALLET : profile!.UserId;
+                metadata.userAddress = AddressOf(profile);
                 metadata.dateTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString();
                 metadata.realm = realm?.RealmName;
                 metadata.placeId = placeId;

@@ -151,6 +151,80 @@ namespace DCL.InWorldCamera.Tests
             Assert.AreEqual(1f, rect.xMax, TOLERANCE);
         }
 
+        [TestCase(true)]
+        [TestCase(false)]
+        public void MeasureTheCharacterWhetherOrNotItsControllerIsEnabled(bool controllerEnabled)
+        {
+            // Arrange — emotes switch the controller off, which empties its collider bounds.
+            var character = new GameObject(nameof(MeasureTheCharacterWhetherOrNotItsControllerIsEnabled));
+
+            try
+            {
+                character.transform.position = new Vector3(10f, 2f, 30f);
+                character.transform.rotation = Quaternion.Euler(0f, 45f, 0f);
+                CharacterController controller = character.AddComponent<CharacterController>();
+                controller.center = new Vector3(0f, 1f, 0f);
+                controller.radius = 0.3f;
+                controller.height = 2f;
+                controller.enabled = controllerEnabled;
+                Physics.SyncTransforms();
+
+                // Act
+                Bounds bounds = ScreenshotMetadataBuilder.CalculateCharacterBounds(controller);
+
+                // Assert — enabled, Unity measures the same capsule itself; disabled is what the shape adds.
+                if (controllerEnabled)
+                {
+                    // Unity may pad the collider's box by the skin width, which the shape leaves out.
+                    float skinTolerance = (controller.skinWidth * 2f) + TOLERANCE;
+                    AssertApproximately(controller.bounds.center, bounds.center);
+                    Assert.AreEqual(controller.bounds.size.x, bounds.size.x, skinTolerance);
+                    Assert.AreEqual(controller.bounds.size.y, bounds.size.y, skinTolerance);
+                    Assert.AreEqual(controller.bounds.size.z, bounds.size.z, skinTolerance);
+                }
+                else
+                    AssertApproximately(Vector3.zero, controller.bounds.size);
+
+                AssertApproximately(new Vector3(10f, 3f, 30f), bounds.center);
+                AssertApproximately(new Vector3(0.6f, 2f, 0.6f), bounds.size);
+            }
+            finally
+            {
+                Object.DestroyImmediate(character);
+            }
+        }
+
+        [Test]
+        public void KeepTheCharacterAtLeastAsTallAsItIsWide()
+        {
+            // Arrange — Unity draws a capsule shorter than its diameter as a sphere.
+            var character = new GameObject(nameof(KeepTheCharacterAtLeastAsTallAsItIsWide));
+
+            try
+            {
+                CharacterController controller = character.AddComponent<CharacterController>();
+                controller.radius = 0.5f;
+                controller.height = 0.2f;
+
+                // Act
+                Bounds bounds = ScreenshotMetadataBuilder.CalculateCharacterBounds(controller);
+
+                // Assert
+                AssertApproximately(Vector3.one, bounds.size);
+            }
+            finally
+            {
+                Object.DestroyImmediate(character);
+            }
+        }
+
+        private static void AssertApproximately(Vector3 expected, Vector3 actual)
+        {
+            Assert.AreEqual(expected.x, actual.x, TOLERANCE);
+            Assert.AreEqual(expected.y, actual.y, TOLERANCE);
+            Assert.AreEqual(expected.z, actual.z, TOLERANCE);
+        }
+
         /// <summary>
         /// A camera at the origin looking down +Z, framing what the in-world one frames.
         /// </summary>
