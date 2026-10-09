@@ -1,5 +1,6 @@
 ﻿using Arch.Core;
 using DCL.CharacterCamera;
+using DCL.CharacterMotion.Components;
 using ECS;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
@@ -7,22 +8,50 @@ using ECS.SceneLifeCycle.Systems;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
+using System.Threading;
 using UnityEngine;
+using Utility;
 
 namespace DCL.SceneLifeCycle.Tests
 {
     public class CheckCameraQualifiedForRepartitioningShould : UnitySystemTestBase<CheckCameraQualifiedForRepartitioningSystem>
     {
         private IPartitionSettings partitionSettings = null!;
+        private CameraSamplingData sharedCameraSamplingData = null!;
 
         [SetUp]
         public void SetUp()
         {
             partitionSettings = Substitute.For<IPartitionSettings>();
             var realmData = new RealmData(new TestIpfsRealm());
-            system = new CheckCameraQualifiedForRepartitioningSystem(world, partitionSettings, realmData, new CameraSamplingData { Position = new Vector3(10, 10, 10) });
+            sharedCameraSamplingData = new CameraSamplingData { Position = new Vector3(10, 10, 10) };
+            system = new CheckCameraQualifiedForRepartitioningSystem(world, partitionSettings, realmData, sharedCameraSamplingData);
 
             world.Create(new RealmComponent(realmData));
+        }
+
+        [Test]
+        public void SampleTheTeleportDestinationWhenItTravelsInThePosition()
+        {
+            // The realm change and movePlayerTo paths leave Parcel at zero and carry the destination in Position
+            Vector3 destination = ParcelMathHelper.GetPositionByParcelPosition(new Vector2Int(7, 3));
+
+            world.Create(new PlayerTeleportIntent(null, Vector2Int.zero, destination, CancellationToken.None, isPositionSet: true));
+
+            system.Update(0);
+
+            Assert.That(sharedCameraSamplingData.Parcel, Is.EqualTo(new Vector2Int(7, 3)));
+            Assert.That(sharedCameraSamplingData.IsDirty, Is.True);
+        }
+
+        [Test]
+        public void SampleTheTeleportParcelWhenThePositionIsNotSet()
+        {
+            world.Create(new PlayerTeleportIntent(null, new Vector2Int(5, 5), Vector3.zero, CancellationToken.None));
+
+            system.Update(0);
+
+            Assert.That(sharedCameraSamplingData.Parcel, Is.EqualTo(new Vector2Int(5, 5)));
         }
 
         [Test]

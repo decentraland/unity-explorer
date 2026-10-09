@@ -35,6 +35,7 @@ using ECS.Prioritization;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.Reporting;
+using ECS.SceneLifeCycle.SingleScene;
 using SceneRunner.Mapping;
 using System.Collections.Generic;
 using System.Threading;
@@ -99,6 +100,8 @@ namespace Global
         public ISystemMemoryCap MemoryCap { get; private set; } = null!;
 
         public SceneLoadingLimit SceneLoadingLimit { get; private set; } = null!;
+
+        public SingleSceneMode SingleSceneMode { get; } = new ();
 
         /// <summary>
         ///     Some plugins may implement both interfaces

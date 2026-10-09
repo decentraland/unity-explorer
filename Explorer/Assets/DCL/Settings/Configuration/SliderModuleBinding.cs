@@ -7,6 +7,7 @@ using DCL.Settings.ModuleControllers;
 using DCL.Settings.ModuleViews;
 using DCL.Settings.Settings;
 using ECS.SceneLifeCycle.IncreasingRadius;
+using ECS.SceneLifeCycle.SingleScene;
 using System;
 using DCL.Audio;
 using DCL.Quality.Runtime;
@@ -49,6 +50,7 @@ namespace DCL.Settings.Configuration
             ChatSettingsAsset chatSettingsAsset,
             ISystemMemoryCap systemMemoryCap,
             SceneLoadingLimit sceneLoadingLimit,
+            SingleSceneMode singleSceneMode,
             IUserBlockingCache userBlockingCache,
             ISettingsModuleEventListener settingsEventListener,
             IAssetsProvisioner assetsProvisioner,
@@ -78,6 +80,11 @@ namespace DCL.Settings.Configuration
                 // add other cases...
                 _ => throw new ArgumentOutOfRangeException(),
             };
+
+            // The mode is fixed for the session, so this slider can never come back; hiding it beats a dead control
+            if (Feature == SliderFeatures.SceneDistanceFeature && singleSceneMode.IsActive)
+                viewInstance.SetActive(false);
+
             return controller;
         }
 

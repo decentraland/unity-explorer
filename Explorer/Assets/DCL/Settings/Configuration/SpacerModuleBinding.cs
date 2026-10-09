@@ -1,7 +1,6 @@
-﻿using Cysharp.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Audio;
-using DCL.FeatureFlags;
 using DCL.Friends.UserBlocking;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Quality.Runtime;
@@ -18,16 +17,12 @@ using Utility;
 
 namespace DCL.Settings.Configuration
 {
-    /// <summary>
-    /// We need this class to serialize by ref
-    /// </summary>
     [Serializable]
-    public abstract class SettingsModuleBindingBase
+    public class SpacerModuleBinding : SettingsModuleBindingBase
     {
-        [field: SerializeField]
-        public FeatureId FeatureId { get; set; } = FeatureId.None;
+        [field: SerializeField] public ViewRef View { get; private set; } = null!;
 
-        public abstract UniTask<SettingsFeatureController?> CreateModuleAsync(
+        public override async UniTask<SettingsFeatureController?> CreateModuleAsync(
             Transform parent,
             QualitySettingsController qualitySettingsController,
             VideoPrioritizationSettings videoPrioritizationSettings,
@@ -42,21 +37,15 @@ namespace DCL.Settings.Configuration
             IAssetsProvisioner assetsProvisioner,
             VolumeBus volumeBus,
             IEventBus eventBus,
-            PointAtMarkerVisibilitySettings pointAtMarkerVisibilitySettings);
-    }
-
-    [Serializable]
-    public abstract class SettingsModuleBinding<TView, TConfig, TControllerType> : SettingsModuleBindingBase
-        where TView : SettingsModuleView<TConfig>
-        where TConfig : SettingsModuleViewConfiguration
-        where TControllerType : Enum
-    {
-        [field: SerializeField] public ViewRef View { get; private set; }
-        [field: SerializeField] public TConfig Config { get; private set; }
-        [field: SerializeField] public TControllerType Feature { get; private set; }
+            PointAtMarkerVisibilitySettings pointAtMarkerVisibilitySettings)
+        {
+            // Nothing to drive: the instance exists only to take up a grid cell
+            await assetsProvisioner.ProvideInstanceAsync(View, parent);
+            return null;
+        }
 
         [Serializable]
-        public class ViewRef : ComponentReference<TView>
+        public class ViewRef : ComponentReference<SettingsSpacerModuleView>
         {
             public ViewRef(string guid) : base(guid) { }
         }

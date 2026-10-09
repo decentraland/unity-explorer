@@ -10,6 +10,7 @@ using DCL.Settings.ModuleControllers;
 using DCL.Settings.ModuleViews;
 using DCL.Settings.Settings;
 using ECS.SceneLifeCycle.IncreasingRadius;
+using ECS.SceneLifeCycle.SingleScene;
 using System;
 using UnityEngine;
 using UnityEngine.Audio;
@@ -43,6 +44,7 @@ namespace DCL.Settings.Configuration
             MuteMicInBackgroundFeature = 15,
             SpringBoneSimulationFeature = 16,
             LobbyFeature = 17,
+            SingleSceneModeFeature = 18,
         }
 
         public override async UniTask<SettingsFeatureController> CreateModuleAsync(
@@ -54,6 +56,7 @@ namespace DCL.Settings.Configuration
             ChatSettingsAsset chatSettingsAsset,
             ISystemMemoryCap systemMemoryCap,
             SceneLoadingLimit sceneLoadingLimit,
+            SingleSceneMode singleSceneMode,
             IUserBlockingCache userBlockingCache,
             ISettingsModuleEventListener settingsEventListener,
             IAssetsProvisioner assetsProvisioner,
@@ -83,6 +86,7 @@ namespace DCL.Settings.Configuration
                 ToggleFeatures.MuteMicInBackgroundFeature => new MuteMicInBackgroundController(viewInstance),
                 ToggleFeatures.SpringBoneSimulationFeature => CreateSimpleToggle(viewInstance, qualitySettingsController, qualitySettingsController.SetSpringBoneSimulation, x => x.SpringBoneSimulation),
                 ToggleFeatures.LobbyFeature => new LobbySettingsController(viewInstance),
+                ToggleFeatures.SingleSceneModeFeature => new SingleSceneModeSettingsController(viewInstance, singleSceneMode),
                 // add other cases...
                 _ => throw new ArgumentOutOfRangeException(nameof(viewInstance))
             };
