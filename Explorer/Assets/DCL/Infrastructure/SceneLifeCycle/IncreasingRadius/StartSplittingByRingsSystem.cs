@@ -65,7 +65,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             if (singleSceneMode.IsActive)
             {
                 if (singleSceneMode.HasAnchor)
-                    parcelMathJobifiedHelper.StartParcelsRingSplit(singleSceneMode.AnchorParcel.ToInt2(), 0, processedScenePointers.Value);
+                    parcelMathJobifiedHelper.StartSingleParcelSplit(singleSceneMode.AnchorParcel.ToInt2(), processedScenePointers.Value);
 
                 return;
             }
