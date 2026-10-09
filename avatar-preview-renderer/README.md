@@ -160,7 +160,7 @@ A request the renderer cannot serve answers with `request-failed` instead of its
 { type: 'request-failed', payload: { request: 'screenshot' | 'metrics', reason: '<why>' } }
 ```
 
-Today that happens for a sized screenshot or a metrics request made while a reload is in flight (nothing is rendered during a reload), for metrics when none of the requested items is loaded, for a sized screenshot whose size is not `width,height` within 1 to 4096 per side, and for a screenshot whose readback failed. An unsized screenshot during a reload still captures the canvas as it is.
+Today that happens for a sized screenshot or a metrics request made while a reload is in flight (nothing is rendered during a reload), for metrics when none of the requested items is loaded, for a sized screenshot whose size is not `width,height` within 1 to 4096 per side or would exceed the GPU texture limit at the current render scale (small canvases render at twice the size), and for a screenshot whose readback failed. An unsized screenshot during a reload still captures the canvas as it is.
 
 ## Taking screenshots
 

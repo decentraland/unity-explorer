@@ -39,6 +39,8 @@ namespace Preview
 
         public void Dispose()
         {
+            // A capture in flight never reaches its own unsubscribe once the owner is gone.
+            RenderPipelineManager.beginCameraRendering -= OnBeginCameraRendering;
             if (_captureCamera != null) Object.Destroy(_captureCamera.gameObject);
             _captureCamera = null;
         }

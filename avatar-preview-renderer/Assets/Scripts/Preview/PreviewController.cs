@@ -315,8 +315,13 @@ namespace Preview
                     JSBridge.NativeCalls.OnError(e.Message);
 
                     // Otherwise the view stays blank behind the loader and every later request is
-                    // answered as still reloading.
+                    // answered as still reloading. A reload queued meanwhile would be lost with the
+                    // loop, so it is started again.
+                    var reloadQueued = _shouldReload;
                     EndReload();
+
+                    if (reloadQueued) StartCoroutine(Reload());
+
                     throw;
                 }
 

@@ -5,6 +5,8 @@ using Data;
 using JetBrains.Annotations;
 using Preview;
 using UnityEngine;
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 using Utils;
 
 /// <summary>
@@ -211,6 +213,15 @@ public class JSBridge : MonoBehaviour
             return;
         }
 
+        // URP renders the capture at the pipeline's render scale, doubled on small canvases, before
+        // downsampling to the requested size, so the intermediate buffer is what the GPU limit bounds.
+        if (Mathf.Max(width, height) * CurrentRenderScale() > SystemInfo.maxTextureSize)
+        {
+            NativeCalls.OnRequestFailed(REQUEST_SCREENSHOT,
+                $"Screenshot size [{size}] exceeds the GPU texture limit at the current render scale");
+            return;
+        }
+
         if (previewController.IsLoading)
         {
             NativeCalls.OnRequestFailed(REQUEST_SCREENSHOT, "The preview is reloading");
@@ -235,6 +246,11 @@ public class JSBridge : MonoBehaviour
                && int.TryParse(parts[1], out height) && height > 0 && height <= MAX_SCREENSHOT_SIDE;
     }
 
+    private static float CurrentRenderScale() =>
+        GraphicsSettings.currentRenderPipeline is UniversalRenderPipelineAsset urpAsset
+            ? Mathf.Max(1f, urpAsset.renderScale)
+            : 1f;
+
     private async Awaitable TakeSizedScreenshotAsync(int width, int height)
     {
         var reloadGeneration = previewController.ReloadGeneration;
@@ -252,8 +268,8 @@ public class JSBridge : MonoBehaviour
         }
 
         // The capture spans frames, so a reload may have started under it, and even finished, leaving
-        // it a half-built scene.
-        if (previewController.IsLoading || previewController.ReloadGeneration != reloadGeneration)
+        // it a half-built scene. Either way the generation moved.
+        if (previewController.ReloadGeneration != reloadGeneration)
         {
             NativeCalls.OnRequestFailed(REQUEST_SCREENSHOT, "The preview reloaded during the capture");
             return;

@@ -1,3 +1,4 @@
+using GLTFast;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -59,6 +60,44 @@ namespace Loading.Tests
             {
                 Object.DestroyImmediate(main);
                 Object.DestroyImmediate(mask);
+            }
+        }
+
+        [Test]
+        public void CountEverySubMeshAndSkipColliders()
+        {
+            // Arrange: one triangle per sub-mesh, on a body and on a collider sharing the mesh.
+            var root = new GameObject("root");
+            var mesh = new Mesh { vertices = new[] { Vector3.zero, Vector3.up, Vector3.right }, subMeshCount = 2 };
+            mesh.SetTriangles(new[] { 0, 1, 2 }, 0);
+            mesh.SetTriangles(new[] { 0, 2, 1 }, 1);
+
+            var body = new GameObject("body", typeof(MeshFilter), typeof(MeshRenderer));
+            body.transform.SetParent(root.transform);
+            body.GetComponent<MeshFilter>().sharedMesh = mesh;
+
+            var collider = new GameObject("body_Collider", typeof(MeshFilter), typeof(MeshRenderer));
+            collider.transform.SetParent(root.transform);
+            collider.GetComponent<MeshFilter>().sharedMesh = mesh;
+
+            // Never loaded, so it has no source document: materials and textures read as none.
+            using var importer = new GltfImport(deferAgent: new UninterruptedDeferAgent());
+
+            try
+            {
+                // Act
+                var metrics = ModelMetrics.Measure(root, importer);
+
+                // Assert
+                Assert.AreEqual(2, metrics.Triangles);
+                Assert.AreEqual(2, metrics.Meshes);
+                Assert.AreEqual(0, metrics.Materials);
+                Assert.AreEqual(0, metrics.Textures);
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+                Object.DestroyImmediate(mesh);
             }
         }
     }
