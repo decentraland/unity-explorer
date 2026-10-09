@@ -784,9 +784,11 @@ namespace Global.Dynamic
             if (!hasMinimumSpecs && !skipScreen)
                 SavedQualitySettingsApplier.EnforceLowPresetOnce();
 
-            bool singleSceneModeEnabled = DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_SINGLE_SCENE_MODE)
-                ? DCLPlayerPrefs.GetBool(DCLPrefKeys.SETTINGS_SINGLE_SCENE_MODE)
-                : !hasMinimumSpecs;
+            bool singleSceneModeEnabled =
+                applicationParametersParser.ResolveFeatureFlagOverride(AppArgsFlags.FORCE_SINGLE_SCENE_MODE, requireDebug: false)
+                ?? (DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_SINGLE_SCENE_MODE)
+                    ? DCLPlayerPrefs.GetBool(DCLPrefKeys.SETTINGS_SINGLE_SCENE_MODE)
+                    : !hasMinimumSpecs);
 
             staticContainer!.SingleSceneMode.SetActive(singleSceneModeEnabled);
 
