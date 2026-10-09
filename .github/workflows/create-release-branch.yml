@@ -12,6 +12,16 @@ jobs:
         uses: actions/checkout@v6
         with:
           ref: dev
+
+      # The workflow can be dispatched from a ref newer than the dev release cut.
+      - name: Check out the workflow's shared API helper
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.workflow_sha }}
+          path: .ci-helpers
+          sparse-checkout: .github/scripts/gh-api-retry.sh
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
           
       - name: Get release date and branch name
         run: |
@@ -79,25 +89,7 @@ jobs:
               bash .github/actions/ci-status-comment/upsert-ci-status.sh
           }
 
-          # The helper the automation dispatch step below also defines, written twice
-          # for the reason stated there: a step cannot export a shell function
-          # to the next one. What it buys here is the distinction between "the
-          # API says there is no run" and "the API did not answer" — the latter
-          # left to set -e would kill this step and prevent dispatch, and
-          # reported as the former it would send the release manager off to
-          # rebuild a commit that is already built.
-          gh_api_retry() {
-            local out attempt
-            for attempt in 1 2 3; do
-              if [ "$attempt" -lt 3 ]; then
-                if out=$(gh api "$@" 2>/dev/null); then printf '%s' "$out"; return 0; fi
-                sleep 5
-              else
-                if out=$(gh api "$@"); then printf '%s' "$out"; return 0; fi
-              fi
-            done
-            return 1
-          }
+          source "$GITHUB_WORKSPACE/.ci-helpers/.github/scripts/gh-api-retry.sh"
 
           BUILD_STYLE="?logo=unity&logoColor=white&style=for-the-badge"
           BUILD_RUNS="${ACTIONS_URL}/workflows/build-unitycloud.yml"
@@ -416,29 +408,7 @@ jobs:
               exit 0 ;;
           esac
 
-          # The helper resolve-explorer-build defines, duplicated because a
-          # composite action cannot export a shell function to its caller. Same
-          # justification, more sharply: this step decides on one answer and
-          # then the workflow ends, so a single 5xx must not settle a release
-          # cut. Three attempts five seconds apart cover a transport failure —
-          # a 5xx, a connection reset — and only that; a spent rate limit
-          # refills on an hour boundary, which is why the flags below record
-          # whether the API answered rather than trusting the retry to make it.
-          # stderr is kept on the last attempt so a permanent failure (this
-          # workflow file renamed, say) says what it was instead of vanishing
-          # into "the API did not answer".
-          gh_api_retry() {
-            local out attempt
-            for attempt in 1 2 3; do
-              if [ "$attempt" -lt 3 ]; then
-                if out=$(gh api "$@" 2>/dev/null); then printf '%s' "$out"; return 0; fi
-                sleep 5
-              else
-                if out=$(gh api "$@"); then printf '%s' "$out"; return 0; fi
-              fi
-            done
-            return 1
-          }
+          source "$GITHUB_WORKSPACE/.ci-helpers/.github/scripts/gh-api-retry.sh"
 
           # Absorbed rather than left to set -e, here and on the jobs call
           # below: an API blip must not red a cut whose branch, PR, labels and

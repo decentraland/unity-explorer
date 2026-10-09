@@ -574,8 +574,17 @@ jobs:
     # GITHUB_TOKEN is allowed to start a run with.
     permissions:
       actions: write
+      contents: read
       pull-requests: read
     steps:
+      - name: Check out the workflow's shared API helper
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.workflow_sha }}
+          sparse-checkout: .github/scripts/gh-api-retry.sh
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
       - name: Dispatch the automation suites
         env:
           GH_TOKEN: ${{ github.token }}
@@ -591,22 +600,9 @@ jobs:
             echo "::notice::PR #${PR_NUMBER} moved from ${HEAD_SHA:0:7} to ${LIVE_SHA:0:7}; the newer build's completion dispatches the suites."
             exit 0
           fi
-          # Same retry policy as create-release-branch.yml; shell functions cannot
-          # be exported between workflow steps. Preserve the last API error.
-          gh_api_retry() {
-            local out attempt
-            for attempt in 1 2 3; do
-              if [ "$attempt" -lt 3 ]; then
-                if out=$(gh api "$@" 2>/dev/null); then printf '%s' "$out"; return 0; fi
-                sleep 5
-              else
-                if out=$(gh api "$@"); then printf '%s' "$out"; return 0; fi
-              fi
-            done
-            return 1
-          }
+          source .github/scripts/gh-api-retry.sh
           if ! RUNS=$(gh_api_retry "repos/${GITHUB_REPOSITORY}/actions/workflows/in-world-tests.yml/runs?head_sha=${HEAD_SHA}&per_page=20" \
-            --jq '.workflow_runs[] | "\(.id) \(.status)"'); then
+            --jq '.workflow_runs[] | select(.head_repository.full_name == env.GITHUB_REPOSITORY) | "\(.id) \(.status)"'); then
             echo "::error::Could not list In-World Tests runs for ${HEAD_SHA:0:7}, so existing validation is unknown and the automation suites were not dispatched. Re-run this job, or start \`In-World Tests\` by hand from the Actions tab against ${HEAD_REF}."
             exit 1
           fi

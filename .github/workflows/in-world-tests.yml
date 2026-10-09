@@ -148,7 +148,10 @@ jobs:
       - name: Fetch the resolver action
         uses: actions/checkout@v6
         with:
-          sparse-checkout: .github/actions/resolve-explorer-build
+          sparse-checkout: |
+            .github/actions/resolve-explorer-build
+            .github/scripts/gh-api-retry.sh
+          sparse-checkout-cone-mode: false
 
       - name: Resolve build URL and tests ref
         id: resolve
@@ -238,8 +241,8 @@ jobs:
     needs: resolve
     # Filtered manual runs target InWorld fixtures only.
     if: (inputs.filter || '') == ''
-    # @main pins the merged version of the reusable, as for the InWorld suite above.
-    uses: decentraland/explorer-automation/.github/workflows/run-visual-suite.yml@main
+    # Reviewed immutable revision includes Visual scoping and the unified report writer.
+    uses: decentraland/explorer-automation/.github/workflows/run-visual-suite.yml@595e84eb51914f1584f9071719391361a03249c4
     # Must be a superset of run-visual-suite.yml's own `permissions:`, or the call
     # dies at startup. contents:write is declared upstream for record mode and
     # unused in test mode; pull-requests:write is required for its PR reporting.
