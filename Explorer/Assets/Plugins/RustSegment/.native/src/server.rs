@@ -64,6 +64,7 @@ impl Server {
         queue_file_path: String,
         queue_count_limit: u32,
         writer_key: String,
+        api_host: String,
         callback_fn: FfiCallbackFn,
         error_fn: Option<FfiErrorCallbackFn>,
     ) -> bool {
@@ -84,6 +85,7 @@ impl Server {
                     queue_file_path,
                     queue_count_limit,
                     writer_key,
+                    api_host,
                     event_bridge.input(),
                     &new_runtime,
                 );
@@ -235,6 +237,7 @@ impl SegmentServer {
         queue_file_path: String,
         queue_count_limit: u32,
         writer_key: String,
+        api_host: String,
         event_input: EventInput,
         async_runtime: &tokio::runtime::Runtime,
     ) -> Self {
@@ -259,7 +262,7 @@ impl SegmentServer {
 
         let queue_batcher = QueuedBatcher::new(event_queue.clone(), None);
 
-        let client = HttpClient::default();
+        let client = HttpClient::new_with_host(api_host.clone());
         let send_daemon =
             AnalyticsEventSendDaemon::new(event_queue.clone(), None, writer_key.clone(), client);
         let send_daemon = Arc::new(parking_lot::Mutex::new(send_daemon));
@@ -278,7 +281,7 @@ impl SegmentServer {
             .catch_unwind(),
         );
 
-        let direct_client = HttpClient::default();
+        let direct_client = HttpClient::new_with_host(api_host);
 
         let context = AppContext {
             batcher: queue_batcher,

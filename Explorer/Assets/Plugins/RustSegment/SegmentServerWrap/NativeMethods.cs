@@ -27,6 +27,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
             IntPtr queueFilePath,
             uint queueCountLimit,
             IntPtr segmentWriteKey,
+            IntPtr segmentApiHost,
             SegmentFfiCallback callback,
             SegmentFfiErrorCallback errorCallback
         );

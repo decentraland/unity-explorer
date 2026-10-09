@@ -8,6 +8,7 @@ namespace Plugins.RustSegment.SegmentServerWrap.Playground
     public class SegmentServerWrapPlayground : MonoBehaviour
     {
         [SerializeField] private bool fillMode;
+        [SerializeField] private string apiHost;
 
         private RustSegmentAnalyticsService service = null!;
 
@@ -31,7 +32,10 @@ namespace Plugins.RustSegment.SegmentServerWrap.Playground
             if (string.IsNullOrWhiteSpace(key))
                 throw new Exception("Segment Write Key is not set.");
 
-            service = new RustSegmentAnalyticsService(key, null);
+            if (string.IsNullOrWhiteSpace(apiHost))
+                throw new Exception("Segment api host is not set.");
+
+            service = new RustSegmentAnalyticsService(key, apiHost, null);
         }
 
         [ContextMenu(nameof(Identify))]

@@ -55,13 +55,16 @@ namespace Plugins.RustSegment.SegmentServerWrap
 
         private readonly IEventBus? eventBus;
 
-        public RustSegmentAnalyticsService(string writerKey, string? anonId, IEventBus? eventBus = null)
+        public RustSegmentAnalyticsService(string writerKey, string apiHost, string? anonId, IEventBus? eventBus = null)
         {
             this.eventBus = eventBus;
             using Mutex<RustSegmentAnalyticsService>.Guard instanceGuard = CURRENT.Lock(); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
 
             if (string.IsNullOrWhiteSpace(writerKey))
                 throw new ArgumentNullException(nameof(writerKey), "Invalid key is null or empty");
+
+            if (string.IsNullOrWhiteSpace(apiHost))
+                throw new ArgumentNullException(nameof(apiHost), "Invalid api host is null or empty");
 
             if (instanceGuard.Value != null)
                 throw new Exception("Rust Segment previous instance is not disposed");
@@ -79,7 +82,8 @@ namespace Plugins.RustSegment.SegmentServerWrap
             const int DEFAULT_LIMIT = 500;
             using var mQueuePath = new MarshaledString(path);
             using var mWriterKey = new MarshaledString(writerKey);
-            bool result = NativeMethods.SegmentServerInitialize(mQueuePath.Ptr, DEFAULT_LIMIT, mWriterKey.Ptr, Callback, ErrorCallback);
+            using var mApiHost = new MarshaledString(apiHost);
+            bool result = NativeMethods.SegmentServerInitialize(mQueuePath.Ptr, DEFAULT_LIMIT, mWriterKey.Ptr, mApiHost.Ptr, Callback, ErrorCallback);
 
             if (result == false)
                 throw new Exception("Rust Segment initialization failed");
@@ -87,7 +91,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
             this.cancellationTokenSource = new CancellationTokenSource();
             PumpJobAsync(this.cancellationTokenSource).Forget();
 
-            ReportHub.Log(ReportCategory.ANALYTICS, "Rust Segment initialized");
+            ReportHub.Log(ReportCategory.ANALYTICS, $"Rust Segment initialized, api host: {apiHost}");
             instanceGuard.Value = this;
         }
 

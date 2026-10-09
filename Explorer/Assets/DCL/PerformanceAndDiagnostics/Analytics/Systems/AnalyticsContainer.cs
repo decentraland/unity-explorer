@@ -89,8 +89,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         private static IAnalyticsService CreateSegmentAnalyticsOrFallbackToDebug(AnalyticsConfiguration analyticsConfig, LauncherTraits launcherTraits, IEventBus eventBus, CancellationToken token)
         {
-            if (analyticsConfig.TryGetSegmentConfiguration(out Configuration segmentConfiguration))
-                return new RustSegmentAnalyticsService(segmentConfiguration.WriteKey!, launcherTraits.LauncherAnonymousId, eventBus)
+            if (analyticsConfig.TryGetSegmentConfiguration(out Configuration? segmentConfiguration))
+                return new RustSegmentAnalyticsService(segmentConfiguration!.WriteKey, segmentConfiguration.ApiHost, launcherTraits.LauncherAnonymousId, eventBus)
                    .WithTimeFlush(TimeSpan.FromSeconds(analyticsConfig.FlushInterval), token);
 
             // Fall back to debug if segment is not configured
