@@ -560,9 +560,10 @@ jobs:
   # the `force-build` label started. Dispatch it against the release branch —
   # the dispatch path resolves the build with no wait, and both zips are up by
   # the time this run fires. A push to the branch starts validation through its
-  # own pull_request trigger. Leave in-flight runs alone unless their jobs show
-  # skipped resolution or Visual. Completed coverage needs build and InWorld
-  # green plus an invoked, non-skipped Visual job.
+  # own pull_request trigger. In-flight coverage needs a same-repository PR run
+  # or an explicitly full manual run, without skipped resolution or Visual.
+  # Partial/custom manual runs never count. Completed legacy coverage still
+  # needs build and InWorld green plus an invoked, non-skipped Visual job.
   # Dispatches report suite results but cannot satisfy required PR checks; those
   # need an eligible PR-triggered InWorld suite result.
   release-gate:
@@ -601,8 +602,14 @@ jobs:
             exit 0
           fi
           source .github/scripts/gh-api-retry.sh
+          # Manual scope is known before jobs start. Completed legacy runs still
+          # need job-based proof; active legacy dispatches cannot establish it.
           if ! RUNS=$(gh_api_retry "repos/${GITHUB_REPOSITORY}/actions/workflows/in-world-tests.yml/runs?head_sha=${HEAD_SHA}&per_page=20" \
-            --jq '.workflow_runs[] | select(.head_repository.full_name == env.GITHUB_REPOSITORY) | "\(.id) \(.status)"'); then
+            --jq '.workflow_runs[]
+              | select(.head_repository.full_name == env.GITHUB_REPOSITORY)
+              | select(.event != "workflow_dispatch" or .display_title != "In-World Tests (partial/custom)")
+              | select(.status == "completed" or .event == "pull_request" or (.event == "workflow_dispatch" and .display_title == "In-World Tests (full)"))
+              | "\(.id) \(.status)"'); then
             echo "::error::Could not list In-World Tests runs for ${HEAD_SHA:0:7}, so existing validation is unknown and the automation suites were not dispatched. Re-run this job, or start \`In-World Tests\` by hand from the Actions tab against ${HEAD_REF}."
             exit 1
           fi
@@ -620,7 +627,7 @@ jobs:
             if [ "$STATUS" != "completed" ] || [ "$RUN_COVERAGE" = "full" ]; then COVERED=1; break; fi
           done <<< "$RUNS"
           if [ "$COVERED" != "0" ]; then
-            echo "::notice::An In-World Tests run for ${HEAD_SHA:0:7} is in flight without skipped build resolution or Visual, or already ran the full suites (build and InWorld green, Visual invoked); not dispatching another."
+            echo "::notice::A same-repository PR run or explicitly full manual run for ${HEAD_SHA:0:7} is in flight without skipped build resolution or Visual, or a completed run already ran the full suites (build and InWorld green, Visual invoked); not dispatching another."
             exit 0
           fi
           gh workflow run in-world-tests.yml --repo "$GITHUB_REPOSITORY" --ref "$HEAD_REF"

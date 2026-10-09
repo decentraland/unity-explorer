@@ -1,4 +1,9 @@
 name: In-World Tests
+run-name: >-
+  ${{ github.event_name == 'workflow_dispatch' &&
+      ((inputs.filter || '') == '' && (inputs.build_url || '') == '' && (inputs.tests_ref || '') == '' &&
+        'In-World Tests (full)' || 'In-World Tests (partial/custom)') ||
+      github.event.pull_request.title || 'In-World Tests' }}
 
 # Dispatcher for the InWorld and Visual NUnit suites. The mechanics — Explorer
 # install, AltTester, `mf explorer test`, Allure upload, and reporting into the
