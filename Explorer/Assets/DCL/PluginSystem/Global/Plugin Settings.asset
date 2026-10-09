@@ -1355,6 +1355,7 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        <CompositorMaterial>k__BackingField: {fileID: 2100000, guid: db01dc9188c04ccaa71227b557f49b72, type: 2}
     - rid: 6478896861045588059
       type: {class: ConnectionStatusPanelSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:

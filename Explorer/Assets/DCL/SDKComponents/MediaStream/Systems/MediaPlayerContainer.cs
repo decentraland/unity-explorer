@@ -4,6 +4,7 @@ using DCL.Audio;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.CharacterCamera;
 using DCL.Optimization.PerformanceBudgeting;
@@ -32,9 +33,10 @@ namespace DCL.SDKComponents.MediaStream
         private readonly IAnalyticsController analyticsController;
 
         private readonly MediaVolume mediaVolume;
+        private readonly SlideTextureCache slideCache;
 
         public MediaPlayerContainer(IAssetsProvisioner assetsProvisioner, IWebRequestController webRequestController, VolumeBus volumeBus, IPerformanceBudget frameBudget,
-            CacheCleaner cacheCleaner, AssetPreLoadCache assetPreLoadCache, IAnalyticsController analyticsController)
+            CacheCleaner cacheCleaner, AssetPreLoadCache assetPreLoadCache, IAnalyticsController analyticsController, IDecentralandUrlsSource decentralandUrlsSource)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.webRequestController = webRequestController;
@@ -44,6 +46,8 @@ namespace DCL.SDKComponents.MediaStream
             this.analyticsController = analyticsController;
 
             mediaVolume = new MediaVolume(volumeBus);
+            slideCache = new SlideTextureCache(webRequestController, decentralandUrlsSource);
+            cacheCleaner.Register(slideCache);
         }
 
         internal MediaFactoryBuilder mediaFactoryBuilder { get; private set; } = null!;
@@ -75,11 +79,15 @@ namespace DCL.SDKComponents.MediaStream
 
             cacheCleaner.Register(videoTexturesPool);
 
-            mediaFactoryBuilder = new MediaFactoryBuilder(webRequestController, mediaVolume, frameBudget, mediaPlayerPrefab, videoTexturesPool, assetPreLoadCache, analyticsController);
+            mediaFactoryBuilder = new MediaFactoryBuilder(webRequestController, mediaVolume, frameBudget, mediaPlayerPrefab, videoTexturesPool, assetPreLoadCache, analyticsController, slideCache,
+                containerSettings.CompositorMaterial);
         }
 
-        public override void Dispose() =>
+        public override void Dispose()
+        {
             mediaVolume.Dispose();
+            slideCache.Dispose();
+        }
 
         private static FeatureId CurrentPlatformMediaPlayerFeature()
         {
@@ -102,6 +110,9 @@ namespace DCL.SDKComponents.MediaStream
         {
             [field: SerializeField]
             public MediaPlayerReference MediaPlayerPrefab { get; private set; } = null!;
+
+            [field: SerializeField]
+            public Material CompositorMaterial { get; private set; } = null!;
         }
     }
 }

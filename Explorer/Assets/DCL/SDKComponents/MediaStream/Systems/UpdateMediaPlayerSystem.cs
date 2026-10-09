@@ -27,8 +27,6 @@ namespace DCL.SDKComponents.MediaStream
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IPerformanceBudget frameTimeBudget;
         private readonly MediaFactory mediaFactory;
-        private const int MAX_LIVEKIT_VIDEO_WIDTH = 2048;
-        private const int MAX_LIVEKIT_VIDEO_HEIGHT = 2048;
 
         private readonly float audioFadeSpeed;
         private readonly Material flipMaterial;
@@ -117,7 +115,7 @@ namespace DCL.SDKComponents.MediaStream
 
                 if (component.IsPlaying)
                     if (component.MediaPlayer.IsLivekitPlayer(out LivekitPlayer? livekitPlayer))
-                        livekitPlayer?.EnsureAudioIsPlaying();
+                        livekitPlayer.EnsureAudioIsPlaying();
 
                 bool hasSpatialEnabledChanged = sdkComponent.HasSpatial && sdkComponent.Spatial != component.IsSpatial;
 
@@ -176,7 +174,7 @@ namespace DCL.SDKComponents.MediaStream
                     // Covers cases like leaving and re-entering the scene
                     // or the stream not being available for some time, like OBS not started while the stream is active
                     if (component.MediaPlayer.IsLivekitPlayer(out LivekitPlayer? livekitPlayer))
-                        livekitPlayer?.EnsureVideoIsPlaying();
+                        livekitPlayer.EnsureVideoIsPlaying();
 
                 bool hasSpatialEnabledChanged = sdkComponent.HasSpatial && sdkComponent.Spatial != component.IsSpatial;
 
@@ -254,9 +252,9 @@ namespace DCL.SDKComponents.MediaStream
             int targetHeight = avText.height;
 
             // Cap LiveKit video resolution to prevent GPU stalls from 4K+ streams.
-            if (livekitPlayer != null && (avText.width > MAX_LIVEKIT_VIDEO_WIDTH || avText.height > MAX_LIVEKIT_VIDEO_HEIGHT))
+            if (livekitPlayer != null && Mathf.Max(avText.width, avText.height) > LiveKitMediaExtensions.MAX_LIVEKIT_TEXTURE_SIZE)
             {
-                float scale = Mathf.Min((float)MAX_LIVEKIT_VIDEO_WIDTH / avText.width, (float)MAX_LIVEKIT_VIDEO_HEIGHT / avText.height);
+                float scale = (float)LiveKitMediaExtensions.MAX_LIVEKIT_TEXTURE_SIZE / Mathf.Max(avText.width, avText.height);
                 targetWidth = Mathf.RoundToInt(avText.width * scale);
                 targetHeight = Mathf.RoundToInt(avText.height * scale);
             }
@@ -389,7 +387,7 @@ namespace DCL.SDKComponents.MediaStream
             if (component.MediaAddress.IsUrlMediaAddress(out var urlMediaAddress) && address.IsUrlMediaAddress(out var other))
             {
                 string selfUrl = urlMediaAddress.Url;
-                string otherUrl = other!.Url;
+                string otherUrl = other.Url;
 
                 if (selfUrl == otherUrl
                     || (sceneData.TryGetMediaUrl(otherUrl, out var localMediaUrl) && selfUrl == localMediaUrl)) return false;
