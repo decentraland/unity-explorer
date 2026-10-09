@@ -10,6 +10,8 @@ name: Visual Regression
 #   Comment "/visual-tests" on a PR. Restricted to OWNER / MEMBER /
 #   COLLABORATOR author associations — anyone else's comment is silently
 #   ignored to keep this from becoming a free-CPU buffet for drive-by PRs.
+#   Release/hotfix PRs already run Visual via in-world-tests.yml. Wait for that
+#   run to finish before a manual rerun so their PR report writes do not overlap.
 #
 # Branch matching:
 #   We look up the PR's head branch in explorer-automation. If that branch

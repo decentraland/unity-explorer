@@ -17,21 +17,23 @@ name: In-World Tests
 #   - Manually, from the Actions tab, against any ref.
 #
 # To make a red suite block the merge, add `InWorld suite result` to main's
-# required status checks. That job gates both suites: it is the only name worth
-# requiring, it stays stable when the reusable workflows' own job names change,
+# required status checks. That job gates the build and InWorld suite; Visual
+# remains advisory until its baselines are versioned with releases. Its name
+# stays stable when the reusable workflows' own job names change,
 # and it passes for PRs into main that are not release or hotfix.
 #
 # Release PRs are opened by create-release-branch.yml with GITHUB_TOKEN, and
 # events that token raises start runs only as action_required, owned by the
 # bot even once approved — so that workflow dispatches
-# this one itself. A dispatch attaches its checks to the dispatched ref's tip,
-# which is the PR head, so the gate still lands on the PR.
+# this one itself to execute validation. Manually dispatched jobs do not satisfy
+# required PR checks; enabling this gate also needs an eligible PR-triggered run
+# for bot-created release PRs.
 #
 # Required vars:
 #   - vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL  Artifact bucket, and where the
 #     Allure report is published
 #
-# Inherited by the reusable workflow via `secrets: inherit`:
+# Inherited by the reusable workflows via `secrets: inherit`:
 #   - secrets.ALTTESTER_LICENSE
 #   - secrets.REPOS_READ_ONLY_TOKEN
 #   - secrets.EXPLORER_TEAM_S3_BUCKET
@@ -47,7 +49,7 @@ on:
   workflow_dispatch:
     inputs:
       filter:
-        description: 'NUnit filter. Empty runs the whole Category=InWorld suite, split across Windows runners; anything narrower runs on one.'
+        description: 'NUnit filter. Empty runs the whole InWorld suite and advisory Visual suite; a filter runs InWorld only, with Windows splitting inferred from it.'
         required: false
         default: ''
         type: string
@@ -167,7 +169,7 @@ jobs:
       # A dispatched run carries no PR, and the release gate is started that way
       # — create-release-branch.yml dispatches it, because the PR it opens with
       # GITHUB_TOKEN raises no events. Without this the result reaches only the
-      # job summary, on the one path where the PR is the whole point.
+      # job summary rather than the PR's status comment.
       # `--head` matches on branch name alone, hence the fork exclusion.
       - name: Find the branch's open PR
         id: pr
@@ -234,12 +236,13 @@ jobs:
   visual-suite:
     name: Visual suite
     needs: resolve
+    # Filtered manual runs target InWorld fixtures only.
+    if: (inputs.filter || '') == ''
     # @main pins the merged version of the reusable, as for the InWorld suite above.
     uses: decentraland/explorer-automation/.github/workflows/run-visual-suite.yml@main
-    # Must be a superset of run-visual-suite.yml's own `permissions:`. contents:write
-    # is its record-mode baseline commit, unused in test mode but declared upstream;
-    # pull-requests:write is the CI status comment's automation section it upserts
-    # (or the standalone comment it falls back to).
+    # Must be a superset of run-visual-suite.yml's own `permissions:`, or the call
+    # dies at startup. contents:write is declared upstream for record mode and
+    # unused in test mode; pull-requests:write is required for its PR reporting.
     permissions:
       contents: write
       pull-requests: write
@@ -268,14 +271,22 @@ jobs:
           RESOLVE: ${{ needs.resolve.result }}
           SUITE: ${{ needs.run-suite.result }}
           VISUAL: ${{ needs.visual-suite.result }}
+          FILTERED: ${{ (inputs.filter || '') != '' }}
         run: |
           set -euo pipefail
           if [ "$RESOLVE" = "skipped" ]; then
-            echo "::notice::Not a release or hotfix PR — the InWorld and Visual suites do not gate this one."
+            echo "::notice::Not a release or hotfix PR — the suites do not run on this one."
             exit 0
           fi
-          if [ "$RESOLVE" = "success" ] && [ "$SUITE" = "success" ] && [ "$VISUAL" = "success" ]; then
-            echo "::notice::InWorld and Visual suites passed."
+          # Default baselines follow dev and may differ from a release or hotfix.
+          # Keep the Visual verdict visible without blocking on those differences.
+          if [ "$FILTERED" = "true" ] && [ "$VISUAL" = "skipped" ]; then
+            echo "::notice::Visual suite skipped for the filtered InWorld run."
+          elif [ "$VISUAL" != "success" ]; then
+            echo "::warning::Visual suite: ${VISUAL} (advisory). See its Allure report or job summary."
+          fi
+          if [ "$RESOLVE" = "success" ] && [ "$SUITE" = "success" ]; then
+            echo "::notice::InWorld suite passed."
             exit 0
           fi
           # Cancelled counts as failure on purpose: a merge gate must not go
