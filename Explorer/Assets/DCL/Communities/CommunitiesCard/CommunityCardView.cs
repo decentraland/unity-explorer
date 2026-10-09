@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Chat;
 using DCL.Communities.CommunitiesCard.Announcements;
 using DCL.Communities.CommunitiesCard.Events;
 using DCL.Communities.CommunitiesCard.Members;
@@ -348,7 +349,9 @@ namespace DCL.Communities.CommunitiesCard
 
         public void ConfigureInteractionButtons(GetCommunityResponse.CommunityData communityData)
         {
-            openChatButton.gameObject.SetActive(communityData.role is CommunityMemberRole.owner or CommunityMemberRole.moderator or CommunityMemberRole.member && communityData.IsAccessAllowed() && communityData.pendingActionType != InviteRequestAction.invite);
+            bool userInWorld = ChatOpener.Instance.IsUserInWorld;
+
+            openChatButton.gameObject.SetActive(userInWorld && communityData.role is CommunityMemberRole.owner or CommunityMemberRole.moderator or CommunityMemberRole.member && communityData.IsAccessAllowed() && communityData.pendingActionType != InviteRequestAction.invite);
             openWizardButton.gameObject.SetActive(communityData.role is CommunityMemberRole.owner or CommunityMemberRole.moderator && communityData.IsAccessAllowed() && communityData.pendingActionType != InviteRequestAction.invite);
             joinedButton.gameObject.SetActive(communityData.role is CommunityMemberRole.member && communityData.IsAccessAllowed() && communityData.pendingActionType != InviteRequestAction.invite);
             joinButton.gameObject.SetActive(communityData.role == CommunityMemberRole.none && communityData.IsAccessAllowed() && communityData.pendingActionType != InviteRequestAction.invite);

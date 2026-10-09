@@ -99,8 +99,8 @@ namespace DCL.UI.ProfileElements
 
         private void OnThumbnailUpdated(ProfileThumbnailViewModel model)
         {
-            picture.style.backgroundColor = model.ProfileColor;
-            picture.style.backgroundImage = model.Sprite == null ? StyleKeyword.Null : new StyleBackground(model.Sprite);
+            picture.SetProfileColor(model.ProfileColor);
+            picture.style.backgroundImage = VisualElementsExtensions.CoverBackground(model.Sprite);
             EnableInClassList(USS_LOADING, model.ThumbnailState == ProfileThumbnailViewModel.State.Loading && model.Sprite == null);
         }
 

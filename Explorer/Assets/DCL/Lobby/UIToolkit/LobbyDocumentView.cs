@@ -17,6 +17,8 @@ namespace DCL.Lobby
     {
         private const string AVATAR_HIT_AREA_NAME = "AvatarHitArea";
         private const string AVATAR_TOOLTIP_NAME = "AvatarTooltip";
+        private const string AVATAR_DRAG_CURSOR_NAME = "AvatarDragCursor";
+        private const string FRIEND_TOOLTIP_NAME = "FriendTooltip";
         private const string WELCOME_TEXT_NAME = "WelcomeText";
         private const string LANDING_CARD_NAME = "LandingCard";
         private const string RECENT_PLACES_NAME = "RecentPlaces";
@@ -60,6 +62,12 @@ namespace DCL.Lobby
 
         /// <summary>Hint beside the pointer over <see cref="AvatarHitArea" />. Exists only while shown.</summary>
         public VisualElement AvatarTooltip => Element<VisualElement>(AVATAR_TOOLTIP_NAME);
+
+        /// <summary>Rotate cursor shown at the pointer while the figure is dragged. Exists only while shown.</summary>
+        public VisualElement AvatarDragCursor => Element<VisualElement>(AVATAR_DRAG_CURSOR_NAME);
+
+        /// <summary>Name of the friend picture under the pointer on a card. Exists only while shown.</summary>
+        public VisualElement FriendTooltip => Element<VisualElement>(FRIEND_TOOLTIP_NAME);
 
         /// <summary>Credits widget of the top bar. It outlives the hierarchy, so its bindings stay.</summary>
         public CreditsPanelElement Credits => credits ??= new CreditsPanelElement();
