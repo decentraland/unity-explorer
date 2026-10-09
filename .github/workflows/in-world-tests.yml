@@ -280,9 +280,9 @@ jobs:
           fi
           # Default baselines follow dev and may differ from a release or hotfix.
           # Keep the Visual verdict visible without blocking on those differences.
-          if [ "$FILTERED" = "true" ] && [ "$VISUAL" = "skipped" ]; then
+          if [ "$RESOLVE" = "success" ] && [ "$FILTERED" = "true" ] && [ "$VISUAL" = "skipped" ]; then
             echo "::notice::Visual suite skipped for the filtered InWorld run."
-          elif [ "$VISUAL" != "success" ]; then
+          elif [ "$RESOLVE" = "success" ] && [ "$VISUAL" != "success" ]; then
             echo "::warning::Visual suite: ${VISUAL} (advisory). See its Allure report or job summary."
           fi
           if [ "$RESOLVE" = "success" ] && [ "$SUITE" = "success" ]; then
@@ -292,5 +292,5 @@ jobs:
           # Cancelled counts as failure on purpose: a merge gate must not go
           # green because the run was interrupted. The superseding run reports
           # its own result.
-          echo "::error::Gate failed — build: ${RESOLVE}, InWorld: ${SUITE}, Visual: ${VISUAL}. See the Allure reports linked in the suites' job summaries."
+          echo "::error::Gate failed — build: ${RESOLVE}, InWorld: ${SUITE}. See the InWorld Allure report or the build job summary."
           exit 1

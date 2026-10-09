@@ -129,7 +129,7 @@ To refresh only one fixture, use:
 
 The workflow enforces `Category=Visual` automatically. It records on CI's macOS runner against the matching Explorer PR build and commits the PNGs back to the explorer-automation PR branch. If the paired build is unavailable, it falls back to a `dev` build: check the reported build before accepting the baseline changes. Inspect the generated PNGs and Allure report, then rerun `/visual-tests` on the Explorer PR to compare against that branch's new baselines.
 
-For a release or hotfix, keep its matching automation branch available while testing that older build. Do not replace automation `main` baselines with an older release's pixels. See [explorer-automation's baseline guidance](https://github.com/decentraland/explorer-automation/blob/main/explorer/README.md#visual-regression-testing) for regeneration and merge order. Merge [explorer-automation#96](https://github.com/decentraland/explorer-automation/pull/96) before this workflow change for automatic Visual filtering and CI status reporting.
+For a release or hotfix, keep its matching automation branch available while testing that older build. Do not replace automation `main` baselines with an older release's pixels. See [explorer-automation's baseline guidance](https://github.com/decentraland/explorer-automation/blob/main/explorer/README.md#visual-regression-testing) for regeneration and merge order.
 
 ---
 

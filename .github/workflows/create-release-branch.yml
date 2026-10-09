@@ -377,13 +377,12 @@ jobs:
       # The PR above was opened with GITHUB_TOKEN, whose events start no workflow
       # run without manual approval — the same suppression the CI-status step above
       # exists to work around.
-      # So the InWorld gate has to be started explicitly, by a token that can.
+      # So the automation suites have to be started explicitly, by a token that can.
       #
-      # Dispatching against the release branch is what puts the gate on the PR:
-      # a workflow_dispatch run attaches its checks to the dispatched ref's tip,
-      # and that tip is the PR head. Without this the required check on main
-      # never reports and the release cannot merge.
-      - name: Start the InWorld gate on the release branch
+      # Dispatching runs the suites against the release branch and reports into
+      # the PR's status comment. A dispatched run cannot satisfy a required check,
+      # so requiring `InWorld suite result` also needs a PR-triggered run.
+      - name: Start the automation suites on the release branch
         env:
           GH_TOKEN: ${{ secrets.ORG_ACCESS_TOKEN }}
         run: |
@@ -475,10 +474,8 @@ jobs:
           done
 
           # Three ways to end up not dispatching, and only the last is a build
-          # problem — so they get three messages. All three are `::error::`:
-          # each one ends with the gate unreported and the release unmergeable,
-          # which is not a line in a green log, and the dispatch failure below
-          # already annotates for exactly that outcome.
+          # problem — so they get three messages. Each leaves the automatic suite
+          # results unavailable and requires an operator to start validation.
           #
           # None of them says "re-run this workflow". Re-running re-enters the
           # `Create or update branch` step above, which force-pushes
@@ -506,10 +503,9 @@ jobs:
           # would invite a re-run, and re-running this workflow force-pushes the
           # release branch, quietly re-cutting the release from a newer dev tip.
           # The branch, PR, labels and CI status comment have all landed by
-          # now; the annotation is what makes the missing gate visible, and the
-          # required check staying unreported is what keeps the release blocked.
+          # now; the annotation is what makes the missing suite run visible.
           if ! gh workflow run in-world-tests.yml --ref "$BRANCH_NAME"; then
-            echo "::error::Could not dispatch the InWorld gate against ${BRANCH_NAME}. The likeliest cause is that ORG_ACCESS_TOKEN lacks \`actions: write\` on this repository, which \`gh workflow run\` requires. The release branch and its PR are fine — start \`In-World Tests\` by hand from the Actions tab against ${BRANCH_NAME}, or its required check will sit unreported and the release will not be mergeable."
+            echo "::error::Could not dispatch the automation suites against ${BRANCH_NAME}. The likeliest cause is that ORG_ACCESS_TOKEN lacks \`actions: write\` on this repository, which \`gh workflow run\` requires. The release branch and its PR are fine — start \`In-World Tests\` by hand from the Actions tab against ${BRANCH_NAME}. Manual runs execute and report the suites; satisfying a required \`InWorld suite result\` check needs a PR-triggered run."
             exit 0
           fi
-          echo "::notice::InWorld gate dispatched against ${BRANCH_NAME}."
+          echo "::notice::Automation suites dispatched against ${BRANCH_NAME}."
