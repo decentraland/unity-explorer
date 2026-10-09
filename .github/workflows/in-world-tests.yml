@@ -242,7 +242,7 @@ jobs:
     # Filtered manual runs target InWorld fixtures only.
     if: (inputs.filter || '') == ''
     # Reviewed immutable revision includes Visual scoping and the unified report writer.
-    uses: decentraland/explorer-automation/.github/workflows/run-visual-suite.yml@595e84eb51914f1584f9071719391361a03249c4
+    uses: decentraland/explorer-automation/.github/workflows/run-visual-suite.yml@8c84a893d8611a58fd7fed0d99bfbe9873a23dc1
     # Must be a superset of run-visual-suite.yml's own `permissions:`, or the call
     # dies at startup. contents:write is declared upstream for record mode and
     # unused in test mode; pull-requests:write is required for its PR reporting.

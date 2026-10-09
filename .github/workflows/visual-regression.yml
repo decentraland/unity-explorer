@@ -48,7 +48,13 @@ permissions:
   pull-requests: write
 
 concurrency:
-  group: visual-regression-${{ github.event.issue.number }}
+  # Only authorized suite requests may replace another suite request.
+  group: >-
+    visual-regression-${{ github.event.issue.number }}-${{
+      github.event.issue.pull_request &&
+      startsWith(github.event.comment.body, '/visual-tests') &&
+      contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association) &&
+      'run' || github.run_id }}
   cancel-in-progress: true
 
 jobs:
@@ -175,7 +181,7 @@ jobs:
     needs: [resolve, automation-pending]
     if: ${{ !cancelled() && needs.resolve.outputs.authorized == 'true' }}
     # Reviewed immutable revision includes Visual scoping and the unified report writer.
-    uses: decentraland/explorer-automation/.github/workflows/run-visual-suite.yml@595e84eb51914f1584f9071719391361a03249c4
+    uses: decentraland/explorer-automation/.github/workflows/run-visual-suite.yml@8c84a893d8611a58fd7fed0d99bfbe9873a23dc1
     # The pinned reusable still declares recording permissions workflow-wide.
     permissions:
       contents: write
