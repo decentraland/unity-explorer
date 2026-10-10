@@ -68,6 +68,7 @@ The tables below are a human-readable overview. The authoritative argument contr
 | `get_scene_content_stats` | — | Current scene's content stats (entities, triangles, bodies, geometries, materials, textures, shader variants, colliders, videos) with the documented soft-limit caps for its parcel count (materials is shown uncapped — see the SRP Batcher note below); triggers a fresh counting pass |
 | `get_scene_content_breakdown` | `limit?` (default 10), `sortBy?` (`triangles`/`materials`/`shaderVariants`/`drawCalls`/`visibleTriangles`) | Rendered content grouped by source model (GLTF `src` + one primitives row): triangles + share of scene, unique materials, shader variants, draw-call estimate, instances, renderers — plus each source's visible-from-this-POV subset (post-culling renderers, triangles, draw calls); position the camera first for viewpoint analysis |
 | `get_performance_stats` | `sampleSeconds?` (default 2, max 10) | Holds the call while sampling real frame times: render FPS avg/min/max, hiccup frames (>50 ms), and the current scene's tick FPS vs target — pair with the breakdown tool for POV cost-vs-FPS analysis |
+| `get_crdt_traffic` | `sampleSeconds?` (default 2, max 10), `limit?` (default 15) | Holds the call while capturing every CRDT message between the scene and the renderer, both directions: totals, per-tick rate, and how many were wasted (identical rewrites, duplicates, stale, deleted entity, leaked Creator Hub components) plus the top writers by entity + component with a per-tick cadence and a verdict — points at the scene code that writes a component every tick without changing it |
 | `get_scene_logs` | `limit?`, `severity?`, `sinceSeq?` | Scene JS console output with monotonic sequence numbers for incremental polling |
 | `list_scene_entities` | `limit?` | Entity ids of the current scene's ECS world |
 | `get_entity_details` | `entityId` | All components of one scene entity |
@@ -115,7 +116,7 @@ The content tools report *counts*, and some counts look scarier than they are. G
 
 ## Structured output
 
-`get_player_state`, `get_scene_state`, `get_scene_content_stats`, `get_scene_content_breakdown`, `get_performance_stats` and `list_scene_entities` also return `structuredContent` mirroring their text payload and declare a matching `outputSchema` in `tools/list` (MCP 2025-06-18). This is done **only on the read-only state tools that benefit from it** — every other tool returns text content only. A tool opts in by overriding `McpTool.OutputSchema` (default `null`); the same `McpJsonSchema` builder produces the schema.
+`get_player_state`, `get_scene_state`, `get_scene_content_stats`, `get_scene_content_breakdown`, `get_performance_stats`, `get_crdt_traffic` and `list_scene_entities` also return `structuredContent` mirroring their text payload and declare a matching `outputSchema` in `tools/list` (MCP 2025-06-18). This is done **only on the read-only state tools that benefit from it** — every other tool returns text content only. A tool opts in by overriding `McpTool.OutputSchema` (default `null`); the same `McpJsonSchema` builder produces the schema.
 
 ## The scene-iteration loop
 

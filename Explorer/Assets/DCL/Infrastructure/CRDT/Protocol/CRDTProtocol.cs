@@ -133,6 +133,29 @@ namespace CRDT.Protocol
             UpdateLWWState(in message, overrideEffect, newComponentEffect);
         }
 
+        public bool IsIdenticalToLWWState(in CRDTMessage message)
+        {
+            switch (message.Type)
+            {
+                case CRDTMessageType.PUT_COMPONENT:
+                case CRDTMessageType.AUTHORITATIVE_PUT_COMPONENT:
+                case CRDTMessageType.DELETE_COMPONENT:
+                    break;
+                default:
+                    return false;
+            }
+
+            crdtState.TryGetLWWComponentState(message, out _, out bool componentExists, out EntityComponentData storedData);
+
+            if (!componentExists)
+                return false;
+
+            if (message.Type == CRDTMessageType.DELETE_COMPONENT)
+                return storedData.isDeleted;
+
+            return !storedData.isDeleted && CRDTMessageComparer.CompareData(in storedData.Data, message.Data) == 0;
+        }
+
         private static void GetReconciliationResultFromLWWMessage(in CRDTMessage message, out CRDTReconciliationEffect overrideEffect, out CRDTReconciliationEffect newComponentEffect)
         {
             switch (message.Type)

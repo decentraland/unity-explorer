@@ -100,6 +100,12 @@ namespace CrdtEcsBridge.JsModulesImplementation
 
             metrics.MessagesFromScene.Add(messages.Count);
 
+            CrdtTrafficProbe traffic = metrics.Traffic;
+            bool capturing = traffic.IsCapturing;
+
+            if (capturing)
+                traffic.RecordBatch();
+
             worldSyncBufferSampler.Begin();
 
             // as we no longer wait for a buffer to apply the thread should be frozen
@@ -111,6 +117,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
                 for (var i = 0; i < messages.Count; i++)
                 {
                     CRDTMessage message = messages[i];
+                    int payloadLength = capturing ? message.Data.Memory.Length : 0;
 
                     // Skip Creator Hub components leaked from main.composite (inspector::*,
                     // specific asset-packs:: tooling metadata, composite::root) and phantom
@@ -120,15 +127,24 @@ namespace CrdtEcsBridge.JsModulesImplementation
                             or CRDTMessageType.APPEND_COMPONENT
                         && CreatorHubComponentFilter.ShouldFilter(in message))
                     {
+                        if (capturing)
+                            traffic.Record(CrdtTrafficDirection.FromScene, message.EntityId.Id, message.ComponentId, CrdtTrafficOutcome.FilteredCreatorHub, payloadLength);
+
                         message.Data.Dispose();
                         continue;
                     }
+
+                    // Must be read before ProcessMessage replaces or disposes the stored payload
+                    bool identicalData = capturing && crdtProtocol.IsIdenticalToLWWState(in message);
 
                     crdtProcessMessagesSampler.Begin();
 
                     CRDTReconciliationResult reconciliationResult = crdtProtocol.ProcessMessage(in message);
 
                     crdtProcessMessagesSampler.End();
+
+                    if (capturing)
+                        traffic.Record(CrdtTrafficDirection.FromScene, message.EntityId.Id, message.ComponentId, ClassifyOutcome(reconciliationResult.State, identicalData), payloadLength);
 
                     // TODO add metric to understand how many conflicts we have based on CRDTStateReconciliationResult
 
@@ -218,6 +234,9 @@ namespace CrdtEcsBridge.JsModulesImplementation
 
                     SerializeOutgoingCRDTMessages(outgoingMessagesSyncBlock.Messages, serializationBufferPoolable.Span);
 
+                    if (metrics.Traffic.IsCapturing)
+                        RecordOutgoingTraffic(outgoingMessagesSyncBlock.Messages);
+
                     SyncOutgoingCRDTMessages(outgoingMessagesSyncBlock.Messages);
 
                     metrics.MessagesToScene.Add(outgoingMessagesSyncBlock.Messages.Count);
@@ -241,6 +260,35 @@ namespace CrdtEcsBridge.JsModulesImplementation
         {
             for (var i = 0; i < outgoingMessages.Count; i++) { SyncCRDTMessage(outgoingMessages[i]); }
         }
+
+        /// <summary>
+        ///     Must run before <see cref="SyncOutgoingCRDTMessages" /> enforces the messages into the local state,
+        ///     otherwise every message compares identical to itself.
+        /// </summary>
+        private void RecordOutgoingTraffic(IReadOnlyList<ProcessedCRDTMessage> outgoingMessages)
+        {
+            for (var i = 0; i < outgoingMessages.Count; i++)
+            {
+                CRDTMessage message = outgoingMessages[i].message;
+
+                CrdtTrafficOutcome outcome = crdtProtocol.IsIdenticalToLWWState(in message)
+                    ? CrdtTrafficOutcome.RedundantIdenticalData
+                    : CrdtTrafficOutcome.Applied;
+
+                metrics.Traffic.Record(CrdtTrafficDirection.ToScene, message.EntityId.Id, message.ComponentId, outcome, message.Data.Memory.Length);
+            }
+        }
+
+        private static CrdtTrafficOutcome ClassifyOutcome(CRDTStateReconciliationResult state, bool identicalData) =>
+            state switch
+            {
+                CRDTStateReconciliationResult.StateUpdatedTimestamp => identicalData ? CrdtTrafficOutcome.RedundantIdenticalData : CrdtTrafficOutcome.Applied,
+                CRDTStateReconciliationResult.NoChanges => CrdtTrafficOutcome.NoOpSameState,
+                CRDTStateReconciliationResult.StateOutdatedTimestamp => CrdtTrafficOutcome.NoOpOutdated,
+                CRDTStateReconciliationResult.StateOutdatedData => CrdtTrafficOutcome.NoOpOutdated,
+                CRDTStateReconciliationResult.EntityWasDeleted => CrdtTrafficOutcome.NoOpEntityDeleted,
+                _ => CrdtTrafficOutcome.Applied,
+            };
 
         private void SyncCRDTMessage(ProcessedCRDTMessage message)
         {
