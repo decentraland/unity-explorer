@@ -116,9 +116,9 @@
   },
   {
    "number": 10315,
-   "status": "pending",
+   "status": "skipped",
    "commit": null,
-   "note": ""
+   "note": "the button always switches to the fixed Genesis realm, so the reported landing in the launch World is not explained by the code; the real defect (startParcelInGenesis is a launch-time snapshot of the World deep-link position) needs a product call on where the button should land"
   },
   {
    "number": 10309,
