@@ -204,7 +204,8 @@ namespace DCL.Profiles.Self
                     getFromCacheIfPossible: false,
                     batchBehaviour: IProfileRepository.FetchBehaviour.ForceFetchFromCatalyst | IProfileRepository.FetchBehaviour.DelayUntilResolved);
 
-                if (saved == null)
+                // When its retries run out the re-read returns the last profile it got, which can still be behind the sent version.
+                if (saved == null || saved.Version < sent.Version)
                     throw new ProfileNotFoundAfterDeployException(address, sent.Version);
 
                 inbox.Send(SelfProfileMsg.FromDeploySucceeded(new DeploySucceeded(address, sent, Copy(saved))));
