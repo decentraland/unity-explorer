@@ -14,8 +14,8 @@
  "issues": [
   {
    "number": 10358,
-   "status": "pending",
-   "commit": null,
+   "status": "fixed",
+   "commit": "496ca01fed3d08c9fdcea947af1d16ea35ed3579",
    "note": ""
   },
   {
