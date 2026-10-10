@@ -222,10 +222,10 @@ namespace DCL.Communities.CommunityCreation
         }
 
         private void DisableShortcutsInput() =>
-            inputBlock.Disable(InputMapComponent.Kind.Shortcuts, InputMapComponent.Kind.InWorldCamera);
+            inputBlock.Disable(InputMapComponent.Kind.Shortcuts, InputMapComponent.Kind.InWorldCamera, InputMapComponent.Kind.VoiceChat);
 
         private void RestoreInput() =>
-            inputBlock.Enable(InputMapComponent.Kind.Shortcuts, InputMapComponent.Kind.InWorldCamera);
+            inputBlock.Enable(InputMapComponent.Kind.Shortcuts, InputMapComponent.Kind.InWorldCamera, InputMapComponent.Kind.VoiceChat);
 
         private void OnCancelAction() =>
             closeTaskCompletionSource.TrySetResult();

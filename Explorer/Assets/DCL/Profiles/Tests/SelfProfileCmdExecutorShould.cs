@@ -531,6 +531,23 @@ namespace DCL.Profiles.Tests
         }
 
         [Test]
+        public void ReportADeployFailureWhenTheSavedProfileIsBehindTheSentVersion()
+        {
+            // Arrange
+            Profile sent = NewProfile(ALICE, 4);
+            AnyGet().Returns(UniTask.FromResult<ProfileTier?>(NewProfile(ALICE, sent.Version - 1)));
+            LogAssert.Expect(LogType.Exception, new Regex(nameof(ProfileNotFoundAfterDeployException)));
+
+            // Act
+            executor.Execute(SelfProfileCmd.FromDeploy(new DeployCmd(ALICE, sent, sent.Version)), inbox);
+
+            // Assert
+            Assert.That(SingleSent().IsDeployFailed(out DeployFailed msg), Is.True);
+            Assert.That(msg.Sent, Is.SameAs(sent));
+            Assert.That(msg.Exception, Is.TypeOf<ProfileNotFoundAfterDeployException>());
+        }
+
+        [Test]
         public void KeepTheDeployInFlightWhenANewerEditDeploys()
         {
             // Arrange

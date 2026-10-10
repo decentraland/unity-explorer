@@ -165,7 +165,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             EmoteReferences? emoteReference = emoteComponent.CurrentEmoteReference;
             if (!emoteReference) return;
 
-            bool shouldCancelEmote = wantsToCancelEmote || World.Has<HiddenPlayerComponent>(entity);
+            bool shouldCancelEmote = wantsToCancelEmote || World.Has<HiddenPlayerComponent>(entity) || IsRemoteAvatarHiddenByModifierArea(entity);
             if (shouldCancelEmote)
             {
                 StopEmote(entity, ref emoteComponent, avatarView, EmoteState.EsInterrupted);
@@ -241,6 +241,16 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             StopEmote(entity, ref emoteComponent, avatarView, EmoteState.EsInterrupted);
             World.Remove<CharacterEmoteIntent>(entity);
+        }
+
+        // A modifier area hides only the wearables, so a hidden avatar's emote props would float on their own.
+        // The local player keeps its emote: stopping it would broadcast the stop to every other client.
+        private bool IsRemoteAvatarHiddenByModifierArea(Entity entity)
+        {
+            if (World.Has<PlayerComponent>(entity)) return false;
+
+            ref AvatarShapeComponent avatarShape = ref World.TryGetRef<AvatarShapeComponent>(entity, out bool hasAvatarShape);
+            return hasAvatarShape && avatarShape.HiddenByModifierArea;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
