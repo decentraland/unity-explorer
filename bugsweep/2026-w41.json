@@ -74,27 +74,27 @@
   },
   {
    "number": 10329,
-   "status": "pending",
+   "status": "skipped",
    "commit": null,
-   "note": ""
+   "note": "all four are one bug: the Create systems' Result ??= keeps a Unity-destroyed pooled Material (then Apply NREs on it next frame), but what destroys a material still in use could not be traced in code (lead: duplicate component adds in GltfNodeModifierSystemBase); changing ??= would only hide it"
   },
   {
    "number": 10381,
-   "status": "pending",
+   "status": "skipped",
    "commit": null,
-   "note": ""
+   "note": "all four are one bug: the Create systems' Result ??= keeps a Unity-destroyed pooled Material (then Apply NREs on it next frame), but what destroys a material still in use could not be traced in code (lead: duplicate component adds in GltfNodeModifierSystemBase); changing ??= would only hide it"
   },
   {
    "number": 10327,
-   "status": "pending",
+   "status": "skipped",
    "commit": null,
-   "note": ""
+   "note": "all four are one bug: the Create systems' Result ??= keeps a Unity-destroyed pooled Material (then Apply NREs on it next frame), but what destroys a material still in use could not be traced in code (lead: duplicate component adds in GltfNodeModifierSystemBase); changing ??= would only hide it"
   },
   {
    "number": 10412,
-   "status": "pending",
+   "status": "skipped",
    "commit": null,
-   "note": ""
+   "note": "all four are one bug: the Create systems' Result ??= keeps a Unity-destroyed pooled Material (then Apply NREs on it next frame), but what destroys a material still in use could not be traced in code (lead: duplicate component adds in GltfNodeModifierSystemBase); changing ??= would only hide it"
   },
   {
    "number": 10332,
