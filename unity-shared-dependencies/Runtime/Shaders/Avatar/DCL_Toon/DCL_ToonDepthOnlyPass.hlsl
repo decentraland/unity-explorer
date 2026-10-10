@@ -56,6 +56,7 @@ half DepthOnlyFragment(Varyings input) : SV_TARGET
     UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
     Dithering(_FadeDistance, input.positionCS, _EndFadeDistance, _StartFadeDistance);
+    DCLTeleportClip(input.uv);
 
     Alpha(SampleAlbedoAlpha(input.uv).a, _BaseColor, _Cutoff);
 

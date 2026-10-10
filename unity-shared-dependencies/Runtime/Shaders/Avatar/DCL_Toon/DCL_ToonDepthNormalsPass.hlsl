@@ -69,6 +69,7 @@ void DepthNormalsFragment(
     UNITY_SETUP_INSTANCE_ID(input);
     UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
     Dithering(_FadeDistance, input.positionCS, _EndFadeDistance, _StartFadeDistance);
+    DCLTeleportClip(input.uv);
 
     Alpha(SampleAlbedoAlpha(input.uv).a, _BaseColor, _Cutoff);
 
