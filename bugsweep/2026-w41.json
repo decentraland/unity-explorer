@@ -128,9 +128,9 @@
   },
   {
    "number": 10404,
-   "status": "pending",
+   "status": "skipped",
    "commit": null,
-   "note": ""
+   "note": "likely already fixed on dev by the 2026-w39 sweep fix for #10185 (c01a552, FullRect sprites for creations thumbnails, merged 2026-10-08 30 min after this report and in no release yet); QA to re-check on macOS with a build containing it"
   },
   {
    "number": 10373,
