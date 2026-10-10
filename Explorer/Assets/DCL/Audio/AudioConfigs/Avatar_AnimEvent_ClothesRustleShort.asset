@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ea799a483c3f4db8afbf38b0e6c08665, type: 3}
+  m_Name: Avatar_AnimEvent_ClothesRustleShort
+  m_EditorClassIdentifier: 
+  audioClips:
+  - {fileID: 8300000, guid: 8f52f789dd3954375b6a46c3611894de, type: 3}
+  - {fileID: 8300000, guid: 22b97edaac1f148a09d722a5ceae532a, type: 3}
+  - {fileID: 8300000, guid: 36f8c0444f98940499324484913ba5d3, type: 3}
+  - {fileID: 8300000, guid: 942cd3a6edfd8412abc4221c825a02a1, type: 3}
+  - {fileID: 8300000, guid: a98ba218b9eee48a1b791709a7815858, type: 3}
+  - {fileID: 8300000, guid: 0d3b99dbd61f94b918e66b2e5a15bf0e, type: 3}
+  - {fileID: 8300000, guid: 3e5ac0262619d4a398cae16fa785774f, type: 3}
+  relativeVolume: 1
+  audioCategory: 3
+  pitchVariation: 0.05
+  clipSelectionMode: 0

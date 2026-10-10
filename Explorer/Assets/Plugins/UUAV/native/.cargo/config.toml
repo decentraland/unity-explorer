@@ -1,0 +1,24 @@
+[env]
+# LGPL shared build of FFmpeg 8.1 (BtbN); see .third_party/ffmpeg/LICENSE.txt
+FFMPEG_DIR = { value = ".third_party/ffmpeg", relative = true }
+
+[build]
+target-dir = ".target"
+
+
+# TODO why exactly this linker?
+[target.x86_64-pc-windows-gnu]
+linker = "C:\\msys64\\mingw64\\bin\\gcc.exe"
+# --no-insert-timestamp: GNU ld stamps the PE COFF TimeDateStamp (offset 136)
+# with the wall clock, making every build byte-unique; zeroing it is required
+# for the reproducibility gates (scripts/uuav/repro-gate.sh)
+rustflags = ["-C", "link-arg=-Wl,--no-insert-timestamp"]
+
+# @loader_path rpath: libuuav.dylib resolves the @rpath/... FFmpeg dylibs
+# from its own folder, in-editor and in a built player alike
+[target.aarch64-apple-darwin]
+rustflags = ["-C", "link-arg=-Wl,-rpath,@loader_path"]
+
+# same @loader_path rpath for the x86_64 slice of the universal binary
+[target.x86_64-apple-darwin]
+rustflags = ["-C", "link-arg=-Wl,-rpath,@loader_path"]

@@ -1,0 +1,5 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <DCL.DebugUtilities.Views.DebugToggleElement>
+        <ui:Toggle/>
+    </DCL.DebugUtilities.Views.DebugToggleElement>
+</ui:UXML>

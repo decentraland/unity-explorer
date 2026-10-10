@@ -1,0 +1,299 @@
+using Arch.Core;
+using Arch.SystemGroups;
+using CommunicationData.URLHelpers;
+using DCL.AvatarRendering.AvatarShape.Components;
+using DCL.Character.Components;
+using DCL.ECSComponents;
+using DCL.CharacterMotion.Components;
+using DCL.Profiles;
+using DCL.SDKComponents.InputModifier.Components;
+using ECS.TestSuite;
+using NUnit.Framework;
+using System;
+using System.Collections.Generic;
+using UnityEngine;
+using Utility;
+using Avatar = DCL.Profiles.Avatar;
+
+namespace DCL.AvatarRendering.Emotes.Tests
+{
+    [TestFixture]
+    public class UpdateEmoteInputSystemShould
+    {
+        private World world;
+        private UpdateEmoteInputSystem system;
+        private TestEmoteWheelShortcutHandler testShortcutHandler;
+        private GameObject testGameObject;
+
+        [OneTimeSetUp]
+        public void OneTimeSetUp() =>
+            EcsTestsUtils.SetUpFeaturesRegistry();
+
+        [OneTimeTearDown]
+        public void OneTimeTearDown() =>
+            EcsTestsUtils.TearDownFeaturesRegistry();
+
+        [SetUp]
+        public void SetUp()
+        {
+            world = World.Create();
+
+            testShortcutHandler = new TestEmoteWheelShortcutHandler();
+
+            var builder = new ArchSystemsWorldBuilder<World>(world);
+            system = UpdateEmoteInputSystem.InjectToWorld(ref builder, testShortcutHandler);
+            system.Initialize();
+
+            testGameObject = new GameObject("TestPlayer");
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            system?.Dispose();
+            testShortcutHandler?.Dispose();
+            world?.Dispose();
+
+            if (testGameObject != null)
+                UnityEngine.Object.DestroyImmediate(testGameObject);
+        }
+
+        private Entity CreatePlayerEntity(Profile profile, bool isVisible = true, bool disableEmote = false)
+        {
+            var avatarShape = new AvatarShapeComponent("TestPlayer", "test-id")
+            {
+                IsVisible = isVisible,
+            };
+
+            var inputModifier = new InputModifierComponent { DisableEmote = disableEmote };
+            var entity = world.Create(
+                new PlayerComponent(testGameObject.transform),
+                profile,
+                avatarShape,
+                inputModifier,
+                new GlideState()
+            );
+
+            return entity;
+        }
+
+        private Profile CreateProfileWithEmotes(params string[] emoteUrns)
+        {
+            var profile = Profile.NewRandomProfile();
+            var avatar = new Avatar();
+
+            for (int i = 0; i < emoteUrns.Length && i < Avatar.MAX_EQUIPPED_EMOTES; i++)
+                avatar.emotes[i] = new URN(emoteUrns[i]);
+
+            profile.Avatar = avatar;
+            return profile;
+        }
+
+        [Test]
+        public void TriggerEmoteBySlotIntent()
+        {
+            // Arrange
+            var profile = CreateProfileWithEmotes("urn:decentraland:off-chain:base-avatars:wave");
+            var entity = CreatePlayerEntity(profile);
+            world.Add(entity, new TriggerEmoteBySlotIntent { Slot = 0 });
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            Assert.IsTrue(world.Has<CharacterEmoteIntent>(entity));
+            var intent = world.Get<CharacterEmoteIntent>(entity);
+            Assert.AreEqual("urn:decentraland:off-chain:base-avatars:wave", intent.EmoteId.ToString());
+            Assert.AreEqual(TriggerSource.Self, intent.TriggerSource);
+            Assert.IsTrue(intent.Spatial);
+            Assert.IsFalse(world.Has<TriggerEmoteBySlotIntent>(entity), "TriggerEmoteBySlotIntent should be removed after processing");
+        }
+
+        [Test]
+        public void NotTriggerEmoteWhenInputModifierDisablesEmote()
+        {
+            // Arrange
+            var profile = CreateProfileWithEmotes("urn:decentraland:off-chain:base-avatars:fist_pump");
+            var entity = CreatePlayerEntity(profile, isVisible: true, disableEmote: true);
+            world.Add(entity, new TriggerEmoteBySlotIntent { Slot = 0 });
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            Assert.IsFalse(world.Has<CharacterEmoteIntent>(entity));
+        }
+
+        [Test]
+        public void TriggerCorrectEmoteFromMultipleSlots()
+        {
+            // Arrange
+            var profile = CreateProfileWithEmotes(
+                "urn:decentraland:off-chain:base-avatars:wave",
+                "urn:decentraland:off-chain:base-avatars:clap",
+                "urn:decentraland:off-chain:base-avatars:dance"
+            );
+            var entity = CreatePlayerEntity(profile);
+            world.Add(entity, new TriggerEmoteBySlotIntent { Slot = 2 });
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            Assert.IsTrue(world.Has<CharacterEmoteIntent>(entity));
+            var intent = world.Get<CharacterEmoteIntent>(entity);
+            Assert.AreEqual("urn:decentraland:off-chain:base-avatars:dance", intent.EmoteId.ToString());
+        }
+
+        [Test]
+        public void NotTriggerEmoteWhenEntityAlreadyHasCharacterEmoteIntent()
+        {
+            // Arrange
+            var profile = CreateProfileWithEmotes("urn:decentraland:off-chain:base-avatars:wave");
+            var entity = CreatePlayerEntity(profile);
+
+            // Add existing emote intent
+            world.Add(entity, new CharacterEmoteIntent { EmoteId = new URN("existing-emote") });
+            world.Add(entity, new TriggerEmoteBySlotIntent { Slot = 0 });
+
+            // Act
+            system.Update(0);
+
+            // Assert - should still have the original emote intent
+            var intent = world.Get<CharacterEmoteIntent>(entity);
+            Assert.AreEqual("existing-emote", intent.EmoteId.ToString());
+        }
+
+        [Test]
+        public void HandleMultiplePlayersCorrectly()
+        {
+            // Arrange
+            var profile1 = CreateProfileWithEmotes("urn:decentraland:off-chain:base-avatars:wave");
+            var profile2 = CreateProfileWithEmotes("urn:decentraland:off-chain:base-avatars:clap");
+
+            var testGo2 = new GameObject("TestPlayer2");
+
+            try
+            {
+                var avatarShape1 = new AvatarShapeComponent("TestPlayer1", "test-id1") { IsVisible = true };
+                var avatarShape2 = new AvatarShapeComponent("TestPlayer2", "test-id2") { IsVisible = true };
+
+                var entity1 = world.Create(
+                    new PlayerComponent(testGameObject.transform),
+                    profile1,
+                    avatarShape1,
+                    new InputModifierComponent(),
+                    new GlideState()
+                );
+
+                var entity2 = world.Create(
+                    new PlayerComponent(testGo2.transform),
+                    profile2,
+                    avatarShape2,
+                    new InputModifierComponent(),
+                    new GlideState()
+                );
+
+                world.Add(entity1, new TriggerEmoteBySlotIntent { Slot = 0 });
+                world.Add(entity2, new TriggerEmoteBySlotIntent { Slot = 0 });
+
+                // Act
+                system.Update(0);
+
+                // Assert - both should have triggered
+                Assert.IsTrue(world.Has<CharacterEmoteIntent>(entity1));
+                Assert.IsTrue(world.Has<CharacterEmoteIntent>(entity2));
+                Assert.AreEqual("urn:decentraland:off-chain:base-avatars:wave", world.Get<CharacterEmoteIntent>(entity1).EmoteId.ToString());
+                Assert.AreEqual("urn:decentraland:off-chain:base-avatars:clap", world.Get<CharacterEmoteIntent>(entity2).EmoteId.ToString());
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(testGo2);
+            }
+        }
+
+        [Test]
+        public void ProcessTriggerEmoteBySlotIntentBeforeTriggerEmoteQuery()
+        {
+            // Arrange - This tests that intent is processed in the same frame
+            var profile = CreateProfileWithEmotes("urn:decentraland:off-chain:base-avatars:wave");
+            var entity = CreatePlayerEntity(profile);
+            world.Add(entity, new TriggerEmoteBySlotIntent { Slot = 0 });
+
+            // Act
+            system.Update(0);
+
+            // Assert - The intent should be removed and emote should be triggered
+            Assert.IsFalse(world.Has<TriggerEmoteBySlotIntent>(entity));
+            Assert.IsTrue(world.Has<CharacterEmoteIntent>(entity));
+        }
+
+        [Test]
+        public void NotifyHandlerWithWheelSlotWhenTriggeringFromIntent()
+        {
+            // Arrange
+            var profile = CreateProfileWithEmotes("urn:decentraland:off-chain:base-avatars:wave");
+            var entity = CreatePlayerEntity(profile);
+            world.Add(entity, new TriggerEmoteBySlotIntent { Slot = 0 });
+
+            // Act
+            system.Update(0);
+
+            // Assert - handler is notified with WheelSlot when trigger came from wheel intent (not Shortcut)
+            Assert.AreEqual(1, testShortcutHandler.NotifyCalls.Count, "Handler should be notified once");
+            Assert.AreEqual(EmoteTriggerSource.WheelSlot, testShortcutHandler.NotifyCalls[0]);
+            Assert.IsTrue(world.Has<CharacterEmoteIntent>(entity), "Emote should still be triggered");
+        }
+
+        [TestCase(0, 0)]
+        [TestCase(1, 1)]
+        [TestCase(2, 2)]
+        [TestCase(3, 3)]
+        [TestCase(4, 4)]
+        [TestCase(5, 5)]
+        [TestCase(6, 6)]
+        [TestCase(7, 7)]
+        [TestCase(8, 8)]
+        [TestCase(9, 9)]
+        public void MapEmoteSlotToCorrectIndex(int slot, int expectedIndex)
+        {
+            // Arrange
+            var emoteUrns = new string[Avatar.MAX_EQUIPPED_EMOTES];
+            for (int i = 0; i < emoteUrns.Length; i++)
+                emoteUrns[i] = $"urn:test:emote{i}";
+
+            var profile = CreateProfileWithEmotes(emoteUrns);
+            var entity = CreatePlayerEntity(profile);
+            world.Add(entity, new TriggerEmoteBySlotIntent { Slot = slot });
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            Assert.IsTrue(world.Has<CharacterEmoteIntent>(entity));
+            var intent = world.Get<CharacterEmoteIntent>(entity);
+            Assert.AreEqual($"urn:test:emote{expectedIndex}", intent.EmoteId.ToString());
+        }
+
+        private class NoOpEventBus : IEventBus
+        {
+            public void Publish<T>(T evt) { }
+            public IDisposable Subscribe<T>(Action<T> handler) => new DisposableStub();
+            private class DisposableStub : IDisposable { public void Dispose() { } }
+        }
+
+        private class TestEmoteWheelShortcutHandler : EmoteWheelShortcutHandler
+        {
+            public List<EmoteTriggerSource> NotifyCalls { get; } = new ();
+
+            public TestEmoteWheelShortcutHandler() : base(new NoOpEventBus()) { }
+
+            public override void NotifyEmotePlayed(EmoteTriggerSource source)
+            {
+                NotifyCalls.Add(source);
+                base.NotifyEmotePlayed(source);
+            }
+        }
+    }
+}
+

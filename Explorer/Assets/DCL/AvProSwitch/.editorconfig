@@ -1,0 +1,9 @@
+# DCL.AvProSwitch is a drop-in facade over the AVPro/UUAV backends: its public
+# surface must mirror AVPro's exact API member names (_audioMode, videoApi,
+# PlatformOptions_macOS, AbsolutePathOrURL, WinRT, ...) so consumer code stays
+# byte-identical to the original AVPro call sites.
+[*.cs]
+resharper_inconsistent_naming_highlighting = none
+# InspectCode runs without Unity-awareness here and flags Unity event methods
+# (Awake) as unused.
+resharper_unused_member_local_highlighting = none

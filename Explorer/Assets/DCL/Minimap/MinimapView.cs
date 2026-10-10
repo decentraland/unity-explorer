@@ -1,0 +1,107 @@
+using DCL.MapRenderer.ConsumerUtils;
+using DCL.MapRenderer.MapLayers.Pins;
+using DCL.UI;
+using DCL.UI.Buttons;
+using MVC;
+using System.Collections.Generic;
+using TMPro;
+using UnityEngine;
+using UnityEngine.UI;
+
+namespace DCL.Minimap
+{
+    public class MinimapView : ViewBase, IView
+    {
+        [field: SerializeField]
+        internal RawImage mapRendererTargetImage { get; private set; } = null!;
+
+        [field: SerializeField]
+        internal HoverableButton minimapRendererButton { get; private set; } = null!;
+
+        [field: SerializeField]
+        internal Button sideMenuButton { get; private set; } = null!;
+
+        [field: SerializeField]
+        internal CanvasGroup sideMenuCanvasGroup { get; private set; } = null!;
+
+        [field: SerializeField]
+        internal PixelPerfectMapRendererTextureProvider pixelPerfectMapRendererTextureProvider { get; private set; } = null!;
+
+        [field: SerializeField]
+        internal int mapRendererVisibleParcels { get; private set; }
+
+        [field: SerializeField]
+        internal Button expandMinimapButton { get; private set; } = null!;
+
+        [field: SerializeField]
+        internal Button collapseMinimapButton { get; private set; } = null!;
+
+        [field: SerializeField]
+        internal TMP_Text placeNameText { get; private set; } = null!;
+
+        [field: SerializeField]
+        internal TMP_Text placeCoordinatesText { get; private set; } = null!;
+
+        [field: SerializeField]
+        internal RectTransform sdk6Label { get; private set; } = null!;
+
+        [field: SerializeField]
+        internal RectTransform minimapContainer { get; private set; } = null!;
+
+        [field: SerializeField]
+        internal CanvasGroup minimapContainerCanvasGroup { get; private set; } = null!;
+
+        [field: SerializeField]
+        internal SideMenuView sideMenuView { get; private set; } = null!;
+
+        [field: SerializeField]
+        internal SceneRestrictionsView sceneRestrictionsView { get; private set; } = null!;
+
+        [field: SerializeField]
+        internal Animator minimapAnimator { get; private set; } = null!;
+
+        [field: SerializeField]
+        internal ButtonView minimapContextualButtonView { get; private set; } = null!;
+
+        [field: SerializeField]
+        internal ToggleButtonWithDisabledState favoriteButton { get; private set; } = null!;
+
+        [field: SerializeField]
+        internal Button donateButton { get; private set; } = null!;
+
+        [field: SerializeField]
+        internal RuntimeAnimatorController genesisCityAnimatorController { get; private set; } = null!;
+
+        [field: SerializeField]
+        internal RuntimeAnimatorController worldsAnimatorController { get; private set; } = null!;
+
+        [field: SerializeField]
+        internal List<GameObject> objectsToActivateForGenesis { get; private set; } = null!;
+
+        [field: SerializeField]
+        internal List<GameObject> objectsToActivateForWorlds { get; private set; } = null!;
+
+        [field: SerializeField]
+        internal MinimapPinMarkerObject destinationPinMarker { get; private set; } = null!;
+
+        [field: SerializeField]
+        internal GameObject ownPlayerBannedMark { get; private set; } = null!;
+
+        [field: SerializeField]
+        internal GameObject ownPlayerBannedTooltip { get; private set; } = null!;
+
+        [SerializeField] internal Button contextMenuButton = null!;
+
+        private void Start()
+        {
+            minimapRendererButton.OnButtonHover += OnHoverMap;
+            minimapRendererButton.OnButtonUnhover += OnUnHoverMap;
+        }
+
+        private void OnHoverMap() =>
+            minimapAnimator.SetTrigger(UIAnimationHashes.HOVER);
+
+        private void OnUnHoverMap() =>
+            minimapAnimator.SetTrigger(UIAnimationHashes.UNHOVER);
+    }
+}

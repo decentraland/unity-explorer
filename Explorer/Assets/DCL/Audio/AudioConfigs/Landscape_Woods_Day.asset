@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ea799a483c3f4db8afbf38b0e6c08665, type: 3}
+  m_Name: Landscape_Woods_Day
+  m_EditorClassIdentifier: 
+  audioClips:
+  - {fileID: 8300000, guid: e2b0dcfdeddccee4d82c1f01e07ac7a9, type: 3}
+  - {fileID: 8300000, guid: 6a32d68c7a2f2974fbd0a52d9b19f7c1, type: 3}
+  - {fileID: 8300000, guid: 5aa2f0e62974d2a43b2d8551ed0ba9ad, type: 3}
+  relativeVolume: 1
+  audioCategory: 2
+  pitchVariation: 0
+  clipSelectionMode: 0

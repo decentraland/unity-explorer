@@ -1,0 +1,405 @@
+using Arch.Core;
+using Cysharp.Threading.Tasks;
+using DCL.Audio;
+using DCL.AvatarRendering.Loading.Components;
+using DCL.Browser;
+using DCL.BugReporting.UI;
+using DCL.CharacterPreview;
+using DCL.Diagnostics;
+using DCL.FeatureFlags;
+using DCL.Input;
+using DCL.Input.Component;
+using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Profiles;
+using DCL.Profiles.Self;
+using DCL.SceneLoadingScreens.SplashScreen;
+using DCL.UI;
+using DCL.Utilities;
+using DCL.Utility;
+using DCL.Web3.Authenticators;
+using DCL.Web3.Identities;
+using DCL.WebRequests;
+using MVC;
+using System;
+using System.Threading;
+using Utility;
+
+namespace DCL.AuthenticationScreenFlow
+{
+    public class AuthenticationScreenController : ControllerBase<AuthenticationScreenView, AuthenticationScreenController.Params>
+    {
+        public readonly struct Params
+        {
+            public readonly bool StartAtLoginSelection;
+            public readonly bool LandAtLaunchDestination;
+
+            public Params(bool startAtLoginSelection, bool landAtLaunchDestination = false)
+            {
+                StartAtLoginSelection = startAtLoginSelection;
+                LandAtLaunchDestination = landAtLaunchDestination;
+            }
+        }
+
+        public enum AuthStatus
+        {
+            None = 0,
+
+            LoginSelectionScreen = 1,
+            LoginRequested = 2,
+
+            GuestOrSignUpScreen = 8,
+
+            VerificationRequested = 3,
+
+            ProfileFetching = 4,
+            LoggedIn = 5,
+
+            ProfileFetchingCached = 6,
+            LoggedInCached = 7,
+
+            AvatarSelection = 9,
+        }
+
+        internal const int ANIMATION_DELAY = 300;
+        internal const string LOADING_TRANSACTION_NAME = "loading_process";
+        private const string EPIC_STORE_INSTALL_SOURCE = "epic";
+
+        private readonly ICompositeWeb3Provider web3Authenticator;
+        private readonly SelfProfile selfProfile;
+        private readonly UnityAppWebBrowser webBrowser;
+        private readonly IWeb3IdentityCache storedIdentityProvider;
+        private readonly ICharacterPreviewFactory characterPreviewFactory;
+        private readonly SplashScreen splashScreen;
+        private readonly CharacterPreviewEventBus characterPreviewEventBus;
+        private readonly string installSource;
+        private readonly AudioMixerVolumesController audioMixerVolumesController;
+        private readonly World world;
+        private readonly AuthScreenEmotesSettings emotesSettings;
+        private readonly AudioClipConfig backgroundMusic;
+        private readonly IWebRequestController webRequestController;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
+        private readonly ProfileChangesBus profileChangesBus;
+        private readonly IMVCManager mvcManager;
+        private readonly string? referrer;
+
+        private AuthenticationScreenCharacterPreviewController? characterPreviewController;
+        private readonly IInputBlock inputBlock;
+
+        private UniTaskCompletionSource? lifeCycleTask;
+        private CancellationTokenSource? loginCancellationTokenSource;
+
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
+        public ReactiveProperty<AuthStatus> CurrentState { get; } = new (AuthStatus.None);
+        public string CurrentRequestId { get; internal set; } = string.Empty;
+        public LoginMethod CurrentLoginMethod { get; internal set; }
+
+        // A cached-vs-fresh login alone cannot tell a new account from a returning user whose cached identity expired
+        public bool IsCurrentlyNewAccount { get; internal set; }
+
+        public bool SkipExistingAccountLobby { get; internal set; }
+
+        public event Action? DiscordButtonClicked;
+        public event Action<string, bool>? OTPVerified;
+        public event Action? OTPResend;
+        public event Action? ProfileFinalized;
+        public event Action<BodyShape, int>? AvatarSelected;
+
+        // Null until OnViewInstantiated: the view is created lazily on first Show and may never be instantiated.
+        private MVCStateMachine<AuthStateBase>? fsm;
+        private AuthenticationScreenAudio? audio;
+
+        public AuthenticationScreenController(
+            ViewFactoryMethod viewFactory,
+            ICompositeWeb3Provider web3Authenticator,
+            SelfProfile selfProfile,
+            UnityAppWebBrowser webBrowser,
+            IWeb3IdentityCache storedIdentityProvider,
+            ICharacterPreviewFactory characterPreviewFactory,
+            SplashScreen splashScreen,
+            CharacterPreviewEventBus characterPreviewEventBus,
+            AudioMixerVolumesController audioMixerVolumesController,
+            string installSource,
+            World world,
+            AuthScreenEmotesSettings emotesSettings,
+            IInputBlock inputBlock,
+            AudioClipConfig backgroundMusic,
+            IWebRequestController webRequestController,
+            IDecentralandUrlsSource decentralandUrlsSource,
+            ProfileChangesBus profileChangesBus,
+            IMVCManager mvcManager,
+            string? referrer = null)
+            : base(viewFactory)
+        {
+            this.web3Authenticator = web3Authenticator;
+            this.selfProfile = selfProfile;
+            this.webBrowser = webBrowser;
+            this.storedIdentityProvider = storedIdentityProvider;
+            this.characterPreviewFactory = characterPreviewFactory;
+            this.splashScreen = splashScreen;
+            this.characterPreviewEventBus = characterPreviewEventBus;
+            this.audioMixerVolumesController = audioMixerVolumesController;
+            this.installSource = installSource;
+            this.world = world;
+            this.emotesSettings = emotesSettings;
+            this.inputBlock = inputBlock;
+            this.backgroundMusic = backgroundMusic;
+            this.webRequestController = webRequestController;
+            this.decentralandUrlsSource = decentralandUrlsSource;
+            this.profileChangesBus = profileChangesBus;
+            this.mvcManager = mvcManager;
+            this.referrer = referrer;
+        }
+
+        public override void Dispose()
+        {
+            base.Dispose();
+            characterPreviewController?.Dispose();
+            viewInstance?.BugReportButton?.onClick.RemoveListener(OpenBugReport);
+
+            CancelLoginProcess();
+            audio?.Dispose();
+            fsm?.Dispose();
+        }
+
+        internal static bool ShouldSkipExistingAccountLobby(bool lobbyEnabled, in Params inputData) =>
+            lobbyEnabled || inputData.LandAtLaunchDestination;
+
+        protected override void OnViewInstantiated()
+        {
+            base.OnViewInstantiated();
+
+            audio = new AuthenticationScreenAudio(viewInstance, audioMixerVolumesController, backgroundMusic);
+            characterPreviewController = new AuthenticationScreenCharacterPreviewController(viewInstance!.CharacterPreviewView, emotesSettings, characterPreviewFactory, world, characterPreviewEventBus);
+
+            bool isEpicBuild = string.Equals(installSource, EPIC_STORE_INSTALL_SOURCE, StringComparison.OrdinalIgnoreCase);
+
+            // Epic builds only support emailOTP due to deeplink limitations
+            // See: https://github.com/decentraland/unity-explorer/issues/9554
+            bool enableEmailOTP = FeaturesRegistry.Instance.IsEnabled(FeatureId.EmailOTPAuth) || isEpicBuild;
+            bool otherLoginMethodsEnabled = !isEpicBuild;
+            viewInstance.LoginSelectionAuthView.EmailOTPContainer.SetActive(enableEmailOTP);
+
+            viewInstance.DiscordButton.onClick.AddListener(OpenSupportUrl);
+            viewInstance.ExitButton.onClick.AddListener(ExitApplication);
+
+            bool bugReportEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.BugReport);
+            viewInstance.BugReportButton?.gameObject.SetActive(bugReportEnabled);
+
+            if (bugReportEnabled)
+                viewInstance.BugReportButton?.onClick.AddListener(OpenBugReport);
+
+            // States
+            fsm = new MVCStateMachine<AuthStateBase>();
+
+            fsm.AddStates(
+                new InitAuthState(viewInstance, installSource),
+                new LoginSelectionAuthState(fsm, viewInstance, this, CurrentState, splashScreen, web3Authenticator, webBrowser,
+                    enableEmailOTP, otherLoginMethodsEnabled, isEpicBuild),
+                new GuestOrSignUpAuthState(fsm, viewInstance, this, CurrentState, web3Authenticator, splashScreen),
+                new ProfileFetchingAuthState(fsm, viewInstance, this, CurrentState, selfProfile, storedIdentityProvider),
+                new IdentityVerificationDappDeepLinkAuthState(fsm, viewInstance, this, CurrentState, web3Authenticator),
+                new LobbyForExistingAccountAuthState(fsm, viewInstance, this, splashScreen, CurrentState, characterPreviewController),
+                new LobbyForNewAccountAuthState(fsm, viewInstance, this, CurrentState, characterPreviewController, selfProfile, webBrowser, webRequestController, decentralandUrlsSource, profileChangesBus, storedIdentityProvider, referrer),
+                new SelectAvatarForNewAccountAuthState(fsm, viewInstance, this, CurrentState, characterPreviewController)
+            );
+
+            if (enableEmailOTP)
+            {
+                var otpVerificationState = new IdentityVerificationOTPAuthState(fsm, viewInstance, this, CurrentState, web3Authenticator);
+                otpVerificationState.OTPVerified += (email, success) => OTPVerified?.Invoke(email, success);
+                otpVerificationState.OTPResend += () => OTPResend?.Invoke();
+
+                fsm.AddStates(otpVerificationState);
+            }
+
+            fsm.Enter<InitAuthState>();
+        }
+
+        /// <summary>
+        /// First time view is shown from bootstrap and could have storedIdentity.
+        /// In all other cases view is shown after logout.
+        /// </summary>
+        protected override void OnBeforeViewShow()
+        {
+            base.OnBeforeViewShow();
+
+            SkipExistingAccountLobby = ShouldSkipExistingAccountLobby(FeaturesRegistry.Instance.IsEnabled(FeatureId.Lobby), inputData);
+
+            if (inputData.StartAtLoginSelection)
+            {
+                fsm?.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.IN, true);
+                return;
+            }
+
+            IWeb3Identity? storedIdentity = storedIdentityProvider.Identity;
+
+            if (storedIdentity == null
+                || storedIdentity.IsExpired
+                // Force to re-login if the identity will expire in 24hs or less, so we mitigate the chances on
+                // getting the identity expired while in-world, provoking signed-fetch requests to fail
+                || storedIdentity.Expiration - DateTime.UtcNow <= TimeSpan.FromDays(1))
+                ReturnToOrigin(UIAnimationHashes.IN);
+            else
+            {
+                CancelLoginProcess();
+                loginCancellationTokenSource = new CancellationTokenSource();
+
+                TryAutoLoginAndProceedAsync(storedIdentity, loginCancellationTokenSource.Token).Forget();
+            }
+
+            return;
+
+            async UniTaskVoid TryAutoLoginAndProceedAsync(IWeb3Identity identity, CancellationToken ct)
+            {
+                try
+                {
+                    IOtpAuthenticator.AutoLoginResult autoLoginSuccess = await web3Authenticator.TryAutoLoginAsync(ct);
+
+                    if (autoLoginSuccess is IOtpAuthenticator.AutoLoginResult.Success
+                        or IOtpAuthenticator.AutoLoginResult.Unnecessary)
+                        fsm?.Enter<ProfileFetchingAuthState, ProfileFetchingPayload>(
+                            new ProfileFetchingPayload(identity,
+                                identity.Method != LoginMethod.TOKEN_FILE,
+                                ct));
+                    else
+                        ReturnToOrigin(UIAnimationHashes.IN);
+                }
+                catch (OperationCanceledException)
+                { /* Expected on cancellation */
+                }
+                catch (Exception e)
+                {
+                    ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
+                    ReturnToOrigin(UIAnimationHashes.IN);
+                }
+            }
+        }
+
+        internal void RaiseProfileFinalized() =>
+            ProfileFinalized?.Invoke();
+
+        internal void RaiseAvatarSelected(BodyShape bodyType, int presetSlot) =>
+            AvatarSelected?.Invoke(bodyType, presetSlot);
+
+        internal void ReturnToOrigin(int animHash)
+        {
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.GuestLogin))
+                fsm?.Enter<GuestOrSignUpAuthState>(true);
+            else
+                fsm?.Enter<LoginSelectionAuthState, int>(animHash, true);
+        }
+
+        internal void ReturnToOrigin(ErrorType errorType)
+        {
+            if (CurrentLoginMethod == LoginMethod.GUEST && FeaturesRegistry.Instance.IsEnabled(FeatureId.GuestLogin))
+                fsm?.Enter<GuestOrSignUpAuthState, ErrorType>(errorType, true);
+            else
+                fsm?.Enter<LoginSelectionAuthState, ErrorType>(errorType);
+        }
+
+        protected override void OnViewShow()
+        {
+            base.OnViewShow();
+
+            BlockUnwantedInputs();
+            audio?.OnShow();
+        }
+
+        protected override void OnViewClose()
+        {
+            base.OnViewClose();
+
+            fsm?.CurrentState?.Exit();
+            CancelLoginProcess();
+
+            UnblockUnwantedInputs();
+            audio?.OnHide();
+        }
+
+        protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
+        {
+            lifeCycleTask?.TrySetCanceled(ct);
+            lifeCycleTask = new UniTaskCompletionSource();
+            await lifeCycleTask.Task;
+        }
+
+        internal void TrySetLifeCycle()
+        {
+            lifeCycleTask?.TrySetResult();
+            lifeCycleTask = null;
+        }
+
+        /// <summary>
+        ///     Ends the auth flow right after the profile fetch, skipping the in-screen welcome step.
+        /// </summary>
+        internal void CompleteExistingAccountLogin(Profile profile, bool isRestoredSession)
+        {
+            // splashScreen is destroyed after the first login
+            if (splashScreen != null)
+                splashScreen.FadeOutAndHide();
+
+            IsCurrentlyNewAccount = false;
+            CurrentState.Value = isRestoredSession ? AuthStatus.LoggedInCached : AuthStatus.LoggedIn;
+
+            ReportHub.LogProductionInfo($"Existing account logged in: {profile.WalletId}");
+
+            fsm?.Enter<InitAuthState>();
+            TrySetLifeCycle();
+        }
+
+        internal void CancelLoginProcess()
+        {
+            loginCancellationTokenSource?.SafeCancelAndDispose();
+            loginCancellationTokenSource = null;
+        }
+
+        internal CancellationToken GetRestartedLoginToken()
+        {
+            loginCancellationTokenSource = loginCancellationTokenSource.SafeRestart();
+            return loginCancellationTokenSource.Token;
+        }
+
+        public void ChangeAccount()
+        {
+            ChangeAccountAsync(GetRestartedLoginToken()).Forget();
+            return;
+
+            async UniTaskVoid ChangeAccountAsync(CancellationToken ct)
+            {
+                await UniTask.Delay(ANIMATION_DELAY, cancellationToken: ct);
+
+                await web3Authenticator.LogoutAsync(ct);
+
+                ReturnToOrigin(UIAnimationHashes.SLIDE);
+            }
+        }
+
+        private void OpenSupportUrl()
+        {
+            webBrowser.OpenUrlMainThreadOnly(DecentralandUrl.SupportLink);
+            DiscordButtonClicked?.Invoke();
+        }
+
+        private void OpenBugReport() =>
+            OpenBugReportAsync().Forget();
+
+        private async UniTaskVoid OpenBugReportAsync()
+        {
+            try { await mvcManager.ShowAsync(BugReportController.IssueCommand(new BugReportParams())); }
+            catch (OperationCanceledException) { }
+            catch (Exception e) { ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION)); }
+        }
+
+        private void ExitApplication()
+        {
+            CancelLoginProcess();
+            ExitUtils.Exit();
+        }
+
+        private void BlockUnwantedInputs() =>
+            inputBlock.Disable(InputMapComponent.BLOCK_USER_INPUT);
+
+        private void UnblockUnwantedInputs() =>
+            inputBlock.Enable(InputMapComponent.BLOCK_USER_INPUT);
+    }
+}

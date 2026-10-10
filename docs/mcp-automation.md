@@ -1,0 +1,165 @@
+# MCP Automation Server
+
+The Explorer can host an embedded [MCP (Model Context Protocol)](https://modelcontextprotocol.io/) server so coding agents (e.g. Claude Code) can **see** the running client (screenshots, player/scene state, scene console logs) and **control** it (teleport, move, walk, look, chat commands, scene reload) — closing the edit → reload → verify loop for SDK7 scene development without a human in the middle.
+
+The server is compiled into all builds but stays dormant unless explicitly enabled at launch.
+
+---
+
+## Enabling
+
+| Flag | Effect |
+|---|---|
+| `--mcp` | Starts the MCP server on the default port **8123** |
+| `--mcp-port <port>` | Starts the MCP server on a specific port (implies `--mcp`) |
+
+The flag is accepted from the command line, or from a deep link whose target realm is loopback (`decentraland://?realm=http://127.0.0.1:8000&mcp=true`) — a deep link pointing at a remote realm drops it, see [`DeepLinkAllowlist`](../Explorer/Assets/DCL/Infrastructure/Global/AppArgs/DeepLinkAllowlist.cs). The endpoint is `http://127.0.0.1:<port>/unity-explorer-mcp`.
+
+```bash
+# macOS
+open Decentraland.app --args --mcp
+
+# Windows
+Decentraland.exe --mcp-port 8124
+```
+
+In the Unity Editor, add `--mcp` to `Main Scene Loader → Debug Settings → App Parameters`.
+
+From a scene folder, `@dcl/sdk-commands` can enable it at launch: `npm run start -- --mcp` (optionally `--mcp-port <port>`) forwards both flags into the deep link that auto-launches the installed client. Any extra Explorer params can follow a second standalone `--` (`npm run start -- --mcp -- --windowed-mode --resolution 1280x720`; npm consumes the first `--`).
+
+## Security model
+
+- The listener binds to **127.0.0.1 only** — it is never reachable from the network.
+- Browser-originated requests are rejected unless their `Origin` is localhost (defense against drive-by pages and DNS rebinding). Requests without an `Origin` header (CLI clients) are allowed.
+- The server only exists while the process runs with the flag; there is no persistence and no authentication token in v1.
+- A deep link can only turn it on when the link's `realm` is loopback (deep-link allowlist tier 2, SEC-019/020), so a link aimed at a production realm cannot start the server. That gate narrows the drive-by surface rather than closing it: a crafted link can supply a loopback realm of its own. Because there is no token, treat an open port as full local control of the client — screenshots, chat commands as the signed-in user, movement — and only enable it on a machine where every local process is trusted.
+
+## Connecting a coding agent
+
+```bash
+claude mcp add --transport http --scope user explorer http://127.0.0.1:8123/unity-explorer-mcp
+```
+
+Smoke test without an agent:
+
+```bash
+curl -s -X POST http://127.0.0.1:8123/unity-explorer-mcp \
+  -H 'Content-Type: application/json' \
+  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"curl","version":"0"}}}'
+
+curl -s -X POST http://127.0.0.1:8123/unity-explorer-mcp \
+  -H 'Content-Type: application/json' \
+  -d '{"jsonrpc":"2.0","id":2,"method":"tools/list"}'
+```
+
+A `tools/call` carrying an argument the tool does not declare is refused as a tool-level error naming it (`ui_drag has no argument 'device'; its arguments are: fromX, fromY, toX, toY, durationFrames, rightButton, path`) instead of running without it — every input schema also states `additionalProperties: false`, so a schema-aware client can refuse locally. The dispatcher checks the keys against the schema before the tool runs; a declared argument carrying an unusable value is still the tool's own refusal.
+
+## Tool catalog
+
+The tables below are a human-readable overview. The authoritative argument contract — exact types, allowed values, defaults — is what the server itself reports via `tools/list`; agents get it fresh at every handshake and should rely on it, not on this page.
+
+### Seeing
+
+| Tool | Arguments | Returns |
+|---|---|---|
+| `screenshot` | `maxWidth?` (default 1280), `quality?`, `worldOnly?` (exclude UI; post-processing still applied) | Downscaled image of the current view (UI included by default) + caption |
+| `get_player_state` | — | Player position/rotation/parcel/velocity/grounded + camera position/rotation/mode + wallet address |
+| `get_scene_state` | — | Current parcel, scene name/state (incl. `JavaScriptError`/`EcsError`), readiness, loading stage |
+| `get_scene_content_stats` | — | Current scene's content stats (entities, triangles, bodies, geometries, materials, textures, shader variants, colliders, videos) with the documented soft-limit caps for its parcel count (materials is shown uncapped — see the SRP Batcher note below); triggers a fresh counting pass |
+| `get_scene_content_breakdown` | `limit?` (default 10), `sortBy?` (`triangles`/`materials`/`shaderVariants`/`drawCalls`/`visibleTriangles`) | Rendered content grouped by source model (GLTF `src` + one primitives row): triangles + share of scene, unique materials, shader variants, draw-call estimate, instances, renderers — plus each source's visible-from-this-POV subset (post-culling renderers, triangles, draw calls); position the camera first for viewpoint analysis |
+| `get_performance_stats` | `sampleSeconds?` (default 2, max 10) | Holds the call while sampling real frame times: render FPS avg/min/max, hiccup frames (>50 ms), and the current scene's tick FPS vs target — pair with the breakdown tool for POV cost-vs-FPS analysis |
+| `get_scene_logs` | `limit?`, `severity?`, `sinceSeq?` | Scene JS console output with monotonic sequence numbers for incremental polling |
+| `list_scene_entities` | `limit?` | Entity ids of the current scene's ECS world |
+| `get_entity_details` | `entityId` | All components of one scene entity |
+
+### Controlling
+
+| Tool | Arguments | Effect |
+|---|---|---|
+| `teleport` | `x`, `y`, `waitForReady?`, `timeoutSec?` | `/goto x,y` through the regular pipeline, waits for scene readiness |
+| `move_to` | `x`, `y`, `z`, `lookAt{X,Y,Z}?`, `durationSec?` | Instant or smooth move to a world position (16 m per parcel). `lookAt*` aims the camera and the avatar at the point — the same look-at a scene's `movePlayerTo` gives, unrefined — and the result reports `cameraRotationEuler` + `aimErrorDegrees`, or a `warning` when a scene-controlled camera did not apply it; a partial `lookAt` is refused rather than dropped |
+| `walk` | `directionX`, `directionY`, `seconds?`, `kind?`, `jump?`, `ignoreInputModifiers?` | Holds camera-relative movement through the real locomotion pipeline (collisions apply). Scene `InputModifier` locks apply exactly as they do to WASD unless `ignoreInputModifiers` |
+| `look_at` | `x`, `y`, `z` | Rotates the camera to a world point (aim before a screenshot, or before an aimed `press_input`) and refines the aim until the point is under the reticle. Reports `aimErrorDegrees`: a third-person camera cannot pitch past its clamp, so a steeply elevated target comes back with the residual and a hint instead of a false success |
+| `camera_look` | `deltaX`, `deltaY`, `seconds?` | Holds a relative mouse-look input (Cinemachine axes) — human-like turns; use `look_at` for absolute aims |
+| `set_camera_mode` | `mode` | Switches the camera mode like the user hotkey; refuses (with the reason) while a scene locks the camera — `CameraModeArea`, scene virtual camera, or photo camera. `get_player_state` → `camera.modeChangeAllowed` reports the lock state in advance |
+| `set_camera_pose` | `x`,`y`,`z`, `lookAt{X,Y,Z}?`, `fov?`, `timeoutSec?` | Places the free camera at an absolute world position, optionally aiming it and setting FOV. Auto-enters free mode (same locks as `set_camera_mode`), waits for the blend to settle (`settled` in the result), and returns the actual pose. The camera stays put while the player moves; restore with `set_camera_mode` |
+| `send_chat` | `message` | Sends to Nearby chat; `/commands` run through the chat command pipeline |
+| `reload_scene` | `timeoutSec?` | Reloads the current scene (motion + skybox frozen during reload) |
+| `trigger_emote` | `urn` or `stop: true`, `loop?` | Plays or stops an avatar emote |
+| `click_entity` | `entityId` and/or `x`,`y`,`z` aim point, `button?`, `eventType?`, `timeoutSec?` | Presses a pointer button on a scene entity exactly like a real click: a camera-origin raycast validates the aim (occluders and the entity's `maxDistance` apply), then the entity's pointer-event intent is filled so the scene receives an identical `PBPointerEventsResult`. `click` sends down + up on consecutive scene ticks. Returns `hit`, hover text, hit point/distance, or the blocking entity. A miss whose edge was **untargeted** (an `x`/`y`/`z` aim without `entityId`) was still fanned out to the scene root, exactly as a human's click on nothing is; the result says so with `rootBroadcast: true`, and the layer releases it there too (a `PET_UP` follows the `PET_DOWN` on a later tick), so a miss never leaves the root holding a button — an `entityId` miss reaches nobody and carries no flag |
+| `click_at` | `x`, `y` (normalized image coords, origin top-left), `button?`, `sceneId?`, `timeoutSec?`, `force?` | Clicks whatever qualified scene entity the ray through that screen point lands on — the screenshot-coordinates counterpart of `click_entity`. It clicks the **3D world only**: a point covered by client UI or the scene's own UI fails with the cover in `blockedByUi` rather than clicking through it, the way a real click at that pixel would land on the UI — scene UI is named by its `crdtId`, which is the address `ui_click` takes for it, and client UI by its element path. Click UI with `ui_click`; `force` aims past a cover deliberately. A miss is `rootBroadcast: true`: the root received the press and its release, like a human's click on nothing |
+| `hover_entity` | `entityId` and/or `x`,`y`,`z`, `sceneId?`, `seconds?` | Aims the reticle at the entity and holds the hover without clicking, so `PetHoverEnter`/`PetHoverLeave` fire like a real cursor; reports the hover tooltip text |
+| `press_input` | `action` (`primary`, `secondary`, `action_3`…), `holdSeconds?`, `entityId?` / `x`,`y`,`z`?, `sceneId?` | Presses + releases an SDK input action. Unaimed it arrives as a global `PBPointerEventsResult` (`hit: null`) on the scene root — a driver has no cursor resting on a target, so that is the only unaimed outcome. With `entityId` or an `x/y/z` aim the reticle is held on the target for the gesture and the action arrives **entity-bound** on it (suppressing the scene-root broadcast for that tick), reported with the same hit/occlusion/range diagnostics a click gives |
+| `sweep_pointer` | `deltaX`, `deltaY`, `seconds?` (as `camera_look`), `entityId?` / `x`,`y`,`z`?, `sceneId?`, `button?`, `timeoutSec?` | Presses a pointer button on an entity, turns the camera while it is held, then releases — the gesture a human makes to sweep a pointer across the world (painting, held drags). The press arms a scene watching for a pointer-down **and parks the pointer on the target**; the camera turn then drags the ray a scene reads from `PrimaryPointerInfo` across the world, since dragging the virtual mouse there pans the camera instead. Reports both legs and the camera outcome: `pressed.hit:false` means the sweep armed nothing. Aim the camera at the target first (`look_at`): only a press that lands on screen parks the pointer, and with none parked the sweep turns the camera without dragging anything. A press that missed aborts the sweep; if the root received it (`pressed.rootBroadcast: true`) it is released there before the abort, so nothing stays held |
+
+### UI
+
+All ui_* tools report `screenRect` in **image pixels (origin top-left) of the client screen**, and state that screen's size as `screen: {width, height}` beside it — `screen` on every result, including the device path and failures, because it is the frame of reference for every coordinate in the payload and for every coordinate a caller passes back. The origin matches a `screenshot`, but the scale need not: `screenshot` downscales to `maxWidth` (default 1280), so a rect normalizes against `screen` and never against the captured image — on a HiDPI display those differ by the backing-store factor. Listed elements also carry a ready-made normalized `center` — the form `ui_drag` takes, no conversion needed. To *click* an element use `ui_click`: `click_at` casts a ray into the 3D world and cannot address UI at all — and, since it would otherwise reach an entity the pixel's real owner intercepts, it now refuses a point covered by UI (`blockedByUi` — a covering scene element is reported by its `crdtId`) unless `force` is set.
+
+| Tool | Arguments | Effect |
+|---|---|---|
+| `ui_list` | `stack?` (`all`/`ugui`/`sdk`), `checkOcclusion?` | Lists interactable UI: client interface elements (with their address `path`, `id`, `kind`, label) and the current scene's SDK UI (addressed by `crdtId`, with its declared pointer event types). Each element carries `screenRect` plus a normalized `center`; the result carries the `screen` size those rects are in |
+| `ui_click` | address (`stack` + `path`/`id`/`altId` or `crdtId`), `button?`, `force?`, `device?`, `timeoutSec?` | Clicks the element. Semantic by default (events synthesized after an occlusion pre-check — a covered element fails with `blockedBy` instead of clicking through); `device: true` replays it positionally through the virtual mouse for real hit-testing. A disabled element is refused rather than clicked: its own handlers would ignore the events, so a success would report a click that did nothing |
+| `ui_set_text` | address, `text`, `submit?`, `optionIndex?` | Types into an input field (value-changed + optional submit events); `optionIndex` selects an SDK dropdown option instead. A **disabled** input or dropdown is refused: a user cannot type into one, and writing the value directly would fire the scene's `onChange` for input the scene declared impossible. `ui_list` marks such elements `disabled: true`. `submit: true` on an SDK scene input leaves the box **empty**: `UIInputInstantiationSystem` blanks the field once it has written the submit result, exactly as it does for a real Enter — the value reached the scene, so the empty box is the submit landing, not a lost write |
+| `ui_scroll` | address, `dx`, `dy`, `force?` | Scrolls a scroll container (uGUI scroll event / SDK scroll-offset). `dy` follows image coordinates — **positive scrolls the content down** — and the result reports the offset actually achieved, so a delta that only hits the clamp is visible instead of reading as a silent success |
+| `ui_drag` | `fromX`,`fromY`,`toX`,`toY` (normalized image coords), `durationFrames?`, `rightButton?`, `path?` (`auto`/`sdk`/`device`) | Presses, drags and releases between two screen points. A drag starting inside the scene's own UI is delivered to those elements (press on the start element, release on the end element, each held until the scene consumed the previous event — an unconsumed release fails the call), because UI Toolkit panels consume element events rather than virtual-device state; anywhere else — or with `path:device` — the virtual mouse is replayed, which is the path that exercises real drag thresholds and hit-testing. The result's `path` says which one ran, and a fallback to the virtual mouse also states `pathReason`. The device path reports `pointerOver` — what covered each end of the drag, or `world` when nothing did — because the gesture verifies no target: a drag over the world reaches no UI at all and adds an `info` line saying so (sweep a held pointer across the world with `sweep_pointer`). If the held button engages the camera pan instead (the left button is the camera-pan binding, exactly as for a human) the call fails saying that. `path:sdk` fails with the skip reason instead of falling back |
+
+### Interpreting the numbers
+
+The content tools report *counts*, and some counts look scarier than they are. Guidance for drawing conclusions from them:
+
+- **Materials ≠ draw-call cost.** The client renders with URP's SRP Batcher, which bins draws by **shader variant** (shader + enabled keywords) and keeps each material's properties in a persistent GPU buffer — so many materials sharing few variants render cheaply. Judge draw-call risk by `shaderVariants`, not `materials`. A high material count with a low variant count is a **memory and texture** concern (and a lost GPU-instancing opportunity, since instancing needs identical materials), not a frame-time concern.
+- **`drawCallsEstimate` is pre-batching.** It counts material slots across renderers — an upper bound before the SRP Batcher and instancing reduce the real cost. Use it to compare sources against each other, not as an absolute GPU cost.
+- **`shaderVariants` is a lower-bound proxy.** It counts distinct variant bins, not per-frame SetPass calls — the batcher only merges *consecutive* draws with the same variant, so interleaving can produce more switches than the bin count suggests. A low variant count reliably proves material dedup won't buy frame time; a high one flags shader churn worth consolidating.
+- **The caps are soft.** The documented limits are warnings ("strong recommendations"), not enforced budgets. Correlate with measured cost — `get_performance_stats` at the relevant viewpoints — before prescribing optimizations.
+
+## Structured output
+
+`get_player_state`, `get_scene_state`, `get_scene_content_stats`, `get_scene_content_breakdown`, `get_performance_stats` and `list_scene_entities` also return `structuredContent` mirroring their text payload and declare a matching `outputSchema` in `tools/list` (MCP 2025-06-18). This is done **only on the read-only state tools that benefit from it** — every other tool returns text content only. A tool opts in by overriding `McpTool.OutputSchema` (default `null`); the same `McpJsonSchema` builder produces the schema.
+
+## The scene-iteration loop
+
+1. Serve the scene and launch the Explorer in one step: `npm run start -- --mcp` in the scene folder (serves at `http://127.0.0.1:8000`, auto-launches the installed client against it with the MCP server on, and hot-reloads on file changes).
+2. To use a specific Explorer build instead, serve with `npm run start -- --no-client` and launch manually:
+
+```bash
+open Decentraland.app --args \
+  --realm http://127.0.0.1:8000 --local-scene true --position 0,0 \
+  --debug --skip-auth-screen --skip-version-check true \
+  --mcp --windowed-mode --resolution 1280x720
+```
+
+Optional determinism flags for stable screenshots: `--disable-hud`, `--skybox-time-enabled false`, `--landscape-terrain-enabled false`, `--skip-minimum-specs-screen`.
+
+3. The agent then loops: edit scene TypeScript → LSD hot reload applies it (or call `reload_scene`) → `get_scene_state` until ready → `screenshot` + `get_scene_logs` → verify → repeat.
+
+Once loading completes, the server announces its address in the scene debug console (available with local scene development or `--scene-console`): `MCP server listening on http://127.0.0.1:8123/unity-explorer-mcp`. A startup failure (port in use) is announced there as an error instead. The same line lands in the `get_scene_logs` buffer, so agents can confirm the server from inside the loop.
+
+A user-invokable Claude Code skill wrapping this loop is published in the **sdk-skills** repo as [`unity-explorer-mcp`](https://github.com/decentraland/sdk-skills/tree/main/unity-explorer-mcp) (installed with `npx skills add decentraland/sdk-skills`, invoked with `/unity-explorer-mcp`). It is the agent-facing counterpart of this document — when the tool surface changes here, update it there.
+
+## Troubleshooting
+
+- **Port already in use** — the server logs an `MCP` category error and stays inert; relaunch with a different `--mcp-port`. Multiple Explorer instances (`--multi-instance`) each need their own port. To confirm which process answers on a port, check `serverInfo.pid` in the `initialize` response and the `address` field of `get_player_state`.
+- **HTTP 403** — the request carried a non-localhost `Origin` header; MCP clients and curl don't send one.
+- **Server won't start on Windows** — `HttpListener` may require a URL ACL depending on machine policy: `netsh http add urlacl url=http://127.0.0.1:8123/unity-explorer-mcp/ user=Everyone` (elevated prompt), then relaunch.
+- **Verbose logs** — enabling the server registers a scene-console log handler, which turns on unconditional verbose logging for the session (same behavior as `--scene-console`).
+- **Scene entity dumps** — `list_scene_entities`/`get_entity_details` read the scene world without acquiring its sync lock (same as the existing `WorldInfoTool` debug tooling); treat results as a diagnostic snapshot.
+- **`ui_drag` reports `path:"device"` with a `pathReason`** — the semantic scene-UI path did not apply (no scene UI panel, or nothing pickable at the start point — scene UI that is still attaching or laying out looks exactly like absent UI), so the virtual mouse dragged the **3D world** instead. Confirm the start element with `ui_list stack:sdk`, or pass `path:sdk` to make the miss an error rather than a world drag.
+- **`ui_click` fails with `blockedBy` on a point that looks empty** — a client surface can be fully transparent and still take the click. The chat message feed is the one to know about: its viewport is an alpha-0 `Image` with `raycastTarget` on, active whenever the chat is in its normal state (even with no messages), covering roughly a 400x200-350 block of the lower-left in 1920x1080 reference units. A real click there focuses the chat, so the refusal is correct; `force: true` is the deliberate way through.
+- **`ui_drag` reports `pointerOver: {start:"world", end:"world"}` with an `info` line** — the device path ran with its pointer over the 3D world at both ends, so no UI element received the drag; `ok` there means only that the mouse states were replayed (the gesture verifies no target). Sweep a held pointer across the world with `sweep_pointer`. The other device-drag outcome is a failure: when the held button engages the camera pan (`Camera.TemporalLock` is the left button, so the cursor turns to `Panning` mid-gesture) the call fails with "the drag panned the camera instead of dragging", and with the cursor locked any pointer gesture fails up front.
+- **A tool rejects a coordinate you did send** — every tool that requires numbers names what actually arrived (`... (y arrived as string "3.0", not a number)`), because the bare "provide a full x/y/z" reads as if the argument were missing. The parser accepts both JSON number types, so a literal `3.0` is not what it refuses; a whole number written `N.0` has been observed reaching the server as a non-number, and writing it as `3` works. `press_input` refuses a half-readable `x/y/z` outright rather than falling back to an aimless press the caller would read as entity-bound.
+- **A click aimed by coordinates alone hits the first qualified entity on the ray, not necessarily the one at the aim point** — `click_at`, and `click_entity` given only `x/y/z`, have no target to check the hit against, so a nearer entity that has `PointerEvents` is clicked and reported with its own `crdtEntityId` (a nearer collider *without* `PointerEvents` is what produces `blockedBy*` instead). Compare the returned `crdtEntityId` with what you aimed at, or pass `entityId` beside the aim: the mismatch is then reported as a block **and** the button is withheld from that nearer entity, which a coordinates-only aim cannot do (there it is the target by contract).
+- **`click_entity` returns `hit:false` with `blockedBy*`** — another collider sits on the camera→target line; `move_to`/`look_at` to a clear vantage and retry. If the reason is "out of range", close within the entity's `maxDistance` (default 10 m) first. Entities whose collider sits away from the pivot (GLTF meshes) may need an explicit `x/y/z` aim point. **With an `entityId`, nothing was delivered:** that edge is withheld from anything else the ray reached and is not broadcast to the scene root either, so the refusal changes no scene state beyond the `PetHoverEnter`/`PetHoverLeave` a real cursor passing over that collider would also produce. A refusal on an aim given only as `x/y/z` (or a `click_at` miss) still broadcasts the press to the scene root — the edge named no entity, so an unqualified one belongs to the root, and a scene's global counters climb while you drive negative cases (measured 5/5). Note the matching `PetUp` is never sent in that case: the composition stops after a press that did not hit, so a scene tracking a held button on the root holds it until its own timeout.
+
+## Implementation map
+
+All input-simulating tools (walk, clicks, hover, global actions, camera look, ui_*) are thin front-ends over the shared **synthetic input simulation layer** (`Explorer/Assets/DCL/SyntheticInput/`), which AltTester probes drive too — see [Synthetic Input Simulation](synthetic-input-simulation.md) for its architecture. What stays MCP-specific:
+
+- `Explorer/Assets/DCL/McpServer/` — feature root, its own `DCL.McpServer` assembly (references `DCL.SyntheticInput`). Two folders are folded into other assemblies via `.asmref` so they can reach code that assembly doesn't reference:
+  - `Core/` — protocol, transport and tool contract: `McpHttpServer` (`HttpListener` server + Origin validation), `McpJsonRpcDispatcher` (JSON-RPC 2.0 routing; `PROTOCOL_VERSION` `2025-06-18`), `McpTool` (abstract tool base), `McpToolsRegistry`, `McpToolResult`, `McpToolAnnotations` (behaviour hints), `McpJsonSchema` (typed schema builder).
+  - `Tools/` — one class per tool (29).
+  - `Systems/` — **folded into `DCL.Plugins`** via `.asmref`: `McpServerPlugin` (builds the registry and hosts the server in `InjectToWorld`).
+  - `Utils/` — `SceneLogBuffer`, `JObjectExtensions` (argument readers, output fragments, and `NonNumericHint`: every "required number" error appends it, so a bad argument names itself instead of reading as an absent one).
+  - `Tests/` — EditMode tests **folded into `DCL.EditMode.Tests`** via `.asmref`: dispatcher / registry / result routing.
+- Gating: `FeatureId.MCP_SERVER` in `FeaturesRegistry` (resolved as `appArgs.HasFlag(MCP) || appArgs.HasFlag(MCP_PORT)`); `DynamicWorldContainer.CreateAsync` reads `FeaturesRegistry.Instance.IsEnabled(FeatureId.MCP_SERVER)` and adds `SyntheticInputPlugin` + `McpServerPlugin`.
+- Flags: `AppArgsFlags.MCP` / `AppArgsFlags.MCP_PORT`; log categories: `ReportCategory.MCP` (server), `ReportCategory.SYNTHETIC_INPUT` (input layer).

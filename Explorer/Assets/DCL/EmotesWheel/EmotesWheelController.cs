@@ -1,0 +1,345 @@
+using Arch.Core;
+using CommunicationData.URLHelpers;
+using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.Emotes;
+using DCL.AvatarRendering.Thumbnails.Utils;
+using DCL.AvatarRendering.Wearables;
+using DCL.Backpack;
+using DCL.Diagnostics;
+using DCL.ExplorePanel;
+using DCL.Input;
+using DCL.Input.Component;
+using DCL.NotificationsBus;
+using DCL.NotificationsBus.NotificationTypes;
+using DCL.Profiles;
+using DCL.Profiles.Self;
+using DCL.UI;
+using DCL.Utility.Types;
+using MVC;
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using UnityEngine;
+using UnityEngine.InputSystem;
+using Utility;
+using Avatar = DCL.Profiles.Avatar;
+
+namespace DCL.EmotesWheel
+{
+    public class EmotesWheelController : ControllerBase<EmotesWheelView>
+    {
+        private const string? EMPTY_IMAGE_TYPE = "empty";
+        private const string EMOTE_LOADING_ERROR_MESSAGE = "Something went wrong loading one of your Emotes";
+        private readonly SelfProfile selfProfile;
+        private readonly IEmoteStorage emoteStorage;
+        private readonly NftTypeIconSO rarityBackgrounds;
+        private readonly World world;
+        private readonly Entity playerEntity;
+        private readonly IThumbnailProvider thumbnailProvider;
+        private readonly IInputBlock inputBlock;
+        private readonly DCLInput.EmoteWheelActions emoteWheelInput;
+        private readonly ICursor cursor;
+        private readonly URN[] currentEmotes = new URN[Avatar.MAX_EQUIPPED_EMOTES];
+        private readonly HashSet<URN> notifiedFailedEmotes = new ();
+        private readonly IMVCManager mvcManager;
+        private UniTaskCompletionSource? closeViewTask;
+        private CancellationTokenSource? fetchProfileCts;
+        private CancellationTokenSource? slotSetUpCts;
+
+
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
+
+        public EmotesWheelController(ViewFactoryMethod viewFactory,
+            SelfProfile selfProfile,
+            IEmoteStorage emoteStorage,
+            NftTypeIconSO rarityBackgrounds,
+            World world,
+            Entity playerEntity,
+            IThumbnailProvider thumbnailProvider,
+            IInputBlock inputBlock,
+            ICursor cursor,
+            IMVCManager mvcManager)
+            : base(viewFactory)
+        {
+            this.selfProfile = selfProfile;
+            this.emoteStorage = emoteStorage;
+            this.rarityBackgrounds = rarityBackgrounds;
+            this.world = world;
+            this.playerEntity = playerEntity;
+            this.thumbnailProvider = thumbnailProvider;
+            this.inputBlock = inputBlock;
+            emoteWheelInput = DCLInput.Instance.EmoteWheel;
+            this.cursor = cursor;
+            this.mvcManager = mvcManager;
+
+            emoteWheelInput.Customize.performed += OpenBackpack;
+        }
+
+        public override void Dispose()
+        {
+            base.Dispose();
+
+            emoteWheelInput.Customize.performed -= OpenBackpack;
+            UnregisterSlotsInput(emoteWheelInput);
+        }
+
+        protected override void OnViewInstantiated()
+        {
+            viewInstance!.Closed += Close;
+            viewInstance.EditButton.onClick.AddListener(OpenBackpack);
+            viewInstance.CurrentEmoteName.text = "";
+
+            for (var i = 0; i < viewInstance.Slots.Length; i++)
+            {
+                EmoteWheelSlotView slot = viewInstance.Slots[i];
+                slot.Slot = i;
+                slot.OnPlay += PlayEmote;
+                slot.OnHover += UpdateCurrentEmote;
+                slot.OnFocusLeave += ClearCurrentEmote;
+            }
+        }
+
+        protected override void OnBeforeViewShow()
+        {
+            UnblockUnwantedInputs();
+            cursor.Unlock();
+            fetchProfileCts = fetchProfileCts.SafeRestart();
+            InitializeEverythingAsync(fetchProfileCts.Token).Forget();
+            return;
+
+            async UniTaskVoid InitializeEverythingAsync(CancellationToken ct)
+            {
+                Option<Profile> known = selfProfile.CurrentProfileSnapshot.KnownProfile;
+                Profile? profile;
+
+                if (known.Has)
+                    profile = known.Value;
+                else
+                {
+                    ProfileReadResult read = await selfProfile.ProfileAsync(ct);
+
+                    if (read.IsCancelled)
+                        return;
+
+                    if (!read.IsOk(out profile))
+                    {
+                        if (read.IsError(out ProfileReadError error) && error != ProfileReadError.FetchFailed)
+                            ReportHub.LogError(new ReportData(ReportCategory.EMOTE), $"Could not initialize emote wheel slots, the profile could not be read ({error})");
+
+                        return;
+                    }
+                }
+
+                SetUpSlots(profile);
+                ListenToSlotsInput(DCLInput.Instance.EmoteWheel);
+            }
+        }
+
+        protected override void OnViewClose()
+        {
+            BlockUnwantedInputs();
+
+            fetchProfileCts.SafeCancelAndDispose();
+            slotSetUpCts.SafeCancelAndDispose();
+
+            UnregisterSlotsInput(emoteWheelInput);
+        }
+
+        protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
+        {
+            closeViewTask?.TrySetCanceled(ct);
+            closeViewTask = new UniTaskCompletionSource();
+
+            UnblockShortcutToEmoteSlotsSetup();
+
+            await closeViewTask.Task;
+        }
+
+        private void SetUpSlots(Profile profile)
+        {
+            slotSetUpCts = slotSetUpCts.SafeRestart();
+
+            for (var i = 0; i < profile.Avatar.Emotes.Count; i++)
+            {
+                URN urn = profile.Avatar.Emotes[i].Shorten();
+                currentEmotes[i] = urn;
+
+                if (urn.IsNullOrEmpty())
+                    SetUpEmptySlot(i);
+                else
+                    SetUpSlotAsync(i, urn, slotSetUpCts.Token).Forget();
+            }
+        }
+
+        private async UniTaskVoid SetUpSlotAsync(int slot, URN emoteUrn, CancellationToken ct)
+        {
+            if (!emoteStorage.TryGetElement(emoteUrn, out IEmote emote))
+            {
+                ReportHub.LogError(new ReportData(), $"Could not setup emote wheel slot {slot} for {emoteUrn}, missing emote in cache");
+                return;
+            }
+
+            EmoteWheelSlotView view = viewInstance!.Slots[slot];
+
+            // Storage hands out the entry before its definition is fetched
+            if (ShouldWaitForDefinition(emote))
+            {
+                view.Thumbnail.gameObject.SetActive(false);
+                view.LoadingSpinner.SetActive(true);
+
+                if (await UniTask.WaitWhile(() => ShouldWaitForDefinition(emote), cancellationToken: ct).SuppressCancellationThrow())
+                    return;
+            }
+
+            if (!IsDefinitionResolved(emote))
+            {
+                ReportHub.LogWarning(new ReportData(ReportCategory.EMOTE), $"Could not setup emote wheel slot {slot} for {emoteUrn}, emote definition failed to load");
+
+                // The slot is rebuilt on every wheel open; a broken emote is announced only once per session
+                if (notifiedFailedEmotes.Add(emoteUrn))
+                    NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(EMOTE_LOADING_ERROR_MESSAGE));
+
+                SetUpEmptySlot(slot);
+                return;
+            }
+
+            view.BackgroundRarity.sprite = rarityBackgrounds.GetTypeImage(emote.GetRarity());
+            view.EmptyContainer.SetActive(false);
+
+            await WaitForThumbnailAsync(emote, view, ct);
+        }
+
+        private void SetUpEmptySlot(int slot)
+        {
+            EmoteWheelSlotView view = viewInstance!.Slots[slot];
+
+            view.BackgroundRarity.sprite = rarityBackgrounds.GetTypeImage(EMPTY_IMAGE_TYPE);
+            view.EmptyContainer.SetActive(true);
+            view.Thumbnail.gameObject.SetActive(false);
+            view.LoadingSpinner.SetActive(false);
+        }
+
+        private async UniTask WaitForThumbnailAsync(IEmote emote, EmoteWheelSlotView view, CancellationToken ct)
+        {
+            view.Thumbnail.gameObject.SetActive(false);
+            view.LoadingSpinner.SetActive(true);
+
+            try
+            {
+                Sprite sprite = await thumbnailProvider.GetAsync(emote, ct);
+
+                view.Thumbnail.sprite = sprite;
+            }
+            catch (OperationCanceledException) { return; }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, new ReportData(ReportCategory.THUMBNAILS));
+
+                if (ct.IsCancellationRequested) return;
+
+                // The failure path must still surface a sprite, otherwise the slot stays stuck on a load that already gave up
+                view.Thumbnail.sprite = LoadThumbnailsUtils.DEFAULT_THUMBNAIL.Sprite;
+            }
+
+            view.Thumbnail.gameObject.SetActive(true);
+            view.LoadingSpinner.SetActive(false);
+        }
+
+        private void UpdateCurrentEmote(int slot)
+        {
+            if (!emoteStorage.TryGetElement(currentEmotes[slot], out IEmote emote) || !IsDefinitionResolved(emote))
+                ClearCurrentEmote(slot);
+            else
+                viewInstance!.CurrentEmoteName.text = emote.GetName();
+        }
+
+        // IsLoading also covers the asset downloads that follow the definition; the slot only needs the definition
+        internal static bool ShouldWaitForDefinition(IEmote emote) =>
+            emote.IsLoading && !IsDefinitionResolved(emote);
+
+        private static bool IsDefinitionResolved(IEmote emote) =>
+            emote.DTO?.Metadata != null;
+
+        private void ClearCurrentEmote(int slot)
+        {
+            viewInstance!.CurrentEmoteName.text = string.Empty;
+        }
+
+        private void PlayEmote(int slot)
+        {
+            if (State == ControllerState.ViewHidden || State == ControllerState.ViewHiding)
+                return;
+
+            world.AddOrGet(playerEntity, new TriggerEmoteBySlotIntent { Slot = slot });
+
+            Close();
+        }
+
+        private void PlayEmote(InputAction.CallbackContext context)
+        {
+            if (State == ControllerState.ViewHidden || State == ControllerState.ViewHiding)
+                return;
+
+            string actionName = context.action.name;
+            int slot = GetSlotFromInputName(actionName);
+            PlayEmote(slot);
+        }
+
+        private void OpenBackpack(InputAction.CallbackContext context)
+        {
+            if (State != ControllerState.ViewHidden && State != ControllerState.ViewHiding)
+                OpenBackpack();
+        }
+
+        private void OpenBackpack()
+        {
+            mvcManager.ShowAndForget(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Backpack, BackpackSections.Emotes)));
+        }
+
+        private void UnblockUnwantedInputs()
+        {
+            inputBlock.Disable(InputMapComponent.Kind.Emotes);
+        }
+
+        // Note: This must be called once the menu has loaded and is ready to be closed
+        private void UnblockShortcutToEmoteSlotsSetup()
+        {
+            inputBlock.Enable(InputMapComponent.Kind.EmoteWheel);
+        }
+
+        private void BlockUnwantedInputs()
+        {
+            inputBlock.Disable(InputMapComponent.Kind.EmoteWheel);
+            inputBlock.Enable(InputMapComponent.Kind.Emotes);
+        }
+
+        private void ListenToSlotsInput(InputActionMap inputActionMap)
+        {
+            for (var i = 0; i < Avatar.MAX_EQUIPPED_EMOTES; i++)
+            {
+                string actionName = GetSlotInputName(i);
+                InputAction inputAction = inputActionMap.FindAction(actionName);
+                inputAction.started += PlayEmote;
+            }
+        }
+
+        private void UnregisterSlotsInput(InputActionMap inputActionMap)
+        {
+            for (var i = 0; i < Avatar.MAX_EQUIPPED_EMOTES; i++)
+            {
+                string actionName = GetSlotInputName(i);
+                InputAction inputAction = inputActionMap.FindAction(actionName);
+                inputAction.started -= PlayEmote;
+            }
+        }
+
+        public void Close() =>
+            closeViewTask?.TrySetResult();
+
+        private static string GetSlotInputName(int slot) =>
+            $"Slot {slot}";
+
+        private static int GetSlotFromInputName(string name) =>
+            int.Parse(name[^1].ToString());
+    }
+}

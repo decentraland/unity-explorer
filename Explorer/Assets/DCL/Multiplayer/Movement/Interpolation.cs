@@ -1,0 +1,98 @@
+﻿using DCL.Character.CharacterMotion.Components;
+using DCL.Character.Components;
+using DCL.CharacterMotion.Components;
+using Unity.Mathematics;
+using UnityEngine;
+
+namespace DCL.Multiplayer.Movement
+{
+    public static class Interpolation
+    {
+        private const float MIN_DIRECTION_SQR_MAGNITUDE = 0.01f;
+
+        public static float Execute(float deltaTime, ref CharacterTransform transComp, ref InterpolationComponent intComp, float lookAtTimeDelta, float rotationSpeed)
+        {
+            var remainedDeltaTime = 0f;
+            Vector3 lookDirection;
+
+            intComp.Time += deltaTime;
+
+            bool isInstant = intComp.End.isInstant || intComp.Time >= intComp.TotalDuration;
+
+            if (!isInstant)
+            {
+                transComp.Transform.position = DoTransition(intComp.Start, intComp.End, intComp.Time, intComp.TotalDuration, intComp.SplineType);
+                Vector3 nextStep = DoTransition(intComp.Start, intComp.End, Mathf.Max(intComp.Time + lookAtTimeDelta, intComp.TotalDuration), intComp.TotalDuration, intComp.SplineType);
+                lookDirection = nextStep - transComp.Transform.position; // look into future step
+            }
+            else
+            {
+                remainedDeltaTime = intComp.TotalDuration - intComp.Time;
+                intComp.Time = intComp.TotalDuration;
+
+                Vector3 posDelta = intComp.End.position - transComp.Transform.position;
+
+                if (posDelta.sqrMagnitude > MIN_DIRECTION_SQR_MAGNITUDE)
+                    lookDirection = intComp.End.velocitySqrMagnitude > MIN_DIRECTION_SQR_MAGNITUDE ? intComp.End.velocity : posDelta;
+                else
+                    lookDirection = Quaternion.Euler(transComp.Rotation.x, intComp.End.rotationY, transComp.Rotation.z) * Vector3.forward;
+
+                transComp.Transform.position = intComp.End.position;
+            }
+
+            LookAt(deltaTime, ref transComp, lookDirection, rotationSpeed, intComp.End.rotationY, isInstant, intComp.UseMessageRotation);
+
+            return remainedDeltaTime;
+        }
+
+        private static void LookAt(float dt, ref CharacterTransform transComp, Vector3 lookDirection, float rotationSpeed, float yRotation,
+            bool instant, bool useMessageRotation)
+        {
+            lookDirection.y = 0; // Flattened to have ground plane direction only (XZ)
+
+            Quaternion lookRotation = lookDirection.sqrMagnitude > MIN_DIRECTION_SQR_MAGNITUDE
+                ? Quaternion.LookRotation(lookDirection, Vector3.up)
+                : Quaternion.Euler(transComp.Transform.rotation.x, yRotation, transComp.Transform.rotation.z);
+
+            if (useMessageRotation)
+                lookRotation.eulerAngles = new Vector3(lookRotation.eulerAngles.x, yRotation, lookRotation.eulerAngles.z);
+
+            transComp.Transform.rotation = instant
+                ? Quaternion.Euler(lookRotation.eulerAngles)
+                : Quaternion.RotateTowards(transComp.Transform.rotation, lookRotation, rotationSpeed * dt);
+        }
+
+        private static Vector3 DoTransition(NetworkMovementMessage start, NetworkMovementMessage end, float time, float totalDuration, InterpolationType blendType)
+        {
+            return blendType switch
+                   {
+                       InterpolationType.Linear => InterpolationSpline.Linear(start, end, time, totalDuration),
+                       InterpolationType.PositionBlending => InterpolationSpline.ProjectivePositionBlending(start, end, time, totalDuration),
+                       InterpolationType.VelocityBlending => InterpolationSpline.ProjectiveVelocityBlending(start, end, time, totalDuration),
+                       InterpolationType.Bezier => InterpolationSpline.Bezier(start, end, time, totalDuration),
+                       InterpolationType.Hermite => InterpolationSpline.Hermite(start, end, time, totalDuration),
+                       InterpolationType.MonotoneYHermite => InterpolationSpline.MonotoneYHermite(start, end, time, totalDuration),
+                       InterpolationType.FullMonotonicHermite => InterpolationSpline.FullMonotonicHermite(start, end, time, totalDuration),
+                       _ => InterpolationSpline.Linear(start, end, time, totalDuration),
+                   };
+        }
+
+        public static Vector2 InterpolateHeadIK(in HeadIKComponent headIK, float2 targetYawAndPitch, float interpolationFactor)
+        {
+            var currentRotation = Quaternion.LookRotation(headIK.LookAt);
+            var targetRotation = Quaternion.Euler(targetYawAndPitch.y, targetYawAndPitch.x, 0);
+
+            var interpolatedRotation = Quaternion.Slerp(currentRotation, targetRotation, interpolationFactor * UnityEngine.Time.deltaTime);
+            Vector3 interpolatedYawAndPitch = interpolatedRotation.eulerAngles;
+
+            return new Vector2(interpolatedYawAndPitch.y, interpolatedYawAndPitch.x);
+        }
+
+        public static Vector3 InterpolatePointAtIK(in HandPointAtComponent pointAt, Vector3 targetHitPoint, float interpolationFactor)
+        {
+            if (pointAt.WorldHitPoint == Vector3.zero) return targetHitPoint;
+
+            return Vector3.Lerp(pointAt.WorldHitPoint, targetHitPoint, interpolationFactor * UnityEngine.Time.deltaTime);
+        }
+    }
+}

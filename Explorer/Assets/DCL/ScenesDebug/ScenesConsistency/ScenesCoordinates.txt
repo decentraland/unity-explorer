@@ -1,0 +1,598 @@
+COORDINATES	STATUS
+100,-138	RUNNING
+101,-116	RUNNING
+107,-123	DOWN
+126,133	DOWN
+128,-16	DOWN
+128,131	DOWN
+13,95	RUNNING
+14,100	RUNNING
+143,-100	DOWN
+16,105	RUNNING
+16,99	RUNNING
+18,111	DOWN
+52,-71	DOWN
+53,-55	DOWN
+53,-62	DOWN
+53,-70	DOWN
+55,-58	DOWN
+57,-59	DOWN
+58,-68	DOWN
+61,-54	DOWN
+61,-70	DOWN
+62,-122	RUNNING
+64,-66	DOWN
+65,-125	RUNNING
+65,-55	DOWN
+68,-58	DOWN
+68,-70	DOWN
+69,-62	DOWN
+7,118	DOWN
+91,-148	DOWN
+91,138	DOWN
+-10,-10	RUNNING
+-10,131	DOWN
+-10,132	DOWN
+-100,37	DOWN
+-102,36	DOWN
+-102,39	DOWN
+-104,-95	DOWN
+-111,144	DOWN
+-115,-101	DOWN
+-118,-6	DOWN
+-119,67	DOWN
+-12,105	DOWN
+-12,95	DOWN
+-122,-132	DOWN
+-126,-77	DOWN
+-129,-77	DOWN
+-130,-80	DOWN
+-131,79	DOWN
+-133,77	DOWN
+-135,77	DOWN
+-139,83	DOWN
+-14,132	DOWN
+-141,-25	DOWN
+-145,43	DOWN
+-147, 95	DOWN
+-148,-125	RUNNING
+-148,-137	DOWN
+-149,150	DOWN
+-150,147	DOWN
+-150,148	DOWN
+-150,149	DOWN
+-150,64	DOWN
+-17,-142	DOWN
+-17,-21	RUNNING
+-2,-66	DOWN
+-2,136	DOWN
+-21,83	DOWN
+-22,-100	DOWN
+-22,106	DOWN
+-28,30	RUNNING
+-29,80	DOWN
+-3,105	DOWN
+-3,132	DOWN
+-3,65	DOWN
+-33,136	DOWN
+-33,137	DOWN
+-33,54	DOWN
+-34,120	DOWN
+-34,57	DOWN
+-35,126	DOWN
+-35,136	DOWN
+-4,136	DOWN
+-40,-59	DOWN
+-42,-108	DOWN
+-43,-138	DOWN
+-49,69	DOWN
+-5,122	DOWN
+-54,58	DOWN
+-54,64	DOWN
+-55,-90	DOWN
+-56,52	DOWN
+-57,59	DOWN
+-57,63	DOWN
+-58,53	DOWN
+-58,57	DOWN
+-58,66	DOWN
+-58,70	DOWN
+-62,-125	DOWN
+-62,1	DOWN
+-63,54	DOWN
+-63,67	DOWN
+-64,64	DOWN
+-65,53	DOWN
+-65,57	DOWN
+-65,66	DOWN
+-65,70	DOWN
+-66,52	DOWN
+-67,63	DOWN
+-69,62	DOWN
+-7, 136	DOWN
+-7,124	DOWN
+-7,129	DOWN
+-7,132	DOWN
+-70,58	DOWN
+-70,65	DOWN
+-70,67	DOWN
+-71,52	DOWN
+-73,50	DOWN
+-74,-99	DOWN
+-8,108	DOWN
+-86,-126	DOWN
+-86,126	DOWN
+-88,-66	DOWN
+-9, -92	DOWN
+-9,132	DOWN
+-9,136	DOWN
+-9,-91	DOWN
+-91,-89	DOWN
+-91,14	DOWN
+-93,12	DOWN
+-95,-89	DOWN
+-96,108	DOWN
+10,65	DOWN
+100,48	RUNNING
+101,-110	DOWN
+101,-112	DOWN
+104,60	DOWN
+105,51	DOWN
+107,-17	DOWN
+107,48	DOWN
+13,75	DOWN
+137,-3	DOWN
+145,60	RUNNING
+146,59	RUNNING
+2,68	DOWN
+22,-118	RUNNING
+25,95	DOWN
+25,99	DOWN
+3,103	RUNNING
+31,-111	DOWN
+31,90	RUNNING
+38,72	DOWN
+40,-71	DOWN
+46,-1	DOWN
+47,-46	DOWN
+5,117	DOWN
+52,52	CRASH
+53,53	CRASH
+53,61	CRASH
+53,67	CRASH
+55,-42	RUNNING
+56,60	CRASH
+56,63	CRASH
+57,60	CRASH
+57,63	CRASH
+58,-55	RUNNING
+58,60	CRASH
+58,63	CRASH
+59,59	CRASH
+59,64	CRASH
+6,64	DOWN
+60,-137	DOWN
+60,55	CRASH
+60,56	CRASH
+60,57	CRASH
+60,58	CRASH
+60,65	CRASH
+60,66	CRASH
+60,67	CRASH
+60,68	CRASH
+61,29	RUNNING
+63,-115	DOWN
+63,55	CRASH
+63,56	CRASH
+63,57	CRASH
+63,58	CRASH
+63,65	CRASH
+63,66	CRASH
+63,67	CRASH
+63,68	CRASH
+64,59	CRASH
+64,64	CRASH
+65,60	CRASH
+65,63	CRASH
+66,60	CRASH
+66,63	CRASH
+67,-11	DOWN
+67,53	CRASH
+67,60	CRASH
+67,63	CRASH
+67,67	CRASH
+69,38	DOWN
+69,61	RUNNING
+97,-102	DOWN
+98,48	RUNNING
+99,-112	DOWN
+99,47	RUNNING
+99,54	RUNNING
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	

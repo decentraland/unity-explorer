@@ -1,0 +1,27 @@
+using DCL.Profiles;
+using SuperScrollView;
+
+namespace DCL.Friends.UI.FriendPanel.Sections
+{
+    public abstract class FriendPanelSectionController<T, U, K> : FriendPanelSectionControllerBase<T, U>
+        where T : FriendPanelSectionView
+        where K : FriendPanelUserView
+        where U : FriendPanelRequestManager<K>
+    {
+        protected FriendPanelSectionController(T view, U requestManager) : base(view, requestManager)
+        {
+            requestManager.ElementClicked += ElementClicked;
+        }
+
+        public override void Dispose()
+        {
+            base.Dispose();
+            requestManager.ElementClicked -= ElementClicked;
+        }
+
+        protected override LoopListViewItem2 OnGetItemByIndex(LoopListView2 loopListView, int index) =>
+            requestManager.GetLoopListItemByIndex(loopListView, index);
+
+        protected abstract void ElementClicked(Profile.CompactInfo profile);
+    }
+}

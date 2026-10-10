@@ -1,0 +1,6 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <DCL.DebugUtilities.Views.DebugControl name="DebugControl" style="flex-direction: row; justify-content: center;">
+        <ui:VisualElement name="Left" style="background-color: rgba(0, 0, 0, 0);"/>
+        <ui:VisualElement name="Right" style="background-color: rgba(0, 0, 0, 0); align-self: auto;"/>
+    </DCL.DebugUtilities.Views.DebugControl>
+</ui:UXML>

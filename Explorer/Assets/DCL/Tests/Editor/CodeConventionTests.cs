@@ -1,0 +1,569 @@
+﻿using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using NUnit.Framework;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Diagnostics;
+using UnityEditor;
+using System.Text;
+using System.Text.RegularExpressions;
+using DCL.Utilities.Extensions;
+using UnityEngine;
+using static Utility.Tests.TestsCategories;
+
+namespace DCL.Tests
+{
+    [Category(CODE_CONVENTIONS)]
+    public class CodeConventionsTests
+    {
+        private const string TRUST_WEBGL_THREAD_SAFETY_FLAG = nameof(TRUST_WEBGL_THREAD_SAFETY_FLAG);
+        private const string IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG = nameof(IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG);
+
+        private const string TRUST_WEBGL_SYSTEM_TASKS_SAFETY_FLAG = nameof(TRUST_WEBGL_SYSTEM_TASKS_SAFETY_FLAG);
+        private const string IGNORE_LINE_WEBGL_SYSTEM_TASKS_SAFETY_FLAG = nameof(IGNORE_LINE_WEBGL_SYSTEM_TASKS_SAFETY_FLAG);
+
+        private const string IGNORE_LINE_WEBGL_UNITASK_SAFETY_FLAG = nameof(IGNORE_LINE_WEBGL_UNITASK_SAFETY_FLAG);
+
+        private const string THREADING_CLASSES_API_LIST_PATH = "Assets/DCL/Tests/Editor/excludes_threading.txt";
+
+        private static readonly string[] UNITASK_FORBIDDEN_CALLS = new []
+        {
+            "UniTask.SwitchToThreadPool",
+            "UniTask.RunOnThreadPool"
+        };
+        // TODO better regex matching?
+
+        private static readonly string[] WEBGL_THREAD_SAFETY_EXCLUDED_PATHS = {
+            "Assets/DCL/Input/UnityInputSystem/DCLInput.cs", // cause it's autogen
+            "Assets/Plugins/UUAV/Packages/UUAV/Runtime/UUAVPlayer.cs", // desktop-only native plugin; Interlocked guards FFI callback state and the assembly never targets WebGL
+            "Assets/DCL/Infrastructure/Utility/Networking/DCLWebSocket.cs", // desktop-only; SynchronizationContext.Current gates the connect continuation's thread affinity
+        };
+
+        private static readonly string[] WEB_SOCKETS_EXCLUDED_PATHS = {
+            "Assets/DCL/Infrastructure/Utility/Networking/DCLWebSocket.cs",
+            "Assets/DCL/Infrastructure/Utility/Networking/Abstract/DClWebSocketDefinitions.cs", // it defines only WebSocketsException wrap
+        }; // cause it's autogen
+
+        private static readonly string[] EXCLUDED_PATHS = { "/Editor/", "/Test", "/Playground", "/EditorTests/", "/Rendering/SkyBox/", "/Ipfs/", "/Plugins/SocketIO" };
+
+        private static readonly string[] EXCLUDED_PATHS_INCLUDE_SOCKET_IO =
+        {
+            "/Editor/", "/Test", "/Playground", "/EditorTests/", "/Rendering/SkyBox/", "/Ipfs/",
+            "/Pulse/ENet/",
+        };
+
+
+        private static IEnumerable<string> AllCSharpFiles() =>
+            AssetDatabase.FindAssets("t:Script")
+                         .Select(AssetDatabase.GUIDToAssetPath)
+                         .Where(assetPath => Path.GetFileName(assetPath) != "AssemblyInfo.cs" && Path.GetExtension(assetPath) == ".cs" &&
+                                             !assetPath.StartsWith("Packages/") && !EXCLUDED_PATHS.Any(assetPath.Contains));
+
+
+        private static IEnumerable<string> AllCSharpFilesWithSocketIo() =>
+            AssetDatabase.FindAssets("t:Script")
+                         .Select(AssetDatabase.GUIDToAssetPath)
+                         .Where(assetPath => Path.GetFileName(assetPath) != "AssemblyInfo.cs" && Path.GetExtension(assetPath) == ".cs" &&
+                                             !assetPath.StartsWith("Packages/") && !EXCLUDED_PATHS_INCLUDE_SOCKET_IO.Any(assetPath.Contains));
+
+        private static string[] threadingForbiddenClasses = null!;
+
+
+        [SetUp]
+        public void Init()
+        {
+            threadingForbiddenClasses =
+                File.ReadLines(THREADING_CLASSES_API_LIST_PATH)
+                .Select(e => e.Trim())
+                .Where(e => !string.IsNullOrEmpty(e))
+                .ToArray();
+        }
+
+        [TestCaseSource(nameof(AllCSharpFiles))]
+        public void VerifyConventions(string filePath)
+        {
+            // Arrange
+            string fileContent = File.ReadAllText(filePath);
+            SyntaxNode root = CSharpSyntaxTree.ParseText(fileContent).GetRoot();
+
+            ClassShouldBeInNamespaces(root, filePath);
+            ShouldNotUsePlayerPrefsDirectly(fileContent, filePath);
+            AllAsyncMethodsShouldEndWithAsyncSuffix(root, fileContent, filePath);
+            UsingUnityEditorShouldBeSurroundedByDirectives(root, filePath);
+        }
+
+        [TestCaseSource(nameof(AllCSharpFilesWithSocketIo))]
+        public void VerifyShouldNotUseThreadingApiDirectly(string filePath)
+        {
+            if (WEBGL_THREAD_SAFETY_EXCLUDED_PATHS.Contains(filePath))
+                return;
+
+            List<(Regex regex, string pattern)> patternList = new List<(Regex regex, string pattern)>();
+            foreach (string forbiddenClass in threadingForbiddenClasses)
+            {
+                string pattern = $@"\b{Regex.Escape(forbiddenClass)}\b";
+                RegexOptions options = RegexOptions.Compiled;
+
+                Regex regex = new Regex(pattern, options);
+                patternList.Add((regex, pattern));
+            }
+
+            ShouldNotUseThreadingApiDirectly(filePath, patternList);
+        }
+
+        //[Test]
+        public void VerifyShouldNotUseThreadingApiDirectly_ByRg()
+        {
+            // TODO include
+            //if (WEBGL_THREAD_SAFETY_EXCLUDED_PATHS.Contains(filePath))
+             //   return;
+
+            StringBuilder pattern = new StringBuilder();
+            IEnumerable<string> regexFriendly = threadingForbiddenClasses.Select(Regex.Escape);
+
+            // output like: \b(ONE|TWO|THREE)\b
+            pattern.Append(@"\b");
+            pattern.Append(@"(");
+            pattern.Append(string.Join("|", regexFriendly));
+            pattern.Append(@")");
+            pattern.Append(@"\b");
+
+            ProcessStartInfo psi = NewRgProcessInfo(pattern.ToString());
+            TestWithRgProcess(psi, "Please exclude threadingForbiddenClasses");
+        }
+
+        [TestCaseSource(nameof(AllCSharpFilesWithSocketIo))]
+        public void VerifyShouldNotUseDangerousUniTask(string filePath)
+        {
+            string fileContent = File.ReadAllText(filePath);
+            ShouldNotUseDangerousUniTask(fileContent, filePath);
+        }
+
+        [TestCaseSource(nameof(AllCSharpFilesWithSocketIo))]
+        public void VerifyShouldNotUseSystemTask(string filePath)
+        {
+            string fileContent = File.ReadAllText(filePath);
+            ShouldNotUseSystemTask(fileContent, filePath);
+        }
+
+        [Test]
+        public void VerifyShouldNotUseWaitForComplition()
+        {
+            const string PATTERN = @"'\.GetLocalizedString\(\)'";
+            ValidateNoForbiddenApiUsed(PATTERN, "Use async version instead.", ignorePaths: null);
+
+            const string PATTERN_WAIT_FOR_COMPLITION = @"'\.WaitForComplition\(\)'";
+            ValidateNoForbiddenApiUsed(PATTERN_WAIT_FOR_COMPLITION, "Use async version instead.", ignorePaths: null);
+        }
+
+        // TODO enforce IO tests in next itertaion
+        //[Test]
+        public void VerifyShouldNotUseDirectFileIo()
+        {
+            const string PATTERN = @"System\.IO";
+            string[] ignorePaths = new []
+            {
+                "*Test*/*Should.cs", // Ignore any test with should suffix
+            };
+            ValidateNoForbiddenApiUsed(
+                    PATTERN,
+                    "If you sure the file won't be used in webgl then guard File IO operations under #if !UNITY_WEBGL and update the test.",
+                    ignorePaths
+                    );
+        }
+
+        [Test]
+        public void VerifyShouldNotUseApplicationQuitting()
+        {
+            const string PATTERN = @"Application\.quitting";
+            string[] ignorePaths = new []
+            {
+                // ExitUtils is the infrastructural wrapper that funnels Unity's quit event into the cleanup pipeline
+                "Assets/DCL/Infrastructure/Utility/ExitUtils.cs",
+                // DCL.Prefs cannot reference the Utility asmdef (cycle via PersistentSetting)
+                "Assets/DCL/Prefs/DCLPlayerPrefs.cs",
+                // Self-contained vendored player package; UUAVClient cannot reference the ExitUtils assembly
+                "Assets/Plugins/UUAV/Packages/UUAV/Runtime/UUAVRuntime.cs",
+            };
+            ValidateNoForbiddenApiUsed(PATTERN, "Use ExitUtils.RegisterCleanUpCandidate instead of subscribing to Unity's quit event directly.", ignorePaths);
+        }
+
+        [Test]
+        public void VerifyShouldNotUseConcurrentCollection()
+        {
+            const string PATTERN = @"System\.Collections\.Concurrent";
+            // must be used only for the infrastructural types, don't abuse the skipping
+            string[] ignorePaths = new []
+            {
+                "Assets/DCL/Infrastructure/Utility/Multithreading/DCLConcurrentDictionary.cs",
+                "Assets/DCL/Infrastructure/Utility/Multithreading/DCLConcurrentBag.cs",
+                "Assets/DCL/Infrastructure/Utility/Multithreading/DCLConcurrentQueue.cs",
+                "Assets/DCL/Infrastructure/Utility/Tests/DCLWebSocketCloseAsyncShould.cs", // test-only SynchronizationContext pump uses BlockingCollection
+            };
+            ValidateNoForbiddenApiUsed(PATTERN, "Use DCLConcurrent insteat version instead.", ignorePaths);
+        }
+
+        [TestCaseSource(nameof(AllCSharpFilesWithSocketIo))]
+        public void VerifyShouldNotUseNativeWebSocket(string filePath)
+        {
+            if (WEB_SOCKETS_EXCLUDED_PATHS.Contains(filePath))
+                return;
+
+            string fileContent = File.ReadAllText(filePath);
+            ShouldNotUseNativeWebSocket(fileContent, filePath);
+        }
+
+        private static string ResolvedRgPathViaShell()
+        {
+
+#if UNITY_EDITOR_WIN
+            const string FILE_NAME = "cmd.exe";
+            const string ARGUMENTS = "/c where rg";
+#else
+
+#if UNITY_EDITOR_OSX
+            const string FILE_NAME = "/bin/zsh";
+#elif UNITY_EDITOR_LINUX
+            const string FILE_NAME = "/bin/bash";
+#endif
+
+            const string ARGUMENTS = "-lc \"which rg\"";
+
+#endif // UNITY_EDITOR_WIN
+
+
+            ProcessStartInfo finder = new ProcessStartInfo
+            {
+                FileName = FILE_NAME,
+                Arguments = ARGUMENTS,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false
+            };
+
+            using Process p = Process.Start(finder).EnsureNotNull("Failed to start the shell used to locate ripgrep (rg).");
+            p.WaitForExit();
+            string output = p.StandardOutput.ReadToEnd();
+
+            // In CI (batch mode) ripgrep is required: fail loudly if missing.
+            // Locally we ignore so devs without rg installed can still run the test suite.
+            if (p.ExitCode == 1 || string.IsNullOrWhiteSpace(output))
+            {
+                string message = $"ripgrep (rg) not found on PATH. Install it to run this convention check (e.g. `brew install ripgrep`). which-output: '{output}', err: '{p.StandardError.ReadToEnd()}'.";
+
+                if (Application.isBatchMode)
+                    Assert.Fail(message);
+                else
+                    Assert.Ignore(message);
+            }
+
+            return output.Trim();
+        }
+
+        private static ProcessStartInfo NewRgProcessInfo(string pattern)
+        {
+            string projectRoot = Directory.GetCurrentDirectory();
+            string rgPath = ResolvedRgPathViaShell();
+
+            // Use rg because C# FileStream is very slow + avoid overhead of NUnit per file
+            var psi = new ProcessStartInfo
+            {
+                FileName = rgPath,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+
+            psi.ArgumentList.Add("--line-number");
+            psi.ArgumentList.Add("--no-heading");
+            psi.ArgumentList.Add("--color");
+            psi.ArgumentList.Add("never");
+
+            psi.ArgumentList.Add(pattern);
+            psi.ArgumentList.Add($"{projectRoot}/Assets");
+
+            psi.ArgumentList.Add("--glob");
+            psi.ArgumentList.Add("*.cs");
+
+            return psi;
+        }
+
+        private static void ExecuteRg(ProcessStartInfo psi, out string? matches)
+        {
+            using Process process = Process.Start(psi).EnsureNotNull("Failed to start ripgrep (rg). Is it installed and on PATH?");
+
+            string stdout = process.StandardOutput.ReadToEnd();
+            string stderr = process.StandardError.ReadToEnd();
+
+            process.WaitForExit();
+
+            // rg exit codes:
+            // 0 = matches found
+            // 1 = no matches
+            // 2 = error
+            if (process.ExitCode == 2)
+            {
+                Assert.Fail($"ripgrep error:\n{stderr}");
+            }
+
+            if (process.ExitCode == 0)
+            {
+                matches = stdout;
+            }
+            else
+            {
+                matches = null;
+            }
+        }
+
+        private static void TestWithRgProcess(ProcessStartInfo psi, string recommendationOnFailure)
+        {
+            ExecuteRg(psi, out string? matches);
+            if (matches != null)
+            {
+                Assert.Fail($"Detected forbidden API usage:\n\n{matches}\nRecommentation: {recommendationOnFailure}\n\nArgs: {psi.Arguments}");
+            }
+        }
+
+        private static void ValidateNoForbiddenApiUsed(
+                string pattern,
+                string recommendation,
+                IReadOnlyList<string>? ignorePaths) // Path ignore starts from {ROOT}/Assets
+        {
+            ProcessStartInfo psi = NewRgProcessInfo(pattern);
+
+            if (ignorePaths != null)
+            {
+                foreach (var p in ignorePaths)
+                {
+                    psi.ArgumentList.Add("--glob");
+                    psi.ArgumentList.Add($"!{p}");
+                }
+            }
+
+            TestWithRgProcess(psi, recommendation);
+        }
+
+        private static void ClassShouldBeInNamespaces(SyntaxNode root, string file)
+        {
+            // Act
+            var classesOutsideNamespaces = root.DescendantNodesAndSelf()
+                                               .OfType<ClassDeclarationSyntax>()
+                                               .Where(classDeclaration =>
+                                                    !classDeclaration.Modifiers.Any(m => m.IsKind(SyntaxKind.PartialKeyword)) &&
+                                                    !classDeclaration.Ancestors().Any(e => e is NamespaceDeclarationSyntax or CompilationUnitSyntax) &&
+                                                    classDeclaration.Parent is CompilationUnitSyntax)
+                                               .ToList();
+
+            // Assert
+            Assert.AreEqual(0, classesOutsideNamespaces.Count,
+                $"File {Path.GetFileName(file)}: Found {classesOutsideNamespaces.Count} non-partial classes outside of namespaces. All non-partial classes should be within a namespace.");
+        }
+
+        private static void ShouldNotUsePlayerPrefsDirectly(string fileContent, string filePath)
+        {
+            // Ignore prefs plugin as it uses PlayerPrefs intentionally
+            if (filePath.StartsWith("Assets/DCL/Prefs/")) return;
+
+            string[]? lines = fileContent.Split('\n');
+            var violations = new List<string>();
+
+            for (var i = 0; i < lines.Length; i++)
+            {
+                string line = lines[i];
+                int index = line.IndexOf("PlayerPrefs.", StringComparison.Ordinal);
+
+                while (index != -1)
+                {
+                    bool isDclPrefixed = index >= 3 && line.Substring(index - 3, 3) == "DCL";
+
+                    if (!isDclPrefixed)
+                        violations.Add($"Line {i + 1}: {line.Trim()}");
+
+                    index = line.IndexOf("PlayerPrefs.", index + 1, StringComparison.Ordinal);
+                }
+            }
+
+            // Assert
+            Assert.IsTrue(violations.Count == 0,
+                $"File {Path.GetFileName(filePath)}: Detected direct use of 'PlayerPrefs.':\n{string.Join("\n", violations)}");
+        }
+
+        // To support WebGL compatability
+        private static void ShouldNotUseNativeWebSocket(string fileContent, string filePath)
+        {
+            var lines = fileContent.Split('\n');
+            var violations = new List<string>();
+
+            for (int i = 0; i < lines.Length; i++)
+            {
+                string line = lines[i];
+
+                string pattern = "System.Net.WebSockets";
+                if (line.Contains(pattern))
+                {
+                    violations.Add($"{filePath}:{i + 1}: uses '{pattern}'");
+                }
+            }
+
+            Assert.IsTrue(
+                    violations.Count == 0,
+                    violations.Count == 0
+                    ? string.Empty
+                    : $"File {Path.GetFileName(filePath)}: Detected forbidden API usage:\n{string.Join("\n", violations)}\nUse DCLWebSocket instead"
+                    );
+        }
+
+        // To support WebGL compatability
+        private static void ShouldNotUseSystemTask(string fileContent, string filePath)
+        {
+            if (fileContent.Contains(TRUST_WEBGL_SYSTEM_TASKS_SAFETY_FLAG))
+                return;
+
+            var lines = fileContent.Split('\n');
+            var violations = new List<string>();
+
+            for (int i = 0; i < lines.Length; i++)
+            {
+                string line = lines[i];
+
+                string pattern = "System.Threading.Tasks";
+                if (line.Contains(pattern)
+                        && line.Contains(IGNORE_LINE_WEBGL_SYSTEM_TASKS_SAFETY_FLAG) == false)
+                {
+                    violations.Add($"{filePath}:{i + 1}: uses '{pattern}'");
+                }
+            }
+
+            Assert.IsTrue(violations.Count == 0,
+                    $"File {Path.GetFileName(filePath)}: Detected forbidden API usage:\n{string.Join("\n", violations)}\nUse DCLTask instead");
+        }
+
+        // To support WebGL compatability
+        private static void ShouldNotUseDangerousUniTask(string fileContent, string filePath)
+        {
+            var lines = fileContent.Split('\n');
+            var violations = new List<string>();
+
+            for (int i = 0; i < lines.Length; i++)
+            {
+                string line = lines[i];
+
+                if (line.Contains(IGNORE_LINE_WEBGL_UNITASK_SAFETY_FLAG))
+                    continue;
+
+                foreach (string pattern in UNITASK_FORBIDDEN_CALLS)
+                {
+                    if (line.Contains(pattern))
+                    {
+                        violations.Add($"{filePath}:{i + 1}: uses '{pattern}'");
+                    }
+                }
+            }
+
+            Assert.IsTrue(violations.Count == 0,
+                    $"File {Path.GetFileName(filePath)}: Detected forbidden API usage:\n{string.Join("\n", violations)}\nUse DCLTask instead");
+        }
+
+        // TODO test is slow, migrate to rg
+        // To support WebGL compatability
+        private static void ShouldNotUseThreadingApiDirectly(string filePath, IReadOnlyList<(Regex regex, string pattern)> patternList)
+        {
+
+            using FileStream fs = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+            using StreamReader reader = new StreamReader(fs);
+
+            List<string> violations = new List<string>();
+
+            int i = 0;
+            string? current;
+            while ((current = reader.ReadLine()) != null)
+            {
+                i++;
+                string line = current;
+
+                if (line.Contains(TRUST_WEBGL_THREAD_SAFETY_FLAG))
+                    break;
+
+                if (line.Contains(IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG))
+                    continue;
+
+                // Ignore namespace keyword
+                if (line.StartsWith("namespace"))
+                    continue;
+
+                // Ignore comment-only lines (//, ///, ////, etc.)
+                if (line.AsSpan().TrimStart().StartsWith("//"))
+                    continue;
+
+                foreach ((Regex regex, string pattern) in patternList)
+                {
+                    if (regex.IsMatch(line))
+                    {
+                        violations.Add($"{filePath}:{i}: uses '{pattern}'");
+                    }
+                }
+            }
+
+            Assert.IsTrue(violations.Count == 0,
+                    $"File {Path.GetFileName(filePath)}: Detected forbidden API usage:\n{string.Join("\n", violations)}\nIf it's intendent use TRUST_WEBGL_THREAD_SAFETY_FLAG or IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG");
+        }
+
+        private static void AllAsyncMethodsShouldEndWithAsyncSuffix(SyntaxNode root, string fileContent, string filePath)
+        {
+            if (fileContent.Contains("[IgnoreAsyncNaming"))
+                return;
+
+            var asyncMethods = root.DescendantNodesAndSelf()
+                                   .Where(n => (n is MethodDeclarationSyntax m && m.Modifiers.Any(SyntaxKind.AsyncKeyword)) ||
+                                               (n is LocalFunctionStatementSyntax l && l.Modifiers.Any(SyntaxKind.AsyncKeyword)))
+                                   .ToList();
+
+            // Act
+            var methodsWithoutProperSuffix = asyncMethods
+                                            .Where(n => !GetName(n).EndsWith("Async"))
+                                            .Select(n => $"{GetName(n)} (line {GetLineNumber(n)})")
+                                            .ToList();
+
+            // Assert
+            Assert.AreEqual(0, methodsWithoutProperSuffix.Count,
+                $"File {Path.GetFileName(filePath)}: Found async methods/functions without 'Async' suffix: \n{string.Join("\n", methodsWithoutProperSuffix)}");
+        }
+
+        private static void UsingUnityEditorShouldBeSurroundedByDirectives(SyntaxNode root, string file)
+        {
+            // Find all using directives for UnityEditor.
+            var usingUnityEditorDirectives = root.DescendantNodes(descendIntoTrivia: true) // descendIntoTrivia to get preprocessor directives
+                                                 .OfType<UsingDirectiveSyntax>()
+                                                 .Where(u => u.Name.ToFullString().Trim() == "UnityEditor")
+                                                 .ToList();
+
+            foreach (UsingDirectiveSyntax usingDirective in usingUnityEditorDirectives)
+            {
+                var precedingTrivia = usingDirective.GetLeadingTrivia().ToList();
+                var followingTrivia = usingDirective.GetTrailingTrivia().ToList();
+
+                bool hasStartDirective = precedingTrivia.Any(t => t.IsKind(SyntaxKind.IfDirectiveTrivia) && t.ToFullString().Contains("UNITY_EDITOR"));
+                bool hasEndDirective = followingTrivia.Any(t => t.IsKind(SyntaxKind.EndIfDirectiveTrivia));
+
+                Assert.IsTrue(hasStartDirective, $"File {Path.GetFileName(file)}: 'using UnityEditor;' is not preceded by '#if UNITY_EDITOR'.");
+                Assert.IsTrue(hasEndDirective, $"File {Path.GetFileName(file)}: 'using UnityEditor;' is not followed by '#endif'.");
+            }
+        }
+
+        private static string GetName(SyntaxNode node) =>
+            node switch
+            {
+                MethodDeclarationSyntax method => method.Identifier.Text,
+                LocalFunctionStatementSyntax localFunction => localFunction.Identifier.Text,
+                _ => string.Empty,
+            };
+
+        private static int GetLineNumber(SyntaxNode node) =>
+            node.GetLocation().GetLineSpan().StartLinePosition.Line + 1;
+    }
+}

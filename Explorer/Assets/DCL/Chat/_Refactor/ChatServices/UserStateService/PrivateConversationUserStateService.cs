@@ -1,0 +1,401 @@
+﻿using Cysharp.Threading.Tasks;
+using DCL.Chat.History;
+using DCL.Diagnostics;
+using DCL.FeatureFlags;
+using DCL.Friends;
+using DCL.Friends.UserBlocking;
+using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.Optimization.Pools;
+using DCL.Settings.Settings;
+using DCL.Utility;
+using DCL.LiveKit.Public;
+using LiveKit.Rooms;
+using LiveKit.Rooms.Participants;
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Linq;
+using UnityEngine;
+using Utility;
+
+namespace DCL.Chat.ChatServices
+{
+    /// <summary>
+    ///     Responsible for managing the private conversation state.
+    ///     Always enabled
+    /// </summary>
+    public class PrivateConversationUserStateService : IDisposable, ICurrentChannelUserStateService
+    {
+        public enum ChatUserState
+        {
+            Connected, //Online friends and other users that are not blocked if both users have ALL set in privacy setting.
+            BlockedByOwnUser, //Own user blocked the other user
+            PrivateMessagesBlockedByOwnUser, //Own user has privacy settings set to ONLY FRIENDS
+            PrivateMessagesBlocked, //The other user has its privacy settings set to ONLY FRIENDS
+            Disconnected, //The other user is either offline or has blocked the own user.
+            OtherClient, //The other user is connected with a client that doesn't support DMs
+        }
+
+        public readonly struct UserState
+        {
+            public readonly bool IsConsideredOnline;
+            public readonly ChatUserState ChatUserState;
+
+            public UserState(bool isConsideredOnline, ChatUserState chatUserState)
+            {
+                IsConsideredOnline = isConsideredOnline;
+                ChatUserState = chatUserState;
+            }
+        }
+
+        private const string PRIVACY_SETTING_ALL = "all";
+        private const int TIMEOUT_FRIENDS_CONTAINER_MINUTES = 2;
+
+        private readonly IUserBlockingCache userBlockingCache;
+        private readonly IFriendsService? friendsService;
+
+        private readonly ChatSettingsAsset settingsAsset;
+        private readonly RPCChatPrivacyService rpcChatPrivacyService;
+        private readonly IFriendsEventBus friendsEventBus;
+        private readonly IRoom chatRoom;
+        private readonly IRoomHub roomHub;
+
+        private readonly ChatEventBus eventBus;
+        private readonly CurrentChannelService currentChannelService;
+
+        /// <summary>
+        ///     Contains the list of all participants in all private conversations as they share the same LiveKit room
+        /// </summary>
+        private readonly HashSet<string> onlineParticipants = new (PoolConstants.AVATARS_COUNT);
+        private readonly HashSet<string> snapshotBuffer = new (PoolConstants.AVATARS_COUNT);
+
+        private CancellationTokenSource cts = new ();
+
+        public IReadOnlyCollection<string> OnlineParticipants { get; }
+
+        public PrivateConversationUserStateService(
+            CurrentChannelService currentChannelService,
+            ChatEventBus eventBus,
+            IUserBlockingCache userBlockingCache,
+            IFriendsService? friendsService,
+            ChatSettingsAsset settingsAsset,
+            RPCChatPrivacyService rpcChatPrivacyService,
+            IFriendsEventBus friendsEventBus,
+            IRoomHub roomHub)
+        {
+            this.currentChannelService = currentChannelService;
+            this.eventBus = eventBus;
+            this.userBlockingCache = userBlockingCache;
+            this.friendsService = friendsService;
+            this.settingsAsset = settingsAsset;
+            this.rpcChatPrivacyService = rpcChatPrivacyService;
+            this.friendsEventBus = friendsEventBus;
+            this.chatRoom = roomHub.ChatRoom();
+            this.roomHub = roomHub;
+
+            OnlineParticipants = new ReadOnlyHashSet<string>(onlineParticipants);
+        }
+
+        public void Dispose()
+        {
+            cts.SafeCancelAndDispose();
+            UnsubscribeFromEvents();
+        }
+
+        public void Activate() { }
+
+        public async UniTask InitializeAsync(CancellationToken ct)
+        {
+            SubscribeToEvents();
+
+            cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+
+            try
+            {
+                await rpcChatPrivacyService.GetOwnSocialSettingsAsync(cts.Token);
+
+                // The chat room is never connected in local scene development (see CommsContainer); waiting would just burn the timeout.
+                if (FeaturesRegistry.Instance.IsEnabled(FeatureId.LocalSceneDevelopment))
+                    return;
+
+                await UniTask.WaitUntil(() =>
+                    chatRoom.Info.ConnectionState == LKConnectionState.ConnConnected, cancellationToken: cts.Token)
+                             .Timeout(TimeSpan.FromMinutes(TIMEOUT_FRIENDS_CONTAINER_MINUTES));
+
+                lock (onlineParticipants)
+                {
+                    foreach ((string remoteParticipantIdentity, _) in chatRoom.Participants.RemoteParticipantIdentities().Where(rp => UserIsConsideredAsOnline(rp.Key)))
+                        onlineParticipants.Add(remoteParticipantIdentity);
+                }
+            }
+            catch (TimeoutException) { ReportHub.LogError(ReportCategory.CHAT_MESSAGES, "Friend service and user blocking cache are not available. Ignore this if you are in LSD"); }
+            catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogError(ReportCategory.CHAT_MESSAGES, $"Error during initialization: {e.Message}"); }
+        }
+
+        private void SubscribeToEvents()
+        {
+            settingsAsset.PrivacySettingsSet += OnPrivacySettingsSet;
+            chatRoom.ConnectionUpdated += OnRoomConnectionStateChanged;
+            chatRoom.Participants.UpdatesFromParticipant += OnUpdatesFromParticipant;
+            friendsEventBus.OnYouBlockedByUser += OnYouBlockedByUser;
+            friendsEventBus.OnYouUnblockedByUser += OnUserUnblocked;
+            friendsEventBus.OnYouBlockedProfile += OnYouBlockedProfile;
+            friendsEventBus.OnYouUnblockedProfile += OnYouUnblockedProfile;
+            friendsEventBus.OnOtherUserAcceptedYourRequest += OnNewFriendAdded;
+            friendsEventBus.OnOtherUserRemovedTheFriendship += OnFriendRemoved;
+            friendsEventBus.OnYouAcceptedFriendRequestReceivedFromOtherUser += OnNewFriendAdded;
+            friendsEventBus.OnYouRemovedFriend += OnFriendRemoved;
+        }
+
+        private void UnsubscribeFromEvents()
+        {
+            settingsAsset.PrivacySettingsSet -= OnPrivacySettingsSet;
+            chatRoom.ConnectionUpdated -= OnRoomConnectionStateChanged;
+            chatRoom.Participants.UpdatesFromParticipant -= OnUpdatesFromParticipant;
+            friendsEventBus.OnYouBlockedByUser -= OnYouBlockedByUser;
+            friendsEventBus.OnYouUnblockedByUser -= OnUserUnblocked;
+            friendsEventBus.OnYouBlockedProfile -= OnYouBlockedProfile;
+            friendsEventBus.OnYouUnblockedProfile -= OnYouUnblockedProfile;
+            friendsEventBus.OnOtherUserAcceptedYourRequest -= OnNewFriendAdded;
+            friendsEventBus.OnOtherUserRemovedTheFriendship -= OnFriendRemoved;
+            friendsEventBus.OnYouAcceptedFriendRequestReceivedFromOtherUser -= OnNewFriendAdded;
+            friendsEventBus.OnYouRemovedFriend -= OnFriendRemoved;
+        }
+
+        private void OnPrivacySettingsSet(ChatPrivacySettings privacySettings)
+        {
+            rpcChatPrivacyService.UpsertSocialSettingsAsync(privacySettings == ChatPrivacySettings.All, cts.Token).Forget();
+
+            // Simply notify that the ChatUserState should be updated
+            // It will be retrieved via "GetChatUserStateAsync"
+
+            eventBus.RaiseCurrentChannelStateUpdatedEvent();
+        }
+
+        public async UniTask<UserState> GetChatUserStateAsync(string userId, CancellationToken ct)
+        {
+            string lowerUserId = userId.ToLower();
+
+            // friendsService is null when the Friends feature is disabled (e.g. local scene development)
+            FriendshipStatus friendshipStatus = friendsService != null
+                ? await friendsService.GetFriendshipStatusAsync(userId, ct)
+                : FriendshipStatus.None;
+            bool isUserConnected = UserIsConsideredAsOnline(userId);
+
+            //If it's a friend we just return its connection status
+            if (friendshipStatus == FriendshipStatus.Friend)
+                return new UserState(isUserConnected, isUserConnected ? ChatUserState.Connected : ChatUserState.Disconnected);
+
+            //If the user is blocked by us, we show that first
+            if (friendshipStatus == FriendshipStatus.Blocked)
+                return new UserState(isUserConnected, ChatUserState.BlockedByOwnUser);
+
+            // If we are being blocked by them, show them as offline
+            if (friendshipStatus == FriendshipStatus.BlockedBy)
+                return new UserState(false, ChatUserState.Disconnected);
+
+            // This is done because other clients don't connect to chat livekit room, so they are not found in the participant list.
+            // If we are able to find them through either island or scene room, it means we cannot chat with them
+            if (!isUserConnected && (roomHub.TryGetUser(userId, out _, out _) || roomHub.TryGetUser(lowerUserId, out _, out _)))
+                return new UserState(isUserConnected, ChatUserState.OtherClient);
+
+            // If the user is not reachable by any means, they are simply offline
+            if (!isUserConnected)
+                return new UserState(false, ChatUserState.Disconnected);
+
+            //If the user is connected we need to check our settings and then theirs.
+            if (settingsAsset.chatPrivacySettings == ChatPrivacySettings.OnlyFriends)
+                return new UserState(isUserConnected, ChatUserState.PrivateMessagesBlockedByOwnUser);
+
+            // User should be online, but check if they disconnected while processing this data + ensure we have metadata
+            LKParticipant? participant = chatRoom.Participants.RemoteParticipant(userId)
+                                       ?? chatRoom.Participants.RemoteParticipant(lowerUserId);
+
+            if (participant != null && !string.IsNullOrEmpty(participant.Metadata))
+            {
+                //If we allow ALL messages, we need to know their settings.
+                ParticipantPrivacyMetadata userMetadata = JsonUtility.FromJson<ParticipantPrivacyMetadata>(participant.Metadata);
+
+                if (userMetadata.private_messages_privacy != PRIVACY_SETTING_ALL)
+                    return new UserState(isUserConnected, ChatUserState.PrivateMessagesBlocked);
+            }
+
+            return new UserState(isUserConnected, isUserConnected ? ChatUserState.Connected : ChatUserState.Disconnected);
+        }
+
+        private void OnRoomConnectionStateChanged(IRoom room, ConnectionUpdate connectionUpdate, LKDisconnectReason? disconnectReason)
+        {
+            bool shouldNotify = false;
+
+            lock (onlineParticipants)
+            {
+                switch (connectionUpdate)
+                {
+                    case ConnectionUpdate.Connected:
+                    case ConnectionUpdate.Reconnected:
+                        onlineParticipants.Clear();
+
+                        foreach ((string remoteParticipantIdentity, _) in chatRoom.Participants.RemoteParticipantIdentities())
+                            if (UserIsConsideredAsOnline(remoteParticipantIdentity))
+                                onlineParticipants.Add(remoteParticipantIdentity);
+
+                        shouldNotify = true;
+                        break;
+                    case ConnectionUpdate.Disconnected:
+                        onlineParticipants.Clear();
+                        shouldNotify = true;
+                        break;
+                }
+
+                if (shouldNotify)
+                    CopyToSnapshotBuffer();
+            }
+
+            if (shouldNotify)
+                eventBus.Publish(new ChatEvents.ChannelUsersStatusUpdated(ChatChannel.EMPTY_CHANNEL_ID, ChatChannel.ChatChannelType.USER, snapshotBuffer));
+        }
+
+        private void OnUpdatesFromParticipant(LKParticipant participant, UpdateFromParticipant update)
+        {
+            ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"Update From Participant {update.ToString()}");
+            string userId = participant.Identity;
+
+            if (update == UpdateFromParticipant.Disconnected)
+                lock (onlineParticipants)
+                {
+                    onlineParticipants.Remove(userId);
+                }
+
+            CheckOnlineStatusAndNotify(userId);
+        }
+
+        private void OnFriendRemoved(string userId)
+        {
+            if (!UserIsConnectedToRoom(userId)) return;
+
+            CheckOnlineStatusAndNotify(userId);
+        }
+
+        private void OnNewFriendAdded(string userId)
+        {
+            CheckOnlineStatusAndNotify(userId);
+        }
+
+        private void OnUserUnblocked(string userId)
+        {
+            if (!UserIsConnectedToRoom(userId)) return;
+
+            CheckOnlineStatusAndNotify(userId);
+        }
+
+        private void OnYouUnblockedProfile(BlockedProfile profile) =>
+            CheckOnlineStatusAndNotify(profile.Profile.UserId.Value);
+
+        private void OnYouBlockedByUser(string userId)
+        {
+            if (!UserIsConnectedToRoom(userId)) return;
+
+            CheckOnlineStatusAndNotify(userId);
+        }
+
+        private void OnYouBlockedProfile(BlockedProfile profile) =>
+            CheckOnlineStatusAndNotify(profile.Profile.UserId.Value);
+
+        /// <summary>
+        /// Determines if a given user should be considered "online"
+        /// </summary>
+        /// <param name="userId">The ID of the user to check.</param>
+        /// <returns>True if the user is considered online under the privacy rules; otherwise false.</returns>
+        private bool UserIsConsideredAsOnline(string userId)
+        {
+            // Quick reject: we have them blocked
+            if (userBlockingCache.UserIsBlocked(userId))
+                return false;
+
+            return UserIsConnectedToRoom(userId);
+        }
+
+
+        private bool UserIsConnectedToRoom(string userId) =>
+            chatRoom.Participants.RemoteParticipant(userId) != null || chatRoom.Participants.RemoteParticipant(userId.ToLower()) != null;
+
+        private void CheckOnlineStatusAndNotify(string userId)
+        {
+            bool consideredAsOnline = UserIsConsideredAsOnline(userId);
+
+            lock (onlineParticipants)
+            {
+                if (consideredAsOnline)
+                    onlineParticipants.Add(userId);
+                else
+                    onlineParticipants.Remove(userId);
+            }
+
+            NotifyUserStateUpdated(userId, consideredAsOnline);
+        }
+
+        private void NotifyUserStateUpdated(string userId, bool isOnline)
+        {
+            // This service doesn't know about the current channel list
+            // so it's the responsibility of the corresponding presenter to detect if the user is in the list
+
+            eventBus.RaiseUserStatusUpdatedEvent(new ChatChannel.ChannelId(userId), ChatChannel.ChatChannelType.USER, userId, isOnline);
+
+            if (currentChannelService.CurrentChannelId.Id == userId)
+                eventBus.RaiseCurrentChannelStateUpdatedEvent();
+        }
+
+        public void CopyOnlineParticipantsTo(HashSet<string> destination)
+        {
+            destination.Clear();
+
+            lock (onlineParticipants)
+            {
+                foreach (string participant in onlineParticipants)
+                    destination.Add(participant);
+            }
+        }
+
+        private void CopyToSnapshotBuffer()
+        {
+            snapshotBuffer.Clear();
+
+            foreach (string participant in onlineParticipants)
+                snapshotBuffer.Add(participant);
+        }
+
+        void ICurrentChannelUserStateService.Deactivate()
+        {
+        }
+
+        // Wire format serialized with JsonUtility: field names must match the JSON keys.
+        // ReSharper disable InconsistentNaming
+        [Serializable]
+        public struct ParticipantPrivacyMetadata
+        {
+            /// <summary>
+            ///     The possible values are "all" or "only_friends"
+            /// </summary>
+            public string private_messages_privacy;
+
+            public ParticipantPrivacyMetadata(string privacy)
+            {
+                private_messages_privacy = privacy;
+            }
+
+            public override string ToString() =>
+                $"(Private Messages Privacy: {private_messages_privacy}";
+        }
+
+        public void Reset()
+        {
+            cts.SafeCancelAndDispose();
+            UnsubscribeFromEvents();
+
+            lock (onlineParticipants)
+            {
+                onlineParticipants.Clear();
+            }
+        }
+    }
+}

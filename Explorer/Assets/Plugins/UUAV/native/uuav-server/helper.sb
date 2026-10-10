@@ -1,0 +1,160 @@
+;; uuav-helper Seatbelt profile. Deny by default; every allowance below is
+;; tied to one concrete need of the decode pipeline. Applied by the helper
+;; to itself (see src/sandbox_macos.rs) before the IPC channel is adopted
+;; and before any untrusted byte is parsed. There is intentionally NO
+;; process-exec, NO process-fork, and NO file-write* on any persistent
+;; path: a compromised decoder cannot launch a payload or persist files.
+;;
+;; Parameters (always supplied by sandbox_macos.rs, never optional):
+;;   SERVICE_NAME           per-session bootstrap name "uuav.<token>"
+;;   PLUGIN_DIR             directory of uuav-helper and its dylibs
+;;   HOME                   user home, for user-installed root CAs
+;;   ALLOW_MEDIA_FILE_READ  "1" only when the protocol whitelist contains
+;;                          "file" (Unity Editor local playback), else "0"
+
+(version 1)
+(deny default)
+
+;; ---- process basics -----------------------------------------------------
+
+(allow process-info* (target self))
+;; the kqueue EVFILT_PROC NOTE_EXIT watch on the parent pid (watch_macos.rs)
+(allow process-info-pidinfo)
+(allow signal (target self))
+;; read-only sysctls: dyld, malloc, Metal and FFmpeg probe hw.* and kern.*
+(allow sysctl-read)
+
+;; ---- files: read system libraries and data, write nothing ----------------
+
+;; realpath/stat crosses directories outside the subpaths below;
+;; metadata only, contents stay denied
+(allow file-read-metadata)
+
+(allow file-read*
+    ;; frameworks, dyld shared cache, GPU driver bundles dlopened at
+    ;; Metal/VideoToolbox init
+    (subpath "/System")
+    (subpath "/usr/lib")
+    (subpath "/usr/share")
+    (subpath "/private/var/db/dyld")
+    ;; Rosetta runtime, for the x86_64 slice under a translated parent
+    (subpath "/Library/Apple")
+    ;; TLS trust: admin trust store and Security MDS databases
+    (subpath "/Library/Keychains")
+    (subpath "/private/var/db/mds")
+    ;; TLS trust: user-installed root CAs (corporate TLS interception)
+    (subpath (string-append (param "HOME") "/Library/Keychains"))
+    ;; resolver and time configuration
+    (literal "/private/etc/hosts")
+    (literal "/private/etc/services")
+    (literal "/private/etc/resolv.conf")
+    (literal "/private/etc/localtime")
+    (subpath "/private/var/db/timezone")
+    (literal "/dev/random")
+    (literal "/dev/urandom")
+    (literal "/dev/null"))
+
+;; the helper's own FFmpeg/libuuav dylibs resolve from its directory via
+;; the @loader_path rpath
+(allow file-read* (subpath (param "PLUGIN_DIR")))
+
+;; Editor-only: the protocol whitelist contained "file", so FFmpeg may read
+;; any path the Editor user can. Writes and exec stay denied even here.
+(if (string=? (param "ALLOW_MEDIA_FILE_READ") "1")
+    (allow file-read*))
+
+;; stdio hygiene: eprintln to a terminal during dev runs; a tty write
+;; grants nothing durable. Writes to the inherited pipes/sockets of the
+;; normal Unity case are not path-checked at all. ioctl on ttys stays
+;; denied: plain writes never need it, and TIOCSTI on a tty injects
+;; keystrokes into the owning shell, a route around the process-exec
+;; denial above.
+(allow file-write-data
+    (literal "/dev/null")
+    (regex #"^/dev/ttys[0-9]+$"))
+(allow file-ioctl (literal "/dev/null"))
+
+;; ---- IPC with the client --------------------------------------------------
+
+;; The socketpair control channel travels by fd inheritance and needs no
+;; rule. IOSurface ports go to exactly one bootstrap name: the client's
+;; per-session service, registered before spawn. No wildcard.
+(allow mach-lookup (global-name (param "SERVICE_NAME")))
+
+;; ---- OS plumbing shared by the frameworks below ----------------------------
+
+(allow mach-lookup
+    ;; CFPreferences (Foundation, Security and Metal all read defaults)
+    (global-name "com.apple.cfprefsd.daemon")
+    (global-name "com.apple.cfprefsd.agent")
+    ;; libinfo (getaddrinfo host/service resolution route)
+    (global-name "com.apple.system.opendirectoryd.libinfo")
+    ;; darwin notifications (libnotify, used throughout the frameworks)
+    (global-name "com.apple.system.notification_center")
+    ;; os_log / unified logging
+    (global-name "com.apple.logd")
+    (global-name "com.apple.diagnosticd"))
+(allow user-preference-read)
+(allow ipc-posix-shm-read-data
+    (ipc-posix-name "apple.shm.notification_center"))
+
+;; ---- network: FFmpeg fetches media directly --------------------------------
+
+;; Loopback is deliberately NOT carved out of this allowance: local-realm
+;; preview (Creator Hub / `dcl start`) serves scene content - media
+;; included - from 127.0.0.1, and this process is what fetches it, so a
+;; localhost deny would silently kill video in every locally previewed
+;; scene.
+(allow network-outbound (remote tcp) (remote udp))
+;; DNS: unix-domain socket on older systems, XPC service on newer ones
+(allow network-outbound (literal "/private/var/run/mDNSResponder"))
+(allow mach-lookup (global-name "com.apple.dnssd.service"))
+;; SecureTransport: certificate evaluation is brokered by trustd and
+;; securityd; revocation fetches happen inside trustd, not in this process
+(allow mach-lookup
+    (global-name "com.apple.trustd")
+    (global-name "com.apple.trustd.agent")
+    (global-name "com.apple.SecurityServer")
+    (global-name "com.apple.ocspd")
+    ;; proxy and interface state queried during connect
+    (global-name "com.apple.SystemConfiguration.configd"))
+
+;; ---- GPU: Metal blit, IOSurface, VideoToolbox hardware decode ---------------
+
+(allow iokit-get-properties)
+
+(allow iokit-open
+    ;; IOSurface allocation and mach-port export (shared textures)
+    (iokit-user-client-class "IOSurfaceRootUserClient")
+    (iokit-user-client-class "IOSurfaceSendRight")
+    ;; pixel transfer between surfaces (CoreVideo may use it on both arches)
+    (iokit-user-client-class "IOSurfaceAcceleratorClient")
+    ;; Apple Silicon GPU
+    (iokit-user-client-class "AGXDeviceUserClient")
+    (iokit-user-client-class "AGXSharedUserClient")
+    (iokit-user-client-class "AGXCommandQueue")
+    ;; Apple Silicon hardware video decoder (VideoToolbox path)
+    (iokit-user-client-class "AppleAVDUserClient")
+    ;; Intel integrated GPUs, including their video decode contexts
+    (iokit-user-client-class "IGAccelDevice")
+    (iokit-user-client-class "IGAccelSharedUserClient")
+    (iokit-user-client-class "IGAccelCommandQueue")
+    (iokit-user-client-class "IGAccelVideoContextMain")
+    (iokit-user-client-class "IGAccelVideoContextMedia")
+    (iokit-user-client-class "IGAccelVideoContextVEBox")
+    ;; AMD discrete GPUs on Intel Macs; the generation is in the class name
+    ;; (AMDRadeonX4000/X5000/X6000), so one anchored regex covers them
+    (iokit-user-client-class-regex
+        #"^AMDRadeonX[0-9]+_AMDAccel(Device|SharedUserClient|CommandQueue|VideoContext[A-Za-z]*)$"))
+
+(allow mach-lookup
+    ;; Metal device bring-up warms the shader compiler service even for a
+    ;; blit-only queue
+    (global-name "com.apple.MTLCompilerService")
+    ;; Intel GPU compiler service
+    (global-name "com.apple.cvmsServ")
+    ;; VideoToolbox out-of-process decoder fallbacks for codecs Apple does
+    ;; not decode in-process, and decode power management
+    (global-name "com.apple.coremedia.decompressionsession.xpc")
+    (global-name "com.apple.coremedia.videodecoder")
+    (global-name "com.apple.PowerManagement.control"))

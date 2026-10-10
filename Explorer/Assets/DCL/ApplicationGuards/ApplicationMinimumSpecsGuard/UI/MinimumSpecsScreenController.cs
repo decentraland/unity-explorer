@@ -1,0 +1,80 @@
+using Cysharp.Threading.Tasks;
+using DCL.Browser;
+using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.PerformanceAndDiagnostics.Analytics;
+using DCL.Prefs;
+using MVC;
+using System.Collections.Generic;
+using System.Threading;
+
+namespace DCL.ApplicationGuards
+{
+    public class MinimumSpecsScreenController : ControllerBase<MinimumSpecsScreenView>
+    {
+        private readonly UnityAppWebBrowser webBrowser;
+        private readonly IAnalyticsController analytics;
+        private readonly IReadOnlyList<SpecResult> specResult;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
+        public readonly UniTaskCompletionSource HoldingTask;
+
+        private MinimumSpecsTablePresenter? specsTablePresenter;
+
+        public MinimumSpecsScreenController(ViewFactoryMethod viewFactory,
+            UnityAppWebBrowser webBrowser,
+            IAnalyticsController analytics,
+            IReadOnlyList<SpecResult> specResult) : base(viewFactory)
+        {
+            this.webBrowser = webBrowser;
+            this.analytics = analytics;
+            this.specResult = specResult;
+            HoldingTask = new UniTaskCompletionSource();
+        }
+
+        protected override void OnViewInstantiated()
+        {
+            viewInstance!.ContinueButton.onClick.AddListener(OnContinueClicked);
+            viewInstance.ReadMoreButton.onClick.AddListener(OnReadMoreClicked);
+            viewInstance.DontShowAgainToggle.SetIsOnWithoutNotify(DCLPlayerPrefs.GetBool(DCLPrefKeys.DONT_SHOW_MIN_SPECS_SCREEN));
+            viewInstance.DontShowAgainToggle.onValueChanged.AddListener(OnToggleChanged);
+
+            specsTablePresenter = new MinimumSpecsTablePresenter(viewInstance.TableView);
+            specsTablePresenter.Populate(specResult);
+        }
+
+        protected override void OnViewShow()
+        {
+            analytics.Track(AnalyticsEvents.Ui.MINIMUM_REQUIREMENTS_SCREEN_SHOWN);
+        }
+
+        private void OnToggleChanged(bool dontShowAgain)
+        {
+            DCLPlayerPrefs.SetBool(DCLPrefKeys.DONT_SHOW_MIN_SPECS_SCREEN, dontShowAgain, true);
+        }
+
+        public override void Dispose()
+        {
+            if (viewInstance == null)
+                return;
+
+            viewInstance.ContinueButton.onClick.RemoveListener(OnContinueClicked);
+            viewInstance.ReadMoreButton.onClick.RemoveListener(OnReadMoreClicked);
+            viewInstance.DontShowAgainToggle.onValueChanged.RemoveListener(OnToggleChanged);
+            HoldingTask.TrySetResult();
+        }
+
+        private void OnContinueClicked()
+        {
+            DCLPlayerPrefs.SetBool(DCLPrefKeys.DONT_SHOW_MIN_SPECS_SCREEN, viewInstance!.DontShowAgainToggle.isOn, true);
+            analytics.Track(AnalyticsEvents.Ui.SKIP_MINIMUM_REQUIREMENTS_SCREEN);
+            HoldingTask.TrySetResult();
+        }
+
+        private void OnReadMoreClicked()
+        {
+            webBrowser.OpenUrlMainThreadOnly(DecentralandUrl.MinimumSpecs);
+        }
+
+        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
+            HoldingTask.Task;
+    }
+}

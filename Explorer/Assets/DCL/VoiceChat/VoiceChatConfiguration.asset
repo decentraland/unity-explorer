@@ -1,0 +1,79 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dcc266991aac5dd4d8eefcb174ba92dd, type: 3}
+  m_Name: VoiceChatConfiguration
+  m_EditorClassIdentifier: 
+  EnableLocalTrackPlayback: 0
+  HoldThresholdInSeconds: 0.5
+  MicrophoneReinitDelayMs: 500
+  MaxFreshDataWaitTimeMs: 1000
+  FreshDataCheckDelayMs: 50
+  MaxReconnectionAttempts: 3
+  ReconnectionDelayMs: 2000
+  AudioMixerGroup: {fileID: 4705557717073340048, guid: e38b0fb061d7ffa47b54d89ecd483bd2, type: 2}
+  microphonePlaybackToSpeakers: 0
+  ChatAudioMixerGroup: {fileID: -2191859670193011288, guid: e38b0fb061d7ffa47b54d89ecd483bd2, type: 2}
+  NearbyChatAudioMixerGroup: {fileID: 5332904453353020933, guid: e38b0fb061d7ffa47b54d89ecd483bd2, type: 2}
+  NearbyCustomRolloffCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 3
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 8
+      value: 0.5
+      inSlope: -0.15
+      outSlope: -0.15
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 14
+      value: 0.03
+      inSlope: -0.04
+      outSlope: -0.02
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 16
+      value: 0
+      inSlope: -0.01
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  nearbySpatialize: 1
+  nearbyIldStrength: 0.75
+  nearbySmoothPanning: 0

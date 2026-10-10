@@ -1,0 +1,120 @@
+using Cysharp.Threading.Tasks;
+using DCL.Ipfs;
+using ECS;
+using Microsoft.ClearScript.JavaScript;
+using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
+using System.Threading;
+
+namespace SceneRuntime.Apis.Modules.Runtime
+{
+    /// <summary>
+    ///     The contracts correspond directly to the JS-SDK-Toolchain and its transport API.
+    ///     They don't have Protobuf related stuff
+    /// </summary>
+    public interface IRuntime : IDisposable
+    {
+        public UniTask<ReadFileResponse> ReadFileAsync(string fileName, CancellationToken ct);
+
+        public UniTask<GetWorldTimeResponse> GetWorldTimeAsync();
+
+        public CurrentSceneEntityResponse GetSceneInformation();
+
+        public UniTask<GetRealmResponse> GetRealmAsync(CancellationToken ct);
+
+        public GetExplorerInformationResponse GetExplorerInformation();
+
+        [Serializable]
+        public struct GetExplorerInformationResponse
+        {
+            public string agent;
+            public string platform;
+
+            /// <summary>
+            ///     JSON-serialized Dictionary&lt;string, string&gt; of custom explorer configurations.
+            ///     Parse with JSON.parse in JS.
+            /// </summary>
+            public string configurationsJson;
+        }
+
+        [Serializable]
+        public struct GetWorldTimeResponse
+        {
+            public float seconds;
+        }
+
+        [Serializable]
+        public struct ReadFileResponse
+        {
+            public ITypedArray<byte> content;
+            public string hash;
+        }
+
+        [Serializable]
+        public class GetRealmResponse
+        {
+            public RealmInfo? realmInfo;
+
+            public GetRealmResponse(RealmInfo? realmInfo)
+            {
+                this.realmInfo = realmInfo;
+            }
+        }
+
+        [Serializable]
+        public class RealmInfo
+        {
+            public string baseUrl;
+            public string realmName;
+            public int networkId;
+            public string commsAdapter;
+            public bool isPreview;
+            public string room;
+            public bool isConnectedSceneRoom;
+
+            public RealmInfo(string baseUrl, string realmName, int networkId, string commsAdapter, bool isPreview, string room, bool isConnectedSceneRoom)
+            {
+                this.baseUrl = baseUrl;
+                this.realmName = realmName;
+                this.networkId = networkId;
+                this.commsAdapter = commsAdapter;
+                this.isPreview = isPreview;
+                this.room = room;
+                this.isConnectedSceneRoom = isConnectedSceneRoom;
+            }
+        }
+
+        [Serializable]
+        public struct CurrentSceneEntityResponse
+        {
+            /// <summary>
+            ///     The URN of the scene running, which can be either the entityId or the full URN.
+            /// </summary>
+            public string urn;
+
+            /// <summary>
+            ///     A list containing the contents of the deployed entities.
+            /// </summary>
+            public string contentJson;
+
+            /// <summary>
+            ///     JSON serialization of the entity.metadata field.
+            /// </summary>
+            public string metadataJson;
+
+            /// <summary>
+            ///     The base URL used to resolve all content files.
+            /// </summary>
+            public string baseUrl;
+
+            public CurrentSceneEntityResponse(string urn, ContentDefinition[]? content, string metadataJson, string baseUrl)
+            {
+                this.urn = urn;
+                contentJson = content is null ? "{}" : JsonConvert.SerializeObject(content);
+                this.metadataJson = metadataJson;
+                this.baseUrl = baseUrl;
+            }
+        }
+    }
+}

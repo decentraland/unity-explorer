@@ -1,0 +1,27 @@
+using System;
+
+namespace DCL.Communities.CommunitiesDataProvider.DTOs
+{
+    [Serializable]
+    public class CreateOrUpdateCommunityResponse
+    {
+        [Serializable]
+        public struct CommunityData
+        {
+            public string id;
+            public string name;
+            public string description;
+            public string ownerAddress;
+            public CommunityPrivacy privacy;
+            public CommunityVisibility visibility;
+            public bool active;
+            public string thumbnailUrl;
+        }
+
+        public string message;
+        public CommunityData data;
+        public CommunityModerationResponse moderationData;
+    }
+}
+
+

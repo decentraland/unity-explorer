@@ -1,0 +1,5 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <DCL.DebugUtilities.Views.DebugButtonElement>
+        <ui:Button text="Button" display-tooltip-when-elided="true" class="debug-button"/>
+    </DCL.DebugUtilities.Views.DebugButtonElement>
+</ui:UXML>

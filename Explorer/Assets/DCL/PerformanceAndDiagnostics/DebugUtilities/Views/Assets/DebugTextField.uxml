@@ -1,0 +1,5 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <DCL.DebugUtilities.Views.DebugTextFieldElement>
+        <ui:TextField picking-mode="Ignore" value="Single-line text"/>
+    </DCL.DebugUtilities.Views.DebugTextFieldElement>
+</ui:UXML>

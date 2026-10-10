@@ -1,0 +1,12 @@
+{
+  "override": true,
+  "debugLogMatrix": [
+    { "category": "VOICE_CHAT", "severity": "Warning" },
+    { "category": "FRIENDS", "severity": "Warning" },
+    { "category": "COMMUNITIES", "severity": "Warning" },
+    { "category": "COMMUNITY_VOICE_CHAT", "severity": "Warning" }
+  ],
+  "sentryMatrix": [
+    { "category": "VOICE_CHAT", "severity": "Exception" }
+  ]
+}

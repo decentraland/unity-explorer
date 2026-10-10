@@ -1,0 +1,23 @@
+addAssignees: author
+numberOfAssignees: 1
+
+addReviewers: true
+numberOfReviewers: 1
+useReviewGroups: true
+
+reviewGroups:
+  techleads:
+    - mikhail-dcl
+    - dalkia
+    - alejandro-jimenez-dcl
+  devs:      
+    - lorux0
+    - davidejensen
+    - popuz
+    - pravusjif
+    - NickKhalow
+    - lorenzo-ranciaffi
+
+filterLabels:
+  exclude:
+    - "no review"

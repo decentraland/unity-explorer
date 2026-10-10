@@ -1,0 +1,216 @@
+using Arch.Core;
+using CommunicationData.URLHelpers;
+using CRDT;
+using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
+using DCL.PerformanceAndDiagnostics.Analytics;
+using DCL.ECSComponents;
+using DCL.Optimization.PerformanceBudgeting;
+using DCL.Utilities.Extensions;
+using DCL.WebRequests;
+using ECS.StreamableLoading.Textures;
+using ECS.Unity.AssetLoad.Cache;
+using ECS.Unity.GltfNodeModifiers.Components;
+using ECS.Unity.PrimitiveRenderer.Components;
+using ECS.Unity.Textures.Components;
+using LiveKit.Rooms;
+using SceneRunner.Scene;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
+using System.Threading;
+using UnityEngine;
+using UnityEngine.Pool;
+
+namespace DCL.SDKComponents.MediaStream
+{
+    /// <summary>
+    ///     A unique instance per scene
+    /// </summary>
+    public class MediaFactory : IMediaFactory
+    {
+        private const string CONTENT_SERVER_PREFIX = "/content/contents";
+
+        private readonly ISceneData sceneData;
+        private readonly IRoom streamingRoom;
+
+        // Lets LivekitPlayer synchronously detect that the room is stopping (realm change) before the FFI
+        // teardown invalidates track handles. A delegate because this assembly (ECS.Unity) cannot
+        // reference the connective room types without an asmdef cycle; MediaFactoryBuilder supplies it.
+        private readonly Func<bool> streamingRoomRunning;
+        private readonly AvatarPlaceHolderTextureSource? placeholderSource;
+        private readonly MediaPlayerCustomPool mediaPlayerPool;
+        private readonly ISceneStateProvider sceneStateProvider;
+        private readonly MediaVolume mediaVolume;
+        private readonly IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap;
+        private readonly IPerformanceBudget frameBudget;
+        private readonly World world;
+        private readonly AssetPreLoadCache assetPreLoadCache;
+
+        private readonly IObjectPool<RenderTexture> videoTexturesPool;
+        private readonly IUrlResolverService urlResolverService;
+
+        public MediaFactory(ISceneData sceneData, IRoom streamingRoom, Func<bool> streamingRoomRunning, MediaPlayerCustomPool mediaPlayerPool, ISceneStateProvider sceneStateProvider, MediaVolume mediaVolume,
+            IObjectPool<RenderTexture> videoTexturesPool, IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap, World world, IWebRequestController webRequestController, IPerformanceBudget frameBudget,
+            AssetPreLoadCache assetPreLoadCache, IAnalyticsController analyticsController, AvatarPlaceHolderTextureSource? placeholderSource)
+        {
+            this.sceneData = sceneData;
+            this.streamingRoom = streamingRoom;
+            this.streamingRoomRunning = streamingRoomRunning;
+            this.placeholderSource = placeholderSource;
+            this.mediaPlayerPool = mediaPlayerPool;
+            this.videoTexturesPool = videoTexturesPool;
+            this.entitiesMap = entitiesMap;
+            this.world = world;
+            this.frameBudget = frameBudget;
+            this.sceneStateProvider = sceneStateProvider;
+            this.mediaVolume = mediaVolume;
+            this.assetPreLoadCache = assetPreLoadCache;
+
+            urlResolverService = new UrlResolverServiceAnalyticsDecorator(
+                new UrlResolverService(webRequestController),
+                analyticsController);
+        }
+
+        internal float worldVolumePercentage => mediaVolume.WorldVolumePercentage;
+
+        internal float masterVolumePercentage => mediaVolume.MasterVolumePercentage;
+
+        /// <summary>
+        ///     Creates both <see cref="VideoTextureConsumer" /> and <see cref="VideoTextureData" />
+        /// </summary>
+        /// <returns></returns>
+        public VideoTextureData CreateVideoPlayback(string url)
+        {
+            VideoTextureConsumer consumer = CreateVideoConsumer();
+            MediaPlayerComponent mediaPlayer = CreateMediaPlayerComponent(url,
+                false, MediaPlayerComponent.DEFAULT_VOLUME,
+                false, null, null);
+
+            return new VideoTextureData(consumer, mediaPlayer);
+        }
+
+        public VideoTextureConsumer CreateVideoConsumer()
+        {
+            var consumer = new VideoTextureConsumer(videoTexturesPool);
+            return consumer;
+        }
+
+        public bool TryAddConsumer(Entity consumerEntity, CRDTEntity videoPlayerCrdtEntity, [NotNullWhen(true)] out TextureData? resultData)
+        {
+            resultData = null;
+
+            if (!entitiesMap.TryGetValue(videoPlayerCrdtEntity, out Entity videoPlayerEntity) || !world.IsAlive(videoPlayerEntity))
+                return false;
+
+            // Wait until Player is created on the video player entity
+
+            if (!world.TryGet(videoPlayerEntity, out VideoTextureConsumer consumer) || !world.TryGet(videoPlayerEntity, out MediaPlayerComponent mediaPlayer))
+                return false;
+
+            // Only TextureData contains referencing mechanism
+            // Create or get it from the entity
+            if (!world.TryGet(videoPlayerEntity, out TextureData? textureData))
+            {
+                textureData = new TextureData(AnyTexture.FromVideoTextureData(new VideoTextureData(consumer, mediaPlayer)));
+                world.Add(videoPlayerEntity, textureData);
+            }
+
+            if (world.TryGet(consumerEntity, out PrimitiveMeshRendererComponent primitiveMeshComponent))
+                consumer.AddConsumer(primitiveMeshComponent.MeshRenderer);
+            else if (world.TryGet(consumerEntity, out GltfNode gltfNode))
+                foreach (Renderer? renderer in gltfNode.Renderers)
+                    consumer.AddConsumer(renderer);
+
+            textureData!.AddReference();
+
+            resultData = textureData;
+            return true;
+        }
+
+        /// <summary>
+        ///     Create media player with budgeting
+        /// </summary>
+        public bool TryCreateMediaPlayer(string url, bool hasVolume, float volume, bool isSpatialAudio, float? spatialMinDistance, float? spatialMaxDistance, out MediaPlayerComponent component)
+        {
+            if (!frameBudget.TrySpendBudget())
+            {
+                component = default(MediaPlayerComponent);
+                return false;
+            }
+
+            component = CreateMediaPlayerComponent(url, hasVolume, volume, isSpatialAudio, spatialMinDistance, spatialMaxDistance);
+            return true;
+        }
+
+        [SuppressMessage("ReSharper", "RedundantAssignment")]
+        private MediaPlayerComponent CreateMediaPlayerComponent(string url, bool hasVolume, float volume, bool isSpatialAudio, float? spatialMinDistance, float? spatialMaxDistance)
+        {
+            bool isValidLocalPath = false;
+            bool isValidStreamUrl = false;
+
+            if (url.IsLivekitAddress())
+            {
+                isValidLocalPath = true;
+                isValidStreamUrl = true;
+            }
+
+            else
+
+                // if it is not valid, we try get it as a scene local video
+            {
+                isValidStreamUrl = url.IsValidUrl();
+
+                if (!isValidStreamUrl)
+                {
+                    isValidLocalPath = sceneData.TryGetMediaUrl(url, out URLAddress mediaUrl);
+
+                    if (isValidLocalPath)
+                        url = mediaUrl;
+                }
+            }
+
+            var address = MediaAddress.New(url);
+
+            // Fresh player per call: a shared MediaPlayer caused the use-after-destroy crash (UNITY-EXPLORER-MV2).
+            MultiMediaPlayer player = address.Match(
+                (streamingRoom, streamingRoomRunning, mediaPlayerPool, placeholderSource),
+                onUrlMediaAddress: static (ctx, address) => MultiMediaPlayer.FromAvProPlayer(new AvProPlayer(ctx.mediaPlayerPool.GetOrCreateReusableMediaPlayer(address.Url), ctx.mediaPlayerPool)),
+                onLivekitAddress: static (ctx, _) => MultiMediaPlayer.FromLivekitPlayer(new LivekitPlayer(ctx.streamingRoom, ctx.streamingRoomRunning, ctx.placeholderSource))
+            );
+
+            var component = new MediaPlayerComponent(player, url.Contains(CONTENT_SERVER_PREFIX))
+            {
+                MediaAddress = address,
+                LastPropagatedVideoState = VideoState.VsPaused,
+                LastPropagatedVideoTime = 0,
+                Cts = new CancellationTokenSource(),
+                OpenMediaPromise = new OpenMediaPromise(),
+            };
+
+            // Seed from the cached resolved URL so this player skips re-resolution.
+            var seededFromCache = false;
+
+            if (!address.IsLivekitAddress(out _) && assetPreLoadCache.TryGetVideoTemplate(url, out VideoTemplateData template))
+            {
+                component.OpenMediaPromise.SeedResolved(template);
+                component.IsLiveStream = template.Resolved.IsLiveStream;
+                component.ResolvedUrlExpiresAt = template.Resolved.ExpiresAtRealtimeSinceStartup;
+                seededFromCache = true;
+            }
+
+            component.MarkAsFailed(!isValidStreamUrl && !isValidLocalPath && !string.IsNullOrEmpty(url));
+
+            float targetVolume = (hasVolume ? volume : MediaPlayerComponent.DEFAULT_VOLUME) * worldVolumePercentage * masterVolumePercentage;
+            component.MediaPlayer.UpdateVolume(sceneStateProvider.IsCurrent ? targetVolume : 0f);
+
+            //only check the URL reachability if the URL is valid and not empty, otherwise we would cause a malformed url exception in the web request controller
+            if (!seededFromCache && component.State != VideoState.VsError && (isValidStreamUrl || isValidLocalPath))
+                component.OpenMediaPromise.UrlReachabilityResolveAsync(component.MediaAddress, ReportCategory.MEDIA_STREAM, component.Cts.Token, urlResolverService).SuppressCancellationThrow().Forget();
+
+            component.UpdateSpatialAudio(isSpatialAudio, spatialMinDistance, spatialMaxDistance);
+
+            return component;
+        }
+    }
+}

@@ -1,0 +1,26 @@
+﻿using DCL.Browser.DecentralandUrls;
+using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.DebugUtilities.UIBindings;
+using DCL.Time;
+using DCL.Web3.Identities;
+using DCL.WebRequests;
+using DCL.WebRequests.Analytics;
+using DCL.WebRequests.RequestsHub;
+using NSubstitute;
+
+namespace ECS.TestSuite
+{
+    public class TestWebRequestController
+    {
+        private const int TOTAL_BUDGET = int.MaxValue;
+
+        public static readonly IWebRequestController INSTANCE = new WebRequestController(
+            Substitute.For<IWebRequestsAnalyticsContainer>(),
+            Substitute.For<IWeb3IdentityCache>(),
+            new RequestHub(DecentralandUrlsSource.CreateForTest()),
+            new WebRequestBudget(TOTAL_BUDGET,
+                new ElementBinding<ulong>(TOTAL_BUDGET)),
+            new RealmClock()
+        );
+    }
+}

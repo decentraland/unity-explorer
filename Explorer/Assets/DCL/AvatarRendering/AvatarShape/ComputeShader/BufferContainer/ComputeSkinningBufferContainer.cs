@@ -1,0 +1,166 @@
+﻿using DCL.Optimization.Pools;
+using System;
+using System.Collections.Generic;
+using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
+using UnityEngine;
+
+namespace DCL.AvatarRendering.AvatarShape.ComputeShader
+{
+    public abstract class ComputeSkinningBufferContainer : IDisposable
+    {
+        internal static readonly ListObjectPool<Matrix4x4> MATRIX4X4_POOL = new (listInstanceDefaultCapacity: ComputeShaderConstants.BASE_BONE_COUNT);
+
+        //5000 is an approximation of a top value a wearable may have for its vertex count
+        internal static readonly ListObjectPool<Vector3> VECTOR3_POOL = new (defaultCapacity: 2, listInstanceDefaultCapacity: 5000);
+        internal static readonly ListObjectPool<Vector4> VECTOR4_POOL = new (listInstanceDefaultCapacity: 5000);
+        internal static readonly ListObjectPool<BoneWeight> BONE_WEIGHT_POOL = new (listInstanceDefaultCapacity: 5000);
+        protected ComputeBuffer vertexIn;
+        protected ComputeBuffer tangentsIn;
+        protected ComputeBuffer normalsIn;
+        protected ComputeBuffer sourceSkin;
+        protected ComputeBuffer bindPoses;
+        protected ComputeBuffer bindPosesIndex;
+
+        protected NativeArray<Vector3> totalVertsIn;
+        protected NativeArray<Vector3> totalNormalsIn;
+        protected NativeArray<Vector4> totalTangentsIn;
+        protected NativeArray<BoneWeight> totalSkinIn;
+        protected NativeArray<int> bindPosesIndexList;
+        protected NativeArray<Matrix4x4> bindPosesMatrix;
+
+        protected int vertCount;
+        protected int skinnedMeshRendererBoneCount;
+
+        public ComputeSkinningBufferContainer(int vertCount, int skinnedMeshRenderersBoneCount)
+        {
+            this.vertCount = vertCount;
+            skinnedMeshRendererBoneCount = skinnedMeshRenderersBoneCount;
+        }
+
+        public static ComputeSkinningBufferContainer New(int vertCount, int skinnedMeshRendererBoneCount)
+        {
+            //Note (Juani): Using too many BeginWrite in Mac caused a crash. So I ve set up this switch that changes the way in which we
+            //set up the buffers depending on the platform
+
+#if UNITY_STANDALONE_WIN || UNITY_EDITOR_WIN
+            return new ComputeSkinningBufferContainerWrite(vertCount, skinnedMeshRendererBoneCount);
+#else
+            return new ComputeSkinningBufferContainerSetData(vertCount, skinnedMeshRendererBoneCount);
+#endif
+        }
+
+        public void Dispose()
+        {
+            vertexIn.Dispose();
+            normalsIn.Dispose();
+            tangentsIn.Dispose();
+            sourceSkin.Dispose();
+            bindPosesIndex.Dispose();
+            bindPoses.Dispose();
+        }
+
+        public abstract void StartWriting();
+
+        public abstract void EndWriting();
+
+        public void SetBuffers(UnityEngine.ComputeShader cs, int kernel)
+        {
+            cs.SetBuffer(kernel, ComputeShaderConstants.VERTS_IN_ID, vertexIn);
+            cs.SetBuffer(kernel, ComputeShaderConstants.NORMALS_IN_ID, normalsIn);
+            cs.SetBuffer(kernel, ComputeShaderConstants.TANGENTS_IN_ID, tangentsIn);
+            cs.SetBuffer(kernel, ComputeShaderConstants.SOURCE_SKIN_ID, sourceSkin);
+            cs.SetBuffer(kernel, ComputeShaderConstants.BIND_POSE_ID, bindPoses);
+            cs.SetBuffer(kernel, ComputeShaderConstants.BIND_POSES_INDEX_ID, bindPosesIndex);
+        }
+
+        public void CopyAllBuffers(Mesh mesh, int currentMeshVertexCount, int vertexCounter, int skinnedMeshCounter, int boneCount, int springBoneOffset = 0)
+        {
+            List<Matrix4x4> bindPosesList = MATRIX4X4_POOL.Get();
+            mesh.GetBindposes(bindPosesList);
+
+            int bindPoseCount = bindPosesList.Count;
+            int destOffset = boneCount * skinnedMeshCounter;
+            Matrix4x4[] bindPosesItems = UnsafeUtility.As<List<Matrix4x4>, ListPrivateFieldAccess<Matrix4x4>>(ref bindPosesList)._items;
+
+            // Initialize all slots to identity, then overwrite with actual bind poses.
+            // Spring bone bind poses are placed at the offset position to match the offset BoneWeight indices,
+            // since the compute shader uses the same index for both g_mBones[idx] and g_BindPoses[baseIndex+idx].
+            for (int i = 0; i < boneCount; i++)
+                bindPosesMatrix[destOffset + i] = Matrix4x4.identity;
+
+            // Copy base skeleton bind poses (indices 0..BASE_BONE_COUNT-1) as-is
+            int baseCopyCount = Math.Min(bindPoseCount, ComputeShaderConstants.BASE_BONE_COUNT);
+            NativeArray<Matrix4x4>.Copy(bindPosesItems, 0, bindPosesMatrix, destOffset, baseCopyCount);
+
+            // Copy spring bone bind poses to the offset position so they align with the offset BoneWeight indices
+            int springBindPoseStart = ComputeShaderConstants.BASE_BONE_COUNT;
+
+            if (bindPoseCount > springBindPoseStart)
+            {
+                int springBindPoseCount = bindPoseCount - springBindPoseStart;
+                int springDestIndex = destOffset + springBindPoseStart + springBoneOffset;
+
+                int maxCopy = boneCount - (springBindPoseStart + springBoneOffset);
+
+                if (maxCopy > 0)
+                {
+                    int copyCount = Math.Min(springBindPoseCount, maxCopy);
+                    NativeArray<Matrix4x4>.Copy(bindPosesItems, springBindPoseStart, bindPosesMatrix, springDestIndex, copyCount);
+                }
+            }
+
+            MATRIX4X4_POOL.Release(bindPosesList);
+
+            List<BoneWeight> boneWeightPool = BONE_WEIGHT_POOL.Get();
+            mesh.GetBoneWeights(boneWeightPool);
+            NativeArray<BoneWeight>.Copy(UnsafeUtility.As<List<BoneWeight>, ListPrivateFieldAccess<BoneWeight>>(ref boneWeightPool)._items, 0, totalSkinIn, vertexCounter, currentMeshVertexCount);
+            BONE_WEIGHT_POOL.Release(boneWeightPool);
+
+            // Offset spring bone indices so each wearable's spring bones map to the correct
+            // slot in the global bone matrix buffer (g_mBones). Without this, multiple wearables
+            // with spring bones would all reference the same bone indices (starting at BASE_BONE_COUNT).
+            if (springBoneOffset > 0)
+            {
+                for (int i = 0; i < currentMeshVertexCount; i++)
+                {
+                    BoneWeight bw = totalSkinIn[vertexCounter + i];
+
+                    if (bw.boneIndex0 >= ComputeShaderConstants.BASE_BONE_COUNT) bw.boneIndex0 += springBoneOffset;
+                    if (bw.boneIndex1 >= ComputeShaderConstants.BASE_BONE_COUNT) bw.boneIndex1 += springBoneOffset;
+                    if (bw.boneIndex2 >= ComputeShaderConstants.BASE_BONE_COUNT) bw.boneIndex2 += springBoneOffset;
+                    if (bw.boneIndex3 >= ComputeShaderConstants.BASE_BONE_COUNT) bw.boneIndex3 += springBoneOffset;
+
+                    totalSkinIn[vertexCounter + i] = bw;
+                }
+            }
+
+            List<Vector3> verticesPool = VECTOR3_POOL.Get();
+            mesh.GetVertices(verticesPool);
+            NativeArray<Vector3>.Copy(UnsafeUtility.As<List<Vector3>, ListPrivateFieldAccess<Vector3>>(ref verticesPool)._items, 0, totalVertsIn, vertexCounter, currentMeshVertexCount);
+            VECTOR3_POOL.Release(verticesPool);
+
+            List<Vector3> normalsPool = VECTOR3_POOL.Get();
+            mesh.GetNormals(normalsPool);
+            NativeArray<Vector3>.Copy(UnsafeUtility.As<List<Vector3>, ListPrivateFieldAccess<Vector3>>(ref normalsPool)._items, 0, totalNormalsIn, vertexCounter, currentMeshVertexCount);
+            VECTOR3_POOL.Release(normalsPool);
+
+            List<Vector4> tangentsPool = VECTOR4_POOL.Get();
+            mesh.GetTangents(tangentsPool);
+            NativeArray<Vector4>.Copy(UnsafeUtility.As<List<Vector4>, ListPrivateFieldAccess<Vector4>>(ref tangentsPool)._items, 0, totalTangentsIn, vertexCounter, currentMeshVertexCount);
+            VECTOR4_POOL.Release(tangentsPool);
+
+            //Setup vertex index for current wearable
+            for (var i = 0; i < mesh.vertexCount; i++)
+                bindPosesIndexList[vertexCounter + i] = boneCount * skinnedMeshCounter;
+        }
+
+        //Helper class to access private fields of List<T>
+        private class ListPrivateFieldAccess<T>
+        {
+#pragma warning disable CS0649
+#pragma warning disable CS8618
+            internal T[] _items; // Do not rename (binary serialization)
+        }
+    }
+}

@@ -1,0 +1,369 @@
+﻿using DCL.Chat.ChatViewModels;
+using DCL.Chat.History;
+using DCL.UI;
+using DG.Tweening;
+using System;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.UI;
+
+namespace DCL.Chat
+{
+    public class ChatChannelsView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+    {
+        public event Action<ChatChannel.ChannelId>? ConversationSelected;
+        public event Action<ChatChannel.ChannelId>? ConversationRemovalRequested;
+
+        [SerializeField] private RectTransform itemsContainer = null!;
+        [SerializeField] private CanvasGroup conversationsToolbarCanvasGroup = null!;
+        [SerializeField] private ChatConversationsToolbarViewItem itemNearbyPrefab = null!;
+        [SerializeField] private PrivateChatConversationsToolbarViewItem itemPrivatePrefab = null!;
+        [SerializeField] private CommunityChatConversationsToolbarViewItem itemCommunityPrefab = null!;
+        [SerializeField] private CanvasGroup scrollButtons = null!;
+        [SerializeField] private ScrollRect scrollView = null!;
+        [SerializeField] private Button scrollUpButton = null!;
+        [SerializeField] private Button scrollDownButton = null!;
+
+        private readonly Dictionary<ChatChannel.ChannelId, ChatConversationsToolbarViewItem> items = new ();
+
+        private ChatConversationsToolbarViewItemPool? chatConversationsToolbarViewItemPool;
+
+        private const float REACTIONS_BUTTON_BOTTOM_PADDING = 48f;
+        public void SetBottomSpaceForReactionsButton(bool reserveSpace)
+        {
+            var rect = (RectTransform)scrollView.transform;
+            Vector2 offsetMin = rect.offsetMin;
+            offsetMin.y = reserveSpace ? REACTIONS_BUTTON_BOTTOM_PADDING : 0f;
+            rect.offsetMin = offsetMin;
+        }
+
+        /// <summary>
+        /// Marks an item as selected.
+        /// </summary>
+        /// <param name="channelId">The Id of the conversation to find the item.</param>
+        /// <param name="invoke">Whether to raise the ConversationSelected event</param>
+        public void SelectConversation(ChatChannel.ChannelId channelId, bool invoke = true)
+        {
+            foreach (KeyValuePair<ChatChannel.ChannelId, ChatConversationsToolbarViewItem> itemPair in items)
+                itemPair.Value.SetSelectionStatus(false);
+
+            items[channelId].SetSelectionStatus(true);
+
+            if (invoke)
+                ConversationSelected?.Invoke(channelId);
+        }
+
+        private void Start()
+        {
+            scrollUpButton.onClick.AddListener(OnScrollUpButtonClicked);
+            scrollDownButton.onClick.AddListener(OnScrollDownButtonClicked);
+            scrollView.onValueChanged.AddListener(OnScrollViewValueChanged);
+        }
+
+        private void OnDisable()
+        {
+            foreach (KeyValuePair<ChatChannel.ChannelId, ChatConversationsToolbarViewItem> itemPair in items)
+                itemPair.Value.HideTooltip(true);
+
+            HideScrollButtons(true);
+        }
+
+        /// <summary>
+        ///     Replaces the value of unread messages to show next to the icon of an item.
+        /// </summary>
+        /// <param name="destinationChannel">The Id of the conversation to find the item.</param>
+        /// <param name="unreadMessages">The amount of unread messages in the conversation.</param>
+        public void SetUnreadMessages(ChatChannel.ChannelId destinationChannel, int unreadMessages)
+        {
+            if (items.TryGetValue(destinationChannel, out ChatConversationsToolbarViewItem? item))
+            {
+                item.ShowMentionSign(false);
+                item.SetUnreadMessages(unreadMessages);
+            }
+        }
+
+        public void AddConversation(BaseChannelViewModel viewModel)
+        {
+            chatConversationsToolbarViewItemPool ??= new ChatConversationsToolbarViewItemPool(itemsContainer, itemNearbyPrefab, itemPrivatePrefab, itemCommunityPrefab);
+
+            ChatConversationsToolbarViewItem newItem = viewModel.ChannelType switch
+                                                       {
+                                                           ChatChannel.ChatChannelType.NEARBY => chatConversationsToolbarViewItemPool.Get<ChatConversationsToolbarViewItem>(),
+                                                           ChatChannel.ChatChannelType.COMMUNITY => chatConversationsToolbarViewItemPool.Get<CommunityChatConversationsToolbarViewItem>(),
+                                                           ChatChannel.ChatChannelType.USER => chatConversationsToolbarViewItemPool.Get<PrivateChatConversationsToolbarViewItem>(),
+                                                           _ => throw new ArgumentOutOfRangeException(),
+                                                       };
+
+            newItem.Initialize();
+            newItem.Id = viewModel.Id;
+            newItem.SetUnreadMessages(viewModel.UnreadMessagesCount);
+
+            newItem.OpenButtonClicked += OpenButtonClicked;
+            newItem.RemoveButtonClicked += OnRemoveButtonClicked;
+            newItem.TooltipShown += OnItemTooltipShown;
+
+            switch (viewModel)
+            {
+                case NearbyChannelViewModel nearby:
+                    newItem.SetConversationName(nearby.DisplayName);
+                    newItem.SetConversationIcon(nearby.Icon);
+                    newItem.SetOfficialIconVisibility(false);
+                    newItem.Configure(isClosable: false);
+                    break;
+
+                case UserChannelViewModel user:
+                    newItem.SetConversationName(user.DisplayName);
+                    newItem.SetClaimedNameIconVisibility(user.HasClaimedName);
+                    newItem.SetOfficialIconVisibility(user.IsOfficial);
+                    newItem.Configure(isClosable: true);
+                    newItem.BindProfileThumbnail(user.ProfilePicture);
+                    newItem.SetConnectionStatus(OnlineStatus.Offline);
+
+                    break;
+
+                case CommunityChannelViewModel community:
+                    newItem.SetConversationName(community.DisplayName);
+                    newItem.SetPicture(community.Thumbnail, Color.white);
+                    newItem.SetOfficialIconVisibility(false);
+                    newItem.Configure(isClosable: true);
+                    var communityItem = newItem as CommunityChatConversationsToolbarViewItem;
+
+                    if (communityItem != null)
+                        communityItem.SetupCommunityUpdates(community.CommunityConnectionUpdates, community.CurrentCommunityCallId);
+
+                    break;
+            }
+
+            items.Add(viewModel.Id, newItem);
+            UpdateScrollButtonsVisibility();
+        }
+
+        public void TryRemoveConversation(ChatChannel channel) =>
+            TryRemoveConversation(channel.Id);
+
+        public void UpdateConversation(BaseChannelViewModel viewModel)
+        {
+            if (!items.TryGetValue(viewModel.Id, out ChatConversationsToolbarViewItem? itemToUpdate)) return;
+
+            itemToUpdate.SetUnreadMessages(viewModel.UnreadMessagesCount);
+            itemToUpdate.ShowMentionSign(viewModel.HasUnreadMentions);
+
+            switch (viewModel)
+            {
+                case UserChannelViewModel user:
+                    itemToUpdate.SetConversationName(user.DisplayName);
+                    itemToUpdate.SetClaimedNameIconVisibility(user.HasClaimedName);
+                    itemToUpdate.SetOfficialIconVisibility(user.IsOfficial);
+                    itemToUpdate.SetConnectionStatus(user.IsOnline ? OnlineStatus.Online : OnlineStatus.Offline);
+                    break;
+
+                case CommunityChannelViewModel community:
+                    itemToUpdate.SetConversationName(community.DisplayName);
+                    itemToUpdate.SetPicture(community.Thumbnail, Color.white);
+                    break;
+            }
+        }
+
+        public void SetOnlineStatus(string channelId, bool isOnline)
+        {
+            if (items.TryGetValue(new ChatChannel.ChannelId(channelId), out ChatConversationsToolbarViewItem? item)) { item.SetConnectionStatus(isOnline ? OnlineStatus.Online : OnlineStatus.Offline); }
+        }
+
+        public void AddItem(ChatConversationsToolbarViewItem newItem)
+        {
+            if (!items.TryAdd(newItem.Id, newItem)) return;
+
+            newItem.OpenButtonClicked += OpenButtonClicked;
+            newItem.RemoveButtonClicked += OnRemoveButtonClicked;
+            newItem.TooltipShown += OnItemTooltipShown;
+
+            if (items.Count == 1) { SelectConversation(newItem.Id); }
+        }
+
+        public void Clear()
+        {
+            items.Clear();
+        }
+
+        public void Show()
+        {
+            gameObject.SetActive(true);
+        }
+
+        public void Hide()
+        {
+            gameObject.SetActive(false);
+        }
+
+        /// <summary>
+        ///     Sets the visual focus state for the conversations' toolbar.
+        /// </summary>
+        public void SetFocusedState(bool isFocused, bool animate, float duration, Ease easing)
+        {
+            conversationsToolbarCanvasGroup.DOKill();
+
+            float targetAlpha = isFocused ? 1.0f : 0.0f;
+            float fadeDuration = animate ? duration : 0f;
+
+            if (isFocused && !conversationsToolbarCanvasGroup.gameObject.activeSelf) { conversationsToolbarCanvasGroup.gameObject.SetActive(true); }
+
+            conversationsToolbarCanvasGroup.DOFade(targetAlpha, fadeDuration)
+                                           .SetEase(easing)
+                                           .OnComplete(() =>
+                                            {
+                                                if (!isFocused) { conversationsToolbarCanvasGroup.gameObject.SetActive(false); }
+                                            });
+        }
+
+        public void OnPointerEnter(PointerEventData eventData)
+        {
+            ShowScrollButtons();
+        }
+
+        public void OnPointerExit(PointerEventData eventData)
+        {
+            HideScrollButtons(false);
+        }
+
+        public void MoveChannelToTop(ChatChannel.ChannelId channel)
+        {
+            if (items.TryGetValue(channel, out ChatConversationsToolbarViewItem? item))
+                item.transform.SetSiblingIndex(1);
+        }
+
+        /// <summary>
+        ///     Removes all conversation items from the toolbar UI. It does not change any data.
+        /// </summary>
+        public void RemoveAllConversations()
+        {
+            foreach (ChatConversationsToolbarViewItem? itemsValue in items.Values)
+                chatConversationsToolbarViewItemPool?.Release(itemsValue);
+
+            items.Clear();
+            UpdateScrollButtonsVisibility();
+        }
+
+        /// <summary>
+        ///     Changes the visual aspect of the connection status of one the items.
+        /// </summary>
+        /// <param name="destinationChannel">The Id of the conversation to find the item.</param>
+        /// <param name="connectionStatus">The current connection status.</param>
+        public void SetConnectionStatus(ChatChannel.ChannelId destinationChannel, OnlineStatus connectionStatus)
+        {
+            if (items[destinationChannel] != null)
+                items[destinationChannel].SetConnectionStatus(connectionStatus);
+        }
+
+        /// <summary>
+        ///     Replaces the value of unread messages to show next to the icon of an item, handling mentions.
+        /// </summary>
+        /// <param name="destinationChannel">The Id of the conversation to find the item.</param>
+        /// <param name="unreadMessages">The amount of unread messages in the conversation.</param>
+        /// <param name="hasMentions">Whether there are mentions among the unread messages or not.</param>
+        public void SetUnreadMessages(ChatChannel.ChannelId destinationChannel, int unreadMessages, bool hasMentions)
+        {
+            if (items.TryGetValue(destinationChannel, out ChatConversationsToolbarViewItem? item))
+            {
+                item.SetUnreadMessages(unreadMessages);
+                item.ShowMentionSign(hasMentions);
+
+                if (hasMentions)
+                {
+                    // If there's a mention, the number is irrelevant, but we pass it anyway
+                    // The badge will just show the '@'
+                }
+                else
+                {
+                    // If no mentions, just show the number
+                    item.SetUnreadMessages(unreadMessages);
+                }
+            }
+        }
+
+        /// <summary>
+        ///     Removes a conversation item from the toolbar UI. It does not change any data.
+        /// </summary>
+        /// <param name="channelId">The Id of the conversation to find the item.</param>
+        public void TryRemoveConversation(ChatChannel.ChannelId channelId)
+        {
+            if (!items.TryGetValue(channelId, out ChatConversationsToolbarViewItem? itemToRemove)) return;
+
+            chatConversationsToolbarViewItemPool?.Release(itemToRemove);
+            items.Remove(channelId);
+            UpdateScrollButtonsVisibility();
+        }
+
+        /// <summary>
+        ///     Makes both scroll buttons disappear with or without animations.
+        /// </summary>
+        /// <param name="isImmediate">Whether to skip animations or not.</param>
+        private void HideScrollButtons(bool isImmediate)
+        {
+            if (scrollButtons.gameObject.activeSelf)
+            {
+                if (isImmediate) { scrollButtons.gameObject.SetActive(false); }
+                else
+                {
+                    scrollButtons.DOKill();
+                    scrollButtons.DOFade(0.0f, 0.5f).OnComplete(() => scrollButtons.gameObject.SetActive(false));
+                }
+            }
+        }
+
+        private void OnItemTooltipShown(GameObject tooltip)
+        {
+            tooltip.transform.SetParent(transform, true);
+        }
+
+        private void OnRemoveButtonClicked(ChatConversationsToolbarViewItem item)
+        {
+            ConversationRemovalRequested?.Invoke(item.Id);
+        }
+
+        private void OnScrollDownButtonClicked()
+        {
+            scrollView.normalizedPosition = new Vector2(0.0f, scrollView.normalizedPosition.y - (scrollView.scrollSensitivity / scrollView.content.sizeDelta.y * 50.0f));
+        }
+
+        private void OnScrollUpButtonClicked()
+        {
+            scrollView.normalizedPosition = new Vector2(0.0f, scrollView.normalizedPosition.y + (scrollView.scrollSensitivity / scrollView.content.sizeDelta.y * 50.0f));
+        }
+
+        private void OnScrollViewValueChanged(Vector2 _)
+        {
+            UpdateScrollButtonsVisibility();
+        }
+
+        private void OpenButtonClicked(ChatConversationsToolbarViewItem item)
+        {
+            SelectConversation(item.Id);
+        }
+
+        /// <summary>
+        ///     Makes one or both scroll buttons appear (depending on the current scroll position), or none of them if there are not enough items in the toolbar.
+        /// </summary>
+        private void ShowScrollButtons()
+        {
+            scrollButtons.gameObject.SetActive(true);
+            UpdateScrollButtonsVisibility();
+            scrollButtons.DOKill();
+            scrollButtons.DOFade(1.0f, 0.5f);
+        }
+
+        private void UpdateScrollButtonsVisibility()
+        {
+            if (scrollView.content.rect.height > scrollView.viewport.rect.height)
+            {
+                scrollUpButton.gameObject.SetActive(scrollView.normalizedPosition.y < 0.9999f);
+                scrollDownButton.gameObject.SetActive(scrollView.normalizedPosition.y > 0.0001f);
+            }
+            else
+            {
+                scrollUpButton.gameObject.SetActive(false);
+                scrollDownButton.gameObject.SetActive(false);
+            }
+        }
+    }
+}

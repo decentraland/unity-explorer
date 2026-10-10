@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0ac32b8a6b4e74a16a311e698f9dbfd7, type: 3}
+  m_Name: EmoteWheelRarityBackgrounds
+  m_EditorClassIdentifier: 
+  nftIcons:
+  - key: common
+    value: {fileID: 21300000, guid: dab073a1923ff49a4b5246df8caede45, type: 3}
+  - key: epic
+    value: {fileID: 21300000, guid: c29b651af1395411797a64c5683b5f81, type: 3}
+  - key: exotic
+    value: {fileID: 21300000, guid: 84570c5c690cb4f03b96427d6746451b, type: 3}
+  - key: legendary
+    value: {fileID: 21300000, guid: 9a810fd3df7224b0abdff17ef73446a6, type: 3}
+  - key: mythic
+    value: {fileID: 21300000, guid: f8fb70a24c2554c149a130a1a660b1f1, type: 3}
+  - key: rare
+    value: {fileID: 21300000, guid: 549e8665e297c4d6c83bec48242b31e2, type: 3}
+  - key: uncommon
+    value: {fileID: 21300000, guid: 4d32973054d574b11a5bb1d6812aef64, type: 3}
+  - key: unique
+    value: {fileID: 21300000, guid: 629af7db7130e41b19502ab6077ae2af, type: 3}
+  - key: empty
+    value: {fileID: 21300000, guid: 3a3dee0180f4b47859cca03776a00e7c, type: 3}
+  defaultIcon: {fileID: 21300000, guid: a520071cb1f3847ea9b5163d9fa179b7, type: 3}

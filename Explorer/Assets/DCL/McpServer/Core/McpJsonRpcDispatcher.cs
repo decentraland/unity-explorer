@@ -1,0 +1,227 @@
+using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System;
+using System.Text;
+using System.Threading;
+using Utility.Multithreading;
+
+namespace DCL.McpServer.Core
+{
+    /// <summary>
+    ///     Routes JSON-RPC 2.0 messages of the MCP Streamable HTTP transport to the tool registry.
+    ///     Only the tools capability is implemented; resources and prompts are not declared.
+    /// </summary>
+    public class McpJsonRpcDispatcher
+    {
+        /// <summary>Version of the MCP specification this server implements, declared in the initialize handshake.</summary>
+        public const string PROTOCOL_VERSION = "2025-06-18";
+
+        private const string SERVER_NAME = "dcl-unity-explorer";
+
+        private const int PARSE_ERROR = -32700;
+        private const int INVALID_REQUEST = -32600;
+        private const int METHOD_NOT_FOUND = -32601;
+        private const int INVALID_PARAMS = -32602;
+
+        // A hung tool (e.g. an asset promise that never resolves) would otherwise hold its HttpListenerContext
+        // open until the server stops. Cap each call so one stuck tool can't tie up the agent's connection.
+        private static readonly TimeSpan TOOL_CALL_TIMEOUT = TimeSpan.FromSeconds(30);
+
+        private readonly McpToolsRegistry tools;
+        private readonly string serverVersion;
+
+        // Lets an agent orchestrating several Explorer instances confirm which process answers on this port.
+        private readonly int processId = System.Diagnostics.Process.GetCurrentProcess().Id;
+
+        public McpJsonRpcDispatcher(McpToolsRegistry tools, string serverVersion)
+        {
+            this.tools = tools;
+            this.serverVersion = serverVersion;
+        }
+
+        /// <summary>
+        ///     Returns the serialized JSON-RPC response, or null when the message is a notification
+        ///     (or a response relayed by the client) and no reply must be sent.
+        /// </summary>
+        public async UniTask<string?> DispatchAsync(string requestJson, CancellationToken ct)
+        {
+            if (ParseRoutableRequest(requestJson, out string? earlyResponse) is not { } routable)
+                return earlyResponse;
+
+            var (id, method, callParams) = routable;
+
+            return method switch
+                   {
+                       "initialize" => JsonRpcEnvelope.Result(id, InitializeResult(callParams)),
+                       "ping" => JsonRpcEnvelope.Result(id, new JObject()),
+                       "tools/list" => JsonRpcEnvelope.Result(id, tools.ToolsListPayload()),
+                       "tools/call" => await CallToolAsync(id,
+                           toolName: callParams?["name"]?.Value<string>(),
+                           arguments: callParams?["arguments"] as JObject ?? new JObject(),
+                           ct),
+                       _ => JsonRpcEnvelope.Error(id, METHOD_NOT_FOUND, $"Method not found: {method}")
+                   };
+        }
+
+        /// <summary>
+        ///     Parses the raw message and returns the id, method and params to route on.
+        ///     Returns null when there is nothing to route: <paramref name="earlyResponse" /> then
+        ///     carries the reply to send back (a JSON-RPC error) or null for a notification that gets no response.
+        /// </summary>
+        private static (JToken id, string method, JObject? callParams)? ParseRoutableRequest(string requestJson, out string? earlyResponse)
+        {
+            earlyResponse = null;
+
+            JToken parsed;
+            try { parsed = JToken.Parse(requestJson); }
+            catch (JsonException)
+            {
+                earlyResponse = JsonRpcEnvelope.Error(null, PARSE_ERROR, "Parse error");
+                return null;
+            }
+
+            // -32700 is reserved for unparseable JSON; well-formed JSON that is not a JSON-RPC object
+            // (a bare array, number or string) is a valid document but an invalid request: -32600.
+            if (parsed is not JObject request)
+            {
+                earlyResponse = JsonRpcEnvelope.Error(null, INVALID_REQUEST, "Invalid request: expected a JSON-RPC object");
+                return null;
+            }
+
+            JToken? id = request["id"];
+            string? method = request["method"]?.Value<string>();
+
+            if (string.IsNullOrEmpty(method))
+            {
+                earlyResponse = id == null ? null : JsonRpcEnvelope.Error(id, INVALID_REQUEST, "Invalid request: missing method");
+                return null;
+            }
+
+            // Messages without an id are notifications ("notifications/initialized" et al.) and get no response.
+            if (id == null)
+                return null;
+
+            return (id, method, request["params"] as JObject);
+        }
+
+        private JObject InitializeResult(JObject? initializeParams)
+        {
+            // We implement a single MCP revision. Per the handshake rules we answer with our version regardless,
+            // but a client pinned to a different revision may abort on a strict mismatch — surface it so the
+            // otherwise-silent interop failure is diagnosable from the server logs.
+            string? requestedVersion = initializeParams?["protocolVersion"]?.Value<string>();
+
+            if (!string.IsNullOrEmpty(requestedVersion) && requestedVersion != PROTOCOL_VERSION)
+                ReportHub.LogWarning(ReportCategory.MCP, $"MCP client requested protocol version '{requestedVersion}', server responding with '{PROTOCOL_VERSION}'");
+
+            return new JObject
+            {
+                ["protocolVersion"] = PROTOCOL_VERSION,
+                ["capabilities"] = new JObject { ["tools"] = new JObject() },
+                ["serverInfo"] = new JObject
+                {
+                    ["name"] = SERVER_NAME,
+                    ["version"] = serverVersion,
+                    ["pid"] = processId,
+                },
+            };
+        }
+
+        private async UniTask<string?> CallToolAsync(JToken id, string? toolName, JObject arguments, CancellationToken ct)
+        {
+            if (!tools.TryGet(toolName, out McpTool? tool))
+                return JsonRpcEnvelope.Error(id, INVALID_PARAMS, $"Unknown tool: {toolName ?? "<missing>"}");
+
+            // An undeclared argument would otherwise be dropped silently while the call reports success.
+            // Reported as a tool error, like every other argument refusal.
+            string? unknownArguments = UnknownArguments(tool.Name, arguments, tools.ArgumentNames(tool.Name));
+
+            if (unknownArguments != null)
+                return JsonRpcEnvelope.Result(id, McpToolResult.Error(unknownArguments).Payload);
+
+            using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            timeout.CancelAfter(TOOL_CALL_TIMEOUT);
+
+            McpToolResult result;
+
+            try
+            {
+                // Put the tool on the thread it declares. Switching under the timeout token turns a stalled
+                // main thread into the regular tool timeout instead of an indefinitely parked request.
+                if (tool.RequiresMainThread)
+                    await UniTask.SwitchToMainThread(timeout.Token);
+
+                result = await tool.ExecuteAsync(arguments, timeout.Token);
+            }
+            catch (OperationCanceledException) when (timeout.IsCancellationRequested && !ct.IsCancellationRequested)
+            {
+                ReportHub.LogWarning(ReportCategory.MCP, $"Tool '{toolName}' timed out after {TOOL_CALL_TIMEOUT.TotalSeconds:0}s");
+                result = McpToolResult.Error($"Tool '{toolName}' timed out after {TOOL_CALL_TIMEOUT.TotalSeconds:0}s");
+            }
+            catch (OperationCanceledException) { throw; }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, ReportCategory.MCP);
+                result = McpToolResult.Error($"Tool '{toolName}' failed: {e.Message}");
+            }
+
+            // A main-thread tool completes on the main thread and UniTask continuations run inline on the completing thread;
+            // undo the switch above so the envelope serialization below never spends main-thread time.
+            if (PlayerLoopHelper.IsMainThread)
+                await DCLTask.SwitchToThreadPool();
+
+            return JsonRpcEnvelope.Result(id, result.Payload);
+        }
+
+        /// <summary>The refusal naming every argument the tool does not declare, or null when all of them are known.</summary>
+        private static string? UnknownArguments(string toolName, JObject arguments, string[] declared)
+        {
+            StringBuilder? unknown = null;
+
+            foreach (JProperty argument in arguments.Properties())
+            {
+                if (Array.IndexOf(declared, argument.Name) >= 0)
+                    continue;
+
+                unknown ??= new StringBuilder();
+
+                if (unknown.Length > 0)
+                    unknown.Append(", ");
+
+                unknown.Append('\'').Append(argument.Name).Append('\'');
+            }
+
+            if (unknown == null)
+                return null;
+
+            return declared.Length == 0
+                ? $"{toolName} takes no arguments; remove {unknown}."
+                : $"{toolName} has no argument {unknown}; its arguments are: {string.Join(", ", declared)}.";
+        }
+
+        private static class JsonRpcEnvelope
+        {
+            public static string Result(JToken id, JToken result) =>
+                new JObject
+                {
+                    ["jsonrpc"] = "2.0",
+                    ["id"] = id,
+                    ["result"] = result,
+                }.ToString(Formatting.None);
+
+            public static string Error(JToken? id, int code, string message) =>
+                new JObject
+                {
+                    ["jsonrpc"] = "2.0",
+                    ["id"] = id ?? JValue.CreateNull(),
+                    ["error"] = new JObject
+                    {
+                        ["code"] = code,
+                        ["message"] = message,
+                    },
+                }.ToString(Formatting.None);
+        }
+    }
+}

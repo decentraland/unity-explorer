@@ -1,0 +1,106 @@
+using DCL.FeatureFlags;
+using System;
+using DCL.Profiles;
+using DCL.Web3.Identities;
+using System.Text.RegularExpressions;
+
+namespace DCL.Chat.History
+{
+    /// <summary>
+    /// Builds chat messages according to some parameters and the data provided by the profile repository.
+    /// </summary>
+    public class ChatMessageFactory
+    {
+        public const string LOADING_PROFILE_TEXT = "Loading Profile...";
+        private static readonly Regex USERNAME_REGEX = new (@"(?<=^|\s)@([A-Za-z0-9]{1,15}(?:#[A-Za-z0-9]{4})?)(?=\s|!|\?|\.|,|$)", RegexOptions.Compiled);
+
+        private readonly IProfileCache profileCache;
+        private readonly IWeb3IdentityCache web3IdentityCache;
+
+        public ChatMessageFactory(
+            IProfileCache profileCache,
+            IWeb3IdentityCache web3IdentityCache)
+        {
+            this.profileCache = profileCache;
+            this.web3IdentityCache = web3IdentityCache;
+        }
+
+        /// <summary>
+        /// Generates a new chat message filled with the data provided in the parameters and also by the profile cache.
+        /// Additional note: we need this function to be immediate (not async) to ensure chat messages are propagated in the correct chronological order.
+        /// </summary>
+        /// <param name="senderWalletAddress">The wallet address of the user that sent the message.</param>
+        /// <param name="isSentByLocalUser">Whether the user that sent the message corresponds to the local user.</param>
+        /// <param name="message">The formatted text message.</param>
+        /// <param name="usernameOverride">Optional. A sender's username to use instead of the one stored in the profile currently.
+        /// Leave it null to use the one provided by the profile.</param>
+        /// <param name="sentTimestamp">The UTC time when the message was sent, in OLE automation format.</param>
+        public ChatMessage CreateChatMessage(string senderWalletAddress, bool isSentByLocalUser, string message, string? usernameOverride, double sentTimestamp)
+        {
+            Profile.CompactInfo? ownProfile = null;
+            if (web3IdentityCache.Identity != null)
+                ownProfile = profileCache.GetCompact(web3IdentityCache.Identity.Address);
+
+            if (isSentByLocalUser)
+            {
+                if (string.IsNullOrEmpty(usernameOverride))
+                    usernameOverride = ownProfile?.ValidatedName ?? string.Empty;
+
+                // NOTE: we are adding a new GUID here because currently we don't get
+                // NOTE: unique message IDs from the backend for our own messages.
+                return new ChatMessage(message,
+                    usernameOverride,
+                    senderWalletAddress,
+                    true,
+                    GetUserHash(ownProfile),
+                    sentTimestamp,
+                    isMention: false
+                );
+            }
+
+            // Using profileCache for immediate access ensures chat messages maintain the correct chronological order
+            // since async profile fetching times are unpredictable.
+            Profile.CompactInfo? profile = profileCache.GetCompact(senderWalletAddress);
+
+            if (string.IsNullOrEmpty(usernameOverride))
+                usernameOverride = profile?.ValidatedName ?? string.Empty;
+
+            bool isMention = false;
+
+            if (ownProfile != null)
+                isMention = IsMention(message, ownProfile.Value.MentionName);
+
+            return new ChatMessage(message,
+                usernameOverride,
+                senderWalletAddress,
+                false,
+                GetUserHash(profile),
+                sentTimestamp,
+                isMention
+            );
+
+            string GetUserHash(Profile.CompactInfo? profile)
+            {
+                string userHash;
+
+                if (profile != null)
+                    userHash = profile.Value.WalletId ?? string.Empty;
+                else
+                    userHash = LOADING_PROFILE_TEXT;
+
+                return userHash;
+            }
+        }
+
+        private bool IsMention(string chatMessage, string userName)
+        {
+            foreach (Match match in USERNAME_REGEX.Matches(chatMessage))
+            {
+                if (match.Value == userName)
+                    return true;
+            }
+
+            return false;
+        }
+    }
+}

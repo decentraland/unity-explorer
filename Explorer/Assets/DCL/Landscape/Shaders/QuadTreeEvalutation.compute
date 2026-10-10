@@ -1,0 +1,67 @@
+﻿#include "QuadTreeHelpers.cginc"
+
+//#pragma enable_d3d11_debug_symbols
+
+// Hierarchical Quadtree Frustum Culling Compute Shader
+#pragma kernel HierarchicalQuadTreeCulling
+
+// Camera parameters
+cbuffer ConstBuffer : register(b0)
+{
+    float4x4 viewProjMatrix;
+    float4 TerrainBounds;
+    float floorValue;
+    float parcelSize;
+    int occupancyMapSize;
+}
+
+// Quadtree node structure - matches your Unity.Mathematics version
+struct QuadTreeNode
+{
+    uint Depth8CornerIndexStart24;
+};
+
+// Input/Output buffers
+StructuredBuffer<QuadTreeNode> quadTreeNodes : register(t0);
+Texture2D<float4> OccupancyTexture : register(t1);
+
+SamplerState OccupancyPointClampSampler : register(s0);
+
+RWStructuredBuffer<int2> visibleParcels : register(u0);
+RWStructuredBuffer<uint> visibleParcelCount : register(u1);
+
+inline float GetOccupancy(int2 plotParcel)
+{
+    float2 occupancyUV = (float2(plotParcel) + occupancyMapSize * 0.5f) / occupancyMapSize;
+    return OccupancyTexture.SampleLevel(OccupancyPointClampSampler, occupancyUV, 0.0).r;
+}
+
+[numthreads(256, 1, 1)]
+void HierarchicalQuadTreeCulling(uint3 id : SV_DispatchThreadID, uint3 groupId : SV_GroupID, uint3 localId : SV_GroupThreadID)
+{
+    uint baseArrayStart = 87381;
+    uint Depth8CornerIndexStart24 = quadTreeNodes[id.x + baseArrayStart].Depth8CornerIndexStart24;
+    uint cornerIndexStart = GetBottom24Bits(Depth8CornerIndexStart24);
+    int2 plot = CalculateWorldPlotFromQuadtreeNode(cornerIndexStart);
+    if (IsWithinTerrainBounds(plot, TerrainBounds))
+    {
+        const float halfParcel = parcelSize / 2;
+        float3 boundingBoxExtents = uint3(halfParcel, halfParcel, halfParcel);
+        float3 boundingBoxCentre = uint3(halfParcel, halfParcel, halfParcel);
+        float4 BoundingBox[8];
+        float4x4 objectTranslation = CreateTranslationMatrix(float3(plot.x * parcelSize, 0, plot.y * parcelSize));
+        CalculateBoundingBox(objectTranslation, viewProjMatrix, boundingBoxCentre, boundingBoxExtents, BoundingBox );
+
+        if (IsFrustumCulled(BoundingBox) == false)
+        {
+            float fOccupancy = GetOccupancy(plot);
+
+            if (fOccupancy >= floorValue)
+            {
+                uint outputIndex;
+                InterlockedAdd(visibleParcelCount[0], 1, outputIndex);
+                visibleParcels[outputIndex] = plot;
+            }
+        }
+    }
+}

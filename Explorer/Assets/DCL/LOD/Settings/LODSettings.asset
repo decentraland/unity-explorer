@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3b0b2609fd084bb696d6821c99c000c1, type: 3}
+  m_Name: LODSettings
+  m_EditorClassIdentifier: 
+  <LodPartitionBucketThresholds>k__BackingField: 05000000
+  <SDK7LodThreshold>k__BackingField: 2
+  <UnloadTolerance>k__BackingField: 1
+  <DefaultTextureArrayResolutionDescriptors>k__BackingField:
+  - Resolution: 512
+    ArraySize: 100
+    InitialArrayCapacity: 5
+  - Resolution: 1024
+    ArraySize: 100
+    InitialArrayCapacity: 10
+  <ArraySizeForMissingResolutions>k__BackingField: 10
+  <CapacityForMissingResolutions>k__BackingField: 1
+  <LODDebugColors>k__BackingField:
+  - {r: 0, g: 1, b: 0, a: 1}
+  - {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  - {r: 1, g: 0, b: 0, a: 1}
+  - {r: 0, g: 0, b: 0, a: 1}
+  <DebugCube>k__BackingField: {fileID: 8255452435763093729, guid: c9870b17ce36346458f07a63c096a16a, type: 3}
+  <EnableLODStreaming>k__BackingField: 1

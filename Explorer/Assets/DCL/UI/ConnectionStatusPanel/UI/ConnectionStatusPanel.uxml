@@ -1,0 +1,20 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/DCL/UI/ConnectionStatusPanel/UI/ConnectionStatusPanel.uss" />
+    <ui:VisualElement name="ConnectionPanel" usage-hints="DynamicTransform" class="connection-panel connection-panel--hidden">
+        <ui:VisualElement name="Header" class="connection-panel__header">
+            <ui:Label text="CONNECTION STATUS" name="TitleLabel" class="connection-panel__title" />
+            <ui:VisualElement name="Spacer" class="connection-panel__header-spacer" />
+            <ui:Button name="CloseButton" class="dcl-clickable connection-panel__close-button" />
+        </ui:VisualElement>
+        <DCL.UI.ConnectionStatusPanel.ConnectionStatusElement title="Scene" subtitle="Scene running with or without errors" name="SceneStatus" />
+        <ui:VisualElement name="Divider" class="connection-panel__divider" />
+        <DCL.UI.ConnectionStatusPanel.ConnectionStatusElement title="Scene Room" subtitle="Room connection to LiveKit" name="SceneRoomStatus" />
+        <ui:VisualElement name="Divider" class="connection-panel__divider" />
+        <DCL.UI.ConnectionStatusPanel.ConnectionStatusElement title="Global Room" subtitle="Global connection to LiveKit" name="GlobalRoomStatus" />
+        <ui:VisualElement name="Divider" class="connection-panel__divider" />
+        <DCL.UI.ConnectionStatusPanel.AssetBundleSceneStatusElement title="Asset Bundle Scene Status" subtitle="Asset Bundles Status" name="AssetBundleStatus" />
+    </ui:VisualElement>
+    <ui:VisualElement name="Sidebar" class="toggle-button-container">
+        <ui:Button name="ConnectionButton" class="toggle-button dcl-clickable" />
+    </ui:VisualElement>
+</ui:UXML>

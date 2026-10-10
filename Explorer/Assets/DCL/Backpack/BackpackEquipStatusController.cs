@@ -1,0 +1,267 @@
+using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.Emotes;
+using DCL.AvatarRendering.Emotes.Equipped;
+using DCL.AvatarRendering.Loading;
+using DCL.AvatarRendering.Wearables.Components;
+using DCL.AvatarRendering.Wearables.Equipped;
+using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.Backpack.BackpackBus;
+using DCL.Diagnostics;
+using DCL.Profiles;
+using DCL.Profiles.Self;
+using DCL.UI;
+using DCL.Web3.Identities;
+using Global.AppArgs;
+using Runtime.Wearables;
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using DCL.Backpack.AvatarSection.Outfits.Commands;
+using UnityEngine;
+using Utility;
+using Utility.Multithreading;
+
+namespace DCL.Backpack
+{
+    public class BackpackEquipStatusController : IDisposable
+    {
+        private readonly IBackpackEventBus backpackEventBus;
+        private readonly IEquippedEmotes equippedEmotes;
+        private readonly IEquippedWearables equippedWearables;
+        private readonly SelfProfile selfProfile;
+        private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly IEmoteStorage emoteStorage;
+        private readonly IWearableStorage wearableStorage;
+        private readonly IAppArgs appArgs;
+        private readonly WarningNotificationView inWorldWarningNotificationView;
+        private readonly ProfileChangesBus profileChangesBus;
+        private readonly IOwnedNftFilter ownedNftFilter;
+        private CancellationTokenSource? publishProfileCts;
+
+        public BackpackEquipStatusController(
+            IBackpackEventBus backpackEventBus,
+            IEquippedEmotes equippedEmotes,
+            IEquippedWearables equippedWearables,
+            SelfProfile selfProfile,
+            IEmoteStorage emoteStorage,
+            IWearableStorage wearableStorage,
+            IWeb3IdentityCache web3IdentityCache,
+            IAppArgs appArgs,
+            WarningNotificationView inWorldWarningNotificationView,
+            ProfileChangesBus profileChangesBus,
+            IOwnedNftFilter ownedNftFilter)
+        {
+            this.backpackEventBus = backpackEventBus;
+            this.equippedEmotes = equippedEmotes;
+            this.equippedWearables = equippedWearables;
+            this.web3IdentityCache = web3IdentityCache;
+            this.selfProfile = selfProfile;
+            this.emoteStorage = emoteStorage;
+            this.wearableStorage = wearableStorage;
+
+            backpackEventBus.EquipWearableEvent += EquipWearable;
+            backpackEventBus.UnEquipWearableEvent += UnEquipWearable;
+            backpackEventBus.PublishProfileEvent += UpdateProfile;
+            backpackEventBus.EquipEmoteEvent += EquipEmote;
+            backpackEventBus.UnEquipEmoteEvent += UnEquipEmote;
+            backpackEventBus.ChangeColorEvent += ChangeColor;
+            backpackEventBus.ForceRenderEvent += SetForceRender;
+            backpackEventBus.UnEquipAllEvent += UnEquipAll;
+            backpackEventBus.UnEquipAllWearablesEvent += UnEquipAllWearables;
+            backpackEventBus.EquipOutfitEvent += EquipOutfit;
+            // Avoid publishing an invalid profile
+            // For example: logout while the update operation is being processed
+            // See: https://github.com/decentraland/unity-explorer/issues/4413
+            web3IdentityCache.OnIdentityCleared += CancelUpdateOperation;
+            web3IdentityCache.OnIdentityChanged += CancelUpdateOperation;
+
+            this.appArgs = appArgs;
+            this.inWorldWarningNotificationView = inWorldWarningNotificationView;
+            this.profileChangesBus = profileChangesBus;
+            this.ownedNftFilter = ownedNftFilter;
+        }
+
+        public void Dispose()
+        {
+            backpackEventBus.EquipWearableEvent -= EquipWearable;
+            backpackEventBus.UnEquipWearableEvent -= UnEquipWearable;
+            backpackEventBus.PublishProfileEvent -= UpdateProfile;
+            backpackEventBus.EquipEmoteEvent -= EquipEmote;
+            backpackEventBus.UnEquipEmoteEvent -= UnEquipEmote;
+            backpackEventBus.ChangeColorEvent -= ChangeColor;
+            backpackEventBus.ForceRenderEvent -= SetForceRender;
+            backpackEventBus.UnEquipAllEvent -= UnEquipAll;
+            backpackEventBus.UnEquipAllWearablesEvent -= UnEquipAllWearables;
+            web3IdentityCache.OnIdentityCleared -= CancelUpdateOperation;
+            web3IdentityCache.OnIdentityChanged -= CancelUpdateOperation;
+            backpackEventBus.EquipOutfitEvent -= EquipOutfit;
+            publishProfileCts?.SafeCancelAndDispose();
+        }
+
+        private void EquipOutfit(BackpackEquipOutfitCommand command, IReadOnlyCollection<IWearable> wearables)
+        {
+            equippedWearables.UnEquipAll();
+
+            foreach (var w in wearables)
+                equippedWearables.Equip(w);
+
+            equippedWearables.SetEyesColor(command.EyesColor);
+            equippedWearables.SetHairColor(command.HairColor);
+            equippedWearables.SetBodyshapeColor(command.SkinColor);
+            equippedWearables.SetForceRender(command.ForceRender);
+        }
+
+        private void UnEquipAll()
+        {
+            equippedEmotes.UnEquipAll();
+            equippedWearables.UnEquipAll();
+            equippedWearables.SetForceRender(Array.Empty<string>());
+        }
+
+        private void UnEquipAllWearables()
+        {
+            equippedWearables.UnEquipAll();
+            equippedWearables.SetForceRender(Array.Empty<string>());
+        }
+
+        private void EquipEmote(int slot, IEmote emote, bool _)
+        {
+            equippedEmotes.EquipEmote(slot, emote);
+        }
+
+        private void UnEquipEmote(int slot, IEmote? emote)
+        {
+            equippedEmotes.UnEquipEmote(slot, emote);
+        }
+
+        private void EquipWearable(IWearable wearable, bool isManuallyEquipped)
+        {
+            equippedWearables.Equip(wearable);
+        }
+
+        private void UnEquipWearable(IWearable wearable)
+        {
+            equippedWearables.UnEquip(wearable);
+
+            var currentForceRender = new List<string>(equippedWearables.ForceRenderCategories);
+            if (currentForceRender.Remove(wearable.GetCategory()))
+            {
+                equippedWearables.SetForceRender(currentForceRender);
+                backpackEventBus.SendForceRender(currentForceRender);
+            }
+        }
+
+        private void SetForceRender(IReadOnlyCollection<string> categories)
+        {
+            equippedWearables.SetForceRender(categories);
+        }
+
+        private void ChangeColor(Color newColor, string category)
+        {
+            switch (category)
+            {
+                case WearableCategories.Categories.EYES:
+                    equippedWearables.SetEyesColor(newColor);
+                    break;
+                case WearableCategories.Categories.HAIR:
+                    equippedWearables.SetHairColor(newColor);
+                    break;
+                case WearableCategories.Categories.BODY_SHAPE:
+                    equippedWearables.SetBodyshapeColor(newColor);
+                    break;
+            }
+        }
+
+        private void UpdateProfile()
+        {
+            if (web3IdentityCache.Identity == null)
+                return;
+
+            publishProfileCts = publishProfileCts.SafeRestart();
+            UpdateProfileAsync(publishProfileCts.Token).Forget();
+        }
+
+        private async UniTaskVoid UpdateProfileAsync(CancellationToken ct)
+        {
+            // Set once the equipped look is announced ahead of the deployment, so a failed deployment can put the committed one back
+            Profile? profileToRevertTo = null;
+
+            try
+            {
+                ProfileReadResult read = await selfProfile.ProfileAsync(ct);
+
+                if (!read.IsOk(out Profile? oldProfile))
+                {
+                    if (!read.IsCancelled)
+                        ShowErrorNotificationAsync(ct).Forget();
+
+                    return;
+                }
+
+                var forceRenderList = new List<string>(equippedWearables.ForceRenderCategories);
+
+                // The version is bumped by whoever commits the profile, so here it still matches the one it is compared against
+                Profile newProfile = oldProfile.CreateNewProfileForUpdate(equippedEmotes,
+                    equippedWearables,
+                    forceRenderList,
+                    emoteStorage,
+                    wearableStorage,
+                    ownedNftFilter,
+                    incrementVersion: false);
+
+                // Skip publishing the same profile
+                if (newProfile.IsSameProfile(oldProfile))
+                {
+                    ReportHub.LogWarning(ReportCategory.PROFILE, "Profile update skipped - no changes detected in avatar configuration");
+                    return;
+                }
+
+                // The equipped look is final here, so it is announced ahead of the slow deployment; a copy is pushed because the commit mutates newProfile
+                profileChangesBus.PushUpdate(new ProfileBuilder().From(newProfile).WithVersion(newProfile.Version + 1).Build());
+                profileToRevertTo = oldProfile;
+
+                // A previewed look is local only: it may hold wearables or emotes the user does not own.
+                bool localOnly = appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS) || appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_WEARABLES);
+                ProfileDeployResult deploy = await selfProfile.DeployProfileAsync(newProfile, ct, localOnly);
+                MultithreadingUtility.AssertMainThread(nameof(UpdateProfileAsync), true);
+
+                if (deploy.IsOk(out Profile? updatedProfile))
+                {
+                    profileChangesBus.PushUpdate(updatedProfile);
+                    backpackEventBus.SendAvatarChanged();
+                }
+                else if (deploy.IsError(out ProfileDeployError error) && error != ProfileDeployError.Cancelled)
+                {
+                    profileChangesBus.PushUpdate(oldProfile);
+
+                    if (error == ProfileDeployError.NothingChanged)
+                        ReportHub.LogWarning(ReportCategory.PROFILE, "Profile update skipped - no changes detected");
+                    else if (error == ProfileDeployError.DeployFailed)
+                        ShowErrorNotificationAsync(ct).Forget();
+                }
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e)
+            {
+                if (profileToRevertTo != null)
+                    profileChangesBus.PushUpdate(profileToRevertTo);
+
+                ReportHub.LogException(e, ReportCategory.PROFILE);
+                ShowErrorNotificationAsync(ct).Forget();
+            }
+        }
+
+        private async UniTask ShowErrorNotificationAsync(CancellationToken ct)
+        {
+            inWorldWarningNotificationView.SetText("There was an error updating your avatar profile. Please try again.");
+            inWorldWarningNotificationView.Show(ct);
+
+            await UniTask.Delay(3000, cancellationToken: ct);
+
+            inWorldWarningNotificationView.Hide(ct: ct);
+        }
+
+        private void CancelUpdateOperation() =>
+            publishProfileCts?.SafeCancelAndDispose();
+    }
+}

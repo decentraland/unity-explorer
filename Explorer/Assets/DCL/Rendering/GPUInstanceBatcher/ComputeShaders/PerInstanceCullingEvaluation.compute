@@ -1,0 +1,63 @@
+﻿#include "Includes/PlatformSpecifications.cginc"
+#include "Includes/CullingFunctions.cginc"
+#include "Includes/CameraFunctions.cginc"
+#include "Includes/Structures.cginc"
+
+// Uncomment for debug symbols - do not commit uncommented
+//#pragma enable_d3d11_debug_symbols
+#pragma kernel CameraCullingAndLODCalculationKernel
+
+////////////////////
+// UNIFORM INPUTS
+////////////////////
+shared RWStructuredBuffer<PerInstance> PerInstanceData;
+StructuredBuffer<GroupData> GroupDataBuffer;
+
+////////////////////
+// UNIFORM OUTPUTS
+////////////////////
+RWStructuredBuffer<PerInstanceLODLevels> PerInstance_LODLevels; // LOD_A, LOD_B, LOD_Dither, LOD_Shadow 
+
+[numthreads(GPUI_THREADS, 1, 1)]
+void CameraCullingAndLODCalculationKernel(uint3 id : SV_DispatchThreadID)
+{
+    if (id.x >= GroupDataBuffer[0].nInstBufferSize)
+        return;
+
+    PerInstanceLODLevels nOutput4 = {8,8,0,8};
+
+    float fDistance;
+    float fScreenSpaceSize;
+    const float4x4 mInstMatrix = PerInstanceData[id.x].worldMatrix;
+    EvaluateInstanceDistance(mInstMatrix, GroupDataBuffer[0].vBoundsExtents, GroupDataBuffer[0].vCameraPosition, GroupDataBuffer[0].fCameraHalfAngle, fDistance, fScreenSpaceSize);
+    
+    bool bCulled = false;
+    
+    // Distance culling
+    if (fDistance >= GroupDataBuffer[0].fMaxDistance)
+    {
+        bCulled = true;
+    }
+
+    if (bCulled == false && fDistance >= GroupDataBuffer[0].fMinCullingDistance)
+    {
+        float4 BoundingBox[8];
+        CalculateBoundingBox(mInstMatrix, GroupDataBuffer[0].matCamera_MVP, GroupDataBuffer[0].vBoundsCenter, GroupDataBuffer[0].vBoundsExtents, BoundingBox);
+        
+        bCulled = IsFrustumCulled(BoundingBox, GroupDataBuffer[0].fFrustumOffset);
+
+        // TODO:
+        // Hierarchical Z-Buffer Occlusion Culling      
+        // if (bCulled == false && isOcclusionCulling)
+        // {
+        //     bCulled = IsOcclusionCulled(BoundingBox, hiZTxtrSize, occlusionOffset, occlusionAccuracy,hiZMap, sampler_hiZMap);
+        // }
+    }
+
+    if (bCulled == false)
+    {
+        nOutput4 = EvaluateLODLevel(GroupDataBuffer[0].nLODCount, GroupDataBuffer[0].matLODSizes, GroupDataBuffer[0].fShadowDistance, fScreenSpaceSize, GroupDataBuffer[0].fMaxDistance, fDistance);
+    }
+
+    PerInstance_LODLevels[id.x] = nOutput4;
+}

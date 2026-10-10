@@ -1,0 +1,85 @@
+using DCL.Friends.UserBlocking;
+using DCL.Utility;
+using System;
+using System.Collections.Generic;
+
+namespace DCL.Friends
+{
+    public class UserBlockingCache : IUserBlockingCache, IDisposable
+    {
+        private readonly IFriendsEventBus eventBus;
+
+        private readonly HashSet<string> blockedUsers = new (StringComparer.OrdinalIgnoreCase);
+        private readonly HashSet<string> blockedByUsers = new (StringComparer.OrdinalIgnoreCase);
+
+        public event Action<string>? UserBlocked;
+        public event Action<string>? UserBlocksYou;
+        public event Action<string>? UserUnblocked;
+        public event Action<string>? UserUnblocksYou;
+
+        // This property is fixed to true since we currently don't want to show chat messages from blocked users in any shape or form.
+        // This can change in the future, so all the logic that is already in place will stay the same for such times.
+        public bool HideChatMessages
+        {
+            get => true;
+
+            set { }
+        }
+
+        public UserBlockingCache(IFriendsEventBus eventBus)
+        {
+            this.eventBus = eventBus;
+
+            eventBus.OnYouBlockedProfile += UserBlockedByYou;
+            eventBus.OnYouUnblockedProfile += UserUnblockedByYou;
+            eventBus.OnYouBlockedByUser += YouBlockedByUser;
+            eventBus.OnYouUnblockedByUser += YouUnblockedByUser;
+        }
+
+        public void Dispose()
+        {
+            eventBus.OnYouBlockedProfile -= UserBlockedByYou;
+            eventBus.OnYouUnblockedProfile -= UserUnblockedByYou;
+            eventBus.OnYouBlockedByUser -= YouBlockedByUser;
+            eventBus.OnYouUnblockedByUser -= YouUnblockedByUser;
+        }
+
+        public bool UserIsBlocked(string userId) =>
+            blockedUsers.Contains(userId) || blockedByUsers.Contains(userId);
+
+        public void Reset(UserBlockingStatus blockingStatus)
+        {
+            blockedUsers.Clear();
+            blockedByUsers.Clear();
+
+            foreach (string user in blockingStatus.BlockedUsers)
+                blockedUsers.Add(user);
+            foreach (string user in blockingStatus.BlockedByUsers)
+                blockedByUsers.Add(user);
+        }
+
+        private void UserBlockedByYou(BlockedProfile user)
+        {
+            blockedUsers.Add(user.Address);
+            UserBlocked?.Invoke(user.Address);
+        }
+
+        private void UserUnblockedByYou(BlockedProfile user)
+        {
+            blockedUsers.Remove(user.Address);
+            UserUnblocked?.Invoke(user.Address);
+        }
+
+        private void YouBlockedByUser(string userAddress)
+        {
+            blockedByUsers.Add(userAddress);
+            UserBlocksYou?.Invoke(userAddress);
+        }
+
+        private void YouUnblockedByUser(string userAddress)
+        {
+            blockedByUsers.Remove(userAddress);
+            UserUnblocksYou?.Invoke(userAddress);
+        }
+    }
+}

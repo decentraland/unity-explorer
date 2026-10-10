@@ -1,0 +1,34 @@
+﻿using DCL.AvatarRendering.AvatarShape.Components;
+using DCL.AvatarRendering.Wearables.Helpers;
+using System.Collections.Generic;
+using DCL.AvatarRendering.AvatarShape.Helpers;
+using DCL.AvatarRendering.Loading.Assets;
+using UnityEngine;
+using Utility;
+
+namespace DCL.AvatarRendering.AvatarShape.ComputeShader
+{
+    public abstract class CustomSkinning
+    {
+        public abstract AvatarCustomSkinningComponent Initialize(IList<CachedAttachment> gameObjects,
+            UnityEngine.ComputeShader skinningShader, IAvatarMaterialPoolHandler avatarMaterial,
+            AvatarShapeComponent avatarShapeComponent, in FacialFeaturesTextures facialFeatureTexture,
+            int boneCount);
+
+        private protected abstract AvatarCustomSkinningComponent.MaterialSetup SetupMaterial(Renderer meshRenderer, Material originalMaterial, int lastWearableVertCount, IAvatarMaterialPoolHandler celShadingMaterial,
+            AvatarShapeComponent shapeComponent, in FacialFeaturesTextures facialFeaturesTextures);
+
+        protected void ResetTransforms(Transform currentTransform, Transform rootTransform)
+        {
+            // Make sure that Transform is uniform with the root
+            // Non-uniform does not make sense as skin relatively to the base avatar
+            // so we just waste calculations on transformation matrices
+
+            while (currentTransform != rootTransform)
+            {
+                currentTransform.ResetLocalTRS();
+                currentTransform = currentTransform.parent;
+            }
+        }
+    }
+}
