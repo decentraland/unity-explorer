@@ -104,9 +104,9 @@
   },
   {
    "number": 10321,
-   "status": "pending",
+   "status": "skipped",
    "commit": null,
-   "note": ""
+   "note": "already fixed on dev by #10350: SelfProfile.ProfileAsync no longer throws Web3IdentityMissingException, it returns ProfileReadError.NoIdentity, which SidebarController already checks"
   },
   {
    "number": 10405,
