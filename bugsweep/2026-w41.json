@@ -68,9 +68,9 @@
   },
   {
    "number": 10044,
-   "status": "pending",
+   "status": "skipped",
    "commit": null,
-   "note": ""
+   "note": "already fixed on dev by #10173 (2bdaa187e, DeleteEntityIntention filter on the particle system queries, which says Fixes #10044); check Sentry UNITY-EXPLORER-Q16 for events on v0.183.0+ and close"
   },
   {
    "number": 10329,
