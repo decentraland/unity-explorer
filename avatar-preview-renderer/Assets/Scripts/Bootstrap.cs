@@ -32,14 +32,34 @@ public class Bootstrap : MonoBehaviour
         QualitySettings.vSyncCount = 0;
         Application.targetFrameRate = PreviewConfiguration.Instance.Fps;
 
-        // Small viewports (e.g. marketplace thumbnails) get supersampled for extra quality since the
-        // absolute shaded pixel count stays bounded (under 1600x1600 -> under 3200x3200). Both
-        // dimensions must be under the threshold, not just one, so a wide-but-short viewport doesn't
-        // get its large dimension doubled too.
-        if (GraphicsSettings.currentRenderPipeline is UniversalRenderPipelineAsset urpAsset
-            && Screen.width < 1600 && Screen.height < 1600)
+        var config = PreviewConfiguration.Instance;
+
+        if (GraphicsSettings.currentRenderPipeline is UniversalRenderPipelineAsset urpAsset)
         {
-            urpAsset.renderScale = 2f;
+            // Small viewports (e.g. marketplace thumbnails) get supersampled for extra quality since the
+            // absolute shaded pixel count stays bounded (under 1600x1600 -> under 3200x3200). Both
+            // dimensions must be under the threshold, not just one, so a wide-but-short viewport doesn't
+            // get its large dimension doubled too. The renderScale URL parameter overrides this: a headless
+            // consumer on software rendering pays for every shaded pixel and asks for 1.
+            var supersample = Screen.width < 1600 && Screen.height < 1600;
+            urpAsset.renderScale = config.RenderScale ?? (supersample ? 2f : urpAsset.renderScale);
+            urpAsset.supportsHDR = config.Hdr;
+
+            if (config.ShadowMap is { } shadowMap)
+            {
+                if (shadowMap <= 0) urpAsset.shadowDistance = 0f;
+                else urpAsset.mainLightShadowmapResolution = shadowMap;
+            }
+        }
+
+        if (!config.PostProcessing)
+        {
+            foreach (var camera in FindObjectsByType<Camera>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            {
+                var cameraData = camera.GetUniversalAdditionalCameraData();
+                cameraData.renderPostProcessing = false;
+                cameraData.antialiasing = AntialiasingMode.None;
+            }
         }
 
         if (PreviewConfiguration.Instance.UninterruptedDeferAgent)
