@@ -148,12 +148,62 @@ So the one line that copies *from another target* is the dev seed for a fresh de
 
 #### Confirming cache behavior from CI
 
-Two signals per build, no extra tooling:
+The *Generate shader and cache report* step writes a GitHub job summary, the
+`{platform}_{install_source}_shader_compilation_report` artifact, and the
+`{platform}_{install_source}_build_metrics` artifact containing `unity_build_metrics.json`.
+It also runs on failed builds when a cloud log is available. Report generation
+errors are non-blocking diagnostics. The parser is
+`scripts/cloudbuild/build_report.py` (Python standard library only).
 
-- **Which pool a build used** — `build.py` logs `Updated name for target: <target>` in the *Execute Unity Cloud build* step. The same target name across branches means the same cache.
-- **Whether cache was actually reused** — the *Generate Shader Compilation Report* step (and its uploaded artifact) prints `Remote Cache Hits: N` and `Total Variants Compiled: N`. Non-zero hits with ~0 variants compiled = warm; `0` hits with many variants = cold.
+- **Which pool a build used:** `build.py` logs `Updated name for target: <target>` in
+  the *Execute Unity Cloud build* step (also `context.build_target` in the JSON).
+  The same target name across branches identifies the same cache pool.
+- **Target identity:** JSON `context` records the Unity build target/number, GitHub
+  run/attempt, commit, platform, install source and requested clean/cache settings.
+  `requested_clean_build: false` does **not** prove that a cache was available.
+- **Library/workspace restore:** `cache.restores` records explicit `hit`, `miss`, or
+  `unknown` outcomes, the cache kind, the cache key (including Unity version/architecture when
+  present), timestamps, restore duration, time before extraction, and extraction
+  duration. A missing marker is unknown, not a miss or a zero-duration operation.
+  Library and workspace attempts are tracked independently, including misses
+  without a key. Repeated outcome messages preserve the original observation;
+  a new fetch starts a separate attempt. Extraction lines have no cache identity,
+  so their timing is attributed only when one attempt is pending, or when exactly one
+  of several pending attempts later completes with a hit. Otherwise extraction timing remains unknown.
+- **Shader work:** `shaders.compiled_variants` counts `compiled N variants` from
+  completed pass summaries, not variants remaining after stripping. Local and
+  remote shader cache hits are separate counters. Restoring a Library can produce
+  **local** hits with zero remote hits; zero remote hits alone does not mean a cold
+  build. A restored cache can still require recompilation.
+- **Cache finalization:** `cache.archives` records the observed compression level,
+  archive creation duration, and archive-to-postbuild-end duration. The last
+  interval includes transfer and other finalization work; it is **not** an isolated
+  upload measurement.
+- **Coverage:** `shaders.status` is `observed`, `partial`, or `unavailable`.
+  `observed` means recognized summaries exist, not proof that the log covers every
+  compilation. Totals cover recognized summaries; a detected format mismatch emits
+  a warning. No summaries means `null` counts, not zero. Individual pass durations
+  can overlap, so `summed_pass_seconds` is not wall-clock build time. JSON timings
+  use seconds; the human-readable summary uses H:MM:SS rounded to whole seconds.
 
-A new pool target whose **first** build shows `Remote Cache Hits: 0` and whose **next** build shows non-zero hits is simultaneously the proof of reuse and the proof of isolation (it can only reuse what it built itself).
+These artifacts are diagnostic outputs; they are not automatically ingested into
+Snowflake or the build dashboard. Run the parser locally against a downloaded log:
+
+```bash
+python3 scripts/cloudbuild/build_report.py \
+  --input-log unity_cloud_log.log \
+  --build-info unity_cloud_build_info.env \
+  --output-report shader_compilation_report.log \
+  --output-json unity_build_metrics.json
+python3 -m unittest scripts.cloudbuild.test_build_report -v
+```
+
+The test fixtures are allowlisted excerpts from macOS builds
+[36460671898](https://github.com/decentraland/unity-explorer/actions/runs/36460671898)
+(cache absent) and
+[36720209155](https://github.com/decentraland/unity-explorer/actions/runs/36720209155)
+(cache restored). They include one shader block each; extraction paths are anonymized.
+No complete build logs or environment dumps are committed.
 
 To change the template defaults, run the template config (`@T_<TARGET_NAME>`) manually in the Unity Cloud Build UI.
 
