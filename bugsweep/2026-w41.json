@@ -44,9 +44,9 @@
   },
   {
    "number": 10376,
-   "status": "pending",
+   "status": "skipped",
    "commit": null,
-   "note": ""
+   "note": "root cause confirmed (SelfProfileModel.Read refetches whenever knowledge is Failed), but a back-off needs a time source threaded into the pure reducer messages plus Sentry throttling in two layers; design change, not a minimal fix"
   },
   {
    "number": 10382,
