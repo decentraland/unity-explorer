@@ -62,9 +62,9 @@
   },
   {
    "number": 10288,
-   "status": "pending",
+   "status": "skipped",
    "commit": null,
-   "note": ""
+   "note": "no root cause found: realmEntity is destroyed or the global world disposed while WaitForFixedScenePromisesAsync polls it, but the concurrent path (overlapping teleports, logout, shutdown) can't be told apart without breadcrumbs; the real fix is serialising teleport chains, a design change"
   },
   {
    "number": 10044,
