@@ -122,9 +122,9 @@
   },
   {
    "number": 10309,
-   "status": "pending",
+   "status": "skipped",
    "commit": null,
-   "note": ""
+   "note": "client gaps found (Pulse-sourced remotes survive ForceRemoveAll, RemoteProfiles.Reset never called) but the exact fix #9041 was reverted on 2026-07-10 with no reason recorded; find out why before re-landing it"
   },
   {
    "number": 10404,
