@@ -240,6 +240,27 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
             Assert.That(childRenderer.sharedMaterial, Is.EqualTo(originalChildMaterial));
         }
 
+        [Test]
+        public void KeepModifiersWhenContainerFinishesLoading()
+        {
+            // Arrange
+            var eventBuffer = new EntityEventBuffer<GltfContainerComponent>(1);
+            var cleanupSystem = new CleanupGltfNodeModifierSystem(world, eventBuffer);
+
+            Entity container = CreateContainerWithMaterialOverride(childRenderer, originalChildMaterial, testMaterial, out Entity nodeEntity);
+            var gltfContainerComponent = new GltfContainerComponent { State = LoadingState.Finished };
+            world.Add(container, gltfContainerComponent, new PBGltfContainer());
+
+            // Act
+            eventBuffer.Add(container, gltfContainerComponent);
+            cleanupSystem.Update(0);
+
+            // Assert
+            Assert.That(world.Has<Components.GltfNodeModifiers>(container), Is.True);
+            Assert.That(world.Has<PBMaterial>(nodeEntity), Is.True);
+            Assert.That(childRenderer.sharedMaterial, Is.EqualTo(testMaterial));
+        }
+
         private Entity CreateContainerWithMaterialOverride(Renderer renderer, Material originalMaterial, Material nodeMaterial, out Entity nodeEntity)
         {
             Entity container = world.Create(
