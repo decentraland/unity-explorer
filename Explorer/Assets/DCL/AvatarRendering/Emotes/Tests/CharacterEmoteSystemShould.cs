@@ -466,6 +466,51 @@ namespace DCL.AvatarRendering.Emotes.Tests
             Assert.AreEqual(EMOTE_URN, updated.PendingStop.Urn.ToString());
         }
 
+        [Test]
+        public void InterruptRemoteEmoteWhenAvatarIsHiddenByModifierArea()
+        {
+            //Arrange: a remote avatar hidden by an AvatarModifierArea while playing an emote with a prop.
+            const string EMOTE_URN = "urn:decentraland:off-chain:base-emotes:dance";
+
+            EmoteReferences remoteEmoteReferences = new GameObject(nameof(EmoteReferences)).AddComponent<EmoteReferences>();
+            remoteEmoteReferences.Initialize(null, null, null, null, 0, legacy: true);
+
+            var emoteComponent = new CharacterEmoteComponent { EmoteUrn = EMOTE_URN, CurrentEmoteReference = remoteEmoteReferences };
+            Entity remoteEntity = world.Create(emoteComponent, avatarView, new AvatarShapeComponent { HiddenByModifierArea = true });
+
+            try
+            {
+                //Act
+                system.Update(0);
+
+                //Assert
+                CharacterEmoteComponent updated = world.Get<CharacterEmoteComponent>(remoteEntity);
+                Assert.IsNull(updated.CurrentEmoteReference);
+                Assert.IsTrue(updated.PendingStop.IsSet);
+                Assert.AreEqual(EmoteState.EsInterrupted, updated.PendingStop.Reason);
+            }
+            finally { Object.DestroyImmediate(remoteEmoteReferences.gameObject); }
+        }
+
+        [Test]
+        public void KeepLocalPlayerEmoteWhenAvatarIsHiddenByModifierArea()
+        {
+            //Arrange
+            const string EMOTE_URN = "urn:decentraland:off-chain:base-emotes:dance";
+
+            ref CharacterEmoteComponent emoteComponent = ref world.Get<CharacterEmoteComponent>(playerEntity);
+            emoteComponent.EmoteUrn = EMOTE_URN;
+            world.Add(playerEntity, new AvatarShapeComponent { HiddenByModifierArea = true });
+
+            //Act
+            system.Update(0);
+
+            //Assert
+            CharacterEmoteComponent updated = world.Get<CharacterEmoteComponent>(playerEntity);
+            Assert.AreSame(emoteReferences, updated.CurrentEmoteReference);
+            Assert.IsFalse(updated.PendingStop.IsSet);
+        }
+
         private static ISceneFacade NewSceneFacadeWithName(string name)
         {
             ISceneData sceneData = Substitute.For<ISceneData>();
