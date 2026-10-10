@@ -38,9 +38,9 @@
   },
   {
    "number": 10375,
-   "status": "pending",
+   "status": "skipped",
    "commit": null,
-   "note": ""
+   "note": "root cause confirmed (wallet/profile captured once in ChatPanelPresenter and AnnouncementsSectionController), but the fix is a refactor across chat and community views, including MonoBehaviours that initialize once; too large for a sweep fix"
   },
   {
    "number": 10376,
