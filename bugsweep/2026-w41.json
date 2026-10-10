@@ -56,9 +56,9 @@
   },
   {
    "number": 10319,
-   "status": "pending",
+   "status": "skipped",
    "commit": null,
-   "note": ""
+   "note": "no root cause found: Sentry events all come from opening the place panel from the startup lobby, and the NRE at mainScroll.verticalNormalizedPosition has no identified null source (prefab reference set, data non-null); needs a repro in a player build, a null-guard would only hide it"
   },
   {
    "number": 10288,
