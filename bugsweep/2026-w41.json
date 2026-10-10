@@ -20,9 +20,9 @@
   },
   {
    "number": 10337,
-   "status": "pending",
+   "status": "skipped",
    "commit": null,
-   "note": ""
+   "note": "root cause is in the native UUAV Rust player: loop_wrap/apply_seek cannot recover from a failed seek on the non-seekable HTTP input served by the preview server (no Range support); fix belongs in UUAV native or the preview server, not Explorer C#"
   },
   {
    "number": 10414,
