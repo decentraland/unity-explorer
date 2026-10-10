@@ -62,6 +62,12 @@ namespace Global.AppArgs
         public const string SPAWN_POINT = "spawnpoint";
         public const string SKIP_AUTH_SCREEN = "skip-auth-screen";
         public const string LANDSCAPE_TERRAIN_ENABLED = "landscape-terrain-enabled";
+
+        /// <summary>
+        ///     Base URL of the satellite map's zoom levels 4 to 8, laid out as <c>{url}/{level}/{i},{j}.ktx2</c>, overriding the
+        ///     default CDN. Without KTX2 support on the machine the map shows only the bundled level-3 chunks.
+        /// </summary>
+        public const string SATELLITE_MAP_URL = "satellite-map-url";
         public const string SKYBOX_TIME_ENABLED = "skybox-time-enabled";
 
         /// <summary>

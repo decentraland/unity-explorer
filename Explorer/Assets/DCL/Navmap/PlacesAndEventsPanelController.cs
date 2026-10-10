@@ -72,6 +72,10 @@ namespace DCL.Navmap
             searchResultController.Show();
         }
 
+        /// <summary>Collapses the panel without the button to expand it again; selecting a place or event opens it.</summary>
+        public void Close() =>
+            Collapse(true);
+
         public void Toggle(Section section)
         {
             switch (section)

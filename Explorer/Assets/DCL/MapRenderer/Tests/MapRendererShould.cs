@@ -70,6 +70,60 @@ namespace DCL.MapRenderer.Tests
         }
 
         [Test]
+        public void HideGenesisCityLayersInAWorld()
+        {
+            IMapActivityOwner owner = Substitute.For<IMapActivityOwner>();
+            mapRenderer.EnableLayers_Test(owner, MapLayer.ScenesOfInterest | MapLayer.PlayerMarker);
+            ClearLayerCalls();
+
+            mapRenderer.ShowWorld("world.dcl.eth", null);
+
+            layers[MapLayer.ScenesOfInterest].Received(1).Disable(Arg.Any<CancellationToken>());
+            layers[MapLayer.PlayerMarker].DidNotReceive().Disable(Arg.Any<CancellationToken>());
+        }
+
+        [Test]
+        public void RestoreGenesisCityLayersInGenesisCity()
+        {
+            IMapActivityOwner owner = Substitute.For<IMapActivityOwner>();
+            mapRenderer.EnableLayers_Test(owner, MapLayer.ScenesOfInterest);
+            mapRenderer.ShowWorld("world.dcl.eth", null);
+            ClearLayerCalls();
+
+            mapRenderer.ShowGenesisCity();
+
+            layers[MapLayer.ScenesOfInterest].Received(1).EnableAsync(Arg.Any<CancellationToken>());
+        }
+
+        [Test]
+        public void NotEnableGenesisCityLayersInAWorld()
+        {
+            IMapActivityOwner owner = Substitute.For<IMapActivityOwner>();
+            mapRenderer.ShowWorld("world.dcl.eth", null);
+            ClearLayerCalls();
+
+            mapRenderer.EnableLayers_Test(owner, MapLayer.HotUsersMarkers | MapLayer.PlayerMarker);
+            mapRenderer.SetSharedLayer(MapLayer.HotUsersMarkers, true);
+
+            layers[MapLayer.HotUsersMarkers].DidNotReceive().EnableAsync(Arg.Any<CancellationToken>());
+            layers[MapLayer.PlayerMarker].Received(1).EnableAsync(Arg.Any<CancellationToken>());
+        }
+
+        [Test]
+        public void KeepASharedLayerHiddenInGenesisCityWhenItWasTurnedOffInAWorld()
+        {
+            IMapActivityOwner owner = Substitute.For<IMapActivityOwner>();
+            mapRenderer.EnableLayers_Test(owner, MapLayer.HotUsersMarkers);
+            mapRenderer.ShowWorld("world.dcl.eth", null);
+            mapRenderer.SetSharedLayer(MapLayer.HotUsersMarkers, false);
+            ClearLayerCalls();
+
+            mapRenderer.ShowGenesisCity();
+
+            layers[MapLayer.HotUsersMarkers].DidNotReceive().EnableAsync(Arg.Any<CancellationToken>());
+        }
+
+        [Test]
         [Ignore("")]
         public void DisableLayerByMask([ValueSource(nameof(TEST_MAP_LAYERS))] MapLayer mask)
         {
@@ -104,6 +158,12 @@ namespace DCL.MapRenderer.Tests
                         layers[mapLayer].DidNotReceive().Disable(default);
                 }
             }
+        }
+
+        private void ClearLayerCalls()
+        {
+            foreach (IMapLayerController layer in layers.Values)
+                layer.ClearReceivedCalls();
         }
     }
 }

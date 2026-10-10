@@ -1,4 +1,5 @@
-﻿using DCL.MapRenderer.CoordsUtils;
+﻿using DCL.MapRenderer.CommonBehavior;
+using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapCameraController;
 using DCL.MapRenderer.MapLayers;
@@ -122,6 +123,162 @@ namespace DCL.MapRenderer.Tests.MapCameraController
             new object[] { new Vector2(-1000, 1200), new Vector2(-860, 860), new Vector2Int(10, 20), 0f},
             new object[] { new Vector2(4000, -8000), new Vector2(720, -720), new Vector2Int(30, 50), 0.5f},
         };
+
+        [Test]
+        public void ClampThePositionToNewWorldBounds()
+        {
+            ((IMapCameraControllerInternal)mapCamera).Initialize(new Vector2Int(20, 20), new Vector2Int(10, 20), MapLayer.SatelliteAtlas);
+            mapCamera.SetZoom(0, 0);
+            mapCamera.SetLocalPosition(new Vector2(800, 800));
+
+            coordsUtils.VisibleWorldBounds.Returns(Rect.MinMaxRect(0, 0, 600, 600));
+            coordsUtils.VisibleWorldBoundsChanged += Raise.Event<Action>();
+
+            // A 200-unit half-height camera with 30% of extra movement fits up to 600 - 200 + 60
+            Assert.AreEqual(new Vector3(460, 460, mapCamera.CAMERA_HEIGHT_EXPOSED), mapCameraObject.transform.localPosition);
+        }
+
+        [Test]
+        public void CentreOnAWorldSmallerThanTheView()
+        {
+            ((IMapCameraControllerInternal)mapCamera).Initialize(new Vector2Int(20, 20), new Vector2Int(10, 20), MapLayer.SatelliteAtlas);
+            mapCamera.SetZoom(0, 0);
+            mapCamera.SetLocalPosition(new Vector2(800, 800));
+
+            coordsUtils.VisibleWorldBounds.Returns(Rect.MinMaxRect(0, 0, 300, 300));
+            coordsUtils.VisibleWorldCenter.Returns(new Vector2(150, 150));
+            coordsUtils.VisibleWorldBoundsChanged += Raise.Event<Action>();
+
+            // The camera moves at most 30% of its 200-unit half-height around the world's centre
+            Assert.AreEqual(new Vector3(210, 210, mapCamera.CAMERA_HEIGHT_EXPOSED), mapCameraObject.transform.localPosition);
+        }
+
+        [TestCase(600, 300, 375)] // Fits the wider side, with a quarter more of sea
+        [TestCase(200, 500, 312.5f)] // Fits the taller side, with a quarter more of sea
+        [TestCase(20, 20, 20)] // A tiny world keeps the closest zoom, 2 parcels
+        [TestCase(4000, 4000, 1000)] // A huge world keeps the configured farthest zoom
+        public void ZoomOutUntilTheWholeWorldFitsInTheSea(float width, float height, float expectedHalfHeight)
+        {
+            // Arrange: a square view over a world's map
+            coordsUtils.BoundsAWorld.Returns(true);
+            coordsUtils.VisibleWorldBounds.Returns(new Rect(0, 0, width, height));
+            ((IMapCameraControllerInternal)mapCamera).Initialize(new Vector2Int(20, 20), new Vector2Int(10, 100), MapLayer.SatelliteAtlas);
+
+            // Act
+            mapCamera.SetZoom(0, 0);
+
+            // Assert
+            Assert.AreEqual(expectedHalfHeight, mapCameraObject.mapCamera.orthographicSize, 0.001f);
+            Assert.AreEqual(0, mapCamera.Zoom, 0.001f);
+        }
+
+        [Test]
+        public void KeepTheConfiguredFarthestZoomInGenesisCity()
+        {
+            // Arrange
+            coordsUtils.VisibleWorldBounds.Returns(new Rect(0, 0, 600, 300));
+            ((IMapCameraControllerInternal)mapCamera).Initialize(new Vector2Int(20, 20), new Vector2Int(10, 100), MapLayer.SatelliteAtlas);
+
+            // Act
+            mapCamera.SetZoom(0, 0);
+
+            // Assert
+            Assert.AreEqual(1000, mapCameraObject.mapCamera.orthographicSize, 0.001f);
+        }
+
+        [Test]
+        public void FitTheFarthestZoomToAWorldShownLater()
+        {
+            // Arrange: the navmap zoomed all the way out over Genesis City
+            ((IMapCameraControllerInternal)mapCamera).Initialize(new Vector2Int(20, 20), new Vector2Int(10, 100), MapLayer.SatelliteAtlas);
+            mapCamera.SetZoom(0, 0);
+
+            // Act: the map switches to a world
+            coordsUtils.BoundsAWorld.Returns(true);
+            coordsUtils.VisibleWorldBounds.Returns(new Rect(0, 0, 400, 400));
+            coordsUtils.VisibleWorldBoundsChanged += Raise.Event<Action>();
+
+            // Assert
+            Assert.AreEqual(250, mapCameraObject.mapCamera.orthographicSize, 0.001f);
+        }
+
+        [Test]
+        public void LetTheCameraCentreReachAWorldsEdge()
+        {
+            // Arrange: a minimap-sized camera over a world larger than its view
+            coordsUtils.BoundsAWorld.Returns(true);
+            coordsUtils.VisibleWorldBounds.Returns(Rect.MinMaxRect(0, 0, 600, 600));
+            ((IMapCameraControllerInternal)mapCamera).Initialize(new Vector2Int(20, 20), new Vector2Int(10, 10), MapLayer.SatelliteAtlas);
+            mapCamera.SetZoom(0, 0);
+
+            // Act
+            mapCamera.SetLocalPosition(new Vector2(590, -50));
+
+            // Assert: the centre stays on the world, the sea shows past its edge
+            Assert.AreEqual(new Vector3(590, 0, mapCamera.CAMERA_HEIGHT_EXPOSED), mapCameraObject.transform.localPosition);
+        }
+
+        [Test]
+        public void LetAFixedZoomCameraCentreReachGenesisCitysEdge()
+        {
+            // Arrange: the minimap's fixed zoom over Genesis City
+            ((IMapCameraControllerInternal)mapCamera).Initialize(new Vector2Int(20, 20), new Vector2Int(10, 10), MapLayer.SatelliteAtlas);
+            mapCamera.SetZoom(0, 0);
+
+            // Act: following a player at the city's edge
+            mapCamera.SetLocalPosition(new Vector2(-990, 1200));
+
+            // Assert
+            Assert.AreEqual(new Vector3(-990, 1000, mapCamera.CAMERA_HEIGHT_EXPOSED), mapCameraObject.transform.localPosition);
+        }
+
+        [Test]
+        public void CenterOnTheMap()
+        {
+            // Arrange
+            coordsUtils.BoundsAWorld.Returns(true);
+            coordsUtils.VisibleWorldBounds.Returns(new Rect(0, 0, 400, 400));
+            coordsUtils.VisibleWorldCenter.Returns(new Vector2(200, 200));
+            ((IMapCameraControllerInternal)mapCamera).Initialize(new Vector2Int(20, 20), new Vector2Int(10, 100), MapLayer.SatelliteAtlas);
+            mapCamera.SetZoom(0, 0);
+            mapCamera.SetLocalPosition(new Vector2(250, 250));
+
+            // Act
+            mapCamera.CenterOnMap();
+
+            // Assert
+            Assert.AreEqual(new Vector3(200, 200, mapCamera.CAMERA_HEIGHT_EXPOSED), mapCameraObject.transform.localPosition);
+        }
+
+        [Test]
+        public void MarkTheCameraChangedWhenItResumesRendering()
+        {
+            // Arrange: a minimap camera suspended while a popup covers it, standing still meanwhile
+            ((IMapCameraControllerInternal)mapCamera).Initialize(new Vector2Int(20, 20), new Vector2Int(10, 20), MapLayer.SatelliteAtlas);
+            mapCamera.SuspendRendering();
+            culling.ClearReceivedCalls();
+
+            // Act
+            mapCamera.ResumeRendering();
+
+            // Assert: the satellite tiles it skipped while suspended are requested again
+            culling.Received(1).SetCameraDirty(mapCamera);
+        }
+
+        [Test]
+        public void NotMarkAReleasedCameraChangedWhenItResumesRendering()
+        {
+            // Arrange
+            ((IMapCameraControllerInternal)mapCamera).Initialize(new Vector2Int(20, 20), new Vector2Int(10, 20), MapLayer.SatelliteAtlas);
+            mapCamera.Release(Substitute.For<IMapActivityOwner>());
+            culling.ClearReceivedCalls();
+
+            // Act
+            mapCamera.ResumeRendering();
+
+            // Assert
+            culling.DidNotReceive().SetCameraDirty(mapCamera);
+        }
 
         [TestCase(true)]
         [TestCase(false)]

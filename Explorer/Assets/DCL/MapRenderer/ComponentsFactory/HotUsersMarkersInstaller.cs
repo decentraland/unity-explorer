@@ -22,6 +22,7 @@ namespace DCL.MapRenderer.ComponentsFactory
 
         public async UniTask InstallAsync(
             Dictionary<MapLayer, IMapLayerController> writer,
+            List<IZoomScalingLayer> zoomScalingLayers,
             MapRendererConfiguration configuration,
             ICoordsUtils coordsUtils,
             IMapCullingController cullingController,
@@ -49,6 +50,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             var controller = new UsersMarkersHotAreaController(objectsPool, wrapsPool, configuration.HotUserMarkersRoot, coordsUtils, cullingController, realmNavigator, onlineUsersProvider, web3IdentityCache);
             await controller.InitializeAsync(cancellationToken);
             writer.Add(MapLayer.HotUsersMarkers, controller);
+            zoomScalingLayers.Add(controller);
         }
 
         private static HotUserMarkerObject CreatePoolMethod(MapRendererConfiguration configuration, HotUserMarkerObject prefab, ICoordsUtils coordsUtils)

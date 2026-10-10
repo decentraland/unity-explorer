@@ -40,6 +40,9 @@ namespace DCL.Navmap.FilterPanel
         [field: SerializeField]
         private GameObject parcelButtonHighlight;
 
+        [SerializeField]
+        private GameObject[] mapTypeSelector;
+
 
         [field: Header("Audio")]
         [field: SerializeField]
@@ -69,6 +72,12 @@ namespace DCL.Navmap.FilterPanel
             canvasGroup.blocksRaycasts = isOn;
             canvasGroup.interactable = isOn;
             UIAudioEventsBus.Instance.SendPlayAudioEvent(isOn ? OpenAudio : CloseAudio);
+        }
+
+        public void SetMapTypeSelectorVisible(bool visible)
+        {
+            foreach (GameObject element in mapTypeSelector)
+                element.SetActive(visible);
         }
 
         private void ToggleSatelliteMap(bool isOn)

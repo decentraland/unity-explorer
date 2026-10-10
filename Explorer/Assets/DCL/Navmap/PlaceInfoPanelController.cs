@@ -17,6 +17,7 @@ using DCL.MapRenderer.MapLayers.Pins;
 using DCL.PlacesAPIService;
 using DCL.UI;
 using DCL.UI.Utilities;
+using ECS;
 using ECS.SceneLifeCycle;
 using MVC;
 using System;
@@ -38,6 +39,7 @@ namespace DCL.Navmap
         private readonly IMapPathEventBus mapPathEventBus;
         private readonly INavmapBus navmapBus;
         private readonly IChatMessagesBus chatMessagesBus;
+        private readonly IRealmData realmData;
         private readonly HttpEventsApiService eventsApiService;
         private readonly ObjectPool<EventElementView> eventElementPool ;
         private readonly SharePlacesAndEventsContextMenuController shareContextMenu;
@@ -71,6 +73,7 @@ namespace DCL.Navmap
             IMapPathEventBus mapPathEventBus,
             INavmapBus navmapBus,
             IChatMessagesBus chatMessagesBus,
+            IRealmData realmData,
             HttpEventsApiService eventsApiService,
             ObjectPool<EventElementView> eventElementPool,
             SharePlacesAndEventsContextMenuController shareContextMenu,
@@ -90,6 +93,7 @@ namespace DCL.Navmap
             this.mapPathEventBus = mapPathEventBus;
             this.navmapBus = navmapBus;
             this.chatMessagesBus = chatMessagesBus;
+            this.realmData = realmData;
             this.eventsApiService = eventsApiService;
             this.eventElementPool = eventElementPool;
             this.shareContextMenu = shareContextMenu;
@@ -186,6 +190,7 @@ namespace DCL.Navmap
         public void Set(PlacesData.PlaceInfo placeInfo)
         {
             this.place = placeInfo;
+            originParcel = null;
 
             if (VectorUtilities.TryParseVector2Int(placeInfo.base_position, out Vector2Int result))
                 currentBaseParcel = result;
@@ -205,8 +210,9 @@ namespace DCL.Navmap
             view.CoordinatesLabel.text = isWorld ? placeInfo.world_name : placeInfo.base_position;
             view.ParcelCountLabel.text = placeInfo.Positions.Length.ToString();
 
-            // Worlds are not on the Genesis map, so on-map navigation doesn't apply to them.
+            // Worlds are not on the Genesis map, so on-map navigation doesn't apply to them, and the events API lists Genesis City's events only.
             view.StartNavigationButton.gameObject.SetActive(!isWorld);
+            view.EventsTabButton.gameObject.SetActive(!isWorld);
             view.StopNavigationButton.gameObject.SetActive(false);
             view.DonateButton?.gameObject.SetActive(donationsService.DonationFeatureEnabled && !string.IsNullOrEmpty(placeInfo.creator_address));
 
@@ -235,6 +241,14 @@ namespace DCL.Navmap
 
             if (parcel == null) return;
             if (place == null) return;
+
+            // The parcel picked on a world's map, where the jump lands.
+            if (place.IsWorld)
+            {
+                view.CoordinatesLabel.text = $"{place.world_name} {parcel.Value.x},{parcel.Value.y}";
+                return;
+            }
+
             if (!TeleportUtils.IsRoad(place.title)) return;
 
             view.CoordinatesLabel.text = $"{parcel.Value.x},{parcel.Value.y}";
@@ -371,14 +385,9 @@ namespace DCL.Navmap
 
             navmapBus.JumpIn(place!);
 
-            // Worlds live on a separate realm; the goto command teleports there by world name.
             if (place!.IsWorld)
             {
-                chatMessagesBus
-                   .SendWithUtcNowTimestamp(ChatChannel.NEARBY_CHANNEL,
-                        $"/{ChatCommandsUtils.COMMAND_GOTO} {place.world_name}",
-                        ChatMessageOrigin.JumpIn);
-
+                chatMessagesBus.SendWithUtcNowTimestamp(ChatChannel.NEARBY_CHANNEL, WorldJumpInCommand(place), ChatMessageOrigin.JumpIn);
                 return;
             }
 
@@ -388,6 +397,22 @@ namespace DCL.Navmap
                .SendWithUtcNowTimestamp(ChatChannel.NEARBY_CHANNEL,
                     $"/{ChatCommandsUtils.COMMAND_GOTO} {destinationParcel?.x},{destinationParcel?.y}",
                     ChatMessageOrigin.JumpIn);
+        }
+
+        /// <summary>
+        ///     A parcel picked on the map of the world the player is in is a teleport inside the current realm; another world is a
+        ///     realm change, to the picked parcel when there is one.
+        /// </summary>
+        private string WorldJumpInCommand(PlacesData.PlaceInfo worldPlace)
+        {
+            bool isCurrentWorld = realmData.IsWorld() && string.Equals(realmData.RealmName, worldPlace.world_name, StringComparison.OrdinalIgnoreCase);
+
+            return originParcel switch
+                   {
+                       { } parcel when isCurrentWorld => $"/{ChatCommandsUtils.COMMAND_GOTO_LOCAL} {parcel.x},{parcel.y}",
+                       { } parcel => $"/{ChatCommandsUtils.COMMAND_GOTO} {worldPlace.world_name}/{parcel.x},{parcel.y}",
+                       _ => $"/{ChatCommandsUtils.COMMAND_GOTO} {worldPlace.world_name}",
+                   };
         }
 
         private void Share()

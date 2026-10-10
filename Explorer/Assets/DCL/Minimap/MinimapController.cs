@@ -55,6 +55,10 @@ namespace DCL.Minimap
         private const float ANIMATION_TIME = 0.2f;
         private const int SHOW_BANNED_TOOLTIP_DELAY_SEC = 10;
 
+        // The row of the contextual button below the map in worlds: the button's height plus its margins, and the gap to the map's frame.
+        private const float CONTEXTUAL_BUTTON_ROW_HEIGHT = 48;
+        private const float CONTEXTUAL_BUTTON_ROW_GAP = 4;
+
         private readonly IMapRenderer mapRenderer;
         private readonly IMVCManager mvcManager;
         private readonly IPlacesAPIService placesAPIService;
@@ -89,6 +93,9 @@ namespace DCL.Minimap
         private ToggleContextMenuControlSettings? homeToggleSettings;
         private PlacesData.PlaceInfo? currentPlaceInfo;
         private string previousRealmName = string.Empty;
+        private (Vector2 Position, Vector2 Size)? worldsBackgroundLayout;
+        private bool isContextualButtonBelowMap;
+        private bool isCollapsed;
 
         public IReadOnlyDictionary<MapLayer, IMapLayerParameter> LayersParameters { get; } = new Dictionary<MapLayer, IMapLayerParameter>
             { { MapLayer.PlayerMarker, new PlayerMarkerParameter { BackgroundIsActive = false } } };
@@ -181,7 +188,7 @@ namespace DCL.Minimap
 
         private void OnRealmChanged(RealmKind realmKind)
         {
-            SetGenesisMode(realmKind is RealmKind.GenesisCity);
+            SetRealmMode(realmKind);
             previousParcelPosition = new Vector2Int(int.MaxValue, int.MaxValue);
             previousRealmName = string.Empty;
         }
@@ -213,7 +220,7 @@ namespace DCL.Minimap
             viewInstance.sideMenuCanvasGroup.gameObject.SetActive(false);
             sideMenuPresenter = new SideMenuPresenter(viewInstance.sideMenuView);
             sceneRestrictionsController = new SceneRestrictionsController(viewInstance.sceneRestrictionsView, sceneRestrictionBusController);
-            SetGenesisMode(realmData.IsGenesis());
+            SetRealmMode(realmData.RealmType.Value);
             realmData.RealmType.OnUpdate += OnRealmChanged;
             realmNavigator.NavigationExecuted += OnNavigationExecuted;
             mapPathEventBus.OnShowPinInMinimapEdge += ShowPinInMinimapEdge;
@@ -348,6 +355,8 @@ namespace DCL.Minimap
 
         private void ExpandMinimap()
         {
+            isCollapsed = false;
+            ShowContextualButtonRowBelowMap();
             viewInstance!.collapseMinimapButton.gameObject.SetActive(true);
             viewInstance.expandMinimapButton.gameObject.SetActive(false);
             viewInstance.minimapRendererButton.gameObject.SetActive(true);
@@ -357,6 +366,8 @@ namespace DCL.Minimap
 
         private void CollapseMinimap()
         {
+            isCollapsed = true;
+            ShowContextualButtonRowBelowMap();
             viewInstance!.collapseMinimapButton.gameObject.SetActive(false);
             viewInstance.expandMinimapButton.gameObject.SetActive(true);
             viewInstance.minimapRendererButton.gameObject.SetActive(false);
@@ -553,23 +564,68 @@ namespace DCL.Minimap
             return null;
         }
 
-        private void SetGenesisMode(bool isGenesisModeActivated)
+        private void SetRealmMode(RealmKind realmKind)
         {
             if (viewInstance == null)
                 return;
 
-            ToggleObjects(isGenesisModeActivated);
+            bool isGenesisModeActivated = realmKind is RealmKind.GenesisCity;
+
+            // A world shows its own map in Genesis City's layout, with the contextual button in a row below the map.
+            bool showMap = isGenesisModeActivated || realmKind is RealmKind.World;
+            isContextualButtonBelowMap = showMap && !isGenesisModeActivated;
+
+            ToggleObjects(showMap);
+
+            // Before laying out the worlds background: a change of animator can restore what the previous one animated.
+            SetAnimatorController(showMap);
+            PlaceWorldsBackground();
             ConfigureContextualButton(isGenesisModeActivated);
-            SetAnimatorController(isGenesisModeActivated);
         }
 
-        private void ToggleObjects(bool isGenesisModeActivated)
+        private void ToggleObjects(bool showMap)
         {
             foreach (GameObject go in viewInstance!.objectsToActivateForGenesis)
-                go.SetActive(isGenesisModeActivated);
+                go.SetActive(showMap);
 
             foreach (GameObject go in viewInstance.objectsToActivateForWorlds)
-                go.SetActive(!isGenesisModeActivated);
+                go.SetActive(!showMap);
+        }
+
+        /// <summary>
+        ///     The worlds layout's background holds the contextual button: under the map's frame, as a row of its own, when a world
+        ///     shows its map; otherwise where the worlds layout and its animator place it.
+        /// </summary>
+        private void PlaceWorldsBackground()
+        {
+            RectTransform background = viewInstance!.worldsBackground;
+            worldsBackgroundLayout ??= (background.anchoredPosition, background.sizeDelta);
+            (Vector2 position, Vector2 size) = worldsBackgroundLayout.Value;
+
+            if (isContextualButtonBelowMap)
+            {
+                var mapFrame = (RectTransform)viewInstance.minimapContainer.parent;
+                position.y = -(mapFrame.rect.height + CONTEXTUAL_BUTTON_ROW_GAP);
+                size.y = CONTEXTUAL_BUTTON_ROW_HEIGHT;
+
+                // Only the worlds animator fades the button in and out, and it may have left it hidden.
+                if (viewInstance.minimapContextualButtonView.TryGetComponent(out CanvasGroup canvasGroup))
+                {
+                    canvasGroup.alpha = 1;
+                    canvasGroup.interactable = true;
+                }
+            }
+
+            background.anchoredPosition = position;
+            background.sizeDelta = size;
+            ShowContextualButtonRowBelowMap();
+        }
+
+        /// <summary>The row below the map collapses with the map, which Genesis City's animator doesn't know about.</summary>
+        private void ShowContextualButtonRowBelowMap()
+        {
+            if (isContextualButtonBelowMap)
+                viewInstance!.worldsBackground.gameObject.SetActive(!isCollapsed);
         }
 
         private void ConfigureContextualButton(bool isGenesisModeActivated)
@@ -622,10 +678,10 @@ namespace DCL.Minimap
                 ChatChannel.NEARBY_CHANNEL, $"/{reloadSceneCommand.Command}", ChatMessageOrigin.Minimap
             );
 
-        private void SetAnimatorController(bool isGenesisModeActivated)
+        private void SetAnimatorController(bool showMap)
         {
             viewInstance!.minimapAnimator.runtimeAnimatorController =
-                isGenesisModeActivated
+                showMap
                     ? viewInstance.genesisCityAnimatorController
                     : viewInstance.worldsAnimatorController;
         }

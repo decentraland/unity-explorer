@@ -21,5 +21,6 @@ namespace DCL.Chat.Commands
     {
         // Constants that shared between several ChatCommands
         public static string COMMAND_GOTO = "goto";
+        public const string COMMAND_GOTO_LOCAL = "goto-local";
     }
 }

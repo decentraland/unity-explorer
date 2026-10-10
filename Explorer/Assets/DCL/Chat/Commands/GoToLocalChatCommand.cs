@@ -14,7 +14,7 @@ namespace DCL.Chat.Commands
     /// </summary>
     public class GoToLocalChatCommand : IChatCommand
     {
-        public string Command => "goto-local";
+        public string Command => ChatCommandsUtils.COMMAND_GOTO_LOCAL;
         public string Description => "<b>/goto-local <i><x,y | x,y/spawn | spawn></i></b>\n  Teleport inside of the current realm";
 
         private readonly ChatTeleporter chatTeleporter;

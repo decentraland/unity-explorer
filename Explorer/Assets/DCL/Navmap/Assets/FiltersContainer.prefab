@@ -2156,6 +2156,9 @@ MonoBehaviour:
   satelliteButtonHighlight: {fileID: 4588498124397608187}
   parcelButton: {fileID: 8453302727989527501}
   parcelButtonHighlight: {fileID: 9181117658965186628}
+  mapTypeSelector:
+  - {fileID: 2665411157185703409}
+  - {fileID: 3096237784337164359}
   <OpenAudio>k__BackingField: {fileID: 11400000, guid: ed99255f331fdd34c92d271fbbaddfb2, type: 2}
   <CloseAudio>k__BackingField: {fileID: 11400000, guid: 4cd70dff1a2f8374faad51b696201090, type: 2}
   <ToggleOnAudio>k__BackingField: {fileID: 11400000, guid: bbf6fdc100a3def44853fe48acbf4fd5, type: 2}

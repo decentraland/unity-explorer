@@ -39,6 +39,10 @@ namespace DCL.Navmap
             webBrowser.OpenUrlMainThreadOnly(GENESIS_CITY_LINK);
         }
 
+        /// <summary>The credits link to genesis.city, whose imagery is Genesis City's only.</summary>
+        public void SetGenesisCityCreditsVisible(bool visible) =>
+            view.SatelliteCreditsText.gameObject.SetActive(visible);
+
         public void InjectCameraController(IMapCameraController controller)
         {
             cameraController = controller;

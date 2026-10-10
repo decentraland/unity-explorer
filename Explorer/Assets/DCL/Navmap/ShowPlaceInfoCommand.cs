@@ -51,6 +51,10 @@ namespace DCL.Navmap
             else
                 searchBarController.DisableBack();
 
+            // The events API lists Genesis City's events: a world's parcels would match the Genesis parcels of the same coordinates.
+            if (placeInfo.IsWorld)
+                return;
+
             events ??= await eventsApiService.GetEventsByParcelAsync(placeInfo.Positions, ct, true);
 
             if (events.Count > 0)

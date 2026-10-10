@@ -26,7 +26,6 @@ namespace DCL.Navmap
     public class NavmapController : IMapActivityOwner, ISection, IDisposable
     {
         private const string EMPTY_PARCEL_NAME = "Empty parcel";
-        private const string WORLDS_WARNING_MESSAGE = "This is the Genesis City map. If you jump into any of this places you will leave the world you are currently visiting.";
         private const MapLayer ACTIVE_MAP_LAYERS =
             MapLayer.SatelliteAtlas | MapLayer.ParcelsAtlas | MapLayer.PlayerMarker | MapLayer.ParcelHoverHighlight | MapLayer.ScenesOfInterest | MapLayer.Favorites | MapLayer.HotUsersMarkers | MapLayer.Pins | MapLayer.SearchResults | MapLayer.LiveEvents | MapLayer.Category | MapLayer.HomeMarker;
 
@@ -102,7 +101,6 @@ namespace DCL.Navmap
 
             navmapView.DestinationInfoElement.gameObject.SetActive(false);
 
-            navmapView.WorldsWarningNotificationView.Text.text = WORLDS_WARNING_MESSAGE;
             navmapView.WorldsWarningNotificationView.Hide();
             navmapFilterPanelController = new (mapRenderer, navmapView.LocationView.FiltersPanel);
             navmapLocationController = new NavmapLocationController(navmapView.LocationView, world, playerEntity, navmapFilterPanelController, navmapBus, homePlaceEventBus);
@@ -166,6 +164,16 @@ namespace DCL.Navmap
             audioEventsBus.SendPlayAudioEvent(navmapView.ClickAudio);
 
             fetchPlaceAndShowCancellationToken = fetchPlaceAndShowCancellationToken.SafeRestart();
+
+            if (realmData.IsWorld())
+            {
+                // Only the world's own parcels can be jumped into; without a manifest the map only reacts over its scenes.
+                if (realmData.IsParcelOfWorld(clickedParcel.Parcel.x, clickedParcel.Parcel.y))
+                    navmapBus.SelectPlaceAsync(clickedParcel.Parcel, fetchPlaceAndShowCancellationToken.Token, true).Forget();
+
+                return;
+            }
+
             FetchPlaceAndShowAsync(fetchPlaceAndShowCancellationToken.Token).Forget();
             return;
 
@@ -183,12 +191,15 @@ namespace DCL.Navmap
         {
             cameraController?.Release(this);
 
+            // A world's map opens zoomed out to the whole world, which its farthest zoom fits.
+            bool isWorld = realmData.IsWorld();
+
             cameraController = mapRenderer.RentCamera(
                 new MapCameraInput(
                     this,
                     ACTIVE_MAP_LAYERS,
                     Vector3.zero.ToParcel(),
-                    zoomController.ResetZoomToMidValue(),
+                    isWorld ? zoomController.ResetZoomToFarthestValue() : zoomController.ResetZoomToMidValue(),
                     navmapView.SatellitePixelPerfectMapRendererTextureProvider.GetPixelPerfectTextureResolution(),
                     navmapView.zoomView.zoomVerticalRange
                 ));
@@ -197,25 +208,30 @@ namespace DCL.Navmap
             mapRenderer.SetSharedLayer(MapLayer.ScenesOfInterest, navmapFilterPanelController.IsFilterActivated(MapLayer.ScenesOfInterest));
             mapRenderer.SetSharedLayer(MapLayer.Pins, navmapFilterPanelController.IsFilterActivated(MapLayer.Pins));
             mapRenderer.SetSharedLayer(MapLayer.HotUsersMarkers, navmapFilterPanelController.IsFilterActivated(MapLayer.HotUsersMarkers));
-            mapRenderer.SetSharedLayer(MapLayer.SatelliteAtlas, navmapFilterPanelController.IsFilterActivated(MapLayer.SatelliteAtlas));
+            // A world only has a satellite map.
+            mapRenderer.SetSharedLayer(MapLayer.SatelliteAtlas, isWorld || navmapFilterPanelController.IsFilterActivated(MapLayer.SatelliteAtlas));
             mapRenderer.SetSharedLayer(MapLayer.ParcelsAtlas, navmapFilterPanelController.IsFilterActivated(MapLayer.ParcelsAtlas));
+            navmapFilterPanelController.SetMapTypeSelectable(!isWorld);
+            satelliteController.SetGenesisCityCreditsVisible(!isWorld);
 
             satelliteController.InjectCameraController(cameraController);
             navmapLocationController.InjectCameraController(cameraController);
+
+            if (isWorld)
+                cameraController.CenterOnMap();
+
             satelliteController.Activate();
             zoomController.Activate(cameraController);
             lastParcelHovered = Vector2.zero;
             navmapView.gameObject.SetActive(true);
 
-            if (!navmapView.WorldsWarningNotificationView.WasEverClosed)
-            {
-                if (realmData is {Configured: true, ScenesAreFixed: true })
-                    navmapView.WorldsWarningNotificationView.Show();
-                else
-                    navmapView.WorldsWarningNotificationView.Hide();
-            }
-
+            // A world's map only lists its own parcels: Genesis City's categories and search don't apply there.
+            navmapView.SetPlacesSearchVisible(!isWorld);
             placesAndEventsPanelController.Show();
+
+            // A parcel clicked in a world opens its card; until then the panel of Genesis City's places stays closed.
+            if (isWorld)
+                placesAndEventsPanelController.Close();
 
             // The map renders into a RenderTexture, so the user's render scale would pixelate it.
             upscalingController.RequireFullRenderScale(this);

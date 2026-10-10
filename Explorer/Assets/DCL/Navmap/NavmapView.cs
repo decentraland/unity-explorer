@@ -64,6 +64,16 @@ namespace DCL.Navmap
         [field: Header("Audio")]
         [field: SerializeField]
         public AudioClipConfig ClickAudio { get; private set; }
+
+        /// <summary>
+        ///     Shows or hides the search of Genesis City's places: the category chips, which share one container, and the search bar
+        ///     with its history.
+        /// </summary>
+        public void SetPlacesSearchVisible(bool visible)
+        {
+            categoryToggles[0].transform.parent.gameObject.SetActive(visible);
+            SearchBarView.transform.parent.gameObject.SetActive(visible);
+        }
     }
 
     [Serializable]

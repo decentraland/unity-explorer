@@ -16,6 +16,7 @@ using DCL.Communities;
 using DCL.SpringBones;
 using DCL.Communities.CommunitiesCard.Members;
 using DCL.DebugUtilities;
+using DCL.Diagnostics;
 using DCL.Donations;
 using DCL.EventsApi;
 using DCL.FeatureFlags;
@@ -78,6 +79,8 @@ namespace Global.Dynamic
 {
     public class DynamicWorldContainer : DCLWorldContainer<DynamicWorldSettings>
     {
+        private const string DEFAULT_SATELLITE_MAP_URL = "https://pub-9c4ed7e357dc4b63a15998d40112eb96.r2.dev/v1/day";
+
         private readonly IProfileBroadcast profileBroadcast;
         private readonly SocialServicesContainer socialServicesContainer;
         private readonly MultiplayerContainer multiplayerContainer;
@@ -188,7 +191,7 @@ namespace Global.Dynamic
             IWeb3IdentityCache identityCache = dynamicWorldDependencies.Web3IdentityCache;
             IAssetsProvisioner assetsProvisioner = dynamicWorldDependencies.AssetsProvisioner;
             IDebugContainerBuilder debugBuilder = dynamicWorldDependencies.DebugContainerBuilder;
-            var placesAndEventsContainer = PlacesAndEventsContainer.Create(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
+            var placesAndEventsContainer = PlacesAndEventsContainer.Create(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, staticContainer.RealmData);
 
             var wearableContainer = WearableContainer.Create(staticContainer, bootstrapContainer, identityCache, globalWorld, appArgs, dynamicWorldParams.EnableAnalytics);
 
@@ -381,6 +384,16 @@ namespace Global.Dynamic
                 realmNavigatorContainer.WorldPermissionsService,
                 chatContainer.ChatHistory);
 
+            string satelliteMapUrl = DEFAULT_SATELLITE_MAP_URL;
+
+            if (appArgs.TryGetValue(AppArgsFlags.SATELLITE_MAP_URL, out string? satelliteMapUrlArg) && satelliteMapUrlArg != null)
+            {
+                if (IsHttpUrl(satelliteMapUrlArg))
+                    satelliteMapUrl = satelliteMapUrlArg;
+                else
+                    ReportHub.LogWarning(ReportCategory.UI, $"Ignoring --{AppArgsFlags.SATELLITE_MAP_URL}: only http and https URLs are accepted");
+            }
+
             MapRendererContainer mapRendererContainer =
                 await MapRendererContainer
                    .CreateAsync(
@@ -394,11 +407,13 @@ namespace Global.Dynamic
                         staticContainer.MapPinsEventBus,
                         realmNavigator,
                         staticContainer.RealmData,
+                        realmContainer.RealmController,
                         placesAndEventsContainer.NavmapBus,
                         placesAndEventsContainer.OnlineUsersProvider,
                         identityCache,
                         placesAndEventsContainer.HomePlaceEventBus,
                         chatContainer.ChatEventBus,
+                        satelliteMapUrl,
                         ct
                     );
 
@@ -1147,5 +1162,8 @@ namespace Global.Dynamic
 
             return (container, true);
         }
+
+        private static bool IsHttpUrl(string url) =>
+            Uri.TryCreate(url, UriKind.Absolute, out Uri? uri) && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
     }
 }

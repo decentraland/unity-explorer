@@ -81,6 +81,12 @@ namespace DCL.Minimap
         [field: SerializeField]
         internal List<GameObject> objectsToActivateForWorlds { get; private set; } = null!;
 
+        /// <summary>
+        ///     The background of the worlds layout, which holds the contextual button
+        /// </summary>
+        [field: SerializeField]
+        internal RectTransform worldsBackground { get; private set; } = null!;
+
         [field: SerializeField]
         internal MinimapPinMarkerObject destinationPinMarker { get; private set; } = null!;
 

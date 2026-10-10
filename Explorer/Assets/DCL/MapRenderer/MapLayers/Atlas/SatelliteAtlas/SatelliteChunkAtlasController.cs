@@ -2,6 +2,7 @@
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapLayers.Atlas;
+using DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -20,22 +21,53 @@ namespace DCL.MapRenderer.MapLayers.SatelliteAtlas
 
         private readonly ChunkBuilder chunkBuilder;
         private readonly List<IChunkController> chunks;
+        private readonly SatelliteDetailTiles? detailTiles;
+        private readonly Transform genesisCityOcean;
+        private readonly Transform bundledChunksRoot;
 
-        public SatelliteChunkAtlasController(Transform parent, int gridSize, int parcelsInsideChunk, ICoordsUtils coordsUtils, IMapCullingController cullingController, ChunkBuilder chunkBuilder)
+        public SatelliteChunkAtlasController(Transform parent, Transform genesisCityOcean, int gridSize, int parcelsInsideChunk, ICoordsUtils coordsUtils, IMapCullingController cullingController,
+            ChunkBuilder chunkBuilder, SatelliteDetailTiles? detailTiles)
             : base(parent, coordsUtils, cullingController)
         {
+            this.genesisCityOcean = genesisCityOcean;
             this.gridSize = gridSize;
             this.parcelsInsideChunk = parcelsInsideChunk;
             this.chunkBuilder = chunkBuilder;
+            this.detailTiles = detailTiles;
 
             var chunkAmounts = new Vector2Int(gridSize, gridSize);
             chunks = new List<IChunkController>(chunkAmounts.x * chunkAmounts.y);
+
+            // The bundled chunks are Genesis City's: they get their own root to hide them in worlds.
+            bundledChunksRoot = new GameObject("Bundled chunks") { layer = parent.gameObject.layer }.transform;
+            bundledChunksRoot.SetParent(parent, false);
+        }
+
+        /// <summary>Shows the satellite map of the world <paramref name="worldName" />, only inside <paramref name="localBounds" /> when they are known.</summary>
+        public void ShowWorld(string worldName, Rect? localBounds)
+        {
+            SetGenesisCityVisible(false);
+            detailTiles?.ShowWorld(worldName, localBounds);
+        }
+
+        public void ShowGenesisCity()
+        {
+            SetGenesisCityVisible(true);
+            detailTiles?.ShowGenesisCity();
+        }
+
+        private void SetGenesisCityVisible(bool visible)
+        {
+            bundledChunksRoot.gameObject.SetActive(visible);
+            genesisCityOcean.gameObject.SetActive(visible);
         }
 
         public async UniTask InitializeAsync(CancellationToken ct)
         {
             int chunkSpriteSize = parcelsInsideChunk * coordsUtils.ParcelSize;
             Vector3 offset = SatelliteMapOffset();
+
+            detailTiles?.Initialize(new Vector2(offset.x - (chunkSpriteSize / 2f), offset.y + (chunkSpriteSize / 2f)), chunkSpriteSize);
 
             CancellationToken linkedCt = CancellationTokenSource.CreateLinkedTokenSource(ctsDisposing.Token, ct).Token;
 
@@ -57,7 +89,7 @@ namespace DCL.MapRenderer.MapLayers.SatelliteAtlas
 
                     var localPosition = new Vector3(x, y, 0);
 
-                    UniTask<IChunkController> instance = chunkBuilder.Invoke(chunkLocalPosition: localPosition, new Vector2Int(i, j), instantiationParent, linkedCt);
+                    UniTask<IChunkController> instance = chunkBuilder.Invoke(chunkLocalPosition: localPosition, new Vector2Int(i, j), bundledChunksRoot, linkedCt);
                     chunksCreating.Add(instance);
                 }
             }
@@ -82,6 +114,9 @@ namespace DCL.MapRenderer.MapLayers.SatelliteAtlas
         UniTask IMapLayerController.EnableAsync(CancellationToken cancellationToken)
         {
             instantiationParent.gameObject.SetActive(true);
+
+            // Refreshes skipped while the layer was hidden would otherwise wait for the next camera change.
+            detailTiles?.Refresh();
             return UniTask.CompletedTask;
         }
 
@@ -93,6 +128,8 @@ namespace DCL.MapRenderer.MapLayers.SatelliteAtlas
 
         protected override void DisposeImpl()
         {
+            detailTiles?.Dispose();
+
             foreach (IChunkController chunk in chunks)
                 chunk.Dispose();
 

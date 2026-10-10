@@ -52,5 +52,9 @@ namespace DCL.Navmap.FilterPanel
 
         public bool IsFilterActivated(MapLayer layer) =>
             currentActiveLayers.Contains(layer);
+
+        /// <summary>Shows or hides the choice between the satellite and the parcels map, keeping the current choice.</summary>
+        public void SetMapTypeSelectable(bool selectable) =>
+            view.SetMapTypeSelectorVisible(selectable);
     }
 }

@@ -445,7 +445,7 @@ namespace DCL.PluginSystem.Global
                 navmapView.WorldsWarningNotificationView, clipboard, webBrowser, decentralandUrlsSource);
 
             placeInfoPanelController = new PlaceInfoPanelController(navmapView.PlacesAndEventsPanelView.PlaceInfoPanelView,
-                imageControllerProvider, placesAPIService, mapPathEventBus, navmapBus, chatMessagesBus, eventsApiService,
+                imageControllerProvider, placesAPIService, mapPathEventBus, navmapBus, chatMessagesBus, realmData, eventsApiService,
                 eventElementsPool, shareContextMenu, webBrowser, mvcManager, homePlaceEventBus, donationsService, cameraReelStorageService, cameraReelScreenshotsStorage,
                 new ReelGalleryConfigParams(
                     settings.PlaceGridLayoutFixedColumnCount,
@@ -475,7 +475,7 @@ namespace DCL.PluginSystem.Global
             // Kept alive by its navmap bus subscription.
             _ = new PlaceInfoToastController(navmapView.PlaceToastView,
                 new PlaceInfoPanelController(navmapView.PlaceToastView.PlacePanelView,
-                    imageControllerProvider, placesAPIService, mapPathEventBus, navmapBus, chatMessagesBus, eventsApiService,
+                    imageControllerProvider, placesAPIService, mapPathEventBus, navmapBus, chatMessagesBus, realmData, eventsApiService,
                     eventElementsPool, shareContextMenu, webBrowser, mvcManager, homePlaceEventBus, donationsService, galleryEventBus: galleryEventBus),
                 placesAPIService, eventsApiService, navmapBus);
 

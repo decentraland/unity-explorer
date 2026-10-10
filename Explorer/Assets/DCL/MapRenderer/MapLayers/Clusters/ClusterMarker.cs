@@ -3,7 +3,6 @@ using DCL.MapRenderer.CommonBehavior;
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
 using DG.Tweening;
-using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
@@ -74,7 +73,8 @@ namespace DCL.MapRenderer.MapLayers.Cluster
         public void SetZoom(float baseScale, float baseZoom, float zoom)
         {
             currentBaseScale = baseScale;
-            currentNewScale = Math.Max(zoom / baseZoom * baseScale, baseScale);
+            // Keeps its on-screen size at any zoom closer than the base one
+            currentNewScale = zoom / baseZoom * baseScale;
 
             if (poolableBehavior.instance != null)
                 poolableBehavior.instance.SetScale(currentBaseScale, currentNewScale);

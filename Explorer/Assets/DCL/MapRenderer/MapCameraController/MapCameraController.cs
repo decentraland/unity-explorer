@@ -16,6 +16,9 @@ namespace DCL.MapRenderer.MapCameraController
         private const int MAX_TEXTURE_SIZE = 4096;
         private const float EXTRA_MAP_MOVEMENT_PADDING = -0.3f;
 
+        // How much farther than a fit a zoomable camera zooms out over a world's map, so the sea surrounds the world.
+        private const float WORLD_SEA_ZOOM_FACTOR = 1.25f;
+
         public event Action<IMapActivityOwner, IMapCameraControllerInternal>? OnReleasing;
         public event Action<float, float, int>? ZoomChanged;
 
@@ -23,7 +26,7 @@ namespace DCL.MapRenderer.MapCameraController
 
         public Camera Camera => mapCameraObject.mapCamera;
 
-        public float Zoom => Mathf.InverseLerp(zoomValues.y, zoomValues.x, mapCameraObject.mapCamera.orthographicSize);
+        public float Zoom => Mathf.InverseLerp(FarthestZoom(), ClosestZoom(), mapCameraObject.mapCamera.orthographicSize);
 
         public Vector2 LocalPosition => mapCameraObject.mapCamera.transform.localPosition;
 
@@ -33,14 +36,19 @@ namespace DCL.MapRenderer.MapCameraController
         private readonly ICoordsUtils coordsUtils;
         private readonly IMapCullingController cullingController;
         private readonly MapCameraObject mapCameraObject;
+        private readonly Color defaultBackgroundColor;
 
         private RenderTexture? renderTexture;
 
         // Zoom Thresholds in Parcels
         private Vector2Int zoomValues;
 
+        private float normalizedZoom;
+        private int zoomLevel;
+
         private Rect cameraPositionBounds;
         private Sequence? translationSequence;
+        private bool rented;
 
         public MapCameraController(
             IMapInteractivityControllerInternal interactivityBehavior,
@@ -56,6 +64,9 @@ namespace DCL.MapRenderer.MapCameraController
 
             mapCameraObject.transform.localPosition = Vector3.up * CAMERA_HEIGHT;
             mapCameraObject.mapCamera.orthographic = true;
+            defaultBackgroundColor = mapCameraObject.mapCamera.backgroundColor;
+
+            coordsUtils.VisibleWorldBoundsChanged += OnVisibleWorldBoundsChanged;
         }
 
         void IMapCameraControllerInternal.Initialize(Vector2Int textureResolution, Vector2Int zoomValues, MapLayer layers)
@@ -74,8 +85,22 @@ namespace DCL.MapRenderer.MapCameraController
             mapCameraObject.mapCamera.targetTexture = renderTexture;
 
             cullingController.OnCameraAdded(this);
+            rented = true;
 
             interactivityBehavior.Initialize(layers);
+        }
+
+        private void OnVisibleWorldBoundsChanged()
+        {
+            if (!rented)
+            {
+                CalculateCameraPositionBounds();
+                return;
+            }
+
+            // A world's farthest zoom depends on its bounds
+            SetCameraSize(normalizedZoom, zoomLevel);
+            SetLocalPosition(mapCameraObject.transform.localPosition);
         }
 
         public void ResizeTexture(Vector2Int textureResolution)
@@ -91,6 +116,10 @@ namespace DCL.MapRenderer.MapCameraController
             renderTexture.Create();
 
             Camera.ResetAspect();
+
+            // A world's farthest zoom depends on the view's aspect
+            if (coordsUtils.BoundsAWorld)
+                SetCameraSize(normalizedZoom, zoomLevel);
 
             SetLocalPosition(mapCameraObject.transform.localPosition);
         }
@@ -147,6 +176,12 @@ namespace DCL.MapRenderer.MapCameraController
             mapCameraObject.transform.localPosition = ClampLocalPosition(localCameraPosition);
         }
 
+        public void CenterOnMap() =>
+            SetLocalPosition(coordsUtils.VisibleWorldCenter);
+
+        public void SetBackgroundColor(Color? color) =>
+            mapCameraObject.mapCamera.backgroundColor = color ?? defaultBackgroundColor;
+
         public void SetPositionAndZoom(Vector2 coordinates, float zoom)
         {
             translationSequence?.Kill();
@@ -178,12 +213,38 @@ namespace DCL.MapRenderer.MapCameraController
         private void SetCameraSize(float zoomCameraValue, int zoomStepLevel)
         {
             zoomCameraValue = Mathf.Clamp01(zoomCameraValue);
-            mapCameraObject.mapCamera.orthographicSize = Mathf.Lerp(zoomValues.y, zoomValues.x, zoomCameraValue);
+            normalizedZoom = zoomCameraValue;
+            zoomLevel = zoomStepLevel;
+
+            mapCameraObject.mapCamera.orthographicSize = Mathf.Lerp(FarthestZoom(), ClosestZoom(), zoomCameraValue);
 
             interactivityBehavior.ApplyCameraZoom(zoomValues.x, mapCameraObject.mapCamera.orthographicSize);
             ZoomChanged?.Invoke(zoomValues.x, mapCameraObject.mapCamera.orthographicSize, zoomStepLevel);
 
             CalculateCameraPositionBounds();
+        }
+
+        private bool IsZoomable() =>
+            zoomValues.x < zoomValues.y;
+
+        // Experiment: a zoomable camera's closest step reaches 2 parcels so the finest satellite level (8) shows.
+        // Markers and clusters keep scaling against the configured closest zoom (zoomValues.x).
+        private float ClosestZoom() =>
+            IsZoomable() ? 2 * coordsUtils.ParcelSize : zoomValues.x;
+
+        /// <summary>
+        ///     The configured farthest zoom; a zoomable camera over a world's map stops where the whole world fits the view with sea
+        ///     around it.
+        /// </summary>
+        private float FarthestZoom()
+        {
+            if (!IsZoomable() || !coordsUtils.BoundsAWorld)
+                return zoomValues.y;
+
+            Rect bounds = coordsUtils.VisibleWorldBounds;
+            float halfHeightToFit = Mathf.Max(bounds.height, bounds.width / mapCameraObject.mapCamera.aspect) / 2f;
+
+            return Mathf.Clamp(halfHeightToFit * WORLD_SEA_ZOOM_FACTOR, ClosestZoom(), zoomValues.y);
         }
 
         private Vector3 ClampLocalPosition(Vector3 localPos)
@@ -197,6 +258,15 @@ namespace DCL.MapRenderer.MapCameraController
         private void CalculateCameraPositionBounds()
         {
             var worldBounds = coordsUtils.VisibleWorldBounds;
+            var worldCenter = coordsUtils.VisibleWorldCenter;
+
+            // A fixed-zoom camera, which follows a target, and any camera over a world's map may centre up to the map's edge,
+            // showing the sea past it.
+            if (coordsUtils.BoundsAWorld || !IsZoomable())
+            {
+                cameraPositionBounds = worldBounds;
+                return;
+            }
 
             var cameraYSize = mapCameraObject.mapCamera.orthographicSize;
             var cameraXSize = cameraYSize * mapCameraObject.mapCamera.aspect;
@@ -212,15 +282,15 @@ namespace DCL.MapRenderer.MapCameraController
 
             if (worldBounds.xMax - worldBounds.xMin < 2 * cameraXSize)
             {
-                xMin = extraPaddingX;
-                xMax = -extraPaddingX;
+                xMin = worldCenter.x + extraPaddingX;
+                xMax = worldCenter.x - extraPaddingX;
             }
 
             // If the map's height is smaller than the camera's height, add extra padding
             if (worldBounds.yMax - worldBounds.yMin < 2 * cameraYSize)
             {
-                yMin = extraPaddingY;
-                yMax = -extraPaddingY;
+                yMin = worldCenter.y + extraPaddingY;
+                yMax = worldCenter.y - extraPaddingY;
             }
 
             cameraPositionBounds = Rect.MinMaxRect(xMin, yMin, xMax, yMax);
@@ -234,6 +304,10 @@ namespace DCL.MapRenderer.MapCameraController
         public void ResumeRendering()
         {
             mapCameraObject.mapCamera.enabled = true;
+
+            // What the camera shows was skipped while it was suspended; it resumes in place, so nothing else marks it changed.
+            if (rented)
+                cullingController.SetCameraDirty(this);
         }
 
         public void SetActive(bool active)
@@ -254,6 +328,7 @@ namespace DCL.MapRenderer.MapCameraController
         public void Release(IMapActivityOwner owner)
         {
             cullingController.OnCameraRemoved(this);
+            rented = false;
             if (renderTexture != null)
                 renderTexture.Release();
             interactivityBehavior.Release();
@@ -262,6 +337,7 @@ namespace DCL.MapRenderer.MapCameraController
 
         public void Dispose()
         {
+            coordsUtils.VisibleWorldBoundsChanged -= OnVisibleWorldBoundsChanged;
             translationSequence?.Kill();
             translationSequence = null;
 

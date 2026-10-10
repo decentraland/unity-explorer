@@ -157,7 +157,12 @@ namespace DCL.PlacesAPIService
                 if (connected_addresses is { Length: 0 })
                     connected_addresses = null;
 
-                if (positions == null) return;
+                // The worlds endpoint lists no positions for a world
+                if (positions == null)
+                {
+                    Positions ??= Array.Empty<Vector2Int>();
+                    return;
+                }
 
                 Positions = new Vector2Int[positions.Length];
 

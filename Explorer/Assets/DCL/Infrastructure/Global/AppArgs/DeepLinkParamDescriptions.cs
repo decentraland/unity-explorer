@@ -23,6 +23,7 @@ namespace Global.AppArgs
             [AppArgsFlags.COMMS_ADAPTER] = "Sends your voice and chat through a server chosen by the link.",
             [AppArgsFlags.GATEKEEPER_URL] = "Changes the server that grants access to voice and chat rooms.",
             [AppArgsFlags.FRIENDS_API_URL] = "Changes the server that holds your friends and social data.",
+            [AppArgsFlags.SATELLITE_MAP_URL] = "Downloads map images from a server chosen by the link, which can see where you are on the map.",
             [AppArgsFlags.FeatureFlags.URL] = "Changes the server that decides which features are enabled.",
             [AppArgsFlags.FeatureFlags.HOSTNAME] = "Changes the server that decides which features are enabled.",
             [AppArgsFlags.LSD_REMOTE_AB_SERVER] = "Changes the server scene asset bundles are downloaded from.",
