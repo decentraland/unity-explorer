@@ -282,7 +282,7 @@ namespace DCL.Minimap
                 if (realmData.ScenesAreFixed)
                     homePlaceEventBus.SetAsHome(realmData.RealmName);
                 else
-                    homePlaceEventBus.SetAsHome(ResolveHomeParcel());
+                    homePlaceEventBus.SetAsHome(previousParcelPosition);
             }
             else
                 homePlaceEventBus.UnsetHome();
@@ -290,15 +290,6 @@ namespace DCL.Minimap
             // Opening context menu loses focus of minimap, so for pin to showup immediately we have to simulate
             // gaining focus again.
             OnFocus();
-        }
-
-        private Vector2Int ResolveHomeParcel()
-        {
-            PlacesData.PlaceInfo? place = GetPlaceCoveringHome();
-
-            return place != null && VectorUtilities.TryParseVector2Int(place.base_position, out Vector2Int basePosition)
-                ? basePosition
-                : previousParcelPosition;
         }
 
         private void OnFavoriteButtonClicked(bool value)
