@@ -134,9 +134,9 @@
   },
   {
    "number": 10373,
-   "status": "pending",
+   "status": "skipped",
    "commit": null,
-   "note": ""
+   "note": "backend change: social-service-ea #488 (2026-09-15) makes GET /v2/communities/<id> return 404 for private communities to non-members, so the card cannot load its details; the backend team needs to decide what non-members may see"
   },
   {
    "number": 10293,
