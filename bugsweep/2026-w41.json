@@ -1,0 +1,430 @@
+{
+ "status": "active",
+ "prUrl": null,
+ "requester": "U0ADNDHL1T7",
+ "originChannel": "C0BB9H2CS5D",
+ "since": "2026-09-28T00:00:00Z",
+ "collectedAt": "2026-10-10T12:02:35Z",
+ "groups": [
+  [
+   10329,
+   10381
+  ]
+ ],
+ "issues": [
+  {
+   "number": 10358,
+   "status": "pending",
+   "commit": null,
+   "note": ""
+  },
+  {
+   "number": 10337,
+   "status": "pending",
+   "commit": null,
+   "note": ""
+  },
+  {
+   "number": 10414,
+   "status": "pending",
+   "commit": null,
+   "note": ""
+  },
+  {
+   "number": 10399,
+   "status": "pending",
+   "commit": null,
+   "note": ""
+  },
+  {
+   "number": 10375,
+   "status": "pending",
+   "commit": null,
+   "note": ""
+  },
+  {
+   "number": 10376,
+   "status": "pending",
+   "commit": null,
+   "note": ""
+  },
+  {
+   "number": 10382,
+   "status": "pending",
+   "commit": null,
+   "note": ""
+  },
+  {
+   "number": 10319,
+   "status": "pending",
+   "commit": null,
+   "note": ""
+  },
+  {
+   "number": 10288,
+   "status": "pending",
+   "commit": null,
+   "note": ""
+  },
+  {
+   "number": 10044,
+   "status": "pending",
+   "commit": null,
+   "note": ""
+  },
+  {
+   "number": 10329,
+   "status": "pending",
+   "commit": null,
+   "note": ""
+  },
+  {
+   "number": 10381,
+   "status": "pending",
+   "commit": null,
+   "note": ""
+  },
+  {
+   "number": 10327,
+   "status": "pending",
+   "commit": null,
+   "note": ""
+  },
+  {
+   "number": 10412,
+   "status": "pending",
+   "commit": null,
+   "note": ""
+  },
+  {
+   "number": 10332,
+   "status": "pending",
+   "commit": null,
+   "note": ""
+  },
+  {
+   "number": 10321,
+   "status": "pending",
+   "commit": null,
+   "note": ""
+  },
+  {
+   "number": 10405,
+   "status": "pending",
+   "commit": null,
+   "note": ""
+  },
+  {
+   "number": 10315,
+   "status": "pending",
+   "commit": null,
+   "note": ""
+  },
+  {
+   "number": 10309,
+   "status": "pending",
+   "commit": null,
+   "note": ""
+  },
+  {
+   "number": 10404,
+   "status": "pending",
+   "commit": null,
+   "note": ""
+  },
+  {
+   "number": 10373,
+   "status": "pending",
+   "commit": null,
+   "note": ""
+  },
+  {
+   "number": 10293,
+   "status": "skipped",
+   "commit": null,
+   "note": "in flight: open member PRs https://github.com/decentraland/unity-explorer/pull/10342 and https://github.com/decentraland/unity-explorer/pull/10343 close it"
+  },
+  {
+   "number": 10185,
+   "status": "skipped",
+   "commit": null,
+   "note": "fixed by bugsweep 2026-w39 (commit c01a552, PR #10359, merged to dev 2026-10-08); Sentry reopened it, verify on dev before treating as a regression"
+  },
+  {
+   "number": 10204,
+   "status": "skipped",
+   "commit": null,
+   "note": "fixed by bugsweep 2026-w39 (commit 420746b, PR #10359, merged to dev 2026-10-08); Sentry reopened it, verify on dev before treating as a regression"
+  },
+  {
+   "number": 10276,
+   "status": "skipped",
+   "commit": null,
+   "note": "fixed by bugsweep 2026-w39 (commit 420746b, PR #10359, merged to dev 2026-10-08); Sentry reopened it, verify on dev before treating as a regression"
+  },
+  {
+   "number": 10192,
+   "status": "skipped",
+   "commit": null,
+   "note": "duplicate of #8532 (avatar parented to scene parcels after jump-in teleport); unknown repro rate, root cause spans teleport and scene loading; too complex for a sweep fix (as in 2026-w39)"
+  },
+  {
+   "number": 10197,
+   "status": "skipped",
+   "commit": null,
+   "note": "data-side: the card shows the Places API contact_name, so the creator name comes from the backend, not the client (as in 2026-w39)"
+  },
+  {
+   "number": 10247,
+   "status": "skipped",
+   "commit": null,
+   "note": "UUAV native helper killed by SIGKILL (OS/OOM); native process, no C# root cause or repro (as in 2026-w39)"
+  },
+  {
+   "number": 10128,
+   "status": "skipped",
+   "commit": null,
+   "note": "own-profile resolution failure is the outcome of the self-profile FSM reshaped by #10350; the remaining failure modes are tracked as #10346 and #10376, no separate root cause to fix"
+  },
+  {
+   "number": 8803,
+   "status": "skipped",
+   "commit": null,
+   "note": "multi-scene world UI leaking across scenes; repro needs the Sepolia multi-scene test world and the cause spans scene UI ownership; too complex for a sweep fix"
+  },
+  {
+   "number": 10283,
+   "status": "skipped",
+   "commit": null,
+   "note": "architectural: move LiveKit FFI out of process, explicitly scoped out of bug sweeps"
+  },
+  {
+   "number": 10346,
+   "status": "skipped",
+   "commit": null,
+   "note": "tech debt: change IProfileRepository to a union result type across callers; refactor, not a bug fix"
+  },
+  {
+   "number": 10374,
+   "status": "skipped",
+   "commit": null,
+   "note": "refactor: remove a single-implementation interface; not a bug, out of sweep scope"
+  },
+  {
+   "number": 10289,
+   "status": "skipped",
+   "commit": null,
+   "note": "user count differs between client and web: the counts come from different backend sources, no client defect identified"
+  },
+  {
+   "number": 10290,
+   "status": "skipped",
+   "commit": null,
+   "note": "Windows-only outfit thumbnail scale on two specific saved outfits; not reproducible on Mac, needs the reporter account to reproduce"
+  },
+  {
+   "number": 10353,
+   "status": "skipped",
+   "commit": null,
+   "note": "avatar platform colour differs across lobby and backpack; rendering/colour-space issue that needs in-editor visual verification, no repro here"
+  },
+  {
+   "number": 10386,
+   "status": "skipped",
+   "commit": null,
+   "note": "emote prop desync for observers on two specific Halloween emotes; animation sync issue needing the assets and two clients to reproduce"
+  },
+  {
+   "number": 10396,
+   "status": "skipped",
+   "commit": null,
+   "note": "no reproduction steps; reporter could not pin down the steps"
+  },
+  {
+   "number": 10401,
+   "status": "skipped",
+   "commit": null,
+   "note": "macOS-only empty scene at 14,100 with backend error; reporter and issue point to a backend/SDK6 cause (#10400)"
+  },
+  {
+   "number": 10403,
+   "status": "skipped",
+   "commit": null,
+   "note": "design enhancement (empty state alignment with Figma), not a bug"
+  },
+  {
+   "number": 10410,
+   "status": "skipped",
+   "commit": null,
+   "note": "product/spec question on guest voice chat access (related to #10248); needs a product decision"
+  },
+  {
+   "number": 10280,
+   "status": "skipped",
+   "commit": null,
+   "note": "native DLL load failure for uuav on Windows; installation/environment issue, no code root cause"
+  },
+  {
+   "number": 10281,
+   "status": "skipped",
+   "commit": null,
+   "note": "HTTP 431 from a remote server; request header size issue with no client stack to a specific caller"
+  },
+  {
+   "number": 10282,
+   "status": "skipped",
+   "commit": null,
+   "note": "scene WebSocket connect/receive failure: network error raised by a scene's own socket, not a client defect"
+  },
+  {
+   "number": 10286,
+   "status": "skipped",
+   "commit": null,
+   "note": "scene WebSocket connect/receive failure: network error raised by a scene's own socket, not a client defect"
+  },
+  {
+   "number": 10294,
+   "status": "skipped",
+   "commit": null,
+   "note": "scene WebSocket connect/receive failure: network error raised by a scene's own socket, not a client defect"
+  },
+  {
+   "number": 10295,
+   "status": "skipped",
+   "commit": null,
+   "note": "scene WebSocket connect/receive failure: network error raised by a scene's own socket, not a client defect"
+  },
+  {
+   "number": 10296,
+   "status": "skipped",
+   "commit": null,
+   "note": "scene WebSocket connect/receive failure: network error raised by a scene's own socket, not a client defect"
+  },
+  {
+   "number": 10297,
+   "status": "skipped",
+   "commit": null,
+   "note": "scene WebSocket connect/receive failure: network error raised by a scene's own socket, not a client defect"
+  },
+  {
+   "number": 10300,
+   "status": "skipped",
+   "commit": null,
+   "note": "scene WebSocket connect/receive failure: network error raised by a scene's own socket, not a client defect"
+  },
+  {
+   "number": 10302,
+   "status": "skipped",
+   "commit": null,
+   "note": "scene WebSocket connect/receive failure: network error raised by a scene's own socket, not a client defect"
+  },
+  {
+   "number": 10306,
+   "status": "skipped",
+   "commit": null,
+   "note": "scene WebSocket connect/receive failure: network error raised by a scene's own socket, not a client defect"
+  },
+  {
+   "number": 10316,
+   "status": "skipped",
+   "commit": null,
+   "note": "scene WebSocket connect/receive failure: network error raised by a scene's own socket, not a client defect"
+  },
+  {
+   "number": 10377,
+   "status": "skipped",
+   "commit": null,
+   "note": "remote party closed the WebSocket without handshake: network condition, not a client defect"
+  },
+  {
+   "number": 10314,
+   "status": "skipped",
+   "commit": null,
+   "note": "native EXC_BAD_ACCESS inside AVPlayer (AVPPlayerGetCachedMediaStatusForURL); OS media framework crash, no managed frames"
+  },
+  {
+   "number": 10318,
+   "status": "skipped",
+   "commit": null,
+   "note": "HTTP 404 from a remote endpoint with no caller frames beyond the web request layer; server-side"
+  },
+  {
+   "number": 10320,
+   "status": "skipped",
+   "commit": null,
+   "note": "events API fetch error: backend/network failure surfaced as an exception"
+  },
+  {
+   "number": 10325,
+   "status": "skipped",
+   "commit": null,
+   "note": "native access violation in il2cpp interface dispatch inside CRDT; memory corruption with no actionable managed frame"
+  },
+  {
+   "number": 10338,
+   "status": "skipped",
+   "commit": null,
+   "note": "platform does not support compute shaders: unsupported GPU/driver, environment issue"
+  },
+  {
+   "number": 10364,
+   "status": "skipped",
+   "commit": null,
+   "note": "Segment analytics native sqlite database corrupt on disk; local file corruption in the native library"
+  },
+  {
+   "number": 10367,
+   "status": "skipped",
+   "commit": null,
+   "note": "Segment analytics native sqlite database corrupt on disk; local file corruption in the native library"
+  },
+  {
+   "number": 10120,
+   "status": "skipped",
+   "commit": null,
+   "note": "Sentry SDK internal: HttpTransport SetResult on an already completed task; third-party SDK, not explorer code (as in 2026-w38)"
+  },
+  {
+   "number": 10121,
+   "status": "skipped",
+   "commit": null,
+   "note": "Sentry SDK internal: HttpTransport SetException on an already completed task; third-party SDK, not explorer code (as in 2026-w38)"
+  },
+  {
+   "number": 10344,
+   "status": "skipped",
+   "commit": null,
+   "note": "BCL SemaphoreSlim.WaitAsync completing twice; no explorer frames in the trace to attribute it"
+  },
+  {
+   "number": 10378,
+   "status": "skipped",
+   "commit": null,
+   "note": "NullReferenceException inside System.Net.Http (TransferEncodingChunked); BCL internal, no explorer frames"
+  },
+  {
+   "number": 10387,
+   "status": "skipped",
+   "commit": null,
+   "note": "IndexOutOfRangeException in a generic Job Execute with every frame stripped; not attributable"
+  },
+  {
+   "number": 10388,
+   "status": "skipped",
+   "commit": null,
+   "note": "UI Toolkit internal MeshGenerationNode invalid state; Unity engine internal, no explorer frames"
+  },
+  {
+   "number": 10402,
+   "status": "skipped",
+   "commit": null,
+   "note": "UI Toolkit internal NRE in GetTextSettingsFrom; Unity engine internal, no explorer frames"
+  },
+  {
+   "number": 10389,
+   "status": "skipped",
+   "commit": null,
+   "note": "NullReferenceException inside the glTFast package (GltfImport.Prepare); third-party package code"
+  }
+ ]
+}
