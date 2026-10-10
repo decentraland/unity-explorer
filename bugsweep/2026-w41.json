@@ -110,9 +110,9 @@
   },
   {
    "number": 10405,
-   "status": "pending",
-   "commit": null,
-   "note": ""
+   "status": "fixed",
+   "commit": "bc17b1132c17d9f165aad58bcb53f84b4d8ac274",
+   "note": "minimap now saves the avatar parcel instead of the base parcel from #9984; worth a confirmation from that PR's author"
   },
   {
    "number": 10315,
