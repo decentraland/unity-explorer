@@ -244,4 +244,14 @@ namespace DCL.ECSComponents
     {
         public bool IsDirty { get; set; }
     }
+
+    public partial class PBPlayerVoiceState : IDirtyMarker
+    {
+        public bool IsDirty { get; set; }
+    }
+
+    public partial class PBVoiceChatModifierArea : IDirtyMarker
+    {
+        public bool IsDirty { get; set; }
+    }
 }
