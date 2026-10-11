@@ -155,6 +155,7 @@ namespace DCL.PluginSystem.Global
                 NearbyAudioPositionSystem.InjectToWorld(ref builder, nearbyMuteService!, listenerState);
                 NearbyAudioCleanupSystem.InjectToWorld(ref builder, nearbyAudioStreamRegistry!, nearbyAudioBindings!, userBlockingCache, nearbyStateModel!, nearbyAudioSourceFactory!, RoomMetadataCurrentScene.Instance);
                 NearbyVoiceChatNametagSystem.InjectToWorld(ref builder, playerEntity, nearbyAudioStreamRegistry!, nearbyStateModel!, nearbyMuteService!);
+                PlayerVoiceStatePropagationSystem.InjectToWorld(ref builder, nearbyAudioStreamRegistry!);
 
                 NearbyVoiceChatDebugSystem.InjectToWorld(ref builder, voiceChatConfiguration, debugContainer, roomHub.IslandRoom(), nearbyStateModel!, nearbyAudioStreamRegistry!, entityParticipantTable);
             }

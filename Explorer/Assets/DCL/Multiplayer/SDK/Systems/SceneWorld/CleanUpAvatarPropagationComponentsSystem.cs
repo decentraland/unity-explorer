@@ -23,6 +23,7 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
             ResetSDKProfileQuery(World);
             ResetSceneCRDTEntityQuery(World);
             ResetAvatarEmoteCommandComponentQuery(World);
+            ResetPlayerVoiceStateComponentQuery(World);
         }
 
         [Query]
@@ -41,6 +42,12 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
         private void ResetAvatarEmoteCommandComponent(ref AvatarEmoteCommandComponent avatarEmoteCommandComponent)
         {
             avatarEmoteCommandComponent.IsDirty = false;
+        }
+
+        [Query]
+        private void ResetPlayerVoiceStateComponent(ref PlayerVoiceStateComponent playerVoiceStateComponent)
+        {
+            playerVoiceStateComponent.IsDirty = false;
         }
     }
 }
