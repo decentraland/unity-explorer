@@ -67,7 +67,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.PerformanceTests
 
             var playerGo = CreateTrackedGameObject("PerfPlayer");
             playerGo.transform.position = new Vector3(0, 1.6f, 0);
-            world.Create(new PlayerComponent(playerGo.transform));
+            Entity playerEntity = world.Create(new PlayerComponent(playerGo.transform));
 
             registry = new FakeStreamRegistry();
             bindings = new HashSet<StreamKey>();
@@ -88,7 +88,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.PerformanceTests
             RoomMetadataCurrentScene roomMetadataCurrentScene = RoomMetadataCurrentScene.CreateForTest();
 
             system = new NearbyAudioBindingSystem(world, registry, bindings, userBlockingCache, stateModel, sourceFactory, roomMetadataCurrentScene);
-            positionSystem = new NearbyAudioPositionSystem(world, muteService, listenerState);
+            positionSystem = new NearbyAudioPositionSystem(world, muteService, listenerState, playerEntity, configuration);
             cleanupSystem = new NearbyAudioCleanupSystem(world, registry, bindings, userBlockingCache, stateModel, sourceFactory, roomMetadataCurrentScene);
             markerSystem = new NearbyLivekitBridgeSystem(world, registry);
             audibleRangeSystem = new NearbyAudibleRangeSystem(world, configuration, listenerState);

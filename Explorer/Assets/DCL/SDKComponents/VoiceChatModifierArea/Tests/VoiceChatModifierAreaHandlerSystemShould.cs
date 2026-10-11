@@ -101,6 +101,14 @@ namespace DCL.SDKComponents.VoiceChatModifierArea.Tests
         }
 
         [Test]
+        public void KeepTheMaxDistanceAboveZero()
+        {
+            AddAreaAndEnter(Area(maxDistance: 0f));
+
+            Assert.Greater(globalWorld.Get<VoiceChatAreaModifiersComponent>(avatarEntity).Modifiers[0].MaxDistance, 0f);
+        }
+
+        [Test]
         public void RemoveTheAreaWhenTheAvatarExits()
         {
             AddAreaAndEnter(Area(mute: true));

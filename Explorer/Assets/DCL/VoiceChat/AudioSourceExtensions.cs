@@ -15,8 +15,11 @@ namespace DCL.VoiceChat
             source.spatialBlend = 1f;
 
             source.rolloffMode = AudioRolloffMode.Custom;
-            source.maxDistance = rolloffCurve[rolloffCurve.length - 1].time;
+            source.maxDistance = rolloffCurve.MaxDistance();
             source.SetCustomCurve(AudioSourceCurveType.CustomRolloff, rolloffCurve);
         }
+
+        public static float MaxDistance(this AnimationCurve rolloffCurve) =>
+            rolloffCurve[rolloffCurve.length - 1].time;
     }
 }

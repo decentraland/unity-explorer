@@ -152,7 +152,7 @@ namespace DCL.PluginSystem.Global
                 NearbyLivekitBridgeSystem.InjectToWorld(ref builder, nearbyAudioStreamRegistry!);
                 NearbyAudibleRangeSystem.InjectToWorld(ref builder, voiceChatConfiguration, listenerState);
                 NearbyAudioBindingSystem.InjectToWorld(ref builder, nearbyAudioStreamRegistry!, nearbyAudioBindings!, userBlockingCache, nearbyStateModel!, nearbyAudioSourceFactory!, RoomMetadataCurrentScene.Instance);
-                NearbyAudioPositionSystem.InjectToWorld(ref builder, nearbyMuteService!, listenerState);
+                NearbyAudioPositionSystem.InjectToWorld(ref builder, nearbyMuteService!, listenerState, playerEntity, voiceChatConfiguration);
                 NearbyAudioCleanupSystem.InjectToWorld(ref builder, nearbyAudioStreamRegistry!, nearbyAudioBindings!, userBlockingCache, nearbyStateModel!, nearbyAudioSourceFactory!, RoomMetadataCurrentScene.Instance);
                 NearbyVoiceChatNametagSystem.InjectToWorld(ref builder, playerEntity, nearbyAudioStreamRegistry!, nearbyStateModel!, nearbyMuteService!);
                 PlayerVoiceStatePropagationSystem.InjectToWorld(ref builder, nearbyAudioStreamRegistry!);

@@ -16,6 +16,7 @@ namespace DCL.VoiceChat
 
         public uint LastSeenMuteVersion;
         public bool LastAppliedMute;
+        public float LastAppliedVolume;
         public bool LastInactive;
         public Vector3 LastWrittenPos;
 
@@ -27,6 +28,7 @@ namespace DCL.VoiceChat
 
             LastSeenMuteVersion = 0;
             LastAppliedMute = true;
+            LastAppliedVolume = 1f;
             LastInactive = false;
             LastWrittenPos = new Vector3(float.PositiveInfinity, float.PositiveInfinity, float.PositiveInfinity);
         }

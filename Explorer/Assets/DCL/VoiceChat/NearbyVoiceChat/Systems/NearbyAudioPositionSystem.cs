@@ -5,52 +5,57 @@ using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using LiveKit.Rooms.Streaming.Audio;
+using System.Collections.Generic;
 using Unity.Mathematics;
-using Unity.Profiling;
 using UnityEngine;
 
 namespace DCL.VoiceChat.Nearby.Systems
 {
     /// <summary>
     ///     Reads position from the avatar entity referenced by <see cref="NearbyAudioSourceComponent.AvatarEntity"/>
-    ///     and drives the <see cref="LivekitAudioSource"/> transform + spatial angles each frame.
+    ///     and drives the <see cref="LivekitAudioSource"/> transform + spatial angles each frame,
+    ///     applying the speaker's and listener's <see cref="VoiceChatAreaModifiersComponent"/>.
     /// </summary>
     [UpdateInGroup(typeof(NearbyVoiceChatGroup))]
     [UpdateAfter(typeof(NearbyAudioBindingSystem))]
     public partial class NearbyAudioPositionSystem : BaseUnityLoopSystem
     {
         private const float POSITION_EPSILON_SQR = 0.01f;
+        private static readonly List<VoiceChatAreaModifier> NO_AREAS = new (0);
 
         private readonly NearbyMuteService muteService;
         private readonly NearbyListenerState listenerState;
+        private readonly Entity playerEntity;
+        private readonly float rolloffDistance;
 
-        internal NearbyAudioPositionSystem(World world, NearbyMuteService muteService, NearbyListenerState listenerState) : base(world)
+        internal NearbyAudioPositionSystem(World world, NearbyMuteService muteService, NearbyListenerState listenerState, Entity playerEntity, VoiceChatConfiguration configuration) : base(world)
         {
             this.muteService = muteService;
             this.listenerState = listenerState;
+            this.playerEntity = playerEntity;
+            rolloffDistance = configuration.NearbyCustomRolloffCurve.MaxDistance();
         }
 
         protected override void Update(float t)
         {
-            SyncPositionsAndSpatialAnglesQuery(World, listenerState.ListenerTransform, listenerState.PlayerHeadPosition);
+            List<VoiceChatAreaModifier> listenerAreas = World.TryGet(playerEntity, out VoiceChatAreaModifiersComponent listenerModifiers) ? listenerModifiers.Modifiers : NO_AREAS;
+            SyncPositionsAndSpatialAnglesQuery(World, listenerState.ListenerTransform, listenerState.PlayerHeadPosition, listenerAreas);
         }
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void SyncPositionsAndSpatialAngles([Data] Transform listenerTransform, [Data] Vector3 playerHeadPos, ref NearbyAudioSourceComponent nearbyAudio)
+        private void SyncPositionsAndSpatialAngles([Data] Transform listenerTransform, [Data] Vector3 playerHeadPos, [Data] List<VoiceChatAreaModifier> listenerAreas, ref NearbyAudioSourceComponent nearbyAudio)
         {
-            // Stale avatar entity reference — NearbyAudioCleanupSystem will tear this audio entity down in CleanUpGroup.
-            bool hasAvatar = World.TryGet(nearbyAudio.AvatarEntity, out AvatarBase? avatarBase);
-            if (!hasAvatar) return;
-
-            // Per-frame idempotent inactive-state application — self-healing
             Entity avatar = nearbyAudio.AvatarEntity;
-            bool inactive = !World.TryGet(avatar, out InAudibleRangeTag rangeTag) || rangeTag.IsSuspended;
+
+            if (!World.TryGet(avatar, out AvatarBase? avatarBase)) return;
+
+            bool hasAreas = World.TryGet(avatar, out VoiceChatAreaModifiersComponent speakerAreas);
+            bool silencedByArea = (hasAreas && speakerAreas.Muted) || !VoiceChatAreaModifiersComponent.CanHear(hasAreas ? speakerAreas.Modifiers : NO_AREAS, listenerAreas);
+            bool inactive = !World.TryGet(avatar, out InAudibleRangeTag rangeTag) || rangeTag.IsSuspended || silencedByArea;
 
             LivekitAudioSource src = nearbyAudio.LivekitAudioSource;
 
-            // Diff-write: Stop/Play is a state change on the AudioSource voice slot, not a topology change to the DSP graph
-            // Pessimistic init (LastInactive=false matches factory's enabled=true hand-off) forces the first-tick write when an avatar binds directly into the suspend band.
             if (inactive != nearbyAudio.LastInactive)
             {
                 if (inactive) src.AudioSource.Stop();
@@ -60,9 +65,13 @@ namespace DCL.VoiceChat.Nearby.Systems
 
             if (inactive) return;
 
-            // reprojection, so gain is calculated relative to the head and not the camera position (audioListener is on the camera)
-            Vector3 remoteAvatarHeadPos = avatarBase!.HeadAnchorPoint.position;
-            Vector3 sourcePos = listenerTransform.position + (remoteAvatarHeadPos - playerHeadPos);
+            Vector3 headOffset = avatarBase!.HeadAnchorPoint.position - playerHeadPos;
+            float maxDistance = hasAreas ? speakerAreas.MaxDistance : float.PositiveInfinity;
+
+            if (maxDistance < rolloffDistance)
+                headOffset *= rolloffDistance / maxDistance;
+
+            Vector3 sourcePos = listenerTransform.position + headOffset;
 
             if ((sourcePos - nearbyAudio.LastWrittenPos).sqrMagnitude > POSITION_EPSILON_SQR)
             {
@@ -70,11 +79,18 @@ namespace DCL.VoiceChat.Nearby.Systems
                 nearbyAudio.LastWrittenPos = sourcePos;
             }
 
-            // virtualized sources are not audible, so no need to calculate spatialization
             if (!src.AudioSource.isVirtual)
             {
                 (float azimuth, float elevation) = CalculateSpatialAngles(listenerTransform, sourcePos);
                 src.SetSpatialAngles(azimuth, elevation);
+            }
+
+            float volume = hasAreas ? speakerAreas.VolumeScale : 1f;
+
+            if (!Mathf.Approximately(volume, nearbyAudio.LastAppliedVolume))
+            {
+                src.AudioSource.volume = volume;
+                nearbyAudio.LastAppliedVolume = volume;
             }
 
             uint cacheVersion = muteService.CacheVersion;

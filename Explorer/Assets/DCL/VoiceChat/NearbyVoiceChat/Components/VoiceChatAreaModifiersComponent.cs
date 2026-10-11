@@ -81,30 +81,26 @@ namespace DCL.VoiceChat.Nearby
         /// <summary>
         ///     True when both sides share an isolating area, or neither stands in one.
         /// </summary>
-        public static bool CanHear(List<VoiceChatAreaModifier>? speaker, List<VoiceChatAreaModifier>? listener)
+        public static bool CanHear(List<VoiceChatAreaModifier> speaker, List<VoiceChatAreaModifier> listener)
         {
-            bool speakerIsolated = false;
+            var speakerIsolated = false;
 
-            if (speaker != null)
-                foreach (VoiceChatAreaModifier speakerModifier in speaker)
-                {
-                    if (!speakerModifier.Isolate) continue;
+            foreach (VoiceChatAreaModifier speakerModifier in speaker)
+            {
+                if (!speakerModifier.Isolate) continue;
 
-                    speakerIsolated = true;
+                speakerIsolated = true;
 
-                    if (listener == null) continue;
-
-                    foreach (VoiceChatAreaModifier listenerModifier in listener)
-                        if (listenerModifier.Isolate && listenerModifier.IsSameArea(speakerModifier))
-                            return true;
-                }
+                foreach (VoiceChatAreaModifier listenerModifier in listener)
+                    if (listenerModifier.Isolate && listenerModifier.IsSameArea(speakerModifier))
+                        return true;
+            }
 
             if (speakerIsolated) return false;
 
-            if (listener != null)
-                foreach (VoiceChatAreaModifier listenerModifier in listener)
-                    if (listenerModifier.Isolate)
-                        return false;
+            foreach (VoiceChatAreaModifier listenerModifier in listener)
+                if (listenerModifier.Isolate)
+                    return false;
 
             return true;
         }

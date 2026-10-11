@@ -48,8 +48,8 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
         [Test]
         public void LetListenersOutsideIsolationHearSpeakersOutsideIsolation()
         {
-            Assert.IsTrue(VoiceChatAreaModifiersComponent.CanHear(null, null));
-            Assert.IsTrue(VoiceChatAreaModifiersComponent.CanHear(new List<VoiceChatAreaModifier> { Modifier(isolate: false) }, null));
+            Assert.IsTrue(VoiceChatAreaModifiersComponent.CanHear(new List<VoiceChatAreaModifier>(), new List<VoiceChatAreaModifier>()));
+            Assert.IsTrue(VoiceChatAreaModifiersComponent.CanHear(new List<VoiceChatAreaModifier> { Modifier(isolate: false) }, new List<VoiceChatAreaModifier>()));
         }
 
         [Test]
@@ -65,8 +65,8 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
         {
             var booth = new List<VoiceChatAreaModifier> { Modifier(isolate: true) };
 
-            Assert.IsFalse(VoiceChatAreaModifiersComponent.CanHear(booth, null));
-            Assert.IsFalse(VoiceChatAreaModifiersComponent.CanHear(null, booth));
+            Assert.IsFalse(VoiceChatAreaModifiersComponent.CanHear(booth, new List<VoiceChatAreaModifier>()));
+            Assert.IsFalse(VoiceChatAreaModifiersComponent.CanHear(new List<VoiceChatAreaModifier>(), booth));
         }
 
         [Test]

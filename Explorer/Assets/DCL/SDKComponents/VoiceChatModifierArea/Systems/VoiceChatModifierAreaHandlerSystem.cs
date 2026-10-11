@@ -26,6 +26,8 @@ namespace DCL.SDKComponents.VoiceChatModifierArea.Systems
     [LogCategory(ReportCategory.CHARACTER_TRIGGER_AREA)]
     public partial class VoiceChatModifierAreaHandlerSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
+        private const float MIN_MAX_DISTANCE = 0.1f;
+
         private static readonly QueryDescription REMOVED_AREA_QUERY = new QueryDescription()
                                                                      .WithAll<VoiceChatModifierAreaComponent>()
                                                                      .WithNone<DeleteEntityIntention, PBVoiceChatModifierArea>();
@@ -122,7 +124,7 @@ namespace DCL.SDKComponents.VoiceChatModifierArea.Systems
         private VoiceChatAreaModifier ToModifier(Entity entity, PBVoiceChatModifierArea pbArea) =>
             new (World, entity,
                 pbArea.HasVolumeScale ? Mathf.Clamp01(pbArea.VolumeScale) : 1f,
-                pbArea.HasMaxDistance ? pbArea.MaxDistance : float.PositiveInfinity,
+                pbArea.HasMaxDistance ? Mathf.Max(pbArea.MaxDistance, MIN_MAX_DISTANCE) : float.PositiveInfinity,
                 pbArea.HasMute && pbArea.Mute,
                 pbArea.HasIsolate && pbArea.Isolate);
 

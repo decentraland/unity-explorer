@@ -30,6 +30,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.PerformanceTests
             typeof(AvatarBase).GetField("<HeadAnchorPoint>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance)!;
 
         private readonly List<GameObject> gameObjects = new (256);
+        private VoiceChatConfiguration configuration = null!;
 
         [SetUp]
         public void SetUp()
@@ -53,7 +54,8 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.PerformanceTests
             var listenerState = new NearbyListenerState();
             listenerState.BindListener(camera.transform, playerGo.transform);
 
-            system = new NearbyAudioPositionSystem(world, muteService, listenerState);
+            configuration = ScriptableObject.CreateInstance<VoiceChatConfiguration>();
+            system = new NearbyAudioPositionSystem(world, muteService, listenerState, world.Create(), configuration);
             system.Initialize();
         }
 
@@ -61,6 +63,8 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.PerformanceTests
         {
             foreach (GameObject go in gameObjects)
                 if (go != null) Object.DestroyImmediate(go);
+
+            Object.DestroyImmediate(configuration);
 
             gameObjects.Clear();
 

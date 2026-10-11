@@ -115,7 +115,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.PerformanceTests
             var playerGo = new GameObject("Listener_LocalPlayer");
             playerGo.transform.SetParent(transform);
             playerGo.transform.localPosition = Vector3.zero;
-            world.Create(new PlayerComponent(playerGo.transform));
+            Entity playerEntity = world.Create(new PlayerComponent(playerGo.transform));
 
             // PositionSystem reads NearbyListenerState (produced by NearbyAudibleRangeSystem in
             // production). This testbed runs PositionSystem without RangeSystem, so we seed the
@@ -135,7 +135,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.PerformanceTests
             RoomMetadataCurrentScene roomMetadataCurrentScene = RoomMetadataCurrentScene.CreateForTest();
 
             bindingSystem = new NearbyAudioBindingSystem(world, registry, bindings, userBlockingCache, stateModel, sourceFactory, roomMetadataCurrentScene);
-            positionSystem = new NearbyAudioPositionSystem(world, muteService, listenerState);
+            positionSystem = new NearbyAudioPositionSystem(world, muteService, listenerState, playerEntity, configuration);
             positionSystem.Initialize();
             cleanupSystem = new NearbyAudioCleanupSystem(world, registry, bindings, userBlockingCache, stateModel, sourceFactory, roomMetadataCurrentScene);
         }
