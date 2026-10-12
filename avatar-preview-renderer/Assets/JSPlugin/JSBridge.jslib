@@ -174,7 +174,9 @@ mergeInto(LibraryManager.library, {
       '*'
     )
   },
-  OnEmoteEvent: function (eventPtr, time) {
+  OnEmoteEvent: function (eventIndex, time) {
+    // Same order as EmotePlaybackEvent in C#; the index travels so the per-frame report marshals no string.
+    const event = ['play', 'playing', 'pause', 'loop', 'end'][eventIndex]
     const targetWindow = (() => {
       try {
         return window.self !== window.top ? window : window.parent
@@ -187,7 +189,7 @@ mergeInto(LibraryManager.library, {
         type: 'unity-renderer',
         payload: {
           type: 'emote-event',
-          payload: { event: UTF8ToString(eventPtr), time: time },
+          payload: { event: event, time: time },
         },
       },
       '*'

@@ -4,9 +4,9 @@ namespace Utils
 {
     public static class GameObjectUtils
     {
-        // The Babylon preview scales every subject so its bounding sphere has this radius, which its
-        // fixed orthographic frame of the same half-size then shows whole.
-        private const float BABYLON_SUBJECT_RADIUS = 1f;
+        // The bounding sphere radius an orthographic subject is scaled to, so every item fills the
+        // same frame.
+        private const float ORTHOGRAPHIC_SUBJECT_RADIUS = 1f;
 
         public static void CenterAndFit(Transform root, Camera mainCamera, float wearablePadding = 0.15f)
         {
@@ -28,9 +28,9 @@ namespace Utils
             float scaleFactor;
             if (mainCamera.orthographic)
             {
-                // Babylon's rule rather than the camera window: the Cinemachine lens owns the
+                // A fixed sphere rather than the camera window: the Cinemachine lens owns the
                 // orthographic size and fits it to the subject afterwards.
-                scaleFactor = BABYLON_SUBJECT_RADIUS / halfDiagonal;
+                scaleFactor = ORTHOGRAPHIC_SUBJECT_RADIUS / halfDiagonal;
             }
             else
             {

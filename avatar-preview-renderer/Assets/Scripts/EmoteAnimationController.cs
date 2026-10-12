@@ -4,7 +4,7 @@ using Loading;
 using UnityEngine;
 
 /// <summary>
-/// What the emote playback reports, named as the Babylon preview's emote events.
+/// What the emote playback reports. The order is the wire order: the bridge sends the index.
 /// </summary>
 public enum EmotePlaybackEvent
 {
@@ -25,7 +25,11 @@ public class EmoteAnimationController : MonoBehaviour
     [SerializeField] private Animation avatarAnimation;
 
     public bool HasAudio => _emoteAudioClip != null;
-    public bool IsPaused => _paused;
+
+    /// <summary>
+    /// True when a play should resume: a stopped clip is held like a paused one, but starts over.
+    /// </summary>
+    public bool IsPaused => _paused && !_stopped;
     public event Action EmoteAnimationEnded;
 
     /// <summary>
@@ -41,6 +45,9 @@ public class EmoteAnimationController : MonoBehaviour
 
     // How many times the clip has wrapped, so a loop is reported once per wrap.
     private int _reportedLoops;
+
+    // Set by StopEmote: the clip is held like a pause, but the next play starts it over.
+    private bool _stopped;
 
     public void PlayEmote(LoadedEmote loadedEmote)
     {
@@ -76,8 +83,7 @@ public class EmoteAnimationController : MonoBehaviour
     }
 
     /// <summary>
-    /// True while the clip advances: a paused or held clip is not playing, as the Babylon preview
-    /// answers it.
+    /// True while the clip advances: a paused or held clip is not playing.
     /// </summary>
     public bool IsEmotePlaying()
     {
@@ -90,11 +96,20 @@ public class EmoteAnimationController : MonoBehaviour
         if (!_loadedEmote.HasValue) return;
 
         _paused = false;
+        _stopped = false;
         _reportedLoops = 0;
+
+        // A pause or a stop left the speeds at zero.
+        var urn = _loadedEmote.Value.Entity.URN;
+        var state = avatarAnimation[urn];
+        if (state != null) state.speed = 1f;
 
         // Prop
         if (_propAnimation != null)
         {
+            var propState = _propAnimation[urn];
+            if (propState != null) propState.speed = 1f;
+
             _propAnimation.Rewind();
             _propAnimation.Sample();
             _propAnimation.Play();
@@ -157,25 +172,17 @@ public class EmoteAnimationController : MonoBehaviour
     }
 
     /// <summary>
-    /// Holds the emote on its first frame with its audio stopped, as the Babylon preview's stop
-    /// does, so the next play starts it over. <see cref="ReturnToIdle"/> leaves the emote instead.
+    /// Holds the emote on its first frame with its audio stopped; the next play starts it over.
+    /// <see cref="ReturnToIdle"/> leaves the emote instead.
     /// </summary>
     public void StopEmote()
     {
         if (!_loadedEmote.HasValue) return;
 
-        GoToEmote(0f);
+        // Flagged before the seek, so the seek keeps both speeds at zero.
         _paused = true;
-
-        var urn = _loadedEmote.Value.Entity.URN;
-        var state = avatarAnimation[urn];
-        if (state != null) state.speed = 0f;
-
-        if (_propAnimation != null)
-        {
-            var propState = _propAnimation[urn];
-            if (propState != null) propState.speed = 0f;
-        }
+        _stopped = true;
+        GoToEmote(0f);
 
         audioSource.Stop();
 
@@ -191,6 +198,7 @@ public class EmoteAnimationController : MonoBehaviour
 
         var time = GetCurrentEmoteTime();
         _paused = false;
+        _stopped = false;
 
         audioSource.Stop();
         if (_propAnimation != null)
@@ -232,6 +240,9 @@ public class EmoteAnimationController : MonoBehaviour
             {
                 state.speed = 0f;
             }
+
+            // The loop count follows the seek, or the next wraps would go unreported or be invented.
+            _reportedLoops = WrapClipTime(seconds, state.length).loops;
         }
 
         avatarAnimation.Sample();
@@ -252,7 +263,20 @@ public class EmoteAnimationController : MonoBehaviour
             audioSource.time = Mathf.Clamp(seconds, 0f, _emoteAudioClip.length);
         }
 
-        PlaybackChanged?.Invoke(EmotePlaybackEvent.Playing, seconds);
+        // A held clip reports no position: it is not playing.
+        if (!_paused) PlaybackChanged?.Invoke(EmotePlaybackEvent.Playing, seconds);
+    }
+
+    /// <summary>
+    /// Splits a clip time that may have run past the length, as a looping clip's does, into the
+    /// number of wraps and the time within the clip.
+    /// </summary>
+    internal static (int loops, float clipTime) WrapClipTime(float time, float length)
+    {
+        if (length <= 0f) return (0, 0f);
+
+        var loops = Mathf.FloorToInt(time / length);
+        return (loops, time - loops * length);
     }
 
     public void EnableSound()
@@ -287,8 +311,7 @@ public class EmoteAnimationController : MonoBehaviour
         var state = avatarAnimation[urn];
         if (state == null || state.length <= 0f) return;
 
-        // A looping clip's time keeps growing past its length.
-        var loops = Mathf.FloorToInt(state.time / state.length);
+        var (loops, clipTime) = WrapClipTime(state.time, state.length);
 
         if (loops > _reportedLoops)
         {
@@ -300,7 +323,7 @@ public class EmoteAnimationController : MonoBehaviour
             }
         }
 
-        PlaybackChanged?.Invoke(EmotePlaybackEvent.Playing, state.time - loops * state.length);
+        PlaybackChanged?.Invoke(EmotePlaybackEvent.Playing, clipTime);
     }
 
     // Within the clip, however many times a looping one has wrapped.
@@ -309,9 +332,9 @@ public class EmoteAnimationController : MonoBehaviour
         if (!_loadedEmote.HasValue) return 0f;
 
         var state = avatarAnimation[_loadedEmote.Value.Entity.URN];
-        if (state == null || state.length <= 0f) return 0f;
+        if (state == null) return 0f;
 
-        return state.time % state.length;
+        return WrapClipTime(state.time, state.length).clipTime;
     }
 
     [UsedImplicitly]

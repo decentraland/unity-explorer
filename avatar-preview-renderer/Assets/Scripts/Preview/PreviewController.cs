@@ -43,9 +43,6 @@ namespace Preview
         // #cc9b76, the skin the JS wrapper used to send whenever a builder caller left it out.
         private static readonly Color DEFAULT_SKIN_COLOR = new(204f / 255f, 155f / 255f, 118f / 255f);
 
-        // Indexed by EmotePlaybackEvent, so a per-frame report allocates nothing.
-        private static readonly string[] EMOTE_EVENT_NAMES = { "play", "playing", "pause", "loop", "end" };
-
         // The entities the caller asked to preview, as resolved on the last reload: the urns and base64
         // definitions, never the profile's own wearables or the body. Metrics are reported for these.
         private readonly HashSet<string> _requestedItemUrns = new();
@@ -79,6 +76,8 @@ namespace Preview
 
         private void OnDestroy()
         {
+            emoteAnimationController.PlaybackChanged -= OnEmotePlaybackChanged;
+            emoteAnimationController.EmoteAnimationEnded -= OnEmoteAnimationEnded;
             _screenshotCapture.Dispose();
         }
 
@@ -101,13 +100,13 @@ namespace Preview
             previewUIPresenter.SetAnimationPlaying(false);
         }
 
+        // The index travels, so the per-frame report marshals no string.
         private static void OnEmotePlaybackChanged(EmotePlaybackEvent playbackEvent, float time)
         {
-            JSBridge.NativeCalls.OnEmoteEvent(EMOTE_EVENT_NAMES[(int)playbackEvent], time);
+            JSBridge.NativeCalls.OnEmoteEvent((int)playbackEvent, time);
         }
 
-        // The in-canvas button is the renderer's own, so its stop goes back to the idle pose; the
-        // bridge's StopEmote holds the first frame, as the Babylon preview does.
+        // The canvas button returns to idle; the bridge's StopEmote holds the first frame instead.
         private void OnEmoteToggleClicked(bool playing)
         {
             if (playing)
@@ -354,7 +353,9 @@ namespace Preview
 
                 try
                 {
-                    // The hosts the page chose, before the first request of this load.
+                    // The hosts the page chose, before the first request of this load. Cached
+                    // definitions carry content URLs of the host they came from.
+                    if (APIService.PeerUrl != config.PeerUrl) EntityService.ClearCache();
                     APIService.PeerUrl = config.PeerUrl;
                     APIService.MarketplaceServerUrl = config.MarketplaceServerUrl;
 
@@ -405,6 +406,11 @@ namespace Preview
                             break;
                         default:
                             throw new ArgumentOutOfRangeException();
+                    }
+
+                    if (config.DisableFace)
+                    {
+                        avatarLoader.HideFacialFeatures();
                     }
                 }
                 catch (Exception e)
@@ -524,11 +530,6 @@ namespace Preview
                 localEmote ?? DefaultEmote(config.Emote, true),
                 Array.Empty<string>(),
                 colors);
-
-            if (config.DisableFace)
-            {
-                avatarLoader.HideFacialFeatures();
-            }
         }
 
         // Null when the caller named none, so the profile's or the mode's own can take over.
@@ -542,9 +543,8 @@ namespace Preview
         }
 
         // "idle" resolves to no emote: the scene rig already carries an Idle clip, so an empty slot
-        // plays it with nothing to download. "none" asks for exactly that; the Babylon preview would
-        // leave the bind pose instead, which no thumbnail wants. NOTE LoadForProfile does not
-        // short-circuit.
+        // plays it with nothing to download. "none" asks for exactly that. NOTE LoadForProfile does
+        // not short-circuit.
         private static EntityDefinition DefaultEmote(string name, bool loop) =>
             name is "idle" or PreviewConfiguration.NO_EMOTE ? null : EntityDefinition.FromEmbeddedEmote(name, loop);
 
@@ -561,8 +561,8 @@ namespace Preview
             return entities;
         }
 
-        // Dresses the empty categories with the Babylon preview's base wearables, so a lone item never
-        // shows on a naked avatar.
+        // Dresses the empty categories with the base wearables, so a lone item never shows on a naked
+        // avatar.
         private static async Awaitable FillDefaultWearables(Dictionary<string, EntityDefinition> slots,
             BodyShape bodyShape, bool includeFacialFeatures)
         {
@@ -693,11 +693,6 @@ namespace Preview
                     // never hidden by another wearable.
                     avatar.forceRender.Union(renderableOverrides.Select(ed => ed.Category)).ToArray(),
                     avatarColors);
-
-                if (config.DisableFace)
-                {
-                    avatarLoader.HideFacialFeatures();
-                }
             }
 
             if (showsItemAlone)
@@ -745,11 +740,6 @@ namespace Preview
 
             await avatarLoader.LoadAvatar(avatar.GetBodyShape(), entities, emote, avatar.forceRender,
                 avatar.GetAvatarColors());
-
-            if (PreviewConfiguration.Instance.DisableFace)
-            {
-                avatarLoader.HideFacialFeatures();
-            }
         }
 
         private async Awaitable<List<string>> LoadUrns(PreviewConfiguration config)

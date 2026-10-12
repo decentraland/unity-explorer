@@ -15,8 +15,8 @@ namespace Services
         private static string EndpointMarketplace => MarketplaceServerUrl ?? $"https://marketplace-api.decentraland.{Environment}";
 
         /// <summary>
-        /// A Catalyst and a Marketplace API host the page chose, as the Babylon preview's `peerUrl`
-        /// and `marketplaceServerUrl`; null keeps the one <see cref="Environment"/> picks.
+        /// A Catalyst and a Marketplace API host the page chose; null keeps the one
+        /// <see cref="Environment"/> picks.
         /// </summary>
         public static string PeerUrl { get; set; }
 

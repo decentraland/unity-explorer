@@ -61,14 +61,27 @@ namespace Tests
             Assert.AreEqual(Vector2.zero, config.Offset);
         }
 
-        [Test]
-        public void MapDisableDefaultEmotesToNoEmote()
+        [TestCase("?disableDefaultEmotes=true")]
+        [TestCase("?disableDefaultEmotes=true&emote=dance")]
+        [TestCase("?emote=dance&disableDefaultEmotes=true")]
+        public void MapDisableDefaultEmotesToNoEmoteWhateverTheOrder(string url)
         {
             // Act
-            PreviewConfiguration.RecreateFrom("?disableDefaultEmotes=true");
+            PreviewConfiguration.RecreateFrom(url);
 
             // Assert
             Assert.AreEqual(PreviewConfiguration.NO_EMOTE, PreviewConfiguration.Instance.Emote);
+        }
+
+        [Test]
+        public void KeepAUrlValueWithItsOwnQueryString()
+        {
+            // Act
+            PreviewConfiguration.RecreateFrom("?url=https://host.example.com/definition.json?v=2&mode=builder");
+
+            // Assert
+            Assert.AreEqual(new[] { "https://host.example.com/definition.json?v=2" }, PreviewConfiguration.Instance.Urls);
+            Assert.AreEqual(PreviewMode.Builder, PreviewConfiguration.Instance.Mode);
         }
 
         [TestCase("NaN")]

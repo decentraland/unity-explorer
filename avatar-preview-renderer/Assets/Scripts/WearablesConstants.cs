@@ -9,8 +9,8 @@ public static class WearablesConstants
     public const string BODY_SHAPE_MALE = "urn:decentraland:off-chain:base-avatars:BaseMale";
     public const string BODY_SHAPE_FEMALE = "urn:decentraland:off-chain:base-avatars:BaseFemale";
 
-    // The categories the Babylon preview fills with a base wearable when nothing else covers them,
-    // so a lone item is shown on a dressed avatar. Same items, so both renderers show the same.
+    // The categories filled with a base wearable when nothing else covers them, so a lone item is
+    // shown on a dressed avatar.
     public static readonly string[] DEFAULT_FACIAL_CATEGORIES =
     {
         WearableCategories.Categories.EYEBROWS,
@@ -27,8 +27,8 @@ public static class WearablesConstants
     };
 
     /// <summary>
-    /// The base wearable the Babylon preview puts in <paramref name="category"/> for
-    /// <paramref name="bodyShape"/>, or null for a category it leaves empty.
+    /// The base wearable that fills <paramref name="category"/> for <paramref name="bodyShape"/>,
+    /// or null for a category left empty.
     /// </summary>
     public static string GetDefaultWearableUrn(string category, BodyShape bodyShape)
     {

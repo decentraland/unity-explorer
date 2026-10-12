@@ -68,7 +68,7 @@ public class JSBridge : MonoBehaviour
     public void AddUrl(string value) => PreviewConfiguration.Instance.AddUrl(value);
 
     [UsedImplicitly]
-    public void ClearUrls() => PreviewConfiguration.Instance.Urls.Clear();
+    public void ClearUrls() => PreviewConfiguration.Instance.ClearUrls();
 
     [UsedImplicitly]
     public void SetDisableFace(string value) => PreviewConfiguration.Instance.SetDisableFace(value);
@@ -501,9 +501,10 @@ public class JSBridge : MonoBehaviour
         public static void OnHasSound(bool hasSound) => Debug.Log($"NativeCall OnHasSound({hasSound})");
 
         // The per-frame playing report would flood the console, so only the state changes are logged.
-        public static void OnEmoteEvent(string emoteEvent, float time)
+        public static void OnEmoteEvent(int emoteEvent, float time)
         {
-            if (emoteEvent != "playing") Debug.Log($"NativeCall OnEmoteEvent({emoteEvent}, {time})");
+            var playbackEvent = (EmotePlaybackEvent)emoteEvent;
+            if (playbackEvent != EmotePlaybackEvent.Playing) Debug.Log($"NativeCall OnEmoteEvent({playbackEvent}, {time})");
         }
 
         public static void OnMetrics(string json) => Debug.Log($"NativeCall OnMetrics({json})");
@@ -542,7 +543,7 @@ public class JSBridge : MonoBehaviour
         public static extern void OnHasSound(bool hasSound);
 
         [System.Runtime.InteropServices.DllImport("__Internal")]
-        public static extern void OnEmoteEvent(string emoteEvent, float time);
+        public static extern void OnEmoteEvent(int emoteEvent, float time);
 
         [System.Runtime.InteropServices.DllImport("__Internal")]
         public static extern void OnMetrics(string json);

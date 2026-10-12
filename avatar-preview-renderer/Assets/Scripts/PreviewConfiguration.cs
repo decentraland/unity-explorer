@@ -74,9 +74,23 @@ public class PreviewConfiguration
     /// The emote that the avatar will play. Default value is idle, other possible values are:
     /// clap, dab, dance, fashion, fashion-2, fashion-3,fashion-4, love, money, fist-pump and head-explode.
     /// <see cref="NO_EMOTE"/> plays none, so the avatar stands in the rig's idle unless a requested
-    /// item is an emote.
+    /// item is an emote; <see cref="DisableDefaultEmotes"/> reads as that whatever was named.
     /// </summary>
-    public string Emote { get; set; } = "idle";
+    public string Emote
+    {
+        get => DisableDefaultEmotes ? NO_EMOTE : _emote;
+        set => _emote = value;
+    }
+
+    private string _emote = "idle";
+
+    /// <summary>
+    /// The other spelling of "no emote", kept as its own flag so the parameter order never matters.
+    /// </summary>
+    public bool DisableDefaultEmotes { get; private set; }
+
+    public void SetDisableDefaultEmotes(string value) =>
+        DisableDefaultEmotes = ParseToggle(value, "disableDefaultEmotes", DisableDefaultEmotes);
 
     /// <summary>
     /// The base64 encoded GLB to load.
@@ -115,9 +129,13 @@ public class PreviewConfiguration
     /// <summary>
     /// URLs of wearable or emote definitions the page hosts, fetched and treated as <see cref="Base64"/>.
     /// </summary>
-    public List<string> Urls { get; } = new();
+    public IReadOnlyList<string> Urls => _urls;
 
-    public void AddUrl(string url) => Urls.Add(url);
+    private readonly List<string> _urls = new();
+
+    public void AddUrl(string url) => _urls.Add(url);
+
+    public void ClearUrls() => _urls.Clear();
 
     /// <summary>
     /// Only the requested items are worn: no profile wearables and no base ones for the empty
@@ -129,7 +147,9 @@ public class PreviewConfiguration
         DisableDefaultWearables = ParseToggle(value, "disableDefaultWearables", DisableDefaultWearables);
 
     /// <summary>
-    /// Hosts for the Catalyst and the Marketplace API, replacing the ones <c>env</c> picks.
+    /// Hosts for the Catalyst and the Marketplace API, replacing the ones <c>env</c> picks. Copied
+    /// to <see cref="Services.APIService"/> at the start of each reload, so a live change never
+    /// switches hosts under a load in flight.
     /// </summary>
     public string PeerUrl { get; private set; }
 
@@ -481,7 +501,8 @@ public class PreviewConfiguration
 
         foreach (var parameter in split)
         {
-            var keyValueSplit = parameter.Split('=');
+            // Two parts at most: a URL value may carry its own query string.
+            var keyValueSplit = parameter.Split('=', 2);
             var key = HttpUtility.UrlDecode(keyValueSplit[0]).Trim();
             var value = (keyValueSplit.Length > 1 ? HttpUtility.UrlDecode(keyValueSplit[1]) : string.Empty).Trim();
 
@@ -621,8 +642,7 @@ public class PreviewConfiguration
                     Instance.SetDisableDefaultWearables(value);
                     break;
                 case "disableDefaultEmotes":
-                    // The Babylon spelling of "no emote", kept so a page can pass either.
-                    if (ParseToggle(value, "disableDefaultEmotes", false)) Instance.Emote = NO_EMOTE;
+                    Instance.SetDisableDefaultEmotes(value);
                     break;
                 case "peerUrl":
                     Instance.SetPeerUrl(value);

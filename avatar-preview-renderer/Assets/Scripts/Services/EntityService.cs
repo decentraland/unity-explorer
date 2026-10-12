@@ -51,6 +51,11 @@ namespace Services
 
         public static EntityDefinition GetCachedEntity(string urn) => CACHED_ENTITIES[urn];
 
+        /// <summary>
+        /// Forgets every definition, so the next request fetches from the current host.
+        /// </summary>
+        public static void ClearCache() => CACHED_ENTITIES.Clear();
+
         public static EntityDefinition GetBodyEntity(BodyShape bodyShape)
         {
             return bodyShape switch
