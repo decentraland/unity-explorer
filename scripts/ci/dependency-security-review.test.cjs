@@ -16,7 +16,7 @@ const request = script('Request Jarvis through the existing reviewer webhook');
 function fixture(files = [], reviews = [], since = [], labeled = false) {
   const listFiles = () => {};
   const listReviews = () => {};
-  const pr = { number: 42, state: 'open', draft: false, head: { sha: 'a'.repeat(40), ref: 'feat/example' }, base: { sha: 'b'.repeat(40), ref: 'dev' }, changed_files: files.length, user: { login: 'author' }, labels: labeled ? [{ name: 'new-dependency' }] : [] };
+  const pr = { number: 42, state: 'open', draft: false, head: { sha: 'a'.repeat(40), ref: 'feat/example', repo: { full_name: 'decentraland/unity-explorer' } }, base: { sha: 'b'.repeat(40), ref: 'dev' }, changed_files: files.length, user: { login: 'author' }, labels: labeled ? [{ name: 'new-dependency' }] : [] };
   const requests = [], outputs = {}, operations = [];
   const github = {
     paginate: async endpoint => (endpoint === listReviews ? reviews : files),
@@ -168,35 +168,83 @@ test('requires a maintainer request for external authors or failed authorization
     assert.deepEqual(f.requests, []);
   }
 });
-for (const [name, mutate] of [
+const excludedPrTypes = [
   ['a release branch', pr => { pr.head.ref = 'release/2026-09-14'; pr.base.ref = 'main' }],
   ['an auto-pr PR', pr => pr.labels.push({ name: 'auto-pr' })]
-]) {
-  test(`excludes ${name} from AI review`, async () => {
-    const f = fixture([{ filename: 'Explorer/Packages/manifest.json' }]);
-    mutate(f.pr);
-    await detect(f.github, f.context, f.core);
-    await request(f.github, f.context, f.core);
-    assert.equal(f.outputs.request, 'false');
-    assert.deepEqual(f.operations, []);
-    assert.deepEqual(f.requests, []);
-  });
-  test(`strips a stale label from ${name}`, async () => {
-    const f = fixture([{ filename: 'Explorer/Packages/manifest.json' }]);
-    mutate(f.pr);
-    f.pr.labels.push({ name: 'new-dependency' });
-    await detect(f.github, f.context, f.core);
-    assert.equal(f.outputs.request, 'false');
-    assert.deepEqual(f.operations, ['remove']);
-  });
-  test(`refuses to request ${name} carrying the label`, async () => {
-    const f = fixture([{ filename: 'Explorer/Packages/manifest.json' }]);
-    mutate(f.pr);
-    f.pr.labels.push({ name: 'new-dependency' });
-    await request(f.github, f.context, f.core);
-    assert.deepEqual(f.requests, []);
-  });
+];
+for (const author of ['github-actions[bot]', 'decentraland-bot']) {
+  for (const [name, mutate] of excludedPrTypes) {
+    test(`excludes ${name} opened by ${author} from the repository`, async () => {
+      const f = fixture([{ filename: 'Explorer/Packages/manifest.json' }]);
+      f.pr.user.login = author;
+      mutate(f.pr);
+      await detect(f.github, f.context, f.core);
+      await request(f.github, f.context, f.core);
+      assert.equal(f.outputs.request, 'false');
+      assert.deepEqual(f.operations, []);
+      assert.deepEqual(f.requests, []);
+    });
+    test(`strips a stale label from ${name} opened by ${author}`, async () => {
+      const f = fixture([{ filename: 'Explorer/Packages/manifest.json' }]);
+      f.pr.user.login = author;
+      mutate(f.pr);
+      f.pr.labels.push({ name: 'new-dependency' });
+      await detect(f.github, f.context, f.core);
+      assert.equal(f.outputs.request, 'false');
+      assert.deepEqual(f.operations, ['remove']);
+    });
+    test(`refuses to request ${name} opened by ${author} carrying the label`, async () => {
+      const f = fixture([{ filename: 'Explorer/Packages/manifest.json' }]);
+      f.pr.user.login = author;
+      mutate(f.pr);
+      f.pr.labels.push({ name: 'new-dependency' });
+      await request(f.github, f.context, f.core);
+      assert.deepEqual(f.requests, []);
+    });
+  }
 }
+for (const [name, mutate] of excludedPrTypes) {
+  for (const [source, author, headRepo] of [
+    ['a repository writer', 'author', { full_name: 'decentraland/unity-explorer' }],
+    ['a human fork', 'author', { full_name: 'contributor/unity-explorer' }],
+    ['GitHub Actions in a fork', 'github-actions[bot]', { full_name: 'contributor/unity-explorer' }],
+    ['the bot in a fork', 'decentraland-bot', { full_name: 'contributor/unity-explorer' }],
+    ['missing head repository metadata', 'github-actions[bot]', null]
+  ]) {
+    test(`keeps ${name} from ${source} eligible for detailed review`, async () => {
+      const f = fixture([{ filename: 'Explorer/Packages/manifest.json' }]);
+      f.pr.user.login = author;
+      f.pr.head.repo = headRepo;
+      mutate(f.pr);
+      await detect(f.github, f.context, f.core);
+      await request(f.github, f.context, f.core);
+      assert.equal(f.outputs.request, 'true');
+      assert.deepEqual(f.operations, ['add', 'request']);
+      assert.ok(f.pr.labels.some(label => label.name === 'new-dependency'));
+    });
+    test(`the request step accepts labeled ${name} from ${source}`, async () => {
+      const f = fixture([{ filename: 'Explorer/Packages/manifest.json' }], [], [], true);
+      f.pr.user.login = author;
+      f.pr.head.repo = headRepo;
+      mutate(f.pr);
+      await request(f.github, f.context, f.core);
+      assert.deepEqual(f.operations, ['request']);
+    });
+  }
+}
+test('a fork release PR stays labeled while waiting for a maintainer request', async () => {
+  const f = fixture([{ filename: 'Explorer/Packages/manifest.json' }]);
+  f.pr.head.ref = 'release/x';
+  f.pr.base.ref = 'main';
+  f.pr.head.repo = { full_name: 'contributor/unity-explorer' };
+  f.github.rest.repos.getCollaboratorPermissionLevel = async () => ({ data: { permission: 'read' } });
+  await detect(f.github, f.context, f.core);
+  await request(f.github, f.context, f.core);
+  assert.equal(f.outputs.request, 'true');
+  assert.deepEqual(f.operations, ['add']);
+  assert.ok(f.pr.labels.some(label => label.name === 'new-dependency'));
+  assert.deepEqual(f.requests, []);
+});
 test('does not let a release-prefixed feature branch opt itself out', async () => {
   const f = fixture([{ filename: 'Explorer/Packages/manifest.json' }]);
   f.pr.head.ref = 'release/not-a-release';

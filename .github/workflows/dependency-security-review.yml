@@ -60,15 +60,12 @@ jobs:
               return;
             }
             const hasLabel = current.labels.some(label => label.name === 'new-dependency');
-            // `auto-pr` and release PRs are excluded from AI review by policy
-            // (docs/branch-and-pr-standards.md): a release PR is an aggregate
-            // dev -> main merge whose commits each ran this pass on their own PR.
-            // The base is pinned so that `release/`-prefixed feature branches, which
-            // create-release-branch.yml never produces, cannot opt themselves out.
-            // Read both from the fetched PR — that workflow labels the PR moments
-            // after opening it, so the event payload can still be bare.
-            const excluded = (current.base.ref === 'main' && current.head.ref.startsWith('release/')) ||
-              current.labels.some(label => label.name === 'auto-pr');
+            // Only repository automation can use the release and auto-pr exclusions.
+            const fromAutomation = ['github-actions[bot]', 'decentraland-bot'].includes(current.user.login) &&
+              current.head.repo?.full_name === `${owner}/${repo}`;
+            const excluded = fromAutomation &&
+              ((current.base.ref === 'main' && current.head.ref.startsWith('release/')) ||
+               current.labels.some(label => label.name === 'auto-pr'));
             if (!hasChanges || excluded) {
               if (hasLabel) {
                 try {
@@ -178,10 +175,12 @@ jobs:
             const { owner, repo } = context.repo;
             const pull_number = context.payload.pull_request.number;
             const { data: pr } = await github.rest.pulls.get({ owner, repo, pull_number });
+            const fromAutomation = ['github-actions[bot]', 'decentraland-bot'].includes(pr.user.login) &&
+              pr.head.repo?.full_name === `${owner}/${repo}`;
             if (pr.state !== 'open' || pr.draft || pr.head.sha !== context.payload.pull_request.head.sha ||
                 pr.base.sha !== context.payload.pull_request.base.sha ||
-                (pr.base.ref === 'main' && pr.head.ref.startsWith('release/')) ||
-                pr.labels.some(label => label.name === 'auto-pr') ||
+                (fromAutomation && ((pr.base.ref === 'main' && pr.head.ref.startsWith('release/')) ||
+                 pr.labels.some(label => label.name === 'auto-pr'))) ||
                 !pr.labels.some(label => label.name === 'new-dependency')) return;
             // External authors cannot auto-start a credential-bearing agent.
             // A collaborator requests decentraland-bot manually after inspecting the PR.
