@@ -770,6 +770,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ebd7609b18c5429db0cd1ac5fdc1b8b8
+    m_Address: BackpackModal
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: f2df2b2c3721c5840b06c8fe73d5d665
     m_Address: VersionUpdateScreen
     m_ReadOnly: 0

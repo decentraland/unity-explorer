@@ -20,6 +20,15 @@ Darwin)
         target/x86_64-apple-darwin/release/librust_segment.dylib \
         -output "$DEST"
     ;;
+Linux)
+    TARGET="x86_64-unknown-linux-gnu"
+    DEST="../SegmentServerWrap/Libraries/Linux/segment-server.so"
+
+    cargo build "${CARGO_FLAGS[@]}" --target "$TARGET"
+
+    mkdir -p "$(dirname "$DEST")"
+    cp "target/$TARGET/release/librust_segment.so" "$DEST"
+    ;;
 *)
     # MSVC, not GNU: the shipped DLL has always imported the UCRT that Plugins/.VCRedist deploys.
     TARGET="x86_64-pc-windows-msvc"

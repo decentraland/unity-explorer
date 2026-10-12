@@ -58,7 +58,11 @@ namespace ECS.Unity.Textures.Components
 
         public void Dispose()
         {
-            videoTexturesPool.Release(Texture);
+            // On application exit Unity destroys the render texture before the world is finalized;
+            // a destroyed texture must not go back to the pool where the release callback would touch its native side
+            if (Texture != null)
+                videoTexturesPool.Release(Texture);
+
             renderers.Clear();
         }
 

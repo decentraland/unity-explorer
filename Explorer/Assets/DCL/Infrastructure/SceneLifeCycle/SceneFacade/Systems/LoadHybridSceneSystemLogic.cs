@@ -85,7 +85,10 @@ namespace ECS.SceneLifeCycle.Systems
 
                 // Pre-v49 bundles are entity-scoped — injecting their files[] would wrongly flag canonical assets.
                 if (definition.assetBundleManifestVersion.SupportsDepsDigests())
+                {
                     definition.assetBundleManifestVersion.InjectDepsDigests(manifest.files);
+                    definition.assetBundleManifestVersion.InjectLods(manifest.lods);
+                }
             }
             catch (OperationCanceledException) { }
             catch (Exception e) { ReportHub.LogException(e, ReportCategory.SCENE_LOADING); }

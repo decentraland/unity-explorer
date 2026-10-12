@@ -1,4 +1,3 @@
-using DCL.LiveKit.Public;
 using DCL.VoiceChat.Nearby.Audio;
 using LiveKit.Proto;
 using LiveKit.Rooms;
@@ -503,7 +502,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
 
         private void RaiseConnectionUpdated(ConnectionUpdate update)
         {
-            room.ConnectionUpdated += Raise.Event<ConnectionDelegate>(room, update, (LKDisconnectReason?)null);
+            room.ConnectionUpdated += Raise.Event<ConnectionDelegate>(room, update, null);
         }
 
         private void RaiseParticipantUpdated(string identity, UpdateFromParticipant update)

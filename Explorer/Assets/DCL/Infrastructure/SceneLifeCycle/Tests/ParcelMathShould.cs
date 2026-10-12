@@ -69,5 +69,36 @@ namespace DCL.SceneLifeCycle.Tests
                 CollectionAssert.AreEquivalent(expectedParcels, parcels);
             }
         }
+
+        [Test]
+        public void LimitSceneHeightByParcels()
+        {
+            List<ParcelMathHelper.ParcelCorners> corners = CreateCorners(Vector2Int.zero, Vector2Int.right, Vector2Int.up);
+
+            ParcelMathHelper.SceneGeometry geometry = ParcelMathHelper.CreateSceneGeometry(corners, Vector2Int.zero, limitHeightByParcels: true);
+
+            // log2(3 + 1) x 20
+            Assert.That(geometry.Height, Is.EqualTo(40f).Within(0.001f));
+        }
+
+        [Test]
+        public void UseFixedSceneHeightWhenNotLimitedByParcels()
+        {
+            List<ParcelMathHelper.ParcelCorners> corners = CreateCorners(Vector2Int.zero, Vector2Int.right, Vector2Int.up);
+
+            ParcelMathHelper.SceneGeometry geometry = ParcelMathHelper.CreateSceneGeometry(corners, Vector2Int.zero, limitHeightByParcels: false);
+
+            Assert.That(geometry.Height, Is.EqualTo(ParcelMathHelper.FIXED_SCENE_HEIGHT));
+        }
+
+        private static List<ParcelMathHelper.ParcelCorners> CreateCorners(params Vector2Int[] parcels)
+        {
+            var corners = new List<ParcelMathHelper.ParcelCorners>(parcels.Length);
+
+            foreach (Vector2Int parcel in parcels)
+                corners.Add(ParcelMathHelper.CalculateCorners(parcel));
+
+            return corners;
+        }
     }
 }

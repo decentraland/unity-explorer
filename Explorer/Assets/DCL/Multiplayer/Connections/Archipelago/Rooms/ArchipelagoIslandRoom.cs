@@ -50,7 +50,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
             IArchipelagoSignFlow signFlow,
             ICharacterObject characterObject,
             ICurrentAdapterAddress currentAdapterAddress
-        ) : base()
+        )
         {
             this.signFlow = signFlow;
             this.characterObject = characterObject;

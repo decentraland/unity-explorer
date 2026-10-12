@@ -1,42 +1,36 @@
 ﻿using System;
-using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.MapRenderer.ComponentsFactory;
-using DCL.WebRequests;
 using DG.Tweening;
 using System.Threading;
 using UnityEngine;
 using Utility;
 using UnityEngine.AddressableAssets;
+using UnityEngine.ResourceManagement.AsyncOperations;
 
 namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
 {
     public class SatelliteChunkController : IChunkController
     {
         private const float SATURATION_VALUE = 1f;
-        private const string CHUNKS_API = "https://media.githubusercontent.com/media/genesis-city/parcels/new-client-images/maps/lod-0/3/";
 
         private readonly MapRendererTextureContainer textureContainer;
-
-        private readonly IWebRequestController webRequestController;
         private readonly AtlasChunk atlasChunk;
 
         private CancellationTokenSource? internalCts;
         private CancellationTokenSource? linkedCts;
         private static readonly int SATURATION = Shader.PropertyToID("_Saturation");
 
-        private Texture2D? currentOwnedTexture;
+        private AsyncOperationHandle<Texture2D> bundledTextureHandle;
 
         public SatelliteChunkController(
             SpriteRenderer prefab,
-            IWebRequestController webRequestController,
             MapRendererTextureContainer textureContainer,
             Vector3 chunkLocalPosition,
             Vector2Int coordsCenter,
             int drawOrder)
         {
-            this.webRequestController = webRequestController;
             this.textureContainer = textureContainer;
             internalCts = new CancellationTokenSource();
 
@@ -61,8 +55,13 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             internalCts?.Dispose();
             internalCts = null;
 
-            UnityObjectUtils.SafeDestroy(currentOwnedTexture);
-            currentOwnedTexture = null;
+            if (atlasChunk && atlasChunk.MainSpriteRenderer.sprite)
+                UnityObjectUtils.SafeDestroy(atlasChunk.MainSpriteRenderer.sprite);
+
+            if (bundledTextureHandle.IsValid())
+                Addressables.Release(bundledTextureHandle);
+
+            bundledTextureHandle = default;
 
             if (atlasChunk)
                 UnityObjectUtils.SafeDestroy(atlasChunk.gameObject);
@@ -70,36 +69,36 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
 
         public async UniTask LoadImageAsync(Vector2Int chunkId, float chunkWorldSize, CancellationToken ct)
         {
+            if (internalCts == null)
+                return;
+
             linkedCts = CancellationTokenSource.CreateLinkedTokenSource(internalCts.Token, ct);
+            CancellationToken loadCt = linkedCts.Token;
             atlasChunk.MainSpriteRenderer.enabled = false;
             atlasChunk.MainSpriteRenderer.color = AtlasChunkConstants.INITIAL_COLOR;
-            var url = $"{CHUNKS_API}{chunkId.x}%2C{chunkId.y}.jpg";
 
-            var textureTask = webRequestController.GetTextureAsync(
-                new CommonArguments(URLAddress.FromString(url), RetryPolicy.WithRetries(1)),
-                new GetTextureArguments(TextureType.Albedo),
-                GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp, FilterMode.Trilinear),
-                linkedCts.Token,
-                ReportCategory.UI
-            );
+            AsyncOperationHandle<Texture2D> handle = Addressables.LoadAssetAsync<Texture2D>($"{chunkId.x},{chunkId.y}");
 
-            Texture2D texture;
-
-            UnityObjectUtils.SafeDestroy(currentOwnedTexture);
-            currentOwnedTexture = null;
-
+            // ToUniTask rethrows handle.OperationException when the load fails
             try
             {
-                currentOwnedTexture = await textureTask;
-                await UniTask.SwitchToMainThread();
-                texture = currentOwnedTexture;
+                await handle.ToUniTask();
             }
-            catch (OperationCanceledException) { return; }
             catch (Exception e)
             {
                 ReportHub.LogException(e, ReportCategory.UI);
-                texture = await Addressables.LoadAssetAsync<Texture2D>($"{chunkId.x},{chunkId.y}").Task;
+                Addressables.Release(handle);
+                return;
             }
+
+            if (loadCt.IsCancellationRequested)
+            {
+                Addressables.Release(handle);
+                return;
+            }
+
+            bundledTextureHandle = handle;
+            Texture2D texture = handle.Result;
 
             // Closing this in try catch, because SpriteRenderer on application closing is being disposed before this code executes.
             try
@@ -115,11 +114,10 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
 
                 atlasChunk.MainSpriteRenderer.sprite.name = chunkId.ToString();
             }
-            catch (OperationCanceledException) { return; }
             catch (Exception e)
             {
                 ReportHub.LogException(e, ReportCategory.UI);
-                throw;
+                return;
             }
 
             textureContainer.AddChunk(chunkId, texture);

@@ -24,6 +24,7 @@ using DCL.Utility.Types;
 using DCL.VoiceChat;
 using DCL.VoiceChat.Nearby;
 using DCL.Web3;
+using DCL.Web3.Identities;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
 using Newtonsoft.Json;
@@ -75,8 +76,9 @@ namespace DCL.UI
         private readonly UnityAppWebBrowser webBrowser;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly GenericUserProfileContextMenuSettings contextMenuSettings;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly IProfileCache profileCache;
+        private readonly IWeb3IdentityCache web3IdentityCache;
 
         private readonly string[] getUserPositionBuffer = new string[1];
 
@@ -122,12 +124,14 @@ namespace DCL.UI
             IVoiceChatOrchestratorActions voiceChatOrchestrator,
             UnityAppWebBrowser webBrowser,
             IDecentralandUrlsSource decentralandUrlsSource,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             IProfileCache profileCache,
+            IWeb3IdentityCache web3IdentityCache,
             NearbyMuteService? nearbyMuteService = null)
         {
             this.nearbyMuteService = nearbyMuteService;
             this.profileCache = profileCache;
+            this.web3IdentityCache = web3IdentityCache;
             this.friendsService = friendsService;
             this.chatEventBus = chatEventBus;
             this.mvcManager = mvcManager;
@@ -207,8 +211,6 @@ namespace DCL.UI
             ContextMenuOpenDirection anchorPoint = ContextMenuOpenDirection.BottomRight, Action? onContextMenuShow = null,
             bool isOpenedOnWorldAvatar = false)
         {
-            if (profile.UserId == null) return;
-
             closeContextMenuTask.TrySetResult();
             closeContextMenuTask = new UniTaskCompletionSource();
             UniTask closeTask = UniTask.WhenAny(closeContextMenuTask.Task, closeMenuTask);
@@ -252,8 +254,10 @@ namespace DCL.UI
 
             if (isVoiceChatFeatureEnabled)
             {
-                // A guest cannot receive a call, so there is nothing to start
-                contextMenuCallButton.Enabled = !profileCache.IsGuest(profile.UserId!);
+                var imGuest = web3IdentityCache.IsGuest();
+
+                // Neither a guest caller nor a guest callee can participate in a call
+                contextMenuCallButton.Enabled = !imGuest && !profileCache.IsGuest(profile.UserId!);
                 startCallButtonControlSettings.SetData(profile.UserId!);
             }
 
@@ -369,10 +373,10 @@ namespace DCL.UI
         private void SendFriendRequest(string userAddress)
         {
             cancellationTokenSource = cancellationTokenSource.SafeRestart();
-            ShowFriendRequestUIAsync(cancellationTokenSource.Token).Forget();
+            ShowFriendRequestUiAsync(cancellationTokenSource.Token).Forget();
             return;
 
-            async UniTaskVoid ShowFriendRequestUIAsync(CancellationToken ct)
+            async UniTaskVoid ShowFriendRequestUiAsync(CancellationToken ct)
             {
                 await mvcManager.ShowAsync(FriendRequestController.IssueCommand(new FriendRequestParams
                 {
@@ -405,7 +409,9 @@ namespace DCL.UI
         private void OnMentionUserClicked(string userName)
         {
             closeContextMenuTask.TrySetResult();
-            ChatOpener.Instance.CloseAllViewsAndFocusChat();
+
+            if (!ChatOpener.Instance.CloseAllViewsAndFocusChat()) return;
+
             chatEventBus.RaiseInsertTextInChatRequestedEvent(userName + " ");
         }
 
@@ -418,7 +424,9 @@ namespace DCL.UI
         private void OnStartCallButtonClicked(string userId)
         {
             closeContextMenuTask.TrySetResult();
-            ChatOpener.Instance.CloseAllViewsAndFocusChat();
+
+            if (!ChatOpener.Instance.CloseAllViewsAndFocusChat()) return;
+
             voiceChatOrchestrator.StartPrivateCallWithUserId(userId);
         }
 
@@ -484,6 +492,7 @@ namespace DCL.UI
             {
                 { "receiver_id", targetAddress },
                 { "friend_position", parcel.ToString() },
+                { "source", "user_context_menu" },
             });
 
         private void OnGiftUserClicked(string payload)

@@ -62,7 +62,7 @@ namespace DCL.McpServer.Tools
         public override async UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
         {
             if (!arguments.TryGetFloat("x", out float x) || !arguments.TryGetFloat("y", out float y) || !arguments.TryGetFloat("z", out float z))
-                return McpToolResult.Error("x, y and z world coordinates for the camera position are required.");
+                return McpToolResult.Error("x, y and z world coordinates for the camera position are required." + arguments.NonNumericHint("x", "y", "z"));
 
             bool hasLookAtX = arguments.TryGetFloat("lookAtX", out float lookAtX);
             bool hasLookAtY = arguments.TryGetFloat("lookAtY", out float lookAtY);
@@ -70,7 +70,7 @@ namespace DCL.McpServer.Tools
             bool hasLookAt = hasLookAtX && hasLookAtY && hasLookAtZ;
 
             if ((hasLookAtX || hasLookAtY || hasLookAtZ) && !hasLookAt)
-                return McpToolResult.Error("lookAtX, lookAtY and lookAtZ must be provided together.");
+                return McpToolResult.Error("lookAtX, lookAtY and lookAtZ must be provided together." + arguments.NonNumericHint("lookAtX", "lookAtY", "lookAtZ"));
 
             float? fov = null;
 

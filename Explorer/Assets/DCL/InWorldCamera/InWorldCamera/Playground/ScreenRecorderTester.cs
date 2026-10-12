@@ -5,11 +5,9 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Equipped;
-using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Browser.DecentralandUrls;
-using DCL.DebugUtilities;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.Ipfs;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -22,7 +20,6 @@ using DCL.WebRequests;
 using ECS;
 using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using Utility;
@@ -40,7 +37,7 @@ namespace DCL.InWorldCamera.Playground
         public Texture2D Texture;
         public ScreenshotMetadata metadata;
 
-        private ScreenRecorder recorder;
+        private ScreenRecorder? recorder;
 
         private void OnDestroy()
         {
@@ -62,10 +59,11 @@ namespace DCL.InWorldCamera.Playground
         [ContextMenu(nameof(CaptureMetadata))]
         public async UniTask CaptureMetadata()
         {
-            Profile? profile = await CreateProfile().ProfileAsync(CancellationToken.None);
+            using SelfProfile selfProfile = CreateProfile();
+            ProfileReadResult read = await selfProfile.ProfileAsync(CancellationToken.None);
 
             var builder = new ScreenshotMetadataBuilder(null, null, null, null);
-            builder.FillMetadata(profile, null, Vector2Int.one, "Test Playground", "Test place id", Array.Empty<VisiblePerson>());
+            builder.FillMetadata(read.IsOk(out Profile? profile) ? profile : null, null, Vector2Int.one, "Test Playground", "Test place id", Array.Empty<VisiblePerson>());
             metadata = builder.GetMetadataAndReset();
             hud.Metadata = metadata;
         }
@@ -105,13 +103,8 @@ namespace DCL.InWorldCamera.Playground
                 new DefaultProfileCache(),
                 world,
                 playerEntity,
-                new PassThroughOwnedNftFilter()
+                new ForcedWearables()
             );
-        }
-
-        private sealed class PassThroughOwnedNftFilter : IOwnedNftFilter
-        {
-            public bool ShouldExclude(URN fullUrn) => false;
         }
     }
 }

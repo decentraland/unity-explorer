@@ -8,22 +8,56 @@ This process occurs at the start of the application, before the plugins are init
 We make a call `IFeatureFlagsProvider.GetAsync(options, ct)`. This finally triggers an HTTP request like:
 ```bash
 curl --location 'https://feature-flags.decentraland.org/explorer.json' \
---header 'X-Address-Hash: 0x..usrAddr' \
+--header 'X-Address-Hash: <anonymous user id>' \
 --header 'X-Debug: false' \
 --header 'referer: https://decentraland.org'
 ```
 
 We require to set the `FeatureFlagOptions options` param:
-- UserId: the user that is requesting the data. This is required by flags configured with strategy https://gh.getunleash.io/reference/activation-strategies#userids
+- UserId: the identity the flags are evaluated against, sent as the `X-Address-Hash` header. Unleash treats it as an opaque string — it feeds gradual-rollout bucketing and the https://gh.getunleash.io/reference/activation-strategies#userids strategy, and does not have to be a wallet address. See [Which identity is sent](#which-identity-is-sent).
 - URL: decentraland systems uses either https://feature-flags.decentraland.org or https://feature-flags.decentraland.zone
 - AppName: refers to the application concept: https://docs.getunleash.io/reference/applications. `explorer` is set by default
 - Hostname: Applies for application hostname strategy: https://gh.getunleash.io/reference/activation-strategies#hostnames. i.e.: decentraland.org, decentraland.zone, localhost
 
-### How to change options through program args
+### Which identity is sent
+
+The client sends an **anonymous user id**, never the wallet address. It is resolved in this order:
+
+1. `--feature-flags-user-id`, an explicit override for QA — see
+   [below](#how-to-change-options-through-program-args).
+2. `--campaign_anon_user_id`, forwarded by the launcher from the website — the id the user is already known by at
+   the original source of the funnel, so the explorer buckets them the same way the website did. The launcher
+   passes it on every launch where it exists, so it needs no local copy.
+3. A `Guid` generated on the first launch without a campaign id and persisted under
+   `DCLPrefKeys.FEATURE_FLAGS_USER_ID`.
+
+Neither argument is ever written to prefs: the stored id is only the generated fallback.
+
+The generated id is deliberately random rather than derived from `SystemInfo.deviceUniqueIdentifier`: the device id
+is unavailable on some platforms (`SystemInfo.unsupportedIdentifier`), which would collapse every affected machine
+into one rollout bucket, and it is shared across cloned VM/VDI images. It is also hardware-derived, and this client
+never sends that raw value anywhere — `HardwareFingerprintProvider` and `GuestSessionIdProvider` both hash it behind
+a domain prefix first.
+
+The trade-off is durability: clearing prefs or reinstalling yields a new id, so that install is re-bucketed. Note
+also that concurrent instances each claim their own `userdata_{n}.json` slot and therefore resolve their own id.
+
+Flags are fetched once during bootstrap, long before the user authenticates, and systems are built from that
+snapshot. Bucketing on an id that already exists pre-login means a user lands in the same A/B group on their very
+first session as on every later one, and the group never changes mid-session. Wallet-targeted allow-lists in this
+client (`user-allow-list`, `alfa-official-wallets`, `banned_users`, ...) are delivered as CSV variant payloads and
+matched client-side against the logged-in address, so they are unaffected by which identity the header carries.
+
+One consequence: a flag configured server-side with the Unleash `userIds` strategy listing wallet addresses will not
+match. Target such rollouts by percentage or by a client-side CSV allow-list instead.
+
+## How to change options through program args
 
 `--feature-flags-url`: represents the `options.URL` param to use different servers.
 
 `--feature-flags-hostname`: represents the `options.Hostname` param as it is required to provide the configuration either for org, zone or local development.
+
+`--feature-flags-user-id`: represents the `options.UserId` param, overriding the resolved anonymous id. Use it to evaluate the document as a specific user — to reproduce the flags a reporter sees, or to land in a particular A/B bucket. Like the two params above it is denied to `decentraland://` deep links by `DeepLinkAllowlist`, and it is never persisted.
 
 An example if you want to set local development mode:
 

@@ -5,7 +5,8 @@
 # For a PR-triggered run the payload's pull_requests[0] is the answer. A push
 # run on dev carries no PR, but its head SHA can be the head of an open release
 # or hotfix PR: create-release-branch.yml cuts release/* from dev's tip and opens
-# the PR with GITHUB_TOKEN, whose events start no runs — so when the cut lands
+# the PR with GITHUB_TOKEN, whose events build nothing (build-unitycloud.yml
+# skips bot-actor pull_request events) — so when the cut lands
 # while dev is still building or testing that commit, the dev run is the only
 # run the release PR will ever get for it. Such a run resolves to that PR, and
 # its result back-fills the seeded "on dev" placeholder in the PR's CI status

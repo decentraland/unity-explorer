@@ -170,7 +170,7 @@ namespace DCL.Billboard.Tests
         public void CameraSentinelUsesCameraPath()
         {
             var map = new Dictionary<CRDTEntity, Entity>();
-            (World world, _, Transform transform, BillboardSystem system) = Construct(BillboardMode.BmY, new Vector3(10, 0, 0), map, (uint)SpecialEntitiesID.CAMERA_ENTITY);
+            (World world, _, Transform transform, BillboardSystem system) = Construct(BillboardMode.BmY, new Vector3(10, 0, 0), map, SpecialEntitiesID.CAMERA_ENTITY);
             map[new CRDTEntity(SpecialEntitiesID.CAMERA_ENTITY)] = CreateTarget(world, new Vector3(0, 0, 10));
 
             system.Update(0);

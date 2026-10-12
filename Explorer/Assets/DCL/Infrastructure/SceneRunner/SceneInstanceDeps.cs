@@ -191,11 +191,13 @@ namespace SceneRunner
 
         public void Dispose()
         {
-            // The order can make a difference here
+            // The order can make a difference here.
+            // The synchronizer goes first: it flags itself disposed, so a buffer the scene thread is still about to apply
+            // is discarded instead of reaching the world that is torn down right after
+            CRDTWorldSynchronizer.Dispose();
             ECSWorldFacade.Dispose();
             CRDTProtocol.Dispose();
             OutgoingCRDTMessagesProvider.Dispose();
-            CRDTWorldSynchronizer.Dispose();
             PoolsProvider.Dispose();
             CRDTMemoryAllocator.Dispose();
 
@@ -265,7 +267,7 @@ namespace SceneRunner
                 string installSource)
                 : this(
                     engineApi,
-                    new RestrictedActionsAPIImplementation(mvcManager, syncDeps.ecsWorldSharedDependencies.SceneStateProvider, globalWorldActions, syncDeps.sceneData, syncDeps.permissionsProvider, systemClipboard, syncDeps.ECSWorldFacade.EcsWorld, syncDeps.ECSWorldFacade.PersistentEntities.Player, new ExplorerUiActions(mvcManager, syncDeps.ecsWorldSharedDependencies.ExplorerUiEvents)),
+                    new RestrictedActionsAPIImplementation(mvcManager, syncDeps.ecsWorldSharedDependencies.SceneStateProvider, globalWorldActions, syncDeps.sceneData, syncDeps.permissionsProvider, systemClipboard, syncDeps.ECSWorldFacade.EcsWorld, syncDeps.ECSWorldFacade.PersistentEntities.Player, new ExplorerUiActions(mvcManager, syncDeps.ecsWorldSharedDependencies.SceneStateProvider, syncDeps.ecsWorldSharedDependencies.ExplorerUiEvents)),
                     new RuntimeImplementation(jsOperations, syncDeps.sceneData, realmData, webRequestController, skyboxSettings, roomHub, installSource),
                     new SceneApiImplementation(syncDeps.sceneData),
                     new ClientWebSocketApiImplementation(syncDeps.PoolsProvider, jsOperations, syncDeps.permissionsProvider),

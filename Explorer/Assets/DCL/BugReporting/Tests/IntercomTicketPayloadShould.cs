@@ -17,6 +17,7 @@ namespace DCL.BugReporting.Tests
                 GraphicCard = "Example GPU",
                 Ram = "32768 MB",
                 ClientVersion = "0.1.0",
+                Platform = IntercomTicketPlatform.Desktop,
             };
 
         [Test]
@@ -30,7 +31,7 @@ namespace DCL.BugReporting.Tests
 
             // Assert - any attribute name the Bug Report type does not declare gets the whole call rejected.
             JObject attributes = (JObject)payload["ticket_attributes"]!;
-            Assert.AreEqual(7, attributes.Count);
+            Assert.AreEqual(8, attributes.Count);
             Assert.AreEqual(data.Title, attributes["_default_title_"]!.Value<string>());
             Assert.AreEqual(data.Description, attributes["_default_description_"]!.Value<string>());
             Assert.AreEqual(data.IssueTypeOptionId, attributes["Issue Type"]!.Value<string>());
@@ -38,6 +39,24 @@ namespace DCL.BugReporting.Tests
             Assert.AreEqual(data.GraphicCard, attributes["Graphic Card"]!.Value<string>());
             Assert.AreEqual(data.Ram, attributes["RAM"]!.Value<string>());
             Assert.AreEqual(data.ClientVersion, attributes["Client version"]!.Value<string>());
+            Assert.AreEqual(1, attributes["Platform"]!.Value<int>());
+        }
+
+        [TestCase(IntercomTicketPlatform.Desktop, 1)]
+        [TestCase(IntercomTicketPlatform.Mobile, 2)]
+        public void SendThePlatformAsItsNumericCode(IntercomTicketPlatform platform, int expectedCode)
+        {
+            // Arrange
+            IntercomTicketData data = ValidData();
+            data.Platform = platform;
+
+            // Act
+            JObject payload = JObject.Parse(IntercomTicketPayload.BuildCreateTicketJson(in data));
+
+            // Assert - the proxy resolves the code to the list option; a label or 0 would be rejected.
+            JToken platformToken = payload["ticket_attributes"]!["Platform"]!;
+            Assert.AreEqual(JTokenType.Integer, platformToken.Type);
+            Assert.AreEqual(expectedCode, platformToken.Value<int>());
         }
 
         [Test]
@@ -54,7 +73,7 @@ namespace DCL.BugReporting.Tests
 
             // Assert
             JObject attributes = (JObject)payload["ticket_attributes"]!;
-            Assert.AreEqual(10, attributes.Count);
+            Assert.AreEqual(11, attributes.Count);
             Assert.AreEqual("7.5.6", attributes["SDK version"]!.Value<string>());
             Assert.AreEqual("1.4.2", attributes["Launcher Version"]!.Value<string>());
             Assert.AreEqual(BugReportMinimumSpecOptions.MEETS_MIN_SPEC, attributes["Meets Minimum Requirements"]!.Value<string>());
@@ -75,44 +94,48 @@ namespace DCL.BugReporting.Tests
         }
 
         [Test]
-        public void EncodeEvidenceWhenAnImageIsAttached()
+        public void EncodeEveryImageAsAnEvidenceArrayInOrder()
         {
             // Arrange
-            byte[] image = Encoding.UTF8.GetBytes("image-bytes");
+            byte[] first = Encoding.UTF8.GetBytes("first-image");
+            byte[] second = Encoding.UTF8.GetBytes("second-image");
             IntercomTicketData data = ValidData();
-            data.EvidenceImage = image;
-            data.EvidenceContentType = "image/png";
+            data.Evidence = new[] { new EvidenceImage(first, "image/png"), new EvidenceImage(second, "image/jpeg") };
 
             // Act
             JObject payload = JObject.Parse(IntercomTicketPayload.BuildCreateTicketJson(in data));
 
-            // Assert
+            // Assert - the proxy numbers the images in the order sent.
             Assert.AreEqual(2, payload.Count);
-            JObject evidence = (JObject)payload["evidence"]!;
-            Assert.AreEqual("image/png", evidence["content_type"]!.Value<string>());
-            Assert.AreEqual(image, Convert.FromBase64String(evidence["data"]!.Value<string>()!));
+            JArray evidence = (JArray)payload["evidence"]!;
+            Assert.AreEqual(2, evidence.Count);
+            Assert.AreEqual("image/png", evidence[0]["content_type"]!.Value<string>());
+            Assert.AreEqual(first, Convert.FromBase64String(evidence[0]["data"]!.Value<string>()!));
+            Assert.AreEqual("image/jpeg", evidence[1]["content_type"]!.Value<string>());
+            Assert.AreEqual(second, Convert.FromBase64String(evidence[1]["data"]!.Value<string>()!));
         }
 
         [Test]
-        public void DefaultTheEvidenceContentTypeToJpeg()
+        public void EncodeASingleImageAsAnArrayOfOne()
         {
             // Arrange
             IntercomTicketData data = ValidData();
-            data.EvidenceImage = new byte[] { 0xff, 0xd8, 0xff };
+            data.Evidence = new[] { new EvidenceImage(new byte[] { 0xff, 0xd8, 0xff }, "image/jpeg") };
 
             // Act
             JObject payload = JObject.Parse(IntercomTicketPayload.BuildCreateTicketJson(in data));
 
             // Assert
-            Assert.AreEqual("image/jpeg", payload["evidence"]!["content_type"]!.Value<string>());
+            Assert.AreEqual(JTokenType.Array, payload["evidence"]!.Type);
+            Assert.AreEqual(1, ((JArray)payload["evidence"]!).Count);
         }
 
         [Test]
-        public void OmitEvidenceWhenTheImageIsMissingOrEmpty()
+        public void OmitEvidenceWhenThereAreNoImages()
         {
             // Arrange
             IntercomTicketData data = ValidData();
-            data.EvidenceImage = Array.Empty<byte>();
+            data.Evidence = Array.Empty<EvidenceImage>();
 
             // Act
             JObject payload = JObject.Parse(IntercomTicketPayload.BuildCreateTicketJson(in data));

@@ -63,7 +63,7 @@ namespace DCL.EventsApi
         public int x;
         public int y;
         public string place_id;
-        public string[] connected_addresses;
+        public string[]? connected_addresses;
         public string community_id;
         public string image_vertical;
         // ReSharper restore InconsistentNaming
@@ -235,7 +235,12 @@ namespace DCL.EventsApi
         //No need to serialize anything more than the already present fields
         public void OnBeforeSerialize() { }
 
-        public void OnAfterDeserialize() =>
+        public void OnAfterDeserialize()
+        {
+            if (connected_addresses is { Length: 0 })
+                connected_addresses = null;
+
             EventDataParser.ParseDeserializedDates(ref this);
+        }
     }
 }

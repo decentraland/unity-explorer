@@ -22,6 +22,11 @@ MonoBehaviour:
     <SettingsGroups>k__BackingField: []
   <GraphicsSectionConfig>k__BackingField:
     <SettingsGroups>k__BackingField:
+    - <GroupTitle>k__BackingField: Experimental
+      <FeatureFlagName>k__BackingField: 0
+      <FeatureId>k__BackingField: 0
+      <Modules>k__BackingField:
+      - rid: 7000000000000000002
     - <GroupTitle>k__BackingField: General
       <FeatureFlagName>k__BackingField: 0
       <FeatureId>k__BackingField: 0
@@ -832,6 +837,24 @@ MonoBehaviour:
           <IsEnabled>k__BackingField: 1
           defaultIsOn: 1
         <Feature>k__BackingField: 16
+    - rid: 7000000000000000002
+      type: {class: ToggleModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
+      data:
+        <FeatureId>k__BackingField: 0
+        <View>k__BackingField:
+          m_AssetGUID: 39458b71e0ed84549b1b280c4fb1f105
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <Config>k__BackingField:
+          <ModuleName>k__BackingField: Experimental Lobby (requires restart)
+          <Description>k__BackingField: Starts the client in the lobby instead of
+            jumping straight into the world. Close and reopen the client for the
+            change to take effect.
+          <IsEnabled>k__BackingField: 1
+          defaultIsOn: 0
+        <Feature>k__BackingField: 17
     - rid: 7533463652475600993
       type: {class: ToggleModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:

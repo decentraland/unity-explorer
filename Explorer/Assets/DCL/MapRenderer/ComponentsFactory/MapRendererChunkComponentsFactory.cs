@@ -2,7 +2,6 @@
 using DCL.AssetsProvision;
 using DCL.MapPins.Bus;
 using DCL.EventsApi;
-using DCL.MapPins.Bus;
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapCameraController;
@@ -131,7 +130,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             var categoriesInstallerTask = categoriesMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, clusterObjectsPool, categoryMarkerPrefab, navmapBus, cancellationToken);
             var sceneOfInterestInstallerTask = sceneOfInterestMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, assetsProvisioner, mapSettings, placesAPIService, clusterObjectsPool, navmapBus, cancellationToken);
             var searchResultsInstallerTask = searchResultsMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, assetsProvisioner, mapSettings, cullingController, searchResultsClusterObjectsPool, navmapBus, cancellationToken);
-            var homeMarkerInstallerTask = homeMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, navmapBus, placesAPIService, mapSettings, assetsProvisioner, homePlaceEventBus, eventBus, cancellationToken);
+            var homeMarkerInstallerTask = homeMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, navmapBus, placesAPIService, mapSettings, assetsProvisioner, homePlaceEventBus, eventBus, web3IdentityCache, cancellationToken);
 
 
             await UniTask.WhenAll(
@@ -260,7 +259,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             {
                 SpriteRenderer atlasChunkPrefab = await GetAtlasChunkPrefabAsync(parent, ct);
 
-                var chunk = new SatelliteChunkController(atlasChunkPrefab, webRequestController, textureContainer, chunkLocalPosition, chunkId, MapRendererDrawOrder.SATELLITE_ATLAS);
+                var chunk = new SatelliteChunkController(atlasChunkPrefab, textureContainer, chunkLocalPosition, chunkId, MapRendererDrawOrder.SATELLITE_ATLAS);
                 await chunk.LoadImageAsync(chunkId, PARCELS_INSIDE_CHUNK * coordsUtils.ParcelSize, ct);
 
                 return chunk;

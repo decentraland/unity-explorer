@@ -1,4 +1,5 @@
 using DCL.Browser;
+using DCL.FeatureFlags;
 using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.UI;
 using DCL.Utilities;
@@ -49,6 +50,7 @@ namespace DCL.AuthenticationScreenFlow
 
             // Cancel button persists in the Verification state (until code is shown)
             view.CancelLoginButton.onClick.AddListener(OnCancelBeforeVerification);
+            view.BackButton.onClick.AddListener(GoBack);
         }
 
         public new void Enter()
@@ -58,6 +60,8 @@ namespace DCL.AuthenticationScreenFlow
 
             view.SetLoadingSpinnerVisibility(false);
             view.SetEmailInputFieldSpinnerActive(false);
+
+            view.BackButton.gameObject.SetActive(FeaturesRegistry.Instance.IsEnabled(FeatureId.GuestLogin));
 
             if (view.gameObject.activeSelf)
             {
@@ -159,6 +163,9 @@ namespace DCL.AuthenticationScreenFlow
             view.EmailInputField.SetText(email);
         }
 
+        private void GoBack() =>
+            controller.ReturnToOrigin(UIAnimationHashes.SLIDE);
+
         // dApp endpoint is case insensitive
 
         private void LoginWithMetamask() =>
@@ -187,8 +194,6 @@ namespace DCL.AuthenticationScreenFlow
 
         private void Login(LoginMethod method)
         {
-            compositeWeb3Provider.CurrentProvider = AuthProvider.Dapp;
-
             controller.CurrentLoginMethod = method;
             currentState.Value = AuthStatus.LoginRequested;
 
@@ -198,8 +203,6 @@ namespace DCL.AuthenticationScreenFlow
 
         private void OTPLogin()
         {
-            compositeWeb3Provider.CurrentProvider = AuthProvider.ThirdWeb;
-
             controller.CurrentLoginMethod = LoginMethod.EMAIL_OTP;
             currentState.Value = AuthStatus.LoginRequested;
             view.SetEmailInputFieldSpinnerActive(true);

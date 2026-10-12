@@ -98,7 +98,7 @@ FFmpeg is built from source once:
 
 ```bash
 cd native
-./scripts/build-ffmpeg-macos.sh   # clones FFmpeg n8.1, LGPL shared universal build into .third_party/ffmpeg
+./scripts/build-ffmpeg-macos.sh   # clones FFmpeg n8.1 + mbedTLS 3.6, LGPL-3.0 shared universal build into .third_party/ffmpeg
 ./build.sh
 ```
 
@@ -139,7 +139,7 @@ libswresample.6.dylib
 libswscale.9.dylib
 ```
 
-No extra support libraries are needed: https uses SecureTransport (an OS framework), and zlib/bzip2/iconv come from the OS.
+No extra support libraries are needed: https uses mbedTLS statically linked into `libavformat` (cmake is a build-time dependency only), and zlib/bzip2/iconv come from the OS.
 
 macOS notes:
 

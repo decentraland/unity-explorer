@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.FeatureFlags;
 using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.Utilities;
 using DCL.Utility;
@@ -60,6 +61,8 @@ namespace DCL.AuthenticationScreenFlow
 
             currentState.Value = AuthStatus.GuestOrSignUpScreen;
 
+            viewInstance.LoginSelectionAuthView.Hide();
+
             view.Show();
             SetButtonsInteractable(true);
 
@@ -108,13 +111,16 @@ namespace DCL.AuthenticationScreenFlow
 
         private async UniTaskVoid LoginAsGuestAsync(CancellationToken ct)
         {
-            compositeWeb3Provider.CurrentProvider = AuthProvider.ThirdWeb;
+            LoginPayload payload = FeaturesRegistry.Instance.IsEnabled(FeatureId.EphemeralGuestAccount)
+                ? LoginPayload.ForEphemeralGuestFlow()
+                : LoginPayload.ForGuestFlow();
+
             controller.CurrentLoginMethod = LoginMethod.GUEST;
             currentState.Value = AuthStatus.LoginRequested;
 
             try
             {
-                IWeb3Identity identity = await compositeWeb3Provider.LoginAsync(LoginPayload.ForGuestFlow(), ct);
+                IWeb3Identity identity = await compositeWeb3Provider.LoginAsync(payload, ct);
                 machine.Enter<ProfileFetchingAuthState, ProfileFetchingPayload>(new ProfileFetchingPayload(identity, false, ct));
             }
             catch (OperationCanceledException e)

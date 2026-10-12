@@ -172,8 +172,16 @@ namespace DCL.Utility
             ReportHub.LogProductionInfo($"[ExitUtils] CleanUpCandidates finished at {stopwatch.ElapsedMilliseconds}ms");
 
             // Flush save file only AFTER the candidates
-            DCLPlayerPrefs.SaveSync();
-            ReportHub.LogProductionInfo($"[ExitUtils] DCLPlayerPrefs flushed at {stopwatch.ElapsedMilliseconds}ms");
+            try
+            {
+                DCLPlayerPrefs.SaveSync();
+                ReportHub.LogProductionInfo($"[ExitUtils] DCLPlayerPrefs flushed at {stopwatch.ElapsedMilliseconds}ms");
+            }
+            catch (Exception e)
+            {
+                // A full disk or a locked prefs file must not keep the process alive: the quit below still has to be dispatched
+                ReportHub.LogWarning(ReportCategory.UNSPECIFIED, $"[ExitUtils] DCLPlayerPrefs could not be flushed, quitting anyway: {e.Message}");
+            }
 
             // Reflection may drop the values. Reapply to be sure, and to move TryTerminateSelf back to the
             // last position in case anything subscribed to Application.quitting after the previous Apply().

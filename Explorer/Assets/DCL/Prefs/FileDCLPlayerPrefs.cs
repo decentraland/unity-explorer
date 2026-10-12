@@ -2,6 +2,7 @@
 // TRUST_WEBGL_SYSTEM_TASKS_SAFETY_FLAG
 #if !UNITY_WEBGL
 
+using DCL.Diagnostics;
 using Newtonsoft.Json;
 using Plugins.DclNativeProcesses;
 using System;
@@ -18,6 +19,7 @@ namespace DCL.Prefs
     {
         private const int CONCURRENT_CLIENTS = 16;
         private const string PREFS_FILENAME = "userdata_{0}.json";
+        private const string STAGING_FILENAME = "userdata_{0}.json.tmp";
         private const string CLAIM_FILENAME = "userdata_{0}.claim";
 
         // Grace period before an empty claim file (e.g. crashed mid-claim) is treated as stale.
@@ -26,6 +28,7 @@ namespace DCL.Prefs
         private readonly FileStream fileStream;
         private readonly FileStream claimStream;
         private readonly string claimPath;
+        private readonly string stagingPath;
         private readonly UserData userData;
 
         private readonly UnityDCLPlayerPrefs unityPrefs;
@@ -76,9 +79,8 @@ namespace DCL.Prefs
             if (fileStream == null)
                 throw new Exception($"Failed to acquire any user-data slot (all {CONCURRENT_CLIENTS} slots occupied or inaccessible)");
 
-            using var reader = new StreamReader(fileStream, Encoding.UTF8, true, 1024, true);
-            string json = reader.ReadToEnd();
-            userData = JsonConvert.DeserializeObject<UserData>(json) ?? new UserData();
+            stagingPath = Path.Combine(baseDir, string.Format(STAGING_FILENAME, PrefsInstanceNumber));
+            userData = ReadUserData(out dataChanged);
         }
 
         public void Dispose()
@@ -210,7 +212,19 @@ namespace DCL.Prefs
             dataChanged = false;
 
             // Run save on a background thread
-            Task.Run(WriteToDisk);
+            Task.Run(WriteToDiskInBackground);
+        }
+
+        private void WriteToDiskInBackground()
+        {
+            try { WriteToDisk(); }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+            {
+                // A full disk or a locked file is the user's environment, not a defect. Unobserved it would resurface
+                // as an unhandled exception on the finalizer thread; flagged again, the data is retried by the next save.
+                dataChanged = true;
+                ReportHub.LogWarning(ReportCategory.UNSPECIFIED, $"[DCLPlayerPrefs] Preferences could not be written to disk: {e.Message}");
+            }
         }
 
         public void SaveSync()
@@ -219,7 +233,12 @@ namespace DCL.Prefs
 
             dataChanged = false;
 
-            WriteToDisk();
+            try { WriteToDisk(); }
+            catch
+            {
+                dataChanged = true;
+                throw;
+            }
         }
 
         private void WriteToDisk()
@@ -229,14 +248,46 @@ namespace DCL.Prefs
             {
                 if (disposed) return;
 
+                byte[] payload = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(userData));
+
+                // Staged to a sibling file first: a full disk fails here, before the live file is truncated,
+                // and the staged copy is what the next start reads if the rewrite below is cut short
+                File.WriteAllBytes(stagingPath, payload);
+
                 fileStream.Seek(0, SeekOrigin.Begin);
                 fileStream.SetLength(0);
+                fileStream.Write(payload, 0, payload.Length);
+                fileStream.Flush();
 
-                using var writer = new StreamWriter(fileStream, Encoding.UTF8, 1024, true);
-                string json = JsonConvert.SerializeObject(userData);
-                writer.Write(json);
-                writer.Flush();
+                File.Delete(stagingPath);
             }
+        }
+
+        private UserData ReadUserData(out bool recoveredFromStaging)
+        {
+            recoveredFromStaging = false;
+
+            // The staged copy outlives a save only when the live file was not rewritten completely, so it is the newest complete state
+            if (File.Exists(stagingPath))
+            {
+                UserData? staged = TryDeserialize(File.ReadAllText(stagingPath));
+
+                if (staged != null)
+                {
+                    recoveredFromStaging = true;
+                    return staged;
+                }
+            }
+
+            using var reader = new StreamReader(fileStream, Encoding.UTF8, true, 1024, true);
+            string json = reader.ReadToEnd();
+            return JsonConvert.DeserializeObject<UserData>(json) ?? new UserData();
+        }
+
+        private static UserData? TryDeserialize(string json)
+        {
+            try { return JsonConvert.DeserializeObject<UserData>(json); }
+            catch (JsonException) { return null; }
         }
 
         private void MigrateString(string key)

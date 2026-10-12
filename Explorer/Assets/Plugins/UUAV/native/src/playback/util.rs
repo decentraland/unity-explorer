@@ -58,21 +58,82 @@ impl From<CancelToken> for ReadOnlyCancelToken {
 
 /// Coalescing seek command, atomic across threads: engine-facing threads
 /// overwrite the pending target, the playback thread takes it.
-pub(super) struct AtomicSeekSlot(ArcSwapOption<f64>);
+pub(crate) struct AtomicSeekSlot(ArcSwapOption<f64>);
 
 impl AtomicSeekSlot {
-    pub(super) fn new() -> Self {
+    pub(crate) fn new() -> Self {
         Self(ArcSwapOption::empty())
     }
 
     /// Requests a seek; an unserviced previous request is simply
     /// overwritten.
-    pub(super) fn request(&self, time: f64) {
+    pub(crate) fn request(&self, time: f64) {
         self.0.store(Some(Arc::new(time)));
     }
 
+    /// Requests a seek only while nothing is pending; an unserviced
+    /// request keeps its target. Returns whether the request was placed.
+    pub(crate) fn request_if_empty(&self, time: f64) -> bool {
+        let previous = self
+            .0
+            .compare_and_swap(std::ptr::null::<f64>(), Some(Arc::new(time)));
+        previous.is_none()
+    }
+
+    /// Drops the pending request, if any: a target requested for a media
+    /// that is being closed must not carry over to the next one.
+    pub(crate) fn clear(&self) {
+        self.0.store(None);
+    }
+
     /// [worker] Takes the pending request, leaving the slot empty.
-    pub(super) fn take(&self) -> Option<f64> {
+    pub(crate) fn take(&self) -> Option<f64> {
         self.0.swap(None).map(|target| *target)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn take_empties_the_slot() {
+        let slot = AtomicSeekSlot::new();
+        assert_eq!(slot.take(), None, "nothing requested yet");
+
+        slot.request(3.0);
+        assert_eq!(slot.take(), Some(3.0));
+        assert_eq!(slot.take(), None, "already taken");
+    }
+
+    #[test]
+    fn latest_request_wins() {
+        let slot = AtomicSeekSlot::new();
+        slot.request(1.0);
+        slot.request(2.0);
+        assert_eq!(slot.take(), Some(2.0));
+    }
+
+    #[test]
+    fn request_if_empty_places_into_an_empty_slot() {
+        let slot = AtomicSeekSlot::new();
+        assert!(slot.request_if_empty(4.0));
+        assert_eq!(slot.take(), Some(4.0));
+    }
+
+    #[test]
+    fn request_if_empty_keeps_the_pending_request() {
+        let slot = AtomicSeekSlot::new();
+        slot.request(7.0);
+        assert!(!slot.request_if_empty(0.0));
+        assert_eq!(slot.take(), Some(7.0), "the pending target survives");
+    }
+
+    #[test]
+    fn clear_drops_the_pending_request() {
+        let slot = AtomicSeekSlot::new();
+        slot.request(5.0);
+        slot.clear();
+        assert_eq!(slot.take(), None);
     }
 }

@@ -17,6 +17,7 @@ namespace DCL.Communities.EventInfo
         private readonly ThumbnailLoader? eventCardThumbnailLoader;
         private CancellationTokenSource panelCts = new ();
         private CancellationTokenSource eventCardOperationsCts = new ();
+        private UniTaskCompletionSource? handedOverCloseIntent;
 
         public EventDetailPanelController(ViewFactoryMethod viewFactory,
             ThumbnailLoader thumbnailLoader,
@@ -42,8 +43,11 @@ namespace DCL.Communities.EventInfo
             viewInstance.EventCopyLinkButtonClicked -= OnEventCopyLinkButtonClicked;
         }
 
-        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
-            UniTask.WhenAny(viewInstance!.GetCloseTasks());
+        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct)
+        {
+            handedOverCloseIntent = new UniTaskCompletionSource();
+            return UniTask.WhenAny(UniTask.WhenAny(viewInstance!.GetCloseTasks()), handedOverCloseIntent.Task);
+        }
 
         protected override void OnViewInstantiated()
         {
@@ -64,6 +68,7 @@ namespace DCL.Communities.EventInfo
         protected override void OnViewClose()
         {
             panelCts.SafeCancelAndDispose();
+            handedOverCloseIntent = null;
         }
 
         private void OnEventCopyLinkButtonClicked(IEventDTO eventData) =>
@@ -80,6 +85,14 @@ namespace DCL.Communities.EventInfo
 
         private void OnJumpInButtonClicked(IEventDTO eventData)
         {
+            if (inputData.JumpInHandler != null)
+            {
+                // The summoner takes it from here, the panel has nothing left to show
+                inputData.JumpInHandler(eventData);
+                handedOverCloseIntent?.TrySetResult();
+                return;
+            }
+
             eventCardOperationsCts = eventCardOperationsCts.SafeRestart();
             eventCardActionsController.JumpInEvent(eventData, eventCardOperationsCts.Token);
         }

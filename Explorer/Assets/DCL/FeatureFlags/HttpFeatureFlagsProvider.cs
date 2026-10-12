@@ -31,7 +31,7 @@ namespace DCL.FeatureFlags
             headers["X-Debug"] = options.Debug ? "true" : "false";
 			headers["referer"] = options.Hostname;
 
-            if (options.UserId.HasValue)
+            if (!string.IsNullOrEmpty(options.UserId))
                 headers["X-Address-Hash"] = options.UserId;
 
             var result = webRequestController.GetAsync(new CommonArguments(fetchUrl), ct, ReportCategory.FEATURE_FLAGS,

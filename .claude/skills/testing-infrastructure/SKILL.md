@@ -97,6 +97,7 @@ System constructors are `internal`. Expose them to tests via an `AssemblyInfo.cs
 - **Multi-frame simulation:** Call `system.Update(0)` repeatedly to simulate multiple frames; set `IsDirty = true` between calls
 - **DeleteEntityIntention:** Add `DeleteEntityIntention` to trigger entity destruction cleanup, verify disposal calls via `.Received()`
 - **IFinalizeWorldSystem:** Mock the interface, wire into `ECSWorldFacade`, call `Dispose()`, verify `FinalizeComponents` called
+- **Cinemachine isolation:** Tests that assert on `CinemachineBrain.ActiveVirtualCamera` (null or a specific camera) must isolate from the static `CinemachineCore` queue — vCams leaked by other fixtures survive across tests. Add a `Camera` to the brain's `GameObject` with a culling mask for a dedicated layer, and place only the test's own vCams on that layer. Without this, a disabled vCam still yields a non-null `ActiveVirtualCamera` from another fixture's leftover in `TopCameraFromPriorityQueue`.
 
 ---
 

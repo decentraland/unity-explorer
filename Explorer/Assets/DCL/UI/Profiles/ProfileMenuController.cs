@@ -15,7 +15,29 @@ using Utility;
 
 namespace DCL.UI.Profiles
 {
-    public class ProfileMenuController : ControllerBase<ProfileMenuView>
+    public class ProfileMenuController : ProfileMenuController<ControllerNoData>
+    {
+        public ProfileMenuController(
+            ViewFactoryMethod viewFactory,
+            IWeb3IdentityCache identityCache,
+            World world,
+            Entity playerEntity,
+            UnityAppWebBrowser webBrowser,
+            ICompositeWeb3Provider web3Authenticator,
+            IUserInAppInitializationFlow userInAppInitializationFlow,
+            IProfileCache profileCache,
+            IPassportBridge passportBridge,
+            ProfileRepositoryWrapper profileDataProvider
+        ) : base(viewFactory, identityCache, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, passportBridge, profileDataProvider) { }
+
+        public static ShowCommand<ProfileMenuView, ControllerNoData> IssueCommand() =>
+            IssueCommand(default(ControllerNoData));
+    }
+
+    /// <summary>
+    ///     The MVC manager keys controllers by view and input type, so a host needing its own instance registers a distinct <typeparamref name="TInputData" />.
+    /// </summary>
+    public class ProfileMenuController<TInputData> : ControllerBase<ProfileMenuView, TInputData>
     {
         private readonly IWeb3IdentityCache identityCache;
         private readonly World world;

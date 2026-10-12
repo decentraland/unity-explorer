@@ -26,6 +26,15 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             public const string USED_EMOTE = "used_emote";
         }
 
+        public static class Backpack
+        {
+            // 'source' tells which surface showed it: the explore panel or the lobby's modal.
+            public const string BACKPACK_OPENED = "backpack_opened";
+
+            // A profile published from the backpack with a different avatar; 'source' is the surface the backpack was shown in.
+            public const string AVATAR_CHANGED = "avatar_changed";
+        }
+
         public static class Ui
         {
             public const string MESSAGE_SENT = "chat_message_sent";
@@ -256,6 +265,9 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         {
             public const string CHAT_BUBBLES_VISIBILITY_CHANGED = "chat-bubbles-visibility-changed";
             public const string QUALITY_SETTINGS_REPORT = "quality_settings_report";
+
+            // Carries the toggle's value before and after the change.
+            public const string LOBBY_SETTING_CHANGED = "lobby_setting_changed";
         }
 
         public static class Reactions
@@ -315,6 +327,18 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             public const string EVENT_JUMPED_IN = "event_jumped_in";
             public const string EVENT_SHARED = "event_shared";
             public const string EVENT_LINK_COPIED = "event_link_copied";
+        }
+
+        /// <summary>
+        ///     Lifecycle of the lobby panel; what the user does inside it is reported through the mirrored surface's events with 'source' set to lobby.
+        /// </summary>
+        public static class Lobby
+        {
+            // Both events carry the raw remote flag and whether the lobby setting was already stored when the session resolved it.
+            public const string LOBBY_OPENED = "lobby_opened";
+
+            // Carries how long the panel stayed on screen, in seconds.
+            public const string LOBBY_CLOSED = "lobby_closed";
         }
 
         public static class Places

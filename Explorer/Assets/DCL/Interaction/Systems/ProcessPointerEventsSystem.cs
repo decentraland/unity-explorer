@@ -12,6 +12,7 @@ using DCL.Interaction.Raycast.Components;
 using DCL.Interaction.Utility;
 using ECS.Abstract;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using UnityEngine;
@@ -67,6 +68,8 @@ namespace DCL.Interaction.Systems
             // Process all PBPointerEvents components to see if any of them is qualified
             hoverFeedbackComponent.Clear();
             bool candidateForHoverLeaveIsValid = TryGetPreviousEntityInfo(in hoverStateComponent, out GlobalColliderSceneEntityInfo previousEntityInfo);
+
+            bool previousHoverEnterIssued = hoverStateComponent.HoverEnterIssued;
             hoverStateComponent.Clear();
 
             if (
@@ -90,16 +93,19 @@ namespace DCL.Interaction.Systems
                     raycastResultForSceneEntities,
                     proximityResultForSceneEntities,
                     ref hoverFeedbackComponent,
-                    pbPointerEvents!,
+                    pbPointerEvents,
                     newEntityIsSelected,
                     in synthetic,
-                    out bool isAtDistance);
+                    out bool isAtDistance,
+                    out bool hoverEntryAtDistance);
 
-                    hoverStateComponent.AssignCollider(collider!, isAtDistance, hoverFeedbackComponent.ScreenPositionOverride == null);
+                hoverStateComponent.AssignCollider(collider, isAtDistance, hoverFeedbackComponent.ScreenPositionOverride == null);
+
+                hoverStateComponent.HoverEnterIssued = newEntityIsSelected ? hoverEntryAtDistance : previousHoverEnterIssued;
             }
 
             if (candidateForHoverLeaveIsValid)
-                ResetPreviousEntity(in raycastResultForSceneEntities, in proximityResultForSceneEntities, in previousEntityInfo);
+                ResetPreviousEntity(in proximityResultForSceneEntities, in previousEntityInfo, previousHoverEnterIssued);
         }
 
         private bool TryGetPreviousEntityInfo(in HoverStateComponent stateComponent, out GlobalColliderSceneEntityInfo globalColliderSceneEntityInfo)
@@ -117,8 +123,8 @@ namespace DCL.Interaction.Systems
             in ProximityResultForSceneEntities proximityResultForSceneEntities,
             bool syntheticAim,
             out GlobalColliderSceneEntityInfo entityInfo,
-            out PBPointerEvents? pbPointerEvents,
-            out Collider? collider
+            [NotNullWhen(true)] out PBPointerEvents? pbPointerEvents,
+            [NotNullWhen(true)] out Collider? collider
         )
         {
             // Check cursor type first
@@ -157,13 +163,13 @@ namespace DCL.Interaction.Systems
         private bool TryGetInteractableEntityFromCursor(in PlayerOriginRaycastResultForSceneEntities raycastResultForSceneEntities,
             bool syntheticAim,
             out GlobalColliderSceneEntityInfo entityInfo,
-            out PBPointerEvents? pbPointerEvents,
-            out Collider? cursorCollider)
+            [NotNullWhen(true)] out PBPointerEvents? pbPointerEvents,
+            [NotNullWhen(true)] out Collider? cursorCollider)
         {
             if (
                 IsPointingOnEntity(in raycastResultForSceneEntities, syntheticAim, out GlobalColliderSceneEntityInfo pointedEntityInfo)
                 && pointedEntityInfo.TryGetPointerEvents(out PBPointerEvents? foundPointerEvents)
-                && HasCursorEvent(foundPointerEvents!))
+                && HasCursorEvent(foundPointerEvents))
             {
                 entityInfo = pointedEntityInfo;
                 pbPointerEvents = foundPointerEvents;
@@ -198,8 +204,8 @@ namespace DCL.Interaction.Systems
 
         private bool TryGetInteractableEntityFromProximity(in ProximityResultForSceneEntities proximityResultForSceneEntities,
             out GlobalColliderSceneEntityInfo entityInfo,
-            out PBPointerEvents? pbPointerEvents,
-            out Collider? cursorCollider)
+            [NotNullWhen(true)] out PBPointerEvents? pbPointerEvents,
+            [NotNullWhen(true)] out Collider? cursorCollider)
         {
             if (
                 proximityResultForSceneEntities.EntityInfo.HasValue
@@ -207,7 +213,7 @@ namespace DCL.Interaction.Systems
             )
             {
                 entityInfo = proximityResultForSceneEntities.EntityInfo.Value;
-                pbPointerEvents = pointerEvents!;
+                pbPointerEvents = pointerEvents;
                 cursorCollider = proximityResultForSceneEntities.Collider!;
                 return true;
             }
@@ -219,13 +225,13 @@ namespace DCL.Interaction.Systems
         }
 
         private void ResetPreviousEntity(
-            in PlayerOriginRaycastResultForSceneEntities raycastResultForSceneEntities,
             in ProximityResultForSceneEntities proximityResultForSceneEntities,
-            in GlobalColliderSceneEntityInfo previousEntityInfo
+            in GlobalColliderSceneEntityInfo previousEntityInfo,
+            bool previousHoverEnterIssued
         )
         {
             ResetHighlightComponentQuery(previousEntityInfo.EcsExecutor.World);
-            HoverFeedbackUtils.TryIssueLeaveHoverEventForPreviousEntity(in raycastResultForSceneEntities, in previousEntityInfo);
+            HoverFeedbackUtils.TryIssueLeaveHoverEventForPreviousEntity(in previousEntityInfo, previousHoverEnterIssued);
             ProximityFeedbackUtils.TryIssueProximityLeaveEventForPreviousEntity(in proximityResultForSceneEntities, in previousEntityInfo);
         }
 
@@ -275,10 +281,12 @@ namespace DCL.Interaction.Systems
             PBPointerEvents pbPointerEvents,
             bool newEntityIsSelected,
             in SyntheticPointerInput synthetic,
-            out bool isAtDistance
+            out bool isAtDistance,
+            out bool hoverEntryAtDistance
         )
         {
             isAtDistance = false;
+            hoverEntryAtDistance = false;
             bool highlightEnabled = true;
             var anyInputInfo = sdkInputActionsMap.Values.GatherAnyInputInfo();
 
@@ -311,6 +319,10 @@ namespace DCL.Interaction.Systems
 
                 if (!isAtDistance) continue;
 
+                // Only a hover entry in range opens a hover the leave has to close; a qualified press or release entry does not.
+                if (pointerEvent.EventType is PointerEventType.PetHoverEnter or PointerEventType.PetHoverLeave)
+                    hoverEntryAtDistance = true;
+
                 if (newEntityIsSelected)
                     pbPointerEvents.AppendPointerEventResultsIntent.AppendPointerInputIfQualified(GetEnterEventType(interactionType), pointerEvent, i);
 
@@ -335,11 +347,15 @@ namespace DCL.Interaction.Systems
                 // Add all inputs that were pressed/unpressed this frame
                 InteractionInputUtils.TryAppendButtonAction(sdkInputActionsMap, ref pbPointerEvents.AppendPointerEventResultsIntent);
 
-                if (synthetic.PressButton.HasValue)
-                    pbPointerEvents.AppendPointerEventResultsIntent.AddInputAction(synthetic.PressButton.Value, PointerEventType.PetDown);
+                // The delivery rule gates only the button edge; hover and highlight follow the ray, as for real input.
+                synthetic.DeliverableEdgesFor(entityInfo.EcsExecutor.World, entityInfo.ColliderSceneEntityInfo.EntityReference, sdkInputActionsMap,
+                    out InputAction? syntheticPress, out InputAction? syntheticRelease);
 
-                if (synthetic.ReleaseButton.HasValue)
-                    pbPointerEvents.AppendPointerEventResultsIntent.AddInputAction(synthetic.ReleaseButton.Value, PointerEventType.PetUp);
+                if (syntheticPress is { } pressed)
+                    pbPointerEvents.AppendPointerEventResultsIntent.AddInputAction(pressed, PointerEventType.PetDown);
+
+                if (syntheticRelease is { } released)
+                    pbPointerEvents.AppendPointerEventResultsIntent.AddInputAction(released, PointerEventType.PetUp);
             }
         }
 

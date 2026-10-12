@@ -1,0 +1,174 @@
+/* EventCard_Small of the uGUI lobby as the lobby overrode it: hovering lifts the texts, fades the host out and brings the buttons in where the schedule sat */
+:root {
+    --upcoming-event-card-hover-duration: 0.2s;
+}
+
+.lobby-upcoming-event-card {
+    width: 358px;
+    height: 135px;
+    border-radius: 24px;
+    background-color: var(--lobby-card-color);
+    overflow: hidden;
+}
+
+/* The Remind me background of the uGUI lobby */
+.lobby-upcoming-event-card--interested {
+    background-color: rgba(8, 8, 10, 0.95);
+}
+
+/* The card's own 24px corners cut its outer ones */
+.lobby-upcoming-event-card__thumbnail {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 135px;
+    border-radius: 8px;
+    background-image: url('/Assets/Textures/ExplorePanel/DefaultImagePlace.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.lobby-upcoming-event-card--loading .lobby-upcoming-event-card__thumbnail {
+    background-image: none;
+    background-color: rgb(207, 205, 212);
+}
+
+.lobby-upcoming-event-card__info {
+    position: absolute;
+    left: 18px;
+    top: 28px;
+    width: 170px;
+}
+
+.lobby-upcoming-event-card__texts {
+    transition: translate var(--upcoming-event-card-hover-duration) ease-out;
+}
+
+.lobby-upcoming-event-card:hover .lobby-upcoming-event-card__texts {
+    translate: 0 -8px;
+}
+
+.lobby-upcoming-event-card__title {
+    height: 24px;
+    font-size: 20px;
+    -unity-font-definition: var(--dcl-font-inter-semibold);
+    -unity-text-align: middle-left;
+    color: var(--dcl-color-snow);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.lobby-upcoming-event-card__host-row {
+    height: 16px;
+    flex-direction: row;
+    align-items: center;
+    transition: opacity var(--upcoming-event-card-hover-duration) ease-out;
+}
+
+.lobby-upcoming-event-card:hover .lobby-upcoming-event-card__host-row {
+    opacity: 0;
+}
+
+.lobby-upcoming-event-card__host-prefix,
+.lobby-upcoming-event-card__host {
+    font-size: 13px;
+    -unity-text-align: middle-left;
+    color: rgba(255, 255, 255, 0.5);
+    white-space: nowrap;
+}
+
+.lobby-upcoming-event-card__host-prefix {
+    margin-right: 3px;
+    -unity-font-definition: var(--dcl-font-inter-regular);
+}
+
+.lobby-upcoming-event-card__host {
+    flex-shrink: 1;
+    -unity-font-definition: var(--dcl-font-inter-bold);
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Only as wide as its text, so the tint does not stretch across the column */
+.lobby-upcoming-event-card__schedule {
+    margin-top: 12px;
+    height: 24px;
+    align-self: flex-start;
+    flex-direction: row;
+    align-items: center;
+    padding: 2px 4px;
+    border-radius: 7px;
+    background-color: rgba(255, 255, 255, 0.03);
+    transition: translate var(--upcoming-event-card-hover-duration) ease-out;
+}
+
+.lobby-upcoming-event-card:hover .lobby-upcoming-event-card__schedule {
+    translate: 0 -30px;
+}
+
+.lobby-upcoming-event-card__schedule-icon {
+    width: 20px;
+    height: 20px;
+    margin-right: 4px;
+    background-image: url('/Assets/Textures/Common/TimeIcn.png');
+}
+
+.lobby-upcoming-event-card__schedule-text {
+    font-size: 16px;
+    -unity-font-definition: var(--dcl-font-inter-semibold);
+    -unity-text-align: middle-left;
+    color: var(--dcl-color-snow);
+}
+
+/* Invisible until the card is hovered, which any pointer over them is, so their invisible state never takes a click meant for the card */
+.lobby-upcoming-event-card__actions {
+    position: absolute;
+    left: 18px;
+    bottom: 19px;
+    flex-direction: row;
+    opacity: 0;
+    transition: opacity var(--upcoming-event-card-hover-duration) ease-out;
+}
+
+.lobby-upcoming-event-card:hover .lobby-upcoming-event-card__actions {
+    opacity: 1;
+}
+
+.lobby-upcoming-event-card__action {
+    width: 36px;
+    height: 36px;
+    margin-right: 8px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    background-color: rgba(255, 255, 255, 0.03);
+    transition: background-color 0.1s;
+}
+
+.lobby-upcoming-event-card__action:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.lobby-upcoming-event-card__action-icon {
+    width: 24px;
+    height: 24px;
+}
+
+.lobby-upcoming-event-card__action-icon--interested {
+    background-image: url('/Assets/Textures/ExplorePanel/ReminderOff.png');
+}
+
+.lobby-upcoming-event-card--interested .lobby-upcoming-event-card__action-icon--interested {
+    background-image: url('/Assets/Textures/ExplorePanel/ReminderOn.png');
+}
+
+.lobby-upcoming-event-card__action-icon--calendar {
+    background-image: url('/Assets/Textures/ExplorePanel/AddToCalendarIcn.png');
+}
+
+.lobby-upcoming-event-card__action-icon--share {
+    background-image: url('/Assets/Textures/Common/ShareIcn.png');
+}

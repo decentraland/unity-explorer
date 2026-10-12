@@ -17,20 +17,10 @@ namespace DCL.Web3.Authenticators
     public interface ICompositeWeb3Provider : IWeb3Authenticator, IEthereumApi, IOtpAuthenticator, IAccountLinkAuthenticator
     {
         /// <summary>
-        /// Currently selected authentication method
-        /// </summary>
-        AuthProvider CurrentProvider { set; }
-
-        /// <summary>
         ///     Clears the local session (identity cache, analytics identity) and releases
         ///     provider-side login resources where the current provider holds any.
         /// </summary>
         UniTask LogoutAsync(CancellationToken ct);
-
-        /// <summary>
-        /// Returns true if the session is backed by a ThirdWeb wallet, either guest or Email + OTP
-        /// </summary>
-        bool IsThirdWebAccount { get; }
 
         /// <summary>
         ///     Sets the callback that will be invoked when a transaction requires user confirmation.

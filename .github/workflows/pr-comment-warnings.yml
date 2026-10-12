@@ -93,8 +93,10 @@ jobs:
           cat resolved.txt
           cat resolved.txt >> "$GITHUB_OUTPUT"
 
+      # test.yml writes warning-result for pull_request runs only: a back-filled
+      # dev push run has none, and its section is composed from the Lint job below.
       - name: Download warning result artifact
-        if: steps.pr.outputs.pr-number != ''
+        if: steps.pr.outputs.pr-number != '' && steps.pr.outputs.backfill != 'true'
         id: download
         continue-on-error: true
         uses: actions/download-artifact@v4
@@ -135,6 +137,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
           RUN_ID: ${{ github.event.workflow_run.id }}
+          BACKFILL: ${{ steps.pr.outputs.backfill }}
+          HEAD_SHA: ${{ steps.pr.outputs.head-sha }}
         run: |
           DELIM="EOF_$(uuidgen)"
           BADGE_STYLE="?logo=jetbrains&logoColor=white&style=for-the-badge"
@@ -149,7 +153,30 @@ jobs:
           [[ "$COUNT" =~ ^[0-9]+$ ]] || COUNT=0
           [[ "$BASELINE" =~ ^[0-9]+$ ]] || BASELINE=""
 
-          if [ "$FOUND" != "true" ]; then
+          FOOTER=""
+          if [ "$BACKFILL" = "true" ]; then
+            # A dev push run into a release PR: no ratchet ran against this PR, so
+            # the Lint job's own conclusion is the only evidence — the same reading
+            # the release cut's seed makes in create-release-branch.yml. An API
+            # failure degrades to "unknown" instead of aborting the step under -e.
+            LINT_CONCLUSION=$(gh api "/repos/$REPO/actions/runs/$RUN_ID/jobs?per_page=100" \
+              --jq '[.jobs[] | select(.name=="Lint") | .conclusion] | .[0] // ""' 2>/dev/null) || LINT_CONCLUSION=unknown
+            case "$LINT_CONCLUSION" in
+              success)
+                BADGE="https://img.shields.io/badge/Lint-Passed!-3fb950${BADGE_STYLE}"
+                MSG="Lint succeeded on the \`dev\` run of this commit. The ratchet itself gates PRs into dev rather than release cuts — every commit on this branch already passed it there." ;;
+              skipped|"")
+                BADGE="https://img.shields.io/badge/Lint-Skipped-lightgrey${BADGE_STYLE}"
+                MSG="No C# files changed in the commit this release was cut from — the ratchet did not run." ;;
+              unknown)
+                BADGE="https://img.shields.io/badge/Lint-Unknown-lightgrey${BADGE_STYLE}"
+                MSG="The Actions API did not answer for the Lint job of this run, so its result is unknown. [See logs](${RUN_URL})." ;;
+              *)
+                BADGE="https://img.shields.io/badge/Lint-Unavailable-ff0000${BADGE_STYLE}"
+                MSG="Lint did not finish (\`${LINT_CONCLUSION}\`) on the \`dev\` run of this commit. [See logs](${RUN_URL})." ;;
+            esac
+            FOOTER="<sub>Reused from the [\`Unity Test\` run](${RUN_URL}) of \`${HEAD_SHA:0:7}\` on \`dev\`, the commit this release was cut from. It stays until a \`Unity Test\` run of this PR — started by a push to the branch or a \`force-build\` label — replaces it.</sub>"
+          elif [ "$FOUND" != "true" ]; then
             if [ "$CONCLUSION" = "success" ]; then
               BADGE="https://img.shields.io/badge/Lint-Skipped-lightgrey${BADGE_STYLE}"
               MSG="No C# files changed — lint ratchet skipped."
@@ -221,7 +248,6 @@ jobs:
           # Footer: the lint job run plus the full InspectCode report artifact (the
           # findings list above is capped; the artifact has everything). The id comes
           # from the trusted Actions API.
-          FOOTER=""
           if [ "$FOUND" = "true" ]; then
             ART_ID=$(gh api "/repos/$REPO/actions/runs/$RUN_ID/artifacts?per_page=100" \
               --jq '.artifacts[] | select(.name=="csharp-lint-reports") | .id' 2>/dev/null | head -1)

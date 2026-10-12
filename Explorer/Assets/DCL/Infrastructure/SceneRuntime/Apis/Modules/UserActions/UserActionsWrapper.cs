@@ -30,7 +30,7 @@ namespace SceneRuntime.Apis.Modules.UserActions
             try
             {
                 var coordinates = new ParcelCoordinates(destination);
-                restrictedActionsAPI.TryTeleportTo(coordinates.AsVector2Int(), null);
+                restrictedActionsAPI.TryTeleportTo(TeleportDestination.FromParcel(coordinates.AsVector2Int()));
             }
             catch (Exception e) { ReportHub.LogWarning(ReportCategory.ENGINE, $"Error while trying to teleport to {destination}: {e.Message} {e}"); }
         }

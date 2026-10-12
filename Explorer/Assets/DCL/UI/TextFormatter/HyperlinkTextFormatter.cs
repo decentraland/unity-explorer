@@ -1,6 +1,7 @@
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI.Utilities;
+using DCL.Utility.Types;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -254,7 +255,8 @@ namespace DCL.UI.InputFieldFormatting
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool IsOwnUsername(ReadOnlySpan<char> username)
         {
-            ReadOnlySpan<char> displayName = selfProfile.OwnProfile?.DisplayName;
+            Option<Profile> known = selfProfile.CurrentProfileSnapshot.KnownProfile;
+            ReadOnlySpan<char> displayName = known.Has ? known.Value.DisplayName : ReadOnlySpan<char>.Empty;
 
             if (displayName.Length != username.Length) return false;
 

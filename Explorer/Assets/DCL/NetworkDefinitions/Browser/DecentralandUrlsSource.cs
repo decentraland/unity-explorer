@@ -6,6 +6,7 @@ using ECS;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using UnityEngine.Pool;
 
 // ReSharper disable once CheckNamespace
@@ -37,6 +38,12 @@ namespace DCL.Browser.DecentralandUrls
         // (see GetFeatureFlagsUrl), so the subdomain is shared rather than the whole url.
         private const string FEATURE_FLAGS_SUBDOMAIN = "feature-flags";
 
+        // An abgen source keeps its LOD generation under a single "LOD/" prefix, beside the asset bundles on the
+        // same CDN: LOD/{level}/{sceneId}_{level}_{platform} for the bundles, whose "LOD/{level}" comes from the
+        // manifest version, and LOD/lods-unity/manifests/{sceneId}_InitialSceneState.json for the descriptors,
+        // whose path carries no such segment — so the descriptor base is the one that takes the prefix.
+        private const string ABGEN_LODS_DESCRIPTOR_SUBPATH = "/LOD";
+
         // A base domain feeds host-trust checks, so anything that could turn it into a different authority
         // (scheme, userinfo, port, path) is rejected rather than silently accepted.
         private static readonly char[] BASE_DOMAIN_FORBIDDEN_CHARS = { '/', ':', '@', '?', '#', ' ', '\t' };
@@ -48,6 +55,7 @@ namespace DCL.Browser.DecentralandUrls
         private readonly string? gatekeeperBaseOverride;
         private readonly string? localAbBaseOverride;
         private readonly bool abgenPipelineForced;
+        private readonly bool abgenLodsForced;
 
         /// <summary>
         ///     The domain <see cref="RawUrl" /> composes every host from.
@@ -63,7 +71,8 @@ namespace DCL.Browser.DecentralandUrls
             string? cliGatekeeperUrl = null,
             string? localAbBaseUrl = null,
             string? customBaseDomain = null,
-            bool abgenPipelineForced = false)
+            bool abgenPipelineForced = false,
+            bool abgenLodsForced = false)
         {
             this.environment = environment;
             BaseDomain = ResolveBaseDomain(environment, customBaseDomain);
@@ -73,6 +82,7 @@ namespace DCL.Browser.DecentralandUrls
             ReportHub.Log(ReportCategory.STARTUP, $"Gatekeeper base override: {gatekeeperBaseOverride ?? "(default)"} (source: {source})");
             localAbBaseOverride = localAbBaseUrl?.TrimEnd('/');
             this.abgenPipelineForced = abgenPipelineForced;
+            this.abgenLodsForced = abgenLodsForced;
 
             realmData.RealmType.OnUpdate += ResetRealmDependentUrls;
         }
@@ -257,6 +267,54 @@ namespace DCL.Browser.DecentralandUrls
         }
 
         /// <summary>
+        ///     The abgen LOD source. LOD bundles and ISS descriptors flip together: the descriptors and the bundles
+        ///     describe one generation, as the abgen registry and abgen-cdn do for asset bundles. The "--abgen-lods"
+        ///     arg forces it on without the flag, exactly as "--abgen-pipeline" does for the asset bundles.
+        ///     <paramref name="abgenSubPath" /> is appended to the abgen host and left off the regular one, which
+        ///     lays its LOD generation out differently (see <see cref="ABGEN_LODS_DESCRIPTOR_SUBPATH" />).
+        ///     FeatureFlagsDependent for the same reasons as <see cref="ResolveAbgenPipelineUrl" />.
+        /// </summary>
+        private UrlData ResolveAbgenLodsUrl(UrlData regularHost, string abgenSubPath)
+        {
+            string abgenHost = $"https://abgen-cdn.{BaseDomain}{abgenSubPath}";
+
+            if (abgenLodsForced)
+                return new UrlData(CacheBehaviour.FeatureFlagsDependent, abgenHost);
+
+            FeatureFlagsConfiguration featureFlags = FeatureFlagsConfiguration.Instance;
+
+            if (featureFlags.IsEmpty)
+                return new UrlData(CacheBehaviour.FeatureFlagsDependent, regularHost.Url!);
+
+            return featureFlags.IsEnabled(FeatureFlagsStrings.ABGEN_LODS)
+                ? new UrlData(CacheBehaviour.FeatureFlagsDependent, abgenHost)
+                : regularHost;
+        }
+
+        private bool AbgenLodsActive =>
+            abgenLodsForced
+            || (!FeatureFlagsConfiguration.Instance.IsEmpty && FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.ABGEN_LODS));
+
+        /// <inheritdoc />
+        public string? AbgenLodsCacheKey
+        {
+            get
+            {
+                if (!AbgenLodsActive)
+                    return null;
+
+                // The resolved base identifies the source; sanitised so it can travel in file names and hash payloads.
+                string baseUrl = Url(DecentralandUrl.LodAssetBundlesCDN);
+                var key = new StringBuilder("abgen-lods-", baseUrl.Length + 11);
+
+                foreach (char c in baseUrl)
+                    key.Append(char.IsLetterOrDigit(c) ? c : '-');
+
+                return key.ToString();
+            }
+        }
+
+        /// <summary>
         ///     Composes the feature-flags host before any instance exists (the pre-login whitelist fetch), from the
         ///     same <see cref="ResolveBaseDomain" /> decision the instance uses, so the two cannot diverge.
         /// </summary>
@@ -318,9 +376,12 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.Market => $"https://market.{BaseDomain}",
                 DecentralandUrl.AssetBundlesCDN => ResolveOptimizedAssetsUrl(ResolveAbgenPipelineUrl($"https://ab-cdn.{BaseDomain}", $"https://abgen-cdn.{BaseDomain}")),
 
-                // LOD bundles are only produced by the regular pipeline, so they never follow the abgen flip
-                DecentralandUrl.LodAssetBundlesCDN => ResolveOptimizedAssetsUrl($"https://ab-cdn.{BaseDomain}"),
-                DecentralandUrl.LodGeneratorCDN => ResolveOptimizedAssetsUrl($"https://lod-generator-unity-cdn.{BaseDomain}"),
+                // LOD bundles ({base}/LOD/{level}/{sceneId}_{level}_{platform}) and ISS descriptors
+                // ({base}/lods-unity/manifests/{sceneId}_InitialSceneState.json) come from the regular pipeline unless the
+                // abgen-lods flip moves both onto an abgen source, which nests them under ABGEN_LODS_DESCRIPTOR_SUBPATH;
+                // they never follow the asset-bundle abgen flip on their own.
+                DecentralandUrl.LodAssetBundlesCDN => ResolveAbgenLodsUrl(ResolveOptimizedAssetsUrl($"https://ab-cdn.{BaseDomain}"), string.Empty),
+                DecentralandUrl.LodGeneratorCDN => ResolveAbgenLodsUrl(ResolveOptimizedAssetsUrl($"https://lod-generator-unity-cdn.{BaseDomain}"), ABGEN_LODS_DESCRIPTOR_SUBPATH),
                 DecentralandUrl.ArchipelagoStatus => $"https://archipelago-ea-stats.{BaseDomain}/status",
                 DecentralandUrl.ArchipelagoHotScenes => $"https://archipelago-ea-stats.{BaseDomain}/hot-scenes",
                 DecentralandUrl.GatekeeperStatus => $"{RawUrl(DecentralandUrl.Gatekeeper).Url!}/status",

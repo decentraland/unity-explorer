@@ -44,13 +44,13 @@ namespace DCL.Web3.Authenticators
             this.identityExpirationDuration = identityExpirationDuration;
         }
 
-        public async UniTask<bool> TryAutoLoginAsync(CancellationToken ct)
+        public async UniTask<IOtpAuthenticator.AutoLoginResult> TryAutoLoginAsync(CancellationToken ct)
         {
             bool isGuest = DCLPlayerPrefs.GetBool(DCLPrefKeys.GUEST_SESSION_ACTIVE);
             string email = DCLPlayerPrefs.GetString(DCLPrefKeys.LOGGEDIN_EMAIL, string.Empty);
 
             if (!isGuest && string.IsNullOrEmpty(email))
-                return false;
+                return IOtpAuthenticator.AutoLoginResult.Failed;
 
             using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
             timeoutCts.CancelAfter(AUTO_LOGIN_TIMEOUT);
@@ -69,13 +69,13 @@ namespace DCL.Web3.Authenticators
                 if (linkedCt.IsCancellationRequested)
                 {
                     ReportHub.LogWarning(ReportCategory.AUTHENTICATION, $"ThirdWeb auto-login timed out after {AUTO_LOGIN_TIMEOUT.TotalSeconds}s");
-                    return false;
+                    return IOtpAuthenticator.AutoLoginResult.Failed;
                 }
 
                 if (!await wallet.IsConnected().AsUniTask().AttachExternalCancellation(linkedCt))
                 {
                     if (!isGuest)
-                        return false;
+                        return IOtpAuthenticator.AutoLoginResult.Failed;
 
                     await LoginWithGuestAsync(wallet, linkedCt);
                 }
@@ -85,7 +85,7 @@ namespace DCL.Web3.Authenticators
 
                 ActiveWallet = wallet;
                 ReportHub.Log(ReportCategory.AUTHENTICATION, "ThirdWeb auto-login successful");
-                return true;
+                return IOtpAuthenticator.AutoLoginResult.Success;
             }
             catch (OperationCanceledException)
             {
@@ -97,7 +97,7 @@ namespace DCL.Web3.Authenticators
             catch (Exception e) when (e is not GuestAccountUpgradedException)
             {
                 ReportHub.LogWarning(ReportCategory.AUTHENTICATION, $"ThirdWeb auto-login failed with exception: {e.Message}");
-                return false;
+                return IOtpAuthenticator.AutoLoginResult.Failed;
             }
         }
 
