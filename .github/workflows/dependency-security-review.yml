@@ -97,8 +97,7 @@ jobs:
             }
             // `hasChanges` describes the PR's cumulative diff, so on its own it would
             // buy a full review on every later push once a single automation file had
-            // been touched. Re-request only for a head that moved something relevant
-            // since the one Jarvis last read.
+            // been touched. Only a passing detailed review can suppress a request.
             let reviews;
             try {
               reviews = await github.paginate(github.rest.pulls.listReviews, {
@@ -111,7 +110,7 @@ jobs:
             }
             // Agent Server's detailed verdict and run marker must be standalone,
             // outside quoted text and fenced examples (src/security-review.ts).
-            const hasDetailedReview = (review) => {
+            const detailedVerdict = (review) => {
               const lines = [];
               let fence;
               for (const line of (review.body || '').split(/\r?\n/)) {
@@ -125,17 +124,20 @@ jobs:
               }
               const verdicts = lines.filter(line => /^\s*DEPENDENCY_REVIEW:/.test(line));
               const markers = lines.filter(line => /^<!-- jarvis-security-review:/.test(line));
-              return verdicts.length === 1 && /^DEPENDENCY_REVIEW: (PASS|NEEDS_ATTENTION|BLOCK)$/.test(verdicts[0]) &&
-                markers.length === 1 && /^<!-- jarvis-security-review:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12} -->$/.test(markers[0]);
+              if (verdicts.length !== 1 || markers.length !== 1 ||
+                  !/^<!-- jarvis-security-review:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12} -->$/.test(markers[0])) return;
+              return /^DEPENDENCY_REVIEW: (PASS|NEEDS_ATTENTION|BLOCK)$/.exec(verdicts[0])?.[1];
             };
-            const reviewedHead = reviews
+            const latestDetailed = reviews
               .filter(review => review.user?.login?.toLowerCase() === 'decentraland-bot' && review.commit_id &&
-                ['COMMENTED', 'APPROVED', 'CHANGES_REQUESTED'].includes(review.state) && hasDetailedReview(review))
-              .map(review => review.commit_id).pop();
-            if (!reviewedHead) {
+                ['COMMENTED', 'APPROVED', 'CHANGES_REQUESTED'].includes(review.state))
+              .map(review => ({ head: review.commit_id, verdict: detailedVerdict(review) }))
+              .filter(review => review.verdict).pop();
+            if (!latestDetailed || latestDetailed.verdict !== 'PASS') {
               core.setOutput('request', 'true');
               return;
             }
+            const reviewedHead = latestDetailed.head;
             if (reviewedHead === classifiedHead) {
               core.notice('This head has already been reviewed.');
               core.setOutput('request', 'false');

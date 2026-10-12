@@ -276,11 +276,37 @@ for (const [name, mutate] of [
     assert.equal(f.outputs.request, 'true');
   });
 }
-for (const verdict of ['PASS', 'NEEDS_ATTENTION', 'BLOCK']) {
+for (const verdict of ['PASS']) {
   test(`recognizes a completed detailed ${verdict} review`, async () => {
     const f = fixture([{ filename: 'Explorer/Packages/manifest.json' }], reviewed('a'.repeat(40), verdict), [], true);
     await detect(f.github, f.context, f.core);
     assert.equal(f.outputs.request, 'false');
+  });
+}
+for (const verdict of ['NEEDS_ATTENTION', 'BLOCK']) {
+  for (const sha of ['a'.repeat(40), 'd'.repeat(40)]) {
+    test(`re-requests after detailed ${verdict} on head ${sha[0]} despite unrelated changes`, async () => {
+      const f = fixture([{ filename: 'Explorer/Packages/manifest.json' }], reviewed(sha, verdict), [{ filename: 'docs/x.md' }], true);
+      await detect(f.github, f.context, f.core);
+      await request(f.github, f.context, f.core);
+      assert.equal(f.outputs.request, 'true');
+      assert.deepEqual(f.operations, ['request']);
+    });
+    test(`does not fall back to an older PASS after ${verdict} on head ${sha[0]}`, async () => {
+      const reviews = [...reviewed('e'.repeat(40)), ...reviewed(sha, verdict)];
+      const f = fixture([{ filename: 'Explorer/Packages/manifest.json' }], reviews, [{ filename: 'docs/x.md' }], true);
+      await detect(f.github, f.context, f.core);
+      await request(f.github, f.context, f.core);
+      assert.equal(f.outputs.request, 'true');
+      assert.deepEqual(f.operations, ['request']);
+    });
+  }
+  test(`a later PASS clears the ${verdict} requirement to re-request`, async () => {
+    const reviews = [...reviewed('e'.repeat(40), verdict), ...reviewed('d'.repeat(40))];
+    const f = fixture([{ filename: 'Explorer/Packages/manifest.json' }], reviews, [{ filename: 'docs/x.md' }], true);
+    await detect(f.github, f.context, f.core);
+    assert.equal(f.outputs.request, 'false');
+    assert.deepEqual(f.operations, []);
   });
 }
 test('does not advance the detailed cursor for a newer ordinary review', async () => {
