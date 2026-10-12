@@ -1,4 +1,4 @@
-using System.Web;
+using System;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -70,7 +70,7 @@ namespace Tests
             // Arrange: values that would break an unencoded query string.
             const string url = "https://host.example.com/definition.json?v=2&b=3";
             PreviewConfiguration.RecreateFrom(
-                $"?mode=builder&url={HttpUtility.UrlEncode(url)}&peerUrl=https://peer.example.com/catalyst"
+                $"?mode=builder&url={Uri.EscapeDataString(url)}&peerUrl=https://peer.example.com/catalyst"
                 + "&username=A%26B+Co&emote=dance&disableDefaultEmotes=true");
             var printed = PreviewConfiguration.Instance.ToString();
 
@@ -93,7 +93,7 @@ namespace Tests
         public void KeepTheDefaultHostForAMalformedOne(string value)
         {
             // Act
-            PreviewConfiguration.RecreateFrom($"?peerUrl={HttpUtility.UrlEncode(value)}");
+            PreviewConfiguration.RecreateFrom($"?peerUrl={Uri.EscapeDataString(value)}");
 
             // Assert
             Assert.IsNull(PreviewConfiguration.Instance.PeerUrl);

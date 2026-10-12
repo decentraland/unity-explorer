@@ -177,7 +177,7 @@ namespace Tests
         {
             // Arrange: a seek past the end event skips it, and the clip then runs out on its own.
             PlayEmote();
-            _rig.GetComponent<Animation>().Stop("emote");
+            _rig.GetComponent<Animation>().Stop();
 
             // Act
             Tick();
