@@ -28,7 +28,7 @@ namespace DCL.SDKComponents.VoiceChatModifierArea.Systems
     [LogCategory(ReportCategory.CHARACTER_TRIGGER_AREA)]
     public partial class VoiceChatModifierAreaHandlerSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
-        private const float MIN_MAX_DISTANCE = 0.1f;
+        private const float MAX_DISTANCE_FLOOR = 0.1f;
 
         private static readonly QueryDescription REMOVED_AREA_QUERY = new QueryDescription()
                                                                      .WithAll<VoiceChatModifierAreaComponent>()
@@ -159,7 +159,7 @@ namespace DCL.SDKComponents.VoiceChatModifierArea.Systems
         private VoiceChatAreaModifier ToModifier(Entity entity, PBVoiceChatModifierArea pbArea) =>
             new (World, entity,
                 pbArea.HasVolumeScale && float.IsFinite(pbArea.VolumeScale) ? Mathf.Clamp01(pbArea.VolumeScale) : 1f,
-                pbArea.HasMaxDistance && float.IsFinite(pbArea.MaxDistance) ? Mathf.Max(pbArea.MaxDistance, MIN_MAX_DISTANCE) : float.PositiveInfinity,
+                pbArea.HasMaxDistance && float.IsFinite(pbArea.MaxDistance) ? Mathf.Max(pbArea.MaxDistance, MAX_DISTANCE_FLOOR) : float.PositiveInfinity,
                 pbArea.HasMute && pbArea.Mute,
                 pbArea.HasIsolate && pbArea.Isolate);
 
@@ -177,13 +177,15 @@ namespace DCL.SDKComponents.VoiceChatModifierArea.Systems
             if (!globalWorld.Has<VoiceChatAreaModifiersComponent>(avatarEntity))
                 globalWorld.Add(avatarEntity, new VoiceChatAreaModifiersComponent(new List<VoiceChatAreaModifier>(2)));
 
-            List<VoiceChatAreaModifier> modifiers = globalWorld.Get<VoiceChatAreaModifiersComponent>(avatarEntity).Modifiers;
-            int index = IndexOfArea(modifiers, modifier);
+            ref VoiceChatAreaModifiersComponent component = ref globalWorld.Get<VoiceChatAreaModifiersComponent>(avatarEntity);
+            int index = IndexOfArea(component.Modifiers, modifier);
 
             if (index >= 0)
-                modifiers[index] = modifier;
+                component.Modifiers[index] = modifier;
             else
-                modifiers.Add(modifier);
+                component.Modifiers.Add(modifier);
+
+            component.Resolve();
         }
 
         private void RemoveFromAvatar(Collider avatarCollider, in VoiceChatAreaModifier area)
@@ -194,12 +196,16 @@ namespace DCL.SDKComponents.VoiceChatModifierArea.Systems
 
         private void RemoveFromAvatar(Entity avatarEntity, in VoiceChatAreaModifier area)
         {
-            if (!globalWorld.TryGet(avatarEntity, out VoiceChatAreaModifiersComponent component)) return;
+            ref VoiceChatAreaModifiersComponent component = ref globalWorld.TryGetRef<VoiceChatAreaModifiersComponent>(avatarEntity, out bool exists);
+
+            if (!exists) return;
 
             int index = IndexOfArea(component.Modifiers, area);
 
-            if (index >= 0)
-                component.Modifiers.RemoveAt(index);
+            if (index < 0) return;
+
+            component.Modifiers.RemoveAt(index);
+            component.Resolve();
         }
 
         private static int IndexOfArea(List<VoiceChatAreaModifier> modifiers, in VoiceChatAreaModifier area)

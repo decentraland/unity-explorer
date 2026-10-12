@@ -33,76 +33,54 @@ namespace DCL.VoiceChat.Nearby
     {
         public readonly List<VoiceChatAreaModifier> Modifiers;
 
-        public VoiceChatAreaModifiersComponent(List<VoiceChatAreaModifier> modifiers)
+        public float VolumeScale { get; private set; }
+        public float MaxDistance { get; private set; }
+        public bool Muted { get; private set; }
+        public bool Isolated { get; private set; }
+
+        public VoiceChatAreaModifiersComponent(List<VoiceChatAreaModifier> modifiers) : this()
         {
             Modifiers = modifiers;
+            Resolve();
         }
 
-        public readonly float VolumeScale
+        /// <summary>
+        ///     Recomputes the resolved values from <see cref="Modifiers" />; call after every change to it.
+        /// </summary>
+        public void Resolve()
         {
-            get
+            VolumeScale = 1f;
+            MaxDistance = float.PositiveInfinity;
+            Muted = false;
+            Isolated = false;
+
+            foreach (VoiceChatAreaModifier modifier in Modifiers)
             {
-                var volume = 1f;
-
-                foreach (VoiceChatAreaModifier modifier in Modifiers)
-                    if (modifier.VolumeScale < volume)
-                        volume = modifier.VolumeScale;
-
-                return volume;
-            }
-        }
-
-        public readonly float MaxDistance
-        {
-            get
-            {
-                float distance = float.PositiveInfinity;
-
-                foreach (VoiceChatAreaModifier modifier in Modifiers)
-                    if (modifier.MaxDistance < distance)
-                        distance = modifier.MaxDistance;
-
-                return distance;
-            }
-        }
-
-        public readonly bool Muted
-        {
-            get
-            {
-                foreach (VoiceChatAreaModifier modifier in Modifiers)
-                    if (modifier.Mute)
-                        return true;
-
-                return false;
+                if (modifier.VolumeScale < VolumeScale) VolumeScale = modifier.VolumeScale;
+                if (modifier.MaxDistance < MaxDistance) MaxDistance = modifier.MaxDistance;
+                Muted |= modifier.Mute;
+                Isolated |= modifier.Isolate;
             }
         }
 
         /// <summary>
         ///     True when both sides share an isolating area, or neither stands in one.
         /// </summary>
-        public static bool CanHear(List<VoiceChatAreaModifier> speaker, List<VoiceChatAreaModifier> listener)
+        public static bool CanHear(in VoiceChatAreaModifiersComponent speaker, in VoiceChatAreaModifiersComponent listener)
         {
-            var speakerIsolated = false;
+            if (!speaker.Isolated) return !listener.Isolated;
+            if (!listener.Isolated) return false;
 
-            foreach (VoiceChatAreaModifier speakerModifier in speaker)
+            foreach (VoiceChatAreaModifier speakerModifier in speaker.Modifiers)
             {
                 if (!speakerModifier.Isolate) continue;
 
-                speakerIsolated = true;
-
-                foreach (VoiceChatAreaModifier listenerModifier in listener)
+                foreach (VoiceChatAreaModifier listenerModifier in listener.Modifiers)
                     if (listenerModifier.Isolate && listenerModifier.IsSameArea(speakerModifier))
                         return true;
             }
 
-            if (speakerIsolated) return false;
-
-            foreach (VoiceChatAreaModifier listenerModifier in listener)
-                if (listenerModifier.Isolate)
-                    return false;
-
-            return true;
+            return false;
         }
     }
 }

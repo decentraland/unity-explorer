@@ -466,16 +466,49 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
         public void RestoresFullVolumeWhenSpeakerLeavesTheArea()
         {
             Entity avatarEntity = CreateAvatarEntity(PARTICIPANT_A, Vector3.zero, new Vector3(0, 1.6f, 0));
-            VoiceChatAreaModifiersComponent modifiers = AreaModifiers(AreaModifier(volumeScale: 0.5f));
-            world.Add(avatarEntity, modifiers);
+            world.Add(avatarEntity, AreaModifiers(AreaModifier(volumeScale: 0.5f)));
             LivekitAudioSource lkSource = CreateLivekitAudioSource();
             CreateAudioEntity(PARTICIPANT_A, "sid-1", avatarEntity, lkSource);
             system.Update(0);
 
-            modifiers.Modifiers.Clear();
+            LeaveAllAreas(avatarEntity);
             system.Update(0);
 
             Assert.That(lkSource.AudioSource.volume, Is.EqualTo(1f).Within(0.001f));
+        }
+
+        [Test]
+        public void ResumesPlaybackWhenSpeakerLeavesTheMuteArea()
+        {
+            Entity avatarEntity = CreateAvatarEntity(PARTICIPANT_A, Vector3.zero, new Vector3(0, 1.6f, 0));
+            world.Add(avatarEntity, AreaModifiers(AreaModifier(mute: true)));
+            LivekitAudioSource lkSource = CreateLivekitAudioSource();
+            lkSource.AudioSource.Play();
+            CreateAudioEntity(PARTICIPANT_A, "sid-1", avatarEntity, lkSource);
+            system.Update(0);
+            Assume.That(lkSource.AudioSource.isPlaying, Is.False);
+
+            LeaveAllAreas(avatarEntity);
+            system.Update(0);
+
+            Assert.That(lkSource.AudioSource.isPlaying, Is.True);
+        }
+
+        [Test]
+        public void ResumesPlaybackWhenSpeakerLeavesTheIsolationArea()
+        {
+            Entity avatarEntity = CreateAvatarEntity(PARTICIPANT_A, Vector3.zero, new Vector3(0, 1.6f, 0));
+            world.Add(avatarEntity, AreaModifiers(AreaModifier(isolate: true)));
+            LivekitAudioSource lkSource = CreateLivekitAudioSource();
+            lkSource.AudioSource.Play();
+            CreateAudioEntity(PARTICIPANT_A, "sid-1", avatarEntity, lkSource);
+            system.Update(0);
+            Assume.That(lkSource.AudioSource.isPlaying, Is.False);
+
+            LeaveAllAreas(avatarEntity);
+            system.Update(0);
+
+            Assert.That(lkSource.AudioSource.isPlaying, Is.True);
         }
 
         [Test]
@@ -486,7 +519,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
             world.Add(avatarEntity, AreaModifiers(AreaModifier(maxDistance: 4f)));
             LivekitAudioSource lkSource = CreateLivekitAudioSource();
             CreateAudioEntity(PARTICIPANT_A, "sid-1", avatarEntity, lkSource);
-            float rolloffDistance = configuration.NearbyCustomRolloffCurve.MaxDistance();
+            float rolloffDistance = configuration.NearbyRolloffMaxDistance;
 
             system.Update(0);
 
@@ -509,13 +542,20 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
             Assert.That(Vector3.Distance(lkSource.transform.position, expected), Is.LessThan(0.01f));
         }
 
+        // ── Helpers ─────────────────────────────────────────────────
+
         private VoiceChatAreaModifier AreaModifier(float volumeScale = 1f, float maxDistance = float.PositiveInfinity, bool mute = false, bool isolate = false) =>
             new (world, world.Create(), volumeScale, maxDistance, mute, isolate);
 
         private static VoiceChatAreaModifiersComponent AreaModifiers(VoiceChatAreaModifier modifier) =>
             new (new List<VoiceChatAreaModifier> { modifier });
 
-        // ── Helpers ─────────────────────────────────────────────────
+        private void LeaveAllAreas(Entity avatarEntity)
+        {
+            ref VoiceChatAreaModifiersComponent modifiers = ref world.Get<VoiceChatAreaModifiersComponent>(avatarEntity);
+            modifiers.Modifiers.Clear();
+            modifiers.Resolve();
+        }
 
         private GameObject CreateTrackedGameObject(string name)
         {

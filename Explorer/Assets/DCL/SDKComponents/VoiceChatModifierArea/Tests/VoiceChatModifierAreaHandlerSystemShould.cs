@@ -171,6 +171,22 @@ namespace DCL.SDKComponents.VoiceChatModifierArea.Tests
         }
 
         [Test]
+        public void ResolveTheAvatarsVoiceWhenItsAreasChange()
+        {
+            AddAreaAndEnter(Area(volumeScale: 0.3f, mute: true, isolate: true));
+            VoiceChatAreaModifiersComponent inside = globalWorld.Get<VoiceChatAreaModifiersComponent>(avatarEntity);
+            Assume.That(inside.Muted && inside.Isolated && inside.VolumeScale < 1f);
+
+            sdkEntityTriggerArea.OnTriggerExit(avatarCollider);
+            system.Update(0);
+
+            VoiceChatAreaModifiersComponent outside = globalWorld.Get<VoiceChatAreaModifiersComponent>(avatarEntity);
+            Assert.IsFalse(outside.Muted);
+            Assert.IsFalse(outside.Isolated);
+            Assert.AreEqual(1f, outside.VolumeScale);
+        }
+
+        [Test]
         public void SkipExcludedAvatars()
         {
             PBVoiceChatModifierArea area = Area(mute: true);

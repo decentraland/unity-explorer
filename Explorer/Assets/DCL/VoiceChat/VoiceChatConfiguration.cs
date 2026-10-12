@@ -82,5 +82,7 @@ namespace DCL.VoiceChat
                  "Y = outer radius — crossing outward beyond this distance MARKS the source suspended.\n" +
                  "Must satisfy: AudibleRangeBand.X > Y > X > 0.")]
         public Vector2 nearbyAudibleSuspendBand = new (16f, 17f);
+
+        public float NearbyRolloffMaxDistance => NearbyCustomRolloffCurve[NearbyCustomRolloffCurve.length - 1].time;
     }
 }

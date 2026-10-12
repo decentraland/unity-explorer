@@ -21,7 +21,7 @@ namespace DCL.VoiceChat.Nearby.Systems
     public partial class NearbyAudioPositionSystem : BaseUnityLoopSystem
     {
         private const float POSITION_EPSILON_SQR = 0.01f;
-        private static readonly List<VoiceChatAreaModifier> NO_AREAS = new (0);
+        private static readonly VoiceChatAreaModifiersComponent NO_AREAS = new (new List<VoiceChatAreaModifier>(0));
 
         private readonly NearbyMuteService muteService;
         private readonly NearbyListenerState listenerState;
@@ -33,26 +33,27 @@ namespace DCL.VoiceChat.Nearby.Systems
             this.muteService = muteService;
             this.listenerState = listenerState;
             this.playerEntity = playerEntity;
-            rolloffDistance = configuration.NearbyCustomRolloffCurve.MaxDistance();
+            rolloffDistance = configuration.NearbyRolloffMaxDistance;
         }
 
         protected override void Update(float t)
         {
-            List<VoiceChatAreaModifier> listenerAreas = World.TryGet(playerEntity, out VoiceChatAreaModifiersComponent listenerModifiers) ? listenerModifiers.Modifiers : NO_AREAS;
+            VoiceChatAreaModifiersComponent listenerAreas = World.TryGet(playerEntity, out VoiceChatAreaModifiersComponent listenerModifiers) ? listenerModifiers : NO_AREAS;
             SyncPositionsAndSpatialAnglesQuery(World, listenerState.ListenerTransform, listenerState.PlayerHeadPosition, listenerAreas);
         }
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void SyncPositionsAndSpatialAngles([Data] Transform listenerTransform, [Data] Vector3 playerHeadPos, [Data] List<VoiceChatAreaModifier> listenerAreas, ref NearbyAudioSourceComponent nearbyAudio)
+        private void SyncPositionsAndSpatialAngles([Data] Transform listenerTransform, [Data] Vector3 playerHeadPos, [Data] in VoiceChatAreaModifiersComponent listenerAreas, ref NearbyAudioSourceComponent nearbyAudio)
         {
             Entity avatar = nearbyAudio.AvatarEntity;
 
             if (!World.TryGet(avatar, out AvatarBase? avatarBase)) return;
 
-            bool hasAreas = World.TryGet(avatar, out VoiceChatAreaModifiersComponent speakerAreas);
-            bool silencedByArea = (hasAreas && speakerAreas.Muted) || !VoiceChatAreaModifiersComponent.CanHear(hasAreas ? speakerAreas.Modifiers : NO_AREAS, listenerAreas);
-            bool inactive = !World.TryGet(avatar, out InAudibleRangeTag rangeTag) || rangeTag.IsSuspended || silencedByArea;
+            VoiceChatAreaModifiersComponent speakerAreas = World.TryGet(avatar, out VoiceChatAreaModifiersComponent areas) ? areas : NO_AREAS;
+
+            bool inactive = !World.TryGet(avatar, out InAudibleRangeTag rangeTag) || rangeTag.IsSuspended
+                            || speakerAreas.Muted || !VoiceChatAreaModifiersComponent.CanHear(speakerAreas, listenerAreas);
 
             LivekitAudioSource src = nearbyAudio.LivekitAudioSource;
 
@@ -66,7 +67,7 @@ namespace DCL.VoiceChat.Nearby.Systems
             if (inactive) return;
 
             Vector3 headOffset = avatarBase!.HeadAnchorPoint.position - playerHeadPos;
-            float maxDistance = hasAreas ? speakerAreas.MaxDistance : float.PositiveInfinity;
+            float maxDistance = speakerAreas.MaxDistance;
 
             if (maxDistance < rolloffDistance)
                 headOffset *= rolloffDistance / maxDistance;
@@ -85,7 +86,7 @@ namespace DCL.VoiceChat.Nearby.Systems
                 src.SetSpatialAngles(azimuth, elevation);
             }
 
-            float volume = hasAreas ? speakerAreas.VolumeScale : 1f;
+            float volume = speakerAreas.VolumeScale;
 
             if (!Mathf.Approximately(volume, nearbyAudio.LastAppliedVolume))
             {
