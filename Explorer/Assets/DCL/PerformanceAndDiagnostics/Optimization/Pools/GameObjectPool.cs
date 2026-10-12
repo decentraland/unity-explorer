@@ -124,8 +124,9 @@ namespace DCL.Optimization.Pools
             Transform transform = component.transform;
             transform.SetParent(ParentContainer, false);
 
-            // Hand out every instance as freshly created: the previous owner's local transform (e.g. a compensating
-            // scale baked by SetParent with worldPositionStays) must not leak into the next one
+            if (!creationTransformCaptured) return;
+
+            // Released instances are handed out with the local transform captured from the first created instance
             transform.SetLocalPositionAndRotation(creationLocalPosition, creationLocalRotation);
             transform.localScale = creationLocalScale;
         }
@@ -134,7 +135,7 @@ namespace DCL.Optimization.Pools
         {
             T component = creationHandler();
 
-            if (creationTransformCaptured || component == null) return component;
+            if (creationTransformCaptured) return component;
 
             Transform transform = component.transform;
             transform.GetLocalPositionAndRotation(out creationLocalPosition, out creationLocalRotation);

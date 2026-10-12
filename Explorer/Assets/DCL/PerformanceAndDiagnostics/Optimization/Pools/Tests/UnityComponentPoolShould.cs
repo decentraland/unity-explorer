@@ -118,6 +118,7 @@ namespace DCL.Optimization.Pools.Tests
 
             pool.Release(reused);
             pool.Clear();
+            Object.DestroyImmediate(pool.ParentContainer.gameObject);
             Object.DestroyImmediate(scaledParent);
         }
     }

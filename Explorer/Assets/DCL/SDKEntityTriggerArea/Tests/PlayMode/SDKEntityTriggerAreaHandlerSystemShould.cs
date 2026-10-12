@@ -206,8 +206,10 @@ namespace DCL.SDKEntityTriggerArea.Tests
             system.Update(0);
 
             Vector3 worldAreaSize = Vector3.Scale(sdkEntityTriggerArea.BoxCollider.size, sdkEntityTriggerArea.transform.lossyScale);
+            Transform areaParent = sdkEntityTriggerArea.transform.parent;
+            Object.DestroyImmediate(reusingTransformComponent.Transform.gameObject);
 
-            Assert.AreEqual(reusingTransformComponent.Transform, sdkEntityTriggerArea.transform.parent);
+            Assert.AreEqual(reusingTransformComponent.Transform, areaParent);
             Assert.AreEqual(0f, Vector3.Distance(targetAreaSize, worldAreaSize), 1e-2f, $"World area size was {worldAreaSize}");
         }
 
