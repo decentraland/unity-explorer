@@ -2,6 +2,7 @@
 using DCL.Chat.MessageBus;
 using DCL.Profiles;
 using DCL.Profiles.Self;
+using DCL.Utility.Types;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Text.RegularExpressions;
@@ -56,8 +57,13 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
                     // { "emoji_count", emoji_count },
                 };
 
-            if (timestamp > 0 && selfProfile is { OwnProfile: not null })
-                jsonObject.Add("message_id", ChatUtils.GetId(selfProfile.OwnProfile.UserId.Value, timestamp));
+            if (timestamp > 0)
+            {
+                Option<Profile> known = selfProfile.CurrentProfileSnapshot.KnownProfile;
+
+                if (known.Has)
+                    jsonObject.Add("message_id", ChatUtils.GetId(known.Value.UserId.Value, timestamp));
+            }
 
             if (channel.ChannelType == ChatChannel.ChatChannelType.USER)
                 jsonObject.Add("receiver_id", channel.Id.Id);

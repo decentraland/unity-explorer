@@ -1,6 +1,8 @@
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.Pulse;
+using DCL.Profiles;
 using DCL.Profiles.Self;
+using DCL.Utility.Types;
 using DCL.Web3.Chains;
 using DCL.Web3.Identities;
 using Decentraland.Pulse;
@@ -15,7 +17,7 @@ namespace DCL.Multiplayer.Movement
 {
     public partial class PulseMultiplayerBus
     {
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly PulseRealm pulseRealm;
 
         private readonly Dictionary<string, string> authChainBuffer = new ();
@@ -33,7 +35,14 @@ namespace DCL.Multiplayer.Movement
         {
             var handshakePacket = OutgoingMessage.Create(PacketMode.RELIABLE, ClientMessage.MessageOneofCase.Handshake);
             handshakePacket.Message.Handshake.AuthChain = ByteString.CopyFromUtf8(BuildAuthChain());
-            handshakePacket.Message.Handshake.ProfileVersion = (await selfProfile.ProfileAsync(ct))?.Version ?? 0;
+            ProfileReadResult profileRead = await selfProfile.ProfileAsync(ct);
+
+            if (profileRead.IsCancelled)
+                throw new OperationCanceledException(ct);
+
+            // The read settles the profile; only the version the catalyst confirmed is announced, never a pending edit's.
+            Option<Profile> confirmed = selfProfile.CurrentProfileSnapshot.ConfirmedProfile;
+            handshakePacket.Message.Handshake.ProfileVersion = confirmed.Has ? confirmed.Value.Version : 0;
 
             WriteInitialState(handshakePacket.Message.Handshake);
 

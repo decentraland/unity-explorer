@@ -1,11 +1,17 @@
 name: In-World Tests
+run-name: >-
+  ${{ github.event_name == 'workflow_dispatch' &&
+      ((inputs.filter || '') == '' && (inputs.build_url || '') == '' && (inputs.tests_ref || '') == '' &&
+        'In-World Tests (full)' || 'In-World Tests (partial/custom)') ||
+      github.event.pull_request.title || 'In-World Tests' }}
 
-# Dispatcher for the InWorld NUnit suite. The mechanics — Explorer install,
-# AltTester, `mf explorer test`, Allure upload, and reporting into the unified
-# CI status comment's InWorld section (standalone comment as fallback) — live
-# in decentraland/explorer-automation's `run-inworld-suite.yml`. This file only
-# decides when to run and against which build, and shares its build resolution
-# with visual-regression.yml via .github/actions/resolve-explorer-build.
+# Dispatcher for the InWorld and Visual NUnit suites. The mechanics — Explorer
+# install, AltTester, `mf explorer test`, Allure upload, and reporting into the
+# unified CI status comment (standalone comment as fallback) — live in
+# decentraland/explorer-automation's `run-inworld-suite.yml` and
+# `run-visual-suite.yml`. This file only decides when to run and against which
+# build, and shares its build resolution with visual-regression.yml via
+# .github/actions/resolve-explorer-build.
 #
 # Triggers:
 #   - Every PR into main from a `release/**` or `hotfix/**` branch. `pull_request`
@@ -16,21 +22,23 @@ name: In-World Tests
 #   - Manually, from the Actions tab, against any ref.
 #
 # To make a red suite block the merge, add `InWorld suite result` to main's
-# required status checks. That job is the gate: it is the only name worth
-# requiring, it stays stable when the reusable workflow's own job names change,
+# required status checks. That job gates the build and InWorld suite; Visual
+# remains advisory until its baselines are versioned with releases. Its name
+# stays stable when the reusable workflows' own job names change,
 # and it passes for PRs into main that are not release or hotfix.
 #
 # Release PRs are opened by create-release-branch.yml with GITHUB_TOKEN, and
 # events that token raises start runs only as action_required, owned by the
 # bot even once approved — so that workflow dispatches
-# this one itself. A dispatch attaches its checks to the dispatched ref's tip,
-# which is the PR head, so the gate still lands on the PR.
+# this one itself to execute validation. Manually dispatched jobs do not satisfy
+# required PR checks; enabling this gate also needs an eligible PR-triggered run
+# for bot-created release PRs.
 #
 # Required vars:
 #   - vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL  Artifact bucket, and where the
 #     Allure report is published
 #
-# Inherited by the reusable workflow via `secrets: inherit`:
+# Inherited by the reusable workflows via `secrets: inherit`:
 #   - secrets.ALTTESTER_LICENSE
 #   - secrets.REPOS_READ_ONLY_TOKEN
 #   - secrets.EXPLORER_TEAM_S3_BUCKET
@@ -46,7 +54,7 @@ on:
   workflow_dispatch:
     inputs:
       filter:
-        description: 'NUnit filter. Empty runs the whole Category=InWorld suite, split across Windows runners; anything narrower runs on one.'
+        description: 'NUnit filter. Empty runs the whole InWorld suite and advisory Visual suite; a filter runs InWorld only, with Windows splitting inferred from it.'
         required: false
         default: ''
         type: string
@@ -72,16 +80,16 @@ on:
 # Keyed on the branch, not the PR number, because both triggers have to land in
 # one group: create-release-branch.yml dispatches this workflow against the same
 # release branch a `pull_request` run also covers, and a PR-number key would put
-# the two in groups that can never cancel each other — two gates on one commit,
-# four shards on the self-hosted GPU pool, and whichever finishes last owning the
-# required check. `github.head_ref` is the source branch on `pull_request` (where
+# the two in groups that can never cancel each other — two suite runs on one
+# commit and four shards on the self-hosted GPU pool. `github.head_ref` is the
+# source branch on `pull_request` (where
 # `ref_name` is the merge ref) and empty everywhere else, so the fallback is what
 # a dispatch and a manual run against any ref key on.
 #
 # Keyed on the head repo as well, because a branch name is not ours to reserve:
 # a fork PR into main may name its branch `release/2026-08-10` too, and
 # `cancel-in-progress` is applied when the run is created — before any job's
-# `if:` is evaluated, so the fork exclusion in `resolve`'s own `if:` (:113)
+# `if:` is evaluated, so the fork exclusion in `resolve`'s own `if:`
 # only skips the jobs of a run that has already cancelled the real gate.
 # Without this segment an outsider could red a release's required check at
 # will, by guessing a name that release cuts make predictable.
@@ -145,7 +153,10 @@ jobs:
       - name: Fetch the resolver action
         uses: actions/checkout@v6
         with:
-          sparse-checkout: .github/actions/resolve-explorer-build
+          sparse-checkout: |
+            .github/actions/resolve-explorer-build
+            .github/scripts/gh-api-retry.sh
+          sparse-checkout-cone-mode: false
 
       - name: Resolve build URL and tests ref
         id: resolve
@@ -156,17 +167,17 @@ jobs:
           # A PR opens before its build exists, so wait one out. Manual runs
           # pick a ref whose build is already there — or say which to use.
           wait-minutes: ${{ github.event_name == 'pull_request' && 90 || 0 }}
-          # Both suites run, so both zips have to exist before either starts.
+          # InWorld runs on macOS and Windows, so both zips must exist.
           build-legs: macos,windows64
           build-url-override: ${{ inputs.build_url }}
           public-url-prefix: ${{ vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           automation-token: ${{ secrets.REPOS_READ_ONLY_TOKEN }}
 
-      # A dispatched run carries no PR, and the release gate is started that way
+      # A dispatched run carries no PR, and release validation is started that way
       # — create-release-branch.yml dispatches it, because the PR it opens with
       # GITHUB_TOKEN raises no events. Without this the result reaches only the
-      # job summary, on the one path where the PR is the whole point.
+      # job summary rather than the PR's status comment.
       # `--head` matches on branch name alone, hence the fork exclusion.
       - name: Find the branch's open PR
         id: pr
@@ -230,6 +241,28 @@ jobs:
       scope: ${{ (inputs.filter || '') == '' && 'ALL' || '' }}
     secrets: inherit
 
+  visual-suite:
+    name: Visual suite
+    needs: resolve
+    # Filtered manual runs target InWorld fixtures only.
+    if: (inputs.filter || '') == ''
+    # Reviewed immutable revision includes Visual scoping and the unified report writer.
+    uses: decentraland/explorer-automation/.github/workflows/run-visual-suite.yml@8c84a893d8611a58fd7fed0d99bfbe9873a23dc1
+    # Must be a superset of run-visual-suite.yml's own `permissions:`, or the call
+    # dies at startup. contents:write is declared upstream for record mode and
+    # unused in test mode; pull-requests:write is required for its PR reporting.
+    permissions:
+      contents: write
+      pull-requests: write
+    with:
+      mode: test
+      build_url: ${{ needs.resolve.outputs.build_url }}
+      pr_number: ${{ needs.resolve.outputs.pr_number }}
+      tests_ref: ${{ needs.resolve.outputs.tests_ref }}
+      commit_sha: ${{ needs.resolve.outputs.commit_sha }}
+      branch_label: ${{ needs.resolve.outputs.branch_label }}
+    secrets: inherit
+
   result:
     name: InWorld suite result
     needs: [resolve, run-suite]
@@ -248,7 +281,7 @@ jobs:
         run: |
           set -euo pipefail
           if [ "$RESOLVE" = "skipped" ]; then
-            echo "::notice::Not a release or hotfix PR — the InWorld suite does not gate this one."
+            echo "::notice::Not a release or hotfix PR — the suites do not run on this one."
             exit 0
           fi
           if [ "$RESOLVE" = "success" ] && [ "$SUITE" = "success" ]; then
@@ -258,5 +291,5 @@ jobs:
           # Cancelled counts as failure on purpose: a merge gate must not go
           # green because the run was interrupted. The superseding run reports
           # its own result.
-          echo "::error::InWorld gate failed — build: ${RESOLVE}, suite: ${SUITE}. See the Allure report linked in the suite's job summary."
+          echo "::error::Gate failed — build: ${RESOLVE}, InWorld: ${SUITE}. See the InWorld Allure report or the build job summary."
           exit 1

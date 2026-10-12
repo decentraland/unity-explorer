@@ -56,7 +56,7 @@ namespace DCL.Diagnostics.Sentry
 
         private readonly PerReportScope.Pool scopesPool;
 
-        public SentryReportHandler(ICategorySeverityMatrix matrix, SentrySampler sentrySampler, bool debounceEnabled)
+        public SentryReportHandler(ICategorySeverityMatrix matrix, SentrySampler sentrySampler, bool debounceEnabled, string? sessionId)
             : base(ReportHandler.Sentry, matrix, debounceEnabled)
         {
             scopesPool = new PerReportScope.Pool(scopeConfigurators);
@@ -110,6 +110,10 @@ namespace DCL.Diagnostics.Sentry
 
             SentrySdk.Init(options);
 
+            // On the SDK's own scope so every event carries it, including those captured by the SDK's integrations and native crashes
+            if (sessionId is { Length: > 0 } launcherSessionId)
+                SentrySdk.ConfigureScope(scope => scope.SetTag("session_id", launcherSessionId));
+
             ExitUtils.RegisterCleanUpCandidate(new OnQuittingCleanUpCandidate(nameof(SentryReportHandler), EndSessionAndFlush));
         }
 
@@ -127,11 +131,6 @@ namespace DCL.Diagnostics.Sentry
         public void AddIdentityToScope(Scope scope, string wallet)
         {
             scope.SetTag("wallet", wallet);
-        }
-
-        public void AddSessionIdToScope(Scope scope, string sessionId)
-        {
-            scope.SetTag("session_id", sessionId);
         }
 
         public void AddCurrentSceneToScope(Scope scope, SceneShortInfo sceneInfo)

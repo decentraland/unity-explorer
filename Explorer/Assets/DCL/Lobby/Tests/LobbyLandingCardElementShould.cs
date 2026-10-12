@@ -66,19 +66,32 @@ namespace DCL.Lobby.Tests
         }
 
         [Test]
-        public void HideTheOnlineCountWhileItHasNone()
+        public void ShowTheOnlineCountOnlyWhileSomebodyIsThere()
         {
             //Act
-            card.HasOnlineCount = false;
+            card.OnlineCount = 0;
 
             //Assert
             Assert.IsFalse(card.ClassListContains("lobby-landing-card--with-online"));
 
             //Act
-            card.HasOnlineCount = true;
+            card.OnlineCount = 3;
 
             //Assert
             Assert.IsTrue(card.ClassListContains("lobby-landing-card--with-online"));
+        }
+
+        [Test]
+        public void ExposeTheConnectedFriendsRowOnceAttached()
+        {
+            //Assert
+            Assert.IsNull(card.ConnectedFriends);
+
+            //Act
+            AttachToPanel();
+
+            //Assert
+            Assert.AreSame(card.Q<LobbyConnectedFriendsElement>("ConnectedFriends"), card.ConnectedFriends);
         }
 
         [Test]

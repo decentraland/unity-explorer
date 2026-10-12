@@ -87,6 +87,19 @@ namespace DCL.Lobby.Tests
         }
 
         [Test]
+        public void CloneACardWithAConnectedFriendsRow()
+        {
+            //Arrange
+            places.Show(section);
+
+            //Act
+            places.SetCount(1);
+
+            //Assert
+            Assert.IsNotNull(Card(0).Q<LobbyConnectedFriendsElement>("ConnectedFriends"));
+        }
+
+        [Test]
         public void FillAPlainRowWhenTheSectionHasNoRail()
         {
             //Arrange

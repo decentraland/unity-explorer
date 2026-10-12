@@ -40,7 +40,7 @@ namespace DCL.Diagnostics
             Sentry?.AddScopeConfigurator(configureScope);
         }
 
-        public static DiagnosticsContainer Create(IReportsHandlingSettings settings, bool isLocalSceneDevelopment, params IReportHandler[] additionalHandlers)
+        public static DiagnosticsContainer Create(IReportsHandlingSettings settings, bool isLocalSceneDevelopment, string? sessionId, params IReportHandler[] additionalHandlers)
         {
             settings.NotifyErrorDebugLogDisabled();
 
@@ -61,7 +61,7 @@ namespace DCL.Diagnostics
                 if (isLocalSceneDevelopment)
                     sentryMatrix = new CategoryExclusionMatrix(sentryMatrix, ReportCategory.JAVASCRIPT);
 
-                handlers.Add(sentryReportHandler = new SentryReportHandler(sentryMatrix, sentrySampler = new SentrySampler(), settings.DebounceEnabled));
+                handlers.Add(sentryReportHandler = new SentryReportHandler(sentryMatrix, sentrySampler = new SentrySampler(), settings.DebounceEnabled, sessionId));
             }
 
             var logger = new ReportHubLogger(handlers);
