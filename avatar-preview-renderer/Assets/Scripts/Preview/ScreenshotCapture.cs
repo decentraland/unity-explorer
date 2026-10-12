@@ -39,7 +39,6 @@ namespace Preview
 
         public void Dispose()
         {
-            // A capture in flight never reaches its own unsubscribe once the owner is gone.
             RenderPipelineManager.beginCameraRendering -= OnBeginCameraRendering;
             if (_captureCamera != null) Object.Destroy(_captureCamera.gameObject);
             _captureCamera = null;
@@ -69,18 +68,18 @@ namespace Preview
                 // URP renders a camera with a target texture straight into that texture's format, so the
                 // target has to be HDR or bloom finds nothing above its threshold. The blit below into an
                 // sRGB texture gives the readback the same 8-bit encoding the screen gets.
-                hdrTarget = RenderTexture.GetTemporary(width, height, CAPTURE_DEPTH_BITS, GraphicsFormat.R16G16B16A16_SFloat);
+                // A device without float render targets (WebGL2 lacking EXT_color_buffer_float) gets an
+                // 8-bit capture instead: bloom is lost, the capture stays valid.
+                var hdrFormat =
+                    SystemInfo.IsFormatSupported(GraphicsFormat.R16G16B16A16_SFloat, GraphicsFormatUsage.Render)
+                        ? GraphicsFormat.R16G16B16A16_SFloat
+                        : GraphicsFormat.R8G8B8A8_SRGB;
+                hdrTarget = RenderTexture.GetTemporary(width, height, CAPTURE_DEPTH_BITS, hdrFormat);
                 target = RenderTexture.GetTemporary(width, height, 0, GraphicsFormat.R8G8B8A8_SRGB);
 
                 captureCamera.CopyFrom(_mainCamera);
                 captureCamera.transform.SetPositionAndRotation(_mainCamera.transform.position,
                     _mainCamera.transform.rotation);
-
-                // The target holds premultiplied colour, so the clear colour has to be premultiplied too,
-                // or the straight-alpha recovery turns a transparent white background opaque.
-                var background = _mainCamera.backgroundColor;
-                captureCamera.backgroundColor = new Color(background.r * background.a,
-                    background.g * background.a, background.b * background.a, background.a);
                 captureCamera.targetTexture = hdrTarget;
                 captureCamera.ResetAspect();
 
@@ -104,7 +103,7 @@ namespace Preview
 
                 if (readback.hasError) throw new InvalidOperationException("The GPU readback failed");
 
-                return EncodePng(readback.GetData<byte>(), width, height, TextureFormat.RGBA32, false);
+                return EncodePng(readback.GetData<byte>(), width, height, TextureFormat.RGBA32, flipRows: false);
             }
             finally
             {
@@ -132,7 +131,9 @@ namespace Preview
 
             var width = Screen.width;
             var height = Screen.height;
-            var target = RenderTexture.GetTemporary(width, height, 0, GraphicsFormat.B8G8R8A8_UNorm);
+            // An sRGB target, like the screen it copies: a linear one would store the decoded values and
+            // the PNG would come out darker than the view.
+            var target = RenderTexture.GetTemporary(width, height, 0, GraphicsFormat.B8G8R8A8_SRGB);
 
             try
             {
@@ -142,7 +143,7 @@ namespace Preview
                 if (readback.hasError) throw new InvalidOperationException("The GPU readback failed");
 
                 // The back buffer reads back bottom-up, unlike a camera target.
-                return EncodePng(readback.GetData<byte>(), width, height, TextureFormat.BGRA32, true);
+                return EncodePng(readback.GetData<byte>(), width, height, TextureFormat.BGRA32, flipRows: true);
             }
             finally
             {
@@ -176,8 +177,6 @@ namespace Preview
             _captureCamera.CopyFrom(_mainCamera);
 
             // The renderer, anti-aliasing, post-processing and volume settings live on the URP camera data.
-            // Copied as serialized data so a settings change on the main camera never has to be mirrored
-            // here field by field.
             var mainData = _mainCamera.GetUniversalAdditionalCameraData();
             var captureData = _captureCamera.GetUniversalAdditionalCameraData();
             JsonUtility.FromJsonOverwrite(JsonUtility.ToJson(mainData), captureData);

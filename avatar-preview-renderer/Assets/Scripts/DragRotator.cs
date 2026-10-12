@@ -70,7 +70,7 @@ public class DragRotator : MonoBehaviour
     /// </summary>
     public void Rotate(float yawDegrees, float pitchDegrees)
     {
-        _yaw += yawDegrees;
+        if (AllowHorizontal) _yaw += yawDegrees;
         if (AllowVertical) _pitch = Mathf.Clamp(_pitch + pitchDegrees, -maxPitch, maxPitch);
         _lastDragTime = Time.time;
         _targetRotation = null;

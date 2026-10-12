@@ -3,6 +3,18 @@ using JetBrains.Annotations;
 using Loading;
 using UnityEngine;
 
+/// <summary>
+/// What the emote playback reports, named as the Babylon preview's emote events.
+/// </summary>
+public enum EmotePlaybackEvent
+{
+    Play,
+    Playing,
+    Pause,
+    Loop,
+    End,
+}
+
 public class EmoteAnimationController : MonoBehaviour
 {
     // Public because AvatarLoader samples the same clip to build the item view's blended pose, and a
@@ -16,10 +28,19 @@ public class EmoteAnimationController : MonoBehaviour
     public bool IsPaused => _paused;
     public event Action EmoteAnimationEnded;
 
+    /// <summary>
+    /// Every playback change, with the clip time in seconds it happened at. Playing is reported
+    /// once per frame while the clip runs.
+    /// </summary>
+    public event Action<EmotePlaybackEvent, float> PlaybackChanged;
+
     private LoadedEmote? _loadedEmote;
     private Animation _propAnimation;
     private AudioClip _emoteAudioClip;
     private bool _paused;
+
+    // How many times the clip has wrapped, so a loop is reported once per wrap.
+    private int _reportedLoops;
 
     public void PlayEmote(LoadedEmote loadedEmote)
     {
@@ -54,10 +75,14 @@ public class EmoteAnimationController : MonoBehaviour
         return _loadedEmote.Value.Clip.length;
     }
 
+    /// <summary>
+    /// True while the clip advances: a paused or held clip is not playing, as the Babylon preview
+    /// answers it.
+    /// </summary>
     public bool IsEmotePlaying()
     {
         if (!_loadedEmote.HasValue) return false;
-        return avatarAnimation.IsPlaying(_loadedEmote.Value.Entity.URN);
+        return !_paused && avatarAnimation.IsPlaying(_loadedEmote.Value.Entity.URN);
     }
 
     public void ReplayEmote()
@@ -65,6 +90,7 @@ public class EmoteAnimationController : MonoBehaviour
         if (!_loadedEmote.HasValue) return;
 
         _paused = false;
+        _reportedLoops = 0;
 
         // Prop
         if (_propAnimation != null)
@@ -84,6 +110,8 @@ public class EmoteAnimationController : MonoBehaviour
         {
             avatarAnimation.CrossFadeQueued(IDLE_CLIP_NAME, 0.3f);
         }
+
+        PlaybackChanged?.Invoke(EmotePlaybackEvent.Play, 0f);
     }
 
     public void PauseEmote()
@@ -104,6 +132,8 @@ public class EmoteAnimationController : MonoBehaviour
         }
 
         audioSource.Pause();
+
+        PlaybackChanged?.Invoke(EmotePlaybackEvent.Pause, GetCurrentEmoteTime());
     }
 
     public void ResumeEmote()
@@ -122,12 +152,44 @@ public class EmoteAnimationController : MonoBehaviour
         }
 
         audioSource.UnPause();
+
+        PlaybackChanged?.Invoke(EmotePlaybackEvent.Play, GetCurrentEmoteTime());
     }
 
-    public void StopEmote(bool withCrossFade = true)
+    /// <summary>
+    /// Holds the emote on its first frame with its audio stopped, as the Babylon preview's stop
+    /// does, so the next play starts it over. <see cref="ReturnToIdle"/> leaves the emote instead.
+    /// </summary>
+    public void StopEmote()
     {
         if (!_loadedEmote.HasValue) return;
 
+        GoToEmote(0f);
+        _paused = true;
+
+        var urn = _loadedEmote.Value.Entity.URN;
+        var state = avatarAnimation[urn];
+        if (state != null) state.speed = 0f;
+
+        if (_propAnimation != null)
+        {
+            var propState = _propAnimation[urn];
+            if (propState != null) propState.speed = 0f;
+        }
+
+        audioSource.Stop();
+
+        PlaybackChanged?.Invoke(EmotePlaybackEvent.End, 0f);
+    }
+
+    /// <summary>
+    /// Leaves the emote for the rig's idle clip, with its prop hidden and its audio stopped.
+    /// </summary>
+    public void ReturnToIdle(bool withCrossFade)
+    {
+        if (!_loadedEmote.HasValue) return;
+
+        var time = GetCurrentEmoteTime();
         _paused = false;
 
         audioSource.Stop();
@@ -144,6 +206,8 @@ public class EmoteAnimationController : MonoBehaviour
         {
             avatarAnimation.Play(IDLE_CLIP_NAME, PlayMode.StopAll);
         }
+
+        PlaybackChanged?.Invoke(EmotePlaybackEvent.End, time);
     }
 
     public void GoToEmote(float seconds)
@@ -187,6 +251,8 @@ public class EmoteAnimationController : MonoBehaviour
         {
             audioSource.time = Mathf.Clamp(seconds, 0f, _emoteAudioClip.length);
         }
+
+        PlaybackChanged?.Invoke(EmotePlaybackEvent.Playing, seconds);
     }
 
     public void EnableSound()
@@ -199,23 +265,53 @@ public class EmoteAnimationController : MonoBehaviour
         if (audioSource != null) audioSource.volume = 0f;
     }
 
-    private float GetCurrentEmoteTime()
-    {
-        if (!_loadedEmote.HasValue) return 0f;
-        var state = avatarAnimation[_loadedEmote.Value.Entity.URN];
-        return state?.time ?? 0f;
-    }
-
     public void ClearEmote()
     {
         if (!_loadedEmote.HasValue) return;
 
-        StopEmote(false);
+        ReturnToIdle(false);
         avatarAnimation.RemoveClip(_loadedEmote.Value.Clip);
         _loadedEmote = null;
         _emoteAudioClip = null;
         _propAnimation = null;
         audioSource.clip = null;
+    }
+
+    private void Update()
+    {
+        if (!_loadedEmote.HasValue || _paused) return;
+
+        var urn = _loadedEmote.Value.Entity.URN;
+        if (!avatarAnimation.IsPlaying(urn)) return;
+
+        var state = avatarAnimation[urn];
+        if (state == null || state.length <= 0f) return;
+
+        // A looping clip's time keeps growing past its length.
+        var loops = Mathf.FloorToInt(state.time / state.length);
+
+        if (loops > _reportedLoops)
+        {
+            _reportedLoops = loops;
+
+            if (_loadedEmote.Value.Clip.wrapMode == WrapMode.Loop)
+            {
+                PlaybackChanged?.Invoke(EmotePlaybackEvent.Loop, 0f);
+            }
+        }
+
+        PlaybackChanged?.Invoke(EmotePlaybackEvent.Playing, state.time - loops * state.length);
+    }
+
+    // Within the clip, however many times a looping one has wrapped.
+    private float GetCurrentEmoteTime()
+    {
+        if (!_loadedEmote.HasValue) return 0f;
+
+        var state = avatarAnimation[_loadedEmote.Value.Entity.URN];
+        if (state == null || state.length <= 0f) return 0f;
+
+        return state.time % state.length;
     }
 
     [UsedImplicitly]
@@ -241,6 +337,7 @@ public class EmoteAnimationController : MonoBehaviour
         {
             EmoteAnimationEnded?.Invoke();
             _loadedEmote.Value.Prop?.SetActive(false);
+            PlaybackChanged?.Invoke(EmotePlaybackEvent.End, _loadedEmote.Value.Clip.length);
         }
     }
 }

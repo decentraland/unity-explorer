@@ -190,7 +190,19 @@ Every reply is posted to the renderer's own window when it is embedded in an ifr
 { type: 'unity-renderer', payload: { type: '<reply type>', payload: <value> } }
 ```
 
-The reply types are `loaded`, `error`, `screenshot`, `metrics`, `request-failed`, `emoteLength`, `isEmotePlaying`, `hasSound`, `element-bounds`, `customization-done` and `avatar-customization-step`.
+The reply types are `loaded`, `error`, `screenshot`, `metrics`, `request-failed`, `emote-event`, `emoteLength`, `isEmotePlaying`, `hasSound`, `element-bounds`, `customization-done` and `avatar-customization-step`.
+
+### Emote events
+
+Every change of the emote playback is posted as an `emote-event`, unasked, with the clip time in seconds it happened at:
+
+```javascript
+{ type: 'emote-event', payload: { event: 'play' | 'playing' | 'pause' | 'loop' | 'end', time } }
+```
+
+`play` is sent when the clip starts or resumes, `playing` once per frame while it runs (and once on a seek, with the position), `pause` when it pauses, `loop` each time a looping clip wraps, and `end` when a clip plays out, is stopped, or is left for the idle pose. These are the Babylon preview's emote events, so a page can drive a progress bar from the real playhead.
+
+`StopEmote` holds the emote on its first frame with its audio stopped, as the Babylon preview's stop does; the next `PlayEmote` starts it over. The in-canvas stop button goes back to the idle pose instead, since it is the renderer's own control.
 
 A request the renderer cannot serve answers with `request-failed` instead of its normal reply, so a caller never waits forever:
 

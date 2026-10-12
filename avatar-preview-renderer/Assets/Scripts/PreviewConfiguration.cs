@@ -366,8 +366,18 @@ public class PreviewConfiguration
 
     public void SetWheelStart(string value) => WheelStart = ParseNumber(value, "wheelStart", WheelStart);
 
-    public void SetCamera(string value) =>
-        Camera = value.Trim().ToLowerInvariant() == "static" ? PreviewCameraKind.Static : PreviewCameraKind.Interactive;
+    // An unknown value keeps the current camera, for the same reason ParseToggle does.
+    public void SetCamera(string value)
+    {
+        var trimmed = value.Trim();
+
+        if (string.Equals(trimmed, "static", StringComparison.OrdinalIgnoreCase))
+            Camera = PreviewCameraKind.Static;
+        else if (string.Equals(trimmed, "interactive", StringComparison.OrdinalIgnoreCase))
+            Camera = PreviewCameraKind.Interactive;
+        else
+            Debug.LogWarning($"Unknown camera value [{value}], keeping camera {Camera}");
+    }
 
     public void SetLockAlpha(string value) => LockAlpha = ParseToggle(value, "lockAlpha", LockAlpha);
 
@@ -393,10 +403,12 @@ public class PreviewConfiguration
         ShowThumbnailBoundaries = ParseToggle(value, "showThumbnailBoundaries", ShowThumbnailBoundaries);
 
     /// <summary>
-    /// Parses a number the way the page wrote it, with a dot decimal separator whatever the locale.
+    /// Parses a finite number the way the page wrote it, with a dot decimal separator whatever the
+    /// locale. NaN and the infinities are rejected: a clamp passes them through and they would stick
+    /// in a zoom or a pan.
     /// </summary>
     public static bool TryParseNumber(string value, out float number) =>
-        float.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out number);
+        float.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out number) && float.IsFinite(number);
 
     // An unparsable value keeps `current`, for the same reason ParseToggle does.
     private static float ParseNumber(string value, string name, float current)

@@ -174,6 +174,25 @@ mergeInto(LibraryManager.library, {
       '*'
     )
   },
+  OnEmoteEvent: function (eventPtr, time) {
+    const targetWindow = (() => {
+      try {
+        return window.self !== window.top ? window : window.parent
+      } catch (e) {
+        return window.parent
+      }
+    })()
+    targetWindow.postMessage(
+      {
+        type: 'unity-renderer',
+        payload: {
+          type: 'emote-event',
+          payload: { event: UTF8ToString(eventPtr), time: time },
+        },
+      },
+      '*'
+    )
+  },
   OnMetrics: function (jsonPtr) {
     const metrics = JSON.parse(UTF8ToString(jsonPtr))
     const targetWindow = (() => {

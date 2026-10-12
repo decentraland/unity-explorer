@@ -57,6 +57,9 @@ namespace Tests
         [TestCase("1,2,3,4")]
         [TestCase("a,b,c")]
         [TestCase("1;2;3")]
+        [TestCase("NaN,0,0")]
+        [TestCase("0,Infinity,0")]
+        [TestCase("0,0,-Infinity")]
         public void RejectAnInvalidVector(string value)
         {
             // Act

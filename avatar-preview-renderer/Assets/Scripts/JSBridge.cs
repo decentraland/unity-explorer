@@ -500,6 +500,12 @@ public class JSBridge : MonoBehaviour
 
         public static void OnHasSound(bool hasSound) => Debug.Log($"NativeCall OnHasSound({hasSound})");
 
+        // The per-frame playing report would flood the console, so only the state changes are logged.
+        public static void OnEmoteEvent(string emoteEvent, float time)
+        {
+            if (emoteEvent != "playing") Debug.Log($"NativeCall OnEmoteEvent({emoteEvent}, {time})");
+        }
+
         public static void OnMetrics(string json) => Debug.Log($"NativeCall OnMetrics({json})");
 
         public static void OnRequestFailed(string request, string reason) =>
@@ -534,6 +540,9 @@ public class JSBridge : MonoBehaviour
 
         [System.Runtime.InteropServices.DllImport("__Internal")]
         public static extern void OnHasSound(bool hasSound);
+
+        [System.Runtime.InteropServices.DllImport("__Internal")]
+        public static extern void OnEmoteEvent(string emoteEvent, float time);
 
         [System.Runtime.InteropServices.DllImport("__Internal")]
         public static extern void OnMetrics(string json);

@@ -222,7 +222,7 @@ namespace Loading
                 }
                 else
                 {
-                    emoteAnimationController.StopEmote(true);
+                    emoteAnimationController.ReturnToIdle(true);
                 }
             }
 

@@ -43,6 +43,9 @@ namespace Preview
         // #cc9b76, the skin the JS wrapper used to send whenever a builder caller left it out.
         private static readonly Color DEFAULT_SKIN_COLOR = new(204f / 255f, 155f / 255f, 118f / 255f);
 
+        // Indexed by EmotePlaybackEvent, so a per-frame report allocates nothing.
+        private static readonly string[] EMOTE_EVENT_NAMES = { "play", "playing", "pause", "loop", "end" };
+
         // The entities the caller asked to preview, as resolved on the last reload: the urns and base64
         // definitions, never the profile's own wearables or the body. Metrics are reported for these.
         private readonly HashSet<string> _requestedItemUrns = new();
@@ -88,6 +91,7 @@ namespace Preview
             previewUIPresenter.ContainerDrag += wearableRotator.OnDrag;
             previewUIPresenter.ContainerPan += previewCameraController.Pan;
             emoteAnimationController.EmoteAnimationEnded += OnEmoteAnimationEnded;
+            emoteAnimationController.PlaybackChanged += OnEmotePlaybackChanged;
 
             StartCoroutine(Reload());
         }
@@ -97,6 +101,13 @@ namespace Preview
             previewUIPresenter.SetAnimationPlaying(false);
         }
 
+        private static void OnEmotePlaybackChanged(EmotePlaybackEvent playbackEvent, float time)
+        {
+            JSBridge.NativeCalls.OnEmoteEvent(EMOTE_EVENT_NAMES[(int)playbackEvent], time);
+        }
+
+        // The in-canvas button is the renderer's own, so its stop goes back to the idle pose; the
+        // bridge's StopEmote holds the first frame, as the Babylon preview does.
         private void OnEmoteToggleClicked(bool playing)
         {
             if (playing)
@@ -105,7 +116,7 @@ namespace Preview
             }
             else
             {
-                emoteAnimationController.StopEmote();
+                emoteAnimationController.ReturnToIdle(true);
             }
         }
 
@@ -206,8 +217,8 @@ namespace Preview
             // pose rather than a moment of the motion.
             if (!interactive)
             {
-                emoteAnimationController.PauseEmote();
                 emoteAnimationController.GoToEmote(0f);
+                emoteAnimationController.PauseEmote();
             }
         }
 
@@ -217,9 +228,17 @@ namespace Preview
         public void RestartZoom() => previewCameraController.RestartZoom();
 
         /// <summary>
-        /// Clears to the configuration's background at once; a reload applies it again anyway.
+        /// Clears to the configuration's background, premultiplied: the canvas holds premultiplied
+        /// colour, so a straight clear would show a transparent white as white, on screen and in a
+        /// capture alike.
         /// </summary>
-        public void ApplyBackground() => mainCamera.backgroundColor = PreviewConfiguration.Instance.Background;
+        public void ApplyBackground()
+        {
+            var background = PreviewConfiguration.Instance.Background;
+
+            mainCamera.backgroundColor = new Color(background.r * background.a, background.g * background.a,
+                background.b * background.a, background.a);
+        }
 
         /// <summary>
         /// A zoom button press from the page: positive pulls closer.
@@ -306,6 +325,7 @@ namespace Preview
                 var config = PreviewConfiguration.Instance;
 
                 _requestedItemUrns.Clear();
+                _showingWearable = false;
                 previewUIPresenter.SetControlsHidden(config.HideControls);
 
                 avatarRotator.enabled = false;
@@ -318,7 +338,7 @@ namespace Preview
                 shadowCatcher.SetActive(config.Shadow);
                 glowCatcher.SetActive(config.Glow);
                 wearableGlowCatcher.SetActive(false);
-                mainCamera.backgroundColor = config.Background;
+                ApplyBackground();
                 mainCamera.orthographic = config.Projection == "orthographic";
                 previewUIPresenter.EnableLoader(!config.DisableLoader);
 
@@ -391,9 +411,9 @@ namespace Preview
                 {
                     JSBridge.NativeCalls.OnError(e.Message);
 
-                    // Otherwise the view stays blank behind the loader and every later request is
-                    // answered as still reloading. A reload queued meanwhile would be lost with the
-                    // loop, so it is started again.
+                    // Nothing of this request is loaded, and the reload ends so later requests are
+                    // served; one queued meanwhile is started again since the loop is left here.
+                    _requestedItemUrns.Clear();
                     var reloadQueued = _shouldReload;
                     EndReload();
 
