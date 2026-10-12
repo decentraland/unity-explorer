@@ -36,6 +36,11 @@ The renderer can run in five different modes, depending on its usage: Marketplac
   * `fist-pump`
   * `head-explode`
 * `urn`: An URN address of a wearable or emote to load. It will override any existing wearable in the same category already present on the profile that has been loaded. Can be included multiple times in `marketplace` and `builder` mode to load multiple wearables.
+* `url`: A URL returning a wearable or emote definition (the JSON the Builder serializes), loaded like a `base64` one. Can be included multiple times in `marketplace` and `builder` mode.
+* `disableDefaultWearables`: Only the requested items are worn: in `marketplace` mode the profile dresses nothing, in `builder` mode the empty categories are not filled with the base wearables. Default is `false`.
+* `disableFace`: Hides the eyes, eyebrows and mouth in every mode. Default is `false`.
+* `disableDefaultEmotes`: The same as `emote=none`: no default emote plays, so the avatar stands in its idle pose unless a requested item is an emote. The Babylon preview leaves the bind pose instead. Default is `false`.
+* `peerUrl`, `marketplaceServerUrl`: Hosts for the Catalyst and the Marketplace API, replacing the ones `env` picks.
 * `type`: Which view to open in. Only used in `marketplace` mode, and only when a single wearable is being previewed (an emote or several urns at once can only be shown on the avatar). If omitted, the view the user last switched to is used. Possible values:
   * `wearable` - the item on its own
   * `avatar` - the item worn by the avatar
@@ -82,11 +87,14 @@ Depending on the mode, not all parameters are used. These are the valid paramete
 * `shadow` (optional)
 * `glow` (optional)
 * `profile`
-* `urn` or `contract` & `item` or `contract` & `token`
+* `urn` or `contract` & `item` or `contract` & `token`, and `base64` or `url`
   * Multiple urn parameters may be used to preview several items at once (a cart, an outfit). The remaining categories are still filled from the profile, and the passed urns override by category, so the last urn wins its category. Several items can only be shown worn by the avatar, since the item-alone view renders a single item.
+  * A `base64` or `url` item counts as a requested item like a urn, so a single one can be shown on its own, which is what a thumbnail of an unpublished item needs.
+* `bodyShape` (optional, overrides the profile's)
 * `emote`
 * `type` (optional)
 * `disableSwitcher` (optional)
+* `disableDefaultWearables`, `disableFace` (optional)
 * the camera options (optional)
 
 ### Profile
@@ -114,7 +122,8 @@ Depending on the mode, not all parameters are used. These are the valid paramete
 * `urn`
   * Multiple urn parameters may be used to load several wearables. The categories of the wearables must be unique (e.g. two urns cannot both be for "upper_body")
 * `emote`
-* `base64`
+* `base64`, `url`
+* `disableDefaultWearables`, `disableFace` (optional). Unless disabled, the categories no item covers (hair, upper body, lower body, feet, and the facial features) are filled with the same base wearables the Babylon preview uses.
 * the camera options (optional)
 
 ### Configurator

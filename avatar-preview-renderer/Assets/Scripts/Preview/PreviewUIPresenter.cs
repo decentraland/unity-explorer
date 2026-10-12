@@ -35,6 +35,7 @@ namespace Preview
             nameof(JSBridge.SetLockAlpha), nameof(JSBridge.SetLockBeta), nameof(JSBridge.SetLockRadius),
             nameof(JSBridge.SetPanning), nameof(JSBridge.SetDisableAutoRotate),
             nameof(JSBridge.SetAutoRotateSpeed), nameof(JSBridge.SetShowThumbnailBoundaries),
+            nameof(JSBridge.SetBackground),
         };
 
         [SerializeField] private AudioSource audioSource;

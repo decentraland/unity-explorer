@@ -11,8 +11,16 @@ namespace Services
     {
         private const int RETRY_COUNT = 2;
 
-        private static string EndpointPeer => $"https://peer.decentraland.{Environment}";
-        private static string EndpointMarketplace => $"https://marketplace-api.decentraland.{Environment}";
+        private static string EndpointPeer => PeerUrl ?? $"https://peer.decentraland.{Environment}";
+        private static string EndpointMarketplace => MarketplaceServerUrl ?? $"https://marketplace-api.decentraland.{Environment}";
+
+        /// <summary>
+        /// A Catalyst and a Marketplace API host the page chose, as the Babylon preview's `peerUrl`
+        /// and `marketplaceServerUrl`; null keeps the one <see cref="Environment"/> picks.
+        /// </summary>
+        public static string PeerUrl { get; set; }
+
+        public static string MarketplaceServerUrl { get; set; }
 
         public static string APICatalyst => EndpointPeer + "/content/contents/{0}";
         private static string APIProfile => EndpointPeer + "/lambdas/profiles/{0}";
@@ -82,7 +90,15 @@ namespace Services
         }
 
 
-        private static async Awaitable<T> GetWithRetry<T>(string url, params object[] args)
+        /// <summary>
+        /// The body of <paramref name="url"/> as text, for a definition the page hosts itself.
+        /// </summary>
+        public static Awaitable<string> GetText(string url) => GetTextWithRetry(url);
+
+        private static async Awaitable<T> GetWithRetry<T>(string url, params object[] args) =>
+            JsonUtility.FromJson<T>(await GetTextWithRetry(string.Format(url, args)));
+
+        private static async Awaitable<string> GetTextWithRetry(string url)
         {
             var retries = 0;
 
@@ -90,17 +106,17 @@ namespace Services
 
             do
             {
-                request = UnityWebRequest.Get(string.Format(url, args));
+                request = UnityWebRequest.Get(url);
                 await request.SendWebRequest();
                 retries++;
             } while (request.result != UnityWebRequest.Result.Success && retries <= RETRY_COUNT);
 
             if (request.result != UnityWebRequest.Result.Success)
             {
-                throw new Exception(request.error);
+                throw new Exception($"{request.error} ({url})");
             }
 
-            return JsonUtility.FromJson<T>(request.downloadHandler.text);
+            return request.downloadHandler.text;
         }
 
     }

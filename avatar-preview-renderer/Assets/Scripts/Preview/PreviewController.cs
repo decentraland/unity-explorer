@@ -217,6 +217,11 @@ namespace Preview
         public void RestartZoom() => previewCameraController.RestartZoom();
 
         /// <summary>
+        /// Clears to the configuration's background at once; a reload applies it again anyway.
+        /// </summary>
+        public void ApplyBackground() => mainCamera.backgroundColor = PreviewConfiguration.Instance.Background;
+
+        /// <summary>
         /// A zoom button press from the page: positive pulls closer.
         /// </summary>
         public void ZoomBy(float delta) => previewCameraController.ZoomByDelta(delta);
@@ -329,6 +334,10 @@ namespace Preview
 
                 try
                 {
+                    // The hosts the page chose, before the first request of this load.
+                    APIService.PeerUrl = config.PeerUrl;
+                    APIService.MarketplaceServerUrl = config.MarketplaceServerUrl;
+
                     await EntityService.PreloadBodyEntities();
 
                     switch (config.Mode)
@@ -367,13 +376,7 @@ namespace Preview
                             await LoadForProfile(config.Profile, config.Emote);
                             break;
                         case PreviewMode.Builder:
-                            await LoadForBuilder(config.BodyShape,
-                                config.EyeColor,
-                                config.HairColor,
-                                config.SkinColor,
-                                config.Urns.ToArray(),
-                                config.Emote,
-                                config.Base64);
+                            await LoadForBuilder(config);
                             break;
                         case PreviewMode.Jesus:
                             showingAvatar = true;
@@ -457,62 +460,106 @@ namespace Preview
             }
         }
 
-        private async Awaitable LoadForBuilder(string bodyShapeName,
-            Color? eyeColor,
-            Color? hairColor,
-            Color? skinColor,
-            string[] urns,
-            string emoteName,
-            List<byte[]> base64)
+        private async Awaitable LoadForBuilder(PreviewConfiguration config)
         {
-            var bodyShape = bodyShapeName.Equals(WearablesConstants.BODY_SHAPE_FEMALE, StringComparison.OrdinalIgnoreCase)
-                ? BodyShape.Female
-                : BodyShape.Male;
+            var bodyShape = ParseBodyShape(config.BodyShape) ?? BodyShape.Male;
 
-            var base64Entities = base64.Select(EntityDefinition.FromBase64).ToArray();
-            var base64Emote = base64Entities.FirstOrDefault(e => e.Type == EntityType.Emote);
-            var base64WearableEntities = base64Entities.Where(e => e.Type != EntityType.Emote);
+            var localEntities = await LoadLocalEntities(config);
+            var localEmote = localEntities.FirstOrDefault(e => e.Type == EntityType.Emote);
+            var localWearables = localEntities.Where(e => e.Type != EntityType.Emote);
 
-            var urnEntities = await EntityService.GetEntities(urns);
+            var urnEntities = await EntityService.GetEntities(config.Urns.ToArray());
 
             foreach (var entity in urnEntities)
             {
                 if (entity.Type != EntityType.Body) _requestedItemUrns.Add(entity.URN);
             }
 
-            foreach (var entity in base64Entities)
+            foreach (var entity in localEntities)
             {
                 _requestedItemUrns.Add(entity.URN);
             }
 
-            // Slot-based deduplication: one wearable per category, base64 items take priority
+            // Slot-based deduplication: one wearable per category, the page's own items take priority
             var slots = new Dictionary<string, EntityDefinition>();
             foreach (var entity in urnEntities.Where(e => e.Type != EntityType.Emote))
             {
                 slots[entity.Category] = entity;
             }
-            foreach (var entity in base64WearableEntities)
+            foreach (var entity in localWearables)
             {
                 slots[entity.Category] = entity;
             }
-            var wearableEntities = slots.Values.ToArray();
 
-            var colors = new AvatarColors(eyeColor ?? Color.black, hairColor ?? Color.black,
-                skinColor ?? DEFAULT_SKIN_COLOR);
+            if (!config.DisableDefaultWearables)
+            {
+                await FillDefaultWearables(slots, bodyShape, !config.DisableFace);
+            }
 
-            // "idle" resolves to no emote: the scene rig already carries an Idle clip, so an empty slot
-            // plays it with nothing to download. NOTE LoadForProfile does not short-circuit.
-            var emoteEntity = base64Emote ?? (emoteName == "idle" ? null : EntityDefinition.FromEmbeddedEmote(emoteName, true));
+            var colors = new AvatarColors(config.EyeColor ?? Color.black, config.HairColor ?? Color.black,
+                config.SkinColor ?? DEFAULT_SKIN_COLOR);
 
             await avatarLoader.LoadAvatar(bodyShape,
-                wearableEntities,
-                emoteEntity,
+                slots.Values.ToArray(),
+                localEmote ?? DefaultEmote(config.Emote, true),
                 Array.Empty<string>(),
                 colors);
 
-            if (PreviewConfiguration.Instance.DisableFace)
+            if (config.DisableFace)
             {
                 avatarLoader.HideFacialFeatures();
+            }
+        }
+
+        // Null when the caller named none, so the profile's or the mode's own can take over.
+        private static BodyShape? ParseBodyShape(string urn)
+        {
+            if (string.IsNullOrEmpty(urn)) return null;
+
+            return urn.Equals(WearablesConstants.BODY_SHAPE_FEMALE, StringComparison.OrdinalIgnoreCase)
+                ? BodyShape.Female
+                : BodyShape.Male;
+        }
+
+        // "idle" resolves to no emote: the scene rig already carries an Idle clip, so an empty slot
+        // plays it with nothing to download. "none" asks for exactly that; the Babylon preview would
+        // leave the bind pose instead, which no thumbnail wants. NOTE LoadForProfile does not
+        // short-circuit.
+        private static EntityDefinition DefaultEmote(string name, bool loop) =>
+            name is "idle" or PreviewConfiguration.NO_EMOTE ? null : EntityDefinition.FromEmbeddedEmote(name, loop);
+
+        // The items the page handed over itself: base64 definitions and definitions it hosts at a URL.
+        private static async Awaitable<List<EntityDefinition>> LoadLocalEntities(PreviewConfiguration config)
+        {
+            var entities = config.Base64.Select(EntityDefinition.FromBase64).ToList();
+
+            foreach (var url in config.Urls)
+            {
+                entities.Add(EntityDefinition.FromDefinitionJson(await APIService.GetText(url)));
+            }
+
+            return entities;
+        }
+
+        // Dresses the empty categories with the Babylon preview's base wearables, so a lone item never
+        // shows on a naked avatar.
+        private static async Awaitable FillDefaultWearables(Dictionary<string, EntityDefinition> slots,
+            BodyShape bodyShape, bool includeFacialFeatures)
+        {
+            var categories = includeFacialFeatures
+                ? WearablesConstants.DEFAULT_BODY_CATEGORIES.Concat(WearablesConstants.DEFAULT_FACIAL_CATEGORIES)
+                : WearablesConstants.DEFAULT_BODY_CATEGORIES;
+
+            var missing = categories
+                .Where(category => !slots.ContainsKey(category))
+                .Select(category => WearablesConstants.GetDefaultWearableUrn(category, bodyShape))
+                .ToArray();
+
+            if (missing.Length == 0) return;
+
+            foreach (var entity in await EntityService.GetEntities(missing))
+            {
+                slots[entity.Category] = entity;
             }
         }
 
@@ -527,12 +574,17 @@ namespace Preview
             Assert.IsNotNull(defaultEmote);
 
             var avatar = await APIService.GetAvatar(profileID);
-            var avatarBodyShape = avatar.GetBodyShape();
+            // A caller-supplied body shape or color wins so combinations can be tried on any profile; the
+            // rest stay the profile's.
+            var avatarBodyShape = ParseBodyShape(config.BodyShape) ?? avatar.GetBodyShape();
             var profileColors = avatar.GetAvatarColors();
-            // A caller-supplied color wins so combinations can be tried on any profile; the rest stay the profile's.
             var avatarColors = new AvatarColors(config.EyeColor ?? profileColors.Eyes,
                 config.HairColor ?? profileColors.Hair, config.SkinColor ?? profileColors.Skin);
-            var allEntities = await EntityService.GetEntities(avatar.wearables.Concat(urns).ToArray());
+
+            // Without the defaults, the profile dresses nothing: only the requested items are worn.
+            var profileWearables = config.DisableDefaultWearables ? Array.Empty<string>() : avatar.wearables;
+            var allEntities = await EntityService.GetEntities(profileWearables.Concat(urns).ToArray());
+            var localEntities = await LoadLocalEntities(config);
 
             // Resolve in request order so that, when two urns compete for the same slot below, the last
             // one wins. We match on the sanitized urn because EntityService normalizes token scoped
@@ -548,6 +600,13 @@ namespace Preview
                 if (definition.Type is not (EntityType.Emote or EntityType.Wearable or EntityType.FacialFeature))
                     throw new NotSupportedException($"Trying to override type: {definition.Type}");
 
+                if (!overrides.Contains(definition)) overrides.Add(definition);
+            }
+
+            // The page's own items count as requested too, after the urns, so the last one still wins
+            // its category.
+            foreach (var definition in localEntities)
+            {
                 if (!overrides.Contains(definition)) overrides.Add(definition);
             }
 
@@ -589,11 +648,7 @@ namespace Preview
                 hasValidRepresentation = true;
             }
 
-            // Same "idle" short-circuit as LoadForBuilder.
-            var emoteDefinition = emoteOverride ??
-                                  (defaultEmote == "idle"
-                                      ? null
-                                      : EntityDefinition.FromEmbeddedEmote(defaultEmote, false));
+            var emoteDefinition = emoteOverride ?? DefaultEmote(defaultEmote, false);
 
             // Slot based composition, same as LoadForBuilder: unlike builder mode, the profile (a real
             // one or a default) fills every remaining category, so previewing a single hat still shows a
@@ -618,6 +673,11 @@ namespace Preview
                     // never hidden by another wearable.
                     avatar.forceRender.Union(renderableOverrides.Select(ed => ed.Category)).ToArray(),
                     avatarColors);
+
+                if (config.DisableFace)
+                {
+                    avatarLoader.HideFacialFeatures();
+                }
             }
 
             if (showsItemAlone)
@@ -659,9 +719,17 @@ namespace Preview
 
             var avatar = await APIService.GetAvatar(profileID);
             var entities = await EntityService.GetEntities(avatar.wearables);
+            var emote = defaultEmote == PreviewConfiguration.NO_EMOTE
+                ? null
+                : EntityDefinition.FromEmbeddedEmote(defaultEmote, loop);
 
-            await avatarLoader.LoadAvatar(avatar.GetBodyShape(), entities,
-                EntityDefinition.FromEmbeddedEmote(defaultEmote, loop), avatar.forceRender, avatar.GetAvatarColors());
+            await avatarLoader.LoadAvatar(avatar.GetBodyShape(), entities, emote, avatar.forceRender,
+                avatar.GetAvatarColors());
+
+            if (PreviewConfiguration.Instance.DisableFace)
+            {
+                avatarLoader.HideFacialFeatures();
+            }
         }
 
         private async Awaitable<List<string>> LoadUrns(PreviewConfiguration config)

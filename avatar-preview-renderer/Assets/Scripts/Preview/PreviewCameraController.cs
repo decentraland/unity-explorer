@@ -288,10 +288,11 @@ namespace Preview
 
             framing.FittedFOV = Mathf.Max(forHeight, forWidth) * margin;
 
-            // An orthographic frame is half its height tall, and the width is brought in through the
-            // aspect, the same choice as above.
+            // An orthographic frame holds the subject's bounding sphere, as the Babylon preview's fixed
+            // frame does once it has scaled the subject into it.
+            var halfHeight = framing.SubjectHeight * 0.5f;
             framing.FittedOrthoSize =
-                Mathf.Max(framing.SubjectHeight * 0.5f, framing.SubjectRadius / Aspect) * margin;
+                Mathf.Sqrt(framing.SubjectRadius * framing.SubjectRadius + halfHeight * halfHeight) * margin;
 
             // Zooming tightens around the view axis, so the subject has to be brought onto it too.
             var inCameraSpace = Quaternion.Inverse(rotation) * toSubject;

@@ -58,7 +58,31 @@ public class JSBridge : MonoBehaviour
         PreviewConfiguration.Instance.Urns = value.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(URNUtils.SanitizeURN).ToList();
 
     [UsedImplicitly]
-    public void SetBackground(string value) => PreviewConfiguration.Instance.SetBackground(value);
+    public void SetBackground(string value)
+    {
+        PreviewConfiguration.Instance.SetBackground(value);
+        previewController.ApplyBackground();
+    }
+
+    [UsedImplicitly]
+    public void AddUrl(string value) => PreviewConfiguration.Instance.AddUrl(value);
+
+    [UsedImplicitly]
+    public void ClearUrls() => PreviewConfiguration.Instance.Urls.Clear();
+
+    [UsedImplicitly]
+    public void SetDisableFace(string value) => PreviewConfiguration.Instance.SetDisableFace(value);
+
+    [UsedImplicitly]
+    public void SetDisableDefaultWearables(string value) =>
+        PreviewConfiguration.Instance.SetDisableDefaultWearables(value);
+
+    [UsedImplicitly]
+    public void SetPeerUrl(string value) => PreviewConfiguration.Instance.SetPeerUrl(value);
+
+    [UsedImplicitly]
+    public void SetMarketplaceServerUrl(string value) =>
+        PreviewConfiguration.Instance.SetMarketplaceServerUrl(value);
 
     [UsedImplicitly]
     public void SetShadow(string value) => PreviewConfiguration.Instance.SetShadow(value);

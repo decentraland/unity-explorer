@@ -190,13 +190,17 @@ namespace Data
                 entity.IsEmote ? null : entity.metadata?.data?.springBones);
         }
 
-        public static EntityDefinition FromBase64(byte[] b64)
-        {
-            var base64String = Encoding.UTF8.GetString(b64);
+        public static EntityDefinition FromBase64(byte[] b64) => FromDefinitionJson(Encoding.UTF8.GetString(b64));
 
-            // Base64 JSON uses {key, url} objects for contents instead of plain strings,
+        /// <summary>
+        /// A wearable or emote definition as the Builder serializes it, whether it came base64 encoded
+        /// or fetched from a URL the page gave.
+        /// </summary>
+        public static EntityDefinition FromDefinitionJson(string json)
+        {
+            // Definition JSON uses {key, url} objects for contents instead of plain strings,
             // so we parse into RawActiveEntity which handles that format
-            var raw = JsonUtility.FromJson<RawActiveEntity>(base64String);
+            var raw = JsonUtility.FromJson<RawActiveEntity>(json);
             var entity = raw.ToActiveEntity();
 
             // JsonUtility can't deserialize the nested Dictionary in springBones.models,
@@ -205,7 +209,7 @@ namespace Data
             {
                 try
                 {
-                    var jo = Newtonsoft.Json.Linq.JObject.Parse(base64String);
+                    var jo = Newtonsoft.Json.Linq.JObject.Parse(json);
                     var springBonesToken = jo["data"]?["springBones"];
                     if (springBonesToken != null)
                         entity.metadata.data.springBones = springBonesToken.ToObject<SpringBonesDto>();

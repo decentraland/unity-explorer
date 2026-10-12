@@ -9,6 +9,11 @@ using Utils;
 
 public class PreviewConfiguration
 {
+    /// <summary>
+    /// The <see cref="Emote"/> value that plays none.
+    /// </summary>
+    public const string NO_EMOTE = "none";
+
     public static PreviewConfiguration Instance { get; private set; } = new();
 
     private PreviewConfiguration()
@@ -67,7 +72,9 @@ public class PreviewConfiguration
 
     /// <summary>
     /// The emote that the avatar will play. Default value is idle, other possible values are:
-    /// clap, dab, dance, fashion, fashion-2, fashion-3,fashion-4, love, money, fist-pump and head-explode
+    /// clap, dab, dance, fashion, fashion-2, fashion-3,fashion-4, love, money, fist-pump and head-explode.
+    /// <see cref="NO_EMOTE"/> plays none, so the avatar stands in the rig's idle unless a requested
+    /// item is an emote.
     /// </summary>
     public string Emote { get; set; } = "idle";
 
@@ -104,6 +111,37 @@ public class PreviewConfiguration
     {
         Urns.Add(URNUtils.SanitizeURN(urn));
     }
+
+    /// <summary>
+    /// URLs of wearable or emote definitions the page hosts, fetched and treated as <see cref="Base64"/>.
+    /// </summary>
+    public List<string> Urls { get; } = new();
+
+    public void AddUrl(string url) => Urls.Add(url);
+
+    /// <summary>
+    /// Only the requested items are worn: no profile wearables and no base ones for the empty
+    /// categories, as the Babylon preview's option of the same name.
+    /// </summary>
+    public bool DisableDefaultWearables { get; private set; }
+
+    public void SetDisableDefaultWearables(string value) =>
+        DisableDefaultWearables = ParseToggle(value, "disableDefaultWearables", DisableDefaultWearables);
+
+    /// <summary>
+    /// Hosts for the Catalyst and the Marketplace API, replacing the ones <c>env</c> picks.
+    /// </summary>
+    public string PeerUrl { get; private set; }
+
+    public string MarketplaceServerUrl { get; private set; }
+
+    public void SetPeerUrl(string value) => PeerUrl = NormalizeHost(value);
+
+    public void SetMarketplaceServerUrl(string value) => MarketplaceServerUrl = NormalizeHost(value);
+
+    // An empty value goes back to the default host; a trailing slash would double up in the paths.
+    private static string NormalizeHost(string value) =>
+        string.IsNullOrWhiteSpace(value) ? null : value.Trim().TrimEnd('/');
 
     /// <summary>
     /// The color of the background in HEX.
@@ -415,7 +453,9 @@ public class PreviewConfiguration
     /// <summary>
     /// If true, facial features (eyes, eyebrows, mouth) will be hidden on the avatar.
     /// </summary>
-    public bool DisableFace { get; set; }
+    public bool DisableFace { get; private set; }
+
+    public void SetDisableFace(string value) => DisableFace = ParseToggle(value, "disableFace", DisableFace);
 
     public static void RecreateFrom(string url)
     {
@@ -560,7 +600,23 @@ public class PreviewConfiguration
                     Instance.UninterruptedDeferAgent = bool.Parse(value);
                     break;
                 case "disableFace":
-                    Instance.DisableFace = bool.Parse(value);
+                    Instance.SetDisableFace(value);
+                    break;
+                case "url":
+                    Instance.AddUrl(value);
+                    break;
+                case "disableDefaultWearables":
+                    Instance.SetDisableDefaultWearables(value);
+                    break;
+                case "disableDefaultEmotes":
+                    // The Babylon spelling of "no emote", kept so a page can pass either.
+                    if (ParseToggle(value, "disableDefaultEmotes", false)) Instance.Emote = NO_EMOTE;
+                    break;
+                case "peerUrl":
+                    Instance.SetPeerUrl(value);
+                    break;
+                case "marketplaceServerUrl":
+                    Instance.SetMarketplaceServerUrl(value);
                     break;
                 default:
                     Debug.LogWarning($"Unknown parameter in URL: {key}");
@@ -580,6 +636,14 @@ public class PreviewConfiguration
         sb.AppendFormat("&emote={0}", Emote);
         foreach (var urn in Urns)
             sb.AppendFormat("&urn={0}", urn);
+        foreach (var url in Urls)
+            sb.AppendFormat("&url={0}", url);
+        sb.AppendFormat("&disableDefaultWearables={0}", DisableDefaultWearables);
+        sb.AppendFormat("&disableFace={0}", DisableFace);
+        if (PeerUrl != null)
+            sb.AppendFormat("&peerUrl={0}", PeerUrl);
+        if (MarketplaceServerUrl != null)
+            sb.AppendFormat("&marketplaceServerUrl={0}", MarketplaceServerUrl);
         sb.AppendFormat("&background={0}", ColorUtility.ToHtmlStringRGBA(Background));
         sb.AppendFormat("&shadow={0}", Shadow ? "on" : "off");
         sb.AppendFormat("&glow={0}", Glow ? "on" : "off");
