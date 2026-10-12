@@ -84,7 +84,7 @@ namespace DCL.PluginSystem.World
             sceneIsCurrentListeners.Add(SDKEntityTriggerAreaHandlerSystem.InjectToWorld(ref builder, sdkEntityTriggerAreaPoolRegistry!, mainPlayerAvatarBaseProxy, sharedDependencies.SceneStateProvider, characterObject));
 
             finalizeWorldSystems.Add(AvatarModifierAreaHandlerSystem.InjectToWorld(ref builder, globalWorld, sceneRestrictionBusController, web3IdentityCache));
-            finalizeWorldSystems.Add(VoiceChatModifierAreaHandlerSystem.InjectToWorld(ref builder, globalWorld));
+            finalizeWorldSystems.Add(VoiceChatModifierAreaHandlerSystem.InjectToWorld(ref builder, globalWorld, sharedDependencies.SceneData));
             finalizeWorldSystems.Add(CameraModeAreaHandlerSystem.InjectToWorld(ref builder, globalWorld, cameraEntityProxy, cameraData, sceneRestrictionBusController));
             finalizeWorldSystems.Add(TriggerAreaHandlerSystem.InjectToWorld(
                 ref builder,

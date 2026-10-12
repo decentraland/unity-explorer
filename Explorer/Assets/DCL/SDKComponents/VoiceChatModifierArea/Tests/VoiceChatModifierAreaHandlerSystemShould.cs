@@ -12,6 +12,8 @@ using ECS.Prioritization.Components;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
+using SceneRunner.Scene;
+using System.Collections.Generic;
 using UnityEngine;
 using Avatar = DCL.Profiles.Avatar;
 using Vector3 = Decentraland.Common.Vector3;
@@ -21,6 +23,7 @@ namespace DCL.SDKComponents.VoiceChatModifierArea.Tests
     public class VoiceChatModifierAreaHandlerSystemShould : UnitySystemTestBase<VoiceChatModifierAreaHandlerSystem>
     {
         private const string USER_ID = "0xspeaker";
+        private static readonly UnityEngine.Vector3 OUTSIDE_THE_SCENE = new (40, 0, 0);
 
         private World globalWorld = null!;
         private Entity triggerAreaEntity;
@@ -29,6 +32,7 @@ namespace DCL.SDKComponents.VoiceChatModifierArea.Tests
         private GameObject triggerAreaGO = null!;
         private Collider avatarCollider = null!;
         private SDKEntityTriggerArea.SDKEntityTriggerArea sdkEntityTriggerArea = null!;
+        private ISceneData sceneData = null!;
 
         [OneTimeSetUp]
         public void OneTimeSetUp() =>
@@ -42,7 +46,9 @@ namespace DCL.SDKComponents.VoiceChatModifierArea.Tests
         public void SetUp()
         {
             globalWorld = World.Create();
-            system = new VoiceChatModifierAreaHandlerSystem(world, globalWorld);
+            sceneData = Substitute.For<ISceneData>();
+            sceneData.Parcels.Returns(new List<Vector2Int> { Vector2Int.zero });
+            system = new VoiceChatModifierAreaHandlerSystem(world, globalWorld, sceneData);
 
             triggerAreaGO = new GameObject("voice area trigger");
             sdkEntityTriggerArea = triggerAreaGO.AddComponent<SDKEntityTriggerArea.SDKEntityTriggerArea>();
@@ -98,6 +104,51 @@ namespace DCL.SDKComponents.VoiceChatModifierArea.Tests
             Assert.AreEqual(float.PositiveInfinity, modifier.MaxDistance);
             Assert.IsFalse(modifier.Mute);
             Assert.IsFalse(modifier.Isolate);
+        }
+
+        [TestCase(float.NaN)]
+        [TestCase(float.PositiveInfinity)]
+        [TestCase(float.NegativeInfinity)]
+        public void TreatNonFiniteValuesAsUnset(float value)
+        {
+            AddAreaAndEnter(Area(volumeScale: value, maxDistance: value));
+
+            VoiceChatAreaModifier modifier = globalWorld.Get<VoiceChatAreaModifiersComponent>(avatarEntity).Modifiers[0];
+            Assert.AreEqual(1f, modifier.VolumeScale);
+            Assert.AreEqual(float.PositiveInfinity, modifier.MaxDistance);
+        }
+
+        [Test]
+        public void IgnoreASpeakerStandingOutsideTheScene()
+        {
+            avatarGO.transform.position = OUTSIDE_THE_SCENE;
+
+            AddAreaAndEnter(Area(mute: true));
+
+            Assert.IsFalse(globalWorld.Has<VoiceChatAreaModifiersComponent>(avatarEntity));
+        }
+
+        [Test]
+        public void RemoveTheAreaWhenTheSpeakerWalksOutOfTheScene()
+        {
+            AddAreaAndEnter(Area(mute: true));
+
+            avatarGO.transform.position = OUTSIDE_THE_SCENE;
+            system.Update(0);
+
+            Assert.IsEmpty(globalWorld.Get<VoiceChatAreaModifiersComponent>(avatarEntity).Modifiers);
+        }
+
+        [Test]
+        public void ApplyTheAreaWhenTheSpeakerWalksIntoTheScene()
+        {
+            avatarGO.transform.position = OUTSIDE_THE_SCENE;
+            AddAreaAndEnter(Area(mute: true));
+
+            avatarGO.transform.position = UnityEngine.Vector3.zero;
+            system.Update(0);
+
+            Assert.AreEqual(1, globalWorld.Get<VoiceChatAreaModifiersComponent>(avatarEntity).Modifiers.Count);
         }
 
         [Test]

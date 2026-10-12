@@ -13,9 +13,11 @@ using ECS.Groups;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
 using ECS.Unity.Transforms.Components;
+using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Utility;
 
 namespace DCL.SDKComponents.VoiceChatModifierArea.Systems
 {
@@ -31,10 +33,12 @@ namespace DCL.SDKComponents.VoiceChatModifierArea.Systems
                                                                      .WithNone<DeleteEntityIntention, PBVoiceChatModifierArea>();
 
         private readonly World globalWorld;
+        private readonly ISceneData sceneData;
 
-        internal VoiceChatModifierAreaHandlerSystem(World world, World globalWorld) : base(world)
+        internal VoiceChatModifierAreaHandlerSystem(World world, World globalWorld, ISceneData sceneData) : base(world)
         {
             this.globalWorld = globalWorld;
+            this.sceneData = sceneData;
         }
 
         protected override void Update(float t)
@@ -59,13 +63,13 @@ namespace DCL.SDKComponents.VoiceChatModifierArea.Systems
         {
             World.Add(entity,
                 new SDKEntityTriggerAreaComponent(areaSize: pbArea.Area, targetOnlyMainPlayer: false),
-                new VoiceChatModifierAreaComponent());
+                new VoiceChatModifierAreaComponent(new HashSet<Collider>()));
         }
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        [All(typeof(TransformComponent), typeof(VoiceChatModifierAreaComponent))]
-        private void UpdateArea(Entity entity, ref PBVoiceChatModifierArea pbArea, ref SDKEntityTriggerAreaComponent triggerArea)
+        [All(typeof(TransformComponent))]
+        private void UpdateArea(Entity entity, ref PBVoiceChatModifierArea pbArea, ref SDKEntityTriggerAreaComponent triggerArea, in VoiceChatModifierAreaComponent area)
         {
             VoiceChatAreaModifier modifier = ToModifier(entity, pbArea);
 
@@ -74,55 +78,86 @@ namespace DCL.SDKComponents.VoiceChatModifierArea.Systems
                 pbArea.IsDirty = false;
                 triggerArea.UpdateAreaSize(pbArea.Area);
 
-                foreach (Collider avatarCollider in triggerArea.CurrentEntitiesInside)
+                foreach (Collider avatarCollider in area.AffectedAvatars)
                     ApplyToAvatar(avatarCollider, pbArea, modifier);
             }
 
             foreach (Collider avatarCollider in triggerArea.ExitedEntitiesToBeProcessed)
-                RemoveFromAvatar(avatarCollider, modifier);
+                if (area.AffectedAvatars.Remove(avatarCollider))
+                    RemoveFromAvatar(avatarCollider, modifier);
 
             triggerArea.TryClearExitedAvatarsToBeProcessed();
-
-            foreach (Collider avatarCollider in triggerArea.EnteredEntitiesToBeProcessed)
-                ApplyToAvatar(avatarCollider, pbArea, modifier);
-
             triggerArea.TryClearEnteredAvatarsToBeProcessed();
+
+            if (triggerArea.CurrentEntitiesInside.Count == 0) return;
+
+            foreach (Collider avatarCollider in triggerArea.CurrentEntitiesInside)
+            {
+                if (avatarCollider == null) continue;
+
+                bool insideScene = IsInsideScene(avatarCollider.transform.position);
+
+                if (insideScene == area.AffectedAvatars.Contains(avatarCollider)) continue;
+
+                if (insideScene)
+                {
+                    area.AffectedAvatars.Add(avatarCollider);
+                    ApplyToAvatar(avatarCollider, pbArea, modifier);
+                }
+                else
+                {
+                    area.AffectedAvatars.Remove(avatarCollider);
+                    RemoveFromAvatar(avatarCollider, modifier);
+                }
+            }
         }
 
         [Query]
-        [All(typeof(DeleteEntityIntention), typeof(VoiceChatModifierAreaComponent))]
-        private void HandleEntityDestruction(Entity entity, ref SDKEntityTriggerAreaComponent triggerArea)
+        [All(typeof(DeleteEntityIntention))]
+        private void HandleEntityDestruction(Entity entity, in VoiceChatModifierAreaComponent area)
         {
-            RemoveFromAllInside(entity, triggerArea);
+            RemoveFromAllAffected(entity, area);
         }
 
         [Query]
         [None(typeof(DeleteEntityIntention), typeof(PBVoiceChatModifierArea))]
-        [All(typeof(VoiceChatModifierAreaComponent))]
-        private void HandleComponentRemoval(Entity entity, ref SDKEntityTriggerAreaComponent triggerArea)
+        private void HandleComponentRemoval(Entity entity, in VoiceChatModifierAreaComponent area)
         {
-            RemoveFromAllInside(entity, triggerArea);
+            RemoveFromAllAffected(entity, area);
         }
 
         [Query]
-        [All(typeof(VoiceChatModifierAreaComponent))]
-        private void ReleaseAllAreas(Entity entity, ref SDKEntityTriggerAreaComponent triggerArea)
+        private void ReleaseAllAreas(Entity entity, in VoiceChatModifierAreaComponent area)
         {
-            RemoveFromAllInside(entity, triggerArea);
+            RemoveFromAllAffected(entity, area);
         }
 
-        private void RemoveFromAllInside(Entity entity, in SDKEntityTriggerAreaComponent triggerArea)
+        private void RemoveFromAllAffected(Entity entity, in VoiceChatModifierAreaComponent area)
         {
             var key = new VoiceChatAreaModifier(World, entity, 1f, float.PositiveInfinity, false, false);
 
-            foreach (Collider avatarCollider in triggerArea.CurrentEntitiesInside)
+            foreach (Collider avatarCollider in area.AffectedAvatars)
                 RemoveFromAvatar(avatarCollider, key);
+
+            area.AffectedAvatars.Clear();
+        }
+
+        private bool IsInsideScene(Vector3 position)
+        {
+            Vector2Int parcel = position.ToParcel();
+            IReadOnlyList<Vector2Int> parcels = sceneData.Parcels;
+
+            for (var i = 0; i < parcels.Count; i++)
+                if (parcels[i] == parcel)
+                    return true;
+
+            return false;
         }
 
         private VoiceChatAreaModifier ToModifier(Entity entity, PBVoiceChatModifierArea pbArea) =>
             new (World, entity,
-                pbArea.HasVolumeScale ? Mathf.Clamp01(pbArea.VolumeScale) : 1f,
-                pbArea.HasMaxDistance ? pbArea.MaxDistance : float.PositiveInfinity,
+                pbArea.HasVolumeScale && float.IsFinite(pbArea.VolumeScale) ? Mathf.Clamp01(pbArea.VolumeScale) : 1f,
+                pbArea.HasMaxDistance && float.IsFinite(pbArea.MaxDistance) ? pbArea.MaxDistance : float.PositiveInfinity,
                 pbArea.HasMute && pbArea.Mute,
                 pbArea.HasIsolate && pbArea.Isolate);
 
@@ -151,7 +186,7 @@ namespace DCL.SDKComponents.VoiceChatModifierArea.Systems
 
         private void RemoveFromAvatar(Collider avatarCollider, in VoiceChatAreaModifier area)
         {
-            if (TryGetAvatarEntity(avatarCollider.transform, out Entity avatarEntity))
+            if (avatarCollider != null && TryGetAvatarEntity(avatarCollider.transform, out Entity avatarEntity))
                 RemoveFromAvatar(avatarEntity, area);
         }
 
