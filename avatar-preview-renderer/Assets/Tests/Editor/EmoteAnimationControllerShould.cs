@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Reflection;
 using System.Text.RegularExpressions;
 using Data;
 using Loading;
@@ -219,14 +218,7 @@ namespace Tests
         // A frame of the controller.
         private void Tick() => Invoke("Update");
 
-        // Unity refuses to run a behaviour's methods through SendMessage outside play mode, so the
-        // frame and the clip's end event are called directly.
-        private void Invoke(string method)
-        {
-            typeof(EmoteAnimationController)
-                .GetMethod(method, BindingFlags.Instance | BindingFlags.NonPublic)!
-                .Invoke(_controller, null);
-        }
+        private void Invoke(string method) => UnityMessages.Invoke(_controller, method);
 
         // In the Editor the runtime clip-event API logs an error per write (the events are set all the
         // same); the player has no such log.

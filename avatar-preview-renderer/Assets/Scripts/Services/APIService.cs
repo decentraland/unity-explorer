@@ -11,6 +11,14 @@ namespace Services
     {
         private const int RETRY_COUNT = 2;
 
+        // Path templates on their own: the host is prepended after formatting, so a host is never
+        // read for placeholders.
+        private const string CONTENT_PATH = "/content/contents/{0}";
+        private const string PROFILE_PATH = "/lambdas/profiles/{0}";
+        private const string ACTIVE_ENTITIES_PATH = "/content/entities/active";
+        private const string MARKETPLACE_ITEM_PATH = "/v1/items?contractAddress={0}&itemId={1}";
+        private const string MARKETPLACE_NFT_PATH = "/v1/nfts?contractAddress={0}&tokenId={1}";
+
         private static string EndpointPeer => PeerUrl ?? $"https://peer.decentraland.{Environment}";
         private static string EndpointMarketplace => MarketplaceServerUrl ?? $"https://marketplace-api.decentraland.{Environment}";
 
@@ -22,17 +30,16 @@ namespace Services
 
         public static string MarketplaceServerUrl { get; set; }
 
-        public static string APICatalyst => EndpointPeer + "/content/contents/{0}";
-        private static string APIProfile => EndpointPeer + "/lambdas/profiles/{0}";
-        private static string APIActiveEntities => EndpointPeer + "/content/entities/active";
-        private static string APIMarketplaceItemID => EndpointMarketplace + "/v1/items?contractAddress={0}&itemId={1}";
-        private static string APIMarketplaceTokenID => EndpointMarketplace + "/v1/nfts?contractAddress={0}&tokenId={1}";
+        /// <summary>
+        /// The URL of a file on the Catalyst, by content hash.
+        /// </summary>
+        public static string ContentUrl(string hash) => EndpointPeer + string.Format(CONTENT_PATH, hash);
 
         public static string Environment { get; set; } = "org";
 
         public static async Awaitable<ProfileResponse.Avatar.AvatarData> GetAvatar(string profileID)
         {
-            var profile = await GetWithRetry<ProfileResponse>(APIProfile, profileID);
+            var profile = await GetWithRetry<ProfileResponse>(EndpointPeer, PROFILE_PATH, profileID);
 
             var avatar = profile.avatars[0].avatar;
 
@@ -62,11 +69,11 @@ namespace Services
         }
 
         public static Awaitable<MarketplaceItemResponse> GetMarketplaceItemFromID(string contract, string itemID) =>
-            GetWithRetry<MarketplaceItemResponse>(APIMarketplaceItemID, contract, itemID);
+            GetWithRetry<MarketplaceItemResponse>(EndpointMarketplace, MARKETPLACE_ITEM_PATH, contract, itemID);
 
 
         public static Awaitable<MarketplaceNTFResponse> GetMarketplaceItemFromToken(string contract, string tokenID) =>
-            GetWithRetry<MarketplaceNTFResponse>(APIMarketplaceTokenID, contract, tokenID);
+            GetWithRetry<MarketplaceNTFResponse>(EndpointMarketplace, MARKETPLACE_NFT_PATH, contract, tokenID);
 
         public static async Awaitable<ActiveEntity[]> GetActiveEntities(string[] pointers)
         {
@@ -76,7 +83,7 @@ namespace Services
             // Each attempt owns its request, so the handlers of a failed one are released.
             while (true)
             {
-                using var attempt = UnityWebRequest.Post(APIActiveEntities, body, "application/json");
+                using var attempt = UnityWebRequest.Post(EndpointPeer + ACTIVE_ENTITIES_PATH, body, "application/json");
                 await attempt.SendWebRequest();
                 retries++;
 
@@ -98,8 +105,8 @@ namespace Services
         /// </summary>
         public static Awaitable<string> GetText(string url) => GetTextWithRetry(url);
 
-        private static async Awaitable<T> GetWithRetry<T>(string url, params object[] args) =>
-            JsonUtility.FromJson<T>(await GetTextWithRetry(string.Format(url, args)));
+        private static async Awaitable<T> GetWithRetry<T>(string host, string pathTemplate, params object[] args) =>
+            JsonUtility.FromJson<T>(await GetTextWithRetry(host + string.Format(pathTemplate, args)));
 
         private static async Awaitable<string> GetTextWithRetry(string url)
         {

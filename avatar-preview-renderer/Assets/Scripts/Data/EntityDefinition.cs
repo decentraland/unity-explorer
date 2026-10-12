@@ -129,7 +129,7 @@ namespace Data
                     .Where(c => repContentsSet.Contains(c.file))
                     .ToDictionary(
                         c => c.file,
-                        c => c.url ?? string.Format(APIService.APICatalyst, c.hash),
+                        c => c.url ?? APIService.ContentUrl(c.hash),
                         StringComparer.OrdinalIgnoreCase
                     );
 
@@ -172,7 +172,7 @@ namespace Data
             var category = entity.IsEmote ? "emote" : entity.metadata.data.category;
             var thumbnailContent = entity.content?.FirstOrDefault(c => c.file == entity.metadata.thumbnail);
             var thumbnail = thumbnailContent != null
-                ? string.Format(APIService.APICatalyst, thumbnailContent.hash)
+                ? APIService.ContentUrl(thumbnailContent.hash)
                 : null;
             var type = entity.IsEmote ? EntityType.Emote :
                 urn.Equals(WearablesConstants.BODY_SHAPE_FEMALE, StringComparison.OrdinalIgnoreCase) || urn.Equals(

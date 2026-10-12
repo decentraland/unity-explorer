@@ -149,7 +149,9 @@ public class EmoteAnimationController : MonoBehaviour
         SetSpeed(_loadedEmote.Value.Entity.URN, 1f);
         audioSource.UnPause();
 
-        PlaybackChanged?.Invoke(EmotePlaybackEvent.Play, GetCurrentEmoteTime());
+        var time = GetCurrentEmoteTime();
+        RestartFinishedAudio(time);
+        PlaybackChanged?.Invoke(EmotePlaybackEvent.Play, time);
     }
 
     /// <summary>
@@ -211,9 +213,7 @@ public class EmoteAnimationController : MonoBehaviour
     {
         if (!_loadedEmote.HasValue) return;
 
-        // A negative time would count as a wrap, one past the end would skip the clip's end event,
-        // and a NaN passes through a clamp.
-        if (float.IsNaN(seconds)) return;
+        // A negative time would count as a wrap, and one past the end would skip the clip's end event.
         seconds = Mathf.Clamp(seconds, 0f, _loadedEmote.Value.Clip.length);
 
         var urn = _loadedEmote.Value.Entity.URN;
@@ -236,7 +236,10 @@ public class EmoteAnimationController : MonoBehaviour
         Seek(urn, seconds);
 
         // A held or paused clip reports no position: it is not playing.
-        if (_state == PlaybackState.Playing) PlaybackChanged?.Invoke(EmotePlaybackEvent.Playing, seconds);
+        if (_state != PlaybackState.Playing) return;
+
+        RestartFinishedAudio(seconds);
+        PlaybackChanged?.Invoke(EmotePlaybackEvent.Playing, seconds);
     }
 
     public void EnableSound()
@@ -348,6 +351,15 @@ public class EmoteAnimationController : MonoBehaviour
         audioSource.clip = _emoteAudioClip;
         audioSource.time = AudioTime(seconds);
         audioSource.Play();
+    }
+
+    // A source that played its clip out stays stopped when only its time moves, so it is started
+    // again at the position, as long as the position is inside the audio.
+    private void RestartFinishedAudio(float seconds)
+    {
+        if (_emoteAudioClip == null || audioSource.isPlaying || seconds >= _emoteAudioClip.length) return;
+
+        PlayAudioFrom(seconds);
     }
 
     // A time at the very end is rejected by the source, so it stays a hair before it.

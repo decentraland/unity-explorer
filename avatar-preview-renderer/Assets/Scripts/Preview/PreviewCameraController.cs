@@ -70,7 +70,7 @@ namespace Preview
             _initialOrthoSize = marketplaceAvatarCamera.Lens.OrthographicSize;
             _zoomRange = ZoomRange.FromOptions(null, null, 50f, defaultZoomIn, defaultZoomOut);
 
-            // Same three cameras the zoom drives - authProfile and jesus are deliberately left alone
+            // The three cameras the zoom drives.
             _avatarFraming = new CameraFraming(marketplaceAvatarCamera, _initialFOV, _initialOrthoSize);
             _wearableFraming = new CameraFraming(marketplaceWearableCamera, _initialFOV, _initialOrthoSize);
             _builderFraming = new CameraFraming(builderCamera, _initialFOV, _initialOrthoSize);
@@ -117,8 +117,8 @@ namespace Preview
 
         public void SetMode(PreviewMode mode)
         {
-            // Only a change of mode starts over from the fit: a reload within a mode, which the editors
-            // trigger on every item update, keeps the zoom and pan the creator set.
+            // Only a change of mode starts over from the fit; a reload within the same mode keeps the
+            // current zoom and pan.
             if (_lastMode != mode)
             {
                 _lastMode = mode;

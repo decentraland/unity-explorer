@@ -11,8 +11,12 @@ namespace Preview
     public readonly struct ZoomRange
     {
         // Babylon maps zoom 0..100 onto a radius divisor of 1..2.8.
+        private const float MAX_PERCENT = 100f;
         private const float MIN_ZOOM_FACTOR = 1f;
         private const float MAX_ZOOM_FACTOR = 2.8f;
+
+        // The farthest pull-back a page may ask for, so the farthest radius stays a finite float.
+        private const float MAX_WHEEL_ZOOM = 100f;
 
         // Babylon's default camera sits this far from its target (3.46 for an item, 3.64 for an
         // avatar), so a radius delta coming from an app is in these metres.
@@ -37,7 +41,7 @@ namespace Preview
         /// Babylon's <c>zoom</c> option, 0 to 100, as a factor over the fitted view.
         /// </summary>
         public static float FactorFromPercent(float percent) =>
-            MIN_ZOOM_FACTOR + (MAX_ZOOM_FACTOR - MIN_ZOOM_FACTOR) * Mathf.Clamp(percent, 0f, 100f) / 100f;
+            MIN_ZOOM_FACTOR + (MAX_ZOOM_FACTOR - MIN_ZOOM_FACTOR) * Mathf.Clamp(percent, 0f, MAX_PERCENT) / MAX_PERCENT;
 
         /// <summary>
         /// With neither option, the renderer's own range around the fitted view. Otherwise Babylon's
@@ -52,9 +56,9 @@ namespace Preview
                 return new ZoomRange(1f / defaultZoomOut, defaultZoomIn, 1f);
 
             var closest = zoomPercent.HasValue ? FactorFromPercent(zoomPercent.Value) : 1f;
-            var pullBack = Mathf.Max(wheelZoom ?? 1f, 1f);
+            var pullBack = Mathf.Clamp(wheelZoom ?? 1f, 1f, MAX_WHEEL_ZOOM);
             var farthest = closest / pullBack;
-            var startFraction = (100f - Mathf.Clamp(wheelStart, 0f, 100f)) / 100f;
+            var startFraction = (MAX_PERCENT - Mathf.Clamp(wheelStart, 0f, MAX_PERCENT)) / MAX_PERCENT;
 
             // Babylon starts at a radius between its limits; the factor is the inverse of the radius.
             var start = closest / (1f + (pullBack - 1f) * startFraction);

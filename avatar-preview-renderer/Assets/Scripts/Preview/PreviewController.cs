@@ -257,9 +257,16 @@ namespace Preview
         public void ZoomBy(float delta) => previewCameraController.ZoomByDelta(delta);
 
         /// <summary>
-        /// Puts the view at an absolute offset, across and up the screen in metres.
+        /// Puts the view at the configuration's offset, across and up the screen in metres. The
+        /// camera takes the configuration first, so the other view starts from the same offset.
         /// </summary>
-        public void SetCameraOffset(Vector2 offset) => previewCameraController.SetOffset(offset);
+        public void ApplyCameraOffset()
+        {
+            var config = PreviewConfiguration.Instance;
+
+            previewCameraController.Configure(config);
+            previewCameraController.SetOffset(config.Offset);
+        }
 
         /// <summary>
         /// Moves the view by Babylon's orbit deltas: alpha turns the subject, beta tilts it, both in
@@ -336,6 +343,7 @@ namespace Preview
                 var config = PreviewConfiguration.Instance;
 
                 _requestedItemUrns.Clear();
+                var wasShowingWearable = _showingWearable;
                 _showingWearable = false;
                 previewUIPresenter.SetControlsHidden(config.HideControls);
 
@@ -442,6 +450,11 @@ namespace Preview
                     _requestedItemUrns.Clear();
                     var reloadQueued = _shouldReload;
                     EndReload();
+
+                    // SetMode put the profile camera first for this load; the subject on screen is
+                    // the last load's, so its view comes back. After the end, so a throw here cannot
+                    // leave the reload open.
+                    if (config.Mode is PreviewMode.Marketplace) ShowWearableView(wasShowingWearable);
 
                     if (reloadQueued) StartCoroutine(Reload());
 
@@ -568,9 +581,7 @@ namespace Preview
                 : BodyShape.Male;
         }
 
-        // "idle" resolves to no emote: the scene rig already carries an Idle clip, so an empty slot
-        // plays it with nothing to download. "none" asks for exactly that. NOTE LoadForProfile does
-        // not short-circuit.
+        // "idle" and "none" resolve to no emote: the rig's own Idle clip plays with nothing to download.
         private static EntityDefinition DefaultEmote(string name, bool loop) =>
             name is "idle" or PreviewConfiguration.NO_EMOTE ? null : EntityDefinition.FromEmbeddedEmote(name, loop);
 

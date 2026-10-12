@@ -31,15 +31,28 @@ public class DragRotator : MonoBehaviour
     // in, and a tilt held only as a quaternion cannot be clamped.
     private float _yaw;
     private float _pitch;
+    private bool _inputEnabled = true;
 
     public bool AllowHorizontal { get; set; } = true;
     public bool AllowVertical { get; set; } = true;
     public bool EnableAutoRotate { get; set; } = true;
 
     /// <summary>
-    /// False ignores drags altogether, for a static camera. Auto-rotate is gated separately.
+    /// False ignores drags altogether and drops the inertia of one under way, for a static camera.
+    /// Auto-rotate is gated separately.
     /// </summary>
-    public bool InputEnabled { get; set; } = true;
+    public bool InputEnabled
+    {
+        get => _inputEnabled;
+        set
+        {
+            _inputEnabled = value;
+            if (value) return;
+
+            _horizontalVel = 0f;
+            _verticalVel = 0f;
+        }
+    }
 
     public float DragSpeed { get => dragSpeed; set => dragSpeed = value; }
 

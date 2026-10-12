@@ -147,9 +147,8 @@ public class PreviewConfiguration
         DisableDefaultWearables = ParseToggle(value, "disableDefaultWearables", DisableDefaultWearables);
 
     /// <summary>
-    /// Hosts for the Catalyst and the Marketplace API, replacing the ones <c>env</c> picks. Copied
-    /// to <see cref="Services.APIService"/> at the start of each reload, so a live change never
-    /// switches hosts under a load in flight.
+    /// Hosts for the Catalyst and the Marketplace API, replacing the ones <c>env</c> picks; null
+    /// keeps those.
     /// </summary>
     public string PeerUrl { get; private set; }
 

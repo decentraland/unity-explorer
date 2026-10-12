@@ -298,9 +298,8 @@ public class JSBridge : MonoBehaviour
             return;
         }
 
-        var planar = new Vector2(offset.x, offset.y);
-        PreviewConfiguration.Instance.SetOffset(planar);
-        previewController.SetCameraOffset(planar);
+        PreviewConfiguration.Instance.SetOffset(new Vector2(offset.x, offset.y));
+        previewController.ApplyCameraOffset();
     }
 
     /// <summary>
