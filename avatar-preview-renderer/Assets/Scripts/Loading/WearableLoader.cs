@@ -162,6 +162,9 @@ namespace Loading
             _wearableDisposable = null;
             _loadedUrn = null;
 
+            // Or Update keeps handing the destroyed renderers to the outline pass.
+            _outlineRenderers.Clear();
+
             _defaultBodyFacialFeatures.Clear();
         }
     }

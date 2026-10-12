@@ -47,6 +47,9 @@ namespace Preview
         // definitions, never the profile's own wearables or the body. Metrics are reported for these.
         private readonly HashSet<string> _requestedItemUrns = new();
 
+        // Whether the emote is already held for a static camera, so a later camera option leaves it alone.
+        private bool _emoteHeldForStaticCamera;
+
         private ScreenshotCapture _screenshotCapture;
 
         private bool _loading;
@@ -76,6 +79,12 @@ namespace Preview
 
         private void OnDestroy()
         {
+            previewUIPresenter.ShowAvatarClicked -= OnShowAvatarClicked;
+            previewUIPresenter.ShowWearableClicked -= OnShowWearableClicked;
+            previewUIPresenter.EmoteToggleClicked -= OnEmoteToggleClicked;
+            previewUIPresenter.ContainerDrag -= avatarRotator.OnDrag;
+            previewUIPresenter.ContainerDrag -= wearableRotator.OnDrag;
+            previewUIPresenter.ContainerPan -= previewCameraController.Pan;
             emoteAnimationController.PlaybackChanged -= OnEmotePlaybackChanged;
             emoteAnimationController.EmoteAnimationEnded -= OnEmoteAnimationEnded;
             _screenshotCapture.Dispose();
@@ -209,16 +218,19 @@ namespace Preview
             // A solo item is being inspected, and yaw alone cannot reach a hood's inside or a shoe's sole.
             avatarRotator.AllowVertical = false;
             wearableRotator.AllowVertical = !config.LockBeta;
-            avatarRotator.EnableAutoRotate = _autoRotateByMode && !config.DisableAutoRotate && interactive;
-            wearableRotator.EnableAutoRotate = !config.DisableAutoRotate && interactive;
+            // A locked turntable does not turn on its own either.
+            avatarRotator.EnableAutoRotate =
+                _autoRotateByMode && !config.DisableAutoRotate && !config.LockAlpha && interactive;
+            wearableRotator.EnableAutoRotate = !config.DisableAutoRotate && !config.LockAlpha && interactive;
 
-            // A static camera is a still: the emote is held on its first frame, so the view shows the
-            // pose rather than a moment of the motion.
-            if (!interactive)
+            // A static camera is a still: the emote is held on its first frame when the camera becomes
+            // static, and a later camera option leaves it where the page put it.
+            if (!interactive && !_emoteHeldForStaticCamera)
             {
-                emoteAnimationController.GoToEmote(0f);
-                emoteAnimationController.PauseEmote();
+                emoteAnimationController.StopEmote();
             }
+
+            _emoteHeldForStaticCamera = !interactive;
         }
 
         /// <summary>
@@ -408,6 +420,14 @@ namespace Preview
                             throw new ArgumentOutOfRangeException();
                     }
 
+                    // Only marketplace shows an item on its own. Any other mode drops one left over from
+                    // an earlier marketplace load, or it would answer a metrics request for an item the
+                    // avatar no longer wears. After the load, so a failed one still shows what was there.
+                    if (config.Mode is not PreviewMode.Marketplace)
+                    {
+                        wearableLoader.Cleanup();
+                    }
+
                     if (config.DisableFace)
                     {
                         avatarLoader.HideFacialFeatures();
@@ -456,10 +476,12 @@ namespace Preview
                     avatarRotator.DragSpeed = 2f;
                 }
 
-                avatarRotator.enabled = true;
-                wearableRotator.enabled = true;
                 _autoRotateByMode = config.Mode is PreviewMode.Marketplace && !hasEmoteOverride;
                 _cameraInputByMode = config.Mode is PreviewMode.Marketplace or PreviewMode.Builder;
+
+                // The load replayed the emote, so a static camera has to hold it again, whatever a
+                // setter that arrived mid-load recorded.
+                _emoteHeldForStaticCamera = false;
                 ApplyCameraSettings();
 
                 previewUIPresenter.EnableEmoteControls(hasEmoteOverride);
@@ -479,6 +501,10 @@ namespace Preview
             mainCamera.cullingMask = -1; // Render everything
             avatarLoader.enabled = true; // Enables Update for Outline
             wearableLoader.enabled = true;
+
+            // On a failed load the previous subject is shown again, and has to turn as before.
+            avatarRotator.enabled = true;
+            wearableRotator.enabled = true;
 
             if (_shouldCleanup)
             {

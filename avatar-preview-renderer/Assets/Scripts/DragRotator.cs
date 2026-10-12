@@ -98,8 +98,9 @@ public class DragRotator : MonoBehaviour
         _horizontalVel *= Mathf.Pow(inertiaDamp, dt);
         _verticalVel *= Mathf.Pow(inertiaDamp, dt);
 
-        // Velocity rotation
-        _yaw += _horizontalVel;
+        // Velocity rotation; a lock set mid-flick drops the inertia, so unlocking later does not resume it
+        if (AllowHorizontal) _yaw += _horizontalVel;
+        else _horizontalVel = 0f;
 
         if (AllowVertical)
         {
@@ -108,6 +109,10 @@ public class DragRotator : MonoBehaviour
 
             // Drop inertia at the stop, or a flick keeps "arriving" after the subject has visibly stopped.
             if (!Mathf.Approximately(_pitch, tilted)) _verticalVel = 0f;
+        }
+        else
+        {
+            _verticalVel = 0f;
         }
 
         // Auto rotation

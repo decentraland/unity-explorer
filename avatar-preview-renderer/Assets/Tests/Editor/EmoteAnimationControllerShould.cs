@@ -1,10 +1,56 @@
+using System.Collections.Generic;
+using System.Reflection;
+using System.Text.RegularExpressions;
+using Data;
+using Loading;
 using NUnit.Framework;
+using UnityEditor;
+using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace Tests
 {
     public class EmoteAnimationControllerShould
     {
         private const float TOLERANCE = 0.0001f;
+        private const float CLIP_LENGTH = 2f;
+
+        private GameObject _rig;
+        private AnimationClip _idleClip;
+        private AnimationClip _emoteClip;
+        private EmoteAnimationController _controller;
+        private List<(EmotePlaybackEvent playbackEvent, float time)> _reported;
+
+        [SetUp]
+        public void SetUp()
+        {
+            _rig = new GameObject("rig");
+            var animation = _rig.AddComponent<Animation>();
+            var audioSource = _rig.AddComponent<AudioSource>();
+
+            _idleClip = LegacyClip(EmoteAnimationController.IDLE_CLIP_NAME, WrapMode.Loop);
+            animation.AddClip(_idleClip, EmoteAnimationController.IDLE_CLIP_NAME);
+            _emoteClip = LegacyClip("emote", WrapMode.Clamp);
+
+            _controller = _rig.AddComponent<EmoteAnimationController>();
+
+            // The references are serialized fields the scene wires; the fixture wires them the same way.
+            var serialized = new SerializedObject(_controller);
+            serialized.FindProperty("avatarAnimation").objectReferenceValue = animation;
+            serialized.FindProperty("audioSource").objectReferenceValue = audioSource;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+
+            _reported = new List<(EmotePlaybackEvent, float)>();
+            _controller.PlaybackChanged += (playbackEvent, time) => _reported.Add((playbackEvent, time));
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            Object.DestroyImmediate(_rig);
+            Object.DestroyImmediate(_idleClip);
+            Object.DestroyImmediate(_emoteClip);
+        }
 
         [TestCase(0f, 2f, 0, 0f)]
         [TestCase(1.5f, 2f, 0, 1.5f)]
@@ -29,6 +75,125 @@ namespace Tests
             // Assert
             Assert.AreEqual(0, wrapped.loops);
             Assert.AreEqual(0f, wrapped.clipTime, TOLERANCE);
+        }
+
+        [Test]
+        public void ReportPlayPauseAndAFreshPlayAfterAStop()
+        {
+            // Act
+            PlayEmote();
+            _controller.PauseEmote();
+            var pausedBeforeStop = _controller.IsPaused;
+            _controller.StopEmote();
+            var pausedAfterStop = _controller.IsPaused;
+            _controller.ReplayEmote();
+
+            // Assert
+            Assert.IsTrue(pausedBeforeStop);
+            Assert.IsFalse(pausedAfterStop);
+            CollectionAssert.AreEqual(new[]
+            {
+                EmotePlaybackEvent.Play, EmotePlaybackEvent.Pause, EmotePlaybackEvent.End, EmotePlaybackEvent.Play,
+            }, Events());
+            Assert.AreEqual(0f, _reported[2].time, TOLERANCE);
+        }
+
+        [Test]
+        public void ReportTheEndOnceWhenAFinishedClipReturnsToIdle()
+        {
+            // Arrange
+            PlayEmote();
+
+            // Act: the clip's own end event, a frame of the fade that follows, then the reload's cleanup.
+            Invoke("EmoteEnded");
+            Tick();
+            _controller.ReturnToIdle(false);
+
+            // Assert
+            CollectionAssert.AreEqual(new[] { EmotePlaybackEvent.Play, EmotePlaybackEvent.End }, Events());
+            Assert.AreEqual(CLIP_LENGTH, _reported[1].time, TOLERANCE);
+        }
+
+        [Test]
+        public void ReportTheEndOnceWhenAStoppedClipReturnsToIdle()
+        {
+            // Arrange
+            PlayEmote();
+
+            // Act
+            _controller.StopEmote();
+            _controller.ReturnToIdle(false);
+
+            // Assert
+            CollectionAssert.AreEqual(new[] { EmotePlaybackEvent.Play, EmotePlaybackEvent.End }, Events());
+        }
+
+        [Test]
+        public void ReportNoPositionWhileHeld()
+        {
+            // Arrange
+            PlayEmote();
+            _controller.StopEmote();
+
+            // Act
+            _controller.GoToEmote(0.5f);
+            Tick();
+
+            // Assert
+            CollectionAssert.DoesNotContain(Events(), EmotePlaybackEvent.Playing);
+        }
+
+        [Test]
+        public void ReportThePositionOfASeekWhilePlaying()
+        {
+            // Arrange
+            PlayEmote();
+
+            // Act
+            _controller.GoToEmote(0.5f);
+
+            // Assert
+            Assert.AreEqual(EmotePlaybackEvent.Playing, _reported[^1].playbackEvent);
+            Assert.AreEqual(0.5f, _reported[^1].time, TOLERANCE);
+        }
+
+        // A frame of the controller.
+        private void Tick() => Invoke("Update");
+
+        // Unity refuses to run a behaviour's methods through SendMessage outside play mode, so the
+        // frame and the clip's end event are called directly.
+        private void Invoke(string method)
+        {
+            typeof(EmoteAnimationController)
+                .GetMethod(method, BindingFlags.Instance | BindingFlags.NonPublic)!
+                .Invoke(_controller, null);
+        }
+
+        // In the Editor the runtime clip-event API logs an error per write (the events are set all the
+        // same); the player has no such log.
+        private void PlayEmote()
+        {
+            for (var i = 0; i < 3; i++)
+            {
+                LogAssert.Expect(LogType.Error, new Regex("AnimationUtility"));
+            }
+
+            _controller.PlayEmote(new LoadedEmote(EntityDefinition.FromEmbeddedEmote("test", false), _emoteClip,
+                null, null, null, null, ModelMetrics.Empty));
+        }
+
+        private List<EmotePlaybackEvent> Events()
+        {
+            var events = new List<EmotePlaybackEvent>(_reported.Count);
+            foreach (var (playbackEvent, _) in _reported) events.Add(playbackEvent);
+            return events;
+        }
+
+        private static AnimationClip LegacyClip(string name, WrapMode wrapMode)
+        {
+            var clip = new AnimationClip { name = name, legacy = true, wrapMode = wrapMode };
+            clip.SetCurve(string.Empty, typeof(Transform), "localPosition.x", AnimationCurve.Linear(0f, 0f, CLIP_LENGTH, 1f));
+            return clip;
         }
     }
 }
