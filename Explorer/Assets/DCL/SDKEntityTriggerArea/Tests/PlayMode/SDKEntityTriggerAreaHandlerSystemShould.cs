@@ -7,7 +7,6 @@ using DCL.SDKEntityTriggerArea.Systems;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using DCL.Utilities;
-using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.TestSuite;
 using ECS.Unity.Transforms.Components;
@@ -26,18 +25,22 @@ namespace DCL.SDKEntityTriggerArea.Tests
     {
         private Entity entity;
         private TransformComponent entityTransformComponent;
-        private ISceneStateProvider sceneStateProvider;
-        private GameObject fakeMainPlayerGO;
-        private GameObject fakeMainPlayerAvatarGO;
-        private SDKEntityTriggerArea sdkEntityTriggerArea;
-        private ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy;
-        private IComponentPoolsRegistry poolsRegistry;
-        private IComponentPool<SDKEntityTriggerArea> sdkEntityTriggerAreaPool;
-        private ICharacterObject characterObject;
+        private ISceneStateProvider sceneStateProvider = null!;
+        private GameObject fakeMainPlayerGO = null!;
+        private GameObject fakeMainPlayerAvatarGO = null!;
+        private SDKEntityTriggerArea sdkEntityTriggerArea = null!;
+        private ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy = null!;
+        private IComponentPoolsRegistry poolsRegistry = null!;
+        private IComponentPool<SDKEntityTriggerArea> sdkEntityTriggerAreaPool = null!;
+        private ICharacterObject characterObject = null!;
+        // NUnit reuses the fixture instance, so the async SetUp resets it before its first await
+        private bool isSetUp;
 
         [SetUp]
         public async void Setup()
         {
+            isSetUp = false;
+
             entity = world.Create(PartitionComponent.TOP_PRIORITY);
 
             entityTransformComponent = AddTransformToEntity(entity);
@@ -70,6 +73,7 @@ namespace DCL.SDKEntityTriggerArea.Tests
             system = new SDKEntityTriggerAreaHandlerSystem(world, sdkEntityTriggerAreaPool, mainPlayerAvatarBaseProxy, sceneStateProvider, characterObject);
 
             Physics.simulationMode = SimulationMode.Script;
+            isSetUp = true;
         }
 
         protected override void OnTearDown()
@@ -84,7 +88,7 @@ namespace DCL.SDKEntityTriggerArea.Tests
         public async Task SetupMonobehaviourCorrectly()
         {
             // Workaround for Unity bug not awaiting async Setup correctly
-            await UniTask.WaitUntil(() => system != null);
+            await UniTask.WaitUntil(() => isSetUp);
 
             var component = new SDKEntityTriggerAreaComponent(areaSize: new Vector3(15, 6, 18));
 
@@ -99,7 +103,7 @@ namespace DCL.SDKEntityTriggerArea.Tests
         public async Task SetupTriggerAreaSizeCorrectly()
         {
             // Workaround for Unity bug not awaiting async Setup correctly
-            await UniTask.WaitUntil(() => system != null);
+            await UniTask.WaitUntil(() => isSetUp);
 
             var targetAreaSize = new Vector3(15, 6, 18);
 
@@ -118,7 +122,7 @@ namespace DCL.SDKEntityTriggerArea.Tests
         public async Task UpdateTriggerAreaSizeCorrectly()
         {
             // Workaround for Unity bug not awaiting async Setup correctly
-            await UniTask.WaitUntil(() => system != null);
+            await UniTask.WaitUntil(() => isSetUp);
 
             var targetAreaSize = new Vector3(15, 6, 18);
 
@@ -146,7 +150,7 @@ namespace DCL.SDKEntityTriggerArea.Tests
         public async Task UpdateTransformCorrectlyIgnoringScale()
         {
             // Workaround for Unity bug not awaiting async Setup correctly
-            await UniTask.WaitUntil(() => system != null);
+            await UniTask.WaitUntil(() => isSetUp);
 
             var component = new SDKEntityTriggerAreaComponent(areaSize: Vector3.one);
 
@@ -179,7 +183,7 @@ namespace DCL.SDKEntityTriggerArea.Tests
         public async Task KeepExplicitAreaSizeWhenReusingAreaReleasedFromScaledEntity(float reusingScaleX, float reusingScaleY, float reusingScaleZ)
         {
             // Workaround for Unity bug not awaiting async Setup correctly
-            await UniTask.WaitUntil(() => system != null);
+            await UniTask.WaitUntil(() => isSetUp);
 
             // A camera-mode-like area whose Transform is scaled to its own area size, later removed by the scene
             entityTransformComponent.SetTransform(new Vector3(64, 20, 64), Quaternion.identity, new Vector3(128, 40, 128));
@@ -217,7 +221,7 @@ namespace DCL.SDKEntityTriggerArea.Tests
         public async Task TrackEnterExitCollectionsCorrectly()
         {
             // Workaround for Unity bug not awaiting async Setup correctly
-            await UniTask.WaitUntil(() => system != null);
+            await UniTask.WaitUntil(() => isSetUp);
 
             var component = new SDKEntityTriggerAreaComponent(areaSize: Vector3.one * 4);
 
@@ -251,7 +255,7 @@ namespace DCL.SDKEntityTriggerArea.Tests
         public async Task HandlePlayerLeaveSceneCorrectly()
         {
             // Workaround for Unity bug not awaiting async Setup correctly
-            await UniTask.WaitUntil(() => system != null);
+            await UniTask.WaitUntil(() => isSetUp);
 
             var component = new SDKEntityTriggerAreaComponent(areaSize: Vector3.one * 4);
 
@@ -295,7 +299,7 @@ namespace DCL.SDKEntityTriggerArea.Tests
         public async Task DetectCharacterWhenAlreadyInside()
         {
             // Workaround for Unity bug not awaiting async Setup correctly
-            await UniTask.WaitUntil(() => system != null);
+            await UniTask.WaitUntil(() => isSetUp);
 
             // Move character inside area
             fakeMainPlayerGO.transform.position = entityTransformComponent.Transform.position;
@@ -319,7 +323,7 @@ namespace DCL.SDKEntityTriggerArea.Tests
         public async Task WaitUntilAvatarBaseIsConfiguredBeforeDetecting()
         {
             // Workaround for Unity bug not awaiting async Setup correctly
-            await UniTask.WaitUntil(() => system != null);
+            await UniTask.WaitUntil(() => isSetUp);
 
             // Move character inside area
             fakeMainPlayerGO.transform.position = entityTransformComponent.Transform.position;
@@ -358,7 +362,7 @@ namespace DCL.SDKEntityTriggerArea.Tests
         public async Task DiscriminateCharacterTypeCorrectly(bool onlyMainPlayer)
         {
             // Workaround for Unity bug not awaiting async Setup correctly
-            await UniTask.WaitUntil(() => system != null);
+            await UniTask.WaitUntil(() => isSetUp);
 
             GameObject? fakeOtherPlayerGO = await Addressables.LoadAssetAsync<GameObject>("Character Object");
             fakeOtherPlayerGO = Object.Instantiate(fakeOtherPlayerGO.GetComponent<CharacterObject>()).gameObject;
@@ -403,7 +407,7 @@ namespace DCL.SDKEntityTriggerArea.Tests
         public async Task SetupColliderTypeCorrectly(SDKEntityTriggerAreaMeshType meshType)
         {
             // Workaround for Unity bug not awaiting async Setup correctly
-            await UniTask.WaitUntil(() => system != null);
+            await UniTask.WaitUntil(() => isSetUp);
             var targetAreaSize = new Vector3(15, 6, 18);
 
             var component = new SDKEntityTriggerAreaComponent(areaSize: targetAreaSize, meshType: meshType);
@@ -431,7 +435,7 @@ namespace DCL.SDKEntityTriggerArea.Tests
         public async Task UsePlayerLayerByDefault()
         {
             // Workaround for Unity bug not awaiting async Setup correctly
-            await UniTask.WaitUntil(() => system != null);
+            await UniTask.WaitUntil(() => isSetUp);
             var component = new SDKEntityTriggerAreaComponent(areaSize: Vector3.one * 4);
             Assert.AreEqual(ColliderLayer.ClPlayer, component.LayerMask);
         }
@@ -440,7 +444,7 @@ namespace DCL.SDKEntityTriggerArea.Tests
         public async Task UseSDKAvatarTriggerAreaLayerWhenOnlyTargetingPlayers()
         {
             // Workaround for Unity bug not awaiting async Setup correctly
-            await UniTask.WaitUntil(() => system != null);
+            await UniTask.WaitUntil(() => isSetUp);
             var component = new SDKEntityTriggerAreaComponent(areaSize: Vector3.one * 4, layerMask: ColliderLayer.ClPlayer);
 
             world.Add(entity, component);
@@ -449,7 +453,7 @@ namespace DCL.SDKEntityTriggerArea.Tests
 
             Assert.AreEqual(PhysicsLayers.SDK_AVATAR_TRIGGER_AREA, sdkEntityTriggerArea.gameObject.layer);
 
-            component = new SDKEntityTriggerAreaComponent(areaSize: Vector3.one * 4, layerMask: ColliderLayer.ClPlayer | ColliderLayer.ClCustom6);
+            component = new SDKEntityTriggerAreaComponent(areaSize: Vector3.one * 4, layerMask: (ColliderLayer)((uint)ColliderLayer.ClPlayer | (uint)ColliderLayer.ClCustom6));
             world.Set(entity, component);
 
             system.Update(0);
@@ -461,7 +465,7 @@ namespace DCL.SDKEntityTriggerArea.Tests
         public async Task DetectSDKEntitiesWithTargetSDKLayer()
         {
             // Workaround for Unity bug not awaiting async Setup correctly
-            await UniTask.WaitUntil(() => system != null);
+            await UniTask.WaitUntil(() => isSetUp);
             var component = new SDKEntityTriggerAreaComponent(areaSize: Vector3.one * 4, layerMask: ColliderLayer.ClCustom1);
 
             world.Add(entity, component);
@@ -505,7 +509,7 @@ namespace DCL.SDKEntityTriggerArea.Tests
 
             for (var i = 0; i < framesToWait; i++)
             {
-                UnityEngine.Physics.Simulate(0.01f);
+                Physics.Simulate(0.01f);
                 await UniTask.Yield();
             }
         }

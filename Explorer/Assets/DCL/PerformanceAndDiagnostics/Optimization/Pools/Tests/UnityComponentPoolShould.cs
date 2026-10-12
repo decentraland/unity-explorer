@@ -20,7 +20,7 @@ namespace DCL.Optimization.Pools.Tests
             gameObjectPool.Clear();
         }
 
-        private GameObjectPool<Transform> gameObjectPool;
+        private GameObjectPool<Transform> gameObjectPool = null!;
         private int onGetCallCount;
 
         [Test]
