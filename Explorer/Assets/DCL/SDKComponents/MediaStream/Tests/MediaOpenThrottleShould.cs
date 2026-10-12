@@ -5,7 +5,8 @@ namespace DCL.SDKComponents.MediaStream.Tests
     public class MediaOpenThrottleShould
     {
         [SetUp]
-        public void SetUp()
+        [TearDown]
+        public void ResetThrottle()
         {
             MediaOpenThrottle.MarkOpened(float.NegativeInfinity);
         }

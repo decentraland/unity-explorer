@@ -283,6 +283,9 @@ namespace DCL.SDKComponents.MediaStream.Tests
         [TestCase("https://player.vimeo.com/external/123456.m3u8?s=abc#t=1")]
         [TestCase("https://www.youtube.com/watch?v=dQw4w9WgXcQ#t=1")]
         [TestCase("https://www.youtube.com.evil.com/watch?v=dQw4w9WgXcQ")]
+        [TestCase("https://player.vimeo.com/external/123456.m3u8?s=a\\u0000b")]
+        [TestCase("https://player.vimeo.com/external/123456.m3u8?s=\\u202Eabc")]
+        [TestCase("https://player.vimeo.com/external/123456.m3u8?")]
         public void ReturnNoClientVideoUrl_WhenUrlIsNotCanonical(string url)
         {
             PresentationBotMetadata metadata = ParseOrFail(WithClientVideo("playing", "client", url) + "}");
@@ -291,6 +294,18 @@ namespace DCL.SDKComponents.MediaStream.Tests
 
             Assert.IsFalse(found);
             Assert.AreEqual(string.Empty, clientUrl);
+        }
+
+        [TestCase(512, true)]
+        [TestCase(513, false)]
+        public void ReturnClientVideoUrl_OnlyWhenVimeoQueryIsAtMost512Chars(int queryLength, bool expected)
+        {
+            string url = "https://player.vimeo.com/external/123456.m3u8?" + new string('a', queryLength);
+            PresentationBotMetadata metadata = ParseOrFail(WithClientVideo("playing", "client", url) + "}");
+
+            bool found = PresentationLayout.TryClientVideoUrl(metadata, out _);
+
+            Assert.AreEqual(expected, found);
         }
 
         [TestCase("{\"videoState\":\"playing\",\"playingVideoIndex\":0,\"slideVideos\":[{\"url\":\"" + YOUTUBE_URL + "\",\"source\":\"stream\"}]}")]
