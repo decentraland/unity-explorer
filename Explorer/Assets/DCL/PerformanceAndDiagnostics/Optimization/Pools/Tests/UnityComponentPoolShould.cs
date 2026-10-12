@@ -83,5 +83,42 @@ namespace DCL.Optimization.Pools.Tests
 
             gameObjectPool.Release(result);
         }
+
+        [Test]
+        public void RestoreCreationTransformOnRelease()
+        {
+            // Arrange: a prefab-like creation with a non-default root transform
+            var creationPosition = new Vector3(1, 2, 3);
+            Quaternion creationRotation = Quaternion.Euler(10, 20, 30);
+            var creationScale = new Vector3(2, 2, 2);
+
+            var pool = new GameObjectPool<Transform>(null, () =>
+            {
+                Transform created = new GameObject().transform;
+                created.SetLocalPositionAndRotation(creationPosition, creationRotation);
+                created.localScale = creationScale;
+                return created;
+            });
+
+            Transform pooled = pool.Get();
+            var scaledParent = new GameObject();
+            scaledParent.transform.localScale = new Vector3(128, 40, 128);
+            pooled.SetParent(scaledParent.transform, worldPositionStays: true);
+            pooled.SetLocalPositionAndRotation(Vector3.one * 50, Quaternion.Euler(45, 45, 45));
+
+            //Act
+            pool.Release(pooled);
+            Transform reused = pool.Get();
+
+            //Assert
+            Assert.AreSame(pooled, reused);
+            Assert.AreEqual(creationPosition, reused.localPosition);
+            Assert.AreEqual(0f, Quaternion.Angle(creationRotation, reused.localRotation), 1e-3f);
+            Assert.AreEqual(creationScale, reused.localScale);
+
+            pool.Release(reused);
+            pool.Clear();
+            Object.DestroyImmediate(scaledParent);
+        }
     }
 }

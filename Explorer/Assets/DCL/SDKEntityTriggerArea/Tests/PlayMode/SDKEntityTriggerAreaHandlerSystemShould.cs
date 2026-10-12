@@ -174,6 +174,44 @@ namespace DCL.SDKEntityTriggerArea.Tests
         }
 
         [Test]
+        [TestCase(1f, 1f, 1f)]
+        [TestCase(512f, 400f, 512f)]
+        public async Task KeepExplicitAreaSizeWhenReusingAreaReleasedFromScaledEntity(float reusingScaleX, float reusingScaleY, float reusingScaleZ)
+        {
+            // Workaround for Unity bug not awaiting async Setup correctly
+            await UniTask.WaitUntil(() => system != null);
+
+            // A camera-mode-like area whose Transform is scaled to its own area size, later removed by the scene
+            entityTransformComponent.SetTransform(new Vector3(64, 20, 64), Quaternion.identity, new Vector3(128, 40, 128));
+            world.Set(entity, entityTransformComponent);
+
+            var scaledEntityComponent = new SDKEntityTriggerAreaComponent(areaSize: new Vector3(128, 40, 128), targetOnlyMainPlayer: true);
+            world.Add(entity, scaledEntityComponent);
+
+            system.Update(0);
+
+            scaledEntityComponent = world.Get<SDKEntityTriggerAreaComponent>(entity);
+            scaledEntityComponent.TryRelease(sdkEntityTriggerAreaPool);
+            world.Remove<SDKEntityTriggerAreaComponent>(entity);
+
+            // An avatar-modifier-like area that gets the released instance from the pool
+            Entity reusingEntity = world.Create(PartitionComponent.TOP_PRIORITY);
+            TransformComponent reusingTransformComponent = AddTransformToEntity(reusingEntity);
+            reusingTransformComponent.SetTransform(new Vector3(256, 150, 256), Quaternion.identity, new Vector3(reusingScaleX, reusingScaleY, reusingScaleZ));
+            world.Set(reusingEntity, reusingTransformComponent);
+
+            var targetAreaSize = new Vector3(512, 400, 512);
+            world.Add(reusingEntity, new SDKEntityTriggerAreaComponent(areaSize: targetAreaSize));
+
+            system.Update(0);
+
+            Vector3 worldAreaSize = Vector3.Scale(sdkEntityTriggerArea.BoxCollider.size, sdkEntityTriggerArea.transform.lossyScale);
+
+            Assert.AreEqual(reusingTransformComponent.Transform, sdkEntityTriggerArea.transform.parent);
+            Assert.AreEqual(0f, Vector3.Distance(targetAreaSize, worldAreaSize), 1e-2f, $"World area size was {worldAreaSize}");
+        }
+
+        [Test]
         public async Task TrackEnterExitCollectionsCorrectly()
         {
             // Workaround for Unity bug not awaiting async Setup correctly
