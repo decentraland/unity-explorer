@@ -86,7 +86,6 @@ namespace Preview
             previewUIPresenter.ContainerDrag -= wearableRotator.OnDrag;
             previewUIPresenter.ContainerPan -= previewCameraController.Pan;
             emoteAnimationController.PlaybackChanged -= OnEmotePlaybackChanged;
-            emoteAnimationController.EmoteAnimationEnded -= OnEmoteAnimationEnded;
             _screenshotCapture.Dispose();
         }
 
@@ -98,29 +97,30 @@ namespace Preview
             previewUIPresenter.ContainerDrag += avatarRotator.OnDrag;
             previewUIPresenter.ContainerDrag += wearableRotator.OnDrag;
             previewUIPresenter.ContainerPan += previewCameraController.Pan;
-            emoteAnimationController.EmoteAnimationEnded += OnEmoteAnimationEnded;
             emoteAnimationController.PlaybackChanged += OnEmotePlaybackChanged;
 
             StartCoroutine(Reload());
         }
 
-        private void OnEmoteAnimationEnded()
-        {
-            previewUIPresenter.SetAnimationPlaying(false);
-        }
-
-        // The index travels, so the per-frame report marshals no string.
-        private static void OnEmotePlaybackChanged(EmotePlaybackEvent playbackEvent, float time)
+        // The index travels, so the per-frame report marshals no string. The canvas button follows
+        // every change too, whether the page or the user made it.
+        private void OnEmotePlaybackChanged(EmotePlaybackEvent playbackEvent, float time)
         {
             JSBridge.NativeCalls.OnEmoteEvent((int)playbackEvent, time);
+
+            if (playbackEvent is EmotePlaybackEvent.Play or EmotePlaybackEvent.Pause or EmotePlaybackEvent.End)
+            {
+                previewUIPresenter.SetAnimationPlaying(playbackEvent == EmotePlaybackEvent.Play);
+            }
         }
 
-        // The canvas button returns to idle; the bridge's StopEmote holds the first frame instead.
+        // The canvas button resumes a paused clip and restarts any other; its stop returns to idle,
+        // where the bridge's StopEmote holds the first frame instead.
         private void OnEmoteToggleClicked(bool playing)
         {
             if (playing)
             {
-                emoteAnimationController.ReplayEmote();
+                PlayEmote();
             }
             else
             {

@@ -70,23 +70,26 @@ namespace Services
 
         public static async Awaitable<ActiveEntity[]> GetActiveEntities(string[] pointers)
         {
+            var body = JsonUtility.ToJson(new ActiveEntitiesRequest(pointers));
             var retries = 0;
-            UnityWebRequest request;
 
-            do
+            // Each attempt owns its request, so the handlers of a failed one are released.
+            while (true)
             {
-                request = UnityWebRequest.Post(APIActiveEntities,
-                    JsonUtility.ToJson(new ActiveEntitiesRequest(pointers)), "application/json");
-                await request.SendWebRequest();
+                using var attempt = UnityWebRequest.Post(APIActiveEntities, body, "application/json");
+                await attempt.SendWebRequest();
                 retries++;
-            } while (request.result != UnityWebRequest.Result.Success && retries <= RETRY_COUNT);
 
-            if (request.result != UnityWebRequest.Result.Success)
-                throw new Exception(request.error);
+                if (attempt.result == UnityWebRequest.Result.Success)
+                {
+                    // Newtonsoft (not JsonUtility) because ActiveEntity.springBones contains a
+                    // Dictionary<string, Dictionary<string, SpringBoneParamsDto>> that JsonUtility can't bind.
+                    return JsonConvert.DeserializeObject<ActiveEntity[]>(attempt.downloadHandler.text)
+                           ?? Array.Empty<ActiveEntity>();
+                }
 
-            // Newtonsoft (not JsonUtility) because ActiveEntity.springBones contains a
-            // Dictionary<string, Dictionary<string, SpringBoneParamsDto>> that JsonUtility can't bind.
-            return JsonConvert.DeserializeObject<ActiveEntity[]>(request.downloadHandler.text) ?? Array.Empty<ActiveEntity>();
+                if (retries > RETRY_COUNT) throw new Exception(attempt.error);
+            }
         }
 
 
@@ -102,21 +105,16 @@ namespace Services
         {
             var retries = 0;
 
-            UnityWebRequest request;
-
-            do
+            // Each attempt owns its request, so the handlers of a failed one are released.
+            while (true)
             {
-                request = UnityWebRequest.Get(url);
-                await request.SendWebRequest();
+                using var attempt = UnityWebRequest.Get(url);
+                await attempt.SendWebRequest();
                 retries++;
-            } while (request.result != UnityWebRequest.Result.Success && retries <= RETRY_COUNT);
 
-            if (request.result != UnityWebRequest.Result.Success)
-            {
-                throw new Exception($"{request.error} ({url})");
+                if (attempt.result == UnityWebRequest.Result.Success) return attempt.downloadHandler.text;
+                if (retries > RETRY_COUNT) throw new Exception($"{attempt.error} ({url})");
             }
-
-            return request.downloadHandler.text;
         }
 
     }

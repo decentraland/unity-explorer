@@ -160,8 +160,21 @@ public class PreviewConfiguration
     public void SetMarketplaceServerUrl(string value) => MarketplaceServerUrl = NormalizeHost(value);
 
     // An empty value goes back to the default host; a trailing slash would double up in the paths.
-    private static string NormalizeHost(string value) =>
-        string.IsNullOrWhiteSpace(value) ? null : value.Trim().TrimEnd('/');
+    // Only a web address that paths can be appended to is a host, a prefix path included but no
+    // query or fragment: anything else keeps the default, since every request is HTTP.
+    private static string NormalizeHost(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return null;
+
+        var host = value.Trim().TrimEnd('/');
+
+        if (Uri.TryCreate(host, UriKind.Absolute, out var uri) && uri.Scheme is "http" or "https"
+            && string.IsNullOrEmpty(uri.Query) && string.IsNullOrEmpty(uri.Fragment))
+            return host;
+
+        Debug.LogWarning($"Unknown host [{value}], keeping the default");
+        return null;
+    }
 
     /// <summary>
     /// The color of the background in HEX.
@@ -657,73 +670,80 @@ public class PreviewConfiguration
         }
     }
 
+    /// <summary>
+    /// The configuration as a query string <see cref="RecreateFrom"/> reads back: every value is
+    /// encoded, so a URL with its own query, a base64 payload or a name with an ampersand survives.
+    /// </summary>
     public override string ToString()
     {
-        var sb = new StringBuilder("?");
+        var sb = new StringBuilder();
 
-        sb.AppendFormat("mode={0}", Mode.ToString().ToLowerInvariant());
-        if (Type.HasValue)
-            sb.AppendFormat("&type={0}", Type.Value.ToString().ToLowerInvariant());
-        sb.AppendFormat("&profile={0}", Profile);
-        sb.AppendFormat("&emote={0}", Emote);
-        foreach (var urn in Urns)
-            sb.AppendFormat("&urn={0}", urn);
-        foreach (var url in Urls)
-            sb.AppendFormat("&url={0}", url);
-        sb.AppendFormat("&disableDefaultWearables={0}", DisableDefaultWearables);
-        sb.AppendFormat("&disableFace={0}", DisableFace);
-        if (PeerUrl != null)
-            sb.AppendFormat("&peerUrl={0}", PeerUrl);
-        if (MarketplaceServerUrl != null)
-            sb.AppendFormat("&marketplaceServerUrl={0}", MarketplaceServerUrl);
-        sb.AppendFormat("&background={0}", ColorUtility.ToHtmlStringRGBA(Background));
-        sb.AppendFormat("&shadow={0}", Shadow ? "on" : "off");
-        sb.AppendFormat("&glow={0}", Glow ? "on" : "off");
-        if (SkinColor.HasValue)
-            sb.AppendFormat("&skinColor={0}", ColorUtility.ToHtmlStringRGB(SkinColor.Value));
-        if (HairColor.HasValue)
-            sb.AppendFormat("&hairColor={0}", ColorUtility.ToHtmlStringRGB(HairColor.Value));
-        if (EyeColor.HasValue)
-            sb.AppendFormat("&eyeColor={0}", ColorUtility.ToHtmlStringRGB(EyeColor.Value));
-        if (!string.IsNullOrEmpty(BodyShape))
-            sb.AppendFormat("&bodyShape={0}", BodyShape);
-        sb.AppendFormat("&showAnimationReference={0}", ShowAnimationReference);
-        sb.AppendFormat("&projection={0}", Projection);
-        foreach (var bytes in Base64)
-            sb.AppendFormat("&base64={0}", Convert.ToBase64String(bytes));
-        if (!string.IsNullOrEmpty(Contract))
-            sb.AppendFormat("&contract={0}", Contract);
-        if (!string.IsNullOrEmpty(ItemID))
-            sb.AppendFormat("&item={0}", ItemID);
-        if (!string.IsNullOrEmpty(TokenID))
-            sb.AppendFormat("&token={0}", TokenID);
-        sb.AppendFormat("&env={0}", APIService.Environment == "zone" ? "dev" : "prod");
-        sb.AppendFormat("&disableLoader={0}", DisableLoader);
-        sb.AppendFormat("&disableSwitcher={0}", DisableSwitcher);
-        sb.AppendFormat("&hideControls={0}", HideControls);
-        if (ZoomLevel.HasValue)
-            sb.AppendFormat(CultureInfo.InvariantCulture, "&zoom={0}", ZoomLevel.Value);
-        if (WheelZoom.HasValue)
-            sb.AppendFormat(CultureInfo.InvariantCulture, "&wheelZoom={0}", WheelZoom.Value);
-        sb.AppendFormat(CultureInfo.InvariantCulture, "&wheelStart={0}", WheelStart);
-        sb.AppendFormat("&camera={0}", Camera.ToString().ToLowerInvariant());
-        sb.AppendFormat("&lockAlpha={0}", LockAlpha);
-        sb.AppendFormat("&lockBeta={0}", LockBeta);
-        sb.AppendFormat("&lockRadius={0}", LockRadius);
-        sb.AppendFormat("&panning={0}", Panning);
-        sb.AppendFormat("&disableAutoRotate={0}", DisableAutoRotate);
-        sb.AppendFormat(CultureInfo.InvariantCulture, "&autoRotateSpeed={0}", AutoRotateSpeed);
-        sb.AppendFormat(CultureInfo.InvariantCulture, "&offsetX={0}&offsetY={1}", Offset.x, Offset.y);
-        sb.AppendFormat("&showThumbnailBoundaries={0}", ShowThumbnailBoundaries);
-        sb.AppendFormat("&useBrowserPreload={0}", UseBrowserPreload);
-        sb.AppendFormat("&username={0}", Username);
-        sb.AppendFormat("&showFPS={0}", ShowFPS);
-        sb.AppendFormat("&fps={0}", Fps);
-        sb.AppendFormat("&sequentialLoad={0}", ConcurrentLoad);
-        sb.AppendFormat("&useUninterruptedDeferAgent={0}", UninterruptedDeferAgent);
+        Append(sb, "mode", Mode.ToString().ToLowerInvariant());
+        if (Type.HasValue) Append(sb, "type", Type.Value.ToString().ToLowerInvariant());
+        Append(sb, "profile", Profile);
+        Append(sb, "emote", _emote);
+        Append(sb, "disableDefaultEmotes", DisableDefaultEmotes);
+        foreach (var urn in Urns) Append(sb, "urn", urn);
+        foreach (var url in Urls) Append(sb, "url", url);
+        Append(sb, "disableDefaultWearables", DisableDefaultWearables);
+        Append(sb, "disableFace", DisableFace);
+        Append(sb, "peerUrl", PeerUrl);
+        Append(sb, "marketplaceServerUrl", MarketplaceServerUrl);
+        Append(sb, "background", ColorUtility.ToHtmlStringRGBA(Background));
+        Append(sb, "shadow", Shadow ? "on" : "off");
+        Append(sb, "glow", Glow ? "on" : "off");
+        if (SkinColor.HasValue) Append(sb, "skinColor", ColorUtility.ToHtmlStringRGB(SkinColor.Value));
+        if (HairColor.HasValue) Append(sb, "hairColor", ColorUtility.ToHtmlStringRGB(HairColor.Value));
+        if (EyeColor.HasValue) Append(sb, "eyeColor", ColorUtility.ToHtmlStringRGB(EyeColor.Value));
+        Append(sb, "bodyShape", BodyShape);
+        Append(sb, "showAnimationReference", ShowAnimationReference);
+        Append(sb, "projection", Projection);
+        foreach (var bytes in Base64) Append(sb, "base64", Convert.ToBase64String(bytes));
+        Append(sb, "contract", Contract);
+        Append(sb, "item", ItemID);
+        Append(sb, "token", TokenID);
+        Append(sb, "env", APIService.Environment == "zone" ? "dev" : "prod");
+        Append(sb, "disableLoader", DisableLoader);
+        Append(sb, "disableSwitcher", DisableSwitcher);
+        Append(sb, "hideControls", HideControls);
+        if (ZoomLevel.HasValue) Append(sb, "zoom", ZoomLevel.Value);
+        if (WheelZoom.HasValue) Append(sb, "wheelZoom", WheelZoom.Value);
+        Append(sb, "wheelStart", WheelStart);
+        Append(sb, "camera", Camera.ToString().ToLowerInvariant());
+        Append(sb, "lockAlpha", LockAlpha);
+        Append(sb, "lockBeta", LockBeta);
+        Append(sb, "lockRadius", LockRadius);
+        Append(sb, "panning", Panning);
+        Append(sb, "disableAutoRotate", DisableAutoRotate);
+        Append(sb, "autoRotateSpeed", AutoRotateSpeed);
+        Append(sb, "offsetX", Offset.x);
+        Append(sb, "offsetY", Offset.y);
+        Append(sb, "showThumbnailBoundaries", ShowThumbnailBoundaries);
+        Append(sb, "useBrowserPreload", UseBrowserPreload);
+        Append(sb, "username", Username);
+        Append(sb, "showFPS", ShowFPS);
+        Append(sb, "fps", Fps);
+        Append(sb, "concurrentLoad", ConcurrentLoad);
+        Append(sb, "uninterruptedDeferAgent", UninterruptedDeferAgent);
 
         return sb.ToString();
     }
+
+    // An unset or empty value is no parameter.
+    private static void Append(StringBuilder sb, string key, string value)
+    {
+        if (string.IsNullOrEmpty(value)) return;
+
+        sb.Append(sb.Length == 0 ? '?' : '&').Append(key).Append('=').Append(HttpUtility.UrlEncode(value));
+    }
+
+    private static void Append(StringBuilder sb, string key, bool value) => Append(sb, key, value.ToString());
+
+    private static void Append(StringBuilder sb, string key, int value) =>
+        Append(sb, key, value.ToString(CultureInfo.InvariantCulture));
+
+    private static void Append(StringBuilder sb, string key, float value) =>
+        Append(sb, key, value.ToString(CultureInfo.InvariantCulture));
 }
 
 public enum PreviewMode

@@ -156,7 +156,13 @@ public class JSBridge : MonoBehaviour
     public void PauseEmote() => previewController.PauseEmote();
 
     [UsedImplicitly]
-    public void GoToEmote(string value) => previewController.GoToEmote(float.Parse(value));
+    public void GoToEmote(string value)
+    {
+        if (PreviewConfiguration.TryParseNumber(value, out var seconds))
+            previewController.GoToEmote(seconds);
+        else
+            Debug.LogWarning($"Invalid emote time [{value}], expected seconds");
+    }
 
     [UsedImplicitly]
     public void StopEmote() => previewController.StopEmote();

@@ -157,6 +157,65 @@ namespace Tests
             Assert.AreEqual(0.5f, _reported[^1].time, TOLERANCE);
         }
 
+        [Test]
+        public void ClampASeekToTheClip()
+        {
+            // Arrange
+            PlayEmote();
+
+            // Act
+            _controller.GoToEmote(CLIP_LENGTH * 2f);
+            _controller.GoToEmote(-1f);
+
+            // Assert
+            Assert.AreEqual(CLIP_LENGTH, _reported[^2].time, TOLERANCE);
+            Assert.AreEqual(0f, _reported[^1].time, TOLERANCE);
+        }
+
+        [Test]
+        public void ReportTheEndOnceWhenTheClipRanOutWithoutItsEndEvent()
+        {
+            // Arrange: a seek past the end event skips it, and the clip then runs out on its own.
+            PlayEmote();
+            _rig.GetComponent<Animation>().Stop("emote");
+
+            // Act
+            Tick();
+            Tick();
+
+            // Assert
+            CollectionAssert.AreEqual(new[] { EmotePlaybackEvent.Play, EmotePlaybackEvent.End }, Events());
+        }
+
+        [Test]
+        public void ShowThePropOnAHoldAfterTheClipRanOut()
+        {
+            // Arrange
+            var prop = new GameObject("prop");
+            var propAnimation = prop.AddComponent<Animation>();
+            var propClip = LegacyClip("emote", WrapMode.Clamp);
+            propAnimation.AddClip(propClip, "emote");
+
+            try
+            {
+                PlayEmote(prop, propAnimation);
+                Invoke("EmoteEnded");
+                var hiddenAfterEnd = !prop.activeSelf;
+
+                // Act
+                _controller.StopEmote();
+
+                // Assert
+                Assert.IsTrue(hiddenAfterEnd);
+                Assert.IsTrue(prop.activeSelf);
+            }
+            finally
+            {
+                Object.DestroyImmediate(prop);
+                Object.DestroyImmediate(propClip);
+            }
+        }
+
         // A frame of the controller.
         private void Tick() => Invoke("Update");
 
@@ -171,7 +230,7 @@ namespace Tests
 
         // In the Editor the runtime clip-event API logs an error per write (the events are set all the
         // same); the player has no such log.
-        private void PlayEmote()
+        private void PlayEmote(GameObject prop = null, Animation propAnimation = null)
         {
             for (var i = 0; i < 3; i++)
             {
@@ -179,7 +238,7 @@ namespace Tests
             }
 
             _controller.PlayEmote(new LoadedEmote(EntityDefinition.FromEmbeddedEmote("test", false), _emoteClip,
-                null, null, null, null, ModelMetrics.Empty));
+                null, prop, propAnimation, null, ModelMetrics.Empty));
         }
 
         private List<EmotePlaybackEvent> Events()

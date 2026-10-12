@@ -1,3 +1,4 @@
+using System.Web;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -50,7 +51,8 @@ namespace Tests
         public void KeepTheDefaultsForUnparsableValues()
         {
             // Act
-            PreviewConfiguration.RecreateFrom("?zoom=abc&wheelStart=NaN&camera=statc&hideControls=maybe&offsetX=Infinity");
+            PreviewConfiguration.RecreateFrom(
+                "?zoom=abc&wheelStart=NaN&camera=statc&hideControls=maybe&offsetX=Infinity&peerUrl=ftp://peer.example.com");
             var config = PreviewConfiguration.Instance;
 
             // Assert
@@ -59,6 +61,42 @@ namespace Tests
             Assert.AreEqual(PreviewCameraKind.Interactive, config.Camera);
             Assert.IsFalse(config.HideControls);
             Assert.AreEqual(Vector2.zero, config.Offset);
+            Assert.IsNull(config.PeerUrl);
+        }
+
+        [Test]
+        public void PrintAConfigurationThatReadsBackTheSame()
+        {
+            // Arrange: values that would break an unencoded query string.
+            const string url = "https://host.example.com/definition.json?v=2&b=3";
+            PreviewConfiguration.RecreateFrom(
+                $"?mode=builder&url={HttpUtility.UrlEncode(url)}&peerUrl=https://peer.example.com/catalyst"
+                + "&username=A%26B+Co&emote=dance&disableDefaultEmotes=true");
+            var printed = PreviewConfiguration.Instance.ToString();
+
+            // Act
+            PreviewConfiguration.RecreateFrom(printed);
+
+            // Assert
+            Assert.AreEqual(new[] { url }, PreviewConfiguration.Instance.Urls);
+            Assert.AreEqual("https://peer.example.com/catalyst", PreviewConfiguration.Instance.PeerUrl);
+            Assert.AreEqual("A&B Co", PreviewConfiguration.Instance.Username);
+            Assert.AreEqual(PreviewMode.Builder, PreviewConfiguration.Instance.Mode);
+            Assert.IsTrue(PreviewConfiguration.Instance.DisableDefaultEmotes);
+            Assert.AreEqual(PreviewConfiguration.NO_EMOTE, PreviewConfiguration.Instance.Emote);
+        }
+
+        [TestCase("https://")]
+        [TestCase("http://not a host")]
+        [TestCase("peer.example.com")]
+        [TestCase("https://peer.example.com/?x=1")]
+        public void KeepTheDefaultHostForAMalformedOne(string value)
+        {
+            // Act
+            PreviewConfiguration.RecreateFrom($"?peerUrl={HttpUtility.UrlEncode(value)}");
+
+            // Assert
+            Assert.IsNull(PreviewConfiguration.Instance.PeerUrl);
         }
 
         [TestCase("?disableDefaultEmotes=true")]

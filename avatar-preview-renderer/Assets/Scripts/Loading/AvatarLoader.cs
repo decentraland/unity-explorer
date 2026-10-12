@@ -222,7 +222,8 @@ namespace Loading
                 }
                 else
                 {
-                    emoteAnimationController.ReturnToIdle(true);
+                    // Forgotten, not only left: its importer is already disposed above.
+                    emoteAnimationController.ClearEmote();
                 }
             }
 

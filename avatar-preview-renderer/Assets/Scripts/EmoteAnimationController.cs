@@ -46,8 +46,6 @@ public class EmoteAnimationController : MonoBehaviour
     /// </summary>
     public bool IsPaused => _state == PlaybackState.Paused;
 
-    public event Action EmoteAnimationEnded;
-
     /// <summary>
     /// Every playback change, with the clip time in seconds it happened at. Playing is reported
     /// once per frame while the clip runs.
@@ -64,6 +62,10 @@ public class EmoteAnimationController : MonoBehaviour
 
     public void PlayEmote(LoadedEmote loadedEmote)
     {
+        // The previous emote's state would otherwise stay on the rig, bound to a clip its importer
+        // has disposed.
+        ClearEmote();
+
         _loadedEmote = loadedEmote;
 
         avatarAnimation.AddClip(_loadedEmote.Value.Clip, _loadedEmote.Value.Entity.URN);
@@ -114,16 +116,7 @@ public class EmoteAnimationController : MonoBehaviour
         // A pause or a stop left the speeds at zero.
         var urn = _loadedEmote.Value.Entity.URN;
         SetSpeed(urn, 1f);
-
-        // Prop
-        if (_propAnimation != null)
-        {
-            _propAnimation.Rewind();
-            _propAnimation.Sample();
-            _propAnimation.Play();
-        }
-
-        _loadedEmote.Value.Prop?.SetActive(true);
+        RestartProp();
 
         // Crossfade
         avatarAnimation.Rewind(urn);
@@ -173,6 +166,9 @@ public class EmoteAnimationController : MonoBehaviour
         var urn = _loadedEmote.Value.Entity.URN;
         if (!avatarAnimation.IsPlaying(urn)) avatarAnimation.Play(urn);
         Seek(urn, 0f);
+
+        // The prop too, on its own first frame: a clip that ran out left it hidden on its last pose.
+        RestartProp();
         SetSpeed(urn, 0f);
         audioSource.Stop();
 
@@ -192,10 +188,7 @@ public class EmoteAnimationController : MonoBehaviour
         _state = PlaybackState.Ended;
 
         audioSource.Stop();
-        if (_propAnimation != null)
-        {
-            _loadedEmote.Value.Prop?.SetActive(false);
-        }
+        _loadedEmote.Value.Prop?.SetActive(false);
 
         if (withCrossFade)
         {
@@ -217,6 +210,11 @@ public class EmoteAnimationController : MonoBehaviour
     public void GoToEmote(float seconds)
     {
         if (!_loadedEmote.HasValue) return;
+
+        // A negative time would count as a wrap, one past the end would skip the clip's end event,
+        // and a NaN passes through a clamp.
+        if (float.IsNaN(seconds)) return;
+        seconds = Mathf.Clamp(seconds, 0f, _loadedEmote.Value.Clip.length);
 
         var urn = _loadedEmote.Value.Entity.URN;
 
@@ -251,12 +249,16 @@ public class EmoteAnimationController : MonoBehaviour
         if (audioSource != null) audioSource.volume = 0f;
     }
 
+    /// <summary>
+    /// Leaves the emote and forgets it. The state is removed by name, so the clip object need not
+    /// still exist.
+    /// </summary>
     public void ClearEmote()
     {
         if (!_loadedEmote.HasValue) return;
 
         ReturnToIdle(false);
-        avatarAnimation.RemoveClip(_loadedEmote.Value.Clip);
+        avatarAnimation.RemoveClip(_loadedEmote.Value.Entity.URN);
         _loadedEmote = null;
         _emoteAudioClip = null;
         _propAnimation = null;
@@ -280,8 +282,17 @@ public class EmoteAnimationController : MonoBehaviour
     {
         if (!_loadedEmote.HasValue || _state != PlaybackState.Playing) return;
 
+        // A rig that cannot play reports nothing, rather than an end that never came.
+        if (!avatarAnimation.isActiveAndEnabled) return;
+
         var urn = _loadedEmote.Value.Entity.URN;
-        if (!avatarAnimation.IsPlaying(urn)) return;
+
+        if (!avatarAnimation.IsPlaying(urn))
+        {
+            // A seek past the clip's end event skips it, so a clip that ran out without it ends here.
+            EmoteEnded();
+            return;
+        }
 
         var state = avatarAnimation[urn];
         if (state == null || state.length <= 0f) return;
@@ -365,17 +376,23 @@ public class EmoteAnimationController : MonoBehaviour
         return WrapClipTime(state.time, state.length).clipTime;
     }
 
+    // Shown first: an inactive object takes no animation call.
+    private void RestartProp()
+    {
+        _loadedEmote?.Prop?.SetActive(true);
+
+        if (_propAnimation == null) return;
+
+        _propAnimation.Rewind();
+        _propAnimation.Sample();
+        _propAnimation.Play();
+    }
+
     [UsedImplicitly]
     private void EmoteStarted()
     {
         PlayAudioFrom(0f);
-
-        if (_propAnimation != null)
-        {
-            _propAnimation.Rewind();
-            _propAnimation.Sample();
-            _propAnimation.Play();
-        }
+        RestartProp();
     }
 
     [UsedImplicitly]
@@ -385,7 +402,6 @@ public class EmoteAnimationController : MonoBehaviour
         if (_state != PlaybackState.Playing) return;
 
         _state = PlaybackState.Ended;
-        EmoteAnimationEnded?.Invoke();
         _loadedEmote.Value.Prop?.SetActive(false);
         PlaybackChanged?.Invoke(EmotePlaybackEvent.End, _loadedEmote.Value.Clip.length);
     }
