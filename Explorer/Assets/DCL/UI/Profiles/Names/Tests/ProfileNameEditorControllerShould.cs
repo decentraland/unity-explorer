@@ -44,7 +44,7 @@ namespace DCL.UI.ProfileNames.Tests
             controller = new ProfileNameEditorController(
                 () => view,
                 new UnityAppWebBrowser(Substitute.For<IDecentralandUrlsSource>()),
-                Substitute.For<ISelfProfile>(),
+                Substitute.For<SelfProfile>(),
                 Substitute.For<INftNamesProvider>(),
                 Substitute.For<IDecentralandUrlsSource>(),
                 new ProfileChangesBus(),

@@ -29,7 +29,7 @@ namespace DCL.BugReporting.UI
         private const int ABOVE_OVERLAYS_ORDER = 100;
 
         private readonly BugReportService bugReportService;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly IInputBlock inputBlock;
         private readonly World globalWorld;
         private readonly Entity playerEntity;
@@ -52,7 +52,7 @@ namespace DCL.BugReporting.UI
         public BugReportController(
             ViewFactoryMethod viewFactory,
             BugReportService bugReportService,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             IInputBlock inputBlock,
             World globalWorld,
             Entity playerEntity,
@@ -228,17 +228,10 @@ namespace DCL.BugReporting.UI
 
         private async UniTask<string?> GetUserNameAsync(CancellationToken ct)
         {
-            try
-            {
-                Profile? profile = await selfProfile.ProfileAsync(ct);
-                return profile?.DisplayName;
-            }
-            catch (OperationCanceledException) { return null; }
-            catch (Exception e)
-            {
-                ReportHub.LogException(e, ReportCategory.UNSPECIFIED);
+            if (!(await selfProfile.ProfileAsync(ct)).IsOk(out Profile? profile))
                 return null;
-            }
+
+            return profile.DisplayName;
         }
 
         private Vector2Int? CurrentParcel() =>
