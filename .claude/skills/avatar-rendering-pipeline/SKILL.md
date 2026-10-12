@@ -117,6 +117,7 @@ Color assignment is based on original material names: `skin` -> SkinColor, `hair
 
 - **Intent-Based Loading:** Entities receive `CharacterEmoteIntent`. `CharacterEmoteSystem` consumes the intent; if the emote is not yet loaded, the intent persists until the asset resolves.
 - **Mecanim vs Legacy:** Asset Bundle emotes use `AnimatorController` with trigger-based transitions. Clip extraction follows naming: `_avatar` suffix for avatar clips, `_prop` suffix for prop clips. Legacy animations (local scene dev only) use `Animation.Play()`.
+- **`IEmote.IsLoading` is not "definition pending".** `IEmoteStorage` hands out an entry (`IEmote.NewEmpty()`, null `DTO`) before its definition is fetched, and `IsLoading` then stays `true` through the asset-bundle, GLTF and audio downloads that follow the definition (`LoadEmotesByPointersSystem`, `LoadSceneEmotesSystem`, `BuilderEmoteAssetPromiseFactory`). UI that only needs the definition (name, rarity, thumbnail) waits on `emote.IsLoading && emote.DTO?.Metadata == null`, never on `IsLoading` alone, and treats a finished load with no `DTO?.Metadata` as a failed definition: never call `GetRarity()`/`GetName()` on it. Waiting on `IsLoading` alone holds the UI until the whole asset has downloaded, indefinitely if the asset promise never resolves. Keep that decision a small `internal static` predicate so an edit-mode test can pin it (see `EmotesWheelController.ShouldWaitForDefinition`).
 
 ---
 

@@ -264,6 +264,24 @@ void SetItemData(ChatEntryView item, ChatMessage msg)
 
 For single-subscriber callbacks on a pooled item, prefer a public `Action` field (`public Action<string>? OnClicked;`) over a C# `event`. `Action` supports direct assignment (`item.OnClicked = Handle`); `event` forces `+=`/`-=` bookkeeping on every rebind.
 
+## Surfacing load failures in the UI
+
+When a view falls back to an empty or placeholder state because its data failed to load (an equipped emote whose definition never resolved, a thumbnail that never arrived), the user must be told, not only the log. Raise a `ServerErrorNotification` through `NotificationsBusController.Instance.AddNotification`, next to the categorized `ReportHub` warning; a silent empty slot reads as a bug.
+
+- **Once per item per session.** Controllers that rebuild their slots on every open (emote wheel, backpack grids) would re-toast a permanently broken item each time. Dedupe the notification with a `HashSet` on the controller keyed by the item's id; the warning and the fallback still run on every rebuild.
+- **User-facing text, never ids.** The message is generic ("Something went wrong loading one of your Emotes") or uses the item's display name. URNs, hashes and URLs belong in the log only.
+
+```csharp
+ReportHub.LogWarning(new ReportData(ReportCategory.EMOTE), $"Could not setup emote wheel slot {slot} for {emoteUrn}, emote definition failed to load");
+
+if (notifiedFailedEmotes.Add(emoteUrn))
+    NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(EMOTE_LOADING_ERROR_MESSAGE));
+
+SetUpEmptySlot(slot);
+```
+
+**Reused slots reset their whole loading state on every path.** A slot view that is rebound (not recreated) keeps whatever the previous item left on it: thumbnail, rarity background, spinner. Before an async wait, hide the stale content and show the spinner; every exit path, the empty/fallback one included, turns the spinner off. Otherwise a slot shows the previous item while waiting, or a spinner over an empty slot after a failure.
+
 ## ViewEventBus — cross-presenter communication
 
 When events need to cross presenter boundaries, use `ViewEventBus` (`Explorer/Assets/DCL/Infrastructure/MVC/ViewEventBus.cs`) or a feature-specific event bus like `ChatEvents`, instead of bubbling callbacks up through constructor parameters.
