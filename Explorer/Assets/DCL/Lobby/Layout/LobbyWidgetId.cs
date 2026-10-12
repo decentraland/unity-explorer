@@ -7,7 +7,8 @@ namespace DCL.Lobby
     public enum LobbyWidgetId
     {
         Landing4x3,
-        Events3x4,
+        LiveEvents3x3,
+        UpcomingEvents3x2,
         FriendsOnline4x2,
         JumpBackIn6x2,
         RecommendedPlaces6x2,

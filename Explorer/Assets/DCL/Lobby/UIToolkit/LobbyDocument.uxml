@@ -1,6 +1,7 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
     <Style src="project://database/Assets/DCL/Lobby/UIToolkit/LobbyDocument.uss" />
     <Style src="project://database/Assets/DCL/Lobby/UIToolkit/LobbyGrid.uss" />
+    <Style src="project://database/Assets/DCL/Lobby/UIToolkit/LobbyLayoutEditor.uss" />
     <Style src="project://database/Assets/DCL/Lobby/UIToolkit/LobbyRail.uss" />
     <Style src="project://database/Assets/DCL/Lobby/UIToolkit/LobbyTopBar.uss" />
     <!-- The widgets and the cards are created in code at runtime, so their stylesheets have to reach them from the document -->
@@ -19,6 +20,9 @@
         <ui:VisualElement name="Logo" class="lobby__logo" picking-mode="Ignore" />
         <ui:VisualElement name="TopBar" class="lobby__top-bar" picking-mode="Ignore">
             <ui:VisualElement name="CreditsSlot" class="lobby__top-bar-slot" picking-mode="Ignore" />
+            <ui:Button name="EditLayout" class="lobby__top-bar-button lobby__edit-layout-button">
+                <ui:VisualElement name="Icon" class="lobby__edit-layout-icon" picking-mode="Ignore" />
+            </ui:Button>
             <ui:Button name="Notifications" class="lobby__top-bar-button">
                 <ui:VisualElement name="Icon" class="lobby__notifications-icon" picking-mode="Ignore" />
                 <ui:Label name="UnreadBadge" text="0" class="lobby__notifications-badge" picking-mode="Ignore" style="display: none;" />
@@ -37,17 +41,16 @@
         <ui:VisualElement name="UnplacedWidgets" class="lobby__unplaced-widgets" picking-mode="Ignore">
             <ui:VisualElement name="Welcome" class="lobby__widget lobby__welcome" picking-mode="Ignore">
                 <ui:Label name="WelcomeText" text="Welcome!" enable-rich-text="false" class="lobby__welcome-title" picking-mode="Ignore" />
-                <ui:Instance template="LobbyLandingCard" />
+                <ui:Instance template="LobbyLandingCard" class="lobby__welcome-card" />
             </ui:VisualElement>
-            <!-- Each row hides itself while empty, so the upcoming one moves up when nothing is live -->
-            <ui:VisualElement name="Events" class="lobby__widget lobby__events" style="display: none;">
-                <ui:Label name="Title" text="Events" class="lobby__events-title" picking-mode="Ignore" />
-                <ui:VisualElement name="LiveEvents" class="lobby__live-events" style="display: none;">
-                    <DCL.Lobby.LobbyRailElement name="Rail" class="lobby__live-events-rail" cards-per-page="1" />
-                </ui:VisualElement>
-                <ui:VisualElement name="UpcomingEvents" class="lobby__upcoming-events" style="display: none;">
-                    <DCL.Lobby.LobbyRailElement name="Rail" class="lobby__upcoming-events-rail" cards-per-page="1" />
-                </ui:VisualElement>
+            <!-- Each events section hides itself while it has nothing to list -->
+            <ui:VisualElement name="LiveEvents" class="lobby__widget lobby__events" style="display: none;">
+                <ui:Label name="Title" text="Live Events" class="lobby__events-title" picking-mode="Ignore" />
+                <DCL.Lobby.LobbyRailElement name="Rail" class="lobby__live-events-rail" cards-per-page="1" />
+            </ui:VisualElement>
+            <ui:VisualElement name="UpcomingEvents" class="lobby__widget lobby__events" style="display: none;">
+                <ui:Label name="Title" text="Upcoming Events" class="lobby__events-title" picking-mode="Ignore" />
+                <DCL.Lobby.LobbyRailElement name="Rail" class="lobby__upcoming-events-rail" cards-per-page="1" />
             </ui:VisualElement>
             <ui:VisualElement name="Friends" class="lobby__widget lobby__friends" style="display: none;">
                 <ui:VisualElement name="Header" class="lobby__friends-header" picking-mode="Ignore">
@@ -66,6 +69,8 @@
                 <DCL.Lobby.LobbyRailElement name="Rail" class="lobby__places-rail" cards-per-page="3" arrows-move-one-card="true" />
             </ui:VisualElement>
         </ui:VisualElement>
+        <!-- A dragged widget section hangs here while the layout is edited (see LobbyLayoutEditor) -->
+        <ui:VisualElement name="LayoutDragLayer" class="lobby__layout-drag-layer" picking-mode="Ignore" />
         <!-- Last so it draws over everything else -->
         <ui:VisualElement name="AvatarTooltip" class="lobby__avatar-tooltip" picking-mode="Ignore" style="display: none;">
             <ui:VisualElement name="Icon" class="lobby__avatar-tooltip-icon" picking-mode="Ignore" />

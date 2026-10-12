@@ -86,6 +86,7 @@ namespace DCL.Lobby
         private readonly LobbyConnectedFriendsPresenter? connectedFriends;
         private readonly ClickOrDragManipulator avatarGesture;
         private readonly LobbyWidgetHost widgetHost = new ();
+        private readonly LobbyLayoutEditor layoutEditor;
 
         private LobbyPlacesRail? recentPlacesRail;
         private LobbyPlacesRail? featuredPlacesRail;
@@ -200,6 +201,8 @@ namespace DCL.Lobby
                 DragEnded = OnAvatarDragEnded,
             };
 
+            layoutEditor = new LobbyLayoutEditor(widgetHost);
+
             if (friends != null)
                 friends.JoinRequested = OnFriendJoin;
         }
@@ -257,6 +260,8 @@ namespace DCL.Lobby
             viewInstance.CloseButton.clicked -= RequestClose;
             viewInstance.CloseButton.clicked += RequestClose;
             viewInstance.CloseButton.SetDisplayed(!inputData.IsStartup);
+            viewInstance.EditLayoutButton.clicked -= ToggleLayoutEditing;
+            viewInstance.EditLayoutButton.clicked += ToggleLayoutEditing;
             profileButtonPresenter.LoadProfile();
 
             notificationsPanel.UnreadCountChanged += ShowUnreadCount;
@@ -325,6 +330,9 @@ namespace DCL.Lobby
             profileChangesBus.UnsubscribeToUpdate(OnProfileUpdated);
             eventCardActions.EventSetAsInterested -= OnEventInterestChanged;
             notificationsPanel.UnreadCountChanged -= ShowUnreadCount;
+
+            // The next show starts outside edit mode, like the first one
+            layoutEditor.Hide();
 
             // Nulled so a late callback finds no source rather than a disposed one, whose token throws
             avatarCts.SafeCancelAndDispose();
@@ -411,6 +419,14 @@ namespace DCL.Lobby
             }
             catch (OperationCanceledException) { }
             catch (Exception e) { ReportHub.LogException(e, ReportCategory.PROFILE); }
+        }
+
+        private void ToggleLayoutEditing()
+        {
+            if (layoutEditor.IsEditing)
+                layoutEditor.Hide();
+            else
+                layoutEditor.Show(viewInstance!.Root);
         }
 
         private void OnProfileUpdated(Profile profile)
@@ -709,8 +725,6 @@ namespace DCL.Lobby
 
             for (var i = 0; i < upcomingEvents.Count; i++)
                 ShowUpcomingEventCard(upcomingEventsRail.Cards[i], upcomingEvents[i], ct);
-
-            viewInstance!.Events.SetDisplayed(liveEvents.Count > 0 || upcomingEvents.Count > 0);
         }
 
         private void ShowLiveEventCard(LobbyLiveEventCardElement card, EventDTO @event, CancellationToken ct)

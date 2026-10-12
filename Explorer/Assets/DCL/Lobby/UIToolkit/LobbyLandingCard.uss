@@ -1,6 +1,6 @@
-/* 300px tall and as wide as its section, with 24px corners and the thumbnail filling it */
+/* Fills what its section leaves under the title, with 24px corners and the thumbnail filling it */
 .lobby-landing-card {
-    height: 300px;
+    flex-grow: 1;
     border-radius: 24px;
     background-color: var(--lobby-card-color);
     overflow: hidden;

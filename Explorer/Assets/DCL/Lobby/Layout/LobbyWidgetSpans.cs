@@ -12,7 +12,8 @@ namespace DCL.Lobby
             widgetId switch
             {
                 LobbyWidgetId.Landing4x3 => new Vector2Int(4, 3),
-                LobbyWidgetId.Events3x4 => new Vector2Int(3, 4),
+                LobbyWidgetId.LiveEvents3x3 => new Vector2Int(3, 3),
+                LobbyWidgetId.UpcomingEvents3x2 => new Vector2Int(3, 2),
                 LobbyWidgetId.FriendsOnline4x2 => new Vector2Int(4, 2),
                 LobbyWidgetId.JumpBackIn6x2 => new Vector2Int(6, 2),
                 LobbyWidgetId.RecommendedPlaces6x2 => new Vector2Int(6, 2),

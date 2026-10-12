@@ -1,0 +1,67 @@
+/* Edit mode of the layout (LobbyLayoutEditor): a handle covers the cells of each placed widget, the dragged widget
+   follows the pointer on the drag layer and the marker shows the cells it would take and whether it can take them; the
+   widgets in its way slide to the cells they would be pushed to and back */
+.lobby--editing .lobby__widget {
+    transition: left 0.15s ease-out, top 0.15s ease-out;
+}
+
+/* The lifted widget keeps up with the pointer instead of easing after it, and lets the marker show through; the
+   selector outranks the editing one above so the transition really goes */
+.lobby--editing .lobby__widget.lobby__widget--lifted {
+    transition-property: none;
+    opacity: 0.85;
+}
+
+.lobby__layout-drag-layer {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.lobby-widget-handle {
+    position: absolute;
+    align-items: center;
+    justify-content: center;
+    border-width: 2px;
+    border-radius: 12px;
+    border-color: rgba(255, 255, 255, 0.35);
+    background-color: rgba(255, 255, 255, 0.04);
+    transition: border-color 0.1s, background-color 0.1s, left 0.15s ease-out, top 0.15s ease-out;
+}
+
+.lobby-widget-handle:hover {
+    border-color: rgba(255, 255, 255, 0.7);
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+.lobby-widget-handle--dragging {
+    opacity: 0.35;
+}
+
+.lobby-widget-handle__label {
+    padding: 6px 14px;
+    border-radius: 14px;
+    background-color: rgba(0, 0, 0, 0.85);
+    font-size: 14px;
+    -unity-font-definition: var(--dcl-font-inter-semibold);
+    -unity-text-align: middle-center;
+    color: var(--lobby-title-color);
+}
+
+.lobby-drop-marker {
+    position: absolute;
+    border-width: 2px;
+    border-radius: 12px;
+}
+
+.lobby-drop-marker--valid {
+    border-color: rgb(67, 214, 141);
+    background-color: rgba(67, 214, 141, 0.15);
+}
+
+.lobby-drop-marker--invalid {
+    border-color: var(--lobby-jump-in-color);
+    background-color: rgba(255, 45, 85, 0.15);
+}

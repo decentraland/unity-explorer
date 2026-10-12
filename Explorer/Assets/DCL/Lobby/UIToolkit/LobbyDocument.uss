@@ -123,7 +123,8 @@
     bottom: var(--lobby-bottom-margin);
 }
 
-/* A widget section is placed by LobbyWidgetHost: its left, top and width are inline, its height comes from its content */
+/* A widget section is placed by LobbyWidgetHost: its left, top, width and height are inline, from its cell and its span, so
+   its content has to fit the cells (the title rows and the rails below add up to the span) */
 .lobby__widget {
     position: absolute;
 }
@@ -169,6 +170,11 @@
     margin-bottom: 10px;
 }
 
+/* The template container of the landing card: it takes the rows left under the title and the card fills it */
+.lobby__welcome-card {
+    flex-grow: 1;
+}
+
 .lobby__friends-header {
     height: 30px;
     flex-direction: row;
@@ -193,11 +199,7 @@
     margin-bottom: 9px;
 }
 
-/* 214px cards plus the dots row under the viewport, and 16px more under the dots */
-.lobby__live-events {
-    margin-bottom: 16px;
-}
-
+/* 214px cards plus the dots row under the viewport */
 .lobby__live-events-rail {
     height: 230px;
 }
@@ -213,10 +215,6 @@
     left: 6px;
 }
 
-.lobby__upcoming-events {
-    margin-top: 4px;
-}
-
 /* 135px cards plus the dots row under the viewport */
 .lobby__upcoming-events-rail {
     height: 155px;
@@ -226,20 +224,20 @@
     margin-top: 12px;
 }
 
-.lobby__places-title {
-    margin-bottom: 5px;
+/* 165px cards plus the dots row under the viewport: with the 30px title it fills the two rows of the section */
+.lobby__places-rail {
+    height: 178px;
 }
 
-/* 165px cards plus the dots row under the viewport */
-.lobby__places-rail {
-    height: 181px;
+.lobby__places-rail .lobby-rail__dots {
+    margin-top: 5px;
 }
 
 /* The recent row has no dots: its cards are padded to the height of the rail so both rows line up along the bottom */
 .lobby__places-row {
     flex-direction: row;
     height: 165px;
-    margin-bottom: 16px;
+    margin-bottom: 13px;
 }
 
 .lobby__places-row > .lobby-place-card {

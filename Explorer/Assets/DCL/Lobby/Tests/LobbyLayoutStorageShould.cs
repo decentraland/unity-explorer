@@ -46,7 +46,7 @@ namespace DCL.Lobby.Tests
         public void RoundTripThePlacements()
         {
             //Arrange
-            layout.TryPlace(LobbyWidgetId.Events3x4, LobbyGridCorner.TopLeft, new Vector2Int(0, 1));
+            layout.TryPlace(LobbyWidgetId.LiveEvents3x3, LobbyGridCorner.TopLeft, new Vector2Int(0, 1));
             layout.TryPlace(LobbyWidgetId.Landing4x3, LobbyGridCorner.TopRight, new Vector2Int(0, 2));
             layout.TryPlace(LobbyWidgetId.RecommendedPlaces6x2, LobbyGridCorner.BottomLeft, new Vector2Int(0, 0));
             var loaded = new LobbyLayout(TOP_GRID, TOP_GRID, BOTTOM_GRID, BOTTOM_GRID);
@@ -81,7 +81,7 @@ namespace DCL.Lobby.Tests
             DCLPlayerPrefs.SetString(DCLPrefKeys.LOBBY_LAYOUT,
                 "{\"Version\":1,\"Entries\":[" +
                 "{\"Corner\":\"TopLeft\",\"Widget\":\"Landing9x9\",\"X\":0,\"Y\":0}," +
-                "{\"Corner\":\"Middle\",\"Widget\":\"Events3x4\",\"X\":0,\"Y\":0}," +
+                "{\"Corner\":\"Middle\",\"Widget\":\"LiveEvents3x3\",\"X\":0,\"Y\":0}," +
                 "{\"Corner\":\"7\",\"Widget\":\"Landing4x3\",\"X\":0,\"Y\":0}," +
                 "{\"Corner\":\"TopLeft\",\"Widget\":\"42\",\"X\":0,\"Y\":0}," +
                 "{\"Corner\":\"BottomRight\",\"Widget\":\"JumpBackIn6x2\",\"X\":0,\"Y\":0}]}");
@@ -103,7 +103,7 @@ namespace DCL.Lobby.Tests
                 "{\"Version\":1,\"Entries\":[" +
                 "{\"Corner\":\"TopLeft\",\"Widget\":\"Landing4x3\",\"X\":0,\"Y\":0}," +
                 "{\"Corner\":\"TopLeft\",\"Widget\":\"FriendsOnline4x2\",\"X\":0,\"Y\":2}," +
-                "{\"Corner\":\"BottomLeft\",\"Widget\":\"Events3x4\",\"X\":0,\"Y\":0}]}");
+                "{\"Corner\":\"BottomLeft\",\"Widget\":\"LiveEvents3x3\",\"X\":0,\"Y\":0}]}");
 
             //Act
             LobbyLayoutStorage.Load(layout);
@@ -147,14 +147,14 @@ namespace DCL.Lobby.Tests
         public void StoreWidgetsAndCornersByName()
         {
             //Arrange
-            layout.TryPlace(LobbyWidgetId.Events3x4, LobbyGridCorner.TopRight, new Vector2Int(1, 0));
+            layout.TryPlace(LobbyWidgetId.LiveEvents3x3, LobbyGridCorner.TopRight, new Vector2Int(1, 0));
 
             //Act
             LobbyLayoutStorage.Save(layout);
 
             //Assert
             string json = DCLPlayerPrefs.GetString(DCLPrefKeys.LOBBY_LAYOUT);
-            StringAssert.Contains("\"Widget\":\"Events3x4\"", json);
+            StringAssert.Contains("\"Widget\":\"LiveEvents3x3\"", json);
             StringAssert.Contains("\"Corner\":\"TopRight\"", json);
         }
 

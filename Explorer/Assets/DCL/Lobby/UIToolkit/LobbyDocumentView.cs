@@ -24,7 +24,6 @@ namespace DCL.Lobby
         private const string RECENT_PLACES_NAME = "RecentPlaces";
         private const string FEATURED_PLACES_NAME = "FeaturedPlaces";
         private const string FRIENDS_NAME = "Friends";
-        private const string EVENTS_NAME = "Events";
         private const string LIVE_EVENTS_NAME = "LiveEvents";
         private const string UPCOMING_EVENTS_NAME = "UpcomingEvents";
         private const string CREDITS_SLOT_NAME = "CreditsSlot";
@@ -32,6 +31,7 @@ namespace DCL.Lobby
         private const string NOTIFICATIONS_NAME = "Notifications";
         private const string UNREAD_BADGE_NAME = "UnreadBadge";
         private const string CLOSE_NAME = "Close";
+        private const string EDIT_LAYOUT_NAME = "EditLayout";
 
         [SerializeField] private VisualTreeAsset placeCardTemplate = null!;
         [SerializeField] private VisualTreeAsset friendCardTemplate = null!;
@@ -87,6 +87,9 @@ namespace DCL.Lobby
         /// <summary>Exists only while the view is shown.</summary>
         public Button CloseButton => Element<Button>(CLOSE_NAME);
 
+        /// <summary>Enters and leaves the edit mode of the layout. Exists only while the view is shown.</summary>
+        public Button EditLayoutButton => Element<Button>(EDIT_LAYOUT_NAME);
+
         /// <summary>Exists only while the view is shown.</summary>
         public Label WelcomeText => Element<Label>(WELCOME_TEXT_NAME);
 
@@ -102,13 +105,10 @@ namespace DCL.Lobby
         /// <summary>Section of the online friends, header and rail. Exists only while the view is shown.</summary>
         public VisualElement Friends => Section(FRIENDS_NAME);
 
-        /// <summary>Section of the events, title and the two rows below. Exists only while the view is shown.</summary>
-        public VisualElement Events => Section(EVENTS_NAME);
-
-        /// <summary>Row of the live events inside <see cref="Events" />. Exists only while the view is shown.</summary>
+        /// <summary>Section of the live events, title and rail. Exists only while the view is shown.</summary>
         public VisualElement LiveEvents => Section(LIVE_EVENTS_NAME);
 
-        /// <summary>Row of the upcoming events inside <see cref="Events" />. Exists only while shown.</summary>
+        /// <summary>Section of the upcoming events, title and rail. Exists only while the view is shown.</summary>
         public VisualElement UpcomingEvents => Section(UPCOMING_EVENTS_NAME);
 
         /// <summary>

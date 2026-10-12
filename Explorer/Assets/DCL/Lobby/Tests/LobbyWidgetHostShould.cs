@@ -48,10 +48,11 @@ namespace DCL.Lobby.Tests
             //Assert
             VisualElement welcome = root.Q("Welcome");
             VisualElement friends = root.Q("Friends");
-            VisualElement events = root.Q("Events");
+            VisualElement liveEvents = root.Q("LiveEvents");
             Assert.AreSame(root.Q("TopLeftGrid"), welcome.parent);
             Assert.AreSame(root.Q("TopLeftGrid"), friends.parent);
-            Assert.AreSame(root.Q("TopRightGrid"), events.parent);
+            Assert.AreSame(root.Q("TopRightGrid"), liveEvents.parent);
+            Assert.AreSame(root.Q("TopRightGrid"), root.Q("UpcomingEvents").parent);
             Assert.AreSame(root.Q("BottomLeftGrid"), root.Q("RecentPlaces").parent);
             Assert.AreSame(root.Q("BottomRightGrid"), root.Q("FeaturedPlaces").parent);
             Assert.AreEqual(0, root.Q("UnplacedWidgets").childCount);
@@ -59,8 +60,10 @@ namespace DCL.Lobby.Tests
             Assert.AreEqual(0f, welcome.style.left.value.value);
             Assert.AreEqual(0f, welcome.style.top.value.value);
             Assert.AreEqual(LobbyGridElement.SpanToSize(LobbyWidgetId.Landing4x3.Span()).x, welcome.style.width.value.value);
+            Assert.AreEqual(LobbyGridElement.SpanToSize(LobbyWidgetId.Landing4x3.Span()).y, welcome.style.height.value.value);
             Assert.AreEqual(3 * LobbyGridElement.CellPitch.y, friends.style.top.value.value);
-            Assert.AreEqual(LobbyGridElement.CellPitch.x, events.style.left.value.value);
+            Assert.AreEqual(LobbyGridElement.CellPitch.x, liveEvents.style.left.value.value);
+            Assert.AreEqual(3 * LobbyGridElement.CellPitch.y, root.Q("UpcomingEvents").style.top.value.value);
         }
 
         [Test]
@@ -69,16 +72,16 @@ namespace DCL.Lobby.Tests
             //Arrange
             var stored = new LobbyLayout(new Vector2Int(4, 6), new Vector2Int(4, 6), new Vector2Int(6, 2), new Vector2Int(6, 2));
             stored.ResetToDefault();
-            stored.Remove(LobbyWidgetId.Events3x4);
+            stored.Remove(LobbyWidgetId.LiveEvents3x3);
             LobbyLayoutStorage.Save(stored);
 
             //Act
             host.Show(root);
 
             //Assert
-            VisualElement events = root.Q("Events");
-            Assert.AreSame(root.Q("UnplacedWidgets"), events.parent);
-            Assert.AreEqual(4, root.Q("TopLeftGrid").childCount + root.Q("BottomLeftGrid").childCount + root.Q("BottomRightGrid").childCount);
+            VisualElement liveEvents = root.Q("LiveEvents");
+            Assert.AreSame(root.Q("UnplacedWidgets"), liveEvents.parent);
+            Assert.AreEqual(5, root.Q("TopLeftGrid").childCount + root.Q("TopRightGrid").childCount + root.Q("BottomLeftGrid").childCount + root.Q("BottomRightGrid").childCount);
         }
 
         [Test]
@@ -100,6 +103,29 @@ namespace DCL.Lobby.Tests
         }
 
         [Test]
+        public void ShowASectionAtAnotherCellUntilApplied()
+        {
+            //Arrange
+            host.Show(root);
+            VisualElement welcome = root.Q("Welcome");
+
+            //Act
+            host.ShowAt(LobbyWidgetId.Landing4x3, new Vector2Int(0, 2));
+
+            //Assert
+            Assert.AreSame(root.Q("TopLeftGrid"), welcome.parent);
+            Assert.AreEqual(2 * LobbyGridElement.CellPitch.y, welcome.style.top.value.value);
+            Assert.IsTrue(host.Layout!.TryGetPlacement(LobbyWidgetId.Landing4x3, out LobbyWidgetPlacement placement));
+            Assert.AreEqual(Vector2Int.zero, placement.Cell, "Showing a section elsewhere leaves the layout alone");
+
+            //Act
+            host.Apply();
+
+            //Assert
+            Assert.AreEqual(0f, welcome.style.top.value.value);
+        }
+
+        [Test]
         public void KeepTheSectionsReachableFromTheRoot()
         {
             //Act
@@ -114,6 +140,7 @@ namespace DCL.Lobby.Tests
         public void RefuseToLayOutBeforeItIsShown()
         {
             Assert.Throws<System.InvalidOperationException>(() => host.Apply());
+            Assert.Throws<System.InvalidOperationException>(() => host.ShowAt(LobbyWidgetId.Landing4x3, Vector2Int.zero));
         }
 
         private static VisualElement BuildHierarchy()
@@ -130,7 +157,8 @@ namespace DCL.Lobby.Tests
             var welcome = new VisualElement { name = "Welcome" };
             welcome.Add(new Label { name = "WelcomeText" });
             unplaced.Add(welcome);
-            unplaced.Add(new VisualElement { name = "Events" });
+            unplaced.Add(new VisualElement { name = "LiveEvents" });
+            unplaced.Add(new VisualElement { name = "UpcomingEvents" });
             unplaced.Add(new VisualElement { name = "Friends" });
             unplaced.Add(new VisualElement { name = "RecentPlaces" });
             unplaced.Add(new VisualElement { name = "FeaturedPlaces" });

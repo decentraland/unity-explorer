@@ -5,8 +5,8 @@ namespace DCL.Lobby
 {
     /// <summary>
     ///     One of the four corner grids the widgets sit on. The cell unit is shared by every grid and lives here; the UXML
-    ///     declares the corner and the cells of each grid and the element sizes itself from them. The cell lines are drawn
-    ///     only while editing.
+    ///     declares the corner and the cells of each grid and the element sizes itself from them. The anchor dots at the
+    ///     corners of every cell are drawn only while editing.
     /// </summary>
     [UxmlElement]
     public partial class LobbyGridElement : VisualElement
@@ -19,8 +19,8 @@ namespace DCL.Lobby
         private const string USS_HIGHLIGHTED = USS_BLOCK + "--highlighted";
         private const string USS_EDITING = USS_BLOCK + "--editing";
 
-        private const float CELL_LINE_WIDTH = 1f;
-        private static readonly Color CELL_LINE_COLOR = new (1f, 1f, 1f, 0.15f);
+        private const float ANCHOR_DOT_RADIUS = 2.5f;
+        private static readonly Color ANCHOR_DOT_COLOR = new (1f, 1f, 1f, 0.35f);
 
         private int columns = 1;
         private int rows = 1;
@@ -80,6 +80,13 @@ namespace DCL.Lobby
         public static Vector2 LocalToCell(Vector2 local) =>
             new (local.x / (CELL_WIDTH + GUTTER), local.y / (CELL_HEIGHT + GUTTER));
 
+        /// <summary>The cell whose top-left corner is nearest to the position; it may lie outside the grid.</summary>
+        public static Vector2Int NearestCell(Vector2 local)
+        {
+            Vector2 cell = LocalToCell(local);
+            return new Vector2Int(Mathf.RoundToInt(cell.x), Mathf.RoundToInt(cell.y));
+        }
+
         public void SetHighlighted(bool highlighted) =>
             EnableInClassList(USS_HIGHLIGHTED, highlighted);
 
@@ -103,8 +110,7 @@ namespace DCL.Lobby
                 return;
 
             Painter2D painter = context.painter2D;
-            painter.strokeColor = CELL_LINE_COLOR;
-            painter.lineWidth = CELL_LINE_WIDTH;
+            painter.fillColor = ANCHOR_DOT_COLOR;
             painter.BeginPath();
 
             for (var y = 0; y < rows; y++)
@@ -112,15 +118,22 @@ namespace DCL.Lobby
                 for (var x = 0; x < columns; x++)
                 {
                     Vector2 corner = CellToLocal(new Vector2Int(x, y));
-                    painter.MoveTo(corner);
-                    painter.LineTo(new Vector2(corner.x + CELL_WIDTH, corner.y));
-                    painter.LineTo(new Vector2(corner.x + CELL_WIDTH, corner.y + CELL_HEIGHT));
-                    painter.LineTo(new Vector2(corner.x, corner.y + CELL_HEIGHT));
-                    painter.ClosePath();
+                    AddDot(painter, corner);
+                    AddDot(painter, new Vector2(corner.x + CELL_WIDTH, corner.y));
+                    AddDot(painter, new Vector2(corner.x + CELL_WIDTH, corner.y + CELL_HEIGHT));
+                    AddDot(painter, new Vector2(corner.x, corner.y + CELL_HEIGHT));
                 }
             }
 
-            painter.Stroke();
+            painter.Fill();
+        }
+
+        // Each dot is its own closed sub-path so the fill does not join it to the previous one
+        private static void AddDot(Painter2D painter, Vector2 center)
+        {
+            painter.MoveTo(new Vector2(center.x + ANCHOR_DOT_RADIUS, center.y));
+            painter.Arc(center, ANCHOR_DOT_RADIUS, 0f, 360f);
+            painter.ClosePath();
         }
     }
 }

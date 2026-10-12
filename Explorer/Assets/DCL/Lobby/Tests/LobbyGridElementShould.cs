@@ -83,6 +83,20 @@ namespace DCL.Lobby.Tests
         }
 
         [Test]
+        public void RoundALocalPositionToTheNearestCell()
+        {
+            //Act
+            Vector2Int down = LobbyGridElement.NearestCell(new Vector2(LobbyGridElement.CellPitch.x * 1.4f, LobbyGridElement.CellPitch.y * 2.4f));
+            Vector2Int up = LobbyGridElement.NearestCell(new Vector2(LobbyGridElement.CellPitch.x * 1.6f, LobbyGridElement.CellPitch.y * 2.6f));
+            Vector2Int outside = LobbyGridElement.NearestCell(new Vector2(-LobbyGridElement.CellPitch.x * 0.8f, 0f));
+
+            //Assert
+            Assert.AreEqual(new Vector2Int(1, 2), down);
+            Assert.AreEqual(new Vector2Int(2, 3), up);
+            Assert.AreEqual(new Vector2Int(-1, 0), outside);
+        }
+
+        [Test]
         public void ToggleTheHighlight()
         {
             //Act
@@ -96,7 +110,7 @@ namespace DCL.Lobby.Tests
         }
 
         [Test]
-        public void ShowTheCellLinesOnlyWhileEditing()
+        public void ShowTheAnchorDotsOnlyWhileEditing()
         {
             //Assert
             Assert.IsFalse(grid.IsEditing);

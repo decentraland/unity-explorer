@@ -66,3 +66,26 @@
     height: 12px;
     background-image: url('/Assets/Textures/Common/CloseIcnThin.png');
 }
+
+.lobby__edit-layout-icon {
+    width: 20px;
+    height: 20px;
+    background-image: url('/Assets/Textures/Common/EditIcn.png');
+}
+
+/* While the layout is edited the same button leaves edit mode, so it reads as Done */
+.lobby--editing .lobby__edit-layout-button {
+    background-color: var(--lobby-jump-in-color);
+}
+
+.lobby--editing .lobby__edit-layout-button:hover {
+    background-color: var(--lobby-jump-in-hover-color);
+}
+
+.lobby--editing .lobby__edit-layout-button:active {
+    background-color: var(--lobby-jump-in-pressed-color);
+}
+
+.lobby--editing .lobby__edit-layout-icon {
+    background-image: url('/Assets/Textures/Common/CheckmarkIcnThick.png');
+}
