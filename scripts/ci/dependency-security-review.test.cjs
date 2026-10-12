@@ -13,10 +13,10 @@ function script(name) {
 }
 const detect = script('Classify changes and maintain label');
 const request = script('Request Jarvis through the existing reviewer webhook');
-function fixture(files = [], reviews = [], since = []) {
+function fixture(files = [], reviews = [], since = [], labeled = false) {
   const listFiles = () => {};
   const listReviews = () => {};
-  const pr = { number: 42, state: 'open', draft: false, head: { sha: 'a'.repeat(40), ref: 'feat/example' }, base: { sha: 'b'.repeat(40), ref: 'dev' }, changed_files: files.length, user: { login: 'author' }, labels: [] };
+  const pr = { number: 42, state: 'open', draft: false, head: { sha: 'a'.repeat(40), ref: 'feat/example' }, base: { sha: 'b'.repeat(40), ref: 'dev' }, changed_files: files.length, user: { login: 'author' }, labels: labeled ? [{ name: 'new-dependency' }] : [] };
   const requests = [], outputs = {}, operations = [];
   const github = {
     paginate: async endpoint => (endpoint === listReviews ? reviews : files),
@@ -28,7 +28,7 @@ function fixture(files = [], reviews = [], since = []) {
       },
       repos: {
         getCollaboratorPermissionLevel: async () => ({ data: { permission: 'write' } }),
-        compareCommitsWithBasehead: async () => ({ data: { files: since } })
+        compareCommitsWithBasehead: async () => ({ data: { status: 'ahead', files: since } })
       },
       issues: {
         addLabels: async () => { operations.push('add'); pr.labels.push({ name: 'new-dependency' }); },
@@ -205,25 +205,26 @@ test('does not let a release-prefixed feature branch opt itself out', async () =
   assert.equal(f.outputs.request, 'true');
   assert.deepEqual(f.operations, ['add', 'request']);
 });
-const reviewed = sha => [{ user: { login: 'decentraland-bot' }, commit_id: sha }];
+const runMarker = '<!-- jarvis-security-review:12345678-1234-1234-1234-123456789abc -->';
+const reviewed = (sha, verdict = 'PASS') => [{ user: { login: 'decentraland-bot' }, state: 'COMMENTED', commit_id: sha, body: `DEPENDENCY_REVIEW: ${verdict}\n${runMarker}` }];
 test('requests the first review when Jarvis has not read this PR yet', async () => {
   const f = fixture([{ filename: 'Explorer/Packages/manifest.json' }]);
   await detect(f.github, f.context, f.core);
   assert.equal(f.outputs.request, 'true');
 });
 test('re-requests when the range since the last review carries a relevant path', async () => {
-  const f = fixture([{ filename: 'Explorer/Packages/manifest.json' }], reviewed('d'.repeat(40)), [{ filename: 'scripts/build.sh' }]);
+  const f = fixture([{ filename: 'Explorer/Packages/manifest.json' }], reviewed('d'.repeat(40)), [{ filename: 'scripts/build.sh' }], true);
   await detect(f.github, f.context, f.core);
   assert.equal(f.outputs.request, 'true');
-  assert.deepEqual(f.operations, ['add']);
+  assert.deepEqual(f.operations, []);
 });
 test('does not re-request when nothing relevant moved since the last review', async () => {
-  const f = fixture([{ filename: 'Explorer/Packages/manifest.json' }], reviewed('d'.repeat(40)), [{ filename: 'Explorer/Assets/DCL/Thing.cs' }]);
+  const f = fixture([{ filename: 'Explorer/Packages/manifest.json' }], reviewed('d'.repeat(40)), [{ filename: 'Explorer/Assets/DCL/Thing.cs' }], true);
   await detect(f.github, f.context, f.core);
   // `request` is gated by `if: steps.detect.outputs.request == 'true'`, so the
   // false verdict is what suppresses the step — it is never entered to be asked.
   assert.equal(f.outputs.request, 'false');
-  assert.deepEqual(f.operations, ['add']);
+  assert.deepEqual(f.operations, []);
 });
 test('keeps the label while declining to re-request', async () => {
   const f = fixture([{ filename: 'Explorer/Packages/manifest.json' }], reviewed('d'.repeat(40)), [{ filename: 'docs/x.md' }]);
@@ -234,30 +235,118 @@ test('keeps the label while declining to re-request', async () => {
   assert.deepEqual(f.pr.labels, [{ name: 'new-dependency' }]);
 });
 test('does not re-review a head Jarvis already read', async () => {
-  const f = fixture([{ filename: 'Explorer/Packages/manifest.json' }], reviewed('a'.repeat(40)));
+  const f = fixture([{ filename: 'Explorer/Packages/manifest.json' }], reviewed('a'.repeat(40)), [], true);
   await detect(f.github, f.context, f.core);
   assert.equal(f.outputs.request, 'false');
 });
 test('ignores reviews by anyone other than the bot', async () => {
-  const f = fixture([{ filename: 'Explorer/Packages/manifest.json' }], [{ user: { login: 'someone' }, commit_id: 'd'.repeat(40) }]);
+  const reviews = reviewed('a'.repeat(40));
+  reviews[0].user.login = 'someone';
+  const f = fixture([{ filename: 'Explorer/Packages/manifest.json' }], reviews, [], true);
+  await detect(f.github, f.context, f.core);
+  assert.equal(f.outputs.request, 'true');
+});
+test('requests the first detailed pass after adding the label despite an ordinary review on this head', async () => {
+  const reviews = reviewed('a'.repeat(40));
+  reviews[0].body = 'REVIEW_RESULT: PASS';
+  const f = fixture([{ filename: 'Explorer/Packages/manifest.json' }], reviews);
+  await detect(f.github, f.context, f.core);
+  await request(f.github, f.context, f.core);
+  assert.equal(f.outputs.request, 'true');
+  assert.deepEqual(f.operations, ['add', 'request']);
+});
+for (const [name, mutate] of [
+  ['an ordinary review', review => { review.body = 'REVIEW_RESULT: PASS' }],
+  ['quoted security markers', review => { review.body = review.body.split('\n').map(line => `> ${line}`).join('\n') }],
+  ['fenced security markers', review => { review.body = `\x60\x60\x60\n${review.body}\n\x60\x60\x60` }],
+  ['tilde-fenced security markers', review => { review.body = `~~~\n${review.body}\n~~~` }],
+  ['duplicate verdicts', review => { review.body += '\nDEPENDENCY_REVIEW: PASS' }],
+  ['duplicate run markers', review => { review.body += `\n${runMarker}` }],
+  ['an invalid verdict', review => { review.body = `DEPENDENCY_REVIEW: UNKNOWN\n${runMarker}` }],
+  ['an invalid run marker', review => { review.body = 'DEPENDENCY_REVIEW: PASS\n<!-- jarvis-security-review:invalid -->' }],
+  ['a pending review', review => { review.state = 'PENDING' }],
+  ['a dismissed review', review => { review.state = 'DISMISSED' }],
+  ['a deleted reviewer', review => { review.user = null }]
+]) {
+  test(`does not suppress detailed review based on ${name}`, async () => {
+    const reviews = reviewed('a'.repeat(40));
+    mutate(reviews[0]);
+    const f = fixture([{ filename: 'Explorer/Packages/manifest.json' }], reviews, [], true);
+    await detect(f.github, f.context, f.core);
+    assert.equal(f.outputs.request, 'true');
+  });
+}
+for (const verdict of ['PASS', 'NEEDS_ATTENTION', 'BLOCK']) {
+  test(`recognizes a completed detailed ${verdict} review`, async () => {
+    const f = fixture([{ filename: 'Explorer/Packages/manifest.json' }], reviewed('a'.repeat(40), verdict), [], true);
+    await detect(f.github, f.context, f.core);
+    assert.equal(f.outputs.request, 'false');
+  });
+}
+test('does not advance the detailed cursor for a newer ordinary review', async () => {
+  const reviews = [...reviewed('d'.repeat(40)), ...reviewed('a'.repeat(40))];
+  reviews[1].body = 'REVIEW_RESULT: PASS';
+  const f = fixture([{ filename: 'Explorer/Packages/manifest.json' }], reviews, [], true);
+  let basehead;
+  f.github.rest.repos.compareCommitsWithBasehead = async args => {
+    basehead = args.basehead;
+    return { data: { status: 'ahead', files: [{ filename: 'scripts/build.sh' }] } };
+  };
+  await detect(f.github, f.context, f.core);
+  assert.equal(basehead, `${'d'.repeat(40)}...${'a'.repeat(40)}`);
+  assert.equal(f.outputs.request, 'true');
+});
+for (const sha of ['a'.repeat(40), 'd'.repeat(40)]) {
+  test(`requests again after retargeting with reviewed head ${sha[0]}`, async () => {
+    const f = fixture([{ filename: 'Explorer/Packages/manifest.json' }], reviewed(sha), [{ filename: 'docs/x.md' }], true);
+    f.context.payload.action = 'edited';
+    f.context.payload.changes = { base: { ref: { from: 'main' } } };
+    await detect(f.github, f.context, f.core);
+    await request(f.github, f.context, f.core);
+    assert.equal(f.outputs.request, 'true');
+    assert.deepEqual(f.operations, ['request']);
+  });
+}
+for (const status of ['behind', 'diverged']) {
+  test(`re-requests for a ${status} force-pushed history`, async () => {
+    const f = fixture([{ filename: 'Explorer/Packages/manifest.json' }], reviewed('d'.repeat(40)), [], true);
+    f.github.rest.repos.compareCommitsWithBasehead = async () => ({ data: { status, files: [] } });
+    await detect(f.github, f.context, f.core);
+    assert.equal(f.outputs.request, 'true');
+  });
+}
+for (const files of [undefined, null, {}]) {
+  test(`re-requests when compare files are ${String(files)}`, async () => {
+    const f = fixture([{ filename: 'Explorer/Packages/manifest.json' }], reviewed('d'.repeat(40)), [], true);
+    f.github.rest.repos.compareCommitsWithBasehead = async () => ({ data: { status: 'ahead', files } });
+    await detect(f.github, f.context, f.core);
+    assert.equal(f.outputs.request, 'true');
+  });
+}
+test('re-requests when prior reviews cannot be read', async () => {
+  const f = fixture([{ filename: 'Explorer/Packages/manifest.json' }], [], [], true);
+  const paginate = f.github.paginate;
+  f.github.paginate = async endpoint => {
+    if (endpoint === f.listReviews) throw new Error('API down');
+    return paginate(endpoint);
+  };
   await detect(f.github, f.context, f.core);
   assert.equal(f.outputs.request, 'true');
 });
 for (const [name, brk] of [
   ['an unreadable', f => { f.github.rest.repos.compareCommitsWithBasehead = async () => { throw new Error('410 gone') } }],
   ['a truncated', f => { f.github.rest.repos.compareCommitsWithBasehead =
-    async () => ({ data: { files: Array.from({ length: 300 }, (_, i) => ({ filename: `src/f${i}.cs` })) } }) }]
+    async () => ({ data: { status: 'ahead', files: Array.from({ length: 300 }, (_, i) => ({ filename: `src/f${i}.cs` })) } }) }]
 ]) {
   test(`fails open on ${name} comparison`, async () => {
-    const f = fixture([{ filename: 'Explorer/Packages/manifest.json' }], reviewed('d'.repeat(40)));
+    const f = fixture([{ filename: 'Explorer/Packages/manifest.json' }], reviewed('d'.repeat(40)), [], true);
     brk(f);
     await detect(f.github, f.context, f.core);
     assert.equal(f.outputs.request, 'true');
   });
 }
-test('grants both write scopes that labelling a pull request requires', () => {
-  // The silent 403 that disabled the detailed pass between #10033 and this fix
-  // named `issues=write; pull_requests=write`; #10033 granted only the first.
+test('preserves the working label scopes and authorizes commit comparisons', () => {
+  assert.match(workflow, /^ {6}contents: read$/m);
   assert.match(workflow, /^ {6}issues: write$/m);
   assert.match(workflow, /^ {6}pull-requests: write$/m);
   assert.doesNotMatch(workflow, /^ {6}pull-requests: read$/m);

@@ -17,11 +17,10 @@ jobs:
     if: github.event.action != 'edited' || github.event.changes.base != null
     runs-on: ubuntu-latest
     permissions:
-      # The label is what switches Agent Server onto the detailed pass, and
-      # `issues.addLabels` on a PR 403s without the pull-requests scope — #10033
-      # downgraded it to read, so every label write has failed since. The 403
-      # names `issues=write; pull_requests=write`, and jarvis-review-status.yml
-      # labels successfully with exactly this pair, so grant both.
+      # Keep the write scopes used by the working default-branch label workflow.
+      # In `issues=write; pull_requests=write`, the semicolon separates alternatives,
+      # not cumulative requirements. Compare commits also needs contents: read.
+      contents: read
       issues: write
       pull-requests: write
     steps:
@@ -92,15 +91,46 @@ jobs:
               core.setOutput('request', 'false');
               return;
             }
+            if (!hasLabel || (context.payload.action === 'edited' && context.payload.changes?.base)) {
+              core.setOutput('request', 'true');
+              return;
+            }
             // `hasChanges` describes the PR's cumulative diff, so on its own it would
             // buy a full review on every later push once a single automation file had
             // been touched. Re-request only for a head that moved something relevant
             // since the one Jarvis last read.
-            const reviews = await github.paginate(github.rest.pulls.listReviews, {
-              owner, repo, pull_number, per_page: 100
-            });
+            let reviews;
+            try {
+              reviews = await github.paginate(github.rest.pulls.listReviews, {
+                owner, repo, pull_number, per_page: 100
+              });
+            } catch (error) {
+              core.warning(`Could not read prior reviews: ${error.message}`);
+              core.setOutput('request', 'true');
+              return;
+            }
+            // Agent Server's detailed verdict and run marker must be standalone,
+            // outside quoted text and fenced examples (src/security-review.ts).
+            const hasDetailedReview = (review) => {
+              const lines = [];
+              let fence;
+              for (const line of (review.body || '').split(/\r?\n/)) {
+                const match = line.match(/^\s*(`{3,}|~{3,})/);
+                if (match) {
+                  if (!fence) fence = match[1];
+                  else if (match[1][0] === fence[0] && match[1].length >= fence.length) fence = undefined;
+                } else if (!fence && !/^\s*>/.test(line)) {
+                  lines.push(line);
+                }
+              }
+              const verdicts = lines.filter(line => /^\s*DEPENDENCY_REVIEW:/.test(line));
+              const markers = lines.filter(line => /^<!-- jarvis-security-review:/.test(line));
+              return verdicts.length === 1 && /^DEPENDENCY_REVIEW: (PASS|NEEDS_ATTENTION|BLOCK)$/.test(verdicts[0]) &&
+                markers.length === 1 && /^<!-- jarvis-security-review:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12} -->$/.test(markers[0]);
+            };
             const reviewedHead = reviews
-              .filter(review => review.user.login === 'decentraland-bot' && review.commit_id)
+              .filter(review => review.user?.login?.toLowerCase() === 'decentraland-bot' && review.commit_id &&
+                ['COMMENTED', 'APPROVED', 'CHANGES_REQUESTED'].includes(review.state) && hasDetailedReview(review))
               .map(review => review.commit_id).pop();
             if (!reviewedHead) {
               core.setOutput('request', 'true');
@@ -118,7 +148,12 @@ jobs:
               const { data } = await github.rest.repos.compareCommitsWithBasehead({
                 owner, repo, basehead: `${reviewedHead}...${classifiedHead}`
               });
-              since = data.files || [];
+              if (data.status !== 'ahead' || !Array.isArray(data.files)) {
+                core.notice('Review history is not an ancestor comparison with a complete file list.');
+                core.setOutput('request', 'true');
+                return;
+              }
+              since = data.files;
             } catch (error) {
               core.warning(`Could not diff ${reviewedHead}...${classifiedHead}: ${error.message}`);
               core.setOutput('request', 'true');
