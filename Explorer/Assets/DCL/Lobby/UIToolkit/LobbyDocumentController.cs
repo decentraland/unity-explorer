@@ -85,6 +85,7 @@ namespace DCL.Lobby
         private readonly LobbyDocumentFriendsPresenter? friends;
         private readonly LobbyConnectedFriendsPresenter? connectedFriends;
         private readonly ClickOrDragManipulator avatarGesture;
+        private readonly LobbyWidgetHost widgetHost = new ();
 
         private LobbyPlacesRail? recentPlacesRail;
         private LobbyPlacesRail? featuredPlacesRail;
@@ -249,6 +250,7 @@ namespace DCL.Lobby
 
             // The renderer keeps the hierarchy across hides, so every handler is removed before it is added again
             viewInstance!.AttachTopBarWidgets();
+            widgetHost.Show(viewInstance.Root);
             viewInstance.Profile.Clicked = ShowProfileMenu;
             viewInstance.NotificationsButton.clicked -= ShowNotifications;
             viewInstance.NotificationsButton.clicked += ShowNotifications;

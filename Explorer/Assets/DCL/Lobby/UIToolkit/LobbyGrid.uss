@@ -1,0 +1,9 @@
+/* A grid sizes itself in code from its cells (LobbyGridElement); the document pins it to its corner. The cell lines are
+   painted by the element while editing */
+.lobby-grid {
+    position: absolute;
+}
+
+.lobby-grid--highlighted {
+    background-color: rgba(255, 255, 255, 0.04);
+}

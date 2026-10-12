@@ -1,6 +1,5 @@
-/* 524x300 with 24px corners, the thumbnail filling it */
+/* 300px tall and as wide as its section, with 24px corners and the thumbnail filling it */
 .lobby-landing-card {
-    width: 524px;
     height: 300px;
     border-radius: 24px;
     background-color: var(--lobby-card-color);

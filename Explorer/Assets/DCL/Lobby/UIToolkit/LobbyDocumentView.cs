@@ -57,6 +57,9 @@ namespace DCL.Lobby
         /// <summary>The uGUI avatar preview nested in the prefab, so it exists from the instantiation on.</summary>
         public CharacterPreviewView CharacterPreviewView => characterPreviewView;
 
+        /// <summary>Root of the hierarchy, for the presenters that find their elements themselves. Exists only while shown.</summary>
+        public VisualElement Root => root ?? throw new InvalidOperationException("The lobby hierarchy exists only while the view is shown");
+
         /// <summary>Transparent element over the figure taking its hover and click. Exists only while shown.</summary>
         public VisualElement AvatarHitArea => Element<VisualElement>(AVATAR_HIT_AREA_NAME);
 

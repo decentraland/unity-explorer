@@ -2,6 +2,7 @@
 :root {
     --lobby-margin: 50px;
     --lobby-columns-top: 180px;
+    --lobby-bottom-margin: 13px;
     --lobby-card-color: rgba(20, 20, 26, 0.9);
     --lobby-card-border-color: rgba(255, 255, 255, 0.1);
     --lobby-title-color: white;
@@ -101,6 +102,36 @@
     background-image: url('/Assets/DCL/Backpack/Textures/CursorRotate.png');
 }
 
+/* The grids size themselves from their cells; each one is pinned to its corner, the bottom ones as low as the places were */
+.lobby__grid--top-left {
+    left: var(--lobby-margin);
+    top: var(--lobby-columns-top);
+}
+
+.lobby__grid--top-right {
+    right: var(--lobby-margin);
+    top: var(--lobby-columns-top);
+}
+
+.lobby__grid--bottom-left {
+    left: var(--lobby-margin);
+    bottom: var(--lobby-bottom-margin);
+}
+
+.lobby__grid--bottom-right {
+    right: var(--lobby-margin);
+    bottom: var(--lobby-bottom-margin);
+}
+
+/* A widget section is placed by LobbyWidgetHost: its left, top and width are inline, its height comes from its content */
+.lobby__widget {
+    position: absolute;
+}
+
+.lobby__unplaced-widgets {
+    display: none;
+}
+
 .lobby__logo {
     position: absolute;
     left: var(--lobby-margin);
@@ -108,13 +139,6 @@
     width: 256px;
     height: 35px;
     background-image: url('/Assets/Textures/ExplorePanel/DecentralandLogo.png');
-}
-
-.lobby__welcome {
-    position: absolute;
-    left: var(--lobby-margin);
-    top: var(--lobby-columns-top);
-    width: 524px;
 }
 
 .lobby__welcome-title,
@@ -145,14 +169,6 @@
     margin-bottom: 10px;
 }
 
-/* The header is centred 25.8px under the middle of the screen, as in the uGUI lobby */
-.lobby__friends {
-    position: absolute;
-    left: var(--lobby-margin);
-    top: 566px;
-    width: 524px;
-}
-
 .lobby__friends-header {
     height: 30px;
     flex-direction: row;
@@ -171,13 +187,6 @@
 .lobby__friends-rail {
     margin-top: 2px;
     height: 148px;
-}
-
-.lobby__events {
-    position: absolute;
-    right: var(--lobby-margin);
-    top: var(--lobby-columns-top);
-    width: 358px;
 }
 
 .lobby__events-title {
@@ -215,20 +224,6 @@
 
 .lobby__upcoming-events-rail .lobby-rail__dots {
     margin-top: 12px;
-}
-
-.lobby__places {
-    position: absolute;
-    bottom: 13px;
-    width: 864px;
-}
-
-.lobby__places--recent {
-    left: var(--lobby-margin);
-}
-
-.lobby__places--featured {
-    right: var(--lobby-margin);
 }
 
 .lobby__places-title {
