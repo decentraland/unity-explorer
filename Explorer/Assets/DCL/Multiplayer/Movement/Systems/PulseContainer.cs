@@ -27,7 +27,7 @@ namespace DCL.Multiplayer.Movement
 
         internal readonly ParcelEncoder parcelEncoder;
         private readonly IDecentralandUrlsSource urlsSource;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly PulseRealm pulseRealm;
 
         public readonly PulseIncomingProfileAnnouncements IncomingProfiles;
@@ -40,7 +40,7 @@ namespace DCL.Multiplayer.Movement
         internal IProfilePropagation? pulseProfilePropagationBus { get; private set; }
 
         private PulseContainer(IWeb3IdentityCache identityCache, MovementInbox movementInbox,
-            ParcelEncoder parcelEncoder, IDecentralandUrlsSource urlsSource, ISelfProfile selfProfile, PulseRealm pulseRealm,
+            ParcelEncoder parcelEncoder, IDecentralandUrlsSource urlsSource, SelfProfile selfProfile, PulseRealm pulseRealm,
             PulseActivation pulseActivation)
         {
             this.identityCache = identityCache;
@@ -60,7 +60,7 @@ namespace DCL.Multiplayer.Movement
             MovementInbox movementInbox,
             LandscapeData landscapeData,
             IDecentralandUrlsSource urlsSource,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             PulseRealm pulseRealm,
             PulseActivation pulseActivation,
             CancellationToken ct)

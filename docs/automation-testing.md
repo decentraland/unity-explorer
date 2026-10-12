@@ -91,13 +91,19 @@ Non-release builds created by CI (for PRs and the dev branch) include AltTester 
 
 ## Visual Regression on PRs
 
+Release and hotfix PRs into `main` automatically run Visual alongside InWorld against the same build. A manual `In-World Tests` dispatch with a `filter` runs InWorld only. When configured as a required check, `InWorld suite result` gates build resolution and InWorld; Visual failures remain visible in the PR's CI status comment and Visual Allure report but are advisory until baselines are versioned per release. The gate finishes independently of Visual. The default explorer-automation baselines follow `dev`, which can be newer than a release cut or a hotfix from `main`.
+
+[Manually dispatched jobs cannot satisfy required PR checks](https://docs.github.com/en/pull-requests/how-tos/merge-and-close-pull-requests/troubleshooting-required-status-checks#checks-from-some-workflow-jobs-are-not-evaluated). They still run the suites and report results, but requiring `InWorld suite result` also needs an eligible PR-triggered run for bot-created release PRs.
+
 The visual regression suite can be triggered on any PR by leaving the following comment:
 
 ```
 /visual-tests
 ```
 
-The dispatcher lives in [`.github/workflows/visual-regression.yml`](../.github/workflows/visual-regression.yml) and hands off to the `run-visual-suite.yml` reusable workflow in [decentraland/explorer-automation](https://github.com/decentraland/explorer-automation).
+Release and hotfix PRs already have an automatic run. Wait for it to finish before requesting a manual rerun, since both runs update the PR's visual report.
+
+The dispatcher lives in [`.github/workflows/visual-regression.yml`](../.github/workflows/visual-regression.yml) and hands off to the `run-visual-suite.yml` reusable workflow in [decentraland/explorer-automation](https://github.com/decentraland/explorer-automation). Both Explorer dispatchers pin that workflow definition to a reviewed revision containing the final CI status writer. The dispatcher marks the automation section as running; the reusable writes the final verdict and Allure report link into that section. Test and baseline branch selection remains independent of the workflow-definition pin.
 
 **Requirements:**
 - The commenter must have `OWNER`, `MEMBER`, or `COLLABORATOR` association on the repo. Comments from anyone else are silently ignored.
@@ -106,6 +112,28 @@ The dispatcher lives in [`.github/workflows/visual-regression.yml`](../.github/w
 **Confirmation:** when authorized, the bot reacts to the trigger comment with 👀. No reaction means the comment was ignored (usually an author-association mismatch).
 
 **Branch matching for baselines and fixtures:** if `decentraland/explorer-automation` has a branch with the same name as the PR's head branch, that branch's visual baselines and test fixtures are used. Otherwise the workflow falls back to explorer-automation's default branch. This lets you stage matching test changes alongside Explorer changes by reusing the branch name.
+
+### Regenerating Visual Baselines
+
+**Prerequisite:** filtered slash commands require explorer-automation's default-branch dispatcher to treat `filter` as an additional restriction within `Category=Visual`. Slash commands execute the default-branch workflow even when the PR has a different head branch. Pinning the Explorer Visual callers does not upgrade that separate dispatcher.
+
+With that capability available, open an explorer-automation PR with the **same head branch name** as the Explorer PR, and wait for the Explorer PR's successful Unity Cloud Build. On the explorer-automation PR, comment:
+
+```text
+/generate-baselines
+```
+
+To refresh only one fixture, use:
+
+```text
+/generate-baselines --filter FullyQualifiedName~UiFixture
+```
+
+The Visual-scoped dispatcher enforces `Category=Visual` automatically. It records on CI's macOS runner against the matching Explorer PR build and commits the PNGs back to the explorer-automation PR branch. If the paired build is unavailable, it falls back to a `dev` build: check the reported build before accepting the baseline changes. Inspect the generated PNGs and Allure report, then rerun `/visual-tests` on the Explorer PR to compare against that branch's new baselines.
+
+If the default dispatcher lacks that capability, run **Manual Visual Tests** from an automation branch whose reusable workflow enforces Visual scoping. Select `mode=record`, `platform=macos`, the matching automation branch as `tests_ref`, and the instrumented Explorer build URL as `build_url`; use `FullyQualifiedName~UiFixture` as the optional filter. Manual recording renders PNGs for inspection in the Allure report and does **not** commit them. Use the slash-command path for automatic commits once its default-branch prerequisite is met.
+
+For a release or hotfix, keep its matching automation branch available while testing that older build. Do not replace automation `main` baselines with an older release's pixels. See [explorer-automation's baseline guidance](https://github.com/decentraland/explorer-automation/blob/8c84a893d8611a58fd7fed0d99bfbe9873a23dc1/explorer/README.md#visual-regression-testing) for recording details.
 
 ---
 

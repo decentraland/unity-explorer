@@ -185,8 +185,7 @@ namespace DCL.Multiplayer.Movement
 
         private readonly PulseContainer pulseContainer;
         private readonly LiveKitMultiplayerContainer liveKitContainer;
-        private readonly ISelfProfile selfProfile;
-
+        public readonly SelfProfile SelfProfile;
         public readonly IMovementMessageBus MovementMessageBus;
         public readonly IRemoteAnnouncements RemoteAnnouncements;
         public readonly IEmotesMessageBus EmotesMessageBus;
@@ -202,11 +201,11 @@ namespace DCL.Multiplayer.Movement
         public PulseMultiplayerBus PulseMultiplayerBus => pulseContainer.pulseMultiplayerBus!;
         public ITransport PulseTransport => pulseContainer.transport!;
 
-        private MultiplayerContainer(PulseContainer pulseContainer, LiveKitMultiplayerContainer liveKitContainer, ISelfProfile selfProfile, PulseActivation pulseActivation, PulseRealm pulseRealm)
+        private MultiplayerContainer(PulseContainer pulseContainer, LiveKitMultiplayerContainer liveKitContainer, SelfProfile selfProfile, PulseActivation pulseActivation, PulseRealm pulseRealm)
         {
             this.pulseContainer = pulseContainer;
             this.liveKitContainer = liveKitContainer;
-            this.selfProfile = selfProfile;
+            SelfProfile = selfProfile;
             PulseActivation = pulseActivation;
             PulseRealm = pulseRealm;
 
@@ -215,8 +214,6 @@ namespace DCL.Multiplayer.Movement
             RemoteAnnouncements = new RemoteAnnouncementsProxy(pulseContainer.IncomingProfiles, liveKitContainer.RemoteAnnouncements);
             EmotesMessageBus = new EmoteMessageBusProxy(pulseContainer.pulseMultiplayerBus!, liveKitContainer.EmotesMessageBus);
             RemoveIntentions = new RemoveIntentionsProxy(pulseContainer.RemoveIntentions, liveKitContainer.RemoveIntentions);
-
-            selfProfile.ProfilePropagated += OnSelfProfilePropagated;
         }
 
         public static async UniTask<MultiplayerContainer> CreateAsync(
@@ -230,7 +227,7 @@ namespace DCL.Multiplayer.Movement
             IMessagePipesHub messagePipesHub,
             MultiplayerDebugSettings multiplayerDebugSettings,
             IUserBlockingCache userBlockingCache,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             CancellationToken ct)
         {
             // Single session-wide source of truth for whether Pulse is the active transport.
@@ -267,15 +264,8 @@ namespace DCL.Multiplayer.Movement
                 commsContainer.RemoteMetadata,
                 ParcelEncoder);
 
-        private void OnSelfProfilePropagated(Profile profile)
-        {
-            if (PulseActivation.IsActive)
-                ProfilePropagation.Propagate(profile);
-        }
-
         public void Dispose()
         {
-            selfProfile.ProfilePropagated -= OnSelfProfilePropagated;
             pulseContainer.Dispose();
             liveKitContainer.Dispose();
         }

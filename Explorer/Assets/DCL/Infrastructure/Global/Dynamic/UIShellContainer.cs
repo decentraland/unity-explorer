@@ -95,7 +95,7 @@ namespace Global.Dynamic
         public ErrorPopupPlugin CreateErrorPopupPlugin(IAssetsProvisioner assetsProvisioner) =>
             new (MvcManager, assetsProvisioner);
 
-        public GenericPopupsPlugin CreateGenericPopupsPlugin(IAssetsProvisioner assetsProvisioner, ICompositeWeb3Provider compositeWeb3Provider, ISelfProfile selfProfile, IInputBlock inputBlock,
+        public GenericPopupsPlugin CreateGenericPopupsPlugin(IAssetsProvisioner assetsProvisioner, ICompositeWeb3Provider compositeWeb3Provider, SelfProfile selfProfile, IInputBlock inputBlock,
             IWeb3IdentityCache identityCache, IProfileCache profileCache, IUserInAppInitializationFlow userInAppInitializationFlow, World world, Entity playerEntity) =>
             new (assetsProvisioner, MvcManager, ClipboardManager, compositeWeb3Provider, selfProfile, inputBlock, identityCache, profileCache, userInAppInitializationFlow, world, playerEntity);
 

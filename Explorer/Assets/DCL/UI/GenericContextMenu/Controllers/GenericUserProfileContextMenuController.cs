@@ -76,7 +76,7 @@ namespace DCL.UI
         private readonly UnityAppWebBrowser webBrowser;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly GenericUserProfileContextMenuSettings contextMenuSettings;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly IProfileCache profileCache;
         private readonly IWeb3IdentityCache web3IdentityCache;
 
@@ -124,7 +124,7 @@ namespace DCL.UI
             IVoiceChatOrchestratorActions voiceChatOrchestrator,
             UnityAppWebBrowser webBrowser,
             IDecentralandUrlsSource decentralandUrlsSource,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             IProfileCache profileCache,
             IWeb3IdentityCache web3IdentityCache,
             NearbyMuteService? nearbyMuteService = null)
