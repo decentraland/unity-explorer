@@ -9,6 +9,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
         private const string SLIDE_1080 = "\"slide\":{\"url\":\"https://cast-presenter-service.decentraland.org/presentations/p/slides/ab12.png\",\"width\":1920,\"height\":1080}";
         private const string CENTERED_VIDEO = "\"slideVideos\":[{\"url\":\"v.mp4\",\"geometry\":{\"x\":480,\"y\":270,\"width\":960,\"height\":540}}]";
         private const string PRESENTER_ADDRESS = "0x0123456789abcdefABCDEF0123456789abcdef01";
+        private const string YOUTUBE_URL = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
 
         [TestCase("{")]
         [TestCase("")]
@@ -238,6 +239,132 @@ namespace DCL.SDKComponents.MediaStream.Tests
             // Assert
             Assert.AreEqual(Vector4.zero, rect);
         }
+
+        [Test]
+        public void ParseClientVideoFields_WhenPresent()
+        {
+            PresentationBotMetadata metadata = ParseOrFail(WithClientVideo("playing", "client", YOUTUBE_URL) + ",\"videoPositionMs\":1500,\"videoPositionAt\":1700000000000}");
+
+            Assert.AreEqual("playing", metadata.videoState);
+            Assert.AreEqual(1500L, metadata.videoPositionMs);
+            Assert.AreEqual(1700000000000L, metadata.videoPositionAt);
+            Assert.AreEqual(YOUTUBE_URL, metadata.slideVideos![0]!.url);
+            Assert.AreEqual("client", metadata.slideVideos[0]!.source);
+        }
+
+        [Test]
+        public void DropVideoPosition_WhenNegative()
+        {
+            PresentationBotMetadata metadata = ParseOrFail($"{{{SLIDE_1080},\"videoPositionMs\":-1,\"videoPositionAt\":-5}}");
+
+            Assert.IsFalse(metadata.videoPositionMs.HasValue);
+            Assert.IsFalse(metadata.videoPositionAt.HasValue);
+        }
+
+        [TestCase("playing", YOUTUBE_URL)]
+        [TestCase("paused", "https://drive.google.com/file/d/1AbC-dEf_GhIjKlMnOp/view")]
+        [TestCase("playing", "https://player.vimeo.com/external/123456.m3u8?s=abc&logging=false")]
+        [TestCase("paused", "https://player.vimeo.com/external/123456.m3u8")]
+        public void ReturnClientVideoUrl_WhenUrlIsCanonical(string state, string url)
+        {
+            PresentationBotMetadata metadata = ParseOrFail(WithClientVideo(state, "client", url) + "}");
+
+            bool found = PresentationLayout.TryClientVideoUrl(metadata, out string clientUrl);
+
+            Assert.IsTrue(found);
+            Assert.AreEqual(url, clientUrl);
+        }
+
+        [TestCase("http://www.youtube.com/watch?v=dQw4w9WgXcQ")]
+        [TestCase("https://youtube.com/watch?v=dQw4w9WgXcQ")]
+        [TestCase("https://www.youtube.com/watch?v=dQw4w9WgXcQQ")]
+        [TestCase("https://drive.google.com/file/d/1AbC-dEf_GhIjKlMnOp")]
+        [TestCase("https://player.vimeo.com/video/1")]
+        [TestCase("https://player.vimeo.com/external/123456.m3u8?s=abc#t=1")]
+        [TestCase("https://www.youtube.com/watch?v=dQw4w9WgXcQ#t=1")]
+        [TestCase("https://www.youtube.com.evil.com/watch?v=dQw4w9WgXcQ")]
+        public void ReturnNoClientVideoUrl_WhenUrlIsNotCanonical(string url)
+        {
+            PresentationBotMetadata metadata = ParseOrFail(WithClientVideo("playing", "client", url) + "}");
+
+            bool found = PresentationLayout.TryClientVideoUrl(metadata, out string clientUrl);
+
+            Assert.IsFalse(found);
+            Assert.AreEqual(string.Empty, clientUrl);
+        }
+
+        [TestCase("{\"videoState\":\"playing\",\"playingVideoIndex\":0,\"slideVideos\":[{\"url\":\"" + YOUTUBE_URL + "\",\"source\":\"stream\"}]}")]
+        [TestCase("{\"videoState\":\"playing\",\"playingVideoIndex\":0,\"slideVideos\":[{\"url\":\"" + YOUTUBE_URL + "\"}]}")]
+        [TestCase("{\"videoState\":\"idle\",\"playingVideoIndex\":0,\"slideVideos\":[{\"url\":\"" + YOUTUBE_URL + "\",\"source\":\"client\"}]}")]
+        [TestCase("{\"videoState\":\"loading\",\"playingVideoIndex\":0,\"slideVideos\":[{\"url\":\"" + YOUTUBE_URL + "\",\"source\":\"client\"}]}")]
+        [TestCase("{\"videoState\":\"playing\",\"playingVideoIndex\":1,\"slideVideos\":[{\"url\":\"" + YOUTUBE_URL + "\",\"source\":\"client\"}]}")]
+        [TestCase("{\"videoState\":\"playing\",\"playingVideoIndex\":0,\"slideVideos\":[null]}")]
+        public void ReturnNoClientVideoUrl_WhenVideoIsNotAPlayingClientVideo(string json)
+        {
+            PresentationBotMetadata metadata = ParseOrFail(json);
+
+            bool found = PresentationLayout.TryClientVideoUrl(metadata, out string clientUrl);
+
+            Assert.IsFalse(found);
+            Assert.AreEqual(string.Empty, clientUrl);
+        }
+
+        [TestCase("playing", 12_500L, 3.5)]
+        [TestCase("paused", 99_999L, 1.0)]
+        [TestCase("playing", 8_000L, 0.0)]
+        public void ComputeTargetPosition_FromAnchor(string state, long nowEpochMs, double expectedSeconds)
+        {
+            var metadata = new PresentationBotMetadata { videoState = state, videoPositionMs = 1_000, videoPositionAt = 10_000 };
+
+            double? target = PresentationLayout.TargetPositionSeconds(metadata, nowEpochMs);
+
+            Assert.AreEqual(expectedSeconds, target);
+        }
+
+        [Test]
+        public void ReturnNoTargetPosition_WhenAnchorIsMissing()
+        {
+            var metadata = new PresentationBotMetadata { videoState = "playing", videoPositionMs = 1_000 };
+
+            Assert.IsNull(PresentationLayout.TargetPositionSeconds(metadata, 12_500));
+        }
+
+        [Test]
+        public void ReturnNoTargetPosition_WhenVideoIsLoading()
+        {
+            var metadata = new PresentationBotMetadata { videoState = "loading", videoPositionMs = 1_000, videoPositionAt = 10_000 };
+
+            Assert.IsNull(PresentationLayout.TargetPositionSeconds(metadata, 12_500));
+        }
+
+        [TestCase(10.0, 11.9)]
+        [TestCase(11.9, 10.0)]
+        public void SkipSeek_WhenDriftIsWithinTwoSeconds(double currentSeconds, double targetSeconds)
+        {
+            Assert.IsFalse(PresentationLayout.NeedsSeek(currentSeconds, targetSeconds, false));
+        }
+
+        [TestCase(10.0, 12.1)]
+        [TestCase(12.1, 10.0)]
+        public void RequireSeek_WhenDriftExceedsTwoSeconds(double currentSeconds, double targetSeconds)
+        {
+            Assert.IsTrue(PresentationLayout.NeedsSeek(currentSeconds, targetSeconds, false));
+        }
+
+        [Test]
+        public void ReturnFalse_WhenLive()
+        {
+            Assert.IsFalse(PresentationLayout.NeedsSeek(0, 100, true));
+        }
+
+        [Test]
+        public void ReturnFalse_WhenTargetIsNull()
+        {
+            Assert.IsFalse(PresentationLayout.NeedsSeek(0, null, false));
+        }
+
+        private static string WithClientVideo(string state, string source, string url) =>
+            $"{{{SLIDE_1080},\"videoState\":\"{state}\",\"playingVideoIndex\":0,\"slideVideos\":[{{\"url\":\"{url}\",\"source\":\"{source}\",\"geometry\":{{\"x\":480,\"y\":270,\"width\":960,\"height\":540}}}}]";
 
         private static PresentationBotMetadata ParseOrFail(string json)
         {
