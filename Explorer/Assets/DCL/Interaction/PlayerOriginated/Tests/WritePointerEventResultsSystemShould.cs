@@ -20,9 +20,9 @@ namespace DCL.Interaction.PlayerOriginated.Tests
     public class WritePointerEventResultsSystemShould : UnitySystemTestBase<WritePointerEventResultsSystem>
     {
         private readonly List<PBPointerEventsResult> results = new ();
-        private IECSToCRDTWriter writer;
-        private IGlobalInputEvents globalInputEvents;
-        private ISceneStateProvider sceneStateProvider;
+        private IECSToCRDTWriter writer = null!;
+        private IGlobalInputEvents globalInputEvents = null!;
+        private ISceneStateProvider sceneStateProvider = null!;
 
         [SetUp]
         public void SetUp()
@@ -93,7 +93,24 @@ namespace DCL.Interaction.PlayerOriginated.Tests
             Assert.That(second.Timestamp, Is.EqualTo(123u));
             Assert.That(second.Hit, Is.Null);
 
-            sceneStateProvider.Received(2).LastUserInputTick = 123u;
+            // Releasing IaBackward (movement) is not a gesture, pressing IaAction6 is
+            sceneStateProvider.Received(1).LastUserInputTick = 123u;
+        }
+
+        [Test]
+        public void NotRecordUserGestureForMovementInput()
+        {
+            globalInputEvents.Entries.Returns(new List<IGlobalInputEvents.Entry>
+            {
+                new (InputAction.IaForward, PointerEventType.PetDown),
+                new (InputAction.IaJump, PointerEventType.PetDown),
+                new (InputAction.IaWalk, PointerEventType.PetUp),
+                new (InputAction.IaAny, PointerEventType.PetDown),
+            });
+
+            system.Update(0);
+
+            sceneStateProvider.DidNotReceive().LastUserInputTick = Arg.Any<uint>();
         }
 
         [Test]

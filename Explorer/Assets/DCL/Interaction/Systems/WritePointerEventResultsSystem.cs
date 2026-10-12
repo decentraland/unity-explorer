@@ -119,8 +119,7 @@ namespace DCL.Interaction.PlayerOriginated.Systems
 
         private void AppendMessage(CRDTEntity sdkEntity, RaycastHit? sdkHit, InputAction button, PointerEventType eventType)
         {
-            // Any non-hover result, entity-bound or global, counts as a user gesture
-            if (eventType is not (PointerEventType.PetHoverEnter or PointerEventType.PetHoverLeave))
+            if (IsUserGesture(button, eventType))
                 sceneStateProvider.LastUserInputTick = sceneStateProvider.TickNumber;
 
             ecsToCRDTWriter.AppendMessage<PBPointerEventsResult, (RaycastHit? sdkHit, InputAction button, PointerEventType eventType, ISceneStateProvider sceneStateProvider)>(
@@ -133,5 +132,13 @@ namespace DCL.Interaction.PlayerOriginated.Systems
                     result.TickNumber = data.sceneStateProvider.TickNumber;
                 }, sdkEntity, (int)sceneStateProvider.TickNumber, (sdkHit, button, eventType, sceneStateProvider));
         }
+
+        /// <summary>
+        ///     Only activation buttons count: movement, jump, walk, modifier and any-key presses do not express intent
+        /// </summary>
+        private static bool IsUserGesture(InputAction button, PointerEventType eventType) =>
+            eventType is not (PointerEventType.PetHoverEnter or PointerEventType.PetHoverLeave)
+            && button is InputAction.IaPointer or InputAction.IaPrimary or InputAction.IaSecondary
+                or InputAction.IaAction3 or InputAction.IaAction4 or InputAction.IaAction5 or InputAction.IaAction6;
     }
 }

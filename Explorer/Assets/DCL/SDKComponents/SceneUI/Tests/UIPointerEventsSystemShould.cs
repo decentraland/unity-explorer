@@ -3,13 +3,11 @@ using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.ECSComponents;
 using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Systems.UIPointerEvents;
-using ECS.LifeCycle.Components;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
 using System;
-using UnityEngine;
 using UnityEngine.UIElements;
 using Entity = Arch.Core.Entity;
 using RaycastHit = DCL.ECSComponents.RaycastHit;
@@ -19,9 +17,9 @@ namespace DCL.SDKComponents.SceneUI.Tests
     public class UIPointerEventsSystemShould : UnitySystemTestBase<UIPointerEventsSystem>
     {
         private Entity entity;
-        private UITransformComponent uiTransformComponent;
-        private ISceneStateProvider sceneStateProvider;
-        private IECSToCRDTWriter ecsToCRDTWriter;
+        private UITransformComponent uiTransformComponent = null!;
+        private ISceneStateProvider sceneStateProvider = null!;
+        private IECSToCRDTWriter ecsToCRDTWriter = null!;
 
         [SetUp]
         public void SetUp()
