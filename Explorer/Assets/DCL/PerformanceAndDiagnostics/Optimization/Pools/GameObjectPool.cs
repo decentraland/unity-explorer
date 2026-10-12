@@ -12,6 +12,7 @@ namespace DCL.Optimization.Pools
 
         private readonly IExtendedObjectPool<T> gameObjectPool;
 
+        private readonly Func<T> creationHandler;
         private readonly Action<T>? onRelease;
         private readonly Action<T>? onGet;
 
@@ -36,10 +37,10 @@ namespace DCL.Optimization.Pools
             if (onRelease != null) this.onRelease += onRelease;
             if (onGet != null) this.onGet += onGet;
 
-            Func<T> create = creationHandler ?? HandleCreation;
+            this.creationHandler = creationHandler ?? HandleCreation;
 
             gameObjectPool = new ExtendedObjectPool<T>(
-                () => CaptureCreationTransform(create()),
+                CreateInstance,
                 actionOnGet: HandleGet,
                 actionOnRelease: HandleRelease,
                 actionOnDestroy: UnityObjectUtils.SafeDestroyGameObject,
@@ -129,8 +130,10 @@ namespace DCL.Optimization.Pools
             transform.localScale = creationLocalScale;
         }
 
-        private T CaptureCreationTransform(T component)
+        private T CreateInstance()
         {
+            T component = creationHandler();
+
             if (creationTransformCaptured || component == null) return component;
 
             Transform transform = component.transform;
