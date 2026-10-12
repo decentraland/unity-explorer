@@ -92,6 +92,8 @@ namespace DCL.Interaction.PlayerOriginated.Tests
             Assert.That(second.TickNumber, Is.EqualTo(123u));
             Assert.That(second.Timestamp, Is.EqualTo(123u));
             Assert.That(second.Hit, Is.Null);
+
+            sceneStateProvider.Received(2).LastUserInputTick = 123u;
         }
 
         [Test]
@@ -152,6 +154,9 @@ namespace DCL.Interaction.PlayerOriginated.Tests
             }
 
             Assert.That(writer.ReceivedCalls().Count(), Is.EqualTo(2));
+
+            // Only the PetDown result is a gesture, the PetHoverLeave one is not
+            sceneStateProvider.Received(1).LastUserInputTick = 123u;
         }
 
         [Test]

@@ -114,16 +114,15 @@ namespace DCL.Interaction.PlayerOriginated.Systems
             raycastHit.FillSDKRaycastHit(scenePosition, intent, sdkEntity);
             AppendMessage(sdkEntity, raycastHit, button, eventType);
 
-            bool isNonHover = eventType is not (PointerEventType.PetHoverEnter or PointerEventType.PetHoverLeave);
-
-            if (isNonHover)
-                sceneStateProvider.LastUserInputTick = sceneStateProvider.TickNumber;
-
-            return isNonHover;
+            return eventType is not (PointerEventType.PetHoverEnter or PointerEventType.PetHoverLeave);
         }
 
         private void AppendMessage(CRDTEntity sdkEntity, RaycastHit? sdkHit, InputAction button, PointerEventType eventType)
         {
+            // Any non-hover result, entity-bound or global, counts as a user gesture
+            if (eventType is not (PointerEventType.PetHoverEnter or PointerEventType.PetHoverLeave))
+                sceneStateProvider.LastUserInputTick = sceneStateProvider.TickNumber;
+
             ecsToCRDTWriter.AppendMessage<PBPointerEventsResult, (RaycastHit? sdkHit, InputAction button, PointerEventType eventType, ISceneStateProvider sceneStateProvider)>(
                 static (result, data) =>
                 {

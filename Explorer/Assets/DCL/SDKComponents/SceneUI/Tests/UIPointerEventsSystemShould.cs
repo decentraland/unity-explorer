@@ -27,6 +27,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
         public void SetUp()
         {
             sceneStateProvider = Substitute.For<ISceneStateProvider>();
+            sceneStateProvider.TickNumber.Returns(123u);
             ecsToCRDTWriter = Substitute.For<IECSToCRDTWriter>();
 
             system = new UIPointerEventsSystem(world, sceneStateProvider, ecsToCRDTWriter);
@@ -36,11 +37,11 @@ namespace DCL.SDKComponents.SceneUI.Tests
         }
 
         [Test]
-        [TestCase(PointerEventType.PetDown)]
-        [TestCase(PointerEventType.PetUp)]
-        [TestCase(PointerEventType.PetHoverEnter)]
-        [TestCase(PointerEventType.PetHoverLeave)]
-        public void TriggerPointerEvents(PointerEventType eventType)
+        [TestCase(PointerEventType.PetDown, true)]
+        [TestCase(PointerEventType.PetUp, true)]
+        [TestCase(PointerEventType.PetHoverEnter, false)]
+        [TestCase(PointerEventType.PetHoverLeave, false)]
+        public void TriggerPointerEvents(PointerEventType eventType, bool isUserGesture)
         {
             // Arrange
             var input = new PBPointerEvents { IsDirty = true };
@@ -79,6 +80,11 @@ namespace DCL.SDKComponents.SceneUI.Tests
                 Arg.Any<int>(),
                 Arg.Any<(RaycastHit sdkHit, InputAction button, PointerEventType eventType, ISceneStateProvider sceneStateProvider)>());
             Assert.IsNull(uiTransformComponent.PointerEventTriggered);
+
+            if (isUserGesture)
+                sceneStateProvider.Received(1).LastUserInputTick = 123u;
+            else
+                sceneStateProvider.DidNotReceive().LastUserInputTick = Arg.Any<uint>();
         }
 
         [Test]

@@ -77,6 +77,10 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIPointerEvents
 
         private void AppendMessage(ref CRDTEntity sdkEntity, InputAction button, PointerEventType eventType)
         {
+            // A non-hover UI pointer result counts as a user gesture
+            if (eventType is not (PointerEventType.PetHoverEnter or PointerEventType.PetHoverLeave))
+                sceneStateProvider.LastUserInputTick = sceneStateProvider.TickNumber;
+
             ecsToCRDTWriter.AppendMessage<PBPointerEventsResult, (RaycastHit sdkHit, InputAction button, PointerEventType eventType, ISceneStateProvider sceneStateProvider)>(
                 static (result, data) =>
                 {
