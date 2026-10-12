@@ -26,7 +26,7 @@ namespace DCL.SDKComponents.MediaStream
         private static readonly Regex PRESENTER_IDENTITY = new (@"^(stream:\S{1,121}|0x[0-9a-fA-F]{40})\z", RegexOptions.Compiled);
 
         private static readonly Regex CLIENT_VIDEO_URL = new (
-            @"^(https://www\.youtube\.com/watch\?v=[A-Za-z0-9_-]{11}|https://drive\.google\.com/file/d/[A-Za-z0-9_-]{10,128}/view|https://player\.vimeo\.com/external/[0-9]+\.m3u8(\?[^#\s]*)?)\z",
+            @"^(https://www\.youtube\.com/watch\?v=[A-Za-z0-9_-]{11}|https://drive\.google\.com/file/d/[A-Za-z0-9_-]{10,128}/view|https://player\.vimeo\.com/external/[0-9]+\.m3u8(\?[!-""$-~]{1,512})?)\z",
             RegexOptions.Compiled);
 
         /// <summary>
@@ -99,7 +99,8 @@ namespace DCL.SDKComponents.MediaStream
         /// </summary>
         /// <returns>
         ///     <c>false</c>, with an empty <paramref name="url" />, unless <c>videoState</c> is playing or paused and the entry's
-        ///     <c>source</c> is <c>client</c> with a canonical YouTube watch, Google Drive view or Vimeo external m3u8 url.
+        ///     <c>source</c> is <c>client</c> with a canonical YouTube watch, Google Drive view or Vimeo external m3u8 url. A Vimeo query is
+        ///     at most 512 printable ASCII characters without <c>#</c>.
         /// </returns>
         public static bool TryClientVideoUrl(PresentationBotMetadata metadata, out string url)
         {

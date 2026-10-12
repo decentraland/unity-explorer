@@ -35,7 +35,8 @@ namespace DCL.SDKComponents.MediaStream
         void Pause();
 
         /// <summary>
-        ///     Cancels any pending resolve and returns the player to its pool.
+        ///     Cancels any pending resolve, returns the player to its pool and forgets a url that failed, so its next
+        ///     <see cref="Update" /> retries it.
         /// </summary>
         void Release();
     }
@@ -47,6 +48,7 @@ namespace DCL.SDKComponents.MediaStream
     internal sealed class PresentationUrlVideo : IPresentationUrlVideo
     {
         private const float MIN_SEEK_INTERVAL_SECONDS = 3f;
+        private const int MAX_LOGGED_URL_LENGTH = 120;
 
         private readonly MediaPlayerCustomPool pool;
         private readonly IUrlResolverService resolver;
@@ -58,14 +60,14 @@ namespace DCL.SDKComponents.MediaStream
         private MultiMediaPlayer? player;
         private string? directUrl;
         private bool isLive;
-        private bool seekInFlight;
+        private bool finished;
         private float lastSeekAt = float.NegativeInfinity;
         private float volume;
         private Vector3 audioPosition;
 
-        public Texture? Texture => player?.LastTexture();
+        public Texture? Texture => LivePlayer()?.LastTexture();
 
-        public bool RequiresVerticalFlip => player is { } current && current.GetTexureScale.y < 0f;
+        public bool RequiresVerticalFlip => LivePlayer() is { } current && current.GetTexureScale.y < 0f;
 
         public PresentationUrlVideo(MediaPlayerCustomPool pool, IUrlResolverService resolver)
         {
@@ -82,7 +84,7 @@ namespace DCL.SDKComponents.MediaStream
         {
             if (url != currentUrl)
             {
-                Release();
+                ReleasePlayer();
                 currentUrl = url;
 
                 if (url == failedUrl)
@@ -94,7 +96,7 @@ namespace DCL.SDKComponents.MediaStream
                 return;
             }
 
-            if (player is not { } current)
+            if (player == null)
             {
                 if (directUrl != null && MediaOpenThrottle.CanOpen(now))
                     Open(directUrl, playing, now);
@@ -102,22 +104,25 @@ namespace DCL.SDKComponents.MediaStream
                 return;
             }
 
-            if (!current.IsValid)
-            {
-                Release();
+            if (LivePlayer() is not { } current)
                 return;
-            }
 
             if (current.GetLastError() != ErrorCode.None)
             {
                 Fail(url);
-                Release();
+                ReleasePlayer();
                 return;
             }
 
-            bool opened = IsMediaOpened(current);
+            if (!IsMediaOpened(current))
+                return;
 
-            if (opened && playing != current.IsPlaying)
+            finished |= current.IsFinished;
+
+            if (finished)
+                return;
+
+            if (playing != current.IsPlaying)
             {
                 if (playing)
                     current.Play();
@@ -125,14 +130,10 @@ namespace DCL.SDKComponents.MediaStream
                     current.Pause();
             }
 
-            if (seekInFlight && !current.IsSeeking)
-                seekInFlight = false;
-
-            if (targetSeconds is { } target && !seekInFlight && now - lastSeekAt >= MIN_SEEK_INTERVAL_SECONDS
-                && opened && !current.IsBuffering && !current.IsSeeking
+            if (targetSeconds is { } target && now - lastSeekAt >= MIN_SEEK_INTERVAL_SECONDS
+                && !current.IsBuffering && !current.IsSeeking
                 && PresentationLayout.NeedsSeek(current.CurrentTime, target, isLive))
             {
-                seekInFlight = true;
                 lastSeekAt = now;
                 current.TrySeek(target);
             }
@@ -141,37 +142,63 @@ namespace DCL.SDKComponents.MediaStream
         public void SetVolume(float volume)
         {
             this.volume = volume;
-            player?.UpdateVolume(volume);
+            LivePlayer()?.UpdateVolume(volume);
         }
 
         public void PlaceAudioAt(Vector3 position)
         {
             audioPosition = position;
-            player?.PlaceAt(position);
+            LivePlayer()?.PlaceAt(position);
         }
 
         public void Pause()
         {
-            player?.Pause();
+            if (LivePlayer() is not { } current)
+                return;
+
+            if (IsMediaOpened(current))
+                current.Pause();
+            else
+                ReturnPlayerToPool();
         }
 
         public void Release()
+        {
+            ReleasePlayer();
+            failedUrl = null;
+        }
+
+        private MultiMediaPlayer? LivePlayer()
+        {
+            if (player is { IsValid: true } current)
+                return current;
+
+            if (player != null)
+                ReleasePlayer();
+
+            return null;
+        }
+
+        private void ReleasePlayer()
         {
             generation++;
             cts?.Cancel();
             cts?.Dispose();
             cts = null;
             currentUrl = null;
-            seekInFlight = false;
+            finished = false;
             lastSeekAt = float.NegativeInfinity;
-
-            MultiMediaPlayer? released = player;
-            string? releasedUrl = directUrl;
-            player = null;
+            ReturnPlayerToPool();
             directUrl = null;
+        }
 
-            if (released is { } local && releasedUrl != null)
-                local.Dispose(MediaAddress.FromUrlMediaAddress(new UrlMediaAddress(releasedUrl)));
+        private void ReturnPlayerToPool()
+        {
+            MultiMediaPlayer? released = player;
+            player = null;
+
+            if (released is { } local && directUrl != null)
+                local.Dispose(MediaAddress.FromUrlMediaAddress(new UrlMediaAddress(directUrl)));
         }
 
         private async UniTaskVoid ResolveAsync(string url, int gen, CancellationToken ct)
@@ -211,7 +238,7 @@ namespace DCL.SDKComponents.MediaStream
             if (!opened.OpenMedia(MediaAddress.FromUrlMediaAddress(new UrlMediaAddress(url)), false, playing))
             {
                 Fail(currentUrl);
-                Release();
+                ReleasePlayer();
                 return;
             }
 
@@ -222,7 +249,8 @@ namespace DCL.SDKComponents.MediaStream
         private void Fail(string? url)
         {
             failedUrl = url;
-            ReportHub.LogWarning(ReportCategory.MEDIA_STREAM, $"Presentation client video could not be played: {url}");
+            string shown = url is { Length: > MAX_LOGGED_URL_LENGTH } ? $"{url[..(MAX_LOGGED_URL_LENGTH - 1)]}…" : url ?? string.Empty;
+            ReportHub.LogWarning(ReportCategory.MEDIA_STREAM, $"Presentation client video could not be played: {shown}");
         }
 
         private static bool IsMediaOpened(MultiMediaPlayer media) =>

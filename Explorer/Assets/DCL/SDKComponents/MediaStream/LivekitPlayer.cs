@@ -98,6 +98,8 @@ namespace DCL.SDKComponents.MediaStream
 
 #if UNITY_INCLUDE_TESTS
         internal int compositorBlitCount => compositor.blitCount;
+
+        internal float compositorVideoFlip => compositor.videoFlip;
 #endif
 
         private bool isAudioOpened => audioSources.Count > 0;
@@ -479,6 +481,10 @@ namespace DCL.SDKComponents.MediaStream
         private void SetPresentation(PresentationBotMetadata? value)
         {
             bool wasComposing = isComposing;
+
+            if (value?.slide?.url != presentation?.slide?.url)
+                urlVideo?.Release();
+
             presentation = value;
             composedFrame = -1;
 

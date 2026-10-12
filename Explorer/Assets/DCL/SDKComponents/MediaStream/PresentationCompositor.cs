@@ -37,6 +37,8 @@ namespace DCL.SDKComponents.MediaStream
 
 #if UNITY_INCLUDE_TESTS
         internal int blitCount { get; private set; }
+
+        internal float videoFlip => material.GetFloat(VIDEO_FLIP);
 #endif
 
         public PresentationCompositor(Material material)
