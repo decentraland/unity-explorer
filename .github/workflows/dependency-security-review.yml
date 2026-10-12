@@ -23,6 +23,7 @@ jobs:
       contents: read
       issues: write
       pull-requests: write
+      statuses: read
     steps:
       - name: Classify changes and maintain label
         id: detect
@@ -60,12 +61,13 @@ jobs:
               return;
             }
             const hasLabel = current.labels.some(label => label.name === 'new-dependency');
-            // Only repository automation can use the release and auto-pr exclusions.
-            const fromAutomation = ['github-actions[bot]', 'decentraland-bot'].includes(current.user.login) &&
+            // Exclude only same-repository GitHub Actions releases and labelled syncs.
+            const fromAutomation = current.user.login === 'github-actions[bot]' &&
               current.head.repo?.full_name === `${owner}/${repo}`;
             const excluded = fromAutomation &&
               ((current.base.ref === 'main' && current.head.ref.startsWith('release/')) ||
-               current.labels.some(label => label.name === 'auto-pr'));
+               (current.base.ref === 'dev' && current.head.ref === 'chore/sync' &&
+                current.labels.some(label => label.name === 'auto-pr')));
             if (!hasChanges || excluded) {
               if (hasLabel) {
                 try {
@@ -128,13 +130,31 @@ jobs:
             const latestDetailed = reviews
               .filter(review => review.user?.login?.toLowerCase() === 'decentraland-bot' && review.commit_id &&
                 ['COMMENTED', 'APPROVED', 'CHANGES_REQUESTED'].includes(review.state))
-              .map(review => ({ head: review.commit_id, verdict: detailedVerdict(review) }))
+              .map(review => ({ head: review.commit_id, submitted: review.submitted_at, verdict: detailedVerdict(review) }))
               .filter(review => review.verdict).pop();
             if (!latestDetailed || latestDetailed.verdict !== 'PASS') {
               core.setOutput('request', 'true');
               return;
             }
             const reviewedHead = latestDetailed.head;
+            // Use the latest status, including failures; never fall back to an older success.
+            let securityStatus;
+            try {
+              const statuses = await github.paginate(github.rest.repos.listCommitStatusesForRef, {
+                owner, repo, ref: reviewedHead, per_page: 100
+              });
+              securityStatus = statuses.find(status => status.context?.toLowerCase() === 'dependency security review');
+            } catch (error) {
+              core.warning(`Could not read security status for ${reviewedHead}: ${error.message}`);
+            }
+            // Earlier or same-second successes cannot establish acceptance of this review.
+            if (securityStatus?.state !== 'success' ||
+                securityStatus.creator?.login?.toLowerCase() !== 'decentraland-bot' ||
+                securityStatus.description !== 'Jarvis security review passed for this commit' ||
+                !(Date.parse(securityStatus.created_at) > Date.parse(latestDetailed.submitted))) {
+              core.setOutput('request', 'true');
+              return;
+            }
             if (reviewedHead === classifiedHead) {
               core.notice('This head has already been reviewed.');
               core.setOutput('request', 'false');
@@ -175,12 +195,13 @@ jobs:
             const { owner, repo } = context.repo;
             const pull_number = context.payload.pull_request.number;
             const { data: pr } = await github.rest.pulls.get({ owner, repo, pull_number });
-            const fromAutomation = ['github-actions[bot]', 'decentraland-bot'].includes(pr.user.login) &&
+            const fromAutomation = pr.user.login === 'github-actions[bot]' &&
               pr.head.repo?.full_name === `${owner}/${repo}`;
             if (pr.state !== 'open' || pr.draft || pr.head.sha !== context.payload.pull_request.head.sha ||
                 pr.base.sha !== context.payload.pull_request.base.sha ||
                 (fromAutomation && ((pr.base.ref === 'main' && pr.head.ref.startsWith('release/')) ||
-                 pr.labels.some(label => label.name === 'auto-pr'))) ||
+                 (pr.base.ref === 'dev' && pr.head.ref === 'chore/sync' &&
+                  pr.labels.some(label => label.name === 'auto-pr')))) ||
                 !pr.labels.some(label => label.name === 'new-dependency')) return;
             // External authors cannot auto-start a credential-bearing agent.
             // A collaborator requests decentraland-bot manually after inspecting the PR.
