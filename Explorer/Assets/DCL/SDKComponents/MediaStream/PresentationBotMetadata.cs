@@ -3,8 +3,6 @@ using System;
 // ReSharper disable InconsistentNaming
 namespace DCL.SDKComponents.MediaStream
 {
-    // Server schema: decentraland/cast-presenter-server src/logic/presentation-manager/component.ts#/v2Fields (published as bot participant metadata { role, presentationId, ...state })
-    // (every field is optional: the bot's initial metadata is only { role, presentationId }, and the explorer treats it as untrusted input)
     [Serializable]
     public class PresentationBotMetadata
     {
@@ -12,9 +10,12 @@ namespace DCL.SDKComponents.MediaStream
         public string? presenterIdentity;
 #pragma warning disable UAC1001
         public int? playingVideoIndex;
+        public long? videoPositionMs;
+        public long? videoPositionAt;
 #pragma warning restore UAC1001
         public PresentationSlideVideo?[]? slideVideos;
         public PresentationOverlay? overlay;
+        public string? videoState;
     }
 
     [Serializable]
@@ -29,6 +30,8 @@ namespace DCL.SDKComponents.MediaStream
     public class PresentationSlideVideo
     {
         public PresentationRect? geometry;
+        public string? url;
+        public string? source;
     }
 
     [Serializable]

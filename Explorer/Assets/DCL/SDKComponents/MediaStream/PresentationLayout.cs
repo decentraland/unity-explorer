@@ -6,7 +6,7 @@ using UnityEngine;
 namespace DCL.SDKComponents.MediaStream
 {
     /// <summary>
-    ///     Pure geometry over the presentation bot's protocol-v2 metadata. Rectangles are normalized to the slide size
+    ///     Pure geometry and playback sync over the presentation bot's protocol-v2 metadata. Rectangles are normalized to the slide size
     ///     as <c>(left, top, width, height)</c> with a top-left origin.
     /// </summary>
     public static class PresentationLayout
@@ -18,8 +18,16 @@ namespace DCL.SDKComponents.MediaStream
         private const double SMALL_CAMERA_RATIO = 0.15;
         private const double LARGE_CAMERA_RATIO = 0.25;
         private const string LARGE_CAMERA_SIZE = "large";
+        private const string PLAYING_STATE = "playing";
+        private const string PAUSED_STATE = "paused";
+        private const string CLIENT_SOURCE = "client";
+        private const double SEEK_THRESHOLD_SECONDS = 2.0;
 
         private static readonly Regex PRESENTER_IDENTITY = new (@"^(stream:\S{1,121}|0x[0-9a-fA-F]{40})\z", RegexOptions.Compiled);
+
+        private static readonly Regex CLIENT_VIDEO_URL = new (
+            @"^(https://www\.youtube\.com/watch\?v=[A-Za-z0-9_-]{11}|https://drive\.google\.com/file/d/[A-Za-z0-9_-]{10,128}/view|https://player\.vimeo\.com/external/[0-9]+\.m3u8(\?[^#\s]*)?)\z",
+            RegexOptions.Compiled);
 
         /// <summary>
         ///     Deserializes bot metadata. Never throws and never logs.
@@ -27,7 +35,8 @@ namespace DCL.SDKComponents.MediaStream
         /// <returns>
         ///     <c>null</c> for empty or malformed input, or for a <c>slide</c> without a url, with a url longer than
         ///     <c>MAX_SLIDE_URL_LENGTH</c> or with a size outside <c>[1, MAX_SLIDE_SIZE]</c>. An invalid
-        ///     <c>presenterIdentity</c> and an <c>overlay</c> with non-finite coordinates are dropped to <c>null</c>.
+        ///     <c>presenterIdentity</c>, an <c>overlay</c> with non-finite coordinates and a negative
+        ///     <c>videoPositionMs</c> or <c>videoPositionAt</c> are dropped to <c>null</c>.
         /// </returns>
         public static PresentationBotMetadata? Parse(string? json)
         {
@@ -47,6 +56,12 @@ namespace DCL.SDKComponents.MediaStream
 
             if (metadata.overlay != null && (!double.IsFinite(metadata.overlay.x) || !double.IsFinite(metadata.overlay.y)))
                 metadata.overlay = null;
+
+            if (metadata.videoPositionMs < 0)
+                metadata.videoPositionMs = null;
+
+            if (metadata.videoPositionAt < 0)
+                metadata.videoPositionAt = null;
 
             PresentationSlide? slide = metadata.slide;
 
@@ -80,6 +95,51 @@ namespace DCL.SDKComponents.MediaStream
         }
 
         /// <summary>
+        ///     The canonical url of the client-played video at <c>playingVideoIndex</c>.
+        /// </summary>
+        /// <returns>
+        ///     <c>false</c>, with an empty <paramref name="url" />, unless <c>videoState</c> is playing or paused and the entry's
+        ///     <c>source</c> is <c>client</c> with a canonical YouTube watch, Google Drive view or Vimeo external m3u8 url.
+        /// </returns>
+        public static bool TryClientVideoUrl(PresentationBotMetadata metadata, out string url)
+        {
+            url = string.Empty;
+            PresentationSlideVideo?[]? videos = metadata.slideVideos;
+
+            if (!IsPlayingOrPaused(metadata.videoState) || videos == null || metadata.playingVideoIndex is not { } index || index < 0 || index >= videos.Length)
+                return false;
+
+            if (videos[index] is not { source: CLIENT_SOURCE, url: { } candidate } || !CLIENT_VIDEO_URL.IsMatch(candidate))
+                return false;
+
+            url = candidate;
+            return true;
+        }
+
+        /// <summary>
+        ///     The presenter's playback position: the anchor plus the time elapsed since it while playing, the anchor itself while paused.
+        /// </summary>
+        /// <returns><c>null</c> unless <c>videoState</c> is playing or paused and both position fields are present; never negative.</returns>
+        public static double? TargetPositionSeconds(PresentationBotMetadata metadata, long nowEpochMs)
+        {
+            if (metadata.videoPositionMs is not { } positionMs || metadata.videoPositionAt is not { } positionAt)
+                return null;
+
+            return metadata.videoState switch
+                   {
+                       PLAYING_STATE => Math.Max(0, positionMs + nowEpochMs - positionAt) / 1000.0,
+                       PAUSED_STATE => Math.Max(0, positionMs) / 1000.0,
+                       _ => null,
+                   };
+        }
+
+        /// <summary>
+        ///     Whether the player has drifted more than two seconds from <paramref name="targetSeconds" />. A live stream never needs a seek.
+        /// </summary>
+        public static bool NeedsSeek(double currentSeconds, double? targetSeconds, bool isLive) =>
+            !isLive && targetSeconds is { } target && Math.Abs(currentSeconds - target) > SEEK_THRESHOLD_SECONDS;
+
+        /// <summary>
         ///     The presenter camera circle's bounding square, computed in integer pixels exactly as the server does.
         ///     A null overlay means bottom-left small; an unknown size means small.
         /// </summary>
@@ -101,6 +161,9 @@ namespace DCL.SDKComponents.MediaStream
 
             return new Vector4((float)left / slideWidth, (float)top / slideHeight, (float)diameter / slideWidth, (float)diameter / slideHeight);
         }
+
+        private static bool IsPlayingOrPaused(string? videoState) =>
+            videoState is PLAYING_STATE or PAUSED_STATE;
 
         private static bool IsValidSlideSize(int size) =>
             size is >= 1 and <= MAX_SLIDE_SIZE;
