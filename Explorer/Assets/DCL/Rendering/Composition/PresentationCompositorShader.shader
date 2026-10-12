@@ -14,6 +14,7 @@ Shader "DCL/PresentationCompositor"
         _SlideSize ("Slide size in px (x, y)", Vector) = (1, 1, 0, 0)
         _VideoTexLinearData ("Video holds sRGB data in a linear texture", Float) = 0
         _CameraTexLinearData ("Camera holds sRGB data in a linear texture", Float) = 0
+        _VideoFlip ("Sample the video upside down", Float) = 0
     }
 
     SubShader
@@ -41,6 +42,7 @@ Shader "DCL/PresentationCompositor"
             float4 _SlideSize;
             float _VideoTexLinearData;
             float _CameraTexLinearData;
+            float _VideoFlip;
 
             bool Inside(float2 p, float2 origin, float2 size)
             {
@@ -86,7 +88,12 @@ Shader "DCL/PresentationCompositor"
 
                         if (Inside(p, content.xy, content.zw))
                         {
-                            color = tex2Dlod(_VideoTex, float4((p - content.xy) / content.zw, 0, 0));
+                            float2 uv = (p - content.xy) / content.zw;
+
+                            if (_VideoFlip > 0.5)
+                                uv.y = 1.0 - uv.y;
+
+                            color = tex2Dlod(_VideoTex, float4(uv, 0, 0));
 
                             if (_VideoTexLinearData > 0.5)
                                 color.rgb = GammaToLinearSpace(color.rgb);

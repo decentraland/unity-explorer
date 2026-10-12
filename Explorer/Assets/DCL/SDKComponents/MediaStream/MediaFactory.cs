@@ -177,11 +177,11 @@ namespace DCL.SDKComponents.MediaStream
 
             var address = MediaAddress.New(url);
 
-            // Fresh player per call: a shared MediaPlayer caused the use-after-destroy crash (UNITY-EXPLORER-MV2).
             MultiMediaPlayer player = address.Match(
-                (streamingRoom, streamingRoomRunning, mediaPlayerPool, placeholderSource, slideCache, compositorMaterial),
+                (streamingRoom, streamingRoomRunning, mediaPlayerPool, placeholderSource, slideCache, compositorMaterial, urlResolverService),
                 onUrlMediaAddress: static (ctx, address) => MultiMediaPlayer.FromAvProPlayer(new AvProPlayer(ctx.mediaPlayerPool.GetOrCreateReusableMediaPlayer(address.Url), ctx.mediaPlayerPool)),
-                onLivekitAddress: static (ctx, _) => MultiMediaPlayer.FromLivekitPlayer(new LivekitPlayer(ctx.streamingRoom, ctx.streamingRoomRunning, ctx.placeholderSource, ctx.slideCache, ctx.compositorMaterial))
+                onLivekitAddress: static (ctx, _) => MultiMediaPlayer.FromLivekitPlayer(new LivekitPlayer(ctx.streamingRoom, ctx.streamingRoomRunning, ctx.placeholderSource, ctx.slideCache, ctx.compositorMaterial,
+                    () => new PresentationUrlVideo(ctx.mediaPlayerPool, ctx.urlResolverService)))
             );
 
             var component = new MediaPlayerComponent(player, url.Contains(CONTENT_SERVER_PREFIX))

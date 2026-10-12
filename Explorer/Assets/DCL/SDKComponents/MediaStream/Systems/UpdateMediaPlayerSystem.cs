@@ -32,9 +32,6 @@ namespace DCL.SDKComponents.MediaStream
         private readonly Material flipMaterial;
         private readonly VideoPrioritizationSettings videoPrioritizationSettings;
 
-        private static float lastOpenMediaTime;
-        private const float MIN_OPEN_MEDIA_INTERVAL_SECONDS = 0.5f;
-
         // Generic-URL retry policy: 5 attempts with exponential backoff (2s, 4s, 8s, 16s, 32s).
         // Covers cold-network scenarios on Windows where the initial reachability probe fails
         // before DNS/SSL is warm. After MAX_RETRY_ATTEMPTS the component stays in VsError so
@@ -423,14 +420,9 @@ namespace DCL.SDKComponents.MediaStream
             if (!component.OpenMediaPromise.IsResolved) return false;
             if (component.OpenMediaPromise.IsConsumed) return false;
 
-            // On macOS, enforce minimum gap between HLS stream opens to prevent
-            // AVFoundation crashes when opening multiple streams simultaneously.
-            // If too soon since last open, defer the opening.
-            // On windows deferr to avoid frame drops when opening multiple streams simultaneously, as the media player can consume a lot of resources while opening a stream.
             float currentTime = UnityEngine.Time.realtimeSinceStartup;
-            float timeSinceLastOpen = currentTime - lastOpenMediaTime;
 
-            if (timeSinceLastOpen < MIN_OPEN_MEDIA_INTERVAL_SECONDS)
+            if (!MediaOpenThrottle.CanOpen(currentTime))
                 return false;
 
             if (component.OpenMediaPromise.IsReachableConsume(component.MediaAddress))
@@ -443,7 +435,7 @@ namespace DCL.SDKComponents.MediaStream
                 // Use the resolved media address (which may be a direct URL after YouTube resolution)
                 MediaAddress resolvedAddress = component.OpenMediaPromise.ResolvedAddress;
 
-                lastOpenMediaTime = currentTime;
+                MediaOpenThrottle.MarkOpened(currentTime);
 
                 // Resolved URLs can run very long (googlevideo manifests exceed a KB);
                 // logging them whole floods the console and Sentry breadcrumbs.
@@ -453,7 +445,7 @@ namespace DCL.SDKComponents.MediaStream
                     resolvedForLog = $"{resolvedForLog[..160]}… ({resolvedForLog.Length} chars)";
 
                 ReportHub.Log(ReportCategory.MEDIA_STREAM,
-                    $"[OpenMedia] Opening media: {component.MediaAddress} → {resolvedForLog}, Time: {currentTime:F3}, TimeSinceLastOpen: {timeSinceLastOpen:F3}s");
+                    $"[OpenMedia] Opening media: {component.MediaAddress} → {resolvedForLog}, Time: {currentTime:F3}");
 
                 Profiler.BeginSample(component.MediaPlayer.HasControl
                     ? "MediaPlayer.OpenMedia"

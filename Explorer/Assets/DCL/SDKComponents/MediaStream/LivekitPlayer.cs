@@ -34,12 +34,16 @@ namespace DCL.SDKComponents.MediaStream
 
         private const float MIN_SPEAKER_HOLD_SECONDS = 1.5f;
         private const float AUDIO_RESCAN_INTERVAL_SECONDS = 2.0f;
+        private const string PLAYING_VIDEO_STATE = "playing";
 
         private readonly Func<bool> isRoomRunning;
         private readonly IRoom room;
         private readonly AvatarPlaceHolderTextureSource? placeholderSource;
         private readonly SlideTextureCache slideCache;
         private readonly PresentationCompositor compositor;
+        private readonly Func<IPresentationUrlVideo>? urlVideoFactory;
+        private readonly Func<long> nowEpochMs;
+        private IPresentationUrlVideo? urlVideo;
         private PlayerState playerState;
         private PresentationBotMetadata? presentation;
         private string? presentationRawMetadata;
@@ -108,14 +112,16 @@ namespace DCL.SDKComponents.MediaStream
             isRoomRunning()
             && room.Info.ConnectionState == LKConnectionState.ConnConnected;
 
-        public LivekitPlayer(IRoom streamingRoom, Func<bool> isRoomRunning, AvatarPlaceHolderTextureSource? placeholderSource,
-            SlideTextureCache slideCache, Material compositorMaterial)
+        internal LivekitPlayer(IRoom streamingRoom, Func<bool> isRoomRunning, AvatarPlaceHolderTextureSource? placeholderSource,
+            SlideTextureCache slideCache, Material compositorMaterial, Func<IPresentationUrlVideo>? urlVideoFactory = null, Func<long>? nowEpochMs = null)
         {
             this.isRoomRunning = isRoomRunning;
             room = streamingRoom;
             this.placeholderSource = placeholderSource;
             this.slideCache = slideCache;
             compositor = new PresentationCompositor(compositorMaterial);
+            this.urlVideoFactory = urlVideoFactory;
+            this.nowEpochMs = nowEpochMs ?? (static () => DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
 
             room.ConnectionUpdated += OnRoomConnectionUpdated;
             room.TrackSubscribed += OnRoomTrackSubscribed;
@@ -169,6 +175,7 @@ namespace DCL.SDKComponents.MediaStream
                 cvs = null;
                 playingAddress = requestedAddress;
                 EnsurePresentationStreams(rescan);
+                UpdateClientVideo();
                 EnsureAudioIsPlaying();
                 return;
             }
@@ -486,6 +493,7 @@ namespace DCL.SDKComponents.MediaStream
 
             shownSlide = null;
             shownSlideUrl = null;
+            urlVideo?.Release();
             compositor.Release();
             slideCache.EndComposing();
         }
@@ -511,6 +519,17 @@ namespace DCL.SDKComponents.MediaStream
                 string? presenter = presentation?.presenterIdentity;
                 presenterCamera = RebindVideoStream(presenterCamera, presenter == null ? null : FindVideoTrack(presenter, static track => track.Source == TrackSource.SourceCamera));
             }
+        }
+
+        private void UpdateClientVideo()
+        {
+            if (presentation is { } metadata && PresentationLayout.TryClientVideoUrl(metadata, out string url))
+            {
+                urlVideo ??= urlVideoFactory?.Invoke();
+                urlVideo?.Update(url, PresentationLayout.TargetPositionSeconds(metadata, nowEpochMs()), metadata.videoState == PLAYING_VIDEO_STATE, UnityEngine.Time.realtimeSinceStartup);
+            }
+            else
+                urlVideo?.Release();
         }
 
         private static bool IsUnresolved(CurrentVideoStreamInfo? stream) =>
@@ -619,12 +638,17 @@ namespace DCL.SDKComponents.MediaStream
 
             Texture slideTexture = shownSlide != null ? shownSlide : Texture2D.blackTexture;
             bool showRect = PresentationLayout.TryVideoRect(metadata, out Vector4 videoRect);
-            Texture? video = showRect ? DecodeLastFrame(presentationVideo) : null;
+            bool clientVideo = PresentationLayout.TryClientVideoUrl(metadata, out _);
+            Texture? video = !showRect ? null
+                : clientVideo ? urlVideo?.Texture
+                : DecodeLastFrame(presentationVideo);
 
             Vector4 cameraRect = PresentationLayout.CameraRect(metadata.overlay, slide.width, slide.height);
             Texture? camera = cameraRect.z > 0f && IsPresenterCameraLive() ? DecodeLastFrame(presenterCamera) : null;
 
-            return compositor.Compose(slide.width, slide.height, slideTexture, showRect, videoRect, video, camera, cameraRect);
+            bool flipVideo = clientVideo && urlVideo != null && !urlVideo.RequiresVerticalFlip;
+
+            return compositor.Compose(slide.width, slide.height, slideTexture, showRect, videoRect, video, camera, cameraRect, flipVideo);
         }
 
         private static Texture2D? DecodeLastFrame(CurrentVideoStreamInfo? stream) =>
@@ -670,6 +694,7 @@ namespace DCL.SDKComponents.MediaStream
             room.Participants.UpdatesFromParticipant -= OnRoomParticipantUpdate;
 
             CloseCurrentStream();
+            urlVideo?.Dispose();
             compositor.Dispose();
         }
 
@@ -744,8 +769,8 @@ namespace DCL.SDKComponents.MediaStream
         public void Pause()
         {
             playerState = PlayerState.Paused;
+            urlVideo?.Pause();
 
-            // There is no "pause" for a streaming source.
             foreach (var (source, _) in audioSources.Values)
                 source.Stop();
         }
@@ -753,6 +778,7 @@ namespace DCL.SDKComponents.MediaStream
         public void Stop()
         {
             playerState = PlayerState.Stopped;
+            urlVideo?.Release();
 
             foreach (var (source, _) in audioSources.Values)
                 source.Stop();
@@ -761,6 +787,7 @@ namespace DCL.SDKComponents.MediaStream
         public void SetVolume(float target)
         {
             Volume = target;
+            urlVideo?.SetVolume(target);
 
             foreach (var (source, _) in audioSources.Values)
                 source.SetVolume(target);
@@ -776,6 +803,7 @@ namespace DCL.SDKComponents.MediaStream
         public void PlaceAudioAt(Vector3 position)
         {
             audioPosition = position;
+            urlVideo?.PlaceAudioAt(position);
 
             foreach (var (source, _) in audioSources.Values)
                 source.transform.position = position;
