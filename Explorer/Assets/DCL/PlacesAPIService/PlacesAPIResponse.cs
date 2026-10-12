@@ -157,7 +157,7 @@ namespace DCL.PlacesAPIService
                 if (connected_addresses is { Length: 0 })
                     connected_addresses = null;
 
-                // The worlds endpoint omits the key entirely, so a missing array reads as no parcels rather than a null reference
+                // A missing array means the place has no parcels
                 if (positions == null)
                     Positions = Array.Empty<Vector2Int>();
                 else

@@ -114,10 +114,12 @@ namespace DCL.FeatureFlags
         {
             get
             {
-                // Captured before the toggle is persisted below, so this session's own flag roll does not count as a stored choice
-                lobbyGrandfathered ??= DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_LOBBY_ENABLED);
+                bool stored = DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_LOBBY_ENABLED);
 
-                if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_LOBBY_ENABLED))
+                // Sampled before the toggle is persisted below, so this session's own flag roll does not count as a stored setting
+                lobbyGrandfathered ??= stored;
+
+                if (stored)
                     return DCLPlayerPrefs.GetBool(DCLPrefKeys.SETTINGS_LOBBY_ENABLED);
 
                 // Persisted as the user's own choice so the lobby survives the flag being withdrawn; skipped when `--lobby false` overrides it
@@ -136,10 +138,10 @@ namespace DCL.FeatureFlags
         public bool LobbyFlagEnabled => lobbyFlagEnabled;
 
         /// <summary>
-        ///     Whether a stored Settings toggle already decided the lobby when this session first resolved it, as opposed to this session's flag roll.
-        ///     False until <see cref="LobbyEnabledSetting" /> is read for the first time.
+        ///     Whether the lobby setting was already stored when this session first resolved the lobby, either by the user in Settings or
+        ///     by an earlier session's flag roll, as opposed to being decided by this session's flag roll.
         /// </summary>
-        public bool LobbyGrandfathered => lobbyGrandfathered ?? false;
+        public bool LobbyGrandfathered => lobbyGrandfathered ??= DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_LOBBY_ENABLED);
 
         /// <summary>
         ///     Checks if a feature is enabled.

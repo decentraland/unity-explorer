@@ -115,7 +115,6 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
             {
                 { "source", SOURCE },
                 { "is_startup", isStartupVisit },
-                { "lobby_enabled", features.IsEnabled(FeatureId.Lobby) },
                 { "lobby_flag_enabled", features.LobbyFlagEnabled },
                 { "lobby_grandfathered", features.LobbyGrandfathered },
             };

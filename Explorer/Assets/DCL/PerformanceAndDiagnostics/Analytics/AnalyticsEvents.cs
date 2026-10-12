@@ -334,7 +334,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         /// </summary>
         public static class Lobby
         {
-            // Both events carry the effective lobby state, the raw remote flag, and whether a stored Settings toggle predating the session decided it.
+            // Both events carry the raw remote flag and whether the lobby setting was already stored when the session resolved it.
             public const string LOBBY_OPENED = "lobby_opened";
 
             // Carries how long the panel stayed on screen, in seconds.
