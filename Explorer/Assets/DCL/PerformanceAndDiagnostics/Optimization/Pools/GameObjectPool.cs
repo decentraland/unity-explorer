@@ -15,6 +15,11 @@ namespace DCL.Optimization.Pools
         private readonly Action<T>? onRelease;
         private readonly Action<T>? onGet;
 
+        private bool creationTransformCaptured;
+        private Vector3 creationLocalPosition;
+        private Quaternion creationLocalRotation;
+        private Vector3 creationLocalScale;
+
         public int CountInactive => gameObjectPool.CountInactive;
 
         // Auto-created child GameObject ("POOL_CONTAINER_<T>") that parks released instances and any owner-side hierarchy parent (live instances).
@@ -31,8 +36,10 @@ namespace DCL.Optimization.Pools
             if (onRelease != null) this.onRelease += onRelease;
             if (onGet != null) this.onGet += onGet;
 
+            Func<T> create = creationHandler ?? HandleCreation;
+
             gameObjectPool = new ExtendedObjectPool<T>(
-                creationHandler ?? HandleCreation,
+                () => CaptureCreationTransform(create()),
                 actionOnGet: HandleGet,
                 actionOnRelease: HandleRelease,
                 actionOnDestroy: UnityObjectUtils.SafeDestroyGameObject,
@@ -113,7 +120,24 @@ namespace DCL.Optimization.Pools
             (gameObject = component.gameObject).SetActive(false);
             gameObject.name = DEFAULT_COMPONENT_NAME;
 
-            component.gameObject.transform.SetParent(ParentContainer, false);
+            Transform transform = component.transform;
+            transform.SetParent(ParentContainer, false);
+
+            // Hand out every instance as freshly created: the previous owner's local transform (e.g. a compensating
+            // scale baked by SetParent with worldPositionStays) must not leak into the next one
+            transform.SetLocalPositionAndRotation(creationLocalPosition, creationLocalRotation);
+            transform.localScale = creationLocalScale;
+        }
+
+        private T CaptureCreationTransform(T component)
+        {
+            if (creationTransformCaptured || component == null) return component;
+
+            Transform transform = component.transform;
+            transform.GetLocalPositionAndRotation(out creationLocalPosition, out creationLocalRotation);
+            creationLocalScale = transform.localScale;
+            creationTransformCaptured = true;
+            return component;
         }
     }
 }
