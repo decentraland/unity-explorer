@@ -162,11 +162,7 @@ namespace DCL.SDKComponents.MediaStream
         public void UpdatePlaybackProperties(PBVideoPlayer sdkVideoPlayer)
         {
             if (IsUrlMediaPlayer(out var urlMediaPlayer))
-            {
-                MediaPlayer mediaPlayer = urlMediaPlayer.MediaPlayer;
-                if (!mediaPlayer.MediaOpened) return;
-                mediaPlayer.UpdatePlaybackProperties(sdkVideoPlayer);
-            }
+                urlMediaPlayer.MediaPlayer.UpdatePlaybackProperties(sdkVideoPlayer);
 
             // Livekit streaming doesn't need to adjust playback properties
         }

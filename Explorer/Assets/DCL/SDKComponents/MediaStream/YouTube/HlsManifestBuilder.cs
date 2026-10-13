@@ -17,8 +17,8 @@ namespace DCL.SDKComponents.MediaStream.YouTube
     ///
     ///     Output: three plain-text playlists whose master references the media playlists by
     ///     the relative names <see cref="VIDEO_PLAYLIST_NAME"/> / <see cref="AUDIO_PLAYLIST_NAME"/>,
-    ///     so wherever the set is exposed (files in one directory, one loopback URL path) the
-    ///     media playlists must sit next to the master under exactly these names.
+    ///     so the loopback URL path that serves the set must expose the media playlists next to
+    ///     the master under exactly these names.
     ///
     ///     Reference: RFC 8216 §4.3 (HLS playlist tags), §4.3.2.5 (EXT-X-MAP byte-range form).
     /// </summary>
@@ -58,7 +58,7 @@ namespace DCL.SDKComponents.MediaStream.YouTube
         /// <summary>
         ///     Selects the best video + audio pair from a list of adaptive formats and validates
         ///     them as synthesizable (byte ranges present, content length known). Useful when the
-        ///     caller needs to know which streams will be used before invoking <see cref="Build(IReadOnlyList&lt;AdaptiveFormatData&gt;,int,IReadOnlyList&lt;SidxParser.SegmentInfo&gt;,IReadOnlyList&lt;SidxParser.SegmentInfo&gt;)"/>
+        ///     caller needs to know which streams will be used before invoking <see cref="Build"/>
         ///     — for example, to pre-fetch each stream's sidx box.
         /// </summary>
         public static bool TrySelectVideoAndAudio(
@@ -88,7 +88,7 @@ namespace DCL.SDKComponents.MediaStream.YouTube
         ///     returned by <see cref="TrySelectVideoAndAudio"/>. If SIDX-derived segment tables
         ///     are supplied the media playlists are split into one HLS segment per fmp4
         ///     fragment, so every segment starts on a clean sidx-described boundary (issue #8350).
-        ///     Falls back to single-segment if either segment list is null or empty.
+        ///     Falls back to single-segment if either segment list is empty.
         ///
         ///     Caller is expected to have already validated the streams via
         ///     <see cref="TrySelectVideoAndAudio"/>; this method does not re-check byte ranges
@@ -99,32 +99,31 @@ namespace DCL.SDKComponents.MediaStream.YouTube
             AdaptiveFormatData video,
             AdaptiveFormatData audio,
             int durationSeconds,
-            IReadOnlyList<SidxParser.SegmentInfo>? videoSegments = null,
-            IReadOnlyList<SidxParser.SegmentInfo>? audioSegments = null,
-            float targetSegmentDurationSeconds = 0f)
+            IReadOnlyList<SidxParser.SegmentInfo> videoSegments,
+            IReadOnlyList<SidxParser.SegmentInfo> audioSegments,
+            float targetSegmentDurationSeconds)
         {
-            bool segmented = videoSegments is { Count: > 0 }
-                             && audioSegments is { Count: > 0 };
+            bool segmented = videoSegments.Count > 0 && audioSegments.Count > 0;
 
             // Method-scoped rent: a branch-scoped using would return the lists to the
             // pool while videoSegments/audioSegments still alias them.
             using var _ = ListPool<SidxParser.SegmentInfo>.Get(out List<SidxParser.SegmentInfo> coalescedVideo);
             using var __ = ListPool<SidxParser.SegmentInfo>.Get(out List<SidxParser.SegmentInfo> coalescedAudio);
 
-            if (segmented && targetSegmentDurationSeconds > 0f)
+            if (segmented)
             {
-                Coalesce(videoSegments!, targetSegmentDurationSeconds, coalescedVideo);
-                Coalesce(audioSegments!, targetSegmentDurationSeconds, coalescedAudio);
+                Coalesce(videoSegments, targetSegmentDurationSeconds, coalescedVideo);
+                Coalesce(audioSegments, targetSegmentDurationSeconds, coalescedAudio);
                 videoSegments = coalescedVideo;
                 audioSegments = coalescedAudio;
             }
 
             string videoPlaylist = segmented
-                ? BuildSegmentedMediaPlaylist(video, videoSegments!)
+                ? BuildSegmentedMediaPlaylist(video, videoSegments)
                 : BuildMediaPlaylist(video, durationSeconds);
 
             string audioPlaylist = segmented
-                ? BuildSegmentedMediaPlaylist(audio, audioSegments!)
+                ? BuildSegmentedMediaPlaylist(audio, audioSegments)
                 : BuildMediaPlaylist(audio, durationSeconds);
 
             return new PlaylistSet(
