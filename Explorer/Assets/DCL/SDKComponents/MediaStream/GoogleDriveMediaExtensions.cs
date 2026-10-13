@@ -23,7 +23,7 @@ namespace DCL.SDKComponents.MediaStream
         {
             string fileId = ExtractFileId(url);
             return fileId != null
-                ? $"https://drive.usercontent.google.com/download?id={fileId}&export=view"
+                ? $"https://drive.usercontent.google.com/download?id={fileId}&export=view&confirm=t"
                 : null;
         }
 
