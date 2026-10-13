@@ -1,4 +1,5 @@
 using CodeLess.Attributes;
+using DCL.Diagnostics;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -40,7 +41,13 @@ namespace DCL.FeatureFlags
             if (!string.Equals(payload.type, "json", StringComparison.OrdinalIgnoreCase)) return false;
             if (string.IsNullOrEmpty(payload.value)) return false;
 
-            json = JsonConvert.DeserializeObject<T>(payload.value);
+            try { json = JsonConvert.DeserializeObject<T>(payload.value); }
+            catch (JsonException e)
+            {
+                ReportHub.LogException(e, ReportCategory.FEATURE_FLAGS);
+                json = default(T);
+                return false;
+            }
 
             return true;
         }
