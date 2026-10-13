@@ -167,7 +167,7 @@ namespace DCL.Lobby
             stage.FitAvatar(avatarBase.transform.position, bounds.max.y);
         }
 
-        // Unions the rest-pose mesh bounds, in avatar space, of every wearable piece rendered through a MeshRenderer; the base skeleton mesh is a SkinnedMeshRenderer and stays out
+        // Unions the rest-pose mesh bounds, in avatar space, of every wearable piece rendered through a MeshRenderer
         private static bool TryGetRestPoseBounds(AvatarBase avatarBase, out Bounds bounds)
         {
             bounds = default(Bounds);

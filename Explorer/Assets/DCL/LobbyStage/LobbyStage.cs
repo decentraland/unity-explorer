@@ -9,7 +9,14 @@ namespace DCL.Lobby
     [ExecuteAlways]
     public class LobbyStage : MonoBehaviour
     {
+        /// <summary>
+        ///     Exponential ease rate, per second, of the camera pull-back towards its target factor.
+        /// </summary>
         private const float PULL_BACK_EASE_SPEED = 8f;
+
+        /// <summary>
+        ///     Difference in pull-back factor below which the ease snaps to its target.
+        /// </summary>
         private const float PULL_BACK_SNAP = 0.001f;
 
         private static readonly int BASE_MAP = Shader.PropertyToID("_BaseMap");
@@ -150,6 +157,12 @@ namespace DCL.Lobby
             return new Vector2(height * textureAspect, height);
         }
 
+        /// <summary>
+        ///     How far the camera moves back from the feet so an avatar this tall fits under the height that currently reaches the top limit; 1 when it already fits.
+        /// </summary>
+        public static float PullBackFactor(float avatarHeight, float fittingHeight, float headroom) =>
+            fittingHeight <= 0f || avatarHeight <= fittingHeight ? 1f : avatarHeight / fittingHeight * headroom;
+
         private void OnEnable()
         {
             RenderPipelineManager.beginCameraRendering += OnBeginCameraRendering;
@@ -222,7 +235,7 @@ namespace DCL.Lobby
             cameraPulledBack = false;
         }
 
-        // Scaling about the avatar's feet keeps them and the floor where they were on screen; the pose is restored after the render, so whatever drives the camera never sees the offset
+        // Scaling about the avatar's feet keeps them and the floor where they were on screen
         private void PullCameraBack(Camera camera)
         {
             Transform cameraTransform = camera.transform;
@@ -254,10 +267,7 @@ namespace DCL.Lobby
             Ray topRay = ViewportRay(cameraTransform, halfHeight, aspect, 0.5f, avatarTopLimit);
             if (!axisPlane.Raycast(topRay, out float enter)) return 1f;
 
-            float fittingHeight = topRay.GetPoint(enter).y - pivot.y;
-            if (fittingHeight <= 0f || avatarHeight <= fittingHeight) return 1f;
-
-            return avatarHeight / fittingHeight * pullBackHeadroom;
+            return PullBackFactor(avatarHeight, topRay.GetPoint(enter).y - pivot.y, pullBackHeadroom);
         }
 
         // Instances are never saved: the preset is the only source of truth, so scenes and the prefab stay clean
