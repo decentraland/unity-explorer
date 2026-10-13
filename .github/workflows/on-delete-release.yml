@@ -33,20 +33,6 @@ jobs:
           echo "latest_release=$LATEST_RELEASE" >> $GITHUB_OUTPUT
           echo "deleted_release=$DELETED_RELEASE_TAG" >> $GITHUB_OUTPUT
 
-      # The prune in s3-latest-release.yml only ranks releases that still exist, so the
-      # delta patches into a deleted release would otherwise stay forever. The zip is kept.
-      - name: Remove the deleted release's delta patches
-        if: ${{ steps.check_latest.outputs.deleted_release != '' }}
-        env:
-          AWS_MAX_ATTEMPTS: 3
-          AWS_RETRY_MODE: standard
-          AWS_ACCESS_KEY_ID: ${{ secrets.EXPLORER_TEAM_AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.EXPLORER_TEAM_AWS_SECRET_ACCESS_KEY }}
-          EXPLORER_TEAM_S3_BUCKET: ${{ secrets.EXPLORER_TEAM_S3_BUCKET }}
-          RELEASES_PATH: ${{ format('@dcl/{0}/releases', github.event.repository.name) }}
-          DELETED_RELEASE: ${{ steps.check_latest.outputs.deleted_release }}
-        run: aws s3 rm --recursive --only-show-errors "s3://$EXPLORER_TEAM_S3_BUCKET/$RELEASES_PATH/$DELETED_RELEASE/delta/"
-
       - name: Run actions if release is the latest
         if: ${{ steps.check_latest.outputs.latest_release != '' }}
         env:
@@ -63,3 +49,19 @@ jobs:
             "timestamp": "'$(date -u +"%Y-%m-%dT%H:%M:%SZ")'"
           }' > latest.json
           aws s3 cp latest.json s3://$EXPLORER_TEAM_S3_BUCKET/$RELEASES_PATH/latest.json
+
+      # The prune in s3-latest-release.yml only ranks releases that still exist, so the
+      # delta patches into a deleted release would otherwise stay forever. The zip is kept.
+      # Housekeeping only: it runs after the rollback above and never fails the job.
+      - name: Remove the deleted release's delta patches
+        if: ${{ steps.check_latest.outputs.deleted_release != '' }}
+        continue-on-error: true
+        env:
+          AWS_MAX_ATTEMPTS: 3
+          AWS_RETRY_MODE: standard
+          AWS_ACCESS_KEY_ID: ${{ secrets.EXPLORER_TEAM_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.EXPLORER_TEAM_AWS_SECRET_ACCESS_KEY }}
+          EXPLORER_TEAM_S3_BUCKET: ${{ secrets.EXPLORER_TEAM_S3_BUCKET }}
+          RELEASES_PATH: ${{ format('@dcl/{0}/releases', github.event.repository.name) }}
+          DELETED_RELEASE: ${{ steps.check_latest.outputs.deleted_release }}
+        run: aws s3 rm --recursive --only-show-errors "s3://$EXPLORER_TEAM_S3_BUCKET/$RELEASES_PATH/$DELETED_RELEASE/delta/"

@@ -11,9 +11,10 @@
 # - patches[]: regular files that changed, patched from `from_path` in the base. A bundle
 #   renamed by its content hash (<name>_<32 hex>.bundle) is paired with the base bundle
 #   of the same <name>, so `from_path` differs from `path`.
-# - whole[]: files with no base counterpart, and files whose patch is not smaller than
-#   the file encoded on its own. They are HDiffPatch patches against an empty file, so
-#   applying them needs only hpatchz.
+# - whole[]: files with no base counterpart, and files whose patch is at least half the
+#   file's size and not smaller than the file encoded on its own (smaller patches are kept
+#   without trying). They are HDiffPatch patches against an empty file, so applying them
+#   needs only hpatchz.
 # - deleted[]: base paths (files or symlinks) absent from the new build.
 # Every patch is applied back with hpatchz and must reproduce the new file's sha256.
 set -euo pipefail

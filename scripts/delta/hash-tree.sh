@@ -2,7 +2,8 @@
 # Describes a build folder as JSON, sorted by path:
 #   [{ "path", "size", "sha256", "mode" } | { "path", "symlink" }]
 # Paths are relative to <dir> with forward slashes. Symlinks are listed with their
-# target and not followed. Directories are not listed.
+# target and not followed. Directories are not listed. Fails on any path or symlink
+# target that could reach outside <dir> (absolute, `..` climbing above the root).
 #
 # Usage: hash-tree.sh <dir>
 set -euo pipefail
@@ -12,6 +13,23 @@ set -euo pipefail
 [ -d "$1" ] || die "not a directory: $1"
 require_tool jq
 
+# escapes_root <path> <symlink target>: true when the target, resolved lexically from the
+# link's folder, climbs above the build root.
+escapes_root() {
+  local depth seg IFS=/
+  depth=$(printf '%s' "$1" | tr -cd / | wc -c)
+  set -f
+  for seg in $2; do
+    case "$seg" in
+      ''|.) ;;
+      ..) depth=$((depth - 1)); [ "$depth" -ge 0 ] || { set +f; return 0; } ;;
+      *) depth=$((depth + 1)) ;;
+    esac
+  done
+  set +f
+  return 1
+}
+
 cd "$1"
 find . -mindepth 1 \( -type f -o -type l \) -print0 |
   while IFS= read -r -d '' p; do
@@ -19,8 +37,12 @@ find . -mindepth 1 \( -type f -o -type l \) -print0 |
     case "$rel" in
       *$'\t'*|*$'\n'*|*$'\r'*|*"$SEP"*) die "unsupported character in path: $rel" ;;
     esac
+    case "/$rel/" in */../*|*/./*|//*) die "unsafe path: $rel" ;; esac
     if [ -L "$p" ]; then
-      printf 'L\t%s\t%s\n' "$rel" "$(readlink "$p")"
+      target="$(readlink "$p")"
+      case "$target" in /*|'') die "absolute or empty symlink target: $rel -> $target" ;; esac
+      if escapes_root "$rel" "$target"; then die "symlink leaves the build: $rel -> $target"; fi
+      printf 'L\t%s\t%s\n' "$rel" "$target"
     else
       printf 'F\t%s\t%s\t%s\t%s\n' "$rel" "$(size_of "$p")" "$(sha256_of "$p")" "$(mode_of "$p")"
     fi

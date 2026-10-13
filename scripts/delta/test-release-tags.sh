@@ -79,16 +79,19 @@ case "$GH_STUB" in
 esac
 STUB
 chmod +x "$WORK/bin/gh"
-# unpublished <name> <gh stub mode> <expected exit: 0 or 1>
+# unpublished <name> <gh stub mode> <expected exit: 0 or 1> [tag]
 unpublished() {
   local code=0
-  PATH="$WORK/bin:$PATH" GH_STUB="$2" GITHUB_REPOSITORY=owner/repo     bash "$SCRIPT_DIR/check-unpublished.sh" v1.0.0-alpha > /dev/null 2>&1 || code=$?
+  PATH="$WORK/bin:$PATH" GH_STUB="$2" GITHUB_REPOSITORY=owner/repo     bash "$SCRIPT_DIR/check-unpublished.sh" "${4-v1.0.0-alpha}" > /dev/null 2>&1 || code=$?
   if [ "$code" -eq "$3" ]; then echo "  ok   $1"; PASSES=$((PASSES + 1)); else echo "  FAIL $1: exit=$code"; FAILURES=$((FAILURES + 1)); fi
 }
 unpublished "no release (404) is unpublished" missing 0
 unpublished "a draft is unpublished" draft 0
 unpublished "a published release is refused" published 1
 unpublished "an API failure is refused, not treated as unpublished" outage 1
+unpublished "an empty tag is refused" missing 1 ""
+unpublished "a non-release tag is refused" missing 1 "avatar-preview-renderer/v3.4.0"
+unpublished "a tag with .. is refused" missing 1 "v1.0.0-../x"
 
 echo
 echo "$PASSES passed, $FAILURES failed"

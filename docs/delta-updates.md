@@ -91,8 +91,10 @@ into X (live) and into X-1 (just replaced) stay, so:
 - the rule depends only on release order. A hotfix shortens the window to hours, still far longer
   than any download.
 
-Deleting a release (draft or published) also removes its `delta/` folder in `on-delete-release.yml`,
-since the prune only ranks releases that still exist. Its zip stays.
+Deleting a published release also removes its `delta/` folder in `on-delete-release.yml`, since the
+prune only ranks releases that still exist. Its zip stays. GitHub sends no `deleted` event for
+drafts: a draft's folder is replaced by the next build of the same tag, and a tag that is never
+published keeps its folder until it is removed by hand.
 
 ## Manifest
 
@@ -142,9 +144,9 @@ since the prune only ranks releases that still exist. Its zip stays.
   - `symlink`: symlink entries with their target, no size or hash (`.app` frameworks use them).
 - `patches`: changed files, patched from `from_path` in the base. `from_path` differs from `path`
   for renamed bundles. `patch` is relative to the manifest's folder.
-- `whole`: files with no base counterpart, and files whose patch is not smaller than the file encoded
-  alone. They are HDiffPatch patches against an **empty** file, so `hpatch` is the only codec the
-  launcher needs.
+- `whole`: files with no base counterpart, and files whose patch is at least half the file's raw
+  size and not smaller than the file encoded alone. They are HDiffPatch patches against an **empty**
+  file, so `hpatch` is the only codec the launcher needs.
 - `deleted`: base paths absent from the new build, including the old names of renamed bundles.
 - Unchanged files appear only in `files`.
 
@@ -172,6 +174,10 @@ Implemented in the launcher repo:
    replaced by a symlink (`Versions/Current` -> `A`) deleted after the swap removes files in the
    symlink's target. `verify-delta.sh` replays this order.
 6. Leave files that are not in the manifest alone (logs, launcher-owned files).
+7. Reject the manifest (fall back to the zip and report it) if any `path`, `from_path`, `deleted`
+   entry or `patch` is absolute or contains a `..` segment, or if a `symlink` target is absolute
+   or resolves outside the install folder. CI generation (`hash-tree.sh`) already refuses such
+   builds; the launcher checks again because the manifest is not signed.
 
 Patching uses HDiffPatch's `hpatch` (MIT, C), ideally linked into the launcher so no extra executable
 needs code signing.
@@ -187,9 +193,11 @@ failure with its exit code. Only `fetch-tools.sh` and `check-unpublished.sh` tou
 |---|---|---|---|
 | `fetch-tools.sh` | `<tools dir>` | pinned HDiffPatch for this OS, sha256-checked; prints the bin folder | identical patches in CI and locally |
 | `extract-build.sh` | `<zip> <out dir>` | prints the build root | handles the macOS `build.tar` inside the zip, keeping modes and symlinks |
-| `hash-tree.sh` | `<dir>` | `files[]` JSON on stdout | one definition of paths, hashes, modes and symlinks |
+| `hash-tree.sh` | `<dir>` | `files[]` JSON on stdout | one definition of paths, hashes, modes and symlinks; refuses paths or symlinks that reach outside the build |
 | `make-delta.sh` | `<base dir> <new dir> <base tag> <out dir>` | `from/<base tag>/**.hdiff`, `base-<tag>.json` | the patches for one base, each round-trip checked |
 | `assemble-manifest.sh` | `<version> <platform> <new dir> <zip> <base-*.json>...` | `manifest.json` on stdout | one place for the manifest format |
+| `signature-status.sh` | `<platform> <build root>` | `<path> ok\|invalid` per `.exe` (osslsigncode) or `.app` (codesign) | proves signatures survive patching |
+| `delta-for-base.sh` | `<version> <platform> <new root> <new zip> <base tag> <base zip> <out dir>` | `from/<base tag>/`, `base-<tag>.json`; removed again on any failure | the whole per-base pipeline (extract, make, verify, signatures) the workflow loops over |
 | `verify-delta.sh` | `<base dir> <delta dir> <manifest> <base tag> <rebuild dir>` | rebuilt tree; exit 0 only on an exact match | replays the launcher before anything is published |
 | `release-tags.sh` | `bases <n> <tag>` or `prune <keep> <window>`, releases JSON on stdin | tags, one per line | which releases to diff from, and which `delta/` folders to remove |
 | `check-unpublished.sh` | `<tag>`, `gh` with `GH_TOKEN` | exit 0 only for a missing or draft release | the immutability guard; an API error is never read as "unpublished" |
@@ -208,10 +216,12 @@ bash scripts/delta/verify-delta.sh "$OLD" /tmp/out /tmp/out/manifest.json v0.185
 
 Tests: `scripts/delta/test-delta.sh` (synthetic builds: changed, added, deleted and renamed files,
 case-only renames, the whole-file fallback, paths with spaces, modes, symlinks replacing directories
-and the reverse, tampered patches, modified bases) and `scripts/delta/test-release-tags.sh`
-(including `check-unpublished.sh` against a stubbed `gh`), both run by
+and the reverse, symlinks leaving the build, tampered patches, modified bases, the macOS
+`build.tar`-in-zip layout, and `delta-for-base.sh` with stubbed signing tools: success, signature
+mismatch, corrupt base zip) and `scripts/delta/test-release-tags.sh` (including
+`check-unpublished.sh` against a stubbed `gh`). Both run in
 [`ci-scripts-tests.yml`](../.github/workflows/ci-scripts-tests.yml) on Linux and on macOS with the
-stock bash 3.2.
+stock bash 3.2, also when the workflows that drive the scripts change.
 
 ## Costs
 

@@ -154,6 +154,72 @@ poke "$WORK/base-modified/Game.dll" 5 "LOCAL-EDIT"
 check_fails "fails when the base differs from the one the patches were made from" \
   bash "$SCRIPT_DIR/verify-delta.sh" "$WORK/base-modified" "$OUT" "$M" v1.0.0-alpha "$WORK/rebuild-modified"
 
+if [ $SYMLINKS -eq 1 ]; then
+  echo "hash-tree.sh containment"
+  mkdir -p "$WORK/escape/sub"
+  ln -s ../../outside "$WORK/escape/sub/link"
+  check_fails "rejects a symlink climbing out of the build" bash "$SCRIPT_DIR/hash-tree.sh" "$WORK/escape"
+  rm -f "$WORK/escape/sub/link"
+  ln -s /etc/passwd "$WORK/escape/sub/link"
+  check_fails "rejects an absolute symlink target" bash "$SCRIPT_DIR/hash-tree.sh" "$WORK/escape"
+  rm -f "$WORK/escape/sub/link"
+  ln -s ../sibling "$WORK/escape/sub/link"
+  check "accepts a relative symlink inside the build" bash "$SCRIPT_DIR/hash-tree.sh" "$WORK/escape"
+fi
+
+# --- extract-build.sh, signature-status.sh, delta-for-base.sh ------------------
+if command -v zip > /dev/null 2>&1; then
+  echo "extract-build.sh"
+  (cd "$BASE" && zip -qry "$WORK/base.zip" .)
+  (cd "$NEW" && zip -qry "$WORK/new.zip" .)
+  check "extracts a flat zip to its root" \
+    bash -c "[ \"\$(bash '$SCRIPT_DIR/extract-build.sh' '$WORK/new.zip' '$WORK/x-flat')\" = \"\$(cd '$WORK/x-flat' && pwd)\" ] && [ -f '$WORK/x-flat/Game.dll' ]"
+  if [ $SYMLINKS -eq 1 ]; then
+    # macOS release zips hold build.tar with a build/ folder, which keeps modes and symlinks.
+    mkdir -p "$WORK/tarzip/build"
+    cp -a "$NEW/." "$WORK/tarzip/build/"
+    (cd "$WORK/tarzip" && tar -cf build.tar build && zip -q "$WORK/tar.zip" build.tar)
+    ROOT="$(bash "$SCRIPT_DIR/extract-build.sh" "$WORK/tar.zip" "$WORK/x-tar")"
+    check "extracts build.tar inside the zip to build/" test "$ROOT" = "$(cd "$WORK/x-tar/build" && pwd)"
+    check "keeps modes and symlinks from build.tar" bash -c "[ -x '$ROOT/run.sh' ] && [ -L '$ROOT/link.txt' ]"
+  fi
+
+  # Stub signing tools: every artifact verifies unless its absolute path contains $SIG_FAIL_MATCH.
+  mkdir -p "$WORK/bin"
+  cat > "$WORK/bin/osslsigncode" <<'STUB'
+#!/usr/bin/env bash
+case "$PWD/$*" in *"${SIG_FAIL_MATCH:-<none>}"*) exit 1 ;; esac
+STUB
+  cp "$WORK/bin/osslsigncode" "$WORK/bin/codesign"
+  chmod +x "$WORK/bin/osslsigncode" "$WORK/bin/codesign"
+  echo "x" > "$NEW/Decentraland.exe"
+  echo "x" > "$BASE/Decentraland.exe"
+  rm -f "$WORK/new.zip" "$WORK/base.zip"
+  (cd "$BASE" && zip -qry "$WORK/base.zip" .)
+  (cd "$NEW" && zip -qry "$WORK/new.zip" .)
+
+  echo "signature-status.sh"
+  check "lists every exe with its result" bash -c \
+    "[ \"\$(PATH='$WORK/bin':\"\$PATH\" bash '$SCRIPT_DIR/signature-status.sh' windows64 '$NEW')\" = 'Decentraland.exe ok' ]"
+
+  echo "delta-for-base.sh"
+  FB="$WORK/out-base"
+  check "produces a verified patch set" \
+    env PATH="$WORK/bin:$PATH" bash "$SCRIPT_DIR/delta-for-base.sh" v1.1.0-alpha windows64 "$NEW" "$WORK/new.zip" v1.0.0-alpha "$WORK/base.zip" "$FB"
+  check "leaves from/<tag> and base-<tag>.json" bash -c "[ -d '$FB/from/v1.0.0-alpha' ] && [ -f '$FB/base-v1.0.0-alpha.json' ]"
+  check_fails "fails when the rebuilt signatures differ" \
+    env PATH="$WORK/bin:$PATH" SIG_FAIL_MATCH=rebuild bash "$SCRIPT_DIR/delta-for-base.sh" v1.1.0-alpha windows64 "$NEW" "$WORK/new.zip" v0.9.0-alpha "$WORK/base.zip" "$FB"
+  cp "$WORK/check.log" "$WORK/signature-failure.log"
+  check "reports the signature difference" grep -q "signature verification of the rebuilt build differs" "$WORK/signature-failure.log"
+  check "removes the failed base's partial output" bash -c "[ ! -e '$FB/from/v0.9.0-alpha' ] && [ ! -e '$FB/base-v0.9.0-alpha.json' ]"
+  head -c 100 "$WORK/base.zip" > "$WORK/corrupt.zip"
+  check_fails "fails on a corrupt base zip" \
+    env PATH="$WORK/bin:$PATH" bash "$SCRIPT_DIR/delta-for-base.sh" v1.1.0-alpha windows64 "$NEW" "$WORK/new.zip" v0.8.0-alpha "$WORK/corrupt.zip" "$FB"
+  check "keeps the patch sets of other bases" test -f "$FB/base-v1.0.0-alpha.json"
+else
+  echo "zip not found: skipping extract-build.sh, signature-status.sh and delta-for-base.sh"
+fi
+
 echo
 echo "$PASSES passed, $FAILURES failed"
 [ "$FAILURES" -eq 0 ]

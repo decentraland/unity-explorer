@@ -13,6 +13,9 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: amazon/aws-cli:latest
+    outputs:
+      is_latest_release: ${{ steps.check_latest.outputs.is_latest_release }}
+      latest_release: ${{ steps.check_latest.outputs.latest_release }}
     steps:
       - name: Install jq
         run: |
@@ -37,6 +40,7 @@ jobs:
           fi
 
           echo "latest_release=$LATEST_RELEASE" >> $GITHUB_ENV
+          echo "latest_release=$LATEST_RELEASE" >> $GITHUB_OUTPUT
 
       - name: Run actions if release is the latest
         if: steps.check_latest.outputs.is_latest_release == 'true'
@@ -54,22 +58,28 @@ jobs:
           }' > latest.json
           aws s3 cp latest.json s3://$EXPLORER_TEAM_S3_BUCKET/$RELEASES_PATH/latest.json
 
+  # Delta patches: keep exactly two series, the ones into the release just published and
+  # into the one it replaced (a grace period for downloads in flight and a rollback target
+  # for on-delete-release.yml). Older series are removed; the sweep window also cleans up
+  # after missed runs. Only on `published`: then the new release is the newest by
+  # published_at, while on `edited` GitHub's /releases/latest may not be, and ranking
+  # could reach the live release. A job of its own because actions/checkout needs git,
+  # which the aws-cli container above lacks. See docs/delta-updates.md.
+  prune-delta-patches:
+    needs: check-latest-release
+    if: needs.check-latest-release.outputs.is_latest_release == 'true' && github.event.action == 'published'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
       - name: Checkout delta scripts
-        if: steps.check_latest.outputs.is_latest_release == 'true' && github.event.action == 'published'
         uses: actions/checkout@v6
         with:
           persist-credentials: false
           sparse-checkout: scripts/delta
 
-      # Delta patches: keep exactly two series, the ones into the release just published
-      # and into the one it replaced (a grace period for launchers mid-download and a
-      # rollback target for on-delete-release.yml). Older series are removed; the window
-      # of 5 also cleans up after missed runs. Only on `published`: then the new release
-      # is the newest by published_at, while on `edited` GitHub's /releases/latest may
-      # not be, and ranking could reach the live release. See docs/delta-updates.md.
       - name: Prune old delta patches
-        if: steps.check_latest.outputs.is_latest_release == 'true' && github.event.action == 'published'
-        shell: bash
         env:
           AWS_MAX_ATTEMPTS: 3
           AWS_RETRY_MODE: standard
@@ -77,14 +87,16 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.EXPLORER_TEAM_AWS_SECRET_ACCESS_KEY }}
           EXPLORER_TEAM_S3_BUCKET: ${{ secrets.EXPLORER_TEAM_S3_BUCKET }}
           RELEASES_PATH: ${{ format('@dcl/{0}/releases', github.event.repository.name) }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+          LATEST_RELEASE: ${{ needs.check-latest-release.outputs.latest_release }}
+          DELTA_KEEP_SERIES: 2
+          DELTA_PRUNE_WINDOW: 5
         run: |
           set -euo pipefail
-          curl -fsSL -H "Authorization: Bearer $GITHUB_TOKEN" \
-            "https://api.github.com/repos/${{ github.repository }}/releases?per_page=100" \
-            | bash scripts/delta/release-tags.sh prune 2 5 > prune.txt
+          gh api "repos/$GITHUB_REPOSITORY/releases?per_page=100" \
+            | bash scripts/delta/release-tags.sh prune "$DELTA_KEEP_SERIES" "$DELTA_PRUNE_WINDOW" > prune.txt
           while IFS= read -r tag; do
-            if [ "$tag" = "$latest_release" ]; then
+            if [ "$tag" = "$LATEST_RELEASE" ]; then
               echo "::warning::Not pruning $tag: it is the live release."
               continue
             fi

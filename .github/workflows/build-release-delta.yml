@@ -9,7 +9,7 @@ name: Release Delta Patches
 #   releases/<tag>/delta/<platform>/from/<base tag>/<path>.hdiff
 # Runs from build-release-main.yml after the build, before the draft release
 # exists, so patches are in place before anyone can publish. Never blocks a
-# release: on failure the launcher falls back to the full zip (and reports it).
+# release: a failed platform or base simply has no patch set.
 # All logic lives in scripts/delta/ (runnable locally); this file is glue.
 # Design: docs/delta-updates.md
 on:
@@ -52,7 +52,7 @@ jobs:
     name: Pick base releases
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    # A delta failure must never block the release; launchers fall back to the zip.
+    # A delta failure must never block the release.
     continue-on-error: true
     outputs:
       bases: ${{ steps.bases.outputs.bases }}
@@ -63,8 +63,8 @@ jobs:
           sparse-checkout: scripts/delta
 
       # Manifests and patches are never rewritten once a release is published: the
-      # CDN caches them as immutable.
-      - name: Refuse a published tag
+      # CDN caches them as immutable. Also rejects a tag that is not a release tag.
+      - name: Refuse a published or invalid tag
         env:
           GH_TOKEN: ${{ github.token }}
         run: bash scripts/delta/check-unpublished.sh "$TAG"
@@ -121,7 +121,7 @@ jobs:
 
       - name: Install osslsigncode
         if: matrix.platform == 'windows64'
-        run: sudo apt-get install -y -qq osslsigncode > /dev/null
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq osslsigncode > /dev/null
 
       # The published zip, not the build artifact, is the source of truth: the manifest
       # must describe exactly what a fresh install gets. A rebuild of the same unpublished
@@ -144,62 +144,29 @@ jobs:
           OUT="$WORK/out"
           FAILED_BASES=""
           mkdir -p "$OUT"
+          echo "Signatures of the new build:"
+          bash scripts/delta/signature-status.sh "$PLATFORM" "$NEW_ROOT"
 
-          # signature_status <tree>: one line per signed executable with its verification
-          # result. Rebuilt and original must match; the bytes already do, this proves
-          # the signatures survive (and on macOS that modes/symlinks keep the seal intact).
-          signature_status() {
-            if [ "$PLATFORM" = windows64 ]; then
-              for exe in Decentraland.exe Decentraland_Data/Plugins/x86_64/uuav-helper.exe; do
-                [ -f "$1/$exe" ] || continue
-                if osslsigncode verify -in "$1/$exe" > /dev/null 2>&1; then echo "$exe ok"; else echo "$exe unsigned-or-invalid"; fi
-              done
-            else
-              for app in "$1"/*.app; do
-                [ -d "$app" ] || continue
-                if codesign --verify --deep --strict "$app" > /dev/null 2>&1; then echo "$(basename "$app") ok"; else echo "$(basename "$app") unsigned-or-invalid"; fi
-              done
-            fi
-          }
-          signature_status "$NEW_ROOT" > "$WORK/signatures-new.txt"
-          echo "Signatures of the new build:"; cat "$WORK/signatures-new.txt"
-
+          # delta-for-base.sh removes its own partial output on failure, so a failing base
+          # is simply left out and the others still ship.
           for BASE_TAG in $(jq -r '.[]' <<< "$BASES"); do
             echo "::group::$BASE_TAG -> $TAG"
-            BASE_WORK="$WORK/base-$BASE_TAG"
-            mkdir -p "$BASE_WORK"
-            if ! aws s3 cp --only-show-errors "s3://$EXPLORER_TEAM_S3_BUCKET/$RELEASES_PATH/$BASE_TAG/$ZIP" "$BASE_WORK/$ZIP"; then
+            BASE_ZIP="$WORK/base-$ZIP"
+            if ! aws s3 cp --only-show-errors "s3://$EXPLORER_TEAM_S3_BUCKET/$RELEASES_PATH/$BASE_TAG/$ZIP" "$BASE_ZIP"; then
               echo "::warning::$BASE_TAG has no $ZIP in S3; skipping this base."
-              rm -rf "$BASE_WORK"
-              echo "::endgroup::"
-              continue
-            fi
-            BASE_ROOT="$(bash scripts/delta/extract-build.sh "$BASE_WORK/$ZIP" "$BASE_WORK/tree")"
-            rm -f "$BASE_WORK/$ZIP"
-
-            # A failing base is left out and the others still ship. errexit does not apply
-            # inside an `if` condition, hence the explicit && chain.
-            if bash scripts/delta/make-delta.sh "$BASE_ROOT" "$NEW_ROOT" "$BASE_TAG" "$OUT" &&
-               bash scripts/delta/assemble-manifest.sh "$TAG" "$PLATFORM" "$NEW_ROOT" "$WORK/$ZIP" \
-                 "$OUT/base-$BASE_TAG.json" > "$BASE_WORK/manifest.json" &&
-               REBUILT="$(bash scripts/delta/verify-delta.sh "$BASE_ROOT" "$OUT" "$BASE_WORK/manifest.json" "$BASE_TAG" "$BASE_WORK/rebuild")" &&
-               signature_status "$REBUILT" > "$BASE_WORK/signatures.txt" &&
-               diff -u "$WORK/signatures-new.txt" "$BASE_WORK/signatures.txt"; then
-              :
-            else
+            elif ! bash scripts/delta/delta-for-base.sh "$TAG" "$PLATFORM" "$NEW_ROOT" "$WORK/$ZIP" "$BASE_TAG" "$BASE_ZIP" "$OUT"; then
               echo "::error::$BASE_TAG: patch generation or verification failed; this base is left out of the manifest."
               FAILED_BASES="$FAILED_BASES $BASE_TAG"
-              rm -rf "$OUT/from/$BASE_TAG" "$OUT/base-$BASE_TAG.json"
             fi
-            rm -rf "$BASE_WORK"
+            rm -f "$BASE_ZIP"
             echo "::endgroup::"
           done
+          echo "FAILED_BASES=$FAILED_BASES" >> "$GITHUB_ENV"
 
           shopt -s nullglob
           BASE_FILES=("$OUT"/base-*.json)
           [ ${#BASE_FILES[@]} -gt 0 ] || { echo "::error::No base produced a patch set."; exit 1; }
           bash scripts/delta/assemble-manifest.sh "$TAG" "$PLATFORM" "$NEW_ROOT" "$WORK/$ZIP" "${BASE_FILES[@]}" > "$WORK/manifest.json"
-          echo "FAILED_BASES=$FAILED_BASES" >> "$GITHUB_ENV"
 
       - name: Refuse a tag published in the meantime
         env:
@@ -241,11 +208,6 @@ jobs:
                 + "| \(100 - ($dl * 100 / $zip) | round)% |"' "$WORK/manifest.json"
             if [ -n "${FAILED_BASES:-}" ]; then
               echo
-              echo "Left out after a failure (launchers on these versions download the full zip):$FAILED_BASES"
+              echo "Left out after a failure:$FAILED_BASES"
             fi
           } >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Report failure
-        if: failure()
-        run: |
-          echo "::error::Delta patches for $TAG ($PLATFORM) were not published. Launchers will download the full zip for this release and report the fallback to Sentry."

@@ -17,6 +17,9 @@ on:
       - ".github/actions/ucb-build-links/**"
       - ".github/workflows/ci-scripts-tests.yml"
       - "scripts/delta/**"
+      - ".github/workflows/build-release-delta.yml"
+      - ".github/workflows/s3-latest-release.yml"
+      - ".github/workflows/on-delete-release.yml"
 
 permissions:
   contents: read
