@@ -11,6 +11,8 @@ namespace DCL.Lobby
         UpcomingEvents3x2,
         FriendsOnline4x2,
         JumpBackIn6x2,
+        JumpBackIn4x2,
         RecommendedPlaces6x2,
+        RecommendedPlaces4x2,
     }
 }

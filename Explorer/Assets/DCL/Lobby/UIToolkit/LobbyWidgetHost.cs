@@ -22,6 +22,8 @@ namespace DCL.Lobby
         private const string FRIENDS_NAME = "Friends";
         private const string RECENT_PLACES_NAME = "RecentPlaces";
         private const string FEATURED_PLACES_NAME = "FeaturedPlaces";
+        private const string RECENT_PLACES_4X2_NAME = "RecentPlaces4x2";
+        private const string FEATURED_PLACES_4X2_NAME = "FeaturedPlaces4x2";
 
         private static readonly LobbyWidgetId[] WIDGETS = (LobbyWidgetId[])Enum.GetValues(typeof(LobbyWidgetId));
 
@@ -50,6 +52,8 @@ namespace DCL.Lobby
             sections[(int)LobbyWidgetId.FriendsOnline4x2] = Find<VisualElement>(root, FRIENDS_NAME);
             sections[(int)LobbyWidgetId.JumpBackIn6x2] = Find<VisualElement>(root, RECENT_PLACES_NAME);
             sections[(int)LobbyWidgetId.RecommendedPlaces6x2] = Find<VisualElement>(root, FEATURED_PLACES_NAME);
+            sections[(int)LobbyWidgetId.JumpBackIn4x2] = Find<VisualElement>(root, RECENT_PLACES_4X2_NAME);
+            sections[(int)LobbyWidgetId.RecommendedPlaces4x2] = Find<VisualElement>(root, FEATURED_PLACES_4X2_NAME);
 
             Layout = new LobbyLayout(
                 grids[(int)LobbyGridCorner.TopLeft].Size,

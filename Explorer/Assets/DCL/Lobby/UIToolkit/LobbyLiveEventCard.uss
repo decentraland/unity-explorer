@@ -1,6 +1,8 @@
 /* The live event card of the uGUI lobby; it casts a shadow past its edges, so it does not clip and each layer rounds its own corners instead */
 .lobby-live-event-card {
-    width: 358px;
+    /* As wide as the three columns of its widget (LobbyGridElement cells), so one card fills the rail and the next starts
+       past the clip */
+    width: 424px;
     height: 214px;
     border-radius: 24px;
     background-color: var(--lobby-card-color);

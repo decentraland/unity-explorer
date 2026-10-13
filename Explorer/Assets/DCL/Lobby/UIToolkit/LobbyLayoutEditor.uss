@@ -1,6 +1,6 @@
 /* Edit mode of the layout (LobbyLayoutEditor): a handle covers the cells of each placed widget, the dragged widget
    follows the pointer on the drag layer and the marker shows the cells it would take and whether it can take them; the
-   widgets in its way slide to the cells they would be pushed to and back */
+   widgets a drop pushes slide to their new cells once it lands */
 .lobby--editing .lobby__widget {
     transition: left 0.15s ease-out, top 0.15s ease-out;
 }
@@ -27,17 +27,103 @@
     border-width: 2px;
     border-radius: 12px;
     border-color: rgba(255, 255, 255, 0.35);
-    background-color: rgba(255, 255, 255, 0.04);
-    transition: border-color 0.1s, background-color 0.1s, left 0.15s ease-out, top 0.15s ease-out;
+    transition: border-color 0.1s, left 0.15s ease-out, top 0.15s ease-out;
 }
 
 .lobby-widget-handle:hover {
     border-color: rgba(255, 255, 255, 0.7);
-    background-color: rgba(255, 255, 255, 0.08);
 }
 
+/* The handle of the dragged widget leaves its cells clear while the widget is on the move; its row in the modal stays,
+   dimmed, so the list keeps its shape */
 .lobby-widget-handle--dragging {
+    visibility: hidden;
+}
+
+.lobby-widget-handle--shelved.lobby-widget-handle--dragging {
+    visibility: visible;
     opacity: 0.35;
+}
+
+/* The button that takes a placed widget off its grid, in the corner of its handle; a row of the modal has none */
+.lobby-widget-handle__remove {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 32px;
+    height: 32px;
+    margin: 0;
+    padding: 0;
+    align-items: center;
+    justify-content: center;
+    border-width: 2px;
+    border-radius: 16px;
+    border-color: rgba(255, 255, 255, 0.35);
+    background-color: rgba(0, 0, 0, 0.85);
+    transition: border-color 0.1s, background-color 0.1s;
+}
+
+.lobby-widget-handle__remove:hover {
+    border-color: rgba(255, 255, 255, 0.7);
+    background-color: rgb(31, 31, 31);
+}
+
+.lobby-widget-handle__remove:active {
+    background-color: black;
+}
+
+.lobby-widget-handle--shelved .lobby-widget-handle__remove {
+    display: none;
+}
+
+.lobby-widget-handle__remove-icon {
+    width: 12px;
+    height: 12px;
+    background-image: url('/Assets/Textures/Common/CloseIcnThin.png');
+}
+
+/* The widget of a pushed handle previews its pushed cell alone (see LobbyLayoutEditor.ShowPushes) */
+.lobby-widget-handle--pushed {
+    display: none;
+}
+
+/* A row of the widget modal: it flows in the list, as tall as the scaled preview in its slot, instead of spanning cells (see
+   SetShelved) */
+.lobby-widget-handle--shelved {
+    position: relative;
+    flex-direction: row;
+    justify-content: flex-start;
+    margin-bottom: 8px;
+    padding: 8px 16px 8px 8px;
+    border-color: rgba(255, 255, 255, 0.2);
+    background-color: rgba(255, 255, 255, 0.06);
+}
+
+/* Sized in code to the widest preview by the scaled height of this one; the preview draws inside from the top-left corner */
+.lobby-widget-handle__preview-slot {
+    display: none;
+    flex-shrink: 0;
+    margin-right: 16px;
+}
+
+.lobby-widget-handle--shelved .lobby-widget-handle__preview-slot {
+    display: flex;
+}
+
+.lobby-widget-handle__text {
+    align-items: center;
+}
+
+.lobby-widget-handle--shelved .lobby-widget-handle__text {
+    flex-grow: 1;
+    align-items: flex-start;
+    justify-content: center;
+}
+
+.lobby-widget-handle--shelved .lobby-widget-handle__label {
+    padding: 0;
+    background-color: transparent;
+    -unity-text-align: middle-left;
 }
 
 .lobby-widget-handle__label {
@@ -48,6 +134,125 @@
     -unity-font-definition: var(--dcl-font-inter-semibold);
     -unity-text-align: middle-center;
     color: var(--lobby-title-color);
+}
+
+/* The span of the widget in cells, columns by rows; only the rows of the modal show it */
+.lobby-widget-handle__size {
+    display: none;
+    margin-top: 2px;
+    font-size: 14px;
+    -unity-font-definition: var(--dcl-font-inter-regular);
+    -unity-text-align: middle-left;
+    color: var(--lobby-subtitle-color);
+}
+
+.lobby-widget-handle--shelved .lobby-widget-handle__size {
+    display: flex;
+}
+
+/* Stand-in of a widget off the grids (LobbyWidgetPreviewElement): its title over blank cards at the size of its span. It is
+   scaled in code from its top-left corner, down to fit a row of the modal and back up while dragged off it */
+.lobby-widget-preview {
+    position: absolute;
+    left: 0;
+    top: 0;
+    transform-origin: left top;
+    padding: 16px;
+    border-radius: 12px;
+    border-width: 2px;
+    border-color: rgba(255, 255, 255, 0.2);
+    background-color: rgba(20, 20, 26, 0.6);
+}
+
+.lobby-widget-preview.lobby__widget--lifted {
+    opacity: 0.85;
+}
+
+.lobby-widget-preview__title {
+    height: 29px;
+    margin-bottom: 10px;
+    font-size: 24px;
+    -unity-font-definition: var(--dcl-font-inter-bold);
+    -unity-text-align: upper-left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--lobby-title-color);
+}
+
+/* The negative margin swallows the trailing gap of the last card */
+.lobby-widget-preview__cards {
+    flex-grow: 1;
+    flex-direction: row;
+    margin-right: -8px;
+}
+
+.lobby-widget-preview__card {
+    flex-grow: 1;
+    flex-basis: 0;
+    margin-right: 8px;
+    border-radius: 16px;
+    border-width: 2px;
+    border-color: rgba(255, 255, 255, 0.25);
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Over the avatar, between the top grids and as tall as them at most; it goes green while a dragged widget would drop into it */
+.lobby__widget-modal {
+    display: none;
+    position: absolute;
+    left: 50%;
+    top: var(--lobby-columns-top);
+    width: 440px;
+    max-height: 640px;
+    translate: -50% 0;
+    padding: 20px;
+    border-width: 2px;
+    border-radius: 16px;
+    border-color: var(--lobby-card-border-color);
+    background-color: var(--lobby-card-color);
+    transition: border-color 0.1s, background-color 0.1s;
+}
+
+.lobby--editing .lobby__widget-modal {
+    display: flex;
+}
+
+.lobby__widget-modal--target {
+    border-color: rgb(67, 214, 141);
+    background-color: rgba(20, 50, 36, 0.9);
+}
+
+.lobby__widget-modal-title {
+    height: 30px;
+    font-size: 24px;
+    -unity-font-definition: var(--dcl-font-inter-bold);
+    -unity-text-align: middle-left;
+    color: var(--lobby-title-color);
+}
+
+.lobby__widget-modal-hint {
+    margin-top: 4px;
+    margin-bottom: 16px;
+    font-size: 14px;
+    -unity-font-definition: var(--dcl-font-inter-regular);
+    white-space: normal;
+    color: var(--lobby-subtitle-color);
+}
+
+.lobby__widget-modal-items {
+    flex-shrink: 1;
+    overflow: hidden;
+}
+
+/* Under the handles of its grid, over the sections: the arrows of the rails hang 39px outside their widgets (the margin
+   of the track in LobbyRail.uss), so it reaches out by as much on each side to catch the pointer there too */
+.lobby-grid-shield {
+    position: absolute;
+    left: -39px;
+    right: -39px;
+    top: 0;
+    bottom: 0;
 }
 
 .lobby-drop-marker {

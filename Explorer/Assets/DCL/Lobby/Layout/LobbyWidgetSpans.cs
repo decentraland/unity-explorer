@@ -16,7 +16,9 @@ namespace DCL.Lobby
                 LobbyWidgetId.UpcomingEvents3x2 => new Vector2Int(3, 2),
                 LobbyWidgetId.FriendsOnline4x2 => new Vector2Int(4, 2),
                 LobbyWidgetId.JumpBackIn6x2 => new Vector2Int(6, 2),
+                LobbyWidgetId.JumpBackIn4x2 => new Vector2Int(4, 2),
                 LobbyWidgetId.RecommendedPlaces6x2 => new Vector2Int(6, 2),
+                LobbyWidgetId.RecommendedPlaces4x2 => new Vector2Int(4, 2),
                 _ => throw new ArgumentOutOfRangeException(nameof(widgetId), widgetId, null),
             };
     }

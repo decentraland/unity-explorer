@@ -497,13 +497,15 @@ namespace DCL.Lobby.Tests
         }
 
         [Test]
-        public void PlaceEveryWidgetByDefault()
+        public void PlaceEveryWidgetButTheFourColumnPlacesByDefault()
         {
             //Act
             layout.ResetToDefault();
 
             //Assert
             Assert.AreEqual(6, layout.Placements.Count);
+            Assert.IsFalse(layout.TryGetPlacement(LobbyWidgetId.JumpBackIn4x2, out _), "The top grids are full by default");
+            Assert.IsFalse(layout.TryGetPlacement(LobbyWidgetId.RecommendedPlaces4x2, out _));
             Assert.IsTrue(layout.TryGetPlacement(LobbyWidgetId.Landing4x3, out LobbyWidgetPlacement landing));
             Assert.IsTrue(layout.TryGetPlacement(LobbyWidgetId.FriendsOnline4x2, out LobbyWidgetPlacement friends));
             Assert.IsTrue(layout.TryGetPlacement(LobbyWidgetId.LiveEvents3x3, out LobbyWidgetPlacement liveEvents));

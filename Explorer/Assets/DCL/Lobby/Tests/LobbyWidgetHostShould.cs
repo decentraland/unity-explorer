@@ -55,7 +55,9 @@ namespace DCL.Lobby.Tests
             Assert.AreSame(root.Q("TopRightGrid"), root.Q("UpcomingEvents").parent);
             Assert.AreSame(root.Q("BottomLeftGrid"), root.Q("RecentPlaces").parent);
             Assert.AreSame(root.Q("BottomRightGrid"), root.Q("FeaturedPlaces").parent);
-            Assert.AreEqual(0, root.Q("UnplacedWidgets").childCount);
+            Assert.AreSame(root.Q("UnplacedWidgets"), root.Q("RecentPlaces4x2").parent, "The four-column places have no room by default");
+            Assert.AreSame(root.Q("UnplacedWidgets"), root.Q("FeaturedPlaces4x2").parent);
+            Assert.AreEqual(2, root.Q("UnplacedWidgets").childCount);
 
             Assert.AreEqual(0f, welcome.style.left.value.value);
             Assert.AreEqual(0f, welcome.style.top.value.value);
@@ -81,7 +83,7 @@ namespace DCL.Lobby.Tests
             //Assert
             VisualElement liveEvents = root.Q("LiveEvents");
             Assert.AreSame(root.Q("UnplacedWidgets"), liveEvents.parent);
-            Assert.AreEqual(5, root.Q("TopLeftGrid").childCount + root.Q("TopRightGrid").childCount + root.Q("BottomLeftGrid").childCount + root.Q("BottomRightGrid").childCount);
+            Assert.AreEqual(9, root.Q("TopLeftGrid").childCount + root.Q("TopRightGrid").childCount + root.Q("BottomLeftGrid").childCount + root.Q("BottomRightGrid").childCount, "Five sections and the outline of each of the four grids");
         }
 
         [Test]
@@ -162,6 +164,8 @@ namespace DCL.Lobby.Tests
             unplaced.Add(new VisualElement { name = "Friends" });
             unplaced.Add(new VisualElement { name = "RecentPlaces" });
             unplaced.Add(new VisualElement { name = "FeaturedPlaces" });
+            unplaced.Add(new VisualElement { name = "RecentPlaces4x2" });
+            unplaced.Add(new VisualElement { name = "FeaturedPlaces4x2" });
 
             return lobby;
         }

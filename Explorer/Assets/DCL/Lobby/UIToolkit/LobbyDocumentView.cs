@@ -23,6 +23,8 @@ namespace DCL.Lobby
         private const string LANDING_CARD_NAME = "LandingCard";
         private const string RECENT_PLACES_NAME = "RecentPlaces";
         private const string FEATURED_PLACES_NAME = "FeaturedPlaces";
+        private const string RECENT_PLACES_4X2_NAME = "RecentPlaces4x2";
+        private const string FEATURED_PLACES_4X2_NAME = "FeaturedPlaces4x2";
         private const string FRIENDS_NAME = "Friends";
         private const string LIVE_EVENTS_NAME = "LiveEvents";
         private const string UPCOMING_EVENTS_NAME = "UpcomingEvents";
@@ -101,6 +103,12 @@ namespace DCL.Lobby
 
         /// <summary>Section of the featured places, title and rail. Exists only while the view is shown.</summary>
         public VisualElement FeaturedPlaces => Section(FEATURED_PLACES_NAME);
+
+        /// <summary>Four-column section of the recently visited places: title and row of cards. Exists only while shown.</summary>
+        public VisualElement RecentPlaces4x2 => Section(RECENT_PLACES_4X2_NAME);
+
+        /// <summary>Four-column section of the featured places, title and rail. Exists only while the view is shown.</summary>
+        public VisualElement FeaturedPlaces4x2 => Section(FEATURED_PLACES_4X2_NAME);
 
         /// <summary>Section of the online friends, header and rail. Exists only while the view is shown.</summary>
         public VisualElement Friends => Section(FRIENDS_NAME);

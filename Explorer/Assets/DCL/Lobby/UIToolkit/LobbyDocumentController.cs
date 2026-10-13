@@ -51,6 +51,9 @@ namespace DCL.Lobby
 
         private const int MAX_RECENT_PLACES = 3;
 
+        /// <summary>Recent places the four-column section has room for.</summary>
+        private const int MAX_RECENT_PLACES_4X2 = 2;
+
         private static readonly Comparison<EventDTO> BY_START_TIME = static (a, b) => a.NextStartAtProcessed.CompareTo(b.NextStartAtProcessed);
 
         /// <summary>Panel pixels from the pointer to the left edge of the avatar tooltip.</summary>
@@ -89,7 +92,9 @@ namespace DCL.Lobby
         private readonly LobbyLayoutEditor layoutEditor;
 
         private LobbyPlacesRail? recentPlacesRail;
+        private LobbyPlacesRail? recentPlaces4x2Rail;
         private LobbyPlacesRail? featuredPlacesRail;
+        private LobbyPlacesRail? featuredPlaces4x2Rail;
         private LobbyLiveEventsRail? liveEventsRail;
         private LobbyUpcomingEventsRail? upcomingEventsRail;
         private LobbyCharacterPreviewController? avatarPreview;
@@ -286,10 +291,15 @@ namespace DCL.Lobby
             landingCard.Clicked = OnLandingCardClicked;
             landingCard.JumpInClicked = OnLandingJumpInClicked;
 
+            // The four-column sections list the same places as the six-column ones, so their rails share the lists
             recentPlacesRail ??= CreatePlacesRail(recentPlaces, LobbyCardOrigin.Recent);
+            recentPlaces4x2Rail ??= CreatePlacesRail(recentPlaces, LobbyCardOrigin.Recent);
             featuredPlacesRail ??= CreatePlacesRail(featuredPlaces, LobbyCardOrigin.Recommended);
+            featuredPlaces4x2Rail ??= CreatePlacesRail(featuredPlaces, LobbyCardOrigin.Recommended);
             recentPlacesRail.Show(viewInstance.RecentPlaces);
+            recentPlaces4x2Rail.Show(viewInstance.RecentPlaces4x2);
             featuredPlacesRail.Show(viewInstance.FeaturedPlaces);
+            featuredPlaces4x2Rail.Show(viewInstance.FeaturedPlaces4x2);
 
             liveEventsRail ??= new LobbyLiveEventsRail(viewInstance.LiveEventCardTemplate) { CardClicked = OnLiveEventClicked };
             upcomingEventsRail ??= CreateUpcomingEventsRail();
@@ -309,8 +319,8 @@ namespace DCL.Lobby
                 ShowLandingCardLoading(landingCard);
 
             ShowLandingPlaceAsync(destination, placesCts.Token).Forget();
-            ShowPlacesAsync(recentPlacesRail, recentPlaces, placesAPIService.GetRecentlyVisitedDestinationsAsync(placesCts.Token, withConnectedUsers: true), MAX_RECENT_PLACES, placesCts.Token).Forget();
-            ShowPlacesAsync(featuredPlacesRail, featuredPlaces, placesAPIService.GetHighlightedDestinationsAsync(placesCts.Token, withConnectedUsers: true), int.MaxValue, placesCts.Token).Forget();
+            ShowPlacesAsync(recentPlacesRail, recentPlaces4x2Rail, recentPlaces, placesAPIService.GetRecentlyVisitedDestinationsAsync(placesCts.Token, withConnectedUsers: true), MAX_RECENT_PLACES, MAX_RECENT_PLACES_4X2, placesCts.Token).Forget();
+            ShowPlacesAsync(featuredPlacesRail, featuredPlaces4x2Rail, featuredPlaces, placesAPIService.GetHighlightedDestinationsAsync(placesCts.Token, withConnectedUsers: true), int.MaxValue, int.MaxValue, placesCts.Token).Forget();
 
             eventsCts = eventsCts.SafeRestart();
             eventCardActions.EventSetAsInterested += OnEventInterestChanged;
@@ -351,7 +361,9 @@ namespace DCL.Lobby
             avatarPreview!.OnHide();
 
             recentPlacesRail?.Hide();
+            recentPlaces4x2Rail?.Hide();
             featuredPlacesRail?.Hide();
+            featuredPlaces4x2Rail?.Hide();
             liveEventsRail?.Hide();
             upcomingEventsRail?.Hide();
 
@@ -617,8 +629,9 @@ namespace DCL.Lobby
                 CardJumpInClicked = index => OnPlaceJumpIn(places[index], origin),
             };
 
-        // A failed fetch keeps the last successful places, so the row only hides while none have ever arrived
-        private async UniTaskVoid ShowPlacesAsync(LobbyPlacesRail rail, List<PlacesData.PlaceInfo> places, UniTask<PlacesData.IPlacesAPIResponse> fetch, int maxCount, CancellationToken ct)
+        // A failed fetch keeps the last successful places, so the rows only hide while none have ever arrived; the four-column
+        // rail shows the first of them up to its own cap
+        private async UniTaskVoid ShowPlacesAsync(LobbyPlacesRail rail, LobbyPlacesRail rail4x2, List<PlacesData.PlaceInfo> places, UniTask<PlacesData.IPlacesAPIResponse> fetch, int maxCount, int maxCount4x2, CancellationToken ct)
         {
             Result<PlacesData.IPlacesAPIResponse> result = await fetch.SuppressToResultAsync(ReportCategory.PLACES);
 
@@ -633,9 +646,15 @@ namespace DCL.Lobby
                     places.Add(data[i]);
             }
 
-            rail.SetCount(places.Count);
+            ShowPlaceCards(rail, places, places.Count, ct);
+            ShowPlaceCards(rail4x2, places, Mathf.Min(places.Count, maxCount4x2), ct);
+        }
 
-            for (var i = 0; i < places.Count; i++)
+        private void ShowPlaceCards(LobbyPlacesRail rail, List<PlacesData.PlaceInfo> places, int count, CancellationToken ct)
+        {
+            rail.SetCount(count);
+
+            for (var i = 0; i < count; i++)
                 ShowPlaceCard(rail.Cards[i], places[i], places[i].connected_addresses, ct);
         }
 

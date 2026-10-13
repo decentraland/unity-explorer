@@ -7,25 +7,35 @@ namespace DCL.Lobby
 {
     /// <summary>
     ///     Edit mode of the lobby layout: every placed widget gets a handle over its cells that can be dragged onto other
-    ///     cells. The widget itself follows the pointer on the drag layer while its dimmed handle marks where it came from.
-    ///     A drop takes only when the whole widget fits inside one grid; the widgets in its way make room by moving off the
-    ///     side it covers, and they show where they would go while the drag hovers over them. Any other release leaves
-    ///     every widget where it was. Every drop that takes is stored at once.
+    ///     cells, and every unplaced widget a row in the widget modal over the avatar that can be dragged onto a grid. The
+    ///     widget itself, or the preview of an unplaced one at full size, follows the pointer on the drag layer, its cells
+    ///     left clear behind it. A drop takes only when the whole widget fits inside one grid; the widgets in its way make
+    ///     room by moving off the side it covers, and they slide to where they would go, without their handles, while the
+    ///     drag hovers over them. A release with the pointer over the modal takes the widget off its grid, as does
+    ///     the button in the corner of a placed handle. Any other release leaves every widget where it was. Every drop
+    ///     that takes is stored at once.
     /// </summary>
     public class LobbyLayoutEditor
     {
         private const string DRAG_LAYER_NAME = "LayoutDragLayer";
+        private const string MODAL_NAME = "WidgetModal";
+        private const string MODAL_ITEMS_NAME = "WidgetModalItems";
         private const string USS_EDITING = "lobby--editing";
         private const string USS_WIDGET_LIFTED = "lobby__widget--lifted";
+        private const string USS_GRID_SHIELD = "lobby-grid-shield";
         private const string USS_DROP_MARKER = "lobby-drop-marker";
         private const string USS_DROP_MARKER_VALID = USS_DROP_MARKER + "--valid";
         private const string USS_DROP_MARKER_INVALID = USS_DROP_MARKER + "--invalid";
+        private const string USS_MODAL_TARGET = "lobby__widget-modal--target";
 
         private static readonly LobbyWidgetId[] WIDGETS = (LobbyWidgetId[])Enum.GetValues(typeof(LobbyWidgetId));
         private static readonly LobbyGridCorner[] CORNERS = (LobbyGridCorner[])Enum.GetValues(typeof(LobbyGridCorner));
 
         private readonly LobbyWidgetHost host;
         private readonly LobbyWidgetHandleElement[] handles = new LobbyWidgetHandleElement[WIDGETS.Length];
+
+        /// <summary>One per grid, between its sections and its handles, so no widget hears the pointer while edited.</summary>
+        private readonly VisualElement[] shields = new VisualElement[CORNERS.Length];
         private readonly VisualElement dropMarker;
 
         /// <summary>Where the widgets in the way of the drop stand while the drag hovers over them.</summary>
@@ -34,9 +44,11 @@ namespace DCL.Lobby
 
         private VisualElement? root;
         private VisualElement? dragLayer;
+        private VisualElement? modal;
+        private VisualElement? modalItems;
         private LobbyWidgetHandleElement? dragged;
 
-        /// <summary>The section of the dragged widget while it follows the pointer on the drag layer.</summary>
+        /// <summary>The section or the preview of the dragged widget while it follows the pointer on the drag layer.</summary>
         private VisualElement? lifted;
 
         /// <summary>Panel pixels from the top-left corner of the dragged handle to the pointer.</summary>
@@ -44,12 +56,17 @@ namespace DCL.Lobby
         private LobbyGridElement? targetGrid;
         private Vector2Int targetCell;
         private bool targetValid;
+        private bool targetModal;
 
         public bool IsEditing => root != null;
 
         private LobbyLayout Layout => host.Layout ?? throw new InvalidOperationException("The layout can be edited only once the widget host is shown");
 
         private VisualElement DragLayer => dragLayer ?? throw new InvalidOperationException("The layout can be dragged only while the editor is shown");
+
+        private VisualElement Modal => modal ?? throw new InvalidOperationException("The widget modal exists only while the editor is shown");
+
+        private VisualElement ModalItems => modalItems ?? throw new InvalidOperationException("The widget modal exists only while the editor is shown");
 
         public LobbyLayoutEditor(LobbyWidgetHost host)
         {
@@ -65,7 +82,14 @@ namespace DCL.Lobby
                     DragStarted = OnDragStarted,
                     Dragged = OnDragged,
                     DragEnded = OnDragEnded,
+                    RemoveRequested = OnRemoveRequested,
                 };
+            }
+
+            for (var i = 0; i < CORNERS.Length; i++)
+            {
+                shields[i] = new VisualElement { name = "GridShield" };
+                shields[i].AddToClassList(USS_GRID_SHIELD);
             }
 
             dropMarker = new VisualElement { name = "DropMarker", pickingMode = PickingMode.Ignore };
@@ -73,8 +97,8 @@ namespace DCL.Lobby
         }
 
         /// <summary>
-        ///     Enters edit mode on the hierarchy the widget host was last shown with: the grids show their anchor dots and a
-        ///     handle covers every placed widget.
+        ///     Enters edit mode on the hierarchy the widget host was last shown with: the grids show their anchor dots, a
+        ///     handle covers every placed widget and the modal lists every unplaced one.
         /// </summary>
         public void Show(VisualElement newRoot)
         {
@@ -82,7 +106,9 @@ namespace DCL.Lobby
                 Hide();
 
             root = newRoot;
-            dragLayer = newRoot.Q(DRAG_LAYER_NAME) ?? throw new InvalidOperationException($"The lobby hierarchy has no {DRAG_LAYER_NAME}");
+            dragLayer = Find(newRoot, DRAG_LAYER_NAME);
+            modal = Find(newRoot, MODAL_NAME);
+            modalItems = Find(newRoot, MODAL_ITEMS_NAME);
             newRoot.AddToClassList(USS_EDITING);
 
             for (var i = 0; i < CORNERS.Length; i++)
@@ -107,6 +133,9 @@ namespace DCL.Lobby
             for (var i = 0; i < handles.Length; i++)
                 handles[i].RemoveFromHierarchy();
 
+            for (var i = 0; i < shields.Length; i++)
+                shields[i].RemoveFromHierarchy();
+
             dropMarker.RemoveFromHierarchy();
 
             for (var i = 0; i < CORNERS.Length; i++)
@@ -119,37 +148,64 @@ namespace DCL.Lobby
             root.RemoveFromClassList(USS_EDITING);
             root = null;
             dragLayer = null;
+            modal = null;
+            modalItems = null;
         }
 
-        // The handles go in after the sections so they draw over them and take the pointer first
+        // The shield of each grid goes in after the sections so it takes the pointer from whatever they hang outside
+        // their cells, and the placed handles after it so they draw over everything and take the pointer first; the
+        // unplaced handles line up in the modal in the order of the widget ids
         private void PlaceHandles()
         {
+            for (var i = 0; i < CORNERS.Length; i++)
+            {
+                shields[i].RemoveFromHierarchy();
+                host.Grid(CORNERS[i]).Add(shields[i]);
+            }
+
             for (var i = 0; i < handles.Length; i++)
             {
                 LobbyWidgetHandleElement handle = handles[i];
                 handle.RemoveFromHierarchy();
 
                 if (!Layout.TryGetPlacement(handle.WidgetId, out LobbyWidgetPlacement placement))
+                {
+                    handle.SetShelved(true);
+                    ModalItems.Add(handle);
                     continue;
+                }
 
+                handle.SetShelved(false);
                 Move(handle, placement.Cell);
                 host.Grid(placement.Corner).Add(handle);
             }
         }
 
-        // The section is lifted onto the drag layer so it draws over every grid, and its slide transition is switched off
-        // so it keeps up with the pointer; the reparent itself runs no transition
+        // The section of a placed widget is lifted onto the drag layer so it draws over every grid, and its slide
+        // transition is switched off so it keeps up with the pointer; the reparent itself runs no transition. The preview
+        // of a shelved widget is lifted instead at full size, hanging from its middle as its row is far smaller than the
+        // widget, while a placed one keeps the pointer where it was grabbed
         private void OnDragStarted(LobbyWidgetHandleElement handle, Vector2 panelPosition)
         {
             dragged = handle;
-            grabOffset = panelPosition - handle.worldBound.position;
+            Vector2 size = LobbyGridElement.SpanToSize(handle.WidgetId.Span());
             handle.SetDragging(true);
 
-            Vector2 size = LobbyGridElement.SpanToSize(handle.WidgetId.Span());
             dropMarker.style.width = size.x;
             dropMarker.style.height = size.y;
 
-            lifted = host.Section(handle.WidgetId);
+            if (handle.IsShelved)
+            {
+                grabOffset = size * 0.5f;
+                handle.Preview.SetScale(1f);
+                lifted = handle.Preview;
+            }
+            else
+            {
+                grabOffset = panelPosition - handle.worldBound.position;
+                lifted = host.Section(handle.WidgetId);
+            }
+
             lifted.AddToClassList(USS_WIDGET_LIFTED);
             DragLayer.Add(lifted);
 
@@ -163,10 +219,15 @@ namespace DCL.Lobby
             UpdateTarget(handle, panelPosition);
         }
 
-        // The host lands the lifted section back on its grid, at the cell the drop took or the one it came from
+        // The host lands the lifted section where the drop left it: on its grid at the cell the drop took or the one it
+        // came from, or off every grid; a lifted preview goes back into its row or away with the placed handle
         private void OnDragEnded(LobbyWidgetHandleElement handle, Vector2 _)
         {
-            if (targetValid && targetGrid != null && Layout.TryPlacePushing(handle.WidgetId, targetGrid.Corner, targetCell))
+            bool changed = targetModal
+                ? Layout.Remove(handle.WidgetId)
+                : targetValid && targetGrid != null && Layout.TryPlacePushing(handle.WidgetId, targetGrid.Corner, targetCell);
+
+            if (changed)
                 LobbyLayoutStorage.Save(Layout);
 
             ClearTarget();
@@ -175,6 +236,17 @@ namespace DCL.Lobby
             host.Apply();
             handle.SetDragging(false);
             dragged = null;
+            PlaceHandles();
+        }
+
+        // The button in the corner of a placed handle does what a drop on the modal does, without the drag
+        private void OnRemoveRequested(LobbyWidgetHandleElement handle)
+        {
+            if (!Layout.Remove(handle.WidgetId))
+                return;
+
+            LobbyLayoutStorage.Save(Layout);
+            host.Apply();
             PlaceHandles();
         }
 
@@ -188,13 +260,16 @@ namespace DCL.Lobby
             lifted.style.top = local.y;
         }
 
-        // The grid under the middle of the lifted widget is the target; the cell nearest to its top-left corner must then
-        // hold the whole widget inside that grid, so a widget straddling two grids has no valid cell
+        // The modal is the target while the pointer is over it, as it is far smaller than most widgets; otherwise the grid
+        // under the middle of the lifted widget is. The cell nearest to the top-left corner of the widget must then hold
+        // the whole widget inside that grid, so a widget straddling two grids has no valid cell
         private void UpdateTarget(LobbyWidgetHandleElement handle, Vector2 panelPosition)
         {
             Vector2Int span = handle.WidgetId.Span();
             Vector2 topLeft = panelPosition - grabOffset;
-            LobbyGridElement? grid = GridAt(topLeft + (LobbyGridElement.SpanToSize(span) * 0.5f));
+            bool overModal = Modal.worldBound.Contains(panelPosition);
+            LobbyGridElement? grid = overModal ? null : GridAt(topLeft + (LobbyGridElement.SpanToSize(span) * 0.5f));
+            SetTargetModal(overModal);
 
             if (grid != targetGrid)
             {
@@ -240,8 +315,18 @@ namespace DCL.Lobby
             return null;
         }
 
-        // The widgets the resolution pushes stand at their pushed cells; the ones the previous target pushed and this one
-        // does not go back to their placement. The resolution is consumed, so the next target starts from none
+        private void SetTargetModal(bool over)
+        {
+            if (over == targetModal)
+                return;
+
+            targetModal = over;
+            Modal.EnableInClassList(USS_MODAL_TARGET, over);
+        }
+
+        // The widgets the resolution pushes stand at their pushed cells with their handles hidden, so only the widget
+        // slides and no card trails it; the ones the previous target pushed and this one does not go back to their
+        // placement with their handle. The resolution is consumed, so the next target starts from none
         private void ShowPushes()
         {
             for (var i = 0; i < pushed.Count; i++)
@@ -249,7 +334,10 @@ namespace DCL.Lobby
                     ShowAtPlacement(pushed[i].WidgetId);
 
             for (var i = 0; i < resolution.Count; i++)
-                Show(resolution[i].WidgetId, resolution[i].Cell);
+            {
+                host.ShowAt(resolution[i].WidgetId, resolution[i].Cell);
+                handles[(int)resolution[i].WidgetId].SetPushed(true);
+            }
 
             pushed.Clear();
             pushed.AddRange(resolution);
@@ -268,13 +356,9 @@ namespace DCL.Lobby
         private void ShowAtPlacement(LobbyWidgetId widgetId)
         {
             if (Layout.TryGetPlacement(widgetId, out LobbyWidgetPlacement placement))
-                Show(widgetId, placement.Cell);
-        }
+                host.ShowAt(widgetId, placement.Cell);
 
-        private void Show(LobbyWidgetId widgetId, Vector2Int cell)
-        {
-            host.ShowAt(widgetId, cell);
-            Move(handles[(int)widgetId], cell);
+            handles[(int)widgetId].SetPushed(false);
         }
 
         private void ClearTarget()
@@ -282,6 +366,7 @@ namespace DCL.Lobby
             targetGrid?.SetHighlighted(false);
             targetGrid = null;
             targetValid = false;
+            SetTargetModal(false);
             dropMarker.RemoveFromHierarchy();
             ShowPushes();
         }
@@ -293,6 +378,9 @@ namespace DCL.Lobby
             element.style.top = local.y;
         }
 
+        private static VisualElement Find(VisualElement root, string elementName) =>
+            root.Q(elementName) ?? throw new InvalidOperationException($"The lobby hierarchy has no {elementName}");
+
         private static string Title(LobbyWidgetId widgetId) =>
             widgetId switch
             {
@@ -301,7 +389,9 @@ namespace DCL.Lobby
                 LobbyWidgetId.UpcomingEvents3x2 => "Upcoming Events",
                 LobbyWidgetId.FriendsOnline4x2 => "Friends",
                 LobbyWidgetId.JumpBackIn6x2 => "Jump Back In",
+                LobbyWidgetId.JumpBackIn4x2 => "Jump Back In",
                 LobbyWidgetId.RecommendedPlaces6x2 => "Recommended Places",
+                LobbyWidgetId.RecommendedPlaces4x2 => "Recommended Places",
                 _ => throw new ArgumentOutOfRangeException(nameof(widgetId), widgetId, null),
             };
     }

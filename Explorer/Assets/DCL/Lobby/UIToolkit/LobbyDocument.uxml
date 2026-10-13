@@ -68,6 +68,22 @@
                 <ui:Label name="Title" text="Recommended Places" class="lobby__places-title" picking-mode="Ignore" />
                 <DCL.Lobby.LobbyRailElement name="Rail" class="lobby__places-rail" cards-per-page="3" arrows-move-one-card="true" />
             </ui:VisualElement>
+            <!-- The four-column versions of the places sections list the same places, two cards wide -->
+            <ui:VisualElement name="RecentPlaces4x2" class="lobby__widget lobby__places" style="display: none;">
+                <ui:Label name="Title" text="Jump Back In" class="lobby__places-title" picking-mode="Ignore" />
+                <ui:VisualElement name="Cards" class="lobby__places-row" />
+            </ui:VisualElement>
+            <ui:VisualElement name="FeaturedPlaces4x2" class="lobby__widget lobby__places" style="display: none;">
+                <ui:Label name="Title" text="Recommended Places" class="lobby__places-title" picking-mode="Ignore" />
+                <DCL.Lobby.LobbyRailElement name="Rail" class="lobby__places-rail" cards-per-page="2" arrows-move-one-card="true" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <!-- Edit mode only, over the avatar: the widgets off the grids wait here as rows that can be dragged onto a grid, and a
+             widget dropped here leaves its grid (see LobbyLayoutEditor) -->
+        <ui:VisualElement name="WidgetModal" class="lobby__widget-modal">
+            <ui:Label name="Title" text="Widgets" class="lobby__widget-modal-title" picking-mode="Ignore" />
+            <ui:Label name="Hint" text="Drag a widget onto a panel to show it, or drop one here to hide it" class="lobby__widget-modal-hint" picking-mode="Ignore" />
+            <ui:VisualElement name="WidgetModalItems" class="lobby__widget-modal-items" picking-mode="Ignore" />
         </ui:VisualElement>
         <!-- A dragged widget section hangs here while the layout is edited (see LobbyLayoutEditor) -->
         <ui:VisualElement name="LayoutDragLayer" class="lobby__layout-drag-layer" picking-mode="Ignore" />

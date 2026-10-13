@@ -18,6 +18,7 @@ namespace DCL.Lobby
         private const string USS_BLOCK = "lobby-grid";
         private const string USS_HIGHLIGHTED = USS_BLOCK + "--highlighted";
         private const string USS_EDITING = USS_BLOCK + "--editing";
+        private const string USS_OUTLINE = USS_BLOCK + "__outline";
 
         private const float ANCHOR_DOT_RADIUS = 2.5f;
         private static readonly Color ANCHOR_DOT_COLOR = new (1f, 1f, 1f, 0.35f);
@@ -64,6 +65,11 @@ namespace DCL.Lobby
         {
             AddToClassList(USS_BLOCK);
             pickingMode = PickingMode.Ignore;
+
+            var outline = new VisualElement { name = "Outline", pickingMode = PickingMode.Ignore };
+            outline.AddToClassList(USS_OUTLINE);
+            Add(outline);
+
             generateVisualContent += OnGenerateVisualContent;
             Resize();
         }

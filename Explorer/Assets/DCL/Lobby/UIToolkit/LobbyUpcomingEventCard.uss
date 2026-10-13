@@ -4,7 +4,9 @@
 }
 
 .lobby-upcoming-event-card {
-    width: 358px;
+    /* As wide as the three columns of its widget (LobbyGridElement cells), so one card fills the rail and the next starts
+       past the clip */
+    width: 424px;
     height: 135px;
     border-radius: 24px;
     background-color: var(--lobby-card-color);
