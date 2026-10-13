@@ -48,7 +48,7 @@ namespace DCL.SDKComponents.AudioSources
             ref PBAudioAnalysis sdkComponent
         )
         {
-            // Skip players whose MediaPlayer object was destroyed; UpdateMediaPlayerSystem tears them down.
+            // Skip players whose MediaPlayer object was destroyed.
             if (!mediaPlayerComponent.MediaPlayer.IsValid) return;
 
             HandleComponent(entity, ref mediaPlayerComponent, ref sdkComponent);
@@ -72,14 +72,13 @@ namespace DCL.SDKComponents.AudioSources
         {
             if (!frameTimeBudgetProvider.TrySpendBudget()) return;
 
-            ThreadSafeLastAudioFrameReadFilter output = null!;
-            if (component.TryAttachLastAudioFrameReadFilterOrUseExisting(out output) == false) 
+            if (!component.TryAttachLastAudioFrameReadFilterOrUseExisting(out ThreadSafeLastAudioFrameReadFilter? output))
             {
                 ReportHub.LogError(GetReportCategory(), "Cannot attach LastAudioFrameReadFilter");
                 return;
             }
 
-            if (output!.TryConsume(out float[]? data, out int outChannels, out int outSampleRate)) 
+            if (output!.TryConsume(out float[]? data, out _, out int outSampleRate))
             {
                 AnalysisResultMode mode = sdkComponent.Mode switch
                 {
@@ -107,7 +106,7 @@ namespace DCL.SDKComponents.AudioSources
                 }
 
                 sdkComponent.IsDirty = false;
-                ecsToCRDTWriter.PutMessage<PBAudioAnalysis>(sdkComponent, entity);
+                ecsToCRDTWriter.PutMessage(sdkComponent, entity);
             }
         }
     }

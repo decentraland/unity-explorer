@@ -12,8 +12,8 @@ namespace DCL.SDKComponents.MediaStream.YouTube
     ///     <c>hlsManifestUrl</c> or <c>dashManifestUrl</c> — typically embed-restricted music
     ///     videos served only as legacy muxed MP4 (itag=18, ~360p, with known A/V drift).
     ///
-    ///     HLS chosen over DASH as the most widely supported manifest format across media
-    ///     backends; the player's FFmpeg demuxes both.
+    ///     HLS is synthesized (rather than DASH) because the playlists are plain text served
+    ///     over loopback by <see cref="LocalHlsPlaylistServer"/>.
     ///
     ///     Output: three plain-text playlists whose master references the media playlists by
     ///     the relative names <see cref="VIDEO_PLAYLIST_NAME"/> / <see cref="AUDIO_PLAYLIST_NAME"/>,
@@ -35,7 +35,7 @@ namespace DCL.SDKComponents.MediaStream.YouTube
         private const int HEADER_PLAYLIST_LENGTH = 256;
         private const int SEGMENT_PLAYLIST_LENGTH = 128;
 
-        // Codecs media backends decode reliably across Windows/macOS/iOS/Android.
+        // H.264 + AAC: the most broadly hardware-decodable pair.
         private const string PREFERRED_VIDEO_CODEC_PREFIX = "avc1";
         private const string PREFERRED_AUDIO_CODEC_PREFIX = "mp4a";
         private const int PREFERRED_HEIGHT = 1080;
@@ -69,7 +69,7 @@ namespace DCL.SDKComponents.MediaStream.YouTube
             video = default;
             audio = default;
 
-            if (adaptive == null || adaptive.Count == 0) return false;
+            if (adaptive.Count == 0) return false;
 
             AdaptiveFormatData? v = SelectBestVideo(adaptive);
             AdaptiveFormatData? a = SelectBestAudio(adaptive);

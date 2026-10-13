@@ -364,7 +364,7 @@ namespace DCL.SDKComponents.MediaStream.YouTube
                 try
                 {
                     JToken parsed = JToken.Parse(body);
-                    var extracted = (string?)parsed?[0]?[2]?[0]?[0]?[13];
+                    var extracted = (string?)parsed[0]?[2]?[0]?[0]?[13];
 
                     if (!string.IsNullOrEmpty(extracted))
                         visitorData = extracted;

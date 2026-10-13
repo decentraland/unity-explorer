@@ -34,7 +34,6 @@ namespace DCL.SDKComponents.MediaStream
             if (offlineMediaPlayers.TryGetValue(url, out Queue<MediaPlayerInfo>? queue) && queue.Count > 0)
             {
                 mediaPlayer = queue.Dequeue().MediaPlayer;
-                mediaPlayer.enabled = true;
                 mediaPlayer.gameObject.SetActive(true);
             }
             else

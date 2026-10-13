@@ -83,7 +83,7 @@ namespace DCL.SDKComponents.MediaStream
             static _ => false
         );
 
-        public Vector2 GetTexureScale => Match(static urlMediaPlayer =>
+        public Vector2 TextureScale => Match(static urlMediaPlayer =>
             {
                 float vScale = urlMediaPlayer.MediaPlayer.TextureProducer.RequiresVerticalFlip() ? -1 : 1;
                 return new Vector2(1, vScale);
