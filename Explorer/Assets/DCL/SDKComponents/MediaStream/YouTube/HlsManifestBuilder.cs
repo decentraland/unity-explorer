@@ -87,9 +87,8 @@ namespace DCL.SDKComponents.MediaStream.YouTube
         ///     Builds the 3 HLS playlists (master + video + audio) from the pre-selected pair
         ///     returned by <see cref="TrySelectVideoAndAudio"/>. If SIDX-derived segment tables
         ///     are supplied the media playlists are split into one HLS segment per fmp4
-        ///     fragment — this avoids the multi-second buffer-fill stall a player exhibits when
-        ///     handed a single byte range covering the entire video body (issue #8350). Falls
-        ///     back to single-segment if either segment list is null or empty.
+        ///     fragment, so every segment starts on a clean sidx-described boundary (issue #8350).
+        ///     Falls back to single-segment if either segment list is null or empty.
         ///
         ///     Caller is expected to have already validated the streams via
         ///     <see cref="TrySelectVideoAndAudio"/>; this method does not re-check byte ranges
