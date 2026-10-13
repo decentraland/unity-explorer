@@ -116,7 +116,7 @@ namespace DCL.SDKComponents.MediaStream
         /// </summary>
         private void AddUuavRow(ref MediaPlayerComponent component)
         {
-            if (!component.MediaPlayer.TryGetUrlMediaPlayer(out MediaPlayer? mediaPlayer) || mediaPlayer == null)
+            if (!component.MediaPlayer.TryGetUrlMediaPlayer(out MediaPlayer? mediaPlayer))
                 return;
 
             UUAVPlayer? uuavPlayer = mediaPlayer.GetComponent<UUAVPlayer>();

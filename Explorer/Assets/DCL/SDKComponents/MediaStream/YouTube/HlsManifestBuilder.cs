@@ -12,8 +12,8 @@ namespace DCL.SDKComponents.MediaStream.YouTube
     ///     <c>hlsManifestUrl</c> or <c>dashManifestUrl</c> — typically embed-restricted music
     ///     videos served only as legacy muxed MP4 (itag=18, ~360p, with known A/V drift).
     ///
-    ///     HLS is synthesized (rather than DASH) because the playlists are plain text served
-    ///     over loopback by <see cref="LocalHlsPlaylistServer"/>.
+    ///     HLS is synthesized because its byte-range tags (EXT-X-MAP / EXT-X-BYTERANGE) map
+    ///     one-to-one onto the sidx fragment table.
     ///
     ///     Output: three plain-text playlists whose master references the media playlists by
     ///     the relative names <see cref="VIDEO_PLAYLIST_NAME"/> / <see cref="AUDIO_PLAYLIST_NAME"/>,
