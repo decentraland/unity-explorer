@@ -112,3 +112,22 @@
     height: 12px;
     background-image: url('/Assets/Textures/Common/CloseIcnThin.png');
 }
+
+/* The panel hangs 8px under the bar, right-aligned with the profile widget */
+.lobby__profile-menu {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.lobby__profile-menu .lobby-profile-menu__panel {
+    top: 81px;
+    right: var(--lobby-margin);
+}
+
+/* In-world the Close button sits right of the widget: 40px plus its 10px margin */
+.lobby__profile-menu--with-close .lobby-profile-menu__panel {
+    right: 100px;
+}

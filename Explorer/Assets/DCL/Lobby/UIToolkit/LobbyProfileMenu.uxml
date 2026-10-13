@@ -1,0 +1,54 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/DCL/Lobby/UIToolkit/LobbyProfileMenu.uss" />
+    <DCL.Lobby.LobbyProfileMenuElement name="ProfileMenu" user-name="User Name" address="0x000...00000">
+        <ui:VisualElement name="Backdrop" class="lobby-profile-menu__backdrop" />
+        <ui:VisualElement name="Panel" class="lobby-profile-menu__panel">
+            <ui:Label name="Header" text="ME" class="lobby-profile-menu__header" picking-mode="Ignore" />
+            <ui:VisualElement name="Identity" class="lobby-profile-menu__identity" picking-mode="Ignore">
+                <ui:VisualElement name="Picture" class="lobby-profile-menu__picture" picking-mode="Ignore" />
+                <ui:VisualElement name="Texts" class="lobby-profile-menu__texts" picking-mode="Ignore">
+                    <ui:VisualElement name="NameRow" class="lobby-profile-menu__name-row" picking-mode="Ignore">
+                        <ui:Label name="Name" text="User Name" enable-rich-text="false" class="lobby-profile-menu__name" picking-mode="Ignore" />
+                        <ui:VisualElement name="VerifiedBadge" class="lobby-profile-menu__verified" picking-mode="Ignore" />
+                    </ui:VisualElement>
+                    <ui:Label name="UserIdCaption" text="User ID" class="lobby-profile-menu__caption" picking-mode="Ignore" />
+                    <ui:VisualElement name="AddressRow" class="lobby-profile-menu__address-row" picking-mode="Ignore">
+                        <ui:Label name="Address" text="0x000...00000" class="lobby-profile-menu__address" picking-mode="Ignore" />
+                        <ui:Button name="CopyAddress" class="lobby-profile-menu__copy">
+                            <ui:VisualElement name="Copied" class="lobby-profile-menu__copied" picking-mode="Ignore">
+                                <ui:VisualElement name="Icon" class="lobby-profile-menu__copied-icon" picking-mode="Ignore" />
+                                <ui:Label name="Label" text="Wallet copied!" class="lobby-profile-menu__copied-label" picking-mode="Ignore" />
+                            </ui:VisualElement>
+                        </ui:Button>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement name="Separator" class="lobby-profile-menu__separator" picking-mode="Ignore" />
+            <ui:Button name="ProfileItem" class="lobby-profile-menu__item">
+                <ui:VisualElement name="Icon" class="lobby-profile-menu__item-icon lobby-profile-menu__profile-icon" picking-mode="Ignore" />
+                <ui:Label name="Label" text="Profile" class="lobby-profile-menu__item-label" picking-mode="Ignore" />
+            </ui:Button>
+            <ui:Button name="SettingsItem" class="lobby-profile-menu__item">
+                <ui:VisualElement name="Icon" class="lobby-profile-menu__item-icon lobby-profile-menu__settings-icon" picking-mode="Ignore" />
+                <ui:Label name="Label" text="Settings" class="lobby-profile-menu__item-label" picking-mode="Ignore" />
+            </ui:Button>
+            <ui:Button name="ReportBugItem" class="lobby-profile-menu__item lobby-profile-menu__item--report-bug">
+                <ui:VisualElement name="Icon" class="lobby-profile-menu__item-icon lobby-profile-menu__bug-icon" picking-mode="Ignore" />
+                <ui:Label name="Label" text="Report a Bug" class="lobby-profile-menu__item-label" picking-mode="Ignore" />
+            </ui:Button>
+            <ui:VisualElement name="Separator" class="lobby-profile-menu__separator" picking-mode="Ignore" />
+            <ui:Button name="SignOutItem" class="lobby-profile-menu__item">
+                <ui:VisualElement name="Icon" class="lobby-profile-menu__item-icon lobby-profile-menu__sign-out-icon" picking-mode="Ignore" />
+                <ui:Label name="Label" text="Sign Out" class="lobby-profile-menu__item-label" picking-mode="Ignore" />
+            </ui:Button>
+            <ui:Button name="ExitItem" class="lobby-profile-menu__item">
+                <ui:VisualElement name="Icon" class="lobby-profile-menu__item-icon lobby-profile-menu__exit-icon" picking-mode="Ignore" />
+                <ui:Label name="Label" text="Exit" class="lobby-profile-menu__item-label" picking-mode="Ignore" />
+            </ui:Button>
+            <ui:VisualElement name="Footer" class="lobby-profile-menu__footer" picking-mode="Ignore">
+                <ui:Button name="TermsLink" text="Terms of Service" class="lobby-profile-menu__link" />
+                <ui:Button name="PrivacyLink" text="Privacy Policy" class="lobby-profile-menu__link" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </DCL.Lobby.LobbyProfileMenuElement>
+</ui:UXML>

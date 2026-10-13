@@ -78,6 +78,7 @@ using DCL.UI;
 using DCL.UI.Credits;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles;
+using DCL.UI.SystemMenu;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using Utility;
@@ -621,6 +622,7 @@ namespace DCL.PluginSystem.Global
                         { ExploreSections.Navmap, navmapController },
                         { ExploreSections.Places, placesController },
                         { ExploreSections.Events, eventsController },
+                        { ExploreSections.Settings, settingsController },
                     });
 
                 mvcManager.RegisterController(exploreSectionModalController);
@@ -640,12 +642,8 @@ namespace DCL.PluginSystem.Global
                     new SidebarProfileButtonPresenter(explorePanelView.ProfileWidget, web3IdentityCache, profileRepository, profileChangesBus),
                     new ProfileMenuController(() => explorePanelView.ProfileMenuView,
                         web3IdentityCache,
-                        world,
-                        playerEntity,
                         webBrowser,
-                        web3Authenticator,
-                        userInAppInitializationFlow,
-                        profileCache,
+                        new UserLogout(web3IdentityCache, web3Authenticator, profileCache, userInAppInitializationFlow, world, playerEntity),
                         passportBridge,
                         profileRepositoryWrapper),
                     communitiesBrowserController,

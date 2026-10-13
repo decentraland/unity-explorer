@@ -20,7 +20,7 @@ using Utility;
 
 namespace DCL.Settings
 {
-    public class SettingsController : ISection, IDisposable, ISettingsModuleEventListener
+    public class SettingsController : IHostableSection, IDisposable, ISettingsModuleEventListener
     {
         public enum SettingsSection
         {
@@ -40,7 +40,7 @@ namespace DCL.Settings
         private readonly SceneLoadingLimit sceneLoadingLimit;
         private readonly VolumeBus volumeBus;
         private readonly ControlsSettingsAsset controlsSettingsAsset;
-        private readonly RectTransform rectTransform;
+        private readonly RectTransform homeHost;
         private readonly List<SettingsFeatureController> controllers = new ();
         private readonly ChatSettingsAsset chatSettingsAsset;
         private readonly IUserBlockingCache userBlockingCache;
@@ -49,6 +49,12 @@ namespace DCL.Settings
         private readonly PointAtMarkerVisibilitySettings pointAtMarkerVisibilitySettings;
 
         private readonly IReadOnlyDictionary<SettingsSection, (Transform container, ButtonWithSelectableStateView button, Sprite background, SettingsSectionConfig config)> sections;
+
+        private bool isSectionActivated;
+
+        public RectTransform? CurrentHost => view.transform.parent as RectTransform;
+
+        public bool IsAtHome => CurrentHost == homeHost;
 
         public event Action<ChatBubbleVisibilitySettings>? ChatBubblesVisibilityChanged;
 
@@ -82,7 +88,7 @@ namespace DCL.Settings
             this.assetsProvisioner = assetsProvisioner;
             this.eventBus = eventBus;
             this.pointAtMarkerVisibilitySettings = pointAtMarkerVisibilitySettings;
-            rectTransform = view.transform.parent.GetComponent<RectTransform>();
+            homeHost = view.transform.parent.GetComponent<RectTransform>();
 
             sections = new Dictionary<SettingsSection, (Transform container, ButtonWithSelectableStateView button, Sprite background, SettingsSectionConfig config)>
             {
@@ -103,11 +109,13 @@ namespace DCL.Settings
         public void Activate()
         {
             view.gameObject.SetActive(true);
+            isSectionActivated = true;
         }
 
         public void Deactivate()
         {
             view.gameObject.SetActive(false);
+            isSectionActivated = false;
         }
 
         public void Toggle(SettingsSection section)
@@ -130,8 +138,29 @@ namespace DCL.Settings
             view.HeaderAnimator.Update(0);
         }
 
+        // The explore panel positions this slot itself, so it stays behind when the view is borrowed
         public RectTransform GetRectTransform() =>
-            rectTransform;
+            homeHost;
+
+        public void AttachTo(RectTransform host)
+        {
+            var viewRect = (RectTransform)view.transform;
+
+            // A fullscreen panel closes popups without awaiting them, so another host can claim a view a modal still shows
+            if (isSectionActivated && viewRect.parent != host)
+                Deactivate();
+
+            if (viewRect.parent == host) return;
+
+            viewRect.SetParent(host, false);
+            viewRect.anchorMin = Vector2.zero;
+            viewRect.anchorMax = Vector2.one;
+            viewRect.offsetMin = Vector2.zero;
+            viewRect.offsetMax = Vector2.zero;
+        }
+
+        public void AttachToHome() =>
+            AttachTo(homeHost);
 
         public void NotifyChatBubblesVisibilityChanged(ChatBubbleVisibilitySettings newVisibility)
         {

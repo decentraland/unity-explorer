@@ -28,8 +28,8 @@ using DCL.RealmNavigation;
 using DCL.UI;
 using DCL.UI.Credits;
 using DCL.UI.ProfileElements;
-using DCL.UI.Profiles;
 using DCL.UI.Profiles.Helpers;
+using DCL.UI.SystemMenu;
 using DCL.UserInAppInitializationFlow;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Authenticators;
@@ -83,7 +83,7 @@ namespace DCL.PluginSystem.Global
         private LobbyDocumentFriendsPresenter? friendsPresenter;
         private LobbyConnectedFriendsPresenter? connectedFriendsPresenter;
         private SidebarProfileButtonPresenter? profileButtonPresenter;
-        private ProfileMenuController<LobbyPopupParameter>? profileMenuController;
+        private LobbyProfileMenuPresenter? profileMenuPresenter;
         private ICreditsPanelController creditsPanelController = new NullCreditsPanelController();
         private LobbyPopupsView? lobbyPopups;
         private LobbyDocumentView? lobbyDocumentView;
@@ -176,6 +176,7 @@ namespace DCL.PluginSystem.Global
             friendsPresenter?.Dispose();
             connectedFriendsPresenter?.Dispose();
             profileButtonPresenter?.Dispose();
+            profileMenuPresenter?.Dispose();
             creditsPanelController.Dispose();
             disposed = true;
         }
@@ -202,16 +203,8 @@ namespace DCL.PluginSystem.Global
             LobbyPopupsView popups = Object.Instantiate(popupsPrefab);
             lobbyPopups = popups;
 
-            profileMenuController = new ProfileMenuController<LobbyPopupParameter>(() => popups.ProfileMenuView,
-                identityCache,
-                world,
-                playerEntity,
-                webBrowser,
-                web3Authenticator,
-                userInAppInitializationFlow,
-                profileCache,
-                passportBridge,
-                profileRepositoryWrapper);
+            profileMenuPresenter = new LobbyProfileMenuPresenter(identityCache, profileRepository, clipboard, passportBridge, mvcManager, webBrowser,
+                new UserLogout(identityCache, web3Authenticator, profileCache, userInAppInitializationFlow, world, playerEntity));
 
             // The sidebar's notifications panel lives in the sidebar view, inactive until the world is loaded
             var notificationsPanel = new NotificationsPanelController<LobbyPopupParameter>(() => popups.NotificationsMenuView,
@@ -235,11 +228,10 @@ namespace DCL.PluginSystem.Global
             var lobbyController = new LobbyDocumentController(viewFactory,
                 inputBlock, cursor, loadingStatus, mvcManager,
                 selfProfile, profileChangesBus, characterPreviewFactory, characterPreviewEventBus, settings.AvatarSettings, lobbyStage, world,
-                placesAPIService, realmData, homePlace, eventsApiService, eventCardActions, realmNavigator, decentralandUrlsSource, startParcel, new SpriteCache(webRequestController), profileButtonPresenter,
+                placesAPIService, realmData, homePlace, eventsApiService, eventCardActions, realmNavigator, decentralandUrlsSource, startParcel, new SpriteCache(webRequestController), profileButtonPresenter, profileMenuPresenter,
                 notificationsPanel, friendsPresenter, connectedFriendsPresenter);
 
             mvcManager.RegisterController(lobbyController);
-            mvcManager.RegisterController(profileMenuController);
             mvcManager.RegisterController(notificationsPanel);
 
             EnableCreditsPanelAsync(lobbyView.Credits, ct)

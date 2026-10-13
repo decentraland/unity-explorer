@@ -24,7 +24,6 @@ using DCL.RealmNavigation;
 using DCL.UI;
 using DCL.UI.Controls.Configs;
 using DCL.UI.ProfileElements;
-using DCL.UI.Profiles;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
 using ECS;
@@ -35,6 +34,7 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
 using UnityEngine.UIElements;
 using Utility;
 using Utility.UIToolkit;
@@ -79,6 +79,7 @@ namespace DCL.Lobby
         private readonly StartParcel startParcel;
         private readonly ISpriteCache spriteCache;
         private readonly SidebarProfileButtonPresenter profileButtonPresenter;
+        private readonly LobbyProfileMenuPresenter profileMenu;
         private readonly NotificationsPanelController<LobbyPopupParameter> notificationsPanel;
         private readonly List<PlacesData.PlaceInfo> recentPlaces = new ();
         private readonly List<PlacesData.PlaceInfo> featuredPlaces = new ();
@@ -114,6 +115,7 @@ namespace DCL.Lobby
         private CancellationTokenSource? eventsCts;
         private CancellationTokenSource? friendsCts;
         private CancellationTokenSource? jumpInCts;
+        private CancellationTokenSource? profileMenuCts;
         private UniTaskCompletionSource? closeIntent;
         private bool leaving;
 
@@ -168,6 +170,7 @@ namespace DCL.Lobby
             StartParcel startParcel,
             ISpriteCache spriteCache,
             SidebarProfileButtonPresenter profileButtonPresenter,
+            LobbyProfileMenuPresenter profileMenu,
             NotificationsPanelController<LobbyPopupParameter> notificationsPanel,
             LobbyDocumentFriendsPresenter? friends,
             LobbyConnectedFriendsPresenter? connectedFriends) : base(viewFactory)
@@ -193,6 +196,7 @@ namespace DCL.Lobby
             this.startParcel = startParcel;
             this.spriteCache = spriteCache;
             this.profileButtonPresenter = profileButtonPresenter;
+            this.profileMenu = profileMenu;
             this.notificationsPanel = notificationsPanel;
             this.friends = friends;
             this.connectedFriends = connectedFriends;
@@ -208,6 +212,8 @@ namespace DCL.Lobby
 
             if (friends != null)
                 friends.JoinRequested = OnFriendJoin;
+
+            profileMenu.SettingsRequested = ShowSettings;
         }
 
         public override void Dispose()
@@ -222,6 +228,8 @@ namespace DCL.Lobby
             eventCardActions.EventSetAsInterested -= OnEventInterestChanged;
             profileChangesBus.UnsubscribeToUpdate(OnProfileUpdated);
             notificationsPanel.UnreadCountChanged -= ShowUnreadCount;
+            DCLInput.Instance.UI.Close.performed -= OnUIClose;
+            profileMenu.SettingsRequested = null;
 
             if (friends != null)
                 friends.JoinRequested = null;
@@ -231,6 +239,7 @@ namespace DCL.Lobby
             eventsCts.SafeCancelAndDispose();
             friendsCts.SafeCancelAndDispose();
             jumpInCts.SafeCancelAndDispose();
+            profileMenuCts.SafeCancelAndDispose();
             avatarPreview?.Dispose();
             closeIntent?.TrySetCanceled();
         }
@@ -256,7 +265,7 @@ namespace DCL.Lobby
 
             // The renderer keeps the hierarchy across hides, so every handler is removed before it is added again
             viewInstance!.AttachTopBarWidgets();
-            viewInstance.Profile.Clicked = ShowProfileMenu;
+            viewInstance.Profile.Clicked = profileMenu.Toggle;
             viewInstance.NotificationsButton.clicked -= ShowNotifications;
             viewInstance.NotificationsButton.clicked += ShowNotifications;
             viewInstance.MapButton.clicked -= ShowMap;
@@ -269,8 +278,13 @@ namespace DCL.Lobby
             viewInstance.EventsButton.SetDisplayed(includeDiscover);
             viewInstance.CloseButton.clicked -= RequestClose;
             viewInstance.CloseButton.clicked += RequestClose;
-            viewInstance.CloseButton.SetDisplayed(!inputData.IsStartup);
+            viewInstance.SetCloseButtonDisplayed(!inputData.IsStartup);
             profileButtonPresenter.LoadProfile();
+
+            profileMenuCts = profileMenuCts.SafeRestart();
+            profileMenu.Show(viewInstance.ProfileMenu, profileMenuCts.Token);
+            DCLInput.Instance.UI.Close.performed -= OnUIClose;
+            DCLInput.Instance.UI.Close.performed += OnUIClose;
 
             notificationsPanel.UnreadCountChanged += ShowUnreadCount;
             ShowUnreadCount(notificationsPanel.UnreadCount);
@@ -338,6 +352,10 @@ namespace DCL.Lobby
             profileChangesBus.UnsubscribeToUpdate(OnProfileUpdated);
             eventCardActions.EventSetAsInterested -= OnEventInterestChanged;
             notificationsPanel.UnreadCountChanged -= ShowUnreadCount;
+            DCLInput.Instance.UI.Close.performed -= OnUIClose;
+            profileMenu.Hide();
+            profileMenuCts.SafeCancelAndDispose();
+            profileMenuCts = null;
 
             // Nulled so a late callback finds no source rather than a disposed one, whose token throws
             avatarCts.SafeCancelAndDispose();
@@ -877,8 +895,11 @@ namespace DCL.Lobby
         private URLDomain WorldUrl(string worldName) =>
             URLDomain.FromString(new ENS(worldName).ConvertEnsToWorldUrl(decentralandUrlsSource.Url(DecentralandUrl.WorldServer)));
 
-        private void ShowProfileMenu() =>
-            mvcManager.ShowAndForget(ProfileMenuController<LobbyPopupParameter>.IssueCommand(new LobbyPopupParameter()));
+        private void OnUIClose(InputAction.CallbackContext _) =>
+            profileMenu.Dismiss();
+
+        private void ShowSettings() =>
+            ShowExploreSection(ExploreSections.Settings);
 
         private void ShowNotifications() =>
             mvcManager.ShowAndForget(NotificationsPanelController<LobbyPopupParameter>.IssueCommand(new LobbyPopupParameter()));

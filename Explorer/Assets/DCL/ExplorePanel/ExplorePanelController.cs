@@ -234,6 +234,7 @@ namespace DCL.ExplorePanel
             NavmapController.AttachToHome();
             PlacesController.AttachToHome();
             EventsController.AttachToHome();
+            SettingsController.AttachToHome();
         }
 
         protected override void OnViewShow()
