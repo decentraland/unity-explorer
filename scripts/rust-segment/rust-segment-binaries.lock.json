@@ -27,7 +27,7 @@
       ],
       "kind": "file",
       "path": "Explorer/Assets/Plugins/RustSegment/.native/Cargo.lock",
-      "sha256": "7de144e34384b6acd2a235d4ee4c650dbbee8c39f09bef32702831f67fd687a3"
+      "sha256": "44d3b43e95e9d25214c4bd37d0f14926910d99e95dd4a3df349990c8602b46d6"
     },
     "cargo_config": {
       "comment": [
@@ -68,7 +68,7 @@
         "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
         "source_digest": "c9fe26baefac242514d94fbe3bcc1784136b8e3eebbe6be4d1f248a7aa2930d7",
         "source_files": 4,
-        "repo_commit": "c8cf92407fef9ca5c1eb06f131660ff62324ec29",
+        "repo_commit": "b88c455b4008012ef12e5a3290c2cb5a5da2e6f7",
         "toolchain": {
           "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
           "cargo": "cargo 1.97.1 (c980f4866 2026-06-30)",
@@ -95,7 +95,7 @@
         "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
         "source_digest": "c9fe26baefac242514d94fbe3bcc1784136b8e3eebbe6be4d1f248a7aa2930d7",
         "source_files": 4,
-        "repo_commit": "c8cf92407fef9ca5c1eb06f131660ff62324ec29",
+        "repo_commit": "b88c455b4008012ef12e5a3290c2cb5a5da2e6f7",
         "toolchain": {
           "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
           "cargo": "cargo 1.97.1 (c980f4866 2026-06-30)",
@@ -125,7 +125,7 @@
           "gcc": "gcc (Ubuntu 11.4.0-1ubuntu1~22.04.3) 11.4.0"
         },
         "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
-        "repo_commit": "c8cf92407fef9ca5c1eb06f131660ff62324ec29"
+        "repo_commit": "b88c455b4008012ef12e5a3290c2cb5a5da2e6f7"
       },
       "artifacts": [
         {
