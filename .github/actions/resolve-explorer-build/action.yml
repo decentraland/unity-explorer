@@ -164,21 +164,7 @@ runs:
         # that did not answer: without gh's own line the operator is sent to a
         # status page that is green, with the one fact that explains it
         # discarded.
-        gh_api_retry() {
-          local out attempt
-          for attempt in 1 2 3; do
-            if [ "$attempt" -lt 3 ]; then
-              if out=$(gh api "$@" 2>/dev/null); then printf '%s' "$out"; return 0; fi
-              # Only between attempts: the callers below act on the answer
-              # immediately, so a sleep after the last one would just delay a
-              # red check.
-              sleep 5
-            else
-              if out=$(gh api "$@"); then printf '%s' "$out"; return 0; fi
-            fi
-          done
-          return 1
-        }
+        source "$GITHUB_ACTION_PATH/../../scripts/gh-api-retry.sh"
 
         # A listing that fails leaves the same candidate set as a commit with
         # no build — TOTAL=0, nothing examined, STATE=none — so without a
