@@ -92,17 +92,24 @@ namespace DCL.Diagnostics.Tests
             Assert.IsNotNull(SentryReportHandler.BeforeSend(@event));
         }
 
-        [Test]
-        public void DropSceneWebSocketFailuresOnly()
+        [TestCase(ReportCategory.JAVASCRIPT)]
+        [TestCase(ReportCategory.LIVEKIT)]
+        [TestCase(ReportCategory.PLACES)]
+        public void DropWebSocketFailuresRegardlessOfCategory(string category)
         {
-            var sceneEvent = new SentryEvent(new WebSocketException());
-            sceneEvent.SetTag("category", ReportCategory.JAVASCRIPT);
+            var @event = new SentryEvent(new WebSocketException("The remote party closed the WebSocket connection without completing the close handshake."));
+            @event.SetTag("category", category);
 
-            var clientEvent = new SentryEvent(new WebSocketException());
-            clientEvent.SetTag("category", ReportCategory.LIVEKIT);
+            Assert.IsNull(SentryReportHandler.BeforeSend(@event));
+        }
 
-            Assert.IsNull(SentryReportHandler.BeforeSend(sceneEvent));
-            Assert.IsNotNull(SentryReportHandler.BeforeSend(clientEvent));
+        [Test]
+        public void DropWebSocketFailuresWrappedByTheRpcTransport()
+        {
+            var @event = new SentryEvent(new InvalidOperationException("RPC Transport failed", new WebSocketException()));
+            @event.SetTag("category", ReportCategory.FRIENDS);
+
+            Assert.IsNull(SentryReportHandler.BeforeSend(@event));
         }
 
         [Test]

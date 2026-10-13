@@ -33,8 +33,8 @@ namespace DCL.Diagnostics.Sentry
         // Errors raised by scene code inside the ClearScript engine, matched by name so this assembly does not reference the engine (#10088, #10125)
         private const string SCRIPT_ENGINE_EXCEPTION_TYPE = "Microsoft.ClearScript.ScriptEngineException";
 
-        // Connect failures of scene-owned websockets are the scene's problem; the same wrapper type is kept for the client's own sockets (#10103)
-        private const string SCENE_WEBSOCKET_EXCEPTION_TYPE = "Utility.Networking.WebSocketException";
+        // A websocket dropped by the remote end is a backend condition the client cannot act on beyond the retry policies every websocket consumer already has (#10103, #10377)
+        private const string WEBSOCKET_EXCEPTION_TYPE = "Utility.Networking.WebSocketException";
 
         // Thrown by the runtime's task machinery inside third-party transports (Sentry SDK, System.Net.Http) with no client frame (#10094, #10120, #10121, #10153)
         private const string TASK_ALREADY_COMPLETED_MESSAGE = "An attempt was made to transition a task to a final state when it had already completed.";
@@ -244,7 +244,7 @@ namespace DCL.Diagnostics.Sentry
             if (message != null && IsIgnoredNativeMessage(message))
                 return Demote(message);
 
-            if (@event.Exception != null && IsIgnoredException(@event.Exception, category))
+            if (@event.Exception != null && IsIgnoredException(@event.Exception))
                 return Demote(@event.Exception.Message);
 
             if (category == null)
@@ -268,7 +268,7 @@ namespace DCL.Diagnostics.Sentry
             return false;
         }
 
-        private static bool IsIgnoredException(Exception exception, string? category)
+        private static bool IsIgnoredException(Exception exception)
         {
             switch (exception)
             {
@@ -278,29 +278,25 @@ namespace DCL.Diagnostics.Sentry
                         return false;
 
                     for (var i = 0; i < aggregate.InnerExceptions.Count; i++)
-                        if (!IsIgnoredException(aggregate.InnerExceptions[i], category))
+                        if (!IsIgnoredException(aggregate.InnerExceptions[i]))
                             return false;
 
                     return true;
 
-                case IOException:
-                    return exception.HResult is HANDLE_DISK_FULL_HRESULT or DISK_FULL_HRESULT
-                           || exception.Message.StartsWith(DISK_FULL_MESSAGE_PREFIX, StringComparison.Ordinal);
+                case IOException when exception.HResult is HANDLE_DISK_FULL_HRESULT or DISK_FULL_HRESULT
+                                      || exception.Message.StartsWith(DISK_FULL_MESSAGE_PREFIX, StringComparison.Ordinal):
 
-                case InvalidOperationException:
-                    return exception.Message.StartsWith(TASK_ALREADY_COMPLETED_MESSAGE, StringComparison.Ordinal)
-                           || exception.Message.StartsWith(INSECURE_CONNECTION_MESSAGE, StringComparison.Ordinal);
+                case InvalidOperationException when exception.Message.StartsWith(TASK_ALREADY_COMPLETED_MESSAGE, StringComparison.Ordinal)
+                                                    || exception.Message.StartsWith(INSECURE_CONNECTION_MESSAGE, StringComparison.Ordinal):
+                    return true;
             }
 
             string? typeName = exception.GetType().FullName;
 
-            if (typeName == SCRIPT_ENGINE_EXCEPTION_TYPE)
+            if (typeName is SCRIPT_ENGINE_EXCEPTION_TYPE or WEBSOCKET_EXCEPTION_TYPE)
                 return true;
 
-            if (typeName == SCENE_WEBSOCKET_EXCEPTION_TYPE)
-                return category == ReportCategory.JAVASCRIPT;
-
-            return exception.InnerException != null && IsIgnoredException(exception.InnerException, category);
+            return exception.InnerException != null && IsIgnoredException(exception.InnerException);
         }
 
         private bool IsValidConfiguration(SentryUnityOptions options) =>
