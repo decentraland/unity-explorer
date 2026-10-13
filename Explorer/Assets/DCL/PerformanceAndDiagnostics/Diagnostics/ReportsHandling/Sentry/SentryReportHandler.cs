@@ -39,6 +39,9 @@ namespace DCL.Diagnostics.Sentry
         // Thrown by the runtime's task machinery inside third-party transports (Sentry SDK, System.Net.Http) with no client frame (#10094, #10120, #10121, #10153)
         private const string TASK_ALREADY_COMPLETED_MESSAGE = "An attempt was made to transition a task to a final state when it had already completed.";
 
+        // The player refuses cleartext http, and every such URL comes from scene content, never from the client's own endpoints (#8080, #10008, #10204, #10276)
+        private const string INSECURE_CONNECTION_MESSAGE = "Insecure connection not allowed";
+
         // The user's disk is full: an environment condition, not a client defect (#10086). Matched by HRESULT first
         // (HRESULT_FROM_WIN32 of ERROR_HANDLE_DISK_FULL and ERROR_DISK_FULL, the codes the runtime attaches on every platform)
         // because the message text is platform-specific: Mono's own "Disk full. Path ..." on Unix, the OS-localized text on Windows
@@ -285,7 +288,8 @@ namespace DCL.Diagnostics.Sentry
                            || exception.Message.StartsWith(DISK_FULL_MESSAGE_PREFIX, StringComparison.Ordinal);
 
                 case InvalidOperationException:
-                    return exception.Message.StartsWith(TASK_ALREADY_COMPLETED_MESSAGE, StringComparison.Ordinal);
+                    return exception.Message.StartsWith(TASK_ALREADY_COMPLETED_MESSAGE, StringComparison.Ordinal)
+                           || exception.Message.StartsWith(INSECURE_CONNECTION_MESSAGE, StringComparison.Ordinal);
             }
 
             string? typeName = exception.GetType().FullName;

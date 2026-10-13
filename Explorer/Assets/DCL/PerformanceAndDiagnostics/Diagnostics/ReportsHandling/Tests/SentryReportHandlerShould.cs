@@ -69,6 +69,22 @@ namespace DCL.Diagnostics.Tests
         }
 
         [Test]
+        public void DropInsecureConnectionRefusals()
+        {
+            var @event = new SentryEvent(new InvalidOperationException("Insecure connection not allowed"));
+
+            Assert.IsNull(SentryReportHandler.BeforeSend(@event));
+        }
+
+        [Test]
+        public void KeepOtherInvalidOperations()
+        {
+            var @event = new SentryEvent(new InvalidOperationException("Collection was modified"));
+
+            Assert.IsNotNull(SentryReportHandler.BeforeSend(@event));
+        }
+
+        [Test]
         public void KeepAggregateWhenAnyInnerExceptionIsActionable()
         {
             var @event = new SentryEvent(new AggregateException(new IOException("Disk full"), new NullReferenceException()));
