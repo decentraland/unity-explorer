@@ -9,6 +9,9 @@ namespace DCL.Lobby
     [ExecuteAlways]
     public class LobbyStage : MonoBehaviour
     {
+        private const float PULL_BACK_EASE_SPEED = 8f;
+        private const float PULL_BACK_SNAP = 0.001f;
+
         private static readonly int BASE_MAP = Shader.PropertyToID("_BaseMap");
         private static readonly int BASE_COLOR = Shader.PropertyToID("_BaseColor");
         private static readonly int SPOT_COLOR = Shader.PropertyToID("_SpotColor");
@@ -32,6 +35,12 @@ namespace DCL.Lobby
         [SerializeField] private ParticleSystem dust = null!;
         [SerializeField] private LobbyStagePreset? preset;
 
+        [Tooltip("Highest screen point, from the bottom, the avatar's head may reach; a taller avatar pulls the camera back until it fits under it")]
+        [SerializeField, Range(0.5f, 1f)] private float avatarTopLimit = 0.95f;
+
+        [Tooltip("Extra pull-back on top of the fit, only for avatars that need one, so jumps and emotes keep the head in frame")]
+        [SerializeField, Range(1f, 1.2f)] private float pullBackHeadroom = 1.03f;
+
         private MaterialPropertyBlock? backdropProperties;
         private MaterialPropertyBlock? floorProperties;
         private MaterialPropertyBlock? mistProperties;
@@ -40,6 +49,11 @@ namespace DCL.Lobby
         private Camera? trackedCamera;
         private LobbyStagePreset? spawnedPropsPreset;
         private int spawnedPropsVersion;
+        private Vector3 avatarFeet;
+        private float avatarHeight;
+        private float currentPullBack = 1f;
+        private Vector3 cameraPositionBeforePullBack;
+        private bool cameraPulledBack;
 
         /// <summary>
         ///     Switches the whole look: image, blend, tints and props.
@@ -57,6 +71,15 @@ namespace DCL.Lobby
         public void Track(Camera? camera)
         {
             trackedCamera = camera;
+        }
+
+        /// <summary>
+        ///     Where the avatar stands and its height above the feet, in metres. When its head would pass the top limit the tracked camera eases back from the feet until it fits; a zero height keeps the default framing.
+        /// </summary>
+        public void FitAvatar(Vector3 feet, float height)
+        {
+            avatarFeet = feet;
+            avatarHeight = height;
         }
 
         /// <summary>
@@ -130,6 +153,7 @@ namespace DCL.Lobby
         private void OnEnable()
         {
             RenderPipelineManager.beginCameraRendering += OnBeginCameraRendering;
+            RenderPipelineManager.endCameraRendering += OnEndCameraRendering;
             ApplyPresetValues();
             RebuildPropsIfStale();
 
@@ -141,6 +165,7 @@ namespace DCL.Lobby
         private void OnDisable()
         {
             RenderPipelineManager.beginCameraRendering -= OnBeginCameraRendering;
+            RenderPipelineManager.endCameraRendering -= OnEndCameraRendering;
 
 #if UNITY_EDITOR
             LobbyStagePreset.AnyChanged -= OnAnyPresetChanged;
@@ -185,7 +210,54 @@ namespace DCL.Lobby
             // Re-applied every frame so preset edits show up live; props are only rebuilt when the preset or its version changed
             ApplyPresetValues();
             RebuildPropsIfStale();
+            PullCameraBack(camera);
             FitBackdrop(camera);
+        }
+
+        private void OnEndCameraRendering(ScriptableRenderContext _, Camera camera)
+        {
+            if (camera != trackedCamera || !cameraPulledBack) return;
+
+            camera.transform.position = cameraPositionBeforePullBack;
+            cameraPulledBack = false;
+        }
+
+        // Scaling about the avatar's feet keeps them and the floor where they were on screen; the pose is restored after the render, so whatever drives the camera never sees the offset
+        private void PullCameraBack(Camera camera)
+        {
+            Transform cameraTransform = camera.transform;
+            Vector3 pivot = avatarFeet;
+            float targetPullBack = RequiredPullBack(camera, pivot);
+
+            currentPullBack = Mathf.Abs(targetPullBack - currentPullBack) <= PULL_BACK_SNAP
+                ? targetPullBack
+                : Mathf.Lerp(currentPullBack, targetPullBack, 1f - Mathf.Exp(-PULL_BACK_EASE_SPEED * UnityEngine.Time.unscaledDeltaTime));
+
+            if (currentPullBack <= 1f) return;
+
+            cameraPositionBeforePullBack = cameraTransform.position;
+            cameraPulledBack = true;
+            cameraTransform.position = pivot + ((cameraPositionBeforePullBack - pivot) * currentPullBack);
+        }
+
+        // Pulling back by s shows the avatar like one 1/s its size, so s is how much taller it is than what reaches the top limit on a plane through its axis
+        private float RequiredPullBack(Camera camera, Vector3 pivot)
+        {
+            if (avatarHeight <= 0f) return 1f;
+
+            Transform cameraTransform = camera.transform;
+            Vector3 flatForward = Vector3.ProjectOnPlane(cameraTransform.forward, Vector3.up).normalized;
+            var axisPlane = new Plane(-flatForward, pivot);
+            float halfHeight = Mathf.Tan(camera.fieldOfView * 0.5f * Mathf.Deg2Rad);
+            float aspect = (float)camera.pixelWidth / camera.pixelHeight;
+
+            Ray topRay = ViewportRay(cameraTransform, halfHeight, aspect, 0.5f, avatarTopLimit);
+            if (!axisPlane.Raycast(topRay, out float enter)) return 1f;
+
+            float fittingHeight = topRay.GetPoint(enter).y - pivot.y;
+            if (fittingHeight <= 0f || avatarHeight <= fittingHeight) return 1f;
+
+            return avatarHeight / fittingHeight * pullBackHeadroom;
         }
 
         // Instances are never saved: the preset is the only source of truth, so scenes and the prefab stay clean
