@@ -1,9 +1,14 @@
+using Cysharp.Threading.Tasks;
 using DCL.Diagnostics.Sentry;
 using NUnit.Framework;
 using Sentry;
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Net;
+using System.Net.Sockets;
 using UnityEngine;
+using UnityEngine.Networking;
 using Utility.Networking;
 
 namespace DCL.Diagnostics.Tests
@@ -16,6 +21,14 @@ namespace DCL.Diagnostics.Tests
 
         private static Scope NewScope() =>
             new (new SentryOptions());
+
+        private static IEnumerable<Exception> NetworkingFailures()
+        {
+            // Never sent, so the exception carries the empty state of an unanswered request
+            yield return new UnityWebRequestException(new UnityWebRequest("http://127.0.0.1:8767/hamsterwood/comms"));
+            yield return new WebException("The remote server returned an error: (404) Not Found.");
+            yield return new SocketException((int)SocketError.ConnectionRefused);
+        }
 
         [TestCase("[Physics.PhysX] cleaning the mesh failed")]
         [TestCase("Curl error 56: Recv failure: Connection reset by peer")]
@@ -110,6 +123,40 @@ namespace DCL.Diagnostics.Tests
             @event.SetTag("category", ReportCategory.FRIENDS);
 
             Assert.IsNull(SentryReportHandler.BeforeSend(@event));
+        }
+
+        [TestCaseSource(nameof(NetworkingFailures))]
+        public void DropNetworkingFailuresInLocalSceneDevelopment(Exception exception)
+        {
+            var @event = new SentryEvent(exception);
+            @event.SetTag("category", ReportCategory.MULTIPLAYER);
+
+            Assert.IsNull(SentryReportHandler.BeforeSend(@event, isLocalSceneDevelopment: true));
+        }
+
+        [TestCaseSource(nameof(NetworkingFailures))]
+        public void KeepNetworkingFailuresOutsideLocalSceneDevelopment(Exception exception)
+        {
+            var @event = new SentryEvent(exception);
+            @event.SetTag("category", ReportCategory.MULTIPLAYER);
+
+            Assert.IsNotNull(SentryReportHandler.BeforeSend(@event, isLocalSceneDevelopment: false));
+        }
+
+        [Test]
+        public void DropNetworkingFailureWrappedByUnobservedTaskInLocalSceneDevelopment()
+        {
+            var @event = new SentryEvent(new AggregateException(new SocketException((int)SocketError.ConnectionRefused)));
+
+            Assert.IsNull(SentryReportHandler.BeforeSend(@event, isLocalSceneDevelopment: true));
+        }
+
+        [Test]
+        public void KeepOtherExceptionsInLocalSceneDevelopment()
+        {
+            var @event = new SentryEvent(new NullReferenceException());
+
+            Assert.IsNotNull(SentryReportHandler.BeforeSend(@event, isLocalSceneDevelopment: true));
         }
 
         [Test]

@@ -1,3 +1,4 @@
+using Cysharp.Threading.Tasks;
 using DCL.Optimization.Pools;
 using DCL.Optimization.ThreadSafePool;
 using DCL.Utility;
@@ -6,6 +7,8 @@ using Sentry.Unity;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Net;
+using System.Net.Sockets;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -59,7 +62,7 @@ namespace DCL.Diagnostics.Sentry
 
         private readonly PerReportScope.Pool scopesPool;
 
-        public SentryReportHandler(ICategorySeverityMatrix matrix, SentrySampler sentrySampler, bool debounceEnabled, string? sessionId)
+        public SentryReportHandler(ICategorySeverityMatrix matrix, SentrySampler sentrySampler, bool debounceEnabled, bool isLocalSceneDevelopment, string? sessionId)
             : base(ReportHandler.Sentry, matrix, debounceEnabled)
         {
             scopesPool = new PerReportScope.Pool(scopeConfigurators);
@@ -86,7 +89,7 @@ namespace DCL.Diagnostics.Sentry
             options.TracesSampler = sentrySampler.Execute;
 
             // The single gateway every event passes through, whether it was captured via ReportHub or directly by the SDK's integrations
-            options.SetBeforeSend(BeforeSend);
+            options.SetBeforeSend(@event => BeforeSend(@event, isLocalSceneDevelopment));
 
 #if UNITY_EDITOR
             // The asset carries a placeholder DSN that only CI replaces, so editor sessions resolve one from the environment instead.
@@ -235,7 +238,7 @@ namespace DCL.Diagnostics.Sentry
         ///     Drops the events the client cannot act on, keeping them as breadcrumbs of the next real report,
         ///     and tags the remaining ones with a category so Sentry can always filter by it.
         /// </summary>
-        internal static SentryEvent? BeforeSend(SentryEvent @event)
+        internal static SentryEvent? BeforeSend(SentryEvent @event, bool isLocalSceneDevelopment = false)
         {
             string? category = @event.Tags.TryGetValue(CATEGORY_TAG, out string? tag) ? tag : null;
 
@@ -244,7 +247,7 @@ namespace DCL.Diagnostics.Sentry
             if (message != null && IsIgnoredNativeMessage(message))
                 return Demote(message);
 
-            if (@event.Exception != null && IsIgnoredException(@event.Exception))
+            if (@event.Exception != null && IsIgnoredException(@event.Exception, isLocalSceneDevelopment))
                 return Demote(@event.Exception.Message);
 
             if (category == null)
@@ -268,7 +271,7 @@ namespace DCL.Diagnostics.Sentry
             return false;
         }
 
-        private static bool IsIgnoredException(Exception exception)
+        private static bool IsIgnoredException(Exception exception, bool isLocalSceneDevelopment)
         {
             switch (exception)
             {
@@ -278,10 +281,14 @@ namespace DCL.Diagnostics.Sentry
                         return false;
 
                     for (var i = 0; i < aggregate.InnerExceptions.Count; i++)
-                        if (!IsIgnoredException(aggregate.InnerExceptions[i]))
+                        if (!IsIgnoredException(aggregate.InnerExceptions[i], isLocalSceneDevelopment))
                             return false;
 
                     return true;
+
+                // In local scene development the content and comms endpoints are the creator's own preview server,
+                // whose responses are theirs to experiment with and never a client defect (#10318)
+                case UnityWebRequestException or WebException or SocketException when isLocalSceneDevelopment:
 
                 case IOException when exception.HResult is HANDLE_DISK_FULL_HRESULT or DISK_FULL_HRESULT
                                       || exception.Message.StartsWith(DISK_FULL_MESSAGE_PREFIX, StringComparison.Ordinal):
@@ -296,7 +303,7 @@ namespace DCL.Diagnostics.Sentry
             if (typeName is SCRIPT_ENGINE_EXCEPTION_TYPE or WEBSOCKET_EXCEPTION_TYPE)
                 return true;
 
-            return exception.InnerException != null && IsIgnoredException(exception.InnerException);
+            return exception.InnerException != null && IsIgnoredException(exception.InnerException, isLocalSceneDevelopment);
         }
 
         private bool IsValidConfiguration(SentryUnityOptions options) =>
