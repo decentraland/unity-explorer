@@ -3,8 +3,8 @@
 The compatability layer doesn't provide full coverage of AVPRO features and should be extended as it goes.
 Feel free to contribute your adapter code 
 
-## Why this layer exists (and why it is not collapsed into `AvProSwitch`)
+## Why this layer still mirrors AVPro's surface
 
-This package deliberately mirrors AVPro's surface (`MediaPlayer`, `IMediaControl`/`IMediaInfo`/`ITextureProducer`, `Enums`, `TimeRanges`) instead of exposing a UUAV-native API, even though that means the UUAV path goes through one more hop than the AVPro path (`AvProSwitch.UuavBackend` → `Compat.MediaPlayer` → `Compat.UUAVBackend`).
+This package mirrors AVPro's surface (`MediaPlayer`, `IMediaControl`/`IMediaInfo`/`ITextureProducer`, `Enums`, `TimeRanges`) instead of exposing a UUAV-native API. It was built as migration scaffolding so the Explorer could switch between AVPro and UUAV behind a trivial, symmetric selection layer.
 
-The extra layer is temporary migration scaffolding: while both engines ship behind the `AvProSwitch` flag, keeping UUAV shaped exactly like AVPro means the switch layer stays trivial and symmetric. Once UUAV is validated stable in production (expected ~1–2 weeks after rollout), the AVPro integration — the AVPro package reference, `AvProBackend`, and the whole `AvProSwitch` selection layer — can be deleted in one sweep, and callers move onto this facade (or `UUAVPlayer` directly) without touching playback logic. Collapsing the layers now would mean refactoring code that is scheduled for deletion.
+That switch and the AVPro package are gone: the Explorer's media systems (`DCL.SDKComponents.MediaStream`) now consume this facade directly. Several members exist only for AVPro-shape parity and are inert here (`OptionsWindows`/`OptionsApple`, `Windows.VideoApi`/`Windows.AudioOutput`, `MediaPathType`, `MediaPlayerEvent`, `TimeRanges.Count`). The facade is slated to be collapsed into a UUAV-native surface; until then, extend it only with members the Explorer actually calls.
