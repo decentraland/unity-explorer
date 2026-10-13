@@ -234,7 +234,10 @@ namespace DCL.Navmap
 
             mapRenderer.SetSharedLayer(MapLayer.ScenesOfInterest, false);
             zoomController.Deactivate();
+
+            // A kept reference would release the next renter's camera on the next Activate
             cameraController?.Release(this);
+            cameraController = null;
             navmapBus.ClearHistory();
             searchBarController.ClearInput();
             navmapView.gameObject.SetActive(false);

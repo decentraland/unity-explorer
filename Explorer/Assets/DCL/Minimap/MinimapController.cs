@@ -409,6 +409,9 @@ namespace DCL.Minimap
                     new Vector2Int(viewInstance.mapRendererVisibleParcels, viewInstance.mapRendererVisibleParcels)
                 ));
 
+                // A map closed before the minimap existed leaves the shared layer off, and only an owner can turn it back on
+                mapRenderer.SetSharedLayer(MapLayer.SatelliteAtlas, true);
+
                 mapRendererTrackPlayerPosition = new MapRendererTrackPlayerPosition(mapCameraController);
                 viewInstance.mapRendererTargetImage.texture = mapCameraController.GetRenderTexture();
                 viewInstance.pixelPerfectMapRendererTextureProvider.Activate(mapCameraController);
