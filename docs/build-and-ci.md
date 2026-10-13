@@ -12,6 +12,7 @@ The main workflow is `build-unitycloud`, which is automatically triggered by pus
 By default, PRs marked as draft will not trigger the build. If this is something you want, you need to add a label `force-build` to this PR.
 
 The `build-release-main` workflow wraps `build-unitycloud` for releases; it is triggered by pushes to `main` and by manual workflow dispatch.
+After the build it runs `build-release-delta`, which publishes the binary patches launcher users update with, before the draft release is created. See [Delta Updates](delta-updates.md).
 Release, hotfix, and `main` builds share a single stable cache target per platform — the *release pool* — instead of a per-version target, so the cache is reused across releases without blocking `main`. See [Cache](#cache).
 
 ### Release cuts

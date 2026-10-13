@@ -1,0 +1,246 @@
+# build-release-delta.yml
+---
+name: Release Delta Patches
+
+# Generates the delta (binary patch) update for a release: per-file HDiffPatch
+# patches from each of the last N published releases into <tag>, plus the
+# manifest the launcher reads. Uploaded to S3 next to the release zip:
+#   releases/<tag>/delta/<platform>/manifest.json
+#   releases/<tag>/delta/<platform>/from/<base tag>/<path>.hdiff
+# Runs from build-release-main.yml after the build, before the draft release
+# exists, so patches are in place before anyone can publish. Never blocks a
+# release: on failure the launcher falls back to the full zip (and reports it).
+# All logic lives in scripts/delta/ (runnable locally); this file is glue.
+# Design: docs/delta-updates.md
+on:
+  workflow_call:
+    inputs:
+      tag:
+        description: 'Release tag the patches lead to (e.g. v0.187.0-alpha)'
+        required: true
+        type: string
+      base_count:
+        description: 'How many previous published releases get a patch set'
+        required: false
+        type: number
+        default: 4
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag the patches lead to (e.g. v0.187.0-alpha). Must not be published yet.'
+        required: true
+        type: string
+      base_count:
+        description: 'How many previous published releases get a patch set'
+        required: false
+        type: number
+        default: 4
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-delta-${{ inputs.tag }}
+  cancel-in-progress: false
+
+env:
+  TAG: ${{ inputs.tag }}
+  RELEASES_PATH: ${{ format('@dcl/{0}/releases', github.event.repository.name) }}
+
+jobs:
+  plan:
+    name: Pick base releases
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    # A delta failure must never block the release; launchers fall back to the zip.
+    continue-on-error: true
+    outputs:
+      bases: ${{ steps.bases.outputs.bases }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+          sparse-checkout: scripts/delta
+
+      # Manifests and patches are never rewritten once a release is published: the
+      # CDN caches them as immutable. /releases/tags/<tag> only returns published releases.
+      - name: Refuse a published tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh api "repos/$GITHUB_REPOSITORY/releases/tags/$TAG" --jq .draft 2>/dev/null | grep -qx false; then
+            echo "::error::$TAG is already published; its delta patches are immutable and are not regenerated."
+            exit 1
+          fi
+
+      - name: Pick base releases
+        id: bases
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BASE_COUNT: ${{ inputs.base_count }}
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/releases?per_page=100" \
+            | bash scripts/delta/release-tags.sh bases "$BASE_COUNT" "$TAG" > bases.txt
+          echo "Bases for $TAG:"; cat bases.txt
+          echo "bases=$(jq -R -s -c 'split("\n") | map(select(length > 0))' bases.txt)" >> "$GITHUB_OUTPUT"
+
+  delta:
+    name: Delta (${{ matrix.platform }})
+    needs: plan
+    # `bases` is empty when the plan job failed (e.g. published tag), `[]` when there is nothing to diff against.
+    if: needs.plan.outputs.bases != '' && needs.plan.outputs.bases != '[]'
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Epic builds are not delta-updated: the Epic store ships its own updates.
+          - platform: windows64
+            runner: ubuntu-latest
+            zip: Decentraland_windows64.zip
+          # A macOS runner so the rebuilt .app can be checked with codesign.
+          - platform: macos
+            runner: macos-latest
+            zip: Decentraland_macos.zip
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 120
+    env:
+      PLATFORM: ${{ matrix.platform }}
+      ZIP: ${{ matrix.zip }}
+      BASES: ${{ needs.plan.outputs.bases }}
+      AWS_MAX_ATTEMPTS: 3
+      AWS_RETRY_MODE: standard
+      AWS_ACCESS_KEY_ID: ${{ secrets.EXPLORER_TEAM_AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.EXPLORER_TEAM_AWS_SECRET_ACCESS_KEY }}
+      EXPLORER_TEAM_S3_BUCKET: ${{ secrets.EXPLORER_TEAM_S3_BUCKET }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+          sparse-checkout: scripts/delta
+
+      - name: Install HDiffPatch (pinned)
+        run: bash scripts/delta/fetch-tools.sh "$RUNNER_TEMP/hdiffpatch" >> "$GITHUB_PATH"
+
+      - name: Install osslsigncode
+        if: matrix.platform == 'windows64'
+        run: sudo apt-get install -y -qq osslsigncode > /dev/null
+
+      # The published zip, not the build artifact, is the source of truth: the manifest
+      # must describe exactly what a fresh install gets.
+      - name: Download the new release zip
+        run: |
+          set -euo pipefail
+          WORK="$RUNNER_TEMP/delta"
+          mkdir -p "$WORK"
+          aws s3 cp --only-show-errors "s3://$EXPLORER_TEAM_S3_BUCKET/$RELEASES_PATH/$TAG/$ZIP" "$WORK/$ZIP"
+          NEW_ROOT="$(bash scripts/delta/extract-build.sh "$WORK/$ZIP" "$WORK/new")"
+          echo "WORK=$WORK" >> "$GITHUB_ENV"
+          echo "NEW_ROOT=$NEW_ROOT" >> "$GITHUB_ENV"
+
+      - name: Generate and verify patches per base
+        run: |
+          set -euo pipefail
+          OUT="$WORK/out"
+          mkdir -p "$OUT"
+
+          # signature_status <tree>: one line per signed executable with its verification
+          # result. Rebuilt and original must match; the bytes already do, this proves
+          # the signatures survive (and on macOS that modes/symlinks keep the seal intact).
+          signature_status() {
+            if [ "$PLATFORM" = windows64 ]; then
+              for exe in Decentraland.exe Decentraland_Data/Plugins/x86_64/uuav-helper.exe; do
+                [ -f "$1/$exe" ] || continue
+                if osslsigncode verify -in "$1/$exe" > /dev/null 2>&1; then echo "$exe ok"; else echo "$exe unsigned-or-invalid"; fi
+              done
+            else
+              for app in "$1"/*.app; do
+                [ -d "$app" ] || continue
+                if codesign --verify --deep --strict "$app" > /dev/null 2>&1; then echo "$(basename "$app") ok"; else echo "$(basename "$app") unsigned-or-invalid"; fi
+              done
+            fi
+          }
+          signature_status "$NEW_ROOT" > "$WORK/signatures-new.txt"
+          echo "Signatures of the new build:"; cat "$WORK/signatures-new.txt"
+
+          for BASE_TAG in $(jq -r '.[]' <<< "$BASES"); do
+            echo "::group::$BASE_TAG -> $TAG"
+            BASE_WORK="$WORK/base-$BASE_TAG"
+            mkdir -p "$BASE_WORK"
+            if ! aws s3 cp --only-show-errors "s3://$EXPLORER_TEAM_S3_BUCKET/$RELEASES_PATH/$BASE_TAG/$ZIP" "$BASE_WORK/$ZIP"; then
+              echo "::warning::$BASE_TAG has no $ZIP in S3; skipping this base."
+              rm -rf "$BASE_WORK"
+              echo "::endgroup::"
+              continue
+            fi
+            BASE_ROOT="$(bash scripts/delta/extract-build.sh "$BASE_WORK/$ZIP" "$BASE_WORK/tree")"
+            rm -f "$BASE_WORK/$ZIP"
+
+            bash scripts/delta/make-delta.sh "$BASE_ROOT" "$NEW_ROOT" "$BASE_TAG" "$OUT"
+            bash scripts/delta/assemble-manifest.sh "$TAG" "$PLATFORM" "$NEW_ROOT" "$WORK/$ZIP" \
+              "$OUT/base-$BASE_TAG.json" > "$BASE_WORK/manifest.json"
+            REBUILT="$(bash scripts/delta/verify-delta.sh "$BASE_ROOT" "$OUT" "$BASE_WORK/manifest.json" "$BASE_TAG" "$BASE_WORK/rebuild")"
+
+            signature_status "$REBUILT" > "$BASE_WORK/signatures.txt"
+            if ! diff -u "$WORK/signatures-new.txt" "$BASE_WORK/signatures.txt"; then
+              echo "::error::$BASE_TAG: signature verification of the rebuilt build differs from the new build."
+              exit 1
+            fi
+            rm -rf "$BASE_WORK"
+            echo "::endgroup::"
+          done
+
+          shopt -s nullglob
+          BASE_FILES=("$OUT"/base-*.json)
+          [ ${#BASE_FILES[@]} -gt 0 ] || { echo "::error::No base produced a patch set."; exit 1; }
+          bash scripts/delta/assemble-manifest.sh "$TAG" "$PLATFORM" "$NEW_ROOT" "$WORK/$ZIP" "${BASE_FILES[@]}" > "$WORK/manifest.json"
+
+      - name: Refuse a published tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh api "repos/$GITHUB_REPOSITORY/releases/tags/$TAG" --jq .draft 2>/dev/null | grep -qx false; then
+            echo "::error::$TAG was published while patches were generated; not uploading (patches are immutable once published)."
+            exit 1
+          fi
+
+      # Patches first, manifest last: a launcher must never see a manifest that
+      # references files not uploaded yet. Both are immutable (cached for a year).
+      - name: Upload patches, then the manifest
+        run: |
+          set -euo pipefail
+          DEST="$RELEASES_PATH/$TAG/delta/$PLATFORM"
+          mkdir -p "$WORK/upload-patches" "$WORK/upload-manifest"
+          mv "$WORK/out/from" "$WORK/upload-patches/from"
+          cp "$WORK/manifest.json" "$WORK/upload-manifest/manifest.json"
+          for dir in upload-patches upload-manifest; do
+            npx @dcl/cdn-uploader@next \
+              --bucket "$EXPLORER_TEAM_S3_BUCKET" \
+              --local-folder "$WORK/$dir" \
+              --bucket-folder "$DEST" \
+              --immutable \
+              --variant uncompressed
+          done
+
+      - name: Write job summary
+        if: always() && env.WORK != ''
+        run: |
+          [ -f "$WORK/manifest.json" ] || exit 0
+          {
+            echo "### Delta patches: $PLATFORM -> $TAG"
+            echo
+            echo "| From | Patched | Whole | Deleted | Download | Full zip | Saving |"
+            echo "|---|---|---|---|---|---|---|"
+            jq -r '.zip.size as $zip
+              | .bases | to_entries[]
+              | ([.value.patches[], .value.whole[] | .patch_size] | add // 0) as $dl
+              | "| \(.key) | \(.value.patches | length) | \(.value.whole | length) | \(.value.deleted | length) "
+                + "| \($dl / 1048576 * 10 | round / 10) MB | \($zip / 1048576 * 10 | round / 10) MB "
+                + "| \(100 - ($dl * 100 / $zip) | round)% |"' "$WORK/manifest.json"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Report failure
+        if: failure()
+        run: |
+          echo "::error::Delta patches for $TAG ($PLATFORM) were not published. Launchers will download the full zip for this release and report the fallback to Sentry."

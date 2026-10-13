@@ -53,3 +53,35 @@ jobs:
             "timestamp": "'$(date -u +"%Y-%m-%dT%H:%M:%SZ")'"
           }' > latest.json
           aws s3 cp latest.json s3://$EXPLORER_TEAM_S3_BUCKET/$RELEASES_PATH/latest.json
+
+      - name: Checkout delta scripts
+        if: steps.check_latest.outputs.is_latest_release == 'true'
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+          sparse-checkout: scripts/delta
+
+      # Delta patches: keep exactly two series, the ones into the release just published
+      # and into the one it replaced (a grace period for launchers mid-download and a
+      # rollback target for on-delete-release.yml). Older series are removed; the window
+      # of 5 also cleans up after missed runs. See docs/delta-updates.md.
+      - name: Prune old delta patches
+        if: steps.check_latest.outputs.is_latest_release == 'true'
+        shell: bash
+        env:
+          AWS_MAX_ATTEMPTS: 3
+          AWS_RETRY_MODE: standard
+          AWS_ACCESS_KEY_ID: ${{ secrets.EXPLORER_TEAM_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.EXPLORER_TEAM_AWS_SECRET_ACCESS_KEY }}
+          EXPLORER_TEAM_S3_BUCKET: ${{ secrets.EXPLORER_TEAM_S3_BUCKET }}
+          RELEASES_PATH: ${{ format('@dcl/{0}/releases', github.event.repository.name) }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          curl -fsSL -H "Authorization: Bearer $GITHUB_TOKEN" \
+            "https://api.github.com/repos/${{ github.repository }}/releases?per_page=100" \
+            | bash scripts/delta/release-tags.sh prune 2 5 > prune.txt
+          while IFS= read -r tag; do
+            echo "Removing delta patches into $tag"
+            aws s3 rm --recursive --only-show-errors "s3://$EXPLORER_TEAM_S3_BUCKET/$RELEASES_PATH/$tag/delta/"
+          done < prune.txt

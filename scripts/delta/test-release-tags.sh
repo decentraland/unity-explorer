@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+# Functional tests for release-tags.sh against a canned GitHub releases list.
+# No network. Run from anywhere:
+#   bash scripts/delta/test-release-tags.sh
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+TAGS="$SCRIPT_DIR/release-tags.sh"
+WORK="$(mktemp -d)"
+trap 'rm -rf "$WORK"' EXIT
+
+# API order (created_at) deliberately differs from published_at order.
+cat > "$WORK/releases.json" <<'JSON'
+[
+  {"tag_name": "v0.188.0-alpha", "draft": true,  "published_at": null},
+  {"tag_name": "v0.186.0-alpha", "draft": false, "published_at": "2026-10-08T14:33:06Z"},
+  {"tag_name": "avatar-preview-renderer/v3.4.0", "draft": false, "published_at": "2026-10-09T10:00:00Z"},
+  {"tag_name": "v0.187.0-alpha", "draft": false, "published_at": "2026-10-13T09:00:00Z"},
+  {"tag_name": "v0.185.0-alpha", "draft": false, "published_at": "2026-10-06T14:22:59Z"},
+  {"tag_name": "v0.184.0-alpha", "draft": false, "published_at": "2026-10-01T19:18:45Z"},
+  {"tag_name": "v0.183.0-alpha", "draft": false, "published_at": "2026-09-29T15:45:19Z"}
+]
+JSON
+
+FAILURES=0
+PASSES=0
+# expect <name> <expected stdout> <args...>
+expect() {
+  local name="$1" want="$2" got code=0
+  shift 2
+  got=$(bash "$TAGS" "$@" < "$WORK/releases.json" 2> "$WORK/stderr") || code=$?
+  if [ "$got" = "$want" ] && [ "$code" -eq 0 ]; then
+    echo "  ok   $name"
+    PASSES=$((PASSES + 1))
+  else
+    echo "  FAIL $name: exit=$code"
+    echo "       want: $(echo "$want" | tr '\n' ' ')"
+    echo "       got:  $(echo "$got" | tr '\n' ' ')"
+    sed 's/^/       /' "$WORK/stderr"
+    FAILURES=$((FAILURES + 1))
+  fi
+}
+expect_usage_error() {
+  local name="$1" code=0
+  shift
+  bash "$TAGS" "$@" < "$WORK/releases.json" > /dev/null 2>&1 || code=$?
+  if [ "$code" -ne 0 ]; then echo "  ok   $name"; PASSES=$((PASSES + 1)); else echo "  FAIL $name: exit 0"; FAILURES=$((FAILURES + 1)); fi
+}
+
+echo "release-tags.sh bases"
+expect "newest published first, drafts and renderer tags skipped" \
+  "$(printf 'v0.187.0-alpha\nv0.186.0-alpha\nv0.185.0-alpha')" bases 3 v0.188.0-alpha
+expect "excludes the current tag" \
+  "$(printf 'v0.186.0-alpha\nv0.185.0-alpha')" bases 2 v0.187.0-alpha
+expect "fewer releases than requested" \
+  "$(printf 'v0.187.0-alpha\nv0.186.0-alpha\nv0.185.0-alpha\nv0.184.0-alpha\nv0.183.0-alpha')" bases 10 v0.188.0-alpha
+expect "zero bases" "" bases 0 v0.188.0-alpha
+
+echo "release-tags.sh prune"
+expect "keeps the two newest, prunes the next window" \
+  "$(printf 'v0.185.0-alpha\nv0.184.0-alpha')" prune 2 2
+expect "window past the end" "v0.183.0-alpha" prune 4 5
+expect "nothing to prune" "" prune 10 3
+
+echo "usage"
+expect_usage_error "unknown mode" list
+expect_usage_error "non-numeric count" bases two v1
+expect_usage_error "missing window" prune 2
+
+echo
+echo "$PASSES passed, $FAILURES failed"
+[ "$FAILURES" -eq 0 ]
