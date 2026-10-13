@@ -130,11 +130,10 @@ During application shutdown or disposal:
 
 ## Testing
 
-`cargo test` runs the unit tests (disk-full response mapping, operation construction). The integration test is `#[ignore]`d because it needs a Segment write key and the network; run it explicitly with (`SEGMENT_API_HOST` defaults to the shipped Custom Domain):
-
+`cargo test` runs the unit tests (disk-full response mapping, operation construction). The integration test is `#[ignore]`d because it needs a Segment write key, an API host and the network; run it explicitly with:
 ```sh
-SEGMENT_WRITE_KEY=... SEGMENT_QUEUE_PATH=... [SEGMENT_API_HOST=...] cargo test -- --ignored
-```
+SEGMENT_WRITE_KEY=... SEGMENT_QUEUE_PATH=... SEGMENT_API_HOST=... cargo test -- --ignored
+````
 
 `rust-segment-verify.yml` runs `cargo check`, `cargo test` and `cargo clippy -- -D warnings` on every PR touching this plugin.
 
