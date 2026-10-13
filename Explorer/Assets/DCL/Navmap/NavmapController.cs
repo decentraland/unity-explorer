@@ -275,6 +275,7 @@ namespace DCL.Navmap
             viewRect.anchorMax = Vector2.one;
             viewRect.offsetMin = Vector2.zero;
             viewRect.offsetMax = Vector2.zero;
+            navmapView.SetCompactLayout(host != homeHost);
         }
 
         public void AttachToHome() =>

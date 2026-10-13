@@ -1,4 +1,5 @@
 using DCL.Audio;
+using DCL.ExplorePanel;
 using DCL.MapRenderer.ConsumerUtils;
 using DCL.UI;
 using System;
@@ -64,6 +65,21 @@ namespace DCL.Navmap
         [field: Header("Audio")]
         [field: SerializeField]
         public AudioClipConfig ClickAudio { get; private set; }
+
+        private bool isCompact;
+
+        public void SetCompactLayout(bool compact)
+        {
+            if (isCompact == compact) return;
+
+            isCompact = compact;
+
+            // The search bar is centred in its container, so it gives the close slot back from its right edge
+            float slot = compact ? ExploreSectionModalView.CLOSE_BUTTON_SLOT_WIDTH : -ExploreSectionModalView.CLOSE_BUTTON_SLOT_WIDTH;
+            var searchBar = (RectTransform)SearchBarView.transform;
+            searchBar.sizeDelta -= new Vector2(slot, 0f);
+            searchBar.anchoredPosition -= new Vector2(slot / 2f, 0f);
+        }
     }
 
     [Serializable]
