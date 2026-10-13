@@ -135,7 +135,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
         {
             // Arrange
             var sceneWearables = new SceneWearablesOverride(new List<URN> { SCENE_WEARABLE }) { IsDirty = true };
-            Entity entity = world.Create(new PlayerComponent(), CreateMainPlayerProfile(), PartitionComponent.TOP_PRIORITY, sceneWearables);
+            Entity entity = world.Create(new PlayerComponent(), CreateProfile(), PartitionComponent.TOP_PRIORITY, sceneWearables);
 
             // Act
             system.Update(0);
@@ -150,7 +150,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
         public void RebuildMainPlayerAvatarWhenSceneWearablesChange()
         {
             // Arrange
-            Profile profile = CreateMainPlayerProfile();
+            Profile profile = CreateProfile();
             Entity entity = world.Create(new PlayerComponent(), profile, PartitionComponent.TOP_PRIORITY, new SceneWearablesOverride(new List<URN> { SCENE_WEARABLE }));
             system.Update(0);
 
@@ -180,7 +180,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
         public void MergeSceneWearablesWhenProfileAndOverrideChangeTogether()
         {
             // Arrange
-            Profile profile = CreateMainPlayerProfile();
+            Profile profile = CreateProfile();
             Entity entity = world.Create(new PlayerComponent(), profile, PartitionComponent.TOP_PRIORITY, new SceneWearablesOverride(new List<URN>()));
             system.Update(0);
 
@@ -197,6 +197,89 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             CollectionAssert.AreEqual(new[] { new URN(BODY_SHAPE_MALE), PROFILE_WEARABLE, SCENE_WEARABLE }, avatarShapeComponent.WearablePromise.LoadingIntention.Pointers);
             Assert.IsFalse(world.Get<SceneWearablesOverride>(entity).IsDirty);
             Assert.IsFalse(profile.IsDirty);
+        }
+
+        [Test]
+        public void AppendExistingSceneWearablesWhenCreatingRemoteAvatar()
+        {
+            // Arrange
+            var sceneWearables = new SceneWearablesOverride(new List<URN> { SCENE_WEARABLE }) { IsDirty = true };
+            Entity entity = world.Create(CreateProfile(), PartitionComponent.TOP_PRIORITY, sceneWearables);
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            AvatarShapeComponent avatarShapeComponent = world.Get<AvatarShapeComponent>(entity);
+            CollectionAssert.AreEqual(new[] { new URN(BODY_SHAPE_MALE), PROFILE_WEARABLE, SCENE_WEARABLE }, avatarShapeComponent.WearablePromise.LoadingIntention.Pointers);
+            Assert.IsFalse(world.Get<SceneWearablesOverride>(entity).IsDirty);
+        }
+
+        [Test]
+        public void MergeSceneWearablesWhenRemoteProfileChanges()
+        {
+            // Arrange
+            Profile profile = CreateProfile();
+            Entity entity = world.Create(profile, PartitionComponent.TOP_PRIORITY, new SceneWearablesOverride(new List<URN> { SCENE_WEARABLE }));
+            system.Update(0);
+
+            Entity originalPromise = world.Get<AvatarShapeComponent>(entity).WearablePromise.Entity;
+            profile.IsDirty = true;
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            AvatarShapeComponent avatarShapeComponent = world.Get<AvatarShapeComponent>(entity);
+            Assert.That(world.IsAlive(originalPromise), Is.False);
+            CollectionAssert.AreEqual(new[] { new URN(BODY_SHAPE_MALE), PROFILE_WEARABLE, SCENE_WEARABLE }, avatarShapeComponent.WearablePromise.LoadingIntention.Pointers);
+            Assert.IsFalse(profile.IsDirty);
+            Assert.IsFalse(world.Get<SceneWearablesOverride>(entity).IsDirty);
+        }
+
+        [Test]
+        public void RebuildRemoteAvatarWhenSceneWearablesChange()
+        {
+            // Arrange
+            Profile profile = CreateProfile();
+            Entity entity = world.Create(profile, PartitionComponent.TOP_PRIORITY);
+            system.Update(0);
+
+            Entity originalPromise = world.Get<AvatarShapeComponent>(entity).WearablePromise.Entity;
+            int emotePromisesCount = world.CountEntities(in EMOTE_PROMISES_QUERY);
+
+            world.Add(entity, new SceneWearablesOverride(new List<URN> { SCENE_WEARABLE }) { IsDirty = true });
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            AvatarShapeComponent avatarShapeComponent = world.Get<AvatarShapeComponent>(entity);
+            Assert.That(world.IsAlive(originalPromise), Is.False);
+            Assert.IsTrue(avatarShapeComponent.IsDirty);
+            CollectionAssert.AreEqual(new[] { new URN(BODY_SHAPE_MALE), PROFILE_WEARABLE, SCENE_WEARABLE }, avatarShapeComponent.WearablePromise.LoadingIntention.Pointers);
+            Assert.IsFalse(world.Get<SceneWearablesOverride>(entity).IsDirty);
+            Assert.IsFalse(profile.IsDirty);
+            Assert.AreEqual(emotePromisesCount, world.CountEntities(in EMOTE_PROMISES_QUERY));
+        }
+
+        [Test]
+        public void RestoreRemoteProfileWearablesWhenSceneWearablesAreCleared()
+        {
+            // Arrange
+            var sceneWearables = new SceneWearablesOverride(new List<URN> { SCENE_WEARABLE });
+            Entity entity = world.Create(CreateProfile(), PartitionComponent.TOP_PRIORITY, sceneWearables);
+            system.Update(0);
+
+            ref SceneWearablesOverride sceneWearablesRef = ref world.Get<SceneWearablesOverride>(entity);
+            sceneWearablesRef.Urns.Clear();
+            sceneWearablesRef.IsDirty = true;
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            CollectionAssert.AreEqual(new[] { new URN(BODY_SHAPE_MALE), PROFILE_WEARABLE }, world.Get<AvatarShapeComponent>(entity).WearablePromise.LoadingIntention.Pointers);
         }
 
         [Test]
@@ -230,7 +313,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             Assert.That(highlightComponent.Opacity, Is.EqualTo(0));
         }
 
-        private static Profile CreateMainPlayerProfile() =>
+        private static Profile CreateProfile() =>
             new ProfileBuilder()
                .WithUserId(FAKE_ID)
                .WithBodyShape(BodyShape.MALE)

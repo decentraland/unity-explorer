@@ -60,6 +60,24 @@ namespace ECS.Unity.AvatarShape.Tests
             Assert.AreEqual(0, globalWorld.CountEntities(new QueryDescription().WithAll<PBAvatarShape>()));
         }
 
+        [TestCase(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM, 0)]
+        [TestCase(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_TO - 1, 0)]
+        [TestCase(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM, 3)]
+        public void NotSpawnGlobalAvatarForRemotePlayerEntity(int entityNumber, int entityVersion)
+        {
+            // Arrange
+            Entity remotePlayerEntity = world.Create(PartitionComponent.TOP_PRIORITY, CRDTEntity.Create(entityNumber, entityVersion));
+            AddTransformToEntity(remotePlayerEntity);
+            world.Add(remotePlayerEntity, new PBAvatarShape { Name = "Remote" });
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            Assert.IsFalse(world.Has<SDKAvatarShapeComponent>(remotePlayerEntity));
+            Assert.AreEqual(0, globalWorld.CountEntities(new QueryDescription().WithAll<PBAvatarShape>()));
+        }
+
         [Test]
         public void ForwardSDKAvatarShapeInstantiationToGlobalWorldSystems()
         {

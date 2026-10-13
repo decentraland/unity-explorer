@@ -441,7 +441,7 @@ namespace Global.Dynamic
             {
                 new AvatarAttachPlugin(globalWorld, staticContainer.MainPlayerAvatarBaseProxy, staticContainer.ComponentsContainer.ComponentPoolsRegistry, commsContainer.EntityParticipantTable, staticContainer.CharacterContainer.Transform),
                 new SceneMaskedEmotePlugin(globalWorld, playerEntity, staticContainer.MainPlayerAvatarBaseProxy, staticContainer.EmotesContainer.EmotePlayer, staticContainer.EmoteStorage, multiplayerEmotesMessageBus),
-                new SceneWearablesPlugin(wearableContainer.WearableCatalog, globalWorld, playerEntity, localSceneDevelopment && !bootstrapContainer.UseRemoteAssetBundles),
+                new SceneWearablesPlugin(wearableContainer.WearableCatalog, globalWorld, playerEntity, commsContainer.EntityParticipantTable, localSceneDevelopment && !bootstrapContainer.UseRemoteAssetBundles),
                 new RealmInfoPlugin(staticContainer.RealmData, commsContainer.RoomHub),
                 new AvatarNametagWorldPlugin(globalWorld, playerEntity, commsContainer.EntityParticipantTable),
             };

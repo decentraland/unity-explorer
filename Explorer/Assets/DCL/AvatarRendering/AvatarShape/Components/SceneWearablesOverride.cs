@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace DCL.AvatarRendering.AvatarShape.Components
 {
     /// <summary>
-    ///     Scene wearables the current scene puts on the local player on top of the profile wearables; empty <see cref="Urns" /> means none.
+    ///     Scene wearables the current scene puts on a player's avatar on top of the profile wearables; empty <see cref="Urns" /> means none.
     /// </summary>
     public struct SceneWearablesOverride
     {

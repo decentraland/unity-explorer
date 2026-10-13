@@ -69,8 +69,8 @@ namespace ECS.Unity.AvatarShape.Systems
         [None(typeof(SDKAvatarShapeComponent), typeof(DeleteEntityIntention))]
         private void LoadAvatarShape(Entity entity, in CRDTEntity crdtEntity, ref PBAvatarShape pbAvatarShape, ref PartitionComponent partitionComponent, ref TransformComponent transformComponent)
         {
-            // The scene's player entity is the local player, not an NPC
-            if (crdtEntity.Id == SpecialEntitiesID.PLAYER_ENTITY) return;
+            // A player's entity, the local or a remote one, is a real avatar, not an NPC
+            if (crdtEntity.Id == SpecialEntitiesID.PLAYER_ENTITY || SpecialEntitiesID.IsOtherPlayerEntity(crdtEntity.EntityNumber)) return;
 
             // We have to create a global transform to hold the CharacterTransform. Using the Transform from the TransformComponent
             // may lead to unexpected consequences, since that one is disposed by the scene, while the avatar lives in the global world

@@ -37,8 +37,8 @@ namespace DCL.AvatarRendering.AvatarShape
         {
             UpdateAvatarFromSDKComponentQuery(World);
             UpdateMainPlayerAvatarFromProfileQuery(World);
-            UpdateMainPlayerAvatarFromSceneWearablesQuery(World);
             UpdateAvatarFromProfileQuery(World);
+            UpdateAvatarFromSceneWearablesQuery(World);
 
             CreateAvatarShapeFromSDKComponentQuery(World);
             CreateMainPlayerAvatarShapeFromProfileQuery(World);
@@ -66,7 +66,7 @@ namespace DCL.AvatarRendering.AvatarShape
         [None(typeof(AvatarShapeComponent), typeof(PBAvatarShape), typeof(PlayerComponent))]
         private void CreateAvatarShapeFromProfile(Entity entity, in Profile profile, ref PartitionComponent partition)
         {
-            WearablePromise wearablePromise = CreateWearablePromise(profile, partition);
+            WearablePromise wearablePromise = CreateWearablePromise(profile, partition, ConsumeSceneWearablesOverride(entity));
             var avatarShape = new AvatarShapeComponent(profile.Name, profile.UserId, profile.Avatar.BodyShape, wearablePromise, profile.Avatar.SkinColor, profile.Avatar.HairColor, profile.Avatar.EyesColor);
             World.Add(entity, avatarShape, new AvatarHighlightComponent());
         }
@@ -115,12 +115,12 @@ namespace DCL.AvatarRendering.AvatarShape
 
         [Query]
         [None(typeof(PlayerComponent), typeof(PBAvatarShape), typeof(DeleteEntityIntention))]
-        private void UpdateAvatarFromProfile(ref Profile profile, ref AvatarShapeComponent avatarShapeComponent, ref PartitionComponent partition)
+        private void UpdateAvatarFromProfile(Entity entity, ref Profile profile, ref AvatarShapeComponent avatarShapeComponent, ref PartitionComponent partition)
         {
             if (!profile.IsDirty)
                 return;
 
-            ApplyProfileToAvatarShape(profile, null, ref avatarShapeComponent, ref partition);
+            ApplyProfileToAvatarShape(profile, ConsumeSceneWearablesOverride(entity), ref avatarShapeComponent, ref partition);
             profile.IsDirty = false;
         }
 
@@ -140,9 +140,8 @@ namespace DCL.AvatarRendering.AvatarShape
         }
 
         [Query]
-        [All(typeof(PlayerComponent))]
         [None(typeof(PBAvatarShape), typeof(DeleteEntityIntention))]
-        private void UpdateMainPlayerAvatarFromSceneWearables(ref SceneWearablesOverride sceneWearables, in Profile profile, ref AvatarShapeComponent avatarShapeComponent, ref PartitionComponent partition)
+        private void UpdateAvatarFromSceneWearables(ref SceneWearablesOverride sceneWearables, in Profile profile, ref AvatarShapeComponent avatarShapeComponent, ref PartitionComponent partition)
         {
             if (!sceneWearables.IsDirty)
                 return;
