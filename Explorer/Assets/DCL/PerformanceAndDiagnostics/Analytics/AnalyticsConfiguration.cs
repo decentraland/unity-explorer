@@ -84,7 +84,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             return false;
         }
 
-        private bool TryCreateSegmentConfiguration(out Configuration? configuration)
+        private bool TryCreateSegmentConfiguration([NotNullWhen(true)] out Configuration? configuration)
         {
             try { segmentConfiguration = new Configuration(segmentWriteKey, segmentApiHost, flushSize, flushInterval); }
             catch (Exception e)
