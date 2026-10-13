@@ -23,8 +23,8 @@ namespace UUAV.Compat
     }
 
     // Windows platform-option enums. Inert under UUAV (audio always routes
-    // through Unity, video always uses the D3D11 path) and present only so the
-    // consumer's platform-options assignments compile.
+    // through Unity, video always uses the D3D11 path); kept only for AVPro-shape
+    // parity until the facade is collapsed (#10441).
     public static class Windows
     {
         public enum VideoApi
