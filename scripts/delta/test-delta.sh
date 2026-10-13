@@ -43,8 +43,12 @@ echo "a=1" > "$BASE/Data/boot.config"
 random_file "$BASE/Data/catalog.bin" 4096
 random_file "$BASE/Data/space dir/asset file.bin" 65536
 printf '#!/bin/sh\necho hi\n' > "$BASE/run.sh"
+echo "old casing" > "$BASE/Plugin.dll"
 
 cp -a "$BASE" "$NEW"
+# Case-only rename: on NTFS/APFS deleting the old name after writing the new one loses the file.
+rm -f "$NEW/Plugin.dll"
+echo "new casing" > "$NEW/plugin.dll"
 rm -f "$NEW/gone.txt"
 poke "$NEW/Game.dll" 1000 "PATCHED-CODE"
 poke "$NEW/Game.dll" 200000 "MORE"
@@ -59,6 +63,14 @@ if ! is_windows; then
   chmod 644 "$BASE/run.sh"
   chmod 755 "$NEW/run.sh"
   ln -s same.txt "$NEW/link.txt"
+  # A real directory that becomes a symlink (.framework Versions/Current) and the reverse.
+  mkdir -p "$BASE/Fw/Versions/A" "$BASE/Fw/Versions/Current" "$NEW/Fw/Versions/A" "$NEW/Lib"
+  echo "lib a" > "$BASE/Fw/Versions/A/lib"
+  echo "lib a" > "$NEW/Fw/Versions/A/lib"
+  echo "lib current" > "$BASE/Fw/Versions/Current/lib"
+  ln -s A "$NEW/Fw/Versions/Current"
+  ln -s Fw/Versions/A "$BASE/Lib"
+  echo "lib dir" > "$NEW/Lib/lib"
   SYMLINKS=1
 fi
 random_file "$WORK/Decentraland_test.zip" 1024
@@ -92,7 +104,8 @@ check "ships a new file whole" jq_true 'any(.whole[]; .path == "added.txt")' "$B
 check "ships a fully rewritten file whole" jq_true 'any(.whole[]; .path == "Data/catalog.bin")' "$B"
 check "keeps a small edit as a patch when whole is not smaller" jq_true 'any(.patches[]; .path == "Data/boot.config")' "$B"
 check "lists deleted and renamed-away paths" \
-  jq_true "(.deleted | sort) == ([\"Data/aa/$OLD_BUNDLE\", \"gone.txt\"] | sort)" "$B"
+  jq_true "[\"Data/aa/$OLD_BUNDLE\", \"gone.txt\", \"Plugin.dll\"] - .deleted == []" "$B"
+check "ships a case-only rename whole" jq_true 'any(.whole[]; .path == "plugin.dll")' "$B"
 check "skips unchanged files" jq_true 'all(.patches[], .whole[]; .path != "same.txt")' "$B"
 check "records from_sha256 of the base file" \
   jq_true ".patches[] | select(.path == \"Game.dll\") | .from_sha256 == \"$(sha256_of "$BASE/Game.dll")\"" "$B"
@@ -121,6 +134,10 @@ check "rebuilds a tree identical to the new build" \
 check "prints the rebuild dir" bash -c "[ -f '$WORK/rebuild/added.txt' ] && [ ! -e '$WORK/rebuild/gone.txt' ] && [ ! -e '$WORK/rebuild/Data/aa/$OLD_BUNDLE' ]"
 if [ $SYMLINKS -eq 1 ]; then
   check "restores symlinks and modes" bash -c "[ -L '$WORK/rebuild/link.txt' ] && [ -x '$WORK/rebuild/run.sh' ]"
+  check "replaces a directory with a symlink without touching its target" \
+    bash -c "[ -L '$WORK/rebuild/Fw/Versions/Current' ] && [ \"\$(cat '$WORK/rebuild/Fw/Versions/A/lib')\" = 'lib a' ]"
+  check "replaces a symlink with a directory without writing through it" \
+    bash -c "[ ! -L '$WORK/rebuild/Lib' ] && [ -f '$WORK/rebuild/Lib/lib' ] && [ \"\$(cat '$WORK/rebuild/Fw/Versions/A/lib')\" = 'lib a' ]"
 fi
 check_fails "refuses a non-empty rebuild dir" \
   bash "$SCRIPT_DIR/verify-delta.sh" "$BASE" "$OUT" "$M" v1.0.0-alpha "$WORK/rebuild"

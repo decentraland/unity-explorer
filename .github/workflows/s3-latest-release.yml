@@ -55,7 +55,7 @@ jobs:
           aws s3 cp latest.json s3://$EXPLORER_TEAM_S3_BUCKET/$RELEASES_PATH/latest.json
 
       - name: Checkout delta scripts
-        if: steps.check_latest.outputs.is_latest_release == 'true'
+        if: steps.check_latest.outputs.is_latest_release == 'true' && github.event.action == 'published'
         uses: actions/checkout@v6
         with:
           persist-credentials: false
@@ -64,9 +64,11 @@ jobs:
       # Delta patches: keep exactly two series, the ones into the release just published
       # and into the one it replaced (a grace period for launchers mid-download and a
       # rollback target for on-delete-release.yml). Older series are removed; the window
-      # of 5 also cleans up after missed runs. See docs/delta-updates.md.
+      # of 5 also cleans up after missed runs. Only on `published`: then the new release
+      # is the newest by published_at, while on `edited` GitHub's /releases/latest may
+      # not be, and ranking could reach the live release. See docs/delta-updates.md.
       - name: Prune old delta patches
-        if: steps.check_latest.outputs.is_latest_release == 'true'
+        if: steps.check_latest.outputs.is_latest_release == 'true' && github.event.action == 'published'
         shell: bash
         env:
           AWS_MAX_ATTEMPTS: 3
@@ -82,6 +84,10 @@ jobs:
             "https://api.github.com/repos/${{ github.repository }}/releases?per_page=100" \
             | bash scripts/delta/release-tags.sh prune 2 5 > prune.txt
           while IFS= read -r tag; do
+            if [ "$tag" = "$latest_release" ]; then
+              echo "::warning::Not pruning $tag: it is the live release."
+              continue
+            fi
             echo "Removing delta patches into $tag"
             aws s3 rm --recursive --only-show-errors "s3://$EXPLORER_TEAM_S3_BUCKET/$RELEASES_PATH/$tag/delta/"
           done < prune.txt

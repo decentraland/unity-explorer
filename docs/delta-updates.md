@@ -52,7 +52,12 @@ s3-latest-release.yml       -> releases/latest.json, then prune old delta/ folde
   tags, which the page workflow is about to create), and the draft release only appears once the
   patches are uploaded.
 - It never blocks a release: both jobs are `continue-on-error`. A failure shows as an error
-  annotation, and launchers fall back to the zip and report it.
+  annotation, and launchers fall back to the zip and report it. A base whose patches fail to
+  generate or verify is left out of the manifest; the other bases still ship. A **cancelled** delta
+  job (or a lost runner) is different: the run ends `cancelled` and no draft release is created. Use
+  "Re-run failed jobs" on the run, or draft the release manually.
+- Each run first removes `<tag>/delta/<platform>/` left by an earlier run of the same unpublished
+  tag, whose zip the new build has just overwritten.
 - `latest.json` is unchanged and stays the only switch that makes a version live.
 - [`build-release-delta.yml`](../.github/workflows/build-release-delta.yml) also has a
   `workflow_dispatch` (`tag`, `base_count`) for regenerating a release that is **not published yet**.
@@ -75,8 +80,9 @@ delta, use the zip".
 generate or upload for a published tag. A missing or broken delta set after publication is not fixed
 in place; launchers fall back to the zip until the next release.
 
-**Retention: always exactly two series.** When release X is published, `s3-latest-release.yml`
-deletes `releases/<X-2>/delta/` (and a few older ones, to clean up after missed runs). The patches
+**Retention: always exactly two series.** When release X is published (not on later edits),
+`s3-latest-release.yml` deletes `releases/<X-2>/delta/` (and a few older ones, to clean up after
+missed runs), never the live release's. The patches
 into X (live) and into X-1 (just replaced) stay, so:
 - a launcher that read the old `latest.json` right before the switch still finds its patches for a
   whole release cycle, so nothing has to track in-flight downloads;
@@ -156,8 +162,12 @@ Implemented in the launcher repo:
    `log::error!("delta update failed, falling back to zip: {}", reason)`, with the installed
    version, the target version and the reason. A missing manifest means CI delta generation failed
    for that release.
-5. Swap the staged files into place, delete the base's `deleted` paths, and keep the previous files
-   until the new version launches (rollback).
+5. Delete the base's `deleted` paths (and the directories they leave empty), then swap the staged
+   files and symlinks into place, verify `files[]` again, and keep the previous files until the new
+   version launches (rollback). The order matters: on case-insensitive file systems a case-only
+   rename (`Foo.dll` -> `foo.dll`) deleted after the swap removes the new file, and a directory
+   replaced by a symlink (`Versions/Current` -> `A`) deleted after the swap removes files in the
+   symlink's target. `verify-delta.sh` replays this order.
 6. Leave files that are not in the manifest alone (logs, launcher-owned files).
 
 Patching uses HDiffPatch's `hpatch` (MIT, C), ideally linked into the launcher so no extra executable
@@ -168,7 +178,7 @@ needs code signing.
 All delta logic lives in [`scripts/delta/`](../scripts/delta/) and runs the same way in CI and
 locally in bash on Linux, macOS (stock bash 3.2) and Windows (Git Bash). Each script takes explicit
 arguments, writes only to the given output folder or JSON on stdout, logs to stderr and signals
-failure with its exit code. Only `fetch-tools.sh` touches the network.
+failure with its exit code. Only `fetch-tools.sh` and `check-unpublished.sh` touch the network.
 
 | Script | Input | Output | Why |
 |---|---|---|---|
@@ -179,6 +189,7 @@ failure with its exit code. Only `fetch-tools.sh` touches the network.
 | `assemble-manifest.sh` | `<version> <platform> <new dir> <zip> <base-*.json>...` | `manifest.json` on stdout | one place for the manifest format |
 | `verify-delta.sh` | `<base dir> <delta dir> <manifest> <base tag> <rebuild dir>` | rebuilt tree; exit 0 only on an exact match | replays the launcher before anything is published |
 | `release-tags.sh` | `bases <n> <tag>` or `prune <keep> <window>`, releases JSON on stdin | tags, one per line | which releases to diff from, and which `delta/` folders to remove |
+| `check-unpublished.sh` | `<tag>`, `gh` with `GH_TOKEN` | exit 0 only for a missing or draft release | the immutability guard; an API error is never read as "unpublished" |
 
 Local run (Git Bash, macOS or Linux), from the repo root:
 
@@ -193,9 +204,11 @@ bash scripts/delta/verify-delta.sh "$OLD" /tmp/out /tmp/out/manifest.json v0.185
 ```
 
 Tests: `scripts/delta/test-delta.sh` (synthetic builds: changed, added, deleted and renamed files,
-the whole-file fallback, paths with spaces, modes, symlinks, tampered patches, modified bases) and
-`scripts/delta/test-release-tags.sh`, both run by
-[`ci-scripts-tests.yml`](../.github/workflows/ci-scripts-tests.yml).
+case-only renames, the whole-file fallback, paths with spaces, modes, symlinks replacing directories
+and the reverse, tampered patches, modified bases) and `scripts/delta/test-release-tags.sh`
+(including `check-unpublished.sh` against a stubbed `gh`), both run by
+[`ci-scripts-tests.yml`](../.github/workflows/ci-scripts-tests.yml) on Linux and on macOS with the
+stock bash 3.2.
 
 ## Costs
 

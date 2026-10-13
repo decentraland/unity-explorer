@@ -43,10 +43,31 @@ jobs:
       - name: Functional tests (resolve-comment-pr.sh, stubbed gh)
         run: bash .github/actions/ci-status-comment/test-resolve-comment-pr.sh
 
-      - name: Functional tests (release-tags.sh)
+      - name: Functional tests (release-tags.sh, check-unpublished.sh)
         run: bash scripts/delta/test-release-tags.sh
 
       - name: Functional tests (delta scripts, pinned HDiffPatch)
         run: |
           PATH="$(bash scripts/delta/fetch-tools.sh "$RUNNER_TEMP/hdiffpatch"):$PATH"
           bash scripts/delta/test-delta.sh
+
+  # The macOS delta leg runs these scripts with BSD tools on a case-insensitive APFS
+  # volume. A shim puts the stock /bin/bash 3.2 first on PATH, so nested `bash` calls
+  # use it too instead of a Homebrew bash.
+  delta-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+          sparse-checkout: scripts/delta
+
+      - name: Functional tests (delta scripts on macOS, stock bash 3.2)
+        run: |
+          mkdir -p "$RUNNER_TEMP/bash32"
+          ln -sf /bin/bash "$RUNNER_TEMP/bash32/bash"
+          PATH="$RUNNER_TEMP/bash32:$PATH"
+          bash --version | head -1
+          PATH="$(bash scripts/delta/fetch-tools.sh "$RUNNER_TEMP/hdiffpatch"):$PATH"
+          bash scripts/delta/test-delta.sh
+          bash scripts/delta/test-release-tags.sh

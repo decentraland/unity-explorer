@@ -4,9 +4,11 @@
 #
 # Usage: verify-delta.sh <base dir> <delta dir> <manifest.json> <base tag> <rebuild dir>
 #
-# Copies <base dir> into <rebuild dir> (which must not exist or be empty), checks each
-# patch's sha256, applies patches and whole files, removes `deleted` paths, applies
-# `mode` and `symlink` entries, then compares the rebuilt tree with `files[]`.
+# Copies <base dir> into <rebuild dir> (which must not exist or be empty), removes
+# `deleted` paths and the directories they leave empty, checks each patch's sha256,
+# applies patches and whole files, applies `symlink` and `mode` entries, then compares
+# the rebuilt tree with `files[]`. Deleting first keeps a case-only rename (Foo.dll ->
+# foo.dll on NTFS/APFS) or a directory replaced by a symlink from losing new files.
 # Prints the absolute rebuild dir on stdout and exits 0 only on an exact match;
 # mismatches are listed on stderr. The caller owns and removes <rebuild dir>.
 # On Windows (Git Bash) permission bits are not meaningful, so `mode` is not compared.
@@ -48,6 +50,14 @@ apply() {
   mv -f "$WORK/out" "$target"
 }
 
+jq -r --arg t "$BASE_TAG" '.bases[$t].deleted[]' "$MANIFEST" |
+  while IFS= read -r path; do
+    rm -f "$REBUILD/$path"
+    dir="$(dirname "$path")"
+    while [ "$dir" != . ] && rmdir "$REBUILD/$dir" 2> /dev/null; do
+      dir="$(dirname "$dir")"
+    done
+  done
 # Patches read from the pristine base, so renamed sources and `deleted` never interfere.
 jq -r --arg t "$BASE_TAG" '.bases[$t].patches[] | [.from_path, .patch, .patch_sha256, .path] | join("\u001f")' "$MANIFEST" |
   while IFS="$SEP" read -r from_path patch sha path; do
@@ -56,10 +66,6 @@ jq -r --arg t "$BASE_TAG" '.bases[$t].patches[] | [.from_path, .patch, .patch_sh
 jq -r --arg t "$BASE_TAG" '.bases[$t].whole[] | [.patch, .patch_sha256, .path] | join("\u001f")' "$MANIFEST" |
   while IFS="$SEP" read -r patch sha path; do
     apply "$WORK/empty" "$patch" "$sha" "$path"
-  done
-jq -r --arg t "$BASE_TAG" '.bases[$t].deleted[]' "$MANIFEST" |
-  while IFS= read -r path; do
-    rm -f "$REBUILD/$path"
   done
 jq -r '.files[] | [.path, (.symlink // ""), (.mode // "")] | join("\u001f")' "$MANIFEST" |
   while IFS="$SEP" read -r path link mode; do

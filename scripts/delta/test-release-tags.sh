@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Functional tests for release-tags.sh against a canned GitHub releases list.
-# No network. Run from anywhere:
+# Functional tests for release-tags.sh against a canned GitHub releases list, and
+# check-unpublished.sh against a stubbed gh. No network. Run from anywhere:
 #   bash scripts/delta/test-release-tags.sh
 set -euo pipefail
 
@@ -66,6 +66,29 @@ echo "usage"
 expect_usage_error "unknown mode" list
 expect_usage_error "non-numeric count" bases two v1
 expect_usage_error "missing window" prune 2
+
+echo "check-unpublished.sh"
+mkdir -p "$WORK/bin"
+cat > "$WORK/bin/gh" <<'STUB'
+#!/usr/bin/env bash
+case "$GH_STUB" in
+  missing)   echo "gh: Not Found (HTTP 404)" >&2; exit 1 ;;
+  draft)     echo true ;;
+  published) echo false ;;
+  outage)    echo "gh: Bad Gateway (HTTP 502)" >&2; exit 1 ;;
+esac
+STUB
+chmod +x "$WORK/bin/gh"
+# unpublished <name> <gh stub mode> <expected exit: 0 or 1>
+unpublished() {
+  local code=0
+  PATH="$WORK/bin:$PATH" GH_STUB="$2" GITHUB_REPOSITORY=owner/repo     bash "$SCRIPT_DIR/check-unpublished.sh" v1.0.0-alpha > /dev/null 2>&1 || code=$?
+  if [ "$code" -eq "$3" ]; then echo "  ok   $1"; PASSES=$((PASSES + 1)); else echo "  FAIL $1: exit=$code"; FAILURES=$((FAILURES + 1)); fi
+}
+unpublished "no release (404) is unpublished" missing 0
+unpublished "a draft is unpublished" draft 0
+unpublished "a published release is refused" published 1
+unpublished "an API failure is refused, not treated as unpublished" outage 1
 
 echo
 echo "$PASSES passed, $FAILURES failed"

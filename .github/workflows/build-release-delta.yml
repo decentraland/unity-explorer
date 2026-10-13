@@ -63,15 +63,11 @@ jobs:
           sparse-checkout: scripts/delta
 
       # Manifests and patches are never rewritten once a release is published: the
-      # CDN caches them as immutable. /releases/tags/<tag> only returns published releases.
+      # CDN caches them as immutable.
       - name: Refuse a published tag
         env:
           GH_TOKEN: ${{ github.token }}
-        run: |
-          if gh api "repos/$GITHUB_REPOSITORY/releases/tags/$TAG" --jq .draft 2>/dev/null | grep -qx false; then
-            echo "::error::$TAG is already published; its delta patches are immutable and are not regenerated."
-            exit 1
-          fi
+        run: bash scripts/delta/check-unpublished.sh "$TAG"
 
       - name: Pick base releases
         id: bases
@@ -128,12 +124,15 @@ jobs:
         run: sudo apt-get install -y -qq osslsigncode > /dev/null
 
       # The published zip, not the build artifact, is the source of truth: the manifest
-      # must describe exactly what a fresh install gets.
+      # must describe exactly what a fresh install gets. A rebuild of the same unpublished
+      # tag overwrites the zip, so a delta left by an earlier run is removed first: if this
+      # run fails, it would describe the previous build.
       - name: Download the new release zip
         run: |
           set -euo pipefail
           WORK="$RUNNER_TEMP/delta"
           mkdir -p "$WORK"
+          aws s3 rm --recursive --only-show-errors "s3://$EXPLORER_TEAM_S3_BUCKET/$RELEASES_PATH/$TAG/delta/$PLATFORM/"
           aws s3 cp --only-show-errors "s3://$EXPLORER_TEAM_S3_BUCKET/$RELEASES_PATH/$TAG/$ZIP" "$WORK/$ZIP"
           NEW_ROOT="$(bash scripts/delta/extract-build.sh "$WORK/$ZIP" "$WORK/new")"
           echo "WORK=$WORK" >> "$GITHUB_ENV"
@@ -143,6 +142,7 @@ jobs:
         run: |
           set -euo pipefail
           OUT="$WORK/out"
+          FAILED_BASES=""
           mkdir -p "$OUT"
 
           # signature_status <tree>: one line per signed executable with its verification
@@ -177,15 +177,19 @@ jobs:
             BASE_ROOT="$(bash scripts/delta/extract-build.sh "$BASE_WORK/$ZIP" "$BASE_WORK/tree")"
             rm -f "$BASE_WORK/$ZIP"
 
-            bash scripts/delta/make-delta.sh "$BASE_ROOT" "$NEW_ROOT" "$BASE_TAG" "$OUT"
-            bash scripts/delta/assemble-manifest.sh "$TAG" "$PLATFORM" "$NEW_ROOT" "$WORK/$ZIP" \
-              "$OUT/base-$BASE_TAG.json" > "$BASE_WORK/manifest.json"
-            REBUILT="$(bash scripts/delta/verify-delta.sh "$BASE_ROOT" "$OUT" "$BASE_WORK/manifest.json" "$BASE_TAG" "$BASE_WORK/rebuild")"
-
-            signature_status "$REBUILT" > "$BASE_WORK/signatures.txt"
-            if ! diff -u "$WORK/signatures-new.txt" "$BASE_WORK/signatures.txt"; then
-              echo "::error::$BASE_TAG: signature verification of the rebuilt build differs from the new build."
-              exit 1
+            # A failing base is left out and the others still ship. errexit does not apply
+            # inside an `if` condition, hence the explicit && chain.
+            if bash scripts/delta/make-delta.sh "$BASE_ROOT" "$NEW_ROOT" "$BASE_TAG" "$OUT" &&
+               bash scripts/delta/assemble-manifest.sh "$TAG" "$PLATFORM" "$NEW_ROOT" "$WORK/$ZIP" \
+                 "$OUT/base-$BASE_TAG.json" > "$BASE_WORK/manifest.json" &&
+               REBUILT="$(bash scripts/delta/verify-delta.sh "$BASE_ROOT" "$OUT" "$BASE_WORK/manifest.json" "$BASE_TAG" "$BASE_WORK/rebuild")" &&
+               signature_status "$REBUILT" > "$BASE_WORK/signatures.txt" &&
+               diff -u "$WORK/signatures-new.txt" "$BASE_WORK/signatures.txt"; then
+              :
+            else
+              echo "::error::$BASE_TAG: patch generation or verification failed; this base is left out of the manifest."
+              FAILED_BASES="$FAILED_BASES $BASE_TAG"
+              rm -rf "$OUT/from/$BASE_TAG" "$OUT/base-$BASE_TAG.json"
             fi
             rm -rf "$BASE_WORK"
             echo "::endgroup::"
@@ -195,15 +199,12 @@ jobs:
           BASE_FILES=("$OUT"/base-*.json)
           [ ${#BASE_FILES[@]} -gt 0 ] || { echo "::error::No base produced a patch set."; exit 1; }
           bash scripts/delta/assemble-manifest.sh "$TAG" "$PLATFORM" "$NEW_ROOT" "$WORK/$ZIP" "${BASE_FILES[@]}" > "$WORK/manifest.json"
+          echo "FAILED_BASES=$FAILED_BASES" >> "$GITHUB_ENV"
 
-      - name: Refuse a published tag
+      - name: Refuse a tag published in the meantime
         env:
           GH_TOKEN: ${{ github.token }}
-        run: |
-          if gh api "repos/$GITHUB_REPOSITORY/releases/tags/$TAG" --jq .draft 2>/dev/null | grep -qx false; then
-            echo "::error::$TAG was published while patches were generated; not uploading (patches are immutable once published)."
-            exit 1
-          fi
+        run: bash scripts/delta/check-unpublished.sh "$TAG"
 
       # Patches first, manifest last: a launcher must never see a manifest that
       # references files not uploaded yet. Both are immutable (cached for a year).
@@ -238,6 +239,10 @@ jobs:
               | "| \(.key) | \(.value.patches | length) | \(.value.whole | length) | \(.value.deleted | length) "
                 + "| \($dl / 1048576 * 10 | round / 10) MB | \($zip / 1048576 * 10 | round / 10) MB "
                 + "| \(100 - ($dl * 100 / $zip) | round)% |"' "$WORK/manifest.json"
+            if [ -n "${FAILED_BASES:-}" ]; then
+              echo
+              echo "Left out after a failure (launchers on these versions download the full zip):$FAILED_BASES"
+            fi
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Report failure
