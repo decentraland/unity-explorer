@@ -1,6 +1,8 @@
+using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.EventsApi;
+using DCL.FeatureFlags;
 using DCL.MapPins.Bus;
 using DCL.MapRenderer;
 using DCL.MapRenderer.ComponentsFactory;
@@ -52,6 +54,7 @@ namespace Global.Dynamic
             IWeb3IdentityCache web3IdentityCache,
             HomePlaceEventBus homePlaceEventBus,
             IEventBus eventBus,
+            World globalWorld,
             CancellationToken ct)
         {
             var mapRendererContainer = new MapRendererContainer(assetsProvisioner, new MapRendererTextureContainer());
@@ -73,7 +76,9 @@ namespace Global.Dynamic
                     onlineUsersProvider,
                     web3IdentityCache,
                     homePlaceEventBus,
-                    eventBus));
+                    eventBus,
+                    globalWorld,
+                    FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.SATELLITE_MAP_TILES)));
 
                 await mapRenderer.InitializeAsync(ct);
                 c.MapRenderer = mapRenderer;

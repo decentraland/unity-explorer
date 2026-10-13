@@ -5,6 +5,7 @@ using NUnit.Framework;
 using System;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace DCL.MapRenderer.Tests.Culling
 {
@@ -384,6 +385,38 @@ namespace DCL.MapRenderer.Tests.Culling
             visibilityChecker.DidNotReceive().IsVisible(obj2, culling.CameraStates[0]);
             visibilityChecker.DidNotReceive().IsVisible(obj2, culling.CameraStates[1]);
             visibilityChecker.DidNotReceive().IsVisible(obj2, culling.CameraStates[2]);
+        }
+
+        [Test]
+        public void RaiseCamerasChangedOnlyWhenACameraIsDirty()
+        {
+            // Arrange
+            var raised = 0;
+            ((IMapCullingController)culling).CamerasChanged += () => raised++;
+
+            // Act
+            culling.ResolveDirtyCameras_Test();
+            culling.SetCameraDirtyInternal_Test(0);
+            culling.ResolveDirtyCameras_Test();
+
+            // Assert
+            Assert.AreEqual(1, raised);
+        }
+
+        [Test]
+        public void KeepResolvingCamerasWhenACamerasChangedSubscriberThrows()
+        {
+            // Arrange
+            LogAssert.ignoreFailingMessages = true;
+            ((IMapCullingController)culling).CamerasChanged += () => throw new InvalidOperationException();
+            culling.SetCameraDirtyInternal_Test(0);
+
+            // Act
+            TestDelegate resolve = () => culling.ResolveDirtyCameras_Test();
+
+            // Assert
+            Assert.DoesNotThrow(resolve);
+            Assert.AreEqual(0, culling.DirtyCamerasFlag);
         }
 
         private IMapPositionProvider AddTrackedObjectAndSetDirtyCamerasFlag(int dirtyCamerasFlag)

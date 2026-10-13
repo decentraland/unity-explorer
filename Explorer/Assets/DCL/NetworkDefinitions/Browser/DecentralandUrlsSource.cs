@@ -410,6 +410,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.CommunitiesV2 => $"https://social-api.{BaseDomain}/v2/communities",
                 DecentralandUrl.ReferralProgress => $"https://social-api.{BaseDomain}/v1/referral-progress",
                 DecentralandUrl.CommunityThumbnail => $"https://assets-cdn.{BaseDomain}/social/communities/{{0}}/raw-thumbnail.png",
+                DecentralandUrl.SatelliteMapTiles => $"https://assets-cdn.{BaseDomain}/map/satellite",
                 DecentralandUrl.Members => $"https://social-api.{BaseDomain}/v1/members",
                 DecentralandUrl.MembersV2 => $"https://social-api.{BaseDomain}/v2/members",
                 DecentralandUrl.CommunityProfileLink => $"https://{BaseDomain}/social/communities/{{0}}?utm_org=dcl&utm_source=explorer&utm_medium=organic&utm_campaign=communities",
