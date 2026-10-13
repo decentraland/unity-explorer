@@ -8,7 +8,7 @@ namespace Plugins.RustSegment.SegmentServerWrap.Playground
     public class SegmentServerWrapPlayground : MonoBehaviour
     {
         [SerializeField] private bool fillMode;
-        [SerializeField] private string apiHost;
+        [SerializeField] private string apiHost = string.Empty;
 
         private RustSegmentAnalyticsService service = null!;
 

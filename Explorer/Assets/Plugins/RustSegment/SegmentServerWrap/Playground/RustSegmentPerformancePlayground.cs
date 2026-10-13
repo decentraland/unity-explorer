@@ -12,7 +12,7 @@ namespace Plugins.RustSegment.SegmentServerWrap.Playground
         [SerializeField] private float delayBetweenRequests = 0.1f;
         [SerializeField] private float delayBetweenFlushes = 5f;
         [SerializeField] private int brakesMilliseconds = 100;
-        [SerializeField] private string apiHost;
+        [SerializeField] private string apiHost = string.Empty;
 
         private RustSegmentAnalyticsService rust = null!;
 
