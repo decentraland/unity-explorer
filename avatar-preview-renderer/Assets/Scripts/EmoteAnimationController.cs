@@ -338,11 +338,13 @@ public class EmoteAnimationController : MonoBehaviour
             if (propState != null) propState.time = seconds;
         }
 
-        // Even when paused, so a resume continues the audio from the right place.
+        // Even when paused, so a resume continues the audio from the right place; a time past the
+        // audio's end stops it rather than leaving the source on its last margin.
         if (_emoteAudioClip != null)
         {
             audioSource.clip = _emoteAudioClip;
-            audioSource.time = AudioTime(seconds);
+            if (seconds < _emoteAudioClip.length) audioSource.time = AudioTime(seconds);
+            else audioSource.Stop();
         }
     }
 
@@ -357,8 +359,8 @@ public class EmoteAnimationController : MonoBehaviour
         audioSource.Play();
     }
 
-    // A source that played its clip out stays stopped when only its time moves, so it is started
-    // again at the position, as long as the position is inside the audio.
+    // A source that is not playing (its clip played out, or a seek skipped the moment it starts) stays
+    // stopped when only its time moves, so it is started at the position, if that is inside the audio.
     private void RestartFinishedAudio(float seconds)
     {
         if (_emoteAudioClip == null || audioSource.isPlaying || seconds >= _emoteAudioClip.length) return;
@@ -366,7 +368,6 @@ public class EmoteAnimationController : MonoBehaviour
         PlayAudioFrom(seconds);
     }
 
-    // A time at the very end is rejected by the source, so it stays a margin before it.
     private float AudioTime(float seconds) =>
         Mathf.Clamp(seconds, 0f, Mathf.Max(0f, _emoteAudioClip.length - AUDIO_END_MARGIN));
 

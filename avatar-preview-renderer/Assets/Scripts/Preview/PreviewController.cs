@@ -445,9 +445,17 @@ namespace Preview
                     EndReload();
 
                     // The failed load leaves the last subject on screen, so its view is restored while
-                    // it is still there.
+                    // it is still there; without an item there is no item view to switch to.
                     if (config.Mode is PreviewMode.Marketplace)
+                    {
                         ShowWearableView(wasShowingWearable && wearableLoader.HasLoadedItem);
+
+                        if (!wearableLoader.HasLoadedItem)
+                        {
+                            previewUIPresenter.SetSwitcherState(PreviewUIPresenter.SwitcherState.Avatar);
+                            previewUIPresenter.EnableSwitcher(false);
+                        }
+                    }
 
                     if (reloadQueued) StartCoroutine(Reload());
 

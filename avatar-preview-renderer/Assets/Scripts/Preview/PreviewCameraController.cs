@@ -54,7 +54,6 @@ namespace Preview
         private ZoomRange _zoomRange;
         private Vector2 _startOffset;
         private bool _zoomLocked;
-        private bool _orthographic;
 
 #if UNITY_EDITOR
         private float _lastAvatarFitMargin;
@@ -88,9 +87,9 @@ namespace Preview
         }
 
         /// <summary>
-        /// Takes the camera options: the zoom range, its lock, the starting offset and the projection.
-        /// The current zoom and pan are only clamped, never replaced, so a reload within a mode keeps
-        /// the creator's framing; <see cref="RestartZoom"/> is the explicit way back to the start.
+        /// Takes the camera options: the zoom range, its lock and the starting offset. The current
+        /// zoom and pan are only clamped, never replaced, so a reload within a mode keeps the current
+        /// framing; <see cref="RestartZoom"/> is the explicit way back to the start.
         /// </summary>
         public void Configure(PreviewConfiguration config)
         {
@@ -98,7 +97,6 @@ namespace Preview
                 defaultZoomIn, defaultZoomOut);
             _startOffset = config.Offset;
             _zoomLocked = config.LockRadius;
-            _orthographic = config.Projection == "orthographic";
 
             _avatarFraming.Zoom = _zoomRange.Clamp(_avatarFraming.Zoom);
             _wearableFraming.Zoom = _zoomRange.Clamp(_wearableFraming.Zoom);
@@ -228,7 +226,7 @@ namespace Preview
             // slides the subject right. The LIVE lens, not the target - mid-zoom they differ, and 1:1 has
             // to match what is on screen.
             var lens = _active.Camera.Lens;
-            var worldHeightAtSubject = _orthographic
+            var worldHeightAtSubject = lens.Orthographic
                 ? 2f * lens.OrthographicSize
                 : 2f * panSubjectDistance * Mathf.Tan(lens.FieldOfView * 0.5f * Mathf.Deg2Rad);
 
