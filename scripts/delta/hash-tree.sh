@@ -47,11 +47,11 @@ find . -mindepth 1 \( -type f -o -type l \) -print0 |
       esac
       if escapes_root "$rel" "$target"; then die "symlink leaves the build: $rel -> $target"; fi
       # The lexical check misses a climb through another symlink (d/x -> up/../.. with
-      # d/up -> ..), so a resolvable target is also checked physically.
+      # d/up -> ..), so the target's folder must exist and is also checked physically.
       if [ -d "$p" ]; then t_dir="$target"; else t_dir="$(dirname "$target")"; fi
-      if dest="$(cd "$(dirname "$p")" && cd -P "$t_dir" 2> /dev/null && pwd -P)"; then
-        case "$dest/" in "$ROOT_P"/*) ;; *) die "symlink leaves the build: $rel -> $target" ;; esac
-      fi
+      dest="$(cd "$(dirname "$p")" && cd -P "$t_dir" 2> /dev/null && pwd -P)" ||
+        die "symlink target folder does not exist: $rel -> $target"
+      case "$dest/" in "$ROOT_P"/*) ;; *) die "symlink leaves the build: $rel -> $target" ;; esac
       printf 'L\t%s\t%s\n' "$rel" "$target"
     else
       printf 'F\t%s\t%s\t%s\t%s\n' "$rel" "$(size_of "$p")" "$(sha256_of "$p")" "$(mode_of "$p")"

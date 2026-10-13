@@ -160,16 +160,18 @@ Implemented in the launcher repo:
    1. check free disk space;
    2. download the patches and `whole` files (checking `patch_sha256`) and apply them into a staging
       folder holding only the changed and new files;
-   3. apply `mode` and `symlink` entries, and verify every `files[].sha256` across staging plus the
-      untouched files.
+   3. verify every `files[].sha256` across staging plus the untouched files. Modes and symlinks
+      come from `files[]`, not from `bases`: a file whose content is unchanged can still change its
+      `mode`, and a symlink can change its target, with no `patches`/`whole` entry.
 4. Otherwise **explicitly fall back to the full zip**. Every fallback except "installed version too
    old" (expected) also sends a loud error to Sentry, e.g.
    `log::error!("delta update failed, falling back to zip: {}", reason)`, with the installed
    version, the target version and the reason. A missing manifest means CI delta generation failed
    for that release.
 5. Delete the base's `deleted` paths (and the directories they leave empty), then swap the staged
-   files and symlinks into place, verify `files[]` again, and keep the previous files until the new
-   version launches (rollback). The order matters: on case-insensitive file systems a case-only
+   files into place, apply every `files[]` `symlink` and `mode` (unchanged files included), verify
+   `files[]` again, and keep the previous files until the new version launches (rollback). The
+   order matters: on case-insensitive file systems a case-only
    rename (`Foo.dll` -> `foo.dll`) deleted after the swap removes the new file, and a directory
    replaced by a symlink (`Versions/Current` -> `A`) deleted after the swap removes files in the
    symlink's target. `verify-delta.sh` replays this order.
