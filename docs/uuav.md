@@ -85,16 +85,15 @@ in the client watches the connection, respawns the helper and restores every
 player's state — URL, position, rate, looping — so a decoder crash degrades to
 a stutter rather than a session loss.
 
-**The AVPro-shaped surface belongs once, on the Explorer side — today it
-exists twice.** Scene code talks to an AVPro-shaped player, and a runtime
-switch picks the backend behind it (`Explorer/Assets/DCL/AvProSwitch/`:
-`MediaPlayer`, `AvProBackend`, `UuavBackend`). The UUAV package still carries
-a second copy of that shape (`Packages/UUAV/AVProCompat/`), and `UuavBackend`
-currently drives it, so the UUAV path runs two facades deep and the enums are
-duplicated. A facade per backend reads as symmetry but buys nothing: it
-duplicates every enum, adds a conversion at each boundary, and gives a bug two
-places to hide — which is why the package-side copy is slated to be collapsed
-into `UuavBackend`, leaving the shape defined once next to the switch.
+**The player-facing surface is the compat facade, and it is scaffolding.**
+AVPro and the runtime switch that picked between the two backends are gone;
+scene code now talks straight to `Packages/UUAV/AVProCompat/` (`MediaPlayer`,
+`IMediaControl`, `IMediaInfo`, `ITextureProducer`). That facade still mirrors
+AVPro's shape — the inert platform-option objects, `MediaPathType`, a no-op
+`MediaPlayerEvent`, a `TimeRanges` whose only read is `Count` — because it was
+built so the switch could stay trivial. With one backend left, the shape buys
+nothing: it is slated to be collapsed so the media systems drive `UUAVPlayer`
+through a surface that states only what UUAV actually does.
 
 ## Where to look
 
