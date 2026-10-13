@@ -28,8 +28,8 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
         {
             transform.localScale = new Vector3(newScale, newScale, 1f);
 
-            // Apply inverse scaling to the text object
-            float positionFactor = newScale / baseScale;
+            // Apply inverse scaling to the text object; closer than the base zoom the title shrinks with the marker
+            float positionFactor = Mathf.Max(newScale / baseScale, 1f);
             float yOffset = (1 - positionFactor) * Y_POSITION_OFFSET;
 
             float yValue = yOffset < 0.9f
@@ -38,7 +38,7 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
 
             title.transform.localPosition = new Vector3(titleBasePosition.x, yValue, titleBasePosition.z);
 
-            float textScaleFactor = baseScale / newScale; // Calculate the inverse scale factor
+            float textScaleFactor = 1f / positionFactor; // Calculate the inverse scale factor
             title.transform.localScale = new Vector3(titleBaseScale * textScaleFactor, titleBaseScale * textScaleFactor, 1f);
         }
 
