@@ -23,6 +23,8 @@ namespace DCL.VoiceChat.Nearby
         Scene,
         /// <summary>Local player is banned from the current scene.</summary>
         SceneBan,
+        /// <summary>The session belongs to a guest, who cannot take part in Nearby voice.</summary>
+        Guest,
     }
 
     public enum NearbyVoiceActivation

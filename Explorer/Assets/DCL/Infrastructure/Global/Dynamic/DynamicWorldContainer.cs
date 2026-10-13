@@ -885,6 +885,7 @@ namespace Global.Dynamic
                         uiShellContainer.MainUIView.SidebarView.NearbyVoiceTip,
                         bootstrapContainer.VolumeBus,
                         userBlockingCache,
+                        identityCache,
                         voiceChatContainer.NearbyMuteService,
                         voiceChatContainer.NearbyStateModel)
                 );
