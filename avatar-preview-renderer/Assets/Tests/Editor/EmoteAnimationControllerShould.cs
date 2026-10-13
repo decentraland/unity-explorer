@@ -172,6 +172,22 @@ namespace Tests
         }
 
         [Test]
+        public void ResumeAPausedClipSeekedToItsEndAtItsEnd()
+        {
+            // Arrange
+            PlayEmote();
+            _controller.PauseEmote();
+            _controller.GoToEmote(CLIP_LENGTH);
+
+            // Act
+            _controller.ResumeEmote();
+
+            // Assert
+            Assert.AreEqual(EmotePlaybackEvent.Play, _reported[^1].playbackEvent);
+            Assert.AreEqual(CLIP_LENGTH, _reported[^1].time, TOLERANCE);
+        }
+
+        [Test]
         public void ReportTheEndOnceWhenTheClipRanOutWithoutItsEndEvent()
         {
             // Arrange: a seek past the end event skips it, and the clip then runs out on its own.

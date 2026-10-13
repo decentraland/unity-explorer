@@ -230,8 +230,9 @@ namespace Preview
                 ? 2f * lens.OrthographicSize
                 : 2f * panSubjectDistance * Mathf.Tan(lens.FieldOfView * 0.5f * Mathf.Deg2Rad);
 
-            _active.UserPan += new Vector2(-normalizedDelta.x, normalizedDelta.y) * worldHeightAtSubject;
-            _active.UserPan = Vector2.ClampMagnitude(_active.UserPan, maxPanOffset);
+            // Only the drag is bounded, around the page's offset: that one is unclamped on purpose.
+            var dragged = _active.UserPan - _startOffset + new Vector2(-normalizedDelta.x, normalizedDelta.y) * worldHeightAtSubject;
+            _active.UserPan = _startOffset + Vector2.ClampMagnitude(dragged, maxPanOffset);
 
             ApplyPan(_active);
         }

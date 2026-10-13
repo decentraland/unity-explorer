@@ -366,9 +366,7 @@ namespace Preview
 
                 try
                 {
-                    // The hosts the page chose, before the first request of this load. Cached
-                    // definitions carry content URLs of the host they came from.
-                    if (APIService.PeerUrl != config.PeerUrl) EntityService.ClearCache();
+                    // The hosts the page chose, before the first request of this load.
                     APIService.PeerUrl = config.PeerUrl;
                     APIService.MarketplaceServerUrl = config.MarketplaceServerUrl;
 
@@ -445,16 +443,18 @@ namespace Preview
                     EndReload();
 
                     // The failed load leaves the last subject on screen, so its view is restored while
-                    // it is still there; without an item there is no item view to switch to.
+                    // it is still there; the item view only exists in marketplace with an item loaded.
+                    var itemViewAvailable = config.Mode is PreviewMode.Marketplace && wearableLoader.HasLoadedItem;
+
                     if (config.Mode is PreviewMode.Marketplace)
                     {
-                        ShowWearableView(wasShowingWearable && wearableLoader.HasLoadedItem);
+                        ShowWearableView(wasShowingWearable && itemViewAvailable);
+                    }
 
-                        if (!wearableLoader.HasLoadedItem)
-                        {
-                            previewUIPresenter.SetSwitcherState(PreviewUIPresenter.SwitcherState.Avatar);
-                            previewUIPresenter.EnableSwitcher(false);
-                        }
+                    if (!itemViewAvailable)
+                    {
+                        previewUIPresenter.SetSwitcherState(PreviewUIPresenter.SwitcherState.Avatar);
+                        previewUIPresenter.EnableSwitcher(false);
                     }
 
                     if (reloadQueued) StartCoroutine(Reload());

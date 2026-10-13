@@ -63,6 +63,9 @@ public class EmoteAnimationController : MonoBehaviour
     // How many times the clip has wrapped, so a loop is reported once per wrap.
     private int _reportedLoops;
 
+    // Where a seek put a paused clip: one moved to its end reads 0 again once Unity stops it there.
+    private float? _pausedSeek;
+
     public void PlayEmote(LoadedEmote loadedEmote)
     {
         // The previous emote's state would otherwise stay on the rig, bound to a clip its importer
@@ -138,6 +141,7 @@ public class EmoteAnimationController : MonoBehaviour
         if (!_loadedEmote.HasValue || _state != PlaybackState.Playing) return;
 
         _state = PlaybackState.Paused;
+        _pausedSeek = null;
         SetSpeed(_loadedEmote.Value.Entity.URN, 0f);
         audioSource.Pause();
 
@@ -152,7 +156,8 @@ public class EmoteAnimationController : MonoBehaviour
         SetSpeed(_loadedEmote.Value.Entity.URN, 1f);
         audioSource.UnPause();
 
-        var time = GetCurrentEmoteTime();
+        var time = _pausedSeek ?? GetCurrentEmoteTime();
+        _pausedSeek = null;
         RestartFinishedAudio(time);
         PlaybackChanged?.Invoke(EmotePlaybackEvent.Play, time);
     }
@@ -238,6 +243,7 @@ public class EmoteAnimationController : MonoBehaviour
         }
 
         Seek(urn, seconds);
+        if (_state == PlaybackState.Paused) _pausedSeek = seconds;
 
         // A held or paused clip reports no position: it is not playing.
         if (_state != PlaybackState.Playing) return;
@@ -304,7 +310,7 @@ public class EmoteAnimationController : MonoBehaviour
         var state = avatarAnimation[urn];
         if (state == null || state.length <= 0f) return;
 
-        var (loops, clipTime) = WrapClipTime(state.time, state.length);
+        var loops = WrapClipTime(state.time, state.length).loops;
 
         if (loops > _reportedLoops)
         {
@@ -316,7 +322,7 @@ public class EmoteAnimationController : MonoBehaviour
             }
         }
 
-        PlaybackChanged?.Invoke(EmotePlaybackEvent.Playing, clipTime);
+        PlaybackChanged?.Invoke(EmotePlaybackEvent.Playing, GetCurrentEmoteTime());
     }
 
     // Moves the clip and its prop, keeps the audio in step, and re-bases the loop count so the next
@@ -383,7 +389,7 @@ public class EmoteAnimationController : MonoBehaviour
         }
     }
 
-    // Within the clip, however many times a looping one has wrapped.
+    // Within the clip: a looping one wraps however many times it ran, any other holds at its end.
     private float GetCurrentEmoteTime()
     {
         if (!_loadedEmote.HasValue) return 0f;
@@ -391,7 +397,9 @@ public class EmoteAnimationController : MonoBehaviour
         var state = avatarAnimation[_loadedEmote.Value.Entity.URN];
         if (state == null) return 0f;
 
-        return WrapClipTime(state.time, state.length).clipTime;
+        return _loadedEmote.Value.Clip.wrapMode == WrapMode.Loop
+            ? WrapClipTime(state.time, state.length).clipTime
+            : Mathf.Min(state.time, state.length);
     }
 
     // Shown first: an inactive object takes no animation call.

@@ -11,6 +11,8 @@ namespace Services
     {
         private static readonly Dictionary<string, EntityDefinition> CACHED_ENTITIES = new();
 
+        private static string _cacheHost;
+
         public static async Awaitable<EntityDefinition[]> GetEntities(string[] urns)
         {
             // Sanitize urns
@@ -22,6 +24,8 @@ namespace Services
                     ? originalPointer.Remove(originalPointer.LastIndexOf(':'))
                     : originalPointer;
             }
+
+            ClearCacheOnHostChange();
 
             var missingEntities = urns.Where(urn => !CACHED_ENTITIES.ContainsKey(urn)).ToArray();
 
@@ -51,10 +55,15 @@ namespace Services
 
         public static EntityDefinition GetCachedEntity(string urn) => CACHED_ENTITIES[urn];
 
-        /// <summary>
-        /// Forgets every definition, so the next request fetches from the current host.
-        /// </summary>
-        public static void ClearCache() => CACHED_ENTITIES.Clear();
+        // Cached definitions carry content URLs of the Catalyst they came from, so a different one,
+        // through peerUrl or env, starts the cache over.
+        private static void ClearCacheOnHostChange()
+        {
+            if (APIService.PeerHost == _cacheHost) return;
+
+            CACHED_ENTITIES.Clear();
+            _cacheHost = APIService.PeerHost;
+        }
 
         public static EntityDefinition GetBodyEntity(BodyShape bodyShape)
         {

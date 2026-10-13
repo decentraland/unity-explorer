@@ -19,8 +19,13 @@ namespace Services
         private const string MARKETPLACE_ITEM_PATH = "/v1/items?contractAddress={0}&itemId={1}";
         private const string MARKETPLACE_NFT_PATH = "/v1/nfts?contractAddress={0}&tokenId={1}";
 
-        private static string EndpointPeer => PeerUrl ?? $"https://peer.decentraland.{Environment}";
         private static string EndpointMarketplace => MarketplaceServerUrl ?? $"https://marketplace-api.decentraland.{Environment}";
+
+        /// <summary>
+        /// The Catalyst every content request goes to: <see cref="PeerUrl"/>, or the one
+        /// <see cref="Environment"/> picks.
+        /// </summary>
+        public static string PeerHost => PeerUrl ?? $"https://peer.decentraland.{Environment}";
 
         /// <summary>
         /// A Catalyst and a Marketplace API host the page chose; null keeps the one
@@ -33,13 +38,13 @@ namespace Services
         /// <summary>
         /// The URL of a file on the Catalyst, by content hash.
         /// </summary>
-        public static string ContentUrl(string hash) => EndpointPeer + string.Format(CONTENT_PATH, hash);
+        public static string ContentUrl(string hash) => PeerHost + string.Format(CONTENT_PATH, hash);
 
         public static string Environment { get; set; } = "org";
 
         public static async Awaitable<ProfileResponse.Avatar.AvatarData> GetAvatar(string profileID)
         {
-            var profile = await GetWithRetry<ProfileResponse>(EndpointPeer, PROFILE_PATH, profileID);
+            var profile = await GetWithRetry<ProfileResponse>(PeerHost, PROFILE_PATH, profileID);
 
             var avatar = profile.avatars[0].avatar;
 
@@ -83,7 +88,7 @@ namespace Services
             // Each attempt owns its request, so the handlers of a failed one are released.
             while (true)
             {
-                using var attempt = UnityWebRequest.Post(EndpointPeer + ACTIVE_ENTITIES_PATH, body, "application/json");
+                using var attempt = UnityWebRequest.Post(PeerHost + ACTIVE_ENTITIES_PATH, body, "application/json");
                 await attempt.SendWebRequest();
                 retries++;
 
