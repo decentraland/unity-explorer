@@ -33,6 +33,7 @@ namespace DCL.Diagnostics.Tests
         [TestCase("[Physics.PhysX] cleaning the mesh failed")]
         [TestCase("Curl error 56: Recv failure: Connection reset by peer")]
         [TestCase("Screen position out of view frustum (screen pos 33.000000, 1860.000000) (Camera rect 0 0 3024 1832)")]
+        [TestCase("Platform does not support compute shaders")]
         public void DropUnactionableNativeMessages(string message)
         {
             var @event = new SentryEvent { Message = message };

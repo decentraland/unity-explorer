@@ -24,13 +24,15 @@ namespace DCL.Diagnostics.Sentry
 
         // Native engine messages are captured by the Sentry Unity SDK's own log integration and never pass through ReportHub,
         // so they can only be filtered on the SDK's BeforeSend gateway. All of them are un-actionable for the client:
-        // PhysX mesh-cooking warnings from creator assets (#7928, #10148, #10181), libcurl transport failures (#10182)
-        // and camera projection warnings of off-screen points (#10154)
+        // PhysX mesh-cooking warnings from creator assets (#7928, #10148, #10181), libcurl transport failures (#10182),
+        // camera projection warnings of off-screen points (#10154) and the engine's compute shader rejection on below-spec GPUs,
+        // a condition the minimum specs guard already detects through SystemInfo.supportsComputeShaders (#10338)
         private static readonly string[] IGNORED_NATIVE_MESSAGE_PREFIXES =
         {
             "[Physics.PhysX]",
             "Curl error ",
             "Screen position out of view frustum",
+            "Platform does not support compute shaders",
         };
 
         // Errors raised by scene code inside the ClearScript engine, matched by name so this assembly does not reference the engine (#10088, #10125)
