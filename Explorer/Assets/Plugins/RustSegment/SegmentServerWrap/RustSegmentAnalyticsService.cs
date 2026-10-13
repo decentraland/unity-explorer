@@ -45,7 +45,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
         private readonly CancellationTokenSource cancellationTokenSource;
 
         // Lock for public operations, cannot be used by callbacks or private methods // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
-        private readonly object publicLock = new (); 
+        private readonly object publicLock = new ();
 
         private long trackId;
         private long flushId;
@@ -155,7 +155,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
                 ReportIfIdentityWasNotCalled();
 #endif
 
-                List<MarshaledString> list = ThreadSafeListPool<MarshaledString>.SHARED.Get()!;
+                List<MarshaledString> list = ThreadSafeListPool<MarshaledString>.SHARED.Get();
 
                 var mUserId = new MarshaledString(cachedUserId);
                 var mAnonId = new MarshaledString(anonId);
@@ -186,7 +186,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
                 ReportIfIdentityWasNotCalled();
 #endif
 
-                List<MarshaledString> list = ThreadSafeListPool<MarshaledString>.SHARED.Get()!;
+                List<MarshaledString> list = ThreadSafeListPool<MarshaledString>.SHARED.Get();
 
                 var mUserId = new MarshaledString(cachedUserId);
                 var mAnonId = new MarshaledString(anonId);
@@ -224,8 +224,8 @@ namespace Plugins.RustSegment.SegmentServerWrap
                 ulong operationId = NativeMethods.SegmentServerFlush();
                 AlertIfInvalid(operationId);
 
-                List<MarshaledString> list = ThreadSafeListPool<MarshaledString>.SHARED.Get()!;
-                afterClean[operationId] = (Operation.Flush, list!);
+                List<MarshaledString> list = ThreadSafeListPool<MarshaledString>.SHARED.Get();
+                afterClean[operationId] = (Operation.Flush, list);
 
                 flushId++;
                 ReportHub.Log(ReportCategory.ANALYTICS, $"{nameof(RustSegmentAnalyticsService)} Flush scheduled operationId: {operationId} flushId: {flushId}");
@@ -313,7 +313,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
 
         private void ReportIfIdentityWasNotCalled()
         {
-            if (string.IsNullOrWhiteSpace(cachedUserId!) && string.IsNullOrWhiteSpace(anonId!))
+            if (string.IsNullOrWhiteSpace(cachedUserId!) && string.IsNullOrWhiteSpace(anonId))
                 ReportHub.LogError(
                         ReportCategory.ANALYTICS,
                         $"Segment to track an event, you must call Identify first"
