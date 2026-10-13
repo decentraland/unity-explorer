@@ -233,7 +233,9 @@ namespace DCL.UserInAppInitializationFlow
                                 }
                                 else
                                 {
-                                    operationResult = livekitOperationResult;
+                                    // A failed own-profile step keeps its own error; any other outcome is decided by the LiveKit result
+                                    if (!IsOwnProfileFailure(operationResult))
+                                        operationResult = livekitOperationResult;
 
                                     if (operationResult.Success)
                                     {
@@ -243,6 +245,11 @@ namespace DCL.UserInAppInitializationFlow
                                         startParcel.MarkLanded();
                                     }
                                 }
+
+                                // TODO: redesign. Clearing the identity cache as a side effect of an error, only to steer the auth decision at the top of the loop, is implicit control flow;
+                                // the retry should decide whether to show the auth screen from the result itself
+                                if (RequiresReauthentication(operationResult))
+                                    identityCache.Clear();
                             }
 
                             return operationResult;
@@ -274,6 +281,14 @@ namespace DCL.UserInAppInitializationFlow
             && !appArgs.HasFlag(AppArgsFlags.AUTOPILOT)
             && !appArgs.HasFlag(AppArgsFlags.MEASURE_LOADING_TIME)
             && !appArgs.HasFlag(AppArgsFlags.DISABLE_HUD);
+
+        /// <summary>A missing profile is resolved only by signing in again, so the cached identity cannot be retried as is.</summary>
+        internal static bool RequiresReauthentication(EnumResult<TaskError> result) =>
+            result.Error is { Exception: ProfileNotFoundException };
+
+        /// <summary>True when the own-profile step failed: the profile is missing or could not be fetched.</summary>
+        internal static bool IsOwnProfileFailure(EnumResult<TaskError> result) =>
+            result.Error is { Exception: ProfileNotFoundException or ProfileFetchFailedException };
 
         internal static bool LandsAtLaunchDestination(IAppArgs appArgs, IUserInAppInitializationFlow.LoadSource loadSource) =>
             loadSource == IUserInAppInitializationFlow.LoadSource.StartUp && appArgs.HasLaunchDestination();
@@ -444,6 +459,13 @@ namespace DCL.UserInAppInitializationFlow
 
             if (result.Error is { Exception: UserBlockedException })
                 return mvcManager.ShowAsync(BlockedScreenController.IssueCommand(new BlockedScreenParameters(((UserBlockedException)result.Error.Value.Exception).BanStatusData.ban)), ct);
+
+            if (result.Error is { Exception: ProfileNotFoundException })
+                return mvcManager.ShowAsync(ErrorPopupWithRetryController.IssueCommand(new ErrorPopupWithRetryController.Input(
+                    title: "Profile Not Found",
+                    description: "We could not find a profile for this account. Did you create your profile? Sign in and complete the account setup, or check that you are using the right wallet.",
+                    iconType: ErrorPopupWithRetryController.IconType.Warning,
+                    retryText: "Continue")), ct);
 
             if (result.Error is { State: TaskError.Timeout })
                 return mvcManager.ShowAsync(ErrorPopupWithRetryController.IssueCommand(new ErrorPopupWithRetryController.Input(

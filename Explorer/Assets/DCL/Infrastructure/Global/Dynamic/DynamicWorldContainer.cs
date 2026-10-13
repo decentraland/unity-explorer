@@ -570,7 +570,7 @@ namespace Global.Dynamic
                     wearableContainer.WearableCatalog,
                     userBlockingCache,
                     includeBannedUsersFromScene),
-                uiShellContainer.CreateMainUIPlugin(includeFriends),
+                uiShellContainer.CreateMainUIPlugin(includeFriends, staticContainer.SingleSceneMode, staticContainer.ScenesCache),
                 profileContainer.CreateProfilePlugin(staticContainer),
                 mapRendererContainer.CreatePlugin(),
                 new SidebarPlugin(
@@ -680,6 +680,7 @@ namespace Global.Dynamic
                     userBlockingCache,
                     profileContainer.ProfileChangesBus,
                     staticContainer.SceneLoadingLimit,
+                    staticContainer.SingleSceneMode,
                     uiShellContainer.MainUIView.WarningNotification,
                     profileContainer.ProfileRepositoryWrapper,
                     upscaleController,

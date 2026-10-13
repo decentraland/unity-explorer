@@ -82,6 +82,7 @@ using DCL.Utilities.Extensions;
 using Utility;
 using DCL.VoiceChat;
 using ECS.SceneLifeCycle.IncreasingRadius;
+using ECS.SceneLifeCycle.SingleScene;
 using ECS.SceneLifeCycle.Realm;
 using Global.AppArgs;
 using Runtime.Wearables;
@@ -105,7 +106,7 @@ namespace DCL.PluginSystem.Global
         private readonly IPlacesAPIService placesAPIService;
         private readonly IProfileRepository profileRepository;
         private readonly IUserInAppInitializationFlow userInAppInitializationFlow;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly IEquippedWearables equippedWearables;
         private readonly IEquippedEmotes equippedEmotes;
         private readonly ICompositeWeb3Provider web3Authenticator;
@@ -144,6 +145,7 @@ namespace DCL.PluginSystem.Global
         private readonly IAppArgs appArgs;
         private readonly IUserBlockingCache userBlockingCache;
         private readonly SceneLoadingLimit sceneLoadingLimit;
+        private readonly SingleSceneMode singleSceneMode;
         private readonly WarningNotificationView inWorldWarningNotificationView;
         private readonly ProfileChangesBus profileChangesBus;
         private readonly CommunitiesDataProvider communitiesDataProvider;
@@ -208,7 +210,7 @@ namespace DCL.PluginSystem.Global
             IProfileRepository profileRepository,
             ICompositeWeb3Provider web3Authenticator,
             IUserInAppInitializationFlow userInAppInitializationFlow,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             IEquippedWearables equippedWearables,
             IEquippedEmotes equippedEmotes,
             UnityAppWebBrowser webBrowser,
@@ -237,6 +239,7 @@ namespace DCL.PluginSystem.Global
             IUserBlockingCache userBlockingCache,
             ProfileChangesBus profileChangesBus,
             SceneLoadingLimit sceneLoadingLimit,
+            SingleSceneMode singleSceneMode,
             WarningNotificationView inWorldWarningNotificationView,
             ProfileRepositoryWrapper profileDataProvider,
             UpscalingController upscalingController,
@@ -309,6 +312,7 @@ namespace DCL.PluginSystem.Global
             this.userBlockingCache = userBlockingCache;
             this.profileChangesBus = profileChangesBus;
             this.sceneLoadingLimit = sceneLoadingLimit;
+            this.singleSceneMode = singleSceneMode;
             this.inWorldWarningNotificationView = inWorldWarningNotificationView;
             this.profileRepositoryWrapper = profileDataProvider;
             this.upscalingController = upscalingController;
@@ -386,7 +390,6 @@ namespace DCL.PluginSystem.Global
                 characterPreviewFactory,
                 wearableStorage,
                 selfProfile,
-                profileCache,
                 equippedWearables,
                 equippedEmotes,
                 emoteStorage,
@@ -501,6 +504,7 @@ namespace DCL.PluginSystem.Global
                 settings.ChatSettingsAsset,
                 userBlockingCache,
                 sceneLoadingLimit,
+                singleSceneMode,
                 volumeBus,
                 assetsProvisioner,
                 eventBus,
