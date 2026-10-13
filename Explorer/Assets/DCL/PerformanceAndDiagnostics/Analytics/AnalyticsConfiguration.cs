@@ -31,11 +31,11 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         private int flushInterval = 30;
 
         [SerializeField] [HideInInspector]
-        private string segmentWriteKey = null!;
+        private string segmentWriteKey = string.Empty;
 
         [SerializeField]
         [Tooltip("Segment Tracking API host the native client posts to. Must carry no /v1 suffix - the client appends the endpoint path itself.")]
-        private string segmentApiHost = null!;
+        private string segmentApiHost = string.Empty;
 
         [field: SerializeField]
         [Tooltip("This parameter sets the interval (in seconds) at which the performance report is tracked to the analytics.")]
