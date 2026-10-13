@@ -1,4 +1,5 @@
 using DCL.ECSComponents;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using UnityEngine;
 using Utility;
@@ -150,7 +151,7 @@ namespace DCL.SDKComponents.MediaStream
         public void MarkAsFailed(bool failed) =>
             HasFailed = failed;
 
-        public bool TryAttachLastAudioFrameReadFilterOrUseExisting(out ThreadSafeLastAudioFrameReadFilter? output) 
+        public bool TryAttachLastAudioFrameReadFilterOrUseExisting([NotNullWhen(true)] out ThreadSafeLastAudioFrameReadFilter? output)
         {
             AudioSource? audioSource = MediaPlayer.AnyExposedAudioSource();
 

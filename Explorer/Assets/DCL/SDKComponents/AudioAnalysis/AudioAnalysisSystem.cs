@@ -78,7 +78,7 @@ namespace DCL.SDKComponents.AudioSources
                 return;
             }
 
-            if (output!.TryConsume(out float[]? data, out _, out int outSampleRate))
+            if (output.TryConsume(out float[]? data, out _, out int outSampleRate))
             {
                 AnalysisResultMode mode = sdkComponent.Mode switch
                 {
