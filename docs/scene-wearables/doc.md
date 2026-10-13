@@ -1,6 +1,6 @@
 # Scene wearables — прототип, итерация 1
 
-> Временная папка; удаляется целиком перед подачей PR. Исследование: [research.md](research.md).
+> Временная папка; удаляется целиком перед подачей PR. Исследование: [research.md](research.md). Следующая итерация: [iteration-1.5.md](iteration-1.5.md).
 > Ветка: `feat/sdk/scene-wearables` (от `dev`). Тестовая сцена: `C:\DCL\Pravus-Orchester\MyScenes\Jubensha2`.
 
 ## Цель
