@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Picks Explorer release tags from a GitHub releases list (the JSON array returned by
-# `gh api repos/<repo>/releases`) on stdin. Only published (non-draft) `v*` releases
-# count, newest `published_at` first; Avatar Preview Renderer tags are ignored.
+# `gh api repos/<repo>/releases`) on stdin. Only published `v*` releases count (no drafts,
+# no pre-releases, which /releases/latest never serves), newest `published_at` first;
+# Avatar Preview Renderer tags are ignored.
 #
 # Usage:
 #   release-tags.sh bases <count> <current tag>   the <count> newest releases other than
@@ -15,7 +16,7 @@ set -euo pipefail
 require_tool jq
 is_count() { case "$1" in ''|*[!0-9]*) return 1 ;; *) return 0 ;; esac; }
 
-PUBLISHED='[.[] | select(.draft == false and (.tag_name | startswith("v")))]
+PUBLISHED='[.[] | select(.draft == false and (.prerelease | not) and (.tag_name | startswith("v")))]
            | sort_by(.published_at) | reverse | map(.tag_name)'
 
 case "${1:-}" in

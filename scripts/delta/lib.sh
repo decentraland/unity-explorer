@@ -8,7 +8,8 @@ die() { echo "[delta] error: $*" >&2; exit 1; }
 require_tool() { # require_tool <command>...
   local t
   for t in "$@"; do
-    command -v "$t" >/dev/null 2>&1 || die "'$t' not found on PATH"
+    # type -P looks only at executables, not at the jq() wrapper below.
+    type -P "$t" >/dev/null 2>&1 || die "'$t' not found on PATH"
   done
 }
 

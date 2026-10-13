@@ -31,6 +31,7 @@ escapes_root() {
 }
 
 cd "$1"
+ROOT_P="$(pwd -P)"
 find . -mindepth 1 \( -type f -o -type l \) -print0 |
   while IFS= read -r -d '' p; do
     rel="${p#./}"
@@ -41,7 +42,16 @@ find . -mindepth 1 \( -type f -o -type l \) -print0 |
     if [ -L "$p" ]; then
       target="$(readlink "$p")"
       case "$target" in /*|'') die "absolute or empty symlink target: $rel -> $target" ;; esac
+      case "$target" in
+        *$'\t'*|*$'\n'*|*$'\r'*|*"$SEP"*) die "unsupported character in symlink target: $rel" ;;
+      esac
       if escapes_root "$rel" "$target"; then die "symlink leaves the build: $rel -> $target"; fi
+      # The lexical check misses a climb through another symlink (d/x -> up/../.. with
+      # d/up -> ..), so a resolvable target is also checked physically.
+      if [ -d "$p" ]; then t_dir="$target"; else t_dir="$(dirname "$target")"; fi
+      if dest="$(cd "$(dirname "$p")" && cd -P "$t_dir" 2> /dev/null && pwd -P)"; then
+        case "$dest/" in "$ROOT_P"/*) ;; *) die "symlink leaves the build: $rel -> $target" ;; esac
+      fi
       printf 'L\t%s\t%s\n' "$rel" "$target"
     else
       printf 'F\t%s\t%s\t%s\t%s\n' "$rel" "$(size_of "$p")" "$(sha256_of "$p")" "$(mode_of "$p")"

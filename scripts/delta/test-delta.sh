@@ -165,6 +165,14 @@ if [ $SYMLINKS -eq 1 ]; then
   rm -f "$WORK/escape/sub/link"
   ln -s ../sibling "$WORK/escape/sub/link"
   check "accepts a relative symlink inside the build" bash "$SCRIPT_DIR/hash-tree.sh" "$WORK/escape"
+  ln -s .. "$WORK/escape/sub/up"
+  check "accepts a symlink to the build root" bash "$SCRIPT_DIR/hash-tree.sh" "$WORK/escape"
+  ln -s up/../.. "$WORK/escape/sub/through"
+  check_fails "rejects a symlink climbing out through another symlink" bash "$SCRIPT_DIR/hash-tree.sh" "$WORK/escape"
+  rm -f "$WORK/escape/sub/through"
+  ln -s "$(printf 'x\nF\tevil\t1\tabc\t755')" "$WORK/escape/sub/inject"
+  check_fails "rejects control characters in a symlink target" bash "$SCRIPT_DIR/hash-tree.sh" "$WORK/escape"
+  rm -f "$WORK/escape/sub/inject"
 fi
 
 # --- extract-build.sh, signature-status.sh, delta-for-base.sh ------------------

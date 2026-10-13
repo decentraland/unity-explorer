@@ -12,13 +12,9 @@ set -euo pipefail
 
 [ $# -eq 1 ] || die "usage: check-unpublished.sh <tag>"
 [ -n "${GITHUB_REPOSITORY:-}" ] || die "GITHUB_REPOSITORY is not set"
-case "$1" in
-  v[0-9]*.[0-9]*.[0-9]*) ;;
-  *) die "not a release tag: '$1'" ;;
-esac
-case "$1" in
-  */*|*..*|*[[:space:]]*) die "not a release tag: '$1'" ;;
-esac
+if ! [[ "$1" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[A-Za-z0-9.]+)?$ ]] || [[ "$1" == *..* ]]; then
+  die "not a release tag: '$1'"
+fi
 require_tool gh
 
 if ! DRAFT="$(gh api "repos/$GITHUB_REPOSITORY/releases/tags/$1" --jq .draft 2>&1)"; then

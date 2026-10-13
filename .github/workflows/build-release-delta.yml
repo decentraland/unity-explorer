@@ -126,10 +126,14 @@ jobs:
       # The published zip, not the build artifact, is the source of truth: the manifest
       # must describe exactly what a fresh install gets. A rebuild of the same unpublished
       # tag overwrites the zip, so a delta left by an earlier run is removed first: if this
-      # run fails, it would describe the previous build.
+      # run fails, it would describe the previous build. The tag is re-checked right before
+      # the delete: it may have been published while this leg waited for a runner.
       - name: Download the new release zip
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
+          bash scripts/delta/check-unpublished.sh "$TAG"
           WORK="$RUNNER_TEMP/delta"
           mkdir -p "$WORK"
           aws s3 rm --recursive --only-show-errors "s3://$EXPLORER_TEAM_S3_BUCKET/$RELEASES_PATH/$TAG/delta/$PLATFORM/"

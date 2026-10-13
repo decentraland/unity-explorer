@@ -15,7 +15,8 @@ cat > "$WORK/releases.json" <<'JSON'
   {"tag_name": "v0.188.0-alpha", "draft": true,  "published_at": null},
   {"tag_name": "v0.186.0-alpha", "draft": false, "published_at": "2026-10-08T14:33:06Z"},
   {"tag_name": "avatar-preview-renderer/v3.4.0", "draft": false, "published_at": "2026-10-09T10:00:00Z"},
-  {"tag_name": "v0.187.0-alpha", "draft": false, "published_at": "2026-10-13T09:00:00Z"},
+  {"tag_name": "v0.188.0-rc1", "draft": false, "prerelease": true, "published_at": "2026-10-13T12:00:00Z"},
+  {"tag_name": "v0.187.0-alpha", "draft": false, "prerelease": false, "published_at": "2026-10-13T09:00:00Z"},
   {"tag_name": "v0.185.0-alpha", "draft": false, "published_at": "2026-10-06T14:22:59Z"},
   {"tag_name": "v0.184.0-alpha", "draft": false, "published_at": "2026-10-01T19:18:45Z"},
   {"tag_name": "v0.183.0-alpha", "draft": false, "published_at": "2026-09-29T15:45:19Z"}
@@ -48,7 +49,7 @@ expect_usage_error() {
 }
 
 echo "release-tags.sh bases"
-expect "newest published first, drafts and renderer tags skipped" \
+expect "newest published first, drafts, pre-releases and renderer tags skipped" \
   "$(printf 'v0.187.0-alpha\nv0.186.0-alpha\nv0.185.0-alpha')" bases 3 v0.188.0-alpha
 expect "excludes the current tag" \
   "$(printf 'v0.186.0-alpha\nv0.185.0-alpha')" bases 2 v0.187.0-alpha
@@ -92,6 +93,8 @@ unpublished "an API failure is refused, not treated as unpublished" outage 1
 unpublished "an empty tag is refused" missing 1 ""
 unpublished "a non-release tag is refused" missing 1 "avatar-preview-renderer/v3.4.0"
 unpublished "a tag with .. is refused" missing 1 "v1.0.0-../x"
+unpublished "a tag with trailing characters is refused" missing 1 "v9.9.9?x"
+unpublished "a tag with a suffix is accepted" missing 0 "v0.187.0-alpha"
 
 echo
 echo "$PASSES passed, $FAILURES failed"
