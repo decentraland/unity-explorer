@@ -88,10 +88,10 @@ namespace DCL.SDKComponents.MediaStream
         ///     on any failure (no usable streams, no free loopback port, etc.).
         ///
         ///     Pre-fetches the sidx (segment index) box for the selected video and audio streams
-        ///     via byte-range HTTP requests; that lets the playlist enumerate one HLS segment per
-        ///     fmp4 fragment instead of a single segment over the entire file, so playback can
-        ///     start after the first ~5-10s chunk rather than the whole body (issue #8350). If
-        ///     sidx fetch or parse fails, falls back to single-segment.
+        ///     via byte-range HTTP requests, so the playlist can enumerate sidx-aligned segments
+        ///     of about <see cref="TARGET_SEGMENT_SECONDS"/> (see HlsManifestBuilder.Coalesce)
+        ///     instead of a single segment over the entire file (issue #8350). If sidx fetch or
+        ///     parse fails, falls back to single-segment.
         ///
         ///     Deliberately contains no try/catch/using around its await: an exception unwinding
         ///     through this async state machine's catch and finally funclets crashes IL2CPP on

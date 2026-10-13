@@ -518,7 +518,7 @@ By running the build from a console/terminal you can specify the pertinent param
 
 ## Test media streaming
 
-**Media streaming** is served by UUAV, the in-house player (`Explorer/Assets/Plugins/UUAV`, see [UUAV Media Stack](uuav.md)). Scene code reaches it through the `UUAV.Compat` facade (`Packages/UUAV/AVProCompat/`): a poll-based `MediaPlayer` component exposing `Control` / `Info` / `TextureProducer`. The media systems are always compiled in (except on Linux, where they are excluded per platform define).
+**Media streaming** is served by UUAV, the in-house player (`Explorer/Assets/Plugins/UUAV`, see [UUAV Media Stack](uuav.md)). The Explorer's media systems (`DCL.SDKComponents.MediaStream`) reach it through the `UUAV.Compat` facade (`Packages/UUAV/AVProCompat/`): a poll-based `MediaPlayer` component exposing `Control` / `Info` / `TextureProducer`. The media systems are always compiled in (except on Linux, where they are excluded per platform define).
 
 To test media streaming you can:
 1. Run `MediaStreaming` sdk-scene from `StaticSceneLoader.unity` scene to verify that media streaming is working. This scene includes both audio- and video streams.

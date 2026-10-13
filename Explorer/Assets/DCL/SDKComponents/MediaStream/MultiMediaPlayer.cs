@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using System.Diagnostics.CodeAnalysis;
 using DCL.ECSComponents;
 using REnum;
 using UnityEngine;
@@ -235,7 +236,7 @@ namespace DCL.SDKComponents.MediaStream
             );
         }
 
-        public bool TryGetUrlMediaPlayer(out MediaPlayer? mediaPlayer)
+        public bool TryGetUrlMediaPlayer([NotNullWhen(true)] out MediaPlayer? mediaPlayer)
         {
             if (IsUrlMediaPlayer(out var urlMediaPlayer))
             {

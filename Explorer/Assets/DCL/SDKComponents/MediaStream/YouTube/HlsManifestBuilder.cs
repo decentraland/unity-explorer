@@ -40,7 +40,7 @@ namespace DCL.SDKComponents.MediaStream.YouTube
         private const string PREFERRED_AUDIO_CODEC_PREFIX = "mp4a";
         private const int PREFERRED_HEIGHT = 1080;
 
-        /// <summary>The 3 playlist contents, ready to write to disk in the same directory.</summary>
+        /// <summary>The 3 playlist contents, served together under one loopback path by <see cref="LocalHlsPlaylistServer"/>.</summary>
         public readonly struct PlaylistSet
         {
             public string Master { get; }
@@ -86,8 +86,9 @@ namespace DCL.SDKComponents.MediaStream.YouTube
         /// <summary>
         ///     Builds the 3 HLS playlists (master + video + audio) from the pre-selected pair
         ///     returned by <see cref="TrySelectVideoAndAudio"/>. If SIDX-derived segment tables
-        ///     are supplied the media playlists are split into one HLS segment per fmp4
-        ///     fragment, so every segment starts on a clean sidx-described boundary (issue #8350).
+        ///     are supplied, consecutive fragments are coalesced (see <see cref="Coalesce"/>) into
+        ///     segments of at least targetSegmentDurationSeconds, each starting on a clean
+        ///     sidx-described boundary (issue #8350).
         ///     Falls back to single-segment if either segment list is empty.
         ///
         ///     Caller is expected to have already validated the streams via
@@ -300,7 +301,7 @@ namespace DCL.SDKComponents.MediaStream.YouTube
             sb.Append("#EXT-X-MAP:URI=\"").Append(stream.Url).Append('"');
             sb.Append(",BYTERANGE=\"").Append(initSize).Append('@').Append(initOffset).Append("\"\n");
 
-            // One HLS segment per fmp4 fragment. Each EXT-X-BYTERANGE points at a clean
+            // One HLS segment per coalesced fragment run. Each EXT-X-BYTERANGE starts on a clean
             // fragment boundary (sidx-described), so the player can decode a single segment in
             // isolation and start playback after the first chunk lands.
             for (int i = 0; i < segments.Count; i++)
