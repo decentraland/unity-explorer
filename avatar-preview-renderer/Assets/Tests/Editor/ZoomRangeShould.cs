@@ -79,6 +79,17 @@ namespace Preview.Tests
         }
 
         [Test]
+        public void BoundAnExtremeWheelZoom()
+        {
+            // Act: a pull-back of 1000 is held at 100, so the farthest view stays a finite float.
+            var range = ZoomRange.FromOptions(100f, 1000f, 0f, 2f, 1.5f);
+
+            // Assert
+            Assert.AreEqual(0.028f, range.Min, TOLERANCE);
+            Assert.AreEqual(0.028f, range.Start, TOLERANCE);
+        }
+
+        [Test]
         public void ClampIntoTheRange()
         {
             // Arrange

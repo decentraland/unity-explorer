@@ -207,10 +207,12 @@ namespace Preview
 
         /// <summary>
         /// Puts the view at an absolute offset, across and up the screen in metres, replacing any
-        /// right-drag pan. Unclamped: the page asked for exactly this.
+        /// right-drag pan; the other views start from it too. Unclamped: the page asked for exactly
+        /// this.
         /// </summary>
         public void SetOffset(Vector2 offset)
         {
+            _startOffset = offset;
             _active.UserPan = offset;
             ApplyPan(_active);
         }

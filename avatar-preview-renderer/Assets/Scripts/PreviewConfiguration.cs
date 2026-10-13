@@ -10,6 +10,11 @@ using Utils;
 public class PreviewConfiguration
 {
     /// <summary>
+    /// The <see cref="Emote"/> value that plays the rig's own idle clip.
+    /// </summary>
+    public const string DEFAULT_EMOTE = "idle";
+
+    /// <summary>
     /// The <see cref="Emote"/> value that plays none.
     /// </summary>
     public const string NO_EMOTE = "none";
@@ -82,7 +87,7 @@ public class PreviewConfiguration
         set => _emote = value;
     }
 
-    private string _emote = "idle";
+    private string _emote = DEFAULT_EMOTE;
 
     /// <summary>
     /// The other spelling of "no emote", kept as its own flag so the parameter order never matters.

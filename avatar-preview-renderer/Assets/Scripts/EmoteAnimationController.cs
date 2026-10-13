@@ -22,6 +22,9 @@ public class EmoteAnimationController : MonoBehaviour
     // second literal would let the two drift apart silently.
     public const string IDLE_CLIP_NAME = "Idle";
 
+    // How far before its end an audio time is held, since the source rejects the exact end.
+    private const float AUDIO_END_MARGIN = 0.01f;
+
     // One state rather than flags, so every entry point reads and writes the same rule.
     private enum PlaybackState
     {
@@ -165,8 +168,9 @@ public class EmoteAnimationController : MonoBehaviour
         var wasRunning = _state is PlaybackState.Playing or PlaybackState.Paused;
         _state = PlaybackState.Held;
 
+        // StopAll, so an idle cross-fade already queued behind the clip's end is dropped too.
         var urn = _loadedEmote.Value.Entity.URN;
-        if (!avatarAnimation.IsPlaying(urn)) avatarAnimation.Play(urn);
+        avatarAnimation.Play(urn, PlayMode.StopAll);
         Seek(urn, 0f);
 
         // The prop too, on its own first frame: a clip that ran out left it hidden on its last pose.
@@ -226,7 +230,7 @@ public class EmoteAnimationController : MonoBehaviour
             if (seconds > 0f)
             {
                 Seek(urn, seconds);
-                PlayAudioFrom(seconds);
+                RestartFinishedAudio(seconds);
                 PlaybackChanged?.Invoke(EmotePlaybackEvent.Playing, seconds);
             }
 
@@ -362,8 +366,9 @@ public class EmoteAnimationController : MonoBehaviour
         PlayAudioFrom(seconds);
     }
 
-    // A time at the very end is rejected by the source, so it stays a hair before it.
-    private float AudioTime(float seconds) => Mathf.Clamp(seconds, 0f, Mathf.Max(0f, _emoteAudioClip.length - 0.01f));
+    // A time at the very end is rejected by the source, so it stays a margin before it.
+    private float AudioTime(float seconds) =>
+        Mathf.Clamp(seconds, 0f, Mathf.Max(0f, _emoteAudioClip.length - AUDIO_END_MARGIN));
 
     private void SetSpeed(string urn, float speed)
     {

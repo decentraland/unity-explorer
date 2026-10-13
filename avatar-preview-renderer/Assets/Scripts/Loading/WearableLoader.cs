@@ -129,6 +129,11 @@ namespace Loading
         }
 
         /// <summary>
+        /// True while an item is loaded and shown on its own.
+        /// </summary>
+        public bool HasLoadedItem => _loadedUrn != null;
+
+        /// <summary>
         /// Metrics of the item shown on its own, when <paramref name="urn"/> is the one loaded.
         /// </summary>
         public bool TryGetMetrics(string urn, out ModelMetrics metrics)

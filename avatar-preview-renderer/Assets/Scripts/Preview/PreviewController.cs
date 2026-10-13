@@ -257,16 +257,9 @@ namespace Preview
         public void ZoomBy(float delta) => previewCameraController.ZoomByDelta(delta);
 
         /// <summary>
-        /// Puts the view at the configuration's offset, across and up the screen in metres. The
-        /// camera takes the configuration first, so the other view starts from the same offset.
+        /// Puts every view at the configuration's offset, across and up the screen in metres.
         /// </summary>
-        public void ApplyCameraOffset()
-        {
-            var config = PreviewConfiguration.Instance;
-
-            previewCameraController.Configure(config);
-            previewCameraController.SetOffset(config.Offset);
-        }
+        public void ApplyCameraOffset() => previewCameraController.SetOffset(PreviewConfiguration.Instance.Offset);
 
         /// <summary>
         /// Moves the view by Babylon's orbit deltas: alpha turns the subject, beta tilts it, both in
@@ -451,10 +444,10 @@ namespace Preview
                     var reloadQueued = _shouldReload;
                     EndReload();
 
-                    // SetMode put the profile camera first for this load; the subject on screen is
-                    // the last load's, so its view comes back. After the end, so a throw here cannot
-                    // leave the reload open.
-                    if (config.Mode is PreviewMode.Marketplace) ShowWearableView(wasShowingWearable);
+                    // The failed load leaves the last subject on screen, so its view is restored while
+                    // it is still there.
+                    if (config.Mode is PreviewMode.Marketplace)
+                        ShowWearableView(wasShowingWearable && wearableLoader.HasLoadedItem);
 
                     if (reloadQueued) StartCoroutine(Reload());
 
@@ -583,7 +576,9 @@ namespace Preview
 
         // "idle" and "none" resolve to no emote: the rig's own Idle clip plays with nothing to download.
         private static EntityDefinition DefaultEmote(string name, bool loop) =>
-            name is "idle" or PreviewConfiguration.NO_EMOTE ? null : EntityDefinition.FromEmbeddedEmote(name, loop);
+            name is PreviewConfiguration.DEFAULT_EMOTE or PreviewConfiguration.NO_EMOTE
+                ? null
+                : EntityDefinition.FromEmbeddedEmote(name, loop);
 
         // The items the page handed over itself: base64 definitions and definitions it hosts at a URL.
         private static async Awaitable<List<EntityDefinition>> LoadLocalEntities(PreviewConfiguration config)
