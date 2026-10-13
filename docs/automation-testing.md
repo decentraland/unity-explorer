@@ -103,7 +103,7 @@ The visual regression suite can be triggered on any PR by leaving the following 
 
 Release and hotfix PRs already have an automatic run. Wait for it to finish before requesting a manual rerun, since both runs update the PR's visual report.
 
-The dispatcher lives in [`.github/workflows/visual-regression.yml`](../.github/workflows/visual-regression.yml) and hands off to the `run-visual-suite.yml` reusable workflow in [decentraland/explorer-automation](https://github.com/decentraland/explorer-automation). Both Explorer dispatchers pin that workflow definition to a reviewed revision containing the final CI status writer. The dispatcher marks the automation section as running; the reusable writes the final verdict and Allure report link into that section. Test and baseline branch selection remains independent of the workflow-definition pin.
+The dispatcher lives in [`.github/workflows/visual-regression.yml`](../.github/workflows/visual-regression.yml) and hands off to the `run-visual-suite.yml` reusable workflow in [decentraland/explorer-automation](https://github.com/decentraland/explorer-automation). Both Explorer dispatchers use the workflow definition from automation `main`, matching InWorld. Future merges to automation `main` update the workflow used by both dispatchers; feature-branch commits that become orphaned after a squash merge are not referenced. The dispatcher marks the automation section as running; the reusable writes the final verdict and Allure report link into that section. Test and baseline branch selection remains independent of the workflow-definition ref.
 
 **Requirements:**
 - The commenter must have `OWNER`, `MEMBER`, or `COLLABORATOR` association on the repo. Comments from anyone else are silently ignored.
@@ -133,7 +133,7 @@ The Visual-scoped dispatcher enforces `Category=Visual` automatically. It record
 
 If the default dispatcher lacks that capability, run **Manual Visual Tests** from an automation branch whose reusable workflow enforces Visual scoping. Select `mode=record`, `platform=macos`, the matching automation branch as `tests_ref`, and the instrumented Explorer build URL as `build_url`; use `FullyQualifiedName~UiFixture` as the optional filter. Manual recording renders PNGs for inspection in the Allure report and does **not** commit them. Use the slash-command path for automatic commits once its default-branch prerequisite is met.
 
-For a release or hotfix, keep its matching automation branch available while testing that older build. Do not replace automation `main` baselines with an older release's pixels. See [explorer-automation's baseline guidance](https://github.com/decentraland/explorer-automation/blob/8c84a893d8611a58fd7fed0d99bfbe9873a23dc1/explorer/README.md#visual-regression-testing) for recording details.
+For a release or hotfix, keep its matching automation branch available while testing that older build. Do not replace automation `main` baselines with an older release's pixels. See [explorer-automation's baseline guidance](https://github.com/decentraland/explorer-automation/blob/main/explorer/README.md#visual-regression-testing) for recording details.
 
 ---
 
