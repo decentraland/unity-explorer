@@ -206,8 +206,8 @@ namespace DCL.Profiling.ECS
 
             if (memoryLimitsEnabled && memoryLimitsVisibilityBinding.IsExpanded)
             {
-                maxAmountOfScenesThatCanLoadInMB.Value = sceneLoadingLimit.currentSceneLimits.SceneMaxAmountOfUsableMemoryInMB.ToString("F");
-                maxAmountOfReductedLODsThatCanLoadInMB.Value = sceneLoadingLimit.currentSceneLimits.QualityReductedLODMaxAmountOfUsableMemoryInMB.ToString("F");
+                maxAmountOfScenesThatCanLoadInMB.Value = sceneLoadingLimit.CurrentSceneLimits.SceneMaxAmountOfUsableMemoryInMB.ToString("F");
+                maxAmountOfReductedLODsThatCanLoadInMB.Value = sceneLoadingLimit.CurrentSceneLimits.QualityReductedLODMaxAmountOfUsableMemoryInMB.ToString("F");
             }
 
             if (performanceVisibilityBinding.IsExpanded)
