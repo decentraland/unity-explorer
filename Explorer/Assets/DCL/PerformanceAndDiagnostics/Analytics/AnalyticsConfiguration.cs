@@ -1,5 +1,6 @@
 ﻿using DCL.Diagnostics;
 using System;
+using System.Diagnostics.CodeAnalysis;
 using UnityEngine;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics
@@ -50,7 +51,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         public int FlushInterval => flushInterval;
 
-        public bool TryGetSegmentConfiguration(out Configuration? configuration)
+        public bool TryGetSegmentConfiguration([NotNullWhen(true)] out Configuration? configuration)
         {
             if (segmentConfiguration != null)
             {
