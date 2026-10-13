@@ -91,6 +91,9 @@ into X (live) and into X-1 (just replaced) stay, so:
 - the rule depends only on release order. A hotfix shortens the window to hours, still far longer
   than any download.
 
+Deleting a release (draft or published) also removes its `delta/` folder in `on-delete-release.yml`,
+since the prune only ranks releases that still exist. Its zip stays.
+
 ## Manifest
 
 [`releases/latest.json`](../.github/workflows/s3-latest-release.yml) stays
