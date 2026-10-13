@@ -24,7 +24,6 @@ namespace DCL.Diagnostics.Tests
 
         private static IEnumerable<Exception> NetworkingFailures()
         {
-            // Never sent, so the exception carries the empty state of an unanswered request
             yield return new UnityWebRequestException(new UnityWebRequest("http://127.0.0.1:8767/hamsterwood/comms"));
             yield return new WebException("The remote server returned an error: (404) Not Found.");
             yield return new SocketException((int)SocketError.ConnectionRefused);

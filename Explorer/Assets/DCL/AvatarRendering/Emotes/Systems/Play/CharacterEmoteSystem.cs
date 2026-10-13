@@ -244,9 +244,9 @@ namespace DCL.AvatarRendering.Emotes.Play
         }
 
         // A modifier area hides only the wearables, so a hidden avatar's emote props would float on their own.
-        // The local player keeps its emote: stopping it would broadcast the stop to every other client.
         private bool IsRemoteAvatarHiddenByModifierArea(Entity entity)
         {
+            // Stopping the local player's emote would broadcast the stop to every other client.
             if (World.Has<PlayerComponent>(entity)) return false;
 
             ref AvatarShapeComponent avatarShape = ref World.TryGetRef<AvatarShapeComponent>(entity, out bool hasAvatarShape);

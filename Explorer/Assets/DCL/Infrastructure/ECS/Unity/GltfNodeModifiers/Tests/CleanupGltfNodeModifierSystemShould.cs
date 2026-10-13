@@ -22,14 +22,14 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
 {
     public class CleanupGltfNodeModifierSystemShould : UnitySystemTestBase<CleanupGltfNodeModifierSystem>
     {
-        private GameObject rootGameObject;
-        private GameObject childGameObject;
-        private MeshRenderer rootRenderer;
-        private MeshRenderer childRenderer;
-        private Material originalRootMaterial;
-        private Material originalChildMaterial;
-        private Material testMaterial;
-        private Material secondTestMaterial;
+        private GameObject rootGameObject = null!;
+        private GameObject childGameObject = null!;
+        private MeshRenderer rootRenderer = null!;
+        private MeshRenderer childRenderer = null!;
+        private Material originalRootMaterial = null!;
+        private Material originalChildMaterial = null!;
+        private Material testMaterial = null!;
+        private Material secondTestMaterial = null!;
 
         [SetUp]
         public void SetUp()
@@ -104,7 +104,7 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
             world.Add(childEntity, gltfNode, CreatePbrMaterial(Color.red), PartitionComponent.TOP_PRIORITY);
 
             // Update the GltfNodeEntities dictionary properly
-            ref var nodeModifiersRef = ref world.TryGetRef<Components.GltfNodeModifiers>(entity, out bool exists);
+            ref var nodeModifiersRef = ref world.TryGetRef<Components.GltfNodeModifiers>(entity, out _);
             nodeModifiersRef.GltfNodeEntities.Add(childEntity, gltfNode.Path!);
 
             // Act - Remove PBGltfNodeModifiers to trigger HandleComponentRemoval query
@@ -147,7 +147,7 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
             world.Add(childEntity, gltfNode, CreatePbrMaterial(Color.blue), PartitionComponent.TOP_PRIORITY);
 
             // Update the GltfNodeEntities dictionary properly
-            ref var nodeModifiersRef = ref world.TryGetRef<Components.GltfNodeModifiers>(entity, out bool exists);
+            ref var nodeModifiersRef = ref world.TryGetRef<Components.GltfNodeModifiers>(entity, out _);
             nodeModifiersRef.GltfNodeEntities.Add(childEntity, gltfNode.Path!);
 
             // Act - Add DeleteEntityIntention to trigger HandleEntityDestruction query
@@ -193,7 +193,7 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
             world.Add(childEntity, gltfNode, CreatePbrMaterial(Color.yellow), PartitionComponent.TOP_PRIORITY);
 
             // Update the GltfNodeEntities dictionary properly
-            ref var nodeModifiersRef = ref world.TryGetRef<Components.GltfNodeModifiers>(entity, out bool exists);
+            ref var nodeModifiersRef = ref world.TryGetRef<Components.GltfNodeModifiers>(entity, out _);
             nodeModifiersRef.GltfNodeEntities.Add(childEntity, gltfNode.Path!);
 
             // Simulate GltfContainerComponent change event

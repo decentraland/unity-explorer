@@ -25,8 +25,7 @@ namespace DCL.Diagnostics.Sentry
         // Native engine messages are captured by the Sentry Unity SDK's own log integration and never pass through ReportHub,
         // so they can only be filtered on the SDK's BeforeSend gateway. All of them are un-actionable for the client:
         // PhysX mesh-cooking warnings from creator assets (#7928, #10148, #10181), libcurl transport failures (#10182),
-        // camera projection warnings of off-screen points (#10154) and the engine's compute shader rejection on below-spec GPUs,
-        // a condition the minimum specs guard already detects through SystemInfo.supportsComputeShaders (#10338)
+        // camera projection warnings of off-screen points (#10154) and the compute shader rejection the minimum specs guard already covers (#10338)
         private static readonly string[] IGNORED_NATIVE_MESSAGE_PREFIXES =
         {
             "[Physics.PhysX]",
@@ -38,13 +37,13 @@ namespace DCL.Diagnostics.Sentry
         // Errors raised by scene code inside the ClearScript engine, matched by name so this assembly does not reference the engine (#10088, #10125)
         private const string SCRIPT_ENGINE_EXCEPTION_TYPE = "Microsoft.ClearScript.ScriptEngineException";
 
-        // A websocket dropped by the remote end is a backend condition the client cannot act on beyond the retry policies every websocket consumer already has (#10103, #10377)
+        // A websocket dropped by the remote end is a backend condition the client cannot act on (#10103, #10377)
         private const string WEBSOCKET_EXCEPTION_TYPE = "Utility.Networking.WebSocketException";
 
         // Thrown by the runtime's task machinery inside third-party transports (Sentry SDK, System.Net.Http) with no client frame (#10094, #10120, #10121, #10153)
         private const string TASK_ALREADY_COMPLETED_MESSAGE = "An attempt was made to transition a task to a final state when it had already completed.";
 
-        // The player refuses cleartext http, and every such URL comes from scene content, never from the client's own endpoints (#8080, #10008, #10204, #10276)
+        // Cleartext http is refused by the player, and such URLs only ever come from scene content (#8080, #10008, #10204, #10276)
         private const string INSECURE_CONNECTION_MESSAGE = "Insecure connection not allowed";
 
         // The user's disk is full: an environment condition, not a client defect (#10086). Matched by HRESULT first
@@ -288,8 +287,7 @@ namespace DCL.Diagnostics.Sentry
 
                     return true;
 
-                // In local scene development the content and comms endpoints are the creator's own preview server,
-                // whose responses are theirs to experiment with and never a client defect (#10318)
+                // In local scene development every endpoint is the creator's own preview server, so its failures are never a client defect (#10318)
                 case UnityWebRequestException or WebException or SocketException when isLocalSceneDevelopment:
 
                 case IOException when exception.HResult is HANDLE_DISK_FULL_HRESULT or DISK_FULL_HRESULT

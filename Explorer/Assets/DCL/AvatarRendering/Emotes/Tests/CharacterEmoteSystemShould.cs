@@ -469,7 +469,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
         [Test]
         public void InterruptRemoteEmoteWhenAvatarIsHiddenByModifierArea()
         {
-            //Arrange: a remote avatar hidden by an AvatarModifierArea while playing an emote with a prop.
+            //Arrange
             const string EMOTE_URN = "urn:decentraland:off-chain:base-emotes:dance";
 
             EmoteReferences remoteEmoteReferences = new GameObject(nameof(EmoteReferences)).AddComponent<EmoteReferences>();
