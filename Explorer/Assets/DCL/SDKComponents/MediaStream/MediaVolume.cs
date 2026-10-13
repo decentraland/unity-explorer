@@ -16,7 +16,6 @@ namespace DCL.SDKComponents.MediaStream
             //is related to the video and audio streams, the MacOS environment does not support
             //the volume control for the video and audio streams, as it doesn’t allow to route audio
             //from HLS through to Unity. This is a limitation of Apple’s AVFoundation framework
-            //Similar issue reported here https://github.com/RenderHeads/UnityPlugin-AVProVideo/issues/1086
             this.volumeBus = volumeBus;
             this.volumeBus.OnMasterVolumeChanged += OnMasterVolumeChanged;
             this.volumeBus.OnWorldVolumeChanged += OnWorldVolumeChanged;

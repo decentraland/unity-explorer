@@ -1,9 +1,9 @@
 using Cysharp.Threading.Tasks;
-using DCL.AvProSwitch;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Utility;
+using UUAV.Compat;
 using Object = UnityEngine.Object;
 
 namespace DCL.SDKComponents.MediaStream
@@ -38,19 +38,8 @@ namespace DCL.SDKComponents.MediaStream
                 mediaPlayer.gameObject.SetActive(true);
             }
             else
-            {
                 mediaPlayer = Object.Instantiate(mediaPlayerPrefab, rootContainerTransform);
-                mediaPlayer.PlatformOptionsWindows._audioMode = Windows.AudioOutput.Unity;
-                mediaPlayer.PlatformOptions_macOS.audioMode = MediaPlayer.PlatformOptions.AudioMode.Unity;
-            }
 
-            #if UNITY_EDITOR
-                mediaPlayer.PlatformOptionsWindows.videoApi = UnityEditorInternal.RenderDoc.IsLoaded() ? Windows.VideoApi.MediaFoundation : Windows.VideoApi.WinRT;
-            #else
-                mediaPlayer.PlatformOptionsWindows.videoApi = Windows.VideoApi.WinRT;
-            #endif
-            mediaPlayer.PlatformOptionsWindows.startWithHighestBitrate = true;
-            mediaPlayer.PlatformOptionsWindows.useLowLiveLatency = false;
             mediaPlayer.enabled = true;
 
             return mediaPlayer;

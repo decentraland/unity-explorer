@@ -1,9 +1,9 @@
 using DCL.ECSComponents;
-using DCL.AvProSwitch;
 using System.Threading;
 using UnityEngine;
 using Utility;
 using Plugins.NativeAudioAnalysis;
+using UUAV.Compat;
 
 namespace DCL.SDKComponents.MediaStream
 {

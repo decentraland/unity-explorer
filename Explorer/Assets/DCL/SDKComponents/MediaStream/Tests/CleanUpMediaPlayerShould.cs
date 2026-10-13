@@ -6,10 +6,10 @@ using ECS.TestSuite;
 using ECS.Unity.Textures.Components;
 using NSubstitute;
 using NUnit.Framework;
-using DCL.AvProSwitch;
 using SceneRunner.Scene;
 using UnityEngine;
 using Utility;
+using UUAV.Compat;
 
 namespace DCL.SDKComponents.MediaStream.Tests
 {

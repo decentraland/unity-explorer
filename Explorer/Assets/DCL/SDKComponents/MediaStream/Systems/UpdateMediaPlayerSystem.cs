@@ -78,7 +78,7 @@ namespace DCL.SDKComponents.MediaStream
             ToggleCurrentStreamsStateQuery(World, enteredScene);
         }
 
-        // Drops players whose AVPro object was destroyed under them (pool eviction / scene teardown). Runs first so no
+        // Drops players whose MediaPlayer object was destroyed under them (pool eviction / scene teardown). Runs first so no
         // later query dereferences the stale ref; recreated from the SDK component next frame.
         [Query]
         [None(typeof(DeleteEntityIntention))]
@@ -457,9 +457,7 @@ namespace DCL.SDKComponents.MediaStream
                 ReportHub.Log(ReportCategory.MEDIA_STREAM,
                     $"[OpenMedia] Opening media: {component.MediaAddress} → {resolvedForLog}, Time: {currentTime:F3}, TimeSinceLastOpen: {timeSinceLastOpen:F3}s");
 
-                Profiler.BeginSample(component.MediaPlayer.HasControl
-                    ? "MediaPlayer.OpenMedia"
-                    : "MediaPlayer.InitialiseAndOpenMedia");
+                Profiler.BeginSample("MediaPlayer.OpenMedia");
 
                 try { component.MediaPlayer.OpenMedia(resolvedAddress, component.IsFromContentServer, autoPlay); }
                 finally { Profiler.EndSample(); }
