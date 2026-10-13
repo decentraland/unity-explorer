@@ -85,7 +85,7 @@ namespace DCL.Settings.Configuration
                 ToggleFeatures.DoubleTapToMove => new DoubleTapToMoveSettingsController(viewInstance),
                 ToggleFeatures.MuteMicInBackgroundFeature => new MuteMicInBackgroundController(viewInstance),
                 ToggleFeatures.SpringBoneSimulationFeature => CreateSimpleToggle(viewInstance, qualitySettingsController, qualitySettingsController.SetSpringBoneSimulation, x => x.SpringBoneSimulation),
-                ToggleFeatures.LobbyFeature => new LobbySettingsController(viewInstance),
+                ToggleFeatures.LobbyFeature => new LobbySettingsController(viewInstance, settingsEventListener),
                 ToggleFeatures.SingleSceneModeFeature => new SingleSceneModeSettingsController(viewInstance, singleSceneMode),
                 // add other cases...
                 _ => throw new ArgumentOutOfRangeException(nameof(viewInstance))

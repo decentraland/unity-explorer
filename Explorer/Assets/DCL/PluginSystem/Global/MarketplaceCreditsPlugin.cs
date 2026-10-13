@@ -28,7 +28,7 @@ namespace DCL.PluginSystem.Global
         private readonly UnityAppWebBrowser webBrowser;
         private readonly IInputBlock inputBlock;
         private readonly MarketplaceCreditsAPIClient marketplaceCreditsAPIClient;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly IWebRequestController webRequestController;
         private readonly IMVCManager mvcManager;
         private readonly IRealmData realmData;
@@ -44,7 +44,7 @@ namespace DCL.PluginSystem.Global
             IAssetsProvisioner assetsProvisioner,
             UnityAppWebBrowser webBrowser,
             IInputBlock inputBlock,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             IWebRequestController webRequestController,
             IDecentralandUrlsSource decentralandUrlsSource,
             IMVCManager mvcManager,
