@@ -65,7 +65,7 @@ namespace DCL.Events
         private int hiddenDayColumns;
         private EventsStateService eventsStateService = null!;
 
-        /// <summary>Day columns the current host has room for; the highlighted banner takes one of them when shown.</summary>
+        /// <summary>Day columns the current host has room for.</summary>
         public int MaxDays => daySelectorButtons.Count - hiddenDayColumns;
         private ThumbnailLoader? eventCardsThumbnailLoader;
         private ProfileRepositoryWrapper? profileRepositoryWrapper;
@@ -183,7 +183,7 @@ namespace DCL.Events
             }
         }
 
-        // The columns sit at fixed offsets from the left, so the trailing ones are the ones a narrower host or the banner leaves no room for
+        // The columns sit at fixed offsets from the left, so it is the trailing ones that lose their room.
         private void ShowDayColumns(int count)
         {
             for (var i = 0; i < daySelectorButtons.Count; i++)

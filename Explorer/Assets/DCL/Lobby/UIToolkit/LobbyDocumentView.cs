@@ -82,13 +82,13 @@ namespace DCL.Lobby
         /// <summary>Profile widget of the top bar. It outlives the hierarchy like <see cref="Credits" />.</summary>
         public ProfileWidgetElement Profile => profile ??= new ProfileWidgetElement();
 
-        /// <summary>Opens the map over the lobby. Exists only while the view is shown.</summary>
+        /// <summary>Exists only while the view is shown.</summary>
         public Button MapButton => Element<Button>(MAP_BUTTON_NAME);
 
-        /// <summary>Opens the places over the lobby. Exists only while the view is shown.</summary>
+        /// <summary>Exists only while the view is shown.</summary>
         public Button PlacesButton => Element<Button>(PLACES_BUTTON_NAME);
 
-        /// <summary>Opens the events over the lobby. Exists only while the view is shown.</summary>
+        /// <summary>Exists only while the view is shown.</summary>
         public Button EventsButton => Element<Button>(EVENTS_BUTTON_NAME);
 
         /// <summary>Exists only while the view is shown.</summary>

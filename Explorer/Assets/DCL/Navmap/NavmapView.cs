@@ -74,7 +74,7 @@ namespace DCL.Navmap
 
             isCompact = compact;
 
-            // The search bar is centred in its container, so it gives the close slot back from its right edge
+            // The search bar is centred in its container, so it gives the close slot back from its right edge.
             float slot = compact ? ExploreSectionModalView.CLOSE_BUTTON_SLOT_WIDTH : -ExploreSectionModalView.CLOSE_BUTTON_SLOT_WIDTH;
             var searchBar = (RectTransform)SearchBarView.transform;
             searchBar.sizeDelta -= new Vector2(slot, 0f);

@@ -86,7 +86,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
                 { "is_startup", isStartupVisit },
             });
 
-        // The map has no section-opened event of its own
+        // The map has no section-opened event of its own.
         private void OnExploreSectionOpened(ExploreSections section)
         {
             switch (section)

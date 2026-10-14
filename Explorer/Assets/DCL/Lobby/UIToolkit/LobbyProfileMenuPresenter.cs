@@ -48,7 +48,7 @@ namespace DCL.Lobby
         private CancellationTokenSource? profileCts;
         private CancellationTokenSource? copiedCts;
 
-        // Independent of the show token: the lobby hides during the logout and must not cancel it
+        // Independent of the show token: the lobby hides during the logout and must not cancel it.
         private CancellationTokenSource? logoutCts;
 
         public bool IsOpen => menu is { IsOpen: true };
@@ -81,7 +81,7 @@ namespace DCL.Lobby
             logoutCts.SafeCancelAndDispose();
         }
 
-        // The handlers are assigned rather than added, so a show after a hide binds the same element again cleanly
+        // The handlers are assigned rather than added, so a show after a hide binds the same element again cleanly.
         public void Show(LobbyProfileMenuElement menuElement, CancellationToken ct)
         {
             menu = menuElement;
@@ -148,7 +148,7 @@ namespace DCL.Lobby
             menu.Close();
         }
 
-        // The address comes from the identity, so it shows even when the profile cannot be fetched
+        // The address comes from the identity, so it shows even when the profile cannot be fetched.
         private async UniTaskVoid LoadProfileAsync(LobbyProfileMenuElement menuElement, CancellationToken ct)
         {
             if (identityCache.Identity == null)
@@ -203,7 +203,7 @@ namespace DCL.Lobby
 
             bool cancelled = await UniTask.Delay(COPIED_FEEDBACK_MS, cancellationToken: ct).SuppressCancellationThrow();
 
-            // A dismiss already cleared it
+            // A dismiss already cleared it.
             if (cancelled) return;
 
             menuElement.IsCopiedShown = false;

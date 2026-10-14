@@ -20,11 +20,11 @@ namespace DCL.ExplorePanel
         [field: SerializeField]
         public CanvasGroup CanvasGroup { get; private set; } = null!;
 
-        /// <summary>The section paints its own background over this whole slot, so this rect is what frames the modal.</summary>
+        /// <summary>The hosted section paints its own background over this whole slot, so this rect frames the modal.</summary>
         [field: SerializeField]
         public RectTransform SectionHost { get; internal set; } = null!;
 
-        /// <summary>The explore panel owns the close control of its sections, so the frame brings its own.</summary>
+        /// <summary>The sections carry no close control of their own.</summary>
         [field: SerializeField]
         public Button CloseButton { get; internal set; } = null!;
 

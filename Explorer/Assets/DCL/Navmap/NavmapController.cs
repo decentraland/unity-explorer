@@ -235,7 +235,7 @@ namespace DCL.Navmap
             mapRenderer.SetSharedLayer(MapLayer.ScenesOfInterest, false);
             zoomController.Deactivate();
 
-            // A kept reference would release the next renter's camera on the next Activate
+            // A kept reference would release the next renter's camera on the next Activate.
             cameraController?.Release(this);
             cameraController = null;
             navmapBus.ClearHistory();
@@ -256,7 +256,7 @@ namespace DCL.Navmap
             navmapView.PanelAnimator.Update(0);
         }
 
-        // The explore panel positions this slot itself, so it stays behind when the view is borrowed
+        // The slot rather than the view, which may sit under another host at the time.
         public RectTransform GetRectTransform() =>
             homeHost;
 
@@ -264,7 +264,7 @@ namespace DCL.Navmap
         {
             var viewRect = (RectTransform)navmapView.transform;
 
-            // A fullscreen panel closes popups without awaiting them, so another host can claim a view a modal still shows
+            // The previous host may still be showing the view, so it is deactivated there first.
             if (isActive && viewRect.parent != host)
                 Deactivate();
 

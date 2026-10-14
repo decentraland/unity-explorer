@@ -30,7 +30,7 @@ namespace DCL.ExplorePanel
             IHostableSection shown = section;
             shown.Activate();
 
-            // Only the explore panel drives the panel animators, so the view may still sit on its OUT frame
+            // The view may still sit on the OUT frame of its last hide.
             shown.ResetAnimator();
         }
 
@@ -38,7 +38,7 @@ namespace DCL.ExplorePanel
         {
             IHostableSection shown = section;
 
-            // A fullscreen panel closes popups without awaiting them, so the explore panel may already have claimed the view back
+            // Another host may already have claimed the view back.
             if (shown.CurrentHost != viewInstance!.SectionHost) return;
 
             shown.Deactivate();

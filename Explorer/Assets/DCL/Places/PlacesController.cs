@@ -116,7 +116,7 @@ namespace DCL.Places
         public void ResetAnimator() =>
             view.ResetAnimator();
 
-        // The explore panel positions this slot itself, so it stays behind when the view is borrowed
+        // The slot rather than the view, which may sit under another host at the time.
         public RectTransform GetRectTransform() =>
             homeHost;
 
@@ -124,7 +124,7 @@ namespace DCL.Places
         {
             var viewRect = (RectTransform)view.transform;
 
-            // A fullscreen panel closes popups without awaiting them, so another host can claim a view a modal still shows
+            // The previous host may still be showing the view, so it is deactivated there first.
             if (isSectionActivated && viewRect.parent != host)
                 Deactivate();
 

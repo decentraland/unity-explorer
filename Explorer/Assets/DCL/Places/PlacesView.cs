@@ -133,7 +133,7 @@ namespace DCL.Places
 
             isCompact = compact;
 
-            // The search bar and the filters dropdown share one right-anchored strip
+            // The search bar and the filters dropdown share one right-anchored strip.
             var filtersStrip = (RectTransform)searchBar.transform.parent;
             filtersStrip.anchoredPosition += new Vector2(compact ? -ExploreSectionModalView.CLOSE_BUTTON_SLOT_WIDTH : ExploreSectionModalView.CLOSE_BUTTON_SLOT_WIDTH, 0f);
         }

@@ -15,7 +15,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
         private readonly IAnalyticsController analytics;
         private readonly ExplorePanelController explorePanelController;
 
-        // The same list serves the explore panel and, borrowed by its modal, the lobby
+        // The same list serves the explore panel and, borrowed by its modal, the lobby.
         private string source => explorePanelController.PlacesController.IsAtHome ? EXPLORE_SOURCE : LOBBY_SOURCE;
 
         public PlacesAnalytics(IAnalyticsController analytics, ExplorePanelController explorePanelController)

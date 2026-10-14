@@ -16,7 +16,7 @@ namespace DCL.Events
 {
     public class EventsByDayView : MonoBehaviour
     {
-        // Authored for the full-width explore panel; a modal host fits one card fewer per row
+        // Sized for the full-width explore panel; a modal host fits one card fewer per row.
         private const int GRID_COLUMNS = 5;
         private const int COMPACT_GRID_COLUMNS = 4;
 

@@ -37,7 +37,7 @@ namespace DCL.Lobby.Tests
     {
         private const string TEMPLATE_PATH = "Assets/DCL/Lobby/UIToolkit/LobbyProfileMenu.uxml";
 
-        // Covers the 1000ms copied feedback plus editor loop jitter
+        // Covers the 1000ms copied feedback plus editor loop jitter.
         private const int COPIED_WAIT_MS = 1500;
 
         private IWeb3IdentityCache identityCache = null!;
@@ -61,7 +61,7 @@ namespace DCL.Lobby.Tests
         [OneTimeSetUp]
         public void OneTimeSetUp()
         {
-            // The editor domain may still hold an initialized registry from a play-mode session
+            // The editor domain may still hold an initialized registry from a play-mode session.
             EcsTestsUtils.TearDownFeaturesRegistry();
             EcsTestsUtils.SetUpFeaturesRegistry(FeatureFlagsStrings.BUG_REPORT);
         }
@@ -127,10 +127,10 @@ namespace DCL.Lobby.Tests
         [Test]
         public void BindTheMenuClosedWithTheBugReportItem()
         {
-            //Act
+            // Act
             presenter.Show(menu, cts.Token);
 
-            //Assert
+            // Assert
             Assert.IsFalse(menu.IsOpen);
             Assert.IsFalse(presenter.IsOpen);
             Assert.IsTrue(menu.CanReportBug);
@@ -139,14 +139,14 @@ namespace DCL.Lobby.Tests
         [Test]
         public async Task ShowTheOwnProfileWhenOpened()
         {
-            //Arrange
+            // Arrange
             presenter.Show(menu, cts.Token);
 
-            //Act
+            // Act
             presenter.Toggle();
             await UniTask.Yield();
 
-            //Assert
+            // Assert
             Assert.IsTrue(presenter.IsOpen);
             Assert.AreEqual("Mojito", menu.UserName);
             Assert.AreEqual(profile.UserNameColor, menu.UserNameColor, "The name takes the color the profile computed for it");
@@ -157,7 +157,7 @@ namespace DCL.Lobby.Tests
         [Test]
         public async Task FallBackToGuestWhenTheProfileCannotBeFetched()
         {
-            //Arrange
+            // Arrange
             profileRepository.GetAsync(Arg.Any<string>(), 0, Arg.Any<URLDomain?>(), Arg.Any<CancellationToken>(), true,
                                   IProfileRepository.FetchBehaviour.Default, ProfileTier.Kind.Compact, Arg.Any<IPartitionComponent?>())
                              .Returns(UniTask.FromException<ProfileTier?>(new InvalidOperationException("profiles endpoint down")));
@@ -165,11 +165,11 @@ namespace DCL.Lobby.Tests
             presenter.Show(menu, cts.Token);
             LogAssert.Expect(LogType.Exception, "InvalidOperationException: profiles endpoint down");
 
-            //Act
+            // Act
             presenter.Open();
             await UniTask.Yield();
 
-            //Assert
+            // Assert
             Assert.AreEqual("Guest", menu.UserName);
             Assert.IsFalse(menu.IsVerified);
             Assert.AreEqual($"{address[..5]}...{address[^5..]}", menu.Address, "The address comes from the identity, not from the profile");
@@ -178,16 +178,16 @@ namespace DCL.Lobby.Tests
         [Test]
         public void ShowNothingToCopyWithoutAnIdentity()
         {
-            //Arrange
+            // Arrange
             identityCache.Identity.Returns((IWeb3Identity?)null);
             presenter.Show(menu, cts.Token);
 
-            //Act
+            // Act
             presenter.Open();
             Submit("CopyAddress");
             Submit("ProfileItem");
 
-            //Assert
+            // Assert
             Assert.AreEqual("Guest", menu.UserName);
             clipboard.DidNotReceive().Set(Arg.Any<string>());
             passportBridge.DidNotReceive().ShowAsync(Arg.Any<PassportParams>());
@@ -196,39 +196,39 @@ namespace DCL.Lobby.Tests
         [Test]
         public async Task CopyTheFullAddressAndConfirmItForAWhile()
         {
-            //Arrange
+            // Arrange
             presenter.Show(menu, cts.Token);
             presenter.Open();
             await UniTask.Yield();
 
-            //Act
+            // Act
             Submit("CopyAddress");
 
-            //Assert
+            // Assert
             clipboard.Received(1).Set(address);
             Assert.IsTrue(menu.IsCopiedShown);
             Assert.IsTrue(presenter.IsOpen, "Copying keeps the menu open");
 
-            //Act
+            // Act
             await UniTask.Delay(COPIED_WAIT_MS);
 
-            //Assert
+            // Assert
             Assert.IsFalse(menu.IsCopiedShown);
         }
 
         [Test]
         public async Task DropTheCopiedConfirmationWhenDismissed()
         {
-            //Arrange
+            // Arrange
             presenter.Show(menu, cts.Token);
             presenter.Open();
             await UniTask.Yield();
             Submit("CopyAddress");
 
-            //Act
+            // Act
             presenter.Dismiss();
 
-            //Assert
+            // Assert
             Assert.IsFalse(menu.IsCopiedShown);
             Assert.IsFalse(presenter.IsOpen);
         }
@@ -236,29 +236,29 @@ namespace DCL.Lobby.Tests
         [Test]
         public void CloseOnAClickOutside()
         {
-            //Arrange
+            // Arrange
             presenter.Show(menu, cts.Token);
             presenter.Open();
 
-            //Act
+            // Act
             menu.OutsideClicked!.Invoke();
 
-            //Assert
+            // Assert
             Assert.IsFalse(presenter.IsOpen);
         }
 
         [Test]
         public async Task OpenTheOwnPassportAndClose()
         {
-            //Arrange
+            // Arrange
             presenter.Show(menu, cts.Token);
             presenter.Open();
             await UniTask.Yield();
 
-            //Act
+            // Act
             Submit("ProfileItem");
 
-            //Assert
+            // Assert
             Assert.IsFalse(presenter.IsOpen);
             await passportBridge.Received(1).ShowAsync(Arg.Is<PassportParams>(p => p.UserId == address && p.IsOwnProfile));
         }
@@ -266,16 +266,16 @@ namespace DCL.Lobby.Tests
         [Test]
         public void RequestTheSettingsAndClose()
         {
-            //Arrange
+            // Arrange
             var requested = 0;
             presenter.SettingsRequested = () => requested++;
             presenter.Show(menu, cts.Token);
             presenter.Open();
 
-            //Act
+            // Act
             Submit("SettingsItem");
 
-            //Assert
+            // Assert
             Assert.IsFalse(presenter.IsOpen);
             Assert.AreEqual(1, requested);
         }
@@ -283,14 +283,14 @@ namespace DCL.Lobby.Tests
         [Test]
         public void OpenTheBugReportAndClose()
         {
-            //Arrange
+            // Arrange
             presenter.Show(menu, cts.Token);
             presenter.Open();
 
-            //Act
+            // Act
             Submit("ReportBugItem");
 
-            //Assert
+            // Assert
             Assert.IsFalse(presenter.IsOpen);
             mvcManager.Received(1).ShowAsync(Arg.Any<ShowCommand<BugReportView, BugReportParams>>(), Arg.Any<CancellationToken>());
         }
@@ -298,15 +298,15 @@ namespace DCL.Lobby.Tests
         [Test]
         public async Task SignOutAndClose()
         {
-            //Arrange
+            // Arrange
             presenter.Show(menu, cts.Token);
             presenter.Open();
 
-            //Act
+            // Act
             Submit("SignOutItem");
             await UniTask.Yield();
 
-            //Assert
+            // Assert
             Assert.IsFalse(presenter.IsOpen);
             await web3Authenticator.Received(1).LogoutAsync(Arg.Any<CancellationToken>());
             profileCache.Received(1).Remove(new Web3Address(address));
@@ -316,20 +316,20 @@ namespace DCL.Lobby.Tests
         [Test]
         public async Task KeepSigningOutAfterTheLobbyHides()
         {
-            //Arrange
+            // Arrange
             var logoutStarted = new UniTaskCompletionSource();
             web3Authenticator.LogoutAsync(Arg.Any<CancellationToken>()).Returns(logoutStarted.Task);
             presenter.Show(menu, cts.Token);
             presenter.Open();
             Submit("SignOutItem");
 
-            //Act
+            // Act
             presenter.Hide();
             cts.Cancel();
             logoutStarted.TrySetResult();
             await UniTask.Yield();
 
-            //Assert
+            // Assert
             await initializationFlow.Received(1).ExecuteAsync(Arg.Any<UserInAppInitializationFlowParameters>(), Arg.Any<CancellationToken>());
         }
 
@@ -337,14 +337,14 @@ namespace DCL.Lobby.Tests
         [TestCase("PrivacyLink", DecentralandUrl.PrivacyPolicy)]
         public void OpenTheLegalPagesAndClose(string buttonName, DecentralandUrl url)
         {
-            //Arrange
+            // Arrange
             presenter.Show(menu, cts.Token);
             presenter.Open();
 
-            //Act
+            // Act
             Submit(buttonName);
 
-            //Assert
+            // Assert
             Assert.IsFalse(presenter.IsOpen);
             webBrowser.Received(1).OpenUrlMainThreadOnly(url);
         }
@@ -352,17 +352,17 @@ namespace DCL.Lobby.Tests
         [Test]
         public void LeaveTheMenuAloneOnceHidden()
         {
-            //Arrange
+            // Arrange
             presenter.Show(menu, cts.Token);
             presenter.Open();
 
-            //Act
+            // Act
             presenter.Hide();
             presenter.Dismiss();
             presenter.Toggle();
             Submit("SettingsItem");
 
-            //Assert
+            // Assert
             Assert.IsFalse(menu.IsOpen);
             Assert.IsNull(menu.SettingsClicked);
         }

@@ -131,7 +131,7 @@ namespace DCL.ExplorePanel.Tests
             return rect;
         }
 
-        // The DOTween fades need the player loop, which the edit mode runner does not tick
+        // The DOTween fades need the player loop, which the edit mode runner does not tick.
         private class InstantModalView : ExploreSectionModalView
         {
             protected override UniTask PlayShowAnimationAsync(CancellationToken ct) =>

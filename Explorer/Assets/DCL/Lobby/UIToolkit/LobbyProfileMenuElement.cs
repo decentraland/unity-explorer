@@ -120,7 +120,7 @@ namespace DCL.Lobby
             AddToClassList(USS_BLOCK);
             pickingMode = PickingMode.Ignore;
 
-            // Inline so IsOpen reads back what Open and Close set
+            // Set inline rather than in USS so IsOpen reads back what Open and Close set.
             this.SetDisplayed(false);
             RegisterCallback<AttachToPanelEvent>(OnAttachToPanel);
         }

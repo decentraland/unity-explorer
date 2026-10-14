@@ -227,7 +227,7 @@ namespace DCL.ExplorePanel
             viewInstance?.ProfileWidget?.OpenProfileButton?.Button?.onClick.AddListener(ShowProfileMenuAsync);
         }
 
-        // The section views are shared with the lobby modals, which do not put them back: whoever shows them claims them
+        // A section view may still sit under a modal host, so each is reclaimed before the show.
         protected override void OnBeforeViewShow()
         {
             backpackController.AttachToHome();

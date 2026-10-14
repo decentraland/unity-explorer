@@ -245,7 +245,7 @@ namespace DCL.Events
 
             int daysToShow = DaysToShow(showBanner);
 
-            // The banner takes the column of the last day, which may still hold the events loaded before it arrived
+            // The banner takes the column of the last day, which may still hold the events loaded before it arrived.
             if (showBanner)
                 view.ClearEventsForDay(daysToShow);
 

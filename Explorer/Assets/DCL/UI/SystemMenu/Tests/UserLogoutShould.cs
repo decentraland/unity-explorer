@@ -46,15 +46,15 @@ namespace DCL.UI.SystemMenu.Tests
         [Test]
         public async Task SignOutForgetTheProfileAndRestartAtTheAuthentication()
         {
-            //Arrange
+            // Arrange
             var identity = new IWeb3Identity.Random();
             Web3Address address = identity.Address;
             identityCache.Identity.Returns(identity);
 
-            //Act
+            // Act
             await logout.LogoutAsync(CancellationToken.None);
 
-            //Assert
+            // Assert
             Received.InOrder(() =>
             {
                 web3Authenticator.LogoutAsync(Arg.Any<CancellationToken>());
@@ -68,14 +68,14 @@ namespace DCL.UI.SystemMenu.Tests
         [Test]
         public async Task DoNothingWithoutAnIdentity()
         {
-            //Arrange
+            // Arrange
             identityCache.Identity.Returns((IWeb3Identity?)null);
             LogAssert.Expect(LogType.Error, new Regex("Cannot logout"));
 
-            //Act
+            // Act
             await logout.LogoutAsync(CancellationToken.None);
 
-            //Assert
+            // Assert
             await web3Authenticator.DidNotReceive().LogoutAsync(Arg.Any<CancellationToken>());
             await initializationFlow.DidNotReceive().ExecuteAsync(Arg.Any<UserInAppInitializationFlowParameters>(), Arg.Any<CancellationToken>());
         }
