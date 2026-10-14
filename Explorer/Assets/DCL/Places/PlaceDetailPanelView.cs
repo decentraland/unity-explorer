@@ -279,7 +279,7 @@ namespace DCL.Places
                         cancellationToken);
 
                     if (creatorProfileThumbnail.Value.Sprite != null)
-                        openPassportButton.onClick.AddListener(() => OpenPassportClicked?.Invoke(currentPlaceInfo.owner));
+                        openPassportButton.onClick.AddListener(() => OpenPassportClicked?.Invoke(creatorProfile.Value.Address));
 
                     if (!string.IsNullOrEmpty(creatorProfile.Value.Name))
                     {
