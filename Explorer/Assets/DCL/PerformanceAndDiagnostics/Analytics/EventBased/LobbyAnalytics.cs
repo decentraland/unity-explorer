@@ -1,4 +1,5 @@
 using DCL.EventsApi;
+using DCL.FeatureFlags;
 using DCL.Lobby;
 using DCL.PlacesAPIService;
 using DCL.UI;
@@ -123,12 +124,18 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
                 { "is_startup", isStartupVisit },
             };
 
-        private JObject VisitPayload() =>
-            new ()
+        private JObject VisitPayload()
+        {
+            FeaturesRegistry features = FeaturesRegistry.Instance;
+
+            return new JObject
             {
                 { "source", SOURCE },
                 { "is_startup", isStartupVisit },
+                { "lobby_flag_enabled", features.LobbyFlagEnabled },
+                { "lobby_grandfathered", features.LobbyGrandfathered },
             };
+        }
 
         private static string OriginName(LobbyCardOrigin origin) =>
             origin switch

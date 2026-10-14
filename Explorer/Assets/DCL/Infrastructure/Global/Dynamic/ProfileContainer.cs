@@ -90,8 +90,7 @@ namespace Global.Dynamic
             var pendingTransferService = new PendingTransferService(giftingPersistence, identityCache, wearableContainer.WearableCatalog, staticContainer.EmoteStorage);
 
             var selfProfile = new SelfProfile(profilesRepository, identityCache, equippedWearables, wearableContainer.WearableCatalog,
-                staticContainer.EmoteStorage, equippedEmotes, selfEmotes, profileCache, globalWorld, playerEntity,
-                pendingTransferService, forcedWearables);
+                staticContainer.EmoteStorage, equippedEmotes, selfEmotes, profileCache, globalWorld, playerEntity, forcedWearables);
 
             ISpriteCache thumbnailCache = new SpriteCache(staticContainer.WebRequestsContainer.WebRequestController);
             var profileRepositoryWrapper = new ProfileRepositoryWrapper(profilesRepository, profileCache, thumbnailCache, identityCache);

@@ -134,5 +134,7 @@ namespace DCL.Prefs
         public const string BUG_REPORT_PERFORMANCE_PROMPT_DISMISSED = "BugReport_PerformancePromptDismissed";
 
         public const string SETTINGS_LOBBY_ENABLED = "Settings_LobbyEnabled";
+
+        public const string SETTINGS_SINGLE_SCENE_MODE = "Settings_SingleSceneMode";
     }
 }

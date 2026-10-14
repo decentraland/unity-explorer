@@ -86,7 +86,7 @@ namespace DCL.Communities.CommunitiesCard
         private readonly GalleryEventBus galleryEventBus;
         private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
         private readonly IInputBlock inputBlock;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly IAnalyticsController analytics;
         private readonly HomePlaceEventBus homePlaceEventBus;
         private readonly IWorldPermissionsService worldPermissionsService;
@@ -130,7 +130,7 @@ namespace DCL.Communities.CommunitiesCard
             GalleryEventBus galleryEventBus,
             IVoiceChatOrchestrator voiceChatOrchestrator,
             IInputBlock inputBlock,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             IAnalyticsController analytics,
             HomePlaceEventBus homePlaceEventBus,
             IWorldPermissionsService worldPermissionsService)

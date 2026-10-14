@@ -51,7 +51,7 @@ namespace DCL.PluginSystem.Global
         private readonly CommunitiesDataProvider communitiesDataProvider;
         private readonly IWebRequestController webRequestController;
         private readonly IPlacesAPIService placesAPIService;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly IRealmNavigator realmNavigator;
         private readonly ISystemClipboard clipboard;
         private readonly UnityAppWebBrowser webBrowser;
@@ -83,7 +83,7 @@ namespace DCL.PluginSystem.Global
             CommunitiesDataProvider communitiesDataProvider,
             IWebRequestController webRequestController,
             IPlacesAPIService placesAPIService,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             IRealmNavigator realmNavigator,
             ISystemClipboard clipboard,
             UnityAppWebBrowser webBrowser,

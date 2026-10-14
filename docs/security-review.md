@@ -9,13 +9,13 @@ The detailed policy lives in [Agent Server's Unity security-review skill](https:
 The [trusted workflow](../.github/workflows/dependency-security-review.yml) reads PR metadata and the complete changed-file inventory. It never checks out or executes PR code.
 
 1. The workflow classifies the current base/head change.
-2. It adds `new-dependency` when detailed review applies, or removes a stale label when it does not.
-3. For a ready PR by a repository writer, it requests `decentraland-bot` after the label update finishes. Drafts wait until ready. External authors require a maintainer to request the bot.
+2. It adds `new-dependency` when detailed review applies, or removes a stale label when it does not. Same-repository PRs authored by `github-actions[bot]` are excluded only for `release/*` targeting `main`, or `chore/sync` targeting `dev` with `auto-pr`. Other `auto-pr` PRs, including `decentraland-bot` fix PRs, remain eligible; [#10363](https://github.com/decentraland/unity-explorer/pull/10363) changed native plugins and workflows. Human-authored PRs and fork PRs remain eligible for detailed review despite those branch names or labels. The job keeps `issues: write` and `pull-requests: write` to match the working repository configuration. GitHub documents the label endpoint's scopes as [alternatives](https://docs.github.com/en/rest/issues/labels#add-labels-to-an-issue); the semicolon in `issues=write; pull_requests=write` [does not require both](https://docs.github.com/en/rest/using-the-rest-api/troubleshooting-the-rest-api#resource-not-accessible). Commit comparisons use `contents: read`, and status checks use `statuses: read`.
+3. For a ready PR by a repository writer, it requests `decentraland-bot` after the label update finishes. Drafts wait until ready. External authors require a maintainer to request the bot. Adding the label or retargeting requests a fresh pass. Otherwise, the latest submitted bot review with a standalone detailed verdict and run marker can suppress a request only when its verdict is `PASS`, the latest security status on that reviewed commit is a fresh success, and no relevant path changed since that head. The status must come from `decentraland-bot`, carry Agent Server's success description, and have a creation time strictly after the review's submission time. Missing, unreadable, rejected, pending, or older status evidence requests again; equal timestamps also request because GitHub's second precision cannot establish their order. `BLOCK` and `NEEDS_ATTENTION` always request another pass, including after unrelated pushes; an older `PASS` cannot hide a newer unresolved verdict. Ordinary reviews, including reviews after security setup failure, do not suppress the detailed pass. Unreadable review history, incomplete comparisons, and backward or divergent force pushes re-request. The label still describes the cumulative PR diff, so a manual re-request reaches the detailed pass.
 4. Agent Server reads repository and label state from the signed review-request webhook. Only Unity Explorer with `new-dependency` starts the detailed path.
 5. Jarvis performs one normal review and extends it with the applicable Unity dependency/plugin or automation checks. It posts one COMMENT review.
 6. Agent Server verifies the bot, head commit, run marker, and verdict, then updates `Dependency Security Review` on that commit.
 
-An irrelevant PR has no detailed status. A label or classification failure does not request Jarvis. Agent Server alone writes the security status; the workflow does not infer a result from comments.
+An irrelevant or excluded PR has no detailed status. A label or classification failure does not request Jarvis. Agent Server alone writes the security status; the workflow does not infer a result from comments.
 
 ## What triggers the detailed pass
 
@@ -43,7 +43,9 @@ Deploy this workflow change with or before Agent Server's label routing. Reclass
 
 After deployment, exercise a renderer-only change, shared-package change, binary/importer or assembly change, automation/prompt change, and unrelated documentation change. Confirm the label matches the current head and that relevant PRs produce one COMMENT review with the matching `commit_id`, run marker, verdict, and advisory status.
 
-Re-request Jarvis after a push, retarget, stale snapshot, invalid verdict, or failed run. If the workflow cannot classify the inventory or maintain the label, fix that failure before requesting manually; otherwise the webhook will intentionally run only the ordinary review.
+`pull_request_target` uses the trusted default-branch workflow, so this PR's runs cannot validate its proposed permission block. The local tests check configuration and behavior with a fake GitHub client; verify label writes and detailed status publication in a live run after deployment. A workflow success or ordinary bot review does not establish that Agent Server completed the detailed pass. If security setup fails, inspect Agent Server's status-write error separately; changing the Actions token permissions does not change the bot's credentials.
+
+Re-request Jarvis after a retarget, stale snapshot, invalid verdict, or failed run, and after any push the classifier judged irrelevant that you still want re-read. If the workflow cannot classify the inventory or maintain the label, fix that failure before requesting manually; otherwise the webhook will intentionally run only the ordinary review.
 
 Run the local workflow checks with:
 
