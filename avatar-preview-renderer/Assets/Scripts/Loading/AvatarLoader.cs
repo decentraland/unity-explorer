@@ -537,6 +537,10 @@ namespace Loading
                 AvatarUtils.SetupWearable(copy, otherColors, unusedOutlineRenderers, otherRootBone, otherBones,
                     includeInactive: true);
 
+                // Copied before the load hides the avatar's face, so the copy hides its own.
+                if (model.Entity.Type == EntityType.Body && PreviewConfiguration.Instance.DisableFace)
+                    AvatarUtils.HideBodyShapeFacialFeatures(copy, true, true, true);
+
                 // The setup gave the copy's renderers their own materials, which outlive the copy.
                 foreach (var copyRenderer in copy.GetComponentsInChildren<SkinnedMeshRenderer>(true))
                     _otherAvatarMaterials.AddRange(copyRenderer.sharedMaterials);

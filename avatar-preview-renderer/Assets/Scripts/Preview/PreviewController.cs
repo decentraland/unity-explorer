@@ -362,11 +362,8 @@ namespace Preview
 
                 avatarRotator.enabled = false;
                 wearableRotator.enabled = false;
-
-                // Upright for the fit below, whatever the last load's start; ApplyCameraStart turns
-                // the views to this load's start afterwards.
-                avatarRotator.SetStartRotation(0f, 0f);
-                wearableRotator.SetStartRotation(0f, 0f);
+                avatarRotator.ResetRotation();
+                wearableRotator.ResetRotation();
 
                 animationReference.SetActive(config.ShowAnimationReference || config.ShowSceneBoundaries);
                 platform.SetActive(config.Mode is PreviewMode.Authentication);
@@ -485,6 +482,11 @@ namespace Preview
 
                     throw;
                 }
+
+                // Upright while the fit below measures the bounds. Only once the load succeeded: a failed
+                // one keeps the last start for the subject it leaves on screen.
+                avatarRotator.SetStartRotation(0f, 0f);
+                wearableRotator.SetStartRotation(0f, 0f);
 
                 // Wait for 1 frame for animation to kick in before measuring bounds for the framing below
                 await Awaitable.NextFrameAsync();
