@@ -1,4 +1,4 @@
-﻿#nullable enable
+#nullable enable
 
 using DCL.CharacterMotion.Animation;
 using DCL.CharacterMotion.Settings;
@@ -59,10 +59,22 @@ namespace DCL.Multiplayer.Movement
 
         public void Enqueue(NetworkMovementMessage message)
         {
-            while (queue.Count > MAX_MESSAGES)
-                queue.Dequeue();
+            if (message.ResetTimeline)
+                queue.Clear();
 
-            queue.Enqueue(message, message.timestamp);
+            while (queue.Count > MAX_MESSAGES)
+            {
+                if (queue.First.ResetTimeline)
+                {
+                    NetworkMovementMessage resetMessage = queue.Dequeue();
+                    queue.Dequeue();
+                    queue.Enqueue(resetMessage, double.MinValue);
+                }
+                else
+                    queue.Dequeue();
+            }
+
+            queue.Enqueue(message, message.ResetTimeline ? double.MinValue : message.timestamp);
         }
 
         public void AddPassed(NetworkMovementMessage message, ICharacterControllerSettings settings, bool wasTeleported = false)

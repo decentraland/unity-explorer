@@ -40,6 +40,14 @@ namespace DCL.Multiplayer.Movement
             {
                 if (!entityParticipantTable.TryGet(item.wallet, out IReadOnlyEntityParticipantTable.Entry entry))
                 {
+                    if (pendingMessages.TryGetValue(item.wallet, out NetworkMovementMessage pending))
+                    {
+                        if (pending.ResetTimeline && !item.message.ResetTimeline && item.message.timestamp < pending.timestamp)
+                            continue;
+
+                        item.message.ResetTimeline |= pending.ResetTimeline;
+                    }
+
                     pendingMessages[item.wallet] = item.message;
                     continue;
                 }

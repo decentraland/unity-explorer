@@ -1,4 +1,9 @@
 using Arch.Core;
+using DCL.Character.CharacterMotion.Components;
+using DCL.Character.Components;
+using DCL.CharacterMotion.Components;
+using DCL.CharacterMotion.Settings;
+using DCL.Multiplayer.Movement.Settings;
 using DCL.Landscape.Settings;
 using DCL.Multiplayer.Connections.Pulse;
 using DCL.Multiplayer.Connections.Rooms;
@@ -15,6 +20,7 @@ using ECS;
 using Google.Protobuf;
 using NSubstitute;
 using NUnit.Framework;
+using Pulse.Transport;
 using System;
 using System.Collections.Generic;
 using UnityEditor;
@@ -59,6 +65,7 @@ namespace DCL.Multiplayer.Movement.Tests
         private PulseMultiplayerBus bus = null!;
         private Dictionary<ServerMessage.MessageOneofCase, IPulseMultiplayerService.IncomingMessageHandler> handlers = null!;
         private Action beforeMessage = null!;
+        private IPulseMultiplayerService.DisconnectHandler disconnect = null!;
         private string currentRealm = null!;
         private World world = null!;
 
@@ -79,6 +86,9 @@ namespace DCL.Multiplayer.Movement.Tests
             pulseService.When(s => s.RegisterBeforeMessageHandler(Arg.Any<Action>()))
                         .Do(ci => beforeMessage = ci.ArgAt<Action>(0));
 
+            pulseService.When(s => s.RegisterDisconnectHandler(Arg.Any<IPulseMultiplayerService.DisconnectHandler>()))
+                        .Do(ci => disconnect = ci.ArgAt<IPulseMultiplayerService.DisconnectHandler>(0));
+
             participantTable = Substitute.For<IReadOnlyEntityParticipantTable>();
             world = World.Create();
             movementInbox = new MovementInbox(participantTable, world);
@@ -90,9 +100,14 @@ namespace DCL.Multiplayer.Movement.Tests
             realmData = Substitute.For<IRealmData>();
             realmData.RealmName.Returns(_ => currentRealm);
 
+            var identity = Substitute.For<IWeb3Identity>();
+            identity.Address.Returns(new Web3Address(WALLET_1));
+            var identityCache = Substitute.For<IWeb3IdentityCache>();
+            identityCache.Identity.Returns(identity);
+
             bus = new PulseMultiplayerBus(pulseService, peerIdCache, movementInbox,
                 new ParcelEncoder(cachedLandscapeData.terrainData), incomingProfiles, removeIntentions,
-                Substitute.For<IWeb3IdentityCache>(), new PulseMultiplayerBus.ReconnectionSettings(),
+                identityCache, new PulseMultiplayerBus.ReconnectionSettings(),
                 Substitute.For<SelfProfile>(), new PulseRealm(realmData));
 
             bus.SubscribeToIncomingMessages();
@@ -352,6 +367,579 @@ namespace DCL.Multiplayer.Movement.Tests
                 Assert.AreEqual(1, bunch.Collection().Count);
         }
 
+        [Test]
+        public void KeepReplacementWhenTheSupersededSessionLeavesLater()
+        {
+            Handle(PlayerJoinedMessage(7, WALLET_1, REALM_A));
+            Handle(PlayerJoinedMessage(8, WALLET_1, REALM_A));
+            DrainAnnouncements();
+
+            Handle(new ServerMessage { PlayerLeft = new PlayerLeft { SubjectId = 7 } });
+
+            using (OwnedBunch<RemoveIntention> bunch = removeIntentions.Bunch())
+                Assert.IsFalse(bunch.Available(), "The superseded session must not remove the current avatar");
+
+            Assert.IsTrue(peerIdCache.TryGetPeerId(new Web3Address(WALLET_1), out uint peerId));
+            Assert.AreEqual(8, peerId);
+            Assert.IsFalse(peerIdCache.TryGetWallet(7, out _));
+            Assert.IsTrue(peerIdCache.TryGetWallet(8, out _));
+        }
+
+        [Test]
+        public void IgnoreSupersededSessionTeleportAfterReplacementJoins()
+        {
+            Handle(PlayerJoinedMessage(7, WALLET_1, REALM_A));
+            Handle(PlayerJoinedMessage(8, WALLET_1, REALM_A));
+
+            Handle(TeleportMessage(7, REALM_B));
+
+            using (OwnedBunch<RemoveIntention> bunch = removeIntentions.Bunch())
+                Assert.IsFalse(bunch.Available());
+
+            Assert.IsTrue(peerIdCache.TryGetPeerId(new Web3Address(WALLET_1), out uint peerId));
+            Assert.AreEqual(8, peerId);
+        }
+
+        [Test]
+        public void RemoveReplacementWhenItsOwnSessionLeaves()
+        {
+            Handle(PlayerJoinedMessage(7, WALLET_1, REALM_A));
+            Handle(PlayerJoinedMessage(8, WALLET_1, REALM_A));
+            Handle(new ServerMessage { PlayerLeft = new PlayerLeft { SubjectId = 7 } });
+
+            Handle(new ServerMessage { PlayerLeft = new PlayerLeft { SubjectId = 8 } });
+
+            using (OwnedBunch<RemoveIntention> bunch = removeIntentions.Bunch())
+                CollectionAssert.AreEquivalent(new[] { new RemoveIntention(WALLET_1, RoomSource.Pulse) }, bunch.Collection());
+
+            Assert.IsFalse(peerIdCache.TryGetPeerId(new Web3Address(WALLET_1), out _));
+            Assert.IsFalse(peerIdCache.TryGetWallet(8, out _));
+        }
+
+        [Test]
+        public void CancelPendingRemovalWhenReplacementJoinsAfterTheLeave()
+        {
+            Handle(PlayerJoinedMessage(7, WALLET_1, REALM_A));
+            Handle(new ServerMessage { PlayerLeft = new PlayerLeft { SubjectId = 7 } });
+
+            Handle(PlayerJoinedMessage(8, WALLET_1, REALM_A));
+
+            using (OwnedBunch<RemoveIntention> bunch = removeIntentions.Bunch())
+                Assert.IsFalse(bunch.Available());
+
+            Assert.IsTrue(peerIdCache.TryGetPeerId(new Web3Address(WALLET_1), out uint peerId));
+            Assert.AreEqual(8, peerId);
+        }
+
+        [Test]
+        public void RouteOnlyTheReplacementMovementAndProfile()
+        {
+            Handle(PlayerJoinedMessage(7, WALLET_1, REALM_A));
+            Handle(PlayerJoinedMessage(8, WALLET_1, REALM_A));
+            DrainAnnouncements();
+            (Entity _, RemotePlayerMovementComponent component) = RegisterEntity(WALLET_1);
+            movementInbox.DrainToEntities();
+            int queuedMovements = component.Queue!.Count;
+
+            Handle(PlayerStateFullMessage(7, sequence: 2));
+            Handle(ProfileAnnouncementMessage(7, 5));
+            movementInbox.DrainToEntities();
+
+            Assert.AreEqual(queuedMovements, component.Queue.Count);
+            Assert.AreEqual(0, DrainAnnouncements().Count);
+
+            Handle(PlayerStateFullMessage(8, sequence: 2));
+            Handle(ProfileAnnouncementMessage(8, 5));
+            movementInbox.DrainToEntities();
+
+            Assert.AreEqual(queuedMovements + 1, component.Queue.Count);
+            Assert.AreEqual(1, DrainAnnouncements().Count);
+        }
+
+        [Test]
+        public void IgnoreSupersededDeltaAndEmoteMessages()
+        {
+            Handle(PlayerJoinedMessage(7, WALLET_1, REALM_A));
+            Handle(PlayerJoinedMessage(8, WALLET_1, REALM_A));
+            (Entity _, RemotePlayerMovementComponent component) = RegisterEntity(WALLET_1);
+            movementInbox.DrainToEntities();
+            int queuedMovements = component.Queue!.Count;
+
+            Handle(PlayerStateDeltaMessage(7, 10, 11));
+            Handle(EmoteStartedMessage(7));
+            Handle(EmoteStoppedMessage(7));
+            movementInbox.DrainToEntities();
+
+            Assert.AreEqual(queuedMovements, component.Queue.Count);
+            Assert.AreEqual(0, bus.ResyncCount);
+            Assert.IsFalse(bus.IsPeerEmoting(new Web3Address(WALLET_1)));
+            using (OwnedBunch<RemoteEmoteIntention> bunch = bus.EmoteIntentions())
+                Assert.IsFalse(bunch.Available());
+            using (OwnedBunch<RemoteEmoteStopIntention> bunch = bus.EmoteStopIntentions())
+                Assert.IsFalse(bunch.Available());
+
+            Handle(EmoteStartedMessage(8));
+            Handle(EmoteStoppedMessage(7));
+            Assert.IsTrue(bus.IsPeerEmoting(new Web3Address(WALLET_1)));
+            using (OwnedBunch<RemoteEmoteIntention> bunch = bus.EmoteIntentions())
+                Assert.IsTrue(bunch.Available());
+            using (OwnedBunch<RemoteEmoteStopIntention> bunch = bus.EmoteStopIntentions())
+                Assert.IsFalse(bunch.Available());
+
+            Handle(EmoteStoppedMessage(8));
+            Assert.IsFalse(bus.IsPeerEmoting(new Web3Address(WALLET_1)));
+            using (OwnedBunch<RemoteEmoteStopIntention> bunch = bus.EmoteStopIntentions())
+                Assert.IsTrue(bunch.Available());
+        }
+
+        [Test]
+        public void KeepReplacementResyncPendingWhenAnOldResponseArrives()
+        {
+            Handle(PlayerJoinedMessage(7, WALLET_1, REALM_A));
+            Handle(PlayerStateDeltaMessage(7, 10, 11));
+            Assert.AreEqual(1, bus.ResyncCount);
+            Handle(PlayerJoinedMessage(8, WALLET_1, REALM_A));
+            Handle(PlayerStateDeltaMessage(8, 10, 11));
+            Assert.AreEqual(2, bus.ResyncCount);
+
+            Handle(PlayerStateFullMessage(7, 10));
+            Handle(PlayerStateDeltaMessage(8, 10, 11));
+            Assert.AreEqual(2, bus.ResyncCount);
+
+            Handle(PlayerStateFullMessage(8, 10));
+            Handle(PlayerStateDeltaMessage(8, 10, 11));
+            Handle(PlayerStateDeltaMessage(8, 20, 21));
+            Assert.AreEqual(3, bus.ResyncCount);
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void KeepLatestReplacementRegardlessOfSupersededLeaveOrder(bool reverseOrder)
+        {
+            Handle(PlayerJoinedMessage(7, WALLET_1, REALM_A));
+            Handle(PlayerJoinedMessage(8, WALLET_1, REALM_A));
+            Handle(PlayerJoinedMessage(9, WALLET_1, REALM_A));
+
+            uint first = reverseOrder ? 8u : 7u;
+            uint second = reverseOrder ? 7u : 8u;
+            Handle(new ServerMessage { PlayerLeft = new PlayerLeft { SubjectId = first } });
+            Handle(new ServerMessage { PlayerLeft = new PlayerLeft { SubjectId = second } });
+            Handle(new ServerMessage { PlayerLeft = new PlayerLeft { SubjectId = first } });
+
+            using (OwnedBunch<RemoveIntention> bunch = removeIntentions.Bunch())
+                Assert.IsFalse(bunch.Available());
+            Assert.IsTrue(peerIdCache.TryGetPeerId(new Web3Address(WALLET_1), out uint peerId));
+            Assert.AreEqual(9, peerId);
+
+            Handle(new ServerMessage { PlayerLeft = new PlayerLeft { SubjectId = 9 } });
+            using (OwnedBunch<RemoveIntention> bunch = removeIntentions.Bunch())
+                CollectionAssert.AreEquivalent(new[] { new RemoveIntention(WALLET_1, RoomSource.Pulse) }, bunch.Collection());
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void TreatSelfMirrorAndTheConcreteWalletAsOverlappingSessions(bool mirrorJoinsLast)
+        {
+            string firstWallet = mirrorJoinsLast ? WALLET_1 : PulseMultiplayerBus.SELF_MIRROR_WALLET_ID;
+            string secondWallet = mirrorJoinsLast ? PulseMultiplayerBus.SELF_MIRROR_WALLET_ID : WALLET_1;
+            Handle(PlayerJoinedMessage(7, firstWallet, REALM_A));
+            Handle(PlayerJoinedMessage(8, secondWallet, REALM_A));
+            Handle(new ServerMessage { PlayerLeft = new PlayerLeft { SubjectId = 7 } });
+
+            using (OwnedBunch<RemoveIntention> bunch = removeIntentions.Bunch())
+                Assert.IsFalse(bunch.Available());
+            Assert.IsFalse(peerIdCache.TryGetWallet(7, out _));
+            Assert.IsTrue(peerIdCache.TryGetPeerId(new Web3Address(WALLET_1), out uint peerId));
+            Assert.AreEqual(8, peerId);
+        }
+
+        [Test]
+        public void KeepReplacementAfterDuplicateJoinsAndRepeatedOldLeaves()
+        {
+            Handle(PlayerJoinedMessage(7, WALLET_1, REALM_A));
+            Handle(PlayerJoinedMessage(7, WALLET_1, REALM_A));
+            Handle(PlayerJoinedMessage(8, WALLET_1, REALM_A));
+            Handle(PlayerJoinedMessage(8, WALLET_1, REALM_A));
+            Handle(new ServerMessage { PlayerLeft = new PlayerLeft { SubjectId = 7 } });
+            Handle(new ServerMessage { PlayerLeft = new PlayerLeft { SubjectId = 7 } });
+
+            using (OwnedBunch<RemoveIntention> bunch = removeIntentions.Bunch())
+                Assert.IsFalse(bunch.Available());
+            Assert.IsTrue(peerIdCache.TryGetPeerId(new Web3Address(WALLET_1), out uint peerId));
+            Assert.AreEqual(8, peerId);
+            Assert.IsFalse(peerIdCache.TryGetWallet(7, out _));
+        }
+
+        [TestCase(7u, 8u, 7u)]
+        [TestCase(7u, 8u, 8u)]
+        [TestCase(8u, 7u, 7u)]
+        [TestCase(8u, 7u, 8u)]
+        public void KeepTheSurvivorInEitherJoinAndLeaveOrder(uint firstJoin, uint secondJoin, uint firstLeave)
+        {
+            Handle(PlayerJoinedMessage(firstJoin, WALLET_1, REALM_A));
+            Handle(PlayerJoinedMessage(secondJoin, WALLET_1, REALM_A));
+            uint survivor = firstLeave == 7 ? 8u : 7u;
+
+            Assert.IsTrue(peerIdCache.TryGetWallet(firstJoin, out _));
+            Assert.IsTrue(peerIdCache.TryGetWallet(secondJoin, out _));
+            Handle(new ServerMessage { PlayerLeft = new PlayerLeft { SubjectId = firstLeave } });
+
+            using (OwnedBunch<RemoveIntention> bunch = removeIntentions.Bunch())
+                Assert.IsFalse(bunch.Available());
+            Assert.IsTrue(peerIdCache.TryGetPeerId(new Web3Address(WALLET_1), out uint peerId));
+            Assert.AreEqual(survivor, peerId);
+            Assert.AreEqual(PeerIdCache.LookupResult.Found, peerIdCache.GetWalletInRealm(survivor, REALM_A, out _));
+
+            Handle(new ServerMessage { PlayerLeft = new PlayerLeft { SubjectId = survivor } });
+            using (OwnedBunch<RemoveIntention> bunch = removeIntentions.Bunch())
+                CollectionAssert.AreEquivalent(new[] { new RemoveIntention(WALLET_1, RoomSource.Pulse) }, bunch.Collection());
+        }
+
+        [Test]
+        public void RestoreMovementAndResyncForTheSelectedSurvivor()
+        {
+            Handle(PlayerJoinedMessage(7, WALLET_1, REALM_A));
+            Handle(PlayerStateDeltaMessage(7, 10, 11));
+            Assert.AreEqual(1, bus.ResyncCount);
+            Handle(PlayerJoinedMessage(8, WALLET_1, REALM_A));
+            (Entity _, RemotePlayerMovementComponent component) = RegisterEntity(WALLET_1);
+            movementInbox.DrainToEntities();
+            int queuedMovements = component.Queue!.Count;
+            Handle(PlayerStateFullMessage(7, 10));
+            movementInbox.DrainToEntities();
+            Assert.AreEqual(queuedMovements, component.Queue.Count);
+
+            Handle(new ServerMessage { PlayerLeft = new PlayerLeft { SubjectId = 8 } });
+            Assert.AreEqual(2, bus.ResyncCount);
+            movementInbox.DrainToEntities();
+            Assert.AreEqual(1, component.Queue.Count);
+            Assert.IsTrue(component.Queue.First.ResetTimeline);
+            Handle(PlayerStateDeltaMessage(7, 10, 11));
+            Assert.AreEqual(2, bus.ResyncCount);
+            Handle(PlayerStateFullMessage(7, 10));
+            Handle(PlayerStateDeltaMessage(7, 10, 11));
+            movementInbox.DrainToEntities();
+            Assert.AreEqual(2, component.Queue.Count);
+
+            Handle(PlayerStateDeltaMessage(7, 20, 21));
+            Assert.AreEqual(3, bus.ResyncCount);
+            using (OwnedBunch<RemoveIntention> bunch = removeIntentions.Bunch())
+                Assert.IsFalse(bunch.Available());
+        }
+
+        [Test]
+        public void FallBackThroughThreeOverlappingSessions()
+        {
+            Handle(PlayerJoinedMessage(7, WALLET_1, REALM_A));
+            Handle(PlayerJoinedMessage(8, WALLET_1, REALM_A));
+            Handle(PlayerJoinedMessage(9, WALLET_1, REALM_A));
+            Handle(new ServerMessage { PlayerLeft = new PlayerLeft { SubjectId = 9 } });
+            Assert.IsTrue(peerIdCache.TryGetPeerId(new Web3Address(WALLET_1), out uint peerId));
+            Assert.AreEqual(8, peerId);
+            Handle(new ServerMessage { PlayerLeft = new PlayerLeft { SubjectId = 8 } });
+            Assert.IsTrue(peerIdCache.TryGetPeerId(new Web3Address(WALLET_1), out peerId));
+            Assert.AreEqual(7, peerId);
+            using (OwnedBunch<RemoveIntention> bunch = removeIntentions.Bunch())
+                Assert.IsFalse(bunch.Available());
+
+            Handle(new ServerMessage { PlayerLeft = new PlayerLeft { SubjectId = 7 } });
+            using (OwnedBunch<RemoveIntention> bunch = removeIntentions.Bunch())
+                CollectionAssert.AreEquivalent(new[] { new RemoveIntention(WALLET_1, RoomSource.Pulse) }, bunch.Collection());
+        }
+
+        [Test]
+        public void RemoveTheWalletAfterItsShadowTeleportsAwayAndItsSelectedPeerLeaves()
+        {
+            Handle(PlayerJoinedMessage(7, WALLET_1, REALM_A));
+            Handle(PlayerJoinedMessage(8, WALLET_1, REALM_A));
+            Handle(TeleportMessage(7, REALM_B));
+            using (OwnedBunch<RemoveIntention> bunch = removeIntentions.Bunch())
+                Assert.IsFalse(bunch.Available());
+            Assert.IsFalse(peerIdCache.TryGetWallet(7, out _));
+
+            Handle(new ServerMessage { PlayerLeft = new PlayerLeft { SubjectId = 8 } });
+            using (OwnedBunch<RemoveIntention> bunch = removeIntentions.Bunch())
+                CollectionAssert.AreEquivalent(new[] { new RemoveIntention(WALLET_1, RoomSource.Pulse) }, bunch.Collection());
+            Assert.IsFalse(peerIdCache.TryGetPeerId(new Web3Address(WALLET_1), out _));
+        }
+
+        [Test]
+        public void PromoteTheDestinationRealmSiblingWhenPurgingTheSelectedPeer()
+        {
+            Handle(PlayerJoinedMessage(7, WALLET_1, REALM_A));
+            Handle(PlayerJoinedMessage(8, WALLET_1, REALM_A));
+            peerIdCache.Set(new Web3Address(WALLET_1), 7, REALM_B);
+            bus.BroadcastTeleport(Vector3.zero);
+            currentRealm = REALM_B;
+            bus.BroadcastTeleport(Vector3.zero);
+            beforeMessage();
+
+            using (OwnedBunch<RemoveIntention> bunch = removeIntentions.Bunch())
+                Assert.IsFalse(bunch.Available());
+            Assert.IsFalse(peerIdCache.TryGetWallet(8, out _));
+            Assert.IsTrue(peerIdCache.TryGetPeerId(new Web3Address(WALLET_1), out uint peerId));
+            Assert.AreEqual(7, peerId);
+            Assert.AreEqual(PeerIdCache.LookupResult.Found, peerIdCache.GetWalletInRealm(7, REALM_B, out _));
+        }
+
+        [Test]
+        public void RemoveEachOverlappingWalletOnceOnDisconnect()
+        {
+            Handle(PlayerJoinedMessage(7, WALLET_1, REALM_A));
+            Handle(PlayerJoinedMessage(8, WALLET_1, REALM_A));
+            Handle(PlayerJoinedMessage(9, WALLET_2, REALM_A));
+
+            disconnect(DisconnectReason.GRACEFUL);
+
+            using (OwnedBunch<RemoveIntention> bunch = removeIntentions.Bunch())
+                CollectionAssert.AreEquivalent(new[]
+                {
+                    new RemoveIntention(WALLET_1, RoomSource.Pulse),
+                    new RemoveIntention(WALLET_2, RoomSource.Pulse),
+                }, bunch.Collection());
+            Assert.IsFalse(peerIdCache.TryGetWallet(7, out _));
+            Assert.IsFalse(peerIdCache.TryGetWallet(8, out _));
+            Assert.IsFalse(peerIdCache.TryGetWallet(9, out _));
+        }
+
+        [Test]
+        public void RefreshAShadowJoinWithoutPromotingOrRoutingIt()
+        {
+            Handle(PlayerJoinedMessage(7, WALLET_1, REALM_A));
+            Handle(PlayerJoinedMessage(8, WALLET_1, REALM_A));
+            DrainAnnouncements();
+            (Entity _, RemotePlayerMovementComponent component) = RegisterEntity(WALLET_1);
+            movementInbox.DrainToEntities();
+            int queuedMovements = component.Queue!.Count;
+
+            Handle(PlayerJoinedMessage(7, WALLET_1, REALM_A));
+            movementInbox.DrainToEntities();
+
+            Assert.AreEqual(queuedMovements, component.Queue.Count);
+            Assert.That(DrainAnnouncements(), Is.Empty);
+            Assert.IsTrue(peerIdCache.TryGetPeerId(new Web3Address(WALLET_1), out uint peerId));
+            Assert.AreEqual(8, peerId);
+        }
+
+        [Test]
+        public void RetireTheSelectedPeerOnTeleportWithoutRemovingItsSurvivor()
+        {
+            Handle(PlayerJoinedMessage(7, WALLET_1, REALM_A));
+            Handle(PlayerJoinedMessage(8, WALLET_1, REALM_A));
+
+            Handle(TeleportMessage(8, REALM_B));
+
+            using (OwnedBunch<RemoveIntention> bunch = removeIntentions.Bunch())
+                Assert.IsFalse(bunch.Available());
+            Assert.IsFalse(peerIdCache.TryGetWallet(8, out _));
+            Assert.IsTrue(peerIdCache.TryGetPeerId(new Web3Address(WALLET_1), out uint peerId));
+            Assert.AreEqual(7, peerId);
+
+            Handle(new ServerMessage { PlayerLeft = new PlayerLeft { SubjectId = 7 } });
+            using (OwnedBunch<RemoveIntention> bunch = removeIntentions.Bunch())
+                CollectionAssert.AreEquivalent(new[] { new RemoveIntention(WALLET_1, RoomSource.Pulse) }, bunch.Collection());
+        }
+
+        [Test]
+        public void RefreshAShadowTeleportWithoutRoutingOrPromotingItsPose()
+        {
+            Handle(PlayerJoinedMessage(7, WALLET_1, REALM_A));
+            Handle(PlayerJoinedMessage(8, WALLET_1, REALM_A));
+            (Entity _, RemotePlayerMovementComponent component) = RegisterEntity(WALLET_1);
+            movementInbox.DrainToEntities();
+            int queuedMovements = component.Queue!.Count;
+
+            Handle(TeleportMessage(7, REALM_A));
+            movementInbox.DrainToEntities();
+
+            Assert.AreEqual(queuedMovements, component.Queue.Count);
+            Assert.IsTrue(peerIdCache.TryGetPeerId(new Web3Address(WALLET_1), out uint peerId));
+            Assert.AreEqual(8, peerId);
+            Assert.IsTrue(peerIdCache.TryGetWallet(7, out _));
+        }
+
+        [Test]
+        public void KeepRejoinProfileAndMovementAfterThePreviousRemovalWasConsumed()
+        {
+            Handle(PlayerJoinedMessage(7, WALLET_1, REALM_A));
+            DrainAnnouncements();
+            movementInbox.DrainToEntities();
+            movementInbox.RemovePending(WALLET_1);
+            Handle(new ServerMessage { PlayerLeft = new PlayerLeft { SubjectId = 7 } });
+            List<RemoveIntention> consumedRemovals;
+            using (OwnedBunch<RemoveIntention> bunch = removeIntentions.Bunch())
+            {
+                consumedRemovals = new List<RemoveIntention>(bunch.Collection());
+                Assert.AreEqual(1, consumedRemovals.Count);
+            }
+
+            Handle(PlayerJoinedMessage(8, WALLET_1, REALM_A));
+            incomingProfiles.Remove(consumedRemovals);
+            Assert.AreEqual(1, DrainAnnouncements().Count);
+            movementInbox.DrainToEntities();
+            (Entity _, RemotePlayerMovementComponent component) = RegisterEntity(WALLET_1);
+            movementInbox.TryFlushPending(WALLET_1);
+
+            Assert.AreEqual(1, component.Queue!.Count);
+            Assert.IsTrue(peerIdCache.TryGetPeerId(new Web3Address(WALLET_1), out uint peerId));
+            Assert.AreEqual(8, peerId);
+            using (OwnedBunch<RemoveIntention> bunch = removeIntentions.Bunch())
+                Assert.IsFalse(bunch.Available());
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void RestoreTheSurvivorsCurrentEmoteStateWithoutDispatchingShadowIntentions(bool stopWhileShadowed)
+        {
+            Handle(PlayerJoinedMessage(7, WALLET_1, REALM_A));
+            if (stopWhileShadowed)
+                Handle(EmoteStartedMessage(7));
+            using (OwnedBunch<RemoteEmoteIntention> bunch = bus.EmoteIntentions())
+                Assert.AreEqual(stopWhileShadowed, bunch.Available());
+            Handle(PlayerJoinedMessage(8, WALLET_1, REALM_A));
+
+            Handle(stopWhileShadowed ? EmoteStoppedMessage(7) : EmoteStartedMessage(7));
+
+            Assert.IsFalse(bus.IsPeerEmoting(new Web3Address(WALLET_1)));
+            using (OwnedBunch<RemoteEmoteIntention> bunch = bus.EmoteIntentions())
+                Assert.IsFalse(bunch.Available());
+            using (OwnedBunch<RemoteEmoteStopIntention> bunch = bus.EmoteStopIntentions())
+                Assert.IsFalse(bunch.Available());
+
+            Handle(new ServerMessage { PlayerLeft = new PlayerLeft { SubjectId = 8 } });
+            Handle(PlayerStateFullMessage(7, 10));
+
+            Assert.AreEqual(!stopWhileShadowed, bus.IsPeerEmoting(new Web3Address(WALLET_1)));
+        }
+
+        [TestCase(false, false)]
+        [TestCase(true, false)]
+        [TestCase(false, true)]
+        public void ApplyTheStationaryOlderSurvivorThroughTheMovementSystemInEitherJoinOrder(bool survivorJoinsLast, bool movedWhileShadowed)
+        {
+            (Entity entity, RemotePlayerMovementComponent _) = RegisterEntity(WALLET_1);
+            var avatar = new GameObject("Pulse survivor movement test");
+            var interpolationSettings = ScriptableObject.CreateInstance<RemotePlayerInterpolationSettings>();
+            try
+            {
+                world.Add(entity, new CharacterTransform(avatar.transform), new HeadIKComponent(),
+                    new InterpolationComponent(), new ExtrapolationComponent(), new HandPointAtComponent());
+                ref RemotePlayerMovementComponent movement = ref world.Get<RemotePlayerMovementComponent>(entity);
+                movement.Initialized = true;
+                movement.InitialCooldownTime = 10;
+                movement.PastMessage = new NetworkMovementMessage { timestamp = 1000, position = new Vector3(9, 0, 0) };
+                avatar.transform.position = movement.PastMessage.position;
+                var settings = Substitute.For<IMultiplayerMovementSettings>();
+                settings.MoveSendRate.Returns(1f);
+                settings.InterpolationSettings.Returns(interpolationSettings);
+                using var movementSystem = new RemotePlayersMovementSystem(world, settings, Substitute.For<ICharacterControllerSettings>());
+                ServerMessage survivor = PlayerJoinedMessage(7, WALLET_1, REALM_A);
+                ServerMessage departing = PlayerJoinedMessage(8, WALLET_1, REALM_A);
+                int parcel = new ParcelEncoder(LandscapeData.terrainData).Encode(Vector2Int.zero);
+                survivor.PlayerJoined.State.State.ParcelIndex = parcel;
+                survivor.PlayerJoined.State.State.PositionXQuantized = 3;
+                departing.PlayerJoined.State.ServerTick = 100;
+                departing.PlayerJoined.State.State.ParcelIndex = parcel;
+                departing.PlayerJoined.State.State.PositionXQuantized = 9;
+
+                Handle(survivorJoinsLast ? departing : survivor);
+                movementInbox.DrainToEntities();
+                movementSystem.Update(0.01f);
+                Handle(survivorJoinsLast ? survivor : departing);
+                movementInbox.DrainToEntities();
+                movementSystem.Update(0.01f);
+                ServerMessage refreshedSurvivor = PlayerStateFullMessage(7, 2);
+                refreshedSurvivor.PlayerStateFull.ServerTick = 1;
+                refreshedSurvivor.PlayerStateFull.State.ParcelIndex = parcel;
+                refreshedSurvivor.PlayerStateFull.State.PositionXQuantized = 6;
+                if (movedWhileShadowed)
+                {
+                    Handle(refreshedSurvivor);
+                    movementInbox.DrainToEntities();
+                    movementSystem.Update(0.01f);
+                    Assert.AreEqual(9, avatar.transform.position.x, PlayerState.PositionXQuantizedStep);
+                    Assert.AreEqual(0, avatar.transform.position.y);
+                    Assert.AreEqual(0, avatar.transform.position.z);
+                }
+                Handle(new ServerMessage { PlayerLeft = new PlayerLeft { SubjectId = 8 } });
+                movementInbox.DrainToEntities();
+                movementSystem.Update(0.01f);
+
+                if (movedWhileShadowed)
+                {
+                    Handle(refreshedSurvivor);
+                    movementInbox.DrainToEntities();
+                    movementSystem.Update(0.01f);
+                }
+
+                Assert.AreEqual(movedWhileShadowed ? 6 : 3, avatar.transform.position.x, PlayerState.PositionXQuantizedStep);
+                Assert.AreEqual(0, avatar.transform.position.y);
+                Assert.AreEqual(0, avatar.transform.position.z);
+                Assert.AreEqual(0.001, world.Get<RemotePlayerMovementComponent>(entity).PastMessage.timestamp, 0.000001);
+                Assert.IsTrue(peerIdCache.TryGetPeerId(new Web3Address(WALLET_1), out uint peerId));
+                Assert.AreEqual(7, peerId);
+                using (OwnedBunch<RemoveIntention> bunch = removeIntentions.Bunch())
+                    Assert.IsFalse(bunch.Available());
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(avatar);
+                UnityEngine.Object.DestroyImmediate(interpolationSettings);
+            }
+        }
+
+        [Test]
+        public void PreservePromotionRecoveryAcrossADuplicateJoin()
+        {
+            Handle(PlayerJoinedMessage(7, WALLET_1, REALM_A));
+            Handle(PlayerJoinedMessage(8, WALLET_1, REALM_A));
+            (Entity _, RemotePlayerMovementComponent component) = RegisterEntity(WALLET_1);
+            movementInbox.DrainToEntities();
+            Handle(new ServerMessage { PlayerLeft = new PlayerLeft { SubjectId = 8 } });
+            Handle(PlayerJoinedMessage(7, WALLET_1, REALM_A));
+            ServerMessage refreshed = PlayerStateFullMessage(7, 1);
+            refreshed.PlayerStateFull.ServerTick = 1;
+            refreshed.PlayerStateFull.State.PositionXQuantized = 6;
+
+            Handle(refreshed);
+            movementInbox.DrainToEntities();
+
+            Assert.AreEqual(1, component.Queue!.Count);
+            Assert.IsTrue(component.Queue.First.ResetTimeline);
+            Assert.AreEqual(0.001, component.Queue.First.timestamp, 0.000001);
+            Assert.AreEqual(6, component.Queue.First.position.x - (component.Queue.First.parcel.x * 16), PlayerState.PositionXQuantizedStep);
+        }
+
+        [Test]
+        public void NotResetTheRecoveredTimelineForALateOlderResyncFull()
+        {
+            Handle(PlayerJoinedMessage(7, WALLET_1, REALM_A));
+            Handle(PlayerJoinedMessage(8, WALLET_1, REALM_A));
+            (Entity _, RemotePlayerMovementComponent component) = RegisterEntity(WALLET_1);
+            movementInbox.DrainToEntities();
+            Handle(new ServerMessage { PlayerLeft = new PlayerLeft { SubjectId = 8 } });
+            Handle(PlayerStateDeltaMessage(7, 1, 2));
+            ServerMessage delayedFull = PlayerStateFullMessage(7, 1);
+            delayedFull.PlayerStateFull.ServerTick = 1;
+            Handle(delayedFull);
+            movementInbox.DrainToEntities();
+
+            Assert.AreEqual(2, component.Queue!.Count);
+            NetworkMovementMessage recovered = component.Queue.Dequeue();
+            Assert.IsTrue(recovered.ResetTimeline);
+            Assert.AreEqual(0.002, recovered.timestamp, 0.000001);
+            NetworkMovementMessage delayed = component.Queue.Dequeue();
+            Assert.IsFalse(delayed.ResetTimeline);
+            Assert.AreEqual(0.001, delayed.timestamp, 0.000001);
+
+            Handle(PlayerStateDeltaMessage(7, 2, 3));
+            movementInbox.DrainToEntities();
+            Assert.AreEqual(1, component.Queue.Count);
+            Assert.IsFalse(component.Queue.First.ResetTimeline);
+            Assert.AreEqual(0.003, component.Queue.First.timestamp, 0.000001);
+            Assert.AreEqual(1, bus.ResyncCount);
+        }
+
         private void Handle(ServerMessage serverMessage)
         {
             byte[] bytes = serverMessage.ToByteArray();
@@ -440,6 +1028,28 @@ namespace DCL.Multiplayer.Movement.Tests
                     ServerTick = 2,
                     Realm = realm,
                     State = new PlayerState(),
+                },
+            };
+
+        private static ServerMessage PlayerStateDeltaMessage(uint subjectId, uint baseline, uint sequence) =>
+            new ()
+            {
+                PlayerStateDelta = new PlayerStateDeltaTier0
+                {
+                    SubjectId = subjectId,
+                    BaselineSeq = baseline,
+                    NewSeq = sequence,
+                    ServerTick = sequence,
+                },
+            };
+
+        private static ServerMessage EmoteStoppedMessage(uint subjectId) =>
+            new ()
+            {
+                EmoteStopped = new EmoteStopped
+                {
+                    SubjectId = subjectId,
+                    ServerTick = 3,
                 },
             };
 

@@ -667,33 +667,17 @@ The struct exists purely to keep the app layer from assuming "peer identifier ==
 
 ### `PeerIdCache`
 
-`Connections/Pulse/PeerIdCache.cs` — a thread-safe bidirectional map `uint ↔ Web3Address`:
+[`PeerIdCache`](../Explorer/Assets/DCL/Multiplayer/Connections/Pulse/PeerIdCache.cs) retains each announced peer's wallet and realm until that peer leaves. One peer per wallet is selected for movement, profile and emote routing. Reads, membership changes and selection share a lock.
 
-```csharp
-public class PeerIdCache
-{
-    private readonly object sync = new();
-    private readonly Dictionary<uint, Web3Address> peersByWallet = new();
-    private readonly Dictionary<Web3Address, uint> walletsByPeerId = new();
+**Takeover ordering:** the replacement can join before the old peer leaves. An observer entering during that overlap can receive either join order; announcement order does not prove session ownership. Removing an avatar by wallet on either peer's leave hides the surviving session until a realm round trip causes fresh announcements.
 
-    public void Set(Web3Address wallet, uint peerId) { lock (sync) { peersByWallet[peerId] = wallet; walletsByPeerId[wallet] = peerId; } }
-    public void Remove(uint peerId) { lock (sync) { if (peersByWallet.Remove(peerId, out var wallet)) walletsByPeerId.Remove(wallet); } }
-    public bool TryGetWallet(uint peerId, out Web3Address wallet) { lock (sync) return peersByWallet.TryGetValue(peerId, out wallet); }
-    public bool TryGetPeerId(Web3Address wallet, out uint peerId) { lock (sync) return walletsByPeerId.TryGetValue(wallet, out peerId); }
+Keep the avatar while any peer for its wallet remains in the current realm. When the selected peer leaves, select a surviving peer and restore its cached pose. Teleports and realm cleanup follow the same membership rule; disconnect removes each wallet once. Repeated announcements and same-realm teleports must not promote an already-known shadow peer. A join after a leave cancels any still-queued wallet removal.
 
-    public void RemoveAll(Action<string> onWalletRemoved)
-    {
-        lock (sync)
-        {
-            foreach (string wallet in peersByWallet.Values) onWalletRemoved(wallet);
-            peersByWallet.Clear();
-            walletsByPeerId.Clear();
-        }
-    }
-}
-```
+Changing the selected peer resets its local movement timeline before applying the new pose. A stationary survivor's server timestamp may precede the old peer's last movement; ordinary stale-packet filtering would otherwise discard that pose. Promotion also requests the survivor's current pose through the existing resync path, covering movement ignored during overlap. The timeline reset stays inside Explorer and adds no protocol message.
 
-All mutation and reads are serialized on a single `lock`. The cache is populated from `PlayerJoined` messages (in `PulseMultiplayerBus.PlayerState.cs` → `HandlePlayerJoined`) and evicted from `PlayerLeft` or full-disconnect events.
+Selection follows first-announcement order, so the old session can temporarily drive the avatar if announced last. The existing protocol carries no ownership generation; this client fix guarantees surviving presence after departure, not authoritative selection during overlap. It works with the existing server protocol.
+
+Regression coverage: `PeerIdCacheShould` checks overlap, selection and cleanup; `PulseMultiplayerBusRealmFilteringShould` exercises join orders, leaves, teleports, realm changes and message routing through the real handlers.
 
 > **Note:** The field names `peersByWallet` / `walletsByPeerId` are **inverted** relative to the actual key types (`peersByWallet` is keyed by `uint` peer-id, not by wallet). Be careful reading call sites — trust the types, not the names.
 
@@ -712,7 +696,7 @@ private void RemoveAllPeers()
 }
 ```
 
-Under a single `lock`, every known peer is enqueued as a `RemoveIntention(wallet, RoomSource.PULSE)` and the internal dictionaries are cleared. The callback runs inside the lock — which means `removeIntentions.Enqueue` must not take a lock that could deadlock against `sync`. In practice it writes into a thread-safe collection with a separate lock, so this is safe.
+Under a single `lock`, every distinct wallet is enqueued as a `RemoveIntention(wallet, RoomSource.PULSE)` and the internal dictionaries are cleared. The callback runs inside the lock — which means `removeIntentions.Enqueue` must not take a lock that could deadlock against `sync`. In practice it writes into a thread-safe collection with a separate lock, so this is safe.
 
 ### `SELF_MIRROR_WALLET_ID` — self-mirror sentinel
 

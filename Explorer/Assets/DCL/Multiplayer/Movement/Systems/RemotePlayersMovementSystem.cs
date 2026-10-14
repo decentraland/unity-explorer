@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
@@ -64,6 +64,20 @@ namespace DCL.Multiplayer.Movement
             if (playerInbox == null) return;
 
             settings.InboxCount = playerInbox.Count;
+
+            if (playerInbox.Count > 0 && playerInbox.First.ResetTimeline)
+            {
+                NetworkMovementMessage firstRemote = playerInbox.Dequeue();
+                firstRemote.ResetTimeline = false;
+                intComp = default(InterpolationComponent);
+                extComp = default(ExtrapolationComponent);
+                remotePlayerMovement.PastMessage = default(NetworkMovementMessage);
+                remotePlayerMovement.WasTeleported = true;
+                remotePlayerMovement.InitialCooldownTime = 0;
+                HandleFirstMessage(ref transComp, ref headIK, firstRemote, ref remotePlayerMovement, ref handPointAt);
+
+                if (playerInbox.Count == 0) return;
+            }
 
             // First message
             if (!remotePlayerMovement.Initialized && playerInbox.Count > 0)

@@ -81,6 +81,8 @@ namespace DCL.Multiplayer.Movement
                     // Expected while a realm-change purge is pending, so not a warning
                     ReportHub.Log(ReportCategory.MULTIPLAYER, $"Dropped {messageType} from peer {subjectId} in a different realm");
                     return false;
+                case PeerIdCache.LookupResult.SupersededPeer:
+                    return false;
                 default:
                     return true;
             }
@@ -152,7 +154,36 @@ namespace DCL.Multiplayer.Movement
 
             routingPurgeRequested = false;
 
-            peerIdCache.RemoveWhereNotInRealm(pulseRealm.Value, PurgeQueues);
+            peerIdCache.RemoveWhereNotInRealm(pulseRealm.Value, PurgeQueues, RestorePromotedPeer);
+        }
+
+        private void RemovePeerRegistration(uint subjectId)
+        {
+            bool walletLeftRealm = peerIdCache.Remove(subjectId, pulseRealm.Value, out Web3Address wallet, out uint? promotedPeerId);
+            PurgeQueues(subjectId);
+
+            if (walletLeftRealm)
+                removeIntentions.Enqueue(wallet);
+            else if (promotedPeerId.HasValue)
+                RestorePromotedPeer(wallet, promotedPeerId.Value);
+        }
+
+        private void RestorePromotedPeer(Web3Address wallet, uint subjectId)
+        {
+            // A shadow's resync response may have been ignored while it was not selected.
+            pendingResyncs.Remove(subjectId);
+
+            if (lastMovementMessages.TryGetValue(subjectId, out var lastMovement))
+            {
+                NetworkMovementMessage movementMessage = lastMovement.message;
+                movementMessage.isInstant = true;
+                movementMessage.ResetTimeline = true;
+                movementMessage.isEmoting = emotingSubjects.Contains(subjectId);
+                Inbox(movementMessage, wallet);
+                TryRequestResync(subjectId, lastMovement.sequence, resetTimeline: true);
+            }
+            else
+                TryRequestResync(subjectId, 0, resetTimeline: true);
         }
 
         private void PurgeQueues(uint subjectId)

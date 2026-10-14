@@ -110,6 +110,19 @@ namespace DCL.Multiplayer.Movement
 
             EmoteStarted emoteStarted = message.Message.EmoteStarted;
 
+            if (peerIdCache.GetWalletInRealm(emoteStarted.SubjectId, pulseRealm.Value, out _) == PeerIdCache.LookupResult.SupersededPeer)
+            {
+                emotingSubjects.Add(emoteStarted.SubjectId);
+
+                if (lastMovementMessages.TryGetValue(emoteStarted.SubjectId, out var shadowMovement))
+                {
+                    shadowMovement.message.isEmoting = true;
+                    lastMovementMessages[emoteStarted.SubjectId] = shadowMovement;
+                }
+
+                return;
+            }
+
             if (!TryGetWalletInCurrentRealm(emoteStarted.SubjectId, EMOTE_STARTED_MESSAGE, out Web3Address walletId))
                 return;
 
@@ -149,6 +162,19 @@ namespace DCL.Multiplayer.Movement
             }
 
             EmoteStopped emoteStopped = message.Message.EmoteStopped;
+
+            if (peerIdCache.GetWalletInRealm(emoteStopped.SubjectId, pulseRealm.Value, out _) == PeerIdCache.LookupResult.SupersededPeer)
+            {
+                emotingSubjects.Remove(emoteStopped.SubjectId);
+
+                if (lastMovementMessages.TryGetValue(emoteStopped.SubjectId, out var shadowMovement))
+                {
+                    shadowMovement.message.isEmoting = false;
+                    lastMovementMessages[emoteStopped.SubjectId] = shadowMovement;
+                }
+
+                return;
+            }
 
             if (!TryGetWalletInCurrentRealm(emoteStopped.SubjectId, EMOTE_STOPPED_MESSAGE, out Web3Address walletId))
                 return;
