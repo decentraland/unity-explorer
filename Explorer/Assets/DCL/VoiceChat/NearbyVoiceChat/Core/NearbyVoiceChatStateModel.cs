@@ -65,9 +65,6 @@ namespace DCL.VoiceChat.Nearby
 
         public bool IsListeningDisabled => state.Value is NearbyVoiceChatState.Suppressed or NearbyVoiceChatState.Disabled;
 
-        public bool IsSuppressedBy(SuppressionReason reason) =>
-            suppressionReasons.Contains(reason);
-
         public NearbyVoiceChatStateModel(NearbyVoiceChatState initialState)
         {
             state = new ReactiveProperty<NearbyVoiceChatState>(initialState);
@@ -136,6 +133,9 @@ namespace DCL.VoiceChat.Nearby
             if (state.Value == NearbyVoiceChatState.Suppressed)
                 SetState(preBlockedState);
         }
+
+        public bool IsSuppressedBy(SuppressionReason reason) =>
+            suppressionReasons.Contains(reason);
 
         private bool TryResetToRemainedSuppression(ReactiveProperty<SuppressionReason?> active)
         {
