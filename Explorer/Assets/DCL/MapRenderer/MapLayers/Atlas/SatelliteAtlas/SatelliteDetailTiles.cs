@@ -1,21 +1,18 @@
-using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.MapRenderer.Culling;
+using DCL.Optimization.Hashing;
+using DCL.Utility.Types;
 using DCL.WebRequests;
 using DG.Tweening;
-using ECS.Prioritization.Components;
-using ECS.StreamableLoading.Common;
-using ECS.StreamableLoading.Common.Components;
-using ECS.StreamableLoading.Textures;
+using ECS.StreamableLoading.Cache.Disk;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using Utility;
 using Object = UnityEngine.Object;
-using TexturePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.TextureData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
 namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
 {
@@ -27,8 +24,9 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
     ///     texture's when that level is finer. Tiles are requested once the cameras have been still for <see cref="SETTLE_SECONDS" />,
     ///     at most <see cref="MAX_CONCURRENT_LOADS" /> at a time, nearest to their camera's centre first; a load whose tile leaves the view
     ///     is cancelled. A tile that fails is requested again after <see cref="RETRY_FAILED_TILE_AFTER_SECONDS" />, even if no camera moves.
-    ///     Textures load through the shared texture cache, in memory and on disk. Up to <see cref="MAX_CACHED_TILES" /> tiles out of view
-    ///     stay loaded while the same cameras are rented; once a camera is released, every tile out of view is released.
+    ///     Each tile's KTX2 file is kept in the disk cache, so a later load reads it from disk; the decoded texture keeps no CPU copy and
+    ///     belongs to the tile alone. Up to <see cref="MAX_CACHED_TILES" /> tiles out of view stay loaded while the same cameras are
+    ///     rented; once a camera is released, every tile out of view is destroyed and its memory freed.
     /// </summary>
     internal class SatelliteDetailTiles : IDisposable
     {
@@ -39,7 +37,8 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
         private const int TILE_PIXELS = 1024;
         private const int MAX_CACHED_TILES = 16;
         private const string MANIFEST_FILE = "manifest.json";
-        private const string REPORT_SOURCE = "SatelliteDetailTiles";
+        private const string CACHE_EXTENSION = "ktx2";
+        private const int CACHE_ITERATION = 1;
         private const float SETTLE_SECONDS = 0.1f;
         private const float FADE_IN_SECONDS = 0.25f;
         private const float RETRY_FAILED_TILE_AFTER_SECONDS = 30f;
@@ -50,8 +49,8 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             Comparer<KeyValuePair<int, Vector3Int>>.Create(static (a, b) => a.Key.CompareTo(b.Key));
 
         private readonly string baseUrl;
-        private readonly World world;
         private readonly IWebRequestController webRequestController;
+        private readonly IDiskCache<byte[]> diskCache;
         private readonly IMapCullingController cullingController;
         private readonly AtlasChunk template;
         private readonly int drawOrderOfBaseLevel;
@@ -76,13 +75,14 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
         private bool retryPending;
         private bool tileFailureReported;
         private bool manifestFailureReported;
+        private bool diskCacheFailureReported;
 
-        public SatelliteDetailTiles(string baseUrl, World world, IWebRequestController webRequestController, IMapCullingController cullingController, SpriteRenderer template,
-            int drawOrderOfBaseLevel)
+        public SatelliteDetailTiles(string baseUrl, IWebRequestController webRequestController, IDiskCache<byte[]> diskCache, IMapCullingController cullingController,
+            SpriteRenderer template, int drawOrderOfBaseLevel)
         {
             this.baseUrl = baseUrl.TrimEnd('/');
-            this.world = world;
             this.webRequestController = webRequestController;
+            this.diskCache = diskCache;
             this.cullingController = cullingController;
             this.drawOrderOfBaseLevel = drawOrderOfBaseLevel;
             nearestFirst = new NearestFirstComparer(tiles);
@@ -377,39 +377,90 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             pending.RemoveRange(0, consumed);
         }
 
-        /// <summary>Loads the tile's texture through the shared texture cache, which holds one reference for the tile until it is released.</summary>
         private async UniTaskVoid LoadAsync(Vector3Int id, Tile tile)
         {
             CancellationToken ct = tile.Cts.Token;
-
-            var intention = new GetTextureIntention(tile.Url, string.Empty, TextureWrapMode.Clamp, FilterMode.Bilinear, TextureType.Albedo, REPORT_SOURCE,
-                skipKtxConversion: true);
-
-            var promise = TexturePromise.Create(world, intention, PartitionComponent.TOP_PRIORITY);
-            StreamableLoadingResult<TextureData> result = default;
-            var completed = false;
+            string url = tile.Url;
+            Texture2D? texture = null;
+            Exception? failure = null;
 
             try
             {
-                promise = await promise.ToUniTaskAsync(world, cancellationToken: ct);
-                completed = promise.TryGetResult(world, out result);
-            }
-            catch (OperationCanceledException) { promise.ForgetLoading(world); }
+                byte[] bytes = await FetchAsync(url, ct);
 
+                await UniTask.SwitchToMainThread(ct);
+                texture = await KtxTextureDecoder.DecodeAsync(bytes, linear: false, TextureWrapMode.Clamp, FilterMode.Bilinear, readable: false, url);
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e) { failure = e; }
+
+            // A request can fail on another thread; the tiles and their views are only touched on the main one.
+            await UniTask.SwitchToMainThread();
             activeLoads--;
 
-            if (completed && result.Succeeded)
-            {
-                // The tile was dropped while loading: it no longer owns anything, so the reference is released here.
-                if (ct.IsCancellationRequested)
-                    result.Asset!.Dereference();
-                else
-                    Show(id, tile, result.Asset!);
-            }
-            else if (completed && !ct.IsCancellationRequested)
-                Fail(tile, result.Exception);
+            // The tile was dropped while loading: it no longer owns anything, so the texture is destroyed here.
+            if (ct.IsCancellationRequested)
+                UnityObjectUtils.SafeDestroy(texture);
+            else if (failure != null)
+                Fail(tile, failure);
+            else if (texture != null)
+                Show(id, tile, texture);
 
             PumpLoads();
+        }
+
+        /// <summary>The tile's KTX2 file from the disk cache, or downloaded and stored there.</summary>
+        private async UniTask<byte[]> FetchAsync(string url, CancellationToken ct)
+        {
+            EnumResult<Option<byte[]>, TaskError> cached;
+
+            using (HashKey key = NewCacheKey(url))
+                cached = await diskCache.ContentAsync(key, CACHE_EXTENSION, ct);
+
+            ct.ThrowIfCancellationRequested();
+
+            if (cached.Success)
+            {
+                if (cached.Value.Has)
+                    return cached.Value.Value;
+            }
+            else
+                ReportDiskCacheFailure(cached.Error!.Value.Message);
+
+            byte[] bytes = await webRequestController
+                                .GetAsync(new CommonArguments(URLAddress.FromString(url), RetryPolicy.WithRetries(1)), ct, ReportCategory.UI, suppressErrors: true)
+                                .GetDataCopyAsync();
+
+            // The write runs on the streamer's lifetime: the tile can be dropped before it ends, and the bytes are already in memory.
+            StoreAsync(url, bytes, lifetimeCts.Token).Forget();
+            return bytes;
+        }
+
+        private async UniTaskVoid StoreAsync(string url, byte[] bytes, CancellationToken ct)
+        {
+            try
+            {
+                using HashKey key = NewCacheKey(url);
+                EnumResult<TaskError> result = await diskCache.PutAsync(key, CACHE_EXTENSION, bytes, ct);
+
+                if (!result.Success)
+                    ReportDiskCacheFailure(result.Error!.Value.Message);
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e) { ReportHub.LogException(e, ReportCategory.UI); }
+        }
+
+        private static HashKey NewCacheKey(string url) =>
+            HashKey.FromString($"{CACHE_ITERATION}:{url}");
+
+        /// <summary>Once per session: a disabled or failing disk cache affects every tile the same way.</summary>
+        private void ReportDiskCacheFailure(string? message)
+        {
+            if (diskCacheFailureReported)
+                return;
+
+            diskCacheFailureReported = true;
+            ReportHub.Log(ReportCategory.UI, $"Satellite tiles are not using the disk cache: {message}");
         }
 
         /// <summary>
@@ -447,17 +498,17 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             }
         }
 
-        private void Fail(Tile tile, Exception? failure)
+        private void Fail(Tile tile, Exception failure)
         {
             // A tile the server doesn't have stays empty: there is nothing to retry or report.
-            if (IsNotFound(failure))
+            if (failure is UnityWebRequestException { ResponseCode: WebRequestUtils.NOT_FOUND })
             {
                 tile.Empty = true;
                 return;
             }
 
             // One report per session: a wrong or offline URL fails every tile in view.
-            if (!tileFailureReported && failure != null)
+            if (!tileFailureReported)
             {
                 tileFailureReported = true;
                 ReportHub.LogException(failure, ReportCategory.UI);
@@ -467,15 +518,6 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
 
             if (!retryPending)
                 RefreshWhenFailedTilesCanRetryAsync(lifetimeCts.Token).Forget();
-        }
-
-        private static bool IsNotFound(Exception? failure)
-        {
-            for (Exception? exception = failure; exception != null; exception = exception.InnerException)
-                if (exception is UnityWebRequestException { ResponseCode: WebRequestUtils.NOT_FOUND })
-                    return true;
-
-            return false;
         }
 
         /// <summary>
@@ -501,10 +543,8 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             Refresh();
         }
 
-        private void Show(Vector3Int id, Tile tile, TextureData textureData)
+        private void Show(Vector3Int id, Tile tile, Texture2D texture)
         {
-            Texture2D texture = textureData.EnsureTexture2D();
-            tile.TextureData = textureData;
             tile.Texture = texture;
             float tileSize = TileSize(id.z, baseChunkSize);
 
@@ -536,12 +576,12 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             return view;
         }
 
-        /// <summary>Cancels the tile's load, gives its texture back to the shared cache, and pools its view.</summary>
+        /// <summary>Cancels the tile's load, destroys its sprite and texture, and pools its view.</summary>
         private void ReleaseTile(Tile tile)
         {
             tile.Cts.SafeCancelAndDispose();
             UnityObjectUtils.SafeDestroy(tile.Sprite);
-            tile.TextureData?.Dereference();
+            UnityObjectUtils.SafeDestroy(tile.Texture);
 
             // On application quit the view can already be destroyed.
             if (!tile.View)
@@ -559,7 +599,6 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             public readonly AtlasChunk View;
             public readonly CancellationTokenSource Cts = new ();
             public string Url = string.Empty;
-            public TextureData? TextureData;
             public Texture2D? Texture;
             public Sprite? Sprite;
             public float? FailedAt;

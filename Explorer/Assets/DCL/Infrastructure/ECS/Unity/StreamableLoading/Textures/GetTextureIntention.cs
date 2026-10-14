@@ -17,9 +17,6 @@ namespace ECS.StreamableLoading.Textures
         public readonly FilterMode FilterMode;
         public readonly TextureType TextureType;
 
-        /// <summary>Keeps the URL away from the media converter, for files that already are KTX2</summary>
-        public readonly bool SkipKtxConversion;
-
         // OR
         public readonly bool IsVideoTexture;
         public readonly CRDTEntity VideoPlayerEntity;
@@ -37,14 +34,12 @@ namespace ECS.StreamableLoading.Textures
 
         public GetTextureIntention(string url, string fileHash, TextureWrapMode wrapMode, FilterMode filterMode, TextureType textureType,
             string reportSource,
-            int attemptsCount = StreamableLoadingDefaults.ATTEMPTS_COUNT,
-            bool skipKtxConversion = false)
+            int attemptsCount = StreamableLoadingDefaults.ATTEMPTS_COUNT)
         {
             CommonArguments = new CommonLoadingArguments(url, attempts: attemptsCount);
             WrapMode = wrapMode;
             FilterMode = filterMode;
             TextureType = textureType;
-            SkipKtxConversion = skipKtxConversion;
             IsVideoTexture = false;
             VideoPlayerEntity = -1;
             FileHash = fileHash;
@@ -62,7 +57,6 @@ namespace ECS.StreamableLoading.Textures
             WrapMode = wrapMode;
             FilterMode = filterMode;
             TextureType = textureType;
-            SkipKtxConversion = false;
             IsVideoTexture = false;
             VideoPlayerEntity = -1;
             FileHash = string.Empty;
@@ -79,7 +73,6 @@ namespace ECS.StreamableLoading.Textures
             IsVideoTexture = true;
             VideoPlayerEntity = videoPlayerEntity;
             TextureType = TextureType.Albedo; //Ignored
-            SkipKtxConversion = false;
             AvatarTextureUserId = null;
             ReportSource = "Video Texture";
         }
@@ -88,7 +81,6 @@ namespace ECS.StreamableLoading.Textures
             cacheKey == other.cacheKey &&
             WrapMode == other.WrapMode &&
             FilterMode == other.FilterMode &&
-            SkipKtxConversion == other.SkipKtxConversion &&
             IsVideoTexture == other.IsVideoTexture &&
             VideoPlayerEntity.Equals(other.VideoPlayerEntity) &&
             AvatarTextureUserId == other.AvatarTextureUserId;
@@ -97,7 +89,7 @@ namespace ECS.StreamableLoading.Textures
             obj is GetTextureIntention other && Equals(other);
 
         public readonly override int GetHashCode() =>
-            HashCode.Combine((int)WrapMode, (int)FilterMode, cacheKey, SkipKtxConversion, IsVideoTexture, VideoPlayerEntity, AvatarTextureUserId);
+            HashCode.Combine((int)WrapMode, (int)FilterMode, cacheKey, IsVideoTexture, VideoPlayerEntity, AvatarTextureUserId);
 
         public readonly override string ToString() =>
             $"Get Texture by {ReportSource}, {(IsAvatarTexture ? "isAvatarTexture" : string.Empty)} : {(IsVideoTexture ? $"Video {VideoPlayerEntity}" : CommonArguments.URL)}";
@@ -123,10 +115,6 @@ namespace ECS.StreamableLoading.Textures
                 keyPayload.Put(asset.IsVideoTexture);
                 keyPayload.Put(asset.VideoPlayerEntity.Id);
                 keyPayload.Put(asset.AvatarTextureUserId ?? string.Empty);
-
-                // Only when set, so the keys of textures stored before the option existed stay the same.
-                if (asset.SkipKtxConversion)
-                    keyPayload.Put(true);
             }
         }
     }

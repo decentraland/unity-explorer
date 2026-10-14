@@ -10,6 +10,7 @@ Entry points live under `Explorer/Assets/DCL/Infrastructure/ECS/StreamableLoadin
 |---------|-----------|----------|
 | Textures (`TextureData`) | `.tex` | `LoadTextureSystem` via `DiskCacheOptions` |
 | Scene JS sources | `.js` | `CachedWebJsSources` |
+| Satellite map zoom tiles (KTX2 files) | `.ktx2` | `SatelliteDetailTiles` via `StaticContainer.BytesDiskCache` (`BytesDiskSerializer`) |
 | ISS descriptors | `.iss.json` | `LoadISSDescriptorSystem` (`GlobalWorldFactory`) |
 | Partial asset-bundle downloads | `.partial` (in `partials/` subdirectory, separate `DiskCache` instance) | `PartialDownloadSystemBase` |
 
