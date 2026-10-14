@@ -22,6 +22,7 @@ namespace DCL.SDKEntityTriggerArea.Components
         private bool targetOnlyMainPlayer;
         private bool hasMonoBehaviour;
         private uint incrementalTick;
+        private Vector3 compensatedParentScale;
 
         public Vector3 AreaSize { get; private set; }
         public SDKEntityTriggerAreaMeshType MeshType { get; private set; }
@@ -58,6 +59,7 @@ namespace DCL.SDKEntityTriggerArea.Components
 
             IsDirty = true;
             incrementalTick = 0;
+            compensatedParentScale = Vector3.zero;
         }
 
         public void TryAssignArea(IComponentPool<SDKEntityTriggerArea> pool, Transform mainPlayerTransform, TransformComponent transformComponent)
@@ -72,10 +74,14 @@ namespace DCL.SDKEntityTriggerArea.Components
                 SetMonoBehaviour(area);
 
                 Transform triggerAreaTransform = area.transform;
-                triggerAreaTransform.SetParent(transformComponent.Transform, worldPositionStays: !useTransformScaleAsAreaSize);
-                triggerAreaTransform.localPosition = Vector3.zero;
-                triggerAreaTransform.localRotation = Quaternion.identity;
+                triggerAreaTransform.SetParent(transformComponent.Transform, worldPositionStays: false);
+                triggerAreaTransform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
             }
+
+            if (useTransformScaleAsAreaSize)
+                area.transform.localScale = Vector3.one;
+            else
+                CompensateParentScale(area.transform, transformComponent.Transform.lossyScale);
 
             // Re-applied on every assignment so a mask update rebinds or clears the filter.
             area.SetTargetTransform(targetOnlyMainPlayer ? mainPlayerTransform : null);
@@ -100,6 +106,20 @@ namespace DCL.SDKEntityTriggerArea.Components
             area.gameObject.layer = PhysicsLayers.IsAvatarOnlyMask(LayerMask)
                 ? PhysicsLayers.SDK_AVATAR_TRIGGER_AREA
                 : PhysicsLayers.SDK_ENTITY_TRIGGER_AREA;
+        }
+
+        /// <summary>
+        ///     Keeps an explicit area size independent of the entity and parent scale changed after the area was assigned
+        /// </summary>
+        public void TryUpdateParentScaleCompensation(Transform parent)
+        {
+            if (!hasMonoBehaviour || AreaSize == Vector3.zero) return;
+
+            Vector3 parentScale = parent.lossyScale;
+
+            if (parentScale == compensatedParentScale) return;
+
+            CompensateParentScale(monoBehaviour!.transform, parentScale);
         }
 
         public void UpdateAreaSize(Vector3 size)
@@ -154,5 +174,15 @@ namespace DCL.SDKEntityTriggerArea.Components
             monoBehaviour = newMonoBehaviour;
             hasMonoBehaviour = newMonoBehaviour != null;
         }
+
+        private void CompensateParentScale(Transform areaTransform, Vector3 parentScale)
+        {
+            compensatedParentScale = parentScale;
+            areaTransform.localScale = new Vector3(InverseScale(parentScale.x), InverseScale(parentScale.y), InverseScale(parentScale.z));
+        }
+
+        // A zero parent axis collapses the area along it, like the parent itself
+        private static float InverseScale(float scale) =>
+            Mathf.Approximately(scale, 0f) ? 0f : 1f / scale;
     }
 }
