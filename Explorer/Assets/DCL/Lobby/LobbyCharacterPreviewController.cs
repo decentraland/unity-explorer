@@ -141,9 +141,7 @@ namespace DCL.Lobby
         private void FitCameraToAvatar()
         {
             if (previewController is { } preview && preview.TryGetAvatarWorldBounds(out Vector3 feet, out Bounds bounds))
-                stage.FitAvatar(feet, bounds.max.y - feet.y);
-            else
-                stage.FitAvatar(Vector3.zero, 0f);
+                stage.SetAvatarFraming(feet, bounds.max.y - feet.y);
         }
 
         private async UniTask PlayFlavourEmotesAsync(CancellationToken ct)

@@ -81,9 +81,9 @@ namespace DCL.Lobby
         }
 
         /// <summary>
-        ///     Where the avatar stands and its height above the feet, in metres. When its head would pass the top limit the tracked camera eases back from the feet until it fits; a zero height keeps the default framing.
+        ///     Stores where the avatar stands and its height above the feet, in metres; each render then eases the tracked camera back from the feet while the head would pass the top limit. Cleared when the stage is disabled.
         /// </summary>
-        public void FitAvatar(Vector3 feet, float height)
+        public void SetAvatarFraming(Vector3 feet, float height)
         {
             avatarFeet = feet;
             avatarHeight = height;
