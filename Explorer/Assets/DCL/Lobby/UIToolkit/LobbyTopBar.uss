@@ -28,22 +28,22 @@
     align-items: center;
     border-width: 2px;
     border-radius: 23px;
-    border-color: rgba(255, 255, 255, 0.03);
-    background-color: black;
+    border-color: rgba(40, 40, 40, 0.55);
+    background-color: rgba(0, 0, 0, 0.55);
     transition: background-color 0.1s;
 }
 
 .lobby__top-bar-pill:hover {
-    background-color: rgb(31, 31, 31);
+    background-color: rgba(90, 90, 90, 0.55);
 }
 
 .lobby__top-bar-pill:active {
-    background-color: black;
+    background-color: rgba(0, 0, 0, 0.55);
 }
 
 .lobby__top-bar-pill-icon {
-    width: 22px;
-    height: 22px;
+    width: 32px;
+    height: 32px;
 }
 
 .lobby__top-bar-pill-label {
@@ -54,7 +54,7 @@
 }
 
 .lobby__map-icon {
-    background-image: url('/Assets/Textures/ExplorePanel/MapOff.png');
+    background-image: url('/Assets/Textures/Common/MapIcn.png');
 }
 
 .lobby__places-icon {
@@ -66,29 +66,29 @@
 }
 
 .lobby__top-bar-button {
-    width: 40px;
-    height: 40px;
+    width: 46px;
+    height: 46px;
     margin-left: 10px;
     align-items: center;
     justify-content: center;
     border-width: 2px;
-    border-radius: 20px;
-    border-color: rgba(255, 255, 255, 0.03);
-    background-color: black;
+    border-radius: 23px;
+    border-color: rgba(40, 40, 40, 0.55);
+    background-color: rgba(0, 0, 0, 0.55);
     transition: background-color 0.1s;
 }
 
 .lobby__top-bar-button:hover {
-    background-color: rgb(31, 31, 31);
+    background-color: rgba(90, 90, 90, 0.55);
 }
 
 .lobby__top-bar-button:active {
-    background-color: black;
+    background-color: rgba(0, 0, 0, 0.55);
 }
 
 .lobby__notifications-icon {
-    width: 22px;
-    height: 22px;
+    width: 32px;
+    height: 32px;
     background-image: url('/Assets/Textures/Common/NotificationIcn.png');
 }
 
@@ -127,7 +127,7 @@
     right: var(--lobby-margin);
 }
 
-/* In-world the Close button sits right of the widget: 40px plus its 10px margin */
+/* In-world the Close button sits right of the widget: 46px plus its 10px margin */
 .lobby__profile-menu--with-close .lobby-profile-menu__panel {
-    right: 100px;
+    right: 106px;
 }
