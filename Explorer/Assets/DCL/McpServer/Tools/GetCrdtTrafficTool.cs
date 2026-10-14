@@ -223,7 +223,7 @@ namespace DCL.McpServer.Tools
             {
                 ["entity"] = entry.EntityId,
                 ["engineEntityId"] = info.EngineId.HasValue ? new JValue(info.EngineId.Value) : JValue.CreateNull(),
-                ["entityLabel"] = (JToken?)info.Label ?? JValue.CreateNull(),
+                ["entityLabel"] = info.Label != null ? new JValue(info.Label) : JValue.CreateNull(),
                 ["componentId"] = entry.ComponentId,
                 ["component"] = ComponentName(entry.ComponentId),
                 ["messages"] = entry.Messages,
