@@ -89,9 +89,9 @@ a stutter rather than a session loss.
 The Explorer's media systems (`DCL.SDKComponents.MediaStream`) talk straight to
 `Packages/UUAV/AVProCompat/` (`MediaPlayer`,
 `IMediaControl`, `IMediaInfo`, `ITextureProducer`). That facade still mirrors
-AVPro's shape — the inert platform-option objects, `MediaPathType`, a no-op
-`MediaPlayerEvent`, a `TimeRanges` whose only read is `Count` — because it was
-built so the switch could stay trivial. With one backend left, the shape buys
+AVPro's shape — `MediaPathType`, a `TimeRanges` whose only read is `Count` —
+because it was built so the switch could stay trivial. With one backend left, the
+shape buys
 nothing: it is slated to be collapsed so the media systems drive `UUAVPlayer`
 through a surface that states only what UUAV actually does.
 

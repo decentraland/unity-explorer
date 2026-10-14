@@ -7,42 +7,12 @@ namespace UUAV.Compat
     [RequireComponent(typeof(AudioSource))]
     public sealed class MediaPlayer : MonoBehaviour
     {
-        // Base for the per-platform option objects; holds the shared AudioMode
-        // enum the macOS options reference. All values are inert under UUAV.
-        public class PlatformOptions
-        {
-            public enum AudioMode
-            {
-                SystemDirect,
-                Unity,
-                FacebookAudio360,
-                None,
-            }
-        }
-
-        public sealed class OptionsWindows : PlatformOptions
-        {
-            public Windows.AudioOutput _audioMode = Windows.AudioOutput.Unity;
-            public Windows.VideoApi videoApi = Windows.VideoApi.MediaFoundation;
-            public bool startWithHighestBitrate;
-            public bool useLowLiveLatency;
-        }
-
-        public sealed class OptionsApple : PlatformOptions
-        {
-            public AudioMode audioMode = AudioMode.Unity;
-        }
-
         private UUAVPlayer uuavPlayer = null!;
         private UUAVBackend backend = null!;
-
-        public OptionsWindows PlatformOptionsWindows { get; } = new OptionsWindows();
-        public OptionsApple PlatformOptions_macOS { get; } = new OptionsApple();
 
         public IMediaControl Control => backend;
         public IMediaInfo Info => backend;
         public ITextureProducer TextureProducer => backend;
-        public MediaPlayerEvent Events { get; } = new MediaPlayerEvent();
 
         public AudioSource AudioSource => uuavPlayer.AudioSource;
 

@@ -21,24 +21,4 @@ namespace UUAV.Compat
         LoadFailed = 100,
         DecodeFailed = 200,
     }
-
-    // Windows platform-option enums. Inert under UUAV: audio always routes
-    // through Unity and video always uses the D3D11 path.
-    public static class Windows
-    {
-        public enum VideoApi
-        {
-            MediaFoundation,
-            DirectShow,
-            WinRT,
-        }
-
-        public enum AudioOutput
-        {
-            System,
-            Unity,
-            FacebookAudio360,
-            None,
-        }
-    }
 }
