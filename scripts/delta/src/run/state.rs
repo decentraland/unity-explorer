@@ -1,5 +1,5 @@
-//! The lifecycle of one platform's delta run, as data. The `Run` document carries the current
-//! `State` between YAML steps; each state holds only what later states need.
+//! The lifecycle of one platform's delta run, as data. The `Run` is the model of the machine in
+//! `fsm`; each state holds only what later states need.
 
 use std::fmt;
 use std::path::PathBuf;
@@ -16,41 +16,39 @@ use crate::publishing::manifest::Manifest;
 use crate::publishing::values::{ETag, ZipName, ZipRef};
 use crate::releases::bases::Bases;
 use crate::releases::tag::{Platform, Tag};
-use crate::run::fsm::Step;
 
-pub const SCHEMA: u32 = 2;
-
-/// The release this run makes patches into, and where its files live.
+/// The release the patches lead to, and where its files live.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct Target {
+pub struct Release {
     pub tag: Tag,
     pub platform: Platform,
     pub zip: ZipName,
     /// Key prefix of all releases in the bucket, e.g. `@dcl/unity-explorer/releases`.
-    pub releases: String,
+    pub bucket_prefix: String,
     /// Local work folder of this run.
     pub work: PathBuf,
 }
 
-impl Target {
+impl Release {
     pub fn zip_key(&self) -> String {
-        zip_key(&self.releases, &self.tag, &self.zip)
+        zip_key(&self.bucket_prefix, &self.tag, &self.zip)
     }
 
     pub fn base_zip_key(&self, base: &Tag) -> String {
-        zip_key(&self.releases, base, &self.zip)
+        zip_key(&self.bucket_prefix, base, &self.zip)
     }
 
-    pub fn prefix(&self) -> String {
-        delta_prefix(&self.releases, &self.tag, self.platform)
+    /// `<bucket_prefix>/<tag>/delta/<platform>`, where the patches and the manifest go.
+    pub fn delta_prefix(&self) -> String {
+        delta_prefix(&self.bucket_prefix, &self.tag, self.platform)
     }
 
     pub fn archive(&self) -> PathBuf {
-        self.work.join("target.zip")
+        self.work.join("release.zip")
     }
 
     pub fn build_dir(&self) -> PathBuf {
-        self.work.join("target")
+        self.work.join("release")
     }
 
     pub fn base_archive(&self, base: &Tag) -> PathBuf {
@@ -72,64 +70,64 @@ impl Target {
 
     pub fn upload(&self) -> UploadLayout {
         UploadLayout {
-            prefix: self.prefix(),
+            prefix: self.delta_prefix(),
             patches: self.work.join("upload").join("patches"),
             manifest: self.work.join("upload").join("manifest"),
         }
     }
 }
 
-/// What the run was asked for. `Request::new` refuses a run without bases and a target listed
+/// What the run was asked for. `Request::new` refuses a run without bases and a release listed
 /// as its own base; duplicate bases are ignored.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Request {
-    pub target: Target,
+    pub release: Release,
     pub bases: Vec<Tag>,
 }
 
 impl Request {
-    pub fn new(target: Target, bases: Vec<Tag>) -> Result<Request> {
+    pub fn new(release: Release, bases: Vec<Tag>) -> Result<Request> {
         let mut unique: Vec<Tag> = Vec::new();
         for base in bases {
-            ensure!(base != target.tag, "{base} cannot be its own base");
+            ensure!(base != release.tag, "{base} cannot be its own base");
             if !unique.contains(&base) {
                 unique.push(base);
             }
         }
         ensure!(!unique.is_empty(), "no base release to make patches from");
-        Ok(Request { target, bases: unique })
+        Ok(Request { release, bases: unique })
     }
 }
 
-/// The target release's zip as downloaded; the `ETag` identifies that exact object.
+/// The release zip as downloaded; the `ETag` identifies that exact object.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct TargetZip {
+pub struct ReleaseZip {
     pub zip: ZipRef,
     pub etag: ETag,
 }
 
-/// Zip paths of the target and of every base that has one.
+/// Zip paths of the release and of every base that has one.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Archives {
-    pub target: Target,
-    pub zip: TargetZip,
+    pub release: Release,
+    pub zip: ReleaseZip,
     pub bases: Bases<PathBuf>,
 }
 
-/// Build roots of the target and of every base that extracted cleanly.
+/// Build roots of the release and of every base that extracted cleanly.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Folders {
-    pub target: Target,
-    pub zip: TargetZip,
+    pub release: Release,
+    pub zip: ReleaseZip,
     pub root: PathBuf,
     pub bases: Bases<PathBuf>,
 }
 
-/// Every build described, and how the target's signed artifacts verify.
+/// Every build described, and how the release's signed artifacts verify.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Builds {
-    pub target: Target,
-    pub zip: TargetZip,
+    pub release: Release,
+    pub zip: ReleaseZip,
     pub build: Build,
     pub signatures: Signatures,
     pub bases: Bases<Build>,
@@ -144,8 +142,8 @@ pub struct Candidate {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Candidates {
-    pub target: Target,
-    pub zip: TargetZip,
+    pub release: Release,
+    pub zip: ReleaseZip,
     pub build: Build,
     pub signatures: Signatures,
     pub bases: Bases<Candidate>,
@@ -154,16 +152,16 @@ pub struct Candidates {
 /// The verified manifest and where its files go.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Upload {
-    pub target: Target,
-    pub zip: TargetZip,
+    pub release: Release,
+    pub zip: ReleaseZip,
     pub manifest: Manifest,
     pub layout: UploadLayout,
 }
 
 /// ```text
-/// Idle -> Unpublished -> Cleared -> Downloaded -> Extracted -> Scanned
-///      -> Encoded -> Verified -> Assembled -> Rechecked -> PatchesUploaded -> Published
-/// any  -> Failed
+/// Requested -> Cleared -> Downloaded -> Extracted -> Scanned -> Encoded
+///           -> Verified -> Prepared -> Rechecked -> PatchesUploaded -> Published
+/// any       -> Failed
 /// ```
 ///
 /// `Published` and `Failed` are terminal. The variant's doc says what the state guarantees.
@@ -171,20 +169,18 @@ pub struct Upload {
 #[serde(tag = "state")]
 pub enum State {
     /// Nothing done yet.
-    Idle(Request),
-    /// The target release is not published.
-    Unpublished(Request),
-    /// Patches left by an earlier run of this target are gone from the bucket.
+    Requested(Request),
+    /// Patches left by an earlier run of this release are gone from the bucket.
     Cleared(Request),
     Downloaded(Archives),
     Extracted(Folders),
     Scanned(Builds),
     Encoded(Candidates),
-    /// Every remaining patch set rebuilt the target build exactly, signatures included; the
+    /// Every remaining patch set rebuilt the release build exactly, signatures included; the
     /// manifest is built from them.
     Verified(Upload),
     /// The upload folders hold the verified patches and `manifest.json`.
-    Assembled(Upload),
+    Prepared(Upload),
     /// Still unpublished, and the zip in the bucket is the one the patches lead to.
     Rechecked(Upload),
     /// The patches are on the CDN; the manifest is not yet.
@@ -193,23 +189,37 @@ pub enum State {
     Published(Manifest),
     /// A run-level failure, or every base dropped.
     Failed {
-        at: Step,
         reason: String,
     },
 }
 
 impl State {
+    /// Every state name, in lifecycle order, as `--until` accepts them.
+    pub const NAMES: [&'static str; 12] = [
+        "Requested",
+        "Cleared",
+        "Downloaded",
+        "Extracted",
+        "Scanned",
+        "Encoded",
+        "Verified",
+        "Prepared",
+        "Rechecked",
+        "PatchesUploaded",
+        "Published",
+        "Failed",
+    ];
+
     pub fn name(&self) -> &'static str {
         match self {
-            State::Idle(_) => "Idle",
-            State::Unpublished(_) => "Unpublished",
+            State::Requested(_) => "Requested",
             State::Cleared(_) => "Cleared",
             State::Downloaded(_) => "Downloaded",
             State::Extracted(_) => "Extracted",
             State::Scanned(_) => "Scanned",
             State::Encoded(_) => "Encoded",
             State::Verified(_) => "Verified",
-            State::Assembled(_) => "Assembled",
+            State::Prepared(_) => "Prepared",
             State::Rechecked(_) => "Rechecked",
             State::PatchesUploaded(_) => "PatchesUploaded",
             State::Published(_) => "Published",
@@ -261,50 +271,38 @@ pub struct Dropped {
     pub reason: DropReason,
 }
 
-/// The document carried between YAML steps: the current state and the bases dropped so far.
-/// Written only by this tool.
+/// The model of the machine: the current state and the bases dropped so far.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Run {
-    pub schema: u32,
     pub state: State,
     pub dropped: Vec<Dropped>,
-}
-
-impl Run {
-    pub fn new(request: Request) -> Run {
-        Run {
-            schema: SCHEMA,
-            state: State::Idle(request),
-            dropped: Vec::new(),
-        }
-    }
 }
 
 #[cfg(test)]
 mod tests {
     use anyhow::{Result, ensure};
 
-    use super::{Request, Target};
+    use super::{Release, Request};
     use crate::publishing::values::ZipName;
     use crate::releases::tag::{Platform, Tag};
 
-    fn target() -> Result<Target> {
-        Ok(Target {
+    fn release() -> Result<Release> {
+        Ok(Release {
             tag: "v1.1.0".parse()?,
             platform: Platform::Windows64,
             zip: ZipName::try_new("Decentraland_windows64.zip".to_owned())?,
-            releases: "releases".to_owned(),
+            bucket_prefix: "releases".to_owned(),
             work: std::path::PathBuf::from("work"),
         })
     }
 
     #[test]
-    fn a_request_needs_bases_other_than_the_target() -> Result<()> {
-        ensure!(Request::new(target()?, vec![]).is_err());
+    fn a_request_needs_bases_other_than_the_release() -> Result<()> {
+        ensure!(Request::new(release()?, vec![]).is_err());
         let own: Tag = "v1.1.0".parse()?;
-        ensure!(Request::new(target()?, vec![own]).is_err());
+        ensure!(Request::new(release()?, vec![own]).is_err());
         let base: Tag = "v1.0.0".parse()?;
-        ensure!(Request::new(target()?, vec![base.clone(), base])?.bases.len() == 1);
+        ensure!(Request::new(release()?, vec![base.clone(), base])?.bases.len() == 1);
         Ok(())
     }
 }

@@ -1,19 +1,20 @@
-//! One platform's delta run. Each YAML step runs `delta step <step> run.json`: the `Run`
-//! document is read, `update` turns the step into the one `Command` it needs (or fails the run
-//! when the step does not fit the state), `execute` runs that command and reports, `update` folds
-//! the report into the next state, and the document is written back.
+//! One platform's delta run as an Elm-style machine. `create-run` writes `init(request)`: the
+//! `Requested` state and the first cmd. `run` drains: execute the pending cmd, feed the fact it
+//! produced to `update`, get the next state with its cmds, save, repeat, until the machine asks
+//! to stop with `Cmd::Complete` or the state named by `--until` is reached.
 //!
 //! ```text
-//! Idle -> Unpublished -> Cleared -> Downloaded -> Extracted -> Scanned
-//!      -> Encoded -> Verified -> Assembled -> Rechecked -> PatchesUploaded -> Published
-//! any  -> Failed (run-level error, step or report out of order, or every base dropped)
+//! Requested -> Cleared -> Downloaded -> Extracted -> Scanned -> Encoded
+//!           -> Verified -> Prepared -> Rechecked -> PatchesUploaded -> Published
+//! any       -> Failed (integrity failure, a fact out of order, or every base dropped)
 //! ```
 //!
 //! `fsm` is pure: no file system, processes or environment. `execute` is the only impure part
-//! and never sees the state.
+//! and never sees the state. `runtime` is the loop between them.
 
 pub mod document;
 pub mod execute;
 pub mod fsm;
+pub mod runtime;
 pub mod state;
 pub mod summary;

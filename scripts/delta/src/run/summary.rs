@@ -21,7 +21,7 @@ fn saving(download: u64, zip: u64) -> u64 {
 
 fn table(manifest: &Manifest) -> Vec<String> {
     let mut lines: Vec<String> = vec![
-        format!("### Delta patches: {} -> {}", manifest.platform(), manifest.target()),
+        format!("### Delta patches: {} -> {}", manifest.platform(), manifest.release()),
         String::new(),
         "| From | Patched | Whole | Deleted | Download | Full zip | Saving |".to_owned(),
         "|---|---|---|---|---|---|---|".to_owned(),
@@ -44,9 +44,9 @@ fn table(manifest: &Manifest) -> Vec<String> {
 pub fn summary(run: &Run) -> String {
     let mut lines: Vec<String> = match &run.state {
         State::Published(manifest) => table(manifest),
-        State::Failed { at, reason } => {
+        State::Failed { reason } => {
             vec![
-                format!("### Delta patches: failed at `{at}`"),
+                "### Delta patches: failed".to_owned(),
                 String::new(),
                 "```".to_owned(),
                 reason.clone(),

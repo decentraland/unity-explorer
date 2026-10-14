@@ -6,9 +6,10 @@ name: Release Delta Patches
 # into <tag>, plus their manifest, and uploads them next to the release zip:
 #   releases/<tag>/delta/<platform>/manifest.json
 #   releases/<tag>/delta/<platform>/from/<base tag>/<path>.hdiff
-# Each step below sends one step to the delta tool (scripts/delta, `delta --help`) on the
-# run document: it must be in the state the step follows, and moves to the next.
-# A failing base is dropped; the others still ship. Design: docs/delta-updates.md
+# The delta tool (scripts/delta, `delta --help`) runs a state machine over a run document;
+# each step below resumes it and drains it to the named state, so the step borders only give
+# timeouts and elapsed times. A failing base is dropped; the others still ship.
+# Design: docs/delta-updates.md
 on:
   workflow_call:
     inputs:
@@ -141,51 +142,33 @@ jobs:
         run: |
           echo "RUN=$RUNNER_TEMP/delta/run.json" >> "$GITHUB_ENV"
           "$DELTA" create-run "$RUNNER_TEMP/delta/run.json" --tag "$TAG" --platform "$PLATFORM" --zip "$ZIP" \
-            --releases "$RELEASES_PATH" --bases "$BASES" --work "$RUNNER_TEMP/delta/work"
+            --bucket-prefix "$RELEASES_PATH" --bases "$BASES" --work "$RUNNER_TEMP/delta/work"
 
-      - name: Confirm the release is unpublished
-        timeout-minutes: 5
-        run: '"$DELTA" step confirm-unpublished "$RUN"'
+      # Each `run` resumes the document and drains the machine until the named state: the step
+      # borders give per-phase timeouts and elapsed times, the machine does not know about them.
+      - name: Remove stale patches, download the zips
+        timeout-minutes: 25
+        run: '"$DELTA" run "$RUN" --until Downloaded'
 
-      - name: Remove patches of an earlier run of this tag
-        timeout-minutes: 5
-        run: '"$DELTA" step remove-stale-patches "$RUN"'
-
-      - name: Download the target and base zips
-        timeout-minutes: 20
-        run: '"$DELTA" step download-archives "$RUN"'
-
-      - name: Extract the builds
-        timeout-minutes: 20
-        run: '"$DELTA" step extract-archives "$RUN"'
-
-      - name: Scan the builds
-        timeout-minutes: 20
-        run: '"$DELTA" step scan-builds "$RUN"'
+      - name: Extract and scan the builds
+        timeout-minutes: 40
+        run: '"$DELTA" run "$RUN" --until Scanned'
 
       - name: Encode the patch sets
         timeout-minutes: 90
-        run: '"$DELTA" step encode-patches "$RUN"'
+        run: '"$DELTA" run "$RUN" --until Encoded'
 
       - name: Replay the patch sets like the launcher
         timeout-minutes: 40
-        run: '"$DELTA" step replay-patches "$RUN"'
+        run: '"$DELTA" run "$RUN" --until Verified'
 
-      - name: Write the manifest
-        timeout-minutes: 10
-        run: '"$DELTA" step write-manifest "$RUN"'
+      - name: Prepare the upload and recheck the release
+        timeout-minutes: 15
+        run: '"$DELTA" run "$RUN" --until Rechecked'
 
-      - name: Recheck the release and its zip
-        timeout-minutes: 5
-        run: '"$DELTA" step recheck-target "$RUN"'
-
-      - name: Upload the patches
-        timeout-minutes: 20
-        run: '"$DELTA" step upload-patches "$RUN"'
-
-      - name: Publish the manifest
-        timeout-minutes: 5
-        run: '"$DELTA" step publish-manifest "$RUN"'
+      - name: Upload the patches, then publish the manifest
+        timeout-minutes: 25
+        run: '"$DELTA" run "$RUN"'
 
       - name: Write job summary
         if: always() && env.RUN != ''

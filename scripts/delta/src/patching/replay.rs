@@ -2,12 +2,15 @@
 
 use std::fmt;
 
+use serde::{Deserialize, Serialize};
+
 use crate::builds::tree::{Node, Tree};
 use crate::builds::values::{Mode, RelPath, Sha256};
 use crate::patching::delta::{Delta, Patch, Whole};
 
 /// One action of the launcher's replay.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(tag = "action", rename_all = "lowercase")]
 pub enum Action {
     Delete(RelPath),
     Diff {

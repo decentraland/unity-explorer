@@ -1,19 +1,20 @@
 //! `delta`: per-file `HDiffPatch` delta updates for Explorer releases. Design: docs/delta-updates.md.
 
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::process::ExitCode;
 
 use anyhow::{Context, Result};
+use clap::builder::PossibleValuesParser;
 use clap::{Parser, Subcommand};
 
 use delta::io::{Io, Releases};
 use delta::publishing::values::ZipName;
-use delta::releases::github::{Release, explorer_releases, pick_bases, prune_targets};
+use delta::releases::github::{Release as PublishedRelease, explorer_releases, pick_bases, prune_targets};
 use delta::releases::tag::{Platform, Tag};
 use delta::run::document;
-use delta::run::execute::execute;
-use delta::run::fsm::{Command, Msg, Report, Step, update};
-use delta::run::state::{Request, Run, State, Target};
+use delta::run::fsm::{Cmd, init};
+use delta::run::runtime::{drain, log};
+use delta::run::state::{Release, Request, Run, State};
 use delta::run::summary::summary;
 use delta::shell;
 use delta::shell::hdiff::{HDiffPatch, fetch_tools};
@@ -43,7 +44,7 @@ enum Operation {
         #[arg(long)]
         live: Option<Tag>,
     },
-    /// Write a new run document, in the Idle state.
+    /// Write a new run document: the Requested state and the first cmd.
     CreateRun {
         document: PathBuf,
         #[arg(long)]
@@ -55,7 +56,7 @@ enum Operation {
         zip: ZipName,
         /// Key prefix of all releases in the bucket, e.g. @dcl/unity-explorer/releases.
         #[arg(long)]
-        releases: String,
+        bucket_prefix: String,
         /// JSON array of base tags.
         #[arg(long)]
         bases: String,
@@ -63,10 +64,12 @@ enum Operation {
         #[arg(long)]
         work: PathBuf,
     },
-    /// Run one step on the run document; it must be in the state the step follows.
-    Step {
-        step: Step,
+    /// Resume the run document: execute its pending cmds until the machine completes.
+    Run {
         document: PathBuf,
+        /// Pause once this state is reached; the next `run` resumes from it.
+        #[arg(long, value_parser = PossibleValuesParser::new(State::NAMES))]
+        until: Option<String>,
         /// Use <folder> as the bucket, with nothing published and every signature valid.
         #[arg(long)]
         local: Option<PathBuf>,
@@ -75,45 +78,8 @@ enum Operation {
     Summary { document: PathBuf },
 }
 
-fn log(line: &str) {
-    eprintln!("[delta] {line}");
-}
-
-fn published_releases(releases: &dyn Releases) -> Result<Vec<Release>> {
+fn published_releases(releases: &dyn Releases) -> Result<Vec<PublishedRelease>> {
     explorer_releases(&releases.list()?)
-}
-
-/// Sends the step, runs the command it asks for, folds the report back in.
-fn step(step: Step, path: &Path, local: Option<PathBuf>) -> Result<ExitCode> {
-    let run: Run = document::load(path)?;
-    let hdiff: HDiffPatch = HDiffPatch::from_env();
-    let io: Io = match local {
-        Some(folder) => shell::folder(folder, hdiff),
-        None => shell::ci(hdiff),
-    };
-    let from: &'static str = run.state.name();
-    let dropped_before: usize = run.dropped.len();
-    let (run, command): (Run, Option<Command>) = update(run, Msg::Step(step));
-    let run: Run = match command {
-        Some(command) => {
-            let report: Report = execute(command, &io);
-            for line in report.lines() {
-                log(&format!("  {line}"));
-            }
-            update(run, Msg::Report(report)).0
-        }
-        None => run,
-    };
-    for dropped in run.dropped.iter().skip(dropped_before) {
-        log(&format!("  {} dropped: {}", dropped.base, dropped.reason));
-    }
-    log(&format!("{from} --{step}--> {}", run.state));
-    document::save(path, &run)?;
-    if let State::Failed { at, reason } = &run.state {
-        eprintln!("::error::delta run failed at {at}: {reason}");
-        return Ok(ExitCode::FAILURE);
-    }
-    Ok(ExitCode::SUCCESS)
 }
 
 fn operate(operation: Operation) -> Result<ExitCode> {
@@ -144,28 +110,41 @@ fn operate(operation: Operation) -> Result<ExitCode> {
             tag,
             platform,
             zip,
-            releases,
+            bucket_prefix,
             bases,
             work,
         } => {
             let base_tags: Vec<Tag> = serde_json::from_str(&bases).context("--bases is not a JSON array of tags")?;
-            let target: Target = Target {
+            let release: Release = Release {
                 tag,
                 platform,
                 zip,
-                releases,
+                bucket_prefix,
                 work,
             };
-            document::save(&path, &Run::new(Request::new(target, base_tags)?))?;
+            let (run, cmds): (Run, Vec<Cmd>) = init(Request::new(release, base_tags)?);
+            document::save(&path, &run, &cmds)?;
             log(&format!("created {}", path.display()));
         }
-        Operation::Step {
-            step: name,
+        Operation::Run {
             document: path,
+            until,
             local,
-        } => return step(name, &path, local),
+        } => {
+            let hdiff: HDiffPatch = HDiffPatch::from_env();
+            let io: Io = match local {
+                Some(folder) => shell::folder(folder, hdiff),
+                None => shell::ci(hdiff),
+            };
+            let run: Run = drain(&path, until.as_deref(), &io)?;
+            if let State::Failed { reason } = &run.state {
+                eprintln!("::error::delta run failed: {reason}");
+                return Ok(ExitCode::FAILURE);
+            }
+        }
         Operation::Summary { document: path } => {
-            print!("{}", summary(&document::load(&path)?));
+            let (run, _): (Run, Vec<Cmd>) = document::load(&path)?;
+            print!("{}", summary(&run));
         }
     }
     Ok(ExitCode::SUCCESS)

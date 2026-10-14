@@ -120,7 +120,7 @@ impl From<&Manifest> for ManifestDto {
             bases.insert(tag.to_string(), delta_dto(delta));
         }
         ManifestDto {
-            version: manifest.target().to_string(),
+            version: manifest.release().to_string(),
             platform: manifest.platform().to_string(),
             zip: ZipDto {
                 path: manifest.zip().name.to_string(),

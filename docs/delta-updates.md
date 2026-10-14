@@ -37,11 +37,11 @@ build-release-main.yml (push to main)
     |
     +--> delta              build-release-delta.yml (needs: build)
     |                         plan:  refuse a published tag, pick the last N published releases
-    |                         delta: [windows64 on ubuntu, macos on macos], one YAML step each:
-    |                                confirm-unpublished -> remove-stale-patches -> download-archives
-    |                                -> extract-archives -> scan-builds -> encode-patches
-    |                                -> replay-patches -> write-manifest -> recheck-target
-    |                                -> upload-patches -> publish-manifest (last)
+    |                         delta: [windows64 on ubuntu, macos on macos], a state machine
+    |                                drained in YAML slices (`delta run --until <state>`):
+    |                                Requested -> Cleared -> Downloaded -> Extracted -> Scanned
+    |                                -> Encoded -> Verified -> Prepared -> Rechecked
+    |                                -> PatchesUploaded -> Published (manifest last)
     v  (workflow_run: success)
 build-release-main-page.yml  -> draft GitHub release
     |
@@ -184,7 +184,7 @@ Implemented in the launcher repo:
    replaced by a symlink (`Versions/Current` -> `A`) deleted after the swap removes files in the
    symlink's target. A `deleted` entry can be a symlink to a directory (`Lib -> Fw/Versions/A`):
    remove the link itself, never recurse into it, or the files of its target go too. The tool's
-   `replay-patches` step replays this order.
+   `ReplayPatches` cmd replays this order.
 6. Leave files that are not in the manifest alone (logs, launcher-owned files).
 7. Reject the manifest (fall back to the zip and report it) if any `path`, `from_path`, `deleted`
    entry or `patch` is absolute, contains an empty, `.` or `..` segment, or contains `\`, `:` or a
@@ -202,24 +202,25 @@ needs code signing.
 All delta logic lives in [`scripts/delta/`](../scripts/delta/), a Rust crate built with the
 toolchain pinned in its `rust-toolchain.toml` (`cargo build --release`, then `delta --help`). The
 domain follows *Domain Modeling Made Functional*: simple types that can only hold valid values, one
-type per lifecycle state, errors as values. The run itself is an Elm-style state machine: every
-transformation of the state is the pure `update(run, msg) -> (run, command)`, and I/O happens only
-in executors that run a `Command` and answer with a plain-data `Report`.
+type per lifecycle state, errors as values. The run is an Elm-style machine in the shape of the
+client's `SelfProfile` FSM: `init(request)` and `update(run, msg)` return the next state and the
+cmds that state needs, as a pair; a `Msg` is a fact from I/O; the executor runs a `Cmd` and
+answers with the next `Msg`; `Cmd::Complete` asks the runtime to stop.
 
 ### Vocabulary
 
 | Term | Meaning |
 |---|---|
-| Target | The release the patches lead to. |
+| Release | The release the patches lead to. |
 | Base | An earlier published release a patch set starts from. |
 | Build / Tree / Node | An extracted release folder; every file and link in it by `RelPath`; one `File { size, sha256, mode }` or `Link { target }`. |
 | Plan / Job | What one base needs: deleted paths, and per changed file a `Diff { from }` or `Whole`. |
 | Patch / Whole / Delta | One encoded file against a base file or an empty file; the patch set of one base. |
 | Manifest | The launcher contract above; `ManifestDto` is its exact JSON, kept apart from the domain type. |
 | Drop | A base taken out of the run with its reason; the other bases continue. |
-| Run / State | The document carried between YAML steps, and where it is in its lifecycle. |
-| Step | What one YAML line sends to the machine (`delta step <step> run.json`). |
-| Command / Report | The one I/O a step needs, as data; what the executor saw, as data. |
+| Run / State | The model of the machine: the current state and the bases dropped so far. |
+| Msg | A fact from I/O, past tense (`ArchivesDownloaded`, `PatchesReplayed`, `IntegrityFailure`). |
+| Cmd | What the machine wants done (`DownloadArchives`, `ReplayPatches`, `Complete`). |
 
 ### Modules
 
@@ -229,57 +230,66 @@ in executors that run a `Command` and answer with a plain-data `Report`.
 | `releases` | `Tag` (semver, ordered by version), `Platform`, `Bases<T>` (never empty), the GitHub release DTO, picking bases, pruning, the published-tag lookup. |
 | `patching` | `plan`, the whole-file rule, `Delta`, the launcher's replay order (`replay_actions`), `differences`, encoding and replaying with `HDiffPatch`. |
 | `publishing` | `Manifest` (refuses inconsistent bases), `ManifestDto`, bucket keys, the upload layout. |
-| `run::state` | The `State` enum in lifecycle order, its payloads, `DropReason`, the `Run` document. |
-| `run::fsm` | `Step`, `Command`, `Report`, `update` and `judge`. Pure: no file system, processes or environment. |
-| `run::execute` | `execute(command, io) -> Report`: the only impure part of a run. It never sees the state. |
+| `run::state` | The `State` enum in lifecycle order, its payloads, `DropReason`, the `Run` model. |
+| `run::fsm` | `Msg`, `Cmd`, `init`, `update` and `judge`. Pure: no file system, processes or environment. |
+| `run::execute` | `execute(cmd, io) -> Msg`: the only impure part of a run. It never sees the state. |
+| `run::runtime` | The drain loop between them, and the document holding `{ run, cmds }`. |
 | `io` / `shell` | The traits `Releases`, `Bucket`, `Signer` and the concrete `HDiffPatch`; their implementations with `gh`, `aws`, `@dcl/cdn-uploader`, `hdiffz`/`hpatchz`, `osslsigncode`/`codesign`, and with local folders for tests and local runs. |
 
 ### Lifecycle
 
 ```
-Idle -> Unpublished -> Cleared -> Downloaded -> Extracted -> Scanned
-     -> Encoded -> Verified -> Assembled -> Rechecked -> PatchesUploaded -> Published
-any  -> Failed (terminal)
+Requested -> Cleared -> Downloaded -> Extracted -> Scanned -> Encoded
+          -> Verified -> Prepared -> Rechecked -> PatchesUploaded -> Published
+any       -> Failed (terminal)
 ```
 
-| Step | From | Command (I/O) | Decided in `update` | To |
+| State | Cmd it issues | Msg it waits for | Decided in `update` on that msg | Next |
 |---|---|---|---|---|
-| `create-run` | - | - | bases are not empty, none is the target | `Idle` |
-| `confirm-unpublished` | `Idle` | release lookup | a published target fails the run | `Unpublished` |
-| `remove-stale-patches` | `Unpublished` | remove `<tag>/delta/<platform>/` | - | `Cleared` |
-| `download-archives` | `Cleared` | download target and base zips | bucket keys; a base without a zip is dropped | `Downloaded` |
-| `extract-archives` | `Downloaded` | extract (archives checked before any write) | a base that fails is dropped | `Extracted` |
-| `scan-builds` | `Extracted` | scan trees, verify target signatures | a base that fails is dropped | `Scanned` |
-| `encode-patches` | `Scanned` | `hdiffz` per job, round-trip checked | the `Plan` of every base | `Encoded` |
-| `replay-patches` | `Encoded` | launcher replay onto a copy of the base, scan, verify signatures | the replay order; `judge`: the rebuilt build must equal the target, signatures included; the `Manifest` | `Verified` |
-| `write-manifest` | `Verified` | move patches, write `manifest.json` | the manifest JSON and the moves | `Assembled` |
-| `recheck-target` | `Assembled` | release lookup, zip `ETag` | still unpublished and the same zip, or the run fails | `Rechecked` |
-| `upload-patches` | `Rechecked` | upload, immutable | - | `PatchesUploaded` |
-| `publish-manifest` | `PatchesUploaded` | upload, revalidated | - | `Published` |
+| `Requested` | `RemoveStalePatches` | `StalePatchesRemoved` | the download keys | `Cleared` |
+| `Cleared` | `DownloadArchives` | `ArchivesDownloaded` | a base without a zip is dropped | `Downloaded` |
+| `Downloaded` | `ExtractArchives` | `ArchivesExtracted` | a base that fails is dropped | `Extracted` |
+| `Extracted` | `ScanBuilds` | `BuildsScanned` | a base that fails is dropped; the `Plan` of every base | `Scanned` |
+| `Scanned` | `EncodePatches` | `PatchesEncoded` | a base that fails is dropped; the replay order | `Encoded` |
+| `Encoded` | `ReplayPatches` | `PatchesReplayed` | `judge`: the rebuilt build must equal the release, signatures included; the `Manifest` and its JSON | `Verified` |
+| `Verified` | `PrepareUploadFolder` | `UploadFolderPrepared` | - | `Prepared` |
+| `Prepared` | `RecheckRelease` | `ReleaseRechecked` | still unpublished and the same zip `ETag`, or the run fails | `Rechecked` |
+| `Rechecked` | `UploadPatches` (immutable) | `PatchesUploaded` | - | `PatchesUploaded` |
+| `PatchesUploaded` | `PublishManifest` (revalidated) | `ManifestPublished` | - | `Published`, `Complete` |
+| any | | `IntegrityFailure`, or a msg that does not fit | the reason | `Failed`, `Complete` |
 
-Each YAML line runs `delta step <step> run.json`:
+`Requested` is created by `delta create-run` from the request (tag, platform, zip, bucket prefix,
+bases, work folder); the plan job has already refused a published tag, and `RecheckRelease` guards
+the upload against a publish or a rebuild during the run. No base left at any point fails the run.
+
+`delta run run.json [--until <state>]` drains the document like `FsmRuntime.Drain`:
 
 ```
-(run, command) = update(run, Step)      pure: the command this step needs, or Failed when the step does not fit the state
-report        = execute(command, io)    impure: run it, report what happened (per base: Ok or Err)
-(run, _)      = update(run, Report)    pure: the next state; failed bases dropped; no base left fails the run
+(run, cmds) = load(run.json)                  the state and the cmds it was paused with; nothing is checked
+loop:
+  cmd = cmds.pop_front()                      Complete: stop, exit by the state (Published 0, Failed 1)
+  msg = execute(cmd, io)                      impure; a cmd that cannot run at all answers IntegrityFailure
+  (run, next) = update(run, msg)              pure; failed bases dropped; cmds.extend(next)
+  save(run.json, run, cmds)                   atomic replace, after every transition
+  if run.state == until: stop, exit 0         the next `run` resumes from here
 ```
 
-The document is replaced atomically, the report and the transition are logged, and `delta summary
-run.json` renders the job summary. The workflow keeps the document as an artifact. Bucket names and
-tokens are read from the environment when a call runs and never reach the document. Executors clean
-up what they consumed (extraction removes the zip, replay removes the base build and its rebuild) and
-what failed; they never decide a transition.
+The YAML keeps one step per phase with its own timeout, each `delta run --until <state>`; the
+machine does not know the steps exist. Every msg, state and cmd is logged, the dropped bases with
+their reasons, and `delta summary run.json` renders the job summary. The workflow keeps the
+document as an artifact. Bucket names and tokens are read from the environment when a call runs
+and never reach the document. Executors clean up what they consumed (extraction removes the zip,
+replay removes the base build and its rebuild) and what failed; they never decide a transition.
 
 Errors are values. A problem with one base drops it (`DropReason`); a problem with the run fails it
-(`Failed { at: Step, reason }`), and a failed run ignores every further step. Clippy denies `unwrap`,
-`expect`, `panic`, indexing and unchecked arithmetic everywhere, tests included. The crate is
-single-threaded: bases are processed one after another.
+(`Failed { reason }`), and a failed run answers every further msg with `Complete`. Clippy denies
+`unwrap`, `expect`, `panic`, indexing and unchecked arithmetic everywhere, tests included. The
+crate is single-threaded: bases are processed one after another.
 
 ### Local run
 
-`--local <folder>` uses a folder as the bucket (`<folder>/<releases>/<tag>/<zip>`), with nothing
-published and every signature valid:
+`--local <folder>` uses a folder as the bucket (`<folder>/<bucket prefix>/<tag>/<zip>`), with
+nothing published and every signature valid:
 
 ```bash
 cd scripts/delta && cargo build --release && DELTA=$PWD/target/release/delta
@@ -288,11 +298,8 @@ mkdir -p /tmp/bucket/releases/v0.185.0-alpha /tmp/bucket/releases/v0.186.0-alpha
 cp v0.185.0-alpha/Decentraland_windows64.zip /tmp/bucket/releases/v0.185.0-alpha/
 cp v0.186.0-alpha/Decentraland_windows64.zip /tmp/bucket/releases/v0.186.0-alpha/
 "$DELTA" create-run /tmp/run.json --tag v0.186.0-alpha --platform windows64 --zip Decentraland_windows64.zip \
-  --releases releases --bases '["v0.185.0-alpha"]' --work /tmp/delta-work
-for step in confirm-unpublished remove-stale-patches download-archives extract-archives scan-builds \
-            encode-patches replay-patches write-manifest recheck-target upload-patches publish-manifest; do
-  "$DELTA" step "$step" /tmp/run.json --local /tmp/bucket || break
-done
+  --bucket-prefix releases --bases '["v0.185.0-alpha"]' --work /tmp/delta-work
+"$DELTA" run /tmp/run.json --local /tmp/bucket
 "$DELTA" summary /tmp/run.json
 ```
 
@@ -302,17 +309,19 @@ The manifest lands in `/tmp/bucket/releases/v0.186.0-alpha/delta/windows64/`.
 
 `cargo test` runs the unit tests next to each module (every rule of the simple types, `plan`, the
 whole-file rule, the replay order, `differences`, archive member checks, base picking and pruning,
-signature changes, `Manifest` rules, the summary), the lifecycle tests of `run::fsm` (every state
-from `Idle` to `Published` driven with hand-written reports and no disk: a step or report out of
-order, a published target, a replaced zip, an I/O failure, a base dropped at each stage, a base
-with no result, every base dropped, a failed run staying failed, and the document round trip at
-every state), and `tests/run.rs`: synthetic builds through every step with the real
-`hdiffz`/`hpatchz` and a folder bucket, covering changed, added, deleted, renamed and case-renamed
-files, the whole-file fallback, paths with spaces, modes, links replacing folders and the reverse,
-a corrupt, a missing and an unsafe base zip (dropped while the others ship), changed signatures,
-the macOS `build.tar` layout, and the command line. Without `HDiffPatch` those tests are skipped
-locally and fail in CI. [`ci-scripts-tests.yml`](../.github/workflows/ci-scripts-tests.yml) runs
-`cargo fmt --check`, `cargo clippy -D warnings` and `cargo test` on Linux and macOS.
+signature changes, `Manifest` rules, the summary), the lifecycle tests of `run::fsm` (every
+transition from `Requested` to `Published` driven with hand-written msgs and no disk, asserting the
+state and the cmd that come back as a pair: a msg out of order, an integrity failure, both recheck
+refusals, a base dropped, a base listed nowhere, every base dropped, a failed run staying failed,
+and the JSON round trip of the run and its cmd at every state), and `tests/run.rs`: synthetic
+builds drained through the real `hdiffz`/`hpatchz` and a folder bucket, covering changed, added,
+deleted, renamed and case-renamed files, the whole-file fallback, paths with spaces, modes, links
+replacing folders and the reverse, a corrupt, a missing and an unsafe base zip (dropped while the
+others ship), changed signatures, the macOS `build.tar` layout, a missing release zip failing before
+the `--until` state, and the command line pausing at `--until` and resuming to completion. Without
+`HDiffPatch` the tests that need it are skipped locally and fail in CI.
+[`ci-scripts-tests.yml`](../.github/workflows/ci-scripts-tests.yml) runs `cargo fmt --check`,
+`cargo clippy -D warnings` and `cargo test` on Linux and macOS.
 
 ## Costs
 

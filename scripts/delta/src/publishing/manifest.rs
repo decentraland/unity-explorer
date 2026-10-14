@@ -1,4 +1,4 @@
-//! The manifest: what a launcher needs to move from any listed base to the target release.
+//! The manifest: what a launcher needs to move from any listed base to the release.
 
 use anyhow::{Result, bail, ensure};
 use serde::{Deserialize, Serialize};
@@ -9,11 +9,11 @@ use crate::publishing::values::ZipRef;
 use crate::releases::bases::Bases;
 use crate::releases::tag::{Platform, Tag};
 
-/// `Manifest::new` refuses a target listed as its own base, a deleted path still in `files`, and
+/// `Manifest::new` refuses a release listed as its own base, a deleted path still in `files`, and
 /// a rebuilt path that is not a regular file of `files`.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Manifest {
-    target: Tag,
+    release: Tag,
     platform: Platform,
     zip: ZipRef,
     files: Tree,
@@ -21,8 +21,8 @@ pub struct Manifest {
 }
 
 impl Manifest {
-    pub fn new(target: Tag, platform: Platform, zip: ZipRef, files: Tree, deltas: Bases<Delta>) -> Result<Manifest> {
-        ensure!(!deltas.contains(&target), "{target} cannot be its own base");
+    pub fn new(release: Tag, platform: Platform, zip: ZipRef, files: Tree, deltas: Bases<Delta>) -> Result<Manifest> {
+        ensure!(!deltas.contains(&release), "{release} cannot be its own base");
         for (base, delta) in &deltas {
             for path in delta.deleted() {
                 ensure!(
@@ -32,12 +32,12 @@ impl Manifest {
             }
             for path in delta.rebuilt() {
                 if !matches!(files.get(path), Some(Node::File { .. })) {
-                    bail!("{base}: {path} is rebuilt but is not a file of the target build");
+                    bail!("{base}: {path} is rebuilt but is not a file of the release build");
                 }
             }
         }
         Ok(Manifest {
-            target,
+            release,
             platform,
             zip,
             files,
@@ -45,8 +45,8 @@ impl Manifest {
         })
     }
 
-    pub fn target(&self) -> &Tag {
-        &self.target
+    pub fn release(&self) -> &Tag {
+        &self.release
     }
 
     pub fn platform(&self) -> Platform {

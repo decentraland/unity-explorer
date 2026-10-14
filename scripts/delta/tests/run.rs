@@ -14,32 +14,19 @@ use delta::io::Io;
 use delta::publishing::contract::{DeltaDto, FileDto, ManifestDto};
 use delta::publishing::values::ZipName;
 use delta::releases::tag::{Platform, Tag};
-use delta::run::execute::execute;
-use delta::run::fsm::{Command, Msg, Step, update};
-use delta::run::state::{DropReason, Request, Run, State, Target};
+use delta::run::document;
+use delta::run::fsm::{Cmd, init};
+use delta::run::runtime::drain;
+use delta::run::state::{DropReason, Release, Request, Run, State};
 use delta::shell;
 use delta::shell::hdiff::HDiffPatch;
 use delta::shell::local::FixedSigner;
 
-const RELEASES: &str = "releases";
-const TARGET: &str = "v1.1.0-alpha";
+const BUCKET_PREFIX: &str = "releases";
+const RELEASE: &str = "v1.1.0-alpha";
 const BASE: &str = "v1.0.0-alpha";
 const OLD_BUNDLE: &str = "Data/aa/ui_assets_all_0123456789abcdef0123456789abcdef.bundle";
 const NEW_BUNDLE: &str = "Data/aa/ui_assets_all_fedcba9876543210fedcba9876543210.bundle";
-
-const ORDER: [Step; 11] = [
-    Step::ConfirmUnpublished,
-    Step::RemoveStalePatches,
-    Step::DownloadArchives,
-    Step::ExtractArchives,
-    Step::ScanBuilds,
-    Step::EncodePatches,
-    Step::ReplayPatches,
-    Step::WriteManifest,
-    Step::RecheckTarget,
-    Step::UploadPatches,
-    Step::PublishManifest,
-];
 
 /// `HDiffPatch` from `$HDIFFZ`/`$HPATCHZ` or PATH; `None` when missing outside CI.
 fn tools() -> Result<Option<HDiffPatch>> {
@@ -204,21 +191,21 @@ struct Fixture {
     root: PathBuf,
     bucket: PathBuf,
     base: PathBuf,
-    target: PathBuf,
+    release: PathBuf,
 }
 
 impl Fixture {
     fn new() -> Result<Fixture> {
         let dir: tempfile::TempDir = tempfile::tempdir()?;
         let root: PathBuf = dir.path().to_path_buf();
-        let (base, target): (PathBuf, PathBuf) = make_builds(&root.join("builds"))?;
+        let (base, release): (PathBuf, PathBuf) = make_builds(&root.join("builds"))?;
         let bucket: PathBuf = root.join("bucket");
         Ok(Fixture {
             _dir: dir,
             root,
             bucket,
             base,
-            target,
+            release,
         })
     }
 
@@ -229,34 +216,42 @@ impl Fixture {
     fn zip_key(&self, tag: &str) -> Result<PathBuf> {
         Ok(self
             .bucket
-            .join(RELEASES)
+            .join(BUCKET_PREFIX)
             .join(tag)
             .join(Fixture::zip_name()?.to_string()))
     }
 
     /// Publishes the builds' zips into the bucket, as the release build does.
     fn upload_zips(&self) -> Result<()> {
-        zip_folder(&self.target, &self.zip_key(TARGET)?)?;
+        zip_folder(&self.release, &self.zip_key(RELEASE)?)?;
         zip_folder(&self.base, &self.zip_key(BASE)?)
     }
 
-    fn start(&self, bases: &[&str], platform: Platform) -> Result<Run> {
+    /// Writes a new run document, as `create-run` does, and returns its path.
+    fn create_run(&self, bases: &[&str], platform: Platform) -> Result<PathBuf> {
         let mut tags: Vec<Tag> = Vec::new();
         for base in bases {
             tags.push(base.parse()?);
         }
-        let target: Target = Target {
-            tag: TARGET.parse()?,
+        let release: Release = Release {
+            tag: RELEASE.parse()?,
             platform,
             zip: Fixture::zip_name()?,
-            releases: RELEASES.to_owned(),
+            bucket_prefix: BUCKET_PREFIX.to_owned(),
             work: self.root.join("work"),
         };
-        Ok(Run::new(Request::new(target, tags)?))
+        let (run, cmds): (Run, Vec<Cmd>) = init(Request::new(release, tags)?);
+        let path: PathBuf = self.root.join("run.json");
+        document::save(&path, &run, &cmds)?;
+        Ok(path)
     }
 
     fn prefix(&self) -> PathBuf {
-        self.bucket.join(RELEASES).join(TARGET).join("delta").join("windows64")
+        self.bucket
+            .join(BUCKET_PREFIX)
+            .join(RELEASE)
+            .join("delta")
+            .join("windows64")
     }
 }
 
@@ -271,30 +266,15 @@ impl World {
         }
     }
 
-    /// Sends the step, runs its command, folds the report back in.
-    fn step(&self, run: Run, step: Step) -> Run {
-        let (run, command): (Run, Option<Command>) = update(run, Msg::Step(step));
-        match command {
-            Some(command) => update(run, Msg::Report(execute(command, &self.io))).0,
-            None => run,
-        }
-    }
-
-    /// Runs the steps in order, stopping at a failure.
-    fn steps(&self, mut run: Run, steps: &[Step]) -> Run {
-        for step in steps {
-            run = self.step(run, *step);
-            if matches!(run.state, State::Failed { .. }) {
-                break;
-            }
-        }
-        run
+    /// Drains the run document like `delta run`, to completion or to `until`.
+    fn run(&self, document: &Path, until: Option<&str>) -> Result<Run> {
+        drain(document, until, &self.io)
     }
 }
 
-fn failure(run: &Run) -> Option<(Step, &str)> {
+fn failure(run: &Run) -> Option<&str> {
     match &run.state {
-        State::Failed { at, reason } => Some((*at, reason.as_str())),
+        State::Failed { reason } => Some(reason.as_str()),
         _ => None,
     }
 }
@@ -310,13 +290,13 @@ fn a_run_publishes_verified_patches_and_the_manifest() -> Result<()> {
     let fixture: Fixture = Fixture::new()?;
     fixture.upload_zips()?;
     let world: World = World::new(&fixture, differ);
-    let run: Run = world.steps(fixture.start(&[BASE], Platform::Windows64)?, &ORDER);
+    let run: Run = world.run(&fixture.create_run(&[BASE], Platform::Windows64)?, None)?;
     ensure!(failure(&run).is_none(), "run failed: {:?}", failure(&run));
     ensure!(run.state.name() == "Published");
     ensure!(run.dropped.is_empty());
 
     let manifest: ManifestDto = read_manifest(&fixture)?;
-    ensure!(manifest.version == TARGET && manifest.platform == "windows64");
+    ensure!(manifest.version == RELEASE && manifest.platform == "windows64");
     ensure!(manifest.zip.path == "Decentraland_windows64.zip");
     let delta: &DeltaDto = manifest.bases.get(BASE).context("no patch set for the base")?;
     let patched: BTreeMap<&str, &str> = delta
@@ -369,7 +349,7 @@ fn links_and_modes_survive_the_round_trip() -> Result<()> {
     let fixture: Fixture = Fixture::new()?;
     fixture.upload_zips()?;
     let world: World = World::new(&fixture, differ);
-    let run: Run = world.steps(fixture.start(&[BASE], Platform::Windows64)?, &ORDER);
+    let run: Run = world.run(&fixture.create_run(&[BASE], Platform::Windows64)?, None)?;
     ensure!(failure(&run).is_none(), "run failed: {:?}", failure(&run));
     let manifest: ManifestDto = read_manifest(&fixture)?;
     ensure!(
@@ -409,10 +389,10 @@ fn a_bad_base_is_dropped_and_the_others_ship() -> Result<()> {
         &[("lnk", Some("sub")), ("lnk/pwned", None)],
     )?;
     let world: World = World::new(&fixture, differ);
-    let run: Run = world.steps(
-        fixture.start(&[BASE, corrupt, missing, unsafe_zip], Platform::Windows64)?,
-        &ORDER,
-    );
+    let run: Run = world.run(
+        &fixture.create_run(&[BASE, corrupt, missing, unsafe_zip], Platform::Windows64)?,
+        None,
+    )?;
     ensure!(failure(&run).is_none(), "run failed: {:?}", failure(&run));
     let reasons: BTreeMap<String, &DropReason> = run.dropped.iter().map(|d| (d.base.to_string(), &d.reason)).collect();
     ensure!(
@@ -445,11 +425,11 @@ fn changed_signatures_drop_the_base_and_an_empty_run_fails() -> Result<()> {
     world.io.signer = Box::new(FixedSigner {
         invalid_under: Some(fixture.root.join("work").join("rebuild")),
     });
-    let run: Run = world.steps(fixture.start(&[BASE], Platform::Windows64)?, &ORDER);
-    let (at, reason): (Step, &str) = failure(&run).context("the run should fail")?;
+    let run: Run = world.run(&fixture.create_run(&[BASE], Platform::Windows64)?, None)?;
+    let reason: &str = failure(&run).context("the run should fail")?;
     ensure!(
-        at == Step::ReplayPatches && reason.contains("no base left") && reason.contains("signatures changed"),
-        "{at}: {reason}"
+        reason.contains("no base left") && reason.contains("signatures changed"),
+        "{reason}"
     );
     ensure!(!fixture.prefix().join("manifest.json").exists());
     Ok(())
@@ -460,7 +440,7 @@ fn changed_signatures_drop_the_base_and_an_empty_run_fails() -> Result<()> {
 fn a_macos_zip_holding_build_tar_is_extracted_with_links_and_modes() -> Result<()> {
     let Some(differ) = tools()? else { return Ok(()) };
     let fixture: Fixture = Fixture::new()?;
-    for (tag, build) in [(TARGET, &fixture.target), (BASE, &fixture.base)] {
+    for (tag, build) in [(RELEASE, &fixture.release), (BASE, &fixture.base)] {
         let staging: PathBuf = fixture.root.join("tar").join(tag);
         fs::create_dir_all(&staging)?;
         let mut tar: tar::Builder<File> = tar::Builder::new(File::create(staging.join("build.tar"))?);
@@ -470,10 +450,7 @@ fn a_macos_zip_holding_build_tar_is_extracted_with_links_and_modes() -> Result<(
         zip_folder(&staging, &fixture.zip_key(tag)?)?;
     }
     let world: World = World::new(&fixture, differ);
-    let run: Run = world.steps(
-        fixture.start(&[BASE], Platform::Macos)?,
-        ORDER.get(..5).context("order")?,
-    );
+    let run: Run = world.run(&fixture.create_run(&[BASE], Platform::Macos)?, Some("Scanned"))?;
     let State::Scanned(builds) = &run.state else {
         anyhow::bail!("not scanned: {:?}", failure(&run))
     };
@@ -490,7 +467,26 @@ fn delta_binary(args: &[&str]) -> Result<Output> {
 }
 
 #[test]
-fn the_command_line_runs_each_step_on_the_document() -> Result<()> {
+fn a_missing_release_zip_fails_the_run_before_the_until_state() -> Result<()> {
+    let fixture: Fixture = Fixture::new()?;
+    zip_folder(&fixture.base, &fixture.zip_key(BASE)?)?;
+    let world: World = World::new(&fixture, HDiffPatch::from_env());
+    let document: PathBuf = fixture.create_run(&[BASE], Platform::Windows64)?;
+    let run: Run = world.run(&document, Some("Scanned"))?;
+    let reason: &str = failure(&run).context("the run should fail")?;
+    ensure!(
+        reason.contains("cannot download the release zip") && reason.contains("the run was Cleared"),
+        "{reason}"
+    );
+    let (saved, cmds): (Run, Vec<Cmd>) = document::load(&document)?;
+    ensure!(saved == run && cmds == vec![Cmd::Complete]);
+    let again: Run = world.run(&document, None)?;
+    ensure!(failure(&again) == Some(reason), "a finished run stays as it is");
+    Ok(())
+}
+
+#[test]
+fn the_command_line_pauses_at_until_and_resumes_to_completion() -> Result<()> {
     if tools()?.is_none() {
         return Ok(());
     }
@@ -499,37 +495,47 @@ fn the_command_line_runs_each_step_on_the_document() -> Result<()> {
     let document: PathBuf = fixture.root.join("run.json");
     let document_text: &str = document.to_str().context("path")?;
     let work: PathBuf = fixture.root.join("work");
-    let started: Output = delta_binary(&[
+    let created: Output = delta_binary(&[
         "create-run",
         document_text,
         "--tag",
-        TARGET,
+        RELEASE,
         "--platform",
         "windows64",
         "--zip",
         "Decentraland_windows64.zip",
-        "--releases",
-        RELEASES,
+        "--bucket-prefix",
+        BUCKET_PREFIX,
         "--bases",
         &format!("[\"{BASE}\"]"),
         "--work",
         work.to_str().context("path")?,
     ])?;
-    ensure!(started.status.success(), "{}", String::from_utf8_lossy(&started.stderr));
+    ensure!(created.status.success(), "{}", String::from_utf8_lossy(&created.stderr));
     let bucket: &str = fixture.bucket.to_str().context("path")?;
-    for step in ORDER {
-        let name: String = step.to_string();
-        let output: Output = delta_binary(&["step", &name, document_text, "--local", bucket])?;
-        ensure!(
-            output.status.success(),
-            "{name}: {}",
-            String::from_utf8_lossy(&output.stderr)
-        );
-    }
+
+    let paused: Output = delta_binary(&["run", document_text, "--until", "Downloaded", "--local", bucket])?;
+    ensure!(paused.status.success(), "{}", String::from_utf8_lossy(&paused.stderr));
+    let (run, cmds): (Run, Vec<Cmd>) = document::load(&document)?;
+    ensure!(run.state.name() == "Downloaded");
+    ensure!(matches!(cmds.as_slice(), [Cmd::ExtractArchives { .. }]), "{cmds:?}");
+
+    let finished: Output = delta_binary(&["run", document_text, "--local", bucket])?;
+    ensure!(
+        finished.status.success(),
+        "{}",
+        String::from_utf8_lossy(&finished.stderr)
+    );
+    let (run, cmds): (Run, Vec<Cmd>) = document::load(&document)?;
+    ensure!(run.state.name() == "Published" && cmds == vec![Cmd::Complete]);
+
     let summary: Output = delta_binary(&["summary", document_text])?;
     let text: String = String::from_utf8_lossy(&summary.stdout).into_owned();
     ensure!(text.contains(&format!("| {BASE} |")), "{text}");
-    let out_of_order: Output = delta_binary(&["step", "encode-patches", document_text, "--local", bucket])?;
-    ensure!(!out_of_order.status.success(), "a step on a finished run must fail");
+
+    let again: Output = delta_binary(&["run", document_text, "--local", bucket])?;
+    ensure!(again.status.success(), "a finished run completes at once");
+    let unknown: Output = delta_binary(&["run", document_text, "--until", "Nowhere", "--local", bucket])?;
+    ensure!(!unknown.status.success(), "an unknown state is refused");
     Ok(())
 }
