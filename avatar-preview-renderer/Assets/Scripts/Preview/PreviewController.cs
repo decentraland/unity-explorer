@@ -283,6 +283,8 @@ namespace Preview
         // The avatar stays upright, as it does under a drag.
         private void ApplyCameraStart(PreviewConfiguration config)
         {
+            previewCameraController.SetCameraStart(config);
+
             var (avatarAlpha, _) = BabylonCamera.AnglesFrom(BabylonCamera.Resolve(config, BabylonCamera.AVATAR),
                 BabylonCamera.AVATAR);
             var (itemAlpha, itemBeta) = BabylonCamera.AnglesFrom(BabylonCamera.Resolve(config, BabylonCamera.ITEM),

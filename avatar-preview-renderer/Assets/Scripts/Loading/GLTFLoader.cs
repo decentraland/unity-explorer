@@ -121,7 +121,9 @@ namespace Loading
             var audioFile = social != null
                 ? string.IsNullOrEmpty(social.audio)
                     ? default
-                    : rep.Files.FirstOrDefault(kvp => kvp.Key.EndsWith(social.audio, StringComparison.OrdinalIgnoreCase))
+                    : rep.Files.FirstOrDefault(kvp =>
+                        kvp.Key.Equals(social.audio, StringComparison.OrdinalIgnoreCase)
+                        || kvp.Key.EndsWith("/" + social.audio, StringComparison.OrdinalIgnoreCase))
                 : rep.Files.FirstOrDefault(kvp =>
                     kvp.Key.EndsWith(".mp3", StringComparison.OrdinalIgnoreCase) ||
                     kvp.Key.EndsWith(".ogg", StringComparison.OrdinalIgnoreCase) ||

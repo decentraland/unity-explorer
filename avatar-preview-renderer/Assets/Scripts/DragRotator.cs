@@ -136,8 +136,9 @@ public class DragRotator : MonoBehaviour
         if (Time.time - _lastDragTime > autoRotateDelay && EnableAutoRotate)
         {
             // Levelling rides with auto-rotate only: a self-spinning view is presenting a canonical
-            // framing, while one tilted by hand is being inspected and should not spring back.
-            _pitch = Mathf.Lerp(_pitch, 0f, returnSpeed * dt);
+            // framing, while one tilted by hand is being inspected and should not spring back. It
+            // levels to the page's starting tilt, not past it.
+            _pitch = Mathf.Lerp(_pitch, _startPitch, returnSpeed * dt);
             _yaw += autoRotateSpeed * dt;
         }
 

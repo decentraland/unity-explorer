@@ -49,6 +49,7 @@ namespace Loading
         // A social emote's other avatar, wearing what the avatar wears, and the animation driving it.
         private GameObject _otherAvatar;
         private Animation _otherAvatarAnimation;
+        private readonly List<Material> _otherAvatarMaterials = new();
 
         // JSBridge spring-bone overrides keyed by itemId; these take precedence over the
         // params declared in the wearable definition and are re-applied after every reload.
@@ -238,7 +239,7 @@ namespace Loading
             }
 
             // If there is a new emote to be played
-            if (emoteChanged || _otherAvatar != null)
+            if (emoteChanged)
             {
                 if (_loadedEmote != null)
                 {
@@ -249,6 +250,11 @@ namespace Loading
                     // Forgotten, not only left: its importer is already disposed above.
                     emoteAnimationController.ClearEmote();
                 }
+            }
+            else if (_otherAvatar != null)
+            {
+                // The same emote keeps its playback; only the other avatar is new.
+                emoteAnimationController.ReplacePartner(_otherAvatar, _otherAvatarAnimation);
             }
 
             _loadedBodyShape = bodyShape;
@@ -439,11 +445,11 @@ namespace Loading
         {
             if (emote.URN.StartsWith("embedded:", StringComparison.Ordinal)) return null;
 
-            var chosen = PreviewConfiguration.Instance.SocialEmote;
-            if (chosen != null) return chosen;
-
+            // Only a social emote takes a social animation; any other emote plays as it is.
             var outcomes = emote.SocialOutcomes;
-            return outcomes is { Length: > 0 } ? outcomes[UnityEngine.Random.Range(0, outcomes.Length)] : null;
+            if (outcomes is not { Length: > 0 }) return null;
+
+            return PreviewConfiguration.Instance.SocialEmote ?? outcomes[UnityEngine.Random.Range(0, outcomes.Length)];
         }
 
         /// <summary>
@@ -499,14 +505,23 @@ namespace Loading
             {
                 if (!model.Root.activeSelf) continue;
 
+                // Inactive like its holder, so the setup has to include inactive renderers.
                 var copy = Instantiate(model.Root, _otherAvatar.transform);
-                AvatarUtils.SetupWearable(copy, otherColors, unusedOutlineRenderers, otherRootBone, otherBones);
+                AvatarUtils.SetupWearable(copy, otherColors, unusedOutlineRenderers, otherRootBone, otherBones,
+                    includeInactive: true);
+
+                // The setup gave the copy's renderers their own materials, which outlive the copy.
+                foreach (var copyRenderer in copy.GetComponentsInChildren<SkinnedMeshRenderer>(true))
+                    _otherAvatarMaterials.AddRange(copyRenderer.sharedMaterials);
             }
         }
 
         private void DestroyOtherAvatar()
         {
             if (_otherAvatar == null) return;
+
+            foreach (var material in _otherAvatarMaterials) Destroy(material);
+            _otherAvatarMaterials.Clear();
 
             Destroy(_otherAvatar);
             _otherAvatar = null;

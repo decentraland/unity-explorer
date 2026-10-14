@@ -163,11 +163,15 @@ namespace Utils
             }
         }
 
+        /// <param name="includeInactive">
+        /// Also sets up the renderers of an inactive <paramref name="go"/>, for a copy built before it is shown.
+        /// </param>
         public static void SetupWearable(GameObject go, AvatarColors colors,
-            List<Renderer> outlineRenderers, Transform avatarRootBone = null, Transform[] avatarBones = null)
+            List<Renderer> outlineRenderers, Transform avatarRootBone = null, Transform[] avatarBones = null,
+            bool includeInactive = false)
         {
             Dictionary<string, Transform> avatarBoneMap = null;
-            var renderers = go.GetComponentsInChildren<SkinnedMeshRenderer>();
+            var renderers = go.GetComponentsInChildren<SkinnedMeshRenderer>(includeInactive);
             foreach (var renderer in renderers)
             {
                 var materials = renderer.materials;

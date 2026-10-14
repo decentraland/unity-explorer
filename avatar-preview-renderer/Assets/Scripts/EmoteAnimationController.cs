@@ -99,11 +99,48 @@ public class EmoteAnimationController : MonoBehaviour
             functionName = "EmoteEnded"
         });
 
-        if (_loadedEmote.Value.Prop != null) _followers.Add((_loadedEmote.Value.Prop, _loadedEmote.Value.PropAnim));
-        if (partner != null) _followers.Add((partner, partnerAnimation));
+        SetFollowers(partner, partnerAnimation);
         _emoteAudioClip = _loadedEmote.Value.Audio;
 
         ReplayEmote();
+    }
+
+    /// <summary>
+    /// Swaps the other avatar of the loaded social emote for a rebuilt one, which takes over the
+    /// playback as it is: shown only while the emote is on screen, at its time and speed.
+    /// </summary>
+    public void ReplacePartner(GameObject partner, [CanBeNull] Animation partnerAnimation)
+    {
+        if (!_loadedEmote.HasValue) return;
+
+        SetFollowers(partner, partnerAnimation);
+
+        // Built hidden, which is right once the emote left or before it starts.
+        if (_state is PlaybackState.Idle or PlaybackState.Ended) return;
+
+        partner.SetActive(true);
+        if (partnerAnimation == null) return;
+
+        var urn = _loadedEmote.Value.Entity.URN;
+        var avatarState = avatarAnimation[urn];
+
+        partnerAnimation.Play();
+        var partnerState = partnerAnimation[urn];
+        if (partnerState == null) return;
+
+        partnerState.time = GetCurrentEmoteTime();
+        partnerState.speed = avatarState != null ? avatarState.speed : 1f;
+        partnerAnimation.Sample();
+    }
+
+    private void SetFollowers([CanBeNull] GameObject partner, [CanBeNull] Animation partnerAnimation)
+    {
+        _followers.Clear();
+
+        if (_loadedEmote.HasValue && _loadedEmote.Value.Prop != null)
+            _followers.Add((_loadedEmote.Value.Prop, _loadedEmote.Value.PropAnim));
+
+        if (partner != null) _followers.Add((partner, partnerAnimation));
     }
 
     public float GetEmoteLength()

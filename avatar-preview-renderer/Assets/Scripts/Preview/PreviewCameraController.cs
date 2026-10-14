@@ -60,6 +60,11 @@ namespace Preview
         // Wheel delta multiplier from the page's wheel precision; 1 at Babylon's default.
         private float _wheelSensitivity = 1f;
 
+        // How much closer the page's camera position is than Babylon's default, per view. Taken on
+        // reload, as the turn from the same options is.
+        private float _avatarCameraScale = 1f;
+        private float _itemCameraScale = 1f;
+
 #if UNITY_EDITOR
         private float _lastAvatarFitMargin;
         private float _lastWearableFitMargin;
@@ -106,15 +111,26 @@ namespace Preview
             _autoCenter = !config.DisableAutoCenter;
             _wheelSensitivity = PreviewConfiguration.DEFAULT_WHEEL_PRECISION / config.WheelPrecision;
 
-            // The avatar views start from Babylon's avatar camera, the item view from its item camera.
-            var avatarScale = config.ZoomScale * BabylonCamera.Closer(BabylonCamera.Resolve(config, BabylonCamera.AVATAR), BabylonCamera.AVATAR);
-            _avatarFraming.Scale = avatarScale;
-            _builderFraming.Scale = avatarScale;
-            _wearableFraming.Scale = config.ZoomScale * BabylonCamera.Closer(BabylonCamera.Resolve(config, BabylonCamera.ITEM), BabylonCamera.ITEM);
+            // The zoom scale is live; the camera position's share is taken on reload.
+            _avatarFraming.Scale = config.ZoomScale * _avatarCameraScale;
+            _builderFraming.Scale = config.ZoomScale * _avatarCameraScale;
+            _wearableFraming.Scale = config.ZoomScale * _itemCameraScale;
 
             _avatarFraming.Zoom = _zoomRange.Clamp(_avatarFraming.Zoom);
             _wearableFraming.Zoom = _zoomRange.Clamp(_wearableFraming.Zoom);
             _builderFraming.Zoom = _zoomRange.Clamp(_builderFraming.Zoom);
+        }
+
+        /// <summary>
+        /// Takes the page's camera position on reload: the avatar views start from Babylon's avatar
+        /// camera, the item view from its item camera.
+        /// </summary>
+        public void SetCameraStart(PreviewConfiguration config)
+        {
+            _avatarCameraScale = BabylonCamera.Closer(BabylonCamera.Resolve(config, BabylonCamera.AVATAR), BabylonCamera.AVATAR);
+            _itemCameraScale = BabylonCamera.Closer(BabylonCamera.Resolve(config, BabylonCamera.ITEM), BabylonCamera.ITEM);
+
+            Configure(config);
         }
 
         /// <summary>

@@ -37,6 +37,20 @@ namespace Tests
         }
 
         [Test]
+        public void ReturnToTheStartRotationOnAReset()
+        {
+            // Arrange
+            _rotator.SetStartRotation(45f, 0f);
+            _rotator.Rotate(30f, 0f);
+
+            // Act
+            _rotator.ResetRotation();
+
+            // Assert
+            Assert.AreEqual(45f, Angle(), TOLERANCE);
+        }
+
+        [Test]
         public void ClampTheTiltOfARotate()
         {
             // Act
