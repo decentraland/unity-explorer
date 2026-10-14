@@ -1,0 +1,51 @@
+/* Hidden until a friend is there; the card stylesheets place the strip it sits in */
+.lobby-connected-friends {
+    display: none;
+    height: 28px;
+    flex-direction: row;
+    align-items: center;
+}
+
+.lobby-connected-friends--shown {
+    display: flex;
+}
+
+/* Color, border and picture are set inline by the element; the zoom crops the transparent margin of a face snapshot */
+.lobby-connected-friends__picture {
+    width: 28px;
+    height: 28px;
+    border-radius: 14px;
+    border-width: 2px;
+    border-color: rgba(255, 255, 255, 0.2);
+    background-color: white;
+    background-image: url('/Assets/DCL/Chat/Textures/DefaultProfileThumbnail.png');
+    background-size: 140%;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.lobby-connected-friends__picture--overlapping {
+    margin-left: -8px;
+}
+
+.lobby-connected-friends__picture--loading {
+    background-image: none;
+}
+
+.lobby-connected-friends__overflow {
+    display: none;
+    height: 28px;
+    min-width: 28px;
+    margin-left: -8px;
+    padding: 0 6px;
+    border-radius: 14px;
+    background-color: var(--dcl-color-shadow);
+    font-size: 14px;
+    -unity-font-definition: var(--dcl-font-inter-semibold);
+    -unity-text-align: middle-center;
+    color: var(--dcl-color-snow);
+}
+
+.lobby-connected-friends--with-overflow .lobby-connected-friends__overflow {
+    display: flex;
+}

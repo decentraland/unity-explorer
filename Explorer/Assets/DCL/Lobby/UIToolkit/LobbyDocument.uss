@@ -72,6 +72,35 @@
     color: var(--lobby-title-color);
 }
 
+/* Name of a hovered friend picture; left and top follow the pointer, the translate centres it vertically */
+.lobby__friend-tooltip {
+    position: absolute;
+    height: 32px;
+    align-items: center;
+    justify-content: center;
+    padding-left: 10px;
+    padding-right: 10px;
+    border-radius: 10px;
+    background-color: rgba(0, 0, 0, 0.95);
+    translate: 0 -50%;
+}
+
+.lobby__friend-tooltip-label {
+    font-size: 14px;
+    -unity-font-definition: var(--dcl-font-inter-semibold);
+    -unity-text-align: middle-center;
+    color: var(--lobby-title-color);
+}
+
+/* Left and top follow the pointer; the translate centres the sprite on it */
+.lobby__avatar-drag-cursor {
+    position: absolute;
+    width: 52px;
+    height: 52px;
+    translate: -50% -50%;
+    background-image: url('/Assets/DCL/Backpack/Textures/CursorRotate.png');
+}
+
 .lobby__logo {
     position: absolute;
     left: var(--lobby-margin);

@@ -110,6 +110,9 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
         /// </summary>
         private void HandleGltfContainerChange(Entity entity, GltfContainerComponent component)
         {
+            // Loading and Finished events share this buffer and would tear down the modifiers just set up for the loaded asset.
+            if (component.State != LoadingState.Unknown) return;
+
             var nodeModifiers = World.TryGetRef<Components.GltfNodeModifiers>(entity, out bool exists);
             if (!exists) return;
 

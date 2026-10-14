@@ -12,8 +12,12 @@ windows-x86_64)
     PLATFORM_DIR="Windows"
     CARGO_ARTIFACTS=(segment-server.dll)
     ;;
+linux-x86_64)
+    PLATFORM_DIR="Linux"
+    CARGO_ARTIFACTS=(segment-server.so)
+    ;;
 *)
-    echo "usage: repro-gate.sh <macos-universal|windows-x86_64>" >&2
+    echo "usage: repro-gate.sh <macos-universal|windows-x86_64|linux-x86_64>" >&2
     exit 2
     ;;
 esac

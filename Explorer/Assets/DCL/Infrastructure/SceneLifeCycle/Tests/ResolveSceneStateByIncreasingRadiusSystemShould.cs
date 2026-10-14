@@ -13,6 +13,7 @@ using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.SceneDefinition;
+using ECS.SceneLifeCycle.SingleScene;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
@@ -32,6 +33,7 @@ namespace DCL.SceneLifeCycle.Tests
         private RealmComponent realmComponent;
 
         private SceneLoadingLimit sceneLoadingLimit;
+        private SingleSceneMode singleSceneMode = null!;
         private ISystemMemoryCap systemMemoryCap;
         private int maximumAmountOfScenesThatCanLoad;
         private int maximumAmountOfLODThatCanLoad;
@@ -66,7 +68,8 @@ namespace DCL.SceneLifeCycle.Tests
             sceneLoadingLimit.SetEnabled(true);
 
             realmPartitionSettings = Substitute.For<IRealmPartitionSettings>();
-            system = new ResolveSceneStateByIncreasingRadiusSystem(world, realmPartitionSettings, playerEntity, visualSceneStateResolver, sceneLoadingLimit);
+            singleSceneMode = new SingleSceneMode();
+            system = new ResolveSceneStateByIncreasingRadiusSystem(world, realmPartitionSettings, playerEntity, visualSceneStateResolver, sceneLoadingLimit, singleSceneMode);
 
             realmComponent = new RealmComponent(realmData);
             world.Create(realmComponent, new VolatileScenePointers());
@@ -196,6 +199,106 @@ namespace DCL.SceneLifeCycle.Tests
             system.Update(0f);
 
             Assert.That(world.CountEntities(new QueryDescription().WithAll<DeleteEntityIntention>()), Is.EqualTo(2));
+        }
+
+        [Test]
+        public async Task LoadOnlyTheAnchorSceneWhenSingleSceneModeIsActive()
+        {
+            realmPartitionSettings.ScenesRequestBatchSize.Returns(30);
+            realmPartitionSettings.MaxLoadingDistanceInParcels.Returns(3000);
+
+            singleSceneMode.Init(true);
+            singleSceneMode.SetAnchor(new Vector2Int(10, 11));
+
+            CreateSceneAtParcels(new Vector2Int[] { new (10, 10), new (10, 11) }, 0);
+            CreateSceneAtParcels(new Vector2Int[] { new (20, 20) }, 1);
+            CreateSceneAtParcels(new Vector2Int[] { new (30, 30) }, 2);
+
+            system.Update(0f);
+
+            while (!system.sortingJobHandle.Value.IsCompleted)
+                await Task.Yield();
+
+            system.Update(0f);
+
+            AssertResult(1, 0, 0, 0);
+        }
+
+        [Test]
+        public void UnloadEveryLoadedSceneButTheAnchorWhenSingleSceneModeIsActive()
+        {
+            realmPartitionSettings.UnloadingDistanceToleranceInParcels.Returns(1);
+            realmPartitionSettings.MaxLoadingDistanceInParcels.Returns(1);
+
+            singleSceneMode.Init(true);
+            singleSceneMode.SetAnchor(new Vector2Int(10, 11));
+
+            CreateLoadedSceneAtParcels(new Vector2Int[] { new (10, 10), new (10, 11) }, outOfRange: true);
+            CreateLoadedSceneAtParcels(new Vector2Int[] { new (20, 20) }, outOfRange: false);
+
+            system.Update(0f);
+
+            Assert.That(world.CountEntities(new QueryDescription().WithAll<DeleteEntityIntention>()), Is.EqualTo(1));
+        }
+
+        [Test]
+        public void KeepPortableExperiencesLoadedWhenSingleSceneModeIsActive()
+        {
+            realmPartitionSettings.UnloadingDistanceToleranceInParcels.Returns(1);
+            realmPartitionSettings.MaxLoadingDistanceInParcels.Returns(1);
+
+            singleSceneMode.Init(true);
+            singleSceneMode.SetAnchor(new Vector2Int(10, 11));
+
+            world.Create(SceneDefinitionComponentFactory.CreateFromDefinition(
+                    new SceneEntityDefinition
+                    {
+                        metadata = new SceneMetadata
+                        {
+                            scene = new SceneMetadataScene { DecodedParcels = new Vector2Int[] { new (50, 50) } },
+                            runtimeVersion = "7",
+                        },
+                    },
+                    new IpfsPath(), true), new PartitionComponent { Bucket = 0 },
+                Substitute.For<ISceneFacade>(), SceneLoadingState.CreatePortableExperience(), ISSDescriptor.NONE);
+
+            system.Update(0f);
+
+            Assert.That(world.CountEntities(new QueryDescription().WithAll<DeleteEntityIntention>()), Is.EqualTo(0));
+        }
+
+        private void CreateSceneAtParcels(Vector2Int[] parcels, int distanceToPlayer)
+        {
+            world.Create(SceneDefinitionComponentFactory.CreateFromDefinition(
+                new SceneEntityDefinition
+                {
+                    metadata = new SceneMetadata
+                    {
+                        scene = new SceneMetadataScene { DecodedParcels = parcels },
+                        runtimeVersion = "7",
+                    },
+                },
+                new IpfsPath()), new PartitionComponent
+            {
+                Bucket = 0, RawSqrDistance = ParcelMathHelper.SQR_PARCEL_SIZE * distanceToPlayer,
+            }, ISSDescriptor.NONE);
+        }
+
+        private void CreateLoadedSceneAtParcels(Vector2Int[] parcels, bool outOfRange)
+        {
+            world.Create(SceneDefinitionComponentFactory.CreateFromDefinition(
+                new SceneEntityDefinition
+                {
+                    metadata = new SceneMetadata
+                    {
+                        scene = new SceneMetadataScene { DecodedParcels = parcels },
+                        runtimeVersion = "7",
+                    },
+                },
+                new IpfsPath()), new PartitionComponent
+            {
+                Bucket = 0, RawSqrDistance = ParcelMathHelper.SQR_PARCEL_SIZE, OutOfRange = outOfRange,
+            }, Substitute.For<ISceneFacade>(), SceneLoadingState.CreateBuiltScene(), ISSDescriptor.NONE);
         }
 
         private void AssertResult(int sceneResultExpected, int lodResultExpected, int lodHighQualityResultExpected, int lodLowQualityResultExpected)

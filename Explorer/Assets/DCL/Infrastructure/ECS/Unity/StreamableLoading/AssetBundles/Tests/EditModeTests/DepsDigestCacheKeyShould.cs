@@ -57,6 +57,20 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         }
 
         [Test]
+        public void ListOnlyTheFilesTheManifestNamesAsConverted()
+        {
+            string platform = PlatformUtils.GetCurrentPlatform();
+            AssetBundleManifestVersion manifest = CreateV49Manifest($"{HASH_A}_{DIGEST_A}{platform}");
+            manifest.InjectContent("QmSceneEntity", new[] { new ContentDefinition { file = "fonts/b.ttf", hash = HASH_B } });
+
+            Assert.That(manifest.ListsConvertedFile(HASH_A), Is.True);
+            Assert.That(manifest.ListsConvertedFile(HASH_A.ToUpperInvariant()), Is.True);
+            Assert.That(manifest.ListsConvertedFile(HASH_B), Is.False,
+                "Qm casing entries name every content file, converted or not");
+            Assert.That(AssetBundleManifestVersion.CreateFromFallback("v49", "2026-05-01").ListsConvertedFile(HASH_A), Is.False);
+        }
+
+        [Test]
         public void RouteReusableAssetsThroughTheSharedAssetsPath()
         {
             const string SCENE_ID = "sceneId";

@@ -49,7 +49,7 @@ namespace MVC
         private readonly CommunitiesDataProvider communitiesDataProvider;
         private readonly UnityAppWebBrowser webBrowser;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly NearbyMuteService? nearbyMuteService;
 
@@ -75,7 +75,7 @@ namespace MVC
             CommunitiesDataProvider communitiesDataProvider,
             UnityAppWebBrowser webBrowser,
             IDecentralandUrlsSource decentralandUrlsSource,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             IWeb3IdentityCache web3IdentityCache,
             NearbyMuteService? nearbyMuteService = null)
         {

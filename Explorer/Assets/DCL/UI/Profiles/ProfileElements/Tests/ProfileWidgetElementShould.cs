@@ -69,8 +69,9 @@ namespace DCL.UI.ProfileElements.Tests
 
             //Assert
             Assert.IsFalse(widget.IsLoading);
-            Assert.AreEqual(sprite, widget.Q("Picture").style.backgroundImage.value.sprite);
+            Assert.AreEqual(sprite.texture, widget.Q("Picture").style.backgroundImage.value.texture, "A full-rect sprite is drawn as its texture so the cover crops it");
             Assert.AreEqual(Color.red, widget.Q("Picture").style.backgroundColor.value);
+            Assert.AreEqual(Color.Lerp(Color.red, Color.white, 0.2f), widget.Q("Picture").style.borderTopColor.value);
         }
 
         [Test]
@@ -85,7 +86,7 @@ namespace DCL.UI.ProfileElements.Tests
 
             //Assert
             Assert.IsFalse(widget.IsLoading);
-            Assert.AreEqual(sprite, widget.Q("Picture").style.backgroundImage.value.sprite);
+            Assert.AreEqual(sprite.texture, widget.Q("Picture").style.backgroundImage.value.texture);
         }
 
         [Test]

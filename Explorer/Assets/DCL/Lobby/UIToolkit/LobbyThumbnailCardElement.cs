@@ -66,7 +66,7 @@ namespace DCL.Lobby
 
         private void ApplyThumbnail(VisualElement target)
         {
-            target.style.backgroundImage = LobbyCardBackground.From(thumbnailSprite);
+            target.style.backgroundImage = VisualElementsExtensions.CoverBackground(thumbnailSprite);
         }
 
         private void OnClicked()

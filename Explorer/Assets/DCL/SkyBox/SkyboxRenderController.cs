@@ -80,7 +80,7 @@ public class SkyboxRenderController : MonoBehaviour
     private const float LOOK_ROTATION_POLE_THRESHOLD = 0.99f;
 
     [Header("Look")]
-    [Tooltip("The look that ships; alternatives for the debug dropdown live on the skybox settings asset.")]
+    [Tooltip("The default look; alternatives, selectable by the skybox look preset feature flag or the debug dropdown, live on the skybox settings asset.")]
     [SerializeField] private SkyboxLookPreset preset = null!;
 
     [Header("Directional Light")]
@@ -184,11 +184,15 @@ public class SkyboxRenderController : MonoBehaviour
 
     /// <summary>
     ///     Switches the look: writes the preset's static material values once and re-evaluates the current
-    ///     time of day so the change is visible immediately.
+    ///     time of day so the change is visible immediately. Before <see cref="Initialize" /> it only stores the
+    ///     preset, which Initialize then reports on and applies.
     /// </summary>
     public void ApplyPreset(SkyboxLookPreset newPreset)
     {
         preset = newPreset;
+
+        if (!skyboxMaterial)
+            return;
 
         // Drop the current flare so the new preset's entries decide it, including no flare at all.
         activeLensFlareData = null;

@@ -9,7 +9,8 @@ set -euo pipefail
 
 case "$(uname -s)" in
 Darwin) CANONICAL_ROOT="${RUST_SEGMENT_CANONICAL_ROOT:-/Users/Shared/build}" ;;
-*) CANONICAL_ROOT="${RUST_SEGMENT_CANONICAL_ROOT:-/c/build}" ;;
+Linux)  CANONICAL_ROOT="${RUST_SEGMENT_CANONICAL_ROOT:-/tmp/rust-segment-build}" ;;
+*)      CANONICAL_ROOT="${RUST_SEGMENT_CANONICAL_ROOT:-/c/build}" ;;
 esac
 
 REPO="$(git rev-parse --show-toplevel)"
@@ -42,7 +43,8 @@ git -C "$REPO" -c core.autocrlf=false -c core.eol=lf archive "$REV" "$PLUGIN" sc
 
 case "$(uname -s)" in
 Darwin) PLATFORM_DIR="Mac" ;;
-*) PLATFORM_DIR="Windows" ;;
+Linux)  PLATFORM_DIR="Linux" ;;
+*)      PLATFORM_DIR="Windows" ;;
 esac
 
 DEPLOYED="$CANONICAL_ROOT/$DEPLOY_GLOB/$PLATFORM_DIR"

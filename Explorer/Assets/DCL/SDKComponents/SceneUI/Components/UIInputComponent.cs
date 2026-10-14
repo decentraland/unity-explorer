@@ -2,6 +2,7 @@ using DCL.Input;
 using DCL.Input.Component;
 using DCL.SDKComponents.SceneUI.Classes;
 using DCL.SDKComponents.SceneUI.Utils;
+using ECS.StreamableLoading.Fonts;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -32,6 +33,8 @@ namespace DCL.SDKComponents.SceneUI.Components
 
         public bool IsOnValueChangedTriggered;
         public bool IsOnSubmitTriggered;
+
+        public SceneFontRequest FontRequest;
 
         internal EventCallback<ChangeEvent<string>> currentOnValueChanged = static _ => { };
         internal EventCallback<KeyDownEvent> currentOnSubmit = static _ => { };
@@ -64,6 +67,7 @@ namespace DCL.SDKComponents.SceneUI.Components
             IsOnValueChangedTriggered = false;
             IsOnSubmitTriggered = false;
             IsFocused = false;
+            FontRequest = default(SceneFontRequest);
             this.RegisterInputCallbacks(inputBlock);
         }
 
