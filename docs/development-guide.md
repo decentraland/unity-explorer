@@ -333,6 +333,8 @@ Some clean-up behaviour is common enough so it's generalized and can be reused a
   }
   ```
 
+  A game object pool re-parents a released instance under its container and resets its local position, rotation and scale to `Vector3.zero`, `Quaternion.identity` and `Vector3.one`. Set the transform you need after `Get`; don't rely on the root transform of a prefab passed to the creation handler.
+
 - **Returning reference-type components to the pool indirectly**
 
   You may store poolable references in another component which is not pooled on its own.

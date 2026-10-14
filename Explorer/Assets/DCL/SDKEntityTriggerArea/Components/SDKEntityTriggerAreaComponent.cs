@@ -109,7 +109,7 @@ namespace DCL.SDKEntityTriggerArea.Components
         }
 
         /// <summary>
-        ///     Keeps an explicit area size independent of the entity and parent scale changed after the area was assigned
+        ///     Keeps an explicit area size independent of entity and parent scale changes made after the area was assigned
         /// </summary>
         public void TryUpdateParentScaleCompensation(Transform parent)
         {

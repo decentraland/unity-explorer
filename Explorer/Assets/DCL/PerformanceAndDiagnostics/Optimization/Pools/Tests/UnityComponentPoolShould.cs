@@ -97,15 +97,17 @@ namespace DCL.Optimization.Pools.Tests
             //Act
             gameObjectPool.Release(pooled);
             Transform reused = gameObjectPool.Get();
-
-            //Assert
-            Assert.AreSame(pooled, reused);
-            Assert.AreEqual(Vector3.zero, reused.localPosition);
-            Assert.AreEqual(0f, Quaternion.Angle(Quaternion.identity, reused.localRotation), 1e-3f);
-            Assert.AreEqual(Vector3.one, reused.localScale);
+            reused.GetLocalPositionAndRotation(out Vector3 reusedPosition, out Quaternion reusedRotation);
+            Vector3 reusedScale = reused.localScale;
 
             gameObjectPool.Release(reused);
             Object.DestroyImmediate(scaledParent);
+
+            //Assert
+            Assert.AreSame(pooled, reused);
+            Assert.AreEqual(Vector3.zero, reusedPosition);
+            Assert.AreEqual(0f, Quaternion.Angle(Quaternion.identity, reusedRotation), 1e-3f);
+            Assert.AreEqual(Vector3.one, reusedScale);
         }
     }
 }
