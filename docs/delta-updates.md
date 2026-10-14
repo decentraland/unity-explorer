@@ -37,9 +37,10 @@ build-release-main.yml (push to main)
     |
     +--> delta              build-release-delta.yml (needs: build)
     |                         plan:  refuse a published tag, pick the last N published releases
-    |                         delta: [windows64 on ubuntu, macos on macos]
-    |                                download zips -> make-delta -> verify -> signatures
-    |                                -> upload patches -> upload manifest (last)
+    |                         delta: [windows64 on ubuntu, macos on macos], one step per workflow:
+    |                                confirm-unpublished -> clear-stale -> download -> extract
+    |                                -> inspect -> encode -> verify -> assemble -> recheck
+    |                                -> upload-patches -> publish-manifest (last)
     v  (workflow_run: success)
 build-release-main-page.yml  -> draft GitHub release
     |
@@ -151,7 +152,7 @@ it into a full release later does not regenerate the patches; launchers use the 
 - `patches`: changed files, patched from `from_path` in the base. `from_path` differs from `path`
   for renamed bundles. `patch` is relative to the manifest's folder.
 - `whole`: files with no base counterpart, and files whose patch is at least half the file's raw
-  size and not smaller than the file encoded alone. They are HDiffPatch patches against an **empty**
+  size and larger than the file encoded alone (a tie keeps the patch). They are HDiffPatch patches against an **empty**
   file, so `hpatch` is the only codec the launcher needs.
 - `deleted`: base paths absent from the new build, including the old names of renamed bundles.
 - Unchanged files appear only in `files`.
@@ -180,7 +181,9 @@ Implemented in the launcher repo:
    order matters: on case-insensitive file systems a case-only
    rename (`Foo.dll` -> `foo.dll`) deleted after the swap removes the new file, and a directory
    replaced by a symlink (`Versions/Current` -> `A`) deleted after the swap removes files in the
-   symlink's target. `run.py verify` replays this order.
+   symlink's target. A `deleted` entry can be a symlink to a directory (`Lib -> Fw/Versions/A`):
+   remove the link itself, never recurse into it, or the files of its target go too. The tool's
+   `verify` workflow replays this order.
 6. Leave files that are not in the manifest alone (logs, launcher-owned files).
 7. Reject the manifest (fall back to the zip and report it) if any `path`, `from_path`, `deleted`
    entry or `patch` is absolute, contains an empty, `.` or `..` segment, or contains `\`, `:` or a
@@ -193,74 +196,108 @@ Implemented in the launcher repo:
 Patching uses HDiffPatch's `hpatch` (MIT, C), ideally linked into the launcher so no extra executable
 needs code signing.
 
-## Scripts
+## The delta tool
 
-All delta logic lives in [`scripts/delta/`](../scripts/delta/), a Python 3.12 tool run the same way
-in CI and locally (`python3 scripts/delta/run.py <command>`, `--help` lists them). It is split by
-what the code may touch. Failure and absence are values: every operation that can fail returns a
-[`returns`](https://github.com/dry-python/returns) `Result[T, Problem]`, absence is a `Maybe[T]`, and
-the code neither raises nor catches. `returns.result.safe` turns the exceptions of library calls
-(`OSError`, pydantic's `ValidationError`) into `Failure`s at the call site; the one `raise` left is
-pydantic's validator protocol, fed by checks that return their problem as a `Maybe[str]`.
+All delta logic lives in [`scripts/delta/`](../scripts/delta/), a Rust crate built with the
+toolchain pinned in its `rust-toolchain.toml` (`cargo build --release`, then `delta --help`). Its
+design follows *Domain Modeling Made Functional*: simple types that can only hold valid values,
+one type per lifecycle stage, workflows that read, decide with pure functions, and write, and I/O
+passed in as capabilities.
 
-| Module | Holds | Why |
-|---|---|---|
-| `delta/domain.py` | the domain values: `RelPath`, `ReleaseTag`, `Sha256`, the `RegularFile \| Symlink` entry union, `Tree`, `DiffPatch`, `WholeFile`, `BaseDelta`, `Manifest`, the application `Step` union, releases | strict, frozen pydantic models that reject unknown fields: a value that exists is valid, so unsafe paths, malformed tags and inconsistent manifests cannot be built |
-| `delta/transform.py` | pure functions: planning a patch set, the whole-file rule, assembling the manifest, the launcher's application order, comparing trees, checking a zip's layout before extraction, picking and pruning releases, signature comparison, the job summary | no I/O; arguments and results are validated against their types at every call |
-| `delta/io/` | `fs` (hashing, scanning, extracting, replaying steps), `hdiff` (pinned download, hdiffz/hpatchz), `github` (`gh api`), `signatures` (osslsigncode, codesign) | the only code touching files, processes or the network |
-| `delta/pipeline.py` | `make_delta`, `verify_delta`, `delta_for_base`, `build_manifest` | joins I/O and transformations into the steps the workflows run |
-| `delta/cli.py` | the commands below | argument parsing and output only |
+### Vocabulary
 
-Each command takes explicit arguments, writes only to the given output folder or to stdout, logs
-to stderr and exits non-zero on failure. Only `fetch-tools`, `check-unpublished`, `bases` and
-`prune` touch the network.
+| Term | Meaning |
+|---|---|
+| Target | The release the patches lead to. |
+| Base | An earlier published release a patch set starts from. |
+| Build / Tree / Node | An extracted release folder; every file and link in it by `RelPath`; one `File { size, sha256, mode }` or `Link { target }`. |
+| Plan / Job | What one base needs: deleted paths, and per changed file a `Diff { from }` or `Whole`. |
+| Patch / Whole / Delta | One encoded file against a base file or an empty file; the patch set of one base. |
+| Manifest | The launcher contract above; `ManifestDto` is its exact JSON, kept apart from the domain type. |
+| Drop | A base taken out of the run with its reason; the other bases continue. |
+| Run / Stage | The document carried between workflow steps, and where it is in its lifecycle. |
+| Workflow / Event | One YAML step; what it did, printed to the log (the document holds the current state only). |
 
-| Command | Input | Output | Why |
-|---|---|---|---|
-| `fetch-tools` | `<tools dir>` | pinned HDiffPatch for this OS, sha256-checked; prints the bin folder | identical patches in CI and locally |
-| `extract` | `<zip> <out dir>` | prints the build root | handles the macOS `build.tar` inside the zip, keeping modes and symlinks |
-| `tree` | `<dir>` | `files[]` JSON on stdout | one definition of paths, hashes, modes and symlinks; refuses paths or symlinks that reach outside the build |
-| `make-delta` | `<base dir> <new dir> <base tag> <out dir>` | `from/<base tag>/**.hdiff`, `base-<tag>.json` | the patches for one base, each round-trip checked |
-| `manifest` | `<version> <platform> <new dir> <zip> <base-*.json>...` | `manifest.json` on stdout | one place for the manifest format |
-| `signatures` | `<platform> <build root>` | `<path> ok\|invalid` per `.exe` (osslsigncode) or `.app` (codesign) | proves signatures survive patching |
-| `delta-for-base` | `<version> <platform> <new root> <new zip> <base tag> <base zip> <out dir>` | `from/<base tag>/`, `base-<tag>.json`; removed again on any failure | the whole per-base pipeline (extract, make, verify, signatures) the workflow loops over |
-| `verify` | `<base dir> <delta dir> <manifest> <base tag> <rebuild dir>` | rebuilt tree; exit 0 only on an exact match | replays the launcher before anything is published |
-| `bases` | `<n> <tag>`, `gh` with `GH_TOKEN` | JSON array of tags | which releases to diff from |
-| `prune` | `<keep> <window> [--live <tag>]`, `gh` with `GH_TOKEN` | tags, one per line | which `delta/` folders to remove |
-| `check-unpublished` | `<tag>`, `gh` with `GH_TOKEN` | exit 0 only for a missing or draft release | the immutability guard; an API error is never read as "unpublished" |
-| `summary` | `<manifest> [failed base]...` | markdown | the workflow's job summary |
+### Modules
 
-Local run (macOS, Linux or Windows), from the repo root:
+| Module | Holds |
+|---|---|
+| `builds` | `RelPath`, `Sha256`, `Mode` (validated with `nutype`), `Node`, `Tree` (refuses entries inside a file or link and links leaving the build), archive member checks, scanning and safe extraction. |
+| `releases` | `Tag` (semver, ordered by version), `Platform`, `Bases<T>` (never empty), the GitHub release DTO, picking bases, pruning, the published-tag lookup. |
+| `patching` | `plan`, the whole-file rule, `Delta`, the launcher's replay order (`replay_steps`), `differences`, encoding and replaying with `HDiffPatch`. |
+| `publishing` | `Manifest` (refuses inconsistent bases), `ManifestDto`, bucket keys, the upload layout. |
+| `run` | Stage types, the `Run` document, `DropReason`, events, the workflows and `advance`. |
+| `capabilities` / `shell` | The traits `Releases`, `Storage`, `Cdn`, `Differ`, `Signer`; their implementations with `gh`, `aws`, `@dcl/cdn-uploader`, `hdiffz`/`hpatchz`, `osslsigncode`/`codesign`, and with local folders for tests and local runs. |
 
-```bash
-pip install -r scripts/delta/requirements.txt
-export PATH="$(python3 scripts/delta/run.py fetch-tools /tmp/delta-tools):$PATH"
-OLD=$(python3 scripts/delta/run.py extract v0.185.0-alpha/Decentraland_windows64.zip /tmp/old)
-NEW=$(python3 scripts/delta/run.py extract v0.186.0-alpha/Decentraland_windows64.zip /tmp/new)
-python3 scripts/delta/run.py make-delta "$OLD" "$NEW" v0.185.0-alpha /tmp/out
-python3 scripts/delta/run.py manifest v0.186.0-alpha windows64 "$NEW" \
-  v0.186.0-alpha/Decentraland_windows64.zip /tmp/out/base-v0.185.0-alpha.json > /tmp/out/manifest.json
-python3 scripts/delta/run.py verify "$OLD" /tmp/out /tmp/out/manifest.json v0.185.0-alpha /tmp/rebuild
+### Lifecycle
+
+```
+start               : Args                         -> Requested
+confirm-unpublished : Requested, Releases          -> Confirmed
+clear-stale         : Confirmed, Storage           -> Cleared      (old <tag>/delta/<platform>/ removed)
+download            : Cleared, Storage             -> Downloaded   (target zip + ETag; missing base zips dropped)
+extract             : Downloaded                   -> Extracted    (archives checked before any write)
+inspect             : Extracted, Signer            -> Inspected    (trees, target signatures)
+encode              : Inspected, Differ            -> Encoded      (plan + hdiffz per base, round-trip checked)
+verify              : Encoded, Differ, Signer      -> Verified     (launcher replay must equal the target)
+assemble            : Verified                     -> Assembled    (manifest.json + upload folders)
+recheck             : Assembled, Releases, Storage -> Rechecked    (still unpublished, zip ETag unchanged)
+upload-patches      : Rechecked, Cdn               -> Uploaded     (immutable)
+publish-manifest    : Uploaded, Cdn                -> Published    (revalidated, last)
+
+any stage --(run-level error, or every base dropped)--> Failed (terminal)
 ```
 
-Checks, from `scripts/delta/` after `pip install -r requirements-dev.txt`: `ruff check .`,
-`ruff format --check .`, `mypy .` (strict, with the pydantic and returns plugins) and
-`python3 -m pytest`.
-`tests/test_domain.py` and `tests/test_transform.py` cover the types and the pure functions,
-`tests/test_releases.py` the release selection and the published-tag guard, and
-`tests/test_pipeline.py` synthetic builds through the real HDiffPatch: changed, added, deleted and
-renamed files, case-only renames, the whole-file fallback, paths with spaces, modes, symlinks
-replacing directories and the reverse, symlinks leaving the build, tampered patches, modified
-bases, the macOS `build.tar`-in-zip layout, and `delta_for_base` with a stubbed signature check
-(success, signature mismatch, corrupt base zip). All run in
-[`ci-scripts-tests.yml`](../.github/workflows/ci-scripts-tests.yml) on Linux and macOS, also when
-the workflows that drive the tool change.
+Each step runs `delta step <workflow> run.json`: the document must be in the stage the workflow
+follows, otherwise the run fails. The document is replaced atomically, the transition and its
+events are logged, and `delta summary run.json` renders the job summary. The workflow keeps the
+document as an artifact. Bucket names and tokens are read from the environment when a call runs and
+never reach the document.
+
+Errors are values (`anyhow::Result`). A problem with one base drops it (`DropReason`); a problem
+with the run fails it. Clippy denies `unwrap`, `expect`, `panic`, indexing and unchecked arithmetic
+everywhere, tests included.
+
+### Local run
+
+`--local <folder>` uses a folder as the bucket and CDN (`<folder>/<releases>/<tag>/<zip>`), with
+nothing published and every signature valid:
+
+```bash
+cd scripts/delta && cargo build --release && DELTA=$PWD/target/release/delta
+export PATH="$("$DELTA" fetch-tools /tmp/delta-tools):$PATH"
+mkdir -p /tmp/bucket/releases/v0.185.0-alpha /tmp/bucket/releases/v0.186.0-alpha
+cp v0.185.0-alpha/Decentraland_windows64.zip /tmp/bucket/releases/v0.185.0-alpha/
+cp v0.186.0-alpha/Decentraland_windows64.zip /tmp/bucket/releases/v0.186.0-alpha/
+"$DELTA" start /tmp/run.json --tag v0.186.0-alpha --platform windows64 --zip Decentraland_windows64.zip \
+  --releases releases --bases '["v0.185.0-alpha"]' --work /tmp/delta-work
+for step in confirm-unpublished clear-stale download extract inspect encode verify assemble recheck \
+            upload-patches publish-manifest; do
+  "$DELTA" step "$step" /tmp/run.json --local /tmp/bucket || break
+done
+"$DELTA" summary /tmp/run.json
+```
+
+The manifest lands in `/tmp/bucket/releases/v0.186.0-alpha/delta/windows64/`.
+
+### Tests
+
+`cargo test` runs the unit tests next to each module (every rule of the simple types, `plan`, the
+whole-file rule, the replay order, `differences`, archive member checks, base picking and pruning,
+signature changes, `Manifest` rules, the summary) and `tests/run.rs`: synthetic builds through every
+workflow with the real `hdiffz`/`hpatchz` and folder capabilities, covering changed, added, deleted,
+renamed and case-renamed files, the whole-file fallback, paths with spaces, modes, links replacing
+folders and the reverse, a corrupt, a missing and an unsafe base zip (dropped while the others
+ship), changed signatures, a published target, a zip replaced during the run, workflows out of
+order, the macOS `build.tar` layout, and the command line. Without `HDiffPatch` those tests are
+skipped locally and fail in CI. [`ci-scripts-tests.yml`](../.github/workflows/ci-scripts-tests.yml)
+runs `cargo fmt --check`, `cargo clippy -D warnings` and `cargo test` on Linux and macOS.
 
 ## Costs
 
 - CI: per platform, about 1.5-2.5 minutes of `hdiffz` per base plus downloading each base zip from
   S3. With N = 4 bases (two weeks at two releases a week) that is roughly 15-20 minutes, on a macOS
-  runner for the macOS leg.
+  runner for the macOS leg, plus about a minute to build the tool (cached between runs).
 - S3: two patch series of about N x 30 MB each per platform (~240 MB for N = 4). Zips are unchanged.
 
 ## Not yet measured
