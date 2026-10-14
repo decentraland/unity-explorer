@@ -273,6 +273,44 @@ public class JSBridge : MonoBehaviour
         previewController.ApplyCameraSettings();
     }
 
+    [UsedImplicitly]
+    public void SetShowSceneBoundaries(string value)
+    {
+        PreviewConfiguration.Instance.SetShowSceneBoundaries(value);
+        previewController.ApplyCameraSettings();
+    }
+
+    [UsedImplicitly]
+    public void SetWheelPrecision(string value)
+    {
+        PreviewConfiguration.Instance.SetWheelPrecision(value);
+        previewController.ApplyCameraSettings();
+    }
+
+    [UsedImplicitly]
+    public void SetZoomScale(string value)
+    {
+        PreviewConfiguration.Instance.SetZoomScale(value);
+        previewController.ApplyCameraSettings();
+    }
+
+    // The starting camera, the auto-centre and the social emote take effect on the next reload.
+
+    [UsedImplicitly]
+    public void SetCameraX(string value) => PreviewConfiguration.Instance.SetCameraX(value);
+
+    [UsedImplicitly]
+    public void SetCameraY(string value) => PreviewConfiguration.Instance.SetCameraY(value);
+
+    [UsedImplicitly]
+    public void SetCameraZ(string value) => PreviewConfiguration.Instance.SetCameraZ(value);
+
+    [UsedImplicitly]
+    public void SetDisableAutoCenter(string value) => PreviewConfiguration.Instance.SetDisableAutoCenter(value);
+
+    [UsedImplicitly]
+    public void SetSocialEmote(string value) => PreviewConfiguration.Instance.SetSocialEmote(value);
+
     /// <summary>
     /// Babylon's <c>changeZoom</c>: a delta that pulls closer when positive.
     /// </summary>
@@ -286,8 +324,8 @@ public class JSBridge : MonoBehaviour
     }
 
     /// <summary>
-    /// Babylon's <c>panCamera</c>: <c>x,y,z</c> in metres, across and up the screen. The depth is
-    /// ignored, since the view has nothing to offset along it.
+    /// Babylon's <c>panCamera</c>: <c>x,y,z</c> in metres, across and up the screen and back from
+    /// the subject.
     /// </summary>
     [UsedImplicitly]
     public void SetOffset(string value)
@@ -299,6 +337,7 @@ public class JSBridge : MonoBehaviour
         }
 
         PreviewConfiguration.Instance.SetOffset(new Vector2(offset.x, offset.y));
+        PreviewConfiguration.Instance.SetOffsetDepth(offset.z);
         previewController.ApplyCameraOffset();
     }
 

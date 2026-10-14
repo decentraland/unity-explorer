@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using JetBrains.Annotations;
 using Loading;
 using UnityEngine;
@@ -56,7 +57,9 @@ public class EmoteAnimationController : MonoBehaviour
     public event Action<EmotePlaybackEvent, float> PlaybackChanged;
 
     private LoadedEmote? _loadedEmote;
-    private Animation _propAnimation;
+    // The prop and, for a social emote, the other avatar: each plays its own clip under the emote's
+    // state name, shown while the emote runs and hidden once it leaves.
+    private readonly List<(GameObject root, Animation animation)> _followers = new();
     private AudioClip _emoteAudioClip;
     private PlaybackState _state = PlaybackState.Idle;
 
@@ -66,7 +69,12 @@ public class EmoteAnimationController : MonoBehaviour
     // Where a seek put a paused clip: one moved to its end reads 0 again once Unity stops it there.
     private float? _pausedSeek;
 
-    public void PlayEmote(LoadedEmote loadedEmote)
+    /// <summary>
+    /// Plays <paramref name="loadedEmote"/> from the start. <paramref name="partner"/> is the other
+    /// avatar of a social emote, playing <paramref name="partnerAnimation"/> in step with it.
+    /// </summary>
+    public void PlayEmote(LoadedEmote loadedEmote, [CanBeNull] GameObject partner = null,
+        [CanBeNull] Animation partnerAnimation = null)
     {
         // The previous emote's state would otherwise stay on the rig, bound to a clip its importer
         // has disposed.
@@ -91,7 +99,8 @@ public class EmoteAnimationController : MonoBehaviour
             functionName = "EmoteEnded"
         });
 
-        _propAnimation = _loadedEmote.Value.PropAnim;
+        if (_loadedEmote.Value.Prop != null) _followers.Add((_loadedEmote.Value.Prop, _loadedEmote.Value.PropAnim));
+        if (partner != null) _followers.Add((partner, partnerAnimation));
         _emoteAudioClip = _loadedEmote.Value.Audio;
 
         ReplayEmote();
@@ -122,7 +131,7 @@ public class EmoteAnimationController : MonoBehaviour
         // A pause or a stop left the speeds at zero.
         var urn = _loadedEmote.Value.Entity.URN;
         SetSpeed(urn, 1f);
-        RestartProp();
+        RestartFollowers();
 
         // Crossfade
         avatarAnimation.Rewind(urn);
@@ -178,8 +187,8 @@ public class EmoteAnimationController : MonoBehaviour
         avatarAnimation.Play(urn, PlayMode.StopAll);
         Seek(urn, 0f);
 
-        // The prop too, on its own first frame: a clip that ran out left it hidden on its last pose.
-        RestartProp();
+        // The prop and the other avatar too, on their first frame: a clip that ran out left them hidden.
+        RestartFollowers();
         SetSpeed(urn, 0f);
         audioSource.Stop();
 
@@ -199,7 +208,7 @@ public class EmoteAnimationController : MonoBehaviour
         _state = PlaybackState.Ended;
 
         audioSource.Stop();
-        _loadedEmote.Value.Prop?.SetActive(false);
+        HideFollowers();
 
         if (withCrossFade)
         {
@@ -274,7 +283,7 @@ public class EmoteAnimationController : MonoBehaviour
         avatarAnimation.RemoveClip(_loadedEmote.Value.Entity.URN);
         _loadedEmote = null;
         _emoteAudioClip = null;
-        _propAnimation = null;
+        _followers.Clear();
         audioSource.clip = null;
         _state = PlaybackState.Idle;
     }
@@ -338,10 +347,10 @@ public class EmoteAnimationController : MonoBehaviour
 
         avatarAnimation.Sample();
 
-        if (_propAnimation != null)
+        foreach (var (_, animation) in _followers)
         {
-            var propState = _propAnimation[urn];
-            if (propState != null) propState.time = seconds;
+            var followerState = animation != null ? animation[urn] : null;
+            if (followerState != null) followerState.time = seconds;
         }
 
         // Even when paused, so a resume continues the audio from the right place; a time past the
@@ -382,10 +391,10 @@ public class EmoteAnimationController : MonoBehaviour
         var state = avatarAnimation[urn];
         if (state != null) state.speed = speed;
 
-        if (_propAnimation != null)
+        foreach (var (_, animation) in _followers)
         {
-            var propState = _propAnimation[urn];
-            if (propState != null) propState.speed = speed;
+            var followerState = animation != null ? animation[urn] : null;
+            if (followerState != null) followerState.speed = speed;
         }
     }
 
@@ -403,22 +412,35 @@ public class EmoteAnimationController : MonoBehaviour
     }
 
     // Shown first: an inactive object takes no animation call.
-    private void RestartProp()
+    private void RestartFollowers()
     {
-        _loadedEmote?.Prop?.SetActive(true);
+        foreach (var (root, animation) in _followers)
+        {
+            if (root == null) continue;
 
-        if (_propAnimation == null) return;
+            root.SetActive(true);
 
-        _propAnimation.Rewind();
-        _propAnimation.Sample();
-        _propAnimation.Play();
+            if (animation == null) continue;
+
+            animation.Rewind();
+            animation.Sample();
+            animation.Play();
+        }
+    }
+
+    private void HideFollowers()
+    {
+        foreach (var (root, _) in _followers)
+        {
+            if (root != null) root.SetActive(false);
+        }
     }
 
     [UsedImplicitly]
     private void EmoteStarted()
     {
         PlayAudioFrom(0f);
-        RestartProp();
+        RestartFollowers();
     }
 
     [UsedImplicitly]
@@ -428,7 +450,7 @@ public class EmoteAnimationController : MonoBehaviour
         if (_state != PlaybackState.Playing) return;
 
         _state = PlaybackState.Ended;
-        _loadedEmote.Value.Prop?.SetActive(false);
+        HideFollowers();
         PlaybackChanged?.Invoke(EmotePlaybackEvent.End, _loadedEmote.Value.Clip.length);
     }
 }

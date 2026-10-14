@@ -46,7 +46,7 @@ The renderer can run in five different modes, depending on its usage: Marketplac
   * `avatar` - the item worn by the avatar
 * `disableSwitcher`: Hides the avatar / item switcher, so the view stays as it was requested. Only used in `marketplace` mode. Default is `false`.
 * `hideControls`: Hides every in-canvas control: the switcher and the emote play / mute buttons. For embedders that draw their own controls around the canvas or capture it for thumbnails. The loader is separate (`disableLoader`), and mouse rotation, wheel zoom and right-drag pan keep working. Can be toggled at runtime with `SetHideControls` without a reload. Default is `false`.
-* Camera options, named and scaled as in the Babylon preview so an app frames both renderers with the same values. Every one of them can also be set at runtime without a reload (see [Camera](#camera) below). Used in `marketplace` and `builder` mode, the two that take camera input.
+* Camera options, named and scaled as in the Babylon preview so an app frames both renderers with the same values. Most can also be set at runtime without a reload (see [Camera](#camera) below). Used in `marketplace` and `builder` mode, the two that take camera input.
   * `zoom`: `0` to `100`, the closest view the wheel can reach: `0` is the fitted view, `100` is 2.8 times closer. When neither `zoom` nor `wheelZoom` is passed, the wheel moves between two thirds of the fitted view and twice it, starting at the fit.
   * `wheelZoom`: how far the wheel pulls back from the `zoom` view, as a factor. `1` (the default when `zoom` is passed) leaves no wheel zoom at all.
   * `wheelStart`: `0` to `100`, where the view starts in that range: `100` is the closest view, `0` the farthest. Default is `50`.
@@ -56,7 +56,13 @@ The renderer can run in five different modes, depending on its usage: Marketplac
   * `disableAutoRotate`: stops the idle turntable in every view. Default is `false`.
   * `autoRotateSpeed`: the idle turntable speed in radians per second. Default is `0.2`.
   * `offsetX`, `offsetY`: where the view starts, in metres across and up the screen. Default is `0`.
+  * `offsetZ`: moves the view back from the subject by that many metres; a perspective view only, as in Babylon. Default is `0`.
+  * `cameraX`, `cameraY`, `cameraZ`: where the Babylon preview would put its camera. The views here stand where Babylon's default cameras do (`0,1,3.5` for the avatar, `-2,2,2` for the item alone), so each axis left out keeps that default and only the difference is applied: a turn, a tilt (the item view only; the avatar stays upright) and a change of distance. Applied on reload.
+  * `wheelPrecision`: how far a wheel notch zooms, Babylon's unit: a larger value zooms less. Default is `100`, minimum `1`.
+  * `zoomScale`: extra zoom on top of every other zoom option; `2` shows the subject twice as large. Default is `1`.
+  * `disableAutoCenter`: aims the view at the subject's own origin, the avatar's feet, instead of its middle, as the Babylon preview does without auto-centre. Applied on reload. Default is `false`.
   * `showThumbnailBoundaries`: outlines the centred half of the canvas that a square screenshot of it keeps, for the Builder's thumbnail editor. Default is `false`.
+  * `showSceneBoundaries`: draws the space an avatar's items have to fit in, a 2 m wide, 3 m tall cylinder on a grid floor, as the Babylon preview does for curators. The same as `showAnimationReference`. Default is `false`.
 * `background`: The background color to use for the renderer. It must be in hex and not include the leading # (e.g. `ff00ff`). It may include alpha for a transparent background. Default is transparent.
 * `shadow`: Whether the avatar casts a shadow on the floor. The shadow is drawn into the canvas alpha, so over a transparent background it composites onto whatever sits behind the renderer. Default is `on`; pass `shadow=off` to remove it. Not used in `configurator` mode, and the item-alone view of `marketplace` mode has no shadow either way.
 * `glow`: Whether a soft pool of light is drawn on the floor under the avatar, so it reads as standing on a lit surface rather than floating. Brightens the canvas the same way `shadow` darkens it, so over a transparent background it lifts whatever sits behind the renderer. Default is `on`; pass `glow=off` to remove it. Same modes as `shadow`, and unlike `shadow` it also appears in the item-alone view of `marketplace` mode, where it sits under the floating item.
@@ -73,6 +79,7 @@ The renderer can run in five different modes, depending on its usage: Marketplac
 * `contract`: The contract address of a wearable or emote to load.
 * `item`: The item id of a wearable or emote to load.
 * `token`: The token id of a wearable or emote to load.
+* `socialEmote`: For a social emote, which of its animations to play, as JSON in the shape of `SocialEmoteAnimation` from `@dcl/schemas`: `{"title","loop","audio","Armature":{"animation"},"Armature_Other":{"animation"},"Armature_Prop":{"animation"}}`. The `Armature_Other` clip plays on a second, grey-skinned avatar wearing the same items, and only the named `audio` plays. Left out, a social emote plays one of its outcomes at random, as the Babylon preview does.
 * `env`: The environment to use for API calls. Possible values:
   * `prod` (default) - uses ORG
   * `dev` - uses ZONE
@@ -171,9 +178,10 @@ For a full list of available functions check [JSBridge](Assets/Scripts/JSBridge.
 These act on the live view and need no `Reload`. A reload within the same mode keeps the zoom and pan the user set; switching modes, or switching between the avatar and the item view, starts again from the options.
 
 * `SetZoomLevel`, `SetWheelZoom`, `SetWheelStart`: the URL options above, applied at once. The view restarts at the new range's start position, as it would after a reload. An empty `SetZoomLevel` or `SetWheelZoom` unsets the option.
-* `SetCamera`, `SetLockAlpha`, `SetLockBeta`, `SetLockRadius`, `SetPanning`, `SetDisableAutoRotate`, `SetAutoRotateSpeed`, `SetShowThumbnailBoundaries`: the URL options above, applied at once.
+* `SetCamera`, `SetLockAlpha`, `SetLockBeta`, `SetLockRadius`, `SetPanning`, `SetDisableAutoRotate`, `SetAutoRotateSpeed`, `SetShowThumbnailBoundaries`, `SetShowSceneBoundaries`, `SetWheelPrecision`, `SetZoomScale`: the URL options above, applied at once.
+* `SetCameraX`, `SetCameraY`, `SetCameraZ`, `SetDisableAutoCenter`, `SetSocialEmote`: the URL options above, applied by the next `Reload`. An empty `SetCameraX` (or `Y`, `Z`) unsets the axis, and an empty `SetSocialEmote` goes back to a random outcome.
 * `SetZoom`: Babylon's `changeZoom`. A delta that pulls the view closer when positive; the Builder's zoom buttons send `0.1` and `-0.1`, which move the orbit by one metre of Babylon's 3.5 m camera distance.
-* `SetOffset`: Babylon's `panCamera`. `x,y,z` in metres, across and up the screen, replacing any right-drag pan. `z` is accepted and ignored. The Builder's thumbnail slider drives `y`.
+* `SetOffset`: Babylon's `panCamera`. `x,y,z` in metres, across and up the screen and back from the subject, replacing any right-drag pan. The Builder's thumbnail slider drives `y`.
 * `SetCameraPosition`: Babylon's `changeCameraPosition`. `alpha,beta,radius` deltas: alpha turns the subject and beta tilts it, in radians, and radius pulls the orbit back by metres.
 
 ```javascript

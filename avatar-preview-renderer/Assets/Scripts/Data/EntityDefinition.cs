@@ -21,6 +21,13 @@ namespace Data
 
         [CanBeNull] private readonly SpringBonesDto _springBones;
 
+        /// <summary>
+        /// The ways a social emote can end, each with the clips both avatars and the prop play; null for
+        /// any other entity. The Babylon preview treats an emote as social only when it has a start
+        /// animation and at least one outcome, and so does this.
+        /// </summary>
+        [CanBeNull] public readonly SocialEmoteAnimation[] SocialOutcomes;
+
         [ItemCanBeNull] private readonly Dictionary<BodyShape, Representation> _representations;
 
         /// <summary>
@@ -66,8 +73,10 @@ namespace Data
             $"Missing {shape} representation for {URN}");
 
         private EntityDefinition(string urn, string category, string thumbnail, EntityType type, EntityFlags flags,
-            Dictionary<BodyShape, Representation> representations, [CanBeNull] SpringBonesDto springBones)
+            Dictionary<BodyShape, Representation> representations, [CanBeNull] SpringBonesDto springBones,
+            [CanBeNull] SocialEmoteAnimation[] socialOutcomes = null)
         {
+            SocialOutcomes = socialOutcomes;
             URN = urn;
             Category = category;
             Thumbnail = thumbnail;
@@ -187,7 +196,22 @@ namespace Data
             };
 
             return new EntityDefinition(urn, category, thumbnail, type, flags, representations,
-                entity.IsEmote ? null : entity.metadata?.data?.springBones);
+                entity.IsEmote ? null : entity.metadata?.data?.springBones,
+                entity.IsEmote ? SocialOutcomesOf(entity.metadata?.emoteDataADR74) : null);
+        }
+
+        [CanBeNull]
+        private static SocialEmoteAnimation[] SocialOutcomesOf([CanBeNull] ActiveEntity.Metadata.Data emoteData)
+        {
+            if (string.IsNullOrEmpty(emoteData?.startAnimation?.Armature?.animation)) return null;
+            if (emoteData.outcomes == null || emoteData.outcomes.Length == 0) return null;
+
+            var outcomes = new SocialEmoteAnimation[emoteData.outcomes.Length];
+
+            for (var i = 0; i < outcomes.Length; i++)
+                outcomes[i] = SocialEmoteAnimation.FromOutcome(emoteData.outcomes[i]);
+
+            return outcomes;
         }
 
         public static EntityDefinition FromBase64(byte[] b64) => FromDefinitionJson(Encoding.UTF8.GetString(b64));

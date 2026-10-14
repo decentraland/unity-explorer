@@ -53,7 +53,12 @@ namespace Preview
 
         private ZoomRange _zoomRange;
         private Vector2 _startOffset;
+        private float _offsetDepth;
         private bool _zoomLocked;
+        private bool _autoCenter = true;
+
+        // Wheel delta multiplier from the page's wheel precision; 1 at Babylon's default.
+        private float _wheelSensitivity = 1f;
 
 #if UNITY_EDITOR
         private float _lastAvatarFitMargin;
@@ -96,7 +101,16 @@ namespace Preview
             _zoomRange = ZoomRange.FromOptions(config.ZoomLevel, config.WheelZoom, config.WheelStart,
                 defaultZoomIn, defaultZoomOut);
             _startOffset = config.Offset;
+            _offsetDepth = config.OffsetDepth;
             _zoomLocked = config.LockRadius;
+            _autoCenter = !config.DisableAutoCenter;
+            _wheelSensitivity = PreviewConfiguration.DEFAULT_WHEEL_PRECISION / config.WheelPrecision;
+
+            // The avatar views start from Babylon's avatar camera, the item view from its item camera.
+            var avatarScale = config.ZoomScale * BabylonCamera.Closer(BabylonCamera.Resolve(config, BabylonCamera.AVATAR), BabylonCamera.AVATAR);
+            _avatarFraming.Scale = avatarScale;
+            _builderFraming.Scale = avatarScale;
+            _wearableFraming.Scale = config.ZoomScale * BabylonCamera.Closer(BabylonCamera.Resolve(config, BabylonCamera.ITEM), BabylonCamera.ITEM);
 
             _avatarFraming.Zoom = _zoomRange.Clamp(_avatarFraming.Zoom);
             _wearableFraming.Zoom = _zoomRange.Clamp(_wearableFraming.Zoom);
@@ -180,7 +194,7 @@ namespace Preview
         {
             if (_zoomLocked) return;
 
-            _active.Zoom = _zoomRange.Clamp(_active.Zoom * Mathf.Pow(wheelZoomStep, -delta));
+            _active.Zoom = _zoomRange.Clamp(_active.Zoom * Mathf.Pow(wheelZoomStep, -delta * _wheelSensitivity));
         }
 
         /// <summary>
@@ -206,13 +220,17 @@ namespace Preview
         /// <summary>
         /// Puts the view at an absolute offset, across and up the screen in metres, replacing any
         /// right-drag pan; the other views start from it too. Unclamped: the page asked for exactly
-        /// this.
+        /// this. The depth pulls every view back by that many metres.
         /// </summary>
-        public void SetOffset(Vector2 offset)
+        public void SetOffset(Vector2 offset, float depth)
         {
             _startOffset = offset;
+            _offsetDepth = depth;
             _active.UserPan = offset;
-            ApplyPan(_active);
+
+            ApplyPan(_avatarFraming);
+            ApplyPan(_wearableFraming);
+            ApplyPan(_builderFraming);
         }
 
         /// <summary>
@@ -253,6 +271,7 @@ namespace Preview
                 out var radius, out var height);
 
             framing.SubjectCenter = center;
+            framing.SubjectPivot = subject.position;
             framing.SubjectRadius = radius;
             framing.SubjectHeight = height;
 
@@ -293,7 +312,9 @@ namespace Preview
                 OrthoSizeFor(framing.SubjectRadius, framing.SubjectHeight * 0.5f, Aspect, margin);
 
             // Zooming tightens around the view axis, so the subject has to be brought onto it too.
-            var inCameraSpace = Quaternion.Inverse(rotation) * toSubject;
+            // Without auto-centre the subject's own origin goes there instead, as Babylon aims at it.
+            var aimed = _autoCenter ? toSubject : framing.SubjectPivot - unpannedPosition;
+            var inCameraSpace = Quaternion.Inverse(rotation) * aimed;
 
             framing.FitOffset = Vector2.ClampMagnitude(
                 new Vector2(inCameraSpace.x, inCameraSpace.y), maxPanOffset);
@@ -370,18 +391,20 @@ namespace Preview
         }
 
         private float TargetFieldOfView(CameraFraming framing) =>
-            Mathf.Clamp(framing.FittedFOV / framing.Zoom, minFieldOfView, maxFieldOfView);
+            Mathf.Clamp(framing.FittedFOV / (framing.Zoom * framing.Scale), minFieldOfView, maxFieldOfView);
 
-        private static float TargetOrthoSize(CameraFraming framing) => framing.FittedOrthoSize / framing.Zoom;
+        private static float TargetOrthoSize(CameraFraming framing) =>
+            framing.FittedOrthoSize / (framing.Zoom * framing.Scale);
 
-        private static void ApplyPan(CameraFraming framing)
+        private void ApplyPan(CameraFraming framing)
         {
             var camTransform = framing.Camera.transform;
             var offset = framing.FitOffset + framing.UserPan;
 
-            // localRotation keeps the offset screen-aligned however the camera is oriented.
+            // localRotation keeps the offset screen-aligned however the camera is oriented. The depth
+            // moves the lens back along its axis, which only a perspective view shows, as in Babylon.
             camTransform.localPosition = framing.InitialLocalPosition +
-                                         camTransform.localRotation * new Vector3(offset.x, offset.y, 0f);
+                                         camTransform.localRotation * new Vector3(offset.x, offset.y, -_offsetDepth);
         }
 
         // The fitted subject is kept so the fit can re-run on an aspect change without the caller
@@ -397,10 +420,15 @@ namespace Preview
             public Vector2 FitOffset;
 
             public float Zoom = 1f;
+
+            // Distance options over the fit: the zoom scale and how far the page's camera position is
+            // from Babylon's default. Not the user's, so a reload recomputes it.
+            public float Scale = 1f;
             public Vector2 UserPan;
 
             public bool HasSubject;
             public Vector3 SubjectCenter;
+            public Vector3 SubjectPivot;
             public float SubjectRadius;
             public float SubjectHeight;
 

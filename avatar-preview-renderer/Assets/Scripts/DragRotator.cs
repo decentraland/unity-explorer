@@ -33,6 +33,10 @@ public class DragRotator : MonoBehaviour
     private float _pitch;
     private bool _inputEnabled = true;
 
+    // Where a reset returns to: the page's starting camera, as a turn and a tilt.
+    private float _startYaw;
+    private float _startPitch;
+
     public bool AllowHorizontal { get; set; } = true;
     public bool AllowVertical { get; set; } = true;
     public bool EnableAutoRotate { get; set; } = true;
@@ -175,10 +179,22 @@ public class DragRotator : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Sets the turn and tilt a reset returns to, and goes there now. The axis locks do not apply: they
+    /// hold the view where it starts.
+    /// </summary>
+    public void SetStartRotation(float yawDegrees, float pitchDegrees)
+    {
+        _startYaw = yawDegrees;
+        _startPitch = Mathf.Clamp(pitchDegrees, -maxPitch, maxPitch);
+
+        ResetRotation();
+    }
+
     public void ResetRotation()
     {
-        _yaw = 0f;
-        _pitch = 0f;
+        _yaw = _startYaw;
+        _pitch = _startPitch;
         _horizontalVel = 0;
         _verticalVel = 0;
         _lastDragTime = 0;
@@ -186,6 +202,6 @@ public class DragRotator : MonoBehaviour
         // An in-flight LookAtCamera would otherwise keep lerping straight over the reset.
         _targetRotation = null;
 
-        transform.rotation = _initialRotation;
+        ApplyRotation();
     }
 }

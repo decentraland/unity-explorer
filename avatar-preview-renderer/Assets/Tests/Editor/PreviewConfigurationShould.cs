@@ -48,6 +48,61 @@ namespace Tests
         }
 
         [Test]
+        public void ReadTheRemainingBabylonOptions()
+        {
+            // Arrange
+            const string socialEmote =
+                "{\"title\":\"Hug\",\"loop\":false,\"Armature\":{\"animation\":\"Friends_Outcome1_Avatar\"},"
+                + "\"Armature_Other\":{\"animation\":\"Friends_Outcome1_AvatarOther\"}}";
+
+            // Act
+            PreviewConfiguration.RecreateFrom(
+                "?showSceneBoundaries=true&offsetZ=1.5&cameraX=2&cameraZ=-1&wheelPrecision=50&zoomScale=2"
+                + $"&disableAutoCenter=true&socialEmote={Uri.EscapeDataString(socialEmote)}");
+            var config = PreviewConfiguration.Instance;
+
+            // Assert
+            Assert.IsTrue(config.ShowSceneBoundaries);
+            Assert.AreEqual(1.5f, config.OffsetDepth, TOLERANCE);
+            Assert.AreEqual(2f, config.CameraX.Value, TOLERANCE);
+            Assert.IsNull(config.CameraY);
+            Assert.AreEqual(-1f, config.CameraZ.Value, TOLERANCE);
+            Assert.AreEqual(50f, config.WheelPrecision, TOLERANCE);
+            Assert.AreEqual(2f, config.ZoomScale, TOLERANCE);
+            Assert.IsTrue(config.DisableAutoCenter);
+            Assert.AreEqual("Friends_Outcome1_AvatarOther", config.SocialEmote.OtherAnimation);
+        }
+
+        [Test]
+        public void TakeBabylonsFallbacksForOutOfRangeValues()
+        {
+            // Act
+            PreviewConfiguration.RecreateFrom("?wheelPrecision=0.2&zoomScale=-3&socialEmote=nope");
+            var config = PreviewConfiguration.Instance;
+
+            // Assert
+            Assert.AreEqual(1f, config.WheelPrecision, TOLERANCE);
+            Assert.AreEqual(1f, config.ZoomScale, TOLERANCE);
+            Assert.IsNull(config.SocialEmote);
+        }
+
+        [Test]
+        public void PrintTheSocialEmoteSoItReadsBack()
+        {
+            // Arrange
+            PreviewConfiguration.RecreateFrom("?socialEmote="
+                + Uri.EscapeDataString("{\"title\":\"A&B\",\"loop\":true,\"Armature\":{\"animation\":\"X_Avatar\"}}"));
+
+            // Act
+            PreviewConfiguration.RecreateFrom(PreviewConfiguration.Instance.ToString());
+
+            // Assert
+            Assert.AreEqual("A&B", PreviewConfiguration.Instance.SocialEmote.title);
+            Assert.IsTrue(PreviewConfiguration.Instance.SocialEmote.loop);
+            Assert.AreEqual("X_Avatar", PreviewConfiguration.Instance.SocialEmote.AvatarAnimation);
+        }
+
+        [Test]
         public void KeepTheDefaultsForUnparsableValues()
         {
             // Act

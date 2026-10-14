@@ -211,6 +211,9 @@ namespace Preview
             previewUIPresenter.EnablePan(_cameraInputByMode && interactive && config.Panning);
             previewUIPresenter.ShowThumbnailBoundaries(config.ShowThumbnailBoundaries);
 
+            // The animation reference is Babylon's scene boundaries: the same cylinder on a grid floor.
+            animationReference.SetActive(config.ShowAnimationReference || config.ShowSceneBoundaries);
+
             ConfigureRotator(avatarRotator, config, interactive);
             ConfigureRotator(wearableRotator, config, interactive);
 
@@ -257,9 +260,10 @@ namespace Preview
         public void ZoomBy(float delta) => previewCameraController.ZoomByDelta(delta);
 
         /// <summary>
-        /// Puts every view at the configuration's offset, across and up the screen in metres.
+        /// Puts every view at the configuration's offset, across and up the screen and back, in metres.
         /// </summary>
-        public void ApplyCameraOffset() => previewCameraController.SetOffset(PreviewConfiguration.Instance.Offset);
+        public void ApplyCameraOffset() =>
+            previewCameraController.SetOffset(PreviewConfiguration.Instance.Offset, PreviewConfiguration.Instance.OffsetDepth);
 
         /// <summary>
         /// Moves the view by Babylon's orbit deltas: alpha turns the subject, beta tilts it, both in
@@ -273,6 +277,20 @@ namespace Preview
             // viewer; the rotator's pitch runs the other way.
             rotator.Rotate(alpha * Mathf.Rad2Deg, -beta * Mathf.Rad2Deg);
             previewCameraController.OrbitBy(radius);
+        }
+
+        // The page's camera position turns each view from where Babylon's default camera for it stands.
+        // The avatar stays upright, as it does under a drag.
+        private void ApplyCameraStart(PreviewConfiguration config)
+        {
+            var (avatarAlpha, _) = BabylonCamera.AnglesFrom(BabylonCamera.Resolve(config, BabylonCamera.AVATAR),
+                BabylonCamera.AVATAR);
+            var (itemAlpha, itemBeta) = BabylonCamera.AnglesFrom(BabylonCamera.Resolve(config, BabylonCamera.ITEM),
+                BabylonCamera.ITEM);
+
+            // The same signs as MoveCamera: Babylon's beta tilts the rotator's pitch the other way.
+            avatarRotator.SetStartRotation(avatarAlpha, 0f);
+            wearableRotator.SetStartRotation(itemAlpha, -itemBeta);
         }
 
         private static void ConfigureRotator(DragRotator rotator, PreviewConfiguration config, bool interactive)
@@ -345,7 +363,7 @@ namespace Preview
                 avatarRotator.ResetRotation();
                 wearableRotator.ResetRotation();
 
-                animationReference.SetActive(config.ShowAnimationReference);
+                animationReference.SetActive(config.ShowAnimationReference || config.ShowSceneBoundaries);
                 platform.SetActive(config.Mode is PreviewMode.Authentication);
                 shadowCatcher.SetActive(config.Shadow);
                 glowCatcher.SetActive(config.Glow);
@@ -497,6 +515,7 @@ namespace Preview
                 // setter that arrived mid-load recorded.
                 _emoteHeldForStaticCamera = false;
                 ApplyCameraSettings();
+                ApplyCameraStart(config);
 
                 previewUIPresenter.EnableEmoteControls(hasEmoteOverride);
                 previewUIPresenter.EnableSwitcher(hasWearableOverride && !config.DisableSwitcher);

@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
 using System.Web;
+using Data;
+using JetBrains.Annotations;
 using Services;
 using UnityEngine;
 using Utils;
@@ -18,6 +20,9 @@ public class PreviewConfiguration
     /// The <see cref="Emote"/> value that plays none.
     /// </summary>
     public const string NO_EMOTE = "none";
+
+    // Babylon's default wheel precision: one unit of wheel delta per 100 of it.
+    public const float DEFAULT_WHEEL_PRECISION = 100f;
 
     public static PreviewConfiguration Instance { get; private set; } = new();
 
@@ -397,6 +402,50 @@ public class PreviewConfiguration
     /// </summary>
     public bool ShowThumbnailBoundaries { get; private set; }
 
+    /// <summary>
+    /// Draws the space an avatar's items have to fit in, a 2 m wide, 3 m tall cylinder on a grid
+    /// floor, as the Babylon preview does for the Builder's curators. The same as
+    /// <see cref="ShowAnimationReference"/>, under Babylon's name.
+    /// </summary>
+    public bool ShowSceneBoundaries { get; private set; }
+
+    /// <summary>
+    /// Depth of the offset, Babylon's <c>offsetZ</c>: positive moves the view back from the subject.
+    /// </summary>
+    public float OffsetDepth { get; private set; }
+
+    /// <summary>
+    /// Where the Babylon preview would put its camera, in its world: each axis left unset keeps that
+    /// preview's default for the view, so only what the page changed turns or pulls back the view.
+    /// </summary>
+    public float? CameraX { get; private set; }
+
+    public float? CameraY { get; private set; }
+
+    public float? CameraZ { get; private set; }
+
+    /// <summary>
+    /// How far a wheel notch zooms, Babylon's unit: 100 is the default, a larger value zooms less.
+    /// </summary>
+    public float WheelPrecision { get; private set; } = DEFAULT_WHEEL_PRECISION;
+
+    /// <summary>
+    /// Extra zoom on top of every other zoom option: 2 shows the subject twice as large.
+    /// </summary>
+    public float ZoomScale { get; private set; } = 1f;
+
+    /// <summary>
+    /// Keeps the subject where it stands instead of bringing its middle onto the view axis, so the
+    /// offset and camera options act from the subject's own origin, as they do in the Babylon preview.
+    /// </summary>
+    public bool DisableAutoCenter { get; private set; }
+
+    /// <summary>
+    /// The social emote animation to play: which clip each armature plays, its loop and its audio.
+    /// Unset, a social emote plays one of its outcomes at random, as the Babylon preview does.
+    /// </summary>
+    [CanBeNull] public SocialEmoteAnimation SocialEmote { get; private set; }
+
     public void SetZoomLevel(string value) => ZoomLevel = ParseOptionalNumber(value, "zoom", ZoomLevel);
 
     public void SetWheelZoom(string value) => WheelZoom = ParseOptionalNumber(value, "wheelZoom", WheelZoom);
@@ -438,6 +487,50 @@ public class PreviewConfiguration
 
     public void SetShowThumbnailBoundaries(string value) =>
         ShowThumbnailBoundaries = ParseToggle(value, "showThumbnailBoundaries", ShowThumbnailBoundaries);
+
+    public void SetShowSceneBoundaries(string value) =>
+        ShowSceneBoundaries = ParseToggle(value, "showSceneBoundaries", ShowSceneBoundaries);
+
+    public void SetOffsetZ(string value) => OffsetDepth = ParseNumber(value, "offsetZ", OffsetDepth);
+
+    public void SetOffsetDepth(float depth) => OffsetDepth = depth;
+
+    public void SetCameraX(string value) => CameraX = ParseOptionalNumber(value, "cameraX", CameraX);
+
+    public void SetCameraY(string value) => CameraY = ParseOptionalNumber(value, "cameraY", CameraY);
+
+    public void SetCameraZ(string value) => CameraZ = ParseOptionalNumber(value, "cameraZ", CameraZ);
+
+    // Babylon floors it at 1.
+    public void SetWheelPrecision(string value) =>
+        WheelPrecision = Mathf.Max(ParseNumber(value, "wheelPrecision", WheelPrecision), 1f);
+
+    // Babylon takes anything but a positive number as 1.
+    public void SetZoomScale(string value)
+    {
+        var scale = ParseNumber(value, "zoomScale", ZoomScale);
+        ZoomScale = scale > 0f ? scale : 1f;
+    }
+
+    public void SetDisableAutoCenter(string value) =>
+        DisableAutoCenter = ParseToggle(value, "disableAutoCenter", DisableAutoCenter);
+
+    // An empty value goes back to a random outcome; an invalid one keeps the current animation.
+    public void SetSocialEmote(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            SocialEmote = null;
+            return;
+        }
+
+        var animation = SocialEmoteAnimation.FromJson(value);
+
+        if (animation != null)
+            SocialEmote = animation;
+        else
+            Debug.LogWarning($"Unknown socialEmote value [{value}], keeping the current one");
+    }
 
     /// <summary>
     /// Parses a finite number the way the page wrote it, with a dot decimal separator whatever the
@@ -631,6 +724,33 @@ public class PreviewConfiguration
                 case "showThumbnailBoundaries":
                     Instance.SetShowThumbnailBoundaries(value);
                     break;
+                case "showSceneBoundaries":
+                    Instance.SetShowSceneBoundaries(value);
+                    break;
+                case "offsetZ":
+                    Instance.SetOffsetZ(value);
+                    break;
+                case "cameraX":
+                    Instance.SetCameraX(value);
+                    break;
+                case "cameraY":
+                    Instance.SetCameraY(value);
+                    break;
+                case "cameraZ":
+                    Instance.SetCameraZ(value);
+                    break;
+                case "wheelPrecision":
+                    Instance.SetWheelPrecision(value);
+                    break;
+                case "zoomScale":
+                    Instance.SetZoomScale(value);
+                    break;
+                case "disableAutoCenter":
+                    Instance.SetDisableAutoCenter(value);
+                    break;
+                case "socialEmote":
+                    Instance.SetSocialEmote(value);
+                    break;
                 case "useBrowserPreload":
                     Instance.UseBrowserPreload = bool.Parse(value);
                     break;
@@ -723,6 +843,15 @@ public class PreviewConfiguration
         Append(sb, "offsetX", Offset.x);
         Append(sb, "offsetY", Offset.y);
         Append(sb, "showThumbnailBoundaries", ShowThumbnailBoundaries);
+        Append(sb, "showSceneBoundaries", ShowSceneBoundaries);
+        Append(sb, "offsetZ", OffsetDepth);
+        if (CameraX.HasValue) Append(sb, "cameraX", CameraX.Value);
+        if (CameraY.HasValue) Append(sb, "cameraY", CameraY.Value);
+        if (CameraZ.HasValue) Append(sb, "cameraZ", CameraZ.Value);
+        Append(sb, "wheelPrecision", WheelPrecision);
+        Append(sb, "zoomScale", ZoomScale);
+        Append(sb, "disableAutoCenter", DisableAutoCenter);
+        if (SocialEmote != null) Append(sb, "socialEmote", SocialEmote.ToJson());
         Append(sb, "useBrowserPreload", UseBrowserPreload);
         Append(sb, "username", Username);
         Append(sb, "showFPS", ShowFPS);

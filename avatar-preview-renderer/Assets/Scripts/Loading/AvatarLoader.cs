@@ -17,6 +17,12 @@ namespace Loading
 {
     public class AvatarLoader : MonoBehaviour
     {
+        // The armature a social emote's clip for the other avatar animates, by the emote file's name.
+        private const string OTHER_ARMATURE_NAME = "Armature_Other";
+
+        // #c9c9c9, the Babylon preview's skin for the other avatar.
+        private static readonly Color OTHER_AVATAR_SKIN = new(201f / 255f, 201f / 255f, 201f / 255f);
+
         [SerializeField] private Camera mainCamera;
 
         [FormerlySerializedAs("emoteEventReceiver")] [SerializeField]
@@ -36,6 +42,13 @@ namespace Loading
         private readonly Dictionary<string, LoadedModel> _loadedModels = new();
         private readonly Dictionary<string, LoadedFacialFeature> _loadedFacialFeatures = new();
         private LoadedEmote? _loadedEmote;
+
+        // The social emote animation the page chose for the loaded emote, so a different one reloads it.
+        private string _loadedSocialEmote;
+
+        // A social emote's other avatar, wearing what the avatar wears, and the animation driving it.
+        private GameObject _otherAvatar;
+        private Animation _otherAvatarAnimation;
 
         // JSBridge spring-bone overrides keyed by itemId; these take precedence over the
         // params declared in the wearable definition and are re-applied after every reload.
@@ -86,11 +99,12 @@ namespace Loading
 
             var modelLoadResults = await Task.WhenAll(modelLoadTasks);
             var facialFeaturesLoadResults = await Task.WhenAll(facialFeaturesLoadTasks);
-            var emoteLoadResult = emoteDefinition != null && emoteDefinition.URN != _loadedEmote?.Entity.URN
-                ? await GLTFLoader.LoadEmote(bodyShape, emoteDefinition, transform)
-                : (LoadedEmote?)null;
+            var socialEmote = PreviewConfiguration.Instance.SocialEmote?.ToJson();
+            var emoteChanged = _loadedEmote?.Entity.URN != emoteDefinition?.URN || socialEmote != _loadedSocialEmote;
 
-            var emoteChanged = _loadedEmote?.Entity.URN != emoteDefinition?.URN;
+            var emoteLoadResult = emoteChanged && emoteDefinition != null
+                ? await GLTFLoader.LoadEmote(bodyShape, emoteDefinition, transform, SocialEmoteFor(emoteDefinition))
+                : (LoadedEmote?)null;
 
             // Clean up previous emote prop / audio
             if (emoteChanged && _loadedEmote != null)
@@ -102,6 +116,7 @@ namespace Loading
             if (emoteChanged)
             {
                 _loadedEmote = emoteLoadResult;
+                _loadedSocialEmote = socialEmote;
             }
 
             var newModels = modelLoadResults.ToList();
@@ -213,12 +228,21 @@ namespace Loading
                 Debug.LogError("[SpringBones] springBonesDriver not wired on AvatarLoader");
             }
 
+            // The other avatar wears what the avatar wears, so it is built again with every load, and
+            // its emote started over with it.
+            DestroyOtherAvatar();
+
+            if (_loadedEmote?.OtherClip != null)
+            {
+                BuildOtherAvatar(_loadedEmote.Value, colors);
+            }
+
             // If there is a new emote to be played
-            if (emoteChanged)
+            if (emoteChanged || _otherAvatar != null)
             {
                 if (_loadedEmote != null)
                 {
-                    emoteAnimationController.PlayEmote(_loadedEmote.Value);
+                    emoteAnimationController.PlayEmote(_loadedEmote.Value, _otherAvatar, _otherAvatarAnimation);
                 }
                 else
                 {
@@ -397,12 +421,96 @@ namespace Loading
 
         public void ClearEmote()
         {
+            DestroyOtherAvatar();
+
             if (_loadedEmote != null)
             {
                 _loadedEmote.Value.Disposable?.Dispose();
                 Destroy(_loadedEmote.Value.Prop);
                 _loadedEmote = null;
+                _loadedSocialEmote = null;
             }
+        }
+
+        // The page's choice, or for a social emote one of its outcomes at random, as the Babylon preview
+        // picks it. The rig's own emotes are never social.
+        [CanBeNull]
+        private static SocialEmoteAnimation SocialEmoteFor(EntityDefinition emote)
+        {
+            if (emote.URN.StartsWith("embedded:", StringComparison.Ordinal)) return null;
+
+            var chosen = PreviewConfiguration.Instance.SocialEmote;
+            if (chosen != null) return chosen;
+
+            var outcomes = emote.SocialOutcomes;
+            return outcomes is { Length: > 0 } ? outcomes[UnityEngine.Random.Range(0, outcomes.Length)] : null;
+        }
+
+        /// <summary>
+        /// A copy of the rig with its armature renamed to the one the other avatar's clip animates,
+        /// wearing copies of every shown item with a grey skin, as the Babylon preview draws the other
+        /// avatar. It sits under this loader, so the camera fit frames both avatars.
+        /// </summary>
+        private void BuildOtherAvatar(LoadedEmote emote, AvatarColors colors)
+        {
+            var rig = avatarAnimation.transform;
+
+            var armature = avatarRootBone;
+            while (armature != null && armature.parent != rig) armature = armature.parent;
+
+            if (armature == null)
+            {
+                Debug.LogWarning("[AvatarLoader] The root bone is not under the rig, so the other avatar is not shown");
+                return;
+            }
+
+            // Built inactive, so nothing on the copies wakes before it is stripped; the emote shows it.
+            _otherAvatar = new GameObject("Other Avatar");
+            _otherAvatar.SetActive(false);
+            _otherAvatar.transform.SetParent(transform, false);
+
+            var otherRig = Instantiate(rig.gameObject, rig.position, rig.rotation, _otherAvatar.transform);
+            var holderScale = _otherAvatar.transform.lossyScale;
+            otherRig.transform.localScale = new Vector3(rig.lossyScale.x / holderScale.x,
+                rig.lossyScale.y / holderScale.y, rig.lossyScale.z / holderScale.z);
+
+            // A bare skeleton: the rig's scripts belong to the avatar, and its own meshes are not worn.
+            foreach (var behaviour in otherRig.GetComponentsInChildren<MonoBehaviour>(true)) DestroyImmediate(behaviour);
+            foreach (var rigRenderer in otherRig.GetComponentsInChildren<Renderer>(true)) rigRenderer.enabled = false;
+
+            // Every transform of the copy, not only the skeleton's: the items' spring-bone chains hang
+            // under the rig's bones, so the copy carries copies of them for the items' copies to bind to.
+            var otherBones = otherRig.GetComponentsInChildren<Transform>(true);
+            var otherRootBone = Array.Find(otherBones, bone => bone.name == avatarRootBone.name);
+            Array.Find(otherBones, bone => bone.name == armature.name).name = OTHER_ARMATURE_NAME;
+
+            // The copy took the avatar's own emote state along; the other avatar plays its own clip.
+            _otherAvatarAnimation = otherRig.GetComponent<Animation>();
+            _otherAvatarAnimation.Stop();
+            _otherAvatarAnimation.playAutomatically = false;
+            _otherAvatarAnimation.RemoveClip(emote.Entity.URN);
+            _otherAvatarAnimation.AddClip(emote.OtherClip, emote.Entity.URN);
+            _otherAvatarAnimation.clip = emote.OtherClip;
+
+            var otherColors = new AvatarColors(colors.Eyes, colors.Hair, OTHER_AVATAR_SKIN);
+            var unusedOutlineRenderers = new List<Renderer>();
+
+            foreach (var model in _loadedModels.Values)
+            {
+                if (!model.Root.activeSelf) continue;
+
+                var copy = Instantiate(model.Root, _otherAvatar.transform);
+                AvatarUtils.SetupWearable(copy, otherColors, unusedOutlineRenderers, otherRootBone, otherBones);
+            }
+        }
+
+        private void DestroyOtherAvatar()
+        {
+            if (_otherAvatar == null) return;
+
+            Destroy(_otherAvatar);
+            _otherAvatar = null;
+            _otherAvatarAnimation = null;
         }
 
         public void TryHideCategory(string category, bool hidden)
@@ -539,12 +647,16 @@ namespace Loading
         [CanBeNull] public readonly AudioClip Audio;
         [CanBeNull] public readonly GameObject Prop;
         [CanBeNull] public readonly Animation PropAnim;
+
+        // A social emote's clip for the other avatar.
+        [CanBeNull] public readonly AnimationClip OtherClip;
         public readonly IDisposable Disposable;
         public readonly ModelMetrics Metrics;
 
         public LoadedEmote(EntityDefinition entity, AnimationClip clip, AudioClip audio, GameObject prop,
-            Animation propAnim, IDisposable disposable, ModelMetrics metrics)
+            Animation propAnim, IDisposable disposable, ModelMetrics metrics, AnimationClip otherClip = null)
         {
+            OtherClip = otherClip;
             Entity = entity;
             Clip = clip;
             Audio = audio;
