@@ -19,11 +19,13 @@ use crate::releases::tag::Platform;
 const S_IFMT: u32 = 0o170_000;
 const S_IFLNK: u32 = 0o120_000;
 const DEFAULT_MODE: &str = "644";
+/// Read size when hashing a file.
+const HASH_BUFFER_BYTES: usize = 1 << 20;
 
 pub fn sha256_file(path: &Path) -> Result<Sha256> {
     let mut file: File = File::open(path).with_context(|| format!("cannot open {}", path.display()))?;
     let mut hasher: sha2::Sha256 = sha2::Sha256::new();
-    let mut buffer: Vec<u8> = vec![0; 1 << 20];
+    let mut buffer: Vec<u8> = vec![0; HASH_BUFFER_BYTES];
     loop {
         let read: usize =
             io::Read::read(&mut file, &mut buffer).with_context(|| format!("cannot read {}", path.display()))?;
@@ -98,7 +100,11 @@ fn scan_entry(root: &Path, entry: &DirEntry, entries: &mut BTreeMap<RelPath, Nod
         // Folders exist only through the entries under them, so an empty one has no place in a
         // patch set and would be missing from a patched install.
         ensure!(
-            path == root || fs::read_dir(path)?.next().is_some(),
+            path == root
+                || fs::read_dir(path)
+                    .with_context(|| format!("cannot list {}", path.display()))?
+                    .next()
+                    .is_some(),
             "empty directory {}: not representable in a patch set",
             path.display()
         );

@@ -56,8 +56,8 @@ jobs:
   plan:
     name: Pick base releases
     runs-on: ubuntu-latest
-    # Above the sum of the step timeouts, with headroom for checkout and runner setup.
-    timeout-minutes: 30
+    # Above the sum of the step timeouts (25), with headroom for runner setup and the post steps.
+    timeout-minutes: 40
     # A delta failure must never block the release.
     continue-on-error: true
     outputs:
@@ -111,10 +111,10 @@ jobs:
             runner: macos-latest
             zip: Decentraland_macos.zip
     runs-on: ${{ matrix.runner }}
-    # Above the sum of the step timeouts (260 on windows64), with headroom for checkout, the
-    # summary and the artifact upload: a hung step fails (absorbed by continue-on-error)
-    # instead of cancelling the job.
-    timeout-minutes: 290
+    # Above the sum of the step timeouts (280 on windows64, checkout, summary and artifact upload
+    # included), with headroom for runner setup and the post steps (cache save): a hung step
+    # fails (absorbed by continue-on-error) instead of cancelling the job.
+    timeout-minutes: 300
     # The bucket credentials are set only on the steps that talk to S3, as environment
     # variables the tool reads itself; they never appear on a command line.
     env:

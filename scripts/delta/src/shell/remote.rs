@@ -46,9 +46,9 @@ impl Releases for GhReleases {
 }
 
 /// The bucket `$EXPLORER_TEAM_S3_BUCKET`: reads and removals through the `aws` CLI, uploads
-/// through `@dcl/cdn-uploader`, which runs with the bucket's write credentials: the program
-/// named by `$CDN_UPLOADER` (CI installs it from the committed lockfile in
-/// `scripts/delta/uploader`), else `npx` with the pinned version.
+/// through the program named by `$CDN_UPLOADER`, `@dcl/cdn-uploader` installed by CI from the
+/// committed lockfile in `scripts/delta/uploader`; it runs with the bucket's write credentials,
+/// so an install resolved on the fly is never an option.
 #[derive(Debug, Default)]
 pub struct S3Bucket;
 
@@ -122,10 +122,8 @@ impl Bucket for S3Bucket {
 
     fn upload(&self, folder: &Path, prefix: &str, caching: Caching) -> Result<()> {
         let bucket: String = variable("EXPLORER_TEAM_S3_BUCKET")?;
-        let (program, mut args): (String, Vec<&str>) = match env::var("CDN_UPLOADER") {
-            Ok(installed) if !installed.is_empty() => (installed, Vec::new()),
-            _ => ("npx".to_owned(), vec!["@dcl/cdn-uploader@1.5.0"]),
-        };
+        let program: String = variable("CDN_UPLOADER")?;
+        let mut args: Vec<&str> = Vec::new();
         args.extend([
             "--bucket",
             &bucket,

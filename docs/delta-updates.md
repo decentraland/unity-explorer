@@ -194,8 +194,8 @@ Implemented in the launcher repo:
 6. Leave files that are not in the manifest alone (logs, launcher-owned files).
 7. Reject the manifest (fall back to the zip and report it) if any `path`, `from_path`, `deleted`
    entry or `patch` is absolute, contains an empty, `.` or `..` segment, a segment ending in `.` or a
-   space, a Windows device name (`CON`, `PRN`, `AUX`, `NUL`, `COM1`-`COM9`, `LPT1`-`LPT9`, with or
-   without an extension), or contains `\`, `:`, `<`, `>`, `"`, `|`, `?`, `*` or a control character
+   space, a Windows device name (`CON`, `PRN`, `AUX`, `NUL`, `COM0`-`COM9`, `LPT0`-`LPT9`,
+   `COM¹`-`COM³`, `LPT¹`-`LPT³`, with or without an extension), or contains `\`, `:`, `<`, `>`, `"`, `|`, `?`, `*` or a control character
    (NUL included), and if a `symlink` target is absolute, contains any of those characters or a
    control character, or resolves outside the install folder. On NTFS those characters reach
    outside the folder or into another file (`..\x.dll`, `C:x.dll`, `\\host\share`,
@@ -308,9 +308,9 @@ crate is single-threaded: bases are processed one after another.
 ### Local run
 
 `--local <folder>` uses a folder as the bucket (`<folder>/<bucket prefix>/<tag>/<zip>`), with
-nothing published and every signature valid. In CI the uploader is installed from the lockfile in
-`scripts/delta/uploader` and named by `CDN_UPLOADER`; a local run without it uses `npx` with the
-pinned version, which only matters for runs against the real bucket:
+nothing published and every signature valid, so no uploader is needed. A run against the real
+bucket requires `CDN_UPLOADER` to name the uploader, which CI installs from the lockfile in
+`scripts/delta/uploader`:
 
 ```bash
 cd scripts/delta && cargo build --release && DELTA=$PWD/target/release/delta

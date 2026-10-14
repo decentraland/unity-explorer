@@ -56,9 +56,7 @@ pub fn fetch_tools(tools: &Path) -> Result<PathBuf> {
         let url: String = format!(
             "https://github.com/sisong/HDiffPatch/releases/download/{VERSION}/hdiffpatch_{VERSION}_bin_{asset}.zip"
         );
-        let out: &str = archive
-            .to_str()
-            .with_context(|| format!("non-UTF-8 path {}", archive.display()))?;
+        let out: &str = path_text(&archive)?;
         run("curl", ["-fsSL", "--retry", "3", "-o", out, &url])?;
     }
     let actual: String = sha256_file(&archive)?.to_string();

@@ -1,5 +1,5 @@
 //! The I/O the executors depend on. `shell` implements the traits with real processes (`gh`,
-//! `aws`, `npx`, `osslsigncode`, `codesign`) and with local folders for tests and local runs.
+//! `aws`, `@dcl/cdn-uploader`, `osslsigncode`, `codesign`) and with local folders for tests and local runs.
 //! `HDiffPatch` is concrete: tests and local runs use the real `hdiffz`/`hpatchz`.
 
 use std::fmt;

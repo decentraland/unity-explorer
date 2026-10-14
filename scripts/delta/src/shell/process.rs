@@ -37,13 +37,30 @@ fn redact(text: String, values: &[String]) -> String {
         .fold(text, |text: String, value: &String| text.replace(value, "***"))
 }
 
-/// `text` with every secret value of the environment replaced by `***`.
+/// `text` with every secret value of the environment, and every AWS ARN (it names the account
+/// and the IAM principal), replaced by `***`.
 pub fn redacted(text: String) -> String {
     let values: Vec<String> = SECRET_VARIABLES
         .iter()
         .filter_map(|name: &&str| std::env::var(name).ok())
         .collect();
-    redact(text, &values)
+    redact_arns(&redact(text, &values))
+}
+
+/// `text` with every `arn:aws...` token, up to whitespace or a quote, replaced by `arn:***`.
+fn redact_arns(text: &str) -> String {
+    let mut out: String = String::with_capacity(text.len());
+    let mut rest: &str = text;
+    while let Some((before, after)) = rest.split_once("arn:aws") {
+        out.push_str(before);
+        out.push_str("arn:***");
+        let end: usize = after
+            .find(|c: char| c.is_whitespace() || c == '"' || c == '\'')
+            .unwrap_or(after.len());
+        rest = after.get(end..).unwrap_or_default();
+    }
+    out.push_str(rest);
+    out
 }
 
 /// Like `capture`, and fails with the tool's output (secrets redacted) unless it exits with 0.
@@ -79,13 +96,28 @@ pub fn path_text(path: &Path) -> Result<&str> {
 mod tests {
     use anyhow::{Result, ensure};
 
-    use super::redact;
+    use super::{redact, redact_arns};
 
     #[test]
     fn secret_values_are_replaced() -> Result<()> {
         let values: Vec<String> = vec!["bucket-name-test".to_owned(), String::new()];
         let text: String = redact("upload failed: s3://bucket-name-test/releases/x".to_owned(), &values);
         ensure!(text == "upload failed: s3://***/releases/x", "{text}");
+        Ok(())
+    }
+
+    #[test]
+    fn arns_are_replaced() -> Result<()> {
+        let text: String = redact_arns(
+            "User: arn:aws:iam::000000000000:user/example is not authorized to perform: s3:PutObject on \
+             resource: \"arn:aws:s3:::bucket-name-test/x\" because 'arn:aws:iam::000000000000:role/r' ends",
+        );
+        ensure!(
+            text == "User: arn:*** is not authorized to perform: s3:PutObject on resource: \"arn:***\" because \
+                    'arn:***' ends",
+            "{text}"
+        );
+        ensure!(redact_arns("no arn here, arn:aws") == "no arn here, arn:***");
         Ok(())
     }
 }

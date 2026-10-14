@@ -10,14 +10,20 @@ pub fn has_unsafe_char(text: &str) -> bool {
         .any(|c: char| c.is_control() || matches!(c, '\\' | ':' | '<' | '>' | '"' | '|' | '?' | '*'))
 }
 
-/// `CON`, `PRN`, `AUX`, `NUL`, `COM1` to `COM9` and `LPT1` to `LPT9`, with or without an
-/// extension: Win32 opens the device instead of a file of that name.
+/// `CON`, `PRN`, `AUX`, `NUL`, and `COM` or `LPT` followed by `0` to `9`, `¹`, `²` or `³`, with
+/// or without an extension: Win32 opens the device instead of a file of that name.
 fn is_windows_device(segment: &str) -> bool {
     let stem: String = segment.split('.').next().unwrap_or_default().to_ascii_uppercase();
     matches!(stem.as_str(), "CON" | "PRN" | "AUX" | "NUL")
-        || ((stem.starts_with("COM") || stem.starts_with("LPT"))
-            && stem.len() == 4
-            && stem.ends_with(|c: char| ('1'..='9').contains(&c)))
+        || stem
+            .strip_prefix("COM")
+            .or_else(|| stem.strip_prefix("LPT"))
+            .is_some_and(|port: &str| {
+                matches!(
+                    port,
+                    "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "¹" | "²" | "³"
+                )
+            })
 }
 
 /// No empty, `.` or `..` segment, no segment ending in `.` or a space (NTFS drops them, so two
@@ -126,6 +132,9 @@ mod tests {
     #[case("Data/aux")]
     #[case("COM1")]
     #[case("lpt9.log")]
+    #[case("COM0")]
+    #[case("lpt³.txt")]
+    #[case("Data/COM¹.dll")]
     #[case("a<b")]
     #[case("a>b")]
     #[case("a\"b")]

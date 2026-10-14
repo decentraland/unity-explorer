@@ -10,6 +10,9 @@ use crate::builds::values::{RelPath, is_lower_hex};
 use crate::publishing::layout::patch_folder;
 use crate::releases::tag::Tag;
 
+/// Hex digits of the content hash Unity appends to a bundle name.
+const BUNDLE_HASH_DIGITS: usize = 32;
+
 /// How one file of the target build is produced.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "kind", rename_all = "lowercase")]
@@ -35,11 +38,11 @@ pub struct Plan {
     pub jobs: Vec<Job>,
 }
 
-/// `dir/name` for `dir/name_<32 lowercase hex>.bundle`: a bundle renamed by its content hash.
+/// `dir/name` for `dir/name_<content hash>.bundle`: a bundle renamed by its content hash.
 fn bundle_key(path: &RelPath) -> Option<&str> {
     let stem: &str = path.as_str().strip_suffix(".bundle")?;
     let (name, hash): (&str, &str) = stem.rsplit_once('_')?;
-    let is_hash: bool = hash.len() == 32 && is_lower_hex(hash);
+    let is_hash: bool = hash.len() == BUNDLE_HASH_DIGITS && is_lower_hex(hash);
     is_hash.then_some(name)
 }
 
