@@ -12,6 +12,7 @@ using DCL.Settings.ModuleControllers;
 using DCL.Settings.Settings;
 using DCL.UI;
 using ECS.SceneLifeCycle.IncreasingRadius;
+using ECS.SceneLifeCycle.SingleScene;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -38,6 +39,7 @@ namespace DCL.Settings
         private readonly VideoPrioritizationSettings videoPrioritizationSettings;
         private readonly ISystemMemoryCap memoryCap;
         private readonly SceneLoadingLimit sceneLoadingLimit;
+        private readonly SingleSceneMode singleSceneMode;
         private readonly VolumeBus volumeBus;
         private readonly ControlsSettingsAsset controlsSettingsAsset;
         private readonly RectTransform rectTransform;
@@ -51,6 +53,7 @@ namespace DCL.Settings
         private readonly IReadOnlyDictionary<SettingsSection, (Transform container, ButtonWithSelectableStateView button, Sprite background, SettingsSectionConfig config)> sections;
 
         public event Action<ChatBubbleVisibilitySettings>? ChatBubblesVisibilityChanged;
+        public event Action<bool, bool>? LobbyEnabledChanged;
 
         public SettingsController(
             SettingsView view,
@@ -63,6 +66,7 @@ namespace DCL.Settings
             ChatSettingsAsset chatSettingsAsset,
             IUserBlockingCache userBlockingCache,
             SceneLoadingLimit sceneLoadingLimit,
+            SingleSceneMode singleSceneMode,
             VolumeBus volumeBus,
             IAssetsProvisioner assetsProvisioner,
             IEventBus eventBus,
@@ -79,6 +83,7 @@ namespace DCL.Settings
             this.controlsSettingsAsset = controlsSettingsAsset;
             this.videoPrioritizationSettings = videoPrioritizationSettings;
             this.sceneLoadingLimit = sceneLoadingLimit;
+            this.singleSceneMode = singleSceneMode;
             this.assetsProvisioner = assetsProvisioner;
             this.eventBus = eventBus;
             this.pointAtMarkerVisibilitySettings = pointAtMarkerVisibilitySettings;
@@ -138,6 +143,11 @@ namespace DCL.Settings
             ChatBubblesVisibilityChanged?.Invoke(newVisibility);
         }
 
+        public void NotifyLobbyEnabledChanged(bool previousValue, bool newValue)
+        {
+            LobbyEnabledChanged?.Invoke(previousValue, newValue);
+        }
+
         private async UniTask GenerateSettingsAsync()
         {
             if (settingsMenuConfiguration.SettingsGroupPrefab == null)
@@ -188,6 +198,7 @@ namespace DCL.Settings
                                 chatSettingsAsset,
                                 memoryCap,
                                 sceneLoadingLimit,
+                                singleSceneMode,
                                 userBlockingCache,
                                 this,
                                 assetsProvisioner,

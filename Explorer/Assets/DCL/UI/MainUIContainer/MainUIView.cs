@@ -13,16 +13,19 @@ namespace DCL.UI.MainUI
 {
     public class MainUIView : ViewBase, IView
     {
-        [field: SerializeField] public ChatMainSharedAreaView ChatMainView { get; private set; }
-        [field: SerializeField] public FriendsPanelView FriendsPanelViewView { get; private set; }
-        [field: SerializeField] public MinimapView MinimapView { get; private set; }
-        [field: SerializeField] public FriendPushNotificationView FriendPushNotificationView { get; private set; }
-        [field: SerializeField] public MarketplaceCreditsMenuView MarketplaceCreditsMenuView { get; private set; }
-        [field: SerializeField] public SidebarView SidebarView { get; private set; }
-        [field: SerializeField] public ControlsPanelView ControlsPanelView { get; private set; }
-        [field: SerializeField] public WarningNotificationView WarningNotification { get; private set; }
-        [field: SerializeField] internal PointerDetectionArea pointerDetectionArea { get; private set; }
-        [field: SerializeField] internal LayoutElement sidebarLayoutElement { get; private set; }
-        [field: SerializeField] internal GameObject sidebarDetectionArea { get; private set; }
+        [field: SerializeField] public ChatMainSharedAreaView ChatMainView { get; private set; } = null!;
+        [field: SerializeField] public FriendsPanelView FriendsPanelViewView { get; private set; } = null!;
+        [field: SerializeField] public MinimapView MinimapView { get; private set; } = null!;
+        [field: SerializeField] public FriendPushNotificationView FriendPushNotificationView { get; private set; } = null!;
+        [field: SerializeField] public MarketplaceCreditsMenuView MarketplaceCreditsMenuView { get; private set; } = null!;
+        [field: SerializeField] public SidebarView SidebarView { get; private set; } = null!;
+        [field: SerializeField] public ControlsPanelView ControlsPanelView { get; private set; } = null!;
+        [field: SerializeField] public WarningNotificationView WarningNotification { get; private set; } = null!;
+        [field: SerializeField] public WarningNotificationView PerformanceModeOnToast { get; private set; } = null!;
+        [field: SerializeField] public WarningNotificationView EndOfSceneToast { get; private set; } = null!;
+        [field: SerializeField] public Button EndOfSceneOpenPlacesButton { get; private set; } = null!;
+        [field: SerializeField] internal PointerDetectionArea pointerDetectionArea { get; private set; } = null!;
+        [field: SerializeField] internal LayoutElement sidebarLayoutElement { get; private set; } = null!;
+        [field: SerializeField] internal GameObject sidebarDetectionArea { get; private set; } = null!;
     }
 }
