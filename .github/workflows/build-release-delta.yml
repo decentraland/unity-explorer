@@ -20,6 +20,13 @@ on:
         required: false
         type: number
         default: 4
+    secrets:
+      EXPLORER_TEAM_AWS_ACCESS_KEY_ID:
+        required: true
+      EXPLORER_TEAM_AWS_SECRET_ACCESS_KEY:
+        required: true
+      EXPLORER_TEAM_S3_BUCKET:
+        required: true
   workflow_dispatch:
     inputs:
       tag:

@@ -14,7 +14,7 @@ enable_error_code = [
   "explicit-override",
   "exhaustive-match",
 ]
-plugins = ["pydantic.mypy"]
+plugins = ["pydantic.mypy", "returns.contrib.mypy.returns_plugin"]
 
 [tool.pydantic-mypy]
 init_forbid_extra = true

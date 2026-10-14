@@ -1,12 +1,13 @@
 """Domain values of a delta update.
 
 Every model is frozen, strict (no type coercion), rejects unknown fields and is revalidated
-whenever it is passed into another model, so an instance that exists is a valid value.
+whenever it is passed into another model, so an instance that exists is a valid value. Values
+built from outside data go through `parse`, which returns a `Result` instead of raising.
 The JSON shapes are the wire format read by the launcher (docs/delta-updates.md).
 """
 
 import re
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from datetime import datetime
 from enum import StrEnum
 from typing import Annotated, Literal, NamedTuple, Self
@@ -19,9 +20,13 @@ from pydantic import (
     Field,
     RootModel,
     StringConstraints,
+    TypeAdapter,
+    ValidationError,
     model_validator,
 )
 from pydantic import Tag as UnionCase
+from returns.maybe import Maybe, Nothing, Some
+from returns.result import Failure, Result, safe
 
 STRICT = ConfigDict(
     strict=True,
@@ -38,8 +43,45 @@ class Value(BaseModel):
     model_config = STRICT
 
 
-class DeltaError(Exception):
-    """A build, patch set or release that cannot be turned into a valid delta."""
+class Problem(Value):
+    """Why an operation could not produce its value."""
+
+    message: str
+
+
+def fail(message: str) -> Failure[Problem]:
+    return Failure(Problem(message=message))
+
+
+def because(context: str) -> Callable[[Exception], Problem]:
+    """Maps an exception caught by `returns.result.safe` to a Problem."""
+    return lambda error: Problem(message=f"{context}: {error}")
+
+
+def parse[M: BaseModel](model: type[M], data: object) -> Result[M, Problem]:
+    return safe((ValidationError,))(model.model_validate)(data).alt(because(f"invalid {model.__name__}"))
+
+
+def parse_json[M: BaseModel](model: type[M], text: str) -> Result[M, Problem]:
+    return safe((ValidationError,))(model.model_validate_json)(text).alt(because(f"invalid {model.__name__}"))
+
+
+def parse_as[T](adapter: TypeAdapter[T], data: object) -> Result[T, Problem]:
+    return safe((ValidationError,))(adapter.validate_python)(data).alt(because("invalid value"))
+
+
+def _enforce[T](value: T, problem: Maybe[str]) -> T:
+    """Pydantic's validator protocol: a validator rejects a value by raising ValueError. The
+    checks below return their problem; this is the only place one becomes an exception."""
+    match problem:
+        case Some(reason):
+            raise ValueError(reason)
+        case _:
+            return value
+
+
+def _checked[T](check: Callable[[T], Maybe[str]]) -> AfterValidator:
+    return AfterValidator(lambda value: _enforce(value, check(value)))
 
 
 # --- scalar values --------------------------------------------------------------------
@@ -48,43 +90,36 @@ class DeltaError(Exception):
 _FORBIDDEN_CHARS = re.compile(r"[\x00-\x1f\x7f\\:]")
 
 
-def _check_rel_path(value: str) -> str:
+def _rel_path_problem(value: str) -> Maybe[str]:
     if _FORBIDDEN_CHARS.search(value):
-        msg = f"unsupported character in path: {value!r}"
-        raise ValueError(msg)
+        return Some(f"unsupported character in path: {value!r}")
     if any(segment in {"", ".", ".."} for segment in value.split("/")):
-        msg = f"unsafe path: {value!r}"
-        raise ValueError(msg)
-    return value
+        return Some(f"unsafe path: {value!r}")
+    return Nothing
 
 
-def _check_symlink_target(value: str) -> str:
+def _symlink_target_problem(value: str) -> Maybe[str]:
     if _FORBIDDEN_CHARS.search(value):
-        msg = f"unsupported character in symlink target: {value!r}"
-        raise ValueError(msg)
+        return Some(f"unsupported character in symlink target: {value!r}")
     if not value or value.startswith("/"):
-        msg = f"absolute or empty symlink target: {value!r}"
-        raise ValueError(msg)
-    return value
+        return Some(f"absolute or empty symlink target: {value!r}")
+    return Nothing
 
 
-def _check_release_tag(value: str) -> str:
-    if ".." in value:
-        msg = f"not a release tag: {value!r}"
-        raise ValueError(msg)
-    return value
+def _release_tag_problem(value: str) -> Maybe[str]:
+    return Some(f"not a release tag: {value!r}") if ".." in value else Nothing
 
 
-RelPath = Annotated[str, AfterValidator(_check_rel_path)]
+RelPath = Annotated[str, _checked(_rel_path_problem)]
 """A path relative to a build root, `/`-separated, that cannot leave the root."""
 
-SymlinkTarget = Annotated[str, AfterValidator(_check_symlink_target)]
+SymlinkTarget = Annotated[str, _checked(_symlink_target_problem)]
 """A relative symlink target; whether it stays inside the build is a Tree invariant."""
 
 ReleaseTag = Annotated[
     str,
     StringConstraints(pattern=r"^v[0-9]+\.[0-9]+\.[0-9]+(-[A-Za-z0-9.]+)?$"),
-    AfterValidator(_check_release_tag),
+    _checked(_release_tag_problem),
 ]
 Sha256 = Annotated[str, StringConstraints(pattern=r"^[0-9a-f]{64}$")]
 FileMode = Annotated[str, StringConstraints(pattern=r"^[0-7]{3,4}$")]
@@ -149,36 +184,60 @@ def lexically_escapes(link_path: RelPath, target: SymlinkTarget) -> bool:
     return False
 
 
+def _tree_problem(entries: tuple[RegularFile | Symlink, ...]) -> Maybe[str]:
+    paths = [entry.path for entry in entries]
+    if paths != sorted(set(paths)):
+        return Some("tree entries must be sorted by path and unique")
+    listed = set(paths)
+    for path in paths:
+        parent = path.rpartition("/")[0]
+        while parent:
+            if parent in listed:
+                return Some(f"{path} is inside {parent}, which is a file or symlink")
+            parent = parent.rpartition("/")[0]
+    for entry in entries:
+        if isinstance(entry, Symlink) and lexically_escapes(entry.path, entry.symlink):
+            return Some(f"symlink leaves the build: {entry.path} -> {entry.symlink}")
+    return Nothing
+
+
 class Tree(RootModel[tuple[Entry, ...]]):
     """Every file and symlink of a build, sorted by path. Directories are implied."""
 
     model_config = ConfigDict(strict=True, frozen=True, validate_default=True, revalidate_instances="always")
 
     @model_validator(mode="after")
-    def _check_invariants(self) -> Self:
-        paths = [entry.path for entry in self.root]
-        if paths != sorted(set(paths)):
-            msg = "tree entries must be sorted by path and unique"
-            raise ValueError(msg)
-        listed = set(paths)
-        for path in paths:
-            parent = path.rpartition("/")[0]
-            while parent:
-                if parent in listed:
-                    msg = f"{path} is inside {parent}, which is a file or symlink"
-                    raise ValueError(msg)
-                parent = parent.rpartition("/")[0]
-        for entry in self.root:
-            if isinstance(entry, Symlink) and lexically_escapes(entry.path, entry.symlink):
-                msg = f"symlink leaves the build: {entry.path} -> {entry.symlink}"
-                raise ValueError(msg)
-        return self
+    def _valid(self) -> Self:
+        return _enforce(self, _tree_problem(self.root))
 
     def by_path(self) -> dict[RelPath, RegularFile | Symlink]:
         return {entry.path: entry for entry in self.root}
 
     def files(self) -> tuple[RegularFile, ...]:
         return tuple(entry for entry in self.root if isinstance(entry, RegularFile))
+
+
+# --- release zips ---------------------------------------------------------------------
+
+
+class ZipFolder(Value):
+    kind: Literal["folder"] = "folder"
+    path: RelPath
+
+
+class ZipRegularFile(Value):
+    kind: Literal["file"] = "file"
+    path: RelPath
+    mode: FileMode
+
+
+class ZipSymlink(Value):
+    kind: Literal["symlink"] = "symlink"
+    path: RelPath
+    target: SymlinkTarget
+
+
+ZipMember = Annotated[ZipFolder | ZipRegularFile | ZipSymlink, Field(discriminator="kind")]
 
 
 # --- patch sets and the manifest ------------------------------------------------------
@@ -210,12 +269,10 @@ class BaseDelta(Value):
     whole: tuple[WholeFile, ...]
 
     @model_validator(mode="after")
-    def _check_targets_unique(self) -> Self:
+    def _valid(self) -> Self:
         targets = [p.path for p in self.patches] + [w.path for w in self.whole]
-        if len(targets) != len(set(targets)):
-            msg = "a path is rebuilt more than once"
-            raise ValueError(msg)
-        return self
+        unique = len(targets) == len(set(targets))
+        return _enforce(self, Nothing if unique else Some("a path is rebuilt more than once"))
 
 
 class DiffJob(Value):
@@ -260,21 +317,22 @@ class Manifest(Value):
     bases: Mapping[ReleaseTag, BaseDelta]
 
     @model_validator(mode="after")
-    def _check_consistency(self) -> Self:
-        if self.version in self.bases:
-            msg = f"{self.version} cannot be its own base"
-            raise ValueError(msg)
-        entries = self.files.by_path()
-        for tag, delta in self.bases.items():
-            for path in delta.deleted:
-                if path in entries:
-                    msg = f"{tag}: {path} is deleted but listed in files"
-                    raise ValueError(msg)
-            for target in [p.path for p in delta.patches] + [w.path for w in delta.whole]:
-                if not isinstance(entries.get(target), RegularFile):
-                    msg = f"{tag}: {target} is rebuilt but is not a regular file in files"
-                    raise ValueError(msg)  # noqa: TRY004 (pydantic reports ValueError)
-        return self
+    def _valid(self) -> Self:
+        return _enforce(self, _manifest_problem(self.version, self.files, self.bases))
+
+
+def _manifest_problem(version: str, files: Tree, bases: Mapping[str, BaseDelta]) -> Maybe[str]:
+    if version in bases:
+        return Some(f"{version} cannot be its own base")
+    entries = files.by_path()
+    for tag, delta in bases.items():
+        for path in delta.deleted:
+            if path in entries:
+                return Some(f"{tag}: {path} is deleted but listed in files")
+        for target in [p.path for p in delta.patches] + [w.path for w in delta.whole]:
+            if not isinstance(entries.get(target), RegularFile):
+                return Some(f"{tag}: {target} is rebuilt but is not a regular file in files")
+    return Nothing
 
 
 # --- releases -------------------------------------------------------------------------

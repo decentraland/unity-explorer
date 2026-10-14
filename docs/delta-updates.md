@@ -197,12 +197,16 @@ needs code signing.
 
 All delta logic lives in [`scripts/delta/`](../scripts/delta/), a Python 3.12 tool run the same way
 in CI and locally (`python3 scripts/delta/run.py <command>`, `--help` lists them). It is split by
-what the code may touch:
+what the code may touch. Failure and absence are values: every operation that can fail returns a
+[`returns`](https://github.com/dry-python/returns) `Result[T, Problem]`, absence is a `Maybe[T]`, and
+the code neither raises nor catches. `returns.result.safe` turns the exceptions of library calls
+(`OSError`, pydantic's `ValidationError`) into `Failure`s at the call site; the one `raise` left is
+pydantic's validator protocol, fed by checks that return their problem as a `Maybe[str]`.
 
 | Module | Holds | Why |
 |---|---|---|
 | `delta/domain.py` | the domain values: `RelPath`, `ReleaseTag`, `Sha256`, the `RegularFile \| Symlink` entry union, `Tree`, `DiffPatch`, `WholeFile`, `BaseDelta`, `Manifest`, the application `Step` union, releases | strict, frozen pydantic models that reject unknown fields: a value that exists is valid, so unsafe paths, malformed tags and inconsistent manifests cannot be built |
-| `delta/transform.py` | pure functions: planning a patch set, the whole-file rule, assembling the manifest, the launcher's application order, comparing trees, picking and pruning releases, signature comparison, the job summary | no I/O; arguments and results are validated against their types at every call |
+| `delta/transform.py` | pure functions: planning a patch set, the whole-file rule, assembling the manifest, the launcher's application order, comparing trees, checking a zip's layout before extraction, picking and pruning releases, signature comparison, the job summary | no I/O; arguments and results are validated against their types at every call |
 | `delta/io/` | `fs` (hashing, scanning, extracting, replaying steps), `hdiff` (pinned download, hdiffz/hpatchz), `github` (`gh api`), `signatures` (osslsigncode, codesign) | the only code touching files, processes or the network |
 | `delta/pipeline.py` | `make_delta`, `verify_delta`, `delta_for_base`, `build_manifest` | joins I/O and transformations into the steps the workflows run |
 | `delta/cli.py` | the commands below | argument parsing and output only |
@@ -240,7 +244,8 @@ python3 scripts/delta/run.py verify "$OLD" /tmp/out /tmp/out/manifest.json v0.18
 ```
 
 Checks, from `scripts/delta/` after `pip install -r requirements-dev.txt`: `ruff check .`,
-`ruff format --check .`, `mypy .` (strict, with the pydantic plugin) and `python3 -m pytest`.
+`ruff format --check .`, `mypy .` (strict, with the pydantic and returns plugins) and
+`python3 -m pytest`.
 `tests/test_domain.py` and `tests/test_transform.py` cover the types and the pure functions,
 `tests/test_releases.py` the release selection and the published-tag guard, and
 `tests/test_pipeline.py` synthetic builds through the real HDiffPatch: changed, added, deleted and

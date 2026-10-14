@@ -1,10 +1,15 @@
-"""Pure transformations between domain values. No file system, process or network access."""
+"""Pure transformations between domain values. No file system, process or network access,
+and no exceptions: a transformation that can fail returns a `Result`."""
 
 import re
 from collections.abc import Callable
 from typing import Any
 
-from pydantic import ValidationError, validate_call
+from pydantic import ConfigDict, validate_call
+from returns.converters import maybe_to_result
+from returns.iterables import Fold
+from returns.maybe import Maybe, Nothing, Some
+from returns.result import Result, Success
 
 from delta.domain import (
     STRICT,
@@ -13,7 +18,6 @@ from delta.domain import (
     BaseDelta,
     BaseResult,
     DeletePath,
-    DeltaError,
     DeltaPlan,
     DiffJob,
     DiffPatch,
@@ -23,6 +27,7 @@ from delta.domain import (
     Manifest,
     Mismatch,
     Platform,
+    Problem,
     PublishedRelease,
     RegularFile,
     ReleaseState,
@@ -35,15 +40,45 @@ from delta.domain import (
     Tree,
     WholeFile,
     WholeJob,
+    ZipFolder,
+    ZipMember,
     ZipRef,
+    ZipSymlink,
+    fail,
+    lexically_escapes,
+    parse,
+    parse_json,
     version_of,
 )
 
+# Result and Maybe containers are checked by type; their payloads are validated models.
+_PURE = ConfigDict(**STRICT, arbitrary_types_allowed=True)
+
 
 def pure[**P, R](function: Callable[P, R]) -> Callable[P, R]:
-    """Validates arguments and the return value against the annotations, strictly."""
-    validated: Callable[P, R] = validate_call(config=STRICT, validate_return=True)(function)
+    """Validates arguments and the return value against the annotations, strictly. A
+    mismatch is a programming error (like a panic), not a Result."""
+    validated: Callable[P, R] = validate_call(config=_PURE, validate_return=True)(function)
     return validated
+
+
+# --- release zips -----------------------------------------------------------------------
+
+
+@pure
+def zip_layout_problem(members: tuple[ZipMember, ...]) -> Maybe[str]:
+    """Extraction writes inside the out folder only if no member lies under a file or symlink
+    member (which would write through the link) and no symlink climbs out lexically."""
+    leaves = {m.path for m in members if not isinstance(m, ZipFolder)}
+    for member in members:
+        parent = member.path.rpartition("/")[0]
+        while parent:
+            if parent in leaves:
+                return Some(f"zip entry {member.path} lies under the file or symlink {parent}")
+            parent = parent.rpartition("/")[0]
+        if isinstance(member, ZipSymlink) and lexically_escapes(member.path, member.target):
+            return Some(f"zip symlink leaves the build: {member.path} -> {member.target}")
+    return Nothing
 
 
 # --- planning a patch set ---------------------------------------------------------------
@@ -51,9 +86,30 @@ def pure[**P, R](function: Callable[P, R]) -> Callable[P, R]:
 _HASHED_BUNDLE = re.compile(r"_[0-9a-f]{32}\.bundle$")
 
 
-def _bundle_key(path: RelPath) -> str | None:
-    """`dir/name` for `dir/name_<32 hex>.bundle`, else None."""
-    return _HASHED_BUNDLE.sub("", path) if _HASHED_BUNDLE.search(path) else None
+def _bundle_key(path: RelPath) -> Maybe[str]:
+    """`dir/name` for `dir/name_<32 hex>.bundle`."""
+    return Some(_HASHED_BUNDLE.sub("", path)) if _HASHED_BUNDLE.search(path) else Nothing
+
+
+def _renamed_from(path: RelPath, renamed_away: dict[str, list[RelPath]]) -> Maybe[RelPath]:
+    """The one base bundle of the same name that left the build."""
+    return _bundle_key(path).bind(
+        lambda key: Some(renamed_away[key][0]) if len(renamed_away.get(key, [])) == 1 else Nothing,
+    )
+
+
+def _job(
+    file: RegularFile, base_files: dict[RelPath, RegularFile], renamed_away: dict[str, list[RelPath]]
+) -> Maybe[Job]:
+    match Maybe.from_optional(base_files.get(file.path)):
+        case Some(old):
+            return Nothing if old.sha256 == file.sha256 else Some(DiffJob(path=file.path, from_path=file.path))
+        case _:
+            return Some(
+                _renamed_from(file.path, renamed_away)
+                .map(lambda from_path: DiffJob(path=file.path, from_path=from_path))
+                .value_or(WholeJob(path=file.path)),
+            )
 
 
 @pure
@@ -65,26 +121,15 @@ def plan_delta(base: Tree, new: Tree) -> DeltaPlan:
     new_entries = new.by_path()
     renamed_away: dict[str, list[RelPath]] = {}
     for path in base_files:
-        key = _bundle_key(path)
-        if key is not None and not isinstance(new_entries.get(path), RegularFile):
-            renamed_away.setdefault(key, []).append(path)
+        if not isinstance(new_entries.get(path), RegularFile):
+            for key in _bundle_key(path).map(lambda k: [k]).value_or([]):
+                renamed_away.setdefault(key, []).append(path)
 
-    jobs: list[Job] = []
-    for file in new.files():
-        old = base_files.get(file.path)
-        if old is not None:
-            if old.sha256 != file.sha256:
-                jobs.append(DiffJob(path=file.path, from_path=file.path))
-            continue
-        key = _bundle_key(file.path)
-        candidates = renamed_away.get(key, []) if key is not None else []
-        if len(candidates) == 1:
-            jobs.append(DiffJob(path=file.path, from_path=candidates[0]))
-        else:
-            jobs.append(WholeJob(path=file.path))
-
+    jobs = tuple(
+        job for file in new.files() for job in _job(file, base_files, renamed_away).map(lambda j: [j]).value_or([])
+    )
     deleted = tuple(entry.path for entry in base.root if entry.path not in new_entries)
-    return DeltaPlan(deleted=deleted, jobs=tuple(jobs))
+    return DeltaPlan(deleted=deleted, jobs=jobs)
 
 
 @pure
@@ -104,15 +149,16 @@ def patch_path(base: ReleaseTag, path: RelPath) -> RelPath:
 
 
 @pure
-def base_delta(plan: DeltaPlan, encoded: tuple[DiffPatch | WholeFile, ...]) -> BaseDelta:
-    planned = [job.path for job in plan.jobs]
-    if [item.path for item in encoded] != planned:
-        msg = "encoded patches do not match the plan"
-        raise DeltaError(msg)
-    return BaseDelta(
-        deleted=plan.deleted,
-        patches=tuple(item for item in encoded if isinstance(item, DiffPatch)),
-        whole=tuple(item for item in encoded if isinstance(item, WholeFile)),
+def base_delta(plan: DeltaPlan, encoded: tuple[DiffPatch | WholeFile, ...]) -> Result[BaseDelta, Problem]:
+    if [item.path for item in encoded] != [job.path for job in plan.jobs]:
+        return fail("encoded patches do not match the plan")
+    return parse(
+        BaseDelta,
+        {
+            "deleted": plan.deleted,
+            "patches": tuple(item for item in encoded if isinstance(item, DiffPatch)),
+            "whole": tuple(item for item in encoded if isinstance(item, WholeFile)),
+        },
     )
 
 
@@ -123,32 +169,26 @@ def assemble_manifest(
     zip_ref: ZipRef,
     files: Tree,
     results: tuple[BaseResult, ...],
-) -> Manifest:
+) -> Result[Manifest, Problem]:
     tags = [result.base for result in results]
     if len(tags) != len(set(tags)):
-        msg = f"duplicate base in {tags}"
-        raise DeltaError(msg)
-    return Manifest(
-        version=version,
-        platform=platform,
-        zip=zip_ref,
-        files=files,
-        bases={result.base: result.delta for result in results},
+        return fail(f"duplicate base in {tags}")
+    return parse(
+        Manifest,
+        {
+            "version": version,
+            "platform": platform,
+            "zip": zip_ref,
+            "files": files,
+            "bases": {result.base: result.delta for result in results},
+        },
     )
 
 
 # --- applying a patch set ---------------------------------------------------------------
 
 
-@pure
-def application_steps(manifest: Manifest, base: ReleaseTag) -> tuple[Step, ...]:
-    """The launcher's order: deletes first, so a case-only rename or a directory replaced by
-    a symlink cannot remove new files; then patches (read from the pristine base) and whole
-    files; then every symlink and mode of `files`, as unchanged files can change them too."""
-    delta = manifest.bases.get(base)
-    if delta is None:
-        msg = f"manifest has no base '{base}'"
-        raise DeltaError(msg)
+def _steps(manifest: Manifest, delta: BaseDelta) -> tuple[Step, ...]:
     steps: list[Step] = [DeletePath(path=path) for path in delta.deleted]
     steps += [
         ApplyDiff(source=p.from_path, patch=p.patch, patch_sha256=p.patch_sha256, path=p.path) for p in delta.patches
@@ -160,6 +200,17 @@ def application_steps(manifest: Manifest, base: ReleaseTag) -> tuple[Step, ...]:
         else:
             steps.append(SetMode(path=entry.path, mode=entry.mode))
     return tuple(steps)
+
+
+@pure
+def application_steps(manifest: Manifest, base: ReleaseTag) -> Result[tuple[Step, ...], Problem]:
+    """The launcher's order: deletes first, so a case-only rename or a directory replaced by
+    a symlink cannot remove new files; then patches (read from the pristine base) and whole
+    files; then every symlink and mode of `files`, as unchanged files can change them too."""
+    return maybe_to_result(
+        Maybe.from_optional(manifest.bases.get(base)).map(lambda delta: _steps(manifest, delta)),
+        Problem(message=f"manifest has no base '{base}'"),
+    )
 
 
 def _comparable(entry: RegularFile | Symlink, *, compare_modes: bool) -> dict[str, Any]:
@@ -186,23 +237,21 @@ def compare_trees(want: Tree, got: Tree, *, compare_modes: bool) -> tuple[Mismat
 # --- releases ---------------------------------------------------------------------------
 
 
+def _published(release: GitHubRelease) -> Result[PublishedRelease, Problem]:
+    return (
+        maybe_to_result(Maybe.from_optional(release.published_at), Problem(message="published without a publish time"))
+        .bind(lambda at: parse(PublishedRelease, {"tag": release.tag_name, "published_at": at}))
+        .alt(lambda problem: Problem(message=f"malformed release {release.tag_name!r}: {problem.message}"))
+    )
+
+
 @pure
-def published_explorer_releases(releases: tuple[GitHubRelease, ...]) -> tuple[PublishedRelease, ...]:
+def published_explorer_releases(releases: tuple[GitHubRelease, ...]) -> Result[tuple[PublishedRelease, ...], Problem]:
     """Published `v*` releases (no drafts, no pre-releases, which /releases/latest never
-    serves). Avatar Preview Renderer tags are ignored; a malformed `v*` tag is an error."""
-    published: list[PublishedRelease] = []
-    for release in releases:
-        if release.draft or release.prerelease or not release.tag_name.startswith("v"):
-            continue
-        if release.published_at is None:
-            msg = f"{release.tag_name} is published without a publish time"
-            raise DeltaError(msg)
-        try:
-            published.append(PublishedRelease(tag=release.tag_name, published_at=release.published_at))
-        except ValidationError as error:
-            msg = f"malformed release tag {release.tag_name!r}"
-            raise DeltaError(msg) from error
-    return tuple(published)
+    serves). Avatar Preview Renderer tags are ignored; a malformed `v*` tag is a Problem."""
+    candidates = [r for r in releases if not r.draft and not r.prerelease and r.tag_name.startswith("v")]
+    empty: Result[tuple[PublishedRelease, ...], Problem] = Success(())
+    return Fold.collect([_published(r) for r in candidates], empty)
 
 
 @pure
@@ -217,25 +266,26 @@ def prune_targets(
     releases: tuple[PublishedRelease, ...],
     keep: int,
     window: int,
-    live: ReleaseTag | None,
+    live: Maybe[ReleaseTag],
 ) -> tuple[ReleaseTag, ...]:
     """Releases `keep` .. `keep + window - 1` by descending version, never `live`. Version
     order, so a late publish of an older tag cannot evict a newer release's series."""
     by_version = sorted(releases, key=lambda r: version_of(r.tag), reverse=True)
-    return tuple(r.tag for r in by_version[keep : keep + window] if r.tag != live)
+    return tuple(r.tag for r in by_version[keep : keep + window] if live != Some(r.tag))
 
 
 @pure
-def release_state(exit_code: int, stdout: str, stderr: str) -> ReleaseState:
-    """Reads `gh api repos/<repo>/releases/tags/<tag>`, which serves published releases and
-    drafts. Only a 404 means missing; any other failure is an error, never "unpublished"."""
+def release_state(exit_code: int, stdout: str, stderr: str) -> Result[ReleaseState, Problem]:
+    """Reads `gh api repos/<repo>/releases/tags/<tag>`, which serves published releases only:
+    a draft is a 404 like a missing tag. Only a 404 means unpublished; any other failure is a
+    Problem, never "unpublished"."""
     if exit_code != 0:
         if "HTTP 404" in stderr:
-            return ReleaseState.MISSING
-        msg = f"release lookup failed: {stderr.strip()}"
-        raise DeltaError(msg)
-    release = GitHubRelease.model_validate_json(stdout)
-    return ReleaseState.DRAFT if release.draft else ReleaseState.PUBLISHED
+            return Success(ReleaseState.MISSING)
+        return fail(f"release lookup failed: {stderr.strip()}")
+    return parse_json(GitHubRelease, stdout).map(
+        lambda release: ReleaseState.DRAFT if release.draft else ReleaseState.PUBLISHED,
+    )
 
 
 # --- signatures -------------------------------------------------------------------------
@@ -250,6 +300,10 @@ def signed_artifacts(platform: Platform, tree: Tree) -> tuple[RelPath, ...]:
     return tuple(sorted(app for app in apps if app.endswith(".app")))
 
 
+def _verdict(valid: Maybe[bool]) -> str:
+    return valid.map(lambda ok: "ok" if ok else "invalid").value_or("absent")
+
+
 @pure
 def signature_differences(
     new: tuple[SignatureCheck, ...],
@@ -258,14 +312,11 @@ def signature_differences(
     wanted = {c.artifact: c.valid for c in new}
     found = {c.artifact: c.valid for c in rebuilt}
     return tuple(
-        f"{artifact}: new build {_verdict(valid=wanted.get(artifact))}, rebuilt {_verdict(valid=found.get(artifact))}"
+        f"{artifact}: new build {_verdict(Maybe.from_optional(wanted.get(artifact)))}, "
+        f"rebuilt {_verdict(Maybe.from_optional(found.get(artifact)))}"
         for artifact in sorted(wanted.keys() | found.keys())
         if wanted.get(artifact) != found.get(artifact)
     )
-
-
-def _verdict(*, valid: bool | None) -> str:
-    return "absent" if valid is None else "ok" if valid else "invalid"
 
 
 # --- reporting --------------------------------------------------------------------------
@@ -275,14 +326,17 @@ def _megabytes(size: int) -> str:
     return f"{size / 1048576:.1f} MB"
 
 
+def _download_size(delta: BaseDelta) -> int:
+    return sum(p.patch_size for p in delta.patches) + sum(w.patch_size for w in delta.whole)
+
+
 @pure
 def size_line(result: BaseResult, new_files: Tree) -> str:
     delta = result.delta
-    download = sum(p.patch_size for p in delta.patches) + sum(w.patch_size for w in delta.whole)
     build = sum(f.size for f in new_files.files())
     return (
         f"{result.base}: {len(delta.patches)} patched, {len(delta.whole)} whole, "
-        f"{len(delta.deleted)} deleted; download {download} bytes, new build {build} bytes"
+        f"{len(delta.deleted)} deleted; download {_download_size(delta)} bytes, new build {build} bytes"
     )
 
 
@@ -295,11 +349,11 @@ def job_summary(manifest: Manifest, failed: tuple[ReleaseTag, ...]) -> str:
         "|---|---|---|---|---|---|---|",
     ]
     for tag, delta in manifest.bases.items():
-        download = sum(p.patch_size for p in delta.patches) + sum(w.patch_size for w in delta.whole)
+        download = _download_size(delta)
         saving = round(100 - download * 100 / manifest.zip.size) if manifest.zip.size else 0
         lines.append(
             f"| {tag} | {len(delta.patches)} | {len(delta.whole)} | {len(delta.deleted)} "
-            f"| {_megabytes(download)} | {_megabytes(manifest.zip.size)} | {saving}% |"
+            f"| {_megabytes(download)} | {_megabytes(manifest.zip.size)} | {saving}% |",
         )
     if failed:
         lines += ["", "Left out after a failure: " + " ".join(failed)]

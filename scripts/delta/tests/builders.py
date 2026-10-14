@@ -8,8 +8,9 @@ import zipfile
 from pathlib import Path
 
 import pytest
+from returns.result import Result
 
-from delta.domain import RegularFile, Symlink, Tree
+from delta.domain import Problem, RegularFile, Symlink, Tree
 
 POSIX_ONLY = pytest.mark.skipif(sys.platform == "win32", reason="symlinks and modes need a POSIX file system")
 
@@ -38,10 +39,26 @@ def zip_dir(source: Path, archive: Path) -> Path:
         for path in sorted(source.rglob("*")):
             name = path.relative_to(source).as_posix()
             if path.is_symlink():
-                info = zipfile.ZipInfo(name)
-                info.create_system = 3
-                info.external_attr = (stat.S_IFLNK | 0o777) << 16
-                zipped.writestr(info, os.readlink(path))  # noqa: PTH115 (Path.readlink normalizes the target text)
+                zipped.writestr(symlink_member(name), os.readlink(path))  # noqa: PTH115 (Path.readlink normalizes the target text)
             elif path.is_file():
                 zipped.write(path, name)
     return archive
+
+
+def symlink_member(name: str) -> zipfile.ZipInfo:
+    """A zip entry header marking a unix symlink; the entry's data is the target."""
+    info = zipfile.ZipInfo(name)
+    info.create_system = 3
+    info.external_attr = (stat.S_IFLNK | 0o777) << 16
+    return info
+
+
+def problem_of[T](result: Result[T, Problem]) -> str:
+    """The Problem's message, or "" when the result is a Success."""
+    return result.swap().map(lambda problem: problem.message).value_or("")
+
+
+def value_of[T](result: Result[T, Problem]) -> T:
+    """The Success value; a Failure fails the test with its Problem."""
+    assert not problem_of(result), problem_of(result)
+    return result.unwrap()

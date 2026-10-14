@@ -1,5 +1,8 @@
 import pytest
 from pydantic import ValidationError
+from returns.maybe import Nothing, Some
+from returns.pipeline import is_successful
+from returns.result import safe
 
 from delta.domain import (
     ApplyDiff,
@@ -7,7 +10,6 @@ from delta.domain import (
     BaseDelta,
     BaseResult,
     DeletePath,
-    DeltaError,
     DeltaPlan,
     DiffJob,
     DiffPatch,
@@ -19,7 +21,10 @@ from delta.domain import (
     SignatureCheck,
     WholeFile,
     WholeJob,
+    ZipFolder,
     ZipRef,
+    ZipRegularFile,
+    ZipSymlink,
 )
 from delta.transform import (
     application_steps,
@@ -33,8 +38,9 @@ from delta.transform import (
     prefer_whole,
     signature_differences,
     signed_artifacts,
+    zip_layout_problem,
 )
-from tests.builders import link, regular, tree
+from tests.builders import link, problem_of, regular, tree, value_of
 
 SHA = "b" * 64
 OLD_BUNDLE = "Data/aa/ui_assets_all_0123456789abcdef0123456789abcdef.bundle"
@@ -97,11 +103,10 @@ def test_patch_path() -> None:
     assert patch_path("v1.0.0", "Data/space dir/a.bin") == "from/v1.0.0/Data/space dir/a.bin.hdiff"
 
 
-def test_pure_functions_reject_invalid_arguments() -> None:
-    with pytest.raises(ValidationError):
-        patch_path("not-a-tag", "a")
-    with pytest.raises(ValidationError):
-        patch_path("v1.0.0", "../a")
+@pytest.mark.parametrize(("base", "path"), [("not-a-tag", "a"), ("v1.0.0", "../a")])
+def test_pure_functions_reject_arguments_outside_their_types(base: str, path: str) -> None:
+    # A type violation is a programming error: pydantic's validate_call refuses the call.
+    assert not is_successful(safe((ValidationError,))(patch_path)(base, path))
 
 
 def _diff(path: str, from_path: str | None = None) -> DiffPatch:
@@ -122,32 +127,31 @@ def _whole(path: str) -> WholeFile:
 def test_base_delta_splits_encoded_patches_and_checks_the_plan() -> None:
     plan = DeltaPlan(deleted=("gone",), jobs=(DiffJob(path="a", from_path="a"), WholeJob(path="b")))
     # A planned diff can be encoded whole.
-    assert base_delta(plan, (_whole("a"), _whole("b"))) == BaseDelta(
+    assert value_of(base_delta(plan, (_whole("a"), _whole("b")))) == BaseDelta(
         deleted=("gone",),
         patches=(),
         whole=(_whole("a"), _whole("b")),
     )
-    with pytest.raises(DeltaError):
-        base_delta(plan, (_diff("a"),))
+    assert "do not match the plan" in problem_of(base_delta(plan, (_diff("a"),)))
 
 
 def _manifest() -> Manifest:
     files = tree(regular("a"), regular("b", mode="755"), link("c", "a"))
     result = BaseResult(base="v1.0.0", delta=BaseDelta(deleted=("gone",), patches=(_diff("a"),), whole=(_whole("b"),)))
     zip_ref = ZipRef(path="Decentraland_windows64.zip", size=1048576, sha256=SHA)
-    return assemble_manifest("v1.1.0", Platform.WINDOWS64, zip_ref, files, (result,))
+    return value_of(assemble_manifest("v1.1.0", Platform.WINDOWS64, zip_ref, files, (result,)))
 
 
 def test_assemble_keys_bases_by_tag_and_rejects_duplicates() -> None:
     manifest = _manifest()
     assert list(manifest.bases) == ["v1.0.0"]
     result = BaseResult(base="v1.0.0", delta=manifest.bases["v1.0.0"])
-    with pytest.raises(DeltaError, match="duplicate"):
-        assemble_manifest(manifest.version, manifest.platform, manifest.zip, manifest.files, (result, result))
+    duplicated = assemble_manifest(manifest.version, manifest.platform, manifest.zip, manifest.files, (result, result))
+    assert "duplicate" in problem_of(duplicated)
 
 
 def test_steps_delete_first_then_patch_then_whole_then_links_and_modes() -> None:
-    assert application_steps(_manifest(), "v1.0.0") == (
+    assert value_of(application_steps(_manifest(), "v1.0.0")) == (
         DeletePath(path="gone"),
         ApplyDiff(source="a", patch="from/v1.0.0/a.hdiff", patch_sha256=SHA, path="a"),
         ApplyWhole(patch="from/v1.0.0/b.hdiff", patch_sha256=SHA, path="b"),
@@ -158,8 +162,7 @@ def test_steps_delete_first_then_patch_then_whole_then_links_and_modes() -> None
 
 
 def test_steps_fail_for_an_unknown_base() -> None:
-    with pytest.raises(DeltaError, match="no base"):
-        application_steps(_manifest(), "v0.9.0")
+    assert "no base" in problem_of(application_steps(_manifest(), "v0.9.0"))
 
 
 def test_compare_trees_lists_every_mismatch() -> None:
@@ -195,3 +198,22 @@ def test_job_summary() -> None:
     summary = job_summary(_manifest(), ("v0.9.0",))
     assert "| v1.0.0 | 1 | 1 | 1 | 0.0 MB | 1.0 MB | 100% |" in summary
     assert "Left out after a failure: v0.9.0" in summary
+
+
+def _folder(path: str) -> ZipFolder:
+    return ZipFolder(path=path)
+
+
+def test_zip_layout_accepts_a_normal_build() -> None:
+    members = (_folder("Fw"), ZipRegularFile(path="Fw/A/lib", mode="644"), ZipSymlink(path="Fw/Current", target="A"))
+    assert zip_layout_problem(members) == Nothing
+
+
+def test_zip_layout_rejects_a_member_written_through_a_symlink() -> None:
+    members = (ZipSymlink(path="lnk", target="sub"), ZipRegularFile(path="lnk/pwned", mode="644"))
+    assert zip_layout_problem(members) == Some("zip entry lnk/pwned lies under the file or symlink lnk")
+
+
+def test_zip_layout_rejects_a_symlink_leaving_the_build() -> None:
+    members = (ZipSymlink(path="lnk", target="../escape"),)
+    assert zip_layout_problem(members) == Some("zip symlink leaves the build: lnk -> ../escape")

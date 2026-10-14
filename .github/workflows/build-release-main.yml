@@ -69,4 +69,7 @@ jobs:
     uses: ./.github/workflows/build-release-delta.yml
     with:
       tag: ${{ needs.get-info.outputs.tag_version }}
-    secrets: inherit
+    secrets:
+      EXPLORER_TEAM_AWS_ACCESS_KEY_ID: ${{ secrets.EXPLORER_TEAM_AWS_ACCESS_KEY_ID }}
+      EXPLORER_TEAM_AWS_SECRET_ACCESS_KEY: ${{ secrets.EXPLORER_TEAM_AWS_SECRET_ACCESS_KEY }}
+      EXPLORER_TEAM_S3_BUCKET: ${{ secrets.EXPLORER_TEAM_S3_BUCKET }}
