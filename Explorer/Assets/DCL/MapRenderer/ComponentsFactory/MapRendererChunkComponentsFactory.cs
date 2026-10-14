@@ -49,6 +49,7 @@ namespace DCL.MapRenderer.ComponentsFactory
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly HomePlaceEventBus homePlaceEventBus;
         private readonly IEventBus eventBus;
+        private readonly string satelliteMapUrl;
         private readonly IDiskCache<byte[]> bytesDiskCache;
         private PlayerMarkerInstaller playerMarkerInstaller { get; }
         private HomeMarkerInstaller homeMarkerInstaller { get; }
@@ -76,6 +77,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             IWeb3IdentityCache web3IdentityCache,
             HomePlaceEventBus homePlaceEventBus,
             IEventBus eventBus,
+            string satelliteMapUrl,
             IDiskCache<byte[]> bytesDiskCache)
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -93,6 +95,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             this.web3IdentityCache = web3IdentityCache;
             this.homePlaceEventBus = homePlaceEventBus;
             this.eventBus = eventBus;
+            this.satelliteMapUrl = satelliteMapUrl;
             this.bytesDiskCache = bytesDiskCache;
         }
 
@@ -259,7 +262,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             {
                 SpriteRenderer template = await GetAtlasChunkPrefabAsync(configuration.SatelliteAtlasRoot, cancellationToken);
 
-                detailTiles = new SatelliteDetailTiles(decentralandUrlsSource.Url(DecentralandUrl.SatelliteMapTiles), webRequestController, bytesDiskCache, cullingController, template,
+                detailTiles = new SatelliteDetailTiles(satelliteMapUrl, webRequestController, bytesDiskCache, cullingController, template,
                     MapRendererDrawOrder.SATELLITE_DETAIL_BASE_LEVEL);
             }
 

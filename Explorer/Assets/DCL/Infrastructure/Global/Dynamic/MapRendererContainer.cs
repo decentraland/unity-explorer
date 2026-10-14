@@ -15,6 +15,7 @@ using DCL.PluginSystem.Global;
 using DCL.Web3.Identities;
 using ECS;
 using ECS.SceneLifeCycle.Realm;
+using Global.AppArgs;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -52,9 +53,15 @@ namespace Global.Dynamic
             IWeb3IdentityCache web3IdentityCache,
             HomePlaceEventBus homePlaceEventBus,
             IEventBus eventBus,
+            IAppArgs appArgs,
             CancellationToken ct)
         {
             var mapRendererContainer = new MapRendererContainer(assetsProvisioner, new MapRendererTextureContainer());
+
+            string satelliteMapUrl = decentralandUrlsSource.Url(DecentralandUrl.SatelliteMapTiles);
+
+            if (appArgs.TryGetValue(AppArgsFlags.SATELLITE_MAP_URL, out string? satelliteMapUrlFromArgs))
+                satelliteMapUrl = satelliteMapUrlFromArgs!;
 
             await mapRendererContainer.InitializeContainerAsync<MapRendererContainer, Settings>(settingsContainer, ct, async c =>
             {
@@ -74,6 +81,7 @@ namespace Global.Dynamic
                     web3IdentityCache,
                     homePlaceEventBus,
                     eventBus,
+                    satelliteMapUrl,
                     staticContainer.BytesDiskCache));
 
                 await mapRenderer.InitializeAsync(ct);
