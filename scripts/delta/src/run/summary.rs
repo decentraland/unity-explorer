@@ -1,7 +1,7 @@
 //! The Markdown job summary of a run.
 
 use crate::publishing::manifest::Manifest;
-use crate::run::stage::{Run, Stage};
+use crate::run::state::{Run, State};
 
 const MEBIBYTE: u64 = 1_048_576;
 
@@ -42,9 +42,9 @@ fn table(manifest: &Manifest) -> Vec<String> {
 }
 
 pub fn summary(run: &Run) -> String {
-    let mut lines: Vec<String> = match &run.stage {
-        Stage::Published(published) => table(&published.manifest),
-        Stage::Failed { at, reason } => {
+    let mut lines: Vec<String> = match &run.state {
+        State::Published(manifest) => table(manifest),
+        State::Failed { at, reason } => {
             vec![
                 format!("### Delta patches: failed at `{at}`"),
                 String::new(),
@@ -53,12 +53,12 @@ pub fn summary(run: &Run) -> String {
                 "```".to_owned(),
             ]
         }
-        other => vec![format!("### Delta patches: stopped at {}", other.name())],
+        other => vec![format!("### Delta patches: stopped at {other}")],
     };
-    if !run.drops.is_empty() {
+    if !run.dropped.is_empty() {
         lines.push(String::new());
         lines.push("Left out:".to_owned());
-        for dropped in &run.drops {
+        for dropped in &run.dropped {
             lines.push(format!("- {}: {}", dropped.base, dropped.reason));
         }
     }

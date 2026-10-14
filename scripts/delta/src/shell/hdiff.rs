@@ -7,7 +7,6 @@ use std::path::{Path, PathBuf};
 use anyhow::{Context, Result, ensure};
 
 use crate::builds::disk::{remove, sha256_file};
-use crate::capabilities::Differ;
 use crate::shell::process::run;
 
 pub const VERSION: &str = "v5.1.3";
@@ -112,8 +111,9 @@ fn text(path: &Path) -> Result<&str> {
         .with_context(|| format!("non-UTF-8 path {}", path.display()))
 }
 
-impl Differ for HDiffPatch {
-    fn diff(&self, old: &Path, new: &Path, patch: &Path) -> Result<()> {
+impl HDiffPatch {
+    /// Writes a patch turning `old` into `new`.
+    pub fn diff(&self, old: &Path, new: &Path, patch: &Path) -> Result<()> {
         let [memory, compression]: [&str; 2] = HDIFFZ_ARGS;
         run(
             &self.hdiffz,
@@ -122,7 +122,8 @@ impl Differ for HDiffPatch {
         Ok(())
     }
 
-    fn patch(&self, old: &Path, patch: &Path, out: &Path) -> Result<()> {
+    /// Applies `patch` to `old`, writing `out`.
+    pub fn patch(&self, old: &Path, patch: &Path, out: &Path) -> Result<()> {
         run(&self.hpatchz, ["-f", text(old)?, text(patch)?, text(out)?])?;
         Ok(())
     }

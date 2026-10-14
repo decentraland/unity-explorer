@@ -1,24 +1,25 @@
-//! End to end: synthetic builds through every workflow, with real `hdiffz`/`hpatchz` and a
-//! folder standing in for the bucket and the CDN. Without `HDiffPatch` the tests are skipped
-//! locally and fail in CI (`$CI` set).
+//! End to end: synthetic builds through every step, with real `hdiffz`/`hpatchz` and a folder
+//! standing in for the bucket. Without `HDiffPatch` the tests are skipped locally and fail in
+//! CI (`$CI` set). The transitions themselves are tested without disk in `run::fsm`.
 
 use std::collections::BTreeMap;
 use std::fs::{self, File};
 use std::io::Write as _;
 use std::path::{Path, PathBuf};
-use std::process::{Command, Output};
+use std::process::Output;
 
 use anyhow::{Context, Result, ensure};
 
-use delta::capabilities::Differ;
+use delta::io::Io;
 use delta::publishing::contract::{DeltaDto, FileDto, ManifestDto};
 use delta::publishing::values::ZipName;
 use delta::releases::tag::{Platform, Tag};
-use delta::run::stage::{DropReason, Requested, Run, Stage, Target};
-use delta::run::workflows::start;
-use delta::run::{Advanced, Capabilities, Workflow, advance};
+use delta::run::execute::execute;
+use delta::run::fsm::{Command, Msg, Step, update};
+use delta::run::state::{DropReason, Request, Run, State, Target};
+use delta::shell;
 use delta::shell::hdiff::HDiffPatch;
-use delta::shell::local::{FixedReleases, FixedSigner, FolderCdn, FolderStorage};
+use delta::shell::local::FixedSigner;
 
 const RELEASES: &str = "releases";
 const TARGET: &str = "v1.1.0-alpha";
@@ -26,18 +27,18 @@ const BASE: &str = "v1.0.0-alpha";
 const OLD_BUNDLE: &str = "Data/aa/ui_assets_all_0123456789abcdef0123456789abcdef.bundle";
 const NEW_BUNDLE: &str = "Data/aa/ui_assets_all_fedcba9876543210fedcba9876543210.bundle";
 
-const ORDER: [Workflow; 11] = [
-    Workflow::ConfirmUnpublished,
-    Workflow::ClearStale,
-    Workflow::Download,
-    Workflow::Extract,
-    Workflow::Inspect,
-    Workflow::Encode,
-    Workflow::Verify,
-    Workflow::Assemble,
-    Workflow::Recheck,
-    Workflow::UploadPatches,
-    Workflow::PublishManifest,
+const ORDER: [Step; 11] = [
+    Step::ConfirmUnpublished,
+    Step::RemoveStalePatches,
+    Step::DownloadArchives,
+    Step::ExtractArchives,
+    Step::ScanBuilds,
+    Step::EncodePatches,
+    Step::ReplayPatches,
+    Step::WriteManifest,
+    Step::RecheckTarget,
+    Step::UploadPatches,
+    Step::PublishManifest,
 ];
 
 /// `HDiffPatch` from `$HDIFFZ`/`$HPATCHZ` or PATH; `None` when missing outside CI.
@@ -251,8 +252,7 @@ impl Fixture {
             releases: RELEASES.to_owned(),
             work: self.root.join("work"),
         };
-        let requested: Requested = start(target, tags)?;
-        Ok(Run::start(requested))
+        Ok(Run::new(Request::new(target, tags)?))
     }
 
     fn prefix(&self) -> PathBuf {
@@ -261,45 +261,30 @@ impl Fixture {
 }
 
 struct World {
-    releases: FixedReleases,
-    storage: FolderStorage,
-    cdn: FolderCdn,
-    differ: HDiffPatch,
-    signer: FixedSigner,
+    io: Io,
 }
 
 impl World {
-    fn new(fixture: &Fixture, differ: HDiffPatch) -> World {
+    fn new(fixture: &Fixture, hdiff: HDiffPatch) -> World {
         World {
-            releases: FixedReleases::default(),
-            storage: FolderStorage {
-                root: fixture.bucket.clone(),
-            },
-            cdn: FolderCdn {
-                root: fixture.bucket.clone(),
-            },
-            differ,
-            signer: FixedSigner::default(),
+            io: shell::folder(fixture.bucket.clone(), hdiff),
         }
     }
 
-    fn step(&self, run: Run, workflow: Workflow) -> Run {
-        let caps: Capabilities<'_> = Capabilities {
-            releases: &self.releases,
-            storage: &self.storage,
-            cdn: &self.cdn,
-            differ: &self.differ,
-            signer: &self.signer,
-        };
-        let advanced: Advanced = advance(run, workflow, &caps);
-        advanced.run
+    /// Sends the step, runs its command, folds the report back in.
+    fn step(&self, run: Run, step: Step) -> Run {
+        let (run, command): (Run, Option<Command>) = update(run, Msg::Step(step));
+        match command {
+            Some(command) => update(run, Msg::Report(execute(command, &self.io))).0,
+            None => run,
+        }
     }
 
-    /// Runs the workflows in order, stopping at a failure.
-    fn steps(&self, mut run: Run, workflows: &[Workflow]) -> Run {
-        for workflow in workflows {
-            run = self.step(run, *workflow);
-            if matches!(run.stage, Stage::Failed { .. }) {
+    /// Runs the steps in order, stopping at a failure.
+    fn steps(&self, mut run: Run, steps: &[Step]) -> Run {
+        for step in steps {
+            run = self.step(run, *step);
+            if matches!(run.state, State::Failed { .. }) {
                 break;
             }
         }
@@ -307,9 +292,9 @@ impl World {
     }
 }
 
-fn failure(run: &Run) -> Option<(&str, &str)> {
-    match &run.stage {
-        Stage::Failed { at, reason } => Some((at.as_str(), reason.as_str())),
+fn failure(run: &Run) -> Option<(Step, &str)> {
+    match &run.state {
+        State::Failed { at, reason } => Some((*at, reason.as_str())),
         _ => None,
     }
 }
@@ -327,8 +312,8 @@ fn a_run_publishes_verified_patches_and_the_manifest() -> Result<()> {
     let world: World = World::new(&fixture, differ);
     let run: Run = world.steps(fixture.start(&[BASE], Platform::Windows64)?, &ORDER);
     ensure!(failure(&run).is_none(), "run failed: {:?}", failure(&run));
-    ensure!(run.stage.name() == "Published");
-    ensure!(run.drops.is_empty());
+    ensure!(run.state.name() == "Published");
+    ensure!(run.dropped.is_empty());
 
     let manifest: ManifestDto = read_manifest(&fixture)?;
     ensure!(manifest.version == TARGET && manifest.platform == "windows64");
@@ -429,7 +414,7 @@ fn a_bad_base_is_dropped_and_the_others_ship() -> Result<()> {
         &ORDER,
     );
     ensure!(failure(&run).is_none(), "run failed: {:?}", failure(&run));
-    let reasons: BTreeMap<String, &DropReason> = run.drops.iter().map(|d| (d.base.to_string(), &d.reason)).collect();
+    let reasons: BTreeMap<String, &DropReason> = run.dropped.iter().map(|d| (d.base.to_string(), &d.reason)).collect();
     ensure!(
         matches!(reasons.get(corrupt), Some(DropReason::Unreadable(_))),
         "{reasons:?}"
@@ -457,74 +442,16 @@ fn changed_signatures_drop_the_base_and_an_empty_run_fails() -> Result<()> {
     let fixture: Fixture = Fixture::new()?;
     fixture.upload_zips()?;
     let mut world: World = World::new(&fixture, differ);
-    world.signer = FixedSigner {
+    world.io.signer = Box::new(FixedSigner {
         invalid_under: Some(fixture.root.join("work").join("rebuild")),
-    };
+    });
     let run: Run = world.steps(fixture.start(&[BASE], Platform::Windows64)?, &ORDER);
-    let (at, reason): (&str, &str) = failure(&run).context("the run should fail")?;
+    let (at, reason): (Step, &str) = failure(&run).context("the run should fail")?;
     ensure!(
-        at == "verify" && reason.contains("no base left") && reason.contains("signatures changed"),
+        at == Step::ReplayPatches && reason.contains("no base left") && reason.contains("signatures changed"),
         "{at}: {reason}"
     );
     ensure!(!fixture.prefix().join("manifest.json").exists());
-    Ok(())
-}
-
-#[test]
-fn a_published_target_is_refused() -> Result<()> {
-    let fixture: Fixture = Fixture::new()?;
-    let mut world: World = World::new(&fixture, HDiffPatch::from_env());
-    world.releases = FixedReleases {
-        published: vec![TARGET.parse()?],
-        listed: Vec::new(),
-    };
-    let run: Run = world.step(
-        fixture.start(&[BASE], Platform::Windows64)?,
-        Workflow::ConfirmUnpublished,
-    );
-    let (at, reason): (&str, &str) = failure(&run).context("the run should fail")?;
-    ensure!(at == "confirm-unpublished" && reason.contains("is published"));
-    Ok(())
-}
-
-#[test]
-fn a_zip_replaced_during_the_run_is_not_uploaded() -> Result<()> {
-    let Some(differ) = tools()? else { return Ok(()) };
-    let fixture: Fixture = Fixture::new()?;
-    fixture.upload_zips()?;
-    let world: World = World::new(&fixture, differ);
-    let assembled: Run = world.steps(
-        fixture.start(&[BASE], Platform::Windows64)?,
-        ORDER.get(..8).context("order")?,
-    );
-    ensure!(assembled.stage.name() == "Assembled", "{:?}", failure(&assembled));
-    write(&fixture.zip_key(TARGET)?, b"a later build of the same tag")?;
-    let run: Run = world.step(assembled, Workflow::Recheck);
-    let (at, reason): (&str, &str) = failure(&run).context("the run should fail")?;
-    ensure!(
-        at == "recheck" && reason.contains("changed in the bucket"),
-        "{at}: {reason}"
-    );
-    Ok(())
-}
-
-#[test]
-fn a_workflow_out_of_order_fails_the_run_and_a_failed_run_stays_failed() -> Result<()> {
-    let fixture: Fixture = Fixture::new()?;
-    let world: World = World::new(&fixture, HDiffPatch::from_env());
-    let run: Run = world.step(fixture.start(&[BASE], Platform::Windows64)?, Workflow::Encode);
-    let (at, reason): (String, String) = failure(&run)
-        .map(|(a, r)| (a.to_owned(), r.to_owned()))
-        .context("should fail")?;
-    ensure!(
-        at == "encode" && reason.contains("encode follows Inspected, but the run is Requested"),
-        "{reason}"
-    );
-    let again: Run = world.step(run, Workflow::ConfirmUnpublished);
-    ensure!(
-        failure(&again) == Some((at.as_str(), reason.as_str())),
-        "the first failure is kept"
-    );
     Ok(())
 }
 
@@ -547,21 +474,23 @@ fn a_macos_zip_holding_build_tar_is_extracted_with_links_and_modes() -> Result<(
         fixture.start(&[BASE], Platform::Macos)?,
         ORDER.get(..5).context("order")?,
     );
-    let Stage::Inspected(inspected) = &run.stage else {
-        anyhow::bail!("not inspected: {:?}", failure(&run))
+    let State::Scanned(builds) = &run.state else {
+        anyhow::bail!("not scanned: {:?}", failure(&run))
     };
-    ensure!(inspected.build.root.ends_with("build"));
-    let run_sh: Option<&delta::builds::tree::Node> = inspected.build.tree.get(&"run.sh".parse()?);
+    ensure!(builds.build.root.ends_with("build"));
+    let run_sh: Option<&delta::builds::tree::Node> = builds.build.tree.get(&"run.sh".parse()?);
     ensure!(matches!(run_sh, Some(delta::builds::tree::Node::File { mode, .. }) if mode.to_string() == "755"));
     Ok(())
 }
 
 fn delta_binary(args: &[&str]) -> Result<Output> {
-    Ok(Command::new(env!("CARGO_BIN_EXE_delta")).args(args).output()?)
+    Ok(std::process::Command::new(env!("CARGO_BIN_EXE_delta"))
+        .args(args)
+        .output()?)
 }
 
 #[test]
-fn the_command_line_runs_each_workflow_on_the_document() -> Result<()> {
+fn the_command_line_runs_each_step_on_the_document() -> Result<()> {
     if tools()?.is_none() {
         return Ok(());
     }
@@ -571,7 +500,7 @@ fn the_command_line_runs_each_workflow_on_the_document() -> Result<()> {
     let document_text: &str = document.to_str().context("path")?;
     let work: PathBuf = fixture.root.join("work");
     let started: Output = delta_binary(&[
-        "start",
+        "create-run",
         document_text,
         "--tag",
         TARGET,
@@ -588,8 +517,8 @@ fn the_command_line_runs_each_workflow_on_the_document() -> Result<()> {
     ])?;
     ensure!(started.status.success(), "{}", String::from_utf8_lossy(&started.stderr));
     let bucket: &str = fixture.bucket.to_str().context("path")?;
-    for workflow in ORDER {
-        let name: String = workflow.to_string();
+    for step in ORDER {
+        let name: String = step.to_string();
         let output: Output = delta_binary(&["step", &name, document_text, "--local", bucket])?;
         ensure!(
             output.status.success(),
@@ -600,7 +529,7 @@ fn the_command_line_runs_each_workflow_on_the_document() -> Result<()> {
     let summary: Output = delta_binary(&["summary", document_text])?;
     let text: String = String::from_utf8_lossy(&summary.stdout).into_owned();
     ensure!(text.contains(&format!("| {BASE} |")), "{text}");
-    let out_of_order: Output = delta_binary(&["step", "encode", document_text, "--local", bucket])?;
+    let out_of_order: Output = delta_binary(&["step", "encode-patches", document_text, "--local", bucket])?;
     ensure!(!out_of_order.status.success(), "a step on a finished run must fail");
     Ok(())
 }

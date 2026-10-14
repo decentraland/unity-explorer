@@ -1,6 +1,6 @@
-//! The production capabilities: GitHub through `gh`, the bucket through `aws`, the CDN through
-//! `@dcl/cdn-uploader`, and code signatures through `osslsigncode` and `codesign`. Settings are
-//! read from the environment when a call runs, so they never reach the run document.
+//! The production I/O: GitHub through `gh`, the bucket through `aws` and `@dcl/cdn-uploader`,
+//! and code signatures through `osslsigncode` and `codesign`. Settings are read from the
+//! environment when a call runs, so they never reach the run document.
 
 use std::env;
 use std::path::Path;
@@ -8,7 +8,7 @@ use std::process::Output;
 
 use anyhow::{Context, Result};
 
-use crate::capabilities::{Caching, Cdn, Releases, Signer, Storage};
+use crate::io::{Bucket, Caching, Releases, Signer};
 use crate::publishing::values::ETag;
 use crate::releases::github::{ReleaseDto, read_published};
 use crate::releases::tag::{Platform, Tag};
@@ -47,11 +47,12 @@ impl Releases for GhReleases {
     }
 }
 
-/// The bucket `$EXPLORER_TEAM_S3_BUCKET`, through the `aws` CLI.
+/// The bucket `$EXPLORER_TEAM_S3_BUCKET`: reads and removals through the `aws` CLI, uploads
+/// through `npx @dcl/cdn-uploader@next`.
 #[derive(Debug, Default)]
-pub struct AwsStorage;
+pub struct S3Bucket;
 
-impl Storage for AwsStorage {
+impl Bucket for S3Bucket {
     fn remove_prefix(&self, prefix: &str) -> Result<()> {
         let bucket: String = variable("EXPLORER_TEAM_S3_BUCKET")?;
         run(
@@ -107,13 +108,7 @@ impl Storage for AwsStorage {
         )?;
         ETag::try_new(stdout_text(&output)).context("aws returned no ETag")
     }
-}
 
-/// Uploads with `npx @dcl/cdn-uploader@next` into `$EXPLORER_TEAM_S3_BUCKET`.
-#[derive(Debug, Default)]
-pub struct CdnUploader;
-
-impl Cdn for CdnUploader {
     fn upload(&self, folder: &Path, prefix: &str, caching: Caching) -> Result<()> {
         let bucket: String = variable("EXPLORER_TEAM_S3_BUCKET")?;
         let mut args: Vec<&str> = vec![

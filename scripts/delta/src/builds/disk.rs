@@ -13,7 +13,7 @@ use crate::builds::members::{Member, check_members};
 use crate::builds::signatures::Signatures;
 use crate::builds::tree::{Node, Tree};
 use crate::builds::values::{Mode, RelPath, Sha256};
-use crate::capabilities::Signer;
+use crate::io::Signer;
 use crate::releases::tag::Platform;
 
 const S_IFMT: u32 = 0o170_000;

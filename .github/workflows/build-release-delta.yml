@@ -6,8 +6,8 @@ name: Release Delta Patches
 # into <tag>, plus their manifest, and uploads them next to the release zip:
 #   releases/<tag>/delta/<platform>/manifest.json
 #   releases/<tag>/delta/<platform>/from/<base tag>/<path>.hdiff
-# Each step below runs one workflow of the delta tool (scripts/delta, `delta --help`) on
-# the run document: it must be in the stage the workflow follows, and moves to the next.
+# Each step below sends one step to the delta tool (scripts/delta, `delta --help`) on the
+# run document: it must be in the state the step follows, and moves to the next.
 # A failing base is dropped; the others still ship. Design: docs/delta-updates.md
 on:
   workflow_call:
@@ -82,7 +82,7 @@ jobs:
           BASE_COUNT: ${{ inputs.base_count }}
         run: |
           set -euo pipefail
-          BASES="$("$DELTA" bases "$BASE_COUNT" "$TAG")"
+          BASES="$("$DELTA" pick-bases "$BASE_COUNT" "$TAG")"
           echo "Bases for $TAG: $BASES"
           echo "bases=$BASES" >> "$GITHUB_OUTPUT"
 
@@ -137,47 +137,47 @@ jobs:
         timeout-minutes: 5
         run: sudo apt-get update -qq && sudo apt-get install -y -qq osslsigncode > /dev/null
 
-      - name: Start the run
+      - name: Create the run document
         run: |
           echo "RUN=$RUNNER_TEMP/delta/run.json" >> "$GITHUB_ENV"
-          "$DELTA" start "$RUNNER_TEMP/delta/run.json" --tag "$TAG" --platform "$PLATFORM" --zip "$ZIP" \
+          "$DELTA" create-run "$RUNNER_TEMP/delta/run.json" --tag "$TAG" --platform "$PLATFORM" --zip "$ZIP" \
             --releases "$RELEASES_PATH" --bases "$BASES" --work "$RUNNER_TEMP/delta/work"
 
       - name: Confirm the release is unpublished
         timeout-minutes: 5
         run: '"$DELTA" step confirm-unpublished "$RUN"'
 
-      - name: Clear patches of an earlier run of this tag
+      - name: Remove patches of an earlier run of this tag
         timeout-minutes: 5
-        run: '"$DELTA" step clear-stale "$RUN"'
+        run: '"$DELTA" step remove-stale-patches "$RUN"'
 
       - name: Download the target and base zips
         timeout-minutes: 20
-        run: '"$DELTA" step download "$RUN"'
+        run: '"$DELTA" step download-archives "$RUN"'
 
       - name: Extract the builds
         timeout-minutes: 20
-        run: '"$DELTA" step extract "$RUN"'
+        run: '"$DELTA" step extract-archives "$RUN"'
 
-      - name: Inspect the builds
+      - name: Scan the builds
         timeout-minutes: 20
-        run: '"$DELTA" step inspect "$RUN"'
+        run: '"$DELTA" step scan-builds "$RUN"'
 
       - name: Encode the patch sets
         timeout-minutes: 90
-        run: '"$DELTA" step encode "$RUN"'
+        run: '"$DELTA" step encode-patches "$RUN"'
 
-      - name: Verify the patch sets like the launcher
+      - name: Replay the patch sets like the launcher
         timeout-minutes: 40
-        run: '"$DELTA" step verify "$RUN"'
+        run: '"$DELTA" step replay-patches "$RUN"'
 
-      - name: Assemble the manifest
+      - name: Write the manifest
         timeout-minutes: 10
-        run: '"$DELTA" step assemble "$RUN"'
+        run: '"$DELTA" step write-manifest "$RUN"'
 
       - name: Recheck the release and its zip
         timeout-minutes: 5
-        run: '"$DELTA" step recheck "$RUN"'
+        run: '"$DELTA" step recheck-target "$RUN"'
 
       - name: Upload the patches
         timeout-minutes: 20

@@ -6,43 +6,45 @@ use std::process::ExitCode;
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
 
-use delta::capabilities::Releases;
+use delta::io::{Io, Releases};
 use delta::publishing::values::ZipName;
 use delta::releases::github::{Release, explorer_releases, pick_bases, prune_targets};
 use delta::releases::tag::{Platform, Tag};
-use delta::run::stage::{Requested, Run, Stage, Target};
+use delta::run::document;
+use delta::run::execute::execute;
+use delta::run::fsm::{Command, Msg, Report, Step, update};
+use delta::run::state::{Request, Run, State, Target};
 use delta::run::summary::summary;
-use delta::run::workflows::start;
-use delta::run::{Advanced, Capabilities, Workflow, advance, document};
+use delta::shell;
 use delta::shell::hdiff::{HDiffPatch, fetch_tools};
-use delta::shell::local::{FixedReleases, FixedSigner, FolderCdn, FolderStorage};
-use delta::shell::remote::{AwsStorage, CdnUploader, GhReleases, SystemSigner};
+use delta::shell::remote::GhReleases;
 
 #[derive(Debug, Parser)]
 #[command(name = "delta", about = "Per-file HDiffPatch delta updates for Explorer releases")]
 struct Cli {
     #[command(subcommand)]
-    command: Command,
+    operation: Operation,
 }
 
+/// What the command line asks the tool to do.
 #[derive(Debug, Subcommand)]
-enum Command {
+enum Operation {
     /// Install the pinned `HDiffPatch`; prints the folder to add to PATH.
     FetchTools { tools: PathBuf },
     /// Exit 0 only when <tag> has no published release (`GITHUB_REPOSITORY`, `GH_TOKEN`).
     CheckUnpublished { tag: Tag },
     /// JSON array of the <count> most recently published releases other than <current>.
-    Bases { count: usize, current: Tag },
-    /// Releases whose delta/ folder is removed, one per line.
-    Prune {
+    PickBases { count: usize, current: Tag },
+    /// Releases whose delta/ folder is to be removed, one per line.
+    ListPrunable {
         keep: usize,
         window: usize,
         /// Never pruned.
         #[arg(long)]
         live: Option<Tag>,
     },
-    /// Write a new run document in the Requested stage.
-    Start {
+    /// Write a new run document, in the Idle state.
+    CreateRun {
         document: PathBuf,
         #[arg(long)]
         tag: Tag,
@@ -61,11 +63,11 @@ enum Command {
         #[arg(long)]
         work: PathBuf,
     },
-    /// Run one workflow on the run document.
+    /// Run one step on the run document; it must be in the state the step follows.
     Step {
-        workflow: Workflow,
+        step: Step,
         document: PathBuf,
-        /// Use <folder> as the bucket and CDN, with nothing published and every signature valid.
+        /// Use <folder> as the bucket, with nothing published and every signature valid.
         #[arg(long)]
         local: Option<PathBuf>,
     },
@@ -81,49 +83,45 @@ fn published_releases(releases: &dyn Releases) -> Result<Vec<Release>> {
     explorer_releases(&releases.list()?)
 }
 
-fn step(workflow: Workflow, path: &Path, local: Option<PathBuf>) -> Result<ExitCode> {
+/// Sends the step, runs the command it asks for, folds the report back in.
+fn step(step: Step, path: &Path, local: Option<PathBuf>) -> Result<ExitCode> {
     let run: Run = document::load(path)?;
-    let from: &'static str = run.stage.name();
-    let differ: HDiffPatch = HDiffPatch::from_env();
-    let advanced: Advanced = if let Some(folder) = local {
-        let storage: FolderStorage = FolderStorage { root: folder.clone() };
-        let cdn: FolderCdn = FolderCdn { root: folder };
-        let caps: Capabilities<'_> = Capabilities {
-            releases: &FixedReleases::default(),
-            storage: &storage,
-            cdn: &cdn,
-            differ: &differ,
-            signer: &FixedSigner::default(),
-        };
-        advance(run, workflow, &caps)
-    } else {
-        let caps: Capabilities<'_> = Capabilities {
-            releases: &GhReleases,
-            storage: &AwsStorage,
-            cdn: &CdnUploader,
-            differ: &differ,
-            signer: &SystemSigner,
-        };
-        advance(run, workflow, &caps)
+    let hdiff: HDiffPatch = HDiffPatch::from_env();
+    let io: Io = match local {
+        Some(folder) => shell::folder(folder, hdiff),
+        None => shell::ci(hdiff),
     };
-    log(&format!("{from} --{workflow}--> {}", advanced.run.stage.name()));
-    for event in &advanced.events {
-        log(&format!("  {event}"));
+    let from: &'static str = run.state.name();
+    let dropped_before: usize = run.dropped.len();
+    let (run, command): (Run, Option<Command>) = update(run, Msg::Step(step));
+    let run: Run = match command {
+        Some(command) => {
+            let report: Report = execute(command, &io);
+            for line in report.lines() {
+                log(&format!("  {line}"));
+            }
+            update(run, Msg::Report(report)).0
+        }
+        None => run,
+    };
+    for dropped in run.dropped.iter().skip(dropped_before) {
+        log(&format!("  {} dropped: {}", dropped.base, dropped.reason));
     }
-    document::save(path, &advanced.run)?;
-    if let Stage::Failed { at, reason } = &advanced.run.stage {
+    log(&format!("{from} --{step}--> {}", run.state));
+    document::save(path, &run)?;
+    if let State::Failed { at, reason } = &run.state {
         eprintln!("::error::delta run failed at {at}: {reason}");
         return Ok(ExitCode::FAILURE);
     }
     Ok(ExitCode::SUCCESS)
 }
 
-fn execute(command: Command) -> Result<ExitCode> {
-    match command {
-        Command::FetchTools { tools } => {
+fn operate(operation: Operation) -> Result<ExitCode> {
+    match operation {
+        Operation::FetchTools { tools } => {
             println!("{}", fetch_tools(&tools)?.display());
         }
-        Command::CheckUnpublished { tag } => {
+        Operation::CheckUnpublished { tag } => {
             if GhReleases.is_published(&tag)? {
                 eprintln!(
                     "::error::{tag} is published; its delta patches are immutable and are not (re)generated or uploaded."
@@ -132,16 +130,16 @@ fn execute(command: Command) -> Result<ExitCode> {
             }
             log(&format!("{tag} has no published release"));
         }
-        Command::Bases { count, current } => {
+        Operation::PickBases { count, current } => {
             let bases: Vec<Tag> = pick_bases(&published_releases(&GhReleases)?, count, &current);
             println!("{}", serde_json::to_string(&bases)?);
         }
-        Command::Prune { keep, window, live } => {
+        Operation::ListPrunable { keep, window, live } => {
             for tag in prune_targets(&published_releases(&GhReleases)?, keep, window, live.as_ref()) {
                 println!("{tag}");
             }
         }
-        Command::Start {
+        Operation::CreateRun {
             document: path,
             tag,
             platform,
@@ -158,16 +156,15 @@ fn execute(command: Command) -> Result<ExitCode> {
                 releases,
                 work,
             };
-            let requested: Requested = start(target, base_tags)?;
-            document::save(&path, &Run::start(requested))?;
-            log(&format!("started {}", path.display()));
+            document::save(&path, &Run::new(Request::new(target, base_tags)?))?;
+            log(&format!("created {}", path.display()));
         }
-        Command::Step {
-            workflow,
+        Operation::Step {
+            step: name,
             document: path,
             local,
-        } => return step(workflow, &path, local),
-        Command::Summary { document: path } => {
+        } => return step(name, &path, local),
+        Operation::Summary { document: path } => {
             print!("{}", summary(&document::load(&path)?));
         }
     }
@@ -176,7 +173,7 @@ fn execute(command: Command) -> Result<ExitCode> {
 
 fn main() -> ExitCode {
     let cli: Cli = Cli::parse();
-    match execute(cli.command) {
+    match operate(cli.operation) {
         Ok(code) => code,
         Err(error) => {
             eprintln!("::error::{error:#}");

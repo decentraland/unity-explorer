@@ -93,7 +93,7 @@ jobs:
           DELTA_PRUNE_WINDOW: 5
         run: |
           set -euo pipefail
-          "$DELTA" prune "$DELTA_KEEP_SERIES" "$DELTA_PRUNE_WINDOW" --live "$LATEST_RELEASE" > prune.txt
+          "$DELTA" list-prunable "$DELTA_KEEP_SERIES" "$DELTA_PRUNE_WINDOW" --live "$LATEST_RELEASE" > prune.txt
           while IFS= read -r tag; do
             echo "Removing delta patches into $tag"
             aws s3 rm --recursive --only-show-errors "s3://$EXPLORER_TEAM_S3_BUCKET/$RELEASES_PATH/$tag/delta/"

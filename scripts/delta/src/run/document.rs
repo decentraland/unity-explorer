@@ -5,7 +5,7 @@ use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result, ensure};
 
-use crate::run::stage::{Run, SCHEMA};
+use crate::run::state::{Run, SCHEMA};
 
 pub fn load(path: &Path) -> Result<Run> {
     let text: String = fs::read_to_string(path).with_context(|| format!("cannot read {}", path.display()))?;

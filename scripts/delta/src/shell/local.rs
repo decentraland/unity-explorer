@@ -1,4 +1,4 @@
-//! Capabilities backed by local folders and fixed answers, for tests and local runs.
+//! I/O backed by local folders and fixed answers, for tests and local runs.
 
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -7,18 +7,20 @@ use anyhow::{Context, Result, ensure};
 use walkdir::{DirEntry, WalkDir};
 
 use crate::builds::disk::{remove, sha256_file};
-use crate::capabilities::{Caching, Cdn, Releases, Signer, Storage};
+use crate::io::{Bucket, Caching, Releases, Signer};
 use crate::publishing::values::ETag;
 use crate::releases::github::ReleaseDto;
 use crate::releases::tag::{Platform, Tag};
 
-/// A bucket kept in a folder: key `a/b` is the file `<root>/a/b`. The `ETag` is the file's sha256.
+/// A bucket kept in a folder: key `a/b` is the file `<root>/a/b`. The `ETag` is the file's
+/// sha256. Uploads copy the folder's files under `<root>/<prefix>/` and append the caching of
+/// each upload to `<root>/<prefix>/.caching`.
 #[derive(Debug, Clone)]
-pub struct FolderStorage {
+pub struct FolderBucket {
     pub root: PathBuf,
 }
 
-impl Storage for FolderStorage {
+impl Bucket for FolderBucket {
     fn remove_prefix(&self, prefix: &str) -> Result<()> {
         remove(&self.root.join(prefix.trim_end_matches('/')))
     }
@@ -37,16 +39,7 @@ impl Storage for FolderStorage {
         let source: PathBuf = self.root.join(key);
         Ok(ETag::try_new(sha256_file(&source)?.to_string())?)
     }
-}
 
-/// A CDN kept in a folder: uploads copy the folder's files under `<root>/<prefix>/`. Records
-/// the caching of each upload in `<root>/<prefix>/.caching`.
-#[derive(Debug, Clone)]
-pub struct FolderCdn {
-    pub root: PathBuf,
-}
-
-impl Cdn for FolderCdn {
     fn upload(&self, folder: &Path, prefix: &str, caching: Caching) -> Result<()> {
         let destination: PathBuf = self.root.join(prefix);
         for item in WalkDir::new(folder).min_depth(1).follow_links(false) {

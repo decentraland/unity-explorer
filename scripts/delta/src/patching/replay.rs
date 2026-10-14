@@ -8,7 +8,7 @@ use crate::patching::delta::{Delta, Patch, Whole};
 
 /// One action of the launcher's replay.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Step {
+pub enum Action {
     Delete(RelPath),
     Diff {
         from: RelPath,
@@ -34,10 +34,10 @@ pub enum Step {
 /// Deletes first, so a case-only rename or a folder replaced by a link cannot remove new
 /// files. Then patches (read from the untouched base) and whole files. Then every link and mode
 /// of the target build: an unchanged file can still change its mode, a link its target.
-pub fn replay_steps(delta: &Delta, target: &Tree) -> Vec<Step> {
-    let mut steps: Vec<Step> = Vec::new();
+pub fn replay_actions(delta: &Delta, target: &Tree) -> Vec<Action> {
+    let mut actions: Vec<Action> = Vec::new();
     for path in delta.deleted() {
-        steps.push(Step::Delete(path.clone()));
+        actions.push(Action::Delete(path.clone()));
     }
     for patch in delta.patches() {
         let Patch {
@@ -47,7 +47,7 @@ pub fn replay_steps(delta: &Delta, target: &Tree) -> Vec<Step> {
             sha256,
             ..
         } = patch;
-        steps.push(Step::Diff {
+        actions.push(Action::Diff {
             from: from.clone(),
             file: file.clone(),
             sha256: sha256.clone(),
@@ -56,7 +56,7 @@ pub fn replay_steps(delta: &Delta, target: &Tree) -> Vec<Step> {
     }
     for whole in delta.whole() {
         let Whole { path, file, sha256, .. } = whole;
-        steps.push(Step::Whole {
+        actions.push(Action::Whole {
             file: file.clone(),
             sha256: sha256.clone(),
             path: path.clone(),
@@ -64,17 +64,17 @@ pub fn replay_steps(delta: &Delta, target: &Tree) -> Vec<Step> {
     }
     for (path, node) in target.entries() {
         match node {
-            Node::Link { target: link_target } => steps.push(Step::Link {
+            Node::Link { target: link_target } => actions.push(Action::Link {
                 path: path.clone(),
                 target: link_target.clone(),
             }),
-            Node::File { mode, .. } => steps.push(Step::Mode {
+            Node::File { mode, .. } => actions.push(Action::Mode {
                 path: path.clone(),
                 mode: mode.clone(),
             }),
         }
     }
-    steps
+    actions
 }
 
 /// How a rebuilt build differs from the target build.
@@ -139,7 +139,7 @@ mod tests {
 
     use anyhow::{Result, ensure};
 
-    use super::{Difference, Step, differences, replay_steps};
+    use super::{Action, Difference, differences, replay_actions};
     use crate::builds::tree::{Node, Tree};
     use crate::builds::values::{Mode, RelPath, Sha256};
     use crate::patching::delta::{Delta, Patch, Whole};
@@ -190,33 +190,33 @@ mod tests {
             ("b", file('5', "755")?),
             ("c", Node::Link { target: "a".to_owned() }),
         ])?;
-        let expected: Vec<Step> = vec![
-            Step::Delete(path("gone")?),
-            Step::Diff {
+        let expected: Vec<Action> = vec![
+            Action::Delete(path("gone")?),
+            Action::Diff {
                 from: path("a")?,
                 file: path("from/v1.0.0/a.hdiff")?,
                 sha256: sha('2')?,
                 path: path("a")?,
             },
-            Step::Whole {
+            Action::Whole {
                 file: path("from/v1.0.0/b.hdiff")?,
                 sha256: sha('3')?,
                 path: path("b")?,
             },
-            Step::Mode {
+            Action::Mode {
                 path: path("a")?,
                 mode: Mode::try_new("644".to_owned())?,
             },
-            Step::Mode {
+            Action::Mode {
                 path: path("b")?,
                 mode: Mode::try_new("755".to_owned())?,
             },
-            Step::Link {
+            Action::Link {
                 path: path("c")?,
                 target: "a".to_owned(),
             },
         ];
-        ensure!(replay_steps(&delta, &target) == expected);
+        ensure!(replay_actions(&delta, &target) == expected);
         Ok(())
     }
 

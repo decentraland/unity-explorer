@@ -10,11 +10,11 @@ use crate::builds::disk::{
 };
 use crate::builds::tree::{Build, Node};
 use crate::builds::values::{RelPath, Sha256};
-use crate::capabilities::Differ;
 use crate::patching::delta::{Delta, Patch, Whole};
 use crate::patching::plan::{Job, Plan, needs_whole_trial, patch_file, prefer_whole};
-use crate::patching::replay::Step;
+use crate::patching::replay::Action;
 use crate::releases::tag::Tag;
+use crate::shell::hdiff::HDiffPatch;
 
 /// Scratch files of one encoding or replay: an empty file and a work slot.
 struct Scratch {
@@ -37,15 +37,15 @@ impl Scratch {
 
 /// Writes the patch and proves it turns `old` back into the file with digest `expected`.
 fn diff_checked(
-    differ: &dyn Differ,
+    hdiff: &HDiffPatch,
     old: &Path,
     new: &Path,
     expected: &Sha256,
     patch: &Path,
     roundtrip: &Path,
 ) -> Result<()> {
-    differ.diff(old, new, patch)?;
-    differ.patch(old, patch, roundtrip)?;
+    hdiff.diff(old, new, patch)?;
+    hdiff.patch(old, patch, roundtrip)?;
     let rebuilt: Sha256 = sha256_file(roundtrip)?;
     ensure!(&rebuilt == expected, "patch round trip differs for {}", new.display());
     remove(roundtrip)
@@ -74,7 +74,7 @@ pub fn encode(
     base: &Build,
     target: &Build,
     staging: &Path,
-    differ: &dyn Differ,
+    hdiff: &HDiffPatch,
 ) -> Result<Delta> {
     let scratch: Scratch = Scratch::new(staging)?;
     let mut patches: Vec<Patch> = Vec::new();
@@ -89,7 +89,7 @@ pub fn encode(
         let (size, sha256): (u64, Sha256) = target_digest(target, path)?;
         match job {
             Job::Whole { .. } => {
-                diff_checked(differ, &scratch.empty, &new_file, &sha256, &out, &scratch.slot)?;
+                diff_checked(hdiff, &scratch.empty, &new_file, &sha256, &out, &scratch.slot)?;
                 whole.push(Whole {
                     path: path.clone(),
                     size: file_size(&out)?,
@@ -98,12 +98,12 @@ pub fn encode(
                 });
             }
             Job::Diff { from, .. } => {
-                diff_checked(differ, &from.under(&base.root), &new_file, &sha256, &out, &scratch.slot)?;
+                diff_checked(hdiff, &from.under(&base.root), &new_file, &sha256, &out, &scratch.slot)?;
                 let diff_size: u64 = file_size(&out)?;
                 let mut whole_wins: bool = false;
                 if needs_whole_trial(size, diff_size) {
                     let trial: PathBuf = scratch.slot.with_extension("whole");
-                    diff_checked(differ, &scratch.empty, &new_file, &sha256, &trial, &scratch.slot)?;
+                    diff_checked(hdiff, &scratch.empty, &new_file, &sha256, &trial, &scratch.slot)?;
                     whole_wins = prefer_whole(diff_size, file_size(&trial)?);
                     if whole_wins {
                         place(&trial, &out)?;
@@ -141,7 +141,7 @@ fn apply_patch(
     sha256: &Sha256,
     target: &Path,
     scratch: &Scratch,
-    differ: &dyn Differ,
+    hdiff: &HDiffPatch,
 ) -> Result<()> {
     ensure!(patch.is_file(), "missing patch {}", patch.display());
     ensure!(
@@ -149,23 +149,23 @@ fn apply_patch(
         "patch sha256 mismatch: {}",
         patch.display()
     );
-    differ.patch(old, patch, &scratch.slot)?;
+    hdiff.patch(old, patch, &scratch.slot)?;
     place(&scratch.slot, target)
 }
 
-/// Copies `base` into the empty `rebuild` folder and applies `steps` like the launcher.
+/// Copies `base` into the empty `rebuild` folder and applies `actions` like the launcher.
 /// Patches are read from `patches` and applied to files of the untouched `base`.
-pub fn rebuild(steps: &[Step], base: &Path, patches: &Path, rebuild: &Path, differ: &dyn Differ) -> Result<()> {
+pub fn rebuild(actions: &[Action], base: &Path, patches: &Path, rebuild: &Path, hdiff: &HDiffPatch) -> Result<()> {
     copy_build(base, rebuild)?;
     let scratch: Scratch = Scratch::new(rebuild.parent().unwrap_or(rebuild))?;
-    for step in steps {
-        match step {
-            Step::Delete(path) => {
+    for action in actions {
+        match action {
+            Action::Delete(path) => {
                 let target: PathBuf = path.under(rebuild);
                 remove(&target)?;
                 remove_empty_parents(&target, rebuild)?;
             }
-            Step::Diff {
+            Action::Diff {
                 from,
                 file,
                 sha256,
@@ -177,26 +177,26 @@ pub fn rebuild(steps: &[Step], base: &Path, patches: &Path, rebuild: &Path, diff
                     sha256,
                     &path.under(rebuild),
                     &scratch,
-                    differ,
+                    hdiff,
                 )?;
             }
-            Step::Whole { file, sha256, path } => {
+            Action::Whole { file, sha256, path } => {
                 apply_patch(
                     &scratch.empty,
                     &file.under(patches),
                     sha256,
                     &path.under(rebuild),
                     &scratch,
-                    differ,
+                    hdiff,
                 )?;
             }
-            Step::Link { path, target } => {
+            Action::Link { path, target } => {
                 let link: PathBuf = path.under(rebuild);
                 remove(&link)?;
                 fs::create_dir_all(link.parent().unwrap_or(rebuild))?;
                 make_link(target, &link)?;
             }
-            Step::Mode { path, mode } => set_mode(&path.under(rebuild), mode)?,
+            Action::Mode { path, mode } => set_mode(&path.under(rebuild), mode)?,
         }
     }
     Ok(())
