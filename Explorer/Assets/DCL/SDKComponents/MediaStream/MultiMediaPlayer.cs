@@ -149,7 +149,7 @@ namespace DCL.SDKComponents.MediaStream
             Match(
                 volume,
                 static (ctx, urlMediaPlayer) => urlMediaPlayer.MediaPlayer.AudioVolume = ctx,
-                static (ctx, livekitPlayer) => livekitPlayer!.SetVolume(ctx));
+                static (ctx, livekitPlayer) => livekitPlayer.SetVolume(ctx));
         }
 
         public void CrossfadeVolume(float volume, float volumeDelta = 1)
@@ -157,7 +157,7 @@ namespace DCL.SDKComponents.MediaStream
             Match(
                 (volume, volumeDelta),
                 static (ctx, urlMediaPlayer) => urlMediaPlayer.MediaPlayer.CrossfadeVolume(ctx.volume, ctx.volumeDelta),
-                static (ctx, livekitPlayer) => livekitPlayer!.CrossfadeVolume(ctx.volume, ctx.volumeDelta));
+                static (ctx, livekitPlayer) => livekitPlayer.CrossfadeVolume(ctx.volume, ctx.volumeDelta));
         }
 
         public void UpdatePlaybackProperties(PBVideoPlayer sdkVideoPlayer)
