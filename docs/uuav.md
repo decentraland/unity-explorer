@@ -86,8 +86,8 @@ player's state — URL, position, rate, looping — so a decoder crash degrades 
 a stutter rather than a session loss.
 
 **The player-facing surface is the compat facade, and it is scaffolding.**
-AVPro and the runtime switch that picked between the two backends are gone;
-scene code now talks straight to `Packages/UUAV/AVProCompat/` (`MediaPlayer`,
+The Explorer's media systems (`DCL.SDKComponents.MediaStream`) talk straight to
+`Packages/UUAV/AVProCompat/` (`MediaPlayer`,
 `IMediaControl`, `IMediaInfo`, `ITextureProducer`). That facade still mirrors
 AVPro's shape — the inert platform-option objects, `MediaPathType`, a no-op
 `MediaPlayerEvent`, a `TimeRanges` whose only read is `Count` — because it was

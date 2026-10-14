@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using System.Diagnostics.CodeAnalysis;
 using DCL.ECSComponents;
 using REnum;
 using UnityEngine;
@@ -234,18 +233,6 @@ namespace DCL.SDKComponents.MediaStream
                     return result;
                 }
             );
-        }
-
-        public bool TryGetUrlMediaPlayer([NotNullWhen(true)] out MediaPlayer? mediaPlayer)
-        {
-            if (IsUrlMediaPlayer(out var urlMediaPlayer))
-            {
-                mediaPlayer = urlMediaPlayer.MediaPlayer;
-                return true;
-            }
-
-            mediaPlayer = null;
-            return false;
         }
 
         public void TrySeek(double seekTime)

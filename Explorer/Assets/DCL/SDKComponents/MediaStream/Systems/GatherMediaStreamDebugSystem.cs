@@ -10,7 +10,6 @@ using SceneRunner.Scene;
 using System.Collections.Generic;
 using UnityEngine;
 using UUAV;
-using UUAV.Compat;
 
 namespace DCL.SDKComponents.MediaStream
 {
@@ -116,10 +115,10 @@ namespace DCL.SDKComponents.MediaStream
         /// </summary>
         private void AddUuavRow(ref MediaPlayerComponent component)
         {
-            if (!component.MediaPlayer.TryGetUrlMediaPlayer(out MediaPlayer? mediaPlayer))
+            if (!component.MediaPlayer.IsUrlMediaPlayer(out var urlMediaPlayer))
                 return;
 
-            UUAVPlayer? uuavPlayer = mediaPlayer.GetComponent<UUAVPlayer>();
+            UUAVPlayer? uuavPlayer = urlMediaPlayer.MediaPlayer.GetComponent<UUAVPlayer>();
 
             if (uuavPlayer == null)
             {

@@ -1,7 +1,6 @@
-# Compatability Note
+# Compatibility Note
 
-The compatability layer doesn't provide full coverage of AVPRO features and should be extended as it goes.
-Feel free to contribute your adapter code 
+The compatibility layer covers only the subset of AVPro's surface the Explorer calls; it is not a general AVPro adapter.
 
 ## Why this layer still mirrors AVPro's surface
 

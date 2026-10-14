@@ -163,9 +163,7 @@ namespace DCL.SDKComponents.MediaStream
                 else
                     ReportHub.Log(ReportCategory.MEDIA_STREAM, $"[{TAG}] audio sidx byte-range fetch failed: {audioSidx.ErrorMessage}");
 
-                // The UUAV helper refuses the file protocol, so the playlists are served
-                // over loopback HTTP. Coalescing costs no startup latency: FFmpeg streams a
-                // byte range progressively.
+                // Coalescing costs no startup latency: FFmpeg streams a byte range progressively.
                 HlsManifestBuilder.PlaylistSet playlists = HlsManifestBuilder.Build(
                     videoStream, audioStream, durationSeconds, videoSegments, audioSegments, TARGET_SEGMENT_SECONDS);
 

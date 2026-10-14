@@ -85,8 +85,8 @@ namespace DCL.SDKComponents.MediaStream.YouTube
 
         /// <summary>
         ///     Builds the 3 HLS playlists (master + video + audio) from the pre-selected pair
-        ///     returned by <see cref="TrySelectVideoAndAudio"/>. If SIDX-derived segment tables
-        ///     are supplied, consecutive fragments are coalesced (see <see cref="Coalesce"/>) into
+        ///     returned by <see cref="TrySelectVideoAndAudio"/>. When both SIDX-derived segment tables
+        ///     are non-empty, consecutive fragments are coalesced (see <see cref="Coalesce"/>) into
         ///     segments of at least targetSegmentDurationSeconds, each starting on a clean
         ///     sidx-described boundary (issue #8350).
         ///     Falls back to single-segment if either segment list is empty.
