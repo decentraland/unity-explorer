@@ -283,6 +283,11 @@ namespace DCL.Lobby
 
             profileMenuCts = profileMenuCts.SafeRestart();
             profileMenu.Show(viewInstance.ProfileMenu, profileMenuCts.Token);
+
+            // The UI map stays disabled until the first world is loaded, so the startup lobby opens the one action its popups need
+            if (inputData.IsStartup)
+                DCLInput.Instance.UI.Close.Enable();
+
             DCLInput.Instance.UI.Close.performed -= OnUIClose;
             DCLInput.Instance.UI.Close.performed += OnUIClose;
 
