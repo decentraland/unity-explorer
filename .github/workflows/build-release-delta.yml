@@ -7,7 +7,7 @@ name: Release Delta Patches
 #   releases/<tag>/delta/<platform>/manifest.json
 #   releases/<tag>/delta/<platform>/from/<base tag>/<path>.hdiff
 # A failed platform or base only leaves that patch set out. Logic lives in
-# scripts/delta/. Design: docs/delta-updates.md
+# scripts/delta/ (python3 scripts/delta/run.py --help). Design: docs/delta-updates.md
 on:
   workflow_call:
     inputs:
@@ -58,11 +58,18 @@ jobs:
           persist-credentials: false
           sparse-checkout: scripts/delta
 
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Install the delta tool's dependencies
+        run: pip install --quiet -r scripts/delta/requirements.txt
+
       # Patches are immutable once the release is published.
       - name: Refuse a published or invalid tag
         env:
           GH_TOKEN: ${{ github.token }}
-        run: bash scripts/delta/check-unpublished.sh "$TAG"
+        run: python3 scripts/delta/run.py check-unpublished "$TAG"
 
       - name: Pick base releases
         id: bases
@@ -71,10 +78,9 @@ jobs:
           BASE_COUNT: ${{ inputs.base_count }}
         run: |
           set -euo pipefail
-          gh api "repos/$GITHUB_REPOSITORY/releases?per_page=100" \
-            | bash scripts/delta/release-tags.sh bases "$BASE_COUNT" "$TAG" > bases.txt
-          echo "Bases for $TAG:"; cat bases.txt
-          echo "bases=$(jq -R -s -c 'split("\n") | map(select(length > 0))' bases.txt)" >> "$GITHUB_OUTPUT"
+          BASES="$(python3 scripts/delta/run.py bases "$BASE_COUNT" "$TAG")"
+          echo "Bases for $TAG: $BASES"
+          echo "bases=$BASES" >> "$GITHUB_OUTPUT"
 
   delta:
     name: Delta (${{ matrix.platform }})
@@ -111,8 +117,15 @@ jobs:
           persist-credentials: false
           sparse-checkout: scripts/delta
 
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Install the delta tool's dependencies
+        run: pip install --quiet -r scripts/delta/requirements.txt
+
       - name: Install HDiffPatch (pinned)
-        run: bash scripts/delta/fetch-tools.sh "$RUNNER_TEMP/hdiffpatch" >> "$GITHUB_PATH"
+        run: python3 scripts/delta/run.py fetch-tools "$RUNNER_TEMP/hdiffpatch" >> "$GITHUB_PATH"
 
       - name: Install osslsigncode
         if: matrix.platform == 'windows64'
@@ -120,20 +133,23 @@ jobs:
 
       # The published zip is the source of truth. A delta left by an earlier run of this
       # tag describes the zip it overwrote, so it is removed; the tag is re-checked first
-      # because it may have been published while this leg was queued.
+      # because it may have been published while this leg was queued. The zip's ETag is
+      # kept so the upload can refuse a zip replaced by a later build of the same tag.
       - name: Download the new release zip
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          bash scripts/delta/check-unpublished.sh "$TAG"
+          python3 scripts/delta/run.py check-unpublished "$TAG"
           WORK="$RUNNER_TEMP/delta"
           mkdir -p "$WORK"
           aws s3 rm --recursive --only-show-errors "s3://$EXPLORER_TEAM_S3_BUCKET/$RELEASES_PATH/$TAG/delta/$PLATFORM/"
-          aws s3 cp --only-show-errors "s3://$EXPLORER_TEAM_S3_BUCKET/$RELEASES_PATH/$TAG/$ZIP" "$WORK/$ZIP"
-          NEW_ROOT="$(bash scripts/delta/extract-build.sh "$WORK/$ZIP" "$WORK/new")"
+          ZIP_ETAG="$(aws s3api get-object --bucket "$EXPLORER_TEAM_S3_BUCKET" --key "$RELEASES_PATH/$TAG/$ZIP" \
+            "$WORK/$ZIP" --query ETag --output text)"
+          NEW_ROOT="$(python3 scripts/delta/run.py extract "$WORK/$ZIP" "$WORK/new")"
           echo "WORK=$WORK" >> "$GITHUB_ENV"
           echo "NEW_ROOT=$NEW_ROOT" >> "$GITHUB_ENV"
+          echo "ZIP_ETAG=$ZIP_ETAG" >> "$GITHUB_ENV"
 
       - name: Generate and verify patches per base
         run: |
@@ -142,7 +158,7 @@ jobs:
           FAILED_BASES=""
           mkdir -p "$OUT"
           echo "Signatures of the new build:"
-          bash scripts/delta/signature-status.sh "$PLATFORM" "$NEW_ROOT"
+          python3 scripts/delta/run.py signatures "$PLATFORM" "$NEW_ROOT"
 
           # A failing base is left out; the others still ship.
           for BASE_TAG in $(jq -r '.[]' <<< "$BASES"); do
@@ -150,7 +166,7 @@ jobs:
             BASE_ZIP="$WORK/base-$ZIP"
             if ! aws s3 cp --only-show-errors "s3://$EXPLORER_TEAM_S3_BUCKET/$RELEASES_PATH/$BASE_TAG/$ZIP" "$BASE_ZIP"; then
               echo "::warning::$BASE_TAG has no $ZIP in S3; skipping this base."
-            elif ! bash scripts/delta/delta-for-base.sh "$TAG" "$PLATFORM" "$NEW_ROOT" "$WORK/$ZIP" "$BASE_TAG" "$BASE_ZIP" "$OUT"; then
+            elif ! python3 scripts/delta/run.py delta-for-base "$TAG" "$PLATFORM" "$NEW_ROOT" "$WORK/$ZIP" "$BASE_TAG" "$BASE_ZIP" "$OUT"; then
               echo "::error::$BASE_TAG: patch generation or verification failed; this base is left out of the manifest."
               FAILED_BASES="$FAILED_BASES $BASE_TAG"
             fi
@@ -162,12 +178,17 @@ jobs:
           shopt -s nullglob
           BASE_FILES=("$OUT"/base-*.json)
           [ ${#BASE_FILES[@]} -gt 0 ] || { echo "::error::No base produced a patch set."; exit 1; }
-          bash scripts/delta/assemble-manifest.sh "$TAG" "$PLATFORM" "$NEW_ROOT" "$WORK/$ZIP" "${BASE_FILES[@]}" > "$WORK/manifest.json"
+          python3 scripts/delta/run.py manifest "$TAG" "$PLATFORM" "$NEW_ROOT" "$WORK/$ZIP" "${BASE_FILES[@]}" > "$WORK/manifest.json"
 
-      - name: Refuse a tag published in the meantime
+      - name: Refuse a tag published or a zip replaced in the meantime
         env:
           GH_TOKEN: ${{ github.token }}
-        run: bash scripts/delta/check-unpublished.sh "$TAG"
+        run: |
+          set -euo pipefail
+          python3 scripts/delta/run.py check-unpublished "$TAG"
+          NOW_ETAG="$(aws s3api head-object --bucket "$EXPLORER_TEAM_S3_BUCKET" --key "$RELEASES_PATH/$TAG/$ZIP" \
+            --query ETag --output text)"
+          [ "$NOW_ETAG" = "$ZIP_ETAG" ] || { echo "::error::$ZIP changed in S3 during generation; not uploading."; exit 1; }
 
       # Manifest last, so it never references a patch not uploaded yet. Only the patches are
       # immutable: a rebuild of this unpublished tag rewrites the manifest under the same key.
@@ -194,19 +215,5 @@ jobs:
         if: always() && env.WORK != ''
         run: |
           [ -f "$WORK/manifest.json" ] || exit 0
-          {
-            echo "### Delta patches: $PLATFORM -> $TAG"
-            echo
-            echo "| From | Patched | Whole | Deleted | Download | Full zip | Saving |"
-            echo "|---|---|---|---|---|---|---|"
-            jq -r '.zip.size as $zip
-              | .bases | to_entries[]
-              | ([.value.patches[], .value.whole[] | .patch_size] | add // 0) as $dl
-              | "| \(.key) | \(.value.patches | length) | \(.value.whole | length) | \(.value.deleted | length) "
-                + "| \($dl / 1048576 * 10 | round / 10) MB | \($zip / 1048576 * 10 | round / 10) MB "
-                + "| \(100 - ($dl * 100 / $zip) | round)% |"' "$WORK/manifest.json"
-            if [ -n "${FAILED_BASES:-}" ]; then
-              echo
-              echo "Left out after a failure:$FAILED_BASES"
-            fi
-          } >> "$GITHUB_STEP_SUMMARY"
+          # shellcheck disable=SC2086 # FAILED_BASES is a list of tags
+          python3 scripts/delta/run.py summary "$WORK/manifest.json" ${FAILED_BASES:-} >> "$GITHUB_STEP_SUMMARY"

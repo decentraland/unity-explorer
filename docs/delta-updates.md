@@ -180,11 +180,14 @@ Implemented in the launcher repo:
    order matters: on case-insensitive file systems a case-only
    rename (`Foo.dll` -> `foo.dll`) deleted after the swap removes the new file, and a directory
    replaced by a symlink (`Versions/Current` -> `A`) deleted after the swap removes files in the
-   symlink's target. `verify-delta.sh` replays this order.
+   symlink's target. `run.py verify` replays this order.
 6. Leave files that are not in the manifest alone (logs, launcher-owned files).
 7. Reject the manifest (fall back to the zip and report it) if any `path`, `from_path`, `deleted`
-   entry or `patch` is absolute or contains a `..` segment, or if a `symlink` target is absolute
-   or resolves outside the install folder. CI generation (`hash-tree.sh`) already refuses such
+   entry or `patch` is absolute, contains an empty, `.` or `..` segment, or contains `\`, `:` or a
+   control character (NUL included), and if a `symlink` target is absolute, contains `\`, `:` or a
+   control character, or resolves outside the install folder. On NTFS those characters reach
+   outside the folder or into another file (`..\x.dll`, `C:x.dll`, `\\host\share`,
+   `Decentraland.exe:ads`). CI generation (the `RelPath` and `Tree` types) already refuses such
    builds; the launcher checks again because the manifest is not signed.
 
 Patching uses HDiffPatch's `hpatch` (MIT, C), ideally linked into the launcher so no extra executable
@@ -192,44 +195,61 @@ needs code signing.
 
 ## Scripts
 
-All delta logic lives in [`scripts/delta/`](../scripts/delta/) and runs the same way in CI and
-locally in bash on Linux, macOS (stock bash 3.2) and Windows (Git Bash). Each script takes explicit
-arguments, writes only to the given output folder or JSON on stdout, logs to stderr and signals
-failure with its exit code. Only `fetch-tools.sh` and `check-unpublished.sh` touch the network.
+All delta logic lives in [`scripts/delta/`](../scripts/delta/), a Python 3.12 tool run the same way
+in CI and locally (`python3 scripts/delta/run.py <command>`, `--help` lists them). It is split by
+what the code may touch:
 
-| Script | Input | Output | Why |
+| Module | Holds | Why |
+|---|---|---|
+| `delta/domain.py` | the domain values: `RelPath`, `ReleaseTag`, `Sha256`, the `RegularFile \| Symlink` entry union, `Tree`, `DiffPatch`, `WholeFile`, `BaseDelta`, `Manifest`, the application `Step` union, releases | strict, frozen pydantic models that reject unknown fields: a value that exists is valid, so unsafe paths, malformed tags and inconsistent manifests cannot be built |
+| `delta/transform.py` | pure functions: planning a patch set, the whole-file rule, assembling the manifest, the launcher's application order, comparing trees, picking and pruning releases, signature comparison, the job summary | no I/O; arguments and results are validated against their types at every call |
+| `delta/io/` | `fs` (hashing, scanning, extracting, replaying steps), `hdiff` (pinned download, hdiffz/hpatchz), `github` (`gh api`), `signatures` (osslsigncode, codesign) | the only code touching files, processes or the network |
+| `delta/pipeline.py` | `make_delta`, `verify_delta`, `delta_for_base`, `build_manifest` | joins I/O and transformations into the steps the workflows run |
+| `delta/cli.py` | the commands below | argument parsing and output only |
+
+Each command takes explicit arguments, writes only to the given output folder or to stdout, logs
+to stderr and exits non-zero on failure. Only `fetch-tools`, `check-unpublished`, `bases` and
+`prune` touch the network.
+
+| Command | Input | Output | Why |
 |---|---|---|---|
-| `fetch-tools.sh` | `<tools dir>` | pinned HDiffPatch for this OS, sha256-checked; prints the bin folder | identical patches in CI and locally |
-| `extract-build.sh` | `<zip> <out dir>` | prints the build root | handles the macOS `build.tar` inside the zip, keeping modes and symlinks |
-| `hash-tree.sh` | `<dir>` | `files[]` JSON on stdout | one definition of paths, hashes, modes and symlinks; refuses paths or symlinks that reach outside the build |
-| `make-delta.sh` | `<base dir> <new dir> <base tag> <out dir>` | `from/<base tag>/**.hdiff`, `base-<tag>.json` | the patches for one base, each round-trip checked |
-| `assemble-manifest.sh` | `<version> <platform> <new dir> <zip> <base-*.json>...` | `manifest.json` on stdout | one place for the manifest format |
-| `signature-status.sh` | `<platform> <build root>` | `<path> ok\|invalid` per `.exe` (osslsigncode) or `.app` (codesign) | proves signatures survive patching |
-| `delta-for-base.sh` | `<version> <platform> <new root> <new zip> <base tag> <base zip> <out dir>` | `from/<base tag>/`, `base-<tag>.json`; removed again on any failure | the whole per-base pipeline (extract, make, verify, signatures) the workflow loops over |
-| `verify-delta.sh` | `<base dir> <delta dir> <manifest> <base tag> <rebuild dir>` | rebuilt tree; exit 0 only on an exact match | replays the launcher before anything is published |
-| `release-tags.sh` | `bases <n> <tag>` or `prune <keep> <window>`, releases JSON on stdin | tags, one per line | which releases to diff from, and which `delta/` folders to remove |
-| `check-unpublished.sh` | `<tag>`, `gh` with `GH_TOKEN` | exit 0 only for a missing or draft release | the immutability guard; an API error is never read as "unpublished" |
+| `fetch-tools` | `<tools dir>` | pinned HDiffPatch for this OS, sha256-checked; prints the bin folder | identical patches in CI and locally |
+| `extract` | `<zip> <out dir>` | prints the build root | handles the macOS `build.tar` inside the zip, keeping modes and symlinks |
+| `tree` | `<dir>` | `files[]` JSON on stdout | one definition of paths, hashes, modes and symlinks; refuses paths or symlinks that reach outside the build |
+| `make-delta` | `<base dir> <new dir> <base tag> <out dir>` | `from/<base tag>/**.hdiff`, `base-<tag>.json` | the patches for one base, each round-trip checked |
+| `manifest` | `<version> <platform> <new dir> <zip> <base-*.json>...` | `manifest.json` on stdout | one place for the manifest format |
+| `signatures` | `<platform> <build root>` | `<path> ok\|invalid` per `.exe` (osslsigncode) or `.app` (codesign) | proves signatures survive patching |
+| `delta-for-base` | `<version> <platform> <new root> <new zip> <base tag> <base zip> <out dir>` | `from/<base tag>/`, `base-<tag>.json`; removed again on any failure | the whole per-base pipeline (extract, make, verify, signatures) the workflow loops over |
+| `verify` | `<base dir> <delta dir> <manifest> <base tag> <rebuild dir>` | rebuilt tree; exit 0 only on an exact match | replays the launcher before anything is published |
+| `bases` | `<n> <tag>`, `gh` with `GH_TOKEN` | JSON array of tags | which releases to diff from |
+| `prune` | `<keep> <window> [--live <tag>]`, `gh` with `GH_TOKEN` | tags, one per line | which `delta/` folders to remove |
+| `check-unpublished` | `<tag>`, `gh` with `GH_TOKEN` | exit 0 only for a missing or draft release | the immutability guard; an API error is never read as "unpublished" |
+| `summary` | `<manifest> [failed base]...` | markdown | the workflow's job summary |
 
-Local run (Git Bash, macOS or Linux), from the repo root:
+Local run (macOS, Linux or Windows), from the repo root:
 
 ```bash
-export PATH="$(bash scripts/delta/fetch-tools.sh /tmp/delta-tools):$PATH"
-OLD=$(bash scripts/delta/extract-build.sh v0.185.0-alpha/Decentraland_windows64.zip /tmp/old)
-NEW=$(bash scripts/delta/extract-build.sh v0.186.0-alpha/Decentraland_windows64.zip /tmp/new)
-bash scripts/delta/make-delta.sh "$OLD" "$NEW" v0.185.0-alpha /tmp/out
-bash scripts/delta/assemble-manifest.sh v0.186.0-alpha windows64 "$NEW" \
+pip install -r scripts/delta/requirements.txt
+export PATH="$(python3 scripts/delta/run.py fetch-tools /tmp/delta-tools):$PATH"
+OLD=$(python3 scripts/delta/run.py extract v0.185.0-alpha/Decentraland_windows64.zip /tmp/old)
+NEW=$(python3 scripts/delta/run.py extract v0.186.0-alpha/Decentraland_windows64.zip /tmp/new)
+python3 scripts/delta/run.py make-delta "$OLD" "$NEW" v0.185.0-alpha /tmp/out
+python3 scripts/delta/run.py manifest v0.186.0-alpha windows64 "$NEW" \
   v0.186.0-alpha/Decentraland_windows64.zip /tmp/out/base-v0.185.0-alpha.json > /tmp/out/manifest.json
-bash scripts/delta/verify-delta.sh "$OLD" /tmp/out /tmp/out/manifest.json v0.185.0-alpha /tmp/rebuild
+python3 scripts/delta/run.py verify "$OLD" /tmp/out /tmp/out/manifest.json v0.185.0-alpha /tmp/rebuild
 ```
 
-Tests: `scripts/delta/test-delta.sh` (synthetic builds: changed, added, deleted and renamed files,
-case-only renames, the whole-file fallback, paths with spaces, modes, symlinks replacing directories
-and the reverse, symlinks leaving the build, tampered patches, modified bases, the macOS
-`build.tar`-in-zip layout, and `delta-for-base.sh` with stubbed signing tools: success, signature
-mismatch, corrupt base zip) and `scripts/delta/test-release-tags.sh` (including
-`check-unpublished.sh` against a stubbed `gh`). Both run in
-[`ci-scripts-tests.yml`](../.github/workflows/ci-scripts-tests.yml) on Linux and on macOS with the
-stock bash 3.2, also when the workflows that drive the scripts change.
+Checks, from `scripts/delta/` after `pip install -r requirements-dev.txt`: `ruff check .`,
+`ruff format --check .`, `mypy .` (strict, with the pydantic plugin) and `python3 -m pytest`.
+`tests/test_domain.py` and `tests/test_transform.py` cover the types and the pure functions,
+`tests/test_releases.py` the release selection and the published-tag guard, and
+`tests/test_pipeline.py` synthetic builds through the real HDiffPatch: changed, added, deleted and
+renamed files, case-only renames, the whole-file fallback, paths with spaces, modes, symlinks
+replacing directories and the reverse, symlinks leaving the build, tampered patches, modified
+bases, the macOS `build.tar`-in-zip layout, and `delta_for_base` with a stubbed signature check
+(success, signature mismatch, corrupt base zip). All run in
+[`ci-scripts-tests.yml`](../.github/workflows/ci-scripts-tests.yml) on Linux and macOS, also when
+the workflows that drive the tool change.
 
 ## Costs
 

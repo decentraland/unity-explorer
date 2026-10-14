@@ -52,7 +52,7 @@ jobs:
 
       # Housekeeping: runs after the rollback and never fails the job. The zip is kept.
       - name: Remove the deleted release's delta patches
-        if: ${{ steps.check_latest.outputs.deleted_release != '' }}
+        if: ${{ !cancelled() && steps.check_latest.outputs.deleted_release != '' }}
         continue-on-error: true
         env:
           AWS_MAX_ATTEMPTS: 3
