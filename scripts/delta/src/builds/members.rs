@@ -2,7 +2,7 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use anyhow::{Result, bail};
+use anyhow::{Context, Result, bail};
 
 use crate::builds::tree::{check_link, leaf_ancestor};
 use crate::builds::values::{Mode, RelPath};
@@ -23,22 +23,28 @@ impl Member {
     }
 }
 
-/// Extraction writes only inside its folder when no two entries share a path (also ignoring
-/// case, as on NTFS and APFS), no entry lies under a file or link entry, and no link can leave
+/// The path with its case folded, as NTFS and APFS compare it.
+fn folded(path: &RelPath) -> Result<RelPath> {
+    RelPath::try_new(path.as_str().to_lowercase()).with_context(|| format!("cannot fold the case of {path}"))
+}
+
+/// Extraction writes only inside its folder when no two entries share a path, no entry lies
+/// under a file or link entry (both ignoring case, as on NTFS and APFS), and no link can leave
 /// the folder.
 pub fn check_members(members: &[Member]) -> Result<()> {
-    let mut seen: BTreeSet<String> = BTreeSet::new();
+    let mut seen: BTreeSet<RelPath> = BTreeSet::new();
     let mut leaves: BTreeMap<RelPath, &Member> = BTreeMap::new();
     for member in members {
-        if !seen.insert(member.path().as_str().to_lowercase()) {
+        let key: RelPath = folded(member.path())?;
+        if !seen.insert(key.clone()) {
             bail!("archive lists {} more than once (ignoring case)", member.path());
         }
         if !matches!(member, Member::Folder(_)) {
-            leaves.insert(member.path().clone(), member);
+            leaves.insert(key, member);
         }
     }
     for member in members {
-        if let Some(parent) = leaf_ancestor(member.path(), &leaves) {
+        if let Some(parent) = leaf_ancestor(&folded(member.path())?, &leaves) {
             bail!("archive entry {} lies under the file or link {parent}", member.path());
         }
         if let Member::Link { path, target } = member {
@@ -89,6 +95,14 @@ mod tests {
     fn refuses_a_link_leaving_the_folder() -> Result<()> {
         ensure!(check_members(&[link("lnk", "../escape")?]).is_err());
         ensure!(check_members(&[link("lnk", "/absolute")?]).is_err());
+        Ok(())
+    }
+
+    #[test]
+    fn refuses_writing_under_a_link_whatever_the_case() -> Result<()> {
+        // On APFS `d/X` and `d/x` are the same name; `d/x` resolves above the folder.
+        let members: Vec<Member> = vec![link("d/up", "..")?, link("d/x", "up/../..")?, file("d/X/evil")?];
+        ensure!(check_members(&members).is_err());
         Ok(())
     }
 

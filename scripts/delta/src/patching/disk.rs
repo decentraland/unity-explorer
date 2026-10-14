@@ -65,23 +65,27 @@ fn base_digest(base: &Build, path: &RelPath) -> Result<Sha256> {
     }
 }
 
-/// Encodes every job of `plan` under `staging` (`staging/from/<base>/<path>.hdiff`). A diff
-/// at least half the file's size is also tried whole, and the smaller wins. Every patch is
-/// applied back and must reproduce the target file.
+/// Encodes every job of `plan` under `staging` (`staging/from/<base>/<build_id>/<path>.hdiff`).
+/// The base's folder exists afterwards even when the plan has no jobs. A diff at least half the
+/// file's size is also tried whole, and the smaller wins. Every patch is applied back and must
+/// reproduce the target file.
 pub fn encode(
     plan: &Plan,
     base_tag: &Tag,
+    build_id: &str,
     base: &Build,
     target: &Build,
     staging: &Path,
     hdiff: &HDiffPatch,
 ) -> Result<Delta> {
     let scratch: Scratch = Scratch::new(staging)?;
+    let own: PathBuf = staging.join("from").join(base_tag.to_string()).join(build_id);
+    fs::create_dir_all(&own).with_context(|| format!("cannot create {}", own.display()))?;
     let mut patches: Vec<Patch> = Vec::new();
     let mut whole: Vec<Whole> = Vec::new();
     for job in &plan.jobs {
         let path: &RelPath = job.path();
-        let file: RelPath = patch_file(base_tag, path)?;
+        let file: RelPath = patch_file(base_tag, build_id, path)?;
         let out: PathBuf = file.under(staging);
         fs::create_dir_all(out.parent().unwrap_or(staging))
             .with_context(|| format!("cannot create the folder of {file}"))?;

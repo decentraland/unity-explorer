@@ -104,9 +104,11 @@ pub fn prefer_whole(diff_size: u64, whole_size: u64) -> bool {
     whole_size < diff_size
 }
 
-/// Where the patch of `path` from `base` lives, relative to the manifest's folder.
-pub fn patch_file(base: &Tag, path: &RelPath) -> Result<RelPath> {
-    let text: String = format!("from/{base}/{path}.hdiff");
+/// Where the patch of `path` from `base` lives, relative to the manifest's folder. `build_id`
+/// names the release build, so a rebuild of the same tag never writes under a key a CDN edge may
+/// already hold as immutable.
+pub fn patch_file(base: &Tag, build_id: &str, path: &RelPath) -> Result<RelPath> {
+    let text: String = format!("from/{base}/{build_id}/{path}.hdiff");
     RelPath::try_new(text.clone()).with_context(|| format!("invalid patch path {text:?}"))
 }
 
@@ -275,10 +277,15 @@ mod tests {
     }
 
     #[test]
-    fn patch_files_live_under_from_tag() -> Result<()> {
+    fn patch_files_live_under_the_base_tag_and_the_build_id() -> Result<()> {
         let base: crate::releases::tag::Tag = "v1.0.0".parse()?;
         ensure!(
-            patch_file(&base, &path("Data/space dir/a.bin")?)?.as_str() == "from/v1.0.0/Data/space dir/a.bin.hdiff"
+            patch_file(&base, "0123abcd", &path("Data/space dir/a.bin")?)?.as_str()
+                == "from/v1.0.0/0123abcd/Data/space dir/a.bin.hdiff"
+        );
+        ensure!(
+            patch_file(&base, "", &path("a")?).is_err(),
+            "an empty build id is refused"
         );
         Ok(())
     }

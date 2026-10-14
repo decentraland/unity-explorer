@@ -175,9 +175,12 @@ pub enum Cmd {
         release_root: PathBuf,
         bases: Vec<(Tag, PathBuf)>,
     },
-    /// Patches go to `staging/from/<base>/<path>.hdiff`. A base that fails leaves nothing there.
+    /// Patches go to `staging/from/<base>/<build_id>/<path>.hdiff`. A base that fails leaves
+    /// nothing there.
     EncodePatches {
         staging: PathBuf,
+        /// The first hex digits of the release zip's sha256: a rebuild never reuses a patch key.
+        build_id: String,
         release: Build,
         bases: Vec<(Tag, Build, Plan)>,
     },
@@ -416,25 +419,11 @@ fn transition(state: State, msg: Msg, dropped: &mut Vec<Dropped>) -> Result<(Sta
             Ok((State::Verified(upload), vec![cmd]))
         }
         (State::Verified(upload), Msg::UploadFolderPrepared) => {
-            let cmd: Cmd = Cmd::RecheckRelease {
-                tag: upload.release.tag.clone(),
-                zip_key: upload.release.zip_key(),
-            };
+            let cmd: Cmd = recheck_release(&upload);
             Ok((State::Prepared(upload), vec![cmd]))
         }
         (State::Prepared(upload), Msg::ReleaseRechecked { published, zip_etag }) => {
-            if published {
-                return Err(format!(
-                    "{} was published while its patches were made",
-                    upload.release.tag
-                ));
-            }
-            if zip_etag != upload.zip.etag {
-                return Err(format!(
-                    "{} changed in the bucket during the run (ETag {} -> {zip_etag})",
-                    upload.release.zip, upload.zip.etag
-                ));
-            }
+            still_the_same_release(&upload, published, &zip_etag)?;
             let cmd: Cmd = Cmd::UploadPatches {
                 folder: upload.layout.patches.clone(),
                 prefix: upload.layout.prefix.clone(),
@@ -442,13 +431,18 @@ fn transition(state: State, msg: Msg, dropped: &mut Vec<Dropped>) -> Result<(Sta
             Ok((State::Rechecked(upload), vec![cmd]))
         }
         (State::Rechecked(upload), Msg::PatchesUploaded) => {
+            let cmd: Cmd = recheck_release(&upload);
+            Ok((State::PatchesUploaded(upload), vec![cmd]))
+        }
+        (State::PatchesUploaded(upload), Msg::ReleaseRechecked { published, zip_etag }) => {
+            still_the_same_release(&upload, published, &zip_etag)?;
             let cmd: Cmd = Cmd::PublishManifest {
                 folder: upload.layout.manifest.clone(),
                 prefix: upload.layout.prefix.clone(),
             };
-            Ok((State::PatchesUploaded(upload), vec![cmd]))
+            Ok((State::ReadyToPublish(upload), vec![cmd]))
         }
-        (State::PatchesUploaded(upload), Msg::ManifestPublished) => {
+        (State::ReadyToPublish(upload), Msg::ManifestPublished) => {
             Ok((State::Published(upload.manifest), vec![Cmd::Complete]))
         }
         (state, msg) => Err(format!("'{msg}' does not fit a {state} run")),
@@ -509,9 +503,15 @@ fn scan_builds(folders: &Folders) -> Cmd {
     }
 }
 
+/// The first hex digits of the release zip's sha256, part of every patch key.
+fn build_id(zip: &ReleaseZip) -> String {
+    zip.zip.sha256.as_ref().chars().take(8).collect()
+}
+
 fn encode_patches(builds: &Builds) -> Cmd {
     Cmd::EncodePatches {
         staging: builds.release.staging(),
+        build_id: build_id(&builds.zip),
         release: builds.build.clone(),
         bases: builds
             .bases
@@ -540,6 +540,31 @@ fn replay_patches(candidates: &Candidates) -> Cmd {
             })
             .collect(),
     }
+}
+
+fn recheck_release(upload: &Upload) -> Cmd {
+    Cmd::RecheckRelease {
+        tag: upload.release.tag.clone(),
+        zip_key: upload.release.zip_key(),
+    }
+}
+
+/// The release must still be unpublished, and its zip in the bucket must still be the one the
+/// patches lead to.
+fn still_the_same_release(upload: &Upload, published: bool, zip_etag: &ETag) -> Result<(), String> {
+    if published {
+        return Err(format!(
+            "{} was published while its patches were made",
+            upload.release.tag
+        ));
+    }
+    if *zip_etag != upload.zip.etag {
+        return Err(format!(
+            "{} changed in the bucket during the run (ETag {} -> {zip_etag})",
+            upload.release.zip, upload.zip.etag
+        ));
+    }
+    Ok(())
 }
 
 fn prepare_upload_folder(upload: &Upload) -> Result<Cmd, String> {
@@ -814,6 +839,7 @@ mod tests {
             Msg::UploadFolderPrepared,
             rechecked(false, "e1")?,
             Msg::PatchesUploaded,
+            rechecked(false, "e1")?,
             Msg::ManifestPublished,
         ])
     }
@@ -884,10 +910,20 @@ mod tests {
 
         let (run, cmd): (Run, Cmd) = send(run, scanned(&[BASE])?)?;
         ensure!(run.state.name() == "Scanned");
-        let Cmd::EncodePatches { staging, bases, .. } = cmd else {
+        let Cmd::EncodePatches {
+            staging,
+            build_id,
+            bases,
+            ..
+        } = cmd
+        else {
             bail!("not an encoding: {cmd}")
         };
         ensure!(staging == PathBuf::from("work").join("staging"));
+        ensure!(
+            build_id == "aaaaaaaa",
+            "the first hex digits of the zip's sha256: {build_id}"
+        );
         let jobs: Vec<Job> = bases.first().map(|(_, _, plan)| plan.jobs.clone()).unwrap_or_default();
         ensure!(
             jobs == vec![Job::Diff {
@@ -935,6 +971,13 @@ mod tests {
 
         let (run, cmd): (Run, Cmd) = send(run, Msg::PatchesUploaded)?;
         ensure!(run.state.name() == "PatchesUploaded");
+        ensure!(
+            matches!(cmd, Cmd::RecheckRelease { .. }),
+            "rechecked again before the manifest"
+        );
+
+        let (run, cmd): (Run, Cmd) = send(run, rechecked(false, "e1")?)?;
+        ensure!(run.state.name() == "ReadyToPublish");
         ensure!(matches!(cmd, Cmd::PublishManifest { .. }));
 
         let (run, cmd): (Run, Cmd) = send(run, Msg::ManifestPublished)?;
@@ -994,23 +1037,25 @@ mod tests {
     }
 
     #[test]
-    fn a_published_release_or_a_replaced_zip_fails_the_recheck() -> Result<()> {
-        let (run, _): (Run, Cmd) = run_at("Prepared")?;
-        let (run, cmd): (Run, Cmd) = send(run, rechecked(true, "e1")?)?;
-        ensure!(cmd == Cmd::Complete);
-        ensure!(
-            failure(&run).is_some_and(|r| r.contains("was published")),
-            "{:?}",
-            failure(&run)
-        );
+    fn a_published_release_or_a_replaced_zip_fails_both_rechecks() -> Result<()> {
+        for state in ["Prepared", "PatchesUploaded"] {
+            let (run, _): (Run, Cmd) = run_at(state)?;
+            let (run, cmd): (Run, Cmd) = send(run, rechecked(true, "e1")?)?;
+            ensure!(cmd == Cmd::Complete);
+            ensure!(
+                failure(&run).is_some_and(|r| r.contains("was published")),
+                "{state}: {:?}",
+                failure(&run)
+            );
 
-        let (run, _): (Run, Cmd) = run_at("Prepared")?;
-        let (run, _): (Run, Cmd) = send(run, rechecked(false, "e2")?)?;
-        ensure!(
-            failure(&run).is_some_and(|r| r.contains("changed in the bucket")),
-            "{:?}",
-            failure(&run)
-        );
+            let (run, _): (Run, Cmd) = run_at(state)?;
+            let (run, _): (Run, Cmd) = send(run, rechecked(false, "e2")?)?;
+            ensure!(
+                failure(&run).is_some_and(|r| r.contains("changed in the bucket")),
+                "{state}: {:?}",
+                failure(&run)
+            );
+        }
         Ok(())
     }
 

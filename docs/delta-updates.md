@@ -58,8 +58,9 @@ s3-latest-release.yml       -> releases/latest.json, then prune old delta/ folde
   generate or verify is left out of the manifest; the other bases still ship. A **cancelled** delta
   job (or a lost runner) is different: the run ends `cancelled` and no draft release is created. Use
   "Re-run failed jobs" on the run, or draft the release manually.
-- Each run first removes `<tag>/delta/<platform>/` left by an earlier run of the same unpublished
-  tag, whose zip the new build has just overwritten.
+- A new zip invalidates every patch set made for the previous zip of the same unpublished tag, so
+  the zip upload in `build-unitycloud.yml` removes `<tag>/delta/` before it replaces the zip. Each
+  delta run removes its own `<tag>/delta/<platform>/` again as a second line of defence.
 - `latest.json` is unchanged and stays the only switch that makes a version live.
 - [`build-release-delta.yml`](../.github/workflows/build-release-delta.yml) also has a
   `workflow_dispatch` (`tag`, `base_count`) for regenerating a release that is **not published yet**.
@@ -71,16 +72,18 @@ s3-latest-release.yml       -> releases/latest.json, then prune old delta/ folde
     latest.json                                    unchanged
     <tag>/Decentraland_<target>.zip                unchanged: fresh installs and fallback
     <tag>/delta/<platform>/manifest.json           uploaded last
-    <tag>/delta/<platform>/from/<base tag>/<path>.hdiff
+    <tag>/delta/<platform>/from/<base tag>/<build id>/<path>.hdiff
 ```
 
-`<platform>` is `windows64` or `macos`. The manifest URL is derived by convention; a 404 means "no
-delta, use the zip".
+`<platform>` is `windows64` or `macos`; `<build id>` is the first eight hex digits of the release
+zip's sha256. The manifest URL is derived by convention; a 404 means "no delta, use the zip". The
+launcher never derives a patch URL: it follows the `patch` strings of the manifest.
 
 **Immutable once published.** Patches are uploaded with a one-year immutable `Cache-Control`. The
 manifest is uploaded without it: a rebuild of a still-unpublished tag rewrites it under the same
-key, and a CDN edge must not keep serving the old one. A stale cached patch is harmless, because
-its `patch_sha256` no longer matches the new manifest. Nothing is rewritten after the release is
+key, and a CDN edge must not keep serving the old one. Patch keys include the build id, so a
+rebuild of an unpublished tag writes its patches under new keys and an edge that cached the previous
+build's patches is never asked for them again. Nothing is rewritten after the release is
 published: the workflow refuses to generate or upload for a published tag. A missing or broken delta set after publication is not fixed
 in place; launchers fall back to the zip until the next release.
 
@@ -177,7 +180,9 @@ Implemented in the launcher repo:
    version, the target version and the reason. A missing manifest means CI delta generation failed
    for that release.
 5. Delete the base's `deleted` paths (and the directories they leave empty), then swap the staged
-   files into place, apply every `files[]` `symlink` and `mode` (unchanged files included), verify
+   files into place, replacing (never writing through) any existing file or symlink at a written
+   path (a symlink in the base can be a regular file in the new build at the same path, and the
+   reverse), apply every `files[]` `symlink` and `mode` (unchanged files included), verify
    `files[]` again, and keep the previous files until the new version launches (rollback). The
    order matters: on case-insensitive file systems a case-only
    rename (`Foo.dll` -> `foo.dll`) deleted after the swap removes the new file, and a directory
@@ -239,8 +244,8 @@ answers with the next `Msg`; `Cmd::Complete` asks the runtime to stop.
 ### Lifecycle
 
 ```
-Requested -> Cleared -> Downloaded -> Extracted -> Scanned -> Encoded
-          -> Verified -> Prepared -> Rechecked -> PatchesUploaded -> Published
+Requested -> Cleared -> Downloaded -> Extracted -> Scanned -> Encoded -> Verified
+          -> Prepared -> Rechecked -> PatchesUploaded -> ReadyToPublish -> Published
 any       -> Failed (terminal)
 ```
 
@@ -255,12 +260,15 @@ any       -> Failed (terminal)
 | `Verified` | `PrepareUploadFolder` | `UploadFolderPrepared` | - | `Prepared` |
 | `Prepared` | `RecheckRelease` | `ReleaseRechecked` | still unpublished and the same zip `ETag`, or the run fails | `Rechecked` |
 | `Rechecked` | `UploadPatches` (immutable) | `PatchesUploaded` | - | `PatchesUploaded` |
-| `PatchesUploaded` | `PublishManifest` (revalidated) | `ManifestPublished` | - | `Published`, `Complete` |
+| `PatchesUploaded` | `RecheckRelease` | `ReleaseRechecked` | the same check again, seconds before the manifest goes out | `ReadyToPublish` |
+| `ReadyToPublish` | `PublishManifest` (revalidated) | `ManifestPublished` | - | `Published`, `Complete` |
 | any | | `IntegrityFailure`, or a msg that does not fit | the reason | `Failed`, `Complete` |
 
 `Requested` is created by `delta create-run` from the request (tag, platform, zip, bucket prefix,
-bases, work folder); the plan job has already refused a published tag, and `RecheckRelease` guards
-the upload against a publish or a rebuild during the run. No base left at any point fails the run.
+bases, work folder); the plan job has already refused a published tag, and `RecheckRelease` runs
+twice, before the patches go out and again before the manifest, so a publish or a rebuild during
+the run never gets this run's manifest. No base left at any point fails the run. Patch keys carry
+the build id (`from/<base>/<build id>/<path>.hdiff`), so a rebuild never reuses a key.
 
 `delta run run.json [--until <state>]` drains the document like `FsmRuntime.Drain`:
 
@@ -317,8 +325,10 @@ and the JSON round trip of the run and its cmd at every state), and `tests/run.r
 builds drained through the real `hdiffz`/`hpatchz` and a folder bucket, covering changed, added,
 deleted, renamed and case-renamed files, the whole-file fallback, paths with spaces, modes, links
 replacing folders and the reverse, a corrupt, a missing and an unsafe base zip (dropped while the
-others ship), changed signatures, the macOS `build.tar` layout, a missing release zip failing before
-the `--until` state, and the command line pausing at `--until` and resuming to completion. Without
+others ship), changed signatures, a base that only lost files (an empty patch set), a zip replaced
+while the run was paused at `Prepared`, the macOS `build.tar` layout, a missing release zip failing
+before the `--until` state, and the command line pausing at `--until` and resuming to completion.
+The launcher's JSON contract is pinned by a literal fixture in `publishing/contract.rs`. Without
 `HDiffPatch` the tests that need it are skipped locally and fail in CI.
 [`ci-scripts-tests.yml`](../.github/workflows/ci-scripts-tests.yml) runs `cargo fmt --check`,
 `cargo clippy -D warnings` and `cargo test` on Linux and macOS.

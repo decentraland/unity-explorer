@@ -324,7 +324,12 @@ fn a_run_publishes_verified_patches_and_the_manifest() -> Result<()> {
         .iter()
         .find(|p| p.path == "Game.dll")
         .context("no Game.dll patch")?;
-    ensure!(game.patch == format!("from/{BASE}/Game.dll.hdiff"));
+    let build_id: String = manifest.zip.sha256.chars().take(8).collect();
+    ensure!(
+        game.patch == format!("from/{BASE}/{build_id}/Game.dll.hdiff"),
+        "{}",
+        game.patch
+    );
     ensure!(game.patch_size < 262_144 / 10, "a small change gives a small patch");
     ensure!(fixture.prefix().join(&game.patch).is_file(), "patch not uploaded");
     ensure!(
@@ -464,6 +469,45 @@ fn delta_binary(args: &[&str]) -> Result<Output> {
     Ok(std::process::Command::new(env!("CARGO_BIN_EXE_delta"))
         .args(args)
         .output()?)
+}
+
+#[test]
+fn a_base_that_only_lost_files_ships_an_empty_patch_set() -> Result<()> {
+    let Some(differ) = tools()? else { return Ok(()) };
+    let fixture: Fixture = Fixture::new()?;
+    fixture.upload_zips()?;
+    let superset: &str = "v0.9.5-alpha";
+    let folder: PathBuf = fixture.root.join("builds").join("superset");
+    delta::builds::disk::copy_build(&fixture.release, &folder)?;
+    write(&folder.join("extra.txt"), b"only in the base\n")?;
+    zip_folder(&folder, &fixture.zip_key(superset)?)?;
+    let world: World = World::new(&fixture, differ);
+    let run: Run = world.run(&fixture.create_run(&[superset], Platform::Windows64)?, None)?;
+    ensure!(failure(&run).is_none(), "run failed: {:?}", failure(&run));
+    let manifest: ManifestDto = read_manifest(&fixture)?;
+    let delta: &DeltaDto = manifest.bases.get(superset).context("no patch set")?;
+    ensure!(delta.deleted == vec!["extra.txt"] && delta.patches.is_empty() && delta.whole.is_empty());
+    Ok(())
+}
+
+#[test]
+fn a_zip_replaced_during_the_run_is_not_published() -> Result<()> {
+    let Some(differ) = tools()? else { return Ok(()) };
+    let fixture: Fixture = Fixture::new()?;
+    fixture.upload_zips()?;
+    let world: World = World::new(&fixture, differ);
+    let document: PathBuf = fixture.create_run(&[BASE], Platform::Windows64)?;
+    let paused: Run = world.run(&document, Some("Prepared"))?;
+    ensure!(paused.state.name() == "Prepared", "{:?}", failure(&paused));
+    write(&fixture.zip_key(RELEASE)?, b"a later build of the same tag")?;
+    let run: Run = world.run(&document, None)?;
+    let reason: &str = failure(&run).context("the run should fail")?;
+    ensure!(reason.contains("changed in the bucket"), "{reason}");
+    ensure!(
+        !fixture.prefix().join("manifest.json").exists(),
+        "nothing was published"
+    );
+    Ok(())
 }
 
 #[test]

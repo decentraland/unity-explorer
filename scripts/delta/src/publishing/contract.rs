@@ -132,3 +132,22 @@ impl From<&Manifest> for ManifestDto {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use anyhow::{Result, ensure};
+
+    use super::ManifestDto;
+
+    /// The exact JSON the launcher reads; a change here is a change to the launcher contract.
+    #[test]
+    fn the_launcher_contract_is_pinned() -> Result<()> {
+        let sha: String = "a".repeat(64);
+        let json: String = format!(
+            r#"{{"version":"v1.1.0-alpha","platform":"windows64","zip":{{"path":"Decentraland_windows64.zip","size":3,"sha256":"{sha}"}},"files":[{{"path":"a.dll","size":1,"sha256":"{sha}","mode":"644"}},{{"path":"l","symlink":"a.dll"}}],"bases":{{"v1.0.0-alpha":{{"deleted":["b"],"patches":[{{"path":"a.dll","from_path":"a.dll","from_sha256":"{sha}","patch":"from/v1.0.0-alpha/aaaaaaaa/a.dll.hdiff","patch_size":1,"patch_sha256":"{sha}"}}],"whole":[{{"path":"c","patch":"from/v1.0.0-alpha/aaaaaaaa/c.hdiff","patch_size":2,"patch_sha256":"{sha}"}}]}}}}}}"#
+        );
+        let dto: ManifestDto = serde_json::from_str(&json)?;
+        ensure!(serde_json::to_value(&dto)? == serde_json::from_str::<serde_json::Value>(&json)?);
+        Ok(())
+    }
+}

@@ -159,8 +159,8 @@ pub struct Upload {
 }
 
 /// ```text
-/// Requested -> Cleared -> Downloaded -> Extracted -> Scanned -> Encoded
-///           -> Verified -> Prepared -> Rechecked -> PatchesUploaded -> Published
+/// Requested -> Cleared -> Downloaded -> Extracted -> Scanned -> Encoded -> Verified
+///           -> Prepared -> Rechecked -> PatchesUploaded -> ReadyToPublish -> Published
 /// any       -> Failed
 /// ```
 ///
@@ -185,6 +185,8 @@ pub enum State {
     Rechecked(Upload),
     /// The patches are on the CDN; the manifest is not yet.
     PatchesUploaded(Upload),
+    /// Rechecked again after the patch upload: still unpublished, zip unchanged.
+    ReadyToPublish(Upload),
     /// The manifest is on the CDN: launchers can use the patches.
     Published(Manifest),
     /// A run-level failure, or every base dropped.
@@ -195,7 +197,7 @@ pub enum State {
 
 impl State {
     /// Every state name, in lifecycle order, as `--until` accepts them.
-    pub const NAMES: [&'static str; 12] = [
+    pub const NAMES: [&'static str; 13] = [
         "Requested",
         "Cleared",
         "Downloaded",
@@ -206,6 +208,7 @@ impl State {
         "Prepared",
         "Rechecked",
         "PatchesUploaded",
+        "ReadyToPublish",
         "Published",
         "Failed",
     ];
@@ -222,6 +225,7 @@ impl State {
             State::Prepared(_) => "Prepared",
             State::Rechecked(_) => "Rechecked",
             State::PatchesUploaded(_) => "PatchesUploaded",
+            State::ReadyToPublish(_) => "ReadyToPublish",
             State::Published(_) => "Published",
             State::Failed { .. } => "Failed",
         }

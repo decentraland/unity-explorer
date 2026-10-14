@@ -978,7 +978,13 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.EXPLORER_TEAM_AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.EXPLORER_TEAM_AWS_SECRET_ACCESS_KEY }}
           EXPLORER_TEAM_S3_BUCKET: ${{ secrets.EXPLORER_TEAM_S3_BUCKET }}
+          IS_RELEASE_BUILD: ${{ inputs.is_release_build }}
         run: |
+          # A new release zip invalidates every delta patch set made for the previous zip of this
+          # tag (docs/delta-updates.md): remove them before the zip is replaced.
+          if [ "$IS_RELEASE_BUILD" = "true" ]; then
+            aws s3 rm --recursive --only-show-errors "s3://$EXPLORER_TEAM_S3_BUCKET/$DESTINATION_PATH/delta/"
+          fi
           npx @dcl/cdn-uploader@next \
             --bucket $EXPLORER_TEAM_S3_BUCKET \
             --local-folder upload_to_s3 \

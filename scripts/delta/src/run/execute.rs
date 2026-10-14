@@ -33,9 +33,10 @@ pub fn execute(cmd: Cmd, io: &Io) -> Msg {
         } => scan_builds(platform, &release_root, bases, io),
         Cmd::EncodePatches {
             staging,
+            build_id,
             release,
             bases,
-        } => Ok(encode_patches(&staging, &release, bases, io)),
+        } => Ok(encode_patches(&staging, &build_id, &release, bases, io)),
         Cmd::ReplayPatches {
             platform,
             staging,
@@ -154,11 +155,11 @@ fn scan_builds(platform: Platform, release_root: &Path, bases: Vec<(Tag, PathBuf
 }
 
 /// A base whose patch set fails to encode leaves nothing in staging, and its build is removed.
-fn encode_patches(staging: &Path, release: &Build, bases: Vec<(Tag, Build, Plan)>, io: &Io) -> Msg {
+fn encode_patches(staging: &Path, build_id: &str, release: &Build, bases: Vec<(Tag, Build, Plan)>, io: &Io) -> Msg {
     let mut encoded: Vec<(Tag, Delta)> = Vec::new();
     let mut failed: Vec<(Tag, String)> = Vec::new();
     for (base, build, plan) in bases {
-        match encode(&plan, &base, &build, release, staging, &io.hdiff) {
+        match encode(&plan, &base, build_id, &build, release, staging, &io.hdiff) {
             Ok(delta) => encoded.push((base, delta)),
             Err(error) => {
                 let partial: PathBuf = staging.join("from").join(base.to_string());
