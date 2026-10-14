@@ -54,9 +54,8 @@ jobs:
           PATH="$(bash scripts/delta/fetch-tools.sh "$RUNNER_TEMP/hdiffpatch"):$PATH"
           bash scripts/delta/test-delta.sh
 
-  # The macOS delta leg runs these scripts with BSD tools on a case-insensitive APFS
-  # volume. A shim puts the stock /bin/bash 3.2 first on PATH, so nested `bash` calls
-  # use it too instead of a Homebrew bash.
+  # BSD tools, case-insensitive APFS, and the stock /bin/bash 3.2 (shimmed first on PATH
+  # so nested `bash` calls use it too).
   delta-macos:
     runs-on: macos-latest
     steps:

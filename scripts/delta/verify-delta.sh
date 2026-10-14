@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
-# Replays a delta update the way the launcher applies it and proves the result is
-# byte-identical to the new build described by the manifest.
+# Applies a delta onto a copy of the base and proves the result is byte-identical to the
+# new build described by the manifest.
 #
 # Usage: verify-delta.sh <base dir> <delta dir> <manifest.json> <base tag> <rebuild dir>
 #
 # Copies <base dir> into <rebuild dir> (which must not exist or be empty), removes
 # `deleted` paths and the directories they leave empty, checks each patch's sha256,
 # applies patches and whole files, applies `symlink` and `mode` entries, then compares
-# the rebuilt tree with `files[]`. Deleting first keeps a case-only rename (Foo.dll ->
-# foo.dll on NTFS/APFS) or a directory replaced by a symlink from losing new files.
+# the rebuilt tree with `files[]`. Deleting first keeps a case-only rename or a directory
+# replaced by a symlink from losing new files.
 # Prints the absolute rebuild dir on stdout and exits 0 only on an exact match;
 # mismatches are listed on stderr. The caller owns and removes <rebuild dir>.
 # On Windows (Git Bash) permission bits are not meaningful, so `mode` is not compared.

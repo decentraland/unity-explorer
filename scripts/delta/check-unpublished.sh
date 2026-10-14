@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 # Exits 0 only when <tag> is a release tag (v<major>.<minor>.<patch>[-suffix]) with no
-# published GitHub release in $GITHUB_REPOSITORY: delta patches and manifests are
-# immutable once a release is published, and the tag names their S3 prefix.
+# published GitHub release in $GITHUB_REPOSITORY.
 #
 # Usage: check-unpublished.sh <tag>   (needs gh, authenticated through GH_TOKEN)
 #

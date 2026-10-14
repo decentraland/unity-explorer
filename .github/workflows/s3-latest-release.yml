@@ -58,13 +58,9 @@ jobs:
           }' > latest.json
           aws s3 cp latest.json s3://$EXPLORER_TEAM_S3_BUCKET/$RELEASES_PATH/latest.json
 
-  # Delta patches: keep exactly two series, the ones into the release just published and
-  # into the one it replaced (a grace period for downloads in flight and a rollback target
-  # for on-delete-release.yml). Older series are removed; the sweep window also cleans up
-  # after missed runs. Only on `published`: then the new release is the newest by
-  # published_at, while on `edited` GitHub's /releases/latest may not be, and ranking
-  # could reach the live release. A job of its own because actions/checkout needs git,
-  # which the aws-cli container above lacks. See docs/delta-updates.md.
+  # Keeps the delta series of the two newest releases and removes older ones; only on
+  # `published`. A separate job: the aws-cli container has no git for checkout.
+  # See docs/delta-updates.md.
   prune-delta-patches:
     needs: check-latest-release
     if: needs.check-latest-release.outputs.is_latest_release == 'true' && github.event.action == 'published'
@@ -104,8 +100,7 @@ jobs:
             aws s3 rm --recursive --only-show-errors "s3://$EXPLORER_TEAM_S3_BUCKET/$RELEASES_PATH/$tag/delta/"
           done < prune.txt
 
-  # A release published as a pre-release is never served by /releases/latest and never
-  # ranked by the prune above, so its delta patches would otherwise stay forever.
+  # The prune never ranks pre-releases, so their delta patches are removed on publish.
   drop-prerelease-delta-patches:
     if: >-
       github.event.action == 'published' && github.event.release.prerelease &&

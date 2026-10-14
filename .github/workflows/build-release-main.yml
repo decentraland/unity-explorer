@@ -60,10 +60,7 @@ jobs:
       tag_version: ${{ needs.get-info.outputs.tag_version }}
     secrets: inherit
 
-  # Delta (binary patch) update into this release for launcher users. Runs before
-  # build-release-main-page.yml drafts the release, so patches exist before anyone can
-  # publish. Never fails this run: a missing delta only makes launchers fall back to
-  # the full zip. See docs/delta-updates.md.
+  # Per-file binary patches into this release; never fails this run. See docs/delta-updates.md.
   delta:
     name: Delta Patches
     needs: [get-info, build]

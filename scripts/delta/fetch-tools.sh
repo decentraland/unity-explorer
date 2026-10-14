@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Installs the pinned HDiffPatch release (hdiffz, hpatchz) for the current OS into
 # <tools dir>, checking the download against its pinned sha256, and prints the folder
-# holding the binaries on stdout (add it to PATH). The only delta script that uses the
-# network. CI and local runs must use the same build so patches are identical.
+# holding the binaries on stdout (add it to PATH). Pinned so CI and local runs produce
+# identical patches.
 #
 # Usage: fetch-tools.sh <tools dir>
 set -euo pipefail

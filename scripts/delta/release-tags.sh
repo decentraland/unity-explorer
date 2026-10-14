@@ -20,8 +20,8 @@ is_count() { case "$1" in ''|*[!0-9]*) return 1 ;; *) return 0 ;; esac; }
 
 CANDIDATES='[.[] | select(.draft == false and (.prerelease | not) and (.tag_name | startswith("v")))]'
 PUBLISHED="$CANDIDATES"' | sort_by(.published_at) | reverse | map(.tag_name)'
-# Prune follows version order, so a late publish of an older tag cannot push a newer
-# release (the rollback target) out of the kept series. A malformed v* tag fails here, before any deletion.
+# Version order, so a late publish of an older tag cannot evict a newer release's series.
+# A malformed v* tag fails here, before anything is pruned.
 BY_VERSION="$CANDIDATES"' | sort_by(.tag_name | ltrimstr("v") | split("-")[0] | split(".") | map(tonumber)) | reverse | map(.tag_name)'
 
 case "${1:-}" in

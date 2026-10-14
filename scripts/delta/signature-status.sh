@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
-# Lists the code-signature verification result of every signed artifact in a build, one
-# `<path> ok|invalid` line each, sorted by path. Two builds with identical bytes, modes and
-# symlinks give identical output; comparing a rebuilt tree with the original proves the
-# signatures survive patching.
+# Prints the code-signature verification result of every signed artifact in a build,
+# one `<path> ok|invalid` line each, sorted by path.
 #
 # Usage: signature-status.sh <platform> <build root>
 #   windows64: every *.exe, checked with osslsigncode (Authenticode)

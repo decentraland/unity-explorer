@@ -5,10 +5,8 @@
 #
 # Usage: delta-for-base.sh <version> <platform> <new root> <new zip> <base tag> <base zip> <out dir>
 #
-# On success <out dir> holds from/<base tag>/ and base-<base tag>.json, ready for
-# assemble-manifest.sh. On any failure both are removed and the exit code is non-zero,
-# so a failed base never leaves a partial patch set behind. Scratch space comes from
-# mktemp (set TMPDIR to move it); it needs room for one extracted base and one rebuild.
+# On success <out dir> holds from/<base tag>/ and base-<base tag>.json. On any failure
+# both are removed and the exit code is non-zero. Scratch space comes from mktemp (TMPDIR).
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 . "$SCRIPT_DIR/lib.sh"
