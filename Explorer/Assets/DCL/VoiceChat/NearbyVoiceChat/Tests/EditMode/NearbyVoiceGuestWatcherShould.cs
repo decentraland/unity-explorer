@@ -29,7 +29,8 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
         public void SuppressWhenTheSessionStartsAsGuest()
         {
             // Arrange
-            identityCache.Identity.Returns(IdentityWith(LoginMethod.GUEST));
+            IWeb3Identity guest = IdentityWith(LoginMethod.GUEST);
+            identityCache.Identity.Returns(guest);
 
             // Act
             using var watcher = new NearbyVoiceGuestWatcher(identityCache, stateModel);
@@ -44,7 +45,8 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
         public void SuppressAnEphemeralGuestToo()
         {
             // Arrange
-            identityCache.Identity.Returns(IdentityWith(LoginMethod.EPHEMERAL_GUEST));
+            IWeb3Identity ephemeralGuest = IdentityWith(LoginMethod.EPHEMERAL_GUEST);
+            identityCache.Identity.Returns(ephemeralGuest);
 
             // Act
             using var watcher = new NearbyVoiceGuestWatcher(identityCache, stateModel);
@@ -57,7 +59,8 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
         public void LeaveAFullAccountUntouched()
         {
             // Arrange
-            identityCache.Identity.Returns(IdentityWith(LoginMethod.EMAIL_OTP));
+            IWeb3Identity fullAccount = IdentityWith(LoginMethod.EMAIL_OTP);
+            identityCache.Identity.Returns(fullAccount);
 
             // Act
             using var watcher = new NearbyVoiceGuestWatcher(identityCache, stateModel);
@@ -71,11 +74,13 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
         public void ResumeOnceTheGuestUpgrades()
         {
             // Arrange
-            identityCache.Identity.Returns(IdentityWith(LoginMethod.GUEST));
+            IWeb3Identity guest = IdentityWith(LoginMethod.GUEST);
+            IWeb3Identity upgraded = IdentityWith(LoginMethod.EMAIL_OTP);
+            identityCache.Identity.Returns(guest);
             using var watcher = new NearbyVoiceGuestWatcher(identityCache, stateModel);
 
             // Act
-            identityCache.Identity.Returns(IdentityWith(LoginMethod.EMAIL_OTP));
+            identityCache.Identity.Returns(upgraded);
             identityCache.OnIdentityChanged += Raise.Event<Action>();
 
             // Assert
@@ -87,12 +92,14 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
         public void KeepSuppressingWhileAnotherReasonRemains()
         {
             // Arrange
-            identityCache.Identity.Returns(IdentityWith(LoginMethod.GUEST));
+            IWeb3Identity guest = IdentityWith(LoginMethod.GUEST);
+            IWeb3Identity upgraded = IdentityWith(LoginMethod.EMAIL_OTP);
+            identityCache.Identity.Returns(guest);
             using var watcher = new NearbyVoiceGuestWatcher(identityCache, stateModel);
             stateModel.Suppress(SuppressionReason.Call);
 
             // Act
-            identityCache.Identity.Returns(IdentityWith(LoginMethod.EMAIL_OTP));
+            identityCache.Identity.Returns(upgraded);
             identityCache.OnIdentityChanged += Raise.Event<Action>();
 
             // Assert

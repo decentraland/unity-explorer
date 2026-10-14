@@ -53,7 +53,6 @@ namespace DCL.VoiceChat.Nearby
 
         /// <summary>
         ///     True when the LiveKit server detects the local participant is actually producing sound (VAD).
-        ///     Updated from <see cref="LiveKit.Rooms.ActiveSpeakers.IActiveSpeakers"/>.
         ///     Written on the LiveKit event thread, read on the Unity main thread — volatile ensures visibility.
         /// </summary>
         private volatile bool isLocalSpeaking;
