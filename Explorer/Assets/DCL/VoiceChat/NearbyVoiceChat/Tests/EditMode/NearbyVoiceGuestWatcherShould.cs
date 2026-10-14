@@ -107,6 +107,24 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
             Assert.That(stateModel.ActiveSuppression.Value, Is.EqualTo(SuppressionReason.Call));
         }
 
+        [Test]
+        public void SuppressWhenTheIdentityChangesToGuest()
+        {
+            // Arrange
+            IWeb3Identity fullAccount = IdentityWith(LoginMethod.EMAIL_OTP);
+            IWeb3Identity guest = IdentityWith(LoginMethod.GUEST);
+            identityCache.Identity.Returns(fullAccount);
+            using var watcher = new NearbyVoiceGuestWatcher(identityCache, stateModel);
+
+            // Act
+            identityCache.Identity.Returns(guest);
+            identityCache.OnIdentityChanged += Raise.Event<Action>();
+
+            // Assert
+            Assert.That(stateModel.State.Value, Is.EqualTo(NearbyVoiceChatState.Suppressed));
+            Assert.That(stateModel.IsSuppressedBy(SuppressionReason.Guest), Is.True);
+        }
+
         private static IWeb3Identity IdentityWith(LoginMethod method)
         {
             var identity = Substitute.For<IWeb3Identity>();
