@@ -25,9 +25,9 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
     ///     at most <see cref="MAX_CONCURRENT_LOADS" /> at a time, nearest to their camera's centre first; a load whose tile leaves the view
     ///     is cancelled. A tile that fails is requested again after <see cref="RETRY_FAILED_TILE_AFTER_SECONDS" />, even if no camera moves.
     ///     Each tile's KTX2 file is kept in the disk cache, so a later load reads it from disk, and a file that fails to decode is removed
-    ///     from it. The decoded texture keeps no CPU copy and
-    ///     belongs to the tile alone. Up to <see cref="MAX_CACHED_TILES" /> tiles out of view stay loaded while the same cameras are
-    ///     rented; once a camera is released, every tile out of view is destroyed and its memory freed.
+    ///     from it. The decoded texture keeps no CPU copy and belongs to the tile alone. Up to <see cref="MAX_CACHED_TILES" /> tiles out of
+    ///     view stay loaded while the same cameras are rented; once a camera is released, every tile out of view is destroyed and its
+    ///     memory freed.
     /// </summary>
     internal class SatelliteDetailTiles : IDisposable
     {
