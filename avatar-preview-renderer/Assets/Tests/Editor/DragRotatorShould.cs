@@ -1,4 +1,5 @@
 using NUnit.Framework;
+using UnityEditor;
 using UnityEngine;
 
 namespace Tests
@@ -48,6 +49,24 @@ namespace Tests
 
             // Assert
             Assert.AreEqual(45f, Angle(), TOLERANCE);
+        }
+
+        [Test]
+        public void LevelToTheStartTiltWhileAutoRotating()
+        {
+            // Arrange: auto-rotate due at once, levelling done in one frame, and no turn of its own.
+            var serialized = new SerializedObject(_rotator);
+            serialized.FindProperty("autoRotateDelay").floatValue = -1f;
+            serialized.FindProperty("returnSpeed").floatValue = 1e6f;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            _rotator.AutoRotateSpeed = 0f;
+            _rotator.SetStartRotation(0f, 20f);
+
+            // Act
+            UnityMessages.Invoke(_rotator, "Update");
+
+            // Assert
+            Assert.AreEqual(20f, Angle(), TOLERANCE);
         }
 
         [Test]

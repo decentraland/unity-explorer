@@ -128,7 +128,8 @@ public class EmoteAnimationController : MonoBehaviour
         var partnerState = partnerAnimation[urn];
         if (partnerState == null) return;
 
-        partnerState.time = GetCurrentEmoteTime();
+        // A paused clip seeked to its end reads 0 once Unity stops it there, so the seek wins.
+        partnerState.time = _pausedSeek ?? GetCurrentEmoteTime();
         partnerState.speed = avatarState != null ? avatarState.speed : 1f;
         partnerAnimation.Sample();
     }

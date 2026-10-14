@@ -53,6 +53,19 @@ namespace Data
         public string ToJson() =>
             JsonConvert.SerializeObject(this, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
 
+        /// <summary>
+        /// The animation an emote plays: none unless it is social, then <paramref name="chosen"/> if the
+        /// page chose one, or the outcome at <paramref name="randomIndex"/>.
+        /// </summary>
+        [CanBeNull]
+        public static SocialEmoteAnimation Resolve([CanBeNull] SocialEmoteAnimation[] outcomes,
+            [CanBeNull] SocialEmoteAnimation chosen, int randomIndex)
+        {
+            if (outcomes is not { Length: > 0 }) return null;
+
+            return chosen ?? outcomes[Mathf.Clamp(randomIndex, 0, outcomes.Length - 1)];
+        }
+
         public static SocialEmoteAnimation FromOutcome(OutcomeGroup outcome) =>
             new()
             {

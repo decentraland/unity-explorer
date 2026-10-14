@@ -81,6 +81,46 @@ namespace Tests
         }
 
         [Test]
+        public void GiveAnEmoteWithoutOutcomesNoAnimationEvenWithAnOption()
+        {
+            // Arrange
+            var chosen = new SocialEmoteAnimation { Armature = new EmoteClip { animation = "RPS_Outcome3_Avatar" } };
+
+            // Act
+            var animation = SocialEmoteAnimation.Resolve(null, chosen, 0);
+
+            // Assert
+            Assert.IsNull(animation);
+        }
+
+        [Test]
+        public void PreferTheChosenAnimationOverARandomOutcome()
+        {
+            // Arrange
+            var outcomes = new[] { new SocialEmoteAnimation(), new SocialEmoteAnimation() };
+            var chosen = new SocialEmoteAnimation();
+
+            // Act
+            var animation = SocialEmoteAnimation.Resolve(outcomes, chosen, 1);
+
+            // Assert
+            Assert.AreSame(chosen, animation);
+        }
+
+        [Test]
+        public void PlayTheRandomOutcomeWithoutAChoice()
+        {
+            // Arrange
+            var outcomes = new[] { new SocialEmoteAnimation(), new SocialEmoteAnimation() };
+
+            // Act
+            var animation = SocialEmoteAnimation.Resolve(outcomes, null, 1);
+
+            // Assert
+            Assert.AreSame(outcomes[1], animation);
+        }
+
+        [Test]
         public void ReadAnOutcomeAsAnAnimation()
         {
             // Arrange

@@ -14,6 +14,9 @@ namespace Tests
         private const float TOLERANCE = 0.0001f;
         private const float CLIP_LENGTH = 2f;
 
+        // The state name of the fixture's emote, its embedded URN.
+        private const string EMOTE_URN = "embedded:test";
+
         private GameObject _rig;
         private AnimationClip _idleClip;
         private AnimationClip _emoteClip;
@@ -203,6 +206,56 @@ namespace Tests
         }
 
         [Test]
+        public void HandAPlayingEmoteToARebuiltPartnerAtItsTime()
+        {
+            // Arrange
+            PlayEmote();
+            _controller.GoToEmote(1f);
+            var (partner, partnerAnimation, partnerClip) = Partner();
+
+            try
+            {
+                // Act
+                _controller.ReplacePartner(partner, partnerAnimation);
+
+                // Assert
+                Assert.IsTrue(partner.activeSelf);
+                Assert.AreEqual(1f, partnerAnimation[EMOTE_URN].time, TOLERANCE);
+                Assert.AreEqual(EmotePlaybackEvent.Playing, _reported[^1].playbackEvent);
+            }
+            finally
+            {
+                Object.DestroyImmediate(partner);
+                Object.DestroyImmediate(partnerClip);
+            }
+        }
+
+        [Test]
+        public void KeepARebuiltPartnerHiddenOnceTheEmoteLeft()
+        {
+            // Arrange
+            PlayEmote();
+            _controller.ReturnToIdle(false);
+            var (partner, partnerAnimation, partnerClip) = Partner();
+            var reported = _reported.Count;
+
+            try
+            {
+                // Act
+                _controller.ReplacePartner(partner, partnerAnimation);
+
+                // Assert
+                Assert.IsFalse(partner.activeSelf);
+                Assert.AreEqual(reported, _reported.Count);
+            }
+            finally
+            {
+                Object.DestroyImmediate(partner);
+                Object.DestroyImmediate(partnerClip);
+            }
+        }
+
+        [Test]
         public void ShowThePropOnAHoldAfterTheClipRanOut()
         {
             // Arrange
@@ -254,6 +307,20 @@ namespace Tests
             var events = new List<EmotePlaybackEvent>(_reported.Count);
             foreach (var (playbackEvent, _) in _reported) events.Add(playbackEvent);
             return events;
+        }
+
+        // A social emote's other avatar, built hidden, with its clip under the emote's state name.
+        private static (GameObject partner, Animation animation, AnimationClip clip) Partner()
+        {
+            var partner = new GameObject("partner");
+            partner.SetActive(false);
+
+            var animation = partner.AddComponent<Animation>();
+            var clip = LegacyClip(EMOTE_URN, WrapMode.Clamp);
+            animation.AddClip(clip, EMOTE_URN);
+            animation.clip = clip;
+
+            return (partner, animation, clip);
         }
 
         private static AnimationClip LegacyClip(string name, WrapMode wrapMode)

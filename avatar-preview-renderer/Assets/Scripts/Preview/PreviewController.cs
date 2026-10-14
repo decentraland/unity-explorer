@@ -376,6 +376,7 @@ namespace Preview
 
                 // Before the mode, whose change starts the framing from these options.
                 previewCameraController.Configure(config);
+                previewCameraController.SetAutoCenter(!config.DisableAutoCenter);
                 previewCameraController.SetMode(config.Mode);
                 confirmationVFX.gameObject.SetActive(config.Mode is PreviewMode.Jesus);
 

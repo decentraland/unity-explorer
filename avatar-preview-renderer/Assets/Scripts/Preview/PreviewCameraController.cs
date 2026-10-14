@@ -108,7 +108,6 @@ namespace Preview
             _startOffset = config.Offset;
             _offsetDepth = config.OffsetDepth;
             _zoomLocked = config.LockRadius;
-            _autoCenter = !config.DisableAutoCenter;
             _wheelSensitivity = PreviewConfiguration.DEFAULT_WHEEL_PRECISION / config.WheelPrecision;
 
             // The zoom scale is live; the camera position's share is taken on reload.
@@ -120,6 +119,11 @@ namespace Preview
             _wearableFraming.Zoom = _zoomRange.Clamp(_wearableFraming.Zoom);
             _builderFraming.Zoom = _zoomRange.Clamp(_builderFraming.Zoom);
         }
+
+        /// <summary>
+        /// Takes the page's auto-centre option on reload, before the fit it changes.
+        /// </summary>
+        public void SetAutoCenter(bool autoCenter) => _autoCenter = autoCenter;
 
         /// <summary>
         /// Takes the page's camera position on reload: the avatar views start from Babylon's avatar

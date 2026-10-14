@@ -164,7 +164,20 @@ namespace Loading
                 var looping = social?.loop ?? (entityDefinition.Flags & EntityFlags.Looping) != 0;
                 Debug.Log($"Loaded emote: {rep.MainFile} with clips: {clips.Length}");
                 
-                var (avatarClip, propClip, otherClip) = social != null ? SelectSocialClips(clips, social) : ExtractClips(clips);
+                AnimationClip avatarClip, propClip, otherClip;
+
+                try
+                {
+                    (avatarClip, propClip, otherClip) =
+                        social != null ? SelectSocialClips(clips, social) : ExtractClips(clips);
+                }
+                catch
+                {
+                    // An animation the page named may match no clip; the import is released with the load.
+                    importer.Dispose();
+                    if (audioClip != null) Object.Destroy(audioClip);
+                    throw;
+                }
                 GameObject prop = null;
                 Animation propAnim = null;
                 

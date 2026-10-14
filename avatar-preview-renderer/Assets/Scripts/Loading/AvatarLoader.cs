@@ -100,12 +100,40 @@ namespace Loading
 
             var modelLoadResults = await Task.WhenAll(modelLoadTasks);
             var facialFeaturesLoadResults = await Task.WhenAll(facialFeaturesLoadTasks);
-            var socialEmote = PreviewConfiguration.Instance.SocialEmote?.ToJson();
+            // Only a social emote takes the option, so only there does a change of it reload the emote.
+            var socialEmote = emoteDefinition?.SocialOutcomes is { Length: > 0 }
+                ? PreviewConfiguration.Instance.SocialEmote?.ToJson()
+                : null;
             var emoteChanged = _loadedEmote?.Entity.URN != emoteDefinition?.URN || socialEmote != _loadedSocialEmote;
 
-            var emoteLoadResult = emoteChanged && emoteDefinition != null
-                ? await GLTFLoader.LoadEmote(bodyShape, emoteDefinition, transform, SocialEmoteFor(emoteDefinition))
-                : (LoadedEmote?)null;
+            LoadedEmote? emoteLoadResult = null;
+
+            if (emoteChanged && emoteDefinition != null)
+            {
+                try
+                {
+                    emoteLoadResult = await GLTFLoader.LoadEmote(bodyShape, emoteDefinition, transform,
+                        SocialEmoteFor(emoteDefinition));
+                }
+                catch
+                {
+                    // The models and features loaded above are not tracked yet, so a failed emote would
+                    // leave them behind.
+                    foreach (var model in modelLoadResults)
+                    {
+                        model.Disposable?.Dispose();
+                        Destroy(model.Root);
+                    }
+
+                    foreach (var feature in facialFeaturesLoadResults)
+                    {
+                        Destroy(feature.Main);
+                        Destroy(feature.Mask);
+                    }
+
+                    throw;
+                }
+            }
 
             // Clean up previous emote prop / audio
             if (emoteChanged && _loadedEmote != null)
@@ -229,8 +257,8 @@ namespace Loading
                 Debug.LogError("[SpringBones] springBonesDriver not wired on AvatarLoader");
             }
 
-            // The other avatar wears what the avatar wears, so it is built again with every load, and
-            // its emote started over with it.
+            // The other avatar wears what the avatar wears, so it is built again with every load; an
+            // unchanged emote hands its playback over to the new one.
             DestroyOtherAvatar();
 
             if (_loadedEmote?.OtherClip != null)
@@ -445,11 +473,10 @@ namespace Loading
         {
             if (emote.URN.StartsWith("embedded:", StringComparison.Ordinal)) return null;
 
-            // Only a social emote takes a social animation; any other emote plays as it is.
             var outcomes = emote.SocialOutcomes;
-            if (outcomes is not { Length: > 0 }) return null;
+            var randomIndex = outcomes is { Length: > 0 } ? UnityEngine.Random.Range(0, outcomes.Length) : 0;
 
-            return PreviewConfiguration.Instance.SocialEmote ?? outcomes[UnityEngine.Random.Range(0, outcomes.Length)];
+            return SocialEmoteAnimation.Resolve(outcomes, PreviewConfiguration.Instance.SocialEmote, randomIndex);
         }
 
         /// <summary>
