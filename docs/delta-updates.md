@@ -39,9 +39,9 @@ build-release-main.yml (push to main)
     |                         plan:  refuse a published tag, pick the last N published releases
     |                         delta: [windows64 on ubuntu, macos on macos], a state machine
     |                                drained in YAML slices (`delta run --until <state>`):
-    |                                Requested -> Cleared -> Downloaded -> Extracted -> Scanned
-    |                                -> Encoded -> Verified -> Prepared -> Rechecked
-    |                                -> PatchesUploaded -> Published (manifest last)
+    |                                Requested -> Unpublished -> Cleared -> Downloaded -> Extracted
+    |                                -> Scanned -> Encoded -> Verified -> Prepared -> Rechecked
+    |                                -> PatchesUploaded -> ReadyToPublish -> Published (manifest last)
     v  (workflow_run: success)
 build-release-main-page.yml  -> draft GitHub release
     |
@@ -244,14 +244,15 @@ answers with the next `Msg`; `Cmd::Complete` asks the runtime to stop.
 ### Lifecycle
 
 ```
-Requested -> Cleared -> Downloaded -> Extracted -> Scanned -> Encoded -> Verified
-          -> Prepared -> Rechecked -> PatchesUploaded -> ReadyToPublish -> Published
+Requested -> Unpublished -> Cleared -> Downloaded -> Extracted -> Scanned -> Encoded
+          -> Verified -> Prepared -> Rechecked -> PatchesUploaded -> ReadyToPublish -> Published
 any       -> Failed (terminal)
 ```
 
 | State | Cmd it issues | Msg it waits for | Decided in `update` on that msg | Next |
 |---|---|---|---|---|
-| `Requested` | `RemoveStalePatches` | `StalePatchesRemoved` | the download keys | `Cleared` |
+| `Requested` | `RecheckRelease` | `ReleaseRechecked` | a published release fails the run before anything is removed | `Unpublished` |
+| `Unpublished` | `RemoveStalePatches` | `StalePatchesRemoved` | the download keys | `Cleared` |
 | `Cleared` | `DownloadArchives` | `ArchivesDownloaded` | a base without a zip is dropped | `Downloaded` |
 | `Downloaded` | `ExtractArchives` | `ArchivesExtracted` | a base that fails is dropped | `Extracted` |
 | `Extracted` | `ScanBuilds` | `BuildsScanned` | a base that fails is dropped; the `Plan` of every base | `Scanned` |
@@ -265,15 +266,15 @@ any       -> Failed (terminal)
 | any | | `IntegrityFailure`, or a msg that does not fit | the reason | `Failed`, `Complete` |
 
 `Requested` is created by `delta create-run` from the request (tag, platform, zip, bucket prefix,
-bases, work folder); the plan job has already refused a published tag, and `RecheckRelease` runs
-twice, before the patches go out and again before the manifest, so a publish or a rebuild during
-the run never gets this run's manifest. No base left at any point fails the run. Patch keys carry
+bases, work folder). `RecheckRelease` runs three times: before anything is removed from the
+bucket, before the patches go out, and again before the manifest, so a publish or a rebuild during
+the run never loses a live release's patches and never gets this run's manifest. No base left at any point fails the run. Patch keys carry
 the build id (`from/<base>/<build id>/<path>.hdiff`), so a rebuild never reuses a key.
 
 `delta run run.json [--until <state>]` drains the document like `FsmRuntime.Drain`:
 
 ```
-(run, cmds) = load(run.json)                  the state and the cmds it was paused with; nothing is checked
+(run, cmds) = load(run.json)                  the state and the cmds it was paused with; already at or past `until`: stop
 loop:
   cmd = cmds.pop_front()                      Complete: stop, exit by the state (Published 0, Failed 1)
   msg = execute(cmd, io)                      impure; a cmd that cannot run at all answers IntegrityFailure
@@ -283,7 +284,10 @@ loop:
 ```
 
 The YAML keeps one step per phase with its own timeout, each `delta run --until <state>`; the
-machine does not know the steps exist. Every msg, state and cmd is logged, the dropped bases with
+machine does not know the steps exist, and a re-run of a slice whose state is already reached does
+nothing. Every value type is validated when it is read back from the document too (`Tree`, `Delta`,
+`Manifest`, `Bases` deserialize through their constructors), and tool output in a failure reason is
+redacted of the bucket name and the access key id before it reaches the document and the summary. Every msg, state and cmd is logged, the dropped bases with
 their reasons, and `delta summary run.json` renders the job summary. The workflow keeps the
 document as an artifact. Bucket names and tokens are read from the environment when a call runs
 and never reach the document. Executors clean up what they consumed (extraction removes the zip,

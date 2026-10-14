@@ -12,7 +12,7 @@ use crate::io::{Bucket, Caching, Releases, Signer};
 use crate::publishing::values::ETag;
 use crate::releases::github::{ReleaseDto, read_published};
 use crate::releases::tag::{Platform, Tag};
-use crate::shell::process::{capture, run, stdout_text};
+use crate::shell::process::{capture, redacted, run, stdout_text};
 
 fn variable(name: &str) -> Result<String> {
     let value: String = env::var(name).with_context(|| format!("{name} is not set"))?;
@@ -48,7 +48,7 @@ impl Releases for GhReleases {
 }
 
 /// The bucket `$EXPLORER_TEAM_S3_BUCKET`: reads and removals through the `aws` CLI, uploads
-/// through `npx @dcl/cdn-uploader@next`.
+/// through `npx @dcl/cdn-uploader`, pinned: it runs with the bucket's write credentials.
 #[derive(Debug, Default)]
 pub struct S3Bucket;
 
@@ -68,9 +68,11 @@ impl Bucket for S3Bucket {
         Ok(())
     }
 
-    fn download(&self, key: &str, to: &Path) -> Result<ETag> {
+    /// A missing key is `Ok(None)`; any other failure (credentials, throttling, network) is an
+    /// error.
+    fn download(&self, key: &str, to: &Path) -> Result<Option<ETag>> {
         let bucket: String = variable("EXPLORER_TEAM_S3_BUCKET")?;
-        let output: Output = run(
+        let output: Output = capture(
             "aws",
             [
                 "s3api",
@@ -86,7 +88,16 @@ impl Bucket for S3Bucket {
                 "text",
             ],
         )?;
-        ETag::try_new(stdout_text(&output)).context("aws returned no ETag")
+        if !output.status.success() {
+            let stderr: String = String::from_utf8_lossy(&output.stderr).into_owned();
+            if stderr.contains("NoSuchKey") || stderr.contains("(404)") {
+                return Ok(None);
+            }
+            anyhow::bail!("aws failed ({}):\n{}", output.status, redacted(stderr));
+        }
+        Ok(Some(
+            ETag::try_new(stdout_text(&output)).context("aws returned no ETag")?,
+        ))
     }
 
     fn etag(&self, key: &str) -> Result<ETag> {
@@ -112,7 +123,7 @@ impl Bucket for S3Bucket {
     fn upload(&self, folder: &Path, prefix: &str, caching: Caching) -> Result<()> {
         let bucket: String = variable("EXPLORER_TEAM_S3_BUCKET")?;
         let mut args: Vec<&str> = vec![
-            "@dcl/cdn-uploader@next",
+            "@dcl/cdn-uploader@1.5.0",
             "--bucket",
             &bucket,
             "--local-folder",

@@ -164,7 +164,7 @@ pub fn rebuild(actions: &[Action], base: &Path, patches: &Path, rebuild: &Path, 
     let scratch: Scratch = Scratch::new(rebuild.parent().unwrap_or(rebuild))?;
     for action in actions {
         match action {
-            Action::Delete(path) => {
+            Action::Delete { path } => {
                 let target: PathBuf = path.under(rebuild);
                 remove(&target)?;
                 remove_empty_parents(&target, rebuild)?;

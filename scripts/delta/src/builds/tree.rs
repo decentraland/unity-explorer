@@ -18,9 +18,18 @@ pub enum Node {
 }
 
 /// Every file and link of a build. `Tree::new` refuses an entry inside a file or link, and a
-/// link that can leave the build.
+/// link that can leave the build; deserialization goes through it.
 #[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[serde(try_from = "BTreeMap<RelPath, Node>")]
 pub struct Tree(BTreeMap<RelPath, Node>);
+
+impl TryFrom<BTreeMap<RelPath, Node>> for Tree {
+    type Error = anyhow::Error;
+
+    fn try_from(entries: BTreeMap<RelPath, Node>) -> Result<Tree> {
+        Tree::new(entries)
+    }
+}
 
 /// An extracted build on disk and what it contains.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -164,6 +173,15 @@ mod tests {
             check_link(&path(link)?, target).is_ok() == allowed,
             "{link} -> {target}"
         );
+        Ok(())
+    }
+
+    #[test]
+    fn reading_json_applies_the_same_rules() -> Result<()> {
+        let inside_file: &str = r#"{"a":{"kind":"file","size":1,"sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","mode":"644"},"a/b":{"kind":"link","target":"x"}}"#;
+        ensure!(serde_json::from_str::<Tree>(inside_file).is_err());
+        let escaping: &str = r#"{"l":{"kind":"link","target":"../x"}}"#;
+        ensure!(serde_json::from_str::<Tree>(escaping).is_err());
         Ok(())
     }
 

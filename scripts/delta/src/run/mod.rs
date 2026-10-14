@@ -4,8 +4,8 @@
 //! to stop with `Cmd::Complete` or the state named by `--until` is reached.
 //!
 //! ```text
-//! Requested -> Cleared -> Downloaded -> Extracted -> Scanned -> Encoded
-//!           -> Verified -> Prepared -> Rechecked -> PatchesUploaded -> Published
+//! Requested -> Unpublished -> Cleared -> Downloaded -> Extracted -> Scanned -> Encoded
+//!           -> Verified -> Prepared -> Rechecked -> PatchesUploaded -> ReadyToPublish -> Published
 //! any       -> Failed (integrity failure, a fact out of order, or every base dropped)
 //! ```
 //!

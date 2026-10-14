@@ -12,12 +12,31 @@ use crate::releases::tag::{Platform, Tag};
 /// `Manifest::new` refuses a release listed as its own base, a deleted path still in `files`, and
 /// a rebuilt path that is not a regular file of `files`.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(try_from = "ManifestParts")]
 pub struct Manifest {
     release: Tag,
     platform: Platform,
     zip: ZipRef,
     files: Tree,
     deltas: Bases<Delta>,
+}
+
+/// The serialized shape of a `Manifest`, before its rules are applied.
+#[derive(Debug, Deserialize)]
+struct ManifestParts {
+    release: Tag,
+    platform: Platform,
+    zip: ZipRef,
+    files: Tree,
+    deltas: Bases<Delta>,
+}
+
+impl TryFrom<ManifestParts> for Manifest {
+    type Error = anyhow::Error;
+
+    fn try_from(parts: ManifestParts) -> Result<Manifest> {
+        Manifest::new(parts.release, parts.platform, parts.zip, parts.files, parts.deltas)
+    }
 }
 
 impl Manifest {

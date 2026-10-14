@@ -31,7 +31,8 @@ pub enum Caching {
 /// the bucket.
 pub trait Bucket {
     fn remove_prefix(&self, prefix: &str) -> Result<()>;
-    fn download(&self, key: &str, to: &Path) -> Result<ETag>;
+    /// `None` when there is no object at `key`; an error for any other failure.
+    fn download(&self, key: &str, to: &Path) -> Result<Option<ETag>>;
     fn etag(&self, key: &str) -> Result<ETag>;
     /// Uploads a folder's files under a key prefix.
     fn upload(&self, folder: &Path, prefix: &str, caching: Caching) -> Result<()>;

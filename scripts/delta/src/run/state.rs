@@ -159,8 +159,8 @@ pub struct Upload {
 }
 
 /// ```text
-/// Requested -> Cleared -> Downloaded -> Extracted -> Scanned -> Encoded -> Verified
-///           -> Prepared -> Rechecked -> PatchesUploaded -> ReadyToPublish -> Published
+/// Requested -> Unpublished -> Cleared -> Downloaded -> Extracted -> Scanned -> Encoded
+///           -> Verified -> Prepared -> Rechecked -> PatchesUploaded -> ReadyToPublish -> Published
 /// any       -> Failed
 /// ```
 ///
@@ -170,6 +170,8 @@ pub struct Upload {
 pub enum State {
     /// Nothing done yet.
     Requested(Request),
+    /// The release is not published, so its patches may be replaced.
+    Unpublished(Request),
     /// Patches left by an earlier run of this release are gone from the bucket.
     Cleared(Request),
     Downloaded(Archives),
@@ -197,8 +199,9 @@ pub enum State {
 
 impl State {
     /// Every state name, in lifecycle order, as `--until` accepts them.
-    pub const NAMES: [&'static str; 13] = [
+    pub const NAMES: [&'static str; 14] = [
         "Requested",
+        "Unpublished",
         "Cleared",
         "Downloaded",
         "Extracted",
@@ -216,6 +219,7 @@ impl State {
     pub fn name(&self) -> &'static str {
         match self {
             State::Requested(_) => "Requested",
+            State::Unpublished(_) => "Unpublished",
             State::Cleared(_) => "Cleared",
             State::Downloaded(_) => "Downloaded",
             State::Extracted(_) => "Extracted",

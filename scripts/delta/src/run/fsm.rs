@@ -234,10 +234,12 @@ impl fmt::Display for Cmd {
     }
 }
 
-/// The request becomes the first state and the first cmd.
+/// The request becomes the first state and the first cmd: nothing is removed from the bucket
+/// before the release is known to be unpublished.
 pub fn init(request: Request) -> (Run, Vec<Cmd>) {
-    let cmd: Cmd = Cmd::RemoveStalePatches {
-        prefix: format!("{}/", request.release.delta_prefix()),
+    let cmd: Cmd = Cmd::RecheckRelease {
+        tag: request.release.tag.clone(),
+        zip_key: request.release.zip_key(),
     };
     let run: Run = Run {
         state: State::Requested(request),
@@ -263,7 +265,19 @@ fn transition(state: State, msg: Msg, dropped: &mut Vec<Dropped>) -> Result<(Sta
     match (state, msg) {
         (State::Failed { reason }, _) => Ok((State::Failed { reason }, vec![Cmd::Complete])),
         (state, Msg::IntegrityFailure { reason }) => Err(format!("{reason} (the run was {state})")),
-        (State::Requested(request), Msg::StalePatchesRemoved) => {
+        (State::Requested(request), Msg::ReleaseRechecked { published, .. }) => {
+            if published {
+                return Err(format!(
+                    "{} is published; its delta patches are immutable",
+                    request.release.tag
+                ));
+            }
+            let cmd: Cmd = Cmd::RemoveStalePatches {
+                prefix: format!("{}/", request.release.delta_prefix()),
+            };
+            Ok((State::Unpublished(request), vec![cmd]))
+        }
+        (State::Unpublished(request), Msg::StalePatchesRemoved) => {
             let cmd: Cmd = download_archives(&request);
             Ok((State::Cleared(request), vec![cmd]))
         }
@@ -720,7 +734,8 @@ mod tests {
             size: 3,
             sha256: sha('9')?,
         };
-        Delta::new(vec![], vec![], vec![whole])
+        // A deleted path, so the replay actions carry a `Delete` through serde.
+        Delta::new(vec![path("gone.txt")?], vec![], vec![whole])
     }
 
     fn start(bases: &[&str]) -> Result<(Run, Vec<Cmd>)> {
@@ -830,6 +845,7 @@ mod tests {
     /// The facts of the happy path, in order.
     fn happy_path() -> Result<Vec<Msg>> {
         Ok(vec![
+            rechecked(false, "e1")?,
             Msg::StalePatchesRemoved,
             downloaded(&[BASE], &[])?,
             extracted(&[BASE])?,
@@ -862,20 +878,38 @@ mod tests {
     }
 
     #[test]
-    fn init_requests_the_run_and_asks_to_remove_stale_patches() -> Result<()> {
+    fn init_requests_the_run_and_asks_whether_the_release_is_published() -> Result<()> {
         let (run, cmds): (Run, Vec<Cmd>) = start(&[BASE])?;
         ensure!(run.state.name() == "Requested");
         ensure!(
-            cmds == vec![Cmd::RemoveStalePatches {
-                prefix: "releases/v1.1.0/delta/windows64/".to_owned()
+            cmds == vec![Cmd::RecheckRelease {
+                tag: tag(RELEASE)?,
+                zip_key: "releases/v1.1.0/Decentraland_windows64.zip".to_owned()
             }]
         );
         Ok(())
     }
 
     #[test]
+    fn a_published_release_is_refused_before_anything_is_removed() -> Result<()> {
+        let (run, _): (Run, Vec<Cmd>) = start(&[BASE])?;
+        let (run, cmd): (Run, Cmd) = send(run, rechecked(true, "e1")?)?;
+        ensure!(cmd == Cmd::Complete);
+        ensure!(failure(&run) == Some("v1.1.0 is published; its delta patches are immutable"));
+        Ok(())
+    }
+
+    #[test]
     fn the_lifecycle_runs_from_requested_to_verified() -> Result<()> {
         let (run, _): (Run, Vec<Cmd>) = start(&[BASE])?;
+
+        let (run, cmd): (Run, Cmd) = send(run, rechecked(false, "e1")?)?;
+        ensure!(run.state.name() == "Unpublished");
+        ensure!(
+            cmd == Cmd::RemoveStalePatches {
+                prefix: "releases/v1.1.0/delta/windows64/".to_owned()
+            }
+        );
 
         let (run, cmd): (Run, Cmd) = send(run, Msg::StalePatchesRemoved)?;
         ensure!(run.state.name() == "Cleared");
@@ -1062,6 +1096,7 @@ mod tests {
     #[test]
     fn a_failing_base_is_dropped_and_the_others_continue() -> Result<()> {
         let (run, _): (Run, Vec<Cmd>) = start(&[BASE, OTHER])?;
+        let (run, _): (Run, Cmd) = send(run, rechecked(false, "e1")?)?;
         let (run, cmd): (Run, Cmd) = send(run, Msg::StalePatchesRemoved)?;
         ensure!(matches!(cmd, Cmd::DownloadArchives { ref bases, .. } if bases.len() == 2));
         let (run, cmd): (Run, Cmd) = send(run, downloaded(&[BASE], &[(OTHER, "no object")])?)?;

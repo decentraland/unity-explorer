@@ -12,7 +12,9 @@ use crate::patching::delta::{Delta, Patch, Whole};
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "action", rename_all = "lowercase")]
 pub enum Action {
-    Delete(RelPath),
+    Delete {
+        path: RelPath,
+    },
     Diff {
         from: RelPath,
         file: RelPath,
@@ -40,7 +42,7 @@ pub enum Action {
 pub fn replay_actions(delta: &Delta, target: &Tree) -> Vec<Action> {
     let mut actions: Vec<Action> = Vec::new();
     for path in delta.deleted() {
-        actions.push(Action::Delete(path.clone()));
+        actions.push(Action::Delete { path: path.clone() });
     }
     for patch in delta.patches() {
         let Patch {
@@ -194,7 +196,7 @@ mod tests {
             ("c", Node::Link { target: "a".to_owned() }),
         ])?;
         let expected: Vec<Action> = vec![
-            Action::Delete(path("gone")?),
+            Action::Delete { path: path("gone")? },
             Action::Diff {
                 from: path("a")?,
                 file: path("from/v1.0.0/a.hdiff")?,

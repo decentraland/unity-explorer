@@ -81,23 +81,28 @@ fn discard(paths: &[&Path], error: &anyhow::Error) -> String {
     text(error)
 }
 
-fn fetch(fetch: &Fetch, io: &Io) -> Result<ETag> {
+/// `None` when the bucket has no object at the key.
+fn fetch(fetch: &Fetch, io: &Io) -> Result<Option<ETag>> {
     if let Some(parent) = fetch.to.parent() {
         fs::create_dir_all(parent).with_context(|| format!("cannot create {}", parent.display()))?;
     }
     io.bucket.download(&fetch.key, &fetch.to)
 }
 
+/// A base without a zip is reported as missing. Any other download failure, for the release or
+/// for a base, is a failure of the cmd: credentials, throttling or the network cannot be trusted.
 fn download_archives(release: &Fetch, bases: Vec<(Tag, Fetch)>, io: &Io) -> Result<Msg> {
-    let zip_etag: ETag = fetch(release, io).context("cannot download the release zip")?;
+    let zip_etag: ETag = fetch(release, io)
+        .and_then(|found: Option<ETag>| found.with_context(|| format!("no object {}", release.key)))
+        .context("cannot download the release zip")?;
     let zip_size: u64 = file_size(&release.to)?;
     let zip_sha256 = sha256_file(&release.to)?;
     let mut found: Vec<(Tag, PathBuf)> = Vec::new();
     let mut missing: Vec<(Tag, String)> = Vec::new();
     for (base, archive) in bases {
-        match fetch(&archive, io) {
-            Ok(_) => found.push((base, archive.to)),
-            Err(error) => missing.push((base, text(&error))),
+        match fetch(&archive, io).with_context(|| format!("cannot download {}", archive.key))? {
+            Some(_) => found.push((base, archive.to)),
+            None => missing.push((base, format!("no object {}", archive.key))),
         }
     }
     Ok(Msg::ArchivesDownloaded {

@@ -27,12 +27,29 @@ pub struct Whole {
     pub sha256: Sha256,
 }
 
-/// `Delta::new` refuses a path rebuilt twice.
+/// `Delta::new` refuses a path rebuilt twice; deserialization goes through it.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(try_from = "DeltaParts")]
 pub struct Delta {
     deleted: Vec<RelPath>,
     patches: Vec<Patch>,
     whole: Vec<Whole>,
+}
+
+/// The serialized shape of a `Delta`, before its rule is applied.
+#[derive(Debug, Deserialize)]
+struct DeltaParts {
+    deleted: Vec<RelPath>,
+    patches: Vec<Patch>,
+    whole: Vec<Whole>,
+}
+
+impl TryFrom<DeltaParts> for Delta {
+    type Error = anyhow::Error;
+
+    fn try_from(parts: DeltaParts) -> Result<Delta> {
+        Delta::new(parts.deleted, parts.patches, parts.whole)
+    }
 }
 
 impl Delta {
@@ -97,6 +114,10 @@ mod tests {
             sha256: Sha256::try_new("a".repeat(64))?,
         };
         ensure!(Delta::new(vec![], vec![], vec![whole.clone(), whole.clone()]).is_err());
+        let twice: String = serde_json::to_string(&serde_json::json!({
+            "deleted": [], "patches": [], "whole": [whole, whole]
+        }))?;
+        ensure!(serde_json::from_str::<Delta>(&twice).is_err(), "read through the rule");
         ensure!(Delta::new(vec![], vec![], vec![whole])?.download_size() == 3);
         Ok(())
     }

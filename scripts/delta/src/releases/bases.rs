@@ -7,10 +7,19 @@ use serde::{Deserialize, Serialize};
 
 use crate::releases::tag::Tag;
 
-/// One value per base release. `Bases::new` refuses an empty map, so a stage holding `Bases`
-/// always has at least one base left.
+/// One value per base release. `Bases::new` refuses an empty map, so a state holding `Bases`
+/// always has at least one base left; deserialization goes through it.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(try_from = "BTreeMap<Tag, T>")]
 pub struct Bases<T>(BTreeMap<Tag, T>);
+
+impl<T> TryFrom<BTreeMap<Tag, T>> for Bases<T> {
+    type Error = anyhow::Error;
+
+    fn try_from(values: BTreeMap<Tag, T>) -> Result<Bases<T>> {
+        Bases::new(values)
+    }
+}
 
 impl<T> Bases<T> {
     pub fn new(values: BTreeMap<Tag, T>) -> Result<Bases<T>> {
@@ -50,5 +59,19 @@ impl<T> IntoIterator for Bases<T> {
 
     fn into_iter(self) -> Self::IntoIter {
         self.0.into_iter()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use anyhow::{Result, ensure};
+
+    use super::Bases;
+
+    #[test]
+    fn an_empty_map_is_refused_when_read_from_json() -> Result<()> {
+        ensure!(serde_json::from_str::<Bases<u32>>("{}").is_err());
+        ensure!(serde_json::from_str::<Bases<u32>>(r#"{"v1.0.0":1}"#).is_ok());
+        Ok(())
     }
 }

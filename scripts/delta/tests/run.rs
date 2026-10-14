@@ -519,8 +519,8 @@ fn a_missing_release_zip_fails_the_run_before_the_until_state() -> Result<()> {
     let run: Run = world.run(&document, Some("Scanned"))?;
     let reason: &str = failure(&run).context("the run should fail")?;
     ensure!(
-        reason.contains("cannot download the release zip") && reason.contains("the run was Cleared"),
-        "{reason}"
+        reason.contains("no object") && reason.contains("the run was Requested"),
+        "the first recheck already needs the zip: {reason}"
     );
     let (saved, cmds): (Run, Vec<Cmd>) = document::load(&document)?;
     ensure!(saved == run && cmds == vec![Cmd::Complete]);
@@ -563,6 +563,17 @@ fn the_command_line_pauses_at_until_and_resumes_to_completion() -> Result<()> {
     let (run, cmds): (Run, Vec<Cmd>) = document::load(&document)?;
     ensure!(run.state.name() == "Downloaded");
     ensure!(matches!(cmds.as_slice(), [Cmd::ExtractArchives { .. }]), "{cmds:?}");
+
+    let repeated: Output = delta_binary(&["run", document_text, "--until", "Downloaded", "--local", bucket])?;
+    ensure!(
+        repeated.status.success(),
+        "{}",
+        String::from_utf8_lossy(&repeated.stderr)
+    );
+    ensure!(
+        document::load(&document)? == (run, cmds),
+        "a slice already reached does nothing"
+    );
 
     let finished: Output = delta_binary(&["run", document_text, "--local", bucket])?;
     ensure!(

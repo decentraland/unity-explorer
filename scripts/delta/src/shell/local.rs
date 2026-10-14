@@ -3,7 +3,7 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use anyhow::{Context, Result, ensure};
+use anyhow::{Context, Result};
 use walkdir::{DirEntry, WalkDir};
 
 use crate::builds::disk::{remove, sha256_file};
@@ -25,18 +25,21 @@ impl Bucket for FolderBucket {
         remove(&self.root.join(prefix.trim_end_matches('/')))
     }
 
-    fn download(&self, key: &str, to: &Path) -> Result<ETag> {
+    fn download(&self, key: &str, to: &Path) -> Result<Option<ETag>> {
         let source: PathBuf = self.root.join(key);
-        ensure!(source.is_file(), "no object {key}");
+        if !source.is_file() {
+            return Ok(None);
+        }
         if let Some(parent) = to.parent() {
             fs::create_dir_all(parent)?;
         }
         fs::copy(&source, to).with_context(|| format!("cannot copy {key}"))?;
-        self.etag(key)
+        Ok(Some(self.etag(key)?))
     }
 
     fn etag(&self, key: &str) -> Result<ETag> {
         let source: PathBuf = self.root.join(key);
+        anyhow::ensure!(source.is_file(), "no object {key}");
         Ok(ETag::try_new(sha256_file(&source)?.to_string())?)
     }
 
