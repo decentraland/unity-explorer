@@ -5,7 +5,7 @@ use std::fs::{self, File, OpenOptions};
 use std::io;
 use std::path::{Path, PathBuf};
 
-use anyhow::{Context, Result, bail, ensure};
+use anyhow::{Context, Result, ensure};
 use sha2::Digest;
 use walkdir::{DirEntry, WalkDir};
 
@@ -175,7 +175,7 @@ pub fn make_link(target: &str, link: &Path) -> Result<()> {
 
 #[cfg(not(unix))]
 pub fn make_link(_target: &str, link: &Path) -> Result<()> {
-    bail!("links are not supported on this platform: {}", link.display())
+    anyhow::bail!("links are not supported on this platform: {}", link.display())
 }
 
 #[cfg(unix)]
