@@ -133,15 +133,6 @@
     display: none;
 }
 
-.lobby__logo {
-    position: absolute;
-    left: var(--lobby-margin);
-    top: 32px;
-    width: 256px;
-    height: 35px;
-    background-image: url('/Assets/Textures/ExplorePanel/DecentralandLogo.png');
-}
-
 .lobby__welcome-title,
 .lobby__events-title,
 .lobby__friends-title,

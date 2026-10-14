@@ -17,12 +17,15 @@
         <ui:VisualElement name="BottomGradient" class="lobby__gradient" picking-mode="Ignore" />
         <!-- The uGUI preview canvas draws under the panel; this only catches the hover and the click over the figure -->
         <ui:VisualElement name="AvatarHitArea" class="lobby__avatar-hit-area" style="display: none;" />
-        <ui:VisualElement name="Logo" class="lobby__logo" picking-mode="Ignore" />
-        <ui:VisualElement name="TopBar" class="lobby__top-bar" picking-mode="Ignore">
-            <ui:VisualElement name="CreditsSlot" class="lobby__top-bar-slot" picking-mode="Ignore" />
-            <ui:Button name="EditLayout" class="lobby__top-bar-button lobby__edit-layout-button">
+        <ui:VisualElement name="Header" class="lobby__header" picking-mode="Ignore">
+            <ui:VisualElement name="Logo" class="lobby__logo" picking-mode="Ignore" />
+            <ui:Label name="Title" text="Lobby" class="lobby__header-title" picking-mode="Ignore" />
+            <ui:Button name="EditLayout" class="lobby__edit-layout-button">
                 <ui:VisualElement name="Icon" class="lobby__edit-layout-icon" picking-mode="Ignore" />
             </ui:Button>
+        </ui:VisualElement>
+        <ui:VisualElement name="TopBar" class="lobby__top-bar" picking-mode="Ignore">
+            <ui:VisualElement name="CreditsSlot" class="lobby__top-bar-slot" picking-mode="Ignore" />
             <ui:Button name="Notifications" class="lobby__top-bar-button">
                 <ui:VisualElement name="Icon" class="lobby__notifications-icon" picking-mode="Ignore" />
                 <ui:Label name="UnreadBadge" text="0" class="lobby__notifications-badge" picking-mode="Ignore" style="display: none;" />
