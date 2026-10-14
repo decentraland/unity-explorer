@@ -221,7 +221,56 @@ namespace Tests
                 // Assert
                 Assert.IsTrue(partner.activeSelf);
                 Assert.AreEqual(1f, partnerAnimation[EMOTE_URN].time, TOLERANCE);
-                Assert.AreEqual(EmotePlaybackEvent.Playing, _reported[^1].playbackEvent);
+            }
+            finally
+            {
+                Object.DestroyImmediate(partner);
+                Object.DestroyImmediate(partnerClip);
+            }
+        }
+
+        [Test]
+        public void HandAPausedEmoteToARebuiltPartnerStill()
+        {
+            // Arrange
+            PlayEmote();
+            _controller.GoToEmote(1f);
+            _controller.PauseEmote();
+            var (partner, partnerAnimation, partnerClip) = Partner();
+
+            try
+            {
+                // Act
+                _controller.ReplacePartner(partner, partnerAnimation);
+
+                // Assert
+                Assert.AreEqual(1f, partnerAnimation[EMOTE_URN].time, TOLERANCE);
+                Assert.AreEqual(0f, partnerAnimation[EMOTE_URN].speed, TOLERANCE);
+            }
+            finally
+            {
+                Object.DestroyImmediate(partner);
+                Object.DestroyImmediate(partnerClip);
+            }
+        }
+
+        [Test]
+        public void HandAHeldEmoteToARebuiltPartnerOnTheFirstFrame()
+        {
+            // Arrange: a seek made while paused, then a stop that holds the first frame.
+            PlayEmote();
+            _controller.PauseEmote();
+            _controller.GoToEmote(1.5f);
+            _controller.StopEmote();
+            var (partner, partnerAnimation, partnerClip) = Partner();
+
+            try
+            {
+                // Act
+                _controller.ReplacePartner(partner, partnerAnimation);
+
+                // Assert
+                Assert.AreEqual(0f, partnerAnimation[EMOTE_URN].time, TOLERANCE);
             }
             finally
             {

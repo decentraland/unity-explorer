@@ -362,8 +362,11 @@ namespace Preview
 
                 avatarRotator.enabled = false;
                 wearableRotator.enabled = false;
-                avatarRotator.ResetRotation();
-                wearableRotator.ResetRotation();
+
+                // Upright for the fit below, whatever the last load's start; ApplyCameraStart turns
+                // the views to this load's start afterwards.
+                avatarRotator.SetStartRotation(0f, 0f);
+                wearableRotator.SetStartRotation(0f, 0f);
 
                 animationReference.SetActive(config.ShowAnimationReference || config.ShowSceneBoundaries);
                 platform.SetActive(config.Mode is PreviewMode.Authentication);

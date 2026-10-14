@@ -217,6 +217,8 @@ namespace Loading
                 return new LoadedEmote(entityDefinition, avatarClip, audioClip, prop, propAnim, importer, metrics, otherClip);
             }
 
+            importer.Dispose();
+            if (audioClip != null) Object.Destroy(audioClip);
             throw new NotSupportedException($"Failed to load emote: {rep.MainFile}");
         }
 
