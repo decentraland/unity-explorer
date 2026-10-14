@@ -35,7 +35,6 @@ namespace DCL.Communities.CommunityCreation
         private const string CREATE_COMMUNITY_ERROR_MESSAGE = "There was an error creating community. Please try again.";
         private const string UPDATE_COMMUNITY_ERROR_MESSAGE = "There was an error updating community. Please try again.";
         private const string GET_PLACES_ERROR_MESSAGE = "There was an error getting places. Please try again.";
-        private const string GET_WORLDS_ERROR_MESSAGE = "There was an error getting worlds. Please try again.";
         private const string GET_OWNERS_NAMES_ERROR_MESSAGE = "There was an error getting owners names. Please try again.";
         private const string GET_COMMUNITY_ERROR_MESSAGE = "There was an error getting the community. Please try again.";
         private const string GET_COMMUNITY_PLACES_ERROR_MESSAGE = "There was an error getting the community places. Please try again.";
@@ -45,7 +44,6 @@ namespace DCL.Communities.CommunityCreation
         private const string FILE_BROWSER_TITLE = "Select image";
         private const int MAX_IMAGE_SIZE_BYTES = 512000; // 500 KB
         private const int MAX_IMAGE_DIMENSION_PIXELS = 512;
-        private const int WARNING_MESSAGE_DELAY_MS = 3000;
         private const string CONTENT_POLICY_LINK_ID = "CONTENT_POLICY_LINK_ID";
         private const string CODE_AND_ETHICS_LINK_ID = "CODE_AND_ETHICS_LINK_ID";
 
@@ -67,8 +65,8 @@ namespace DCL.Communities.CommunityCreation
 
         private Sprite? lastSelectedProfileThumbnail;
         private bool isProfileThumbnailDirty;
-        private string originalCommunityNameForEdition;
-        private string originalCommunityDescriptionForEdition;
+        private string? originalCommunityNameForEdition;
+        private string? originalCommunityDescriptionForEdition;
         private CommunityPrivacy? originalCommunityPrivacyForEdition;
         private CommunityVisibility? originalCommunityVisibilityForEdition;
 
@@ -222,10 +220,10 @@ namespace DCL.Communities.CommunityCreation
         }
 
         private void DisableShortcutsInput() =>
-            inputBlock.Disable(InputMapComponent.Kind.Shortcuts, InputMapComponent.Kind.InWorldCamera);
+            inputBlock.Disable(InputMapComponent.Kind.Shortcuts, InputMapComponent.Kind.InWorldCamera, InputMapComponent.Kind.VoiceChat);
 
         private void RestoreInput() =>
-            inputBlock.Enable(InputMapComponent.Kind.Shortcuts, InputMapComponent.Kind.InWorldCamera);
+            inputBlock.Enable(InputMapComponent.Kind.Shortcuts, InputMapComponent.Kind.InWorldCamera, InputMapComponent.Kind.VoiceChat);
 
         private void OnCancelAction() =>
             closeTaskCompletionSource.TrySetResult();
@@ -391,7 +389,7 @@ namespace DCL.Communities.CommunityCreation
             originalCommunityPrivacyForEdition = getCommunityResult.Value.data.privacy;
             originalCommunityVisibilityForEdition = getCommunityResult.Value.data.visibility;
 
-            viewInstance!.SetProfileSelectedImage(getCommunityResult.Value.data.thumbnailUrl, thumbnailLoader);
+            viewInstance!.SetProfileSelectedImage(getCommunityResult.Value.data.thumbnailUrl, thumbnailLoader!);
             viewInstance.SetCommunityName(getCommunityResult.Value.data.name, getCommunityResult.Value.data.role == CommunityMemberRole.owner);
             viewInstance.SetCommunityDescription(getCommunityResult.Value.data.description);
             viewInstance.SetCommunityPrivacy(getCommunityResult.Value.data.privacy, getCommunityResult.Value.data.role == CommunityMemberRole.owner);
