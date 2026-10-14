@@ -2,7 +2,7 @@
     --place-card-hover-duration: 0.3s;
 }
 
-/* 280x165 with 24px corners: the thumbnail over a 55px footer that holds the texts */
+/* 280x165 with 24px corners: the thumbnail fills the card and a gradient darkens its bottom under the texts */
 .lobby-place-card {
     width: 280px;
     height: 165px;
@@ -11,29 +11,42 @@
     overflow: hidden;
 }
 
-/* Gives up as much height as the hovered footer grows; its 16px corners make the dark strip under it curve into it */
 .lobby-place-card__thumbnail {
     position: absolute;
     left: 0;
     top: 0;
     right: 0;
-    height: 110px;
-    border-radius: 16px;
+    bottom: 0;
     background-image: url('/Assets/Textures/ExplorePanel/DefaultImagePlace.png');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-    transition: height var(--place-card-hover-duration) ease-out, opacity var(--lobby-thumbnail-fade-duration) ease-out;
-}
-
-.lobby-place-card:hover .lobby-place-card__thumbnail {
-    height: 86px;
+    transition: opacity var(--lobby-thumbnail-fade-duration) ease-out;
 }
 
 /* While the picture is on its way the dark fill of the card shows; the picture then fades in over it rather than popping up */
 .lobby-place-card--loading .lobby-place-card__thumbnail {
     opacity: 0;
-    transition: height var(--place-card-hover-duration) ease-out, opacity 0s;
+    transition: opacity 0s;
+}
+
+/* The sprite is authored at this size for the Linear color space (a plain alpha ramp blends in linear light and reads
+   too faint): a 52px fade into a flat 78% black strip under the texts. Sliced so the fade keeps its shape while the
+   strip stretches with the hovered footer, putting the jump-in button on the flat part */
+.lobby-place-card__gradient {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 100px;
+    background-image: url('/Assets/DCL/Lobby/Textures/CardBottomGradient.png');
+    -unity-slice-top: 52;
+    -unity-slice-bottom: 44;
+    transition: height var(--place-card-hover-duration) ease-out;
+}
+
+.lobby-place-card:hover .lobby-place-card__gradient {
+    height: 124px;
 }
 
 /* The counter's margin spaces the friends row that follows it */

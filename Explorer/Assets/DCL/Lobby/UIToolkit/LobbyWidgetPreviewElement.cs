@@ -62,6 +62,7 @@ namespace DCL.Lobby
                 LobbyWidgetId.JumpBackIn4x2 => 2,
                 LobbyWidgetId.RecommendedPlaces6x2 => 3,
                 LobbyWidgetId.RecommendedPlaces4x2 => 2,
+                LobbyWidgetId.GoTo4x1 => 1,
                 _ => throw new ArgumentOutOfRangeException(nameof(widgetId), widgetId, null),
             };
     }

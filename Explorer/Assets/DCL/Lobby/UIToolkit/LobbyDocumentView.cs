@@ -34,6 +34,7 @@ namespace DCL.Lobby
         private const string UNREAD_BADGE_NAME = "UnreadBadge";
         private const string CLOSE_NAME = "Close";
         private const string EDIT_LAYOUT_NAME = "EditLayout";
+        private const string GO_TO_FIELD_NAME = "GoToField";
 
         [SerializeField] private VisualTreeAsset placeCardTemplate = null!;
         [SerializeField] private VisualTreeAsset friendCardTemplate = null!;
@@ -118,6 +119,9 @@ namespace DCL.Lobby
 
         /// <summary>Section of the upcoming events, title and rail. Exists only while the view is shown.</summary>
         public VisualElement UpcomingEvents => Section(UPCOMING_EVENTS_NAME);
+
+        /// <summary>Field of the go-to row a destination is typed in. Exists only while the view is shown.</summary>
+        public LobbyGoToElement GoToField => Element<LobbyGoToElement>(GO_TO_FIELD_NAME);
 
         /// <summary>
         ///     Moves <see cref="Credits" /> and <see cref="Profile" /> into their slots. A no-op while the renderer

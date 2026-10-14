@@ -235,7 +235,7 @@ namespace DCL.PluginSystem.Global
             var lobbyController = new LobbyDocumentController(viewFactory,
                 inputBlock, cursor, loadingStatus, mvcManager,
                 selfProfile, profileChangesBus, characterPreviewFactory, characterPreviewEventBus, settings.AvatarSettings, lobbyStage, world,
-                placesAPIService, realmData, homePlace, eventsApiService, eventCardActions, realmNavigator, decentralandUrlsSource, startParcel, new SpriteCache(webRequestController), profileButtonPresenter,
+                placesAPIService, realmData, homePlace, eventsApiService, eventCardActions, realmNavigator, decentralandUrlsSource, webRequestController, startParcel, new SpriteCache(webRequestController), profileButtonPresenter,
                 notificationsPanel, friendsPresenter, connectedFriendsPresenter);
 
             mvcManager.RegisterController(lobbyController);

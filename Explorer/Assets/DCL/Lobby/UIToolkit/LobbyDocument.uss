@@ -234,3 +234,16 @@
 .lobby__places-row > .lobby-place-card {
     margin-right: 8px;
 }
+
+/* The go-to row: its question over the pill, which takes the rest of its single row of cells */
+.lobby__goto-title {
+    height: 26px;
+    margin-bottom: 10px;
+    font-size: 18px;
+    -unity-font-definition: var(--dcl-font-inter-regular);
+    -unity-text-align: middle-left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--lobby-title-color);
+}

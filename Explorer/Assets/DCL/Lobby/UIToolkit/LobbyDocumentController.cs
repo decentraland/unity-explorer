@@ -3,6 +3,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Backpack;
 using DCL.CharacterPreview;
+using DCL.Chat.Commands;
 using DCL.CommunicationData.URLHelpers;
 using DCL.Communities.EventInfo;
 using DCL.Diagnostics;
@@ -25,6 +26,7 @@ using DCL.UI.ProfileElements;
 using DCL.UI.Profiles;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
+using DCL.WebRequests;
 using ECS;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
@@ -47,6 +49,9 @@ namespace DCL.Lobby
         private const string LIVE_EVENT_HOST_FORMAT = "By {0}";
         private const string WELCOME_FALLBACK = "Welcome!";
         private const string WELCOME_FORMAT = "Welcome {0}!";
+
+        /// <summary>What a world named without its domain gets, as in the /goto chat command.</summary>
+        private const string WORLD_SUFFIX = ".dcl.eth";
         private const int MAX_UPCOMING_EVENTS = 10;
 
         private const int MAX_RECENT_PLACES = 3;
@@ -77,6 +82,7 @@ namespace DCL.Lobby
         private readonly EventCardActionsController eventCardActions;
         private readonly IRealmNavigator realmNavigator;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
+        private readonly IWebRequestController webRequestController;
         private readonly StartParcel startParcel;
         private readonly ISpriteCache spriteCache;
         private readonly SidebarProfileButtonPresenter profileButtonPresenter;
@@ -166,6 +172,7 @@ namespace DCL.Lobby
             EventCardActionsController eventCardActions,
             IRealmNavigator realmNavigator,
             IDecentralandUrlsSource decentralandUrlsSource,
+            IWebRequestController webRequestController,
             StartParcel startParcel,
             ISpriteCache spriteCache,
             SidebarProfileButtonPresenter profileButtonPresenter,
@@ -191,6 +198,7 @@ namespace DCL.Lobby
             this.eventCardActions = eventCardActions;
             this.realmNavigator = realmNavigator;
             this.decentralandUrlsSource = decentralandUrlsSource;
+            this.webRequestController = webRequestController;
             this.startParcel = startParcel;
             this.spriteCache = spriteCache;
             this.profileButtonPresenter = profileButtonPresenter;
@@ -290,6 +298,7 @@ namespace DCL.Lobby
             LobbyLandingCardElement landingCard = viewInstance.LandingCard;
             landingCard.Clicked = OnLandingCardClicked;
             landingCard.JumpInClicked = OnLandingJumpInClicked;
+            viewInstance.GoToField.Submitted = OnGoToSubmitted;
 
             // The four-column sections list the same places as the six-column ones, so their rails share the lists
             recentPlacesRail ??= CreatePlacesRail(recentPlaces, LobbyCardOrigin.Recent);
@@ -775,7 +784,11 @@ namespace DCL.Lobby
         private void OnPlaceJumpIn(PlacesData.PlaceInfo place, LobbyCardOrigin origin)
         {
             PlaceJumpedIn?.Invoke(place, origin);
-            PickDestination(place.IsWorld ? WorldUrl(place.world_name) : null, place.base_position_processed, landOnParcel: false);
+
+            if (place.IsWorld)
+                PickWorld(WorldUrl(place.world_name));
+            else
+                PickParcel(place.base_position_processed, landOnParcel: false);
         }
 
         private void OnLiveEventClicked(int index) =>
@@ -860,7 +873,11 @@ namespace DCL.Lobby
         private void OnEventJumpIn(IEventDTO @event, LobbyCardOrigin origin)
         {
             EventJumpedIn?.Invoke(@event, origin);
-            PickDestination(@event.World ? WorldUrl(@event.Server) : null, new Vector2Int(@event.X, @event.Y), landOnParcel: true);
+
+            if (@event.World)
+                PickWorld(WorldUrl(@event.Server));
+            else
+                PickParcel(new Vector2Int(@event.X, @event.Y), landOnParcel: true);
         }
 
         // Land next to the friend rather than on the scene spawn point
@@ -869,27 +886,73 @@ namespace DCL.Lobby
             Vector2Int parcel = friend.position.ToParcel();
 
             FriendJoined?.Invoke(friend.avatarId, parcel);
-            PickDestination(friend.worldName is { Length: > 0 } worldName ? WorldUrl(worldName) : null, parcel, landOnParcel: true);
+
+            if (friend.worldName is { Length: > 0 } worldName)
+                PickWorld(WorldUrl(worldName));
+            else
+                PickParcel(parcel, landOnParcel: true);
         }
 
-        // Before the world loads the startup teleport lands in the pick; in-world it teleports right away
-        private void PickDestination(URLDomain? worldUrl, Vector2Int parcel, bool landOnParcel)
+        // The row takes what the /goto chat command takes: a parcel or a world, each with an optional spawn point and the
+        // world with an optional parcel, or the random and crowd keywords
+        private void OnGoToSubmitted(string destination)
+        {
+            GotoTarget target = ChatParamUtils.ParseGotoTarget(destination);
+
+            if (target.IsCrowd)
+            {
+                jumpInCts = jumpInCts.SafeRestart();
+                GoToCrowdAsync(jumpInCts.Token).Forget();
+            }
+            else if (target.IsRandom)
+                PickParcel(GoToChatCommand.RandomParcel(), landOnParcel: false);
+            else if (target.World != null)
+                PickWorld(WorldUrl(WorldName(target.World)), target.Parcel, target.SpawnPoint);
+            else if (target.Parcel is { } parcel)
+                PickParcel(parcel, landOnParcel: false, target.SpawnPoint);
+        }
+
+        private async UniTaskVoid GoToCrowdAsync(CancellationToken ct)
+        {
+            Result<Vector2Int> result = await GoToChatCommand.FindCrowdAsync(webRequestController, decentralandUrlsSource, ct).SuppressToResultAsync(ReportCategory.UI);
+
+            if (ct.IsCancellationRequested || !result.Success) return;
+
+            PickParcel(result.Value, landOnParcel: false);
+        }
+
+        // Before the world loads the startup teleport lands in the pick; in-world it teleports right away. The world's own
+        // spawn is the landing unless a parcel is given
+        private void PickWorld(URLDomain worldUrl, Vector2Int? parcel = null, string? spawnPointName = null)
         {
             if (startParcel.IsConsumed())
             {
                 jumpInCts = jumpInCts.SafeRestart();
-
-                if (worldUrl.HasValue)
-                    realmNavigator.TryChangeRealmAsync(worldUrl.Value, jumpInCts.Token, isWorld: true, allowsSpawnPointerOverride: true).Forget();
-                else
-                    realmNavigator.TeleportToParcelAsync(parcel, jumpInCts.Token, false, landOnParcel).Forget();
+                realmNavigator.TryChangeRealmAsync(worldUrl, jumpInCts.Token, parcel ?? default(Vector2Int), isWorld: true, allowsSpawnPointerOverride: true, spawnPointName: spawnPointName).Forget();
             }
-            else if (worldUrl.HasValue)
-                startParcel.AssignRealm(worldUrl.Value);
+            else
+            {
+                startParcel.AssignRealm(worldUrl, spawnPointName);
+
+                if (parcel is { } startAt)
+                    startParcel.Assign(startAt, spawnPointName);
+            }
+
+            RequestClose();
+        }
+
+        // Before the world loads the startup teleport lands in the pick; in-world it teleports right away
+        private void PickParcel(Vector2Int parcel, bool landOnParcel, string? spawnPointName = null)
+        {
+            if (startParcel.IsConsumed())
+            {
+                jumpInCts = jumpInCts.SafeRestart();
+                realmNavigator.TeleportToParcelAsync(parcel, jumpInCts.Token, false, landOnParcel, spawnPointName).Forget();
+            }
             else
             {
                 startParcel.AssignRealm(URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Genesis)));
-                startParcel.Assign(parcel);
+                startParcel.Assign(parcel, spawnPointName);
             }
 
             RequestClose();
@@ -897,6 +960,10 @@ namespace DCL.Lobby
 
         private URLDomain WorldUrl(string worldName) =>
             URLDomain.FromString(new ENS(worldName).ConvertEnsToWorldUrl(decentralandUrlsSource.Url(DecentralandUrl.WorldServer)));
+
+        // A short name is a .dcl.eth world; a full ENS name stands as typed
+        private static string WorldName(string name) =>
+            name.IsEns() || name.EndsWith(WORLD_SUFFIX, StringComparison.OrdinalIgnoreCase) ? name : name + WORLD_SUFFIX;
 
         private void ShowProfileMenu() =>
             mvcManager.ShowAndForget(ProfileMenuController<LobbyPopupParameter>.IssueCommand(new LobbyPopupParameter()));

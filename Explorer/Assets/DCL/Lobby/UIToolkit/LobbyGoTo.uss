@@ -1,0 +1,64 @@
+/* The pill of the go-to widget (LobbyGoToElement): the icon, the command and the field in a row; its frame brightens while
+   the field is focused */
+.lobby-goto {
+    flex-direction: row;
+    align-items: center;
+    height: 56px;
+    padding: 0 20px;
+    border-width: 2px;
+    border-radius: 28px;
+    border-color: rgba(255, 255, 255, 0.5);
+    background-color: rgba(20, 20, 26, 0.35);
+    transition: border-color 0.1s;
+}
+
+.lobby-goto:hover {
+    border-color: rgba(255, 255, 255, 0.75);
+}
+
+.lobby-goto--focused {
+    border-color: white;
+}
+
+.lobby-goto__icon {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    margin-right: 12px;
+    background-image: url('/Assets/Textures/Common/LocationIcn.png');
+    -unity-background-image-tint-color: var(--lobby-title-color);
+}
+
+.lobby-goto__command {
+    flex-shrink: 0;
+    margin-right: 10px;
+    font-size: 18px;
+    -unity-font-definition: var(--dcl-font-inter-bold);
+    -unity-text-align: middle-left;
+    color: var(--lobby-title-color);
+}
+
+/* The field is stripped of the default chrome: the pill is its frame */
+.lobby-goto__input {
+    flex-grow: 1;
+    flex-shrink: 1;
+    margin: 0;
+    --unity-cursor-color: var(--lobby-title-color);
+    --unity-selection-color: rgba(255, 255, 255, 0.25);
+}
+
+.lobby-goto__input > .unity-text-field__input {
+    margin: 0;
+    padding: 0;
+    border-width: 0;
+    border-radius: 0;
+    background-color: rgba(0, 0, 0, 0);
+    font-size: 16px;
+    -unity-font-definition: var(--dcl-font-inter-regular);
+    -unity-text-align: middle-left;
+    color: var(--lobby-title-color);
+}
+
+.lobby-goto__input > .unity-base-text-field__input--placeholder {
+    color: var(--lobby-subtitle-color);
+}

@@ -12,6 +12,7 @@
     <Style src="project://database/Assets/DCL/Lobby/UIToolkit/LobbyLiveEventCard.uss" />
     <Style src="project://database/Assets/DCL/Lobby/UIToolkit/LobbyUpcomingEventCard.uss" />
     <Style src="project://database/Assets/DCL/Lobby/UIToolkit/LobbyConnectedFriends.uss" />
+    <Style src="project://database/Assets/DCL/Lobby/UIToolkit/LobbyGoTo.uss" />
     <ui:Template name="LobbyLandingCard" src="project://database/Assets/DCL/Lobby/UIToolkit/LobbyLandingCard.uxml?fileID=9197481963319205126&amp;guid=f260689364e4454c8f4a329cd3e46b06&amp;type=3#LobbyLandingCard" />
     <ui:VisualElement name="Lobby" class="lobby">
         <ui:VisualElement name="BottomGradient" class="lobby__gradient" picking-mode="Ignore" />
@@ -80,13 +81,18 @@
                 <ui:Label name="Title" text="Recommended Places" class="lobby__places-title" picking-mode="Ignore" />
                 <DCL.Lobby.LobbyRailElement name="Rail" class="lobby__places-rail" cards-per-page="2" arrows-move-one-card="true" />
             </ui:VisualElement>
+            <!-- One row: the question over the pill a destination is typed in, which goes where the /goto chat command goes -->
+            <ui:VisualElement name="GoTo" class="lobby__widget lobby__goto" picking-mode="Ignore">
+                <ui:Label name="Title" text="Jump to any Genesis City coordinate or a World" class="lobby__goto-title" picking-mode="Ignore" />
+                <DCL.Lobby.LobbyGoToElement name="GoToField" />
+            </ui:VisualElement>
         </ui:VisualElement>
-        <!-- Edit mode only, over the avatar: the widgets off the grids wait here as rows that can be dragged onto a grid, and a
+        <!-- Edit mode only, over the avatar: the widgets off the grids wait here as cards that can be dragged onto a grid, and a
              widget dropped here leaves its grid (see LobbyLayoutEditor) -->
         <ui:VisualElement name="WidgetModal" class="lobby__widget-modal">
             <ui:Label name="Title" text="Widgets" class="lobby__widget-modal-title" picking-mode="Ignore" />
             <ui:Label name="Hint" text="Drag a widget onto a panel to show it, or drop one here to hide it" class="lobby__widget-modal-hint" picking-mode="Ignore" />
-            <ui:VisualElement name="WidgetModalItems" class="lobby__widget-modal-items" picking-mode="Ignore" />
+            <ui:ScrollView name="WidgetModalItems" class="lobby__widget-modal-items" mode="Vertical" horizontal-scroller-visibility="Hidden" vertical-scroller-visibility="Auto" mouse-wheel-scroll-size="60" />
         </ui:VisualElement>
         <!-- A dragged widget section hangs here while the layout is edited (see LobbyLayoutEditor) -->
         <ui:VisualElement name="LayoutDragLayer" class="lobby__layout-drag-layer" picking-mode="Ignore" />
