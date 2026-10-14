@@ -85,40 +85,26 @@ namespace DCL.Optimization.Pools.Tests
         }
 
         [Test]
-        public void RestoreCreationTransformOnRelease()
+        public void ResetTransformToIdentityOnRelease()
         {
-            // Arrange: a prefab-like creation with a non-default root transform
-            var creationPosition = new Vector3(1, 2, 3);
-            Quaternion creationRotation = Quaternion.Euler(10, 20, 30);
-            var creationScale = new Vector3(2, 2, 2);
-
-            var pool = new GameObjectPool<Transform>(null, () =>
-            {
-                Transform created = new GameObject().transform;
-                created.SetLocalPositionAndRotation(creationPosition, creationRotation);
-                created.localScale = creationScale;
-                return created;
-            });
-
-            Transform pooled = pool.Get();
+            // Arrange: an owner leaves its local transform on the pooled instance
+            Transform pooled = gameObjectPool.Get();
             var scaledParent = new GameObject();
             scaledParent.transform.localScale = new Vector3(128, 40, 128);
             pooled.SetParent(scaledParent.transform, worldPositionStays: true);
             pooled.SetLocalPositionAndRotation(Vector3.one * 50, Quaternion.Euler(45, 45, 45));
 
             //Act
-            pool.Release(pooled);
-            Transform reused = pool.Get();
+            gameObjectPool.Release(pooled);
+            Transform reused = gameObjectPool.Get();
 
             //Assert
             Assert.AreSame(pooled, reused);
-            Assert.AreEqual(creationPosition, reused.localPosition);
-            Assert.AreEqual(0f, Quaternion.Angle(creationRotation, reused.localRotation), 1e-3f);
-            Assert.AreEqual(creationScale, reused.localScale);
+            Assert.AreEqual(Vector3.zero, reused.localPosition);
+            Assert.AreEqual(0f, Quaternion.Angle(Quaternion.identity, reused.localRotation), 1e-3f);
+            Assert.AreEqual(Vector3.one, reused.localScale);
 
-            pool.Release(reused);
-            pool.Clear();
-            Object.DestroyImmediate(pool.ParentContainer.gameObject);
+            gameObjectPool.Release(reused);
             Object.DestroyImmediate(scaledParent);
         }
     }

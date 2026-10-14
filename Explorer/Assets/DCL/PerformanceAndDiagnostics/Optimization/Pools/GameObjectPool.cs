@@ -12,14 +12,8 @@ namespace DCL.Optimization.Pools
 
         private readonly IExtendedObjectPool<T> gameObjectPool;
 
-        private readonly Func<T> creationHandler;
         private readonly Action<T>? onRelease;
         private readonly Action<T>? onGet;
-
-        private bool creationTransformCaptured;
-        private Vector3 creationLocalPosition;
-        private Quaternion creationLocalRotation;
-        private Vector3 creationLocalScale;
 
         public int CountInactive => gameObjectPool.CountInactive;
 
@@ -37,10 +31,8 @@ namespace DCL.Optimization.Pools
             if (onRelease != null) this.onRelease += onRelease;
             if (onGet != null) this.onGet += onGet;
 
-            this.creationHandler = creationHandler ?? HandleCreation;
-
             gameObjectPool = new ExtendedObjectPool<T>(
-                CreateInstance,
+                creationHandler ?? HandleCreation,
                 actionOnGet: HandleGet,
                 actionOnRelease: HandleRelease,
                 actionOnDestroy: UnityObjectUtils.SafeDestroyGameObject,
@@ -124,24 +116,9 @@ namespace DCL.Optimization.Pools
             Transform transform = component.transform;
             transform.SetParent(ParentContainer, false);
 
-            if (!creationTransformCaptured) return;
-
-            // Released instances are handed out with the local transform captured from the first created instance
-            transform.SetLocalPositionAndRotation(creationLocalPosition, creationLocalRotation);
-            transform.localScale = creationLocalScale;
-        }
-
-        private T CreateInstance()
-        {
-            T component = creationHandler();
-
-            if (creationTransformCaptured) return component;
-
-            Transform transform = component.transform;
-            transform.GetLocalPositionAndRotation(out creationLocalPosition, out creationLocalRotation);
-            creationLocalScale = transform.localScale;
-            creationTransformCaptured = true;
-            return component;
+            // Released instances don't carry the previous owner's local transform
+            transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
+            transform.localScale = Vector3.one;
         }
     }
 }
