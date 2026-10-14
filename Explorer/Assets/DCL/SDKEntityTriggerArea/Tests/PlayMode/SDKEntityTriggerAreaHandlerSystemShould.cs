@@ -218,6 +218,89 @@ namespace DCL.SDKEntityTriggerArea.Tests
         }
 
         [Test]
+        public async Task KeepExplicitAreaSizeWhenEntityScaleChangesAfterAssignment()
+        {
+            // Workaround for Unity bug not awaiting async Setup correctly
+            await UniTask.WaitUntil(() => isSetUp);
+
+            var targetAreaSize = new Vector3(4, 4, 4);
+            world.Add(entity, new SDKEntityTriggerAreaComponent(areaSize: targetAreaSize));
+
+            system.Update(0);
+
+            entityTransformComponent.SetTransform(Vector3.one * 30, Quaternion.identity, new Vector3(3, 5, 2));
+            world.Set(entity, entityTransformComponent);
+
+            system.Update(0);
+
+            Vector3 worldAreaSize = WorldAreaSize();
+            Assert.AreEqual(0f, Vector3.Distance(targetAreaSize, worldAreaSize), 1e-3f, $"World area size was {worldAreaSize}");
+        }
+
+        [Test]
+        public async Task KeepExplicitAreaSizeWhenParentScaleChangesAfterAssignment()
+        {
+            // Workaround for Unity bug not awaiting async Setup correctly
+            await UniTask.WaitUntil(() => isSetUp);
+
+            var parent = new GameObject();
+            entityTransformComponent.Transform.SetParent(parent.transform);
+
+            var targetAreaSize = new Vector3(4, 4, 4);
+            world.Add(entity, new SDKEntityTriggerAreaComponent(areaSize: targetAreaSize));
+
+            system.Update(0);
+
+            parent.transform.localScale = new Vector3(3, 5, 2);
+
+            system.Update(0);
+
+            Vector3 worldAreaSize = WorldAreaSize();
+            entityTransformComponent.Transform.SetParent(null);
+            Object.DestroyImmediate(parent);
+
+            Assert.AreEqual(0f, Vector3.Distance(targetAreaSize, worldAreaSize), 1e-3f, $"World area size was {worldAreaSize}");
+        }
+
+        [Test]
+        public async Task FollowEntityScaleOnlyWhileAreaSizeIsZero()
+        {
+            // Workaround for Unity bug not awaiting async Setup correctly
+            await UniTask.WaitUntil(() => isSetUp);
+
+            var entityScale = new Vector3(3, 5, 2);
+            entityTransformComponent.SetTransform(Vector3.one * 30, Quaternion.identity, entityScale);
+            world.Set(entity, entityTransformComponent);
+
+            var explicitAreaSize = new Vector3(4, 4, 4);
+            world.Add(entity, new SDKEntityTriggerAreaComponent(areaSize: explicitAreaSize));
+
+            system.Update(0);
+
+            Vector3 explicitWorldAreaSize = WorldAreaSize();
+
+            SDKEntityTriggerAreaComponent component = world.Get<SDKEntityTriggerAreaComponent>(entity);
+            component.UpdateAreaSize(Vector3.zero);
+            world.Set(entity, component);
+
+            system.Update(0);
+
+            Vector3 scaleDrivenWorldAreaSize = WorldAreaSize();
+
+            component = world.Get<SDKEntityTriggerAreaComponent>(entity);
+            component.UpdateAreaSize(explicitAreaSize);
+            world.Set(entity, component);
+
+            system.Update(0);
+
+            Vector3 restoredWorldAreaSize = WorldAreaSize();
+
+            Assert.AreEqual(0f, Vector3.Distance(explicitAreaSize, explicitWorldAreaSize), 1e-3f, $"Explicit world area size was {explicitWorldAreaSize}");
+            Assert.AreEqual(0f, Vector3.Distance(entityScale, scaleDrivenWorldAreaSize), 1e-3f, $"Scale-driven world area size was {scaleDrivenWorldAreaSize}");
+            Assert.AreEqual(0f, Vector3.Distance(explicitAreaSize, restoredWorldAreaSize), 1e-3f, $"Restored world area size was {restoredWorldAreaSize}");
+        }
+
+        [Test]
         public async Task TrackEnterExitCollectionsCorrectly()
         {
             // Workaround for Unity bug not awaiting async Setup correctly
@@ -501,6 +584,9 @@ namespace DCL.SDKEntityTriggerArea.Tests
             // Cleanup
             Object.DestroyImmediate(sdkEntityGO);
         }
+
+        private Vector3 WorldAreaSize() =>
+            Vector3.Scale(sdkEntityTriggerArea.BoxCollider.size, sdkEntityTriggerArea.transform.lossyScale);
 
         private static async Task WaitForPhysics()
         {
