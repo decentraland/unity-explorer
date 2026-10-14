@@ -128,7 +128,7 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
             }
         }
 
-        private async UniTask<string> ResolveIPv4Async(string hostName, CancellationToken ct)
+        internal async UniTask<string> ResolveIPv4Async(string hostName, CancellationToken ct)
         {
             if (IPAddress.TryParse(hostName, out IPAddress? literal))
                 return literal.ToString();
@@ -137,8 +137,11 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
 
             try
             {
+                // Fixes: https://github.com/decentraland/unity-explorer/issues/10043
+                // Thread-pool callers (the reconnect loop) have no SynchronizationContext;
+                // FromCurrentSynchronizationContext would throw there and orphan the started lookup.
                 candidates = await Dns.GetHostAddressesAsync(hostName)
-                                      .AsUniTask()
+                                      .AsUniTask(useCurrentSynchronizationContext: SynchronizationContext.Current != null)
                                       .AttachExternalCancellation(ct)
                                       .Timeout(TimeSpan.FromMilliseconds(options.ConnectTimeoutMs));
             }

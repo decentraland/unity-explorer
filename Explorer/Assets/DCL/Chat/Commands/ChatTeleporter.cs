@@ -215,18 +215,9 @@ namespace DCL.Chat.Commands
         {
             if (startParcel.IsConsumed()) return false;
 
-            if (realmUrl is { } realm)
-            {
-                if (!CanJoinStartupRealm(realm)) return false;
+            if (realmUrl is { } realm && !CanJoinStartupRealm(realm)) return false;
 
-                startParcel.AssignRealm(realm, spawnPointName);
-            }
-
-            if (parcel is { } target)
-                startParcel.Assign(target, spawnPointName);
-
-            startParcel.RequestJumpIn();
-            return true;
+            return startParcel.TryTakeAsStartupDestination(realmUrl, parcel, spawnPointName);
         }
 
         // Once the startup realm is applied, only a link to the picked realm can still join the startup destination
