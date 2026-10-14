@@ -358,6 +358,11 @@ namespace DCL.Lobby
             eventCardActions.EventSetAsInterested -= OnEventInterestChanged;
             notificationsPanel.UnreadCountChanged -= ShowUnreadCount;
             DCLInput.Instance.UI.Close.performed -= OnUIClose;
+
+            // Undoes the startup-only enable, which bypassed the still disabled UI map.
+            if (inputData.IsStartup)
+                DCLInput.Instance.UI.Close.Disable();
+
             profileMenu.Hide();
             profileMenuCts.SafeCancelAndDispose();
             profileMenuCts = null;

@@ -155,13 +155,7 @@ namespace DCL.Settings
             if (isSectionActivated && viewRect.parent != host)
                 Deactivate();
 
-            if (viewRect.parent == host) return;
-
-            viewRect.SetParent(host, false);
-            viewRect.anchorMin = Vector2.zero;
-            viewRect.anchorMax = Vector2.one;
-            viewRect.offsetMin = Vector2.zero;
-            viewRect.offsetMax = Vector2.zero;
+            SectionHosting.MoveUnder(viewRect, host);
         }
 
         public void AttachToHome() =>

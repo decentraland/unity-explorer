@@ -29,8 +29,6 @@ using DCL.Settings;
 using DCL.Shop;
 using DCL.SpringBones;
 using DCL.Settings.Configuration;
-using DCL.UserInAppInitializationFlow;
-using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
@@ -107,11 +105,10 @@ namespace DCL.PluginSystem.Global
         private readonly IMVCManager mvcManager;
         private readonly IPlacesAPIService placesAPIService;
         private readonly IProfileRepository profileRepository;
-        private readonly IUserInAppInitializationFlow userInAppInitializationFlow;
+        private readonly UserLogout userLogout;
         private readonly SelfProfile selfProfile;
         private readonly IEquippedWearables equippedWearables;
         private readonly IEquippedEmotes equippedEmotes;
-        private readonly ICompositeWeb3Provider web3Authenticator;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
@@ -134,7 +131,6 @@ namespace DCL.PluginSystem.Global
         private readonly IRealmData realmData;
         private readonly PublishIpfsEntityCommand publishIpfsEntityCommand;
         private readonly IRendererFeaturesCache rendererFeaturesCache;
-        private readonly IProfileCache profileCache;
         private readonly IInputBlock inputBlock;
         private readonly ChatTeleporter chatTeleporter;
         private readonly ISystemMemoryCap systemMemoryCap;
@@ -211,15 +207,13 @@ namespace DCL.PluginSystem.Global
             IWearableStorage wearableStorage,
             ICharacterPreviewFactory characterPreviewFactory,
             IProfileRepository profileRepository,
-            ICompositeWeb3Provider web3Authenticator,
-            IUserInAppInitializationFlow userInAppInitializationFlow,
+            UserLogout userLogout,
             SelfProfile selfProfile,
             IEquippedWearables equippedWearables,
             IEquippedEmotes equippedEmotes,
             UnityAppWebBrowser webBrowser,
             IEmoteStorage emoteStorage,
             IRealmData realmData,
-            IProfileCache profileCache,
             CharacterPreviewEventBus characterPreviewEventBus,
             IMapPathEventBus mapPathEventBus,
             IBackpackEventBus backpackEventBus,
@@ -284,14 +278,12 @@ namespace DCL.PluginSystem.Global
             this.wearableStorage = wearableStorage;
             this.characterPreviewFactory = characterPreviewFactory;
             this.profileRepository = profileRepository;
-            this.web3Authenticator = web3Authenticator;
-            this.userInAppInitializationFlow = userInAppInitializationFlow;
+            this.userLogout = userLogout;
             this.selfProfile = selfProfile;
             this.equippedWearables = equippedWearables;
             this.equippedEmotes = equippedEmotes;
             this.webBrowser = webBrowser;
             this.realmData = realmData;
-            this.profileCache = profileCache;
             this.emoteStorage = emoteStorage;
             this.characterPreviewEventBus = characterPreviewEventBus;
             this.mapPathEventBus = mapPathEventBus;
@@ -351,6 +343,7 @@ namespace DCL.PluginSystem.Global
             settingsController?.Dispose();
             backpackSubPlugin?.Dispose();
             placeInfoPanelController?.Dispose();
+            eventInfoPanelController?.Dispose();
             communitiesBrowserController?.Dispose();
             placesController?.Dispose();
             explorePanelController?.Dispose();
@@ -475,10 +468,8 @@ namespace DCL.PluginSystem.Global
             navmapCommandFactory.AttachUiControllers(placesAndEventsPanelController, searchResultPanelController,
                 searchBarController, placeInfoPanelController, eventInfoPanelController);
 
-            IMapRenderer mapRenderer = mapRendererContainer.MapRenderer;
-
             SatelliteController satelliteController = new (navmapView.GetComponentInChildren<SatelliteView>(),
-                navmapView.MapCameraDragBehaviorData, mapRenderer, webBrowser);
+                navmapView.MapCameraDragBehaviorData, webBrowser);
 
             // Kept alive by its navmap bus subscription.
             _ = new PlaceInfoToastController(navmapView.PlaceToastView,
@@ -647,7 +638,7 @@ namespace DCL.PluginSystem.Global
                     new ProfileMenuController(() => explorePanelView.ProfileMenuView,
                         web3IdentityCache,
                         webBrowser,
-                        new UserLogout(web3IdentityCache, web3Authenticator, profileCache, userInAppInitializationFlow, world, playerEntity),
+                        userLogout,
                         passportBridge,
                         profileRepositoryWrapper),
                     communitiesBrowserController,

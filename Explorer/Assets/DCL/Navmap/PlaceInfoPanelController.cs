@@ -368,23 +368,21 @@ namespace DCL.Navmap
 
         private void JumpIn()
         {
-            if (destination == currentBaseParcel)
+            Vector2Int? destinationParcel = TeleportUtils.IsRoad(place!.title) && originParcel != null ? originParcel : currentBaseParcel;
+
+            // A place with nowhere to go is not reported as a jump-in.
+            if (!place.IsWorld && destinationParcel == null) return;
+
+            if (destination.HasValue && destination == currentBaseParcel)
                 mapPathEventBus.ArrivedToDestination();
 
-            navmapBus.JumpIn(place!);
+            navmapBus.JumpIn(place);
             jumpInCancellationToken = jumpInCancellationToken.SafeRestart();
 
-            if (place!.IsWorld)
-            {
+            if (place.IsWorld)
                 chatTeleporter.TeleportToRealmAsync(place.world_name, jumpInCancellationToken.Token).SuppressToResultAsync(ReportCategory.PLACES).Forget();
-                return;
-            }
-
-            Vector2Int? destinationParcel = TeleportUtils.IsRoad(place.title) && originParcel != null ? originParcel : currentBaseParcel;
-
-            if (destinationParcel == null) return;
-
-            chatTeleporter.TeleportToParcelAsync(destinationParcel.Value, false, jumpInCancellationToken.Token).SuppressToResultAsync(ReportCategory.PLACES).Forget();
+            else
+                chatTeleporter.TeleportToParcelAsync(destinationParcel!.Value, local: false, jumpInCancellationToken.Token).SuppressToResultAsync(ReportCategory.PLACES).Forget();
         }
 
         private void Share()

@@ -127,13 +127,8 @@ namespace DCL.Places
             if (isSectionActivated && viewRect.parent != host)
                 Deactivate();
 
-            if (viewRect.parent == host) return;
+            if (!SectionHosting.MoveUnder(viewRect, host)) return;
 
-            viewRect.SetParent(host, false);
-            viewRect.anchorMin = Vector2.zero;
-            viewRect.anchorMax = Vector2.one;
-            viewRect.offsetMin = Vector2.zero;
-            viewRect.offsetMax = Vector2.zero;
             view.SetCompactLayout(host != homeHost);
         }
 

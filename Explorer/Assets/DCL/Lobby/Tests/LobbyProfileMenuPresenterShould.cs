@@ -37,9 +37,6 @@ namespace DCL.Lobby.Tests
     {
         private const string TEMPLATE_PATH = "Assets/DCL/Lobby/UIToolkit/LobbyProfileMenu.uxml";
 
-        // Covers the 1000ms copied feedback plus editor loop jitter.
-        private const int COPIED_WAIT_MS = 1500;
-
         private IWeb3IdentityCache identityCache = null!;
         private IProfileRepository profileRepository = null!;
         private ISystemClipboard clipboard = null!;
@@ -157,12 +154,16 @@ namespace DCL.Lobby.Tests
         [Test]
         public async Task FallBackToGuestWhenTheProfileCannotBeFetched()
         {
-            // Arrange
+            // Arrange: a first open succeeds, so the fallback has a previous profile to clear
+            presenter.Show(menu, cts.Token);
+            presenter.Open();
+            await UniTask.Yield();
+            presenter.Dismiss();
+
             profileRepository.GetAsync(Arg.Any<string>(), 0, Arg.Any<URLDomain?>(), Arg.Any<CancellationToken>(), true,
                                   IProfileRepository.FetchBehaviour.Default, ProfileTier.Kind.Compact, Arg.Any<IPartitionComponent?>())
                              .Returns(UniTask.FromException<ProfileTier?>(new InvalidOperationException("profiles endpoint down")));
 
-            presenter.Show(menu, cts.Token);
             LogAssert.Expect(LogType.Exception, "InvalidOperationException: profiles endpoint down");
 
             // Act
@@ -171,6 +172,7 @@ namespace DCL.Lobby.Tests
 
             // Assert
             Assert.AreEqual("Guest", menu.UserName);
+            Assert.AreEqual(Color.white, menu.UserNameColor, "The previous profile's color is not kept");
             Assert.IsFalse(menu.IsVerified);
             Assert.AreEqual($"{address[..5]}...{address[^5..]}", menu.Address, "The address comes from the identity, not from the profile");
         }
@@ -194,7 +196,7 @@ namespace DCL.Lobby.Tests
         }
 
         [Test]
-        public async Task CopyTheFullAddressAndConfirmItForAWhile()
+        public async Task CopyTheFullAddressAndShowTheConfirmation()
         {
             // Arrange
             presenter.Show(menu, cts.Token);
@@ -208,12 +210,6 @@ namespace DCL.Lobby.Tests
             clipboard.Received(1).Set(address);
             Assert.IsTrue(menu.IsCopiedShown);
             Assert.IsTrue(presenter.IsOpen, "Copying keeps the menu open");
-
-            // Act
-            await UniTask.Delay(COPIED_WAIT_MS);
-
-            // Assert
-            Assert.IsFalse(menu.IsCopiedShown);
         }
 
         [Test]

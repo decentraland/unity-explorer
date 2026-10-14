@@ -1,9 +1,13 @@
+/* Solid colors throughout: translucent white blends in linear space here and renders far lighter than the design's sRGB mix */
 .lobby-profile-menu {
     position: absolute;
     left: 0;
     top: 0;
     right: 0;
     bottom: 0;
+    --profile-menu-raised-color: rgb(34, 33, 36);
+    --profile-menu-pressed-color: rgb(45, 42, 51);
+    --profile-menu-separator-color: rgb(42, 41, 44);
 }
 
 .lobby-profile-menu__backdrop {
@@ -12,13 +16,6 @@
     top: 0;
     right: 0;
     bottom: 0;
-}
-
-/* Solid colors throughout: translucent white blends in linear space here and renders far lighter than the design's sRGB mix */
-.lobby-profile-menu {
-    --profile-menu-raised-color: rgb(34, 33, 36);
-    --profile-menu-pressed-color: rgb(45, 42, 51);
-    --profile-menu-separator-color: rgb(42, 41, 44);
 }
 
 /* Opaque so the lobby never shows through; top and right come from the hosting document */

@@ -18,7 +18,7 @@ using Utility;
 
 namespace DCL.Navmap
 {
-    public class EventInfoPanelController
+    public class EventInfoPanelController : IDisposable
     {
         private readonly EventInfoPanelView view;
         private readonly INavmapBus navmapBus;
@@ -64,6 +64,13 @@ namespace DCL.Navmap
             view.ShareButton.onClick.AddListener(Share);
             view.JumpInButton.onClick.AddListener(JumpIn);
             view.EventsScrollRect.SetScrollSensitivityBasedOnPlatform();
+        }
+
+        public void Dispose()
+        {
+            interestedCancellationToken.SafeCancelAndDispose();
+            updateLayoutCancellationToken.SafeCancelAndDispose();
+            jumpInCancellationToken.SafeCancelAndDispose();
         }
 
         public void Show()
@@ -205,7 +212,7 @@ namespace DCL.Navmap
 
             navmapBus.JumpIn(place!);
             jumpInCancellationToken = jumpInCancellationToken.SafeRestart();
-            chatTeleporter.TeleportToParcelAsync(new Vector2Int(@event.Value.x, @event.Value.y), false, jumpInCancellationToken.Token).SuppressToResultAsync(ReportCategory.EVENTS).Forget();
+            chatTeleporter.TeleportToParcelAsync(new Vector2Int(@event.Value.x, @event.Value.y), local: false, jumpInCancellationToken.Token).SuppressToResultAsync(ReportCategory.EVENTS).Forget();
         }
     }
 }

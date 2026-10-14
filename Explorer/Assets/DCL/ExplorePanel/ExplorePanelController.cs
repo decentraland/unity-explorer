@@ -36,6 +36,7 @@ namespace DCL.ExplorePanel
     public class ExplorePanelController : ControllerBase<ExplorePanelView, ExplorePanelParameter>, IReshowController<ExplorePanelParameter>
     {
         private readonly BackpackController backpackController;
+        private readonly IHostableSection[] hostableSections;
         private readonly ShopController shopController;
         private readonly SidebarProfileButtonPresenter profileButtonPresenter;
         private readonly ProfileMenuController profileMenuController;
@@ -94,6 +95,7 @@ namespace DCL.ExplorePanel
             NavmapController = navmapController;
             SettingsController = settingsController;
             this.backpackController = backpackController;
+            hostableSections = new IHostableSection[] { backpackController, navmapController, placesController, eventsController, settingsController };
             CameraReelController = cameraReelController;
             this.profileButtonPresenter = profileButtonPresenter;
             dclInput = DCLInput.Instance;
@@ -228,11 +230,8 @@ namespace DCL.ExplorePanel
         // A section view may still sit under a modal host, so each is reclaimed before the show.
         protected override void OnBeforeViewShow()
         {
-            backpackController.AttachToHome();
-            NavmapController.AttachToHome();
-            PlacesController.AttachToHome();
-            EventsController.AttachToHome();
-            SettingsController.AttachToHome();
+            foreach (IHostableSection section in hostableSections)
+                section.AttachToHome();
         }
 
         protected override void OnViewShow()

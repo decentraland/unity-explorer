@@ -12,6 +12,7 @@ using DCL.UI.SystemMenu;
 using DCL.Utilities.Extensions;
 using DCL.Utility;
 using DCL.Utility.Types;
+using DCL.Web3;
 using DCL.Web3.Identities;
 using MVC;
 using System;
@@ -28,6 +29,8 @@ namespace DCL.Lobby
     {
         private const string GUEST_NAME = "Guest";
         private const int COPIED_FEEDBACK_MS = 1000;
+
+        private static readonly Color GUEST_NAME_COLOR = Color.white;
 
         /// <summary>The Settings item was picked.</summary>
         public Action? SettingsRequested;
@@ -154,13 +157,14 @@ namespace DCL.Lobby
             if (identityCache.Identity == null)
             {
                 address = string.Empty;
-                ShowIdentity(menuElement, GUEST_NAME, menuElement.UserNameColor, isVerified: false);
+                menuElement.Address = string.Empty;
+                ShowIdentity(menuElement, GUEST_NAME, GUEST_NAME_COLOR, isVerified: false);
                 picture.Clear();
                 return;
             }
 
             address = identityCache.Identity.Address;
-            menuElement.Address = $"{address[..5]}...{address[^5..]}";
+            menuElement.Address = Web3Address.Shorten(address);
 
             Result<Profile.CompactInfo?> result = await profileRepository.GetCompactAsync(address, ct).SuppressToResultAsync(ReportCategory.PROFILE);
 
@@ -168,7 +172,7 @@ namespace DCL.Lobby
 
             if (!result.Success || result.Value == null)
             {
-                ShowIdentity(menuElement, GUEST_NAME, menuElement.UserNameColor, isVerified: false);
+                ShowIdentity(menuElement, GUEST_NAME, GUEST_NAME_COLOR, isVerified: false);
                 picture.Clear();
                 return;
             }

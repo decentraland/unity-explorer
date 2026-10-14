@@ -235,7 +235,6 @@ namespace DCL.Navmap
             mapRenderer.SetSharedLayer(MapLayer.ScenesOfInterest, false);
             zoomController.Deactivate();
 
-            // A kept reference would release the next renter's camera on the next Activate.
             cameraController?.Release(this);
             cameraController = null;
             navmapBus.ClearHistory();
@@ -268,13 +267,8 @@ namespace DCL.Navmap
             if (isActive && viewRect.parent != host)
                 Deactivate();
 
-            if (viewRect.parent == host) return;
+            if (!SectionHosting.MoveUnder(viewRect, host)) return;
 
-            viewRect.SetParent(host, false);
-            viewRect.anchorMin = Vector2.zero;
-            viewRect.anchorMax = Vector2.one;
-            viewRect.offsetMin = Vector2.zero;
-            viewRect.offsetMax = Vector2.zero;
             navmapView.SetCompactLayout(host != homeHost);
         }
 

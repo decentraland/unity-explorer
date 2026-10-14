@@ -64,11 +64,11 @@ namespace DCL.Events
         private int currentNumberOfDaysShowed;
         private int hiddenDayColumns;
         private EventsStateService eventsStateService = null!;
+        private ThumbnailLoader? eventCardsThumbnailLoader;
+        private ProfileRepositoryWrapper? profileRepositoryWrapper;
 
         /// <summary>Day columns the current host has room for.</summary>
         public int MaxDays => daySelectorButtons.Count - hiddenDayColumns;
-        private ThumbnailLoader? eventCardsThumbnailLoader;
-        private ProfileRepositoryWrapper? profileRepositoryWrapper;
 
         private void Awake()
         {
