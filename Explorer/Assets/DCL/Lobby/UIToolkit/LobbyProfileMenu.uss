@@ -14,21 +14,28 @@
     bottom: 0;
 }
 
+/* Solid colors throughout: translucent white blends in linear space here and renders far lighter than the design's sRGB mix */
+.lobby-profile-menu {
+    --profile-menu-raised-color: rgb(34, 33, 36);
+    --profile-menu-pressed-color: rgb(45, 42, 51);
+    --profile-menu-separator-color: rgb(42, 41, 44);
+}
+
 /* Opaque so the lobby never shows through; top and right come from the hosting document */
 .lobby-profile-menu__panel {
     position: absolute;
-    width: 380px;
+    width: 370px;
     padding: 20px 20px 0 20px;
-    border-radius: 24px;
+    border-radius: 16px;
     border-width: 1px;
-    border-color: rgba(255, 255, 255, 0.1);
-    background-color: rgb(28, 28, 30);
+    border-color: var(--profile-menu-raised-color);
+    background-color: var(--dcl-color-shadow);
     overflow: hidden;
 }
 
 .lobby-profile-menu__header {
-    margin-bottom: 20px;
-    font-size: 14px;
+    margin-bottom: 24px;
+    font-size: 16px;
     -unity-font-definition: var(--dcl-font-inter-semibold);
     color: var(--dcl-color-snow);
 }
@@ -44,7 +51,7 @@
     width: 72px;
     height: 72px;
     border-radius: 36px;
-    border-width: 2px;
+    border-width: 3px;
     border-color: rgba(255, 255, 255, 0.2);
     background-color: white;
     background-image: url('/Assets/DCL/Chat/Textures/DefaultProfileThumbnail.png');
@@ -73,7 +80,7 @@
 /* The name takes the profile color, set inline by the element */
 .lobby-profile-menu__name {
     flex-shrink: 1;
-    font-size: 20px;
+    font-size: 22px;
     -unity-font-definition: var(--dcl-font-inter-semibold);
     color: var(--dcl-color-snow);
     white-space: nowrap;
@@ -84,9 +91,9 @@
 .lobby-profile-menu__verified {
     display: none;
     flex-shrink: 0;
-    width: 22px;
-    height: 22px;
-    margin-left: 4px;
+    width: 16px;
+    height: 16px;
+    margin-left: 6px;
     background-image: var(--sprite-common__icon-verified);
 }
 
@@ -96,7 +103,7 @@
 
 .lobby-profile-menu__caption {
     margin-top: 2px;
-    font-size: 14px;
+    font-size: 15px;
     -unity-font-definition: var(--dcl-font-inter-regular);
     color: var(--dcl-color-silver);
 }
@@ -108,16 +115,16 @@
 }
 
 .lobby-profile-menu__address {
-    font-size: 14px;
+    font-size: 15px;
     -unity-font-definition: var(--dcl-font-inter-regular);
     color: var(--dcl-color-snow);
 }
 
 /* Only the glyph responds to the hover, never a button rect */
 .lobby-profile-menu__copy {
-    width: 22px;
-    height: 22px;
-    margin-left: 8px;
+    width: 16px;
+    height: 16px;
+    margin-left: 10px;
     background-color: transparent;
     background-image: var(--sprite-common__icon-copy);
     -unity-background-image-tint-color: var(--dcl-color-silver);
@@ -173,12 +180,18 @@
 /* Negative side margins reach past the panel padding */
 .lobby-profile-menu__separator {
     height: 1px;
-    margin: 16px -20px;
-    background-color: rgba(255, 255, 255, 0.1);
+    margin: 12px -20px;
+    background-color: var(--profile-menu-separator-color);
 }
 
+.lobby-profile-menu__separator--identity {
+    margin-top: 24px;
+}
+
+/* Negative side margins put the icon on the panel padding, in line with the header and the picture */
 .lobby-profile-menu__item {
     height: 46px;
+    margin: 0 -12px;
     padding: 0 12px;
     flex-direction: row;
     align-items: center;
@@ -187,11 +200,11 @@
 }
 
 .lobby-profile-menu__item:hover {
-    background-color: rgb(31, 31, 31);
+    background-color: var(--profile-menu-raised-color);
 }
 
 .lobby-profile-menu__item:active {
-    background-color: black;
+    background-color: var(--profile-menu-pressed-color);
 }
 
 .lobby-profile-menu__item--report-bug {
@@ -202,15 +215,16 @@
     display: flex;
 }
 
+/* 32px boxes whose textures carry their own padding, like the design's 24px icons */
 .lobby-profile-menu__item-icon {
     flex-shrink: 0;
-    width: 22px;
-    height: 22px;
+    width: 32px;
+    height: 32px;
 }
 
 .lobby-profile-menu__item-label {
     margin-left: 12px;
-    font-size: 16px;
+    font-size: 17px;
     -unity-font-definition: var(--dcl-font-inter-semibold);
     color: var(--dcl-color-snow);
 }
@@ -227,26 +241,34 @@
     background-image: var(--sprite-common__icon-debug);
 }
 
+/* The only texture without padding, so it is drawn at the glyph size of the others */
 .lobby-profile-menu__sign-out-icon {
     background-image: url('/Assets/Textures/Common/LogOutIcn.png');
+    background-size: 24px 24px;
 }
 
+/* Its door has no left padding in the texture; anchored right so the door lines up with the other glyphs and the arrow overhangs */
 .lobby-profile-menu__exit-icon {
-    background-image: url('/Assets/Textures/Common/ExitIcn.png');
+    background-image: url('/Assets/DCL/Communities/Textures/LeaveIcon.png');
+    background-size: 28px 28px;
+    background-position-x: right;
 }
 
 /* Negative margins reach the panel edges; the panel clips the corners */
 .lobby-profile-menu__footer {
+    height: 38px;
     flex-direction: row;
-    justify-content: space-around;
-    margin: 16px -20px 0 -20px;
-    padding: 14px 20px;
-    background-color: rgb(20, 20, 22);
+    justify-content: center;
+    align-items: center;
+    margin: 12px -20px 0 -20px;
+    padding: 0 20px;
+    background-color: var(--profile-menu-raised-color);
 }
 
 /* Only the text responds to the hover, never a button rect */
 .lobby-profile-menu__link {
-    font-size: 13px;
+    margin: 0 26px;
+    font-size: 14px;
     -unity-font-definition: var(--dcl-font-inter-regular);
     color: var(--dcl-color-silver);
     background-color: transparent;

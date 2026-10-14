@@ -23,7 +23,7 @@
                     </ui:VisualElement>
                 </ui:VisualElement>
             </ui:VisualElement>
-            <ui:VisualElement name="Separator" class="lobby-profile-menu__separator" picking-mode="Ignore" />
+            <ui:VisualElement name="Separator" class="lobby-profile-menu__separator lobby-profile-menu__separator--identity" picking-mode="Ignore" />
             <ui:Button name="ProfileItem" class="lobby-profile-menu__item">
                 <ui:VisualElement name="Icon" class="lobby-profile-menu__item-icon lobby-profile-menu__profile-icon" picking-mode="Ignore" />
                 <ui:Label name="Label" text="Profile" class="lobby-profile-menu__item-label" picking-mode="Ignore" />
