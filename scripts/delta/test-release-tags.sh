@@ -29,7 +29,7 @@ PASSES=0
 expect() {
   local name="$1" want="$2" got code=0
   shift 2
-  got=$(bash "$TAGS" "$@" < "$WORK/releases.json" 2> "$WORK/stderr") || code=$?
+  got=$(bash "$TAGS" "$@" < "${RELEASES:-$WORK/releases.json}" 2> "$WORK/stderr") || code=$?
   if [ "$got" = "$want" ] && [ "$code" -eq 0 ]; then
     echo "  ok   $name"
     PASSES=$((PASSES + 1))
@@ -44,7 +44,7 @@ expect() {
 expect_usage_error() {
   local name="$1" code=0
   shift
-  bash "$TAGS" "$@" < "$WORK/releases.json" > /dev/null 2>&1 || code=$?
+  bash "$TAGS" "$@" < "${RELEASES:-$WORK/releases.json}" > /dev/null 2>&1 || code=$?
   if [ "$code" -ne 0 ]; then echo "  ok   $name"; PASSES=$((PASSES + 1)); else echo "  FAIL $name: exit 0"; FAILURES=$((FAILURES + 1)); fi
 }
 
@@ -62,6 +62,24 @@ expect "keeps the two newest, prunes the next window" \
   "$(printf 'v0.185.0-alpha\nv0.184.0-alpha')" prune 2 2
 expect "window past the end" "v0.183.0-alpha" prune 4 5
 expect "nothing to prune" "" prune 10 3
+
+# v0.187 was published after v0.188: prune must still keep v0.189 and v0.188.
+cat > "$WORK/out-of-order.json" <<'JSON'
+[
+  {"tag_name": "v0.189.0-alpha", "draft": false, "published_at": "2026-10-20T10:00:00Z"},
+  {"tag_name": "v0.187.0-alpha", "draft": false, "published_at": "2026-10-16T10:00:00Z"},
+  {"tag_name": "v0.188.0-alpha", "draft": false, "published_at": "2026-10-15T10:00:00Z"},
+  {"tag_name": "v0.186.10-alpha", "draft": false, "published_at": "2026-10-08T10:00:00Z"},
+  {"tag_name": "v0.186.9-alpha", "draft": false, "published_at": "2026-10-09T10:00:00Z"}
+]
+JSON
+RELEASES="$WORK/out-of-order.json" expect "ranks by version, not publish time"   "$(printf 'v0.187.0-alpha
+v0.186.10-alpha
+v0.186.9-alpha')" prune 2 5
+RELEASES="$WORK/out-of-order.json" expect "bases still follow publish time"   "$(printf 'v0.187.0-alpha
+v0.188.0-alpha')" bases 2 v0.189.0-alpha
+echo '[{"tag_name": "vNext", "draft": false, "published_at": "2026-10-20T10:00:00Z"}]' > "$WORK/malformed.json"
+RELEASES="$WORK/malformed.json" expect_usage_error "fails on a malformed v* tag instead of pruning" prune 2 5
 
 echo "usage"
 expect_usage_error "unknown mode" list

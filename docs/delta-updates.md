@@ -88,13 +88,17 @@ into X (live) and into X-1 (just replaced) stay, so:
   whole release cycle, so nothing has to track in-flight downloads;
 - a rollback by [`on-delete-release.yml`](../.github/workflows/on-delete-release.yml) to X-1 finds
   its patches still there;
-- the rule depends only on release order. A hotfix shortens the window to hours, still far longer
-  than any download.
+- the rule depends only on version order (a late publish of an older tag cannot evict a newer
+  release's series). A hotfix shortens the window to hours, still far longer than any download.
 
 Deleting a published release also removes its `delta/` folder in `on-delete-release.yml`, since the
 prune only ranks releases that still exist. Its zip stays. GitHub sends no `deleted` event for
 drafts: a draft's folder is replaced by the next build of the same tag, and a tag that is never
 published keeps its folder until it is removed by hand.
+
+Publishing a release as a pre-release removes its `delta/` folder right away in
+`s3-latest-release.yml`: `/releases/latest` never serves it and the prune never ranks it. Turning
+it into a full release later does not regenerate the patches; launchers use the zip for it.
 
 ## Manifest
 

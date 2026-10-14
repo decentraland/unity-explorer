@@ -103,3 +103,25 @@ jobs:
             echo "Removing delta patches into $tag"
             aws s3 rm --recursive --only-show-errors "s3://$EXPLORER_TEAM_S3_BUCKET/$RELEASES_PATH/$tag/delta/"
           done < prune.txt
+
+  # A release published as a pre-release is never served by /releases/latest and never
+  # ranked by the prune above, so its delta patches would otherwise stay forever.
+  drop-prerelease-delta-patches:
+    if: >-
+      github.event.action == 'published' && github.event.release.prerelease &&
+      startsWith(github.event.release.tag_name, 'v')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: Remove the pre-release's delta patches
+        env:
+          AWS_MAX_ATTEMPTS: 3
+          AWS_RETRY_MODE: standard
+          AWS_ACCESS_KEY_ID: ${{ secrets.EXPLORER_TEAM_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.EXPLORER_TEAM_AWS_SECRET_ACCESS_KEY }}
+          EXPLORER_TEAM_S3_BUCKET: ${{ secrets.EXPLORER_TEAM_S3_BUCKET }}
+          RELEASES_PATH: ${{ format('@dcl/{0}/releases', github.event.repository.name) }}
+          TAG: ${{ github.event.release.tag_name }}
+        run: aws s3 rm --recursive --only-show-errors "s3://$EXPLORER_TEAM_S3_BUCKET/$RELEASES_PATH/$TAG/delta/"
