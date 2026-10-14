@@ -85,7 +85,7 @@ namespace DCL.VoiceChat.UI
             {
                 await UniTask.WaitUntil(
                     () => loadingStatus.CurrentStage.Value == LoadingStatus.LoadingStage.Completed && coveringViews == 0
-                          && stateModel.ActiveSuppression.Value != SuppressionReason.Guest,
+                          && !stateModel.IsSuppressedBy(SuppressionReason.Guest),
                     cancellationToken: ct);
 
                 // Count the display up front: a user who quits without pressing either button has still seen the tip.
