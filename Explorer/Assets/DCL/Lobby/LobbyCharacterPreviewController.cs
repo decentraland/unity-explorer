@@ -1,10 +1,8 @@
 using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.CharacterPreview;
 using DCL.Diagnostics;
-using DCL.Optimization.Pools;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -54,7 +52,7 @@ namespace DCL.Lobby
             ApplyAvatar(avatar, position);
 
             emotesCts = emotesCts.SafeRestart();
-            FitAndPlayFlavourEmotesAsync(emotesCts.Token).Forget();
+            PlayFlavourEmotesAsync(emotesCts.Token).Forget();
         }
 
         /// <summary>
@@ -88,6 +86,9 @@ namespace DCL.Lobby
             RenderTargetChanged -= FitStage;
             base.Dispose();
         }
+
+        protected override void OnAvatarLoaded() =>
+            FitCameraToAvatar();
 
         // The pooled camera can change with every render target, so the stage is pointed at the current one each time
         private void FitStage()
@@ -137,56 +138,12 @@ namespace DCL.Lobby
             catch (Exception e) { ReportHub.LogException(e, ReportCategory.UI); }
         }
 
-        private async UniTaskVoid FitAndPlayFlavourEmotesAsync(CancellationToken ct)
-        {
-            try
-            {
-                while (previewController is { } preview && !preview.IsAvatarLoaded())
-                    await UniTask.Yield(ct);
-
-                FitCameraToAvatar();
-                await PlayFlavourEmotesAsync(ct);
-            }
-            catch (OperationCanceledException) { }
-            catch (Exception e) { ReportHub.LogException(e, ReportCategory.UI); }
-        }
-
-        // Wearables are skinned on the GPU, which leaves their renderers with placeholder bounds; the rest-pose meshes are the avatar's real size
         private void FitCameraToAvatar()
         {
-            Camera? camera = previewCamera;
-            CharacterPreviewAvatarContainer? container = camera != null ? camera.GetComponentInParent<CharacterPreviewAvatarContainer>() : null;
-            AvatarBase? avatarBase = container != null ? container.GetComponentInChildren<AvatarBase>() : null;
-
-            if (avatarBase == null || !TryGetRestPoseBounds(avatarBase, out Bounds bounds))
-            {
+            if (previewController is { } preview && preview.TryGetAvatarWorldBounds(out Vector3 feet, out Bounds bounds))
+                stage.FitAvatar(feet, bounds.max.y - feet.y);
+            else
                 stage.FitAvatar(Vector3.zero, 0f);
-                return;
-            }
-
-            stage.FitAvatar(avatarBase.transform.position, bounds.max.y);
-        }
-
-        // Unions the rest-pose mesh bounds, in avatar space, of every wearable piece rendered through a MeshRenderer
-        private static bool TryGetRestPoseBounds(AvatarBase avatarBase, out Bounds bounds)
-        {
-            bounds = default(Bounds);
-            var found = false;
-
-            using PoolExtensions.Scope<List<MeshFilter>> filters = avatarBase.gameObject.GetComponentsInChildrenIntoPooledList<MeshFilter>();
-
-            foreach (MeshFilter filter in filters.Value)
-            {
-                Mesh? mesh = filter.sharedMesh;
-                if (mesh == null || !filter.TryGetComponent(out MeshRenderer _)) continue;
-
-                if (found) bounds.Encapsulate(mesh.bounds);
-                else bounds = mesh.bounds;
-
-                found = true;
-            }
-
-            return found;
         }
 
         private async UniTask PlayFlavourEmotesAsync(CancellationToken ct)

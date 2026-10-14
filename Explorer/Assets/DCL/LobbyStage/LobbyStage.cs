@@ -60,7 +60,7 @@ namespace DCL.Lobby
         private float avatarHeight;
         private float currentPullBack = 1f;
         private Vector3 cameraPositionBeforePullBack;
-        private bool cameraPulledBack;
+        private Transform? pulledBackCamera;
 
         /// <summary>
         ///     Switches the whole look: image, blend, tints and props.
@@ -179,6 +179,9 @@ namespace DCL.Lobby
         {
             RenderPipelineManager.beginCameraRendering -= OnBeginCameraRendering;
             RenderPipelineManager.endCameraRendering -= OnEndCameraRendering;
+            RestoreCamera();
+            avatarHeight = 0f;
+            currentPullBack = 1f;
 
 #if UNITY_EDITOR
             LobbyStagePreset.AnyChanged -= OnAnyPresetChanged;
@@ -229,15 +232,22 @@ namespace DCL.Lobby
 
         private void OnEndCameraRendering(ScriptableRenderContext _, Camera camera)
         {
-            if (camera != trackedCamera || !cameraPulledBack) return;
+            if (camera != trackedCamera) return;
 
-            camera.transform.position = cameraPositionBeforePullBack;
-            cameraPulledBack = false;
+            RestoreCamera();
         }
 
-        // Scaling about the avatar's feet keeps them and the floor where they were on screen
+        private void RestoreCamera()
+        {
+            if (pulledBackCamera != null) pulledBackCamera.position = cameraPositionBeforePullBack;
+            pulledBackCamera = null;
+        }
+
+        // Scaling about the avatar's feet keeps them and the floor where they were on screen; a pull left unrestored by a skipped end of render is undone first, so it never compounds
         private void PullCameraBack(Camera camera)
         {
+            RestoreCamera();
+
             Transform cameraTransform = camera.transform;
             Vector3 pivot = avatarFeet;
             float targetPullBack = RequiredPullBack(camera, pivot);
@@ -249,7 +259,7 @@ namespace DCL.Lobby
             if (currentPullBack <= 1f) return;
 
             cameraPositionBeforePullBack = cameraTransform.position;
-            cameraPulledBack = true;
+            pulledBackCamera = cameraTransform;
             cameraTransform.position = pivot + ((cameraPositionBeforePullBack - pivot) * currentPullBack);
         }
 
