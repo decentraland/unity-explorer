@@ -3,19 +3,40 @@
 
 use nutype::nutype;
 
-/// No empty, `.` or `..` segment; no `\` (a Windows separator), `:` (drive letters, NTFS
-/// streams) or control character.
+/// A control character, `\` (a Windows separator), `:` (drive letters, NTFS streams) or one of
+/// `< > " | ? *`, which Win32 refuses in a name.
+pub fn has_unsafe_char(text: &str) -> bool {
+    text.chars()
+        .any(|c: char| c.is_control() || matches!(c, '\\' | ':' | '<' | '>' | '"' | '|' | '?' | '*'))
+}
+
+/// `CON`, `PRN`, `AUX`, `NUL`, `COM1` to `COM9` and `LPT1` to `LPT9`, with or without an
+/// extension: Win32 opens the device instead of a file of that name.
+fn is_windows_device(segment: &str) -> bool {
+    let stem: String = segment.split('.').next().unwrap_or_default().to_ascii_uppercase();
+    matches!(stem.as_str(), "CON" | "PRN" | "AUX" | "NUL")
+        || ((stem.starts_with("COM") || stem.starts_with("LPT"))
+            && stem.len() == 4
+            && stem.ends_with(|c: char| ('1'..='9').contains(&c)))
+}
+
+/// No empty, `.` or `..` segment, no segment ending in `.` or a space (NTFS drops them, so two
+/// names on a Unix runner are one on Windows), no Windows device name, and no unsafe character.
 fn is_rel_path(value: &str) -> bool {
-    let unsafe_char: bool = value.chars().any(|c: char| c.is_control() || c == '\\' || c == ':');
-    let unsafe_segment: bool = value.split('/').any(|s: &str| s.is_empty() || s == "." || s == "..");
-    !unsafe_char && !unsafe_segment
+    let unsafe_segment: bool = value
+        .split('/')
+        .any(|s: &str| s.is_empty() || s == "." || s == ".." || s.ends_with(['.', ' ']) || is_windows_device(s));
+    !has_unsafe_char(value) && !unsafe_segment
+}
+
+/// Lowercase hexadecimal digits only.
+pub fn is_lower_hex(text: &str) -> bool {
+    text.chars()
+        .all(|c: char| c.is_ascii_digit() || ('a'..='f').contains(&c))
 }
 
 fn is_sha256(value: &str) -> bool {
-    value.len() == 64
-        && value
-            .chars()
-            .all(|c: char| c.is_ascii_digit() || ('a'..='f').contains(&c))
+    value.len() == 64 && is_lower_hex(value)
 }
 
 fn is_mode(value: &str) -> bool {
@@ -71,6 +92,11 @@ mod tests {
     #[case("Data/space dir/asset file.bin")]
     #[case("x.app/Contents/Info.plist")]
     #[case(".hidden")]
+    #[case("COM10")]
+    #[case("CONFIG")]
+    #[case("console.log")]
+    #[case("lpt")]
+    #[case("a.b.c")]
     fn rel_path_accepts(#[case] path: &str) -> anyhow::Result<()> {
         let parsed: RelPath = RelPath::try_new(path.to_owned())?;
         anyhow::ensure!(parsed.as_str() == path);
@@ -92,6 +118,20 @@ mod tests {
     #[case("a\u{0}b")]
     #[case("a\nb")]
     #[case("a\tb")]
+    #[case("Decentraland.exe.")]
+    #[case("Foo.dll ")]
+    #[case("sub/trailing. /x")]
+    #[case("CON")]
+    #[case("con.txt")]
+    #[case("Data/aux")]
+    #[case("COM1")]
+    #[case("lpt9.log")]
+    #[case("a<b")]
+    #[case("a>b")]
+    #[case("a\"b")]
+    #[case("a|b")]
+    #[case("a?b")]
+    #[case("a*b")]
     fn rel_path_refuses(#[case] path: &str) -> anyhow::Result<()> {
         anyhow::ensure!(RelPath::try_new(path.to_owned()).is_err(), "accepted {path:?}");
         Ok(())

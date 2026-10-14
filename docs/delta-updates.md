@@ -38,10 +38,8 @@ build-release-main.yml (push to main)
     +--> delta              build-release-delta.yml (needs: build)
     |                         plan:  refuse a published tag, pick the last N published releases
     |                         delta: [windows64 on ubuntu, macos on macos], a state machine
-    |                                drained in YAML slices (`delta run --until <state>`):
-    |                                Requested -> Unpublished -> Cleared -> Downloaded -> Extracted
-    |                                -> Scanned -> Encoded -> Verified -> Prepared -> Rechecked
-    |                                -> PatchesUploaded -> ReadyToPublish -> Published (manifest last)
+    |                                drained in YAML slices (`delta run --until <state>`),
+    |                                see "Lifecycle" below; the manifest goes out last
     v  (workflow_run: success)
 build-release-main-page.yml  -> draft GitHub release
     |
@@ -58,9 +56,10 @@ s3-latest-release.yml       -> releases/latest.json, then prune old delta/ folde
   generate or verify is left out of the manifest; the other bases still ship. A **cancelled** delta
   job (or a lost runner) is different: the run ends `cancelled` and no draft release is created. Use
   "Re-run failed jobs" on the run, or draft the release manually.
-- A new zip invalidates every patch set made for the previous zip of the same unpublished tag, so
-  the zip upload in `build-unitycloud.yml` removes `<tag>/delta/` before it replaces the zip. Each
-  delta run removes its own `<tag>/delta/<platform>/` again as a second line of defence.
+- A new launcher zip invalidates the patch set made for the previous zip of the same unpublished
+  tag and platform, so the zip upload in `build-unitycloud.yml` removes `<tag>/delta/<platform>/`
+  before it replaces the zip (Epic zips have no patches). Each delta run removes the same folder
+  again as a second line of defence.
 - `latest.json` is unchanged and stays the only switch that makes a version live.
 - [`build-release-delta.yml`](../.github/workflows/build-release-delta.yml) also has a
   `workflow_dispatch` (`tag`, `base_count`) for regenerating a release that is **not published yet**.
@@ -129,7 +128,7 @@ it into a full release later does not regenerate the patches; launchers use the 
           "path": "GameAssembly.dll",
           "from_path": "GameAssembly.dll",
           "from_sha256": "...",
-          "patch": "from/v0.186.0-alpha/GameAssembly.dll.hdiff",
+          "patch": "from/v0.186.0-alpha/1a2b3c4d/GameAssembly.dll.hdiff",
           "patch_size": 8347352,
           "patch_sha256": "..."
         }
@@ -137,7 +136,7 @@ it into a full release later does not regenerate the patches; launchers use the 
       "whole": [
         {
           "path": "Decentraland_Data/StreamingAssets/aa/catalog.hash",
-          "patch": "from/v0.186.0-alpha/Decentraland_Data/StreamingAssets/aa/catalog.hash.hdiff",
+          "patch": "from/v0.186.0-alpha/1a2b3c4d/Decentraland_Data/StreamingAssets/aa/catalog.hash.hdiff",
           "patch_size": 58,
           "patch_sha256": "..."
         }
@@ -160,6 +159,8 @@ it into a full release later does not regenerate the patches; launchers use the 
   file, so `hpatch` is the only codec the launcher needs.
 - `deleted`: base paths absent from the new build, including the old names of renamed bundles.
 - Unchanged files appear only in `files`.
+- Folders exist only through the entries under them. A build with an empty folder is refused at
+  generation time, so a patched install never lacks a folder the zip would have created.
 
 ## Launcher contract
 
@@ -192,8 +193,10 @@ Implemented in the launcher repo:
    `ReplayPatches` cmd replays this order.
 6. Leave files that are not in the manifest alone (logs, launcher-owned files).
 7. Reject the manifest (fall back to the zip and report it) if any `path`, `from_path`, `deleted`
-   entry or `patch` is absolute, contains an empty, `.` or `..` segment, or contains `\`, `:` or a
-   control character (NUL included), and if a `symlink` target is absolute, contains `\`, `:` or a
+   entry or `patch` is absolute, contains an empty, `.` or `..` segment, a segment ending in `.` or a
+   space, a Windows device name (`CON`, `PRN`, `AUX`, `NUL`, `COM1`-`COM9`, `LPT1`-`LPT9`, with or
+   without an extension), or contains `\`, `:`, `<`, `>`, `"`, `|`, `?`, `*` or a control character
+   (NUL included), and if a `symlink` target is absolute, contains any of those characters or a
    control character, or resolves outside the install folder. On NTFS those characters reach
    outside the folder or into another file (`..\x.dll`, `C:x.dll`, `\\host\share`,
    `Decentraland.exe:ads`). CI generation (the `RelPath` and `Tree` types) already refuses such
@@ -283,6 +286,10 @@ loop:
   if run.state == until: stop, exit 0         the next `run` resumes from here
 ```
 
+Only a document paused by `--until` or ended by a msg can be resumed. A cmd interrupted mid-execution
+may have consumed its inputs (extraction removes the zips, replay removes the base builds), so a
+killed step is not resumed on its work folder: create a new run.
+
 The YAML keeps one step per phase with its own timeout, each `delta run --until <state>`; the
 machine does not know the steps exist, and a re-run of a slice whose state is already reached does
 nothing. Every value type is validated when it is read back from the document too (`Tree`, `Delta`,
@@ -301,7 +308,9 @@ crate is single-threaded: bases are processed one after another.
 ### Local run
 
 `--local <folder>` uses a folder as the bucket (`<folder>/<bucket prefix>/<tag>/<zip>`), with
-nothing published and every signature valid:
+nothing published and every signature valid. In CI the uploader is installed from the lockfile in
+`scripts/delta/uploader` and named by `CDN_UPLOADER`; a local run without it uses `npx` with the
+pinned version, which only matters for runs against the real bucket:
 
 ```bash
 cd scripts/delta && cargo build --release && DELTA=$PWD/target/release/delta

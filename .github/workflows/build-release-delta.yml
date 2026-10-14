@@ -5,7 +5,7 @@ name: Release Delta Patches
 # Generates per-file HDiffPatch patches from each of the last N published releases
 # into <tag>, plus their manifest, and uploads them next to the release zip:
 #   releases/<tag>/delta/<platform>/manifest.json
-#   releases/<tag>/delta/<platform>/from/<base tag>/<path>.hdiff
+#   releases/<tag>/delta/<platform>/from/<base tag>/<build id>/<path>.hdiff
 # The delta tool (scripts/delta, `delta --help`) runs a state machine over a run document;
 # each step below resumes it and drains it to the named state, so the step borders only give
 # timeouts and elapsed times. A failing base is dropped; the others still ship.
@@ -56,7 +56,8 @@ jobs:
   plan:
     name: Pick base releases
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # Above the sum of the step timeouts, with headroom for checkout and runner setup.
+    timeout-minutes: 30
     # A delta failure must never block the release.
     continue-on-error: true
     outputs:
@@ -65,6 +66,7 @@ jobs:
       GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v6
+        timeout-minutes: 5
         with:
           persist-credentials: false
           sparse-checkout: |
@@ -109,9 +111,10 @@ jobs:
             runner: macos-latest
             zip: Decentraland_macos.zip
     runs-on: ${{ matrix.runner }}
-    # Above the sum of the step timeouts: a hung step fails (absorbed by continue-on-error)
+    # Above the sum of the step timeouts (260 on windows64), with headroom for checkout, the
+    # summary and the artifact upload: a hung step fails (absorbed by continue-on-error)
     # instead of cancelling the job.
-    timeout-minutes: 260
+    timeout-minutes: 290
     # The bucket credentials are set only on the steps that talk to S3, as environment
     # variables the tool reads itself; they never appear on a command line.
     env:
@@ -121,6 +124,7 @@ jobs:
       GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v6
+        timeout-minutes: 5
         with:
           persist-credentials: false
           sparse-checkout: |
@@ -138,6 +142,14 @@ jobs:
         if: matrix.platform == 'windows64'
         timeout-minutes: 5
         run: sudo apt-get update -qq && sudo apt-get install -y -qq osslsigncode > /dev/null
+
+      # The uploader runs with the bucket's write credentials, so it is installed from the
+      # committed lockfile, not resolved fresh by npx.
+      - name: Install the CDN uploader (locked)
+        timeout-minutes: 5
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund --prefix scripts/delta/uploader
+          echo "CDN_UPLOADER=$PWD/scripts/delta/uploader/node_modules/.bin/cdn-uploader" >> "$GITHUB_ENV"
 
       - name: Create the run document
         timeout-minutes: 5
@@ -192,10 +204,12 @@ jobs:
 
       - name: Write job summary
         if: always() && env.RUN != ''
+        timeout-minutes: 5
         run: '[ ! -f "$RUN" ] || "$DELTA" summary "$RUN" >> "$GITHUB_STEP_SUMMARY"'
 
       - name: Keep the run document
         if: always() && env.RUN != ''
+        timeout-minutes: 5
         uses: actions/upload-artifact@v6
         with:
           name: delta-run-${{ matrix.platform }}

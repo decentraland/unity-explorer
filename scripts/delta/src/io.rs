@@ -8,14 +8,12 @@ use std::path::Path;
 use anyhow::Result;
 
 use crate::publishing::values::ETag;
-use crate::releases::github::ReleaseDto;
 use crate::releases::tag::{Platform, Tag};
 use crate::shell::hdiff::HDiffPatch;
 
-/// GitHub releases of the repository.
+/// GitHub releases of the repository, as far as a run needs them.
 pub trait Releases {
     fn is_published(&self, tag: &Tag) -> Result<bool>;
-    fn list(&self) -> Result<Vec<ReleaseDto>>;
 }
 
 /// How the CDN may cache an upload.

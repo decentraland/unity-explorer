@@ -9,7 +9,6 @@ use walkdir::{DirEntry, WalkDir};
 use crate::builds::disk::{remove, sha256_file};
 use crate::io::{Bucket, Caching, Releases, Signer};
 use crate::publishing::values::ETag;
-use crate::releases::github::ReleaseDto;
 use crate::releases::tag::{Platform, Tag};
 
 /// A bucket kept in a folder: key `a/b` is the file `<root>/a/b`. The `ETag` is the file's
@@ -65,20 +64,15 @@ impl Bucket for FolderBucket {
     }
 }
 
-/// Fixed answers about GitHub releases.
+/// Only the listed tags are published.
 #[derive(Debug, Clone, Default)]
 pub struct FixedReleases {
     pub published: Vec<Tag>,
-    pub listed: Vec<ReleaseDto>,
 }
 
 impl Releases for FixedReleases {
     fn is_published(&self, tag: &Tag) -> Result<bool> {
         Ok(self.published.contains(tag))
-    }
-
-    fn list(&self) -> Result<Vec<ReleaseDto>> {
-        Ok(self.listed.clone())
     }
 }
 

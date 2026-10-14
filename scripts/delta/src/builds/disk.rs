@@ -95,6 +95,13 @@ fn check_link_on_disk(root: &Path, link: &Path, rel: &RelPath, target: &str) -> 
 fn scan_entry(root: &Path, entry: &DirEntry, entries: &mut BTreeMap<RelPath, Node>) -> Result<()> {
     let path: &Path = entry.path();
     if entry.file_type().is_dir() {
+        // Folders exist only through the entries under them, so an empty one has no place in a
+        // patch set and would be missing from a patched install.
+        ensure!(
+            path == root || fs::read_dir(path)?.next().is_some(),
+            "empty directory {}: not representable in a patch set",
+            path.display()
+        );
         return Ok(());
     }
     let rel: RelPath = rel_path(root, path)?;
@@ -352,6 +359,17 @@ mod tests {
         let file: std::path::PathBuf = dir.path().join("a");
         fs::write(&file, b"abc")?;
         ensure!(sha256_file(&file)?.to_string() == "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad");
+        Ok(())
+    }
+
+    #[test]
+    fn scan_refuses_an_empty_directory() -> Result<()> {
+        let dir: tempfile::TempDir = tempfile::tempdir()?;
+        fs::write(dir.path().join("a"), b"a")?;
+        fs::create_dir(dir.path().join("empty"))?;
+        ensure!(super::scan(dir.path()).is_err());
+        fs::write(dir.path().join("empty").join("b"), b"b")?;
+        ensure!(super::scan(dir.path())?.entries().len() == 2);
         Ok(())
     }
 

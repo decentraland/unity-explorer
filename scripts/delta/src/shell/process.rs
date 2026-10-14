@@ -1,6 +1,7 @@
 //! Running external tools.
 
 use std::ffi::OsStr;
+use std::path::Path;
 use std::process::{Command, Output, Stdio};
 
 use anyhow::{Context, Result, ensure};
@@ -19,8 +20,14 @@ where
 }
 
 /// The values that must never reach an error message, which ends up in the run document and
-/// the job summary: the bucket name and the access key id.
-const SECRET_VARIABLES: [&str; 2] = ["EXPLORER_TEAM_S3_BUCKET", "AWS_ACCESS_KEY_ID"];
+/// the job summary: the bucket name and every credential the tools run with.
+const SECRET_VARIABLES: [&str; 5] = [
+    "EXPLORER_TEAM_S3_BUCKET",
+    "AWS_ACCESS_KEY_ID",
+    "AWS_SECRET_ACCESS_KEY",
+    "AWS_SESSION_TOKEN",
+    "GH_TOKEN",
+];
 
 /// `text` with every one of `values` replaced by `***`.
 fn redact(text: String, values: &[String]) -> String {
@@ -61,6 +68,11 @@ where
 
 pub fn stdout_text(output: &Output) -> String {
     String::from_utf8_lossy(&output.stdout).trim().to_owned()
+}
+
+pub fn path_text(path: &Path) -> Result<&str> {
+    path.to_str()
+        .with_context(|| format!("non-UTF-8 path {}", path.display()))
 }
 
 #[cfg(test)]

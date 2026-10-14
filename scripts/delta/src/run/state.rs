@@ -59,7 +59,7 @@ impl Release {
         self.work.join("bases").join(base.to_string())
     }
 
-    /// Patches before verification: `staging/from/<base>/<path>.hdiff`.
+    /// Patches before verification: `staging/from/<base>/<build id>/<path>.hdiff`.
     pub fn staging(&self) -> PathBuf {
         self.work.join("staging")
     }
@@ -164,7 +164,7 @@ pub struct Upload {
 /// any       -> Failed
 /// ```
 ///
-/// `Published` and `Failed` are terminal. The variant's doc says what the state guarantees.
+/// `Published` and `Failed` are terminal.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "state")]
 pub enum State {

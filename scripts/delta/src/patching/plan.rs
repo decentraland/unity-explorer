@@ -6,7 +6,8 @@ use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 
 use crate::builds::tree::{Node, Tree};
-use crate::builds::values::RelPath;
+use crate::builds::values::{RelPath, is_lower_hex};
+use crate::publishing::layout::patch_folder;
 use crate::releases::tag::Tag;
 
 /// How one file of the target build is produced.
@@ -38,10 +39,7 @@ pub struct Plan {
 fn bundle_key(path: &RelPath) -> Option<&str> {
     let stem: &str = path.as_str().strip_suffix(".bundle")?;
     let (name, hash): (&str, &str) = stem.rsplit_once('_')?;
-    let is_hash: bool = hash.len() == 32
-        && hash
-            .chars()
-            .all(|c: char| c.is_ascii_digit() || ('a'..='f').contains(&c));
+    let is_hash: bool = hash.len() == 32 && is_lower_hex(hash);
     is_hash.then_some(name)
 }
 
@@ -108,7 +106,7 @@ pub fn prefer_whole(diff_size: u64, whole_size: u64) -> bool {
 /// names the release build, so a rebuild of the same tag never writes under a key a CDN edge may
 /// already hold as immutable.
 pub fn patch_file(base: &Tag, build_id: &str, path: &RelPath) -> Result<RelPath> {
-    let text: String = format!("from/{base}/{build_id}/{path}.hdiff");
+    let text: String = format!("{}/{path}.hdiff", patch_folder(base, build_id));
     RelPath::try_new(text.clone()).with_context(|| format!("invalid patch path {text:?}"))
 }
 

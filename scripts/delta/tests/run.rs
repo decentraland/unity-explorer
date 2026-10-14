@@ -507,6 +507,28 @@ fn a_zip_replaced_during_the_run_is_not_published() -> Result<()> {
         !fixture.prefix().join("manifest.json").exists(),
         "nothing was published"
     );
+    ensure!(!fixture.prefix().join("from").exists(), "no patch was uploaded either");
+    Ok(())
+}
+
+#[test]
+fn a_zip_replaced_after_the_patch_upload_holds_back_the_manifest() -> Result<()> {
+    let Some(differ) = tools()? else { return Ok(()) };
+    let fixture: Fixture = Fixture::new()?;
+    fixture.upload_zips()?;
+    let world: World = World::new(&fixture, differ);
+    let document: PathBuf = fixture.create_run(&[BASE], Platform::Windows64)?;
+    let paused: Run = world.run(&document, Some("PatchesUploaded"))?;
+    ensure!(paused.state.name() == "PatchesUploaded", "{:?}", failure(&paused));
+    ensure!(fixture.prefix().join("from").exists(), "the patches are up");
+    write(&fixture.zip_key(RELEASE)?, b"a later build of the same tag")?;
+    let run: Run = world.run(&document, None)?;
+    let reason: &str = failure(&run).context("the run should fail")?;
+    ensure!(reason.contains("changed in the bucket"), "{reason}");
+    ensure!(
+        !fixture.prefix().join("manifest.json").exists(),
+        "the manifest was held back"
+    );
     Ok(())
 }
 

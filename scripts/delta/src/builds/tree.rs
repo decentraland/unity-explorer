@@ -7,7 +7,7 @@ use anyhow::{Result, bail, ensure};
 use relative_path::{Component, RelativePath, RelativePathBuf};
 use serde::{Deserialize, Serialize};
 
-use crate::builds::values::{Mode, RelPath, Sha256};
+use crate::builds::values::{Mode, RelPath, Sha256, has_unsafe_char};
 
 /// One entry of a build. Folders are implied by the paths.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -88,13 +88,12 @@ pub(crate) fn leaf_ancestor<'a, V>(path: &RelPath, entries: &'a BTreeMap<RelPath
     None
 }
 
-/// A link target must be relative, free of `\`, `:` and control characters, and must not climb
+/// A link target must be relative, free of the characters `RelPath` refuses, and must not climb
 /// above the build root when resolved from the link's folder. Links through other links are
 /// checked on disk by the scan.
 pub fn check_link(path: &RelPath, target: &str) -> Result<()> {
-    let unsafe_char: bool = target.chars().any(|c: char| c.is_control() || c == '\\' || c == ':');
     ensure!(
-        !unsafe_char,
+        !has_unsafe_char(target),
         "unsupported character in the target of link {path}: {target:?}"
     );
     ensure!(

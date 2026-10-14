@@ -7,7 +7,7 @@ use anyhow::{Context, Result};
 use clap::builder::PossibleValuesParser;
 use clap::{Parser, Subcommand};
 
-use delta::io::{Io, Releases};
+use delta::io::{Io, Releases as _};
 use delta::publishing::values::ZipName;
 use delta::releases::github::{Release as PublishedRelease, explorer_releases, pick_bases, prune_targets};
 use delta::releases::tag::{Platform, Tag};
@@ -78,8 +78,8 @@ enum Operation {
     Summary { document: PathBuf },
 }
 
-fn published_releases(releases: &dyn Releases) -> Result<Vec<PublishedRelease>> {
-    explorer_releases(&releases.list()?)
+fn published_releases() -> Result<Vec<PublishedRelease>> {
+    explorer_releases(&GhReleases.list()?)
 }
 
 fn operate(operation: Operation) -> Result<ExitCode> {
@@ -97,11 +97,11 @@ fn operate(operation: Operation) -> Result<ExitCode> {
             log(&format!("{tag} has no published release"));
         }
         Operation::PickBases { count, current } => {
-            let bases: Vec<Tag> = pick_bases(&published_releases(&GhReleases)?, count, &current);
+            let bases: Vec<Tag> = pick_bases(&published_releases()?, count, &current);
             println!("{}", serde_json::to_string(&bases)?);
         }
         Operation::ListPrunable { keep, window, live } => {
-            for tag in prune_targets(&published_releases(&GhReleases)?, keep, window, live.as_ref()) {
+            for tag in prune_targets(&published_releases()?, keep, window, live.as_ref()) {
                 println!("{tag}");
             }
         }

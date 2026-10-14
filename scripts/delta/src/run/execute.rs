@@ -16,7 +16,7 @@ use crate::io::{Caching, Io};
 use crate::patching::delta::Delta;
 use crate::patching::disk::{encode, rebuild};
 use crate::patching::plan::Plan;
-use crate::publishing::layout::UploadLayout;
+use crate::publishing::layout::{UploadLayout, base_folder};
 use crate::publishing::values::ETag;
 use crate::releases::tag::{Platform, Tag};
 use crate::run::fsm::{Cmd, Fetch, Msg, Rebuilt, Replay, Unpack};
@@ -167,7 +167,7 @@ fn encode_patches(staging: &Path, build_id: &str, release: &Build, bases: Vec<(T
         match encode(&plan, &base, build_id, &build, release, staging, &io.hdiff) {
             Ok(delta) => encoded.push((base, delta)),
             Err(error) => {
-                let partial: PathBuf = staging.join("from").join(base.to_string());
+                let partial: PathBuf = staging.join(base_folder(&base));
                 failed.push((base, discard(&[&partial, &build.root], &error)));
             }
         }

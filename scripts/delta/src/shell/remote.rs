@@ -12,7 +12,7 @@ use crate::io::{Bucket, Caching, Releases, Signer};
 use crate::publishing::values::ETag;
 use crate::releases::github::{ReleaseDto, read_published};
 use crate::releases::tag::{Platform, Tag};
-use crate::shell::process::{capture, redacted, run, stdout_text};
+use crate::shell::process::{capture, path_text, redacted, run, stdout_text};
 
 fn variable(name: &str) -> Result<String> {
     let value: String = env::var(name).with_context(|| format!("{name} is not set"))?;
@@ -20,14 +20,18 @@ fn variable(name: &str) -> Result<String> {
     Ok(value)
 }
 
-fn path_text(path: &Path) -> Result<&str> {
-    path.to_str()
-        .with_context(|| format!("non-UTF-8 path {}", path.display()))
-}
-
 /// GitHub releases of `$GITHUB_REPOSITORY`, through `gh` (authenticated by `GH_TOKEN`).
 #[derive(Debug, Default)]
 pub struct GhReleases;
+
+impl GhReleases {
+    /// Every release of the repository, as the API lists them.
+    pub fn list(&self) -> Result<Vec<ReleaseDto>> {
+        let repository: String = variable("GITHUB_REPOSITORY")?;
+        let output: Output = run("gh", ["api", &format!("repos/{repository}/releases?per_page=100")])?;
+        serde_json::from_slice(&output.stdout).context("invalid releases list")
+    }
+}
 
 impl Releases for GhReleases {
     fn is_published(&self, tag: &Tag) -> Result<bool> {
@@ -36,19 +40,15 @@ impl Releases for GhReleases {
         read_published(
             output.status.success(),
             &String::from_utf8_lossy(&output.stdout),
-            &String::from_utf8_lossy(&output.stderr),
+            &redacted(String::from_utf8_lossy(&output.stderr).into_owned()),
         )
-    }
-
-    fn list(&self) -> Result<Vec<ReleaseDto>> {
-        let repository: String = variable("GITHUB_REPOSITORY")?;
-        let output: Output = run("gh", ["api", &format!("repos/{repository}/releases?per_page=100")])?;
-        serde_json::from_slice(&output.stdout).context("invalid releases list")
     }
 }
 
 /// The bucket `$EXPLORER_TEAM_S3_BUCKET`: reads and removals through the `aws` CLI, uploads
-/// through `npx @dcl/cdn-uploader`, pinned: it runs with the bucket's write credentials.
+/// through `@dcl/cdn-uploader`, which runs with the bucket's write credentials: the program
+/// named by `$CDN_UPLOADER` (CI installs it from the committed lockfile in
+/// `scripts/delta/uploader`), else `npx` with the pinned version.
 #[derive(Debug, Default)]
 pub struct S3Bucket;
 
@@ -122,8 +122,11 @@ impl Bucket for S3Bucket {
 
     fn upload(&self, folder: &Path, prefix: &str, caching: Caching) -> Result<()> {
         let bucket: String = variable("EXPLORER_TEAM_S3_BUCKET")?;
-        let mut args: Vec<&str> = vec![
-            "@dcl/cdn-uploader@1.5.0",
+        let (program, mut args): (String, Vec<&str>) = match env::var("CDN_UPLOADER") {
+            Ok(installed) if !installed.is_empty() => (installed, Vec::new()),
+            _ => ("npx".to_owned(), vec!["@dcl/cdn-uploader@1.5.0"]),
+        };
+        args.extend([
             "--bucket",
             &bucket,
             "--local-folder",
@@ -132,11 +135,11 @@ impl Bucket for S3Bucket {
             prefix,
             "--variant",
             "uncompressed",
-        ];
+        ]);
         if caching == Caching::Immutable {
             args.push("--immutable");
         }
-        run("npx", args)?;
+        run(&program, args)?;
         Ok(())
     }
 }

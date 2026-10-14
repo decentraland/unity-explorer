@@ -7,7 +7,7 @@ use std::path::{Path, PathBuf};
 use anyhow::{Context, Result, ensure};
 
 use crate::builds::disk::{remove, sha256_file};
-use crate::shell::process::run;
+use crate::shell::process::{path_text, run};
 
 pub const VERSION: &str = "v5.1.3";
 /// Patch size over speed; the same flags give the same patches on every run.
@@ -94,37 +94,36 @@ pub struct HDiffPatch {
 }
 
 impl HDiffPatch {
-    pub fn new(hdiffz: String, hpatchz: String) -> HDiffPatch {
-        HDiffPatch { hdiffz, hpatchz }
-    }
-
     pub fn from_env() -> HDiffPatch {
         HDiffPatch {
             hdiffz: env::var("HDIFFZ").unwrap_or_else(|_| "hdiffz".to_owned()),
             hpatchz: env::var("HPATCHZ").unwrap_or_else(|_| "hpatchz".to_owned()),
         }
     }
-}
 
-fn text(path: &Path) -> Result<&str> {
-    path.to_str()
-        .with_context(|| format!("non-UTF-8 path {}", path.display()))
-}
-
-impl HDiffPatch {
     /// Writes a patch turning `old` into `new`.
     pub fn diff(&self, old: &Path, new: &Path, patch: &Path) -> Result<()> {
         let [memory, compression]: [&str; 2] = HDIFFZ_ARGS;
         run(
             &self.hdiffz,
-            ["-f", memory, compression, text(old)?, text(new)?, text(patch)?],
+            [
+                "-f",
+                memory,
+                compression,
+                path_text(old)?,
+                path_text(new)?,
+                path_text(patch)?,
+            ],
         )?;
         Ok(())
     }
 
     /// Applies `patch` to `old`, writing `out`.
     pub fn patch(&self, old: &Path, patch: &Path, out: &Path) -> Result<()> {
-        run(&self.hpatchz, ["-f", text(old)?, text(patch)?, text(out)?])?;
+        run(
+            &self.hpatchz,
+            ["-f", path_text(old)?, path_text(patch)?, path_text(out)?],
+        )?;
         Ok(())
     }
 }

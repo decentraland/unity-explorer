@@ -13,6 +13,7 @@ use crate::builds::values::{RelPath, Sha256};
 use crate::patching::delta::{Delta, Patch, Whole};
 use crate::patching::plan::{Job, Plan, needs_whole_trial, patch_file, prefer_whole};
 use crate::patching::replay::Action;
+use crate::publishing::layout::patch_folder;
 use crate::releases::tag::Tag;
 use crate::shell::hdiff::HDiffPatch;
 
@@ -79,7 +80,7 @@ pub fn encode(
     hdiff: &HDiffPatch,
 ) -> Result<Delta> {
     let scratch: Scratch = Scratch::new(staging)?;
-    let own: PathBuf = staging.join("from").join(base_tag.to_string()).join(build_id);
+    let own: PathBuf = staging.join(patch_folder(base_tag, build_id));
     fs::create_dir_all(&own).with_context(|| format!("cannot create {}", own.display()))?;
     let mut patches: Vec<Patch> = Vec::new();
     let mut whole: Vec<Whole> = Vec::new();

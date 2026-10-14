@@ -38,10 +38,6 @@ impl<T> Bases<T> {
     pub fn contains(&self, tag: &Tag) -> bool {
         self.0.contains_key(tag)
     }
-
-    pub fn into_map(self) -> BTreeMap<Tag, T> {
-        self.0
-    }
 }
 
 impl<'a, T> IntoIterator for &'a Bases<T> {

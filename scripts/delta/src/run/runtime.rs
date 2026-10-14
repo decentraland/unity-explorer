@@ -1,10 +1,12 @@
 //! Drains the cmds of a run like `FsmRuntime.Drain`: pop the front, execute it, feed the msg
 //! back to `update`, append the cmds the new state asks for, save the document after every
 //! transition. `Cmd::Complete` ends the drain. `until` pauses the drain once the named state is
-//! reached, with the cmds that state waits on saved for the next invocation. The document is not
-//! checked against the disk on entry: the run proceeds with the state and the cmds it was paused
-//! with. A document already at or past `until` is left as it is, so re-running a slice never runs
-//! the next one.
+//! reached, with the cmds that state waits on saved for the next invocation. Only a document
+//! paused by `until` or ended by a msg can be resumed: a cmd interrupted mid-execution may have
+//! consumed its inputs (extraction removes the zips, replay removes the base builds), so its work
+//! folder must not be reused. The document is not checked against the disk on entry. A document
+//! already at or past `until` is returned unchanged, so re-running a slice never runs the next
+//! one.
 
 use std::collections::VecDeque;
 use std::path::Path;

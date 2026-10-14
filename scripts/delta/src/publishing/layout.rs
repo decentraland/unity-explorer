@@ -12,6 +12,16 @@ pub fn zip_key(releases: &str, tag: &Tag, zip: &ZipName) -> String {
     format!("{releases}/{tag}/{zip}")
 }
 
+/// `from/<base>`: everything a patch set from `base` holds, relative to the manifest's folder.
+pub fn base_folder(base: &Tag) -> String {
+    format!("from/{base}")
+}
+
+/// `from/<base>/<build id>`: the patches of one release build from `base`.
+pub fn patch_folder(base: &Tag, build_id: &str) -> String {
+    format!("{}/{build_id}", base_folder(base))
+}
+
 /// `<releases>/<tag>/delta/<platform>`: the manifest and `from/<base>/` patches of a release.
 pub fn delta_prefix(releases: &str, tag: &Tag, platform: Platform) -> String {
     format!("{releases}/{tag}/delta/{platform}")

@@ -6,7 +6,7 @@
 
 use std::collections::BTreeMap;
 use std::fmt;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 use serde::{Deserialize, Serialize};
 
@@ -17,7 +17,7 @@ use crate::patching::delta::Delta;
 use crate::patching::plan::{Plan, plan};
 use crate::patching::replay::{Action, Difference, differences, replay_actions};
 use crate::publishing::contract::ManifestDto;
-use crate::publishing::layout::UploadLayout;
+use crate::publishing::layout::{UploadLayout, base_folder};
 use crate::publishing::manifest::Manifest;
 use crate::publishing::values::{ETag, ZipRef};
 use crate::releases::bases::Bases;
@@ -154,7 +154,7 @@ pub struct Replay {
     pub rebuild: PathBuf,
 }
 
-/// What the machine wants done. Each variant says what to do, never why.
+/// What the machine wants done.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "cmd", rename_all = "kebab-case")]
 pub enum Cmd {
@@ -259,7 +259,7 @@ pub fn update(run: Run, msg: Msg) -> (Run, Vec<Cmd>) {
     (Run { state, dropped }, cmds)
 }
 
-/// Each arm names the state a fact moves on from, and returns the next state with its cmd.
+/// The transition table: the next state and its cmds for every fact a state accepts.
 #[allow(clippy::too_many_lines)] // one arm per fact: the table reads best whole
 fn transition(state: State, msg: Msg, dropped: &mut Vec<Dropped>) -> Result<(State, Vec<Cmd>), String> {
     match (state, msg) {
@@ -517,9 +517,12 @@ fn scan_builds(folders: &Folders) -> Cmd {
     }
 }
 
+/// Hex digits of the release zip's sha256 in every patch key (docs/delta-updates.md, S3 layout).
+const BUILD_ID_DIGITS: usize = 8;
+
 /// The first hex digits of the release zip's sha256, part of every patch key.
 fn build_id(zip: &ReleaseZip) -> String {
-    zip.zip.sha256.as_ref().chars().take(8).collect()
+    zip.zip.sha256.as_ref().chars().take(BUILD_ID_DIGITS).collect()
 }
 
 fn encode_patches(builds: &Builds) -> Cmd {
@@ -590,7 +593,7 @@ fn prepare_upload_folder(upload: &Upload) -> Result<Cmd, String> {
         .deltas()
         .keys()
         .map(|base: &Tag| {
-            let folder: PathBuf = Path::new("from").join(base.to_string());
+            let folder: String = base_folder(base);
             (staging.join(&folder), upload.layout.patches.join(&folder))
         })
         .collect();
