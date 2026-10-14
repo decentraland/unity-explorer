@@ -12,6 +12,7 @@ using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis.Modules.EngineApi;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using UnityEngine.Profiling;
 using Utility.Multithreading;
@@ -88,6 +89,13 @@ namespace CrdtEcsBridge.JsModulesImplementation
         {
             // Called on the thread where the Scene Runtime is running (background thread)
 
+            CrdtTrafficProbe traffic = metrics.Traffic;
+            bool capturing = traffic.IsCapturing;
+
+            // The probe's own classification work stays outside the timed regions
+            long incomingTicks = 0;
+            long stageStart = capturing ? Stopwatch.GetTimestamp() : 0;
+
             // Deserialize messages from the byte array
             List<CRDTMessage> messages = instancePoolsProvider.GetDeserializationMessagesPool();
 
@@ -98,13 +106,13 @@ namespace CrdtEcsBridge.JsModulesImplementation
 
             deserializeBatchSampler.End();
 
-            metrics.MessagesFromScene.Add(messages.Count);
-
-            CrdtTrafficProbe traffic = metrics.Traffic;
-            bool capturing = traffic.IsCapturing;
-
             if (capturing)
+            {
+                incomingTicks += Stopwatch.GetTimestamp() - stageStart;
                 traffic.RecordBatch();
+            }
+
+            metrics.MessagesFromScene.Add(messages.Count);
 
             worldSyncBufferSampler.Begin();
 
@@ -137,23 +145,35 @@ namespace CrdtEcsBridge.JsModulesImplementation
                     // Must be read before ProcessMessage replaces or disposes the stored payload
                     bool identicalData = capturing && crdtProtocol.IsIdenticalToLWWState(in message);
 
+                    if (capturing)
+                        stageStart = Stopwatch.GetTimestamp();
+
                     crdtProcessMessagesSampler.Begin();
 
                     CRDTReconciliationResult reconciliationResult = crdtProtocol.ProcessMessage(in message);
 
                     crdtProcessMessagesSampler.End();
 
-                    if (capturing)
-                        traffic.Record(CrdtTrafficDirection.FromScene, message.EntityId.Id, message.ComponentId, ClassifyOutcome(reconciliationResult.State, identicalData), payloadLength);
-
                     // TODO add metric to understand how many conflicts we have based on CRDTStateReconciliationResult
 
                     // Prepare the message to be synced with the ECS World
                     worldSyncBuffer.SyncCRDTMessage(in message, reconciliationResult.Effect);
+
+                    if (capturing)
+                    {
+                        incomingTicks += Stopwatch.GetTimestamp() - stageStart;
+                        traffic.Record(CrdtTrafficDirection.FromScene, message.EntityId.Id, message.ComponentId, ClassifyOutcome(reconciliationResult.State, identicalData), payloadLength);
+                    }
                 }
+
+                if (capturing)
+                    stageStart = Stopwatch.GetTimestamp();
 
                 // Deserialize messages
                 worldSyncBuffer.FinalizeAndDeserialize();
+
+                if (capturing)
+                    traffic.AddIncomingTime(incomingTicks + Stopwatch.GetTimestamp() - stageStart);
             }
             catch
             {
@@ -225,6 +245,9 @@ namespace CrdtEcsBridge.JsModulesImplementation
             {
                 outgoingMessagesSampler.Begin();
 
+                bool capturing = metrics.Traffic.IsCapturing;
+                long outgoingStart = capturing ? Stopwatch.GetTimestamp() : 0;
+
                 PoolableByteArray serializationBufferPoolable;
 
                 using (OutgoingCRDTMessagesSyncBlock outgoingMessagesSyncBlock = GetSerializationSyncBlock())
@@ -234,13 +257,22 @@ namespace CrdtEcsBridge.JsModulesImplementation
 
                     SerializeOutgoingCRDTMessages(outgoingMessagesSyncBlock.Messages, serializationBufferPoolable.Span);
 
-                    if (metrics.Traffic.IsCapturing)
+                    if (capturing)
+                    {
+                        long recordStart = Stopwatch.GetTimestamp();
                         RecordOutgoingTraffic(outgoingMessagesSyncBlock.Messages);
+
+                        // Shift the start past the classification so it is not counted as outgoing work
+                        outgoingStart += Stopwatch.GetTimestamp() - recordStart;
+                    }
 
                     SyncOutgoingCRDTMessages(outgoingMessagesSyncBlock.Messages);
 
                     metrics.MessagesToScene.Add(outgoingMessagesSyncBlock.Messages.Count);
                 }
+
+                if (capturing)
+                    metrics.Traffic.AddOutgoingTime(Stopwatch.GetTimestamp() - outgoingStart);
 
                 outgoingMessagesSampler.End();
                 return serializationBufferPoolable;
@@ -320,12 +352,19 @@ namespace CrdtEcsBridge.JsModulesImplementation
             {
                 using MultiThreadSync.Scope mutex = multiThreadSync.GetScope(syncOwner);
 
+                // Timed after the lock is acquired: waiting for the main thread is not bridge work
+                bool capturing = metrics.Traffic.IsCapturing;
+                long applyStart = capturing ? Stopwatch.GetTimestamp() : 0;
+
                 applyBufferSampler.Begin();
 
                 // Apply changes to the ECS World on the main thread
                 delegated = true;
                 crdtWorldSynchronizer.ApplySyncCommandBuffer(worldSyncBuffer);
                 applyBufferSampler.End();
+
+                if (capturing)
+                    metrics.Traffic.AddApplyTime(Stopwatch.GetTimestamp() - applyStart);
 
                 // Allow system for which throttling is enabled to process once
                 // If the scene is updated more frequently than Unity Loop the gate will be effectively open all the time

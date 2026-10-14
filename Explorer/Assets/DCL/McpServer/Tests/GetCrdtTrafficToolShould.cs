@@ -13,6 +13,7 @@ using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
 using System;
+using System.Diagnostics;
 using System.Threading;
 using DCL.Utilities;
 
@@ -222,6 +223,33 @@ namespace DCL.McpServer.Tests
             // Assert
             var hottest = (JObject)result.Payload["structuredContent"]!["toScene"]!["hotWriters"]![0]!;
             Assert.That(hottest["verdict"]!.Value<string>(), Does.StartWith("hot: changes every tick"));
+        }
+
+        [Test]
+        public void ReportBridgeTimePerSceneTick()
+        {
+            // Arrange
+            GetCrdtTrafficTool tool = CreateTool(static probe =>
+            {
+                probe.RecordBatch();
+                probe.RecordBatch();
+                probe.AddIncomingTime(Stopwatch.Frequency / 1000);
+                probe.AddApplyTime(Stopwatch.Frequency / 2000);
+                probe.AddOutgoingTime(Stopwatch.Frequency / 4000);
+            });
+
+            // Act
+            McpToolResult result = Execute(tool, new JObject());
+
+            // Assert
+            JToken bridgeTime = result.Payload["structuredContent"]!["bridgeTime"]!;
+
+            Assert.That(bridgeTime["totalMs"]!.Value<double>(), Is.EqualTo(1.75).Within(0.01));
+            Assert.That(bridgeTime["totalUsPerTick"]!.Value<double>(), Is.EqualTo(875).Within(1));
+            Assert.That(bridgeTime["incomingUsPerTick"]!.Value<double>(), Is.EqualTo(500).Within(1));
+            Assert.That(bridgeTime["applyUsPerTick"]!.Value<double>(), Is.EqualTo(250).Within(1));
+            Assert.That(bridgeTime["outgoingUsPerTick"]!.Value<double>(), Is.EqualTo(125).Within(1));
+            Assert.That(result.Payload["content"]![0]!["text"]!.Value<string>(), Does.Contain("CRDT bridge time:"));
         }
 
         [Test]

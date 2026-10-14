@@ -115,6 +115,32 @@ namespace DCL.Profiling.Tests
             Assert.That(entries, Is.Empty);
         }
 
+        [Test]
+        public void AccumulateBridgeTimeOnlyWhileCapturing()
+        {
+            // Arrange
+            probe.AddIncomingTime(1000);
+            probe.TryStartCapture();
+
+            // Act
+            probe.AddIncomingTime(10);
+            probe.AddIncomingTime(5);
+            probe.AddApplyTime(7);
+            probe.AddOutgoingTime(3);
+            CrdtTrafficProbe.Snapshot first = probe.StopCapture(entries);
+
+            probe.TryStartCapture();
+            probe.AddApplyTime(2);
+            CrdtTrafficProbe.Snapshot second = probe.StopCapture(entries);
+
+            // Assert
+            Assert.That(first.Time.IncomingTicks, Is.EqualTo(15));
+            Assert.That(first.Time.ApplyTicks, Is.EqualTo(7));
+            Assert.That(first.Time.OutgoingTicks, Is.EqualTo(3));
+            Assert.That(first.Time.TotalTicks, Is.EqualTo(25));
+            Assert.That(second.Time.TotalTicks, Is.EqualTo(2));
+        }
+
         private CrdtTrafficProbe.EntrySnapshot Find(CrdtTrafficDirection direction, int componentId)
         {
             foreach (CrdtTrafficProbe.EntrySnapshot entry in entries)

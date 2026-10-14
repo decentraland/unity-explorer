@@ -61,7 +61,9 @@ namespace DCL.McpServer.Tools
             + "values every tick' is scene code calling a mutable getter (e.g. Transform.getMutable) in a system every frame without changing anything — "
             + "grep the scene source for that component to find it. Each writer carries engineEntityId (the id get_entity_details takes; "
             + "'entity' is the CRDT id the scene uses) and an entityLabel describing it (GLTF src, primitive mesh, text, hidden, parent). "
-            + "Scene-defined custom components never appear: the SDK does not send them to the renderer. The call holds for sampleSeconds while it captures. Pair with get_performance_stats: "
+            + "Scene-defined custom components never appear: the SDK does not send them to the renderer. bridgeTime reports the CPU time the CRDT "
+            + "bridge spent per scene tick (incoming reconcile, apply under the scene world lock, outgoing serialize) — the cost a fix removes, "
+            + "measurable even when render FPS is too noisy to show it; it excludes the ECS systems that later react to the dirtied components. The call holds for sampleSeconds while it captures. Pair with get_performance_stats: "
             + "msgs/tick from the scene is the cost the Current Scene debug panel charts.";
 
         public override JObject OutputSchema =>
@@ -70,6 +72,13 @@ namespace DCL.McpServer.Tools
                           .Integer("sceneTicks", "Scene ticks (JS frames) observed during the window; per-tick rates divide by this.")
                           .Object("fromScene", DirectionSchema(), "Messages the scene sent to the renderer.")
                           .Object("toScene", DirectionSchema(), "Messages the renderer sent to the scene (player/camera transforms, pointer events, engine info, load states).")
+                          .Object("bridgeTime", McpJsonSchema.Object()
+                                                             .Number("totalMs", "CRDT bridge CPU time over the whole window.")
+                                                             .Number("totalUsPerTick", "Average microseconds per scene tick: the sum of the three stages.")
+                                                             .Number("incomingUsPerTick", "Deserializing the scene's messages, reconciling them and preparing the world sync buffer (scene thread).")
+                                                             .Number("applyUsPerTick", "Applying the sync buffer to the ECS world while holding the scene world lock, which blocks the main thread from that world.")
+                                                             .Number("outgoingUsPerTick", "Serializing the renderer's messages back to the scene."),
+                              "CPU time the CRDT bridge spent on the exchanges, excluding the capture's own classification work and the ECS systems reacting afterwards.")
                           .Build();
 
         public override McpToolAnnotations Annotations => McpToolAnnotations.ReadOnly();
@@ -133,6 +142,7 @@ namespace DCL.McpServer.Tools
                 ["sceneTicks"] = snapshot.Batches,
                 ["fromScene"] = DirectionJson(snapshot.FromScene, snapshot.FromSceneBytes, snapshot.Batches, fromSceneEntries, limit, entities),
                 ["toScene"] = DirectionJson(snapshot.ToScene, snapshot.ToSceneBytes, snapshot.Batches, toSceneEntries, limit, entities),
+                ["bridgeTime"] = BridgeTimeJson(snapshot.Time, snapshot.Batches),
             };
 
             var text = new StringBuilder();
@@ -141,6 +151,13 @@ namespace DCL.McpServer.Tools
 
             AppendDirectionText(text, "Scene -> renderer", snapshot.FromScene, snapshot.FromSceneBytes, snapshot.Batches, fromSceneEntries, limit, entities);
             AppendDirectionText(text, "Renderer -> scene", snapshot.ToScene, snapshot.ToSceneBytes, snapshot.Batches, toSceneEntries, limit, entities);
+
+            CrdtTrafficProbe.BridgeTime time = snapshot.Time;
+            text.Append("CRDT bridge time: ").Append(FormatUs(PerTickUs(time.TotalTicks, snapshot.Batches))).Append(" us/tick (incoming ")
+                .Append(FormatUs(PerTickUs(time.IncomingTicks, snapshot.Batches))).Append(", apply under world lock ")
+                .Append(FormatUs(PerTickUs(time.ApplyTicks, snapshot.Batches))).Append(", outgoing ")
+                .Append(FormatUs(PerTickUs(time.OutgoingTicks, snapshot.Batches))).Append("); ")
+                .Append(TicksToMs(time.TotalTicks).ToString("F2", CultureInfo.InvariantCulture)).AppendLine(" ms over the window.");
 
             return McpToolResult.TextWithStructured(text.ToString(), structured);
         }
@@ -356,6 +373,25 @@ namespace DCL.McpServer.Tools
                 SpecialEntitiesID.CAMERA_ENTITY => "camera",
                 _ => null,
             };
+
+        private static JObject BridgeTimeJson(in CrdtTrafficProbe.BridgeTime time, long sceneTicks) =>
+            new ()
+            {
+                ["totalMs"] = Math.Round(TicksToMs(time.TotalTicks), 2),
+                ["totalUsPerTick"] = Math.Round(PerTickUs(time.TotalTicks, sceneTicks), 1),
+                ["incomingUsPerTick"] = Math.Round(PerTickUs(time.IncomingTicks, sceneTicks), 1),
+                ["applyUsPerTick"] = Math.Round(PerTickUs(time.ApplyTicks, sceneTicks), 1),
+                ["outgoingUsPerTick"] = Math.Round(PerTickUs(time.OutgoingTicks, sceneTicks), 1),
+            };
+
+        private static double TicksToMs(long stopwatchTicks) =>
+            stopwatchTicks * 1000d / System.Diagnostics.Stopwatch.Frequency;
+
+        private static double PerTickUs(long stopwatchTicks, long sceneTicks) =>
+            sceneTicks > 0 ? stopwatchTicks * 1_000_000d / System.Diagnostics.Stopwatch.Frequency / sceneTicks : 0d;
+
+        private static string FormatUs(double microseconds) =>
+            microseconds.ToString("F1", CultureInfo.InvariantCulture);
 
         private static float PerTick(long messages, long ticks) =>
             ticks > 0 ? (float)messages / ticks : 0f;

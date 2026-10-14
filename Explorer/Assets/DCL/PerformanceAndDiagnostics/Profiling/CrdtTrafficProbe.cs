@@ -22,6 +22,9 @@ namespace DCL.Profiling
         private OutcomeCounts toScene;
         private long fromSceneBytes;
         private long toSceneBytes;
+        private long incomingTicks;
+        private long applyTicks;
+        private long outgoingTicks;
 
         public bool IsCapturing => DCLInterlocked.Read(ref capturing) == 1;
 
@@ -39,6 +42,9 @@ namespace DCL.Profiling
                 toScene = default(OutcomeCounts);
                 fromSceneBytes = 0;
                 toSceneBytes = 0;
+                incomingTicks = 0;
+                applyTicks = 0;
+                outgoingTicks = 0;
 
                 foreach (Entry entry in entries.Values)
                     entry.Reset();
@@ -64,7 +70,7 @@ namespace DCL.Profiling
                     target.Add(new EntrySnapshot(entry.Key.Direction, entry.Key.EntityId, entry.Key.ComponentId, entry.Messages, entry.Bytes, entry.Counts));
                 }
 
-                return new Snapshot(batches, fromScene, fromSceneBytes, toScene, toSceneBytes);
+                return new Snapshot(batches, fromScene, fromSceneBytes, toScene, toSceneBytes, new BridgeTime(incomingTicks, applyTicks, outgoingTicks));
             }
         }
 
@@ -76,6 +82,37 @@ namespace DCL.Profiling
             if (!IsCapturing) return;
 
             lock (gate) { batches++; }
+        }
+
+        /// <summary>
+        ///     Adds <see cref="System.Diagnostics.Stopwatch" /> ticks spent deserializing the scene's messages, reconciling
+        ///     them and preparing the world sync buffer.
+        /// </summary>
+        public void AddIncomingTime(long stopwatchTicks)
+        {
+            if (!IsCapturing) return;
+
+            lock (gate) { incomingTicks += stopwatchTicks; }
+        }
+
+        /// <summary>
+        ///     Adds <see cref="System.Diagnostics.Stopwatch" /> ticks spent applying the world sync buffer while holding the scene world lock.
+        /// </summary>
+        public void AddApplyTime(long stopwatchTicks)
+        {
+            if (!IsCapturing) return;
+
+            lock (gate) { applyTicks += stopwatchTicks; }
+        }
+
+        /// <summary>
+        ///     Adds <see cref="System.Diagnostics.Stopwatch" /> ticks spent serializing the renderer's messages back to the scene.
+        /// </summary>
+        public void AddOutgoingTime(long stopwatchTicks)
+        {
+            if (!IsCapturing) return;
+
+            lock (gate) { outgoingTicks += stopwatchTicks; }
         }
 
         public void Record(CrdtTrafficDirection direction, int entityId, int componentId, CrdtTrafficOutcome outcome, int bytes)
@@ -119,14 +156,36 @@ namespace DCL.Profiling
             public readonly long FromSceneBytes;
             public readonly OutcomeCounts ToScene;
             public readonly long ToSceneBytes;
+            public readonly BridgeTime Time;
 
-            public Snapshot(long batches, OutcomeCounts fromScene, long fromSceneBytes, OutcomeCounts toScene, long toSceneBytes)
+            public Snapshot(long batches, OutcomeCounts fromScene, long fromSceneBytes, OutcomeCounts toScene, long toSceneBytes, BridgeTime time)
             {
                 Batches = batches;
                 FromScene = fromScene;
                 FromSceneBytes = fromSceneBytes;
                 ToScene = toScene;
                 ToSceneBytes = toSceneBytes;
+                Time = time;
+            }
+        }
+
+        /// <summary>
+        ///     <see cref="System.Diagnostics.Stopwatch" /> ticks the CRDT bridge spent on the scene's exchanges during the capture,
+        ///     excluding the probe's own classification work.
+        /// </summary>
+        public readonly struct BridgeTime
+        {
+            public readonly long IncomingTicks;
+            public readonly long ApplyTicks;
+            public readonly long OutgoingTicks;
+
+            public long TotalTicks => IncomingTicks + ApplyTicks + OutgoingTicks;
+
+            public BridgeTime(long incomingTicks, long applyTicks, long outgoingTicks)
+            {
+                IncomingTicks = incomingTicks;
+                ApplyTicks = applyTicks;
+                OutgoingTicks = outgoingTicks;
             }
         }
 
