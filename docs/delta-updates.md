@@ -75,9 +75,11 @@ s3-latest-release.yml       -> releases/latest.json, then prune old delta/ folde
 `<platform>` is `windows64` or `macos`. The manifest URL is derived by convention; a 404 means "no
 delta, use the zip".
 
-**Immutable once published.** Patches and manifests are uploaded with a one-year immutable
-`Cache-Control` and are never rewritten after the release is published: the workflow refuses to
-generate or upload for a published tag. A missing or broken delta set after publication is not fixed
+**Immutable once published.** Patches are uploaded with a one-year immutable `Cache-Control`. The
+manifest is uploaded without it: a rebuild of a still-unpublished tag rewrites it under the same
+key, and a CDN edge must not keep serving the old one. A stale cached patch is harmless, because
+its `patch_sha256` no longer matches the new manifest. Nothing is rewritten after the release is
+published: the workflow refuses to generate or upload for a published tag. A missing or broken delta set after publication is not fixed
 in place; launchers fall back to the zip until the next release.
 
 **Retention: always exactly two series.** When release X is published (not on later edits),

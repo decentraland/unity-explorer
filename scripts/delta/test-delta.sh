@@ -228,6 +228,7 @@ STUB
     env PATH="$WORK/bin:$PATH" bash "$SCRIPT_DIR/delta-for-base.sh" v1.1.0-alpha windows64 "$NEW" "$WORK/new.zip" v0.8.0-alpha "$WORK/corrupt.zip" "$FB"
   check "keeps the patch sets of other bases" test -f "$FB/base-v1.0.0-alpha.json"
 else
+  [ -z "${CI:-}" ] || { echo "zip is required in CI: extract-build.sh, signature-status.sh and delta-for-base.sh tests cannot run"; exit 1; }
   echo "zip not found: skipping extract-build.sh, signature-status.sh and delta-for-base.sh"
 fi
 

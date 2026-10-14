@@ -169,7 +169,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: bash scripts/delta/check-unpublished.sh "$TAG"
 
-      # Manifest last, so it never references a patch not uploaded yet.
+      # Manifest last, so it never references a patch not uploaded yet. Only the patches are
+      # immutable: a rebuild of this unpublished tag rewrites the manifest under the same key.
       - name: Upload patches, then the manifest
         run: |
           set -euo pipefail
@@ -177,14 +178,17 @@ jobs:
           mkdir -p "$WORK/upload-patches" "$WORK/upload-manifest"
           mv "$WORK/out/from" "$WORK/upload-patches/from"
           cp "$WORK/manifest.json" "$WORK/upload-manifest/manifest.json"
-          for dir in upload-patches upload-manifest; do
-            npx @dcl/cdn-uploader@next \
-              --bucket "$EXPLORER_TEAM_S3_BUCKET" \
-              --local-folder "$WORK/$dir" \
-              --bucket-folder "$DEST" \
-              --immutable \
-              --variant uncompressed
-          done
+          npx @dcl/cdn-uploader@next \
+            --bucket "$EXPLORER_TEAM_S3_BUCKET" \
+            --local-folder "$WORK/upload-patches" \
+            --bucket-folder "$DEST" \
+            --immutable \
+            --variant uncompressed
+          npx @dcl/cdn-uploader@next \
+            --bucket "$EXPLORER_TEAM_S3_BUCKET" \
+            --local-folder "$WORK/upload-manifest" \
+            --bucket-folder "$DEST" \
+            --variant uncompressed
 
       - name: Write job summary
         if: always() && env.WORK != ''
