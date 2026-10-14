@@ -1,4 +1,3 @@
-// Effectivly NO-OPs, exist only for the compatabilitty
 namespace UUAV.Compat
 {
     // Mirrors AVPro's MediaPathType. The consumer only ever passes
@@ -19,6 +18,5 @@ namespace UUAV.Compat
     {
         None = 0,
         LoadFailed = 100,
-        DecodeFailed = 200,
     }
 }

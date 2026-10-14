@@ -2,8 +2,8 @@ using UnityEngine;
 
 namespace UUAV.Compat
 {
-    // AVPro-compatible facade over UUAVPlayer. The consumer is poll-based
-    // (no event subscriptions), see the compat plan for the full mapping.
+    // AVPro-shaped facade over UUAVPlayer. Poll-based: exposes state through
+    // Control / Info / TextureProducer and no events.
     [RequireComponent(typeof(AudioSource))]
     public sealed class MediaPlayer : MonoBehaviour
     {
