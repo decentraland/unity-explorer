@@ -1,7 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.EventsApi;
-using DCL.FeatureFlags;
 using DCL.MapPins.Bus;
 using DCL.MapRenderer;
 using DCL.MapRenderer.ComponentsFactory;
@@ -75,8 +74,7 @@ namespace Global.Dynamic
                     web3IdentityCache,
                     homePlaceEventBus,
                     eventBus,
-                    staticContainer.BytesDiskCache,
-                    FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.SATELLITE_MAP_TILES)));
+                    staticContainer.BytesDiskCache));
 
                 await mapRenderer.InitializeAsync(ct);
                 c.MapRenderer = mapRenderer;

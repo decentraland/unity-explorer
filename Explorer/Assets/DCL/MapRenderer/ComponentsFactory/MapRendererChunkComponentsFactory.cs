@@ -50,7 +50,6 @@ namespace DCL.MapRenderer.ComponentsFactory
         private readonly HomePlaceEventBus homePlaceEventBus;
         private readonly IEventBus eventBus;
         private readonly IDiskCache<byte[]> bytesDiskCache;
-        private readonly bool streamSatelliteTiles;
         private PlayerMarkerInstaller playerMarkerInstaller { get; }
         private HomeMarkerInstaller homeMarkerInstaller { get; }
         private SceneOfInterestsMarkersInstaller sceneOfInterestMarkerInstaller { get; }
@@ -77,8 +76,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             IWeb3IdentityCache web3IdentityCache,
             HomePlaceEventBus homePlaceEventBus,
             IEventBus eventBus,
-            IDiskCache<byte[]> bytesDiskCache,
-            bool streamSatelliteTiles)
+            IDiskCache<byte[]> bytesDiskCache)
         {
             this.assetsProvisioner = assetsProvisioner;
             mapSettings = settings;
@@ -96,7 +94,6 @@ namespace DCL.MapRenderer.ComponentsFactory
             this.homePlaceEventBus = homePlaceEventBus;
             this.eventBus = eventBus;
             this.bytesDiskCache = bytesDiskCache;
-            this.streamSatelliteTiles = streamSatelliteTiles;
         }
 
         async UniTask<MapRendererComponents> IMapRendererComponentsFactory.CreateAsync(CancellationToken cancellationToken)
@@ -258,7 +255,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             SatelliteDetailTiles? detailTiles = null;
 
             // Without the KTX2 native decoder the tiles can't be read: the map shows the bundled chunks only.
-            if (streamSatelliteTiles && KtxNativeSupport.IsSupported)
+            if (KtxNativeSupport.IsSupported)
             {
                 SpriteRenderer template = await GetAtlasChunkPrefabAsync(configuration.SatelliteAtlasRoot, cancellationToken);
 
