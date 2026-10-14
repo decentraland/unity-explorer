@@ -1,5 +1,9 @@
+using Arch.Core;
+using CRDT;
+using CrdtEcsBridge.Components.Transform;
 using Cysharp.Threading.Tasks;
 using DCL.ECS7;
+using DCL.ECSComponents;
 using DCL.McpServer.Core;
 using DCL.McpServer.Tools;
 using DCL.Profiling;
@@ -19,6 +23,7 @@ namespace DCL.McpServer.Tests
         private const int ENTITY = 512;
         private const int CUSTOM_COMPONENT = 5000;
 
+        private World world = null!;
         private IScenesCache scenesCache = null!;
         private ISceneFacade scene = null!;
         private SceneRuntimeMetrics metrics = null!;
@@ -26,11 +31,19 @@ namespace DCL.McpServer.Tests
         [SetUp]
         public void SetUp()
         {
+            world = World.Create();
             metrics = new SceneRuntimeMetrics();
             scene = Substitute.For<ISceneFacade>();
             scene.RuntimeMetrics.Returns(metrics);
+            scene.EcsExecutor.Returns(new SceneEcsExecutor(world));
             scenesCache = Substitute.For<IScenesCache>();
             scenesCache.CurrentScene.Returns(new ReactiveProperty<ISceneFacade?>(scene));
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            world.Dispose();
         }
 
         [Test]
@@ -154,6 +167,61 @@ namespace DCL.McpServer.Tests
             Assert.That(fromScene["entityLabel"]!.Type, Is.EqualTo(JTokenType.Null));
             Assert.That(fromScene["component"]!.Value<string>(), Is.EqualTo("custom:5000"));
             Assert.That(fromScene["verdict"]!.Value<string>(), Does.StartWith("wasted: Creator Hub"));
+        }
+
+        [Test]
+        public void DescribeWritersWithTheirEngineEntity()
+        {
+            // Arrange
+            Entity engineEntity = world.Create(
+                new CRDTEntity(ENTITY),
+                new PBGltfContainer { Src = "assets/drink.glb" },
+                new PBVisibilityComponent { Visible = false },
+                new SDKTransform { ParentId = 600 });
+
+            GetCrdtTrafficTool tool = CreateTool(static probe =>
+            {
+                probe.RecordBatch();
+                probe.Record(CrdtTrafficDirection.FromScene, ENTITY, ComponentID.MESH_RENDERER, CrdtTrafficOutcome.RedundantIdenticalData, 8);
+                probe.Record(CrdtTrafficDirection.FromScene, ENTITY + 1, ComponentID.TRANSFORM, CrdtTrafficOutcome.Applied, 8);
+            });
+
+            // Act
+            McpToolResult result = Execute(tool, new JObject());
+
+            // Assert
+            var writers = (JArray)result.Payload["structuredContent"]!["fromScene"]!["hotWriters"]!;
+            JToken described = writers[0]["entity"]!.Value<int>() == ENTITY ? writers[0] : writers[1];
+            JToken missing = writers[0]["entity"]!.Value<int>() == ENTITY ? writers[1] : writers[0];
+
+            Assert.That(described["engineEntityId"]!.Value<int>(), Is.EqualTo(engineEntity.Id));
+            Assert.That(described["entityLabel"]!.Value<string>(), Is.EqualTo("gltf assets/drink.glb, hidden, parent 600"));
+            Assert.That(missing["engineEntityId"]!.Type, Is.EqualTo(JTokenType.Null));
+            Assert.That(missing["entityLabel"]!.Type, Is.EqualTo(JTokenType.Null));
+            Assert.That(result.Payload["content"]![0]!["text"]!.Value<string>(), Does.Contain($"entity {ENTITY} [engine {engineEntity.Id}] (gltf assets/drink.glb"));
+        }
+
+        [Test]
+        public void TreatAWriterAFewTicksShortAsEveryTick()
+        {
+            // Arrange
+            GetCrdtTrafficTool tool = CreateTool(static probe =>
+            {
+                for (var tick = 0; tick < 100; tick++)
+                {
+                    probe.RecordBatch();
+
+                    if (tick > 0)
+                        probe.Record(CrdtTrafficDirection.ToScene, ENTITY, ComponentID.TRANSFORM, CrdtTrafficOutcome.Applied, 44);
+                }
+            });
+
+            // Act
+            McpToolResult result = Execute(tool, new JObject());
+
+            // Assert
+            var hottest = (JObject)result.Payload["structuredContent"]!["toScene"]!["hotWriters"]![0]!;
+            Assert.That(hottest["verdict"]!.Value<string>(), Does.StartWith("hot: changes every tick"));
         }
 
         [Test]

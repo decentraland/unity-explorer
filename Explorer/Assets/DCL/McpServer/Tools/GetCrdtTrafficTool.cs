@@ -1,6 +1,10 @@
+using Arch.Core;
+using CRDT;
 using CrdtEcsBridge.Components;
+using CrdtEcsBridge.Components.Transform;
 using Cysharp.Threading.Tasks;
 using DCL.ECS7;
+using DCL.ECSComponents;
 using DCL.McpServer.Core;
 using DCL.McpServer.Utils;
 using DCL.Profiling;
@@ -29,6 +33,15 @@ namespace DCL.McpServer.Tools
         private const float MAX_SAMPLE_SECONDS = 10f;
         private const int DEFAULT_LIMIT = 15;
         private const int MAX_LIMIT = 100;
+        private const int MAX_TEXT_LABEL_LENGTH = 24;
+
+        /// <summary>
+        ///     Scene and renderer ticks drift by a frame or two over a window, so a writer that fires on every tick
+        ///     can be a few messages short of the tick count.
+        /// </summary>
+        private const float EVERY_TICK_RATIO = 0.95f;
+
+        private static readonly QueryDescription CRDT_ENTITIES = new QueryDescription().WithAll<CRDTEntity>();
 
         private static readonly Dictionary<int, string> COMPONENT_NAMES = BuildComponentNames();
 
@@ -46,7 +59,9 @@ namespace DCL.McpServer.Tools
             + "current state, arrived stale, targeted a deleted entity, or was a Creator Hub component leaked from main.composite). Reports totals, "
             + "the per-tick rate and the top writers grouped by entity + component with their cadence and a verdict. A writer flagged 'rewrites identical "
             + "values every tick' is scene code calling a mutable getter (e.g. Transform.getMutable) in a system every frame without changing anything — "
-            + "grep the scene source for that component to find it. The call holds for sampleSeconds while it captures. Pair with get_performance_stats: "
+            + "grep the scene source for that component to find it. Each writer carries engineEntityId (the id get_entity_details takes; "
+            + "'entity' is the CRDT id the scene uses) and an entityLabel describing it (GLTF src, primitive mesh, text, hidden, parent). "
+            + "Scene-defined custom components never appear: the SDK does not send them to the renderer. The call holds for sampleSeconds while it captures. Pair with get_performance_stats: "
             + "msgs/tick from the scene is the cost the Current Scene debug panel charts.";
 
         public override JObject OutputSchema =>
@@ -110,20 +125,22 @@ namespace DCL.McpServer.Tools
             fromSceneEntries.Sort(BY_MESSAGES_DESC);
             toSceneEntries.Sort(BY_MESSAGES_DESC);
 
+            Dictionary<int, EntityInfo> entities = ResolveEntities(scene.EcsExecutor.World, fromSceneEntries, toSceneEntries, limit);
+
             var structured = new JObject
             {
                 ["sampleSeconds"] = Round1(sampleSeconds),
                 ["sceneTicks"] = snapshot.Batches,
-                ["fromScene"] = DirectionJson(snapshot.FromScene, snapshot.FromSceneBytes, snapshot.Batches, fromSceneEntries, limit),
-                ["toScene"] = DirectionJson(snapshot.ToScene, snapshot.ToSceneBytes, snapshot.Batches, toSceneEntries, limit),
+                ["fromScene"] = DirectionJson(snapshot.FromScene, snapshot.FromSceneBytes, snapshot.Batches, fromSceneEntries, limit, entities),
+                ["toScene"] = DirectionJson(snapshot.ToScene, snapshot.ToSceneBytes, snapshot.Batches, toSceneEntries, limit, entities),
             };
 
             var text = new StringBuilder();
             text.Append("CRDT traffic over ").Append(sampleSeconds.ToString("F1", CultureInfo.InvariantCulture)).Append(" s (")
                 .Append(snapshot.Batches).AppendLine(" scene ticks).");
 
-            AppendDirectionText(text, "Scene -> renderer", snapshot.FromScene, snapshot.FromSceneBytes, snapshot.Batches, fromSceneEntries, limit);
-            AppendDirectionText(text, "Renderer -> scene", snapshot.ToScene, snapshot.ToSceneBytes, snapshot.Batches, toSceneEntries, limit);
+            AppendDirectionText(text, "Scene -> renderer", snapshot.FromScene, snapshot.FromSceneBytes, snapshot.Batches, fromSceneEntries, limit, entities);
+            AppendDirectionText(text, "Renderer -> scene", snapshot.ToScene, snapshot.ToSceneBytes, snapshot.Batches, toSceneEntries, limit, entities);
 
             return McpToolResult.TextWithStructured(text.ToString(), structured);
         }
@@ -142,25 +159,27 @@ namespace DCL.McpServer.Tools
                           .Integer("filteredCreatorHub", "Creator Hub components leaked from main.composite, dropped before the protocol.")
                           .Integer("distinctWriters", "Distinct entity + component pairs that sent at least one message.")
                           .ObjectArray("hotWriters", McpJsonSchema.Object()
-                                                                   .Integer("entity")
-                                                                   .String("entityLabel", "scene root, player or camera for the SDK reserved entities.", nullable: true)
+                                                                   .Integer("entity", "CRDT entity id, as the scene code sees it.")
+                                                                   .Integer("engineEntityId", "Engine entity id for get_entity_details; null when the entity no longer exists.", nullable: true)
+                                                                   .String("entityLabel", "scene root, player or camera for the SDK reserved entities; otherwise what the entity shows (gltf src, primitive mesh, text, hidden, parent CRDT id).", nullable: true)
                                                                    .Integer("componentId")
                                                                    .String("component", "Component name, or custom:<id> for a scene-defined component.")
                                                                    .Integer("messages")
                                                                    .Integer("bytes")
-                                                                   .Number("perTick", "messages / sceneTicks; 1.0 means written every tick.")
+                                                                   .Number("perTick", "messages / sceneTicks; 1.0 means written every tick (verdicts treat 95% of ticks as every tick).")
                                                                    .Integer("applied")
                                                                    .Integer("wasted")
                                                                    .String("verdict"),
                               "Top writers by message count.");
 
-        private static JObject DirectionJson(in CrdtTrafficProbe.OutcomeCounts counts, long bytes, long ticks, List<CrdtTrafficProbe.EntrySnapshot> entries, int limit)
+        private static JObject DirectionJson(in CrdtTrafficProbe.OutcomeCounts counts, long bytes, long ticks, List<CrdtTrafficProbe.EntrySnapshot> entries, int limit,
+            Dictionary<int, EntityInfo> entities)
         {
             var writers = new JArray();
             int shown = Math.Min(limit, entries.Count);
 
             for (var i = 0; i < shown; i++)
-                writers.Add(WriterJson(entries[i], ticks));
+                writers.Add(WriterJson(entries[i], ticks, entities));
 
             return new JObject
             {
@@ -179,14 +198,15 @@ namespace DCL.McpServer.Tools
             };
         }
 
-        private static JObject WriterJson(in CrdtTrafficProbe.EntrySnapshot entry, long ticks)
+        private static JObject WriterJson(in CrdtTrafficProbe.EntrySnapshot entry, long ticks, Dictionary<int, EntityInfo> entities)
         {
-            string? label = EntityLabel(entry.EntityId);
+            entities.TryGetValue(entry.EntityId, out EntityInfo info);
 
             return new JObject
             {
                 ["entity"] = entry.EntityId,
-                ["entityLabel"] = (JToken?)label ?? JValue.CreateNull(),
+                ["engineEntityId"] = info.EngineId.HasValue ? new JValue(info.EngineId.Value) : JValue.CreateNull(),
+                ["entityLabel"] = (JToken?)info.Label ?? JValue.CreateNull(),
                 ["componentId"] = entry.ComponentId,
                 ["component"] = ComponentName(entry.ComponentId),
                 ["messages"] = entry.Messages,
@@ -199,7 +219,7 @@ namespace DCL.McpServer.Tools
         }
 
         private static void AppendDirectionText(StringBuilder text, string title, in CrdtTrafficProbe.OutcomeCounts counts, long bytes, long ticks,
-            List<CrdtTrafficProbe.EntrySnapshot> entries, int limit)
+            List<CrdtTrafficProbe.EntrySnapshot> entries, int limit, Dictionary<int, EntityInfo> entities)
         {
             text.Append(title).Append(": ").Append(counts.Total).Append(" msgs (")
                 .Append(PerTick(counts.Total, ticks).ToString("F1", CultureInfo.InvariantCulture)).Append("/tick), ")
@@ -221,12 +241,15 @@ namespace DCL.McpServer.Tools
             for (var i = 0; i < shown; i++)
             {
                 CrdtTrafficProbe.EntrySnapshot entry = entries[i];
-                string? label = EntityLabel(entry.EntityId);
+                entities.TryGetValue(entry.EntityId, out EntityInfo info);
 
                 text.Append("  entity ").Append(entry.EntityId);
 
-                if (label != null)
-                    text.Append(" (").Append(label).Append(')');
+                if (info.EngineId.HasValue)
+                    text.Append(" [engine ").Append(info.EngineId.Value).Append(']');
+
+                if (info.Label != null)
+                    text.Append(" (").Append(info.Label).Append(')');
 
                 text.Append(' ').Append(ComponentName(entry.ComponentId)).Append(": ").Append(entry.Messages).Append(" msgs (")
                     .Append(PerTick(entry.Messages, ticks).ToString("F1", CultureInfo.InvariantCulture)).Append("/tick), ")
@@ -240,7 +263,7 @@ namespace DCL.McpServer.Tools
         private static string Verdict(in CrdtTrafficProbe.EntrySnapshot entry, long ticks)
         {
             CrdtTrafficProbe.OutcomeCounts counts = entry.Counts;
-            bool everyTick = entry.Messages >= ticks;
+            bool everyTick = entry.Messages >= ticks * EVERY_TICK_RATIO;
 
             if (counts.Wasted == 0)
                 return everyTick ? "hot: changes every tick (applied; check whether every tick is needed)" : "ok";
@@ -264,7 +287,68 @@ namespace DCL.McpServer.Tools
         private static string ComponentName(int componentId) =>
             COMPONENT_NAMES.TryGetValue(componentId, out string? name) ? name : $"custom:{componentId}";
 
-        private static string? EntityLabel(int entityId) =>
+        /// <summary>
+        ///     Resolves the engine entity and a short description for every writer the report lists. Runs on the
+        ///     main thread, after the capture, where the scene world is not being written.
+        /// </summary>
+        private static Dictionary<int, EntityInfo> ResolveEntities(World world, List<CrdtTrafficProbe.EntrySnapshot> fromScene,
+            List<CrdtTrafficProbe.EntrySnapshot> toScene, int limit)
+        {
+            var wanted = new HashSet<int>();
+
+            for (var i = 0; i < Math.Min(limit, fromScene.Count); i++)
+                wanted.Add(fromScene[i].EntityId);
+
+            for (var i = 0; i < Math.Min(limit, toScene.Count); i++)
+                wanted.Add(toScene[i].EntityId);
+
+            var engineEntities = new Dictionary<int, Entity>(wanted.Count);
+
+            world.Query(in CRDT_ENTITIES, (Entity entity, ref CRDTEntity crdtEntity) =>
+            {
+                if (wanted.Contains(crdtEntity.Id))
+                    engineEntities[crdtEntity.Id] = entity;
+            });
+
+            var entities = new Dictionary<int, EntityInfo>(wanted.Count);
+            var parts = new List<string>(5);
+
+            foreach (int entityId in wanted)
+            {
+                bool resolved = engineEntities.TryGetValue(entityId, out Entity entity);
+                string? label = ReservedEntityLabel(entityId) ?? (resolved ? DescribeEntity(world, entity, parts) : null);
+                entities[entityId] = new EntityInfo(resolved ? entity.Id : (int?)null, label);
+            }
+
+            return entities;
+        }
+
+        private static string? DescribeEntity(World world, Entity entity, List<string> parts)
+        {
+            parts.Clear();
+
+            if (world.TryGet(entity, out PBGltfContainer? gltf) && gltf != null)
+                parts.Add($"gltf {gltf.Src}");
+
+            if (world.TryGet(entity, out PBMeshRenderer? mesh) && mesh != null)
+                parts.Add($"mesh {mesh.MeshCase}");
+
+            if (world.TryGet(entity, out PBTextShape? textShape) && textShape != null)
+            {
+                string text = textShape.Text.Length > MAX_TEXT_LABEL_LENGTH ? textShape.Text.Substring(0, MAX_TEXT_LABEL_LENGTH) + "…" : textShape.Text;
+                parts.Add($"text \"{text}\"");
+            }
+
+            if (world.TryGet(entity, out PBVisibilityComponent? visibility) && visibility is { HasVisible: true, Visible: false })
+                parts.Add("hidden");
+
+            if (world.TryGet(entity, out SDKTransform? transform) && transform != null && transform.ParentId.Id != SpecialEntitiesID.SCENE_ROOT_ENTITY)
+                parts.Add($"parent {transform.ParentId.Id}");
+
+            return parts.Count > 0 ? string.Join(", ", parts) : null;
+        }
+
+        private static string? ReservedEntityLabel(int entityId) =>
             entityId switch
             {
                 SpecialEntitiesID.SCENE_ROOT_ENTITY => "scene root",
@@ -314,6 +398,18 @@ namespace DCL.McpServer.Tools
             }
 
             return names;
+        }
+
+        private readonly struct EntityInfo
+        {
+            public readonly int? EngineId;
+            public readonly string? Label;
+
+            public EntityInfo(int? engineId, string? label)
+            {
+                EngineId = engineId;
+                Label = label;
+            }
         }
 
         /// <summary>
