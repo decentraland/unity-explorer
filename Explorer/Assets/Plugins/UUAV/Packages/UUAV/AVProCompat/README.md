@@ -1,6 +1,6 @@
 # Compatibility Note
 
-The compatibility layer covers only the subset of AVPro's surface the Explorer calls; it is not a general AVPro adapter.
+The compatibility layer covers the subset of AVPro's surface the Explorer calls, plus a few inert AVPro-shaped members (listed below) pending removal in #10441; it is not a general AVPro adapter.
 
 ## Why this layer still mirrors AVPro's surface
 

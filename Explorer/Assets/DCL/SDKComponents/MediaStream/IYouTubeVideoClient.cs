@@ -89,7 +89,7 @@ namespace DCL.SDKComponents.MediaStream
         ///
         ///     Pre-fetches the sidx (segment index) box for the selected video and audio streams
         ///     via byte-range HTTP requests, so the playlist can enumerate sidx-aligned segments
-        ///     of about <see cref="TARGET_SEGMENT_SECONDS"/> (see HlsManifestBuilder.Coalesce)
+        ///     of at least <see cref="TARGET_SEGMENT_SECONDS"/> (see HlsManifestBuilder.Coalesce)
         ///     instead of a single segment over the entire file (issue #8350). If sidx fetch or
         ///     parse fails, falls back to single-segment.
         ///
