@@ -22,6 +22,8 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
     ///     Update() keeps the SDKProfile in sync when Profile.IsDirty — unlike
     ///     <see cref="PlayerProfileDataPropagationSystem" /> which only targets the assigned scene
     ///     and which skips the local player entirely (filtered by PlayerComponent).
+    ///     It also mirrors <see cref="LocalPlayerTalkingComponent" /> into <see cref="SDKProfile.Talking" />,
+    ///     leaving it unset while the component is absent (Nearby voice chat disabled).
     ///     Runs in SyncedPreRenderingSystemGroup before the writer systems so SDKProfile
     ///     is up-to-date when they flush CRDT. Profile.IsDirty is guaranteed to be set
     ///     (set in PresentationSystemGroup, reset later in the same PreRenderingSystemGroup).
@@ -60,6 +62,7 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
             World.Add(playerEntity, new PlayerSceneCRDTEntity(new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY)));
 
             characterDataPropagationUtility.CopyProfileToSceneEntity(profile!, World, playerEntity);
+            PropagateTalking();
         }
 
         protected override void Update(float t)
@@ -67,10 +70,17 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
             if (!globalWorld.TryGet(localPlayerEntity, out Profile? profile))
                 return;
 
-            if (!profile!.IsDirty)
-                return;
+            if (profile!.IsDirty)
+                characterDataPropagationUtility.CopyProfileToSceneEntity(profile, World, persistentEntities.Player);
 
-            characterDataPropagationUtility.CopyProfileToSceneEntity(profile, World, persistentEntities.Player);
+            PropagateTalking();
+        }
+
+        private void PropagateTalking()
+        {
+            if (globalWorld.TryGet(localPlayerEntity, out LocalPlayerTalkingComponent talking)
+                && World.TryGet(persistentEntities.Player, out SDKProfile? sdkProfile))
+                sdkProfile!.SetTalking(talking.IsTalking);
         }
     }
 }

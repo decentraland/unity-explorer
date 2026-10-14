@@ -42,7 +42,7 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
         [None(typeof(DeleteEntityIntention))]
         private void UpdateAvatarBase([Data] bool force, PlayerSceneCRDTEntity playerCRDTEntity, SDKProfile profile)
         {
-            if (!force && !profile.IsDirty) return;
+            if (!force && !profile.IsDirty && !profile.IsTalkingDirty) return;
 
             ecsToCRDTWriter.PutMessage<PBAvatarBase, SDKProfile>(static (pbComponent, profile) =>
             {
@@ -52,7 +52,15 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
                 pbComponent.SkinColor = avatar.SkinColor.ToColor3();
                 pbComponent.EyesColor = avatar.EyesColor.ToColor3();
                 pbComponent.HairColor = avatar.HairColor.ToColor3();
+
+                // The message is pooled: clear a value left by a previous write
+                if (profile.Talking is { } talking)
+                    pbComponent.Talking = talking;
+                else
+                    pbComponent.ClearTalking();
             }, playerCRDTEntity.CRDTEntity, profile);
+
+            profile.IsTalkingDirty = false;
         }
 
         [Query]

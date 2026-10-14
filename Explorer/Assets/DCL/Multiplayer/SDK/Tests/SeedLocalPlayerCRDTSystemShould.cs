@@ -80,5 +80,36 @@ namespace DCL.Multiplayer.SDK.Tests
 
             Assert.IsFalse(world.Has<PlayerSceneCRDTEntity>(persistentPlayerEntity));
         }
+
+        [Test]
+        public void LeaveTalkingUnsetWithoutNearbyVoiceChat()
+        {
+            // Act
+            system.Initialize();
+            system.Update(0);
+
+            // Assert
+            Assert.IsNull(world.Get<SDKProfile>(persistentPlayerEntity).Talking);
+        }
+
+        [Test]
+        public void MirrorLocalPlayerTalking()
+        {
+            // Arrange
+            globalWorld.Add(localPlayerEntity, new LocalPlayerTalkingComponent { IsTalking = true });
+
+            // Act
+            system.Initialize();
+
+            // Assert
+            Assert.AreEqual(true, world.Get<SDKProfile>(persistentPlayerEntity).Talking);
+
+            // Act
+            globalWorld.Get<LocalPlayerTalkingComponent>(localPlayerEntity).IsTalking = false;
+            system.Update(0);
+
+            // Assert
+            Assert.AreEqual(false, world.Get<SDKProfile>(persistentPlayerEntity).Talking);
+        }
     }
 }
