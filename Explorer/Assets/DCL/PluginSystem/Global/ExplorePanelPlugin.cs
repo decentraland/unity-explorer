@@ -657,8 +657,7 @@ namespace DCL.PluginSystem.Global
                     inputBlock,
                     eventsApiService,
                     mvcManager,
-                    joinedCommunitiesVoiceLiveTracker,
-                    creditsPanelController);
+                    joinedCommunitiesVoiceLiveTracker);
 
             mvcManager.RegisterController(explorePanelController);
 

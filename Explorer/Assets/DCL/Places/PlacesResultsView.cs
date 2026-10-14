@@ -92,13 +92,13 @@ namespace DCL.Places
             ThumbnailLoader thumbnailLoader,
             ProfileRepositoryWrapper profileRepoWrapper,
             HomePlaceEventBus homeEventBus,
-            IWorldPermissionsService worldPermissionsService)
+            IWorldPermissionsService permissionsService)
         {
             this.placesStateService = stateService;
             this.placesCardsThumbnailLoader = thumbnailLoader;
             this.profileRepositoryWrapper = profileRepoWrapper;
             this.homePlaceEventBus = homeEventBus;
-            this.worldPermissionsService = worldPermissionsService;
+            this.worldPermissionsService = permissionsService;
         }
 
         public void SetPlacesCounter(string text, bool showBackButton = false)

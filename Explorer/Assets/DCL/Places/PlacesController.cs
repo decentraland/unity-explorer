@@ -10,7 +10,6 @@ using DCL.PrivateWorlds;
 using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.UI.Profiles.Helpers;
-using DCL.Utilities;
 using DCL.Web3.Identities;
 using MVC;
 using System;

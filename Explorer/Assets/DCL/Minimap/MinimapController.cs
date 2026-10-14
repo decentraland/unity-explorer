@@ -442,7 +442,7 @@ namespace DCL.Minimap
 
             placesApiCts.SafeCancelAndDispose();
             placesApiCts = new CancellationTokenSource();
-            RefreshPlaceInfoUIAsync(previousParcelPosition, placesApiCts.Token).Forget();
+            RefreshPlaceInfoUiAsync(previousParcelPosition, placesApiCts.Token).Forget();
         }
 
         private void UpdatePlaceDisplayAsync(Vector3 playerPosition)
@@ -462,7 +462,7 @@ namespace DCL.Minimap
 
             placesApiCts.SafeCancelAndDispose();
             placesApiCts = new CancellationTokenSource();
-            RefreshPlaceInfoUIAsync(playerParcelPosition, placesApiCts.Token).Forget();
+            RefreshPlaceInfoUiAsync(playerParcelPosition, placesApiCts.Token).Forget();
 
             // This is disabled until we figure out a better way to inform the user if the current is scene is SDK6 or not
             // bool isNotEmptyParcel = scenesCache.Contains(playerParcelPosition);
@@ -470,7 +470,7 @@ namespace DCL.Minimap
             // viewInstance!.sdk6Label.gameObject.SetActive(isNotEmptyParcel && !isSdk7Scene);
         }
 
-        private async UniTaskVoid RefreshPlaceInfoUIAsync(Vector2Int parcelPosition, CancellationToken ct)
+        private async UniTaskVoid RefreshPlaceInfoUiAsync(Vector2Int parcelPosition, CancellationToken ct)
         {
             await realmData.WaitConfiguredAsync();
 
