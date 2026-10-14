@@ -130,9 +130,14 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             string? profilePictureUrl,
             string walletId, CancellationToken ct)
         {
+            SetParticipantName(participantName, nameColor);
+            profilePictureView.SetupAsync(profileRepositoryWrapper, nameColor, profilePictureUrl, walletId, ct).Forget();
+        }
+
+        public void SetParticipantName(string? participantName, Color nameColor)
+        {
             nameElement.text = participantName;
             nameElement.color = nameColor;
-            profilePictureView.SetupAsync(profileRepositoryWrapper, nameColor, profilePictureUrl, walletId, ct).Forget();
         }
 
         private void OnApproveButtonClicked()
