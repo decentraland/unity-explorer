@@ -823,6 +823,6 @@ dotnet_naming_symbols.movement_snapshot_fields.applicable_accessibilities = publ
 dotnet_naming_symbols.movement_snapshot_fields.resharper_required_modifiers = instance
 dotnet_naming_rule.movement_snapshot_fields_should_be_camel_case.symbols = movement_snapshot_fields
 dotnet_naming_rule.movement_snapshot_fields_should_be_camel_case.style = movement_snapshot_camel_case
+dotnet_naming_rule.movement_snapshot_fields_should_be_camel_case.resharper_style = aaBb, headIK+AaBb
 dotnet_naming_rule.movement_snapshot_fields_should_be_camel_case.severity = warning
-resharper_abbreviations = IK
 

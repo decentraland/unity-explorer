@@ -10,7 +10,7 @@ namespace DCL.Multiplayer.Movement
         public double timestamp;
 
         /// <summary>
-        ///     Stored to be able to perform diffs
+        ///     Retained for movement diffs.
         /// </summary>
         public Vector2Int parcel;
 
