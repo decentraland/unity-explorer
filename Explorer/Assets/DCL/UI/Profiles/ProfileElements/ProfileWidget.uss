@@ -11,7 +11,8 @@
     transition: background-color 0.1s;
 }
 
-.profile-widget:hover {
+.profile-widget:hover,
+.profile-widget--open {
     background-color: rgba(90, 90, 90, 0.55);
 }
 

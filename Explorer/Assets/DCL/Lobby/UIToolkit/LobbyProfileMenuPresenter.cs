@@ -35,6 +35,9 @@ namespace DCL.Lobby
         /// <summary>The Settings item was picked.</summary>
         public Action? SettingsRequested;
 
+        /// <summary>The menu opened (true) or closed (false).</summary>
+        public Action<bool>? OpenChanged;
+
         private readonly IWeb3IdentityCache identityCache;
         private readonly IProfileRepository profileRepository;
         private readonly ISystemClipboard clipboard;
@@ -135,6 +138,7 @@ namespace DCL.Lobby
             if (menu == null) return;
 
             menu.Open();
+            OpenChanged?.Invoke(true);
             profileCts = profileCts.SafeRestartLinked(showCt);
             LoadProfileAsync(menu, profileCts.Token).Forget();
         }
@@ -149,6 +153,7 @@ namespace DCL.Lobby
             copiedCts = null;
             menu.IsCopiedShown = false;
             menu.Close();
+            OpenChanged?.Invoke(false);
         }
 
         // The address comes from the identity, so it shows even when the profile cannot be fetched.

@@ -86,10 +86,23 @@
     background-color: rgba(0, 0, 0, 0.55);
 }
 
+/* The bell texture has less padding than the pill icons, so a smaller box keeps the visible glyph the same height */
 .lobby__notifications-icon {
+    width: 28px;
+    height: 28px;
+    background-image: url('/Assets/Textures/Common/NotificationIcn.png');
+}
+
+.lobby__top-bar-button--open,
+.lobby__top-bar-button--open:active {
+    background-color: rgba(90, 90, 90, 0.55);
+}
+
+/* The lit frame of the sidebar's bell animation is padded like the pill icons, so it takes their box */
+.lobby__top-bar-button--open .lobby__notifications-icon {
     width: 32px;
     height: 32px;
-    background-image: url('/Assets/Textures/Common/NotificationIcn.png');
+    background-image: url('/Assets/Textures/ExplorePanel/NotificationsHover/NotificationIcon_00062.png');
 }
 
 .lobby__notifications-badge {

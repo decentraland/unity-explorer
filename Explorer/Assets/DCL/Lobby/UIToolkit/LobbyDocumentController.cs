@@ -116,6 +116,7 @@ namespace DCL.Lobby
         private CancellationTokenSource? friendsCts;
         private CancellationTokenSource? jumpInCts;
         private CancellationTokenSource? profileMenuCts;
+        private CancellationTokenSource? notificationsCts;
         private UniTaskCompletionSource? closeIntent;
         private bool leaving;
 
@@ -230,6 +231,7 @@ namespace DCL.Lobby
             notificationsPanel.UnreadCountChanged -= ShowUnreadCount;
             DCLInput.Instance.UI.Close.performed -= OnUIClose;
             profileMenu.SettingsRequested = null;
+            profileMenu.OpenChanged = null;
 
             if (friends != null)
                 friends.JoinRequested = null;
@@ -240,6 +242,7 @@ namespace DCL.Lobby
             friendsCts.SafeCancelAndDispose();
             jumpInCts.SafeCancelAndDispose();
             profileMenuCts.SafeCancelAndDispose();
+            notificationsCts.SafeCancelAndDispose();
             avatarPreview?.Dispose();
             closeIntent?.TrySetCanceled();
         }
@@ -266,6 +269,7 @@ namespace DCL.Lobby
             // The renderer keeps the hierarchy across hides, so every handler is removed before it is added again
             viewInstance!.AttachTopBarWidgets();
             viewInstance.Profile.Clicked = profileMenu.Toggle;
+            profileMenu.OpenChanged = SetProfileMenuOpen;
             viewInstance.NotificationsButton.clicked -= ShowNotifications;
             viewInstance.NotificationsButton.clicked += ShowNotifications;
             viewInstance.MapButton.clicked -= ShowMap;
@@ -366,6 +370,8 @@ namespace DCL.Lobby
             profileMenu.Hide();
             profileMenuCts.SafeCancelAndDispose();
             profileMenuCts = null;
+            notificationsCts.SafeCancelAndDispose();
+            notificationsCts = null;
 
             // Nulled so a late callback finds no source rather than a disposed one, whose token throws
             avatarCts.SafeCancelAndDispose();
@@ -465,6 +471,9 @@ namespace DCL.Lobby
             string? name = profile?.ValidatedName;
             viewInstance!.WelcomeText.text = string.IsNullOrEmpty(name) ? WELCOME_FALLBACK : string.Format(WELCOME_FORMAT, name);
         }
+
+        private void SetProfileMenuOpen(bool open) =>
+            viewInstance!.Profile.IsMenuOpen = open;
 
         private void ShowUnreadCount(int count)
         {
@@ -913,7 +922,24 @@ namespace DCL.Lobby
             ShowExploreSection(ExploreSections.Settings);
 
         private void ShowNotifications() =>
-            mvcManager.ShowAndForget(NotificationsPanelController<LobbyPopupParameter>.IssueCommand(new LobbyPopupParameter()));
+            ShowNotificationsAsync().Forget();
+
+        // A click while the panel is up restarts the show, as in the sidebar
+        private async UniTaskVoid ShowNotificationsAsync()
+        {
+            CancellationTokenSource cts = notificationsCts = notificationsCts.SafeRestart();
+            viewInstance!.SetNotificationsPanelOpen(true);
+
+            try { await mvcManager.ShowAsync(NotificationsPanelController<LobbyPopupParameter>.IssueCommand(new LobbyPopupParameter()), cts.Token); }
+            catch (OperationCanceledException) { }
+            catch (Exception e) { ReportHub.LogException(e, ReportCategory.UI); }
+            finally
+            {
+                // A restart owns the state from then on
+                if (ReferenceEquals(cts, notificationsCts))
+                    viewInstance.SetNotificationsPanelOpen(false);
+            }
+        }
 
         private void ShowMap() =>
             ShowExploreSection(ExploreSections.Navmap);

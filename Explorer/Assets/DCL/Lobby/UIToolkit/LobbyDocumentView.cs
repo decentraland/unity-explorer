@@ -39,6 +39,7 @@ namespace DCL.Lobby
         private const string PROFILE_MENU_NAME = "ProfileMenu";
         private const string PROFILE_MENU_SLOT_NAME = "ProfileMenuSlot";
         private const string USS_PROFILE_MENU_WITH_CLOSE = "lobby__profile-menu--with-close";
+        private const string USS_NOTIFICATIONS_OPEN = "lobby__top-bar-button--open";
 
         [SerializeField] private VisualTreeAsset placeCardTemplate = null!;
         [SerializeField] private VisualTreeAsset friendCardTemplate = null!;
@@ -143,6 +144,10 @@ namespace DCL.Lobby
             CloseButton.SetDisplayed(displayed);
             Section(PROFILE_MENU_SLOT_NAME).EnableInClassList(USS_PROFILE_MENU_WITH_CLOSE, displayed);
         }
+
+        /// <summary>Open state of <see cref="NotificationsButton" />; a no-op while the hierarchy is gone.</summary>
+        public void SetNotificationsPanelOpen(bool open) =>
+            root?.Q<Button>(NOTIFICATIONS_NAME)?.EnableInClassList(USS_NOTIFICATIONS_OPEN, open);
 
         private VisualElement Section(string elementName) =>
             Element<VisualElement>(elementName);

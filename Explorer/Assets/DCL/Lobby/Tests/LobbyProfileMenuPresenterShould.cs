@@ -134,6 +134,37 @@ namespace DCL.Lobby.Tests
         }
 
         [Test]
+        public void ReportEachOpenAndClose()
+        {
+            // Arrange
+            bool? reported = null;
+            presenter.OpenChanged = open => reported = open;
+            presenter.Show(menu, cts.Token);
+
+            // Assert
+            Assert.IsNull(reported);
+
+            // Act
+            presenter.Toggle();
+
+            // Assert
+            Assert.IsTrue(reported);
+
+            // Act
+            presenter.Dismiss();
+
+            // Assert
+            Assert.IsFalse(reported);
+
+            // Act
+            reported = null;
+            presenter.Dismiss();
+
+            // Assert
+            Assert.IsNull(reported);
+        }
+
+        [Test]
         public async Task ShowTheOwnProfileWhenOpened()
         {
             // Arrange
