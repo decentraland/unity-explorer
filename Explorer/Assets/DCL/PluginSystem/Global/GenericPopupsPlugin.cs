@@ -24,7 +24,7 @@ namespace DCL.PluginSystem.Global
         private readonly IMVCManager mvcManager;
         private readonly ClipboardManager clipboardManager;
         private readonly ICompositeWeb3Provider compositeWeb3Provider;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly IInputBlock inputBlock;
         private readonly IWeb3IdentityCache identityCache;
         private readonly IProfileCache profileCache;
@@ -41,7 +41,7 @@ namespace DCL.PluginSystem.Global
             IMVCManager mvcManager,
             ClipboardManager clipboardManager,
             ICompositeWeb3Provider compositeWeb3Provider,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             IInputBlock inputBlock,
             IWeb3IdentityCache identityCache,
             IProfileCache profileCache,

@@ -60,7 +60,7 @@ namespace DCL.Lobby
         private readonly ICursor cursor;
         private readonly IReadOnlyLoadingStatus loadingStatus;
         private readonly IMVCManager mvcManager;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly ProfileChangesBus profileChangesBus;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
@@ -145,7 +145,7 @@ namespace DCL.Lobby
             ICursor cursor,
             IReadOnlyLoadingStatus loadingStatus,
             IMVCManager mvcManager,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             ProfileChangesBus profileChangesBus,
             ICharacterPreviewFactory characterPreviewFactory,
             CharacterPreviewEventBus characterPreviewEventBus,
@@ -388,17 +388,18 @@ namespace DCL.Lobby
         {
             try
             {
-                Profile? profile = await selfProfile.ProfileAsync(ct);
+                ProfileReadResult profileResult = await selfProfile.ProfileAsync(ct);
 
                 if (ct.IsCancellationRequested) return;
 
-                ShowWelcome(profile);
-
-                if (profile == null)
+                if (!profileResult.IsOk(out Profile? profile))
                 {
+                    ShowWelcome(null);
                     ReportHub.LogWarning(ReportCategory.PROFILE, "Own profile is not available, the lobby avatar is not shown");
                     return;
                 }
+
+                ShowWelcome(profile);
 
                 avatarPreview!.Initialize(profile.Avatar, CharacterPreviewUtils.LOBBY_PREVIEW_POSITION);
                 avatarPreview.OnBeforeShow();

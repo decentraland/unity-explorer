@@ -47,7 +47,7 @@ namespace DCL.Multiplayer.Movement
             PulseRemoveIntentions removeIntentions,
             IWeb3IdentityCache identityCache,
             ReconnectionSettings settings,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             PulseRealm pulseRealm)
         {
             this.pulseService = pulseService;
