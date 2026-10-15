@@ -4,6 +4,8 @@ using Cysharp.Threading.Tasks;
 using DCL.Backpack;
 using DCL.CharacterPreview;
 using DCL.Chat.Commands;
+using DCL.Chat.History;
+using DCL.Chat.MessageBus;
 using DCL.CommunicationData.URLHelpers;
 using DCL.Communities;
 using DCL.Communities.CommunitiesCard;
@@ -23,6 +25,8 @@ using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connectivity;
 using DCL.Notifications.NotificationsMenu;
+using DCL.NotificationsBus;
+using DCL.NotificationsBus.NotificationTypes;
 using DCL.Places;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
@@ -62,6 +66,7 @@ namespace DCL.Lobby
 
         /// <summary>What a world named without its domain gets, as in the /goto chat command.</summary>
         private const string WORLD_SUFFIX = ".dcl.eth";
+        private const string CROWD_LOOKUP_ERROR_MESSAGE = "The most crowded place could not be found. Please try again.";
         private const int MAX_UPCOMING_EVENTS = 10;
 
         private const int MAX_RECENT_PLACES = 3;
@@ -102,6 +107,7 @@ namespace DCL.Lobby
         private readonly IRealmNavigator realmNavigator;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IWebRequestController webRequestController;
+        private readonly IChatMessagesBus chatMessagesBus;
         private readonly StartParcel startParcel;
         private readonly ISpriteCache spriteCache;
         private readonly SidebarProfileButtonPresenter profileButtonPresenter;
@@ -208,6 +214,7 @@ namespace DCL.Lobby
             IRealmNavigator realmNavigator,
             IDecentralandUrlsSource decentralandUrlsSource,
             IWebRequestController webRequestController,
+            IChatMessagesBus chatMessagesBus,
             StartParcel startParcel,
             ISpriteCache spriteCache,
             SidebarProfileButtonPresenter profileButtonPresenter,
@@ -237,6 +244,7 @@ namespace DCL.Lobby
             this.realmNavigator = realmNavigator;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.webRequestController = webRequestController;
+            this.chatMessagesBus = chatMessagesBus;
             this.startParcel = startParcel;
             this.spriteCache = spriteCache;
             this.profileButtonPresenter = profileButtonPresenter;
@@ -1098,66 +1106,88 @@ namespace DCL.Lobby
         // world with an optional parcel, or the random and crowd keywords
         private void OnGoToSubmitted(string destination)
         {
+            // In-world the destination is sent to the chat as the command itself, which resolves it like a typed /goto
+            // and reports the outcome in the nearby channel
+            if (startParcel.IsConsumed())
+            {
+                chatMessagesBus.SendWithUtcNowTimestamp(ChatChannel.NEARBY_CHANNEL, $"/{ChatCommandsUtils.COMMAND_GOTO} {destination}", ChatMessageOrigin.JumpIn);
+                RequestClose();
+                return;
+            }
+
+            // Before the world loads the destination is parsed here and handed to the startup teleport
             GotoTarget target = ChatParamUtils.ParseGotoTarget(destination);
 
             if (target.IsCrowd)
-            {
-                jumpInCts = jumpInCts.SafeRestart();
-                GoToCrowdAsync(jumpInCts.Token).Forget();
-            }
+                StartAtCrowdAsync(placesCts!.Token).Forget();
             else if (target.IsRandom)
-                PickParcel(GoToChatCommand.RandomParcel(), landOnParcel: false);
+                StartAt(GenesisUrl(), GoToChatCommand.RandomParcel(), spawnPointName: null);
             else if (target.World != null)
-                PickWorld(WorldUrl(WorldName(target.World)), target.Parcel, target.SpawnPoint);
+                StartAt(WorldUrl(WorldName(target.World)), target.Parcel, target.SpawnPoint);
             else if (target.Parcel is { } parcel)
-                PickParcel(parcel, landOnParcel: false, target.SpawnPoint);
+                StartAt(GenesisUrl(), parcel, target.SpawnPoint);
         }
 
-        private async UniTaskVoid GoToCrowdAsync(CancellationToken ct)
+        // The lookup runs on the places token, which closing the lobby cancels; a lookup that fails is reported and leaves
+        // the lobby up
+        private async UniTaskVoid StartAtCrowdAsync(CancellationToken ct)
         {
             Result<Vector2Int> result = await GoToChatCommand.FindCrowdAsync(webRequestController, decentralandUrlsSource, ct).SuppressToResultAsync(ReportCategory.UI);
 
-            if (ct.IsCancellationRequested || !result.Success) return;
+            if (ct.IsCancellationRequested) return;
 
-            PickParcel(result.Value, landOnParcel: false);
+            if (!result.Success)
+            {
+                NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(CROWD_LOOKUP_ERROR_MESSAGE));
+                return;
+            }
+
+            StartAt(GenesisUrl(), result.Value, spawnPointName: null);
         }
 
-        // Before the world loads the startup teleport lands in the pick; in-world it teleports right away. The world's own
-        // spawn is the landing unless a parcel is given
-        private void PickWorld(URLDomain worldUrl, Vector2Int? parcel = null, string? spawnPointName = null)
+        // Before the world loads the startup teleport lands in the pick; in-world it teleports right away, onto the world's
+        // own spawn
+        private void PickWorld(URLDomain worldUrl)
         {
-            if (startParcel.IsConsumed())
+            if (!startParcel.IsConsumed())
             {
-                jumpInCts = jumpInCts.SafeRestart();
-                realmNavigator.TryChangeRealmAsync(worldUrl, jumpInCts.Token, parcel ?? default(Vector2Int), isWorld: true, allowsSpawnPointerOverride: true, spawnPointName: spawnPointName).Forget();
-            }
-            else
-            {
-                startParcel.AssignRealm(worldUrl, spawnPointName);
-
-                if (parcel is { } startAt)
-                    startParcel.Assign(startAt, spawnPointName);
+                StartAt(worldUrl, parcel: null, spawnPointName: null);
+                return;
             }
 
+            jumpInCts = jumpInCts.SafeRestart();
+            realmNavigator.TryChangeRealmAsync(worldUrl, jumpInCts.Token, isWorld: true, allowsSpawnPointerOverride: true).Forget();
             RequestClose();
         }
 
         // Before the world loads the startup teleport lands in the pick; in-world it teleports right away
-        private void PickParcel(Vector2Int parcel, bool landOnParcel, string? spawnPointName = null)
+        private void PickParcel(Vector2Int parcel, bool landOnParcel)
         {
-            if (startParcel.IsConsumed())
+            if (!startParcel.IsConsumed())
             {
-                jumpInCts = jumpInCts.SafeRestart();
-                realmNavigator.TeleportToParcelAsync(parcel, jumpInCts.Token, false, landOnParcel, spawnPointName).Forget();
+                StartAt(GenesisUrl(), parcel, spawnPointName: null);
+                return;
             }
-            else
-            {
-                startParcel.AssignRealm(URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Genesis)));
-                startParcel.Assign(parcel, spawnPointName);
-            }
+
+            jumpInCts = jumpInCts.SafeRestart();
+            realmNavigator.TeleportToParcelAsync(parcel, jumpInCts.Token, false, landOnParcel).Forget();
+            RequestClose();
+        }
+
+        // Hands the pick to the startup teleport: the realm, the parcel if one is given and the realm's own spawn otherwise,
+        // and the spawn point if one is named
+        private void StartAt(URLDomain realm, Vector2Int? parcel, string? spawnPointName)
+        {
+            startParcel.AssignRealm(realm, spawnPointName);
+
+            if (parcel is { } startAt)
+                startParcel.Assign(startAt, spawnPointName);
 
             RequestClose();
         }
+
+        private URLDomain GenesisUrl() =>
+            URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Genesis));
 
         private URLDomain WorldUrl(string worldName) =>
             URLDomain.FromString(new ENS(worldName).ConvertEnsToWorldUrl(decentralandUrlsSource.Url(DecentralandUrl.WorldServer)));

@@ -128,11 +128,14 @@ namespace DCL.Lobby.Tests
         {
             //Arrange
             host.Layout!.Remove(LobbyWidgetId.Landing4x3);
+            host.Layout.Remove(LobbyWidgetId.LiveEvents3x3);
+            host.Layout.Remove(LobbyWidgetId.UpcomingEvents3x2);
             host.Apply();
             editor.Show(root);
+            editor.Hide();
 
             //Act
-            host.Layout.TryPlace(LobbyWidgetId.Landing4x3, LobbyGridCorner.TopRight, new Vector2Int(0, 1));
+            Assert.IsTrue(host.Layout.TryPlace(LobbyWidgetId.Landing4x3, LobbyGridCorner.TopRight, new Vector2Int(0, 1)), "The events made room");
             host.Apply();
             editor.Show(root);
 
@@ -224,6 +227,7 @@ namespace DCL.Lobby.Tests
             Assert.AreSame(Card(LobbyWidgetFamily.GoTo), root.Q("WidgetModalItems")[2]);
 
             //Act
+            editor.Hide();
             host.Layout!.Remove(LobbyWidgetId.RecommendedPlaces6x2);
             host.Apply();
             editor.Show(root);
@@ -242,14 +246,17 @@ namespace DCL.Lobby.Tests
         {
             //Arrange
             host.Layout!.Remove(LobbyWidgetId.Landing4x3);
+            host.Layout.Remove(LobbyWidgetId.LiveEvents3x3);
+            host.Layout.Remove(LobbyWidgetId.UpcomingEvents3x2);
             host.Apply();
             editor.Show(root);
             LobbyWidgetCardElement card = Card(LobbyWidgetFamily.Landing);
             Assert.AreSame(root.Q("WidgetModalItems"), card.parent);
             Assert.IsNull(root.Q<LobbyWidgetHandleElement>(LobbyWidgetId.Landing4x3.ToString()));
+            editor.Hide();
 
             //Act
-            host.Layout.TryPlace(LobbyWidgetId.Landing4x3, LobbyGridCorner.TopRight, new Vector2Int(0, 1));
+            Assert.IsTrue(host.Layout.TryPlace(LobbyWidgetId.Landing4x3, LobbyGridCorner.TopRight, new Vector2Int(0, 1)), "The events made room");
             host.Apply();
             editor.Show(root);
 
@@ -261,7 +268,7 @@ namespace DCL.Lobby.Tests
             Assert.AreEqual(size.x + (2 * LobbyWidgetHandleElement.OUTSET), handle.style.width.value.value);
             Assert.AreEqual(size.y + (2 * LobbyWidgetHandleElement.OUTSET), handle.style.height.value.value);
             Assert.AreEqual(LobbyGridElement.CellPitch.y - LobbyWidgetHandleElement.OUTSET, handle.style.top.value.value);
-            Assert.AreEqual(3, root.Q("WidgetModalItems").childCount, "Only the communities, the gallery and the go-to row are left off the grids");
+            Assert.AreEqual(5, root.Q("WidgetModalItems").childCount, "The two event rows and the three off by default are left off the grids");
         }
 
         [Test]
@@ -349,17 +356,28 @@ namespace DCL.Lobby.Tests
         {
             //Arrange
             editor.Show(root);
-            Submit(Handle(LobbyWidgetId.Landing4x3).Q<Button>("Remove"));
+            Submit(Handle(LobbyWidgetId.FriendsOnline4x2).Q<Button>("Remove"));
 
             //Act
             editor.Hide();
 
             //Assert
-            Assert.IsTrue(host.Layout!.TryGetPlacement(LobbyWidgetId.Landing4x3, out LobbyWidgetPlacement placement));
+            Assert.IsTrue(host.Layout!.TryGetPlacement(LobbyWidgetId.FriendsOnline4x2, out LobbyWidgetPlacement placement));
             Assert.AreEqual(LobbyGridCorner.TopLeft, placement.Corner);
-            Assert.AreEqual(Vector2Int.zero, placement.Cell);
-            Assert.AreSame(root.Q("TopLeftGrid"), root.Q("Welcome").parent);
+            Assert.AreEqual(new Vector2Int(0, 3), placement.Cell);
+            Assert.AreSame(root.Q("TopLeftGrid"), root.Q("Friends").parent);
             Assert.IsFalse(DCLPlayerPrefs.HasKey(DCLPrefKeys.LOBBY_LAYOUT));
+        }
+
+        [Test]
+        public void GiveTheRequiredWidgetNoRemoveButton()
+        {
+            //Act
+            editor.Show(root);
+
+            //Assert
+            Assert.IsNull(Handle(LobbyLayout.REQUIRED_WIDGET).Q<Button>("Remove"), "The landing stays on a grid");
+            Assert.IsNotNull(Handle(LobbyWidgetId.FriendsOnline4x2).Q<Button>("Remove"));
         }
 
         [Test]
@@ -369,6 +387,7 @@ namespace DCL.Lobby.Tests
             host.Layout!.Remove(LobbyWidgetId.Landing4x3);
             host.Apply();
             editor.Show(root);
+            LobbyWidgetCardElement landingCard = Card(LobbyWidgetFamily.Landing);
             Assert.IsFalse(SaveButton.enabledSelf);
 
             //Act
@@ -380,7 +399,7 @@ namespace DCL.Lobby.Tests
             Assert.AreEqual(LobbyGridCorner.TopLeft, placement.Corner);
             Assert.AreEqual(Vector2Int.zero, placement.Cell);
             Assert.AreSame(root.Q("TopLeftGrid"), Handle(LobbyWidgetId.Landing4x3).parent);
-            Assert.IsNull(Card(LobbyWidgetFamily.Landing).parent);
+            Assert.IsNull(landingCard.parent, "The row left the modal");
             Assert.IsTrue(SaveButton.enabledSelf, "The shipped layout differs from the one on entry");
             Assert.IsFalse(DCLPlayerPrefs.HasKey(DCLPrefKeys.LOBBY_LAYOUT), "Nothing is stored until Save");
         }

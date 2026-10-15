@@ -13,7 +13,8 @@ namespace DCL.Lobby
     ///     drop takes only when the whole widget fits inside one grid; the widgets in its way make room by moving off the
     ///     side it covers, and they slide to where they would go, without their handles, while the drag hovers over them.
     ///     A release of a placed widget with the pointer over the modal takes it off its grid, as does the button in the
-    ///     corner of its handle. Any other release leaves every widget where it was. Every change shows at once but is
+    ///     corner of its handle; <see cref="LobbyLayout.REQUIRED_WIDGET" /> has no such button and never targets the
+    ///     modal. Any other release leaves every widget where it was. Every change shows at once but is
     ///     stored only by the Save button of the modal, which leaves edit mode; Cancel and the Back button of the header,
     ///     like <see cref="Hide" />, put the layout back as it was on entry, and Reset to Default puts the shipped layout
     ///     up for saving.
@@ -100,7 +101,7 @@ namespace DCL.Lobby
             {
                 LobbyWidgetId widgetId = WIDGETS[i];
 
-                handles[(int)widgetId] = new LobbyWidgetHandleElement(widgetId)
+                handles[(int)widgetId] = new LobbyWidgetHandleElement(widgetId, removable: widgetId != LobbyLayout.REQUIRED_WIDGET)
                 {
                     name = widgetId.ToString(),
                     DragStarted = OnHandleDragStarted,
@@ -227,7 +228,8 @@ namespace DCL.Lobby
             return false;
         }
 
-        // Stores the layout as it stands and leaves edit mode; a drag in progress lands first, where it is
+        // Stores the layout as it stands and leaves edit mode; a drag in progress is cancelled first, its widget staying
+        // where it came from
         private void Save()
         {
             EndDragInProgress();
@@ -402,7 +404,8 @@ namespace DCL.Lobby
             UpdateSaveButton();
         }
 
-        // A drag cut short lands where the pointer last was, through the gesture it came from
+        // A drag cut short is ended through the gesture it came from with no target left, so the release puts its widget
+        // back where it came from
         private void EndDragInProgress()
         {
             if (draggedHandle == null && draggedCard == null)
@@ -437,14 +440,15 @@ namespace DCL.Lobby
         }
 
         // The modal is the target of a placed widget while the pointer is over it, as it is far smaller than most
-        // widgets; an unplaced one has nothing to leave, so it never targets the modal. Otherwise the grid under the
-        // middle of the lifted widget is the target. The cell nearest to the top-left corner of the widget must then
-        // hold the whole widget inside that grid, so a widget straddling two grids has no valid cell
+        // widgets; an unplaced one has nothing to leave and the required widget never leaves, so neither targets the
+        // modal. Otherwise the grid under the middle of the lifted widget is the target. The cell nearest to the top-left
+        // corner of the widget must then hold the whole widget inside that grid, so a widget straddling two grids has no
+        // valid cell
         private void UpdateTarget(Vector2 panelPosition)
         {
             Vector2Int span = draggedWidgetId.Span();
             Vector2 topLeft = panelPosition - grabOffset;
-            bool overModal = draggedHandle != null && Modal.worldBound.Contains(panelPosition);
+            bool overModal = draggedHandle != null && draggedWidgetId != LobbyLayout.REQUIRED_WIDGET && Modal.worldBound.Contains(panelPosition);
             LobbyGridElement? grid = overModal ? null : GridAt(topLeft + (LobbyGridElement.SpanToSize(span) * 0.5f));
             SetTargetModal(overModal);
 

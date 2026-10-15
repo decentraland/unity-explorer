@@ -8,7 +8,8 @@ namespace DCL.Lobby
 {
     /// <summary>
     ///     Persists the lobby layout as one JSON string in the player prefs. Widgets and corners are stored by enum name so a
-    ///     renamed or resized widget is dropped on load instead of landing on a wrong one.
+    ///     renamed or resized widget is dropped on load instead of landing on a wrong one. A stored layout without
+    ///     <see cref="LobbyLayout.REQUIRED_WIDGET" /> gets it back on load.
     /// </summary>
     public static class LobbyLayoutStorage
     {
@@ -37,7 +38,8 @@ namespace DCL.Lobby
 
         /// <summary>
         ///     Replaces the placements with the stored ones. Entries that are unknown, out of the grid or overlapping are
-        ///     skipped; a missing, malformed or outdated value gives the default layout.
+        ///     skipped, and <see cref="LobbyLayout.REQUIRED_WIDGET" /> is put back if no entry places it; a missing,
+        ///     malformed or outdated value gives the default layout.
         /// </summary>
         public static void Load(LobbyLayout layout)
         {
@@ -74,6 +76,8 @@ namespace DCL.Lobby
 
                 layout.TryPlace(widgetId, corner, new Vector2Int(entry.X, entry.Y));
             }
+
+            layout.EnsureRequiredWidget();
         }
 
         // Enum.TryParse also accepts any integer, so the result is checked against the declared values

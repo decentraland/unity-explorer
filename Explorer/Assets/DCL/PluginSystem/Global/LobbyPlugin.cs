@@ -5,6 +5,7 @@ using DCL.AssetsProvision;
 using DCL.Backpack;
 using DCL.Browser;
 using DCL.CharacterPreview;
+using DCL.Chat.MessageBus;
 using DCL.Clipboard;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.Credits;
@@ -64,6 +65,7 @@ namespace DCL.PluginSystem.Global
         private readonly HttpEventsApiService eventsApiService;
         private readonly IRealmNavigator realmNavigator;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
+        private readonly IChatMessagesBus chatMessagesBus;
         private readonly ISystemClipboard clipboard;
         private readonly StartParcel startParcel;
         private readonly IWebRequestController webRequestController;
@@ -111,6 +113,7 @@ namespace DCL.PluginSystem.Global
             HttpEventsApiService eventsApiService,
             IRealmNavigator realmNavigator,
             IDecentralandUrlsSource decentralandUrlsSource,
+            IChatMessagesBus chatMessagesBus,
             ISystemClipboard clipboard,
             StartParcel startParcel,
             IWebRequestController webRequestController,
@@ -147,6 +150,7 @@ namespace DCL.PluginSystem.Global
             this.eventsApiService = eventsApiService;
             this.realmNavigator = realmNavigator;
             this.decentralandUrlsSource = decentralandUrlsSource;
+            this.chatMessagesBus = chatMessagesBus;
             this.clipboard = clipboard;
             this.startParcel = startParcel;
             this.webRequestController = webRequestController;
@@ -243,7 +247,7 @@ namespace DCL.PluginSystem.Global
             var lobbyController = new LobbyDocumentController(viewFactory,
                 inputBlock, cursor, loadingStatus, mvcManager,
                 selfProfile, profileChangesBus, characterPreviewFactory, characterPreviewEventBus, settings.AvatarSettings, lobbyStage, world,
-                placesAPIService, realmData, homePlace, eventsApiService, eventCardActions, realmNavigator, decentralandUrlsSource, webRequestController, startParcel, new SpriteCache(webRequestController), profileButtonPresenter,
+                placesAPIService, realmData, homePlace, eventsApiService, eventCardActions, realmNavigator, decentralandUrlsSource, webRequestController, chatMessagesBus, startParcel, new SpriteCache(webRequestController), profileButtonPresenter,
                 notificationsPanel, friendsPresenter, connectedFriendsPresenter, communitiesDataProvider, cameraReelContainer, identityCache);
 
             mvcManager.RegisterController(lobbyController);

@@ -8,8 +8,9 @@ namespace DCL.Lobby
     /// <summary>
     ///     Edit-mode frame of a placed widget that takes the pointer and reports its drags with itself as the source. It
     ///     covers the cells of the widget over its section, reaching a little past them, with a button in its top-right
-    ///     corner that asks for the widget to leave its grid. Its tint goes in a separate <see cref="Underlay" /> meant to
-    ///     sit under the section, so the widget itself is not tinted. Positions are in panel space.
+    ///     corner that asks for the widget to leave its grid, when the widget is removable. Its tint goes in a separate
+    ///     <see cref="Underlay" /> meant to sit under the section, so the widget itself is not tinted. Positions are in
+    ///     panel space.
     /// </summary>
     public class LobbyWidgetHandleElement : VisualElement
     {
@@ -45,7 +46,7 @@ namespace DCL.Lobby
         /// <summary>Panel position of the top-left corner of the cells of the widget, inside the frame.</summary>
         public Vector2 WidgetPosition => worldBound.position + new Vector2(OUTSET, OUTSET);
 
-        public LobbyWidgetHandleElement(LobbyWidgetId widgetId)
+        public LobbyWidgetHandleElement(LobbyWidgetId widgetId, bool removable)
         {
             WidgetId = widgetId;
 
@@ -61,14 +62,17 @@ namespace DCL.Lobby
             Underlay.style.width = style.width;
             Underlay.style.height = style.height;
 
-            var remove = new Button(() => RemoveRequested?.Invoke(this)) { name = "Remove" };
-            remove.AddToClassList(USS_REMOVE);
-            // A press on the button must not reach the gesture below, or it would start a drag
-            remove.RegisterCallback<PointerDownEvent>(static evt => evt.StopPropagation());
-            var removeIcon = new VisualElement { name = "Icon", pickingMode = PickingMode.Ignore };
-            removeIcon.AddToClassList(USS_REMOVE_ICON);
-            remove.Add(removeIcon);
-            Add(remove);
+            if (removable)
+            {
+                var remove = new Button(() => RemoveRequested?.Invoke(this)) { name = "Remove" };
+                remove.AddToClassList(USS_REMOVE);
+                // A press on the button must not reach the gesture below, or it would start a drag
+                remove.RegisterCallback<PointerDownEvent>(static evt => evt.StopPropagation());
+                var removeIcon = new VisualElement { name = "Icon", pickingMode = PickingMode.Ignore };
+                removeIcon.AddToClassList(USS_REMOVE_ICON);
+                remove.Add(removeIcon);
+                Add(remove);
+            }
 
             gesture = new ClickOrDragManipulator
             {

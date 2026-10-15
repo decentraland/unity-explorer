@@ -383,9 +383,13 @@ namespace DCL.Lobby
         private float MaxOffset() =>
             Mathf.Max(0f, content.layout.width - viewport.contentRect.width);
 
-        // A drag can settle nearest to the last page while the strip has not reached its end
-        private bool AtEnd() =>
-            offset >= MaxOffset() - END_TOLERANCE;
+        // A drag can settle nearest to the last page while the strip has not reached its end; before the first layout
+        // pass nothing is measured and the strip counts as at its end
+        private bool AtEnd()
+        {
+            float maxOffset = MaxOffset();
+            return float.IsNaN(maxOffset) || offset >= maxOffset - END_TOLERANCE;
+        }
 
         // The content cannot slide past its end, so the last cards share the offset of the end
         private float CardOffset(int card) =>

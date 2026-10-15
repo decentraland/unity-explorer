@@ -564,5 +564,63 @@ namespace DCL.Lobby.Tests
             Assert.AreEqual(BOTTOM_GRID, layout.GridSize(LobbyGridCorner.BottomLeft));
             Assert.AreEqual(BOTTOM_GRID, layout.GridSize(LobbyGridCorner.BottomRight));
         }
+
+        [Test]
+        public void KeepTheRequiredWidgetWhereItIs()
+        {
+            //Arrange
+            layout.TryPlace(LobbyLayout.REQUIRED_WIDGET, LobbyGridCorner.TopRight, new Vector2Int(0, 2));
+
+            //Act
+            layout.EnsureRequiredWidget();
+
+            //Assert
+            Assert.AreEqual(1, layout.Placements.Count);
+            Assert.IsTrue(layout.TryGetPlacement(LobbyLayout.REQUIRED_WIDGET, out LobbyWidgetPlacement placement));
+            Assert.AreEqual(LobbyGridCorner.TopRight, placement.Corner);
+            Assert.AreEqual(new Vector2Int(0, 2), placement.Cell);
+        }
+
+        [Test]
+        public void PutTheRequiredWidgetBackAtItsShippedCellMakingRoom()
+        {
+            //Arrange
+            layout.TryPlace(LobbyWidgetId.FriendsOnline4x2, LobbyGridCorner.TopLeft, Vector2Int.zero);
+
+            //Act
+            layout.EnsureRequiredWidget();
+
+            //Assert
+            Assert.IsTrue(layout.TryGetPlacement(LobbyLayout.REQUIRED_WIDGET, out LobbyWidgetPlacement landing));
+            Assert.AreEqual(LobbyGridCorner.TopLeft, landing.Corner);
+            Assert.AreEqual(Vector2Int.zero, landing.Cell);
+            Assert.IsTrue(layout.TryGetPlacement(LobbyWidgetId.FriendsOnline4x2, out LobbyWidgetPlacement friends));
+            Assert.AreEqual(new Vector2Int(0, 3), friends.Cell, "The friends moved down off the landing");
+        }
+
+        [Test]
+        public void FallBackToTheShippedLayoutWhenNothingCanMakeRoomForTheRequiredWidget()
+        {
+            //Arrange
+            layout.TryPlace(LobbyWidgetId.FriendsOnline4x2, LobbyGridCorner.TopLeft, new Vector2Int(0, 0));
+            layout.TryPlace(LobbyWidgetId.RecommendedPlaces4x2, LobbyGridCorner.TopLeft, new Vector2Int(0, 2));
+            layout.TryPlace(LobbyWidgetId.Communities4x2, LobbyGridCorner.TopLeft, new Vector2Int(0, 4));
+            var shipped = new LobbyLayout(TOP_GRID, TOP_GRID, BOTTOM_GRID, BOTTOM_GRID);
+            shipped.ResetToDefault();
+
+            //Act
+            layout.EnsureRequiredWidget();
+
+            //Assert
+            Assert.AreEqual(shipped.Placements.Count, layout.Placements.Count);
+
+            for (var i = 0; i < shipped.Placements.Count; i++)
+            {
+                LobbyWidgetPlacement expected = shipped.Placements[i];
+                Assert.IsTrue(layout.TryGetPlacement(expected.WidgetId, out LobbyWidgetPlacement placement), expected.WidgetId.ToString());
+                Assert.AreEqual(expected.Corner, placement.Corner);
+                Assert.AreEqual(expected.Cell, placement.Cell);
+            }
+        }
     }
 }

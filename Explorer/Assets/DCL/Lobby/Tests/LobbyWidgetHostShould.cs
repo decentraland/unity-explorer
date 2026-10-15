@@ -99,7 +99,9 @@ namespace DCL.Lobby.Tests
             VisualElement welcome = root.Q("Welcome");
 
             //Act
-            host.Layout!.TryPlace(LobbyWidgetId.Landing4x3, LobbyGridCorner.TopRight, new Vector2Int(0, 1));
+            host.Layout!.Remove(LobbyWidgetId.LiveEvents3x3);
+            host.Layout.Remove(LobbyWidgetId.UpcomingEvents3x2);
+            Assert.IsTrue(host.Layout.TryPlace(LobbyWidgetId.Landing4x3, LobbyGridCorner.TopRight, new Vector2Int(0, 1)), "The events made room");
             host.Layout.Remove(LobbyWidgetId.FriendsOnline4x2);
             host.Apply();
 
