@@ -16,7 +16,6 @@ namespace DCL.Multiplayer.Connections.Pulse
         private readonly object sync = new ();
         private readonly Dictionary<uint, (Web3Address wallet, string realm)> peersByWallet = new ();
         private readonly Dictionary<Web3Address, uint> walletsByPeerId = new ();
-        private readonly List<uint> removalBuffer = new ();
 
         public void Set(Web3Address wallet, uint peerId, string realm)
         {
@@ -102,30 +101,6 @@ namespace DCL.Multiplayer.Connections.Pulse
                 foreach ((Web3Address wallet, string peerRealm) in peersByWallet.Values)
                     if (peerRealm != realm)
                         result.Add(wallet);
-            }
-        }
-
-        /// <summary>
-        ///     Atomically removes every peer whose announced realm differs from <paramref name="realm" />,
-        ///     invoking the callback with each removed peer id.
-        /// </summary>
-        public void RemoveWhereNotInRealm(string realm, Action<uint> onPeerRemoved)
-        {
-            lock (sync)
-            {
-                removalBuffer.Clear();
-
-                foreach (KeyValuePair<uint, (Web3Address wallet, string realm)> pair in peersByWallet)
-                    if (pair.Value.realm != realm)
-                        removalBuffer.Add(pair.Key);
-
-                foreach (uint peerId in removalBuffer)
-                {
-                    if (peersByWallet.Remove(peerId, out (Web3Address wallet, string realm) entry))
-                        walletsByPeerId.Remove(entry.wallet);
-
-                    onPeerRemoved(peerId);
-                }
             }
         }
     }

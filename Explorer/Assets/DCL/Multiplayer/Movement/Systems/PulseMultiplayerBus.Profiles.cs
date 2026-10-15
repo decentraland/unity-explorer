@@ -22,6 +22,7 @@ namespace DCL.Multiplayer.Movement
             if (!TryGetWalletInCurrentRealm(announcement.SubjectId, PROFILE_ANNOUNCEMENT_MESSAGE, out Web3Address userId))
                 return;
 
+            profileVersions[announcement.SubjectId] = announcement.Version;
             incomingProfiles.Enqueue(userId, announcement.Version);
         }
     }
