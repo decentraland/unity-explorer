@@ -8,6 +8,7 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Profiles.Self;
 using DCL.Web3;
 using DCL.Web3.Identities;
+using ECS;
 using ECS.Prioritization.Components;
 using ECS.TestSuite;
 using NSubstitute;
@@ -161,7 +162,7 @@ namespace DCL.Profiles.Tests
             IWeb3Identity identity = Substitute.For<IWeb3Identity>();
             identity.Address.Returns(new Web3Address(WALLET));
 
-            return new SelfProfile(profileRepository, new MemoryWeb3IdentityCache { Identity = identity }, Substitute.For<IEquippedWearables>(),
+            return new SelfProfile(profileRepository, new MemoryWeb3IdentityCache { Identity = identity }, new IRealmData.Fake(), Substitute.For<IEquippedWearables>(),
                 Substitute.For<IWearableStorage>(), emoteStorage, Substitute.For<IEquippedEmotes>(), forcedEmotes: null, profileCache ?? Substitute.For<IProfileCache>(),
                 world, world.Create(), new ForcedWearables());
         }
