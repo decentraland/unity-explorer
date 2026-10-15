@@ -211,7 +211,7 @@
     height: 155px;
 }
 
-.lobby__upcoming-events-rail .lobby-rail__dots {
+.lobby__upcoming-events-rail .lobby-rail__pager {
     margin-top: 12px;
 }
 
@@ -220,7 +220,7 @@
     height: 178px;
 }
 
-.lobby__places-rail .lobby-rail__dots {
+.lobby__places-rail .lobby-rail__pager {
     margin-top: 5px;
 }
 

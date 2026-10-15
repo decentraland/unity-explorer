@@ -130,5 +130,38 @@ namespace DCL.Lobby.Tests
             Assert.IsFalse(grid.IsEditing);
             Assert.IsFalse(grid.ClassListContains("lobby-grid--editing"));
         }
+
+        [Test]
+        public void TintTheDotsOfTheHintedCellsOnlyWhileEditing()
+        {
+            //Arrange
+            grid.SetEditing(true);
+
+            //Act
+            grid.SetDropHint(new Vector2Int(1, 1), new Vector2Int(2, 1), valid: true);
+
+            //Assert
+            Assert.IsTrue(grid.HasDropHint);
+
+            //Act
+            grid.SetEditing(false);
+
+            //Assert
+            Assert.IsFalse(grid.HasDropHint, "Leaving edit mode drops the hint");
+        }
+
+        [Test]
+        public void ClearTheDropHint()
+        {
+            //Arrange
+            grid.SetEditing(true);
+            grid.SetDropHint(Vector2Int.zero, new Vector2Int(3, 3), valid: false);
+
+            //Act
+            grid.ClearDropHint();
+
+            //Assert
+            Assert.IsFalse(grid.HasDropHint);
+        }
     }
 }

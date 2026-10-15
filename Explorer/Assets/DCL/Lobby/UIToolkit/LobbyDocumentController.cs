@@ -310,7 +310,7 @@ namespace DCL.Lobby
             featuredPlacesRail.Show(viewInstance.FeaturedPlaces);
             featuredPlaces4x2Rail.Show(viewInstance.FeaturedPlaces4x2);
 
-            liveEventsRail ??= new LobbyLiveEventsRail(viewInstance.LiveEventCardTemplate) { CardClicked = OnLiveEventClicked };
+            liveEventsRail ??= new LobbyLiveEventsRail(viewInstance.LiveEventCardTemplate) { CardClicked = OnLiveEventClicked, CardJumpInClicked = OnLiveEventJumpInClicked };
             upcomingEventsRail ??= CreateUpcomingEventsRail();
             liveEventsRail.Show(viewInstance.LiveEvents);
             upcomingEventsRail.Show(viewInstance.UpcomingEvents);
@@ -793,6 +793,9 @@ namespace DCL.Lobby
 
         private void OnLiveEventClicked(int index) =>
             OpenEventDetails(liveEvents[index], LobbyCardOrigin.LiveEvents);
+
+        private void OnLiveEventJumpInClicked(int index) =>
+            OnEventJumpIn(liveEvents[index], LobbyCardOrigin.LiveEvents);
 
         private void OnUpcomingEventClicked(int index) =>
             OpenEventDetails(upcomingEvents[index], LobbyCardOrigin.UpcomingEvents);

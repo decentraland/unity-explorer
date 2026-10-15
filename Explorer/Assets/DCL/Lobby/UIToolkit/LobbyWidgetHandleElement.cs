@@ -6,16 +6,20 @@ using Utility.UIToolkit;
 namespace DCL.Lobby
 {
     /// <summary>
-    ///     Edit-mode cover of a placed widget that takes the pointer and reports its drags with itself as the source. It
-    ///     spans the cells of the widget over its section, with its title in the middle and a button in its top-right
-    ///     corner that asks for the widget to leave its grid. Positions are in panel space.
+    ///     Edit-mode frame of a placed widget that takes the pointer and reports its drags with itself as the source. It
+    ///     covers the cells of the widget over its section, reaching a little past them, with a button in its top-right
+    ///     corner that asks for the widget to leave its grid. Its tint goes in a separate <see cref="Underlay" /> meant to
+    ///     sit under the section, so the widget itself is not tinted. Positions are in panel space.
     /// </summary>
     public class LobbyWidgetHandleElement : VisualElement
     {
+        /// <summary>How far the frame reaches past the cells of the widget on each side.</summary>
+        public const float OUTSET = 3f;
+
         private const string USS_BLOCK = "lobby-widget-handle";
-        private const string USS_LABEL = USS_BLOCK + "__label";
         private const string USS_REMOVE = USS_BLOCK + "__remove";
         private const string USS_REMOVE_ICON = USS_BLOCK + "__remove-icon";
+        private const string USS_UNDERLAY = USS_BLOCK + "__underlay";
         private const string USS_DRAGGING = USS_BLOCK + "--dragging";
         private const string USS_PUSHED = USS_BLOCK + "--pushed";
 
@@ -32,7 +36,16 @@ namespace DCL.Lobby
 
         public LobbyWidgetId WidgetId { get; }
 
-        public LobbyWidgetHandleElement(LobbyWidgetId widgetId, string title)
+        /// <summary>
+        ///     The tint of the handle, the size of the handle and placed with it, for the hierarchy to put under the
+        ///     section; it hides along with the handle.
+        /// </summary>
+        public VisualElement Underlay { get; }
+
+        /// <summary>Panel position of the top-left corner of the cells of the widget, inside the frame.</summary>
+        public Vector2 WidgetPosition => worldBound.position + new Vector2(OUTSET, OUTSET);
+
+        public LobbyWidgetHandleElement(LobbyWidgetId widgetId)
         {
             WidgetId = widgetId;
 
@@ -40,12 +53,13 @@ namespace DCL.Lobby
             AddToClassList(VisualElementsExtensions.INTERACTABLE_CLASS);
 
             Vector2 size = LobbyGridElement.SpanToSize(widgetId.Span());
-            style.width = size.x;
-            style.height = size.y;
+            style.width = size.x + (OUTSET * 2f);
+            style.height = size.y + (OUTSET * 2f);
 
-            var label = new Label(title) { name = "Label", pickingMode = PickingMode.Ignore };
-            label.AddToClassList(USS_LABEL);
-            Add(label);
+            Underlay = new VisualElement { name = "WidgetUnderlay", pickingMode = PickingMode.Ignore };
+            Underlay.AddToClassList(USS_UNDERLAY);
+            Underlay.style.width = style.width;
+            Underlay.style.height = style.height;
 
             var remove = new Button(() => RemoveRequested?.Invoke(this)) { name = "Remove" };
             remove.AddToClassList(USS_REMOVE);
@@ -66,16 +80,32 @@ namespace DCL.Lobby
             this.AddManipulator(gesture);
         }
 
+        /// <summary>Puts the frame around the cells of the widget at the cell, in the space of its grid.</summary>
+        public void PlaceAt(Vector2Int cell)
+        {
+            Vector2 local = LobbyGridElement.CellToLocal(cell);
+            style.left = local.x - OUTSET;
+            style.top = local.y - OUTSET;
+            Underlay.style.left = style.left;
+            Underlay.style.top = style.top;
+        }
+
         /// <summary>Hides the handle while its widget is on the move, so its cells show clear.</summary>
-        public void SetDragging(bool dragging) =>
+        public void SetDragging(bool dragging)
+        {
             EnableInClassList(USS_DRAGGING, dragging);
+            Underlay.EnableInClassList(USS_DRAGGING, dragging);
+        }
 
         /// <summary>
         ///     Hides the handle while its widget stands aside for a drag hovering over it, so the widget slides alone and
-        ///     no card trails it.
+        ///     no frame trails it.
         /// </summary>
-        public void SetPushed(bool pushed) =>
+        public void SetPushed(bool pushed)
+        {
             EnableInClassList(USS_PUSHED, pushed);
+            Underlay.EnableInClassList(USS_PUSHED, pushed);
+        }
 
         /// <summary>Forgets a press in progress; a drag ends where the pointer last was.</summary>
         public void Cancel() =>

@@ -84,7 +84,7 @@ namespace DCL.Lobby.Tests
             //Assert
             VisualElement liveEvents = root.Q("LiveEvents");
             Assert.AreSame(root.Q("UnplacedWidgets"), liveEvents.parent);
-            Assert.AreEqual(9, root.Q("TopLeftGrid").childCount + root.Q("TopRightGrid").childCount + root.Q("BottomLeftGrid").childCount + root.Q("BottomRightGrid").childCount, "Five sections and the outline of each of the four grids");
+            Assert.AreEqual(9, root.Q("TopLeftGrid").childCount + root.Q("TopRightGrid").childCount + root.Q("BottomLeftGrid").childCount + root.Q("BottomRightGrid").childCount, "Five sections and the backdrop of each of the four grids");
         }
 
         [Test]

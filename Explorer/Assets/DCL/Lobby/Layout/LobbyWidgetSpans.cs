@@ -22,5 +22,21 @@ namespace DCL.Lobby
                 LobbyWidgetId.GoTo4x1 => new Vector2Int(4, 1),
                 _ => throw new ArgumentOutOfRangeException(nameof(widgetId), widgetId, null),
             };
+
+        /// <summary>How many cards the widget shows at once.</summary>
+        public static int CardCount(this LobbyWidgetId widgetId) =>
+            widgetId switch
+            {
+                LobbyWidgetId.Landing4x3 => 1,
+                LobbyWidgetId.LiveEvents3x3 => 1,
+                LobbyWidgetId.UpcomingEvents3x2 => 1,
+                LobbyWidgetId.FriendsOnline4x2 => 4,
+                LobbyWidgetId.JumpBackIn6x2 => 3,
+                LobbyWidgetId.JumpBackIn4x2 => 2,
+                LobbyWidgetId.RecommendedPlaces6x2 => 3,
+                LobbyWidgetId.RecommendedPlaces4x2 => 2,
+                LobbyWidgetId.GoTo4x1 => 1,
+                _ => throw new ArgumentOutOfRangeException(nameof(widgetId), widgetId, null),
+            };
     }
 }

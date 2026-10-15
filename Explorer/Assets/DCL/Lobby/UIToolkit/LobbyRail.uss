@@ -4,19 +4,11 @@
     --rail-dot-duration: 0.2s;
     --rail-dot-selected-color: rgb(255, 51, 153);
     --rail-dot-color: rgba(255, 255, 255, 0.4);
+    --rail-pill-color: var(--dcl-color-black-70);
 }
 
 .lobby-rail {
     flex-direction: column;
-}
-
-/* Wider than the rail by an arrow and its gap on each side; the padding keeps the gaps inside the rail, so crossing one to reach an arrow does not drop the hover that shows it */
-.lobby-rail__track {
-    flex-grow: 1;
-    margin-left: -39px;
-    margin-right: -39px;
-    padding-left: 39px;
-    padding-right: 39px;
 }
 
 .lobby-rail__viewport {
@@ -44,16 +36,41 @@
     margin-right: 8px;
 }
 
-.lobby-rail__arrow {
+/* The row under the cards is as tall as the dots; the pill is centred over it and overflows it, so the arrows and the
+   background that come up on hover add nothing to the layout of the rail */
+.lobby-rail__pager {
+    height: 8px;
+    margin-top: 8px;
+}
+
+.lobby-rail__pager-pill {
     position: absolute;
     top: 50%;
-    width: 31px;
-    height: 40px;
-    translate: 0 -50%;
-    border-radius: 8px;
+    left: 50%;
+    translate: -50% -50%;
+    height: 32px;
+    padding: 0 4px;
+    border-radius: 16px;
+    flex-direction: row;
+    align-items: center;
+    background-color: rgba(0, 0, 0, 0);
+    transition: background-color var(--rail-arrow-fade-duration) ease-out;
+}
+
+.lobby-rail:hover .lobby-rail__pager-pill {
+    background-color: var(--rail-pill-color);
+}
+
+.lobby-rail__arrow {
+    width: 24px;
+    height: 24px;
+    margin: 0;
+    padding: 0;
+    border-width: 0;
+    border-radius: 6px;
     justify-content: center;
     align-items: center;
-    background-color: var(--dcl-color-black-70);
+    background-color: rgba(0, 0, 0, 0);
     opacity: 0;
     transition: opacity var(--rail-arrow-fade-duration) ease-out, background-color 0.1s;
 }
@@ -66,17 +83,9 @@
     background-color: var(--dcl-color-black-80);
 }
 
-.lobby-rail__arrow--previous {
-    left: 0;
-}
-
-.lobby-rail__arrow--next {
-    right: 0;
-}
-
 .lobby-rail__arrow-icon {
-    width: 15px;
-    height: 24px;
+    width: 9px;
+    height: 14px;
     background-image: url('/Assets/Textures/Common/ArrowLeft.png');
 }
 
@@ -85,10 +94,8 @@
 }
 
 .lobby-rail__dots {
-    height: 8px;
-    margin-top: 8px;
+    margin: 0 12px;
     flex-direction: row;
-    justify-content: center;
     align-items: center;
 }
 

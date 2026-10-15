@@ -118,19 +118,48 @@
     background-image: url('/Assets/Textures/Common/CloseIcnThin.png');
 }
 
-/* While the layout is edited the same button leaves edit mode, so it reads as Done */
+/* The modal takes over while the layout is edited, with its own Cancel and Save, so the button steps aside for Back */
 .lobby--editing .lobby__edit-layout-button {
-    background-color: var(--lobby-jump-in-color);
+    display: none;
 }
 
-.lobby--editing .lobby__edit-layout-button:hover {
-    background-color: var(--lobby-jump-in-hover-color);
+/* The Back pill of the edit mode, styled like the edit button it replaces */
+.lobby__back-button {
+    display: none;
+    height: 42px;
+    margin-left: 12px;
+    padding: 0 20px 0 16px;
+    flex-direction: row;
+    align-items: center;
+    border-width: 2px;
+    border-radius: 21px;
+    border-color: var(--dcl-color-white-10);
+    background-color: var(--dcl-color-black-70);
+    transition: background-color 0.1s;
 }
 
-.lobby--editing .lobby__edit-layout-button:active {
-    background-color: var(--lobby-jump-in-pressed-color);
+.lobby--editing .lobby__back-button {
+    display: flex;
 }
 
-.lobby--editing .lobby__edit-layout-icon {
-    background-image: url('/Assets/Textures/Common/CheckmarkIcnThick.png');
+.lobby__back-button:hover {
+    background-color: rgb(31, 31, 31);
+}
+
+.lobby__back-button:active {
+    background-color: var(--dcl-color-black-70);
+}
+
+.lobby__back-icon {
+    width: 9px;
+    height: 14px;
+    margin-right: 12px;
+    background-image: url('/Assets/Textures/Common/ArrowLeft.png');
+}
+
+.lobby__back-text {
+    font-size: 16px;
+    -unity-font-definition: var(--dcl-font-inter-semibold);
+    -unity-text-align: middle-center;
+    color: var(--lobby-title-color);
 }

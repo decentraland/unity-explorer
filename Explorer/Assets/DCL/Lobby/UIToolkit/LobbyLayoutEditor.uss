@@ -1,15 +1,14 @@
-/* Edit mode of the layout (LobbyLayoutEditor): a handle covers the cells of each placed widget, the dragged widget
-   follows the pointer on the drag layer and the marker shows the cells it would take and whether it can take them; the
-   widgets a drop pushes slide to their new cells once it lands */
+/* Edit mode of the layout (LobbyLayoutEditor): a handle frames the cells of each placed widget, the dragged widget follows
+   the pointer on the drag layer in a frame of its own and the marker shows the cells it would take and whether it can take
+   them; the widgets a drop pushes slide to their new cells once it lands */
 .lobby--editing .lobby__widget {
     transition: left 0.15s ease-out, top 0.15s ease-out;
 }
 
-/* The lifted widget keeps up with the pointer instead of easing after it, and lets the marker show through; the
-   selector outranks the editing one above so the transition really goes */
+/* The lifted widget keeps up with the pointer instead of easing after it; the selector outranks the editing one above so
+   the transition really goes */
 .lobby--editing .lobby__widget.lobby__widget--lifted {
     transition-property: none;
-    opacity: 0.85;
 }
 
 .lobby__layout-drag-layer {
@@ -20,21 +19,36 @@
     bottom: 0;
 }
 
+/* Under the lifted widget, reaching past its cells like a handle: the handle frame, brighter */
+.lobby-drag-frame {
+    position: absolute;
+    border-width: 2px;
+    border-radius: 24px;
+    border-color: rgba(255, 255, 255, 0.2);
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* The frame draws over the widget, its tint under it (the underlay), so the widget itself keeps its colours */
 .lobby-widget-handle {
     position: absolute;
-    align-items: center;
-    justify-content: center;
     border-width: 2px;
-    border-radius: 12px;
-    border-color: rgba(255, 255, 255, 0.35);
+    border-radius: 24px;
+    border-color: rgba(255, 255, 255, 0.1);
     transition: border-color 0.1s, left 0.15s ease-out, top 0.15s ease-out;
 }
 
-.lobby-widget-handle:hover {
-    border-color: rgba(255, 255, 255, 0.7);
+.lobby-widget-handle__underlay {
+    position: absolute;
+    border-radius: 24px;
+    background-color: rgba(255, 255, 255, 0.05);
+    transition: left 0.15s ease-out, top 0.15s ease-out;
 }
 
-/* The handle of the dragged widget leaves its cells clear while the widget is on the move */
+.lobby-widget-handle:hover {
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* The handle of the dragged widget, and its underlay, leave its cells clear while the widget is on the move */
 .lobby-widget-handle--dragging {
     visibility: hidden;
 }
@@ -50,16 +64,14 @@
     padding: 0;
     align-items: center;
     justify-content: center;
-    border-width: 2px;
+    border-width: 0;
     border-radius: 16px;
-    border-color: rgba(255, 255, 255, 0.35);
-    background-color: rgba(0, 0, 0, 0.85);
-    transition: border-color 0.1s, background-color 0.1s;
+    background-color: var(--dcl-color-shadow);
+    transition: background-color 0.1s;
 }
 
 .lobby-widget-handle__remove:hover {
-    border-color: rgba(255, 255, 255, 0.7);
-    background-color: rgb(31, 31, 31);
+    background-color: rgb(43, 42, 46);
 }
 
 .lobby-widget-handle__remove:active {
@@ -72,72 +84,95 @@
     background-image: url('/Assets/Textures/Common/CloseIcnThin.png');
 }
 
-/* The widget of a pushed handle previews its pushed cell alone (see LobbyLayoutEditor.ShowPushes) */
+/* The widget of a pushed handle previews its pushed cell alone, without the handle or its underlay (see
+   LobbyLayoutEditor.ShowPushes) */
 .lobby-widget-handle--pushed {
     display: none;
 }
 
-.lobby-widget-handle__label {
-    padding: 6px 14px;
-    border-radius: 14px;
-    background-color: rgba(0, 0, 0, 0.85);
-    font-size: 14px;
-    -unity-font-definition: var(--dcl-font-inter-semibold);
-    -unity-text-align: middle-center;
-    color: var(--lobby-title-color);
-}
-
-/* A card of the widget modal (LobbyWidgetCardElement): the scaled preview of the family over its title; it dims while one
-   of its sizes is on the move */
+/* A row of the widget modal (LobbyWidgetCardElement): the grip, the icon and the title of a family off the grids; it dims
+   while one of its sizes is on the move */
 .lobby-widget-card {
-    position: relative;
-    margin-bottom: 12px;
-    padding: 12px;
-    border-width: 2px;
+    flex-direction: row;
+    align-items: center;
+    height: 44px;
+    margin-bottom: 4px;
+    padding: 10px 20px 10px 4px;
     border-radius: 12px;
-    border-color: rgba(255, 255, 255, 0.2);
-    background-color: rgba(255, 255, 255, 0.06);
-    transition: border-color 0.1s, opacity 0.1s;
+    background-color: rgba(255, 255, 255, 0.1);
+    transition: background-color 0.1s, opacity 0.1s;
 }
 
 .lobby-widget-card:hover {
-    border-color: rgba(255, 255, 255, 0.7);
+    background-color: rgba(255, 255, 255, 0.15);
 }
 
 .lobby-widget-card--dragging {
     opacity: 0.35;
 }
 
-/* Sized in code to the scaled preview of the first size of the family, which draws inside from the top-left corner */
-.lobby-widget-card__preview-slot {
-    align-self: center;
-    margin-bottom: 10px;
-}
-
-.lobby-widget-card__footer {
+/* Two columns of three dots, each a vertical menu icon */
+.lobby-widget-card__grip {
+    width: 24px;
+    height: 24px;
+    margin-right: 10px;
     flex-direction: row;
     align-items: center;
-    justify-content: space-between;
-    height: 28px;
+    justify-content: center;
+}
+
+.lobby-widget-card__grip-column {
+    width: 5px;
+    height: 18px;
+    margin: 0 1.5px;
+    background-image: url('/Assets/Textures/Common/MenuVerticalIcn.png');
+    -unity-background-image-tint-color: var(--dcl-color-silver);
+}
+
+.lobby-widget-card__icon {
+    width: 24px;
+    height: 24px;
+    margin-right: 10px;
+}
+
+.lobby-widget-card__icon--landing {
+    background-image: url('/Assets/Textures/ExplorePanel/HomeOutline.png');
+}
+
+.lobby-widget-card__icon--live-events {
+    background-image: url('/Assets/Textures/ExplorePanel/LiveIcn.png');
+}
+
+.lobby-widget-card__icon--upcoming-events {
+    background-image: url('/Assets/Textures/Common/CalendarIcn.png');
+}
+
+.lobby-widget-card__icon--friends-online {
+    background-image: url('/Assets/Textures/Common/FriendIcn.png');
+}
+
+.lobby-widget-card__icon--jump-back-in {
+    background-image: url('/Assets/Textures/Common/TimeIcn.png');
+}
+
+.lobby-widget-card__icon--recommended-places {
+    background-image: url('/Assets/Textures/ExplorePanel/MyPlacesIcn.png');
+}
+
+.lobby-widget-card__icon--go-to {
+    background-image: url('/Assets/Textures/Common/LocationIcn.png');
 }
 
 .lobby-widget-card__title {
-    font-size: 16px;
+    flex-grow: 1;
+    font-size: 14px;
     -unity-font-definition: var(--dcl-font-inter-semibold);
     -unity-text-align: middle-left;
     color: var(--lobby-title-color);
 }
 
-/* The span of a family of one size in cells, columns by rows */
-.lobby-widget-card__size {
-    font-size: 14px;
-    -unity-font-definition: var(--dcl-font-inter-regular);
-    -unity-text-align: middle-right;
-    color: var(--lobby-subtitle-color);
-}
-
-/* The size buttons of a family of several sizes show while the card is hovered, and stay while a drag off one is on;
-   they keep taking the pointer while faded out, which only matters under the pointer, where they show */
+/* The size buttons of a family of several sizes show while the row is hovered, and stay while a drag off one is on; they
+   keep taking the pointer while faded out, which only matters under the pointer, where they show */
 .lobby-widget-card__sizes {
     flex-direction: row;
     opacity: 0;
@@ -151,7 +186,7 @@
 
 .lobby-widget-card__size-button {
     margin-left: 6px;
-    padding: 4px 10px;
+    padding: 3px 10px;
     border-width: 1px;
     border-radius: 12px;
     border-color: rgba(255, 255, 255, 0.35);
@@ -168,22 +203,12 @@
     background-color: rgb(31, 31, 31);
 }
 
-/* Stand-in of a widget off the grids (LobbyWidgetPreviewElement): its title over blank cards at the size of its span. It is
-   scaled in code from its top-left corner, down to fit a card of the modal and back up while dragged off it */
+/* Stand-in of a widget off the grids (LobbyWidgetPreviewElement), lifted while dragged off its row: its title over blank
+   cards at the size of its span, laid out like a section so the drag frame fits around it */
 .lobby-widget-preview {
     position: absolute;
     left: 0;
     top: 0;
-    transform-origin: left top;
-    padding: 16px;
-    border-radius: 12px;
-    border-width: 2px;
-    border-color: rgba(255, 255, 255, 0.2);
-    background-color: rgba(20, 20, 26, 0.6);
-}
-
-.lobby-widget-preview.lobby__widget--lifted {
-    opacity: 0.85;
 }
 
 .lobby-widget-preview__title {
@@ -215,20 +240,22 @@
     background-color: rgba(255, 255, 255, 0.1);
 }
 
-/* Over the avatar, between the top grids and as tall as them at most; it goes green while a dragged widget would drop into it */
+/* Over the avatar, between the top grids and as tall as them (640px, their six rows of cells). The design draws it 598px
+   wide between 472px grids; the 136px cells make the grids 568px, so it is narrowed to leave the same room on each side.
+   It goes green while a dragged widget would drop into it */
 .lobby__widget-modal {
     display: none;
     position: absolute;
     left: 50%;
     top: var(--lobby-columns-top);
     width: 480px;
-    max-height: 640px;
+    height: 640px;
     translate: -50% 0;
-    padding: 20px;
-    border-width: 2px;
-    border-radius: 16px;
-    border-color: var(--lobby-card-border-color);
-    background-color: var(--lobby-card-color);
+    padding: 40px 36px;
+    border-width: 1px;
+    border-radius: 24px;
+    border-color: rgba(255, 255, 255, 0.1);
+    background-color: rgba(0, 0, 0, 0.8);
     transition: border-color 0.1s, background-color 0.1s;
 }
 
@@ -237,30 +264,31 @@
 }
 
 .lobby__widget-modal--target {
-    border-color: rgb(67, 214, 141);
-    background-color: rgba(20, 50, 36, 0.9);
+    border-color: rgb(52, 206, 119);
+    background-color: rgba(14, 40, 27, 0.9);
 }
 
 .lobby__widget-modal-title {
-    height: 30px;
-    font-size: 24px;
-    -unity-font-definition: var(--dcl-font-inter-bold);
+    height: 27px;
+    font-size: 22px;
+    -unity-font-definition: var(--dcl-font-inter-semibold);
     -unity-text-align: middle-left;
-    color: var(--lobby-title-color);
+    color: var(--dcl-color-snow);
 }
 
 .lobby__widget-modal-hint {
-    margin-top: 4px;
-    margin-bottom: 16px;
+    margin-top: 10px;
     font-size: 14px;
     -unity-font-definition: var(--dcl-font-inter-regular);
     white-space: normal;
-    color: var(--lobby-subtitle-color);
+    color: rgb(207, 205, 212);
 }
 
-/* The cards scroll inside the room the modal leaves them, past a thin bar with no end buttons */
+/* The rows take the room between the hint and the buttons and scroll inside it, past a thin bar with no end buttons */
 .lobby__widget-modal-items {
+    flex-grow: 1;
     flex-shrink: 1;
+    margin-top: 40px;
 }
 
 .lobby__widget-modal-items .unity-scroll-view__vertical-scroller {
@@ -296,6 +324,78 @@
     background-color: rgba(255, 255, 255, 0.6);
 }
 
+/* Reset on the left, Cancel and Save on the right */
+.lobby__widget-modal-actions {
+    flex-direction: row;
+    align-items: center;
+    margin-top: 40px;
+}
+
+.lobby__widget-modal-actions-spacer {
+    flex-grow: 1;
+}
+
+.lobby__widget-modal-button {
+    height: 42px;
+    padding: 0 16px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    border-width: 0;
+    border-radius: 12px;
+    background-color: rgb(43, 42, 48);
+    font-size: 14px;
+    -unity-font-definition: var(--dcl-font-inter-semibold);
+    -unity-text-align: middle-center;
+    color: var(--dcl-color-snow);
+    transition: background-color 0.1s, opacity 0.1s;
+}
+
+.lobby__widget-modal-button:hover {
+    background-color: rgb(58, 57, 64);
+}
+
+.lobby__widget-modal-button:active {
+    background-color: rgb(33, 32, 37);
+}
+
+.lobby__widget-modal-button--fixed {
+    width: 110px;
+    margin-left: 12px;
+    padding: 0;
+}
+
+.lobby__widget-modal-button--primary {
+    background-color: var(--lobby-jump-in-color);
+}
+
+.lobby__widget-modal-button--primary:hover {
+    background-color: var(--lobby-jump-in-hover-color);
+}
+
+.lobby__widget-modal-button--primary:active {
+    background-color: var(--lobby-jump-in-pressed-color);
+}
+
+/* Save waits, faded, until there is a change to store */
+.lobby__widget-modal-button--primary:disabled {
+    opacity: 0.2;
+}
+
+.lobby__widget-modal-save-icon {
+    width: 14px;
+    height: 14px;
+    margin-right: 6px;
+    background-image: url('/Assets/Textures/Common/CheckmarkIcnThick.png');
+}
+
+.lobby__widget-modal-save-label {
+    font-size: 14px;
+    -unity-font-definition: var(--dcl-font-inter-semibold);
+    -unity-text-align: middle-center;
+    color: var(--dcl-color-snow);
+}
+
 /* Under the handles of its grid, over the sections: the arrows of the rails hang 39px outside their widgets (the margin
    of the track in LobbyRail.uss), so it reaches out by as much on each side to catch the pointer there too */
 .lobby-grid-shield {
@@ -306,18 +406,16 @@
     bottom: 0;
 }
 
+/* The cells the dragged widget would take, tinted by whether the drop can take them */
 .lobby-drop-marker {
     position: absolute;
-    border-width: 2px;
-    border-radius: 12px;
+    border-radius: 6px;
 }
 
 .lobby-drop-marker--valid {
-    border-color: rgb(67, 214, 141);
-    background-color: rgba(67, 214, 141, 0.15);
+    background-color: rgba(52, 206, 119, 0.1);
 }
 
 .lobby-drop-marker--invalid {
-    border-color: var(--lobby-jump-in-color);
-    background-color: rgba(255, 45, 85, 0.15);
+    background-color: rgba(255, 45, 85, 0.1);
 }

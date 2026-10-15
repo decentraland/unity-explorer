@@ -7,17 +7,19 @@ namespace DCL.Lobby
 {
     /// <summary>
     ///     A horizontal strip of cards that pages by the mouse wheel or the arrows, and scrolls freely by dragging; a
-    ///     released drag settles on the nearest card. The cards are its children; the chrome is built here and styled
-    ///     by LobbyRail.uss, which also owns the snap through a USS transition of the translate.
+    ///     released drag settles on the nearest card. The arrows wrap round past either end; the wheel stops there.
+    ///     The cards are its children; the chrome is built here and styled by LobbyRail.uss, which also owns the snap
+    ///     through a USS transition of the translate.
     /// </summary>
     [UxmlElement]
     public partial class LobbyRailElement : VisualElement
     {
         private const string USS_BLOCK = "lobby-rail";
         private const string USS_INSTANT = USS_BLOCK + "--instant";
-        private const string USS_TRACK = USS_BLOCK + "__track";
         private const string USS_VIEWPORT = USS_BLOCK + "__viewport";
         private const string USS_CONTENT = USS_BLOCK + "__content";
+        private const string USS_PAGER = USS_BLOCK + "__pager";
+        private const string USS_PAGER_PILL = USS_BLOCK + "__pager-pill";
         private const string USS_ARROW = USS_BLOCK + "__arrow";
         private const string USS_ARROW_PREVIOUS = USS_ARROW + "--previous";
         private const string USS_ARROW_NEXT = USS_ARROW + "--next";
@@ -49,6 +51,7 @@ namespace DCL.Lobby
 
         private readonly VisualElement viewport;
         private readonly VisualElement content;
+        private readonly VisualElement pill;
         private readonly Button previous;
         private readonly Button next;
         private readonly VisualElement dots;
@@ -97,27 +100,33 @@ namespace DCL.Lobby
         {
             AddToClassList(USS_BLOCK);
 
-            // The viewport clips the cards; the track lets the arrows hang beside them
-            var track = new VisualElement { name = "Track" };
-            track.AddToClassList(USS_TRACK);
-            hierarchy.Add(track);
-
+            // The viewport clips the cards
             viewport = new VisualElement { name = "Viewport", pickingMode = PickingMode.Position };
             viewport.AddToClassList(USS_VIEWPORT);
-            track.Add(viewport);
+            hierarchy.Add(viewport);
 
             content = new VisualElement { name = "Content", pickingMode = PickingMode.Ignore };
             content.AddToClassList(USS_CONTENT);
             viewport.Add(content);
 
+            // The pager row keeps the height of the dots; the pill hangs centred over it with the arrows around the dots
+            var pager = new VisualElement { name = "Pager", pickingMode = PickingMode.Ignore };
+            pager.AddToClassList(USS_PAGER);
+            hierarchy.Add(pager);
+
+            pill = new VisualElement { name = "Pill", pickingMode = PickingMode.Ignore };
+            pill.AddToClassList(USS_PAGER_PILL);
+            pager.Add(pill);
+
             previous = CreateArrow(PREVIOUS_NAME, USS_ARROW_PREVIOUS);
             next = CreateArrow(NEXT_NAME, USS_ARROW_NEXT);
-            track.Add(previous);
-            track.Add(next);
 
             dots = new VisualElement { name = "Dots", pickingMode = PickingMode.Ignore };
             dots.AddToClassList(USS_DOTS);
-            hierarchy.Add(dots);
+
+            pill.Add(previous);
+            pill.Add(dots);
+            pill.Add(next);
 
             endInstantMove = EndInstantMove;
 
@@ -182,26 +191,37 @@ namespace DCL.Lobby
             return arrow;
         }
 
+        // From the start the rail wraps round to the last page
         private void OnPreviousClicked()
         {
             if (ArrowsMoveOneCard)
                 StepToCard(currentCard - 1);
             else
-                SnapTo(PageBefore());
+                SnapTo(currentCard == 0 ? PageCount - 1 : PageBefore());
         }
 
+        // Past the last page the rail wraps round to the first, once the strip has reached its end
         private void OnNextClicked()
         {
             if (ArrowsMoveOneCard)
                 StepToCard(currentCard + 1);
             else
-                SnapTo(PageAfter());
+            {
+                int page = PageAfter();
+                SnapTo(page < PageCount || !AtEnd() ? page : 0);
+            }
         }
 
-        // The last cards share the offset of the end, so stepping into them lands on the first of those
+        // The last cards share the offset of the end, so stepping into them lands on the first of those; a step past
+        // either end wraps round
         private void StepToCard(int card)
         {
-            card = CardAt(CardOffset(Mathf.Clamp(card, 0, Mathf.Max(0, shownCount - 1))));
+            if (card < 0)
+                card = shownCount - 1;
+            else if (card >= shownCount || (card > currentCard && AtEnd()))
+                card = 0;
+
+            card = CardAt(CardOffset(card));
             SnapToCard(card, PageAt(CardOffset(card)));
         }
 
@@ -333,7 +353,7 @@ namespace DCL.Lobby
             SnapTo(evt.delta.y > 0f ? PageAfter() : PageBefore());
         }
 
-        // The strides are only known once the cards are laid out, so the current card and the arrows are re-placed then
+        // The strides are only known once the cards are laid out, so the current card is re-placed then
         private void OnContentGeometryChanged(GeometryChangedEvent _)
         {
             if (dragging) return;
@@ -362,6 +382,10 @@ namespace DCL.Lobby
         // Measured against the viewport's content box: its padding is room for the shadows of the edge cards
         private float MaxOffset() =>
             Mathf.Max(0f, content.layout.width - viewport.contentRect.width);
+
+        // A drag can settle nearest to the last page while the strip has not reached its end
+        private bool AtEnd() =>
+            offset >= MaxOffset() - END_TOLERANCE;
 
         // The content cannot slide past its end, so the last cards share the offset of the end
         private float CardOffset(int card) =>
@@ -414,18 +438,16 @@ namespace DCL.Lobby
         private void SelectPage(int page)
         {
             CurrentPage = page;
-            previous.SetDisplayed(currentCard > 0);
-
-            // A drag can settle nearest to the last page while the strip has not reached its end
-            next.SetDisplayed(page < PageCount - 1 || CardOffset(currentCard) < MaxOffset() - END_TOLERANCE);
 
             for (var i = 0; i < dots.childCount; i++)
                 dots[i].EnableInClassList(USS_DOT_SELECTED, i == page);
         }
 
+        // The pill goes with the dots: nothing to page through leaves no arrows either
         private void ShowDots(int pageCount)
         {
             int visibleDots = pageCount > 1 ? pageCount : 0;
+            pill.SetDisplayed(visibleDots > 0);
 
             for (int i = dots.childCount; i < visibleDots; i++)
             {

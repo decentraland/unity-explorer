@@ -6,24 +6,31 @@ using Utility.UIToolkit;
 namespace DCL.Lobby
 {
     /// <summary>
-    ///     Card of the widget modal for a widget family off the grids: the scaled-down preview of its first size over its
-    ///     title. A family of one size states the size beside the title; one of several sizes shows a button per size in
-    ///     its bottom-right corner while hovered, and a drag off a button carries that size, while a drag off the card
-    ///     itself carries the first one. The card reports its drags with itself as the source. Positions are in panel space.
+    ///     Row of the widget modal for a widget family off the grids: a grip, the icon of the family and its title. A drag
+    ///     off the row carries the first size of the family; a family of several sizes also shows a button per size at the
+    ///     right end of the row while hovered, and a drag off a button carries that size. The row keeps a stand-in of each
+    ///     size for the drag to lift (see <see cref="Preview" />) and reports its drags with itself as the source.
+    ///     Positions are in panel space.
     /// </summary>
     public class LobbyWidgetCardElement : VisualElement
     {
-        /// <summary>Fraction of the size of the widget its preview is drawn at in the card.</summary>
-        public const float PREVIEW_SCALE = 0.4f;
-
         private const string USS_BLOCK = "lobby-widget-card";
-        private const string USS_PREVIEW_SLOT = USS_BLOCK + "__preview-slot";
-        private const string USS_FOOTER = USS_BLOCK + "__footer";
+        private const string USS_GRIP = USS_BLOCK + "__grip";
+        private const string USS_GRIP_COLUMN = USS_BLOCK + "__grip-column";
+        private const string USS_ICON = USS_BLOCK + "__icon";
+        private const string USS_ICON_LANDING = USS_ICON + "--landing";
+        private const string USS_ICON_LIVE_EVENTS = USS_ICON + "--live-events";
+        private const string USS_ICON_UPCOMING_EVENTS = USS_ICON + "--upcoming-events";
+        private const string USS_ICON_FRIENDS_ONLINE = USS_ICON + "--friends-online";
+        private const string USS_ICON_JUMP_BACK_IN = USS_ICON + "--jump-back-in";
+        private const string USS_ICON_RECOMMENDED_PLACES = USS_ICON + "--recommended-places";
+        private const string USS_ICON_GO_TO = USS_ICON + "--go-to";
         private const string USS_TITLE = USS_BLOCK + "__title";
-        private const string USS_SIZE = USS_BLOCK + "__size";
         private const string USS_SIZES = USS_BLOCK + "__sizes";
         private const string USS_SIZE_BUTTON = USS_BLOCK + "__size-button";
         private const string USS_DRAGGING = USS_BLOCK + "--dragging";
+
+        private const int GRIP_COLUMNS = 2;
 
         /// <summary>The size of the family the drag carries and the panel position it started at.</summary>
         public Action<LobbyWidgetCardElement, LobbyWidgetId, Vector2>? DragStarted;
@@ -34,7 +41,6 @@ namespace DCL.Lobby
 
         private readonly LobbyWidgetPreviewElement[] previews;
         private readonly ClickOrDragManipulator[] gestures;
-        private readonly VisualElement previewSlot;
 
         public LobbyWidgetFamily Family { get; }
 
@@ -52,59 +58,61 @@ namespace DCL.Lobby
             for (var i = 0; i < variants.Length; i++)
                 previews[i] = new LobbyWidgetPreviewElement(variants[i], title) { name = "Preview" };
 
-            // The slot holds the first preview, scaled from its top-left corner, so it takes that size
-            Vector2 slotSize = LobbyGridElement.SpanToSize(variants[0].Span()) * PREVIEW_SCALE;
-            previewSlot = new VisualElement { name = "PreviewSlot", pickingMode = PickingMode.Ignore };
-            previewSlot.AddToClassList(USS_PREVIEW_SLOT);
-            previewSlot.style.width = slotSize.x;
-            previewSlot.style.height = slotSize.y;
-            Add(previewSlot);
+            var grip = new VisualElement { name = "Grip", pickingMode = PickingMode.Ignore };
+            grip.AddToClassList(USS_GRIP);
 
-            var footer = new VisualElement { name = "Footer", pickingMode = PickingMode.Ignore };
-            footer.AddToClassList(USS_FOOTER);
-            Add(footer);
+            for (var i = 0; i < GRIP_COLUMNS; i++)
+            {
+                var column = new VisualElement { pickingMode = PickingMode.Ignore };
+                column.AddToClassList(USS_GRIP_COLUMN);
+                grip.Add(column);
+            }
+
+            Add(grip);
+
+            var icon = new VisualElement { name = "Icon", pickingMode = PickingMode.Ignore };
+            icon.AddToClassList(USS_ICON);
+            icon.AddToClassList(IconClass(family));
+            Add(icon);
 
             var titleLabel = new Label(title) { name = "Title", pickingMode = PickingMode.Ignore };
             titleLabel.AddToClassList(USS_TITLE);
-            footer.Add(titleLabel);
+            Add(titleLabel);
 
-            // The first gesture is the card's own and carries the first size; the others belong to the size buttons
+            // The first gesture is the row's own and carries the first size; the others belong to the size buttons
             gestures = new ClickOrDragManipulator[variants.Length == 1 ? 1 : variants.Length + 1];
             gestures[0] = NewGesture(variants[0]);
             this.AddManipulator(gestures[0]);
 
             if (variants.Length == 1)
-            {
-                Vector2Int span = variants[0].Span();
-                var size = new Label($"{span.x} x {span.y}") { name = "Size", pickingMode = PickingMode.Ignore };
-                size.AddToClassList(USS_SIZE);
-                footer.Add(size);
-            }
-            else
-            {
-                var sizes = new VisualElement { name = "Sizes", pickingMode = PickingMode.Ignore };
-                sizes.AddToClassList(USS_SIZES);
-                footer.Add(sizes);
+                return;
 
-                for (var i = 0; i < variants.Length; i++)
-                {
-                    Vector2Int span = variants[i].Span();
-                    var button = new Label($"{span.x}x{span.y}") { name = variants[i].ToString() };
-                    button.AddToClassList(USS_SIZE_BUTTON);
-                    // A press on a size button must not reach the gesture of the card, or both would drag
-                    button.RegisterCallback<PointerDownEvent>(static evt => evt.StopPropagation());
-                    gestures[i + 1] = NewGesture(variants[i]);
-                    button.AddManipulator(gestures[i + 1]);
-                    sizes.Add(button);
-                }
-            }
+            var sizes = new VisualElement { name = "Sizes", pickingMode = PickingMode.Ignore };
+            sizes.AddToClassList(USS_SIZES);
+            Add(sizes);
 
-            Restore();
+            // A size reads as the cards it shows, the smaller first
+            for (var i = 0; i < variants.Length; i++)
+            {
+                int cardCount = variants[i].CardCount();
+                var button = new Label($"x{cardCount}") { name = variants[i].ToString(), userData = cardCount };
+                button.AddToClassList(USS_SIZE_BUTTON);
+                // A press on a size button must not reach the gesture of the row, or both would drag
+                button.RegisterCallback<PointerDownEvent>(static evt => evt.StopPropagation());
+                gestures[i + 1] = NewGesture(variants[i]);
+                button.AddManipulator(gestures[i + 1]);
+
+                var at = 0;
+
+                while (at < sizes.childCount && (int)sizes[at].userData < cardCount)
+                    at++;
+
+                sizes.Insert(at, button);
+            }
         }
 
         /// <summary>
-        ///     Stand-in of the given size of the family, free to be lifted elsewhere at another scale until
-        ///     <see cref="Restore" />.
+        ///     Stand-in of the given size of the family, free to be lifted elsewhere until <see cref="Restore" />.
         /// </summary>
         public LobbyWidgetPreviewElement Preview(LobbyWidgetId variant)
         {
@@ -115,19 +123,14 @@ namespace DCL.Lobby
             throw new ArgumentOutOfRangeException(nameof(variant), variant, $"{variant} is not a size of {Family}");
         }
 
-        /// <summary>Puts the preview of the first size back into the slot at the card scale and the others away.</summary>
+        /// <summary>Puts every stand-in away.</summary>
         public void Restore()
         {
-            for (var i = 1; i < previews.Length; i++)
+            for (var i = 0; i < previews.Length; i++)
                 previews[i].RemoveFromHierarchy();
-
-            if (previews[0].parent != previewSlot)
-                previewSlot.Add(previews[0]);
-
-            previews[0].SetScale(PREVIEW_SCALE);
         }
 
-        /// <summary>Marks the card while one of its sizes is on the move: it dims and keeps its size buttons out.</summary>
+        /// <summary>Marks the row while one of its sizes is on the move: it dims and keeps its size buttons out.</summary>
         public void SetDragging(bool dragging) =>
             EnableInClassList(USS_DRAGGING, dragging);
 
@@ -144,6 +147,19 @@ namespace DCL.Lobby
                 DragStarted = position => DragStarted?.Invoke(this, variant, position),
                 Dragged = (position, delta) => Dragged?.Invoke(this, position, delta),
                 DragEnded = position => DragEnded?.Invoke(this, position),
+            };
+
+        private static string IconClass(LobbyWidgetFamily family) =>
+            family switch
+            {
+                LobbyWidgetFamily.Landing => USS_ICON_LANDING,
+                LobbyWidgetFamily.LiveEvents => USS_ICON_LIVE_EVENTS,
+                LobbyWidgetFamily.UpcomingEvents => USS_ICON_UPCOMING_EVENTS,
+                LobbyWidgetFamily.FriendsOnline => USS_ICON_FRIENDS_ONLINE,
+                LobbyWidgetFamily.JumpBackIn => USS_ICON_JUMP_BACK_IN,
+                LobbyWidgetFamily.RecommendedPlaces => USS_ICON_RECOMMENDED_PLACES,
+                LobbyWidgetFamily.GoTo => USS_ICON_GO_TO,
+                _ => throw new ArgumentOutOfRangeException(nameof(family), family, null),
             };
     }
 }

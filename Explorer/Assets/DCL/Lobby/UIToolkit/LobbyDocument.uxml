@@ -24,6 +24,11 @@
             <ui:Button name="EditLayout" class="lobby__edit-layout-button">
                 <ui:VisualElement name="Icon" class="lobby__edit-layout-icon" picking-mode="Ignore" />
             </ui:Button>
+            <!-- Takes the place of the edit button while the layout is edited; it leaves like Cancel, dropping the changes -->
+            <ui:Button name="BackFromLayout" class="lobby__back-button">
+                <ui:VisualElement name="Icon" class="lobby__back-icon" picking-mode="Ignore" />
+                <ui:Label name="Text" text="Back" class="lobby__back-text" picking-mode="Ignore" />
+            </ui:Button>
         </ui:VisualElement>
         <ui:VisualElement name="TopBar" class="lobby__top-bar" picking-mode="Ignore">
             <ui:VisualElement name="CreditsSlot" class="lobby__top-bar-slot" picking-mode="Ignore" />
@@ -87,12 +92,21 @@
                 <DCL.Lobby.LobbyGoToElement name="GoToField" />
             </ui:VisualElement>
         </ui:VisualElement>
-        <!-- Edit mode only, over the avatar: the widgets off the grids wait here as cards that can be dragged onto a grid, and a
-             widget dropped here leaves its grid (see LobbyLayoutEditor) -->
+        <!-- Edit mode only, over the avatar: the widgets off the grids wait here as rows that can be dragged onto a grid, a
+             widget dropped here leaves its grid, and the buttons at the bottom store or drop the changes (see LobbyLayoutEditor) -->
         <ui:VisualElement name="WidgetModal" class="lobby__widget-modal">
-            <ui:Label name="Title" text="Widgets" class="lobby__widget-modal-title" picking-mode="Ignore" />
-            <ui:Label name="Hint" text="Drag a widget onto a panel to show it, or drop one here to hide it" class="lobby__widget-modal-hint" picking-mode="Ignore" />
+            <ui:Label name="Title" text="Customize Lobby" class="lobby__widget-modal-title" picking-mode="Ignore" />
+            <ui:Label name="Hint" text="Choose which widgets to show and drag them to rearrange your layout. Drag them back here, or click the close [×] button, to remove them." class="lobby__widget-modal-hint" picking-mode="Ignore" />
             <ui:ScrollView name="WidgetModalItems" class="lobby__widget-modal-items" mode="Vertical" horizontal-scroller-visibility="Hidden" vertical-scroller-visibility="Auto" mouse-wheel-scroll-size="60" />
+            <ui:VisualElement name="Actions" class="lobby__widget-modal-actions" picking-mode="Ignore">
+                <ui:Button name="ResetLayout" text="Reset to Default" class="lobby__widget-modal-button" />
+                <ui:VisualElement name="Spacer" class="lobby__widget-modal-actions-spacer" picking-mode="Ignore" />
+                <ui:Button name="CancelLayout" text="CANCEL" class="lobby__widget-modal-button lobby__widget-modal-button--fixed" />
+                <ui:Button name="SaveLayout" class="lobby__widget-modal-button lobby__widget-modal-button--fixed lobby__widget-modal-button--primary">
+                    <ui:VisualElement name="Icon" class="lobby__widget-modal-save-icon" picking-mode="Ignore" />
+                    <ui:Label name="Label" text="SAVE" class="lobby__widget-modal-save-label" picking-mode="Ignore" />
+                </ui:Button>
+            </ui:VisualElement>
         </ui:VisualElement>
         <!-- A dragged widget section hangs here while the layout is edited (see LobbyLayoutEditor) -->
         <ui:VisualElement name="LayoutDragLayer" class="lobby__layout-drag-layer" picking-mode="Ignore" />

@@ -45,13 +45,13 @@ namespace DCL.Lobby
         public static string Title(this LobbyWidgetFamily family) =>
             family switch
             {
-                LobbyWidgetFamily.Landing => "Welcome",
+                LobbyWidgetFamily.Landing => "Jump In Home",
                 LobbyWidgetFamily.LiveEvents => "Live Events",
                 LobbyWidgetFamily.UpcomingEvents => "Upcoming Events",
-                LobbyWidgetFamily.FriendsOnline => "Friends",
+                LobbyWidgetFamily.FriendsOnline => "Online Friends",
                 LobbyWidgetFamily.JumpBackIn => "Jump Back In",
                 LobbyWidgetFamily.RecommendedPlaces => "Recommended Places",
-                LobbyWidgetFamily.GoTo => "Go To",
+                LobbyWidgetFamily.GoTo => "Go to",
                 _ => throw new ArgumentOutOfRangeException(nameof(family), family, null),
             };
     }

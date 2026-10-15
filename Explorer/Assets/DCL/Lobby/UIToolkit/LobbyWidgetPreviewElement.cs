@@ -5,9 +5,8 @@ using UnityEngine.UIElements;
 namespace DCL.Lobby
 {
     /// <summary>
-    ///     Stand-in of a widget while it is off the grids: its title over as many blank cards as the widget shows, at the
-    ///     size of its span and with no data behind them. It can be drawn scaled down from its top-left corner to fit a
-    ///     row of the widget modal, and at full size while dragged off it.
+    ///     Stand-in of a widget while it is dragged off its row of the widget modal: its title over as many blank cards as
+    ///     the widget shows, at the size of its span and laid out like a section, with no data behind it.
     /// </summary>
     public class LobbyWidgetPreviewElement : VisualElement
     {
@@ -36,7 +35,7 @@ namespace DCL.Lobby
             cards.AddToClassList(USS_CARDS);
             Add(cards);
 
-            int cardCount = CardCount(widgetId);
+            int cardCount = widgetId.CardCount();
 
             for (var i = 0; i < cardCount; i++)
             {
@@ -45,25 +44,5 @@ namespace DCL.Lobby
                 cards.Add(card);
             }
         }
-
-        /// <summary>Draws the preview at a fraction of the size of its span; its layout box keeps the full size.</summary>
-        public void SetScale(float scale) =>
-            style.scale = new Scale(new Vector2(scale, scale));
-
-        /// <summary>How many cards the widget shows at once.</summary>
-        private static int CardCount(LobbyWidgetId widgetId) =>
-            widgetId switch
-            {
-                LobbyWidgetId.Landing4x3 => 1,
-                LobbyWidgetId.LiveEvents3x3 => 1,
-                LobbyWidgetId.UpcomingEvents3x2 => 1,
-                LobbyWidgetId.FriendsOnline4x2 => 4,
-                LobbyWidgetId.JumpBackIn6x2 => 3,
-                LobbyWidgetId.JumpBackIn4x2 => 2,
-                LobbyWidgetId.RecommendedPlaces6x2 => 3,
-                LobbyWidgetId.RecommendedPlaces4x2 => 2,
-                LobbyWidgetId.GoTo4x1 => 1,
-                _ => throw new ArgumentOutOfRangeException(nameof(widgetId), widgetId, null),
-            };
     }
 }
