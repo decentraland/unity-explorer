@@ -100,6 +100,7 @@ namespace DCL.Multiplayer.SDK.Tests
 
             // Act
             system.Initialize();
+            system.Update(0);
 
             // Assert
             Assert.AreEqual(true, world.Get<SDKTalking>(persistentPlayerEntity).Value);

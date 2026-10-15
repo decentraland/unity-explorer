@@ -62,7 +62,6 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
             World.Add(playerEntity, new PlayerSceneCRDTEntity(new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY)));
 
             characterDataPropagationUtility.CopyProfileToSceneEntity(profile!, World, playerEntity);
-            PropagateTalking();
         }
 
         protected override void Update(float t)
@@ -73,11 +72,6 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
             if (profile!.IsDirty)
                 characterDataPropagationUtility.CopyProfileToSceneEntity(profile, World, persistentEntities.Player);
 
-            PropagateTalking();
-        }
-
-        private void PropagateTalking()
-        {
             if (globalWorld.TryGet(localPlayerEntity, out LocalPlayerTalkingComponent talking))
                 World.Get<SDKTalking>(persistentEntities.Player).Set(talking.IsTalking);
         }
