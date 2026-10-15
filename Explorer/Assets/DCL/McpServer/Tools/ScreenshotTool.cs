@@ -35,6 +35,7 @@ namespace DCL.McpServer.Tools
         private const int MIN_WIDTH = 64;
         private const int MAX_WIDTH = 1920;
         private const int JPG_QUALITY = 75;
+        private const GraphicsFormat PASSTHROUGH_GRAPHICS_FORMAT = GraphicsFormat.R8G8B8A8_UNorm;
 
         private const string MIME_TYPE_PNG = "image/png";
         private const string MIME_TYPE_JPEG = "image/jpeg";
@@ -147,9 +148,14 @@ namespace DCL.McpServer.Tools
                 int width = Mathf.Min(maxWidth, sourceWidth);
                 int height = Mathf.Max(1, Mathf.RoundToInt((float)sourceHeight * width / sourceWidth));
 
+                // In Linear color space the back buffer copy is already display-encoded but not flagged sRGB, so an sRGB target would encode it twice.
+                bool encodeToSrgb = backbufferCopy == null || backbufferCopy.isDataSRGB;
+
+                // sRGB must be assigned after graphicsFormat: its setter rewrites the format.
                 var descriptor = new RenderTextureDescriptor(width, height)
                 {
-                    graphicsFormat = OutputGraphicsFormat(), sRGB = true, msaaSamples = 1, depthBufferBits = 0,
+                    graphicsFormat = encodeToSrgb ? OutputGraphicsFormat() : PASSTHROUGH_GRAPHICS_FORMAT,
+                    sRGB = encodeToSrgb, msaaSamples = 1, depthBufferBits = 0,
                     mipCount = 1, useMipMap = false,
                 };
 

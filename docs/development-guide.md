@@ -520,12 +520,7 @@ By running the build from a console/terminal you can specify the pertinent param
 
 ## Test media streaming
 
-**Media streaming** is served by two switchable backends behind the `AvProSwitch` assembly (`Explorer/Assets/DCL/AvProSwitch`):
-
-* **AVPro** (default) — the `com.renderheads.avpro.video-ultra` package, resolved from `decentraland/unity-explorer-packages`. No manual import is needed.
-* **UUAV** — the in-house player (`Explorer/Assets/Plugins/UUAV`), used when the `use-custom-media-player` feature flag is enabled or the `--use-custom-media-player` launch argument is passed (`--use-custom-media-player false` forces AVPro).
-
-The backend is chosen once at startup (`MediaPlayerContainer` reads `FeaturesRegistry` and sets `MediaPlayerBackendSelection.UseCustomPlayer`); the startup log prints `Media player backend: AVPro|UUAV`. The media systems are always compiled in (except on Linux, where they are excluded per platform define). `AvProSwitch` references the AVPro package assembly directly, so removing the package from the manifest also requires updating `AvProSwitch` (the asmdef reference and `AvProBackend`).
+**Media streaming** is served by UUAV, the in-house player (`Explorer/Assets/Plugins/UUAV`, see [UUAV Media Stack](uuav.md)). The Explorer's media systems (`DCL.SDKComponents.MediaStream`) reach it through the `UUAV.Compat` facade (`Packages/UUAV/AVProCompat/`): a poll-based `MediaPlayer` component exposing `Control` / `Info` / `TextureProducer`. The media systems are always compiled in (except on Linux, where they are excluded per platform define).
 
 To test media streaming you can:
 1. Run `MediaStreaming` sdk-scene from `StaticSceneLoader.unity` scene to verify that media streaming is working. This scene includes both audio- and video streams.

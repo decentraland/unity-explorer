@@ -13,6 +13,7 @@ using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.UI.Profiles.Helpers;
 using ECS.SceneLifeCycle;
 using DCL.VoiceChat;
+using DCL.Web3.Identities;
 using DCL.VoiceChat.CommunityVoiceChat;
 using DCL.VoiceChat.Nearby;
 using DCL.VoiceChat.Nearby.Audio;
@@ -63,6 +64,7 @@ namespace DCL.PluginSystem.Global
         private readonly IScenesCache scenesCache;
         private readonly ISceneRestrictionBusController sceneRestrictionBusController;
         private readonly VolumeBus volumeBus;
+        private readonly IWeb3IdentityCache identityCache;
 
         private ProvidedAsset<VoiceChatPluginSettings> voiceChatPluginSettingsAsset;
         private VoiceChatMicrophoneHandler? voiceChatHandler;
@@ -105,12 +107,14 @@ namespace DCL.PluginSystem.Global
             NearbyVoiceTipView nearbyVoiceTipView,
             VolumeBus volumeBus,
             IUserBlockingCache userBlockingCache,
+            IWeb3IdentityCache identityCache,
             NearbyMuteService? nearbyMuteService = null,
             NearbyVoiceChatStateModel? nearbyStateModel = null)
         {
             this.nearbyMuteService = nearbyMuteService;
             this.nearbyStateModel = nearbyStateModel;
             this.userBlockingCache = userBlockingCache;
+            this.identityCache = identityCache;
             this.roomHub = roomHub;
             this.voiceChatPanelView = voiceChatPanelView;
             this.profileDataProvider = profileDataProvider;
@@ -241,6 +245,9 @@ namespace DCL.PluginSystem.Global
 
                 var bannedPlayerWatcher = new NearbyVoiceBannedPlayerWatcher(roomHub, sceneRestrictionBusController, stateModel);
                 pluginScope.Add(bannedPlayerWatcher);
+
+                var guestWatcher = new NearbyVoiceGuestWatcher(identityCache, stateModel);
+                pluginScope.Add(guestWatcher);
 
                 nearbyMuteService!.LoadAsync(ct).Forget();
 

@@ -1,3 +1,4 @@
+using Cysharp.Threading.Tasks;
 using DCL.Optimization.Pools;
 using DCL.Optimization.ThreadSafePool;
 using DCL.Utility;
@@ -6,6 +7,8 @@ using Sentry.Unity;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Net;
+using System.Net.Sockets;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -21,23 +24,27 @@ namespace DCL.Diagnostics.Sentry
 
         // Native engine messages are captured by the Sentry Unity SDK's own log integration and never pass through ReportHub,
         // so they can only be filtered on the SDK's BeforeSend gateway. All of them are un-actionable for the client:
-        // PhysX mesh-cooking warnings from creator assets (#7928, #10148, #10181), libcurl transport failures (#10182)
-        // and camera projection warnings of off-screen points (#10154)
+        // PhysX mesh-cooking warnings from creator assets (#7928, #10148, #10181), libcurl transport failures (#10182),
+        // camera projection warnings of off-screen points (#10154) and the compute shader rejection the minimum specs guard already covers (#10338)
         private static readonly string[] IGNORED_NATIVE_MESSAGE_PREFIXES =
         {
             "[Physics.PhysX]",
             "Curl error ",
             "Screen position out of view frustum",
+            "Platform does not support compute shaders",
         };
 
         // Errors raised by scene code inside the ClearScript engine, matched by name so this assembly does not reference the engine (#10088, #10125)
         private const string SCRIPT_ENGINE_EXCEPTION_TYPE = "Microsoft.ClearScript.ScriptEngineException";
 
-        // Connect failures of scene-owned websockets are the scene's problem; the same wrapper type is kept for the client's own sockets (#10103)
-        private const string SCENE_WEBSOCKET_EXCEPTION_TYPE = "Utility.Networking.WebSocketException";
+        // A websocket dropped by the remote end is a backend condition the client cannot act on (#10103, #10377)
+        private const string WEBSOCKET_EXCEPTION_TYPE = "Utility.Networking.WebSocketException";
 
         // Thrown by the runtime's task machinery inside third-party transports (Sentry SDK, System.Net.Http) with no client frame (#10094, #10120, #10121, #10153)
         private const string TASK_ALREADY_COMPLETED_MESSAGE = "An attempt was made to transition a task to a final state when it had already completed.";
+
+        // Cleartext http is refused by the player, and such URLs only ever come from scene content (#8080, #10008, #10204, #10276)
+        private const string INSECURE_CONNECTION_MESSAGE = "Insecure connection not allowed";
 
         // The user's disk is full: an environment condition, not a client defect (#10086). Matched by HRESULT first
         // (HRESULT_FROM_WIN32 of ERROR_HANDLE_DISK_FULL and ERROR_DISK_FULL, the codes the runtime attaches on every platform)
@@ -56,7 +63,7 @@ namespace DCL.Diagnostics.Sentry
 
         private readonly PerReportScope.Pool scopesPool;
 
-        public SentryReportHandler(ICategorySeverityMatrix matrix, SentrySampler sentrySampler, bool debounceEnabled, string? sessionId)
+        public SentryReportHandler(ICategorySeverityMatrix matrix, SentrySampler sentrySampler, bool debounceEnabled, bool isLocalSceneDevelopment, string? sessionId)
             : base(ReportHandler.Sentry, matrix, debounceEnabled)
         {
             scopesPool = new PerReportScope.Pool(scopeConfigurators);
@@ -83,7 +90,7 @@ namespace DCL.Diagnostics.Sentry
             options.TracesSampler = sentrySampler.Execute;
 
             // The single gateway every event passes through, whether it was captured via ReportHub or directly by the SDK's integrations
-            options.SetBeforeSend(BeforeSend);
+            options.SetBeforeSend(@event => BeforeSend(@event, isLocalSceneDevelopment));
 
 #if UNITY_EDITOR
             // The asset carries a placeholder DSN that only CI replaces, so editor sessions resolve one from the environment instead.
@@ -232,7 +239,7 @@ namespace DCL.Diagnostics.Sentry
         ///     Drops the events the client cannot act on, keeping them as breadcrumbs of the next real report,
         ///     and tags the remaining ones with a category so Sentry can always filter by it.
         /// </summary>
-        internal static SentryEvent? BeforeSend(SentryEvent @event)
+        internal static SentryEvent? BeforeSend(SentryEvent @event, bool isLocalSceneDevelopment = false)
         {
             string? category = @event.Tags.TryGetValue(CATEGORY_TAG, out string? tag) ? tag : null;
 
@@ -241,7 +248,7 @@ namespace DCL.Diagnostics.Sentry
             if (message != null && IsIgnoredNativeMessage(message))
                 return Demote(message);
 
-            if (@event.Exception != null && IsIgnoredException(@event.Exception, category))
+            if (@event.Exception != null && IsIgnoredException(@event.Exception, isLocalSceneDevelopment))
                 return Demote(@event.Exception.Message);
 
             if (category == null)
@@ -265,7 +272,7 @@ namespace DCL.Diagnostics.Sentry
             return false;
         }
 
-        private static bool IsIgnoredException(Exception exception, string? category)
+        private static bool IsIgnoredException(Exception exception, bool isLocalSceneDevelopment)
         {
             switch (exception)
             {
@@ -275,28 +282,28 @@ namespace DCL.Diagnostics.Sentry
                         return false;
 
                     for (var i = 0; i < aggregate.InnerExceptions.Count; i++)
-                        if (!IsIgnoredException(aggregate.InnerExceptions[i], category))
+                        if (!IsIgnoredException(aggregate.InnerExceptions[i], isLocalSceneDevelopment))
                             return false;
 
                     return true;
 
-                case IOException:
-                    return exception.HResult is HANDLE_DISK_FULL_HRESULT or DISK_FULL_HRESULT
-                           || exception.Message.StartsWith(DISK_FULL_MESSAGE_PREFIX, StringComparison.Ordinal);
+                // In local scene development every endpoint is the creator's own preview server, so its failures are never a client defect (#10318)
+                case UnityWebRequestException or WebException or SocketException when isLocalSceneDevelopment:
 
-                case InvalidOperationException:
-                    return exception.Message.StartsWith(TASK_ALREADY_COMPLETED_MESSAGE, StringComparison.Ordinal);
+                case IOException when exception.HResult is HANDLE_DISK_FULL_HRESULT or DISK_FULL_HRESULT
+                                      || exception.Message.StartsWith(DISK_FULL_MESSAGE_PREFIX, StringComparison.Ordinal):
+
+                case InvalidOperationException when exception.Message.StartsWith(TASK_ALREADY_COMPLETED_MESSAGE, StringComparison.Ordinal)
+                                                    || exception.Message.StartsWith(INSECURE_CONNECTION_MESSAGE, StringComparison.Ordinal):
+                    return true;
             }
 
             string? typeName = exception.GetType().FullName;
 
-            if (typeName == SCRIPT_ENGINE_EXCEPTION_TYPE)
+            if (typeName is SCRIPT_ENGINE_EXCEPTION_TYPE or WEBSOCKET_EXCEPTION_TYPE)
                 return true;
 
-            if (typeName == SCENE_WEBSOCKET_EXCEPTION_TYPE)
-                return category == ReportCategory.JAVASCRIPT;
-
-            return exception.InnerException != null && IsIgnoredException(exception.InnerException, category);
+            return exception.InnerException != null && IsIgnoredException(exception.InnerException, isLocalSceneDevelopment);
         }
 
         private bool IsValidConfiguration(SentryUnityOptions options) =>
