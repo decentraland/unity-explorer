@@ -8,7 +8,6 @@ using DCL.Multiplayer.SDK.Components;
 using DCL.Multiplayer.SDK.Systems.SceneWorld;
 using DCL.Profiles;
 using DCL.VoiceChat.Nearby;
-using DCL.VoiceChat.Nearby.Audio;
 using DCL.VoiceChat.Nearby.Systems;
 using ECS.TestSuite;
 using NSubstitute;
@@ -23,7 +22,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
     /// <summary>
     ///     Covers the path from Nearby voice activity to <c>PBAvatarBase.talking</c>:
     ///     <see cref="NearbyTalkingSDKPropagationSystem" /> feeds the scene's <see cref="SDKTalking" />, <see cref="WriteSDKAvatarBaseSystem" /> writes it.
-    ///     Remote activity enters through <see cref="IsActivelySpeakingTag" />, the local player's through the registry.
+    ///     Remote activity enters through <see cref="IsActivelySpeakingTag" />, the local player's through <see cref="NearbyVoiceChatStateModel.IsLocalSpeaking" />.
     ///     The local player's value is stored in <see cref="LocalPlayerTalkingComponent" /> instead.
     /// </summary>
     public class NearbyTalkingSDKPropagationSystemShould : UnitySystemTestBase<NearbyTalkingSDKPropagationSystem>
@@ -31,7 +30,6 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
         private const string LOCAL_WALLET = "0xlocal";
         private const string REMOTE_WALLET = "0xremote";
 
-        private INearbyAudioStreamRegistry registry = null!;
         private NearbyVoiceChatStateModel stateModel = null!;
         private IECSToCRDTWriter ecsToCRDTWriter = null!;
         private World sceneWorld = null!;
@@ -51,7 +49,6 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
         [SetUp]
         public void SetUp()
         {
-            registry = Substitute.For<INearbyAudioStreamRegistry>();
             stateModel = new NearbyVoiceChatStateModel(NearbyVoiceChatState.Idle);
 
             sceneWorld = World.Create();
@@ -72,7 +69,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
 
             playerEntity = world.Create(new PlayerComponent());
 
-            system = new NearbyTalkingSDKPropagationSystem(world, playerEntity, registry, stateModel);
+            system = new NearbyTalkingSDKPropagationSystem(world, playerEntity, stateModel);
 
             system.Initialize();
         }
@@ -117,24 +114,24 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
         }
 
         [Test]
-        public void StoreLocalTalkingOnlyWithOpenMic()
+        public void MirrorLocalSpeakingFromStateModel()
         {
             // Arrange
             AddPlayerToScene(playerEntity, LOCAL_WALLET, SpecialEntitiesID.PLAYER_ENTITY);
-            registry.IsActiveSpeaker(LOCAL_WALLET).Returns(true);
+            stateModel.IsLocalSpeaking = true;
 
             // Act
-            Tick();
-
-            // Assert
-            Assert.That(world.Get<LocalPlayerTalkingComponent>(playerEntity).IsTalking, Is.False);
-
-            // Act
-            stateModel.StartSpeaking();
             Tick();
 
             // Assert
             Assert.That(world.Get<LocalPlayerTalkingComponent>(playerEntity).IsTalking, Is.True);
+
+            // Act
+            stateModel.IsLocalSpeaking = false;
+            Tick();
+
+            // Assert
+            Assert.That(world.Get<LocalPlayerTalkingComponent>(playerEntity).IsTalking, Is.False);
 
             // Nothing is written through the scene the local player stands in
             Assert.That(written, Is.Null);

@@ -7,8 +7,6 @@ using DCL.Character.Components;
 using DCL.Diagnostics;
 using DCL.Multiplayer.SDK.Components;
 using DCL.Multiplayer.SDK.Systems.GlobalWorld;
-using DCL.Profiles;
-using DCL.VoiceChat.Nearby.Audio;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 
@@ -30,13 +28,11 @@ namespace DCL.VoiceChat.Nearby.Systems
     public partial class NearbyTalkingSDKPropagationSystem : BaseUnityLoopSystem
     {
         private readonly Entity playerEntity;
-        private readonly INearbyAudioStreamRegistry registry;
         private readonly NearbyVoiceChatStateModel stateModel;
 
-        internal NearbyTalkingSDKPropagationSystem(World world, Entity playerEntity, INearbyAudioStreamRegistry registry, NearbyVoiceChatStateModel stateModel) : base(world)
+        internal NearbyTalkingSDKPropagationSystem(World world, Entity playerEntity, NearbyVoiceChatStateModel stateModel) : base(world)
         {
             this.playerEntity = playerEntity;
-            this.registry = registry;
             this.stateModel = stateModel;
         }
 
@@ -47,18 +43,9 @@ namespace DCL.VoiceChat.Nearby.Systems
 
         protected override void Update(float t)
         {
-            UpdateLocalPlayerTalking();
+            World.Get<LocalPlayerTalkingComponent>(playerEntity).IsTalking = stateModel.IsLocalSpeaking;
             MarkRemotePlayerTalkingQuery(World);
             MarkRemotePlayerSilentQuery(World);
-        }
-
-        private void UpdateLocalPlayerTalking()
-        {
-            if (!World.TryGet(playerEntity, out Profile? profile))
-                return;
-
-            World.Get<LocalPlayerTalkingComponent>(playerEntity).IsTalking =
-                stateModel.State.Value == NearbyVoiceChatState.OpenMic && registry.IsActiveSpeaker(profile!.UserId.Value);
         }
 
         [Query]
