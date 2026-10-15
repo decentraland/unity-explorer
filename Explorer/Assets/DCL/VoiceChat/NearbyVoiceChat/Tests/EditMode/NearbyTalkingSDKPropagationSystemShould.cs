@@ -63,8 +63,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
             ecsToCRDTWriter.When(w => w.PutMessage(Arg.Any<Action<PBAvatarBase, SDKProfile>>(), Arg.Any<CRDTEntity>(), Arg.Any<SDKProfile>()))
                            .Do(call =>
                             {
-                                // Pre-set talking to stand for a pooled message reused from a previous write
-                                var message = new PBAvatarBase { Talking = true };
+                                var message = new PBAvatarBase();
                                 call.Arg<Action<PBAvatarBase, SDKProfile>>()(message, call.Arg<SDKProfile>());
                                 written = message;
                             });

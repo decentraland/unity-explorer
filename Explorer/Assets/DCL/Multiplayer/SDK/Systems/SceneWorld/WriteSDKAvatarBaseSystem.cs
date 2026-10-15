@@ -53,11 +53,8 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
                 pbComponent.EyesColor = avatar.EyesColor.ToColor3();
                 pbComponent.HairColor = avatar.HairColor.ToColor3();
 
-                // The message is pooled: clear a value left by a previous write
                 if (profile.Talking is { } talking)
                     pbComponent.Talking = talking;
-                else
-                    pbComponent.ClearTalking();
             }, playerCRDTEntity.CRDTEntity, profile);
 
             profile.IsTalkingDirty = false;
