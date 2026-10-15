@@ -78,12 +78,8 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
 
         private void PropagateTalking()
         {
-            if (!globalWorld.TryGet(localPlayerEntity, out LocalPlayerTalkingComponent talking)) return;
-
-            ref SDKTalking sdkTalking = ref World.TryGetRef<SDKTalking>(persistentEntities.Player, out bool exists);
-
-            if (exists)
-                sdkTalking.Set(talking.IsTalking);
+            if (globalWorld.TryGet(localPlayerEntity, out LocalPlayerTalkingComponent talking))
+                World.Get<SDKTalking>(persistentEntities.Player).Set(talking.IsTalking);
         }
     }
 }
