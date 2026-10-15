@@ -4,15 +4,11 @@ using CrdtEcsBridge.Components;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.Character.Components;
 using DCL.ECSComponents;
-using DCL.Friends.UserBlocking;
 using DCL.Multiplayer.SDK.Components;
 using DCL.Multiplayer.SDK.Systems.SceneWorld;
-using DCL.Multiplayer.SDK.Tests;
 using DCL.Profiles;
-using DCL.SceneBannedUsers;
 using DCL.VoiceChat.Nearby;
 using DCL.VoiceChat.Nearby.Audio;
-using DCL.VoiceChat.Nearby.MutePersistence;
 using DCL.VoiceChat.Nearby.Systems;
 using ECS.TestSuite;
 using NSubstitute;
@@ -20,23 +16,23 @@ using NUnit.Framework;
 using SceneRunner.Scene;
 using System;
 using UnityEngine;
+using SceneFacadeUtils = DCL.Multiplayer.SDK.Tests.SceneFacadeUtils;
 
 namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
 {
     /// <summary>
     ///     Covers the path from Nearby voice activity to <c>PBAvatarBase.talking</c>:
-    ///     <see cref="NearbyTalkingSystem" /> feeds the scene's <see cref="SDKProfile" />, <see cref="WriteSDKAvatarBaseSystem" /> writes it.
+    ///     <see cref="NearbyTalkingSDKPropagationSystem" /> feeds the scene's <see cref="SDKProfile" />, <see cref="WriteSDKAvatarBaseSystem" /> writes it.
+    ///     Remote activity enters through <see cref="IsActivelySpeakingTag" />, the local player's through the registry.
     ///     The local player's value is stored in <see cref="LocalPlayerTalkingComponent" /> instead.
     /// </summary>
-    public class NearbyTalkingSystemShould : UnitySystemTestBase<NearbyTalkingSystem>
+    public class NearbyTalkingSDKPropagationSystemShould : UnitySystemTestBase<NearbyTalkingSDKPropagationSystem>
     {
         private const string LOCAL_WALLET = "0xlocal";
         private const string REMOTE_WALLET = "0xremote";
 
         private INearbyAudioStreamRegistry registry = null!;
         private NearbyVoiceChatStateModel stateModel = null!;
-        private INearbyMuteCache muteCache = null!;
-        private IUserBlockingCache userBlockingCache = null!;
         private IECSToCRDTWriter ecsToCRDTWriter = null!;
         private World sceneWorld = null!;
         private ISceneFacade scene = null!;
@@ -57,8 +53,6 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
         {
             registry = Substitute.For<INearbyAudioStreamRegistry>();
             stateModel = new NearbyVoiceChatStateModel(NearbyVoiceChatState.Idle);
-            muteCache = Substitute.For<INearbyMuteCache>();
-            userBlockingCache = Substitute.For<IUserBlockingCache>();
 
             sceneWorld = World.Create();
             scene = SceneFacadeUtils.CreateSceneFacadeSubstitute(Vector2Int.zero, sceneWorld);
@@ -79,9 +73,9 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
 
             playerEntity = world.Create(new PlayerComponent());
 
-            system = new NearbyTalkingSystem(world, playerEntity, registry, stateModel,
-                new NearbyMuteService(muteCache, Substitute.For<INearbyMuteRepository>()),
-                userBlockingCache, RoomMetadataCurrentScene.CreateForTest());
+            system = new NearbyTalkingSDKPropagationSystem(world, playerEntity, registry, stateModel);
+
+            system.Initialize();
         }
 
         protected override void OnTearDown()
@@ -95,8 +89,8 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
         public void WriteTalkingForActiveRemoteSpeaker()
         {
             // Arrange
-            AddPlayerToScene(world.Create(), REMOTE_WALLET, SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM);
-            registry.IsActiveSpeaker(REMOTE_WALLET).Returns(true);
+            Entity remote = world.Create(new IsActivelySpeakingTag());
+            AddPlayerToScene(remote, REMOTE_WALLET, SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM);
 
             // Act
             Tick();
@@ -106,21 +100,16 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
             Assert.That(written?.Talking, Is.True);
         }
 
-        [TestCase(true, false, false)]
-        [TestCase(false, true, false)]
-        [TestCase(false, false, true)]
-        public void WriteNotTalkingForFilteredRemoteSpeaker(bool blocked, bool muted, bool listeningDisabled)
+        [Test]
+        public void WriteNotTalkingOnceRemoteSpeakerStops()
         {
             // Arrange
-            AddPlayerToScene(world.Create(), REMOTE_WALLET, SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM);
-            registry.IsActiveSpeaker(REMOTE_WALLET).Returns(true);
-            userBlockingCache.UserIsBlocked(REMOTE_WALLET).Returns(blocked);
-            muteCache.IsMuted(REMOTE_WALLET).Returns(muted);
-
-            if (listeningDisabled)
-                stateModel.Disable();
+            Entity remote = world.Create(new IsActivelySpeakingTag());
+            AddPlayerToScene(remote, REMOTE_WALLET, SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM);
+            Tick();
 
             // Act
+            world.Remove<IsActivelySpeakingTag>(remote);
             Tick();
 
             // Assert
@@ -156,8 +145,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
         public void NotRewriteAvatarBaseWhenTalkingIsUnchanged()
         {
             // Arrange
-            AddPlayerToScene(world.Create(), REMOTE_WALLET, SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM);
-            registry.IsActiveSpeaker(REMOTE_WALLET).Returns(true);
+            AddPlayerToScene(world.Create(new IsActivelySpeakingTag()), REMOTE_WALLET, SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM);
 
             // Act
             Tick();
