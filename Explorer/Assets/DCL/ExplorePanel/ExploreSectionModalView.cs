@@ -17,6 +17,9 @@ namespace DCL.ExplorePanel
         /// <summary>Header width the close button takes at the section's right edge, button plus margin.</summary>
         public const float CLOSE_BUTTON_SLOT_WIDTH = 62f;
 
+        /// <summary>Band at the section's top edge on whose centre line the close button sits.</summary>
+        public const float HEADER_HEIGHT = 68f;
+
         [field: SerializeField]
         public CanvasGroup CanvasGroup { get; private set; } = null!;
 

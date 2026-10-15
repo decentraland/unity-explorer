@@ -61,6 +61,9 @@ namespace DCL.Navmap
         [field: SerializeField]
         public DestinationInfoElement DestinationInfoElement { get; private set; } = null!;
 
+        [field: SerializeField]
+        public NavmapCategoriesStripView CategoriesStrip { get; private set; } = null!;
+
         [field: Header("Audio")]
         [field: SerializeField]
         public AudioClipConfig ClickAudio { get; private set; } = null!;
@@ -73,11 +76,15 @@ namespace DCL.Navmap
 
             isCompact = compact;
 
-            // The search bar is centred in its container, so it gives the close slot back from its right edge.
-            float slot = compact ? ExploreSectionModalView.CLOSE_BUTTON_SLOT_WIDTH : -ExploreSectionModalView.CLOSE_BUTTON_SLOT_WIDTH;
+            float sign = compact ? 1f : -1f;
             var searchBar = (RectTransform)SearchBarView.transform;
-            searchBar.sizeDelta -= new Vector2(slot, 0f);
-            searchBar.anchoredPosition -= new Vector2(slot / 2f, 0f);
+            var band = (RectTransform)searchBar.parent;
+
+            // Centred in its band, so the close slot comes off the right edge and the bar drops onto the modal header's centre line.
+            searchBar.sizeDelta -= new Vector2(sign * ExploreSectionModalView.CLOSE_BUTTON_SLOT_WIDTH, 0f);
+            searchBar.anchoredPosition -= new Vector2(sign * ExploreSectionModalView.CLOSE_BUTTON_SLOT_WIDTH / 2f, sign * (ExploreSectionModalView.HEADER_HEIGHT - band.rect.height) / 2f);
+
+            CategoriesStrip.SetWrapping(compact);
         }
     }
 
