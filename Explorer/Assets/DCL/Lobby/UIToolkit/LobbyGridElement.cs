@@ -84,7 +84,7 @@ namespace DCL.Lobby
 
         /// <summary>Pixel size of a widget spanning the given cells, gutters between them included.</summary>
         public static Vector2 SpanToSize(Vector2Int span) =>
-            new (span.x * CELL_WIDTH + (span.x - 1) * GUTTER, span.y * CELL_HEIGHT + (span.y - 1) * GUTTER);
+            new ((span.x * CELL_WIDTH) + ((span.x - 1) * GUTTER), (span.y * CELL_HEIGHT) + ((span.y - 1) * GUTTER));
 
         /// <summary>Position of the top-left corner of the cell in the space of the grid.</summary>
         public static Vector2 CellToLocal(Vector2Int cell) =>

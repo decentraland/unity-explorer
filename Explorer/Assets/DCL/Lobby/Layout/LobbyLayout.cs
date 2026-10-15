@@ -13,16 +13,16 @@ namespace DCL.Lobby
         public const int CORNER_COUNT = 4;
 
         /// <summary>The widget no layout goes without; <see cref="EnsureRequiredWidget" /> puts it back.</summary>
-        public const LobbyWidgetId REQUIRED_WIDGET = LobbyWidgetId.Landing4x3;
+        public const LobbyWidgetId REQUIRED_WIDGET = LobbyWidgetId.Landing4By3;
 
         private static readonly LobbyWidgetPlacement[] DEFAULT_PLACEMENTS =
         {
-            new (LobbyWidgetId.Landing4x3, LobbyGridCorner.TopLeft, new Vector2Int(0, 0)),
-            new (LobbyWidgetId.FriendsOnline4x2, LobbyGridCorner.TopLeft, new Vector2Int(0, 3)),
-            new (LobbyWidgetId.LiveEvents3x3, LobbyGridCorner.TopRight, new Vector2Int(1, 0)),
-            new (LobbyWidgetId.UpcomingEvents3x2, LobbyGridCorner.TopRight, new Vector2Int(1, 3)),
-            new (LobbyWidgetId.JumpBackIn6x2, LobbyGridCorner.BottomLeft, new Vector2Int(0, 0)),
-            new (LobbyWidgetId.RecommendedPlaces6x2, LobbyGridCorner.BottomRight, new Vector2Int(0, 0)),
+            new (LobbyWidgetId.Landing4By3, LobbyGridCorner.TopLeft, new Vector2Int(0, 0)),
+            new (LobbyWidgetId.FriendsOnline4By2, LobbyGridCorner.TopLeft, new Vector2Int(0, 3)),
+            new (LobbyWidgetId.LiveEvents3By3, LobbyGridCorner.TopRight, new Vector2Int(1, 0)),
+            new (LobbyWidgetId.UpcomingEvents3By2, LobbyGridCorner.TopRight, new Vector2Int(1, 3)),
+            new (LobbyWidgetId.JumpBackIn6By2, LobbyGridCorner.BottomLeft, new Vector2Int(0, 0)),
+            new (LobbyWidgetId.RecommendedPlaces6By2, LobbyGridCorner.BottomRight, new Vector2Int(0, 0)),
         };
 
         /// <summary>Down, right, up and left in grid space; the order breaks ties between equally cheap pushes.</summary>

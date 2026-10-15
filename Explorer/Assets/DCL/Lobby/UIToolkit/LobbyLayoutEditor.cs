@@ -85,13 +85,13 @@ namespace DCL.Lobby
 
         public bool IsEditing => root != null;
 
-        private LobbyLayout Layout => host.Layout ?? throw new InvalidOperationException("The layout can be edited only once the widget host is shown");
+        private LobbyLayout RequireLayout() => host.Layout ?? throw new InvalidOperationException("The layout can be edited only once the widget host is shown");
 
-        private VisualElement DragLayer => dragLayer ?? throw new InvalidOperationException("The layout can be dragged only while the editor is shown");
+        private VisualElement RequireDragLayer() => dragLayer ?? throw new InvalidOperationException("The layout can be dragged only while the editor is shown");
 
-        private VisualElement Modal => modal ?? throw new InvalidOperationException("The widget modal exists only while the editor is shown");
+        private VisualElement RequireModal() => modal ?? throw new InvalidOperationException("The widget modal exists only while the editor is shown");
 
-        private VisualElement ModalItems => modalItems ?? throw new InvalidOperationException("The widget modal exists only while the editor is shown");
+        private VisualElement RequireModalItems() => modalItems ?? throw new InvalidOperationException("The widget modal exists only while the editor is shown");
 
         public LobbyLayoutEditor(LobbyWidgetHost host)
         {
@@ -161,7 +161,7 @@ namespace DCL.Lobby
             saveButton.clicked += Save;
 
             opening.Clear();
-            opening.AddRange(Layout.Placements);
+            opening.AddRange(RequireLayout().Placements);
 
             newRoot.AddToClassList(USS_EDITING);
 
@@ -197,7 +197,7 @@ namespace DCL.Lobby
                 handle.RemoveFromHierarchy();
                 handle.Underlay.RemoveFromHierarchy();
 
-                if (!Layout.TryGetPlacement(handle.WidgetId, out LobbyWidgetPlacement placement))
+                if (!RequireLayout().TryGetPlacement(handle.WidgetId, out LobbyWidgetPlacement placement))
                     continue;
 
                 handle.PlaceAt(placement.Cell);
@@ -213,7 +213,7 @@ namespace DCL.Lobby
                 card.Restore();
 
                 if (!IsPlaced(card.Family))
-                    ModalItems.Add(card);
+                    RequireModalItems().Add(card);
             }
         }
 
@@ -222,7 +222,7 @@ namespace DCL.Lobby
             ReadOnlySpan<LobbyWidgetId> variants = family.Variants();
 
             for (var i = 0; i < variants.Length; i++)
-                if (Layout.TryGetPlacement(variants[i], out _))
+                if (RequireLayout().TryGetPlacement(variants[i], out _))
                     return true;
 
             return false;
@@ -233,7 +233,7 @@ namespace DCL.Lobby
         private void Save()
         {
             EndDragInProgress();
-            LobbyLayoutStorage.Save(Layout);
+            LobbyLayoutStorage.Save(RequireLayout());
             Close(revert: false);
         }
 
@@ -241,7 +241,7 @@ namespace DCL.Lobby
         private void ResetToDefault()
         {
             EndDragInProgress();
-            Layout.ResetToDefault();
+            RequireLayout().ResetToDefault();
             host.Apply();
             PlaceHandles();
             UpdateSaveButton();
@@ -299,23 +299,23 @@ namespace DCL.Lobby
 
         private void RestoreOpening()
         {
-            Layout.Clear();
+            RequireLayout().Clear();
 
             for (var i = 0; i < opening.Count; i++)
-                Layout.TryPlace(opening[i].WidgetId, opening[i].Corner, opening[i].Cell);
+                RequireLayout().TryPlace(opening[i].WidgetId, opening[i].Corner, opening[i].Cell);
         }
 
         /// <summary>Whether any widget stands elsewhere than it did on entry.</summary>
         private bool HasChanges()
         {
-            if (Layout.Placements.Count != opening.Count)
+            if (RequireLayout().Placements.Count != opening.Count)
                 return true;
 
             for (var i = 0; i < opening.Count; i++)
             {
                 LobbyWidgetPlacement was = opening[i];
 
-                if (!Layout.TryGetPlacement(was.WidgetId, out LobbyWidgetPlacement now) || now.Corner != was.Corner || now.Cell != was.Cell)
+                if (!RequireLayout().TryGetPlacement(was.WidgetId, out LobbyWidgetPlacement now) || now.Corner != was.Corner || now.Cell != was.Cell)
                     return true;
             }
 
@@ -357,8 +357,8 @@ namespace DCL.Lobby
             dragFrame.style.height = size.y + (LobbyWidgetHandleElement.OUTSET * 2f);
 
             element.AddToClassList(USS_WIDGET_LIFTED);
-            DragLayer.Add(dragFrame);
-            DragLayer.Add(element);
+            RequireDragLayer().Add(dragFrame);
+            RequireDragLayer().Add(element);
 
             MoveLifted(panelPosition);
             UpdateTarget(panelPosition);
@@ -387,9 +387,9 @@ namespace DCL.Lobby
         private void EndDrag()
         {
             if (targetModal)
-                Layout.Remove(draggedWidgetId);
+                RequireLayout().Remove(draggedWidgetId);
             else if (targetValid && targetGrid != null)
-                Layout.TryPlacePushing(draggedWidgetId, targetGrid.Corner, targetCell);
+                RequireLayout().TryPlacePushing(draggedWidgetId, targetGrid.Corner, targetCell);
 
             ClearTarget();
             lifted?.RemoveFromClassList(USS_WIDGET_LIFTED);
@@ -419,7 +419,7 @@ namespace DCL.Lobby
         // The button in the corner of a placed handle does what a drop on the modal does, without the drag
         private void OnRemoveRequested(LobbyWidgetHandleElement handle)
         {
-            if (!Layout.Remove(handle.WidgetId))
+            if (!RequireLayout().Remove(handle.WidgetId))
                 return;
 
             host.Apply();
@@ -432,7 +432,7 @@ namespace DCL.Lobby
             if (lifted == null)
                 return;
 
-            Vector2 local = DragLayer.WorldToLocal(panelPosition - grabOffset);
+            Vector2 local = RequireDragLayer().WorldToLocal(panelPosition - grabOffset);
             lifted.style.left = local.x;
             lifted.style.top = local.y;
             dragFrame.style.left = local.x - LobbyWidgetHandleElement.OUTSET;
@@ -448,7 +448,7 @@ namespace DCL.Lobby
         {
             Vector2Int span = draggedWidgetId.Span();
             Vector2 topLeft = panelPosition - grabOffset;
-            bool overModal = draggedHandle != null && draggedWidgetId != LobbyLayout.REQUIRED_WIDGET && Modal.worldBound.Contains(panelPosition);
+            bool overModal = draggedHandle != null && draggedWidgetId != LobbyLayout.REQUIRED_WIDGET && RequireModal().worldBound.Contains(panelPosition);
             LobbyGridElement? grid = overModal ? null : GridAt(topLeft + (LobbyGridElement.SpanToSize(span) * 0.5f));
             SetTargetModal(overModal);
 
@@ -474,7 +474,7 @@ namespace DCL.Lobby
             }
 
             targetCell = LobbyGridElement.NearestCell(grid.WorldToLocal(topLeft));
-            targetValid = Layout.TryResolvePush(draggedWidgetId, grid.Corner, targetCell, resolution);
+            targetValid = RequireLayout().TryResolvePush(draggedWidgetId, grid.Corner, targetCell, resolution);
             ShowPushes();
 
             Vector2 markerLocal = LobbyGridElement.CellToLocal(targetCell);
@@ -504,7 +504,7 @@ namespace DCL.Lobby
                 return;
 
             targetModal = over;
-            Modal.EnableInClassList(USS_MODAL_TARGET, over);
+            RequireModal().EnableInClassList(USS_MODAL_TARGET, over);
         }
 
         // The widgets the resolution pushes stand at their pushed cells with their handles hidden, so only the widget
@@ -538,7 +538,7 @@ namespace DCL.Lobby
 
         private void ShowAtPlacement(LobbyWidgetId widgetId)
         {
-            if (Layout.TryGetPlacement(widgetId, out LobbyWidgetPlacement placement))
+            if (RequireLayout().TryGetPlacement(widgetId, out LobbyWidgetPlacement placement))
                 host.ShowAt(widgetId, placement.Cell);
 
             handles[(int)widgetId].SetPushed(false);

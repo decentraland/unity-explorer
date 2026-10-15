@@ -66,8 +66,8 @@ namespace DCL.Lobby.Tests
 
             Assert.AreEqual(0f, welcome.style.left.value.value);
             Assert.AreEqual(0f, welcome.style.top.value.value);
-            Assert.AreEqual(LobbyGridElement.SpanToSize(LobbyWidgetId.Landing4x3.Span()).x, welcome.style.width.value.value);
-            Assert.AreEqual(LobbyGridElement.SpanToSize(LobbyWidgetId.Landing4x3.Span()).y, welcome.style.height.value.value);
+            Assert.AreEqual(LobbyGridElement.SpanToSize(LobbyWidgetId.Landing4By3.Span()).x, welcome.style.width.value.value);
+            Assert.AreEqual(LobbyGridElement.SpanToSize(LobbyWidgetId.Landing4By3.Span()).y, welcome.style.height.value.value);
             Assert.AreEqual(3 * LobbyGridElement.CellPitch.y, friends.style.top.value.value);
             Assert.AreEqual(LobbyGridElement.CellPitch.x, liveEvents.style.left.value.value);
             Assert.AreEqual(3 * LobbyGridElement.CellPitch.y, root.Q("UpcomingEvents").style.top.value.value);
@@ -79,7 +79,7 @@ namespace DCL.Lobby.Tests
             //Arrange
             var stored = new LobbyLayout(new Vector2Int(4, 6), new Vector2Int(4, 6), new Vector2Int(6, 2), new Vector2Int(6, 2));
             stored.ResetToDefault();
-            stored.Remove(LobbyWidgetId.LiveEvents3x3);
+            stored.Remove(LobbyWidgetId.LiveEvents3By3);
             LobbyLayoutStorage.Save(stored);
 
             //Act
@@ -99,10 +99,10 @@ namespace DCL.Lobby.Tests
             VisualElement welcome = root.Q("Welcome");
 
             //Act
-            host.Layout!.Remove(LobbyWidgetId.LiveEvents3x3);
-            host.Layout.Remove(LobbyWidgetId.UpcomingEvents3x2);
-            Assert.IsTrue(host.Layout.TryPlace(LobbyWidgetId.Landing4x3, LobbyGridCorner.TopRight, new Vector2Int(0, 1)), "The events made room");
-            host.Layout.Remove(LobbyWidgetId.FriendsOnline4x2);
+            host.Layout!.Remove(LobbyWidgetId.LiveEvents3By3);
+            host.Layout.Remove(LobbyWidgetId.UpcomingEvents3By2);
+            Assert.IsTrue(host.Layout.TryPlace(LobbyWidgetId.Landing4By3, LobbyGridCorner.TopRight, new Vector2Int(0, 1)), "The events made room");
+            host.Layout.Remove(LobbyWidgetId.FriendsOnline4By2);
             host.Apply();
 
             //Assert
@@ -119,12 +119,12 @@ namespace DCL.Lobby.Tests
             VisualElement welcome = root.Q("Welcome");
 
             //Act
-            host.ShowAt(LobbyWidgetId.Landing4x3, new Vector2Int(0, 2));
+            host.ShowAt(LobbyWidgetId.Landing4By3, new Vector2Int(0, 2));
 
             //Assert
             Assert.AreSame(root.Q("TopLeftGrid"), welcome.parent);
             Assert.AreEqual(2 * LobbyGridElement.CellPitch.y, welcome.style.top.value.value);
-            Assert.IsTrue(host.Layout!.TryGetPlacement(LobbyWidgetId.Landing4x3, out LobbyWidgetPlacement placement));
+            Assert.IsTrue(host.Layout!.TryGetPlacement(LobbyWidgetId.Landing4By3, out LobbyWidgetPlacement placement));
             Assert.AreEqual(Vector2Int.zero, placement.Cell, "Showing a section elsewhere leaves the layout alone");
 
             //Act
@@ -149,7 +149,7 @@ namespace DCL.Lobby.Tests
         public void RefuseToLayOutBeforeItIsShown()
         {
             Assert.Throws<System.InvalidOperationException>(() => host.Apply());
-            Assert.Throws<System.InvalidOperationException>(() => host.ShowAt(LobbyWidgetId.Landing4x3, Vector2Int.zero));
+            Assert.Throws<System.InvalidOperationException>(() => host.ShowAt(LobbyWidgetId.Landing4By3, Vector2Int.zero));
         }
 
         private static VisualElement BuildHierarchy()

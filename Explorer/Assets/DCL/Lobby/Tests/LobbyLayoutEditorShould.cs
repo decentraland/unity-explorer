@@ -26,7 +26,7 @@ namespace DCL.Lobby.Tests
         private LobbyWidgetHost host = null!;
         private LobbyLayoutEditor editor = null!;
 
-        private Button SaveButton => root.Q<Button>("SaveLayout");
+        private Button FindSaveButton() => root.Q<Button>("SaveLayout");
 
         [SetUp]
         public void SetUp()
@@ -65,8 +65,8 @@ namespace DCL.Lobby.Tests
             Assert.IsTrue(root.ClassListContains(EDITING_CLASS));
             Assert.AreEqual(6, root.Query<LobbyWidgetHandleElement>().ToList().Count, "Only the placed widgets have a handle");
 
-            LobbyWidgetHandleElement friends = Handle(LobbyWidgetId.FriendsOnline4x2);
-            Vector2 size = LobbyGridElement.SpanToSize(LobbyWidgetId.FriendsOnline4x2.Span());
+            LobbyWidgetHandleElement friends = Handle(LobbyWidgetId.FriendsOnline4By2);
+            Vector2 size = LobbyGridElement.SpanToSize(LobbyWidgetId.FriendsOnline4By2.Span());
             const float OUTSET = LobbyWidgetHandleElement.OUTSET;
             Assert.AreSame(root.Q("TopLeftGrid"), friends.parent);
             Assert.AreEqual(-OUTSET, friends.style.left.value.value, "The frame reaches past the cells");
@@ -84,8 +84,8 @@ namespace DCL.Lobby.Tests
 
             //Assert
             VisualElement grid = root.Q("TopLeftGrid");
-            Assert.Less(grid.IndexOf(root.Q("Welcome")), grid.IndexOf(Handle(LobbyWidgetId.Landing4x3)));
-            Assert.Less(grid.IndexOf(root.Q("Friends")), grid.IndexOf(Handle(LobbyWidgetId.FriendsOnline4x2)));
+            Assert.Less(grid.IndexOf(root.Q("Welcome")), grid.IndexOf(Handle(LobbyWidgetId.Landing4By3)));
+            Assert.Less(grid.IndexOf(root.Q("Friends")), grid.IndexOf(Handle(LobbyWidgetId.FriendsOnline4By2)));
         }
 
         [Test]
@@ -96,7 +96,7 @@ namespace DCL.Lobby.Tests
 
             //Assert
             VisualElement grid = root.Q("TopLeftGrid");
-            LobbyWidgetHandleElement friends = Handle(LobbyWidgetId.FriendsOnline4x2);
+            LobbyWidgetHandleElement friends = Handle(LobbyWidgetId.FriendsOnline4By2);
             Assert.AreSame(grid, friends.Underlay.parent);
             Assert.AreEqual(grid.IndexOf(root.Q("Friends")) - 1, grid.IndexOf(friends.Underlay));
             Assert.AreEqual(friends.style.left.value.value, friends.Underlay.style.left.value.value);
@@ -119,23 +119,23 @@ namespace DCL.Lobby.Tests
             Assert.AreEqual(PickingMode.Position, shield.pickingMode);
             Assert.Less(grid.IndexOf(root.Q("Welcome")), grid.IndexOf(shield));
             Assert.Less(grid.IndexOf(root.Q("Friends")), grid.IndexOf(shield));
-            Assert.Less(grid.IndexOf(shield), grid.IndexOf(Handle(LobbyWidgetId.Landing4x3)));
-            Assert.Less(grid.IndexOf(shield), grid.IndexOf(Handle(LobbyWidgetId.FriendsOnline4x2)));
+            Assert.Less(grid.IndexOf(shield), grid.IndexOf(Handle(LobbyWidgetId.Landing4By3)));
+            Assert.Less(grid.IndexOf(shield), grid.IndexOf(Handle(LobbyWidgetId.FriendsOnline4By2)));
         }
 
         [Test]
         public void KeepTheShieldBetweenASectionMovedOntoAnotherGridAndItsHandle()
         {
             //Arrange
-            host.Layout!.Remove(LobbyWidgetId.Landing4x3);
-            host.Layout.Remove(LobbyWidgetId.LiveEvents3x3);
-            host.Layout.Remove(LobbyWidgetId.UpcomingEvents3x2);
+            host.Layout!.Remove(LobbyWidgetId.Landing4By3);
+            host.Layout.Remove(LobbyWidgetId.LiveEvents3By3);
+            host.Layout.Remove(LobbyWidgetId.UpcomingEvents3By2);
             host.Apply();
             editor.Show(root);
             editor.Hide();
 
             //Act
-            Assert.IsTrue(host.Layout.TryPlace(LobbyWidgetId.Landing4x3, LobbyGridCorner.TopRight, new Vector2Int(0, 1)), "The events made room");
+            Assert.IsTrue(host.Layout.TryPlace(LobbyWidgetId.Landing4By3, LobbyGridCorner.TopRight, new Vector2Int(0, 1)), "The events made room");
             host.Apply();
             editor.Show(root);
 
@@ -143,7 +143,7 @@ namespace DCL.Lobby.Tests
             VisualElement grid = root.Q("TopRightGrid");
             VisualElement shield = grid.Q("GridShield");
             Assert.Less(grid.IndexOf(root.Q("Welcome")), grid.IndexOf(shield));
-            Assert.Less(grid.IndexOf(shield), grid.IndexOf(Handle(LobbyWidgetId.Landing4x3)));
+            Assert.Less(grid.IndexOf(shield), grid.IndexOf(Handle(LobbyWidgetId.Landing4By3)));
         }
 
         [Test]
@@ -172,8 +172,8 @@ namespace DCL.Lobby.Tests
         public void ListEveryFamilyWithNoSizePlacedInTheModalOnShow()
         {
             //Arrange
-            host.Layout!.Remove(LobbyWidgetId.JumpBackIn6x2);
-            host.Layout.Remove(LobbyWidgetId.LiveEvents3x3);
+            host.Layout!.Remove(LobbyWidgetId.JumpBackIn6By2);
+            host.Layout.Remove(LobbyWidgetId.LiveEvents3By3);
             host.Apply();
 
             //Act
@@ -201,15 +201,15 @@ namespace DCL.Lobby.Tests
             VisualElement sizes = jumpBackIn.Q("Sizes");
             Assert.AreEqual(2, sizes.childCount, "A family of several sizes has a button per size");
             Assert.AreEqual("x2", ((Label)sizes[0]).text, "A size reads as the cards it shows, the smaller first");
-            Assert.AreEqual(LobbyWidgetId.JumpBackIn4x2.ToString(), sizes[0].name);
+            Assert.AreEqual(LobbyWidgetId.JumpBackIn4By2.ToString(), sizes[0].name);
             Assert.AreEqual("x3", ((Label)sizes[1]).text);
-            Assert.AreEqual(LobbyWidgetId.JumpBackIn6x2.ToString(), sizes[1].name);
+            Assert.AreEqual(LobbyWidgetId.JumpBackIn6By2.ToString(), sizes[1].name);
 
-            LobbyWidgetPreviewElement preview = jumpBackIn.Preview(LobbyWidgetId.JumpBackIn6x2);
+            LobbyWidgetPreviewElement preview = jumpBackIn.Preview(LobbyWidgetId.JumpBackIn6By2);
             Assert.IsNull(preview.parent, "The stand-ins wait out of the hierarchy until a drag lifts one");
             Assert.AreEqual("Jump Back In", preview.Q<Label>("Title").text);
             Assert.AreEqual(3, preview.Q("Cards").childCount);
-            Vector2 size = LobbyGridElement.SpanToSize(LobbyWidgetId.JumpBackIn6x2.Span());
+            Vector2 size = LobbyGridElement.SpanToSize(LobbyWidgetId.JumpBackIn6By2.Span());
             Assert.AreEqual(size.x, preview.style.width.value.value);
             Assert.AreEqual(size.y, preview.style.height.value.value);
         }
@@ -228,7 +228,7 @@ namespace DCL.Lobby.Tests
 
             //Act
             editor.Hide();
-            host.Layout!.Remove(LobbyWidgetId.RecommendedPlaces6x2);
+            host.Layout!.Remove(LobbyWidgetId.RecommendedPlaces6By2);
             host.Apply();
             editor.Show(root);
 
@@ -245,26 +245,26 @@ namespace DCL.Lobby.Tests
         public void MoveTheWidgetBetweenTheModalAndTheGridAsTheLayoutChanges()
         {
             //Arrange
-            host.Layout!.Remove(LobbyWidgetId.Landing4x3);
-            host.Layout.Remove(LobbyWidgetId.LiveEvents3x3);
-            host.Layout.Remove(LobbyWidgetId.UpcomingEvents3x2);
+            host.Layout!.Remove(LobbyWidgetId.Landing4By3);
+            host.Layout.Remove(LobbyWidgetId.LiveEvents3By3);
+            host.Layout.Remove(LobbyWidgetId.UpcomingEvents3By2);
             host.Apply();
             editor.Show(root);
             LobbyWidgetCardElement card = Card(LobbyWidgetFamily.Landing);
             Assert.AreSame(root.Q("WidgetModalItems"), card.parent);
-            Assert.IsNull(root.Q<LobbyWidgetHandleElement>(LobbyWidgetId.Landing4x3.ToString()));
+            Assert.IsNull(root.Q<LobbyWidgetHandleElement>(LobbyWidgetId.Landing4By3.ToString()));
             editor.Hide();
 
             //Act
-            Assert.IsTrue(host.Layout.TryPlace(LobbyWidgetId.Landing4x3, LobbyGridCorner.TopRight, new Vector2Int(0, 1)), "The events made room");
+            Assert.IsTrue(host.Layout.TryPlace(LobbyWidgetId.Landing4By3, LobbyGridCorner.TopRight, new Vector2Int(0, 1)), "The events made room");
             host.Apply();
             editor.Show(root);
 
             //Assert
             Assert.IsNull(card.parent);
-            LobbyWidgetHandleElement handle = Handle(LobbyWidgetId.Landing4x3);
+            LobbyWidgetHandleElement handle = Handle(LobbyWidgetId.Landing4By3);
             Assert.AreSame(root.Q("TopRightGrid"), handle.parent);
-            Vector2 size = LobbyGridElement.SpanToSize(LobbyWidgetId.Landing4x3.Span());
+            Vector2 size = LobbyGridElement.SpanToSize(LobbyWidgetId.Landing4By3.Span());
             Assert.AreEqual(size.x + (2 * LobbyWidgetHandleElement.OUTSET), handle.style.width.value.value);
             Assert.AreEqual(size.y + (2 * LobbyWidgetHandleElement.OUTSET), handle.style.height.value.value);
             Assert.AreEqual(LobbyGridElement.CellPitch.y - LobbyWidgetHandleElement.OUTSET, handle.style.top.value.value);
@@ -275,7 +275,7 @@ namespace DCL.Lobby.Tests
         public void LeaveNothingBehindOnHide()
         {
             //Arrange
-            host.Layout!.Remove(LobbyWidgetId.Landing4x3);
+            host.Layout!.Remove(LobbyWidgetId.Landing4By3);
             host.Apply();
             editor.Show(root);
 
@@ -301,13 +301,13 @@ namespace DCL.Lobby.Tests
             editor.Show(root);
 
             //Assert
-            Assert.IsFalse(SaveButton.enabledSelf, "Nothing to store on entry");
+            Assert.IsFalse(FindSaveButton().enabledSelf, "Nothing to store on entry");
 
             //Act
-            Submit(Handle(LobbyWidgetId.UpcomingEvents3x2).Q<Button>("Remove"));
+            Submit(Handle(LobbyWidgetId.UpcomingEvents3By2).Q<Button>("Remove"));
 
             //Assert
-            Assert.IsTrue(SaveButton.enabledSelf);
+            Assert.IsTrue(FindSaveButton().enabledSelf);
         }
 
         [Test]
@@ -315,18 +315,18 @@ namespace DCL.Lobby.Tests
         {
             //Arrange
             editor.Show(root);
-            Submit(Handle(LobbyWidgetId.UpcomingEvents3x2).Q<Button>("Remove"));
+            Submit(Handle(LobbyWidgetId.UpcomingEvents3By2).Q<Button>("Remove"));
 
             //Act
-            Submit(SaveButton);
+            Submit(FindSaveButton());
 
             //Assert
             Assert.IsFalse(editor.IsEditing);
             Assert.IsFalse(root.ClassListContains(EDITING_CLASS));
-            Assert.IsFalse(host.Layout!.TryGetPlacement(LobbyWidgetId.UpcomingEvents3x2, out _), "The change stands");
+            Assert.IsFalse(host.Layout!.TryGetPlacement(LobbyWidgetId.UpcomingEvents3By2, out _), "The change stands");
             Assert.IsTrue(DCLPlayerPrefs.HasKey(DCLPrefKeys.LOBBY_LAYOUT));
             LobbyLayoutStorage.Load(host.Layout);
-            Assert.IsFalse(host.Layout.TryGetPlacement(LobbyWidgetId.UpcomingEvents3x2, out _), "The change was stored");
+            Assert.IsFalse(host.Layout.TryGetPlacement(LobbyWidgetId.UpcomingEvents3By2, out _), "The change was stored");
             Assert.AreSame(root.Q("UnplacedWidgets"), root.Q("UpcomingEvents").parent);
         }
 
@@ -336,7 +336,7 @@ namespace DCL.Lobby.Tests
         {
             //Arrange
             editor.Show(root);
-            Submit(Handle(LobbyWidgetId.UpcomingEvents3x2).Q<Button>("Remove"));
+            Submit(Handle(LobbyWidgetId.UpcomingEvents3By2).Q<Button>("Remove"));
 
             //Act
             Submit(root.Q<Button>(buttonName));
@@ -344,7 +344,7 @@ namespace DCL.Lobby.Tests
             //Assert
             Assert.IsFalse(editor.IsEditing);
             Assert.IsFalse(root.ClassListContains(EDITING_CLASS));
-            Assert.IsTrue(host.Layout!.TryGetPlacement(LobbyWidgetId.UpcomingEvents3x2, out LobbyWidgetPlacement placement));
+            Assert.IsTrue(host.Layout!.TryGetPlacement(LobbyWidgetId.UpcomingEvents3By2, out LobbyWidgetPlacement placement));
             Assert.AreEqual(LobbyGridCorner.TopRight, placement.Corner);
             Assert.AreEqual(new Vector2Int(1, 3), placement.Cell);
             Assert.AreSame(root.Q("TopRightGrid"), root.Q("UpcomingEvents").parent, "The section is back on its grid");
@@ -356,13 +356,13 @@ namespace DCL.Lobby.Tests
         {
             //Arrange
             editor.Show(root);
-            Submit(Handle(LobbyWidgetId.FriendsOnline4x2).Q<Button>("Remove"));
+            Submit(Handle(LobbyWidgetId.FriendsOnline4By2).Q<Button>("Remove"));
 
             //Act
             editor.Hide();
 
             //Assert
-            Assert.IsTrue(host.Layout!.TryGetPlacement(LobbyWidgetId.FriendsOnline4x2, out LobbyWidgetPlacement placement));
+            Assert.IsTrue(host.Layout!.TryGetPlacement(LobbyWidgetId.FriendsOnline4By2, out LobbyWidgetPlacement placement));
             Assert.AreEqual(LobbyGridCorner.TopLeft, placement.Corner);
             Assert.AreEqual(new Vector2Int(0, 3), placement.Cell);
             Assert.AreSame(root.Q("TopLeftGrid"), root.Q("Friends").parent);
@@ -377,30 +377,30 @@ namespace DCL.Lobby.Tests
 
             //Assert
             Assert.IsNull(Handle(LobbyLayout.REQUIRED_WIDGET).Q<Button>("Remove"), "The landing stays on a grid");
-            Assert.IsNotNull(Handle(LobbyWidgetId.FriendsOnline4x2).Q<Button>("Remove"));
+            Assert.IsNotNull(Handle(LobbyWidgetId.FriendsOnline4By2).Q<Button>("Remove"));
         }
 
         [Test]
         public void PutTheShippedLayoutUpOnReset()
         {
             //Arrange
-            host.Layout!.Remove(LobbyWidgetId.Landing4x3);
+            host.Layout!.Remove(LobbyWidgetId.Landing4By3);
             host.Apply();
             editor.Show(root);
             LobbyWidgetCardElement landingCard = Card(LobbyWidgetFamily.Landing);
-            Assert.IsFalse(SaveButton.enabledSelf);
+            Assert.IsFalse(FindSaveButton().enabledSelf);
 
             //Act
             Submit(root.Q<Button>("ResetLayout"));
 
             //Assert
             Assert.IsTrue(editor.IsEditing, "Reset stays in edit mode");
-            Assert.IsTrue(host.Layout.TryGetPlacement(LobbyWidgetId.Landing4x3, out LobbyWidgetPlacement placement));
+            Assert.IsTrue(host.Layout.TryGetPlacement(LobbyWidgetId.Landing4By3, out LobbyWidgetPlacement placement));
             Assert.AreEqual(LobbyGridCorner.TopLeft, placement.Corner);
             Assert.AreEqual(Vector2Int.zero, placement.Cell);
-            Assert.AreSame(root.Q("TopLeftGrid"), Handle(LobbyWidgetId.Landing4x3).parent);
+            Assert.AreSame(root.Q("TopLeftGrid"), Handle(LobbyWidgetId.Landing4By3).parent);
             Assert.IsNull(landingCard.parent, "The row left the modal");
-            Assert.IsTrue(SaveButton.enabledSelf, "The shipped layout differs from the one on entry");
+            Assert.IsTrue(FindSaveButton().enabledSelf, "The shipped layout differs from the one on entry");
             Assert.IsFalse(DCLPlayerPrefs.HasKey(DCLPrefKeys.LOBBY_LAYOUT), "Nothing is stored until Save");
         }
 
@@ -409,7 +409,7 @@ namespace DCL.Lobby.Tests
         {
             //Arrange
             editor.Show(root);
-            LobbyWidgetHandleElement handle = Handle(LobbyWidgetId.Landing4x3);
+            LobbyWidgetHandleElement handle = Handle(LobbyWidgetId.Landing4By3);
 
             //Act
             Press(handle, 100f);
@@ -422,7 +422,7 @@ namespace DCL.Lobby.Tests
             Assert.AreSame(dragLayer, welcome.parent);
             Assert.AreSame(dragLayer, frame.parent);
             Assert.Less(dragLayer.IndexOf(frame), dragLayer.IndexOf(welcome), "The frame draws under the widget");
-            Vector2 size = LobbyGridElement.SpanToSize(LobbyWidgetId.Landing4x3.Span());
+            Vector2 size = LobbyGridElement.SpanToSize(LobbyWidgetId.Landing4By3.Span());
             Assert.AreEqual(size.x + (2 * LobbyWidgetHandleElement.OUTSET), frame.style.width.value.value);
             Assert.AreEqual(welcome.style.left.value.value - LobbyWidgetHandleElement.OUTSET, frame.style.left.value.value);
             Assert.IsTrue(welcome.ClassListContains(LIFTED_CLASS));
@@ -435,7 +435,7 @@ namespace DCL.Lobby.Tests
         public void LiftTheFirstSizeOffTheRowWhileDragging()
         {
             //Arrange
-            host.Layout!.Remove(LobbyWidgetId.UpcomingEvents3x2);
+            host.Layout!.Remove(LobbyWidgetId.UpcomingEvents3By2);
             host.Apply();
             editor.Show(root);
             LobbyWidgetCardElement card = Card(LobbyWidgetFamily.UpcomingEvents);
@@ -445,8 +445,8 @@ namespace DCL.Lobby.Tests
             Move(card, 130f);
 
             //Assert
-            LobbyWidgetPreviewElement preview = card.Preview(LobbyWidgetId.UpcomingEvents3x2);
-            Vector2 size = LobbyGridElement.SpanToSize(LobbyWidgetId.UpcomingEvents3x2.Span());
+            LobbyWidgetPreviewElement preview = card.Preview(LobbyWidgetId.UpcomingEvents3By2);
+            Vector2 size = LobbyGridElement.SpanToSize(LobbyWidgetId.UpcomingEvents3By2.Span());
             Assert.AreSame(root.Q("LayoutDragLayer"), preview.parent, "The stand-in is lifted, not the section");
             Assert.AreSame(root.Q("UnplacedWidgets"), root.Q("UpcomingEvents").parent);
             Assert.IsTrue(preview.ClassListContains(LIFTED_CLASS));
@@ -460,22 +460,22 @@ namespace DCL.Lobby.Tests
         public void LiftTheSizePickedOnTheRowWhileDragging()
         {
             //Arrange
-            host.Layout!.Remove(LobbyWidgetId.JumpBackIn6x2);
+            host.Layout!.Remove(LobbyWidgetId.JumpBackIn6By2);
             host.Apply();
             editor.Show(root);
             LobbyWidgetCardElement card = Card(LobbyWidgetFamily.JumpBackIn);
-            VisualElement sizeButton = card.Q(LobbyWidgetId.JumpBackIn4x2.ToString());
+            VisualElement sizeButton = card.Q(LobbyWidgetId.JumpBackIn4By2.ToString());
 
             //Act
             Press(sizeButton, 100f);
             Move(sizeButton, 130f);
 
             //Assert
-            LobbyWidgetPreviewElement preview = card.Preview(LobbyWidgetId.JumpBackIn4x2);
-            Vector2 size = LobbyGridElement.SpanToSize(LobbyWidgetId.JumpBackIn4x2.Span());
+            LobbyWidgetPreviewElement preview = card.Preview(LobbyWidgetId.JumpBackIn4By2);
+            Vector2 size = LobbyGridElement.SpanToSize(LobbyWidgetId.JumpBackIn4By2.Span());
             Assert.AreSame(root.Q("LayoutDragLayer"), preview.parent, "The stand-in of the picked size is lifted");
             Assert.AreEqual(130f - (size.x * 0.5f), preview.style.left.value.value);
-            Assert.IsNull(card.Preview(LobbyWidgetId.JumpBackIn6x2).parent, "The other size stays away");
+            Assert.IsNull(card.Preview(LobbyWidgetId.JumpBackIn6By2).parent, "The other size stays away");
             Assert.IsTrue(card.ClassListContains(CARD_DRAGGING_CLASS));
             Assert.AreEqual(2, root.Q("LayoutDragLayer").childCount, "The frame and the stand-in: the row itself does not drag along");
         }
@@ -484,11 +484,11 @@ namespace DCL.Lobby.Tests
         public void PutTheSizeAwayOnADropOutsideEveryGrid()
         {
             //Arrange
-            host.Layout!.Remove(LobbyWidgetId.JumpBackIn6x2);
+            host.Layout!.Remove(LobbyWidgetId.JumpBackIn6By2);
             host.Apply();
             editor.Show(root);
             LobbyWidgetCardElement card = Card(LobbyWidgetFamily.JumpBackIn);
-            VisualElement sizeButton = card.Q(LobbyWidgetId.JumpBackIn4x2.ToString());
+            VisualElement sizeButton = card.Q(LobbyWidgetId.JumpBackIn4By2.ToString());
 
             //Act
             Press(sizeButton, 100f);
@@ -496,9 +496,9 @@ namespace DCL.Lobby.Tests
             Release(sizeButton, 130f);
 
             //Assert
-            Assert.IsFalse(host.Layout.TryGetPlacement(LobbyWidgetId.JumpBackIn4x2, out _));
-            Assert.IsFalse(SaveButton.enabledSelf, "A drop that does not take changes nothing");
-            LobbyWidgetPreviewElement preview = card.Preview(LobbyWidgetId.JumpBackIn4x2);
+            Assert.IsFalse(host.Layout.TryGetPlacement(LobbyWidgetId.JumpBackIn4By2, out _));
+            Assert.IsFalse(FindSaveButton().enabledSelf, "A drop that does not take changes nothing");
+            LobbyWidgetPreviewElement preview = card.Preview(LobbyWidgetId.JumpBackIn4By2);
             Assert.IsNull(preview.parent, "The lifted stand-in goes away");
             Assert.IsFalse(preview.ClassListContains(LIFTED_CLASS));
             Assert.AreEqual(0, root.Q("LayoutDragLayer").childCount, "The frame goes away with it");
@@ -511,13 +511,13 @@ namespace DCL.Lobby.Tests
         {
             //Arrange
             editor.Show(root);
-            LobbyWidgetHandleElement handle = Handle(LobbyWidgetId.UpcomingEvents3x2);
+            LobbyWidgetHandleElement handle = Handle(LobbyWidgetId.UpcomingEvents3By2);
 
             //Act
             Submit(handle.Q<Button>("Remove"));
 
             //Assert
-            Assert.IsFalse(host.Layout!.TryGetPlacement(LobbyWidgetId.UpcomingEvents3x2, out _));
+            Assert.IsFalse(host.Layout!.TryGetPlacement(LobbyWidgetId.UpcomingEvents3By2, out _));
             Assert.IsFalse(DCLPlayerPrefs.HasKey(DCLPrefKeys.LOBBY_LAYOUT), "Nothing is stored until Save");
             Assert.AreSame(root.Q("UnplacedWidgets"), root.Q("UpcomingEvents").parent);
             Assert.IsNull(handle.parent);
@@ -529,7 +529,7 @@ namespace DCL.Lobby.Tests
         {
             //Arrange
             editor.Show(root);
-            LobbyWidgetHandleElement handle = Handle(LobbyWidgetId.Landing4x3);
+            LobbyWidgetHandleElement handle = Handle(LobbyWidgetId.Landing4By3);
 
             //Act
             Press(handle, 100f);
@@ -537,10 +537,10 @@ namespace DCL.Lobby.Tests
             Release(handle, 130f);
 
             //Assert
-            Assert.IsTrue(host.Layout!.TryGetPlacement(LobbyWidgetId.Landing4x3, out LobbyWidgetPlacement placement));
+            Assert.IsTrue(host.Layout!.TryGetPlacement(LobbyWidgetId.Landing4By3, out LobbyWidgetPlacement placement));
             Assert.AreEqual(LobbyGridCorner.TopLeft, placement.Corner);
             Assert.AreEqual(Vector2Int.zero, placement.Cell);
-            Assert.IsFalse(SaveButton.enabledSelf, "A drop that does not take changes nothing");
+            Assert.IsFalse(FindSaveButton().enabledSelf, "A drop that does not take changes nothing");
             VisualElement welcome = root.Q("Welcome");
             Assert.AreSame(root.Q("TopLeftGrid"), welcome.parent, "The widget lands back on its grid");
             Assert.IsFalse(welcome.ClassListContains(LIFTED_CLASS));
@@ -555,7 +555,7 @@ namespace DCL.Lobby.Tests
         {
             //Arrange
             editor.Show(root);
-            LobbyWidgetHandleElement handle = Handle(LobbyWidgetId.RecommendedPlaces6x2);
+            LobbyWidgetHandleElement handle = Handle(LobbyWidgetId.RecommendedPlaces6By2);
             Press(handle, 100f);
             Move(handle, 130f);
 
@@ -563,7 +563,7 @@ namespace DCL.Lobby.Tests
             editor.Hide();
 
             //Assert
-            Assert.IsTrue(host.Layout!.TryGetPlacement(LobbyWidgetId.RecommendedPlaces6x2, out LobbyWidgetPlacement placement));
+            Assert.IsTrue(host.Layout!.TryGetPlacement(LobbyWidgetId.RecommendedPlaces6By2, out LobbyWidgetPlacement placement));
             Assert.AreEqual(LobbyGridCorner.BottomRight, placement.Corner);
             VisualElement featuredPlaces = root.Q("FeaturedPlaces");
             Assert.AreSame(root.Q("BottomRightGrid"), featuredPlaces.parent);
@@ -577,7 +577,7 @@ namespace DCL.Lobby.Tests
         public void DropARowDragCutShortByHideAway()
         {
             //Arrange
-            host.Layout!.Remove(LobbyWidgetId.FriendsOnline4x2);
+            host.Layout!.Remove(LobbyWidgetId.FriendsOnline4By2);
             host.Apply();
             editor.Show(root);
             LobbyWidgetCardElement card = Card(LobbyWidgetFamily.FriendsOnline);
@@ -588,8 +588,8 @@ namespace DCL.Lobby.Tests
             editor.Hide();
 
             //Assert
-            Assert.IsFalse(host.Layout.TryGetPlacement(LobbyWidgetId.FriendsOnline4x2, out _));
-            LobbyWidgetPreviewElement preview = card.Preview(LobbyWidgetId.FriendsOnline4x2);
+            Assert.IsFalse(host.Layout.TryGetPlacement(LobbyWidgetId.FriendsOnline4By2, out _));
+            LobbyWidgetPreviewElement preview = card.Preview(LobbyWidgetId.FriendsOnline4By2);
             Assert.IsNull(preview.parent);
             Assert.IsFalse(preview.ClassListContains(LIFTED_CLASS));
             Assert.AreEqual(0, root.Q("LayoutDragLayer").childCount);

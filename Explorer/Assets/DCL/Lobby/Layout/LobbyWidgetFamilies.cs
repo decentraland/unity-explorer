@@ -4,15 +4,15 @@ namespace DCL.Lobby
 {
     public static class LobbyWidgetFamilies
     {
-        private static readonly LobbyWidgetId[] LANDING = { LobbyWidgetId.Landing4x3 };
-        private static readonly LobbyWidgetId[] LIVE_EVENTS = { LobbyWidgetId.LiveEvents3x3 };
-        private static readonly LobbyWidgetId[] UPCOMING_EVENTS = { LobbyWidgetId.UpcomingEvents3x2 };
-        private static readonly LobbyWidgetId[] FRIENDS_ONLINE = { LobbyWidgetId.FriendsOnline4x2 };
-        private static readonly LobbyWidgetId[] JUMP_BACK_IN = { LobbyWidgetId.JumpBackIn6x2, LobbyWidgetId.JumpBackIn4x2 };
-        private static readonly LobbyWidgetId[] RECOMMENDED_PLACES = { LobbyWidgetId.RecommendedPlaces6x2, LobbyWidgetId.RecommendedPlaces4x2 };
-        private static readonly LobbyWidgetId[] COMMUNITIES = { LobbyWidgetId.Communities6x2, LobbyWidgetId.Communities4x2 };
-        private static readonly LobbyWidgetId[] GALLERY = { LobbyWidgetId.Gallery6x2, LobbyWidgetId.Gallery4x2 };
-        private static readonly LobbyWidgetId[] GO_TO = { LobbyWidgetId.GoTo4x1 };
+        private static readonly LobbyWidgetId[] LANDING = { LobbyWidgetId.Landing4By3 };
+        private static readonly LobbyWidgetId[] LIVE_EVENTS = { LobbyWidgetId.LiveEvents3By3 };
+        private static readonly LobbyWidgetId[] UPCOMING_EVENTS = { LobbyWidgetId.UpcomingEvents3By2 };
+        private static readonly LobbyWidgetId[] FRIENDS_ONLINE = { LobbyWidgetId.FriendsOnline4By2 };
+        private static readonly LobbyWidgetId[] JUMP_BACK_IN = { LobbyWidgetId.JumpBackIn6By2, LobbyWidgetId.JumpBackIn4By2 };
+        private static readonly LobbyWidgetId[] RECOMMENDED_PLACES = { LobbyWidgetId.RecommendedPlaces6By2, LobbyWidgetId.RecommendedPlaces4By2 };
+        private static readonly LobbyWidgetId[] COMMUNITIES = { LobbyWidgetId.Communities6By2, LobbyWidgetId.Communities4By2 };
+        private static readonly LobbyWidgetId[] GALLERY = { LobbyWidgetId.Gallery6By2, LobbyWidgetId.Gallery4By2 };
+        private static readonly LobbyWidgetId[] GO_TO = { LobbyWidgetId.GoTo4By1 };
 
         /// <summary>The sizes of the family, the first one being the one it takes when none is picked.</summary>
         public static ReadOnlySpan<LobbyWidgetId> Variants(this LobbyWidgetFamily family) =>
@@ -33,19 +33,19 @@ namespace DCL.Lobby
         public static LobbyWidgetFamily Family(this LobbyWidgetId widgetId) =>
             widgetId switch
             {
-                LobbyWidgetId.Landing4x3 => LobbyWidgetFamily.Landing,
-                LobbyWidgetId.LiveEvents3x3 => LobbyWidgetFamily.LiveEvents,
-                LobbyWidgetId.UpcomingEvents3x2 => LobbyWidgetFamily.UpcomingEvents,
-                LobbyWidgetId.FriendsOnline4x2 => LobbyWidgetFamily.FriendsOnline,
-                LobbyWidgetId.JumpBackIn6x2 => LobbyWidgetFamily.JumpBackIn,
-                LobbyWidgetId.JumpBackIn4x2 => LobbyWidgetFamily.JumpBackIn,
-                LobbyWidgetId.RecommendedPlaces6x2 => LobbyWidgetFamily.RecommendedPlaces,
-                LobbyWidgetId.RecommendedPlaces4x2 => LobbyWidgetFamily.RecommendedPlaces,
-                LobbyWidgetId.Communities6x2 => LobbyWidgetFamily.Communities,
-                LobbyWidgetId.Communities4x2 => LobbyWidgetFamily.Communities,
-                LobbyWidgetId.Gallery6x2 => LobbyWidgetFamily.Gallery,
-                LobbyWidgetId.Gallery4x2 => LobbyWidgetFamily.Gallery,
-                LobbyWidgetId.GoTo4x1 => LobbyWidgetFamily.GoTo,
+                LobbyWidgetId.Landing4By3 => LobbyWidgetFamily.Landing,
+                LobbyWidgetId.LiveEvents3By3 => LobbyWidgetFamily.LiveEvents,
+                LobbyWidgetId.UpcomingEvents3By2 => LobbyWidgetFamily.UpcomingEvents,
+                LobbyWidgetId.FriendsOnline4By2 => LobbyWidgetFamily.FriendsOnline,
+                LobbyWidgetId.JumpBackIn6By2 => LobbyWidgetFamily.JumpBackIn,
+                LobbyWidgetId.JumpBackIn4By2 => LobbyWidgetFamily.JumpBackIn,
+                LobbyWidgetId.RecommendedPlaces6By2 => LobbyWidgetFamily.RecommendedPlaces,
+                LobbyWidgetId.RecommendedPlaces4By2 => LobbyWidgetFamily.RecommendedPlaces,
+                LobbyWidgetId.Communities6By2 => LobbyWidgetFamily.Communities,
+                LobbyWidgetId.Communities4By2 => LobbyWidgetFamily.Communities,
+                LobbyWidgetId.Gallery6By2 => LobbyWidgetFamily.Gallery,
+                LobbyWidgetId.Gallery4By2 => LobbyWidgetFamily.Gallery,
+                LobbyWidgetId.GoTo4By1 => LobbyWidgetFamily.GoTo,
                 _ => throw new ArgumentOutOfRangeException(nameof(widgetId), widgetId, null),
             };
 

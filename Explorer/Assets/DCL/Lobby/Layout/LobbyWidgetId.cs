@@ -6,18 +6,18 @@ namespace DCL.Lobby
     /// </summary>
     public enum LobbyWidgetId
     {
-        Landing4x3,
-        LiveEvents3x3,
-        UpcomingEvents3x2,
-        FriendsOnline4x2,
-        JumpBackIn6x2,
-        JumpBackIn4x2,
-        RecommendedPlaces6x2,
-        RecommendedPlaces4x2,
-        Communities6x2,
-        Communities4x2,
-        Gallery6x2,
-        Gallery4x2,
-        GoTo4x1,
+        Landing4By3,
+        LiveEvents3By3,
+        UpcomingEvents3By2,
+        FriendsOnline4By2,
+        JumpBackIn6By2,
+        JumpBackIn4By2,
+        RecommendedPlaces6By2,
+        RecommendedPlaces4By2,
+        Communities6By2,
+        Communities4By2,
+        Gallery6By2,
+        Gallery4By2,
+        GoTo4By1,
     }
 }

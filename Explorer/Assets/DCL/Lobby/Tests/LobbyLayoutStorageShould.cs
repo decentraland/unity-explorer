@@ -46,9 +46,9 @@ namespace DCL.Lobby.Tests
         public void RoundTripThePlacements()
         {
             //Arrange
-            layout.TryPlace(LobbyWidgetId.LiveEvents3x3, LobbyGridCorner.TopLeft, new Vector2Int(0, 1));
-            layout.TryPlace(LobbyWidgetId.Landing4x3, LobbyGridCorner.TopRight, new Vector2Int(0, 2));
-            layout.TryPlace(LobbyWidgetId.RecommendedPlaces6x2, LobbyGridCorner.BottomLeft, new Vector2Int(0, 0));
+            layout.TryPlace(LobbyWidgetId.LiveEvents3By3, LobbyGridCorner.TopLeft, new Vector2Int(0, 1));
+            layout.TryPlace(LobbyWidgetId.Landing4By3, LobbyGridCorner.TopRight, new Vector2Int(0, 2));
+            layout.TryPlace(LobbyWidgetId.RecommendedPlaces6By2, LobbyGridCorner.BottomLeft, new Vector2Int(0, 0));
             var loaded = new LobbyLayout(TOP_GRID, TOP_GRID, BOTTOM_GRID, BOTTOM_GRID);
 
             //Act
@@ -83,18 +83,18 @@ namespace DCL.Lobby.Tests
             //Arrange
             DCLPlayerPrefs.SetString(DCLPrefKeys.LOBBY_LAYOUT,
                 "{\"Version\":1,\"Entries\":[" +
-                "{\"Corner\":\"TopLeft\",\"Widget\":\"Landing9x9\",\"X\":0,\"Y\":0}," +
-                "{\"Corner\":\"Middle\",\"Widget\":\"LiveEvents3x3\",\"X\":0,\"Y\":0}," +
-                "{\"Corner\":\"7\",\"Widget\":\"Landing4x3\",\"X\":0,\"Y\":0}," +
+                "{\"Corner\":\"TopLeft\",\"Widget\":\"Landing9By9\",\"X\":0,\"Y\":0}," +
+                "{\"Corner\":\"Middle\",\"Widget\":\"LiveEvents3By3\",\"X\":0,\"Y\":0}," +
+                "{\"Corner\":\"7\",\"Widget\":\"Landing4By3\",\"X\":0,\"Y\":0}," +
                 "{\"Corner\":\"TopLeft\",\"Widget\":\"42\",\"X\":0,\"Y\":0}," +
-                "{\"Corner\":\"BottomRight\",\"Widget\":\"JumpBackIn6x2\",\"X\":0,\"Y\":0}]}");
+                "{\"Corner\":\"BottomRight\",\"Widget\":\"JumpBackIn6By2\",\"X\":0,\"Y\":0}]}");
 
             //Act
             LobbyLayoutStorage.Load(layout);
 
             //Assert
             Assert.AreEqual(2, layout.Placements.Count, "The known entry and the required widget put back");
-            Assert.IsTrue(layout.TryGetPlacement(LobbyWidgetId.JumpBackIn6x2, out LobbyWidgetPlacement placement));
+            Assert.IsTrue(layout.TryGetPlacement(LobbyWidgetId.JumpBackIn6By2, out LobbyWidgetPlacement placement));
             Assert.AreEqual(LobbyGridCorner.BottomRight, placement.Corner);
             Assert.IsTrue(layout.TryGetPlacement(LobbyLayout.REQUIRED_WIDGET, out _));
         }
@@ -105,16 +105,16 @@ namespace DCL.Lobby.Tests
             //Arrange
             DCLPlayerPrefs.SetString(DCLPrefKeys.LOBBY_LAYOUT,
                 "{\"Version\":1,\"Entries\":[" +
-                "{\"Corner\":\"TopLeft\",\"Widget\":\"Landing4x3\",\"X\":0,\"Y\":0}," +
-                "{\"Corner\":\"TopLeft\",\"Widget\":\"FriendsOnline4x2\",\"X\":0,\"Y\":2}," +
-                "{\"Corner\":\"BottomLeft\",\"Widget\":\"LiveEvents3x3\",\"X\":0,\"Y\":0}]}");
+                "{\"Corner\":\"TopLeft\",\"Widget\":\"Landing4By3\",\"X\":0,\"Y\":0}," +
+                "{\"Corner\":\"TopLeft\",\"Widget\":\"FriendsOnline4By2\",\"X\":0,\"Y\":2}," +
+                "{\"Corner\":\"BottomLeft\",\"Widget\":\"LiveEvents3By3\",\"X\":0,\"Y\":0}]}");
 
             //Act
             LobbyLayoutStorage.Load(layout);
 
             //Assert
             Assert.AreEqual(1, layout.Placements.Count);
-            Assert.AreEqual(LobbyWidgetId.Landing4x3, layout.Placements[0].WidgetId);
+            Assert.AreEqual(LobbyWidgetId.Landing4By3, layout.Placements[0].WidgetId);
         }
 
         [Test]
@@ -151,14 +151,14 @@ namespace DCL.Lobby.Tests
         public void StoreWidgetsAndCornersByName()
         {
             //Arrange
-            layout.TryPlace(LobbyWidgetId.LiveEvents3x3, LobbyGridCorner.TopRight, new Vector2Int(1, 0));
+            layout.TryPlace(LobbyWidgetId.LiveEvents3By3, LobbyGridCorner.TopRight, new Vector2Int(1, 0));
 
             //Act
             LobbyLayoutStorage.Save(layout);
 
             //Assert
             string json = DCLPlayerPrefs.GetString(DCLPrefKeys.LOBBY_LAYOUT);
-            StringAssert.Contains("\"Widget\":\"LiveEvents3x3\"", json);
+            StringAssert.Contains("\"Widget\":\"LiveEvents3By3\"", json);
             StringAssert.Contains("\"Corner\":\"TopRight\"", json);
         }
 

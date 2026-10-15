@@ -72,7 +72,7 @@ namespace DCL.Lobby
         private const int MAX_RECENT_PLACES = 3;
 
         /// <summary>Recent places the four-column section has room for.</summary>
-        private const int MAX_RECENT_PLACES_4X2 = 2;
+        private const int MAX_RECENT_PLACES_4_BY_2 = 2;
 
         /// <summary>How many of the user's communities the rails page through.</summary>
         private const int MAX_COMMUNITIES = 10;
@@ -132,15 +132,15 @@ namespace DCL.Lobby
         private readonly LobbyLayoutEditor layoutEditor;
 
         private LobbyPlacesRail? recentPlacesRail;
-        private LobbyPlacesRail? recentPlaces4x2Rail;
+        private LobbyPlacesRail? recentPlaces4By2Rail;
         private LobbyPlacesRail? featuredPlacesRail;
-        private LobbyPlacesRail? featuredPlaces4x2Rail;
+        private LobbyPlacesRail? featuredPlaces4By2Rail;
         private LobbyLiveEventsRail? liveEventsRail;
         private LobbyUpcomingEventsRail? upcomingEventsRail;
         private LobbyCommunitiesRail? communitiesRail;
-        private LobbyCommunitiesRail? communities4x2Rail;
+        private LobbyCommunitiesRail? communities4By2Rail;
         private LobbyGalleryRail? galleryRail;
-        private LobbyGalleryRail? gallery4x2Rail;
+        private LobbyGalleryRail? gallery4By2Rail;
         private LobbyCharacterPreviewController? avatarPreview;
 
         // Null while the landing place loads
@@ -354,13 +354,13 @@ namespace DCL.Lobby
 
             // The four-column sections list the same places as the six-column ones, so their rails share the lists
             recentPlacesRail ??= CreatePlacesRail(recentPlaces, LobbyCardOrigin.Recent);
-            recentPlaces4x2Rail ??= CreatePlacesRail(recentPlaces, LobbyCardOrigin.Recent);
+            recentPlaces4By2Rail ??= CreatePlacesRail(recentPlaces, LobbyCardOrigin.Recent);
             featuredPlacesRail ??= CreatePlacesRail(featuredPlaces, LobbyCardOrigin.Recommended);
-            featuredPlaces4x2Rail ??= CreatePlacesRail(featuredPlaces, LobbyCardOrigin.Recommended);
+            featuredPlaces4By2Rail ??= CreatePlacesRail(featuredPlaces, LobbyCardOrigin.Recommended);
             recentPlacesRail.Show(viewInstance.RecentPlaces);
-            recentPlaces4x2Rail.Show(viewInstance.RecentPlaces4x2);
+            recentPlaces4By2Rail.Show(viewInstance.RecentPlaces4By2);
             featuredPlacesRail.Show(viewInstance.FeaturedPlaces);
-            featuredPlaces4x2Rail.Show(viewInstance.FeaturedPlaces4x2);
+            featuredPlaces4By2Rail.Show(viewInstance.FeaturedPlaces4By2);
 
             liveEventsRail ??= new LobbyLiveEventsRail(viewInstance.LiveEventCardTemplate) { CardClicked = OnLiveEventClicked, CardJumpInClicked = OnLiveEventJumpInClicked };
             upcomingEventsRail ??= CreateUpcomingEventsRail();
@@ -369,15 +369,15 @@ namespace DCL.Lobby
 
             // The four-column rail lists the same communities as the six-column one
             communitiesRail ??= new LobbyCommunitiesRail(viewInstance.CommunityCardTemplate) { CardClicked = OnCommunityClicked };
-            communities4x2Rail ??= new LobbyCommunitiesRail(viewInstance.CommunityCardTemplate) { CardClicked = OnCommunityClicked };
+            communities4By2Rail ??= new LobbyCommunitiesRail(viewInstance.CommunityCardTemplate) { CardClicked = OnCommunityClicked };
             communitiesRail.Show(viewInstance.Communities);
-            communities4x2Rail.Show(viewInstance.Communities4x2);
+            communities4By2Rail.Show(viewInstance.Communities4By2);
 
             // The four-column rail lists the same photos as the six-column one
             galleryRail ??= new LobbyGalleryRail(viewInstance.GalleryCardTemplate) { CardClicked = OnPhotoClicked };
-            gallery4x2Rail ??= new LobbyGalleryRail(viewInstance.GalleryCardTemplate) { CardClicked = OnPhotoClicked };
+            gallery4By2Rail ??= new LobbyGalleryRail(viewInstance.GalleryCardTemplate) { CardClicked = OnPhotoClicked };
             galleryRail.Show(viewInstance.Gallery);
-            gallery4x2Rail.Show(viewInstance.Gallery4x2);
+            gallery4By2Rail.Show(viewInstance.Gallery4By2);
 
             // Before the places: a cached landing place binds its card synchronously
             friendsCts = friendsCts.SafeRestart();
@@ -392,8 +392,8 @@ namespace DCL.Lobby
                 ShowLandingCardLoading(landingCard);
 
             ShowLandingPlaceAsync(destination, placesCts.Token).Forget();
-            ShowPlacesAsync(recentPlacesRail, recentPlaces4x2Rail, recentPlaces, placesAPIService.GetRecentlyVisitedDestinationsAsync(placesCts.Token, withConnectedUsers: true), MAX_RECENT_PLACES, MAX_RECENT_PLACES_4X2, placesCts.Token).Forget();
-            ShowPlacesAsync(featuredPlacesRail, featuredPlaces4x2Rail, featuredPlaces, placesAPIService.GetHighlightedDestinationsAsync(placesCts.Token, withConnectedUsers: true), int.MaxValue, int.MaxValue, placesCts.Token).Forget();
+            ShowPlacesAsync(recentPlacesRail, recentPlaces4By2Rail, recentPlaces, placesAPIService.GetRecentlyVisitedDestinationsAsync(placesCts.Token, withConnectedUsers: true), MAX_RECENT_PLACES, MAX_RECENT_PLACES_4_BY_2, placesCts.Token).Forget();
+            ShowPlacesAsync(featuredPlacesRail, featuredPlaces4By2Rail, featuredPlaces, placesAPIService.GetHighlightedDestinationsAsync(placesCts.Token, withConnectedUsers: true), int.MaxValue, int.MaxValue, placesCts.Token).Forget();
 
             eventsCts = eventsCts.SafeRestart();
             eventCardActions.EventSetAsInterested += OnEventInterestChanged;
@@ -446,15 +446,15 @@ namespace DCL.Lobby
             avatarPreview!.OnHide();
 
             recentPlacesRail?.Hide();
-            recentPlaces4x2Rail?.Hide();
+            recentPlaces4By2Rail?.Hide();
             featuredPlacesRail?.Hide();
-            featuredPlaces4x2Rail?.Hide();
+            featuredPlaces4By2Rail?.Hide();
             liveEventsRail?.Hide();
             upcomingEventsRail?.Hide();
             communitiesRail?.Hide();
-            communities4x2Rail?.Hide();
+            communities4By2Rail?.Hide();
             galleryRail?.Hide();
-            gallery4x2Rail?.Hide();
+            gallery4By2Rail?.Hide();
 
             inputBlock.Enable(InputMapComponent.BLOCK_USER_INPUT);
 
@@ -720,7 +720,7 @@ namespace DCL.Lobby
 
         // A failed fetch keeps the last successful places, so the rows only hide while none have ever arrived; the four-column
         // rail shows the first of them up to its own cap
-        private async UniTaskVoid ShowPlacesAsync(LobbyPlacesRail rail, LobbyPlacesRail rail4x2, List<PlacesData.PlaceInfo> places, UniTask<PlacesData.IPlacesAPIResponse> fetch, int maxCount, int maxCount4x2, CancellationToken ct)
+        private async UniTaskVoid ShowPlacesAsync(LobbyPlacesRail rail, LobbyPlacesRail rail4By2, List<PlacesData.PlaceInfo> places, UniTask<PlacesData.IPlacesAPIResponse> fetch, int maxCount, int maxCount4By2, CancellationToken ct)
         {
             Result<PlacesData.IPlacesAPIResponse> result = await fetch.SuppressToResultAsync(ReportCategory.PLACES);
 
@@ -736,7 +736,7 @@ namespace DCL.Lobby
             }
 
             ShowPlaceCards(rail, places, places.Count, ct);
-            ShowPlaceCards(rail4x2, places, Mathf.Min(places.Count, maxCount4x2), ct);
+            ShowPlaceCards(rail4By2, places, Mathf.Min(places.Count, maxCount4By2), ct);
         }
 
         private void ShowPlaceCards(LobbyPlacesRail rail, List<PlacesData.PlaceInfo> places, int count, CancellationToken ct)
@@ -814,7 +814,7 @@ namespace DCL.Lobby
             }
 
             ShowCommunityCards(communitiesRail!, ct);
-            ShowCommunityCards(communities4x2Rail!, ct);
+            ShowCommunityCards(communities4By2Rail!, ct);
         }
 
         private void ShowCommunityCards(LobbyCommunitiesRail rail, CancellationToken ct)
@@ -863,7 +863,7 @@ namespace DCL.Lobby
             }
 
             ShowPhotoCards(galleryRail!, ct, rewind: true);
-            ShowPhotoCards(gallery4x2Rail!, ct, rewind: true);
+            ShowPhotoCards(gallery4By2Rail!, ct, rewind: true);
         }
 
         private void ShowPhotoCards(LobbyGalleryRail rail, CancellationToken ct, bool rewind)
@@ -912,7 +912,7 @@ namespace DCL.Lobby
             if (!photos.Remove(photo) || galleryCts == null) return;
 
             ShowPhotoCards(galleryRail!, galleryCts.Token, rewind: false);
-            ShowPhotoCards(gallery4x2Rail!, galleryCts.Token, rewind: false);
+            ShowPhotoCards(gallery4By2Rail!, galleryCts.Token, rewind: false);
         }
 
         private LobbyUpcomingEventsRail CreateUpcomingEventsRail() =>

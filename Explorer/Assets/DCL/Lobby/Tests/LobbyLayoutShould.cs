@@ -24,11 +24,11 @@ namespace DCL.Lobby.Tests
         public void PlaceAWidgetInsideItsGrid()
         {
             //Act
-            bool placed = layout.TryPlace(LobbyWidgetId.LiveEvents3x3, LobbyGridCorner.TopRight, new Vector2Int(1, 2));
+            bool placed = layout.TryPlace(LobbyWidgetId.LiveEvents3By3, LobbyGridCorner.TopRight, new Vector2Int(1, 2));
 
             //Assert
             Assert.IsTrue(placed);
-            Assert.IsTrue(layout.TryGetPlacement(LobbyWidgetId.LiveEvents3x3, out LobbyWidgetPlacement placement));
+            Assert.IsTrue(layout.TryGetPlacement(LobbyWidgetId.LiveEvents3By3, out LobbyWidgetPlacement placement));
             Assert.AreEqual(LobbyGridCorner.TopRight, placement.Corner);
             Assert.AreEqual(new Vector2Int(1, 2), placement.Cell);
             Assert.AreEqual(1, layout.Placements.Count);
@@ -41,7 +41,7 @@ namespace DCL.Lobby.Tests
         public void RejectAPlacementOutsideTheGrid(int x, int y)
         {
             //Act
-            bool placed = layout.TryPlace(LobbyWidgetId.LiveEvents3x3, LobbyGridCorner.TopLeft, new Vector2Int(x, y));
+            bool placed = layout.TryPlace(LobbyWidgetId.LiveEvents3By3, LobbyGridCorner.TopLeft, new Vector2Int(x, y));
 
             //Assert
             Assert.IsFalse(placed);
@@ -52,24 +52,24 @@ namespace DCL.Lobby.Tests
         public void RejectAnOverlappingPlacement()
         {
             //Arrange
-            layout.TryPlace(LobbyWidgetId.Landing4x3, LobbyGridCorner.TopLeft, new Vector2Int(0, 0));
+            layout.TryPlace(LobbyWidgetId.Landing4By3, LobbyGridCorner.TopLeft, new Vector2Int(0, 0));
 
             //Act
-            bool placed = layout.TryPlace(LobbyWidgetId.FriendsOnline4x2, LobbyGridCorner.TopLeft, new Vector2Int(0, 2));
+            bool placed = layout.TryPlace(LobbyWidgetId.FriendsOnline4By2, LobbyGridCorner.TopLeft, new Vector2Int(0, 2));
 
             //Assert
             Assert.IsFalse(placed);
-            Assert.IsFalse(layout.TryGetPlacement(LobbyWidgetId.FriendsOnline4x2, out _));
+            Assert.IsFalse(layout.TryGetPlacement(LobbyWidgetId.FriendsOnline4By2, out _));
         }
 
         [Test]
         public void AllowTheSameCellsOnAnotherGrid()
         {
             //Arrange
-            layout.TryPlace(LobbyWidgetId.Landing4x3, LobbyGridCorner.TopLeft, new Vector2Int(0, 0));
+            layout.TryPlace(LobbyWidgetId.Landing4By3, LobbyGridCorner.TopLeft, new Vector2Int(0, 0));
 
             //Act
-            bool placed = layout.TryPlace(LobbyWidgetId.FriendsOnline4x2, LobbyGridCorner.TopRight, new Vector2Int(0, 0));
+            bool placed = layout.TryPlace(LobbyWidgetId.FriendsOnline4By2, LobbyGridCorner.TopRight, new Vector2Int(0, 0));
 
             //Assert
             Assert.IsTrue(placed);
@@ -79,10 +79,10 @@ namespace DCL.Lobby.Tests
         public void MoveAPlacedWidgetOverItsOwnCells()
         {
             //Arrange
-            layout.TryPlace(LobbyWidgetId.Landing4x3, LobbyGridCorner.TopLeft, new Vector2Int(0, 0));
+            layout.TryPlace(LobbyWidgetId.Landing4By3, LobbyGridCorner.TopLeft, new Vector2Int(0, 0));
 
             //Act
-            bool moved = layout.TryPlace(LobbyWidgetId.Landing4x3, LobbyGridCorner.TopLeft, new Vector2Int(0, 1));
+            bool moved = layout.TryPlace(LobbyWidgetId.Landing4By3, LobbyGridCorner.TopLeft, new Vector2Int(0, 1));
 
             //Assert
             Assert.IsTrue(moved);
@@ -94,15 +94,15 @@ namespace DCL.Lobby.Tests
         public void KeepTheOldPlacementWhenAMoveFails()
         {
             //Arrange
-            layout.TryPlace(LobbyWidgetId.Landing4x3, LobbyGridCorner.TopLeft, new Vector2Int(0, 0));
-            layout.TryPlace(LobbyWidgetId.FriendsOnline4x2, LobbyGridCorner.TopLeft, new Vector2Int(0, 4));
+            layout.TryPlace(LobbyWidgetId.Landing4By3, LobbyGridCorner.TopLeft, new Vector2Int(0, 0));
+            layout.TryPlace(LobbyWidgetId.FriendsOnline4By2, LobbyGridCorner.TopLeft, new Vector2Int(0, 4));
 
             //Act
-            bool moved = layout.TryPlace(LobbyWidgetId.Landing4x3, LobbyGridCorner.TopLeft, new Vector2Int(0, 2));
+            bool moved = layout.TryPlace(LobbyWidgetId.Landing4By3, LobbyGridCorner.TopLeft, new Vector2Int(0, 2));
 
             //Assert
             Assert.IsFalse(moved);
-            Assert.IsTrue(layout.TryGetPlacement(LobbyWidgetId.Landing4x3, out LobbyWidgetPlacement placement));
+            Assert.IsTrue(layout.TryGetPlacement(LobbyWidgetId.Landing4By3, out LobbyWidgetPlacement placement));
             Assert.AreEqual(new Vector2Int(0, 0), placement.Cell);
         }
 
@@ -110,24 +110,24 @@ namespace DCL.Lobby.Tests
         public void RemoveAPlacement()
         {
             //Arrange
-            layout.TryPlace(LobbyWidgetId.JumpBackIn6x2, LobbyGridCorner.BottomLeft, new Vector2Int(0, 0));
+            layout.TryPlace(LobbyWidgetId.JumpBackIn6By2, LobbyGridCorner.BottomLeft, new Vector2Int(0, 0));
 
             //Act
-            bool removed = layout.Remove(LobbyWidgetId.JumpBackIn6x2);
-            bool removedAgain = layout.Remove(LobbyWidgetId.JumpBackIn6x2);
+            bool removed = layout.Remove(LobbyWidgetId.JumpBackIn6By2);
+            bool removedAgain = layout.Remove(LobbyWidgetId.JumpBackIn6By2);
 
             //Assert
             Assert.IsTrue(removed);
             Assert.IsFalse(removedAgain);
             Assert.AreEqual(0, layout.Placements.Count);
-            Assert.IsTrue(layout.IsFree(LobbyGridCorner.BottomLeft, new Vector2Int(0, 0), LobbyWidgetId.JumpBackIn6x2.Span()));
+            Assert.IsTrue(layout.IsFree(LobbyGridCorner.BottomLeft, new Vector2Int(0, 0), LobbyWidgetId.JumpBackIn6By2.Span()));
         }
 
         [Test]
         public void ReportOccupiedCellsAsNotFree()
         {
             //Arrange
-            layout.TryPlace(LobbyWidgetId.LiveEvents3x3, LobbyGridCorner.TopRight, new Vector2Int(1, 0));
+            layout.TryPlace(LobbyWidgetId.LiveEvents3By3, LobbyGridCorner.TopRight, new Vector2Int(1, 0));
 
             //Act
             bool overlapping = layout.IsFree(LobbyGridCorner.TopRight, new Vector2Int(0, 2), new Vector2Int(2, 1));
@@ -144,11 +144,11 @@ namespace DCL.Lobby.Tests
         public void IgnoreAWidgetWhenAsked()
         {
             //Arrange
-            layout.TryPlace(LobbyWidgetId.LiveEvents3x3, LobbyGridCorner.TopRight, new Vector2Int(1, 0));
+            layout.TryPlace(LobbyWidgetId.LiveEvents3By3, LobbyGridCorner.TopRight, new Vector2Int(1, 0));
 
             //Act
             bool withoutIgnoring = layout.IsFree(LobbyGridCorner.TopRight, new Vector2Int(0, 0), new Vector2Int(4, 2));
-            bool ignoring = layout.IsFree(LobbyGridCorner.TopRight, new Vector2Int(0, 0), new Vector2Int(4, 2), LobbyWidgetId.LiveEvents3x3);
+            bool ignoring = layout.IsFree(LobbyGridCorner.TopRight, new Vector2Int(0, 0), new Vector2Int(4, 2), LobbyWidgetId.LiveEvents3By3);
 
             //Assert
             Assert.IsFalse(withoutIgnoring);
@@ -159,21 +159,21 @@ namespace DCL.Lobby.Tests
         public void PushTheWidgetDownWhenCoveringItsTopRows()
         {
             //Arrange
-            layout.TryPlace(LobbyWidgetId.Landing4x3, LobbyGridCorner.TopLeft, new Vector2Int(0, 0));
+            layout.TryPlace(LobbyWidgetId.Landing4By3, LobbyGridCorner.TopLeft, new Vector2Int(0, 0));
 
             //Act
-            bool resolved = layout.TryResolvePush(LobbyWidgetId.FriendsOnline4x2, LobbyGridCorner.TopLeft, new Vector2Int(0, 0), pushed);
+            bool resolved = layout.TryResolvePush(LobbyWidgetId.FriendsOnline4By2, LobbyGridCorner.TopLeft, new Vector2Int(0, 0), pushed);
 
             //Assert
             Assert.IsTrue(resolved);
             Assert.AreEqual(1, pushed.Count);
-            Assert.AreEqual(LobbyWidgetId.Landing4x3, pushed[0].WidgetId);
+            Assert.AreEqual(LobbyWidgetId.Landing4By3, pushed[0].WidgetId);
             Assert.AreEqual(LobbyGridCorner.TopLeft, pushed[0].Corner);
             Assert.AreEqual(new Vector2Int(0, 2), pushed[0].Cell);
 
-            Assert.IsTrue(layout.TryGetPlacement(LobbyWidgetId.Landing4x3, out LobbyWidgetPlacement landing), "Resolving changes nothing");
+            Assert.IsTrue(layout.TryGetPlacement(LobbyWidgetId.Landing4By3, out LobbyWidgetPlacement landing), "Resolving changes nothing");
             Assert.AreEqual(new Vector2Int(0, 0), landing.Cell);
-            Assert.IsFalse(layout.TryGetPlacement(LobbyWidgetId.FriendsOnline4x2, out _));
+            Assert.IsFalse(layout.TryGetPlacement(LobbyWidgetId.FriendsOnline4By2, out _));
         }
 
         [Test]
@@ -181,15 +181,15 @@ namespace DCL.Lobby.Tests
         {
             //Arrange
             layout = new LobbyLayout(new Vector2Int(8, 6), TOP_GRID, BOTTOM_GRID, BOTTOM_GRID);
-            layout.TryPlace(LobbyWidgetId.UpcomingEvents3x2, LobbyGridCorner.TopLeft, new Vector2Int(3, 0));
+            layout.TryPlace(LobbyWidgetId.UpcomingEvents3By2, LobbyGridCorner.TopLeft, new Vector2Int(3, 0));
 
             //Act
-            bool resolved = layout.TryResolvePush(LobbyWidgetId.FriendsOnline4x2, LobbyGridCorner.TopLeft, new Vector2Int(0, 0), pushed);
+            bool resolved = layout.TryResolvePush(LobbyWidgetId.FriendsOnline4By2, LobbyGridCorner.TopLeft, new Vector2Int(0, 0), pushed);
 
             //Assert
             Assert.IsTrue(resolved);
             Assert.AreEqual(1, pushed.Count);
-            Assert.AreEqual(new Vector2Int(4, 0), PushedCell(LobbyWidgetId.UpcomingEvents3x2));
+            Assert.AreEqual(new Vector2Int(4, 0), PushedCell(LobbyWidgetId.UpcomingEvents3By2));
         }
 
         [Test]
@@ -197,66 +197,66 @@ namespace DCL.Lobby.Tests
         {
             //Arrange
             layout = new LobbyLayout(new Vector2Int(8, 6), TOP_GRID, BOTTOM_GRID, BOTTOM_GRID);
-            layout.TryPlace(LobbyWidgetId.UpcomingEvents3x2, LobbyGridCorner.TopLeft, new Vector2Int(1, 0));
+            layout.TryPlace(LobbyWidgetId.UpcomingEvents3By2, LobbyGridCorner.TopLeft, new Vector2Int(1, 0));
 
             //Act
-            bool resolved = layout.TryResolvePush(LobbyWidgetId.FriendsOnline4x2, LobbyGridCorner.TopLeft, new Vector2Int(3, 0), pushed);
+            bool resolved = layout.TryResolvePush(LobbyWidgetId.FriendsOnline4By2, LobbyGridCorner.TopLeft, new Vector2Int(3, 0), pushed);
 
             //Assert
             Assert.IsTrue(resolved);
             Assert.AreEqual(1, pushed.Count);
-            Assert.AreEqual(new Vector2Int(0, 0), PushedCell(LobbyWidgetId.UpcomingEvents3x2));
+            Assert.AreEqual(new Vector2Int(0, 0), PushedCell(LobbyWidgetId.UpcomingEvents3By2));
         }
 
         [Test]
         public void PushTheWidgetUpWhenCoveringItsBottomRows()
         {
             //Arrange
-            layout.TryPlace(LobbyWidgetId.UpcomingEvents3x2, LobbyGridCorner.TopLeft, new Vector2Int(0, 2));
+            layout.TryPlace(LobbyWidgetId.UpcomingEvents3By2, LobbyGridCorner.TopLeft, new Vector2Int(0, 2));
 
             //Act
-            bool resolved = layout.TryResolvePush(LobbyWidgetId.FriendsOnline4x2, LobbyGridCorner.TopLeft, new Vector2Int(0, 3), pushed);
+            bool resolved = layout.TryResolvePush(LobbyWidgetId.FriendsOnline4By2, LobbyGridCorner.TopLeft, new Vector2Int(0, 3), pushed);
 
             //Assert
             Assert.IsTrue(resolved);
             Assert.AreEqual(1, pushed.Count);
-            Assert.AreEqual(new Vector2Int(0, 1), PushedCell(LobbyWidgetId.UpcomingEvents3x2));
+            Assert.AreEqual(new Vector2Int(0, 1), PushedCell(LobbyWidgetId.UpcomingEvents3By2));
         }
 
         [Test]
         public void PushOffTheNextCheapestSideWhenTheGridBlocksTheCheapest()
         {
             //Arrange
-            layout.TryPlace(LobbyWidgetId.Landing4x3, LobbyGridCorner.TopLeft, new Vector2Int(0, 0));
+            layout.TryPlace(LobbyWidgetId.Landing4By3, LobbyGridCorner.TopLeft, new Vector2Int(0, 0));
 
             //Act
-            bool resolved = layout.TryResolvePush(LobbyWidgetId.FriendsOnline4x2, LobbyGridCorner.TopLeft, new Vector2Int(0, 1), pushed);
+            bool resolved = layout.TryResolvePush(LobbyWidgetId.FriendsOnline4By2, LobbyGridCorner.TopLeft, new Vector2Int(0, 1), pushed);
 
             //Assert
             Assert.IsTrue(resolved);
-            Assert.AreEqual(new Vector2Int(0, 3), PushedCell(LobbyWidgetId.Landing4x3), "Up would leave the grid, so the widget goes down");
+            Assert.AreEqual(new Vector2Int(0, 3), PushedCell(LobbyWidgetId.Landing4By3), "Up would leave the grid, so the widget goes down");
         }
 
         [Test]
         public void PushSidewaysOnAGridTooShortToPushDown()
         {
             //Arrange
-            layout.TryPlace(LobbyWidgetId.UpcomingEvents3x2, LobbyGridCorner.BottomLeft, new Vector2Int(0, 0));
+            layout.TryPlace(LobbyWidgetId.UpcomingEvents3By2, LobbyGridCorner.BottomLeft, new Vector2Int(0, 0));
 
             //Act
-            bool resolved = layout.TryResolvePush(LobbyWidgetId.FriendsOnline4x2, LobbyGridCorner.BottomLeft, new Vector2Int(0, 0), pushed);
+            bool resolved = layout.TryResolvePush(LobbyWidgetId.FriendsOnline4By2, LobbyGridCorner.BottomLeft, new Vector2Int(0, 0), pushed);
 
             //Assert
             Assert.IsFalse(resolved, "Right would leave a six-column grid and down a two-row one");
 
             //Act
             layout = new LobbyLayout(TOP_GRID, TOP_GRID, new Vector2Int(7, 2), BOTTOM_GRID);
-            layout.TryPlace(LobbyWidgetId.UpcomingEvents3x2, LobbyGridCorner.BottomLeft, new Vector2Int(0, 0));
-            resolved = layout.TryResolvePush(LobbyWidgetId.FriendsOnline4x2, LobbyGridCorner.BottomLeft, new Vector2Int(0, 0), pushed);
+            layout.TryPlace(LobbyWidgetId.UpcomingEvents3By2, LobbyGridCorner.BottomLeft, new Vector2Int(0, 0));
+            resolved = layout.TryResolvePush(LobbyWidgetId.FriendsOnline4By2, LobbyGridCorner.BottomLeft, new Vector2Int(0, 0), pushed);
 
             //Assert
             Assert.IsTrue(resolved);
-            Assert.AreEqual(new Vector2Int(4, 0), PushedCell(LobbyWidgetId.UpcomingEvents3x2));
+            Assert.AreEqual(new Vector2Int(4, 0), PushedCell(LobbyWidgetId.UpcomingEvents3By2));
         }
 
         [Test]
@@ -264,18 +264,18 @@ namespace DCL.Lobby.Tests
         {
             //Arrange
             layout = new LobbyLayout(new Vector2Int(9, 6), TOP_GRID, BOTTOM_GRID, BOTTOM_GRID);
-            layout.TryPlace(LobbyWidgetId.Landing4x3, LobbyGridCorner.TopRight, new Vector2Int(0, 0));
-            layout.TryPlace(LobbyWidgetId.UpcomingEvents3x2, LobbyGridCorner.TopLeft, new Vector2Int(3, 1));
-            layout.TryPlace(LobbyWidgetId.LiveEvents3x3, LobbyGridCorner.TopLeft, new Vector2Int(6, 0));
+            layout.TryPlace(LobbyWidgetId.Landing4By3, LobbyGridCorner.TopRight, new Vector2Int(0, 0));
+            layout.TryPlace(LobbyWidgetId.UpcomingEvents3By2, LobbyGridCorner.TopLeft, new Vector2Int(3, 1));
+            layout.TryPlace(LobbyWidgetId.LiveEvents3By3, LobbyGridCorner.TopLeft, new Vector2Int(6, 0));
 
             //Act
-            bool resolved = layout.TryResolvePush(LobbyWidgetId.Landing4x3, LobbyGridCorner.TopLeft, new Vector2Int(0, 0), pushed);
+            bool resolved = layout.TryResolvePush(LobbyWidgetId.Landing4By3, LobbyGridCorner.TopLeft, new Vector2Int(0, 0), pushed);
 
             //Assert
             Assert.IsTrue(resolved);
             Assert.AreEqual(2, pushed.Count);
-            Assert.AreEqual(new Vector2Int(4, 1), PushedCell(LobbyWidgetId.UpcomingEvents3x2), "Pushed right off the placed widget");
-            Assert.AreEqual(new Vector2Int(6, 3), PushedCell(LobbyWidgetId.LiveEvents3x3), "Pushed down off the pushed widget, right would leave the grid");
+            Assert.AreEqual(new Vector2Int(4, 1), PushedCell(LobbyWidgetId.UpcomingEvents3By2), "Pushed right off the placed widget");
+            Assert.AreEqual(new Vector2Int(6, 3), PushedCell(LobbyWidgetId.LiveEvents3By3), "Pushed down off the pushed widget, right would leave the grid");
         }
 
         [Test]
@@ -283,12 +283,12 @@ namespace DCL.Lobby.Tests
         {
             //Arrange
             layout = new LobbyLayout(new Vector2Int(9, 4), TOP_GRID, BOTTOM_GRID, BOTTOM_GRID);
-            layout.TryPlace(LobbyWidgetId.Landing4x3, LobbyGridCorner.TopRight, new Vector2Int(0, 0));
-            layout.TryPlace(LobbyWidgetId.UpcomingEvents3x2, LobbyGridCorner.TopLeft, new Vector2Int(3, 1));
-            layout.TryPlace(LobbyWidgetId.LiveEvents3x3, LobbyGridCorner.TopLeft, new Vector2Int(6, 0));
+            layout.TryPlace(LobbyWidgetId.Landing4By3, LobbyGridCorner.TopRight, new Vector2Int(0, 0));
+            layout.TryPlace(LobbyWidgetId.UpcomingEvents3By2, LobbyGridCorner.TopLeft, new Vector2Int(3, 1));
+            layout.TryPlace(LobbyWidgetId.LiveEvents3By3, LobbyGridCorner.TopLeft, new Vector2Int(6, 0));
 
             //Act
-            bool resolved = layout.TryResolvePush(LobbyWidgetId.Landing4x3, LobbyGridCorner.TopLeft, new Vector2Int(0, 0), pushed);
+            bool resolved = layout.TryResolvePush(LobbyWidgetId.Landing4By3, LobbyGridCorner.TopLeft, new Vector2Int(0, 0), pushed);
 
             //Assert
             Assert.IsFalse(resolved, "Every side but left leaves the grid and left lands on the placed widget");
@@ -300,17 +300,17 @@ namespace DCL.Lobby.Tests
         {
             //Arrange
             layout = new LobbyLayout(new Vector2Int(4, 8), TOP_GRID, BOTTOM_GRID, BOTTOM_GRID);
-            layout.TryPlace(LobbyWidgetId.UpcomingEvents3x2, LobbyGridCorner.TopLeft, new Vector2Int(0, 0));
-            layout.TryPlace(LobbyWidgetId.LiveEvents3x3, LobbyGridCorner.TopLeft, new Vector2Int(0, 2));
+            layout.TryPlace(LobbyWidgetId.UpcomingEvents3By2, LobbyGridCorner.TopLeft, new Vector2Int(0, 0));
+            layout.TryPlace(LobbyWidgetId.LiveEvents3By3, LobbyGridCorner.TopLeft, new Vector2Int(0, 2));
 
             //Act
-            bool resolved = layout.TryResolvePush(LobbyWidgetId.FriendsOnline4x2, LobbyGridCorner.TopLeft, new Vector2Int(0, 0), pushed);
+            bool resolved = layout.TryResolvePush(LobbyWidgetId.FriendsOnline4By2, LobbyGridCorner.TopLeft, new Vector2Int(0, 0), pushed);
 
             //Assert
             Assert.IsTrue(resolved);
             Assert.AreEqual(2, pushed.Count);
-            Assert.AreEqual(new Vector2Int(0, 2), PushedCell(LobbyWidgetId.UpcomingEvents3x2));
-            Assert.AreEqual(new Vector2Int(0, 4), PushedCell(LobbyWidgetId.LiveEvents3x3));
+            Assert.AreEqual(new Vector2Int(0, 2), PushedCell(LobbyWidgetId.UpcomingEvents3By2));
+            Assert.AreEqual(new Vector2Int(0, 4), PushedCell(LobbyWidgetId.LiveEvents3By3));
         }
 
         [Test]
@@ -318,28 +318,28 @@ namespace DCL.Lobby.Tests
         {
             //Arrange
             layout = new LobbyLayout(new Vector2Int(7, 8), TOP_GRID, BOTTOM_GRID, BOTTOM_GRID);
-            layout.TryPlace(LobbyWidgetId.LiveEvents3x3, LobbyGridCorner.TopLeft, new Vector2Int(0, 0));
-            layout.TryPlace(LobbyWidgetId.UpcomingEvents3x2, LobbyGridCorner.TopLeft, new Vector2Int(4, 0));
-            layout.TryPlace(LobbyWidgetId.FriendsOnline4x2, LobbyGridCorner.TopLeft, new Vector2Int(0, 6));
-            layout.TryPlace(LobbyWidgetId.JumpBackIn6x2, LobbyGridCorner.BottomLeft, new Vector2Int(0, 0));
+            layout.TryPlace(LobbyWidgetId.LiveEvents3By3, LobbyGridCorner.TopLeft, new Vector2Int(0, 0));
+            layout.TryPlace(LobbyWidgetId.UpcomingEvents3By2, LobbyGridCorner.TopLeft, new Vector2Int(4, 0));
+            layout.TryPlace(LobbyWidgetId.FriendsOnline4By2, LobbyGridCorner.TopLeft, new Vector2Int(0, 6));
+            layout.TryPlace(LobbyWidgetId.JumpBackIn6By2, LobbyGridCorner.BottomLeft, new Vector2Int(0, 0));
 
             //Act
-            bool resolved = layout.TryResolvePush(LobbyWidgetId.Landing4x3, LobbyGridCorner.TopLeft, new Vector2Int(0, 0), pushed);
+            bool resolved = layout.TryResolvePush(LobbyWidgetId.Landing4By3, LobbyGridCorner.TopLeft, new Vector2Int(0, 0), pushed);
 
             //Assert
             Assert.IsTrue(resolved);
             Assert.AreEqual(1, pushed.Count, "The widget beside, the one further below and the ones on other grids stay");
-            Assert.AreEqual(new Vector2Int(0, 3), PushedCell(LobbyWidgetId.LiveEvents3x3));
+            Assert.AreEqual(new Vector2Int(0, 3), PushedCell(LobbyWidgetId.LiveEvents3By3));
         }
 
         [Test]
         public void ResolveAFreeCellWithoutPushes()
         {
             //Arrange
-            layout.TryPlace(LobbyWidgetId.Landing4x3, LobbyGridCorner.TopLeft, new Vector2Int(0, 0));
+            layout.TryPlace(LobbyWidgetId.Landing4By3, LobbyGridCorner.TopLeft, new Vector2Int(0, 0));
 
             //Act
-            bool resolved = layout.TryResolvePush(LobbyWidgetId.FriendsOnline4x2, LobbyGridCorner.TopLeft, new Vector2Int(0, 3), pushed);
+            bool resolved = layout.TryResolvePush(LobbyWidgetId.FriendsOnline4By2, LobbyGridCorner.TopLeft, new Vector2Int(0, 3), pushed);
 
             //Assert
             Assert.IsTrue(resolved);
@@ -350,10 +350,10 @@ namespace DCL.Lobby.Tests
         public void FailToPushAWidgetOffTheGrid()
         {
             //Arrange
-            layout.TryPlace(LobbyWidgetId.Landing4x3, LobbyGridCorner.TopLeft, new Vector2Int(0, 3));
+            layout.TryPlace(LobbyWidgetId.Landing4By3, LobbyGridCorner.TopLeft, new Vector2Int(0, 3));
 
             //Act
-            bool resolved = layout.TryResolvePush(LobbyWidgetId.FriendsOnline4x2, LobbyGridCorner.TopLeft, new Vector2Int(0, 2), pushed);
+            bool resolved = layout.TryResolvePush(LobbyWidgetId.FriendsOnline4By2, LobbyGridCorner.TopLeft, new Vector2Int(0, 2), pushed);
 
             //Assert
             Assert.IsFalse(resolved);
@@ -364,7 +364,7 @@ namespace DCL.Lobby.Tests
         public void FailToPushFromOutsideTheGrid()
         {
             //Act
-            bool resolved = layout.TryResolvePush(LobbyWidgetId.FriendsOnline4x2, LobbyGridCorner.TopLeft, new Vector2Int(1, 0), pushed);
+            bool resolved = layout.TryResolvePush(LobbyWidgetId.FriendsOnline4By2, LobbyGridCorner.TopLeft, new Vector2Int(1, 0), pushed);
 
             //Assert
             Assert.IsFalse(resolved);
@@ -374,18 +374,18 @@ namespace DCL.Lobby.Tests
         public void MoveTheWidgetsInTheWayWhenPlacingWithAPush()
         {
             //Arrange
-            layout.TryPlace(LobbyWidgetId.Landing4x3, LobbyGridCorner.TopLeft, new Vector2Int(0, 0));
-            layout.TryPlace(LobbyWidgetId.FriendsOnline4x2, LobbyGridCorner.TopLeft, new Vector2Int(0, 3));
+            layout.TryPlace(LobbyWidgetId.Landing4By3, LobbyGridCorner.TopLeft, new Vector2Int(0, 0));
+            layout.TryPlace(LobbyWidgetId.FriendsOnline4By2, LobbyGridCorner.TopLeft, new Vector2Int(0, 3));
 
             //Act
-            bool placed = layout.TryPlacePushing(LobbyWidgetId.FriendsOnline4x2, LobbyGridCorner.TopLeft, new Vector2Int(0, 0));
+            bool placed = layout.TryPlacePushing(LobbyWidgetId.FriendsOnline4By2, LobbyGridCorner.TopLeft, new Vector2Int(0, 0));
 
             //Assert
             Assert.IsTrue(placed);
             Assert.AreEqual(2, layout.Placements.Count);
-            Assert.IsTrue(layout.TryGetPlacement(LobbyWidgetId.FriendsOnline4x2, out LobbyWidgetPlacement friends));
+            Assert.IsTrue(layout.TryGetPlacement(LobbyWidgetId.FriendsOnline4By2, out LobbyWidgetPlacement friends));
             Assert.AreEqual(new Vector2Int(0, 0), friends.Cell);
-            Assert.IsTrue(layout.TryGetPlacement(LobbyWidgetId.Landing4x3, out LobbyWidgetPlacement landing));
+            Assert.IsTrue(layout.TryGetPlacement(LobbyWidgetId.Landing4By3, out LobbyWidgetPlacement landing));
             Assert.AreEqual(new Vector2Int(0, 2), landing.Cell, "The pushed widget takes the cells the moved one leaves");
         }
 
@@ -393,18 +393,18 @@ namespace DCL.Lobby.Tests
         public void PushWhenMovingAWidgetInFromAnotherGrid()
         {
             //Arrange
-            layout.TryPlace(LobbyWidgetId.Landing4x3, LobbyGridCorner.TopLeft, new Vector2Int(0, 0));
-            layout.TryPlace(LobbyWidgetId.LiveEvents3x3, LobbyGridCorner.TopRight, new Vector2Int(1, 0));
+            layout.TryPlace(LobbyWidgetId.Landing4By3, LobbyGridCorner.TopLeft, new Vector2Int(0, 0));
+            layout.TryPlace(LobbyWidgetId.LiveEvents3By3, LobbyGridCorner.TopRight, new Vector2Int(1, 0));
 
             //Act
-            bool placed = layout.TryPlacePushing(LobbyWidgetId.LiveEvents3x3, LobbyGridCorner.TopLeft, new Vector2Int(0, 0));
+            bool placed = layout.TryPlacePushing(LobbyWidgetId.LiveEvents3By3, LobbyGridCorner.TopLeft, new Vector2Int(0, 0));
 
             //Assert
             Assert.IsTrue(placed);
-            Assert.IsTrue(layout.TryGetPlacement(LobbyWidgetId.LiveEvents3x3, out LobbyWidgetPlacement liveEvents));
+            Assert.IsTrue(layout.TryGetPlacement(LobbyWidgetId.LiveEvents3By3, out LobbyWidgetPlacement liveEvents));
             Assert.AreEqual(LobbyGridCorner.TopLeft, liveEvents.Corner);
             Assert.AreEqual(new Vector2Int(0, 0), liveEvents.Cell);
-            Assert.IsTrue(layout.TryGetPlacement(LobbyWidgetId.Landing4x3, out LobbyWidgetPlacement landing));
+            Assert.IsTrue(layout.TryGetPlacement(LobbyWidgetId.Landing4By3, out LobbyWidgetPlacement landing));
             Assert.AreEqual(new Vector2Int(0, 3), landing.Cell);
         }
 
@@ -412,17 +412,17 @@ namespace DCL.Lobby.Tests
         public void KeepTheLayoutWhenAPushFails()
         {
             //Arrange
-            layout.TryPlace(LobbyWidgetId.FriendsOnline4x2, LobbyGridCorner.TopLeft, new Vector2Int(0, 0));
-            layout.TryPlace(LobbyWidgetId.Landing4x3, LobbyGridCorner.TopLeft, new Vector2Int(0, 3));
+            layout.TryPlace(LobbyWidgetId.FriendsOnline4By2, LobbyGridCorner.TopLeft, new Vector2Int(0, 0));
+            layout.TryPlace(LobbyWidgetId.Landing4By3, LobbyGridCorner.TopLeft, new Vector2Int(0, 3));
 
             //Act
-            bool placed = layout.TryPlacePushing(LobbyWidgetId.FriendsOnline4x2, LobbyGridCorner.TopLeft, new Vector2Int(0, 2));
+            bool placed = layout.TryPlacePushing(LobbyWidgetId.FriendsOnline4By2, LobbyGridCorner.TopLeft, new Vector2Int(0, 2));
 
             //Assert
             Assert.IsFalse(placed);
-            Assert.IsTrue(layout.TryGetPlacement(LobbyWidgetId.FriendsOnline4x2, out LobbyWidgetPlacement friends));
+            Assert.IsTrue(layout.TryGetPlacement(LobbyWidgetId.FriendsOnline4By2, out LobbyWidgetPlacement friends));
             Assert.AreEqual(new Vector2Int(0, 0), friends.Cell);
-            Assert.IsTrue(layout.TryGetPlacement(LobbyWidgetId.Landing4x3, out LobbyWidgetPlacement landing));
+            Assert.IsTrue(layout.TryGetPlacement(LobbyWidgetId.Landing4By3, out LobbyWidgetPlacement landing));
             Assert.AreEqual(new Vector2Int(0, 3), landing.Cell);
         }
 
@@ -441,10 +441,10 @@ namespace DCL.Lobby.Tests
         public void SnapToTheClosestFreeCellWhenTheNearestIsTaken()
         {
             //Arrange
-            layout.TryPlace(LobbyWidgetId.Landing4x3, LobbyGridCorner.TopLeft, new Vector2Int(0, 0));
+            layout.TryPlace(LobbyWidgetId.Landing4By3, LobbyGridCorner.TopLeft, new Vector2Int(0, 0));
 
             //Act
-            bool found = layout.TryFindSnapCell(LobbyGridCorner.TopLeft, LobbyWidgetId.FriendsOnline4x2.Span(), new Vector2(0f, 2f), out Vector2Int cell);
+            bool found = layout.TryFindSnapCell(LobbyGridCorner.TopLeft, LobbyWidgetId.FriendsOnline4By2.Span(), new Vector2(0f, 2f), out Vector2Int cell);
 
             //Assert
             Assert.IsTrue(found);
@@ -477,7 +477,7 @@ namespace DCL.Lobby.Tests
         public void FailToSnapWhenTheSpanIsLargerThanTheGrid()
         {
             //Act
-            bool found = layout.TryFindSnapCell(LobbyGridCorner.BottomLeft, LobbyWidgetId.LiveEvents3x3.Span(), Vector2.zero, out _);
+            bool found = layout.TryFindSnapCell(LobbyGridCorner.BottomLeft, LobbyWidgetId.LiveEvents3By3.Span(), Vector2.zero, out _);
 
             //Assert
             Assert.IsFalse(found);
@@ -487,7 +487,7 @@ namespace DCL.Lobby.Tests
         public void FailToSnapWhenTheGridIsFull()
         {
             //Arrange
-            layout.TryPlace(LobbyWidgetId.JumpBackIn6x2, LobbyGridCorner.BottomLeft, new Vector2Int(0, 0));
+            layout.TryPlace(LobbyWidgetId.JumpBackIn6By2, LobbyGridCorner.BottomLeft, new Vector2Int(0, 0));
 
             //Act
             bool found = layout.TryFindSnapCell(LobbyGridCorner.BottomLeft, new Vector2Int(1, 1), new Vector2(2f, 1f), out _);
@@ -504,14 +504,14 @@ namespace DCL.Lobby.Tests
 
             //Assert
             Assert.AreEqual(6, layout.Placements.Count);
-            Assert.IsFalse(layout.TryGetPlacement(LobbyWidgetId.JumpBackIn4x2, out _), "The top grids are full by default");
-            Assert.IsFalse(layout.TryGetPlacement(LobbyWidgetId.RecommendedPlaces4x2, out _));
-            Assert.IsTrue(layout.TryGetPlacement(LobbyWidgetId.Landing4x3, out LobbyWidgetPlacement landing));
-            Assert.IsTrue(layout.TryGetPlacement(LobbyWidgetId.FriendsOnline4x2, out LobbyWidgetPlacement friends));
-            Assert.IsTrue(layout.TryGetPlacement(LobbyWidgetId.LiveEvents3x3, out LobbyWidgetPlacement liveEvents));
-            Assert.IsTrue(layout.TryGetPlacement(LobbyWidgetId.UpcomingEvents3x2, out LobbyWidgetPlacement upcomingEvents));
-            Assert.IsTrue(layout.TryGetPlacement(LobbyWidgetId.JumpBackIn6x2, out LobbyWidgetPlacement recent));
-            Assert.IsTrue(layout.TryGetPlacement(LobbyWidgetId.RecommendedPlaces6x2, out LobbyWidgetPlacement featured));
+            Assert.IsFalse(layout.TryGetPlacement(LobbyWidgetId.JumpBackIn4By2, out _), "The top grids are full by default");
+            Assert.IsFalse(layout.TryGetPlacement(LobbyWidgetId.RecommendedPlaces4By2, out _));
+            Assert.IsTrue(layout.TryGetPlacement(LobbyWidgetId.Landing4By3, out LobbyWidgetPlacement landing));
+            Assert.IsTrue(layout.TryGetPlacement(LobbyWidgetId.FriendsOnline4By2, out LobbyWidgetPlacement friends));
+            Assert.IsTrue(layout.TryGetPlacement(LobbyWidgetId.LiveEvents3By3, out LobbyWidgetPlacement liveEvents));
+            Assert.IsTrue(layout.TryGetPlacement(LobbyWidgetId.UpcomingEvents3By2, out LobbyWidgetPlacement upcomingEvents));
+            Assert.IsTrue(layout.TryGetPlacement(LobbyWidgetId.JumpBackIn6By2, out LobbyWidgetPlacement recent));
+            Assert.IsTrue(layout.TryGetPlacement(LobbyWidgetId.RecommendedPlaces6By2, out LobbyWidgetPlacement featured));
             Assert.AreEqual(LobbyGridCorner.TopLeft, landing.Corner);
             Assert.AreEqual(LobbyGridCorner.TopLeft, friends.Corner);
             Assert.AreEqual(LobbyGridCorner.TopRight, liveEvents.Corner);
@@ -524,13 +524,13 @@ namespace DCL.Lobby.Tests
         public void ReplaceThePlacementsWithTheDefault()
         {
             //Arrange
-            layout.TryPlace(LobbyWidgetId.Landing4x3, LobbyGridCorner.BottomLeft, new Vector2Int(0, 0));
+            layout.TryPlace(LobbyWidgetId.Landing4By3, LobbyGridCorner.BottomLeft, new Vector2Int(0, 0));
 
             //Act
             layout.ResetToDefault();
 
             //Assert
-            Assert.IsTrue(layout.TryGetPlacement(LobbyWidgetId.Landing4x3, out LobbyWidgetPlacement landing));
+            Assert.IsTrue(layout.TryGetPlacement(LobbyWidgetId.Landing4By3, out LobbyWidgetPlacement landing));
             Assert.AreEqual(LobbyGridCorner.TopLeft, landing.Corner);
         }
 
@@ -585,7 +585,7 @@ namespace DCL.Lobby.Tests
         public void PutTheRequiredWidgetBackAtItsShippedCellMakingRoom()
         {
             //Arrange
-            layout.TryPlace(LobbyWidgetId.FriendsOnline4x2, LobbyGridCorner.TopLeft, Vector2Int.zero);
+            layout.TryPlace(LobbyWidgetId.FriendsOnline4By2, LobbyGridCorner.TopLeft, Vector2Int.zero);
 
             //Act
             layout.EnsureRequiredWidget();
@@ -594,7 +594,7 @@ namespace DCL.Lobby.Tests
             Assert.IsTrue(layout.TryGetPlacement(LobbyLayout.REQUIRED_WIDGET, out LobbyWidgetPlacement landing));
             Assert.AreEqual(LobbyGridCorner.TopLeft, landing.Corner);
             Assert.AreEqual(Vector2Int.zero, landing.Cell);
-            Assert.IsTrue(layout.TryGetPlacement(LobbyWidgetId.FriendsOnline4x2, out LobbyWidgetPlacement friends));
+            Assert.IsTrue(layout.TryGetPlacement(LobbyWidgetId.FriendsOnline4By2, out LobbyWidgetPlacement friends));
             Assert.AreEqual(new Vector2Int(0, 3), friends.Cell, "The friends moved down off the landing");
         }
 
@@ -602,9 +602,9 @@ namespace DCL.Lobby.Tests
         public void FallBackToTheShippedLayoutWhenNothingCanMakeRoomForTheRequiredWidget()
         {
             //Arrange
-            layout.TryPlace(LobbyWidgetId.FriendsOnline4x2, LobbyGridCorner.TopLeft, new Vector2Int(0, 0));
-            layout.TryPlace(LobbyWidgetId.RecommendedPlaces4x2, LobbyGridCorner.TopLeft, new Vector2Int(0, 2));
-            layout.TryPlace(LobbyWidgetId.Communities4x2, LobbyGridCorner.TopLeft, new Vector2Int(0, 4));
+            layout.TryPlace(LobbyWidgetId.FriendsOnline4By2, LobbyGridCorner.TopLeft, new Vector2Int(0, 0));
+            layout.TryPlace(LobbyWidgetId.RecommendedPlaces4By2, LobbyGridCorner.TopLeft, new Vector2Int(0, 2));
+            layout.TryPlace(LobbyWidgetId.Communities4By2, LobbyGridCorner.TopLeft, new Vector2Int(0, 4));
             var shipped = new LobbyLayout(TOP_GRID, TOP_GRID, BOTTOM_GRID, BOTTOM_GRID);
             shipped.ResetToDefault();
 

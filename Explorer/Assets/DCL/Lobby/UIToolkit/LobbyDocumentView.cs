@@ -23,12 +23,12 @@ namespace DCL.Lobby
         private const string LANDING_CARD_NAME = "LandingCard";
         private const string RECENT_PLACES_NAME = "RecentPlaces";
         private const string FEATURED_PLACES_NAME = "FeaturedPlaces";
-        private const string RECENT_PLACES_4X2_NAME = "RecentPlaces4x2";
-        private const string FEATURED_PLACES_4X2_NAME = "FeaturedPlaces4x2";
+        private const string RECENT_PLACES_4_BY_2_NAME = "RecentPlaces4x2";
+        private const string FEATURED_PLACES_4_BY_2_NAME = "FeaturedPlaces4x2";
         private const string COMMUNITIES_NAME = "Communities";
-        private const string COMMUNITIES_4X2_NAME = "Communities4x2";
+        private const string COMMUNITIES_4_BY_2_NAME = "Communities4x2";
         private const string GALLERY_NAME = "Gallery";
-        private const string GALLERY_4X2_NAME = "Gallery4x2";
+        private const string GALLERY_4_BY_2_NAME = "Gallery4x2";
         private const string FRIENDS_NAME = "Friends";
         private const string LIVE_EVENTS_NAME = "LiveEvents";
         private const string UPCOMING_EVENTS_NAME = "UpcomingEvents";
@@ -116,22 +116,22 @@ namespace DCL.Lobby
         public VisualElement FeaturedPlaces => Section(FEATURED_PLACES_NAME);
 
         /// <summary>Four-column section of the recently visited places: title and row of cards. Exists only while shown.</summary>
-        public VisualElement RecentPlaces4x2 => Section(RECENT_PLACES_4X2_NAME);
+        public VisualElement RecentPlaces4By2 => Section(RECENT_PLACES_4_BY_2_NAME);
 
         /// <summary>Four-column section of the featured places, title and rail. Exists only while the view is shown.</summary>
-        public VisualElement FeaturedPlaces4x2 => Section(FEATURED_PLACES_4X2_NAME);
+        public VisualElement FeaturedPlaces4By2 => Section(FEATURED_PLACES_4_BY_2_NAME);
 
         /// <summary>Section of the user's communities, title and rail. Exists only while the view is shown.</summary>
         public VisualElement Communities => Section(COMMUNITIES_NAME);
 
         /// <summary>Four-column section of the user's communities, title and rail. Exists only while the view is shown.</summary>
-        public VisualElement Communities4x2 => Section(COMMUNITIES_4X2_NAME);
+        public VisualElement Communities4By2 => Section(COMMUNITIES_4_BY_2_NAME);
 
         /// <summary>Section of the user's camera reel photos, title and rail. Exists only while the view is shown.</summary>
         public VisualElement Gallery => Section(GALLERY_NAME);
 
         /// <summary>Four-column section of the user's camera reel photos, title and rail. Exists only while the view is shown.</summary>
-        public VisualElement Gallery4x2 => Section(GALLERY_4X2_NAME);
+        public VisualElement Gallery4By2 => Section(GALLERY_4_BY_2_NAME);
 
         /// <summary>Section of the online friends, header and rail. Exists only while the view is shown.</summary>
         public VisualElement Friends => Section(FRIENDS_NAME);
