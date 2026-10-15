@@ -136,7 +136,7 @@ namespace DCL.McpServer.Systems
                           .Add(new WalkTool(syntheticInput, globalWorld, arguments.PlayerEntity))
                           .Add(new SendChatTool(chatMessagesBus))
                           .Add(new ReloadSceneTool(reloadSceneController, scenesCache, globalWorld, arguments.PlayerEntity, arguments.SkyboxEntity))
-                          .Add(new ListSceneEntitiesTool(worldInfoHub))
+                          .Add(new ListSceneEntitiesTool(scenesCache))
                           .Add(new GetEntityDetailsTool(worldInfoHub))
                           .Add(new TriggerEmoteTool(globalWorldActions))
                           .Add(new ClickEntityTool(syntheticInput))

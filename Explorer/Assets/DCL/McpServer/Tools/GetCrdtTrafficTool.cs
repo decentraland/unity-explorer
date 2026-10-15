@@ -1,10 +1,7 @@
 using Arch.Core;
 using CRDT;
-using CrdtEcsBridge.Components;
-using CrdtEcsBridge.Components.Transform;
 using Cysharp.Threading.Tasks;
 using DCL.ECS7;
-using DCL.ECSComponents;
 using DCL.McpServer.Core;
 using DCL.McpServer.Utils;
 using DCL.Profiling;
@@ -33,7 +30,6 @@ namespace DCL.McpServer.Tools
         private const float MAX_SAMPLE_SECONDS = 10f;
         private const int DEFAULT_LIMIT = 15;
         private const int MAX_LIMIT = 100;
-        private const int MAX_TEXT_LABEL_LENGTH = 24;
 
         /// <summary>
         ///     Scene and renderer ticks drift by a frame or two over a window, so a writer that fires on every tick
@@ -335,46 +331,12 @@ namespace DCL.McpServer.Tools
             foreach (int entityId in wanted)
             {
                 bool resolved = engineEntities.TryGetValue(entityId, out Entity entity);
-                string? label = ReservedEntityLabel(entityId) ?? (resolved ? DescribeEntity(world, entity, parts) : null);
+                string? label = SceneEntityLabel.Reserved(entityId) ?? (resolved ? SceneEntityLabel.Describe(world, entity, parts) : null);
                 entities[entityId] = new EntityInfo(resolved ? entity.Id : (int?)null, label);
             }
 
             return entities;
         }
-
-        private static string? DescribeEntity(World world, Entity entity, List<string> parts)
-        {
-            parts.Clear();
-
-            if (world.TryGet(entity, out PBGltfContainer? gltf) && gltf != null)
-                parts.Add($"gltf {gltf.Src}");
-
-            if (world.TryGet(entity, out PBMeshRenderer? mesh) && mesh != null)
-                parts.Add($"mesh {mesh.MeshCase}");
-
-            if (world.TryGet(entity, out PBTextShape? textShape) && textShape != null)
-            {
-                string text = textShape.Text.Length > MAX_TEXT_LABEL_LENGTH ? textShape.Text.Substring(0, MAX_TEXT_LABEL_LENGTH) + "…" : textShape.Text;
-                parts.Add($"text \"{text}\"");
-            }
-
-            if (world.TryGet(entity, out PBVisibilityComponent? visibility) && visibility is { HasVisible: true, Visible: false })
-                parts.Add("hidden");
-
-            if (world.TryGet(entity, out SDKTransform? transform) && transform != null && transform.ParentId.Id != SpecialEntitiesID.SCENE_ROOT_ENTITY)
-                parts.Add($"parent {transform.ParentId.Id}");
-
-            return parts.Count > 0 ? string.Join(", ", parts) : null;
-        }
-
-        private static string? ReservedEntityLabel(int entityId) =>
-            entityId switch
-            {
-                SpecialEntitiesID.SCENE_ROOT_ENTITY => "scene root",
-                SpecialEntitiesID.PLAYER_ENTITY => "player",
-                SpecialEntitiesID.CAMERA_ENTITY => "camera",
-                _ => null,
-            };
 
         private static JObject BridgeTimeJson(in CrdtTrafficProbe.BridgeTime time, long sceneTicks) =>
             new ()
