@@ -55,13 +55,6 @@ namespace UUAV.Compat
             return true;
         }
 
-        // Forwards to Control.Stop (pause + seek to the start), mirroring
-        // AVPro's component-level Stop.
-        public void Stop()
-        {
-            backend.Stop();
-        }
-
         public void CloseMedia()
         {
             uuavPlayer.CloseMedia();

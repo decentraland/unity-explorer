@@ -39,8 +39,6 @@ namespace DCL.SDKComponents.MediaStream
             else
                 mediaPlayer = Object.Instantiate(mediaPlayerPrefab, rootContainerTransform);
 
-            mediaPlayer.enabled = true;
-
             return mediaPlayer;
         }
 
@@ -82,10 +80,8 @@ namespace DCL.SDKComponents.MediaStream
             // Already destroyed (pool eviction / scene teardown): nothing left to stop or re-pool.
             if (mediaPlayer == null) return;
 
-            mediaPlayer.Stop();
             mediaPlayer.CloseMedia();
             mediaPlayer.AudioVolume = 0f;
-            mediaPlayer.enabled = false;
             mediaPlayer.gameObject.SetActive(false);
 
             var info = new MediaPlayerInfo(mediaPlayer, UnityEngine.Time.realtimeSinceStartup);

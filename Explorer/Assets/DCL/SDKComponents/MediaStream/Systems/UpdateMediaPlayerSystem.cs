@@ -156,7 +156,6 @@ namespace DCL.SDKComponents.MediaStream
             if (TryReInitializeOnExpiredYouTubeUrl(entity, ref component)) return;
             if (TryReInitializeOnFailedMedia(entity, ref component)) return;
 
-            if (component.MediaPlayer.WaitingForProperties) return;
             if (!frameTimeBudget.TrySpendBudget()) return;
 
             component.UpdateState();
@@ -197,7 +196,7 @@ namespace DCL.SDKComponents.MediaStream
             if (!videoPrioritizationSettings.PlayCurrentSceneStreamOnly || sceneStateProvider.IsCurrent)
             {
                 if (ConsumePromise(ref component, false))
-                    component.MediaPlayer.SetPlaybackPropertiesAsync(sdkComponent, component.IsLiveStream).Forget();
+                    component.MediaPlayer.SetPlaybackProperties(sdkComponent, component.IsLiveStream);
 
                 component.UpdateState();
 
@@ -425,8 +424,9 @@ namespace DCL.SDKComponents.MediaStream
             if (!component.OpenMediaPromise.IsResolved) return false;
             if (component.OpenMediaPromise.IsConsumed) return false;
 
-            // Enforce a minimum gap between stream opens: opening several at once spikes
-            // decoder/helper startup cost and causes frame drops.
+            // Enforce a minimum gap between stream opens. Inherited from AVPro, where it avoided AVFoundation
+            // crashes on simultaneous opens; with UUAV the open is async IPC to the helper, so profile whether
+            // the gap still pays for delaying the Nth stream by N × MIN_OPEN_MEDIA_INTERVAL_SECONDS.
             float currentTime = UnityEngine.Time.realtimeSinceStartup;
             float timeSinceLastOpen = currentTime - lastOpenMediaTime;
 

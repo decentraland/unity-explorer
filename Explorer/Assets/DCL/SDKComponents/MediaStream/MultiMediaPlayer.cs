@@ -1,4 +1,3 @@
-using Cysharp.Threading.Tasks;
 using DCL.ECSComponents;
 using REnum;
 using UnityEngine;
@@ -17,13 +16,6 @@ namespace DCL.SDKComponents.MediaStream
     {
         public readonly MediaPlayer MediaPlayer;
         public readonly MediaPlayerCustomPool MediaPlayerCustomPool;
-
-        /// <summary>
-        /// This is here because UpdateMediaPlayerSystem uses an async method SetPlaybackProperties that needs to
-        /// complete before we do anything else, otherwise it might overwrite a later call to
-        /// UpdatePlaybackProperties, if that call is done before it completes. Check issue #6974 for more info.
-        /// </summary>
-        public bool WaitingForProperties;
 
         public UrlMediaPlayer(MediaPlayer mediaPlayer, MediaPlayerCustomPool mediaPlayerCustomPool)
         {
@@ -78,11 +70,6 @@ namespace DCL.SDKComponents.MediaStream
             static _ => true
         );
 
-        public bool WaitingForProperties => Match(
-            static urlMediaPlayer => urlMediaPlayer.WaitingForProperties,
-            static _ => false
-        );
-
         public Vector2 TextureScale => Match(static urlMediaPlayer =>
             {
                 float vScale = urlMediaPlayer.MediaPlayer.TextureProducer.RequiresVerticalFlip() ? -1 : 1;
@@ -118,7 +105,7 @@ namespace DCL.SDKComponents.MediaStream
         public void CloseCurrentStream()
         {
             Match(
-                static urlMediaPlayer => urlMediaPlayer.MediaPlayer.CloseCurrentStream(),
+                static urlMediaPlayer => urlMediaPlayer.MediaPlayer.CloseMedia(),
                 static livekitPlayer => livekitPlayer.CloseCurrentStream()
             );
         }
@@ -182,15 +169,13 @@ namespace DCL.SDKComponents.MediaStream
                 static (ctx, urlMediaPlayer) => urlMediaPlayer.MediaPlayer.Control.SetLooping(ctx),
                 static (_, _) => { });
 
-        public async UniTaskVoid SetPlaybackPropertiesAsync(PBVideoPlayer sdkVideoPlayer, bool isLiveStream = false)
+        public void SetPlaybackProperties(PBVideoPlayer sdkVideoPlayer, bool isLiveStream = false)
         {
             if (IsUrlMediaPlayer(out var urlMediaPlayer))
             {
                 MediaPlayer mediaPlayer = urlMediaPlayer.MediaPlayer;
                 if (!mediaPlayer.MediaOpened) return;
-                urlMediaPlayer.WaitingForProperties = true;
-                await MediaPlayerExtensions.SetPlaybackPropertiesAsync(mediaPlayer.Control, sdkVideoPlayer, isLiveStream);
-                urlMediaPlayer.WaitingForProperties = false;
+                MediaPlayerExtensions.SetPlaybackProperties(mediaPlayer.Control, sdkVideoPlayer, isLiveStream);
             }
 
             // Livekit streaming doesn't need to adjust playback properties
@@ -202,7 +187,7 @@ namespace DCL.SDKComponents.MediaStream
             {
                 MediaPlayer mediaPlayer = urlMediaPlayer.MediaPlayer;
                 if (!mediaPlayer.MediaOpened) return;
-                MediaPlayerExtensions.SetPlaybackPropertiesAsync(mediaPlayer.Control, MediaPlayerComponent.DEFAULT_POSITION, customMediaStream.Loop, MediaPlayerComponent.DEFAULT_PLAYBACK_RATE, true).Forget();
+                MediaPlayerExtensions.SetPlaybackProperties(mediaPlayer.Control, MediaPlayerComponent.DEFAULT_POSITION, customMediaStream.Loop, MediaPlayerComponent.DEFAULT_PLAYBACK_RATE, true);
             }
         }
 
@@ -221,8 +206,9 @@ namespace DCL.SDKComponents.MediaStream
                     if (player.MediaOpened)
                         return true;
 
-                    // Video files from the content server are flagged as application/octet-stream;
-                    // the query param makes it answer with the real content type.
+                    // Inherited from AVPro (RenderHeads #2008: AVFoundation can't open application/octet-stream media,
+                    // which is how the content server flags video files). FFmpeg probes the bytes, so re-check
+                    // whether UUAV still needs it with a content-server MP4 on macOS and Windows.
                     string target = ctx.isFromContentServer ? string.Format("{0}?includeMimeType", address.Url) : address.Url;
                     return player.OpenMedia(MediaPathType.AbsolutePathOrURL, target, ctx.autoPlay);
                 },
