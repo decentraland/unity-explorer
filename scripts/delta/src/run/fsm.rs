@@ -179,7 +179,8 @@ pub enum Cmd {
     /// nothing there.
     EncodePatches {
         staging: PathBuf,
-        /// The first hex digits of the release zip's sha256: a rebuild never reuses a patch key.
+        /// The first hex digits of the release zip's sha256 and the encoding generation
+        /// (`3f9a12bc-e1`): a rebuild or a re-encode never reuses a patch key.
         build_id: String,
         release: Build,
         bases: Vec<(Tag, Build, Plan)>,
@@ -520,8 +521,8 @@ fn scan_builds(folders: &Folders) -> Cmd {
 /// Hex digits of the release zip's sha256 in every patch key (docs/delta-updates.md, S3 layout).
 const BUILD_ID_DIGITS: usize = 8;
 
-/// Bumped whenever `hdiff::VERSION`, `hdiff::HDIFFZ_ARGS` or the whole-file rule changes the
-/// bytes a zip encodes to, so a re-encode of the same zip never reuses a patch key.
+/// Bumped whenever `hdiff::VERSION`, `hdiff::HDIFFZ_ARGS`, the whole-file rule or the bundle
+/// pairing changes the bytes a zip encodes to (pinned by `encoding_generation_pins_the_encoder`), so a re-encode of the same zip never reuses a patch key.
 const ENCODING_GENERATION: u32 = 1;
 
 /// The first hex digits of the release zip's sha256 and the encoding generation, part of every
@@ -678,7 +679,7 @@ mod tests {
 
     use anyhow::{Context, Result, bail, ensure};
 
-    use super::{Cmd, Msg, Rebuilt, init, judge, update};
+    use super::{Cmd, ENCODING_GENERATION, Msg, Rebuilt, init, judge, update};
     use crate::builds::signatures::Signatures;
     use crate::builds::tree::{Build, Node, Tree};
     use crate::builds::values::{Mode, RelPath, Sha256};
@@ -687,6 +688,7 @@ mod tests {
     use crate::publishing::values::{ETag, ZipName};
     use crate::releases::tag::{Platform, Tag};
     use crate::run::state::{DropReason, Dropped, Release, Request, Run, State};
+    use crate::shell::hdiff::{HDIFFZ_ARGS, VERSION};
 
     const RELEASE: &str = "v1.1.0";
     const BASE: &str = "v1.0.0";
@@ -884,6 +886,17 @@ mod tests {
         ensure!(run.state.name() == state_name, "never reached {state_name}");
         let cmd: Cmd = cmds.pop().context("no cmd")?;
         Ok((run, cmd))
+    }
+
+    /// Changing the encoder changes the patch bytes under the same key: bump
+    /// `ENCODING_GENERATION`, then this pin.
+    #[test]
+    fn encoding_generation_pins_the_encoder() -> Result<()> {
+        ensure!(
+            (ENCODING_GENERATION, VERSION, HDIFFZ_ARGS) == (1, "v5.1.3", ["-m-6", "-c-lzma2-9-16m"]),
+            "the encoder changed: bump ENCODING_GENERATION and this pin"
+        );
+        Ok(())
     }
 
     #[test]

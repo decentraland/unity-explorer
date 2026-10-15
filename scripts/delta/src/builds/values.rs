@@ -11,9 +11,15 @@ pub fn has_unsafe_char(text: &str) -> bool {
 }
 
 /// `CON`, `PRN`, `AUX`, `NUL`, and `COM` or `LPT` followed by `0` to `9`, `¹`, `²` or `³`, with
-/// or without an extension: Win32 opens the device instead of a file of that name.
+/// or without an extension, ignoring spaces before it: Win32 opens the device instead of a file
+/// of that name.
 fn is_windows_device(segment: &str) -> bool {
-    let stem: String = segment.split('.').next().unwrap_or_default().to_ascii_uppercase();
+    let stem: String = segment
+        .split('.')
+        .next()
+        .unwrap_or_default()
+        .trim_end_matches(' ')
+        .to_ascii_uppercase();
     matches!(stem.as_str(), "CON" | "PRN" | "AUX" | "NUL")
         || stem
             .strip_prefix("COM")
@@ -135,6 +141,9 @@ mod tests {
     #[case("COM0")]
     #[case("lpt³.txt")]
     #[case("Data/COM¹.dll")]
+    #[case("CON .txt")]
+    #[case("Data/nul  .dll")]
+    #[case("COM1 .log")]
     #[case("a<b")]
     #[case("a>b")]
     #[case("a\"b")]

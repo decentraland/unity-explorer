@@ -111,7 +111,7 @@ jobs:
             runner: macos-latest
             zip: Decentraland_macos.zip
     runs-on: ${{ matrix.runner }}
-    # Above the sum of the step timeouts (280 on windows64, checkout, summary and artifact upload
+    # Above the sum of the step timeouts (285 on windows64, checkout, summary and artifact upload
     # included), with headroom for runner setup and the post steps (cache save): a hung step
     # fails (absorbed by continue-on-error) instead of cancelling the job.
     timeout-minutes: 300
@@ -183,19 +183,14 @@ jobs:
         timeout-minutes: 40
         run: '"$DELTA" run "$RUN" --until Verified'
 
-      - name: Prepare the upload and recheck the release
+      - name: Prepare the upload
         timeout-minutes: 15
-        env:
-          AWS_MAX_ATTEMPTS: 3
-          AWS_RETRY_MODE: standard
-          AWS_ACCESS_KEY_ID: ${{ secrets.EXPLORER_TEAM_AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.EXPLORER_TEAM_AWS_SECRET_ACCESS_KEY }}
-          EXPLORER_TEAM_S3_BUCKET: ${{ secrets.EXPLORER_TEAM_S3_BUCKET }}
-          GH_TOKEN: ${{ github.token }}
-        run: '"$DELTA" run "$RUN" --until Rechecked'
+        run: '"$DELTA" run "$RUN" --until Prepared'
 
-      - name: Upload the patches, recheck the release, publish the manifest
-        timeout-minutes: 25
+      # The recheck before the upload runs in the same invocation as the upload, so it cannot
+      # go stale between steps.
+      - name: Recheck the release, upload the patches, recheck, publish the manifest
+        timeout-minutes: 30
         env:
           AWS_MAX_ATTEMPTS: 3
           AWS_RETRY_MODE: standard

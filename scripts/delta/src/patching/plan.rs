@@ -53,6 +53,7 @@ fn is_file(tree: &Tree, path: &RelPath) -> bool {
 /// Changed files are patched from the same path. A bundle renamed by its content hash is
 /// patched from the one base bundle of the same name that left the build. Everything else that
 /// is new or changed ships whole. Unchanged files, and changes to modes or links, need no job.
+/// Changing the pairing changes the patch bytes: bump `ENCODING_GENERATION` (`run::fsm`).
 pub fn plan(base: &Tree, target: &Tree) -> Plan {
     let mut renamed_away: BTreeMap<&str, Vec<&RelPath>> = BTreeMap::new();
     for (path, _, _) in base.files() {
@@ -100,7 +101,8 @@ pub fn needs_whole_trial(file_size: u64, diff_size: u64) -> bool {
     diff_size.saturating_mul(2) >= file_size
 }
 
-/// The whole-file encoding wins only when strictly smaller; a tie keeps the patch.
+/// The whole-file encoding wins only when strictly smaller; a tie keeps the patch. Changing this
+/// or `needs_whole_trial` changes the patch bytes: bump `ENCODING_GENERATION` (`run::fsm`).
 pub fn prefer_whole(diff_size: u64, whole_size: u64) -> bool {
     whole_size < diff_size
 }

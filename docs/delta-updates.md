@@ -131,7 +131,7 @@ it into a full release later does not regenerate the patches; launchers use the 
           "path": "GameAssembly.dll",
           "from_path": "GameAssembly.dll",
           "from_sha256": "...",
-          "patch": "from/v0.186.0-alpha/1a2b3c4d/GameAssembly.dll.hdiff",
+          "patch": "from/v0.186.0-alpha/1a2b3c4d-e1/GameAssembly.dll.hdiff",
           "patch_size": 8347352,
           "patch_sha256": "..."
         }
@@ -139,7 +139,7 @@ it into a full release later does not regenerate the patches; launchers use the 
       "whole": [
         {
           "path": "Decentraland_Data/StreamingAssets/aa/catalog.hash",
-          "patch": "from/v0.186.0-alpha/1a2b3c4d/Decentraland_Data/StreamingAssets/aa/catalog.hash.hdiff",
+          "patch": "from/v0.186.0-alpha/1a2b3c4d-e1/Decentraland_Data/StreamingAssets/aa/catalog.hash.hdiff",
           "patch_size": 58,
           "patch_sha256": "..."
         }
@@ -199,7 +199,7 @@ until it lands, no client reads these files):
 7. Reject the manifest (fall back to the zip and report it) if any `path`, `from_path`, `deleted`
    entry or `patch` is absolute, contains an empty, `.` or `..` segment, a segment ending in `.` or a
    space, a Windows device name (`CON`, `PRN`, `AUX`, `NUL`, `COM0`-`COM9`, `LPT0`-`LPT9`,
-   `COM¹`-`COM³`, `LPT¹`-`LPT³`, with or without an extension), or contains `\`, `:`, `<`, `>`, `"`, `|`, `?`, `*` or a control character
+   `COM¹`-`COM³`, `LPT¹`-`LPT³`, with or without an extension, ignoring spaces before it), or contains `\`, `:`, `<`, `>`, `"`, `|`, `?`, `*` or a control character
    (NUL included), and if a `symlink` target is absolute, contains any of those characters or a
    control character, or resolves outside the install folder. On NTFS those characters reach
    outside the folder or into another file (`..\x.dll`, `C:x.dll`, `\\host\share`,
@@ -294,6 +294,10 @@ loop:
 Only a document paused by `--until` or ended by a msg can be resumed. A cmd interrupted mid-execution
 may have consumed its inputs (extraction removes the zips, replay removes the base builds), so a
 killed step is not resumed on its work folder: create a new run.
+
+`--until` refuses `Unpublished`, `Rechecked` and `ReadyToPublish`: their next cmd acts on a release
+check that would be stale when resumed later, so each recheck runs in the same invocation as the
+removal, upload or publish it guards.
 
 The YAML keeps one step per phase with its own timeout, each `delta run --until <state>`; the
 machine does not know the steps exist, and a re-run of a slice whose state is already reached does

@@ -71,14 +71,23 @@ fn text(error: &anyhow::Error) -> String {
     format!("{error:#}")
 }
 
-/// Removes `paths` after a failure; a failed removal is added to the reason.
+/// Removes every one of `paths`, going on past a failed removal; the reasons of the failed ones.
+fn remove_all(paths: &[&Path]) -> Vec<String> {
+    paths
+        .iter()
+        .filter_map(|path: &&Path| remove(path).err())
+        .map(|cleanup: anyhow::Error| text(&cleanup))
+        .collect()
+}
+
+/// Removes `paths` after a failure; each failed removal is added to the reason.
 fn discard(paths: &[&Path], error: &anyhow::Error) -> String {
-    for path in paths {
-        if let Err(cleanup) = remove(path) {
-            return format!("{error:#} (and cannot clean up: {cleanup:#})");
-        }
+    let failures: Vec<String> = remove_all(paths);
+    if failures.is_empty() {
+        text(error)
+    } else {
+        format!("{error:#} (and cannot clean up: {})", failures.join("; "))
     }
-    text(error)
 }
 
 /// `None` when the bucket has no object at the key.
@@ -201,10 +210,16 @@ fn replay_patches(
     let mut failed: Vec<(Tag, String)> = Vec::new();
     for (base, replay) in bases {
         let replayed: Result<Rebuilt> = rebuild_and_describe(platform, staging, artifacts, &replay, io);
-        let cleaned: Result<()> = remove(&replay.rebuild).and_then(|()| remove(&replay.base));
-        match (replayed, cleaned) {
-            (Ok(result), Ok(())) => rebuilt.push((base, result)),
-            (Err(error), _) | (Ok(_), Err(error)) => failed.push((base, text(&error))),
+        match replayed {
+            Ok(result) => {
+                let failures: Vec<String> = remove_all(&[&replay.rebuild, &replay.base]);
+                if failures.is_empty() {
+                    rebuilt.push((base, result));
+                } else {
+                    failed.push((base, format!("cannot clean up: {}", failures.join("; "))));
+                }
+            }
+            Err(error) => failed.push((base, discard(&[&replay.rebuild, &replay.base], &error))),
         }
     }
     Msg::PatchesReplayed { rebuilt, failed }

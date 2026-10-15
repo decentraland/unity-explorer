@@ -198,9 +198,10 @@ pub enum State {
 }
 
 impl State {
-    /// The states `--until` accepts: every state but `Unpublished` and `ReadyToPublish`, whose
-    /// next cmd acts on a release check that would be stale when resumed later.
-    pub const PAUSES: [&'static str; 12] = [
+    /// The states `--until` accepts: every state but `Unpublished`, `Rechecked` and
+    /// `ReadyToPublish`, whose next cmd acts on a release check that would be stale when resumed
+    /// later.
+    pub const PAUSES: [&'static str; 11] = [
         "Requested",
         "Cleared",
         "Downloaded",
@@ -209,7 +210,6 @@ impl State {
         "Encoded",
         "Verified",
         "Prepared",
-        "Rechecked",
         "PatchesUploaded",
         "Published",
         "Failed",
