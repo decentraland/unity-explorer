@@ -68,7 +68,7 @@ enum Operation {
     Run {
         document: PathBuf,
         /// Pause once this state is reached; the next `run` resumes from it.
-        #[arg(long, value_parser = PossibleValuesParser::new(State::NAMES))]
+        #[arg(long, value_parser = PossibleValuesParser::new(State::PAUSES))]
         until: Option<String>,
         /// Use <folder> as the bucket, with nothing published and every signature valid.
         #[arg(long)]

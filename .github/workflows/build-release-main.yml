@@ -60,7 +60,8 @@ jobs:
       tag_version: ${{ needs.get-info.outputs.tag_version }}
     secrets: inherit
 
-  # Per-file binary patches into this release; never fails this run. See docs/delta-updates.md.
+  # Per-file binary patches into this release (docs/delta-updates.md). A failed delta job never
+  # fails this run; a cancelled or lost one does, and then no draft release is created.
   delta:
     name: Delta Patches
     needs: [get-info, build]

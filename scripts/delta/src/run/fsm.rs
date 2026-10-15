@@ -520,9 +520,15 @@ fn scan_builds(folders: &Folders) -> Cmd {
 /// Hex digits of the release zip's sha256 in every patch key (docs/delta-updates.md, S3 layout).
 const BUILD_ID_DIGITS: usize = 8;
 
-/// The first hex digits of the release zip's sha256, part of every patch key.
+/// Bumped whenever `hdiff::VERSION`, `hdiff::HDIFFZ_ARGS` or the whole-file rule changes the
+/// bytes a zip encodes to, so a re-encode of the same zip never reuses a patch key.
+const ENCODING_GENERATION: u32 = 1;
+
+/// The first hex digits of the release zip's sha256 and the encoding generation, part of every
+/// patch key.
 fn build_id(zip: &ReleaseZip) -> String {
-    zip.zip.sha256.as_ref().chars().take(BUILD_ID_DIGITS).collect()
+    let digest: String = zip.zip.sha256.as_ref().chars().take(BUILD_ID_DIGITS).collect();
+    format!("{digest}-e{ENCODING_GENERATION}")
 }
 
 fn encode_patches(builds: &Builds) -> Cmd {
@@ -958,8 +964,8 @@ mod tests {
         };
         ensure!(staging == PathBuf::from("work").join("staging"));
         ensure!(
-            build_id == "aaaaaaaa",
-            "the first hex digits of the zip's sha256: {build_id}"
+            build_id == "aaaaaaaa-e1",
+            "the first hex digits of the zip's sha256 and the encoding generation: {build_id}"
         );
         let jobs: Vec<Job> = bases.first().map(|(_, _, plan)| plan.jobs.clone()).unwrap_or_default();
         ensure!(

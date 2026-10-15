@@ -4,7 +4,8 @@ Launcher users update by downloading small binary patches instead of the full re
 Explorer release, CI publishes per-file [HDiffPatch](https://github.com/sisong/HDiffPatch) patches
 from each of the last N published releases, plus a manifest. The launcher always targets the latest
 release: it applies the patch set for its installed version when one exists, and falls back to the
-full zip otherwise.
+full zip otherwise. A release that is still a draft when the next one is built is not a base of it,
+so its users download the full zip for that next release.
 
 Epic builds are excluded: the Epic store ships its own updates.
 
@@ -51,14 +52,15 @@ s3-latest-release.yml       -> releases/latest.json, then prune old delta/ folde
   receives the exact `tag_version` the build used (the version action derives the next tag from git
   tags, which the page workflow is about to create), and the draft release only appears once the
   patches are uploaded.
-- It never blocks a release: both jobs are `continue-on-error`. A failure shows as an error
+- A failed delta job never fails the run: both jobs are `continue-on-error`. A failure shows as an error
   annotation, and launchers fall back to the zip and report it. A base whose patches fail to
   generate or verify is left out of the manifest; the other bases still ship. A **cancelled** delta
   job (or a lost runner) is different: the run ends `cancelled` and no draft release is created. Use
   "Re-run failed jobs" on the run, or draft the release manually.
 - A new launcher zip invalidates the patch set made for the previous zip of the same unpublished
   tag and platform, so the zip upload in `build-unitycloud.yml` removes `<tag>/delta/<platform>/`
-  before it replaces the zip (Epic zips have no patches). Each delta run removes the same folder
+  before it replaces the zip and again after, so a manifest a concurrent run published during the
+  upload is not kept (Epic zips have no patches). Each delta run removes the same folder
   again as a second line of defence.
 - `latest.json` is unchanged and stays the only switch that makes a version live.
 - [`build-release-delta.yml`](../.github/workflows/build-release-delta.yml) also has a
@@ -75,13 +77,14 @@ s3-latest-release.yml       -> releases/latest.json, then prune old delta/ folde
 ```
 
 `<platform>` is `windows64` or `macos`; `<build id>` is the first eight hex digits of the release
-zip's sha256. The manifest URL is derived by convention; a 404 means "no delta, use the zip". The
+zip's sha256 and the encoding generation (`3f9a12bc-e1`), bumped whenever the HDiffPatch version,
+its flags or the whole-file rule change the patch bytes. The manifest URL is derived by convention; a 404 means "no delta, use the zip". The
 launcher never derives a patch URL: it follows the `patch` strings of the manifest.
 
 **Immutable once published.** Patches are uploaded with a one-year immutable `Cache-Control`. The
 manifest is uploaded without it: a rebuild of a still-unpublished tag rewrites it under the same
 key, and a CDN edge must not keep serving the old one. Patch keys include the build id, so a
-rebuild of an unpublished tag writes its patches under new keys and an edge that cached the previous
+rebuild of an unpublished tag with a new zip or a new encoding writes its patches under new keys and an edge that cached the previous
 build's patches is never asked for them again. Nothing is rewritten after the release is
 published: the workflow refuses to generate or upload for a published tag. A missing or broken delta set after publication is not fixed
 in place; launchers fall back to the zip until the next release.
@@ -164,7 +167,8 @@ it into a full release later does not regenerate the patches; launchers use the 
 
 ## Launcher contract
 
-Implemented in the launcher repo:
+To be implemented in `decentraland/launcher-rust` (branch `feat/delta-updates`, not merged yet;
+until it lands, no client reads these files):
 
 1. Read `latest.json`. If the installed version equals it, stop.
 2. Fetch `releases/<version>/delta/<platform>/manifest.json`.
@@ -272,7 +276,8 @@ any       -> Failed (terminal)
 bases, work folder). `RecheckRelease` runs three times: before anything is removed from the
 bucket, before the patches go out, and again before the manifest, so a publish or a rebuild during
 the run never loses a live release's patches and never gets this run's manifest. No base left at any point fails the run. Patch keys carry
-the build id (`from/<base>/<build id>/<path>.hdiff`), so a rebuild never reuses a key.
+the build id (`from/<base>/<build id>/<path>.hdiff`), so a rebuild with a new zip or a new
+encoding never reuses a key.
 
 `delta run run.json [--until <state>]` drains the document like `FsmRuntime.Drain`:
 

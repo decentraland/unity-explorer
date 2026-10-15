@@ -10,6 +10,7 @@ use std::process::Output;
 
 use anyhow::{Context, Result, ensure};
 
+use delta::builds::disk::extract;
 use delta::io::Io;
 use delta::publishing::contract::{DeltaDto, FileDto, ManifestDto};
 use delta::publishing::values::ZipName;
@@ -324,7 +325,7 @@ fn a_run_publishes_verified_patches_and_the_manifest() -> Result<()> {
         .iter()
         .find(|p| p.path == "Game.dll")
         .context("no Game.dll patch")?;
-    let build_id: String = manifest.zip.sha256.chars().take(8).collect();
+    let build_id: String = format!("{}-e1", manifest.zip.sha256.get(..8).context("short sha256")?);
     ensure!(
         game.patch == format!("from/{BASE}/{build_id}/Game.dll.hdiff"),
         "{}",
@@ -417,6 +418,37 @@ fn a_bad_base_is_dropped_and_the_others_ship() -> Result<()> {
     ensure!(
         !fixture.root.join("work/bases").join(unsafe_zip).join("lnk").exists(),
         "nothing of the unsafe zip was written"
+    );
+    Ok(())
+}
+
+/// APFS takes the composed and decomposed forms of `é` as one name, which the case-folded entry
+/// check does not see: a file listed under the other form of a link's name must not be written
+/// through the link chain `d/é -> up/../..`, `d/up -> ..` above the build.
+#[test]
+fn extraction_never_writes_through_a_link_named_in_another_unicode_form() -> Result<()> {
+    let dir: tempfile::TempDir = tempfile::tempdir()?;
+    let archive: PathBuf = dir.path().join("release.zip");
+    zip_entries(
+        &archive,
+        &[
+            ("d/up", Some("..")),
+            ("d/\u{e9}", Some("up/../..")),
+            ("d/e\u{301}/payload", None),
+        ],
+    )?;
+    let above: PathBuf = dir.path().join("above");
+    let extracted: Result<PathBuf> = extract(&archive, &above.join("out"));
+    let written: Vec<String> = fs::read_dir(&above)?
+        .map(|item| Ok(item?.file_name().to_string_lossy().into_owned()))
+        .collect::<Result<Vec<String>>>()?;
+    ensure!(
+        written == ["out"],
+        "written next to the build: {written:?} ({extracted:?})"
+    );
+    ensure!(
+        !dir.path().join("payload").exists(),
+        "written above the build ({extracted:?})"
     );
     Ok(())
 }
@@ -614,5 +646,10 @@ fn the_command_line_pauses_at_until_and_resumes_to_completion() -> Result<()> {
     ensure!(again.status.success(), "a finished run completes at once");
     let unknown: Output = delta_binary(&["run", document_text, "--until", "Nowhere", "--local", bucket])?;
     ensure!(!unknown.status.success(), "an unknown state is refused");
+    let stale: Output = delta_binary(&["run", document_text, "--until", "ReadyToPublish", "--local", bucket])?;
+    ensure!(
+        !stale.status.success(),
+        "a pause before a stale release check is refused"
+    );
     Ok(())
 }

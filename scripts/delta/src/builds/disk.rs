@@ -269,8 +269,10 @@ fn list_members(archive: &mut zip::ZipArchive<File>) -> Result<Vec<Member>> {
     Ok(members)
 }
 
-/// Writes checked members. Files are created with `create_new`, so a write never goes through
-/// anything already at that path.
+/// Writes checked members: folders and files first, links last, so no write passes through a
+/// link the archive made, whatever case or Unicode form its name uses. Files are created with
+/// `create_new`, so a write never goes through anything already at that path, and a link is
+/// only made in a folder that resolves inside `out`.
 fn write_members(archive: &mut zip::ZipArchive<File>, members: &[Member], out: &Path) -> Result<()> {
     for (index, member) in members.iter().enumerate() {
         let target: PathBuf = member.path().under(out);
@@ -278,11 +280,8 @@ fn write_members(archive: &mut zip::ZipArchive<File>, members: &[Member], out: &
             Member::Folder(_) => {
                 fs::create_dir_all(&target).with_context(|| format!("cannot create {}", target.display()))?;
             }
-            Member::Link {
-                target: link_target, ..
-            } => {
+            Member::Link { .. } => {
                 fs::create_dir_all(target.parent().unwrap_or(out))?;
-                make_link(link_target, &target)?;
             }
             Member::File { mode, .. } => {
                 fs::create_dir_all(target.parent().unwrap_or(out))?;
@@ -295,6 +294,24 @@ fn write_members(archive: &mut zip::ZipArchive<File>, members: &[Member], out: &
                 io::copy(&mut source, &mut sink).with_context(|| format!("cannot extract {}", member.path()))?;
                 set_mode(&target, mode)?;
             }
+        }
+    }
+    let real_out: PathBuf = fs::canonicalize(out).with_context(|| format!("cannot resolve {}", out.display()))?;
+    for member in members {
+        if let Member::Link {
+            path,
+            target: link_target,
+        } = member
+        {
+            let target: PathBuf = path.under(out);
+            let folder: &Path = target.parent().unwrap_or(out);
+            let real_folder: PathBuf =
+                fs::canonicalize(folder).with_context(|| format!("cannot resolve {}", folder.display()))?;
+            ensure!(
+                real_folder.starts_with(&real_out),
+                "link {path} would be created outside the build"
+            );
+            make_link(link_target, &target)?;
         }
     }
     Ok(())

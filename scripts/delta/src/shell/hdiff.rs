@@ -9,6 +9,7 @@ use anyhow::{Context, Result, ensure};
 use crate::builds::disk::{remove, sha256_file};
 use crate::shell::process::{path_text, run};
 
+/// Changing it or `HDIFFZ_ARGS` changes the patch bytes: bump `ENCODING_GENERATION` (`run::fsm`).
 pub const VERSION: &str = "v5.1.3";
 /// Patch size over speed; the same flags give the same patches on every run.
 pub const HDIFFZ_ARGS: [&str; 2] = ["-m-6", "-c-lzma2-9-16m"];

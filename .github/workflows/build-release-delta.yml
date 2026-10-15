@@ -115,13 +115,13 @@ jobs:
     # included), with headroom for runner setup and the post steps (cache save): a hung step
     # fails (absorbed by continue-on-error) instead of cancelling the job.
     timeout-minutes: 300
-    # The bucket credentials are set only on the steps that talk to S3, as environment
-    # variables the tool reads itself; they never appear on a command line.
+    # The bucket credentials and GH_TOKEN are set only on the steps that talk to S3 and recheck
+    # the release, as environment variables the tool reads itself; they never appear on a
+    # command line or reach the steps that run HDiffPatch on archive content.
     env:
       PLATFORM: ${{ matrix.platform }}
       ZIP: ${{ matrix.zip }}
       BASES: ${{ needs.plan.outputs.bases }}
-      GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v6
         timeout-minutes: 5
@@ -168,6 +168,7 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.EXPLORER_TEAM_AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.EXPLORER_TEAM_AWS_SECRET_ACCESS_KEY }}
           EXPLORER_TEAM_S3_BUCKET: ${{ secrets.EXPLORER_TEAM_S3_BUCKET }}
+          GH_TOKEN: ${{ github.token }}
         run: '"$DELTA" run "$RUN" --until Downloaded'
 
       - name: Extract and scan the builds
@@ -190,6 +191,7 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.EXPLORER_TEAM_AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.EXPLORER_TEAM_AWS_SECRET_ACCESS_KEY }}
           EXPLORER_TEAM_S3_BUCKET: ${{ secrets.EXPLORER_TEAM_S3_BUCKET }}
+          GH_TOKEN: ${{ github.token }}
         run: '"$DELTA" run "$RUN" --until Rechecked'
 
       - name: Upload the patches, recheck the release, publish the manifest
@@ -200,6 +202,7 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.EXPLORER_TEAM_AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.EXPLORER_TEAM_AWS_SECRET_ACCESS_KEY }}
           EXPLORER_TEAM_S3_BUCKET: ${{ secrets.EXPLORER_TEAM_S3_BUCKET }}
+          GH_TOKEN: ${{ github.token }}
         run: '"$DELTA" run "$RUN"'
 
       - name: Write job summary
