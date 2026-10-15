@@ -99,7 +99,10 @@ namespace DCL.WebRequests
 
                 // BaseColour or any colour image should be non-linear; Metallic-roughness, normals or any data based textures should be linear.
                 // readable: true keeps the decoded texture CPU-readable.
-                return await KtxTextureDecoder.DecodeAsync(data, webRequest.textureType != TextureType.Albedo, wrapMode, filterMode, readable: true, webRequest.url);
+                Texture2D texture = await KtxTextureDecoder.DecodeAsync(data, webRequest.textureType != TextureType.Albedo, wrapMode, filterMode, readable: true, webRequest.url);
+
+                ProfilingCounters.TexturesAmount.Value++;
+                return texture;
             }
         }
     }

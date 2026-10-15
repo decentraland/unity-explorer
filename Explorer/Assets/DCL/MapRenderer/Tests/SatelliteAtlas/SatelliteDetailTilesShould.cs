@@ -16,9 +16,9 @@ namespace DCL.MapRenderer.Tests.SatelliteAtlas
         private readonly Dictionary<Vector3Int, SatelliteDetailTiles.Tile> tiles = new ();
         private readonly List<KeyValuePair<int, Vector3Int>> evictions = new ();
         private readonly List<Vector3Int> unusedLoads = new ();
-        private GameObject viewObject;
-        private AtlasChunk view;
-        private Texture2D loadedTexture;
+        private GameObject viewObject = null!;
+        private AtlasChunk view = null!;
+        private Texture2D loadedTexture = null!;
 
         [SetUp]
         public void SetUp()

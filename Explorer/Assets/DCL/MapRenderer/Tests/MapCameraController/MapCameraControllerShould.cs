@@ -12,10 +12,10 @@ namespace DCL.MapRenderer.Tests.MapCameraController
 {
     public class MapCameraControllerShould
     {
-        private DCL.MapRenderer.MapCameraController.MapCameraController mapCamera;
-        private MapCameraObject mapCameraObject;
-        private ICoordsUtils coordsUtils;
-        private IMapCullingController culling;
+        private DCL.MapRenderer.MapCameraController.MapCameraController mapCamera = null!;
+        private MapCameraObject mapCameraObject = null!;
+        private ICoordsUtils coordsUtils = null!;
+        private IMapCullingController culling = null!;
 
         [SetUp]
         public void SetUp()

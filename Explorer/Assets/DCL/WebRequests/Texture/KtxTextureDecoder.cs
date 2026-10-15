@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DCL.Profiling;
 using KtxUnity;
 using System;
 using UnityEngine;
@@ -52,7 +51,6 @@ namespace DCL.WebRequests
                 texture.wrapMode = wrapMode;
                 texture.filterMode = filterMode;
                 texture.SetDebugName(debugName);
-                ProfilingCounters.TexturesAmount.Value++;
                 return texture;
             }
             finally

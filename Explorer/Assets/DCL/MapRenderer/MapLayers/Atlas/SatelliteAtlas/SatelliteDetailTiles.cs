@@ -23,8 +23,9 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
     ///     Every map camera gets the level-3 tiles in view and, on top of them, the level whose sharpness is nearest to its render
     ///     texture's when that level is finer. Tiles are requested once the cameras have been still for <see cref="SETTLE_SECONDS" />,
     ///     at most <see cref="MAX_CONCURRENT_LOADS" /> at a time, nearest to their camera's centre first; a load whose tile leaves the view
-    ///     is cancelled. A tile that fails is requested again after <see cref="RETRY_FAILED_TILE_AFTER_SECONDS" />, even if no camera moves.
-    ///     Each tile's KTX2 file is kept in the disk cache, so a later load reads it from disk, and a file that fails to decode is removed
+    ///     is cancelled. A tile that fails is requested again after <see cref="RETRY_FAILED_TILE_AFTER_SECONDS" />, even if no camera moves,
+    ///     and keeps that wait if it leaves the view and comes back in between; a tile the server answers 404 for is never requested again
+    ///     in the session. Each tile's KTX2 file is kept in the disk cache, so a later load reads it from disk, and a file that fails to decode is removed
     ///     from it. The decoded texture keeps no CPU copy and belongs to the tile alone. Up to <see cref="MAX_CACHED_TILES" /> tiles out of
     ///     view stay loaded while the same cameras are rented; once a camera is released, every tile out of view is destroyed and its
     ///     memory freed.
@@ -42,12 +43,18 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
         private const int CACHE_ITERATION = 1;
         private const float SETTLE_SECONDS = 0.1f;
         private const float FADE_IN_SECONDS = 0.25f;
-        private const float RETRY_FAILED_TILE_AFTER_SECONDS = 30f;
+        internal const float RETRY_FAILED_TILE_AFTER_SECONDS = 30f;
         private const float SATURATION_VALUE = 1f;
         private static readonly int SATURATION = Shader.PropertyToID("_Saturation");
 
         private static readonly IComparer<KeyValuePair<int, Vector3Int>> OLDEST_FIRST =
             Comparer<KeyValuePair<int, Vector3Int>>.Create(static (a, b) => a.Key.CompareTo(b.Key));
+
+        /// <summary>Tests replace the clock to pass the retry wait without waiting it out.</summary>
+        internal Func<float>? clockOverride;
+
+        /// <summary>Tests replace the KTX2 decoder to control when a tile's texture is produced, and which one.</summary>
+        internal Func<byte[], string, UniTask<Texture2D>>? decodeOverride;
 
         private readonly string baseUrl;
         private readonly IWebRequestController webRequestController;
@@ -64,6 +71,10 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
         private readonly List<Vector3Int> unusedLoads = new ();
         private readonly List<KeyValuePair<int, Vector3Int>> evictions = new ();
 
+        // Kept for the session, by URL, past the tiles' own lifetime: a tile out of view is dropped from <see cref="tiles" />.
+        private readonly HashSet<string> emptyUrls = new ();
+        private readonly Dictionary<string, float> failedUrls = new ();
+
         private UniTask<SatelliteManifest> manifestLoad;
         private Vector2 gridTopLeft;
         private float baseChunkSize;
@@ -77,6 +88,10 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
         private bool tileFailureReported;
         private bool manifestFailureReported;
         private bool diskCacheFailureReported;
+
+        internal int ActiveLoads => activeLoads;
+
+        private float Now => clockOverride?.Invoke() ?? UnityEngine.Time.realtimeSinceStartup;
 
         public SatelliteDetailTiles(string baseUrl, IWebRequestController webRequestController, IDiskCache<byte[]> diskCache, IMapCullingController cullingController,
             SpriteRenderer template, int drawOrderOfBaseLevel)
@@ -133,7 +148,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
                 return;
 
             refreshStamp++;
-            lastCameraChangeTime = UnityEngine.Time.realtimeSinceStartup;
+            lastCameraChangeTime = Now;
 
             int previousCameraCount = cameraCount;
             cameraCount = cullingController.CameraStates.Count;
@@ -207,7 +222,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
 
         /// <summary>
         ///     Fills <paramref name="result" /> with the tiles that have no texture and were not used in the refresh
-        ///     <paramref name="refreshStamp" />: pending or loading tiles that left the view, and failed or empty tiles out of view.
+        ///     <paramref name="refreshStamp" />: pending or loading tiles that left the view, and failed tiles out of view.
         /// </summary>
         internal static void CollectUnusedLoads(Dictionary<Vector3Int, Tile> tiles, int refreshStamp, List<Vector3Int> result)
         {
@@ -258,7 +273,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
 
                 while (true)
                 {
-                    float remaining = SETTLE_SECONDS - (UnityEngine.Time.realtimeSinceStartup - lastCameraChangeTime);
+                    float remaining = SETTLE_SECONDS - (Now - lastCameraChangeTime);
 
                     if (remaining <= 0f)
                         break;
@@ -323,9 +338,10 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             {
                 tile.LastUsed = refreshStamp;
 
-                if (requestWith != null && tile.FailedAt is { } failedAt && UnityEngine.Time.realtimeSinceStartup - failedAt >= RETRY_FAILED_TILE_AFTER_SECONDS)
+                if (requestWith != null && tile.FailedAt is { } failedAt && Now - failedAt >= RETRY_FAILED_TILE_AFTER_SECONDS)
                 {
                     tile.FailedAt = null;
+                    failedUrls.Remove(tile.Url);
                     Enqueue(id, tile, cameraCenter);
                 }
 
@@ -335,17 +351,27 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             if (requestWith == null)
                 return;
 
-            tile = new Tile(RentView()) { LastUsed = refreshStamp };
+            // A tile of a section the manifest doesn't list is not published: there is nothing to request.
+            if (!requestWith.TryGetTilePath(id, out string path))
+                return;
+
+            var url = $"{baseUrl}/{path}";
+
+            if (emptyUrls.Contains(url))
+                return;
+
+            tile = new Tile(RentView()) { LastUsed = refreshStamp, Url = url };
             tiles.Add(id, tile);
 
-            // A tile of a section the manifest doesn't list is not published: there is nothing to request.
-            if (requestWith.TryGetTilePath(id, out string path))
+            // Back in view before its retry wait is over: it waits the rest of it, as if it had never left.
+            if (failedUrls.TryGetValue(url, out float failedBefore) && Now - failedBefore < RETRY_FAILED_TILE_AFTER_SECONDS)
             {
-                tile.Url = $"{baseUrl}/{path}";
-                Enqueue(id, tile, cameraCenter);
+                tile.FailedAt = failedBefore;
+                return;
             }
-            else
-                tile.Empty = true;
+
+            failedUrls.Remove(url);
+            Enqueue(id, tile, cameraCenter);
         }
 
         private void Enqueue(Vector3Int id, Tile tile, Vector2 cameraCenter)
@@ -391,7 +417,12 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
 
                 await UniTask.SwitchToMainThread(ct);
 
-                try { texture = await KtxTextureDecoder.DecodeAsync(bytes, linear: false, TextureWrapMode.Clamp, FilterMode.Bilinear, readable: false, url); }
+                try
+                {
+                    texture = decodeOverride != null
+                        ? await decodeOverride(bytes, url)
+                        : await KtxTextureDecoder.DecodeAsync(bytes, linear: false, TextureWrapMode.Clamp, FilterMode.Bilinear, readable: false, url);
+                }
 
                 // A missing native decoder is the machine's, not the file's.
                 catch (Exception e) when (e is not (OperationCanceledException or DllNotFoundException or EntryPointNotFoundException))
@@ -412,7 +443,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             if (ct.IsCancellationRequested)
                 UnityObjectUtils.SafeDestroy(texture);
             else if (failure != null)
-                Fail(tile, failure);
+                Fail(id, tile, failure);
             else if (texture != null)
                 Show(id, tile, texture);
 
@@ -522,12 +553,14 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             }
         }
 
-        private void Fail(Tile tile, Exception failure)
+        private void Fail(Vector3Int id, Tile tile, Exception failure)
         {
-            // A tile the server doesn't have stays empty: there is nothing to retry or report.
+            // A tile the server doesn't have is empty for the session: there is nothing to retry or report, and no view to hold.
             if (failure is UnityWebRequestException { ResponseCode: WebRequestUtils.NOT_FOUND })
             {
-                tile.Empty = true;
+                emptyUrls.Add(tile.Url);
+                tiles.Remove(id);
+                ReleaseTile(tile);
                 return;
             }
 
@@ -538,7 +571,8 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
                 ReportHub.LogException(failure, ReportCategory.UI);
             }
 
-            tile.FailedAt = lastFailureTime = UnityEngine.Time.realtimeSinceStartup;
+            tile.FailedAt = lastFailureTime = Now;
+            failedUrls[tile.Url] = lastFailureTime;
 
             if (!retryPending)
                 RefreshWhenFailedTilesCanRetryAsync(lifetimeCts.Token).Forget();
@@ -554,7 +588,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
 
             while (true)
             {
-                float remaining = RETRY_FAILED_TILE_AFTER_SECONDS - (UnityEngine.Time.realtimeSinceStartup - lastFailureTime);
+                float remaining = RETRY_FAILED_TILE_AFTER_SECONDS - (Now - lastFailureTime);
 
                 if (remaining <= 0f)
                     break;
@@ -629,7 +663,6 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             public float DistanceSqToCamera;
             public int LastUsed;
             public bool Pending;
-            public bool Empty;
 
             public Tile(AtlasChunk view)
             {

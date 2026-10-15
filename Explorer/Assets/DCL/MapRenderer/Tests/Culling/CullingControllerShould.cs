@@ -13,8 +13,8 @@ namespace DCL.MapRenderer.Tests.Culling
     {
         private static Rect cameraRect = new Rect(-50, -50, 100, 100);
 
-        private MapCullingController culling;
-        private IMapCullingVisibilityChecker visibilityChecker;
+        private MapCullingController culling = null!;
+        private IMapCullingVisibilityChecker visibilityChecker = null!;
 
         [SetUp]
         public void SetUp()
