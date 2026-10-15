@@ -114,6 +114,26 @@ namespace DCL.Interaction.PlayerOriginated.Tests
         }
 
         [Test]
+        [TestCase(PointerEventType.PetProximityEnter)]
+        [TestCase(PointerEventType.PetProximityLeave)]
+        public void NotRecordUserGestureForProximityEvents(PointerEventType eventType)
+        {
+            var sdkEvents = new PBPointerEvents
+            {
+                AppendPointerEventResultsIntent = new AppendPointerEventResultsIntent(),
+                PointerEvents = { CreateEntry(eventType, InputAction.IaPointer) },
+            };
+
+            sdkEvents.AppendPointerEventResultsIntent.InitializeWithAlloc();
+            sdkEvents.AppendPointerEventResultsIntent.AddValidIndex(0);
+            world.Create(new CRDTEntity(100), sdkEvents);
+
+            system.Update(0);
+
+            sceneStateProvider.DidNotReceive().LastUserInputTick = Arg.Any<uint>();
+        }
+
+        [Test]
         public void WriteValidResults()
         {
             var sdkEvents = new PBPointerEvents

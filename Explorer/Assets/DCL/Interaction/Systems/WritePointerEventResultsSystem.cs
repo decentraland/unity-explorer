@@ -134,10 +134,10 @@ namespace DCL.Interaction.PlayerOriginated.Systems
         }
 
         /// <summary>
-        ///     Only activation buttons count: movement, jump, walk, modifier and any-key presses do not express intent
+        ///     Only a press or release of an activation button counts: hover, proximity, movement, jump, walk, modifier and any-key input do not express intent
         /// </summary>
         private static bool IsUserGesture(InputAction button, PointerEventType eventType) =>
-            eventType is not (PointerEventType.PetHoverEnter or PointerEventType.PetHoverLeave)
+            eventType is PointerEventType.PetDown or PointerEventType.PetUp
             && button is InputAction.IaPointer or InputAction.IaPrimary or InputAction.IaSecondary
                 or InputAction.IaAction3 or InputAction.IaAction4 or InputAction.IaAction5 or InputAction.IaAction6;
     }
