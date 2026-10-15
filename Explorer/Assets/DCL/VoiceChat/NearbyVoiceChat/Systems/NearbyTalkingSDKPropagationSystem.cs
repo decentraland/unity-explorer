@@ -13,8 +13,10 @@ namespace DCL.VoiceChat.Nearby.Systems
 {
     /// <summary>
     ///     Resolves each player's Nearby voice activity, exposed to scenes as <c>PBAvatarBase.talking</c>.
-    ///     A remote player's value goes to the <see cref="SDKTalking" /> of the scene the player stands in;
-    ///     <see cref="SDKTalking.Set" /> marks it for a rewrite only when the value flips.
+    ///     A remote player's value goes to the <see cref="SDKTalking" /> of the scene the player stands in,
+    ///     written only on the frame <see cref="IsActivelySpeakingTag" /> appears or disappears
+    ///     (tracked through <see cref="TalkingMirroredTag" />) and on the frame the player is assigned to a scene;
+    ///     in steady state no remote player is touched.
     ///     Remote activity is read from <see cref="IsActivelySpeakingTag" /> as is: whether the local player hears
     ///     the speaker (mute, block, scene ban, listening state) does not change the fact that the avatar is talking.
     ///     The local player's value goes to <see cref="TalkingComponent" />, which
@@ -42,23 +44,39 @@ namespace DCL.VoiceChat.Nearby.Systems
         protected override void Update(float t)
         {
             World.Get<TalkingComponent>(playerEntity).IsTalking = stateModel.IsLocalSpeaking;
-            MarkRemotePlayerTalkingQuery(World);
-            MarkRemotePlayerSilentQuery(World);
+            StartTalkingQuery(World);
+            StopTalkingQuery(World);
+            SeedOnSceneAssignmentQuery(World);
         }
 
         [Query]
         [All(typeof(IsActivelySpeakingTag))]
-        [None(typeof(PlayerComponent), typeof(DeleteEntityIntention))]
-        private void MarkRemotePlayerTalking(in PlayerCRDTEntity playerCRDTEntity)
+        [None(typeof(TalkingMirroredTag), typeof(PlayerComponent), typeof(DeleteEntityIntention))]
+        private void StartTalking(Entity entity, in PlayerCRDTEntity playerCRDTEntity)
         {
             SetSceneTalking(in playerCRDTEntity, true);
+            World.Add<TalkingMirroredTag>(entity);
         }
 
         [Query]
+        [All(typeof(TalkingMirroredTag))]
         [None(typeof(IsActivelySpeakingTag), typeof(PlayerComponent), typeof(DeleteEntityIntention))]
-        private void MarkRemotePlayerSilent(in PlayerCRDTEntity playerCRDTEntity)
+        private void StopTalking(Entity entity, in PlayerCRDTEntity playerCRDTEntity)
         {
             SetSceneTalking(in playerCRDTEntity, false);
+            World.Remove<TalkingMirroredTag>(entity);
+        }
+
+        /// <summary>
+        ///     A freshly assigned scene entity carries no talking value yet, so the current state is written in full.
+        /// </summary>
+        [Query]
+        [None(typeof(PlayerComponent), typeof(DeleteEntityIntention))]
+        private void SeedOnSceneAssignment(Entity entity, in PlayerCRDTEntity playerCRDTEntity)
+        {
+            if (!playerCRDTEntity.IsDirty) return;
+
+            SetSceneTalking(in playerCRDTEntity, World.Has<IsActivelySpeakingTag>(entity));
         }
 
         private static void SetSceneTalking(in PlayerCRDTEntity playerCRDTEntity, bool talking)
