@@ -265,6 +265,9 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         {
             public const string CHAT_BUBBLES_VISIBILITY_CHANGED = "chat-bubbles-visibility-changed";
             public const string QUALITY_SETTINGS_REPORT = "quality_settings_report";
+
+            // Carries the toggle's value before and after the change.
+            public const string LOBBY_SETTING_CHANGED = "lobby_setting_changed";
         }
 
         public static class Reactions
@@ -331,6 +334,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         /// </summary>
         public static class Lobby
         {
+            // Both events carry the raw remote flag and whether the lobby setting was already stored when the session resolved it.
             public const string LOBBY_OPENED = "lobby_opened";
 
             // Carries how long the panel stayed on screen, in seconds.

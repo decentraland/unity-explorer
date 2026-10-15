@@ -65,16 +65,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 32976ee587c04db88e083b6775e5ee5f
-    m_Address: SkyboxLookPreset_Legacy
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 6fdeef5a54c14a44b8c8fd9b140de6c6
-    m_Address: SkyboxLookPreset_Halloween2026
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 23318cb20f4dbe9429dd8be585ef75d6
     m_Address: CharacterPreviewContainer
     m_ReadOnly: 0
@@ -92,6 +82,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 2df144b808932744487656f89a42fb11
     m_Address: FlatNormal_256_BC5.DDS
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 32976ee587c04db88e083b6775e5ee5f
+    m_Address: SkyboxLookPreset_Legacy
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -180,6 +175,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 656920c5c75f2fdfa40685df8aa57d37
+    m_Address: Assets/DCL/LobbyStage/Prefabs/LobbyStage.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 6578400f95c457644a7e77726c1305a2
     m_Address: AvatarAudioSettings.asset
     m_ReadOnly: 0
@@ -192,6 +192,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 6bdb4b9ae9bf04745acee14bf4c684e1
     m_Address: DefaultBlack_256_BC7.DDS
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6fdeef5a54c14a44b8c8fd9b140de6c6
+    m_Address: SkyboxLookPreset_Halloween2026
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -247,16 +252,6 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 8ae3fb61048040438ec8a0347e048766
     m_Address: Assets/DCL/Lobby/UIToolkit/LobbyDocument.prefab
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: c85615cb88b54cc9a85e397318aff22f
-    m_Address: Assets/DCL/Lobby/Prefabs/LobbyPopups.prefab
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 656920c5c75f2fdfa40685df8aa57d37
-    m_Address: Assets/DCL/LobbyStage/Prefabs/LobbyStage.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -340,6 +335,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c85615cb88b54cc9a85e397318aff22f
+    m_Address: Assets/DCL/Lobby/Prefabs/LobbyPopups.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: c9870b17ce36346458f07a63c096a16a
     m_Address: FaillingLODCubePivot.prefab
     m_ReadOnly: 0
@@ -367,6 +367,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: df3decac75a242f4689cb445dc93eb06
     m_Address: UIAudioContainer
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: dfe79687037014506aefcf889c9b7a4d
+    m_Address: Assets/DCL/Settings/Prefabs/SettingsModuleView_Spacer.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
