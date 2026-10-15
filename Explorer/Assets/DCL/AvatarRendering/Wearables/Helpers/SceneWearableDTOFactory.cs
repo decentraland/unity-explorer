@@ -128,7 +128,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                     category = category,
                     hides = Array.Empty<string>(),
                     replaces = Array.Empty<string>(),
-                    removesDefaultHiding = Array.Empty<string>(),
+                    removesDefaultHiding = new[] { WearableCategories.Categories.HANDS },
                     tags = Array.Empty<string>(),
                     representations = new[]
                     {

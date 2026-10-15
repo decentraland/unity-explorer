@@ -8,6 +8,7 @@ using DCL.Ipfs;
 using ECS.StreamableLoading.Common.Components;
 using NSubstitute;
 using NUnit.Framework;
+using Runtime.Wearables;
 using SceneRunner.Scene;
 using System;
 using UnityEngine;
@@ -169,7 +170,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
             Assert.AreEqual("hat", dto.metadata.data.category);
             Assert.IsEmpty(dto.metadata.data.hides);
             Assert.IsEmpty(dto.metadata.data.replaces);
-            Assert.IsEmpty(dto.metadata.data.removesDefaultHiding);
+            CollectionAssert.AreEqual(new[] { WearableCategories.Categories.HANDS }, dto.metadata.data.removesDefaultHiding);
             Assert.IsEmpty(dto.metadata.data.tags);
             Assert.AreEqual(string.Empty, dto.metadata.thumbnail);
 
