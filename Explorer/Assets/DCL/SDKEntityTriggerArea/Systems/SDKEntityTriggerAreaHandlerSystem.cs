@@ -37,13 +37,18 @@ namespace DCL.SDKEntityTriggerArea.Systems
         {
             if (!sceneStateProvider.IsCurrent || !mainPlayerAvatarBaseProxy.Configured) return;
 
-            UpdateSDKEntityTriggerAreaOnDirtyQuery(World);
+            UpdateSDKEntityTriggerAreaQuery(World);
         }
 
         [Query]
-        private void UpdateSDKEntityTriggerAreaOnDirty(ref TransformComponent transformComponent, ref SDKEntityTriggerAreaComponent triggerAreaComponent)
+        private void UpdateSDKEntityTriggerArea(ref TransformComponent transformComponent, ref SDKEntityTriggerAreaComponent triggerAreaComponent)
         {
-            if (!triggerAreaComponent.IsDirty) return;
+            if (!triggerAreaComponent.IsDirty)
+            {
+                triggerAreaComponent.TryUpdateParentScaleCompensation(transformComponent.Transform);
+                return;
+            }
+
             triggerAreaComponent.IsDirty = false;
 
             triggerAreaComponent.TryAssignArea(poolRegistry, mainPlayerTransform, transformComponent);
