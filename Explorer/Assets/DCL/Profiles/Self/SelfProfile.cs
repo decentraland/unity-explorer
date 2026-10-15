@@ -8,6 +8,7 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
 using DCL.Utility.Types;
 using DCL.Web3.Identities;
+using ECS;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -36,6 +37,7 @@ namespace DCL.Profiles.Self
         public SelfProfile(
             IProfileRepository profileRepository,
             IWeb3IdentityCache web3IdentityCache,
+            IRealmData realmData,
             IEquippedWearables equippedWearables,
             IWearableStorage wearableStorage,
             IEmoteStorage emoteStorage,
@@ -49,7 +51,7 @@ namespace DCL.Profiles.Self
             this.web3IdentityCache = web3IdentityCache;
             drainToken = drainCts.Token;
 
-            var executor = new SelfProfileCmdExecutor(profileRepository, profileCache, web3IdentityCache, wearableStorage, emoteStorage, equippedWearables, equippedEmotes,
+            var executor = new SelfProfileCmdExecutor(profileRepository, profileCache, web3IdentityCache, realmData, wearableStorage, emoteStorage, equippedWearables, equippedEmotes,
                 forcedWearables, forcedEmotes, world, playerEntity);
 
             runtime = new FsmRuntime<SelfProfileModel, SelfProfileMsg, SelfProfileCmd>(FSM_TAG, ReportCategory.PROFILE, SelfProfileModel.NoIdentity(), SelfProfileModel.Update, executor);
