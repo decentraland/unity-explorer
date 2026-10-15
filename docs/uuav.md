@@ -87,13 +87,12 @@ a stutter rather than a session loss.
 
 **The player-facing surface is the compat facade, and it is scaffolding.**
 The Explorer's media systems (`DCL.SDKComponents.MediaStream`) talk straight to
-`Packages/UUAV/AVProCompat/` (`MediaPlayer`,
-`IMediaControl`, `IMediaInfo`, `ITextureProducer`). That facade still mirrors
-AVPro's shape (`MediaPathType` exists only for parity)
-because it was built so the switch could stay trivial. With one backend left, the
-shape buys
-nothing: it is slated to be collapsed so the media systems drive `UUAVPlayer`
-through a surface that states only what UUAV actually does.
+`Packages/UUAV/AVProCompat/` (`MediaPlayer`, `IMediaControl`, `IMediaInfo`,
+`ITextureProducer`). That facade mirrors AVPro's shape, which buys nothing with
+a single backend. It is tracked for collapse in
+[#10441](https://github.com/decentraland/unity-explorer/issues/10441), so the
+media systems drive `UUAVPlayer` through a surface that states only what UUAV
+actually does.
 
 ## Where to look
 

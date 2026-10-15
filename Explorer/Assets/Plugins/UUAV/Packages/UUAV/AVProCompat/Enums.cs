@@ -1,16 +1,5 @@
 namespace UUAV.Compat
 {
-    // Mirrors AVPro's MediaPathType. The consumer only ever passes
-    // AbsolutePathOrURL; the remaining members exist for signature parity.
-    public enum MediaPathType
-    {
-        AbsolutePathOrURL,
-        RelativeToProjectFolder,
-        RelativeToStreamingAssetsFolder,
-        RelativeToDataFolder,
-        RelativeToPersistentDataFolder,
-    }
-
     // Mirrors AVPro's ErrorCode. UUAV surfaces errors only as a state, so the
     // backend collapses every failure onto LoadFailed; the consumer just checks
     // for != None.

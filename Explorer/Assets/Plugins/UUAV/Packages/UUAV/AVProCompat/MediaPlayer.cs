@@ -42,9 +42,8 @@ namespace UUAV.Compat
             backend.Tick();
         }
 
-        public bool OpenMedia(MediaPathType pathType, string path, bool autoPlay)
+        public bool OpenMedia(string path, bool autoPlay)
         {
-            // Only AbsolutePathOrURL is used; UUAV takes the URL/path verbatim.
             uuavPlayer.OpenMedia(path);
 
             if (autoPlay)

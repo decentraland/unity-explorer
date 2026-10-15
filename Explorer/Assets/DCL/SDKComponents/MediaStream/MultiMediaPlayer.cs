@@ -210,7 +210,7 @@ namespace DCL.SDKComponents.MediaStream
                     // which is how the content server flags video files). FFmpeg probes the bytes, so re-check
                     // whether UUAV still needs it with a content-server MP4 on macOS and Windows.
                     string target = ctx.isFromContentServer ? string.Format("{0}?includeMimeType", address.Url) : address.Url;
-                    return player.OpenMedia(MediaPathType.AbsolutePathOrURL, target, ctx.autoPlay);
+                    return player.OpenMedia(target, ctx.autoPlay);
                 },
                 onLivekitAddress: static (ctx, address) =>
                 {
