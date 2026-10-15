@@ -65,9 +65,9 @@ namespace DCL.VoiceChat.Nearby.Systems
 
         private static void SetSceneTalking(in PlayerCRDTEntity playerCRDTEntity, bool talking)
         {
-            if (playerCRDTEntity.SceneFacade is not { } scene) return;
+            if (!playerCRDTEntity.AssignedToScene) return;
 
-            ref SDKTalking sdkTalking = ref scene.EcsExecutor.World.TryGetRef<SDKTalking>(playerCRDTEntity.SceneWorldEntity, out bool exists);
+            ref SDKTalking sdkTalking = ref playerCRDTEntity.SceneFacade!.EcsExecutor.World.TryGetRef<SDKTalking>(playerCRDTEntity.SceneWorldEntity, out bool exists);
 
             if (exists)
                 sdkTalking.Set(talking);
