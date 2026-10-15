@@ -1,8 +1,8 @@
 namespace DCL.Multiplayer.SDK.Components
 {
     /// <summary>
-    ///     Voice activity of the player written as <c>PBAvatarBase.talking</c>; <c>null</c> while the engine does not report it.
-    ///     <see cref="IsDirty" /> is reset by <see cref="DCL.Multiplayer.SDK.Systems.SceneWorld.CleanUpAvatarPropagationComponentsSystem" />.
+    ///     Voice activity of the player for <c>PBAvatarBase.talking</c>; <c>null</c> while it is not reported.
+    ///     <see cref="Set" /> raises <see cref="IsDirty" /> only when the value changes.
     /// </summary>
     public struct SDKTalking
     {

@@ -2,6 +2,7 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using DCL.AvatarRendering.AvatarShape;
 using DCL.Character.Components;
 using DCL.Diagnostics;
 using DCL.Multiplayer.SDK.Components;
@@ -19,11 +20,11 @@ namespace DCL.VoiceChat.Nearby.Systems
     ///     in steady state no remote player is touched.
     ///     Remote activity is read from <see cref="IsActivelySpeakingTag" /> as is: whether the local player hears
     ///     the speaker (mute, block, scene ban, listening state) does not change the fact that the avatar is talking.
-    ///     The local player's value goes to <see cref="TalkingComponent" />, which
-    ///     <see cref="DCL.Multiplayer.SDK.Systems.SceneWorld.LocalPlayerCRDTEntityHandlerSystem" /> mirrors into every scene.
+    ///     The local player's value goes to <see cref="TalkingComponent" /> on the global player entity.
     /// </summary>
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [UpdateAfter(typeof(PlayerProfileDataPropagationSystem))]
+    [UpdateAfter(typeof(AvatarGroup))]
     [LogCategory(ReportCategory.NEARBY_VOICE_CHAT)]
     public partial class NearbyTalkingSDKPropagationSystem : BaseUnityLoopSystem
     {
@@ -68,7 +69,7 @@ namespace DCL.VoiceChat.Nearby.Systems
         }
 
         /// <summary>
-        ///     A freshly assigned scene entity carries no talking value yet, so the current state is written in full.
+        ///     Writes the current state on the frame the scene assignment changes.
         /// </summary>
         [Query]
         [None(typeof(PlayerComponent), typeof(DeleteEntityIntention))]

@@ -23,7 +23,7 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
     ///     <see cref="PlayerProfileDataPropagationSystem" /> which only targets the assigned scene
     ///     and which skips the local player entirely (filtered by PlayerComponent).
     ///     It also mirrors <see cref="TalkingComponent" /> into <see cref="SDKTalking" />,
-    ///     leaving it unset while the component is absent (Nearby voice chat disabled).
+    ///     leaving it unset while the component is absent.
     ///     Runs in SyncedPreRenderingSystemGroup before the writer systems so SDKProfile
     ///     is up-to-date when they flush CRDT. Profile.IsDirty is guaranteed to be set
     ///     (set in PresentationSystemGroup, reset later in the same PreRenderingSystemGroup).
