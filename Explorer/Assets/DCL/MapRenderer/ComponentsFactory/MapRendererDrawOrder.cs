@@ -7,11 +7,12 @@
     {
         internal const int ATLAS = 1;
         internal const int SATELLITE_ATLAS = 2;
-        internal const int HOME_POINT = 3;
 
-        // Streamed satellite levels 3 to 8, one order each so finer levels cover coarser ones. Above the edge patches (3)
-        // that MapRendererConfiguration.prefab draws over the bundled chunks.
-        internal const int SATELLITE_DETAIL_BASE_LEVEL = 4;
+        // Streamed satellite levels 3 to 8, one order each (3 to 8) so finer levels cover coarser ones.
+        internal const int SATELLITE_DETAIL_BASE_LEVEL = 3;
+
+        // The edge patches in MapRendererConfiguration.prefab draw at 9, over the bundled chunks and every streamed level,
+        // so the satellite imagery's margin outside the city never shows. They follow GenesisCityData.INTERACTABLE_WORLD_BOUNDS.
         internal const int COLD_USER_MARKERS = 10;
         internal const int HOT_USER_MARKERS = 11;
         internal const int SEARCH_RESULTS = 12;
