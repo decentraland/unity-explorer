@@ -153,9 +153,9 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
         }
 
         [Test]
-        public void LeaveTalkingUnsetWhenNearbyDoesNotReport()
+        public void LeaveTalkingUnsetWhenPropagationNeverRan()
         {
-            // Arrange: Nearby feature flag off, so only the profile change triggers a write
+            // Arrange: the propagation system is not ticked, so only the profile change triggers the write
             SDKProfile sdkProfile = AddPlayerToScene(world.Create(), REMOTE_WALLET, SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM);
             sdkProfile.IsDirty = true;
 
